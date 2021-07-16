@@ -446,12 +446,42 @@ pub const ID3D12Resource = extern struct {
     fn VTable(comptime T: type) type {
         return extern struct {
             Map: fn (*T, UINT, ?*const D3D12_RANGE, *?*c_void) callconv(WINAPI) HRESULT,
-            Unmap: fn (*T, UINT, *const D3D12_RANGE) callconv(WINAPI) void,
+            Unmap: fn (*T, UINT, ?*const D3D12_RANGE) callconv(WINAPI) void,
             GetDesc: fn (*T, *D3D12_RESOURCE_DESC) callconv(WINAPI) *D3D12_RESOURCE_DESC,
             GetGPUVirtualAddress: fn (*T) callconv(WINAPI) D3D12_GPU_VIRTUAL_ADDRESS,
             WriteToSubresource: fn (*T, UINT, ?*const D3D12_BOX, *const c_void, UINT, UINT) callconv(WINAPI) HRESULT,
             ReadFromSubresource: fn (*T, *c_void, UINT, UINT, UINT, ?*const D3D12_BOX) callconv(WINAPI) HRESULT,
             GetHeapProperties: fn (*T, ?*D3D12_HEAP_PROPERTIES, ?*D3D12_HEAP_FLAGS) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const ID3D12Resource1 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        resource: ID3D12Resource.VTable(Self),
+        resource1: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Resource.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetProtectedResourceSession(self: *T, guid: *const GUID, session: *?*c_void) HRESULT {
+                return self.v.resource1.GetProtectedResourceSession(self, guid, session);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetProtectedResourceSession: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -574,6 +604,54 @@ pub const ID3D12PipelineState = extern struct {
     fn VTable(comptime T: type) type {
         return extern struct {
             GetCachedBlob: fn (*T, **ID3DBlob) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const ID3D12DescriptorHeap = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        dheap: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetDesc(self: *T) D3D12_DESCRIPTOR_HEAP_DESC {
+                var desc: D3D12_DESCRIPTOR_HEAP_DESC = undefined;
+                self.v.dheap.GetDesc(self, &desc);
+                return desc;
+            }
+            pub inline fn GetCPUDescriptorHandleForHeapStart(self: *T) D3D12_CPU_DESCRIPTOR_HANDLE {
+                var handle: D3D12_CPU_DESCRIPTOR_HANDLE = undefined;
+                _ = self.v.dheap.GetCPUDescriptorHandleForHeapStart(self, &handle);
+                return handle;
+            }
+            pub inline fn GetGPUDescriptorHandleForHeapStart(self: *T) D3D12_GPU_DESCRIPTOR_HANDLE {
+                var handle: D3D12_GPU_DESCRIPTOR_HANDLE = undefined;
+                _ = self.v.dheap.GetGPUDescriptorHandleForHeapStart(self, &handle);
+                return handle;
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetDesc: fn (*T, *D3D12_DESCRIPTOR_HEAP_DESC) callconv(WINAPI) *D3D12_DESCRIPTOR_HEAP_DESC,
+            GetCPUDescriptorHandleForHeapStart: fn (
+                *T,
+                *D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) *D3D12_CPU_DESCRIPTOR_HANDLE,
+            GetGPUDescriptorHandleForHeapStart: fn (
+                *T,
+                *D3D12_GPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) *D3D12_GPU_DESCRIPTOR_HANDLE,
         };
     }
 };
