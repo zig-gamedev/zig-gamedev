@@ -191,6 +191,45 @@ pub const D3D12_RESOURCE_DESC = extern struct {
     }
 };
 
+pub const D3D12_FENCE_FLAGS = packed struct {
+    SHARED: bool align(4) = false, // 0x1
+    SHARED_CROSS_ADAPTER: bool = false, // 0x2
+    NON_MONITORED: bool = false, // 0x4
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_FENCE_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_FENCE_FLAGS) == 4);
+}
+
 pub const ID3D12Object = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -211,7 +250,7 @@ pub const ID3D12Object = extern struct {
             pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const os.IUnknown) HRESULT {
                 return self.v.object.SetPrivateDataInterface(self, guid, data);
             }
-            pub inline fn SetName(self: *T, name: ?os.LPCWSTR) HRESULT {
+            pub inline fn SetName(self: *T, name: LPCWSTR) HRESULT {
                 return self.v.object.SetName(self, name);
             }
         };
@@ -222,7 +261,7 @@ pub const ID3D12Object = extern struct {
             GetPrivateData: fn (*T, *const GUID, *UINT, ?*c_void) callconv(WINAPI) HRESULT,
             SetPrivateData: fn (*T, *const GUID, UINT, ?*const c_void) callconv(WINAPI) HRESULT,
             SetPrivateDataInterface: fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
-            SetName: fn (*T, ?LPCWSTR) callconv(WINAPI) HRESULT,
+            SetName: fn (*T, LPCWSTR) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -240,7 +279,7 @@ pub const ID3D12DeviceChild = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetDevice(self: *T, guid: *const GUID, device: **c_void) HRESULT {
+            pub inline fn GetDevice(self: *T, guid: *const GUID, device: *?*c_void) HRESULT {
                 return self.v.devchild.GetDevice(self, guid, device);
             }
         };
@@ -248,7 +287,7 @@ pub const ID3D12DeviceChild = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDevice: fn (*T, *const GUID, **c_void) callconv(WINAPI) HRESULT,
+            GetDevice: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -346,10 +385,10 @@ pub const ID3D12Resource = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn Map(self: *T, subresource: UINT, read_range: *const D3D12_RANGE, data: **c_void) HRESULT {
+            pub inline fn Map(self: *T, subresource: UINT, read_range: ?*const D3D12_RANGE, data: *?*c_void) HRESULT {
                 return self.v.resource.Map(self, subresource, read_range, data);
             }
-            pub inline fn Unmap(self: *T, subresource: UINT, written_range: *const D3D12_RANGE) void {
+            pub inline fn Unmap(self: *T, subresource: UINT, written_range: ?*const D3D12_RANGE) void {
                 self.v.resource.Unmap(self, subresource, written_range);
             }
             pub inline fn GetDesc(self: *T) D3D12_RESOURCE_DESC {
@@ -363,7 +402,7 @@ pub const ID3D12Resource = extern struct {
             pub inline fn WriteToSubresource(
                 self: *T,
                 dst_subresource: UINT,
-                dst_box: *const D3D12_BOX,
+                dst_box: ?*const D3D12_BOX,
                 src_data: *const c_void,
                 src_row_pitch: UINT,
                 src_depth_pitch: UINT,
@@ -383,7 +422,7 @@ pub const ID3D12Resource = extern struct {
                 dst_row_pitch: UINT,
                 dst_depth_pitch: UINT,
                 src_subresource: UINT,
-                src_box: *const D3D12_BOX,
+                src_box: ?*const D3D12_BOX,
             ) HRESULT {
                 return self.v.resource.ReadFromSubresource(
                     self,
@@ -394,7 +433,11 @@ pub const ID3D12Resource = extern struct {
                     src_box,
                 );
             }
-            pub inline fn GetHeapProperties(self: *T, properties: *D3D12_HEAP_PROPERTIES, flags: *D3D12_HEAP_FLAGS) HRESULT {
+            pub inline fn GetHeapProperties(
+                self: *T,
+                properties: ?*D3D12_HEAP_PROPERTIES,
+                flags: ?*D3D12_HEAP_FLAGS,
+            ) HRESULT {
                 return self.v.resource.GetHeapProperties(self, properties, flags);
             }
         };
@@ -402,13 +445,13 @@ pub const ID3D12Resource = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Map: fn (*T, UINT, *const D3D12_RANGE, **c_void) callconv(WINAPI) HRESULT,
+            Map: fn (*T, UINT, ?*const D3D12_RANGE, *?*c_void) callconv(WINAPI) HRESULT,
             Unmap: fn (*T, UINT, *const D3D12_RANGE) callconv(WINAPI) void,
             GetDesc: fn (*T, *D3D12_RESOURCE_DESC) callconv(WINAPI) *D3D12_RESOURCE_DESC,
             GetGPUVirtualAddress: fn (*T) callconv(WINAPI) D3D12_GPU_VIRTUAL_ADDRESS,
-            WriteToSubresource: fn (*T, UINT, *const D3D12_BOX, *const c_void, UINT, UINT) callconv(WINAPI) HRESULT,
-            ReadFromSubresource: fn (*T, *c_void, UINT, UINT, UINT, *const D3D12_BOX) callconv(WINAPI) HRESULT,
-            GetHeapProperties: fn (*T, *D3D12_HEAP_PROPERTIES, *D3D12_HEAP_FLAGS) callconv(WINAPI) HRESULT,
+            WriteToSubresource: fn (*T, UINT, ?*const D3D12_BOX, *const c_void, UINT, UINT) callconv(WINAPI) HRESULT,
+            ReadFromSubresource: fn (*T, *c_void, UINT, UINT, UINT, ?*const D3D12_BOX) callconv(WINAPI) HRESULT,
+            GetHeapProperties: fn (*T, ?*D3D12_HEAP_PROPERTIES, ?*D3D12_HEAP_FLAGS) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -477,6 +520,36 @@ pub const ID3D12Fence = extern struct {
     }
 };
 
+pub const ID3D12Fence1 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        fence: ID3D12Fence.VTable(Self),
+        fence1: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Fence.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetCreationFlags(self: *T) D3D12_FENCE_FLAGS {
+                return self.v.fence1.GetCreationFlags(self);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetCreationFlags: fn (*T) callconv(WINAPI) D3D12_FENCE_FLAGS,
+        };
+    }
+};
+
 pub const ID3D12PipelineState = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -505,12 +578,12 @@ pub const ID3D12PipelineState = extern struct {
     }
 };
 
-pub var D3D12GetDebugInterface: fn (*const GUID, **c_void) callconv(WINAPI) HRESULT = undefined;
+pub var D3D12GetDebugInterface: fn (*const GUID, *?*c_void) callconv(WINAPI) HRESULT = undefined;
 pub var D3D12CreateDevice: fn (
     ?*IUnknown,
     u32,
     *const GUID,
-    **c_void,
+    *?*c_void,
 ) callconv(WINAPI) HRESULT = undefined;
 
 pub const IID_ID3D12Device = GUID{
