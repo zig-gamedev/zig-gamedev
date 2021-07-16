@@ -3,6 +3,7 @@ usingnamespace std.os.windows;
 usingnamespace @import("windows.zig");
 usingnamespace @import("dxgi.zig");
 usingnamespace @import("d3dcommon.zig");
+usingnamespace @import("d3d12sdklayers.zig");
 
 pub const D3D12_GPU_VIRTUAL_ADDRESS = UINT64;
 
@@ -503,6 +504,7 @@ pub const ID3D12PipelineState = extern struct {
     }
 };
 
+pub var D3D12GetDebugInterface: fn (*const GUID, **c_void) callconv(WINAPI) HRESULT = undefined;
 pub var D3D12CreateDevice: fn (
     ?*IUnknown,
     u32,
@@ -520,4 +522,5 @@ pub const IID_ID3D12Device = GUID{
 pub fn d3d12_load_dll() !void {
     var d3d12_dll = try std.DynLib.openZ("d3d12.dll");
     D3D12CreateDevice = d3d12_dll.lookup(@TypeOf(D3D12CreateDevice), "D3D12CreateDevice").?;
+    D3D12GetDebugInterface = d3d12_dll.lookup(@TypeOf(D3D12GetDebugInterface), "D3D12GetDebugInterface").?;
 }
