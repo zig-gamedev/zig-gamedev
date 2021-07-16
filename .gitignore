@@ -1,0 +1,4 @@
+zig-cache
+*.cso
+*.exe
+*.pdb
