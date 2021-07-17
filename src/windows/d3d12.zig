@@ -1905,12 +1905,530 @@ pub const ID3D12CommandQueue = extern struct {
     }
 };
 
-pub var D3D12GetDebugInterface: fn (*const GUID, *?*c_void) callconv(WINAPI) HRESULT = undefined;
+pub const ID3D12Device = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetNodeCount(self: *T) UINT {
+                return self.v.device.GetNodeCount(self);
+            }
+            pub inline fn CreateCommandQueue(
+                self: *T,
+                desc: *const D3D12_COMMAND_QUEUE_DESC,
+                guid: *const GUID,
+                obj: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateCommandQueue(self, desc, guid, obj);
+            }
+            pub inline fn CreateCommandAllocator(
+                self: *T,
+                cmdlist_type: D3D12_COMMAND_LIST_TYPE,
+                guid: *const GUID,
+                obj: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateCommandAllocator(self, cmdlist_type, guid, obj);
+            }
+            pub inline fn CreateGraphicsPipelineState(
+                self: *T,
+                desc: *const D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+                guid: *const GUID,
+                pso: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateGraphicsPipelineState(self, desc, guid, pso);
+            }
+            pub inline fn CreateComputePipelineState(
+                self: *T,
+                desc: *const D3D12_COMPUTE_PIPELINE_STATE_DESC,
+                guid: *const GUID,
+                pso: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateComputePipelineState(self, desc, guid, pso);
+            }
+            pub inline fn CreateCommandList(
+                self: *T,
+                node_mask: UINT,
+                cmdlist_type: D3D12_COMMAND_LIST_TYPE,
+                cmdalloc: *ID3D12CommandAllocator,
+                initial_state: ?*ID3D12PipelineState,
+                guid: *const GUID,
+                cmdlist: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateCommandList(self, node_mask, cmdlist_type, cmdalloc, initial_state, guid, cmdlist);
+            }
+            pub inline fn CheckFeatureSupport(self: *T, feature: D3D12_FEATURE, data: *c_void, data_size: UINT) HRESULT {
+                return self.vtbl.CheckFeatureSupport(self, feature, data, data_size);
+            }
+            pub inline fn CreateDescriptorHeap(
+                self: *T,
+                desc: *const D3D12_DESCRIPTOR_HEAP_DESC,
+                guid: *const GUID,
+                heap: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateDescriptorHeap(self, desc, guid, heap);
+            }
+            pub inline fn GetDescriptorHandleIncrementSize(self: *T, heap_type: D3D12_DESCRIPTOR_HEAP_TYPE) UINT {
+                return self.v.device.GetDescriptorHandleIncrementSize(self, heap_type);
+            }
+            pub inline fn CreateRootSignature(
+                self: *T,
+                node_mask: UINT,
+                blob: *const c_void,
+                blob_size: UINT64,
+                guid: *const GUID,
+                signature: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateRootSignature(self, node_mask, blob, blob_size, guid, signature);
+            }
+            pub inline fn CreateConstantBufferView(
+                self: *T,
+                desc: ?*const D3D12_CONSTANT_BUFFER_VIEW_DESC,
+                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.device.CreateConstantBufferView(self, desc, dst_descriptor);
+            }
+            pub inline fn CreateShaderResourceView(
+                self: *T,
+                resource: ?*ID3D12Resource,
+                desc: ?*const D3D12_SHADER_RESOURCE_VIEW_DESC,
+                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.device.CreateShaderResourceView(self, resource, desc, dst_descriptor);
+            }
+            pub inline fn CreateUnorderedAccessView(
+                self: *T,
+                resource: ?*ID3D12Resource,
+                counter_resource: ?*ID3D12Resource,
+                desc: ?*const D3D12_UNORDERED_ACCESS_VIEW_DESC,
+                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.device.CreateUnorderedAccessView(
+                    self,
+                    resource,
+                    counter_resource,
+                    desc,
+                    dst_descriptor,
+                );
+            }
+            pub inline fn CreateRenderTargetView(
+                self: *T,
+                resource: ?*ID3D12Resource,
+                desc: ?*const D3D12_RENDER_TARGET_VIEW_DESC,
+                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.device.CreateRenderTargetView(self, resource, desc, dst_descriptor);
+            }
+            pub inline fn CreateDepthStencilView(
+                self: *T,
+                resource: ?*ID3D12Resource,
+                desc: ?*const D3D12_DEPTH_STENCIL_VIEW_DESC,
+                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.device.CreateDepthStencilView(self, resource, desc, dst_descriptor);
+            }
+            pub inline fn CreateSampler(
+                self: *T,
+                desc: *const D3D12_SAMPLER_DESC,
+                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.device.CreateSampler(self, desc, dst_descriptor);
+            }
+            pub inline fn CopyDescriptors(
+                self: *T,
+                num_dst_ranges: UINT,
+                dst_range_starts: [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                dst_range_sizes: ?[*]const UINT,
+                num_src_ranges: UINT,
+                src_range_starts: [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                src_range_sizes: ?[*]const UINT,
+                heap_type: D3D12_DESCRIPTOR_HEAP_TYPE,
+            ) void {
+                self.v.device.CopyDescriptors(
+                    self,
+                    num_dst_ranges,
+                    dst_range_starts,
+                    dst_range_sizes,
+                    num_src_ranges,
+                    src_range_starts,
+                    src_range_sizes,
+                    heap_type,
+                );
+            }
+            pub inline fn CopyDescriptorsSimple(
+                self: *T,
+                num: UINT,
+                dst_range_start: D3D12_CPU_DESCRIPTOR_HANDLE,
+                src_range_start: D3D12_CPU_DESCRIPTOR_HANDLE,
+                heap_type: D3D12_DESCRIPTOR_HEAP_TYPE,
+            ) void {
+                self.v.device.CopyDescriptorsSimple(self, num, dst_range_start, src_range_start, heap_type);
+            }
+            pub inline fn GetResourceAllocationInfo(
+                self: *T,
+                visible_mask: UINT,
+                num_descs: UINT,
+                descs: [*]const D3D12_RESOURCE_DESC,
+            ) D3D12_RESOURCE_ALLOCATION_INFO {
+                var info: D3D12_RESOURCE_ALLOCATION_INFO = undefined;
+                self.v.device.GetResourceAllocationInfo(self, &info, visible_mask, num_descs, descs);
+                return info;
+            }
+            pub inline fn GetCustomHeapProperties(
+                self: *T,
+                node_mask: UINT,
+                heap_type: D3D12_HEAP_TYPE,
+            ) D3D12_HEAP_PROPERTIES {
+                var props: D3D12_HEAP_PROPERTIES = undefined;
+                self.v.device.GetCustomHeapProperties(self, &props, node_mask, heap_type);
+                return props;
+            }
+            pub inline fn CreateCommittedResource(
+                self: *T,
+                heap_props: *const D3D12_HEAP_PROPERTIES,
+                heap_flags: D3D12_HEAP_FLAGS,
+                desc: *const D3D12_RESOURCE_DESC,
+                state: D3D12_RESOURCE_STATES,
+                clear_value: ?*const D3D12_CLEAR_VALUE,
+                guid: *const GUID,
+                resource: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateCommittedResource(
+                    self,
+                    heap_props,
+                    heap_flags,
+                    desc,
+                    state,
+                    clear_value,
+                    guid,
+                    resource,
+                );
+            }
+            pub inline fn CreateHeap(self: *T, desc: *const D3D12_HEAP_DESC, guid: *const GUID, heap: ?*?*c_void) HRESULT {
+                return self.v.device.CreateHeap(self, desc, guid, heap);
+            }
+            pub inline fn CreatePlacedResource(
+                self: *T,
+                heap: *ID3D12Heap,
+                heap_offset: UINT64,
+                desc: *const D3D12_RESOURCE_DESC,
+                state: D3D12_RESOURCE_STATES,
+                clear_value: ?*const D3D12_CLEAR_VALUE,
+                guid: *const GUID,
+                resource: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device.CreatePlacedResource(
+                    self,
+                    heap,
+                    heap_offset,
+                    desc,
+                    state,
+                    clear_value,
+                    guid,
+                    resource,
+                );
+            }
+            pub inline fn CreateReservedResource(
+                self: *T,
+                desc: *const D3D12_RESOURCE_DESC,
+                state: D3D12_RESOURCE_STATES,
+                clear_value: ?*const D3D12_CLEAR_VALUE,
+                guid: *const GUID,
+                resource: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateReservedResource(self, desc, state, clear_value, guid, resource);
+            }
+            pub inline fn CreateSharedHandle(
+                self: *T,
+                object: *ID3D12DeviceChild,
+                attributes: ?*const SECURITY_ATTRIBUTES,
+                access: DWORD,
+                name: ?LPCWSTR,
+                handle: ?*HANDLE,
+            ) HRESULT {
+                return self.v.device.CreateSharedHandle(self, object, attributes, access, name, handle);
+            }
+            pub inline fn OpenSharedHandle(self: *T, handle: HANDLE, guid: *const GUID, object: ?*?*c_void) HRESULT {
+                return self.v.device.OpenSharedHandle(self, handle, guid, object);
+            }
+            pub inline fn OpenSharedHandleByName(self: *T, name: LPCWSTR, access: DWORD, handle: ?*HANDLE) HRESULT {
+                return self.v.device.OpenSharedHandleByName(self, name, access, handle);
+            }
+            pub inline fn MakeResident(self: *T, num: UINT, objects: [*]const *ID3D12Pageable) HRESULT {
+                return self.v.device.MakeResident(self, num, objects);
+            }
+            pub inline fn Evict(self: *T, num: UINT, objects: [*]const *ID3D12Pageable) HRESULT {
+                return self.v.device.Evict(self, num, objects);
+            }
+            pub inline fn CreateFence(
+                self: *T,
+                initial_value: UINT64,
+                flags: D3D12_FENCE_FLAGS,
+                guid: *const GUID,
+                fence: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateFence(self, initial_value, flags, guid, fence);
+            }
+            pub inline fn GetDeviceRemovedReason(self: *T) HRESULT {
+                return self.v.device.GetDeviceRemovedReason(self);
+            }
+            pub inline fn GetCopyableFootprints(
+                self: *T,
+                desc: *const D3D12_RESOURCE_DESC,
+                first_subresource: UINT,
+                num_subresources: UINT,
+                base_offset: UINT64,
+                layouts: ?[*]D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+                num_rows: ?[*]UINT,
+                row_size: ?[*]UINT64,
+                total_sizie: ?*UINT64,
+            ) void {
+                self.v.device.GetCopyableFootprints(
+                    self,
+                    desc,
+                    first_subresource,
+                    num_subresources,
+                    base_offset,
+                    layouts,
+                    num_rows,
+                    row_size,
+                    total_sizie,
+                );
+            }
+            pub inline fn CreateQueryHeap(
+                self: *T,
+                desc: *const D3D12_QUERY_HEAP_DESC,
+                guid: *const GUID,
+                query_heap: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateQueryHeap(self, desc, guid, query_heap);
+            }
+            pub inline fn SetStablePowerState(self: *T, enable: BOOL) HRESULT {
+                return self.v.device.SetStablePowerState(self, enable);
+            }
+            pub inline fn CreateCommandSignature(
+                self: *T,
+                desc: *const D3D12_COMMAND_SIGNATURE_DESC,
+                root_signature: ?*ID3D12RootSignature,
+                guid: *const GUID,
+                cmd_signature: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateCommandSignature(self, desc, root_signature, guid, cmd_signature);
+            }
+            pub inline fn GetResourceTiling(
+                self: *T,
+                resource: *ID3D12Resource,
+                num_resource_tiles: ?*UINT,
+                packed_mip_desc: ?*D3D12_PACKED_MIP_INFO,
+                std_tile_shape_non_packed_mips: ?*D3D12_TILE_SHAPE,
+                num_subresource_tilings: ?*UINT,
+                first_subresource: UINT,
+                subresource_tiling_for_non_packed_mips: [*]D3D12_SUBRESOURCE_TILING,
+            ) void {
+                self.v.device.GetResourceTiling(
+                    self,
+                    resource,
+                    num_resource_tiles,
+                    packed_mip_desc,
+                    std_tile_shape_non_packed_mips,
+                    num_subresource_tilings,
+                    first_subresource,
+                    subresource_tiling_for_non_packed_mips,
+                );
+            }
+            pub inline fn GetAdapterLuid(self: *T) LUID {
+                return self.v.device.GetAdapterLuid(self);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetNodeCount: fn (*T) callconv(WINAPI) UINT,
+            CreateCommandQueue: fn (*T, *const D3D12_COMMAND_QUEUE_DESC, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateCommandAllocator: fn (*T, D3D12_COMMAND_LIST_TYPE, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateGraphicsPipelineState: fn (
+                *T,
+                *const D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateComputePipelineState: fn (
+                *T,
+                *const D3D12_COMPUTE_PIPELINE_STATE_DESC,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateCommandList: fn (
+                *T,
+                UINT,
+                D3D12_COMMAND_LIST_TYPE,
+                *ID3D12CommandAllocator,
+                ?*ID3D12PipelineState,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CheckFeatureSupport: fn (*T, D3D12_FEATURE, *c_void, UINT) callconv(WINAPI) HRESULT,
+            CreateDescriptorHeap: fn (
+                *T,
+                *const D3D12_DESCRIPTOR_HEAP_DESC,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            GetDescriptorHandleIncrementSize: fn (*T, D3D12_DESCRIPTOR_HEAP_TYPE) callconv(WINAPI) UINT,
+            CreateRootSignature: fn (*T, UINT, *const c_void, UINT64, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateConstantBufferView: fn (
+                *T,
+                ?*const D3D12_CONSTANT_BUFFER_VIEW_DESC,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) void,
+            CreateShaderResourceView: fn (
+                *T,
+                ?*ID3D12Resource,
+                ?*const D3D12_SHADER_RESOURCE_VIEW_DESC,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) void,
+            CreateUnorderedAccessView: fn (
+                *T,
+                ?*ID3D12Resource,
+                ?*ID3D12Resource,
+                ?*const D3D12_UNORDERED_ACCESS_VIEW_DESC,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) void,
+            CreateRenderTargetView: fn (
+                *T,
+                ?*ID3D12Resource,
+                ?*const RENDER_TARGET_VIEW_DESC,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) void,
+            CreateDepthStencilView: fn (
+                *T,
+                ?*ID3D12Resource,
+                ?*const D3D12_DEPTH_STENCIL_VIEW_DESC,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) void,
+            CreateSampler: fn (*T, *const D3D12_SAMPLER_DESC, D3D12_CPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            CopyDescriptors: fn (
+                *T,
+                UINT,
+                [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?[*]const UINT,
+                UINT,
+                [*]const CPU_DESCRIPTOR_HANDLE,
+                ?[*]const UINT,
+                D3D12_DESCRIPTOR_HEAP_TYPE,
+            ) callconv(WINAPI) void,
+            CopyDescriptorsSimple: fn (
+                *T,
+                UINT,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+                D3D12_DESCRIPTOR_HEAP_TYPE,
+            ) callconv(WINAPI) void,
+            GetResourceAllocationInfo: fn (
+                *T,
+                *D3D12_RESOURCE_ALLOCATION_INFO,
+                UINT,
+                UINT,
+                [*]const D3D12_RESOURCE_DESC,
+            ) callconv(WINAPI) *D3D12_RESOURCE_ALLOCATION_INFO,
+            GetCustomHeapProperties: fn (
+                *T,
+                *D3D12_HEAP_PROPERTIES,
+                UINT,
+                D3D12_HEAP_TYPE,
+            ) callconv(WINAPI) *D3D12_HEAP_PROPERTIES,
+            CreateCommittedResource: fn (
+                *T,
+                *const D3D12_HEAP_PROPERTIES,
+                D3D12_HEAP_FLAGS,
+                *const D3D12_RESOURCE_DESC,
+                D3D12_RESOURCE_STATES,
+                ?*const D3D12_CLEAR_VALUE,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateHeap: fn (*T, *const D3D12_HEAP_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CreatePlacedResource: fn (
+                *T,
+                *ID3D12Heap,
+                UINT64,
+                *const D3D12_RESOURCE_DESC,
+                D3D12_RESOURCE_STATES,
+                ?*const D3D12_CLEAR_VALUE,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateReservedResource: fn (
+                *T,
+                *const D3D12_RESOURCE_DESC,
+                D3D12_RESOURCE_STATES,
+                ?*const CLEAR_VALUE,
+                *const os.GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateSharedHandle: fn (
+                *T,
+                *ID3D12DeviceChild,
+                ?*const SECURITY_ATTRIBUTES,
+                DWORD,
+                ?LPCWSTR,
+                ?*HANDLE,
+            ) callconv(WINAPI) HRESULT,
+            OpenSharedHandle: fn (*T, HANDLE, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            OpenSharedHandleByName: fn (*T, LPCWSTR, DWORD, ?*HANDLE) callconv(WINAPI) HRESULT,
+            MakeResident: fn (*T, UINT, [*]const *ID3D12Pageable) callconv(WINAPI) HRESULT,
+            Evict: fn (*T, UINT, [*]const *ID3D12Pageable) callconv(WINAPI) HRESULT,
+            CreateFence: fn (*T, UINT64, D3D12_FENCE_FLAGS, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetDeviceRemovedReason: fn (*T) callconv(WINAPI) HRESULT,
+            GetCopyableFootprints: fn (
+                *T,
+                *const D3D12_RESOURCE_DESC,
+                UINT,
+                UINT,
+                UINT64,
+                ?[*]D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+                ?[*]UINT,
+                ?[*]UINT64,
+                ?*UINT64,
+            ) callconv(WINAPI) void,
+            CreateQueryHeap: fn (*T, *const D3D12_QUERY_HEAP_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            SetStablePowerState: fn (*T, BOOL) callconv(WINAPI) HRESULT,
+            CreateCommandSignature: fn (
+                *T,
+                *const D3D12_COMMAND_SIGNATURE_DESC,
+                ?*ID3D12RootSignature,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            GetResourceTiling: fn (
+                *T,
+                *ID3D12Resource,
+                ?*UINT,
+                ?*D3D12_PACKED_MIP_INFO,
+                ?*D3D12_TILE_SHAPE,
+                ?*UINT,
+                UINT,
+                [*]D3D12_SUBRESOURCE_TILING,
+            ) callconv(WINAPI) void,
+            GetAdapterLuid: fn (*T) callconv(WINAPI) LUID,
+        };
+    }
+};
+
+pub var D3D12GetDebugInterface: fn (*const GUID, ?*?*c_void) callconv(WINAPI) HRESULT = undefined;
 pub var D3D12CreateDevice: fn (
     ?*IUnknown,
     u32,
     *const GUID,
-    *?*c_void,
+    ?*?*c_void,
 ) callconv(WINAPI) HRESULT = undefined;
 
 pub const IID_ID3D12Device = GUID{

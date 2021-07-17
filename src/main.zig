@@ -14,11 +14,12 @@ pub fn main() !void {
 
     var maybe_debug: ?*w.ID3D12Debug5 = null;
     _ = w.D3D12GetDebugInterface(&w.IID_ID3D12Debug5, @ptrCast(*?*c_void, &maybe_debug));
+    _ = w.D3D12GetDebugInterface(&w.IID_ID3D12Debug5, null);
     const debug = maybe_debug.?;
     debug.EnableDebugLayer();
     debug.SetEnableGPUBasedValidation(w.TRUE);
 
-    var maybe_device: ?*w.ID3D12CommandQueue = null;
+    var maybe_device: ?*w.ID3D12Device = null;
     std.debug.assert(w.D3D12CreateDevice(null, 0xb100, &w.IID_ID3D12Device, @ptrCast(*?*c_void, &maybe_device)) == 0);
     const device = maybe_device.?;
 
