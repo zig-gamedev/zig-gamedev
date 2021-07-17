@@ -8,6 +8,16 @@ usingnamespace @import("d3d12sdklayers.zig");
 
 pub const D3D12_GPU_VIRTUAL_ADDRESS = UINT64;
 
+pub const D3D12_PRIMITIVE_TOPOLOGY = D3D_PRIMITIVE_TOPOLOGY;
+
+pub const D3D12_PRIMITIVE_TOPOLOGY_TYPE = enum(UINT) {
+    UNDEFINED = 0,
+    POINT = 1,
+    LINE = 2,
+    TRIANGLE = 3,
+    PATCH = 4,
+};
+
 pub const D3D12_HEAP_TYPE = enum(UINT) {
     DEFAULT = 1,
     UPLOAD = 2,
@@ -228,6 +238,312 @@ pub const D3D12_FENCE_FLAGS = packed struct {
 comptime {
     std.debug.assert(@sizeOf(D3D12_FENCE_FLAGS) == 4);
     std.debug.assert(@alignOf(D3D12_FENCE_FLAGS) == 4);
+}
+
+pub const D3D12_DESCRIPTOR_HEAP_TYPE = enum(UINT) {
+    CBV_SRV_UAV = 0,
+    SAMPLER = 1,
+    RTV = 2,
+    DSV = 3,
+};
+
+pub const D3D12_DESCRIPTOR_HEAP_FLAGS = packed struct {
+    SHADER_VISIBLE: bool align(4) = false, // 0x1
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_DESCRIPTOR_HEAP_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_DESCRIPTOR_HEAP_FLAGS) == 4);
+}
+
+pub const D3D12_DESCRIPTOR_HEAP_DESC = extern struct {
+    Type: D3D12_DESCRIPTOR_HEAP_TYPE,
+    NumDescriptors: UINT,
+    Flags: D3D12_DESCRIPTOR_HEAP_FLAGS,
+    NodeMask: UINT,
+};
+
+pub const D3D12_COMMAND_LIST_TYPE = enum(UINT) {
+    DIRECT = 0,
+    BUNDLE = 1,
+    COMPUTE = 2,
+    COPY = 3,
+    VIDEO_DECODE = 4,
+    VIDEO_PROCESS = 5,
+    VIDEO_ENCODE = 6,
+};
+
+pub const D3D12_RESOURCE_BARRIER_TYPE = enum(UINT) {
+    TRANSITION = 0,
+    ALIASING = 1,
+    UAV = 2,
+};
+
+pub const D3D12_RESOURCE_TRANSITION_BARRIER = extern struct {
+    pResource: *ID3D12Resource,
+    Subresource: UINT,
+    StateBefore: D3D12_RESOURCE_STATES,
+    StateAfter: D3D12_RESOURCE_STATES,
+};
+
+pub const D3D12_RESOURCE_ALIASING_BARRIER = extern struct {
+    pResourceBefore: *ID3D12Resource,
+    pResourceAfter: *ID3D12Resource,
+};
+
+pub const D3D12_RESOURCE_UAV_BARRIER = extern struct {
+    pResource: *ID3D12Resource,
+};
+
+pub const D3D12_RESOURCE_BARRIER_FLAGS = packed struct {
+    BEGIN_ONLY: bool align(4) = false, // 0x1
+    END_ONLY: bool = false, // 0x2
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RESOURCE_BARRIER_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_RESOURCE_BARRIER_FLAGS) == 4);
+}
+
+pub const D3D12_RESOURCE_BARRIER = extern struct {
+    Type: D3D12_RESOURCE_BARRIER_TYPE,
+    Flags: D3D12_RESOURCE_BARRIER_FLAGS,
+    u: extern union {
+        Transition: D3D12_RESOURCE_TRANSITION_BARRIER,
+        Aliasing: D3D12_RESOURCE_ALIASING_BARRIER,
+        UAV: D3D12_RESOURCE_UAV_BARRIER,
+    },
+};
+
+pub const D3D12_SUBRESOURCE_FOOTPRINT = extern struct {
+    Format: DXGI_FORMAT,
+    Width: UINT,
+    Height: UINT,
+    Depth: UINT,
+    RowPitch: UINT,
+};
+
+pub const D3D12_PLACED_SUBRESOURCE_FOOTPRINT = extern struct {
+    Offset: UINT64,
+    Footprint: D3D12_SUBRESOURCE_FOOTPRINT,
+};
+
+pub const D3D12_TEXTURE_COPY_TYPE = enum(UINT) {
+    D3D12_SUBRESOURCE_INDEX = 0,
+    D3D12_PLACED_FOOTPRINT = 1,
+};
+
+pub const D3D12_TEXTURE_COPY_LOCATION = extern struct {
+    pResource: *ID3D12Resource,
+    Type: D3D12_TEXTURE_COPY_TYPE,
+    u: extern union {
+        PlacedFootprint: D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+        SubresourceIndex: UINT,
+    },
+};
+
+pub const D3D12_TILED_RESOURCE_COORDINATE = extern struct {
+    X: UINT,
+    Y: UINT,
+    Z: UINT,
+    Subresource: UINT,
+};
+
+pub const D3D12_TILE_REGION_SIZE = extern struct {
+    NumTiles: UINT,
+    UseBox: BOOL,
+    Width: UINT,
+    Height: UINT16,
+    Depth: UINT16,
+};
+
+pub const D3D12_TILE_RANGE_FLAGS = packed struct {
+    NULL: bool align(4) = false, // 0x1
+    SKIP: bool = false, // 0x2
+    REUSE_SINGLE_TILE: bool = false, // 0x4
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_TILE_RANGE_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_TILE_RANGE_FLAGS) == 4);
+}
+
+pub const D3D12_SUBRESOURCE_TILING = extern struct {
+    WidthInTiles: UINT,
+    HeightInTiles: UINT16,
+    DepthInTiles: UINT16,
+    StartTileIndexInOverallResource: UINT,
+};
+
+pub const D3D12_TILE_SHAPE = extern struct {
+    WidthInTexels: UINT,
+    HeightInTexels: UINT,
+    DepthInTexels: UINT,
+};
+
+pub const D3D12_TILE_MAPPING_FLAGS = packed struct {
+    NO_HAZARD: bool align(4) = false, // 0x1
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_TILE_MAPPING_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_TILE_MAPPING_FLAGS) == 4);
+}
+
+pub const D3D12_TILE_COPY_FLAGS = packed struct {
+    NO_HAZARD: bool align(4) = false, // 0x1
+    LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE: bool = false, // 0x2
+    SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER: bool = false, // 0x4
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_TILE_COPY_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_TILE_COPY_FLAGS) == 4);
 }
 
 pub const ID3D12Object = extern struct {
@@ -652,6 +968,567 @@ pub const ID3D12DescriptorHeap = extern struct {
                 *T,
                 *D3D12_GPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) *D3D12_GPU_DESCRIPTOR_HANDLE,
+        };
+    }
+};
+
+pub const ID3D12CommandList = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        cmdlist: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetType(self: *T) D3D12_COMMAND_LIST_TYPE {
+                return self.v.cmdlist.GetType(self);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetType: fn (*T) callconv(WINAPI) D3D12_COMMAND_LIST_TYPE,
+        };
+    }
+};
+
+pub const ID3D12GraphicsCommandList = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        cmdlist: ID3D12CommandList.VTable(Self),
+        grcmdlist: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12CommandList.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn Close(self: *T) HRESULT {
+                return self.v.grcmdlist.Close(self);
+            }
+            pub inline fn Reset(self: *T, alloc: *ID3D12CommandAllocator, initial_state: ?*ID3D12PipelineState) HRESULT {
+                return self.v.grcmdlist.Reset(self, alloc, initial_state);
+            }
+            pub inline fn ClearState(self: *T, pso: ?*ID3D12PipelineState) void {
+                self.v.grcmdlist.ClearState(self, pso);
+            }
+            pub inline fn DrawInstanced(
+                self: *T,
+                vertex_count_per_instance: UINT,
+                instance_count: UINT,
+                start_vertex_location: UINT,
+                start_instance_location: UINT,
+            ) void {
+                self.v.grcmdlist.DrawInstanced(
+                    self,
+                    vertex_count_per_instance,
+                    instance_count,
+                    start_vertex_location,
+                    start_instance_location,
+                );
+            }
+            pub inline fn DrawIndexedInstanced(
+                self: *T,
+                index_count_per_instance: UINT,
+                instance_count: UINT,
+                start_index_location: UINT,
+                base_vertex_location: INT,
+                start_instance_location: UINT,
+            ) void {
+                self.v.grcmdlist.DrawIndexedInstanced(
+                    self,
+                    index_count_per_instance,
+                    instance_count,
+                    start_index_location,
+                    base_vertex_location,
+                    start_instance_location,
+                );
+            }
+            pub inline fn Dispatch(self: *T, count_x: UINT, count_y: UINT, count_z: UINT) void {
+                self.v.grcmdlist.Dispatch(self, count_x, count_y, count_z);
+            }
+            pub inline fn CopyBufferRegion(
+                self: *T,
+                dst_buffer: *ID3D12Resource,
+                dst_offset: UINT64,
+                src_buffer: *ID3D12Resource,
+                src_offset: UINT64,
+                num_bytes: UINT64,
+            ) void {
+                self.v.grcmdlist.CopyBufferRegion(
+                    self,
+                    dst_buffer,
+                    dst_offset,
+                    src_buffer,
+                    src_offset,
+                    num_bytes,
+                );
+            }
+            pub inline fn CopyTextureRegion(
+                self: *T,
+                dst: *const D3D12_TEXTURE_COPY_LOCATION,
+                dst_x: UINT,
+                dst_y: UINT,
+                dst_z: UINT,
+                src: *const D3D12_TEXTURE_COPY_LOCATION,
+                src_box: ?*const D3D12_BOX,
+            ) void {
+                self.v.grcmdlist.CopyTextureRegion(self, dst, dst_x, dst_y, dst_z, src, src_box);
+            }
+            pub inline fn CopyResource(self: *T, dst: *ID3D12Resource, src: *ID3D12Resource) void {
+                self.v.grcmdlist.CopyResource(self, dst, src);
+            }
+            pub inline fn CopyTiles(
+                self: *T,
+                tiled_resource: *ID3D12Resource,
+                tile_region_start_coordinate: *const D3D12_TILED_RESOURCE_COORDINATE,
+                tile_region_size: *const D3D12_TILE_REGION_SIZE,
+                buffer: *ID3D12Resource,
+                buffer_start_offset_in_bytes: UINT64,
+                flags: D3D12_TILE_COPY_FLAGS,
+            ) void {
+                self.v.grcmdlist.CopyTiles(
+                    self,
+                    tiled_resource,
+                    tile_region_start_coordinate,
+                    tile_region_size,
+                    buffer,
+                    buffer_start_offset_in_bytes,
+                    flags,
+                );
+            }
+            pub inline fn ResolveSubresource(
+                self: *T,
+                dst_resource: *ID3D12Resource,
+                dst_subresource: UINT,
+                src_resource: *ID3D12Resource,
+                src_subresource: UINT,
+                format: DXGI_FORMAT,
+            ) void {
+                self.v.grcmdlist.ResolveSubresource(
+                    self,
+                    dst_resource,
+                    dst_subresource,
+                    src_resource,
+                    src_subresource,
+                    format,
+                );
+            }
+            pub inline fn IASetPrimitiveTopology(self: *T, topology: D3D12_PRIMITIVE_TOPOLOGY) void {
+                self.v.grcmdlist.IASetPrimitiveTopology(self, topology);
+            }
+            pub inline fn RSSetViewports(self: *T, num: UINT, viewports: [*]const D3D12_VIEWPORT) void {
+                self.v.grcmdlist.RSSetViewports(self, num, viewports);
+            }
+            pub inline fn RSSetScissorRects(self: *T, num: UINT, rects: [*]const D3D12_RECT) void {
+                self.v.grcmdlist.RSSetScissorRects(self, num, rects);
+            }
+            pub inline fn OMSetBlendFactor(self: *T, blend_factor: *const [4]FLOAT) void {
+                self.v.grcmdlist.OMSetBlendFactor(self, blend_factor);
+            }
+            pub inline fn OMSetStencilRef(self: *T, stencil_ref: UINT) void {
+                self.v.grcmdlist.OMSetStencilRef(self, stencil_ref);
+            }
+            pub inline fn SetPipelineState(self: *T, pso: *ID3D12PipelineState) void {
+                self.v.grcmdlist.SetPipelineState(self, pso);
+            }
+            pub inline fn ResourceBarrier(self: *T, num: UINT, barriers: [*]const D3D12_RESOURCE_BARRIER) void {
+                self.v.grcmdlist.ResourceBarrier(self, num, barriers);
+            }
+            pub inline fn ExecuteBundle(self: *T, cmdlist: *ID3D12GraphicsCommandList) void {
+                self.v.grcmdlist.ExecuteBundle(self, cmdlist);
+            }
+            pub inline fn SetDescriptorHeaps(self: *T, num: UINT, heaps: [*]const *ID3D12DescriptorHeap) void {
+                self.v.grcmdlist.SetDescriptorHeaps(self, num, heaps);
+            }
+            pub inline fn SetComputeRootSignature(self: *T, root_signature: ?*ID3D12RootSignature) void {
+                self.v.grcmdlist.SetComputeRootSignature(self, root_signature);
+            }
+            pub inline fn SetGraphicsRootSignature(self: *T, root_signature: ?*ID3D12RootSignature) void {
+                self.v.grcmdlist.SetGraphicsRootSignature(self, root_signature);
+            }
+            pub inline fn SetComputeRootDescriptorTable(
+                self: *T,
+                root_index: UINT,
+                base_descriptor: D3D12_GPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.grcmdlist.SetComputeRootDescriptorTable(self, root_index, base_descriptor);
+            }
+            pub inline fn SetGraphicsRootDescriptorTable(
+                self: *T,
+                root_index: UINT,
+                base_descriptor: D3D12_GPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.grcmdlist.SetGraphicsRootDescriptorTable(self, root_index, base_descriptor);
+            }
+            pub inline fn SetComputeRoot32BitConstant(self: *T, index: UINT, data: UINT, off: UINT) void {
+                self.v.grcmdlist.SetComputeRoot32BitConstant(self, index, data, off);
+            }
+            pub inline fn SetGraphicsRoot32BitConstant(self: *T, index: UINT, data: UINT, off: UINT) void {
+                self.v.grcmdlist.SetGraphicsRoot32BitConstant(self, index, data, off);
+            }
+            pub inline fn SetComputeRoot32BitConstants(
+                self: *T,
+                root_index: UINT,
+                num: UINT,
+                data: *const c_void,
+                offset: UINT,
+            ) void {
+                self.v.grcmdlist.SetComputeRoot32BitConstants(self, root_index, num, data, offset);
+            }
+            pub inline fn SetGraphicsRoot32BitConstants(
+                self: *T,
+                root_index: UINT,
+                num: UINT,
+                data: *const c_void,
+                offset: UINT,
+            ) void {
+                self.v.grcmdlist.SetGraphicsRoot32BitConstants(self, root_index, num, data, offset);
+            }
+            pub inline fn SetComputeRootConstantBufferView(
+                self: *T,
+                index: UINT,
+                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+            ) void {
+                self.v.grcmdlist.SetComputeRootConstantBufferView(self, index, buffer_location);
+            }
+            pub inline fn SetGraphicsRootConstantBufferView(
+                self: *T,
+                index: UINT,
+                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+            ) void {
+                self.v.grcmdlist.SetGraphicsRootConstantBufferView(self, index, buffer_location);
+            }
+            pub inline fn SetComputeRootShaderResourceView(
+                self: *T,
+                index: UINT,
+                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+            ) void {
+                self.v.grcmdlist.SetComputeRootShaderResourceView(self, index, buffer_location);
+            }
+            pub inline fn SetGraphicsRootShaderResourceView(
+                self: *T,
+                index: UINT,
+                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+            ) void {
+                self.v.grcmdlist.SetGraphicsRootShaderResourceView(self, index, buffer_location);
+            }
+            pub inline fn SetComputeRootUnorderedAccessView(
+                self: *T,
+                index: UINT,
+                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+            ) void {
+                self.v.grcmdlist.SetComputeRootUnorderedAccessView(self, index, buffer_location);
+            }
+            pub inline fn SetGraphicsRootUnorderedAccessView(
+                self: *T,
+                index: UINT,
+                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+            ) void {
+                self.v.grcmdlist.SetGraphicsRootUnorderedAccessView(self, index, buffer_location);
+            }
+            pub inline fn IASetIndexBuffer(self: *T, view: ?*const D3D12_INDEX_BUFFER_VIEW) void {
+                self.v.grcmdlist.IASetIndexBuffer(self, view);
+            }
+            pub inline fn IASetVertexBuffers(
+                self: *T,
+                start_slot: UINT,
+                num_views: UINT,
+                views: ?[*]const VERTEX_BUFFER_VIEW,
+            ) void {
+                self.v.grcmdlist.IASetVertexBuffers(self, start_slot, num_views, views);
+            }
+            pub inline fn SOSetTargets(
+                self: *T,
+                start_slot: UINT,
+                num_views: UINT,
+                views: ?[*]const D3D12_STREAM_OUTPUT_BUFFER_VIEW,
+            ) void {
+                self.v.grcmdlist.SOSetTargets(self, start_slot, num_views, views);
+            }
+            pub inline fn OMSetRenderTargets(
+                self: *T,
+                num_rt_descriptors: UINT,
+                rt_descriptors: ?[*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                single_handle: BOOL,
+                ds_descriptors: ?*const D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.grcmdlist.OMSetRenderTargets(
+                    self,
+                    num_rt_descriptors,
+                    rt_descriptors,
+                    single_handle,
+                    ds_descriptors,
+                );
+            }
+            pub inline fn ClearDepthStencilView(
+                self: *T,
+                ds_view: D3D12_CPU_DESCRIPTOR_HANDLE,
+                clear_flags: D3D12_CLEAR_FLAGS,
+                depth: FLOAT,
+                stencil: UINT8,
+                num_rects: UINT,
+                rects: ?[*]const D3D12_RECT,
+            ) void {
+                self.v.grcmdlist.ClearDepthStencilView(
+                    self,
+                    ds_view,
+                    clear_flags,
+                    depth,
+                    stencil,
+                    num_rects,
+                    rects,
+                );
+            }
+            pub inline fn ClearRenderTargetView(
+                self: *T,
+                rt_view: D3D12_CPU_DESCRIPTOR_HANDLE,
+                rgba: *const [4]FLOAT,
+                num_rects: UINT,
+                rects: ?[*]const D3D12_RECT,
+            ) void {
+                self.v.grcmdlist.ClearRenderTargetView(self, rt_view, rgba, num_rects, rects);
+            }
+            pub inline fn ClearUnorderedAccessViewUint(
+                self: *T,
+                gpu_view: D3D12_GPU_DESCRIPTOR_HANDLE,
+                cpu_view: D3D12_CPU_DESCRIPTOR_HANDLE,
+                resource: *ID3D12Resource,
+                values: *const [4]UINT,
+                num_rects: UINT,
+                rects: ?[*]const D3D12_RECT,
+            ) void {
+                self.v.grcmdlist.ClearUnorderedAccessViewUint(
+                    self,
+                    gpu_view,
+                    cpu_view,
+                    resource,
+                    values,
+                    num_rects,
+                    rects,
+                );
+            }
+            pub inline fn ClearUnorderedAccessViewFloat(
+                self: *T,
+                gpu_view: D3D12_GPU_DESCRIPTOR_HANDLE,
+                cpu_view: D3D12_CPU_DESCRIPTOR_HANDLE,
+                resource: *ID3D12Resource,
+                values: *const [4]FLOAT,
+                num_rects: UINT,
+                rects: ?[*]const D3D12_RECT,
+            ) void {
+                self.v.grcmdlist.ClearUnorderedAccessViewFloat(
+                    self,
+                    gpu_view,
+                    cpu_view,
+                    resource,
+                    values,
+                    num_rects,
+                    rects,
+                );
+            }
+            pub inline fn DiscardResource(self: *T, resource: *ID3D12Resource, region: ?*const D3D12_DISCARD_REGION) void {
+                self.v.grcmdlist.DiscardResource(self, resource, region);
+            }
+            pub inline fn BeginQuery(self: *T, query: *ID3D12QueryHeap, query_type: D3D12_QUERY_TYPE, index: UINT) void {
+                self.v.grcmdlist.BeginQuery(self, query, query_type, index);
+            }
+            pub inline fn EndQuery(self: *T, query: *ID3D12QueryHeap, query_type: D3D12_QUERY_TYPE, index: UINT) void {
+                self.v.grcmdlist.EndQuery(self, query, query_type, index);
+            }
+            pub inline fn ResolveQueryData(
+                self: *T,
+                query: *ID3D12QueryHeap,
+                query_type: D3D12_QUERY_TYPE,
+                start_index: UINT,
+                num_queries: UINT,
+                dst_resource: *ID3D12Resource,
+                buffer_offset: UINT64,
+            ) void {
+                self.v.grcmdlist.ResolveQueryData(
+                    self,
+                    query,
+                    query_type,
+                    start_index,
+                    num_queries,
+                    dst_resource,
+                    buffer_offset,
+                );
+            }
+            pub inline fn SetPredication(
+                self: *T,
+                buffer: ?*ID3D12Resource,
+                buffer_offset: UINT64,
+                operation: D3D12_PREDICATION_OP,
+            ) void {
+                self.v.grcmdlist.SetPredication(self, buffer, buffer_offset, operation);
+            }
+            pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
+                self.v.grcmdlist.SetMarker(self, metadata, data, size);
+            }
+            pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
+                self.v.grcmdlist.BeginEvent(self, metadata, data, size);
+            }
+            pub inline fn EndEvent(self: *T) void {
+                self.v.grcmdlist.EndEvent(self);
+            }
+            pub inline fn ExecuteIndirect(
+                self: *T,
+                command_signature: *ID3D12CommandSignature,
+                max_command_count: UINT,
+                arg_buffer: *ID3D12Resource,
+                arg_buffer_offset: UINT64,
+                count_buffer: ?*ID3D12Resource,
+                count_buffer_offset: UINT64,
+            ) void {
+                self.v.grcmdlist.ExecuteIndirect(
+                    self,
+                    command_signature,
+                    max_command_count,
+                    arg_buffer,
+                    arg_buffer_offset,
+                    count_buffer,
+                    count_buffer_offset,
+                );
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            Close: fn (*T) callconv(.C) HRESULT,
+            Reset: fn (*T, *ID3D12CommandAllocator, ?*ID3D12PipelineState) callconv(WINAPI) HRESULT,
+            ClearState: fn (*T, ?*ID3D12PipelineState) callconv(WINAPI) void,
+            DrawInstanced: fn (*T, UINT, UINT, UINT, UINT) callconv(WINAPI) void,
+            DrawIndexedInstanced: fn (*T, UINT, UINT, UINT, INT, UINT) callconv(WINAPI) void,
+            Dispatch: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+            CopyBufferRegion: fn (*T, *ID3D12Resource, UINT64, *ID3D12Resource, UINT64, UINT64) callconv(WINAPI) void,
+            CopyTextureRegion: fn (
+                *T,
+                *const D3D12_TEXTURE_COPY_LOCATION,
+                UINT,
+                UINT,
+                UINT,
+                *const D3D12_TEXTURE_COPY_LOCATION,
+                ?*const D3D12_BOX,
+            ) callconv(WINAPI) void,
+            CopyResource: fn (*T, *ID3D12Resource, *ID3D12Resource) callconv(WINAPI) void,
+            CopyTiles: fn (
+                *T,
+                *ID3D12Resource,
+                *const D3D12_TILED_RESOURCE_COORDINATE,
+                *const D3D12_TILE_REGION_SIZE,
+                *ID3D12Resource,
+                buffer_start_offset_in_bytes: UINT64,
+                D3D12_TILE_COPY_FLAGS,
+            ) callconv(WINAPI) void,
+            ResolveSubresource: fn (*T, *ID3D12Resource, UINT, *ID3D12Resource, UINT, DXGI_FORMAT) callconv(WINAPI) void,
+            IASetPrimitiveTopology: fn (*T, D3D12_PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
+            RSSetViewports: fn (*T, UINT, [*]const D3D12_VIEWPORT) callconv(WINAPI) void,
+            RSSetScissorRects: fn (*T, UINT, [*]const D3D12_RECT) callconv(WINAPI) void,
+            OMSetBlendFactor: fn (*T, *const [4]FLOAT) callconv(WINAPI) void,
+            OMSetStencilRef: fn (*T, UINT) callconv(WINAPI) void,
+            SetPipelineState: fn (*T, *ID3D12PipelineState) callconv(WINAPI) void,
+            ResourceBarrier: fn (*T, UINT, [*]const D3D12_RESOURCE_BARRIER) callconv(WINAPI) void,
+            ExecuteBundle: fn (*T, *ID3D12GraphicsCommandList) callconv(WINAPI) void,
+            SetDescriptorHeaps: fn (*T, UINT, [*]const *ID3D12DescriptorHeap) callconv(WINAPI) void,
+            SetComputeRootSignature: fn (*T, ?*ID3D12RootSignature) callconv(WINAPI) void,
+            SetGraphicsRootSignature: fn (*T, ?*ID3D12RootSignature) callconv(WINAPI) void,
+            SetComputeRootDescriptorTable: fn (*T, UINT, D3D12_GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            SetGraphicsRootDescriptorTable: fn (*T, UINT, D3D12_GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            SetComputeRoot32BitConstant: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+            SetGraphicsRoot32BitConstant: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+            SetComputeRoot32BitConstants: fn (*T, UINT, UINT, *const c_void, UINT) callconv(WINAPI) void,
+            SetGraphicsRoot32BitConstants: fn (*T, UINT, UINT, *const c_void, UINT) callconv(WINAPI) void,
+            SetComputeRootConstantBufferView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootConstantBufferView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetComputeRootShaderResourceView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootShaderResourceView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetComputeRootUnorderedAccessView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootUnorderedAccessView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            IASetIndexBuffer: fn (*T, ?*const D3D12_INDEX_BUFFER_VIEW) callconv(WINAPI) void,
+            IASetVertexBuffers: fn (*T, UINT, UINT, ?[*]const D3D12_VERTEX_BUFFER_VIEW) callconv(WINAPI) void,
+            SOSetTargets: fn (*T, UINT, UINT, ?[*]const D3D12_STREAM_OUTPUT_BUFFER_VIEW) callconv(WINAPI) void,
+            OMSetRenderTargets: fn (
+                *T,
+                UINT,
+                ?[*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                BOOL,
+                ?*const D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) void,
+            ClearDepthStencilView: fn (
+                *T,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+                D3D12_CLEAR_FLAGS,
+                FLOAT,
+                UINT8,
+                UINT,
+                ?[*]const D3D12_RECT,
+            ) callconv(WINAPI) void,
+            ClearRenderTargetView: fn (
+                *T,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+                *const [4]FLOAT,
+                UINT,
+                ?[*]const D3D12_RECT,
+            ) callconv(WINAPI) void,
+            ClearUnorderedAccessViewUint: fn (
+                *T,
+                D3D12_GPU_DESCRIPTOR_HANDLE,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+                *ID3D12Resource,
+                *const [4]UINT,
+                UINT,
+                ?[*]const D3D12_RECT,
+            ) callconv(WINAPI) void,
+            ClearUnorderedAccessViewFloat: fn (
+                *T,
+                D3D12_GPU_DESCRIPTOR_HANDLE,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+                *ID3D12Resource,
+                *const [4]FLOAT,
+                UINT,
+                ?[*]const D3D12_RECT,
+            ) callconv(WINAPI) void,
+            DiscardResource: fn (*T, *ID3D12Resource, ?*const D3D12_DISCARD_REGION) callconv(WINAPI) void,
+            BeginQuery: fn (*T, *ID3D12QueryHeap, D3D12_QUERY_TYPE, UINT) callconv(WINAPI) void,
+            EndQuery: fn (*T, *ID3D12QueryHeap, D3D12_QUERY_TYPE, UINT) callconv(WINAPI) void,
+            ResolveQueryData: fn (
+                *T,
+                *ID3D12QueryHeap,
+                D3D12_QUERY_TYPE,
+                UINT,
+                UINT,
+                *ID3D12Resource,
+                UINT64,
+            ) callconv(WINAPI) void,
+            SetPredication: fn (*T, ?*ID3D12Resource, UINT64, D3D12_PREDICATION_OP) callconv(WINAPI) void,
+            SetMarker: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
+            BeginEvent: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
+            EndEvent: fn (*T) callconv(WINAPI) void,
+            ExecuteIndirect: fn (
+                *T,
+                *ID3D12CommandSignature,
+                UINT,
+                *ID3D12Resource,
+                UINT64,
+                ?*ID3D12Resource,
+                UINT64,
+            ) callconv(WINAPI) void,
         };
     }
 };

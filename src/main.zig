@@ -18,7 +18,7 @@ pub fn main() !void {
     debug.EnableDebugLayer();
     debug.SetEnableGPUBasedValidation(w.TRUE);
 
-    var maybe_device: ?*w.ID3D12PipelineState = null;
+    var maybe_device: ?*w.ID3D12GraphicsCommandList = null;
     std.debug.assert(w.D3D12CreateDevice(null, 0xb100, &w.IID_ID3D12Device, @ptrCast(*?*c_void, &maybe_device)) == 0);
     const device = maybe_device.?;
 
