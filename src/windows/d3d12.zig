@@ -10,6 +10,14 @@ pub const D3D12_GPU_VIRTUAL_ADDRESS = UINT64;
 
 pub const D3D12_PRIMITIVE_TOPOLOGY = D3D_PRIMITIVE_TOPOLOGY;
 
+pub const D3D12_CPU_DESCRIPTOR_HANDLE = extern struct {
+    ptr: UINT64,
+};
+
+pub const D3D12_GPU_DESCRIPTOR_HANDLE = extern struct {
+    ptr: UINT64,
+};
+
 pub const D3D12_PRIMITIVE_TOPOLOGY_TYPE = enum(UINT) {
     UNDEFINED = 0,
     POINT = 1,
@@ -545,6 +553,184 @@ comptime {
     std.debug.assert(@sizeOf(D3D12_TILE_COPY_FLAGS) == 4);
     std.debug.assert(@alignOf(D3D12_TILE_COPY_FLAGS) == 4);
 }
+
+pub const D3D12_VIEWPORT = extern struct {
+    TopLeftX: FLOAT,
+    TopLeftY: FLOAT,
+    Width: FLOAT,
+    Height: FLOAT,
+    MinDepth: FLOAT,
+    MaxDepth: FLOAT,
+};
+
+pub const D3D12_RECT = RECT;
+
+pub const D3D12_RESOURCE_STATES = packed struct {
+    VERTEX_AND_CONSTANT_BUFFER: bool align(4) = false, // 0x1
+    INDEX_BUFFER: bool = false, // 0x2
+    RENDER_TARGET: bool = false, // 0x4
+    UNORDERED_ACCESS: bool = false, // 0x8
+    DEPTH_WRITE: bool = false, // 0x10
+    DEPTH_READ: bool = false, // 0x20
+    NON_PIXEL_SHADER_RESOURCE: bool = false, // 0x40
+    PIXEL_SHADER_RESOURCE: bool = false, // 0x80
+    STREAM_OUT: bool = false, // 0x100
+    INDIRECT_ARGUMENT: bool = false, // 0x200
+    COPY_DEST: bool = false, // 0x400
+    COPY_SOURCE: bool = false, // 0x800
+    RESOLVE_DEST: bool = false, // 0x1000
+    RESOLVE_SOURCE: bool = false, // 0x2000
+    __reserved14: bool = false, // 0x4000
+    __reserved15: bool = false, // 0x8000
+    VIDEO_DECODE_READ: bool = false, // 0x10000
+    VIDEO_DECODE_WRITE: bool = false, // 0x20000
+    VIDEO_PROCESS_READ: bool = false, // 0x40000
+    VIDEO_PROCESS_WRITE: bool = false, // 0x80000
+    __reserved20: bool = false, // 0x100000
+    VIDEO_ENCODE_READ: bool = false, // 0x200000
+    RAYTRACING_ACCELERATION_STRUCTURE: bool = false, // 0x400000
+    VIDEO_ENCODE_WRITE: bool = false, // 0x800000
+    SHADING_RATE_SOURCE: bool = false, // 0x1000000
+    __reserved25: bool = false, // 0x2000000
+    __reserved26: bool = false, // 0x4000000
+    __reserved27: bool = false, // 0x8000000
+    __reserved28: bool = false, // 0x10000000
+    __reserved29: bool = false, // 0x20000000
+    __reserved30: bool = false, // 0x40000000
+    __reserved31: bool = false, // 0x80000000
+
+    pub fn genericRead() D3D12_RESOURCE_STATES {
+        return .{
+            .VERTEX_AND_CONSTANT_BUFFER = true,
+            .INDEX_BUFFER = true,
+            .NON_PIXEL_SHADER_RESOURCE = true,
+            .PIXEL_SHADER_RESOURCE = true,
+            .INDIRECT_ARGUMENT = true,
+            .COPY_SOURCE = true,
+        };
+    }
+    pub fn predication() D3D12_RESOURCE_STATES {
+        return .{ .INDIRECT_ARGUMENT = true };
+    }
+    pub fn allShaderResource() D3D12_RESOURCE_STATES {
+        return .{ .NON_PIXEL_SHADER_RESOURCE = true, .PIXEL_SHADER_RESOURCE = true };
+    }
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RESOURCE_STATES) == 4);
+    std.debug.assert(@alignOf(D3D12_RESOURCE_STATES) == 4);
+}
+
+pub const D3D12_INDEX_BUFFER_STRIP_CUT_VALUE = enum(UINT) {
+    DISABLED = 0,
+    _0xFFFF = 1,
+    _0xFFFFFFFF = 2,
+};
+
+pub const D3D12_VERTEX_BUFFER_VIEW = extern struct {
+    BufferLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+    SizeInBytes: UINT,
+    StrideInBytes: UINT,
+};
+
+pub const D3D12_INDEX_BUFFER_VIEW = extern struct {
+    BufferLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+    SizeInBytes: UINT,
+    Format: DXGI_FORMAT,
+};
+
+pub const D3D12_STREAM_OUTPUT_BUFFER_VIEW = extern struct {
+    BufferLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+    SizeInBytes: UINT64,
+    BufferFilledSizeLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+};
+
+pub const D3D12_CLEAR_FLAGS = packed struct {
+    DEPTH: bool align(4) = false,
+    STENCIL: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_CLEAR_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_CLEAR_FLAGS) == 4);
+}
+
+pub const D3D12_DISCARD_REGION = extern struct {
+    NumRects: UINT,
+    pRects: *const D3D12_RECT,
+    FirstSubresource: UINT,
+    NumSubresources: UINT,
+};
+
+pub const D3D12_QUERY_HEAP_TYPE = enum(UINT) {
+    OCCLUSION = 0,
+    TIMESTAMP = 1,
+    PIPELINE_STATISTICS = 2,
+    SO_STATISTICS = 3,
+};
+
+pub const D3D12_QUERY_HEAP_DESC = extern struct {
+    Type: D3D12_QUERY_HEAP_TYPE,
+    Count: UINT,
+    NodeMask: UINT,
+};
+
+pub const D3D12_QUERY_TYPE = enum(UINT) {
+    OCCLUSION = 0,
+    BINARY_OCCLUSION = 1,
+    TIMESTAMP = 2,
+    PIPELINE_STATISTICS = 3,
+    SO_STATISTICS_STREAM0 = 4,
+    SO_STATISTICS_STREAM1 = 5,
+    SO_STATISTICS_STREAM2 = 6,
+    SO_STATISTICS_STREAM3 = 7,
+};
+
+pub const D3D12_PREDICATION_OP = enum(UINT) {
+    EQUAL_ZERO = 0,
+    NOT_EQUAL_ZERO = 1,
+};
+
+pub const D3D12_INDIRECT_ARGUMENT_TYPE = enum(UINT) {
+    DRAW = 0,
+    DRAW_INDEXED = 1,
+    DISPATCH = 2,
+    VERTEX_BUFFER_VIEW = 3,
+    INDEX_BUFFER_VIEW = 4,
+    CONSTANT = 5,
+    CONSTANT_BUFFER_VIEW = 6,
+    SHADER_RESOURCE_VIEW = 7,
+    UNORDERED_ACCESS_VIEW = 8,
+};
 
 pub const ID3D12Object = extern struct {
     const Self = @This();
