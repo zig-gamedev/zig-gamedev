@@ -805,7 +805,7 @@ pub const ID3D12Object = extern struct {
             pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: ?*const c_void) HRESULT {
                 return self.v.object.SetPrivateData(self, guid, data_size, data);
             }
-            pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const os.IUnknown) HRESULT {
+            pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const IUnknown) HRESULT {
                 return self.v.object.SetPrivateDataInterface(self, guid, data);
             }
             pub inline fn SetName(self: *T, name: LPCWSTR) HRESULT {
