@@ -736,6 +736,58 @@ pub const D3D12_INDIRECT_ARGUMENT_TYPE = enum(UINT) {
     DISPATCH_MESH = 10,
 };
 
+pub const D3D12_COMMAND_QUEUE_FLAGS = packed struct {
+    DISABLE_GPU_TIMEOUT: bool align(4) = false, // 0x1
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_COMMAND_QUEUE_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_COMMAND_QUEUE_FLAGS) == 4);
+}
+
+pub const D3D12_COMMAND_QUEUE_PRIORITY = enum(UINT) {
+    NORMAL = 0,
+    HIGH = 100,
+    GLOBAL_REALTIME = 10000,
+};
+
+pub const D3D12_COMMAND_QUEUE_DESC = extern struct {
+    Type: D3D12_COMMAND_LIST_TYPE,
+    Priority: INT,
+    Flags: D3D12_COMMAND_QUEUE_FLAGS,
+    NodeMask: UINT,
+};
+
 pub const ID3D12Object = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -1050,8 +1102,8 @@ pub const ID3D12Fence = extern struct {
     fn VTable(comptime T: type) type {
         return extern struct {
             GetCompletedValue: fn (*T) callconv(WINAPI) UINT64,
-            SetEventOnCompletion: fn (*Self, UINT64, HANDLE) callconv(WINAPI) HRESULT,
-            Signal: fn (*Self, UINT64) callconv(WINAPI) HRESULT,
+            SetEventOnCompletion: fn (*T, UINT64, HANDLE) callconv(WINAPI) HRESULT,
+            Signal: fn (*T, UINT64) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1719,6 +1771,136 @@ pub const ID3D12GraphicsCommandList = extern struct {
                 ?*ID3D12Resource,
                 UINT64,
             ) callconv(WINAPI) void,
+        };
+    }
+};
+
+pub const ID3D12CommandQueue = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12Object.VTable(Self),
+        cmdqueue: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn UpdateTileMappings(
+                self: *T,
+                resource: *ID3D12Resource,
+                num_resource_regions: UINT,
+                resource_region_start_coordinates: ?[*]const D3D12_TILED_RESOURCE_COORDINATE,
+                resource_region_sizes: ?[*]const D3D12_TILE_REGION_SIZE,
+                heap: ?*ID3D12Heap,
+                num_ranges: UINT,
+                range_flags: ?[*]const D3D12_TILE_RANGE_FLAGS,
+                heap_range_start_offsets: ?[*]const UINT,
+                range_tile_counts: ?[*]const UINT,
+                flags: D3D12_TILE_MAPPING_FLAGS,
+            ) void {
+                self.v.cmdqueue.UpdateTileMappings(
+                    self,
+                    resource,
+                    num_resource_regions,
+                    resource_region_start_coordinates,
+                    resource_region_sizes,
+                    heap,
+                    num_ranges,
+                    range_flags,
+                    heap_range_start_offsets,
+                    range_tile_counts,
+                    flags,
+                );
+            }
+            pub inline fn CopyTileMappings(
+                self: *T,
+                dst_resource: *ID3D12Resource,
+                dst_region_start_coordinate: *const D3D12_TILED_RESOURCE_COORDINATE,
+                src_resource: *IResource,
+                src_region_start_coordinate: *const D3D12_TILED_RESOURCE_COORDINATE,
+                region_size: *const D3D12_TILE_REGION_SIZE,
+                flags: D3D12_TILE_MAPPING_FLAGS,
+            ) void {
+                self.v.cmdqueue.CopyTileMappings(
+                    self,
+                    dst_resource,
+                    dst_region_start_coordinate,
+                    src_resource,
+                    src_region_start_coordinate,
+                    region_size,
+                    flags,
+                );
+            }
+            pub inline fn ExecuteCommandLists(self: *T, num: UINT, cmdlists: [*]const *ID3D12CommandList) void {
+                self.v.cmdqueue.ExecuteCommandLists(self, num, cmdlists);
+            }
+            pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
+                self.v.cmdqueue.SetMarker(self, metadata, data, size);
+            }
+            pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
+                self.v.cmdqueue.BeginEvent(self, metadata, data, size);
+            }
+            pub inline fn EndEvent(self: *T) void {
+                self.v.cmdqueue.EndEvent(self);
+            }
+            pub inline fn Signal(self: *T, fence: *ID3D12Fence, value: UINT64) HRESULT {
+                return self.v.cmdqueue.Signal(self, fence, value);
+            }
+            pub inline fn Wait(self: *T, fence: *ID3D12Fence, value: UINT64) HRESULT {
+                return self.v.cmdqueue.Wait(self, fence, value);
+            }
+            pub inline fn GetTimestampFrequency(self: *T, frequency: *UINT64) HRESULT {
+                return self.v.cmdqueue.GetTimestampFrequency(self, frequency);
+            }
+            pub inline fn GetClockCalibration(self: *T, gpu_timestamp: *UINT64, cpu_timestamp: *UINT64) HRESULT {
+                return self.vtbl.GetClockCalibration(self, gpu_timestamp, cpu_timestamp);
+            }
+            pub inline fn GetDesc(self: *T) D3D12_COMMAND_QUEUE_DESC {
+                var desc: COMMAND_QUEUE_DESC = undefined;
+                self.v.cmdqueue.GetDesc(self, &desc);
+                return desc;
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            UpdateTileMappings: fn (
+                *T,
+                *ID3D12Resource,
+                UINT,
+                ?[*]const D3D12_TILED_RESOURCE_COORDINATE,
+                ?[*]const D3D12_TILE_REGION_SIZE,
+                *ID3D12Heap,
+                UINT,
+                ?[*]const D3D12_TILE_RANGE_FLAGS,
+                ?[*]const UINT,
+                ?[*]const UINT,
+                D3D12_TILE_MAPPING_FLAGS,
+            ) callconv(WINAPI) void,
+            CopyTileMappings: fn (
+                *T,
+                *ID3D12Resource,
+                *const D3D12_TILED_RESOURCE_COORDINATE,
+                *ID3D12Resource,
+                *const D3D12_TILED_RESOURCE_COORDINATE,
+                *const D3D12_TILE_REGION_SIZE,
+                D3D12_TILE_MAPPING_FLAGS,
+            ) callconv(WINAPI) void,
+            ExecuteCommandLists: fn (*T, UINT, [*]const *ID3D12CommandList) callconv(WINAPI) void,
+            SetMarker: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
+            BeginEvent: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
+            EndEvent: fn (*T) callconv(WINAPI) void,
+            Signal: fn (*T, *ID3D12Fence, UINT64) callconv(WINAPI) HRESULT,
+            Wait: fn (*T, *ID3D12Fence, UINT64) callconv(WINAPI) HRESULT,
+            GetTimestampFrequency: fn (*T, *UINT64) callconv(WINAPI) HRESULT,
+            GetClockCalibration: fn (*T, *UINT64, *UINT64) callconv(WINAPI) HRESULT,
+            GetDesc: fn (*T, *D3D12_COMMAND_QUEUE_DESC) callconv(WINAPI) *D3D12_COMMAND_QUEUE_DESC,
         };
     }
 };
