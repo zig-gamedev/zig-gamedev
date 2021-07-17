@@ -1858,7 +1858,7 @@ pub const ID3D12CommandQueue = extern struct {
                 return self.v.cmdqueue.GetTimestampFrequency(self, frequency);
             }
             pub inline fn GetClockCalibration(self: *T, gpu_timestamp: *UINT64, cpu_timestamp: *UINT64) HRESULT {
-                return self.vtbl.GetClockCalibration(self, gpu_timestamp, cpu_timestamp);
+                return self.v.cmdqueue.GetClockCalibration(self, gpu_timestamp, cpu_timestamp);
             }
             pub inline fn GetDesc(self: *T) D3D12_COMMAND_QUEUE_DESC {
                 var desc: COMMAND_QUEUE_DESC = undefined;
