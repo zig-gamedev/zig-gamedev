@@ -3338,7 +3338,7 @@ pub const ID3D12Device = extern struct {
 pub var D3D12GetDebugInterface: fn (*const GUID, ?*?*c_void) callconv(WINAPI) HRESULT = undefined;
 pub var D3D12CreateDevice: fn (
     ?*IUnknown,
-    u32,
+    D3D_FEATURE_LEVEL,
     *const GUID,
     ?*?*c_void,
 ) callconv(WINAPI) HRESULT = undefined;

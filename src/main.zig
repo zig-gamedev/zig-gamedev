@@ -4,6 +4,7 @@ const w = struct {
     usingnamespace @import("windows/windows.zig");
     usingnamespace @import("windows/d3d12.zig");
     usingnamespace @import("windows/d3d12sdklayers.zig");
+    usingnamespace @import("windows/d3dcommon.zig");
 };
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -14,13 +15,13 @@ pub fn main() !void {
 
     var maybe_debug: ?*w.ID3D12Debug5 = null;
     _ = w.D3D12GetDebugInterface(&w.IID_ID3D12Debug5, @ptrCast(*?*c_void, &maybe_debug));
-    _ = w.D3D12GetDebugInterface(&w.IID_ID3D12Debug5, null);
     const debug = maybe_debug.?;
     debug.EnableDebugLayer();
     debug.SetEnableGPUBasedValidation(w.TRUE);
 
     var maybe_device: ?*w.ID3D12Device = null;
-    std.debug.assert(w.D3D12CreateDevice(null, 0xb100, &w.IID_ID3D12Device, @ptrCast(?*?*c_void, &maybe_device)) == 0);
+    std.debug.assert(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device, @ptrCast(?*?*c_void, &maybe_device)) == 0);
+
     const device = maybe_device.?;
 
     const buffer_desc = w.D3D12_RESOURCE_DESC.buffer(100);
