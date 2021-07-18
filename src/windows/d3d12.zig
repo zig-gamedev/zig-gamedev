@@ -736,6 +736,43 @@ pub const D3D12_INDIRECT_ARGUMENT_TYPE = enum(UINT) {
     DISPATCH_MESH = 10,
 };
 
+pub const D3D12_INDIRECT_ARGUMENT_DESC = extern struct {
+    Type: D3D12_INDIRECT_ARGUMENT_TYPE,
+    u: extern union {
+        VertexBuffer: extern struct {
+            Slot: UINT,
+        },
+        Constant: extern struct {
+            RootParameterIndex: UINT,
+            DestOffsetIn32BitValues: UINT,
+            Num32BitValuesToSet: UINT,
+        },
+        ConstantBufferView: extern struct {
+            RootParameterIndex: UINT,
+        },
+        ShaderResourceView: extern struct {
+            RootParameterIndex: UINT,
+        },
+        UnorderedAccessView: extern struct {
+            RootParameterIndex: UINT,
+        },
+    },
+};
+
+pub const D3D12_COMMAND_SIGNATURE_DESC = extern struct {
+    ByteStride: UINT,
+    NumArgumentDescs: UINT,
+    pArgumentDescs: *const D3D12_INDIRECT_ARGUMENT_DESC,
+    NodeMask: UINT,
+};
+
+pub const D3D12_PACKED_MIP_INFO = extern struct {
+    NumStandardMips: UINT8,
+    NumPackedMips: UINT8,
+    NumTilesForPackedMips: UINT,
+    StartTileIndexInOverallResource: UINT,
+};
+
 pub const D3D12_COMMAND_QUEUE_FLAGS = packed struct {
     DISABLE_GPU_TIMEOUT: bool align(4) = false, // 0x1
     __reserved1: bool = false,
@@ -1122,6 +1159,543 @@ pub const D3D12_FEATURE = enum(UINT) {
     D3D12_OPTIONS9 = 37,
     D3D12_OPTIONS10 = 39,
     D3D12_OPTIONS11 = 40,
+};
+
+pub const D3D12_CONSTANT_BUFFER_VIEW_DESC = extern struct {
+    BufferLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+    SizeInBytes: UINT,
+};
+
+pub inline fn D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(src0: UINT, src1: UINT, src2: UINT, src3: UINT) UINT {
+    return (src0 & 0x7) | ((src1 & 0x7) << 3) | ((src2 & 0x7) << (3 * 2)) | ((src3 & 0x7) << (3 * 3)) | (1 << (3 * 4));
+}
+pub const D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING = D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(0, 1, 2, 3);
+
+pub const D3D12_BUFFER_SRV_FLAGS = packed struct {
+    RAW: bool align(4) = false, // 0x1
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_BUFFER_SRV_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_BUFFER_SRV_FLAGS) == 4);
+}
+
+pub const D3D12_BUFFER_SRV = extern struct {
+    FirstElement: UINT64,
+    NumElements: UINT,
+    StructureByteStride: UINT,
+    Flags: D3D12_BUFFER_SRV_FLAGS,
+};
+
+pub const D3D12_TEX1D_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    ResourceMinLODClamp: FLOAT,
+};
+
+pub const D3D12_TEX1D_ARRAY_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+    ResourceMinLODClamp: FLOAT,
+};
+
+pub const D3D12_TEX2D_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    PlaneSlice: UINT,
+    ResourceMinLODClamp: FLOAT,
+};
+
+pub const D3D12_TEX2D_ARRAY_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+    PlaneSlice: UINT,
+    ResourceMinLODClamp: FLOAT,
+};
+
+pub const D3D12_TEX3D_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    ResourceMinLODClamp: FLOAT,
+};
+
+pub const D3D12_TEXCUBE_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    ResourceMinLODClamp: FLOAT,
+};
+
+pub const D3D12_TEXCUBE_ARRAY_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    First2DArrayFace: UINT,
+    NumCubes: UINT,
+    ResourceMinLODClamp: FLOAT,
+};
+
+pub const D3D12_TEX2DMS_SRV = extern struct {
+    UnusedField_NothingToDefine: UINT,
+};
+
+pub const D3D12_TEX2DMS_ARRAY_SRV = extern struct {
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const D3D12_SRV_DIMENSION = enum(UINT) {
+    UNKNOWN = 0,
+    BUFFER = 1,
+    TEXTURE1D = 2,
+    TEXTURE1DARRAY = 3,
+    TEXTURE2D = 4,
+    TEXTURE2DARRAY = 5,
+    TEXTURE2DMS = 6,
+    TEXTURE2DMSARRAY = 7,
+    TEXTURE3D = 8,
+    TEXTURECUBE = 9,
+    TEXTURECUBEARRAY = 10,
+};
+
+pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
+    Format: DXGI_FORMAT,
+    ViewDimension: D3D12_SRV_DIMENSION,
+    Shader4ComponentMapping: UINT,
+    u: extern union {
+        Buffer: D3D12_BUFFER_SRV,
+        Texture1D: D3D12_TEX1D_SRV,
+        Texture1DArray: D3D12_TEX1D_ARRAY_SRV,
+        Texture2D: D3D12_TEX2D_SRV,
+        Texture2DArray: D3D12_TEX2D_ARRAY_SRV,
+        Texture2DMS: D3D12_TEX2DMS_SRV,
+        Texture2DMSArray: D3D12_TEX2DMS_ARRAY_SRV,
+        Texture3D: D3D12_TEX3D_SRV,
+        TextureCube: D3D12_TEXCUBE_SRV,
+        TextureCubeArray: D3D12_TEXCUBE_ARRAY_SRV,
+    },
+
+    pub fn typedBuffer(format: DXGI_FORMAT, first_element: UINT64, num_elements: UINT) D3D12_SHADER_RESOURCE_VIEW_DESC {
+        return .{
+            .Format = format,
+            .ViewDimension = .BUFFER,
+            .u = .{
+                .Buffer = .{
+                    .FirstElement = first_element,
+                    .NumElements = num_elements,
+                    .StructureByteStride = 0,
+                },
+            },
+        };
+    }
+
+    pub fn structuredBuffer(first_element: UINT64, num_elements: UINT, stride: UINT) D3D12_SHADER_RESOURCE_VIEW_DESC {
+        return .{
+            .ViewDimension = .BUFFER,
+            .u = .{
+                .Buffer = .{
+                    .FirstElement = first_element,
+                    .NumElements = num_elements,
+                    .StructureByteStride = stride,
+                },
+            },
+        };
+    }
+};
+
+pub const D3D12_FILTER = enum(UINT) {
+    MIN_MAG_MIP_POINT = 0,
+    MIN_MAG_POINT_MIP_LINEAR = 0x1,
+    MIN_POINT_MAG_LINEAR_MIP_POINT = 0x4,
+    MIN_POINT_MAG_MIP_LINEAR = 0x5,
+    MIN_LINEAR_MAG_MIP_POINT = 0x10,
+    MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x11,
+    MIN_MAG_LINEAR_MIP_POINT = 0x14,
+    MIN_MAG_MIP_LINEAR = 0x15,
+    ANISOTROPIC = 0x55,
+    COMPARISON_MIN_MAG_MIP_POINT = 0x80,
+    COMPARISON_MIN_MAG_POINT_MIP_LINEAR = 0x81,
+    COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT = 0x84,
+    COMPARISON_MIN_POINT_MAG_MIP_LINEAR = 0x85,
+    COMPARISON_MIN_LINEAR_MAG_MIP_POINT = 0x90,
+    COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x91,
+    COMPARISON_MIN_MAG_LINEAR_MIP_POINT = 0x94,
+    COMPARISON_MIN_MAG_MIP_LINEAR = 0x95,
+    COMPARISON_ANISOTROPIC = 0xd5,
+    MINIMUM_MIN_MAG_MIP_POINT = 0x100,
+    MINIMUM_MIN_MAG_POINT_MIP_LINEAR = 0x101,
+    MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT = 0x104,
+    MINIMUM_MIN_POINT_MAG_MIP_LINEAR = 0x105,
+    MINIMUM_MIN_LINEAR_MAG_MIP_POINT = 0x110,
+    MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x111,
+    MINIMUM_MIN_MAG_LINEAR_MIP_POINT = 0x114,
+    MINIMUM_MIN_MAG_MIP_LINEAR = 0x115,
+    MINIMUM_ANISOTROPIC = 0x155,
+    MAXIMUM_MIN_MAG_MIP_POINT = 0x180,
+    MAXIMUM_MIN_MAG_POINT_MIP_LINEAR = 0x181,
+    MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT = 0x184,
+    MAXIMUM_MIN_POINT_MAG_MIP_LINEAR = 0x185,
+    MAXIMUM_MIN_LINEAR_MAG_MIP_POINT = 0x190,
+    MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x191,
+    MAXIMUM_MIN_MAG_LINEAR_MIP_POINT = 0x194,
+    MAXIMUM_MIN_MAG_MIP_LINEAR = 0x195,
+    MAXIMUM_ANISOTROPIC = 0x1d5,
+};
+
+pub const D3D12_FILTER_TYPE = enum(UINT) {
+    POINT = 0,
+    LINEAR = 1,
+};
+
+pub const D3D12_FILTER_REDUCTION_TYPE = enum(UINT) {
+    STANDARD = 0,
+    COMPARISON = 1,
+    MINIMUM = 2,
+    MAXIMUM = 3,
+};
+
+pub const D3D12_TEXTURE_ADDRESS_MODE = enum(UINT) {
+    WRAP = 1,
+    MIRROR = 2,
+    CLAMP = 3,
+    BORDER = 4,
+    MIRROR_ONCE = 5,
+};
+
+pub const D3D12_SAMPLER_DESC = extern struct {
+    Filter: D3D12_FILTER,
+    AddressU: D3D12_TEXTURE_ADDRESS_MODE,
+    AddressV: D3D12_TEXTURE_ADDRESS_MODE,
+    AddressW: D3D12_TEXTURE_ADDRESS_MODE,
+    MipLODBias: FLOAT,
+    MaxAnisotropy: UINT,
+    ComparisonFunc: D3D12_COMPARISON_FUNC,
+    BorderColor: [4]FLOAT,
+    MinLOD: FLOAT,
+    MaxLOD: FLOAT,
+};
+
+pub const D3D12_BUFFER_UAV_FLAGS = packed struct {
+    RAW: bool align(4) = false, // 0x1
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_BUFFER_UAV_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_BUFFER_UAV_FLAGS) == 4);
+}
+
+pub const D3D12_BUFFER_UAV = extern struct {
+    FirstElement: UINT64,
+    NumElements: UINT,
+    StructureByteStride: UINT,
+    CounterOffsetInBytes: UINT64,
+    Flags: D3D12_BUFFER_UAV_FLAGS,
+};
+
+pub const D3D12_TEX1D_UAV = extern struct {
+    MipSlice: UINT,
+};
+
+pub const D3D12_TEX1D_ARRAY_UAV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const D3D12_TEX2D_UAV = extern struct {
+    MipSlice: UINT,
+    PlaneSlice: UINT,
+};
+
+pub const D3D12_TEX2D_ARRAY_UAV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+    PlaneSlice: UINT,
+};
+
+pub const D3D12_TEX3D_UAV = extern struct {
+    MipSlice: UINT,
+    FirstWSlice: UINT,
+    WSize: UINT,
+};
+
+pub const D3D12_UAV_DIMENSION = enum(UINT) {
+    UNKNOWN = 0,
+    BUFFER = 1,
+    TEXTURE1D = 2,
+    TEXTURE1DARRAY = 3,
+    TEXTURE2D = 4,
+    TEXTURE2DARRAY = 5,
+    TEXTURE3D = 8,
+};
+
+pub const D3D12_UNORDERED_ACCESS_VIEW_DESC = extern struct {
+    Format: DXGI_FORMAT,
+    ViewDimension: D3D12_UAV_DIMENSION,
+    u: extern union {
+        Buffer: D3D12_BUFFER_UAV,
+        Texture1D: D3D12_TEX1D_UAV,
+        Texture1DArray: D3D12_TEX1D_ARRAY_UAV,
+        Texture2D: D3D12_TEX2D_UAV,
+        Texture2DArray: D3D12_TEX2D_ARRAY_UAV,
+        Texture3D: D3D12_TEX3D_UAV,
+    },
+};
+
+pub const D3D12_BUFFER_RTV = extern struct {
+    FirstElement: UINT64,
+    NumElements: UINT,
+};
+
+pub const D3D12_TEX1D_RTV = extern struct {
+    MipSlice: UINT,
+};
+
+pub const D3D12_TEX1D_ARRAY_RTV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const D3D12_TEX2D_RTV = extern struct {
+    MipSlice: UINT,
+    PlaneSlice: UINT,
+};
+
+pub const D3D12_TEX2DMS_RTV = extern struct {
+    UnusedField_NothingToDefine: UINT,
+};
+
+pub const D3D12_TEX2D_ARRAY_RTV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+    PlaneSlice: UINT,
+};
+
+pub const D3D12_TEX2DMS_ARRAY_RTV = extern struct {
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const D3D12_TEX3D_RTV = extern struct {
+    MipSlice: UINT,
+    FirstWSlice: UINT,
+    WSize: UINT,
+};
+
+pub const D3D12_RTV_DIMENSION = enum(UINT) {
+    UNKNOWN = 0,
+    BUFFER = 1,
+    TEXTURE1D = 2,
+    TEXTURE1DARRAY = 3,
+    TEXTURE2D = 4,
+    TEXTURE2DARRAY = 5,
+    TEXTURE2DMS = 6,
+    TEXTURE2DMSARRAY = 7,
+    TEXTURE3D = 8,
+};
+
+pub const D3D12_RENDER_TARGET_VIEW_DESC = extern struct {
+    Format: DXGI_FORMAT,
+    ViewDimension: D3D12_RTV_DIMENSION,
+    u: extern union {
+        Buffer: D3D12_BUFFER_RTV,
+        Texture1D: D3D12_TEX1D_RTV,
+        Texture1DArray: D3D12_TEX1D_ARRAY_RTV,
+        Texture2D: D3D12_TEX2D_RTV,
+        Texture2DArray: D3D12_TEX2D_ARRAY_RTV,
+        Texture2DMS: D3D12_TEX2DMS_RTV,
+        Texture2DMSArray: D3D12_TEX2DMS_ARRAY_RTV,
+        Texture3D: D3D12_TEX3D_RTV,
+    },
+};
+
+pub const D3D12_TEX1D_DSV = extern struct {
+    MipSlice: UINT,
+};
+
+pub const D3D12_TEX1D_ARRAY_DSV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const D3D12_TEX2D_DSV = extern struct {
+    MipSlice: UINT,
+};
+
+pub const D3D12_TEX2D_ARRAY_DSV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const D3D12_TEX2DMS_DSV = extern struct {
+    UnusedField_NothingToDefine: UINT,
+};
+
+pub const D3D12_TEX2DMS_ARRAY_DSV = extern struct {
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const D3D12_DSV_FLAGS = packed struct {
+    READ_ONLY_DEPTH: bool align(4) = false, // 0x1
+    READ_ONLY_STENCIL: bool = false, // 0x2
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_DSV_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_DSV_FLAGS) == 4);
+}
+
+pub const D3D12_DSV_DIMENSION = enum(UINT) {
+    UNKNOWN = 0,
+    TEXTURE1D = 1,
+    TEXTURE1DARRAY = 2,
+    TEXTURE2D = 3,
+    TEXTURE2DARRAY = 4,
+    TEXTURE2DMS = 5,
+    TEXTURE2DMSARRAY = 6,
+};
+
+pub const D3D12_DEPTH_STENCIL_VIEW_DESC = extern struct {
+    Format: DXGI_FORMAT,
+    ViewDimension: D3D12_DSV_DIMENSION,
+    Flags: D3D12_DSV_FLAGS,
+    u: extern union {
+        Texture1D: D3D12_TEX1D_DSV,
+        Texture1DArray: D3D12_TEX1D_ARRAY_DSV,
+        Texture2D: D3D12_TEX2D_DSV,
+        Texture2DArray: D3D12_TEX2D_ARRAY_DSV,
+        Texture2DMS: D3D12_TEX2DMS_DSV,
+        Texture2DMSArray: D3D12_TEX2DMS_ARRAY_DSV,
+    },
+};
+
+pub const D3D12_RESOURCE_ALLOCATION_INFO = extern struct {
+    SizeInBytes: UINT64,
+    Alignment: UINT64,
+};
+
+pub const D3D12_DEPTH_STENCIL_VALUE = extern struct {
+    Depth: FLOAT,
+    Stencil: UINT8,
+};
+
+pub const D3D12_CLEAR_VALUE = extern struct {
+    Format: DXGI_FORMAT,
+    u: extern union {
+        Color: [4]FLOAT,
+        DepthStencil: D3D12_DEPTH_STENCIL_VALUE,
+    },
+
+    pub fn color(format: DXGI_FORMAT, in_color: [4]FLOAT) D3D12_CLEAR_VALUE {
+        return .{
+            .Format = format,
+            .u = .{ .Color = in_color },
+        };
+    }
+
+    pub fn depthStencil(format: DXGI_FORMAT, depth: FLOAT, stencil: UINT8) D3D12_CLEAR_VALUE {
+        return .{
+            .Format = format,
+            .u = .{ .DepthStencil = .{ .Depth = depth, .Stencil = stencil } },
+        };
+    }
 };
 
 pub const ID3D12Object = extern struct {
@@ -2580,7 +3154,9 @@ pub const ID3D12Device = extern struct {
                 );
             }
             pub inline fn GetAdapterLuid(self: *T) LUID {
-                return self.v.device.GetAdapterLuid(self);
+                var luid: LUID = undefined;
+                self.v.device.GetAdapterLuid(self, &luid);
+                return luid;
             }
         };
     }
@@ -2641,7 +3217,7 @@ pub const ID3D12Device = extern struct {
             CreateRenderTargetView: fn (
                 *T,
                 ?*ID3D12Resource,
-                ?*const RENDER_TARGET_VIEW_DESC,
+                ?*const D3D12_RENDER_TARGET_VIEW_DESC,
                 D3D12_CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
             CreateDepthStencilView: fn (
@@ -2657,7 +3233,7 @@ pub const ID3D12Device = extern struct {
                 [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
                 ?[*]const UINT,
                 UINT,
-                [*]const CPU_DESCRIPTOR_HANDLE,
+                [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
                 ?[*]const UINT,
                 D3D12_DESCRIPTOR_HEAP_TYPE,
             ) callconv(WINAPI) void,
@@ -2706,8 +3282,8 @@ pub const ID3D12Device = extern struct {
                 *T,
                 *const D3D12_RESOURCE_DESC,
                 D3D12_RESOURCE_STATES,
-                ?*const CLEAR_VALUE,
-                *const os.GUID,
+                ?*const D3D12_CLEAR_VALUE,
+                *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateSharedHandle: fn (
@@ -2754,7 +3330,7 @@ pub const ID3D12Device = extern struct {
                 UINT,
                 [*]D3D12_SUBRESOURCE_TILING,
             ) callconv(WINAPI) void,
-            GetAdapterLuid: fn (*T) callconv(WINAPI) LUID,
+            GetAdapterLuid: fn (*T, *LUID) callconv(WINAPI) *LUID,
         };
     }
 };
