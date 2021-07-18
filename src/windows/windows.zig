@@ -18,7 +18,7 @@ pub const IUnknown = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn QueryInterface(self: *T, guid: *const GUID, outobj: **c_void) HRESULT {
+            pub inline fn QueryInterface(self: *T, guid: *const GUID, outobj: ?*?*c_void) HRESULT {
                 return self.v.unknown.QueryInterface(self, guid, outobj);
             }
             pub inline fn AddRef(self: *T) ULONG {
@@ -32,7 +32,7 @@ pub const IUnknown = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            QueryInterface: fn (*T, *const GUID, **c_void) callconv(WINAPI) HRESULT,
+            QueryInterface: fn (*T, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
             AddRef: fn (*T) callconv(WINAPI) ULONG,
             Release: fn (*T) callconv(WINAPI) ULONG,
         };
