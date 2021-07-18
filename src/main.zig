@@ -20,7 +20,7 @@ pub fn main() !void {
     debug.SetEnableGPUBasedValidation(w.TRUE);
 
     var maybe_device: ?*w.ID3D12Device = null;
-    std.debug.assert(w.D3D12CreateDevice(null, 0xb100, &w.IID_ID3D12Device, @ptrCast(*?*c_void, &maybe_device)) == 0);
+    std.debug.assert(w.D3D12CreateDevice(null, 0xb100, &w.IID_ID3D12Device, @ptrCast(?*?*c_void, &maybe_device)) == 0);
     const device = maybe_device.?;
 
     const buffer_desc = w.D3D12_RESOURCE_DESC.buffer(100);

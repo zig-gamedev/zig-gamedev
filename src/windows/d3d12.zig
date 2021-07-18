@@ -788,6 +788,342 @@ pub const D3D12_COMMAND_QUEUE_DESC = extern struct {
     NodeMask: UINT,
 };
 
+pub const D3D12_SHADER_BYTECODE = extern struct {
+    pShaderBytecode: ?*const c_void,
+    BytecodeLength: UINT64,
+};
+
+pub const D3D12_SO_DECLARATION_ENTRY = extern struct {
+    Stream: UINT,
+    SemanticName: LPCSTR,
+    SemanticIndex: UINT,
+    StartComponent: UINT8,
+    ComponentCount: UINT8,
+    OutputSlot: UINT8,
+};
+
+pub const D3D12_STREAM_OUTPUT_DESC = extern struct {
+    pSODeclaration: ?[*]const D3D12_SO_DECLARATION_ENTRY,
+    NumEntries: UINT,
+    pBufferStrides: ?[*]const UINT,
+    NumStrides: UINT,
+    RasterizedStream: UINT,
+};
+
+pub const D3D12_BLEND = enum(UINT) {
+    ZERO = 1,
+    ONE = 2,
+    SRC_COLOR = 3,
+    INV_SRC_COLOR = 4,
+    SRC_ALPHA = 5,
+    INV_SRC_ALPHA = 6,
+    DEST_ALPHA = 7,
+    INV_DEST_ALPHA = 8,
+    DEST_COLOR = 9,
+    INV_DEST_COLOR = 10,
+    SRC_ALPHA_SAT = 11,
+    BLEND_FACTOR = 14,
+    INV_BLEND_FACTOR = 15,
+    SRC1_COLOR = 16,
+    INV_SRC1_COLOR = 17,
+    SRC1_ALPHA = 18,
+    INV_SRC1_ALPHA = 19,
+};
+
+pub const D3D12_BLEND_OP = enum(UINT) {
+    ADD = 1,
+    SUBTRACT = 2,
+    REV_SUBTRACT = 3,
+    MIN = 4,
+    MAX = 5,
+};
+
+pub const D3D12_COLOR_WRITE_ENABLE = packed struct {
+    RED: bool align(4) = false, // 0x1
+    GREEN: bool = false, // 0x2
+    BLUE: bool = false, // 0x4
+    ALPHA: bool = false, // 0x8
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+
+    pub fn all() D3D12_COLOR_WRITE_ENABLE {
+        return .{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
+    }
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_COLOR_WRITE_ENABLE) == 4);
+    std.debug.assert(@alignOf(D3D12_COLOR_WRITE_ENABLE) == 4);
+}
+
+pub const D3D12_LOGIC_OP = enum(UINT) {
+    CLEAR = 0,
+    SET = 1,
+    COPY = 2,
+    COPY_INVERTED = 3,
+    NOOP = 4,
+    INVERT = 5,
+    AND = 6,
+    NAND = 7,
+    OR = 8,
+    NOR = 9,
+    XOR = 10,
+    EQUIV = 11,
+    AND_REVERSE = 12,
+    AND_INVERTED = 13,
+    OR_REVERSE = 14,
+    OR_INVERTED = 15,
+};
+
+pub const D3D12_RENDER_TARGET_BLEND_DESC = extern struct {
+    BlendEnable: BOOL,
+    LogicOpEnable: BOOL,
+    SrcBlend: D3D12_BLEND,
+    DestBlend: D3D12_BLEND,
+    BlendOp: D3D12_BLEND_OP,
+    SrcBlendAlpha: D3D12_BLEND,
+    DestBlendAlpha: D3D12_BLEND,
+    BlendOpAlpha: D3D12_BLEND_OP,
+    LogicOp: D3D12_LOGIC_OP,
+    RenderTargetWriteMask: UINT8,
+};
+
+pub const D3D12_BLEND_DESC = extern struct {
+    AlphaToCoverageEnable: BOOL,
+    IndependentBlendEnable: BOOL,
+    RenderTarget: [8]D3D12_RENDER_TARGET_BLEND_DESC,
+};
+
+pub const D3D12_RASTERIZER_DESC = extern struct {
+    FillMode: D3D12_FILL_MODE,
+    CullMode: D3D12_CULL_MODE,
+    FrontCounterClockwise: BOOL,
+    DepthBias: INT,
+    DepthBiasClamp: FLOAT,
+    SlopeScaledDepthBias: FLOAT,
+    DepthClipEnable: BOOL,
+    MultisampleEnable: BOOL,
+    AntialiasedLineEnable: BOOL,
+    ForcedSampleCount: UINT,
+    ConservativeRaster: D3D12_CONSERVATIVE_RASTERIZATION_MODE,
+};
+
+pub const D3D12_FILL_MODE = enum(UINT) {
+    WIREFRAME = 2,
+    SOLID = 3,
+};
+
+pub const D3D12_CULL_MODE = enum(UINT) {
+    NONE = 1,
+    FRONT = 2,
+    BACK = 3,
+};
+
+pub const D3D12_CONSERVATIVE_RASTERIZATION_MODE = enum(UINT) {
+    OFF = 0,
+    ON = 1,
+};
+
+pub const D3D12_COMPARISON_FUNC = enum(UINT) {
+    NEVER = 1,
+    LESS = 2,
+    EQUAL = 3,
+    LESS_EQUAL = 4,
+    GREATER = 5,
+    NOT_EQUAL = 6,
+    GREATER_EQUAL = 7,
+    ALWAYS = 8,
+};
+
+pub const D3D12_DEPTH_WRITE_MASK = enum(UINT) {
+    ZERO = 0,
+    ALL = 1,
+};
+
+pub const D3D12_STENCIL_OP = enum(UINT) {
+    KEEP = 1,
+    ZERO = 2,
+    REPLACE = 3,
+    INCR_SAT = 4,
+    DECR_SAT = 5,
+    INVERT = 6,
+    INCR = 7,
+    DECR = 8,
+};
+
+pub const D3D12_DEPTH_STENCILOP_DESC = extern struct {
+    StencilFailOp: D3D12_STENCIL_OP,
+    StencilDepthFailOp: D3D12_STENCIL_OP,
+    StencilPassOp: D3D12_STENCIL_OP,
+    StencilFunc: D3D12_COMPARISON_FUNC,
+};
+
+pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
+    DepthEnable: BOOL,
+    DepthWriteMask: D3D12_DEPTH_WRITE_MASK,
+    DepthFunc: D3D12_COMPARISON_FUNC,
+    StencilEnable: BOOL,
+    StencilReadMask: UINT8,
+    StencilWriteMask: UINT8,
+    FrontFace: D3D12_DEPTH_STENCILOP_DESC,
+    BackFace: D3D12_DEPTH_STENCILOP_DESC,
+};
+
+pub const D3D12_INPUT_LAYOUT_DESC = extern struct {
+    pInputElementDescs: ?[*]const D3D12_INPUT_ELEMENT_DESC,
+    NumElements: UINT,
+};
+
+pub const D3D12_INPUT_CLASSIFICATION = enum(UINT) {
+    PER_VERTEX_DATA = 0,
+    PER_INSTANCE_DATA = 1,
+};
+
+pub const D3D12_INPUT_ELEMENT_DESC = extern struct {
+    SemanticName: LPCSTR,
+    SemanticIndex: UINT,
+    Format: DXGI_FORMAT,
+    InputSlot: UINT,
+    AlignedByteOffset: UINT,
+    InputSlotClass: D3D12_INPUT_CLASSIFICATION,
+    InstanceDataStepRate: UINT,
+};
+
+pub const D3D12_CACHED_PIPELINE_STATE = extern struct {
+    pCachedBlob: ?*const c_void,
+    CachedBlobSizeInBytes: UINT64,
+};
+
+pub const D3D12_PIPELINE_STATE_FLAGS = packed struct {
+    TOOL_DEBUG: bool align(4) = false, // 0x1
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_PIPELINE_STATE_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_PIPELINE_STATE_FLAGS) == 4);
+}
+
+pub const D3D12_GRAPHICS_PIPELINE_STATE_DESC = extern struct {
+    pRootSignature: ?*ID3D12RootSignature,
+    VS: D3D12_SHADER_BYTECODE,
+    PS: D3D12_SHADER_BYTECODE,
+    DS: D3D12_SHADER_BYTECODE,
+    HS: D3D12_SHADER_BYTECODE,
+    GS: D3D12_SHADER_BYTECODE,
+    StreamOutput: D3D12_STREAM_OUTPUT_DESC,
+    BlendState: D3D12_BLEND_DESC,
+    SampleMask: UINT,
+    RasterizerState: D3D12_RASTERIZER_DESC,
+    DepthStencilState: D3D12_DEPTH_STENCIL_DESC,
+    InputLayout: D3D12_INPUT_LAYOUT_DESC,
+    IBStripCutValue: D3D12_INDEX_BUFFER_STRIP_CUT_VALUE,
+    PrimitiveTopologyType: D3D12_PRIMITIVE_TOPOLOGY_TYPE,
+    NumRenderTargets: UINT,
+    RTVFormats: [8]DXGI_FORMAT,
+    DSVFormat: DXGI_FORMAT,
+    SampleDesc: DXGI_SAMPLE_DESC,
+    NodeMask: UINT,
+    CachedPSO: D3D12_CACHED_PIPELINE_STATE,
+    Flags: D3D12_PIPELINE_STATE_FLAGS,
+};
+
+pub const D3D12_COMPUTE_PIPELINE_STATE_DESC = extern struct {
+    pRootSignature: ?*ID3D12RootSignature,
+    CS: D3D12_SHADER_BYTECODE,
+    NodeMask: UINT,
+    CachedPSO: D3D12_CACHED_PIPELINE_STATE,
+    Flags: D3D12_PIPELINE_STATE_FLAGS,
+};
+
+pub const D3D12_FEATURE = enum(UINT) {
+    D3D12_OPTIONS = 0,
+    ARCHITECTURE = 1,
+    FEATURE_LEVELS = 2,
+    FORMAT_SUPPORT = 3,
+    MULTISAMPLE_QUALITY_LEVELS = 4,
+    FORMAT_INFO = 5,
+    GPU_VIRTUAL_ADDRESS_SUPPORT = 6,
+    SHADER_MODEL = 7,
+    D3D12_OPTIONS1 = 8,
+    PROTECTED_RESOURCE_SESSION_SUPPORT = 10,
+    ROOT_SIGNATURE = 12,
+    ARCHITECTURE1 = 16,
+    D3D12_OPTIONS2 = 18,
+    SHADER_CACHE = 19,
+    COMMAND_QUEUE_PRIORITY = 20,
+    D3D12_OPTIONS3 = 21,
+    EXISTING_HEAPS = 22,
+    D3D12_OPTIONS4 = 23,
+    SERIALIZATION = 24,
+    CROSS_NODE = 25,
+    D3D12_OPTIONS5 = 27,
+    DISPLAYABLE = 28,
+    D3D12_OPTIONS6 = 30,
+    QUERY_META_COMMAND = 31,
+    D3D12_OPTIONS7 = 32,
+    PROTECTED_RESOURCE_SESSION_TYPE_COUNT = 33,
+    PROTECTED_RESOURCE_SESSION_TYPES = 34,
+    D3D12_OPTIONS8 = 36,
+    D3D12_OPTIONS9 = 37,
+    D3D12_OPTIONS10 = 39,
+    D3D12_OPTIONS11 = 40,
+};
+
 pub const ID3D12Object = extern struct {
     const Self = @This();
     v: *const extern struct {
