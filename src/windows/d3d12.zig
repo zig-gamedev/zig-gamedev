@@ -3349,6 +3349,12 @@ pub const IID_ID3D12Device = GUID{
     .Data3 = 0x4b57,
     .Data4 = .{ 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 },
 };
+pub const IID_ID3D12CommandQueue = GUID{
+    .Data1 = 0x0ec870a6,
+    .Data2 = 0x5d7e,
+    .Data3 = 0x4c22,
+    .Data4 = .{ 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed },
+};
 
 pub fn d3d12_load_dll() !void {
     var d3d12_dll = try std.DynLib.openZ("d3d12.dll");
