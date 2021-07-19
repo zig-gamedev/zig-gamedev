@@ -632,3 +632,57 @@ pub const IDXGISwapChain = extern struct {
         };
     }
 };
+
+pub const IDXGIFactory = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        factory: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn EnumAdapters(self: *T, index: UINT, adapter: *?*IDXGIAdapter) HRESULT {
+                return self.v.factory.EnumAdapters(self, index, adapter);
+            }
+            pub inline fn MakeWindowAssociation(self: *T, window: HWND, flags: UINT) HRESULT {
+                return self.v.factory.MakeWindowAssociation(self, window, flags);
+            }
+            pub inline fn GetWindowAssociation(self: *T, window: *HWND) HRESULT {
+                return self.v.factory.GetWindowAssociation(self, window);
+            }
+            pub inline fn CreateSwapChain(
+                self: *T,
+                device: *IUnknown,
+                desc: *DXGI_SWAP_CHAIN_DESC,
+                swapchain: *?*IDXGISwapChain,
+            ) HRESULT {
+                return self.v.factory.CreateSwapChain(self, device, desc, swapchain);
+            }
+            pub inline fn CreateSoftwareAdapter(self: *T, adapter: *?*IDXGIAdapter) HRESULT {
+                return self.v.factory.CreateSoftwareAdapter(self, adapter);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            EnumAdapters: fn (*T, UINT, *?*IDXGIAdapter) callconv(WINAPI) HRESULT,
+            MakeWindowAssociation: fn (*T, HWND, UINT) callconv(WINAPI) HRESULT,
+            GetWindowAssociation: fn (*T, *HWND) callconv(WINAPI) HRESULT,
+            CreateSwapChain: fn (*T, *IUnknown, *DXGI_SWAP_CHAIN_DESC, *?*IDXGISwapChain) callconv(WINAPI) HRESULT,
+            CreateSoftwareAdapter: fn (*T, *?*IDXGIAdapter) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub var CreateDXGIFactory2: fn (UINT, *const GUID, *?*void) callconv(WINAPI) HRESULT = undefined;
+
+pub fn dxgi_load_dll() !void {
+    var dxgi_dll = try std.DynLib.openZ("dxgi.dll");
+    CreateDXGIFactory2 = dxgi_dll.lookup(@TypeOf(CreateDXGIFactory2), "CreateDXGIFactory2").?;
+}

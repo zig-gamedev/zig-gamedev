@@ -5,12 +5,14 @@ const w = struct {
     usingnamespace @import("windows/d3d12.zig");
     usingnamespace @import("windows/d3d12sdklayers.zig");
     usingnamespace @import("windows/d3dcommon.zig");
+    usingnamespace @import("windows/dxgi.zig");
 };
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*c]const u8 = ".\\D3D12\\";
 
 pub fn main() !void {
+    try w.dxgi_load_dll();
     try w.d3d12_load_dll();
 
     const debug = blk: {
