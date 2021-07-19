@@ -400,3 +400,123 @@ pub const IDXGIAdapter = extern struct {
         };
     }
 };
+
+pub const DXGI_ENUM_MODES = packed struct {
+    INTERLACED: bool align(4) = false, // 0x1
+    SCALING: bool = false, // 0x2
+    STEREO: bool = false, // 0x4
+    DISABLED_STEREO: bool = false, // 0x8
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(DXGI_ENUM_MODES) == 4);
+    std.debug.assert(@alignOf(DXGI_ENUM_MODES) == 4);
+}
+
+pub const IDXGIOutput = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        output: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetDesc(self: *T, desc: *DXGI_OUTPUT_DESC) HRESULT {
+                return self.v.output.GetDesc(self, desc);
+            }
+            pub inline fn GetDisplayModeList(
+                self: *T,
+                enum_format: DXGI_FORMAT,
+                flags: DXGI_ENUM_MODES,
+                num_nodes: *UINT,
+                desc: ?*DXGI_MODE_DESC,
+            ) HRESULT {
+                return self.v.output.GetDisplayModeList(self, enum_format, flags, num_nodes, desc);
+            }
+            pub inline fn FindClosestMatchingMode(
+                self: *T,
+                mode_to_match: *const DXGI_MODE_DESC,
+                closest_match: *DXGI_MODE_DESC,
+                concerned_device: ?*IUnknown,
+            ) HRESULT {
+                return self.v.output.FindClosestMatchingMode(self, mode_to_match, closest_match, concerned_device);
+            }
+            pub inline fn WaitForVBlank(self: *T) HRESULT {
+                return self.v.output.WaitForVBlank(self);
+            }
+            pub inline fn TakeOwnership(self: *T, device: *IUnknown, exclusive: BOOL) HRESULT {
+                return self.v.output.TakeOwnership(self, device, exclusive);
+            }
+            pub inline fn ReleaseOwnership(self: *T) void {
+                self.v.output.ReleaseOwnership(self);
+            }
+            pub inline fn GetGammaControlCapabilities(self: *T, gamma_caps: *DXGI_GAMMA_CONTROL_CAPABILITIES) HRESULT {
+                return self.v.output.GetGammaControlCapabilities(self, gamma_caps);
+            }
+            pub inline fn SetGammaControl(self: *T, array: *const DXGI_GAMMA_CONTROL) HRESULT {
+                return self.v.output.SetGammaControl(self, array);
+            }
+            pub inline fn GetGammaControl(self: *T, array: *DXGI_GAMMA_CONTROL) HRESULT {
+                return self.v.output.GetGammaControl(self, array);
+            }
+            pub inline fn SetDisplaySurface(self: *T, scanout_surface: *IDXGISurface) HRESULT {
+                return self.v.output.SetDisplaySurface(self, scanout_surface);
+            }
+            pub inline fn GetDisplaySurfaceData(self: *T, destination: *IDXGISurface) HRESULT {
+                return self.v.output.GetDisplaySurfaceData(self, destination);
+            }
+            pub inline fn GetFrameStatistics(self: *T, stats: *DXGI_FRAME_STATISTICS) HRESULT {
+                return self.v.output.GetFrameStatistics(self, stats);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetDesc: fn (self: *T, desc: *DXGI_OUTPUT_DESC) callconv(WINAPI) HRESULT,
+            GetDisplayModeList: fn (*T, DXGI_FORMAT, DXGI_ENUM_MODES, *UINT, ?*DXGI_MODE_DESC) callconv(WINAPI) HRESULT,
+            FindClosestMatchingMode: fn (*T, *const DXGI_MODE_DESC, *DXGI_MODE_DESC, ?*IUnknown) callconv(WINAPI) HRESULT,
+            WaitForVBlank: fn (*T) callconv(WINAPI) HRESULT,
+            TakeOwnership: fn (*T, *IUnknown, BOOL) callconv(WINAPI) HRESULT,
+            ReleaseOwnership: fn (*T) callconv(WINAPI) void,
+            GetGammaControlCapabilities: fn (*T, *DXGI_GAMMA_CONTROL_CAPABILITIES) callconv(WINAPI) HRESULT,
+            SetGammaControl: fn (*T, *const DXGI_GAMMA_CONTROL) callconv(WINAPI) HRESULT,
+            GetGammaControl: fn (*T, *DXGI_GAMMA_CONTROL) callconv(WINAPI) HRESULT,
+            SetDisplaySurface: fn (*T, *IDXGISurface) callconv(WINAPI) HRESULT,
+            GetDisplaySurfaceData: fn (*T, *IDXGISurface) callconv(WINAPI) HRESULT,
+            GetFrameStatistics: fn (*T, *DXGI_FRAME_STATISTICS) callconv(WINAPI) HRESULT,
+        };
+    }
+};
