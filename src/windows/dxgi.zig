@@ -626,7 +626,7 @@ pub const IDXGISwapChain = extern struct {
             GetDesc: fn (*T, *DXGI_SWAP_CHAIN_DESC) callconv(WINAPI) HRESULT,
             ResizeBuffers: fn (*T, UINT, UINT, UINT, DXGI_FORMAT, DXGI_SWAP_CHAIN_FLAG) callconv(WINAPI) HRESULT,
             ResizeTarget: fn (*T, *const DXGI_MODE_DESC) callconv(WINAPI) HRESULT,
-            GetContainingOutput: fn (*T, *?*pIDXGIOutput) callconv(WINAPI) HRESULT,
+            GetContainingOutput: fn (*T, *?*IDXGIOutput) callconv(WINAPI) HRESULT,
             GetFrameStatistics: fn (*T, *DXGI_FRAME_STATISTICS) callconv(WINAPI) HRESULT,
             GetLastPresentCount: fn (*T, *UINT) callconv(WINAPI) HRESULT,
         };
@@ -851,7 +851,14 @@ pub const IDXGIDevice1 = extern struct {
     }
 };
 
-pub var CreateDXGIFactory2: fn (UINT, *const GUID, *?*void) callconv(WINAPI) HRESULT = undefined;
+pub const IID_IDXGIFactory1 = GUID{
+    .Data1 = 0x770aae78,
+    .Data2 = 0xf26f,
+    .Data3 = 0x4dba,
+    .Data4 = .{ 0xa8, 0x29, 0x25, 0x3c, 0x83, 0xd1, 0xb3, 0x87 },
+};
+
+pub var CreateDXGIFactory2: fn (UINT, *const GUID, *?*c_void) callconv(WINAPI) HRESULT = undefined;
 
 pub fn dxgi_load_dll() !void {
     var dxgi_dll = try std.DynLib.openZ("dxgi.dll");

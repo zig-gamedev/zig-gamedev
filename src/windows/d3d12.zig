@@ -2690,7 +2690,7 @@ pub const ID3D12CommandQueue = extern struct {
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
-        devchild: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
         cmdqueue: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
@@ -2771,7 +2771,7 @@ pub const ID3D12CommandQueue = extern struct {
                 return self.v.cmdqueue.GetClockCalibration(self, gpu_timestamp, cpu_timestamp);
             }
             pub inline fn GetDesc(self: *T) D3D12_COMMAND_QUEUE_DESC {
-                var desc: COMMAND_QUEUE_DESC = undefined;
+                var desc: D3D12_COMMAND_QUEUE_DESC = undefined;
                 self.v.cmdqueue.GetDesc(self, &desc);
                 return desc;
             }

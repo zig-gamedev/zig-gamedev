@@ -219,7 +219,7 @@ pub const IID_ID3D12Debug = GUID{
     .Data3 = 0x474b,
     .Data4 = .{ 0xb9, 0x89, 0xf0, 0x27, 0x44, 0x82, 0x45, 0xe0 },
 };
-pub const IID_IDebug1 = GUID{
+pub const IID_ID3D12Debug1 = GUID{
     .Data1 = 0xaffaa4ca,
     .Data2 = 0x63fe,
     .Data3 = 0x4d8e,

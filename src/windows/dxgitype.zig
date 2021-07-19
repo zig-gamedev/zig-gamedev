@@ -2,6 +2,7 @@ const std = @import("std");
 usingnamespace std.os.windows;
 usingnamespace @import("windows.zig");
 usingnamespace @import("dxgiformat.zig");
+usingnamespace @import("dxgicommon.zig");
 
 pub const DXGI_CPU_ACCESS = enum(UINT) {
     NONE = 0,
