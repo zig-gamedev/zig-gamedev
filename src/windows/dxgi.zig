@@ -520,3 +520,115 @@ pub const IDXGIOutput = extern struct {
         };
     }
 };
+
+pub const DXGI_MAX_SWAP_CHAIN_BUFFERS = 16;
+
+pub const DXGI_PRESENT = packed struct {
+    TEST: bool align(4) = false, // 0x1
+    DO_NOT_SEQUENCE: bool = false, // 0x2
+    RESTART: bool = false, // 0x4
+    DO_NOT_WAIT: bool = false, // 0x8
+    STEREO_PREFER_RIGHT: bool = false, // 0x10
+    STEREO_TEMPORARY_MONO: bool = false, // 0x20
+    RESTRICT_TO_OUTPUT: bool = false, // 0x40
+    __reserved7: bool = false, // 0x80
+    USE_DURATION: bool = false, // 0x100
+    ALLOW_TEARING: bool = false, // 0x200
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(DXGI_PRESENT) == 4);
+    std.debug.assert(@alignOf(DXGI_PRESENT) == 4);
+}
+
+pub const IDXGISwapChain = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        devsubobj: IDXGIDeviceSubObject.VTable(Self),
+        swapchain: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace IDXGIDeviceSubObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn Present(self: *T, sync_interval: UINT, flags: DXGI_PRESENT) HRESULT {
+                return self.v.swapchain.Present(self, sync_interval, flags);
+            }
+            pub inline fn GetBuffer(self: *T, guid: *const GUID, surface: *?*c_void) HRESULT {
+                return self.v.swapchain.GetBuffer(self, guid, surface);
+            }
+            pub inline fn SetFullscreenState(self: *T, target: ?*IDXGIOutput) HRESULT {
+                return self.v.swapchain.SetFullscreenState(self, target);
+            }
+            pub inline fn GetFullscreenState(self: *T, fullscreen: ?*BOOL, target: ?*?*IDXGIOutput) HRESULT {
+                return self.v.swapchain.GetFullscreenState(self, fullscreen, target);
+            }
+            pub inline fn GetDesc(self: *T, desc: *DXGI_SWAP_CHAIN_DESC) HRESULT {
+                return self.v.swapchain.GetDesc(self, desc);
+            }
+            pub inline fn ResizeBuffers(
+                self: *T,
+                count: UINT,
+                width: UINT,
+                height: UINT,
+                format: DXGI_FORMAT,
+                flags: DXGI_SWAP_CHAIN_FLAG,
+            ) HRESULT {
+                return self.v.swapchain.ResizeBuffers(self, count, width, height, format, flags);
+            }
+            pub inline fn ResizeTarget(self: *T, params: *const DXGI_MODE_DESC) HRESULT {
+                return self.v.swapchain.ResizeTarget(self, params);
+            }
+            pub inline fn GetContainingOutput(self: *T, output: *?*pIDXGIOutput) HRESULT {
+                return self.v.swapchain.GetContainingOutput(self, output);
+            }
+            pub inline fn GetFrameStatistics(self: *T, stats: *DXGI_FRAME_STATISTICS) HRESULT {
+                return self.v.swapchain.GetFrameStatistics(self, stats);
+            }
+            pub inline fn GetLastPresentCount(self: *T, count: *UINT) HRESULT {
+                return self.v.swapchain.GetLastPresentCount(self, count);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            Present: fn (*T, UINT, DXGI_PRESENT) callconv(WINAPI) HRESULT,
+            GetBuffer: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            SetFullscreenState: fn (*T, ?*IDXGIOutput) callconv(WINAPI) HRESULT,
+            GetFullscreenState: fn (*T, ?*BOOL, ?*?*IDXGIOutput) callconv(WINAPI) HRESULT,
+            GetDesc: fn (*T, *DXGI_SWAP_CHAIN_DESC) callconv(WINAPI) HRESULT,
+            ResizeBuffers: fn (*T, UINT, UINT, UINT, DXGI_FORMAT, DXGI_SWAP_CHAIN_FLAG) callconv(WINAPI) HRESULT,
+            ResizeTarget: fn (*T, *const DXGI_MODE_DESC) callconv(WINAPI) HRESULT,
+            GetContainingOutput: fn (*T, *?*pIDXGIOutput) callconv(WINAPI) HRESULT,
+            GetFrameStatistics: fn (*T, *DXGI_FRAME_STATISTICS) callconv(WINAPI) HRESULT,
+            GetLastPresentCount: fn (*T, *UINT) callconv(WINAPI) HRESULT,
+        };
+    }
+};
