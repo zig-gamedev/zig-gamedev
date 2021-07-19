@@ -219,3 +219,184 @@ pub const IDXGIDeviceSubObject = extern struct {
         };
     }
 };
+
+pub const IDXGIResource = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        devsubobj: IDXGIDeviceSubObject.VTable(Self),
+        resource: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace IDXGIDeviceSubObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetSharedHandle(self: *T, handle: *HANDLE) HRESULT {
+                return self.v.resource.GetSharedHandle(self, handle);
+            }
+            pub inline fn GetUsage(self: *T, usage: *DXGI_USAGE) HRESULT {
+                return self.v.resource.GetUsage(self, usage);
+            }
+            pub inline fn SetEvictionPriority(self: *T, priority: UINT) HRESULT {
+                return self.v.resource.SetEvictionPriority(self, priority);
+            }
+            pub inline fn GetEvictionPriority(self: *T, priority: *UINT) HRESULT {
+                return self.v.resource.GetEvictionPriority(self, priority);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetSharedHandle: fn (*T, *HANDLE) callconv(WINAPI) HRESULT,
+            GetUsage: fn (*T, *DXGI_USAGE) callconv(WINAPI) HRESULT,
+            SetEvictionPriority: fn (*T, UINT) callconv(WINAPI) HRESULT,
+            GetEvictionPriority: fn (*T, *UINT) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const IDXGIKeyedMutex = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        devsubobj: IDXGIDeviceSubObject.VTable(Self),
+        mutex: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace IDXGIDeviceSubObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn AcquireSync(self: *T, key: UINT64, milliseconds: DWORD) HRESULT {
+                return self.v.mutex.AcquireSync(self, key, milliseconds);
+            }
+            pub inline fn ReleaseSync(self: *T, key: UINT64) HRESULT {
+                return self.v.mutex.ReleaseSync(self, key);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            AcquireSync: fn (*T, UINT64, DWORD) callconv(WINAPI) HRESULT,
+            ReleaseSync: fn (*T, UINT64) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const DXGI_MAP = packed struct {
+    READ: bool align(4) = false, // 0x1
+    WRITE: bool = false, // 0x2
+    DISCARD: bool = false, // 0x4
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(DXGI_MAP) == 4);
+    std.debug.assert(@alignOf(DXGI_MAP) == 4);
+}
+
+pub const IDXGISurface = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        devsubobj: IDXGIDeviceSubObject.VTable(Self),
+        surface: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace IDXGIDeviceSubObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetDesc(self: *T, desc: *DXGI_SURFACE_DESC) HRESULT {
+                return self.v.surface.GetDesc(self, desc);
+            }
+            pub inline fn Map(self: *T, locked_rect: *DXGI_MAPPED_RECT, flags: DXGI_MAP) HRESULT {
+                return self.v.surface.Map(self, locked_rect, flags);
+            }
+            pub inline fn Unmap(self: *T) HRESULT {
+                return self.v.surface.Unmap(self);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetDesc: fn (*T, *DXGI_SURFACE_DESC) callconv(WINAPI) HRESULT,
+            Map: fn (*T, *DXGI_MAPPED_RECT, DXGI_MAP) callconv(WINAPI) HRESULT,
+            Unmap: fn (*T) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const IDXGIAdapter = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        adapter: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn EnumOutputs(self: *T, index: UINT, output: *?*IDXGIOutput) HRESULT {
+                return self.v.adapter.EnumOutputs(self, index, output);
+            }
+            pub inline fn GetDesc(self: *T, desc: *DXGI_ADAPTER_DESC) HRESULT {
+                return self.v.adapter.GetDesc(self, desc);
+            }
+            pub inline fn CheckInterfaceSupport(self: *T, guid: *const GUID, umd_ver: *LARGE_INTEGER) HRESULT {
+                return self.v.adapter.CheckInterfaceSupport(self, guid, umd_ver);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            EnumOutputs: fn (*T, UINT, *?*IDXGIOutput) callconv(WINAPI) HRESULT,
+            GetDesc: fn (*T, *DXGI_ADAPTER_DESC) callconv(WINAPI) HRESULT,
+            CheckInterfaceSupport: fn (*T, *const GUID, *LARGE_INTEGER) callconv(WINAPI) HRESULT,
+        };
+    }
+};
