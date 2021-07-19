@@ -680,6 +680,177 @@ pub const IDXGIFactory = extern struct {
     }
 };
 
+pub const IDXGIDevice = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        device: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetAdapter(self: *T, adapter: *?*IDXGIAdapter) HRESULT {
+                return self.v.device.GetAdapter(self, adapter);
+            }
+            pub inline fn CreateSurface(
+                self: *T,
+                desc: *const DXGI_SURFACE_DESC,
+                num_surfaces: UINT,
+                usage: DXGI_USAGE,
+                shared_resource: ?*const DXGI_SHARED_RESOURCE,
+                surface: *?*IDXGISurface,
+            ) HRESULT {
+                return self.v.device.CreateSurface(self, desc, num_surfaces, usage, shared_resource, surface);
+            }
+            pub inline fn QueryResourceResidency(
+                self: *T,
+                resources: *const *IUnknown,
+                status: [*]DXGI_RESIDENCY,
+                num_resources: UINT,
+            ) HRESULT {
+                return self.v.device.QueryResourceResidency(self, resources, status, num_resources);
+            }
+            pub inline fn SetGPUThreadPriority(self: *T, priority: INT) HRESULT {
+                return self.v.device.SetGPUThreadPriority(self, priority);
+            }
+            pub inline fn GetGPUThreadPriority(self: *T, priority: *INT) HRESULT {
+                return self.v.device.GetGPUThreadPriority(self, priority);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetAdapter: fn (self: *T, adapter: *?*IDXGIAdapter) callconv(WINAPI) HRESULT,
+            CreateSurface: fn (
+                *T,
+                *const DXGI_SURFACE_DESC,
+                UINT,
+                DXGI_USAGE,
+                ?*const DXGI_SHARED_RESOURCE,
+                *?*IDXGISurface,
+            ) callconv(WINAPI) HRESULT,
+            QueryResourceResidency: fn (
+                *T,
+                *const *IUnknown,
+                [*]DXGI_RESIDENCY,
+                UINT,
+            ) callconv(WINAPI) HRESULT,
+            SetGPUThreadPriority: fn (self: *T, priority: INT) callconv(WINAPI) HRESULT,
+            GetGPUThreadPriority: fn (self: *T, priority: *INT) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const DXGI_ADAPTER_DESC1 = extern struct {
+    Description: [128]WCHAR,
+    VendorId: UINT,
+    DeviceId: UINT,
+    SubSysId: UINT,
+    Revision: UINT,
+    DedicatedVideoMemory: SIZE_T,
+    DedicatedSystemMemory: SIZE_T,
+    SharedSystemMemory: SIZE_T,
+    AdapterLuid: LUID,
+    Flags: UINT,
+};
+
+pub const IDXGIFactory1 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        factory: IDXGIFactory.VTable(Self),
+        factory1: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace IDXGIFactory.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn EnumAdapters1(self: *T, index: UINT, adapter: *?*IDXGIAdapter1) HRESULT {
+                return self.v.factory1.EnumAdapters1(self, index, adapter);
+            }
+            pub inline fn IsCurrent(self: *T) BOOL {
+                return self.v.factory1.IsCurrent(self);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            EnumAdapters1: fn (*T, UINT, *?*IDXGIAdapter) callconv(WINAPI) HRESULT,
+            IsCurrent: fn (*T) callconv(WINAPI) BOOL,
+        };
+    }
+};
+
+pub const IDXGIAdapter1 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        adapter: IDXGIAdapter.VTable(Self),
+        adapter1: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace IDXGIAdapter.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetDesc1(self: *T, desc: *DXGI_ADAPTER_DESC1) HRESULT {
+                return self.v.adapter1.GetDesc1(self, desc);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetDesc1: fn (*T, *DXGI_ADAPTER_DESC1) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const IDXGIDevice1 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        device: IDXGIDevice.VTable(Self),
+        device1: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace IDXGIDevice.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn SetMaximumFrameLatency(self: *T, max_latency: UINT) HRESULT {
+                return self.v.device1.SetMaximumFrameLatency(self, max_latency);
+            }
+            pub inline fn GetMaximumFrameLatency(self: *T, max_latency: *UINT) HRESULT {
+                return self.v.device1.GetMaximumFrameLatency(self, max_latency);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            SetMaximumFrameLatency: fn (self: *T, max_latency: UINT) callconv(WINAPI) HRESULT,
+            GetMaximumFrameLatency: fn (self: *T, max_latency: *UINT) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 pub var CreateDXGIFactory2: fn (UINT, *const GUID, *?*void) callconv(WINAPI) HRESULT = undefined;
 
 pub fn dxgi_load_dll() !void {

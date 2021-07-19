@@ -15,6 +15,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.rdynamic = true;
+    exe.linkSystemLibrary("c");
     exe.install();
 
     const run_cmd = exe.run();
