@@ -157,3 +157,65 @@ pub const DXGI_SWAP_CHAIN_DESC = extern struct {
     SwapEffect: DXGI_SWAP_EFFECT,
     Flags: UINT,
 };
+
+pub const IDXGIObject = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: *const c_void) HRESULT {
+                return self.v.object.SetPrivateData(self, guid, data_size, data);
+            }
+            pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const IUnknown) HRESULT {
+                return self.v.object.SetPrivateDataInterface(self, guid, data);
+            }
+            pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: *c_void) HRESULT {
+                return self.v.object.GetPrivateData(self, guid, data_size, data);
+            }
+            pub inline fn GetParent(self: *T, guid: *const GUID, parent: *?*c_void) HRESULT {
+                return self.v.object.GetParent(self, guid, parent);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            SetPrivateData: fn (*T, *const GUID, UINT, *const c_void) callconv(WINAPI) HRESULT,
+            SetPrivateDataInterface: fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
+            GetPrivateData: fn (*T, *const GUID, *UINT, *c_void) callconv(WINAPI) HRESULT,
+            GetParent: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const IDXGIDeviceSubObject = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IDXGIObject.VTable(Self),
+        devsubobj: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDXGIObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetDevice(self: *T, guid: *const GUID, parent: *?*c_void) HRESULT {
+                return self.v.devsubobj.GetDevice(self, guid, parent);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetDevice: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+        };
+    }
+};
