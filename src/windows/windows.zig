@@ -4,6 +4,7 @@ usingnamespace std.os.windows;
 pub const UINT8 = u8;
 pub const UINT16 = c_ushort;
 pub const UINT64 = c_ulonglong;
+pub const HMONITOR = HANDLE;
 pub const LUID = struct {
     LowPart: DWORD,
     HighPart: LONG,
