@@ -12,7 +12,77 @@ const w = struct {
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*c]const u8 = ".\\D3D12\\";
 
+fn processWindowMessage(
+    window: w.HWND,
+    message: w.UINT,
+    wparam: w.WPARAM,
+    lparam: w.LPARAM,
+) callconv(w.WINAPI) w.LRESULT {
+    const processed = switch (message) {
+        w.user32.WM_DESTROY => blk: {
+            w.user32.PostQuitMessage(0);
+            break :blk true;
+        },
+        w.user32.WM_KEYDOWN => blk: {
+            if (wparam == w.VK_ESCAPE) {
+                w.user32.PostQuitMessage(0);
+                break :blk true;
+            }
+            break :blk false;
+        },
+        else => false,
+    };
+    return if (processed) 0 else w.user32.DefWindowProcA(window, message, wparam, lparam);
+}
+
+const window_name = "zig d3d12 test";
+const window_width = 400;
+const window_height = 400;
+
+fn createWindow() !w.HWND {
+    const winclass = w.user32.WNDCLASSEXA{
+        .style = 0,
+        .lpfnWndProc = processWindowMessage,
+        .cbClsExtra = 0,
+        .cbWndExtra = 0,
+        .hInstance = @ptrCast(w.HINSTANCE, w.kernel32.GetModuleHandleW(null)),
+        .hIcon = null,
+        .hCursor = w.LoadCursorA(null, @intToPtr(w.LPCSTR, 32512)),
+        .hbrBackground = null,
+        .lpszMenuName = null,
+        .lpszClassName = window_name,
+        .hIconSm = null,
+    };
+    _ = try w.user32.registerClassExA(&winclass);
+
+    const style = w.user32.WS_OVERLAPPED +
+        w.user32.WS_SYSMENU +
+        w.user32.WS_CAPTION +
+        w.user32.WS_MINIMIZEBOX;
+
+    var rect = w.RECT{ .left = 0, .top = 0, .right = window_width, .bottom = window_height };
+    _ = w.user32.AdjustWindowRectEx(&rect, style, w.FALSE, 0);
+
+    const window = try w.user32.createWindowExA(
+        0,
+        window_name,
+        window_name,
+        style + w.WS_VISIBLE,
+        -1,
+        -1,
+        rect.right - rect.left,
+        rect.bottom - rect.top,
+        null,
+        null,
+        winclass.hInstance,
+        null,
+    );
+    return window;
+}
+
 pub fn main() !void {
+    _ = w.SetProcessDPIAware();
+
     try w.dxgi_load_dll();
     try w.d3d12_load_dll();
 
@@ -48,6 +118,41 @@ pub fn main() !void {
         break :blk maybe_cmdqueue.?;
     };
 
+    const window = try createWindow();
+
+    const swapchain = blk: {
+        var maybe_swapchain: ?*w.IDXGISwapChain = null;
+        _ = factory.CreateSwapChain(
+            @ptrCast(*w.IUnknown, cmdqueue),
+            &w.DXGI_SWAP_CHAIN_DESC{
+                .BufferDesc = .{
+                    .Width = window_width,
+                    .Height = window_height,
+                    .RefreshRate = .{
+                        .Numerator = 0,
+                        .Denominator = 0,
+                    },
+                    .Format = .R8G8B8A8_UNORM,
+                    .ScanlineOrdering = .UNSPECIFIED,
+                    .Scaling = .UNSPECIFIED,
+                },
+                .SampleDesc = .{
+                    .Count = 1,
+                    .Quality = 0,
+                },
+                .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
+                .BufferCount = 4,
+                .OutputWindow = window,
+                .Windowed = w.TRUE,
+                .SwapEffect = .FLIP_DISCARD,
+                .Flags = .{},
+            },
+            &maybe_swapchain,
+        );
+        break :blk maybe_swapchain.?;
+    };
+
+    _ = swapchain.Release();
     _ = factory.Release();
     _ = cmdqueue.Release();
     _ = device.Release();

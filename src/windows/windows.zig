@@ -39,3 +39,13 @@ pub const IUnknown = extern struct {
         };
     }
 };
+
+pub extern "user32" fn SetProcessDPIAware() callconv(WINAPI) BOOL;
+
+pub extern "user32" fn LoadCursorA(
+    hInstance: ?HINSTANCE,
+    lpCursorName: LPCSTR,
+) callconv(WINAPI) HCURSOR;
+
+pub const VK_ESCAPE = 0x001B;
+pub const WS_VISIBLE = 0x10000000;

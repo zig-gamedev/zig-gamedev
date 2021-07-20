@@ -155,7 +155,7 @@ pub const DXGI_SWAP_CHAIN_DESC = extern struct {
     OutputWindow: HWND,
     Windowed: BOOL,
     SwapEffect: DXGI_SWAP_EFFECT,
-    Flags: UINT,
+    Flags: DXGI_SWAP_CHAIN_FLAG,
 };
 
 pub const IDXGIObject = extern struct {
