@@ -167,7 +167,7 @@ pub const IDXGIObject = extern struct {
     usingnamespace IUnknown.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: *const c_void) HRESULT {
                 return self.v.object.SetPrivateData(self, guid, data_size, data);
@@ -184,7 +184,7 @@ pub const IDXGIObject = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             SetPrivateData: fn (*T, *const GUID, UINT, *const c_void) callconv(WINAPI) HRESULT,
             SetPrivateDataInterface: fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
@@ -205,7 +205,7 @@ pub const IDXGIDeviceSubObject = extern struct {
     usingnamespace IDXGIObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetDevice(self: *T, guid: *const GUID, parent: *?*c_void) HRESULT {
                 return self.v.devsubobj.GetDevice(self, guid, parent);
@@ -213,7 +213,7 @@ pub const IDXGIDeviceSubObject = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             GetDevice: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
         };
@@ -233,7 +233,7 @@ pub const IDXGIResource = extern struct {
     usingnamespace IDXGIDeviceSubObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetSharedHandle(self: *T, handle: *HANDLE) HRESULT {
                 return self.v.resource.GetSharedHandle(self, handle);
@@ -250,7 +250,7 @@ pub const IDXGIResource = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             GetSharedHandle: fn (*T, *HANDLE) callconv(WINAPI) HRESULT,
             GetUsage: fn (*T, *DXGI_USAGE) callconv(WINAPI) HRESULT,
@@ -273,7 +273,7 @@ pub const IDXGIKeyedMutex = extern struct {
     usingnamespace IDXGIDeviceSubObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn AcquireSync(self: *T, key: UINT64, milliseconds: DWORD) HRESULT {
                 return self.v.mutex.AcquireSync(self, key, milliseconds);
@@ -284,7 +284,7 @@ pub const IDXGIKeyedMutex = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             AcquireSync: fn (*T, UINT64, DWORD) callconv(WINAPI) HRESULT,
             ReleaseSync: fn (*T, UINT64) callconv(WINAPI) HRESULT,
@@ -344,7 +344,7 @@ pub const IDXGISurface = extern struct {
     usingnamespace IDXGIDeviceSubObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetDesc(self: *T, desc: *DXGI_SURFACE_DESC) HRESULT {
                 return self.v.surface.GetDesc(self, desc);
@@ -358,7 +358,7 @@ pub const IDXGISurface = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             GetDesc: fn (*T, *DXGI_SURFACE_DESC) callconv(WINAPI) HRESULT,
             Map: fn (*T, *DXGI_MAPPED_RECT, DXGI_MAP) callconv(WINAPI) HRESULT,
@@ -378,7 +378,7 @@ pub const IDXGIAdapter = extern struct {
     usingnamespace IDXGIObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn EnumOutputs(self: *T, index: UINT, output: *?*IDXGIOutput) HRESULT {
                 return self.v.adapter.EnumOutputs(self, index, output);
@@ -392,7 +392,7 @@ pub const IDXGIAdapter = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             EnumOutputs: fn (*T, UINT, *?*IDXGIOutput) callconv(WINAPI) HRESULT,
             GetDesc: fn (*T, *DXGI_ADAPTER_DESC) callconv(WINAPI) HRESULT,
@@ -451,7 +451,7 @@ pub const IDXGIOutput = extern struct {
     usingnamespace IDXGIObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetDesc(self: *T, desc: *DXGI_OUTPUT_DESC) HRESULT {
                 return self.v.output.GetDesc(self, desc);
@@ -503,7 +503,7 @@ pub const IDXGIOutput = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             GetDesc: fn (self: *T, desc: *DXGI_OUTPUT_DESC) callconv(WINAPI) HRESULT,
             GetDisplayModeList: fn (*T, DXGI_FORMAT, DXGI_ENUM_MODES, *UINT, ?*DXGI_MODE_DESC) callconv(WINAPI) HRESULT,
@@ -575,7 +575,7 @@ pub const IDXGISwapChain = extern struct {
     usingnamespace IDXGIDeviceSubObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn Present(self: *T, sync_interval: UINT, flags: DXGI_PRESENT) HRESULT {
                 return self.v.swapchain.Present(self, sync_interval, flags);
@@ -617,7 +617,7 @@ pub const IDXGISwapChain = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             Present: fn (*T, UINT, DXGI_PRESENT) callconv(WINAPI) HRESULT,
             GetBuffer: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
@@ -644,7 +644,7 @@ pub const IDXGIFactory = extern struct {
     usingnamespace IDXGIObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn EnumAdapters(self: *T, index: UINT, adapter: *?*IDXGIAdapter) HRESULT {
                 return self.v.factory.EnumAdapters(self, index, adapter);
@@ -669,7 +669,7 @@ pub const IDXGIFactory = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             EnumAdapters: fn (*T, UINT, *?*IDXGIAdapter) callconv(WINAPI) HRESULT,
             MakeWindowAssociation: fn (*T, HWND, UINT) callconv(WINAPI) HRESULT,
@@ -691,7 +691,7 @@ pub const IDXGIDevice = extern struct {
     usingnamespace IDXGIObject.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetAdapter(self: *T, adapter: *?*IDXGIAdapter) HRESULT {
                 return self.v.device.GetAdapter(self, adapter);
@@ -723,7 +723,7 @@ pub const IDXGIDevice = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             GetAdapter: fn (self: *T, adapter: *?*IDXGIAdapter) callconv(WINAPI) HRESULT,
             CreateSurface: fn (
@@ -772,7 +772,7 @@ pub const IDXGIFactory1 = extern struct {
     usingnamespace IDXGIFactory.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn EnumAdapters1(self: *T, index: UINT, adapter: *?*IDXGIAdapter1) HRESULT {
                 return self.v.factory1.EnumAdapters1(self, index, adapter);
@@ -783,7 +783,7 @@ pub const IDXGIFactory1 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             EnumAdapters1: fn (*T, UINT, *?*IDXGIAdapter) callconv(WINAPI) HRESULT,
             IsCurrent: fn (*T) callconv(WINAPI) BOOL,
@@ -804,7 +804,7 @@ pub const IDXGIAdapter1 = extern struct {
     usingnamespace IDXGIAdapter.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetDesc1(self: *T, desc: *DXGI_ADAPTER_DESC1) HRESULT {
                 return self.v.adapter1.GetDesc1(self, desc);
@@ -812,7 +812,7 @@ pub const IDXGIAdapter1 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             GetDesc1: fn (*T, *DXGI_ADAPTER_DESC1) callconv(WINAPI) HRESULT,
         };
@@ -832,7 +832,7 @@ pub const IDXGIDevice1 = extern struct {
     usingnamespace IDXGIDevice.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn SetMaximumFrameLatency(self: *T, max_latency: UINT) HRESULT {
                 return self.v.device1.SetMaximumFrameLatency(self, max_latency);
@@ -843,7 +843,7 @@ pub const IDXGIDevice1 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             SetMaximumFrameLatency: fn (self: *T, max_latency: UINT) callconv(WINAPI) HRESULT,
             GetMaximumFrameLatency: fn (self: *T, max_latency: *UINT) callconv(WINAPI) HRESULT,

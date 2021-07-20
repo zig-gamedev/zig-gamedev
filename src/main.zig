@@ -7,6 +7,8 @@ const w = struct {
     usingnamespace @import("windows/d3d12sdklayers.zig");
     usingnamespace @import("windows/d3dcommon.zig");
     usingnamespace @import("windows/dxgi.zig");
+    usingnamespace @import("windows/dxgi1_2.zig");
+    usingnamespace @import("windows/dxgi1_4.zig");
 };
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -61,7 +63,7 @@ fn createWindow() !w.HWND {
         w.user32.WS_MINIMIZEBOX;
 
     var rect = w.RECT{ .left = 0, .top = 0, .right = window_width, .bottom = window_height };
-    _ = w.user32.AdjustWindowRectEx(&rect, style, w.FALSE, 0);
+    try w.user32.adjustWindowRectEx(&rect, style, false, 0);
 
     return try w.user32.createWindowExA(
         0,
@@ -87,7 +89,7 @@ pub fn main() !void {
 
     const factory = blk: {
         var maybe_factory: ?*w.IDXGIFactory1 = null;
-        _ = w.CreateDXGIFactory2(1, &w.IID_IDXGIFactory1, @ptrCast(*?*c_void, &maybe_factory));
+        _ = w.CreateDXGIFactory2(1, &w.IID_IDXGIFactory4, @ptrCast(*?*c_void, &maybe_factory));
         break :blk maybe_factory.?;
     };
 
@@ -150,7 +152,10 @@ pub fn main() !void {
             },
             &maybe_swapchain,
         );
-        break :blk maybe_swapchain.?;
+        defer _ = maybe_swapchain.?.Release();
+        var maybe_swapchain1: ?*w.IDXGISwapChain1 = null;
+        _ = maybe_swapchain.?.QueryInterface(&w.IID_IDXGISwapChain3, @ptrCast(*?*c_void, &maybe_swapchain1));
+        break :blk maybe_swapchain1.?;
     };
     _ = factory.Release();
     defer _ = swapchain.Release();
