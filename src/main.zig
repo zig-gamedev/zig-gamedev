@@ -36,8 +36,8 @@ fn processWindowMessage(
 }
 
 const window_name = "zig d3d12 test";
-const window_width = 400;
-const window_height = 400;
+const window_width = 800;
+const window_height = 800;
 
 fn createWindow() !w.HWND {
     const winclass = w.user32.WNDCLASSEXA{
@@ -63,7 +63,7 @@ fn createWindow() !w.HWND {
     var rect = w.RECT{ .left = 0, .top = 0, .right = window_width, .bottom = window_height };
     _ = w.user32.AdjustWindowRectEx(&rect, style, w.FALSE, 0);
 
-    const window = try w.user32.createWindowExA(
+    return try w.user32.createWindowExA(
         0,
         window_name,
         window_name,
@@ -77,7 +77,6 @@ fn createWindow() !w.HWND {
         winclass.hInstance,
         null,
     );
-    return window;
 }
 
 pub fn main() !void {
@@ -106,6 +105,7 @@ pub fn main() !void {
         _ = w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device, @ptrCast(*?*c_void, &maybe_device));
         break :blk maybe_device.?;
     };
+    defer _ = device.Release();
 
     const cmdqueue = blk: {
         var maybe_cmdqueue: ?*w.ID3D12CommandQueue = null;
@@ -117,6 +117,7 @@ pub fn main() !void {
         }, &w.IID_ID3D12CommandQueue, @ptrCast(*?*c_void, &maybe_cmdqueue));
         break :blk maybe_cmdqueue.?;
     };
+    defer _ = cmdqueue.Release();
 
     const window = try createWindow();
 
@@ -151,11 +152,23 @@ pub fn main() !void {
         );
         break :blk maybe_swapchain.?;
     };
-
-    _ = swapchain.Release();
     _ = factory.Release();
-    _ = cmdqueue.Release();
-    _ = device.Release();
+    defer _ = swapchain.Release();
+
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer {
+        const leaked = gpa.deinit();
+        std.debug.assert(leaked == false);
+    }
+
+    while (true) {
+        var message = std.mem.zeroes(w.user32.MSG);
+        if (w.user32.PeekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) > 0) {
+            _ = w.user32.DispatchMessageA(&message);
+            if (message.message == w.user32.WM_QUIT)
+                break;
+        } else {}
+    }
 
     std.debug.print("All OK!\n", .{});
 }
