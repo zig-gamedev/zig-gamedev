@@ -89,7 +89,7 @@ pub fn main() !void {
 
     const factory = blk: {
         var maybe_factory: ?*w.IDXGIFactory1 = null;
-        _ = w.CreateDXGIFactory2(1, &w.IID_IDXGIFactory4, @ptrCast(*?*c_void, &maybe_factory));
+        _ = w.CreateDXGIFactory2(1, &w.IID_IDXGIFactory1, @ptrCast(*?*c_void, &maybe_factory));
         break :blk maybe_factory.?;
     };
 
