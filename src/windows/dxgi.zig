@@ -861,6 +861,7 @@ pub const IID_IDXGIFactory1 = GUID{
 pub var CreateDXGIFactory2: fn (UINT, *const GUID, *?*c_void) callconv(WINAPI) HRESULT = undefined;
 
 pub fn dxgi_load_dll() !void {
+    // TODO(mziulek): Better error handling.
     var dxgi_dll = try std.DynLib.openZ("dxgi.dll");
     CreateDXGIFactory2 = dxgi_dll.lookup(@TypeOf(CreateDXGIFactory2), "CreateDXGIFactory2").?;
 }

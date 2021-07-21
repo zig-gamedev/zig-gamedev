@@ -3357,6 +3357,7 @@ pub const IID_ID3D12CommandQueue = GUID{
 };
 
 pub fn d3d12_load_dll() !void {
+    // TODO(mziulek): Better error handling.
     var d3d12_dll = try std.DynLib.openZ("d3d12.dll");
     D3D12CreateDevice = d3d12_dll.lookup(@TypeOf(D3D12CreateDevice), "D3D12CreateDevice").?;
     D3D12GetDebugInterface = d3d12_dll.lookup(@TypeOf(D3D12GetDebugInterface), "D3D12GetDebugInterface").?;

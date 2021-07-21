@@ -47,5 +47,7 @@ pub extern "user32" fn LoadCursorA(
     lpCursorName: LPCSTR,
 ) callconv(WINAPI) HCURSOR;
 
+pub extern "user32" fn GetClientRect(HWND, *RECT) callconv(WINAPI) BOOL;
+
 pub const VK_ESCAPE = 0x001B;
 pub const WS_VISIBLE = 0x10000000;
