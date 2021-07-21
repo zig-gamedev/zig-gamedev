@@ -153,9 +153,9 @@ pub fn main() !void {
             &maybe_swapchain,
         );
         defer _ = maybe_swapchain.?.Release();
-        var maybe_swapchain1: ?*w.IDXGISwapChain1 = null;
-        _ = maybe_swapchain.?.QueryInterface(&w.IID_IDXGISwapChain3, @ptrCast(*?*c_void, &maybe_swapchain1));
-        break :blk maybe_swapchain1.?;
+        var maybe_swapchain3: ?*w.IDXGISwapChain3 = null;
+        _ = maybe_swapchain.?.QueryInterface(&w.IID_IDXGISwapChain3, @ptrCast(*?*c_void, &maybe_swapchain3));
+        break :blk maybe_swapchain3.?;
     };
     _ = factory.Release();
     defer _ = swapchain.Release();

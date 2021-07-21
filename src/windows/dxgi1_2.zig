@@ -62,7 +62,7 @@ pub const IDXGISwapChain1 = extern struct {
     usingnamespace IDXGISwapChain.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetDesc1(self: *T, desc: *DXGI_SWAP_CHAIN_DESC1) HRESULT {
                 return self.v.swapchain1.GetDesc1(self, desc);
@@ -105,7 +105,7 @@ pub const IDXGISwapChain1 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             GetDesc1: fn (*T, *DXGI_SWAP_CHAIN_DESC1) callconv(WINAPI) HRESULT,
             GetFullscreenDesc: fn (*T, *DXGI_SWAP_CHAIN_FULLSCREEN_DESC) callconv(WINAPI) HRESULT,

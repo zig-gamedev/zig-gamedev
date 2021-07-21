@@ -5,6 +5,7 @@ usingnamespace @import("dxgicommon.zig");
 usingnamespace @import("dxgitype.zig");
 usingnamespace @import("dxgiformat.zig");
 usingnamespace @import("dxgi.zig");
+usingnamespace @import("dxgi1_2.zig");
 
 pub const DXGI_MATRIX_3X2_F = extern struct {
     _11: FLOAT,
@@ -32,7 +33,7 @@ pub const IDXGISwapChain2 = extern struct {
     usingnamespace IDXGISwapChain1.Methods(Self);
     usingnamespace Methods(Self);
 
-    fn Methods(comptime T: type) type {
+    pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn SetSourceSize(self: *T, width: UINT, height: UINT) HRESULT {
                 return self.v.swapchain2.SetSourceSize(self, width, height);
@@ -58,7 +59,7 @@ pub const IDXGISwapChain2 = extern struct {
         };
     }
 
-    fn VTable(comptime T: type) type {
+    pub fn VTable(comptime T: type) type {
         return extern struct {
             SetSourceSize: fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
             GetSourceSize: fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
