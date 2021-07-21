@@ -85,18 +85,25 @@ fn initWindow(name: [*:0]const u8, width: u32, height: u32) !w.HWND {
 }
 
 const GraphicsContext = struct {
+    const max_num_buffered_frames = 2;
+
     device: *w.ID3D12Device,
     cmdqueue: *w.ID3D12CommandQueue,
+    cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator,
     swapchain: *w.IDXGISwapChain3,
+    frame_fence: *w.ID3D12Fence,
+    frame_fence_event: w.HANDLE,
 
     fn init(window: w.HWND) !GraphicsContext {
         const factory = blk: {
             var maybe_factory: ?*w.IDXGIFactory1 = null;
+            // TODO(mziulek): Enable debug flag only in debug buld.
             try vhr(w.CreateDXGIFactory2(1, &w.IID_IDXGIFactory1, @ptrCast(*?*c_void, &maybe_factory)));
             break :blk maybe_factory.?;
         };
-        errdefer _ = factory.Release();
+        defer _ = factory.Release();
 
+        // TODO(mziulek): Run only in debug build.
         var maybe_debug: ?*w.ID3D12Debug1 = null;
         _ = w.D3D12GetDebugInterface(&w.IID_ID3D12Debug1, @ptrCast(*?*c_void, &maybe_debug));
         if (maybe_debug) |debug| {
@@ -164,12 +171,52 @@ const GraphicsContext = struct {
             break :blk maybe_swapchain3.?;
         };
         errdefer _ = swapchain.Release();
-        _ = factory.Release();
+
+        const frame_fence = blk: {
+            var maybe_frame_fence: ?*w.ID3D12Fence = null;
+            try vhr(device.CreateFence(0, .{}, &w.IID_ID3D12Fence, @ptrCast(*?*c_void, &maybe_frame_fence)));
+            break :blk maybe_frame_fence.?;
+        };
+        errdefer _ = frame_fence.Release();
+
+        const frame_fence_event = w.CreateEventEx(null, "frame_fence_event", 0, w.EVENT_ALL_ACCESS) catch unreachable;
+
+        const cmdallocs = blk: {
+            var maybe_cmdallocs = [_]?*w.ID3D12CommandAllocator{null} ** max_num_buffered_frames;
+            errdefer {
+                for (maybe_cmdallocs) |cmdalloc| {
+                    if (cmdalloc) |ca| {
+                        _ = ca.Release();
+                    }
+                }
+            }
+            for (maybe_cmdallocs) |*cmdalloc| {
+                try vhr(device.CreateCommandAllocator(
+                    .DIRECT,
+                    &w.IID_ID3D12CommandAllocator,
+                    @ptrCast(*?*c_void, &cmdalloc.*),
+                ));
+            }
+            var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
+            var i: u32 = 0;
+            while (i < max_num_buffered_frames) : (i += 1) {
+                cmdallocs[i] = maybe_cmdallocs[i].?;
+            }
+            break :blk cmdallocs;
+        };
+        errdefer {
+            for (cmdallocs) |cmdalloc| {
+                _ = cmdalloc.Release();
+            }
+        }
 
         return GraphicsContext{
             .device = device,
             .cmdqueue = cmdqueue,
+            .cmdallocs = cmdallocs,
             .swapchain = swapchain,
+            .frame_fence = frame_fence,
+            .frame_fence_event = frame_fence_event,
         };
     }
 
@@ -177,6 +224,10 @@ const GraphicsContext = struct {
         _ = gr.device.Release();
         _ = gr.cmdqueue.Release();
         _ = gr.swapchain.Release();
+        _ = gr.frame_fence.Release();
+        for (gr.cmdallocs) |cmdalloc| {
+            _ = cmdalloc.Release();
+        }
         gr.* = undefined;
     }
 };
