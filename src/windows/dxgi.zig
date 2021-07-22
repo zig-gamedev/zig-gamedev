@@ -580,8 +580,8 @@ pub const IDXGISwapChain = extern struct {
             pub inline fn Present(self: *T, sync_interval: UINT, flags: DXGI_PRESENT) HRESULT {
                 return self.v.swapchain.Present(self, sync_interval, flags);
             }
-            pub inline fn GetBuffer(self: *T, guid: *const GUID, surface: *?*c_void) HRESULT {
-                return self.v.swapchain.GetBuffer(self, guid, surface);
+            pub inline fn GetBuffer(self: *T, index: u32, guid: *const GUID, surface: *?*c_void) HRESULT {
+                return self.v.swapchain.GetBuffer(self, index, guid, surface);
             }
             pub inline fn SetFullscreenState(self: *T, target: ?*IDXGIOutput) HRESULT {
                 return self.v.swapchain.SetFullscreenState(self, target);
@@ -620,7 +620,7 @@ pub const IDXGISwapChain = extern struct {
     pub fn VTable(comptime T: type) type {
         return extern struct {
             Present: fn (*T, UINT, DXGI_PRESENT) callconv(WINAPI) HRESULT,
-            GetBuffer: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetBuffer: fn (*T, u32, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
             SetFullscreenState: fn (*T, ?*IDXGIOutput) callconv(WINAPI) HRESULT,
             GetFullscreenState: fn (*T, ?*BOOL, ?*?*IDXGIOutput) callconv(WINAPI) HRESULT,
             GetDesc: fn (*T, *DXGI_SWAP_CHAIN_DESC) callconv(WINAPI) HRESULT,

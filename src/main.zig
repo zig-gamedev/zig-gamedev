@@ -84,17 +84,21 @@ fn initWindow(name: [*:0]const u8, width: u32, height: u32) !w.HWND {
     );
 }
 
-const GraphicsContext = struct {
-    const max_num_buffered_frames = 2;
+pub const GraphicsContext = struct {
+    pub const max_num_buffered_frames = 2;
+    pub const num_swapbuffers = 4;
 
     device: *w.ID3D12Device,
     cmdqueue: *w.ID3D12CommandQueue,
+    cmdlist: *w.ID3D12GraphicsCommandList,
     cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator,
     swapchain: *w.IDXGISwapChain3,
+    swapbuffers: [num_swapbuffers]*w.ID3D12Resource,
+    rtv_descriptor_heap: *w.ID3D12DescriptorHeap,
     frame_fence: *w.ID3D12Fence,
     frame_fence_event: w.HANDLE,
 
-    fn init(window: w.HWND) !GraphicsContext {
+    pub fn init(window: w.HWND) !GraphicsContext {
         const factory = blk: {
             var maybe_factory: ?*w.IDXGIFactory1 = null;
             // TODO(mziulek): Enable debug flag only in debug buld.
@@ -157,7 +161,7 @@ const GraphicsContext = struct {
                         .Quality = 0,
                     },
                     .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
-                    .BufferCount = 4,
+                    .BufferCount = num_swapbuffers,
                     .OutputWindow = window,
                     .Windowed = w.TRUE,
                     .SwapEffect = .FLIP_DISCARD,
@@ -172,6 +176,43 @@ const GraphicsContext = struct {
         };
         errdefer _ = swapchain.Release();
 
+        const rtv_descriptor_heap = blk: {
+            var maybe_heap: ?*w.ID3D12DescriptorHeap = null;
+            try vhr(device.CreateDescriptorHeap(&.{
+                .Type = .RTV,
+                .NumDescriptors = num_swapbuffers,
+                .Flags = .{},
+                .NodeMask = 0,
+            }, &w.IID_ID3D12DescriptorHeap, @ptrCast(*?*c_void, &maybe_heap)));
+            break :blk maybe_heap.?;
+        };
+        errdefer _ = rtv_descriptor_heap.Release();
+
+        const swapbuffers = blk: {
+            var maybe_swapbuffers = [_]?*w.ID3D12Resource{null} ** num_swapbuffers;
+            errdefer {
+                for (maybe_swapbuffers) |swapbuffer| {
+                    if (swapbuffer) |sb| _ = sb.Release();
+                }
+            }
+            var descriptor = rtv_descriptor_heap.GetCPUDescriptorHandleForHeapStart();
+            for (maybe_swapbuffers) |*swapbuffer, buffer_idx| {
+                try vhr(swapchain.GetBuffer(
+                    @intCast(u32, buffer_idx),
+                    &w.IID_ID3D12Resource,
+                    @ptrCast(*?*c_void, &swapbuffer.*),
+                ));
+                device.CreateRenderTargetView(swapbuffer.*, null, descriptor);
+                descriptor.ptr += device.GetDescriptorHandleIncrementSize(.RTV);
+            }
+            var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
+            for (maybe_swapbuffers) |swapbuffer, i| swapbuffers[i] = swapbuffer.?;
+            break :blk swapbuffers;
+        };
+        errdefer {
+            for (swapbuffers) |swapbuffer| _ = swapbuffer.Release();
+        }
+
         const frame_fence = blk: {
             var maybe_frame_fence: ?*w.ID3D12Fence = null;
             try vhr(device.CreateFence(0, .{}, &w.IID_ID3D12Fence, @ptrCast(*?*c_void, &maybe_frame_fence)));
@@ -185,9 +226,7 @@ const GraphicsContext = struct {
             var maybe_cmdallocs = [_]?*w.ID3D12CommandAllocator{null} ** max_num_buffered_frames;
             errdefer {
                 for (maybe_cmdallocs) |cmdalloc| {
-                    if (cmdalloc) |ca| {
-                        _ = ca.Release();
-                    }
+                    if (cmdalloc) |ca| _ = ca.Release();
                 }
             }
             for (maybe_cmdallocs) |*cmdalloc| {
@@ -198,36 +237,50 @@ const GraphicsContext = struct {
                 ));
             }
             var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
-            var i: u32 = 0;
-            while (i < max_num_buffered_frames) : (i += 1) {
-                cmdallocs[i] = maybe_cmdallocs[i].?;
-            }
+            for (maybe_cmdallocs) |cmdalloc, i| cmdallocs[i] = cmdalloc.?;
             break :blk cmdallocs;
         };
         errdefer {
-            for (cmdallocs) |cmdalloc| {
-                _ = cmdalloc.Release();
-            }
+            for (cmdallocs) |cmdalloc| _ = cmdalloc.Release();
         }
+
+        const cmdlist = blk: {
+            var maybe_cmdlist: ?*w.ID3D12GraphicsCommandList = null;
+            try vhr(device.CreateCommandList(
+                0,
+                .DIRECT,
+                cmdallocs[0],
+                null,
+                &w.IID_ID3D12GraphicsCommandList,
+                @ptrCast(*?*c_void, &maybe_cmdlist),
+            ));
+            break :blk maybe_cmdlist.?;
+        };
+        errdefer _ = cmdlist.Release();
+        try vhr(cmdlist.Close());
 
         return GraphicsContext{
             .device = device,
             .cmdqueue = cmdqueue,
+            .cmdlist = cmdlist,
             .cmdallocs = cmdallocs,
             .swapchain = swapchain,
+            .swapbuffers = swapbuffers,
             .frame_fence = frame_fence,
             .frame_fence_event = frame_fence_event,
+            .rtv_descriptor_heap = rtv_descriptor_heap,
         };
     }
 
-    fn deinit(gr: *GraphicsContext) void {
+    pub fn deinit(gr: *GraphicsContext) void {
         _ = gr.device.Release();
         _ = gr.cmdqueue.Release();
         _ = gr.swapchain.Release();
         _ = gr.frame_fence.Release();
-        for (gr.cmdallocs) |cmdalloc| {
-            _ = cmdalloc.Release();
-        }
+        _ = gr.cmdlist.Release();
+        _ = gr.rtv_descriptor_heap.Release();
+        for (gr.cmdallocs) |cmdalloc| _ = cmdalloc.Release();
+        for (gr.swapbuffers) |swapbuffer| _ = swapbuffer.Release();
         gr.* = undefined;
     }
 };
@@ -244,6 +297,7 @@ pub fn main() !void {
 
     const window = try initWindow(window_name, window_width, window_height);
     var gr = try GraphicsContext.init(window);
+    defer gr.deinit();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
@@ -260,6 +314,5 @@ pub fn main() !void {
         } else {}
     }
 
-    gr.deinit();
     std.debug.print("All OK!\n", .{});
 }

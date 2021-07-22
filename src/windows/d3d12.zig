@@ -3397,6 +3397,12 @@ pub const IID_ID3D12RootSignature = GUID{
     .Data3 = 0x4ee8,
     .Data4 = .{ 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 },
 };
+pub const IID_ID3D12GraphicsCommandList = GUID{
+    .Data1 = 0x5b160d0f,
+    .Data2 = 0xac1b,
+    .Data3 = 0x4185,
+    .Data4 = .{ 0x8b, 0xa8, 0xb3, 0xae, 0x42, 0xa5, 0xa4, 0x55 },
+};
 
 pub fn d3d12_load_dll() !void {
     // TODO(mziulek): Better error handling.
