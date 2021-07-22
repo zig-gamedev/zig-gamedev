@@ -106,19 +106,23 @@ pub const GraphicsContext = struct {
     pub fn init(window: w.HWND) !GraphicsContext {
         const factory = blk: {
             var maybe_factory: ?*w.IDXGIFactory1 = null;
-            // TODO(mziulek): Enable debug flag only in debug buld.
-            try vhr(w.CreateDXGIFactory2(1, &w.IID_IDXGIFactory1, @ptrCast(*?*c_void, &maybe_factory)));
+            try vhr(w.CreateDXGIFactory2(
+                if (comptime builtin.mode == .Debug) w.DXGI_CREATE_FACTORY_DEBUG else 0,
+                &w.IID_IDXGIFactory1,
+                @ptrCast(*?*c_void, &maybe_factory),
+            ));
             break :blk maybe_factory.?;
         };
         defer _ = factory.Release();
 
-        // TODO(mziulek): Run only in debug build.
-        var maybe_debug: ?*w.ID3D12Debug1 = null;
-        _ = w.D3D12GetDebugInterface(&w.IID_ID3D12Debug1, @ptrCast(*?*c_void, &maybe_debug));
-        if (maybe_debug) |debug| {
-            debug.EnableDebugLayer();
-            debug.SetEnableGPUBasedValidation(w.TRUE);
-            _ = debug.Release();
+        if (comptime builtin.mode == .Debug) {
+            var maybe_debug: ?*w.ID3D12Debug1 = null;
+            _ = w.D3D12GetDebugInterface(&w.IID_ID3D12Debug1, @ptrCast(*?*c_void, &maybe_debug));
+            if (maybe_debug) |debug| {
+                debug.EnableDebugLayer();
+                debug.SetEnableGPUBasedValidation(w.TRUE);
+                _ = debug.Release();
+            }
         }
 
         const device = blk: {
@@ -355,7 +359,7 @@ pub fn main() !void {
                     .Transition = .{
                         .pResource = back_buffer,
                         .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                        .StateBefore = .{}, // .PRESENT
+                        .StateBefore = .{},
                         .StateAfter = .{ .RENDER_TARGET = true },
                     },
                 },
@@ -376,7 +380,10 @@ pub fn main() !void {
             }});
 
             try vhr(gr.cmdlist.Close());
-            gr.cmdqueue.ExecuteCommandLists(1, &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)});
+            gr.cmdqueue.ExecuteCommandLists(
+                1,
+                &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
+            );
 
             gr.frame_fence_counter += 1;
             try vhr(gr.swapchain.Present(0, .{}));

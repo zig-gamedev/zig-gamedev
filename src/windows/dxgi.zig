@@ -858,6 +858,7 @@ pub const IID_IDXGIFactory1 = GUID{
     .Data4 = .{ 0xa8, 0x29, 0x25, 0x3c, 0x83, 0xd1, 0xb3, 0x87 },
 };
 
+pub const DXGI_CREATE_FACTORY_DEBUG = 0x1;
 pub var CreateDXGIFactory2: fn (UINT, *const GUID, *?*c_void) callconv(WINAPI) HRESULT = undefined;
 
 pub fn dxgi_load_dll() !void {
