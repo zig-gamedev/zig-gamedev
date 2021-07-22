@@ -21,6 +21,49 @@ inline fn vhr(hr: w.HRESULT) !void {
     }
 }
 
+const FrameStats = struct {
+    time: f64,
+    delta_time: f32,
+    fps: f32,
+    average_cpu_time: f32,
+    timer: std.time.Timer,
+    previous_time_ns: u64,
+    fps_refresh_time_ns: u64,
+    frame_counter: u64,
+
+    fn init() FrameStats {
+        return .{
+            .time = 0.0,
+            .delta_time = 0.0,
+            .fps = 0.0,
+            .average_cpu_time = 0.0,
+            .timer = std.time.Timer.start() catch unreachable,
+            .previous_time_ns = 0,
+            .fps_refresh_time_ns = 0,
+            .frame_counter = 0,
+        };
+    }
+
+    fn update(self: *FrameStats) void {
+        const now_ns = self.timer.read();
+        self.time = @intToFloat(f64, now_ns) / std.time.ns_per_s;
+        self.delta_time = @intToFloat(f32, now_ns - self.previous_time_ns) / std.time.ns_per_s;
+        self.previous_time_ns = now_ns;
+
+        if ((now_ns - self.fps_refresh_time_ns) >= std.time.ns_per_s) {
+            const t = @intToFloat(f64, now_ns - self.fps_refresh_time_ns) / std.time.ns_per_s;
+            const fps = @intToFloat(f64, self.frame_counter) / t;
+            const ms = (1.0 / fps) * 1000.0;
+
+            self.fps = @floatCast(f32, fps);
+            self.average_cpu_time = @floatCast(f32, ms);
+            self.fps_refresh_time_ns = now_ns;
+            self.frame_counter = 0;
+        }
+        self.frame_counter += 1;
+    }
+};
+
 fn processWindowMessage(
     window: w.HWND,
     message: w.UINT,
@@ -313,6 +356,8 @@ pub fn main() !void {
         std.debug.assert(leaked == false);
     }
 
+    var stats = FrameStats.init();
+
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
         if (w.user32.PeekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) > 0) {
@@ -320,6 +365,17 @@ pub fn main() !void {
             if (message.message == w.user32.WM_QUIT)
                 break;
         } else {
+            stats.update();
+            {
+                var buffer = [_]u8{0} ** 64;
+                const text = std.fmt.bufPrint(
+                    buffer[0..],
+                    "FPS: {d:.1}  CPU time: {d:.3} ms",
+                    .{ stats.fps, stats.average_cpu_time },
+                ) catch unreachable;
+                _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
+            }
+
             const cmdalloc = gr.cmdallocs[gr.frame_index];
             try vhr(cmdalloc.Reset());
             try vhr(gr.cmdlist.Reset(cmdalloc, null));

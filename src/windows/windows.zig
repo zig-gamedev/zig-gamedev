@@ -49,5 +49,7 @@ pub extern "user32" fn LoadCursorA(
 
 pub extern "user32" fn GetClientRect(HWND, *RECT) callconv(WINAPI) BOOL;
 
+pub extern "user32" fn SetWindowTextA(hWnd: ?HWND, lpString: LPCSTR) callconv(WINAPI) BOOL;
+
 pub const VK_ESCAPE = 0x001B;
 pub const WS_VISIBLE = 0x10000000;
