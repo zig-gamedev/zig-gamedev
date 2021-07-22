@@ -157,10 +157,7 @@ pub const GraphicsContext = struct {
                     .BufferDesc = .{
                         .Width = viewport_width,
                         .Height = viewport_height,
-                        .RefreshRate = .{
-                            .Numerator = 0,
-                            .Denominator = 0,
-                        },
+                        .RefreshRate = .{ .Numerator = 0, .Denominator = 0 },
                         .Format = .R8G8B8A8_UNORM,
                         .ScanlineOrdering = .UNSPECIFIED,
                         .Scaling = .UNSPECIFIED,
