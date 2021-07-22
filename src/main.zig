@@ -341,20 +341,39 @@ pub fn main() !void {
                 .bottom = @intCast(c_long, gr.viewport_height),
             }});
 
-            if (false) {
-                gr.cmdlist.OMSetRenderTargets(
-                    1,
-                    &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{self.srgb_texture_rtv},
-                    w.TRUE,
-                    null,
-                );
-                gr.cmdlist.ClearRenderTargetView(
-                    self.srgb_texture_rtv,
-                    &[4]f32{ 0.2, 0.4, 0.8, 1.0 },
-                    0,
-                    null,
-                );
-            }
+            const back_buffer = gr.swapbuffers[gr.back_buffer_index];
+            const back_buffer_rtv = blk: {
+                var descriptor = gr.rtv_descriptor_heap.GetCPUDescriptorHandleForHeapStart();
+                descriptor.ptr += gr.back_buffer_index * gr.device.GetDescriptorHandleIncrementSize(.RTV);
+                break :blk descriptor;
+            };
+
+            gr.cmdlist.ResourceBarrier(1, &[_]w.D3D12_RESOURCE_BARRIER{.{
+                .Type = .TRANSITION,
+                .Flags = .{},
+                .u = .{
+                    .Transition = .{
+                        .pResource = back_buffer,
+                        .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                        .StateBefore = .{}, // .PRESENT
+                        .StateAfter = .{ .RENDER_TARGET = true },
+                    },
+                },
+            }});
+            gr.cmdlist.OMSetRenderTargets(1, &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer_rtv}, w.TRUE, null);
+            gr.cmdlist.ClearRenderTargetView(back_buffer_rtv, &[4]f32{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
+            gr.cmdlist.ResourceBarrier(1, &[_]w.D3D12_RESOURCE_BARRIER{.{
+                .Type = .TRANSITION,
+                .Flags = .{},
+                .u = .{
+                    .Transition = .{
+                        .pResource = back_buffer,
+                        .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                        .StateBefore = .{ .RENDER_TARGET = true },
+                        .StateAfter = .{},
+                    },
+                },
+            }});
 
             try vhr(gr.cmdlist.Close());
             gr.cmdqueue.ExecuteCommandLists(1, &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)});

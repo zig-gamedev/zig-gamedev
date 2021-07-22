@@ -6,6 +6,8 @@ usingnamespace @import("dxgicommon.zig");
 usingnamespace @import("d3dcommon.zig");
 usingnamespace @import("d3d12sdklayers.zig");
 
+pub const D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES = 0xffff_ffff;
+
 pub const D3D12_GPU_VIRTUAL_ADDRESS = UINT64;
 
 pub const D3D12_PRIMITIVE_TOPOLOGY = D3D_PRIMITIVE_TOPOLOGY;
