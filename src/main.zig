@@ -165,10 +165,7 @@ pub const GraphicsContext = struct {
                         .ScanlineOrdering = .UNSPECIFIED,
                         .Scaling = .UNSPECIFIED,
                     },
-                    .SampleDesc = .{
-                        .Count = 1,
-                        .Quality = 0,
-                    },
+                    .SampleDesc = .{ .Count = 1, .Quality = 0 },
                     .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
                     .BufferCount = num_swapbuffers,
                     .OutputWindow = window,
