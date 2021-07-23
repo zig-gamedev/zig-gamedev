@@ -1,5 +1,5 @@
 *.cso
+*.exe
+*.pdb
 
-/zig-cache
-/zig-out/bin/*.pdb
-/zig-out/bin/*.exe
+zig-cache
