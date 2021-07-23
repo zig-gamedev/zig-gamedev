@@ -10,9 +10,9 @@ pub fn build(b: *std.build.Builder) void {
     inline for (files) |file| {
         std.fs.Dir.copyFile(
             std.fs.cwd(),
-            "../../external/bin/D3D12/" ++ file,
+            "../../external/bin/d3d12/" ++ file,
             std.fs.cwd(),
-            "zig-out/bin/D3D12/" ++ file,
+            "zig-out/bin/d3d12/" ++ file,
             .{},
         ) catch unreachable;
     }

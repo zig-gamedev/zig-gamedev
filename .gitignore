@@ -13,6 +13,7 @@
 !README
 !.ignore
 !.vimrc
+!.gitkeep
 
 !/external/bin/dxc.exe
 !/external/bin/dxcompiler.dll
