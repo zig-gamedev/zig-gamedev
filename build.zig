@@ -11,7 +11,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("sandbox02", "src/main.zig");
+    const exe = b.addExecutable("triangle", "src/triangle.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
@@ -31,4 +31,29 @@ pub fn build(b: *std.build.Builder) void {
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+
+    const hlsl_step = b.step("hlsl", "Build shaders");
+    var hlsl_command = [_][]const u8{
+        "external/bin/dxc.exe",
+        "path to input file",
+        "entry point name",
+        "path to output file",
+        "target profile",
+        "/WX",
+        "/Ges",
+        "/O3",
+    };
+    const shader_dir = "zig-out/bin/data/shaders/";
+
+    hlsl_command[1] = "src/triangle.hlsl";
+    hlsl_command[2] = "/E vsTriangle";
+    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle.vs.cso";
+    hlsl_command[4] = "/T vs_6_6";
+    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
+
+    hlsl_command[1] = "src/triangle.hlsl";
+    hlsl_command[2] = "/E psTriangle";
+    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle.ps.cso";
+    hlsl_command[4] = "/T ps_6_6";
+    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 }
