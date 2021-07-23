@@ -1,6 +1,6 @@
 const std = @import("std");
 usingnamespace std.os.windows;
-usingnamespace @import("win.zig");
+usingnamespace @import("misc.zig");
 usingnamespace @import("dxgicommon.zig");
 usingnamespace @import("dxgitype.zig");
 usingnamespace @import("dxgiformat.zig");

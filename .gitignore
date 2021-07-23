@@ -11,6 +11,8 @@
 !*.hlsli
 
 !README
+!.ignore
+!.vimrc
 
 !/external/bin/dxc.exe
 !/external/bin/dxcompiler.dll

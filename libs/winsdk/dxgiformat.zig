@@ -1,6 +1,6 @@
 const std = @import("std");
 usingnamespace std.os.windows;
-usingnamespace @import("win.zig");
+usingnamespace @import("misc.zig");
 
 pub const DXGI_FORMAT = enum(UINT) {
     UNKNOWN = 0,

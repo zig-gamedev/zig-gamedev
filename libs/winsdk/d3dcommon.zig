@@ -1,6 +1,6 @@
 const std = @import("std");
 usingnamespace std.os.windows;
-usingnamespace @import("win.zig");
+usingnamespace @import("misc.zig");
 
 pub const D3D_PRIMITIVE_TOPOLOGY = enum(UINT) {
     UNDEFINED = 0,

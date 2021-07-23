@@ -36,7 +36,7 @@ pub fn build(b: *std.build.Builder) void {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    exe.addPackagePath("mzwin", "../../libs/mzwin/mzwin.zig");
+    exe.addPackagePath("winsdk", "../../libs/winsdk/winsdk.zig");
 
     exe.linkSystemLibrary("c");
     exe.install();

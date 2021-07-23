@@ -1,6 +1,6 @@
 const std = @import("std");
 usingnamespace std.os.windows;
-usingnamespace @import("win.zig");
+usingnamespace @import("misc.zig");
 
 pub const D3D12_GPU_BASED_VALIDATION_FLAGS = packed struct {
     DISABLE_STATE_TRACKING: bool align(4) = false, // 0x1

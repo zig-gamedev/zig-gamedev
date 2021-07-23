@@ -1,5 +1,5 @@
 pub usingnamespace @import("std").os.windows;
-pub usingnamespace @import("win.zig");
+pub usingnamespace @import("misc.zig");
 pub usingnamespace @import("d3d12.zig");
 pub usingnamespace @import("d3d12sdklayers.zig");
 pub usingnamespace @import("d3dcommon.zig");
