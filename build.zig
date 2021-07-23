@@ -14,7 +14,12 @@ pub fn build(b: *std.build.Builder) void {
     const exe = b.addExecutable("sandbox02", "src/main.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
+
+    // This is needed to export symbols from an .exe file.
+    // We export D3D12SDKVersion and D3D12SDKPath symbols which
+    // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
+
     exe.linkSystemLibrary("c");
     exe.install();
 

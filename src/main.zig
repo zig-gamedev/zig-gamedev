@@ -334,6 +334,55 @@ pub const GraphicsContext = struct {
         for (gr.swapbuffers) |swapbuffer| _ = swapbuffer.Release();
         gr.* = undefined;
     }
+
+    pub fn beginFrame(gr: *GraphicsContext) !void {
+        const cmdalloc = gr.cmdallocs[gr.frame_index];
+        try vhr(cmdalloc.Reset());
+        try vhr(gr.cmdlist.Reset(cmdalloc, null));
+
+        gr.cmdlist.RSSetViewports(1, &[_]w.D3D12_VIEWPORT{.{
+            .TopLeftX = 0.0,
+            .TopLeftY = 0.0,
+            .Width = @intToFloat(f32, gr.viewport_width),
+            .Height = @intToFloat(f32, gr.viewport_height),
+            .MinDepth = 0.0,
+            .MaxDepth = 1.0,
+        }});
+        gr.cmdlist.RSSetScissorRects(1, &[_]w.D3D12_RECT{.{
+            .left = 0,
+            .top = 0,
+            .right = @intCast(c_long, gr.viewport_width),
+            .bottom = @intCast(c_long, gr.viewport_height),
+        }});
+    }
+
+    pub fn endFrame(gr: *GraphicsContext) !void {
+        try vhr(gr.cmdlist.Close());
+        gr.cmdqueue.ExecuteCommandLists(
+            1,
+            &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
+        );
+
+        gr.frame_fence_counter += 1;
+        try vhr(gr.swapchain.Present(0, .{}));
+        try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+
+        const gpu_frame_counter = gr.frame_fence.GetCompletedValue();
+        if ((gr.frame_fence_counter - gpu_frame_counter) >= GraphicsContext.max_num_buffered_frames) {
+            try vhr(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
+            w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
+        }
+
+        gr.frame_index = (gr.frame_index + 1) % GraphicsContext.max_num_buffered_frames;
+        gr.back_buffer_index = gr.swapchain.GetCurrentBackBufferIndex();
+    }
+
+    pub fn waitForGpu(gr: *GraphicsContext) !void {
+        gr.frame_fence_counter += 1;
+        try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+        try vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
+        w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
+    }
 };
 
 pub fn main() !void {
@@ -376,24 +425,7 @@ pub fn main() !void {
                 _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
             }
 
-            const cmdalloc = gr.cmdallocs[gr.frame_index];
-            try vhr(cmdalloc.Reset());
-            try vhr(gr.cmdlist.Reset(cmdalloc, null));
-
-            gr.cmdlist.RSSetViewports(1, &[_]w.D3D12_VIEWPORT{.{
-                .TopLeftX = 0.0,
-                .TopLeftY = 0.0,
-                .Width = @intToFloat(f32, gr.viewport_width),
-                .Height = @intToFloat(f32, gr.viewport_height),
-                .MinDepth = 0.0,
-                .MaxDepth = 1.0,
-            }});
-            gr.cmdlist.RSSetScissorRects(1, &[_]w.D3D12_RECT{.{
-                .left = 0,
-                .top = 0,
-                .right = @intCast(c_long, gr.viewport_width),
-                .bottom = @intCast(c_long, gr.viewport_height),
-            }});
+            try gr.beginFrame();
 
             const back_buffer = gr.swapbuffers[gr.back_buffer_index];
             const back_buffer_rtv = blk: {
@@ -429,31 +461,11 @@ pub fn main() !void {
                 },
             }});
 
-            try vhr(gr.cmdlist.Close());
-            gr.cmdqueue.ExecuteCommandLists(
-                1,
-                &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
-            );
-
-            gr.frame_fence_counter += 1;
-            try vhr(gr.swapchain.Present(0, .{}));
-            try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
-
-            const gpu_frame_counter = gr.frame_fence.GetCompletedValue();
-            if ((gr.frame_fence_counter - gpu_frame_counter) >= GraphicsContext.max_num_buffered_frames) {
-                try vhr(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
-                w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
-            }
-
-            gr.frame_index = (gr.frame_index + 1) % GraphicsContext.max_num_buffered_frames;
-            gr.back_buffer_index = gr.swapchain.GetCurrentBackBufferIndex();
+            try gr.endFrame();
         }
     }
 
-    gr.frame_fence_counter += 1;
-    try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
-    try vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
-    w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
+    try gr.waitForGpu();
 
     std.debug.print("All OK!\n", .{});
 }
