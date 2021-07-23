@@ -47,14 +47,6 @@ pub fn build(b: *std.build.Builder) void {
         run_cmd.addArgs(args);
     }
 
-    std.fs.Dir.copyFile(
-        std.fs.cwd(),
-        "../../external/bin/D3D12/D3D12Core.dll",
-        std.fs.cwd(),
-        "zig-out/bin/D3D12/D3D12Core.dll",
-        .{},
-    ) catch unreachable;
-
     const hlsl_step = b.step("hlsl", "Build shaders");
     var hlsl_command = [_][]const u8{
         "../../external/bin/dxc.exe",
