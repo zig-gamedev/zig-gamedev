@@ -1,5 +1,21 @@
-*.cso
-*.exe
-*.pdb
+# Ignore all files by default, but scan all directories
+*
+!*/
+
+!*.c
+!*.cpp
+!*.zig
+!*.h
+!*.txt
+
+!README
+
+!/external/bin/dxc.exe
+!/external/bin/dxcompiler.dll
+!/external/bin/dxil.dll
+!/external/bin/D3D12/D3D12Core.dll
+!/external/bin/D3D12/D3D12Core.pdb
+!/external/bin/D3D12/D3D12SDKLayers.dll
+!/external/bin/D3D12/D3D12SDKLayers.pdb
 
 zig-cache
