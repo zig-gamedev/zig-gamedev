@@ -399,12 +399,6 @@ pub fn main() !void {
     var gr = try GraphicsContext.init(window);
     defer gr.deinit();
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa.deinit();
-        std.debug.assert(leaked == false);
-    }
-
     var stats = FrameStats.init();
 
     while (true) {
