@@ -1,5 +1,12 @@
 const std = @import("std");
-usingnamespace std.os.windows;
+pub usingnamespace std.os.windows;
+pub usingnamespace @import("d3d12.zig");
+pub usingnamespace @import("d3d12sdklayers.zig");
+pub usingnamespace @import("d3dcommon.zig");
+pub usingnamespace @import("dxgi.zig");
+pub usingnamespace @import("dxgi1_2.zig");
+pub usingnamespace @import("dxgi1_3.zig");
+pub usingnamespace @import("dxgi1_4.zig");
 
 pub const UINT8 = u8;
 pub const UINT16 = c_ushort;

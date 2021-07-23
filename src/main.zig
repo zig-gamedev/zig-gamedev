@@ -1,15 +1,6 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const w = struct {
-    usingnamespace std.os.windows;
-    usingnamespace @import("windows/windows.zig");
-    usingnamespace @import("windows/d3d12.zig");
-    usingnamespace @import("windows/d3d12sdklayers.zig");
-    usingnamespace @import("windows/d3dcommon.zig");
-    usingnamespace @import("windows/dxgi.zig");
-    usingnamespace @import("windows/dxgi1_2.zig");
-    usingnamespace @import("windows/dxgi1_4.zig");
-};
+const w = @import("windows/windows.zig");
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*c]const u8 = ".\\D3D12\\";
