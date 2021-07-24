@@ -15,9 +15,9 @@
 !.vimrc
 !.gitkeep
 
-!/external/bin/dxc.exe
-!/external/bin/dxcompiler.dll
-!/external/bin/dxil.dll
+!/external/bin/dxc/dxc.exe
+!/external/bin/dxc/dxcompiler.dll
+!/external/bin/dxc/dxil.dll
 !/external/bin/D3D12/D3D12Core.dll
 !/external/bin/D3D12/D3D12Core.pdb
 !/external/bin/D3D12/D3D12SDKLayers.dll

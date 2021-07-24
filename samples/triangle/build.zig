@@ -49,7 +49,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const hlsl_step = b.step("hlsl", "Build shaders");
     var hlsl_command = [_][]const u8{
-        "../../external/bin/dxc.exe",
+        "../../external/bin/dxc/dxc.exe",
         "path to input file",
         "entry point name",
         "path to output file",
