@@ -390,9 +390,21 @@ pub fn main() !void {
     var gr = try GraphicsContext.init(window);
     defer gr.deinit();
 
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer {
+        const leaked = gpa.deinit();
+        std.debug.assert(leaked == false);
+    }
+
     {
         const vs_file = try std.fs.cwd().openFile("content/shaders/triangle.vs.cso", .{});
         defer vs_file.close();
+
+        const allocator = &gpa.allocator;
+        const vs_code = try vs_file.reader().readAllAlloc(allocator, 256 * 1024);
+        defer allocator.free(vs_code);
+
+        std.debug.print("{}\n", .{vs_code.len});
     }
 
     var stats = FrameStats.init();
