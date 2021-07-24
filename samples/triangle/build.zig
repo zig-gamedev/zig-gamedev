@@ -7,6 +7,7 @@ pub fn build(b: *std.build.Builder) void {
         "D3D12SDKLayers.dll",
         "D3D12SDKLayers.pdb",
     };
+    std.fs.cwd().makePath("zig-out/bin/d3d12") catch unreachable;
     inline for (files) |file| {
         std.fs.Dir.copyFile(
             std.fs.cwd(),
@@ -58,7 +59,7 @@ pub fn build(b: *std.build.Builder) void {
         "/Ges",
         "/O3",
     };
-    const shader_dir = "zig-out/bin/data/shaders/";
+    const shader_dir = "content/shaders/";
     const shader_ver = "6_6";
 
     hlsl_command[1] = "src/triangle.hlsl";

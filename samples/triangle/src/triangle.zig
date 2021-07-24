@@ -390,6 +390,11 @@ pub fn main() !void {
     var gr = try GraphicsContext.init(window);
     defer gr.deinit();
 
+    {
+        const vs_file = try std.fs.cwd().openFile("content/shaders/triangle.vs.cso", .{});
+        defer vs_file.close();
+    }
+
     var stats = FrameStats.init();
 
     while (true) {
