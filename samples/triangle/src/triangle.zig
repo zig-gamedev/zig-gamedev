@@ -3,7 +3,7 @@ const std = @import("std");
 const w = @import("winsdk");
 
 pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*c]const u8 = ".\\d3d12\\";
+pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 inline fn vhr(hr: w.HRESULT) !void {
     if (hr != 0) {
