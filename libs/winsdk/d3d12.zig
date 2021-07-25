@@ -2758,6 +2758,20 @@ pub const D3D12_SUBRESOURCE_RANGE_UINT64 = extern struct {
     Range: D3D12_RANGE_UINT64,
 };
 
+pub const D3D12_SAMPLE_POSITION = extern struct {
+    X: INT8,
+    Y: INT8,
+};
+
+pub const D3D12_RESOLVE_MODE = enum(UINT) {
+    DECOMPRESS = 0,
+    MIN = 1,
+    MAX = 2,
+    AVERAGE = 3,
+    ENCODE_SAMPLER_FEEDBACK = 4,
+    DECODE_SAMPLER_FEEDBACK = 5,
+};
+
 pub const ID3D12GraphicsCommandList1 = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -3619,6 +3633,12 @@ pub const IID_ID3D12GraphicsCommandList = GUID{
     .Data2 = 0xac1b,
     .Data3 = 0x4185,
     .Data4 = .{ 0x8b, 0xa8, 0xb3, 0xae, 0x42, 0xa5, 0xa4, 0x55 },
+};
+pub const IID_ID3D12GraphicsCommandList1 = GUID{
+    .Data1 = 0x553103fb,
+    .Data2 = 0x1fe7,
+    .Data3 = 0x4557,
+    .Data4 = .{ 0xbb, 0x38, 0x94, 0x6d, 0x7d, 0x0e, 0x7c, 0xa7 },
 };
 
 pub fn d3d12_load_dll() !void {

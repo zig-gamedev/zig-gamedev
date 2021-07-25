@@ -1,6 +1,7 @@
 const std = @import("std");
 usingnamespace std.os.windows;
 
+pub const INT8 = i8;
 pub const UINT8 = u8;
 pub const UINT16 = c_ushort;
 pub const UINT64 = c_ulonglong;

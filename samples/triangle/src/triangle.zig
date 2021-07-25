@@ -124,7 +124,7 @@ pub const GraphicsContext = struct {
 
     device: *w.ID3D12Device,
     cmdqueue: *w.ID3D12CommandQueue,
-    cmdlist: *w.ID3D12GraphicsCommandList,
+    cmdlist: *w.ID3D12GraphicsCommandList1,
     cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator,
     swapchain: *w.IDXGISwapChain3,
     swapbuffers: [num_swapbuffers]*w.ID3D12Resource,
@@ -282,13 +282,13 @@ pub const GraphicsContext = struct {
         }
 
         const cmdlist = blk: {
-            var maybe_cmdlist: ?*w.ID3D12GraphicsCommandList = null;
+            var maybe_cmdlist: ?*w.ID3D12GraphicsCommandList1 = null;
             try vhr(device.CreateCommandList(
                 0,
                 .DIRECT,
                 cmdallocs[0],
                 null,
-                &w.IID_ID3D12GraphicsCommandList,
+                &w.IID_ID3D12GraphicsCommandList1,
                 @ptrCast(*?*c_void, &maybe_cmdlist),
             ));
             break :blk maybe_cmdlist.?;
