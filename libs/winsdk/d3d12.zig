@@ -2801,7 +2801,7 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
                 dependent_resources: [*]const *ID3D12Resource,
                 dependent_subresource_ranges: [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
             ) void {
-                return self.v.grcmdlist1.AtomicCopyBufferUINT(
+                self.v.grcmdlist1.AtomicCopyBufferUINT(
                     self,
                     dst_buffer,
                     dst_offset,
@@ -2822,7 +2822,7 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
                 dependent_resources: [*]const *ID3D12Resource,
                 dependent_subresource_ranges: [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
             ) void {
-                return self.v.grcmdlist1.AtomicCopyBufferUINT64(
+                self.v.grcmdlist1.AtomicCopyBufferUINT64(
                     self,
                     dst_buffer,
                     dst_offset,
@@ -2834,7 +2834,7 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
                 );
             }
             pub inline fn OMSetDepthBounds(self: *T, min: FLOAT, max: FLOAT) void {
-                return self.v.grcmdlist1.OMSetDepthBounds(self, min, max);
+                self.v.grcmdlist1.OMSetDepthBounds(self, min, max);
             }
             pub inline fn SetSamplePositions(
                 self: *T,
@@ -2842,7 +2842,7 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
                 num_pixels: UINT,
                 sample_positions: *D3D12_SAMPLE_POSITION,
             ) void {
-                return self.v.grcmdlist1.SetSamplePositions(self, num_samples, num_pixels, sample_positions);
+                self.v.grcmdlist1.SetSamplePositions(self, num_samples, num_pixels, sample_positions);
             }
             pub inline fn ResolveSubresourceRegion(
                 self: *T,
@@ -2856,7 +2856,7 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
                 format: DXGI_FORMAT,
                 resolve_mode: D3D12_RESOLVE_MODE,
             ) void {
-                return self.v.grcmdlist1.ResolveSubresourceRegion(
+                self.v.grcmdlist1.ResolveSubresourceRegion(
                     self,
                     dst_resource,
                     dst_subresource,
@@ -2870,7 +2870,7 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
                 );
             }
             pub inline fn SetViewInstanceMask(self: *T, mask: UINT) void {
-                return self.v.grcmdlist1.SetViewInstanceMask(self, mask);
+                self.v.grcmdlist1.SetViewInstanceMask(self, mask);
             }
         };
     }
@@ -2912,6 +2912,97 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
                 D3D12_RESOLVE_MODE,
             ) callconv(WINAPI) void,
             SetViewInstanceMask: fn (*T, UINT) callconv(WINAPI) void,
+        };
+    }
+};
+
+pub const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER = extern struct {
+    Dest: D3D12_GPU_VIRTUAL_ADDRESS,
+    Value: UINT32,
+};
+
+pub const D3D12_WRITEBUFFERIMMEDIATE_MODE = enum(UINT) {
+    DEFAULT = 0,
+    MARKER_IN = 0x1,
+    MARKER_OUT = 0x2,
+};
+
+pub const ID3D12GraphicsCommandList2 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        cmdlist: ID3D12CommandList.VTable(Self),
+        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
+        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
+        grcmdlist2: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12CommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn WriteBufferImmediate(
+                self: *T,
+                count: UINT,
+                params: [*]const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER,
+                modes: ?[*]const D3D12_WRITEBUFFERIMMEDIATE_MODE,
+            ) void {
+                self.v.grcmdlist2.WriteBufferImmediate(self, count, params, modes);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            WriteBufferImmediate: fn (
+                *T,
+                UINT,
+                [*]const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER,
+                ?[*]const D3D12_WRITEBUFFERIMMEDIATE_MODE,
+            ) callconv(WINAPI) void,
+        };
+    }
+};
+
+pub const ID3D12GraphicsCommandList3 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        cmdlist: ID3D12CommandList.VTable(Self),
+        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
+        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
+        grcmdlist2: ID3D12GraphicsCommandList2.VTable(Self),
+        grcmdlist3: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12CommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList2.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn SetProtectedResourceSession(self: *T, prsession: ?*ID3D12ProtectedResourceSession) void {
+                self.v.grcmdlist3.SetProtectedResourceSession(self, prsession);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            SetProtectedResourceSession: fn (*T, ?*ID3D12ProtectedResourceSession) callconv(WINAPI) void,
         };
     }
 };
@@ -3566,6 +3657,243 @@ pub const ID3D12Device = extern struct {
     }
 };
 
+pub const D3D12_MULTIPLE_FENCE_WAIT_FLAGS = enum(UINT) {
+    ALL = 0,
+    ANY = 1,
+};
+
+pub const D3D12_RESIDENCY_PRIORITY = enum(UINT) {
+    D3D12_RESIDENCY_PRIORITY_MINIMUM = 0x28000000,
+    D3D12_RESIDENCY_PRIORITY_LOW = 0x50000000,
+    D3D12_RESIDENCY_PRIORITY_NORMAL = 0x78000000,
+    D3D12_RESIDENCY_PRIORITY_HIGH = 0xa0010000,
+    D3D12_RESIDENCY_PRIORITY_MAXIMUM = 0xc8000000,
+};
+
+pub const ID3D12Device1 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn CreatePipelineLibrary(
+                self: *T,
+                blob: *const c_void,
+                blob_length: SIZE_T,
+                guid: *const GUID,
+                library: *?*c_void,
+            ) HRESULT {
+                return self.v.device1.CreatePipelineLibrary(self, blob, blob_length, guid, library);
+            }
+            pub inline fn SetEventOnMultipleFenceCompletion(
+                self: *T,
+                fences: [*]const *ID3D12Fence,
+                fence_values: [*]const UINT64,
+                num_fences: UINT,
+                flags: D3D12_MULTIPLE_FENCE_WAIT_FLAGS,
+                event: HANDLE,
+            ) HRESULT {
+                return self.v.device1.SetEventOnMultipleFenceCompletion(self, fences, fence_values, num_fences, flags, event);
+            }
+            pub inline fn SetResidencyPriority(
+                self: *T,
+                num_objects: UINT,
+                objects: [*]const *ID3D12Pageable,
+                priorities: [*]const D3D12_RESIDENCY_PRIORITY,
+            ) HRESULT {
+                return self.v.device1.SetResidencyPriority(self, num_objects, objects, priorities);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            CreatePipelineLibrary: fn (*T, *const c_void, SIZE_T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            SetEventOnMultipleFenceCompletion: fn (
+                *T,
+                [*]const *ID3D12Fence,
+                [*]const UINT64,
+                UINT,
+                D3D12_MULTIPLE_FENCE_WAIT_FLAGS,
+                HANDLE,
+            ) callconv(WINAPI) HRESULT,
+            SetResidencyPriority: fn (
+                *T,
+                UINT,
+                [*]const *ID3D12Pageable,
+                [*]const D3D12_RESIDENCY_PRIORITY,
+            ) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const D3D12_PIPELINE_STATE_STREAM_DESC = extern struct {
+    SizeInBytes: SIZE_T,
+    pPipelineStateSubobjectStream: *c_void,
+};
+
+pub const ID3D12Device2 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: ID3D12Device1.VTable(Self),
+        device2: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn CreatePipelineState(
+                self: *T,
+                desc: *const D3D12_PIPELINE_STATE_STREAM_DESC,
+                guid: *const GUID,
+                pso: *?*c_void,
+            ) HRESULT {
+                return self.v.device2.CreatePipelineState(self, desc, guid, pso);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            CreatePipelineState: fn (
+                *T,
+                *const D3D12_PIPELINE_STATE_STREAM_DESC,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const D3D12_PROTECTED_SESSION_STATUS = enum(UINT) {
+    OK = 0,
+    INVALID = 1,
+};
+
+pub const ID3D12ProtectedSession = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        psession: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetStatusFence(self: *T, guid: *const GUID, fence: ?*?*c_void) HRESULT {
+                return self.v.psession.GetStatusFence(self, guid, fence);
+            }
+            pub inline fn GetSessionStatus(self: *T) D3D12_PROTECTED_SESSION_STATUS {
+                return self.v.psession.GetSessionStatus(self);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetStatusFence: fn (*T, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            GetSessionStatus: fn (*T) callconv(WINAPI) D3D12_PROTECTED_SESSION_STATUS,
+        };
+    }
+};
+
+pub const D3D12_PROTECTED_RESOURCE_SESSION_FLAGS = packed struct {
+    __reserved0: bool align(4) = false,
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_PROTECTED_RESOURCE_SESSION_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_PROTECTED_RESOURCE_SESSION_FLAGS) == 4);
+}
+
+pub const D3D12_PROTECTED_RESOURCE_SESSION_DESC = extern struct {
+    NodeMask: UINT,
+    Flags: D3D12_PROTECTED_RESOURCE_SESSION_FLAGS,
+};
+
+pub const ID3D12ProtectedResourceSession = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        psession: ID3D12ProtectedSession.VTable(Self),
+        prsession: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12ProtectedSession.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetDesc(self: *T) D3D12_PROTECTED_RESOURCE_SESSION_DESC {
+                var desc: D3D12_PROTECTED_RESOURCE_SESSION_DESC = undefined;
+                self.v.prsession.GetDesc(self, &desc);
+                return desc;
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetDesc: fn (*T, *D3D12_PROTECTED_RESOURCE_SESSION_DESC) callconv(WINAPI) *D3D12_PROTECTED_RESOURCE_SESSION_DESC,
+        };
+    }
+};
+
 pub var D3D12GetDebugInterface: fn (*const GUID, ?*?*c_void) callconv(WINAPI) HRESULT = undefined;
 pub var D3D12CreateDevice: fn (
     ?*IUnknown,
@@ -3579,6 +3907,24 @@ pub const IID_ID3D12Device = GUID{
     .Data2 = 0x1db6,
     .Data3 = 0x4b57,
     .Data4 = .{ 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 },
+};
+pub const IID_ID3D12Device1 = GUID{
+    .Data1 = 0x77acce80,
+    .Data2 = 0x638e,
+    .Data3 = 0x4e65,
+    .Data4 = .{ 0x88, 0x95, 0xc1, 0xf2, 0x33, 0x86, 0x86, 0x3e },
+};
+pub const IID_ID3D12Device2 = GUID{
+    .Data1 = 0x30baa41e,
+    .Data2 = 0xb15b,
+    .Data3 = 0x475c,
+    .Data4 = .{ 0xa0, 0xbb, 0x1a, 0xf5, 0xc5, 0xb6, 0x43, 0x28 },
+};
+pub const IID_ID3D12Device3 = GUID{
+    .Data1 = 0x81dadc15,
+    .Data2 = 0x2bad,
+    .Data3 = 0x4392,
+    .Data4 = .{ 0x93, 0xc5, 0x10, 0x13, 0x45, 0xc4, 0xaa, 0x98 },
 };
 pub const IID_ID3D12CommandQueue = GUID{
     .Data1 = 0x0ec870a6,
@@ -3639,6 +3985,18 @@ pub const IID_ID3D12GraphicsCommandList1 = GUID{
     .Data2 = 0x1fe7,
     .Data3 = 0x4557,
     .Data4 = .{ 0xbb, 0x38, 0x94, 0x6d, 0x7d, 0x0e, 0x7c, 0xa7 },
+};
+pub const IID_ID3D12GraphicsCommandList2 = GUID{
+    .Data1 = 0x38C3E584,
+    .Data2 = 0xFF17,
+    .Data3 = 0x412C,
+    .Data4 = .{ 0x91, 0x50, 0x4F, 0xC6, 0xF9, 0xD7, 0x2A, 0x28 },
+};
+pub const IID_ID3D12GraphicsCommandList3 = GUID{
+    .Data1 = 0x6FDA83A7,
+    .Data2 = 0xB84C,
+    .Data3 = 0x4E38,
+    .Data4 = .{ 0x9A, 0xC8, 0xC7, 0xBD, 0x22, 0x01, 0x6B, 0x3D },
 };
 
 pub fn d3d12_load_dll() !void {
