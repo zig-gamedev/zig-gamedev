@@ -2748,6 +2748,160 @@ pub const ID3D12GraphicsCommandList = extern struct {
     }
 };
 
+pub const D3D12_RANGE_UINT64 = extern struct {
+    Begin: UINT64,
+    End: UINT64,
+};
+
+pub const D3D12_SUBRESOURCE_RANGE_UINT64 = extern struct {
+    Subresource: UINT,
+    Range: D3D12_RANGE_UINT64,
+};
+
+pub const ID3D12GraphicsCommandList1 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        cmdlist: ID3D12CommandList.VTable(Self),
+        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
+        grcmdlist1: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12CommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn AtomicCopyBufferUINT(
+                self: *T,
+                dst_buffer: *ID3D12Resource,
+                dst_offset: UINT64,
+                src_buffer: *ID3D12Resource,
+                src_offset: UINT64,
+                dependencies: UINT,
+                dependent_resources: [*]const *ID3D12Resource,
+                dependent_subresource_ranges: [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
+            ) void {
+                return self.v.grcmdlist1.AtomicCopyBufferUINT(
+                    self,
+                    dst_buffer,
+                    dst_offset,
+                    src_buffer,
+                    src_offset,
+                    dependencies,
+                    dependent_resources,
+                    dependent_subresource_ranges,
+                );
+            }
+            pub inline fn AtomicCopyBufferUINT64(
+                self: *T,
+                dst_buffer: *ID3D12Resource,
+                dst_offset: UINT64,
+                src_buffer: *ID3D12Resource,
+                src_offset: UINT64,
+                dependencies: UINT,
+                dependent_resources: [*]const *ID3D12Resource,
+                dependent_subresource_ranges: [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
+            ) void {
+                return self.v.grcmdlist1.AtomicCopyBufferUINT64(
+                    self,
+                    dst_buffer,
+                    dst_offset,
+                    src_buffer,
+                    src_offset,
+                    dependencies,
+                    dependent_resources,
+                    dependent_subresource_ranges,
+                );
+            }
+            pub inline fn OMSetDepthBounds(self: *T, min: FLOAT, max: FLOAT) void {
+                return self.v.grcmdlist1.OMSetDepthBounds(self, min, max);
+            }
+            pub inline fn SetSamplePositions(
+                self: *T,
+                num_samples: UINT,
+                num_pixels: UINT,
+                sample_positions: *D3D12_SAMPLE_POSITION,
+            ) void {
+                return self.v.grcmdlist1.SetSamplePositions(self, num_samples, num_pixels, sample_positions);
+            }
+            pub inline fn ResolveSubresourceRegion(
+                self: *T,
+                dst_resource: *ID3D12Resource,
+                dst_subresource: UINT,
+                dst_x: UINT,
+                dst_y: UINT,
+                src_resource: *ID3D12Resource,
+                src_subresource: UINT,
+                src_rect: *D3D12_RECT,
+                format: DXGI_FORMAT,
+                resolve_mode: D3D12_RESOLVE_MODE,
+            ) void {
+                return self.v.grcmdlist1.ResolveSubresourceRegion(
+                    self,
+                    dst_resource,
+                    dst_subresource,
+                    dst_x,
+                    dst_y,
+                    src_resource,
+                    src_subresource,
+                    src_rect,
+                    format,
+                    resolve_mode,
+                );
+            }
+            pub inline fn SetViewInstanceMask(self: *T, mask: UINT) void {
+                return self.v.grcmdlist1.SetViewInstanceMask(self, mask);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            AtomicCopyBufferUINT: fn (
+                *T,
+                *ID3D12Resource,
+                UINT64,
+                *ID3D12Resource,
+                UINT64,
+                UINT,
+                [*]const *ID3D12Resource,
+                [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
+            ) callconv(WINAPI) void,
+            AtomicCopyBufferUINT64: fn (
+                *T,
+                *ID3D12Resource,
+                UINT64,
+                *ID3D12Resource,
+                UINT64,
+                UINT,
+                [*]const *ID3D12Resource,
+                [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
+            ) callconv(WINAPI) void,
+            OMSetDepthBounds: fn (*T, FLOAT, FLOAT) callconv(WINAPI) void,
+            SetSamplePositions: fn (*T, UINT, UINT, *D3D12_SAMPLE_POSITION) callconv(WINAPI) void,
+            ResolveSubresourceRegion: fn (
+                *T,
+                *ID3D12Resource,
+                UINT,
+                UINT,
+                UINT,
+                *ID3D12Resource,
+                UINT,
+                *D3D12_RECT,
+                DXGI_FORMAT,
+                D3D12_RESOLVE_MODE,
+            ) callconv(WINAPI) void,
+            SetViewInstanceMask: fn (*T, UINT) callconv(WINAPI) void,
+        };
+    }
+};
+
 pub const ID3D12CommandQueue = extern struct {
     const Self = @This();
     v: *const extern struct {
