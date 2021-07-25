@@ -3736,6 +3736,35 @@ pub const ID3D12Device1 = extern struct {
     }
 };
 
+pub const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE = enum(UINT) {
+    ROOT_SIGNATURE = 0,
+    VS = 1,
+    PS = 2,
+    DS = 3,
+    HS = 4,
+    GS = 5,
+    CS = 6,
+    STREAM_OUTPUT = 7,
+    BLEND = 8,
+    SAMPLE_MASK = 9,
+    RASTERIZER = 10,
+    DEPTH_STENCIL = 11,
+    INPUT_LAYOUT = 12,
+    IB_STRIP_CUT_VALUE = 13,
+    PRIMITIVE_TOPOLOGY = 14,
+    RENDER_TARGET_FORMATS = 15,
+    DEPTH_STENCIL_FORMAT = 16,
+    SAMPLE_DESC = 17,
+    NODE_MASK = 18,
+    CACHED_PSO = 19,
+    FLAGS = 20,
+    DEPTH_STENCIL1 = 21,
+    VIEW_INSTANCING = 22,
+    AS = 24,
+    MS = 25,
+    MAX_VALID = 26,
+};
+
 pub const D3D12_PIPELINE_STATE_STREAM_DESC = extern struct {
     SizeInBytes: SIZE_T,
     pPipelineStateSubobjectStream: *c_void,
