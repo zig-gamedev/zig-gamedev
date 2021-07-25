@@ -950,12 +950,35 @@ pub const D3D12_RENDER_TARGET_BLEND_DESC = extern struct {
     BlendOpAlpha: D3D12_BLEND_OP,
     LogicOp: D3D12_LOGIC_OP,
     RenderTargetWriteMask: UINT8,
+
+    pub fn default() D3D12_RENDER_TARGET_BLEND_DESC {
+        return .{
+            .BlendEnable = FALSE,
+            .LogicOpEnable = FALSE,
+            .SrcBlend = .ONE,
+            .DestBlend = .ZERO,
+            .BlendOp = .ADD,
+            .SrcBlendAlpha = .ONE,
+            .DestBlendAlpha = .ZERO,
+            .BlendOpAlpha = .ADD,
+            .LogicOp = .NOOP,
+            .RenderTargetWriteMask = 0xf,
+        };
+    }
 };
 
 pub const D3D12_BLEND_DESC = extern struct {
     AlphaToCoverageEnable: BOOL,
     IndependentBlendEnable: BOOL,
     RenderTarget: [8]D3D12_RENDER_TARGET_BLEND_DESC,
+
+    pub fn default() D3D12_BLEND_DESC {
+        return .{
+            .AlphaToCoverageEnable = FALSE,
+            .IndependentBlendEnable = FALSE,
+            .RenderTarget = [_]D3D12_RENDER_TARGET_BLEND_DESC{D3D12_RENDER_TARGET_BLEND_DESC.default()} ** 8,
+        };
+    }
 };
 
 pub const D3D12_RASTERIZER_DESC = extern struct {
@@ -970,6 +993,22 @@ pub const D3D12_RASTERIZER_DESC = extern struct {
     AntialiasedLineEnable: BOOL,
     ForcedSampleCount: UINT,
     ConservativeRaster: D3D12_CONSERVATIVE_RASTERIZATION_MODE,
+
+    pub fn default() D3D12_RASTERIZER_DESC {
+        return .{
+            .FillMode = .SOLID,
+            .CullMode = .BACK,
+            .FrontCounterClockwise = FALSE,
+            .DepthBias = 0,
+            .DepthBiasClamp = 0.0,
+            .SlopeScaledDepthBias = 0.0,
+            .DepthClipEnable = TRUE,
+            .MultisampleEnable = FALSE,
+            .AntialiasedLineEnable = FALSE,
+            .ForcedSampleCount = 0,
+            .ConservativeRaster = .OFF,
+        };
+    }
 };
 
 pub const D3D12_FILL_MODE = enum(UINT) {
@@ -1020,6 +1059,15 @@ pub const D3D12_DEPTH_STENCILOP_DESC = extern struct {
     StencilDepthFailOp: D3D12_STENCIL_OP,
     StencilPassOp: D3D12_STENCIL_OP,
     StencilFunc: D3D12_COMPARISON_FUNC,
+
+    pub fn default() D3D12_DEPTH_STENCILOP_DESC {
+        return .{
+            .StencilFailOp = .KEEP,
+            .StencilDepthFailOp = .KEEP,
+            .StencilPassOp = .KEEP,
+            .StencilFunc = .ALWAYS,
+        };
+    }
 };
 
 pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
@@ -1031,6 +1079,19 @@ pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
     StencilWriteMask: UINT8,
     FrontFace: D3D12_DEPTH_STENCILOP_DESC,
     BackFace: D3D12_DEPTH_STENCILOP_DESC,
+
+    pub fn default() D3D12_DEPTH_STENCIL_DESC {
+        return .{
+            .DepthEnable = TRUE,
+            .DepthWriteMask = .ALL,
+            .DepthFunc = .LESS,
+            .StencilEnable = FALSE,
+            .StencilReadMask = 0xff,
+            .StencilWriteMask = 0xff,
+            .FrontFace = D3D12_DEPTH_STENCILOP_DESC.default(),
+            .BackFace = D3D12_DEPTH_STENCILOP_DESC.default(),
+        };
+    }
 };
 
 pub const D3D12_INPUT_LAYOUT_DESC = extern struct {

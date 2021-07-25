@@ -396,15 +396,74 @@ pub fn main() !void {
         std.debug.assert(leaked == false);
     }
 
-    {
+    const pipeline = blk: {
         const vs_file = try std.fs.cwd().openFile("content/shaders/triangle.vs.cso", .{});
         defer vs_file.close();
+        const ps_file = try std.fs.cwd().openFile("content/shaders/triangle.ps.cso", .{});
+        defer ps_file.close();
 
         const allocator = &gpa.allocator;
         const vs_code = try vs_file.reader().readAllAlloc(allocator, 256 * 1024);
         defer allocator.free(vs_code);
+        const ps_code = try ps_file.reader().readAllAlloc(allocator, 256 * 1024);
+        defer allocator.free(ps_code);
 
-        std.debug.print("{}\n", .{vs_code.len});
+        var maybe_rs: ?*w.ID3D12RootSignature = null;
+        try vhr(gr.device.CreateRootSignature(
+            0,
+            vs_code.ptr,
+            vs_code.len,
+            &w.IID_ID3D12RootSignature,
+            @ptrCast(*?*c_void, &maybe_rs),
+        ));
+        errdefer _ = maybe_rs.?.Release();
+
+        const pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC{
+            .pRootSignature = maybe_rs,
+            .VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len },
+            .PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len },
+            .DS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
+            .HS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
+            .GS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
+            .StreamOutput = .{
+                .pSODeclaration = null,
+                .NumEntries = 0,
+                .pBufferStrides = null,
+                .NumStrides = 0,
+                .RasterizedStream = 0,
+            },
+            .BlendState = w.D3D12_BLEND_DESC.default(),
+            .SampleMask = 0xffff_ffff,
+            .RasterizerState = w.D3D12_RASTERIZER_DESC.default(),
+            .DepthStencilState = blk1: {
+                var desc = w.D3D12_DEPTH_STENCIL_DESC.default();
+                desc.DepthEnable = w.FALSE;
+                break :blk1 desc;
+            },
+            .InputLayout = .{ .pInputElementDescs = null, .NumElements = 0 },
+            .IBStripCutValue = .DISABLED,
+            .PrimitiveTopologyType = .TRIANGLE,
+            .NumRenderTargets = 1,
+            .RTVFormats = [_]w.DXGI_FORMAT{.R8G8B8A8_UNORM} ++ [_]w.DXGI_FORMAT{.UNKNOWN} ** 7,
+            .DSVFormat = .UNKNOWN,
+            .SampleDesc = .{ .Count = 1, .Quality = 0 },
+            .NodeMask = 0,
+            .CachedPSO = .{ .pCachedBlob = null, .CachedBlobSizeInBytes = 0 },
+            .Flags = .{},
+        };
+
+        var maybe_pso: ?*w.ID3D12PipelineState = null;
+        try vhr(gr.device.CreateGraphicsPipelineState(
+            &pso_desc,
+            &w.IID_ID3D12PipelineState,
+            @ptrCast(*?*c_void, &maybe_pso),
+        ));
+
+        break :blk .{ .pso = maybe_pso.?, .rs = maybe_rs.? };
+    };
+    defer {
+        _ = pipeline.pso.Release();
+        _ = pipeline.rs.Release();
     }
 
     var stats = FrameStats.init();
@@ -450,6 +509,10 @@ pub fn main() !void {
             }});
             gr.cmdlist.OMSetRenderTargets(1, &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer_rtv}, w.TRUE, null);
             gr.cmdlist.ClearRenderTargetView(back_buffer_rtv, &[4]f32{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
+            gr.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+            gr.cmdlist.SetPipelineState(pipeline.pso);
+            gr.cmdlist.SetGraphicsRootSignature(pipeline.rs);
+            gr.cmdlist.DrawInstanced(3, 1, 0, 0);
             gr.cmdlist.ResourceBarrier(1, &[_]w.D3D12_RESOURCE_BARRIER{.{
                 .Type = .TRANSITION,
                 .Flags = .{},
