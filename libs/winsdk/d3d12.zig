@@ -4942,6 +4942,217 @@ pub const ID3D12Device3 = extern struct {
     }
 };
 
+pub const D3D12_COMMAND_LIST_FLAGS = packed struct {
+    __reserved0: bool align(4) = false,
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_COMMAND_LIST_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_COMMAND_LIST_FLAGS) == 4);
+}
+
+pub const D3D12_RESOURCE_ALLOCATION_INFO1 = extern struct {
+    Offset: UINT64,
+    Alignment: UINT64,
+    SizeInBytes: UINT64,
+};
+
+pub const ID3D12Device4 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: ID3D12Device1.VTable(Self),
+        device2: ID3D12Device2.VTable(Self),
+        device3: ID3D12Device3.VTable(Self),
+        device4: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace ID3D12Device2.Methods(Self);
+    usingnamespace ID3D12Device3.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn CreateCommandList1(
+                self: *T,
+                node_mask: UINT,
+                cmdlist_type: D3D12_COMMAND_LIST_TYPE,
+                flags: D3D12_COMMAND_LIST_FLAGS,
+                guid: *const GUID,
+                cmdlist: *?*c_void,
+            ) HRESULT {
+                return self.v.device4.CreateCommandList1(self, node_mask, cmdlist_type, flags, guid, cmdlist);
+            }
+            pub inline fn CreateProtectedResourceSession(
+                self: *T,
+                desc: *const D3D12_PROTECTED_RESOURCE_SESSION_DESC,
+                guid: *const GUID,
+                session: *?*c_void,
+            ) HRESULT {
+                return self.v.device4.CreateProtectedResourceSession(self, desc, guid, session);
+            }
+            pub inline fn CreateCommittedResource1(
+                self: *T,
+                heap_properties: *const D3D12_HEAP_PROPERTIES,
+                heap_flags: D3D12_HEAP_FLAGS,
+                desc: *const D3D12_RESOURCE_DESC,
+                initial_state: D3D12_RESOURCE_STATES,
+                clear_value: ?*const D3D12_CLEAR_VALUE,
+                psession: ?*ID3D12ProtectedResourceSession,
+                guid: *const GUID,
+                resource: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device4.CreateCommittedResource1(
+                    self,
+                    heap_properties,
+                    heap_flags,
+                    desc,
+                    initial_state,
+                    clear_value,
+                    psession,
+                    guid,
+                    resource,
+                );
+            }
+            pub inline fn CreateHeap1(
+                self: *T,
+                desc: *const D3D12_HEAP_DESC,
+                psession: ?*ID3D12ProtectedResourceSession,
+                guid: *const GUID,
+                heap: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device4.CreateHeap1(self, desc, psession, guid, heap);
+            }
+            pub inline fn CreateReservedResource1(
+                self: *T,
+                desc: *const D3D12_RESOURCE_DESC,
+                initial_state: D3D12_RESOURCE_STATES,
+                clear_value: ?*const D3D12_CLEAR_VALUE,
+                psession: ?*ID3D12ProtectedResourceSession,
+                guid: *const GUID,
+                resource: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device4.CreateReservedResource1(
+                    self,
+                    desc,
+                    initial_state,
+                    clear_value,
+                    psession,
+                    guid,
+                    resource,
+                );
+            }
+            pub inline fn GetResourceAllocationInfo1(
+                self: *T,
+                visible_mask: UINT,
+                num_resource_descs: UINT,
+                resource_descs: [*]const D3D12_RESOURCE_DESC,
+                alloc_info: ?[*]D3D12_RESOURCE_ALLOCATION_INFO1,
+            ) D3D12_RESOURCE_ALLOCATION_INFO {
+                var desc: D3D12_RESOURCE_ALLOCATION_INFO = undefined;
+                self.v.device4.GetResourceAllocationInfo1(
+                    self,
+                    &desc,
+                    visible_mask,
+                    num_resource_descs,
+                    resource_descs,
+                    alloc_info,
+                );
+                return desc;
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            CreateCommandList1: fn (
+                *T,
+                UINT,
+                D3D12_COMMAND_LIST_TYPE,
+                D3D12_COMMAND_LIST_FLAGS,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateProtectedResourceSession: fn (
+                *T,
+                *const D3D12_PROTECTED_RESOURCE_SESSION_DESC,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateCommittedResource1: fn (
+                *T,
+                *const D3D12_HEAP_PROPERTIES,
+                D3D12_HEAP_FLAGS,
+                *const D3D12_RESOURCE_DESC,
+                D3D12_RESOURCE_STATES,
+                ?*const D3D12_CLEAR_VALUE,
+                ?*ID3D12ProtectedResourceSession,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateHeap1: fn (
+                *T,
+                *const D3D12_HEAP_DESC,
+                ?*ID3D12ProtectedResourceSession,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateReservedResource1: fn (
+                *T,
+                *const D3D12_RESOURCE_DESC,
+                D3D12_RESOURCE_STATES,
+                ?*const D3D12_CLEAR_VALUE,
+                ?*ID3D12ProtectedResourceSession,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            GetResourceAllocationInfo1: fn (
+                *T,
+                *D3D12_RESOURCE_ALLOCATION_INFO,
+                UINT,
+                UINT,
+                [*]const D3D12_RESOURCE_DESC,
+                ?[*]D3D12_RESOURCE_ALLOCATION_INFO1,
+            ) callconv(WINAPI) *D3D12_RESOURCE_ALLOCATION_INFO,
+        };
+    }
+};
+
 pub const D3D12_PROTECTED_SESSION_STATUS = enum(UINT) {
     OK = 0,
     INVALID = 1,
@@ -5089,6 +5300,12 @@ pub const IID_ID3D12Device3 = GUID{
     .Data2 = 0x2bad,
     .Data3 = 0x4392,
     .Data4 = .{ 0x93, 0xc5, 0x10, 0x13, 0x45, 0xc4, 0xaa, 0x98 },
+};
+pub const IID_ID3D12Device4 = GUID{
+    .Data1 = 0xe865df17,
+    .Data2 = 0xa9ee,
+    .Data3 = 0x46f9,
+    .Data4 = .{ 0xa4, 0x63, 0x30, 0x98, 0x31, 0x5a, 0xa2, 0xe5 },
 };
 pub const IID_ID3D12CommandQueue = GUID{
     .Data1 = 0x0ec870a6,
