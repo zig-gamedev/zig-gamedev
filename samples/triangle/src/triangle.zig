@@ -359,12 +359,12 @@ pub const GraphicsContext = struct {
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
         const gpu_frame_counter = gr.frame_fence.GetCompletedValue();
-        if ((gr.frame_fence_counter - gpu_frame_counter) >= GraphicsContext.max_num_buffered_frames) {
+        if ((gr.frame_fence_counter - gpu_frame_counter) >= max_num_buffered_frames) {
             try vhr(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
             w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
         }
 
-        gr.frame_index = (gr.frame_index + 1) % GraphicsContext.max_num_buffered_frames;
+        gr.frame_index = (gr.frame_index + 1) % max_num_buffered_frames;
         gr.back_buffer_index = gr.swapchain.GetCurrentBackBufferIndex();
     }
 
