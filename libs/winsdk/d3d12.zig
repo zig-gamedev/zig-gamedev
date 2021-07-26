@@ -4717,7 +4717,14 @@ pub const ID3D12Device1 = extern struct {
                 flags: D3D12_MULTIPLE_FENCE_WAIT_FLAGS,
                 event: HANDLE,
             ) HRESULT {
-                return self.v.device1.SetEventOnMultipleFenceCompletion(self, fences, fence_values, num_fences, flags, event);
+                return self.v.device1.SetEventOnMultipleFenceCompletion(
+                    self,
+                    fences,
+                    fence_values,
+                    num_fences,
+                    flags,
+                    event,
+                );
             }
             pub inline fn SetResidencyPriority(
                 self: *T,
@@ -5043,7 +5050,10 @@ pub const ID3D12ProtectedResourceSession = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc: fn (*T, *D3D12_PROTECTED_RESOURCE_SESSION_DESC) callconv(WINAPI) *D3D12_PROTECTED_RESOURCE_SESSION_DESC,
+            GetDesc: fn (
+                *T,
+                *D3D12_PROTECTED_RESOURCE_SESSION_DESC,
+            ) callconv(WINAPI) *D3D12_PROTECTED_RESOURCE_SESSION_DESC,
         };
     }
 };
