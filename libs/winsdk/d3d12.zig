@@ -4825,6 +4825,116 @@ pub const ID3D12Device2 = extern struct {
     }
 };
 
+pub const D3D12_RESIDENCY_FLAGS = packed struct {
+    D3D12_RESIDENCY_FLAG_DENY_OVERBUDGET: bool align(4) = false,
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RESIDENCY_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_RESIDENCY_FLAGS) == 4);
+}
+
+pub const ID3D12Device3 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: ID3D12Device1.VTable(Self),
+        device2: ID3D12Device2.VTable(Self),
+        device3: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace ID3D12Device2.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn OpenExistingHeapFromAddress(
+                self: *T,
+                address: *const c_void,
+                guid: *const GUID,
+                heap: *?*c_void,
+            ) HRESULT {
+                return self.v.device3.OpenExistingHeapFromAddress(self, address, guid, heap);
+            }
+            pub inline fn OpenExistingHeapFromFileMapping(
+                self: *T,
+                file_mapping: HANDLE,
+                guid: *const GUID,
+                heap: *?*c_void,
+            ) HRESULT {
+                return self.v.device3.OpenExistingHeapFromFileMapping(self, file_mapping, guid, heap);
+            }
+            pub inline fn EnqueueMakeResident(
+                self: *T,
+                flags: D3D12_RESIDENCY_FLAGS,
+                num_objects: UINT,
+                objects: [*]const *ID3D12Pageable,
+                fence_to_signal: *ID3D12Fence,
+                fence_value_to_signal: UINT64,
+            ) HRESULT {
+                return self.v.device3.EnqueueMakeResident(
+                    self,
+                    flags,
+                    num_objects,
+                    objects,
+                    fence_to_signal,
+                    fence_value_to_signal,
+                );
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            OpenExistingHeapFromAddress: fn (*T, *const c_void, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            OpenExistingHeapFromFileMapping: fn (*T, HANDLE, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            EnqueueMakeResident: fn (
+                *T,
+                D3D12_RESIDENCY_FLAGS,
+                UINT,
+                [*]const *ID3D12Pageable,
+                *ID3D12Fence,
+                UINT64,
+            ) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 pub const D3D12_PROTECTED_SESSION_STATUS = enum(UINT) {
     OK = 0,
     INVALID = 1,
