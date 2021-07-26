@@ -3007,6 +3007,902 @@ pub const ID3D12GraphicsCommandList3 = extern struct {
     }
 };
 
+pub const D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE = enum(UINT) {
+    DISCARD = 0,
+    PRESERVE = 1,
+    CLEAR = 2,
+    NO_ACCESS = 3,
+};
+
+pub const D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS = extern struct {
+    ClearValue: D3D12_CLEAR_VALUE,
+};
+
+pub const D3D12_RENDER_PASS_BEGINNING_ACCESS = extern struct {
+    Type: D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE,
+    u: extern union {
+        Clear: D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS,
+    },
+};
+
+pub const D3D12_RENDER_PASS_ENDING_ACCESS_TYPE = enum(UINT) {
+    DISCARD = 0,
+    PRESERVE = 1,
+    RESOLVE = 2,
+    NO_ACCESS = 3,
+};
+
+pub const D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS = extern struct {
+    SrcSubresource: UINT,
+    DstSubresource: UINT,
+    DstX: UINT,
+    DstY: UINT,
+    SrcRect: D3D12_RECT,
+};
+
+pub const D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS = extern struct {
+    pSrcResource: *ID3D12Resource,
+    pDstResource: *ID3D12Resource,
+    SubresourceCount: UINT,
+    pSubresourceParameters: [*]const D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS,
+    Format: DXGI_FORMAT,
+    ResolveMode: D3D12_RESOLVE_MODE,
+    PreserveResolveSource: BOOL,
+};
+
+pub const D3D12_RENDER_PASS_ENDING_ACCESS = extern struct {
+    Type: D3D12_RENDER_PASS_ENDING_ACCESS_TYPE,
+    u: extern union {
+        Resolve: D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS,
+    },
+};
+
+pub const D3D12_RENDER_PASS_RENDER_TARGET_DESC = extern struct {
+    cpuDescriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+    BeginningAccess: D3D12_RENDER_PASS_BEGINNING_ACCESS,
+    EndingAccess: D3D12_RENDER_PASS_ENDING_ACCESS,
+};
+
+pub const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC = extern struct {
+    cpuDescriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+    DepthBeginningAccess: D3D12_RENDER_PASS_BEGINNING_ACCESS,
+    StencilBeginningAccess: D3D12_RENDER_PASS_BEGINNING_ACCESS,
+    DepthEndingAccess: D3D12_RENDER_PASS_ENDING_ACCESS,
+    StencilEndingAccess: D3D12_RENDER_PASS_ENDING_ACCESS,
+};
+
+pub const D3D12_RENDER_PASS_FLAGS = packed struct {
+    D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES: bool align(4) = false, // 0x1
+    D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS: bool = false, // 0x2
+    D3D12_RENDER_PASS_FLAG_RESUMING_PASS: bool = false, // 0x4
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RENDER_PASS_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_RENDER_PASS_FLAGS) == 4);
+}
+
+pub const D3D12_META_COMMAND_PARAMETER_TYPE = enum(UINT) {
+    FLOAT = 0,
+    UINT64 = 1,
+    GPU_VIRTUAL_ADDRESS = 2,
+    CPU_DESCRIPTOR_HANDLE_HEAP_TYPE_CBV_SRV_UAV = 3,
+    GPU_DESCRIPTOR_HANDLE_HEAP_TYPE_CBV_SRV_UAV = 4,
+};
+
+pub const D3D12_META_COMMAND_PARAMETER_FLAGS = packed struct {
+    D3D12_META_COMMAND_PARAMETER_FLAG_INPUT: bool align(4) = false, // 0x1
+    D3D12_META_COMMAND_PARAMETER_FLAG_OUTPUT: bool = false, // 0x2
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_META_COMMAND_PARAMETER_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_META_COMMAND_PARAMETER_FLAGS) == 4);
+}
+
+pub const D3D12_META_COMMAND_PARAMETER_STAGE = enum(UINT) {
+    CREATION = 0,
+    INITIALIZATION = 1,
+    EXECUTION = 2,
+};
+
+pub const D3D12_META_COMMAND_PARAMETER_DESC = extern struct {
+    Name: LPCWSTR,
+    Type: D3D12_META_COMMAND_PARAMETER_TYPE,
+    Flags: D3D12_META_COMMAND_PARAMETER_FLAGS,
+    RequiredResourceState: D3D12_RESOURCE_STATES,
+    StructureOffset: UINT,
+};
+
+pub const D3D12_GRAPHICS_STATES = packed struct {
+    D3D12_GRAPHICS_STATE_IA_VERTEX_BUFFERS: bool align(4) = false, // ( 1 << 0 )
+    D3D12_GRAPHICS_STATE_IA_INDEX_BUFFER: bool = false, // ( 1 << 1 )
+    D3D12_GRAPHICS_STATE_IA_PRIMITIVE_TOPOLOGY: bool = false, // ( 1 << 2 )
+    D3D12_GRAPHICS_STATE_DESCRIPTOR_HEAP: bool = false, // ( 1 << 3 )
+    D3D12_GRAPHICS_STATE_GRAPHICS_ROOT_SIGNATURE: bool = false, // ( 1 << 4 )
+    D3D12_GRAPHICS_STATE_COMPUTE_ROOT_SIGNATURE: bool = false, // ( 1 << 5 )
+    D3D12_GRAPHICS_STATE_RS_VIEWPORTS: bool = false, // ( 1 << 6 )
+    D3D12_GRAPHICS_STATE_RS_SCISSOR_RECTS: bool = false, // ( 1 << 7 )
+    D3D12_GRAPHICS_STATE_PREDICATION: bool = false, // ( 1 << 8 )
+    D3D12_GRAPHICS_STATE_OM_RENDER_TARGETS: bool = false, // ( 1 << 9 )
+    D3D12_GRAPHICS_STATE_OM_STENCIL_REF: bool = false, //  ( 1 << 10 )
+    D3D12_GRAPHICS_STATE_OM_BLEND_FACTOR: bool = false, // ( 1 << 11 )
+    D3D12_GRAPHICS_STATE_PIPELINE_STATE: bool = false, // ( 1 << 12 )
+    D3D12_GRAPHICS_STATE_SO_TARGETS: bool = false, // ( 1 << 13 )
+    D3D12_GRAPHICS_STATE_OM_DEPTH_BOUNDS: bool = false, //  ( 1 << 14 )
+    D3D12_GRAPHICS_STATE_SAMPLE_POSITIONS: bool = false, // ( 1 << 15 )
+    D3D12_GRAPHICS_STATE_VIEW_INSTANCE_MASK: bool = false, // ( 1 << 16 )
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_GRAPHICS_STATES) == 4);
+    std.debug.assert(@alignOf(D3D12_GRAPHICS_STATES) == 4);
+}
+
+pub const D3D12_META_COMMAND_DESC = extern struct {
+    Id: GUID,
+    Name: LPCWSTR,
+    InitializationDirtyState: D3D12_GRAPHICS_STATES,
+    ExecutionDirtyState: D3D12_GRAPHICS_STATES,
+};
+
+pub const ID3D12MetaCommand = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        metacmd: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetRequiredParameterResourceSize(
+                self: *T,
+                stage: D3D12_META_COMMAND_PARAMETER_STAGE,
+                param_index: UINT,
+            ) UINT64 {
+                return self.v.metacmd.GetRequiredParameterResourceSize(self, stage, param_index);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetRequiredParameterResourceSize: fn (
+                *T,
+                D3D12_META_COMMAND_PARAMETER_STAGE,
+                UINT,
+            ) callconv(WINAPI) UINT64,
+        };
+    }
+};
+
+pub const D3D12_STATE_SUBOBJECT_TYPE = enum(UINT) {
+    STATE_OBJECT_CONFIG = 0,
+    GLOBAL_ROOT_SIGNATURE = 1,
+    LOCAL_ROOT_SIGNATURE = 2,
+    NODE_MASK = 3,
+    DXIL_LIBRARY = 5,
+    EXISTING_COLLECTION = 6,
+    SUBOBJECT_TO_EXPORTS_ASSOCIATION = 7,
+    DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION = 8,
+    RAYTRACING_SHADER_CONFIG = 9,
+    RAYTRACING_PIPELINE_CONFIG = 10,
+    HIT_GROUP = 11,
+    RAYTRACING_PIPELINE_CONFIG1 = 12,
+    MAX_VALID = 13,
+};
+
+pub const D3D12_STATE_SUBOBJECT = extern struct {
+    Type: D3D12_STATE_SUBOBJECT_TYPE,
+    desc: *const c_void,
+};
+
+pub const D3D12_STATE_OBJECT_FLAGS = packed struct {
+    ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITIONS: bool align(4) = false, // 0x1
+    ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS: bool = false, // 0x2
+    ALLOW_STATE_OBJECT_ADDITIONS: bool = false, // 0x4
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_STATE_OBJECT_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_STATE_OBJECT_FLAGS) == 4);
+}
+
+pub const D3D12_STATE_OBJECT_CONFIG = extern struct {
+    Flags: D3D12_STATE_OBJECT_FLAGS,
+};
+
+pub const D3D12_GLOBAL_ROOT_SIGNATURE = extern struct {
+    pGlobalRootSignature: *ID3D12RootSignature,
+};
+
+pub const D3D12_LOCAL_ROOT_SIGNATURE = extern struct {
+    pLocalRootSignature: *ID3D12RootSignature,
+};
+
+pub const D3D12_NODE_MASK = extern struct {
+    NodeMask: UINT,
+};
+
+pub const D3D12_EXPORT_FLAGS = packed struct {
+    __reserved0: bool align(4) = false,
+    __reserved1: bool = false,
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_EXPORT_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_EXPORT_FLAGS) == 4);
+}
+
+pub const D3D12_EXPORT_DESC = extern struct {
+    Name: LPCWSTR,
+    ExportToRename: LPCWSTR,
+    Flags: D3D12_EXPORT_FLAGS,
+};
+
+pub const D3D12_DXIL_LIBRARY_DESC = extern struct {
+    DXILLibrary: D3D12_SHADER_BYTECODE,
+    NumExports: UINT,
+    pExports: [*]D3D12_EXPORT_DESC,
+};
+
+pub const D3D12_EXISTING_COLLECTION_DESC = extern struct {
+    pExistingCollection: *ID3D12StateObject,
+    NumExports: UINT,
+    pExports: [*]D3D12_EXPORT_DESC,
+};
+
+pub const D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION = extern struct {
+    pSubobjectToAssociate: *const D3D12_STATE_SUBOBJECT,
+    NumExports: UINT,
+    pExports: [*]LPCWSTR,
+};
+
+pub const D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION = extern struct {
+    SubobjectToAssociate: LPCWSTR,
+    NumExports: UINT,
+    pExports: [*]LPCWSTR,
+};
+
+pub const D3D12_HIT_GROUP_TYPE = enum(UINT) {
+    TRIANGLES = 0,
+    PROCEDURAL_PRIMITIVE = 0x1,
+};
+
+pub const D3D12_HIT_GROUP_DESC = extern struct {
+    HitGroupExport: LPCWSTR,
+    Type: D3D12_HIT_GROUP_TYPE,
+    AnyHitShaderImport: LPCWSTR,
+    ClosestHitShaderImport: LPCWSTR,
+    IntersectionShaderImport: LPCWSTR,
+};
+
+pub const D3D12_RAYTRACING_SHADER_CONFIG = extern struct {
+    MaxPayloadSizeInBytes: UINT,
+    MaxAttributeSizeInBytes: UINT,
+};
+
+pub const D3D12_RAYTRACING_PIPELINE_CONFIG = extern struct {
+    MaxTraceRecursionDepth: UINT,
+};
+
+pub const D3D12_RAYTRACING_PIPELINE_FLAGS = packed struct {
+    __reserved0: bool align(4) = false, // 0x1
+    __reserved1: bool = false, // 0x2
+    __reserved2: bool = false, // 0x4
+    __reserved3: bool = false, // 0x8
+    __reserved4: bool = false, // 0x10
+    __reserved5: bool = false, // 0x20
+    __reserved6: bool = false, // 0x40
+    __reserved7: bool = false, // 0x80
+    SKIP_TRIANGLES: bool = false, // 0x100
+    SKIP_PROCEDURAL_PRIMITIVES: bool = false, // 0x200
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RAYTRACING_PIPELINE_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_RAYTRACING_PIPELINE_FLAGS) == 4);
+}
+
+pub const D3D12_RAYTRACING_PIPELINE_CONFIG1 = extern struct {
+    MaxTraceRecursionDepth: UINT,
+    Flags: D3D12_RAYTRACING_PIPELINE_FLAGS,
+};
+
+pub const D3D12_STATE_OBJECT_TYPE = enum(UINT) {
+    COLLECTION = 0,
+    RAYTRACING_PIPELINE = 3,
+};
+
+pub const D3D12_STATE_OBJECT_DESC = extern struct {
+    Type: D3D12_STATE_OBJECT_TYPE,
+    NumSubobjects: UINT,
+    pSubobjects: [*]const D3D12_STATE_SUBOBJECT,
+};
+
+pub const D3D12_RAYTRACING_GEOMETRY_FLAGS = packed struct {
+    OPAQUE: bool align(4) = false, // 0x1
+    NO_DUPLICATE_ANYHIT_INVOCATION: bool = false, // 0x2
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RAYTRACING_GEOMETRY_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_RAYTRACING_GEOMETRY_FLAGS) == 4);
+}
+
+pub const D3D12_RAYTRACING_GEOMETRY_TYPE = enum(UINT) {
+    TRIANGLES = 0,
+    PROCEDURAL_PRIMITIVE_AABBS = 1,
+};
+
+pub const D3D12_RAYTRACING_INSTANCE_FLAGS = packed struct {
+    TRIANGLE_CULL_DISABLE: bool align(4) = false, // 0x1
+    TRIANGLE_FRONT_COUNTERCLOCKWISE: bool = false, // 0x2
+    FORCE_OPAQUE: bool = false, // 0x4
+    FORCE_NON_OPAQUE: bool = false, // 0x8
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RAYTRACING_INSTANCE_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_RAYTRACING_INSTANCE_FLAGS) == 4);
+}
+
+pub const D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE = extern struct {
+    StartAddress: D3D12_GPU_VIRTUAL_ADDRESS,
+    StrideInBytes: UINT64,
+};
+
+pub const D3D12_GPU_VIRTUAL_ADDRESS_RANGE = extern struct {
+    StartAddress: D3D12_GPU_VIRTUAL_ADDRESS,
+    SizeInBytes: UINT64,
+};
+
+pub const D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE = extern struct {
+    StartAddress: D3D12_GPU_VIRTUAL_ADDRESS,
+    SizeInBytes: UINT64,
+    StrideInBytes: UINT64,
+};
+
+pub const D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC = extern struct {
+    Transform3x4: D3D12_GPU_VIRTUAL_ADDRESS,
+    IndexFormat: DXGI_FORMAT,
+    VertexFormat: DXGI_FORMAT,
+    IndexCount: UINT,
+    VertexCount: UINT,
+    IndexBuffer: D3D12_GPU_VIRTUAL_ADDRESS,
+    VertexBuffer: D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE,
+};
+
+pub const D3D12_RAYTRACING_AABB = extern struct {
+    MinX: FLOAT,
+    MinY: FLOAT,
+    MinZ: FLOAT,
+    MaxX: FLOAT,
+    MaxY: FLOAT,
+    MaxZ: FLOAT,
+};
+
+pub const D3D12_RAYTRACING_GEOMETRY_AABBS_DESC = extern struct {
+    AABBCount: UINT64,
+    AABBs: D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE,
+};
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = packed struct {
+    ALLOW_UPDATE: bool align(4) = false, // 0x1
+    ALLOW_COMPACTION: bool = false, // 0x2
+    PREFER_FAST_TRACE: bool = false, //	0x4
+    PREFER_FAST_BUILD: bool = false, // 0x8
+    MINIMIZE_MEMORY: bool = false, // 0x10
+    PERFORM_UPDATE: bool = false, // 0x20
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS) == 4);
+}
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE = enum(UINT) {
+    CLONE = 0,
+    COMPACT = 0x1,
+    VISUALIZATION_DECODE_FOR_TOOLS = 0x2,
+    SERIALIZE = 0x3,
+    DESERIALIZE = 0x4,
+};
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE = enum(UINT) {
+    TOP_LEVEL = 0,
+    BOTTOM_LEVEL = 0x1,
+};
+
+pub const D3D12_ELEMENTS_LAYOUT = enum(UINT) {
+    ARRAY = 0,
+    ARRAY_OF_POINTERS = 0x1,
+};
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE = enum(UINT) {
+    COMPACTED_SIZE = 0,
+    TOOLS_VISUALIZATION = 0x1,
+    SERIALIZATION = 0x2,
+    CURRENT_SIZE = 0x3,
+};
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC = extern struct {
+    DestBuffer: D3D12_GPU_VIRTUAL_ADDRESS,
+    InfoType: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE,
+};
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC = extern struct {
+    CompactedSizeInBytes: UINT64,
+};
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION_DESC = extern struct {
+    DecodedSizeInBytes: UINT64,
+};
+
+pub const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER = extern struct {
+    Type: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE,
+    NumDescs: UINT,
+};
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC = extern struct {
+    SerializedSizeInBytes: UINT64,
+    NumBottomLevelAccelerationStructurePointers: UINT64,
+};
+
+pub const D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER = extern struct {
+    DriverOpaqueGUID: GUID,
+    DriverOpaqueVersioningData: [16]BYTE,
+};
+
+pub const D3D12_SERIALIZED_DATA_TYPE = enum(UINT) {
+    RAYTRACING_ACCELERATION_STRUCTURE = 0,
+};
+
+pub const D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS = enum(UINT) {
+    COMPATIBLE_WITH_DEVICE = 0,
+    UNSUPPORTED_TYPE = 0x1,
+    UNRECOGNIZED = 0x2,
+    INCOMPATIBLE_VERSION = 0x3,
+    INCOMPATIBLE_TYPE = 0x4,
+};
+
+pub const D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER = extern struct {
+    DriverMatchingIdentifier: D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
+    SerializedSizeInBytesIncludingHeader: UINT64,
+    DeserializedSizeInBytes: UINT64,
+    NumBottomLevelAccelerationStructurePointersAfterHeader: UINT64,
+};
+
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC = extern struct {
+    CurrentSizeInBytes: UINT64,
+};
+
+pub const D3D12_RAYTRACING_INSTANCE_DESC = packed struct {
+    Transform: [3][4]FLOAT align(8), // TODO(mziulek): Is alignment 8 correct?
+    InstanceID: u24,
+    InstanceMask: u8,
+    InstanceContributionToHitGroupIndex: u24,
+    Flags: u8,
+    AccelerationStructure: D3D12_GPU_VIRTUAL_ADDRESS,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_RAYTRACING_INSTANCE_DESC) == 64);
+    std.debug.assert(@alignOf(D3D12_RAYTRACING_INSTANCE_DESC) == 8);
+}
+
+pub const D3D12_RAYTRACING_GEOMETRY_DESC = extern struct {
+    Type: D3D12_RAYTRACING_GEOMETRY_TYPE,
+    Flags: D3D12_RAYTRACING_GEOMETRY_FLAGS,
+    u: extern union {
+        Triangles: D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC,
+        AABBs: D3D12_RAYTRACING_GEOMETRY_AABBS_DESC,
+    },
+};
+
+pub const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS = extern struct {
+    Type: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE,
+    Flags: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS,
+    NumDescs: UINT,
+    DescsLayout: D3D12_ELEMENTS_LAYOUT,
+    u: extern union {
+        InstanceDescs: D3D12_GPU_VIRTUAL_ADDRESS,
+        pGeometryDescs: [*]const D3D12_RAYTRACING_GEOMETRY_DESC,
+        ppGeometryDescs: [*]const *D3D12_RAYTRACING_GEOMETRY_DESC,
+    },
+};
+
+pub const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC = extern struct {
+    DestAccelerationStructureData: D3D12_GPU_VIRTUAL_ADDRESS,
+    Inputs: D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
+    SourceAccelerationStructureData: D3D12_GPU_VIRTUAL_ADDRESS,
+    ScratchAccelerationStructureData: D3D12_GPU_VIRTUAL_ADDRESS,
+};
+
+pub const ID3D12StateObject = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+};
+
+pub const D3D12_DISPATCH_RAYS_DESC = extern struct {
+    RayGenerationShaderRecord: D3D12_GPU_VIRTUAL_ADDRESS_RANGE,
+    MissShaderTable: D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
+    HitGroupTable: D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
+    CallableShaderTable: D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
+    Width: UINT,
+    Height: UINT,
+    Depth: UINT,
+};
+
+pub const ID3D12GraphicsCommandList4 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        cmdlist: ID3D12CommandList.VTable(Self),
+        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
+        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
+        grcmdlist2: ID3D12GraphicsCommandList2.VTable(Self),
+        grcmdlist3: ID3D12GraphicsCommandList3.VTable(Self),
+        grcmdlist4: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12CommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList2.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList3.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn BeginRenderPass(
+                self: *T,
+                num_render_targets: UINT,
+                render_targets: ?[*]const D3D12_RENDER_PASS_RENDER_TARGET_DESC,
+                depth_stencil: ?*const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC,
+                flags: D3D12_RENDER_PASS_FLAGS,
+            ) void {
+                self.v.grcmdlist4.BeginRenderPass(self, num_render_targets, render_targets, depth_stencil, flags);
+            }
+            pub inline fn EndRenderPass(self: *T) void {
+                self.v.grcmdlist4.EndRenderPass(self);
+            }
+            pub inline fn InitializeMetaCommand(
+                self: *T,
+                meta_cmd: *ID3D12MetaCommand,
+                init_param_data: ?*const c_void,
+                data_size: SIZE_T,
+            ) void {
+                self.v.grcmdlist4.InitializeMetaCommand(self, meta_cmd, init_param_data, data_size);
+            }
+            pub inline fn ExecuteMetaCommand(
+                self: *T,
+                meta_cmd: *ID3D12MetaCommand,
+                exe_param_data: ?*const c_void,
+                data_size: SIZE_T,
+            ) void {
+                self.v.grcmdlist4.InitializeMetaCommand(self, meta_cmd, exe_param_data, data_size);
+            }
+            pub inline fn BuildRaytracingAccelerationStructure(
+                self: *T,
+                desc: *const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
+                num_post_build_descs: UINT,
+                post_build_descs: ?[*]const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+            ) void {
+                self.v.grcmdlist4.BuildRaytracingAccelerationStructure(self, desc, num_post_build_descs, post_build_descs);
+            }
+            pub inline fn EmitRaytracingAccelerationStructurePostbuildInfo(
+                self: *T,
+                desc: *const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+                num_src_accel_structs: UINT,
+                src_accel_struct_data: [*]const D3D12_GPU_VIRTUAL_ADDRESS,
+            ) void {
+                self.v.grcmdlist4.EmitRaytracingAccelerationStructurePostbuildInfo(
+                    self,
+                    desc,
+                    num_src_accel_structs,
+                    src_accel_struct_data,
+                );
+            }
+            pub inline fn CopyRaytracingAccelerationStructure(
+                self: *T,
+                dst_data: D3D12_GPU_VIRTUAL_ADDRESS,
+                src_data: D3D12_GPU_VIRTUAL_ADDRESS,
+                mode: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
+            ) void {
+                self.v.grcmdlist4.CopyRaytracingAccelerationStructure(self, dst_data, src_data, mode);
+            }
+            pub inline fn SetPipelineState1(self: *T, state_obj: *ID3D12StateObject) void {
+                self.v.grcmdlist4.SetPipelineState1(self, state_obj);
+            }
+            pub inline fn DispatchRays(self: *T, desc: *const D3D12_DISPATCH_RAYS_DESC) void {
+                self.v.grcmdlist4.DispatchRays(self, desc);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            BeginRenderPass: fn (
+                *T,
+                UINT,
+                ?[*]const D3D12_RENDER_PASS_RENDER_TARGET_DESC,
+                ?*const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC,
+                D3D12_RENDER_PASS_FLAGS,
+            ) callconv(WINAPI) void,
+            EndRenderPass: fn (*T) callconv(WINAPI) void,
+            InitializeMetaCommand: fn (*T, *ID3D12MetaCommand, ?*const c_void, SIZE_T) callconv(WINAPI) void,
+            ExecuteMetaCommand: fn (*T, *ID3D12MetaCommand, ?*const c_void, SIZE_T) callconv(WINAPI) void,
+            BuildRaytracingAccelerationStructure: fn (
+                *T,
+                *const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
+                UINT,
+                ?[*]const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+            ) callconv(WINAPI) void,
+            EmitRaytracingAccelerationStructurePostbuildInfo: fn (
+                *T,
+                *const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+                UINT,
+                [*]const D3D12_GPU_VIRTUAL_ADDRESS,
+            ) callconv(WINAPI) void,
+            CopyRaytracingAccelerationStructure: fn (
+                *T,
+                D3D12_GPU_VIRTUAL_ADDRESS,
+                D3D12_GPU_VIRTUAL_ADDRESS,
+                D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
+            ) callconv(WINAPI) void,
+            SetPipelineState1: fn (*T, *ID3D12StateObject) callconv(WINAPI) void,
+            DispatchRays: fn (*T, *const D3D12_DISPATCH_RAYS_DESC) callconv(WINAPI) void,
+        };
+    }
+};
+
 pub const ID3D12CommandQueue = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -4026,6 +4922,12 @@ pub const IID_ID3D12GraphicsCommandList3 = GUID{
     .Data2 = 0xB84C,
     .Data3 = 0x4E38,
     .Data4 = .{ 0x9A, 0xC8, 0xC7, 0xBD, 0x22, 0x01, 0x6B, 0x3D },
+};
+pub const IID_ID3D12GraphicsCommandList4 = GUID{
+    .Data1 = 0x8754318e,
+    .Data2 = 0xd3a9,
+    .Data3 = 0x4541,
+    .Data4 = .{ 0x98, 0xcf, 0x64, 0x5b, 0x50, 0xdc, 0x48, 0x74 },
 };
 
 pub fn d3d12_load_dll() !void {
