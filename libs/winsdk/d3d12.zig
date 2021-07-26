@@ -3903,6 +3903,125 @@ pub const ID3D12GraphicsCommandList4 = extern struct {
     }
 };
 
+pub const D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT = 2;
+
+pub const D3D12_SHADING_RATE = enum(UINT) {
+    _1X1 = 0,
+    _1X2 = 0x1,
+    _2X1 = 0x4,
+    _2X2 = 0x5,
+    _2X4 = 0x6,
+    _4X2 = 0x9,
+    _4X4 = 0xa,
+};
+
+pub const D3D12_SHADING_RATE_COMBINER = enum(UINT) {
+    PASSTHROUGH = 0,
+    OVERRIDE = 1,
+    COMBINER_MIN = 2,
+    COMBINER_MAX = 3,
+    COMBINER_SUM = 4,
+};
+
+pub const ID3D12GraphicsCommandList5 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        cmdlist: ID3D12CommandList.VTable(Self),
+        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
+        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
+        grcmdlist2: ID3D12GraphicsCommandList2.VTable(Self),
+        grcmdlist3: ID3D12GraphicsCommandList3.VTable(Self),
+        grcmdlist4: ID3D12GraphicsCommandList4.VTable(Self),
+        grcmdlist5: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12CommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList2.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList3.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList4.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn RSSetShadingRate(
+                self: *T,
+                base_shading_rate: D3D12_SHADING_RATE,
+                combiners: ?[D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT]D3D12_SHADING_RATE_COMBINER,
+            ) void {
+                self.v.grcmdlist5.RSSetShadingRate(self, base_shading_rate, combiners);
+            }
+            pub inline fn RSSetShadingRateImage(self: *T, shading_rate_img: ?*ID3D12Resource) void {
+                self.v.grcmdlist5.RSSetShadingRateImage(self, shading_rate_img);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            RSSetShadingRate: fn (
+                *T,
+                D3D12_SHADING_RATE,
+                ?[D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT]D3D12_SHADING_RATE_COMBINER,
+            ) callconv(WINAPI) void,
+            RSSetShadingRateImage: fn (*T, ?*ID3D12Resource) callconv(WINAPI) void,
+        };
+    }
+};
+
+pub const ID3D12GraphicsCommandList6 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        devchild: ID3D12DeviceChild.VTable(Self),
+        cmdlist: ID3D12CommandList.VTable(Self),
+        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
+        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
+        grcmdlist2: ID3D12GraphicsCommandList2.VTable(Self),
+        grcmdlist3: ID3D12GraphicsCommandList3.VTable(Self),
+        grcmdlist4: ID3D12GraphicsCommandList4.VTable(Self),
+        grcmdlist5: ID3D12GraphicsCommandList5.VTable(Self),
+        grcmdlist6: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12CommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList2.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList3.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList4.Methods(Self);
+    usingnamespace ID3D12GraphicsCommandList5.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn DispatchMesh(
+                self: *T,
+                thread_group_count_x: UINT,
+                thread_group_count_y: UINT,
+                thread_group_count_z: UINT,
+            ) void {
+                self.v.grcmdlist6.DispatchMesh(self, thread_group_count_x, thread_group_count_y, thread_group_count_z);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            DispatchMesh: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+        };
+    }
+};
+
 pub const ID3D12CommandQueue = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -4928,6 +5047,18 @@ pub const IID_ID3D12GraphicsCommandList4 = GUID{
     .Data2 = 0xd3a9,
     .Data3 = 0x4541,
     .Data4 = .{ 0x98, 0xcf, 0x64, 0x5b, 0x50, 0xdc, 0x48, 0x74 },
+};
+pub const IID_ID3D12GraphicsCommandList5 = GUID{
+    .Data1 = 0x55050859,
+    .Data2 = 0x4024,
+    .Data3 = 0x474c,
+    .Data4 = .{ 0x87, 0xf5, 0x64, 0x72, 0xea, 0xee, 0x44, 0xea },
+};
+pub const IID_ID3D12GraphicsCommandList6 = GUID{
+    .Data1 = 0xc3827890,
+    .Data2 = 0xe548,
+    .Data3 = 0x4cfa,
+    .Data4 = .{ 0x96, 0xcf, 0x56, 0x89, 0xa9, 0x37, 0x0f, 0x80 },
 };
 
 pub fn d3d12_load_dll() !void {
