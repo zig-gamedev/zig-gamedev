@@ -5474,6 +5474,207 @@ pub const ID3D12Device7 = extern struct {
     }
 };
 
+pub const D3D12_MIP_REGION = extern struct {
+    Width: UINT,
+    Height: UINT,
+    Depth: UINT,
+};
+
+pub const D3D12_RESOURCE_DESC1 = extern struct {
+    Dimension: D3D12_RESOURCE_DIMENSION,
+    Alignment: UINT64,
+    Width: UINT64,
+    Height: UINT,
+    DepthOrArraySize: UINT16,
+    MipLevels: UINT16,
+    Format: DXGI_FORMAT,
+    SampleDesc: DXGI_SAMPLE_DESC,
+    Layout: D3D12_TEXTURE_LAYOUT,
+    Flags: D3D12_RESOURCE_FLAGS,
+    SamplerFeedbackMipRegion: D3D12_MIP_REGION,
+};
+
+pub const ID3D12Device8 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: ID3D12Device1.VTable(Self),
+        device2: ID3D12Device2.VTable(Self),
+        device3: ID3D12Device3.VTable(Self),
+        device4: ID3D12Device4.VTable(Self),
+        device5: ID3D12Device5.VTable(Self),
+        device6: ID3D12Device6.VTable(Self),
+        device7: ID3D12Device7.VTable(Self),
+        device8: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace ID3D12Device2.Methods(Self);
+    usingnamespace ID3D12Device3.Methods(Self);
+    usingnamespace ID3D12Device4.Methods(Self);
+    usingnamespace ID3D12Device5.Methods(Self);
+    usingnamespace ID3D12Device6.Methods(Self);
+    usingnamespace ID3D12Device7.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetResourceAllocationInfo2(
+                self: *T,
+                visible_mask: UINT,
+                num_resource_descs: UINT,
+                resource_descs: *const D3D12_RESOURCE_DESC1,
+                alloc_info: ?[*]D3D12_RESOURCE_ALLOCATION_INFO1,
+            ) D3D12_RESOURCE_ALLOCATION_INFO {
+                var desc: D3D12_RESOURCE_ALLOCATION_INFO = undefined;
+                self.v.device8.GetResourceAllocationInfo2(
+                    self,
+                    &desc,
+                    visible_mask,
+                    num_resource_descs,
+                    resource_descs,
+                    alloc_info,
+                );
+                return desc;
+            }
+            pub inline fn CreateCommittedResource2(
+                self: *T,
+                heap_properties: *const D3D12_HEAP_PROPERTIES,
+                heap_flags: D3D12_HEAP_FLAGS,
+                desc: *const D3D12_RESOURCE_DESC1,
+                initial_state: D3D12_RESOURCE_STATES,
+                clear_value: ?*const D3D12_CLEAR_VALUE,
+                prsession: ?*ID3D12ProtectedResourceSession,
+                guid: *const GUID,
+                resource: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device8.CreateCommittedResource2(
+                    self,
+                    heap_properties,
+                    heap_flags,
+                    desc,
+                    initial_state,
+                    clear_value,
+                    prsession,
+                    guid,
+                    resource,
+                );
+            }
+            pub inline fn CreatePlacedResource1(
+                self: *T,
+                heap: *ID3D12Heap,
+                heap_offset: UINT64,
+                desc: *const D3D12_RESOURCE_DESC1,
+                initial_state: D3D12_RESOURCE_STATES,
+                clear_value: ?*const D3D12_CLEAR_VALUE,
+                guid: *const GUID,
+                resource: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device8.CreatePlacedResource1(
+                    self,
+                    heap,
+                    heap_offset,
+                    desc,
+                    initial_state,
+                    clear_value,
+                    guid,
+                    resource,
+                );
+            }
+            pub inline fn CreateSamplerFeedbackUnorderedAccessView(
+                self: *T,
+                targeted_resource: ?*ID3D12Resource,
+                feedback_resource: ?*ID3D12Resource,
+                dest_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) void {
+                self.v.device8.CreateSamplerFeedbackUnorderedAccessView(
+                    self,
+                    targeted_resource,
+                    feedback_resource,
+                    dest_descriptor,
+                );
+            }
+            pub inline fn GetCopyableFootprints1(
+                self: *T,
+                desc: *const D3D12_RESOURCE_DESC1,
+                first_subresource: UINT,
+                num_subresources: UINT,
+                base_offset: UINT64,
+                layouts: ?[*]D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+                num_rows: ?[*]UINT,
+                row_size_in_bytes: ?[*]UINT64,
+                total_bytes: ?*UINT64,
+            ) void {
+                self.v.device8.GetCopyableFootprints1(
+                    self,
+                    desc,
+                    first_subresource,
+                    num_subresources,
+                    base_offset,
+                    layouts,
+                    num_rows,
+                    row_size_in_bytes,
+                    total_bytes,
+                );
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetResourceAllocationInfo2: fn (
+                *T,
+                UINT,
+                UINT,
+                *const D3D12_RESOURCE_DESC1,
+                ?[*]D3D12_RESOURCE_ALLOCATION_INFO1,
+            ) callconv(WINAPI) D3D12_RESOURCE_ALLOCATION_INFO,
+            CreateCommittedResource2: fn (
+                *T,
+                *const D3D12_HEAP_PROPERTIES,
+                D3D12_HEAP_FLAGS,
+                *const D3D12_RESOURCE_DESC1,
+                D3D12_RESOURCE_STATES,
+                ?*const D3D12_CLEAR_VALUE,
+                ?*ID3D12ProtectedResourceSession,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreatePlacedResource1: fn (
+                *T,
+                *ID3D12Heap,
+                UINT64,
+                *const D3D12_RESOURCE_DESC1,
+                D3D12_RESOURCE_STATES,
+                ?*const D3D12_CLEAR_VALUE,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateSamplerFeedbackUnorderedAccessView: fn (
+                *T,
+                ?*ID3D12Resource,
+                ?*ID3D12Resource,
+                D3D12_CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) void,
+            GetCopyableFootprints1: fn (
+                *T,
+                *const D3D12_RESOURCE_DESC1,
+                UINT,
+                UINT,
+                UINT64,
+                ?[*]D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+                ?[*]UINT,
+                ?[*]UINT64,
+                ?*UINT64,
+            ) callconv(WINAPI) void,
+        };
+    }
+};
+
 pub const D3D12_PROTECTED_SESSION_STATUS = enum(UINT) {
     OK = 0,
     INVALID = 1,
@@ -5645,6 +5846,12 @@ pub const IID_ID3D12Device7 = GUID{
     .Data2 = 0x68a1,
     .Data3 = 0x4b9b,
     .Data4 = .{ 0x8b, 0xd1, 0xdd, 0x60, 0x46, 0xb9, 0x35, 0x8b },
+};
+pub const IID_ID3D12Device8 = GUID{
+    .Data1 = 0x9218E6BB,
+    .Data2 = 0xF944,
+    .Data3 = 0x4F7E,
+    .Data4 = .{ 0xA7, 0x5C, 0xB1, 0xB2, 0xC7, 0xB7, 0x01, 0xF3 },
 };
 pub const IID_ID3D12CommandQueue = GUID{
     .Data1 = 0x0ec870a6,
