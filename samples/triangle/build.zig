@@ -67,7 +67,6 @@ pub fn build(b: *std.build.Builder) void {
 
     exe.addPackagePath("winsdk", "../../libs/winsdk/winsdk.zig");
 
-    exe.linkSystemLibrary("c");
     exe.install();
 
     const run_cmd = exe.run();
