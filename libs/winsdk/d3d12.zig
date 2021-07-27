@@ -3754,6 +3754,12 @@ pub const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC = extern struct {
     ScratchAccelerationStructureData: D3D12_GPU_VIRTUAL_ADDRESS,
 };
 
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = extern struct {
+    ResultDataMaxSizeInBytes: UINT64,
+    ScratchDataSizeInBytes: UINT64,
+    UpdateScratchDataSizeInBytes: UINT64,
+};
+
 pub const ID3D12StateObject = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -5153,6 +5159,249 @@ pub const ID3D12Device4 = extern struct {
     }
 };
 
+pub const D3D12_LIFETIME_STATE = enum(UINT) {
+    IN_USE = 0,
+    NOT_IN_USE = 1,
+};
+
+pub const ID3D12LifetimeOwner = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        ltowner: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn LifetimeStateUpdated(self: *T, new_state: D3D12_LIFETIME_STATE) void {
+                self.v.ltowner.LifetimeStateUpdated(self, new_state);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            LifetimeStateUpdated: fn (*T, D3D12_LIFETIME_STATE) callconv(WINAPI) void,
+        };
+    }
+};
+
+pub const ID3D12Device5 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: ID3D12Device1.VTable(Self),
+        device2: ID3D12Device2.VTable(Self),
+        device3: ID3D12Device3.VTable(Self),
+        device4: ID3D12Device4.VTable(Self),
+        device5: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace ID3D12Device2.Methods(Self);
+    usingnamespace ID3D12Device3.Methods(Self);
+    usingnamespace ID3D12Device4.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn CreateLifetimeTracker(
+                self: *T,
+                owner: *ID3D12LifetimeOwner,
+                guid: *const GUID,
+                tracker: *?*c_void,
+            ) HRESULT {
+                return self.v.device5.CreateLifetimeTracker(self, owner, guid, tracker);
+            }
+            pub inline fn RemoveDevice(self: *T) void {
+                self.v.device5.RemoveDevice(self);
+            }
+            pub inline fn EnumerateMetaCommands(
+                self: *T,
+                num_meta_cmds: *UINT,
+                descs: ?[*]D3D12_META_COMMAND_DESC,
+            ) HRESULT {
+                return self.v.device5.EnumerateMetaCommands(self, num_meta_cmds, descs);
+            }
+            pub inline fn EnumerateMetaCommandParameters(
+                self: *T,
+                cmd_id: *const GUID,
+                stage: D3D12_META_COMMAND_PARAMETER_STAGE,
+                total_size: ?*UINT,
+                param_count: *UINT,
+                param_descs: ?[*]D3D12_META_COMMAND_PARAMETER_DESC,
+            ) HRESULT {
+                return self.v.device5.EnumerateMetaCommandParameters(
+                    self,
+                    cmd_id,
+                    stage,
+                    total_size,
+                    param_count,
+                    param_descs,
+                );
+            }
+            pub inline fn CreateMetaCommand(
+                self: *T,
+                cmd_id: *const GUID,
+                node_mask: UINT,
+                creation_param_data: ?*const c_void,
+                creation_param_data_size: SIZE_T,
+                guid: *const GUID,
+                meta_cmd: *?*c_void,
+            ) HRESULT {
+                return self.v.device5.CreateMetaCommand(
+                    self,
+                    cmd_id,
+                    node_mask,
+                    creation_param_data,
+                    creation_param_data_size,
+                    guid,
+                    meta_cmd,
+                );
+            }
+            pub inline fn CreateStateObject(
+                self: *T,
+                desc: *const D3D12_STATE_OBJECT_DESC,
+                guid: *const GUID,
+                state_object: *?*c_void,
+            ) HRESULT {
+                return self.v.device5.CreateStateObject(self, desc, guid, state_object);
+            }
+            pub inline fn GetRaytracingAccelerationStructurePrebuildInfo(
+                self: *T,
+                desc: *const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
+                info: *D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
+            ) void {
+                self.v.device5.GetRaytracingAccelerationStructurePrebuildInfo(self, desc, info);
+            }
+            pub inline fn CheckDriverMatchingIdentifier(
+                self: *T,
+                serialized_data_type: D3D12_SERIALIZED_DATA_TYPE,
+                identifier_to_check: *const D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
+            ) D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS {
+                return self.v.device5.CheckDriverMatchingIdentifier(self, serialized_data_type, identifier_to_check);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            CreateLifetimeTracker: fn (*T, *ID3D12LifetimeOwner, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            RemoveDevice: fn (self: *T) callconv(WINAPI) void,
+            EnumerateMetaCommands: fn (*T, *UINT, ?[*]D3D12_META_COMMAND_DESC) callconv(WINAPI) HRESULT,
+            EnumerateMetaCommandParameters: fn (
+                *T,
+                *const GUID,
+                D3D12_META_COMMAND_PARAMETER_STAGE,
+                ?*UINT,
+                *UINT,
+                ?[*]D3D12_META_COMMAND_PARAMETER_DESC,
+            ) callconv(WINAPI) HRESULT,
+            CreateMetaCommand: fn (
+                *T,
+                *const GUID,
+                UINT,
+                ?*const c_void,
+                SIZE_T,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateStateObject: fn (
+                *T,
+                *const D3D12_STATE_OBJECT_DESC,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            GetRaytracingAccelerationStructurePrebuildInfo: fn (
+                *T,
+                *const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
+                *D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
+            ) callconv(WINAPI) void,
+            CheckDriverMatchingIdentifier: fn (
+                *T,
+                D3D12_SERIALIZED_DATA_TYPE,
+                *const D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
+            ) callconv(WINAPI) D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS,
+        };
+    }
+};
+
+pub const D3D12_BACKGROUND_PROCESSING_MODE = enum(UINT) {
+    ALLOWED = 0,
+    ALLOW_INTRUSIVE_MEASUREMENTS = 1,
+    DISABLE_BACKGROUND_WORK = 2,
+    DISABLE_PROFILING_BY_SYSTEM = 3,
+};
+
+pub const D3D12_MEASUREMENTS_ACTION = enum(UINT) {
+    KEEP_ALL = 0,
+    COMMIT_RESULTS = 1,
+    COMMIT_RESULTS_HIGH_PRIORITY = 2,
+    DISCARD_PREVIOUS = 3,
+};
+
+pub const ID3D12Device6 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: ID3D12Device1.VTable(Self),
+        device2: ID3D12Device2.VTable(Self),
+        device3: ID3D12Device3.VTable(Self),
+        device4: ID3D12Device4.VTable(Self),
+        device5: ID3D12Device5.VTable(Self),
+        device6: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace ID3D12Device2.Methods(Self);
+    usingnamespace ID3D12Device3.Methods(Self);
+    usingnamespace ID3D12Device4.Methods(Self);
+    usingnamespace ID3D12Device5.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn SetBackgroundProcessingMode(
+                self: *T,
+                mode: D3D12_BACKGROUND_PROCESSING_MODE,
+                measurements_action: D3D12_MEASUREMENTS_ACTION,
+                event_to_signal_upon_completion: ?HANDLE,
+                further_measurements_desired: ?*BOOL,
+            ) HRESULT {
+                return self.v.device6.SetBackgroundProcessingMode(
+                    self,
+                    mode,
+                    measurements_action,
+                    event_to_signal_upon_completion,
+                    further_measurements_desired,
+                );
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            SetBackgroundProcessingMode: fn (
+                *T,
+                D3D12_BACKGROUND_PROCESSING_MODE,
+                D3D12_MEASUREMENTS_ACTION,
+                ?HANDLE,
+                ?*BOOL,
+            ) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 pub const D3D12_PROTECTED_SESSION_STATUS = enum(UINT) {
     OK = 0,
     INVALID = 1,
@@ -5306,6 +5555,18 @@ pub const IID_ID3D12Device4 = GUID{
     .Data2 = 0xa9ee,
     .Data3 = 0x46f9,
     .Data4 = .{ 0xa4, 0x63, 0x30, 0x98, 0x31, 0x5a, 0xa2, 0xe5 },
+};
+pub const IID_ID3D12Device5 = GUID{
+    .Data1 = 0x8b4f173a,
+    .Data2 = 0x2fea,
+    .Data3 = 0x4b80,
+    .Data4 = .{ 0x8f, 0x58, 0x43, 0x07, 0x19, 0x1a, 0xb9, 0x5d },
+};
+pub const IID_ID3D12Device6 = GUID{
+    .Data1 = 0xc70b221b,
+    .Data2 = 0x40e4,
+    .Data3 = 0x4a17,
+    .Data4 = .{ 0x89, 0xaf, 0x02, 0x5a, 0x07, 0x27, 0xa6, 0xdc },
 };
 pub const IID_ID3D12CommandQueue = GUID{
     .Data1 = 0x0ec870a6,
