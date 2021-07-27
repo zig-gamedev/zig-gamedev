@@ -5402,6 +5402,78 @@ pub const ID3D12Device6 = extern struct {
     }
 };
 
+pub const D3D12_PROTECTED_RESOURCE_SESSION_DESC1 = extern struct {
+    NodeMask: UINT,
+    Flags: D3D12_PROTECTED_RESOURCE_SESSION_FLAGS,
+    ProtectionType: GUID,
+};
+
+pub const ID3D12Device7 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: ID3D12Device1.VTable(Self),
+        device2: ID3D12Device2.VTable(Self),
+        device3: ID3D12Device3.VTable(Self),
+        device4: ID3D12Device4.VTable(Self),
+        device5: ID3D12Device5.VTable(Self),
+        device6: ID3D12Device6.VTable(Self),
+        device7: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace ID3D12Device2.Methods(Self);
+    usingnamespace ID3D12Device3.Methods(Self);
+    usingnamespace ID3D12Device4.Methods(Self);
+    usingnamespace ID3D12Device5.Methods(Self);
+    usingnamespace ID3D12Device6.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn AddToStateObject(
+                self: *T,
+                addition: *const D3D12_STATE_OBJECT_DESC,
+                state_object: *ID3D12StateObject,
+                guid: *const GUID,
+                new_state_object: *?*c_void,
+            ) HRESULT {
+                return self.v.device7.AddToStateObject(self, addition, state_object, guid, new_state_object);
+            }
+            pub inline fn CreateProtectedResourceSession1(
+                self: *T,
+                desc: *const D3D12_PROTECTED_RESOURCE_SESSION_DESC1,
+                guid: *const GUID,
+                session: *?*c_void,
+            ) HRESULT {
+                return self.v.device7.CreateProtectedResourceSession1(self, desc, guid, session);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            AddToStateObject: fn (
+                *T,
+                *const D3D12_STATE_OBJECT_DESC,
+                *ID3D12StateObject,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateProtectedResourceSession1: fn (
+                *T,
+                *const D3D12_PROTECTED_RESOURCE_SESSION_DESC1,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 pub const D3D12_PROTECTED_SESSION_STATUS = enum(UINT) {
     OK = 0,
     INVALID = 1,
@@ -5567,6 +5639,12 @@ pub const IID_ID3D12Device6 = GUID{
     .Data2 = 0x40e4,
     .Data3 = 0x4a17,
     .Data4 = .{ 0x89, 0xaf, 0x02, 0x5a, 0x07, 0x27, 0xa6, 0xdc },
+};
+pub const IID_ID3D12Device7 = GUID{
+    .Data1 = 0x5c014b53,
+    .Data2 = 0x68a1,
+    .Data3 = 0x4b9b,
+    .Data4 = .{ 0x8b, 0xd1, 0xdd, 0x60, 0x46, 0xb9, 0x35, 0x8b },
 };
 pub const IID_ID3D12CommandQueue = GUID{
     .Data1 = 0x0ec870a6,
