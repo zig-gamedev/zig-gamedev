@@ -5675,6 +5675,220 @@ pub const ID3D12Device8 = extern struct {
     }
 };
 
+pub const D3D12_SHADER_CACHE_KIND_FLAGS = packed struct {
+    IMPLICIT_D3D_CACHE_FOR_DRIVER: bool align(4) = false, // 0x1
+    IMPLICIT_D3D_CONVERSIONS: bool = false, // 0x2
+    IMPLICIT_DRIVER_MANAGED: bool = false, // 0x4
+    APPLICATION_MANAGED: bool = false, // 0x8
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_SHADER_CACHE_KIND_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_SHADER_CACHE_KIND_FLAGS) == 4);
+}
+
+pub const D3D12_SHADER_CACHE_CONTROL_FLAGS = packed struct {
+    DISABLE: bool align(4) = false, // 0x1
+    ENABLE: bool = false, // 0x2
+    CLEAR: bool = false, // 0x4
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_SHADER_CACHE_CONTROL_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_SHADER_CACHE_CONTROL_FLAGS) == 4);
+}
+
+pub const D3D12_SHADER_CACHE_MODE = enum(UINT) {
+    MEMORY = 0,
+    DISK = 1,
+};
+
+pub const D3D12_SHADER_CACHE_FLAGS = packed struct {
+    DRIVER_VERSIONED: bool align(4) = false, // 0x1
+    USE_WORKING_DIR: bool = false, // 0x2
+    __reserved2: bool = false,
+    __reserved3: bool = false,
+    __reserved4: bool = false,
+    __reserved5: bool = false,
+    __reserved6: bool = false,
+    __reserved7: bool = false,
+    __reserved8: bool = false,
+    __reserved9: bool = false,
+    __reserved10: bool = false,
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+};
+comptime {
+    std.debug.assert(@sizeOf(D3D12_SHADER_CACHE_FLAGS) == 4);
+    std.debug.assert(@alignOf(D3D12_SHADER_CACHE_FLAGS) == 4);
+}
+
+pub const D3D12_SHADER_CACHE_SESSION_DESC = extern struct {
+    Identifier: GUID,
+    Mode: D3D12_SHADER_CACHE_MODE,
+    Flags: D3D12_SHADER_CACHE_FLAGS,
+    MaximumInMemoryCacheSizeBytes: UINT,
+    MaximumInMemoryCacheEntries: UINT,
+    MaximumValueFileSizeBytes: UINT,
+    Version: UINT64,
+};
+
+pub const ID3D12Device9 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: ID3D12Object.VTable(Self),
+        device: ID3D12Device.VTable(Self),
+        device1: ID3D12Device1.VTable(Self),
+        device2: ID3D12Device2.VTable(Self),
+        device3: ID3D12Device3.VTable(Self),
+        device4: ID3D12Device4.VTable(Self),
+        device5: ID3D12Device5.VTable(Self),
+        device6: ID3D12Device6.VTable(Self),
+        device7: ID3D12Device7.VTable(Self),
+        device8: ID3D12Device8.VTable(Self),
+        device9: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace ID3D12Device2.Methods(Self);
+    usingnamespace ID3D12Device3.Methods(Self);
+    usingnamespace ID3D12Device4.Methods(Self);
+    usingnamespace ID3D12Device5.Methods(Self);
+    usingnamespace ID3D12Device6.Methods(Self);
+    usingnamespace ID3D12Device7.Methods(Self);
+    usingnamespace ID3D12Device8.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn CreateShaderCacheSession(
+                self: *T,
+                desc: *const D3D12_SHADER_CACHE_SESSION_DESC,
+                guid: *const GUID,
+                session: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device9.CreateShaderCacheSession(self, desc, guid, session);
+            }
+            pub inline fn ShaderCacheControl(
+                self: *T,
+                kinds: D3D12_SHADER_CACHE_KIND_FLAGS,
+                control: D3D12_SHADER_CACHE_CONTROL_FLAGS,
+            ) HRESULT {
+                return self.v.device9.ShaderCacheControl(self, kinds, control);
+            }
+            pub inline fn CreateCommandQueue1(
+                self: *T,
+                desc: *const D3D12_COMMAND_QUEUE_DESC,
+                creator_id: *const GUID,
+                guid: *const GUID,
+                cmdqueue: *?*c_void,
+            ) HRESULT {
+                return self.v.device9.CreateCommandQueue1(self, desc, creator_id, guid, cmdqueue);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            CreateShaderCacheSession: fn (
+                *T,
+                *const D3D12_SHADER_CACHE_SESSION_DESC,
+                *const GUID,
+                ?*?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            ShaderCacheControl: fn (
+                *T,
+                D3D12_SHADER_CACHE_KIND_FLAGS,
+                D3D12_SHADER_CACHE_CONTROL_FLAGS,
+            ) callconv(WINAPI) HRESULT,
+            CreateCommandQueue1: fn (
+                *T,
+                *const D3D12_COMMAND_QUEUE_DESC,
+                *const GUID,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 pub const D3D12_PROTECTED_SESSION_STATUS = enum(UINT) {
     OK = 0,
     INVALID = 1,
@@ -5852,6 +6066,12 @@ pub const IID_ID3D12Device8 = GUID{
     .Data2 = 0xF944,
     .Data3 = 0x4F7E,
     .Data4 = .{ 0xA7, 0x5C, 0xB1, 0xB2, 0xC7, 0xB7, 0x01, 0xF3 },
+};
+pub const IID_ID3D12Device9 = GUID{
+    .Data1 = 0x4c80e962,
+    .Data2 = 0xf032,
+    .Data3 = 0x4f60,
+    .Data4 = .{ 0xbc, 0x9e, 0xeb, 0xc2, 0xcf, 0xa1, 0xd8, 0x3c },
 };
 pub const IID_ID3D12CommandQueue = GUID{
     .Data1 = 0x0ec870a6,

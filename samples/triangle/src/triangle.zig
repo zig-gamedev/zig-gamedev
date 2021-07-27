@@ -122,7 +122,7 @@ pub const GraphicsContext = struct {
     pub const max_num_buffered_frames = 2;
     pub const num_swapbuffers = 4;
 
-    device: *w.ID3D12Device8,
+    device: *w.ID3D12Device9,
     cmdqueue: *w.ID3D12CommandQueue,
     cmdlist: *w.ID3D12GraphicsCommandList6,
     cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator,
@@ -160,8 +160,8 @@ pub const GraphicsContext = struct {
         }
 
         const device = blk: {
-            var maybe_device: ?*w.ID3D12Device8 = null;
-            try vhr(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device8, @ptrCast(*?*c_void, &maybe_device)));
+            var maybe_device: ?*w.ID3D12Device9 = null;
+            try vhr(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device9, @ptrCast(*?*c_void, &maybe_device)));
             break :blk maybe_device.?;
         };
         errdefer _ = device.Release();
