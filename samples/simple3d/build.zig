@@ -1,5 +1,4 @@
 const std = @import("std");
-const Pkg = std.build.Pkg;
 
 pub fn build(b: *std.build.Builder) void {
     const files = [_][]const u8{
