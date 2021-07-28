@@ -9,6 +9,7 @@
 !*.txt
 !*.hlsl
 !*.hlsli
+!*.bat
 
 !README
 !.ignore
