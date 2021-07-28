@@ -61,6 +61,12 @@ pub const GraphicsContext = struct {
         var dheap = try DescriptorHeap.init(device, 1024, .RTV, .{});
         defer dheap.deinit();
 
+        var mheap = try GpuMemoryHeap.init(device, 1024, .UPLOAD);
+        defer mheap.deinit();
+
+        const mem = mheap.allocate(100);
+        _ = mem;
+
         const des = dheap.allocateDescriptors(10);
         _ = des;
 
@@ -342,6 +348,79 @@ const DescriptorHeap = struct {
         };
 
         dheap.size += num_descriptors;
-        return Descriptor{ .cpu_handle = cpu_handle, .gpu_handle = gpu_handle };
+        return .{ .cpu_handle = cpu_handle, .gpu_handle = gpu_handle };
+    }
+};
+
+const GpuMemoryHeap = struct {
+    const alloc_alignment: u32 = 512;
+
+    heap: *w.ID3D12Resource,
+    cpu_slice: []u8,
+    gpu_base: w.D3D12_GPU_VIRTUAL_ADDRESS,
+    size: u32,
+    capacity: u32,
+
+    fn init(device: *w.ID3D12Device9, capacity: u32, heap_type: w.D3D12_HEAP_TYPE) !GpuMemoryHeap {
+        assert(capacity > 0);
+        const resource = blk: {
+            var maybe_resource: ?*w.ID3D12Resource = null;
+            try vhr(device.CreateCommittedResource(
+                &w.D3D12_HEAP_PROPERTIES{
+                    .Type = heap_type,
+                    .CPUPageProperty = .UNKNOWN,
+                    .MemoryPoolPreference = .UNKNOWN,
+                    .CreationNodeMask = 0,
+                    .VisibleNodeMask = 0,
+                },
+                .{},
+                &w.D3D12_RESOURCE_DESC.initBuffer(capacity),
+                w.D3D12_RESOURCE_STATES.genericRead(),
+                null,
+                &w.IID_ID3D12Resource,
+                @ptrCast(*?*c_void, &maybe_resource),
+            ));
+            break :blk maybe_resource.?;
+        };
+        errdefer _ = resource.Release();
+
+        const cpu_base = blk: {
+            var maybe_cpu_base: ?[*]u8 = null;
+            try vhr(resource.Map(
+                0,
+                &w.D3D12_RANGE{ .Begin = 0, .End = 0 },
+                @ptrCast(*?*c_void, &maybe_cpu_base),
+            ));
+            break :blk maybe_cpu_base.?;
+        };
+        return GpuMemoryHeap{
+            .heap = resource,
+            .cpu_slice = cpu_base[0..capacity],
+            .gpu_base = resource.GetGPUVirtualAddress(),
+            .size = 0,
+            .capacity = capacity,
+        };
+    }
+
+    fn deinit(mheap: *GpuMemoryHeap) void {
+        _ = mheap.heap.Release();
+        mheap.* = undefined;
+    }
+
+    fn allocate(
+        mheap: *GpuMemoryHeap,
+        size: u32,
+    ) struct { cpu_slice: ?[]u8, gpu_base: ?w.D3D12_GPU_VIRTUAL_ADDRESS } {
+        assert(size > 0);
+
+        const aligned_size = (size + (alloc_alignment - 1)) & ~(alloc_alignment - 1);
+        if ((mheap.size + aligned_size) >= mheap.capacity) {
+            return .{ .cpu_slice = null, .gpu_base = null };
+        }
+        const cpu_slice = (mheap.cpu_slice.ptr + mheap.size)[0..size];
+        const gpu_base = mheap.gpu_base + mheap.size;
+
+        mheap.size += aligned_size;
+        return .{ .cpu_slice = cpu_slice, .gpu_base = gpu_base };
     }
 };

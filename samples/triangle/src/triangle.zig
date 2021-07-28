@@ -432,11 +432,11 @@ pub fn main() !void {
                 .NumStrides = 0,
                 .RasterizedStream = 0,
             },
-            .BlendState = w.D3D12_BLEND_DESC.default(),
+            .BlendState = w.D3D12_BLEND_DESC.initDefault(),
             .SampleMask = 0xffff_ffff,
-            .RasterizerState = w.D3D12_RASTERIZER_DESC.default(),
+            .RasterizerState = w.D3D12_RASTERIZER_DESC.initDefault(),
             .DepthStencilState = blk1: {
-                var desc = w.D3D12_DEPTH_STENCIL_DESC.default();
+                var desc = w.D3D12_DEPTH_STENCIL_DESC.initDefault();
                 desc.DepthEnable = w.FALSE;
                 break :blk1 desc;
             },

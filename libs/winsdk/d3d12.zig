@@ -195,7 +195,7 @@ pub const D3D12_RESOURCE_DESC = extern struct {
     Layout: D3D12_TEXTURE_LAYOUT,
     Flags: D3D12_RESOURCE_FLAGS,
 
-    pub fn buffer(width: UINT64) D3D12_RESOURCE_DESC {
+    pub fn initBuffer(width: UINT64) D3D12_RESOURCE_DESC {
         return .{
             .Dimension = .BUFFER,
             .Alignment = 0,
@@ -951,7 +951,7 @@ pub const D3D12_RENDER_TARGET_BLEND_DESC = extern struct {
     LogicOp: D3D12_LOGIC_OP,
     RenderTargetWriteMask: UINT8,
 
-    pub fn default() D3D12_RENDER_TARGET_BLEND_DESC {
+    pub fn initDefault() D3D12_RENDER_TARGET_BLEND_DESC {
         return .{
             .BlendEnable = FALSE,
             .LogicOpEnable = FALSE,
@@ -972,11 +972,11 @@ pub const D3D12_BLEND_DESC = extern struct {
     IndependentBlendEnable: BOOL,
     RenderTarget: [8]D3D12_RENDER_TARGET_BLEND_DESC,
 
-    pub fn default() D3D12_BLEND_DESC {
+    pub fn initDefault() D3D12_BLEND_DESC {
         return .{
             .AlphaToCoverageEnable = FALSE,
             .IndependentBlendEnable = FALSE,
-            .RenderTarget = [_]D3D12_RENDER_TARGET_BLEND_DESC{D3D12_RENDER_TARGET_BLEND_DESC.default()} ** 8,
+            .RenderTarget = [_]D3D12_RENDER_TARGET_BLEND_DESC{D3D12_RENDER_TARGET_BLEND_DESC.initDefault()} ** 8,
         };
     }
 };
@@ -994,7 +994,7 @@ pub const D3D12_RASTERIZER_DESC = extern struct {
     ForcedSampleCount: UINT,
     ConservativeRaster: D3D12_CONSERVATIVE_RASTERIZATION_MODE,
 
-    pub fn default() D3D12_RASTERIZER_DESC {
+    pub fn initDefault() D3D12_RASTERIZER_DESC {
         return .{
             .FillMode = .SOLID,
             .CullMode = .BACK,
@@ -1060,7 +1060,7 @@ pub const D3D12_DEPTH_STENCILOP_DESC = extern struct {
     StencilPassOp: D3D12_STENCIL_OP,
     StencilFunc: D3D12_COMPARISON_FUNC,
 
-    pub fn default() D3D12_DEPTH_STENCILOP_DESC {
+    pub fn initDefault() D3D12_DEPTH_STENCILOP_DESC {
         return .{
             .StencilFailOp = .KEEP,
             .StencilDepthFailOp = .KEEP,
@@ -1080,7 +1080,7 @@ pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
     FrontFace: D3D12_DEPTH_STENCILOP_DESC,
     BackFace: D3D12_DEPTH_STENCILOP_DESC,
 
-    pub fn default() D3D12_DEPTH_STENCIL_DESC {
+    pub fn initDefault() D3D12_DEPTH_STENCIL_DESC {
         return .{
             .DepthEnable = TRUE,
             .DepthWriteMask = .ALL,
@@ -1088,8 +1088,8 @@ pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
             .StencilEnable = FALSE,
             .StencilReadMask = 0xff,
             .StencilWriteMask = 0xff,
-            .FrontFace = D3D12_DEPTH_STENCILOP_DESC.default(),
-            .BackFace = D3D12_DEPTH_STENCILOP_DESC.default(),
+            .FrontFace = D3D12_DEPTH_STENCILOP_DESC.initDefault(),
+            .BackFace = D3D12_DEPTH_STENCILOP_DESC.initDefault(),
         };
     }
 };
@@ -1370,7 +1370,11 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
         TextureCubeArray: D3D12_TEXCUBE_ARRAY_SRV,
     },
 
-    pub fn typedBuffer(format: DXGI_FORMAT, first_element: UINT64, num_elements: UINT) D3D12_SHADER_RESOURCE_VIEW_DESC {
+    pub fn initTypedBuffer(
+        format: DXGI_FORMAT,
+        first_element: UINT64,
+        num_elements: UINT,
+    ) D3D12_SHADER_RESOURCE_VIEW_DESC {
         return .{
             .Format = format,
             .ViewDimension = .BUFFER,
@@ -1384,7 +1388,11 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
         };
     }
 
-    pub fn structuredBuffer(first_element: UINT64, num_elements: UINT, stride: UINT) D3D12_SHADER_RESOURCE_VIEW_DESC {
+    pub fn initStructuredBuffer(
+        first_element: UINT64,
+        num_elements: UINT,
+        stride: UINT,
+    ) D3D12_SHADER_RESOURCE_VIEW_DESC {
         return .{
             .ViewDimension = .BUFFER,
             .u = .{
@@ -1746,14 +1754,14 @@ pub const D3D12_CLEAR_VALUE = extern struct {
         DepthStencil: D3D12_DEPTH_STENCIL_VALUE,
     },
 
-    pub fn color(format: DXGI_FORMAT, in_color: [4]FLOAT) D3D12_CLEAR_VALUE {
+    pub fn initColor(format: DXGI_FORMAT, in_color: [4]FLOAT) D3D12_CLEAR_VALUE {
         return .{
             .Format = format,
             .u = .{ .Color = in_color },
         };
     }
 
-    pub fn depthStencil(format: DXGI_FORMAT, depth: FLOAT, stencil: UINT8) D3D12_CLEAR_VALUE {
+    pub fn initDepthStencil(format: DXGI_FORMAT, depth: FLOAT, stencil: UINT8) D3D12_CLEAR_VALUE {
         return .{
             .Format = format,
             .u = .{ .DepthStencil = .{ .Depth = depth, .Stencil = stencil } },
