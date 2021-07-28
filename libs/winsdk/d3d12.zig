@@ -1754,10 +1754,10 @@ pub const D3D12_CLEAR_VALUE = extern struct {
         DepthStencil: D3D12_DEPTH_STENCIL_VALUE,
     },
 
-    pub fn initColor(format: DXGI_FORMAT, in_color: [4]FLOAT) D3D12_CLEAR_VALUE {
+    pub fn initColor(format: DXGI_FORMAT, in_color: *const [4]FLOAT) D3D12_CLEAR_VALUE {
         return .{
             .Format = format,
-            .u = .{ .Color = in_color },
+            .u = .{ .Color = in_color.* },
         };
     }
 
