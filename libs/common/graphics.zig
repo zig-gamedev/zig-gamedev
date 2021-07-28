@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 const w = @import("../winsdk/winsdk.zig");
+const assert = std.debug.assert;
 
 pub inline fn vhr(hr: w.HRESULT) !void {
     if (hr != 0) {
@@ -56,6 +57,12 @@ pub const GraphicsContext = struct {
             break :blk maybe_device.?;
         };
         errdefer _ = device.Release();
+
+        var dheap = try DescriptorHeap.init(device, 1024, .RTV, .{});
+        defer dheap.deinit();
+
+        const des = dheap.allocateDescriptors(10);
+        _ = des;
 
         const cmdqueue = blk: {
             var maybe_cmdqueue: ?*w.ID3D12CommandQueue = null;
@@ -264,5 +271,77 @@ pub const GraphicsContext = struct {
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
         try vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
         w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
+    }
+};
+
+const Descriptor = struct {
+    cpu_handle: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+    gpu_handle: w.D3D12_GPU_DESCRIPTOR_HANDLE,
+};
+
+const DescriptorHeap = struct {
+    heap: *w.ID3D12DescriptorHeap,
+    base: Descriptor,
+    size: u32,
+    size_temp: u32,
+    capacity: u32,
+    descriptor_size: u32,
+
+    fn init(
+        device: *w.ID3D12Device9,
+        capacity: u32,
+        heap_type: w.D3D12_DESCRIPTOR_HEAP_TYPE,
+        flags: w.D3D12_DESCRIPTOR_HEAP_FLAGS,
+    ) !DescriptorHeap {
+        assert(capacity > 0);
+        const heap = blk: {
+            var maybe_heap: ?*w.ID3D12DescriptorHeap = null;
+            try vhr(device.CreateDescriptorHeap(&.{
+                .Type = heap_type,
+                .NumDescriptors = capacity,
+                .Flags = flags,
+                .NodeMask = 0,
+            }, &w.IID_ID3D12DescriptorHeap, @ptrCast(*?*c_void, &maybe_heap)));
+            break :blk maybe_heap.?;
+        };
+        return DescriptorHeap{
+            .heap = heap,
+            .base = .{
+                .cpu_handle = heap.GetCPUDescriptorHandleForHeapStart(),
+                .gpu_handle = blk: {
+                    if (flags.SHADER_VISIBLE == true)
+                        break :blk heap.GetGPUDescriptorHandleForHeapStart();
+                    break :blk w.D3D12_GPU_DESCRIPTOR_HANDLE{ .ptr = 0 };
+                },
+            },
+            .size = 0,
+            .size_temp = 0,
+            .capacity = capacity,
+            .descriptor_size = device.GetDescriptorHandleIncrementSize(heap_type),
+        };
+    }
+
+    fn deinit(dheap: *DescriptorHeap) void {
+        _ = dheap.heap.Release();
+        dheap.* = undefined;
+    }
+
+    fn allocateDescriptors(dheap: *DescriptorHeap, num_descriptors: u32) Descriptor {
+        assert(num_descriptors > 0);
+        assert((dheap.size + num_descriptors) < dheap.capacity);
+
+        const cpu_handle = w.D3D12_CPU_DESCRIPTOR_HANDLE{
+            .ptr = dheap.base.cpu_handle.ptr + dheap.size * dheap.descriptor_size,
+        };
+        const gpu_handle = w.D3D12_GPU_DESCRIPTOR_HANDLE{
+            .ptr = blk: {
+                if (dheap.base.gpu_handle.ptr != 0)
+                    break :blk dheap.base.gpu_handle.ptr + dheap.size * dheap.descriptor_size;
+                break :blk 0;
+            },
+        };
+
+        dheap.size += num_descriptors;
+        return Descriptor{ .cpu_handle = cpu_handle, .gpu_handle = gpu_handle };
     }
 };
