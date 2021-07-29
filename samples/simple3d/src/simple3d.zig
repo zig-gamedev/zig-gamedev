@@ -226,27 +226,22 @@ pub fn main() !void {
 
             try grctx.beginFrame();
 
-            const back_buffer = grctx.swapbuffers[grctx.back_buffer_index];
-            const back_buffer_rtv = blk: {
-                var descriptor = grctx.rtv_descriptor_heap.GetCPUDescriptorHandleForHeapStart();
-                descriptor.ptr += grctx.back_buffer_index * grctx.device.GetDescriptorHandleIncrementSize(.RTV);
-                break :blk descriptor;
-            };
+            const back_buffer = grctx.getBackBuffer();
 
             grctx.cmdlist.ResourceBarrier(1, &[_]w.D3D12_RESOURCE_BARRIER{.{
                 .Type = .TRANSITION,
                 .Flags = .{},
                 .u = .{
                     .Transition = .{
-                        .pResource = back_buffer,
+                        .pResource = grctx.getResource(back_buffer.resource_handle),
                         .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
                         .StateBefore = .{},
                         .StateAfter = .{ .RENDER_TARGET = true },
                     },
                 },
             }});
-            grctx.cmdlist.OMSetRenderTargets(1, &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer_rtv}, w.TRUE, null);
-            grctx.cmdlist.ClearRenderTargetView(back_buffer_rtv, &[4]f32{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
+            grctx.cmdlist.OMSetRenderTargets(1, &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.cpu_handle}, w.TRUE, null);
+            grctx.cmdlist.ClearRenderTargetView(back_buffer.cpu_handle, &[4]f32{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
             grctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
             grctx.cmdlist.SetPipelineState(pipeline.pso);
             grctx.cmdlist.SetGraphicsRootSignature(pipeline.rs);
@@ -256,7 +251,7 @@ pub fn main() !void {
                 .Flags = .{},
                 .u = .{
                     .Transition = .{
-                        .pResource = back_buffer,
+                        .pResource = grctx.getResource(back_buffer.resource_handle),
                         .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
                         .StateBefore = .{ .RENDER_TARGET = true },
                         .StateAfter = .{},

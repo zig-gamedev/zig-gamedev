@@ -11,16 +11,18 @@ pub inline fn vhr(hr: w.HRESULT) !void {
 }
 
 pub const GraphicsContext = struct {
-    pub const max_num_buffered_frames = 2;
-    pub const num_swapbuffers = 4;
+    const max_num_buffered_frames = 2;
+    const num_swapbuffers = 4;
+    const num_rtv_descriptors = 128;
 
     device: *w.ID3D12Device9,
     cmdqueue: *w.ID3D12CommandQueue,
     cmdlist: *w.ID3D12GraphicsCommandList6,
     cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator,
     swapchain: *w.IDXGISwapChain3,
-    swapbuffers: [num_swapbuffers]*w.ID3D12Resource,
-    rtv_descriptor_heap: *w.ID3D12DescriptorHeap,
+    swapchain_buffers: [num_swapbuffers]ResourceHandle,
+    rtv_heap: DescriptorHeap,
+    resource_pool: ResourcePool,
     viewport_width: u32,
     viewport_height: u32,
     frame_fence: *w.ID3D12Fence,
@@ -57,18 +59,6 @@ pub const GraphicsContext = struct {
             break :blk maybe_device.?;
         };
         errdefer _ = device.Release();
-
-        var dheap = try DescriptorHeap.init(device, 1024, .RTV, .{});
-        defer dheap.deinit();
-
-        var mheap = try GpuMemoryHeap.init(device, 1024, .UPLOAD);
-        defer mheap.deinit();
-
-        const mem = mheap.allocate(100);
-        _ = mem;
-
-        const des = dheap.allocateDescriptors(10);
-        _ = des;
 
         const cmdqueue = blk: {
             var maybe_cmdqueue: ?*w.ID3D12CommandQueue = null;
@@ -112,22 +102,17 @@ pub const GraphicsContext = struct {
             ));
             defer _ = maybe_swapchain.?.Release();
             var maybe_swapchain3: ?*w.IDXGISwapChain3 = null;
-            try vhr(maybe_swapchain.?.QueryInterface(&w.IID_IDXGISwapChain3, @ptrCast(*?*c_void, &maybe_swapchain3)));
+            try vhr(maybe_swapchain.?.QueryInterface(
+                &w.IID_IDXGISwapChain3,
+                @ptrCast(*?*c_void, &maybe_swapchain3),
+            ));
             break :blk maybe_swapchain3.?;
         };
         errdefer _ = swapchain.Release();
 
-        const rtv_descriptor_heap = blk: {
-            var maybe_heap: ?*w.ID3D12DescriptorHeap = null;
-            try vhr(device.CreateDescriptorHeap(&.{
-                .Type = .RTV,
-                .NumDescriptors = num_swapbuffers,
-                .Flags = .{},
-                .NodeMask = 0,
-            }, &w.IID_ID3D12DescriptorHeap, @ptrCast(*?*c_void, &maybe_heap)));
-            break :blk maybe_heap.?;
-        };
-        errdefer _ = rtv_descriptor_heap.Release();
+        var resource_pool = ResourcePool.init();
+
+        var rtv_heap = try DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
 
         const swapbuffers = blk: {
             var maybe_swapbuffers = [_]?*w.ID3D12Resource{null} ** num_swapbuffers;
@@ -136,15 +121,13 @@ pub const GraphicsContext = struct {
                     if (swapbuffer) |sb| _ = sb.Release();
                 }
             }
-            var descriptor = rtv_descriptor_heap.GetCPUDescriptorHandleForHeapStart();
             for (maybe_swapbuffers) |*swapbuffer, buffer_idx| {
                 try vhr(swapchain.GetBuffer(
                     @intCast(u32, buffer_idx),
                     &w.IID_ID3D12Resource,
                     @ptrCast(*?*c_void, &swapbuffer.*),
                 ));
-                device.CreateRenderTargetView(swapbuffer.*, null, descriptor);
-                descriptor.ptr += device.GetDescriptorHandleIncrementSize(.RTV);
+                device.CreateRenderTargetView(swapbuffer.*, null, rtv_heap.allocateDescriptors(1).cpu_handle);
             }
             var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
             for (maybe_swapbuffers) |swapbuffer, i| swapbuffers[i] = swapbuffer.?;
@@ -153,6 +136,14 @@ pub const GraphicsContext = struct {
         errdefer {
             for (swapbuffers) |swapbuffer| _ = swapbuffer.Release();
         }
+
+        const swapchain_buffers = blk: {
+            var swapchain_buffers: [num_swapbuffers]ResourceHandle = undefined;
+            for (swapbuffers) |swapbuffer, i| {
+                swapchain_buffers[i] = resource_pool.addResource(swapbuffer, .{});
+            }
+            break :blk swapchain_buffers;
+        };
 
         const frame_fence = blk: {
             var maybe_frame_fence: ?*w.ID3D12Fence = null;
@@ -206,11 +197,12 @@ pub const GraphicsContext = struct {
             .cmdlist = cmdlist,
             .cmdallocs = cmdallocs,
             .swapchain = swapchain,
-            .swapbuffers = swapbuffers,
+            .swapchain_buffers = swapchain_buffers,
             .frame_fence = frame_fence,
             .frame_fence_event = frame_fence_event,
             .frame_fence_counter = 0,
-            .rtv_descriptor_heap = rtv_descriptor_heap,
+            .rtv_heap = rtv_heap,
+            .resource_pool = resource_pool,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
             .frame_index = 0,
@@ -219,14 +211,14 @@ pub const GraphicsContext = struct {
     }
 
     pub fn deinit(gr: *GraphicsContext) void {
+        gr.resource_pool.deinit();
+        gr.rtv_heap.deinit();
         _ = gr.device.Release();
         _ = gr.cmdqueue.Release();
         _ = gr.swapchain.Release();
         _ = gr.frame_fence.Release();
         _ = gr.cmdlist.Release();
-        _ = gr.rtv_descriptor_heap.Release();
         for (gr.cmdallocs) |cmdalloc| _ = cmdalloc.Release();
-        for (gr.swapbuffers) |swapbuffer| _ = swapbuffer.Release();
         gr.* = undefined;
     }
 
@@ -277,6 +269,118 @@ pub const GraphicsContext = struct {
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
         try vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
         w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
+    }
+
+    pub fn getBackBuffer(gr: GraphicsContext) struct {
+        resource_handle: ResourceHandle,
+        cpu_handle: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+    } {
+        return .{
+            .resource_handle = gr.swapchain_buffers[gr.back_buffer_index],
+            .cpu_handle = .{
+                .ptr = gr.rtv_heap.base.cpu_handle.ptr + gr.back_buffer_index * gr.rtv_heap.descriptor_size,
+            },
+        };
+    }
+
+    pub inline fn getResource(gr: GraphicsContext, handle: ResourceHandle) *w.ID3D12Resource {
+        return gr.resource_pool.getResource(handle).raw.?;
+    }
+};
+
+pub const ResourceHandle = struct {
+    index: u16 align(4),
+    generation: u16,
+};
+
+const Resource = struct {
+    raw: ?*w.ID3D12Resource,
+    state: w.D3D12_RESOURCE_STATES,
+    desc: w.D3D12_RESOURCE_DESC,
+};
+
+const ResourcePool = struct {
+    const max_num_resources = 256;
+
+    resources: []Resource,
+    generations: []u16,
+
+    fn init() ResourcePool {
+        return .{
+            .resources = blk: {
+                var resources = std.heap.page_allocator.alloc(
+                    Resource,
+                    max_num_resources + 1,
+                ) catch unreachable;
+                for (resources) |*res| {
+                    res.* = .{ .raw = null, .state = .{}, .desc = w.D3D12_RESOURCE_DESC.initBuffer(0) };
+                }
+                break :blk resources;
+            },
+            .generations = blk: {
+                var generations = std.heap.page_allocator.alloc(
+                    u16,
+                    max_num_resources + 1,
+                ) catch unreachable;
+                for (generations) |*gen| gen.* = 0;
+                break :blk generations;
+            },
+        };
+    }
+
+    fn deinit(pool: *ResourcePool) void {
+        for (pool.resources) |resource, i| {
+            if (i > 0 and i <= GraphicsContext.num_swapbuffers) {
+                // Release internally created swapbuffers.
+                _ = resource.raw.?.Release();
+            } else if (i > GraphicsContext.num_swapbuffers) {
+                // Verify that all resources has been released by a user.
+                assert(resource.raw == null);
+            }
+        }
+        std.heap.page_allocator.free(pool.resources);
+        std.heap.page_allocator.free(pool.generations);
+        pool.* = undefined;
+    }
+
+    fn addResource(
+        pool: *ResourcePool,
+        raw: *w.ID3D12Resource,
+        state: w.D3D12_RESOURCE_STATES,
+    ) ResourceHandle {
+        var slot_idx: u32 = 1;
+        while (slot_idx <= max_num_resources) : (slot_idx += 1) {
+            if (pool.resources[slot_idx].raw == null)
+                break;
+        }
+        assert(slot_idx <= max_num_resources);
+
+        pool.resources[slot_idx] = .{ .raw = raw, .state = state, .desc = raw.GetDesc() };
+        return .{
+            .index = @intCast(u16, slot_idx),
+            .generation = blk: {
+                pool.generations[slot_idx] += 1;
+                break :blk pool.generations[slot_idx];
+            },
+        };
+    }
+
+    fn isResourceValid(pool: ResourcePool, handle: ResourceHandle) bool {
+        return handle.index > 0 and
+            handle.index <= max_num_resources and
+            handle.generation > 0 and
+            handle.generation == pool.generations[handle.index] and
+            pool.resources[handle.index].raw != null;
+    }
+
+    fn editResource(pool: ResourcePool, handle: ResourceHandle) *Resource {
+        assert(pool.isResourceValid(handle));
+        return &pool.resources[handle.index];
+    }
+
+    fn getResource(pool: ResourcePool, handle: ResourceHandle) Resource {
+        assert(pool.isResourceValid(handle));
+        return pool.resources[handle.index];
     }
 };
 
