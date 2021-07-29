@@ -240,8 +240,18 @@ pub fn main() !void {
                     },
                 },
             }});
-            grctx.cmdlist.OMSetRenderTargets(1, &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.cpu_handle}, w.TRUE, null);
-            grctx.cmdlist.ClearRenderTargetView(back_buffer.cpu_handle, &[4]f32{ 0.2, 0.4, 0.8, 1.0 }, 0, null);
+            grctx.cmdlist.OMSetRenderTargets(
+                1,
+                &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+                w.TRUE,
+                null,
+            );
+            grctx.cmdlist.ClearRenderTargetView(
+                back_buffer.descriptor_handle,
+                &[4]f32{ 0.2, 0.4, 0.8, 1.0 },
+                0,
+                null,
+            );
             grctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
             grctx.cmdlist.SetPipelineState(pipeline.pso);
             grctx.cmdlist.SetGraphicsRootSignature(pipeline.rs);

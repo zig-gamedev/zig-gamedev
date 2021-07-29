@@ -14,6 +14,9 @@ pub const GraphicsContext = struct {
     const max_num_buffered_frames = 2;
     const num_swapbuffers = 4;
     const num_rtv_descriptors = 128;
+    const num_dsv_descriptors = 128;
+    const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
+    const num_cbv_srv_uav_gpu_descriptors = 4 * 1024;
 
     device: *w.ID3D12Device9,
     cmdqueue: *w.ID3D12CommandQueue,
@@ -22,6 +25,9 @@ pub const GraphicsContext = struct {
     swapchain: *w.IDXGISwapChain3,
     swapchain_buffers: [num_swapbuffers]ResourceHandle,
     rtv_heap: DescriptorHeap,
+    dsv_heap: DescriptorHeap,
+    cbv_srv_uav_cpu_heap: DescriptorHeap,
+    cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap,
     resource_pool: ResourcePool,
     viewport_width: u32,
     viewport_height: u32,
@@ -113,6 +119,35 @@ pub const GraphicsContext = struct {
         var resource_pool = ResourcePool.init();
 
         var rtv_heap = try DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
+        errdefer rtv_heap.deinit();
+
+        var dsv_heap = try DescriptorHeap.init(device, num_dsv_descriptors, .DSV, .{});
+        errdefer dsv_heap.deinit();
+
+        var cbv_srv_uav_cpu_heap = try DescriptorHeap.init(
+            device,
+            num_cbv_srv_uav_cpu_descriptors,
+            .CBV_SRV_UAV,
+            .{},
+        );
+        errdefer cbv_srv_uav_cpu_heap.deinit();
+
+        var cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap = undefined;
+        for (cbv_srv_uav_gpu_heaps) |*heap, heap_index| {
+            heap.* = DescriptorHeap.init(
+                device,
+                num_cbv_srv_uav_gpu_descriptors,
+                .CBV_SRV_UAV,
+                .{ .SHADER_VISIBLE = true },
+            ) catch |err| {
+                var i: u32 = 0;
+                while (i < heap_index) : (i += 1) {
+                    cbv_srv_uav_gpu_heaps[i].deinit();
+                }
+                return err;
+            };
+        }
+        errdefer for (cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
 
         const swapbuffers = blk: {
             var maybe_swapbuffers = [_]?*w.ID3D12Resource{null} ** num_swapbuffers;
@@ -202,6 +237,9 @@ pub const GraphicsContext = struct {
             .frame_fence_event = frame_fence_event,
             .frame_fence_counter = 0,
             .rtv_heap = rtv_heap,
+            .dsv_heap = dsv_heap,
+            .cbv_srv_uav_cpu_heap = cbv_srv_uav_cpu_heap,
+            .cbv_srv_uav_gpu_heaps = cbv_srv_uav_gpu_heaps,
             .resource_pool = resource_pool,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
@@ -213,6 +251,9 @@ pub const GraphicsContext = struct {
     pub fn deinit(gr: *GraphicsContext) void {
         gr.resource_pool.deinit();
         gr.rtv_heap.deinit();
+        gr.dsv_heap.deinit();
+        gr.cbv_srv_uav_cpu_heap.deinit();
+        for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
         _ = gr.device.Release();
         _ = gr.cmdqueue.Release();
         _ = gr.swapchain.Release();
@@ -273,11 +314,11 @@ pub const GraphicsContext = struct {
 
     pub fn getBackBuffer(gr: GraphicsContext) struct {
         resource_handle: ResourceHandle,
-        cpu_handle: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+        descriptor_handle: w.D3D12_CPU_DESCRIPTOR_HANDLE,
     } {
         return .{
             .resource_handle = gr.swapchain_buffers[gr.back_buffer_index],
-            .cpu_handle = .{
+            .descriptor_handle = .{
                 .ptr = gr.rtv_heap.base.cpu_handle.ptr + gr.back_buffer_index * gr.rtv_heap.descriptor_size,
             },
         };
