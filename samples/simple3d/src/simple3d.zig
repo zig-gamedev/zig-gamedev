@@ -121,9 +121,6 @@ pub fn main() !void {
 
     _ = w.SetProcessDPIAware();
 
-    try w.dxgi_load_dll();
-    try w.d3d12_load_dll();
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const leaked = gpa.deinit();

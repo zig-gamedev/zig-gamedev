@@ -6020,13 +6020,13 @@ pub const ID3D12ProtectedResourceSession = extern struct {
     }
 };
 
-pub var D3D12GetDebugInterface: fn (*const GUID, ?*?*c_void) callconv(WINAPI) HRESULT = undefined;
-pub var D3D12CreateDevice: fn (
+pub extern "d3d12" fn D3D12GetDebugInterface(*const GUID, ?*?*c_void) callconv(WINAPI) HRESULT;
+pub extern "d3d12" fn D3D12CreateDevice(
     ?*IUnknown,
     D3D_FEATURE_LEVEL,
     *const GUID,
     ?*?*c_void,
-) callconv(WINAPI) HRESULT = undefined;
+) callconv(WINAPI) HRESULT;
 
 pub const IID_ID3D12Device = GUID{
     .Data1 = 0x189819f1,
@@ -6178,10 +6178,3 @@ pub const IID_ID3D12GraphicsCommandList6 = GUID{
     .Data3 = 0x4cfa,
     .Data4 = .{ 0x96, 0xcf, 0x56, 0x89, 0xa9, 0x37, 0x0f, 0x80 },
 };
-
-pub fn d3d12_load_dll() !void {
-    // TODO(mziulek): Better error handling.
-    var d3d12_dll = try std.DynLib.openZ("d3d12.dll");
-    D3D12CreateDevice = d3d12_dll.lookup(@TypeOf(D3D12CreateDevice), "D3D12CreateDevice").?;
-    D3D12GetDebugInterface = d3d12_dll.lookup(@TypeOf(D3D12GetDebugInterface), "D3D12GetDebugInterface").?;
-}
