@@ -196,7 +196,8 @@ pub const D3D12_RESOURCE_DESC = extern struct {
     Flags: D3D12_RESOURCE_FLAGS,
 
     pub fn initBuffer(width: UINT64) D3D12_RESOURCE_DESC {
-        return .{
+        var v = std.mem.zeroes(@This());
+        v = .{
             .Dimension = .BUFFER,
             .Alignment = 0,
             .Width = width,
@@ -208,6 +209,7 @@ pub const D3D12_RESOURCE_DESC = extern struct {
             .Layout = .ROW_MAJOR,
             .Flags = .{},
         };
+        return v;
     }
 };
 
@@ -952,7 +954,8 @@ pub const D3D12_RENDER_TARGET_BLEND_DESC = extern struct {
     RenderTargetWriteMask: UINT8,
 
     pub fn initDefault() D3D12_RENDER_TARGET_BLEND_DESC {
-        return .{
+        var v = std.mem.zeroes(@This());
+        v = .{
             .BlendEnable = FALSE,
             .LogicOpEnable = FALSE,
             .SrcBlend = .ONE,
@@ -964,6 +967,7 @@ pub const D3D12_RENDER_TARGET_BLEND_DESC = extern struct {
             .LogicOp = .NOOP,
             .RenderTargetWriteMask = 0xf,
         };
+        return v;
     }
 };
 
@@ -973,11 +977,13 @@ pub const D3D12_BLEND_DESC = extern struct {
     RenderTarget: [8]D3D12_RENDER_TARGET_BLEND_DESC,
 
     pub fn initDefault() D3D12_BLEND_DESC {
-        return .{
+        var v = std.mem.zeroes(@This());
+        v = .{
             .AlphaToCoverageEnable = FALSE,
             .IndependentBlendEnable = FALSE,
             .RenderTarget = [_]D3D12_RENDER_TARGET_BLEND_DESC{D3D12_RENDER_TARGET_BLEND_DESC.initDefault()} ** 8,
         };
+        return v;
     }
 };
 
@@ -995,7 +1001,8 @@ pub const D3D12_RASTERIZER_DESC = extern struct {
     ConservativeRaster: D3D12_CONSERVATIVE_RASTERIZATION_MODE,
 
     pub fn initDefault() D3D12_RASTERIZER_DESC {
-        return .{
+        var v = std.mem.zeroes(@This());
+        v = .{
             .FillMode = .SOLID,
             .CullMode = .BACK,
             .FrontCounterClockwise = FALSE,
@@ -1008,6 +1015,7 @@ pub const D3D12_RASTERIZER_DESC = extern struct {
             .ForcedSampleCount = 0,
             .ConservativeRaster = .OFF,
         };
+        return v;
     }
 };
 
@@ -1061,12 +1069,14 @@ pub const D3D12_DEPTH_STENCILOP_DESC = extern struct {
     StencilFunc: D3D12_COMPARISON_FUNC,
 
     pub fn initDefault() D3D12_DEPTH_STENCILOP_DESC {
-        return .{
+        var v = std.mem.zeroes(@This());
+        v = .{
             .StencilFailOp = .KEEP,
             .StencilDepthFailOp = .KEEP,
             .StencilPassOp = .KEEP,
             .StencilFunc = .ALWAYS,
         };
+        return v;
     }
 };
 
@@ -1081,7 +1091,8 @@ pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
     BackFace: D3D12_DEPTH_STENCILOP_DESC,
 
     pub fn initDefault() D3D12_DEPTH_STENCIL_DESC {
-        return .{
+        var desc = std.mem.zeroes(@This());
+        desc = .{
             .DepthEnable = TRUE,
             .DepthWriteMask = .ALL,
             .DepthFunc = .LESS,
@@ -1091,6 +1102,7 @@ pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
             .FrontFace = D3D12_DEPTH_STENCILOP_DESC.initDefault(),
             .BackFace = D3D12_DEPTH_STENCILOP_DESC.initDefault(),
         };
+        return desc;
     }
 };
 
@@ -1375,7 +1387,8 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
         first_element: UINT64,
         num_elements: UINT,
     ) D3D12_SHADER_RESOURCE_VIEW_DESC {
-        return .{
+        var desc = std.mem.zeroes(@This());
+        desc = .{
             .Format = format,
             .ViewDimension = .BUFFER,
             .u = .{
@@ -1386,6 +1399,7 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
                 },
             },
         };
+        return desc;
     }
 
     pub fn initStructuredBuffer(
@@ -1393,7 +1407,8 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
         num_elements: UINT,
         stride: UINT,
     ) D3D12_SHADER_RESOURCE_VIEW_DESC {
-        return .{
+        var v = std.mem.zeroes(@This());
+        v = .{
             .ViewDimension = .BUFFER,
             .u = .{
                 .Buffer = .{
@@ -1403,6 +1418,7 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
                 },
             },
         };
+        return v;
     }
 };
 
@@ -1755,17 +1771,21 @@ pub const D3D12_CLEAR_VALUE = extern struct {
     },
 
     pub fn initColor(format: DXGI_FORMAT, in_color: *const [4]FLOAT) D3D12_CLEAR_VALUE {
-        return .{
+        var v = std.mem.zeroes(@This());
+        v = .{
             .Format = format,
             .u = .{ .Color = in_color.* },
         };
+        return v;
     }
 
     pub fn initDepthStencil(format: DXGI_FORMAT, depth: FLOAT, stencil: UINT8) D3D12_CLEAR_VALUE {
-        return .{
+        var v = std.mem.zeroes(@This());
+        v = .{
             .Format = format,
             .u = .{ .DepthStencil = .{ .Depth = depth, .Stencil = stencil } },
         };
+        return v;
     }
 };
 

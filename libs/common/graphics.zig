@@ -30,6 +30,7 @@ pub const GraphicsContext = struct {
     cbv_srv_uav_cpu_heap: DescriptorHeap,
     cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap,
     resource_pool: ResourcePool,
+    pipeline_pool: PipelinePool,
     buffered_resource_barriers: []w.D3D12_RESOURCE_BARRIER,
     num_buffered_resource_barriers: u32,
     viewport_width: u32,
@@ -120,6 +121,7 @@ pub const GraphicsContext = struct {
         errdefer _ = swapchain.Release();
 
         var resource_pool = ResourcePool.init();
+        var pipeline_pool = PipelinePool.init();
 
         var rtv_heap = try DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
         errdefer rtv_heap.deinit();
@@ -244,6 +246,7 @@ pub const GraphicsContext = struct {
             .cbv_srv_uav_cpu_heap = cbv_srv_uav_cpu_heap,
             .cbv_srv_uav_gpu_heaps = cbv_srv_uav_gpu_heaps,
             .resource_pool = resource_pool,
+            .pipeline_pool = pipeline_pool,
             .buffered_resource_barriers = std.heap.page_allocator.alloc(
                 w.D3D12_RESOURCE_BARRIER,
                 max_num_buffered_resource_barriers,
@@ -354,11 +357,11 @@ pub const GraphicsContext = struct {
             if (gr.num_buffered_resource_barriers >= gr.buffered_resource_barriers.len) {
                 gr.flushResourceBarriers();
             }
-            gr.buffered_resource_barriers[gr.num_buffered_resource_barriers] = w.D3D12_RESOURCE_BARRIER{
+            gr.buffered_resource_barriers[gr.num_buffered_resource_barriers] = .{
                 .Type = .TRANSITION,
                 .Flags = .{},
                 .u = .{
-                    .Transition = w.D3D12_RESOURCE_TRANSITION_BARRIER{
+                    .Transition = .{
                         .pResource = resource.raw.?,
                         .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
                         .StateBefore = resource.state,
@@ -369,6 +372,47 @@ pub const GraphicsContext = struct {
             gr.num_buffered_resource_barriers += 1;
             resource.state = state_after;
         }
+    }
+
+    pub fn createGraphicsShaderPipeline(
+        gr: *GraphicsContext,
+        pso_desc: w.D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+    ) PipelineHandle {
+        const hash = compute_hash: {
+            var hasher = std.hash.Adler32.init();
+            hasher.update(
+                @ptrCast([*]const u8, pso_desc.VS.pShaderBytecode.?)[0..pso_desc.VS.BytecodeLength],
+            );
+            hasher.update(
+                @ptrCast([*]const u8, pso_desc.PS.pShaderBytecode.?)[0..pso_desc.PS.BytecodeLength],
+            );
+            hasher.update(std.mem.asBytes(&pso_desc.BlendState));
+            hasher.update(std.mem.asBytes(&pso_desc.SampleMask));
+            hasher.update(std.mem.asBytes(&pso_desc.RasterizerState));
+            hasher.update(std.mem.asBytes(&pso_desc.DepthStencilState));
+            hasher.update(std.mem.asBytes(&pso_desc.IBStripCutValue));
+            hasher.update(std.mem.asBytes(&pso_desc.PrimitiveTopologyType));
+            hasher.update(std.mem.asBytes(&pso_desc.NumRenderTargets));
+            hasher.update(std.mem.asBytes(&pso_desc.RTVFormats));
+            hasher.update(std.mem.asBytes(&pso_desc.DSVFormat));
+            hasher.update(std.mem.asBytes(&pso_desc.SampleDesc));
+            hasher.update(std.mem.asBytes(&pso_desc.InputLayout.NumElements));
+            if (pso_desc.InputLayout.pInputElementDescs) |elements| {
+                var i: u32 = 0;
+                while (i < pso_desc.InputLayout.NumElements) : (i += 1) {
+                    // TODO(mziulek): We ignore 'SemanticName' field here.
+                    hasher.update(std.mem.asBytes(&elements[i].Format));
+                    hasher.update(std.mem.asBytes(&elements[i].InputSlot));
+                    hasher.update(std.mem.asBytes(&elements[i].AlignedByteOffset));
+                    hasher.update(std.mem.asBytes(&elements[i].InputSlotClass));
+                    hasher.update(std.mem.asBytes(&elements[i].InstanceDataStepRate));
+                }
+            }
+            break :compute_hash hasher.final();
+        };
+        std.debug.print("Hash: {d}\n", .{hash});
+        _ = gr;
+        return PipelineHandle{ .index = 1, .generation = 1 };
     }
 };
 
@@ -465,6 +509,106 @@ const ResourcePool = struct {
     fn getResource(pool: ResourcePool, handle: ResourceHandle) *const Resource {
         assert(pool.isResourceValid(handle));
         return &pool.resources[handle.index];
+    }
+};
+
+pub const PipelineHandle = struct {
+    index: u16 align(4),
+    generation: u16,
+};
+
+const PipelineType = enum {
+    Graphics,
+    Compute,
+};
+
+const Pipeline = struct {
+    pso: ?*w.ID3D12PipelineState,
+    rs: ?*w.ID3D12RootSignature,
+    ptype: ?PipelineType,
+};
+
+const PipelinePool = struct {
+    const max_num_pipelines = 256;
+
+    pipelines: []Pipeline,
+    generations: []u16,
+
+    fn init() PipelinePool {
+        return .{
+            .pipelines = blk: {
+                var pipelines = std.heap.page_allocator.alloc(
+                    Pipeline,
+                    max_num_pipelines + 1,
+                ) catch unreachable;
+                for (pipelines) |*pipeline| {
+                    pipeline.* = .{ .pso = null, .rs = null, .ptype = null };
+                }
+                break :blk pipelines;
+            },
+            .generations = blk: {
+                var generations = std.heap.page_allocator.alloc(
+                    u16,
+                    max_num_pipelines + 1,
+                ) catch unreachable;
+                for (generations) |*gen| gen.* = 0;
+                break :blk generations;
+            },
+        };
+    }
+
+    fn deinit(pool: *PipelinePool) void {
+        for (pool.pipelines) |pipeline| {
+            // Verify that all pipelines has been released by a user.
+            assert(pipeline.pso == null);
+            assert(pipeline.rs == null);
+        }
+        std.heap.page_allocator.free(pool.pipelines);
+        std.heap.page_allocator.free(poll.generations);
+        pool.* = undefined;
+    }
+
+    fn addPipeline(
+        pool: *PipelinePool,
+        pso: *w.ID3D12PipelineState,
+        rs: *w.ID3D12RootSignature,
+        ptype: PipelineType,
+    ) PipelineHandle {
+        var slot_idx: u32 = 1;
+        while (slot_idx <= max_num_pipelines) : (slot_idx += 1) {
+            if (pool.pipelines[slot_idx].pso == null)
+                break;
+        }
+        assert(slot_idx <= max_num_pipelines);
+
+        pool.pipelines[slot_idx] = .{ .pso = pso, .rs = rs, .ptype = ptype };
+        return .{
+            .index = @intCast(u16, slot_idx),
+            .generation = blk: {
+                pool.generations[slot_idx] += 1;
+                break :blk pool.generations[slot_idx];
+            },
+        };
+    }
+
+    fn isPipelineValid(pool: PipelinePool, handle: PipelineHandle) bool {
+        return handle.index > 0 and
+            handle.index <= max_num_pipelines and
+            handle.generation > 0 and
+            handle.generation == pool.generations[handle.index] and
+            pool.pipelines[handle.index].pso != null and
+            pool.pipelines[handle.index].rs != null and
+            pool.pipelines[handle.index].ptype != null;
+    }
+
+    fn editPipeline(pool: PipelinePool, handle: PipelineHandle) *Pipeline {
+        assert(pool.isPipelineValid(handle));
+        return &pool.pipelines[handle.index];
+    }
+
+    fn getPipeline(pool: PipelinePool, handle: PipelineHandle) *const Pipeline {
+        assert(pool.isPipelineValid(handle));
+        return &pool.pipelines[handle.index];
     }
 };
 

@@ -190,6 +190,8 @@ pub fn main() !void {
             .Flags = .{},
         };
 
+        _ = grctx.createGraphicsShaderPipeline(pso_desc);
+
         var maybe_pso: ?*w.ID3D12PipelineState = null;
         try vhr(grctx.device.CreateGraphicsPipelineState(
             &pso_desc,
