@@ -1,6 +1,6 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const w = @import("winsdk");
+const w = @import("win32");
 const gr = @import("graphics");
 usingnamespace @import("vectormath");
 const vhr = gr.vhr;

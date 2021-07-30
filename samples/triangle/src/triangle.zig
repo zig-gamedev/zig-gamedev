@@ -1,6 +1,6 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const w = @import("winsdk");
+const w = @import("win32");
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";

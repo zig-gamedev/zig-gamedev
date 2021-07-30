@@ -1,6 +1,6 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const w = @import("../winsdk/winsdk.zig");
+const w = @import("../win32/win32.zig");
 const assert = std.debug.assert;
 
 pub inline fn vhr(hr: w.HRESULT) !void {
