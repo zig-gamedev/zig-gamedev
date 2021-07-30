@@ -124,15 +124,15 @@ pub fn main() !void {
     try w.dxgi_load_dll();
     try w.d3d12_load_dll();
 
-    const window = try initWindow(window_name, window_width, window_height);
-    var grctx = try gr.GraphicsContext.init(window);
-    defer grctx.deinit();
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const leaked = gpa.deinit();
         std.debug.assert(leaked == false);
     }
+
+    const window = try initWindow(window_name, window_width, window_height);
+    var grctx = try gr.GraphicsContext.init(&gpa.allocator, window);
+    defer grctx.deinit();
 
     const pipeline = blk: {
         const vs_file = try std.fs.cwd().openFile("content/shaders/simple3d.vs.cso", .{});

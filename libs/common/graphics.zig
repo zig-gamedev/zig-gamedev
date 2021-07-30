@@ -30,7 +30,10 @@ pub const GraphicsContext = struct {
     cbv_srv_uav_cpu_heap: DescriptorHeap,
     cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap,
     resource_pool: ResourcePool,
-    pipeline_pool: PipelinePool,
+    pipeline: struct {
+        pool: PipelinePool,
+        map: std.AutoHashMap(u32, PipelineHandle),
+    },
     buffered_resource_barriers: []w.D3D12_RESOURCE_BARRIER,
     num_buffered_resource_barriers: u32,
     viewport_width: u32,
@@ -40,8 +43,9 @@ pub const GraphicsContext = struct {
     frame_fence_counter: u64,
     frame_index: u32,
     back_buffer_index: u32,
+    allocator: *std.mem.Allocator,
 
-    pub fn init(window: w.HWND) !GraphicsContext {
+    pub fn init(allocator: *std.mem.Allocator, window: w.HWND) !GraphicsContext {
         const factory = blk: {
             var maybe_factory: ?*w.IDXGIFactory1 = null;
             try vhr(w.CreateDXGIFactory2(
@@ -246,7 +250,10 @@ pub const GraphicsContext = struct {
             .cbv_srv_uav_cpu_heap = cbv_srv_uav_cpu_heap,
             .cbv_srv_uav_gpu_heaps = cbv_srv_uav_gpu_heaps,
             .resource_pool = resource_pool,
-            .pipeline_pool = pipeline_pool,
+            .pipeline = .{
+                .pool = pipeline_pool,
+                .map = std.AutoHashMap(u32, PipelineHandle).init(allocator),
+            },
             .buffered_resource_barriers = std.heap.page_allocator.alloc(
                 w.D3D12_RESOURCE_BARRIER,
                 max_num_buffered_resource_barriers,
@@ -256,11 +263,14 @@ pub const GraphicsContext = struct {
             .viewport_height = viewport_height,
             .frame_index = 0,
             .back_buffer_index = swapchain.GetCurrentBackBufferIndex(),
+            .allocator = allocator,
         };
     }
 
     pub fn deinit(gr: *GraphicsContext) void {
         std.heap.page_allocator.free(gr.buffered_resource_barriers);
+        assert(gr.pipeline.map.count() == 0);
+        gr.pipeline.map.deinit();
         gr.resource_pool.deinit();
         gr.rtv_heap.deinit();
         gr.dsv_heap.deinit();
