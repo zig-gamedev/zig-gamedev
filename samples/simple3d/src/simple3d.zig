@@ -250,7 +250,7 @@ pub fn main() !void {
             grctx.cmdlist.SetGraphicsRootSignature(pipeline.rs);
             grctx.cmdlist.DrawInstanced(3, 1, 0, 0);
 
-            grctx.addTransitionBarrier(back_buffer.resource_handle, .{});
+            grctx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATES.PRESENT);
             grctx.flushResourceBarriers();
 
             try grctx.endFrame();

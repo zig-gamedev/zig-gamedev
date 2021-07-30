@@ -90,23 +90,14 @@ pub const D3D12_HEAP_FLAGS = packed struct {
     __reserved30: bool = false,
     __reserved31: bool = false,
 
-    pub fn allowAllBuffersAndTextures() D3D12_HEAP_FLAGS {
-        return .{};
-    }
-    pub fn allowOnlyBuffers() D3D12_HEAP_FLAGS {
-        return .{ .DENY_RT_DS_TEXTURES = true, .DENY_NON_RT_DS_TEXTURES = true };
-    }
-    pub fn allowOnlyNonRtDsTextures() D3D12_HEAP_FLAGS {
-        return .{ .DENY_BUFFERS = true, .DENY_RT_DS_TEXTURES = true };
-    }
-    pub fn allowOnlyRtDsTextures() D3D12_HEAP_FLAGS {
-        return .{ .DENY_BUFFERS = true, .DENY_NON_RT_DS_TEXTURES = true };
-    }
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
+    pub const ALLOW_ALL_BUFFERS_AND_TEXTURES = Self{};
+    pub const ALLOW_ONLY_BUFFERS = Self{ .DENY_RT_DS_TEXTURES = true, .DENY_NON_RT_DS_TEXTURES = true };
+    pub const ALLOW_ONLY_NON_RT_DS_TEXTURES = Self{ .DENY_BUFFERS = true, .DENY_RT_DS_TEXTURES = true };
+    pub const ALLOW_ONLY_RT_DS_TEXTURES = Self{ .DENY_BUFFERS = true, .DENY_NON_RT_DS_TEXTURES = true };
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_HEAP_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_HEAP_FLAGS) == 4);
-}
 
 pub const D3D12_HEAP_DESC = extern struct {
     SizeInBytes: UINT64,
@@ -177,11 +168,11 @@ pub const D3D12_RESOURCE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RESOURCE_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_RESOURCE_FLAGS) == 4);
-}
 
 pub const D3D12_RESOURCE_DESC = extern struct {
     Dimension: D3D12_RESOURCE_DIMENSION,
@@ -246,11 +237,11 @@ pub const D3D12_FENCE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_FENCE_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_FENCE_FLAGS) == 4);
-}
 
 pub const D3D12_DESCRIPTOR_HEAP_TYPE = enum(UINT) {
     CBV_SRV_UAV = 0,
@@ -292,11 +283,11 @@ pub const D3D12_DESCRIPTOR_HEAP_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_DESCRIPTOR_HEAP_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_DESCRIPTOR_HEAP_FLAGS) == 4);
-}
 
 pub const D3D12_DESCRIPTOR_HEAP_DESC = extern struct {
     Type: D3D12_DESCRIPTOR_HEAP_TYPE,
@@ -370,11 +361,11 @@ pub const D3D12_RESOURCE_BARRIER_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RESOURCE_BARRIER_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_RESOURCE_BARRIER_FLAGS) == 4);
-}
 
 pub const D3D12_RESOURCE_BARRIER = extern struct {
     Type: D3D12_RESOURCE_BARRIER_TYPE,
@@ -461,11 +452,11 @@ pub const D3D12_TILE_RANGE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_TILE_RANGE_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_TILE_RANGE_FLAGS) == 4);
-}
 
 pub const D3D12_SUBRESOURCE_TILING = extern struct {
     WidthInTiles: UINT,
@@ -513,11 +504,11 @@ pub const D3D12_TILE_MAPPING_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_TILE_MAPPING_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_TILE_MAPPING_FLAGS) == 4);
-}
 
 pub const D3D12_TILE_COPY_FLAGS = packed struct {
     NO_HAZARD: bool align(4) = false, // 0x1
@@ -552,11 +543,11 @@ pub const D3D12_TILE_COPY_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_TILE_COPY_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_TILE_COPY_FLAGS) == 4);
-}
 
 pub const D3D12_VIEWPORT = extern struct {
     TopLeftX: FLOAT,
@@ -603,27 +594,22 @@ pub const D3D12_RESOURCE_STATES = packed struct {
     __reserved30: bool = false, // 0x40000000
     __reserved31: bool = false, // 0x80000000
 
-    pub fn genericRead() D3D12_RESOURCE_STATES {
-        return .{
-            .VERTEX_AND_CONSTANT_BUFFER = true,
-            .INDEX_BUFFER = true,
-            .NON_PIXEL_SHADER_RESOURCE = true,
-            .PIXEL_SHADER_RESOURCE = true,
-            .INDIRECT_ARGUMENT = true,
-            .COPY_SOURCE = true,
-        };
-    }
-    pub fn predication() D3D12_RESOURCE_STATES {
-        return .{ .INDIRECT_ARGUMENT = true };
-    }
-    pub fn allShaderResource() D3D12_RESOURCE_STATES {
-        return .{ .NON_PIXEL_SHADER_RESOURCE = true, .PIXEL_SHADER_RESOURCE = true };
-    }
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+
+    pub const NONE = Self{};
+    pub const PRESENT = Self{};
+    pub const GENERIC_READ = Self{
+        .VERTEX_AND_CONSTANT_BUFFER = true,
+        .INDEX_BUFFER = true,
+        .NON_PIXEL_SHADER_RESOURCE = true,
+        .PIXEL_SHADER_RESOURCE = true,
+        .INDIRECT_ARGUMENT = true,
+        .COPY_SOURCE = true,
+    };
+    pub const PREDICATION = Self{ .INDIRECT_ARGUMENT = true };
+    pub const ALL_SHADER_RESOURCE = Self{ .NON_PIXEL_SHADER_RESOURCE = true, .PIXEL_SHADER_RESOURCE = true };
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RESOURCE_STATES) == 4);
-    std.debug.assert(@alignOf(D3D12_RESOURCE_STATES) == 4);
-}
 
 pub const D3D12_INDEX_BUFFER_STRIP_CUT_VALUE = enum(UINT) {
     DISABLED = 0,
@@ -682,11 +668,11 @@ pub const D3D12_CLEAR_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_CLEAR_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_CLEAR_FLAGS) == 4);
-}
 
 pub const D3D12_DISCARD_REGION = extern struct {
     NumRects: UINT,
@@ -810,11 +796,11 @@ pub const D3D12_COMMAND_QUEUE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_COMMAND_QUEUE_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_COMMAND_QUEUE_FLAGS) == 4);
-}
 
 pub const D3D12_COMMAND_QUEUE_PRIORITY = enum(UINT) {
     NORMAL = 0,
@@ -913,9 +899,10 @@ pub const D3D12_COLOR_WRITE_ENABLE = packed struct {
     __reserved30: bool = false,
     __reserved31: bool = false,
 
-    pub fn all() D3D12_COLOR_WRITE_ENABLE {
-        return .{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
-    }
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
+    pub const ALL = Self{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
 };
 comptime {
     std.debug.assert(@sizeOf(D3D12_COLOR_WRITE_ENABLE) == 4);
@@ -1164,11 +1151,11 @@ pub const D3D12_PIPELINE_STATE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_PIPELINE_STATE_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_PIPELINE_STATE_FLAGS) == 4);
-}
 
 pub const D3D12_GRAPHICS_PIPELINE_STATE_DESC = extern struct {
     pRootSignature: ?*ID3D12RootSignature,
@@ -1279,11 +1266,11 @@ pub const D3D12_BUFFER_SRV_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_BUFFER_SRV_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_BUFFER_SRV_FLAGS) == 4);
-}
 
 pub const D3D12_BUFFER_SRV = extern struct {
     FirstElement: UINT64,
@@ -1527,11 +1514,11 @@ pub const D3D12_BUFFER_UAV_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_BUFFER_UAV_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_BUFFER_UAV_FLAGS) == 4);
-}
 
 pub const D3D12_BUFFER_UAV = extern struct {
     FirstElement: UINT64,
@@ -1723,11 +1710,11 @@ pub const D3D12_DSV_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_DSV_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_DSV_FLAGS) == 4);
-}
 
 pub const D3D12_DSV_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
@@ -3100,9 +3087,9 @@ pub const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC = extern struct {
 };
 
 pub const D3D12_RENDER_PASS_FLAGS = packed struct {
-    D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES: bool align(4) = false, // 0x1
-    D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS: bool = false, // 0x2
-    D3D12_RENDER_PASS_FLAG_RESUMING_PASS: bool = false, // 0x4
+    ALLOW_UAV_WRITES: bool align(4) = false, // 0x1
+    SUSPENDING_PASS: bool = false, // 0x2
+    RESUMING_PASS: bool = false, // 0x4
     __reserved3: bool = false,
     __reserved4: bool = false,
     __reserved5: bool = false,
@@ -3132,11 +3119,11 @@ pub const D3D12_RENDER_PASS_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RENDER_PASS_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_RENDER_PASS_FLAGS) == 4);
-}
 
 pub const D3D12_META_COMMAND_PARAMETER_TYPE = enum(UINT) {
     FLOAT = 0,
@@ -3147,8 +3134,8 @@ pub const D3D12_META_COMMAND_PARAMETER_TYPE = enum(UINT) {
 };
 
 pub const D3D12_META_COMMAND_PARAMETER_FLAGS = packed struct {
-    D3D12_META_COMMAND_PARAMETER_FLAG_INPUT: bool align(4) = false, // 0x1
-    D3D12_META_COMMAND_PARAMETER_FLAG_OUTPUT: bool = false, // 0x2
+    INPUT: bool align(4) = false, // 0x1
+    OUTPUT: bool = false, // 0x2
     __reserved2: bool = false,
     __reserved3: bool = false,
     __reserved4: bool = false,
@@ -3179,11 +3166,11 @@ pub const D3D12_META_COMMAND_PARAMETER_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_META_COMMAND_PARAMETER_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_META_COMMAND_PARAMETER_FLAGS) == 4);
-}
 
 pub const D3D12_META_COMMAND_PARAMETER_STAGE = enum(UINT) {
     CREATION = 0,
@@ -3200,23 +3187,23 @@ pub const D3D12_META_COMMAND_PARAMETER_DESC = extern struct {
 };
 
 pub const D3D12_GRAPHICS_STATES = packed struct {
-    D3D12_GRAPHICS_STATE_IA_VERTEX_BUFFERS: bool align(4) = false, // ( 1 << 0 )
-    D3D12_GRAPHICS_STATE_IA_INDEX_BUFFER: bool = false, // ( 1 << 1 )
-    D3D12_GRAPHICS_STATE_IA_PRIMITIVE_TOPOLOGY: bool = false, // ( 1 << 2 )
-    D3D12_GRAPHICS_STATE_DESCRIPTOR_HEAP: bool = false, // ( 1 << 3 )
-    D3D12_GRAPHICS_STATE_GRAPHICS_ROOT_SIGNATURE: bool = false, // ( 1 << 4 )
-    D3D12_GRAPHICS_STATE_COMPUTE_ROOT_SIGNATURE: bool = false, // ( 1 << 5 )
-    D3D12_GRAPHICS_STATE_RS_VIEWPORTS: bool = false, // ( 1 << 6 )
-    D3D12_GRAPHICS_STATE_RS_SCISSOR_RECTS: bool = false, // ( 1 << 7 )
-    D3D12_GRAPHICS_STATE_PREDICATION: bool = false, // ( 1 << 8 )
-    D3D12_GRAPHICS_STATE_OM_RENDER_TARGETS: bool = false, // ( 1 << 9 )
-    D3D12_GRAPHICS_STATE_OM_STENCIL_REF: bool = false, //  ( 1 << 10 )
-    D3D12_GRAPHICS_STATE_OM_BLEND_FACTOR: bool = false, // ( 1 << 11 )
-    D3D12_GRAPHICS_STATE_PIPELINE_STATE: bool = false, // ( 1 << 12 )
-    D3D12_GRAPHICS_STATE_SO_TARGETS: bool = false, // ( 1 << 13 )
-    D3D12_GRAPHICS_STATE_OM_DEPTH_BOUNDS: bool = false, //  ( 1 << 14 )
-    D3D12_GRAPHICS_STATE_SAMPLE_POSITIONS: bool = false, // ( 1 << 15 )
-    D3D12_GRAPHICS_STATE_VIEW_INSTANCE_MASK: bool = false, // ( 1 << 16 )
+    IA_VERTEX_BUFFERS: bool align(4) = false, // ( 1 << 0 )
+    IA_INDEX_BUFFER: bool = false, // ( 1 << 1 )
+    IA_PRIMITIVE_TOPOLOGY: bool = false, // ( 1 << 2 )
+    DESCRIPTOR_HEAP: bool = false, // ( 1 << 3 )
+    GRAPHICS_ROOT_SIGNATURE: bool = false, // ( 1 << 4 )
+    COMPUTE_ROOT_SIGNATURE: bool = false, // ( 1 << 5 )
+    RS_VIEWPORTS: bool = false, // ( 1 << 6 )
+    RS_SCISSOR_RECTS: bool = false, // ( 1 << 7 )
+    PREDICATION: bool = false, // ( 1 << 8 )
+    OM_RENDER_TARGETS: bool = false, // ( 1 << 9 )
+    OM_STENCIL_REF: bool = false, //  ( 1 << 10 )
+    OM_BLEND_FACTOR: bool = false, // ( 1 << 11 )
+    PIPELINE_STATE: bool = false, // ( 1 << 12 )
+    SO_TARGETS: bool = false, // ( 1 << 13 )
+    OM_DEPTH_BOUNDS: bool = false, //  ( 1 << 14 )
+    SAMPLE_POSITIONS: bool = false, // ( 1 << 15 )
+    VIEW_INSTANCE_MASK: bool = false, // ( 1 << 16 )
     __reserved17: bool = false,
     __reserved18: bool = false,
     __reserved19: bool = false,
@@ -3232,11 +3219,11 @@ pub const D3D12_GRAPHICS_STATES = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_GRAPHICS_STATES) == 4);
-    std.debug.assert(@alignOf(D3D12_GRAPHICS_STATES) == 4);
-}
 
 pub const D3D12_META_COMMAND_DESC = extern struct {
     Id: GUID,
@@ -3335,11 +3322,11 @@ pub const D3D12_STATE_OBJECT_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_STATE_OBJECT_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_STATE_OBJECT_FLAGS) == 4);
-}
 
 pub const D3D12_STATE_OBJECT_CONFIG = extern struct {
     Flags: D3D12_STATE_OBJECT_FLAGS,
@@ -3390,11 +3377,11 @@ pub const D3D12_EXPORT_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_EXPORT_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_EXPORT_FLAGS) == 4);
-}
 
 pub const D3D12_EXPORT_DESC = extern struct {
     Name: LPCWSTR,
@@ -3481,11 +3468,11 @@ pub const D3D12_RAYTRACING_PIPELINE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RAYTRACING_PIPELINE_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_RAYTRACING_PIPELINE_FLAGS) == 4);
-}
 
 pub const D3D12_RAYTRACING_PIPELINE_CONFIG1 = extern struct {
     MaxTraceRecursionDepth: UINT,
@@ -3536,11 +3523,11 @@ pub const D3D12_RAYTRACING_GEOMETRY_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RAYTRACING_GEOMETRY_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_RAYTRACING_GEOMETRY_FLAGS) == 4);
-}
 
 pub const D3D12_RAYTRACING_GEOMETRY_TYPE = enum(UINT) {
     TRIANGLES = 0,
@@ -3580,11 +3567,11 @@ pub const D3D12_RAYTRACING_INSTANCE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RAYTRACING_INSTANCE_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_RAYTRACING_INSTANCE_FLAGS) == 4);
-}
 
 pub const D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE = extern struct {
     StartAddress: D3D12_GPU_VIRTUAL_ADDRESS,
@@ -3659,11 +3646,11 @@ pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS) == 4);
-}
 
 pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE = enum(UINT) {
     CLONE = 0,
@@ -4867,7 +4854,7 @@ pub const ID3D12Device2 = extern struct {
 };
 
 pub const D3D12_RESIDENCY_FLAGS = packed struct {
-    D3D12_RESIDENCY_FLAG_DENY_OVERBUDGET: bool align(4) = false,
+    DENY_OVERBUDGET: bool align(4) = false,
     __reserved1: bool = false,
     __reserved2: bool = false,
     __reserved3: bool = false,
@@ -4899,11 +4886,11 @@ pub const D3D12_RESIDENCY_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_RESIDENCY_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_RESIDENCY_FLAGS) == 4);
-}
 
 pub const ID3D12Device3 = extern struct {
     const Self = @This();
@@ -5009,11 +4996,11 @@ pub const D3D12_COMMAND_LIST_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_COMMAND_LIST_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_COMMAND_LIST_FLAGS) == 4);
-}
 
 pub const D3D12_RESOURCE_ALLOCATION_INFO1 = extern struct {
     Offset: UINT64,
@@ -5736,11 +5723,11 @@ pub const D3D12_SHADER_CACHE_KIND_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_SHADER_CACHE_KIND_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_SHADER_CACHE_KIND_FLAGS) == 4);
-}
 
 pub const D3D12_SHADER_CACHE_CONTROL_FLAGS = packed struct {
     DISABLE: bool align(4) = false, // 0x1
@@ -5775,11 +5762,11 @@ pub const D3D12_SHADER_CACHE_CONTROL_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_SHADER_CACHE_CONTROL_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_SHADER_CACHE_CONTROL_FLAGS) == 4);
-}
 
 pub const D3D12_SHADER_CACHE_MODE = enum(UINT) {
     MEMORY = 0,
@@ -5819,11 +5806,11 @@ pub const D3D12_SHADER_CACHE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_SHADER_CACHE_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_SHADER_CACHE_FLAGS) == 4);
-}
 
 pub const D3D12_SHADER_CACHE_SESSION_DESC = extern struct {
     Identifier: GUID,
@@ -5987,11 +5974,11 @@ pub const D3D12_PROTECTED_RESOURCE_SESSION_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_PROTECTED_RESOURCE_SESSION_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_PROTECTED_RESOURCE_SESSION_FLAGS) == 4);
-}
 
 pub const D3D12_PROTECTED_RESOURCE_SESSION_DESC = extern struct {
     NodeMask: UINT,

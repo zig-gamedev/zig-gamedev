@@ -1,4 +1,5 @@
 const std = @import("std");
+const assert = std.debug.assert;
 usingnamespace std.os.windows;
 
 pub const INT8 = i8;
@@ -55,3 +56,34 @@ pub extern "user32" fn SetWindowTextA(hWnd: ?HWND, lpString: LPCSTR) callconv(WI
 
 pub const VK_ESCAPE = 0x001B;
 pub const WS_VISIBLE = 0x10000000;
+
+pub fn FlagsMixin(comptime FlagType: type) type {
+    comptime assert(@sizeOf(FlagType) == 4);
+    comptime assert(@alignOf(FlagType) == 4);
+    return struct {
+        pub fn toInt(self: FlagType) FlagsInt {
+            return @bitCast(FlagsInt, self);
+        }
+        pub fn fromInt(value: FlagsInt) FlagType {
+            return @bitCast(FlagType, value);
+        }
+        pub fn with(a: FlagType, b: FlagType) FlagType {
+            return fromInt(toInt(a) | toInt(b));
+        }
+        pub fn only(a: FlagType, b: FlagType) FlagType {
+            return fromInt(toInt(a) & toInt(b));
+        }
+        pub fn without(a: FlagType, b: FlagType) FlagType {
+            return fromInt(toInt(a) & ~toInt(b));
+        }
+        pub fn hasAllSet(a: FlagType, b: FlagType) bool {
+            return (toInt(a) & toInt(b)) == toInt(b);
+        }
+        pub fn hasAnySet(a: FlagType, b: FlagType) bool {
+            return (toInt(a) & toInt(b)) != 0;
+        }
+        pub fn isEmpty(a: FlagType) bool {
+            return toInt(a) == 0;
+        }
+    };
+}
