@@ -228,18 +228,9 @@ pub fn main() !void {
 
             const back_buffer = grctx.getBackBuffer();
 
-            grctx.cmdlist.ResourceBarrier(1, &[_]w.D3D12_RESOURCE_BARRIER{.{
-                .Type = .TRANSITION,
-                .Flags = .{},
-                .u = .{
-                    .Transition = .{
-                        .pResource = grctx.getResource(back_buffer.resource_handle),
-                        .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                        .StateBefore = .{},
-                        .StateAfter = .{ .RENDER_TARGET = true },
-                    },
-                },
-            }});
+            grctx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
+            grctx.flushResourceBarriers();
+
             grctx.cmdlist.OMSetRenderTargets(
                 1,
                 &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
@@ -256,18 +247,9 @@ pub fn main() !void {
             grctx.cmdlist.SetPipelineState(pipeline.pso);
             grctx.cmdlist.SetGraphicsRootSignature(pipeline.rs);
             grctx.cmdlist.DrawInstanced(3, 1, 0, 0);
-            grctx.cmdlist.ResourceBarrier(1, &[_]w.D3D12_RESOURCE_BARRIER{.{
-                .Type = .TRANSITION,
-                .Flags = .{},
-                .u = .{
-                    .Transition = .{
-                        .pResource = grctx.getResource(back_buffer.resource_handle),
-                        .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                        .StateBefore = .{ .RENDER_TARGET = true },
-                        .StateAfter = .{},
-                    },
-                },
-            }});
+
+            grctx.addTransitionBarrier(back_buffer.resource_handle, .{});
+            grctx.flushResourceBarriers();
 
             try grctx.endFrame();
         }

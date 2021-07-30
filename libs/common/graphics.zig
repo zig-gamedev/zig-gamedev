@@ -17,6 +17,7 @@ pub const GraphicsContext = struct {
     const num_dsv_descriptors = 128;
     const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
     const num_cbv_srv_uav_gpu_descriptors = 4 * 1024;
+    const max_num_buffered_resource_barriers = 32;
 
     device: *w.ID3D12Device9,
     cmdqueue: *w.ID3D12CommandQueue,
@@ -29,6 +30,8 @@ pub const GraphicsContext = struct {
     cbv_srv_uav_cpu_heap: DescriptorHeap,
     cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap,
     resource_pool: ResourcePool,
+    buffered_resource_barriers: []w.D3D12_RESOURCE_BARRIER,
+    num_buffered_resource_barriers: u32,
     viewport_width: u32,
     viewport_height: u32,
     frame_fence: *w.ID3D12Fence,
@@ -241,6 +244,11 @@ pub const GraphicsContext = struct {
             .cbv_srv_uav_cpu_heap = cbv_srv_uav_cpu_heap,
             .cbv_srv_uav_gpu_heaps = cbv_srv_uav_gpu_heaps,
             .resource_pool = resource_pool,
+            .buffered_resource_barriers = std.heap.page_allocator.alloc(
+                w.D3D12_RESOURCE_BARRIER,
+                max_num_buffered_resource_barriers,
+            ) catch unreachable,
+            .num_buffered_resource_barriers = 0,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
             .frame_index = 0,
@@ -249,6 +257,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn deinit(gr: *GraphicsContext) void {
+        std.heap.page_allocator.free(gr.buffered_resource_barriers);
         gr.resource_pool.deinit();
         gr.rtv_heap.deinit();
         gr.dsv_heap.deinit();
@@ -326,6 +335,40 @@ pub const GraphicsContext = struct {
 
     pub inline fn getResource(gr: GraphicsContext, handle: ResourceHandle) *w.ID3D12Resource {
         return gr.resource_pool.getResource(handle).raw.?;
+    }
+
+    pub fn flushResourceBarriers(gr: *GraphicsContext) void {
+        if (gr.num_buffered_resource_barriers > 0) {
+            gr.cmdlist.ResourceBarrier(gr.num_buffered_resource_barriers, gr.buffered_resource_barriers.ptr);
+            gr.num_buffered_resource_barriers = 0;
+        }
+    }
+
+    pub fn addTransitionBarrier(
+        gr: *GraphicsContext,
+        handle: ResourceHandle,
+        state_after: w.D3D12_RESOURCE_STATES,
+    ) void {
+        var resource = gr.resource_pool.editResource(handle);
+        if (@bitCast(u32, state_after) != @bitCast(u32, resource.state)) {
+            if (gr.num_buffered_resource_barriers >= gr.buffered_resource_barriers.len) {
+                gr.flushResourceBarriers();
+            }
+            gr.buffered_resource_barriers[gr.num_buffered_resource_barriers] = w.D3D12_RESOURCE_BARRIER{
+                .Type = .TRANSITION,
+                .Flags = .{},
+                .u = .{
+                    .Transition = w.D3D12_RESOURCE_TRANSITION_BARRIER{
+                        .pResource = resource.raw.?,
+                        .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                        .StateBefore = resource.state,
+                        .StateAfter = state_after,
+                    },
+                },
+            };
+            gr.num_buffered_resource_barriers += 1;
+            resource.state = state_after;
+        }
     }
 };
 
@@ -419,9 +462,9 @@ const ResourcePool = struct {
         return &pool.resources[handle.index];
     }
 
-    fn getResource(pool: ResourcePool, handle: ResourceHandle) Resource {
+    fn getResource(pool: ResourcePool, handle: ResourceHandle) *const Resource {
         assert(pool.isResourceValid(handle));
-        return pool.resources[handle.index];
+        return &pool.resources[handle.index];
     }
 };
 
