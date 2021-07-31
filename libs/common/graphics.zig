@@ -32,7 +32,8 @@ pub const GraphicsContext = struct {
     resource_pool: ResourcePool,
     pipeline: struct {
         pool: PipelinePool,
-        map: std.AutoHashMap(u32, PipelineHandle),
+        map: std.AutoHashMapUnmanaged(u32, PipelineHandle),
+        current: PipelineHandle,
     },
     buffered_resource_barriers: []w.D3D12_RESOURCE_BARRIER,
     num_buffered_resource_barriers: u32,
@@ -43,9 +44,8 @@ pub const GraphicsContext = struct {
     frame_fence_counter: u64,
     frame_index: u32,
     back_buffer_index: u32,
-    allocator: *std.mem.Allocator,
 
-    pub fn init(allocator: *std.mem.Allocator, window: w.HWND) !GraphicsContext {
+    pub fn init(window: w.HWND) !GraphicsContext {
         const factory = blk: {
             var maybe_factory: ?*w.IDXGIFactory1 = null;
             try vhr(w.CreateDXGIFactory2(
@@ -252,7 +252,8 @@ pub const GraphicsContext = struct {
             .resource_pool = resource_pool,
             .pipeline = .{
                 .pool = pipeline_pool,
-                .map = std.AutoHashMap(u32, PipelineHandle).init(allocator),
+                .map = .{},
+                .current = .{ .index = 0, .generation = 0 },
             },
             .buffered_resource_barriers = std.heap.page_allocator.alloc(
                 w.D3D12_RESOURCE_BARRIER,
@@ -263,14 +264,13 @@ pub const GraphicsContext = struct {
             .viewport_height = viewport_height,
             .frame_index = 0,
             .back_buffer_index = swapchain.GetCurrentBackBufferIndex(),
-            .allocator = allocator,
         };
     }
 
-    pub fn deinit(gr: *GraphicsContext) void {
+    pub fn deinit(gr: *GraphicsContext, allocator: *std.mem.Allocator) void {
         std.heap.page_allocator.free(gr.buffered_resource_barriers);
         assert(gr.pipeline.map.count() == 0);
-        gr.pipeline.map.deinit();
+        gr.pipeline.map.deinit(allocator);
         gr.resource_pool.deinit();
         gr.rtv_heap.deinit();
         gr.dsv_heap.deinit();
@@ -304,6 +304,7 @@ pub const GraphicsContext = struct {
             .right = @intCast(c_long, gr.viewport_width),
             .bottom = @intCast(c_long, gr.viewport_height),
         }});
+        gr.pipeline.current = .{ .index = 0, .generation = 0 };
     }
 
     pub fn endFrame(gr: *GraphicsContext) !void {
@@ -386,8 +387,9 @@ pub const GraphicsContext = struct {
 
     pub fn createGraphicsShaderPipeline(
         gr: *GraphicsContext,
-        pso_desc: w.D3D12_GRAPHICS_PIPELINE_STATE_DESC,
-    ) PipelineHandle {
+        pso_desc: *w.D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+        allocator: *std.mem.Allocator,
+    ) !PipelineHandle {
         const hash = compute_hash: {
             var hasher = std.hash.Adler32.init();
             hasher.update(
@@ -406,6 +408,8 @@ pub const GraphicsContext = struct {
             hasher.update(std.mem.asBytes(&pso_desc.RTVFormats));
             hasher.update(std.mem.asBytes(&pso_desc.DSVFormat));
             hasher.update(std.mem.asBytes(&pso_desc.SampleDesc));
+            // We don't support Stream Output.
+            assert(pso_desc.StreamOutput.pSODeclaration == null);
             hasher.update(std.mem.asBytes(&pso_desc.InputLayout.NumElements));
             if (pso_desc.InputLayout.pInputElementDescs) |elements| {
                 var i: u32 = 0;
@@ -420,9 +424,94 @@ pub const GraphicsContext = struct {
             }
             break :compute_hash hasher.final();
         };
-        std.debug.print("Hash: {d}\n", .{hash});
-        _ = gr;
-        return PipelineHandle{ .index = 1, .generation = 1 };
+        std.debug.print("PSO hash: {d}\n", .{hash});
+
+        if (gr.pipeline.map.contains(hash)) {
+            std.log.info("[graphics] Graphics pipeline hit detected.", .{});
+            const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
+            _ = incrementPipelineRefcount(gr.*, handle);
+            return handle;
+        }
+
+        const rs = blk: {
+            var maybe_rs: ?*w.ID3D12RootSignature = null;
+            try vhr(gr.device.CreateRootSignature(
+                0,
+                pso_desc.VS.pShaderBytecode.?,
+                pso_desc.VS.BytecodeLength,
+                &w.IID_ID3D12RootSignature,
+                @ptrCast(*?*c_void, &maybe_rs),
+            ));
+            break :blk maybe_rs.?;
+        };
+        errdefer _ = rs.Release();
+
+        pso_desc.pRootSignature = rs;
+
+        const pso = blk: {
+            var maybe_pso: ?*w.ID3D12PipelineState = null;
+            try vhr(gr.device.CreateGraphicsPipelineState(
+                pso_desc,
+                &w.IID_ID3D12PipelineState,
+                @ptrCast(*?*c_void, &maybe_pso),
+            ));
+            break :blk maybe_pso.?;
+        };
+        errdefer _ = pso.Release();
+
+        const handle = gr.pipeline.pool.addPipeline(pso, rs, .Graphics);
+        gr.pipeline.map.put(allocator, hash, handle) catch unreachable;
+        return handle;
+    }
+
+    pub fn setPipelineState(gr: *GraphicsContext, pipeline_handle: PipelineHandle) void {
+        // TODO(mziulek): Do we need to unset pipeline state (null, null)?
+        const pipeline = gr.pipeline.pool.getPipeline(pipeline_handle);
+
+        if (pipeline_handle.index == gr.pipeline.current.index and
+            pipeline_handle.generation == gr.pipeline.current.generation)
+        {
+            return;
+        }
+
+        gr.cmdlist.SetPipelineState(pipeline.pso.?);
+        switch (pipeline.ptype.?) {
+            .Graphics => gr.cmdlist.SetGraphicsRootSignature(pipeline.rs.?),
+            .Compute => gr.cmdlist.SetComputeRootSignature(pipeline.rs.?),
+        }
+
+        gr.pipeline.current = pipeline_handle;
+    }
+
+    pub fn incrementPipelineRefcount(gr: GraphicsContext, handle: PipelineHandle) u32 {
+        const pipeline = gr.pipeline.pool.getPipeline(handle);
+        const refcount = pipeline.pso.?.AddRef();
+        _ = pipeline.rs.?.AddRef();
+        return refcount;
+    }
+
+    pub fn releasePipeline(gr: *GraphicsContext, handle: PipelineHandle) u32 {
+        var pipeline = gr.pipeline.pool.editPipeline(handle);
+
+        const refcount = pipeline.pso.?.Release();
+        _ = pipeline.rs.?.Release();
+
+        if (refcount == 0) {
+            const hash_to_delete = blk: {
+                var it = gr.pipeline.map.iterator();
+                while (it.next()) |kv| {
+                    if (kv.value_ptr.*.index == handle.index and
+                        kv.value_ptr.*.generation == handle.generation)
+                    {
+                        break :blk kv.key_ptr.*;
+                    }
+                }
+                unreachable;
+            };
+            _ = gr.pipeline.map.remove(hash_to_delete);
+            pipeline.* = .{ .pso = null, .rs = null, .ptype = null };
+        }
+        return refcount;
     }
 };
 

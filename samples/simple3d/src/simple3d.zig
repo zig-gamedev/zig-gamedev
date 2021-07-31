@@ -128,8 +128,8 @@ pub fn main() !void {
     }
 
     const window = try initWindow(window_name, window_width, window_height);
-    var grctx = try gr.GraphicsContext.init(&gpa.allocator, window);
-    defer grctx.deinit();
+    var grctx = try gr.GraphicsContext.init(window);
+    defer grctx.deinit(&gpa.allocator);
 
     const pipeline = blk: {
         const vs_file = try std.fs.cwd().openFile("content/shaders/simple3d.vs.cso", .{});
@@ -143,18 +143,8 @@ pub fn main() !void {
         const ps_code = try ps_file.reader().readAllAlloc(allocator, 256 * 1024);
         defer allocator.free(ps_code);
 
-        var maybe_rs: ?*w.ID3D12RootSignature = null;
-        try vhr(grctx.device.CreateRootSignature(
-            0,
-            vs_code.ptr,
-            vs_code.len,
-            &w.IID_ID3D12RootSignature,
-            @ptrCast(*?*c_void, &maybe_rs),
-        ));
-        errdefer _ = maybe_rs.?.Release();
-
-        const pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC{
-            .pRootSignature = maybe_rs,
+        var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC{
+            .pRootSignature = null,
             .VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len },
             .PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len },
             .DS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
@@ -186,21 +176,10 @@ pub fn main() !void {
             .CachedPSO = .{ .pCachedBlob = null, .CachedBlobSizeInBytes = 0 },
             .Flags = .{},
         };
-
-        _ = grctx.createGraphicsShaderPipeline(pso_desc);
-
-        var maybe_pso: ?*w.ID3D12PipelineState = null;
-        try vhr(grctx.device.CreateGraphicsPipelineState(
-            &pso_desc,
-            &w.IID_ID3D12PipelineState,
-            @ptrCast(*?*c_void, &maybe_pso),
-        ));
-
-        break :blk .{ .pso = maybe_pso.?, .rs = maybe_rs.? };
+        break :blk try grctx.createGraphicsShaderPipeline(&pso_desc, allocator);
     };
     defer {
-        _ = pipeline.pso.Release();
-        _ = pipeline.rs.Release();
+        _ = grctx.releasePipeline(pipeline);
     }
 
     var stats = FrameStats.init();
@@ -242,9 +221,8 @@ pub fn main() !void {
                 0,
                 null,
             );
+            grctx.setPipelineState(pipeline);
             grctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-            grctx.cmdlist.SetPipelineState(pipeline.pso);
-            grctx.cmdlist.SetGraphicsRootSignature(pipeline.rs);
             grctx.cmdlist.DrawInstanced(3, 1, 0, 0);
 
             grctx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATES.PRESENT);
