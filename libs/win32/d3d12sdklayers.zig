@@ -35,11 +35,11 @@ pub const D3D12_GPU_BASED_VALIDATION_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_GPU_BASED_VALIDATION_FLAGS) == 4);
-    std.debug.assert(@alignOf(D3D12_GPU_BASED_VALIDATION_FLAGS) == 4);
-}
 
 pub const ID3D12Debug = extern struct {
     const Self = @This();

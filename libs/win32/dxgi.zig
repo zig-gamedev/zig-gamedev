@@ -37,11 +37,11 @@ pub const DXGI_USAGE = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(DXGI_USAGE) == 4);
-    std.debug.assert(@alignOf(DXGI_USAGE) == 4);
-}
 
 pub const DXGI_FRAME_STATISTICS = extern struct {
     PresentCount: UINT,
@@ -141,11 +141,11 @@ pub const DXGI_SWAP_CHAIN_FLAG = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(DXGI_SWAP_CHAIN_FLAG) == 4);
-    std.debug.assert(@alignOf(DXGI_SWAP_CHAIN_FLAG) == 4);
-}
 
 pub const DXGI_SWAP_CHAIN_DESC = extern struct {
     BufferDesc: DXGI_MODE_DESC,
@@ -325,11 +325,11 @@ pub const DXGI_MAP = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(DXGI_MAP) == 4);
-    std.debug.assert(@alignOf(DXGI_MAP) == 4);
-}
 
 pub const IDXGISurface = extern struct {
     const Self = @This();
@@ -434,11 +434,11 @@ pub const DXGI_ENUM_MODES = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(DXGI_ENUM_MODES) == 4);
-    std.debug.assert(@alignOf(DXGI_ENUM_MODES) == 4);
-}
 
 pub const IDXGIOutput = extern struct {
     const Self = @This();
@@ -556,11 +556,11 @@ pub const DXGI_PRESENT = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
+
+    const Self = @This();
+    pub usingnamespace FlagsMixin(Self);
+    pub const NONE = Self{};
 };
-comptime {
-    std.debug.assert(@sizeOf(DXGI_PRESENT) == 4);
-    std.debug.assert(@alignOf(DXGI_PRESENT) == 4);
-}
 
 pub const IDXGISwapChain = extern struct {
     const Self = @This();
