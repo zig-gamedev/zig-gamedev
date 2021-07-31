@@ -387,9 +387,40 @@ pub const GraphicsContext = struct {
 
     pub fn createGraphicsShaderPipeline(
         gr: *GraphicsContext,
-        pso_desc: *w.D3D12_GRAPHICS_PIPELINE_STATE_DESC,
         allocator: *std.mem.Allocator,
+        pso_desc: *w.D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+        vs_cso_path: ?[]const u8,
+        ps_cso_path: ?[]const u8,
     ) !PipelineHandle {
+        const vs_code = blk: {
+            if (vs_cso_path) |path| {
+                assert(pso_desc.VS.pShaderBytecode == null);
+                const vs_file = try std.fs.cwd().openFile(path, .{});
+                defer vs_file.close();
+                const vs_code = try vs_file.reader().readAllAlloc(allocator, 256 * 1024);
+                pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
+                break :blk vs_code;
+            } else {
+                break :blk null;
+            }
+        };
+        const ps_code = blk: {
+            if (ps_cso_path) |path| {
+                assert(pso_desc.PS.pShaderBytecode == null);
+                const ps_file = try std.fs.cwd().openFile(path, .{});
+                defer ps_file.close();
+                const ps_code = try ps_file.reader().readAllAlloc(allocator, 256 * 1024);
+                pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
+                break :blk ps_code;
+            } else {
+                break :blk null;
+            }
+        };
+        defer {
+            if (vs_code) |code| allocator.free(code);
+            if (ps_code) |code| allocator.free(code);
+        }
+
         const hash = compute_hash: {
             var hasher = std.hash.Adler32.init();
             hasher.update(

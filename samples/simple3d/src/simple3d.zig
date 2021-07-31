@@ -126,27 +126,17 @@ pub fn main() !void {
         const leaked = gpa.deinit();
         std.debug.assert(leaked == false);
     }
+    const allocator = &gpa.allocator;
 
     const window = try initWindow(window_name, window_width, window_height);
     var grctx = try gr.GraphicsContext.init(window);
     defer grctx.deinit(&gpa.allocator);
 
     const pipeline = blk: {
-        const vs_file = try std.fs.cwd().openFile("content/shaders/simple3d.vs.cso", .{});
-        defer vs_file.close();
-        const ps_file = try std.fs.cwd().openFile("content/shaders/simple3d.ps.cso", .{});
-        defer ps_file.close();
-
-        const allocator = &gpa.allocator;
-        const vs_code = try vs_file.reader().readAllAlloc(allocator, 256 * 1024);
-        defer allocator.free(vs_code);
-        const ps_code = try ps_file.reader().readAllAlloc(allocator, 256 * 1024);
-        defer allocator.free(ps_code);
-
         var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC{
             .pRootSignature = null,
-            .VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len },
-            .PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len },
+            .VS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
+            .PS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
             .DS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
             .HS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
             .GS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
@@ -176,7 +166,12 @@ pub fn main() !void {
             .CachedPSO = .{ .pCachedBlob = null, .CachedBlobSizeInBytes = 0 },
             .Flags = .{},
         };
-        break :blk try grctx.createGraphicsShaderPipeline(&pso_desc, allocator);
+        break :blk try grctx.createGraphicsShaderPipeline(
+            allocator,
+            &pso_desc,
+            "content/shaders/simple3d.vs.cso",
+            "content/shaders/simple3d.ps.cso",
+        );
     };
     defer {
         _ = grctx.releasePipeline(pipeline);
