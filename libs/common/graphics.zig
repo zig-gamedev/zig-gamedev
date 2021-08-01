@@ -289,7 +289,10 @@ pub const GraphicsContext = struct {
         const cmdalloc = gr.cmdallocs[gr.frame_index];
         try vhr(cmdalloc.Reset());
         try vhr(gr.cmdlist.Reset(cmdalloc, null));
-
+        gr.cmdlist.SetDescriptorHeaps(
+            1,
+            &[_]*w.ID3D12DescriptorHeap{gr.cbv_srv_uav_gpu_heaps[gr.frame_index].heap},
+        );
         gr.cmdlist.RSSetViewports(1, &[_]w.D3D12_VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
@@ -308,11 +311,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn endFrame(gr: *GraphicsContext) !void {
-        try vhr(gr.cmdlist.Close());
-        gr.cmdqueue.ExecuteCommandLists(
-            1,
-            &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
-        );
+        try gr.flushGpuCommands();
 
         gr.frame_fence_counter += 1;
         try vhr(gr.swapchain.Present(0, .{}));
@@ -326,13 +325,27 @@ pub const GraphicsContext = struct {
 
         gr.frame_index = (gr.frame_index + 1) % max_num_buffered_frames;
         gr.back_buffer_index = gr.swapchain.GetCurrentBackBufferIndex();
+
+        gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
     }
 
-    pub fn waitForGpu(gr: *GraphicsContext) !void {
+    pub fn flushGpuCommands(gr: *GraphicsContext) !void {
+        gr.flushResourceBarriers();
+        try vhr(gr.cmdlist.Close());
+        gr.cmdqueue.ExecuteCommandLists(
+            1,
+            &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
+        );
+    }
+
+    pub fn finishGpuCommands(gr: *GraphicsContext) !void {
         gr.frame_fence_counter += 1;
+
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
         try vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
         w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
+
+        gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
     }
 
     pub fn getBackBuffer(gr: GraphicsContext) struct {

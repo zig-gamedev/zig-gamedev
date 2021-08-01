@@ -221,7 +221,7 @@ pub fn main() !void {
         }
     }
 
-    try grctx.waitForGpu();
+    try grctx.finishGpuCommands();
 
     std.debug.print("All OK!\n", .{});
 }
