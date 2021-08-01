@@ -401,6 +401,7 @@ pub const GraphicsContext = struct {
                 pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
                 break :blk vs_code;
             } else {
+                assert(pso_desc.VS.pShaderBytecode != null);
                 break :blk null;
             }
         };
@@ -413,6 +414,7 @@ pub const GraphicsContext = struct {
                 pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
                 break :blk ps_code;
             } else {
+                assert(pso_desc.PS.pShaderBytecode != null);
                 break :blk null;
             }
         };
