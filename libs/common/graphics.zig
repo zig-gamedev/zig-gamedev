@@ -18,6 +18,7 @@ pub const GraphicsContext = struct {
     const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
     const num_cbv_srv_uav_gpu_descriptors = 4 * 1024;
     const max_num_buffered_resource_barriers = 32;
+    const upload_heap_capacity = 8 * 1024 * 1024;
 
     device: *w.ID3D12Device9,
     cmdqueue: *w.ID3D12CommandQueue,
@@ -30,6 +31,7 @@ pub const GraphicsContext = struct {
     cbv_srv_uav_cpu_heap: DescriptorHeap,
     cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap,
     resource_pool: ResourcePool,
+    upload_memory_heaps: [max_num_buffered_frames]GpuMemoryHeap,
     pipeline: struct {
         pool: PipelinePool,
         map: std.AutoHashMapUnmanaged(u32, PipelineHandle),
@@ -158,6 +160,18 @@ pub const GraphicsContext = struct {
         }
         errdefer for (cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
 
+        var upload_heaps: [max_num_buffered_frames]GpuMemoryHeap = undefined;
+        for (upload_heaps) |*heap, heap_index| {
+            heap.* = GpuMemoryHeap.init(device, upload_heap_capacity, .UPLOAD) catch |err| {
+                var i: u32 = 0;
+                while (i < heap_index) : (i += 1) {
+                    upload_heaps[i].deinit();
+                }
+                return err;
+            };
+        }
+        errdefer for (upload_heaps) |*heap| heap.*.deinit();
+
         const swapbuffers = blk: {
             var maybe_swapbuffers = [_]?*w.ID3D12Resource{null} ** num_swapbuffers;
             errdefer {
@@ -249,6 +263,7 @@ pub const GraphicsContext = struct {
             .dsv_heap = dsv_heap,
             .cbv_srv_uav_cpu_heap = cbv_srv_uav_cpu_heap,
             .cbv_srv_uav_gpu_heaps = cbv_srv_uav_gpu_heaps,
+            .upload_memory_heaps = upload_heaps,
             .resource_pool = resource_pool,
             .pipeline = .{
                 .pool = pipeline_pool,
@@ -276,6 +291,7 @@ pub const GraphicsContext = struct {
         gr.dsv_heap.deinit();
         gr.cbv_srv_uav_cpu_heap.deinit();
         for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
+        for (gr.upload_memory_heaps) |*heap| heap.*.deinit();
         _ = gr.device.Release();
         _ = gr.cmdqueue.Release();
         _ = gr.swapchain.Release();
@@ -852,7 +868,7 @@ const GpuMemoryHeap = struct {
                 },
                 .{},
                 &w.D3D12_RESOURCE_DESC.initBuffer(capacity),
-                w.D3D12_RESOURCE_STATES.genericRead(),
+                w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,
                 &w.IID_ID3D12Resource,
                 @ptrCast(*?*c_void, &maybe_resource),

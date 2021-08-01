@@ -35,10 +35,7 @@ pub const D3D12_GPU_BASED_VALIDATION_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const ID3D12Debug = extern struct {

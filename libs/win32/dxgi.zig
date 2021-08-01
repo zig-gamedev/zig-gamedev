@@ -37,10 +37,7 @@ pub const DXGI_USAGE = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const DXGI_FRAME_STATISTICS = extern struct {
@@ -141,10 +138,7 @@ pub const DXGI_SWAP_CHAIN_FLAG = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const DXGI_SWAP_CHAIN_DESC = extern struct {
@@ -325,10 +319,7 @@ pub const DXGI_MAP = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const IDXGISurface = extern struct {
@@ -434,10 +425,7 @@ pub const DXGI_ENUM_MODES = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const IDXGIOutput = extern struct {
@@ -556,10 +544,7 @@ pub const DXGI_PRESENT = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const IDXGISwapChain = extern struct {

@@ -61,10 +61,10 @@ pub fn FlagsMixin(comptime FlagType: type) type {
     comptime assert(@sizeOf(FlagType) == 4);
     comptime assert(@alignOf(FlagType) == 4);
     return struct {
-        pub fn toInt(self: FlagType) FlagsInt {
-            return @bitCast(FlagsInt, self);
+        pub fn toInt(self: FlagType) UINT {
+            return @bitCast(UINT, self);
         }
-        pub fn fromInt(value: FlagsInt) FlagType {
+        pub fn fromInt(value: UINT) FlagType {
             return @bitCast(FlagType, value);
         }
         pub fn with(a: FlagType, b: FlagType) FlagType {

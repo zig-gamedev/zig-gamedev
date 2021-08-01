@@ -89,15 +89,12 @@ pub const D3D12_HEAP_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
-    pub const ALLOW_ALL_BUFFERS_AND_TEXTURES = Self{};
-    pub const ALLOW_ONLY_BUFFERS = Self{ .DENY_RT_DS_TEXTURES = true, .DENY_NON_RT_DS_TEXTURES = true };
-    pub const ALLOW_ONLY_NON_RT_DS_TEXTURES = Self{ .DENY_BUFFERS = true, .DENY_RT_DS_TEXTURES = true };
-    pub const ALLOW_ONLY_RT_DS_TEXTURES = Self{ .DENY_BUFFERS = true, .DENY_NON_RT_DS_TEXTURES = true };
+    pub usingnamespace FlagsMixin(@This());
 };
+pub const D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES = D3D12_HEAP_FLAGS{};
+pub const D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS = D3D12_HEAP_FLAGS{ .DENY_RT_DS_TEXTURES = true, .DENY_NON_RT_DS_TEXTURES = true };
+pub const D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES = D3D12_HEAP_FLAGS{ .DENY_BUFFERS = true, .DENY_RT_DS_TEXTURES = true };
+pub const D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES = D3D12_HEAP_FLAGS{ .DENY_BUFFERS = true, .DENY_NON_RT_DS_TEXTURES = true };
 
 pub const D3D12_HEAP_DESC = extern struct {
     SizeInBytes: UINT64,
@@ -168,10 +165,7 @@ pub const D3D12_RESOURCE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_RESOURCE_DESC = extern struct {
@@ -237,10 +231,7 @@ pub const D3D12_FENCE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_DESCRIPTOR_HEAP_TYPE = enum(UINT) {
@@ -283,10 +274,7 @@ pub const D3D12_DESCRIPTOR_HEAP_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_DESCRIPTOR_HEAP_DESC = extern struct {
@@ -361,10 +349,7 @@ pub const D3D12_RESOURCE_BARRIER_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_RESOURCE_BARRIER = extern struct {
@@ -452,10 +437,7 @@ pub const D3D12_TILE_RANGE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_SUBRESOURCE_TILING = extern struct {
@@ -504,10 +486,7 @@ pub const D3D12_TILE_MAPPING_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_TILE_COPY_FLAGS = packed struct {
@@ -543,10 +522,7 @@ pub const D3D12_TILE_COPY_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_VIEWPORT = extern struct {
@@ -593,22 +569,22 @@ pub const D3D12_RESOURCE_STATES = packed struct {
     __reserved29: bool = false, // 0x20000000
     __reserved30: bool = false, // 0x40000000
     __reserved31: bool = false, // 0x80000000
+    pub usingnamespace FlagsMixin(@This());
+};
 
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-
-    pub const NONE = Self{};
-    pub const PRESENT = Self{};
-    pub const GENERIC_READ = Self{
-        .VERTEX_AND_CONSTANT_BUFFER = true,
-        .INDEX_BUFFER = true,
-        .NON_PIXEL_SHADER_RESOURCE = true,
-        .PIXEL_SHADER_RESOURCE = true,
-        .INDIRECT_ARGUMENT = true,
-        .COPY_SOURCE = true,
-    };
-    pub const PREDICATION = Self{ .INDIRECT_ARGUMENT = true };
-    pub const ALL_SHADER_RESOURCE = Self{ .NON_PIXEL_SHADER_RESOURCE = true, .PIXEL_SHADER_RESOURCE = true };
+pub const D3D12_RESOURCE_STATE_GENERIC_READ = D3D12_RESOURCE_STATES{
+    .VERTEX_AND_CONSTANT_BUFFER = true,
+    .INDEX_BUFFER = true,
+    .NON_PIXEL_SHADER_RESOURCE = true,
+    .PIXEL_SHADER_RESOURCE = true,
+    .INDIRECT_ARGUMENT = true,
+    .COPY_SOURCE = true,
+};
+pub const D3D12_RESOURCE_STATE_PRESENT = D3D12_RESOURCE_STATES{};
+pub const D3D12_RESOURCE_STATE_PREDICATION = D3D12_RESOURCE_STATES{ .INDIRECT_ARGUMENT = true };
+pub const D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE = D3D12_RESOURCE_STATES{
+    .NON_PIXEL_SHADER_RESOURCE = true,
+    .PIXEL_SHADER_RESOURCE = true,
 };
 
 pub const D3D12_INDEX_BUFFER_STRIP_CUT_VALUE = enum(UINT) {
@@ -668,10 +644,7 @@ pub const D3D12_CLEAR_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_DISCARD_REGION = extern struct {
@@ -796,10 +769,7 @@ pub const D3D12_COMMAND_QUEUE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_COMMAND_QUEUE_PRIORITY = enum(UINT) {
@@ -906,16 +876,10 @@ pub const D3D12_COLOR_WRITE_ENABLE = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
-    pub const ALL = Self{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
+    pub usingnamespace FlagsMixin(@This());
 };
-comptime {
-    std.debug.assert(@sizeOf(D3D12_COLOR_WRITE_ENABLE) == 4);
-    std.debug.assert(@alignOf(D3D12_COLOR_WRITE_ENABLE) == 4);
-}
+
+pub const D3D12_COLOR_WRITE_ENABLE_ALL = D3D12_COLOR_WRITE_ENABLE{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
 
 pub const D3D12_LOGIC_OP = enum(UINT) {
     CLEAR = 0,
@@ -1167,10 +1131,7 @@ pub const D3D12_PIPELINE_STATE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_GRAPHICS_PIPELINE_STATE_DESC = extern struct {
@@ -1282,10 +1243,7 @@ pub const D3D12_BUFFER_SRV_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_BUFFER_SRV = extern struct {
@@ -1530,10 +1488,7 @@ pub const D3D12_BUFFER_UAV_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_BUFFER_UAV = extern struct {
@@ -1726,10 +1681,7 @@ pub const D3D12_DSV_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_DSV_DIMENSION = enum(UINT) {
@@ -3135,10 +3087,7 @@ pub const D3D12_RENDER_PASS_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_META_COMMAND_PARAMETER_TYPE = enum(UINT) {
@@ -3182,10 +3131,7 @@ pub const D3D12_META_COMMAND_PARAMETER_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_META_COMMAND_PARAMETER_STAGE = enum(UINT) {
@@ -3235,10 +3181,7 @@ pub const D3D12_GRAPHICS_STATES = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_META_COMMAND_DESC = extern struct {
@@ -3338,10 +3281,7 @@ pub const D3D12_STATE_OBJECT_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_STATE_OBJECT_CONFIG = extern struct {
@@ -3393,10 +3333,7 @@ pub const D3D12_EXPORT_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_EXPORT_DESC = extern struct {
@@ -3484,10 +3421,7 @@ pub const D3D12_RAYTRACING_PIPELINE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_RAYTRACING_PIPELINE_CONFIG1 = extern struct {
@@ -3539,10 +3473,7 @@ pub const D3D12_RAYTRACING_GEOMETRY_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_RAYTRACING_GEOMETRY_TYPE = enum(UINT) {
@@ -3583,10 +3514,7 @@ pub const D3D12_RAYTRACING_INSTANCE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE = extern struct {
@@ -3662,10 +3590,7 @@ pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE = enum(UINT) {
@@ -4902,10 +4827,7 @@ pub const D3D12_RESIDENCY_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const ID3D12Device3 = extern struct {
@@ -5012,10 +4934,7 @@ pub const D3D12_COMMAND_LIST_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_RESOURCE_ALLOCATION_INFO1 = extern struct {
@@ -5739,10 +5658,7 @@ pub const D3D12_SHADER_CACHE_KIND_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_SHADER_CACHE_CONTROL_FLAGS = packed struct {
@@ -5778,10 +5694,7 @@ pub const D3D12_SHADER_CACHE_CONTROL_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_SHADER_CACHE_MODE = enum(UINT) {
@@ -5822,10 +5735,7 @@ pub const D3D12_SHADER_CACHE_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_SHADER_CACHE_SESSION_DESC = extern struct {
@@ -5990,10 +5900,7 @@ pub const D3D12_PROTECTED_RESOURCE_SESSION_FLAGS = packed struct {
     __reserved29: bool = false,
     __reserved30: bool = false,
     __reserved31: bool = false,
-
-    const Self = @This();
-    pub usingnamespace FlagsMixin(Self);
-    pub const NONE = Self{};
+    pub usingnamespace FlagsMixin(@This());
 };
 
 pub const D3D12_PROTECTED_RESOURCE_SESSION_DESC = extern struct {
