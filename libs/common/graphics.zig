@@ -30,8 +30,8 @@ pub const GraphicsContext = struct {
     dsv_heap: DescriptorHeap,
     cbv_srv_uav_cpu_heap: DescriptorHeap,
     cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap,
-    resource_pool: ResourcePool,
     upload_memory_heaps: [max_num_buffered_frames]GpuMemoryHeap,
+    resource_pool: ResourcePool,
     pipeline: struct {
         pool: PipelinePool,
         map: std.AutoHashMapUnmanaged(u32, PipelineHandle),
