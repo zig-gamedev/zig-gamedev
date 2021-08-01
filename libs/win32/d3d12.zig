@@ -818,6 +818,10 @@ pub const D3D12_COMMAND_QUEUE_DESC = extern struct {
 pub const D3D12_SHADER_BYTECODE = extern struct {
     pShaderBytecode: ?*const c_void,
     BytecodeLength: UINT64,
+
+    pub inline fn initZero() D3D12_SHADER_BYTECODE {
+        return std.mem.zeroes(@This());
+    }
 };
 
 pub const D3D12_SO_DECLARATION_ENTRY = extern struct {
@@ -835,6 +839,10 @@ pub const D3D12_STREAM_OUTPUT_DESC = extern struct {
     pBufferStrides: ?[*]const UINT,
     NumStrides: UINT,
     RasterizedStream: UINT,
+
+    pub inline fn initZero() D3D12_STREAM_OUTPUT_DESC {
+        return std.mem.zeroes(@This());
+    }
 };
 
 pub const D3D12_BLEND = enum(UINT) {
@@ -1096,6 +1104,10 @@ pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
 pub const D3D12_INPUT_LAYOUT_DESC = extern struct {
     pInputElementDescs: ?[*]const D3D12_INPUT_ELEMENT_DESC,
     NumElements: UINT,
+
+    pub inline fn initZero() D3D12_INPUT_LAYOUT_DESC {
+        return std.mem.zeroes(@This());
+    }
 };
 
 pub const D3D12_INPUT_CLASSIFICATION = enum(UINT) {
@@ -1116,6 +1128,10 @@ pub const D3D12_INPUT_ELEMENT_DESC = extern struct {
 pub const D3D12_CACHED_PIPELINE_STATE = extern struct {
     pCachedBlob: ?*const c_void,
     CachedBlobSizeInBytes: UINT64,
+
+    pub inline fn initZero() D3D12_CACHED_PIPELINE_STATE {
+        return std.mem.zeroes(@This());
+    }
 };
 
 pub const D3D12_PIPELINE_STATE_FLAGS = packed struct {

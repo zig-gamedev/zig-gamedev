@@ -135,18 +135,12 @@ pub fn main() !void {
     const pipeline = blk: {
         var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC{
             .pRootSignature = null,
-            .VS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
-            .PS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
-            .DS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
-            .HS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
-            .GS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
-            .StreamOutput = .{
-                .pSODeclaration = null,
-                .NumEntries = 0,
-                .pBufferStrides = null,
-                .NumStrides = 0,
-                .RasterizedStream = 0,
-            },
+            .VS = w.D3D12_SHADER_BYTECODE.initZero(),
+            .PS = w.D3D12_SHADER_BYTECODE.initZero(),
+            .DS = w.D3D12_SHADER_BYTECODE.initZero(),
+            .HS = w.D3D12_SHADER_BYTECODE.initZero(),
+            .GS = w.D3D12_SHADER_BYTECODE.initZero(),
+            .StreamOutput = w.D3D12_STREAM_OUTPUT_DESC.initZero(),
             .BlendState = w.D3D12_BLEND_DESC.initDefault(),
             .SampleMask = 0xffff_ffff,
             .RasterizerState = w.D3D12_RASTERIZER_DESC.initDefault(),
@@ -155,7 +149,7 @@ pub fn main() !void {
                 desc.DepthEnable = w.FALSE;
                 break :blk1 desc;
             },
-            .InputLayout = .{ .pInputElementDescs = null, .NumElements = 0 },
+            .InputLayout = w.D3D12_INPUT_LAYOUT_DESC.initZero(),
             .IBStripCutValue = .DISABLED,
             .PrimitiveTopologyType = .TRIANGLE,
             .NumRenderTargets = 1,
@@ -163,7 +157,7 @@ pub fn main() !void {
             .DSVFormat = .UNKNOWN,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .NodeMask = 0,
-            .CachedPSO = .{ .pCachedBlob = null, .CachedBlobSizeInBytes = 0 },
+            .CachedPSO = w.D3D12_CACHED_PIPELINE_STATE.initZero(),
             .Flags = .{},
         };
         break :blk try grctx.createGraphicsShaderPipeline(
@@ -216,7 +210,7 @@ pub fn main() !void {
                 0,
                 null,
             );
-            grctx.setPipelineState(pipeline);
+            grctx.setCurrentPipeline(pipeline);
             grctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
             grctx.cmdlist.DrawInstanced(3, 1, 0, 0);
 

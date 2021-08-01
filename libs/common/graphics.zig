@@ -495,7 +495,7 @@ pub const GraphicsContext = struct {
         return handle;
     }
 
-    pub fn setPipelineState(gr: *GraphicsContext, pipeline_handle: PipelineHandle) void {
+    pub fn setCurrentPipeline(gr: *GraphicsContext, pipeline_handle: PipelineHandle) void {
         // TODO(mziulek): Do we need to unset pipeline state (null, null)?
         const pipeline = gr.pipeline.pool.getPipeline(pipeline_handle);
 
