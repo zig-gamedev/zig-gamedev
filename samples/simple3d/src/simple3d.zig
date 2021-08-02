@@ -184,13 +184,28 @@ pub fn main() !void {
         .{ .COPY_DEST = true },
         null,
     );
-    const vertex_buffer_srv = grctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    grctx.device.CreateShaderResourceView(
-        grctx.getResource(vertex_buffer),
-        &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32G32B32_FLOAT, 0, 3),
-        vertex_buffer_srv,
-    );
+    //const vertex_buffer_srv = grctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    //grctx.device.CreateShaderResourceView(
+    //   grctx.getResource(vertex_buffer),
+    //  &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32G32B32_FLOAT, 0, 3),
+    // vertex_buffer_srv,
+    //);
     defer _ = grctx.releaseResource(vertex_buffer);
+
+    const index_buffer = try grctx.createCommittedResource(
+        .DEFAULT,
+        .{},
+        &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
+        .{ .COPY_DEST = true },
+        null,
+    );
+    //const index_buffer_srv = grctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    //grctx.device.CreateShaderResourceView(
+    //   grctx.getResource(index_buffer),
+    //  &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32G32B32_FLOAT, 0, 3),
+    // vertex_buffer_srv,
+    //);
+    defer _ = grctx.releaseResource(index_buffer);
 
     try grctx.beginFrame();
 
@@ -206,6 +221,23 @@ pub fn main() !void {
         upload_verts.buffer_offset,
         upload_verts.cpu_slice.len * @sizeOf(Vec3),
     );
+
+    const upload_indices = grctx.allocateUploadBufferRegion(u32, 3);
+    upload_indices.cpu_slice[0] = 0;
+    upload_indices.cpu_slice[1] = 1;
+    upload_indices.cpu_slice[2] = 2;
+
+    grctx.cmdlist.CopyBufferRegion(
+        grctx.getResource(index_buffer),
+        0,
+        upload_indices.buffer,
+        upload_indices.buffer_offset,
+        upload_indices.cpu_slice.len * @sizeOf(u32),
+    );
+
+    grctx.addTransitionBarrier(vertex_buffer, .{ .VERTEX_AND_CONSTANT_BUFFER = true });
+    grctx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
+    grctx.flushResourceBarriers();
 
     try grctx.flushGpuCommands();
     try grctx.finishGpuCommands();
@@ -256,7 +288,12 @@ pub fn main() !void {
                 .SizeInBytes = 3 * @sizeOf(Vec3),
                 .StrideInBytes = @sizeOf(Vec3),
             }});
-            grctx.cmdlist.DrawInstanced(3, 1, 0, 0);
+            grctx.cmdlist.IASetIndexBuffer(&.{
+                .BufferLocation = grctx.getResource(index_buffer).GetGPUVirtualAddress(),
+                .SizeInBytes = 3 * @sizeOf(u32),
+                .Format = .R32_UINT,
+            });
+            grctx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
 
             grctx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
             grctx.flushResourceBarriers();
