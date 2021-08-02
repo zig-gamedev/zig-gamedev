@@ -1100,6 +1100,28 @@ pub const D3D12_INPUT_ELEMENT_DESC = extern struct {
     AlignedByteOffset: UINT,
     InputSlotClass: D3D12_INPUT_CLASSIFICATION,
     InstanceDataStepRate: UINT,
+
+    pub inline fn init(
+        semanticName: LPCSTR,
+        semanticIndex: UINT,
+        format: DXGI_FORMAT,
+        inputSlot: UINT,
+        alignedByteOffset: UINT,
+        inputSlotClass: D3D12_INPUT_CLASSIFICATION,
+        instanceDataStepRate: UINT,
+    ) D3D12_INPUT_ELEMENT_DESC {
+        var v = std.mem.zeroes(@This());
+        v = .{
+            .SemanticName = semanticName,
+            .SemanticIndex = semanticIndex,
+            .Format = format,
+            .InputSlot = inputSlot,
+            .AlignedByteOffset = alignedByteOffset,
+            .InputSlotClass = inputSlotClass,
+            .InstanceDataStepRate = instanceDataStepRate,
+        };
+        return v;
+    }
 };
 
 pub const D3D12_CACHED_PIPELINE_STATE = extern struct {
@@ -2464,7 +2486,7 @@ pub const ID3D12GraphicsCommandList = extern struct {
                 self: *T,
                 start_slot: UINT,
                 num_views: UINT,
-                views: ?[*]const VERTEX_BUFFER_VIEW,
+                views: ?[*]const D3D12_VERTEX_BUFFER_VIEW,
             ) void {
                 self.v.grcmdlist.IASetVertexBuffers(self, start_slot, num_views, views);
             }

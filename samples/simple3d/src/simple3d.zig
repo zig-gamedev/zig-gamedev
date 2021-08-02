@@ -133,6 +133,9 @@ pub fn main() !void {
     defer grctx.deinit(&gpa.allocator);
 
     const pipeline = blk: {
+        const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
+            w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+        };
         var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC{
             .pRootSignature = null,
             .VS = w.D3D12_SHADER_BYTECODE.initZero(),
@@ -149,7 +152,10 @@ pub fn main() !void {
                 desc.DepthEnable = w.FALSE;
                 break :blk1 desc;
             },
-            .InputLayout = w.D3D12_INPUT_LAYOUT_DESC.initZero(),
+            .InputLayout = .{
+                .pInputElementDescs = &input_layout_desc,
+                .NumElements = input_layout_desc.len,
+            },
             .IBStripCutValue = .DISABLED,
             .PrimitiveTopologyType = .TRIANGLE,
             .NumRenderTargets = 1,
@@ -185,6 +191,24 @@ pub fn main() !void {
         vertex_buffer_srv,
     );
     defer _ = grctx.releaseResource(vertex_buffer);
+
+    try grctx.beginFrame();
+
+    const upload_verts = grctx.allocateUploadBufferRegion(Vec3, 3);
+    upload_verts.cpu_slice[0] = vec3Init(-0.7, -0.7, 0.0);
+    upload_verts.cpu_slice[1] = vec3Init(0.0, 0.7, 0.0);
+    upload_verts.cpu_slice[2] = vec3Init(0.7, -0.7, 0.0);
+
+    grctx.cmdlist.CopyBufferRegion(
+        grctx.getResource(vertex_buffer),
+        0,
+        upload_verts.buffer,
+        upload_verts.buffer_offset,
+        upload_verts.cpu_slice.len * @sizeOf(Vec3),
+    );
+
+    try grctx.flushGpuCommands();
+    try grctx.finishGpuCommands();
 
     var stats = FrameStats.init();
 
@@ -227,6 +251,11 @@ pub fn main() !void {
             );
             grctx.setCurrentPipeline(pipeline);
             grctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+            grctx.cmdlist.IASetVertexBuffers(0, 1, &[_]w.D3D12_VERTEX_BUFFER_VIEW{.{
+                .BufferLocation = grctx.getResource(vertex_buffer).GetGPUVirtualAddress(),
+                .SizeInBytes = 3 * @sizeOf(Vec3),
+                .StrideInBytes = @sizeOf(Vec3),
+            }});
             grctx.cmdlist.DrawInstanced(3, 1, 0, 0);
 
             grctx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
@@ -237,6 +266,4 @@ pub fn main() !void {
     }
 
     try grctx.finishGpuCommands();
-
-    std.debug.print("All OK!\n", .{});
 }

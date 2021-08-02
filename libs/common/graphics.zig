@@ -623,9 +623,9 @@ pub const GraphicsContext = struct {
         if (memory.cpu_slice == null or memory.gpu_base == null) {
             std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
 
-            gr.flushGpuCommands();
-            gr.finishGpuCommands();
-            gr.beginFrame();
+            gr.flushGpuCommands() catch unreachable;
+            gr.finishGpuCommands() catch unreachable;
+            gr.beginFrame() catch unreachable;
 
             memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
         }
