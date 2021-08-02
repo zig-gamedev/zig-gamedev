@@ -1365,11 +1365,13 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
         desc = .{
             .Format = format,
             .ViewDimension = .BUFFER,
+            .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
             .u = .{
                 .Buffer = .{
                     .FirstElement = first_element,
                     .NumElements = num_elements,
                     .StructureByteStride = 0,
+                    .Flags = .{},
                 },
             },
         };
@@ -1383,12 +1385,15 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
     ) D3D12_SHADER_RESOURCE_VIEW_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
+            .Format = .UNKNOWN,
             .ViewDimension = .BUFFER,
+            .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
             .u = .{
                 .Buffer = .{
                     .FirstElement = first_element,
                     .NumElements = num_elements,
                     .StructureByteStride = stride,
+                    .Flags = .{},
                 },
             },
         };

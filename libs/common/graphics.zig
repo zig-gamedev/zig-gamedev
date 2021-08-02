@@ -618,6 +618,7 @@ pub const GraphicsContext = struct {
         gr: *GraphicsContext,
         size: u32,
     ) struct { cpu_slice: []u8, gpu_base: w.D3D12_GPU_VIRTUAL_ADDRESS } {
+        assert(size > 0);
         var memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
         if (memory.cpu_slice == null or memory.gpu_base == null) {
             std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
@@ -636,6 +637,7 @@ pub const GraphicsContext = struct {
         comptime T: type,
         num_elements: u32,
     ) struct { cpu_slice: []T, buffer: *w.ID3D12Resource, buffer_offset: u64 } {
+        assert(num_elements > 0);
         const size = num_elements * @sizeOf(T);
         const memory = gr.allocateUploadMemory(size);
         const aligned_size = (size + (GpuMemoryHeap.alloc_alignment - 1)) & ~(GpuMemoryHeap.alloc_alignment - 1);
@@ -644,6 +646,29 @@ pub const GraphicsContext = struct {
             .buffer = gr.upload_memory_heaps[gr.frame_index].heap,
             .buffer_offset = gr.upload_memory_heaps[gr.frame_index].size - aligned_size,
         };
+    }
+
+    pub fn allocateCpuDescriptors(
+        gr: *GraphicsContext,
+        dtype: w.D3D12_DESCRIPTOR_HEAP_TYPE,
+        num: u32,
+    ) w.D3D12_CPU_DESCRIPTOR_HANDLE {
+        assert(num > 0);
+        switch (dtype) {
+            .CBV_SRV_UAV => {
+                assert(gr.cbv_srv_uav_cpu_heap.size_temp == 0);
+                return gr.cbv_srv_uav_cpu_heap.allocateDescriptors(num).cpu_handle;
+            },
+            .RTV => {
+                assert(gr.rtv_heap.size_temp == 0);
+                return gr.rtv_heap.allocateDescriptors(num).cpu_handle;
+            },
+            .DSV => {
+                assert(gr.dsv_heap.size_temp == 0);
+                return gr.dsv_heap.allocateDescriptors(num).cpu_handle;
+            },
+            .SAMPLER => unreachable,
+        }
     }
 };
 

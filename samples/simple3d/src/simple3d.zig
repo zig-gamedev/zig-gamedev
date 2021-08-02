@@ -178,7 +178,13 @@ pub fn main() !void {
         .{ .COPY_DEST = true },
         null,
     );
-    _ = grctx.releaseResource(vertex_buffer);
+    const vertex_buffer_srv = grctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    grctx.device.CreateShaderResourceView(
+        grctx.getResource(vertex_buffer),
+        &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32G32B32_FLOAT, 0, 3),
+        vertex_buffer_srv,
+    );
+    defer _ = grctx.releaseResource(vertex_buffer);
 
     var stats = FrameStats.init();
 
