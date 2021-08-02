@@ -54,6 +54,18 @@ pub const D3D12_HEAP_PROPERTIES = extern struct {
     MemoryPoolPreference: D3D12_MEMORY_POOL,
     CreationNodeMask: UINT,
     VisibleNodeMask: UINT,
+
+    pub fn initType(heap_type: D3D12_HEAP_TYPE) D3D12_HEAP_PROPERTIES {
+        var v = std.mem.zeroes(@This());
+        v = D3D12_HEAP_PROPERTIES{
+            .Type = heap_type,
+            .CPUPageProperty = .UNKNOWN,
+            .MemoryPoolPreference = .UNKNOWN,
+            .CreationNodeMask = 0,
+            .VisibleNodeMask = 0,
+        };
+        return v;
+    }
 };
 
 pub const D3D12_HEAP_FLAGS = packed struct {

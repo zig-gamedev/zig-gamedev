@@ -343,6 +343,7 @@ pub const GraphicsContext = struct {
         gr.back_buffer_index = gr.swapchain.GetCurrentBackBufferIndex();
 
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
+        gr.upload_memory_heaps[gr.frame_index].size = 0;
     }
 
     pub fn flushGpuCommands(gr: *GraphicsContext) !void {
@@ -362,6 +363,7 @@ pub const GraphicsContext = struct {
         w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
 
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
+        gr.upload_memory_heaps[gr.frame_index].size = 0;
     }
 
     pub fn getBackBuffer(gr: GraphicsContext) struct {
@@ -378,6 +380,42 @@ pub const GraphicsContext = struct {
 
     pub inline fn getResource(gr: GraphicsContext, handle: ResourceHandle) *w.ID3D12Resource {
         return gr.resource_pool.getResource(handle).raw.?;
+    }
+
+    pub fn createCommittedResource(
+        gr: *GraphicsContext,
+        heap_type: w.D3D12_HEAP_TYPE,
+        heap_flags: w.D3D12_HEAP_FLAGS,
+        desc: *const w.D3D12_RESOURCE_DESC,
+        initial_state: w.D3D12_RESOURCE_STATES,
+        clear_value: ?*const w.D3D12_CLEAR_VALUE,
+    ) !ResourceHandle {
+        const resource = blk: {
+            var maybe_resource: ?*w.ID3D12Resource = null;
+            try vhr(gr.device.CreateCommittedResource(
+                &w.D3D12_HEAP_PROPERTIES.initType(heap_type),
+                heap_flags,
+                desc,
+                initial_state,
+                clear_value,
+                &w.IID_ID3D12Resource,
+                @ptrCast(*?*c_void, &maybe_resource),
+            ));
+            break :blk maybe_resource.?;
+        };
+        return gr.resource_pool.addResource(resource, initial_state);
+    }
+
+    pub fn releaseResource(gr: GraphicsContext, handle: ResourceHandle) u32 {
+        if (gr.resource_pool.isResourceValid(handle)) {
+            var resource = gr.resource_pool.editResource(handle);
+            const refcount = resource.raw.?.Release();
+            if (refcount == 0) {
+                resource.* = .{ .raw = null, .state = .{}, .desc = w.D3D12_RESOURCE_DESC.initBuffer(0) };
+            }
+            return refcount;
+        }
+        return 0;
     }
 
     pub fn flushResourceBarriers(gr: *GraphicsContext) void {
@@ -574,6 +612,38 @@ pub const GraphicsContext = struct {
             pipeline.* = .{ .pso = null, .rs = null, .ptype = null };
         }
         return refcount;
+    }
+
+    pub fn allocateUploadMemory(
+        gr: *GraphicsContext,
+        size: u32,
+    ) struct { cpu_slice: []u8, gpu_base: w.D3D12_GPU_VIRTUAL_ADDRESS } {
+        var memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
+        if (memory.cpu_slice == null or memory.gpu_base == null) {
+            std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
+
+            gr.flushGpuCommands();
+            gr.finishGpuCommands();
+            gr.beginFrame();
+
+            memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
+        }
+        return .{ .cpu_slice = memory.cpu_slice.?, .gpu_base = memory.gpu_base.? };
+    }
+
+    pub fn allocateUploadBufferRegion(
+        gr: *GraphicsContext,
+        comptime T: type,
+        num_elements: u32,
+    ) struct { cpu_slice: []T, buffer: *w.ID3D12Resource, buffer_offset: u64 } {
+        const size = num_elements * @sizeOf(T);
+        const memory = gr.allocateUploadMemory(size);
+        const aligned_size = (size + (GpuMemoryHeap.alloc_alignment - 1)) & ~(GpuMemoryHeap.alloc_alignment - 1);
+        return .{
+            .cpu_slice = std.mem.bytesAsSlice(T, @alignCast(@alignOf(T), memory.cpu_slice)),
+            .buffer = gr.upload_memory_heaps[gr.frame_index].heap,
+            .buffer_offset = gr.upload_memory_heaps[gr.frame_index].size - aligned_size,
+        };
     }
 };
 
@@ -859,13 +929,7 @@ const GpuMemoryHeap = struct {
         const resource = blk: {
             var maybe_resource: ?*w.ID3D12Resource = null;
             try vhr(device.CreateCommittedResource(
-                &w.D3D12_HEAP_PROPERTIES{
-                    .Type = heap_type,
-                    .CPUPageProperty = .UNKNOWN,
-                    .MemoryPoolPreference = .UNKNOWN,
-                    .CreationNodeMask = 0,
-                    .VisibleNodeMask = 0,
-                },
+                &w.D3D12_HEAP_PROPERTIES.initType(heap_type),
                 .{},
                 &w.D3D12_RESOURCE_DESC.initBuffer(capacity),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,

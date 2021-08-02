@@ -171,6 +171,15 @@ pub fn main() !void {
         _ = grctx.releasePipeline(pipeline);
     }
 
+    const vertex_buffer = try grctx.createCommittedResource(
+        .DEFAULT,
+        .{},
+        &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
+        .{ .COPY_DEST = true },
+        null,
+    );
+    _ = grctx.releaseResource(vertex_buffer);
+
     var stats = FrameStats.init();
 
     while (true) {
