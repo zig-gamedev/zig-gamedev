@@ -671,6 +671,20 @@ pub const GraphicsContext = struct {
             .SAMPLER => unreachable,
         }
     }
+
+    pub fn allocateGpuDescriptors(gr: *GraphicsContext, num_descriptors: u32) Descriptor {
+        return gr.cbv_srv_uav_gpu_heaps[gr.frame_index].allocateDescriptors(num_descriptors);
+    }
+
+    pub fn copyDescriptorsToGpuHeap(
+        gr: *GraphicsContext,
+        num: u32,
+        src_base_handle: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+    ) w.D3D12_GPU_DESCRIPTOR_HANDLE {
+        const base = gr.allocateGpuDescriptors(num);
+        gr.device.CopyDescriptorsSimple(num, base.cpu_handle, src_base_handle, .CBV_SRV_UAV);
+        return base.gpu_handle;
+    }
 };
 
 pub const ResourceHandle = struct {

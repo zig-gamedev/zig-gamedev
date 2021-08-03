@@ -20,6 +20,8 @@ const DemoState = struct {
     pipeline: gr.PipelineHandle,
     vertex_buffer: gr.ResourceHandle,
     index_buffer: gr.ResourceHandle,
+    entity_buffer: gr.ResourceHandle,
+    entity_buffer_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
 
     fn init(allocator: *std.mem.Allocator) !DemoState {
         const window = try lib.initWindow(window_name, window_width, window_height);
@@ -53,12 +55,6 @@ const DemoState = struct {
             .{ .COPY_DEST = true },
             null,
         );
-        //const vertex_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        //grfx.device.CreateShaderResourceView(
-        //   grfx.getResource(vertex_buffer),
-        //  &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32G32B32_FLOAT, 0, 3),
-        // vertex_buffer_srv,
-        //);
         errdefer _ = grfx.releaseResource(vertex_buffer);
 
         const index_buffer = try grfx.createCommittedResource(
@@ -68,13 +64,23 @@ const DemoState = struct {
             .{ .COPY_DEST = true },
             null,
         );
-        //const index_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        //grfx.device.CreateShaderResourceView(
-        //   grfx.getResource(index_buffer),
-        //  &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32G32B32_FLOAT, 0, 3),
-        // vertex_buffer_srv,
-        //);
         errdefer _ = grfx.releaseResource(index_buffer);
+
+        const entity_buffer = try grfx.createCommittedResource(
+            .DEFAULT,
+            .{},
+            &w.D3D12_RESOURCE_DESC.initBuffer(1 * @sizeOf(Mat4)),
+            .{ .NON_PIXEL_SHADER_RESOURCE = true },
+            null,
+        );
+        errdefer _ = grfx.releaseResource(entity_buffer);
+
+        const entity_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(
+            grfx.getResource(entity_buffer),
+            &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(0, 1, @sizeOf(Mat4)),
+            entity_buffer_srv,
+        );
 
         try grfx.beginFrame();
 
@@ -118,6 +124,8 @@ const DemoState = struct {
             .pipeline = pipeline,
             .vertex_buffer = vertex_buffer,
             .index_buffer = index_buffer,
+            .entity_buffer = entity_buffer,
+            .entity_buffer_srv = entity_buffer_srv,
         };
     }
 
@@ -125,6 +133,7 @@ const DemoState = struct {
         demo.grfx.finishGpuCommands() catch unreachable;
         _ = demo.grfx.releaseResource(demo.vertex_buffer);
         _ = demo.grfx.releaseResource(demo.index_buffer);
+        _ = demo.grfx.releaseResource(demo.entity_buffer);
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.grfx.deinit(allocator);
         demo.* = undefined;
@@ -148,8 +157,23 @@ const DemoState = struct {
         var grfx = &demo.grfx;
         try grfx.beginFrame();
 
+        grfx.addTransitionBarrier(demo.entity_buffer, .{ .COPY_DEST = true });
+        grfx.flushResourceBarriers();
+
+        const upload_entity = grfx.allocateUploadBufferRegion(Mat4, 1);
+        upload_entity.cpu_slice[0] = mat4InitIdentity();
+
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(demo.entity_buffer),
+            0,
+            upload_entity.buffer,
+            upload_entity.buffer_offset,
+            upload_entity.cpu_slice.len * @sizeOf(Mat4),
+        );
+
         const back_buffer = grfx.getBackBuffer();
 
+        grfx.addTransitionBarrier(demo.entity_buffer, .{ .NON_PIXEL_SHADER_RESOURCE = true });
         grfx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
         grfx.flushResourceBarriers();
 
@@ -177,6 +201,8 @@ const DemoState = struct {
             .SizeInBytes = 3 * @sizeOf(u32),
             .Format = .R32_UINT,
         });
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.entity_buffer_srv));
+        grfx.cmdlist.SetGraphicsRoot32BitConstant(0, 0, 0);
         grfx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
 
         grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
