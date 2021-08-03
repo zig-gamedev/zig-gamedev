@@ -672,7 +672,7 @@ pub const GraphicsContext = struct {
         }
     }
 
-    pub fn allocateGpuDescriptors(gr: *GraphicsContext, num_descriptors: u32) Descriptor {
+    pub inline fn allocateGpuDescriptors(gr: *GraphicsContext, num_descriptors: u32) Descriptor {
         return gr.cbv_srv_uav_gpu_heaps[gr.frame_index].allocateDescriptors(num_descriptors);
     }
 
