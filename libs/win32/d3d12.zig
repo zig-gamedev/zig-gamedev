@@ -1191,6 +1191,34 @@ pub const D3D12_GRAPHICS_PIPELINE_STATE_DESC = extern struct {
     NodeMask: UINT,
     CachedPSO: D3D12_CACHED_PIPELINE_STATE,
     Flags: D3D12_PIPELINE_STATE_FLAGS,
+
+    pub fn initDefault() D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+        var v = std.mem.zeroes(@This());
+        v = D3D12_GRAPHICS_PIPELINE_STATE_DESC{
+            .pRootSignature = null,
+            .VS = D3D12_SHADER_BYTECODE.initZero(),
+            .PS = D3D12_SHADER_BYTECODE.initZero(),
+            .DS = D3D12_SHADER_BYTECODE.initZero(),
+            .HS = D3D12_SHADER_BYTECODE.initZero(),
+            .GS = D3D12_SHADER_BYTECODE.initZero(),
+            .StreamOutput = D3D12_STREAM_OUTPUT_DESC.initZero(),
+            .BlendState = D3D12_BLEND_DESC.initDefault(),
+            .SampleMask = 0xffff_ffff,
+            .RasterizerState = D3D12_RASTERIZER_DESC.initDefault(),
+            .DepthStencilState = D3D12_DEPTH_STENCIL_DESC.initDefault(),
+            .InputLayout = D3D12_INPUT_LAYOUT_DESC.initZero(),
+            .IBStripCutValue = .DISABLED,
+            .PrimitiveTopologyType = .TRIANGLE,
+            .NumRenderTargets = 1,
+            .RTVFormats = [_]DXGI_FORMAT{.R8G8B8A8_UNORM} ++ [_]DXGI_FORMAT{.UNKNOWN} ** 7,
+            .DSVFormat = .UNKNOWN,
+            .SampleDesc = .{ .Count = 1, .Quality = 0 },
+            .NodeMask = 0,
+            .CachedPSO = D3D12_CACHED_PIPELINE_STATE.initZero(),
+            .Flags = .{},
+        };
+        return v;
+    }
 };
 
 pub const D3D12_COMPUTE_PIPELINE_STATE_DESC = extern struct {

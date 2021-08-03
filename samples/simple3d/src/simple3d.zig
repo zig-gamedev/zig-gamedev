@@ -31,35 +31,11 @@ const DemoState = struct {
             const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
                 w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
             };
-            var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC{
-                .pRootSignature = null,
-                .VS = w.D3D12_SHADER_BYTECODE.initZero(),
-                .PS = w.D3D12_SHADER_BYTECODE.initZero(),
-                .DS = w.D3D12_SHADER_BYTECODE.initZero(),
-                .HS = w.D3D12_SHADER_BYTECODE.initZero(),
-                .GS = w.D3D12_SHADER_BYTECODE.initZero(),
-                .StreamOutput = w.D3D12_STREAM_OUTPUT_DESC.initZero(),
-                .BlendState = w.D3D12_BLEND_DESC.initDefault(),
-                .SampleMask = 0xffff_ffff,
-                .RasterizerState = w.D3D12_RASTERIZER_DESC.initDefault(),
-                .DepthStencilState = blk1: {
-                    var desc = w.D3D12_DEPTH_STENCIL_DESC.initDefault();
-                    desc.DepthEnable = w.FALSE;
-                    break :blk1 desc;
-                },
-                .InputLayout = .{
-                    .pInputElementDescs = &input_layout_desc,
-                    .NumElements = input_layout_desc.len,
-                },
-                .IBStripCutValue = .DISABLED,
-                .PrimitiveTopologyType = .TRIANGLE,
-                .NumRenderTargets = 1,
-                .RTVFormats = [_]w.DXGI_FORMAT{.R8G8B8A8_UNORM} ++ [_]w.DXGI_FORMAT{.UNKNOWN} ** 7,
-                .DSVFormat = .UNKNOWN,
-                .SampleDesc = .{ .Count = 1, .Quality = 0 },
-                .NodeMask = 0,
-                .CachedPSO = w.D3D12_CACHED_PIPELINE_STATE.initZero(),
-                .Flags = .{},
+            var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+            pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+            pso_desc.InputLayout = .{
+                .pInputElementDescs = &input_layout_desc,
+                .NumElements = input_layout_desc.len,
             };
             break :blk try grfx.createGraphicsShaderPipeline(
                 allocator,
