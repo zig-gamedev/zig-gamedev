@@ -284,6 +284,7 @@ pub const GraphicsContext = struct {
 
     pub fn deinit(gr: *GraphicsContext, allocator: *std.mem.Allocator) void {
         std.heap.page_allocator.free(gr.buffered_resource_barriers);
+        w.CloseHandle(gr.frame_fence_event);
         assert(gr.pipeline.map.count() == 0);
         gr.pipeline.map.deinit(allocator);
         gr.resource_pool.deinit();
