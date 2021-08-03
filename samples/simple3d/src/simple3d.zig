@@ -11,8 +11,8 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const DemoState = struct {
     const window_name = "zig-gamedev: simple3d";
-    const window_width = 800;
-    const window_height = 800;
+    const window_width = 1280;
+    const window_height = 720;
 
     window: w.HWND,
     grfx: gr.GraphicsContext,
@@ -130,9 +130,9 @@ const DemoState = struct {
         demo.* = undefined;
     }
 
-    fn update(demo: DemoState) void {
+    fn update(demo: *DemoState) void {
         {
-            var stats = demo.frame_stats;
+            var stats = &demo.frame_stats;
             stats.update();
             var buffer = [_]u8{0} ** 64;
             const text = std.fmt.bufPrint(
