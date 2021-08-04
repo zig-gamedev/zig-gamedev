@@ -184,12 +184,6 @@ pub fn main() !void {
         .{ .COPY_DEST = true },
         null,
     );
-    //const vertex_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    //grfx.device.CreateShaderResourceView(
-    //   grfx.getResource(vertex_buffer),
-    //  &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32G32B32_FLOAT, 0, 3),
-    // vertex_buffer_srv,
-    //);
     defer _ = grfx.releaseResource(vertex_buffer);
 
     const index_buffer = try grfx.createCommittedResource(
@@ -199,12 +193,6 @@ pub fn main() !void {
         .{ .COPY_DEST = true },
         null,
     );
-    //const index_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    //grfx.device.CreateShaderResourceView(
-    //   grfx.getResource(index_buffer),
-    //  &w.D3D12_SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32G32B32_FLOAT, 0, 3),
-    // vertex_buffer_srv,
-    //);
     defer _ = grfx.releaseResource(index_buffer);
 
     try grfx.beginFrame();
