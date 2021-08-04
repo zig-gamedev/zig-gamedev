@@ -68,7 +68,6 @@ pub fn build(b: *std.build.Builder) void {
     exe.addPackagePath("win32", "../../libs/win32/win32.zig");
     exe.addPackagePath("graphics", "../../libs/common/graphics.zig");
     exe.addPackagePath("vectormath", "../../libs/common/vectormath.zig");
-    exe.addPackagePath("library", "../../libs/common/library.zig");
 
     exe.install();
 
