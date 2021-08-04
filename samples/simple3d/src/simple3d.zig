@@ -5,6 +5,7 @@ const gr = @import("graphics");
 const lib = @import("library");
 usingnamespace @import("vectormath");
 const vhr = gr.vhr;
+const math = std.math;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -34,6 +35,7 @@ const DemoState = struct {
                 w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
             };
             var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+            pso_desc.RasterizerState.CullMode = .NONE;
             pso_desc.DepthStencilState.DepthEnable = w.FALSE;
             pso_desc.InputLayout = .{
                 .pInputElementDescs = &input_layout_desc,
@@ -160,16 +162,35 @@ const DemoState = struct {
         grfx.addTransitionBarrier(demo.entity_buffer, .{ .COPY_DEST = true });
         grfx.flushResourceBarriers();
 
-        const upload_entity = grfx.allocateUploadBufferRegion(Mat4, 1);
-        upload_entity.cpu_slice[0] = mat4InitIdentity();
-
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(demo.entity_buffer),
-            0,
-            upload_entity.buffer,
-            upload_entity.buffer_offset,
-            upload_entity.cpu_slice.len * @sizeOf(Mat4),
-        );
+        {
+            const object_to_camera = mat4Mul(
+                mat4InitRotationY(@floatCast(f32, demo.frame_stats.time)),
+                mat4InitLookAt(
+                    vec3Init(3.0, 3.0, -3.0),
+                    vec3Init(0.0, 0.0, 0.0),
+                    vec3Init(0.0, 1.0, 0.0),
+                ),
+            );
+            const upload_entity = grfx.allocateUploadBufferRegion(Mat4, 1);
+            upload_entity.cpu_slice[0] = mat4Transpose(
+                mat4Mul(
+                    object_to_camera,
+                    mat4InitPerspective(
+                        math.pi / 3.0,
+                        @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
+                        0.1,
+                        100.0,
+                    ),
+                ),
+            );
+            grfx.cmdlist.CopyBufferRegion(
+                grfx.getResource(demo.entity_buffer),
+                0,
+                upload_entity.buffer,
+                upload_entity.buffer_offset,
+                upload_entity.cpu_slice.len * @sizeOf(Mat4),
+            );
+        }
 
         const back_buffer = grfx.getBackBuffer();
 

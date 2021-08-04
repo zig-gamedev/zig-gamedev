@@ -1,6 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
-pub const math = std.math;
+const math = std.math;
 
 pub const Vec3 = [3]f32;
 pub const Mat4 = [4][4]f32;
@@ -45,11 +45,11 @@ pub fn vec3Init(x: f32, y: f32, z: f32) Vec3 {
 }
 
 pub fn vec3Length(a: Vec3) f32 {
-    return math.sqrt(dot(a, a));
+    return math.sqrt(vec3Dot(a, a));
 }
 
 pub fn vec3Normalize(a: Vec3) Vec3 {
-    const len = length(a);
+    const len = vec3Length(a);
     assert(!math.approxEq(f32, len, 0.0, 0.0001));
     const rcplen = 1.0 / len;
     return .{ rcplen * a[0], rcplen * a[1], rcplen * a[2] };
