@@ -1,5 +1,6 @@
 const std = @import("std");
 const w = @import("../win32/win32.zig");
+const c = @import("c.zig");
 
 pub const FrameStats = struct {
     time: f64,
@@ -50,7 +51,12 @@ fn processWindowMessage(
     wparam: w.WPARAM,
     lparam: w.LPARAM,
 ) callconv(w.WINAPI) w.LRESULT {
+    var ui = if (c.igGetCurrentContext() != null) c.igGetIO() else null;
     const processed = switch (message) {
+        w.user32.WM_LBUTTONDOWN => blk: {
+            if (ui != null) ui.?.*.MouseDown[0] = true;
+            break :blk true;
+        },
         w.user32.WM_DESTROY => blk: {
             w.user32.PostQuitMessage(0);
             break :blk true;

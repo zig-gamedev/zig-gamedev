@@ -3,6 +3,7 @@ const std = @import("std");
 const w = @import("win32");
 const gr = @import("graphics");
 const lib = @import("library");
+const c = @import("c");
 usingnamespace @import("vectormath");
 const vhr = gr.vhr;
 const math = std.math;
@@ -235,6 +236,9 @@ const DemoState = struct {
 
 pub fn main() !void {
     _ = w.SetProcessDPIAware();
+
+    _ = c.igCreateContext(null);
+    defer c.igDestroyContext(null);
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

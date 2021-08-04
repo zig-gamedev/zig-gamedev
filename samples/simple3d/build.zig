@@ -69,6 +69,19 @@ pub fn build(b: *std.build.Builder) void {
     exe.addPackagePath("graphics", "../../libs/common/graphics.zig");
     exe.addPackagePath("vectormath", "../../libs/common/vectormath.zig");
     exe.addPackagePath("library", "../../libs/common/library.zig");
+    exe.addPackagePath("c", "../../libs/common/c.zig");
+
+    exe.addIncludeDir("../../external/src");
+
+    exe.linkSystemLibrary("c");
+    exe.linkSystemLibrary("c++");
+    exe.linkSystemLibrary("imm32");
+    exe.addCSourceFile("../../external/src/cimgui/imgui/imgui.cpp", &[_][]const u8{""});
+    exe.addCSourceFile("../../external/src/cimgui/imgui/imgui_widgets.cpp", &[_][]const u8{""});
+    exe.addCSourceFile("../../external/src/cimgui/imgui/imgui_tables.cpp", &[_][]const u8{""});
+    exe.addCSourceFile("../../external/src/cimgui/imgui/imgui_draw.cpp", &[_][]const u8{""});
+    exe.addCSourceFile("../../external/src/cimgui/imgui/imgui_demo.cpp", &[_][]const u8{""});
+    exe.addCSourceFile("../../external/src/cimgui/cimgui.cpp", &[_][]const u8{""});
 
     exe.install();
 
