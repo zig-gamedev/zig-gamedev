@@ -31,6 +31,9 @@ const DemoState = struct {
         var grfx = try gr.GraphicsContext.init(window);
         errdefer grfx.deinit(allocator);
 
+        var gui = try gr.GuiContext.init(&grfx);
+        defer gui.deinit(&grfx);
+
         const pipeline = blk: {
             const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
                 w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),

@@ -54,7 +54,20 @@ pub extern "user32" fn GetClientRect(HWND, *RECT) callconv(WINAPI) BOOL;
 
 pub extern "user32" fn SetWindowTextA(hWnd: ?HWND, lpString: LPCSTR) callconv(WINAPI) BOOL;
 
-pub const VK_ESCAPE = 0x001B;
+pub const VK_TAB = 0x09;
+pub const VK_ESCAPE = 0x1B;
+pub const VK_LEFT = 0x25;
+pub const VK_UP = 0x26;
+pub const VK_RIGHT = 0x27;
+pub const VK_DOWN = 0x28;
+pub const VK_PRIOR = 0x21;
+pub const VK_NEXT = 0x22;
+pub const VK_END = 0x23;
+pub const VK_HOME = 0x24;
+pub const VK_DELETE = 0x2E;
+pub const VK_BACK = 0x08;
+pub const VK_RETURN = 0x0D;
+
 pub const WS_VISIBLE = 0x10000000;
 
 pub fn FlagsMixin(comptime FlagType: type) type {

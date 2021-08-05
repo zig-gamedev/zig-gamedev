@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 const w = @import("../win32/win32.zig");
+const c = @import("c.zig");
 const assert = std.debug.assert;
 
 pub inline fn vhr(hr: w.HRESULT) !void {
@@ -46,6 +47,7 @@ pub const GraphicsContext = struct {
     frame_fence_counter: u64,
     frame_index: u32,
     back_buffer_index: u32,
+    window: w.HWND,
 
     pub fn init(window: w.HWND) !GraphicsContext {
         const factory = blk: {
@@ -279,6 +281,7 @@ pub const GraphicsContext = struct {
             .viewport_height = viewport_height,
             .frame_index = 0,
             .back_buffer_index = swapchain.GetCurrentBackBufferIndex(),
+            .window = window,
         };
     }
 
@@ -684,6 +687,83 @@ pub const GraphicsContext = struct {
         const base = gr.allocateGpuDescriptors(num);
         gr.device.CopyDescriptorsSimple(num, base.cpu_handle, src_base_handle, .CBV_SRV_UAV);
         return base.gpu_handle;
+    }
+
+    pub fn updateTex2dSubresource(
+        gr: GraphicsContext,
+        texture: ResourceHandle,
+        subresource: u32,
+        data: []const u8,
+        row_pitch: u32,
+    ) void {
+        const resource = gr.resource_pool.getResource(texture);
+        assert(resource.desc.Dimension == .TEXTURE2D);
+        _ = subresource;
+        _ = data;
+        _ = row_pitch;
+    }
+};
+
+pub const GuiContext = struct {
+    font: ResourceHandle,
+
+    pub fn init(gr: *GraphicsContext) !GuiContext {
+        assert(c.igGetCurrentContext() != null);
+
+        var io = c.igGetIO().?;
+        io.*.KeyMap[c.ImGuiKey_Tab] = w.VK_TAB;
+        io.*.KeyMap[c.ImGuiKey_LeftArrow] = w.VK_LEFT;
+        io.*.KeyMap[c.ImGuiKey_RightArrow] = w.VK_RIGHT;
+        io.*.KeyMap[c.ImGuiKey_UpArrow] = w.VK_UP;
+        io.*.KeyMap[c.ImGuiKey_DownArrow] = w.VK_DOWN;
+        io.*.KeyMap[c.ImGuiKey_PageUp] = w.VK_PRIOR;
+        io.*.KeyMap[c.ImGuiKey_PageDown] = w.VK_NEXT;
+        io.*.KeyMap[c.ImGuiKey_Home] = w.VK_HOME;
+        io.*.KeyMap[c.ImGuiKey_End] = w.VK_END;
+        io.*.KeyMap[c.ImGuiKey_Delete] = w.VK_DELETE;
+        io.*.KeyMap[c.ImGuiKey_Backspace] = w.VK_BACK;
+        io.*.KeyMap[c.ImGuiKey_Enter] = w.VK_RETURN;
+        io.*.KeyMap[c.ImGuiKey_Escape] = w.VK_ESCAPE;
+        io.*.KeyMap[c.ImGuiKey_A] = 'A';
+        io.*.KeyMap[c.ImGuiKey_C] = 'C';
+        io.*.KeyMap[c.ImGuiKey_V] = 'V';
+        io.*.KeyMap[c.ImGuiKey_X] = 'X';
+        io.*.KeyMap[c.ImGuiKey_Y] = 'Y';
+        io.*.KeyMap[c.ImGuiKey_Z] = 'Z';
+        io.*.ImeWindowHandle = gr.window;
+        io.*.DisplaySize = .{ .x = @intToFloat(f32, gr.viewport_width), .y = @intToFloat(f32, gr.viewport_height) };
+        c.igGetStyle().?.*.WindowRounding = 0.0;
+
+        _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, "content/Roboto-Medium.ttf", 24.0, null, null);
+        const font_info: struct { pixels: []const u8, width: u32, height: u32 } = blk: {
+            var pp: [*c]u8 = undefined;
+            var ww: i32 = undefined;
+            var hh: i32 = undefined;
+            c.ImFontAtlas_GetTexDataAsRGBA32(io.*.Fonts, &pp, &ww, &hh, null);
+            break :blk .{
+                .pixels = pp[0..@intCast(usize, ww * hh * 4)],
+                .width = @intCast(u32, ww),
+                .height = @intCast(u32, hh),
+            };
+        };
+
+        const font = try gr.createCommittedResource(
+            .DEFAULT,
+            .{},
+            &w.D3D12_RESOURCE_DESC.initTex2d(font_info.width, font_info.height, .R8G8B8A8_UNORM, 1),
+            .{ .COPY_DEST = true },
+            null,
+        );
+        gr.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
+
+        return GuiContext{
+            .font = font,
+        };
+    }
+
+    pub fn deinit(gui: *GuiContext, gr: *GraphicsContext) void {
+        _ = gr.releaseResource(gui.font);
+        gui.* = undefined;
     }
 };
 

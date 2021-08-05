@@ -57,6 +57,40 @@ fn processWindowMessage(
             if (ui != null) ui.?.*.MouseDown[0] = true;
             break :blk true;
         },
+        w.user32.WM_LBUTTONUP => blk: {
+            if (ui != null) ui.?.*.MouseDown[0] = false;
+            break :blk true;
+        },
+        w.user32.WM_RBUTTONDOWN => blk: {
+            if (ui != null) ui.?.*.MouseDown[1] = true;
+            break :blk true;
+        },
+        w.user32.WM_RBUTTONUP => blk: {
+            if (ui != null) ui.?.*.MouseDown[1] = false;
+            break :blk true;
+        },
+        w.user32.WM_MBUTTONDOWN => blk: {
+            if (ui != null) ui.?.*.MouseDown[2] = true;
+            break :blk true;
+        },
+        w.user32.WM_MBUTTONUP => blk: {
+            if (ui != null) ui.?.*.MouseDown[2] = false;
+            break :blk true;
+        },
+        w.user32.WM_MOUSEWHEEL => blk: {
+            if (ui != null) {
+                const get_wheel_delta_wparam = @intCast(i16, (wparam & 0xffff_0000) >> 16);
+                ui.?.*.MouseWheel += if (get_wheel_delta_wparam > 0) @as(f32, 1.0) else @as(f32, -1.0);
+            }
+            break :blk true;
+        },
+        w.user32.WM_MOUSEMOVE => blk: {
+            if (ui != null) {
+                ui.?.*.MousePos.x = @intToFloat(f32, @intCast(i16, lparam & 0xffff));
+                ui.?.*.MousePos.y = @intToFloat(f32, @intCast(i16, (lparam & 0xffff_0000) >> 16));
+            }
+            break :blk true;
+        },
         w.user32.WM_DESTROY => blk: {
             w.user32.PostQuitMessage(0);
             break :blk true;

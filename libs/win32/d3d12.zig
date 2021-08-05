@@ -209,6 +209,23 @@ pub const D3D12_RESOURCE_DESC = extern struct {
         };
         return v;
     }
+
+    pub fn initTex2d(width: UINT64, height: UINT, format: DXGI_FORMAT, mip_levels: u32) D3D12_RESOURCE_DESC {
+        var v = std.mem.zeroes(@This());
+        v = .{
+            .Dimension = .TEXTURE2D,
+            .Alignment = 0,
+            .Width = width,
+            .Height = height,
+            .DepthOrArraySize = 1,
+            .MipLevels = @intCast(u16, mip_levels),
+            .Format = format,
+            .SampleDesc = .{ .Count = 1, .Quality = 0 },
+            .Layout = .UNKNOWN,
+            .Flags = .{},
+        };
+        return v;
+    }
 };
 
 pub const D3D12_FENCE_FLAGS = packed struct {
