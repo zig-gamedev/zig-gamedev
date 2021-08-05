@@ -736,8 +736,10 @@ pub const GraphicsContext = struct {
 
 pub const GuiContext = struct {
     font: ResourceHandle,
+    font_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+    pipeline: PipelineHandle,
 
-    pub fn init(gr: *GraphicsContext) !GuiContext {
+    pub fn init(allocator: *std.mem.Allocator, gr: *GraphicsContext) !GuiContext {
         assert(c.igGetCurrentContext() != null);
 
         var io = c.igGetIO().?;
@@ -784,15 +786,52 @@ pub const GuiContext = struct {
             .{ .COPY_DEST = true },
             null,
         );
+        errdefer _ = gr.releaseResource(font);
+
         gr.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
         gr.addTransitionBarrier(font, .{ .PIXEL_SHADER_RESOURCE = true });
 
+        const font_srv = gr.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        gr.device.CreateShaderResourceView(gr.getResource(font), null, font_srv);
+
+        const pipeline = blk: {
+            const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
+                w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+                w.D3D12_INPUT_ELEMENT_DESC.init("_Uv", 0, .R32G32_FLOAT, 0, 8, .PER_VERTEX_DATA, 0),
+                w.D3D12_INPUT_ELEMENT_DESC.init("_Color", 0, .R8G8B8A8_UNORM, 0, 16, .PER_VERTEX_DATA, 0),
+            };
+            var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+            pso_desc.RasterizerState.CullMode = .NONE;
+            pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+            pso_desc.BlendState.RenderTarget[0].BlendEnable = w.TRUE;
+            pso_desc.BlendState.RenderTarget[0].SrcBlend = .SRC_ALPHA;
+            pso_desc.BlendState.RenderTarget[0].DestBlend = .INV_SRC_ALPHA;
+            pso_desc.BlendState.RenderTarget[0].BlendOp = .ADD;
+            pso_desc.BlendState.RenderTarget[0].SrcBlendAlpha = .INV_SRC_ALPHA;
+            pso_desc.BlendState.RenderTarget[0].DestBlendAlpha = .ZERO;
+            pso_desc.BlendState.RenderTarget[0].BlendOpAlpha = .ADD;
+            pso_desc.InputLayout = .{
+                .pInputElementDescs = &input_layout_desc,
+                .NumElements = input_layout_desc.len,
+            };
+            break :blk try gr.createGraphicsShaderPipeline(
+                allocator,
+                &pso_desc,
+                "content/shaders/imgui.vs.cso",
+                "content/shaders/imgui.ps.cso",
+            );
+        };
+        errdefer _ = gr.releasePipeline(pipeline);
+
         return GuiContext{
             .font = font,
+            .font_srv = font_srv,
+            .pipeline = pipeline,
         };
     }
 
     pub fn deinit(gui: *GuiContext, gr: *GraphicsContext) void {
+        _ = gr.releasePipeline(gui.pipeline);
         _ = gr.releaseResource(gui.font);
         gui.* = undefined;
     }

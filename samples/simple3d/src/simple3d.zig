@@ -18,6 +18,7 @@ const DemoState = struct {
 
     window: w.HWND,
     grfx: gr.GraphicsContext,
+    gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
     pipeline: gr.PipelineHandle,
     vertex_buffer: gr.ResourceHandle,
@@ -87,8 +88,8 @@ const DemoState = struct {
 
         try grfx.beginFrame();
 
-        var gui = try gr.GuiContext.init(&grfx);
-        defer gui.deinit(&grfx);
+        var gui = try gr.GuiContext.init(allocator, &grfx);
+        errdefer gui.deinit(&grfx);
 
         const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
         upload_verts.cpu_slice[0] = vec3Init(-0.7, -0.7, 0.0);
@@ -125,6 +126,7 @@ const DemoState = struct {
 
         return DemoState{
             .grfx = grfx,
+            .gui = gui,
             .window = window,
             .frame_stats = lib.FrameStats.init(),
             .pipeline = pipeline,
@@ -141,6 +143,7 @@ const DemoState = struct {
         _ = demo.grfx.releaseResource(demo.index_buffer);
         _ = demo.grfx.releaseResource(demo.entity_buffer);
         _ = demo.grfx.releasePipeline(demo.pipeline);
+        demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit(allocator);
         demo.* = undefined;
     }
