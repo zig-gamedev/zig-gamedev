@@ -690,7 +690,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn updateTex2dSubresource(
-        gr: GraphicsContext,
+        gr: *GraphicsContext,
         texture: ResourceHandle,
         subresource: u32,
         data: []const u8,
@@ -701,6 +701,15 @@ pub const GraphicsContext = struct {
         _ = subresource;
         _ = data;
         _ = row_pitch;
+
+        var layout: [1]w.D3D12_PLACED_SUBRESOURCE_FOOTPRINT = undefined;
+        var required_size: u64 = undefined;
+        gr.device.GetCopyableFootprints(&resource.desc, subresource, layout.len, 0, &layout, null, null, &required_size);
+
+        const upload = gr.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
+        layout[0].Offset = upload.buffer_offset;
+        const ss = resource.desc.Format.sizeInBytes();
+        _ = ss;
     }
 };
 
