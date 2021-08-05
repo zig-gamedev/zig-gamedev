@@ -31,9 +31,6 @@ const DemoState = struct {
         var grfx = try gr.GraphicsContext.init(window);
         errdefer grfx.deinit(allocator);
 
-        var gui = try gr.GuiContext.init(&grfx);
-        defer gui.deinit(&grfx);
-
         const pipeline = blk: {
             const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
                 w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
@@ -89,6 +86,9 @@ const DemoState = struct {
         );
 
         try grfx.beginFrame();
+
+        var gui = try gr.GuiContext.init(&grfx);
+        defer gui.deinit(&grfx);
 
         const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
         upload_verts.cpu_slice[0] = vec3Init(-0.7, -0.7, 0.0);

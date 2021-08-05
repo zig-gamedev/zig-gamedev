@@ -125,7 +125,7 @@ pub const DXGI_FORMAT = enum(UINT) {
     SAMPLER_FEEDBACK_MIN_MIP_OPAQUE = 189,
     SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE = 190,
 
-    pub fn sizeInBytes(format: DXGI_FORMAT) u32 {
+    pub fn pixelSizeInBytes(format: DXGI_FORMAT) u32 {
         return switch (format) {
             .R32G32B32A32_TYPELESS,
             .R32G32B32A32_FLOAT,

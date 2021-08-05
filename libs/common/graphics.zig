@@ -698,9 +698,6 @@ pub const GraphicsContext = struct {
     ) void {
         const resource = gr.resource_pool.getResource(texture);
         assert(resource.desc.Dimension == .TEXTURE2D);
-        _ = subresource;
-        _ = data;
-        _ = row_pitch;
 
         var layout: [1]w.D3D12_PLACED_SUBRESOURCE_FOOTPRINT = undefined;
         var required_size: u64 = undefined;
@@ -708,8 +705,32 @@ pub const GraphicsContext = struct {
 
         const upload = gr.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
         layout[0].Offset = upload.buffer_offset;
-        const ss = resource.desc.Format.sizeInBytes();
-        _ = ss;
+
+        const pixel_size = resource.desc.Format.pixelSizeInBytes();
+        var y: u32 = 0;
+        while (y < layout[0].Footprint.Height) : (y += 1) {
+            var x: u32 = 0;
+            while (x < layout[0].Footprint.Width * pixel_size) : (x += 1) {
+                upload.cpu_slice[y * layout[0].Footprint.RowPitch + x] = data[y * row_pitch + x];
+            }
+        }
+
+        gr.addTransitionBarrier(texture, .{ .COPY_DEST = true });
+        gr.flushResourceBarriers();
+
+        gr.cmdlist.CopyTextureRegion(&w.D3D12_TEXTURE_COPY_LOCATION{
+            .pResource = gr.getResource(texture),
+            .Type = .SUBRESOURCE_INDEX,
+            .u = .{
+                .SubresourceIndex = subresource,
+            },
+        }, 0, 0, 0, &w.D3D12_TEXTURE_COPY_LOCATION{
+            .pResource = upload.buffer,
+            .Type = .PLACED_FOOTPRINT,
+            .u = .{
+                .PlacedFootprint = layout[0],
+            },
+        }, null);
     }
 };
 
@@ -764,6 +785,7 @@ pub const GuiContext = struct {
             null,
         );
         gr.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
+        gr.addTransitionBarrier(font, .{ .PIXEL_SHADER_RESOURCE = true });
 
         return GuiContext{
             .font = font,
