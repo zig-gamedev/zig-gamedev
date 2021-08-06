@@ -30,6 +30,9 @@ const DemoState = struct {
         _ = c.igCreateContext(null);
         errdefer c.igDestroyContext(null);
 
+        var d2d: ?*w.ID2D1Bitmap1 = null;
+        _ = d2d;
+
         const window = try lib.initWindow(window_name, window_width, window_height);
 
         var grfx = try gr.GraphicsContext.init(window);
