@@ -185,7 +185,7 @@ const DemoState = struct {
             upload_entity.cpu_slice[0] = mat4Transpose(
                 mat4Mul(
                     object_to_camera,
-                    mat4InitPerspective(
+                    mat4InitPerspectiveFovLh(
                         math.pi / 3.0,
                         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
                         0.1,

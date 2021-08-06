@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 const w = @import("../win32/win32.zig");
 const c = @import("c.zig");
+usingnamespace @import("vectormath.zig");
 const assert = std.debug.assert;
 
 pub inline fn vhr(hr: w.HRESULT) !void {
@@ -870,7 +871,7 @@ pub const GuiContext = struct {
 
     pub fn draw(gui: *GuiContext, gr: *GraphicsContext) !void {
         assert(c.igGetCurrentContext() != null);
-        _ = gui;
+
         c.igRender();
         const draw_data = c.igGetDrawData();
         if (draw_data == null or draw_data.?.*.TotalVtxCount == 0) {
@@ -878,12 +879,6 @@ pub const GuiContext = struct {
         }
         const num_vertices = @intCast(u32, draw_data.?.*.TotalVtxCount);
         const num_indices = @intCast(u32, draw_data.?.*.TotalIdxCount);
-
-        const io = c.igGetIO().?;
-        const vp_width = @floatToInt(i32, io.*.DisplaySize.x * io.*.DisplayFramebufferScale.x);
-        const vp_height = @floatToInt(i32, io.*.DisplaySize.y * io.*.DisplayFramebufferScale.y);
-        _ = vp_width;
-        _ = vp_height;
 
         var vb = gui.vb[gr.frame_index];
         var ib = gui.ib[gr.frame_index];
@@ -947,6 +942,67 @@ pub const GuiContext = struct {
                 vb_idx += list_vb_size;
                 ib_idx += list_ib_size;
             }
+        }
+
+        const io = c.igGetIO().?;
+        const vp_width = io.*.DisplaySize.x * io.*.DisplayFramebufferScale.x;
+        const vp_height = io.*.DisplaySize.y * io.*.DisplayFramebufferScale.y;
+        gr.cmdlist.RSSetViewports(1, &[_]w.D3D12_VIEWPORT{.{
+            .TopLeftX = 0.0,
+            .TopLeftY = 0.0,
+            .Width = vp_width,
+            .Height = vp_height,
+            .MinDepth = 0.0,
+            .MaxDepth = 1.0,
+        }});
+        gr.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+        gr.setCurrentPipeline(gui.pipeline);
+        {
+            const mem = gr.allocateUploadMemory(@sizeOf(Mat4));
+            const xform = mat4Transpose(mat4InitOrthoOffCenterLh(0.0, vp_width, vp_height, 0.0, 0.0, 1.0));
+            @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &xform[0][0]), @sizeOf(Mat4));
+
+            gr.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        }
+        gr.cmdlist.SetGraphicsRootDescriptorTable(1, gr.copyDescriptorsToGpuHeap(1, gui.font_srv));
+        gr.cmdlist.IASetVertexBuffers(0, 1, &[_]w.D3D12_VERTEX_BUFFER_VIEW{.{
+            .BufferLocation = gr.getResource(vb).GetGPUVirtualAddress(),
+            .SizeInBytes = num_vertices * @sizeOf(c.ImDrawVert),
+            .StrideInBytes = @sizeOf(c.ImDrawVert),
+        }});
+        gr.cmdlist.IASetIndexBuffer(&.{
+            .BufferLocation = gr.getResource(ib).GetGPUVirtualAddress(),
+            .SizeInBytes = num_indices * @sizeOf(c.ImDrawIdx),
+            .Format = if (@sizeOf(c.ImDrawIdx) == 2) .R16_UINT else .R32_UINT,
+        });
+
+        var vertex_offset: i32 = 0;
+        var index_offset: u32 = 0;
+
+        var cmdlist_idx: u32 = 0;
+        const num_cmdlists = @intCast(u32, draw_data.?.*.CmdListsCount);
+        while (cmdlist_idx < num_cmdlists) : (cmdlist_idx += 1) {
+            const cmdlist = draw_data.?.*.CmdLists[cmdlist_idx];
+
+            var cmd_idx: u32 = 0;
+            const num_cmds = cmdlist.*.CmdBuffer.Size;
+            while (cmd_idx < num_cmds) : (cmd_idx += 1) {
+                const cmd = &cmdlist.*.CmdBuffer.Data[cmd_idx];
+
+                if (cmd.*.UserCallback != null) {
+                    // TODO(mziulek): Call the callback.
+                } else {
+                    gr.cmdlist.RSSetScissorRects(1, &[_]w.D3D12_RECT{.{
+                        .left = @floatToInt(i32, cmd.*.ClipRect.x),
+                        .top = @floatToInt(i32, cmd.*.ClipRect.y),
+                        .right = @floatToInt(i32, cmd.*.ClipRect.z),
+                        .bottom = @floatToInt(i32, cmd.*.ClipRect.w),
+                    }});
+                    gr.cmdlist.DrawIndexedInstanced(cmd.*.ElemCount, 1, index_offset, vertex_offset, 0);
+                }
+                index_offset += cmd.*.ElemCount;
+            }
+            vertex_offset += cmdlist.*.VtxBuffer.Size;
         }
     }
 };

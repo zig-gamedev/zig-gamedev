@@ -32,6 +32,6 @@ void psMain(
     float4 color : _Color,
     out float4 out_color : SV_Target0
 ) {
-    color = pow(color, 2.2f);
+    //color = pow(color, 2.2f);
     out_color = color * srv_t0.Sample(sam_s0, uv);
 }

@@ -79,8 +79,8 @@ fn processWindowMessage(
         },
         w.user32.WM_MOUSEWHEEL => blk: {
             if (ui != null) {
-                const get_wheel_delta_wparam = @intCast(i16, (wparam & 0xffff_0000) >> 16);
-                ui.?.*.MouseWheel += if (get_wheel_delta_wparam > 0) @as(f32, 1.0) else @as(f32, -1.0);
+                const get_wheel_delta_wparam = @intCast(u16, ((wparam >> 16) & 0xffff));
+                ui.?.*.MouseWheel += if ((get_wheel_delta_wparam & 0x8000) > 0) @as(f32, -1.0) else @as(f32, 1.0);
             }
             break :blk true;
         },

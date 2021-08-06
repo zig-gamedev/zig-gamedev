@@ -142,7 +142,7 @@ pub fn mat4InitRotationZ(angle: f32) Mat4 {
     };
 }
 
-pub fn mat4InitPerspective(fovy: f32, aspect: f32, near: f32, far: f32) Mat4 {
+pub fn mat4InitPerspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat4 {
     const sinfov = math.sin(0.5 * fovy);
     const cosfov = math.cos(0.5 * fovy);
 
@@ -189,5 +189,29 @@ pub fn mat4InitLookAt(eye: Vec3, at: Vec3, up: Vec3) Mat4 {
         [_]f32{ ax[1], ay[1], az[1], 0.0 },
         [_]f32{ ax[2], ay[2], az[2], 0.0 },
         [_]f32{ -vec3Dot(ax, eye), -vec3Dot(ay, eye), -vec3Dot(az, eye), 1.0 },
+    };
+}
+
+pub fn mat4InitOrthoOffCenterLh(
+    view_left: f32,
+    view_right: f32,
+    view_bottom: f32,
+    view_top: f32,
+    near_z: f32,
+    far_z: f32,
+) Mat4 {
+    assert(!math.approxEq(f32, view_right, view_left, 0.00001));
+    assert(!math.approxEq(f32, view_top, view_bottom, 0.00001));
+    assert(!math.approxEq(f32, far_z, near_z, 0.00001));
+
+    const rcp_width = 1.0 / (view_right - view_left);
+    const rcp_height = 1.0 / (view_top - view_bottom);
+    const range = 1.0 / (far_z - near_z);
+
+    return .{
+        [_]f32{ rcp_width + rcp_width, 0.0, 0.0, 0.0 },
+        [_]f32{ 0.0, rcp_height + rcp_height, 0.0, 0.0 },
+        [_]f32{ 0.0, 0.0, range, 0.0 },
+        [_]f32{ -(view_left + view_right) * rcp_width, -(view_top + view_bottom) * rcp_height, -range * near_z, 1.0 },
     };
 }
