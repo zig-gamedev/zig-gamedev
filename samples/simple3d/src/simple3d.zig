@@ -13,8 +13,8 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const DemoState = struct {
     const window_name = "zig-gamedev: simple3d";
-    const window_width = 1280;
-    const window_height = 720;
+    const window_width = 1920;
+    const window_height = 1080;
 
     window: w.HWND,
     grfx: gr.GraphicsContext,
@@ -27,6 +27,9 @@ const DemoState = struct {
     entity_buffer_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
 
     fn init(allocator: *std.mem.Allocator) !DemoState {
+        _ = c.igCreateContext(null);
+        errdefer c.igDestroyContext(null);
+
         const window = try lib.initWindow(window_name, window_width, window_height);
 
         var grfx = try gr.GraphicsContext.init(window);
@@ -145,6 +148,7 @@ const DemoState = struct {
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit(allocator);
+        c.igDestroyContext(null);
         demo.* = undefined;
     }
 
@@ -247,9 +251,6 @@ const DemoState = struct {
 
 pub fn main() !void {
     _ = w.SetProcessDPIAware();
-
-    _ = c.igCreateContext(null);
-    defer c.igDestroyContext(null);
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
