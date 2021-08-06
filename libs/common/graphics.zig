@@ -386,6 +386,15 @@ pub const GraphicsContext = struct {
         return gr.resource_pool.getResource(handle).raw.?;
     }
 
+    pub fn getResourceSize(gr: GraphicsContext, handle: ResourceHandle) u64 {
+        if (gr.resource_pool.isResourceValid(handle)) {
+            const resource = gr.resource_pool.getResource(handle);
+            assert(resource.desc.Dimension == .BUFFER);
+            return resource.desc.Width;
+        }
+        return 0;
+    }
+
     pub fn createCommittedResource(
         gr: *GraphicsContext,
         heap_type: w.D3D12_HEAP_TYPE,
@@ -435,7 +444,7 @@ pub const GraphicsContext = struct {
         state_after: w.D3D12_RESOURCE_STATES,
     ) void {
         var resource = gr.resource_pool.editResource(handle);
-        if (@bitCast(u32, state_after) != @bitCast(u32, resource.state)) {
+        if (state_after.toInt() != resource.state.toInt()) {
             if (gr.num_buffered_resource_barriers >= gr.buffered_resource_barriers.len) {
                 gr.flushResourceBarriers();
             }
@@ -595,6 +604,9 @@ pub const GraphicsContext = struct {
     }
 
     pub fn releasePipeline(gr: *GraphicsContext, handle: PipelineHandle) u32 {
+        if (!gr.pipeline.pool.isPipelineValid(handle)) {
+            return 0;
+        }
         var pipeline = gr.pipeline.pool.editPipeline(handle);
 
         const refcount = pipeline.pso.?.Release();
@@ -738,6 +750,10 @@ pub const GuiContext = struct {
     font: ResourceHandle,
     font_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
     pipeline: PipelineHandle,
+    vb: [GraphicsContext.max_num_buffered_frames]ResourceHandle,
+    ib: [GraphicsContext.max_num_buffered_frames]ResourceHandle,
+    vb_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
+    ib_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
     pub fn init(allocator: *std.mem.Allocator, gr: *GraphicsContext) !GuiContext {
         assert(c.igGetCurrentContext() != null);
@@ -827,13 +843,111 @@ pub const GuiContext = struct {
             .font = font,
             .font_srv = font_srv,
             .pipeline = pipeline,
+            .vb = [_]ResourceHandle{.{ .index = 0, .generation = 0 }} ** GraphicsContext.max_num_buffered_frames,
+            .ib = [_]ResourceHandle{.{ .index = 0, .generation = 0 }} ** GraphicsContext.max_num_buffered_frames,
+            .vb_cpu_addr = [_][]align(8) u8{&.{}} ** GraphicsContext.max_num_buffered_frames,
+            .ib_cpu_addr = [_][]align(8) u8{&.{}} ** GraphicsContext.max_num_buffered_frames,
         };
     }
 
     pub fn deinit(gui: *GuiContext, gr: *GraphicsContext) void {
         _ = gr.releasePipeline(gui.pipeline);
         _ = gr.releaseResource(gui.font);
+        for (gui.vb) |vb| _ = gr.releaseResource(vb);
+        for (gui.ib) |ib| _ = gr.releaseResource(ib);
         gui.* = undefined;
+    }
+
+    pub fn update(delta_time: f32) void {
+        assert(c.igGetCurrentContext() != null);
+        var io = c.igGetIO().?;
+        io.*.KeyCtrl = w.GetAsyncKeyState(w.VK_CONTROL) < 0;
+        io.*.KeyShift = w.GetAsyncKeyState(w.VK_SHIFT) < 0;
+        io.*.KeyAlt = w.GetAsyncKeyState(w.VK_MENU) < 0;
+        io.*.DeltaTime = delta_time;
+        c.igNewFrame();
+    }
+
+    pub fn draw(gui: *GuiContext, gr: *GraphicsContext) !void {
+        assert(c.igGetCurrentContext() != null);
+        _ = gui;
+        c.igRender();
+        const draw_data = c.igGetDrawData();
+        if (draw_data == null or draw_data.?.*.TotalVtxCount == 0) {
+            return;
+        }
+        const num_vertices = @intCast(u32, draw_data.?.*.TotalVtxCount);
+        const num_indices = @intCast(u32, draw_data.?.*.TotalIdxCount);
+
+        const io = c.igGetIO().?;
+        const vp_width = @floatToInt(i32, io.*.DisplaySize.x * io.*.DisplayFramebufferScale.x);
+        const vp_height = @floatToInt(i32, io.*.DisplaySize.y * io.*.DisplayFramebufferScale.y);
+        _ = vp_width;
+        _ = vp_height;
+
+        var vb = gui.vb[gr.frame_index];
+        var ib = gui.ib[gr.frame_index];
+
+        if (gr.getResourceSize(vb) < num_vertices * @sizeOf(c.ImDrawVert)) {
+            _ = gr.releaseResource(vb);
+            const new_size = 2 * num_vertices * @sizeOf(c.ImDrawVert);
+            vb = try gr.createCommittedResource(
+                .UPLOAD,
+                .{},
+                &w.D3D12_RESOURCE_DESC.initBuffer(new_size),
+                w.D3D12_RESOURCE_STATE_GENERIC_READ,
+                null,
+            );
+            gui.vb[gr.frame_index] = vb;
+            gui.vb_cpu_addr[gr.frame_index] = blk: {
+                var ptr: ?[*]align(8) u8 = null;
+                try vhr(gr.getResource(vb).Map(0, &.{ .Begin = 0, .End = 0 }, @ptrCast(*?*c_void, &ptr)));
+                break :blk ptr.?[0..new_size];
+            };
+        }
+        if (gr.getResourceSize(ib) < num_indices * @sizeOf(c.ImDrawIdx)) {
+            _ = gr.releaseResource(ib);
+            const new_size = 2 * num_indices * @sizeOf(c.ImDrawIdx);
+            ib = try gr.createCommittedResource(
+                .UPLOAD,
+                .{},
+                &w.D3D12_RESOURCE_DESC.initBuffer(new_size),
+                w.D3D12_RESOURCE_STATE_GENERIC_READ,
+                null,
+            );
+            gui.ib[gr.frame_index] = ib;
+            gui.ib_cpu_addr[gr.frame_index] = blk: {
+                var ptr: ?[*]align(8) u8 = null;
+                try vhr(gr.getResource(ib).Map(0, &.{ .Begin = 0, .End = 0 }, @ptrCast(*?*c_void, &ptr)));
+                break :blk ptr.?[0..new_size];
+            };
+        }
+        // Update vertex and index buffers.
+        {
+            var vb_slice = std.mem.bytesAsSlice(c.ImDrawVert, gui.vb_cpu_addr[gr.frame_index]);
+            var ib_slice = std.mem.bytesAsSlice(c.ImDrawIdx, gui.ib_cpu_addr[gr.frame_index]);
+            var vb_idx: u32 = 0;
+            var ib_idx: u32 = 0;
+            var cmdlist_idx: u32 = 0;
+            const num_cmdlists = @intCast(u32, draw_data.?.*.CmdListsCount);
+            while (cmdlist_idx < num_cmdlists) : (cmdlist_idx += 1) {
+                const list = draw_data.?.*.CmdLists[cmdlist_idx];
+                const list_vb_size = @intCast(u32, list.*.VtxBuffer.Size);
+                const list_ib_size = @intCast(u32, list.*.IdxBuffer.Size);
+                std.mem.copy(
+                    c.ImDrawVert,
+                    vb_slice[vb_idx .. vb_idx + list_vb_size],
+                    list.*.VtxBuffer.Data[0..list_vb_size],
+                );
+                std.mem.copy(
+                    c.ImDrawIdx,
+                    ib_slice[ib_idx .. ib_idx + list_ib_size],
+                    list.*.IdxBuffer.Data[0..list_ib_size],
+                );
+                vb_idx += list_vb_size;
+                ib_idx += list_ib_size;
+            }
+        }
     }
 };
 

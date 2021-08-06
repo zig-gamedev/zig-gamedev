@@ -135,7 +135,7 @@ pub fn initWindow(name: [*:0]const u8, width: u32, height: u32) !w.HWND {
         0,
         name,
         name,
-        style + w.WS_VISIBLE,
+        style + w.user32.WS_VISIBLE,
         -1,
         -1,
         rect.right - rect.left,

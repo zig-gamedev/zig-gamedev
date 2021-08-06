@@ -160,6 +160,9 @@ const DemoState = struct {
             ) catch unreachable;
             _ = w.SetWindowTextA(demo.window, @ptrCast([*:0]const u8, text.ptr));
         }
+        gr.GuiContext.update(demo.frame_stats.delta_time);
+
+        c.igShowDemoWindow(null);
     }
 
     fn draw(demo: *DemoState) !void {
@@ -232,6 +235,8 @@ const DemoState = struct {
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.entity_buffer_srv));
         grfx.cmdlist.SetGraphicsRoot32BitConstant(0, 0, 0);
         grfx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
+
+        try demo.gui.draw(grfx);
 
         grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
         grfx.flushResourceBarriers();
