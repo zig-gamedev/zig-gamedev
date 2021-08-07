@@ -13,6 +13,34 @@ pub const D2D1_SIZE_2F = D2D_SIZE_2F;
 pub const D2D1_SIZE_2U = D2D_SIZE_2U;
 pub const D2D1_MATRIX_3X2_F = D2D_MATRIX_3X2_F;
 
+pub const D2D1_COLOR_F = extern struct {
+    r: FLOAT,
+    g: FLOAT,
+    b: FLOAT,
+    a: FLOAT,
+
+    pub const Black = D2D1_COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 };
+
+    fn toSrgb(s: FLOAT) FLOAT {
+        var l: FLOAT = undefined;
+        if (s > 0.0031308) {
+            l = 1.055 * (std.math.pow(FLOAT, s, (1.0 / 2.4))) - 0.055;
+        } else {
+            l = 12.92 * s;
+        }
+        return l;
+    }
+
+    pub fn linearToSrgb(r: FLOAT, g: FLOAT, b: FLOAT, a: FLOAT) D2D1_COLOR_F {
+        return D2D1_COLOR_F{
+            .r = toSrgb(r),
+            .g = toSrgb(g),
+            .b = toSrgb(b),
+            .a = a,
+        };
+    }
+};
+
 pub const D2D1_ALPHA_MODE = enum(UINT) {
     UNKNOWN = 0,
     PREMULTIPLIED = 1,
