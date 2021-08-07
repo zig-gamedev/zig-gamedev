@@ -66,9 +66,21 @@ pub const ID2D1Image = extern struct {
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
         resource: ID2D1Resource.VTable(Self),
+        image: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID2D1Resource.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
 };
 
 pub const ID2D1Bitmap = extern struct {
@@ -76,10 +88,12 @@ pub const ID2D1Bitmap = extern struct {
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
         resource: ID2D1Resource.VTable(Self),
+        image: ID2D1Image.VTable(Self),
         bitmap: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID2D1Resource.Methods(Self);
+    usingnamespace ID2D1Image.Methods(Self);
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {

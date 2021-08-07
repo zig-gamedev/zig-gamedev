@@ -9,11 +9,13 @@ pub const ID2D1Bitmap1 = extern struct {
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
         resource: ID2D1Resource.VTable(Self),
+        image: ID2D1Image.VTable(Self),
         bitmap: ID2D1Bitmap.VTable(Self),
         bitmap1: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID2D1Resource.Methods(Self);
+    usingnamespace ID2D1Image.Methods(Self);
     usingnamespace ID2D1Bitmap.Methods(Self);
     usingnamespace Methods(Self);
 
