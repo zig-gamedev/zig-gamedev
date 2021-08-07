@@ -3,6 +3,16 @@ usingnamespace std.os.windows;
 usingnamespace @import("misc.zig");
 usingnamespace @import("dxgiformat.zig");
 
+pub const D2D1_POINT_2F = D2D_POINT_2F;
+pub const D2D1_POINT_2U = D2D_POINT_2U;
+pub const D2D1_POINT_2L = D2D_POINT_2L;
+pub const D2D1_RECT_2F = D2D_RECT_2F;
+pub const D2D1_RECT_2U = D2D_RECT_2U;
+pub const D2D1_RECT_2L = D2D_RECT_2L;
+pub const D2D1_SIZE_2F = D2D_SIZE_2F;
+pub const D2D1_SIZE_2U = D2D_SIZE_2U;
+pub const D2D1_MATRIX_3X2_F = D2D_MATRIX_3X2_F;
+
 pub const D2D1_ALPHA_MODE = enum(UINT) {
     UNKNOWN = 0,
     PREMULTIPLIED = 1,
