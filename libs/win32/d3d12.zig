@@ -1897,10 +1897,22 @@ pub const ID3D12RootSignature = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        rs: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
 };
 
 pub const ID3D12QueryHeap = extern struct {
@@ -1909,10 +1921,24 @@ pub const ID3D12QueryHeap = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
+        qheap: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
 };
 
 pub const ID3D12CommandSignature = extern struct {
@@ -1921,10 +1947,24 @@ pub const ID3D12CommandSignature = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
+        cmdsig: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
 };
 
 pub const ID3D12Pageable = extern struct {
@@ -1933,10 +1973,22 @@ pub const ID3D12Pageable = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
 };
 
 pub const ID3D12Heap = extern struct {
@@ -1945,11 +1997,13 @@ pub const ID3D12Heap = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         heap: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1975,11 +2029,13 @@ pub const ID3D12Resource = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         resource: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -2061,12 +2117,14 @@ pub const ID3D12Resource1 = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         resource: ID3D12Resource.VTable(Self),
         resource1: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace ID3D12Resource.Methods(Self);
     usingnamespace Methods(Self);
 
@@ -2091,11 +2149,13 @@ pub const ID3D12CommandAllocator = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         alloc: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -2119,11 +2179,13 @@ pub const ID3D12Fence = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         fence: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -2155,12 +2217,14 @@ pub const ID3D12Fence1 = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         fence: ID3D12Fence.VTable(Self),
         fence1: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace ID3D12Fence.Methods(Self);
     usingnamespace Methods(Self);
 
@@ -2185,11 +2249,13 @@ pub const ID3D12PipelineState = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         pstate: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -2213,11 +2279,13 @@ pub const ID3D12DescriptorHeap = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         dheap: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -4075,11 +4143,13 @@ pub const ID3D12CommandQueue = extern struct {
         unknown: IUnknown.VTable(Self),
         object: ID3D12Object.VTable(Self),
         devchild: ID3D12DeviceChild.VTable(Self),
+        pageable: ID3D12Pageable.VTable(Self),
         cmdqueue: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace ID3D12Object.Methods(Self);
     usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace ID3D12Pageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
