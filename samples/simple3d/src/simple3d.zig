@@ -30,7 +30,7 @@ const DemoState = struct {
         _ = c.igCreateContext(null);
         errdefer c.igDestroyContext(null);
 
-        var d2d: ?*w.ID2D1SolidColorBrush = null;
+        var d2d: ?*w.ID2D1RenderTarget = null;
         _ = d2d;
 
         const window = try lib.initWindow(window_name, window_width, window_height);

@@ -6,11 +6,11 @@ usingnamespace @import("dxgiformat.zig");
 pub const D2D1_POINT_2F = D2D_POINT_2F;
 pub const D2D1_POINT_2U = D2D_POINT_2U;
 pub const D2D1_POINT_2L = D2D_POINT_2L;
-pub const D2D1_RECT_2F = D2D_RECT_2F;
-pub const D2D1_RECT_2U = D2D_RECT_2U;
-pub const D2D1_RECT_2L = D2D_RECT_2L;
-pub const D2D1_SIZE_2F = D2D_SIZE_2F;
-pub const D2D1_SIZE_2U = D2D_SIZE_2U;
+pub const D2D1_RECT_F = D2D_RECT_F;
+pub const D2D1_RECT_U = D2D_RECT_U;
+pub const D2D1_RECT_L = D2D_RECT_L;
+pub const D2D1_SIZE_F = D2D_SIZE_F;
+pub const D2D1_SIZE_U = D2D_SIZE_U;
 pub const D2D1_MATRIX_3X2_F = D2D_MATRIX_3X2_F;
 
 pub const D2D1_COLOR_F = extern struct {
@@ -123,4 +123,10 @@ pub const D2D_MATRIX_4X4_F = extern struct {
 
 pub const D2D_MATRIX_5X4_F = extern struct {
     m: [5][4]FLOAT,
+};
+
+pub const DWRITE_MEASURING_MODE = enum(UINT) {
+    NATURAL = 0,
+    GDI_CLASSIC = 1,
+    GDI_NATURAL = 2,
 };
