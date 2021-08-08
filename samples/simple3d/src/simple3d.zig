@@ -30,12 +30,15 @@ const DemoState = struct {
         _ = c.igCreateContext(null);
         errdefer c.igDestroyContext(null);
 
-        var _0: ?*w.ID2D1DeviceContext6 = null;
-        var _1: ?*w.ID2D1Factory7 = null;
-        var _2: ?*w.ID2D1Device6 = null;
-        _ = _0;
-        _ = _1;
-        _ = _2;
+        var d2d_factory: ?*w.ID2D1Factory7 = null;
+        var d2d_devctx: ?*w.ID2D1DeviceContext6 = null;
+        var d2d_device: ?*w.ID2D1Device6 = null;
+        _ = d2d_factory;
+        _ = d2d_devctx;
+        _ = d2d_device;
+
+        try vhr(w.D2D1CreateFactory(.SINGLE_THREADED, &w.IID_ID2D1Factory7, null, @ptrCast(*?*c_void, &d2d_factory)));
+        _ = d2d_factory.?.Release();
 
         const window = try lib.initWindow(window_name, window_width, window_height);
 

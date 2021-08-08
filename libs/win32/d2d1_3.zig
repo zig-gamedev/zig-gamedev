@@ -530,3 +530,10 @@ pub const ID2D1Device6 = extern struct {
         };
     }
 };
+
+pub const IID_ID2D1Factory7 = GUID{
+    .Data1 = 0xbdc2bdd3,
+    .Data2 = 0xb96c,
+    .Data3 = 0x4de6,
+    .Data4 = .{ 0xbd, 0xf7, 0x99, 0xd4, 0x74, 0x54, 0x54, 0xde },
+};

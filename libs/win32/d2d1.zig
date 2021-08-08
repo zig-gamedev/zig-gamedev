@@ -904,3 +904,26 @@ pub const ID2D1Factory = extern struct {
         };
     }
 };
+
+pub const D2D1_FACTORY_TYPE = enum(UINT) {
+    SINGLE_THREADED = 0,
+    MULTI_THREADED = 1,
+};
+
+pub const D2D1_DEBUG_LEVEL = enum(UINT) {
+    NONE = 0,
+    ERROR = 1,
+    WARNING = 2,
+    INFORMATION = 3,
+};
+
+pub const D2D1_FACTORY_OPTIONS = extern struct {
+    debugLevel: D2D1_DEBUG_LEVEL,
+};
+
+pub extern "d2d1" fn D2D1CreateFactory(
+    D2D1_FACTORY_TYPE,
+    *const GUID,
+    ?*const D2D1_FACTORY_OPTIONS,
+    *?*c_void,
+) callconv(WINAPI) HRESULT;
