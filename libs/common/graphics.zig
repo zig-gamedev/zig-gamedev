@@ -129,6 +129,18 @@ pub const GraphicsContext = struct {
         };
         errdefer _ = swapchain.Release();
 
+        var d2d_factory: ?*w.ID2D1Factory7 = null;
+        var d2d_devctx: ?*w.ID2D1DeviceContext6 = null;
+        var d2d_device: ?*w.ID2D1Device6 = null;
+        var d3d11on12_device: ?*w.ID3D11On12Device2 = null;
+        _ = d2d_factory;
+        _ = d2d_devctx;
+        _ = d2d_device;
+        _ = d3d11on12_device;
+
+        try vhr(w.D2D1CreateFactory(.SINGLE_THREADED, &w.IID_ID2D1Factory7, null, @ptrCast(*?*c_void, &d2d_factory)));
+        _ = d2d_factory.?.Release();
+
         var resource_pool = ResourcePool.init();
         var pipeline_pool = PipelinePool.init();
 

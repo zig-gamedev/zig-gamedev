@@ -16,3 +16,4 @@ pub usingnamespace @import("d2d1_1.zig");
 pub usingnamespace @import("d2d1_2.zig");
 pub usingnamespace @import("d2d1_3.zig");
 pub usingnamespace @import("d3d11.zig");
+pub usingnamespace @import("d3d11on12.zig");
