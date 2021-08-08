@@ -13,3 +13,5 @@ pub usingnamespace @import("dxgi1_4.zig");
 pub usingnamespace @import("dcommon.zig");
 pub usingnamespace @import("d2d1.zig");
 pub usingnamespace @import("d2d1_1.zig");
+pub usingnamespace @import("d2d1_2.zig");
+pub usingnamespace @import("d2d1_3.zig");

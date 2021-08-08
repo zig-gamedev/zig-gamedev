@@ -30,8 +30,12 @@ const DemoState = struct {
         _ = c.igCreateContext(null);
         errdefer c.igDestroyContext(null);
 
-        var d2d: ?*w.ID2D1DeviceContext = null;
-        _ = d2d;
+        var _0: ?*w.ID2D1DeviceContext6 = null;
+        var _1: ?*w.ID2D1Factory7 = null;
+        var _2: ?*w.ID2D1Device6 = null;
+        _ = _0;
+        _ = _1;
+        _ = _2;
 
         const window = try lib.initWindow(window_name, window_width, window_height);
 
