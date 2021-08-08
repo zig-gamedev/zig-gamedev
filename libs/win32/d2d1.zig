@@ -869,3 +869,38 @@ pub const ID2D1RenderTarget = extern struct {
         };
     }
 };
+
+pub const ID2D1Factory = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        factory: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            ReloadSystemMetrics: *c_void,
+            GetDesktopDpi: *c_void,
+            CreateRectangleGeometry: *c_void,
+            CreateRoundedRectangleGeometry: *c_void,
+            CreateEllipseleGeometry: *c_void,
+            CreateGeometryGroup: *c_void,
+            CreateTransformedGeometry: *c_void,
+            CreatePathGeometry: *c_void,
+            CreateStrokeStyle: *c_void,
+            CreateDrawingStateBlock: *c_void,
+            CreateWicBitmapRenderTarget: *c_void,
+            CreateHwndRenderTarget: *c_void,
+            CreateDxgiSurfaceRenderTarget: *c_void,
+            CreateDCRenderTarget: *c_void,
+        };
+    }
+};
