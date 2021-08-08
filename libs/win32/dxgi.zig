@@ -843,5 +843,12 @@ pub const IID_IDXGIFactory1 = GUID{
     .Data4 = .{ 0xa8, 0x29, 0x25, 0x3c, 0x83, 0xd1, 0xb3, 0x87 },
 };
 
+pub const IID_IDXGIDevice = GUID{
+    .Data1 = 0x54ec77fa,
+    .Data2 = 0x1377,
+    .Data3 = 0x44e6,
+    .Data4 = .{ 0x8c, 0x32, 0x88, 0xfd, 0x5f, 0x44, 0xc8, 0x4c },
+};
+
 pub const DXGI_CREATE_FACTORY_DEBUG = 0x1;
 pub extern "dxgi" fn CreateDXGIFactory2(UINT, *const GUID, *?*c_void) callconv(WINAPI) HRESULT;

@@ -49,6 +49,14 @@ pub const GraphicsContext = struct {
     frame_index: u32,
     back_buffer_index: u32,
     window: w.HWND,
+    d2d: struct {
+        factory: *w.ID2D1Factory7,
+        device: *w.ID2D1Device6,
+        context: *w.ID2D1DeviceContext6,
+        device11on12: *w.ID3D11On12Device2,
+        device11: *w.ID3D11Device,
+        context11: *w.ID3D11DeviceContext,
+    },
 
     pub fn init(window: w.HWND) !GraphicsContext {
         const factory = blk: {
@@ -129,17 +137,73 @@ pub const GraphicsContext = struct {
         };
         errdefer _ = swapchain.Release();
 
-        var d2d_factory: ?*w.ID2D1Factory7 = null;
-        var d2d_devctx: ?*w.ID2D1DeviceContext6 = null;
-        var d2d_device: ?*w.ID2D1Device6 = null;
-        var d3d11on12_device: ?*w.ID3D11On12Device2 = null;
-        _ = d2d_factory;
-        _ = d2d_devctx;
-        _ = d2d_device;
-        _ = d3d11on12_device;
+        const d3d11 = blk: {
+            var maybe_device11: ?*w.ID3D11Device = null;
+            var maybe_device_context11: ?*w.ID3D11DeviceContext = null;
+            try vhr(w.D3D11On12CreateDevice(
+                @ptrCast(*w.IUnknown, device),
+                if (comptime builtin.mode == .Debug) .{ .DEBUG = true, .BGRA_SUPPORT = true } else .{ .BGRA_SUPPORT = true },
+                null,
+                0,
+                &[_]*w.IUnknown{@ptrCast(*w.IUnknown, cmdqueue)},
+                1,
+                0,
+                &maybe_device11,
+                &maybe_device_context11,
+                null,
+            ));
+            break :blk .{ .device = maybe_device11.?, .device_context = maybe_device_context11.? };
+        };
+        errdefer {
+            _ = d3d11.device.Release();
+            _ = d3d11.device_context.Release();
+        }
 
-        try vhr(w.D2D1CreateFactory(.SINGLE_THREADED, &w.IID_ID2D1Factory7, null, @ptrCast(*?*c_void, &d2d_factory)));
-        _ = d2d_factory.?.Release();
+        const device11on12 = blk: {
+            var maybe_device11on12: ?*w.ID3D11On12Device2 = null;
+            try vhr(d3d11.device.QueryInterface(
+                &w.IID_ID3D11On12Device2,
+                @ptrCast(*?*c_void, &maybe_device11on12),
+            ));
+            break :blk maybe_device11on12.?;
+        };
+        errdefer _ = device11on12.Release();
+
+        const d2d_factory = blk: {
+            var maybe_d2d_factory: ?*w.ID2D1Factory7 = null;
+            try vhr(w.D2D1CreateFactory(
+                .SINGLE_THREADED,
+                &w.IID_ID2D1Factory7,
+                if (comptime builtin.mode == .Debug)
+                    &w.D2D1_FACTORY_OPTIONS{ .debugLevel = .INFORMATION }
+                else
+                    &w.D2D1_FACTORY_OPTIONS{ .debugLevel = .NONE },
+                @ptrCast(*?*c_void, &maybe_d2d_factory),
+            ));
+            break :blk maybe_d2d_factory.?;
+        };
+        errdefer _ = d2d_factory.Release();
+
+        const dxgi_device = blk: {
+            var maybe_dxgi_device: ?*w.IDXGIDevice = null;
+            try vhr(device11on12.QueryInterface(&w.IID_IDXGIDevice, @ptrCast(*?*c_void, &maybe_dxgi_device)));
+            break :blk maybe_dxgi_device.?;
+        };
+        defer _ = dxgi_device.Release();
+
+        const d2d_device = blk: {
+            var maybe_d2d_device: ?*w.ID2D1Device6 = null;
+            try vhr(d2d_factory.CreateDevice6(dxgi_device, &maybe_d2d_device));
+            break :blk maybe_d2d_device.?;
+        };
+        errdefer _ = d2d_device.Release();
+
+        const d2d_device_context = blk: {
+            var maybe_d2d_device_context: ?*w.ID2D1DeviceContext6 = null;
+            try vhr(d2d_device.CreateDeviceContext6(.{}, &maybe_d2d_device_context));
+            break :blk maybe_d2d_device_context.?;
+        };
+        errdefer _ = d2d_device_context.Release();
 
         var resource_pool = ResourcePool.init();
         var pipeline_pool = PipelinePool.init();
@@ -295,6 +359,14 @@ pub const GraphicsContext = struct {
             .frame_index = 0,
             .back_buffer_index = swapchain.GetCurrentBackBufferIndex(),
             .window = window,
+            .d2d = .{
+                .factory = d2d_factory,
+                .device = d2d_device,
+                .context = d2d_device_context,
+                .device11on12 = device11on12,
+                .device11 = d3d11.device,
+                .context11 = d3d11.device_context,
+            },
         };
     }
 
@@ -307,6 +379,12 @@ pub const GraphicsContext = struct {
         gr.rtv_heap.deinit();
         gr.dsv_heap.deinit();
         gr.cbv_srv_uav_cpu_heap.deinit();
+        _ = gr.d2d.factory.Release();
+        _ = gr.d2d.device.Release();
+        _ = gr.d2d.context.Release();
+        _ = gr.d2d.device11on12.Release();
+        _ = gr.d2d.device11.Release();
+        _ = gr.d2d.context11.Release();
         for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
         for (gr.upload_memory_heaps) |*heap| heap.*.deinit();
         _ = gr.device.Release();
@@ -796,7 +874,7 @@ pub const GuiContext = struct {
         c.igGetStyle().?.*.WindowRounding = 0.0;
 
         _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, "content/Roboto-Medium.ttf", 24.0, null, null);
-        const font_info: struct { pixels: []const u8, width: u32, height: u32 } = blk: {
+        const font_info = blk: {
             var pp: [*c]u8 = undefined;
             var ww: i32 = undefined;
             var hh: i32 = undefined;

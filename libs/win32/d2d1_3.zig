@@ -345,14 +345,16 @@ pub const ID2D1Factory7 = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn CreateDevice6(self: *T, dxgi_device: *IDXGIDevice, d2d_device6: *?*ID2D1Device6) HRESULT {
+                return self.v.factory7.CreateDevice6(self, dxgi_device, d2d_device6);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateDevice6: *c_void,
+            CreateDevice6: fn (*T, *IDXGIDevice, *?*ID2D1Device6) callconv(WINAPI) HRESULT,
         };
     }
 };
