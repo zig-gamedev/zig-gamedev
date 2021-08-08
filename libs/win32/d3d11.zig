@@ -283,7 +283,7 @@ pub const ID3D11Device = extern struct {
     }
 };
 
-pub const IID_ID3D11Resource = os.GUID{
+pub const IID_ID3D11Resource = GUID{
     .Data1 = 0xdc8e63f3,
     .Data2 = 0xd12b,
     .Data3 = 0x4952,
