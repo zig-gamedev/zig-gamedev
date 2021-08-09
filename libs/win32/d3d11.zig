@@ -38,6 +38,42 @@ pub const D3D11_CREATE_DEVICE_FLAG = packed struct {
     pub usingnamespace FlagsMixin(@This());
 };
 
+pub const D3D11_BIND_FLAG = packed struct {
+    D3D11_BIND_VERTEX_BUFFER: bool align(4) = false, // 0x1
+    D3D11_BIND_INDEX_BUFFER: bool = false, // 0x2
+    CONSTANT_BUFFER: bool = false, // 0x4
+    SHADER_RESOURCE: bool = false, // 0x8
+    STREAM_OUTPUT: bool = false, // 0x10
+    RENDER_TARGET: bool = false, // 0x20
+    DEPTH_STENCIL: bool = false, // 0x40
+    UNORDERED_ACCESS: bool = false, // 0x80
+    __reserved8: bool = false, // 0x100
+    DECODER: bool = false, // 0x200
+    VIDEO_ENCODER: bool = false, // 0x400
+    __reserved11: bool = false,
+    __reserved12: bool = false,
+    __reserved13: bool = false,
+    __reserved14: bool = false,
+    __reserved15: bool = false,
+    __reserved16: bool = false,
+    __reserved17: bool = false,
+    __reserved18: bool = false,
+    __reserved19: bool = false,
+    __reserved20: bool = false,
+    __reserved21: bool = false,
+    __reserved22: bool = false,
+    __reserved23: bool = false,
+    __reserved24: bool = false,
+    __reserved25: bool = false,
+    __reserved26: bool = false,
+    __reserved27: bool = false,
+    __reserved28: bool = false,
+    __reserved29: bool = false,
+    __reserved30: bool = false,
+    __reserved31: bool = false,
+    pub usingnamespace FlagsMixin(@This());
+};
+
 pub const ID3D11DeviceChild = extern struct {
     const Self = @This();
     v: *const extern struct {

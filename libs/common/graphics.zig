@@ -56,17 +56,18 @@ pub const GraphicsContext = struct {
         device11on12: *w.ID3D11On12Device2,
         device11: *w.ID3D11Device,
         context11: *w.ID3D11DeviceContext,
+        swapbuffers11: [num_swapbuffers]*w.ID3D11Resource,
     },
 
     pub fn init(window: w.HWND) !GraphicsContext {
         const factory = blk: {
-            var maybe_factory: ?*w.IDXGIFactory1 = null;
+            var factory: *w.IDXGIFactory1 = undefined;
             try vhr(w.CreateDXGIFactory2(
                 if (comptime builtin.mode == .Debug) w.DXGI_CREATE_FACTORY_DEBUG else 0,
                 &w.IID_IDXGIFactory1,
-                @ptrCast(*?*c_void, &maybe_factory),
+                @ptrCast(*?*c_void, &factory),
             ));
-            break :blk maybe_factory.?;
+            break :blk factory;
         };
         defer _ = factory.Release();
 
@@ -81,21 +82,21 @@ pub const GraphicsContext = struct {
         }
 
         const device = blk: {
-            var maybe_device: ?*w.ID3D12Device9 = null;
-            try vhr(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device9, @ptrCast(*?*c_void, &maybe_device)));
-            break :blk maybe_device.?;
+            var device: *w.ID3D12Device9 = undefined;
+            try vhr(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device9, @ptrCast(*?*c_void, &device)));
+            break :blk device;
         };
         errdefer _ = device.Release();
 
         const cmdqueue = blk: {
-            var maybe_cmdqueue: ?*w.ID3D12CommandQueue = null;
+            var cmdqueue: *w.ID3D12CommandQueue = undefined;
             try vhr(device.CreateCommandQueue(&.{
                 .Type = .DIRECT,
                 .Priority = @enumToInt(w.D3D12_COMMAND_QUEUE_PRIORITY.NORMAL),
                 .Flags = .{},
                 .NodeMask = 0,
-            }, &w.IID_ID3D12CommandQueue, @ptrCast(*?*c_void, &maybe_cmdqueue)));
-            break :blk maybe_cmdqueue.?;
+            }, &w.IID_ID3D12CommandQueue, @ptrCast(*?*c_void, &cmdqueue)));
+            break :blk cmdqueue;
         };
         errdefer _ = cmdqueue.Release();
 
@@ -160,17 +161,17 @@ pub const GraphicsContext = struct {
         }
 
         const device11on12 = blk: {
-            var maybe_device11on12: ?*w.ID3D11On12Device2 = null;
+            var device11on12: *w.ID3D11On12Device2 = undefined;
             try vhr(d3d11.device.QueryInterface(
                 &w.IID_ID3D11On12Device2,
-                @ptrCast(*?*c_void, &maybe_device11on12),
+                @ptrCast(*?*c_void, &device11on12),
             ));
-            break :blk maybe_device11on12.?;
+            break :blk device11on12;
         };
         errdefer _ = device11on12.Release();
 
         const d2d_factory = blk: {
-            var maybe_d2d_factory: ?*w.ID2D1Factory7 = null;
+            var d2d_factory: *w.ID2D1Factory7 = undefined;
             try vhr(w.D2D1CreateFactory(
                 .SINGLE_THREADED,
                 &w.IID_ID2D1Factory7,
@@ -178,9 +179,9 @@ pub const GraphicsContext = struct {
                     &w.D2D1_FACTORY_OPTIONS{ .debugLevel = .INFORMATION }
                 else
                     &w.D2D1_FACTORY_OPTIONS{ .debugLevel = .NONE },
-                @ptrCast(*?*c_void, &maybe_d2d_factory),
+                @ptrCast(*?*c_void, &d2d_factory),
             ));
-            break :blk maybe_d2d_factory.?;
+            break :blk d2d_factory;
         };
         errdefer _ = d2d_factory.Release();
 
@@ -206,7 +207,10 @@ pub const GraphicsContext = struct {
         errdefer _ = d2d_device_context.Release();
 
         var resource_pool = ResourcePool.init();
+        errdefer resource_pool.deinit();
+
         var pipeline_pool = PipelinePool.init();
+        errdefer pipeline_pool.deinit();
 
         var rtv_heap = try DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
         errdefer rtv_heap.deinit();
@@ -223,8 +227,8 @@ pub const GraphicsContext = struct {
         errdefer cbv_srv_uav_cpu_heap.deinit();
 
         var cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap = undefined;
-        for (cbv_srv_uav_gpu_heaps) |*heap, heap_index| {
-            heap.* = DescriptorHeap.init(
+        for (cbv_srv_uav_gpu_heaps) |_, heap_index| {
+            cbv_srv_uav_gpu_heaps[heap_index] = DescriptorHeap.init(
                 device,
                 num_cbv_srv_uav_gpu_descriptors,
                 .CBV_SRV_UAV,
@@ -240,8 +244,8 @@ pub const GraphicsContext = struct {
         errdefer for (cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
 
         var upload_heaps: [max_num_buffered_frames]GpuMemoryHeap = undefined;
-        for (upload_heaps) |*heap, heap_index| {
-            heap.* = GpuMemoryHeap.init(device, upload_heap_capacity, .UPLOAD) catch |err| {
+        for (upload_heaps) |_, heap_index| {
+            upload_heaps[heap_index] = GpuMemoryHeap.init(device, upload_heap_capacity, .UPLOAD) catch |err| {
                 var i: u32 = 0;
                 while (i < heap_index) : (i += 1) {
                     upload_heaps[i].deinit();
@@ -251,64 +255,84 @@ pub const GraphicsContext = struct {
         }
         errdefer for (upload_heaps) |*heap| heap.*.deinit();
 
-        const swapbuffers = blk: {
-            var maybe_swapbuffers = [_]?*w.ID3D12Resource{null} ** num_swapbuffers;
-            for (maybe_swapbuffers) |*swapbuffer, buffer_index| {
+        const swapchain_buffers = blk: {
+            var swapchain_buffers: [num_swapbuffers]ResourceHandle = undefined;
+            var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
+            for (swapbuffers) |_, buffer_index| {
                 vhr(swapchain.GetBuffer(
                     @intCast(u32, buffer_index),
                     &w.IID_ID3D12Resource,
-                    @ptrCast(*?*c_void, &swapbuffer.*),
+                    @ptrCast(*?*c_void, &swapbuffers[buffer_index]),
                 )) catch |err| {
                     var i: u32 = 0;
                     while (i < buffer_index) : (i += 1) {
-                        _ = maybe_swapbuffers[i].?.Release();
+                        _ = swapbuffers[i].Release();
                     }
                     return err;
                 };
-                device.CreateRenderTargetView(swapbuffer.*, null, rtv_heap.allocateDescriptors(1).cpu_handle);
-            }
-            var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
-            for (maybe_swapbuffers) |swapbuffer, i| swapbuffers[i] = swapbuffer.?;
-            break :blk swapbuffers;
-        };
-        errdefer {
-            for (swapbuffers) |swapbuffer| _ = swapbuffer.Release();
-        }
-
-        const swapchain_buffers = blk: {
-            var swapchain_buffers: [num_swapbuffers]ResourceHandle = undefined;
-            for (swapbuffers) |swapbuffer, i| {
-                swapchain_buffers[i] = resource_pool.addResource(swapbuffer, .{});
+                device.CreateRenderTargetView(
+                    swapbuffers[buffer_index],
+                    null,
+                    rtv_heap.allocateDescriptors(1).cpu_handle,
+                );
+                swapchain_buffers[buffer_index] = resource_pool.addResource(swapbuffers[buffer_index], .{});
             }
             break :blk swapchain_buffers;
         };
 
+        const swapbuffers11 = blk: {
+            var swapbuffers11: [num_swapbuffers]*w.ID3D11Resource = undefined;
+            for (swapbuffers11) |_, buffer_index| {
+                vhr(device11on12.CreateWrappedResource(
+                    @ptrCast(*w.IUnknown, resource_pool.getResource(swapchain_buffers[buffer_index]).raw.?),
+                    &w.D3D11_RESOURCE_FLAGS{
+                        .BindFlags = (w.D3D11_BIND_FLAG{ .RENDER_TARGET = true }).toInt(),
+                        .MiscFlags = 0,
+                        .CPUAccessFlags = 0,
+                        .StructureByteStride = 0,
+                    },
+                    .{ .RENDER_TARGET = true },
+                    w.D3D12_RESOURCE_STATE_PRESENT,
+                    &w.IID_ID3D11Resource,
+                    @ptrCast(*?*c_void, &swapbuffers11[buffer_index]),
+                )) catch |err| {
+                    var i: u32 = 0;
+                    while (i < num_swapbuffers) : (i += 1) {
+                        _ = swapbuffers11[i].Release();
+                    }
+                    return err;
+                };
+            }
+            break :blk swapbuffers11;
+        };
+        errdefer {
+            for (swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
+        }
+
         const frame_fence = blk: {
-            var maybe_frame_fence: ?*w.ID3D12Fence = null;
-            try vhr(device.CreateFence(0, .{}, &w.IID_ID3D12Fence, @ptrCast(*?*c_void, &maybe_frame_fence)));
-            break :blk maybe_frame_fence.?;
+            var frame_fence: *w.ID3D12Fence = undefined;
+            try vhr(device.CreateFence(0, .{}, &w.IID_ID3D12Fence, @ptrCast(*?*c_void, &frame_fence)));
+            break :blk frame_fence;
         };
         errdefer _ = frame_fence.Release();
 
         const frame_fence_event = w.CreateEventEx(null, "frame_fence_event", 0, w.EVENT_ALL_ACCESS) catch unreachable;
 
         const cmdallocs = blk: {
-            var maybe_cmdallocs = [_]?*w.ID3D12CommandAllocator{null} ** max_num_buffered_frames;
-            for (maybe_cmdallocs) |*cmdalloc, cmdalloc_index| {
+            var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
+            for (cmdallocs) |_, cmdalloc_index| {
                 vhr(device.CreateCommandAllocator(
                     .DIRECT,
                     &w.IID_ID3D12CommandAllocator,
-                    @ptrCast(*?*c_void, &cmdalloc.*),
+                    @ptrCast(*?*c_void, &cmdallocs[cmdalloc_index]),
                 )) catch |err| {
                     var i: u32 = 0;
                     while (i < cmdalloc_index) : (i += 1) {
-                        _ = maybe_cmdallocs[i].?.Release();
+                        _ = cmdallocs[i].Release();
                     }
                     return err;
                 };
             }
-            var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
-            for (maybe_cmdallocs) |cmdalloc, i| cmdallocs[i] = cmdalloc.?;
             break :blk cmdallocs;
         };
         errdefer {
@@ -316,16 +340,16 @@ pub const GraphicsContext = struct {
         }
 
         const cmdlist = blk: {
-            var maybe_cmdlist: ?*w.ID3D12GraphicsCommandList6 = null;
+            var cmdlist: *w.ID3D12GraphicsCommandList6 = undefined;
             try vhr(device.CreateCommandList(
                 0,
                 .DIRECT,
                 cmdallocs[0],
                 null,
                 &w.IID_ID3D12GraphicsCommandList6,
-                @ptrCast(*?*c_void, &maybe_cmdlist),
+                @ptrCast(*?*c_void, &cmdlist),
             ));
-            break :blk maybe_cmdlist.?;
+            break :blk cmdlist;
         };
         errdefer _ = cmdlist.Release();
         try vhr(cmdlist.Close());
@@ -368,6 +392,7 @@ pub const GraphicsContext = struct {
                 .device11on12 = device11on12,
                 .device11 = d3d11.device,
                 .context11 = d3d11.device_context,
+                .swapbuffers11 = swapbuffers11,
             },
         };
     }
@@ -387,6 +412,7 @@ pub const GraphicsContext = struct {
         _ = gr.d2d.device11on12.Release();
         _ = gr.d2d.device11.Release();
         _ = gr.d2d.context11.Release();
+        for (gr.d2d.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
         for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
         for (gr.upload_memory_heaps) |*heap| heap.*.deinit();
         _ = gr.device.Release();
@@ -1143,7 +1169,9 @@ const ResourcePool = struct {
         for (pool.resources) |resource, i| {
             if (i > 0 and i <= GraphicsContext.num_swapbuffers) {
                 // Release internally created swapbuffers.
-                _ = resource.raw.?.Release();
+                if (resource.raw) |raw| {
+                    _ = raw.Release();
+                }
             } else if (i > GraphicsContext.num_swapbuffers) {
                 // Verify that all resources has been released by a user.
                 assert(resource.raw == null);
@@ -1247,7 +1275,7 @@ const PipelinePool = struct {
             assert(pipeline.rs == null);
         }
         std.heap.page_allocator.free(pool.pipelines);
-        std.heap.page_allocator.free(poll.generations);
+        std.heap.page_allocator.free(pool.generations);
         pool.* = undefined;
     }
 
