@@ -253,17 +253,18 @@ pub const GraphicsContext = struct {
 
         const swapbuffers = blk: {
             var maybe_swapbuffers = [_]?*w.ID3D12Resource{null} ** num_swapbuffers;
-            errdefer {
-                for (maybe_swapbuffers) |swapbuffer| {
-                    if (swapbuffer) |sb| _ = sb.Release();
-                }
-            }
-            for (maybe_swapbuffers) |*swapbuffer, buffer_idx| {
-                try vhr(swapchain.GetBuffer(
-                    @intCast(u32, buffer_idx),
+            for (maybe_swapbuffers) |*swapbuffer, buffer_index| {
+                vhr(swapchain.GetBuffer(
+                    @intCast(u32, buffer_index),
                     &w.IID_ID3D12Resource,
                     @ptrCast(*?*c_void, &swapbuffer.*),
-                ));
+                )) catch |err| {
+                    var i: u32 = 0;
+                    while (i < buffer_index) : (i += 1) {
+                        _ = maybe_swapbuffers[i].?.Release();
+                    }
+                    return err;
+                };
                 device.CreateRenderTargetView(swapbuffer.*, null, rtv_heap.allocateDescriptors(1).cpu_handle);
             }
             var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
@@ -293,17 +294,18 @@ pub const GraphicsContext = struct {
 
         const cmdallocs = blk: {
             var maybe_cmdallocs = [_]?*w.ID3D12CommandAllocator{null} ** max_num_buffered_frames;
-            errdefer {
-                for (maybe_cmdallocs) |cmdalloc| {
-                    if (cmdalloc) |ca| _ = ca.Release();
-                }
-            }
-            for (maybe_cmdallocs) |*cmdalloc| {
-                try vhr(device.CreateCommandAllocator(
+            for (maybe_cmdallocs) |*cmdalloc, cmdalloc_index| {
+                vhr(device.CreateCommandAllocator(
                     .DIRECT,
                     &w.IID_ID3D12CommandAllocator,
                     @ptrCast(*?*c_void, &cmdalloc.*),
-                ));
+                )) catch |err| {
+                    var i: u32 = 0;
+                    while (i < cmdalloc_index) : (i += 1) {
+                        _ = maybe_cmdallocs[i].?.Release();
+                    }
+                    return err;
+                };
             }
             var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
             for (maybe_cmdallocs) |cmdalloc, i| cmdallocs[i] = cmdalloc.?;
