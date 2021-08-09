@@ -242,8 +242,10 @@ const DemoState = struct {
 
         try demo.gui.draw(grfx);
 
-        grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
-        grfx.flushResourceBarriers();
+        try grfx.flushGpuCommands();
+
+        grfx.beginDraw2d();
+        try grfx.endDraw2d();
 
         try grfx.endFrame();
     }

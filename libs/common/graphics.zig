@@ -499,8 +499,6 @@ pub const GraphicsContext = struct {
     }
 
     pub fn endFrame(gr: *GraphicsContext) !void {
-        try gr.flushGpuCommands();
-
         gr.frame_fence_counter += 1;
         try vhr(gr.swapchain.Present(0, .{}));
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
@@ -516,6 +514,29 @@ pub const GraphicsContext = struct {
 
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
         gr.upload_memory_heaps[gr.frame_index].size = 0;
+    }
+
+    pub fn beginDraw2d(gr: GraphicsContext) void {
+        gr.d2d.device11on12.AcquireWrappedResources(
+            &[_]*w.ID3D11Resource{gr.d2d.swapbuffers11[gr.back_buffer_index]},
+            1,
+        );
+        gr.d2d.context.SetTarget(@ptrCast(*w.ID2D1Image, gr.d2d.targets[gr.back_buffer_index]));
+        gr.d2d.context.BeginDraw();
+    }
+
+    pub fn endDraw2d(gr: *GraphicsContext) !void {
+        try vhr(gr.d2d.context.EndDraw(null, null));
+
+        gr.d2d.device11on12.ReleaseWrappedResources(
+            &[_]*w.ID3D11Resource{gr.d2d.swapbuffers11[gr.back_buffer_index]},
+            1,
+        );
+        gr.d2d.context11.Flush();
+
+        // Above calls will set back buffer state to PRESENT. We need to reflect this change
+        // in 'resource_pool' by manually setting state.
+        gr.resource_pool.editResource(gr.swapchain_buffers[gr.back_buffer_index]).*.state = w.D3D12_RESOURCE_STATE_PRESENT;
     }
 
     pub fn flushGpuCommands(gr: *GraphicsContext) !void {
@@ -587,7 +608,7 @@ pub const GraphicsContext = struct {
         return gr.resource_pool.addResource(resource, initial_state);
     }
 
-    pub fn releaseResource(gr: GraphicsContext, handle: ResourceHandle) u32 {
+    pub fn releaseResource(gr: *GraphicsContext, handle: ResourceHandle) u32 {
         if (gr.resource_pool.isResourceValid(handle)) {
             var resource = gr.resource_pool.editResource(handle);
             const refcount = resource.raw.?.Release();
@@ -1261,7 +1282,7 @@ const ResourcePool = struct {
             pool.resources[handle.index].raw != null;
     }
 
-    fn editResource(pool: ResourcePool, handle: ResourceHandle) *Resource {
+    fn editResource(pool: *ResourcePool, handle: ResourceHandle) *Resource {
         assert(pool.isResourceValid(handle));
         return &pool.resources[handle.index];
     }

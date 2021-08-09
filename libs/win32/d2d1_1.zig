@@ -166,6 +166,9 @@ pub const ID2D1DeviceContext = extern struct {
             ) HRESULT {
                 return self.v.devctx.CreateBitmapFromDxgiSurface(self, surface, properties, bitmap);
             }
+            pub inline fn SetTarget(self: *T, image: ?*ID2D1Image) void {
+                self.v.devctx.SetTarget(self, image);
+            }
         };
     }
 
