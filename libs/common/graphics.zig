@@ -57,6 +57,7 @@ pub const GraphicsContext = struct {
         device11: *w.ID3D11Device,
         context11: *w.ID3D11DeviceContext,
         swapbuffers11: [num_swapbuffers]*w.ID3D11Resource,
+        targets: [num_swapbuffers]*w.ID2D1Bitmap1,
     },
 
     pub fn init(window: w.HWND) !GraphicsContext {
@@ -309,6 +310,42 @@ pub const GraphicsContext = struct {
             for (swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
         }
 
+        const d2d_targets = blk: {
+            var maybe_d2d_targets = [_]?*w.ID2D1Bitmap1{null} ** num_swapbuffers;
+            errdefer {
+                for (maybe_d2d_targets) |target| {
+                    if (target) |t| _ = t.Release();
+                }
+            }
+
+            for (maybe_d2d_targets) |_, target_index| {
+                const swapbuffer11 = swapbuffers11[target_index];
+
+                var surface: *w.IDXGISurface = undefined;
+                try vhr(swapbuffer11.QueryInterface(&w.IID_IDXGISurface, @ptrCast(*?*c_void, &surface)));
+                defer _ = surface.Release();
+
+                try vhr(d2d_device_context.CreateBitmapFromDxgiSurface(
+                    surface,
+                    &w.D2D1_BITMAP_PROPERTIES1{
+                        .pixelFormat = .{ .format = .R8G8B8A8_UNORM, .alphaMode = .PREMULTIPLIED },
+                        .dpiX = 96.0,
+                        .dpiY = 96.0,
+                        .bitmapOptions = .{ .TARGET = true, .CANNOT_DRAW = true },
+                        .colorContext = null,
+                    },
+                    &maybe_d2d_targets[target_index],
+                ));
+            }
+
+            var d2d_targets: [num_swapbuffers]*w.ID2D1Bitmap1 = undefined;
+            for (d2d_targets) |_, i| d2d_targets[i] = maybe_d2d_targets[i].?;
+            break :blk d2d_targets;
+        };
+        errdefer {
+            for (d2d_targets) |target| _ = target.Release();
+        }
+
         const frame_fence = blk: {
             var frame_fence: *w.ID3D12Fence = undefined;
             try vhr(device.CreateFence(0, .{}, &w.IID_ID3D12Fence, @ptrCast(*?*c_void, &frame_fence)));
@@ -393,6 +430,7 @@ pub const GraphicsContext = struct {
                 .device11 = d3d11.device,
                 .context11 = d3d11.device_context,
                 .swapbuffers11 = swapbuffers11,
+                .targets = d2d_targets,
             },
         };
     }
@@ -412,6 +450,7 @@ pub const GraphicsContext = struct {
         _ = gr.d2d.device11on12.Release();
         _ = gr.d2d.device11.Release();
         _ = gr.d2d.context11.Release();
+        for (gr.d2d.targets) |target| _ = target.Release();
         for (gr.d2d.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
         for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
         for (gr.upload_memory_heaps) |*heap| heap.*.deinit();
