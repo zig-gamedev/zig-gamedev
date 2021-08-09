@@ -242,9 +242,7 @@ const DemoState = struct {
 
         try demo.gui.draw(grfx);
 
-        try grfx.flushGpuCommands();
-
-        grfx.beginDraw2d();
+        try grfx.beginDraw2d();
         try grfx.endDraw2d();
 
         try grfx.endFrame();

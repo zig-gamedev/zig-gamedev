@@ -516,7 +516,9 @@ pub const GraphicsContext = struct {
         gr.upload_memory_heaps[gr.frame_index].size = 0;
     }
 
-    pub fn beginDraw2d(gr: GraphicsContext) void {
+    pub fn beginDraw2d(gr: *GraphicsContext) !void {
+        try gr.flushGpuCommands();
+
         gr.d2d.device11on12.AcquireWrappedResources(
             &[_]*w.ID3D11Resource{gr.d2d.swapbuffers11[gr.back_buffer_index]},
             1,
