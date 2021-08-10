@@ -59,8 +59,8 @@ pub const GraphicsContext = struct {
         context11: *w.ID3D11DeviceContext,
         swapbuffers11: [num_swapbuffers]*w.ID3D11Resource,
         targets: [num_swapbuffers]*w.ID2D1Bitmap1,
-        dwrite_factory: *w.IDWriteFactory,
     },
+    dwrite_factory: *w.IDWriteFactory,
 
     pub fn init(window: w.HWND) !GraphicsContext {
         const factory = blk: {
@@ -442,8 +442,8 @@ pub const GraphicsContext = struct {
                 .context11 = d3d11.device_context,
                 .swapbuffers11 = swapbuffers11,
                 .targets = d2d_targets,
-                .dwrite_factory = dwrite_factory,
             },
+            .dwrite_factory = dwrite_factory,
         };
     }
 
@@ -463,7 +463,7 @@ pub const GraphicsContext = struct {
         _ = gr.d2d.device11on12.Release();
         _ = gr.d2d.device11.Release();
         _ = gr.d2d.context11.Release();
-        _ = gr.d2d.dwrite_factory.Release();
+        _ = gr.dwrite_factory.Release();
         for (gr.d2d.targets) |target| _ = target.Release();
         for (gr.d2d.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
         for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();

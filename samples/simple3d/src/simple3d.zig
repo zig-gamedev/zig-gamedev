@@ -104,7 +104,7 @@ const DemoState = struct {
 
         const textformat = blk: {
             var maybe_textformat: ?*w.IDWriteTextFormat = null;
-            try vhr(grfx.d2d.dwrite_factory.CreateTextFormat(
+            try vhr(grfx.dwrite_factory.CreateTextFormat(
                 std.unicode.utf8ToUtf16LeStringLiteral("Verdana")[0..],
                 null,
                 w.DWRITE_FONT_WEIGHT.NORMAL,
@@ -298,7 +298,11 @@ const DemoState = struct {
 };
 
 pub fn main() !void {
+    _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_MULTITHREADED));
     _ = w.SetProcessDPIAware();
+
+    var wincodec: ?*w.IWICBitmapSource = null;
+    _ = wincodec;
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
@@ -321,4 +325,6 @@ pub fn main() !void {
             try demo.draw();
         }
     }
+
+    w.ole32.CoUninitialize();
 }

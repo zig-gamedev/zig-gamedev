@@ -18,3 +18,4 @@ pub usingnamespace @import("d2d1_3.zig");
 pub usingnamespace @import("d3d11.zig");
 pub usingnamespace @import("d3d11on12.zig");
 pub usingnamespace @import("dwrite.zig");
+pub usingnamespace @import("wincodec.zig");
