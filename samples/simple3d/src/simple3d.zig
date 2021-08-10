@@ -107,9 +107,9 @@ const DemoState = struct {
             try vhr(grfx.d2d.dwrite_factory.CreateTextFormat(
                 std.unicode.utf8ToUtf16LeStringLiteral("Verdana")[0..],
                 null,
-                .REGULAR,
-                .NORMAL,
-                .NORMAL,
+                w.DWRITE_FONT_WEIGHT.NORMAL,
+                w.DWRITE_FONT_STYLE.NORMAL,
+                w.DWRITE_FONT_STRETCH.NORMAL,
                 32.0,
                 std.unicode.utf8ToUtf16LeStringLiteral("en-us")[0..],
                 &maybe_textformat,
