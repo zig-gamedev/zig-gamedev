@@ -10,6 +10,7 @@
 !*.hlsl
 !*.hlsli
 !*.bat
+!*.ttf
 
 !README
 !.ignore
