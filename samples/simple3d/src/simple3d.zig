@@ -127,9 +127,9 @@ const DemoState = struct {
         errdefer gui.deinit(&grfx);
 
         const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
-        upload_verts.cpu_slice[0] = vec3Init(-0.7, -0.7, 0.0);
-        upload_verts.cpu_slice[1] = vec3Init(0.0, 0.7, 0.0);
-        upload_verts.cpu_slice[2] = vec3Init(0.7, -0.7, 0.0);
+        upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
+        upload_verts.cpu_slice[1] = vec3.init(0.0, 0.7, 0.0);
+        upload_verts.cpu_slice[2] = vec3.init(0.7, -0.7, 0.0);
 
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(vertex_buffer),
@@ -203,19 +203,19 @@ const DemoState = struct {
         grfx.flushResourceBarriers();
 
         {
-            const object_to_camera = mat4Mul(
-                mat4InitRotationY(@floatCast(f32, demo.frame_stats.time)),
-                mat4InitLookAt(
-                    vec3Init(3.0, 3.0, -3.0),
-                    vec3Init(0.0, 0.0, 0.0),
-                    vec3Init(0.0, 1.0, 0.0),
+            const object_to_camera = mat4.mul(
+                mat4.initRotationY(@floatCast(f32, demo.frame_stats.time)),
+                mat4.initLookAtLh(
+                    vec3.init(3.0, 3.0, -3.0),
+                    vec3.init(0.0, 0.0, 0.0),
+                    vec3.init(0.0, 1.0, 0.0),
                 ),
             );
             const upload_entity = grfx.allocateUploadBufferRegion(Mat4, 1);
-            upload_entity.cpu_slice[0] = mat4Transpose(
-                mat4Mul(
+            upload_entity.cpu_slice[0] = mat4.transpose(
+                mat4.mul(
                     object_to_camera,
-                    mat4InitPerspectiveFovLh(
+                    mat4.initPerspectiveFovLh(
                         math.pi / 3.0,
                         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
                         0.1,
