@@ -25,6 +25,8 @@ const DemoState = struct {
     index_buffer: gr.ResourceHandle,
     entity_buffer: gr.ResourceHandle,
     entity_buffer_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+    brush: *w.ID2D1SolidColorBrush,
+    textformat: *w.IDWriteTextFormat,
 
     fn init(allocator: *std.mem.Allocator) !DemoState {
         _ = c.igCreateContext(null);
@@ -89,6 +91,36 @@ const DemoState = struct {
             entity_buffer_srv,
         );
 
+        const brush = blk: {
+            var maybe_brush: ?*w.ID2D1SolidColorBrush = null;
+            try vhr(grfx.d2d.context.CreateSolidColorBrush(
+                &w.D2D1_COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
+                null,
+                &maybe_brush,
+            ));
+            break :blk maybe_brush.?;
+        };
+        errdefer _ = brush.Release();
+
+        const textformat = blk: {
+            var maybe_textformat: ?*w.IDWriteTextFormat = null;
+            try vhr(grfx.d2d.dwrite_factory.CreateTextFormat(
+                std.unicode.utf8ToUtf16LeStringLiteral("Verdana")[0..],
+                null,
+                .REGULAR,
+                .NORMAL,
+                .NORMAL,
+                32.0,
+                std.unicode.utf8ToUtf16LeStringLiteral("en-us")[0..],
+                &maybe_textformat,
+            ));
+            break :blk maybe_textformat.?;
+        };
+        errdefer _ = textformat.Release();
+
+        try vhr(textformat.SetTextAlignment(.LEADING));
+        try vhr(textformat.SetParagraphAlignment(.NEAR));
+
         try grfx.beginFrame();
 
         var gui = try gr.GuiContext.init(allocator, &grfx);
@@ -136,11 +168,15 @@ const DemoState = struct {
             .index_buffer = index_buffer,
             .entity_buffer = entity_buffer,
             .entity_buffer_srv = entity_buffer_srv,
+            .brush = brush,
+            .textformat = textformat,
         };
     }
 
     fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
         demo.grfx.finishGpuCommands() catch unreachable;
+        _ = demo.brush.Release();
+        _ = demo.textformat.Release();
         _ = demo.grfx.releaseResource(demo.vertex_buffer);
         _ = demo.grfx.releaseResource(demo.index_buffer);
         _ = demo.grfx.releaseResource(demo.entity_buffer);
@@ -242,6 +278,11 @@ const DemoState = struct {
         try demo.gui.draw(grfx);
 
         try grfx.beginDraw2d();
+        demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 1.0, .g = 0.25, .b = 0.25, .a = 1.0 });
+        grfx.d2d.context.FillRectangle(
+            &w.D2D1_RECT_F{ .left = 10.0, .top = 10.0, .right = 200.0, .bottom = 100.0 },
+            @ptrCast(*w.ID2D1Brush, demo.brush),
+        );
         try grfx.endDraw2d();
 
         try grfx.endFrame();

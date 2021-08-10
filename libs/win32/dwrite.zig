@@ -90,10 +90,10 @@ pub const IDWriteTextFormat = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn SetTextAlignment(self: *T, alignment: D2D1_TEXT_ALIGNMENT) HRESULT {
+            pub inline fn SetTextAlignment(self: *T, alignment: DWRITE_TEXT_ALIGNMENT) HRESULT {
                 return self.v.textformat.SetTextAlignment(self, alignment);
             }
-            pub inline fn SetParagraphAlignment(self: *T, alignment: D2D1_PARAGRAPH_ALIGNMENT) HRESULT {
+            pub inline fn SetParagraphAlignment(self: *T, alignment: DWRITE_PARAGRAPH_ALIGNMENT) HRESULT {
                 return self.v.textformat.SetParagraphAlignment(self, alignment);
             }
         };
