@@ -70,9 +70,9 @@ pub fn main() !void {
     try grfx.beginFrame();
 
     const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
-    upload_verts.cpu_slice[0] = vec3Init(-0.7, -0.7, 0.0);
-    upload_verts.cpu_slice[1] = vec3Init(0.0, 0.7, 0.0);
-    upload_verts.cpu_slice[2] = vec3Init(0.7, -0.7, 0.0);
+    upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
+    upload_verts.cpu_slice[1] = vec3.init(0.0, 0.7, 0.0);
+    upload_verts.cpu_slice[2] = vec3.init(0.7, -0.7, 0.0);
 
     grfx.cmdlist.CopyBufferRegion(
         grfx.getResource(vertex_buffer),
