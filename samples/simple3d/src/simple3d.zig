@@ -188,17 +188,8 @@ const DemoState = struct {
     }
 
     fn update(demo: *DemoState) void {
-        {
-            var stats = &demo.frame_stats;
-            stats.update();
-            var buffer = [_]u8{0} ** 64;
-            const text = std.fmt.bufPrint(
-                buffer[0..],
-                "FPS: {d:.1}  CPU time: {d:.3} ms | {s}",
-                .{ stats.fps, stats.average_cpu_time, window_name },
-            ) catch unreachable;
-            _ = w.SetWindowTextA(demo.window, @ptrCast([*:0]const u8, text.ptr));
-        }
+        demo.frame_stats.update();
+
         gr.GuiContext.update(demo.frame_stats.delta_time);
 
         c.igShowDemoWindow(null);
@@ -278,11 +269,28 @@ const DemoState = struct {
         try demo.gui.draw(grfx);
 
         try grfx.beginDraw2d();
-        demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 1.0, .g = 0.25, .b = 0.25, .a = 1.0 });
-        grfx.d2d.context.FillRectangle(
-            &w.D2D1_RECT_F{ .left = 10.0, .top = 10.0, .right = 200.0, .bottom = 100.0 },
-            @ptrCast(*w.ID2D1Brush, demo.brush),
-        );
+        {
+            const stats = &demo.frame_stats;
+            var buffer = [_]u8{0} ** 64;
+            const text = std.fmt.bufPrint(
+                buffer[0..],
+                "FPS: {d:.1}\nCPU time: {d:.3} ms",
+                .{ stats.fps, stats.average_cpu_time },
+            ) catch unreachable;
+
+            demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
+            grfx.d2d.context.DrawTextSimple(
+                text,
+                demo.textformat,
+                &w.D2D1_RECT_F{
+                    .left = 10.0,
+                    .top = 10.0,
+                    .right = @intToFloat(f32, grfx.viewport_width),
+                    .bottom = @intToFloat(f32, grfx.viewport_height),
+                },
+                @ptrCast(*w.ID2D1Brush, demo.brush),
+            );
+        }
         try grfx.endDraw2d();
 
         try grfx.endFrame();
