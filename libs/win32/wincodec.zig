@@ -44,3 +44,55 @@ pub const IWICBitmapSource = extern struct {
         };
     }
 };
+
+pub const IWICBitmapFrameDecode = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        bmpsource: IWICBitmapSource.VTable(Self),
+        bmpframedecode: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IWICBitmapSource.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetMetadataQueryReader: *c_void,
+            GetColorContexts: *c_void,
+            GetThumbnail: *c_void,
+        };
+    }
+};
+
+pub const IWICBitmap = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        bmpsource: IWICBitmapSource.VTable(Self),
+        bmp: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IWICBitmapSource.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            Lock: *c_void,
+            SetPalette: *c_void,
+            SetResolution: *c_void,
+        };
+    }
+};
