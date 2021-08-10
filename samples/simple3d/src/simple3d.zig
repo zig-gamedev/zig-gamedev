@@ -124,7 +124,6 @@ const DemoState = struct {
         grfx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
         grfx.flushResourceBarriers();
 
-        try grfx.flushGpuCommands();
         try grfx.finishGpuCommands();
 
         return DemoState{

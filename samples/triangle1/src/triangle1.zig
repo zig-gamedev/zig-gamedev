@@ -99,7 +99,6 @@ pub fn main() !void {
     grfx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
     grfx.flushResourceBarriers();
 
-    try grfx.flushGpuCommands();
     try grfx.finishGpuCommands();
 
     var stats = lib.FrameStats.init();
@@ -157,8 +156,6 @@ pub fn main() !void {
 
             grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
             grfx.flushResourceBarriers();
-
-            try grfx.flushGpuCommands();
 
             try grfx.endFrame();
         }

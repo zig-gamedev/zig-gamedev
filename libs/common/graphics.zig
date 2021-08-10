@@ -49,6 +49,7 @@ pub const GraphicsContext = struct {
     frame_index: u32,
     back_buffer_index: u32,
     window: w.HWND,
+    is_cmdlist_opened: bool,
     d2d: struct {
         factory: *w.ID2D1Factory7,
         device: *w.ID2D1Device6,
@@ -398,6 +399,7 @@ pub const GraphicsContext = struct {
         };
         errdefer _ = cmdlist.Release();
         try vhr(cmdlist.Close());
+        const is_cmdlist_opened = false;
 
         return GraphicsContext{
             .device = device,
@@ -430,6 +432,7 @@ pub const GraphicsContext = struct {
             .frame_index = 0,
             .back_buffer_index = swapchain.GetCurrentBackBufferIndex(),
             .window = window,
+            .is_cmdlist_opened = is_cmdlist_opened,
             .d2d = .{
                 .factory = d2d_factory,
                 .device = d2d_device,
@@ -445,6 +448,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn deinit(gr: *GraphicsContext, allocator: *std.mem.Allocator) void {
+        gr.finishGpuCommands() catch unreachable;
         std.heap.page_allocator.free(gr.buffered_resource_barriers);
         w.CloseHandle(gr.frame_fence_event);
         assert(gr.pipeline.map.count() == 0);
@@ -477,6 +481,7 @@ pub const GraphicsContext = struct {
         const cmdalloc = gr.cmdallocs[gr.frame_index];
         try vhr(cmdalloc.Reset());
         try vhr(gr.cmdlist.Reset(cmdalloc, null));
+        gr.is_cmdlist_opened = true;
         gr.cmdlist.SetDescriptorHeaps(
             1,
             &[_]*w.ID3D12DescriptorHeap{gr.cbv_srv_uav_gpu_heaps[gr.frame_index].heap},
@@ -499,6 +504,8 @@ pub const GraphicsContext = struct {
     }
 
     pub fn endFrame(gr: *GraphicsContext) !void {
+        try gr.flushGpuCommands();
+
         gr.frame_fence_counter += 1;
         try vhr(gr.swapchain.Present(0, .{}));
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
@@ -542,15 +549,20 @@ pub const GraphicsContext = struct {
     }
 
     pub fn flushGpuCommands(gr: *GraphicsContext) !void {
-        gr.flushResourceBarriers();
-        try vhr(gr.cmdlist.Close());
-        gr.cmdqueue.ExecuteCommandLists(
-            1,
-            &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
-        );
+        if (gr.is_cmdlist_opened) {
+            gr.flushResourceBarriers();
+            try vhr(gr.cmdlist.Close());
+            gr.is_cmdlist_opened = false;
+            gr.cmdqueue.ExecuteCommandLists(
+                1,
+                &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
+            );
+        }
     }
 
     pub fn finishGpuCommands(gr: *GraphicsContext) !void {
+        try gr.flushGpuCommands();
+
         gr.frame_fence_counter += 1;
 
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
@@ -830,7 +842,6 @@ pub const GraphicsContext = struct {
         if (memory.cpu_slice == null or memory.gpu_base == null) {
             std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
 
-            gr.flushGpuCommands() catch unreachable;
             gr.finishGpuCommands() catch unreachable;
             gr.beginFrame() catch unreachable;
 
