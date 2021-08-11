@@ -494,6 +494,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn beginFrame(gr: *GraphicsContext) !void {
+        assert(!gr.is_cmdlist_opened);
         const cmdalloc = gr.cmdallocs[gr.frame_index];
         try vhr(cmdalloc.Reset());
         try vhr(gr.cmdlist.Reset(cmdalloc, null));
@@ -797,6 +798,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn setCurrentPipeline(gr: *GraphicsContext, pipeline_handle: PipelineHandle) void {
+        assert(gr.is_cmdlist_opened);
         // TODO(mziulek): Do we need to unset pipeline state (null, null)?
         const pipeline = gr.pipeline.pool.getPipeline(pipeline_handle);
 
@@ -926,6 +928,7 @@ pub const GraphicsContext = struct {
         data: []const u8,
         row_pitch: u32,
     ) void {
+        assert(gr.is_cmdlist_opened);
         const resource = gr.resource_pool.getResource(texture);
         assert(resource.desc.Dimension == .TEXTURE2D);
 
@@ -974,6 +977,7 @@ pub const GuiContext = struct {
     ib_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
     pub fn init(allocator: *std.mem.Allocator, gr: *GraphicsContext) !GuiContext {
+        assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
         var io = c.igGetIO().?;
@@ -1087,6 +1091,7 @@ pub const GuiContext = struct {
     }
 
     pub fn draw(gui: *GuiContext, gr: *GraphicsContext) !void {
+        assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
         c.igRender();
