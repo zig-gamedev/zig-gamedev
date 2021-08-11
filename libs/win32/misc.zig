@@ -56,6 +56,16 @@ pub extern "user32" fn SetWindowTextA(hWnd: ?HWND, lpString: LPCSTR) callconv(WI
 
 pub extern "user32" fn GetAsyncKeyState(vKey: c_int) callconv(WINAPI) SHORT;
 
+pub const CLSCTX_INPROC_SERVER = 0x1;
+
+pub extern "ole32" fn CoCreateInstance(
+    rclsid: *const GUID,
+    pUnkOuter: ?*IUnknown,
+    dwClsContext: DWORD,
+    riid: *const GUID,
+    ppv: *?*c_void,
+) callconv(WINAPI) HRESULT;
+
 pub const VK_TAB = 0x09;
 pub const VK_ESCAPE = 0x1B;
 pub const VK_LEFT = 0x25;

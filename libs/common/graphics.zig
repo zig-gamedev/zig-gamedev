@@ -61,8 +61,22 @@ pub const GraphicsContext = struct {
         targets: [num_swapbuffers]*w.ID2D1Bitmap1,
     },
     dwrite_factory: *w.IDWriteFactory,
+    wic_factory: *w.IWICImagingFactory,
 
     pub fn init(window: w.HWND) !GraphicsContext {
+        const wic_factory = blk: {
+            var maybe_wic_factory: ?*w.IWICImagingFactory = null;
+            try vhr(w.CoCreateInstance(
+                &w.CLSID_WICImagingFactory,
+                null,
+                w.CLSCTX_INPROC_SERVER,
+                &w.IID_IWICImagingFactory,
+                @ptrCast(*?*c_void, &maybe_wic_factory),
+            ));
+            break :blk maybe_wic_factory.?;
+        };
+        errdefer _ = wic_factory.Release();
+
         const factory = blk: {
             var factory: *w.IDXGIFactory1 = undefined;
             try vhr(w.CreateDXGIFactory2(
@@ -444,6 +458,7 @@ pub const GraphicsContext = struct {
                 .targets = d2d_targets,
             },
             .dwrite_factory = dwrite_factory,
+            .wic_factory = wic_factory,
         };
     }
 
@@ -474,6 +489,7 @@ pub const GraphicsContext = struct {
         _ = gr.frame_fence.Release();
         _ = gr.cmdlist.Release();
         for (gr.cmdallocs) |cmdalloc| _ = cmdalloc.Release();
+        _ = gr.wic_factory.Release();
         gr.* = undefined;
     }
 

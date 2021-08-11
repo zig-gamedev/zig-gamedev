@@ -298,11 +298,9 @@ const DemoState = struct {
 };
 
 pub fn main() !void {
-    _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_MULTITHREADED));
+    // WIC requires below call (when we pass COINIT_MULTITHREADED '_ = wic_factory.Release()' crashes on exit).
+    _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
     _ = w.SetProcessDPIAware();
-
-    var wincodec: ?*w.IWICBitmapSource = null;
-    _ = wincodec;
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
