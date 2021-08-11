@@ -12,6 +12,13 @@ pub inline fn vhr(hr: w.HRESULT) !void {
     }
 }
 
+// TODO(mziulek): For now, we always transition *all* subresources.
+const TransitionResourceBarrier = struct {
+    state_before: w.D3D12_RESOURCE_STATES,
+    state_after: w.D3D12_RESOURCE_STATES,
+    resource: ResourceHandle,
+};
+
 pub const GraphicsContext = struct {
     const max_num_buffered_frames = 2;
     const num_swapbuffers = 4;
@@ -19,7 +26,7 @@ pub const GraphicsContext = struct {
     const num_dsv_descriptors = 128;
     const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
     const num_cbv_srv_uav_gpu_descriptors = 4 * 1024;
-    const max_num_buffered_resource_barriers = 32;
+    const max_num_buffered_resource_barriers = 16;
     const upload_heap_capacity = 8 * 1024 * 1024;
 
     device: *w.ID3D12Device9,
@@ -39,8 +46,8 @@ pub const GraphicsContext = struct {
         map: std.AutoHashMapUnmanaged(u32, PipelineHandle),
         current: PipelineHandle,
     },
-    buffered_resource_barriers: []w.D3D12_RESOURCE_BARRIER,
-    num_buffered_resource_barriers: u32,
+    transition_resource_barriers: []TransitionResourceBarrier,
+    num_transition_resource_barriers: u32,
     viewport_width: u32,
     viewport_height: u32,
     frame_fence: *w.ID3D12Fence,
@@ -436,11 +443,11 @@ pub const GraphicsContext = struct {
                 .map = .{},
                 .current = .{ .index = 0, .generation = 0 },
             },
-            .buffered_resource_barriers = std.heap.page_allocator.alloc(
-                w.D3D12_RESOURCE_BARRIER,
+            .transition_resource_barriers = std.heap.page_allocator.alloc(
+                TransitionResourceBarrier,
                 max_num_buffered_resource_barriers,
             ) catch unreachable,
-            .num_buffered_resource_barriers = 0,
+            .num_transition_resource_barriers = 0,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
             .frame_index = 0,
@@ -464,7 +471,7 @@ pub const GraphicsContext = struct {
 
     pub fn deinit(gr: *GraphicsContext, allocator: *std.mem.Allocator) void {
         gr.finishGpuCommands() catch unreachable;
-        std.heap.page_allocator.free(gr.buffered_resource_barriers);
+        std.heap.page_allocator.free(gr.transition_resource_barriers);
         w.CloseHandle(gr.frame_fence_event);
         assert(gr.pipeline.map.count() == 0);
         gr.pipeline.map.deinit(allocator);
@@ -652,9 +659,34 @@ pub const GraphicsContext = struct {
     }
 
     pub fn flushResourceBarriers(gr: *GraphicsContext) void {
-        if (gr.num_buffered_resource_barriers > 0) {
-            gr.cmdlist.ResourceBarrier(gr.num_buffered_resource_barriers, gr.buffered_resource_barriers.ptr);
-            gr.num_buffered_resource_barriers = 0;
+        if (gr.num_transition_resource_barriers > 0) {
+            var d3d12_barriers: [max_num_buffered_resource_barriers]w.D3D12_RESOURCE_BARRIER = undefined;
+
+            var num_valid_barriers: u32 = 0;
+            var barrier_index: u32 = 0;
+            while (barrier_index < gr.num_transition_resource_barriers) : (barrier_index += 1) {
+                const barrier = &gr.transition_resource_barriers[barrier_index];
+
+                if (gr.resource_pool.isResourceValid(barrier.resource)) {
+                    d3d12_barriers[num_valid_barriers] = .{
+                        .Type = .TRANSITION,
+                        .Flags = .{},
+                        .u = .{
+                            .Transition = .{
+                                .pResource = gr.getResource(barrier.resource),
+                                .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                                .StateBefore = barrier.state_before,
+                                .StateAfter = barrier.state_after,
+                            },
+                        },
+                    };
+                    num_valid_barriers += 1;
+                }
+            }
+            if (num_valid_barriers > 0) {
+                gr.cmdlist.ResourceBarrier(num_valid_barriers, &d3d12_barriers);
+            }
+            gr.num_transition_resource_barriers = 0;
         }
     }
 
@@ -664,25 +696,19 @@ pub const GraphicsContext = struct {
         state_after: w.D3D12_RESOURCE_STATES,
     ) void {
         var resource = gr.resource_pool.editResource(handle);
+
         if (state_after.toInt() != resource.state.toInt()) {
-            if (gr.num_buffered_resource_barriers >= gr.buffered_resource_barriers.len) {
+            if (gr.num_transition_resource_barriers >= gr.transition_resource_barriers.len) {
                 gr.flushResourceBarriers();
             }
-            gr.buffered_resource_barriers[gr.num_buffered_resource_barriers] = .{
-                .Type = .TRANSITION,
-                .Flags = .{},
-                .u = .{
-                    .Transition = .{
-                        .pResource = resource.raw.?,
-                        .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                        .StateBefore = resource.state,
-                        .StateAfter = state_after,
-                    },
-                },
+            gr.transition_resource_barriers[gr.num_transition_resource_barriers] = .{
+                .resource = handle,
+                .state_before = resource.state,
+                .state_after = state_after,
             };
-            gr.num_buffered_resource_barriers += 1;
-            resource.state = state_after;
         }
+        gr.num_transition_resource_barriers += 1;
+        resource.state = state_after;
     }
 
     pub fn createGraphicsShaderPipeline(
@@ -965,6 +991,27 @@ pub const GraphicsContext = struct {
             },
         }, null);
     }
+
+    pub fn createAndUploadTex2dFromFile(gr: *GraphicsContext, path: []const u16, num_mip_levels: i32) !ResourceHandle {
+        // TODO(mziulek): Is this the correct way? We want to make sure that slice is ended with '0' (comes from [*:0] str).
+        assert(path.ptr[path.len] == 0);
+        _ = num_mip_levels;
+
+        const bmp_decoder = blk: {
+            var maybe_bmp_decoder: ?*w.IWICBitmapDecoder = undefined;
+            try vhr(gr.wic_factory.CreateDecoderFromFilename(
+                @ptrCast(w.LPCWSTR, path.ptr),
+                null,
+                w.GENERIC_READ,
+                .MetadataCacheOnDemand,
+                &maybe_bmp_decoder,
+            ));
+            break :blk maybe_bmp_decoder.?;
+        };
+        defer _ = bmp_decoder.Release();
+
+        return ResourceHandle{ .index = 0, .generation = 0 };
+    }
 };
 
 pub const GuiContext = struct {
@@ -1073,6 +1120,7 @@ pub const GuiContext = struct {
     }
 
     pub fn deinit(gui: *GuiContext, gr: *GraphicsContext) void {
+        gr.finishGpuCommands() catch unreachable;
         _ = gr.releasePipeline(gui.pipeline);
         _ = gr.releaseResource(gui.font);
         for (gui.vb) |vb| _ = gr.releaseResource(vb);

@@ -7,6 +7,7 @@ const c = @import("c");
 usingnamespace @import("vectormath");
 const vhr = gr.vhr;
 const math = std.math;
+const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -105,13 +106,13 @@ const DemoState = struct {
         const textformat = blk: {
             var maybe_textformat: ?*w.IDWriteTextFormat = null;
             try vhr(grfx.dwrite_factory.CreateTextFormat(
-                std.unicode.utf8ToUtf16LeStringLiteral("Verdana")[0..],
+                utf8ToUtf16LeStringLiteral("Verdana"),
                 null,
                 w.DWRITE_FONT_WEIGHT.NORMAL,
                 w.DWRITE_FONT_STYLE.NORMAL,
                 w.DWRITE_FONT_STRETCH.NORMAL,
                 32.0,
-                std.unicode.utf8ToUtf16LeStringLiteral("en-us")[0..],
+                utf8ToUtf16LeStringLiteral("en-us"),
                 &maybe_textformat,
             ));
             break :blk maybe_textformat.?;
@@ -125,6 +126,8 @@ const DemoState = struct {
 
         var gui = try gr.GuiContext.init(allocator, &grfx);
         errdefer gui.deinit(&grfx);
+
+        _ = try grfx.createAndUploadTex2dFromFile(utf8ToUtf16LeStringLiteral("aa")[0..], 1);
 
         const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
         upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
