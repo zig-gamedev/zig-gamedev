@@ -658,6 +658,11 @@ pub const GraphicsContext = struct {
         return 0;
     }
 
+    pub fn releaseResourceSafe(gr: *GraphicsContext, handle: ResourceHandle) u32 {
+        gr.finishGpuCommands() catch unreachable;
+        return releaseResource(gr, handle);
+    }
+
     pub fn flushResourceBarriers(gr: *GraphicsContext) void {
         if (gr.num_transition_resource_barriers > 0) {
             var d3d12_barriers: [max_num_buffered_resource_barriers]w.D3D12_RESOURCE_BARRIER = undefined;
@@ -875,6 +880,11 @@ pub const GraphicsContext = struct {
             pipeline.* = .{ .pso = null, .rs = null, .ptype = null };
         }
         return refcount;
+    }
+
+    pub fn releasePipelineSafe(gr: *GraphicsContext, handle: PipelineHandle) u32 {
+        gr.finishGpuCommands() catch unreachable;
+        return gr.releasePipeline(handle);
     }
 
     pub fn allocateUploadMemory(

@@ -56,7 +56,7 @@ const DemoState = struct {
                 "content/shaders/simple3d.ps.cso",
             );
         };
-        errdefer _ = grfx.releasePipeline(pipeline);
+        errdefer _ = grfx.releasePipelineSafe(pipeline);
 
         const vertex_buffer = try grfx.createCommittedResource(
             .DEFAULT,
@@ -65,7 +65,7 @@ const DemoState = struct {
             .{ .COPY_DEST = true },
             null,
         );
-        errdefer _ = grfx.releaseResource(vertex_buffer);
+        errdefer _ = grfx.releaseResourceSafe(vertex_buffer);
 
         const index_buffer = try grfx.createCommittedResource(
             .DEFAULT,
@@ -74,7 +74,7 @@ const DemoState = struct {
             .{ .COPY_DEST = true },
             null,
         );
-        errdefer _ = grfx.releaseResource(index_buffer);
+        errdefer _ = grfx.releaseResourceSafe(index_buffer);
 
         const entity_buffer = try grfx.createCommittedResource(
             .DEFAULT,
@@ -83,7 +83,7 @@ const DemoState = struct {
             .{ .NON_PIXEL_SHADER_RESOURCE = true },
             null,
         );
-        errdefer _ = grfx.releaseResource(entity_buffer);
+        errdefer _ = grfx.releaseResourceSafe(entity_buffer);
 
         const entity_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
@@ -127,7 +127,7 @@ const DemoState = struct {
         var gui = try gr.GuiContext.init(allocator, &grfx);
         errdefer gui.deinit(&grfx);
 
-        _ = try grfx.createAndUploadTex2dFromFile(utf8ToUtf16LeStringLiteral("aa")[0..], 1);
+        //_ = try grfx.createAndUploadTex2dFromFile(utf8ToUtf16LeStringLiteral("aa")[0..], 1);
 
         const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
         upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
