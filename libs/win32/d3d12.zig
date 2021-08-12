@@ -68,46 +68,23 @@ pub const D3D12_HEAP_PROPERTIES = extern struct {
     }
 };
 
-pub const D3D12_HEAP_FLAGS = packed struct {
-    SHARED: bool align(4) = false, // 0x1
-    __reserved1: bool = false, // 0x2
-    DENY_BUFFERS: bool = false, // 0x4
-    ALLOW_DISPLAY: bool = false, // 0x8
-    __reserved4: bool = false, // 0x10
-    SHARED_CROSS_ADAPTER: bool = false, // 0x20
-    DENY_RT_DS_TEXTURES: bool = false, // 0x40
-    DENY_NON_RT_DS_TEXTURES: bool = false, // 0x80
-    HARDWARE_PROTECTED: bool = false, // 0x100
-    ALLOW_WRITE_WATCH: bool = false, // 0x200
-    ALLOW_SHADER_ATOMICS: bool = false, // 0x400
-    CREATE_NOT_RESIDENT: bool = false, // 0x800
-    CREATE_NOT_ZEROED: bool = false, // 0x1000
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
-
-pub const D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES = D3D12_HEAP_FLAGS{};
-pub const D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS = D3D12_HEAP_FLAGS{ .DENY_RT_DS_TEXTURES = true, .DENY_NON_RT_DS_TEXTURES = true };
-pub const D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES = D3D12_HEAP_FLAGS{ .DENY_BUFFERS = true, .DENY_RT_DS_TEXTURES = true };
-pub const D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES = D3D12_HEAP_FLAGS{ .DENY_BUFFERS = true, .DENY_NON_RT_DS_TEXTURES = true };
+pub const D3D12_HEAP_FLAGS = UINT;
+pub const D3D12_HEAP_FLAG_NONE = 0;
+pub const D3D12_HEAP_FLAG_SHARED = 0x1;
+pub const D3D12_HEAP_FLAG_DENY_BUFFERS = 0x4;
+pub const D3D12_HEAP_FLAG_ALLOW_DISPLAY = 0x8;
+pub const D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER = 0x20;
+pub const D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES = 0x40;
+pub const D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES = 0x80;
+pub const D3D12_HEAP_FLAG_HARDWARE_PROTECTED = 0x100;
+pub const D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH = 0x200;
+pub const D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS = 0x400;
+pub const D3D12_HEAP_FLAG_CREATE_NOT_RESIDENT = 0x800;
+pub const D3D12_HEAP_FLAG_CREATE_NOT_ZEROED = 0x1000;
+pub const D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES = 0;
+pub const D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS = 0xc0;
+pub const D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES = 0x44;
+pub const D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES = 0x84;
 
 pub const D3D12_HEAP_DESC = extern struct {
     SizeInBytes: UINT64,
@@ -145,41 +122,16 @@ pub const D3D12_TEXTURE_LAYOUT = enum(UINT) {
     _64KB_STANDARD_SWIZZLE = 3,
 };
 
-pub const D3D12_RESOURCE_FLAGS = packed struct {
-    ALLOW_RENDER_TARGET: bool align(4) = false, // 0x1
-    ALLOW_DEPTH_STENCIL: bool = false, // 0x2
-    ALLOW_UNORDERED_ACCESS: bool = false, // 0x4
-    DENY_SHADER_RESOURCE: bool = false, // 0x8
-    ALLOW_CROSS_ADAPTER: bool = false, // 0x10
-    ALLOW_SIMULTANEOUS_ACCESS: bool = false, // 0x20
-    VIDEO_DECODE_REFERENCE_ONLY: bool = false, // 0x40
-    VIDEO_ENCODE_REFERENCE_ONLY: bool = false, // 0x80
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_RESOURCE_FLAGS = UINT;
+pub const D3D12_RESOURCE_FLAG_NONE = 0;
+pub const D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET = 0x1;
+pub const D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL = 0x2;
+pub const D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS = 0x4;
+pub const D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE = 0x8;
+pub const D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER = 0x10;
+pub const D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS = 0x20;
+pub const D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY = 0x40;
+pub const D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY = 0x80;
 
 pub const D3D12_RESOURCE_DESC = extern struct {
     Dimension: D3D12_RESOURCE_DIMENSION,
@@ -205,7 +157,7 @@ pub const D3D12_RESOURCE_DESC = extern struct {
             .Format = .UNKNOWN,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .Layout = .ROW_MAJOR,
-            .Flags = .{},
+            .Flags = D3D12_RESOURCE_FLAG_NONE,
         };
         return v;
     }
@@ -222,47 +174,17 @@ pub const D3D12_RESOURCE_DESC = extern struct {
             .Format = format,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .Layout = .UNKNOWN,
-            .Flags = .{},
+            .Flags = D3D12_RESOURCE_FLAG_NONE,
         };
         return v;
     }
 };
 
-pub const D3D12_FENCE_FLAGS = packed struct {
-    SHARED: bool align(4) = false, // 0x1
-    SHARED_CROSS_ADAPTER: bool = false, // 0x2
-    NON_MONITORED: bool = false, // 0x4
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_FENCE_FLAGS = UINT;
+pub const D3D12_FENCE_FLAG_NONE = 0;
+pub const D3D12_FENCE_FLAG_SHARED = 0x1;
+pub const D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER = 0x2;
+pub const D3D12_FENCE_FLAG_NON_MONITORED = 0x4;
 
 pub const D3D12_DESCRIPTOR_HEAP_TYPE = enum(UINT) {
     CBV_SRV_UAV = 0,
@@ -271,41 +193,9 @@ pub const D3D12_DESCRIPTOR_HEAP_TYPE = enum(UINT) {
     DSV = 3,
 };
 
-pub const D3D12_DESCRIPTOR_HEAP_FLAGS = packed struct {
-    SHADER_VISIBLE: bool align(4) = false, // 0x1
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_DESCRIPTOR_HEAP_FLAGS = UINT;
+pub const D3D12_DESCRIPTOR_HEAP_FLAG_NONE = 0;
+pub const D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE = 0x1;
 
 pub const D3D12_DESCRIPTOR_HEAP_DESC = extern struct {
     Type: D3D12_DESCRIPTOR_HEAP_TYPE,
@@ -346,41 +236,10 @@ pub const D3D12_RESOURCE_UAV_BARRIER = extern struct {
     pResource: *ID3D12Resource,
 };
 
-pub const D3D12_RESOURCE_BARRIER_FLAGS = packed struct {
-    BEGIN_ONLY: bool align(4) = false, // 0x1
-    END_ONLY: bool = false, // 0x2
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_RESOURCE_BARRIER_FLAGS = UINT;
+pub const D3D12_RESOURCE_BARRIER_FLAG_NONE = 0;
+pub const D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY = 0x1;
+pub const D3D12_RESOURCE_BARRIER_FLAG_END_ONLY = 0x2;
 
 pub const D3D12_RESOURCE_BARRIER = extern struct {
     Type: D3D12_RESOURCE_BARRIER_TYPE,
@@ -434,41 +293,11 @@ pub const D3D12_TILE_REGION_SIZE = extern struct {
     Depth: UINT16,
 };
 
-pub const D3D12_TILE_RANGE_FLAGS = packed struct {
-    NULL: bool align(4) = false, // 0x1
-    SKIP: bool = false, // 0x2
-    REUSE_SINGLE_TILE: bool = false, // 0x4
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_TILE_RANGE_FLAGS = UINT;
+pub const D3D12_TILE_RANGE_FLAG_NONE = 0;
+pub const D3D12_TILE_RANGE_FLAG_NULL = 0x1;
+pub const D3D12_TILE_RANGE_FLAG_SKIP = 0x2;
+pub const D3D12_TILE_RANGE_FLAG_REUSE_SINGLE_TILE = 0x4;
 
 pub const D3D12_SUBRESOURCE_TILING = extern struct {
     WidthInTiles: UINT,
@@ -483,77 +312,15 @@ pub const D3D12_TILE_SHAPE = extern struct {
     DepthInTexels: UINT,
 };
 
-pub const D3D12_TILE_MAPPING_FLAGS = packed struct {
-    NO_HAZARD: bool align(4) = false, // 0x1
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_TILE_MAPPING_FLAGS = UINT;
+pub const D3D12_TILE_MAPPING_FLAG_NONE = 0;
+pub const D3D12_TILE_MAPPING_FLAG_NO_HAZARD = 0x1;
 
-pub const D3D12_TILE_COPY_FLAGS = packed struct {
-    NO_HAZARD: bool align(4) = false, // 0x1
-    LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE: bool = false, // 0x2
-    SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER: bool = false, // 0x4
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_TILE_COPY_FLAGS = UINT;
+pub const D3D12_TILE_COPY_FLAG_NONE = 0;
+pub const D3D12_TILE_COPY_FLAG_NO_HAZARD = 0x1;
+pub const D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE = 0x2;
+pub const D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER = 0x4;
 
 pub const D3D12_VIEWPORT = extern struct {
     TopLeftX: FLOAT,
@@ -566,56 +333,34 @@ pub const D3D12_VIEWPORT = extern struct {
 
 pub const D3D12_RECT = RECT;
 
-pub const D3D12_RESOURCE_STATES = packed struct {
-    VERTEX_AND_CONSTANT_BUFFER: bool align(4) = false, // 0x1
-    INDEX_BUFFER: bool = false, // 0x2
-    RENDER_TARGET: bool = false, // 0x4
-    UNORDERED_ACCESS: bool = false, // 0x8
-    DEPTH_WRITE: bool = false, // 0x10
-    DEPTH_READ: bool = false, // 0x20
-    NON_PIXEL_SHADER_RESOURCE: bool = false, // 0x40
-    PIXEL_SHADER_RESOURCE: bool = false, // 0x80
-    STREAM_OUT: bool = false, // 0x100
-    INDIRECT_ARGUMENT: bool = false, // 0x200
-    COPY_DEST: bool = false, // 0x400
-    COPY_SOURCE: bool = false, // 0x800
-    RESOLVE_DEST: bool = false, // 0x1000
-    RESOLVE_SOURCE: bool = false, // 0x2000
-    __reserved14: bool = false, // 0x4000
-    __reserved15: bool = false, // 0x8000
-    VIDEO_DECODE_READ: bool = false, // 0x10000
-    VIDEO_DECODE_WRITE: bool = false, // 0x20000
-    VIDEO_PROCESS_READ: bool = false, // 0x40000
-    VIDEO_PROCESS_WRITE: bool = false, // 0x80000
-    __reserved20: bool = false, // 0x100000
-    VIDEO_ENCODE_READ: bool = false, // 0x200000
-    RAYTRACING_ACCELERATION_STRUCTURE: bool = false, // 0x400000
-    VIDEO_ENCODE_WRITE: bool = false, // 0x800000
-    SHADING_RATE_SOURCE: bool = false, // 0x1000000
-    __reserved25: bool = false, // 0x2000000
-    __reserved26: bool = false, // 0x4000000
-    __reserved27: bool = false, // 0x8000000
-    __reserved28: bool = false, // 0x10000000
-    __reserved29: bool = false, // 0x20000000
-    __reserved30: bool = false, // 0x40000000
-    __reserved31: bool = false, // 0x80000000
-    pub usingnamespace FlagsMixin(@This());
-};
-
-pub const D3D12_RESOURCE_STATE_GENERIC_READ = D3D12_RESOURCE_STATES{
-    .VERTEX_AND_CONSTANT_BUFFER = true,
-    .INDEX_BUFFER = true,
-    .NON_PIXEL_SHADER_RESOURCE = true,
-    .PIXEL_SHADER_RESOURCE = true,
-    .INDIRECT_ARGUMENT = true,
-    .COPY_SOURCE = true,
-};
-pub const D3D12_RESOURCE_STATE_PRESENT = D3D12_RESOURCE_STATES{};
-pub const D3D12_RESOURCE_STATE_PREDICATION = D3D12_RESOURCE_STATES{ .INDIRECT_ARGUMENT = true };
-pub const D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE = D3D12_RESOURCE_STATES{
-    .NON_PIXEL_SHADER_RESOURCE = true,
-    .PIXEL_SHADER_RESOURCE = true,
-};
+pub const D3D12_RESOURCE_STATES = UINT;
+pub const D3D12_RESOURCE_STATE_COMMON = 0;
+pub const D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1;
+pub const D3D12_RESOURCE_STATE_INDEX_BUFFER = 0x2;
+pub const D3D12_RESOURCE_STATE_RENDER_TARGET = 0x4;
+pub const D3D12_RESOURCE_STATE_UNORDERED_ACCESS = 0x8;
+pub const D3D12_RESOURCE_STATE_DEPTH_WRITE = 0x10;
+pub const D3D12_RESOURCE_STATE_DEPTH_READ = 0x20;
+pub const D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 0x40;
+pub const D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 0x80;
+pub const D3D12_RESOURCE_STATE_STREAM_OUT = 0x100;
+pub const D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT = 0x200;
+pub const D3D12_RESOURCE_STATE_COPY_DEST = 0x400;
+pub const D3D12_RESOURCE_STATE_COPY_SOURCE = 0x800;
+pub const D3D12_RESOURCE_STATE_RESOLVE_DEST = 0x1000;
+pub const D3D12_RESOURCE_STATE_RESOLVE_SOURCE = 0x2000;
+pub const D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x400000;
+pub const D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE = 0x1000000;
+pub const D3D12_RESOURCE_STATE_GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800);
+pub const D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE = (0x40 | 0x80);
+pub const D3D12_RESOURCE_STATE_PRESENT = 0;
+pub const D3D12_RESOURCE_STATE_PREDICATION = 0x200;
+pub const D3D12_RESOURCE_STATE_VIDEO_DECODE_READ = 0x10000;
+pub const D3D12_RESOURCE_STATE_VIDEO_DECODE_WRITE = 0x20000;
+pub const D3D12_RESOURCE_STATE_VIDEO_PROCESS_READ = 0x40000;
+pub const D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE = 0x80000;
+pub const D3D12_RESOURCE_STATE_VIDEO_ENCODE_READ = 0x200000;
+pub const D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE = 0x800000;
 
 pub const D3D12_INDEX_BUFFER_STRIP_CUT_VALUE = enum(UINT) {
     DISABLED = 0,
@@ -641,41 +386,9 @@ pub const D3D12_STREAM_OUTPUT_BUFFER_VIEW = extern struct {
     BufferFilledSizeLocation: D3D12_GPU_VIRTUAL_ADDRESS,
 };
 
-pub const D3D12_CLEAR_FLAGS = packed struct {
-    DEPTH: bool align(4) = false,
-    STENCIL: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_CLEAR_FLAGS = UINT;
+pub const D3D12_CLEAR_FLAG_DEPTH = 0x1;
+pub const D3D12_CLEAR_FLAG_STENCIL = 0x2;
 
 pub const D3D12_DISCARD_REGION = extern struct {
     NumRects: UINT,
@@ -766,41 +479,9 @@ pub const D3D12_PACKED_MIP_INFO = extern struct {
     StartTileIndexInOverallResource: UINT,
 };
 
-pub const D3D12_COMMAND_QUEUE_FLAGS = packed struct {
-    DISABLE_GPU_TIMEOUT: bool align(4) = false, // 0x1
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_COMMAND_QUEUE_FLAGS = UINT;
+pub const D3D12_COMMAND_QUEUE_FLAG_NONE = 0;
+pub const D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT = 0x1;
 
 pub const D3D12_COMMAND_QUEUE_PRIORITY = enum(UINT) {
     NORMAL = 0,
@@ -873,43 +554,16 @@ pub const D3D12_BLEND_OP = enum(UINT) {
     MAX = 5,
 };
 
-pub const D3D12_COLOR_WRITE_ENABLE = packed struct {
-    RED: bool align(4) = false, // 0x1
-    GREEN: bool = false, // 0x2
-    BLUE: bool = false, // 0x4
-    ALPHA: bool = false, // 0x8
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
-
-pub const D3D12_COLOR_WRITE_ENABLE_ALL = D3D12_COLOR_WRITE_ENABLE{ .RED = true, .GREEN = true, .BLUE = true, .ALPHA = true };
+pub const D3D12_COLOR_WRITE_ENABLE = UINT;
+pub const D3D12_COLOR_WRITE_ENABLE_RED = 0x1;
+pub const D3D12_COLOR_WRITE_ENABLE_GREEN = 0x2;
+pub const D3D12_COLOR_WRITE_ENABLE_BLUE = 0x4;
+pub const D3D12_COLOR_WRITE_ENABLE_ALPHA = 0x8;
+pub const D3D12_COLOR_WRITE_ENABLE_ALL =
+    D3D12_COLOR_WRITE_ENABLE_RED |
+    D3D12_COLOR_WRITE_ENABLE_GREEN |
+    D3D12_COLOR_WRITE_ENABLE_BLUE |
+    D3D12_COLOR_WRITE_ENABLE_ALPHA;
 
 pub const D3D12_LOGIC_OP = enum(UINT) {
     CLEAR = 0,
@@ -1150,41 +804,9 @@ pub const D3D12_CACHED_PIPELINE_STATE = extern struct {
     }
 };
 
-pub const D3D12_PIPELINE_STATE_FLAGS = packed struct {
-    TOOL_DEBUG: bool align(4) = false, // 0x1
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_PIPELINE_STATE_FLAGS = UINT;
+pub const D3D12_PIPELINE_STATE_FLAG_NONE = 0;
+pub const D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG = 0x1;
 
 pub const D3D12_GRAPHICS_PIPELINE_STATE_DESC = extern struct {
     pRootSignature: ?*ID3D12RootSignature,
@@ -1232,7 +854,7 @@ pub const D3D12_GRAPHICS_PIPELINE_STATE_DESC = extern struct {
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .NodeMask = 0,
             .CachedPSO = D3D12_CACHED_PIPELINE_STATE.initZero(),
-            .Flags = .{},
+            .Flags = D3D12_PIPELINE_STATE_FLAG_NONE,
         };
         return v;
     }
@@ -1290,41 +912,9 @@ pub inline fn D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(src0: UINT, src1: UINT, sr
 }
 pub const D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING = D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(0, 1, 2, 3);
 
-pub const D3D12_BUFFER_SRV_FLAGS = packed struct {
-    RAW: bool align(4) = false, // 0x1
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_BUFFER_SRV_FLAGS = UINT;
+pub const D3D12_BUFFER_SRV_FLAG_NONE = 0;
+pub const D3D12_BUFFER_SRV_FLAG_RAW = 0x1;
 
 pub const D3D12_BUFFER_SRV = extern struct {
     FirstElement: UINT64,
@@ -1460,7 +1050,7 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
                     .FirstElement = first_element,
                     .NumElements = num_elements,
                     .StructureByteStride = stride,
-                    .Flags = .{},
+                    .Flags = D3D12_BUFFER_SRV_FLAG_NONE,
                 },
             },
         };
@@ -1540,41 +1130,9 @@ pub const D3D12_SAMPLER_DESC = extern struct {
     MaxLOD: FLOAT,
 };
 
-pub const D3D12_BUFFER_UAV_FLAGS = packed struct {
-    RAW: bool align(4) = false, // 0x1
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_BUFFER_UAV_FLAGS = UINT;
+pub const D3D12_BUFFER_UAV_FLAG_NONE = 0;
+pub const D3D12_BUFFER_UAV_FLAG_RAW = 0x1;
 
 pub const D3D12_BUFFER_UAV = extern struct {
     FirstElement: UINT64,
@@ -1733,41 +1291,10 @@ pub const D3D12_TEX2DMS_ARRAY_DSV = extern struct {
     ArraySize: UINT,
 };
 
-pub const D3D12_DSV_FLAGS = packed struct {
-    READ_ONLY_DEPTH: bool align(4) = false, // 0x1
-    READ_ONLY_STENCIL: bool = false, // 0x2
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_DSV_FLAGS = UINT;
+pub const D3D12_DSV_FLAG_NONE = 0;
+pub const D3D12_DSV_FLAG_READ_ONLY_DEPTH = 0x1;
+pub const D3D12_DSV_FLAG_READ_ONLY_STENCIL = 0x2;
 
 pub const D3D12_DSV_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
@@ -3207,41 +2734,11 @@ pub const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC = extern struct {
     StencilEndingAccess: D3D12_RENDER_PASS_ENDING_ACCESS,
 };
 
-pub const D3D12_RENDER_PASS_FLAGS = packed struct {
-    ALLOW_UAV_WRITES: bool align(4) = false, // 0x1
-    SUSPENDING_PASS: bool = false, // 0x2
-    RESUMING_PASS: bool = false, // 0x4
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_RENDER_PASS_FLAGS = UINT;
+pub const D3D12_RENDER_PASS_FLAG_NONE = 0;
+pub const D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES = 0x1;
+pub const D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS = 0x2;
+pub const D3D12_RENDER_PASS_FLAG_RESUMING_PASS = 0x4;
 
 pub const D3D12_META_COMMAND_PARAMETER_TYPE = enum(UINT) {
     FLOAT = 0,
@@ -3251,41 +2748,9 @@ pub const D3D12_META_COMMAND_PARAMETER_TYPE = enum(UINT) {
     GPU_DESCRIPTOR_HANDLE_HEAP_TYPE_CBV_SRV_UAV = 4,
 };
 
-pub const D3D12_META_COMMAND_PARAMETER_FLAGS = packed struct {
-    INPUT: bool align(4) = false, // 0x1
-    OUTPUT: bool = false, // 0x2
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_META_COMMAND_PARAMETER_FLAGS = UINT;
+pub const D3D12_META_COMMAND_PARAMETER_FLAG_INPUT = 0x1;
+pub const D3D12_META_COMMAND_PARAMETER_FLAG_OUTPUT = 0x2;
 
 pub const D3D12_META_COMMAND_PARAMETER_STAGE = enum(UINT) {
     CREATION = 0,
@@ -3301,41 +2766,25 @@ pub const D3D12_META_COMMAND_PARAMETER_DESC = extern struct {
     StructureOffset: UINT,
 };
 
-pub const D3D12_GRAPHICS_STATES = packed struct {
-    IA_VERTEX_BUFFERS: bool align(4) = false, // ( 1 << 0 )
-    IA_INDEX_BUFFER: bool = false, // ( 1 << 1 )
-    IA_PRIMITIVE_TOPOLOGY: bool = false, // ( 1 << 2 )
-    DESCRIPTOR_HEAP: bool = false, // ( 1 << 3 )
-    GRAPHICS_ROOT_SIGNATURE: bool = false, // ( 1 << 4 )
-    COMPUTE_ROOT_SIGNATURE: bool = false, // ( 1 << 5 )
-    RS_VIEWPORTS: bool = false, // ( 1 << 6 )
-    RS_SCISSOR_RECTS: bool = false, // ( 1 << 7 )
-    PREDICATION: bool = false, // ( 1 << 8 )
-    OM_RENDER_TARGETS: bool = false, // ( 1 << 9 )
-    OM_STENCIL_REF: bool = false, //  ( 1 << 10 )
-    OM_BLEND_FACTOR: bool = false, // ( 1 << 11 )
-    PIPELINE_STATE: bool = false, // ( 1 << 12 )
-    SO_TARGETS: bool = false, // ( 1 << 13 )
-    OM_DEPTH_BOUNDS: bool = false, //  ( 1 << 14 )
-    SAMPLE_POSITIONS: bool = false, // ( 1 << 15 )
-    VIEW_INSTANCE_MASK: bool = false, // ( 1 << 16 )
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_GRAPHICS_STATES = UINT;
+pub const D3D12_GRAPHICS_STATE_NONE = 0;
+pub const D3D12_GRAPHICS_STATE_IA_VERTEX_BUFFERS = (1 << 0);
+pub const D3D12_GRAPHICS_STATE_IA_INDEX_BUFFER = (1 << 1);
+pub const D3D12_GRAPHICS_STATE_IA_PRIMITIVE_TOPOLOGY = (1 << 2);
+pub const D3D12_GRAPHICS_STATE_DESCRIPTOR_HEAP = (1 << 3);
+pub const D3D12_GRAPHICS_STATE_GRAPHICS_ROOT_SIGNATURE = (1 << 4);
+pub const D3D12_GRAPHICS_STATE_COMPUTE_ROOT_SIGNATURE = (1 << 5);
+pub const D3D12_GRAPHICS_STATE_RS_VIEWPORTS = (1 << 6);
+pub const D3D12_GRAPHICS_STATE_RS_SCISSOR_RECTS = (1 << 7);
+pub const D3D12_GRAPHICS_STATE_PREDICATION = (1 << 8);
+pub const D3D12_GRAPHICS_STATE_OM_RENDER_TARGETS = (1 << 9);
+pub const D3D12_GRAPHICS_STATE_OM_STENCIL_REF = (1 << 10);
+pub const D3D12_GRAPHICS_STATE_OM_BLEND_FACTOR = (1 << 11);
+pub const D3D12_GRAPHICS_STATE_PIPELINE_STATE = (1 << 12);
+pub const D3D12_GRAPHICS_STATE_SO_TARGETS = (1 << 13);
+pub const D3D12_GRAPHICS_STATE_OM_DEPTH_BOUNDS = (1 << 14);
+pub const D3D12_GRAPHICS_STATE_SAMPLE_POSITIONS = (1 << 15);
+pub const D3D12_GRAPHICS_STATE_VIEW_INSTANCE_MASK = (1 << 16);
 
 pub const D3D12_META_COMMAND_DESC = extern struct {
     Id: GUID,
@@ -3401,41 +2850,11 @@ pub const D3D12_STATE_SUBOBJECT = extern struct {
     desc: *const c_void,
 };
 
-pub const D3D12_STATE_OBJECT_FLAGS = packed struct {
-    ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITIONS: bool align(4) = false, // 0x1
-    ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS: bool = false, // 0x2
-    ALLOW_STATE_OBJECT_ADDITIONS: bool = false, // 0x4
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_STATE_OBJECT_FLAGS = UINT;
+pub const D3D12_STATE_OBJECT_FLAG_NONE = 0;
+pub const D3D12_STATE_OBJECT_FLAG_ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITIONS = 0x1;
+pub const D3D12_STATE_OBJECT_FLAG_ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS = 0x2;
+pub const D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS = 0x4;
 
 pub const D3D12_STATE_OBJECT_CONFIG = extern struct {
     Flags: D3D12_STATE_OBJECT_FLAGS,
@@ -3453,41 +2872,7 @@ pub const D3D12_NODE_MASK = extern struct {
     NodeMask: UINT,
 };
 
-pub const D3D12_EXPORT_FLAGS = packed struct {
-    __reserved0: bool align(4) = false,
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_EXPORT_FLAGS = UINT;
 
 pub const D3D12_EXPORT_DESC = extern struct {
     Name: LPCWSTR,
@@ -3541,41 +2926,10 @@ pub const D3D12_RAYTRACING_PIPELINE_CONFIG = extern struct {
     MaxTraceRecursionDepth: UINT,
 };
 
-pub const D3D12_RAYTRACING_PIPELINE_FLAGS = packed struct {
-    __reserved0: bool align(4) = false, // 0x1
-    __reserved1: bool = false, // 0x2
-    __reserved2: bool = false, // 0x4
-    __reserved3: bool = false, // 0x8
-    __reserved4: bool = false, // 0x10
-    __reserved5: bool = false, // 0x20
-    __reserved6: bool = false, // 0x40
-    __reserved7: bool = false, // 0x80
-    SKIP_TRIANGLES: bool = false, // 0x100
-    SKIP_PROCEDURAL_PRIMITIVES: bool = false, // 0x200
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_RAYTRACING_PIPELINE_FLAGS = UINT;
+pub const D3D12_RAYTRACING_PIPELINE_FLAG_NONE = 0;
+pub const D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES = 0x100;
+pub const D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES = 0x200;
 
 pub const D3D12_RAYTRACING_PIPELINE_CONFIG1 = extern struct {
     MaxTraceRecursionDepth: UINT,
@@ -3593,82 +2947,22 @@ pub const D3D12_STATE_OBJECT_DESC = extern struct {
     pSubobjects: [*]const D3D12_STATE_SUBOBJECT,
 };
 
-pub const D3D12_RAYTRACING_GEOMETRY_FLAGS = packed struct {
-    OPAQUE: bool align(4) = false, // 0x1
-    NO_DUPLICATE_ANYHIT_INVOCATION: bool = false, // 0x2
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_RAYTRACING_GEOMETRY_FLAGS = UINT;
+pub const D3D12_RAYTRACING_GEOMETRY_FLAG_NONE = 0;
+pub const D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE = 0x1;
+pub const D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION = 0x2;
 
 pub const D3D12_RAYTRACING_GEOMETRY_TYPE = enum(UINT) {
     TRIANGLES = 0,
     PROCEDURAL_PRIMITIVE_AABBS = 1,
 };
 
-pub const D3D12_RAYTRACING_INSTANCE_FLAGS = packed struct {
-    TRIANGLE_CULL_DISABLE: bool align(4) = false, // 0x1
-    TRIANGLE_FRONT_COUNTERCLOCKWISE: bool = false, // 0x2
-    FORCE_OPAQUE: bool = false, // 0x4
-    FORCE_NON_OPAQUE: bool = false, // 0x8
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_RAYTRACING_INSTANCE_FLAGS = UINT;
+pub const D3D12_RAYTRACING_INSTANCE_FLAG_NONE = 0;
+pub const D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE = 0x1;
+pub const D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE = 0x2;
+pub const D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE = 0x4;
+pub const D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE = 0x8;
 
 pub const D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE = extern struct {
     StartAddress: D3D12_GPU_VIRTUAL_ADDRESS,
@@ -3710,41 +3004,14 @@ pub const D3D12_RAYTRACING_GEOMETRY_AABBS_DESC = extern struct {
     AABBs: D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = packed struct {
-    ALLOW_UPDATE: bool align(4) = false, // 0x1
-    ALLOW_COMPACTION: bool = false, // 0x2
-    PREFER_FAST_TRACE: bool = false, //	0x4
-    PREFER_FAST_BUILD: bool = false, // 0x8
-    MINIMIZE_MEMORY: bool = false, // 0x10
-    PERFORM_UPDATE: bool = false, // 0x20
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = UINT;
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE = 0;
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE = 0x1;
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION = 0x2;
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE = 0x4;
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD = 0x8;
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY = 0x10;
+pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE = 0x20;
 
 pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE = enum(UINT) {
     CLONE = 0,
@@ -4949,41 +4216,9 @@ pub const ID3D12Device2 = extern struct {
     }
 };
 
-pub const D3D12_RESIDENCY_FLAGS = packed struct {
-    DENY_OVERBUDGET: bool align(4) = false,
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_RESIDENCY_FLAGS = UINT;
+pub const D3D12_RESIDENCY_FLAG_NONE = 0;
+pub const D3D12_RESIDENCY_FLAG_DENY_OVERBUDGET = 0x1;
 
 pub const ID3D12Device3 = extern struct {
     const Self = @This();
@@ -5056,41 +4291,7 @@ pub const ID3D12Device3 = extern struct {
     }
 };
 
-pub const D3D12_COMMAND_LIST_FLAGS = packed struct {
-    __reserved0: bool align(4) = false,
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_COMMAND_LIST_FLAGS = UINT;
 
 pub const D3D12_RESOURCE_ALLOCATION_INFO1 = extern struct {
     Offset: UINT64,
@@ -5780,118 +4981,26 @@ pub const ID3D12Device8 = extern struct {
     }
 };
 
-pub const D3D12_SHADER_CACHE_KIND_FLAGS = packed struct {
-    IMPLICIT_D3D_CACHE_FOR_DRIVER: bool align(4) = false, // 0x1
-    IMPLICIT_D3D_CONVERSIONS: bool = false, // 0x2
-    IMPLICIT_DRIVER_MANAGED: bool = false, // 0x4
-    APPLICATION_MANAGED: bool = false, // 0x8
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_SHADER_CACHE_KIND_FLAGS = UINT;
+pub const D3D12_SHADER_CACHE_KIND_FLAG_IMPLICIT_D3D_CACHE_FOR_DRIVER = 0x1;
+pub const D3D12_SHADER_CACHE_KIND_FLAG_IMPLICIT_D3D_CONVERSIONS = 0x2;
+pub const D3D12_SHADER_CACHE_KIND_FLAG_IMPLICIT_DRIVER_MANAGED = 0x4;
+pub const D3D12_SHADER_CACHE_KIND_FLAG_APPLICATION_MANAGED = 0x8;
 
-pub const D3D12_SHADER_CACHE_CONTROL_FLAGS = packed struct {
-    DISABLE: bool align(4) = false, // 0x1
-    ENABLE: bool = false, // 0x2
-    CLEAR: bool = false, // 0x4
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_SHADER_CACHE_CONTROL_FLAGS = UINT;
+pub const D3D12_SHADER_CACHE_CONTROL_FLAG_DISABLE = 0x1;
+pub const D3D12_SHADER_CACHE_CONTROL_FLAG_ENABLE = 0x2;
+pub const D3D12_SHADER_CACHE_CONTROL_FLAG_CLEAR = 0x4;
 
 pub const D3D12_SHADER_CACHE_MODE = enum(UINT) {
     MEMORY = 0,
     DISK = 1,
 };
 
-pub const D3D12_SHADER_CACHE_FLAGS = packed struct {
-    DRIVER_VERSIONED: bool align(4) = false, // 0x1
-    USE_WORKING_DIR: bool = false, // 0x2
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_SHADER_CACHE_FLAGS = UINT;
+pub const D3D12_SHADER_CACHE_FLAG_NONE = 0;
+pub const D3D12_SHADER_CACHE_FLAG_DRIVER_VERSIONED = 0x1;
+pub const D3D12_SHADER_CACHE_FLAG_USE_WORKING_DIR = 0x2;
 
 pub const D3D12_SHADER_CACHE_SESSION_DESC = extern struct {
     Identifier: GUID,
@@ -6022,41 +5131,7 @@ pub const ID3D12ProtectedSession = extern struct {
     }
 };
 
-pub const D3D12_PROTECTED_RESOURCE_SESSION_FLAGS = packed struct {
-    __reserved0: bool align(4) = false,
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_PROTECTED_RESOURCE_SESSION_FLAGS = UINT;
 
 pub const D3D12_PROTECTED_RESOURCE_SESSION_DESC = extern struct {
     NodeMask: UINT,

@@ -117,7 +117,7 @@ pub const GraphicsContext = struct {
             try vhr(device.CreateCommandQueue(&.{
                 .Type = .DIRECT,
                 .Priority = @enumToInt(w.D3D12_COMMAND_QUEUE_PRIORITY.NORMAL),
-                .Flags = .{},
+                .Flags = w.D3D12_COMMAND_QUEUE_FLAG_NONE,
                 .NodeMask = 0,
             }, &w.IID_ID3D12CommandQueue, @ptrCast(*?*c_void, &cmdqueue)));
             break :blk cmdqueue;
@@ -243,17 +243,17 @@ pub const GraphicsContext = struct {
         var pipeline_pool = PipelinePool.init();
         errdefer pipeline_pool.deinit();
 
-        var rtv_heap = try DescriptorHeap.init(device, num_rtv_descriptors, .RTV, .{});
+        var rtv_heap = try DescriptorHeap.init(device, num_rtv_descriptors, .RTV, w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
         errdefer rtv_heap.deinit();
 
-        var dsv_heap = try DescriptorHeap.init(device, num_dsv_descriptors, .DSV, .{});
+        var dsv_heap = try DescriptorHeap.init(device, num_dsv_descriptors, .DSV, w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
         errdefer dsv_heap.deinit();
 
         var cbv_srv_uav_cpu_heap = try DescriptorHeap.init(
             device,
             num_cbv_srv_uav_cpu_descriptors,
             .CBV_SRV_UAV,
-            .{},
+            w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
         );
         errdefer cbv_srv_uav_cpu_heap.deinit();
 
@@ -263,7 +263,7 @@ pub const GraphicsContext = struct {
                 device,
                 num_cbv_srv_uav_gpu_descriptors,
                 .CBV_SRV_UAV,
-                .{ .SHADER_VISIBLE = true },
+                w.D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
             ) catch |err| {
                 var i: u32 = 0;
                 while (i < heap_index) : (i += 1) {
@@ -306,7 +306,10 @@ pub const GraphicsContext = struct {
                     null,
                     rtv_heap.allocateDescriptors(1).cpu_handle,
                 );
-                swapchain_buffers[buffer_index] = resource_pool.addResource(swapbuffers[buffer_index], .{});
+                swapchain_buffers[buffer_index] = resource_pool.addResource(
+                    swapbuffers[buffer_index],
+                    w.D3D12_RESOURCE_STATE_PRESENT,
+                );
             }
             break :blk swapchain_buffers;
         };
@@ -322,7 +325,7 @@ pub const GraphicsContext = struct {
                         .CPUAccessFlags = 0,
                         .StructureByteStride = 0,
                     },
-                    .{ .RENDER_TARGET = true },
+                    w.D3D12_RESOURCE_STATE_RENDER_TARGET,
                     w.D3D12_RESOURCE_STATE_PRESENT,
                     &w.IID_ID3D11Resource,
                     @ptrCast(*?*c_void, &swapbuffers11[buffer_index]),
@@ -378,7 +381,12 @@ pub const GraphicsContext = struct {
 
         const frame_fence = blk: {
             var frame_fence: *w.ID3D12Fence = undefined;
-            try vhr(device.CreateFence(0, .{}, &w.IID_ID3D12Fence, @ptrCast(*?*c_void, &frame_fence)));
+            try vhr(device.CreateFence(
+                0,
+                w.D3D12_FENCE_FLAG_NONE,
+                &w.IID_ID3D12Fence,
+                @ptrCast(*?*c_void, &frame_fence),
+            ));
             break :blk frame_fence;
         };
         errdefer _ = frame_fence.Release();
@@ -651,7 +659,11 @@ pub const GraphicsContext = struct {
             var resource = gr.resource_pool.editResource(handle);
             const refcount = resource.raw.?.Release();
             if (refcount == 0) {
-                resource.* = .{ .raw = null, .state = .{}, .desc = w.D3D12_RESOURCE_DESC.initBuffer(0) };
+                resource.* = .{
+                    .raw = null,
+                    .state = w.D3D12_RESOURCE_STATE_COMMON,
+                    .desc = w.D3D12_RESOURCE_DESC.initBuffer(0),
+                };
             }
             return refcount;
         }
@@ -675,7 +687,7 @@ pub const GraphicsContext = struct {
                 if (gr.resource_pool.isResourceValid(barrier.resource)) {
                     d3d12_barriers[num_valid_barriers] = .{
                         .Type = .TRANSITION,
-                        .Flags = .{},
+                        .Flags = w.D3D12_RESOURCE_BARRIER_FLAG_NONE,
                         .u = .{
                             .Transition = .{
                                 .pResource = gr.getResource(barrier.resource),
@@ -702,7 +714,7 @@ pub const GraphicsContext = struct {
     ) void {
         var resource = gr.resource_pool.editResource(handle);
 
-        if (state_after.toInt() != resource.state.toInt()) {
+        if (state_after != resource.state) {
             if (gr.num_transition_resource_barriers >= gr.transition_resource_barriers.len) {
                 gr.flushResourceBarriers();
             }
@@ -984,7 +996,7 @@ pub const GraphicsContext = struct {
             }
         }
 
-        gr.addTransitionBarrier(texture, .{ .COPY_DEST = true });
+        gr.addTransitionBarrier(texture, w.D3D12_RESOURCE_STATE_COPY_DEST);
         gr.flushResourceBarriers();
 
         gr.cmdlist.CopyTextureRegion(&w.D3D12_TEXTURE_COPY_LOCATION{
@@ -1076,15 +1088,15 @@ pub const GuiContext = struct {
 
         const font = try gr.createCommittedResource(
             .DEFAULT,
-            .{},
+            w.D3D12_HEAP_FLAG_NONE,
             &w.D3D12_RESOURCE_DESC.initTex2d(font_info.width, font_info.height, .R8G8B8A8_UNORM, 1),
-            .{ .COPY_DEST = true },
+            w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
         );
         errdefer _ = gr.releaseResource(font);
 
         gr.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
-        gr.addTransitionBarrier(font, .{ .PIXEL_SHADER_RESOURCE = true });
+        gr.addTransitionBarrier(font, w.D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         const font_srv = gr.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         gr.device.CreateShaderResourceView(gr.getResource(font), null, font_srv);
@@ -1168,7 +1180,7 @@ pub const GuiContext = struct {
             const new_size = 2 * num_vertices * @sizeOf(c.ImDrawVert);
             vb = try gr.createCommittedResource(
                 .UPLOAD,
-                .{},
+                w.D3D12_HEAP_FLAG_NONE,
                 &w.D3D12_RESOURCE_DESC.initBuffer(new_size),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,
@@ -1185,7 +1197,7 @@ pub const GuiContext = struct {
             const new_size = 2 * num_indices * @sizeOf(c.ImDrawIdx);
             ib = try gr.createCommittedResource(
                 .UPLOAD,
-                .{},
+                w.D3D12_HEAP_FLAG_NONE,
                 &w.D3D12_RESOURCE_DESC.initBuffer(new_size),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,
@@ -1312,7 +1324,11 @@ const ResourcePool = struct {
                     max_num_resources + 1,
                 ) catch unreachable;
                 for (resources) |*res| {
-                    res.* = .{ .raw = null, .state = .{}, .desc = w.D3D12_RESOURCE_DESC.initBuffer(0) };
+                    res.* = .{
+                        .raw = null,
+                        .state = w.D3D12_RESOURCE_STATE_COMMON,
+                        .desc = w.D3D12_RESOURCE_DESC.initBuffer(0),
+                    };
                 }
                 break :blk resources;
             },
@@ -1520,7 +1536,7 @@ const DescriptorHeap = struct {
             .base = .{
                 .cpu_handle = heap.GetCPUDescriptorHandleForHeapStart(),
                 .gpu_handle = blk: {
-                    if (flags.SHADER_VISIBLE == true)
+                    if ((flags & w.D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) != 0)
                         break :blk heap.GetGPUDescriptorHandleForHeapStart();
                     break :blk w.D3D12_GPU_DESCRIPTOR_HANDLE{ .ptr = 0 };
                 },
@@ -1572,7 +1588,7 @@ const GpuMemoryHeap = struct {
             var maybe_resource: ?*w.ID3D12Resource = null;
             try vhr(device.CreateCommittedResource(
                 &w.D3D12_HEAP_PROPERTIES.initType(heap_type),
-                .{},
+                w.D3D12_HEAP_FLAG_NONE,
                 &w.D3D12_RESOURCE_DESC.initBuffer(capacity),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,

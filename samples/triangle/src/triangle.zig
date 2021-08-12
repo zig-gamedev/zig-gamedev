@@ -171,7 +171,7 @@ pub const GraphicsContext = struct {
             try vhr(device.CreateCommandQueue(&.{
                 .Type = .DIRECT,
                 .Priority = @enumToInt(w.D3D12_COMMAND_QUEUE_PRIORITY.NORMAL),
-                .Flags = .{},
+                .Flags = w.D3D12_COMMAND_QUEUE_FLAG_NONE,
                 .NodeMask = 0,
             }, &w.IID_ID3D12CommandQueue, @ptrCast(*?*c_void, &maybe_cmdqueue)));
             break :blk maybe_cmdqueue.?;
@@ -218,7 +218,7 @@ pub const GraphicsContext = struct {
             try vhr(device.CreateDescriptorHeap(&.{
                 .Type = .RTV,
                 .NumDescriptors = num_swapbuffers,
-                .Flags = .{},
+                .Flags = w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
                 .NodeMask = 0,
             }, &w.IID_ID3D12DescriptorHeap, @ptrCast(*?*c_void, &maybe_heap)));
             break :blk maybe_heap.?;
@@ -252,7 +252,12 @@ pub const GraphicsContext = struct {
 
         const frame_fence = blk: {
             var maybe_frame_fence: ?*w.ID3D12Fence = null;
-            try vhr(device.CreateFence(0, .{}, &w.IID_ID3D12Fence, @ptrCast(*?*c_void, &maybe_frame_fence)));
+            try vhr(device.CreateFence(
+                0,
+                w.D3D12_FENCE_FLAG_NONE,
+                &w.IID_ID3D12Fence,
+                @ptrCast(*?*c_void, &maybe_frame_fence),
+            ));
             break :blk maybe_frame_fence.?;
         };
         errdefer _ = frame_fence.Release();
@@ -446,7 +451,7 @@ pub fn main() !void {
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .NodeMask = 0,
             .CachedPSO = .{ .pCachedBlob = null, .CachedBlobSizeInBytes = 0 },
-            .Flags = .{},
+            .Flags = w.D3D12_PIPELINE_STATE_FLAG_NONE,
         };
 
         var maybe_pso: ?*w.ID3D12PipelineState = null;
@@ -494,13 +499,13 @@ pub fn main() !void {
 
             gr.cmdlist.ResourceBarrier(1, &[_]w.D3D12_RESOURCE_BARRIER{.{
                 .Type = .TRANSITION,
-                .Flags = .{},
+                .Flags = w.D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 .u = .{
                     .Transition = .{
                         .pResource = back_buffer,
                         .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                        .StateBefore = .{},
-                        .StateAfter = .{ .RENDER_TARGET = true },
+                        .StateBefore = w.D3D12_RESOURCE_STATE_PRESENT,
+                        .StateAfter = w.D3D12_RESOURCE_STATE_RENDER_TARGET,
                     },
                 },
             }});
@@ -512,13 +517,13 @@ pub fn main() !void {
             gr.cmdlist.DrawInstanced(3, 1, 0, 0);
             gr.cmdlist.ResourceBarrier(1, &[_]w.D3D12_RESOURCE_BARRIER{.{
                 .Type = .TRANSITION,
-                .Flags = .{},
+                .Flags = w.D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 .u = .{
                     .Transition = .{
                         .pResource = back_buffer,
                         .Subresource = w.D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                        .StateBefore = .{ .RENDER_TARGET = true },
-                        .StateAfter = .{},
+                        .StateBefore = w.D3D12_RESOURCE_STATE_RENDER_TARGET,
+                        .StateAfter = w.D3D12_RESOURCE_STATE_PRESENT,
                     },
                 },
             }});

@@ -46,26 +46,26 @@ pub fn main() !void {
         );
     };
     defer {
-        _ = grfx.releasePipeline(pipeline);
+        _ = grfx.releasePipelineSafe(pipeline);
     }
 
     const vertex_buffer = try grfx.createCommittedResource(
         .DEFAULT,
-        .{},
+        w.D3D12_HEAP_FLAG_NONE,
         &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
-        .{ .COPY_DEST = true },
+        w.D3D12_RESOURCE_STATE_COPY_DEST,
         null,
     );
-    defer _ = grfx.releaseResource(vertex_buffer);
+    defer _ = grfx.releaseResourceSafe(vertex_buffer);
 
     const index_buffer = try grfx.createCommittedResource(
         .DEFAULT,
-        .{},
+        w.D3D12_HEAP_FLAG_NONE,
         &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
-        .{ .COPY_DEST = true },
+        w.D3D12_RESOURCE_STATE_COPY_DEST,
         null,
     );
-    defer _ = grfx.releaseResource(index_buffer);
+    defer _ = grfx.releaseResourceSafe(index_buffer);
 
     try grfx.beginFrame();
 
@@ -95,8 +95,8 @@ pub fn main() !void {
         upload_indices.cpu_slice.len * @sizeOf(u32),
     );
 
-    grfx.addTransitionBarrier(vertex_buffer, .{ .VERTEX_AND_CONSTANT_BUFFER = true });
-    grfx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
+    grfx.addTransitionBarrier(vertex_buffer, w.D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    grfx.addTransitionBarrier(index_buffer, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
     grfx.flushResourceBarriers();
 
     try grfx.finishGpuCommands();
@@ -125,7 +125,7 @@ pub fn main() !void {
 
             const back_buffer = grfx.getBackBuffer();
 
-            grfx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
+            grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_RENDER_TARGET);
             grfx.flushResourceBarriers();
 
             grfx.cmdlist.OMSetRenderTargets(

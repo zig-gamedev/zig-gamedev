@@ -60,27 +60,27 @@ const DemoState = struct {
 
         const vertex_buffer = try grfx.createCommittedResource(
             .DEFAULT,
-            .{},
+            w.D3D12_HEAP_FLAG_NONE,
             &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
-            .{ .COPY_DEST = true },
+            w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
         );
         errdefer _ = grfx.releaseResourceSafe(vertex_buffer);
 
         const index_buffer = try grfx.createCommittedResource(
             .DEFAULT,
-            .{},
+            w.D3D12_HEAP_FLAG_NONE,
             &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
-            .{ .COPY_DEST = true },
+            w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
         );
         errdefer _ = grfx.releaseResourceSafe(index_buffer);
 
         const entity_buffer = try grfx.createCommittedResource(
             .DEFAULT,
-            .{},
+            w.D3D12_HEAP_FLAG_NONE,
             &w.D3D12_RESOURCE_DESC.initBuffer(1 * @sizeOf(Mat4)),
-            .{ .NON_PIXEL_SHADER_RESOURCE = true },
+            w.D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
             null,
         );
         errdefer _ = grfx.releaseResourceSafe(entity_buffer);
@@ -155,8 +155,8 @@ const DemoState = struct {
             upload_indices.cpu_slice.len * @sizeOf(u32),
         );
 
-        grfx.addTransitionBarrier(vertex_buffer, .{ .VERTEX_AND_CONSTANT_BUFFER = true });
-        grfx.addTransitionBarrier(index_buffer, .{ .INDEX_BUFFER = true });
+        grfx.addTransitionBarrier(vertex_buffer, w.D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        grfx.addTransitionBarrier(index_buffer, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
         grfx.flushResourceBarriers();
 
         try grfx.finishGpuCommands();
@@ -202,7 +202,7 @@ const DemoState = struct {
         var grfx = &demo.grfx;
         try grfx.beginFrame();
 
-        grfx.addTransitionBarrier(demo.entity_buffer, .{ .COPY_DEST = true });
+        grfx.addTransitionBarrier(demo.entity_buffer, w.D3D12_RESOURCE_STATE_COPY_DEST);
         grfx.flushResourceBarriers();
 
         {
@@ -237,8 +237,8 @@ const DemoState = struct {
 
         const back_buffer = grfx.getBackBuffer();
 
-        grfx.addTransitionBarrier(demo.entity_buffer, .{ .NON_PIXEL_SHADER_RESOURCE = true });
-        grfx.addTransitionBarrier(back_buffer.resource_handle, .{ .RENDER_TARGET = true });
+        grfx.addTransitionBarrier(demo.entity_buffer, w.D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_RENDER_TARGET);
         grfx.flushResourceBarriers();
 
         grfx.cmdlist.OMSetRenderTargets(
