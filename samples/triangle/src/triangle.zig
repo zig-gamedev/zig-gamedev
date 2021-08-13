@@ -1,14 +1,14 @@
 const builtin = @import("builtin");
 const std = @import("std");
 const w = @import("win32");
+const panic = std.debug.panic;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-inline fn vhr(hr: w.HRESULT) !void {
+inline fn vhr(hr: w.HRESULT) void {
     if (hr != 0) {
-        return error.HResult;
-        //std.debug.panic("HRESULT function failed ({}).", .{hr});
+        panic("HRESULT function failed ({}).", .{hr});
     }
 }
 
@@ -137,15 +137,15 @@ pub const GraphicsContext = struct {
     frame_index: u32,
     back_buffer_index: u32,
 
-    pub fn init(window: w.HWND) !GraphicsContext {
+    pub fn init(window: w.HWND) GraphicsContext {
         const factory = blk: {
-            var maybe_factory: ?*w.IDXGIFactory1 = null;
-            try vhr(w.CreateDXGIFactory2(
+            var factory: *w.IDXGIFactory1 = undefined;
+            vhr(w.CreateDXGIFactory2(
                 if (comptime builtin.mode == .Debug) w.DXGI_CREATE_FACTORY_DEBUG else 0,
                 &w.IID_IDXGIFactory1,
-                @ptrCast(*?*c_void, &maybe_factory),
+                @ptrCast(*?*c_void, &factory),
             ));
-            break :blk maybe_factory.?;
+            break :blk factory;
         };
         defer _ = factory.Release();
 
@@ -160,23 +160,21 @@ pub const GraphicsContext = struct {
         }
 
         const device = blk: {
-            var maybe_device: ?*w.ID3D12Device9 = null;
-            try vhr(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device9, @ptrCast(*?*c_void, &maybe_device)));
-            break :blk maybe_device.?;
+            var device: *w.ID3D12Device9 = undefined;
+            vhr(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device9, @ptrCast(*?*c_void, &device)));
+            break :blk device;
         };
-        errdefer _ = device.Release();
 
         const cmdqueue = blk: {
-            var maybe_cmdqueue: ?*w.ID3D12CommandQueue = null;
-            try vhr(device.CreateCommandQueue(&.{
+            var cmdqueue: *w.ID3D12CommandQueue = undefined;
+            vhr(device.CreateCommandQueue(&.{
                 .Type = .DIRECT,
                 .Priority = @enumToInt(w.D3D12_COMMAND_QUEUE_PRIORITY.NORMAL),
                 .Flags = w.D3D12_COMMAND_QUEUE_FLAG_NONE,
                 .NodeMask = 0,
-            }, &w.IID_ID3D12CommandQueue, @ptrCast(*?*c_void, &maybe_cmdqueue)));
-            break :blk maybe_cmdqueue.?;
+            }, &w.IID_ID3D12CommandQueue, @ptrCast(*?*c_void, &cmdqueue)));
+            break :blk cmdqueue;
         };
-        errdefer _ = cmdqueue.Release();
 
         var rect: w.RECT = undefined;
         _ = w.GetClientRect(window, &rect);
@@ -184,8 +182,8 @@ pub const GraphicsContext = struct {
         const viewport_height = @intCast(u32, rect.bottom - rect.top);
 
         const swapchain = blk: {
-            var maybe_swapchain: ?*w.IDXGISwapChain = null;
-            try vhr(factory.CreateSwapChain(
+            var swapchain: *w.IDXGISwapChain = undefined;
+            vhr(factory.CreateSwapChain(
                 @ptrCast(*w.IUnknown, cmdqueue),
                 &w.DXGI_SWAP_CHAIN_DESC{
                     .BufferDesc = .{
@@ -204,102 +202,79 @@ pub const GraphicsContext = struct {
                     .SwapEffect = .FLIP_DISCARD,
                     .Flags = 0,
                 },
-                &maybe_swapchain,
+                @ptrCast(*?*w.IDXGISwapChain, &swapchain),
             ));
-            defer _ = maybe_swapchain.?.Release();
-            var maybe_swapchain3: ?*w.IDXGISwapChain3 = null;
-            try vhr(maybe_swapchain.?.QueryInterface(&w.IID_IDXGISwapChain3, @ptrCast(*?*c_void, &maybe_swapchain3)));
-            break :blk maybe_swapchain3.?;
+            defer _ = swapchain.Release();
+            var swapchain3: *w.IDXGISwapChain3 = undefined;
+            vhr(swapchain.QueryInterface(&w.IID_IDXGISwapChain3, @ptrCast(*?*c_void, &swapchain3)));
+            break :blk swapchain3;
         };
-        errdefer _ = swapchain.Release();
 
         const rtv_descriptor_heap = blk: {
-            var maybe_heap: ?*w.ID3D12DescriptorHeap = null;
-            try vhr(device.CreateDescriptorHeap(&.{
+            var heap: *w.ID3D12DescriptorHeap = undefined;
+            vhr(device.CreateDescriptorHeap(&.{
                 .Type = .RTV,
                 .NumDescriptors = num_swapbuffers,
                 .Flags = w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
                 .NodeMask = 0,
-            }, &w.IID_ID3D12DescriptorHeap, @ptrCast(*?*c_void, &maybe_heap)));
-            break :blk maybe_heap.?;
+            }, &w.IID_ID3D12DescriptorHeap, @ptrCast(*?*c_void, &heap)));
+            break :blk heap;
         };
-        errdefer _ = rtv_descriptor_heap.Release();
 
         const swapbuffers = blk: {
-            var maybe_swapbuffers = [_]?*w.ID3D12Resource{null} ** num_swapbuffers;
-            errdefer {
-                for (maybe_swapbuffers) |swapbuffer| {
-                    if (swapbuffer) |sb| _ = sb.Release();
-                }
-            }
             var descriptor = rtv_descriptor_heap.GetCPUDescriptorHandleForHeapStart();
-            for (maybe_swapbuffers) |*swapbuffer, buffer_idx| {
-                try vhr(swapchain.GetBuffer(
+
+            var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
+            for (swapbuffers) |_, buffer_idx| {
+                vhr(swapchain.GetBuffer(
                     @intCast(u32, buffer_idx),
                     &w.IID_ID3D12Resource,
-                    @ptrCast(*?*c_void, &swapbuffer.*),
+                    @ptrCast(*?*c_void, &swapbuffers[buffer_idx]),
                 ));
-                device.CreateRenderTargetView(swapbuffer.*, null, descriptor);
+                device.CreateRenderTargetView(swapbuffers[buffer_idx], null, descriptor);
                 descriptor.ptr += device.GetDescriptorHandleIncrementSize(.RTV);
             }
-            var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
-            for (maybe_swapbuffers) |swapbuffer, i| swapbuffers[i] = swapbuffer.?;
             break :blk swapbuffers;
         };
-        errdefer {
-            for (swapbuffers) |swapbuffer| _ = swapbuffer.Release();
-        }
 
         const frame_fence = blk: {
-            var maybe_frame_fence: ?*w.ID3D12Fence = null;
-            try vhr(device.CreateFence(
+            var frame_fence: *w.ID3D12Fence = undefined;
+            vhr(device.CreateFence(
                 0,
                 w.D3D12_FENCE_FLAG_NONE,
                 &w.IID_ID3D12Fence,
-                @ptrCast(*?*c_void, &maybe_frame_fence),
+                @ptrCast(*?*c_void, &frame_fence),
             ));
-            break :blk maybe_frame_fence.?;
+            break :blk frame_fence;
         };
-        errdefer _ = frame_fence.Release();
 
         const frame_fence_event = w.CreateEventEx(null, "frame_fence_event", 0, w.EVENT_ALL_ACCESS) catch unreachable;
 
         const cmdallocs = blk: {
-            var maybe_cmdallocs = [_]?*w.ID3D12CommandAllocator{null} ** max_num_buffered_frames;
-            errdefer {
-                for (maybe_cmdallocs) |cmdalloc| {
-                    if (cmdalloc) |ca| _ = ca.Release();
-                }
-            }
-            for (maybe_cmdallocs) |*cmdalloc| {
-                try vhr(device.CreateCommandAllocator(
+            var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
+            for (cmdallocs) |_, cmdalloc_index| {
+                vhr(device.CreateCommandAllocator(
                     .DIRECT,
                     &w.IID_ID3D12CommandAllocator,
-                    @ptrCast(*?*c_void, &cmdalloc.*),
+                    @ptrCast(*?*c_void, &cmdallocs[cmdalloc_index]),
                 ));
             }
-            var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
-            for (maybe_cmdallocs) |cmdalloc, i| cmdallocs[i] = cmdalloc.?;
             break :blk cmdallocs;
         };
-        errdefer {
-            for (cmdallocs) |cmdalloc| _ = cmdalloc.Release();
-        }
 
         const cmdlist = blk: {
-            var maybe_cmdlist: ?*w.ID3D12GraphicsCommandList6 = null;
-            try vhr(device.CreateCommandList(
+            var cmdlist: *w.ID3D12GraphicsCommandList6 = undefined;
+            vhr(device.CreateCommandList(
                 0,
                 .DIRECT,
                 cmdallocs[0],
                 null,
                 &w.IID_ID3D12GraphicsCommandList6,
-                @ptrCast(*?*c_void, &maybe_cmdlist),
+                @ptrCast(*?*c_void, &cmdlist),
             ));
-            break :blk maybe_cmdlist.?;
+            break :blk cmdlist;
         };
-        errdefer _ = cmdlist.Release();
-        try vhr(cmdlist.Close());
+        vhr(cmdlist.Close());
 
         return GraphicsContext{
             .device = device,
@@ -331,10 +306,10 @@ pub const GraphicsContext = struct {
         gr.* = undefined;
     }
 
-    pub fn beginFrame(gr: *GraphicsContext) !void {
+    pub fn beginFrame(gr: *GraphicsContext) void {
         const cmdalloc = gr.cmdallocs[gr.frame_index];
-        try vhr(cmdalloc.Reset());
-        try vhr(gr.cmdlist.Reset(cmdalloc, null));
+        vhr(cmdalloc.Reset());
+        vhr(gr.cmdlist.Reset(cmdalloc, null));
 
         gr.cmdlist.RSSetViewports(1, &[_]w.D3D12_VIEWPORT{.{
             .TopLeftX = 0.0,
@@ -352,20 +327,20 @@ pub const GraphicsContext = struct {
         }});
     }
 
-    pub fn endFrame(gr: *GraphicsContext) !void {
-        try vhr(gr.cmdlist.Close());
+    pub fn endFrame(gr: *GraphicsContext) void {
+        vhr(gr.cmdlist.Close());
         gr.cmdqueue.ExecuteCommandLists(
             1,
             &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
         );
 
         gr.frame_fence_counter += 1;
-        try vhr(gr.swapchain.Present(0, 0));
-        try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+        vhr(gr.swapchain.Present(0, 0));
+        vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
         const gpu_frame_counter = gr.frame_fence.GetCompletedValue();
         if ((gr.frame_fence_counter - gpu_frame_counter) >= max_num_buffered_frames) {
-            try vhr(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
+            vhr(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
             w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
         }
 
@@ -373,10 +348,10 @@ pub const GraphicsContext = struct {
         gr.back_buffer_index = gr.swapchain.GetCurrentBackBufferIndex();
     }
 
-    pub fn waitForGpu(gr: *GraphicsContext) !void {
+    pub fn waitForGpu(gr: *GraphicsContext) void {
         gr.frame_fence_counter += 1;
-        try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
-        try vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
+        vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+        vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
         w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
     }
 };
@@ -389,7 +364,7 @@ pub fn main() !void {
     _ = w.SetProcessDPIAware();
 
     const window = try initWindow(window_name, window_width, window_height);
-    var gr = try GraphicsContext.init(window);
+    var gr = GraphicsContext.init(window);
     defer gr.deinit();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -410,18 +385,17 @@ pub fn main() !void {
         const ps_code = try ps_file.reader().readAllAlloc(allocator, 256 * 1024);
         defer allocator.free(ps_code);
 
-        var maybe_rs: ?*w.ID3D12RootSignature = null;
-        try vhr(gr.device.CreateRootSignature(
+        var rs: *w.ID3D12RootSignature = undefined;
+        vhr(gr.device.CreateRootSignature(
             0,
             vs_code.ptr,
             vs_code.len,
             &w.IID_ID3D12RootSignature,
-            @ptrCast(*?*c_void, &maybe_rs),
+            @ptrCast(*?*c_void, &rs),
         ));
-        errdefer _ = maybe_rs.?.Release();
 
         const pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC{
-            .pRootSignature = maybe_rs,
+            .pRootSignature = rs,
             .VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len },
             .PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len },
             .DS = .{ .pShaderBytecode = null, .BytecodeLength = 0 },
@@ -454,14 +428,14 @@ pub fn main() !void {
             .Flags = w.D3D12_PIPELINE_STATE_FLAG_NONE,
         };
 
-        var maybe_pso: ?*w.ID3D12PipelineState = null;
-        try vhr(gr.device.CreateGraphicsPipelineState(
+        var pso: *w.ID3D12PipelineState = undefined;
+        vhr(gr.device.CreateGraphicsPipelineState(
             &pso_desc,
             &w.IID_ID3D12PipelineState,
-            @ptrCast(*?*c_void, &maybe_pso),
+            @ptrCast(*?*c_void, &pso),
         ));
 
-        break :blk .{ .pso = maybe_pso.?, .rs = maybe_rs.? };
+        break :blk .{ .pso = pso, .rs = rs };
     };
     defer {
         _ = pipeline.pso.Release();
@@ -488,7 +462,7 @@ pub fn main() !void {
                 _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
             }
 
-            try gr.beginFrame();
+            gr.beginFrame();
 
             const back_buffer = gr.swapbuffers[gr.back_buffer_index];
             const back_buffer_rtv = blk: {
@@ -528,11 +502,11 @@ pub fn main() !void {
                 },
             }});
 
-            try gr.endFrame();
+            gr.endFrame();
         }
     }
 
-    try gr.waitForGpu();
+    gr.waitForGpu();
 
     std.debug.print("All OK!\n", .{});
 }
