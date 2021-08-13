@@ -1,6 +1,20 @@
 const std = @import("std");
 const w = @import("../win32/win32.zig");
 const c = @import("c.zig");
+const panic = std.debug.panic;
+
+pub fn hrPanicOnFail(hr: w.HRESULT) void {
+    if (hr != 0) {
+        // TODO(mziulek): In ReleaseMode display a MessageBox for the user.
+        panic("HRESULT error detected ({d}).", .{hr});
+    }
+}
+
+pub fn hrErrorOnFail(hr: w.HRESULT) !void {
+    if (hr != 0) {
+        return error.HResultError;
+    }
+}
 
 pub const FrameStats = struct {
     time: f64,

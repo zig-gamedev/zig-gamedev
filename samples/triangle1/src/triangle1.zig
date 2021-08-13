@@ -5,7 +5,7 @@ const gr = @import("graphics");
 const lib = @import("library");
 const c = @import("c");
 usingnamespace @import("vectormath");
-const vhr = gr.vhr;
+const hrPanicOnFail = lib.hrPanicOnFail;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -24,8 +24,8 @@ pub fn main() !void {
     }
     const allocator = &gpa.allocator;
 
-    const window = try lib.initWindow(window_name, window_width, window_height);
-    var grfx = try gr.GraphicsContext.init(window);
+    const window = lib.initWindow(window_name, window_width, window_height) catch unreachable;
+    var grfx = gr.GraphicsContext.init(window);
     defer grfx.deinit(&gpa.allocator);
 
     const pipeline = blk: {
@@ -38,7 +38,7 @@ pub fn main() !void {
             .pInputElementDescs = &input_layout_desc,
             .NumElements = input_layout_desc.len,
         };
-        break :blk try grfx.createGraphicsShaderPipeline(
+        break :blk grfx.createGraphicsShaderPipeline(
             allocator,
             &pso_desc,
             "content/shaders/triangle1.vs.cso",
@@ -46,28 +46,28 @@ pub fn main() !void {
         );
     };
     defer {
-        _ = grfx.releasePipelineSafe(pipeline);
+        _ = grfx.releasePipeline(pipeline);
     }
 
-    const vertex_buffer = try grfx.createCommittedResource(
+    const vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
         w.D3D12_HEAP_FLAG_NONE,
         &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
         w.D3D12_RESOURCE_STATE_COPY_DEST,
         null,
-    );
-    defer _ = grfx.releaseResourceSafe(vertex_buffer);
+    ) catch unreachable;
+    defer _ = grfx.releaseResource(vertex_buffer);
 
-    const index_buffer = try grfx.createCommittedResource(
+    const index_buffer = grfx.createCommittedResource(
         .DEFAULT,
         w.D3D12_HEAP_FLAG_NONE,
         &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
         w.D3D12_RESOURCE_STATE_COPY_DEST,
         null,
-    );
-    defer _ = grfx.releaseResourceSafe(index_buffer);
+    ) catch unreachable;
+    defer _ = grfx.releaseResource(index_buffer);
 
-    try grfx.beginFrame();
+    grfx.beginFrame();
 
     const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
     upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
@@ -99,7 +99,7 @@ pub fn main() !void {
     grfx.addTransitionBarrier(index_buffer, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
     grfx.flushResourceBarriers();
 
-    try grfx.finishGpuCommands();
+    grfx.finishGpuCommands();
 
     var stats = lib.FrameStats.init();
 
@@ -121,7 +121,7 @@ pub fn main() !void {
                 _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
             }
 
-            try grfx.beginFrame();
+            grfx.beginFrame();
 
             const back_buffer = grfx.getBackBuffer();
 
@@ -157,9 +157,9 @@ pub fn main() !void {
             grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
             grfx.flushResourceBarriers();
 
-            try grfx.endFrame();
+            grfx.endFrame();
         }
     }
 
-    try grfx.finishGpuCommands();
+    grfx.finishGpuCommands();
 }

@@ -1,14 +1,14 @@
 const builtin = @import("builtin");
 const std = @import("std");
 const w = @import("win32");
-const panic = std.debug.panic;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-inline fn vhr(hr: w.HRESULT) void {
+pub fn hrPanicOnFail(hr: w.HRESULT) void {
     if (hr != 0) {
-        panic("HRESULT function failed ({}).", .{hr});
+        // TODO(mziulek): In ReleaseMode display a MessageBox for the user.
+        std.debug.panic("HRESULT error detected ({d}).", .{hr});
     }
 }
 
@@ -140,7 +140,7 @@ pub const GraphicsContext = struct {
     pub fn init(window: w.HWND) GraphicsContext {
         const factory = blk: {
             var factory: *w.IDXGIFactory1 = undefined;
-            vhr(w.CreateDXGIFactory2(
+            hrPanicOnFail(w.CreateDXGIFactory2(
                 if (comptime builtin.mode == .Debug) w.DXGI_CREATE_FACTORY_DEBUG else 0,
                 &w.IID_IDXGIFactory1,
                 @ptrCast(*?*c_void, &factory),
@@ -161,13 +161,18 @@ pub const GraphicsContext = struct {
 
         const device = blk: {
             var device: *w.ID3D12Device9 = undefined;
-            vhr(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device9, @ptrCast(*?*c_void, &device)));
+            hrPanicOnFail(w.D3D12CreateDevice(
+                null,
+                ._11_1,
+                &w.IID_ID3D12Device9,
+                @ptrCast(*?*c_void, &device),
+            ));
             break :blk device;
         };
 
         const cmdqueue = blk: {
             var cmdqueue: *w.ID3D12CommandQueue = undefined;
-            vhr(device.CreateCommandQueue(&.{
+            hrPanicOnFail(device.CreateCommandQueue(&.{
                 .Type = .DIRECT,
                 .Priority = @enumToInt(w.D3D12_COMMAND_QUEUE_PRIORITY.NORMAL),
                 .Flags = w.D3D12_COMMAND_QUEUE_FLAG_NONE,
@@ -183,7 +188,7 @@ pub const GraphicsContext = struct {
 
         const swapchain = blk: {
             var swapchain: *w.IDXGISwapChain = undefined;
-            vhr(factory.CreateSwapChain(
+            hrPanicOnFail(factory.CreateSwapChain(
                 @ptrCast(*w.IUnknown, cmdqueue),
                 &w.DXGI_SWAP_CHAIN_DESC{
                     .BufferDesc = .{
@@ -205,14 +210,18 @@ pub const GraphicsContext = struct {
                 @ptrCast(*?*w.IDXGISwapChain, &swapchain),
             ));
             defer _ = swapchain.Release();
+
             var swapchain3: *w.IDXGISwapChain3 = undefined;
-            vhr(swapchain.QueryInterface(&w.IID_IDXGISwapChain3, @ptrCast(*?*c_void, &swapchain3)));
+            hrPanicOnFail(swapchain.QueryInterface(
+                &w.IID_IDXGISwapChain3,
+                @ptrCast(*?*c_void, &swapchain3),
+            ));
             break :blk swapchain3;
         };
 
         const rtv_descriptor_heap = blk: {
             var heap: *w.ID3D12DescriptorHeap = undefined;
-            vhr(device.CreateDescriptorHeap(&.{
+            hrPanicOnFail(device.CreateDescriptorHeap(&.{
                 .Type = .RTV,
                 .NumDescriptors = num_swapbuffers,
                 .Flags = w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
@@ -226,7 +235,7 @@ pub const GraphicsContext = struct {
 
             var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
             for (swapbuffers) |_, buffer_idx| {
-                vhr(swapchain.GetBuffer(
+                hrPanicOnFail(swapchain.GetBuffer(
                     @intCast(u32, buffer_idx),
                     &w.IID_ID3D12Resource,
                     @ptrCast(*?*c_void, &swapbuffers[buffer_idx]),
@@ -239,7 +248,7 @@ pub const GraphicsContext = struct {
 
         const frame_fence = blk: {
             var frame_fence: *w.ID3D12Fence = undefined;
-            vhr(device.CreateFence(
+            hrPanicOnFail(device.CreateFence(
                 0,
                 w.D3D12_FENCE_FLAG_NONE,
                 &w.IID_ID3D12Fence,
@@ -253,7 +262,7 @@ pub const GraphicsContext = struct {
         const cmdallocs = blk: {
             var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
             for (cmdallocs) |_, cmdalloc_index| {
-                vhr(device.CreateCommandAllocator(
+                hrPanicOnFail(device.CreateCommandAllocator(
                     .DIRECT,
                     &w.IID_ID3D12CommandAllocator,
                     @ptrCast(*?*c_void, &cmdallocs[cmdalloc_index]),
@@ -264,7 +273,7 @@ pub const GraphicsContext = struct {
 
         const cmdlist = blk: {
             var cmdlist: *w.ID3D12GraphicsCommandList6 = undefined;
-            vhr(device.CreateCommandList(
+            hrPanicOnFail(device.CreateCommandList(
                 0,
                 .DIRECT,
                 cmdallocs[0],
@@ -274,7 +283,7 @@ pub const GraphicsContext = struct {
             ));
             break :blk cmdlist;
         };
-        vhr(cmdlist.Close());
+        hrPanicOnFail(cmdlist.Close());
 
         return GraphicsContext{
             .device = device,
@@ -308,8 +317,8 @@ pub const GraphicsContext = struct {
 
     pub fn beginFrame(gr: *GraphicsContext) void {
         const cmdalloc = gr.cmdallocs[gr.frame_index];
-        vhr(cmdalloc.Reset());
-        vhr(gr.cmdlist.Reset(cmdalloc, null));
+        hrPanicOnFail(cmdalloc.Reset());
+        hrPanicOnFail(gr.cmdlist.Reset(cmdalloc, null));
 
         gr.cmdlist.RSSetViewports(1, &[_]w.D3D12_VIEWPORT{.{
             .TopLeftX = 0.0,
@@ -328,19 +337,19 @@ pub const GraphicsContext = struct {
     }
 
     pub fn endFrame(gr: *GraphicsContext) void {
-        vhr(gr.cmdlist.Close());
+        hrPanicOnFail(gr.cmdlist.Close());
         gr.cmdqueue.ExecuteCommandLists(
             1,
             &[_]*w.ID3D12CommandList{@ptrCast(*w.ID3D12CommandList, gr.cmdlist)},
         );
 
         gr.frame_fence_counter += 1;
-        vhr(gr.swapchain.Present(0, 0));
-        vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+        hrPanicOnFail(gr.swapchain.Present(0, 0));
+        hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
         const gpu_frame_counter = gr.frame_fence.GetCompletedValue();
         if ((gr.frame_fence_counter - gpu_frame_counter) >= max_num_buffered_frames) {
-            vhr(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
+            hrPanicOnFail(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
             w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
         }
 
@@ -350,8 +359,8 @@ pub const GraphicsContext = struct {
 
     pub fn waitForGpu(gr: *GraphicsContext) void {
         gr.frame_fence_counter += 1;
-        vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
-        vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
+        hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+        hrPanicOnFail(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
         w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
     }
 };
@@ -363,7 +372,7 @@ pub fn main() !void {
 
     _ = w.SetProcessDPIAware();
 
-    const window = try initWindow(window_name, window_width, window_height);
+    const window = initWindow(window_name, window_width, window_height) catch unreachable;
     var gr = GraphicsContext.init(window);
     defer gr.deinit();
 
@@ -374,19 +383,19 @@ pub fn main() !void {
     }
 
     const pipeline = blk: {
-        const vs_file = try std.fs.cwd().openFile("content/shaders/triangle.vs.cso", .{});
+        const vs_file = std.fs.cwd().openFile("content/shaders/triangle.vs.cso", .{}) catch unreachable;
         defer vs_file.close();
-        const ps_file = try std.fs.cwd().openFile("content/shaders/triangle.ps.cso", .{});
+        const ps_file = std.fs.cwd().openFile("content/shaders/triangle.ps.cso", .{}) catch unreachable;
         defer ps_file.close();
 
         const allocator = &gpa.allocator;
-        const vs_code = try vs_file.reader().readAllAlloc(allocator, 256 * 1024);
+        const vs_code = vs_file.reader().readAllAlloc(allocator, 256 * 1024) catch unreachable;
         defer allocator.free(vs_code);
-        const ps_code = try ps_file.reader().readAllAlloc(allocator, 256 * 1024);
+        const ps_code = ps_file.reader().readAllAlloc(allocator, 256 * 1024) catch unreachable;
         defer allocator.free(ps_code);
 
         var rs: *w.ID3D12RootSignature = undefined;
-        vhr(gr.device.CreateRootSignature(
+        hrPanicOnFail(gr.device.CreateRootSignature(
             0,
             vs_code.ptr,
             vs_code.len,
@@ -429,7 +438,7 @@ pub fn main() !void {
         };
 
         var pso: *w.ID3D12PipelineState = undefined;
-        vhr(gr.device.CreateGraphicsPipelineState(
+        hrPanicOnFail(gr.device.CreateGraphicsPipelineState(
             &pso_desc,
             &w.IID_ID3D12PipelineState,
             @ptrCast(*?*c_void, &pso),

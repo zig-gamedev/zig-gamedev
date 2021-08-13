@@ -5,8 +5,8 @@ const gr = @import("graphics");
 const lib = @import("library");
 const c = @import("c");
 usingnamespace @import("vectormath");
-const vhr = gr.vhr;
 const math = std.math;
+const hrPanicOnFail = lib.hrPanicOnFail;
 const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -27,14 +27,12 @@ const DemoState = struct {
     brush: *w.ID2D1SolidColorBrush,
     textformat: *w.IDWriteTextFormat,
 
-    fn init(allocator: *std.mem.Allocator) !DemoState {
+    fn init(allocator: *std.mem.Allocator) DemoState {
         _ = c.igCreateContext(null);
-        errdefer c.igDestroyContext(null);
 
-        const window = try lib.initWindow(window_name, window_width, window_height);
+        const window = lib.initWindow(window_name, window_width, window_height) catch unreachable;
 
-        var grfx = try gr.GraphicsContext.init(window);
-        errdefer grfx.deinit(allocator);
+        var grfx = gr.GraphicsContext.init(window);
 
         const pipeline = blk: {
             const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
@@ -47,47 +45,43 @@ const DemoState = struct {
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
             };
-            break :blk try grfx.createGraphicsShaderPipeline(
+            break :blk grfx.createGraphicsShaderPipeline(
                 allocator,
                 &pso_desc,
                 "content/shaders/textured_quad.vs.cso",
                 "content/shaders/textured_quad.ps.cso",
             );
         };
-        errdefer _ = grfx.releasePipelineSafe(pipeline);
 
-        const vertex_buffer = try grfx.createCommittedResource(
+        const vertex_buffer = grfx.createCommittedResource(
             .DEFAULT,
             w.D3D12_HEAP_FLAG_NONE,
             &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
-        );
-        errdefer _ = grfx.releaseResourceSafe(vertex_buffer);
+        ) catch unreachable;
 
-        const index_buffer = try grfx.createCommittedResource(
+        const index_buffer = grfx.createCommittedResource(
             .DEFAULT,
             w.D3D12_HEAP_FLAG_NONE,
             &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
-        );
-        errdefer _ = grfx.releaseResourceSafe(index_buffer);
+        ) catch unreachable;
 
         const brush = blk: {
             var maybe_brush: ?*w.ID2D1SolidColorBrush = null;
-            try vhr(grfx.d2d.context.CreateSolidColorBrush(
+            hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
                 &w.D2D1_COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
                 null,
                 &maybe_brush,
             ));
             break :blk maybe_brush.?;
         };
-        errdefer _ = brush.Release();
 
         const textformat = blk: {
             var maybe_textformat: ?*w.IDWriteTextFormat = null;
-            try vhr(grfx.dwrite_factory.CreateTextFormat(
+            hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
                 utf8ToUtf16LeStringLiteral("Verdana"),
                 null,
                 w.DWRITE_FONT_WEIGHT.NORMAL,
@@ -99,15 +93,13 @@ const DemoState = struct {
             ));
             break :blk maybe_textformat.?;
         };
-        errdefer _ = textformat.Release();
 
-        try vhr(textformat.SetTextAlignment(.LEADING));
-        try vhr(textformat.SetParagraphAlignment(.NEAR));
+        hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
+        hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        try grfx.beginFrame();
+        grfx.beginFrame();
 
-        var gui = try gr.GuiContext.init(allocator, &grfx);
-        errdefer gui.deinit(&grfx);
+        var gui = gr.GuiContext.init(allocator, &grfx);
 
         //_ = try grfx.createAndUploadTex2dFromFile(utf8ToUtf16LeStringLiteral("aa")[0..], 1);
 
@@ -141,7 +133,7 @@ const DemoState = struct {
         grfx.addTransitionBarrier(index_buffer, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
         grfx.flushResourceBarriers();
 
-        try grfx.finishGpuCommands();
+        grfx.finishGpuCommands();
 
         return DemoState{
             .grfx = grfx,
@@ -157,7 +149,7 @@ const DemoState = struct {
     }
 
     fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
-        demo.grfx.finishGpuCommands() catch unreachable;
+        demo.grfx.finishGpuCommands();
         _ = demo.brush.Release();
         _ = demo.textformat.Release();
         _ = demo.grfx.releaseResource(demo.vertex_buffer);
@@ -177,9 +169,9 @@ const DemoState = struct {
         c.igShowDemoWindow(null);
     }
 
-    fn draw(demo: *DemoState) !void {
+    fn draw(demo: *DemoState) void {
         var grfx = &demo.grfx;
-        try grfx.beginFrame();
+        grfx.beginFrame();
 
         const back_buffer = grfx.getBackBuffer();
 
@@ -212,9 +204,9 @@ const DemoState = struct {
         });
         grfx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
 
-        try demo.gui.draw(grfx);
+        demo.gui.draw(grfx);
 
-        try grfx.beginDraw2d();
+        grfx.beginDraw2d();
         {
             const stats = &demo.frame_stats;
             var buffer = [_]u8{0} ** 64;
@@ -237,9 +229,9 @@ const DemoState = struct {
                 @ptrCast(*w.ID2D1Brush, demo.brush),
             );
         }
-        try grfx.endDraw2d();
+        grfx.endDraw2d();
 
-        try grfx.endFrame();
+        grfx.endFrame();
     }
 };
 
@@ -255,7 +247,7 @@ pub fn main() !void {
     }
     const allocator = &gpa.allocator;
 
-    var demo = try DemoState.init(allocator);
+    var demo = DemoState.init(allocator);
     defer demo.deinit(allocator);
 
     while (true) {
@@ -266,7 +258,7 @@ pub fn main() !void {
                 break;
         } else {
             demo.update();
-            try demo.draw();
+            demo.draw();
         }
     }
 

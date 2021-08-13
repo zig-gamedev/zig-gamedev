@@ -2,15 +2,11 @@ const builtin = @import("builtin");
 const std = @import("std");
 const w = @import("../win32/win32.zig");
 const c = @import("c.zig");
+const lib = @import("library.zig");
 usingnamespace @import("vectormath.zig");
 const assert = std.debug.assert;
-
-pub inline fn vhr(hr: w.HRESULT) !void {
-    if (hr != 0) {
-        //return error.HResult;
-        std.debug.panic("HRESULT function failed ({}).", .{hr});
-    }
-}
+const hrPanicOnFail = lib.hrPanicOnFail;
+const hrErrorOnFail = lib.hrErrorOnFail;
 
 // TODO(mziulek): For now, we always transition *all* subresources.
 const TransitionResourceBarrier = struct {
@@ -70,23 +66,22 @@ pub const GraphicsContext = struct {
     dwrite_factory: *w.IDWriteFactory,
     wic_factory: *w.IWICImagingFactory,
 
-    pub fn init(window: w.HWND) !GraphicsContext {
+    pub fn init(window: w.HWND) GraphicsContext {
         const wic_factory = blk: {
-            var maybe_wic_factory: ?*w.IWICImagingFactory = null;
-            try vhr(w.CoCreateInstance(
+            var wic_factory: *w.IWICImagingFactory = undefined;
+            hrPanicOnFail(w.CoCreateInstance(
                 &w.CLSID_WICImagingFactory,
                 null,
                 w.CLSCTX_INPROC_SERVER,
                 &w.IID_IWICImagingFactory,
-                @ptrCast(*?*c_void, &maybe_wic_factory),
+                @ptrCast(*?*c_void, &wic_factory),
             ));
-            break :blk maybe_wic_factory.?;
+            break :blk wic_factory;
         };
-        errdefer _ = wic_factory.Release();
 
         const factory = blk: {
             var factory: *w.IDXGIFactory1 = undefined;
-            try vhr(w.CreateDXGIFactory2(
+            hrPanicOnFail(w.CreateDXGIFactory2(
                 if (comptime builtin.mode == .Debug) w.DXGI_CREATE_FACTORY_DEBUG else 0,
                 &w.IID_IDXGIFactory1,
                 @ptrCast(*?*c_void, &factory),
@@ -107,14 +102,18 @@ pub const GraphicsContext = struct {
 
         const device = blk: {
             var device: *w.ID3D12Device9 = undefined;
-            try vhr(w.D3D12CreateDevice(null, ._11_1, &w.IID_ID3D12Device9, @ptrCast(*?*c_void, &device)));
+            hrPanicOnFail(w.D3D12CreateDevice(
+                null,
+                ._11_1,
+                &w.IID_ID3D12Device9,
+                @ptrCast(*?*c_void, &device),
+            ));
             break :blk device;
         };
-        errdefer _ = device.Release();
 
         const cmdqueue = blk: {
             var cmdqueue: *w.ID3D12CommandQueue = undefined;
-            try vhr(device.CreateCommandQueue(&.{
+            hrPanicOnFail(device.CreateCommandQueue(&.{
                 .Type = .DIRECT,
                 .Priority = @enumToInt(w.D3D12_COMMAND_QUEUE_PRIORITY.NORMAL),
                 .Flags = w.D3D12_COMMAND_QUEUE_FLAG_NONE,
@@ -122,7 +121,6 @@ pub const GraphicsContext = struct {
             }, &w.IID_ID3D12CommandQueue, @ptrCast(*?*c_void, &cmdqueue)));
             break :blk cmdqueue;
         };
-        errdefer _ = cmdqueue.Release();
 
         var rect: w.RECT = undefined;
         _ = w.GetClientRect(window, &rect);
@@ -130,8 +128,8 @@ pub const GraphicsContext = struct {
         const viewport_height = @intCast(u32, rect.bottom - rect.top);
 
         const swapchain = blk: {
-            var maybe_swapchain: ?*w.IDXGISwapChain = null;
-            try vhr(factory.CreateSwapChain(
+            var swapchain: *w.IDXGISwapChain = undefined;
+            hrPanicOnFail(factory.CreateSwapChain(
                 @ptrCast(*w.IUnknown, cmdqueue),
                 &w.DXGI_SWAP_CHAIN_DESC{
                     .BufferDesc = .{
@@ -150,22 +148,22 @@ pub const GraphicsContext = struct {
                     .SwapEffect = .FLIP_DISCARD,
                     .Flags = 0,
                 },
-                &maybe_swapchain,
+                @ptrCast(*?*w.IDXGISwapChain, &swapchain),
             ));
-            defer _ = maybe_swapchain.?.Release();
-            var maybe_swapchain3: ?*w.IDXGISwapChain3 = null;
-            try vhr(maybe_swapchain.?.QueryInterface(
+            defer _ = swapchain.Release();
+
+            var swapchain3: *w.IDXGISwapChain3 = undefined;
+            hrPanicOnFail(swapchain.QueryInterface(
                 &w.IID_IDXGISwapChain3,
-                @ptrCast(*?*c_void, &maybe_swapchain3),
+                @ptrCast(*?*c_void, &swapchain3),
             ));
-            break :blk maybe_swapchain3.?;
+            break :blk swapchain3;
         };
-        errdefer _ = swapchain.Release();
 
         const d3d11 = blk: {
-            var maybe_device11: ?*w.ID3D11Device = null;
-            var maybe_device_context11: ?*w.ID3D11DeviceContext = null;
-            try vhr(w.D3D11On12CreateDevice(
+            var device11: *w.ID3D11Device = undefined;
+            var device_context11: *w.ID3D11DeviceContext = undefined;
+            hrPanicOnFail(w.D3D11On12CreateDevice(
                 @ptrCast(*w.IUnknown, device),
                 if (comptime builtin.mode == .Debug)
                     w.D3D11_CREATE_DEVICE_DEBUG | w.D3D11_CREATE_DEVICE_BGRA_SUPPORT
@@ -176,30 +174,25 @@ pub const GraphicsContext = struct {
                 &[_]*w.IUnknown{@ptrCast(*w.IUnknown, cmdqueue)},
                 1,
                 0,
-                &maybe_device11,
-                &maybe_device_context11,
+                @ptrCast(*?*w.ID3D11Device, &device11),
+                @ptrCast(*?*w.ID3D11DeviceContext, &device_context11),
                 null,
             ));
-            break :blk .{ .device = maybe_device11.?, .device_context = maybe_device_context11.? };
+            break :blk .{ .device = device11, .device_context = device_context11 };
         };
-        errdefer {
-            _ = d3d11.device.Release();
-            _ = d3d11.device_context.Release();
-        }
 
         const device11on12 = blk: {
             var device11on12: *w.ID3D11On12Device2 = undefined;
-            try vhr(d3d11.device.QueryInterface(
+            hrPanicOnFail(d3d11.device.QueryInterface(
                 &w.IID_ID3D11On12Device2,
                 @ptrCast(*?*c_void, &device11on12),
             ));
             break :blk device11on12;
         };
-        errdefer _ = device11on12.Release();
 
         const d2d_factory = blk: {
             var d2d_factory: *w.ID2D1Factory7 = undefined;
-            try vhr(w.D2D1CreateFactory(
+            hrPanicOnFail(w.D2D1CreateFactory(
                 .SINGLE_THREADED,
                 &w.IID_ID2D1Factory7,
                 if (comptime builtin.mode == .Debug)
@@ -210,55 +203,57 @@ pub const GraphicsContext = struct {
             ));
             break :blk d2d_factory;
         };
-        errdefer _ = d2d_factory.Release();
 
         const dxgi_device = blk: {
-            var maybe_dxgi_device: ?*w.IDXGIDevice = null;
-            try vhr(device11on12.QueryInterface(&w.IID_IDXGIDevice, @ptrCast(*?*c_void, &maybe_dxgi_device)));
-            break :blk maybe_dxgi_device.?;
+            var dxgi_device: *w.IDXGIDevice = undefined;
+            hrPanicOnFail(device11on12.QueryInterface(
+                &w.IID_IDXGIDevice,
+                @ptrCast(*?*c_void, &dxgi_device),
+            ));
+            break :blk dxgi_device;
         };
         defer _ = dxgi_device.Release();
 
         const d2d_device = blk: {
-            var maybe_d2d_device: ?*w.ID2D1Device6 = null;
-            try vhr(d2d_factory.CreateDevice6(dxgi_device, &maybe_d2d_device));
-            break :blk maybe_d2d_device.?;
+            var d2d_device: *w.ID2D1Device6 = undefined;
+            hrPanicOnFail(d2d_factory.CreateDevice6(
+                dxgi_device,
+                @ptrCast(*?*w.ID2D1Device6, &d2d_device),
+            ));
+            break :blk d2d_device;
         };
-        errdefer _ = d2d_device.Release();
 
         const d2d_device_context = blk: {
-            var maybe_d2d_device_context: ?*w.ID2D1DeviceContext6 = null;
-            try vhr(d2d_device.CreateDeviceContext6(w.D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &maybe_d2d_device_context));
-            break :blk maybe_d2d_device_context.?;
+            var d2d_device_context: *w.ID2D1DeviceContext6 = undefined;
+            hrPanicOnFail(d2d_device.CreateDeviceContext6(
+                w.D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+                @ptrCast(*?*w.ID2D1DeviceContext6, &d2d_device_context),
+            ));
+            break :blk d2d_device_context;
         };
-        errdefer _ = d2d_device_context.Release();
 
         const dwrite_factory = blk: {
             var dwrite_factory: *w.IDWriteFactory = undefined;
-            try vhr(w.DWriteCreateFactory(.SHARED, &w.IID_IDWriteFactory, @ptrCast(*?*c_void, &dwrite_factory)));
+            hrPanicOnFail(w.DWriteCreateFactory(
+                .SHARED,
+                &w.IID_IDWriteFactory,
+                @ptrCast(*?*c_void, &dwrite_factory),
+            ));
             break :blk dwrite_factory;
         };
-        errdefer _ = dwrite_factory.Release();
 
         var resource_pool = ResourcePool.init();
-        errdefer resource_pool.deinit();
-
         var pipeline_pool = PipelinePool.init();
-        errdefer pipeline_pool.deinit();
 
-        var rtv_heap = try DescriptorHeap.init(device, num_rtv_descriptors, .RTV, w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-        errdefer rtv_heap.deinit();
+        var rtv_heap = DescriptorHeap.init(device, num_rtv_descriptors, .RTV, w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+        var dsv_heap = DescriptorHeap.init(device, num_dsv_descriptors, .DSV, w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
-        var dsv_heap = try DescriptorHeap.init(device, num_dsv_descriptors, .DSV, w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-        errdefer dsv_heap.deinit();
-
-        var cbv_srv_uav_cpu_heap = try DescriptorHeap.init(
+        var cbv_srv_uav_cpu_heap = DescriptorHeap.init(
             device,
             num_cbv_srv_uav_cpu_descriptors,
             .CBV_SRV_UAV,
             w.D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
         );
-        errdefer cbv_srv_uav_cpu_heap.deinit();
 
         var cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap = undefined;
         for (cbv_srv_uav_gpu_heaps) |_, heap_index| {
@@ -267,43 +262,23 @@ pub const GraphicsContext = struct {
                 num_cbv_srv_uav_gpu_descriptors,
                 .CBV_SRV_UAV,
                 w.D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-            ) catch |err| {
-                var i: u32 = 0;
-                while (i < heap_index) : (i += 1) {
-                    cbv_srv_uav_gpu_heaps[i].deinit();
-                }
-                return err;
-            };
+            );
         }
-        errdefer for (cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
 
         var upload_heaps: [max_num_buffered_frames]GpuMemoryHeap = undefined;
         for (upload_heaps) |_, heap_index| {
-            upload_heaps[heap_index] = GpuMemoryHeap.init(device, upload_heap_capacity, .UPLOAD) catch |err| {
-                var i: u32 = 0;
-                while (i < heap_index) : (i += 1) {
-                    upload_heaps[i].deinit();
-                }
-                return err;
-            };
+            upload_heaps[heap_index] = GpuMemoryHeap.init(device, upload_heap_capacity, .UPLOAD);
         }
-        errdefer for (upload_heaps) |*heap| heap.*.deinit();
 
         const swapchain_buffers = blk: {
             var swapchain_buffers: [num_swapbuffers]ResourceHandle = undefined;
             var swapbuffers: [num_swapbuffers]*w.ID3D12Resource = undefined;
             for (swapbuffers) |_, buffer_index| {
-                vhr(swapchain.GetBuffer(
+                hrPanicOnFail(swapchain.GetBuffer(
                     @intCast(u32, buffer_index),
                     &w.IID_ID3D12Resource,
                     @ptrCast(*?*c_void, &swapbuffers[buffer_index]),
-                )) catch |err| {
-                    var i: u32 = 0;
-                    while (i < buffer_index) : (i += 1) {
-                        _ = swapbuffers[i].Release();
-                    }
-                    return err;
-                };
+                ));
                 device.CreateRenderTargetView(
                     swapbuffers[buffer_index],
                     null,
@@ -320,7 +295,7 @@ pub const GraphicsContext = struct {
         const swapbuffers11 = blk: {
             var swapbuffers11: [num_swapbuffers]*w.ID3D11Resource = undefined;
             for (swapbuffers11) |_, buffer_index| {
-                vhr(device11on12.CreateWrappedResource(
+                hrPanicOnFail(device11on12.CreateWrappedResource(
                     @ptrCast(*w.IUnknown, resource_pool.getResource(swapchain_buffers[buffer_index]).raw.?),
                     &w.D3D11_RESOURCE_FLAGS{
                         .BindFlags = w.D3D11_BIND_RENDER_TARGET,
@@ -332,36 +307,24 @@ pub const GraphicsContext = struct {
                     w.D3D12_RESOURCE_STATE_PRESENT,
                     &w.IID_ID3D11Resource,
                     @ptrCast(*?*c_void, &swapbuffers11[buffer_index]),
-                )) catch |err| {
-                    var i: u32 = 0;
-                    while (i < num_swapbuffers) : (i += 1) {
-                        _ = swapbuffers11[i].Release();
-                    }
-                    return err;
-                };
+                ));
             }
             break :blk swapbuffers11;
         };
-        errdefer {
-            for (swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
-        }
 
         const d2d_targets = blk: {
-            var maybe_d2d_targets = [_]?*w.ID2D1Bitmap1{null} ** num_swapbuffers;
-            errdefer {
-                for (maybe_d2d_targets) |target| {
-                    if (target) |t| _ = t.Release();
-                }
-            }
-
-            for (maybe_d2d_targets) |_, target_index| {
+            var d2d_targets: [num_swapbuffers]*w.ID2D1Bitmap1 = undefined;
+            for (d2d_targets) |_, target_index| {
                 const swapbuffer11 = swapbuffers11[target_index];
 
                 var surface: *w.IDXGISurface = undefined;
-                try vhr(swapbuffer11.QueryInterface(&w.IID_IDXGISurface, @ptrCast(*?*c_void, &surface)));
+                hrPanicOnFail(swapbuffer11.QueryInterface(
+                    &w.IID_IDXGISurface,
+                    @ptrCast(*?*c_void, &surface),
+                ));
                 defer _ = surface.Release();
 
-                try vhr(d2d_device_context.CreateBitmapFromDxgiSurface(
+                hrPanicOnFail(d2d_device_context.CreateBitmapFromDxgiSurface(
                     surface,
                     &w.D2D1_BITMAP_PROPERTIES1{
                         .pixelFormat = .{ .format = .R8G8B8A8_UNORM, .alphaMode = .PREMULTIPLIED },
@@ -370,21 +333,15 @@ pub const GraphicsContext = struct {
                         .bitmapOptions = w.D2D1_BITMAP_OPTIONS_TARGET | w.D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
                         .colorContext = null,
                     },
-                    &maybe_d2d_targets[target_index],
+                    @ptrCast(*?*w.ID2D1Bitmap1, &d2d_targets[target_index]),
                 ));
             }
-
-            var d2d_targets: [num_swapbuffers]*w.ID2D1Bitmap1 = undefined;
-            for (d2d_targets) |_, i| d2d_targets[i] = maybe_d2d_targets[i].?;
             break :blk d2d_targets;
         };
-        errdefer {
-            for (d2d_targets) |target| _ = target.Release();
-        }
 
         const frame_fence = blk: {
             var frame_fence: *w.ID3D12Fence = undefined;
-            try vhr(device.CreateFence(
+            hrPanicOnFail(device.CreateFence(
                 0,
                 w.D3D12_FENCE_FLAG_NONE,
                 &w.IID_ID3D12Fence,
@@ -392,34 +349,29 @@ pub const GraphicsContext = struct {
             ));
             break :blk frame_fence;
         };
-        errdefer _ = frame_fence.Release();
 
-        const frame_fence_event = w.CreateEventEx(null, "frame_fence_event", 0, w.EVENT_ALL_ACCESS) catch unreachable;
+        const frame_fence_event = w.CreateEventEx(
+            null,
+            "frame_fence_event",
+            0,
+            w.EVENT_ALL_ACCESS,
+        ) catch unreachable;
 
         const cmdallocs = blk: {
             var cmdallocs: [max_num_buffered_frames]*w.ID3D12CommandAllocator = undefined;
             for (cmdallocs) |_, cmdalloc_index| {
-                vhr(device.CreateCommandAllocator(
+                hrPanicOnFail(device.CreateCommandAllocator(
                     .DIRECT,
                     &w.IID_ID3D12CommandAllocator,
                     @ptrCast(*?*c_void, &cmdallocs[cmdalloc_index]),
-                )) catch |err| {
-                    var i: u32 = 0;
-                    while (i < cmdalloc_index) : (i += 1) {
-                        _ = cmdallocs[i].Release();
-                    }
-                    return err;
-                };
+                ));
             }
             break :blk cmdallocs;
         };
-        errdefer {
-            for (cmdallocs) |cmdalloc| _ = cmdalloc.Release();
-        }
 
         const cmdlist = blk: {
             var cmdlist: *w.ID3D12GraphicsCommandList6 = undefined;
-            try vhr(device.CreateCommandList(
+            hrPanicOnFail(device.CreateCommandList(
                 0,
                 .DIRECT,
                 cmdallocs[0],
@@ -429,8 +381,7 @@ pub const GraphicsContext = struct {
             ));
             break :blk cmdlist;
         };
-        errdefer _ = cmdlist.Release();
-        try vhr(cmdlist.Close());
+        hrPanicOnFail(cmdlist.Close());
         const is_cmdlist_opened = false;
 
         return GraphicsContext{
@@ -481,7 +432,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn deinit(gr: *GraphicsContext, allocator: *std.mem.Allocator) void {
-        gr.finishGpuCommands() catch unreachable;
+        gr.finishGpuCommands();
         std.heap.page_allocator.free(gr.transition_resource_barriers);
         w.CloseHandle(gr.frame_fence_event);
         assert(gr.pipeline.map.count() == 0);
@@ -511,11 +462,11 @@ pub const GraphicsContext = struct {
         gr.* = undefined;
     }
 
-    pub fn beginFrame(gr: *GraphicsContext) !void {
+    pub fn beginFrame(gr: *GraphicsContext) void {
         assert(!gr.is_cmdlist_opened);
         const cmdalloc = gr.cmdallocs[gr.frame_index];
-        try vhr(cmdalloc.Reset());
-        try vhr(gr.cmdlist.Reset(cmdalloc, null));
+        hrPanicOnFail(cmdalloc.Reset());
+        hrPanicOnFail(gr.cmdlist.Reset(cmdalloc, null));
         gr.is_cmdlist_opened = true;
         gr.cmdlist.SetDescriptorHeaps(
             1,
@@ -538,16 +489,16 @@ pub const GraphicsContext = struct {
         gr.pipeline.current = .{ .index = 0, .generation = 0 };
     }
 
-    pub fn endFrame(gr: *GraphicsContext) !void {
-        try gr.flushGpuCommands();
+    pub fn endFrame(gr: *GraphicsContext) void {
+        gr.flushGpuCommands();
 
         gr.frame_fence_counter += 1;
-        try vhr(gr.swapchain.Present(0, 0));
-        try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+        hrPanicOnFail(gr.swapchain.Present(0, 0));
+        hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
         const gpu_frame_counter = gr.frame_fence.GetCompletedValue();
         if ((gr.frame_fence_counter - gpu_frame_counter) >= max_num_buffered_frames) {
-            try vhr(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
+            hrPanicOnFail(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
             w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
         }
 
@@ -558,8 +509,8 @@ pub const GraphicsContext = struct {
         gr.upload_memory_heaps[gr.frame_index].size = 0;
     }
 
-    pub fn beginDraw2d(gr: *GraphicsContext) !void {
-        try gr.flushGpuCommands();
+    pub fn beginDraw2d(gr: *GraphicsContext) void {
+        gr.flushGpuCommands();
 
         gr.d2d.device11on12.AcquireWrappedResources(
             &[_]*w.ID3D11Resource{gr.d2d.swapbuffers11[gr.back_buffer_index]},
@@ -569,8 +520,8 @@ pub const GraphicsContext = struct {
         gr.d2d.context.BeginDraw();
     }
 
-    pub fn endDraw2d(gr: *GraphicsContext) !void {
-        try vhr(gr.d2d.context.EndDraw(null, null));
+    pub fn endDraw2d(gr: *GraphicsContext) void {
+        hrPanicOnFail(gr.d2d.context.EndDraw(null, null));
 
         gr.d2d.device11on12.ReleaseWrappedResources(
             &[_]*w.ID3D11Resource{gr.d2d.swapbuffers11[gr.back_buffer_index]},
@@ -583,10 +534,10 @@ pub const GraphicsContext = struct {
         gr.resource_pool.editResource(gr.swapchain_buffers[gr.back_buffer_index]).*.state = w.D3D12_RESOURCE_STATE_PRESENT;
     }
 
-    pub fn flushGpuCommands(gr: *GraphicsContext) !void {
+    pub fn flushGpuCommands(gr: *GraphicsContext) void {
         if (gr.is_cmdlist_opened) {
             gr.flushResourceBarriers();
-            try vhr(gr.cmdlist.Close());
+            hrPanicOnFail(gr.cmdlist.Close());
             gr.is_cmdlist_opened = false;
             gr.cmdqueue.ExecuteCommandLists(
                 1,
@@ -595,13 +546,13 @@ pub const GraphicsContext = struct {
         }
     }
 
-    pub fn finishGpuCommands(gr: *GraphicsContext) !void {
-        try gr.flushGpuCommands();
+    pub fn finishGpuCommands(gr: *GraphicsContext) void {
+        gr.flushGpuCommands();
 
         gr.frame_fence_counter += 1;
 
-        try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
-        try vhr(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
+        hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+        hrPanicOnFail(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
         w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
 
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
@@ -642,17 +593,17 @@ pub const GraphicsContext = struct {
         clear_value: ?*const w.D3D12_CLEAR_VALUE,
     ) !ResourceHandle {
         const resource = blk: {
-            var maybe_resource: ?*w.ID3D12Resource = null;
-            try vhr(gr.device.CreateCommittedResource(
+            var resource: *w.ID3D12Resource = undefined;
+            try hrErrorOnFail(gr.device.CreateCommittedResource(
                 &w.D3D12_HEAP_PROPERTIES.initType(heap_type),
                 heap_flags,
                 desc,
                 initial_state,
                 clear_value,
                 &w.IID_ID3D12Resource,
-                @ptrCast(*?*c_void, &maybe_resource),
+                @ptrCast(*?*c_void, &resource),
             ));
-            break :blk maybe_resource.?;
+            break :blk resource;
         };
         return gr.resource_pool.addResource(resource, initial_state);
     }
@@ -671,11 +622,6 @@ pub const GraphicsContext = struct {
             return refcount;
         }
         return 0;
-    }
-
-    pub fn releaseResourceSafe(gr: *GraphicsContext, handle: ResourceHandle) u32 {
-        gr.finishGpuCommands() catch unreachable;
-        return releaseResource(gr, handle);
     }
 
     pub fn flushResourceBarriers(gr: *GraphicsContext) void {
@@ -737,13 +683,13 @@ pub const GraphicsContext = struct {
         pso_desc: *w.D3D12_GRAPHICS_PIPELINE_STATE_DESC,
         vs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
-    ) !PipelineHandle {
+    ) PipelineHandle {
         const vs_code = blk: {
             if (vs_cso_path) |path| {
                 assert(pso_desc.VS.pShaderBytecode == null);
-                const vs_file = try std.fs.cwd().openFile(path, .{});
+                const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
                 defer vs_file.close();
-                const vs_code = try vs_file.reader().readAllAlloc(allocator, 256 * 1024);
+                const vs_code = vs_file.reader().readAllAlloc(allocator, 256 * 1024) catch unreachable;
                 pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
                 break :blk vs_code;
             } else {
@@ -754,9 +700,9 @@ pub const GraphicsContext = struct {
         const ps_code = blk: {
             if (ps_cso_path) |path| {
                 assert(pso_desc.PS.pShaderBytecode == null);
-                const ps_file = try std.fs.cwd().openFile(path, .{});
+                const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
                 defer ps_file.close();
-                const ps_code = try ps_file.reader().readAllAlloc(allocator, 256 * 1024);
+                const ps_code = ps_file.reader().readAllAlloc(allocator, 256 * 1024) catch unreachable;
                 pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
                 break :blk ps_code;
             } else {
@@ -813,30 +759,28 @@ pub const GraphicsContext = struct {
         }
 
         const rs = blk: {
-            var maybe_rs: ?*w.ID3D12RootSignature = null;
-            try vhr(gr.device.CreateRootSignature(
+            var rs: *w.ID3D12RootSignature = undefined;
+            hrPanicOnFail(gr.device.CreateRootSignature(
                 0,
                 pso_desc.VS.pShaderBytecode.?,
                 pso_desc.VS.BytecodeLength,
                 &w.IID_ID3D12RootSignature,
-                @ptrCast(*?*c_void, &maybe_rs),
+                @ptrCast(*?*c_void, &rs),
             ));
-            break :blk maybe_rs.?;
+            break :blk rs;
         };
-        errdefer _ = rs.Release();
 
         pso_desc.pRootSignature = rs;
 
         const pso = blk: {
-            var maybe_pso: ?*w.ID3D12PipelineState = null;
-            try vhr(gr.device.CreateGraphicsPipelineState(
+            var pso: *w.ID3D12PipelineState = undefined;
+            hrPanicOnFail(gr.device.CreateGraphicsPipelineState(
                 pso_desc,
                 &w.IID_ID3D12PipelineState,
-                @ptrCast(*?*c_void, &maybe_pso),
+                @ptrCast(*?*c_void, &pso),
             ));
-            break :blk maybe_pso.?;
+            break :blk pso;
         };
-        errdefer _ = pso.Release();
 
         const handle = gr.pipeline.pool.addPipeline(pso, rs, .Graphics);
         gr.pipeline.map.put(allocator, hash, handle) catch unreachable;
@@ -897,11 +841,6 @@ pub const GraphicsContext = struct {
         return refcount;
     }
 
-    pub fn releasePipelineSafe(gr: *GraphicsContext, handle: PipelineHandle) u32 {
-        gr.finishGpuCommands() catch unreachable;
-        return gr.releasePipeline(handle);
-    }
-
     pub fn allocateUploadMemory(
         gr: *GraphicsContext,
         size: u32,
@@ -911,8 +850,8 @@ pub const GraphicsContext = struct {
         if (memory.cpu_slice == null or memory.gpu_base == null) {
             std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
 
-            gr.finishGpuCommands() catch unreachable;
-            gr.beginFrame() catch unreachable;
+            gr.finishGpuCommands();
+            gr.beginFrame();
 
             memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
         }
@@ -1024,7 +963,7 @@ pub const GraphicsContext = struct {
 
         const bmp_decoder = blk: {
             var maybe_bmp_decoder: ?*w.IWICBitmapDecoder = undefined;
-            try vhr(gr.wic_factory.CreateDecoderFromFilename(
+            hrPanicOnFail(gr.wic_factory.CreateDecoderFromFilename(
                 @ptrCast(w.LPCWSTR, path.ptr),
                 null,
                 w.GENERIC_READ,
@@ -1048,7 +987,7 @@ pub const GuiContext = struct {
     vb_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
     ib_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
-    pub fn init(allocator: *std.mem.Allocator, gr: *GraphicsContext) !GuiContext {
+    pub fn init(allocator: *std.mem.Allocator, gr: *GraphicsContext) GuiContext {
         assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
@@ -1089,14 +1028,13 @@ pub const GuiContext = struct {
             };
         };
 
-        const font = try gr.createCommittedResource(
+        const font = gr.createCommittedResource(
             .DEFAULT,
             w.D3D12_HEAP_FLAG_NONE,
             &w.D3D12_RESOURCE_DESC.initTex2d(font_info.width, font_info.height, .R8G8B8A8_UNORM, 1),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
-        );
-        errdefer _ = gr.releaseResource(font);
+        ) catch unreachable;
 
         gr.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
         gr.addTransitionBarrier(font, w.D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -1124,14 +1062,13 @@ pub const GuiContext = struct {
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
             };
-            break :blk try gr.createGraphicsShaderPipeline(
+            break :blk gr.createGraphicsShaderPipeline(
                 allocator,
                 &pso_desc,
                 "content/shaders/imgui.vs.cso",
                 "content/shaders/imgui.ps.cso",
             );
         };
-        errdefer _ = gr.releasePipeline(pipeline);
 
         return GuiContext{
             .font = font,
@@ -1145,7 +1082,7 @@ pub const GuiContext = struct {
     }
 
     pub fn deinit(gui: *GuiContext, gr: *GraphicsContext) void {
-        gr.finishGpuCommands() catch unreachable;
+        gr.finishGpuCommands();
         _ = gr.releasePipeline(gui.pipeline);
         _ = gr.releaseResource(gui.font);
         for (gui.vb) |vb| _ = gr.releaseResource(vb);
@@ -1163,7 +1100,7 @@ pub const GuiContext = struct {
         c.igNewFrame();
     }
 
-    pub fn draw(gui: *GuiContext, gr: *GraphicsContext) !void {
+    pub fn draw(gui: *GuiContext, gr: *GraphicsContext) void {
         assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
@@ -1181,34 +1118,42 @@ pub const GuiContext = struct {
         if (gr.getResourceSize(vb) < num_vertices * @sizeOf(c.ImDrawVert)) {
             _ = gr.releaseResource(vb);
             const new_size = 2 * num_vertices * @sizeOf(c.ImDrawVert);
-            vb = try gr.createCommittedResource(
+            vb = gr.createCommittedResource(
                 .UPLOAD,
                 w.D3D12_HEAP_FLAG_NONE,
                 &w.D3D12_RESOURCE_DESC.initBuffer(new_size),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,
-            );
+            ) catch unreachable;
             gui.vb[gr.frame_index] = vb;
             gui.vb_cpu_addr[gr.frame_index] = blk: {
                 var ptr: ?[*]align(8) u8 = null;
-                try vhr(gr.getResource(vb).Map(0, &.{ .Begin = 0, .End = 0 }, @ptrCast(*?*c_void, &ptr)));
+                hrPanicOnFail(gr.getResource(vb).Map(
+                    0,
+                    &.{ .Begin = 0, .End = 0 },
+                    @ptrCast(*?*c_void, &ptr),
+                ));
                 break :blk ptr.?[0..new_size];
             };
         }
         if (gr.getResourceSize(ib) < num_indices * @sizeOf(c.ImDrawIdx)) {
             _ = gr.releaseResource(ib);
             const new_size = 2 * num_indices * @sizeOf(c.ImDrawIdx);
-            ib = try gr.createCommittedResource(
+            ib = gr.createCommittedResource(
                 .UPLOAD,
                 w.D3D12_HEAP_FLAG_NONE,
                 &w.D3D12_RESOURCE_DESC.initBuffer(new_size),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,
-            );
+            ) catch unreachable;
             gui.ib[gr.frame_index] = ib;
             gui.ib_cpu_addr[gr.frame_index] = blk: {
                 var ptr: ?[*]align(8) u8 = null;
-                try vhr(gr.getResource(ib).Map(0, &.{ .Begin = 0, .End = 0 }, @ptrCast(*?*c_void, &ptr)));
+                hrPanicOnFail(gr.getResource(ib).Map(
+                    0,
+                    &.{ .Begin = 0, .End = 0 },
+                    @ptrCast(*?*c_void, &ptr),
+                ));
                 break :blk ptr.?[0..new_size];
             };
         }
@@ -1522,17 +1467,17 @@ const DescriptorHeap = struct {
         capacity: u32,
         heap_type: w.D3D12_DESCRIPTOR_HEAP_TYPE,
         flags: w.D3D12_DESCRIPTOR_HEAP_FLAGS,
-    ) !DescriptorHeap {
+    ) DescriptorHeap {
         assert(capacity > 0);
         const heap = blk: {
-            var maybe_heap: ?*w.ID3D12DescriptorHeap = null;
-            try vhr(device.CreateDescriptorHeap(&.{
+            var heap: *w.ID3D12DescriptorHeap = undefined;
+            hrPanicOnFail(device.CreateDescriptorHeap(&.{
                 .Type = heap_type,
                 .NumDescriptors = capacity,
                 .Flags = flags,
                 .NodeMask = 0,
-            }, &w.IID_ID3D12DescriptorHeap, @ptrCast(*?*c_void, &maybe_heap)));
-            break :blk maybe_heap.?;
+            }, &w.IID_ID3D12DescriptorHeap, @ptrCast(*?*c_void, &heap)));
+            break :blk heap;
         };
         return DescriptorHeap{
             .heap = heap,
@@ -1585,31 +1530,29 @@ const GpuMemoryHeap = struct {
     size: u32,
     capacity: u32,
 
-    fn init(device: *w.ID3D12Device9, capacity: u32, heap_type: w.D3D12_HEAP_TYPE) !GpuMemoryHeap {
+    fn init(device: *w.ID3D12Device9, capacity: u32, heap_type: w.D3D12_HEAP_TYPE) GpuMemoryHeap {
         assert(capacity > 0);
         const resource = blk: {
-            var maybe_resource: ?*w.ID3D12Resource = null;
-            try vhr(device.CreateCommittedResource(
+            var resource: *w.ID3D12Resource = undefined;
+            hrPanicOnFail(device.CreateCommittedResource(
                 &w.D3D12_HEAP_PROPERTIES.initType(heap_type),
                 w.D3D12_HEAP_FLAG_NONE,
                 &w.D3D12_RESOURCE_DESC.initBuffer(capacity),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,
                 &w.IID_ID3D12Resource,
-                @ptrCast(*?*c_void, &maybe_resource),
+                @ptrCast(*?*c_void, &resource),
             ));
-            break :blk maybe_resource.?;
+            break :blk resource;
         };
-        errdefer _ = resource.Release();
-
         const cpu_base = blk: {
-            var maybe_cpu_base: ?[*]u8 = null;
-            try vhr(resource.Map(
+            var cpu_base: [*]u8 = undefined;
+            hrPanicOnFail(resource.Map(
                 0,
                 &w.D3D12_RANGE{ .Begin = 0, .End = 0 },
-                @ptrCast(*?*c_void, &maybe_cpu_base),
+                @ptrCast(*?*c_void, &cpu_base),
             ));
-            break :blk maybe_cpu_base.?;
+            break :blk cpu_base;
         };
         return GpuMemoryHeap{
             .heap = resource,
