@@ -666,41 +666,12 @@ pub const D2D1_BITMAP_INTERPOLATION_MODE = enum(UINT) {
     LINEAR = 1,
 };
 
-pub const D2D1_DRAW_TEXT_OPTIONS = packed struct {
-    NO_SNAP: bool align(4) = false, // 0x1
-    CLIP: bool = false, // 0x2
-    ENABLE_COLOR_FONT: bool = false, // 0x4
-    DISABLE_COLOR_BITMAP_SNAPPING: bool = false, // 0x8
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D2D1_DRAW_TEXT_OPTIONS = UINT;
+pub const D2D1_DRAW_TEXT_OPTIONS_NONE = 0;
+pub const D2D1_DRAW_TEXT_OPTIONS_NO_SNAP = 0x1;
+pub const D2D1_DRAW_TEXT_OPTIONS_CLIP = 0x2;
+pub const D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT = 0x4;
+pub const D2D1_DRAW_TEXT_OPTIONS_DISABLE_COLOR_BITMAP_SNAPPING = 0x8;
 
 pub const D2D1_TAG = UINT64;
 
@@ -794,7 +765,16 @@ pub const ID2D1RenderTarget = extern struct {
                 assert(text.len < utf16.len);
                 const len = std.unicode.utf8ToUtf16Le(utf16[0..], text) catch unreachable;
                 utf16[len] = 0;
-                DrawText(self, &utf16, @intCast(u32, len), format, layout_rect, brush, .{}, .NATURAL);
+                DrawText(
+                    self,
+                    &utf16,
+                    @intCast(u32, len),
+                    format,
+                    layout_rect,
+                    brush,
+                    D2D1_DRAW_TEXT_OPTIONS_NONE,
+                    .NATURAL,
+                );
             }
         };
     }

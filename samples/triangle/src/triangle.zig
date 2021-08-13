@@ -197,12 +197,12 @@ pub const GraphicsContext = struct {
                         .Scaling = .UNSPECIFIED,
                     },
                     .SampleDesc = .{ .Count = 1, .Quality = 0 },
-                    .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
+                    .BufferUsage = w.DXGI_USAGE_RENDER_TARGET_OUTPUT,
                     .BufferCount = num_swapbuffers,
                     .OutputWindow = window,
                     .Windowed = w.TRUE,
                     .SwapEffect = .FLIP_DISCARD,
-                    .Flags = .{},
+                    .Flags = 0,
                 },
                 &maybe_swapchain,
             ));
@@ -360,7 +360,7 @@ pub const GraphicsContext = struct {
         );
 
         gr.frame_fence_counter += 1;
-        try vhr(gr.swapchain.Present(0, .{}));
+        try vhr(gr.swapchain.Present(0, 0));
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
         const gpu_frame_counter = gr.frame_fence.GetCompletedValue();

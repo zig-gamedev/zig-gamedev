@@ -2,41 +2,9 @@ const std = @import("std");
 usingnamespace std.os.windows;
 usingnamespace @import("misc.zig");
 
-pub const D3D12_GPU_BASED_VALIDATION_FLAGS = packed struct {
-    DISABLE_STATE_TRACKING: bool align(4) = false, // 0x1
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D3D12_GPU_BASED_VALIDATION_FLAGS = UINT;
+pub const D3D12_GPU_BASED_VALIDATION_FLAG_NONE = 0;
+pub const D3D12_GPU_BASED_VALIDATION_FLAG_DISABLE_STATE_TRACKING = 0x1;
 
 pub const ID3D12Debug = extern struct {
     const Self = @This();

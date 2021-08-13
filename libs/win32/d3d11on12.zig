@@ -5,7 +5,6 @@ usingnamespace @import("misc.zig");
 usingnamespace @import("d3dcommon.zig");
 usingnamespace @import("d3d11.zig");
 
-pub const D3D11_BIND_RENDER_TARGET = 0x20;
 pub const D3D11_RESOURCE_FLAGS = extern struct {
     BindFlags: UINT,
     MiscFlags: UINT,

@@ -79,7 +79,7 @@ pub const IDXGISwapChain1 = extern struct {
             pub inline fn Present1(
                 self: *T,
                 sync_interval: UINT,
-                flags: DXGI_PRESENT,
+                flags: UINT,
                 params: *const DXGI_PRESENT_PARAMETERS,
             ) HRESULT {
                 return self.v.swapchain1.Present1(self, sync_interval, flags, params);
@@ -111,7 +111,7 @@ pub const IDXGISwapChain1 = extern struct {
             GetFullscreenDesc: fn (*T, *DXGI_SWAP_CHAIN_FULLSCREEN_DESC) callconv(WINAPI) HRESULT,
             GetHwnd: fn (*T, *HWND) callconv(WINAPI) HRESULT,
             GetCoreWindow: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
-            Present1: fn (*T, UINT, DXGI_PRESENT, *const DXGI_PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
+            Present1: fn (*T, UINT, UINT, *const DXGI_PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
             IsTemporaryMonoSupported: fn (*T) callconv(WINAPI) BOOL,
             GetRestrictToOutput: fn (*T, *?*IDXGIOutput) callconv(WINAPI) HRESULT,
             SetBackgroundColor: fn (*T, *const DXGI_RGBA) callconv(WINAPI) HRESULT,

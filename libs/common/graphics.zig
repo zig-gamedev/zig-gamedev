@@ -7,8 +7,8 @@ const assert = std.debug.assert;
 
 pub inline fn vhr(hr: w.HRESULT) !void {
     if (hr != 0) {
-        return error.HResult;
-        //std.debug.panic("HRESULT function failed ({}).", .{hr});
+        //return error.HResult;
+        std.debug.panic("HRESULT function failed ({}).", .{hr});
     }
 }
 
@@ -143,12 +143,12 @@ pub const GraphicsContext = struct {
                         .Scaling = .UNSPECIFIED,
                     },
                     .SampleDesc = .{ .Count = 1, .Quality = 0 },
-                    .BufferUsage = .{ .RENDER_TARGET_OUTPUT = true },
+                    .BufferUsage = w.DXGI_USAGE_RENDER_TARGET_OUTPUT,
                     .BufferCount = num_swapbuffers,
                     .OutputWindow = window,
                     .Windowed = w.TRUE,
                     .SwapEffect = .FLIP_DISCARD,
-                    .Flags = .{},
+                    .Flags = 0,
                 },
                 &maybe_swapchain,
             ));
@@ -167,7 +167,10 @@ pub const GraphicsContext = struct {
             var maybe_device_context11: ?*w.ID3D11DeviceContext = null;
             try vhr(w.D3D11On12CreateDevice(
                 @ptrCast(*w.IUnknown, device),
-                if (comptime builtin.mode == .Debug) .{ .DEBUG = true, .BGRA_SUPPORT = true } else .{ .BGRA_SUPPORT = true },
+                if (comptime builtin.mode == .Debug)
+                    w.D3D11_CREATE_DEVICE_DEBUG | w.D3D11_CREATE_DEVICE_BGRA_SUPPORT
+                else
+                    w.D3D11_CREATE_DEVICE_BGRA_SUPPORT,
                 null,
                 0,
                 &[_]*w.IUnknown{@ptrCast(*w.IUnknown, cmdqueue)},
@@ -225,7 +228,7 @@ pub const GraphicsContext = struct {
 
         const d2d_device_context = blk: {
             var maybe_d2d_device_context: ?*w.ID2D1DeviceContext6 = null;
-            try vhr(d2d_device.CreateDeviceContext6(.{}, &maybe_d2d_device_context));
+            try vhr(d2d_device.CreateDeviceContext6(w.D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &maybe_d2d_device_context));
             break :blk maybe_d2d_device_context.?;
         };
         errdefer _ = d2d_device_context.Release();
@@ -320,7 +323,7 @@ pub const GraphicsContext = struct {
                 vhr(device11on12.CreateWrappedResource(
                     @ptrCast(*w.IUnknown, resource_pool.getResource(swapchain_buffers[buffer_index]).raw.?),
                     &w.D3D11_RESOURCE_FLAGS{
-                        .BindFlags = (w.D3D11_BIND_FLAG{ .RENDER_TARGET = true }).toInt(),
+                        .BindFlags = w.D3D11_BIND_RENDER_TARGET,
                         .MiscFlags = 0,
                         .CPUAccessFlags = 0,
                         .StructureByteStride = 0,
@@ -364,7 +367,7 @@ pub const GraphicsContext = struct {
                         .pixelFormat = .{ .format = .R8G8B8A8_UNORM, .alphaMode = .PREMULTIPLIED },
                         .dpiX = 96.0,
                         .dpiY = 96.0,
-                        .bitmapOptions = .{ .TARGET = true, .CANNOT_DRAW = true },
+                        .bitmapOptions = w.D2D1_BITMAP_OPTIONS_TARGET | w.D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
                         .colorContext = null,
                     },
                     &maybe_d2d_targets[target_index],
@@ -539,7 +542,7 @@ pub const GraphicsContext = struct {
         try gr.flushGpuCommands();
 
         gr.frame_fence_counter += 1;
-        try vhr(gr.swapchain.Present(0, .{}));
+        try vhr(gr.swapchain.Present(0, 0));
         try vhr(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
         const gpu_frame_counter = gr.frame_fence.GetCompletedValue();

@@ -5,40 +5,14 @@ usingnamespace @import("dxgicommon.zig");
 usingnamespace @import("dxgitype.zig");
 usingnamespace @import("dxgiformat.zig");
 
-pub const DXGI_USAGE = packed struct {
-    __reserved0: bool align(4) = false,
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    SHADER_INPUT: bool = false, // 0x10
-    RENDER_TARGET_OUTPUT: bool = false, // 0x20
-    BACK_BUFFER: bool = false, // 0x40
-    SHARED: bool = false, // 0x80
-    READ_ONLY: bool = false, // 0x100
-    DISCARD_ON_PRESENT: bool = false, // 0x200
-    UNORDERED_ACCESS: bool = false, // 0x400
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const DXGI_USAGE = UINT;
+pub const DXGI_USAGE_SHADER_INPUT = 0x00000010;
+pub const DXGI_USAGE_RENDER_TARGET_OUTPUT = 0x00000020;
+pub const DXGI_USAGE_BACK_BUFFER = 0x00000040;
+pub const DXGI_USAGE_SHARED = 0x00000080;
+pub const DXGI_USAGE_READ_ONLY = 0x00000100;
+pub const DXGI_USAGE_DISCARD_ON_PRESENT = 0x00000200;
+pub const DXGI_USAGE_UNORDERED_ACCESS = 0x00000400;
 
 pub const DXGI_FRAME_STATISTICS = extern struct {
     PresentCount: UINT,
@@ -105,41 +79,20 @@ pub const DXGI_SWAP_EFFECT = enum(UINT) {
     FLIP_DISCARD = 4,
 };
 
-pub const DXGI_SWAP_CHAIN_FLAG = packed struct {
-    NONPREROTATED: bool align(4) = false, // 0x1
-    ALLOW_MODE_SWITCH: bool = false, // 0x2
-    GDI_COMPATIBLE: bool = false, // 0x4
-    RESTRICTED_CONTENT: bool = false, // 0x8
-    RESTRICT_SHARED_RESOURCE_DRIVER: bool = false, // 0x10
-    DISPLAY_ONLY: bool = false, // 0x20
-    FRAME_LATENCY_WAITABLE_OBJECT: bool = false, // 0x40
-    FOREGROUND_LAYER: bool = false, // 0x80
-    FULLSCREEN_VIDEO: bool = false, // 0x100
-    YUV_VIDEO: bool = false, // 0x200
-    HW_PROTECTED: bool = false, // 0x400
-    ALLOW_TEARING: bool = false, // 0x800
-    RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS: bool = false, // 0x1000
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const DXGI_SWAP_CHAIN_FLAG = UINT;
+pub const DXGI_SWAP_CHAIN_FLAG_NONPREROTATED = 1;
+pub const DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH = 2;
+pub const DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE = 4;
+pub const DXGI_SWAP_CHAIN_FLAG_RESTRICTED_CONTENT = 8;
+pub const DXGI_SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER = 16;
+pub const DXGI_SWAP_CHAIN_FLAG_DISPLAY_ONLY = 32;
+pub const DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT = 64;
+pub const DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER = 128;
+pub const DXGI_SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO = 256;
+pub const DXGI_SWAP_CHAIN_FLAG_YUV_VIDEO = 512;
+pub const DXGI_SWAP_CHAIN_FLAG_HW_PROTECTED = 1024;
+pub const DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING = 2048;
+pub const DXGI_SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS = 4096;
 
 pub const DXGI_SWAP_CHAIN_DESC = extern struct {
     BufferDesc: DXGI_MODE_DESC,
@@ -286,41 +239,9 @@ pub const IDXGIKeyedMutex = extern struct {
     }
 };
 
-pub const DXGI_MAP = packed struct {
-    READ: bool align(4) = false, // 0x1
-    WRITE: bool = false, // 0x2
-    DISCARD: bool = false, // 0x4
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const DXGI_MAP_READ = 0x1;
+pub const DXGI_MAP_WRITE = 0x2;
+pub const DXGI_MAP_DISCARD = 0x4;
 
 pub const IDXGISurface = extern struct {
     const Self = @This();
@@ -340,7 +261,7 @@ pub const IDXGISurface = extern struct {
             pub inline fn GetDesc(self: *T, desc: *DXGI_SURFACE_DESC) HRESULT {
                 return self.v.surface.GetDesc(self, desc);
             }
-            pub inline fn Map(self: *T, locked_rect: *DXGI_MAPPED_RECT, flags: DXGI_MAP) HRESULT {
+            pub inline fn Map(self: *T, locked_rect: *DXGI_MAPPED_RECT, flags: UINT) HRESULT {
                 return self.v.surface.Map(self, locked_rect, flags);
             }
             pub inline fn Unmap(self: *T) HRESULT {
@@ -352,7 +273,7 @@ pub const IDXGISurface = extern struct {
     pub fn VTable(comptime T: type) type {
         return extern struct {
             GetDesc: fn (*T, *DXGI_SURFACE_DESC) callconv(WINAPI) HRESULT,
-            Map: fn (*T, *DXGI_MAPPED_RECT, DXGI_MAP) callconv(WINAPI) HRESULT,
+            Map: fn (*T, *DXGI_MAPPED_RECT, UINT) callconv(WINAPI) HRESULT,
             Unmap: fn (*T) callconv(WINAPI) HRESULT,
         };
     }
@@ -392,41 +313,10 @@ pub const IDXGIAdapter = extern struct {
     }
 };
 
-pub const DXGI_ENUM_MODES = packed struct {
-    INTERLACED: bool align(4) = false, // 0x1
-    SCALING: bool = false, // 0x2
-    STEREO: bool = false, // 0x4
-    DISABLED_STEREO: bool = false, // 0x8
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const DXGI_ENUM_MODES_INTERLACED = 0x1;
+pub const DXGI_ENUM_MODES_SCALING = 0x2;
+pub const DXGI_ENUM_MODES_STEREO = 0x4;
+pub const DXGI_ENUM_MODES_DISABLED_STEREO = 0x8;
 
 pub const IDXGIOutput = extern struct {
     const Self = @This();
@@ -447,7 +337,7 @@ pub const IDXGIOutput = extern struct {
             pub inline fn GetDisplayModeList(
                 self: *T,
                 enum_format: DXGI_FORMAT,
-                flags: DXGI_ENUM_MODES,
+                flags: UINT,
                 num_nodes: *UINT,
                 desc: ?*DXGI_MODE_DESC,
             ) HRESULT {
@@ -494,7 +384,7 @@ pub const IDXGIOutput = extern struct {
     pub fn VTable(comptime T: type) type {
         return extern struct {
             GetDesc: fn (self: *T, desc: *DXGI_OUTPUT_DESC) callconv(WINAPI) HRESULT,
-            GetDisplayModeList: fn (*T, DXGI_FORMAT, DXGI_ENUM_MODES, *UINT, ?*DXGI_MODE_DESC) callconv(WINAPI) HRESULT,
+            GetDisplayModeList: fn (*T, DXGI_FORMAT, UINT, *UINT, ?*DXGI_MODE_DESC) callconv(WINAPI) HRESULT,
             FindClosestMatchingMode: fn (*T, *const DXGI_MODE_DESC, *DXGI_MODE_DESC, ?*IUnknown) callconv(WINAPI) HRESULT,
             WaitForVBlank: fn (*T) callconv(WINAPI) HRESULT,
             TakeOwnership: fn (*T, *IUnknown, BOOL) callconv(WINAPI) HRESULT,
@@ -511,41 +401,15 @@ pub const IDXGIOutput = extern struct {
 
 pub const DXGI_MAX_SWAP_CHAIN_BUFFERS = 16;
 
-pub const DXGI_PRESENT = packed struct {
-    TEST: bool align(4) = false, // 0x1
-    DO_NOT_SEQUENCE: bool = false, // 0x2
-    RESTART: bool = false, // 0x4
-    DO_NOT_WAIT: bool = false, // 0x8
-    STEREO_PREFER_RIGHT: bool = false, // 0x10
-    STEREO_TEMPORARY_MONO: bool = false, // 0x20
-    RESTRICT_TO_OUTPUT: bool = false, // 0x40
-    __reserved7: bool = false, // 0x80
-    USE_DURATION: bool = false, // 0x100
-    ALLOW_TEARING: bool = false, // 0x200
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const DXGI_PRESENT_TEST = 0x00000001;
+pub const DXGI_PRESENT_DO_NOT_SEQUENCE = 0x00000002;
+pub const DXGI_PRESENT_RESTART = 0x00000004;
+pub const DXGI_PRESENT_DO_NOT_WAIT = 0x00000008;
+pub const DXGI_PRESENT_STEREO_PREFER_RIGHT = 0x00000010;
+pub const DXGI_PRESENT_STEREO_TEMPORARY_MONO = 0x00000020;
+pub const DXGI_PRESENT_RESTRICT_TO_OUTPUT = 0x00000040;
+pub const DXGI_PRESENT_USE_DURATION = 0x00000100;
+pub const DXGI_PRESENT_ALLOW_TEARING = 0x00000200;
 
 pub const IDXGISwapChain = extern struct {
     const Self = @This();
@@ -562,7 +426,7 @@ pub const IDXGISwapChain = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn Present(self: *T, sync_interval: UINT, flags: DXGI_PRESENT) HRESULT {
+            pub inline fn Present(self: *T, sync_interval: UINT, flags: UINT) HRESULT {
                 return self.v.swapchain.Present(self, sync_interval, flags);
             }
             pub inline fn GetBuffer(self: *T, index: u32, guid: *const GUID, surface: *?*c_void) HRESULT {
@@ -604,7 +468,7 @@ pub const IDXGISwapChain = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            Present: fn (*T, UINT, DXGI_PRESENT) callconv(WINAPI) HRESULT,
+            Present: fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
             GetBuffer: fn (*T, u32, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
             SetFullscreenState: fn (*T, ?*IDXGIOutput) callconv(WINAPI) HRESULT,
             GetFullscreenState: fn (*T, ?*BOOL, ?*?*IDXGIOutput) callconv(WINAPI) HRESULT,

@@ -63,77 +63,16 @@ pub const ID2D1ColorContext = extern struct {
     }
 };
 
-pub const D2D1_DEVICE_CONTEXT_OPTIONS = packed struct {
-    ENABLE_MULTITHREADED_OPTIMIZATIONS: bool align(4) = false, // 0x1
-    __reserved1: bool = false,
-    __reserved2: bool = false,
-    __reserved3: bool = false,
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D2D1_DEVICE_CONTEXT_OPTIONS = UINT;
+pub const D2D1_DEVICE_CONTEXT_OPTIONS_NONE = 0;
+pub const D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS = 0x1;
 
-pub const D2D1_BITMAP_OPTIONS = packed struct {
-    TARGET: bool align(4) = false, // 0x1
-    CANNOT_DRAW: bool = false, // 0x2
-    CPU_READ: bool = false, // 0x4
-    GDI_COMPATIBLE: bool = false, // 0x8
-    __reserved4: bool = false,
-    __reserved5: bool = false,
-    __reserved6: bool = false,
-    __reserved7: bool = false,
-    __reserved8: bool = false,
-    __reserved9: bool = false,
-    __reserved10: bool = false,
-    __reserved11: bool = false,
-    __reserved12: bool = false,
-    __reserved13: bool = false,
-    __reserved14: bool = false,
-    __reserved15: bool = false,
-    __reserved16: bool = false,
-    __reserved17: bool = false,
-    __reserved18: bool = false,
-    __reserved19: bool = false,
-    __reserved20: bool = false,
-    __reserved21: bool = false,
-    __reserved22: bool = false,
-    __reserved23: bool = false,
-    __reserved24: bool = false,
-    __reserved25: bool = false,
-    __reserved26: bool = false,
-    __reserved27: bool = false,
-    __reserved28: bool = false,
-    __reserved29: bool = false,
-    __reserved30: bool = false,
-    __reserved31: bool = false,
-    pub usingnamespace FlagsMixin(@This());
-};
+pub const D2D1_BITMAP_OPTIONS = UINT;
+pub const D2D1_BITMAP_OPTIONS_NONE = 0;
+pub const D2D1_BITMAP_OPTIONS_TARGET = 0x1;
+pub const D2D1_BITMAP_OPTIONS_CANNOT_DRAW = 0x2;
+pub const D2D1_BITMAP_OPTIONS_CPU_READ = 0x4;
+pub const D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE = 0x8;
 
 pub const D2D1_BITMAP_PROPERTIES1 = extern struct {
     pixelFormat: D2D1_PIXEL_FORMAT,
