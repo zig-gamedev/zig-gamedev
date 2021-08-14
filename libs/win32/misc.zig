@@ -83,33 +83,10 @@ pub const VK_CONTROL = 0x11;
 pub const VK_SHIFT = 0x10;
 pub const VK_MENU = 0x12;
 
-pub fn FlagsMixin(comptime FlagType: type) type {
-    comptime assert(@sizeOf(FlagType) == 4);
-    comptime assert(@alignOf(FlagType) == 4);
-    return struct {
-        pub fn toInt(self: FlagType) UINT {
-            return @bitCast(UINT, self);
-        }
-        pub fn fromInt(value: UINT) FlagType {
-            return @bitCast(FlagType, value);
-        }
-        pub fn with(a: FlagType, b: FlagType) FlagType {
-            return fromInt(toInt(a) | toInt(b));
-        }
-        pub fn only(a: FlagType, b: FlagType) FlagType {
-            return fromInt(toInt(a) & toInt(b));
-        }
-        pub fn without(a: FlagType, b: FlagType) FlagType {
-            return fromInt(toInt(a) & ~toInt(b));
-        }
-        pub fn hasAllSet(a: FlagType, b: FlagType) bool {
-            return (toInt(a) & toInt(b)) == toInt(b);
-        }
-        pub fn hasAnySet(a: FlagType, b: FlagType) bool {
-            return (toInt(a) & toInt(b)) != 0;
-        }
-        pub fn isEmpty(a: FlagType) bool {
-            return toInt(a) == 0;
-        }
-    };
-}
+pub const D3D12_ERROR_ADAPTER_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887E0001));
+pub const D3D12_ERROR_DRIVER_VERSION_MISMATCH = @bitCast(HRESULT, @as(c_ulong, 0x887E0002));
+pub const DXGI_ERROR_INVALID_CALL = @bitCast(HRESULT, @as(c_ulong, 0x887A0001));
+pub const DXGI_ERROR_WAS_STILL_DRAWING = @bitCast(HRESULT, @as(c_ulong, 0x887A000A));
+pub const DWRITE_E_FILEFORMAT = @bitCast(HRESULT, @as(c_ulong, 0x88985000));
+
+pub const DXGI_STATUS_MODE_CHANGED = @bitCast(HRESULT, @as(c_ulong, 0x087A0007));

@@ -10,6 +10,12 @@ pub const HResultError = error{
     E_FAIL,
     E_OUTOFMEMORY,
     E_INVALIDARG,
+    E_NOTIMPL,
+    D3D12_ERROR_ADAPTER_NOT_FOUND,
+    D3D12_ERROR_DRIVER_VERSION_MISMATCH,
+    DXGI_ERROR_INVALID_CALL,
+    DXGI_ERROR_WAS_STILL_DRAWING,
+    DXGI_STATUS_MODE_CHANGED,
     DWRITE_E_FILEFORMAT,
 };
 
@@ -34,10 +40,16 @@ pub inline fn hrErrorOnFail(hr: w.HRESULT) HResultError!void {
 
 fn hrErrorToCode(err: HResultError) w.HRESULT {
     return switch (err) {
+        HResultError.D3D12_ERROR_ADAPTER_NOT_FOUND => w.D3D12_ERROR_ADAPTER_NOT_FOUND,
+        HResultError.D3D12_ERROR_DRIVER_VERSION_MISMATCH => w.D3D12_ERROR_DRIVER_VERSION_MISMATCH,
+        HResultError.DXGI_ERROR_INVALID_CALL => w.DXGI_ERROR_INVALID_CALL,
+        HResultError.DXGI_ERROR_WAS_STILL_DRAWING => w.DXGI_ERROR_WAS_STILL_DRAWING,
+        HResultError.DXGI_STATUS_MODE_CHANGED => w.DXGI_STATUS_MODE_CHANGED,
+        HResultError.DWRITE_E_FILEFORMAT => w.DWRITE_E_FILEFORMAT,
         HResultError.E_FAIL => w.E_FAIL,
         HResultError.E_OUTOFMEMORY => w.E_OUTOFMEMORY,
         HResultError.E_INVALIDARG => w.E_INVALIDARG,
-        HResultError.DWRITE_E_FILEFORMAT => @bitCast(w.HRESULT, @as(c_ulong, 0x88985000)),
+        HResultError.E_NOTIMPL => w.E_NOTIMPL,
     };
 }
 
@@ -45,9 +57,15 @@ fn hrCodeToError(hr: w.HRESULT) HResultError {
     assert(hr != w.S_OK);
     const code = @bitCast(c_ulong, hr);
     return switch (code) {
-        0x88985000 => HResultError.DWRITE_E_FILEFORMAT,
+        @bitCast(c_ulong, w.D3D12_ERROR_ADAPTER_NOT_FOUND) => HResultError.D3D12_ERROR_ADAPTER_NOT_FOUND,
+        @bitCast(c_ulong, w.D3D12_ERROR_DRIVER_VERSION_MISMATCH) => HResultError.D3D12_ERROR_DRIVER_VERSION_MISMATCH,
+        @bitCast(c_ulong, w.DXGI_ERROR_INVALID_CALL) => HResultError.DXGI_ERROR_INVALID_CALL,
+        @bitCast(c_ulong, w.DXGI_ERROR_WAS_STILL_DRAWING) => HResultError.DXGI_ERROR_WAS_STILL_DRAWING,
+        @bitCast(c_ulong, w.DXGI_STATUS_MODE_CHANGED) => HResultError.DXGI_STATUS_MODE_CHANGED,
+        @bitCast(c_ulong, w.DWRITE_E_FILEFORMAT) => HResultError.DWRITE_E_FILEFORMAT,
         @bitCast(c_ulong, w.E_OUTOFMEMORY) => HResultError.E_OUTOFMEMORY,
         @bitCast(c_ulong, w.E_INVALIDARG) => HResultError.E_INVALIDARG,
+        @bitCast(c_ulong, w.E_NOTIMPL) => HResultError.E_NOTIMPL,
         else => HResultError.E_FAIL,
     };
 }
