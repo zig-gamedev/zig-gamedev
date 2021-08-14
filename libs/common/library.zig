@@ -6,6 +6,8 @@ const assert = std.debug.assert;
 
 pub const HResultError = error{
     E_FAIL,
+    E_OUTOFMEMORY,
+    E_INVALIDARG,
     DWRITE_E_FILEFORMAT,
 };
 
@@ -22,19 +24,17 @@ pub inline fn hrPanicOnFail(hr: w.HRESULT) void {
     }
 }
 
-pub fn hrErrorOnFail(hr: w.HRESULT) HResultError!void {
+pub inline fn hrErrorOnFail(hr: w.HRESULT) HResultError!void {
     if (hr != w.S_OK) {
-        const code = @bitCast(c_ulong, hr);
-        return switch (code) {
-            0x88985000 => HResultError.DWRITE_E_FILEFORMAT,
-            else => HResultError.E_FAIL,
-        };
+        return hrCodeToError(hr);
     }
 }
 
 fn hrErrorToCode(err: HResultError) w.HRESULT {
     return switch (err) {
-        HResultError.E_FAIL => @bitCast(w.HRESULT, @as(c_ulong, 0x80004005)),
+        HResultError.E_FAIL => w.E_FAIL,
+        HResultError.E_OUTOFMEMORY => w.E_OUTOFMEMORY,
+        HResultError.E_INVALIDARG => w.E_INVALIDARG,
         HResultError.DWRITE_E_FILEFORMAT => @bitCast(w.HRESULT, @as(c_ulong, 0x88985000)),
     };
 }
@@ -44,6 +44,8 @@ fn hrCodeToError(hr: w.HRESULT) HResultError {
     const code = @bitCast(c_ulong, hr);
     return switch (code) {
         0x88985000 => HResultError.DWRITE_E_FILEFORMAT,
+        @bitCast(c_ulong, w.E_OUTOFMEMORY) => HResultError.E_OUTOFMEMORY,
+        @bitCast(c_ulong, w.E_INVALIDARG) => HResultError.E_INVALIDARG,
         else => HResultError.E_FAIL,
     };
 }

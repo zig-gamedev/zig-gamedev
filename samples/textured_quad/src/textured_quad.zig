@@ -28,7 +28,7 @@ const DemoState = struct {
     brush: *w.ID2D1SolidColorBrush,
     textformat: *w.IDWriteTextFormat,
 
-    fn init(allocator: *std.mem.Allocator) lib.HResultError!DemoState {
+    fn init(allocator: *std.mem.Allocator) DemoState {
         _ = c.igCreateContext(null);
 
         const window = lib.initWindow(window_name, window_width, window_height) catch unreachable;
@@ -248,7 +248,7 @@ pub fn main() !void {
     }
     const allocator = &gpa.allocator;
 
-    var demo = DemoState.init(allocator) catch |err| hrPanic(err);
+    var demo = DemoState.init(allocator);
     defer demo.deinit(allocator);
 
     while (true) {
