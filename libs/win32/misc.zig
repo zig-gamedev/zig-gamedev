@@ -1,5 +1,4 @@
 const std = @import("std");
-const assert = std.debug.assert;
 usingnamespace std.os.windows;
 
 pub const INT8 = i8;
@@ -87,6 +86,5 @@ pub const D3D12_ERROR_ADAPTER_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887E0
 pub const D3D12_ERROR_DRIVER_VERSION_MISMATCH = @bitCast(HRESULT, @as(c_ulong, 0x887E0002));
 pub const DXGI_ERROR_INVALID_CALL = @bitCast(HRESULT, @as(c_ulong, 0x887A0001));
 pub const DXGI_ERROR_WAS_STILL_DRAWING = @bitCast(HRESULT, @as(c_ulong, 0x887A000A));
-pub const DWRITE_E_FILEFORMAT = @bitCast(HRESULT, @as(c_ulong, 0x88985000));
-
 pub const DXGI_STATUS_MODE_CHANGED = @bitCast(HRESULT, @as(c_ulong, 0x087A0007));
+pub const DWRITE_E_FILEFORMAT = @bitCast(HRESULT, @as(c_ulong, 0x88985000));
