@@ -4,6 +4,8 @@ const c = @import("c.zig");
 const panic = std.debug.panic;
 const assert = std.debug.assert;
 
+// TODO(mziulek): Handle more error codes from:
+// https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
 pub const HResultError = error{
     E_FAIL,
     E_OUTOFMEMORY,
