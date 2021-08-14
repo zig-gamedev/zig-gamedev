@@ -5,6 +5,7 @@ const c = @import("c.zig");
 const lib = @import("library.zig");
 usingnamespace @import("vectormath.zig");
 const assert = std.debug.assert;
+const HResultError = lib.HResultError;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const hrErrorOnFail = lib.hrErrorOnFail;
 
@@ -591,7 +592,7 @@ pub const GraphicsContext = struct {
         desc: *const w.D3D12_RESOURCE_DESC,
         initial_state: w.D3D12_RESOURCE_STATES,
         clear_value: ?*const w.D3D12_CLEAR_VALUE,
-    ) !ResourceHandle {
+    ) HResultError!ResourceHandle {
         const resource = blk: {
             var resource: *w.ID3D12Resource = undefined;
             try hrErrorOnFail(gr.device.CreateCommittedResource(
@@ -956,7 +957,11 @@ pub const GraphicsContext = struct {
         }, null);
     }
 
-    pub fn createAndUploadTex2dFromFile(gr: *GraphicsContext, path: []const u16, num_mip_levels: i32) !ResourceHandle {
+    pub fn createAndUploadTex2dFromFile(
+        gr: *GraphicsContext,
+        path: []const u16,
+        num_mip_levels: i32,
+    ) HResultError!ResourceHandle {
         // TODO(mziulek): Is this the correct way? We want to make sure that slice is ended with '0' (comes from [*:0] str).
         assert(path.ptr[path.len] == 0);
         _ = num_mip_levels;

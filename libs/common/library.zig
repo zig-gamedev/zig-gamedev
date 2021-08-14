@@ -2,18 +2,50 @@ const std = @import("std");
 const w = @import("../win32/win32.zig");
 const c = @import("c.zig");
 const panic = std.debug.panic;
+const assert = std.debug.assert;
 
-pub fn hrPanicOnFail(hr: w.HRESULT) void {
-    if (hr != 0) {
-        // TODO(mziulek): In ReleaseMode display a MessageBox for the user.
-        panic("HRESULT error detected ({d}).", .{hr});
+pub const HResultError = error{
+    E_FAIL,
+    DWRITE_E_FILEFORMAT,
+};
+
+pub fn hrPanic(err: HResultError) noreturn {
+    panic(
+        "HRESULT error detected (0x{X}, {}).",
+        .{ @bitCast(c_ulong, hrErrorToCode(err)), err },
+    );
+}
+
+pub inline fn hrPanicOnFail(hr: w.HRESULT) void {
+    if (hr != w.S_OK) {
+        hrPanic(hrCodeToError(hr));
     }
 }
 
-pub fn hrErrorOnFail(hr: w.HRESULT) !void {
-    if (hr != 0) {
-        return error.HResultError;
+pub fn hrErrorOnFail(hr: w.HRESULT) HResultError!void {
+    if (hr != w.S_OK) {
+        const code = @bitCast(c_ulong, hr);
+        return switch (code) {
+            0x88985000 => HResultError.DWRITE_E_FILEFORMAT,
+            else => HResultError.E_FAIL,
+        };
     }
+}
+
+fn hrErrorToCode(err: HResultError) w.HRESULT {
+    return switch (err) {
+        HResultError.E_FAIL => @bitCast(w.HRESULT, @as(c_ulong, 0x80004005)),
+        HResultError.DWRITE_E_FILEFORMAT => @bitCast(w.HRESULT, @as(c_ulong, 0x88985000)),
+    };
+}
+
+fn hrCodeToError(hr: w.HRESULT) HResultError {
+    assert(hr != w.S_OK);
+    const code = @bitCast(c_ulong, hr);
+    return switch (code) {
+        0x88985000 => HResultError.DWRITE_E_FILEFORMAT,
+        else => HResultError.E_FAIL,
+    };
 }
 
 pub const FrameStats = struct {

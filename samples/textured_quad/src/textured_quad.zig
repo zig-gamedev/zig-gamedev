@@ -7,6 +7,7 @@ const c = @import("c");
 usingnamespace @import("vectormath");
 const math = std.math;
 const hrPanicOnFail = lib.hrPanicOnFail;
+const hrPanic = lib.hrPanic;
 const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -27,7 +28,7 @@ const DemoState = struct {
     brush: *w.ID2D1SolidColorBrush,
     textformat: *w.IDWriteTextFormat,
 
-    fn init(allocator: *std.mem.Allocator) DemoState {
+    fn init(allocator: *std.mem.Allocator) lib.HResultError!DemoState {
         _ = c.igCreateContext(null);
 
         const window = lib.initWindow(window_name, window_width, window_height) catch unreachable;
@@ -59,7 +60,7 @@ const DemoState = struct {
             &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
-        ) catch unreachable;
+        ) catch |err| hrPanic(err);
 
         const index_buffer = grfx.createCommittedResource(
             .DEFAULT,
@@ -67,7 +68,7 @@ const DemoState = struct {
             &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
-        ) catch unreachable;
+        ) catch |err| hrPanic(err);
 
         const brush = blk: {
             var maybe_brush: ?*w.ID2D1SolidColorBrush = null;
@@ -247,7 +248,7 @@ pub fn main() !void {
     }
     const allocator = &gpa.allocator;
 
-    var demo = DemoState.init(allocator);
+    var demo = DemoState.init(allocator) catch |err| hrPanic(err);
     defer demo.deinit(allocator);
 
     while (true) {
