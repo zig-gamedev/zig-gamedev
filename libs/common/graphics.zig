@@ -979,6 +979,13 @@ pub const GraphicsContext = struct {
         };
         defer _ = bmp_decoder.Release();
 
+        const bmp_frame = blk: {
+            var maybe_bmp_frame: ?*w.IWICBitmapFrameDecode = null;
+            hrPanicOnFail(bmp_decoder.GetFrame(0, &maybe_bmp_frame));
+            break :blk maybe_bmp_frame.?;
+        };
+        defer _ = bmp_frame.Release();
+
         return ResourceHandle{ .index = 0, .generation = 0 };
     }
 };

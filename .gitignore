@@ -6,11 +6,14 @@
 !*.cpp
 !*.zig
 !*.h
-!*.txt
 !*.hlsl
 !*.hlsli
+
+!*.txt
 !*.bat
+
 !*.ttf
+!*.png
 
 !README
 !.ignore

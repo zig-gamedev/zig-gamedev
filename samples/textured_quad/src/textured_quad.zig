@@ -102,7 +102,10 @@ const DemoState = struct {
 
         var gui = gr.GuiContext.init(allocator, &grfx);
 
-        //_ = try grfx.createAndUploadTex2dFromFile(utf8ToUtf16LeStringLiteral("aa")[0..], 1);
+        _ = grfx.createAndUploadTex2dFromFile(
+            utf8ToUtf16LeStringLiteral("content/genart_0025_5.png")[0..],
+            1,
+        ) catch |err| hrPanic(err);
 
         const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
         upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);

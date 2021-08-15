@@ -11,6 +11,7 @@ pub const HResultError = error{
     E_OUTOFMEMORY,
     E_INVALIDARG,
     E_NOTIMPL,
+    E_FILE_NOT_FOUND,
     D3D12_ERROR_ADAPTER_NOT_FOUND,
     D3D12_ERROR_DRIVER_VERSION_MISMATCH,
     DXGI_ERROR_INVALID_CALL,
@@ -21,7 +22,7 @@ pub const HResultError = error{
 
 pub fn hrPanic(err: HResultError) noreturn {
     panic(
-        "HRESULT error detected (0x{X}, {}).",
+        "HRESULT error detected (0x{x}, {}).",
         .{ @bitCast(c_ulong, hrErrorToCode(err)), err },
     );
 }
@@ -50,6 +51,7 @@ fn hrErrorToCode(err: HResultError) w.HRESULT {
         HResultError.E_OUTOFMEMORY => w.E_OUTOFMEMORY,
         HResultError.E_INVALIDARG => w.E_INVALIDARG,
         HResultError.E_NOTIMPL => w.E_NOTIMPL,
+        HResultError.E_FILE_NOT_FOUND => w.E_FILE_NOT_FOUND,
     };
 }
 
@@ -66,7 +68,11 @@ fn hrCodeToError(hr: w.HRESULT) HResultError {
         @bitCast(c_ulong, w.E_OUTOFMEMORY) => HResultError.E_OUTOFMEMORY,
         @bitCast(c_ulong, w.E_INVALIDARG) => HResultError.E_INVALIDARG,
         @bitCast(c_ulong, w.E_NOTIMPL) => HResultError.E_NOTIMPL,
-        else => HResultError.E_FAIL,
+        @bitCast(c_ulong, w.E_FILE_NOT_FOUND) => HResultError.E_FILE_NOT_FOUND,
+        else => blk: {
+            std.log.debug("HRESULT error 0x{x} is not handled treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
+            break :blk HResultError.E_FAIL;
+        },
     };
 }
 
