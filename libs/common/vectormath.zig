@@ -2,6 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const math = std.math;
 
+pub const Vec2 = [2]f32;
 pub const Vec3 = [3]f32;
 pub const Mat4 = [4][4]f32;
 
@@ -15,6 +16,12 @@ const scalar = struct {
             temp = -temp;
         }
         return temp;
+    }
+};
+
+pub const vec2 = struct {
+    pub fn init(x: f32, y: f32) Vec2 {
+        return .{ x, y };
     }
 };
 

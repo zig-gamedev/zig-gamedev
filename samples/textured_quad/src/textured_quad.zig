@@ -13,10 +13,19 @@ const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
+const Vertex = struct {
+    position: Vec3,
+    uv: Vec2,
+};
+comptime {
+    std.debug.assert(@sizeOf([2]Vertex) == 40);
+    std.debug.assert(@alignOf([2]Vertex) == 4);
+}
+
 const DemoState = struct {
     const window_name = "zig-gamedev: textured quad";
-    const window_width = 1920;
-    const window_height = 1080;
+    const window_width = 1000;
+    const window_height = 1000;
 
     window: w.HWND,
     grfx: gr.GraphicsContext,
@@ -25,6 +34,7 @@ const DemoState = struct {
     pipeline: gr.PipelineHandle,
     vertex_buffer: gr.ResourceHandle,
     index_buffer: gr.ResourceHandle,
+    texture: gr.ResourceHandle,
     brush: *w.ID2D1SolidColorBrush,
     textformat: *w.IDWriteTextFormat,
 
@@ -38,6 +48,7 @@ const DemoState = struct {
         const pipeline = blk: {
             const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
                 w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+                w.D3D12_INPUT_ELEMENT_DESC.init("_Texcoords", 0, .R32G32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
             };
             var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC.initDefault();
             pso_desc.RasterizerState.CullMode = .NONE;
@@ -57,7 +68,7 @@ const DemoState = struct {
         const vertex_buffer = grfx.createCommittedResource(
             .DEFAULT,
             w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
+            &w.D3D12_RESOURCE_DESC.initBuffer(4 * @sizeOf(Vertex)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err);
@@ -65,7 +76,7 @@ const DemoState = struct {
         const index_buffer = grfx.createCommittedResource(
             .DEFAULT,
             w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
+            &w.D3D12_RESOURCE_DESC.initBuffer(4 * @sizeOf(u32)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err);
@@ -102,28 +113,42 @@ const DemoState = struct {
 
         var gui = gr.GuiContext.init(allocator, &grfx);
 
-        _ = grfx.createAndUploadTex2dFromFile(
-            utf8ToUtf16LeStringLiteral("content/genart_0025_5.png")[0..],
+        const texture = grfx.createAndUploadTex2dFromFile(
+            utf8ToUtf16LeStringLiteral("content/genart_0025_5.png"),
             1,
         ) catch |err| hrPanic(err);
 
-        const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
-        upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
-        upload_verts.cpu_slice[1] = vec3.init(0.0, 0.7, 0.0);
-        upload_verts.cpu_slice[2] = vec3.init(0.7, -0.7, 0.0);
+        const upload_verts = grfx.allocateUploadBufferRegion(Vertex, 4);
+        upload_verts.cpu_slice[0] = .{
+            .position = vec3.init(-0.7, 0.7, 0.0),
+            .uv = vec2.init(0.0, 0.0),
+        };
+        upload_verts.cpu_slice[1] = .{
+            .position = vec3.init(0.7, 0.7, 0.0),
+            .uv = vec2.init(1.0, 0.0),
+        };
+        upload_verts.cpu_slice[2] = .{
+            .position = vec3.init(-0.7, -0.7, 0.0),
+            .uv = vec2.init(0.0, 1.0),
+        };
+        upload_verts.cpu_slice[3] = .{
+            .position = vec3.init(0.7, -0.7, 0.0),
+            .uv = vec2.init(1.0, 1.0),
+        };
 
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(vertex_buffer),
             0,
             upload_verts.buffer,
             upload_verts.buffer_offset,
-            upload_verts.cpu_slice.len * @sizeOf(Vec3),
+            upload_verts.cpu_slice.len * @sizeOf(Vertex),
         );
 
-        const upload_indices = grfx.allocateUploadBufferRegion(u32, 3);
+        const upload_indices = grfx.allocateUploadBufferRegion(u32, 4);
         upload_indices.cpu_slice[0] = 0;
         upload_indices.cpu_slice[1] = 1;
         upload_indices.cpu_slice[2] = 2;
+        upload_indices.cpu_slice[3] = 3;
 
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(index_buffer),
@@ -139,7 +164,7 @@ const DemoState = struct {
 
         grfx.finishGpuCommands();
 
-        return DemoState{
+        return .{
             .grfx = grfx,
             .gui = gui,
             .window = window,
@@ -147,6 +172,7 @@ const DemoState = struct {
             .pipeline = pipeline,
             .vertex_buffer = vertex_buffer,
             .index_buffer = index_buffer,
+            .texture = texture,
             .brush = brush,
             .textformat = textformat,
         };
@@ -158,6 +184,7 @@ const DemoState = struct {
         _ = demo.textformat.Release();
         _ = demo.grfx.releaseResource(demo.vertex_buffer);
         _ = demo.grfx.releaseResource(demo.index_buffer);
+        _ = demo.grfx.releaseResource(demo.texture);
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit(allocator);
@@ -195,18 +222,18 @@ const DemoState = struct {
             null,
         );
         grfx.setCurrentPipeline(demo.pipeline);
-        grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+        grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLESTRIP);
         grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]w.D3D12_VERTEX_BUFFER_VIEW{.{
             .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
-            .SizeInBytes = 3 * @sizeOf(Vec3),
-            .StrideInBytes = @sizeOf(Vec3),
+            .SizeInBytes = 4 * @sizeOf(Vertex),
+            .StrideInBytes = @sizeOf(Vertex),
         }});
         grfx.cmdlist.IASetIndexBuffer(&.{
             .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
-            .SizeInBytes = 3 * @sizeOf(u32),
+            .SizeInBytes = 4 * @sizeOf(u32),
             .Format = .R32_UINT,
         });
-        grfx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
+        grfx.cmdlist.DrawIndexedInstanced(4, 1, 0, 0, 0);
 
         demo.gui.draw(grfx);
 

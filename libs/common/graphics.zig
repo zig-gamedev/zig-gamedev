@@ -6,6 +6,7 @@ const lib = @import("library.zig");
 usingnamespace @import("vectormath.zig");
 const assert = std.debug.assert;
 const HResultError = lib.HResultError;
+const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const hrErrorOnFail = lib.hrErrorOnFail;
 
@@ -960,11 +961,11 @@ pub const GraphicsContext = struct {
     pub fn createAndUploadTex2dFromFile(
         gr: *GraphicsContext,
         path: []const u16,
-        num_mip_levels: i32,
+        num_mip_levels: u32,
     ) HResultError!ResourceHandle {
+        assert(gr.is_cmdlist_opened);
         // TODO(mziulek): Is this the correct way? We want to make sure that slice is ended with '0' (comes from [*:0] str).
         assert(path.ptr[path.len] == 0);
-        _ = num_mip_levels;
 
         const bmp_decoder = blk: {
             var maybe_bmp_decoder: ?*w.IWICBitmapDecoder = undefined;
@@ -986,7 +987,104 @@ pub const GraphicsContext = struct {
         };
         defer _ = bmp_frame.Release();
 
-        return ResourceHandle{ .index = 0, .generation = 0 };
+        const pixel_format = blk: {
+            var pixel_format: w.GUID = undefined;
+            hrPanicOnFail(bmp_frame.GetPixelFormat(&pixel_format));
+            break :blk pixel_format;
+        };
+
+        const eql = std.mem.eql;
+        const asBytes = std.mem.asBytes;
+        const num_components: u32 = blk: {
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat24bppRGB)))
+                break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppRGB)))
+                break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppRGBA)))
+                break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppPRGBA)))
+                break :blk 4;
+
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat24bppBGR)))
+                break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppBGR)))
+                break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppBGRA)))
+                break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppPBGRA)))
+                break :blk 4;
+
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat8bppGray)))
+                break :blk 1;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat8bppAlpha)))
+                break :blk 1;
+            break :blk 0;
+        };
+        assert(num_components != 0);
+
+        const wic_format = if (num_components == 1)
+            &w.GUID_WICPixelFormat8bppGray
+        else
+            &w.GUID_WICPixelFormat32bppRGBA;
+
+        const dxgi_format = if (num_components == 1) w.DXGI_FORMAT.R8_UNORM else w.DXGI_FORMAT.R8G8B8A8_UNORM;
+
+        const image_conv = blk: {
+            var maybe_image_conv: ?*w.IWICFormatConverter = null;
+            hrPanicOnFail(gr.wic_factory.CreateFormatConverter(&maybe_image_conv));
+            break :blk maybe_image_conv.?;
+        };
+        defer _ = image_conv.Release();
+
+        hrPanicOnFail(image_conv.Initialize(
+            @ptrCast(*w.IWICBitmapSource, bmp_frame),
+            wic_format,
+            .None,
+            null,
+            0.0,
+            .Custom,
+        ));
+        const image_wh = blk: {
+            var width: u32 = undefined;
+            var height: u32 = undefined;
+            hrPanicOnFail(image_conv.GetSize(&width, &height));
+            break :blk .{ .w = width, .h = height };
+        };
+        const texture = try gr.createCommittedResource(
+            .DEFAULT,
+            w.D3D12_HEAP_FLAG_NONE,
+            &w.D3D12_RESOURCE_DESC.initTex2d(image_wh.w, image_wh.h, dxgi_format, num_mip_levels),
+            w.D3D12_RESOURCE_STATE_COPY_DEST,
+            null,
+        );
+
+        const desc = gr.getResource(texture).GetDesc();
+
+        var layout: [1]w.D3D12_PLACED_SUBRESOURCE_FOOTPRINT = undefined;
+        var required_size: u64 = undefined;
+        gr.device.GetCopyableFootprints(&desc, 0, 1, 0, &layout, null, null, &required_size);
+
+        const upload = gr.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
+        layout[0].Offset = upload.buffer_offset;
+
+        hrPanicOnFail(image_conv.CopyPixels(
+            null,
+            layout[0].Footprint.RowPitch,
+            layout[0].Footprint.RowPitch * layout[0].Footprint.Height,
+            upload.cpu_slice.ptr,
+        ));
+
+        gr.cmdlist.CopyTextureRegion(&w.D3D12_TEXTURE_COPY_LOCATION{
+            .pResource = gr.getResource(texture),
+            .Type = .SUBRESOURCE_INDEX,
+            .u = .{ .SubresourceIndex = 0 },
+        }, 0, 0, 0, &w.D3D12_TEXTURE_COPY_LOCATION{
+            .pResource = upload.buffer,
+            .Type = .PLACED_FOOTPRINT,
+            .u = .{ .PlacedFootprint = layout[0] },
+        }, null);
+
+        return texture;
     }
 };
 
@@ -1046,7 +1144,7 @@ pub const GuiContext = struct {
             &w.D3D12_RESOURCE_DESC.initTex2d(font_info.width, font_info.height, .R8G8B8A8_UNORM, 1),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
-        ) catch unreachable;
+        ) catch |err| hrPanic(err);
 
         gr.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
         gr.addTransitionBarrier(font, w.D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);

@@ -70,7 +70,7 @@ fn hrCodeToError(hr: w.HRESULT) HResultError {
         @bitCast(c_ulong, w.E_NOTIMPL) => HResultError.E_NOTIMPL,
         @bitCast(c_ulong, w.E_FILE_NOT_FOUND) => HResultError.E_FILE_NOT_FOUND,
         else => blk: {
-            std.log.debug("HRESULT error 0x{x} is not handled treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
+            std.debug.print("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
             break :blk HResultError.E_FAIL;
         },
     };

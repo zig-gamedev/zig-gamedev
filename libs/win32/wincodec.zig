@@ -207,8 +207,27 @@ pub const IWICFormatConverter = extern struct {
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn Initialize(
+                self: *T,
+                source: ?*IWICBitmapSource,
+                dest_format: *const WICPixelFormatGUID,
+                dither: WICBitmapDitherType,
+                palette: ?*IWICPalette,
+                alpha_threshold_percent: f64,
+                palette_translate: WICBitmapPaletteType,
+            ) HRESULT {
+                return self.v.fmtconv.Initialize(
+                    self,
+                    source,
+                    dest_format,
+                    dither,
+                    palette,
+                    alpha_threshold_percent,
+                    palette_translate,
+                );
+            }
+        };
     }
 
     fn VTable(comptime T: type) type {
