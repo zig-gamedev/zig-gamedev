@@ -141,7 +141,7 @@ const DemoState = struct {
             0,
             upload_verts.buffer,
             upload_verts.buffer_offset,
-            upload_verts.cpu_slice.len * @sizeOf(Vertex),
+            upload_verts.cpu_slice.len * @sizeOf(@TypeOf(upload_verts.cpu_slice[0])),
         );
 
         const upload_indices = grfx.allocateUploadBufferRegion(u32, 4);
@@ -155,7 +155,7 @@ const DemoState = struct {
             0,
             upload_indices.buffer,
             upload_indices.buffer_offset,
-            upload_indices.cpu_slice.len * @sizeOf(u32),
+            upload_indices.cpu_slice.len * @sizeOf(@TypeOf(upload_indices.cpu_slice[0])),
         );
 
         grfx.addTransitionBarrier(vertex_buffer, w.D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
