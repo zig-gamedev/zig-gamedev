@@ -35,6 +35,7 @@ const DemoState = struct {
     vertex_buffer: gr.ResourceHandle,
     index_buffer: gr.ResourceHandle,
     texture: gr.ResourceHandle,
+    texture_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
     brush: *w.ID2D1SolidColorBrush,
     textformat: *w.IDWriteTextFormat,
 
@@ -118,6 +119,9 @@ const DemoState = struct {
             1,
         ) catch |err| hrPanic(err);
 
+        const texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(grfx.getResource(texture), null, texture_srv);
+
         const upload_verts = grfx.allocateUploadBufferRegion(Vertex, 4);
         upload_verts.cpu_slice[0] = .{
             .position = vec3.init(-0.7, 0.7, 0.0),
@@ -160,6 +164,7 @@ const DemoState = struct {
 
         grfx.addTransitionBarrier(vertex_buffer, w.D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         grfx.addTransitionBarrier(index_buffer, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        grfx.addTransitionBarrier(texture, w.D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         grfx.flushResourceBarriers();
 
         grfx.finishGpuCommands();
@@ -173,6 +178,7 @@ const DemoState = struct {
             .vertex_buffer = vertex_buffer,
             .index_buffer = index_buffer,
             .texture = texture,
+            .texture_srv = texture_srv,
             .brush = brush,
             .textformat = textformat,
         };
@@ -233,6 +239,7 @@ const DemoState = struct {
             .SizeInBytes = 4 * @sizeOf(u32),
             .Format = .R32_UINT,
         });
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.texture_srv));
         grfx.cmdlist.DrawIndexedInstanced(4, 1, 0, 0, 0);
 
         demo.gui.draw(grfx);

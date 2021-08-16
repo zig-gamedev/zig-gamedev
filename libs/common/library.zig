@@ -160,8 +160,8 @@ fn processWindowMessage(
         },
         w.user32.WM_MOUSEMOVE => blk: {
             if (ui != null) {
-                ui.?.*.MousePos.x = @intToFloat(f32, @intCast(i16, lparam & 0xffff));
-                ui.?.*.MousePos.y = @intToFloat(f32, @intCast(i16, (lparam & 0xffff_0000) >> 16));
+                ui.?.*.MousePos.x = @intToFloat(f32, @bitCast(i16, @intCast(u16, lparam & 0xffff)));
+                ui.?.*.MousePos.y = @intToFloat(f32, @bitCast(i16, @intCast(u16, (lparam & 0xffff_0000) >> 16)));
             }
             break :blk true;
         },
