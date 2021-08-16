@@ -13,8 +13,8 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 pub fn main() !void {
     const window_name = "zig-gamedev: triangle1";
-    const window_width = 800;
-    const window_height = 800;
+    const window_width = 900;
+    const window_height = 900;
 
     _ = w.SetProcessDPIAware();
 
@@ -24,6 +24,9 @@ pub fn main() !void {
         std.debug.assert(leaked == false);
     }
     const allocator = &gpa.allocator;
+
+    _ = c.igCreateContext(null);
+    defer c.igDestroyContext(null);
 
     const window = lib.initWindow(window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
@@ -70,6 +73,9 @@ pub fn main() !void {
 
     grfx.beginFrame();
 
+    var gui = gr.GuiContext.init(allocator, &grfx);
+    defer gui.deinit(&grfx);
+
     const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
     upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
     upload_verts.cpu_slice[1] = vec3.init(0.0, 0.7, 0.0);
@@ -102,6 +108,8 @@ pub fn main() !void {
 
     grfx.finishGpuCommands();
 
+    var triangle_color = vec3.init(0.0, 1.0, 0.0);
+
     var stats = lib.FrameStats.init();
 
     while (true) {
@@ -121,6 +129,17 @@ pub fn main() !void {
                 ) catch unreachable;
                 _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
             }
+            gr.GuiContext.update(stats.delta_time);
+
+            c.igSetNextWindowPos(c.ImVec2{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, c.ImVec2{ .x = 0.0, .y = 0.0 });
+            c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);
+            _ = c.igBegin(
+                "Demo Settings",
+                null,
+                c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+            );
+            _ = c.igColorEdit3("Triangle color", &triangle_color, c.ImGuiColorEditFlags_None);
+            c.igEnd();
 
             grfx.beginFrame();
 
@@ -153,7 +172,16 @@ pub fn main() !void {
                 .SizeInBytes = 3 * @sizeOf(u32),
                 .Format = .R32_UINT,
             });
+            grfx.cmdlist.SetGraphicsRoot32BitConstant(
+                0,
+                c.igColorConvertFloat4ToU32(
+                    c.ImVec4{ .x = triangle_color[0], .y = triangle_color[1], .z = triangle_color[2], .w = 1.0 },
+                ),
+                0,
+            );
             grfx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
+
+            gui.draw(&grfx);
 
             grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
             grfx.flushResourceBarriers();

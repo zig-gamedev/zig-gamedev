@@ -119,6 +119,7 @@ pub const FrameStats = struct {
     }
 };
 
+// TODO(mziulek): We do not handle all keys for imgui (typing in color value in ColorPicker does not work).
 fn processWindowMessage(
     window: w.HWND,
     message: w.UINT,
