@@ -6,6 +6,7 @@ const lib = @import("library");
 const c = @import("c");
 usingnamespace @import("vectormath");
 const math = std.math;
+const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 
@@ -60,7 +61,7 @@ const DemoState = struct {
             &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
-        ) catch unreachable;
+        ) catch |err| hrPanic(err);
 
         const index_buffer = grfx.createCommittedResource(
             .DEFAULT,
@@ -68,7 +69,7 @@ const DemoState = struct {
             &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
-        ) catch unreachable;
+        ) catch |err| hrPanic(err);
 
         const entity_buffer = grfx.createCommittedResource(
             .DEFAULT,
@@ -76,7 +77,7 @@ const DemoState = struct {
             &w.D3D12_RESOURCE_DESC.initBuffer(1 * @sizeOf(Mat4)),
             w.D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
             null,
-        ) catch unreachable;
+        ) catch |err| hrPanic(err);
 
         const entity_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(

@@ -5,6 +5,7 @@ const gr = @import("graphics");
 const lib = @import("library");
 const c = @import("c");
 usingnamespace @import("vectormath");
+const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -55,7 +56,7 @@ pub fn main() !void {
         &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
         w.D3D12_RESOURCE_STATE_COPY_DEST,
         null,
-    ) catch unreachable;
+    ) catch |err| hrPanic(err);
     defer _ = grfx.releaseResource(vertex_buffer);
 
     const index_buffer = grfx.createCommittedResource(
@@ -64,7 +65,7 @@ pub fn main() !void {
         &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
         w.D3D12_RESOURCE_STATE_COPY_DEST,
         null,
-    ) catch unreachable;
+    ) catch |err| hrPanic(err);
     defer _ = grfx.releaseResource(index_buffer);
 
     grfx.beginFrame();
