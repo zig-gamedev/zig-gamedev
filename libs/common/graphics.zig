@@ -751,7 +751,7 @@ pub const GraphicsContext = struct {
             }
             break :compute_hash hasher.final();
         };
-        std.debug.print("PSO hash: {d}\n", .{hash});
+        std.debug.print("Graphics pipeline hash: {d}\n", .{hash});
 
         if (gr.pipeline.map.contains(hash)) {
             std.log.info("[graphics] Graphics pipeline hit detected.", .{});
@@ -785,6 +785,72 @@ pub const GraphicsContext = struct {
         };
 
         const handle = gr.pipeline.pool.addPipeline(pso, rs, .Graphics);
+        gr.pipeline.map.put(allocator, hash, handle) catch unreachable;
+        return handle;
+    }
+
+    pub fn createComputeShaderPipeline(
+        gr: *GraphicsContext,
+        allocator: *std.mem.Allocator,
+        pso_desc: *w.D3D12_COMPUTE_PIPELINE_STATE_DESC,
+        cs_cso_path: ?[]const u8,
+    ) PipelineHandle {
+        const cs_code = blk: {
+            if (cs_cso_path) |path| {
+                assert(pso_desc.CS.pShaderBytecode == null);
+                const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+                defer cs_file.close();
+                break :blk cs_code;
+            } else {
+                assert(pso_desc.CS.pShaderBytecode != null);
+                break :blk null;
+            }
+        };
+        defer {
+            if (cs_code) |code| allocator.free(code);
+        }
+
+        const hash = compute_hash: {
+            var hasher = std.hash.Adler32.init();
+            hasher.update(
+                @ptrCast([*]const u8, pso_desc.CS.pShaderBytecode.?)[0..pso_desc.CS.BytecodeLength],
+            );
+            break :compute_hash hasher.final();
+        };
+        std.debug.print("Compute pipeline hash: {d}\n", .{hash});
+
+        if (gr.pipeline.map.contains(hash)) {
+            std.log.info("[graphics] Compute pipeline hit detected.", .{});
+            const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
+            _ = incrementPipelineRefcount(gr.*, handle);
+            return handle;
+        }
+
+        const rs = blk: {
+            var rs: *w.ID3D12RootSignature = undefined;
+            hrPanicOnFail(gr.device.CreateRootSignature(
+                0,
+                pso_desc.CS.pShaderBytecode.?,
+                pso_desc.CS.BytecodeLength,
+                &w.IID_ID3D12RootSignature,
+                @ptrCast(*?*c_void, &rs),
+            ));
+            break :blk rs;
+        };
+
+        pso_desc.pRootSignature = rs;
+
+        const pso = blk: {
+            var pso: *w.ID3D12PipelineState = undefined;
+            hrPanicOnFail(gr.device.CreateComputePipelineState(
+                pso_desc,
+                &w.IID_ID3D12PipelineState,
+                @ptrCast(*?*c_void, &pso),
+            ));
+            break :blk pso;
+        };
+
+        const handle = gr.pipeline.pool.addPipeline(pso, rs, .Compute);
         gr.pipeline.map.put(allocator, hash, handle) catch unreachable;
         return handle;
     }
@@ -996,28 +1062,18 @@ pub const GraphicsContext = struct {
         const eql = std.mem.eql;
         const asBytes = std.mem.asBytes;
         const num_components: u32 = blk: {
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat24bppRGB)))
-                break :blk 4;
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppRGB)))
-                break :blk 4;
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppRGBA)))
-                break :blk 4;
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppPRGBA)))
-                break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat24bppRGB))) break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppRGB))) break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppRGBA))) break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppPRGBA))) break :blk 4;
 
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat24bppBGR)))
-                break :blk 4;
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppBGR)))
-                break :blk 4;
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppBGRA)))
-                break :blk 4;
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppPBGRA)))
-                break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat24bppBGR))) break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppBGR))) break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppBGRA))) break :blk 4;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat32bppPBGRA))) break :blk 4;
 
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat8bppGray)))
-                break :blk 1;
-            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat8bppAlpha)))
-                break :blk 1;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat8bppGray))) break :blk 1;
+            if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat8bppAlpha))) break :blk 1;
             break :blk 0;
         };
         assert(num_components != 0);
@@ -1234,7 +1290,7 @@ pub const GuiContext = struct {
                 &w.D3D12_RESOURCE_DESC.initBuffer(new_size),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,
-            ) catch unreachable;
+            ) catch |err| hrPanic(err);
             gui.vb[gr.frame_index] = vb;
             gui.vb_cpu_addr[gr.frame_index] = blk: {
                 var ptr: ?[*]align(8) u8 = null;
@@ -1255,7 +1311,7 @@ pub const GuiContext = struct {
                 &w.D3D12_RESOURCE_DESC.initBuffer(new_size),
                 w.D3D12_RESOURCE_STATE_GENERIC_READ,
                 null,
-            ) catch unreachable;
+            ) catch |err| hrPanic(err);
             gui.ib[gr.frame_index] = ib;
             gui.ib_cpu_addr[gr.frame_index] = blk: {
                 var ptr: ?[*]align(8) u8 = null;
