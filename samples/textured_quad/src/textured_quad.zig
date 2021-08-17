@@ -109,7 +109,6 @@ const DemoState = struct {
             ));
             break :blk maybe_textformat.?;
         };
-
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
@@ -136,7 +135,7 @@ const DemoState = struct {
                 .u = .{
                     .Texture2D = .{
                         .MostDetailedMip = 0,
-                        .MipLevels = num_mipmaps,
+                        .MipLevels = 0xffff_ffff,
                         .PlaneSlice = 0,
                         .ResourceMinLODClamp = 0.0,
                     },
