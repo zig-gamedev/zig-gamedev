@@ -13,6 +13,8 @@ const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
+const num_mipmaps = 3;
+
 const Vertex = struct {
     position: Vec3,
     uv: Vec2,
@@ -24,8 +26,8 @@ comptime {
 
 const DemoState = struct {
     const window_name = "zig-gamedev: textured quad";
-    const window_width = 1000;
-    const window_height = 1000;
+    const window_width = 1024;
+    const window_height = 1024;
 
     window: w.HWND,
     grfx: gr.GraphicsContext,
@@ -69,7 +71,7 @@ const DemoState = struct {
         const vertex_buffer = grfx.createCommittedResource(
             .DEFAULT,
             w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initBuffer(4 * @sizeOf(Vertex)),
+            &w.D3D12_RESOURCE_DESC.initBuffer(num_mipmaps * 4 * @sizeOf(Vertex)),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err);
@@ -110,57 +112,71 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
+        var mipgen = gr.MipmapGenerator.init(allocator, &grfx, .R8G8B8A8_UNORM);
+
         grfx.beginFrame();
 
         const gui = gr.GuiContext.init(allocator, &grfx);
 
         const texture = grfx.createAndUploadTex2dFromFile(
             utf8ToUtf16LeStringLiteral("content/genart_0025_5.png"),
-            1,
+            num_mipmaps,
         ) catch |err| hrPanic(err);
+
+        mipgen.generateMipmaps(&grfx, texture);
 
         const texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(grfx.getResource(texture), null, texture_srv);
 
-        const upload_verts = grfx.allocateUploadBufferRegion(Vertex, 4);
-        upload_verts.cpu_slice[0] = .{
-            .position = vec3.init(-0.7, 0.7, 0.0),
-            .uv = vec2.init(0.0, 0.0),
-        };
-        upload_verts.cpu_slice[1] = .{
-            .position = vec3.init(0.7, 0.7, 0.0),
-            .uv = vec2.init(1.0, 0.0),
-        };
-        upload_verts.cpu_slice[2] = .{
-            .position = vec3.init(-0.7, -0.7, 0.0),
-            .uv = vec2.init(0.0, 1.0),
-        };
-        upload_verts.cpu_slice[3] = .{
-            .position = vec3.init(0.7, -0.7, 0.0),
-            .uv = vec2.init(1.0, 1.0),
-        };
+        // Fill vertex buffer.
+        {
+            const upload_verts = grfx.allocateUploadBufferRegion(Vertex, num_mipmaps * 4);
+            var mipmap_index: u32 = 0;
+            var r: f32 = 1.0;
+            while (mipmap_index < num_mipmaps) : (mipmap_index += 1) {
+                const index = mipmap_index * 4;
+                upload_verts.cpu_slice[index] = .{
+                    .position = vec3.init(-r, r, 0.0),
+                    .uv = vec2.init(0.0, 0.0),
+                };
+                upload_verts.cpu_slice[index + 1] = .{
+                    .position = vec3.init(r, r, 0.0),
+                    .uv = vec2.init(1.0, 0.0),
+                };
+                upload_verts.cpu_slice[index + 2] = .{
+                    .position = vec3.init(-r, -r, 0.0),
+                    .uv = vec2.init(0.0, 1.0),
+                };
+                upload_verts.cpu_slice[index + 3] = .{
+                    .position = vec3.init(r, -r, 0.0),
+                    .uv = vec2.init(1.0, 1.0),
+                };
+                r *= 0.5;
+            }
+            grfx.cmdlist.CopyBufferRegion(
+                grfx.getResource(vertex_buffer),
+                0,
+                upload_verts.buffer,
+                upload_verts.buffer_offset,
+                upload_verts.cpu_slice.len * @sizeOf(@TypeOf(upload_verts.cpu_slice[0])),
+            );
+        }
+        // Fill index buffer.
+        {
+            const upload_indices = grfx.allocateUploadBufferRegion(u32, 4);
+            upload_indices.cpu_slice[0] = 0;
+            upload_indices.cpu_slice[1] = 1;
+            upload_indices.cpu_slice[2] = 2;
+            upload_indices.cpu_slice[3] = 3;
 
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(vertex_buffer),
-            0,
-            upload_verts.buffer,
-            upload_verts.buffer_offset,
-            upload_verts.cpu_slice.len * @sizeOf(@TypeOf(upload_verts.cpu_slice[0])),
-        );
-
-        const upload_indices = grfx.allocateUploadBufferRegion(u32, 4);
-        upload_indices.cpu_slice[0] = 0;
-        upload_indices.cpu_slice[1] = 1;
-        upload_indices.cpu_slice[2] = 2;
-        upload_indices.cpu_slice[3] = 3;
-
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(index_buffer),
-            0,
-            upload_indices.buffer,
-            upload_indices.buffer_offset,
-            upload_indices.cpu_slice.len * @sizeOf(@TypeOf(upload_indices.cpu_slice[0])),
-        );
+            grfx.cmdlist.CopyBufferRegion(
+                grfx.getResource(index_buffer),
+                0,
+                upload_indices.buffer,
+                upload_indices.buffer_offset,
+                upload_indices.cpu_slice.len * @sizeOf(@TypeOf(upload_indices.cpu_slice[0])),
+            );
+        }
 
         grfx.addTransitionBarrier(vertex_buffer, w.D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         grfx.addTransitionBarrier(index_buffer, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
@@ -168,6 +184,9 @@ const DemoState = struct {
         grfx.flushResourceBarriers();
 
         grfx.finishGpuCommands();
+
+        // We need to call it here, we can't rely on 'defer' because it runs *after* 'grfx' copy in 'return' statement below.
+        mipgen.deinit(&grfx);
 
         return .{
             .grfx = grfx,
@@ -231,7 +250,7 @@ const DemoState = struct {
         grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLESTRIP);
         grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]w.D3D12_VERTEX_BUFFER_VIEW{.{
             .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
-            .SizeInBytes = 4 * @sizeOf(Vertex),
+            .SizeInBytes = num_mipmaps * 4 * @sizeOf(Vertex),
             .StrideInBytes = @sizeOf(Vertex),
         }});
         grfx.cmdlist.IASetIndexBuffer(&.{
@@ -240,7 +259,7 @@ const DemoState = struct {
             .Format = .R32_UINT,
         });
         grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.texture_srv));
-        grfx.cmdlist.DrawIndexedInstanced(4, 1, 0, 0, 0);
+        grfx.cmdlist.DrawIndexedInstanced(4, 1, 0, 8, 0);
 
         demo.gui.draw(grfx);
 

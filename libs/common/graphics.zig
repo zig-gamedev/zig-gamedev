@@ -586,6 +586,11 @@ pub const GraphicsContext = struct {
         return 0;
     }
 
+    pub fn getResourceDesc(gr: GraphicsContext, handle: ResourceHandle) w.D3D12_RESOURCE_DESC {
+        const resource = gr.resource_pool.getResource(handle);
+        return resource.desc;
+    }
+
     pub fn createCommittedResource(
         gr: *GraphicsContext,
         heap_type: w.D3D12_HEAP_TYPE,
@@ -800,6 +805,8 @@ pub const GraphicsContext = struct {
                 assert(pso_desc.CS.pShaderBytecode == null);
                 const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
                 defer cs_file.close();
+                const cs_code = cs_file.reader().readAllAlloc(allocator, 256 * 1024) catch unreachable;
+                pso_desc.CS = .{ .pShaderBytecode = cs_code.ptr, .BytecodeLength = cs_code.len };
                 break :blk cs_code;
             } else {
                 assert(pso_desc.CS.pShaderBytecode != null);
@@ -963,6 +970,36 @@ pub const GraphicsContext = struct {
             },
             .SAMPLER => unreachable,
         }
+    }
+
+    pub fn allocateTempCpuDescriptors(
+        gr: *GraphicsContext,
+        dtype: w.D3D12_DESCRIPTOR_HEAP_TYPE,
+        num: u32,
+    ) w.D3D12_CPU_DESCRIPTOR_HANDLE {
+        assert(num > 0);
+        var dheap = switch (dtype) {
+            .CBV_SRV_UAV => &gr.cbv_srv_uav_cpu_heap,
+            .RTV => &gr.rtv_heap,
+            .DSV => &gr.dsv_heap,
+            .SAMPLER => unreachable,
+        };
+        const handle = dheap.allocateDescriptors(num).cpu_handle;
+        dheap.size_temp += num;
+        return handle;
+    }
+
+    pub fn deallocateAllTempCpuDescriptors(gr: *GraphicsContext, dtype: w.D3D12_DESCRIPTOR_HEAP_TYPE) void {
+        var dheap = switch (dtype) {
+            .CBV_SRV_UAV => &gr.cbv_srv_uav_cpu_heap,
+            .RTV => &gr.rtv_heap,
+            .DSV => &gr.dsv_heap,
+            .SAMPLER => unreachable,
+        };
+        assert(dheap.size_temp > 0);
+        assert(dheap.size_temp <= dheap.size);
+        dheap.size -= dheap.size_temp;
+        dheap.size_temp = 0;
     }
 
     pub inline fn allocateGpuDescriptors(gr: *GraphicsContext, num_descriptors: u32) Descriptor {
@@ -1409,6 +1446,165 @@ pub const GuiContext = struct {
                 index_offset += cmd.*.ElemCount;
             }
             vertex_offset += cmdlist.*.VtxBuffer.Size;
+        }
+    }
+};
+
+pub const MipmapGenerator = struct {
+    const num_scratch_textures = 4;
+
+    pipeline: PipelineHandle,
+    scratch_textures: [num_scratch_textures]ResourceHandle,
+    base_uav: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+    format: w.DXGI_FORMAT,
+
+    pub fn init(allocator: *std.mem.Allocator, gr: *GraphicsContext, format: w.DXGI_FORMAT) MipmapGenerator {
+        var width: u32 = 2048 / 2;
+        var height: u32 = 2048 / 2;
+
+        var scratch_textures: [num_scratch_textures]ResourceHandle = undefined;
+        for (scratch_textures) |_, texture_index| {
+            scratch_textures[texture_index] = gr.createCommittedResource(
+                .DEFAULT,
+                w.D3D12_HEAP_FLAG_NONE,
+                &blk: {
+                    var desc = w.D3D12_RESOURCE_DESC.initTex2d(width, height, format, 1);
+                    desc.Flags = w.D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                    break :blk desc;
+                },
+                w.D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                null,
+            ) catch |err| hrPanic(err);
+            width /= 2;
+            height /= 2;
+        }
+
+        const base_uav = gr.allocateCpuDescriptors(.CBV_SRV_UAV, num_scratch_textures);
+        var cpu_handle = base_uav;
+        for (scratch_textures) |_, texture_index| {
+            gr.device.CreateUnorderedAccessView(
+                gr.getResource(scratch_textures[texture_index]),
+                null,
+                null,
+                cpu_handle,
+            );
+            cpu_handle.ptr += gr.cbv_srv_uav_cpu_heap.descriptor_size;
+        }
+
+        var desc = w.D3D12_COMPUTE_PIPELINE_STATE_DESC.initDefault();
+        const pipeline = gr.createComputeShaderPipeline(allocator, &desc, "content/shaders/generate_mipmaps.cs.cso");
+
+        return MipmapGenerator{
+            .pipeline = pipeline,
+            .scratch_textures = scratch_textures,
+            .base_uav = base_uav,
+            .format = format,
+        };
+    }
+
+    pub fn deinit(mipgen: *MipmapGenerator, gr: *GraphicsContext) void {
+        for (mipgen.scratch_textures) |_, texture_index| {
+            _ = gr.releaseResource(mipgen.scratch_textures[texture_index]);
+        }
+        _ = gr.releasePipeline(mipgen.pipeline);
+        mipgen.* = undefined;
+    }
+
+    pub fn generateMipmaps(mipgen: *MipmapGenerator, gr: *GraphicsContext, texture: ResourceHandle) void {
+        const texture_desc = gr.getResourceDesc(texture);
+        assert(mipgen.format == texture_desc.Format);
+        assert(texture_desc.Width <= 2048 and texture_desc.Height <= 2048);
+        assert(texture_desc.Width == texture_desc.Height);
+        assert(texture_desc.MipLevels > 1);
+
+        var array_slice: u32 = 0;
+        while (array_slice < texture_desc.DepthOrArraySize) : (array_slice += 1) {
+            const texture_srv = gr.allocateTempCpuDescriptors(.CBV_SRV_UAV, 1);
+            gr.device.CreateShaderResourceView(
+                gr.getResource(texture),
+                &w.D3D12_SHADER_RESOURCE_VIEW_DESC{
+                    .Format = .UNKNOWN,
+                    .ViewDimension = .TEXTURE2DARRAY,
+                    .Shader4ComponentMapping = w.D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+                    .u = .{
+                        .Texture2DArray = .{
+                            .MipLevels = texture_desc.MipLevels,
+                            .FirstArraySlice = array_slice,
+                            .ArraySize = 1,
+                            .MostDetailedMip = 0,
+                            .PlaneSlice = 0,
+                            .ResourceMinLODClamp = 0.0,
+                        },
+                    },
+                },
+                texture_srv,
+            );
+            const table_base = gr.copyDescriptorsToGpuHeap(1, texture_srv);
+            _ = gr.copyDescriptorsToGpuHeap(num_scratch_textures, mipgen.base_uav);
+            gr.deallocateAllTempCpuDescriptors(.CBV_SRV_UAV);
+
+            gr.setCurrentPipeline(mipgen.pipeline);
+            var total_num_mips: u32 = texture_desc.MipLevels - 1;
+            var current_src_mip_level: u32 = 0;
+
+            while (true) {
+                for (mipgen.scratch_textures) |scratch_texture| {
+                    gr.addTransitionBarrier(scratch_texture, w.D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                }
+                gr.addTransitionBarrier(texture, w.D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                gr.flushResourceBarriers();
+
+                const dispatch_num_mips = if (total_num_mips >= 4) 4 else total_num_mips;
+                gr.cmdlist.SetComputeRoot32BitConstant(0, current_src_mip_level, 0);
+                gr.cmdlist.SetComputeRoot32BitConstant(0, dispatch_num_mips, 1);
+                gr.cmdlist.SetComputeRootDescriptorTable(1, table_base);
+                const num_groups_x = std.math.max(
+                    @intCast(u32, texture_desc.Width) >> @intCast(u5, 3 + current_src_mip_level),
+                    1,
+                );
+                const num_groups_y = std.math.max(
+                    texture_desc.Height >> @intCast(u5, 3 + current_src_mip_level),
+                    1,
+                );
+                gr.cmdlist.Dispatch(num_groups_x, num_groups_y, 1);
+
+                for (mipgen.scratch_textures) |scratch_texture| {
+                    gr.addTransitionBarrier(scratch_texture, w.D3D12_RESOURCE_STATE_COPY_SOURCE);
+                }
+                gr.addTransitionBarrier(texture, w.D3D12_RESOURCE_STATE_COPY_DEST);
+                gr.flushResourceBarriers();
+
+                var mip_index: u32 = 0;
+                while (mip_index < dispatch_num_mips) : (mip_index += 1) {
+                    const dst = w.D3D12_TEXTURE_COPY_LOCATION{
+                        .pResource = gr.getResource(texture),
+                        .Type = .SUBRESOURCE_INDEX,
+                        .u = .{ .SubresourceIndex = mip_index + 1 + current_src_mip_level +
+                            array_slice * texture_desc.MipLevels },
+                    };
+                    const src = w.D3D12_TEXTURE_COPY_LOCATION{
+                        .pResource = gr.getResource(mipgen.scratch_textures[mip_index]),
+                        .Type = .SUBRESOURCE_INDEX,
+                        .u = .{ .SubresourceIndex = 0 },
+                    };
+                    const box = w.D3D12_BOX{
+                        .left = 0,
+                        .top = 0,
+                        .front = 0,
+                        .right = @intCast(u32, texture_desc.Width) >> @intCast(u5, mip_index + 1 + current_src_mip_level),
+                        .bottom = texture_desc.Height >> @intCast(u5, mip_index + 1 + current_src_mip_level),
+                        .back = 1,
+                    };
+                    gr.cmdlist.CopyTextureRegion(&dst, 0, 0, 0, &src, &box);
+                }
+
+                assert(total_num_mips >= dispatch_num_mips);
+                total_num_mips -= dispatch_num_mips;
+                if (total_num_mips == 0) {
+                    break;
+                }
+                current_src_mip_level += dispatch_num_mips;
+            }
         }
     }
 };

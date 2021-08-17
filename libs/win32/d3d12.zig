@@ -866,6 +866,18 @@ pub const D3D12_COMPUTE_PIPELINE_STATE_DESC = extern struct {
     NodeMask: UINT,
     CachedPSO: D3D12_CACHED_PIPELINE_STATE,
     Flags: D3D12_PIPELINE_STATE_FLAGS,
+
+    pub fn initDefault() D3D12_COMPUTE_PIPELINE_STATE_DESC {
+        var v = std.mem.zeroes(@This());
+        v = D3D12_COMPUTE_PIPELINE_STATE_DESC{
+            .pRootSignature = null,
+            .CS = D3D12_SHADER_BYTECODE.initZero(),
+            .NodeMask = 0,
+            .CachedPSO = D3D12_CACHED_PIPELINE_STATE.initZero(),
+            .Flags = D3D12_PIPELINE_STATE_FLAG_NONE,
+        };
+        return v;
+    }
 };
 
 pub const D3D12_FEATURE = enum(UINT) {

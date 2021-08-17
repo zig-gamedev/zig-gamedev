@@ -56,6 +56,12 @@ pub fn build(b: *std.build.Builder) void {
     hlsl_command[4] = "/T ps_" ++ shader_ver;
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 
+    hlsl_command[1] = "../../libs/common/generate_mipmaps.hlsl";
+    hlsl_command[2] = "/E main";
+    hlsl_command[3] = "/Fo " ++ shader_dir ++ "generate_mipmaps.cs.cso";
+    hlsl_command[4] = "/T cs_" ++ shader_ver;
+    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
+
     b.getInstallStep().dependOn(hlsl_step);
 
     // Standard target options allows the person running `zig build` to choose
