@@ -1,7 +1,7 @@
 #define root_signature \
     "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
     "DescriptorTable(SRV(t0), visibility = SHADER_VISIBILITY_PIXEL), " \
-    "StaticSampler(s0, filter = FILTER_MIN_MAG_MIP_LINEAR, visibility = SHADER_VISIBILITY_PIXEL)"
+    "StaticSampler(s0, filter = FILTER_MIN_MAG_LINEAR_MIP_POINT, visibility = SHADER_VISIBILITY_PIXEL)"
 
 [RootSignature(root_signature)]
 void vsMain(

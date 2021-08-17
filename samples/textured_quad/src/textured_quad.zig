@@ -13,7 +13,7 @@ const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const num_mipmaps = 3;
+const num_mipmaps = 5;
 
 const Vertex = struct {
     position: Vec3,
@@ -40,6 +40,7 @@ const DemoState = struct {
     texture_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
     brush: *w.ID2D1SolidColorBrush,
     textformat: *w.IDWriteTextFormat,
+    mipmap_level: i32,
 
     fn init(allocator: *std.mem.Allocator) DemoState {
         _ = c.igCreateContext(null);
@@ -120,13 +121,29 @@ const DemoState = struct {
 
         const texture = grfx.createAndUploadTex2dFromFile(
             utf8ToUtf16LeStringLiteral("content/genart_0025_5.png"),
-            num_mipmaps,
+            0, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 
         mipgen.generateMipmaps(&grfx, texture);
 
         const texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(grfx.getResource(texture), null, texture_srv);
+        grfx.device.CreateShaderResourceView(
+            grfx.getResource(texture),
+            &w.D3D12_SHADER_RESOURCE_VIEW_DESC{
+                .Format = .UNKNOWN,
+                .ViewDimension = .TEXTURE2D,
+                .Shader4ComponentMapping = w.D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+                .u = .{
+                    .Texture2D = .{
+                        .MostDetailedMip = 0,
+                        .MipLevels = num_mipmaps,
+                        .PlaneSlice = 0,
+                        .ResourceMinLODClamp = 0.0,
+                    },
+                },
+            },
+            texture_srv,
+        );
 
         // Fill vertex buffer.
         {
@@ -185,7 +202,9 @@ const DemoState = struct {
 
         grfx.finishGpuCommands();
 
-        // We need to call it here, we can't rely on 'defer' because it runs *after* 'grfx' copy in 'return' statement below.
+        // NOTE(mziulek):
+        // We need to call 'deinit' explicitly - we can't rely on 'defer' in this case because it runs *after*
+        // 'grfx' is copied in 'return' statement below.
         mipgen.deinit(&grfx);
 
         return .{
@@ -200,6 +219,7 @@ const DemoState = struct {
             .texture_srv = texture_srv,
             .brush = brush,
             .textformat = textformat,
+            .mipmap_level = 1,
         };
     }
 
@@ -222,7 +242,15 @@ const DemoState = struct {
 
         gr.GuiContext.update(demo.frame_stats.delta_time);
 
-        c.igShowDemoWindow(null);
+        c.igSetNextWindowPos(c.ImVec2{ .x = 10.0, .y = 100.0 }, c.ImGuiCond_FirstUseEver, c.ImVec2{ .x = 0.0, .y = 0.0 });
+        c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);
+        _ = c.igBegin(
+            "Demo Settings",
+            null,
+            c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+        );
+        _ = c.igSliderInt("Mipmap Level", &demo.mipmap_level, 0, num_mipmaps - 1, null, c.ImGuiSliderFlags_None);
+        c.igEnd();
     }
 
     fn draw(demo: *DemoState) void {
@@ -259,7 +287,7 @@ const DemoState = struct {
             .Format = .R32_UINT,
         });
         grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.texture_srv));
-        grfx.cmdlist.DrawIndexedInstanced(4, 1, 0, 8, 0);
+        grfx.cmdlist.DrawIndexedInstanced(4, 1, 0, demo.mipmap_level * 4, 0);
 
         demo.gui.draw(grfx);
 
@@ -295,6 +323,8 @@ const DemoState = struct {
 pub fn main() !void {
     // WIC requires below call (when we pass COINIT_MULTITHREADED '_ = wic_factory.Release()' crashes on exit).
     _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
+    defer w.ole32.CoUninitialize();
+
     _ = w.SetProcessDPIAware();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -318,6 +348,4 @@ pub fn main() !void {
             demo.draw();
         }
     }
-
-    w.ole32.CoUninitialize();
 }

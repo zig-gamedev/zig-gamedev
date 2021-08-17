@@ -294,6 +294,8 @@ const DemoState = struct {
 pub fn main() !void {
     // WIC requires below call (when we pass COINIT_MULTITHREADED '_ = wic_factory.Release()' crashes on exit).
     _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
+    defer w.ole32.CoUninitialize();
+
     _ = w.SetProcessDPIAware();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -317,6 +319,4 @@ pub fn main() !void {
             demo.draw();
         }
     }
-
-    w.ole32.CoUninitialize();
 }
