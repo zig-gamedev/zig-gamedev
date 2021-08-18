@@ -16,6 +16,8 @@ StructuredBuffer<EntityData> srv_entity_data : register(t0);
 [RootSignature(root_signature)]
 void vsTriangle(
     float3 position : POSITION,
+    float3 normal : _Normal,
+    float2 texcoords0 : _Texcoords0,
     out float4 out_position : SV_Position
 ) {
     const uint entity_index = cbv_entity_index.index;

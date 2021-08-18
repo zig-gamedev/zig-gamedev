@@ -11,7 +11,9 @@
 
 !*.txt
 !*.bat
+!*.gltf
 
+!*.bin
 !*.ttf
 !*.png
 
