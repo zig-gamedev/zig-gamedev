@@ -244,23 +244,6 @@ const DemoState = struct {
                 null,
             ) catch |err| hrPanic(err);
 
-            const upload_verts = grfx.allocateUploadBufferRegion(Vertex, num_vertices);
-            for (positions.items) |_, i| {
-                upload_verts.cpu_slice[i] = .{
-                    .position = positions.items[i],
-                    .normal = normals.items[i],
-                    .texcoords0 = texcoords0.items[i],
-                };
-            }
-
-            grfx.cmdlist.CopyBufferRegion(
-                grfx.getResource(vertex_buffer),
-                0,
-                upload_verts.buffer,
-                upload_verts.buffer_offset,
-                upload_verts.cpu_slice.len * @sizeOf(Vertex),
-            );
-
             const index_buffer = grfx.createCommittedResource(
                 .DEFAULT,
                 w.D3D12_HEAP_FLAG_NONE,
@@ -269,18 +252,34 @@ const DemoState = struct {
                 null,
             ) catch |err| hrPanic(err);
 
+            const upload_verts = grfx.allocateUploadBufferRegion(Vertex, num_vertices);
+            for (positions.items) |_, i| {
+                upload_verts.cpu_slice[i] = .{
+                    .position = positions.items[i],
+                    .normal = normals.items[i],
+                    .texcoords0 = texcoords0.items[i],
+                };
+            }
+            grfx.cmdlist.CopyBufferRegion(
+                grfx.getResource(vertex_buffer),
+                0,
+                upload_verts.buffer,
+                upload_verts.buffer_offset,
+                upload_verts.cpu_slice.len * @sizeOf(@TypeOf(upload_verts.cpu_slice[0])),
+            );
+
             const upload_indices = grfx.allocateUploadBufferRegion(u32, num_indices);
             for (indices.items) |index, i| {
                 upload_indices.cpu_slice[i] = index;
             }
-
             grfx.cmdlist.CopyBufferRegion(
                 grfx.getResource(index_buffer),
                 0,
                 upload_indices.buffer,
                 upload_indices.buffer_offset,
-                upload_indices.cpu_slice.len * @sizeOf(u32),
+                upload_indices.cpu_slice.len * @sizeOf(@TypeOf(upload_indices.cpu_slice[0])),
             );
+
             break :blk .{
                 .num_vertices = num_vertices,
                 .num_indices = num_indices,
