@@ -6,12 +6,103 @@ const lib = @import("library");
 const c = @import("c");
 usingnamespace @import("vectormath");
 const math = std.math;
+const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+var num_mesh_vertices: u32 = 0;
+var num_mesh_indices: u32 = 0;
+
+fn loadMesh(filename: []const u8, indices: *std.ArrayList(u32), positions: *std.ArrayList(Vec3)) void {
+    const data = blk: {
+        var data: *c.cgltf_data = undefined;
+        const options = std.mem.zeroes(c.cgltf_options);
+        // Parse.
+        {
+            const result = c.cgltf_parse_file(&options, filename.ptr, @ptrCast([*c][*c]c.cgltf_data, &data));
+            assert(result == c.cgltf_result_success);
+        }
+        // Load.
+        {
+            const result = c.cgltf_load_buffers(&options, data, filename.ptr);
+            assert(result == c.cgltf_result_success);
+        }
+        break :blk data;
+    };
+    defer c.cgltf_free(data);
+
+    const num_vertices: u32 = @intCast(u32, data.meshes[0].primitives[0].attributes[0].data.*.count);
+    const num_indices: u32 = @intCast(u32, data.meshes[0].primitives[0].indices.*.count);
+
+    indices.resize(num_indices) catch unreachable;
+    positions.resize(num_vertices) catch unreachable;
+
+    // Indices.
+    {
+        const accessor = data.meshes[0].primitives[0].indices;
+
+        assert(accessor.*.buffer_view != null);
+        assert(accessor.*.stride == accessor.*.buffer_view.*.stride or accessor.*.buffer_view.*.stride == 0);
+        assert((accessor.*.stride * accessor.*.count) == accessor.*.buffer_view.*.size);
+        assert(accessor.*.buffer_view.*.buffer.*.data != null);
+
+        const data_addr = @alignCast(4, @ptrCast([*]const u8, accessor.*.buffer_view.*.buffer.*.data) +
+            accessor.*.offset + accessor.*.buffer_view.*.offset);
+
+        if (accessor.*.stride == 1) {
+            assert(accessor.*.component_type == c.cgltf_component_type_r_8u);
+            const src = @ptrCast([*]const u8, data_addr);
+            var i: u32 = 0;
+            while (i < num_indices) : (i += 1) {
+                indices.items[i] = src[i];
+            }
+        } else if (accessor.*.stride == 2) {
+            assert(accessor.*.component_type == c.cgltf_component_type_r_16u);
+            const src = @ptrCast([*]const u16, data_addr);
+            var i: u32 = 0;
+            while (i < num_indices) : (i += 1) {
+                indices.items[i] = src[i];
+            }
+        } else if (accessor.*.stride == 4) {
+            assert(accessor.*.component_type == c.cgltf_component_type_r_32u);
+            const src = @ptrCast([*]const u32, data_addr);
+            var i: u32 = 0;
+            while (i < num_indices) : (i += 1) {
+                indices.items[i] = src[i];
+            }
+        } else {
+            unreachable;
+        }
+    }
+    // Attributes.
+    {
+        const num_attribs: u32 = @intCast(u32, data.meshes[0].primitives[0].attributes_count);
+
+        var attrib_index: u32 = 0;
+        while (attrib_index < num_attribs) : (attrib_index += 1) {
+            const attrib = &data.*.meshes[0].primitives[0].attributes[attrib_index];
+            const accessor = attrib.*.data;
+
+            assert(accessor.*.buffer_view != null);
+            assert(accessor.*.stride == accessor.*.buffer_view.*.stride or accessor.*.buffer_view.*.stride == 0);
+            assert((accessor.*.stride * accessor.*.count) == accessor.*.buffer_view.*.size);
+            assert(accessor.*.buffer_view.*.buffer.*.data != null);
+
+            const data_addr = @ptrCast([*]const u8, accessor.*.buffer_view.*.buffer.*.data) +
+                accessor.*.offset + accessor.*.buffer_view.*.offset;
+
+            if (attrib.*.type == c.cgltf_attribute_type_position) {
+                assert(accessor.*.type == c.cgltf_type_vec3);
+                assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
+                @memcpy(@ptrCast([*]u8, positions.items.ptr), data_addr, accessor.*.count * accessor.*.stride);
+            }
+        }
+    }
+}
 
 const DemoState = struct {
     const window_name = "zig-gamedev: simple3d";
@@ -42,6 +133,7 @@ const DemoState = struct {
             };
             var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC.initDefault();
             pso_desc.RasterizerState.CullMode = .NONE;
+            pso_desc.RasterizerState.FillMode = .WIREFRAME;
             pso_desc.DepthStencilState.DepthEnable = w.FALSE;
             pso_desc.InputLayout = .{
                 .pInputElementDescs = &input_layout_desc,
@@ -54,22 +146,6 @@ const DemoState = struct {
                 "content/shaders/simple3d.ps.cso",
             );
         };
-
-        const vertex_buffer = grfx.createCommittedResource(
-            .DEFAULT,
-            w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
-            w.D3D12_RESOURCE_STATE_COPY_DEST,
-            null,
-        ) catch |err| hrPanic(err);
-
-        const index_buffer = grfx.createCommittedResource(
-            .DEFAULT,
-            w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
-            w.D3D12_RESOURCE_STATE_COPY_DEST,
-            null,
-        ) catch |err| hrPanic(err);
 
         const entity_buffer = grfx.createCommittedResource(
             .DEFAULT,
@@ -110,7 +186,6 @@ const DemoState = struct {
             ));
             break :blk maybe_textformat.?;
         };
-
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
@@ -120,10 +195,27 @@ const DemoState = struct {
 
         //_ = try grfx.createAndUploadTex2dFromFile(utf8ToUtf16LeStringLiteral("aa")[0..], 1);
 
-        const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
-        upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
-        upload_verts.cpu_slice[1] = vec3.init(0.0, 0.7, 0.0);
-        upload_verts.cpu_slice[2] = vec3.init(0.7, -0.7, 0.0);
+        var indices = std.ArrayList(u32).init(allocator);
+        defer indices.deinit();
+        var positions = std.ArrayList(Vec3).init(allocator);
+        defer positions.deinit();
+        loadMesh("content/SciFiHelmet/SciFiHelmet.gltf", &indices, &positions);
+
+        num_mesh_vertices = @intCast(u32, positions.items.len);
+        num_mesh_indices = @intCast(u32, indices.items.len);
+
+        const vertex_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            w.D3D12_HEAP_FLAG_NONE,
+            &w.D3D12_RESOURCE_DESC.initBuffer(num_mesh_vertices * @sizeOf(Vec3)),
+            w.D3D12_RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err);
+
+        const upload_verts = grfx.allocateUploadBufferRegion(Vec3, num_mesh_vertices);
+        for (positions.items) |pos, i| {
+            upload_verts.cpu_slice[i] = pos;
+        }
 
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(vertex_buffer),
@@ -133,10 +225,18 @@ const DemoState = struct {
             upload_verts.cpu_slice.len * @sizeOf(Vec3),
         );
 
-        const upload_indices = grfx.allocateUploadBufferRegion(u32, 3);
-        upload_indices.cpu_slice[0] = 0;
-        upload_indices.cpu_slice[1] = 1;
-        upload_indices.cpu_slice[2] = 2;
+        const index_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            w.D3D12_HEAP_FLAG_NONE,
+            &w.D3D12_RESOURCE_DESC.initBuffer(num_mesh_indices * @sizeOf(u32)),
+            w.D3D12_RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err);
+
+        const upload_indices = grfx.allocateUploadBufferRegion(u32, num_mesh_indices);
+        for (indices.items) |index, i| {
+            upload_indices.cpu_slice[i] = index;
+        }
 
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(index_buffer),
@@ -248,17 +348,17 @@ const DemoState = struct {
         grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
         grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]w.D3D12_VERTEX_BUFFER_VIEW{.{
             .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
-            .SizeInBytes = 3 * @sizeOf(Vec3),
+            .SizeInBytes = num_mesh_vertices * @sizeOf(Vec3),
             .StrideInBytes = @sizeOf(Vec3),
         }});
         grfx.cmdlist.IASetIndexBuffer(&.{
             .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
-            .SizeInBytes = 3 * @sizeOf(u32),
+            .SizeInBytes = num_mesh_indices * @sizeOf(u32),
             .Format = .R32_UINT,
         });
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.entity_buffer_srv));
         grfx.cmdlist.SetGraphicsRoot32BitConstant(0, 0, 0);
-        grfx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
+        grfx.cmdlist.DrawIndexedInstanced(num_mesh_indices, 1, 0, 0, 0);
 
         demo.gui.draw(grfx);
 
