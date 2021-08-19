@@ -3,7 +3,7 @@
     "RootConstants(b0, num32BitConstants = 1, visibility = SHADER_VISIBILITY_VERTEX), " \
     "DescriptorTable(SRV(t0), visibility = SHADER_VISIBILITY_VERTEX), " \
     "DescriptorTable(SRV(t1), visibility = SHADER_VISIBILITY_PIXEL), " \
-    "StaticSampler(s0, filter = FILTER_MIN_MAG_MIP_LINEAR, visibility = SHADER_VISIBILITY_PIXEL)"
+    "StaticSampler(s0, filter = FILTER_ANISOTROPIC, maxAnisotropy = 16, visibility = SHADER_VISIBILITY_PIXEL)"
 
 struct EntityIndex {
     uint index;
