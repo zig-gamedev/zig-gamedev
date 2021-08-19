@@ -83,6 +83,8 @@ pub fn build(b: *std.build.Builder) void {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
+    exe.want_lto = false;
+
     exe.addPackagePath("win32", "../../libs/win32/win32.zig");
     exe.addPackagePath("graphics", "../../libs/common/graphics.zig");
     exe.addPackagePath("vectormath", "../../libs/common/vectormath.zig");
