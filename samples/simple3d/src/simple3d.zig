@@ -132,7 +132,6 @@ const DemoState = struct {
     const window_width = 1920;
     const window_height = 1080;
 
-    window: w.HWND,
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
@@ -333,7 +332,6 @@ const DemoState = struct {
         return .{
             .grfx = grfx,
             .gui = gui,
-            .window = window,
             .frame_stats = lib.FrameStats.init(),
             .pipeline = pipeline,
             .vertex_buffer = buffers.vertex,
@@ -386,7 +384,7 @@ const DemoState = struct {
             const object_to_camera = mat4.mul(
                 mat4.initRotationY(@floatCast(f32, 0.5 * demo.frame_stats.time)),
                 mat4.initLookAtLh(
-                    vec3.init(3.0, 3.0, -3.0),
+                    vec3.init(2.2, 2.2, -2.2),
                     vec3.init(0.0, 0.0, 0.0),
                     vec3.init(0.0, 1.0, 0.0),
                 ),

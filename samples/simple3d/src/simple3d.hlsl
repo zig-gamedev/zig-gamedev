@@ -40,5 +40,7 @@ void psTriangle(
     float2 texcoords0 : _Texcoords0,
     out float4 out_color : SV_Target0
 ) {
-    out_color = srv_t1.Sample(sam_s0, texcoords0);
+    float3 n = normalize(normal);
+    float3 color = 2.0 * abs(n) * srv_t1.Sample(sam_s0, texcoords0).rgb;
+    out_color = float4(color, 1.0);
 }
