@@ -283,7 +283,16 @@ pub const GraphicsContext = struct {
                 ));
                 device.CreateRenderTargetView(
                     swapbuffers[buffer_index],
-                    null,
+                    &w.D3D12_RENDER_TARGET_VIEW_DESC{
+                        .Format = .R8G8B8A8_UNORM, // TODO(mziulek): .R8G8B8A8_UNORM_SRGB?
+                        .ViewDimension = .TEXTURE2D,
+                        .u = .{
+                            .Texture2D = .{
+                                .MipSlice = 0,
+                                .PlaneSlice = 0,
+                            },
+                        },
+                    },
                     rtv_heap.allocateDescriptors(1).cpu_handle,
                 );
                 swapchain_buffers[buffer_index] = resource_pool.addResource(
@@ -1111,9 +1120,9 @@ pub const GraphicsContext = struct {
 
             if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat8bppGray))) break :blk 1;
             if (eql(u8, asBytes(&pixel_format), asBytes(&w.GUID_WICPixelFormat8bppAlpha))) break :blk 1;
-            break :blk 0;
+
+            unreachable;
         };
-        assert(num_components != 0);
 
         const wic_format = if (num_components == 1)
             &w.GUID_WICPixelFormat8bppGray
@@ -1265,6 +1274,7 @@ pub const GuiContext = struct {
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
             };
+            pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
             break :blk gr.createGraphicsShaderPipeline(
                 allocator,
                 &pso_desc,

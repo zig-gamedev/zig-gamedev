@@ -173,6 +173,7 @@ const DemoState = struct {
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
             };
+            pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
             break :blk grfx.createGraphicsShaderPipeline(
                 allocator,
                 &pso_desc,
