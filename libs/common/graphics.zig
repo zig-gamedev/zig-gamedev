@@ -25,7 +25,7 @@ pub const GraphicsContext = struct {
     const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
     const num_cbv_srv_uav_gpu_descriptors = 4 * 1024;
     const max_num_buffered_resource_barriers = 16;
-    const upload_heap_capacity = 8 * 1024 * 1024;
+    const upload_heap_capacity = 18 * 1024 * 1024;
 
     device: *w.ID3D12Device9,
     cmdqueue: *w.ID3D12CommandQueue,
@@ -1146,7 +1146,7 @@ pub const GraphicsContext = struct {
         const texture = try gr.createCommittedResource(
             .DEFAULT,
             w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initTex2d(image_wh.w, image_wh.h, dxgi_format, num_mip_levels),
+            &w.D3D12_RESOURCE_DESC.initTex2d(dxgi_format, image_wh.w, image_wh.h, num_mip_levels),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
         );
@@ -1234,7 +1234,7 @@ pub const GuiContext = struct {
         const font = gr.createCommittedResource(
             .DEFAULT,
             w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initTex2d(font_info.width, font_info.height, .R8G8B8A8_UNORM, 1),
+            &w.D3D12_RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, font_info.width, font_info.height, 1),
             w.D3D12_RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err);
@@ -1468,7 +1468,7 @@ pub const MipmapGenerator = struct {
                 .DEFAULT,
                 w.D3D12_HEAP_FLAG_NONE,
                 &blk: {
-                    var desc = w.D3D12_RESOURCE_DESC.initTex2d(width, height, format, 1);
+                    var desc = w.D3D12_RESOURCE_DESC.initTex2d(format, width, height, 1);
                     desc.Flags = w.D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
                     break :blk desc;
                 },

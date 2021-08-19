@@ -137,10 +137,18 @@ const DemoState = struct {
     gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
     pipeline: gr.PipelineHandle,
+
     vertex_buffer: gr.ResourceHandle,
     index_buffer: gr.ResourceHandle,
     entity_buffer: gr.ResourceHandle,
+
+    base_color_texture: gr.ResourceHandle,
+    depth_texture: gr.ResourceHandle,
+
     entity_buffer_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+    base_color_texture_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+    depth_texture_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
+
     brush: *w.ID2D1SolidColorBrush,
     textformat: *w.IDWriteTextFormat,
     num_mesh_vertices: u32,
@@ -160,8 +168,7 @@ const DemoState = struct {
             };
             var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC.initDefault();
             pso_desc.RasterizerState.CullMode = .NONE;
-            pso_desc.RasterizerState.FillMode = .WIREFRAME;
-            pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+            pso_desc.DSVFormat = .D32_FLOAT;
             pso_desc.InputLayout = .{
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
@@ -216,11 +223,36 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
+        var mipgen = gr.MipmapGenerator.init(allocator, &grfx, .R8G8B8A8_UNORM);
+
         grfx.beginFrame();
 
         var gui = gr.GuiContext.init(allocator, &grfx);
 
-        //_ = try grfx.createAndUploadTex2dFromFile(utf8ToUtf16LeStringLiteral("aa")[0..], 1);
+        const base_color_texture = grfx.createAndUploadTex2dFromFile(
+            utf8ToUtf16LeStringLiteral("content/SciFiHelmet/SciFiHelmet_BaseColor.png"),
+            0, // Create complete mipmap chain (up to 1x1).
+        ) catch |err| hrPanic(err);
+
+        mipgen.generateMipmaps(&grfx, base_color_texture);
+
+        const base_color_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(grfx.getResource(base_color_texture), null, base_color_texture_srv);
+
+        const depth_texture = grfx.createCommittedResource(
+            .DEFAULT,
+            w.D3D12_HEAP_FLAG_NONE,
+            &blk: {
+                var desc = w.D3D12_RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+                desc.Flags = w.D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | w.D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+                break :blk desc;
+            },
+            w.D3D12_RESOURCE_STATE_DEPTH_WRITE,
+            &w.D3D12_CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+        ) catch |err| hrPanic(err);
+
+        const depth_texture_srv = grfx.allocateCpuDescriptors(.DSV, 1);
+        grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_srv);
 
         const buffers = blk: {
             var indices = std.ArrayList(u32).init(allocator);
@@ -290,9 +322,12 @@ const DemoState = struct {
 
         grfx.addTransitionBarrier(buffers.vertex, w.D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         grfx.addTransitionBarrier(buffers.index, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        grfx.addTransitionBarrier(base_color_texture, w.D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         grfx.flushResourceBarriers();
 
         grfx.finishGpuCommands();
+
+        mipgen.deinit(&grfx);
 
         return .{
             .grfx = grfx,
@@ -303,7 +338,11 @@ const DemoState = struct {
             .vertex_buffer = buffers.vertex,
             .index_buffer = buffers.index,
             .entity_buffer = entity_buffer,
+            .base_color_texture = base_color_texture,
+            .depth_texture = depth_texture,
             .entity_buffer_srv = entity_buffer_srv,
+            .base_color_texture_srv = base_color_texture_srv,
+            .depth_texture_srv = depth_texture_srv,
             .brush = brush,
             .textformat = textformat,
             .num_mesh_vertices = buffers.num_vertices,
@@ -318,6 +357,8 @@ const DemoState = struct {
         _ = demo.grfx.releaseResource(demo.vertex_buffer);
         _ = demo.grfx.releaseResource(demo.index_buffer);
         _ = demo.grfx.releaseResource(demo.entity_buffer);
+        _ = demo.grfx.releaseResource(demo.base_color_texture);
+        _ = demo.grfx.releaseResource(demo.depth_texture);
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit(allocator);
@@ -342,7 +383,7 @@ const DemoState = struct {
 
         {
             const object_to_camera = mat4.mul(
-                mat4.initRotationY(@floatCast(f32, demo.frame_stats.time)),
+                mat4.initRotationY(@floatCast(f32, 0.5 * demo.frame_stats.time)),
                 mat4.initLookAtLh(
                     vec3.init(3.0, 3.0, -3.0),
                     vec3.init(0.0, 0.0, 0.0),
@@ -380,7 +421,7 @@ const DemoState = struct {
             1,
             &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
             w.TRUE,
-            null,
+            &demo.depth_texture_srv,
         );
         grfx.cmdlist.ClearRenderTargetView(
             back_buffer.descriptor_handle,
@@ -388,6 +429,7 @@ const DemoState = struct {
             0,
             null,
         );
+        grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_srv, w.D3D12_CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
         grfx.setCurrentPipeline(demo.pipeline);
         grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
         grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]w.D3D12_VERTEX_BUFFER_VIEW{.{
@@ -400,6 +442,7 @@ const DemoState = struct {
             .SizeInBytes = demo.num_mesh_indices * @sizeOf(u32),
             .Format = .R32_UINT,
         });
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(2, grfx.copyDescriptorsToGpuHeap(1, demo.base_color_texture_srv));
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.entity_buffer_srv));
         grfx.cmdlist.SetGraphicsRoot32BitConstant(0, 0, 0);
         grfx.cmdlist.DrawIndexedInstanced(demo.num_mesh_indices, 1, 0, 0, 0);

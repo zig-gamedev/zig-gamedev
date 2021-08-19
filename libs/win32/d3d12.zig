@@ -162,7 +162,7 @@ pub const D3D12_RESOURCE_DESC = extern struct {
         return v;
     }
 
-    pub fn initTex2d(width: UINT64, height: UINT, format: DXGI_FORMAT, mip_levels: u32) D3D12_RESOURCE_DESC {
+    pub fn initTex2d(format: DXGI_FORMAT, width: UINT64, height: UINT, mip_levels: u32) D3D12_RESOURCE_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .Dimension = .TEXTURE2D,
