@@ -7,6 +7,68 @@ usingnamespace @import("d2d1_1.zig");
 usingnamespace @import("d2d1_2.zig");
 usingnamespace @import("dxgi.zig");
 
+pub const D2D1_INK_NIB_SHAPE = enum(UINT) {
+    ROUND = 0,
+    SQUARE = 1,
+};
+
+pub const D2D1_INK_POINT = extern struct {
+    x: FLOAT,
+    y: FLOAT,
+    radius: FLOAT,
+};
+
+pub const D2D1_INK_BEZIER_SEGMENT = extern struct {
+    point1: D2D1_INK_POINT,
+    point2: D2D1_INK_POINT,
+    point3: D2D1_INK_POINT,
+};
+
+pub const D2D1_INK_STYLE_PROPERTIES = extern struct {
+    nibShape: D2D1_INK_NIB_SHAPE,
+    nibTransform: D2D1_MATRIX_3X2_F,
+};
+
+pub const ID2D1Ink = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        resource: ID2D1Resource.VTable(Self),
+        ink: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID2D1Resource.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn SetStartPoint(self: *T, point: *const D2D1_INK_POINT) void {
+                self.v.ink.SetStartPoint(self, point);
+            }
+            pub inline fn GetStartPoint(self: *T) D2D1_INK_POINT {
+                var point: D2D1_INK_POINT = undefined;
+                self.v.ink.GetStartPoint(self, &point);
+                return point;
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            SetStartPoint: fn (*T, *const D2D1_INK_POINT) callconv(WINAPI) void,
+            GetStartPoint: fn (*T, *D2D1_INK_POINT) callconv(WINAPI) *D2D1_INK_POINT,
+            AddSegments: *c_void,
+            RemoveSegmentsAtEnd: *c_void,
+            SetSegments: *c_void,
+            SetSegmentAtEnd: *c_void,
+            GetSegmentCount: *c_void,
+            GetSegments: *c_void,
+            StreamAsGeometry: *c_void,
+            GetBounds: *c_void,
+        };
+    }
+};
+
 pub const ID2D1DeviceContext2 = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -25,14 +87,16 @@ pub const ID2D1DeviceContext2 = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn CreateInk(self: *T, start_point: *const D2D1_INK_POINT, ink: *?*ID2D1Ink) HRESULT {
+                return self.devctx2.CreateInk(self, start_point, ink);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            CreateInk: *c_void,
+            CreateInk: fn (*T, *const D2D1_INK_POINT, *?*ID2D1Ink) callconv(WINAPI) HRESULT,
             CreateInkStyle: *c_void,
             CreateGradientMesh: *c_void,
             CreateImageSourceFromWic: *c_void,
