@@ -5,6 +5,39 @@ usingnamespace @import("dcommon.zig");
 const IDWriteTextFormat = @import("dwrite.zig").IDWriteTextFormat;
 const assert = std.debug.assert;
 
+pub const D2D1_CAP_STYLE = enum(UINT) {
+    FLAT = 0,
+    SQUARE = 1,
+    ROUND = 2,
+    TRIANGLE = 3,
+};
+
+pub const D2D1_DASH_STYLE = enum(UINT) {
+    SOLID = 0,
+    DASH = 1,
+    DOT = 2,
+    DASH_DOT = 3,
+    DASH_DOT_DOT = 4,
+    CUSTOM = 5,
+};
+
+pub const D2D1_LINE_JOIN = enum(UINT) {
+    MITER = 0,
+    BEVEL = 1,
+    ROUND = 2,
+    MITER_OR_BEVEL = 3,
+};
+
+pub const D2D1_STROKE_STYLE_PROPERTIES = extern struct {
+    startCap: D2D1_CAP_STYLE,
+    endCap: D2D1_CAP_STYLE,
+    dashCap: D2D1_CAP_STYLE,
+    lineJoin: D2D1_LINE_JOIN,
+    miterLimit: FLOAT,
+    dashStyle: D2D1_DASH_STYLE,
+    dashOffset: FLOAT,
+};
+
 pub const ID2D1Resource = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -467,6 +500,61 @@ pub const ID2D1TransformedGeometry = extern struct {
     }
 };
 
+pub const D2D1_FIGURE_BEGIN = enum(UINT) {
+    FILLED = 0,
+    HOLLOW = 1,
+};
+
+pub const D2D1_FIGURE_END = enum(UINT) {
+    OPEN = 0,
+    CLOSED = 1,
+};
+
+pub const D2D1_BEZIER_SEGMENT = extern struct {
+    point1: D2D1_POINT_2F,
+    point2: D2D1_POINT_2F,
+    point3: D2D1_POINT_2F,
+};
+
+pub const D2D1_TRIANGLE = extern struct {
+    point1: D2D1_POINT_2F,
+    point2: D2D1_POINT_2F,
+    point3: D2D1_POINT_2F,
+};
+
+pub const D2D1_PATH_SEGMENT = UINT;
+pub const D2D1_PATH_SEGMENT_NONE = 0x00000000;
+pub const D2D1_PATH_SEGMENT_FORCE_UNSTROKED = 0x00000001;
+pub const D2D1_PATH_SEGMENT_FORCE_ROUND_LINE_JOIN = 0x00000002;
+
+pub const D2D1_SWEEP_DIRECTION = enum(UINT) {
+    COUNTER_CLOCKWISE = 0,
+    CLOCKWISE = 1,
+};
+
+pub const D2D1_FILL_MODE = enum(UINT) {
+    ALTERNATE = 0,
+    WINDING = 1,
+};
+
+pub const D2D1_ARC_SIZE = enum(UINT) {
+    SMALL = 0,
+    LARGE = 1,
+};
+
+pub const D2D1_ARC_SEGMENT = extern struct {
+    point: D2D1_POINT_2F,
+    size: D2D1_SIZE_F,
+    rotationAngle: FLOAT,
+    sweepDirection: D2D1_SWEEP_DIRECTION,
+    arcSize: D2D1_ARC_SIZE,
+};
+
+pub const D2D1_QUADRATIC_BEZIER_SEGMENT = extern struct {
+    point1: D2D1_POINT_2F,
+    point2: D2D1_POINT_2F,
+};
+
 pub const ID2D1SimplifiedGeometrySink = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -477,20 +565,40 @@ pub const ID2D1SimplifiedGeometrySink = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn SetFillMode(self: *T, mode: D2D1_FILL_MODE) void {
+                self.v.simgeosink.SetFillMode(self, mode);
+            }
+            pub inline fn SetSegmentFlags(self: *T, flags: D2D1_PATH_SEGMENT) void {
+                self.v.simgeosink.SetSegmentFlags(self, flags);
+            }
+            pub inline fn BeginFigure(self: *T, point: D2D1_POINT_2F, begin: D2D1_FIGURE_BEGIN) void {
+                self.v.simgeosink.BeginFigure(self, point, begin);
+            }
+            pub inline fn AddLines(self: *T, points: [*]const D2D1_POINT_2F, count: UINT32) void {
+                self.v.simgeosink.AddLines(self, points, count);
+            }
+            pub inline fn AddBeziers(self: *T, segments: [*]const D2D1_BEZIER_SEGMENT, count: UINT32) void {
+                self.v.simgeosink.AddBeziers(self, segments, count);
+            }
+            pub inline fn EndFigure(self: *T, end: D2D1_FIGURE_END) void {
+                self.v.simgeosink.EndFigure(self, end);
+            }
+            pub inline fn Close(self: *T) HRESULT {
+                return self.v.simgeosink.Close(self);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            SetFillMode: *c_void,
-            SetSegmentFlags: *c_void,
-            BeginFigure: *c_void,
-            AddLines: *c_void,
-            AddBeziers: *c_void,
-            EndFigure: *c_void,
-            Close: *c_void,
+            SetFillMode: fn (*T, D2D1_FILL_MODE) callconv(WINAPI) void,
+            SetSegmentFlags: fn (*T, D2D1_PATH_SEGMENT) callconv(WINAPI) void,
+            BeginFigure: fn (*T, D2D1_POINT_2F, D2D1_FIGURE_BEGIN) callconv(WINAPI) void,
+            AddLines: fn (*T, [*]const D2D1_POINT_2F, UINT32) callconv(WINAPI) void,
+            AddBeziers: fn (*T, [*]const D2D1_BEZIER_SEGMENT, UINT32) callconv(WINAPI) void,
+            EndFigure: fn (*T, D2D1_FIGURE_END) callconv(WINAPI) void,
+            Close: fn (*T) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -507,18 +615,32 @@ pub const ID2D1GeometrySink = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn AddLine(self: *T, point: D2D1_POINT_2F) void {
+                self.v.geosink.AddLine(self, point);
+            }
+            pub inline fn AddBezier(self: *T, segment: *const D2D1_BEZIER_SEGMENT) void {
+                self.v.geosink.AddBezier(self, segment);
+            }
+            pub inline fn AddQuadraticBezier(self: *T, segment: *const D2D1_QUADRATIC_BEZIER_SEGMENT) void {
+                self.v.geosink.AddQuadraticBezier(self, segment);
+            }
+            pub inline fn AddQuadraticBeziers(self: *T, segments: [*]const D2D1_QUADRATIC_BEZIER_SEGMENT, count: UINT32) void {
+                self.v.geosink.AddQuadraticBeziers(self, segments, count);
+            }
+            pub inline fn AddArc(self: *T, segment: *const D2D1_ARC_SEGMENT) void {
+                self.v.geosink.AddArc(self, segment);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            AddLine: *c_void,
-            AddBezier: *c_void,
-            AddQuadraticBezier: *c_void,
-            AddQuadraticBeziers: *c_void,
-            AddArc: *c_void,
+            AddLine: fn (*T, D2D1_POINT_2F) callconv(WINAPI) void,
+            AddBezier: fn (*T, *const D2D1_BEZIER_SEGMENT) callconv(WINAPI) void,
+            AddQuadraticBezier: fn (*T, *const D2D1_QUADRATIC_BEZIER_SEGMENT) callconv(WINAPI) void,
+            AddQuadraticBeziers: fn (*T, [*]const D2D1_QUADRATIC_BEZIER_SEGMENT, UINT32) callconv(WINAPI) void,
+            AddArc: fn (*T, *const D2D1_ARC_SEGMENT) callconv(WINAPI) void,
         };
     }
 };
@@ -560,17 +682,25 @@ pub const ID2D1PathGeometry = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn Open(self: *T, sink: *?*ID2D1GeometrySink) HRESULT {
+                return self.v.pathgeo.Open(self, sink);
+            }
+            pub inline fn GetSegmentCount(self: *T, count: *UINT32) HRESULT {
+                return self.v.pathgeo.GetSegmentCount(self, count);
+            }
+            pub inline fn GetFigureCount(self: *T, count: *UINT32) HRESULT {
+                return self.v.pathgeo.GetFigureCount(self, count);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            Open: *c_void,
+            Open: fn (*T, *?*ID2D1GeometrySink) callconv(WINAPI) HRESULT,
             Stream: *c_void,
-            GetSegmentCount: *c_void,
-            GetFigureCount: *c_void,
+            GetSegmentCount: fn (*T, *UINT32) callconv(WINAPI) HRESULT,
+            GetFigureCount: fn (*T, *UINT32) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -661,6 +791,12 @@ pub const D2D1_ELLIPSE = extern struct {
     radiusY: FLOAT,
 };
 
+pub const D2D1_ROUNDED_RECT = extern struct {
+    rect: D2D1_RECT_F,
+    radiusX: FLOAT,
+    radiusY: FLOAT,
+};
+
 pub const D2D1_BITMAP_INTERPOLATION_MODE = enum(UINT) {
     NEAREST_NEIGHBOR = 0,
     LINEAR = 1,
@@ -706,11 +842,53 @@ pub const ID2D1RenderTarget = extern struct {
             ) void {
                 self.v.rendertarget.DrawLine(self, p0, p1, brush, width, style);
             }
+            pub inline fn DrawRectangle(
+                self: *T,
+                rect: *const D2D1_RECT_F,
+                brush: *ID2D1Brush,
+                width: FLOAT,
+                stroke: ?*ID2D1StrokeStyle,
+            ) void {
+                self.v.rendertarget.DrawRectangle(self, rect, brush, width, stroke);
+            }
             pub inline fn FillRectangle(self: *T, rect: *const D2D1_RECT_F, brush: *ID2D1Brush) void {
                 self.v.rendertarget.FillRectangle(self, rect, brush);
             }
+            pub inline fn DrawRoundedRectangle(
+                self: *T,
+                rect: *const D2D1_ROUNDED_RECT,
+                brush: *ID2D1Brush,
+                width: FLOAT,
+                stroke: ?*ID2D1StrokeStyle,
+            ) void {
+                self.v.rendertarget.DrawRoundedRectangle(self, rect, brush, width, stroke);
+            }
+            pub inline fn FillRoundedRectangle(self: *T, rect: *const D2D1_ROUNDED_RECT, brush: *ID2D1Brush) void {
+                self.v.rendertarget.FillRoundedRectangle(self, rect, brush);
+            }
+            pub inline fn DrawEllipse(
+                self: *T,
+                ellipse: *const D2D1_ELLIPSE,
+                brush: *ID2D1Brush,
+                width: FLOAT,
+                stroke: ?*ID2D1StrokeStyle,
+            ) void {
+                self.v.rendertarget.DrawEllipse(self, ellipse, brush, width, stroke);
+            }
             pub inline fn FillEllipse(self: *T, ellipse: *const D2D1_ELLIPSE, brush: *ID2D1Brush) void {
                 self.v.rendertarget.FillEllipse(self, ellipse, brush);
+            }
+            pub inline fn DrawGeometry(
+                self: *T,
+                geo: *ID2D1Geometry,
+                brush: *ID2D1Brush,
+                width: FLOAT,
+                stroke: ?*ID2D1StrokeStyle,
+            ) void {
+                self.v.rendertarget.DrawGeometry(self, geo, brush, width, stroke);
+            }
+            pub inline fn FillGeometry(self: *T, geo: *ID2D1Geometry, brush: *ID2D1Brush, opacity_brush: ?*ID2D1Brush) void {
+                self.v.rendertarget.FillGeometry(self, geo, brush, opacity_brush);
             }
             pub inline fn DrawBitmap(
                 self: *T,
@@ -805,14 +983,20 @@ pub const ID2D1RenderTarget = extern struct {
                 FLOAT,
                 ?*ID2D1StrokeStyle,
             ) callconv(WINAPI) void,
-            DrawRectangle: *c_void,
+            DrawRectangle: fn (*T, *const D2D1_RECT_F, *ID2D1Brush, FLOAT, ?*ID2D1StrokeStyle) callconv(WINAPI) void,
             FillRectangle: fn (*T, *const D2D1_RECT_F, *ID2D1Brush) callconv(WINAPI) void,
-            DrawRoundedRectangle: *c_void,
-            FillRoundedRectangle: *c_void,
-            DrawEllipse: *c_void,
+            DrawRoundedRectangle: fn (
+                *T,
+                *const D2D1_ROUNDED_RECT,
+                *ID2D1Brush,
+                FLOAT,
+                ?*ID2D1StrokeStyle,
+            ) callconv(WINAPI) void,
+            FillRoundedRectangle: fn (*T, *const D2D1_ROUNDED_RECT, *ID2D1Brush) callconv(WINAPI) void,
+            DrawEllipse: fn (*T, *const D2D1_ELLIPSE, *ID2D1Brush, FLOAT, ?*ID2D1StrokeStyle) callconv(WINAPI) void,
             FillEllipse: fn (*T, *const D2D1_ELLIPSE, *ID2D1Brush) callconv(WINAPI) void,
-            DrawGeometry: *c_void,
-            FillGeometry: *c_void,
+            DrawGeometry: fn (*T, *ID2D1Geometry, *ID2D1Brush, FLOAT, ?*ID2D1StrokeStyle) callconv(WINAPI) void,
+            FillGeometry: fn (*T, *ID2D1Geometry, *ID2D1Brush, ?*ID2D1Brush) callconv(WINAPI) void,
             FillMesh: *c_void,
             FillOpacityMask: *c_void,
             DrawBitmap: fn (
@@ -876,22 +1060,56 @@ pub const ID2D1Factory = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn CreateRectangleGeometry(self: *T, rect: *const D2D1_RECT_F, geo: *?*ID2D1RectangleGeometry) HRESULT {
+                return self.v.factory.CreateRectangleGeometry(self, rect, geo);
+            }
+            pub inline fn CreateRoundedRectangleGeometry(
+                self: *T,
+                rect: *const D2D1_ROUNDED_RECT,
+                geo: *?*ID2D1RoundedRectangleGeometry,
+            ) HRESULT {
+                return self.v.factory.CreateRoundedRectangleGeometry(self, rect, geo);
+            }
+            pub inline fn CreateEllipseGeometry(self: *T, ellipse: *const D2D1_ELLIPSE, geo: *?*ID2D1EllipseGeometry) HRESULT {
+                return self.v.factory.CreateEllipseGeometry(self, ellipse, geo);
+            }
+            pub inline fn CreatePathGeometry(self: *T, geo: *?*ID2D1PathGeometry) HRESULT {
+                return self.v.factory.CreatePathGeometry(self, geo);
+            }
+            pub inline fn CreateStrokeStyle(
+                self: *T,
+                properties: *const D2D1_STROKE_STYLE_PROPERTIES,
+                dashes: [*]const FLOAT,
+                dashes_count: UINT32,
+                stroke_style: *?*ID2D1StrokeStyle,
+            ) HRESULT {
+                return self.v.factory.CreateStrokeStyle(self, properties, dashes, dashes_count, stroke_style);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
             ReloadSystemMetrics: *c_void,
             GetDesktopDpi: *c_void,
-            CreateRectangleGeometry: *c_void,
-            CreateRoundedRectangleGeometry: *c_void,
-            CreateEllipseleGeometry: *c_void,
+            CreateRectangleGeometry: fn (*T, *const D2D1_RECT_F, *?*ID2D1RectangleGeometry) callconv(WINAPI) HRESULT,
+            CreateRoundedRectangleGeometry: fn (
+                *T,
+                *const D2D1_ROUNDED_RECT,
+                *?*ID2D1RoundedRectangleGeometry,
+            ) callconv(WINAPI) HRESULT,
+            CreateEllipseGeometry: fn (*T, *const D2D1_ELLIPSE, *?*ID2D1EllipseGeometry) callconv(WINAPI) HRESULT,
             CreateGeometryGroup: *c_void,
             CreateTransformedGeometry: *c_void,
-            CreatePathGeometry: *c_void,
-            CreateStrokeStyle: *c_void,
+            CreatePathGeometry: fn (*T, *?*ID2D1PathGeometry) callconv(WINAPI) HRESULT,
+            CreateStrokeStyle: fn (
+                *T,
+                *const D2D1_STROKE_STYLE_PROPERTIES,
+                [*]const FLOAT,
+                UINT32,
+                *?*ID2D1StrokeStyle,
+            ) callconv(WINAPI) HRESULT,
             CreateDrawingStateBlock: *c_void,
             CreateWicBitmapRenderTarget: *c_void,
             CreateHwndRenderTarget: *c_void,
