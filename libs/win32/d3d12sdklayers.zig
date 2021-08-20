@@ -178,6 +178,64 @@ pub const ID3D12Debug5 = extern struct {
     }
 };
 
+pub const ID3D12InfoQueue = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        info: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn SetMuteDebugOutput(self: *T, mute: BOOL) void {
+                self.v.info.SetMuteDebugOutput(self, mute);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            SetMessageCountLimit: *c_void,
+            ClearStoredMessages: *c_void,
+            GetMessage: *c_void,
+            GetNumMessagesAllowedByStorageFilter: *c_void,
+            GetNumMessagesDeniedByStorageFilter: *c_void,
+            GetNumStoredMessages: *c_void,
+            GetNumStoredMessagesAllowedByRetrievalFilter: *c_void,
+            GetNumMessagesDiscardedByMessageCountLimit: *c_void,
+            GetMessageCountLimit: *c_void,
+            AddStorageFilterEntries: *c_void,
+            GetStorageFilter: *c_void,
+            ClearStorageFilter: *c_void,
+            PushEmptyStorageFilter: *c_void,
+            PushCopyOfStorageFilter: *c_void,
+            PushStorageFilter: *c_void,
+            PopStorageFilter: *c_void,
+            GetStorageFilterStackSize: *c_void,
+            AddRetrievalFilterEntries: *c_void,
+            GetRetrievalFilter: *c_void,
+            ClearRetrievalFilter: *c_void,
+            PushEmptyRetrievalFilter: *c_void,
+            PushCopyOfRetrievalFilter: *c_void,
+            PushRetrievalFilter: *c_void,
+            PopRetrievalFilter: *c_void,
+            GetRetrievalFilterStackSize: *c_void,
+            AddMessage: *c_void,
+            AddApplicationMessage: *c_void,
+            SetBreakOnCategory: *c_void,
+            SetBreakOnSeverity: *c_void,
+            SetBreakOnID: *c_void,
+            GetBreakOnCategory: *c_void,
+            GetBreakOnSeverity: *c_void,
+            GetBreakOnID: *c_void,
+            SetMuteDebugOutput: fn (*T, BOOL) callconv(WINAPI) void,
+            GetMuteDebugOutput: *c_void,
+        };
+    }
+};
+
 pub const IID_ID3D12Debug = GUID{
     .Data1 = 0x344488b7,
     .Data2 = 0x6846,
@@ -213,4 +271,10 @@ pub const IID_ID3D12Debug5 = GUID{
     .Data2 = 0x09fa,
     .Data3 = 0x40e0,
     .Data4 = .{ 0x90, 0x69, 0x5d, 0xcd, 0x58, 0x9a, 0x52, 0xc9 },
+};
+pub const IID_ID3D12InfoQueue = GUID{
+    .Data1 = 0x0742a90b,
+    .Data2 = 0xc387,
+    .Data3 = 0x483f,
+    .Data4 = .{ 0xb9, 0x46, 0x30, 0xa7, 0xe4, 0xe6, 0x14, 0x58 },
 };

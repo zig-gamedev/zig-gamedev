@@ -107,7 +107,7 @@ const DemoState = struct {
         );
         grfx.cmdlist.ClearRenderTargetView(
             back_buffer.descriptor_handle,
-            &[4]f32{ 0.2, 0.4, 0.8, 1.0 },
+            &[4]f32{ 0.0, 0.0, 0.0, 0.0 },
             0,
             null,
         );
@@ -124,7 +124,7 @@ const DemoState = struct {
                 .{ stats.fps, stats.average_cpu_time },
             ) catch unreachable;
 
-            demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
+            demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
             grfx.d2d.context.DrawTextSimple(
                 text,
                 demo.textformat,
@@ -134,6 +134,11 @@ const DemoState = struct {
                     .right = @intToFloat(f32, grfx.viewport_width),
                     .bottom = @intToFloat(f32, grfx.viewport_height),
                 },
+                @ptrCast(*w.ID2D1Brush, demo.brush),
+            );
+
+            grfx.d2d.context.FillEllipse(
+                &.{ .point = .{ .x = 1100.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
                 @ptrCast(*w.ID2D1Brush, demo.brush),
             );
         }

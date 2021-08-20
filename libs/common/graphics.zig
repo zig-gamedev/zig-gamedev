@@ -531,7 +531,13 @@ pub const GraphicsContext = struct {
         gr.d2d.context.BeginDraw();
     }
 
+    var info_queue: *w.ID3D12InfoQueue = undefined;
+
     pub fn endDraw2d(gr: *GraphicsContext) void {
+        if (comptime builtin.mode == .Debug) {
+            hrPanicOnFail(gr.device.QueryInterface(&w.IID_ID3D12InfoQueue, @ptrCast(*?*c_void, &info_queue)));
+            info_queue.SetMuteDebugOutput(w.TRUE);
+        }
         hrPanicOnFail(gr.d2d.context.EndDraw(null, null));
 
         gr.d2d.device11on12.ReleaseWrappedResources(
@@ -539,6 +545,11 @@ pub const GraphicsContext = struct {
             1,
         );
         gr.d2d.context11.Flush();
+
+        if (comptime builtin.mode == .Debug) {
+            info_queue.SetMuteDebugOutput(w.FALSE);
+            _ = info_queue.Release();
+        }
 
         // Above calls will set back buffer state to PRESENT. We need to reflect this change
         // in 'resource_pool' by manually setting state.
