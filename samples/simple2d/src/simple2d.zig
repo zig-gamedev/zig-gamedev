@@ -216,6 +216,7 @@ fn drawShapes(demo: DemoState) void {
     grfx.d2d.context.FillGeometry(@ptrCast(*w.ID2D1Geometry, demo.ellipse), @ptrCast(*w.ID2D1Brush, demo.brush), null);
     grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
 
+    demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.2, .g = 0.4, .b = 0.8, .a = 1.0 });
     var i: u32 = 0;
     while (i < 5) : (i += 1) {
         grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(0.0, @intToFloat(f32, i) * 50.0));
@@ -269,7 +270,7 @@ fn draw(demo: *DemoState) void {
     );
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.0, 0.0, 0.0, 0.0 },
+        &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
         null,
     );

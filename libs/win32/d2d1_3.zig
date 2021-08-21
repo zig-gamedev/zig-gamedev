@@ -50,6 +50,34 @@ pub const ID2D1Ink = extern struct {
                 self.v.ink.GetStartPoint(self, &point);
                 return point;
             }
+            pub inline fn AddSegments(self: *T, segments: [*]const D2D1_INK_BEZIER_SEGMENT, count: UINT32) HRESULT {
+                return self.v.ink.AddSegments(self, segments, count);
+            }
+            pub inline fn RemoveSegmentsAtEnd(self: *T, count: UINT32) HRESULT {
+                return self.v.ink.RemoveSegmentsAtEnd(self, count);
+            }
+            pub inline fn SetSegments(
+                self: *T,
+                start_segment: UINT32,
+                segments: [*]const D2D1_INK_BEZIER_SEGMENT,
+                count: UINT32,
+            ) HRESULT {
+                return self.v.ink.SetSegments(self, start_segment, segments, count);
+            }
+            pub inline fn SetSegmentAtEnd(self: *T, segment: *const D2D1_INK_BEZIER_SEGMENT) HRESULT {
+                return self.v.ink.SetSegmentAtEnd(self, segment);
+            }
+            pub inline fn GetSegmentCount(self: *T) UINT32 {
+                return self.v.ink.GetSegmentCount(self);
+            }
+            pub inline fn GetSegments(
+                self: *T,
+                start_segment: UINT32,
+                segments: [*]const D2D1_INK_BEZIER_SEGMENT,
+                count: UINT32,
+            ) HRESULT {
+                return self.v.ink.GetSegments(self, start_segment, segments, count);
+            }
         };
     }
 
@@ -57,12 +85,12 @@ pub const ID2D1Ink = extern struct {
         return extern struct {
             SetStartPoint: fn (*T, *const D2D1_INK_POINT) callconv(WINAPI) void,
             GetStartPoint: fn (*T, *D2D1_INK_POINT) callconv(WINAPI) *D2D1_INK_POINT,
-            AddSegments: *c_void,
-            RemoveSegmentsAtEnd: *c_void,
-            SetSegments: *c_void,
-            SetSegmentAtEnd: *c_void,
-            GetSegmentCount: *c_void,
-            GetSegments: *c_void,
+            AddSegments: fn (*T, [*]const D2D1_INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
+            RemoveSegmentsAtEnd: fn (*T, UINT32) callconv(WINAPI) HRESULT,
+            SetSegments: fn (*T, UINT32, [*]const D2D1_INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
+            SetSegmentAtEnd: fn (*T, *const D2D1_INK_BEZIER_SEGMENT) callconv(WINAPI) HRESULT,
+            GetSegmentCount: fn (*T) callconv(WINAPI) UINT32,
+            GetSegments: fn (*T, UINT32, [*]const D2D1_INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
             StreamAsGeometry: *c_void,
             GetBounds: *c_void,
         };
@@ -125,6 +153,9 @@ pub const ID2D1DeviceContext2 = extern struct {
             ) HRESULT {
                 return self.v.devctx2.CreateInkStyle(self, properties, ink_style);
             }
+            pub inline fn DrawInk(self: *T, ink: *w.ID2D1Ink, brush: *w.ID2D1Brush, style: ?*w.ID2D1InkStyle) void {
+                return self.v.devctx2.DrawInk(self, ink, brush, style);
+            }
         };
     }
 
@@ -137,7 +168,7 @@ pub const ID2D1DeviceContext2 = extern struct {
             CreateLookupTable3D: *c_void,
             CreateImageSourceFromDxgi: *c_void,
             GetGradientMeshWorldBounds: *c_void,
-            DrawInk: *c_void,
+            DrawInk: fn (*T, *ID2D1Ink, *ID2D1Brush, ?*ID2D1InkStyle) callconv(WINAPI) void,
             DrawGradientMesh: *c_void,
             DrawGdiMetafile1: *c_void,
             CreateTransformedImageSource: *c_void,
