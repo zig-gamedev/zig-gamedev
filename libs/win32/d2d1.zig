@@ -1080,7 +1080,7 @@ pub const ID2D1Factory = extern struct {
             pub inline fn CreateStrokeStyle(
                 self: *T,
                 properties: *const D2D1_STROKE_STYLE_PROPERTIES,
-                dashes: [*]const FLOAT,
+                dashes: ?[*]const FLOAT,
                 dashes_count: UINT32,
                 stroke_style: *?*ID2D1StrokeStyle,
             ) HRESULT {
@@ -1106,7 +1106,7 @@ pub const ID2D1Factory = extern struct {
             CreateStrokeStyle: fn (
                 *T,
                 *const D2D1_STROKE_STYLE_PROPERTIES,
-                [*]const FLOAT,
+                ?[*]const FLOAT,
                 UINT32,
                 *?*ID2D1StrokeStyle,
             ) callconv(WINAPI) HRESULT,
