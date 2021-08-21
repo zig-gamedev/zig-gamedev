@@ -69,6 +69,33 @@ pub const ID2D1Ink = extern struct {
     }
 };
 
+pub const ID2D1InkStyle = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        resource: ID2D1Resource.VTable(Self),
+        inkstyle: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace ID2D1Resource.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            SetNibTransform: *c_void,
+            GetNibTransform: *c_void,
+            SetNibShape: *c_void,
+            GetNibShape: *c_void,
+        };
+    }
+};
+
 pub const ID2D1DeviceContext2 = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -89,7 +116,14 @@ pub const ID2D1DeviceContext2 = extern struct {
     pub fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn CreateInk(self: *T, start_point: *const D2D1_INK_POINT, ink: *?*ID2D1Ink) HRESULT {
-                return self.devctx2.CreateInk(self, start_point, ink);
+                return self.v.devctx2.CreateInk(self, start_point, ink);
+            }
+            pub inline fn CreateInkStyle(
+                self: *T,
+                properties: ?*const D2D1_INK_STYLE_PROPERTIES,
+                ink_style: *?*ID2D1InkStyle,
+            ) HRESULT {
+                return self.v.devctx2.CreateInkStyle(self, properties, ink_style);
             }
         };
     }
@@ -97,7 +131,7 @@ pub const ID2D1DeviceContext2 = extern struct {
     pub fn VTable(comptime T: type) type {
         return extern struct {
             CreateInk: fn (*T, *const D2D1_INK_POINT, *?*ID2D1Ink) callconv(WINAPI) HRESULT,
-            CreateInkStyle: *c_void,
+            CreateInkStyle: fn (*T, ?*const D2D1_INK_STYLE_PROPERTIES, *?*ID2D1InkStyle) callconv(WINAPI) HRESULT,
             CreateGradientMesh: *c_void,
             CreateImageSourceFromWic: *c_void,
             CreateLookupTable3D: *c_void,

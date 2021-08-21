@@ -26,6 +26,8 @@ const DemoState = struct {
     ellipse: *w.ID2D1EllipseGeometry,
     stroke_style: *w.ID2D1StrokeStyle,
     path: *w.ID2D1PathGeometry,
+    ink: *w.ID2D1Ink,
+    ink_style: *w.ID2D1InkStyle,
 };
 
 fn init(allocator: *std.mem.Allocator) DemoState {
@@ -113,6 +115,22 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         sink.EndFigure(.OPEN);
         break :blk path;
     };
+    const ink_style = blk: {
+        var ink_style: *w.ID2D1InkStyle = undefined;
+        hrPanicOnFail(grfx.d2d.context.CreateInkStyle(
+            &.{ .nibShape = .ROUND, .nibTransform = w.D2D1_MATRIX_3X2_F.initIdentity() },
+            @ptrCast(*?*w.ID2D1InkStyle, &ink_style),
+        ));
+        break :blk ink_style;
+    };
+    const ink = blk: {
+        var ink: *w.ID2D1Ink = undefined;
+        hrPanicOnFail(grfx.d2d.context.CreateInk(
+            &.{ .x = 0.0, .y = 0.0, .radius = 0.0 },
+            @ptrCast(*?*w.ID2D1Ink, &ink),
+        ));
+        break :blk ink;
+    };
 
     grfx.beginFrame();
 
@@ -129,6 +147,8 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         .ellipse = ellipse,
         .stroke_style = stroke_style,
         .path = path,
+        .ink_style = ink_style,
+        .ink = ink,
     };
 }
 
@@ -205,8 +225,8 @@ fn drawShapes(demo: DemoState) void {
             15.0,
             null,
         );
-        grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
     }
+    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
 }
 
 fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
@@ -216,6 +236,8 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.ellipse.Release();
     _ = demo.stroke_style.Release();
     _ = demo.path.Release();
+    _ = demo.ink.Release();
+    _ = demo.ink_style.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit(allocator);
     c.igDestroyContext(null);
