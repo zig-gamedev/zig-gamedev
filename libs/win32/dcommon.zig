@@ -111,6 +111,26 @@ pub const D2D_SIZE_U = extern struct {
 
 pub const D2D_MATRIX_3X2_F = extern struct {
     m: [3][2]FLOAT,
+
+    pub fn initTranslation(x: FLOAT, y: FLOAT) D2D_MATRIX_3X2_F {
+        return .{
+            .m = [_][2]FLOAT{
+                [2]FLOAT{ 1.0, 0.0 },
+                [2]FLOAT{ 0.0, 1.0 },
+                [2]FLOAT{ x, y },
+            },
+        };
+    }
+
+    pub fn initIdentity() D2D_MATRIX_3X2_F {
+        return .{
+            .m = [_][2]FLOAT{
+                [2]FLOAT{ 1.0, 0.0 },
+                [2]FLOAT{ 0.0, 1.0 },
+                [2]FLOAT{ 0.0, 0.0 },
+            },
+        };
+    }
 };
 
 pub const D2D_MATRIX_4X3_F = extern struct {

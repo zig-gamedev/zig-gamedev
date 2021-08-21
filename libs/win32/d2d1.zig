@@ -921,6 +921,9 @@ pub const ID2D1RenderTarget = extern struct {
                     measuring_mode,
                 );
             }
+            pub inline fn SetTransform(self: *T, m: *const D2D1_MATRIX_3X2_F) void {
+                self.v.rendertarget.SetTransform(self, m);
+            }
             pub inline fn Clear(self: *T, color: ?*const D2D1_COLOR_F) void {
                 self.v.rendertarget.Clear(self, color);
             }

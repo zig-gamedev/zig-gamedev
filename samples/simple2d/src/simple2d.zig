@@ -25,6 +25,7 @@ const DemoState = struct {
     textformat: *w.IDWriteTextFormat,
     ellipse: *w.ID2D1EllipseGeometry,
     stroke_style: *w.ID2D1StrokeStyle,
+    path: *w.ID2D1PathGeometry,
 };
 
 fn init(allocator: *std.mem.Allocator) DemoState {
@@ -85,6 +86,33 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         ));
         break :blk maybe_stroke_style.?;
     };
+    const path = blk: {
+        var path: *w.ID2D1PathGeometry = undefined;
+        hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*w.ID2D1PathGeometry, &path)));
+
+        var sink: *w.ID2D1GeometrySink = undefined;
+        hrPanicOnFail(path.Open(@ptrCast(*?*w.ID2D1GeometrySink, &sink)));
+        defer {
+            hrPanicOnFail(sink.Close());
+            _ = sink.Release();
+        }
+        sink.BeginFigure(.{ .x = 500.0, .y = 400.0 }, .FILLED);
+        sink.AddLine(.{ .x = 600.0, .y = 300.0 });
+        sink.AddLine(.{ .x = 700.0, .y = 400.0 });
+        sink.AddLine(.{ .x = 800.0, .y = 300.0 });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 850.0, .y = 350.0 },
+            .point2 = .{ .x = 850.0, .y = 350.0 },
+            .point3 = .{ .x = 900.0, .y = 300.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 920.0, .y = 280.0 },
+            .point2 = .{ .x = 950.0, .y = 320.0 },
+            .point3 = .{ .x = 1000.0, .y = 300.0 },
+        });
+        sink.EndFigure(.OPEN);
+        break :blk path;
+    };
 
     grfx.beginFrame();
 
@@ -100,16 +128,13 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         .textformat = textformat,
         .ellipse = ellipse,
         .stroke_style = stroke_style,
+        .path = path,
     };
 }
 
 fn drawShapes(demo: DemoState) void {
     var grfx = &demo.grfx;
 
-    grfx.d2d.context.FillEllipse(
-        &.{ .point = .{ .x = 1100.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
-        @ptrCast(*w.ID2D1Brush, demo.brush),
-    );
     grfx.d2d.context.DrawLine(
         .{ .x = 20.0, .y = 200.0 },
         .{ .x = 120.0, .y = 300.0 },
@@ -131,6 +156,57 @@ fn drawShapes(demo: DemoState) void {
         33.0,
         demo.stroke_style,
     );
+
+    grfx.d2d.context.DrawRectangle(
+        &.{ .left = 500.0, .top = 100.0, .right = 600.0, .bottom = 200.0 },
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+        5.0,
+        null,
+    );
+    grfx.d2d.context.FillRectangle(
+        &.{ .left = 610.0, .top = 100.0, .right = 710.0, .bottom = 200.0 },
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+    );
+    grfx.d2d.context.FillRoundedRectangle(
+        &.{
+            .rect = .{ .left = 830.0, .top = 100.0, .right = 930.0, .bottom = 200.0 },
+            .radiusX = 20.0,
+            .radiusY = 20.0,
+        },
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+    );
+
+    grfx.d2d.context.DrawEllipse(
+        &.{ .point = .{ .x = 990.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+        5.0,
+        null,
+    );
+    grfx.d2d.context.FillEllipse(
+        &.{ .point = .{ .x = 1100.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+    );
+    grfx.d2d.context.DrawGeometry(
+        @ptrCast(*w.ID2D1Geometry, demo.ellipse),
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+        7.0,
+        null,
+    );
+    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(110.0, 0.0));
+    grfx.d2d.context.FillGeometry(@ptrCast(*w.ID2D1Geometry, demo.ellipse), @ptrCast(*w.ID2D1Brush, demo.brush), null);
+    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
+
+    var i: u32 = 0;
+    while (i < 5) : (i += 1) {
+        grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(0.0, @intToFloat(f32, i) * 50.0));
+        grfx.d2d.context.DrawGeometry(
+            @ptrCast(*w.ID2D1Geometry, demo.path),
+            @ptrCast(*w.ID2D1Brush, demo.brush),
+            15.0,
+            null,
+        );
+        grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
+    }
 }
 
 fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
@@ -139,6 +215,7 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.textformat.Release();
     _ = demo.ellipse.Release();
     _ = demo.stroke_style.Release();
+    _ = demo.path.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit(allocator);
     c.igDestroyContext(null);
