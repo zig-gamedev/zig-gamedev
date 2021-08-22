@@ -29,8 +29,9 @@ const DemoState = struct {
     path: *w.ID2D1PathGeometry,
     ink: *w.ID2D1Ink,
     ink_style: *w.ID2D1InkStyle,
+    bezier_lines_path: *w.ID2D1PathGeometry,
 
-    control_points: std.ArrayList(w.D2D1_POINT_2F),
+    points: std.ArrayList(w.D2D1_POINT_2F),
 };
 
 fn init(allocator: *std.mem.Allocator) DemoState {
@@ -39,7 +40,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
 
-    var control_points = std.ArrayList(w.D2D1_POINT_2F).init(allocator);
+    var points = std.ArrayList(w.D2D1_POINT_2F).init(allocator);
 
     const brush = blk: {
         var maybe_brush: ?*w.ID2D1SolidColorBrush = null;
@@ -135,26 +136,43 @@ fn init(allocator: *std.mem.Allocator) DemoState {
             @ptrCast(*?*w.ID2D1Ink, &ink),
         ));
 
-        const p0 = w.D2D1_POINT_2F{ .x = 500.0, .y = 800.0 };
+        const p0 = w.D2D1_POINT_2F{ .x = 0.0, .y = 0.0 };
+        points.append(p0) catch unreachable;
         ink.SetStartPoint(&.{ .x = p0.x, .y = p0.y, .radius = 12.5 });
         const sp = ink.GetStartPoint();
         assert(sp.x == p0.x and sp.y == p0.y and sp.radius == 12.5);
         assert(ink.GetSegmentCount() == 0);
 
         {
-            const p1 = w.D2D1_POINT_2F{ .x = 700.0, .y = 800.0 };
+            const p1 = w.D2D1_POINT_2F{ .x = 200.0, .y = 0.0 };
             const cp1 = w.D2D1_POINT_2F{ .x = p0.x - 40.0, .y = p0.y + 140.0 };
             const cp2 = w.D2D1_POINT_2F{ .x = p1.x + 40.0, .y = p1.y - 140.0 };
-            control_points.append(cp1) catch unreachable;
-            control_points.append(cp2) catch unreachable;
+            points.append(cp1) catch unreachable;
+            points.append(cp2) catch unreachable;
             hrPanicOnFail(ink.AddSegments(&[_]w.D2D1_INK_BEZIER_SEGMENT{.{
                 .point1 = .{ .x = cp1.x, .y = cp1.y, .radius = 12.5 },
                 .point2 = .{ .x = cp2.x, .y = cp2.y, .radius = 12.5 },
                 .point3 = .{ .x = p1.x, .y = p1.y, .radius = 1.0 },
             }}, 1));
+            points.append(p1) catch unreachable;
         }
 
         break :blk ink;
+    };
+    const bezier_lines_path = blk: {
+        var bezier_lines_path: *w.ID2D1PathGeometry = undefined;
+        hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*w.ID2D1PathGeometry, &bezier_lines_path)));
+
+        var sink: *w.ID2D1GeometrySink = undefined;
+        hrPanicOnFail(bezier_lines_path.Open(@ptrCast(*?*w.ID2D1GeometrySink, &sink)));
+        defer {
+            hrPanicOnFail(sink.Close());
+            _ = sink.Release();
+        }
+        sink.BeginFigure(.{ .x = 0.0, .y = 0.0 }, .FILLED);
+        sink.AddLines(points.items.ptr + 1, @intCast(u32, points.items.len - 1));
+        sink.EndFigure(.OPEN);
+        break :blk bezier_lines_path;
     };
 
     grfx.beginFrame();
@@ -174,7 +192,8 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         .path = path,
         .ink_style = ink_style,
         .ink = ink,
-        .control_points = control_points,
+        .points = points,
+        .bezier_lines_path = bezier_lines_path,
     };
 }
 
@@ -255,15 +274,29 @@ fn drawShapes(demo: DemoState) void {
     }
     grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
 
+    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(500.0, 800.0));
     grfx.d2d.context.DrawInk(demo.ink, @ptrCast(*w.ID2D1Brush, demo.brush), demo.ink_style);
 
+    demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+    grfx.d2d.context.DrawGeometry(
+        @ptrCast(*w.ID2D1Geometry, demo.bezier_lines_path),
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+        3.0,
+        null,
+    );
+
     demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.8, .g = 0.0, .b = 0.0, .a = 1.0 });
-    for (demo.control_points.items) |cp| {
+    for (demo.points.items) |cp| {
         grfx.d2d.context.FillEllipse(
-            &.{ .point = cp, .radiusX = 12.5, .radiusY = 12.5 },
+            &.{ .point = cp, .radiusX = 9.0, .radiusY = 9.0 },
             @ptrCast(*w.ID2D1Brush, demo.brush),
         );
     }
+
+    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(800.0, 800.0));
+    grfx.d2d.context.DrawInk(demo.ink, @ptrCast(*w.ID2D1Brush, demo.brush), demo.ink_style);
+
+    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
 }
 
 fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
@@ -275,7 +308,8 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.path.Release();
     _ = demo.ink.Release();
     _ = demo.ink_style.Release();
-    demo.control_points.deinit();
+    _ = demo.bezier_lines_path.Release();
+    demo.points.deinit();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit(allocator);
     c.igDestroyContext(null);
