@@ -30,6 +30,7 @@ const DemoState = struct {
     ink: *w.ID2D1Ink,
     ink_style: *w.ID2D1InkStyle,
     bezier_lines_path: *w.ID2D1PathGeometry,
+    noise_path: *w.ID2D1PathGeometry,
 
     ink_points: std.ArrayList(w.D2D1_POINT_2F),
 };
@@ -189,6 +190,32 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         sink.EndFigure(.OPEN);
         break :blk bezier_lines_path;
     };
+    const noise_path = blk: {
+        var points = std.ArrayList(w.D2D1_POINT_2F).init(allocator);
+        defer points.deinit();
+
+        var i: u32 = 0;
+        while (i < 100) : (i += 1) {
+            const frac = @intToFloat(f32, (i + 1)) / 100.0;
+            const y = 150.0 * c.stb_perlin_fbm_noise3(4.0 * frac, 0.0, 0.0, 2.0, 0.5, 2);
+            points.append(.{ .x = 400.0 * frac, .y = y }) catch unreachable;
+        }
+        points.append(.{ .x = 400.0, .y = 100.0 }) catch unreachable;
+
+        var noise_path: *w.ID2D1PathGeometry = undefined;
+        hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*w.ID2D1PathGeometry, &noise_path)));
+
+        var sink: *w.ID2D1GeometrySink = undefined;
+        hrPanicOnFail(noise_path.Open(@ptrCast(*?*w.ID2D1GeometrySink, &sink)));
+        defer {
+            hrPanicOnFail(sink.Close());
+            _ = sink.Release();
+        }
+        sink.BeginFigure(.{ .x = 0.0, .y = 100.0 }, .FILLED);
+        sink.AddLines(points.items.ptr, @intCast(u32, points.items.len));
+        sink.EndFigure(.CLOSED);
+        break :blk noise_path;
+    };
 
     grfx.beginFrame();
 
@@ -209,6 +236,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         .ink = ink,
         .ink_points = ink_points,
         .bezier_lines_path = bezier_lines_path,
+        .noise_path = noise_path,
     };
 }
 
@@ -287,7 +315,6 @@ fn drawShapes(demo: DemoState) void {
             null,
         );
     }
-    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
 
     grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(500.0, 800.0));
     grfx.d2d.context.DrawInk(demo.ink, @ptrCast(*w.ID2D1Brush, demo.brush), demo.ink_style);
@@ -311,6 +338,22 @@ fn drawShapes(demo: DemoState) void {
     grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(750.0, 900.0));
     grfx.d2d.context.DrawInk(demo.ink, @ptrCast(*w.ID2D1Brush, demo.brush), demo.ink_style);
 
+    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(1000.0, 600.0));
+
+    demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.2, .g = 0.4, .b = 0.8, .a = 1.0 });
+    grfx.d2d.context.FillGeometry(
+        @ptrCast(*w.ID2D1Geometry, demo.noise_path),
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+        null,
+    );
+    demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.8, .g = 0.0, .b = 0.0, .a = 1.0 });
+    grfx.d2d.context.DrawGeometry(
+        @ptrCast(*w.ID2D1Geometry, demo.noise_path),
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+        8.0,
+        null,
+    );
+
     grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
 }
 
@@ -324,6 +367,7 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.ink.Release();
     _ = demo.ink_style.Release();
     _ = demo.bezier_lines_path.Release();
+    _ = demo.noise_path.Release();
     demo.ink_points.deinit();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit(allocator);

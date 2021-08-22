@@ -3,4 +3,5 @@ pub usingnamespace @cImport({
     @cDefine("CIMGUI_NO_EXPORT", "");
     @cInclude("cimgui/cimgui.h");
     @cInclude("cgltf.h");
+    @cInclude("stb_perlin.h");
 });
