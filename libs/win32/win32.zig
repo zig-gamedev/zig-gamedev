@@ -19,3 +19,4 @@ pub usingnamespace @import("d3d11.zig");
 pub usingnamespace @import("d3d11on12.zig");
 pub usingnamespace @import("dwrite.zig");
 pub usingnamespace @import("wincodec.zig");
+pub usingnamespace @import("mmdeviceapi.zig");
