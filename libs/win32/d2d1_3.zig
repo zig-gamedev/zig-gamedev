@@ -47,7 +47,7 @@ pub const ID2D1Ink = extern struct {
             }
             pub inline fn GetStartPoint(self: *T) D2D1_INK_POINT {
                 var point: D2D1_INK_POINT = undefined;
-                self.v.ink.GetStartPoint(self, &point);
+                _ = self.v.ink.GetStartPoint(self, &point);
                 return point;
             }
             pub inline fn AddSegments(self: *T, segments: [*]const D2D1_INK_BEZIER_SEGMENT, count: UINT32) HRESULT {
@@ -153,7 +153,7 @@ pub const ID2D1DeviceContext2 = extern struct {
             ) HRESULT {
                 return self.v.devctx2.CreateInkStyle(self, properties, ink_style);
             }
-            pub inline fn DrawInk(self: *T, ink: *w.ID2D1Ink, brush: *w.ID2D1Brush, style: ?*w.ID2D1InkStyle) void {
+            pub inline fn DrawInk(self: *T, ink: *ID2D1Ink, brush: *ID2D1Brush, style: ?*ID2D1InkStyle) void {
                 return self.v.devctx2.DrawInk(self, ink, brush, style);
             }
         };
