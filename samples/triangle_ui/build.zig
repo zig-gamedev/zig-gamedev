@@ -32,15 +32,15 @@ pub fn build(b: *std.build.Builder) void {
     const shader_dir = "content/shaders/";
     const shader_ver = "6_6";
 
-    hlsl_command[1] = "src/triangle1.hlsl";
-    hlsl_command[2] = "/E vsTriangle";
-    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle1.vs.cso";
+    hlsl_command[1] = "src/triangle_ui.hlsl";
+    hlsl_command[2] = "/E vsMain";
+    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle_ui.vs.cso";
     hlsl_command[4] = "/T vs_" ++ shader_ver;
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 
-    hlsl_command[1] = "src/triangle1.hlsl";
-    hlsl_command[2] = "/E psTriangle";
-    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle1.ps.cso";
+    hlsl_command[1] = "src/triangle_ui.hlsl";
+    hlsl_command[2] = "/E psMain";
+    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle_ui.ps.cso";
     hlsl_command[4] = "/T ps_" ++ shader_ver;
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 
@@ -68,7 +68,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("triangle1", "src/triangle1.zig");
+    const exe = b.addExecutable("triangle_ui", "src/triangle_ui.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
@@ -76,6 +76,8 @@ pub fn build(b: *std.build.Builder) void {
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
+
+    exe.want_lto = false;
 
     exe.addPackagePath("win32", "../../libs/win32/win32.zig");
     exe.addPackagePath("graphics", "../../libs/common/graphics.zig");
