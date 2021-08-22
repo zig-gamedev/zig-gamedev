@@ -255,7 +255,7 @@ fn drawShapes(demo: DemoState) void {
     }
     grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
 
-    grfx.d2d.context.DrawInk(demo.ink, @ptrCast(*w.ID2D1Brush, demo.brush), null);
+    grfx.d2d.context.DrawInk(demo.ink, @ptrCast(*w.ID2D1Brush, demo.brush), demo.ink_style);
 
     demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.8, .g = 0.0, .b = 0.0, .a = 1.0 });
     for (demo.control_points.items) |cp| {
