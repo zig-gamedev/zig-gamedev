@@ -24,14 +24,22 @@ pub const IMMDevice = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn Activate(
+                self: *T,
+                guid: *const GUID,
+                clsctx: DWORD,
+                params: ?*PROPVARIANT,
+                iface: *?*c_void,
+            ) HRESULT {
+                return self.v.device.Activate(self, guid, clsctx, params, iface);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
-            Activate: *c_void,
+            Activate: fn (*T, *const GUID, DWORD, ?*PROPVARIANT, *?*c_void) callconv(WINAPI) HRESULT,
             OpenPropertyStore: *c_void,
             GetId: *c_void,
             GetState: *c_void,
@@ -49,15 +57,17 @@ pub const IMMDeviceEnumerator = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn GetDefaultAudioEndpoint(self: *T, flow: EDataFlow, role: ERole, endpoint: *?*IMMDevice) HRESULT {
+                return self.v.devenum.GetDefaultAudioEndpoint(self, flow, role, endpoint);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
             EnumAudioEndpoints: *c_void,
-            GetDefaultAudioEndpoint: *c_void,
+            GetDefaultAudioEndpoint: fn (*T, EDataFlow, ERole, *?*IMMDevice) callconv(WINAPI) HRESULT,
             GetDevice: *c_void,
             RegisterEndpointNotificationCallback: *c_void,
             UnregisterEndpointNotificationCallback: *c_void,

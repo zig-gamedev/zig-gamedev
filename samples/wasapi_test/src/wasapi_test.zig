@@ -71,6 +71,42 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     };
     defer _ = audio_device_enumerator.Release();
 
+    const audio_device = blk: {
+        var audio_device: *w.IMMDevice = undefined;
+        hrPanicOnFail(audio_device_enumerator.GetDefaultAudioEndpoint(
+            .eRender,
+            .eConsole,
+            @ptrCast(*?*w.IMMDevice, &audio_device),
+        ));
+        break :blk audio_device;
+    };
+    defer _ = audio_device.Release();
+
+    const audio_client = blk: {
+        var audio_client: *w.IAudioClient3 = undefined;
+        hrPanicOnFail(audio_device.Activate(
+            &w.IID_IAudioClient3,
+            w.CLSCTX_INPROC_SERVER,
+            null,
+            @ptrCast(*?*c_void, &audio_client),
+        ));
+        break :blk audio_client;
+    };
+    defer _ = audio_client.Release();
+
+    var closest_format: ?*w.WAVEFORMATEX = null;
+    const wanted_format = w.WAVEFORMATEX{
+        .wFormatTag = w.WAVE_FORMAT_IEEE_FLOAT,
+        .nChannels = 2,
+        .nSamplesPerSec = 48_000,
+        .nAvgBytesPerSec = 48_000 * 8,
+        .nBlockAlign = 8,
+        .wBitsPerSample = 32,
+        .cbSize = 0,
+    };
+    hrPanicOnFail(audio_client.IsFormatSupported(.SHARED, &wanted_format, &closest_format));
+    assert(closest_format == null);
+
     grfx.beginFrame();
 
     var gui = gr.GuiContext.init(allocator, &grfx);

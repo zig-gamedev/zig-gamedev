@@ -20,3 +20,6 @@ pub usingnamespace @import("d3d11on12.zig");
 pub usingnamespace @import("dwrite.zig");
 pub usingnamespace @import("wincodec.zig");
 pub usingnamespace @import("mmdeviceapi.zig");
+pub usingnamespace @import("audioclient.zig");
+pub usingnamespace @import("audiosessiontypes.zig");
+pub usingnamespace @import("mmeapi.zig");

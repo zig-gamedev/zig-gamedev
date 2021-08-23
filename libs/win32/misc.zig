@@ -7,6 +7,8 @@ pub const UINT16 = c_ushort;
 pub const UINT32 = c_uint;
 pub const UINT64 = c_ulonglong;
 pub const HMONITOR = HANDLE;
+pub const PROPVARIANT = opaque {};
+pub const REFERENCE_TIME = c_longlong;
 pub const LUID = extern struct {
     LowPart: DWORD,
     HighPart: LONG,

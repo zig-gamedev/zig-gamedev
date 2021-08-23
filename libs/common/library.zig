@@ -12,6 +12,7 @@ pub const HResultError = error{
     E_INVALIDARG,
     E_NOTIMPL,
     E_FILE_NOT_FOUND,
+    E_NOINTERFACE,
     D3D12_ERROR_ADAPTER_NOT_FOUND,
     D3D12_ERROR_DRIVER_VERSION_MISMATCH,
     DXGI_ERROR_INVALID_CALL,
@@ -52,6 +53,7 @@ fn hrErrorToCode(err: HResultError) w.HRESULT {
         HResultError.E_INVALIDARG => w.E_INVALIDARG,
         HResultError.E_NOTIMPL => w.E_NOTIMPL,
         HResultError.E_FILE_NOT_FOUND => w.E_FILE_NOT_FOUND,
+        HResultError.E_NOINTERFACE => w.E_NOINTERFACE,
     };
 }
 
@@ -69,6 +71,7 @@ fn hrCodeToError(hr: w.HRESULT) HResultError {
         @bitCast(c_ulong, w.E_INVALIDARG) => HResultError.E_INVALIDARG,
         @bitCast(c_ulong, w.E_NOTIMPL) => HResultError.E_NOTIMPL,
         @bitCast(c_ulong, w.E_FILE_NOT_FOUND) => HResultError.E_FILE_NOT_FOUND,
+        @bitCast(c_ulong, w.E_NOINTERFACE) => HResultError.E_NOINTERFACE,
         else => blk: {
             std.debug.print("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
             break :blk HResultError.E_FAIL;
