@@ -2,7 +2,7 @@ const std = @import("std");
 usingnamespace std.os.windows;
 usingnamespace @import("misc.zig");
 usingnamespace @import("audiosessiontypes.zig");
-usingnamespace @import("mmeapi.zig");
+usingnamespace @import("mmreg.zig");
 
 pub const IAudioClient = extern struct {
     const Self = @This();

@@ -22,4 +22,4 @@ pub usingnamespace @import("wincodec.zig");
 pub usingnamespace @import("mmdeviceapi.zig");
 pub usingnamespace @import("audioclient.zig");
 pub usingnamespace @import("audiosessiontypes.zig");
-pub usingnamespace @import("mmeapi.zig");
+pub usingnamespace @import("mmreg.zig");
