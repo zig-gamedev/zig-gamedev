@@ -94,18 +94,33 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     };
     defer _ = audio_client.Release();
 
-    var closest_format: ?*w.WAVEFORMATEX = null;
-    const wanted_format = w.WAVEFORMATEX{
-        .wFormatTag = w.WAVE_FORMAT_IEEE_FLOAT,
-        .nChannels = 2,
-        .nSamplesPerSec = 48_000,
-        .nAvgBytesPerSec = 48_000 * 8,
-        .nBlockAlign = 8,
-        .wBitsPerSample = 32,
-        .cbSize = 0,
-    };
-    hrPanicOnFail(audio_client.IsFormatSupported(.SHARED, &wanted_format, &closest_format));
-    assert(closest_format == null);
+    // Initialize audio client interafce.
+    {
+        var closest_format: ?*w.WAVEFORMATEX = null;
+        const wanted_format = w.WAVEFORMATEX{
+            .wFormatTag = w.WAVE_FORMAT_IEEE_FLOAT,
+            .nChannels = 2,
+            .nSamplesPerSec = 48_000,
+            .nAvgBytesPerSec = 48_000 * 8,
+            .nBlockAlign = 8,
+            .wBitsPerSample = 32,
+            .cbSize = 0,
+        };
+        hrPanicOnFail(audio_client.IsFormatSupported(.SHARED, &wanted_format, &closest_format));
+        assert(closest_format == null);
+
+        var default_period: w.REFERENCE_TIME = 0;
+        hrPanicOnFail(audio_client.GetDevicePeriod(&default_period, null));
+
+        hrPanicOnFail(audio_client.Initialize(
+            .SHARED,
+            w.AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+            default_period,
+            0,
+            &wanted_format,
+            null,
+        ));
+    }
 
     grfx.beginFrame();
 
