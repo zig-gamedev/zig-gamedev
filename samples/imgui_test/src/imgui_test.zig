@@ -69,7 +69,7 @@ fn update(demo: *DemoState) void {
         var number: u32 = 0;
     };
 
-    c.igPushItemWidth(-120.0);
+    c.igPushItemWidth(c.igGetFontSize() * -12.0);
 
     c.igText("dear imgui says hello. (%s)", c.igGetVersion());
     c.igSpacing();
@@ -94,8 +94,6 @@ fn update(demo: *DemoState) void {
         c.igText("USER GUIDE:");
         c.igShowUserGuide();
     }
-
-    _ = c.ImGuiTableColumnSettings_ImGuiTableColumnSettings();
 
     c.igText("Number is %d", .{static.number});
     static.number += 1;
