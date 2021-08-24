@@ -122,70 +122,127 @@ pub const FrameStats = struct {
     }
 };
 
-// TODO(mziulek): We do not handle all keys for imgui (typing in color value in ColorPicker does not work).
 fn processWindowMessage(
     window: w.HWND,
     message: w.UINT,
     wparam: w.WPARAM,
     lparam: w.LPARAM,
 ) callconv(w.WINAPI) w.LRESULT {
-    var ui = if (c.igGetCurrentContext() != null) c.igGetIO() else null;
-    const processed = switch (message) {
-        w.user32.WM_LBUTTONDOWN => blk: {
-            if (ui != null) ui.?.*.MouseDown[0] = true;
-            break :blk true;
-        },
-        w.user32.WM_LBUTTONUP => blk: {
-            if (ui != null) ui.?.*.MouseDown[0] = false;
-            break :blk true;
-        },
-        w.user32.WM_RBUTTONDOWN => blk: {
-            if (ui != null) ui.?.*.MouseDown[1] = true;
-            break :blk true;
-        },
-        w.user32.WM_RBUTTONUP => blk: {
-            if (ui != null) ui.?.*.MouseDown[1] = false;
-            break :blk true;
-        },
-        w.user32.WM_MBUTTONDOWN => blk: {
-            if (ui != null) ui.?.*.MouseDown[2] = true;
-            break :blk true;
-        },
-        w.user32.WM_MBUTTONUP => blk: {
-            if (ui != null) ui.?.*.MouseDown[2] = false;
-            break :blk true;
-        },
-        w.user32.WM_MOUSEWHEEL => blk: {
-            if (ui != null) {
-                const get_wheel_delta_wparam = @intCast(u16, ((wparam >> 16) & 0xffff));
-                ui.?.*.MouseWheel += if ((get_wheel_delta_wparam & 0x8000) > 0) @as(f32, -1.0) else @as(f32, 1.0);
+    assert(c.igGetCurrentContext() != null);
+    var ui = c.igGetIO().?;
+    var ui_backend = @ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData));
+    switch (message) {
+        w.user32.WM_LBUTTONDOWN,
+        w.user32.WM_RBUTTONDOWN,
+        w.user32.WM_MBUTTONDOWN,
+        w.user32.WM_LBUTTONDBLCLK,
+        w.user32.WM_RBUTTONDBLCLK,
+        w.user32.WM_MBUTTONDBLCLK,
+        => {
+            var button: u32 = 0;
+            if (message == w.user32.WM_LBUTTONDOWN or message == w.user32.WM_LBUTTONDBLCLK) button = 0;
+            if (message == w.user32.WM_RBUTTONDOWN or message == w.user32.WM_RBUTTONDBLCLK) button = 1;
+            if (message == w.user32.WM_MBUTTONDOWN or message == w.user32.WM_MBUTTONDBLCLK) button = 2;
+            if (c.igIsAnyMouseDown() == false and w.GetCapture() == null) {
+                _ = w.SetCapture(window);
             }
-            break :blk true;
+            ui.*.MouseDown[button] = true;
         },
-        w.user32.WM_MOUSEMOVE => blk: {
-            if (ui != null) {
-                ui.?.*.MousePos.x = @intToFloat(f32, @bitCast(i16, @intCast(u16, lparam & 0xffff)));
-                ui.?.*.MousePos.y = @intToFloat(f32, @bitCast(i16, @intCast(u16, (lparam & 0xffff_0000) >> 16)));
+        w.user32.WM_LBUTTONUP,
+        w.user32.WM_RBUTTONUP,
+        w.user32.WM_MBUTTONUP,
+        => {
+            var button: u32 = 0;
+            if (message == w.user32.WM_LBUTTONUP) button = 0;
+            if (message == w.user32.WM_RBUTTONUP) button = 1;
+            if (message == w.user32.WM_MBUTTONUP) button = 2;
+            ui.*.MouseDown[button] = false;
+            if (c.igIsAnyMouseDown() == false and w.GetCapture() == window) {
+                _ = w.ReleaseCapture();
             }
-            break :blk true;
         },
-        w.user32.WM_DESTROY => blk: {
-            w.user32.PostQuitMessage(0);
-            break :blk true;
+        w.user32.WM_MOUSEWHEEL => {
+            ui.*.MouseWheel += @intToFloat(f32, w.GET_WHEEL_DELTA_WPARAM(wparam)) / @intToFloat(f32, w.WHEEL_DELTA);
         },
-        w.user32.WM_KEYDOWN => blk: {
+        w.user32.WM_MOUSEMOVE => {
+            ui_backend.*.mouse_window = window;
+            if (ui_backend.*.mouse_tracked == false) {
+                var tme = w.TRACKMOUSEEVENT{
+                    .cbSize = @sizeOf(w.TRACKMOUSEEVENT),
+                    .dwFlags = w.TME_LEAVE,
+                    .hwndTrack = window,
+                    .dwHoverTime = 0,
+                };
+                _ = w.TrackMouseEvent(&tme);
+                ui_backend.*.mouse_tracked = true;
+            }
+        },
+        w.user32.WM_MOUSELEAVE => {
+            if (ui_backend.*.mouse_window == window) {
+                ui_backend.*.mouse_window = null;
+            }
+            ui_backend.*.mouse_tracked = false;
+        },
+        w.user32.WM_KEYDOWN,
+        w.user32.WM_KEYUP,
+        w.user32.WM_SYSKEYDOWN,
+        w.user32.WM_SYSKEYUP,
+        => {
             if (wparam == w.VK_ESCAPE) {
                 w.user32.PostQuitMessage(0);
-                break :blk true;
             }
-            break :blk false;
+            const down = if (message == w.user32.WM_KEYDOWN or message == w.user32.WM_SYSKEYDOWN) true else false;
+            if (wparam < 256)
+                ui.*.KeysDown[wparam] = down;
+            if (wparam == w.VK_CONTROL)
+                ui.*.KeyCtrl = down;
+            if (wparam == w.VK_SHIFT)
+                ui.*.KeyShift = down;
+            if (wparam == w.VK_MENU)
+                ui.*.KeyAlt = down;
         },
-        else => false,
-    };
-    return if (processed) 0 else w.user32.DefWindowProcA(window, message, wparam, lparam);
+        w.user32.WM_SETFOCUS,
+        w.user32.WM_KILLFOCUS,
+        => {
+            c.ImGuiIO_AddFocusEvent(ui, if (message == w.user32.WM_SETFOCUS) true else false);
+        },
+        w.user32.WM_CHAR => {
+            if (wparam > 0 and wparam < 0x10000) {
+                c.ImGuiIO_AddInputCharacterUTF16(ui, @intCast(u16, wparam & 0xffff));
+            }
+        },
+        w.user32.WM_DESTROY => {
+            w.user32.PostQuitMessage(0);
+        },
+        else => {
+            return w.user32.defWindowProcA(window, message, wparam, lparam);
+        },
+    }
+    return 0;
 }
 
-pub fn initWindow(name: [*:0]const u8, width: u32, height: u32) !w.HWND {
+const GuiBackendState = struct {
+    window: ?w.HWND,
+    mouse_window: ?w.HWND,
+    mouse_tracked: bool,
+};
+
+pub fn initWindow(allocator: *std.mem.Allocator, name: [*:0]const u8, width: u32, height: u32) !w.HWND {
+    assert(c.igGetCurrentContext() == null);
+    _ = c.igCreateContext(null);
+
+    var io = c.igGetIO().?;
+    assert(io.*.BackendPlatformUserData == null);
+
+    const gui_backend = allocator.create(GuiBackendState) catch unreachable;
+    errdefer allocator.destroy(gui_backend);
+
+    gui_backend.*.window = null;
+    gui_backend.*.mouse_window = null;
+    gui_backend.*.mouse_tracked = false;
+
+    io.*.BackendPlatformUserData = gui_backend;
+
     const winclass = w.user32.WNDCLASSEXA{
         .style = 0,
         .lpfnWndProc = processWindowMessage,
@@ -209,7 +266,7 @@ pub fn initWindow(name: [*:0]const u8, width: u32, height: u32) !w.HWND {
     var rect = w.RECT{ .left = 0, .top = 0, .right = @intCast(i32, width), .bottom = @intCast(i32, height) };
     try w.user32.adjustWindowRectEx(&rect, style, false, 0);
 
-    return try w.user32.createWindowExA(
+    const window = try w.user32.createWindowExA(
         0,
         name,
         name,
@@ -223,4 +280,80 @@ pub fn initWindow(name: [*:0]const u8, width: u32, height: u32) !w.HWND {
         winclass.hInstance,
         null,
     );
+
+    var actual_rect: w.RECT = undefined;
+    _ = w.GetClientRect(window, &actual_rect);
+    const viewport_width = @intCast(u32, actual_rect.right - actual_rect.left);
+    const viewport_height = @intCast(u32, actual_rect.bottom - actual_rect.top);
+
+    io.*.KeyMap[c.ImGuiKey_Tab] = w.VK_TAB;
+    io.*.KeyMap[c.ImGuiKey_LeftArrow] = w.VK_LEFT;
+    io.*.KeyMap[c.ImGuiKey_RightArrow] = w.VK_RIGHT;
+    io.*.KeyMap[c.ImGuiKey_UpArrow] = w.VK_UP;
+    io.*.KeyMap[c.ImGuiKey_DownArrow] = w.VK_DOWN;
+    io.*.KeyMap[c.ImGuiKey_PageUp] = w.VK_PRIOR;
+    io.*.KeyMap[c.ImGuiKey_PageDown] = w.VK_NEXT;
+    io.*.KeyMap[c.ImGuiKey_Home] = w.VK_HOME;
+    io.*.KeyMap[c.ImGuiKey_End] = w.VK_END;
+    io.*.KeyMap[c.ImGuiKey_Delete] = w.VK_DELETE;
+    io.*.KeyMap[c.ImGuiKey_Backspace] = w.VK_BACK;
+    io.*.KeyMap[c.ImGuiKey_Enter] = w.VK_RETURN;
+    io.*.KeyMap[c.ImGuiKey_Escape] = w.VK_ESCAPE;
+    io.*.KeyMap[c.ImGuiKey_Space] = w.VK_SPACE;
+    io.*.KeyMap[c.ImGuiKey_Insert] = w.VK_INSERT;
+    io.*.KeyMap[c.ImGuiKey_A] = 'A';
+    io.*.KeyMap[c.ImGuiKey_C] = 'C';
+    io.*.KeyMap[c.ImGuiKey_V] = 'V';
+    io.*.KeyMap[c.ImGuiKey_X] = 'X';
+    io.*.KeyMap[c.ImGuiKey_Y] = 'Y';
+    io.*.KeyMap[c.ImGuiKey_Z] = 'Z';
+    io.*.ImeWindowHandle = window;
+    io.*.DisplaySize = .{ .x = @intToFloat(f32, viewport_width), .y = @intToFloat(f32, viewport_height) };
+    c.igGetStyle().?.*.WindowRounding = 0.0;
+
+    gui_backend.*.window = window;
+    gui_backend.*.mouse_window = null;
+    gui_backend.*.mouse_tracked = false;
+
+    return window;
+}
+
+pub fn deinitWindow(allocator: *std.mem.Allocator) void {
+    var io = c.igGetIO().?;
+    assert(io.*.BackendPlatformUserData != null);
+    allocator.destroy(@ptrCast(*GuiBackendState, @alignCast(8, io.*.BackendPlatformUserData)));
+    c.igDestroyContext(null);
+}
+
+pub fn updateWindow(delta_time: f32) void {
+    assert(c.igGetCurrentContext() != null);
+
+    var ui = c.igGetIO().?;
+    var ui_backend = @ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData));
+    assert(ui_backend.*.window != null);
+
+    ui.*.MousePos = c.ImVec2{ .x = -std.math.f32_max, .y = -std.math.f32_max };
+
+    const focused_window = w.GetForegroundWindow();
+    const hovered_window = ui_backend.*.mouse_window;
+    var mouse_window: ?w.HWND = null;
+    if (hovered_window != null and
+        (hovered_window == ui_backend.*.window or w.IsChild(hovered_window, ui_backend.*.window) == w.TRUE))
+    {
+        mouse_window = hovered_window;
+    } else if (focused_window != null and
+        (focused_window == ui_backend.*.window or w.IsChild(focused_window, ui_backend.*.window) == w.TRUE))
+    {
+        mouse_window = focused_window;
+    }
+
+    if (mouse_window != null) {
+        var pos: w.POINT = undefined;
+        if (w.GetCursorPos(&pos) == w.TRUE and w.ScreenToClient(mouse_window, &pos) == w.TRUE) {
+            ui.*.MousePos = c.ImVec2{ .x = @intToFloat(f32, pos.x), .y = @intToFloat(f32, pos.y) };
+        }
+    }
+
+    ui.*.DeltaTime = delta_time;
+    c.igNewFrame();
 }

@@ -14,6 +14,11 @@ pub const LUID = extern struct {
     HighPart: LONG,
 };
 
+pub const WHEEL_DELTA = 120;
+pub inline fn GET_WHEEL_DELTA_WPARAM(wparam: WPARAM) i16 {
+    return @bitCast(i16, @intCast(u16, ((wparam >> 16) & 0xffff)));
+}
+
 pub const IUnknown = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -57,6 +62,30 @@ pub extern "user32" fn SetWindowTextA(hWnd: ?HWND, lpString: LPCSTR) callconv(WI
 
 pub extern "user32" fn GetAsyncKeyState(vKey: c_int) callconv(WINAPI) SHORT;
 
+pub const TME_LEAVE = 0x00000002;
+pub const TRACKMOUSEEVENT = extern struct {
+    cbSize: DWORD,
+    dwFlags: DWORD,
+    hwndTrack: ?HWND,
+    dwHoverTime: DWORD,
+};
+pub extern "user32" fn TrackMouseEvent(event: *TRACKMOUSEEVENT) callconv(WINAPI) BOOL;
+
+pub extern "user32" fn SetCapture(hWnd: ?HWND) callconv(WINAPI) ?HWND;
+pub extern "user32" fn GetCapture() callconv(WINAPI) ?HWND;
+pub extern "user32" fn ReleaseCapture() callconv(WINAPI) BOOL;
+
+pub extern "user32" fn GetForegroundWindow() callconv(WINAPI) ?HWND;
+
+pub extern "user32" fn IsChild(hWndParent: ?HWND, hWnd: ?HWND) callconv(WINAPI) BOOL;
+
+pub extern "user32" fn GetCursorPos(point: *POINT) callconv(WINAPI) BOOL;
+
+pub extern "user32" fn ScreenToClient(
+    hWnd: ?HWND,
+    lpPoint: *POINT,
+) callconv(WINAPI) BOOL;
+
 pub const CLSCTX_INPROC_SERVER = 0x1;
 
 pub extern "ole32" fn CoCreateInstance(
@@ -83,6 +112,8 @@ pub const VK_RETURN = 0x0D;
 pub const VK_CONTROL = 0x11;
 pub const VK_SHIFT = 0x10;
 pub const VK_MENU = 0x12;
+pub const VK_SPACE = 0x20;
+pub const VK_INSERT = 0x2D;
 
 pub const E_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x80070002));
 pub const D3D12_ERROR_ADAPTER_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887E0001));

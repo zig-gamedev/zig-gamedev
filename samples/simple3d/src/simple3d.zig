@@ -154,9 +154,7 @@ const DemoState = struct {
     num_mesh_indices: u32,
 
     fn init(allocator: *std.mem.Allocator) DemoState {
-        _ = c.igCreateContext(null);
-
-        const window = lib.initWindow(window_name, window_width, window_height) catch unreachable;
+        const window = lib.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
         var grfx = gr.GraphicsContext.init(window);
 
         const pipeline = blk: {
@@ -361,14 +359,14 @@ const DemoState = struct {
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit(allocator);
-        c.igDestroyContext(null);
+        lib.deinitWindow(allocator);
         demo.* = undefined;
     }
 
     fn update(demo: *DemoState) void {
         demo.frame_stats.update();
 
-        gr.GuiContext.update(demo.frame_stats.delta_time);
+        lib.updateWindow(demo.frame_stats.delta_time);
 
         c.igShowDemoWindow(null);
     }
@@ -496,10 +494,13 @@ pub fn main() !void {
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
-        if (w.user32.PeekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) > 0) {
-            _ = w.user32.DispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT)
+        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch unreachable;
+        if (has_message) {
+            _ = w.user32.translateMessage(&message);
+            _ = w.user32.dispatchMessageA(&message);
+            if (message.message == w.user32.WM_QUIT) {
                 break;
+            }
         } else {
             demo.update();
             demo.draw();

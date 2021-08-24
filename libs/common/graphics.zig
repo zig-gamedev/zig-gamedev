@@ -1214,29 +1214,7 @@ pub const GuiContext = struct {
         assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
-        var io = c.igGetIO().?;
-        io.*.KeyMap[c.ImGuiKey_Tab] = w.VK_TAB;
-        io.*.KeyMap[c.ImGuiKey_LeftArrow] = w.VK_LEFT;
-        io.*.KeyMap[c.ImGuiKey_RightArrow] = w.VK_RIGHT;
-        io.*.KeyMap[c.ImGuiKey_UpArrow] = w.VK_UP;
-        io.*.KeyMap[c.ImGuiKey_DownArrow] = w.VK_DOWN;
-        io.*.KeyMap[c.ImGuiKey_PageUp] = w.VK_PRIOR;
-        io.*.KeyMap[c.ImGuiKey_PageDown] = w.VK_NEXT;
-        io.*.KeyMap[c.ImGuiKey_Home] = w.VK_HOME;
-        io.*.KeyMap[c.ImGuiKey_End] = w.VK_END;
-        io.*.KeyMap[c.ImGuiKey_Delete] = w.VK_DELETE;
-        io.*.KeyMap[c.ImGuiKey_Backspace] = w.VK_BACK;
-        io.*.KeyMap[c.ImGuiKey_Enter] = w.VK_RETURN;
-        io.*.KeyMap[c.ImGuiKey_Escape] = w.VK_ESCAPE;
-        io.*.KeyMap[c.ImGuiKey_A] = 'A';
-        io.*.KeyMap[c.ImGuiKey_C] = 'C';
-        io.*.KeyMap[c.ImGuiKey_V] = 'V';
-        io.*.KeyMap[c.ImGuiKey_X] = 'X';
-        io.*.KeyMap[c.ImGuiKey_Y] = 'Y';
-        io.*.KeyMap[c.ImGuiKey_Z] = 'Z';
-        io.*.ImeWindowHandle = gr.window;
-        io.*.DisplaySize = .{ .x = @intToFloat(f32, gr.viewport_width), .y = @intToFloat(f32, gr.viewport_height) };
-        c.igGetStyle().?.*.WindowRounding = 0.0;
+        const io = c.igGetIO().?;
 
         _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, "content/Roboto-Medium.ttf", 24.0, null, null);
         const font_info = blk: {
@@ -1312,16 +1290,6 @@ pub const GuiContext = struct {
         for (gui.vb) |vb| _ = gr.releaseResource(vb);
         for (gui.ib) |ib| _ = gr.releaseResource(ib);
         gui.* = undefined;
-    }
-
-    pub fn update(delta_time: f32) void {
-        assert(c.igGetCurrentContext() != null);
-        var io = c.igGetIO().?;
-        io.*.KeyCtrl = w.GetAsyncKeyState(w.VK_CONTROL) < 0;
-        io.*.KeyShift = w.GetAsyncKeyState(w.VK_SHIFT) < 0;
-        io.*.KeyAlt = w.GetAsyncKeyState(w.VK_MENU) < 0;
-        io.*.DeltaTime = delta_time;
-        c.igNewFrame();
     }
 
     pub fn draw(gui: *GuiContext, gr: *GraphicsContext) void {
