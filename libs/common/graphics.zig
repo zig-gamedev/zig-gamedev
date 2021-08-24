@@ -1271,7 +1271,6 @@ pub const GuiContext = struct {
                 "content/shaders/imgui.ps.cso",
             );
         };
-
         return GuiContext{
             .font = font,
             .font_srv = font_srv,
@@ -1309,7 +1308,7 @@ pub const GuiContext = struct {
 
         if (gr.getResourceSize(vb) < num_vertices * @sizeOf(c.ImDrawVert)) {
             _ = gr.releaseResource(vb);
-            const new_size = 2 * num_vertices * @sizeOf(c.ImDrawVert);
+            const new_size = (num_vertices + 5_000) * @sizeOf(c.ImDrawVert);
             vb = gr.createCommittedResource(
                 .UPLOAD,
                 w.D3D12_HEAP_FLAG_NONE,
@@ -1330,7 +1329,7 @@ pub const GuiContext = struct {
         }
         if (gr.getResourceSize(ib) < num_indices * @sizeOf(c.ImDrawIdx)) {
             _ = gr.releaseResource(ib);
-            const new_size = 2 * num_indices * @sizeOf(c.ImDrawIdx);
+            const new_size = (num_indices + 10_000) * @sizeOf(c.ImDrawIdx);
             ib = gr.createCommittedResource(
                 .UPLOAD,
                 w.D3D12_HEAP_FLAG_NONE,
@@ -1376,15 +1375,15 @@ pub const GuiContext = struct {
             }
         }
 
-        const display_px = draw_data.?.*.DisplayPos.x;
-        const display_py = draw_data.?.*.DisplayPos.y;
-        const display_width = draw_data.?.*.DisplaySize.x;
-        const display_height = draw_data.?.*.DisplaySize.y;
+        const display_x = draw_data.?.*.DisplayPos.x;
+        const display_y = draw_data.?.*.DisplayPos.y;
+        const display_w = draw_data.?.*.DisplaySize.x;
+        const display_h = draw_data.?.*.DisplaySize.y;
         gr.cmdlist.RSSetViewports(1, &[_]w.D3D12_VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
-            .Width = display_width,
-            .Height = display_height,
+            .Width = display_w,
+            .Height = display_h,
             .MinDepth = 0.0,
             .MaxDepth = 1.0,
         }});
@@ -1393,10 +1392,10 @@ pub const GuiContext = struct {
         {
             const mem = gr.allocateUploadMemory(@sizeOf(Mat4));
             const xform = mat4.transpose(mat4.initOrthoOffCenterLh(
-                display_px,
-                display_px + display_width,
-                display_py + display_height,
-                display_py,
+                display_x,
+                display_x + display_w,
+                display_y + display_h,
+                display_y,
                 0.0,
                 1.0,
             ));
@@ -1433,10 +1432,10 @@ pub const GuiContext = struct {
                     // TODO(mziulek): Call the callback.
                 } else {
                     const rect = [1]w.D3D12_RECT{.{
-                        .left = @floatToInt(i32, cmd.*.ClipRect.x - display_px),
-                        .top = @floatToInt(i32, cmd.*.ClipRect.y - display_py),
-                        .right = @floatToInt(i32, cmd.*.ClipRect.z - display_px),
-                        .bottom = @floatToInt(i32, cmd.*.ClipRect.w - display_py),
+                        .left = @floatToInt(i32, cmd.*.ClipRect.x - display_x),
+                        .top = @floatToInt(i32, cmd.*.ClipRect.y - display_y),
+                        .right = @floatToInt(i32, cmd.*.ClipRect.z - display_x),
+                        .bottom = @floatToInt(i32, cmd.*.ClipRect.w - display_y),
                     }};
                     if (rect[0].right > rect[0].left and rect[0].bottom > rect[0].top) {
                         gr.cmdlist.RSSetScissorRects(1, &rect);
