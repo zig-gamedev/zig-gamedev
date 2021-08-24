@@ -231,17 +231,18 @@ pub fn initWindow(allocator: *std.mem.Allocator, name: [*:0]const u8, width: u32
     assert(c.igGetCurrentContext() == null);
     _ = c.igCreateContext(null);
 
-    var io = c.igGetIO().?;
-    assert(io.*.BackendPlatformUserData == null);
+    var ui = c.igGetIO().?;
+    assert(ui.*.BackendPlatformUserData == null);
 
-    const gui_backend = allocator.create(GuiBackendState) catch unreachable;
-    errdefer allocator.destroy(gui_backend);
+    const ui_backend = allocator.create(GuiBackendState) catch unreachable;
+    errdefer allocator.destroy(ui_backend);
 
-    gui_backend.*.window = null;
-    gui_backend.*.mouse_window = null;
-    gui_backend.*.mouse_tracked = false;
+    ui_backend.*.window = null;
+    ui_backend.*.mouse_window = null;
+    ui_backend.*.mouse_tracked = false;
 
-    io.*.BackendPlatformUserData = gui_backend;
+    ui.*.BackendPlatformUserData = ui_backend;
+    ui.*.BackendFlags |= c.ImGuiBackendFlags_RendererHasVtxOffset;
 
     const winclass = w.user32.WNDCLASSEXA{
         .style = 0,
@@ -280,48 +281,45 @@ pub fn initWindow(allocator: *std.mem.Allocator, name: [*:0]const u8, width: u32
         winclass.hInstance,
         null,
     );
+    ui_backend.*.window = window;
 
     var actual_rect: w.RECT = undefined;
     _ = w.GetClientRect(window, &actual_rect);
     const viewport_width = @intCast(u32, actual_rect.right - actual_rect.left);
     const viewport_height = @intCast(u32, actual_rect.bottom - actual_rect.top);
 
-    io.*.KeyMap[c.ImGuiKey_Tab] = w.VK_TAB;
-    io.*.KeyMap[c.ImGuiKey_LeftArrow] = w.VK_LEFT;
-    io.*.KeyMap[c.ImGuiKey_RightArrow] = w.VK_RIGHT;
-    io.*.KeyMap[c.ImGuiKey_UpArrow] = w.VK_UP;
-    io.*.KeyMap[c.ImGuiKey_DownArrow] = w.VK_DOWN;
-    io.*.KeyMap[c.ImGuiKey_PageUp] = w.VK_PRIOR;
-    io.*.KeyMap[c.ImGuiKey_PageDown] = w.VK_NEXT;
-    io.*.KeyMap[c.ImGuiKey_Home] = w.VK_HOME;
-    io.*.KeyMap[c.ImGuiKey_End] = w.VK_END;
-    io.*.KeyMap[c.ImGuiKey_Delete] = w.VK_DELETE;
-    io.*.KeyMap[c.ImGuiKey_Backspace] = w.VK_BACK;
-    io.*.KeyMap[c.ImGuiKey_Enter] = w.VK_RETURN;
-    io.*.KeyMap[c.ImGuiKey_Escape] = w.VK_ESCAPE;
-    io.*.KeyMap[c.ImGuiKey_Space] = w.VK_SPACE;
-    io.*.KeyMap[c.ImGuiKey_Insert] = w.VK_INSERT;
-    io.*.KeyMap[c.ImGuiKey_A] = 'A';
-    io.*.KeyMap[c.ImGuiKey_C] = 'C';
-    io.*.KeyMap[c.ImGuiKey_V] = 'V';
-    io.*.KeyMap[c.ImGuiKey_X] = 'X';
-    io.*.KeyMap[c.ImGuiKey_Y] = 'Y';
-    io.*.KeyMap[c.ImGuiKey_Z] = 'Z';
-    io.*.ImeWindowHandle = window;
-    io.*.DisplaySize = .{ .x = @intToFloat(f32, viewport_width), .y = @intToFloat(f32, viewport_height) };
+    ui.*.KeyMap[c.ImGuiKey_Tab] = w.VK_TAB;
+    ui.*.KeyMap[c.ImGuiKey_LeftArrow] = w.VK_LEFT;
+    ui.*.KeyMap[c.ImGuiKey_RightArrow] = w.VK_RIGHT;
+    ui.*.KeyMap[c.ImGuiKey_UpArrow] = w.VK_UP;
+    ui.*.KeyMap[c.ImGuiKey_DownArrow] = w.VK_DOWN;
+    ui.*.KeyMap[c.ImGuiKey_PageUp] = w.VK_PRIOR;
+    ui.*.KeyMap[c.ImGuiKey_PageDown] = w.VK_NEXT;
+    ui.*.KeyMap[c.ImGuiKey_Home] = w.VK_HOME;
+    ui.*.KeyMap[c.ImGuiKey_End] = w.VK_END;
+    ui.*.KeyMap[c.ImGuiKey_Delete] = w.VK_DELETE;
+    ui.*.KeyMap[c.ImGuiKey_Backspace] = w.VK_BACK;
+    ui.*.KeyMap[c.ImGuiKey_Enter] = w.VK_RETURN;
+    ui.*.KeyMap[c.ImGuiKey_Escape] = w.VK_ESCAPE;
+    ui.*.KeyMap[c.ImGuiKey_Space] = w.VK_SPACE;
+    ui.*.KeyMap[c.ImGuiKey_Insert] = w.VK_INSERT;
+    ui.*.KeyMap[c.ImGuiKey_A] = 'A';
+    ui.*.KeyMap[c.ImGuiKey_C] = 'C';
+    ui.*.KeyMap[c.ImGuiKey_V] = 'V';
+    ui.*.KeyMap[c.ImGuiKey_X] = 'X';
+    ui.*.KeyMap[c.ImGuiKey_Y] = 'Y';
+    ui.*.KeyMap[c.ImGuiKey_Z] = 'Z';
+    ui.*.ImeWindowHandle = window;
+    ui.*.DisplaySize = .{ .x = @intToFloat(f32, viewport_width), .y = @intToFloat(f32, viewport_height) };
     c.igGetStyle().?.*.WindowRounding = 0.0;
-
-    gui_backend.*.window = window;
-    gui_backend.*.mouse_window = null;
-    gui_backend.*.mouse_tracked = false;
 
     return window;
 }
 
 pub fn deinitWindow(allocator: *std.mem.Allocator) void {
-    var io = c.igGetIO().?;
-    assert(io.*.BackendPlatformUserData != null);
-    allocator.destroy(@ptrCast(*GuiBackendState, @alignCast(8, io.*.BackendPlatformUserData)));
+    var ui = c.igGetIO().?;
+    assert(ui.*.BackendPlatformUserData != null);
+    allocator.destroy(@ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData)));
     c.igDestroyContext(null);
 }
 

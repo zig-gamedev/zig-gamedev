@@ -1376,14 +1376,15 @@ pub const GuiContext = struct {
             }
         }
 
-        const io = c.igGetIO().?;
-        const vp_width = io.*.DisplaySize.x * io.*.DisplayFramebufferScale.x;
-        const vp_height = io.*.DisplaySize.y * io.*.DisplayFramebufferScale.y;
+        const display_px = draw_data.?.*.DisplayPos.x;
+        const display_py = draw_data.?.*.DisplayPos.y;
+        const display_width = draw_data.?.*.DisplaySize.x;
+        const display_height = draw_data.?.*.DisplaySize.y;
         gr.cmdlist.RSSetViewports(1, &[_]w.D3D12_VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
-            .Width = vp_width,
-            .Height = vp_height,
+            .Width = display_width,
+            .Height = display_height,
             .MinDepth = 0.0,
             .MaxDepth = 1.0,
         }});
@@ -1391,7 +1392,14 @@ pub const GuiContext = struct {
         gr.setCurrentPipeline(gui.pipeline);
         {
             const mem = gr.allocateUploadMemory(@sizeOf(Mat4));
-            const xform = mat4.transpose(mat4.initOrthoOffCenterLh(0.0, vp_width, vp_height, 0.0, 0.0, 1.0));
+            const xform = mat4.transpose(mat4.initOrthoOffCenterLh(
+                display_px,
+                display_px + display_width,
+                display_py + display_height,
+                display_py,
+                0.0,
+                1.0,
+            ));
             @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &xform[0][0]), @sizeOf(Mat4));
 
             gr.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
@@ -1408,8 +1416,8 @@ pub const GuiContext = struct {
             .Format = if (@sizeOf(c.ImDrawIdx) == 2) .R16_UINT else .R32_UINT,
         });
 
-        var vertex_offset: i32 = 0;
-        var index_offset: u32 = 0;
+        var global_vtx_offset: i32 = 0;
+        var global_idx_offset: u32 = 0;
 
         var cmdlist_idx: u32 = 0;
         const num_cmdlists = @intCast(u32, draw_data.?.*.CmdListsCount);
@@ -1424,17 +1432,26 @@ pub const GuiContext = struct {
                 if (cmd.*.UserCallback != null) {
                     // TODO(mziulek): Call the callback.
                 } else {
-                    gr.cmdlist.RSSetScissorRects(1, &[_]w.D3D12_RECT{.{
-                        .left = @floatToInt(i32, cmd.*.ClipRect.x),
-                        .top = @floatToInt(i32, cmd.*.ClipRect.y),
-                        .right = @floatToInt(i32, cmd.*.ClipRect.z),
-                        .bottom = @floatToInt(i32, cmd.*.ClipRect.w),
-                    }});
-                    gr.cmdlist.DrawIndexedInstanced(cmd.*.ElemCount, 1, index_offset, vertex_offset, 0);
+                    const rect = [1]w.D3D12_RECT{.{
+                        .left = @floatToInt(i32, cmd.*.ClipRect.x - display_px),
+                        .top = @floatToInt(i32, cmd.*.ClipRect.y - display_py),
+                        .right = @floatToInt(i32, cmd.*.ClipRect.z - display_px),
+                        .bottom = @floatToInt(i32, cmd.*.ClipRect.w - display_py),
+                    }};
+                    if (rect[0].right > rect[0].left and rect[0].bottom > rect[0].top) {
+                        gr.cmdlist.RSSetScissorRects(1, &rect);
+                        gr.cmdlist.DrawIndexedInstanced(
+                            cmd.*.ElemCount,
+                            1,
+                            cmd.*.IdxOffset + global_idx_offset,
+                            @intCast(i32, cmd.*.VtxOffset) + global_vtx_offset,
+                            0,
+                        );
+                    }
                 }
-                index_offset += cmd.*.ElemCount;
             }
-            vertex_offset += cmdlist.*.VtxBuffer.Size;
+            global_idx_offset += @intCast(u32, cmdlist.*.IdxBuffer.Size);
+            global_vtx_offset += cmdlist.*.VtxBuffer.Size;
         }
     }
 };
