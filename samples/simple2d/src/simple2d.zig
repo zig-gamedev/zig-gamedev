@@ -569,7 +569,7 @@ fn drawShapes(demo: DemoState) void {
     );
 
     // Draw sun.
-    // NOTE(mziulek): Using 'demo.radial_gradient_brush' causes GPU Based Validation errors (D3D11on12 bug?).
+    // NOTE(mziulek): Using 'demo.radial_gradient_brush' causes GPU-Based Validation errors (D3D11on12 bug?).
     // As a workaround we use 'demo.brush' (solid color brush).
     demo.brush.SetColor(&w.d2d1_colorf.DarkOrange);
     grfx.d2d.context.FillGeometry(demo.sun_geo, @ptrCast(*w.ID2D1Brush, demo.brush), null);
