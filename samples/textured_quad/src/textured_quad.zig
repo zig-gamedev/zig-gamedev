@@ -236,7 +236,7 @@ const DemoState = struct {
     fn update(demo: *DemoState) void {
         demo.frame_stats.update();
 
-        lib.updateWindow(demo.frame_stats.delta_time);
+        lib.newImGuiFrame(demo.frame_stats.delta_time);
 
         c.igSetNextWindowPos(c.ImVec2{ .x = 10.0, .y = 100.0 }, c.ImGuiCond_FirstUseEver, c.ImVec2{ .x = 0.0, .y = 0.0 });
         c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);

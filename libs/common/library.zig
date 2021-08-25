@@ -323,7 +323,7 @@ pub fn deinitWindow(allocator: *std.mem.Allocator) void {
     c.igDestroyContext(null);
 }
 
-pub fn updateWindow(delta_time: f32) void {
+pub fn newImGuiFrame(delta_time: f32) void {
     assert(c.igGetCurrentContext() != null);
 
     var ui = c.igGetIO().?;

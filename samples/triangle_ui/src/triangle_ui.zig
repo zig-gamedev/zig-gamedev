@@ -131,7 +131,7 @@ pub fn main() !void {
                 ) catch unreachable;
                 _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
             }
-            lib.updateWindow(stats.delta_time);
+            lib.newImGuiFrame(stats.delta_time);
 
             c.igSetNextWindowPos(c.ImVec2{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, c.ImVec2{ .x = 0.0, .y = 0.0 });
             c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);

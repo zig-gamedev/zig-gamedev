@@ -148,7 +148,7 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
 
-    lib.updateWindow(demo.frame_stats.delta_time);
+    lib.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igShowDemoWindow(null);
 }
