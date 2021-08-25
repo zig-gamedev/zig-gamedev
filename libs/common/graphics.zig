@@ -531,12 +531,44 @@ pub const GraphicsContext = struct {
         gr.d2d.context.BeginDraw();
     }
 
-    var info_queue: *w.ID3D12InfoQueue = undefined;
-
     pub fn endDraw2d(gr: *GraphicsContext) void {
+        var info_queue: *w.ID3D12InfoQueue = undefined;
+        const mute_d2d_completely = true;
         if (comptime builtin.mode == .Debug) {
+            // NOTE(mziulek): D2D1 is slow. It creates and destroys resources every frame. To see create/destroy
+            // messages in debug output set 'mute_d2d_completely' to 'false'.
             hrPanicOnFail(gr.device.QueryInterface(&w.IID_ID3D12InfoQueue, @ptrCast(*?*c_void, &info_queue)));
-            info_queue.SetMuteDebugOutput(w.TRUE);
+
+            if (mute_d2d_completely) {
+                info_queue.SetMuteDebugOutput(w.TRUE);
+            } else {
+                var filter: w.D3D12_INFO_QUEUE_FILTER = std.mem.zeroes(w.D3D12_INFO_QUEUE_FILTER);
+                hrPanicOnFail(info_queue.PushStorageFilter(&filter));
+
+                var hide = [_]w.D3D12_MESSAGE_ID{
+                    .CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
+                    .COMMAND_LIST_DRAW_VERTEX_BUFFER_STRIDE_TOO_SMALL,
+                    .CREATEGRAPHICSPIPELINESTATE_DEPTHSTENCILVIEW_NOT_SET,
+                };
+                hrPanicOnFail(info_queue.AddStorageFilterEntries(&w.D3D12_INFO_QUEUE_FILTER{
+                    .AllowList = .{
+                        .NumCategories = 0,
+                        .pCategoryList = null,
+                        .NumSeverities = 0,
+                        .pSeverityList = null,
+                        .NumIDs = 0,
+                        .pIDList = null,
+                    },
+                    .DenyList = .{
+                        .NumCategories = 0,
+                        .pCategoryList = null,
+                        .NumSeverities = 0,
+                        .pSeverityList = null,
+                        .NumIDs = hide.len,
+                        .pIDList = &hide,
+                    },
+                }));
+            }
         }
         hrPanicOnFail(gr.d2d.context.EndDraw(null, null));
 
@@ -547,7 +579,11 @@ pub const GraphicsContext = struct {
         gr.d2d.context11.Flush();
 
         if (comptime builtin.mode == .Debug) {
-            info_queue.SetMuteDebugOutput(w.FALSE);
+            if (mute_d2d_completely) {
+                info_queue.SetMuteDebugOutput(w.FALSE);
+            } else {
+                info_queue.PopStorageFilter();
+            }
             _ = info_queue.Release();
         }
 

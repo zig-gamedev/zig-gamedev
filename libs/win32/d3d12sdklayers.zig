@@ -178,6 +178,48 @@ pub const ID3D12Debug5 = extern struct {
     }
 };
 
+pub const D3D12_MESSAGE_CATEGORY = enum(UINT) {
+    APPLICATION_DEFINED = 0,
+    MISCELLANEOUS = 1,
+    INITIALIZATION = 2,
+    CLEANUP = 3,
+    COMPILATION = 4,
+    STATE_CREATION = 5,
+    STATE_SETTING = 6,
+    STATE_GETTING = 7,
+    RESOURCE_MANIPULATION = 8,
+    EXECUTION = 9,
+    SHADER = 10,
+};
+
+pub const D3D12_MESSAGE_SEVERITY = enum(UINT) {
+    CORRUPTION = 0,
+    ERROR = 1,
+    WARNING = 2,
+    INFO = 3,
+    MESSAGE = 4,
+};
+
+pub const D3D12_MESSAGE_ID = enum(UINT) {
+    CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE = 820,
+    COMMAND_LIST_DRAW_VERTEX_BUFFER_STRIDE_TOO_SMALL = 209,
+    CREATEGRAPHICSPIPELINESTATE_DEPTHSTENCILVIEW_NOT_SET = 680,
+};
+
+pub const D3D12_INFO_QUEUE_FILTER_DESC = extern struct {
+    NumCategories: u32,
+    pCategoryList: ?[*]D3D12_MESSAGE_CATEGORY,
+    NumSeverities: u32,
+    pSeverityList: ?[*]D3D12_MESSAGE_SEVERITY,
+    NumIDs: u32,
+    pIDList: ?[*]D3D12_MESSAGE_ID,
+};
+
+pub const D3D12_INFO_QUEUE_FILTER = extern struct {
+    AllowList: D3D12_INFO_QUEUE_FILTER_DESC,
+    DenyList: D3D12_INFO_QUEUE_FILTER_DESC,
+};
+
 pub const ID3D12InfoQueue = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -189,6 +231,15 @@ pub const ID3D12InfoQueue = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub inline fn AddStorageFilterEntries(self: *T, filter: *D3D12_INFO_QUEUE_FILTER) HRESULT {
+                return self.v.info.AddStorageFilterEntries(self, filter);
+            }
+            pub inline fn PushStorageFilter(self: *T, filter: *D3D12_INFO_QUEUE_FILTER) HRESULT {
+                return self.v.info.PushStorageFilter(self, filter);
+            }
+            pub inline fn PopStorageFilter(self: *T) void {
+                self.v.info.PopStorageFilter(self);
+            }
             pub inline fn SetMuteDebugOutput(self: *T, mute: BOOL) void {
                 self.v.info.SetMuteDebugOutput(self, mute);
             }
@@ -206,13 +257,13 @@ pub const ID3D12InfoQueue = extern struct {
             GetNumStoredMessagesAllowedByRetrievalFilter: *c_void,
             GetNumMessagesDiscardedByMessageCountLimit: *c_void,
             GetMessageCountLimit: *c_void,
-            AddStorageFilterEntries: *c_void,
+            AddStorageFilterEntries: fn (*T, *D3D12_INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
             GetStorageFilter: *c_void,
             ClearStorageFilter: *c_void,
             PushEmptyStorageFilter: *c_void,
             PushCopyOfStorageFilter: *c_void,
-            PushStorageFilter: *c_void,
-            PopStorageFilter: *c_void,
+            PushStorageFilter: fn (*T, *D3D12_INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
+            PopStorageFilter: fn (*T) callconv(WINAPI) void,
             GetStorageFilterStackSize: *c_void,
             AddRetrievalFilterEntries: *c_void,
             GetRetrievalFilter: *c_void,
