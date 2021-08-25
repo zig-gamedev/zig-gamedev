@@ -32,6 +32,11 @@ const DemoState = struct {
     noise_path: *w.ID2D1PathGeometry,
 
     ink_points: std.ArrayList(w.D2D1_POINT_2F),
+
+    left_mountain_geo: *w.ID2D1Geometry,
+    right_mountain_geo: *w.ID2D1Geometry,
+    sun_geo: *w.ID2D1Geometry,
+    river_geo: *w.ID2D1Geometry,
 };
 
 fn init(allocator: *std.mem.Allocator) DemoState {
@@ -213,6 +218,181 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         sink.EndFigure(.CLOSED);
         break :blk noise_path;
     };
+    const left_mountain_geo = blk: {
+        var left_mountain_path: *w.ID2D1PathGeometry = undefined;
+        hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*w.ID2D1PathGeometry, &left_mountain_path)));
+
+        var sink: *w.ID2D1GeometrySink = undefined;
+        hrPanicOnFail(left_mountain_path.Open(@ptrCast(*?*w.ID2D1GeometrySink, &sink)));
+        defer {
+            hrPanicOnFail(sink.Close());
+            _ = sink.Release();
+        }
+        sink.SetFillMode(.WINDING);
+
+        sink.BeginFigure(.{ .x = 346.0, .y = 255.0 }, .FILLED);
+        const points = [_]w.D2D1_POINT_2F{
+            .{ .x = 267.0, .y = 177.0 },
+            .{ .x = 236.0, .y = 192.0 },
+            .{ .x = 212.0, .y = 160.0 },
+            .{ .x = 156.0, .y = 255.0 },
+            .{ .x = 346.0, .y = 255.0 },
+        };
+        sink.AddLines(&points, points.len);
+        sink.EndFigure(.CLOSED);
+        break :blk @ptrCast(*w.ID2D1Geometry, left_mountain_path);
+    };
+    const right_mountain_geo = blk: {
+        var right_mountain_path: *w.ID2D1PathGeometry = undefined;
+        hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*w.ID2D1PathGeometry, &right_mountain_path)));
+
+        var sink: *w.ID2D1GeometrySink = undefined;
+        hrPanicOnFail(right_mountain_path.Open(@ptrCast(*?*w.ID2D1GeometrySink, &sink)));
+        defer {
+            hrPanicOnFail(sink.Close());
+            _ = sink.Release();
+        }
+        sink.SetFillMode(.WINDING);
+
+        sink.BeginFigure(.{ .x = 575.0, .y = 263.0 }, .FILLED);
+        const points = [_]w.D2D1_POINT_2F{
+            .{ .x = 481.0, .y = 146.0 },
+            .{ .x = 449.0, .y = 181.0 },
+            .{ .x = 433.0, .y = 159.0 },
+            .{ .x = 401.0, .y = 214.0 },
+            .{ .x = 381.0, .y = 199.0 },
+            .{ .x = 323.0, .y = 263.0 },
+            .{ .x = 575.0, .y = 263.0 },
+        };
+        sink.AddLines(&points, points.len);
+        sink.EndFigure(.CLOSED);
+        break :blk @ptrCast(*w.ID2D1Geometry, right_mountain_path);
+    };
+    const sun_geo = blk: {
+        var sun_path: *w.ID2D1PathGeometry = undefined;
+        hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*w.ID2D1PathGeometry, &sun_path)));
+
+        var sink: *w.ID2D1GeometrySink = undefined;
+        hrPanicOnFail(sun_path.Open(@ptrCast(*?*w.ID2D1GeometrySink, &sink)));
+        defer {
+            hrPanicOnFail(sink.Close());
+            _ = sink.Release();
+        }
+        sink.SetFillMode(.WINDING);
+
+        sink.BeginFigure(.{ .x = 270.0, .y = 255.0 }, .FILLED);
+        sink.AddArc(&.{
+            .point = .{ .x = 440.0, .y = 255.0 },
+            .size = .{ .width = 85.0, .height = 85.0 },
+            .rotationAngle = 0.0, // rotation angle
+            .sweepDirection = .CLOCKWISE,
+            .arcSize = .SMALL,
+        });
+        sink.EndFigure(.CLOSED);
+
+        sink.BeginFigure(.{ .x = 299.0, .y = 182.0 }, .HOLLOW);
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 299.0, .y = 182.0 },
+            .point2 = .{ .x = 294.0, .y = 176.0 },
+            .point3 = .{ .x = 285.0, .y = 178.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 276.0, .y = 179.0 },
+            .point2 = .{ .x = 272.0, .y = 173.0 },
+            .point3 = .{ .x = 272.0, .y = 173.0 },
+        });
+        sink.EndFigure(.OPEN);
+
+        sink.BeginFigure(.{ .x = 354.0, .y = 156.0 }, .HOLLOW);
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 354.0, .y = 156.0 },
+            .point2 = .{ .x = 358.0, .y = 149.0 },
+            .point3 = .{ .x = 354.0, .y = 142.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 349.0, .y = 134.0 },
+            .point2 = .{ .x = 354.0, .y = 127.0 },
+            .point3 = .{ .x = 354.0, .y = 127.0 },
+        });
+        sink.EndFigure(.OPEN);
+
+        sink.BeginFigure(.{ .x = 322.0, .y = 164.0 }, .HOLLOW);
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 322.0, .y = 164.0 },
+            .point2 = .{ .x = 322.0, .y = 156.0 },
+            .point3 = .{ .x = 314.0, .y = 152.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 306.0, .y = 149.0 },
+            .point2 = .{ .x = 305.0, .y = 141.0 },
+            .point3 = .{ .x = 305.0, .y = 141.0 },
+        });
+        sink.EndFigure(.OPEN);
+
+        sink.BeginFigure(.{ .x = 385.0, .y = 164.0 }, .HOLLOW);
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 385.0, .y = 164.0 },
+            .point2 = .{ .x = 392.0, .y = 161.0 },
+            .point3 = .{ .x = 394.0, .y = 152.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 395.0, .y = 144.0 },
+            .point2 = .{ .x = 402.0, .y = 141.0 },
+            .point3 = .{ .x = 402.0, .y = 142.0 },
+        });
+        sink.EndFigure(.OPEN);
+
+        sink.BeginFigure(.{ .x = 408.0, .y = 182.0 }, .HOLLOW);
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 408.0, .y = 182.0 },
+            .point2 = .{ .x = 416.0, .y = 184.0 },
+            .point3 = .{ .x = 422.0, .y = 178.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 428.0, .y = 171.0 },
+            .point2 = .{ .x = 435.0, .y = 173.0 },
+            .point3 = .{ .x = 435.0, .y = 173.0 },
+        });
+        sink.EndFigure(.OPEN);
+
+        break :blk @ptrCast(*w.ID2D1Geometry, sun_path);
+    };
+    const river_geo = blk: {
+        var river_path: *w.ID2D1PathGeometry = undefined;
+        hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*w.ID2D1PathGeometry, &river_path)));
+
+        var sink: *w.ID2D1GeometrySink = undefined;
+        hrPanicOnFail(river_path.Open(@ptrCast(*?*w.ID2D1GeometrySink, &sink)));
+        defer {
+            hrPanicOnFail(sink.Close());
+            _ = sink.Release();
+        }
+        sink.SetFillMode(.WINDING);
+
+        sink.BeginFigure(.{ .x = 183.0, .y = 392.0 }, .FILLED);
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 238.0, .y = 284.0 },
+            .point2 = .{ .x = 472.0, .y = 345.0 },
+            .point3 = .{ .x = 356.0, .y = 303.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 237.0, .y = 261.0 },
+            .point2 = .{ .x = 333.0, .y = 256.0 },
+            .point3 = .{ .x = 333.0, .y = 256.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 335.0, .y = 257.0 },
+            .point2 = .{ .x = 241.0, .y = 261.0 },
+            .point3 = .{ .x = 411.0, .y = 306.0 },
+        });
+        sink.AddBezier(&.{
+            .point1 = .{ .x = 574.0, .y = 350.0 },
+            .point2 = .{ .x = 288.0, .y = 324.0 },
+            .point3 = .{ .x = 296.0, .y = 392.0 },
+        });
+        sink.EndFigure(.CLOSED);
+        break :blk @ptrCast(*w.ID2D1Geometry, river_path);
+    };
 
     return .{
         .grfx = grfx,
@@ -227,6 +407,10 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         .ink_points = ink_points,
         .bezier_lines_path = bezier_lines_path,
         .noise_path = noise_path,
+        .left_mountain_geo = left_mountain_geo,
+        .right_mountain_geo = right_mountain_geo,
+        .sun_geo = sun_geo,
+        .river_geo = river_geo,
     };
 }
 
@@ -344,6 +528,40 @@ fn drawShapes(demo: DemoState) void {
         null,
     );
 
+    grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initTranslation(1080.0, 640.0));
+
+    // Draw background.
+    demo.brush.SetColor(&w.d2d1_colorf.White);
+    grfx.d2d.context.FillRectangle(
+        &.{ .left = 100.0, .top = 100.0, .right = 620.0, .bottom = 420.0 },
+        @ptrCast(*w.ID2D1Brush, demo.brush),
+    );
+
+    // Draw sun.
+    demo.brush.SetColor(&w.d2d1_colorf.Black);
+    grfx.d2d.context.DrawGeometry(demo.sun_geo, @ptrCast(*w.ID2D1Brush, demo.brush), 5.0, null);
+
+    // Draw left mountain geometry.
+    demo.brush.SetColor(&w.d2d1_colorf.OliveDrab);
+    grfx.d2d.context.FillGeometry(demo.left_mountain_geo, @ptrCast(*w.ID2D1Brush, demo.brush), null);
+
+    demo.brush.SetColor(&w.d2d1_colorf.Black);
+    grfx.d2d.context.DrawGeometry(demo.left_mountain_geo, @ptrCast(*w.ID2D1Brush, demo.brush), 5.0, null);
+
+    // Draw river geometry.
+    demo.brush.SetColor(&w.d2d1_colorf.LightSkyBlue);
+    grfx.d2d.context.FillGeometry(demo.river_geo, @ptrCast(*w.ID2D1Brush, demo.brush), null);
+
+    demo.brush.SetColor(&w.d2d1_colorf.Black);
+    grfx.d2d.context.DrawGeometry(demo.river_geo, @ptrCast(*w.ID2D1Brush, demo.brush), 5.0, null);
+
+    // Draw right mountain geometry.
+    demo.brush.SetColor(&w.d2d1_colorf.YellowGreen);
+    grfx.d2d.context.FillGeometry(demo.right_mountain_geo, @ptrCast(*w.ID2D1Brush, demo.brush), null);
+
+    demo.brush.SetColor(&w.d2d1_colorf.Black);
+    grfx.d2d.context.DrawGeometry(demo.right_mountain_geo, @ptrCast(*w.ID2D1Brush, demo.brush), 5.0, null);
+
     grfx.d2d.context.SetTransform(&w.D2D1_MATRIX_3X2_F.initIdentity());
 }
 
@@ -358,6 +576,10 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.ink_style.Release();
     _ = demo.bezier_lines_path.Release();
     _ = demo.noise_path.Release();
+    _ = demo.left_mountain_geo.Release();
+    _ = demo.right_mountain_geo.Release();
+    _ = demo.sun_geo.Release();
+    _ = demo.river_geo.Release();
     demo.ink_points.deinit();
     demo.grfx.deinit(allocator);
     lib.deinitWindow(allocator);
