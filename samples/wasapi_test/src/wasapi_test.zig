@@ -188,7 +188,8 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        grfx.d2d.context.DrawTextSimple(
+        lib.DrawText(
+            grfx.d2d.context,
             text,
             demo.textformat,
             &w.D2D1_RECT_F{

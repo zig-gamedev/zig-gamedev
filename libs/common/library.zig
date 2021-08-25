@@ -355,3 +355,25 @@ pub fn newImGuiFrame(delta_time: f32) void {
     ui.*.DeltaTime = delta_time;
     c.igNewFrame();
 }
+
+pub fn DrawText(
+    devctx: *w.ID2D1DeviceContext6,
+    text: []const u8,
+    format: *w.IDWriteTextFormat,
+    layout_rect: *const w.D2D1_RECT_F,
+    brush: *w.ID2D1Brush,
+) void {
+    var utf16: [128:0]u16 = undefined;
+    assert(text.len < utf16.len);
+    const len = std.unicode.utf8ToUtf16Le(utf16[0..], text) catch unreachable;
+    utf16[len] = 0;
+    devctx.DrawText(
+        &utf16,
+        @intCast(u32, len),
+        format,
+        layout_rect,
+        brush,
+        w.D2D1_DRAW_TEXT_OPTIONS_NONE,
+        .NATURAL,
+    );
+}

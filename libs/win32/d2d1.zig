@@ -988,30 +988,6 @@ pub const ID2D1RenderTarget = extern struct {
             pub inline fn EndDraw(self: *T, tag1: ?*D2D1_TAG, tag2: ?*D2D1_TAG) HRESULT {
                 return self.v.rendertarget.EndDraw(self, tag1, tag2);
             }
-
-            // NOTE(mziulek): This is a helper method to draw short utf8 strings (not part of D2D1 API).
-            pub fn DrawTextSimple(
-                self: *T,
-                text: []const u8,
-                format: *IDWriteTextFormat,
-                layout_rect: *const D2D1_RECT_F,
-                brush: *ID2D1Brush,
-            ) void {
-                var utf16: [128:0]u16 = undefined;
-                assert(text.len < utf16.len);
-                const len = std.unicode.utf8ToUtf16Le(utf16[0..], text) catch unreachable;
-                utf16[len] = 0;
-                DrawText(
-                    self,
-                    &utf16,
-                    @intCast(u32, len),
-                    format,
-                    layout_rect,
-                    brush,
-                    D2D1_DRAW_TEXT_OPTIONS_NONE,
-                    .NATURAL,
-                );
-            }
         };
     }
 

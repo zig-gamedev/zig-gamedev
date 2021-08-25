@@ -298,7 +298,8 @@ const DemoState = struct {
             ) catch unreachable;
 
             demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
-            grfx.d2d.context.DrawTextSimple(
+            lib.DrawText(
+                grfx.d2d.context,
                 text,
                 demo.textformat,
                 &w.D2D1_RECT_F{
