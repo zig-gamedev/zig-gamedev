@@ -19,7 +19,6 @@ const window_height = 1080;
 
 const DemoState = struct {
     grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
 
     brush: *w.ID2D1SolidColorBrush,
@@ -215,15 +214,8 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         break :blk noise_path;
     };
 
-    grfx.beginFrame();
-
-    var gui = gr.GuiContext.init(allocator, &grfx);
-
-    grfx.finishGpuCommands();
-
     return .{
         .grfx = grfx,
-        .gui = gui,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .textformat = textformat,
@@ -367,7 +359,6 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.bezier_lines_path.Release();
     _ = demo.noise_path.Release();
     demo.ink_points.deinit();
-    demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit(allocator);
     lib.deinitWindow(allocator);
     demo.* = undefined;
@@ -375,10 +366,6 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
 
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
-
-    lib.updateWindow(demo.frame_stats.delta_time);
-
-    c.igShowDemoWindow(null);
 }
 
 fn draw(demo: *DemoState) void {
@@ -402,8 +389,6 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
-
-    demo.gui.draw(grfx);
 
     grfx.beginDraw2d();
     {
