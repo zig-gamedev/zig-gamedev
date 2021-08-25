@@ -18,7 +18,9 @@ pub const d2d1_colorf = struct {
     pub const Black = D2D1_COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 };
     pub const White = D2D1_COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 };
     pub const YellowGreen = D2D1_COLOR_F{ .r = 0.603921592, .g = 0.803921640, .b = 0.196078449, .a = 1.0 };
+    pub const Yellow = D2D1_COLOR_F{ .r = 1.0, .g = 1.0, .b = 0.0, .a = 1.0 };
     pub const LightSkyBlue = D2D1_COLOR_F{ .r = 0.529411793, .g = 0.807843208, .b = 0.980392218, .a = 1.000000000 };
+    pub const DarkOrange = D2D1_COLOR_F{ .r = 1.000000000, .g = 0.549019635, .b = 0.000000000, .a = 1.000000000 };
 };
 
 pub const D2D1_COLOR_F = extern struct {

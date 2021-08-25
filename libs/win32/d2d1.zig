@@ -38,6 +38,13 @@ pub const D2D1_STROKE_STYLE_PROPERTIES = extern struct {
     dashOffset: FLOAT,
 };
 
+pub const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES = extern struct {
+    center: D2D1_POINT_2F,
+    gradientOriginOffset: D2D1_POINT_2F,
+    radiusX: FLOAT,
+    radiusY: FLOAT,
+};
+
 pub const ID2D1Resource = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -112,6 +119,22 @@ pub const ID2D1Bitmap = extern struct {
             CopyFromMemory: *c_void,
         };
     }
+};
+
+pub const D2D1_GAMMA = enum(UINT) {
+    _2_2 = 0,
+    _1_0 = 1,
+};
+
+pub const D2D1_EXTEND_MODE = enum(UINT) {
+    CLAMP = 0,
+    WRAP = 1,
+    MIRROR = 2,
+};
+
+pub const D2D1_GRADIENT_STOP = extern struct {
+    position: FLOAT,
+    color: D2D1_COLOR_F,
 };
 
 pub const ID2D1GradientStopCollection = extern struct {
@@ -832,6 +855,38 @@ pub const ID2D1RenderTarget = extern struct {
             ) HRESULT {
                 return self.v.rendertarget.CreateSolidColorBrush(self, color, properties, brush);
             }
+            pub inline fn CreateGradientStopCollection(
+                self: *T,
+                stops: [*]const D2D1_GRADIENT_STOP,
+                num_stops: UINT32,
+                gamma: D2D1_GAMMA,
+                extend_mode: D2D1_EXTEND_MODE,
+                stop_collection: *?*ID2D1GradientStopCollection,
+            ) HRESULT {
+                return self.v.rendertarget.CreateGradientStopCollection(
+                    self,
+                    stops,
+                    num_stops,
+                    gamma,
+                    extend_mode,
+                    stop_collection,
+                );
+            }
+            pub inline fn CreateRadialGradientBrush(
+                self: *T,
+                gradient_properties: *const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES,
+                brush_properties: ?*const D2D1_BRUSH_PROPERTIES,
+                stop_collection: *ID2D1GradientStopCollection,
+                brush: *?*ID2D1RadialGradientBrush,
+            ) HRESULT {
+                return self.v.rendertarget.CreateRadialGradientBrush(
+                    self,
+                    gradient_properties,
+                    brush_properties,
+                    stop_collection,
+                    brush,
+                );
+            }
             pub inline fn DrawLine(
                 self: *T,
                 p0: D2D1_POINT_2F,
@@ -972,9 +1027,22 @@ pub const ID2D1RenderTarget = extern struct {
                 ?*const D2D1_BRUSH_PROPERTIES,
                 *?*ID2D1SolidColorBrush,
             ) callconv(WINAPI) HRESULT,
-            CreateGradientStopCollection: *c_void,
+            CreateGradientStopCollection: fn (
+                *T,
+                [*]const D2D1_GRADIENT_STOP,
+                UINT32,
+                D2D1_GAMMA,
+                D2D1_EXTEND_MODE,
+                *?*ID2D1GradientStopCollection,
+            ) callconv(WINAPI) HRESULT,
             CreateLinearGradientBrush: *c_void,
-            CreateRadialGradientBrush: *c_void,
+            CreateRadialGradientBrush: fn (
+                *T,
+                *const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES,
+                ?*const D2D1_BRUSH_PROPERTIES,
+                *ID2D1GradientStopCollection,
+                *?*ID2D1RadialGradientBrush,
+            ) callconv(WINAPI) HRESULT,
             CreateCompatibleRenderTarget: *c_void,
             CreateLayer: *c_void,
             CreateMesh: *c_void,

@@ -22,6 +22,7 @@ const DemoState = struct {
     frame_stats: lib.FrameStats,
 
     brush: *w.ID2D1SolidColorBrush,
+    radial_gradient_brush: *w.ID2D1RadialGradientBrush,
     textformat: *w.IDWriteTextFormat,
     ellipse: *w.ID2D1EllipseGeometry,
     stroke_style: *w.ID2D1StrokeStyle,
@@ -393,6 +394,35 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         sink.EndFigure(.CLOSED);
         break :blk @ptrCast(*w.ID2D1Geometry, river_path);
     };
+    const radial_gradient_brush = blk: {
+        const stops = [_]w.D2D1_GRADIENT_STOP{
+            .{ .color = w.d2d1_colorf.YellowGreen, .position = 0.0 },
+            .{ .color = w.d2d1_colorf.LightSkyBlue, .position = 1.0 },
+        };
+        var stop_collection: *w.ID2D1GradientStopCollection = undefined;
+        hrPanicOnFail(grfx.d2d.context.CreateGradientStopCollection(
+            &stops,
+            2,
+            ._2_2,
+            .CLAMP,
+            @ptrCast(*?*w.ID2D1GradientStopCollection, &stop_collection),
+        ));
+        defer _ = stop_collection.Release();
+
+        var radial_gradient_brush: *w.ID2D1RadialGradientBrush = undefined;
+        hrPanicOnFail(grfx.d2d.context.CreateRadialGradientBrush(
+            &.{
+                .center = .{ .x = 75.0, .y = 75.0 },
+                .gradientOriginOffset = .{ .x = 0.0, .y = 0.0 },
+                .radiusX = 75.0,
+                .radiusY = 75.0,
+            },
+            null,
+            stop_collection,
+            @ptrCast(*?*w.ID2D1RadialGradientBrush, &radial_gradient_brush),
+        ));
+        break :blk radial_gradient_brush;
+    };
 
     return .{
         .grfx = grfx,
@@ -411,6 +441,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         .right_mountain_geo = right_mountain_geo,
         .sun_geo = sun_geo,
         .river_geo = river_geo,
+        .radial_gradient_brush = radial_gradient_brush,
     };
 }
 
@@ -524,7 +555,7 @@ fn drawShapes(demo: DemoState) void {
     grfx.d2d.context.DrawGeometry(
         @ptrCast(*w.ID2D1Geometry, demo.noise_path),
         @ptrCast(*w.ID2D1Brush, demo.brush),
-        8.0,
+        5.0,
         null,
     );
 
@@ -538,6 +569,11 @@ fn drawShapes(demo: DemoState) void {
     );
 
     // Draw sun.
+    // NOTE(mziulek): Using 'demo.radial_gradient_brush' causes GPU Based Validation errors (D3D11on12 bug?).
+    // As a workaround we use 'demo.brush' (solid color brush).
+    demo.brush.SetColor(&w.d2d1_colorf.DarkOrange);
+    grfx.d2d.context.FillGeometry(demo.sun_geo, @ptrCast(*w.ID2D1Brush, demo.brush), null);
+
     demo.brush.SetColor(&w.d2d1_colorf.Black);
     grfx.d2d.context.DrawGeometry(demo.sun_geo, @ptrCast(*w.ID2D1Brush, demo.brush), 5.0, null);
 
@@ -580,6 +616,7 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.right_mountain_geo.Release();
     _ = demo.sun_geo.Release();
     _ = demo.river_geo.Release();
+    _ = demo.radial_gradient_brush.Release();
     demo.ink_points.deinit();
     demo.grfx.deinit(allocator);
     lib.deinitWindow(allocator);
