@@ -568,6 +568,9 @@ fn drawShapes(demo: DemoState) void {
         @ptrCast(*w.ID2D1Brush, demo.brush),
     );
 
+    // NOTE(mziulek): D2D1 is slow. It creates and destroys resources every frame (see graphics.endDraw2d()).
+    // TODO(mziulek): Check if ID2D1GeometryRealization helps.
+
     // Draw sun.
     // NOTE(mziulek): Using 'demo.radial_gradient_brush' causes GPU-Based Validation errors (D3D11on12 bug?).
     // As a workaround we use 'demo.brush' (solid color brush).
