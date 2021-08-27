@@ -2,7 +2,7 @@ const std = @import("std");
 usingnamespace std.os.windows;
 usingnamespace @import("misc.zig");
 
-pub const D3D_PRIMITIVE_TOPOLOGY = enum(UINT) {
+pub const PRIMITIVE_TOPOLOGY = enum(UINT) {
     UNDEFINED = 0,
     POINTLIST = 1,
     LINELIST = 2,
@@ -47,7 +47,7 @@ pub const D3D_PRIMITIVE_TOPOLOGY = enum(UINT) {
     _32_CONTROL_POINT_PATCHLIST = 64,
 };
 
-pub const D3D_FEATURE_LEVEL = enum(UINT) {
+pub const FEATURE_LEVEL = enum(UINT) {
     _1_0_CORE = 0x1000,
     _9_1 = 0x9100,
     _9_2 = 0x9200,
@@ -61,7 +61,7 @@ pub const D3D_FEATURE_LEVEL = enum(UINT) {
     _12_2 = 0xc200,
 };
 
-pub const ID3DBlob = extern struct {
+pub const IBlob = extern struct {
     const Self = @This();
     vtbl: *const extern struct {
         unknown: IUnknown.VTable(Self),

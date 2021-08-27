@@ -3,14 +3,14 @@ usingnamespace std.os.windows;
 usingnamespace @import("misc.zig");
 usingnamespace @import("dxgiformat.zig");
 usingnamespace @import("dxgicommon.zig");
-usingnamespace @import("d3dcommon.zig");
+const d3d = @import("d3dcommon.zig");
 usingnamespace @import("d3d12sdklayers.zig");
 
 pub const D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES = 0xffff_ffff;
 
 pub const D3D12_GPU_VIRTUAL_ADDRESS = UINT64;
 
-pub const D3D12_PRIMITIVE_TOPOLOGY = D3D_PRIMITIVE_TOPOLOGY;
+pub const D3D12_PRIMITIVE_TOPOLOGY = d3d.PRIMITIVE_TOPOLOGY;
 
 pub const D3D12_CPU_DESCRIPTOR_HANDLE = extern struct {
     ptr: UINT64,
@@ -1807,7 +1807,7 @@ pub const ID3D12PipelineState = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetCachedBlob: fn (*T, **ID3DBlob) callconv(WINAPI) HRESULT,
+            GetCachedBlob: fn (*T, **d3d.IBlob) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -5188,7 +5188,7 @@ pub const ID3D12ProtectedResourceSession = extern struct {
 pub extern "d3d12" fn D3D12GetDebugInterface(*const GUID, ?*?*c_void) callconv(WINAPI) HRESULT;
 pub extern "d3d12" fn D3D12CreateDevice(
     ?*IUnknown,
-    D3D_FEATURE_LEVEL,
+    d3d.FEATURE_LEVEL,
     *const GUID,
     ?*?*c_void,
 ) callconv(WINAPI) HRESULT;

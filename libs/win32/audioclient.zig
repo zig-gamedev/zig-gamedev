@@ -69,6 +69,9 @@ pub const IAudioClient = extern struct {
             pub inline fn SetEventHandle(self: *T, handle: HANDLE) HRESULT {
                 return self.v.audioclient.SetEventHandle(self, handle);
             }
+            pub inline fn GetService(self: *T, guid: *const GUID, iface: *?*c_void) HRESULT {
+                return self.v.audioclient.GetService(self, guid, iface);
+            }
         };
     }
 
@@ -93,7 +96,7 @@ pub const IAudioClient = extern struct {
             Stop: fn (*T) callconv(WINAPI) HRESULT,
             Reset: fn (*T) callconv(WINAPI) HRESULT,
             SetEventHandle: fn (*T, HANDLE) callconv(WINAPI) HRESULT,
-            GetService: *c_void,
+            GetService: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -153,10 +156,45 @@ pub const IAudioClient3 = extern struct {
     }
 };
 
+pub const IAudioRenderClient = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        renderclient: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetBuffer(self: *T, num_frames_requested: UINT32, data: *?*BYTE) HRESULT {
+                return self.v.renderclient.GetBuffer(self, num_frames_requested, data);
+            }
+            pub inline fn ReleaseBuffer(self: *T, num_frames_written: UINT32, flags: DWORD) HRESULT {
+                return self.v.renderclient.ReleaseBuffer(self, num_frames_written, flags);
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            GetBuffer: fn (*T, UINT32, *?*BYTE) callconv(WINAPI) HRESULT,
+            ReleaseBuffer: fn (*T, UINT32, DWORD) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 // NOTE(mziulek): IAudioClient3 interface is available on Windows 10 and newer.
 pub const IID_IAudioClient3 = GUID{
     .Data1 = 0x7ED4EE07,
     .Data2 = 0x8E67,
     .Data3 = 0x4CD4,
     .Data4 = .{ 0x8C, 0x1A, 0x2B, 0x7A, 0x59, 0x87, 0xAD, 0x42 },
+};
+
+pub const IID_IAudioRenderClient = GUID{
+    .Data1 = 0xF294ACFC,
+    .Data2 = 0x3146,
+    .Data3 = 0x4483,
+    .Data4 = .{ 0xA7, 0xBF, 0xAD, 0xDC, 0xA7, 0xC2, 0x60, 0xE2 },
 };

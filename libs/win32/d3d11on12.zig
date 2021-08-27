@@ -2,7 +2,7 @@ const std = @import("std");
 const D3D12_RESOURCE_STATES = @import("d3d12.zig").D3D12_RESOURCE_STATES;
 usingnamespace std.os.windows;
 usingnamespace @import("misc.zig");
-usingnamespace @import("d3dcommon.zig");
+const d3d = @import("d3dcommon.zig");
 usingnamespace @import("d3d11.zig");
 
 pub const D3D11_RESOURCE_FLAGS = extern struct {
@@ -137,12 +137,12 @@ pub const IID_ID3D11On12Device2 = GUID{
 pub extern "d3d11" fn D3D11On12CreateDevice(
     device12: *IUnknown,
     flags11: D3D11_CREATE_DEVICE_FLAG,
-    feature_levels: ?[*]const D3D_FEATURE_LEVEL,
+    feature_levels: ?[*]const d3d.FEATURE_LEVEL,
     num_feature_levels: UINT,
     cmd_queues: [*]const *IUnknown,
     num_cmd_queues: UINT,
     node_mask: UINT,
     device11: ?*?*ID3D11Device,
     device_ctx11: ?*?*ID3D11DeviceContext,
-    ?*D3D_FEATURE_LEVEL,
+    ?*d3d.FEATURE_LEVEL,
 ) callconv(WINAPI) HRESULT;

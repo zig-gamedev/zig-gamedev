@@ -113,7 +113,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         hrPanicOnFail(audio_client.Initialize(
             .SHARED,
             w.AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-            default_period,
+            default_period, // or 0
             0,
             &wanted_format,
             null,

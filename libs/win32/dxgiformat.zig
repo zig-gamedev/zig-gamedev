@@ -1,8 +1,7 @@
 const std = @import("std");
-usingnamespace std.os.windows;
-usingnamespace @import("misc.zig");
+const w = std.os.windows;
 
-pub const DXGI_FORMAT = enum(UINT) {
+pub const DXGI_FORMAT = enum(w.UINT) {
     UNKNOWN = 0,
     R32G32B32A32_TYPELESS = 1,
     R32G32B32A32_FLOAT = 2,
