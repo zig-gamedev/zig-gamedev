@@ -7,7 +7,7 @@ const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
-usingnamespace common.vectormath;
+const vm = common.vectormath;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 
@@ -61,7 +61,7 @@ pub fn main() !void {
     const vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
+        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(vm.Vec3)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -81,17 +81,17 @@ pub fn main() !void {
     var gui = gr.GuiContext.init(allocator, &grfx);
     defer gui.deinit(&grfx);
 
-    const upload_verts = grfx.allocateUploadBufferRegion(Vec3, 3);
-    upload_verts.cpu_slice[0] = vec3.init(-0.7, -0.7, 0.0);
-    upload_verts.cpu_slice[1] = vec3.init(0.0, 0.7, 0.0);
-    upload_verts.cpu_slice[2] = vec3.init(0.7, -0.7, 0.0);
+    const upload_verts = grfx.allocateUploadBufferRegion(vm.Vec3, 3);
+    upload_verts.cpu_slice[0] = vm.vec3.init(-0.7, -0.7, 0.0);
+    upload_verts.cpu_slice[1] = vm.vec3.init(0.0, 0.7, 0.0);
+    upload_verts.cpu_slice[2] = vm.vec3.init(0.7, -0.7, 0.0);
 
     grfx.cmdlist.CopyBufferRegion(
         grfx.getResource(vertex_buffer),
         0,
         upload_verts.buffer,
         upload_verts.buffer_offset,
-        upload_verts.cpu_slice.len * @sizeOf(Vec3),
+        upload_verts.cpu_slice.len * @sizeOf(vm.Vec3),
     );
 
     const upload_indices = grfx.allocateUploadBufferRegion(u32, 3);
@@ -113,7 +113,7 @@ pub fn main() !void {
 
     grfx.finishGpuCommands();
 
-    var triangle_color = vec3.init(0.0, 1.0, 0.0);
+    var triangle_color = vm.vec3.init(0.0, 1.0, 0.0);
 
     var stats = lib.FrameStats.init();
 
@@ -172,8 +172,8 @@ pub fn main() !void {
             grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
             grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
                 .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
-                .SizeInBytes = 3 * @sizeOf(Vec3),
-                .StrideInBytes = @sizeOf(Vec3),
+                .SizeInBytes = 3 * @sizeOf(vm.Vec3),
+                .StrideInBytes = @sizeOf(vm.Vec3),
             }});
             grfx.cmdlist.IASetIndexBuffer(&.{
                 .BufferLocation = grfx.getResource(index_buffer).GetGPUVirtualAddress(),

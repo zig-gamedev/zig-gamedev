@@ -9,7 +9,7 @@ const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
-usingnamespace common.vectormath;
+const vm = common.vectormath;
 const math = std.math;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const hrPanic = lib.hrPanic;
@@ -21,8 +21,8 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const num_mipmaps = 5;
 
 const Vertex = struct {
-    position: Vec3,
-    uv: Vec2,
+    position: vm.Vec3,
+    uv: vm.Vec2,
 };
 comptime {
     std.debug.assert(@sizeOf([2]Vertex) == 40);
@@ -154,20 +154,20 @@ const DemoState = struct {
             while (mipmap_index < num_mipmaps) : (mipmap_index += 1) {
                 const index = mipmap_index * 4;
                 upload_verts.cpu_slice[index] = .{
-                    .position = vec3.init(-r, r, 0.0),
-                    .uv = vec2.init(0.0, 0.0),
+                    .position = vm.vec3.init(-r, r, 0.0),
+                    .uv = vm.vec2.init(0.0, 0.0),
                 };
                 upload_verts.cpu_slice[index + 1] = .{
-                    .position = vec3.init(r, r, 0.0),
-                    .uv = vec2.init(1.0, 0.0),
+                    .position = vm.vec3.init(r, r, 0.0),
+                    .uv = vm.vec2.init(1.0, 0.0),
                 };
                 upload_verts.cpu_slice[index + 2] = .{
-                    .position = vec3.init(-r, -r, 0.0),
-                    .uv = vec2.init(0.0, 1.0),
+                    .position = vm.vec3.init(-r, -r, 0.0),
+                    .uv = vm.vec2.init(0.0, 1.0),
                 };
                 upload_verts.cpu_slice[index + 3] = .{
-                    .position = vec3.init(r, -r, 0.0),
-                    .uv = vec2.init(1.0, 1.0),
+                    .position = vm.vec3.init(r, -r, 0.0),
+                    .uv = vm.vec2.init(1.0, 1.0),
                 };
                 r *= 0.5;
             }

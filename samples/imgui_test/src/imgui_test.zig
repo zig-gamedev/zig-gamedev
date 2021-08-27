@@ -1,10 +1,12 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const w = @import("win32");
-const gr = @import("graphics");
-const lib = @import("library");
-const c = @import("c");
-usingnamespace @import("vectormath");
+const win32 = @import("win32");
+const w = win32.base;
+const d3d12 = win32.d3d12;
+const common = @import("common");
+const gr = common.graphics;
+const lib = common.library;
+const c = common.c;
 const assert = std.debug.assert;
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -108,12 +110,12 @@ fn draw(demo: *DemoState) void {
 
     const back_buffer = grfx.getBackBuffer();
 
-    grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_RENDER_TARGET);
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
     grfx.flushResourceBarriers();
 
     grfx.cmdlist.OMSetRenderTargets(
         1,
-        &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
         null,
     );
@@ -126,7 +128,7 @@ fn draw(demo: *DemoState) void {
 
     demo.gui.draw(grfx);
 
-    grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
     grfx.flushResourceBarriers();
 
     grfx.endFrame();
