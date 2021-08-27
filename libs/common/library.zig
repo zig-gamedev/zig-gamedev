@@ -1,5 +1,8 @@
 const std = @import("std");
-const w = @import("../win32/win32.zig");
+const win32 = @import("win32");
+const w = win32.base;
+const dwrite = win32.dwrite;
+const d2d1 = win32.d2d1;
 const c = @import("c.zig");
 const panic = std.debug.panic;
 const assert = std.debug.assert;
@@ -357,11 +360,11 @@ pub fn newImGuiFrame(delta_time: f32) void {
 }
 
 pub fn DrawText(
-    devctx: *w.ID2D1DeviceContext6,
+    devctx: *d2d1.IDeviceContext6,
     text: []const u8,
-    format: *w.IDWriteTextFormat,
-    layout_rect: *const w.D2D1_RECT_F,
-    brush: *w.ID2D1Brush,
+    format: *dwrite.ITextFormat,
+    layout_rect: *const d2d1.RECT_F,
+    brush: *d2d1.IBrush,
 ) void {
     var utf16: [128:0]u16 = undefined;
     assert(text.len < utf16.len);
@@ -373,7 +376,7 @@ pub fn DrawText(
         format,
         layout_rect,
         brush,
-        w.D2D1_DRAW_TEXT_OPTIONS_NONE,
+        d2d1.DRAW_TEXT_OPTIONS_NONE,
         .NATURAL,
     );
 }

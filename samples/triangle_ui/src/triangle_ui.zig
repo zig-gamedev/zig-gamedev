@@ -1,10 +1,13 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const w = @import("win32");
-const gr = @import("graphics");
-const lib = @import("library");
-const c = @import("c");
-usingnamespace @import("vectormath");
+const win32 = @import("win32");
+const w = win32.base;
+const d3d12 = win32.d3d12;
+const common = @import("common");
+const gr = common.graphics;
+const lib = common.library;
+const c = common.c;
+usingnamespace common.vectormath;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 
@@ -15,6 +18,9 @@ pub fn main() !void {
     const window_name = "zig-gamedev: triangle ui";
     const window_width = 900;
     const window_height = 900;
+
+    _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
+    defer w.ole32.CoUninitialize();
 
     _ = w.SetProcessDPIAware();
 
@@ -32,10 +38,10 @@ pub fn main() !void {
     defer grfx.deinit(&gpa.allocator);
 
     const pipeline = blk: {
-        const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
-            w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+        const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
+            d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
         };
-        var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.DepthStencilState.DepthEnable = w.FALSE;
         pso_desc.InputLayout = .{
             .pInputElementDescs = &input_layout_desc,
@@ -54,18 +60,18 @@ pub fn main() !void {
 
     const vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
-        w.D3D12_HEAP_FLAG_NONE,
-        &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
-        w.D3D12_RESOURCE_STATE_COPY_DEST,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(Vec3)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
     defer _ = grfx.releaseResource(vertex_buffer);
 
     const index_buffer = grfx.createCommittedResource(
         .DEFAULT,
-        w.D3D12_HEAP_FLAG_NONE,
-        &w.D3D12_RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
-        w.D3D12_RESOURCE_STATE_COPY_DEST,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
     defer _ = grfx.releaseResource(index_buffer);
@@ -101,8 +107,8 @@ pub fn main() !void {
         upload_indices.cpu_slice.len * @sizeOf(u32),
     );
 
-    grfx.addTransitionBarrier(vertex_buffer, w.D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-    grfx.addTransitionBarrier(index_buffer, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
+    grfx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
     grfx.flushResourceBarriers();
 
     grfx.finishGpuCommands();
@@ -147,12 +153,12 @@ pub fn main() !void {
 
             const back_buffer = grfx.getBackBuffer();
 
-            grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_RENDER_TARGET);
+            grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
             grfx.flushResourceBarriers();
 
             grfx.cmdlist.OMSetRenderTargets(
                 1,
-                &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+                &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
                 w.TRUE,
                 null,
             );
@@ -164,7 +170,7 @@ pub fn main() !void {
             );
             grfx.setCurrentPipeline(pipeline);
             grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-            grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]w.D3D12_VERTEX_BUFFER_VIEW{.{
+            grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
                 .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
                 .SizeInBytes = 3 * @sizeOf(Vec3),
                 .StrideInBytes = @sizeOf(Vec3),
@@ -185,7 +191,7 @@ pub fn main() !void {
 
             gui.draw(&grfx);
 
-            grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_PRESENT);
+            grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
             grfx.flushResourceBarriers();
 
             grfx.endFrame();

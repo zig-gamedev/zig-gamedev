@@ -1,9 +1,19 @@
-const std = @import("std");
-usingnamespace std.os.windows;
-usingnamespace @import("misc.zig");
-usingnamespace @import("dcommon.zig");
+const windows = @import("windows.zig");
+const UINT = windows.UINT;
+const IUnknown = windows.IUnknown;
+const GUID = windows.GUID;
+const HRESULT = windows.HRESULT;
+const WINAPI = windows.WINAPI;
+const LPCWSTR = windows.LPCWSTR;
+const FLOAT = windows.FLOAT;
 
-pub const DWRITE_FONT_WEIGHT = enum(UINT) {
+pub const MEASURING_MODE = enum(UINT) {
+    NATURAL = 0,
+    GDI_CLASSIC = 1,
+    GDI_NATURAL = 2,
+};
+
+pub const FONT_WEIGHT = enum(UINT) {
     THIN = 100,
     EXTRA_LIGHT = 200,
     LIGHT = 300,
@@ -17,7 +27,7 @@ pub const DWRITE_FONT_WEIGHT = enum(UINT) {
     ULTRA_BLACK = 950,
 };
 
-pub const DWRITE_FONT_STRETCH = enum(UINT) {
+pub const FONT_STRETCH = enum(UINT) {
     UNDEFINED = 0,
     ULTRA_CONDENSED = 1,
     EXTRA_CONDENSED = 2,
@@ -30,31 +40,31 @@ pub const DWRITE_FONT_STRETCH = enum(UINT) {
     ULTRA_EXPANDED = 9,
 };
 
-pub const DWRITE_FONT_STYLE = enum(UINT) {
+pub const FONT_STYLE = enum(UINT) {
     NORMAL = 0,
     OBLIQUE = 1,
     ITALIC = 2,
 };
 
-pub const DWRITE_FACTORY_TYPE = enum(UINT) {
+pub const FACTORY_TYPE = enum(UINT) {
     SHARED = 0,
     ISOLATED = 1,
 };
 
-pub const DWRITE_TEXT_ALIGNMENT = enum(UINT) {
+pub const TEXT_ALIGNMENT = enum(UINT) {
     LEADING = 0,
     TRAILING = 1,
     CENTER = 2,
     JUSTIFIED = 3,
 };
 
-pub const DWRITE_PARAGRAPH_ALIGNMENT = enum(UINT) {
+pub const PARAGRAPH_ALIGNMENT = enum(UINT) {
     NEAR = 0,
     FAR = 1,
     CENTER = 2,
 };
 
-pub const IDWriteFontCollection = extern struct {
+pub const IFontCollection = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
@@ -79,7 +89,7 @@ pub const IDWriteFontCollection = extern struct {
     }
 };
 
-pub const IDWriteTextFormat = extern struct {
+pub const ITextFormat = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
@@ -90,10 +100,10 @@ pub const IDWriteTextFormat = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn SetTextAlignment(self: *T, alignment: DWRITE_TEXT_ALIGNMENT) HRESULT {
+            pub inline fn SetTextAlignment(self: *T, alignment: TEXT_ALIGNMENT) HRESULT {
                 return self.v.textformat.SetTextAlignment(self, alignment);
             }
-            pub inline fn SetParagraphAlignment(self: *T, alignment: DWRITE_PARAGRAPH_ALIGNMENT) HRESULT {
+            pub inline fn SetParagraphAlignment(self: *T, alignment: PARAGRAPH_ALIGNMENT) HRESULT {
                 return self.v.textformat.SetParagraphAlignment(self, alignment);
             }
         };
@@ -101,8 +111,8 @@ pub const IDWriteTextFormat = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetTextAlignment: fn (*T, DWRITE_TEXT_ALIGNMENT) callconv(WINAPI) HRESULT,
-            SetParagraphAlignment: fn (*T, DWRITE_PARAGRAPH_ALIGNMENT) callconv(WINAPI) HRESULT,
+            SetTextAlignment: fn (*T, TEXT_ALIGNMENT) callconv(WINAPI) HRESULT,
+            SetParagraphAlignment: fn (*T, PARAGRAPH_ALIGNMENT) callconv(WINAPI) HRESULT,
             SetWordWrapping: *c_void,
             SetReadingDirection: *c_void,
             SetFlowDirection: *c_void,
@@ -130,7 +140,7 @@ pub const IDWriteTextFormat = extern struct {
     }
 };
 
-pub const IDWriteFactory = extern struct {
+pub const IFactory = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
@@ -144,13 +154,13 @@ pub const IDWriteFactory = extern struct {
             pub inline fn CreateTextFormat(
                 self: *T,
                 font_family_name: LPCWSTR,
-                font_collection: ?*IDWriteFontCollection,
-                font_weight: DWRITE_FONT_WEIGHT,
-                font_style: DWRITE_FONT_STYLE,
-                font_stretch: DWRITE_FONT_STRETCH,
+                font_collection: ?*IFontCollection,
+                font_weight: FONT_WEIGHT,
+                font_style: FONT_STYLE,
+                font_stretch: FONT_STRETCH,
                 font_size: FLOAT,
                 locale_name: LPCWSTR,
-                text_format: *?*IDWriteTextFormat,
+                text_format: *?*ITextFormat,
             ) HRESULT {
                 return self.v.factory.CreateTextFormat(
                     self,
@@ -184,13 +194,13 @@ pub const IDWriteFactory = extern struct {
             CreateTextFormat: fn (
                 *T,
                 LPCWSTR,
-                ?*IDWriteFontCollection,
-                DWRITE_FONT_WEIGHT,
-                DWRITE_FONT_STYLE,
-                DWRITE_FONT_STRETCH,
+                ?*IFontCollection,
+                FONT_WEIGHT,
+                FONT_STYLE,
+                FONT_STRETCH,
                 FLOAT,
                 LPCWSTR,
-                *?*IDWriteTextFormat,
+                *?*ITextFormat,
             ) callconv(WINAPI) HRESULT,
             CreateTypography: *c_void,
             GetGdiInterop: *c_void,
@@ -204,7 +214,7 @@ pub const IDWriteFactory = extern struct {
     }
 };
 
-pub const IID_IDWriteFactory = GUID{
+pub const IID_IFactory = GUID{
     .Data1 = 0xb859ee5a,
     .Data2 = 0xd838,
     .Data3 = 0x4b5b,
@@ -212,7 +222,7 @@ pub const IID_IDWriteFactory = GUID{
 };
 
 pub extern "dwrite" fn DWriteCreateFactory(
-    factory_type: DWRITE_FACTORY_TYPE,
+    factory_type: FACTORY_TYPE,
     guid: *const GUID,
     factory: *?*c_void,
 ) callconv(WINAPI) HRESULT;

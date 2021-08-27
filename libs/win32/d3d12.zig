@@ -1,26 +1,46 @@
 const std = @import("std");
-usingnamespace std.os.windows;
-usingnamespace @import("misc.zig");
-usingnamespace @import("dxgiformat.zig");
-usingnamespace @import("dxgicommon.zig");
+const windows = @import("windows.zig");
+const dxgi = @import("dxgi.zig");
 const d3d = @import("d3dcommon.zig");
-usingnamespace @import("d3d12sdklayers.zig");
+const UINT = windows.UINT;
+const IUnknown = windows.IUnknown;
+const HRESULT = windows.HRESULT;
+const GUID = windows.GUID;
+const LUID = windows.LUID;
+const WINAPI = windows.WINAPI;
+const FLOAT = windows.FLOAT;
+const LPCWSTR = windows.LPCWSTR;
+const LPCSTR = windows.LPCSTR;
+const UINT8 = windows.UINT8;
+const UINT16 = windows.UINT16;
+const UINT32 = windows.UINT32;
+const UINT64 = windows.UINT64;
+const INT = windows.INT;
+const INT8 = windows.INT8;
+const BYTE = windows.BYTE;
+const DWORD = windows.DWORD;
+const SIZE_T = windows.SIZE_T;
+const HANDLE = windows.HANDLE;
+const SECURITY_ATTRIBUTES = windows.SECURITY_ATTRIBUTES;
+const BOOL = windows.BOOL;
+const FALSE = windows.FALSE;
+const TRUE = windows.TRUE;
 
-pub const D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES = 0xffff_ffff;
+pub const RESOURCE_BARRIER_ALL_SUBRESOURCES = 0xffff_ffff;
 
-pub const D3D12_GPU_VIRTUAL_ADDRESS = UINT64;
+pub const GPU_VIRTUAL_ADDRESS = UINT64;
 
-pub const D3D12_PRIMITIVE_TOPOLOGY = d3d.PRIMITIVE_TOPOLOGY;
+pub const PRIMITIVE_TOPOLOGY = d3d.PRIMITIVE_TOPOLOGY;
 
-pub const D3D12_CPU_DESCRIPTOR_HANDLE = extern struct {
+pub const CPU_DESCRIPTOR_HANDLE = extern struct {
     ptr: UINT64,
 };
 
-pub const D3D12_GPU_DESCRIPTOR_HANDLE = extern struct {
+pub const GPU_DESCRIPTOR_HANDLE = extern struct {
     ptr: UINT64,
 };
 
-pub const D3D12_PRIMITIVE_TOPOLOGY_TYPE = enum(UINT) {
+pub const PRIMITIVE_TOPOLOGY_TYPE = enum(UINT) {
     UNDEFINED = 0,
     POINT = 1,
     LINE = 2,
@@ -28,36 +48,36 @@ pub const D3D12_PRIMITIVE_TOPOLOGY_TYPE = enum(UINT) {
     PATCH = 4,
 };
 
-pub const D3D12_HEAP_TYPE = enum(UINT) {
+pub const HEAP_TYPE = enum(UINT) {
     DEFAULT = 1,
     UPLOAD = 2,
     READBACK = 3,
     CUSTOM = 4,
 };
 
-pub const D3D12_CPU_PAGE_PROPERTY = enum(UINT) {
+pub const CPU_PAGE_PROPERTY = enum(UINT) {
     UNKNOWN = 0,
     NOT_AVAILABLE = 1,
     WRITE_COMBINE = 2,
     WRITE_BACK = 3,
 };
 
-pub const D3D12_MEMORY_POOL = enum(UINT) {
+pub const MEMORY_POOL = enum(UINT) {
     UNKNOWN = 0,
     L0 = 1,
     L1 = 2,
 };
 
-pub const D3D12_HEAP_PROPERTIES = extern struct {
-    Type: D3D12_HEAP_TYPE,
-    CPUPageProperty: D3D12_CPU_PAGE_PROPERTY,
-    MemoryPoolPreference: D3D12_MEMORY_POOL,
+pub const HEAP_PROPERTIES = extern struct {
+    Type: HEAP_TYPE,
+    CPUPageProperty: CPU_PAGE_PROPERTY,
+    MemoryPoolPreference: MEMORY_POOL,
     CreationNodeMask: UINT,
     VisibleNodeMask: UINT,
 
-    pub fn initType(heap_type: D3D12_HEAP_TYPE) D3D12_HEAP_PROPERTIES {
+    pub fn initType(heap_type: HEAP_TYPE) HEAP_PROPERTIES {
         var v = std.mem.zeroes(@This());
-        v = D3D12_HEAP_PROPERTIES{
+        v = HEAP_PROPERTIES{
             .Type = heap_type,
             .CPUPageProperty = .UNKNOWN,
             .MemoryPoolPreference = .UNKNOWN,
@@ -68,37 +88,37 @@ pub const D3D12_HEAP_PROPERTIES = extern struct {
     }
 };
 
-pub const D3D12_HEAP_FLAGS = UINT;
-pub const D3D12_HEAP_FLAG_NONE = 0;
-pub const D3D12_HEAP_FLAG_SHARED = 0x1;
-pub const D3D12_HEAP_FLAG_DENY_BUFFERS = 0x4;
-pub const D3D12_HEAP_FLAG_ALLOW_DISPLAY = 0x8;
-pub const D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER = 0x20;
-pub const D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES = 0x40;
-pub const D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES = 0x80;
-pub const D3D12_HEAP_FLAG_HARDWARE_PROTECTED = 0x100;
-pub const D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH = 0x200;
-pub const D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS = 0x400;
-pub const D3D12_HEAP_FLAG_CREATE_NOT_RESIDENT = 0x800;
-pub const D3D12_HEAP_FLAG_CREATE_NOT_ZEROED = 0x1000;
-pub const D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES = 0;
-pub const D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS = 0xc0;
-pub const D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES = 0x44;
-pub const D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES = 0x84;
+pub const HEAP_FLAGS = UINT;
+pub const HEAP_FLAG_NONE = 0;
+pub const HEAP_FLAG_SHARED = 0x1;
+pub const HEAP_FLAG_DENY_BUFFERS = 0x4;
+pub const HEAP_FLAG_ALLOW_DISPLAY = 0x8;
+pub const HEAP_FLAG_SHARED_CROSS_ADAPTER = 0x20;
+pub const HEAP_FLAG_DENY_RT_DS_TEXTURES = 0x40;
+pub const HEAP_FLAG_DENY_NON_RT_DS_TEXTURES = 0x80;
+pub const HEAP_FLAG_HARDWARE_PROTECTED = 0x100;
+pub const HEAP_FLAG_ALLOW_WRITE_WATCH = 0x200;
+pub const HEAP_FLAG_ALLOW_SHADER_ATOMICS = 0x400;
+pub const HEAP_FLAG_CREATE_NOT_RESIDENT = 0x800;
+pub const HEAP_FLAG_CREATE_NOT_ZEROED = 0x1000;
+pub const HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES = 0;
+pub const HEAP_FLAG_ALLOW_ONLY_BUFFERS = 0xc0;
+pub const HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES = 0x44;
+pub const HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES = 0x84;
 
-pub const D3D12_HEAP_DESC = extern struct {
+pub const HEAP_DESC = extern struct {
     SizeInBytes: UINT64,
-    Properties: D3D12_HEAP_PROPERTIES,
+    Properties: HEAP_PROPERTIES,
     Alignment: UINT64,
-    Flags: D3D12_HEAP_FLAGS,
+    Flags: HEAP_FLAGS,
 };
 
-pub const D3D12_RANGE = extern struct {
+pub const RANGE = extern struct {
     Begin: UINT64,
     End: UINT64,
 };
 
-pub const D3D12_BOX = extern struct {
+pub const BOX = extern struct {
     left: UINT,
     top: UINT,
     front: UINT,
@@ -107,7 +127,7 @@ pub const D3D12_BOX = extern struct {
     back: UINT,
 };
 
-pub const D3D12_RESOURCE_DIMENSION = enum(UINT) {
+pub const RESOURCE_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
     BUFFER = 1,
     TEXTURE1D = 2,
@@ -115,37 +135,37 @@ pub const D3D12_RESOURCE_DIMENSION = enum(UINT) {
     TEXTURE3D = 4,
 };
 
-pub const D3D12_TEXTURE_LAYOUT = enum(UINT) {
+pub const TEXTURE_LAYOUT = enum(UINT) {
     UNKNOWN = 0,
     ROW_MAJOR = 1,
     _64KB_UNDEFINED_SWIZZLE = 2,
     _64KB_STANDARD_SWIZZLE = 3,
 };
 
-pub const D3D12_RESOURCE_FLAGS = UINT;
-pub const D3D12_RESOURCE_FLAG_NONE = 0;
-pub const D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET = 0x1;
-pub const D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL = 0x2;
-pub const D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS = 0x4;
-pub const D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE = 0x8;
-pub const D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER = 0x10;
-pub const D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS = 0x20;
-pub const D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY = 0x40;
-pub const D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY = 0x80;
+pub const RESOURCE_FLAGS = UINT;
+pub const RESOURCE_FLAG_NONE = 0;
+pub const RESOURCE_FLAG_ALLOW_RENDER_TARGET = 0x1;
+pub const RESOURCE_FLAG_ALLOW_DEPTH_STENCIL = 0x2;
+pub const RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS = 0x4;
+pub const RESOURCE_FLAG_DENY_SHADER_RESOURCE = 0x8;
+pub const RESOURCE_FLAG_ALLOW_CROSS_ADAPTER = 0x10;
+pub const RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS = 0x20;
+pub const RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY = 0x40;
+pub const RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY = 0x80;
 
-pub const D3D12_RESOURCE_DESC = extern struct {
-    Dimension: D3D12_RESOURCE_DIMENSION,
+pub const RESOURCE_DESC = extern struct {
+    Dimension: RESOURCE_DIMENSION,
     Alignment: UINT64,
     Width: UINT64,
     Height: UINT,
     DepthOrArraySize: UINT16,
     MipLevels: UINT16,
-    Format: DXGI_FORMAT,
-    SampleDesc: DXGI_SAMPLE_DESC,
-    Layout: D3D12_TEXTURE_LAYOUT,
-    Flags: D3D12_RESOURCE_FLAGS,
+    Format: dxgi.FORMAT,
+    SampleDesc: dxgi.SAMPLE_DESC,
+    Layout: TEXTURE_LAYOUT,
+    Flags: RESOURCE_FLAGS,
 
-    pub fn initBuffer(width: UINT64) D3D12_RESOURCE_DESC {
+    pub fn initBuffer(width: UINT64) RESOURCE_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .Dimension = .BUFFER,
@@ -157,12 +177,12 @@ pub const D3D12_RESOURCE_DESC = extern struct {
             .Format = .UNKNOWN,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .Layout = .ROW_MAJOR,
-            .Flags = D3D12_RESOURCE_FLAG_NONE,
+            .Flags = RESOURCE_FLAG_NONE,
         };
         return v;
     }
 
-    pub fn initTex2d(format: DXGI_FORMAT, width: UINT64, height: UINT, mip_levels: u32) D3D12_RESOURCE_DESC {
+    pub fn initTex2d(format: dxgi.FORMAT, width: UINT64, height: UINT, mip_levels: u32) RESOURCE_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .Dimension = .TEXTURE2D,
@@ -174,37 +194,37 @@ pub const D3D12_RESOURCE_DESC = extern struct {
             .Format = format,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .Layout = .UNKNOWN,
-            .Flags = D3D12_RESOURCE_FLAG_NONE,
+            .Flags = RESOURCE_FLAG_NONE,
         };
         return v;
     }
 };
 
-pub const D3D12_FENCE_FLAGS = UINT;
-pub const D3D12_FENCE_FLAG_NONE = 0;
-pub const D3D12_FENCE_FLAG_SHARED = 0x1;
-pub const D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER = 0x2;
-pub const D3D12_FENCE_FLAG_NON_MONITORED = 0x4;
+pub const FENCE_FLAGS = UINT;
+pub const FENCE_FLAG_NONE = 0;
+pub const FENCE_FLAG_SHARED = 0x1;
+pub const FENCE_FLAG_SHARED_CROSS_ADAPTER = 0x2;
+pub const FENCE_FLAG_NON_MONITORED = 0x4;
 
-pub const D3D12_DESCRIPTOR_HEAP_TYPE = enum(UINT) {
+pub const DESCRIPTOR_HEAP_TYPE = enum(UINT) {
     CBV_SRV_UAV = 0,
     SAMPLER = 1,
     RTV = 2,
     DSV = 3,
 };
 
-pub const D3D12_DESCRIPTOR_HEAP_FLAGS = UINT;
-pub const D3D12_DESCRIPTOR_HEAP_FLAG_NONE = 0;
-pub const D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE = 0x1;
+pub const DESCRIPTOR_HEAP_FLAGS = UINT;
+pub const DESCRIPTOR_HEAP_FLAG_NONE = 0;
+pub const DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE = 0x1;
 
-pub const D3D12_DESCRIPTOR_HEAP_DESC = extern struct {
-    Type: D3D12_DESCRIPTOR_HEAP_TYPE,
+pub const DESCRIPTOR_HEAP_DESC = extern struct {
+    Type: DESCRIPTOR_HEAP_TYPE,
     NumDescriptors: UINT,
-    Flags: D3D12_DESCRIPTOR_HEAP_FLAGS,
+    Flags: DESCRIPTOR_HEAP_FLAGS,
     NodeMask: UINT,
 };
 
-pub const D3D12_COMMAND_LIST_TYPE = enum(UINT) {
+pub const COMMAND_LIST_TYPE = enum(UINT) {
     DIRECT = 0,
     BUNDLE = 1,
     COMPUTE = 2,
@@ -214,78 +234,78 @@ pub const D3D12_COMMAND_LIST_TYPE = enum(UINT) {
     VIDEO_ENCODE = 6,
 };
 
-pub const D3D12_RESOURCE_BARRIER_TYPE = enum(UINT) {
+pub const RESOURCE_BARRIER_TYPE = enum(UINT) {
     TRANSITION = 0,
     ALIASING = 1,
     UAV = 2,
 };
 
-pub const D3D12_RESOURCE_TRANSITION_BARRIER = extern struct {
-    pResource: *ID3D12Resource,
+pub const RESOURCE_TRANSITION_BARRIER = extern struct {
+    pResource: *IResource,
     Subresource: UINT,
-    StateBefore: D3D12_RESOURCE_STATES,
-    StateAfter: D3D12_RESOURCE_STATES,
+    StateBefore: RESOURCE_STATES,
+    StateAfter: RESOURCE_STATES,
 };
 
-pub const D3D12_RESOURCE_ALIASING_BARRIER = extern struct {
-    pResourceBefore: *ID3D12Resource,
-    pResourceAfter: *ID3D12Resource,
+pub const RESOURCE_ALIASING_BARRIER = extern struct {
+    pResourceBefore: *IResource,
+    pResourceAfter: *IResource,
 };
 
-pub const D3D12_RESOURCE_UAV_BARRIER = extern struct {
-    pResource: *ID3D12Resource,
+pub const RESOURCE_UAV_BARRIER = extern struct {
+    pResource: *IResource,
 };
 
-pub const D3D12_RESOURCE_BARRIER_FLAGS = UINT;
-pub const D3D12_RESOURCE_BARRIER_FLAG_NONE = 0;
-pub const D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY = 0x1;
-pub const D3D12_RESOURCE_BARRIER_FLAG_END_ONLY = 0x2;
+pub const RESOURCE_BARRIER_FLAGS = UINT;
+pub const RESOURCE_BARRIER_FLAG_NONE = 0;
+pub const RESOURCE_BARRIER_FLAG_BEGIN_ONLY = 0x1;
+pub const RESOURCE_BARRIER_FLAG_END_ONLY = 0x2;
 
-pub const D3D12_RESOURCE_BARRIER = extern struct {
-    Type: D3D12_RESOURCE_BARRIER_TYPE,
-    Flags: D3D12_RESOURCE_BARRIER_FLAGS,
+pub const RESOURCE_BARRIER = extern struct {
+    Type: RESOURCE_BARRIER_TYPE,
+    Flags: RESOURCE_BARRIER_FLAGS,
     u: extern union {
-        Transition: D3D12_RESOURCE_TRANSITION_BARRIER,
-        Aliasing: D3D12_RESOURCE_ALIASING_BARRIER,
-        UAV: D3D12_RESOURCE_UAV_BARRIER,
+        Transition: RESOURCE_TRANSITION_BARRIER,
+        Aliasing: RESOURCE_ALIASING_BARRIER,
+        UAV: RESOURCE_UAV_BARRIER,
     },
 };
 
-pub const D3D12_SUBRESOURCE_FOOTPRINT = extern struct {
-    Format: DXGI_FORMAT,
+pub const SUBRESOURCE_FOOTPRINT = extern struct {
+    Format: dxgi.FORMAT,
     Width: UINT,
     Height: UINT,
     Depth: UINT,
     RowPitch: UINT,
 };
 
-pub const D3D12_PLACED_SUBRESOURCE_FOOTPRINT = extern struct {
+pub const PLACED_SUBRESOURCE_FOOTPRINT = extern struct {
     Offset: UINT64,
-    Footprint: D3D12_SUBRESOURCE_FOOTPRINT,
+    Footprint: SUBRESOURCE_FOOTPRINT,
 };
 
-pub const D3D12_TEXTURE_COPY_TYPE = enum(UINT) {
+pub const TEXTURE_COPY_TYPE = enum(UINT) {
     SUBRESOURCE_INDEX = 0,
     PLACED_FOOTPRINT = 1,
 };
 
-pub const D3D12_TEXTURE_COPY_LOCATION = extern struct {
-    pResource: *ID3D12Resource,
-    Type: D3D12_TEXTURE_COPY_TYPE,
+pub const TEXTURE_COPY_LOCATION = extern struct {
+    pResource: *IResource,
+    Type: TEXTURE_COPY_TYPE,
     u: extern union {
-        PlacedFootprint: D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+        PlacedFootprint: PLACED_SUBRESOURCE_FOOTPRINT,
         SubresourceIndex: UINT,
     },
 };
 
-pub const D3D12_TILED_RESOURCE_COORDINATE = extern struct {
+pub const TILED_RESOURCE_COORDINATE = extern struct {
     X: UINT,
     Y: UINT,
     Z: UINT,
     Subresource: UINT,
 };
 
-pub const D3D12_TILE_REGION_SIZE = extern struct {
+pub const TILE_REGION_SIZE = extern struct {
     NumTiles: UINT,
     UseBox: BOOL,
     Width: UINT,
@@ -293,36 +313,36 @@ pub const D3D12_TILE_REGION_SIZE = extern struct {
     Depth: UINT16,
 };
 
-pub const D3D12_TILE_RANGE_FLAGS = UINT;
-pub const D3D12_TILE_RANGE_FLAG_NONE = 0;
-pub const D3D12_TILE_RANGE_FLAG_NULL = 0x1;
-pub const D3D12_TILE_RANGE_FLAG_SKIP = 0x2;
-pub const D3D12_TILE_RANGE_FLAG_REUSE_SINGLE_TILE = 0x4;
+pub const TILE_RANGE_FLAGS = UINT;
+pub const TILE_RANGE_FLAG_NONE = 0;
+pub const TILE_RANGE_FLAG_NULL = 0x1;
+pub const TILE_RANGE_FLAG_SKIP = 0x2;
+pub const TILE_RANGE_FLAG_REUSE_SINGLE_TILE = 0x4;
 
-pub const D3D12_SUBRESOURCE_TILING = extern struct {
+pub const SUBRESOURCE_TILING = extern struct {
     WidthInTiles: UINT,
     HeightInTiles: UINT16,
     DepthInTiles: UINT16,
     StartTileIndexInOverallResource: UINT,
 };
 
-pub const D3D12_TILE_SHAPE = extern struct {
+pub const TILE_SHAPE = extern struct {
     WidthInTexels: UINT,
     HeightInTexels: UINT,
     DepthInTexels: UINT,
 };
 
-pub const D3D12_TILE_MAPPING_FLAGS = UINT;
-pub const D3D12_TILE_MAPPING_FLAG_NONE = 0;
-pub const D3D12_TILE_MAPPING_FLAG_NO_HAZARD = 0x1;
+pub const TILE_MAPPING_FLAGS = UINT;
+pub const TILE_MAPPING_FLAG_NONE = 0;
+pub const TILE_MAPPING_FLAG_NO_HAZARD = 0x1;
 
-pub const D3D12_TILE_COPY_FLAGS = UINT;
-pub const D3D12_TILE_COPY_FLAG_NONE = 0;
-pub const D3D12_TILE_COPY_FLAG_NO_HAZARD = 0x1;
-pub const D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE = 0x2;
-pub const D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER = 0x4;
+pub const TILE_COPY_FLAGS = UINT;
+pub const TILE_COPY_FLAG_NONE = 0;
+pub const TILE_COPY_FLAG_NO_HAZARD = 0x1;
+pub const TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE = 0x2;
+pub const TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER = 0x4;
 
-pub const D3D12_VIEWPORT = extern struct {
+pub const VIEWPORT = extern struct {
     TopLeftX: FLOAT,
     TopLeftY: FLOAT,
     Width: FLOAT,
@@ -331,86 +351,86 @@ pub const D3D12_VIEWPORT = extern struct {
     MaxDepth: FLOAT,
 };
 
-pub const D3D12_RECT = RECT;
+pub const RECT = windows.RECT;
 
-pub const D3D12_RESOURCE_STATES = UINT;
-pub const D3D12_RESOURCE_STATE_COMMON = 0;
-pub const D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1;
-pub const D3D12_RESOURCE_STATE_INDEX_BUFFER = 0x2;
-pub const D3D12_RESOURCE_STATE_RENDER_TARGET = 0x4;
-pub const D3D12_RESOURCE_STATE_UNORDERED_ACCESS = 0x8;
-pub const D3D12_RESOURCE_STATE_DEPTH_WRITE = 0x10;
-pub const D3D12_RESOURCE_STATE_DEPTH_READ = 0x20;
-pub const D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 0x40;
-pub const D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 0x80;
-pub const D3D12_RESOURCE_STATE_STREAM_OUT = 0x100;
-pub const D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT = 0x200;
-pub const D3D12_RESOURCE_STATE_COPY_DEST = 0x400;
-pub const D3D12_RESOURCE_STATE_COPY_SOURCE = 0x800;
-pub const D3D12_RESOURCE_STATE_RESOLVE_DEST = 0x1000;
-pub const D3D12_RESOURCE_STATE_RESOLVE_SOURCE = 0x2000;
-pub const D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x400000;
-pub const D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE = 0x1000000;
-pub const D3D12_RESOURCE_STATE_GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800);
-pub const D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE = (0x40 | 0x80);
-pub const D3D12_RESOURCE_STATE_PRESENT = 0;
-pub const D3D12_RESOURCE_STATE_PREDICATION = 0x200;
-pub const D3D12_RESOURCE_STATE_VIDEO_DECODE_READ = 0x10000;
-pub const D3D12_RESOURCE_STATE_VIDEO_DECODE_WRITE = 0x20000;
-pub const D3D12_RESOURCE_STATE_VIDEO_PROCESS_READ = 0x40000;
-pub const D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE = 0x80000;
-pub const D3D12_RESOURCE_STATE_VIDEO_ENCODE_READ = 0x200000;
-pub const D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE = 0x800000;
+pub const RESOURCE_STATES = UINT;
+pub const RESOURCE_STATE_COMMON = 0;
+pub const RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1;
+pub const RESOURCE_STATE_INDEX_BUFFER = 0x2;
+pub const RESOURCE_STATE_RENDER_TARGET = 0x4;
+pub const RESOURCE_STATE_UNORDERED_ACCESS = 0x8;
+pub const RESOURCE_STATE_DEPTH_WRITE = 0x10;
+pub const RESOURCE_STATE_DEPTH_READ = 0x20;
+pub const RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 0x40;
+pub const RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 0x80;
+pub const RESOURCE_STATE_STREAM_OUT = 0x100;
+pub const RESOURCE_STATE_INDIRECT_ARGUMENT = 0x200;
+pub const RESOURCE_STATE_COPY_DEST = 0x400;
+pub const RESOURCE_STATE_COPY_SOURCE = 0x800;
+pub const RESOURCE_STATE_RESOLVE_DEST = 0x1000;
+pub const RESOURCE_STATE_RESOLVE_SOURCE = 0x2000;
+pub const RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x400000;
+pub const RESOURCE_STATE_SHADING_RATE_SOURCE = 0x1000000;
+pub const RESOURCE_STATE_GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800);
+pub const RESOURCE_STATE_ALL_SHADER_RESOURCE = (0x40 | 0x80);
+pub const RESOURCE_STATE_PRESENT = 0;
+pub const RESOURCE_STATE_PREDICATION = 0x200;
+pub const RESOURCE_STATE_VIDEO_DECODE_READ = 0x10000;
+pub const RESOURCE_STATE_VIDEO_DECODE_WRITE = 0x20000;
+pub const RESOURCE_STATE_VIDEO_PROCESS_READ = 0x40000;
+pub const RESOURCE_STATE_VIDEO_PROCESS_WRITE = 0x80000;
+pub const RESOURCE_STATE_VIDEO_ENCODE_READ = 0x200000;
+pub const RESOURCE_STATE_VIDEO_ENCODE_WRITE = 0x800000;
 
-pub const D3D12_INDEX_BUFFER_STRIP_CUT_VALUE = enum(UINT) {
+pub const INDEX_BUFFER_STRIP_CUT_VALUE = enum(UINT) {
     DISABLED = 0,
     _0xFFFF = 1,
     _0xFFFFFFFF = 2,
 };
 
-pub const D3D12_VERTEX_BUFFER_VIEW = extern struct {
-    BufferLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const VERTEX_BUFFER_VIEW = extern struct {
+    BufferLocation: GPU_VIRTUAL_ADDRESS,
     SizeInBytes: UINT,
     StrideInBytes: UINT,
 };
 
-pub const D3D12_INDEX_BUFFER_VIEW = extern struct {
-    BufferLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const INDEX_BUFFER_VIEW = extern struct {
+    BufferLocation: GPU_VIRTUAL_ADDRESS,
     SizeInBytes: UINT,
-    Format: DXGI_FORMAT,
+    Format: dxgi.FORMAT,
 };
 
-pub const D3D12_STREAM_OUTPUT_BUFFER_VIEW = extern struct {
-    BufferLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const STREAM_OUTPUT_BUFFER_VIEW = extern struct {
+    BufferLocation: GPU_VIRTUAL_ADDRESS,
     SizeInBytes: UINT64,
-    BufferFilledSizeLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+    BufferFilledSizeLocation: GPU_VIRTUAL_ADDRESS,
 };
 
-pub const D3D12_CLEAR_FLAGS = UINT;
-pub const D3D12_CLEAR_FLAG_DEPTH = 0x1;
-pub const D3D12_CLEAR_FLAG_STENCIL = 0x2;
+pub const CLEAR_FLAGS = UINT;
+pub const CLEAR_FLAG_DEPTH = 0x1;
+pub const CLEAR_FLAG_STENCIL = 0x2;
 
-pub const D3D12_DISCARD_REGION = extern struct {
+pub const DISCARD_REGION = extern struct {
     NumRects: UINT,
-    pRects: *const D3D12_RECT,
+    pRects: *const RECT,
     FirstSubresource: UINT,
     NumSubresources: UINT,
 };
 
-pub const D3D12_QUERY_HEAP_TYPE = enum(UINT) {
+pub const QUERY_HEAP_TYPE = enum(UINT) {
     OCCLUSION = 0,
     TIMESTAMP = 1,
     PIPELINE_STATISTICS = 2,
     SO_STATISTICS = 3,
 };
 
-pub const D3D12_QUERY_HEAP_DESC = extern struct {
-    Type: D3D12_QUERY_HEAP_TYPE,
+pub const QUERY_HEAP_DESC = extern struct {
+    Type: QUERY_HEAP_TYPE,
     Count: UINT,
     NodeMask: UINT,
 };
 
-pub const D3D12_QUERY_TYPE = enum(UINT) {
+pub const QUERY_TYPE = enum(UINT) {
     OCCLUSION = 0,
     BINARY_OCCLUSION = 1,
     TIMESTAMP = 2,
@@ -423,12 +443,12 @@ pub const D3D12_QUERY_TYPE = enum(UINT) {
     PIPELINE_STATISTICS1 = 10,
 };
 
-pub const D3D12_PREDICATION_OP = enum(UINT) {
+pub const PREDICATION_OP = enum(UINT) {
     EQUAL_ZERO = 0,
     NOT_EQUAL_ZERO = 1,
 };
 
-pub const D3D12_INDIRECT_ARGUMENT_TYPE = enum(UINT) {
+pub const INDIRECT_ARGUMENT_TYPE = enum(UINT) {
     DRAW = 0,
     DRAW_INDEXED = 1,
     DISPATCH = 2,
@@ -442,8 +462,8 @@ pub const D3D12_INDIRECT_ARGUMENT_TYPE = enum(UINT) {
     DISPATCH_MESH = 10,
 };
 
-pub const D3D12_INDIRECT_ARGUMENT_DESC = extern struct {
-    Type: D3D12_INDIRECT_ARGUMENT_TYPE,
+pub const INDIRECT_ARGUMENT_DESC = extern struct {
+    Type: INDIRECT_ARGUMENT_TYPE,
     u: extern union {
         VertexBuffer: extern struct {
             Slot: UINT,
@@ -465,47 +485,47 @@ pub const D3D12_INDIRECT_ARGUMENT_DESC = extern struct {
     },
 };
 
-pub const D3D12_COMMAND_SIGNATURE_DESC = extern struct {
+pub const COMMAND_SIGNATURE_DESC = extern struct {
     ByteStride: UINT,
     NumArgumentDescs: UINT,
-    pArgumentDescs: *const D3D12_INDIRECT_ARGUMENT_DESC,
+    pArgumentDescs: *const INDIRECT_ARGUMENT_DESC,
     NodeMask: UINT,
 };
 
-pub const D3D12_PACKED_MIP_INFO = extern struct {
+pub const PACKED_MIP_INFO = extern struct {
     NumStandardMips: UINT8,
     NumPackedMips: UINT8,
     NumTilesForPackedMips: UINT,
     StartTileIndexInOverallResource: UINT,
 };
 
-pub const D3D12_COMMAND_QUEUE_FLAGS = UINT;
-pub const D3D12_COMMAND_QUEUE_FLAG_NONE = 0;
-pub const D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT = 0x1;
+pub const COMMAND_QUEUE_FLAGS = UINT;
+pub const COMMAND_QUEUE_FLAG_NONE = 0;
+pub const COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT = 0x1;
 
-pub const D3D12_COMMAND_QUEUE_PRIORITY = enum(UINT) {
+pub const COMMAND_QUEUE_PRIORITY = enum(UINT) {
     NORMAL = 0,
     HIGH = 100,
     GLOBAL_REALTIME = 10000,
 };
 
-pub const D3D12_COMMAND_QUEUE_DESC = extern struct {
-    Type: D3D12_COMMAND_LIST_TYPE,
+pub const COMMAND_QUEUE_DESC = extern struct {
+    Type: COMMAND_LIST_TYPE,
     Priority: INT,
-    Flags: D3D12_COMMAND_QUEUE_FLAGS,
+    Flags: COMMAND_QUEUE_FLAGS,
     NodeMask: UINT,
 };
 
-pub const D3D12_SHADER_BYTECODE = extern struct {
+pub const SHADER_BYTECODE = extern struct {
     pShaderBytecode: ?*const c_void,
     BytecodeLength: UINT64,
 
-    pub inline fn initZero() D3D12_SHADER_BYTECODE {
+    pub inline fn initZero() SHADER_BYTECODE {
         return std.mem.zeroes(@This());
     }
 };
 
-pub const D3D12_SO_DECLARATION_ENTRY = extern struct {
+pub const SO_DECLARATION_ENTRY = extern struct {
     Stream: UINT,
     SemanticName: LPCSTR,
     SemanticIndex: UINT,
@@ -514,19 +534,19 @@ pub const D3D12_SO_DECLARATION_ENTRY = extern struct {
     OutputSlot: UINT8,
 };
 
-pub const D3D12_STREAM_OUTPUT_DESC = extern struct {
-    pSODeclaration: ?[*]const D3D12_SO_DECLARATION_ENTRY,
+pub const STREAM_OUTPUT_DESC = extern struct {
+    pSODeclaration: ?[*]const SO_DECLARATION_ENTRY,
     NumEntries: UINT,
     pBufferStrides: ?[*]const UINT,
     NumStrides: UINT,
     RasterizedStream: UINT,
 
-    pub inline fn initZero() D3D12_STREAM_OUTPUT_DESC {
+    pub inline fn initZero() STREAM_OUTPUT_DESC {
         return std.mem.zeroes(@This());
     }
 };
 
-pub const D3D12_BLEND = enum(UINT) {
+pub const BLEND = enum(UINT) {
     ZERO = 1,
     ONE = 2,
     SRC_COLOR = 3,
@@ -546,7 +566,7 @@ pub const D3D12_BLEND = enum(UINT) {
     INV_SRC1_ALPHA = 19,
 };
 
-pub const D3D12_BLEND_OP = enum(UINT) {
+pub const BLEND_OP = enum(UINT) {
     ADD = 1,
     SUBTRACT = 2,
     REV_SUBTRACT = 3,
@@ -554,18 +574,18 @@ pub const D3D12_BLEND_OP = enum(UINT) {
     MAX = 5,
 };
 
-pub const D3D12_COLOR_WRITE_ENABLE = UINT;
-pub const D3D12_COLOR_WRITE_ENABLE_RED = 0x1;
-pub const D3D12_COLOR_WRITE_ENABLE_GREEN = 0x2;
-pub const D3D12_COLOR_WRITE_ENABLE_BLUE = 0x4;
-pub const D3D12_COLOR_WRITE_ENABLE_ALPHA = 0x8;
-pub const D3D12_COLOR_WRITE_ENABLE_ALL =
-    D3D12_COLOR_WRITE_ENABLE_RED |
-    D3D12_COLOR_WRITE_ENABLE_GREEN |
-    D3D12_COLOR_WRITE_ENABLE_BLUE |
-    D3D12_COLOR_WRITE_ENABLE_ALPHA;
+pub const COLOR_WRITE_ENABLE = UINT;
+pub const COLOR_WRITE_ENABLE_RED = 0x1;
+pub const COLOR_WRITE_ENABLE_GREEN = 0x2;
+pub const COLOR_WRITE_ENABLE_BLUE = 0x4;
+pub const COLOR_WRITE_ENABLE_ALPHA = 0x8;
+pub const COLOR_WRITE_ENABLE_ALL =
+    COLOR_WRITE_ENABLE_RED |
+    COLOR_WRITE_ENABLE_GREEN |
+    COLOR_WRITE_ENABLE_BLUE |
+    COLOR_WRITE_ENABLE_ALPHA;
 
-pub const D3D12_LOGIC_OP = enum(UINT) {
+pub const LOGIC_OP = enum(UINT) {
     CLEAR = 0,
     SET = 1,
     COPY = 2,
@@ -584,19 +604,19 @@ pub const D3D12_LOGIC_OP = enum(UINT) {
     OR_INVERTED = 15,
 };
 
-pub const D3D12_RENDER_TARGET_BLEND_DESC = extern struct {
+pub const RENDER_TARGET_BLEND_DESC = extern struct {
     BlendEnable: BOOL,
     LogicOpEnable: BOOL,
-    SrcBlend: D3D12_BLEND,
-    DestBlend: D3D12_BLEND,
-    BlendOp: D3D12_BLEND_OP,
-    SrcBlendAlpha: D3D12_BLEND,
-    DestBlendAlpha: D3D12_BLEND,
-    BlendOpAlpha: D3D12_BLEND_OP,
-    LogicOp: D3D12_LOGIC_OP,
+    SrcBlend: BLEND,
+    DestBlend: BLEND,
+    BlendOp: BLEND_OP,
+    SrcBlendAlpha: BLEND,
+    DestBlendAlpha: BLEND,
+    BlendOpAlpha: BLEND_OP,
+    LogicOp: LOGIC_OP,
     RenderTargetWriteMask: UINT8,
 
-    pub fn initDefault() D3D12_RENDER_TARGET_BLEND_DESC {
+    pub fn initDefault() RENDER_TARGET_BLEND_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .BlendEnable = FALSE,
@@ -614,25 +634,25 @@ pub const D3D12_RENDER_TARGET_BLEND_DESC = extern struct {
     }
 };
 
-pub const D3D12_BLEND_DESC = extern struct {
+pub const BLEND_DESC = extern struct {
     AlphaToCoverageEnable: BOOL,
     IndependentBlendEnable: BOOL,
-    RenderTarget: [8]D3D12_RENDER_TARGET_BLEND_DESC,
+    RenderTarget: [8]RENDER_TARGET_BLEND_DESC,
 
-    pub fn initDefault() D3D12_BLEND_DESC {
+    pub fn initDefault() BLEND_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .AlphaToCoverageEnable = FALSE,
             .IndependentBlendEnable = FALSE,
-            .RenderTarget = [_]D3D12_RENDER_TARGET_BLEND_DESC{D3D12_RENDER_TARGET_BLEND_DESC.initDefault()} ** 8,
+            .RenderTarget = [_]RENDER_TARGET_BLEND_DESC{RENDER_TARGET_BLEND_DESC.initDefault()} ** 8,
         };
         return v;
     }
 };
 
-pub const D3D12_RASTERIZER_DESC = extern struct {
-    FillMode: D3D12_FILL_MODE,
-    CullMode: D3D12_CULL_MODE,
+pub const RASTERIZER_DESC = extern struct {
+    FillMode: FILL_MODE,
+    CullMode: CULL_MODE,
     FrontCounterClockwise: BOOL,
     DepthBias: INT,
     DepthBiasClamp: FLOAT,
@@ -641,9 +661,9 @@ pub const D3D12_RASTERIZER_DESC = extern struct {
     MultisampleEnable: BOOL,
     AntialiasedLineEnable: BOOL,
     ForcedSampleCount: UINT,
-    ConservativeRaster: D3D12_CONSERVATIVE_RASTERIZATION_MODE,
+    ConservativeRaster: CONSERVATIVE_RASTERIZATION_MODE,
 
-    pub fn initDefault() D3D12_RASTERIZER_DESC {
+    pub fn initDefault() RASTERIZER_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .FillMode = .SOLID,
@@ -662,23 +682,23 @@ pub const D3D12_RASTERIZER_DESC = extern struct {
     }
 };
 
-pub const D3D12_FILL_MODE = enum(UINT) {
+pub const FILL_MODE = enum(UINT) {
     WIREFRAME = 2,
     SOLID = 3,
 };
 
-pub const D3D12_CULL_MODE = enum(UINT) {
+pub const CULL_MODE = enum(UINT) {
     NONE = 1,
     FRONT = 2,
     BACK = 3,
 };
 
-pub const D3D12_CONSERVATIVE_RASTERIZATION_MODE = enum(UINT) {
+pub const CONSERVATIVE_RASTERIZATION_MODE = enum(UINT) {
     OFF = 0,
     ON = 1,
 };
 
-pub const D3D12_COMPARISON_FUNC = enum(UINT) {
+pub const COMPARISON_FUNC = enum(UINT) {
     NEVER = 1,
     LESS = 2,
     EQUAL = 3,
@@ -689,12 +709,12 @@ pub const D3D12_COMPARISON_FUNC = enum(UINT) {
     ALWAYS = 8,
 };
 
-pub const D3D12_DEPTH_WRITE_MASK = enum(UINT) {
+pub const DEPTH_WRITE_MASK = enum(UINT) {
     ZERO = 0,
     ALL = 1,
 };
 
-pub const D3D12_STENCIL_OP = enum(UINT) {
+pub const STENCIL_OP = enum(UINT) {
     KEEP = 1,
     ZERO = 2,
     REPLACE = 3,
@@ -705,13 +725,13 @@ pub const D3D12_STENCIL_OP = enum(UINT) {
     DECR = 8,
 };
 
-pub const D3D12_DEPTH_STENCILOP_DESC = extern struct {
-    StencilFailOp: D3D12_STENCIL_OP,
-    StencilDepthFailOp: D3D12_STENCIL_OP,
-    StencilPassOp: D3D12_STENCIL_OP,
-    StencilFunc: D3D12_COMPARISON_FUNC,
+pub const DEPTH_STENCILOP_DESC = extern struct {
+    StencilFailOp: STENCIL_OP,
+    StencilDepthFailOp: STENCIL_OP,
+    StencilPassOp: STENCIL_OP,
+    StencilFunc: COMPARISON_FUNC,
 
-    pub fn initDefault() D3D12_DEPTH_STENCILOP_DESC {
+    pub fn initDefault() DEPTH_STENCILOP_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .StencilFailOp = .KEEP,
@@ -723,17 +743,17 @@ pub const D3D12_DEPTH_STENCILOP_DESC = extern struct {
     }
 };
 
-pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
+pub const DEPTH_STENCIL_DESC = extern struct {
     DepthEnable: BOOL,
-    DepthWriteMask: D3D12_DEPTH_WRITE_MASK,
-    DepthFunc: D3D12_COMPARISON_FUNC,
+    DepthWriteMask: DEPTH_WRITE_MASK,
+    DepthFunc: COMPARISON_FUNC,
     StencilEnable: BOOL,
     StencilReadMask: UINT8,
     StencilWriteMask: UINT8,
-    FrontFace: D3D12_DEPTH_STENCILOP_DESC,
-    BackFace: D3D12_DEPTH_STENCILOP_DESC,
+    FrontFace: DEPTH_STENCILOP_DESC,
+    BackFace: DEPTH_STENCILOP_DESC,
 
-    pub fn initDefault() D3D12_DEPTH_STENCIL_DESC {
+    pub fn initDefault() DEPTH_STENCIL_DESC {
         var desc = std.mem.zeroes(@This());
         desc = .{
             .DepthEnable = TRUE,
@@ -742,45 +762,45 @@ pub const D3D12_DEPTH_STENCIL_DESC = extern struct {
             .StencilEnable = FALSE,
             .StencilReadMask = 0xff,
             .StencilWriteMask = 0xff,
-            .FrontFace = D3D12_DEPTH_STENCILOP_DESC.initDefault(),
-            .BackFace = D3D12_DEPTH_STENCILOP_DESC.initDefault(),
+            .FrontFace = DEPTH_STENCILOP_DESC.initDefault(),
+            .BackFace = DEPTH_STENCILOP_DESC.initDefault(),
         };
         return desc;
     }
 };
 
-pub const D3D12_INPUT_LAYOUT_DESC = extern struct {
-    pInputElementDescs: ?[*]const D3D12_INPUT_ELEMENT_DESC,
+pub const INPUT_LAYOUT_DESC = extern struct {
+    pInputElementDescs: ?[*]const INPUT_ELEMENT_DESC,
     NumElements: UINT,
 
-    pub inline fn initZero() D3D12_INPUT_LAYOUT_DESC {
+    pub inline fn initZero() INPUT_LAYOUT_DESC {
         return std.mem.zeroes(@This());
     }
 };
 
-pub const D3D12_INPUT_CLASSIFICATION = enum(UINT) {
+pub const INPUT_CLASSIFICATION = enum(UINT) {
     PER_VERTEX_DATA = 0,
     PER_INSTANCE_DATA = 1,
 };
 
-pub const D3D12_INPUT_ELEMENT_DESC = extern struct {
+pub const INPUT_ELEMENT_DESC = extern struct {
     SemanticName: LPCSTR,
     SemanticIndex: UINT,
-    Format: DXGI_FORMAT,
+    Format: dxgi.FORMAT,
     InputSlot: UINT,
     AlignedByteOffset: UINT,
-    InputSlotClass: D3D12_INPUT_CLASSIFICATION,
+    InputSlotClass: INPUT_CLASSIFICATION,
     InstanceDataStepRate: UINT,
 
     pub inline fn init(
         semanticName: LPCSTR,
         semanticIndex: UINT,
-        format: DXGI_FORMAT,
+        format: dxgi.FORMAT,
         inputSlot: UINT,
         alignedByteOffset: UINT,
-        inputSlotClass: D3D12_INPUT_CLASSIFICATION,
+        inputSlotClass: INPUT_CLASSIFICATION,
         instanceDataStepRate: UINT,
-    ) D3D12_INPUT_ELEMENT_DESC {
+    ) INPUT_ELEMENT_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .SemanticName = semanticName,
@@ -795,93 +815,93 @@ pub const D3D12_INPUT_ELEMENT_DESC = extern struct {
     }
 };
 
-pub const D3D12_CACHED_PIPELINE_STATE = extern struct {
+pub const CACHED_PIPELINE_STATE = extern struct {
     pCachedBlob: ?*const c_void,
     CachedBlobSizeInBytes: UINT64,
 
-    pub inline fn initZero() D3D12_CACHED_PIPELINE_STATE {
+    pub inline fn initZero() CACHED_PIPELINE_STATE {
         return std.mem.zeroes(@This());
     }
 };
 
-pub const D3D12_PIPELINE_STATE_FLAGS = UINT;
-pub const D3D12_PIPELINE_STATE_FLAG_NONE = 0;
-pub const D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG = 0x1;
+pub const PIPELINE_STATE_FLAGS = UINT;
+pub const PIPELINE_STATE_FLAG_NONE = 0;
+pub const PIPELINE_STATE_FLAG_TOOL_DEBUG = 0x1;
 
-pub const D3D12_GRAPHICS_PIPELINE_STATE_DESC = extern struct {
-    pRootSignature: ?*ID3D12RootSignature,
-    VS: D3D12_SHADER_BYTECODE,
-    PS: D3D12_SHADER_BYTECODE,
-    DS: D3D12_SHADER_BYTECODE,
-    HS: D3D12_SHADER_BYTECODE,
-    GS: D3D12_SHADER_BYTECODE,
-    StreamOutput: D3D12_STREAM_OUTPUT_DESC,
-    BlendState: D3D12_BLEND_DESC,
+pub const GRAPHICS_PIPELINE_STATE_DESC = extern struct {
+    pRootSignature: ?*IRootSignature,
+    VS: SHADER_BYTECODE,
+    PS: SHADER_BYTECODE,
+    DS: SHADER_BYTECODE,
+    HS: SHADER_BYTECODE,
+    GS: SHADER_BYTECODE,
+    StreamOutput: STREAM_OUTPUT_DESC,
+    BlendState: BLEND_DESC,
     SampleMask: UINT,
-    RasterizerState: D3D12_RASTERIZER_DESC,
-    DepthStencilState: D3D12_DEPTH_STENCIL_DESC,
-    InputLayout: D3D12_INPUT_LAYOUT_DESC,
-    IBStripCutValue: D3D12_INDEX_BUFFER_STRIP_CUT_VALUE,
-    PrimitiveTopologyType: D3D12_PRIMITIVE_TOPOLOGY_TYPE,
+    RasterizerState: RASTERIZER_DESC,
+    DepthStencilState: DEPTH_STENCIL_DESC,
+    InputLayout: INPUT_LAYOUT_DESC,
+    IBStripCutValue: INDEX_BUFFER_STRIP_CUT_VALUE,
+    PrimitiveTopologyType: PRIMITIVE_TOPOLOGY_TYPE,
     NumRenderTargets: UINT,
-    RTVFormats: [8]DXGI_FORMAT,
-    DSVFormat: DXGI_FORMAT,
-    SampleDesc: DXGI_SAMPLE_DESC,
+    RTVFormats: [8]dxgi.FORMAT,
+    DSVFormat: dxgi.FORMAT,
+    SampleDesc: dxgi.SAMPLE_DESC,
     NodeMask: UINT,
-    CachedPSO: D3D12_CACHED_PIPELINE_STATE,
-    Flags: D3D12_PIPELINE_STATE_FLAGS,
+    CachedPSO: CACHED_PIPELINE_STATE,
+    Flags: PIPELINE_STATE_FLAGS,
 
-    pub fn initDefault() D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+    pub fn initDefault() GRAPHICS_PIPELINE_STATE_DESC {
         var v = std.mem.zeroes(@This());
-        v = D3D12_GRAPHICS_PIPELINE_STATE_DESC{
+        v = GRAPHICS_PIPELINE_STATE_DESC{
             .pRootSignature = null,
-            .VS = D3D12_SHADER_BYTECODE.initZero(),
-            .PS = D3D12_SHADER_BYTECODE.initZero(),
-            .DS = D3D12_SHADER_BYTECODE.initZero(),
-            .HS = D3D12_SHADER_BYTECODE.initZero(),
-            .GS = D3D12_SHADER_BYTECODE.initZero(),
-            .StreamOutput = D3D12_STREAM_OUTPUT_DESC.initZero(),
-            .BlendState = D3D12_BLEND_DESC.initDefault(),
+            .VS = SHADER_BYTECODE.initZero(),
+            .PS = SHADER_BYTECODE.initZero(),
+            .DS = SHADER_BYTECODE.initZero(),
+            .HS = SHADER_BYTECODE.initZero(),
+            .GS = SHADER_BYTECODE.initZero(),
+            .StreamOutput = STREAM_OUTPUT_DESC.initZero(),
+            .BlendState = BLEND_DESC.initDefault(),
             .SampleMask = 0xffff_ffff,
-            .RasterizerState = D3D12_RASTERIZER_DESC.initDefault(),
-            .DepthStencilState = D3D12_DEPTH_STENCIL_DESC.initDefault(),
-            .InputLayout = D3D12_INPUT_LAYOUT_DESC.initZero(),
+            .RasterizerState = RASTERIZER_DESC.initDefault(),
+            .DepthStencilState = DEPTH_STENCIL_DESC.initDefault(),
+            .InputLayout = INPUT_LAYOUT_DESC.initZero(),
             .IBStripCutValue = .DISABLED,
             .PrimitiveTopologyType = .TRIANGLE,
             .NumRenderTargets = 1,
-            .RTVFormats = [_]DXGI_FORMAT{.R8G8B8A8_UNORM} ++ [_]DXGI_FORMAT{.UNKNOWN} ** 7,
+            .RTVFormats = [_]dxgi.FORMAT{.R8G8B8A8_UNORM} ++ [_]dxgi.FORMAT{.UNKNOWN} ** 7,
             .DSVFormat = .UNKNOWN,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .NodeMask = 0,
-            .CachedPSO = D3D12_CACHED_PIPELINE_STATE.initZero(),
-            .Flags = D3D12_PIPELINE_STATE_FLAG_NONE,
+            .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
+            .Flags = PIPELINE_STATE_FLAG_NONE,
         };
         return v;
     }
 };
 
-pub const D3D12_COMPUTE_PIPELINE_STATE_DESC = extern struct {
-    pRootSignature: ?*ID3D12RootSignature,
-    CS: D3D12_SHADER_BYTECODE,
+pub const COMPUTE_PIPELINE_STATE_DESC = extern struct {
+    pRootSignature: ?*IRootSignature,
+    CS: SHADER_BYTECODE,
     NodeMask: UINT,
-    CachedPSO: D3D12_CACHED_PIPELINE_STATE,
-    Flags: D3D12_PIPELINE_STATE_FLAGS,
+    CachedPSO: CACHED_PIPELINE_STATE,
+    Flags: PIPELINE_STATE_FLAGS,
 
-    pub fn initDefault() D3D12_COMPUTE_PIPELINE_STATE_DESC {
+    pub fn initDefault() COMPUTE_PIPELINE_STATE_DESC {
         var v = std.mem.zeroes(@This());
-        v = D3D12_COMPUTE_PIPELINE_STATE_DESC{
+        v = COMPUTE_PIPELINE_STATE_DESC{
             .pRootSignature = null,
-            .CS = D3D12_SHADER_BYTECODE.initZero(),
+            .CS = SHADER_BYTECODE.initZero(),
             .NodeMask = 0,
-            .CachedPSO = D3D12_CACHED_PIPELINE_STATE.initZero(),
-            .Flags = D3D12_PIPELINE_STATE_FLAG_NONE,
+            .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
+            .Flags = PIPELINE_STATE_FLAG_NONE,
         };
         return v;
     }
 };
 
-pub const D3D12_FEATURE = enum(UINT) {
-    D3D12_OPTIONS = 0,
+pub const FEATURE = enum(UINT) {
+    OPTIONS = 0,
     ARCHITECTURE = 1,
     FEATURE_LEVELS = 2,
     FORMAT_SUPPORT = 3,
@@ -889,59 +909,59 @@ pub const D3D12_FEATURE = enum(UINT) {
     FORMAT_INFO = 5,
     GPU_VIRTUAL_ADDRESS_SUPPORT = 6,
     SHADER_MODEL = 7,
-    D3D12_OPTIONS1 = 8,
+    OPTIONS1 = 8,
     PROTECTED_RESOURCE_SESSION_SUPPORT = 10,
     ROOT_SIGNATURE = 12,
     ARCHITECTURE1 = 16,
-    D3D12_OPTIONS2 = 18,
+    OPTIONS2 = 18,
     SHADER_CACHE = 19,
     COMMAND_QUEUE_PRIORITY = 20,
-    D3D12_OPTIONS3 = 21,
+    OPTIONS3 = 21,
     EXISTING_HEAPS = 22,
-    D3D12_OPTIONS4 = 23,
+    OPTIONS4 = 23,
     SERIALIZATION = 24,
     CROSS_NODE = 25,
-    D3D12_OPTIONS5 = 27,
+    OPTIONS5 = 27,
     DISPLAYABLE = 28,
-    D3D12_OPTIONS6 = 30,
+    OPTIONS6 = 30,
     QUERY_META_COMMAND = 31,
-    D3D12_OPTIONS7 = 32,
+    OPTIONS7 = 32,
     PROTECTED_RESOURCE_SESSION_TYPE_COUNT = 33,
     PROTECTED_RESOURCE_SESSION_TYPES = 34,
-    D3D12_OPTIONS8 = 36,
-    D3D12_OPTIONS9 = 37,
-    D3D12_OPTIONS10 = 39,
-    D3D12_OPTIONS11 = 40,
+    OPTIONS8 = 36,
+    OPTIONS9 = 37,
+    OPTIONS10 = 39,
+    OPTIONS11 = 40,
 };
 
-pub const D3D12_CONSTANT_BUFFER_VIEW_DESC = extern struct {
-    BufferLocation: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const CONSTANT_BUFFER_VIEW_DESC = extern struct {
+    BufferLocation: GPU_VIRTUAL_ADDRESS,
     SizeInBytes: UINT,
 };
 
-pub inline fn D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(src0: UINT, src1: UINT, src2: UINT, src3: UINT) UINT {
+pub inline fn ENCODE_SHADER_4_COMPONENT_MAPPING(src0: UINT, src1: UINT, src2: UINT, src3: UINT) UINT {
     return (src0 & 0x7) | ((src1 & 0x7) << 3) | ((src2 & 0x7) << (3 * 2)) | ((src3 & 0x7) << (3 * 3)) | (1 << (3 * 4));
 }
-pub const D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING = D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(0, 1, 2, 3);
+pub const DEFAULT_SHADER_4_COMPONENT_MAPPING = ENCODE_SHADER_4_COMPONENT_MAPPING(0, 1, 2, 3);
 
-pub const D3D12_BUFFER_SRV_FLAGS = UINT;
-pub const D3D12_BUFFER_SRV_FLAG_NONE = 0;
-pub const D3D12_BUFFER_SRV_FLAG_RAW = 0x1;
+pub const BUFFER_SRV_FLAGS = UINT;
+pub const BUFFER_SRV_FLAG_NONE = 0;
+pub const BUFFER_SRV_FLAG_RAW = 0x1;
 
-pub const D3D12_BUFFER_SRV = extern struct {
+pub const BUFFER_SRV = extern struct {
     FirstElement: UINT64,
     NumElements: UINT,
     StructureByteStride: UINT,
-    Flags: D3D12_BUFFER_SRV_FLAGS,
+    Flags: BUFFER_SRV_FLAGS,
 };
 
-pub const D3D12_TEX1D_SRV = extern struct {
+pub const TEX1D_SRV = extern struct {
     MostDetailedMip: UINT,
     MipLevels: UINT,
     ResourceMinLODClamp: FLOAT,
 };
 
-pub const D3D12_TEX1D_ARRAY_SRV = extern struct {
+pub const TEX1D_ARRAY_SRV = extern struct {
     MostDetailedMip: UINT,
     MipLevels: UINT,
     FirstArraySlice: UINT,
@@ -949,14 +969,14 @@ pub const D3D12_TEX1D_ARRAY_SRV = extern struct {
     ResourceMinLODClamp: FLOAT,
 };
 
-pub const D3D12_TEX2D_SRV = extern struct {
+pub const TEX2D_SRV = extern struct {
     MostDetailedMip: UINT,
     MipLevels: UINT,
     PlaneSlice: UINT,
     ResourceMinLODClamp: FLOAT,
 };
 
-pub const D3D12_TEX2D_ARRAY_SRV = extern struct {
+pub const TEX2D_ARRAY_SRV = extern struct {
     MostDetailedMip: UINT,
     MipLevels: UINT,
     FirstArraySlice: UINT,
@@ -965,19 +985,19 @@ pub const D3D12_TEX2D_ARRAY_SRV = extern struct {
     ResourceMinLODClamp: FLOAT,
 };
 
-pub const D3D12_TEX3D_SRV = extern struct {
+pub const TEX3D_SRV = extern struct {
     MostDetailedMip: UINT,
     MipLevels: UINT,
     ResourceMinLODClamp: FLOAT,
 };
 
-pub const D3D12_TEXCUBE_SRV = extern struct {
+pub const TEXCUBE_SRV = extern struct {
     MostDetailedMip: UINT,
     MipLevels: UINT,
     ResourceMinLODClamp: FLOAT,
 };
 
-pub const D3D12_TEXCUBE_ARRAY_SRV = extern struct {
+pub const TEXCUBE_ARRAY_SRV = extern struct {
     MostDetailedMip: UINT,
     MipLevels: UINT,
     First2DArrayFace: UINT,
@@ -985,16 +1005,16 @@ pub const D3D12_TEXCUBE_ARRAY_SRV = extern struct {
     ResourceMinLODClamp: FLOAT,
 };
 
-pub const D3D12_TEX2DMS_SRV = extern struct {
+pub const TEX2DMS_SRV = extern struct {
     UnusedField_NothingToDefine: UINT,
 };
 
-pub const D3D12_TEX2DMS_ARRAY_SRV = extern struct {
+pub const TEX2DMS_ARRAY_SRV = extern struct {
     FirstArraySlice: UINT,
     ArraySize: UINT,
 };
 
-pub const D3D12_SRV_DIMENSION = enum(UINT) {
+pub const SRV_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
     BUFFER = 1,
     TEXTURE1D = 2,
@@ -1008,33 +1028,33 @@ pub const D3D12_SRV_DIMENSION = enum(UINT) {
     TEXTURECUBEARRAY = 10,
 };
 
-pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
-    Format: DXGI_FORMAT,
-    ViewDimension: D3D12_SRV_DIMENSION,
+pub const SHADER_RESOURCE_VIEW_DESC = extern struct {
+    Format: dxgi.FORMAT,
+    ViewDimension: SRV_DIMENSION,
     Shader4ComponentMapping: UINT,
     u: extern union {
-        Buffer: D3D12_BUFFER_SRV,
-        Texture1D: D3D12_TEX1D_SRV,
-        Texture1DArray: D3D12_TEX1D_ARRAY_SRV,
-        Texture2D: D3D12_TEX2D_SRV,
-        Texture2DArray: D3D12_TEX2D_ARRAY_SRV,
-        Texture2DMS: D3D12_TEX2DMS_SRV,
-        Texture2DMSArray: D3D12_TEX2DMS_ARRAY_SRV,
-        Texture3D: D3D12_TEX3D_SRV,
-        TextureCube: D3D12_TEXCUBE_SRV,
-        TextureCubeArray: D3D12_TEXCUBE_ARRAY_SRV,
+        Buffer: BUFFER_SRV,
+        Texture1D: TEX1D_SRV,
+        Texture1DArray: TEX1D_ARRAY_SRV,
+        Texture2D: TEX2D_SRV,
+        Texture2DArray: TEX2D_ARRAY_SRV,
+        Texture2DMS: TEX2DMS_SRV,
+        Texture2DMSArray: TEX2DMS_ARRAY_SRV,
+        Texture3D: TEX3D_SRV,
+        TextureCube: TEXCUBE_SRV,
+        TextureCubeArray: TEXCUBE_ARRAY_SRV,
     },
 
     pub fn initTypedBuffer(
-        format: DXGI_FORMAT,
+        format: dxgi.FORMAT,
         first_element: UINT64,
         num_elements: UINT,
-    ) D3D12_SHADER_RESOURCE_VIEW_DESC {
+    ) SHADER_RESOURCE_VIEW_DESC {
         var desc = std.mem.zeroes(@This());
         desc = .{
             .Format = format,
             .ViewDimension = .BUFFER,
-            .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+            .Shader4ComponentMapping = DEFAULT_SHADER_4_COMPONENT_MAPPING,
             .u = .{
                 .Buffer = .{
                     .FirstElement = first_element,
@@ -1051,18 +1071,18 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
         first_element: UINT64,
         num_elements: UINT,
         stride: UINT,
-    ) D3D12_SHADER_RESOURCE_VIEW_DESC {
+    ) SHADER_RESOURCE_VIEW_DESC {
         var v = std.mem.zeroes(@This());
         v = .{
             .Format = .UNKNOWN,
             .ViewDimension = .BUFFER,
-            .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+            .Shader4ComponentMapping = DEFAULT_SHADER_4_COMPONENT_MAPPING,
             .u = .{
                 .Buffer = .{
                     .FirstElement = first_element,
                     .NumElements = num_elements,
                     .StructureByteStride = stride,
-                    .Flags = D3D12_BUFFER_SRV_FLAG_NONE,
+                    .Flags = BUFFER_SRV_FLAG_NONE,
                 },
             },
         };
@@ -1070,7 +1090,7 @@ pub const D3D12_SHADER_RESOURCE_VIEW_DESC = extern struct {
     }
 };
 
-pub const D3D12_FILTER = enum(UINT) {
+pub const FILTER = enum(UINT) {
     MIN_MAG_MIP_POINT = 0,
     MIN_MAG_POINT_MIP_LINEAR = 0x1,
     MIN_POINT_MAG_LINEAR_MIP_POINT = 0x4,
@@ -1109,19 +1129,19 @@ pub const D3D12_FILTER = enum(UINT) {
     MAXIMUM_ANISOTROPIC = 0x1d5,
 };
 
-pub const D3D12_FILTER_TYPE = enum(UINT) {
+pub const FILTER_TYPE = enum(UINT) {
     POINT = 0,
     LINEAR = 1,
 };
 
-pub const D3D12_FILTER_REDUCTION_TYPE = enum(UINT) {
+pub const FILTER_REDUCTION_TYPE = enum(UINT) {
     STANDARD = 0,
     COMPARISON = 1,
     MINIMUM = 2,
     MAXIMUM = 3,
 };
 
-pub const D3D12_TEXTURE_ADDRESS_MODE = enum(UINT) {
+pub const TEXTURE_ADDRESS_MODE = enum(UINT) {
     WRAP = 1,
     MIRROR = 2,
     CLAMP = 3,
@@ -1129,60 +1149,60 @@ pub const D3D12_TEXTURE_ADDRESS_MODE = enum(UINT) {
     MIRROR_ONCE = 5,
 };
 
-pub const D3D12_SAMPLER_DESC = extern struct {
-    Filter: D3D12_FILTER,
-    AddressU: D3D12_TEXTURE_ADDRESS_MODE,
-    AddressV: D3D12_TEXTURE_ADDRESS_MODE,
-    AddressW: D3D12_TEXTURE_ADDRESS_MODE,
+pub const SAMPLER_DESC = extern struct {
+    Filter: FILTER,
+    AddressU: TEXTURE_ADDRESS_MODE,
+    AddressV: TEXTURE_ADDRESS_MODE,
+    AddressW: TEXTURE_ADDRESS_MODE,
     MipLODBias: FLOAT,
     MaxAnisotropy: UINT,
-    ComparisonFunc: D3D12_COMPARISON_FUNC,
+    ComparisonFunc: COMPARISON_FUNC,
     BorderColor: [4]FLOAT,
     MinLOD: FLOAT,
     MaxLOD: FLOAT,
 };
 
-pub const D3D12_BUFFER_UAV_FLAGS = UINT;
-pub const D3D12_BUFFER_UAV_FLAG_NONE = 0;
-pub const D3D12_BUFFER_UAV_FLAG_RAW = 0x1;
+pub const BUFFER_UAV_FLAGS = UINT;
+pub const BUFFER_UAV_FLAG_NONE = 0;
+pub const BUFFER_UAV_FLAG_RAW = 0x1;
 
-pub const D3D12_BUFFER_UAV = extern struct {
+pub const BUFFER_UAV = extern struct {
     FirstElement: UINT64,
     NumElements: UINT,
     StructureByteStride: UINT,
     CounterOffsetInBytes: UINT64,
-    Flags: D3D12_BUFFER_UAV_FLAGS,
+    Flags: BUFFER_UAV_FLAGS,
 };
 
-pub const D3D12_TEX1D_UAV = extern struct {
+pub const TEX1D_UAV = extern struct {
     MipSlice: UINT,
 };
 
-pub const D3D12_TEX1D_ARRAY_UAV = extern struct {
+pub const TEX1D_ARRAY_UAV = extern struct {
     MipSlice: UINT,
     FirstArraySlice: UINT,
     ArraySize: UINT,
 };
 
-pub const D3D12_TEX2D_UAV = extern struct {
+pub const TEX2D_UAV = extern struct {
     MipSlice: UINT,
     PlaneSlice: UINT,
 };
 
-pub const D3D12_TEX2D_ARRAY_UAV = extern struct {
+pub const TEX2D_ARRAY_UAV = extern struct {
     MipSlice: UINT,
     FirstArraySlice: UINT,
     ArraySize: UINT,
     PlaneSlice: UINT,
 };
 
-pub const D3D12_TEX3D_UAV = extern struct {
+pub const TEX3D_UAV = extern struct {
     MipSlice: UINT,
     FirstWSlice: UINT,
     WSize: UINT,
 };
 
-pub const D3D12_UAV_DIMENSION = enum(UINT) {
+pub const UAV_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
     BUFFER = 1,
     TEXTURE1D = 2,
@@ -1192,62 +1212,62 @@ pub const D3D12_UAV_DIMENSION = enum(UINT) {
     TEXTURE3D = 8,
 };
 
-pub const D3D12_UNORDERED_ACCESS_VIEW_DESC = extern struct {
-    Format: DXGI_FORMAT,
-    ViewDimension: D3D12_UAV_DIMENSION,
+pub const UNORDERED_ACCESS_VIEW_DESC = extern struct {
+    Format: dxgi.FORMAT,
+    ViewDimension: UAV_DIMENSION,
     u: extern union {
-        Buffer: D3D12_BUFFER_UAV,
-        Texture1D: D3D12_TEX1D_UAV,
-        Texture1DArray: D3D12_TEX1D_ARRAY_UAV,
-        Texture2D: D3D12_TEX2D_UAV,
-        Texture2DArray: D3D12_TEX2D_ARRAY_UAV,
-        Texture3D: D3D12_TEX3D_UAV,
+        Buffer: BUFFER_UAV,
+        Texture1D: TEX1D_UAV,
+        Texture1DArray: TEX1D_ARRAY_UAV,
+        Texture2D: TEX2D_UAV,
+        Texture2DArray: TEX2D_ARRAY_UAV,
+        Texture3D: TEX3D_UAV,
     },
 };
 
-pub const D3D12_BUFFER_RTV = extern struct {
+pub const BUFFER_RTV = extern struct {
     FirstElement: UINT64,
     NumElements: UINT,
 };
 
-pub const D3D12_TEX1D_RTV = extern struct {
+pub const TEX1D_RTV = extern struct {
     MipSlice: UINT,
 };
 
-pub const D3D12_TEX1D_ARRAY_RTV = extern struct {
+pub const TEX1D_ARRAY_RTV = extern struct {
     MipSlice: UINT,
     FirstArraySlice: UINT,
     ArraySize: UINT,
 };
 
-pub const D3D12_TEX2D_RTV = extern struct {
+pub const TEX2D_RTV = extern struct {
     MipSlice: UINT,
     PlaneSlice: UINT,
 };
 
-pub const D3D12_TEX2DMS_RTV = extern struct {
+pub const TEX2DMS_RTV = extern struct {
     UnusedField_NothingToDefine: UINT,
 };
 
-pub const D3D12_TEX2D_ARRAY_RTV = extern struct {
+pub const TEX2D_ARRAY_RTV = extern struct {
     MipSlice: UINT,
     FirstArraySlice: UINT,
     ArraySize: UINT,
     PlaneSlice: UINT,
 };
 
-pub const D3D12_TEX2DMS_ARRAY_RTV = extern struct {
+pub const TEX2DMS_ARRAY_RTV = extern struct {
     FirstArraySlice: UINT,
     ArraySize: UINT,
 };
 
-pub const D3D12_TEX3D_RTV = extern struct {
+pub const TEX3D_RTV = extern struct {
     MipSlice: UINT,
     FirstWSlice: UINT,
     WSize: UINT,
 };
 
-pub const D3D12_RTV_DIMENSION = enum(UINT) {
+pub const RTV_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
     BUFFER = 1,
     TEXTURE1D = 2,
@@ -1259,56 +1279,56 @@ pub const D3D12_RTV_DIMENSION = enum(UINT) {
     TEXTURE3D = 8,
 };
 
-pub const D3D12_RENDER_TARGET_VIEW_DESC = extern struct {
-    Format: DXGI_FORMAT,
-    ViewDimension: D3D12_RTV_DIMENSION,
+pub const RENDER_TARGET_VIEW_DESC = extern struct {
+    Format: dxgi.FORMAT,
+    ViewDimension: RTV_DIMENSION,
     u: extern union {
-        Buffer: D3D12_BUFFER_RTV,
-        Texture1D: D3D12_TEX1D_RTV,
-        Texture1DArray: D3D12_TEX1D_ARRAY_RTV,
-        Texture2D: D3D12_TEX2D_RTV,
-        Texture2DArray: D3D12_TEX2D_ARRAY_RTV,
-        Texture2DMS: D3D12_TEX2DMS_RTV,
-        Texture2DMSArray: D3D12_TEX2DMS_ARRAY_RTV,
-        Texture3D: D3D12_TEX3D_RTV,
+        Buffer: BUFFER_RTV,
+        Texture1D: TEX1D_RTV,
+        Texture1DArray: TEX1D_ARRAY_RTV,
+        Texture2D: TEX2D_RTV,
+        Texture2DArray: TEX2D_ARRAY_RTV,
+        Texture2DMS: TEX2DMS_RTV,
+        Texture2DMSArray: TEX2DMS_ARRAY_RTV,
+        Texture3D: TEX3D_RTV,
     },
 };
 
-pub const D3D12_TEX1D_DSV = extern struct {
+pub const TEX1D_DSV = extern struct {
     MipSlice: UINT,
 };
 
-pub const D3D12_TEX1D_ARRAY_DSV = extern struct {
-    MipSlice: UINT,
-    FirstArraySlice: UINT,
-    ArraySize: UINT,
-};
-
-pub const D3D12_TEX2D_DSV = extern struct {
-    MipSlice: UINT,
-};
-
-pub const D3D12_TEX2D_ARRAY_DSV = extern struct {
+pub const TEX1D_ARRAY_DSV = extern struct {
     MipSlice: UINT,
     FirstArraySlice: UINT,
     ArraySize: UINT,
 };
 
-pub const D3D12_TEX2DMS_DSV = extern struct {
+pub const TEX2D_DSV = extern struct {
+    MipSlice: UINT,
+};
+
+pub const TEX2D_ARRAY_DSV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const TEX2DMS_DSV = extern struct {
     UnusedField_NothingToDefine: UINT,
 };
 
-pub const D3D12_TEX2DMS_ARRAY_DSV = extern struct {
+pub const TEX2DMS_ARRAY_DSV = extern struct {
     FirstArraySlice: UINT,
     ArraySize: UINT,
 };
 
-pub const D3D12_DSV_FLAGS = UINT;
-pub const D3D12_DSV_FLAG_NONE = 0;
-pub const D3D12_DSV_FLAG_READ_ONLY_DEPTH = 0x1;
-pub const D3D12_DSV_FLAG_READ_ONLY_STENCIL = 0x2;
+pub const DSV_FLAGS = UINT;
+pub const DSV_FLAG_NONE = 0;
+pub const DSV_FLAG_READ_ONLY_DEPTH = 0x1;
+pub const DSV_FLAG_READ_ONLY_STENCIL = 0x2;
 
-pub const D3D12_DSV_DIMENSION = enum(UINT) {
+pub const DSV_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
     TEXTURE1D = 1,
     TEXTURE1DARRAY = 2,
@@ -1318,38 +1338,38 @@ pub const D3D12_DSV_DIMENSION = enum(UINT) {
     TEXTURE2DMSARRAY = 6,
 };
 
-pub const D3D12_DEPTH_STENCIL_VIEW_DESC = extern struct {
-    Format: DXGI_FORMAT,
-    ViewDimension: D3D12_DSV_DIMENSION,
-    Flags: D3D12_DSV_FLAGS,
+pub const DEPTH_STENCIL_VIEW_DESC = extern struct {
+    Format: dxgi.FORMAT,
+    ViewDimension: DSV_DIMENSION,
+    Flags: DSV_FLAGS,
     u: extern union {
-        Texture1D: D3D12_TEX1D_DSV,
-        Texture1DArray: D3D12_TEX1D_ARRAY_DSV,
-        Texture2D: D3D12_TEX2D_DSV,
-        Texture2DArray: D3D12_TEX2D_ARRAY_DSV,
-        Texture2DMS: D3D12_TEX2DMS_DSV,
-        Texture2DMSArray: D3D12_TEX2DMS_ARRAY_DSV,
+        Texture1D: TEX1D_DSV,
+        Texture1DArray: TEX1D_ARRAY_DSV,
+        Texture2D: TEX2D_DSV,
+        Texture2DArray: TEX2D_ARRAY_DSV,
+        Texture2DMS: TEX2DMS_DSV,
+        Texture2DMSArray: TEX2DMS_ARRAY_DSV,
     },
 };
 
-pub const D3D12_RESOURCE_ALLOCATION_INFO = extern struct {
+pub const RESOURCE_ALLOCATION_INFO = extern struct {
     SizeInBytes: UINT64,
     Alignment: UINT64,
 };
 
-pub const D3D12_DEPTH_STENCIL_VALUE = extern struct {
+pub const DEPTH_STENCIL_VALUE = extern struct {
     Depth: FLOAT,
     Stencil: UINT8,
 };
 
-pub const D3D12_CLEAR_VALUE = extern struct {
-    Format: DXGI_FORMAT,
+pub const CLEAR_VALUE = extern struct {
+    Format: dxgi.FORMAT,
     u: extern union {
         Color: [4]FLOAT,
-        DepthStencil: D3D12_DEPTH_STENCIL_VALUE,
+        DepthStencil: DEPTH_STENCIL_VALUE,
     },
 
-    pub fn initColor(format: DXGI_FORMAT, in_color: *const [4]FLOAT) D3D12_CLEAR_VALUE {
+    pub fn initColor(format: dxgi.FORMAT, in_color: *const [4]FLOAT) CLEAR_VALUE {
         var v = std.mem.zeroes(@This());
         v = .{
             .Format = format,
@@ -1358,7 +1378,7 @@ pub const D3D12_CLEAR_VALUE = extern struct {
         return v;
     }
 
-    pub fn initDepthStencil(format: DXGI_FORMAT, depth: FLOAT, stencil: UINT8) D3D12_CLEAR_VALUE {
+    pub fn initDepthStencil(format: dxgi.FORMAT, depth: FLOAT, stencil: UINT8) CLEAR_VALUE {
         var v = std.mem.zeroes(@This());
         v = .{
             .Format = format,
@@ -1368,7 +1388,7 @@ pub const D3D12_CLEAR_VALUE = extern struct {
     }
 };
 
-pub const ID3D12Object = extern struct {
+pub const IObject = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
@@ -1404,15 +1424,15 @@ pub const ID3D12Object = extern struct {
     }
 };
 
-pub const ID3D12DeviceChild = extern struct {
+pub const IDeviceChild = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
+        object: IObject.VTable(Self),
         devchild: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace IObject.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1430,17 +1450,17 @@ pub const ID3D12DeviceChild = extern struct {
     }
 };
 
-pub const ID3D12RootSignature = extern struct {
+pub const IRootSignature = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
         rs: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1454,19 +1474,19 @@ pub const ID3D12RootSignature = extern struct {
     }
 };
 
-pub const ID3D12QueryHeap = extern struct {
+pub const IQueryHeap = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         qheap: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1480,19 +1500,19 @@ pub const ID3D12QueryHeap = extern struct {
     }
 };
 
-pub const ID3D12CommandSignature = extern struct {
+pub const ICommandSignature = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         cmdsig: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1506,17 +1526,17 @@ pub const ID3D12CommandSignature = extern struct {
     }
 };
 
-pub const ID3D12Pageable = extern struct {
+pub const IPageable = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
         pageable: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1530,25 +1550,25 @@ pub const ID3D12Pageable = extern struct {
     }
 };
 
-pub const ID3D12Heap = extern struct {
+pub const IHeap = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         heap: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetDesc(self: *T) D3D12_HEAP_DESC {
-                var desc: D3D12_HEAP_DESC = undefined;
+            pub inline fn GetDesc(self: *T) HEAP_DESC {
+                var desc: HEAP_DESC = undefined;
                 self.v.heap.GetDesc(self, &desc);
                 return desc;
             }
@@ -1557,46 +1577,46 @@ pub const ID3D12Heap = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc: fn (*T, *D3D12_HEAP_DESC) callconv(WINAPI) *D3D12_HEAP_DESC,
+            GetDesc: fn (*T, *HEAP_DESC) callconv(WINAPI) *HEAP_DESC,
         };
     }
 };
 
-pub const ID3D12Resource = extern struct {
+pub const IResource = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         resource: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn Map(self: *T, subresource: UINT, read_range: ?*const D3D12_RANGE, data: *?*c_void) HRESULT {
+            pub inline fn Map(self: *T, subresource: UINT, read_range: ?*const RANGE, data: *?*c_void) HRESULT {
                 return self.v.resource.Map(self, subresource, read_range, data);
             }
-            pub inline fn Unmap(self: *T, subresource: UINT, written_range: ?*const D3D12_RANGE) void {
+            pub inline fn Unmap(self: *T, subresource: UINT, written_range: ?*const RANGE) void {
                 self.v.resource.Unmap(self, subresource, written_range);
             }
-            pub inline fn GetDesc(self: *T) D3D12_RESOURCE_DESC {
-                var desc: D3D12_RESOURCE_DESC = undefined;
+            pub inline fn GetDesc(self: *T) RESOURCE_DESC {
+                var desc: RESOURCE_DESC = undefined;
                 _ = self.v.resource.GetDesc(self, &desc);
                 return desc;
             }
-            pub inline fn GetGPUVirtualAddress(self: *T) D3D12_GPU_VIRTUAL_ADDRESS {
+            pub inline fn GetGPUVirtualAddress(self: *T) GPU_VIRTUAL_ADDRESS {
                 return self.v.resource.GetGPUVirtualAddress(self);
             }
             pub inline fn WriteToSubresource(
                 self: *T,
                 dst_subresource: UINT,
-                dst_box: ?*const D3D12_BOX,
+                dst_box: ?*const BOX,
                 src_data: *const c_void,
                 src_row_pitch: UINT,
                 src_depth_pitch: UINT,
@@ -1616,7 +1636,7 @@ pub const ID3D12Resource = extern struct {
                 dst_row_pitch: UINT,
                 dst_depth_pitch: UINT,
                 src_subresource: UINT,
-                src_box: ?*const D3D12_BOX,
+                src_box: ?*const BOX,
             ) HRESULT {
                 return self.v.resource.ReadFromSubresource(
                     self,
@@ -1629,8 +1649,8 @@ pub const ID3D12Resource = extern struct {
             }
             pub inline fn GetHeapProperties(
                 self: *T,
-                properties: ?*D3D12_HEAP_PROPERTIES,
-                flags: ?*D3D12_HEAP_FLAGS,
+                properties: ?*HEAP_PROPERTIES,
+                flags: ?*HEAP_FLAGS,
             ) HRESULT {
                 return self.v.resource.GetHeapProperties(self, properties, flags);
             }
@@ -1639,32 +1659,32 @@ pub const ID3D12Resource = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Map: fn (*T, UINT, ?*const D3D12_RANGE, *?*c_void) callconv(WINAPI) HRESULT,
-            Unmap: fn (*T, UINT, ?*const D3D12_RANGE) callconv(WINAPI) void,
-            GetDesc: fn (*T, *D3D12_RESOURCE_DESC) callconv(WINAPI) *D3D12_RESOURCE_DESC,
-            GetGPUVirtualAddress: fn (*T) callconv(WINAPI) D3D12_GPU_VIRTUAL_ADDRESS,
-            WriteToSubresource: fn (*T, UINT, ?*const D3D12_BOX, *const c_void, UINT, UINT) callconv(WINAPI) HRESULT,
-            ReadFromSubresource: fn (*T, *c_void, UINT, UINT, UINT, ?*const D3D12_BOX) callconv(WINAPI) HRESULT,
-            GetHeapProperties: fn (*T, ?*D3D12_HEAP_PROPERTIES, ?*D3D12_HEAP_FLAGS) callconv(WINAPI) HRESULT,
+            Map: fn (*T, UINT, ?*const RANGE, *?*c_void) callconv(WINAPI) HRESULT,
+            Unmap: fn (*T, UINT, ?*const RANGE) callconv(WINAPI) void,
+            GetDesc: fn (*T, *RESOURCE_DESC) callconv(WINAPI) *RESOURCE_DESC,
+            GetGPUVirtualAddress: fn (*T) callconv(WINAPI) GPU_VIRTUAL_ADDRESS,
+            WriteToSubresource: fn (*T, UINT, ?*const BOX, *const c_void, UINT, UINT) callconv(WINAPI) HRESULT,
+            ReadFromSubresource: fn (*T, *c_void, UINT, UINT, UINT, ?*const BOX) callconv(WINAPI) HRESULT,
+            GetHeapProperties: fn (*T, ?*HEAP_PROPERTIES, ?*HEAP_FLAGS) callconv(WINAPI) HRESULT,
         };
     }
 };
 
-pub const ID3D12Resource1 = extern struct {
+pub const IResource1 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
-        resource: ID3D12Resource.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
+        resource: IResource.VTable(Self),
         resource1: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
-    usingnamespace ID3D12Resource.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
+    usingnamespace IResource.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1682,19 +1702,19 @@ pub const ID3D12Resource1 = extern struct {
     }
 };
 
-pub const ID3D12CommandAllocator = extern struct {
+pub const ICommandAllocator = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         alloc: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1712,19 +1732,19 @@ pub const ID3D12CommandAllocator = extern struct {
     }
 };
 
-pub const ID3D12Fence = extern struct {
+pub const IFence = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         fence: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1750,26 +1770,26 @@ pub const ID3D12Fence = extern struct {
     }
 };
 
-pub const ID3D12Fence1 = extern struct {
+pub const IFence1 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
-        fence: ID3D12Fence.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
+        fence: IFence.VTable(Self),
         fence1: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
-    usingnamespace ID3D12Fence.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
+    usingnamespace IFence.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetCreationFlags(self: *T) D3D12_FENCE_FLAGS {
+            pub inline fn GetCreationFlags(self: *T) FENCE_FLAGS {
                 return self.v.fence1.GetCreationFlags(self);
             }
         };
@@ -1777,24 +1797,24 @@ pub const ID3D12Fence1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetCreationFlags: fn (*T) callconv(WINAPI) D3D12_FENCE_FLAGS,
+            GetCreationFlags: fn (*T) callconv(WINAPI) FENCE_FLAGS,
         };
     }
 };
 
-pub const ID3D12PipelineState = extern struct {
+pub const IPipelineState = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         pstate: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1812,35 +1832,35 @@ pub const ID3D12PipelineState = extern struct {
     }
 };
 
-pub const ID3D12DescriptorHeap = extern struct {
+pub const IDescriptorHeap = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         dheap: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetDesc(self: *T) D3D12_DESCRIPTOR_HEAP_DESC {
-                var desc: D3D12_DESCRIPTOR_HEAP_DESC = undefined;
+            pub inline fn GetDesc(self: *T) DESCRIPTOR_HEAP_DESC {
+                var desc: DESCRIPTOR_HEAP_DESC = undefined;
                 self.v.dheap.GetDesc(self, &desc);
                 return desc;
             }
-            pub inline fn GetCPUDescriptorHandleForHeapStart(self: *T) D3D12_CPU_DESCRIPTOR_HANDLE {
-                var handle: D3D12_CPU_DESCRIPTOR_HANDLE = undefined;
+            pub inline fn GetCPUDescriptorHandleForHeapStart(self: *T) CPU_DESCRIPTOR_HANDLE {
+                var handle: CPU_DESCRIPTOR_HANDLE = undefined;
                 _ = self.v.dheap.GetCPUDescriptorHandleForHeapStart(self, &handle);
                 return handle;
             }
-            pub inline fn GetGPUDescriptorHandleForHeapStart(self: *T) D3D12_GPU_DESCRIPTOR_HANDLE {
-                var handle: D3D12_GPU_DESCRIPTOR_HANDLE = undefined;
+            pub inline fn GetGPUDescriptorHandleForHeapStart(self: *T) GPU_DESCRIPTOR_HANDLE {
+                var handle: GPU_DESCRIPTOR_HANDLE = undefined;
                 _ = self.v.dheap.GetGPUDescriptorHandleForHeapStart(self, &handle);
                 return handle;
             }
@@ -1849,35 +1869,35 @@ pub const ID3D12DescriptorHeap = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc: fn (*T, *D3D12_DESCRIPTOR_HEAP_DESC) callconv(WINAPI) *D3D12_DESCRIPTOR_HEAP_DESC,
+            GetDesc: fn (*T, *DESCRIPTOR_HEAP_DESC) callconv(WINAPI) *DESCRIPTOR_HEAP_DESC,
             GetCPUDescriptorHandleForHeapStart: fn (
                 *T,
-                *D3D12_CPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) *D3D12_CPU_DESCRIPTOR_HANDLE,
+                *CPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) *CPU_DESCRIPTOR_HANDLE,
             GetGPUDescriptorHandleForHeapStart: fn (
                 *T,
-                *D3D12_GPU_DESCRIPTOR_HANDLE,
-            ) callconv(WINAPI) *D3D12_GPU_DESCRIPTOR_HANDLE,
+                *GPU_DESCRIPTOR_HANDLE,
+            ) callconv(WINAPI) *GPU_DESCRIPTOR_HANDLE,
         };
     }
 };
 
-pub const ID3D12CommandList = extern struct {
+pub const ICommandList = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
         cmdlist: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetType(self: *T) D3D12_COMMAND_LIST_TYPE {
+            pub inline fn GetType(self: *T) COMMAND_LIST_TYPE {
                 return self.v.cmdlist.GetType(self);
             }
         };
@@ -1885,24 +1905,24 @@ pub const ID3D12CommandList = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetType: fn (*T) callconv(WINAPI) D3D12_COMMAND_LIST_TYPE,
+            GetType: fn (*T) callconv(WINAPI) COMMAND_LIST_TYPE,
         };
     }
 };
 
-pub const ID3D12GraphicsCommandList = extern struct {
+pub const IGraphicsCommandList = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        cmdlist: ID3D12CommandList.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        cmdlist: ICommandList.VTable(Self),
         grcmdlist: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12CommandList.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace ICommandList.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -1910,10 +1930,10 @@ pub const ID3D12GraphicsCommandList = extern struct {
             pub inline fn Close(self: *T) HRESULT {
                 return self.v.grcmdlist.Close(self);
             }
-            pub inline fn Reset(self: *T, alloc: *ID3D12CommandAllocator, initial_state: ?*ID3D12PipelineState) HRESULT {
+            pub inline fn Reset(self: *T, alloc: *ICommandAllocator, initial_state: ?*IPipelineState) HRESULT {
                 return self.v.grcmdlist.Reset(self, alloc, initial_state);
             }
-            pub inline fn ClearState(self: *T, pso: ?*ID3D12PipelineState) void {
+            pub inline fn ClearState(self: *T, pso: ?*IPipelineState) void {
                 self.v.grcmdlist.ClearState(self, pso);
             }
             pub inline fn DrawInstanced(
@@ -1953,9 +1973,9 @@ pub const ID3D12GraphicsCommandList = extern struct {
             }
             pub inline fn CopyBufferRegion(
                 self: *T,
-                dst_buffer: *ID3D12Resource,
+                dst_buffer: *IResource,
                 dst_offset: UINT64,
-                src_buffer: *ID3D12Resource,
+                src_buffer: *IResource,
                 src_offset: UINT64,
                 num_bytes: UINT64,
             ) void {
@@ -1970,26 +1990,26 @@ pub const ID3D12GraphicsCommandList = extern struct {
             }
             pub inline fn CopyTextureRegion(
                 self: *T,
-                dst: *const D3D12_TEXTURE_COPY_LOCATION,
+                dst: *const TEXTURE_COPY_LOCATION,
                 dst_x: UINT,
                 dst_y: UINT,
                 dst_z: UINT,
-                src: *const D3D12_TEXTURE_COPY_LOCATION,
-                src_box: ?*const D3D12_BOX,
+                src: *const TEXTURE_COPY_LOCATION,
+                src_box: ?*const BOX,
             ) void {
                 self.v.grcmdlist.CopyTextureRegion(self, dst, dst_x, dst_y, dst_z, src, src_box);
             }
-            pub inline fn CopyResource(self: *T, dst: *ID3D12Resource, src: *ID3D12Resource) void {
+            pub inline fn CopyResource(self: *T, dst: *IResource, src: *IResource) void {
                 self.v.grcmdlist.CopyResource(self, dst, src);
             }
             pub inline fn CopyTiles(
                 self: *T,
-                tiled_resource: *ID3D12Resource,
-                tile_region_start_coordinate: *const D3D12_TILED_RESOURCE_COORDINATE,
-                tile_region_size: *const D3D12_TILE_REGION_SIZE,
-                buffer: *ID3D12Resource,
+                tiled_resource: *IResource,
+                tile_region_start_coordinate: *const TILED_RESOURCE_COORDINATE,
+                tile_region_size: *const TILE_REGION_SIZE,
+                buffer: *IResource,
                 buffer_start_offset_in_bytes: UINT64,
-                flags: D3D12_TILE_COPY_FLAGS,
+                flags: TILE_COPY_FLAGS,
             ) void {
                 self.v.grcmdlist.CopyTiles(
                     self,
@@ -2003,11 +2023,11 @@ pub const ID3D12GraphicsCommandList = extern struct {
             }
             pub inline fn ResolveSubresource(
                 self: *T,
-                dst_resource: *ID3D12Resource,
+                dst_resource: *IResource,
                 dst_subresource: UINT,
-                src_resource: *ID3D12Resource,
+                src_resource: *IResource,
                 src_subresource: UINT,
-                format: DXGI_FORMAT,
+                format: dxgi.FORMAT,
             ) void {
                 self.v.grcmdlist.ResolveSubresource(
                     self,
@@ -2018,13 +2038,13 @@ pub const ID3D12GraphicsCommandList = extern struct {
                     format,
                 );
             }
-            pub inline fn IASetPrimitiveTopology(self: *T, topology: D3D12_PRIMITIVE_TOPOLOGY) void {
+            pub inline fn IASetPrimitiveTopology(self: *T, topology: PRIMITIVE_TOPOLOGY) void {
                 self.v.grcmdlist.IASetPrimitiveTopology(self, topology);
             }
-            pub inline fn RSSetViewports(self: *T, num: UINT, viewports: [*]const D3D12_VIEWPORT) void {
+            pub inline fn RSSetViewports(self: *T, num: UINT, viewports: [*]const VIEWPORT) void {
                 self.v.grcmdlist.RSSetViewports(self, num, viewports);
             }
-            pub inline fn RSSetScissorRects(self: *T, num: UINT, rects: [*]const D3D12_RECT) void {
+            pub inline fn RSSetScissorRects(self: *T, num: UINT, rects: [*]const RECT) void {
                 self.v.grcmdlist.RSSetScissorRects(self, num, rects);
             }
             pub inline fn OMSetBlendFactor(self: *T, blend_factor: *const [4]FLOAT) void {
@@ -2033,35 +2053,35 @@ pub const ID3D12GraphicsCommandList = extern struct {
             pub inline fn OMSetStencilRef(self: *T, stencil_ref: UINT) void {
                 self.v.grcmdlist.OMSetStencilRef(self, stencil_ref);
             }
-            pub inline fn SetPipelineState(self: *T, pso: *ID3D12PipelineState) void {
+            pub inline fn SetPipelineState(self: *T, pso: *IPipelineState) void {
                 self.v.grcmdlist.SetPipelineState(self, pso);
             }
-            pub inline fn ResourceBarrier(self: *T, num: UINT, barriers: [*]const D3D12_RESOURCE_BARRIER) void {
+            pub inline fn ResourceBarrier(self: *T, num: UINT, barriers: [*]const RESOURCE_BARRIER) void {
                 self.v.grcmdlist.ResourceBarrier(self, num, barriers);
             }
-            pub inline fn ExecuteBundle(self: *T, cmdlist: *ID3D12GraphicsCommandList) void {
+            pub inline fn ExecuteBundle(self: *T, cmdlist: *IGraphicsCommandList) void {
                 self.v.grcmdlist.ExecuteBundle(self, cmdlist);
             }
-            pub inline fn SetDescriptorHeaps(self: *T, num: UINT, heaps: [*]const *ID3D12DescriptorHeap) void {
+            pub inline fn SetDescriptorHeaps(self: *T, num: UINT, heaps: [*]const *IDescriptorHeap) void {
                 self.v.grcmdlist.SetDescriptorHeaps(self, num, heaps);
             }
-            pub inline fn SetComputeRootSignature(self: *T, root_signature: ?*ID3D12RootSignature) void {
+            pub inline fn SetComputeRootSignature(self: *T, root_signature: ?*IRootSignature) void {
                 self.v.grcmdlist.SetComputeRootSignature(self, root_signature);
             }
-            pub inline fn SetGraphicsRootSignature(self: *T, root_signature: ?*ID3D12RootSignature) void {
+            pub inline fn SetGraphicsRootSignature(self: *T, root_signature: ?*IRootSignature) void {
                 self.v.grcmdlist.SetGraphicsRootSignature(self, root_signature);
             }
             pub inline fn SetComputeRootDescriptorTable(
                 self: *T,
                 root_index: UINT,
-                base_descriptor: D3D12_GPU_DESCRIPTOR_HANDLE,
+                base_descriptor: GPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.grcmdlist.SetComputeRootDescriptorTable(self, root_index, base_descriptor);
             }
             pub inline fn SetGraphicsRootDescriptorTable(
                 self: *T,
                 root_index: UINT,
-                base_descriptor: D3D12_GPU_DESCRIPTOR_HANDLE,
+                base_descriptor: GPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.grcmdlist.SetGraphicsRootDescriptorTable(self, root_index, base_descriptor);
             }
@@ -2092,53 +2112,53 @@ pub const ID3D12GraphicsCommandList = extern struct {
             pub inline fn SetComputeRootConstantBufferView(
                 self: *T,
                 index: UINT,
-                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+                buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
                 self.v.grcmdlist.SetComputeRootConstantBufferView(self, index, buffer_location);
             }
             pub inline fn SetGraphicsRootConstantBufferView(
                 self: *T,
                 index: UINT,
-                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+                buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
                 self.v.grcmdlist.SetGraphicsRootConstantBufferView(self, index, buffer_location);
             }
             pub inline fn SetComputeRootShaderResourceView(
                 self: *T,
                 index: UINT,
-                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+                buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
                 self.v.grcmdlist.SetComputeRootShaderResourceView(self, index, buffer_location);
             }
             pub inline fn SetGraphicsRootShaderResourceView(
                 self: *T,
                 index: UINT,
-                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+                buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
                 self.v.grcmdlist.SetGraphicsRootShaderResourceView(self, index, buffer_location);
             }
             pub inline fn SetComputeRootUnorderedAccessView(
                 self: *T,
                 index: UINT,
-                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+                buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
                 self.v.grcmdlist.SetComputeRootUnorderedAccessView(self, index, buffer_location);
             }
             pub inline fn SetGraphicsRootUnorderedAccessView(
                 self: *T,
                 index: UINT,
-                buffer_location: D3D12_GPU_VIRTUAL_ADDRESS,
+                buffer_location: GPU_VIRTUAL_ADDRESS,
             ) void {
                 self.v.grcmdlist.SetGraphicsRootUnorderedAccessView(self, index, buffer_location);
             }
-            pub inline fn IASetIndexBuffer(self: *T, view: ?*const D3D12_INDEX_BUFFER_VIEW) void {
+            pub inline fn IASetIndexBuffer(self: *T, view: ?*const INDEX_BUFFER_VIEW) void {
                 self.v.grcmdlist.IASetIndexBuffer(self, view);
             }
             pub inline fn IASetVertexBuffers(
                 self: *T,
                 start_slot: UINT,
                 num_views: UINT,
-                views: ?[*]const D3D12_VERTEX_BUFFER_VIEW,
+                views: ?[*]const VERTEX_BUFFER_VIEW,
             ) void {
                 self.v.grcmdlist.IASetVertexBuffers(self, start_slot, num_views, views);
             }
@@ -2146,16 +2166,16 @@ pub const ID3D12GraphicsCommandList = extern struct {
                 self: *T,
                 start_slot: UINT,
                 num_views: UINT,
-                views: ?[*]const D3D12_STREAM_OUTPUT_BUFFER_VIEW,
+                views: ?[*]const STREAM_OUTPUT_BUFFER_VIEW,
             ) void {
                 self.v.grcmdlist.SOSetTargets(self, start_slot, num_views, views);
             }
             pub inline fn OMSetRenderTargets(
                 self: *T,
                 num_rt_descriptors: UINT,
-                rt_descriptors: ?[*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                rt_descriptors: ?[*]const CPU_DESCRIPTOR_HANDLE,
                 single_handle: BOOL,
-                ds_descriptors: ?*const D3D12_CPU_DESCRIPTOR_HANDLE,
+                ds_descriptors: ?*const CPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.grcmdlist.OMSetRenderTargets(
                     self,
@@ -2167,12 +2187,12 @@ pub const ID3D12GraphicsCommandList = extern struct {
             }
             pub inline fn ClearDepthStencilView(
                 self: *T,
-                ds_view: D3D12_CPU_DESCRIPTOR_HANDLE,
-                clear_flags: D3D12_CLEAR_FLAGS,
+                ds_view: CPU_DESCRIPTOR_HANDLE,
+                clear_flags: CLEAR_FLAGS,
                 depth: FLOAT,
                 stencil: UINT8,
                 num_rects: UINT,
-                rects: ?[*]const D3D12_RECT,
+                rects: ?[*]const RECT,
             ) void {
                 self.v.grcmdlist.ClearDepthStencilView(
                     self,
@@ -2186,21 +2206,21 @@ pub const ID3D12GraphicsCommandList = extern struct {
             }
             pub inline fn ClearRenderTargetView(
                 self: *T,
-                rt_view: D3D12_CPU_DESCRIPTOR_HANDLE,
+                rt_view: CPU_DESCRIPTOR_HANDLE,
                 rgba: *const [4]FLOAT,
                 num_rects: UINT,
-                rects: ?[*]const D3D12_RECT,
+                rects: ?[*]const RECT,
             ) void {
                 self.v.grcmdlist.ClearRenderTargetView(self, rt_view, rgba, num_rects, rects);
             }
             pub inline fn ClearUnorderedAccessViewUint(
                 self: *T,
-                gpu_view: D3D12_GPU_DESCRIPTOR_HANDLE,
-                cpu_view: D3D12_CPU_DESCRIPTOR_HANDLE,
-                resource: *ID3D12Resource,
+                gpu_view: GPU_DESCRIPTOR_HANDLE,
+                cpu_view: CPU_DESCRIPTOR_HANDLE,
+                resource: *IResource,
                 values: *const [4]UINT,
                 num_rects: UINT,
-                rects: ?[*]const D3D12_RECT,
+                rects: ?[*]const RECT,
             ) void {
                 self.v.grcmdlist.ClearUnorderedAccessViewUint(
                     self,
@@ -2214,12 +2234,12 @@ pub const ID3D12GraphicsCommandList = extern struct {
             }
             pub inline fn ClearUnorderedAccessViewFloat(
                 self: *T,
-                gpu_view: D3D12_GPU_DESCRIPTOR_HANDLE,
-                cpu_view: D3D12_CPU_DESCRIPTOR_HANDLE,
-                resource: *ID3D12Resource,
+                gpu_view: GPU_DESCRIPTOR_HANDLE,
+                cpu_view: CPU_DESCRIPTOR_HANDLE,
+                resource: *IResource,
                 values: *const [4]FLOAT,
                 num_rects: UINT,
-                rects: ?[*]const D3D12_RECT,
+                rects: ?[*]const RECT,
             ) void {
                 self.v.grcmdlist.ClearUnorderedAccessViewFloat(
                     self,
@@ -2231,22 +2251,22 @@ pub const ID3D12GraphicsCommandList = extern struct {
                     rects,
                 );
             }
-            pub inline fn DiscardResource(self: *T, resource: *ID3D12Resource, region: ?*const D3D12_DISCARD_REGION) void {
+            pub inline fn DiscardResource(self: *T, resource: *IResource, region: ?*const DISCARD_REGION) void {
                 self.v.grcmdlist.DiscardResource(self, resource, region);
             }
-            pub inline fn BeginQuery(self: *T, query: *ID3D12QueryHeap, query_type: D3D12_QUERY_TYPE, index: UINT) void {
+            pub inline fn BeginQuery(self: *T, query: *IQueryHeap, query_type: QUERY_TYPE, index: UINT) void {
                 self.v.grcmdlist.BeginQuery(self, query, query_type, index);
             }
-            pub inline fn EndQuery(self: *T, query: *ID3D12QueryHeap, query_type: D3D12_QUERY_TYPE, index: UINT) void {
+            pub inline fn EndQuery(self: *T, query: *IQueryHeap, query_type: QUERY_TYPE, index: UINT) void {
                 self.v.grcmdlist.EndQuery(self, query, query_type, index);
             }
             pub inline fn ResolveQueryData(
                 self: *T,
-                query: *ID3D12QueryHeap,
-                query_type: D3D12_QUERY_TYPE,
+                query: *IQueryHeap,
+                query_type: QUERY_TYPE,
                 start_index: UINT,
                 num_queries: UINT,
-                dst_resource: *ID3D12Resource,
+                dst_resource: *IResource,
                 buffer_offset: UINT64,
             ) void {
                 self.v.grcmdlist.ResolveQueryData(
@@ -2261,9 +2281,9 @@ pub const ID3D12GraphicsCommandList = extern struct {
             }
             pub inline fn SetPredication(
                 self: *T,
-                buffer: ?*ID3D12Resource,
+                buffer: ?*IResource,
                 buffer_offset: UINT64,
-                operation: D3D12_PREDICATION_OP,
+                operation: PREDICATION_OP,
             ) void {
                 self.v.grcmdlist.SetPredication(self, buffer, buffer_offset, operation);
             }
@@ -2278,11 +2298,11 @@ pub const ID3D12GraphicsCommandList = extern struct {
             }
             pub inline fn ExecuteIndirect(
                 self: *T,
-                command_signature: *ID3D12CommandSignature,
+                command_signature: *ICommandSignature,
                 max_command_count: UINT,
-                arg_buffer: *ID3D12Resource,
+                arg_buffer: *IResource,
                 arg_buffer_offset: UINT64,
-                count_buffer: ?*ID3D12Resource,
+                count_buffer: ?*IResource,
                 count_buffer_offset: UINT64,
             ) void {
                 self.v.grcmdlist.ExecuteIndirect(
@@ -2301,144 +2321,144 @@ pub const ID3D12GraphicsCommandList = extern struct {
     fn VTable(comptime T: type) type {
         return extern struct {
             Close: fn (*T) callconv(.C) HRESULT,
-            Reset: fn (*T, *ID3D12CommandAllocator, ?*ID3D12PipelineState) callconv(WINAPI) HRESULT,
-            ClearState: fn (*T, ?*ID3D12PipelineState) callconv(WINAPI) void,
+            Reset: fn (*T, *ICommandAllocator, ?*IPipelineState) callconv(WINAPI) HRESULT,
+            ClearState: fn (*T, ?*IPipelineState) callconv(WINAPI) void,
             DrawInstanced: fn (*T, UINT, UINT, UINT, UINT) callconv(WINAPI) void,
             DrawIndexedInstanced: fn (*T, UINT, UINT, UINT, INT, UINT) callconv(WINAPI) void,
             Dispatch: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-            CopyBufferRegion: fn (*T, *ID3D12Resource, UINT64, *ID3D12Resource, UINT64, UINT64) callconv(WINAPI) void,
+            CopyBufferRegion: fn (*T, *IResource, UINT64, *IResource, UINT64, UINT64) callconv(WINAPI) void,
             CopyTextureRegion: fn (
                 *T,
-                *const D3D12_TEXTURE_COPY_LOCATION,
+                *const TEXTURE_COPY_LOCATION,
                 UINT,
                 UINT,
                 UINT,
-                *const D3D12_TEXTURE_COPY_LOCATION,
-                ?*const D3D12_BOX,
+                *const TEXTURE_COPY_LOCATION,
+                ?*const BOX,
             ) callconv(WINAPI) void,
-            CopyResource: fn (*T, *ID3D12Resource, *ID3D12Resource) callconv(WINAPI) void,
+            CopyResource: fn (*T, *IResource, *IResource) callconv(WINAPI) void,
             CopyTiles: fn (
                 *T,
-                *ID3D12Resource,
-                *const D3D12_TILED_RESOURCE_COORDINATE,
-                *const D3D12_TILE_REGION_SIZE,
-                *ID3D12Resource,
+                *IResource,
+                *const TILED_RESOURCE_COORDINATE,
+                *const TILE_REGION_SIZE,
+                *IResource,
                 buffer_start_offset_in_bytes: UINT64,
-                D3D12_TILE_COPY_FLAGS,
+                TILE_COPY_FLAGS,
             ) callconv(WINAPI) void,
-            ResolveSubresource: fn (*T, *ID3D12Resource, UINT, *ID3D12Resource, UINT, DXGI_FORMAT) callconv(WINAPI) void,
-            IASetPrimitiveTopology: fn (*T, D3D12_PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
-            RSSetViewports: fn (*T, UINT, [*]const D3D12_VIEWPORT) callconv(WINAPI) void,
-            RSSetScissorRects: fn (*T, UINT, [*]const D3D12_RECT) callconv(WINAPI) void,
+            ResolveSubresource: fn (*T, *IResource, UINT, *IResource, UINT, dxgi.FORMAT) callconv(WINAPI) void,
+            IASetPrimitiveTopology: fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
+            RSSetViewports: fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
+            RSSetScissorRects: fn (*T, UINT, [*]const RECT) callconv(WINAPI) void,
             OMSetBlendFactor: fn (*T, *const [4]FLOAT) callconv(WINAPI) void,
             OMSetStencilRef: fn (*T, UINT) callconv(WINAPI) void,
-            SetPipelineState: fn (*T, *ID3D12PipelineState) callconv(WINAPI) void,
-            ResourceBarrier: fn (*T, UINT, [*]const D3D12_RESOURCE_BARRIER) callconv(WINAPI) void,
-            ExecuteBundle: fn (*T, *ID3D12GraphicsCommandList) callconv(WINAPI) void,
-            SetDescriptorHeaps: fn (*T, UINT, [*]const *ID3D12DescriptorHeap) callconv(WINAPI) void,
-            SetComputeRootSignature: fn (*T, ?*ID3D12RootSignature) callconv(WINAPI) void,
-            SetGraphicsRootSignature: fn (*T, ?*ID3D12RootSignature) callconv(WINAPI) void,
-            SetComputeRootDescriptorTable: fn (*T, UINT, D3D12_GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
-            SetGraphicsRootDescriptorTable: fn (*T, UINT, D3D12_GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            SetPipelineState: fn (*T, *IPipelineState) callconv(WINAPI) void,
+            ResourceBarrier: fn (*T, UINT, [*]const RESOURCE_BARRIER) callconv(WINAPI) void,
+            ExecuteBundle: fn (*T, *IGraphicsCommandList) callconv(WINAPI) void,
+            SetDescriptorHeaps: fn (*T, UINT, [*]const *IDescriptorHeap) callconv(WINAPI) void,
+            SetComputeRootSignature: fn (*T, ?*IRootSignature) callconv(WINAPI) void,
+            SetGraphicsRootSignature: fn (*T, ?*IRootSignature) callconv(WINAPI) void,
+            SetComputeRootDescriptorTable: fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            SetGraphicsRootDescriptorTable: fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
             SetComputeRoot32BitConstant: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
             SetGraphicsRoot32BitConstant: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
             SetComputeRoot32BitConstants: fn (*T, UINT, UINT, *const c_void, UINT) callconv(WINAPI) void,
             SetGraphicsRoot32BitConstants: fn (*T, UINT, UINT, *const c_void, UINT) callconv(WINAPI) void,
-            SetComputeRootConstantBufferView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootConstantBufferView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetComputeRootShaderResourceView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootShaderResourceView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetComputeRootUnorderedAccessView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootUnorderedAccessView: fn (*T, UINT, D3D12_GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            IASetIndexBuffer: fn (*T, ?*const D3D12_INDEX_BUFFER_VIEW) callconv(WINAPI) void,
-            IASetVertexBuffers: fn (*T, UINT, UINT, ?[*]const D3D12_VERTEX_BUFFER_VIEW) callconv(WINAPI) void,
-            SOSetTargets: fn (*T, UINT, UINT, ?[*]const D3D12_STREAM_OUTPUT_BUFFER_VIEW) callconv(WINAPI) void,
+            SetComputeRootConstantBufferView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootConstantBufferView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetComputeRootShaderResourceView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootShaderResourceView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetComputeRootUnorderedAccessView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootUnorderedAccessView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            IASetIndexBuffer: fn (*T, ?*const INDEX_BUFFER_VIEW) callconv(WINAPI) void,
+            IASetVertexBuffers: fn (*T, UINT, UINT, ?[*]const VERTEX_BUFFER_VIEW) callconv(WINAPI) void,
+            SOSetTargets: fn (*T, UINT, UINT, ?[*]const STREAM_OUTPUT_BUFFER_VIEW) callconv(WINAPI) void,
             OMSetRenderTargets: fn (
                 *T,
                 UINT,
-                ?[*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?[*]const CPU_DESCRIPTOR_HANDLE,
                 BOOL,
-                ?*const D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?*const CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
             ClearDepthStencilView: fn (
                 *T,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
-                D3D12_CLEAR_FLAGS,
+                CPU_DESCRIPTOR_HANDLE,
+                CLEAR_FLAGS,
                 FLOAT,
                 UINT8,
                 UINT,
-                ?[*]const D3D12_RECT,
+                ?[*]const RECT,
             ) callconv(WINAPI) void,
             ClearRenderTargetView: fn (
                 *T,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
+                CPU_DESCRIPTOR_HANDLE,
                 *const [4]FLOAT,
                 UINT,
-                ?[*]const D3D12_RECT,
+                ?[*]const RECT,
             ) callconv(WINAPI) void,
             ClearUnorderedAccessViewUint: fn (
                 *T,
-                D3D12_GPU_DESCRIPTOR_HANDLE,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
-                *ID3D12Resource,
+                GPU_DESCRIPTOR_HANDLE,
+                CPU_DESCRIPTOR_HANDLE,
+                *IResource,
                 *const [4]UINT,
                 UINT,
-                ?[*]const D3D12_RECT,
+                ?[*]const RECT,
             ) callconv(WINAPI) void,
             ClearUnorderedAccessViewFloat: fn (
                 *T,
-                D3D12_GPU_DESCRIPTOR_HANDLE,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
-                *ID3D12Resource,
+                GPU_DESCRIPTOR_HANDLE,
+                CPU_DESCRIPTOR_HANDLE,
+                *IResource,
                 *const [4]FLOAT,
                 UINT,
-                ?[*]const D3D12_RECT,
+                ?[*]const RECT,
             ) callconv(WINAPI) void,
-            DiscardResource: fn (*T, *ID3D12Resource, ?*const D3D12_DISCARD_REGION) callconv(WINAPI) void,
-            BeginQuery: fn (*T, *ID3D12QueryHeap, D3D12_QUERY_TYPE, UINT) callconv(WINAPI) void,
-            EndQuery: fn (*T, *ID3D12QueryHeap, D3D12_QUERY_TYPE, UINT) callconv(WINAPI) void,
+            DiscardResource: fn (*T, *IResource, ?*const DISCARD_REGION) callconv(WINAPI) void,
+            BeginQuery: fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
+            EndQuery: fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
             ResolveQueryData: fn (
                 *T,
-                *ID3D12QueryHeap,
-                D3D12_QUERY_TYPE,
+                *IQueryHeap,
+                QUERY_TYPE,
                 UINT,
                 UINT,
-                *ID3D12Resource,
+                *IResource,
                 UINT64,
             ) callconv(WINAPI) void,
-            SetPredication: fn (*T, ?*ID3D12Resource, UINT64, D3D12_PREDICATION_OP) callconv(WINAPI) void,
+            SetPredication: fn (*T, ?*IResource, UINT64, PREDICATION_OP) callconv(WINAPI) void,
             SetMarker: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
             BeginEvent: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
             EndEvent: fn (*T) callconv(WINAPI) void,
             ExecuteIndirect: fn (
                 *T,
-                *ID3D12CommandSignature,
+                *ICommandSignature,
                 UINT,
-                *ID3D12Resource,
+                *IResource,
                 UINT64,
-                ?*ID3D12Resource,
+                ?*IResource,
                 UINT64,
             ) callconv(WINAPI) void,
         };
     }
 };
 
-pub const D3D12_RANGE_UINT64 = extern struct {
+pub const RANGE_UINT64 = extern struct {
     Begin: UINT64,
     End: UINT64,
 };
 
-pub const D3D12_SUBRESOURCE_RANGE_UINT64 = extern struct {
+pub const SUBRESOURCE_RANGE_UINT64 = extern struct {
     Subresource: UINT,
-    Range: D3D12_RANGE_UINT64,
+    Range: RANGE_UINT64,
 };
 
-pub const D3D12_SAMPLE_POSITION = extern struct {
+pub const SAMPLE_POSITION = extern struct {
     X: INT8,
     Y: INT8,
 };
 
-pub const D3D12_RESOLVE_MODE = enum(UINT) {
+pub const RESOLVE_MODE = enum(UINT) {
     DECOMPRESS = 0,
     MIN = 1,
     MAX = 2,
@@ -2447,34 +2467,34 @@ pub const D3D12_RESOLVE_MODE = enum(UINT) {
     DECODE_SAMPLER_FEEDBACK = 5,
 };
 
-pub const ID3D12GraphicsCommandList1 = extern struct {
+pub const IGraphicsCommandList1 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        cmdlist: ID3D12CommandList.VTable(Self),
-        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        cmdlist: ICommandList.VTable(Self),
+        grcmdlist: IGraphicsCommandList.VTable(Self),
         grcmdlist1: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12CommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace ICommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn AtomicCopyBufferUINT(
                 self: *T,
-                dst_buffer: *ID3D12Resource,
+                dst_buffer: *IResource,
                 dst_offset: UINT64,
-                src_buffer: *ID3D12Resource,
+                src_buffer: *IResource,
                 src_offset: UINT64,
                 dependencies: UINT,
-                dependent_resources: [*]const *ID3D12Resource,
-                dependent_subresource_ranges: [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
+                dependent_resources: [*]const *IResource,
+                dependent_subresource_ranges: [*]const SUBRESOURCE_RANGE_UINT64,
             ) void {
                 self.v.grcmdlist1.AtomicCopyBufferUINT(
                     self,
@@ -2489,13 +2509,13 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
             }
             pub inline fn AtomicCopyBufferUINT64(
                 self: *T,
-                dst_buffer: *ID3D12Resource,
+                dst_buffer: *IResource,
                 dst_offset: UINT64,
-                src_buffer: *ID3D12Resource,
+                src_buffer: *IResource,
                 src_offset: UINT64,
                 dependencies: UINT,
-                dependent_resources: [*]const *ID3D12Resource,
-                dependent_subresource_ranges: [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
+                dependent_resources: [*]const *IResource,
+                dependent_subresource_ranges: [*]const SUBRESOURCE_RANGE_UINT64,
             ) void {
                 self.v.grcmdlist1.AtomicCopyBufferUINT64(
                     self,
@@ -2515,21 +2535,21 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
                 self: *T,
                 num_samples: UINT,
                 num_pixels: UINT,
-                sample_positions: *D3D12_SAMPLE_POSITION,
+                sample_positions: *SAMPLE_POSITION,
             ) void {
                 self.v.grcmdlist1.SetSamplePositions(self, num_samples, num_pixels, sample_positions);
             }
             pub inline fn ResolveSubresourceRegion(
                 self: *T,
-                dst_resource: *ID3D12Resource,
+                dst_resource: *IResource,
                 dst_subresource: UINT,
                 dst_x: UINT,
                 dst_y: UINT,
-                src_resource: *ID3D12Resource,
+                src_resource: *IResource,
                 src_subresource: UINT,
-                src_rect: *D3D12_RECT,
-                format: DXGI_FORMAT,
-                resolve_mode: D3D12_RESOLVE_MODE,
+                src_rect: *RECT,
+                format: dxgi.FORMAT,
+                resolve_mode: RESOLVE_MODE,
             ) void {
                 self.v.grcmdlist1.ResolveSubresourceRegion(
                     self,
@@ -2554,71 +2574,71 @@ pub const ID3D12GraphicsCommandList1 = extern struct {
         return extern struct {
             AtomicCopyBufferUINT: fn (
                 *T,
-                *ID3D12Resource,
+                *IResource,
                 UINT64,
-                *ID3D12Resource,
+                *IResource,
                 UINT64,
                 UINT,
-                [*]const *ID3D12Resource,
-                [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
+                [*]const *IResource,
+                [*]const SUBRESOURCE_RANGE_UINT64,
             ) callconv(WINAPI) void,
             AtomicCopyBufferUINT64: fn (
                 *T,
-                *ID3D12Resource,
+                *IResource,
                 UINT64,
-                *ID3D12Resource,
+                *IResource,
                 UINT64,
                 UINT,
-                [*]const *ID3D12Resource,
-                [*]const D3D12_SUBRESOURCE_RANGE_UINT64,
+                [*]const *IResource,
+                [*]const SUBRESOURCE_RANGE_UINT64,
             ) callconv(WINAPI) void,
             OMSetDepthBounds: fn (*T, FLOAT, FLOAT) callconv(WINAPI) void,
-            SetSamplePositions: fn (*T, UINT, UINT, *D3D12_SAMPLE_POSITION) callconv(WINAPI) void,
+            SetSamplePositions: fn (*T, UINT, UINT, *SAMPLE_POSITION) callconv(WINAPI) void,
             ResolveSubresourceRegion: fn (
                 *T,
-                *ID3D12Resource,
+                *IResource,
                 UINT,
                 UINT,
                 UINT,
-                *ID3D12Resource,
+                *IResource,
                 UINT,
-                *D3D12_RECT,
-                DXGI_FORMAT,
-                D3D12_RESOLVE_MODE,
+                *RECT,
+                dxgi.FORMAT,
+                RESOLVE_MODE,
             ) callconv(WINAPI) void,
             SetViewInstanceMask: fn (*T, UINT) callconv(WINAPI) void,
         };
     }
 };
 
-pub const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER = extern struct {
-    Dest: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const WRITEBUFFERIMMEDIATE_PARAMETER = extern struct {
+    Dest: GPU_VIRTUAL_ADDRESS,
     Value: UINT32,
 };
 
-pub const D3D12_WRITEBUFFERIMMEDIATE_MODE = enum(UINT) {
+pub const WRITEBUFFERIMMEDIATE_MODE = enum(UINT) {
     DEFAULT = 0,
     MARKER_IN = 0x1,
     MARKER_OUT = 0x2,
 };
 
-pub const ID3D12GraphicsCommandList2 = extern struct {
+pub const IGraphicsCommandList2 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        cmdlist: ID3D12CommandList.VTable(Self),
-        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
-        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        cmdlist: ICommandList.VTable(Self),
+        grcmdlist: IGraphicsCommandList.VTable(Self),
+        grcmdlist1: IGraphicsCommandList1.VTable(Self),
         grcmdlist2: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12CommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace ICommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList1.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -2626,8 +2646,8 @@ pub const ID3D12GraphicsCommandList2 = extern struct {
             pub inline fn WriteBufferImmediate(
                 self: *T,
                 count: UINT,
-                params: [*]const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER,
-                modes: ?[*]const D3D12_WRITEBUFFERIMMEDIATE_MODE,
+                params: [*]const WRITEBUFFERIMMEDIATE_PARAMETER,
+                modes: ?[*]const WRITEBUFFERIMMEDIATE_MODE,
             ) void {
                 self.v.grcmdlist2.WriteBufferImmediate(self, count, params, modes);
             }
@@ -2639,37 +2659,37 @@ pub const ID3D12GraphicsCommandList2 = extern struct {
             WriteBufferImmediate: fn (
                 *T,
                 UINT,
-                [*]const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER,
-                ?[*]const D3D12_WRITEBUFFERIMMEDIATE_MODE,
+                [*]const WRITEBUFFERIMMEDIATE_PARAMETER,
+                ?[*]const WRITEBUFFERIMMEDIATE_MODE,
             ) callconv(WINAPI) void,
         };
     }
 };
 
-pub const ID3D12GraphicsCommandList3 = extern struct {
+pub const IGraphicsCommandList3 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        cmdlist: ID3D12CommandList.VTable(Self),
-        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
-        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
-        grcmdlist2: ID3D12GraphicsCommandList2.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        cmdlist: ICommandList.VTable(Self),
+        grcmdlist: IGraphicsCommandList.VTable(Self),
+        grcmdlist1: IGraphicsCommandList1.VTable(Self),
+        grcmdlist2: IGraphicsCommandList2.VTable(Self),
         grcmdlist3: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12CommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList2.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace ICommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList1.Methods(Self);
+    usingnamespace IGraphicsCommandList2.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn SetProtectedResourceSession(self: *T, prsession: ?*ID3D12ProtectedResourceSession) void {
+            pub inline fn SetProtectedResourceSession(self: *T, prsession: ?*IProtectedResourceSession) void {
                 self.v.grcmdlist3.SetProtectedResourceSession(self, prsession);
             }
         };
@@ -2677,82 +2697,82 @@ pub const ID3D12GraphicsCommandList3 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            SetProtectedResourceSession: fn (*T, ?*ID3D12ProtectedResourceSession) callconv(WINAPI) void,
+            SetProtectedResourceSession: fn (*T, ?*IProtectedResourceSession) callconv(WINAPI) void,
         };
     }
 };
 
-pub const D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE = enum(UINT) {
+pub const RENDER_PASS_BEGINNING_ACCESS_TYPE = enum(UINT) {
     DISCARD = 0,
     PRESERVE = 1,
     CLEAR = 2,
     NO_ACCESS = 3,
 };
 
-pub const D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS = extern struct {
-    ClearValue: D3D12_CLEAR_VALUE,
+pub const RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS = extern struct {
+    ClearValue: CLEAR_VALUE,
 };
 
-pub const D3D12_RENDER_PASS_BEGINNING_ACCESS = extern struct {
-    Type: D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE,
+pub const RENDER_PASS_BEGINNING_ACCESS = extern struct {
+    Type: RENDER_PASS_BEGINNING_ACCESS_TYPE,
     u: extern union {
-        Clear: D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS,
+        Clear: RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS,
     },
 };
 
-pub const D3D12_RENDER_PASS_ENDING_ACCESS_TYPE = enum(UINT) {
+pub const RENDER_PASS_ENDING_ACCESS_TYPE = enum(UINT) {
     DISCARD = 0,
     PRESERVE = 1,
     RESOLVE = 2,
     NO_ACCESS = 3,
 };
 
-pub const D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS = extern struct {
+pub const RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS = extern struct {
     SrcSubresource: UINT,
     DstSubresource: UINT,
     DstX: UINT,
     DstY: UINT,
-    SrcRect: D3D12_RECT,
+    SrcRect: RECT,
 };
 
-pub const D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS = extern struct {
-    pSrcResource: *ID3D12Resource,
-    pDstResource: *ID3D12Resource,
+pub const RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS = extern struct {
+    pSrcResource: *IResource,
+    pDstResource: *IResource,
     SubresourceCount: UINT,
-    pSubresourceParameters: [*]const D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS,
-    Format: DXGI_FORMAT,
-    ResolveMode: D3D12_RESOLVE_MODE,
+    pSubresourceParameters: [*]const RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS,
+    Format: dxgi.FORMAT,
+    ResolveMode: RESOLVE_MODE,
     PreserveResolveSource: BOOL,
 };
 
-pub const D3D12_RENDER_PASS_ENDING_ACCESS = extern struct {
-    Type: D3D12_RENDER_PASS_ENDING_ACCESS_TYPE,
+pub const RENDER_PASS_ENDING_ACCESS = extern struct {
+    Type: RENDER_PASS_ENDING_ACCESS_TYPE,
     u: extern union {
-        Resolve: D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS,
+        Resolve: RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS,
     },
 };
 
-pub const D3D12_RENDER_PASS_RENDER_TARGET_DESC = extern struct {
-    cpuDescriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
-    BeginningAccess: D3D12_RENDER_PASS_BEGINNING_ACCESS,
-    EndingAccess: D3D12_RENDER_PASS_ENDING_ACCESS,
+pub const RENDER_PASS_RENDER_TARGET_DESC = extern struct {
+    cpuDescriptor: CPU_DESCRIPTOR_HANDLE,
+    BeginningAccess: RENDER_PASS_BEGINNING_ACCESS,
+    EndingAccess: RENDER_PASS_ENDING_ACCESS,
 };
 
-pub const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC = extern struct {
-    cpuDescriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
-    DepthBeginningAccess: D3D12_RENDER_PASS_BEGINNING_ACCESS,
-    StencilBeginningAccess: D3D12_RENDER_PASS_BEGINNING_ACCESS,
-    DepthEndingAccess: D3D12_RENDER_PASS_ENDING_ACCESS,
-    StencilEndingAccess: D3D12_RENDER_PASS_ENDING_ACCESS,
+pub const RENDER_PASS_DEPTH_STENCIL_DESC = extern struct {
+    cpuDescriptor: CPU_DESCRIPTOR_HANDLE,
+    DepthBeginningAccess: RENDER_PASS_BEGINNING_ACCESS,
+    StencilBeginningAccess: RENDER_PASS_BEGINNING_ACCESS,
+    DepthEndingAccess: RENDER_PASS_ENDING_ACCESS,
+    StencilEndingAccess: RENDER_PASS_ENDING_ACCESS,
 };
 
-pub const D3D12_RENDER_PASS_FLAGS = UINT;
-pub const D3D12_RENDER_PASS_FLAG_NONE = 0;
-pub const D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES = 0x1;
-pub const D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS = 0x2;
-pub const D3D12_RENDER_PASS_FLAG_RESUMING_PASS = 0x4;
+pub const RENDER_PASS_FLAGS = UINT;
+pub const RENDER_PASS_FLAG_NONE = 0;
+pub const RENDER_PASS_FLAG_ALLOW_UAV_WRITES = 0x1;
+pub const RENDER_PASS_FLAG_SUSPENDING_PASS = 0x2;
+pub const RENDER_PASS_FLAG_RESUMING_PASS = 0x4;
 
-pub const D3D12_META_COMMAND_PARAMETER_TYPE = enum(UINT) {
+pub const META_COMMAND_PARAMETER_TYPE = enum(UINT) {
     FLOAT = 0,
     UINT64 = 1,
     GPU_VIRTUAL_ADDRESS = 2,
@@ -2760,69 +2780,69 @@ pub const D3D12_META_COMMAND_PARAMETER_TYPE = enum(UINT) {
     GPU_DESCRIPTOR_HANDLE_HEAP_TYPE_CBV_SRV_UAV = 4,
 };
 
-pub const D3D12_META_COMMAND_PARAMETER_FLAGS = UINT;
-pub const D3D12_META_COMMAND_PARAMETER_FLAG_INPUT = 0x1;
-pub const D3D12_META_COMMAND_PARAMETER_FLAG_OUTPUT = 0x2;
+pub const META_COMMAND_PARAMETER_FLAGS = UINT;
+pub const META_COMMAND_PARAMETER_FLAG_INPUT = 0x1;
+pub const META_COMMAND_PARAMETER_FLAG_OUTPUT = 0x2;
 
-pub const D3D12_META_COMMAND_PARAMETER_STAGE = enum(UINT) {
+pub const META_COMMAND_PARAMETER_STAGE = enum(UINT) {
     CREATION = 0,
     INITIALIZATION = 1,
     EXECUTION = 2,
 };
 
-pub const D3D12_META_COMMAND_PARAMETER_DESC = extern struct {
+pub const META_COMMAND_PARAMETER_DESC = extern struct {
     Name: LPCWSTR,
-    Type: D3D12_META_COMMAND_PARAMETER_TYPE,
-    Flags: D3D12_META_COMMAND_PARAMETER_FLAGS,
-    RequiredResourceState: D3D12_RESOURCE_STATES,
+    Type: META_COMMAND_PARAMETER_TYPE,
+    Flags: META_COMMAND_PARAMETER_FLAGS,
+    RequiredResourceState: RESOURCE_STATES,
     StructureOffset: UINT,
 };
 
-pub const D3D12_GRAPHICS_STATES = UINT;
-pub const D3D12_GRAPHICS_STATE_NONE = 0;
-pub const D3D12_GRAPHICS_STATE_IA_VERTEX_BUFFERS = (1 << 0);
-pub const D3D12_GRAPHICS_STATE_IA_INDEX_BUFFER = (1 << 1);
-pub const D3D12_GRAPHICS_STATE_IA_PRIMITIVE_TOPOLOGY = (1 << 2);
-pub const D3D12_GRAPHICS_STATE_DESCRIPTOR_HEAP = (1 << 3);
-pub const D3D12_GRAPHICS_STATE_GRAPHICS_ROOT_SIGNATURE = (1 << 4);
-pub const D3D12_GRAPHICS_STATE_COMPUTE_ROOT_SIGNATURE = (1 << 5);
-pub const D3D12_GRAPHICS_STATE_RS_VIEWPORTS = (1 << 6);
-pub const D3D12_GRAPHICS_STATE_RS_SCISSOR_RECTS = (1 << 7);
-pub const D3D12_GRAPHICS_STATE_PREDICATION = (1 << 8);
-pub const D3D12_GRAPHICS_STATE_OM_RENDER_TARGETS = (1 << 9);
-pub const D3D12_GRAPHICS_STATE_OM_STENCIL_REF = (1 << 10);
-pub const D3D12_GRAPHICS_STATE_OM_BLEND_FACTOR = (1 << 11);
-pub const D3D12_GRAPHICS_STATE_PIPELINE_STATE = (1 << 12);
-pub const D3D12_GRAPHICS_STATE_SO_TARGETS = (1 << 13);
-pub const D3D12_GRAPHICS_STATE_OM_DEPTH_BOUNDS = (1 << 14);
-pub const D3D12_GRAPHICS_STATE_SAMPLE_POSITIONS = (1 << 15);
-pub const D3D12_GRAPHICS_STATE_VIEW_INSTANCE_MASK = (1 << 16);
+pub const GRAPHICS_STATES = UINT;
+pub const GRAPHICS_STATE_NONE = 0;
+pub const GRAPHICS_STATE_IA_VERTEX_BUFFERS = (1 << 0);
+pub const GRAPHICS_STATE_IA_INDEX_BUFFER = (1 << 1);
+pub const GRAPHICS_STATE_IA_PRIMITIVE_TOPOLOGY = (1 << 2);
+pub const GRAPHICS_STATE_DESCRIPTOR_HEAP = (1 << 3);
+pub const GRAPHICS_STATE_GRAPHICS_ROOT_SIGNATURE = (1 << 4);
+pub const GRAPHICS_STATE_COMPUTE_ROOT_SIGNATURE = (1 << 5);
+pub const GRAPHICS_STATE_RS_VIEWPORTS = (1 << 6);
+pub const GRAPHICS_STATE_RS_SCISSOR_RECTS = (1 << 7);
+pub const GRAPHICS_STATE_PREDICATION = (1 << 8);
+pub const GRAPHICS_STATE_OM_RENDER_TARGETS = (1 << 9);
+pub const GRAPHICS_STATE_OM_STENCIL_REF = (1 << 10);
+pub const GRAPHICS_STATE_OM_BLEND_FACTOR = (1 << 11);
+pub const GRAPHICS_STATE_PIPELINE_STATE = (1 << 12);
+pub const GRAPHICS_STATE_SO_TARGETS = (1 << 13);
+pub const GRAPHICS_STATE_OM_DEPTH_BOUNDS = (1 << 14);
+pub const GRAPHICS_STATE_SAMPLE_POSITIONS = (1 << 15);
+pub const GRAPHICS_STATE_VIEW_INSTANCE_MASK = (1 << 16);
 
-pub const D3D12_META_COMMAND_DESC = extern struct {
+pub const META_COMMAND_DESC = extern struct {
     Id: GUID,
     Name: LPCWSTR,
-    InitializationDirtyState: D3D12_GRAPHICS_STATES,
-    ExecutionDirtyState: D3D12_GRAPHICS_STATES,
+    InitializationDirtyState: GRAPHICS_STATES,
+    ExecutionDirtyState: GRAPHICS_STATES,
 };
 
-pub const ID3D12MetaCommand = extern struct {
+pub const IMetaCommand = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
         metacmd: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn GetRequiredParameterResourceSize(
                 self: *T,
-                stage: D3D12_META_COMMAND_PARAMETER_STAGE,
+                stage: META_COMMAND_PARAMETER_STAGE,
                 param_index: UINT,
             ) UINT64 {
                 return self.v.metacmd.GetRequiredParameterResourceSize(self, stage, param_index);
@@ -2834,14 +2854,14 @@ pub const ID3D12MetaCommand = extern struct {
         return extern struct {
             GetRequiredParameterResourceSize: fn (
                 *T,
-                D3D12_META_COMMAND_PARAMETER_STAGE,
+                META_COMMAND_PARAMETER_STAGE,
                 UINT,
             ) callconv(WINAPI) UINT64,
         };
     }
 };
 
-pub const D3D12_STATE_SUBOBJECT_TYPE = enum(UINT) {
+pub const STATE_SUBOBJECT_TYPE = enum(UINT) {
     STATE_OBJECT_CONFIG = 0,
     GLOBAL_ROOT_SIGNATURE = 1,
     LOCAL_ROOT_SIGNATURE = 2,
@@ -2857,152 +2877,152 @@ pub const D3D12_STATE_SUBOBJECT_TYPE = enum(UINT) {
     MAX_VALID = 13,
 };
 
-pub const D3D12_STATE_SUBOBJECT = extern struct {
-    Type: D3D12_STATE_SUBOBJECT_TYPE,
+pub const STATE_SUBOBJECT = extern struct {
+    Type: STATE_SUBOBJECT_TYPE,
     desc: *const c_void,
 };
 
-pub const D3D12_STATE_OBJECT_FLAGS = UINT;
-pub const D3D12_STATE_OBJECT_FLAG_NONE = 0;
-pub const D3D12_STATE_OBJECT_FLAG_ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITIONS = 0x1;
-pub const D3D12_STATE_OBJECT_FLAG_ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS = 0x2;
-pub const D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS = 0x4;
+pub const STATE_OBJECT_FLAGS = UINT;
+pub const STATE_OBJECT_FLAG_NONE = 0;
+pub const STATE_OBJECT_FLAG_ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITIONS = 0x1;
+pub const STATE_OBJECT_FLAG_ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS = 0x2;
+pub const STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS = 0x4;
 
-pub const D3D12_STATE_OBJECT_CONFIG = extern struct {
-    Flags: D3D12_STATE_OBJECT_FLAGS,
+pub const STATE_OBJECT_CONFIG = extern struct {
+    Flags: STATE_OBJECT_FLAGS,
 };
 
-pub const D3D12_GLOBAL_ROOT_SIGNATURE = extern struct {
-    pGlobalRootSignature: *ID3D12RootSignature,
+pub const GLOBAL_ROOT_SIGNATURE = extern struct {
+    pGlobalRootSignature: *IRootSignature,
 };
 
-pub const D3D12_LOCAL_ROOT_SIGNATURE = extern struct {
-    pLocalRootSignature: *ID3D12RootSignature,
+pub const LOCAL_ROOT_SIGNATURE = extern struct {
+    pLocalRootSignature: *IRootSignature,
 };
 
-pub const D3D12_NODE_MASK = extern struct {
+pub const NODE_MASK = extern struct {
     NodeMask: UINT,
 };
 
-pub const D3D12_EXPORT_FLAGS = UINT;
+pub const EXPORT_FLAGS = UINT;
 
-pub const D3D12_EXPORT_DESC = extern struct {
+pub const EXPORT_DESC = extern struct {
     Name: LPCWSTR,
     ExportToRename: LPCWSTR,
-    Flags: D3D12_EXPORT_FLAGS,
+    Flags: EXPORT_FLAGS,
 };
 
-pub const D3D12_DXIL_LIBRARY_DESC = extern struct {
-    DXILLibrary: D3D12_SHADER_BYTECODE,
+pub const DXIL_LIBRARY_DESC = extern struct {
+    DXILLibrary: SHADER_BYTECODE,
     NumExports: UINT,
-    pExports: [*]D3D12_EXPORT_DESC,
+    pExports: [*]EXPORT_DESC,
 };
 
-pub const D3D12_EXISTING_COLLECTION_DESC = extern struct {
-    pExistingCollection: *ID3D12StateObject,
+pub const EXISTING_COLLECTION_DESC = extern struct {
+    pExistingCollection: *IStateObject,
     NumExports: UINT,
-    pExports: [*]D3D12_EXPORT_DESC,
+    pExports: [*]EXPORT_DESC,
 };
 
-pub const D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION = extern struct {
-    pSubobjectToAssociate: *const D3D12_STATE_SUBOBJECT,
+pub const SUBOBJECT_TO_EXPORTS_ASSOCIATION = extern struct {
+    pSubobjectToAssociate: *const STATE_SUBOBJECT,
     NumExports: UINT,
     pExports: [*]LPCWSTR,
 };
 
-pub const D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION = extern struct {
+pub const DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION = extern struct {
     SubobjectToAssociate: LPCWSTR,
     NumExports: UINT,
     pExports: [*]LPCWSTR,
 };
 
-pub const D3D12_HIT_GROUP_TYPE = enum(UINT) {
+pub const HIT_GROUP_TYPE = enum(UINT) {
     TRIANGLES = 0,
     PROCEDURAL_PRIMITIVE = 0x1,
 };
 
-pub const D3D12_HIT_GROUP_DESC = extern struct {
+pub const HIT_GROUP_DESC = extern struct {
     HitGroupExport: LPCWSTR,
-    Type: D3D12_HIT_GROUP_TYPE,
+    Type: HIT_GROUP_TYPE,
     AnyHitShaderImport: LPCWSTR,
     ClosestHitShaderImport: LPCWSTR,
     IntersectionShaderImport: LPCWSTR,
 };
 
-pub const D3D12_RAYTRACING_SHADER_CONFIG = extern struct {
+pub const RAYTRACING_SHADER_CONFIG = extern struct {
     MaxPayloadSizeInBytes: UINT,
     MaxAttributeSizeInBytes: UINT,
 };
 
-pub const D3D12_RAYTRACING_PIPELINE_CONFIG = extern struct {
+pub const RAYTRACING_PIPELINE_CONFIG = extern struct {
     MaxTraceRecursionDepth: UINT,
 };
 
-pub const D3D12_RAYTRACING_PIPELINE_FLAGS = UINT;
-pub const D3D12_RAYTRACING_PIPELINE_FLAG_NONE = 0;
-pub const D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES = 0x100;
-pub const D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES = 0x200;
+pub const RAYTRACING_PIPELINE_FLAGS = UINT;
+pub const RAYTRACING_PIPELINE_FLAG_NONE = 0;
+pub const RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES = 0x100;
+pub const RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES = 0x200;
 
-pub const D3D12_RAYTRACING_PIPELINE_CONFIG1 = extern struct {
+pub const RAYTRACING_PIPELINE_CONFIG1 = extern struct {
     MaxTraceRecursionDepth: UINT,
-    Flags: D3D12_RAYTRACING_PIPELINE_FLAGS,
+    Flags: RAYTRACING_PIPELINE_FLAGS,
 };
 
-pub const D3D12_STATE_OBJECT_TYPE = enum(UINT) {
+pub const STATE_OBJECT_TYPE = enum(UINT) {
     COLLECTION = 0,
     RAYTRACING_PIPELINE = 3,
 };
 
-pub const D3D12_STATE_OBJECT_DESC = extern struct {
-    Type: D3D12_STATE_OBJECT_TYPE,
+pub const STATE_OBJECT_DESC = extern struct {
+    Type: STATE_OBJECT_TYPE,
     NumSubobjects: UINT,
-    pSubobjects: [*]const D3D12_STATE_SUBOBJECT,
+    pSubobjects: [*]const STATE_SUBOBJECT,
 };
 
-pub const D3D12_RAYTRACING_GEOMETRY_FLAGS = UINT;
-pub const D3D12_RAYTRACING_GEOMETRY_FLAG_NONE = 0;
-pub const D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE = 0x1;
-pub const D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION = 0x2;
+pub const RAYTRACING_GEOMETRY_FLAGS = UINT;
+pub const RAYTRACING_GEOMETRY_FLAG_NONE = 0;
+pub const RAYTRACING_GEOMETRY_FLAG_OPAQUE = 0x1;
+pub const RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION = 0x2;
 
-pub const D3D12_RAYTRACING_GEOMETRY_TYPE = enum(UINT) {
+pub const RAYTRACING_GEOMETRY_TYPE = enum(UINT) {
     TRIANGLES = 0,
     PROCEDURAL_PRIMITIVE_AABBS = 1,
 };
 
-pub const D3D12_RAYTRACING_INSTANCE_FLAGS = UINT;
-pub const D3D12_RAYTRACING_INSTANCE_FLAG_NONE = 0;
-pub const D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE = 0x1;
-pub const D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE = 0x2;
-pub const D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE = 0x4;
-pub const D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE = 0x8;
+pub const RAYTRACING_INSTANCE_FLAGS = UINT;
+pub const RAYTRACING_INSTANCE_FLAG_NONE = 0;
+pub const RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE = 0x1;
+pub const RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE = 0x2;
+pub const RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE = 0x4;
+pub const RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE = 0x8;
 
-pub const D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE = extern struct {
-    StartAddress: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const GPU_VIRTUAL_ADDRESS_AND_STRIDE = extern struct {
+    StartAddress: GPU_VIRTUAL_ADDRESS,
     StrideInBytes: UINT64,
 };
 
-pub const D3D12_GPU_VIRTUAL_ADDRESS_RANGE = extern struct {
-    StartAddress: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const GPU_VIRTUAL_ADDRESS_RANGE = extern struct {
+    StartAddress: GPU_VIRTUAL_ADDRESS,
     SizeInBytes: UINT64,
 };
 
-pub const D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE = extern struct {
-    StartAddress: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE = extern struct {
+    StartAddress: GPU_VIRTUAL_ADDRESS,
     SizeInBytes: UINT64,
     StrideInBytes: UINT64,
 };
 
-pub const D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC = extern struct {
-    Transform3x4: D3D12_GPU_VIRTUAL_ADDRESS,
-    IndexFormat: DXGI_FORMAT,
-    VertexFormat: DXGI_FORMAT,
+pub const RAYTRACING_GEOMETRY_TRIANGLES_DESC = extern struct {
+    Transform3x4: GPU_VIRTUAL_ADDRESS,
+    IndexFormat: dxgi.FORMAT,
+    VertexFormat: dxgi.FORMAT,
     IndexCount: UINT,
     VertexCount: UINT,
-    IndexBuffer: D3D12_GPU_VIRTUAL_ADDRESS,
-    VertexBuffer: D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE,
+    IndexBuffer: GPU_VIRTUAL_ADDRESS,
+    VertexBuffer: GPU_VIRTUAL_ADDRESS_AND_STRIDE,
 };
 
-pub const D3D12_RAYTRACING_AABB = extern struct {
+pub const RAYTRACING_AABB = extern struct {
     MinX: FLOAT,
     MinY: FLOAT,
     MinZ: FLOAT,
@@ -3011,21 +3031,21 @@ pub const D3D12_RAYTRACING_AABB = extern struct {
     MaxZ: FLOAT,
 };
 
-pub const D3D12_RAYTRACING_GEOMETRY_AABBS_DESC = extern struct {
+pub const RAYTRACING_GEOMETRY_AABBS_DESC = extern struct {
     AABBCount: UINT64,
-    AABBs: D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE,
+    AABBs: GPU_VIRTUAL_ADDRESS_AND_STRIDE,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = UINT;
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE = 0;
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE = 0x1;
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION = 0x2;
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE = 0x4;
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD = 0x8;
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY = 0x10;
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE = 0x20;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS = UINT;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE = 0;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE = 0x1;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION = 0x2;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE = 0x4;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD = 0x8;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY = 0x10;
+pub const RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE = 0x20;
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE = enum(UINT) {
+pub const RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE = enum(UINT) {
     CLONE = 0,
     COMPACT = 0x1,
     VISUALIZATION_DECODE_FOR_TOOLS = 0x2,
@@ -3033,56 +3053,56 @@ pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE = enum(UINT) {
     DESERIALIZE = 0x4,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE = enum(UINT) {
+pub const RAYTRACING_ACCELERATION_STRUCTURE_TYPE = enum(UINT) {
     TOP_LEVEL = 0,
     BOTTOM_LEVEL = 0x1,
 };
 
-pub const D3D12_ELEMENTS_LAYOUT = enum(UINT) {
+pub const ELEMENTS_LAYOUT = enum(UINT) {
     ARRAY = 0,
     ARRAY_OF_POINTERS = 0x1,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE = enum(UINT) {
+pub const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE = enum(UINT) {
     COMPACTED_SIZE = 0,
     TOOLS_VISUALIZATION = 0x1,
     SERIALIZATION = 0x2,
     CURRENT_SIZE = 0x3,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC = extern struct {
-    DestBuffer: D3D12_GPU_VIRTUAL_ADDRESS,
-    InfoType: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE,
+pub const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC = extern struct {
+    DestBuffer: GPU_VIRTUAL_ADDRESS,
+    InfoType: RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC = extern struct {
+pub const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC = extern struct {
     CompactedSizeInBytes: UINT64,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION_DESC = extern struct {
+pub const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION_DESC = extern struct {
     DecodedSizeInBytes: UINT64,
 };
 
-pub const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER = extern struct {
-    Type: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE,
+pub const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER = extern struct {
+    Type: RAYTRACING_ACCELERATION_STRUCTURE_TYPE,
     NumDescs: UINT,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC = extern struct {
+pub const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC = extern struct {
     SerializedSizeInBytes: UINT64,
     NumBottomLevelAccelerationStructurePointers: UINT64,
 };
 
-pub const D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER = extern struct {
+pub const SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER = extern struct {
     DriverOpaqueGUID: GUID,
     DriverOpaqueVersioningData: [16]BYTE,
 };
 
-pub const D3D12_SERIALIZED_DATA_TYPE = enum(UINT) {
+pub const SERIALIZED_DATA_TYPE = enum(UINT) {
     RAYTRACING_ACCELERATION_STRUCTURE = 0,
 };
 
-pub const D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS = enum(UINT) {
+pub const DRIVER_MATCHING_IDENTIFIER_STATUS = enum(UINT) {
     COMPATIBLE_WITH_DEVICE = 0,
     UNSUPPORTED_TYPE = 0x1,
     UNRECOGNIZED = 0x2,
@@ -3090,107 +3110,107 @@ pub const D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS = enum(UINT) {
     INCOMPATIBLE_TYPE = 0x4,
 };
 
-pub const D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER = extern struct {
-    DriverMatchingIdentifier: D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
+pub const SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER = extern struct {
+    DriverMatchingIdentifier: SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
     SerializedSizeInBytesIncludingHeader: UINT64,
     DeserializedSizeInBytes: UINT64,
     NumBottomLevelAccelerationStructurePointersAfterHeader: UINT64,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC = extern struct {
+pub const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC = extern struct {
     CurrentSizeInBytes: UINT64,
 };
 
-pub const D3D12_RAYTRACING_INSTANCE_DESC = packed struct {
+pub const RAYTRACING_INSTANCE_DESC = packed struct {
     Transform: [3][4]FLOAT align(8), // TODO(mziulek): Is alignment 8 correct?
     InstanceID: u24,
     InstanceMask: u8,
     InstanceContributionToHitGroupIndex: u24,
     Flags: u8,
-    AccelerationStructure: D3D12_GPU_VIRTUAL_ADDRESS,
+    AccelerationStructure: GPU_VIRTUAL_ADDRESS,
 };
 comptime {
-    std.debug.assert(@sizeOf(D3D12_RAYTRACING_INSTANCE_DESC) == 64);
-    std.debug.assert(@alignOf(D3D12_RAYTRACING_INSTANCE_DESC) == 8);
+    std.debug.assert(@sizeOf(RAYTRACING_INSTANCE_DESC) == 64);
+    std.debug.assert(@alignOf(RAYTRACING_INSTANCE_DESC) == 8);
 }
 
-pub const D3D12_RAYTRACING_GEOMETRY_DESC = extern struct {
-    Type: D3D12_RAYTRACING_GEOMETRY_TYPE,
-    Flags: D3D12_RAYTRACING_GEOMETRY_FLAGS,
+pub const RAYTRACING_GEOMETRY_DESC = extern struct {
+    Type: RAYTRACING_GEOMETRY_TYPE,
+    Flags: RAYTRACING_GEOMETRY_FLAGS,
     u: extern union {
-        Triangles: D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC,
-        AABBs: D3D12_RAYTRACING_GEOMETRY_AABBS_DESC,
+        Triangles: RAYTRACING_GEOMETRY_TRIANGLES_DESC,
+        AABBs: RAYTRACING_GEOMETRY_AABBS_DESC,
     },
 };
 
-pub const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS = extern struct {
-    Type: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE,
-    Flags: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS,
+pub const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS = extern struct {
+    Type: RAYTRACING_ACCELERATION_STRUCTURE_TYPE,
+    Flags: RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS,
     NumDescs: UINT,
-    DescsLayout: D3D12_ELEMENTS_LAYOUT,
+    DescsLayout: ELEMENTS_LAYOUT,
     u: extern union {
-        InstanceDescs: D3D12_GPU_VIRTUAL_ADDRESS,
-        pGeometryDescs: [*]const D3D12_RAYTRACING_GEOMETRY_DESC,
-        ppGeometryDescs: [*]const *D3D12_RAYTRACING_GEOMETRY_DESC,
+        InstanceDescs: GPU_VIRTUAL_ADDRESS,
+        pGeometryDescs: [*]const RAYTRACING_GEOMETRY_DESC,
+        ppGeometryDescs: [*]const *RAYTRACING_GEOMETRY_DESC,
     },
 };
 
-pub const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC = extern struct {
-    DestAccelerationStructureData: D3D12_GPU_VIRTUAL_ADDRESS,
-    Inputs: D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
-    SourceAccelerationStructureData: D3D12_GPU_VIRTUAL_ADDRESS,
-    ScratchAccelerationStructureData: D3D12_GPU_VIRTUAL_ADDRESS,
+pub const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC = extern struct {
+    DestAccelerationStructureData: GPU_VIRTUAL_ADDRESS,
+    Inputs: BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
+    SourceAccelerationStructureData: GPU_VIRTUAL_ADDRESS,
+    ScratchAccelerationStructureData: GPU_VIRTUAL_ADDRESS,
 };
 
-pub const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = extern struct {
+pub const RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = extern struct {
     ResultDataMaxSizeInBytes: UINT64,
     ScratchDataSizeInBytes: UINT64,
     UpdateScratchDataSizeInBytes: UINT64,
 };
 
-pub const ID3D12StateObject = extern struct {
+pub const IStateObject = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
 };
 
-pub const D3D12_DISPATCH_RAYS_DESC = extern struct {
-    RayGenerationShaderRecord: D3D12_GPU_VIRTUAL_ADDRESS_RANGE,
-    MissShaderTable: D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
-    HitGroupTable: D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
-    CallableShaderTable: D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
+pub const DISPATCH_RAYS_DESC = extern struct {
+    RayGenerationShaderRecord: GPU_VIRTUAL_ADDRESS_RANGE,
+    MissShaderTable: GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
+    HitGroupTable: GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
+    CallableShaderTable: GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE,
     Width: UINT,
     Height: UINT,
     Depth: UINT,
 };
 
-pub const ID3D12GraphicsCommandList4 = extern struct {
+pub const IGraphicsCommandList4 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        cmdlist: ID3D12CommandList.VTable(Self),
-        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
-        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
-        grcmdlist2: ID3D12GraphicsCommandList2.VTable(Self),
-        grcmdlist3: ID3D12GraphicsCommandList3.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        cmdlist: ICommandList.VTable(Self),
+        grcmdlist: IGraphicsCommandList.VTable(Self),
+        grcmdlist1: IGraphicsCommandList1.VTable(Self),
+        grcmdlist2: IGraphicsCommandList2.VTable(Self),
+        grcmdlist3: IGraphicsCommandList3.VTable(Self),
         grcmdlist4: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12CommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList2.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList3.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace ICommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList1.Methods(Self);
+    usingnamespace IGraphicsCommandList2.Methods(Self);
+    usingnamespace IGraphicsCommandList3.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -3198,9 +3218,9 @@ pub const ID3D12GraphicsCommandList4 = extern struct {
             pub inline fn BeginRenderPass(
                 self: *T,
                 num_render_targets: UINT,
-                render_targets: ?[*]const D3D12_RENDER_PASS_RENDER_TARGET_DESC,
-                depth_stencil: ?*const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC,
-                flags: D3D12_RENDER_PASS_FLAGS,
+                render_targets: ?[*]const RENDER_PASS_RENDER_TARGET_DESC,
+                depth_stencil: ?*const RENDER_PASS_DEPTH_STENCIL_DESC,
+                flags: RENDER_PASS_FLAGS,
             ) void {
                 self.v.grcmdlist4.BeginRenderPass(self, num_render_targets, render_targets, depth_stencil, flags);
             }
@@ -3209,7 +3229,7 @@ pub const ID3D12GraphicsCommandList4 = extern struct {
             }
             pub inline fn InitializeMetaCommand(
                 self: *T,
-                meta_cmd: *ID3D12MetaCommand,
+                meta_cmd: *IMetaCommand,
                 init_param_data: ?*const c_void,
                 data_size: SIZE_T,
             ) void {
@@ -3217,7 +3237,7 @@ pub const ID3D12GraphicsCommandList4 = extern struct {
             }
             pub inline fn ExecuteMetaCommand(
                 self: *T,
-                meta_cmd: *ID3D12MetaCommand,
+                meta_cmd: *IMetaCommand,
                 exe_param_data: ?*const c_void,
                 data_size: SIZE_T,
             ) void {
@@ -3225,17 +3245,17 @@ pub const ID3D12GraphicsCommandList4 = extern struct {
             }
             pub inline fn BuildRaytracingAccelerationStructure(
                 self: *T,
-                desc: *const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
+                desc: *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
                 num_post_build_descs: UINT,
-                post_build_descs: ?[*]const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+                post_build_descs: ?[*]const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
             ) void {
                 self.v.grcmdlist4.BuildRaytracingAccelerationStructure(self, desc, num_post_build_descs, post_build_descs);
             }
             pub inline fn EmitRaytracingAccelerationStructurePostbuildInfo(
                 self: *T,
-                desc: *const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+                desc: *const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
                 num_src_accel_structs: UINT,
-                src_accel_struct_data: [*]const D3D12_GPU_VIRTUAL_ADDRESS,
+                src_accel_struct_data: [*]const GPU_VIRTUAL_ADDRESS,
             ) void {
                 self.v.grcmdlist4.EmitRaytracingAccelerationStructurePostbuildInfo(
                     self,
@@ -3246,16 +3266,16 @@ pub const ID3D12GraphicsCommandList4 = extern struct {
             }
             pub inline fn CopyRaytracingAccelerationStructure(
                 self: *T,
-                dst_data: D3D12_GPU_VIRTUAL_ADDRESS,
-                src_data: D3D12_GPU_VIRTUAL_ADDRESS,
-                mode: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
+                dst_data: GPU_VIRTUAL_ADDRESS,
+                src_data: GPU_VIRTUAL_ADDRESS,
+                mode: RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
             ) void {
                 self.v.grcmdlist4.CopyRaytracingAccelerationStructure(self, dst_data, src_data, mode);
             }
-            pub inline fn SetPipelineState1(self: *T, state_obj: *ID3D12StateObject) void {
+            pub inline fn SetPipelineState1(self: *T, state_obj: *IStateObject) void {
                 self.v.grcmdlist4.SetPipelineState1(self, state_obj);
             }
-            pub inline fn DispatchRays(self: *T, desc: *const D3D12_DISPATCH_RAYS_DESC) void {
+            pub inline fn DispatchRays(self: *T, desc: *const DISPATCH_RAYS_DESC) void {
                 self.v.grcmdlist4.DispatchRays(self, desc);
             }
         };
@@ -3266,40 +3286,40 @@ pub const ID3D12GraphicsCommandList4 = extern struct {
             BeginRenderPass: fn (
                 *T,
                 UINT,
-                ?[*]const D3D12_RENDER_PASS_RENDER_TARGET_DESC,
-                ?*const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC,
-                D3D12_RENDER_PASS_FLAGS,
+                ?[*]const RENDER_PASS_RENDER_TARGET_DESC,
+                ?*const RENDER_PASS_DEPTH_STENCIL_DESC,
+                RENDER_PASS_FLAGS,
             ) callconv(WINAPI) void,
             EndRenderPass: fn (*T) callconv(WINAPI) void,
-            InitializeMetaCommand: fn (*T, *ID3D12MetaCommand, ?*const c_void, SIZE_T) callconv(WINAPI) void,
-            ExecuteMetaCommand: fn (*T, *ID3D12MetaCommand, ?*const c_void, SIZE_T) callconv(WINAPI) void,
+            InitializeMetaCommand: fn (*T, *IMetaCommand, ?*const c_void, SIZE_T) callconv(WINAPI) void,
+            ExecuteMetaCommand: fn (*T, *IMetaCommand, ?*const c_void, SIZE_T) callconv(WINAPI) void,
             BuildRaytracingAccelerationStructure: fn (
                 *T,
-                *const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
+                *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
                 UINT,
-                ?[*]const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+                ?[*]const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
             ) callconv(WINAPI) void,
             EmitRaytracingAccelerationStructurePostbuildInfo: fn (
                 *T,
-                *const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
+                *const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
                 UINT,
-                [*]const D3D12_GPU_VIRTUAL_ADDRESS,
+                [*]const GPU_VIRTUAL_ADDRESS,
             ) callconv(WINAPI) void,
             CopyRaytracingAccelerationStructure: fn (
                 *T,
-                D3D12_GPU_VIRTUAL_ADDRESS,
-                D3D12_GPU_VIRTUAL_ADDRESS,
-                D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
+                GPU_VIRTUAL_ADDRESS,
+                GPU_VIRTUAL_ADDRESS,
+                RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
             ) callconv(WINAPI) void,
-            SetPipelineState1: fn (*T, *ID3D12StateObject) callconv(WINAPI) void,
-            DispatchRays: fn (*T, *const D3D12_DISPATCH_RAYS_DESC) callconv(WINAPI) void,
+            SetPipelineState1: fn (*T, *IStateObject) callconv(WINAPI) void,
+            DispatchRays: fn (*T, *const DISPATCH_RAYS_DESC) callconv(WINAPI) void,
         };
     }
 };
 
-pub const D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT = 2;
+pub const RS_SET_SHADING_RATE_COMBINER_COUNT = 2;
 
-pub const D3D12_SHADING_RATE = enum(UINT) {
+pub const SHADING_RATE = enum(UINT) {
     _1X1 = 0,
     _1X2 = 0x1,
     _2X1 = 0x4,
@@ -3309,7 +3329,7 @@ pub const D3D12_SHADING_RATE = enum(UINT) {
     _4X4 = 0xa,
 };
 
-pub const D3D12_SHADING_RATE_COMBINER = enum(UINT) {
+pub const SHADING_RATE_COMBINER = enum(UINT) {
     PASSTHROUGH = 0,
     OVERRIDE = 1,
     COMBINER_MIN = 2,
@@ -3317,41 +3337,41 @@ pub const D3D12_SHADING_RATE_COMBINER = enum(UINT) {
     COMBINER_SUM = 4,
 };
 
-pub const ID3D12GraphicsCommandList5 = extern struct {
+pub const IGraphicsCommandList5 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        cmdlist: ID3D12CommandList.VTable(Self),
-        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
-        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
-        grcmdlist2: ID3D12GraphicsCommandList2.VTable(Self),
-        grcmdlist3: ID3D12GraphicsCommandList3.VTable(Self),
-        grcmdlist4: ID3D12GraphicsCommandList4.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        cmdlist: ICommandList.VTable(Self),
+        grcmdlist: IGraphicsCommandList.VTable(Self),
+        grcmdlist1: IGraphicsCommandList1.VTable(Self),
+        grcmdlist2: IGraphicsCommandList2.VTable(Self),
+        grcmdlist3: IGraphicsCommandList3.VTable(Self),
+        grcmdlist4: IGraphicsCommandList4.VTable(Self),
         grcmdlist5: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12CommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList2.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList3.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList4.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace ICommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList1.Methods(Self);
+    usingnamespace IGraphicsCommandList2.Methods(Self);
+    usingnamespace IGraphicsCommandList3.Methods(Self);
+    usingnamespace IGraphicsCommandList4.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn RSSetShadingRate(
                 self: *T,
-                base_shading_rate: D3D12_SHADING_RATE,
-                combiners: ?[D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT]D3D12_SHADING_RATE_COMBINER,
+                base_shading_rate: SHADING_RATE,
+                combiners: ?[RS_SET_SHADING_RATE_COMBINER_COUNT]SHADING_RATE_COMBINER,
             ) void {
                 self.v.grcmdlist5.RSSetShadingRate(self, base_shading_rate, combiners);
             }
-            pub inline fn RSSetShadingRateImage(self: *T, shading_rate_img: ?*ID3D12Resource) void {
+            pub inline fn RSSetShadingRateImage(self: *T, shading_rate_img: ?*IResource) void {
                 self.v.grcmdlist5.RSSetShadingRateImage(self, shading_rate_img);
             }
         };
@@ -3361,39 +3381,39 @@ pub const ID3D12GraphicsCommandList5 = extern struct {
         return extern struct {
             RSSetShadingRate: fn (
                 *T,
-                D3D12_SHADING_RATE,
-                ?[D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT]D3D12_SHADING_RATE_COMBINER,
+                SHADING_RATE,
+                ?[RS_SET_SHADING_RATE_COMBINER_COUNT]SHADING_RATE_COMBINER,
             ) callconv(WINAPI) void,
-            RSSetShadingRateImage: fn (*T, ?*ID3D12Resource) callconv(WINAPI) void,
+            RSSetShadingRateImage: fn (*T, ?*IResource) callconv(WINAPI) void,
         };
     }
 };
 
-pub const ID3D12GraphicsCommandList6 = extern struct {
+pub const IGraphicsCommandList6 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        cmdlist: ID3D12CommandList.VTable(Self),
-        grcmdlist: ID3D12GraphicsCommandList.VTable(Self),
-        grcmdlist1: ID3D12GraphicsCommandList1.VTable(Self),
-        grcmdlist2: ID3D12GraphicsCommandList2.VTable(Self),
-        grcmdlist3: ID3D12GraphicsCommandList3.VTable(Self),
-        grcmdlist4: ID3D12GraphicsCommandList4.VTable(Self),
-        grcmdlist5: ID3D12GraphicsCommandList5.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        cmdlist: ICommandList.VTable(Self),
+        grcmdlist: IGraphicsCommandList.VTable(Self),
+        grcmdlist1: IGraphicsCommandList1.VTable(Self),
+        grcmdlist2: IGraphicsCommandList2.VTable(Self),
+        grcmdlist3: IGraphicsCommandList3.VTable(Self),
+        grcmdlist4: IGraphicsCommandList4.VTable(Self),
+        grcmdlist5: IGraphicsCommandList5.VTable(Self),
         grcmdlist6: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12CommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList1.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList2.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList3.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList4.Methods(Self);
-    usingnamespace ID3D12GraphicsCommandList5.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace ICommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList.Methods(Self);
+    usingnamespace IGraphicsCommandList1.Methods(Self);
+    usingnamespace IGraphicsCommandList2.Methods(Self);
+    usingnamespace IGraphicsCommandList3.Methods(Self);
+    usingnamespace IGraphicsCommandList4.Methods(Self);
+    usingnamespace IGraphicsCommandList5.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -3416,35 +3436,35 @@ pub const ID3D12GraphicsCommandList6 = extern struct {
     }
 };
 
-pub const ID3D12CommandQueue = extern struct {
+pub const ICommandQueue = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        pageable: ID3D12Pageable.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pageable: IPageable.VTable(Self),
         cmdqueue: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12Pageable.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IPageable.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn UpdateTileMappings(
                 self: *T,
-                resource: *ID3D12Resource,
+                resource: *IResource,
                 num_resource_regions: UINT,
-                resource_region_start_coordinates: ?[*]const D3D12_TILED_RESOURCE_COORDINATE,
-                resource_region_sizes: ?[*]const D3D12_TILE_REGION_SIZE,
-                heap: ?*ID3D12Heap,
+                resource_region_start_coordinates: ?[*]const TILED_RESOURCE_COORDINATE,
+                resource_region_sizes: ?[*]const TILE_REGION_SIZE,
+                heap: ?*IHeap,
                 num_ranges: UINT,
-                range_flags: ?[*]const D3D12_TILE_RANGE_FLAGS,
+                range_flags: ?[*]const TILE_RANGE_FLAGS,
                 heap_range_start_offsets: ?[*]const UINT,
                 range_tile_counts: ?[*]const UINT,
-                flags: D3D12_TILE_MAPPING_FLAGS,
+                flags: TILE_MAPPING_FLAGS,
             ) void {
                 self.v.cmdqueue.UpdateTileMappings(
                     self,
@@ -3462,12 +3482,12 @@ pub const ID3D12CommandQueue = extern struct {
             }
             pub inline fn CopyTileMappings(
                 self: *T,
-                dst_resource: *ID3D12Resource,
-                dst_region_start_coordinate: *const D3D12_TILED_RESOURCE_COORDINATE,
+                dst_resource: *IResource,
+                dst_region_start_coordinate: *const TILED_RESOURCE_COORDINATE,
                 src_resource: *IResource,
-                src_region_start_coordinate: *const D3D12_TILED_RESOURCE_COORDINATE,
-                region_size: *const D3D12_TILE_REGION_SIZE,
-                flags: D3D12_TILE_MAPPING_FLAGS,
+                src_region_start_coordinate: *const TILED_RESOURCE_COORDINATE,
+                region_size: *const TILE_REGION_SIZE,
+                flags: TILE_MAPPING_FLAGS,
             ) void {
                 self.v.cmdqueue.CopyTileMappings(
                     self,
@@ -3479,7 +3499,7 @@ pub const ID3D12CommandQueue = extern struct {
                     flags,
                 );
             }
-            pub inline fn ExecuteCommandLists(self: *T, num: UINT, cmdlists: [*]const *ID3D12CommandList) void {
+            pub inline fn ExecuteCommandLists(self: *T, num: UINT, cmdlists: [*]const *ICommandList) void {
                 self.v.cmdqueue.ExecuteCommandLists(self, num, cmdlists);
             }
             pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
@@ -3491,10 +3511,10 @@ pub const ID3D12CommandQueue = extern struct {
             pub inline fn EndEvent(self: *T) void {
                 self.v.cmdqueue.EndEvent(self);
             }
-            pub inline fn Signal(self: *T, fence: *ID3D12Fence, value: UINT64) HRESULT {
+            pub inline fn Signal(self: *T, fence: *IFence, value: UINT64) HRESULT {
                 return self.v.cmdqueue.Signal(self, fence, value);
             }
-            pub inline fn Wait(self: *T, fence: *ID3D12Fence, value: UINT64) HRESULT {
+            pub inline fn Wait(self: *T, fence: *IFence, value: UINT64) HRESULT {
                 return self.v.cmdqueue.Wait(self, fence, value);
             }
             pub inline fn GetTimestampFrequency(self: *T, frequency: *UINT64) HRESULT {
@@ -3503,8 +3523,8 @@ pub const ID3D12CommandQueue = extern struct {
             pub inline fn GetClockCalibration(self: *T, gpu_timestamp: *UINT64, cpu_timestamp: *UINT64) HRESULT {
                 return self.v.cmdqueue.GetClockCalibration(self, gpu_timestamp, cpu_timestamp);
             }
-            pub inline fn GetDesc(self: *T) D3D12_COMMAND_QUEUE_DESC {
-                var desc: D3D12_COMMAND_QUEUE_DESC = undefined;
+            pub inline fn GetDesc(self: *T) COMMAND_QUEUE_DESC {
+                var desc: COMMAND_QUEUE_DESC = undefined;
                 self.v.cmdqueue.GetDesc(self, &desc);
                 return desc;
             }
@@ -3515,48 +3535,48 @@ pub const ID3D12CommandQueue = extern struct {
         return extern struct {
             UpdateTileMappings: fn (
                 *T,
-                *ID3D12Resource,
+                *IResource,
                 UINT,
-                ?[*]const D3D12_TILED_RESOURCE_COORDINATE,
-                ?[*]const D3D12_TILE_REGION_SIZE,
-                *ID3D12Heap,
+                ?[*]const TILED_RESOURCE_COORDINATE,
+                ?[*]const TILE_REGION_SIZE,
+                *IHeap,
                 UINT,
-                ?[*]const D3D12_TILE_RANGE_FLAGS,
+                ?[*]const TILE_RANGE_FLAGS,
                 ?[*]const UINT,
                 ?[*]const UINT,
-                D3D12_TILE_MAPPING_FLAGS,
+                TILE_MAPPING_FLAGS,
             ) callconv(WINAPI) void,
             CopyTileMappings: fn (
                 *T,
-                *ID3D12Resource,
-                *const D3D12_TILED_RESOURCE_COORDINATE,
-                *ID3D12Resource,
-                *const D3D12_TILED_RESOURCE_COORDINATE,
-                *const D3D12_TILE_REGION_SIZE,
-                D3D12_TILE_MAPPING_FLAGS,
+                *IResource,
+                *const TILED_RESOURCE_COORDINATE,
+                *IResource,
+                *const TILED_RESOURCE_COORDINATE,
+                *const TILE_REGION_SIZE,
+                TILE_MAPPING_FLAGS,
             ) callconv(WINAPI) void,
-            ExecuteCommandLists: fn (*T, UINT, [*]const *ID3D12CommandList) callconv(WINAPI) void,
+            ExecuteCommandLists: fn (*T, UINT, [*]const *ICommandList) callconv(WINAPI) void,
             SetMarker: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
             BeginEvent: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
             EndEvent: fn (*T) callconv(WINAPI) void,
-            Signal: fn (*T, *ID3D12Fence, UINT64) callconv(WINAPI) HRESULT,
-            Wait: fn (*T, *ID3D12Fence, UINT64) callconv(WINAPI) HRESULT,
+            Signal: fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
+            Wait: fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
             GetTimestampFrequency: fn (*T, *UINT64) callconv(WINAPI) HRESULT,
             GetClockCalibration: fn (*T, *UINT64, *UINT64) callconv(WINAPI) HRESULT,
-            GetDesc: fn (*T, *D3D12_COMMAND_QUEUE_DESC) callconv(WINAPI) *D3D12_COMMAND_QUEUE_DESC,
+            GetDesc: fn (*T, *COMMAND_QUEUE_DESC) callconv(WINAPI) *COMMAND_QUEUE_DESC,
         };
     }
 };
 
-pub const ID3D12Device = extern struct {
+pub const IDevice = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
+        object: IObject.VTable(Self),
         device: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
+    usingnamespace IObject.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -3566,7 +3586,7 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateCommandQueue(
                 self: *T,
-                desc: *const D3D12_COMMAND_QUEUE_DESC,
+                desc: *const COMMAND_QUEUE_DESC,
                 guid: *const GUID,
                 obj: *?*c_void,
             ) HRESULT {
@@ -3574,7 +3594,7 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateCommandAllocator(
                 self: *T,
-                cmdlist_type: D3D12_COMMAND_LIST_TYPE,
+                cmdlist_type: COMMAND_LIST_TYPE,
                 guid: *const GUID,
                 obj: *?*c_void,
             ) HRESULT {
@@ -3582,7 +3602,7 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateGraphicsPipelineState(
                 self: *T,
-                desc: *const D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+                desc: *const GRAPHICS_PIPELINE_STATE_DESC,
                 guid: *const GUID,
                 pso: *?*c_void,
             ) HRESULT {
@@ -3590,7 +3610,7 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateComputePipelineState(
                 self: *T,
-                desc: *const D3D12_COMPUTE_PIPELINE_STATE_DESC,
+                desc: *const COMPUTE_PIPELINE_STATE_DESC,
                 guid: *const GUID,
                 pso: *?*c_void,
             ) HRESULT {
@@ -3599,26 +3619,26 @@ pub const ID3D12Device = extern struct {
             pub inline fn CreateCommandList(
                 self: *T,
                 node_mask: UINT,
-                cmdlist_type: D3D12_COMMAND_LIST_TYPE,
-                cmdalloc: *ID3D12CommandAllocator,
-                initial_state: ?*ID3D12PipelineState,
+                cmdlist_type: COMMAND_LIST_TYPE,
+                cmdalloc: *ICommandAllocator,
+                initial_state: ?*IPipelineState,
                 guid: *const GUID,
                 cmdlist: *?*c_void,
             ) HRESULT {
                 return self.v.device.CreateCommandList(self, node_mask, cmdlist_type, cmdalloc, initial_state, guid, cmdlist);
             }
-            pub inline fn CheckFeatureSupport(self: *T, feature: D3D12_FEATURE, data: *c_void, data_size: UINT) HRESULT {
+            pub inline fn CheckFeatureSupport(self: *T, feature: FEATURE, data: *c_void, data_size: UINT) HRESULT {
                 return self.vtbl.CheckFeatureSupport(self, feature, data, data_size);
             }
             pub inline fn CreateDescriptorHeap(
                 self: *T,
-                desc: *const D3D12_DESCRIPTOR_HEAP_DESC,
+                desc: *const DESCRIPTOR_HEAP_DESC,
                 guid: *const GUID,
                 heap: *?*c_void,
             ) HRESULT {
                 return self.v.device.CreateDescriptorHeap(self, desc, guid, heap);
             }
-            pub inline fn GetDescriptorHandleIncrementSize(self: *T, heap_type: D3D12_DESCRIPTOR_HEAP_TYPE) UINT {
+            pub inline fn GetDescriptorHandleIncrementSize(self: *T, heap_type: DESCRIPTOR_HEAP_TYPE) UINT {
                 return self.v.device.GetDescriptorHandleIncrementSize(self, heap_type);
             }
             pub inline fn CreateRootSignature(
@@ -3633,25 +3653,25 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateConstantBufferView(
                 self: *T,
-                desc: ?*const D3D12_CONSTANT_BUFFER_VIEW_DESC,
-                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+                desc: ?*const CONSTANT_BUFFER_VIEW_DESC,
+                dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.device.CreateConstantBufferView(self, desc, dst_descriptor);
             }
             pub inline fn CreateShaderResourceView(
                 self: *T,
-                resource: ?*ID3D12Resource,
-                desc: ?*const D3D12_SHADER_RESOURCE_VIEW_DESC,
-                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+                resource: ?*IResource,
+                desc: ?*const SHADER_RESOURCE_VIEW_DESC,
+                dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.device.CreateShaderResourceView(self, resource, desc, dst_descriptor);
             }
             pub inline fn CreateUnorderedAccessView(
                 self: *T,
-                resource: ?*ID3D12Resource,
-                counter_resource: ?*ID3D12Resource,
-                desc: ?*const D3D12_UNORDERED_ACCESS_VIEW_DESC,
-                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+                resource: ?*IResource,
+                counter_resource: ?*IResource,
+                desc: ?*const UNORDERED_ACCESS_VIEW_DESC,
+                dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.device.CreateUnorderedAccessView(
                     self,
@@ -3663,36 +3683,36 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateRenderTargetView(
                 self: *T,
-                resource: ?*ID3D12Resource,
-                desc: ?*const D3D12_RENDER_TARGET_VIEW_DESC,
-                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+                resource: ?*IResource,
+                desc: ?*const RENDER_TARGET_VIEW_DESC,
+                dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.device.CreateRenderTargetView(self, resource, desc, dst_descriptor);
             }
             pub inline fn CreateDepthStencilView(
                 self: *T,
-                resource: ?*ID3D12Resource,
-                desc: ?*const D3D12_DEPTH_STENCIL_VIEW_DESC,
-                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+                resource: ?*IResource,
+                desc: ?*const DEPTH_STENCIL_VIEW_DESC,
+                dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.device.CreateDepthStencilView(self, resource, desc, dst_descriptor);
             }
             pub inline fn CreateSampler(
                 self: *T,
-                desc: *const D3D12_SAMPLER_DESC,
-                dst_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+                desc: *const SAMPLER_DESC,
+                dst_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.device.CreateSampler(self, desc, dst_descriptor);
             }
             pub inline fn CopyDescriptors(
                 self: *T,
                 num_dst_ranges: UINT,
-                dst_range_starts: [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                dst_range_starts: [*]const CPU_DESCRIPTOR_HANDLE,
                 dst_range_sizes: ?[*]const UINT,
                 num_src_ranges: UINT,
-                src_range_starts: [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                src_range_starts: [*]const CPU_DESCRIPTOR_HANDLE,
                 src_range_sizes: ?[*]const UINT,
-                heap_type: D3D12_DESCRIPTOR_HEAP_TYPE,
+                heap_type: DESCRIPTOR_HEAP_TYPE,
             ) void {
                 self.v.device.CopyDescriptors(
                     self,
@@ -3708,9 +3728,9 @@ pub const ID3D12Device = extern struct {
             pub inline fn CopyDescriptorsSimple(
                 self: *T,
                 num: UINT,
-                dst_range_start: D3D12_CPU_DESCRIPTOR_HANDLE,
-                src_range_start: D3D12_CPU_DESCRIPTOR_HANDLE,
-                heap_type: D3D12_DESCRIPTOR_HEAP_TYPE,
+                dst_range_start: CPU_DESCRIPTOR_HANDLE,
+                src_range_start: CPU_DESCRIPTOR_HANDLE,
+                heap_type: DESCRIPTOR_HEAP_TYPE,
             ) void {
                 self.v.device.CopyDescriptorsSimple(self, num, dst_range_start, src_range_start, heap_type);
             }
@@ -3718,28 +3738,28 @@ pub const ID3D12Device = extern struct {
                 self: *T,
                 visible_mask: UINT,
                 num_descs: UINT,
-                descs: [*]const D3D12_RESOURCE_DESC,
-            ) D3D12_RESOURCE_ALLOCATION_INFO {
-                var info: D3D12_RESOURCE_ALLOCATION_INFO = undefined;
+                descs: [*]const RESOURCE_DESC,
+            ) RESOURCE_ALLOCATION_INFO {
+                var info: RESOURCE_ALLOCATION_INFO = undefined;
                 self.v.device.GetResourceAllocationInfo(self, &info, visible_mask, num_descs, descs);
                 return info;
             }
             pub inline fn GetCustomHeapProperties(
                 self: *T,
                 node_mask: UINT,
-                heap_type: D3D12_HEAP_TYPE,
-            ) D3D12_HEAP_PROPERTIES {
-                var props: D3D12_HEAP_PROPERTIES = undefined;
+                heap_type: HEAP_TYPE,
+            ) HEAP_PROPERTIES {
+                var props: HEAP_PROPERTIES = undefined;
                 self.v.device.GetCustomHeapProperties(self, &props, node_mask, heap_type);
                 return props;
             }
             pub inline fn CreateCommittedResource(
                 self: *T,
-                heap_props: *const D3D12_HEAP_PROPERTIES,
-                heap_flags: D3D12_HEAP_FLAGS,
-                desc: *const D3D12_RESOURCE_DESC,
-                state: D3D12_RESOURCE_STATES,
-                clear_value: ?*const D3D12_CLEAR_VALUE,
+                heap_props: *const HEAP_PROPERTIES,
+                heap_flags: HEAP_FLAGS,
+                desc: *const RESOURCE_DESC,
+                state: RESOURCE_STATES,
+                clear_value: ?*const CLEAR_VALUE,
                 guid: *const GUID,
                 resource: ?*?*c_void,
             ) HRESULT {
@@ -3754,16 +3774,16 @@ pub const ID3D12Device = extern struct {
                     resource,
                 );
             }
-            pub inline fn CreateHeap(self: *T, desc: *const D3D12_HEAP_DESC, guid: *const GUID, heap: ?*?*c_void) HRESULT {
+            pub inline fn CreateHeap(self: *T, desc: *const HEAP_DESC, guid: *const GUID, heap: ?*?*c_void) HRESULT {
                 return self.v.device.CreateHeap(self, desc, guid, heap);
             }
             pub inline fn CreatePlacedResource(
                 self: *T,
-                heap: *ID3D12Heap,
+                heap: *IHeap,
                 heap_offset: UINT64,
-                desc: *const D3D12_RESOURCE_DESC,
-                state: D3D12_RESOURCE_STATES,
-                clear_value: ?*const D3D12_CLEAR_VALUE,
+                desc: *const RESOURCE_DESC,
+                state: RESOURCE_STATES,
+                clear_value: ?*const CLEAR_VALUE,
                 guid: *const GUID,
                 resource: ?*?*c_void,
             ) HRESULT {
@@ -3780,9 +3800,9 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateReservedResource(
                 self: *T,
-                desc: *const D3D12_RESOURCE_DESC,
-                state: D3D12_RESOURCE_STATES,
-                clear_value: ?*const D3D12_CLEAR_VALUE,
+                desc: *const RESOURCE_DESC,
+                state: RESOURCE_STATES,
+                clear_value: ?*const CLEAR_VALUE,
                 guid: *const GUID,
                 resource: ?*?*c_void,
             ) HRESULT {
@@ -3790,7 +3810,7 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateSharedHandle(
                 self: *T,
-                object: *ID3D12DeviceChild,
+                object: *IDeviceChild,
                 attributes: ?*const SECURITY_ATTRIBUTES,
                 access: DWORD,
                 name: ?LPCWSTR,
@@ -3804,16 +3824,16 @@ pub const ID3D12Device = extern struct {
             pub inline fn OpenSharedHandleByName(self: *T, name: LPCWSTR, access: DWORD, handle: ?*HANDLE) HRESULT {
                 return self.v.device.OpenSharedHandleByName(self, name, access, handle);
             }
-            pub inline fn MakeResident(self: *T, num: UINT, objects: [*]const *ID3D12Pageable) HRESULT {
+            pub inline fn MakeResident(self: *T, num: UINT, objects: [*]const *IPageable) HRESULT {
                 return self.v.device.MakeResident(self, num, objects);
             }
-            pub inline fn Evict(self: *T, num: UINT, objects: [*]const *ID3D12Pageable) HRESULT {
+            pub inline fn Evict(self: *T, num: UINT, objects: [*]const *IPageable) HRESULT {
                 return self.v.device.Evict(self, num, objects);
             }
             pub inline fn CreateFence(
                 self: *T,
                 initial_value: UINT64,
-                flags: D3D12_FENCE_FLAGS,
+                flags: FENCE_FLAGS,
                 guid: *const GUID,
                 fence: *?*c_void,
             ) HRESULT {
@@ -3824,11 +3844,11 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn GetCopyableFootprints(
                 self: *T,
-                desc: *const D3D12_RESOURCE_DESC,
+                desc: *const RESOURCE_DESC,
                 first_subresource: UINT,
                 num_subresources: UINT,
                 base_offset: UINT64,
-                layouts: ?[*]D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+                layouts: ?[*]PLACED_SUBRESOURCE_FOOTPRINT,
                 num_rows: ?[*]UINT,
                 row_size: ?[*]UINT64,
                 total_sizie: ?*UINT64,
@@ -3847,7 +3867,7 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateQueryHeap(
                 self: *T,
-                desc: *const D3D12_QUERY_HEAP_DESC,
+                desc: *const QUERY_HEAP_DESC,
                 guid: *const GUID,
                 query_heap: ?*?*c_void,
             ) HRESULT {
@@ -3858,8 +3878,8 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn CreateCommandSignature(
                 self: *T,
-                desc: *const D3D12_COMMAND_SIGNATURE_DESC,
-                root_signature: ?*ID3D12RootSignature,
+                desc: *const COMMAND_SIGNATURE_DESC,
+                root_signature: ?*IRootSignature,
                 guid: *const GUID,
                 cmd_signature: ?*?*c_void,
             ) HRESULT {
@@ -3867,13 +3887,13 @@ pub const ID3D12Device = extern struct {
             }
             pub inline fn GetResourceTiling(
                 self: *T,
-                resource: *ID3D12Resource,
+                resource: *IResource,
                 num_resource_tiles: ?*UINT,
-                packed_mip_desc: ?*D3D12_PACKED_MIP_INFO,
-                std_tile_shape_non_packed_mips: ?*D3D12_TILE_SHAPE,
+                packed_mip_desc: ?*PACKED_MIP_INFO,
+                std_tile_shape_non_packed_mips: ?*TILE_SHAPE,
                 num_subresource_tilings: ?*UINT,
                 first_subresource: UINT,
-                subresource_tiling_for_non_packed_mips: [*]D3D12_SUBRESOURCE_TILING,
+                subresource_tiling_for_non_packed_mips: [*]SUBRESOURCE_TILING,
             ) void {
                 self.v.device.GetResourceTiling(
                     self,
@@ -3897,131 +3917,131 @@ pub const ID3D12Device = extern struct {
     fn VTable(comptime T: type) type {
         return extern struct {
             GetNodeCount: fn (*T) callconv(WINAPI) UINT,
-            CreateCommandQueue: fn (*T, *const D3D12_COMMAND_QUEUE_DESC, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
-            CreateCommandAllocator: fn (*T, D3D12_COMMAND_LIST_TYPE, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateCommandQueue: fn (*T, *const COMMAND_QUEUE_DESC, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateCommandAllocator: fn (*T, COMMAND_LIST_TYPE, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
             CreateGraphicsPipelineState: fn (
                 *T,
-                *const D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+                *const GRAPHICS_PIPELINE_STATE_DESC,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateComputePipelineState: fn (
                 *T,
-                *const D3D12_COMPUTE_PIPELINE_STATE_DESC,
+                *const COMPUTE_PIPELINE_STATE_DESC,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateCommandList: fn (
                 *T,
                 UINT,
-                D3D12_COMMAND_LIST_TYPE,
-                *ID3D12CommandAllocator,
-                ?*ID3D12PipelineState,
+                COMMAND_LIST_TYPE,
+                *ICommandAllocator,
+                ?*IPipelineState,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
-            CheckFeatureSupport: fn (*T, D3D12_FEATURE, *c_void, UINT) callconv(WINAPI) HRESULT,
+            CheckFeatureSupport: fn (*T, FEATURE, *c_void, UINT) callconv(WINAPI) HRESULT,
             CreateDescriptorHeap: fn (
                 *T,
-                *const D3D12_DESCRIPTOR_HEAP_DESC,
+                *const DESCRIPTOR_HEAP_DESC,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
-            GetDescriptorHandleIncrementSize: fn (*T, D3D12_DESCRIPTOR_HEAP_TYPE) callconv(WINAPI) UINT,
+            GetDescriptorHandleIncrementSize: fn (*T, DESCRIPTOR_HEAP_TYPE) callconv(WINAPI) UINT,
             CreateRootSignature: fn (*T, UINT, *const c_void, UINT64, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
             CreateConstantBufferView: fn (
                 *T,
-                ?*const D3D12_CONSTANT_BUFFER_VIEW_DESC,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?*const CONSTANT_BUFFER_VIEW_DESC,
+                CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
             CreateShaderResourceView: fn (
                 *T,
-                ?*ID3D12Resource,
-                ?*const D3D12_SHADER_RESOURCE_VIEW_DESC,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?*IResource,
+                ?*const SHADER_RESOURCE_VIEW_DESC,
+                CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
             CreateUnorderedAccessView: fn (
                 *T,
-                ?*ID3D12Resource,
-                ?*ID3D12Resource,
-                ?*const D3D12_UNORDERED_ACCESS_VIEW_DESC,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?*IResource,
+                ?*IResource,
+                ?*const UNORDERED_ACCESS_VIEW_DESC,
+                CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
             CreateRenderTargetView: fn (
                 *T,
-                ?*ID3D12Resource,
-                ?*const D3D12_RENDER_TARGET_VIEW_DESC,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?*IResource,
+                ?*const RENDER_TARGET_VIEW_DESC,
+                CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
             CreateDepthStencilView: fn (
                 *T,
-                ?*ID3D12Resource,
-                ?*const D3D12_DEPTH_STENCIL_VIEW_DESC,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?*IResource,
+                ?*const DEPTH_STENCIL_VIEW_DESC,
+                CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
-            CreateSampler: fn (*T, *const D3D12_SAMPLER_DESC, D3D12_CPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            CreateSampler: fn (*T, *const SAMPLER_DESC, CPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
             CopyDescriptors: fn (
                 *T,
                 UINT,
-                [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                [*]const CPU_DESCRIPTOR_HANDLE,
                 ?[*]const UINT,
                 UINT,
-                [*]const D3D12_CPU_DESCRIPTOR_HANDLE,
+                [*]const CPU_DESCRIPTOR_HANDLE,
                 ?[*]const UINT,
-                D3D12_DESCRIPTOR_HEAP_TYPE,
+                DESCRIPTOR_HEAP_TYPE,
             ) callconv(WINAPI) void,
             CopyDescriptorsSimple: fn (
                 *T,
                 UINT,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
-                D3D12_DESCRIPTOR_HEAP_TYPE,
+                CPU_DESCRIPTOR_HANDLE,
+                CPU_DESCRIPTOR_HANDLE,
+                DESCRIPTOR_HEAP_TYPE,
             ) callconv(WINAPI) void,
             GetResourceAllocationInfo: fn (
                 *T,
-                *D3D12_RESOURCE_ALLOCATION_INFO,
+                *RESOURCE_ALLOCATION_INFO,
                 UINT,
                 UINT,
-                [*]const D3D12_RESOURCE_DESC,
-            ) callconv(WINAPI) *D3D12_RESOURCE_ALLOCATION_INFO,
+                [*]const RESOURCE_DESC,
+            ) callconv(WINAPI) *RESOURCE_ALLOCATION_INFO,
             GetCustomHeapProperties: fn (
                 *T,
-                *D3D12_HEAP_PROPERTIES,
+                *HEAP_PROPERTIES,
                 UINT,
-                D3D12_HEAP_TYPE,
-            ) callconv(WINAPI) *D3D12_HEAP_PROPERTIES,
+                HEAP_TYPE,
+            ) callconv(WINAPI) *HEAP_PROPERTIES,
             CreateCommittedResource: fn (
                 *T,
-                *const D3D12_HEAP_PROPERTIES,
-                D3D12_HEAP_FLAGS,
-                *const D3D12_RESOURCE_DESC,
-                D3D12_RESOURCE_STATES,
-                ?*const D3D12_CLEAR_VALUE,
+                *const HEAP_PROPERTIES,
+                HEAP_FLAGS,
+                *const RESOURCE_DESC,
+                RESOURCE_STATES,
+                ?*const CLEAR_VALUE,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
-            CreateHeap: fn (*T, *const D3D12_HEAP_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CreateHeap: fn (*T, *const HEAP_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
             CreatePlacedResource: fn (
                 *T,
-                *ID3D12Heap,
+                *IHeap,
                 UINT64,
-                *const D3D12_RESOURCE_DESC,
-                D3D12_RESOURCE_STATES,
-                ?*const D3D12_CLEAR_VALUE,
+                *const RESOURCE_DESC,
+                RESOURCE_STATES,
+                ?*const CLEAR_VALUE,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateReservedResource: fn (
                 *T,
-                *const D3D12_RESOURCE_DESC,
-                D3D12_RESOURCE_STATES,
-                ?*const D3D12_CLEAR_VALUE,
+                *const RESOURCE_DESC,
+                RESOURCE_STATES,
+                ?*const CLEAR_VALUE,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateSharedHandle: fn (
                 *T,
-                *ID3D12DeviceChild,
+                *IDeviceChild,
                 ?*const SECURITY_ATTRIBUTES,
                 DWORD,
                 ?LPCWSTR,
@@ -4029,51 +4049,51 @@ pub const ID3D12Device = extern struct {
             ) callconv(WINAPI) HRESULT,
             OpenSharedHandle: fn (*T, HANDLE, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
             OpenSharedHandleByName: fn (*T, LPCWSTR, DWORD, ?*HANDLE) callconv(WINAPI) HRESULT,
-            MakeResident: fn (*T, UINT, [*]const *ID3D12Pageable) callconv(WINAPI) HRESULT,
-            Evict: fn (*T, UINT, [*]const *ID3D12Pageable) callconv(WINAPI) HRESULT,
-            CreateFence: fn (*T, UINT64, D3D12_FENCE_FLAGS, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            MakeResident: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+            Evict: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+            CreateFence: fn (*T, UINT64, FENCE_FLAGS, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
             GetDeviceRemovedReason: fn (*T) callconv(WINAPI) HRESULT,
             GetCopyableFootprints: fn (
                 *T,
-                *const D3D12_RESOURCE_DESC,
+                *const RESOURCE_DESC,
                 UINT,
                 UINT,
                 UINT64,
-                ?[*]D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+                ?[*]PLACED_SUBRESOURCE_FOOTPRINT,
                 ?[*]UINT,
                 ?[*]UINT64,
                 ?*UINT64,
             ) callconv(WINAPI) void,
-            CreateQueryHeap: fn (*T, *const D3D12_QUERY_HEAP_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CreateQueryHeap: fn (*T, *const QUERY_HEAP_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
             SetStablePowerState: fn (*T, BOOL) callconv(WINAPI) HRESULT,
             CreateCommandSignature: fn (
                 *T,
-                *const D3D12_COMMAND_SIGNATURE_DESC,
-                ?*ID3D12RootSignature,
+                *const COMMAND_SIGNATURE_DESC,
+                ?*IRootSignature,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             GetResourceTiling: fn (
                 *T,
-                *ID3D12Resource,
+                *IResource,
                 ?*UINT,
-                ?*D3D12_PACKED_MIP_INFO,
-                ?*D3D12_TILE_SHAPE,
+                ?*PACKED_MIP_INFO,
+                ?*TILE_SHAPE,
                 ?*UINT,
                 UINT,
-                [*]D3D12_SUBRESOURCE_TILING,
+                [*]SUBRESOURCE_TILING,
             ) callconv(WINAPI) void,
             GetAdapterLuid: fn (*T, *LUID) callconv(WINAPI) *LUID,
         };
     }
 };
 
-pub const D3D12_MULTIPLE_FENCE_WAIT_FLAGS = enum(UINT) {
+pub const MULTIPLE_FENCE_WAIT_FLAGS = enum(UINT) {
     ALL = 0,
     ANY = 1,
 };
 
-pub const D3D12_RESIDENCY_PRIORITY = enum(UINT) {
+pub const RESIDENCY_PRIORITY = enum(UINT) {
     MINIMUM = 0x28000000,
     LOW = 0x50000000,
     NORMAL = 0x78000000,
@@ -4081,17 +4101,17 @@ pub const D3D12_RESIDENCY_PRIORITY = enum(UINT) {
     MAXIMUM = 0xc8000000,
 };
 
-pub const ID3D12Device1 = extern struct {
+pub const IDevice1 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
         device1: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -4107,10 +4127,10 @@ pub const ID3D12Device1 = extern struct {
             }
             pub inline fn SetEventOnMultipleFenceCompletion(
                 self: *T,
-                fences: [*]const *ID3D12Fence,
+                fences: [*]const *IFence,
                 fence_values: [*]const UINT64,
                 num_fences: UINT,
-                flags: D3D12_MULTIPLE_FENCE_WAIT_FLAGS,
+                flags: MULTIPLE_FENCE_WAIT_FLAGS,
                 event: HANDLE,
             ) HRESULT {
                 return self.v.device1.SetEventOnMultipleFenceCompletion(
@@ -4125,8 +4145,8 @@ pub const ID3D12Device1 = extern struct {
             pub inline fn SetResidencyPriority(
                 self: *T,
                 num_objects: UINT,
-                objects: [*]const *ID3D12Pageable,
-                priorities: [*]const D3D12_RESIDENCY_PRIORITY,
+                objects: [*]const *IPageable,
+                priorities: [*]const RESIDENCY_PRIORITY,
             ) HRESULT {
                 return self.v.device1.SetResidencyPriority(self, num_objects, objects, priorities);
             }
@@ -4138,23 +4158,23 @@ pub const ID3D12Device1 = extern struct {
             CreatePipelineLibrary: fn (*T, *const c_void, SIZE_T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
             SetEventOnMultipleFenceCompletion: fn (
                 *T,
-                [*]const *ID3D12Fence,
+                [*]const *IFence,
                 [*]const UINT64,
                 UINT,
-                D3D12_MULTIPLE_FENCE_WAIT_FLAGS,
+                MULTIPLE_FENCE_WAIT_FLAGS,
                 HANDLE,
             ) callconv(WINAPI) HRESULT,
             SetResidencyPriority: fn (
                 *T,
                 UINT,
-                [*]const *ID3D12Pageable,
-                [*]const D3D12_RESIDENCY_PRIORITY,
+                [*]const *IPageable,
+                [*]const RESIDENCY_PRIORITY,
             ) callconv(WINAPI) HRESULT,
         };
     }
 };
 
-pub const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE = enum(UINT) {
+pub const PIPELINE_STATE_SUBOBJECT_TYPE = enum(UINT) {
     ROOT_SIGNATURE = 0,
     VS = 1,
     PS = 2,
@@ -4183,31 +4203,31 @@ pub const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE = enum(UINT) {
     MAX_VALID = 26,
 };
 
-pub const D3D12_PIPELINE_STATE_STREAM_DESC = extern struct {
+pub const PIPELINE_STATE_STREAM_DESC = extern struct {
     SizeInBytes: SIZE_T,
     pPipelineStateSubobjectStream: *c_void,
 };
 
-pub const ID3D12Device2 = extern struct {
+pub const IDevice2 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
-        device1: ID3D12Device1.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: IDevice1.VTable(Self),
         device2: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
-    usingnamespace ID3D12Device1.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace IDevice1.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn CreatePipelineState(
                 self: *T,
-                desc: *const D3D12_PIPELINE_STATE_STREAM_DESC,
+                desc: *const PIPELINE_STATE_STREAM_DESC,
                 guid: *const GUID,
                 pso: *?*c_void,
             ) HRESULT {
@@ -4220,7 +4240,7 @@ pub const ID3D12Device2 = extern struct {
         return extern struct {
             CreatePipelineState: fn (
                 *T,
-                *const D3D12_PIPELINE_STATE_STREAM_DESC,
+                *const PIPELINE_STATE_STREAM_DESC,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
@@ -4228,25 +4248,25 @@ pub const ID3D12Device2 = extern struct {
     }
 };
 
-pub const D3D12_RESIDENCY_FLAGS = UINT;
-pub const D3D12_RESIDENCY_FLAG_NONE = 0;
-pub const D3D12_RESIDENCY_FLAG_DENY_OVERBUDGET = 0x1;
+pub const RESIDENCY_FLAGS = UINT;
+pub const RESIDENCY_FLAG_NONE = 0;
+pub const RESIDENCY_FLAG_DENY_OVERBUDGET = 0x1;
 
-pub const ID3D12Device3 = extern struct {
+pub const IDevice3 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
-        device1: ID3D12Device1.VTable(Self),
-        device2: ID3D12Device2.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: IDevice1.VTable(Self),
+        device2: IDevice2.VTable(Self),
         device3: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
-    usingnamespace ID3D12Device1.Methods(Self);
-    usingnamespace ID3D12Device2.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace IDevice1.Methods(Self);
+    usingnamespace IDevice2.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -4269,10 +4289,10 @@ pub const ID3D12Device3 = extern struct {
             }
             pub inline fn EnqueueMakeResident(
                 self: *T,
-                flags: D3D12_RESIDENCY_FLAGS,
+                flags: RESIDENCY_FLAGS,
                 num_objects: UINT,
-                objects: [*]const *ID3D12Pageable,
-                fence_to_signal: *ID3D12Fence,
+                objects: [*]const *IPageable,
+                fence_to_signal: *IFence,
                 fence_value_to_signal: UINT64,
             ) HRESULT {
                 return self.v.device3.EnqueueMakeResident(
@@ -4293,41 +4313,41 @@ pub const ID3D12Device3 = extern struct {
             OpenExistingHeapFromFileMapping: fn (*T, HANDLE, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
             EnqueueMakeResident: fn (
                 *T,
-                D3D12_RESIDENCY_FLAGS,
+                RESIDENCY_FLAGS,
                 UINT,
-                [*]const *ID3D12Pageable,
-                *ID3D12Fence,
+                [*]const *IPageable,
+                *IFence,
                 UINT64,
             ) callconv(WINAPI) HRESULT,
         };
     }
 };
 
-pub const D3D12_COMMAND_LIST_FLAGS = UINT;
+pub const COMMAND_LIST_FLAGS = UINT;
 
-pub const D3D12_RESOURCE_ALLOCATION_INFO1 = extern struct {
+pub const RESOURCE_ALLOCATION_INFO1 = extern struct {
     Offset: UINT64,
     Alignment: UINT64,
     SizeInBytes: UINT64,
 };
 
-pub const ID3D12Device4 = extern struct {
+pub const IDevice4 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
-        device1: ID3D12Device1.VTable(Self),
-        device2: ID3D12Device2.VTable(Self),
-        device3: ID3D12Device3.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: IDevice1.VTable(Self),
+        device2: IDevice2.VTable(Self),
+        device3: IDevice3.VTable(Self),
         device4: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
-    usingnamespace ID3D12Device1.Methods(Self);
-    usingnamespace ID3D12Device2.Methods(Self);
-    usingnamespace ID3D12Device3.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace IDevice1.Methods(Self);
+    usingnamespace IDevice2.Methods(Self);
+    usingnamespace IDevice3.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -4335,8 +4355,8 @@ pub const ID3D12Device4 = extern struct {
             pub inline fn CreateCommandList1(
                 self: *T,
                 node_mask: UINT,
-                cmdlist_type: D3D12_COMMAND_LIST_TYPE,
-                flags: D3D12_COMMAND_LIST_FLAGS,
+                cmdlist_type: COMMAND_LIST_TYPE,
+                flags: COMMAND_LIST_FLAGS,
                 guid: *const GUID,
                 cmdlist: *?*c_void,
             ) HRESULT {
@@ -4344,7 +4364,7 @@ pub const ID3D12Device4 = extern struct {
             }
             pub inline fn CreateProtectedResourceSession(
                 self: *T,
-                desc: *const D3D12_PROTECTED_RESOURCE_SESSION_DESC,
+                desc: *const PROTECTED_RESOURCE_SESSION_DESC,
                 guid: *const GUID,
                 session: *?*c_void,
             ) HRESULT {
@@ -4352,12 +4372,12 @@ pub const ID3D12Device4 = extern struct {
             }
             pub inline fn CreateCommittedResource1(
                 self: *T,
-                heap_properties: *const D3D12_HEAP_PROPERTIES,
-                heap_flags: D3D12_HEAP_FLAGS,
-                desc: *const D3D12_RESOURCE_DESC,
-                initial_state: D3D12_RESOURCE_STATES,
-                clear_value: ?*const D3D12_CLEAR_VALUE,
-                psession: ?*ID3D12ProtectedResourceSession,
+                heap_properties: *const HEAP_PROPERTIES,
+                heap_flags: HEAP_FLAGS,
+                desc: *const RESOURCE_DESC,
+                initial_state: RESOURCE_STATES,
+                clear_value: ?*const CLEAR_VALUE,
+                psession: ?*IProtectedResourceSession,
                 guid: *const GUID,
                 resource: ?*?*c_void,
             ) HRESULT {
@@ -4375,8 +4395,8 @@ pub const ID3D12Device4 = extern struct {
             }
             pub inline fn CreateHeap1(
                 self: *T,
-                desc: *const D3D12_HEAP_DESC,
-                psession: ?*ID3D12ProtectedResourceSession,
+                desc: *const HEAP_DESC,
+                psession: ?*IProtectedResourceSession,
                 guid: *const GUID,
                 heap: ?*?*c_void,
             ) HRESULT {
@@ -4384,10 +4404,10 @@ pub const ID3D12Device4 = extern struct {
             }
             pub inline fn CreateReservedResource1(
                 self: *T,
-                desc: *const D3D12_RESOURCE_DESC,
-                initial_state: D3D12_RESOURCE_STATES,
-                clear_value: ?*const D3D12_CLEAR_VALUE,
-                psession: ?*ID3D12ProtectedResourceSession,
+                desc: *const RESOURCE_DESC,
+                initial_state: RESOURCE_STATES,
+                clear_value: ?*const CLEAR_VALUE,
+                psession: ?*IProtectedResourceSession,
                 guid: *const GUID,
                 resource: ?*?*c_void,
             ) HRESULT {
@@ -4405,10 +4425,10 @@ pub const ID3D12Device4 = extern struct {
                 self: *T,
                 visible_mask: UINT,
                 num_resource_descs: UINT,
-                resource_descs: [*]const D3D12_RESOURCE_DESC,
-                alloc_info: ?[*]D3D12_RESOURCE_ALLOCATION_INFO1,
-            ) D3D12_RESOURCE_ALLOCATION_INFO {
-                var desc: D3D12_RESOURCE_ALLOCATION_INFO = undefined;
+                resource_descs: [*]const RESOURCE_DESC,
+                alloc_info: ?[*]RESOURCE_ALLOCATION_INFO1,
+            ) RESOURCE_ALLOCATION_INFO {
+                var desc: RESOURCE_ALLOCATION_INFO = undefined;
                 self.v.device4.GetResourceAllocationInfo1(
                     self,
                     &desc,
@@ -4427,62 +4447,62 @@ pub const ID3D12Device4 = extern struct {
             CreateCommandList1: fn (
                 *T,
                 UINT,
-                D3D12_COMMAND_LIST_TYPE,
-                D3D12_COMMAND_LIST_FLAGS,
+                COMMAND_LIST_TYPE,
+                COMMAND_LIST_FLAGS,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateProtectedResourceSession: fn (
                 *T,
-                *const D3D12_PROTECTED_RESOURCE_SESSION_DESC,
+                *const PROTECTED_RESOURCE_SESSION_DESC,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateCommittedResource1: fn (
                 *T,
-                *const D3D12_HEAP_PROPERTIES,
-                D3D12_HEAP_FLAGS,
-                *const D3D12_RESOURCE_DESC,
-                D3D12_RESOURCE_STATES,
-                ?*const D3D12_CLEAR_VALUE,
-                ?*ID3D12ProtectedResourceSession,
+                *const HEAP_PROPERTIES,
+                HEAP_FLAGS,
+                *const RESOURCE_DESC,
+                RESOURCE_STATES,
+                ?*const CLEAR_VALUE,
+                ?*IProtectedResourceSession,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateHeap1: fn (
                 *T,
-                *const D3D12_HEAP_DESC,
-                ?*ID3D12ProtectedResourceSession,
+                *const HEAP_DESC,
+                ?*IProtectedResourceSession,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateReservedResource1: fn (
                 *T,
-                *const D3D12_RESOURCE_DESC,
-                D3D12_RESOURCE_STATES,
-                ?*const D3D12_CLEAR_VALUE,
-                ?*ID3D12ProtectedResourceSession,
+                *const RESOURCE_DESC,
+                RESOURCE_STATES,
+                ?*const CLEAR_VALUE,
+                ?*IProtectedResourceSession,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             GetResourceAllocationInfo1: fn (
                 *T,
-                *D3D12_RESOURCE_ALLOCATION_INFO,
+                *RESOURCE_ALLOCATION_INFO,
                 UINT,
                 UINT,
-                [*]const D3D12_RESOURCE_DESC,
-                ?[*]D3D12_RESOURCE_ALLOCATION_INFO1,
-            ) callconv(WINAPI) *D3D12_RESOURCE_ALLOCATION_INFO,
+                [*]const RESOURCE_DESC,
+                ?[*]RESOURCE_ALLOCATION_INFO1,
+            ) callconv(WINAPI) *RESOURCE_ALLOCATION_INFO,
         };
     }
 };
 
-pub const D3D12_LIFETIME_STATE = enum(UINT) {
+pub const LIFETIME_STATE = enum(UINT) {
     IN_USE = 0,
     NOT_IN_USE = 1,
 };
 
-pub const ID3D12LifetimeOwner = extern struct {
+pub const ILifetimeOwner = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
@@ -4493,7 +4513,7 @@ pub const ID3D12LifetimeOwner = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn LifetimeStateUpdated(self: *T, new_state: D3D12_LIFETIME_STATE) void {
+            pub inline fn LifetimeStateUpdated(self: *T, new_state: LIFETIME_STATE) void {
                 self.v.ltowner.LifetimeStateUpdated(self, new_state);
             }
         };
@@ -4501,37 +4521,37 @@ pub const ID3D12LifetimeOwner = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            LifetimeStateUpdated: fn (*T, D3D12_LIFETIME_STATE) callconv(WINAPI) void,
+            LifetimeStateUpdated: fn (*T, LIFETIME_STATE) callconv(WINAPI) void,
         };
     }
 };
 
-pub const ID3D12Device5 = extern struct {
+pub const IDevice5 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
-        device1: ID3D12Device1.VTable(Self),
-        device2: ID3D12Device2.VTable(Self),
-        device3: ID3D12Device3.VTable(Self),
-        device4: ID3D12Device4.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: IDevice1.VTable(Self),
+        device2: IDevice2.VTable(Self),
+        device3: IDevice3.VTable(Self),
+        device4: IDevice4.VTable(Self),
         device5: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
-    usingnamespace ID3D12Device1.Methods(Self);
-    usingnamespace ID3D12Device2.Methods(Self);
-    usingnamespace ID3D12Device3.Methods(Self);
-    usingnamespace ID3D12Device4.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace IDevice1.Methods(Self);
+    usingnamespace IDevice2.Methods(Self);
+    usingnamespace IDevice3.Methods(Self);
+    usingnamespace IDevice4.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn CreateLifetimeTracker(
                 self: *T,
-                owner: *ID3D12LifetimeOwner,
+                owner: *ILifetimeOwner,
                 guid: *const GUID,
                 tracker: *?*c_void,
             ) HRESULT {
@@ -4543,17 +4563,17 @@ pub const ID3D12Device5 = extern struct {
             pub inline fn EnumerateMetaCommands(
                 self: *T,
                 num_meta_cmds: *UINT,
-                descs: ?[*]D3D12_META_COMMAND_DESC,
+                descs: ?[*]META_COMMAND_DESC,
             ) HRESULT {
                 return self.v.device5.EnumerateMetaCommands(self, num_meta_cmds, descs);
             }
             pub inline fn EnumerateMetaCommandParameters(
                 self: *T,
                 cmd_id: *const GUID,
-                stage: D3D12_META_COMMAND_PARAMETER_STAGE,
+                stage: META_COMMAND_PARAMETER_STAGE,
                 total_size: ?*UINT,
                 param_count: *UINT,
-                param_descs: ?[*]D3D12_META_COMMAND_PARAMETER_DESC,
+                param_descs: ?[*]META_COMMAND_PARAMETER_DESC,
             ) HRESULT {
                 return self.v.device5.EnumerateMetaCommandParameters(
                     self,
@@ -4585,7 +4605,7 @@ pub const ID3D12Device5 = extern struct {
             }
             pub inline fn CreateStateObject(
                 self: *T,
-                desc: *const D3D12_STATE_OBJECT_DESC,
+                desc: *const STATE_OBJECT_DESC,
                 guid: *const GUID,
                 state_object: *?*c_void,
             ) HRESULT {
@@ -4593,16 +4613,16 @@ pub const ID3D12Device5 = extern struct {
             }
             pub inline fn GetRaytracingAccelerationStructurePrebuildInfo(
                 self: *T,
-                desc: *const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
-                info: *D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
+                desc: *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
+                info: *RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
             ) void {
                 self.v.device5.GetRaytracingAccelerationStructurePrebuildInfo(self, desc, info);
             }
             pub inline fn CheckDriverMatchingIdentifier(
                 self: *T,
-                serialized_data_type: D3D12_SERIALIZED_DATA_TYPE,
-                identifier_to_check: *const D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
-            ) D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS {
+                serialized_data_type: SERIALIZED_DATA_TYPE,
+                identifier_to_check: *const SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
+            ) DRIVER_MATCHING_IDENTIFIER_STATUS {
                 return self.v.device5.CheckDriverMatchingIdentifier(self, serialized_data_type, identifier_to_check);
             }
         };
@@ -4610,16 +4630,16 @@ pub const ID3D12Device5 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreateLifetimeTracker: fn (*T, *ID3D12LifetimeOwner, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateLifetimeTracker: fn (*T, *ILifetimeOwner, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
             RemoveDevice: fn (self: *T) callconv(WINAPI) void,
-            EnumerateMetaCommands: fn (*T, *UINT, ?[*]D3D12_META_COMMAND_DESC) callconv(WINAPI) HRESULT,
+            EnumerateMetaCommands: fn (*T, *UINT, ?[*]META_COMMAND_DESC) callconv(WINAPI) HRESULT,
             EnumerateMetaCommandParameters: fn (
                 *T,
                 *const GUID,
-                D3D12_META_COMMAND_PARAMETER_STAGE,
+                META_COMMAND_PARAMETER_STAGE,
                 ?*UINT,
                 *UINT,
-                ?[*]D3D12_META_COMMAND_PARAMETER_DESC,
+                ?[*]META_COMMAND_PARAMETER_DESC,
             ) callconv(WINAPI) HRESULT,
             CreateMetaCommand: fn (
                 *T,
@@ -4632,67 +4652,67 @@ pub const ID3D12Device5 = extern struct {
             ) callconv(WINAPI) HRESULT,
             CreateStateObject: fn (
                 *T,
-                *const D3D12_STATE_OBJECT_DESC,
+                *const STATE_OBJECT_DESC,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
             GetRaytracingAccelerationStructurePrebuildInfo: fn (
                 *T,
-                *const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
-                *D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
+                *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
+                *RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
             ) callconv(WINAPI) void,
             CheckDriverMatchingIdentifier: fn (
                 *T,
-                D3D12_SERIALIZED_DATA_TYPE,
-                *const D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
-            ) callconv(WINAPI) D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS,
+                SERIALIZED_DATA_TYPE,
+                *const SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
+            ) callconv(WINAPI) DRIVER_MATCHING_IDENTIFIER_STATUS,
         };
     }
 };
 
-pub const D3D12_BACKGROUND_PROCESSING_MODE = enum(UINT) {
+pub const BACKGROUND_PROCESSING_MODE = enum(UINT) {
     ALLOWED = 0,
     ALLOW_INTRUSIVE_MEASUREMENTS = 1,
     DISABLE_BACKGROUND_WORK = 2,
     DISABLE_PROFILING_BY_SYSTEM = 3,
 };
 
-pub const D3D12_MEASUREMENTS_ACTION = enum(UINT) {
+pub const MEASUREMENTS_ACTION = enum(UINT) {
     KEEP_ALL = 0,
     COMMIT_RESULTS = 1,
     COMMIT_RESULTS_HIGH_PRIORITY = 2,
     DISCARD_PREVIOUS = 3,
 };
 
-pub const ID3D12Device6 = extern struct {
+pub const IDevice6 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
-        device1: ID3D12Device1.VTable(Self),
-        device2: ID3D12Device2.VTable(Self),
-        device3: ID3D12Device3.VTable(Self),
-        device4: ID3D12Device4.VTable(Self),
-        device5: ID3D12Device5.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: IDevice1.VTable(Self),
+        device2: IDevice2.VTable(Self),
+        device3: IDevice3.VTable(Self),
+        device4: IDevice4.VTable(Self),
+        device5: IDevice5.VTable(Self),
         device6: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
-    usingnamespace ID3D12Device1.Methods(Self);
-    usingnamespace ID3D12Device2.Methods(Self);
-    usingnamespace ID3D12Device3.Methods(Self);
-    usingnamespace ID3D12Device4.Methods(Self);
-    usingnamespace ID3D12Device5.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace IDevice1.Methods(Self);
+    usingnamespace IDevice2.Methods(Self);
+    usingnamespace IDevice3.Methods(Self);
+    usingnamespace IDevice4.Methods(Self);
+    usingnamespace IDevice5.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn SetBackgroundProcessingMode(
                 self: *T,
-                mode: D3D12_BACKGROUND_PROCESSING_MODE,
-                measurements_action: D3D12_MEASUREMENTS_ACTION,
+                mode: BACKGROUND_PROCESSING_MODE,
+                measurements_action: MEASUREMENTS_ACTION,
                 event_to_signal_upon_completion: ?HANDLE,
                 further_measurements_desired: ?*BOOL,
             ) HRESULT {
@@ -4711,8 +4731,8 @@ pub const ID3D12Device6 = extern struct {
         return extern struct {
             SetBackgroundProcessingMode: fn (
                 *T,
-                D3D12_BACKGROUND_PROCESSING_MODE,
-                D3D12_MEASUREMENTS_ACTION,
+                BACKGROUND_PROCESSING_MODE,
+                MEASUREMENTS_ACTION,
                 ?HANDLE,
                 ?*BOOL,
             ) callconv(WINAPI) HRESULT,
@@ -4720,43 +4740,43 @@ pub const ID3D12Device6 = extern struct {
     }
 };
 
-pub const D3D12_PROTECTED_RESOURCE_SESSION_DESC1 = extern struct {
+pub const PROTECTED_RESOURCE_SESSION_DESC1 = extern struct {
     NodeMask: UINT,
-    Flags: D3D12_PROTECTED_RESOURCE_SESSION_FLAGS,
+    Flags: PROTECTED_RESOURCE_SESSION_FLAGS,
     ProtectionType: GUID,
 };
 
-pub const ID3D12Device7 = extern struct {
+pub const IDevice7 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
-        device1: ID3D12Device1.VTable(Self),
-        device2: ID3D12Device2.VTable(Self),
-        device3: ID3D12Device3.VTable(Self),
-        device4: ID3D12Device4.VTable(Self),
-        device5: ID3D12Device5.VTable(Self),
-        device6: ID3D12Device6.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: IDevice1.VTable(Self),
+        device2: IDevice2.VTable(Self),
+        device3: IDevice3.VTable(Self),
+        device4: IDevice4.VTable(Self),
+        device5: IDevice5.VTable(Self),
+        device6: IDevice6.VTable(Self),
         device7: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
-    usingnamespace ID3D12Device1.Methods(Self);
-    usingnamespace ID3D12Device2.Methods(Self);
-    usingnamespace ID3D12Device3.Methods(Self);
-    usingnamespace ID3D12Device4.Methods(Self);
-    usingnamespace ID3D12Device5.Methods(Self);
-    usingnamespace ID3D12Device6.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace IDevice1.Methods(Self);
+    usingnamespace IDevice2.Methods(Self);
+    usingnamespace IDevice3.Methods(Self);
+    usingnamespace IDevice4.Methods(Self);
+    usingnamespace IDevice5.Methods(Self);
+    usingnamespace IDevice6.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn AddToStateObject(
                 self: *T,
-                addition: *const D3D12_STATE_OBJECT_DESC,
-                state_object: *ID3D12StateObject,
+                addition: *const STATE_OBJECT_DESC,
+                state_object: *IStateObject,
                 guid: *const GUID,
                 new_state_object: *?*c_void,
             ) HRESULT {
@@ -4764,7 +4784,7 @@ pub const ID3D12Device7 = extern struct {
             }
             pub inline fn CreateProtectedResourceSession1(
                 self: *T,
-                desc: *const D3D12_PROTECTED_RESOURCE_SESSION_DESC1,
+                desc: *const PROTECTED_RESOURCE_SESSION_DESC1,
                 guid: *const GUID,
                 session: *?*c_void,
             ) HRESULT {
@@ -4777,14 +4797,14 @@ pub const ID3D12Device7 = extern struct {
         return extern struct {
             AddToStateObject: fn (
                 *T,
-                *const D3D12_STATE_OBJECT_DESC,
-                *ID3D12StateObject,
+                *const STATE_OBJECT_DESC,
+                *IStateObject,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateProtectedResourceSession1: fn (
                 *T,
-                *const D3D12_PROTECTED_RESOURCE_SESSION_DESC1,
+                *const PROTECTED_RESOURCE_SESSION_DESC1,
                 *const GUID,
                 *?*c_void,
             ) callconv(WINAPI) HRESULT,
@@ -4792,51 +4812,51 @@ pub const ID3D12Device7 = extern struct {
     }
 };
 
-pub const D3D12_MIP_REGION = extern struct {
+pub const MIP_REGION = extern struct {
     Width: UINT,
     Height: UINT,
     Depth: UINT,
 };
 
-pub const D3D12_RESOURCE_DESC1 = extern struct {
-    Dimension: D3D12_RESOURCE_DIMENSION,
+pub const RESOURCE_DESC1 = extern struct {
+    Dimension: RESOURCE_DIMENSION,
     Alignment: UINT64,
     Width: UINT64,
     Height: UINT,
     DepthOrArraySize: UINT16,
     MipLevels: UINT16,
-    Format: DXGI_FORMAT,
-    SampleDesc: DXGI_SAMPLE_DESC,
-    Layout: D3D12_TEXTURE_LAYOUT,
-    Flags: D3D12_RESOURCE_FLAGS,
-    SamplerFeedbackMipRegion: D3D12_MIP_REGION,
+    Format: dxgi.FORMAT,
+    SampleDesc: dxgi.SAMPLE_DESC,
+    Layout: TEXTURE_LAYOUT,
+    Flags: RESOURCE_FLAGS,
+    SamplerFeedbackMipRegion: MIP_REGION,
 };
 
-pub const ID3D12Device8 = extern struct {
+pub const IDevice8 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
-        device1: ID3D12Device1.VTable(Self),
-        device2: ID3D12Device2.VTable(Self),
-        device3: ID3D12Device3.VTable(Self),
-        device4: ID3D12Device4.VTable(Self),
-        device5: ID3D12Device5.VTable(Self),
-        device6: ID3D12Device6.VTable(Self),
-        device7: ID3D12Device7.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: IDevice1.VTable(Self),
+        device2: IDevice2.VTable(Self),
+        device3: IDevice3.VTable(Self),
+        device4: IDevice4.VTable(Self),
+        device5: IDevice5.VTable(Self),
+        device6: IDevice6.VTable(Self),
+        device7: IDevice7.VTable(Self),
         device8: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
-    usingnamespace ID3D12Device1.Methods(Self);
-    usingnamespace ID3D12Device2.Methods(Self);
-    usingnamespace ID3D12Device3.Methods(Self);
-    usingnamespace ID3D12Device4.Methods(Self);
-    usingnamespace ID3D12Device5.Methods(Self);
-    usingnamespace ID3D12Device6.Methods(Self);
-    usingnamespace ID3D12Device7.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace IDevice1.Methods(Self);
+    usingnamespace IDevice2.Methods(Self);
+    usingnamespace IDevice3.Methods(Self);
+    usingnamespace IDevice4.Methods(Self);
+    usingnamespace IDevice5.Methods(Self);
+    usingnamespace IDevice6.Methods(Self);
+    usingnamespace IDevice7.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -4845,10 +4865,10 @@ pub const ID3D12Device8 = extern struct {
                 self: *T,
                 visible_mask: UINT,
                 num_resource_descs: UINT,
-                resource_descs: *const D3D12_RESOURCE_DESC1,
-                alloc_info: ?[*]D3D12_RESOURCE_ALLOCATION_INFO1,
-            ) D3D12_RESOURCE_ALLOCATION_INFO {
-                var desc: D3D12_RESOURCE_ALLOCATION_INFO = undefined;
+                resource_descs: *const RESOURCE_DESC1,
+                alloc_info: ?[*]RESOURCE_ALLOCATION_INFO1,
+            ) RESOURCE_ALLOCATION_INFO {
+                var desc: RESOURCE_ALLOCATION_INFO = undefined;
                 self.v.device8.GetResourceAllocationInfo2(
                     self,
                     &desc,
@@ -4861,12 +4881,12 @@ pub const ID3D12Device8 = extern struct {
             }
             pub inline fn CreateCommittedResource2(
                 self: *T,
-                heap_properties: *const D3D12_HEAP_PROPERTIES,
-                heap_flags: D3D12_HEAP_FLAGS,
-                desc: *const D3D12_RESOURCE_DESC1,
-                initial_state: D3D12_RESOURCE_STATES,
-                clear_value: ?*const D3D12_CLEAR_VALUE,
-                prsession: ?*ID3D12ProtectedResourceSession,
+                heap_properties: *const HEAP_PROPERTIES,
+                heap_flags: HEAP_FLAGS,
+                desc: *const RESOURCE_DESC1,
+                initial_state: RESOURCE_STATES,
+                clear_value: ?*const CLEAR_VALUE,
+                prsession: ?*IProtectedResourceSession,
                 guid: *const GUID,
                 resource: ?*?*c_void,
             ) HRESULT {
@@ -4884,11 +4904,11 @@ pub const ID3D12Device8 = extern struct {
             }
             pub inline fn CreatePlacedResource1(
                 self: *T,
-                heap: *ID3D12Heap,
+                heap: *IHeap,
                 heap_offset: UINT64,
-                desc: *const D3D12_RESOURCE_DESC1,
-                initial_state: D3D12_RESOURCE_STATES,
-                clear_value: ?*const D3D12_CLEAR_VALUE,
+                desc: *const RESOURCE_DESC1,
+                initial_state: RESOURCE_STATES,
+                clear_value: ?*const CLEAR_VALUE,
                 guid: *const GUID,
                 resource: ?*?*c_void,
             ) HRESULT {
@@ -4905,9 +4925,9 @@ pub const ID3D12Device8 = extern struct {
             }
             pub inline fn CreateSamplerFeedbackUnorderedAccessView(
                 self: *T,
-                targeted_resource: ?*ID3D12Resource,
-                feedback_resource: ?*ID3D12Resource,
-                dest_descriptor: D3D12_CPU_DESCRIPTOR_HANDLE,
+                targeted_resource: ?*IResource,
+                feedback_resource: ?*IResource,
+                dest_descriptor: CPU_DESCRIPTOR_HANDLE,
             ) void {
                 self.v.device8.CreateSamplerFeedbackUnorderedAccessView(
                     self,
@@ -4918,11 +4938,11 @@ pub const ID3D12Device8 = extern struct {
             }
             pub inline fn GetCopyableFootprints1(
                 self: *T,
-                desc: *const D3D12_RESOURCE_DESC1,
+                desc: *const RESOURCE_DESC1,
                 first_subresource: UINT,
                 num_subresources: UINT,
                 base_offset: UINT64,
-                layouts: ?[*]D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+                layouts: ?[*]PLACED_SUBRESOURCE_FOOTPRINT,
                 num_rows: ?[*]UINT,
                 row_size_in_bytes: ?[*]UINT64,
                 total_bytes: ?*UINT64,
@@ -4948,43 +4968,43 @@ pub const ID3D12Device8 = extern struct {
                 *T,
                 UINT,
                 UINT,
-                *const D3D12_RESOURCE_DESC1,
-                ?[*]D3D12_RESOURCE_ALLOCATION_INFO1,
-            ) callconv(WINAPI) D3D12_RESOURCE_ALLOCATION_INFO,
+                *const RESOURCE_DESC1,
+                ?[*]RESOURCE_ALLOCATION_INFO1,
+            ) callconv(WINAPI) RESOURCE_ALLOCATION_INFO,
             CreateCommittedResource2: fn (
                 *T,
-                *const D3D12_HEAP_PROPERTIES,
-                D3D12_HEAP_FLAGS,
-                *const D3D12_RESOURCE_DESC1,
-                D3D12_RESOURCE_STATES,
-                ?*const D3D12_CLEAR_VALUE,
-                ?*ID3D12ProtectedResourceSession,
+                *const HEAP_PROPERTIES,
+                HEAP_FLAGS,
+                *const RESOURCE_DESC1,
+                RESOURCE_STATES,
+                ?*const CLEAR_VALUE,
+                ?*IProtectedResourceSession,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreatePlacedResource1: fn (
                 *T,
-                *ID3D12Heap,
+                *IHeap,
                 UINT64,
-                *const D3D12_RESOURCE_DESC1,
-                D3D12_RESOURCE_STATES,
-                ?*const D3D12_CLEAR_VALUE,
+                *const RESOURCE_DESC1,
+                RESOURCE_STATES,
+                ?*const CLEAR_VALUE,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             CreateSamplerFeedbackUnorderedAccessView: fn (
                 *T,
-                ?*ID3D12Resource,
-                ?*ID3D12Resource,
-                D3D12_CPU_DESCRIPTOR_HANDLE,
+                ?*IResource,
+                ?*IResource,
+                CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
             GetCopyableFootprints1: fn (
                 *T,
-                *const D3D12_RESOURCE_DESC1,
+                *const RESOURCE_DESC1,
                 UINT,
                 UINT,
                 UINT64,
-                ?[*]D3D12_PLACED_SUBRESOURCE_FOOTPRINT,
+                ?[*]PLACED_SUBRESOURCE_FOOTPRINT,
                 ?[*]UINT,
                 ?[*]UINT64,
                 ?*UINT64,
@@ -4993,71 +5013,71 @@ pub const ID3D12Device8 = extern struct {
     }
 };
 
-pub const D3D12_SHADER_CACHE_KIND_FLAGS = UINT;
-pub const D3D12_SHADER_CACHE_KIND_FLAG_IMPLICIT_D3D_CACHE_FOR_DRIVER = 0x1;
-pub const D3D12_SHADER_CACHE_KIND_FLAG_IMPLICIT_D3D_CONVERSIONS = 0x2;
-pub const D3D12_SHADER_CACHE_KIND_FLAG_IMPLICIT_DRIVER_MANAGED = 0x4;
-pub const D3D12_SHADER_CACHE_KIND_FLAG_APPLICATION_MANAGED = 0x8;
+pub const SHADER_CACHE_KIND_FLAGS = UINT;
+pub const SHADER_CACHE_KIND_FLAG_IMPLICIT_D3D_CACHE_FOR_DRIVER = 0x1;
+pub const SHADER_CACHE_KIND_FLAG_IMPLICIT_D3D_CONVERSIONS = 0x2;
+pub const SHADER_CACHE_KIND_FLAG_IMPLICIT_DRIVER_MANAGED = 0x4;
+pub const SHADER_CACHE_KIND_FLAG_APPLICATION_MANAGED = 0x8;
 
-pub const D3D12_SHADER_CACHE_CONTROL_FLAGS = UINT;
-pub const D3D12_SHADER_CACHE_CONTROL_FLAG_DISABLE = 0x1;
-pub const D3D12_SHADER_CACHE_CONTROL_FLAG_ENABLE = 0x2;
-pub const D3D12_SHADER_CACHE_CONTROL_FLAG_CLEAR = 0x4;
+pub const SHADER_CACHE_CONTROL_FLAGS = UINT;
+pub const SHADER_CACHE_CONTROL_FLAG_DISABLE = 0x1;
+pub const SHADER_CACHE_CONTROL_FLAG_ENABLE = 0x2;
+pub const SHADER_CACHE_CONTROL_FLAG_CLEAR = 0x4;
 
-pub const D3D12_SHADER_CACHE_MODE = enum(UINT) {
+pub const SHADER_CACHE_MODE = enum(UINT) {
     MEMORY = 0,
     DISK = 1,
 };
 
-pub const D3D12_SHADER_CACHE_FLAGS = UINT;
-pub const D3D12_SHADER_CACHE_FLAG_NONE = 0;
-pub const D3D12_SHADER_CACHE_FLAG_DRIVER_VERSIONED = 0x1;
-pub const D3D12_SHADER_CACHE_FLAG_USE_WORKING_DIR = 0x2;
+pub const SHADER_CACHE_FLAGS = UINT;
+pub const SHADER_CACHE_FLAG_NONE = 0;
+pub const SHADER_CACHE_FLAG_DRIVER_VERSIONED = 0x1;
+pub const SHADER_CACHE_FLAG_USE_WORKING_DIR = 0x2;
 
-pub const D3D12_SHADER_CACHE_SESSION_DESC = extern struct {
+pub const SHADER_CACHE_SESSION_DESC = extern struct {
     Identifier: GUID,
-    Mode: D3D12_SHADER_CACHE_MODE,
-    Flags: D3D12_SHADER_CACHE_FLAGS,
+    Mode: SHADER_CACHE_MODE,
+    Flags: SHADER_CACHE_FLAGS,
     MaximumInMemoryCacheSizeBytes: UINT,
     MaximumInMemoryCacheEntries: UINT,
     MaximumValueFileSizeBytes: UINT,
     Version: UINT64,
 };
 
-pub const ID3D12Device9 = extern struct {
+pub const IDevice9 = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        device: ID3D12Device.VTable(Self),
-        device1: ID3D12Device1.VTable(Self),
-        device2: ID3D12Device2.VTable(Self),
-        device3: ID3D12Device3.VTable(Self),
-        device4: ID3D12Device4.VTable(Self),
-        device5: ID3D12Device5.VTable(Self),
-        device6: ID3D12Device6.VTable(Self),
-        device7: ID3D12Device7.VTable(Self),
-        device8: ID3D12Device8.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: IDevice1.VTable(Self),
+        device2: IDevice2.VTable(Self),
+        device3: IDevice3.VTable(Self),
+        device4: IDevice4.VTable(Self),
+        device5: IDevice5.VTable(Self),
+        device6: IDevice6.VTable(Self),
+        device7: IDevice7.VTable(Self),
+        device8: IDevice8.VTable(Self),
         device9: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12Device.Methods(Self);
-    usingnamespace ID3D12Device1.Methods(Self);
-    usingnamespace ID3D12Device2.Methods(Self);
-    usingnamespace ID3D12Device3.Methods(Self);
-    usingnamespace ID3D12Device4.Methods(Self);
-    usingnamespace ID3D12Device5.Methods(Self);
-    usingnamespace ID3D12Device6.Methods(Self);
-    usingnamespace ID3D12Device7.Methods(Self);
-    usingnamespace ID3D12Device8.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace IDevice1.Methods(Self);
+    usingnamespace IDevice2.Methods(Self);
+    usingnamespace IDevice3.Methods(Self);
+    usingnamespace IDevice4.Methods(Self);
+    usingnamespace IDevice5.Methods(Self);
+    usingnamespace IDevice6.Methods(Self);
+    usingnamespace IDevice7.Methods(Self);
+    usingnamespace IDevice8.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
             pub inline fn CreateShaderCacheSession(
                 self: *T,
-                desc: *const D3D12_SHADER_CACHE_SESSION_DESC,
+                desc: *const SHADER_CACHE_SESSION_DESC,
                 guid: *const GUID,
                 session: ?*?*c_void,
             ) HRESULT {
@@ -5065,14 +5085,14 @@ pub const ID3D12Device9 = extern struct {
             }
             pub inline fn ShaderCacheControl(
                 self: *T,
-                kinds: D3D12_SHADER_CACHE_KIND_FLAGS,
-                control: D3D12_SHADER_CACHE_CONTROL_FLAGS,
+                kinds: SHADER_CACHE_KIND_FLAGS,
+                control: SHADER_CACHE_CONTROL_FLAGS,
             ) HRESULT {
                 return self.v.device9.ShaderCacheControl(self, kinds, control);
             }
             pub inline fn CreateCommandQueue1(
                 self: *T,
-                desc: *const D3D12_COMMAND_QUEUE_DESC,
+                desc: *const COMMAND_QUEUE_DESC,
                 creator_id: *const GUID,
                 guid: *const GUID,
                 cmdqueue: *?*c_void,
@@ -5086,18 +5106,18 @@ pub const ID3D12Device9 = extern struct {
         return extern struct {
             CreateShaderCacheSession: fn (
                 *T,
-                *const D3D12_SHADER_CACHE_SESSION_DESC,
+                *const SHADER_CACHE_SESSION_DESC,
                 *const GUID,
                 ?*?*c_void,
             ) callconv(WINAPI) HRESULT,
             ShaderCacheControl: fn (
                 *T,
-                D3D12_SHADER_CACHE_KIND_FLAGS,
-                D3D12_SHADER_CACHE_CONTROL_FLAGS,
+                SHADER_CACHE_KIND_FLAGS,
+                SHADER_CACHE_CONTROL_FLAGS,
             ) callconv(WINAPI) HRESULT,
             CreateCommandQueue1: fn (
                 *T,
-                *const D3D12_COMMAND_QUEUE_DESC,
+                *const COMMAND_QUEUE_DESC,
                 *const GUID,
                 *const GUID,
                 *?*c_void,
@@ -5106,22 +5126,22 @@ pub const ID3D12Device9 = extern struct {
     }
 };
 
-pub const D3D12_PROTECTED_SESSION_STATUS = enum(UINT) {
+pub const PROTECTED_SESSION_STATUS = enum(UINT) {
     OK = 0,
     INVALID = 1,
 };
 
-pub const ID3D12ProtectedSession = extern struct {
+pub const IProtectedSession = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
         psession: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
@@ -5129,7 +5149,7 @@ pub const ID3D12ProtectedSession = extern struct {
             pub inline fn GetStatusFence(self: *T, guid: *const GUID, fence: ?*?*c_void) HRESULT {
                 return self.v.psession.GetStatusFence(self, guid, fence);
             }
-            pub inline fn GetSessionStatus(self: *T) D3D12_PROTECTED_SESSION_STATUS {
+            pub inline fn GetSessionStatus(self: *T) PROTECTED_SESSION_STATUS {
                 return self.v.psession.GetSessionStatus(self);
             }
         };
@@ -5138,37 +5158,37 @@ pub const ID3D12ProtectedSession = extern struct {
     fn VTable(comptime T: type) type {
         return extern struct {
             GetStatusFence: fn (*T, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
-            GetSessionStatus: fn (*T) callconv(WINAPI) D3D12_PROTECTED_SESSION_STATUS,
+            GetSessionStatus: fn (*T) callconv(WINAPI) PROTECTED_SESSION_STATUS,
         };
     }
 };
 
-pub const D3D12_PROTECTED_RESOURCE_SESSION_FLAGS = UINT;
+pub const PROTECTED_RESOURCE_SESSION_FLAGS = UINT;
 
-pub const D3D12_PROTECTED_RESOURCE_SESSION_DESC = extern struct {
+pub const PROTECTED_RESOURCE_SESSION_DESC = extern struct {
     NodeMask: UINT,
-    Flags: D3D12_PROTECTED_RESOURCE_SESSION_FLAGS,
+    Flags: PROTECTED_RESOURCE_SESSION_FLAGS,
 };
 
-pub const ID3D12ProtectedResourceSession = extern struct {
+pub const IProtectedResourceSession = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        object: ID3D12Object.VTable(Self),
-        devchild: ID3D12DeviceChild.VTable(Self),
-        psession: ID3D12ProtectedSession.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        psession: IProtectedSession.VTable(Self),
         prsession: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D12Object.Methods(Self);
-    usingnamespace ID3D12DeviceChild.Methods(Self);
-    usingnamespace ID3D12ProtectedSession.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IProtectedSession.Methods(Self);
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetDesc(self: *T) D3D12_PROTECTED_RESOURCE_SESSION_DESC {
-                var desc: D3D12_PROTECTED_RESOURCE_SESSION_DESC = undefined;
+            pub inline fn GetDesc(self: *T) PROTECTED_RESOURCE_SESSION_DESC {
+                var desc: PROTECTED_RESOURCE_SESSION_DESC = undefined;
                 self.v.prsession.GetDesc(self, &desc);
                 return desc;
             }
@@ -5179,8 +5199,8 @@ pub const ID3D12ProtectedResourceSession = extern struct {
         return extern struct {
             GetDesc: fn (
                 *T,
-                *D3D12_PROTECTED_RESOURCE_SESSION_DESC,
-            ) callconv(WINAPI) *D3D12_PROTECTED_RESOURCE_SESSION_DESC,
+                *PROTECTED_RESOURCE_SESSION_DESC,
+            ) callconv(WINAPI) *PROTECTED_RESOURCE_SESSION_DESC,
         };
     }
 };
@@ -5193,145 +5213,145 @@ pub extern "d3d12" fn D3D12CreateDevice(
     ?*?*c_void,
 ) callconv(WINAPI) HRESULT;
 
-pub const IID_ID3D12Device = GUID{
+pub const IID_IDevice = GUID{
     .Data1 = 0x189819f1,
     .Data2 = 0x1db6,
     .Data3 = 0x4b57,
     .Data4 = .{ 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 },
 };
-pub const IID_ID3D12Device1 = GUID{
+pub const IID_IDevice1 = GUID{
     .Data1 = 0x77acce80,
     .Data2 = 0x638e,
     .Data3 = 0x4e65,
     .Data4 = .{ 0x88, 0x95, 0xc1, 0xf2, 0x33, 0x86, 0x86, 0x3e },
 };
-pub const IID_ID3D12Device2 = GUID{
+pub const IID_IDevice2 = GUID{
     .Data1 = 0x30baa41e,
     .Data2 = 0xb15b,
     .Data3 = 0x475c,
     .Data4 = .{ 0xa0, 0xbb, 0x1a, 0xf5, 0xc5, 0xb6, 0x43, 0x28 },
 };
-pub const IID_ID3D12Device3 = GUID{
+pub const IID_IDevice3 = GUID{
     .Data1 = 0x81dadc15,
     .Data2 = 0x2bad,
     .Data3 = 0x4392,
     .Data4 = .{ 0x93, 0xc5, 0x10, 0x13, 0x45, 0xc4, 0xaa, 0x98 },
 };
-pub const IID_ID3D12Device4 = GUID{
+pub const IID_IDevice4 = GUID{
     .Data1 = 0xe865df17,
     .Data2 = 0xa9ee,
     .Data3 = 0x46f9,
     .Data4 = .{ 0xa4, 0x63, 0x30, 0x98, 0x31, 0x5a, 0xa2, 0xe5 },
 };
-pub const IID_ID3D12Device5 = GUID{
+pub const IID_IDevice5 = GUID{
     .Data1 = 0x8b4f173a,
     .Data2 = 0x2fea,
     .Data3 = 0x4b80,
     .Data4 = .{ 0x8f, 0x58, 0x43, 0x07, 0x19, 0x1a, 0xb9, 0x5d },
 };
-pub const IID_ID3D12Device6 = GUID{
+pub const IID_IDevice6 = GUID{
     .Data1 = 0xc70b221b,
     .Data2 = 0x40e4,
     .Data3 = 0x4a17,
     .Data4 = .{ 0x89, 0xaf, 0x02, 0x5a, 0x07, 0x27, 0xa6, 0xdc },
 };
-pub const IID_ID3D12Device7 = GUID{
+pub const IID_IDevice7 = GUID{
     .Data1 = 0x5c014b53,
     .Data2 = 0x68a1,
     .Data3 = 0x4b9b,
     .Data4 = .{ 0x8b, 0xd1, 0xdd, 0x60, 0x46, 0xb9, 0x35, 0x8b },
 };
-pub const IID_ID3D12Device8 = GUID{
+pub const IID_IDevice8 = GUID{
     .Data1 = 0x9218E6BB,
     .Data2 = 0xF944,
     .Data3 = 0x4F7E,
     .Data4 = .{ 0xA7, 0x5C, 0xB1, 0xB2, 0xC7, 0xB7, 0x01, 0xF3 },
 };
-pub const IID_ID3D12Device9 = GUID{
+pub const IID_IDevice9 = GUID{
     .Data1 = 0x4c80e962,
     .Data2 = 0xf032,
     .Data3 = 0x4f60,
     .Data4 = .{ 0xbc, 0x9e, 0xeb, 0xc2, 0xcf, 0xa1, 0xd8, 0x3c },
 };
-pub const IID_ID3D12CommandQueue = GUID{
+pub const IID_ICommandQueue = GUID{
     .Data1 = 0x0ec870a6,
     .Data2 = 0x5d7e,
     .Data3 = 0x4c22,
     .Data4 = .{ 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed },
 };
-pub const IID_ID3D12Fence = GUID{
+pub const IID_IFence = GUID{
     .Data1 = 0x0a753dcf,
     .Data2 = 0xc4d8,
     .Data3 = 0x4b91,
     .Data4 = .{ 0xad, 0xf6, 0xbe, 0x5a, 0x60, 0xd9, 0x5a, 0x76 },
 };
-pub const IID_ID3D12CommandAllocator = GUID{
+pub const IID_ICommandAllocator = GUID{
     .Data1 = 0x6102dee4,
     .Data2 = 0xaf59,
     .Data3 = 0x4b09,
     .Data4 = .{ 0xb9, 0x99, 0xb4, 0x4d, 0x73, 0xf0, 0x9b, 0x24 },
 };
-pub const IID_ID3D12PipelineState = GUID{
+pub const IID_IPipelineState = GUID{
     .Data1 = 0x765a30f3,
     .Data2 = 0xf624,
     .Data3 = 0x4c6f,
     .Data4 = .{ 0xa8, 0x28, 0xac, 0xe9, 0x48, 0x62, 0x24, 0x45 },
 };
-pub const IID_ID3D12DescriptorHeap = GUID{
+pub const IID_IDescriptorHeap = GUID{
     .Data1 = 0x8efb471d,
     .Data2 = 0x616c,
     .Data3 = 0x4f49,
     .Data4 = .{ 0x90, 0xf7, 0x12, 0x7b, 0xb7, 0x63, 0xfa, 0x51 },
 };
-pub const IID_ID3D12Resource = GUID{
+pub const IID_IResource = GUID{
     .Data1 = 0x696442be,
     .Data2 = 0xa72e,
     .Data3 = 0x4059,
     .Data4 = .{ 0xbc, 0x79, 0x5b, 0x5c, 0x98, 0x04, 0x0f, 0xad },
 };
-pub const IID_ID3D12RootSignature = GUID{
+pub const IID_IRootSignature = GUID{
     .Data1 = 0xc54a6b66,
     .Data2 = 0x72df,
     .Data3 = 0x4ee8,
     .Data4 = .{ 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 },
 };
-pub const IID_ID3D12GraphicsCommandList = GUID{
+pub const IID_IGraphicsCommandList = GUID{
     .Data1 = 0x5b160d0f,
     .Data2 = 0xac1b,
     .Data3 = 0x4185,
     .Data4 = .{ 0x8b, 0xa8, 0xb3, 0xae, 0x42, 0xa5, 0xa4, 0x55 },
 };
-pub const IID_ID3D12GraphicsCommandList1 = GUID{
+pub const IID_IGraphicsCommandList1 = GUID{
     .Data1 = 0x553103fb,
     .Data2 = 0x1fe7,
     .Data3 = 0x4557,
     .Data4 = .{ 0xbb, 0x38, 0x94, 0x6d, 0x7d, 0x0e, 0x7c, 0xa7 },
 };
-pub const IID_ID3D12GraphicsCommandList2 = GUID{
+pub const IID_IGraphicsCommandList2 = GUID{
     .Data1 = 0x38C3E584,
     .Data2 = 0xFF17,
     .Data3 = 0x412C,
     .Data4 = .{ 0x91, 0x50, 0x4F, 0xC6, 0xF9, 0xD7, 0x2A, 0x28 },
 };
-pub const IID_ID3D12GraphicsCommandList3 = GUID{
+pub const IID_IGraphicsCommandList3 = GUID{
     .Data1 = 0x6FDA83A7,
     .Data2 = 0xB84C,
     .Data3 = 0x4E38,
     .Data4 = .{ 0x9A, 0xC8, 0xC7, 0xBD, 0x22, 0x01, 0x6B, 0x3D },
 };
-pub const IID_ID3D12GraphicsCommandList4 = GUID{
+pub const IID_IGraphicsCommandList4 = GUID{
     .Data1 = 0x8754318e,
     .Data2 = 0xd3a9,
     .Data3 = 0x4541,
     .Data4 = .{ 0x98, 0xcf, 0x64, 0x5b, 0x50, 0xdc, 0x48, 0x74 },
 };
-pub const IID_ID3D12GraphicsCommandList5 = GUID{
+pub const IID_IGraphicsCommandList5 = GUID{
     .Data1 = 0x55050859,
     .Data2 = 0x4024,
     .Data3 = 0x474c,
     .Data4 = .{ 0x87, 0xf5, 0x64, 0x72, 0xea, 0xee, 0x44, 0xea },
 };
-pub const IID_ID3D12GraphicsCommandList6 = GUID{
+pub const IID_IGraphicsCommandList6 = GUID{
     .Data1 = 0xc3827890,
     .Data2 = 0xe548,
     .Data3 = 0x4cfa,

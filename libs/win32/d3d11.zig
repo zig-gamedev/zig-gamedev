@@ -1,31 +1,33 @@
-const std = @import("std");
-usingnamespace std.os.windows;
-usingnamespace @import("misc.zig");
+const windows = @import("windows.zig");
+const IUnknown = windows.IUnknown;
+const UINT = windows.UINT;
+const WINAPI = windows.WINAPI;
+const GUID = windows.GUID;
 
-pub const D3D11_CREATE_DEVICE_FLAG = UINT;
-pub const D3D11_CREATE_DEVICE_SINGLETHREADED = 0x1;
-pub const D3D11_CREATE_DEVICE_DEBUG = 0x2;
-pub const D3D11_CREATE_DEVICE_SWITCH_TO_REF = 0x4;
-pub const D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS = 0x8;
-pub const D3D11_CREATE_DEVICE_BGRA_SUPPORT = 0x20;
-pub const D3D11_CREATE_DEVICE_DEBUGGABLE = 0x40;
-pub const D3D11_CREATE_DEVICE_PREVENT_ALTERING_LAYER_SETTINGS_FROM_REGISTRY = 0x80;
-pub const D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT = 0x100;
-pub const D3D11_CREATE_DEVICE_VIDEO_SUPPORT = 0x800;
+pub const CREATE_DEVICE_FLAG = UINT;
+pub const CREATE_DEVICE_SINGLETHREADED = 0x1;
+pub const CREATE_DEVICE_DEBUG = 0x2;
+pub const CREATE_DEVICE_SWITCH_TO_REF = 0x4;
+pub const CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS = 0x8;
+pub const CREATE_DEVICE_BGRA_SUPPORT = 0x20;
+pub const CREATE_DEVICE_DEBUGGABLE = 0x40;
+pub const CREATE_DEVICE_PREVENT_ALTERING_LAYER_SETTINGS_FROM_REGISTRY = 0x80;
+pub const CREATE_DEVICE_DISABLE_GPU_TIMEOUT = 0x100;
+pub const CREATE_DEVICE_VIDEO_SUPPORT = 0x800;
 
-pub const D3D11_BIND_FLAG = UINT;
-pub const D3D11_BIND_VERTEX_BUFFER = 0x1;
-pub const D3D11_BIND_INDEX_BUFFER = 0x2;
-pub const D3D11_BIND_CONSTANT_BUFFER = 0x4;
-pub const D3D11_BIND_SHADER_RESOURCE = 0x8;
-pub const D3D11_BIND_STREAM_OUTPUT = 0x10;
-pub const D3D11_BIND_RENDER_TARGET = 0x20;
-pub const D3D11_BIND_DEPTH_STENCIL = 0x40;
-pub const D3D11_BIND_UNORDERED_ACCESS = 0x80;
-pub const D3D11_BIND_DECODER = 0x200;
-pub const D3D11_BIND_VIDEO_ENCODER = 0x400;
+pub const BIND_FLAG = UINT;
+pub const BIND_VERTEX_BUFFER = 0x1;
+pub const BIND_INDEX_BUFFER = 0x2;
+pub const BIND_CONSTANT_BUFFER = 0x4;
+pub const BIND_SHADER_RESOURCE = 0x8;
+pub const BIND_STREAM_OUTPUT = 0x10;
+pub const BIND_RENDER_TARGET = 0x20;
+pub const BIND_DEPTH_STENCIL = 0x40;
+pub const BIND_UNORDERED_ACCESS = 0x80;
+pub const BIND_DECODER = 0x200;
+pub const BIND_VIDEO_ENCODER = 0x400;
 
-pub const ID3D11DeviceChild = extern struct {
+pub const IDeviceChild = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
@@ -50,15 +52,15 @@ pub const ID3D11DeviceChild = extern struct {
     }
 };
 
-pub const ID3D11Resource = extern struct {
+pub const IResource = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        devchild: ID3D11DeviceChild.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
         resource: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D11DeviceChild.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
@@ -76,15 +78,15 @@ pub const ID3D11Resource = extern struct {
     }
 };
 
-pub const ID3D11DeviceContext = extern struct {
+pub const IDeviceContext = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
-        devchild: ID3D11DeviceChild.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
         devctx: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
-    usingnamespace ID3D11DeviceChild.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
@@ -209,7 +211,7 @@ pub const ID3D11DeviceContext = extern struct {
     }
 };
 
-pub const ID3D11Device = extern struct {
+pub const IDevice = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
@@ -270,7 +272,7 @@ pub const ID3D11Device = extern struct {
     }
 };
 
-pub const IID_ID3D11Resource = GUID{
+pub const IID_IResource = GUID{
     .Data1 = 0xdc8e63f3,
     .Data2 = 0xd12b,
     .Data3 = 0x4952,

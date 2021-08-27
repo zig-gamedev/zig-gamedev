@@ -149,7 +149,7 @@ const DemoState = struct {
     depth_texture_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
 
     brush: *w.ID2D1SolidColorBrush,
-    textformat: *w.IDWriteTextFormat,
+    textformat: *w.dwrite.ITextFormat,
     num_mesh_vertices: u32,
     num_mesh_indices: u32,
 
@@ -205,13 +205,13 @@ const DemoState = struct {
         };
 
         const textformat = blk: {
-            var maybe_textformat: ?*w.IDWriteTextFormat = null;
+            var maybe_textformat: ?*w.dwrite.ITextFormat = null;
             hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
                 utf8ToUtf16LeStringLiteral("Verdana"),
                 null,
-                w.DWRITE_FONT_WEIGHT.NORMAL,
-                w.DWRITE_FONT_STYLE.NORMAL,
-                w.DWRITE_FONT_STRETCH.NORMAL,
+                w.dwrite.FONT_WEIGHT.NORMAL,
+                w.dwrite.FONT_STYLE.NORMAL,
+                w.dwrite.FONT_STRETCH.NORMAL,
                 32.0,
                 utf8ToUtf16LeStringLiteral("en-us"),
                 &maybe_textformat,

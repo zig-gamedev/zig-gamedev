@@ -1,4 +1,6 @@
 const std = @import("std");
+const Builder = std.build.Builder;
+const Pkg = std.build.Pkg;
 
 pub fn build(b: *std.build.Builder) void {
     const files = [_][]const u8{
@@ -65,7 +67,11 @@ pub fn build(b: *std.build.Builder) void {
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
 
-    exe.addPackagePath("win32", "../../libs/win32/win32.zig");
+    const pkg_win32 = Pkg{
+        .name = "win32",
+        .path = .{ .path = "../../libs/win32/win32.zig" },
+    };
+    exe.addPackage(pkg_win32);
 
     exe.install();
 

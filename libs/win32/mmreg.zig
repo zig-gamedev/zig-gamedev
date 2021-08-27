@@ -1,6 +1,4 @@
-const std = @import("std");
-usingnamespace std.os.windows;
-usingnamespace @import("misc.zig");
+usingnamespace @import("windows.zig");
 
 pub const WAVEFORMATEX = extern struct {
     wFormatTag: WORD,

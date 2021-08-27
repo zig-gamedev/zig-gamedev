@@ -1,5 +1,4 @@
-const std = @import("std");
-usingnamespace std.os.windows;
+pub usingnamespace @import("std").os.windows;
 
 pub const INT8 = i8;
 pub const UINT8 = u8;

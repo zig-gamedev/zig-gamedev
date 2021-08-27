@@ -1,10 +1,15 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const w = @import("win32");
-const gr = @import("graphics");
-const lib = @import("library");
-const c = @import("c");
-usingnamespace @import("vectormath");
+const win32 = @import("win32");
+const w = win32.base;
+const d3d12 = win32.d3d12;
+const d2d1 = win32.d2d1;
+const dwrite = win32.dwrite;
+const common = @import("common");
+const gr = common.graphics;
+const lib = common.library;
+const c = common.c;
+usingnamespace common.vectormath;
 const math = std.math;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const hrPanic = lib.hrPanic;
@@ -37,9 +42,9 @@ const DemoState = struct {
     vertex_buffer: gr.ResourceHandle,
     index_buffer: gr.ResourceHandle,
     texture: gr.ResourceHandle,
-    texture_srv: w.D3D12_CPU_DESCRIPTOR_HANDLE,
-    brush: *w.ID2D1SolidColorBrush,
-    textformat: *w.IDWriteTextFormat,
+    texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
+    brush: *d2d1.ISolidColorBrush,
+    textformat: *dwrite.ITextFormat,
     mipmap_level: i32,
 
     fn init(allocator: *std.mem.Allocator) DemoState {
@@ -47,11 +52,11 @@ const DemoState = struct {
         var grfx = gr.GraphicsContext.init(window);
 
         const pipeline = blk: {
-            const input_layout_desc = [_]w.D3D12_INPUT_ELEMENT_DESC{
-                w.D3D12_INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
-                w.D3D12_INPUT_ELEMENT_DESC.init("_Texcoords", 0, .R32G32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
+            const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
+                d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+                d3d12.INPUT_ELEMENT_DESC.init("_Texcoords", 0, .R32G32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
             };
-            var pso_desc = w.D3D12_GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+            var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
             pso_desc.RasterizerState.CullMode = .NONE;
             pso_desc.DepthStencilState.DepthEnable = w.FALSE;
             pso_desc.InputLayout = .{
@@ -68,24 +73,24 @@ const DemoState = struct {
 
         const vertex_buffer = grfx.createCommittedResource(
             .DEFAULT,
-            w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initBuffer(num_mipmaps * 4 * @sizeOf(Vertex)),
-            w.D3D12_RESOURCE_STATE_COPY_DEST,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(num_mipmaps * 4 * @sizeOf(Vertex)),
+            d3d12.RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err);
 
         const index_buffer = grfx.createCommittedResource(
             .DEFAULT,
-            w.D3D12_HEAP_FLAG_NONE,
-            &w.D3D12_RESOURCE_DESC.initBuffer(4 * @sizeOf(u32)),
-            w.D3D12_RESOURCE_STATE_COPY_DEST,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(4 * @sizeOf(u32)),
+            d3d12.RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err);
 
         const brush = blk: {
-            var maybe_brush: ?*w.ID2D1SolidColorBrush = null;
+            var maybe_brush: ?*d2d1.ISolidColorBrush = null;
             hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
-                &w.D2D1_COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
+                &d2d1.COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
                 null,
                 &maybe_brush,
             ));
@@ -93,13 +98,13 @@ const DemoState = struct {
         };
 
         const textformat = blk: {
-            var maybe_textformat: ?*w.IDWriteTextFormat = null;
+            var maybe_textformat: ?*dwrite.ITextFormat = null;
             hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
                 utf8ToUtf16LeStringLiteral("Verdana"),
                 null,
-                w.DWRITE_FONT_WEIGHT.NORMAL,
-                w.DWRITE_FONT_STYLE.NORMAL,
-                w.DWRITE_FONT_STRETCH.NORMAL,
+                dwrite.FONT_WEIGHT.NORMAL,
+                dwrite.FONT_STYLE.NORMAL,
+                dwrite.FONT_STRETCH.NORMAL,
                 32.0,
                 utf8ToUtf16LeStringLiteral("en-us"),
                 &maybe_textformat,
@@ -125,10 +130,10 @@ const DemoState = struct {
         const texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
             grfx.getResource(texture),
-            &w.D3D12_SHADER_RESOURCE_VIEW_DESC{
+            &d3d12.SHADER_RESOURCE_VIEW_DESC{
                 .Format = .UNKNOWN,
                 .ViewDimension = .TEXTURE2D,
-                .Shader4ComponentMapping = w.D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+                .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
                 .u = .{
                     .Texture2D = .{
                         .MostDetailedMip = 0,
@@ -191,9 +196,9 @@ const DemoState = struct {
             );
         }
 
-        grfx.addTransitionBarrier(vertex_buffer, w.D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        grfx.addTransitionBarrier(index_buffer, w.D3D12_RESOURCE_STATE_INDEX_BUFFER);
-        grfx.addTransitionBarrier(texture, w.D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        grfx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+        grfx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         grfx.flushResourceBarriers();
 
         grfx.finishGpuCommands();
@@ -255,12 +260,12 @@ const DemoState = struct {
 
         const back_buffer = grfx.getBackBuffer();
 
-        grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_RENDER_TARGET);
+        grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
         grfx.flushResourceBarriers();
 
         grfx.cmdlist.OMSetRenderTargets(
             1,
-            &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
             w.TRUE,
             null,
         );
@@ -272,7 +277,7 @@ const DemoState = struct {
         );
         grfx.setCurrentPipeline(demo.pipeline);
         grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLESTRIP);
-        grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]w.D3D12_VERTEX_BUFFER_VIEW{.{
+        grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
             .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
             .SizeInBytes = num_mipmaps * 4 * @sizeOf(Vertex),
             .StrideInBytes = @sizeOf(Vertex),
@@ -297,18 +302,18 @@ const DemoState = struct {
                 .{ stats.fps, stats.average_cpu_time },
             ) catch unreachable;
 
-            demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
+            demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
             lib.DrawText(
                 grfx.d2d.context,
                 text,
                 demo.textformat,
-                &w.D2D1_RECT_F{
+                &d2d1.RECT_F{
                     .left = 10.0,
                     .top = 10.0,
                     .right = @intToFloat(f32, grfx.viewport_width),
                     .bottom = @intToFloat(f32, grfx.viewport_height),
                 },
-                @ptrCast(*w.ID2D1Brush, demo.brush),
+                @ptrCast(*d2d1.IBrush, demo.brush),
             );
         }
         grfx.endDraw2d();

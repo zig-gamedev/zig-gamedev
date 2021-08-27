@@ -1,6 +1,8 @@
-const std = @import("std");
-usingnamespace std.os.windows;
-usingnamespace @import("misc.zig");
+const windows = @import("windows.zig");
+const IUnknown = windows.IUnknown;
+const UINT = windows.UINT;
+const WINAPI = windows.WINAPI;
+const SIZE_T = windows.SIZE_T;
 
 pub const PRIMITIVE_TOPOLOGY = enum(UINT) {
     UNDEFINED = 0,
