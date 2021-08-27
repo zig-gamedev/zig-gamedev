@@ -12,7 +12,7 @@ const d3d11on12 = win32.d3d11on12;
 const wic = win32.wic;
 const c = @import("c.zig");
 const lib = @import("library.zig");
-usingnamespace @import("vectormath.zig");
+const vm = @import("vectormath.zig");
 const assert = std.debug.assert;
 const HResultError = lib.HResultError;
 const hrPanic = lib.hrPanic;
@@ -1435,8 +1435,8 @@ pub const GuiContext = struct {
         gr.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
         gr.setCurrentPipeline(gui.pipeline);
         {
-            const mem = gr.allocateUploadMemory(@sizeOf(Mat4));
-            const xform = mat4.transpose(mat4.initOrthoOffCenterLh(
+            const mem = gr.allocateUploadMemory(@sizeOf(vm.Mat4));
+            const xform = vm.mat4.transpose(vm.mat4.initOrthoOffCenterLh(
                 display_x,
                 display_x + display_w,
                 display_y + display_h,
@@ -1444,7 +1444,7 @@ pub const GuiContext = struct {
                 0.0,
                 1.0,
             ));
-            @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &xform[0][0]), @sizeOf(Mat4));
+            @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &xform[0][0]), @sizeOf(vm.Mat4));
 
             gr.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         }
