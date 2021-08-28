@@ -8,3 +8,4 @@ pub const d3d = @import("d3dcommon.zig");
 pub const d2d1 = @import("d2d1.zig");
 pub const d3d11on12 = @import("d3d11on12.zig");
 pub const wic = @import("wincodec.zig");
+pub const wasapi = @import("wasapi.zig");

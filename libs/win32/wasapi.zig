@@ -1,6 +1,131 @@
-usingnamespace @import("windows.zig");
-usingnamespace @import("audiosessiontypes.zig");
-usingnamespace @import("mmreg.zig");
+const windows = @import("windows.zig");
+const UINT = windows.UINT;
+const UINT32 = windows.UINT32;
+const IUnknown = windows.IUnknown;
+const WINAPI = windows.WINAPI;
+const GUID = windows.GUID;
+const HRESULT = windows.HRESULT;
+const DWORD = windows.DWORD;
+const WORD = windows.WORD;
+const PROPVARIANT = windows.PROPVARIANT;
+const HANDLE = windows.HANDLE;
+
+pub const REFERENCE_TIME = windows.REFERENCE_TIME;
+
+pub const EDataFlow = enum(UINT) {
+    eRender = 0,
+    eCapture = 1,
+    eAll = 2,
+};
+
+pub const ERole = enum(UINT) {
+    eConsole = 0,
+    eMultimedia = 1,
+    eCommunications = 2,
+};
+
+pub const IMMDevice = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        device: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn Activate(
+                self: *T,
+                guid: *const GUID,
+                clsctx: DWORD,
+                params: ?*PROPVARIANT,
+                iface: *?*c_void,
+            ) HRESULT {
+                return self.v.device.Activate(self, guid, clsctx, params, iface);
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            Activate: fn (*T, *const GUID, DWORD, ?*PROPVARIANT, *?*c_void) callconv(WINAPI) HRESULT,
+            OpenPropertyStore: *c_void,
+            GetId: *c_void,
+            GetState: *c_void,
+        };
+    }
+};
+
+pub const IMMDeviceEnumerator = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devenum: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetDefaultAudioEndpoint(self: *T, flow: EDataFlow, role: ERole, endpoint: *?*IMMDevice) HRESULT {
+                return self.v.devenum.GetDefaultAudioEndpoint(self, flow, role, endpoint);
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            EnumAudioEndpoints: *c_void,
+            GetDefaultAudioEndpoint: fn (*T, EDataFlow, ERole, *?*IMMDevice) callconv(WINAPI) HRESULT,
+            GetDevice: *c_void,
+            RegisterEndpointNotificationCallback: *c_void,
+            UnregisterEndpointNotificationCallback: *c_void,
+        };
+    }
+};
+
+pub const CLSID_MMDeviceEnumerator = GUID{
+    .Data1 = 0xBCDE0395,
+    .Data2 = 0xE52F,
+    .Data3 = 0x467C,
+    .Data4 = .{ 0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E },
+};
+pub const IID_IMMDeviceEnumerator = GUID{
+    .Data1 = 0xA95664D2,
+    .Data2 = 0x9614,
+    .Data3 = 0x4F35,
+    .Data4 = .{ 0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36, 0x17, 0xE6 },
+};
+
+pub const WAVEFORMATEX = extern struct {
+    wFormatTag: WORD,
+    nChannels: WORD,
+    nSamplesPerSec: DWORD,
+    nAvgBytesPerSec: DWORD,
+    nBlockAlign: WORD,
+    wBitsPerSample: WORD,
+    cbSize: WORD,
+};
+
+pub const WAVE_FORMAT_PCM = @as(u32, 1);
+pub const WAVE_FORMAT_IEEE_FLOAT = @as(u32, 0x0003);
+
+pub const AUDCLNT_SHAREMODE = enum(UINT) {
+    SHARED = 0,
+    EXCLUSIVE = 1,
+};
+
+pub const AUDCLNT_STREAMFLAGS_CROSSPROCESS: UINT = 0x00010000;
+pub const AUDCLNT_STREAMFLAGS_LOOPBACK: UINT = 0x00020000;
+pub const AUDCLNT_STREAMFLAGS_EVENTCALLBACK: UINT = 0x00040000;
+pub const AUDCLNT_STREAMFLAGS_NOPERSIST: UINT = 0x00080000;
+pub const AUDCLNT_STREAMFLAGS_RATEADJUST: UINT = 0x00100000;
+pub const AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY: UINT = 0x08000000;
+pub const AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM: UINT = 0x80000000;
+pub const AUDCLNT_SESSIONFLAGS_EXPIREWHENUNOWNED: UINT = 0x10000000;
+pub const AUDCLNT_SESSIONFLAGS_DISPLAY_HIDE: UINT = 0x20000000;
+pub const AUDCLNT_SESSIONFLAGS_DISPLAY_HIDEWHENEXPIRED: UINT = 0x40000000;
 
 pub const IAudioClient = extern struct {
     const Self = @This();

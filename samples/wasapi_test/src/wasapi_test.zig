@@ -1,10 +1,15 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const w = @import("win32");
-const gr = @import("graphics");
-const lib = @import("library");
-const c = @import("c");
-usingnamespace @import("vectormath");
+const win32 = @import("win32");
+const w = win32.base;
+const d2d1 = win32.d2d1;
+const d3d12 = win32.d3d12;
+const dwrite = win32.dwrite;
+const wasapi = win32.wasapi;
+const common = @import("common");
+const gr = common.graphics;
+const lib = common.library;
+const c = common.c;
 const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
@@ -22,8 +27,8 @@ const DemoState = struct {
     gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
 
-    brush: *w.ID2D1SolidColorBrush,
-    textformat: *w.IDWriteTextFormat,
+    brush: *d2d1.ISolidColorBrush,
+    textformat: *dwrite.ITextFormat,
 };
 
 fn init(allocator: *std.mem.Allocator) DemoState {
@@ -31,22 +36,22 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     var grfx = gr.GraphicsContext.init(window);
 
     const brush = blk: {
-        var maybe_brush: ?*w.ID2D1SolidColorBrush = null;
+        var maybe_brush: ?*d2d1.ISolidColorBrush = null;
         hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
-            &w.D2D1_COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
+            &d2d1.COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
             null,
             &maybe_brush,
         ));
         break :blk maybe_brush.?;
     };
     const textformat = blk: {
-        var maybe_textformat: ?*w.IDWriteTextFormat = null;
+        var maybe_textformat: ?*dwrite.ITextFormat = null;
         hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
             utf8ToUtf16LeStringLiteral("Verdana"),
             null,
-            w.DWRITE_FONT_WEIGHT.NORMAL,
-            w.DWRITE_FONT_STYLE.NORMAL,
-            w.DWRITE_FONT_STRETCH.NORMAL,
+            dwrite.FONT_WEIGHT.NORMAL,
+            dwrite.FONT_STYLE.NORMAL,
+            dwrite.FONT_STRETCH.NORMAL,
             32.0,
             utf8ToUtf16LeStringLiteral("en-us"),
             &maybe_textformat,
@@ -57,12 +62,12 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
     const audio_device_enumerator = blk: {
-        var audio_device_enumerator: *w.IMMDeviceEnumerator = undefined;
+        var audio_device_enumerator: *wasapi.IMMDeviceEnumerator = undefined;
         hrPanicOnFail(w.CoCreateInstance(
-            &w.CLSID_MMDeviceEnumerator,
+            &wasapi.CLSID_MMDeviceEnumerator,
             null,
             w.CLSCTX_INPROC_SERVER,
-            &w.IID_IMMDeviceEnumerator,
+            &wasapi.IID_IMMDeviceEnumerator,
             @ptrCast(*?*c_void, &audio_device_enumerator),
         ));
         break :blk audio_device_enumerator;
@@ -70,20 +75,20 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     defer _ = audio_device_enumerator.Release();
 
     const audio_device = blk: {
-        var audio_device: *w.IMMDevice = undefined;
+        var audio_device: *wasapi.IMMDevice = undefined;
         hrPanicOnFail(audio_device_enumerator.GetDefaultAudioEndpoint(
             .eRender,
             .eConsole,
-            @ptrCast(*?*w.IMMDevice, &audio_device),
+            @ptrCast(*?*wasapi.IMMDevice, &audio_device),
         ));
         break :blk audio_device;
     };
     defer _ = audio_device.Release();
 
     const audio_client = blk: {
-        var audio_client: *w.IAudioClient3 = undefined;
+        var audio_client: *wasapi.IAudioClient3 = undefined;
         hrPanicOnFail(audio_device.Activate(
-            &w.IID_IAudioClient3,
+            &wasapi.IID_IAudioClient3,
             w.CLSCTX_INPROC_SERVER,
             null,
             @ptrCast(*?*c_void, &audio_client),
@@ -94,9 +99,9 @@ fn init(allocator: *std.mem.Allocator) DemoState {
 
     // Initialize audio client interafce.
     {
-        var closest_format: ?*w.WAVEFORMATEX = null;
-        const wanted_format = w.WAVEFORMATEX{
-            .wFormatTag = w.WAVE_FORMAT_IEEE_FLOAT,
+        var closest_format: ?*wasapi.WAVEFORMATEX = null;
+        const wanted_format = wasapi.WAVEFORMATEX{
+            .wFormatTag = wasapi.WAVE_FORMAT_IEEE_FLOAT,
             .nChannels = 2,
             .nSamplesPerSec = 48_000,
             .nAvgBytesPerSec = 48_000 * 8,
@@ -107,12 +112,12 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         hrPanicOnFail(audio_client.IsFormatSupported(.SHARED, &wanted_format, &closest_format));
         assert(closest_format == null);
 
-        var default_period: w.REFERENCE_TIME = 0;
+        var default_period: wasapi.REFERENCE_TIME = 0;
         hrPanicOnFail(audio_client.GetDevicePeriod(&default_period, null));
 
         hrPanicOnFail(audio_client.Initialize(
             .SHARED,
-            w.AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+            wasapi.AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
             default_period, // or 0
             0,
             &wanted_format,
@@ -159,12 +164,12 @@ fn draw(demo: *DemoState) void {
 
     const back_buffer = grfx.getBackBuffer();
 
-    grfx.addTransitionBarrier(back_buffer.resource_handle, w.D3D12_RESOURCE_STATE_RENDER_TARGET);
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
     grfx.flushResourceBarriers();
 
     grfx.cmdlist.OMSetRenderTargets(
         1,
-        &[_]w.D3D12_CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
         null,
     );
@@ -187,18 +192,18 @@ fn draw(demo: *DemoState) void {
             .{ stats.fps, stats.average_cpu_time },
         ) catch unreachable;
 
-        demo.brush.SetColor(&w.D2D1_COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+        demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
         lib.DrawText(
             grfx.d2d.context,
             text,
             demo.textformat,
-            &w.D2D1_RECT_F{
+            &d2d1.RECT_F{
                 .left = 10.0,
                 .top = 10.0,
                 .right = @intToFloat(f32, grfx.viewport_width),
                 .bottom = @intToFloat(f32, grfx.viewport_height),
             },
-            @ptrCast(*w.ID2D1Brush, demo.brush),
+            @ptrCast(*d2d1.IBrush, demo.brush),
         );
     }
     grfx.endDraw2d();

@@ -1,4 +1,6 @@
 const std = @import("std");
+const Builder = std.build.Builder;
+const Pkg = std.build.Pkg;
 
 pub fn build(b: *std.build.Builder) void {
     const files = [_][]const u8{
@@ -67,11 +69,24 @@ pub fn build(b: *std.build.Builder) void {
 
     exe.want_lto = false;
 
-    exe.addPackagePath("win32", "../../libs/win32/win32.zig");
-    exe.addPackagePath("graphics", "../../libs/common/graphics.zig");
-    exe.addPackagePath("vectormath", "../../libs/common/vectormath.zig");
-    exe.addPackagePath("library", "../../libs/common/library.zig");
-    exe.addPackagePath("c", "../../libs/common/c.zig");
+    const pkg_win32 = Pkg{
+        .name = "win32",
+        .path = .{ .path = "../../libs/win32/win32.zig" },
+    };
+    exe.addPackage(pkg_win32);
+
+    const pkg_common = Pkg{
+        .name = "common",
+        .path = .{ .path = "../../libs/common/common.zig" },
+        .dependencies = &[_]Pkg{
+            Pkg{
+                .name = "win32",
+                .path = .{ .path = "../../libs/win32/win32.zig" },
+                .dependencies = null,
+            },
+        },
+    };
+    exe.addPackage(pkg_common);
 
     const external = "../../external/src";
     exe.addIncludeDir(external);
