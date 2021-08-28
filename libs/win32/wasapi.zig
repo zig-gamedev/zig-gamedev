@@ -9,8 +9,7 @@ const DWORD = windows.DWORD;
 const WORD = windows.WORD;
 const PROPVARIANT = windows.PROPVARIANT;
 const HANDLE = windows.HANDLE;
-
-pub const REFERENCE_TIME = windows.REFERENCE_TIME;
+const REFERENCE_TIME = windows.REFERENCE_TIME;
 
 pub const EDataFlow = enum(UINT) {
     eRender = 0,

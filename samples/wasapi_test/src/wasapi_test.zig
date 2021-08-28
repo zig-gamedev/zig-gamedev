@@ -112,7 +112,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         hrPanicOnFail(audio_client.IsFormatSupported(.SHARED, &wanted_format, &closest_format));
         assert(closest_format == null);
 
-        var default_period: wasapi.REFERENCE_TIME = 0;
+        var default_period: w.REFERENCE_TIME = 0;
         hrPanicOnFail(audio_client.GetDevicePeriod(&default_period, null));
 
         hrPanicOnFail(audio_client.Initialize(
