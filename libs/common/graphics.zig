@@ -1436,15 +1436,15 @@ pub const GuiContext = struct {
         gr.setCurrentPipeline(gui.pipeline);
         {
             const mem = gr.allocateUploadMemory(@sizeOf(vm.Mat4));
-            const xform = vm.mat4.transpose(vm.mat4.initOrthoOffCenterLh(
+            const xform = vm.Mat4.initOrthoOffCenterLh(
                 display_x,
                 display_x + display_w,
                 display_y + display_h,
                 display_y,
                 0.0,
                 1.0,
-            ));
-            @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &xform[0][0]), @sizeOf(vm.Mat4));
+            ).transpose();
+            @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &xform.m[0][0]), @sizeOf(vm.Mat4));
 
             gr.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         }

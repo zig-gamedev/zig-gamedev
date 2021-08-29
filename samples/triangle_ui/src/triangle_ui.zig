@@ -82,9 +82,9 @@ pub fn main() !void {
     defer gui.deinit(&grfx);
 
     const upload_verts = grfx.allocateUploadBufferRegion(vm.Vec3, 3);
-    upload_verts.cpu_slice[0] = vm.vec3.init(-0.7, -0.7, 0.0);
-    upload_verts.cpu_slice[1] = vm.vec3.init(0.0, 0.7, 0.0);
-    upload_verts.cpu_slice[2] = vm.vec3.init(0.7, -0.7, 0.0);
+    upload_verts.cpu_slice[0] = vm.Vec3.init(-0.7, -0.7, 0.0);
+    upload_verts.cpu_slice[1] = vm.Vec3.init(0.0, 0.7, 0.0);
+    upload_verts.cpu_slice[2] = vm.Vec3.init(0.7, -0.7, 0.0);
 
     grfx.cmdlist.CopyBufferRegion(
         grfx.getResource(vertex_buffer),
@@ -113,7 +113,7 @@ pub fn main() !void {
 
     grfx.finishGpuCommands();
 
-    var triangle_color = vm.vec3.init(0.0, 1.0, 0.0);
+    var triangle_color = vm.Vec3.init(0.0, 1.0, 0.0);
 
     var stats = lib.FrameStats.init();
 
@@ -146,7 +146,7 @@ pub fn main() !void {
                 null,
                 c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
             );
-            _ = c.igColorEdit3("Triangle color", &triangle_color, c.ImGuiColorEditFlags_None);
+            _ = c.igColorEdit3("Triangle color", &triangle_color.v, c.ImGuiColorEditFlags_None);
             c.igEnd();
 
             grfx.beginFrame();
@@ -183,7 +183,7 @@ pub fn main() !void {
             grfx.cmdlist.SetGraphicsRoot32BitConstant(
                 0,
                 c.igColorConvertFloat4ToU32(
-                    c.ImVec4{ .x = triangle_color[0], .y = triangle_color[1], .z = triangle_color[2], .w = 1.0 },
+                    c.ImVec4{ .x = triangle_color.v[0], .y = triangle_color.v[1], .z = triangle_color.v[2], .w = 1.0 },
                 ),
                 0,
             );

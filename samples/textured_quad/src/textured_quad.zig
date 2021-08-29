@@ -154,20 +154,20 @@ const DemoState = struct {
             while (mipmap_index < num_mipmaps) : (mipmap_index += 1) {
                 const index = mipmap_index * 4;
                 upload_verts.cpu_slice[index] = .{
-                    .position = vm.vec3.init(-r, r, 0.0),
-                    .uv = vm.vec2.init(0.0, 0.0),
+                    .position = vm.Vec3.init(-r, r, 0.0),
+                    .uv = vm.Vec2.init(0.0, 0.0),
                 };
                 upload_verts.cpu_slice[index + 1] = .{
-                    .position = vm.vec3.init(r, r, 0.0),
-                    .uv = vm.vec2.init(1.0, 0.0),
+                    .position = vm.Vec3.init(r, r, 0.0),
+                    .uv = vm.Vec2.init(1.0, 0.0),
                 };
                 upload_verts.cpu_slice[index + 2] = .{
-                    .position = vm.vec3.init(-r, -r, 0.0),
-                    .uv = vm.vec2.init(0.0, 1.0),
+                    .position = vm.Vec3.init(-r, -r, 0.0),
+                    .uv = vm.Vec2.init(0.0, 1.0),
                 };
                 upload_verts.cpu_slice[index + 3] = .{
-                    .position = vm.vec3.init(r, -r, 0.0),
-                    .uv = vm.vec2.init(1.0, 1.0),
+                    .position = vm.Vec3.init(r, -r, 0.0),
+                    .uv = vm.Vec2.init(1.0, 1.0),
                 };
                 r *= 0.5;
             }
