@@ -1,4 +1,3 @@
-const builtin = @import("builtin");
 const std = @import("std");
 const win32 = @import("win32");
 const w = win32.base;
@@ -10,10 +9,11 @@ const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
+const math = std.math;
 const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
-const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -22,6 +22,14 @@ const window_name = "zig-gamedev: wasapi test";
 const window_width = 1920;
 const window_height = 1080;
 
+const AudioContex = struct {
+    client: *wasapi.IAudioClient3,
+    render_client: *wasapi.IAudioRenderClient,
+    buffer_ready_event: w.HANDLE,
+    buffer_size_in_frames: u32,
+    thread_handle: ?w.HANDLE,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -29,7 +37,37 @@ const DemoState = struct {
 
     brush: *d2d1.ISolidColorBrush,
     textformat: *dwrite.ITextFormat,
+
+    audio: AudioContex,
 };
+
+fn fillAudioBuffer(audio: AudioContex) void {
+    var buffer_padding_in_frames: w.UINT = 0;
+    hrPanicOnFail(audio.client.GetCurrentPadding(&buffer_padding_in_frames));
+
+    const num_frames = audio.buffer_size_in_frames - buffer_padding_in_frames;
+    var ptr: [*]f32 = undefined;
+
+    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @ptrCast(*?*w.BYTE, &ptr)));
+    var i: u32 = 0;
+    while (i < num_frames) : (i += 1) {
+        const frac = @intToFloat(f32, i) / @intToFloat(f32, num_frames);
+        ptr[i * 2 + 0] = 0.25 * math.sin(2.0 * math.pi * 440.0 * frac);
+        ptr[i * 2 + 1] = 0.25 * math.sin(2.0 * math.pi * 440.0 * frac);
+    }
+    hrPanicOnFail(audio.render_client.ReleaseBuffer(num_frames, 0));
+}
+
+fn audioThread(ctx: ?*c_void) callconv(.C) w.DWORD {
+    const audio = @ptrCast(*AudioContex, @alignCast(8, ctx));
+
+    fillAudioBuffer(audio.*);
+    while (true) {
+        w.WaitForSingleObject(audio.buffer_ready_event, w.INFINITE) catch unreachable;
+        fillAudioBuffer(audio.*);
+    }
+    return 0;
+}
 
 fn init(allocator: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
@@ -47,13 +85,13 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     const textformat = blk: {
         var maybe_textformat: ?*dwrite.ITextFormat = null;
         hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
-            utf8ToUtf16LeStringLiteral("Verdana"),
+            L("Verdana"),
             null,
             dwrite.FONT_WEIGHT.NORMAL,
             dwrite.FONT_STYLE.NORMAL,
             dwrite.FONT_STRETCH.NORMAL,
             32.0,
-            utf8ToUtf16LeStringLiteral("en-us"),
+            L("en-us"),
             &maybe_textformat,
         ));
         break :blk maybe_textformat.?;
@@ -95,7 +133,6 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         ));
         break :blk audio_client;
     };
-    defer _ = audio_client.Release();
 
     // Initialize audio client interafce.
     {
@@ -112,18 +149,36 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         hrPanicOnFail(audio_client.IsFormatSupported(.SHARED, &wanted_format, &closest_format));
         assert(closest_format == null);
 
-        var default_period: w.REFERENCE_TIME = 0;
-        hrPanicOnFail(audio_client.GetDevicePeriod(&default_period, null));
-
         hrPanicOnFail(audio_client.Initialize(
             .SHARED,
             wasapi.AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-            default_period, // or 0
+            0,
             0,
             &wanted_format,
             null,
         ));
     }
+
+    const audio_render_client = blk: {
+        var audio_render_client: *wasapi.IAudioRenderClient = undefined;
+        hrPanicOnFail(audio_client.GetService(
+            &wasapi.IID_IAudioRenderClient,
+            @ptrCast(*?*c_void, &audio_render_client),
+        ));
+        break :blk audio_render_client;
+    };
+
+    const audio_buffer_ready_event = w.CreateEventEx(
+        null,
+        "audio_buffer_ready_event",
+        0,
+        w.EVENT_ALL_ACCESS,
+    ) catch unreachable;
+
+    hrPanicOnFail(audio_client.SetEventHandle(audio_buffer_ready_event));
+
+    var audio_buffer_size_in_frames: w.UINT = 0;
+    hrPanicOnFail(audio_client.GetBufferSize(&audio_buffer_size_in_frames));
 
     grfx.beginFrame();
 
@@ -137,11 +192,22 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .textformat = textformat,
+        .audio = .{
+            .client = audio_client,
+            .render_client = audio_render_client,
+            .buffer_ready_event = audio_buffer_ready_event,
+            .buffer_size_in_frames = audio_buffer_size_in_frames,
+            .thread_handle = null,
+        },
     };
 }
 
 fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    hrPanicOnFail(demo.audio.client.Stop());
+    w.CloseHandle(demo.audio.buffer_ready_event);
+    _ = demo.audio.render_client.Release();
+    _ = demo.audio.client.Release();
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
@@ -227,6 +293,17 @@ pub fn main() !void {
 
     var demo = init(allocator);
     defer deinit(&demo, allocator);
+
+    demo.audio.thread_handle = w.kernel32.CreateThread(
+        null,
+        0,
+        audioThread,
+        @ptrCast(*c_void, &demo.audio),
+        0,
+        null,
+    ).?;
+    w.kernel32.Sleep(1);
+    hrPanicOnFail(demo.audio.client.Start());
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);

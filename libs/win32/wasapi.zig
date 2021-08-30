@@ -1,4 +1,5 @@
 const windows = @import("windows.zig");
+const BYTE = windows.BYTE;
 const UINT = windows.UINT;
 const UINT32 = windows.UINT32;
 const IUnknown = windows.IUnknown;
@@ -107,8 +108,8 @@ pub const WAVEFORMATEX = extern struct {
     cbSize: WORD,
 };
 
-pub const WAVE_FORMAT_PCM = @as(u32, 1);
-pub const WAVE_FORMAT_IEEE_FLOAT = @as(u32, 0x0003);
+pub const WAVE_FORMAT_PCM: UINT = 1;
+pub const WAVE_FORMAT_IEEE_FLOAT: UINT = 0x0003;
 
 pub const AUDCLNT_SHAREMODE = enum(UINT) {
     SHARED = 0,
@@ -289,7 +290,7 @@ pub const IAudioRenderClient = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetBuffer(self: *T, num_frames_requested: UINT32, data: *?*BYTE) HRESULT {
+            pub inline fn GetBuffer(self: *T, num_frames_requested: UINT32, data: ?*?*BYTE) HRESULT {
                 return self.v.renderclient.GetBuffer(self, num_frames_requested, data);
             }
             pub inline fn ReleaseBuffer(self: *T, num_frames_written: UINT32, flags: DWORD) HRESULT {
@@ -300,7 +301,7 @@ pub const IAudioRenderClient = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetBuffer: fn (*T, UINT32, *?*BYTE) callconv(WINAPI) HRESULT,
+            GetBuffer: fn (*T, UINT32, ?*?*BYTE) callconv(WINAPI) HRESULT,
             ReleaseBuffer: fn (*T, UINT32, DWORD) callconv(WINAPI) HRESULT,
         };
     }
