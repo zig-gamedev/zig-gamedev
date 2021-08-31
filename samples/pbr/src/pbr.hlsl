@@ -1,4 +1,4 @@
-#if defined(MESH_PBR)
+#if defined(PSO_MESH_PBR)
 
 #define root_signature \
     "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
@@ -51,6 +51,6 @@ void psMeshPbr(
     out_color = float4(color, 1.0);
 }
 
-#elif defined(MESH_DEBUG)
+#elif defined(PSO_MESH_DEBUG)
 
 #endif

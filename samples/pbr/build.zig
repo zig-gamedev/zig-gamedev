@@ -51,10 +51,10 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "psMain", "imgui.ps.cso", "ps", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd("src/pbr.hlsl", "vsMeshPbr", "mesh_pbr.vs.cso", "vs", "MESH_PBR");
+    dxc_command = makeDxcCmd("src/pbr.hlsl", "vsMeshPbr", "mesh_pbr.vs.cso", "vs", "PSO_MESH_PBR");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd("src/pbr.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "MESH_PBR");
+    dxc_command = makeDxcCmd("src/pbr.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "PSO_MESH_PBR");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     b.getInstallStep().dependOn(dxc_step);
@@ -111,6 +111,8 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_draw.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_demo.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/cimgui.cpp", &[_][]const u8{""});
+
+    exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
 
     exe.install();
 

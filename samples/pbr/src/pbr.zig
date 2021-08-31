@@ -35,7 +35,7 @@ comptime {
 }
 
 fn loadMesh(
-    filename: []const u8,
+    gltf_path: []const u8,
     indices: *std.ArrayList(u32),
     positions: *std.ArrayList(vm.Vec3),
     normals: ?*std.ArrayList(vm.Vec3),
@@ -47,12 +47,12 @@ fn loadMesh(
         const options = std.mem.zeroes(c.cgltf_options);
         // Parse.
         {
-            const result = c.cgltf_parse_file(&options, filename.ptr, @ptrCast([*c][*c]c.cgltf_data, &data));
+            const result = c.cgltf_parse_file(&options, gltf_path.ptr, @ptrCast([*c][*c]c.cgltf_data, &data));
             assert(result == c.cgltf_result_success);
         }
         // Load.
         {
-            const result = c.cgltf_load_buffers(&options, data, filename.ptr);
+            const result = c.cgltf_load_buffers(&options, data, gltf_path.ptr);
             assert(result == c.cgltf_result_success);
         }
         break :blk data;
@@ -61,6 +61,12 @@ fn loadMesh(
 
     const num_vertices: u32 = @intCast(u32, data.meshes[0].primitives[0].attributes[0].data.*.count);
     const num_indices: u32 = @intCast(u32, data.meshes[0].primitives[0].indices.*.count);
+
+    assert(indices.items.len == 0);
+    assert(positions.items.len == 0);
+    if (normals != null) assert(normals.?.items.len == 0);
+    if (texcoords0 != null) assert(texcoords0.?.items.len == 0);
+    if (tangents != null) assert(tangents.?.items.len == 0);
 
     indices.resize(num_indices) catch unreachable;
     positions.resize(num_vertices) catch unreachable;
@@ -143,23 +149,71 @@ fn loadMesh(
     }
 }
 
+// In this demo program, Mesh is just a range of vertices/indices in one global vertex/index buffer.
+const Mesh = struct {
+    index_offset: u32,
+    vertex_offset: u32,
+    num_indices: u32,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
 
-    mesh_pbr_pipeline: gr.PipelineHandle,
+    mesh_pbr_pso: gr.PipelineHandle,
 
     depth_texture: gr.ResourceHandle,
     depth_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     brush: *d2d1.ISolidColorBrush,
     textformat: *dwrite.ITextFormat,
+
+    meshes: std.ArrayList(Mesh),
 };
 
-fn init(allocator: *std.mem.Allocator) DemoState {
-    const window = lib.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
+fn addMesh(
+    temp_allocator: *std.mem.Allocator,
+    gltf_path: []const u8,
+    meshes: *std.ArrayList(Mesh),
+    vertices: *std.ArrayList(Vertex),
+    indices: *std.ArrayList(u32),
+) void {
+    var mesh_indices = std.ArrayList(u32).init(temp_allocator);
+    var mesh_positions = std.ArrayList(vm.Vec3).init(temp_allocator);
+    var mesh_normals = std.ArrayList(vm.Vec3).init(temp_allocator);
+    var mesh_texcoords0 = std.ArrayList(vm.Vec2).init(temp_allocator);
+    var mesh_tangents = std.ArrayList(vm.Vec4).init(temp_allocator);
+    loadMesh(gltf_path, &mesh_indices, &mesh_positions, &mesh_normals, &mesh_texcoords0, &mesh_tangents);
+
+    meshes.append(.{
+        .index_offset = @intCast(u32, indices.items.len),
+        .vertex_offset = @intCast(u32, vertices.items.len),
+        .num_indices = @intCast(u32, mesh_indices.items.len),
+    }) catch unreachable;
+
+    indices.ensureTotalCapacity(indices.items.len + mesh_indices.items.len) catch unreachable;
+    for (mesh_indices.items) |mesh_index| {
+        indices.appendAssumeCapacity(mesh_index);
+    }
+
+    vertices.ensureTotalCapacity(vertices.items.len + mesh_positions.items.len) catch unreachable;
+    for (mesh_positions.items) |_, index| {
+        vertices.appendAssumeCapacity(.{
+            .position = mesh_positions.items[index],
+            .normal = mesh_normals.items[index],
+            .texcoords0 = mesh_texcoords0.items[index],
+            .tangent = mesh_tangents.items[index],
+        });
+    }
+}
+
+fn init(gpa: *std.mem.Allocator) DemoState {
+    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
+
+    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
+    defer arena_allocator.deinit();
 
     const brush = blk: {
         var maybe_brush: ?*d2d1.ISolidColorBrush = null;
@@ -187,7 +241,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
     hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-    const mesh_pbr_pipeline = blk: {
+    const mesh_pbr_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
             d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
@@ -203,12 +257,23 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         };
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         break :blk grfx.createGraphicsShaderPipeline(
-            allocator,
+            gpa,
             &pso_desc,
             "content/shaders/mesh_pbr.vs.cso",
             "content/shaders/mesh_pbr.ps.cso",
         );
     };
+
+    var all_meshes = std.ArrayList(Mesh).init(gpa);
+    var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
+    var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
+    addMesh(
+        &arena_allocator.allocator,
+        "content/SciFiHelmet/SciFiHelmet.gltf",
+        &all_meshes,
+        &all_vertices,
+        &all_indices,
+    );
 
     const depth_texture = grfx.createCommittedResource(
         .DEFAULT,
@@ -227,7 +292,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(allocator, &grfx);
+    var gui = gr.GuiContext.init(gpa, &grfx);
 
     grfx.finishGpuCommands();
 
@@ -235,23 +300,25 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         .grfx = grfx,
         .gui = gui,
         .frame_stats = lib.FrameStats.init(),
-        .mesh_pbr_pipeline = mesh_pbr_pipeline,
+        .mesh_pbr_pso = mesh_pbr_pso,
         .depth_texture = depth_texture,
         .depth_texture_srv = depth_texture_srv,
         .brush = brush,
         .textformat = textformat,
+        .meshes = all_meshes,
     };
 }
 
-fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
-    _ = demo.grfx.releasePipeline(demo.mesh_pbr_pipeline);
+    demo.meshes.deinit();
+    _ = demo.grfx.releasePipeline(demo.mesh_pbr_pso);
     _ = demo.grfx.releaseResource(demo.depth_texture);
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit(allocator);
-    lib.deinitWindow(allocator);
+    demo.grfx.deinit(gpa);
+    lib.deinitWindow(gpa);
     demo.* = undefined;
 }
 
