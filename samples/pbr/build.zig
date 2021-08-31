@@ -42,22 +42,22 @@ pub fn build(b: *std.build.Builder) void {
         ) catch unreachable;
     }
 
-    const hlsl_step = b.step("hlsl", "Build shaders");
-    var hlsl_command: [9][]const u8 = undefined;
+    const dxc_step = b.step("dxc", "Build shaders");
+    var dxc_command: [9][]const u8 = undefined;
 
-    hlsl_command = makeDxcCmd("../../libs/common/imgui.hlsl", "vsMain", "imgui.vs.cso", "vs", "");
-    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
+    dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "vsMain", "imgui.vs.cso", "vs", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    hlsl_command = makeDxcCmd("../../libs/common/imgui.hlsl", "psMain", "imgui.ps.cso", "ps", "");
-    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
+    dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "psMain", "imgui.ps.cso", "ps", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    hlsl_command = makeDxcCmd("src/pbr.hlsl", "vsMeshPbr", "mesh_pbr.vs.cso", "vs", "MESH_PBR");
-    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
+    dxc_command = makeDxcCmd("src/pbr.hlsl", "vsMeshPbr", "mesh_pbr.vs.cso", "vs", "MESH_PBR");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    hlsl_command = makeDxcCmd("src/pbr.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "MESH_PBR");
-    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
+    dxc_command = makeDxcCmd("src/pbr.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "MESH_PBR");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    b.getInstallStep().dependOn(hlsl_step);
+    b.getInstallStep().dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
