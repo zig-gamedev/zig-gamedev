@@ -86,6 +86,14 @@ pub const Vec3 = struct {
     }
 };
 
+pub const Vec4 = struct {
+    v: [4]f32,
+
+    pub fn init(x: f32, y: f32, z: f32, w: f32) Vec4 {
+        return .{ .v = [_]f32{ x, y, z, w } };
+    }
+};
+
 pub const Mat4 = struct {
     m: [4][4]f32,
 
