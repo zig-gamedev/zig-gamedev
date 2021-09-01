@@ -156,6 +156,10 @@ const Mesh = struct {
     num_indices: u32,
 };
 
+const PsoMeshPbr_Const = extern struct {
+    object_to_clip: vm.Mat4,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -428,14 +432,20 @@ fn draw(demo: *DemoState) void {
     // Draw helmet.
     {
         const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.5 * demo.frame_stats.time));
-        const final_transform = object_to_world.mul(world_to_clip).transpose();
+        const object_to_clip_t = object_to_world.mul(world_to_clip).transpose();
 
-        const mem = grfx.allocateUploadMemory(@sizeOf(vm.Mat4));
-        @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &final_transform.m[0][0]), @sizeOf(vm.Mat4));
+        const mem = grfx.allocateUploadMemory(vm.Mat4, 1);
+        mem.cpu_slice[0] = object_to_clip_t;
 
         grfx.setCurrentPipeline(demo.mesh_pbr_pso);
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
-        grfx.cmdlist.DrawIndexedInstanced(demo.meshes.items[0].num_indices, 1, 0, 0, 0);
+        grfx.cmdlist.DrawIndexedInstanced(
+            demo.meshes.items[0].num_indices,
+            1,
+            demo.meshes.items[0].index_offset,
+            @intCast(i32, demo.meshes.items[0].vertex_offset),
+            0,
+        );
     }
 
     demo.gui.draw(grfx);

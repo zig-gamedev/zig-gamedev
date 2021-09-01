@@ -983,9 +983,11 @@ pub const GraphicsContext = struct {
 
     pub fn allocateUploadMemory(
         gr: *GraphicsContext,
-        size: u32,
-    ) struct { cpu_slice: []u8, gpu_base: d3d12.GPU_VIRTUAL_ADDRESS } {
-        assert(size > 0);
+        comptime T: type,
+        num_elements: u32,
+    ) struct { cpu_slice: []T, gpu_base: d3d12.GPU_VIRTUAL_ADDRESS } {
+        assert(num_elements > 0);
+        const size = num_elements * @sizeOf(T);
         var memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
         if (memory.cpu_slice == null or memory.gpu_base == null) {
             std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
@@ -995,7 +997,10 @@ pub const GraphicsContext = struct {
 
             memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
         }
-        return .{ .cpu_slice = memory.cpu_slice.?, .gpu_base = memory.gpu_base.? };
+        return .{
+            .cpu_slice = std.mem.bytesAsSlice(T, @alignCast(@alignOf(T), memory.cpu_slice.?)),
+            .gpu_base = memory.gpu_base.?,
+        };
     }
 
     pub fn allocateUploadBufferRegion(
@@ -1005,10 +1010,10 @@ pub const GraphicsContext = struct {
     ) struct { cpu_slice: []T, buffer: *d3d12.IResource, buffer_offset: u64 } {
         assert(num_elements > 0);
         const size = num_elements * @sizeOf(T);
-        const memory = gr.allocateUploadMemory(size);
+        const memory = gr.allocateUploadMemory(T, num_elements);
         const aligned_size = (size + (GpuMemoryHeap.alloc_alignment - 1)) & ~(GpuMemoryHeap.alloc_alignment - 1);
         return .{
-            .cpu_slice = std.mem.bytesAsSlice(T, @alignCast(@alignOf(T), memory.cpu_slice)),
+            .cpu_slice = memory.cpu_slice,
             .buffer = gr.upload_memory_heaps[gr.frame_index].heap,
             .buffer_offset = gr.upload_memory_heaps[gr.frame_index].size - aligned_size,
         };
@@ -1435,8 +1440,8 @@ pub const GuiContext = struct {
         gr.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
         gr.setCurrentPipeline(gui.pipeline);
         {
-            const mem = gr.allocateUploadMemory(@sizeOf(vm.Mat4));
-            const xform = vm.Mat4.initOrthoOffCenterLh(
+            const mem = gr.allocateUploadMemory(vm.Mat4, 1);
+            mem.cpu_slice[0] = vm.Mat4.initOrthoOffCenterLh(
                 display_x,
                 display_x + display_w,
                 display_y + display_h,
@@ -1444,7 +1449,6 @@ pub const GuiContext = struct {
                 0.0,
                 1.0,
             ).transpose();
-            @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &xform.m[0][0]), @sizeOf(vm.Mat4));
 
             gr.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         }
