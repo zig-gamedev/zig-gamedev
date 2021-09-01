@@ -398,9 +398,48 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.addTransitionBarrier(mesh_textures[3], d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     grfx.flushResourceBarriers();
 
+    const env = blk: {
+        var width: u32 = 0;
+        var height: u32 = 0;
+        c.stbi_set_flip_vertically_on_load(1);
+        const image_data = c.stbi_loadf(
+            "content/Newport_Loft.hdr",
+            @ptrCast(*i32, &width),
+            @ptrCast(*i32, &height),
+            null,
+            3,
+        );
+        assert(image_data != null and width > 0 and height > 0);
+
+        const equirect_texture = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initTex2d(.R32G32B32_FLOAT, width, height, 1),
+            d3d12.RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err);
+
+        const equirect_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(grfx.getResource(equirect_texture), null, equirect_texture_srv);
+
+        grfx.updateTex2dSubresource(
+            equirect_texture,
+            0,
+            std.mem.sliceAsBytes(image_data[0 .. width * height * 3]),
+            width * @sizeOf(f32),
+        );
+        c.stbi_image_free(image_data);
+
+        grfx.addTransitionBarrier(equirect_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
+
+        break :blk .{ .equirect_texture = equirect_texture };
+    };
+
     grfx.finishGpuCommands();
 
     mipgen_rgba8.deinit(&grfx);
+    _ = grfx.releaseResource(env.equirect_texture);
 
     return .{
         .grfx = grfx,

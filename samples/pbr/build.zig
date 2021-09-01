@@ -116,6 +116,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/cimgui/cimgui.cpp", &[_][]const u8{""});
 
     exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
+    exe.addCSourceFile(external ++ "/stb_image.c", &[_][]const u8{"-std=c99"});
 
     exe.install();
 
