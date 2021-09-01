@@ -170,6 +170,9 @@ const DemoState = struct {
     textformat: *dwrite.ITextFormat,
 
     meshes: std.ArrayList(Mesh),
+
+    vertex_buffer: gr.ResourceHandle,
+    index_buffer: gr.ResourceHandle,
 };
 
 fn addMesh(
@@ -249,7 +252,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             d3d12.INPUT_ELEMENT_DESC.init("_Tangent", 0, .R32G32B32A32_FLOAT, 0, 32, .PER_VERTEX_DATA, 0),
         };
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.RasterizerState.CullMode = .NONE;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.InputLayout = .{
             .pInputElementDescs = &input_layout_desc,
@@ -294,6 +296,51 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     var gui = gr.GuiContext.init(gpa, &grfx);
 
+    const vertex_buffer = blk: {
+        var vertex_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
+            d3d12.RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err);
+        const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
+        for (all_vertices.items) |vertex, i| {
+            upload.cpu_slice[i] = vertex;
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(vertex_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        break :blk vertex_buffer;
+    };
+    const index_buffer = blk: {
+        var index_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
+            d3d12.RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err);
+        const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        for (all_indices.items) |index, i| {
+            upload.cpu_slice[i] = index;
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(index_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+        break :blk index_buffer;
+    };
+
     grfx.finishGpuCommands();
 
     return .{
@@ -306,6 +353,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .brush = brush,
         .textformat = textformat,
         .meshes = all_meshes,
+        .vertex_buffer = vertex_buffer,
+        .index_buffer = index_buffer,
     };
 }
 
@@ -314,6 +363,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.meshes.deinit();
     _ = demo.grfx.releasePipeline(demo.mesh_pbr_pso);
     _ = demo.grfx.releaseResource(demo.depth_texture);
+    _ = demo.grfx.releaseResource(demo.vertex_buffer);
+    _ = demo.grfx.releaseResource(demo.index_buffer);
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
@@ -334,6 +385,17 @@ fn draw(demo: *DemoState) void {
     var grfx = &demo.grfx;
     grfx.beginFrame();
 
+    const world_to_clip = vm.Mat4.initLookAtLh(
+        vm.Vec3.init(2.2, 2.2, -2.2),
+        vm.Vec3.init(0.0, 0.0, 0.0),
+        vm.Vec3.init(0.0, 1.0, 0.0),
+    ).mul(vm.Mat4.initPerspectiveFovLh(
+        math.pi / 3.0,
+        @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
+        0.1,
+        100.0,
+    ));
+
     const back_buffer = grfx.getBackBuffer();
 
     grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
@@ -343,7 +405,7 @@ fn draw(demo: *DemoState) void {
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
-        null,
+        &demo.depth_texture_srv,
     );
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
@@ -351,6 +413,30 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
+    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_srv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+    grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+        .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+        .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.vertex_buffer)),
+        .StrideInBytes = @sizeOf(Vertex),
+    }});
+    grfx.cmdlist.IASetIndexBuffer(&.{
+        .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+        .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
+        .Format = .R32_UINT,
+    });
+    // Draw helmet.
+    {
+        const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.5 * demo.frame_stats.time));
+        const final_transform = object_to_world.mul(world_to_clip).transpose();
+
+        const mem = grfx.allocateUploadMemory(@sizeOf(vm.Mat4));
+        @memcpy(mem.cpu_slice.ptr, @ptrCast([*]const u8, &final_transform.m[0][0]), @sizeOf(vm.Mat4));
+
+        grfx.setCurrentPipeline(demo.mesh_pbr_pso);
+        grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        grfx.cmdlist.DrawIndexedInstanced(demo.meshes.items[0].num_indices, 1, 0, 0, 0);
+    }
 
     demo.gui.draw(grfx);
 
@@ -390,15 +476,15 @@ pub fn main() !void {
 
     _ = w.SetProcessDPIAware();
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa.deinit();
+        const leaked = gpa_allocator.deinit();
         std.debug.assert(leaked == false);
     }
-    const allocator = &gpa.allocator;
+    const gpa = &gpa_allocator.allocator;
 
-    var demo = init(allocator);
-    defer deinit(&demo, allocator);
+    var demo = init(gpa);
+    defer deinit(&demo, gpa);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
