@@ -744,9 +744,9 @@ pub const GraphicsContext = struct {
                 .state_before = resource.state,
                 .state_after = state_after,
             };
+            gr.num_transition_resource_barriers += 1;
+            resource.*.state = state_after;
         }
-        gr.num_transition_resource_barriers += 1;
-        resource.state = state_after;
     }
 
     pub fn createGraphicsShaderPipeline(

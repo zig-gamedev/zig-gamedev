@@ -57,6 +57,9 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("src/pbr.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "PSO_MESH_PBR");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("../../libs/common/generate_mipmaps.hlsl", "main", "generate_mipmaps.cs.cso", "cs", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     b.getInstallStep().dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose

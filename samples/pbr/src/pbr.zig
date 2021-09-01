@@ -177,6 +177,8 @@ const DemoState = struct {
 
     vertex_buffer: gr.ResourceHandle,
     index_buffer: gr.ResourceHandle,
+
+    mesh_textures: [4]gr.ResourceHandle,
 };
 
 fn addMesh(
@@ -296,6 +298,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const depth_texture_srv = grfx.allocateCpuDescriptors(.DSV, 1);
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_srv);
 
+    var mipgen_rgba8 = gr.MipmapGenerator.init(gpa, &grfx, .R8G8B8A8_UNORM);
+
     grfx.beginFrame();
 
     var gui = gr.GuiContext.init(gpa, &grfx);
@@ -345,7 +349,32 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk index_buffer;
     };
 
+    const mesh_textures = [_]gr.ResourceHandle{
+        grfx.createAndUploadTex2dFromFile(
+            L("content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png"),
+            0,
+        ) catch |err| hrPanic(err),
+        grfx.createAndUploadTex2dFromFile(
+            L("content/SciFiHelmet/SciFiHelmet_BaseColor.png"),
+            0,
+        ) catch |err| hrPanic(err),
+        grfx.createAndUploadTex2dFromFile(
+            L("content/SciFiHelmet/SciFiHelmet_MetallicRoughness.png"),
+            0,
+        ) catch |err| hrPanic(err),
+        grfx.createAndUploadTex2dFromFile(
+            L("content/SciFiHelmet/SciFiHelmet_Normal.png"),
+            0,
+        ) catch |err| hrPanic(err),
+    };
+    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[0]);
+    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[1]);
+    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[2]);
+    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[3]);
+
     grfx.finishGpuCommands();
+
+    mipgen_rgba8.deinit(&grfx);
 
     return .{
         .grfx = grfx,
@@ -359,6 +388,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .meshes = all_meshes,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
+        .mesh_textures = mesh_textures,
     };
 }
 
@@ -369,6 +399,9 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.depth_texture);
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
+    for (demo.mesh_textures) |texture| {
+        _ = demo.grfx.releaseResource(texture);
+    }
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
@@ -429,7 +462,7 @@ fn draw(demo: *DemoState) void {
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
         .Format = .R32_UINT,
     });
-    // Draw helmet.
+    // Draw SciFiHelmet.
     {
         const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.5 * demo.frame_stats.time));
         const object_to_clip_t = object_to_world.mul(world_to_clip).transpose();
@@ -460,7 +493,7 @@ fn draw(demo: *DemoState) void {
             .{ stats.fps, stats.average_cpu_time },
         ) catch unreachable;
 
-        demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+        demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
         lib.DrawText(
             grfx.d2d.context,
             text,
