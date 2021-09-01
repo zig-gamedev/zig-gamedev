@@ -149,7 +149,7 @@ fn loadMesh(
     }
 }
 
-// In this demo program, Mesh is just a range of vertices/indices in one global vertex/index buffer.
+// In this demo program, Mesh is just a range of vertices/indices in a single global vertex/index buffer.
 const Mesh = struct {
     index_offset: u32,
     vertex_offset: u32,
@@ -158,6 +158,7 @@ const Mesh = struct {
 
 const PsoMeshPbr_Const = extern struct {
     object_to_clip: vm.Mat4,
+    object_to_world: vm.Mat4,
 };
 
 const DemoState = struct {
@@ -179,6 +180,7 @@ const DemoState = struct {
     index_buffer: gr.ResourceHandle,
 
     mesh_textures: [4]gr.ResourceHandle,
+    mesh_textures_srv: [4]d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
 fn addMesh(
@@ -282,6 +284,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         &all_vertices,
         &all_indices,
     );
+    addMesh(
+        &arena_allocator.allocator,
+        "content/cube.gltf",
+        &all_meshes,
+        &all_vertices,
+        &all_indices,
+    );
 
     const depth_texture = grfx.createCommittedResource(
         .DEFAULT,
@@ -349,7 +358,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk index_buffer;
     };
 
-    const mesh_textures = [_]gr.ResourceHandle{
+    const mesh_textures = .{
         grfx.createAndUploadTex2dFromFile(
             L("content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png"),
             0,
@@ -372,6 +381,23 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[2]);
     mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[3]);
 
+    const mesh_textures_srv = .{
+        grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+        grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+        grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+        grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+    };
+    grfx.device.CreateShaderResourceView(grfx.getResource(mesh_textures[0]), null, mesh_textures_srv[0]);
+    grfx.device.CreateShaderResourceView(grfx.getResource(mesh_textures[1]), null, mesh_textures_srv[1]);
+    grfx.device.CreateShaderResourceView(grfx.getResource(mesh_textures[2]), null, mesh_textures_srv[2]);
+    grfx.device.CreateShaderResourceView(grfx.getResource(mesh_textures[3]), null, mesh_textures_srv[3]);
+
+    grfx.addTransitionBarrier(mesh_textures[0], d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.addTransitionBarrier(mesh_textures[1], d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.addTransitionBarrier(mesh_textures[2], d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.addTransitionBarrier(mesh_textures[3], d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.flushResourceBarriers();
+
     grfx.finishGpuCommands();
 
     mipgen_rgba8.deinit(&grfx);
@@ -389,6 +415,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .mesh_textures = mesh_textures,
+        .mesh_textures_srv = mesh_textures_srv,
     };
 }
 
@@ -465,18 +492,29 @@ fn draw(demo: *DemoState) void {
     // Draw SciFiHelmet.
     {
         const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.5 * demo.frame_stats.time));
-        const object_to_clip_t = object_to_world.mul(world_to_clip).transpose();
+        const object_to_clip = object_to_world.mul(world_to_clip);
 
-        const mem = grfx.allocateUploadMemory(vm.Mat4, 1);
-        mem.cpu_slice[0] = object_to_clip_t;
+        const mem = grfx.allocateUploadMemory(PsoMeshPbr_Const, 1);
+        mem.cpu_slice[0] = .{
+            .object_to_clip = object_to_clip.transpose(),
+            .object_to_world = object_to_world.transpose(),
+        };
 
+        const mesh_index = 0;
         grfx.setCurrentPipeline(demo.mesh_pbr_pso);
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {
+            const table = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures_srv[0]);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures_srv[0]);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures_srv[1]);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures_srv[2]);
+            break :blk table;
+        });
         grfx.cmdlist.DrawIndexedInstanced(
-            demo.meshes.items[0].num_indices,
+            demo.meshes.items[mesh_index].num_indices,
             1,
-            demo.meshes.items[0].index_offset,
-            @intCast(i32, demo.meshes.items[0].vertex_offset),
+            demo.meshes.items[mesh_index].index_offset,
+            @intCast(i32, demo.meshes.items[mesh_index].vertex_offset),
             0,
         );
     }

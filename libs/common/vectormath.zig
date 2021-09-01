@@ -13,7 +13,7 @@ pub fn modAngle(in_angle: f32) f32 {
     return temp;
 }
 
-pub const Vec2 = struct {
+pub const Vec2 = extern struct {
     v: [2]f32,
 
     pub fn init(x: f32, y: f32) Vec2 {
@@ -21,7 +21,7 @@ pub const Vec2 = struct {
     }
 };
 
-pub const Vec3 = struct {
+pub const Vec3 = extern struct {
     v: [3]f32,
 
     pub fn dot(a: Vec3, b: Vec3) f32 {
@@ -86,7 +86,7 @@ pub const Vec3 = struct {
     }
 };
 
-pub const Vec4 = struct {
+pub const Vec4 = extern struct {
     v: [4]f32,
 
     pub fn init(x: f32, y: f32, z: f32, w: f32) Vec4 {
@@ -94,7 +94,7 @@ pub const Vec4 = struct {
     }
 };
 
-pub const Mat4 = struct {
+pub const Mat4 = extern struct {
     m: [4][4]f32,
 
     pub fn transpose(a: Mat4) Mat4 {
