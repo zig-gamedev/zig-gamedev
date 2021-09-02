@@ -24,6 +24,17 @@ pub const Vec2 = extern struct {
 pub const Vec3 = extern struct {
     v: [3]f32,
 
+    pub fn init(x: f32, y: f32, z: f32) Vec3 {
+        return .{ .v = [_]f32{ x, y, z } };
+    }
+
+    pub inline fn initZero() Vec3 {
+        const static = struct {
+            const zero = init(0.0, 0.0, 0.0);
+        };
+        return static.zero;
+    }
+
     pub fn dot(a: Vec3, b: Vec3) f32 {
         return a.v[0] * b.v[0] + a.v[1] * b.v[1] + a.v[2] * b.v[2];
     }
@@ -48,10 +59,6 @@ pub const Vec3 = extern struct {
 
     pub fn scale(a: Vec3, b: f32) Vec3 {
         return .{ .v = [_]f32{ a.v[0] * b, a.v[1] * b, a.v[2] * b } };
-    }
-
-    pub fn init(x: f32, y: f32, z: f32) Vec3 {
-        return .{ .v = [_]f32{ x, y, z } };
     }
 
     pub fn length(a: Vec3) f32 {
@@ -225,18 +232,22 @@ pub const Mat4 = extern struct {
         };
     }
 
-    pub fn initLookAtLh(eye: Vec3, at: Vec3, up: Vec3) Mat4 {
-        const az = Vec3.normalize(Vec3.sub(at, eye));
-        const ax = Vec3.normalize(Vec3.cross(up, az));
+    pub fn initLookToLh(eye_pos: Vec3, eye_dir: Vec3, up_dir: Vec3) Mat4 {
+        const az = Vec3.normalize(eye_dir);
+        const ax = Vec3.normalize(Vec3.cross(up_dir, az));
         const ay = Vec3.normalize(Vec3.cross(az, ax));
         return .{
             .m = [_][4]f32{
                 [_]f32{ ax.v[0], ay.v[0], az.v[0], 0.0 },
                 [_]f32{ ax.v[1], ay.v[1], az.v[1], 0.0 },
                 [_]f32{ ax.v[2], ay.v[2], az.v[2], 0.0 },
-                [_]f32{ -Vec3.dot(ax, eye), -Vec3.dot(ay, eye), -Vec3.dot(az, eye), 1.0 },
+                [_]f32{ -Vec3.dot(ax, eye_pos), -Vec3.dot(ay, eye_pos), -Vec3.dot(az, eye_pos), 1.0 },
             },
         };
+    }
+
+    pub inline fn initLookAtLh(eye_pos: Vec3, focus_pos: Vec3, up_dir: Vec3) Mat4 {
+        return initLookToLh(eye_pos, focus_pos.sub(eye_pos), up_dir);
     }
 
     pub fn initOrthoOffCenterLh(
