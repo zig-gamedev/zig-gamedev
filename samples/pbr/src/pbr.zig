@@ -32,6 +32,11 @@ const env_texture_resolution = 512;
 const mesh_cube = 0;
 const mesh_helmet = 1;
 
+const ResourceView = struct {
+    resource: gr.ResourceHandle,
+    view: d3d12.CPU_DESCRIPTOR_HANDLE,
+};
+
 const Vertex = struct {
     position: Vec3,
     normal: Vec3,
@@ -192,8 +197,7 @@ const DemoState = struct {
     mesh_textures: [4]gr.ResourceHandle,
     mesh_textures_srv: [4]d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    env_texture: gr.ResourceHandle,
-    env_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
+    env_texture: ResourceView,
 };
 
 fn addMesh(
@@ -491,6 +495,48 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk index_buffer;
     };
 
+    // NOTE(mziulek): Uploading data to a GPU can cause cmdlist state reset (when we run out of mem.).
+    // This is why, in general, we should group all upload operations together to minimize the risk
+    // of incorrect state bugs.
+    const equirect_texture = blk: {
+        var width: u32 = 0;
+        var height: u32 = 0;
+        c.stbi_set_flip_vertically_on_load(1);
+        const image_data = c.stbi_loadf(
+            "content/Newport_Loft.hdr",
+            @ptrCast(*i32, &width),
+            @ptrCast(*i32, &height),
+            null,
+            3,
+        );
+        assert(image_data != null and width > 0 and height > 0);
+
+        const equirect_texture = .{
+            .resource = grfx.createCommittedResource(
+                .DEFAULT,
+                d3d12.HEAP_FLAG_NONE,
+                &d3d12.RESOURCE_DESC.initTex2d(.R32G32B32_FLOAT, width, height, 1),
+                d3d12.RESOURCE_STATE_COPY_DEST,
+                null,
+            ) catch |err| hrPanic(err),
+            .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+        };
+        grfx.device.CreateShaderResourceView(grfx.getResource(equirect_texture.resource), null, equirect_texture.view);
+
+        grfx.updateTex2dSubresource(
+            equirect_texture.resource,
+            0,
+            std.mem.sliceAsBytes(image_data[0 .. width * height * 3]),
+            width * @sizeOf(f32) * 3,
+        );
+        c.stbi_image_free(image_data);
+
+        grfx.addTransitionBarrier(equirect_texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
+
+        break :blk equirect_texture;
+    };
+
     const mesh_textures = .{
         grfx.createAndUploadTex2dFromFile(
             L("content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png"),
@@ -531,42 +577,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.addTransitionBarrier(mesh_textures[3], d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     grfx.flushResourceBarriers();
 
-    const env = blk: {
-        var width: u32 = 0;
-        var height: u32 = 0;
-        c.stbi_set_flip_vertically_on_load(1);
-        const image_data = c.stbi_loadf(
-            "content/Newport_Loft.hdr",
-            @ptrCast(*i32, &width),
-            @ptrCast(*i32, &height),
-            null,
-            3,
-        );
-        assert(image_data != null and width > 0 and height > 0);
-
-        const equirect_texture = grfx.createCommittedResource(
-            .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
-            &d3d12.RESOURCE_DESC.initTex2d(.R32G32B32_FLOAT, width, height, 1),
-            d3d12.RESOURCE_STATE_COPY_DEST,
-            null,
-        ) catch |err| hrPanic(err);
-
-        const equirect_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(grfx.getResource(equirect_texture), null, equirect_texture_srv);
-
-        grfx.updateTex2dSubresource(
-            equirect_texture,
-            0,
-            std.mem.sliceAsBytes(image_data[0 .. width * height * 3]),
-            width * @sizeOf(f32) * 3,
-        );
-        c.stbi_image_free(image_data);
-
-        grfx.addTransitionBarrier(equirect_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        grfx.flushResourceBarriers();
-
-        const env_texture = grfx.createCommittedResource(
+    const env_texture = .{
+        .resource = grfx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC{
@@ -583,56 +595,50 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             },
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
-        ) catch |err| hrPanic(err);
-
-        const env_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(
-            grfx.getResource(env_texture),
-            &d3d12.SHADER_RESOURCE_VIEW_DESC{
-                .Format = .UNKNOWN,
-                .ViewDimension = .TEXTURECUBE,
-                .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
-                .u = .{
-                    .TextureCube = .{
-                        .MipLevels = 0xffff_ffff,
-                        .MostDetailedMip = 0,
-                        .ResourceMinLODClamp = 0.0,
-                    },
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+    };
+    grfx.device.CreateShaderResourceView(
+        grfx.getResource(env_texture.resource),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC{
+            .Format = .UNKNOWN,
+            .ViewDimension = .TEXTURECUBE,
+            .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+            .u = .{
+                .TextureCube = .{
+                    .MipLevels = 0xffff_ffff,
+                    .MostDetailedMip = 0,
+                    .ResourceMinLODClamp = 0.0,
                 },
             },
-            env_texture_srv,
-        );
+        },
+        env_texture.view,
+    );
 
-        grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
-            .SizeInBytes = @intCast(u32, grfx.getResourceSize(vertex_buffer)),
-            .StrideInBytes = @sizeOf(Vertex),
-        }});
-        grfx.cmdlist.IASetIndexBuffer(&.{
-            .BufferLocation = grfx.getResource(index_buffer).GetGPUVirtualAddress(),
-            .SizeInBytes = @intCast(u32, grfx.getResourceSize(index_buffer)),
-            .Format = .R32_UINT,
-        });
-        grfx.setCurrentPipeline(temp_pipelines.generate_env_texture_pso);
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, equirect_texture_srv));
-        drawToCubeTexture(&grfx, env_texture, 0);
+    grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+        .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
+        .SizeInBytes = @intCast(u32, grfx.getResourceSize(vertex_buffer)),
+        .StrideInBytes = @sizeOf(Vertex),
+    }});
+    grfx.cmdlist.IASetIndexBuffer(&.{
+        .BufferLocation = grfx.getResource(index_buffer).GetGPUVirtualAddress(),
+        .SizeInBytes = @intCast(u32, grfx.getResourceSize(index_buffer)),
+        .Format = .R32_UINT,
+    });
 
-        mipgen_rgba16f.generateMipmaps(&grfx, env_texture);
-        grfx.addTransitionBarrier(env_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        grfx.flushResourceBarriers();
+    grfx.setCurrentPipeline(temp_pipelines.generate_env_texture_pso);
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, equirect_texture.view));
+    drawToCubeTexture(&grfx, env_texture.resource, 0);
 
-        break :blk .{
-            .equirect_texture = equirect_texture,
-            .env_texture = env_texture,
-            .env_texture_srv = env_texture_srv,
-        };
-    };
+    mipgen_rgba16f.generateMipmaps(&grfx, env_texture.resource);
+    grfx.addTransitionBarrier(env_texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.flushResourceBarriers();
 
     grfx.finishGpuCommands();
 
     mipgen_rgba8.deinit(&grfx);
     mipgen_rgba16f.deinit(&grfx);
-    _ = grfx.releaseResource(env.equirect_texture);
+    _ = grfx.releaseResource(equirect_texture.resource);
     _ = grfx.releasePipeline(temp_pipelines.generate_env_texture_pso);
     grfx.deallocateAllTempCpuDescriptors(.RTV);
 
@@ -651,8 +657,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .index_buffer = index_buffer,
         .mesh_textures = mesh_textures,
         .mesh_textures_srv = mesh_textures_srv,
-        .env_texture = env.env_texture,
-        .env_texture_srv = env.env_texture_srv,
+        .env_texture = env_texture,
     };
 }
 
@@ -662,7 +667,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releasePipeline(demo.mesh_pbr_pso);
     _ = demo.grfx.releasePipeline(demo.sample_env_texture_pso);
     _ = demo.grfx.releaseResource(demo.depth_texture);
-    _ = demo.grfx.releaseResource(demo.env_texture);
+    _ = demo.grfx.releaseResource(demo.env_texture.resource);
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
     for (demo.mesh_textures) |texture| {
@@ -768,7 +773,7 @@ fn draw(demo: *DemoState) void {
 
         grfx.setCurrentPipeline(demo.sample_env_texture_pso);
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.env_texture_srv));
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.env_texture.view));
         grfx.cmdlist.DrawIndexedInstanced(
             demo.meshes.items[mesh_cube].num_indices,
             1,

@@ -333,7 +333,7 @@ pub fn newImGuiFrame(delta_time: f32) void {
     var ui_backend = @ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData));
     assert(ui_backend.*.window != null);
 
-    ui.*.MousePos = c.ImVec2{ .x = -std.math.f32_max, .y = -std.math.f32_max };
+    ui.*.MousePos = c.ImVec2{ .x = -c.igGET_FLT_MAX(), .y = -c.igGET_FLT_MAX() };
 
     const focused_window = w.GetForegroundWindow();
     const hovered_window = ui_backend.*.mouse_window;
