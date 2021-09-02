@@ -505,12 +505,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             0,
         ) catch |err| hrPanic(err),
     };
-    if (false) {
-        mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[0]);
-        mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[1]);
-        mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[2]);
-        mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[3]);
-    }
+    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[0]);
+    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[1]);
+    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[2]);
+    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[3]);
 
     const mesh_textures_srv = .{
         grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
