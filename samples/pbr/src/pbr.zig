@@ -29,6 +29,9 @@ const window_height = 1080;
 
 const env_texture_resolution = 512;
 
+const mesh_cube = 0;
+const mesh_helmet = 1;
+
 const Vertex = struct {
     position: Vec3,
     normal: Vec3,
@@ -291,6 +294,7 @@ fn drawToCubeTexture(grfx: *gr.GraphicsContext, dest_texture: gr.ResourceHandle,
         mem.cpu_slice[0] = object_to_view[cube_face_idx].mul(view_to_clip).transpose();
 
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        // NOTE(mziulek): We assume that the first mesh in vertex/index buffer is a 'cube'.
         grfx.cmdlist.DrawIndexedInstanced(36, 1, 0, 0, 0);
     }
 
@@ -684,18 +688,18 @@ fn draw(demo: *DemoState) void {
     var grfx = &demo.grfx;
     grfx.beginFrame();
 
-    const world_to_view = vm.Mat4.initLookAtLh(
+    const cam_world_to_view = vm.Mat4.initLookAtLh(
         vm.Vec3.init(2.2, 2.2, -2.2),
         vm.Vec3.init(0.0, 0.0, 0.0),
         vm.Vec3.init(0.0, 1.0, 0.0),
     );
-    const view_to_clip = vm.Mat4.initPerspectiveFovLh(
+    const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
         math.pi / 3.0,
         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
         0.1,
         100.0,
     );
-    const world_to_clip = world_to_view.mul(view_to_clip);
+    const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
     const back_buffer = grfx.getBackBuffer();
 
@@ -729,7 +733,7 @@ fn draw(demo: *DemoState) void {
     // Draw SciFiHelmet.
     {
         const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.5 * demo.frame_stats.time));
-        const object_to_clip = object_to_world.mul(world_to_clip);
+        const object_to_clip = object_to_world.mul(cam_world_to_clip);
 
         const mem = grfx.allocateUploadMemory(PsoMeshPbr_Const, 1);
         mem.cpu_slice[0] = .{
@@ -737,7 +741,6 @@ fn draw(demo: *DemoState) void {
             .object_to_world = object_to_world.transpose(),
         };
 
-        const mesh_index = 1;
         grfx.setCurrentPipeline(demo.mesh_pbr_pso);
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {
@@ -748,28 +751,31 @@ fn draw(demo: *DemoState) void {
             break :blk table;
         });
         grfx.cmdlist.DrawIndexedInstanced(
-            demo.meshes.items[mesh_index].num_indices,
+            demo.meshes.items[mesh_helmet].num_indices,
             1,
-            demo.meshes.items[mesh_index].index_offset,
-            @intCast(i32, demo.meshes.items[mesh_index].vertex_offset),
+            demo.meshes.items[mesh_helmet].index_offset,
+            @intCast(i32, demo.meshes.items[mesh_helmet].vertex_offset),
             0,
         );
     }
     // Draw env. cube texture.
     {
-        var world_to_view_origin = world_to_view;
-        world_to_view_origin.m[3][0] = 0.0;
-        world_to_view_origin.m[3][1] = 0.0;
-        world_to_view_origin.m[3][2] = 0.0;
-        world_to_view_origin.m[3][3] = 1.0;
+        var world_to_view_origin = cam_world_to_view;
+        world_to_view_origin.m[3] = [_]f32{ 0.0, 0.0, 0.0, 1.0 };
 
         const mem = grfx.allocateUploadMemory(Mat4, 1);
-        mem.cpu_slice[0] = world_to_view_origin.mul(view_to_clip).transpose();
+        mem.cpu_slice[0] = world_to_view_origin.mul(cam_view_to_clip).transpose();
 
         grfx.setCurrentPipeline(demo.sample_env_texture_pso);
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.env_texture_srv));
-        grfx.cmdlist.DrawIndexedInstanced(36, 1, 0, 0, 0);
+        grfx.cmdlist.DrawIndexedInstanced(
+            demo.meshes.items[mesh_cube].num_indices,
+            1,
+            demo.meshes.items[mesh_cube].index_offset,
+            @intCast(i32, demo.meshes.items[mesh_cube].vertex_offset),
+            0,
+        );
     }
 
     demo.gui.draw(grfx);
