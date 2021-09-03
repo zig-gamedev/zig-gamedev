@@ -29,6 +29,8 @@ const window_height = 1080;
 
 const env_texture_resolution = 512;
 const irradiance_texture_resolution = 64;
+const prefiltered_env_texture_resolution = 256;
+const prefiltered_env_texture_num_mip_levels = 6;
 
 const mesh_cube = 0;
 const mesh_helmet = 1;
@@ -198,6 +200,7 @@ const DemoState = struct {
 
     env_texture: ResourceView,
     irradiance_texture: ResourceView,
+    prefiltered_env_texture: ResourceView,
 
     camera: struct {
         position: Vec3,
@@ -427,9 +430,16 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             "content/shaders/generate_irradiance_texture.vs.cso",
             "content/shaders/generate_irradiance_texture.ps.cso",
         );
+        const generate_prefiltered_env_texture_pso = grfx.createGraphicsShaderPipeline(
+            gpa,
+            &pso_desc,
+            "content/shaders/generate_prefiltered_env_texture.vs.cso",
+            "content/shaders/generate_prefiltered_env_texture.ps.cso",
+        );
         break :blk .{
             .generate_env_texture_pso = generate_env_texture_pso,
             .generate_irradiance_texture_pso = generate_irradiance_texture_pso,
+            .generate_prefiltered_env_texture_pso = generate_prefiltered_env_texture_pso,
         };
     };
 
@@ -691,6 +701,44 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         irradiance_texture.view,
     );
 
+    const prefiltered_env_texture = .{
+        .resource = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC{
+                .Dimension = .TEXTURE2D,
+                .Alignment = 0,
+                .Width = prefiltered_env_texture_resolution,
+                .Height = prefiltered_env_texture_resolution,
+                .DepthOrArraySize = 6,
+                .MipLevels = prefiltered_env_texture_num_mip_levels,
+                .Format = .R16G16B16A16_FLOAT,
+                .SampleDesc = .{ .Count = 1, .Quality = 0 },
+                .Layout = .UNKNOWN,
+                .Flags = d3d12.RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+            },
+            d3d12.RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+    };
+    grfx.device.CreateShaderResourceView(
+        grfx.getResource(prefiltered_env_texture.resource),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC{
+            .Format = .UNKNOWN,
+            .ViewDimension = .TEXTURECUBE,
+            .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+            .u = .{
+                .TextureCube = .{
+                    .MipLevels = prefiltered_env_texture_num_mip_levels,
+                    .MostDetailedMip = 0,
+                    .ResourceMinLODClamp = 0.0,
+                },
+            },
+        },
+        prefiltered_env_texture.view,
+    );
+
     grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(vertex_buffer)),
@@ -722,6 +770,22 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.addTransitionBarrier(irradiance_texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     grfx.flushResourceBarriers();
 
+    //
+    // Generate prefiltered env. (cube) texture content.
+    //
+    grfx.setCurrentPipeline(temp_pipelines.generate_prefiltered_env_texture_pso);
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(2, grfx.copyDescriptorsToGpuHeap(1, env_texture.view));
+    {
+        var mip_level: u32 = 0;
+        while (mip_level < prefiltered_env_texture_num_mip_levels) : (mip_level += 1) {
+            const roughness = @intToFloat(f32, mip_level) / @intToFloat(f32, prefiltered_env_texture_num_mip_levels - 1);
+            grfx.cmdlist.SetGraphicsRoot32BitConstant(1, @bitCast(u32, roughness), 0);
+            drawToCubeTexture(&grfx, prefiltered_env_texture.resource, mip_level);
+        }
+    }
+    grfx.addTransitionBarrier(prefiltered_env_texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.flushResourceBarriers();
+
     grfx.finishGpuCommands();
 
     mipgen_rgba8.deinit(&grfx);
@@ -729,6 +793,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     _ = grfx.releaseResource(equirect_texture.resource);
     _ = grfx.releasePipeline(temp_pipelines.generate_env_texture_pso);
     _ = grfx.releasePipeline(temp_pipelines.generate_irradiance_texture_pso);
+    _ = grfx.releasePipeline(temp_pipelines.generate_prefiltered_env_texture_pso);
 
     return .{
         .grfx = grfx,
@@ -745,6 +810,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .mesh_textures = mesh_textures,
         .env_texture = env_texture,
         .irradiance_texture = irradiance_texture,
+        .prefiltered_env_texture = prefiltered_env_texture,
         .camera = .{
             .position = Vec3.init(2.2, 0.0, 2.2),
             .forward = Vec3.initZero(),
@@ -766,6 +832,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.depth_texture.resource);
     _ = demo.grfx.releaseResource(demo.env_texture.resource);
     _ = demo.grfx.releaseResource(demo.irradiance_texture.resource);
+    _ = demo.grfx.releaseResource(demo.prefiltered_env_texture.resource);
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
     for (demo.mesh_textures) |texture| {
@@ -914,6 +981,7 @@ fn draw(demo: *DemoState) void {
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.env_texture.view));
         //grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.irradiance_texture.view));
+        //grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.prefiltered_env_texture.view));
         grfx.cmdlist.DrawIndexedInstanced(
             demo.meshes.items[mesh_cube].num_indices,
             1,

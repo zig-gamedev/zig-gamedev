@@ -87,6 +87,23 @@ pub fn build(b: *std.build.Builder) void {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd(
+        "src/pbr.hlsl",
+        "vsGeneratePrefilteredEnvTexture",
+        "generate_prefiltered_env_texture.vs.cso",
+        "vs",
+        "PSO__GENERATE_PREFILTERED_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/pbr.hlsl",
+        "psGeneratePrefilteredEnvTexture",
+        "generate_prefiltered_env_texture.ps.cso",
+        "ps",
+        "PSO__GENERATE_PREFILTERED_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     dxc_command = makeDxcCmd("../../libs/common/generate_mipmaps.hlsl", "main", "generate_mipmaps.cs.cso", "cs", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
