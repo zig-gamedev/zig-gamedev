@@ -16,6 +16,7 @@
 !*.bin
 !*.ttf
 !*.png
+!*.hdr
 
 !README
 !.ignore
