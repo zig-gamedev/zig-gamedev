@@ -1,4 +1,6 @@
-#define PI 3.1415926f
+#define PI 3.1415926
+
+#define GAMMA 2.2
 
 float radicalInverseVdc(uint bits) {
     bits = (bits << 16u) | (bits >> 16u);
@@ -117,7 +119,7 @@ void psMeshPbr(
         metallic = mr.r;
         roughness = mr.g;
     }
-    const float3 base_color = srv_base_color_texture.Sample(sam_aniso, texcoords0).rgb;
+    const float3 base_color = pow(srv_base_color_texture.Sample(sam_aniso, texcoords0).rgb, GAMMA);
     const float ao = srv_ao_texture.Sample(sam_aniso, texcoords0).r;
 
     const float3 v = normalize(cbv_const.camera_position - position);
@@ -135,7 +137,7 @@ void psMeshPbr(
     const float3 prefiltered_color = srv_prefiltered_env_texture.SampleLevel(
         sam_aniso,
         r,
-        roughness * 5.0 // roughness * (num_mip_levels - 1.0f)
+        roughness * 5.0 // roughness * (num_mip_levels - 1.0)
     ).rgb;
     const float2 env_brdf = srv_brdf_integration_texture.SampleLevel(
         sam_aniso,
@@ -148,10 +150,9 @@ void psMeshPbr(
     const float3 ambient = (kd * diffuse + specular) * ao;
 
     float3 color = ambient;
-    color *= 4.0;
     color = color / (color + 1.0);
 
-    out_color = float4(color, 1.0);
+    out_color = float4(pow(color, 1.0 / GAMMA), 1.0);
 }
 
 #elif defined(PSO__GENERATE_ENV_TEXTURE)
@@ -197,7 +198,8 @@ void psGenerateEnvTexture(
     out float4 out_color : SV_Target0
 ) {
     const float2 uv = sampleSphericalMap(normalize(position));
-    out_color = srv_equirect_texture.SampleLevel(sam_s0, uv, 0);
+    float3 color = srv_equirect_texture.SampleLevel(sam_s0, uv, 0).rgb;
+    out_color = float4(color, 1.0);
 }
 
 #elif defined(PSO__SAMPLE_ENV_TEXTURE)
@@ -244,7 +246,7 @@ void psSampleEnvTexture(
 ) {
     float3 env_color = srv_env_texture.Sample(sam_s0, uvw).rgb;
     env_color = env_color / (env_color + 1.0);
-    out_color = float4(env_color, 1.0);
+    out_color = float4(pow(env_color, 1.0 / GAMMA), 1.0);
 }
 
 #elif defined(PSO__GENERATE_IRRADIANCE_TEXTURE)
