@@ -31,6 +31,7 @@ const env_texture_resolution = 512;
 const irradiance_texture_resolution = 64;
 const prefiltered_env_texture_resolution = 256;
 const prefiltered_env_texture_num_mip_levels = 6;
+const brdf_integration_texture_resolution = 512;
 
 const mesh_cube = 0;
 const mesh_helmet = 1;
@@ -201,6 +202,7 @@ const DemoState = struct {
     env_texture: ResourceView,
     irradiance_texture: ResourceView,
     prefiltered_env_texture: ResourceView,
+    brdf_integration_texture: ResourceView,
 
     camera: struct {
         position: Vec3,
@@ -436,10 +438,16 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             "content/shaders/generate_prefiltered_env_texture.vs.cso",
             "content/shaders/generate_prefiltered_env_texture.ps.cso",
         );
+        const generate_brdf_integration_texture_pso = grfx.createComputeShaderPipeline(
+            gpa,
+            &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
+            "content/shaders/generate_brdf_integration_texture.cs.cso",
+        );
         break :blk .{
             .generate_env_texture_pso = generate_env_texture_pso,
             .generate_irradiance_texture_pso = generate_irradiance_texture_pso,
             .generate_prefiltered_env_texture_pso = generate_prefiltered_env_texture_pso,
+            .generate_brdf_integration_texture_pso = generate_brdf_integration_texture_pso,
         };
     };
 
@@ -609,20 +617,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     // END: Upload texture data to the GPU.
     //
 
-    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[0].resource);
-    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[1].resource);
-    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[2].resource);
-    mipgen_rgba8.generateMipmaps(&grfx, mesh_textures[3].resource);
-
-    grfx.device.CreateShaderResourceView(grfx.getResource(mesh_textures[0].resource), null, mesh_textures[0].view);
-    grfx.device.CreateShaderResourceView(grfx.getResource(mesh_textures[1].resource), null, mesh_textures[1].view);
-    grfx.device.CreateShaderResourceView(grfx.getResource(mesh_textures[2].resource), null, mesh_textures[2].view);
-    grfx.device.CreateShaderResourceView(grfx.getResource(mesh_textures[3].resource), null, mesh_textures[3].view);
-
-    grfx.addTransitionBarrier(mesh_textures[0].resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    grfx.addTransitionBarrier(mesh_textures[1].resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    grfx.addTransitionBarrier(mesh_textures[2].resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    grfx.addTransitionBarrier(mesh_textures[3].resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    for (mesh_textures) |texture| {
+        mipgen_rgba8.generateMipmaps(&grfx, texture.resource);
+        grfx.device.CreateShaderResourceView(grfx.getResource(texture.resource), null, texture.view);
+        grfx.addTransitionBarrier(texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    }
     grfx.flushResourceBarriers();
 
     const env_texture = .{
@@ -739,6 +738,31 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         prefiltered_env_texture.view,
     );
 
+    const brdf_integration_texture = .{
+        .resource = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &blk: {
+                var desc = d3d12.RESOURCE_DESC.initTex2d(
+                    .R16G16_FLOAT,
+                    brdf_integration_texture_resolution,
+                    brdf_integration_texture_resolution,
+                    1, // mip levels
+                );
+                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                break :blk desc;
+            },
+            d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+            null,
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+    };
+    grfx.device.CreateShaderResourceView(
+        grfx.getResource(brdf_integration_texture.resource),
+        null,
+        brdf_integration_texture.view,
+    );
+
     grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(vertex_buffer)),
@@ -786,6 +810,22 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.addTransitionBarrier(prefiltered_env_texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     grfx.flushResourceBarriers();
 
+    //
+    // Generate BRDF integration texture.
+    //
+    {
+        const uav = grfx.allocateTempCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateUnorderedAccessView(grfx.getResource(brdf_integration_texture.resource), null, null, uav);
+
+        grfx.setCurrentPipeline(temp_pipelines.generate_brdf_integration_texture_pso);
+        grfx.cmdlist.SetComputeRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, uav));
+        const num_groups = @divExact(brdf_integration_texture_resolution, 8);
+        grfx.cmdlist.Dispatch(num_groups, num_groups, 1);
+
+        grfx.addTransitionBarrier(brdf_integration_texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
+        grfx.deallocateAllTempCpuDescriptors(.CBV_SRV_UAV);
+    }
     grfx.finishGpuCommands();
 
     mipgen_rgba8.deinit(&grfx);
@@ -794,6 +834,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     _ = grfx.releasePipeline(temp_pipelines.generate_env_texture_pso);
     _ = grfx.releasePipeline(temp_pipelines.generate_irradiance_texture_pso);
     _ = grfx.releasePipeline(temp_pipelines.generate_prefiltered_env_texture_pso);
+    _ = grfx.releasePipeline(temp_pipelines.generate_brdf_integration_texture_pso);
 
     return .{
         .grfx = grfx,
@@ -811,6 +852,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .env_texture = env_texture,
         .irradiance_texture = irradiance_texture,
         .prefiltered_env_texture = prefiltered_env_texture,
+        .brdf_integration_texture = brdf_integration_texture,
         .camera = .{
             .position = Vec3.init(2.2, 0.0, 2.2),
             .forward = Vec3.initZero(),
@@ -833,6 +875,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.env_texture.resource);
     _ = demo.grfx.releaseResource(demo.irradiance_texture.resource);
     _ = demo.grfx.releaseResource(demo.prefiltered_env_texture.resource);
+    _ = demo.grfx.releaseResource(demo.brdf_integration_texture.resource);
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
     for (demo.mesh_textures) |texture| {

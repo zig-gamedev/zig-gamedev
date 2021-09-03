@@ -104,6 +104,15 @@ pub fn build(b: *std.build.Builder) void {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd(
+        "src/pbr.hlsl",
+        "csGenerateBrdfIntegrationTexture",
+        "generate_brdf_integration_texture.cs.cso",
+        "cs",
+        "PSO__GENERATE_BRDF_INTEGRATION_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     dxc_command = makeDxcCmd("../../libs/common/generate_mipmaps.hlsl", "main", "generate_mipmaps.cs.cso", "cs", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
