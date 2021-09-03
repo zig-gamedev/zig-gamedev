@@ -36,6 +36,8 @@ Texture2D srv_base_color_texture : register(t1);
 Texture2D srv_metallic_roughness_texture : register(t2);
 Texture2D srv_normal_texture : register(t3);
 
+//TextureCube srv_irradiance_texture : register(t4);
+
 SamplerState sam_aniso : register(s0);
 
 [RootSignature(root_signature)]
@@ -143,6 +145,79 @@ void psSampleEnvTexture(
     float3 env_color = srv_env_texture.Sample(sam_s0, uvw).rgb;
     env_color = env_color / (env_color + 1.0);
     out_color = float4(env_color, 1.0);
+}
+
+#elif defined(PSO__GENERATE_IRRADIANCE_TEXTURE)
+
+#define root_signature \
+    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
+    "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
+    "DescriptorTable(SRV(t0), visibility = SHADER_VISIBILITY_PIXEL), " \
+    "StaticSampler(" \
+    "   s0, " \
+    "   filter = FILTER_MIN_MAG_MIP_LINEAR, " \
+    "   visibility = SHADER_VISIBILITY_PIXEL, " \
+    "   addressU = TEXTURE_ADDRESS_CLAMP, " \
+    "   addressV = TEXTURE_ADDRESS_CLAMP, " \
+    "   addressW = TEXTURE_ADDRESS_CLAMP" \
+    ")"
+
+struct Const {
+    float4x4 object_to_clip;
+};
+ConstantBuffer<Const> cbv_const : register(b0);
+
+TextureCube srv_env_texture : register(t0);
+SamplerState sam_s0 : register(s0);
+
+[RootSignature(root_signature)]
+void vsGenerateIrradianceTexture(
+    float3 position : POSITION,
+    float3 normal : _Normal,
+    float2 texcoords0 : _Texcoords0,
+    float4 tangent : _Tangent,
+    out float4 out_position_clip : SV_Position,
+    out float3 out_position : _Position
+) {
+    out_position_clip = mul(float4(position, 1.0), cbv_const.object_to_clip);
+    out_position = position;
+}
+
+#define PI 3.1415926f
+
+[RootSignature(root_signature)]
+void psGenerateIrradianceTexture(
+    float4 position_clip : SV_Position,
+    float3 position : _Position,
+    out float4 out_color : SV_Target0
+) {
+    const float3 n = normalize(position);
+
+    // This is Right-Handed coordinate system and works for upper-left UV coordinate systems.
+    const float3 up_vector = abs(n.y) < 0.999 ? float3(0.0, 1.0, 0.0) : float3(0.0, 0.0, 1.0);
+    const float3 tangent_x = normalize(cross(up_vector, n));
+    const float3 tangent_y = normalize(cross(n, tangent_x));
+
+    uint num_samples = 0;
+    float3 irradiance = 0.0;
+
+    for (float phi = 0.0; phi < (2.0 * PI); phi += 0.025) {
+        for (float theta = 0.0; theta < (0.5 * PI); theta += 0.025) {
+            // Point on a hemisphere.
+            const float3 h = float3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+
+            // Transform from tangent space to world space.
+            const float3 sample_vector = tangent_x * h.x + tangent_y * h.y + n * h.z;
+
+            irradiance += srv_env_texture.SampleLevel(sam_s0, sample_vector, 0).rgb *
+                cos(theta) * sin(theta);
+
+            num_samples++;
+        }
+    }
+
+    irradiance = PI * irradiance * (1.0 / num_samples);
+    out_color = float4(irradiance, 1.0);
 }
 
 #endif

@@ -783,8 +783,14 @@ pub const GraphicsContext = struct {
             }
         };
         defer {
-            if (vs_code) |code| allocator.free(code);
-            if (ps_code) |code| allocator.free(code);
+            if (vs_code) |code| {
+                allocator.free(code);
+                pso_desc.VS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
+            }
+            if (ps_code) |code| {
+                allocator.free(code);
+                pso_desc.PS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
+            }
         }
 
         const hash = compute_hash: {
@@ -879,7 +885,10 @@ pub const GraphicsContext = struct {
             }
         };
         defer {
-            if (cs_code) |code| allocator.free(code);
+            if (cs_code) |code| {
+                allocator.free(code);
+                pso_desc.CS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
+            }
         }
 
         const hash = compute_hash: {

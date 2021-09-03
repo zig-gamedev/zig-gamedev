@@ -75,9 +75,9 @@ pub const Vec3 = extern struct {
     pub fn transform(a: Vec3, b: Mat4) Vec3 {
         return .{
             .v = [_]f32{
-                a.v[0] * b.v[0][0] + a.v[1] * b.v[1][0] + a.v[2] * b.v[2][0] + b.v[3][0],
-                a.v[0] * b.v[0][1] + a.v[1] * b.v[1][1] + a.v[2] * b.v[2][1] + b.v[3][1],
-                a.v[0] * b.v[0][2] + a.v[1] * b.v[1][2] + a.v[2] * b.v[2][2] + b.v[3][2],
+                a.v[0] * b.m[0][0] + a.v[1] * b.m[1][0] + a.v[2] * b.m[2][0] + b.m[3][0],
+                a.v[0] * b.m[0][1] + a.v[1] * b.m[1][1] + a.v[2] * b.m[2][1] + b.m[3][1],
+                a.v[0] * b.m[0][2] + a.v[1] * b.m[1][2] + a.v[2] * b.m[2][2] + b.m[3][2],
             },
         };
     }
@@ -85,9 +85,9 @@ pub const Vec3 = extern struct {
     pub fn transformNormal(a: Vec3, b: Mat4) Vec3 {
         return .{
             .v = [_]f32{
-                a.v[0] * b.v[0][0] + a.v[1] * b.v[1][0] + a.v[2] * b.v[2][0],
-                a.v[0] * b.v[0][1] + a.v[1] * b.v[1][1] + a.v[2] * b.v[2][1],
-                a.v[0] * b.v[0][2] + a.v[1] * b.v[1][2] + a.v[2] * b.v[2][2],
+                a.v[0] * b.m[0][0] + a.v[1] * b.m[1][0] + a.v[2] * b.m[2][0],
+                a.v[0] * b.m[0][1] + a.v[1] * b.m[1][1] + a.v[2] * b.m[2][1],
+                a.v[0] * b.m[0][2] + a.v[1] * b.m[1][2] + a.v[2] * b.m[2][2],
             },
         };
     }

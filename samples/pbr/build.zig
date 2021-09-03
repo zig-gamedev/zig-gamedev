@@ -70,6 +70,23 @@ pub fn build(b: *std.build.Builder) void {
         makeDxcCmd("src/pbr.hlsl", "psSampleEnvTexture", "sample_env_texture.ps.cso", "ps", "PSO__SAMPLE_ENV_TEXTURE");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd(
+        "src/pbr.hlsl",
+        "vsGenerateIrradianceTexture",
+        "generate_irradiance_texture.vs.cso",
+        "vs",
+        "PSO__GENERATE_IRRADIANCE_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/pbr.hlsl",
+        "psGenerateIrradianceTexture",
+        "generate_irradiance_texture.ps.cso",
+        "ps",
+        "PSO__GENERATE_IRRADIANCE_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     dxc_command = makeDxcCmd("../../libs/common/generate_mipmaps.hlsl", "main", "generate_mipmaps.cs.cso", "cs", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 

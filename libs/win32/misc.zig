@@ -111,6 +111,9 @@ pub extern "ole32" fn CoCreateInstance(
     ppv: *?*c_void,
 ) callconv(WINAPI) HRESULT;
 
+pub const VK_LBUTTON = 0x01;
+pub const VK_RBUTTON = 0x02;
+
 pub const VK_TAB = 0x09;
 pub const VK_ESCAPE = 0x1B;
 pub const VK_LEFT = 0x25;

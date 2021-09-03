@@ -28,6 +28,7 @@ const window_width = 1920;
 const window_height = 1080;
 
 const env_texture_resolution = 512;
+const irradiance_texture_resolution = 64;
 
 const mesh_cube = 0;
 const mesh_helmet = 1;
@@ -196,6 +197,18 @@ const DemoState = struct {
     mesh_textures: [4]ResourceView,
 
     env_texture: ResourceView,
+    irradiance_texture: ResourceView,
+
+    camera: struct {
+        position: Vec3,
+        forward: Vec3,
+        pitch: f32,
+        yaw: f32,
+    },
+    mouse: struct {
+        cursor_prev_x: i32,
+        cursor_prev_y: i32,
+    },
 };
 
 fn addMesh(
@@ -291,6 +304,7 @@ fn drawToCubeTexture(grfx: *gr.GraphicsContext, dest_texture: gr.ResourceHandle,
         grfx.addTransitionBarrier(dest_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
         grfx.flushResourceBarriers();
         grfx.cmdlist.OMSetRenderTargets(1, &[_]d3d12.CPU_DESCRIPTOR_HANDLE{cube_face_rtv}, w.TRUE, null);
+        grfx.deallocateAllTempCpuDescriptors(.RTV);
 
         const mem = grfx.allocateUploadMemory(Mat4, 1);
         mem.cpu_slice[0] = object_to_view[cube_face_idx].mul(view_to_clip).transpose();
@@ -400,14 +414,22 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.RTVFormats[0] = .R16G16B16A16_FLOAT;
         pso_desc.DepthStencilState.DepthEnable = w.FALSE;
         pso_desc.RasterizerState.CullMode = .FRONT;
+
         const generate_env_texture_pso = grfx.createGraphicsShaderPipeline(
             gpa,
             &pso_desc,
             "content/shaders/generate_env_texture.vs.cso",
             "content/shaders/generate_env_texture.ps.cso",
         );
+        const generate_irradiance_texture_pso = grfx.createGraphicsShaderPipeline(
+            gpa,
+            &pso_desc,
+            "content/shaders/generate_irradiance_texture.vs.cso",
+            "content/shaders/generate_irradiance_texture.ps.cso",
+        );
         break :blk .{
             .generate_env_texture_pso = generate_env_texture_pso,
+            .generate_irradiance_texture_pso = generate_irradiance_texture_pso,
         };
     };
 
@@ -631,6 +653,44 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         env_texture.view,
     );
 
+    const irradiance_texture = .{
+        .resource = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC{
+                .Dimension = .TEXTURE2D,
+                .Alignment = 0,
+                .Width = irradiance_texture_resolution,
+                .Height = irradiance_texture_resolution,
+                .DepthOrArraySize = 6,
+                .MipLevels = 0,
+                .Format = .R16G16B16A16_FLOAT,
+                .SampleDesc = .{ .Count = 1, .Quality = 0 },
+                .Layout = .UNKNOWN,
+                .Flags = d3d12.RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+            },
+            d3d12.RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+    };
+    grfx.device.CreateShaderResourceView(
+        grfx.getResource(irradiance_texture.resource),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC{
+            .Format = .UNKNOWN,
+            .ViewDimension = .TEXTURECUBE,
+            .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+            .u = .{
+                .TextureCube = .{
+                    .MipLevels = 0xffff_ffff,
+                    .MostDetailedMip = 0,
+                    .ResourceMinLODClamp = 0.0,
+                },
+            },
+        },
+        irradiance_texture.view,
+    );
+
     grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(vertex_buffer)),
@@ -642,12 +702,24 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .Format = .R32_UINT,
     });
 
+    //
+    // Generate env. (cube) texture content.
+    //
     grfx.setCurrentPipeline(temp_pipelines.generate_env_texture_pso);
     grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, equirect_texture.view));
     drawToCubeTexture(&grfx, env_texture.resource, 0);
-
     mipgen_rgba16f.generateMipmaps(&grfx, env_texture.resource);
     grfx.addTransitionBarrier(env_texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.flushResourceBarriers();
+
+    //
+    // Generate irradiance (cube) texture content.
+    //
+    grfx.setCurrentPipeline(temp_pipelines.generate_irradiance_texture_pso);
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, env_texture.view));
+    drawToCubeTexture(&grfx, irradiance_texture.resource, 0);
+    mipgen_rgba16f.generateMipmaps(&grfx, irradiance_texture.resource);
+    grfx.addTransitionBarrier(irradiance_texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     grfx.flushResourceBarriers();
 
     grfx.finishGpuCommands();
@@ -656,7 +728,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     mipgen_rgba16f.deinit(&grfx);
     _ = grfx.releaseResource(equirect_texture.resource);
     _ = grfx.releasePipeline(temp_pipelines.generate_env_texture_pso);
-    grfx.deallocateAllTempCpuDescriptors(.RTV);
+    _ = grfx.releasePipeline(temp_pipelines.generate_irradiance_texture_pso);
 
     return .{
         .grfx = grfx,
@@ -672,6 +744,17 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .index_buffer = index_buffer,
         .mesh_textures = mesh_textures,
         .env_texture = env_texture,
+        .irradiance_texture = irradiance_texture,
+        .camera = .{
+            .position = Vec3.init(2.2, 0.0, 2.2),
+            .forward = Vec3.initZero(),
+            .pitch = 0.0,
+            .yaw = math.pi + 0.25 * math.pi,
+        },
+        .mouse = .{
+            .cursor_prev_x = 0,
+            .cursor_prev_y = 0,
+        },
     };
 }
 
@@ -682,6 +765,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releasePipeline(demo.sample_env_texture_pso);
     _ = demo.grfx.releaseResource(demo.depth_texture.resource);
     _ = demo.grfx.releaseResource(demo.env_texture.resource);
+    _ = demo.grfx.releaseResource(demo.irradiance_texture.resource);
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
     for (demo.mesh_textures) |texture| {
@@ -701,15 +785,56 @@ fn update(demo: *DemoState) void {
     lib.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igShowDemoWindow(null);
+
+    // Handle camera rotation with mouse.
+    {
+        var pos: w.POINT = undefined;
+        _ = w.GetCursorPos(&pos);
+        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
+        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        demo.mouse.cursor_prev_x = pos.x;
+        demo.mouse.cursor_prev_y = pos.y;
+
+        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+            demo.camera.pitch += 0.0025 * delta_y;
+            demo.camera.yaw += 0.0025 * delta_x;
+            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.yaw = vm.modAngle(demo.camera.yaw);
+        }
+    }
+
+    // Handle camera movement with 'WASD' keys.
+    {
+        const speed: f32 = 5.0;
+        const delta_time = demo.frame_stats.delta_time;
+        const transform = Mat4.initRotationX(demo.camera.pitch).mul(Mat4.initRotationY(demo.camera.yaw));
+        var forward = Vec3.init(0.0, 0.0, 1.0).transform(transform).normalize();
+
+        demo.camera.forward = forward;
+        const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
+        forward = forward.scale(speed * delta_time);
+
+        if (w.GetAsyncKeyState('W') < 0) {
+            demo.camera.position = demo.camera.position.add(forward);
+        } else if (w.GetAsyncKeyState('S') < 0) {
+            demo.camera.position = demo.camera.position.sub(forward);
+        }
+        if (w.GetAsyncKeyState('D') < 0) {
+            demo.camera.position = demo.camera.position.add(right);
+        } else if (w.GetAsyncKeyState('A') < 0) {
+            demo.camera.position = demo.camera.position.sub(right);
+        }
+    }
 }
 
 fn draw(demo: *DemoState) void {
     var grfx = &demo.grfx;
     grfx.beginFrame();
 
-    const cam_world_to_view = vm.Mat4.initLookAtLh(
-        vm.Vec3.init(2.2, 2.2, -2.2),
-        vm.Vec3.init(0.0, 0.0, 0.0),
+    const cam_world_to_view = vm.Mat4.initLookToLh(
+        demo.camera.position,
+        demo.camera.forward,
         vm.Vec3.init(0.0, 1.0, 0.0),
     );
     const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
@@ -788,6 +913,7 @@ fn draw(demo: *DemoState) void {
         grfx.setCurrentPipeline(demo.sample_env_texture_pso);
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.env_texture.view));
+        //grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.irradiance_texture.view));
         grfx.cmdlist.DrawIndexedInstanced(
             demo.meshes.items[mesh_cube].num_indices,
             1,
