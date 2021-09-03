@@ -45,13 +45,14 @@ float geometrySmith(float n_dot_l, float n_dot_v, float roughness) {
 
 #define root_signature \
     "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
-    "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
-    "DescriptorTable(SRV(t0, numDescriptors = 4), visibility = SHADER_VISIBILITY_PIXEL), " \
+    "CBV(b0), " \
+    "DescriptorTable(SRV(t0, numDescriptors = 7), visibility = SHADER_VISIBILITY_PIXEL), " \
     "StaticSampler(s0, filter = FILTER_ANISOTROPIC, maxAnisotropy = 16, visibility = SHADER_VISIBILITY_PIXEL)"
 
 struct Const {
     float4x4 object_to_clip;
     float4x4 object_to_world;
+    float3 camera_position;
 };
 ConstantBuffer<Const> cbv_const : register(b0);
 
@@ -79,9 +80,15 @@ Texture2D srv_base_color_texture : register(t1);
 Texture2D srv_metallic_roughness_texture : register(t2);
 Texture2D srv_normal_texture : register(t3);
 
-//TextureCube srv_irradiance_texture : register(t4);
+TextureCube srv_irradiance_texture : register(t4);
+TextureCube srv_prefiltered_env_texture : register(t5);
+Texture2D srv_brdf_integration_texture : register(t6);
 
 SamplerState sam_aniso : register(s0);
+
+float3 fresnelSchlickRoughness(float cos_theta, float3 f0, float roughness) {
+    return f0 + (max(1.0 - roughness, f0) - f0) * pow(1.0 - cos_theta, 5.0);
+}
 
 [RootSignature(root_signature)]
 void psMeshPbr(
@@ -92,8 +99,58 @@ void psMeshPbr(
     float4 tangent : _Tangent,
     out float4 out_color : SV_Target0
 ) {
-    float3 n = normalize(normal);
-    float3 color = abs(n) * srv_ao_texture.Sample(sam_aniso, texcoords0).rgb;
+    float3 n = normalize(srv_normal_texture.Sample(sam_aniso, texcoords0).rgb * 2.0 - 1.0);
+
+    normal = normalize(normal);
+    tangent.xyz = normalize(tangent.xyz);
+    const float3 bitangent = normalize(cross(normal, tangent.xyz)) * tangent.w;
+
+    const float3x3 object_to_world = (float3x3)cbv_const.object_to_world;
+
+    n = mul(n, float3x3(tangent.xyz, bitangent, normal));
+    n = normalize(mul(n, object_to_world));
+
+    float metallic;
+    float roughness;
+    {
+        const float2 mr = srv_metallic_roughness_texture.Sample(sam_aniso, texcoords0).bg;
+        metallic = mr.r;
+        roughness = mr.g;
+    }
+    const float3 base_color = srv_base_color_texture.Sample(sam_aniso, texcoords0).rgb;
+    const float ao = srv_ao_texture.Sample(sam_aniso, texcoords0).r;
+
+    const float3 v = normalize(cbv_const.camera_position - position);
+    const float n_dot_v = saturate(dot(n, v));
+
+    float3 f0 = float3(0.04, 0.04, 0.04);
+    f0 = lerp(f0, base_color, metallic);
+
+    const float3 r = reflect(-v, n);
+    const float3 f = fresnelSchlickRoughness(n_dot_v, f0, roughness);
+
+    const float3 kd = (1.0 - f) * (1.0 - metallic);
+
+    const float3 irradiance = srv_irradiance_texture.SampleLevel(sam_aniso, n, 0.0).rgb;
+    const float3 prefiltered_color = srv_prefiltered_env_texture.SampleLevel(
+        sam_aniso,
+        r,
+        roughness * 5.0 // roughness * (num_mip_levels - 1.0f)
+    ).rgb;
+    const float2 env_brdf = srv_brdf_integration_texture.SampleLevel(
+        sam_aniso,
+        float2(min(n_dot_v, 0.999), roughness),
+        0.0
+    ).rg;
+
+    const float3 diffuse = irradiance * base_color;
+    const float3 specular = prefiltered_color * (f * env_brdf.x + env_brdf.y);
+    const float3 ambient = (kd * diffuse + specular) * ao;
+
+    float3 color = ambient;
+    color *= 4.0;
+    color = color / (color + 1.0);
+
     out_color = float4(color, 1.0);
 }
 

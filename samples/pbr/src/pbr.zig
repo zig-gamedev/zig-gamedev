@@ -177,6 +177,7 @@ const Mesh = struct {
 const PsoMeshPbr_Const = extern struct {
     object_to_clip: Mat4,
     object_to_world: Mat4,
+    camera_position: Vec3,
 };
 
 const DemoState = struct {
@@ -826,8 +827,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         grfx.flushResourceBarriers();
         grfx.deallocateAllTempCpuDescriptors(.CBV_SRV_UAV);
     }
+
     grfx.finishGpuCommands();
 
+    // Release temporary resources.
     mipgen_rgba8.deinit(&grfx);
     mipgen_rgba16f.deinit(&grfx);
     _ = grfx.releaseResource(equirect_texture.resource);
@@ -986,22 +989,26 @@ fn draw(demo: *DemoState) void {
     });
     // Draw SciFiHelmet.
     {
-        const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.5 * demo.frame_stats.time));
+        const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.25 * demo.frame_stats.time));
         const object_to_clip = object_to_world.mul(cam_world_to_clip);
 
         const mem = grfx.allocateUploadMemory(PsoMeshPbr_Const, 1);
         mem.cpu_slice[0] = .{
             .object_to_clip = object_to_clip.transpose(),
             .object_to_world = object_to_world.transpose(),
+            .camera_position = demo.camera.position,
         };
 
         grfx.setCurrentPipeline(demo.mesh_pbr_pso);
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {
             const table = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures[0].view);
-            _ = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures[0].view);
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures[1].view);
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures[2].view);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.mesh_textures[3].view);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.irradiance_texture.view);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.prefiltered_env_texture.view);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.brdf_integration_texture.view);
             break :blk table;
         });
         grfx.cmdlist.DrawIndexedInstanced(
@@ -1023,8 +1030,6 @@ fn draw(demo: *DemoState) void {
         grfx.setCurrentPipeline(demo.sample_env_texture_pso);
         grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.env_texture.view));
-        //grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.irradiance_texture.view));
-        //grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.prefiltered_env_texture.view));
         grfx.cmdlist.DrawIndexedInstanced(
             demo.meshes.items[mesh_cube].num_indices,
             1,
