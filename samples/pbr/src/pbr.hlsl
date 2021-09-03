@@ -55,6 +55,7 @@ struct Const {
     float4x4 object_to_clip;
     float4x4 object_to_world;
     float3 camera_position;
+    int draw_mode;
 };
 ConstantBuffer<Const> cbv_const : register(b0);
 
@@ -101,6 +102,23 @@ void psMeshPbr(
     float4 tangent : _Tangent,
     out float4 out_color : SV_Target0
 ) {
+    if (cbv_const.draw_mode == 1) {
+        out_color = pow(srv_ao_texture.Sample(sam_aniso, texcoords0), 1.0 / GAMMA);
+        return;
+    } else if (cbv_const.draw_mode == 2) {
+        out_color = srv_base_color_texture.Sample(sam_aniso, texcoords0);
+        return;
+    } else if (cbv_const.draw_mode == 3) {
+        out_color = pow(srv_metallic_roughness_texture.Sample(sam_aniso, texcoords0).b, 1.0 / GAMMA);
+        return;
+    } else if (cbv_const.draw_mode == 4) {
+        out_color = pow(srv_metallic_roughness_texture.Sample(sam_aniso, texcoords0).g, 1.0 / GAMMA);
+        return;
+    } else if (cbv_const.draw_mode == 5) {
+        out_color = pow(srv_normal_texture.Sample(sam_aniso, texcoords0), 1.0 / GAMMA);
+        return;
+    }
+
     float3 n = normalize(srv_normal_texture.Sample(sam_aniso, texcoords0).rgb * 2.0 - 1.0);
 
     normal = normalize(normal);

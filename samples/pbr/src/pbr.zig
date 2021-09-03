@@ -178,6 +178,7 @@ const PsoMeshPbr_Const = extern struct {
     object_to_clip: Mat4,
     object_to_world: Mat4,
     camera_position: Vec3,
+    draw_mode: i32,
 };
 
 const DemoState = struct {
@@ -204,6 +205,8 @@ const DemoState = struct {
     irradiance_texture: ResourceView,
     prefiltered_env_texture: ResourceView,
     brdf_integration_texture: ResourceView,
+
+    draw_mode: i32,
 
     camera: struct {
         position: Vec3,
@@ -856,6 +859,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .irradiance_texture = irradiance_texture,
         .prefiltered_env_texture = prefiltered_env_texture,
         .brdf_integration_texture = brdf_integration_texture,
+        .draw_mode = 0,
         .camera = .{
             .position = Vec3.init(2.2, 0.0, 2.2),
             .forward = Vec3.initZero(),
@@ -897,7 +901,24 @@ fn update(demo: *DemoState) void {
 
     lib.newImGuiFrame(demo.frame_stats.delta_time);
 
-    c.igShowDemoWindow(null);
+    c.igSetNextWindowPos(
+        c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImGuiCond_FirstUseEver,
+        c.ImVec2{ .x = 0.0, .y = 0.0 },
+    );
+    c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);
+    _ = c.igBegin(
+        "Demo Settings",
+        null,
+        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+    );
+    _ = c.igRadioButton_IntPtr("Draw PBR effect", &demo.draw_mode, 0);
+    _ = c.igRadioButton_IntPtr("Draw Ambient Occlusion texture", &demo.draw_mode, 1);
+    _ = c.igRadioButton_IntPtr("Draw Base Color texture", &demo.draw_mode, 2);
+    _ = c.igRadioButton_IntPtr("Draw Metallic texture", &demo.draw_mode, 3);
+    _ = c.igRadioButton_IntPtr("Draw Roughness texture", &demo.draw_mode, 4);
+    _ = c.igRadioButton_IntPtr("Draw Normal texture", &demo.draw_mode, 5);
+    c.igEnd();
 
     // Handle camera rotation with mouse.
     {
@@ -997,6 +1018,7 @@ fn draw(demo: *DemoState) void {
             .object_to_clip = object_to_clip.transpose(),
             .object_to_world = object_to_world.transpose(),
             .camera_position = demo.camera.position,
+            .draw_mode = demo.draw_mode,
         };
 
         grfx.setCurrentPipeline(demo.mesh_pbr_pso);
