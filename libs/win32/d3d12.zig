@@ -1819,7 +1819,7 @@ pub const IPipelineState = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetCachedBlob(self: *T, blob: **ID3DBlob) HRESULT {
+            pub inline fn GetCachedBlob(self: *T, blob: **d3d.ID3DBlob) HRESULT {
                 return self.v.pstate.GetCachedBlob(self, blob);
             }
         };

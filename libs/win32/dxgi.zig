@@ -1,5 +1,7 @@
 const windows = @import("windows.zig");
 const UINT = windows.UINT;
+const UINT64 = windows.UINT64;
+const DWORD = windows.DWORD;
 const FLOAT = windows.FLOAT;
 const BOOL = windows.BOOL;
 const GUID = windows.GUID;
@@ -844,7 +846,7 @@ pub const ISwapChain = extern struct {
             pub inline fn ResizeTarget(self: *T, params: *const MODE_DESC) HRESULT {
                 return self.v.swapchain.ResizeTarget(self, params);
             }
-            pub inline fn GetContainingOutput(self: *T, output: *?*pIOutput) HRESULT {
+            pub inline fn GetContainingOutput(self: *T, output: *?*IOutput) HRESULT {
                 return self.v.swapchain.GetContainingOutput(self, output);
             }
             pub inline fn GetFrameStatistics(self: *T, stats: *FRAME_STATISTICS) HRESULT {

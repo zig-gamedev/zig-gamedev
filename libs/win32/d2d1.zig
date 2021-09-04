@@ -12,6 +12,8 @@ const FLOAT = windows.FLOAT;
 const LPCWSTR = windows.LPCWSTR;
 const UINT32 = windows.UINT32;
 const UINT64 = windows.UINT64;
+const POINT = windows.POINT;
+const RECT = windows.RECT;
 
 pub const POINT_2F = D2D_POINT_2F;
 pub const POINT_2U = D2D_POINT_2U;
