@@ -192,7 +192,8 @@ const DemoState = struct {
     depth_texture: ResourceView,
 
     brush: *d2d1.ISolidColorBrush,
-    textformat: *dwrite.ITextFormat,
+    info_tfmt: *dwrite.ITextFormat,
+    title_tfmt: *dwrite.ITextFormat,
 
     meshes: std.ArrayList(Mesh),
 
@@ -344,8 +345,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk maybe_brush.?;
     };
 
-    const textformat = blk: {
-        var maybe_textformat: ?*dwrite.ITextFormat = null;
+    const info_tfmt = blk: {
+        var info_tfmt: *dwrite.ITextFormat = undefined;
         hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
@@ -354,12 +355,29 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             dwrite.FONT_STRETCH.NORMAL,
             32.0,
             L("en-us"),
-            &maybe_textformat,
+            @ptrCast(*?*dwrite.ITextFormat, &info_tfmt),
         ));
-        break :blk maybe_textformat.?;
+        break :blk info_tfmt;
     };
-    hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
-    hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
+    hrPanicOnFail(info_tfmt.SetTextAlignment(.LEADING));
+    hrPanicOnFail(info_tfmt.SetParagraphAlignment(.NEAR));
+
+    const title_tfmt = blk: {
+        var title_tfmt: *dwrite.ITextFormat = undefined;
+        hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
+            L("Verdana"),
+            null,
+            dwrite.FONT_WEIGHT.NORMAL,
+            dwrite.FONT_STYLE.NORMAL,
+            dwrite.FONT_STRETCH.NORMAL,
+            72.0,
+            L("en-us"),
+            @ptrCast(*?*dwrite.ITextFormat, &title_tfmt),
+        ));
+        break :blk title_tfmt;
+    };
+    hrPanicOnFail(title_tfmt.SetTextAlignment(.CENTER));
+    hrPanicOnFail(title_tfmt.SetParagraphAlignment(.CENTER));
 
     const mesh_pbr_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -493,6 +511,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var mipgen_rgba16f = gr.MipmapGenerator.init(gpa, &grfx, .R16G16B16A16_FLOAT);
 
     grfx.beginFrame();
+    drawLoadingScreen(&grfx, title_tfmt, brush);
     grfx.endFrame();
 
     grfx.beginFrame();
@@ -834,7 +853,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         grfx.deallocateAllTempCpuDescriptors(.CBV_SRV_UAV);
     }
 
+    drawLoadingScreen(&grfx, title_tfmt, brush);
     grfx.endFrame();
+    w.kernel32.Sleep(100);
     grfx.finishGpuCommands();
 
     // Release temporary resources.
@@ -854,7 +875,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .sample_env_texture_pso = sample_env_texture_pso,
         .depth_texture = depth_texture,
         .brush = brush,
-        .textformat = textformat,
+        .info_tfmt = info_tfmt,
+        .title_tfmt = title_tfmt,
         .meshes = all_meshes,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
@@ -893,7 +915,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         _ = demo.grfx.releaseResource(texture.resource);
     }
     _ = demo.brush.Release();
-    _ = demo.textformat.Release();
+    _ = demo.info_tfmt.Release();
+    _ = demo.title_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit(gpa);
     lib.deinitWindow(gpa);
@@ -964,6 +987,31 @@ fn update(demo: *DemoState) void {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
+}
+
+fn drawLoadingScreen(grfx: *gr.GraphicsContext, textformat: *dwrite.ITextFormat, brush: *d2d1.ISolidColorBrush) void {
+    const back_buffer = grfx.getBackBuffer();
+
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    grfx.flushResourceBarriers();
+
+    grfx.beginDraw2d();
+
+    grfx.d2d.context.Clear(&d2d1.colorf.Black);
+    brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+    lib.DrawText(
+        grfx.d2d.context,
+        "Loading...",
+        textformat,
+        &d2d1.RECT_F{
+            .left = 0.0,
+            .top = 0.0,
+            .right = @intToFloat(f32, grfx.viewport_width),
+            .bottom = @intToFloat(f32, grfx.viewport_height),
+        },
+        @ptrCast(*d2d1.IBrush, brush),
+    );
+    grfx.endDraw2d();
 }
 
 fn draw(demo: *DemoState) void {
@@ -1081,7 +1129,7 @@ fn draw(demo: *DemoState) void {
         lib.DrawText(
             grfx.d2d.context,
             text,
-            demo.textformat,
+            demo.info_tfmt,
             &d2d1.RECT_F{
                 .left = 10.0,
                 .top = 10.0,
