@@ -493,6 +493,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var mipgen_rgba16f = gr.MipmapGenerator.init(gpa, &grfx, .R16G16B16A16_FLOAT);
 
     grfx.beginFrame();
+    grfx.endFrame();
+
+    grfx.beginFrame();
 
     var gui = gr.GuiContext.init(gpa, &grfx);
 
@@ -831,6 +834,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         grfx.deallocateAllTempCpuDescriptors(.CBV_SRV_UAV);
     }
 
+    grfx.endFrame();
     grfx.finishGpuCommands();
 
     // Release temporary resources.

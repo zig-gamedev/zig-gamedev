@@ -42,6 +42,9 @@ const DemoState = struct {
 };
 
 fn fillAudioBuffer(audio: AudioContex) void {
+    const static = struct {
+        var time: f64 = 0.0;
+    };
     var buffer_padding_in_frames: w.UINT = 0;
     hrPanicOnFail(audio.client.GetCurrentPadding(&buffer_padding_in_frames));
 
@@ -51,11 +54,13 @@ fn fillAudioBuffer(audio: AudioContex) void {
     hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @ptrCast(*?*w.BYTE, &ptr)));
     var i: u32 = 0;
     while (i < num_frames) : (i += 1) {
-        const frac = @intToFloat(f32, i) / @intToFloat(f32, num_frames);
-        ptr[i * 2 + 0] = 0.25 * math.sin(2.0 * math.pi * 440.0 * frac);
-        ptr[i * 2 + 1] = 0.25 * math.sin(2.0 * math.pi * 440.0 * frac);
+        const t = static.time + @intToFloat(f64, i) * (1.0 / 48_000.0);
+        ptr[i * 2 + 0] = @floatCast(f32, 0.25 * math.sin(2.0 * math.pi * 440.0 * t));
+        ptr[i * 2 + 1] = @floatCast(f32, 0.25 * math.sin(2.0 * math.pi * 440.0 * t));
     }
     hrPanicOnFail(audio.render_client.ReleaseBuffer(num_frames, 0));
+
+    static.time += @intToFloat(f64, num_frames) * (1.0 / 48_000.0);
 }
 
 fn audioThread(ctx: ?*c_void) callconv(.C) w.DWORD {
