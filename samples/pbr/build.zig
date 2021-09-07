@@ -9,6 +9,7 @@ fn makeDxcCmd(
     comptime profile: []const u8,
     comptime define: []const u8,
 ) [9][]const u8 {
+    // NOTE(mziulek): PIX reports warning about non-retail shader version. Why?
     const shader_ver = "6_6";
     const shader_dir = "content/shaders/";
     return [9][]const u8{

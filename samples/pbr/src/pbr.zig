@@ -9,6 +9,7 @@ const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
+const pix = common.pix;
 const vm = common.vectormath;
 const math = std.math;
 const assert = std.debug.assert;
@@ -1060,6 +1061,12 @@ fn draw(demo: *DemoState) void {
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
         .Format = .R32_UINT,
     });
+
+    pix.beginEventOnCommandList(
+        @ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist),
+        "Draw meshes",
+    );
+
     // Draw SciFiHelmet.
     {
         const object_to_world = vm.Mat4.initRotationY(@floatCast(f32, 0.25 * demo.frame_stats.time));
@@ -1112,6 +1119,7 @@ fn draw(demo: *DemoState) void {
             0,
         );
     }
+    pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
     demo.gui.draw(grfx);
 
