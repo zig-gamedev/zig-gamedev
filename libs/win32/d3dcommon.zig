@@ -15,7 +15,7 @@ pub const PRIMITIVE_TOPOLOGY = enum(UINT) {
     LINESTRIP_ADJ = 11,
     TRIANGLELIST_ADJ = 12,
     TRIANGLESTRIP_ADJ = 13,
-    _1_CONTROL_POINT_PATCHLIST = 33,
+    CONTROL_POINT_PATCHLIST = 33,
     _2_CONTROL_POINT_PATCHLIST = 34,
     _3_CONTROL_POINT_PATCHLIST = 35,
     _4_CONTROL_POINT_PATCHLIST = 36,
@@ -50,17 +50,17 @@ pub const PRIMITIVE_TOPOLOGY = enum(UINT) {
 };
 
 pub const FEATURE_LEVEL = enum(UINT) {
-    _1_0_CORE = 0x1000,
-    _9_1 = 0x9100,
-    _9_2 = 0x9200,
-    _9_3 = 0x9300,
-    _10_0 = 0xa000,
-    _10_1 = 0xa100,
-    _11_0 = 0xb000,
-    _11_1 = 0xb100,
-    _12_0 = 0xc000,
-    _12_1 = 0xc100,
-    _12_2 = 0xc200,
+    FL_1_0_CORE = 0x1000,
+    FL_9_1 = 0x9100,
+    FL_9_2 = 0x9200,
+    FL_9_3 = 0x9300,
+    FL_10_0 = 0xa000,
+    FL_10_1 = 0xa100,
+    FL_11_0 = 0xb000,
+    FL_11_1 = 0xb100,
+    FL_12_0 = 0xc000,
+    FL_12_1 = 0xc100,
+    FL_12_2 = 0xc200,
 };
 
 pub const IBlob = extern struct {

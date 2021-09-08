@@ -115,7 +115,7 @@ pub const GraphicsContext = struct {
             var device: *d3d12.IDevice9 = undefined;
             hrPanicOnFail(d3d12.D3D12CreateDevice(
                 null,
-                ._11_1,
+                .FL_11_1,
                 &d3d12.IID_IDevice9,
                 @ptrCast(*?*c_void, &device),
             ));
