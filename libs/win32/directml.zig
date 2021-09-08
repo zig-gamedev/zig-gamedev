@@ -9,6 +9,7 @@ const HRESULT = windows.HRESULT;
 const WINAPI = windows.WINAPI;
 const GUID = windows.GUID;
 const LPCWSTR = windows.LPCWSTR;
+const LPCSTR = windows.LPCSTR;
 const BOOL = windows.BOOL;
 
 //
@@ -704,6 +705,98 @@ pub const IDevice = extern struct {
     }
 };
 
+pub const GRAPH_EDGE_TYPE = enum(UINT) {
+    INVALID,
+    INPUT,
+    OUTPUT,
+    INTERMEDIATE,
+};
+
+pub const GRAPH_EDGE_DESC = extern struct {
+    Type: GRAPH_EDGE_TYPE,
+    Desc: *const c_void,
+};
+
+pub const INPUT_GRAPH_EDGE_DESC = extern struct {
+    GraphInputIndex: UINT,
+    ToNodeIndex: UINT,
+    ToNodeInputIndex: UINT,
+    Name: ?LPCSTR,
+};
+
+pub const OUTPUT_GRAPH_EDGE_DESC = extern struct {
+    FromNodeIndex: UINT,
+    FromNodeOutputIndex: UINT,
+    GraphOutputIndex: UINT,
+    Name: ?LPCSTR,
+};
+
+pub const INTERMEDIATE_GRAPH_EDGE_DESC = extern struct {
+    FromNodeIndex: UINT,
+    FromNodeOutputIndex: UINT,
+    ToNodeIndex: UINT,
+    ToNodeInputIndex: UINT,
+    Name: ?LPCSTR,
+};
+
+pub const GRAPH_NODE_TYPE = enum(UINT) {
+    INVALID,
+    OPERATOR,
+};
+
+pub const GRAPH_NODE_DESC = extern struct {
+    Type: GRAPH_NODE_TYPE,
+    Desc: *const c_void,
+};
+
+pub const OPERATOR_GRAPH_NODE_DESC = extern struct {
+    Operator: *IOperator,
+    Name: ?LPCSTR,
+};
+
+pub const GRAPH_DESC = extern struct {
+    InputCount: UINT,
+    OutputCount: UINT,
+
+    NodeCount: UINT,
+    Nodes: [*]const GRAPH_NODE_DESC,
+
+    InputEdgeCount: UINT,
+    InputEdges: ?[*]const GRAPH_EDGE_DESC,
+
+    OutputEdgeCount: UINT,
+    OutputEdges: [*]const GRAPH_EDGE_DESC,
+
+    IntermediateEdgeCount: UINT,
+    IntermediateEdges: ?[*]const GRAPH_EDGE_DESC,
+};
+
+pub const IID_IDevice1 = GUID.parse("a0884f9a-d2be-4355-aa5d-5901281ad1d2");
+pub const IDevice1 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        device: IDevice.VTable(Self),
+        device1: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDevice.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            CompileGraph: fn (*T, *const GRAPH_DESC, EXECUTION_FLAGS, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 //
 // DML feature support queries.
 //
@@ -743,10 +836,10 @@ pub const FEATURE_DATA_FEATURE_LEVELS = extern struct {
 // DML device functions, enumerations, and structures.
 //
 pub const BINDING_TABLE_DESC = extern struct {
-    //    IDMLDispatchable* Dispatchable;
-    //    D3D12_CPU_DESCRIPTOR_HANDLE CPUDescriptorHandle;
-    //    D3D12_GPU_DESCRIPTOR_HANDLE GPUDescriptorHandle;
-    //    UINT SizeInDescriptors;
+    Dispatchable: *IDispatchable,
+    CPUDescriptorHandle: d3d12.CPU_DESCRIPTOR_HANDLE,
+    GPUDescriptorHandle: d3d12.GPU_DESCRIPTOR_HANDLE,
+    SizeInDescriptors: UINT,
 };
 
 pub const EXECUTION_FLAGS = UINT;
