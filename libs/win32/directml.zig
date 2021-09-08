@@ -478,6 +478,232 @@ pub const IOperatorInitializer = extern struct {
     }
 };
 
+pub const BINDING_TYPE = enum(UINT) {
+    NONE,
+    BUFFER,
+    BUFFER_ARRAY,
+};
+
+pub const BINDING_DESC = extern struct {
+    Type: BINDING_TYPE,
+    Desc: *const c_void,
+};
+
+pub const BUFFER_BINDING = extern struct {
+    Buffer: ?*d3d12.IResource,
+    Offset: UINT64,
+    SizeInBytes: UINT64,
+};
+
+pub const BUFFER_ARRAY_BINDING = extern struct {
+    BindingCount: UINT,
+    Bindings: [*]const BUFFER_BINDING,
+};
+
+pub const IID_IBindingTable = GUID.parse("29c687dc-de74-4e3b-ab00-1168f2fc3cfc");
+pub const IBindingTable = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        bindtable: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn BindInputs(self: *T, num: UINT, bindings: ?[*]const BINDING_DESC) void {
+                self.v.bindtable.BindInputs(self, num, bindings);
+            }
+            pub inline fn BindOutputs(self: *T, num: UINT, bindings: ?[*]const BINDING_DESC) void {
+                self.v.bindtable.BindOutputs(self, num, bindings);
+            }
+            pub inline fn BindTemporaryResource(self: *T, binding: ?*const BINDING_DESC) void {
+                self.v.bindtable.BindTemporaryResource(self, binding);
+            }
+            pub inline fn BindPersistentResource(self: *T, binding: ?*const BINDING_DESC) void {
+                self.v.bindtable.BindPersistentResource(self, binding);
+            }
+            pub inline fn Reset(self: *T, desc: ?*const BINDING_TABLE_DESC) HRESULT {
+                return self.v.bindtable.Reset(self, desc);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            BindInputs: fn (*T, UINT, ?[*]const BINDING_DESC) callconv(WINAPI) void,
+            BindOutputs: fn (*T, UINT, ?[*]const BINDING_DESC) callconv(WINAPI) void,
+            BindTemporaryResource: fn (*T, ?*const BINDING_DESC) callconv(WINAPI) void,
+            BindPersistentResource: fn (*T, ?*const BINDING_DESC) callconv(WINAPI) void,
+            Reset: fn (*T, ?*const BINDING_TABLE_DESC) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const IID_ICommandRecorder = GUID.parse("e6857a76-2e3e-4fdd-bff4-5d2ba10fb453");
+pub const ICommandRecorder = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        cmdrec: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn RecordDispatch(
+                self: *T,
+                cmdlist: *d3d12.ICommandList,
+                dispatchable: *IDispatchable,
+                bindings: *IBindingTable,
+            ) void {
+                self.v.cmdrec.RecordDispatch(self, cmdlist, dispatchable, bindings);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            RecordDispatch: fn (*T, *d3d12.ICommandList, *IDispatchable, *IBindingTable) callconv(WINAPI) void,
+        };
+    }
+};
+
+pub const IID_IDebugDevice = GUID.parse("7d6f3ac9-394a-4ac3-92a7-390cc57a8217");
+pub const IDebugDevice = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        debugdev: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn SetMuteDebugOutput(self: *T, mute: BOOL) void {
+                self.v.debugdev.SetMuteDebugOutput(self, mute);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            SetMuteDebugOutput: fn (*T, BOOL) callconv(WINAPI) void,
+        };
+    }
+};
+
+pub const IID_IDevice = GUID.parse("6dbd6437-96fd-423f-a98c-ae5e7c2a573f");
+pub const IDevice = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        device: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn CheckFeatureSupport(
+                self: *T,
+                feature: FEATURE,
+                feature_query_data_size: UINT,
+                feature_query_data: ?*const c_void,
+                feature_support_data_size: UINT,
+                feature_support_data: *c_void,
+            ) HRESULT {
+                return self.v.device.CheckFeatureSupport(
+                    self,
+                    feature,
+                    feature_query_data_size,
+                    feature_query_data,
+                    feature_support_data_size,
+                    feature_support_data,
+                );
+            }
+            pub inline fn CreateOperator(self: *T, desc: *const OPERATOR_DESC, guid: *const GUID, ppv: ?*?*c_void) HRESULT {
+                return self.v.device.CreateOperator(self, desc, guid, ppv);
+            }
+            pub inline fn CompileOperator(
+                self: *T,
+                op: *IOperator,
+                flags: EXECUTION_FLAGS,
+                guid: *const GUID,
+                ppv: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device.CompileOperator(self, op, flags, guid, ppv);
+            }
+            pub inline fn CreateOperatorInitializer(
+                self: *T,
+                num_ops: UINT,
+                ops: ?[*]const *ICompiledOperator,
+                guid: *const GUID,
+                ppv: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateOperatorInitializer(self, num_ops, ops, guid, ppv);
+            }
+            pub inline fn CreateCommandRecorder(self: *T, guid: *const GUID, ppv: *?*c_void) HRESULT {
+                return self.v.device.CreateCommandRecorder(self, guid, ppv);
+            }
+            pub inline fn CreateBindingTable(
+                self: *T,
+                desc: ?*const BINDING_TABLE_DESC,
+                guid: *const GUID,
+                ppv: *?*c_void,
+            ) HRESULT {
+                return self.v.device.CreateBindingTable(self, desc, guid, ppv);
+            }
+            pub inline fn Evict(self: *T, num: UINT, objs: [*]const *IPageable) HRESULT {
+                return self.v.device.Evict(self, num, objs);
+            }
+            pub inline fn MakeResident(self: *T, num: UINT, objs: [*]const *IPageable) HRESULT {
+                return self.v.device.MakeResident(self, num, objs);
+            }
+            pub inline fn GetDeviceRemovedReason(self: *T) HRESULT {
+                return self.v.device.GetDeviceRemovedReason(self);
+            }
+            pub inline fn GetParentDevice(self: *T, guid: *const GUID, ppv: *?*c_void) HRESULT {
+                return self.v.device.GetParentDevice(self, guid, ppv);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            CheckFeatureSupport: fn (*T, FEATURE, UINT, ?*const c_void, UINT, *c_void) callconv(WINAPI) HRESULT,
+            CreateOperator: fn (*T, *const OPERATOR_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CompileOperator: fn (*T, *IOperator, EXECUTION_FLAGS, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CreateOperatorInitializer: fn (
+                *T,
+                UINT,
+                ?[*]const *ICompiledOperator,
+                *const GUID,
+                *?*c_void,
+            ) callconv(WINAPI) HRESULT,
+            CreateCommandRecorder: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateBindingTable: fn (*T, ?*const BINDING_TABLE_DESC, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            Evict: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+            MakeResident: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+            GetDeviceRemovedReason: fn (*T) callconv(WINAPI) HRESULT,
+            GetParentDevice: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 //
 // DML feature support queries.
 //
