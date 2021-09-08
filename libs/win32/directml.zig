@@ -771,7 +771,7 @@ pub const GRAPH_DESC = extern struct {
     IntermediateEdges: ?[*]const GRAPH_EDGE_DESC,
 };
 
-pub const IID_IDevice1 = GUID.parse("a0884f9a-d2be-4355-aa5d-5901281ad1d2");
+pub const IID_IDevice1 = GUID.parse("{a0884f9a-d2be-4355-aa5d-5901281ad1d2}");
 pub const IDevice1 = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -786,8 +786,17 @@ pub const IDevice1 = extern struct {
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn CompileGraph(
+                self: *T,
+                desc: *const GRAPH_DESC,
+                flags: EXECUTION_FLAGS,
+                guid: *const GUID,
+                ppv: ?*?*c_void,
+            ) HRESULT {
+                return self.v.device1.CompileGraph(self, desc, flags, guid, ppv);
+            }
+        };
     }
 
     fn VTable(comptime T: type) type {

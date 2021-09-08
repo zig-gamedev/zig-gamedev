@@ -26,10 +26,14 @@
 !/external/bin/dxc/dxc.exe
 !/external/bin/dxc/dxcompiler.dll
 !/external/bin/dxc/dxil.dll
-!/external/bin/D3D12/D3D12Core.dll
-!/external/bin/D3D12/D3D12Core.pdb
-!/external/bin/D3D12/D3D12SDKLayers.dll
-!/external/bin/D3D12/D3D12SDKLayers.pdb
+!/external/bin/d3d12/D3D12Core.dll
+!/external/bin/d3d12/D3D12Core.pdb
+!/external/bin/d3d12/D3D12SDKLayers.dll
+!/external/bin/d3d12/D3D12SDKLayers.pdb
+!/external/bin/d3d12/DirectML.dll
+!/external/bin/d3d12/DirectML.pdb
+!/external/bin/d3d12/DirectML.Debug.dll
+!/external/bin/d3d12/DirectML.Debug.pdb
 
 # Ignore some special directories
 zig-cache
