@@ -11,6 +11,7 @@ const GUID = windows.GUID;
 const LPCWSTR = windows.LPCWSTR;
 const LPCSTR = windows.LPCSTR;
 const BOOL = windows.BOOL;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 //
 // DirectML constants.
@@ -270,7 +271,7 @@ pub const ELEMENT_WISE_IDENTITY_OPERATOR_DESC = extern struct {
 //
 // Interfaces.
 //
-pub const IID_IObject = GUID.parse("c8263aac-9e0c-4a2d-9b8e-007521a3317c");
+pub const IID_IObject = GUID.parse("{c8263aac-9e0c-4a2d-9b8e-007521a3317c}");
 pub const IObject = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -307,7 +308,7 @@ pub const IObject = extern struct {
     }
 };
 
-pub const IID_IDeviceChild = GUID.parse("27e83142-8165-49e3-974e-2fd66e4cb69d");
+pub const IID_IDeviceChild = GUID.parse("{27e83142-8165-49e3-974e-2fd66e4cb69d}");
 pub const IDeviceChild = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -334,7 +335,7 @@ pub const IDeviceChild = extern struct {
     }
 };
 
-pub const IID_IPageable = GUID.parse("b1ab0825-4542-4a4b-8617-6dde6e8f6201");
+pub const IID_IPageable = GUID.parse("{b1ab0825-4542-4a4b-8617-6dde6e8f6201}");
 pub const IPageable = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -359,7 +360,7 @@ pub const IPageable = extern struct {
     }
 };
 
-pub const IID_IOperator = GUID.parse("26caae7a-3081-4633-9581-226fbe57695d");
+pub const IID_IOperator = GUID.parse("{26caae7a-3081-4633-9581-226fbe57695d}");
 pub const IOperator = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -390,7 +391,7 @@ pub const BINDING_PROPERTIES = extern struct {
     PersistentResourceSize: UINT64,
 };
 
-pub const IID_IDispatchable = GUID.parse("dcb821a8-1039-441e-9f1c-b1759c2f3cec");
+pub const IID_IDispatchable = GUID.parse("{dcb821a8-1039-441e-9f1c-b1759c2f3cec}");
 pub const IDispatchable = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -417,7 +418,7 @@ pub const IDispatchable = extern struct {
     }
 };
 
-pub const IID_ICompiledOperator = GUID.parse("6b15e56a-bf5c-4902-92d8-da3a650afea4");
+pub const IID_ICompiledOperator = GUID.parse("{6b15e56a-bf5c-4902-92d8-da3a650afea4}");
 pub const ICompiledOperator = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -446,7 +447,7 @@ pub const ICompiledOperator = extern struct {
     }
 };
 
-pub const IID_IOperatorInitializer = GUID.parse("427c1113-435c-469c-8676-4d5dd072f813");
+pub const IID_IOperatorInitializer = GUID.parse("{427c1113-435c-469c-8676-4d5dd072f813}");
 pub const IOperatorInitializer = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -501,7 +502,7 @@ pub const BUFFER_ARRAY_BINDING = extern struct {
     Bindings: [*]const BUFFER_BINDING,
 };
 
-pub const IID_IBindingTable = GUID.parse("29c687dc-de74-4e3b-ab00-1168f2fc3cfc");
+pub const IID_IBindingTable = GUID.parse("{29c687dc-de74-4e3b-ab00-1168f2fc3cfc}");
 pub const IBindingTable = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -546,7 +547,7 @@ pub const IBindingTable = extern struct {
     }
 };
 
-pub const IID_ICommandRecorder = GUID.parse("e6857a76-2e3e-4fdd-bff4-5d2ba10fb453");
+pub const IID_ICommandRecorder = GUID.parse("{e6857a76-2e3e-4fdd-bff4-5d2ba10fb453}");
 pub const ICommandRecorder = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -580,7 +581,7 @@ pub const ICommandRecorder = extern struct {
     }
 };
 
-pub const IID_IDebugDevice = GUID.parse("7d6f3ac9-394a-4ac3-92a7-390cc57a8217");
+pub const IID_IDebugDevice = GUID.parse("{7d6f3ac9-394a-4ac3-92a7-390cc57a8217}");
 pub const IDebugDevice = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -605,7 +606,7 @@ pub const IDebugDevice = extern struct {
     }
 };
 
-pub const IID_IDevice = GUID.parse("6dbd6437-96fd-423f-a98c-ae5e7c2a573f");
+pub const IID_IDevice = GUID.parse("{6dbd6437-96fd-423f-a98c-ae5e7c2a573f}");
 pub const IDevice = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -860,3 +861,31 @@ pub const EXECUTION_FLAG_DESCRIPTORS_VOLATILE: EXECUTION_FLAGS = 0x4;
 pub const CREATE_DEVICE_FLAGS = UINT;
 pub const CREATE_DEVICE_FLAG_NONE: CREATE_DEVICE_FLAGS = 0;
 pub const CREATE_DEVICE_FLAG_DEBUG: CREATE_DEVICE_FLAGS = 0x1;
+
+pub fn createDevice(
+    d3d12_device: *d3d12.IDevice,
+    flags: CREATE_DEVICE_FLAGS,
+    min_feature_level: FEATURE_LEVEL,
+    guid: *const GUID,
+    ppv: ?*?*c_void,
+) HRESULT {
+    var DMLCreateDevice1: fn (
+        *d3d12.IDevice,
+        CREATE_DEVICE_FLAGS,
+        FEATURE_LEVEL,
+        *const GUID,
+        ?*?*c_void,
+    ) callconv(WINAPI) HRESULT = undefined;
+
+    var directml_dll = windows.kernel32.GetModuleHandleW(L("DirectML.dll"));
+    if (directml_dll == null) {
+        directml_dll = (std.DynLib.openZ("d3d12/DirectML.dll") catch unreachable).dll;
+    }
+
+    DMLCreateDevice1 = @ptrCast(
+        @TypeOf(DMLCreateDevice1),
+        windows.kernel32.GetProcAddress(directml_dll.?, "DMLCreateDevice1").?,
+    );
+
+    return DMLCreateDevice1(d3d12_device, flags, min_feature_level, guid, ppv);
+}

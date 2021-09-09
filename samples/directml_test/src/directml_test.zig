@@ -38,7 +38,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var grfx = gr.GraphicsContext.init(window);
 
     var deviceml: *dml.IDevice1 = undefined;
-    hrPanicOnFail(DMLCreateDevice1(
+    hrPanicOnFail(dml.createDevice(
         @ptrCast(*d3d12.IDevice, grfx.device),
         dml.CREATE_DEVICE_FLAG_DEBUG,
         .FL_4_1,
@@ -169,11 +169,6 @@ pub fn main() !void {
     // WIC requires below call (when we pass COINIT_MULTITHREADED '_ = wic_factory.Release()' crashes on exit).
     _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
     defer w.ole32.CoUninitialize();
-
-    {
-        var directml_dll = std.DynLib.openZ("d3d12/DirectML.dll") catch return;
-        DMLCreateDevice1 = directml_dll.lookup(@TypeOf(DMLCreateDevice1), "DMLCreateDevice1").?;
-    }
 
     _ = w.SetProcessDPIAware();
 
