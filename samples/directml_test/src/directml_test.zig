@@ -48,6 +48,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     ));
     _ = deviceml.Release();
 
+    _ = dml.calcBufferTensorSize(.UINT32, &[_]u32{ 1, 2, 3, 4 }, null);
+
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
         hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(

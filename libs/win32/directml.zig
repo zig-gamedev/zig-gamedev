@@ -12,6 +12,7 @@ const LPCWSTR = windows.LPCWSTR;
 const LPCSTR = windows.LPCSTR;
 const BOOL = windows.BOOL;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const assert = std.debug.assert;
 
 //
 // DirectML constants.
@@ -888,4 +889,29 @@ pub fn createDevice(
     );
 
     return DMLCreateDevice1(d3d12_device, flags, min_feature_level, guid, ppv);
+}
+
+pub fn calcBufferTensorSize(data_type: TENSOR_DATA_TYPE, sizes: []const UINT, strides: ?[]const UINT) UINT64 {
+    if (strides != null) assert(sizes.len == strides.?.len);
+
+    const element_size_in_bytes: UINT = switch (data_type) {
+        .FLOAT32, .UINT32, .INT32 => 4,
+        .FLOAT16, .UINT16, .INT16 => 2,
+        .UINT8, .INT8 => 1,
+        .UNKNOWN, .FLOAT64, .UINT64, .INT64 => unreachable,
+    };
+    const min_implied_size_in_bytes = blk: {
+        if (strides == null) {
+            var size: UINT = 1;
+            for (sizes) |s| size *= s;
+            break :blk size * element_size_in_bytes;
+        } else {
+            var index_of_last_element: UINT = 0;
+            for (sizes) |_, i| {
+                index_of_last_element += (sizes[i] - 1) * strides.?[i];
+            }
+            break :blk (index_of_last_element + 1) * element_size_in_bytes;
+        }
+    };
+    return (min_implied_size_in_bytes + 3) & ~@as(UINT64, 3);
 }
