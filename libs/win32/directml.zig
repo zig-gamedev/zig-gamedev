@@ -59,7 +59,7 @@ pub const BUFFER_TENSOR_DESC = extern struct {
     Flags: TENSOR_FLAGS,
     DimensionCount: UINT,
     Sizes: [*]const UINT,
-    Strides: [*]const UINT,
+    Strides: ?[*]const UINT,
     TotalTensorSizeInBytes: UINT64,
     GuaranteedBaseOffsetAlignment: UINT,
 };

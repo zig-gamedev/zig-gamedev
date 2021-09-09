@@ -38,17 +38,51 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
 
-    var deviceml: *dml.IDevice1 = undefined;
+    var dml_device: *dml.IDevice1 = undefined;
     hrPanicOnFail(dml.createDevice(
         @ptrCast(*d3d12.IDevice, grfx.device),
         if (comptime builtin.mode == .Debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
         .FL_4_1,
         &dml.IID_IDevice1,
-        @ptrCast(*?*c_void, &deviceml),
+        @ptrCast(*?*c_void, &dml_device),
     ));
-    _ = deviceml.Release();
 
-    _ = dml.calcBufferTensorSize(.UINT32, &[_]u32{ 1, 2, 3, 4 }, null);
+    const dml_operator = blk: {
+        const tensor_sizes = [_]u32{ 1, 2, 3, 4 };
+        //const tensor_num_elements = tensor_sizes[0] * tensor_sizes[1] * tensor_sizes[2] * tensor_sizes[3];
+        const buffer_tensor_desc = dml.BUFFER_TENSOR_DESC{
+            .DataType = .FLOAT32,
+            .Flags = dml.TENSOR_FLAG_NONE,
+            .DimensionCount = @intCast(u32, tensor_sizes.len),
+            .Sizes = &tensor_sizes,
+            .Strides = null,
+            .TotalTensorSizeInBytes = dml.calcBufferTensorSize(
+                .FLOAT32,
+                tensor_sizes[0..],
+                null,
+            ),
+            .GuaranteedBaseOffsetAlignment = 0,
+        };
+        const tensor_desc = dml.TENSOR_DESC{
+            .Type = .BUFFER,
+            .Desc = &buffer_tensor_desc,
+        };
+        const identity_operator_desc = dml.ELEMENT_WISE_IDENTITY_OPERATOR_DESC{
+            .InputTensor = &tensor_desc,
+            .OutputTensor = &tensor_desc,
+            .ScaleBias = null,
+        };
+        const operator_desc = dml.OPERATOR_DESC{
+            .Type = .ELEMENT_WISE_IDENTITY,
+            .Desc = &identity_operator_desc,
+        };
+
+        var dml_operator: *dml.IOperator = undefined;
+        hrPanicOnFail(dml_device.CreateOperator(&operator_desc, &dml.IID_IOperator, @ptrCast(*?*c_void, &dml_operator)));
+        break :blk dml_operator;
+    };
+    _ = dml_operator.Release();
+    _ = dml_device.Release();
 
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
