@@ -157,14 +157,6 @@ fn draw(demo: *DemoState) void {
     grfx.endFrame();
 }
 
-var DMLCreateDevice1: fn (
-    *d3d12.IDevice,
-    dml.CREATE_DEVICE_FLAGS,
-    dml.FEATURE_LEVEL,
-    *const w.GUID,
-    ?*?*c_void,
-) callconv(w.WINAPI) w.HRESULT = undefined;
-
 pub fn main() !void {
     // WIC requires below call (when we pass COINIT_MULTITHREADED '_ = wic_factory.Release()' crashes on exit).
     _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
