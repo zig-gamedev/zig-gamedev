@@ -46,6 +46,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         &dml.IID_IDevice1,
         @ptrCast(*?*c_void, &dml_device),
     ));
+    defer _ = dml_device.Release();
 
     const dml_operator = blk: {
         const tensor_sizes = [_]u32{ 1, 2, 3, 4 };
@@ -81,8 +82,35 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         hrPanicOnFail(dml_device.CreateOperator(&operator_desc, &dml.IID_IOperator, @ptrCast(*?*c_void, &dml_operator)));
         break :blk dml_operator;
     };
-    _ = dml_operator.Release();
-    _ = dml_device.Release();
+    defer _ = dml_operator.Release();
+
+    const dml_compiled_operator = blk: {
+        var dml_compiled_operator: *dml.ICompiledOperator = undefined;
+        hrPanicOnFail(dml_device.CompileOperator(
+            dml_operator,
+            dml.EXECUTION_FLAG_NONE,
+            &dml.IID_ICompiledOperator,
+            @ptrCast(*?*c_void, &dml_compiled_operator),
+        ));
+        break :blk dml_compiled_operator;
+    };
+    defer _ = dml_compiled_operator.Release();
+
+    const dml_operator_init = blk: {
+        const operators = [_]*dml.ICompiledOperator{dml_compiled_operator};
+        var dml_operator_init: *dml.IOperatorInitializer = undefined;
+        hrPanicOnFail(dml_device.CreateOperatorInitializer(
+            operators.len,
+            &operators,
+            &dml.IID_IOperatorInitializer,
+            @ptrCast(*?*c_void, &dml_operator_init),
+        ));
+        break :blk dml_operator_init;
+    };
+    defer _ = dml_operator_init.Release();
+
+    const bp = dml_compiled_operator.GetBindingProperties();
+    _ = bp;
 
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;

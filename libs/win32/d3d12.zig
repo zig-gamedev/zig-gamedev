@@ -1569,7 +1569,7 @@ pub const IHeap = extern struct {
         return extern struct {
             pub inline fn GetDesc(self: *T) HEAP_DESC {
                 var desc: HEAP_DESC = undefined;
-                self.v.heap.GetDesc(self, &desc);
+                _ = self.v.heap.GetDesc(self, &desc);
                 return desc;
             }
         };
@@ -1851,7 +1851,7 @@ pub const IDescriptorHeap = extern struct {
         return extern struct {
             pub inline fn GetDesc(self: *T) DESCRIPTOR_HEAP_DESC {
                 var desc: DESCRIPTOR_HEAP_DESC = undefined;
-                self.v.dheap.GetDesc(self, &desc);
+                _ = self.v.dheap.GetDesc(self, &desc);
                 return desc;
             }
             pub inline fn GetCPUDescriptorHandleForHeapStart(self: *T) CPU_DESCRIPTOR_HANDLE {
@@ -3525,7 +3525,7 @@ pub const ICommandQueue = extern struct {
             }
             pub inline fn GetDesc(self: *T) COMMAND_QUEUE_DESC {
                 var desc: COMMAND_QUEUE_DESC = undefined;
-                self.v.cmdqueue.GetDesc(self, &desc);
+                _ = self.v.cmdqueue.GetDesc(self, &desc);
                 return desc;
             }
         };
@@ -5189,7 +5189,7 @@ pub const IProtectedResourceSession = extern struct {
         return extern struct {
             pub inline fn GetDesc(self: *T) PROTECTED_RESOURCE_SESSION_DESC {
                 var desc: PROTECTED_RESOURCE_SESSION_DESC = undefined;
-                self.v.prsession.GetDesc(self, &desc);
+                _ = self.v.prsession.GetDesc(self, &desc);
                 return desc;
             }
         };

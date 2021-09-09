@@ -409,13 +409,19 @@ pub const IDispatchable = extern struct {
     usingnamespace Methods(Self);
 
     fn Methods(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn GetBindingProperties(self: *T) BINDING_PROPERTIES {
+                var properties: BINDING_PROPERTIES = undefined;
+                _ = self.v.dispatchable.GetBindingProperties(self, &properties);
+                return properties;
+            }
+        };
     }
 
     fn VTable(comptime T: type) type {
-        _ = T;
-        return extern struct {};
+        return extern struct {
+            GetBindingProperties: fn (*T, *BINDING_PROPERTIES) callconv(WINAPI) *BINDING_PROPERTIES,
+        };
     }
 };
 
