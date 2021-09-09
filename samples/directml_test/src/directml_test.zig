@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const win32 = @import("win32");
 const w = win32.base;
@@ -40,7 +41,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var deviceml: *dml.IDevice1 = undefined;
     hrPanicOnFail(dml.createDevice(
         @ptrCast(*d3d12.IDevice, grfx.device),
-        dml.CREATE_DEVICE_FLAG_DEBUG,
+        if (comptime builtin.mode == .Debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
         .FL_4_1,
         &dml.IID_IDevice1,
         @ptrCast(*?*c_void, &deviceml),
