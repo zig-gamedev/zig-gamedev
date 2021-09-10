@@ -146,6 +146,12 @@ pub fn build(b: *std.build.Builder) void {
     };
     exe.addPackage(pkg_win32);
 
+    const pkg_config = Pkg{
+        .name = "config",
+        .path = .{ .path = "config.zig" },
+    };
+    exe.addPackage(pkg_config);
+
     const pkg_common = Pkg{
         .name = "common",
         .path = .{ .path = "../../libs/common/common.zig" },
@@ -153,6 +159,11 @@ pub fn build(b: *std.build.Builder) void {
             Pkg{
                 .name = "win32",
                 .path = .{ .path = "../../libs/win32/win32.zig" },
+                .dependencies = null,
+            },
+            Pkg{
+                .name = "config",
+                .path = .{ .path = "config.zig" },
                 .dependencies = null,
             },
         },

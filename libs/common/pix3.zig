@@ -1,5 +1,6 @@
 const std = @import("std");
 const win32 = @import("win32");
+const config = @import("config");
 const windows = std.os.windows;
 const d3d12 = win32.d3d12;
 const kernel32 = windows.kernel32;
@@ -18,9 +19,6 @@ const WINAPI = windows.WINAPI;
 const UINT32 = u32;
 const BOOL = windows.BOOL;
 const DWORD = windows.DWORD;
-
-// TODO(mziulek): Disable PIX usage when needed. How?
-const USE_PIX: bool = true;
 
 pub const CAPTURE_TIMING = (1 << 0);
 pub const CAPTURE_GPU = (1 << 1);
@@ -65,7 +63,14 @@ pub const CaptureParameters = extern union {
     timing_capture_params: TimingCaptureParameters,
 };
 
-pub fn loadLatestWinPixGpuCapturerLibrary() ?HMODULE {
+pub const loadLatestWinPixGpuCapturerLibrary =
+    if (config.USE_PIX) loadLatestWinPixGpuCapturerLibrary_impl else loadLatestWinPixGpuCapturerLibrary_empty;
+fn loadLatestWinPixGpuCapturerLibrary_empty() ?HMODULE {
+    return null;
+}
+fn loadLatestWinPixGpuCapturerLibrary_impl() ?HMODULE {
+    if (comptime config.USE_PIX == false) return null;
+
     const module = kernel32.GetModuleHandleW(L("WinPixGpuCapturer.dll"));
     if (module != null) {
         return module;
@@ -137,7 +142,13 @@ fn getFunctionPtr(func_name: LPCSTR) ?FARPROC {
     return func;
 }
 
-pub fn beginCapture(flags: DWORD, params: ?*const CaptureParameters) callconv(WINAPI) HRESULT {
+pub const beginCapture = if (config.USE_PIX) beginCapture_impl else beginCapture_empty;
+fn beginCapture_empty(flags: DWORD, params: ?*const CaptureParameters) HRESULT {
+    _ = flags;
+    _ = params;
+    return windows.S_OK;
+}
+fn beginCapture_impl(flags: DWORD, params: ?*const CaptureParameters) HRESULT {
     if (flags == CAPTURE_GPU) {
         const beginProgrammaticGpuCapture = @ptrCast(
             ?fn (?*const CaptureParameters) callconv(WINAPI) HRESULT,
@@ -152,7 +163,11 @@ pub fn beginCapture(flags: DWORD, params: ?*const CaptureParameters) callconv(WI
     }
 }
 
-pub fn endCapture() callconv(WINAPI) HRESULT {
+pub const endCapture = if (config.USE_PIX) endCapture_impl else endCapture_empty;
+fn endCapture_empty() HRESULT {
+    return windows.S_OK;
+}
+fn endCapture_impl() HRESULT {
     const endProgrammaticGpuCapture = @ptrCast(
         ?fn () callconv(WINAPI) HRESULT,
         getFunctionPtr("EndProgrammaticGpuCapture"),
@@ -163,7 +178,12 @@ pub fn endCapture() callconv(WINAPI) HRESULT {
     return endProgrammaticGpuCapture.?();
 }
 
-pub fn setTargetWindow(hwnd: HWND) HRESULT {
+pub const setTargetWindow = if (config.USE_PIX) setTargetWindow_impl else setTargetWindow_empty;
+fn setTargetWindow_empty(hwnd: HWND) HRESULT {
+    _ = hwnd;
+    return windows.S_OK;
+}
+fn setTargetWindow_impl(hwnd: HWND) HRESULT {
     const setGlobalTargetWindow = @ptrCast(?fn (HWND) callconv(WINAPI) void, getFunctionPtr("SetGlobalTargetWindow"));
     if (setGlobalTargetWindow == null) {
         return windows.E_FAIL;
@@ -172,7 +192,13 @@ pub fn setTargetWindow(hwnd: HWND) HRESULT {
     return windows.S_OK;
 }
 
-pub fn gpuCaptureNextFrames(file_name: LPCWSTR, num_frames: UINT32) HRESULT {
+pub const gpuCaptureNextFrames = if (config.USE_PIX) gpuCaptureNextFrames_impl else gpuCaptureNextFrames_empty;
+fn gpuCaptureNextFrames_empty(file_name: LPCWSTR, num_frames: UINT32) HRESULT {
+    _ = file_name;
+    _ = num_frames;
+    return windows.S_OK;
+}
+fn gpuCaptureNextFrames_impl(file_name: LPCWSTR, num_frames: UINT32) HRESULT {
     const captureNextFrame = @ptrCast(?fn (LPCWSTR, UINT32) callconv(WINAPI) HRESULT, getFunctionPtr("CaptureNextFrame"));
     if (captureNextFrame == null) {
         return windows.E_FAIL;
@@ -232,7 +258,12 @@ fn encodeStringInfo(alignment: u64, copy_chunk_size: u64, is_ansi: bool, is_shor
     return mask0 | mask1 | mask2 | mask3;
 }
 
-pub fn setMarkerOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
+pub const setMarkerOnCommandList = if (config.USE_PIX) setMarkerOnCommandList_impl else setMarkerOnCommandList_empty;
+fn setMarkerOnCommandList_empty(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
+    _ = cmdlist;
+    _ = name;
+}
+fn setMarkerOnCommandList_impl(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
     std.debug.assert(name.len > 0);
     const num_name_qwords: u32 = (@intCast(u32, name.len + 1) + 7) / 8;
     std.debug.assert(num_name_qwords < (EventsGraphicsRecordSpaceQwords / 2));
@@ -255,7 +286,12 @@ pub fn setMarkerOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []cons
     cmdlist.SetMarker(D3D12_EVENT_METADATA, @ptrCast(*c_void, &buffer), (3 + num_name_qwords) * 8);
 }
 
-pub fn beginEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
+pub const beginEventOnCommandList = if (config.USE_PIX) beginEventOnCommandList_impl else beginEventOnCommandList_empty;
+fn beginEventOnCommandList_empty(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
+    _ = cmdlist;
+    _ = name;
+}
+fn beginEventOnCommandList_impl(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
     std.debug.assert(name.len > 0);
     const num_name_qwords: u32 = (@intCast(u32, name.len + 1) + 7) / 8;
     std.debug.assert(num_name_qwords < (EventsGraphicsRecordSpaceQwords / 2));
@@ -278,6 +314,10 @@ pub fn beginEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []con
     cmdlist.BeginEvent(D3D12_EVENT_METADATA, @ptrCast(*c_void, &buffer), (3 + num_name_qwords) * 8);
 }
 
-pub inline fn endEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList) void {
+pub const endEventOnCommandList = if (config.USE_PIX) endEventOnCommandList_impl else endEventOnCommandList_empty;
+fn endEventOnCommandList_empty(cmdlist: *d3d12.IGraphicsCommandList) void {
+    _ = cmdlist;
+}
+fn endEventOnCommandList_impl(cmdlist: *d3d12.IGraphicsCommandList) void {
     cmdlist.EndEvent();
 }

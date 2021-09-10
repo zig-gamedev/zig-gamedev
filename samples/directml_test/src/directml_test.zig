@@ -52,16 +52,12 @@ const DemoState = struct {
 fn init(gpa: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
-    if (false) {
-        if (comptime builtin.mode == .Debug) {
-            _ = pix.loadLatestWinPixGpuCapturerLibrary();
-            _ = pix.setTargetWindow(window);
-            _ = pix.beginCapture(
-                pix.CAPTURE_GPU,
-                &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
-            );
-        }
-    }
+    _ = pix.loadLatestWinPixGpuCapturerLibrary();
+    _ = pix.setTargetWindow(window);
+    _ = pix.beginCapture(
+        pix.CAPTURE_GPU,
+        &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
+    );
 
     var grfx = gr.GraphicsContext.init(window);
 
@@ -281,11 +277,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.endFrame();
     grfx.finishGpuCommands();
 
-    if (false) {
-        if (comptime builtin.mode == .Debug) {
-            _ = pix.endCapture();
-        }
-    }
+    _ = pix.endCapture();
 
     return .{
         .grfx = grfx,

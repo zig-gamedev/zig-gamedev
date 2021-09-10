@@ -69,6 +69,13 @@ pub fn build(b: *std.build.Builder) void {
     const mode = b.standardReleaseOptions();
 
     const exe = b.addExecutable("directml_test", "src/directml_test.zig");
+
+    const exe_options = b.addOptions();
+    exe.addOptions("exe_options", exe_options);
+
+    const use_pix = b.option(bool, "use_pix", "use pix") orelse false;
+    exe_options.addOption(bool, "USE_PIX", use_pix);
+
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
@@ -85,6 +92,12 @@ pub fn build(b: *std.build.Builder) void {
     };
     exe.addPackage(pkg_win32);
 
+    const pkg_config = Pkg{
+        .name = "config",
+        .path = .{ .path = "config.zig" },
+    };
+    exe.addPackage(pkg_config);
+
     const pkg_common = Pkg{
         .name = "common",
         .path = .{ .path = "../../libs/common/common.zig" },
@@ -92,6 +105,11 @@ pub fn build(b: *std.build.Builder) void {
             Pkg{
                 .name = "win32",
                 .path = .{ .path = "../../libs/win32/win32.zig" },
+                .dependencies = null,
+            },
+            Pkg{
+                .name = "config",
+                .path = .{ .path = "config.zig" },
                 .dependencies = null,
             },
         },
