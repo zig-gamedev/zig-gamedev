@@ -234,7 +234,7 @@ fn encodeStringInfo(alignment: u64, copy_chunk_size: u64, is_ansi: bool, is_shor
 
 pub fn setMarkerOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
     std.debug.assert(name.len > 0);
-    const num_name_qwords: u32 = (@intCast(u32, name.len) + 7) / 8;
+    const num_name_qwords: u32 = (@intCast(u32, name.len + 1) + 7) / 8;
     std.debug.assert(num_name_qwords < (EventsGraphicsRecordSpaceQwords / 2));
 
     var buffer: [EventsGraphicsRecordSpaceQwords]u64 = undefined;
@@ -257,7 +257,7 @@ pub fn setMarkerOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []cons
 
 pub fn beginEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
     std.debug.assert(name.len > 0);
-    const num_name_qwords: u32 = (@intCast(u32, name.len) + 7) / 8;
+    const num_name_qwords: u32 = (@intCast(u32, name.len + 1) + 7) / 8;
     std.debug.assert(num_name_qwords < (EventsGraphicsRecordSpaceQwords / 2));
 
     var buffer: [EventsGraphicsRecordSpaceQwords]u64 = undefined;

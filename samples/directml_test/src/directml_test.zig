@@ -46,6 +46,16 @@ const DemoState = struct {
 
 fn init(gpa: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+
+    if (comptime builtin.mode == .Debug) {
+        _ = pix.loadLatestWinPixGpuCapturerLibrary();
+        _ = pix.setTargetWindow(window);
+        _ = pix.beginCapture(
+            pix.CAPTURE_GPU,
+            &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
+        );
+    }
+
     var grfx = gr.GraphicsContext.init(window);
 
     var dml_device: *dml.IDevice1 = undefined;
@@ -193,6 +203,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     // Begin frame to init/upload resources on the GPU.
     //
     grfx.beginFrame();
+    grfx.endFrame();
+    grfx.beginFrame();
+
+    pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
     var gui = gr.GuiContext.init(gpa, &grfx);
 
@@ -237,7 +251,14 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         dml_binding_table,
     );
 
+    _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+
+    grfx.endFrame();
     grfx.finishGpuCommands();
+
+    if (comptime builtin.mode == .Debug) {
+        _ = pix.endCapture();
+    }
 
     return .{
         .grfx = grfx,
