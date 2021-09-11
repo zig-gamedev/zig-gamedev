@@ -68,9 +68,14 @@ pub const beginCapture = if (config.USE_PIX) impl.beginCapture else empty.beginC
 pub const endCapture = if (config.USE_PIX) impl.endCapture else empty.endCapture;
 pub const setTargetWindow = if (config.USE_PIX) impl.setTargetWindow else empty.setTargetWindow;
 pub const gpuCaptureNextFrames = if (config.USE_PIX) impl.gpuCaptureNextFrames else empty.gpuCaptureNextFrames;
+
 pub const setMarkerOnCommandList = if (config.USE_PIX) impl.setMarkerOnCommandList else empty.setMarkerOnCommandList;
 pub const beginEventOnCommandList = if (config.USE_PIX) impl.beginEventOnCommandList else empty.beginEventOnCommandList;
 pub const endEventOnCommandList = if (config.USE_PIX) impl.endEventOnCommandList else empty.endEventOnCommandList;
+
+pub const setMarkerOnCommandQueue = if (config.USE_PIX) impl.setMarkerOnCommandQueue else empty.setMarkerOnCommandQueue;
+pub const beginEventOnCommandQueue = if (config.USE_PIX) impl.beginEventOnCommandQueue else empty.beginEventOnCommandQueue;
+pub const endEventOnCommandQueue = if (config.USE_PIX) impl.endEventOnCommandQueue else empty.endEventOnCommandQueue;
 
 fn getFunctionPtr(func_name: LPCSTR) ?FARPROC {
     const module = kernel32.GetModuleHandleW(L("WinPixGpuCapturer.dll"));
@@ -140,8 +145,6 @@ fn encodeStringInfo(alignment: u64, copy_chunk_size: u64, is_ansi: bool, is_shor
 
 const impl = struct {
     fn loadGpuCapturerLibrary() ?HMODULE {
-        if (comptime config.USE_PIX == false) return null;
-
         const module = kernel32.GetModuleHandleW(L("WinPixGpuCapturer.dll"));
         if (module != null) {
             return module;
@@ -242,7 +245,7 @@ const impl = struct {
         return captureNextFrame.?(file_name, num_frames);
     }
 
-    fn setMarkerOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
+    fn setMarkerOnContext(comptime Context: type, context: Context, name: []const u8) void {
         std.debug.assert(name.len > 0);
         const num_name_qwords: u32 = (@intCast(u32, name.len + 1) + 7) / 8;
         std.debug.assert(num_name_qwords < (EventsGraphicsRecordSpaceQwords / 2));
@@ -262,10 +265,18 @@ const impl = struct {
         dest[num_name_qwords + 0] = 0;
         @memcpy(@ptrCast([*]u8, dest), name.ptr, name.len);
 
-        cmdlist.SetMarker(D3D12_EVENT_METADATA, @ptrCast(*c_void, &buffer), (3 + num_name_qwords) * 8);
+        context.SetMarker(D3D12_EVENT_METADATA, @ptrCast(*c_void, &buffer), (3 + num_name_qwords) * 8);
     }
 
-    fn beginEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
+    fn setMarkerOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
+        setMarkerOnContext(@TypeOf(cmdlist), cmdlist, name);
+    }
+
+    fn setMarkerOnCommandQueue(cmdqueue: *d3d12.ICommandQueue, name: []const u8) void {
+        setMarkerOnContext(@TypeOf(cmdqueue), cmdqueue, name);
+    }
+
+    fn beginEventOnContext(comptime Context: type, context: Context, name: []const u8) void {
         std.debug.assert(name.len > 0);
         const num_name_qwords: u32 = (@intCast(u32, name.len + 1) + 7) / 8;
         std.debug.assert(num_name_qwords < (EventsGraphicsRecordSpaceQwords / 2));
@@ -285,11 +296,27 @@ const impl = struct {
         dest[num_name_qwords + 0] = 0;
         @memcpy(@ptrCast([*]u8, dest), name.ptr, name.len);
 
-        cmdlist.BeginEvent(D3D12_EVENT_METADATA, @ptrCast(*c_void, &buffer), (3 + num_name_qwords) * 8);
+        context.BeginEvent(D3D12_EVENT_METADATA, @ptrCast(*c_void, &buffer), (3 + num_name_qwords) * 8);
+    }
+
+    fn beginEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
+        beginEventOnContext(@TypeOf(cmdlist), cmdlist, name);
+    }
+
+    fn beginEventOnCommandQueue(cmdqueue: *d3d12.ICommandQueue, name: []const u8) void {
+        beginEventOnContext(@TypeOf(cmdqueue), cmdqueue, name);
+    }
+
+    fn endEventOnContext(comptime Context: type, context: Context) void {
+        context.EndEvent();
     }
 
     fn endEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList) void {
-        cmdlist.EndEvent();
+        endEventOnContext(@TypeOf(cmdlist), cmdlist);
+    }
+
+    fn endEventOnCommandQueue(cmdqueue: *d3d12.ICommandQueue) void {
+        endEventOnContext(@TypeOf(cmdqueue), cmdqueue);
     }
 };
 
@@ -314,6 +341,7 @@ const empty = struct {
         _ = num_frames;
         return windows.S_OK;
     }
+
     fn setMarkerOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
         _ = cmdlist;
         _ = name;
@@ -324,5 +352,17 @@ const empty = struct {
     }
     fn endEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList) void {
         _ = cmdlist;
+    }
+
+    fn setMarkerOnCommandQueue(cmdqueue: *d3d12.ICommandQueue, name: []const u8) void {
+        _ = cmdqueue;
+        _ = name;
+    }
+    fn beginEventOnCommandQueue(cmdqueue: *d3d12.ICommandQueue, name: []const u8) void {
+        _ = cmdqueue;
+        _ = name;
+    }
+    fn endEventOnCommandQueue(cmdqueue: *d3d12.ICommandQueue) void {
+        _ = cmdqueue;
     }
 };
