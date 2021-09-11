@@ -52,7 +52,7 @@ const DemoState = struct {
 fn init(gpa: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
-    _ = pix.loadLatestWinPixGpuCapturerLibrary();
+    _ = pix.loadGpuCapturerLibrary();
     _ = pix.setTargetWindow(window);
     _ = pix.beginCapture(
         pix.CAPTURE_GPU,
