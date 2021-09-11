@@ -70,12 +70,6 @@ pub fn build(b: *std.build.Builder) void {
 
     const exe = b.addExecutable("directml_test", "src/directml_test.zig");
 
-    const exe_options = b.addOptions();
-    exe.addOptions("exe_options", exe_options);
-
-    const use_pix = b.option(bool, "use_pix", "use pix") orelse false;
-    exe_options.addOption(bool, "USE_PIX", use_pix);
-
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
