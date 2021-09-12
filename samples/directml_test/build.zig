@@ -73,9 +73,10 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
+    const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
-    exe_options.addOption(bool, "enable_pix", false);
+    exe_options.addOption(bool, "enable_pix", enable_pix);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
