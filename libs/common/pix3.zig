@@ -18,7 +18,7 @@ const WINAPI = windows.WINAPI;
 const UINT32 = u32;
 const BOOL = windows.BOOL;
 const DWORD = windows.DWORD;
-const USE_PIX = @import("build_options").enable_pix;
+const enable_pix = @import("build_options").enable_pix;
 
 pub const CAPTURE_TIMING = (1 << 0);
 pub const CAPTURE_GPU = (1 << 1);
@@ -63,19 +63,19 @@ pub const CaptureParameters = extern union {
     timing_capture_params: TimingCaptureParameters,
 };
 
-pub const loadGpuCapturerLibrary = if (USE_PIX) impl.loadGpuCapturerLibrary else empty.loadGpuCapturerLibrary;
-pub const beginCapture = if (USE_PIX) impl.beginCapture else empty.beginCapture;
-pub const endCapture = if (USE_PIX) impl.endCapture else empty.endCapture;
-pub const setTargetWindow = if (USE_PIX) impl.setTargetWindow else empty.setTargetWindow;
-pub const gpuCaptureNextFrames = if (USE_PIX) impl.gpuCaptureNextFrames else empty.gpuCaptureNextFrames;
+pub const loadGpuCapturerLibrary = if (enable_pix) impl.loadGpuCapturerLibrary else empty.loadGpuCapturerLibrary;
+pub const beginCapture = if (enable_pix) impl.beginCapture else empty.beginCapture;
+pub const endCapture = if (enable_pix) impl.endCapture else empty.endCapture;
+pub const setTargetWindow = if (enable_pix) impl.setTargetWindow else empty.setTargetWindow;
+pub const gpuCaptureNextFrames = if (enable_pix) impl.gpuCaptureNextFrames else empty.gpuCaptureNextFrames;
 
-pub const setMarkerOnCommandList = if (USE_PIX) impl.setMarkerOnCommandList else empty.setMarkerOnCommandList;
-pub const beginEventOnCommandList = if (USE_PIX) impl.beginEventOnCommandList else empty.beginEventOnCommandList;
-pub const endEventOnCommandList = if (USE_PIX) impl.endEventOnCommandList else empty.endEventOnCommandList;
+pub const setMarkerOnCommandList = if (enable_pix) impl.setMarkerOnCommandList else empty.setMarkerOnCommandList;
+pub const beginEventOnCommandList = if (enable_pix) impl.beginEventOnCommandList else empty.beginEventOnCommandList;
+pub const endEventOnCommandList = if (enable_pix) impl.endEventOnCommandList else empty.endEventOnCommandList;
 
-pub const setMarkerOnCommandQueue = if (USE_PIX) impl.setMarkerOnCommandQueue else empty.setMarkerOnCommandQueue;
-pub const beginEventOnCommandQueue = if (USE_PIX) impl.beginEventOnCommandQueue else empty.beginEventOnCommandQueue;
-pub const endEventOnCommandQueue = if (USE_PIX) impl.endEventOnCommandQueue else empty.endEventOnCommandQueue;
+pub const setMarkerOnCommandQueue = if (enable_pix) impl.setMarkerOnCommandQueue else empty.setMarkerOnCommandQueue;
+pub const beginEventOnCommandQueue = if (enable_pix) impl.beginEventOnCommandQueue else empty.beginEventOnCommandQueue;
+pub const endEventOnCommandQueue = if (enable_pix) impl.endEventOnCommandQueue else empty.endEventOnCommandQueue;
 
 fn getFunctionPtr(func_name: LPCSTR) ?FARPROC {
     const module = kernel32.GetModuleHandleW(L("WinPixGpuCapturer.dll"));
