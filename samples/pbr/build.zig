@@ -133,6 +133,10 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
+    const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
+    exe_options.addOption(bool, "enable_pix", false);
+
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
     // is required by DirectX 12 Agility SDK.
@@ -146,12 +150,6 @@ pub fn build(b: *std.build.Builder) void {
     };
     exe.addPackage(pkg_win32);
 
-    const pkg_config = Pkg{
-        .name = "config",
-        .path = .{ .path = "config.zig" },
-    };
-    exe.addPackage(pkg_config);
-
     const pkg_common = Pkg{
         .name = "common",
         .path = .{ .path = "../../libs/common/common.zig" },
@@ -162,8 +160,8 @@ pub fn build(b: *std.build.Builder) void {
                 .dependencies = null,
             },
             Pkg{
-                .name = "config",
-                .path = .{ .path = "config.zig" },
+                .name = "build_options",
+                .path = exe_options.getSource(),
                 .dependencies = null,
             },
         },
