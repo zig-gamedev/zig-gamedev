@@ -13,6 +13,7 @@ const wic = win32.wic;
 const c = @import("c.zig");
 const lib = @import("library.zig");
 const vm = @import("vectormath.zig");
+const tracy = @import("tracy.zig");
 const assert = std.debug.assert;
 const HResultError = lib.HResultError;
 const hrPanic = lib.hrPanic;
@@ -514,6 +515,7 @@ pub const GraphicsContext = struct {
 
         gr.frame_fence_counter += 1;
         hrPanicOnFail(gr.swapchain.Present(0, 0));
+        tracy.frameMark();
         hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
         const gpu_frame_counter = gr.frame_fence.GetCompletedValue();

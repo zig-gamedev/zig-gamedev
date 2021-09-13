@@ -51,8 +51,8 @@ const DemoState = struct {
 };
 
 fn init(gpa: *std.mem.Allocator) DemoState {
-    const tracy_ctx = tracy.trace(@src(), "my zone");
-    defer tracy_ctx.end();
+    const tracy_zone = tracy.zone(@src(), 1);
+    defer tracy_zone.end();
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 

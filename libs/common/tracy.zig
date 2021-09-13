@@ -10,6 +10,8 @@ extern fn ___tracy_emit_zone_begin_callstack(
 
 extern fn ___tracy_emit_zone_end(ctx: ___tracy_c_zone_context) void;
 
+extern fn ___tracy_emit_frame_mark(name: ?[*:0]const u8) void;
+
 pub const ___tracy_source_location_data = extern struct {
     name: ?[*:0]const u8,
     function: [*:0]const u8,
@@ -33,7 +35,20 @@ pub const Ctx = if (enable) ___tracy_c_zone_context else struct {
     }
 };
 
-pub inline fn trace(comptime src: std.builtin.SourceLocation, name: ?[*:0]const u8) Ctx {
+pub inline fn zone(comptime src: std.builtin.SourceLocation, active: c_int) Ctx {
+    if (!enable) return .{};
+
+    const loc = ___tracy_source_location_data{
+        .name = null,
+        .function = src.fn_name.ptr,
+        .file = src.file.ptr,
+        .line = src.line,
+        .color = 0,
+    };
+    return ___tracy_emit_zone_begin_callstack(&loc, 1, active);
+}
+
+pub inline fn zoneN(comptime src: std.builtin.SourceLocation, name: ?[*:0]const u8, active: c_int) Ctx {
     if (!enable) return .{};
 
     const loc = ___tracy_source_location_data{
@@ -43,5 +58,28 @@ pub inline fn trace(comptime src: std.builtin.SourceLocation, name: ?[*:0]const 
         .line = src.line,
         .color = 0,
     };
-    return ___tracy_emit_zone_begin_callstack(&loc, 1, 1);
+    return ___tracy_emit_zone_begin_callstack(&loc, 1, active);
+}
+
+pub inline fn zoneNC(comptime src: std.builtin.SourceLocation, name: ?[*:0]const u8, color: u32, active: c_int) Ctx {
+    if (!enable) return .{};
+
+    const loc = ___tracy_source_location_data{
+        .name = name,
+        .function = src.fn_name.ptr,
+        .file = src.file.ptr,
+        .line = src.line,
+        .color = color,
+    };
+    return ___tracy_emit_zone_begin_callstack(&loc, 1, active);
+}
+
+pub inline fn frameMark() void {
+    if (!enable) return;
+    ___tracy_emit_frame_mark(null);
+}
+
+pub inline fn frameMarkNamed(name: [*:0]const u8) void {
+    if (!enable) return;
+    ___tracy_emit_frame_mark(name);
 }
