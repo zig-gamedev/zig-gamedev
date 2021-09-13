@@ -18,7 +18,7 @@ const L = std.unicode.utf8ToUtf16LeStringLiteral;
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const window_name = "zig-gamedev: wasapi test";
+const window_name = "zig-gamedev: procedural audio test";
 const window_width = 1920;
 const window_height = 1080;
 

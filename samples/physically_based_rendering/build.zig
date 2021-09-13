@@ -31,10 +31,6 @@ pub fn build(b: *std.build.Builder) void {
         "D3D12Core.pdb",
         "D3D12SDKLayers.dll",
         "D3D12SDKLayers.pdb",
-        "DirectML.dll",
-        "DirectML.pdb",
-        "DirectML.Debug.dll",
-        "DirectML.Debug.pdb",
     };
     std.fs.cwd().makePath("zig-out/bin/d3d12") catch unreachable;
     inline for (files) |file| {
@@ -56,6 +52,91 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "psMain", "imgui.ps.cso", "ps", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/physically_based_rendering.hlsl", "vsMeshPbr", "mesh_pbr.vs.cso", "vs", "PSO__MESH_PBR");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/physically_based_rendering.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "PSO__MESH_PBR");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "vsGenerateEnvTexture",
+        "generate_env_texture.vs.cso",
+        "vs",
+        "PSO__GENERATE_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "psGenerateEnvTexture",
+        "generate_env_texture.ps.cso",
+        "ps",
+        "PSO__GENERATE_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "vsSampleEnvTexture",
+        "sample_env_texture.vs.cso",
+        "vs",
+        "PSO__SAMPLE_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "psSampleEnvTexture",
+        "sample_env_texture.ps.cso",
+        "ps",
+        "PSO__SAMPLE_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "vsGenerateIrradianceTexture",
+        "generate_irradiance_texture.vs.cso",
+        "vs",
+        "PSO__GENERATE_IRRADIANCE_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "psGenerateIrradianceTexture",
+        "generate_irradiance_texture.ps.cso",
+        "ps",
+        "PSO__GENERATE_IRRADIANCE_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "vsGeneratePrefilteredEnvTexture",
+        "generate_prefiltered_env_texture.vs.cso",
+        "vs",
+        "PSO__GENERATE_PREFILTERED_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "psGeneratePrefilteredEnvTexture",
+        "generate_prefiltered_env_texture.ps.cso",
+        "ps",
+        "PSO__GENERATE_PREFILTERED_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "csGenerateBrdfIntegrationTexture",
+        "generate_brdf_integration_texture.cs.cso",
+        "cs",
+        "PSO__GENERATE_BRDF_INTEGRATION_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd("../../libs/common/generate_mipmaps.hlsl", "main", "generate_mipmaps.cs.cso", "cs", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     b.getInstallStep().dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose
@@ -68,8 +149,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("directml_test", "src/directml_test.zig");
-
+    const exe = b.addExecutable("physically_based_rendering", "src/physically_based_rendering.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
@@ -135,6 +215,9 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_draw.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_demo.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/cimgui.cpp", &[_][]const u8{""});
+
+    exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
+    exe.addCSourceFile(external ++ "/stb_image.c", &[_][]const u8{"-std=c99"});
 
     exe.install();
 

@@ -2,12 +2,39 @@ const std = @import("std");
 const Builder = std.build.Builder;
 const Pkg = std.build.Pkg;
 
+fn makeDxcCmd(
+    comptime input_path: []const u8,
+    comptime entry_point: []const u8,
+    comptime output_filename: []const u8,
+    comptime profile: []const u8,
+    comptime define: []const u8,
+) [9][]const u8 {
+    // NOTE(mziulek): PIX reports warning about non-retail shader version. Why?
+    const shader_ver = "6_6";
+    const shader_dir = "content/shaders/";
+    return [9][]const u8{
+        "../../external/bin/dxc/dxc.exe",
+        input_path,
+        "/E " ++ entry_point,
+        "/Fo " ++ shader_dir ++ output_filename,
+        "/T " ++ profile ++ "_" ++ shader_ver,
+        if (define.len == 0) "" else "/D " ++ define,
+        "/WX",
+        "/Ges",
+        "/O3",
+    };
+}
+
 pub fn build(b: *std.build.Builder) void {
     const files = [_][]const u8{
         "D3D12Core.dll",
         "D3D12Core.pdb",
         "D3D12SDKLayers.dll",
         "D3D12SDKLayers.pdb",
+        "DirectML.dll",
+        "DirectML.pdb",
+        "DirectML.Debug.dll",
+        "DirectML.Debug.pdb",
     };
     std.fs.cwd().makePath("zig-out/bin/d3d12") catch unreachable;
     inline for (files) |file| {
@@ -20,6 +47,17 @@ pub fn build(b: *std.build.Builder) void {
         ) catch unreachable;
     }
 
+    const dxc_step = b.step("dxc", "Build shaders");
+    var dxc_command: [9][]const u8 = undefined;
+
+    dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "vsMain", "imgui.vs.cso", "vs", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "psMain", "imgui.ps.cso", "ps", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    b.getInstallStep().dependOn(dxc_step);
+
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
@@ -30,7 +68,8 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("simple2d", "src/simple2d.zig");
+    const exe = b.addExecutable("machine_learning_test", "src/machine_learning_test.zig");
+
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
@@ -96,8 +135,6 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_draw.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_demo.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/cimgui.cpp", &[_][]const u8{""});
-
-    exe.addCSourceFile(external ++ "/stb_perlin.c", &[_][]const u8{"-std=c99"});
 
     exe.install();
 

@@ -24,7 +24,7 @@ const Mat4 = vm.Mat4;
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const window_name = "zig-gamedev: pbr";
+const window_name = "zig-gamedev: physically based rendering";
 const window_width = 1920;
 const window_height = 1080;
 

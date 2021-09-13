@@ -58,7 +58,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("imgui_test", "src/imgui_test.zig");
+    const exe = b.addExecutable("procedural_audio_test", "src/procedural_audio_test.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
 

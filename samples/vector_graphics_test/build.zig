@@ -20,34 +20,6 @@ pub fn build(b: *std.build.Builder) void {
         ) catch unreachable;
     }
 
-    const hlsl_step = b.step("hlsl", "Build shaders");
-    var hlsl_command = [_][]const u8{
-        "../../external/bin/dxc/dxc.exe",
-        "path to input file",
-        "entry point name",
-        "path to output file",
-        "target profile",
-        "/WX",
-        "/Ges",
-        "/O3",
-    };
-    const shader_dir = "content/shaders/";
-    const shader_ver = "6_6";
-
-    hlsl_command[1] = "../../libs/common/imgui.hlsl";
-    hlsl_command[2] = "/E vsMain";
-    hlsl_command[3] = "/Fo " ++ shader_dir ++ "imgui.vs.cso";
-    hlsl_command[4] = "/T vs_" ++ shader_ver;
-    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
-
-    hlsl_command[1] = "../../libs/common/imgui.hlsl";
-    hlsl_command[2] = "/E psMain";
-    hlsl_command[3] = "/Fo " ++ shader_dir ++ "imgui.ps.cso";
-    hlsl_command[4] = "/T ps_" ++ shader_ver;
-    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
-
-    b.getInstallStep().dependOn(hlsl_step);
-
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
@@ -58,7 +30,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("wasapi_test", "src/wasapi_test.zig");
+    const exe = b.addExecutable("vector_graphics_test", "src/vector_graphics_test.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
@@ -124,6 +96,8 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_draw.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_demo.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/cimgui.cpp", &[_][]const u8{""});
+
+    exe.addCSourceFile(external ++ "/stb_perlin.c", &[_][]const u8{"-std=c99"});
 
     exe.install();
 
