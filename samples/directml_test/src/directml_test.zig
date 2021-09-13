@@ -12,6 +12,7 @@ const lib = common.library;
 const c = common.c;
 const pix = common.pix;
 const vm = common.vectormath;
+const tracy = common.tracy;
 const math = std.math;
 const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
@@ -50,6 +51,9 @@ const DemoState = struct {
 };
 
 fn init(gpa: *std.mem.Allocator) DemoState {
+    const tracy_ctx = tracy.trace(@src(), "my zone");
+    defer tracy_ctx.end();
+
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
     _ = pix.loadGpuCapturerLibrary();
