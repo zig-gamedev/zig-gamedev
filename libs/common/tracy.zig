@@ -24,13 +24,13 @@ pub const ___tracy_c_zone_context = extern struct {
     id: u32,
     active: c_int,
 
-    pub fn end(self: ___tracy_c_zone_context) void {
+    pub inline fn end(self: ___tracy_c_zone_context) void {
         ___tracy_emit_zone_end(self);
     }
 };
 
 pub const Ctx = if (enable) ___tracy_c_zone_context else struct {
-    pub fn end(self: Ctx) void {
+    pub inline fn end(self: Ctx) void {
         _ = self;
     }
 };

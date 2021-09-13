@@ -758,6 +758,9 @@ pub const GraphicsContext = struct {
         vs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
+        const tracy_zone = tracy.zone(@src(), 1);
+        defer tracy_zone.end();
+
         const vs_code = blk: {
             if (vs_cso_path) |path| {
                 assert(pso_desc.VS.pShaderBytecode == null);
@@ -873,6 +876,9 @@ pub const GraphicsContext = struct {
         pso_desc: *d3d12.COMPUTE_PIPELINE_STATE_DESC,
         cs_cso_path: ?[]const u8,
     ) PipelineHandle {
+        const tracy_zone = tracy.zone(@src(), 1);
+        defer tracy_zone.end();
+
         const cs_code = blk: {
             if (cs_cso_path) |path| {
                 assert(pso_desc.CS.pShaderBytecode == null);

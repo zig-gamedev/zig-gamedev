@@ -74,6 +74,25 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
+    const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
+    const tracy = b.option([]const u8, "tracy", "Enable Tracy integration. Supply path to Tracy source.");
+
+    const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
+
+    exe_options.addOption(bool, "enable_pix", enable_pix);
+    exe_options.addOption(bool, "enable_tracy", tracy != null);
+    if (tracy) |tracy_path| {
+        const client_cpp = std.fs.path.join(
+            b.allocator,
+            &[_][]const u8{ tracy_path, "TracyClient.cpp" },
+        ) catch unreachable;
+        exe.addIncludeDir(tracy_path);
+        exe.addCSourceFile(client_cpp, &[_][]const u8{ "-DTRACY_ENABLE=1", "-fno-sanitize=undefined" });
+        exe.linkSystemLibrary("ws2_32");
+        exe.linkSystemLibrary("dbghelp");
+    }
+
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
     // is required by DirectX 12 Agility SDK.
@@ -94,6 +113,11 @@ pub fn build(b: *std.build.Builder) void {
             Pkg{
                 .name = "win32",
                 .path = .{ .path = "../../libs/win32/win32.zig" },
+                .dependencies = null,
+            },
+            Pkg{
+                .name = "build_options",
+                .path = exe_options.getSource(),
                 .dependencies = null,
             },
         },
