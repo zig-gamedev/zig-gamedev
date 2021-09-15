@@ -1060,7 +1060,7 @@ pub const SHADER_RESOURCE_VIEW_DESC = extern struct {
                     .FirstElement = first_element,
                     .NumElements = num_elements,
                     .StructureByteStride = 0,
-                    .Flags = .{},
+                    .Flags = BUFFER_SRV_FLAG_NONE,
                 },
             },
         };

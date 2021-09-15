@@ -56,6 +56,8 @@ const DemoState = struct {
     frame_stats: lib.FrameStats,
 
     depth_texture: ResourceView,
+    vertex_buffer: ResourceView,
+    index_buffer: ResourceView,
 
     brush: *d2d1.ISolidColorBrush,
     info_tfmt: *dwrite.ITextFormat,
@@ -296,6 +298,38 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
     loadAllMeshes(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices);
 
+    const vertex_buffer = .{
+        .resource = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
+            d3d12.RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+    };
+    grfx.device.CreateShaderResourceView(
+        grfx.getResource(vertex_buffer.resource),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(0, @intCast(u32, all_vertices.items.len), @sizeOf(Vertex)),
+        vertex_buffer.view,
+    );
+
+    const index_buffer = .{
+        .resource = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
+            d3d12.RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+    };
+    grfx.device.CreateShaderResourceView(
+        grfx.getResource(index_buffer.resource),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_indices.items.len)),
+        index_buffer.view,
+    );
+
     const depth_texture = .{
         .resource = grfx.createCommittedResource(
             .DEFAULT,
@@ -338,12 +372,16 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .info_tfmt = info_tfmt,
         .meshes = all_meshes,
         .depth_texture = depth_texture,
+        .vertex_buffer = vertex_buffer,
+        .index_buffer = index_buffer,
     };
 }
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.grfx.releaseResource(demo.depth_texture.resource);
+    _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
+    _ = demo.grfx.releaseResource(demo.index_buffer.resource);
     demo.meshes.deinit();
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
