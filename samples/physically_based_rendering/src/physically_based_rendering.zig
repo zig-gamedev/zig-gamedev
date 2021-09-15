@@ -53,46 +53,40 @@ comptime {
     assert(@alignOf([2]Vertex) == 4);
 }
 
-fn loadMesh(
-    gltf_path: []const u8,
+fn parseAndLoadGltfFile(gltf_path: []const u8) *c.cgltf_data {
+    var data: *c.cgltf_data = undefined;
+    const options = std.mem.zeroes(c.cgltf_options);
+    // Parse.
+    {
+        const result = c.cgltf_parse_file(&options, gltf_path.ptr, @ptrCast([*c][*c]c.cgltf_data, &data));
+        assert(result == c.cgltf_result_success);
+    }
+    // Load.
+    {
+        const result = c.cgltf_load_buffers(&options, data, gltf_path.ptr);
+        assert(result == c.cgltf_result_success);
+    }
+    return data;
+}
+
+fn appendMesh(
+    data: *c.cgltf_data,
+    mesh_index: u32,
     indices: *std.ArrayList(u32),
     positions: *std.ArrayList(Vec3),
     normals: ?*std.ArrayList(Vec3),
     texcoords0: ?*std.ArrayList(Vec2),
     tangents: ?*std.ArrayList(Vec4),
 ) void {
-    const data = blk: {
-        var data: *c.cgltf_data = undefined;
-        const options = std.mem.zeroes(c.cgltf_options);
-        // Parse.
-        {
-            const result = c.cgltf_parse_file(&options, gltf_path.ptr, @ptrCast([*c][*c]c.cgltf_data, &data));
-            assert(result == c.cgltf_result_success);
-        }
-        // Load.
-        {
-            const result = c.cgltf_load_buffers(&options, data, gltf_path.ptr);
-            assert(result == c.cgltf_result_success);
-        }
-        break :blk data;
-    };
-    defer c.cgltf_free(data);
-
-    const num_vertices: u32 = @intCast(u32, data.meshes[0].primitives[0].attributes[0].data.*.count);
-    const num_indices: u32 = @intCast(u32, data.meshes[0].primitives[0].indices.*.count);
-
-    assert(indices.items.len == 0);
-    assert(positions.items.len == 0);
-    if (normals != null) assert(normals.?.items.len == 0);
-    if (texcoords0 != null) assert(texcoords0.?.items.len == 0);
-    if (tangents != null) assert(tangents.?.items.len == 0);
-
-    indices.resize(num_indices) catch unreachable;
-    positions.resize(num_vertices) catch unreachable;
+    assert(mesh_index < data.meshes_count);
+    const num_vertices: u32 = @intCast(u32, data.meshes[mesh_index].primitives[0].attributes[0].data.*.count);
+    const num_indices: u32 = @intCast(u32, data.meshes[mesh_index].primitives[0].indices.*.count);
 
     // Indices.
     {
-        const accessor = data.meshes[0].primitives[0].indices;
+        indices.ensureTotalCapacity(indices.items.len + num_indices) catch unreachable;
+
+        const accessor = data.meshes[mesh_index].primitives[0].indices;
 
         assert(accessor.*.buffer_view != null);
         assert(accessor.*.stride == accessor.*.buffer_view.*.stride or accessor.*.buffer_view.*.stride == 0);
@@ -107,33 +101,34 @@ fn loadMesh(
             const src = @ptrCast([*]const u8, data_addr);
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
-                indices.items[i] = src[i];
+                indices.appendAssumeCapacity(src[i]);
             }
         } else if (accessor.*.stride == 2) {
             assert(accessor.*.component_type == c.cgltf_component_type_r_16u);
             const src = @ptrCast([*]const u16, data_addr);
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
-                indices.items[i] = src[i];
+                indices.appendAssumeCapacity(src[i]);
             }
         } else if (accessor.*.stride == 4) {
             assert(accessor.*.component_type == c.cgltf_component_type_r_32u);
             const src = @ptrCast([*]const u32, data_addr);
             var i: u32 = 0;
             while (i < num_indices) : (i += 1) {
-                indices.items[i] = src[i];
+                indices.appendAssumeCapacity(src[i]);
             }
         } else {
             unreachable;
         }
     }
+
     // Attributes.
     {
-        const num_attribs: u32 = @intCast(u32, data.meshes[0].primitives[0].attributes_count);
+        const num_attribs: u32 = @intCast(u32, data.meshes[mesh_index].primitives[0].attributes_count);
 
         var attrib_index: u32 = 0;
         while (attrib_index < num_attribs) : (attrib_index += 1) {
-            const attrib = &data.*.meshes[0].primitives[0].attributes[attrib_index];
+            const attrib = &data.*.meshes[mesh_index].primitives[0].attributes[attrib_index];
             const accessor = attrib.*.data;
 
             assert(accessor.*.buffer_view != null);
@@ -147,25 +142,50 @@ fn loadMesh(
             if (attrib.*.type == c.cgltf_attribute_type_position) {
                 assert(accessor.*.type == c.cgltf_type_vec3);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
-                @memcpy(@ptrCast([*]u8, positions.items.ptr), data_addr, accessor.*.count * accessor.*.stride);
+
+                positions.resize(positions.items.len + num_vertices) catch unreachable;
+                @memcpy(
+                    @ptrCast([*]u8, &positions.items[positions.items.len - num_vertices]),
+                    data_addr,
+                    accessor.*.count * accessor.*.stride,
+                );
             } else if (attrib.*.type == c.cgltf_attribute_type_normal and normals != null) {
                 assert(accessor.*.type == c.cgltf_type_vec3);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
-                normals.?.resize(num_vertices) catch unreachable;
-                @memcpy(@ptrCast([*]u8, normals.?.items.ptr), data_addr, accessor.*.count * accessor.*.stride);
+
+                normals.?.resize(normals.?.items.len + num_vertices) catch unreachable;
+                @memcpy(
+                    @ptrCast([*]u8, &normals.?.items[normals.?.items.len - num_vertices]),
+                    data_addr,
+                    accessor.*.count * accessor.*.stride,
+                );
             } else if (attrib.*.type == c.cgltf_attribute_type_texcoord and texcoords0 != null) {
                 assert(accessor.*.type == c.cgltf_type_vec2);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
-                texcoords0.?.resize(num_vertices) catch unreachable;
-                @memcpy(@ptrCast([*]u8, texcoords0.?.items.ptr), data_addr, accessor.*.count * accessor.*.stride);
+
+                texcoords0.?.resize(texcoords0.?.items.len + num_vertices) catch unreachable;
+                @memcpy(
+                    @ptrCast([*]u8, &texcoords0.?.items[texcoords0.?.items.len - num_vertices]),
+                    data_addr,
+                    accessor.*.count * accessor.*.stride,
+                );
             } else if (attrib.*.type == c.cgltf_attribute_type_tangent and tangents != null) {
                 assert(accessor.*.type == c.cgltf_type_vec4);
                 assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
-                tangents.?.resize(num_vertices) catch unreachable;
-                @memcpy(@ptrCast([*]u8, tangents.?.items.ptr), data_addr, accessor.*.count * accessor.*.stride);
+
+                tangents.?.resize(tangents.?.items.len + num_vertices) catch unreachable;
+                @memcpy(
+                    @ptrCast([*]u8, &tangents.?.items[tangents.?.items.len - num_vertices]),
+                    data_addr,
+                    accessor.*.count * accessor.*.stride,
+                );
             }
         }
     }
+
+    if (normals != null) assert(normals.?.items.len == positions.items.len);
+    if (texcoords0 != null) assert(texcoords0.?.items.len == positions.items.len);
+    if (tangents != null) assert(tangents.?.items.len == positions.items.len);
 }
 
 // In this demo program, Mesh is just a range of vertices/indices in a single global vertex/index buffer.
@@ -222,38 +242,59 @@ const DemoState = struct {
     },
 };
 
-fn addMesh(
-    temp_allocator: *std.mem.Allocator,
-    gltf_path: []const u8,
-    meshes: *std.ArrayList(Mesh),
-    vertices: *std.ArrayList(Vertex),
-    indices: *std.ArrayList(u32),
+fn loadAllMeshes(
+    arena: *std.mem.Allocator,
+    all_meshes: *std.ArrayList(Mesh),
+    all_vertices: *std.ArrayList(Vertex),
+    all_indices: *std.ArrayList(u32),
 ) void {
-    var mesh_indices = std.ArrayList(u32).init(temp_allocator);
-    var mesh_positions = std.ArrayList(Vec3).init(temp_allocator);
-    var mesh_normals = std.ArrayList(Vec3).init(temp_allocator);
-    var mesh_texcoords0 = std.ArrayList(Vec2).init(temp_allocator);
-    var mesh_tangents = std.ArrayList(Vec4).init(temp_allocator);
-    loadMesh(gltf_path, &mesh_indices, &mesh_positions, &mesh_normals, &mesh_texcoords0, &mesh_tangents);
+    var indices = std.ArrayList(u32).init(arena);
+    var positions = std.ArrayList(Vec3).init(arena);
+    var normals = std.ArrayList(Vec3).init(arena);
+    var texcoords0 = std.ArrayList(Vec2).init(arena);
+    var tangents = std.ArrayList(Vec4).init(arena);
 
-    meshes.append(.{
-        .index_offset = @intCast(u32, indices.items.len),
-        .vertex_offset = @intCast(u32, vertices.items.len),
-        .num_indices = @intCast(u32, mesh_indices.items.len),
-    }) catch unreachable;
+    {
+        const pre_indices_len = indices.items.len;
+        const pre_positions_len = positions.items.len;
 
-    indices.ensureTotalCapacity(indices.items.len + mesh_indices.items.len) catch unreachable;
-    for (mesh_indices.items) |mesh_index| {
-        indices.appendAssumeCapacity(mesh_index);
+        const data = parseAndLoadGltfFile("content/cube.gltf");
+        defer c.cgltf_free(data);
+        appendMesh(data, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+
+        all_meshes.append(.{
+            .index_offset = @intCast(u32, pre_indices_len),
+            .vertex_offset = @intCast(u32, pre_positions_len),
+            .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
+        }) catch unreachable;
+    }
+    {
+        const pre_indices_len = indices.items.len;
+        const pre_positions_len = positions.items.len;
+
+        const data = parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
+        defer c.cgltf_free(data);
+        appendMesh(data, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+
+        all_meshes.append(.{
+            .index_offset = @intCast(u32, pre_indices_len),
+            .vertex_offset = @intCast(u32, pre_positions_len),
+            .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
+        }) catch unreachable;
     }
 
-    vertices.ensureTotalCapacity(vertices.items.len + mesh_positions.items.len) catch unreachable;
-    for (mesh_positions.items) |_, index| {
-        vertices.appendAssumeCapacity(.{
-            .position = mesh_positions.items[index],
-            .normal = mesh_normals.items[index],
-            .texcoords0 = mesh_texcoords0.items[index],
-            .tangent = mesh_tangents.items[index],
+    all_indices.ensureTotalCapacity(indices.items.len) catch unreachable;
+    for (indices.items) |mesh_index| {
+        all_indices.appendAssumeCapacity(mesh_index);
+    }
+
+    all_vertices.ensureTotalCapacity(positions.items.len) catch unreachable;
+    for (positions.items) |_, index| {
+        all_vertices.appendAssumeCapacity(.{
+            .position = positions.items[index],
+            .normal = normals.items[index],
+            .texcoords0 = texcoords0.items[index],
+            .tangent = tangents.items[index],
         });
     }
 }
@@ -477,20 +518,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var all_meshes = std.ArrayList(Mesh).init(gpa);
     var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
-    addMesh(
-        &arena_allocator.allocator,
-        "content/cube.gltf",
-        &all_meshes,
-        &all_vertices,
-        &all_indices,
-    );
-    addMesh(
-        &arena_allocator.allocator,
-        "content/SciFiHelmet/SciFiHelmet.gltf",
-        &all_meshes,
-        &all_vertices,
-        &all_indices,
-    );
+    loadAllMeshes(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices);
 
     const depth_texture = .{
         .resource = grfx.createCommittedResource(
