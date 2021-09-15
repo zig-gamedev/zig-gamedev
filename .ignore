@@ -3,6 +3,7 @@
 *.pdb
 *.bin
 *.png
+*.jpg
 *.ttf
 *.gltf
 *.hdr

@@ -30,13 +30,37 @@ const window_name = "zig-gamedev: simple raytracer";
 const window_width = 1920;
 const window_height = 1080;
 
+const Vertex = struct {
+    position: Vec3,
+    normal: Vec3,
+    texcoords0: Vec2,
+    tangent: Vec4,
+};
+
+// In this demo program, Mesh is just a range of vertices/indices in a single global vertex/index buffer.
+const Mesh = struct {
+    index_offset: u32,
+    vertex_offset: u32,
+    num_indices: u32,
+    num_vertices: u32,
+};
+
+const ResourceView = struct {
+    resource: gr.ResourceHandle,
+    view: d3d12.CPU_DESCRIPTOR_HANDLE,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
 
+    depth_texture: ResourceView,
+
     brush: *d2d1.ISolidColorBrush,
     info_tfmt: *dwrite.ITextFormat,
+
+    meshes: std.ArrayList(Mesh),
 };
 
 fn parseAndLoadGltfFile(gltf_path: []const u8) *c.cgltf_data {
@@ -169,8 +193,67 @@ fn appendMeshPrimitive(
     }
 }
 
+fn loadAllMeshes(
+    arena: *std.mem.Allocator,
+    all_meshes: *std.ArrayList(Mesh),
+    all_vertices: *std.ArrayList(Vertex),
+    all_indices: *std.ArrayList(u32),
+) void {
+    const tracy_zone = tracy.zone(@src(), 1);
+    defer tracy_zone.end();
+
+    var indices = std.ArrayList(u32).init(arena);
+    var positions = std.ArrayList(Vec3).init(arena);
+    var normals = std.ArrayList(Vec3).init(arena);
+    var texcoords0 = std.ArrayList(Vec2).init(arena);
+    var tangents = std.ArrayList(Vec4).init(arena);
+
+    const data = parseAndLoadGltfFile("content/Sponza/Sponza.gltf");
+    defer c.cgltf_free(data);
+
+    const num_meshes = @intCast(u32, data.meshes_count);
+    var mesh_index: u32 = 0;
+
+    while (mesh_index < num_meshes) : (mesh_index += 1) {
+        const num_prims = @intCast(u32, data.meshes[mesh_index].primitives_count);
+        var prim_index: u32 = 0;
+
+        while (prim_index < num_prims) : (prim_index += 1) {
+            const pre_indices_len = indices.items.len;
+            const pre_positions_len = positions.items.len;
+
+            appendMeshPrimitive(data, mesh_index, prim_index, &indices, &positions, &normals, &texcoords0, &tangents);
+
+            all_meshes.append(.{
+                .index_offset = @intCast(u32, pre_indices_len),
+                .vertex_offset = @intCast(u32, pre_positions_len),
+                .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
+                .num_vertices = @intCast(u32, positions.items.len - pre_positions_len),
+            }) catch unreachable;
+        }
+    }
+
+    all_indices.ensureTotalCapacity(indices.items.len) catch unreachable;
+    for (indices.items) |index| {
+        all_indices.appendAssumeCapacity(index);
+    }
+
+    all_vertices.ensureTotalCapacity(positions.items.len) catch unreachable;
+    for (positions.items) |_, index| {
+        all_vertices.appendAssumeCapacity(.{
+            .position = positions.items[index],
+            .normal = normals.items[index],
+            .texcoords0 = texcoords0.items[index],
+            .tangent = tangents.items[index],
+        });
+    }
+}
+
 fn init(gpa: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+
+    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
+    defer arena_allocator.deinit();
 
     _ = pix.loadGpuCapturerLibrary();
     _ = pix.setTargetWindow(window);
@@ -208,34 +291,26 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     hrPanicOnFail(info_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(info_tfmt.SetParagraphAlignment(.NEAR));
 
-    {
-        const tracy_zone = tracy.zone(@src(), 1);
-        defer tracy_zone.end();
+    var all_meshes = std.ArrayList(Mesh).init(gpa);
+    var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
+    var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
+    loadAllMeshes(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices);
 
-        var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-        defer arena_allocator.deinit();
-
-        const arena = &arena_allocator.allocator;
-
-        var indices = std.ArrayList(u32).init(arena);
-        var positions = std.ArrayList(Vec3).init(arena);
-        var normals = std.ArrayList(Vec3).init(arena);
-        var texcoords0 = std.ArrayList(Vec2).init(arena);
-        var tangents = std.ArrayList(Vec4).init(arena);
-
-        const data = parseAndLoadGltfFile("content/Sponza/Sponza.gltf");
-        defer c.cgltf_free(data);
-
-        const num_meshes = @intCast(u32, data.meshes_count);
-        var mesh_index: u32 = 0;
-        while (mesh_index < num_meshes) : (mesh_index += 1) {
-            const num_prims = @intCast(u32, data.meshes[mesh_index].primitives_count);
-            var prim_index: u32 = 0;
-            while (prim_index < num_prims) : (prim_index += 1) {
-                appendMeshPrimitive(data, mesh_index, prim_index, &indices, &positions, &normals, &texcoords0, &tangents);
-            }
-        }
-    }
+    const depth_texture = .{
+        .resource = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &blk: {
+                var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+                break :blk desc;
+            },
+            d3d12.RESOURCE_STATE_DEPTH_WRITE,
+            &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.DSV, 1),
+    };
+    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
 
     //
     // Begin frame to init/upload resources on the GPU.
@@ -261,11 +336,15 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .info_tfmt = info_tfmt,
+        .meshes = all_meshes,
+        .depth_texture = depth_texture,
     };
 }
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    _ = demo.grfx.releaseResource(demo.depth_texture.resource);
+    demo.meshes.deinit();
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
@@ -292,7 +371,7 @@ fn draw(demo: *DemoState) void {
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
-        null,
+        &demo.depth_texture.view,
     );
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
@@ -300,6 +379,7 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
+    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture.view, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
 
     demo.gui.draw(grfx);
 
