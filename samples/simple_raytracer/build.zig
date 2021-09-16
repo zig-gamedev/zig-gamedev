@@ -50,9 +50,24 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "psMain", "imgui.ps.cso", "ps", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd("src/simple_raytracer.hlsl", "vsStaticMesh", "static_mesh.vs.cso", "vs", "PSO__STATIC_MESH");
+    dxc_command = makeDxcCmd("../../libs/common/generate_mipmaps.hlsl", "main", "generate_mipmaps.cs.cso", "cs", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/simple_raytracer.hlsl", "psStaticMesh", "static_mesh.ps.cso", "ps", "PSO__STATIC_MESH");
+
+    dxc_command = makeDxcCmd(
+        "src/simple_raytracer.hlsl",
+        "vsRastStaticMesh",
+        "rast_static_mesh.vs.cso",
+        "vs",
+        "PSO__RAST_STATIC_MESH",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/simple_raytracer.hlsl",
+        "psRastStaticMesh",
+        "rast_static_mesh.ps.cso",
+        "ps",
+        "PSO__RAST_STATIC_MESH",
+    );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     b.getInstallStep().dependOn(dxc_step);

@@ -415,13 +415,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.DSVFormat = .D32_FLOAT;
-        pso_desc.RasterizerState.CullMode = .NONE;
-        pso_desc.RasterizerState.FillMode = .WIREFRAME;
         break :blk grfx.createGraphicsShaderPipeline(
             gpa,
             &pso_desc,
-            "content/shaders/static_mesh.vs.cso",
-            "content/shaders/static_mesh.ps.cso",
+            "content/shaders/rast_static_mesh.vs.cso",
+            "content/shaders/rast_static_mesh.ps.cso",
         );
     };
 
@@ -441,6 +439,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
 
+    var mipgen_rgba8 = gr.MipmapGenerator.init(gpa, &grfx, .R8G8B8A8_UNORM);
+    //var mipgen_rgba16f = gr.MipmapGenerator.init(gpa, &grfx, .R16G16B16A16_FLOAT);
+
     //
     // Begin frame to init/upload resources on the GPU.
     //
@@ -458,6 +459,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var all_materials = std.ArrayList(Material).init(gpa);
     var all_textures = std.ArrayList(ResourceView).init(gpa);
     loadScene(&arena_allocator.allocator, &grfx, &all_meshes, &all_vertices, &all_indices, &all_materials, &all_textures);
+
+    for (all_textures.items) |texture| {
+        mipgen_rgba8.generateMipmaps(&grfx, texture.resource);
+        grfx.addTransitionBarrier(texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    }
+    grfx.flushResourceBarriers();
 
     const vertex_buffer = .{
         .resource = grfx.createCommittedResource(
@@ -528,6 +535,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.endFrame();
     grfx.finishGpuCommands();
 
+    mipgen_rgba8.deinit(&grfx);
+
     _ = pix.endCapture();
 
     return .{
@@ -544,7 +553,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .camera = .{
-            .position = Vec3.init(2.2, 0.0, 2.2),
+            .position = Vec3.init(0.0, 1.0, 0.0),
             .forward = Vec3.initZero(),
             .pitch = 0.0,
             .yaw = math.pi + 0.25 * math.pi,
@@ -670,14 +679,19 @@ fn draw(demo: *DemoState) void {
         };
 
         grfx.setCurrentPipeline(demo.static_mesh_pso);
-        grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
+        grfx.cmdlist.SetGraphicsRootConstantBufferView(2, mem.gpu_base);
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(3, blk: {
             const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
             break :blk table;
         });
         for (demo.meshes.items) |mesh| {
             grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
+            grfx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {
+                const base_color_tex_index = demo.materials.items[mesh.material_index].base_color_tex_index;
+                const table = grfx.copyDescriptorsToGpuHeap(1, demo.textures.items[base_color_tex_index].view);
+                break :blk table;
+            });
             grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
         }
     }
