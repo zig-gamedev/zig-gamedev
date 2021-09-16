@@ -225,6 +225,7 @@ fn appendMeshPrimitive(
 
 fn loadScene(
     arena: *std.mem.Allocator,
+    grfx: *gr.GraphicsContext,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
@@ -354,7 +355,18 @@ fn loadScene(
     var image_index: u32 = 0;
     all_textures.ensureTotalCapacity(num_images + 1) catch unreachable;
 
-    while (image_index < num_images) : (image_index += 1) {}
+    while (image_index < num_images) : (image_index += 1) {
+        const image = &data.images[image_index];
+
+        var buffer: [64]u8 = undefined;
+        const path = std.fmt.bufPrint(buffer[0..], "content/Sponza/{s}", .{image.uri}) catch unreachable;
+
+        const texture = grfx.createAndUploadTex2dFromFile(path, 0) catch unreachable;
+        const view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(grfx.getResource(texture), null, view);
+
+        all_textures.appendAssumeCapacity(.{ .resource = texture, .view = view });
+    }
 }
 
 fn init(gpa: *std.mem.Allocator) DemoState {
@@ -445,7 +457,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
     var all_materials = std.ArrayList(Material).init(gpa);
     var all_textures = std.ArrayList(ResourceView).init(gpa);
-    loadScene(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices, &all_materials, &all_textures);
+    loadScene(&arena_allocator.allocator, &grfx, &all_meshes, &all_vertices, &all_indices, &all_materials, &all_textures);
 
     const vertex_buffer = .{
         .resource = grfx.createCommittedResource(

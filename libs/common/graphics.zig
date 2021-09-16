@@ -1150,17 +1150,21 @@ pub const GraphicsContext = struct {
 
     pub fn createAndUploadTex2dFromFile(
         gr: *GraphicsContext,
-        path: []const u16,
+        path: []const u8,
         num_mip_levels: u32,
     ) HResultError!ResourceHandle {
         assert(gr.is_cmdlist_opened);
-        // TODO(mziulek): Is this the correct way? We want to make sure that slice is ended with '0' (comes from [*:0] str).
-        assert(path.ptr[path.len] == 0);
+
+        // TODO(mziulek): Hardcoded array size. Make it more robust.
+        var path_u16: [300]u16 = undefined;
+        assert(path.len < path_u16.len - 1);
+        const path_len = std.unicode.utf8ToUtf16Le(path_u16[0..], path) catch unreachable;
+        path_u16[path_len] = 0;
 
         const bmp_decoder = blk: {
             var maybe_bmp_decoder: ?*wic.IBitmapDecoder = undefined;
             hrPanicOnFail(gr.wic_factory.CreateDecoderFromFilename(
-                @ptrCast(w.LPCWSTR, path.ptr),
+                @ptrCast(w.LPCWSTR, &path_u16),
                 null,
                 w.GENERIC_READ,
                 .MetadataCacheOnDemand,

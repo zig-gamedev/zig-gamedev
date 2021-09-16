@@ -233,7 +233,7 @@ const DemoState = struct {
         var gui = gr.GuiContext.init(allocator, &grfx);
 
         const base_color_texture = grfx.createAndUploadTex2dFromFile(
-            utf8ToUtf16LeStringLiteral("content/SciFiHelmet/SciFiHelmet_BaseColor.png"),
+            "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
             0, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 

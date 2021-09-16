@@ -121,7 +121,7 @@ const DemoState = struct {
         const gui = gr.GuiContext.init(allocator, &grfx);
 
         const texture = grfx.createAndUploadTex2dFromFile(
-            utf8ToUtf16LeStringLiteral("content/genart_0025_5.png"),
+            "content/genart_0025_5.png",
             0, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 

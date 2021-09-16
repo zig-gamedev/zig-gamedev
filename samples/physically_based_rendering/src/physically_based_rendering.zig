@@ -641,28 +641,28 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const mesh_textures = [_]ResourceView{
         .{
             .resource = grfx.createAndUploadTex2dFromFile(
-                L("content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png"),
+                "content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
                 0,
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
         },
         .{
             .resource = grfx.createAndUploadTex2dFromFile(
-                L("content/SciFiHelmet/SciFiHelmet_BaseColor.png"),
+                "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
                 0,
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
         },
         .{
             .resource = grfx.createAndUploadTex2dFromFile(
-                L("content/SciFiHelmet/SciFiHelmet_MetallicRoughness.png"),
+                "content/SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
                 0,
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
         },
         .{
             .resource = grfx.createAndUploadTex2dFromFile(
-                L("content/SciFiHelmet/SciFiHelmet_Normal.png"),
+                "content/SciFiHelmet/SciFiHelmet_Normal.png",
                 0,
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
