@@ -440,7 +440,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
 
     var mipgen_rgba8 = gr.MipmapGenerator.init(gpa, &grfx, .R8G8B8A8_UNORM);
-    //var mipgen_rgba16f = gr.MipmapGenerator.init(gpa, &grfx, .R16G16B16A16_FLOAT);
 
     //
     // Begin frame to init/upload resources on the GPU.
