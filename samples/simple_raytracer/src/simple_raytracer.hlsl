@@ -28,12 +28,12 @@ Buffer<uint> srv_index_buffer : register(t1);
 [RootSignature(root_signature)]
 void vsStaticMesh(
     uint vertex_id : SV_VertexID,
-    out float3 out_position_ndc : SV_Position
+    out float4 out_position_ndc : SV_Position
 ) {
     const uint vertex_index = srv_index_buffer[vertex_id + cbv_draw_root.index_offset] + cbv_draw_root.vertex_offset;
     const Vertex vertex = srv_vertex_buffer[vertex_index];
 
-    out_position_ndc = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
+    out_position_ndc = mul(float4(0.008 * vertex.position, 1.0), cbv_frame.object_to_clip);
 }
 
 [RootSignature(root_signature)]

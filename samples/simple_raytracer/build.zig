@@ -47,8 +47,12 @@ pub fn build(b: *std.build.Builder) void {
 
     var dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "vsMain", "imgui.vs.cso", "vs", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
     dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "psMain", "imgui.ps.cso", "ps", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd("src/simple_raytracer.hlsl", "vsStaticMesh", "static_mesh.vs.cso", "vs", "PSO__STATIC_MESH");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/simple_raytracer.hlsl", "psStaticMesh", "static_mesh.ps.cso", "ps", "PSO__STATIC_MESH");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     b.getInstallStep().dependOn(dxc_step);

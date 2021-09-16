@@ -50,10 +50,16 @@ const ResourceView = struct {
     view: d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
+const PsoStaticMesh_FrameConst = struct {
+    object_to_clip: Mat4,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
+
+    static_mesh_pso: gr.PipelineHandle,
 
     depth_texture: ResourceView,
     vertex_buffer: ResourceView,
@@ -63,6 +69,17 @@ const DemoState = struct {
     info_tfmt: *dwrite.ITextFormat,
 
     meshes: std.ArrayList(Mesh),
+
+    camera: struct {
+        position: Vec3,
+        forward: Vec3,
+        pitch: f32,
+        yaw: f32,
+    },
+    mouse: struct {
+        cursor_prev_x: i32,
+        cursor_prev_y: i32,
+    },
 };
 
 fn parseAndLoadGltfFile(gltf_path: []const u8) *c.cgltf_data {
@@ -293,6 +310,20 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     hrPanicOnFail(info_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(info_tfmt.SetParagraphAlignment(.NEAR));
 
+    const static_mesh_pso = blk: {
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.DSVFormat = .D32_FLOAT;
+        pso_desc.RasterizerState.CullMode = .NONE;
+        pso_desc.RasterizerState.FillMode = .WIREFRAME;
+        break :blk grfx.createGraphicsShaderPipeline(
+            gpa,
+            &pso_desc,
+            "content/shaders/static_mesh.vs.cso",
+            "content/shaders/static_mesh.ps.cso",
+        );
+    };
+
     var all_meshes = std.ArrayList(Mesh).init(gpa);
     var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
@@ -357,6 +388,38 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     var gui = gr.GuiContext.init(gpa, &grfx);
 
+    // Upload vertex buffer.
+    {
+        const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
+        for (all_vertices.items) |vertex, i| {
+            upload.cpu_slice[i] = vertex;
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(vertex_buffer.resource),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(vertex_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    }
+
+    // Upload index buffer.
+    {
+        const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        for (all_indices.items) |index, i| {
+            upload.cpu_slice[i] = index;
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(index_buffer.resource),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(index_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    }
+
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
     grfx.endFrame();
@@ -368,12 +431,23 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .grfx = grfx,
         .gui = gui,
         .frame_stats = lib.FrameStats.init(),
+        .static_mesh_pso = static_mesh_pso,
         .brush = brush,
         .info_tfmt = info_tfmt,
         .meshes = all_meshes,
         .depth_texture = depth_texture,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
+        .camera = .{
+            .position = Vec3.init(2.2, 0.0, 2.2),
+            .forward = Vec3.initZero(),
+            .pitch = 0.0,
+            .yaw = math.pi + 0.25 * math.pi,
+        },
+        .mouse = .{
+            .cursor_prev_x = 0,
+            .cursor_prev_y = 0,
+        },
     };
 }
 
@@ -382,6 +456,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.depth_texture.resource);
     _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
     _ = demo.grfx.releaseResource(demo.index_buffer.resource);
+    _ = demo.grfx.releasePipeline(demo.static_mesh_pso);
     demo.meshes.deinit();
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
@@ -394,11 +469,65 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     lib.newImGuiFrame(demo.frame_stats.delta_time);
+
+    // Handle camera rotation with mouse.
+    {
+        var pos: w.POINT = undefined;
+        _ = w.GetCursorPos(&pos);
+        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
+        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        demo.mouse.cursor_prev_x = pos.x;
+        demo.mouse.cursor_prev_y = pos.y;
+
+        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+            demo.camera.pitch += 0.0025 * delta_y;
+            demo.camera.yaw += 0.0025 * delta_x;
+            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.yaw = vm.modAngle(demo.camera.yaw);
+        }
+    }
+
+    // Handle camera movement with 'WASD' keys.
+    {
+        const speed: f32 = 5.0;
+        const delta_time = demo.frame_stats.delta_time;
+        const transform = Mat4.initRotationX(demo.camera.pitch).mul(Mat4.initRotationY(demo.camera.yaw));
+        var forward = Vec3.init(0.0, 0.0, 1.0).transform(transform).normalize();
+
+        demo.camera.forward = forward;
+        const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
+        forward = forward.scale(speed * delta_time);
+
+        if (w.GetAsyncKeyState('W') < 0) {
+            demo.camera.position = demo.camera.position.add(forward);
+        } else if (w.GetAsyncKeyState('S') < 0) {
+            demo.camera.position = demo.camera.position.sub(forward);
+        }
+        if (w.GetAsyncKeyState('D') < 0) {
+            demo.camera.position = demo.camera.position.add(right);
+        } else if (w.GetAsyncKeyState('A') < 0) {
+            demo.camera.position = demo.camera.position.sub(right);
+        }
+    }
 }
 
 fn draw(demo: *DemoState) void {
     var grfx = &demo.grfx;
     grfx.beginFrame();
+
+    const cam_world_to_view = vm.Mat4.initLookToLh(
+        demo.camera.position,
+        demo.camera.forward,
+        vm.Vec3.init(0.0, 1.0, 0.0),
+    );
+    const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
+        math.pi / 3.0,
+        @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
+        0.1,
+        100.0,
+    );
+    const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
     const back_buffer = grfx.getBackBuffer();
 
@@ -418,6 +547,30 @@ fn draw(demo: *DemoState) void {
         null,
     );
     grfx.cmdlist.ClearDepthStencilView(demo.depth_texture.view, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+    grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+
+    // Draw Sponza.
+    {
+        const object_to_world = vm.Mat4.initIdentity();
+        const object_to_clip = object_to_world.mul(cam_world_to_clip);
+
+        const mem = grfx.allocateUploadMemory(PsoStaticMesh_FrameConst, 1);
+        mem.cpu_slice[0] = .{
+            .object_to_clip = object_to_clip.transpose(),
+        };
+
+        grfx.setCurrentPipeline(demo.static_mesh_pso);
+        grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
+            const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
+            break :blk table;
+        });
+        for (demo.meshes.items) |mesh| {
+            grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
+            grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+        }
+    }
 
     demo.gui.draw(grfx);
 
