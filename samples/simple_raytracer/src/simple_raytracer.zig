@@ -37,12 +37,21 @@ const Vertex = struct {
     tangent: Vec4,
 };
 
-// In this demo program, Mesh is just a range of vertices/indices in a single global vertex/index buffer.
 const Mesh = struct {
     index_offset: u32,
     vertex_offset: u32,
     num_indices: u32,
     num_vertices: u32,
+    material_index: u32,
+};
+
+const Material = struct {
+    base_color: Vec3,
+    roughness: f32,
+    metallic: f32,
+    base_color_tex_index: u16,
+    metallic_roughness_tex_index: u16,
+    normal_tex_index: u16,
 };
 
 const ResourceView = struct {
@@ -69,6 +78,7 @@ const DemoState = struct {
     info_tfmt: *dwrite.ITextFormat,
 
     meshes: std.ArrayList(Mesh),
+    materials: std.ArrayList(Material),
 
     camera: struct {
         position: Vec3,
@@ -212,11 +222,12 @@ fn appendMeshPrimitive(
     }
 }
 
-fn loadAllMeshes(
+fn loadScene(
     arena: *std.mem.Allocator,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
+    all_materials: *std.ArrayList(Material),
 ) void {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
@@ -243,11 +254,25 @@ fn loadAllMeshes(
 
             appendMeshPrimitive(data, mesh_index, prim_index, &indices, &positions, &normals, &texcoords0, &tangents);
 
+            const num_materials = @intCast(u32, data.materials_count);
+            var material_index: u32 = 0;
+            var assigned_material_index: u32 = 0xffff_ffff;
+
+            while (material_index < num_materials) : (material_index += 1) {
+                const prim = &data.meshes[mesh_index].primitives[prim_index];
+                if (prim.material == &data.materials[material_index]) {
+                    assigned_material_index = material_index;
+                    break;
+                }
+            }
+            assert(assigned_material_index != 0xffff_ffff);
+
             all_meshes.append(.{
                 .index_offset = @intCast(u32, pre_indices_len),
                 .vertex_offset = @intCast(u32, pre_positions_len),
                 .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
                 .num_vertices = @intCast(u32, positions.items.len - pre_positions_len),
+                .material_index = assigned_material_index,
             }) catch unreachable;
         }
     }
@@ -264,6 +289,62 @@ fn loadAllMeshes(
             .normal = normals.items[index],
             .texcoords0 = texcoords0.items[index],
             .tangent = tangents.items[index],
+        });
+    }
+
+    const num_materials = @intCast(u32, data.materials_count);
+    var material_index: u32 = 0;
+    all_materials.ensureTotalCapacity(num_materials) catch unreachable;
+
+    while (material_index < num_materials) : (material_index += 1) {
+        const gltf_material = &data.materials[material_index];
+        assert(gltf_material.has_pbr_metallic_roughness == 1);
+
+        const mr = &gltf_material.pbr_metallic_roughness;
+
+        const num_images = @intCast(u32, data.images_count);
+        const invalid_image_index = num_images + 1;
+
+        var base_color_tex_index: u32 = invalid_image_index;
+        var metallic_roughness_tex_index: u32 = invalid_image_index;
+        var normal_tex_index: u32 = invalid_image_index;
+
+        var image_index: u32 = 0;
+
+        while (image_index < num_images) : (image_index += 1) {
+            const image = &data.images[image_index];
+            assert(image.uri != null);
+
+            if (mr.base_color_texture.texture != null and
+                mr.base_color_texture.texture.*.image.*.uri == image.uri)
+            {
+                assert(base_color_tex_index == invalid_image_index);
+                base_color_tex_index = image_index;
+            }
+
+            if (mr.metallic_roughness_texture.texture != null and
+                mr.metallic_roughness_texture.texture.*.image.*.uri == image.uri)
+            {
+                assert(metallic_roughness_tex_index == invalid_image_index);
+                metallic_roughness_tex_index = image_index;
+            }
+
+            if (gltf_material.normal_texture.texture != null and
+                gltf_material.normal_texture.texture.*.image.*.uri == image.uri)
+            {
+                assert(normal_tex_index == invalid_image_index);
+                normal_tex_index = image_index;
+            }
+        }
+        assert(base_color_tex_index != invalid_image_index);
+
+        all_materials.appendAssumeCapacity(.{
+            .base_color = Vec3.init(mr.base_color_factor[0], mr.base_color_factor[1], mr.base_color_factor[2]),
+            .roughness = mr.roughness_factor,
+            .metallic = mr.metallic_factor,
+            .base_color_tex_index = @intCast(u16, base_color_tex_index),
+            .metallic_roughness_tex_index = @intCast(u16, metallic_roughness_tex_index),
+            .normal_tex_index = @intCast(u16, normal_tex_index),
         });
     }
 }
@@ -327,7 +408,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var all_meshes = std.ArrayList(Mesh).init(gpa);
     var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
-    loadAllMeshes(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices);
+    var all_materials = std.ArrayList(Material).init(gpa);
+    loadScene(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices, &all_materials);
 
     const vertex_buffer = .{
         .resource = grfx.createCommittedResource(
@@ -435,6 +517,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .brush = brush,
         .info_tfmt = info_tfmt,
         .meshes = all_meshes,
+        .materials = all_materials,
         .depth_texture = depth_texture,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
@@ -458,6 +541,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.index_buffer.resource);
     _ = demo.grfx.releasePipeline(demo.static_mesh_pso);
     demo.meshes.deinit();
+    demo.materials.deinit();
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
