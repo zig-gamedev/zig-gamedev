@@ -79,6 +79,7 @@ const DemoState = struct {
 
     meshes: std.ArrayList(Mesh),
     materials: std.ArrayList(Material),
+    textures: std.ArrayList(ResourceView),
 
     camera: struct {
         position: Vec3,
@@ -228,6 +229,7 @@ fn loadScene(
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
     all_materials: *std.ArrayList(Material),
+    all_textures: *std.ArrayList(ResourceView),
 ) void {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
@@ -303,7 +305,7 @@ fn loadScene(
         const mr = &gltf_material.pbr_metallic_roughness;
 
         const num_images = @intCast(u32, data.images_count);
-        const invalid_image_index = num_images + 1;
+        const invalid_image_index = num_images;
 
         var base_color_tex_index: u32 = invalid_image_index;
         var metallic_roughness_tex_index: u32 = invalid_image_index;
@@ -347,6 +349,12 @@ fn loadScene(
             .normal_tex_index = @intCast(u16, normal_tex_index),
         });
     }
+
+    const num_images = @intCast(u32, data.images_count);
+    var image_index: u32 = 0;
+    all_textures.ensureTotalCapacity(num_images + 1) catch unreachable;
+
+    while (image_index < num_images) : (image_index += 1) {}
 }
 
 fn init(gpa: *std.mem.Allocator) DemoState {
@@ -436,7 +444,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
     var all_materials = std.ArrayList(Material).init(gpa);
-    loadScene(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices, &all_materials);
+    var all_textures = std.ArrayList(ResourceView).init(gpa);
+    loadScene(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices, &all_materials, &all_textures);
 
     const vertex_buffer = .{
         .resource = grfx.createCommittedResource(
@@ -518,6 +527,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .info_tfmt = info_tfmt,
         .meshes = all_meshes,
         .materials = all_materials,
+        .textures = all_textures,
         .depth_texture = depth_texture,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
@@ -540,8 +550,12 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
     _ = demo.grfx.releaseResource(demo.index_buffer.resource);
     _ = demo.grfx.releasePipeline(demo.static_mesh_pso);
+    for (demo.textures.items) |texture| {
+        _ = demo.grfx.releaseResource(texture.resource);
+    }
     demo.meshes.deinit();
     demo.materials.deinit();
+    demo.textures.deinit();
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
