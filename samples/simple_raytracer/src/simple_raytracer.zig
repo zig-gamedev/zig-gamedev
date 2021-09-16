@@ -405,6 +405,33 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         );
     };
 
+    const depth_texture = .{
+        .resource = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &blk: {
+                var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+                break :blk desc;
+            },
+            d3d12.RESOURCE_STATE_DEPTH_WRITE,
+            &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.DSV, 1),
+    };
+    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
+
+    //
+    // Begin frame to init/upload resources on the GPU.
+    //
+    grfx.beginFrame();
+    grfx.endFrame();
+    grfx.beginFrame();
+
+    pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
+
+    var gui = gr.GuiContext.init(gpa, &grfx);
+
     var all_meshes = std.ArrayList(Mesh).init(gpa);
     var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
@@ -442,33 +469,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_indices.items.len)),
         index_buffer.view,
     );
-
-    const depth_texture = .{
-        .resource = grfx.createCommittedResource(
-            .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
-            &blk: {
-                var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
-                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-                break :blk desc;
-            },
-            d3d12.RESOURCE_STATE_DEPTH_WRITE,
-            &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
-        ) catch |err| hrPanic(err),
-        .view = grfx.allocateCpuDescriptors(.DSV, 1),
-    };
-    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
-
-    //
-    // Begin frame to init/upload resources on the GPU.
-    //
-    grfx.beginFrame();
-    grfx.endFrame();
-    grfx.beginFrame();
-
-    pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
-
-    var gui = gr.GuiContext.init(gpa, &grfx);
 
     // Upload vertex buffer.
     {
