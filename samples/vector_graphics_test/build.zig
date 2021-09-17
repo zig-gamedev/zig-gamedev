@@ -48,7 +48,11 @@ pub fn build(b: *std.build.Builder) void {
             &[_][]const u8{ tracy_path, "TracyClient.cpp" },
         ) catch unreachable;
         exe.addIncludeDir(tracy_path);
-        exe.addCSourceFile(client_cpp, &[_][]const u8{ "-DTRACY_ENABLE=1", "-fno-sanitize=undefined" });
+        exe.addCSourceFile(client_cpp, &[_][]const u8{
+            "-DTRACY_ENABLE=1",
+            "-fno-sanitize=undefined",
+            "-D_WIN32_WINNT=0x601",
+        });
         exe.linkSystemLibrary("ws2_32");
         exe.linkSystemLibrary("dbghelp");
     }
