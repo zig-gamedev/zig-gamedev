@@ -24,18 +24,21 @@ pub fn main() !void {
 
     _ = w.SetProcessDPIAware();
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa.deinit();
+        const leaked = gpa_allocator.deinit();
         std.debug.assert(leaked == false);
     }
-    const allocator = &gpa.allocator;
+    const gpa = &gpa_allocator.allocator;
 
-    const window = lib.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
-    defer lib.deinitWindow(&gpa.allocator);
+    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
+    defer arena_allocator.deinit();
+
+    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+    defer lib.deinitWindow(gpa);
 
     var grfx = gr.GraphicsContext.init(window);
-    defer grfx.deinit(&gpa.allocator);
+    defer grfx.deinit();
 
     const pipeline = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -48,7 +51,7 @@ pub fn main() !void {
             .NumElements = input_layout_desc.len,
         };
         break :blk grfx.createGraphicsShaderPipeline(
-            allocator,
+            &arena_allocator.allocator,
             &pso_desc,
             "content/shaders/triangle_ui.vs.cso",
             "content/shaders/triangle_ui.ps.cso",
@@ -78,7 +81,7 @@ pub fn main() !void {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(allocator, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
     defer gui.deinit(&grfx);
 
     const upload_verts = grfx.allocateUploadBufferRegion(vm.Vec3, 3);

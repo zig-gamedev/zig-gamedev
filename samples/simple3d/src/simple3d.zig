@@ -158,9 +158,12 @@ const DemoState = struct {
     num_mesh_vertices: u32,
     num_mesh_indices: u32,
 
-    fn init(allocator: *std.mem.Allocator) DemoState {
-        const window = lib.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
+    fn init(gpa: *std.mem.Allocator) DemoState {
+        const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
         var grfx = gr.GraphicsContext.init(window);
+
+        var arena_allocator = std.heap.ArenaAllocator.init(gpa);
+        defer arena_allocator.deinit();
 
         const pipeline = blk: {
             const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -177,7 +180,7 @@ const DemoState = struct {
             };
             pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
             break :blk grfx.createGraphicsShaderPipeline(
-                allocator,
+                &arena_allocator.allocator,
                 &pso_desc,
                 "content/shaders/simple3d.vs.cso",
                 "content/shaders/simple3d.ps.cso",
@@ -226,11 +229,11 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        var mipgen = gr.MipmapGenerator.init(allocator, &grfx, .R8G8B8A8_UNORM);
+        var mipgen = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
 
         grfx.beginFrame();
 
-        var gui = gr.GuiContext.init(allocator, &grfx);
+        var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
         const base_color_texture = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
@@ -258,13 +261,13 @@ const DemoState = struct {
         grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_srv);
 
         const buffers = blk: {
-            var indices = std.ArrayList(u32).init(allocator);
+            var indices = std.ArrayList(u32).init(&arena_allocator.allocator);
             defer indices.deinit();
-            var positions = std.ArrayList(vm.Vec3).init(allocator);
+            var positions = std.ArrayList(vm.Vec3).init(&arena_allocator.allocator);
             defer positions.deinit();
-            var normals = std.ArrayList(vm.Vec3).init(allocator);
+            var normals = std.ArrayList(vm.Vec3).init(&arena_allocator.allocator);
             defer normals.deinit();
-            var texcoords0 = std.ArrayList(vm.Vec2).init(allocator);
+            var texcoords0 = std.ArrayList(vm.Vec2).init(&arena_allocator.allocator);
             defer texcoords0.deinit();
             loadMesh("content/SciFiHelmet/SciFiHelmet.gltf", &indices, &positions, &normals, &texcoords0);
 
@@ -352,7 +355,7 @@ const DemoState = struct {
         };
     }
 
-    fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
+    fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         demo.grfx.finishGpuCommands();
         _ = demo.brush.Release();
         _ = demo.textformat.Release();
@@ -363,8 +366,8 @@ const DemoState = struct {
         _ = demo.grfx.releaseResource(demo.depth_texture);
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
-        demo.grfx.deinit(allocator);
-        lib.deinitWindow(allocator);
+        demo.grfx.deinit();
+        lib.deinitWindow(gpa);
         demo.* = undefined;
     }
 

@@ -47,9 +47,12 @@ const DemoState = struct {
     textformat: *dwrite.ITextFormat,
     mipmap_level: i32,
 
-    fn init(allocator: *std.mem.Allocator) DemoState {
-        const window = lib.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
+    fn init(gpa: *std.mem.Allocator) DemoState {
+        const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
         var grfx = gr.GraphicsContext.init(window);
+
+        var arena_allocator = std.heap.ArenaAllocator.init(gpa);
+        defer arena_allocator.deinit();
 
         const pipeline = blk: {
             const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -64,7 +67,7 @@ const DemoState = struct {
                 .NumElements = input_layout_desc.len,
             };
             break :blk grfx.createGraphicsShaderPipeline(
-                allocator,
+                &arena_allocator.allocator,
                 &pso_desc,
                 "content/shaders/textured_quad.vs.cso",
                 "content/shaders/textured_quad.ps.cso",
@@ -114,11 +117,11 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        var mipgen = gr.MipmapGenerator.init(allocator, &grfx, .R8G8B8A8_UNORM);
+        var mipgen = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
 
         grfx.beginFrame();
 
-        const gui = gr.GuiContext.init(allocator, &grfx);
+        const gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
         const texture = grfx.createAndUploadTex2dFromFile(
             "content/genart_0025_5.png",
@@ -224,7 +227,7 @@ const DemoState = struct {
         };
     }
 
-    fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
+    fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         demo.grfx.finishGpuCommands();
         _ = demo.brush.Release();
         _ = demo.textformat.Release();
@@ -233,8 +236,8 @@ const DemoState = struct {
         _ = demo.grfx.releaseResource(demo.texture);
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
-        demo.grfx.deinit(allocator);
-        lib.deinitWindow(allocator);
+        demo.grfx.deinit();
+        lib.deinitWindow(gpa);
         demo.* = undefined;
     }
 

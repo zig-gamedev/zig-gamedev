@@ -416,7 +416,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.DSVFormat = .D32_FLOAT;
         break :blk grfx.createGraphicsShaderPipeline(
-            gpa,
+            &arena_allocator.allocator,
             &pso_desc,
             "content/shaders/rast_static_mesh.vs.cso",
             "content/shaders/rast_static_mesh.ps.cso",
@@ -439,7 +439,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
 
-    var mipgen_rgba8 = gr.MipmapGenerator.init(gpa, &grfx, .R8G8B8A8_UNORM);
+    var mipgen_rgba8 = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
 
     //
     // Begin frame to init/upload resources on the GPU.
@@ -450,7 +450,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(gpa, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
     var all_meshes = std.ArrayList(Mesh).init(gpa);
     var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
@@ -579,7 +579,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit(gpa);
+    demo.grfx.deinit();
     lib.deinitWindow(gpa);
     demo.* = undefined;
 }

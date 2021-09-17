@@ -423,7 +423,11 @@ pub const GraphicsContext = struct {
             .resource_pool = resource_pool,
             .pipeline = .{
                 .pool = pipeline_pool,
-                .map = .{},
+                .map = blk: {
+                    var hm: std.AutoHashMapUnmanaged(u32, PipelineHandle) = .{};
+                    hm.ensureTotalCapacity(std.heap.page_allocator, PipelinePool.max_num_pipelines) catch unreachable;
+                    break :blk hm;
+                },
                 .current = .{ .index = 0, .generation = 0 },
             },
             .transition_resource_barriers = std.heap.page_allocator.alloc(
@@ -452,12 +456,12 @@ pub const GraphicsContext = struct {
         };
     }
 
-    pub fn deinit(gr: *GraphicsContext, allocator: *std.mem.Allocator) void {
+    pub fn deinit(gr: *GraphicsContext) void {
         gr.finishGpuCommands();
         std.heap.page_allocator.free(gr.transition_resource_barriers);
         w.CloseHandle(gr.frame_fence_event);
         assert(gr.pipeline.map.count() == 0);
-        gr.pipeline.map.deinit(allocator);
+        gr.pipeline.map.deinit(std.heap.page_allocator);
         gr.resource_pool.deinit();
         gr.rtv_heap.deinit();
         gr.dsv_heap.deinit();
@@ -753,7 +757,7 @@ pub const GraphicsContext = struct {
 
     pub fn createGraphicsShaderPipeline(
         gr: *GraphicsContext,
-        allocator: *std.mem.Allocator,
+        arena: *std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         vs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
@@ -766,7 +770,7 @@ pub const GraphicsContext = struct {
                 assert(pso_desc.VS.pShaderBytecode == null);
                 const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
                 defer vs_file.close();
-                const vs_code = vs_file.reader().readAllAlloc(allocator, 256 * 1024) catch unreachable;
+                const vs_code = vs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
                 pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
                 break :blk vs_code;
             } else {
@@ -779,7 +783,7 @@ pub const GraphicsContext = struct {
                 assert(pso_desc.PS.pShaderBytecode == null);
                 const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
                 defer ps_file.close();
-                const ps_code = ps_file.reader().readAllAlloc(allocator, 256 * 1024) catch unreachable;
+                const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
                 pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
                 break :blk ps_code;
             } else {
@@ -788,12 +792,10 @@ pub const GraphicsContext = struct {
             }
         };
         defer {
-            if (vs_code) |code| {
-                allocator.free(code);
+            if (vs_code != null) {
                 pso_desc.VS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
             }
-            if (ps_code) |code| {
-                allocator.free(code);
+            if (ps_code != null) {
                 pso_desc.PS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
             }
         }
@@ -866,13 +868,13 @@ pub const GraphicsContext = struct {
         };
 
         const handle = gr.pipeline.pool.addPipeline(pso, rs, .Graphics);
-        gr.pipeline.map.put(allocator, hash, handle) catch unreachable;
+        gr.pipeline.map.putAssumeCapacity(hash, handle);
         return handle;
     }
 
     pub fn createComputeShaderPipeline(
         gr: *GraphicsContext,
-        allocator: *std.mem.Allocator,
+        arena: *std.mem.Allocator,
         pso_desc: *d3d12.COMPUTE_PIPELINE_STATE_DESC,
         cs_cso_path: ?[]const u8,
     ) PipelineHandle {
@@ -884,7 +886,7 @@ pub const GraphicsContext = struct {
                 assert(pso_desc.CS.pShaderBytecode == null);
                 const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
                 defer cs_file.close();
-                const cs_code = cs_file.reader().readAllAlloc(allocator, 256 * 1024) catch unreachable;
+                const cs_code = cs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
                 pso_desc.CS = .{ .pShaderBytecode = cs_code.ptr, .BytecodeLength = cs_code.len };
                 break :blk cs_code;
             } else {
@@ -893,8 +895,7 @@ pub const GraphicsContext = struct {
             }
         };
         defer {
-            if (cs_code) |code| {
-                allocator.free(code);
+            if (cs_code != null) {
                 pso_desc.CS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
             }
         }
@@ -940,7 +941,7 @@ pub const GraphicsContext = struct {
         };
 
         const handle = gr.pipeline.pool.addPipeline(pso, rs, .Compute);
-        gr.pipeline.map.put(allocator, hash, handle) catch unreachable;
+        gr.pipeline.map.putAssumeCapacity(hash, handle);
         return handle;
     }
 
@@ -1281,7 +1282,7 @@ pub const GuiContext = struct {
     vb_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
     ib_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
-    pub fn init(allocator: *std.mem.Allocator, gr: *GraphicsContext) GuiContext {
+    pub fn init(arena: *std.mem.Allocator, gr: *GraphicsContext) GuiContext {
         assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
@@ -1336,7 +1337,7 @@ pub const GuiContext = struct {
             };
             pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
             break :blk gr.createGraphicsShaderPipeline(
-                allocator,
+                arena,
                 &pso_desc,
                 "content/shaders/imgui.vs.cso",
                 "content/shaders/imgui.ps.cso",
@@ -1533,7 +1534,7 @@ pub const MipmapGenerator = struct {
     base_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
     format: dxgi.FORMAT,
 
-    pub fn init(allocator: *std.mem.Allocator, gr: *GraphicsContext, format: dxgi.FORMAT) MipmapGenerator {
+    pub fn init(arena: *std.mem.Allocator, gr: *GraphicsContext, format: dxgi.FORMAT) MipmapGenerator {
         var width: u32 = 2048 / 2;
         var height: u32 = 2048 / 2;
 
@@ -1567,7 +1568,7 @@ pub const MipmapGenerator = struct {
         }
 
         var desc = d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault();
-        const pipeline = gr.createComputeShaderPipeline(allocator, &desc, "content/shaders/generate_mipmaps.cs.cso");
+        const pipeline = gr.createComputeShaderPipeline(arena, &desc, "content/shaders/generate_mipmaps.cs.cso");
 
         return MipmapGenerator{
             .pipeline = pipeline,

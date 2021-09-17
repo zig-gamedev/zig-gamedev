@@ -436,7 +436,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         };
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         break :blk grfx.createGraphicsShaderPipeline(
-            gpa,
+            &arena_allocator.allocator,
             &pso_desc,
             "content/shaders/mesh_pbr.vs.cso",
             "content/shaders/mesh_pbr.ps.cso",
@@ -461,7 +461,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
         break :blk grfx.createGraphicsShaderPipeline(
-            gpa,
+            &arena_allocator.allocator,
             &pso_desc,
             "content/shaders/sample_env_texture.vs.cso",
             "content/shaders/sample_env_texture.ps.cso",
@@ -485,25 +485,25 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.RasterizerState.CullMode = .FRONT;
 
         const generate_env_texture_pso = grfx.createGraphicsShaderPipeline(
-            gpa,
+            &arena_allocator.allocator,
             &pso_desc,
             "content/shaders/generate_env_texture.vs.cso",
             "content/shaders/generate_env_texture.ps.cso",
         );
         const generate_irradiance_texture_pso = grfx.createGraphicsShaderPipeline(
-            gpa,
+            &arena_allocator.allocator,
             &pso_desc,
             "content/shaders/generate_irradiance_texture.vs.cso",
             "content/shaders/generate_irradiance_texture.ps.cso",
         );
         const generate_prefiltered_env_texture_pso = grfx.createGraphicsShaderPipeline(
-            gpa,
+            &arena_allocator.allocator,
             &pso_desc,
             "content/shaders/generate_prefiltered_env_texture.vs.cso",
             "content/shaders/generate_prefiltered_env_texture.ps.cso",
         );
         const generate_brdf_integration_texture_pso = grfx.createComputeShaderPipeline(
-            gpa,
+            &arena_allocator.allocator,
             &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
             "content/shaders/generate_brdf_integration_texture.cs.cso",
         );
@@ -536,8 +536,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
 
-    var mipgen_rgba8 = gr.MipmapGenerator.init(gpa, &grfx, .R8G8B8A8_UNORM);
-    var mipgen_rgba16f = gr.MipmapGenerator.init(gpa, &grfx, .R16G16B16A16_FLOAT);
+    var mipgen_rgba8 = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
+    var mipgen_rgba16f = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R16G16B16A16_FLOAT);
 
     grfx.beginFrame();
     drawLoadingScreen(&grfx, title_tfmt, brush);
@@ -545,7 +545,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(gpa, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
     const vertex_buffer = blk: {
         var vertex_buffer = grfx.createCommittedResource(
@@ -947,7 +947,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.info_tfmt.Release();
     _ = demo.title_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit(gpa);
+    demo.grfx.deinit();
     lib.deinitWindow(gpa);
     demo.* = undefined;
 }

@@ -44,11 +44,11 @@ const DemoState = struct {
     river_geo: *d2d1.IGeometry,
 };
 
-fn init(allocator: *std.mem.Allocator) DemoState {
-    const window = lib.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
+fn init(gpa: *std.mem.Allocator) DemoState {
+    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
 
-    var ink_points = std.ArrayList(d2d1.POINT_2F).init(allocator);
+    var ink_points = std.ArrayList(d2d1.POINT_2F).init(gpa);
 
     const brush = blk: {
         var maybe_brush: ?*d2d1.ISolidColorBrush = null;
@@ -198,7 +198,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
         break :blk bezier_lines_path;
     };
     const noise_path = blk: {
-        var points = std.ArrayList(d2d1.POINT_2F).init(allocator);
+        var points = std.ArrayList(d2d1.POINT_2F).init(gpa);
         defer points.deinit();
 
         var i: u32 = 0;
@@ -608,7 +608,7 @@ fn drawShapes(demo: DemoState) void {
     grfx.d2d.context.SetTransform(&d2d1.MATRIX_3X2_F.initIdentity());
 }
 
-fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
@@ -625,8 +625,8 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.river_geo.Release();
     _ = demo.radial_gradient_brush.Release();
     demo.ink_points.deinit();
-    demo.grfx.deinit(allocator);
-    lib.deinitWindow(allocator);
+    demo.grfx.deinit();
+    lib.deinitWindow(gpa);
     demo.* = undefined;
 }
 

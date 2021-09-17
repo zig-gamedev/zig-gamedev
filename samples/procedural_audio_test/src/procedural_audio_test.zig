@@ -74,9 +74,12 @@ fn audioThread(ctx: ?*c_void) callconv(.C) w.DWORD {
     return 0;
 }
 
-fn init(allocator: *std.mem.Allocator) DemoState {
-    const window = lib.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
+fn init(gpa: *std.mem.Allocator) DemoState {
+    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
+
+    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
+    defer arena_allocator.deinit();
 
     const brush = blk: {
         var maybe_brush: ?*d2d1.ISolidColorBrush = null;
@@ -187,7 +190,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(allocator, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
     grfx.finishGpuCommands();
 
@@ -207,7 +210,7 @@ fn init(allocator: *std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     hrPanicOnFail(demo.audio.client.Stop());
     w.CloseHandle(demo.audio.buffer_ready_event);
@@ -216,8 +219,8 @@ fn deinit(demo: *DemoState, allocator: *std.mem.Allocator) void {
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit(allocator);
-    lib.deinitWindow(allocator);
+    demo.grfx.deinit();
+    lib.deinitWindow(gpa);
     demo.* = undefined;
 }
 

@@ -56,6 +56,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
+    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
+    defer arena_allocator.deinit();
+
     _ = pix.loadGpuCapturerLibrary();
     _ = pix.setTargetWindow(window);
     _ = pix.beginCapture(
@@ -233,7 +236,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(gpa, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
     const dml_binding_table = blk: {
         const base_descriptor = grfx.allocateGpuDescriptors(dml_num_descriptors);
@@ -314,7 +317,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit(gpa);
+    demo.grfx.deinit();
     lib.deinitWindow(gpa);
     demo.* = undefined;
 }
