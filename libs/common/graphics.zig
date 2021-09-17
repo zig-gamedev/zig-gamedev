@@ -834,7 +834,7 @@ pub const GraphicsContext = struct {
             }
             break :compute_hash hasher.final();
         };
-        std.debug.print("Graphics pipeline hash: {d}\n", .{hash});
+        std.log.info("[graphics] Graphics pipeline hash: {d}", .{hash});
 
         if (gr.pipeline.map.contains(hash)) {
             std.log.info("[graphics] Graphics pipeline hit detected.", .{});
@@ -907,7 +907,7 @@ pub const GraphicsContext = struct {
             );
             break :compute_hash hasher.final();
         };
-        std.debug.print("Compute pipeline hash: {d}\n", .{hash});
+        std.log.info("[graphics] Compute pipeline hash: {d}", .{hash});
 
         if (gr.pipeline.map.contains(hash)) {
             std.log.info("[graphics] Compute pipeline hit detected.", .{});
