@@ -857,7 +857,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     {
         var mip_level: u32 = 0;
         while (mip_level < prefiltered_env_texture_num_mip_levels) : (mip_level += 1) {
-            const roughness = @intToFloat(f32, mip_level) / @intToFloat(f32, prefiltered_env_texture_num_mip_levels - 1);
+            const roughness = @intToFloat(f32, mip_level) /
+                @intToFloat(f32, prefiltered_env_texture_num_mip_levels - 1);
             grfx.cmdlist.SetGraphicsRoot32BitConstant(1, @bitCast(u32, roughness), 0);
             drawToCubeTexture(&grfx, prefiltered_env_texture.resource, mip_level);
         }

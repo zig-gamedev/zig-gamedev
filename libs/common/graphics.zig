@@ -604,7 +604,8 @@ pub const GraphicsContext = struct {
 
         // Above calls will set back buffer state to PRESENT. We need to reflect this change
         // in 'resource_pool' by manually setting state.
-        gr.resource_pool.editResource(gr.swapchain_buffers[gr.back_buffer_index]).*.state = d3d12.RESOURCE_STATE_PRESENT;
+        gr.resource_pool.editResource(gr.swapchain_buffers[gr.back_buffer_index]).*.state =
+            d3d12.RESOURCE_STATE_PRESENT;
     }
 
     pub fn flushGpuCommands(gr: *GraphicsContext) void {

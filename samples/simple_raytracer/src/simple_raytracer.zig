@@ -477,7 +477,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
     grfx.device.CreateShaderResourceView(
         grfx.getResource(vertex_buffer.resource),
-        &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(0, @intCast(u32, all_vertices.items.len), @sizeOf(Vertex)),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
+            0,
+            @intCast(u32, all_vertices.items.len),
+            @sizeOf(Vertex),
+        ),
         vertex_buffer.view,
     );
 
