@@ -61,7 +61,13 @@ const ResourceView = struct {
 
 const PsoStaticMesh_FrameConst = struct {
     object_to_clip: Mat4,
+    object_to_world: Mat4,
+    camera_position: Vec3,
+    padding0: f32 = 0.0,
 };
+comptime {
+    assert(@sizeOf(PsoStaticMesh_FrameConst) == 128 + 16);
+}
 
 const DemoState = struct {
     grfx: gr.GraphicsContext,
@@ -367,6 +373,20 @@ fn loadScene(
 
         all_textures.appendAssumeCapacity(.{ .resource = texture, .view = view });
     }
+
+    const texture_4x4 = ResourceView{
+        .resource = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, 4, 4, 0),
+            d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+            null,
+        ) catch |err| hrPanic(err),
+        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+    };
+    grfx.device.CreateShaderResourceView(grfx.getResource(texture_4x4.resource), null, texture_4x4.view);
+
+    all_textures.appendAssumeCapacity(texture_4x4);
 }
 
 fn init(gpa: *std.mem.Allocator) DemoState {
@@ -687,6 +707,8 @@ fn draw(demo: *DemoState) void {
         const mem = grfx.allocateUploadMemory(PsoStaticMesh_FrameConst, 1);
         mem.cpu_slice[0] = .{
             .object_to_clip = object_to_clip.transpose(),
+            .object_to_world = object_to_world.transpose(),
+            .camera_position = demo.camera.position,
         };
 
         grfx.setCurrentPipeline(demo.static_mesh_pso);
@@ -699,8 +721,13 @@ fn draw(demo: *DemoState) void {
         for (demo.meshes.items) |mesh| {
             grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
             grfx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {
-                const base_color_tex_index = demo.materials.items[mesh.material_index].base_color_tex_index;
-                const table = grfx.copyDescriptorsToGpuHeap(1, demo.textures.items[base_color_tex_index].view);
+                const color_index = demo.materials.items[mesh.material_index].base_color_tex_index;
+                const mr_index = demo.materials.items[mesh.material_index].metallic_roughness_tex_index;
+                const normal_index = demo.materials.items[mesh.material_index].normal_tex_index;
+
+                const table = grfx.copyDescriptorsToGpuHeap(1, demo.textures.items[color_index].view);
+                _ = grfx.copyDescriptorsToGpuHeap(1, demo.textures.items[mr_index].view);
+                _ = grfx.copyDescriptorsToGpuHeap(1, demo.textures.items[normal_index].view);
                 break :blk table;
             });
             grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
