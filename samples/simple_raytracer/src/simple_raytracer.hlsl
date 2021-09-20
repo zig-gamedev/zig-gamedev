@@ -44,11 +44,8 @@ void vsRastStaticMesh(
     const uint vertex_index = srv_index_buffer[vertex_id + cbv_draw_root.index_offset] + cbv_draw_root.vertex_offset;
     const Vertex vertex = srv_vertex_buffer[vertex_index];
 
-    // TODO(mziulek): Sponza requires scaling. Clean this up.
-    const float3 in_position = 0.008 * vertex.position;
-
-    out_position_ndc = mul(float4(in_position, 1.0), cbv_frame.object_to_clip);
-    out_position = mul(in_position, (float3x3)cbv_frame.object_to_world);
+    out_position_ndc = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
+    out_position = mul(vertex.position, (float3x3)cbv_frame.object_to_world);
     out_normal = vertex.normal;
     out_texcoords0 = vertex.texcoords0;
     out_tangent = vertex.tangent;

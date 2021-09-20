@@ -294,7 +294,7 @@ fn loadScene(
     all_vertices.ensureTotalCapacity(positions.items.len) catch unreachable;
     for (positions.items) |_, index| {
         all_vertices.appendAssumeCapacity(.{
-            .position = positions.items[index],
+            .position = positions.items[index].scale(0.008), // NOTE(mziulek): Sponza requires scaling.
             .normal = normals.items[index],
             .texcoords0 = texcoords0.items[index],
             .tangent = tangents.items[index],
@@ -587,6 +587,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
         grfx.addTransitionBarrier(vertex_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
     }
 
     // Upload index buffer.
@@ -603,6 +604,19 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
         grfx.addTransitionBarrier(index_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
+    }
+
+    // Create "Bottom Level Acceleration Structure" (blas).
+    {
+        var geometry_descs = std.ArrayList(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
+            &arena_allocator.allocator,
+            all_meshes.items.len,
+        ) catch unreachable;
+        _ = geometry_descs;
+        for (all_meshes.items) |mesh| {
+            _ = mesh;
+        }
     }
 
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
