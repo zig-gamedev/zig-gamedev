@@ -146,7 +146,7 @@ void psRastStaticMesh(
         lo += (kd * (base_color / PI) + specular) * radiance * n_dot_l;
     }
 
-    const float3 ambient = 0.03 * base_color * ao;
+    const float3 ambient = 0.05 * base_color * ao;
 
     float3 color = ambient + lo;
 

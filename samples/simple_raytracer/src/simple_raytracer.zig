@@ -81,7 +81,7 @@ const DemoState = struct {
     index_buffer: ResourceView,
 
     brush: *d2d1.ISolidColorBrush,
-    info_tfmt: *dwrite.ITextFormat,
+    normal_tfmt: *dwrite.ITextFormat,
 
     meshes: std.ArrayList(Mesh),
     materials: std.ArrayList(Material),
@@ -389,6 +389,31 @@ fn loadScene(
     all_textures.appendAssumeCapacity(texture_4x4);
 }
 
+fn drawLoadingScreen(grfx: *gr.GraphicsContext, textformat: *dwrite.ITextFormat, brush: *d2d1.ISolidColorBrush) void {
+    const back_buffer = grfx.getBackBuffer();
+
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    grfx.flushResourceBarriers();
+
+    grfx.beginDraw2d();
+
+    grfx.d2d.context.Clear(&d2d1.colorf.Black);
+    brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+    lib.DrawText(
+        grfx.d2d.context,
+        "Loading...",
+        textformat,
+        &d2d1.RECT_F{
+            .left = 0.0,
+            .top = 0.0,
+            .right = @intToFloat(f32, grfx.viewport_width),
+            .bottom = @intToFloat(f32, grfx.viewport_height),
+        },
+        @ptrCast(*d2d1.IBrush, brush),
+    );
+    grfx.endDraw2d();
+}
+
 fn init(gpa: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -414,8 +439,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk brush;
     };
 
-    const info_tfmt = blk: {
-        var info_tfmt: *dwrite.ITextFormat = undefined;
+    const normal_tfmt = blk: {
+        var normal_tfmt: *dwrite.ITextFormat = undefined;
         hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
@@ -424,12 +449,29 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             dwrite.FONT_STRETCH.NORMAL,
             32.0,
             L("en-us"),
-            @ptrCast(*?*dwrite.ITextFormat, &info_tfmt),
+            @ptrCast(*?*dwrite.ITextFormat, &normal_tfmt),
         ));
-        break :blk info_tfmt;
+        break :blk normal_tfmt;
     };
-    hrPanicOnFail(info_tfmt.SetTextAlignment(.LEADING));
-    hrPanicOnFail(info_tfmt.SetParagraphAlignment(.NEAR));
+    hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
+    hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
+
+    const large_tfmt = blk: {
+        var large_tfmt: *dwrite.ITextFormat = undefined;
+        hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
+            L("Verdana"),
+            null,
+            dwrite.FONT_WEIGHT.NORMAL,
+            dwrite.FONT_STYLE.NORMAL,
+            dwrite.FONT_STRETCH.NORMAL,
+            72.0,
+            L("en-us"),
+            @ptrCast(*?*dwrite.ITextFormat, &large_tfmt),
+        ));
+        break :blk large_tfmt;
+    };
+    hrPanicOnFail(large_tfmt.SetTextAlignment(.CENTER));
+    hrPanicOnFail(large_tfmt.SetParagraphAlignment(.CENTER));
 
     const static_mesh_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -465,7 +507,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     // Begin frame to init/upload resources on the GPU.
     //
     grfx.beginFrame();
+    drawLoadingScreen(&grfx, large_tfmt, brush);
     grfx.endFrame();
+
     grfx.beginFrame();
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
@@ -563,10 +607,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
+    drawLoadingScreen(&grfx, large_tfmt, brush);
     grfx.endFrame();
+    w.kernel32.Sleep(100);
     grfx.finishGpuCommands();
 
     mipgen_rgba8.deinit(&grfx);
+    _ = large_tfmt.Release();
 
     _ = pix.endCapture();
 
@@ -576,7 +623,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .static_mesh_pso = static_mesh_pso,
         .brush = brush,
-        .info_tfmt = info_tfmt,
+        .normal_tfmt = normal_tfmt,
         .meshes = all_meshes,
         .materials = all_materials,
         .textures = all_textures,
@@ -609,7 +656,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.materials.deinit();
     demo.textures.deinit();
     _ = demo.brush.Release();
-    _ = demo.info_tfmt.Release();
+    _ = demo.normal_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
@@ -750,7 +797,7 @@ fn draw(demo: *DemoState) void {
         lib.DrawText(
             grfx.d2d.context,
             text,
-            demo.info_tfmt,
+            demo.normal_tfmt,
             &d2d1.RECT_F{
                 .left = 10.0,
                 .top = 10.0,
