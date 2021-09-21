@@ -69,6 +69,10 @@ comptime {
     assert(@sizeOf(PsoStaticMesh_FrameConst) == 128 + 16);
 }
 
+const PsoZPrePass_FrameConst = struct {
+    object_to_clip: Mat4,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -77,7 +81,10 @@ const DemoState = struct {
     static_mesh_pso: gr.PipelineHandle,
     z_pre_pass_pso: gr.PipelineHandle,
 
-    depth_texture: ResourceView,
+    depth_texture: gr.ResourceHandle,
+    depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
+    depth_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
+
     vertex_buffer: ResourceView,
     index_buffer: ResourceView,
 
@@ -424,13 +431,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var arena_allocator = std.heap.ArenaAllocator.init(gpa);
     defer arena_allocator.deinit();
 
-    _ = pix.loadGpuCapturerLibrary();
-    _ = pix.setTargetWindow(window);
-    _ = pix.beginCapture(
-        pix.CAPTURE_GPU,
-        &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
-    );
-
     var grfx = gr.GraphicsContext.init(window);
 
     const brush = blk: {
@@ -481,6 +481,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.DSVFormat = .D32_FLOAT;
+        pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         break :blk grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,
             &pso_desc,
@@ -502,21 +503,38 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         );
     };
 
-    const depth_texture = .{
-        .resource = grfx.createCommittedResource(
-            .DEFAULT,
-            d3d12.HEAP_FLAG_NONE,
-            &blk: {
-                var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
-                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-                break :blk desc;
+    const depth_texture = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &blk: {
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+            break :blk desc;
+        },
+        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+    ) catch |err| hrPanic(err);
+
+    const depth_texture_dsv = grfx.allocateCpuDescriptors(.DSV, 1);
+    const depth_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_dsv);
+    grfx.device.CreateShaderResourceView(
+        grfx.getResource(depth_texture),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC{
+            .Format = .R32_FLOAT,
+            .ViewDimension = .TEXTURE2D,
+            .Shader4ComponentMapping = d3d12.DEFAULT_SHADER_4_COMPONENT_MAPPING,
+            .u = .{
+                .Texture2D = .{
+                    .MostDetailedMip = 0,
+                    .MipLevels = 1,
+                    .PlaneSlice = 0,
+                    .ResourceMinLODClamp = 0.0,
+                },
             },
-            d3d12.RESOURCE_STATE_DEPTH_WRITE,
-            &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
-        ) catch |err| hrPanic(err),
-        .view = grfx.allocateCpuDescriptors(.DSV, 1),
-    };
-    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
+        },
+        depth_texture_srv,
+    );
 
     var mipgen_rgba8 = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
 
@@ -808,8 +826,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk_tlas tlas_buffer;
     };
 
-    _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
-
     drawLoadingScreen(&grfx, large_tfmt, brush);
     grfx.endFrame();
     w.kernel32.Sleep(100);
@@ -832,6 +848,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .materials = all_materials,
         .textures = all_textures,
         .depth_texture = depth_texture,
+        .depth_texture_dsv = depth_texture_dsv,
+        .depth_texture_srv = depth_texture_srv,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .blas_buffer = blas_buffer,
@@ -853,7 +871,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.grfx.releaseResource(demo.tlas_buffer);
     _ = demo.grfx.releaseResource(demo.blas_buffer);
-    _ = demo.grfx.releaseResource(demo.depth_texture.resource);
+    _ = demo.grfx.releaseResource(demo.depth_texture);
     _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
     _ = demo.grfx.releaseResource(demo.index_buffer.resource);
     _ = demo.grfx.releasePipeline(demo.static_mesh_pso);
@@ -931,7 +949,7 @@ fn draw(demo: *DemoState) void {
         math.pi / 3.0,
         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
         0.1,
-        100.0,
+        20.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
@@ -944,7 +962,7 @@ fn draw(demo: *DemoState) void {
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
-        &demo.depth_texture.view,
+        &demo.depth_texture_dsv,
     );
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
@@ -952,11 +970,39 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
-    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture.view, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+
+    // Z Pre Pass.
+    {
+        pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Z Pre Pass");
+        defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+
+        const object_to_clip = cam_world_to_clip;
+
+        const mem = grfx.allocateUploadMemory(PsoZPrePass_FrameConst, 1);
+        mem.cpu_slice[0] = .{
+            .object_to_clip = object_to_clip.transpose(),
+        };
+
+        grfx.setCurrentPipeline(demo.z_pre_pass_pso);
+        grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
+            const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
+            break :blk table;
+        });
+        for (demo.meshes.items) |mesh| {
+            grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
+            grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+        }
+    }
 
     // Draw Sponza.
     {
+        pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Main Pass");
+        defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+
         const object_to_world = vm.Mat4.initIdentity();
         const object_to_clip = object_to_world.mul(cam_world_to_clip);
 
