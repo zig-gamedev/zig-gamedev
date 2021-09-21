@@ -81,6 +81,7 @@ const DemoState = struct {
     index_buffer: ResourceView,
 
     blas_buffer: gr.ResourceHandle,
+    tlas_buffer: gr.ResourceHandle,
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
@@ -659,14 +660,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &desc_blk: {
-                var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ResultDataMaxSizeInBytes);
+                var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ScratchDataSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
                 break :desc_blk desc;
             },
             d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
             null,
         ) catch |err| hrPanic(err);
-
         grfx.releaseResourceDeferred(blas_scratch_buffer);
 
         const blas_buffer = grfx.createCommittedResource(
@@ -698,6 +698,102 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk blas_buffer;
     };
 
+    // Create "Top Level Acceleration Structure" (tlas).
+    const tlas_buffer = blk_tlas: {
+        const instance_desc = d3d12.RAYTRACING_INSTANCE_DESC{
+            .Transform = [3][4]f32{
+                [4]f32{ 1.0, 0.0, 0.0, 0.0 },
+                [4]f32{ 0.0, 1.0, 0.0, 0.0 },
+                [4]f32{ 0.0, 0.0, 1.0, 0.0 },
+            },
+            .InstanceID = 0,
+            .InstanceMask = 1,
+            .InstanceContributionToHitGroupIndex = 0,
+            .Flags = 0,
+            .AccelerationStructure = grfx.getResource(blas_buffer).GetGPUVirtualAddress(),
+        };
+
+        const instance_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(@sizeOf(d3d12.RAYTRACING_INSTANCE_DESC)),
+            d3d12.RESOURCE_STATE_COPY_DEST,
+            null,
+        ) catch |err| hrPanic(err);
+        grfx.releaseResourceDeferred(instance_buffer);
+
+        // Upload instance desc to instance buffer.
+        {
+            const upload = grfx.allocateUploadBufferRegion(d3d12.RAYTRACING_INSTANCE_DESC, 1);
+            upload.cpu_slice[0] = instance_desc;
+
+            grfx.cmdlist.CopyBufferRegion(
+                grfx.getResource(instance_buffer),
+                0,
+                upload.buffer,
+                upload.buffer_offset,
+                upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+            );
+            grfx.addTransitionBarrier(instance_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            grfx.flushResourceBarriers();
+        }
+
+        const tlas_inputs = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
+            .Type = .TOP_LEVEL,
+            .Flags = d3d12.RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE,
+            .NumDescs = 1,
+            .DescsLayout = .ARRAY,
+            .u = .{
+                .InstanceDescs = grfx.getResource(instance_buffer).GetGPUVirtualAddress(),
+            },
+        };
+
+        var tlas_build_info: d3d12.RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = undefined;
+        grfx.device.GetRaytracingAccelerationStructurePrebuildInfo(&tlas_inputs, &tlas_build_info);
+        std.log.info("TLAS: {}", .{tlas_build_info});
+
+        const tlas_scratch_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &desc_blk: {
+                var desc = d3d12.RESOURCE_DESC.initBuffer(tlas_build_info.ScratchDataSizeInBytes);
+                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                break :desc_blk desc;
+            },
+            d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+            null,
+        ) catch |err| hrPanic(err);
+        grfx.releaseResourceDeferred(tlas_scratch_buffer);
+
+        const tlas_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &desc_blk: {
+                var desc = d3d12.RESOURCE_DESC.initBuffer(tlas_build_info.ResultDataMaxSizeInBytes);
+                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                break :desc_blk desc;
+            },
+            d3d12.RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+            null,
+        ) catch |err| hrPanic(err);
+
+        const tlas_desc = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
+            .DestAccelerationStructureData = grfx.getResource(tlas_buffer).GetGPUVirtualAddress(),
+            .Inputs = tlas_inputs,
+            .SourceAccelerationStructureData = 0,
+            .ScratchAccelerationStructureData = grfx.getResource(tlas_scratch_buffer).GetGPUVirtualAddress(),
+        };
+        grfx.cmdlist.BuildRaytracingAccelerationStructure(&tlas_desc, 0, null);
+        grfx.cmdlist.ResourceBarrier(
+            1,
+            &[_]d3d12.RESOURCE_BARRIER{
+                .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(tlas_buffer) } } },
+            },
+        );
+
+        break :blk_tlas tlas_buffer;
+    };
+
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
     drawLoadingScreen(&grfx, large_tfmt, brush);
@@ -724,6 +820,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .blas_buffer = blas_buffer,
+        .tlas_buffer = tlas_buffer,
         .camera = .{
             .position = Vec3.init(0.0, 1.0, 0.0),
             .forward = Vec3.initZero(),
@@ -739,6 +836,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    _ = demo.grfx.releaseResource(demo.tlas_buffer);
     _ = demo.grfx.releaseResource(demo.blas_buffer);
     _ = demo.grfx.releaseResource(demo.depth_texture.resource);
     _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
