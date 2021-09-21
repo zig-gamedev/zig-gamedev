@@ -80,6 +80,8 @@ const DemoState = struct {
     vertex_buffer: ResourceView,
     index_buffer: ResourceView,
 
+    blas_buffer: gr.ResourceHandle,
+
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
@@ -608,16 +610,93 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     }
 
     // Create "Bottom Level Acceleration Structure" (blas).
-    {
+    const blas_buffer = blk: {
         var geometry_descs = std.ArrayList(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
             &arena_allocator.allocator,
             all_meshes.items.len,
         ) catch unreachable;
-        _ = geometry_descs;
+
+        const vertex_buffer_addr = grfx.getResource(vertex_buffer.resource).GetGPUVirtualAddress();
+        const index_buffer_addr = grfx.getResource(index_buffer.resource).GetGPUVirtualAddress();
+
         for (all_meshes.items) |mesh| {
-            _ = mesh;
+            const desc = d3d12.RAYTRACING_GEOMETRY_DESC{
+                .Flags = d3d12.RAYTRACING_GEOMETRY_FLAG_OPAQUE,
+                .Type = .TRIANGLES,
+                .u = .{
+                    .Triangles = .{
+                        .Transform3x4 = 0,
+                        .IndexFormat = .R32_UINT,
+                        .VertexFormat = .R32G32B32_FLOAT,
+                        .IndexCount = mesh.num_indices,
+                        .VertexCount = mesh.num_vertices,
+                        .IndexBuffer = index_buffer_addr + mesh.index_offset * @sizeOf(u32),
+                        .VertexBuffer = .{
+                            .StrideInBytes = @sizeOf(Vertex),
+                            .StartAddress = vertex_buffer_addr + mesh.vertex_offset * @sizeOf(Vertex),
+                        },
+                    },
+                },
+            };
+            geometry_descs.appendAssumeCapacity(desc);
         }
-    }
+
+        const blas_inputs = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
+            .Type = .BOTTOM_LEVEL,
+            .Flags = d3d12.RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE,
+            .NumDescs = @intCast(u32, geometry_descs.items.len),
+            .DescsLayout = .ARRAY,
+            .u = .{
+                .pGeometryDescs = geometry_descs.items.ptr,
+            },
+        };
+
+        var blas_build_info: d3d12.RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = undefined;
+        grfx.device.GetRaytracingAccelerationStructurePrebuildInfo(&blas_inputs, &blas_build_info);
+        std.log.info("BLAS: {}", .{blas_build_info});
+
+        const blas_scratch_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &desc_blk: {
+                var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ResultDataMaxSizeInBytes);
+                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                break :desc_blk desc;
+            },
+            d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
+            null,
+        ) catch |err| hrPanic(err);
+
+        grfx.releaseResourceDeferred(blas_scratch_buffer);
+
+        const blas_buffer = grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &desc_blk: {
+                var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ResultDataMaxSizeInBytes);
+                desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                break :desc_blk desc;
+            },
+            d3d12.RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+            null,
+        ) catch |err| hrPanic(err);
+
+        const blas_desc = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
+            .DestAccelerationStructureData = grfx.getResource(blas_buffer).GetGPUVirtualAddress(),
+            .Inputs = blas_inputs,
+            .SourceAccelerationStructureData = 0,
+            .ScratchAccelerationStructureData = grfx.getResource(blas_scratch_buffer).GetGPUVirtualAddress(),
+        };
+        grfx.cmdlist.BuildRaytracingAccelerationStructure(&blas_desc, 0, null);
+        grfx.cmdlist.ResourceBarrier(
+            1,
+            &[_]d3d12.RESOURCE_BARRIER{
+                .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(blas_buffer) } } },
+            },
+        );
+
+        break :blk blas_buffer;
+    };
 
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
@@ -644,6 +723,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .depth_texture = depth_texture,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
+        .blas_buffer = blas_buffer,
         .camera = .{
             .position = Vec3.init(0.0, 1.0, 0.0),
             .forward = Vec3.initZero(),
@@ -659,6 +739,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    _ = demo.grfx.releaseResource(demo.blas_buffer);
     _ = demo.grfx.releaseResource(demo.depth_texture.resource);
     _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
     _ = demo.grfx.releaseResource(demo.index_buffer.resource);

@@ -27,6 +27,11 @@ const TransitionResourceBarrier = struct {
     resource: ResourceHandle,
 };
 
+const ResourceWithCounter = struct {
+    resource: ResourceHandle,
+    counter: u32,
+};
+
 pub const GraphicsContext = struct {
     const max_num_buffered_frames = 2;
     const num_swapbuffers = 4;
@@ -56,6 +61,7 @@ pub const GraphicsContext = struct {
     },
     transition_resource_barriers: []TransitionResourceBarrier,
     num_transition_resource_barriers: u32,
+    resources_to_release: std.ArrayList(ResourceWithCounter),
     viewport_width: u32,
     viewport_height: u32,
     frame_fence: *d3d12.IFence,
@@ -434,6 +440,7 @@ pub const GraphicsContext = struct {
                 TransitionResourceBarrier,
                 max_num_buffered_resource_barriers,
             ) catch unreachable,
+            .resources_to_release = std.ArrayList(ResourceWithCounter).initCapacity(std.heap.page_allocator, 64) catch unreachable,
             .num_transition_resource_barriers = 0,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
@@ -459,6 +466,7 @@ pub const GraphicsContext = struct {
     pub fn deinit(gr: *GraphicsContext) void {
         gr.finishGpuCommands();
         std.heap.page_allocator.free(gr.transition_resource_barriers);
+        gr.resources_to_release.deinit();
         w.CloseHandle(gr.frame_fence_event);
         assert(gr.pipeline.map.count() == 0);
         gr.pipeline.map.deinit(std.heap.page_allocator);
@@ -533,6 +541,15 @@ pub const GraphicsContext = struct {
 
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
         gr.upload_memory_heaps[gr.frame_index].size = 0;
+
+        for (gr.resources_to_release.items) |*res, i| {
+            assert(res.counter > 0);
+            res.counter -= 1;
+            if (res.counter == 0) {
+                _ = gr.releaseResource(res.resource);
+                _ = gr.resources_to_release.swapRemove(i);
+            }
+        }
     }
 
     pub fn beginDraw2d(gr: *GraphicsContext) void {
@@ -631,6 +648,13 @@ pub const GraphicsContext = struct {
 
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
         gr.upload_memory_heaps[gr.frame_index].size = 0;
+
+        if (gr.resources_to_release.items.len > 0) {
+            for (gr.resources_to_release.items) |res| {
+                _ = gr.releaseResource(res.resource);
+            }
+            gr.resources_to_release.resize(0) catch unreachable;
+        }
     }
 
     pub fn getBackBuffer(gr: GraphicsContext) struct {
@@ -701,6 +725,13 @@ pub const GraphicsContext = struct {
             return refcount;
         }
         return 0;
+    }
+
+    pub fn releaseResourceDeferred(gr: *GraphicsContext, handle: ResourceHandle) void {
+        // TODO(mziulek): Does this make sense? Is there non-growing container?
+        assert(gr.resources_to_release.items.len < gr.resources_to_release.capacity);
+
+        gr.resources_to_release.appendAssumeCapacity(.{ .resource = handle, .counter = max_num_buffered_frames + 2 });
     }
 
     pub fn flushResourceBarriers(gr: *GraphicsContext) void {
