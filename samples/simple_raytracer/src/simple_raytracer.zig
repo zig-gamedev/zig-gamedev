@@ -75,6 +75,7 @@ const DemoState = struct {
     frame_stats: lib.FrameStats,
 
     static_mesh_pso: gr.PipelineHandle,
+    z_pre_pass_pso: gr.PipelineHandle,
 
     depth_texture: ResourceView,
     vertex_buffer: ResourceView,
@@ -488,6 +489,19 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         );
     };
 
+    const z_pre_pass_pso = blk: {
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.RTVFormats[0] = .UNKNOWN;
+        pso_desc.NumRenderTargets = 0;
+        pso_desc.DSVFormat = .D32_FLOAT;
+        break :blk grfx.createGraphicsShaderPipeline(
+            &arena_allocator.allocator,
+            &pso_desc,
+            "content/shaders/z_pre_pass.vs.cso",
+            "content/shaders/z_pre_pass.ps.cso",
+        );
+    };
+
     const depth_texture = .{
         .resource = grfx.createCommittedResource(
             .DEFAULT,
@@ -811,6 +825,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .gui = gui,
         .frame_stats = lib.FrameStats.init(),
         .static_mesh_pso = static_mesh_pso,
+        .z_pre_pass_pso = z_pre_pass_pso,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .meshes = all_meshes,
@@ -842,6 +857,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
     _ = demo.grfx.releaseResource(demo.index_buffer.resource);
     _ = demo.grfx.releasePipeline(demo.static_mesh_pso);
+    _ = demo.grfx.releasePipeline(demo.z_pre_pass_pso);
     for (demo.textures.items) |texture| {
         _ = demo.grfx.releaseResource(texture.resource);
     }
@@ -958,6 +974,7 @@ fn draw(demo: *DemoState) void {
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
             break :blk table;
         });
+        //grfx.cmdlist.SetGraphicsRootShaderResourceView(4, grfx.getResource(demo.tlas_buffer).GetGPUVirtualAddress());
         for (demo.meshes.items) |mesh| {
             grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
             grfx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {

@@ -1,6 +1,13 @@
 #define GAMMA 2.2
 #define PI 3.1415926
 
+struct Vertex {
+    float3 position;
+    float3 normal;
+    float2 texcoords0;
+    float4 tangent;
+};
+
 #if defined(PSO__RAST_STATIC_MESH)
 
 #define root_signature \
@@ -23,12 +30,6 @@ struct FrameConst {
 };
 ConstantBuffer<FrameConst> cbv_frame : register(b1);
 
-struct Vertex {
-    float3 position;
-    float3 normal;
-    float2 texcoords0;
-    float4 tangent;
-};
 StructuredBuffer<Vertex> srv_vertex_buffer : register(t0);
 Buffer<uint> srv_index_buffer : register(t1);
 
@@ -152,5 +153,58 @@ void psRastStaticMesh(
 
     out_color = float4(color, 1.0);
 }
+
+#elif defined(PSO__Z_PRE_PASS)
+
+#define root_signature \
+    "RootConstants(b0, num32BitConstants = 2), " \
+    "CBV(b1), " \
+    "DescriptorTable(SRV(t0, numDescriptors = 2), visibility = SHADER_VISIBILITY_VERTEX)"
+
+struct DrawRootConst {
+    uint vertex_offset;
+    uint index_offset;
+};
+ConstantBuffer<DrawRootConst> cbv_draw_root : register(b0);
+
+struct FrameConst {
+    float4x4 object_to_clip;
+};
+ConstantBuffer<FrameConst> cbv_frame : register(b1);
+
+StructuredBuffer<Vertex> srv_vertex_buffer : register(t0);
+Buffer<uint> srv_index_buffer : register(t1);
+
+[RootSignature(root_signature)]
+void vsZPrePass(
+    uint vertex_id : SV_VertexID,
+    out float4 out_position_ndc : SV_Position
+) {
+    const uint vertex_index = srv_index_buffer[vertex_id + cbv_draw_root.index_offset] + cbv_draw_root.vertex_offset;
+    const Vertex vertex = srv_vertex_buffer[vertex_index];
+
+    out_position_ndc = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
+}
+
+[RootSignature(root_signature)]
+void psZPrePass(
+    float4 position_ndc : SV_Position
+) {
+}
+
+#elif defined(PSO__RT_SHADOW_MASK)
+
+GlobalRootSignature GlobalSignature = {
+    "DescriptorTable(UAV(u0)),"
+    "SRV(t0),"
+    "CBV(b0),"
+    "DescriptorTable(SRV(t1, numDescriptors = 2)),"
+};
+
+RaytracingAccelerationStructure srv_bvh : register(t0);
+StructuredBuffer<Vertex> srv_vertex_buffer : register(t0);
+Buffer<uint> srv_index_buffer : register(t1);
+
+RWTexture2D<float> uav_shadow_mask : register(u0);
 
 #endif

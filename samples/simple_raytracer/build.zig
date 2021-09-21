@@ -70,6 +70,23 @@ pub fn build(b: *std.build.Builder) void {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd(
+        "src/simple_raytracer.hlsl",
+        "vsZPrePass",
+        "z_pre_pass.vs.cso",
+        "vs",
+        "PSO__Z_PRE_PASS",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/simple_raytracer.hlsl",
+        "psZPrePass",
+        "z_pre_pass.ps.cso",
+        "ps",
+        "PSO__Z_PRE_PASS",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     b.getInstallStep().dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose
