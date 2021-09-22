@@ -87,7 +87,8 @@ const DemoState = struct {
     z_pre_pass_pso: gr.PipelineHandle,
     gen_shadow_rays_pso: gr.PipelineHandle,
 
-    //trace_shadow_rays_stateobj: *d3d12.IStateObject,
+    trace_shadow_rays_stateobj: *d3d12.IStateObject,
+    trace_shadow_rays_rs: *d3d12.IRootSignature,
 
     depth_texture: gr.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
@@ -879,7 +880,44 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 
     // Create 'trace shadow rays' RT state object.
-    {}
+    var trace_shadow_rays_stateobj: *d3d12.IStateObject = undefined;
+    var trace_shadow_rays_rs: *d3d12.IRootSignature = undefined;
+    {
+        const cso_file = std.fs.cwd().openFile("content/shaders/trace_shadow_rays.lib.cso", .{}) catch unreachable;
+        defer cso_file.close();
+
+        const cso_code = cso_file.reader().readAllAlloc(&arena_allocator.allocator, 256 * 1024) catch unreachable;
+
+        const lib_desc = d3d12.DXIL_LIBRARY_DESC{
+            .DXILLibrary = .{ .pShaderBytecode = cso_code.ptr, .BytecodeLength = cso_code.len },
+            .NumExports = 0,
+            .pExports = null,
+        };
+
+        const subobject = d3d12.STATE_SUBOBJECT{
+            .Type = .DXIL_LIBRARY,
+            .pDesc = &lib_desc,
+        };
+
+        const state_object_desc = d3d12.STATE_OBJECT_DESC{
+            .Type = .RAYTRACING_PIPELINE,
+            .NumSubobjects = 1,
+            .pSubobjects = @ptrCast([*]const d3d12.STATE_SUBOBJECT, &subobject),
+        };
+
+        hrPanicOnFail(grfx.device.CreateStateObject(
+            &state_object_desc,
+            &d3d12.IID_IStateObject,
+            @ptrCast(*?*c_void, &trace_shadow_rays_stateobj),
+        ));
+        hrPanicOnFail(grfx.device.CreateRootSignature(
+            0,
+            cso_code.ptr,
+            cso_code.len,
+            &d3d12.IID_IRootSignature,
+            @ptrCast(*?*c_void, &trace_shadow_rays_rs),
+        ));
+    }
 
     drawLoadingScreen(&grfx, large_tfmt, brush);
     grfx.endFrame();
@@ -898,6 +936,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .static_mesh_pso = static_mesh_pso,
         .z_pre_pass_pso = z_pre_pass_pso,
         .gen_shadow_rays_pso = gen_shadow_rays_pso,
+        .trace_shadow_rays_stateobj = trace_shadow_rays_stateobj,
+        .trace_shadow_rays_rs = trace_shadow_rays_rs,
         .shadow_rays_buffer = shadow_rays_buffer,
         .shadow_rays_buffer_uav = shadow_rays_buffer_uav,
         .shadow_rays_buffer_srv = shadow_rays_buffer_srv,
@@ -928,6 +968,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    _ = demo.trace_shadow_rays_stateobj.Release();
+    _ = demo.trace_shadow_rays_rs.Release();
     _ = demo.grfx.releaseResource(demo.tlas_buffer);
     _ = demo.grfx.releaseResource(demo.blas_buffer);
     _ = demo.grfx.releaseResource(demo.depth_texture);

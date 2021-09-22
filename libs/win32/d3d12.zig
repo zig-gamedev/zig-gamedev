@@ -2880,7 +2880,7 @@ pub const STATE_SUBOBJECT_TYPE = enum(UINT) {
 
 pub const STATE_SUBOBJECT = extern struct {
     Type: STATE_SUBOBJECT_TYPE,
-    desc: *const c_void,
+    pDesc: *const c_void,
 };
 
 pub const STATE_OBJECT_FLAGS = UINT;
@@ -2916,7 +2916,7 @@ pub const EXPORT_DESC = extern struct {
 pub const DXIL_LIBRARY_DESC = extern struct {
     DXILLibrary: SHADER_BYTECODE,
     NumExports: UINT,
-    pExports: [*]EXPORT_DESC,
+    pExports: ?[*]EXPORT_DESC,
 };
 
 pub const EXISTING_COLLECTION_DESC = extern struct {
@@ -3169,6 +3169,7 @@ pub const RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = extern struct {
     UpdateScratchDataSizeInBytes: UINT64,
 };
 
+pub const IID_IStateObject = GUID.parse("{47016943-fca8-4594-93ea-af258b55346d}");
 pub const IStateObject = extern struct {
     const Self = @This();
     v: *const extern struct {
