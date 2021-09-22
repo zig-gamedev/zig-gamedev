@@ -15,7 +15,7 @@ fn makeDxcCmd(
     return [_][]const u8{
         "../../external/bin/dxc/dxc.exe",
         input_path,
-        "/E " ++ entry_point,
+        if (entry_point.len == 0) "" else "/E " ++ entry_point,
         "/Fo " ++ shader_dir ++ output_filename,
         "/T " ++ profile ++ "_" ++ shader_ver,
         if (define.len == 0) "" else "/D " ++ define,
@@ -101,6 +101,15 @@ pub fn build(b: *std.build.Builder) void {
         "gen_shadow_rays.ps.cso",
         "ps",
         "PSO__GEN_SHADOW_RAYS",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/simple_raytracer.hlsl",
+        "",
+        "trace_shadow_rays.lib.cso",
+        "lib",
+        "PSO__TRACE_SHADOW_RAYS",
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 

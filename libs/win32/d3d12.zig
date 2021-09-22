@@ -3175,10 +3175,22 @@ pub const IStateObject = extern struct {
         unknown: IUnknown.VTable(Self),
         object: IObject.VTable(Self),
         devchild: IDeviceChild.VTable(Self),
+        stateobj: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace IObject.Methods(Self);
     usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
 };
 
 pub const DISPATCH_RAYS_DESC = extern struct {

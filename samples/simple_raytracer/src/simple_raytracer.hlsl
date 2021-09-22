@@ -1,6 +1,8 @@
 #define GAMMA 2.2
 #define PI 3.1415926
 
+static const float3 g_light_position = float3(0.0, 5.0, 0.0);
+
 struct Vertex {
     float3 position;
     float3 normal;
@@ -121,9 +123,8 @@ void psRastStaticMesh(
 
     // Light contribution.
     {
-        const float3 l_position = float3(0.0, 5.0, 0.0);
         const float3 l_radiance = float3(70.0, 70.0, 50.0);
-        const float3 l_vec = l_position - position;
+        const float3 l_vec = g_light_position - position;
         const float3 l = normalize(l_vec);
 
         float3 h = normalize(l + v);
@@ -244,19 +245,61 @@ void psGenShadowRays(
     uav_shadow_rays[position_screen.xy] = ro;
 }
 
-#elif defined(PSO__RT_SHADOW_MASK)
+#elif defined(PSO__TRACE_SHADOW_RAYS)
 
-GlobalRootSignature GlobalSignature = {
-    "DescriptorTable(UAV(u0)),"
+RaytracingShaderConfig g_shader_config = {
+	4, // MaxPayloadSizeInBytes
+	4, // MaxAttributeSizeInBytes
+};
+
+RaytracingPipelineConfig g_pipeline_config = {
+    1, // MaxTraceRecursionDepth
+};
+
+GlobalRootSignature g_global_signature = {
     "SRV(t0),"
-    "CBV(b0),"
-    "DescriptorTable(SRV(t1, numDescriptors = 2)),"
+    "DescriptorTable(SRV(t1), UAV(u0)),"
 };
 
 RaytracingAccelerationStructure srv_bvh : register(t0);
-StructuredBuffer<Vertex> srv_vertex_buffer : register(t0);
-Buffer<uint> srv_index_buffer : register(t1);
+Texture2D<float3> srv_shadow_rays : register(t1);
 
 RWTexture2D<float> uav_shadow_mask : register(u0);
+
+struct Payload {
+    float mask;
+};
+
+[shader("raygeneration")]
+void generateShadowRay() {
+    float3 ro = srv_shadow_rays[DispatchRaysIndex().xy];
+
+    RayDesc ray;
+    ray.Origin = ro;
+    ray.Direction = g_light_position - ro;
+    ray.TMin = 0.0;
+    ray.TMax = 100.0;
+
+    Payload payload;
+    payload.mask = 1.0;
+
+    TraceRay(
+        srv_bvh,
+        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
+        1, // InstanceInclusionMask
+        0, // RayContributionToHitGroupIndex
+        0, // MultiplierForGeometryContributionToHitGroupIndex
+        0, // MissShaderIndex
+        ray,
+        payload
+    );
+
+    uav_shadow_mask[DispatchRaysIndex().xy] = payload.mask;
+}
+
+[shader("miss")]
+void shadowMiss(inout Payload payload) {
+	payload.mask = 0.0;
+}
 
 #endif

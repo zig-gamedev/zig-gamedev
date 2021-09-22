@@ -87,6 +87,8 @@ const DemoState = struct {
     z_pre_pass_pso: gr.PipelineHandle,
     gen_shadow_rays_pso: gr.PipelineHandle,
 
+    //trace_shadow_rays_stateobj: *d3d12.IStateObject,
+
     depth_texture: gr.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
     depth_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
@@ -693,7 +695,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     }
 
     // Create "Bottom Level Acceleration Structure" (blas).
-    const blas_buffer = blk: {
+    const blas_buffer = blas_blk: {
         var geometry_descs = std.ArrayList(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
             &arena_allocator.allocator,
             all_meshes.items.len,
@@ -741,10 +743,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         const blas_scratch_buffer = grfx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
-            &desc_blk: {
+            &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ScratchDataSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-                break :desc_blk desc;
+                break :blk desc;
             },
             d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
             null,
@@ -754,10 +756,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         const blas_buffer = grfx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
-            &desc_blk: {
+            &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(blas_build_info.ResultDataMaxSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-                break :desc_blk desc;
+                break :blk desc;
             },
             d3d12.RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
             null,
@@ -777,7 +779,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             },
         );
 
-        break :blk blas_buffer;
+        break :blas_blk blas_buffer;
     };
 
     // Create "Top Level Acceleration Structure" (tlas).
@@ -875,6 +877,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
         break :blk_tlas tlas_buffer;
     };
+
+    // Create 'trace shadow rays' RT state object.
+    {}
 
     drawLoadingScreen(&grfx, large_tfmt, brush);
     grfx.endFrame();
