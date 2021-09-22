@@ -87,6 +87,23 @@ pub fn build(b: *std.build.Builder) void {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd(
+        "src/simple_raytracer.hlsl",
+        "vsGenShadowRays",
+        "gen_shadow_rays.vs.cso",
+        "vs",
+        "PSO__GEN_SHADOW_RAYS",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/simple_raytracer.hlsl",
+        "psGenShadowRays",
+        "gen_shadow_rays.ps.cso",
+        "ps",
+        "PSO__GEN_SHADOW_RAYS",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     b.getInstallStep().dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose

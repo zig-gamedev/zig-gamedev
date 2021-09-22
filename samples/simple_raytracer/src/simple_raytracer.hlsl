@@ -46,7 +46,7 @@ void vsRastStaticMesh(
     const Vertex vertex = srv_vertex_buffer[vertex_index];
 
     out_position_ndc = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
-    out_position = mul(vertex.position, (float3x3)cbv_frame.object_to_world);
+    out_position = mul(float4(vertex.position, 1.0), cbv_frame.object_to_world).xyz;
     out_normal = vertex.normal;
     out_texcoords0 = vertex.texcoords0;
     out_tangent = vertex.tangent;
@@ -190,6 +190,58 @@ void vsZPrePass(
 void psZPrePass(
     float4 position_ndc : SV_Position
 ) {
+}
+
+#elif defined(PSO__GEN_SHADOW_RAYS)
+
+#define root_signature \
+    "RootConstants(b0, num32BitConstants = 2), " \
+    "CBV(b1), " \
+    "DescriptorTable(SRV(t0, numDescriptors = 2), visibility = SHADER_VISIBILITY_VERTEX), " \
+    "DescriptorTable(UAV(u0), visibility = SHADER_VISIBILITY_PIXEL)"
+
+struct DrawRootConst {
+    uint vertex_offset;
+    uint index_offset;
+};
+ConstantBuffer<DrawRootConst> cbv_draw_root : register(b0);
+
+struct FrameConst {
+    float4x4 object_to_clip;
+    float4x4 object_to_world;
+};
+ConstantBuffer<FrameConst> cbv_frame : register(b1);
+
+StructuredBuffer<Vertex> srv_vertex_buffer : register(t0);
+Buffer<uint> srv_index_buffer : register(t1);
+
+RWTexture2D<float3> uav_shadow_rays : register(u0);
+
+[RootSignature(root_signature)]
+void vsGenShadowRays(
+    uint vertex_id : SV_VertexID,
+    out float4 out_position_ndc : SV_Position,
+    out float3 out_position : _Position,
+    out float3 out_normal : _Normal
+) {
+    const uint vertex_index = srv_index_buffer[vertex_id + cbv_draw_root.index_offset] + cbv_draw_root.vertex_offset;
+    const Vertex vertex = srv_vertex_buffer[vertex_index];
+
+    out_position_ndc = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
+    out_position = mul(float4(vertex.position, 1.0), cbv_frame.object_to_world).xyz;
+    out_normal = mul(vertex.normal, (float3x3)cbv_frame.object_to_world);
+}
+
+[earlydepthstencil]
+[RootSignature(root_signature)]
+void psGenShadowRays(
+    float4 position_screen : SV_Position,
+    float3 position : _Position,
+    float3 normal : _Normal
+) {
+    float3 n = normalize(normal);
+    float3 ro = position + 0.005 * n;
+    uav_shadow_rays[position_screen.xy] = ro;
 }
 
 #elif defined(PSO__RT_SHADOW_MASK)

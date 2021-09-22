@@ -628,7 +628,7 @@ pub const RENDER_TARGET_BLEND_DESC = extern struct {
             .DestBlendAlpha = .ZERO,
             .BlendOpAlpha = .ADD,
             .LogicOp = .NOOP,
-            .RenderTargetWriteMask = 0xf,
+            .RenderTargetWriteMask = 0x0,
         };
         return v;
     }
@@ -876,6 +876,7 @@ pub const GRAPHICS_PIPELINE_STATE_DESC = extern struct {
             .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
             .Flags = PIPELINE_STATE_FLAG_NONE,
         };
+        v.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         return v;
     }
 };
