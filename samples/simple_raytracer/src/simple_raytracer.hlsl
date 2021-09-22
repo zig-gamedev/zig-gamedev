@@ -248,8 +248,8 @@ void psGenShadowRays(
 #elif defined(PSO__TRACE_SHADOW_RAYS)
 
 RaytracingShaderConfig g_shader_config = {
-	4, // MaxPayloadSizeInBytes
-	4, // MaxAttributeSizeInBytes
+    4, // MaxPayloadSizeInBytes
+    4, // MaxAttributeSizeInBytes
 };
 
 RaytracingPipelineConfig g_pipeline_config = {
@@ -258,7 +258,7 @@ RaytracingPipelineConfig g_pipeline_config = {
 
 GlobalRootSignature g_global_signature = {
     "SRV(t0),"
-    "DescriptorTable(SRV(t1), UAV(u0)),"
+        "DescriptorTable(SRV(t1), UAV(u0)),"
 };
 
 RaytracingAccelerationStructure srv_bvh : register(t0);
@@ -299,7 +299,7 @@ void generateShadowRay() {
 
 [shader("miss")]
 void shadowMiss(inout Payload payload) {
-	payload.mask = 0.0;
+    payload.mask = 0.0;
 }
 
 #endif
