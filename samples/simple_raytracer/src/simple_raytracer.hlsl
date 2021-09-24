@@ -30,6 +30,7 @@ struct FrameConst {
     float4x4 object_to_world;
     float3 camera_position;
     float3 light_position;
+    int draw_mode;
 };
 ConstantBuffer<FrameConst> cbv_frame : register(b1);
 
@@ -161,7 +162,11 @@ void psRastStaticMesh(
     const float hit_distance = srv_shadow_mask[position_window.xy];
     const float mask = (hit_distance > l_vec_len) ? 1.0 : 0.5;
 
-    out_color = float4(color * mask, 1.0);
+    if (cbv_frame.draw_mode == 2) {
+        out_color = float4(mask, mask, mask, 1.0);
+    } else {
+        out_color = float4(color * mask, 1.0);
+    }
 }
 
 #elif defined(PSO__Z_PRE_PASS)

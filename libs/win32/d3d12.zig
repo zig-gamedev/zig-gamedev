@@ -937,15 +937,33 @@ pub const FEATURE = enum(UINT) {
     OPTIONS11 = 40,
 };
 
+pub const RENDER_PASS_TIER = enum(UINT) {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+};
+
+pub const RAYTRACING_TIER = enum(UINT) {
+    NOT_SUPPORTED = 0,
+    _1_0 = 10,
+    _1_1 = 11,
+};
+
+pub const FEATURE_DATA_D3D12_OPTIONS5 = extern struct {
+    SRVOnlyTiledResourceTier3: BOOL,
+    RenderPassesTier: RENDER_PASS_TIER,
+    RaytracingTier: RAYTRACING_TIER,
+};
+
 pub const CONSTANT_BUFFER_VIEW_DESC = extern struct {
     BufferLocation: GPU_VIRTUAL_ADDRESS,
     SizeInBytes: UINT,
 };
 
-pub inline fn ENCODE_SHADER_4_COMPONENT_MAPPING(src0: UINT, src1: UINT, src2: UINT, src3: UINT) UINT {
+pub inline fn encodeShader4ComponentMapping(src0: UINT, src1: UINT, src2: UINT, src3: UINT) UINT {
     return (src0 & 0x7) | ((src1 & 0x7) << 3) | ((src2 & 0x7) << (3 * 2)) | ((src3 & 0x7) << (3 * 3)) | (1 << (3 * 4));
 }
-pub const DEFAULT_SHADER_4_COMPONENT_MAPPING = ENCODE_SHADER_4_COMPONENT_MAPPING(0, 1, 2, 3);
+pub const DEFAULT_SHADER_4_COMPONENT_MAPPING = encodeShader4ComponentMapping(0, 1, 2, 3);
 
 pub const BUFFER_SRV_FLAGS = UINT;
 pub const BUFFER_SRV_FLAG_NONE = 0;
@@ -3681,7 +3699,7 @@ pub const IDevice = extern struct {
                 return self.v.device.CreateCommandList(self, node_mask, cmdlist_type, cmdalloc, initial_state, guid, cmdlist);
             }
             pub inline fn CheckFeatureSupport(self: *T, feature: FEATURE, data: *c_void, data_size: UINT) HRESULT {
-                return self.vtbl.CheckFeatureSupport(self, feature, data, data_size);
+                return self.v.device.CheckFeatureSupport(self, feature, data, data_size);
             }
             pub inline fn CreateDescriptorHeap(
                 self: *T,

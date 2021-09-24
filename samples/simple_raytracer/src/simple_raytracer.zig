@@ -65,7 +65,7 @@ const PsoStaticMesh_FrameConst = struct {
     camera_position: Vec3,
     padding0: f32 = 0.0,
     light_position: Vec3,
-    padding1: f32 = 0.0,
+    draw_mode: i32, // 1 - shadows, 2 - shadow mask
 };
 comptime {
     assert(@sizeOf(PsoStaticMesh_FrameConst) == 128 + 32);
@@ -94,8 +94,8 @@ const DemoState = struct {
     z_pre_pass_pso: gr.PipelineHandle,
     gen_shadow_rays_pso: gr.PipelineHandle,
 
-    trace_shadow_rays_stateobj: *d3d12.IStateObject,
-    trace_shadow_rays_rs: *d3d12.IRootSignature,
+    trace_shadow_rays_stateobj: ?*d3d12.IStateObject,
+    trace_shadow_rays_rs: ?*d3d12.IRootSignature,
     trace_shadow_rays_table: gr.ResourceHandle,
 
     depth_texture: gr.ResourceHandle,
@@ -134,6 +134,9 @@ const DemoState = struct {
         cursor_prev_y: i32,
     },
     light_position: Vec3,
+
+    dxr_is_supported: bool,
+    dxr_draw_mode: i32,
 };
 
 fn parseAndLoadGltfFile(gltf_path: []const u8) *c.cgltf_data {
@@ -466,6 +469,14 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     var grfx = gr.GraphicsContext.init(window);
 
+    // Check for DirectX Raytracing (DXR) support.
+    const dxr_is_supported = blk: {
+        var options5: d3d12.FEATURE_DATA_D3D12_OPTIONS5 = undefined;
+        const res = grfx.device.CheckFeatureSupport(.OPTIONS5, &options5, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS5));
+        break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == w.S_OK;
+    };
+    const dxr_draw_mode = @boolToInt(dxr_is_supported);
+
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
         hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
@@ -556,9 +567,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 
     // Create 'trace shadow rays' RT state object.
-    var trace_shadow_rays_stateobj: *d3d12.IStateObject = undefined;
-    var trace_shadow_rays_rs: *d3d12.IRootSignature = undefined;
-    {
+    var trace_shadow_rays_stateobj: ?*d3d12.IStateObject = null;
+    var trace_shadow_rays_rs: ?*d3d12.IRootSignature = null;
+    if (dxr_is_supported) {
         const cso_file = std.fs.cwd().openFile("content/shaders/trace_shadow_rays.lib.cso", .{}) catch unreachable;
         defer cso_file.close();
 
@@ -783,7 +794,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     }
 
     // Create "Bottom Level Acceleration Structure" (blas).
-    const blas_buffer = blk_blas: {
+    const blas_buffer = if (dxr_is_supported) blk_blas: {
         var geometry_descs = std.ArrayList(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
             &arena_allocator.allocator,
             all_meshes.items.len,
@@ -868,10 +879,18 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         );
 
         break :blk_blas blas_buffer;
+    } else blk_blas: {
+        break :blk_blas grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(1),
+            d3d12.RESOURCE_STATE_COMMON,
+            null,
+        ) catch |err| hrPanic(err);
     };
 
     // Create "Top Level Acceleration Structure" (tlas).
-    const tlas_buffer = blk_tlas: {
+    const tlas_buffer = if (dxr_is_supported) blk_tlas: {
         const instance_desc = d3d12.RAYTRACING_INSTANCE_DESC{
             .Transform = [3][4]f32{
                 [4]f32{ 1.0, 0.0, 0.0, 0.0 },
@@ -964,6 +983,14 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         );
 
         break :blk_tlas tlas_buffer;
+    } else blk_tlas: {
+        break :blk_tlas grfx.createCommittedResource(
+            .DEFAULT,
+            d3d12.HEAP_FLAG_NONE,
+            &d3d12.RESOURCE_DESC.initBuffer(1),
+            d3d12.RESOURCE_STATE_COMMON,
+            null,
+        ) catch |err| hrPanic(err);
     };
 
     drawLoadingScreen(&grfx, large_tfmt, brush);
@@ -1015,13 +1042,17 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .cursor_prev_y = 0,
         },
         .light_position = Vec3.init(0.0, 5.0, 0.0),
+        .dxr_is_supported = dxr_is_supported,
+        .dxr_draw_mode = dxr_draw_mode,
     };
 }
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
-    _ = demo.trace_shadow_rays_stateobj.Release();
-    _ = demo.trace_shadow_rays_rs.Release();
+    if (demo.dxr_is_supported) {
+        _ = demo.trace_shadow_rays_stateobj.?.Release();
+        _ = demo.trace_shadow_rays_rs.?.Release();
+    }
     _ = demo.grfx.releaseResource(demo.trace_shadow_rays_table);
     _ = demo.grfx.releaseResource(demo.tlas_buffer);
     _ = demo.grfx.releaseResource(demo.blas_buffer);
@@ -1049,7 +1080,39 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
 
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
+
     lib.newImGuiFrame(demo.frame_stats.delta_time);
+
+    c.igSetNextWindowPos(
+        c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImGuiCond_FirstUseEver,
+        c.ImVec2{ .x = 0.0, .y = 0.0 },
+    );
+    c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);
+    _ = c.igBegin(
+        "Demo Settings",
+        null,
+        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+    );
+    if (demo.dxr_is_supported) {
+        c.igTextColored(
+            c.ImVec4{ .x = 0.0, .y = 0.75, .z = 0.0, .w = 1.0 },
+            "DirectX Raytracing (DXR) is supported.",
+            "",
+        );
+    } else {
+        c.igTextColored(
+            c.ImVec4{ .x = 0.75, .y = 0.0, .z = 0.0, .w = 1.0 },
+            "DirectX Raytracing (DXR) is NOT supported.",
+            "",
+        );
+    }
+    c.igBeginDisabled(!demo.dxr_is_supported);
+    _ = c.igRadioButton_IntPtr("No Shadows", &demo.dxr_draw_mode, 0);
+    _ = c.igRadioButton_IntPtr("Shadows", &demo.dxr_draw_mode, 1);
+    _ = c.igRadioButton_IntPtr("Shadow Mask", &demo.dxr_draw_mode, 2);
+    c.igEndDisabled();
+    c.igEnd();
 
     // Handle camera rotation with mouse.
     {
@@ -1161,7 +1224,7 @@ fn draw(demo: *DemoState) void {
     grfx.flushResourceBarriers();
 
     // Generate shadow rays.
-    {
+    if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
         pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Generate shadow rays.");
         defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
@@ -1197,21 +1260,21 @@ fn draw(demo: *DemoState) void {
             grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
             grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
         }
-    }
 
-    grfx.cmdlist.OMSetRenderTargets(
-        1,
-        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        w.TRUE,
-        &demo.depth_texture_dsv,
-    );
+        grfx.cmdlist.OMSetRenderTargets(
+            1,
+            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+            w.TRUE,
+            &demo.depth_texture_dsv,
+        );
+    }
 
     grfx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     grfx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
     grfx.flushResourceBarriers();
 
     // Trace shadow rays.
-    {
+    if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
         pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Trace Shadow Rays");
         defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
@@ -1224,7 +1287,7 @@ fn draw(demo: *DemoState) void {
             const upload = grfx.allocateUploadBufferRegion(u8, total_table_size);
 
             var properties: *d3d12.IStateObjectProperties = undefined;
-            hrPanicOnFail(demo.trace_shadow_rays_stateobj.QueryInterface(
+            hrPanicOnFail(demo.trace_shadow_rays_stateobj.?.QueryInterface(
                 &d3d12.IID_IStateObjectProperties,
                 @ptrCast(*?*c_void, &properties),
             ));
@@ -1268,8 +1331,8 @@ fn draw(demo: *DemoState) void {
             .light_position = demo.light_position,
         };
 
-        grfx.cmdlist.SetPipelineState1(demo.trace_shadow_rays_stateobj);
-        grfx.cmdlist.SetComputeRootSignature(demo.trace_shadow_rays_rs);
+        grfx.cmdlist.SetPipelineState1(demo.trace_shadow_rays_stateobj.?);
+        grfx.cmdlist.SetComputeRootSignature(demo.trace_shadow_rays_rs.?);
         grfx.cmdlist.SetComputeRootShaderResourceView(0, grfx.getResource(demo.tlas_buffer).GetGPUVirtualAddress());
         grfx.cmdlist.SetComputeRootDescriptorTable(1, blk: {
             const table = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_rays_texture_srv);
@@ -1289,6 +1352,16 @@ fn draw(demo: *DemoState) void {
             .Depth = 1,
         };
         grfx.cmdlist.DispatchRays(&dispatch_desc);
+    } else {
+        const gpu_view = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_uav);
+        grfx.cmdlist.ClearUnorderedAccessViewFloat(
+            gpu_view,
+            demo.shadow_mask_texture_uav,
+            grfx.getResource(demo.shadow_mask_texture),
+            &.{ 1000.0, 0.0, 0.0, 0.0 },
+            0,
+            null,
+        );
     }
 
     grfx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -1308,6 +1381,7 @@ fn draw(demo: *DemoState) void {
             .object_to_world = object_to_world.transpose(),
             .camera_position = demo.camera.position,
             .light_position = demo.light_position,
+            .draw_mode = demo.dxr_draw_mode,
         };
 
         grfx.setCurrentPipeline(demo.static_mesh_pso);
