@@ -65,7 +65,7 @@ const PsoStaticMesh_FrameConst = struct {
     camera_position: Vec3,
     padding0: f32 = 0.0,
     light_position: Vec3,
-    draw_mode: i32, // 1 - shadows, 2 - shadow mask
+    draw_mode: i32, // 0 - no shadows, 1 - shadows, 2 - shadow mask
 };
 comptime {
     assert(@sizeOf(PsoStaticMesh_FrameConst) == 128 + 32);
@@ -136,7 +136,7 @@ const DemoState = struct {
     light_position: Vec3,
 
     dxr_is_supported: bool,
-    dxr_draw_mode: i32,
+    dxr_draw_mode: i32, // 0 - no shadows, 1 - shadows, 2 - shadow mask
 };
 
 fn parseAndLoadGltfFile(gltf_path: []const u8) *c.cgltf_data {
@@ -880,6 +880,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
         break :blk_blas blas_buffer;
     } else blk_blas: {
+        // DXR is not supported. Create a dummy BLAS buffer to simplify code.
         break :blk_blas grfx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
@@ -984,6 +985,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
         break :blk_tlas tlas_buffer;
     } else blk_tlas: {
+        // DXR is not supported. Create a dummy TLAS buffer to simplify code.
         break :blk_tlas grfx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
