@@ -20,7 +20,7 @@ const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const hrErrorOnFail = lib.hrErrorOnFail;
 
-const enable_debug_layer = (builtin.mode == .Debug);
+const enable_debug_layer = false;
 const enable_gpu_based_validation = false;
 
 // TODO(mziulek): For now, we always transition *all* subresources.
