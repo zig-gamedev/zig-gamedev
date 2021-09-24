@@ -39,7 +39,7 @@ Buffer<uint> srv_index_buffer : register(t1);
 [RootSignature(root_signature)]
 void vsRastStaticMesh(
     uint vertex_id : SV_VertexID,
-    out float4 out_position_ndc : SV_Position,
+    out float4 out_position_clip : SV_Position,
     out float3 out_position : _Position,
     out float3 out_normal : _Normal,
     out float2 out_texcoords0 : _Texcoords0,
@@ -48,7 +48,7 @@ void vsRastStaticMesh(
     const uint vertex_index = srv_index_buffer[vertex_id + cbv_draw_root.index_offset] + cbv_draw_root.vertex_offset;
     const Vertex vertex = srv_vertex_buffer[vertex_index];
 
-    out_position_ndc = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
+    out_position_clip = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
     out_position = mul(float4(vertex.position, 1.0), cbv_frame.object_to_world).xyz;
     out_normal = vertex.normal;
     out_texcoords0 = vertex.texcoords0;
@@ -137,7 +137,7 @@ void psRastStaticMesh(
         float n_dot_l = saturate(dot(n, l));
         float h_dot_v = saturate(dot(h, v));
 
-        float attenuation = max(1.0 / l_vec_len_sq, 0.001);
+        float attenuation = max(rcp(l_vec_len_sq), 0.001);
         float3 radiance = l_radiance * attenuation;
 
         float3 f = fresnelSchlick(h_dot_v, f0);
@@ -156,7 +156,7 @@ void psRastStaticMesh(
     float3 color = ambient + lo;
 
     color = color / (color + 1.0);
-    color = pow(color, 1.0 / GAMMA);
+    color = pow(color, rcp(GAMMA));
 
     const float hit_distance = srv_shadow_mask[position_window.xy];
     const float mask = (hit_distance > l_vec_len) ? 1.0 : 0.5;
@@ -188,17 +188,17 @@ Buffer<uint> srv_index_buffer : register(t1);
 [RootSignature(root_signature)]
 void vsZPrePass(
     uint vertex_id : SV_VertexID,
-    out float4 out_position_ndc : SV_Position
+    out float4 out_position_clip : SV_Position
 ) {
     const uint vertex_index = srv_index_buffer[vertex_id + cbv_draw_root.index_offset] + cbv_draw_root.vertex_offset;
     const Vertex vertex = srv_vertex_buffer[vertex_index];
 
-    out_position_ndc = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
+    out_position_clip = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
 }
 
 [RootSignature(root_signature)]
 void psZPrePass(
-    float4 position_ndc : SV_Position
+    float4 position_window : SV_Position
 ) {
 }
 
@@ -228,14 +228,14 @@ Buffer<uint> srv_index_buffer : register(t1);
 [RootSignature(root_signature)]
 void vsGenShadowRays(
     uint vertex_id : SV_VertexID,
-    out float4 out_position_ndc : SV_Position,
+    out float4 out_position_clip : SV_Position,
     out float3 out_position : _Position,
     out float3 out_normal : _Normal
 ) {
     const uint vertex_index = srv_index_buffer[vertex_id + cbv_draw_root.index_offset] + cbv_draw_root.vertex_offset;
     const Vertex vertex = srv_vertex_buffer[vertex_index];
 
-    out_position_ndc = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
+    out_position_clip = mul(float4(vertex.position, 1.0), cbv_frame.object_to_clip);
     out_position = mul(float4(vertex.position, 1.0), cbv_frame.object_to_world).xyz;
     out_normal = mul(vertex.normal, (float3x3)cbv_frame.object_to_world);
 }

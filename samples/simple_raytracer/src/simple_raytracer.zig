@@ -797,7 +797,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
                 .Flags = d3d12.RAYTRACING_GEOMETRY_FLAG_OPAQUE,
                 .Type = .TRIANGLES,
                 .u = .{
-                    .Triangles = d3d12.RAYTRACING_GEOMETRY_TRIANGLES_DESC{
+                    .Triangles = .{
                         .Transform3x4 = 0,
                         .IndexFormat = .R32_UINT,
                         .VertexFormat = .R32G32B32_FLOAT,
@@ -1220,7 +1220,8 @@ fn draw(demo: *DemoState) void {
             grfx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_COPY_DEST);
             grfx.flushResourceBarriers();
 
-            const upload = grfx.allocateUploadBufferRegion(u8, 192);
+            const total_table_size = 192;
+            const upload = grfx.allocateUploadBufferRegion(u8, total_table_size);
 
             var properties: *d3d12.IStateObjectProperties = undefined;
             hrPanicOnFail(demo.trace_shadow_rays_stateobj.QueryInterface(
@@ -1256,7 +1257,7 @@ fn draw(demo: *DemoState) void {
                 0,
                 upload.buffer,
                 upload.buffer_offset,
-                192,
+                total_table_size,
             );
             grfx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
             grfx.flushResourceBarriers();
