@@ -28,6 +28,8 @@ const TRUE = windows.TRUE;
 
 pub const RESOURCE_BARRIER_ALL_SUBRESOURCES = 0xffff_ffff;
 
+pub const SHADER_IDENTIFIER_SIZE_IN_BYTES = 32;
+
 pub const GPU_VIRTUAL_ADDRESS = UINT64;
 
 pub const PRIMITIVE_TOPOLOGY = d3d.PRIMITIVE_TOPOLOGY;
@@ -2875,7 +2877,7 @@ pub const STATE_SUBOBJECT_TYPE = enum(UINT) {
     RAYTRACING_PIPELINE_CONFIG = 10,
     HIT_GROUP = 11,
     RAYTRACING_PIPELINE_CONFIG1 = 12,
-    MAX_VALID = 13,
+    MAX_VALID,
 };
 
 pub const STATE_SUBOBJECT = extern struct {
@@ -3191,6 +3193,43 @@ pub const IStateObject = extern struct {
     fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {};
+    }
+};
+
+pub const IID_IStateObjectProperties = GUID.parse("{de5fa827-9bf9-4f26-89ff-d7f56fde3860}");
+pub const IStateObjectProperties = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        properties: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetShaderIdentifier(self: *T, export_name: LPCWSTR) *c_void {
+                return self.v.properties.GetShaderIdentifier(self, export_name);
+            }
+            pub inline fn GetShaderStackSize(self: *T, export_name: LPCWSTR) UINT64 {
+                return self.v.properties.GetShaderStackSize(self, export_name);
+            }
+            pub inline fn GetPipelineStackSize(self: *T) UINT64 {
+                return self.v.properties.GetPipelineStackSize(self);
+            }
+            pub inline fn SetPipelineStackSize(self: *T, stack_size: UINT64) void {
+                self.v.properties.SetPipelineStackSize(self, stack_size);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetShaderIdentifier: fn (*T, LPCWSTR) callconv(WINAPI) *c_void,
+            GetShaderStackSize: fn (*T, LPCWSTR) callconv(WINAPI) UINT64,
+            GetPipelineStackSize: fn (*T) callconv(WINAPI) UINT64,
+            SetPipelineStackSize: fn (*T, UINT64) callconv(WINAPI) void,
+        };
     }
 };
 
@@ -4214,7 +4253,7 @@ pub const PIPELINE_STATE_SUBOBJECT_TYPE = enum(UINT) {
     VIEW_INSTANCING = 22,
     AS = 24,
     MS = 25,
-    MAX_VALID = 26,
+    MAX_VALID,
 };
 
 pub const PIPELINE_STATE_STREAM_DESC = extern struct {

@@ -1,5 +1,6 @@
 #define GAMMA 2.2
 #define PI 3.1415926
+#define FLT_MAX 10000.0
 
 static const float3 g_light_position = float3(0.0, 5.0, 0.0);
 
@@ -17,6 +18,7 @@ struct Vertex {
     "DescriptorTable(SRV(t2, numDescriptors = 3), visibility = SHADER_VISIBILITY_PIXEL), " \
     "CBV(b1), " \
     "DescriptorTable(SRV(t0, numDescriptors = 2), visibility = SHADER_VISIBILITY_VERTEX), " \
+    "DescriptorTable(SRV(t5), visibility = SHADER_VISIBILITY_PIXEL), " \
     "StaticSampler(s0, filter = FILTER_ANISOTROPIC, maxAnisotropy = 16, visibility = SHADER_VISIBILITY_PIXEL)"
 
 struct DrawRootConst {
@@ -58,6 +60,8 @@ Texture2D srv_base_color_texture : register(t2);
 Texture2D srv_metallic_roughness_texture : register(t3);
 Texture2D srv_normal_texture: register(t4);
 
+Texture2D<float> srv_shadow_mask: register(t5);
+
 SamplerState sam_aniso : register(s0);
 
 float3 fresnelSchlick(float cos_theta, float3 f0) {
@@ -85,7 +89,7 @@ float geometrySmith(float n_dot_l, float n_dot_v, float roughness) {
 
 [RootSignature(root_signature)]
 void psRastStaticMesh(
-    float4 position_ndc : SV_Position,
+    float4 position_window : SV_Position,
     float3 position : _Position,
     float3 normal : _Normal,
     float2 texcoords0 : _Texcoords0,
@@ -121,17 +125,20 @@ void psRastStaticMesh(
 
     float3 lo = 0.0;
 
+    const float3 l_vec = g_light_position - position;
+    const float l_vec_len_sq = dot(l_vec, l_vec);
+    const float l_vec_len = sqrt(l_vec_len_sq);
+
     // Light contribution.
     {
         const float3 l_radiance = float3(70.0, 70.0, 50.0);
-        const float3 l_vec = g_light_position - position;
-        const float3 l = normalize(l_vec);
+        const float3 l = l_vec * rcp(l_vec_len);
 
         float3 h = normalize(l + v);
         float n_dot_l = saturate(dot(n, l));
         float h_dot_v = saturate(dot(h, v));
 
-        float attenuation = max(1.0 / dot(l_vec, l_vec), 0.001);
+        float attenuation = max(1.0 / l_vec_len_sq, 0.001);
         float3 radiance = l_radiance * attenuation;
 
         float3 f = fresnelSchlick(h_dot_v, f0);
@@ -152,7 +159,10 @@ void psRastStaticMesh(
     color = color / (color + 1.0);
     color = pow(color, 1.0 / GAMMA);
 
-    out_color = float4(color, 1.0);
+    const float hit_distance = srv_shadow_mask[position_window.xy];
+    const float mask = (hit_distance > l_vec_len) ? 1.0 : 0.5;
+
+    out_color = float4(color * mask, 1.0);
 }
 
 #elif defined(PSO__Z_PRE_PASS)
@@ -216,8 +226,6 @@ ConstantBuffer<FrameConst> cbv_frame : register(b1);
 StructuredBuffer<Vertex> srv_vertex_buffer : register(t0);
 Buffer<uint> srv_index_buffer : register(t1);
 
-RWTexture2D<float3> uav_shadow_rays : register(u0);
-
 [RootSignature(root_signature)]
 void vsGenShadowRays(
     uint vertex_id : SV_VertexID,
@@ -236,20 +244,21 @@ void vsGenShadowRays(
 [earlydepthstencil]
 [RootSignature(root_signature)]
 void psGenShadowRays(
-    float4 position_screen : SV_Position,
+    float4 position_window : SV_Position,
     float3 position : _Position,
-    float3 normal : _Normal
+    float3 normal : _Normal,
+    out float4 out_ray_origin : SV_Target0
 ) {
     float3 n = normalize(normal);
-    float3 ro = position + 0.005 * n;
-    uav_shadow_rays[position_screen.xy] = ro;
+    float3 ro = position + 0.001 * n;
+    out_ray_origin = float4(ro, 0.0);
 }
 
 #elif defined(PSO__TRACE_SHADOW_RAYS)
 
 RaytracingShaderConfig g_shader_config = {
     4, // MaxPayloadSizeInBytes
-    4, // MaxAttributeSizeInBytes
+    8, // MaxAttributeSizeInBytes
 };
 
 RaytracingPipelineConfig g_pipeline_config = {
@@ -258,7 +267,15 @@ RaytracingPipelineConfig g_pipeline_config = {
 
 GlobalRootSignature g_global_signature = {
     "SRV(t0),"
-        "DescriptorTable(SRV(t1), UAV(u0)),"
+    "DescriptorTable(SRV(t1), UAV(u0)),"
+};
+
+SubobjectToExportsAssociation g_assoc = {
+    "g_global_signature", "generateShadowRay"
+};
+
+TriangleHitGroup g_shadow_hit_group = {
+    "", "shadowClosestHit"
 };
 
 RaytracingAccelerationStructure srv_bvh : register(t0);
@@ -267,7 +284,7 @@ Texture2D<float3> srv_shadow_rays : register(t1);
 RWTexture2D<float> uav_shadow_mask : register(u0);
 
 struct Payload {
-    float mask;
+    float t;
 };
 
 [shader("raygeneration")]
@@ -281,7 +298,7 @@ void generateShadowRay() {
     ray.TMax = 100.0;
 
     Payload payload;
-    payload.mask = 1.0;
+    payload.t = FLT_MAX;
 
     TraceRay(
         srv_bvh,
@@ -294,12 +311,17 @@ void generateShadowRay() {
         payload
     );
 
-    uav_shadow_mask[DispatchRaysIndex().xy] = payload.mask;
+    uav_shadow_mask[DispatchRaysIndex().xy] = payload.t;
+}
+
+[shader("closesthit")]
+void shadowClosestHit(inout Payload payload, BuiltInTriangleIntersectionAttributes) {
+	payload.t = RayTCurrent();
 }
 
 [shader("miss")]
 void shadowMiss(inout Payload payload) {
-    payload.mask = 0.0;
+    payload.t = FLT_MAX;
 }
 
 #endif

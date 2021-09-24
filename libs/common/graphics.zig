@@ -20,6 +20,9 @@ const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const hrErrorOnFail = lib.hrErrorOnFail;
 
+const enable_debug_layer = (builtin.mode == .Debug);
+const enable_gpu_based_validation = false;
+
 // TODO(mziulek): For now, we always transition *all* subresources.
 const TransitionResourceBarrier = struct {
     state_before: d3d12.RESOURCE_STATES,
@@ -100,7 +103,7 @@ pub const GraphicsContext = struct {
         const factory = blk: {
             var factory: *dxgi.IFactory1 = undefined;
             hrPanicOnFail(dxgi.CreateDXGIFactory2(
-                if (comptime builtin.mode == .Debug) dxgi.CREATE_FACTORY_DEBUG else 0,
+                if (enable_debug_layer) dxgi.CREATE_FACTORY_DEBUG else 0,
                 &dxgi.IID_IFactory1,
                 @ptrCast(*?*c_void, &factory),
             ));
@@ -108,12 +111,14 @@ pub const GraphicsContext = struct {
         };
         defer _ = factory.Release();
 
-        if (comptime builtin.mode == .Debug) {
+        if (enable_debug_layer) {
             var maybe_debug: ?*d3d12d.IDebug1 = null;
             _ = d3d12.D3D12GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(*?*c_void, &maybe_debug));
             if (maybe_debug) |debug| {
                 debug.EnableDebugLayer();
-                debug.SetEnableGPUBasedValidation(w.TRUE);
+                if (enable_gpu_based_validation) {
+                    debug.SetEnableGPUBasedValidation(w.TRUE);
+                }
                 _ = debug.Release();
             }
         }
@@ -183,7 +188,7 @@ pub const GraphicsContext = struct {
             var device_context11: *d3d11.IDeviceContext = undefined;
             hrPanicOnFail(d3d11on12.D3D11On12CreateDevice(
                 @ptrCast(*w.IUnknown, device),
-                if (comptime builtin.mode == .Debug)
+                if (enable_debug_layer)
                     d3d11.CREATE_DEVICE_DEBUG | d3d11.CREATE_DEVICE_BGRA_SUPPORT
                 else
                     d3d11.CREATE_DEVICE_BGRA_SUPPORT,
@@ -213,7 +218,7 @@ pub const GraphicsContext = struct {
             hrPanicOnFail(d2d1.D2D1CreateFactory(
                 .SINGLE_THREADED,
                 &d2d1.IID_IFactory7,
-                if (comptime builtin.mode == .Debug)
+                if (enable_debug_layer)
                     &d2d1.FACTORY_OPTIONS{ .debugLevel = .INFORMATION }
                 else
                     &d2d1.FACTORY_OPTIONS{ .debugLevel = .NONE },
@@ -566,7 +571,7 @@ pub const GraphicsContext = struct {
     pub fn endDraw2d(gr: *GraphicsContext) void {
         var info_queue: *d3d12d.IInfoQueue = undefined;
         const mute_d2d_completely = true;
-        if (comptime builtin.mode == .Debug) {
+        if (enable_debug_layer) {
             // NOTE(mziulek): D2D1 is slow. It creates and destroys resources every frame. To see create/destroy
             // messages in debug output set 'mute_d2d_completely' to 'false'.
             hrPanicOnFail(gr.device.QueryInterface(&d3d12d.IID_IInfoQueue, @ptrCast(*?*c_void, &info_queue)));
@@ -610,7 +615,7 @@ pub const GraphicsContext = struct {
         );
         gr.d2d.context11.Flush();
 
-        if (comptime builtin.mode == .Debug) {
+        if (enable_debug_layer) {
             if (mute_d2d_completely) {
                 info_queue.SetMuteDebugOutput(w.FALSE);
             } else {
@@ -979,7 +984,6 @@ pub const GraphicsContext = struct {
 
     pub fn setCurrentPipeline(gr: *GraphicsContext, pipeline_handle: PipelineHandle) void {
         assert(gr.is_cmdlist_opened);
-        // TODO(mziulek): Do we need to unset pipeline state (null, null)?
         const pipeline = gr.pipeline.pool.getPipeline(pipeline_handle);
 
         if (pipeline_handle.index == gr.pipeline.current.index and

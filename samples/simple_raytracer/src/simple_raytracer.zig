@@ -89,14 +89,19 @@ const DemoState = struct {
 
     trace_shadow_rays_stateobj: *d3d12.IStateObject,
     trace_shadow_rays_rs: *d3d12.IRootSignature,
+    trace_shadow_rays_table: gr.ResourceHandle,
 
     depth_texture: gr.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
     depth_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    shadow_rays_buffer: gr.ResourceHandle,
-    shadow_rays_buffer_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
-    shadow_rays_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
+    shadow_rays_texture: gr.ResourceHandle,
+    shadow_rays_texture_rtv: d3d12.CPU_DESCRIPTOR_HANDLE,
+    shadow_rays_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
+
+    shadow_mask_texture: gr.ResourceHandle,
+    shadow_mask_texture_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
+    shadow_mask_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     vertex_buffer: ResourceView,
     index_buffer: ResourceView,
@@ -444,6 +449,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var arena_allocator = std.heap.ArenaAllocator.init(gpa);
     defer arena_allocator.deinit();
 
+    _ = pix.loadGpuCapturerLibrary();
+    _ = pix.setTargetWindow(window);
+    _ = pix.beginCapture(
+        pix.CAPTURE_GPU,
+        &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
+    );
+
     var grfx = gr.GraphicsContext.init(window);
 
     const brush = blk: {
@@ -493,6 +505,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const static_mesh_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         break :blk grfx.createGraphicsShaderPipeline(
@@ -507,6 +521,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .UNKNOWN;
         pso_desc.NumRenderTargets = 0;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0x0;
         pso_desc.DSVFormat = .D32_FLOAT;
         break :blk grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,
@@ -518,9 +533,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const gen_shadow_rays_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
-        pso_desc.RTVFormats[0] = .UNKNOWN;
-        pso_desc.NumRenderTargets = 0;
-        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0x0;
+        pso_desc.RTVFormats[0] = .R32G32B32A32_FLOAT;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
@@ -531,6 +546,54 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             "content/shaders/gen_shadow_rays.ps.cso",
         );
     };
+
+    // Create 'trace shadow rays' RT state object.
+    var trace_shadow_rays_stateobj: *d3d12.IStateObject = undefined;
+    var trace_shadow_rays_rs: *d3d12.IRootSignature = undefined;
+    {
+        const cso_file = std.fs.cwd().openFile("content/shaders/trace_shadow_rays.lib.cso", .{}) catch unreachable;
+        defer cso_file.close();
+
+        const cso_code = cso_file.reader().readAllAlloc(&arena_allocator.allocator, 256 * 1024) catch unreachable;
+
+        const lib_desc = d3d12.DXIL_LIBRARY_DESC{
+            .DXILLibrary = .{ .pShaderBytecode = cso_code.ptr, .BytecodeLength = cso_code.len },
+            .NumExports = 0,
+            .pExports = null,
+        };
+
+        const subobject = d3d12.STATE_SUBOBJECT{
+            .Type = .DXIL_LIBRARY,
+            .pDesc = &lib_desc,
+        };
+
+        const state_object_desc = d3d12.STATE_OBJECT_DESC{
+            .Type = .RAYTRACING_PIPELINE,
+            .NumSubobjects = 1,
+            .pSubobjects = @ptrCast([*]const d3d12.STATE_SUBOBJECT, &subobject),
+        };
+
+        hrPanicOnFail(grfx.device.CreateStateObject(
+            &state_object_desc,
+            &d3d12.IID_IStateObject,
+            @ptrCast(*?*c_void, &trace_shadow_rays_stateobj),
+        ));
+        hrPanicOnFail(grfx.device.CreateRootSignature(
+            0,
+            cso_code.ptr,
+            cso_code.len,
+            &d3d12.IID_IRootSignature,
+            @ptrCast(*?*c_void, &trace_shadow_rays_rs),
+        ));
+    }
+
+    const trace_shadow_rays_table = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(64 * 1024),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
 
     const depth_texture = grfx.createCommittedResource(
         .DEFAULT,
@@ -566,7 +629,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         depth_texture_srv,
     );
 
-    const shadow_rays_buffer = grfx.createCommittedResource(
+    const shadow_rays_texture = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
@@ -576,6 +639,24 @@ fn init(gpa: *std.mem.Allocator) DemoState {
                 grfx.viewport_height,
                 1,
             );
+            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+            break :blk desc;
+        },
+        d3d12.RESOURCE_STATE_RENDER_TARGET,
+        &d3d12.CLEAR_VALUE.initColor(.R32G32B32A32_FLOAT, &.{ 0.0, 0.0, 0.0, 0.0 }),
+    ) catch |err| hrPanic(err);
+
+    const shadow_rays_texture_rtv = grfx.allocateCpuDescriptors(.RTV, 1);
+    const shadow_rays_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+
+    grfx.device.CreateRenderTargetView(grfx.getResource(shadow_rays_texture), null, shadow_rays_texture_rtv);
+    grfx.device.CreateShaderResourceView(grfx.getResource(shadow_rays_texture), null, shadow_rays_texture_srv);
+
+    const shadow_mask_texture = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &blk: {
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.R32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             break :blk desc;
         },
@@ -583,11 +664,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    const shadow_rays_buffer_uav = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    const shadow_rays_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    const shadow_mask_texture_uav = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    const shadow_mask_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
-    grfx.device.CreateUnorderedAccessView(grfx.getResource(shadow_rays_buffer), null, null, shadow_rays_buffer_uav);
-    grfx.device.CreateShaderResourceView(grfx.getResource(shadow_rays_buffer), null, shadow_rays_buffer_srv);
+    grfx.device.CreateUnorderedAccessView(grfx.getResource(shadow_mask_texture), null, null, shadow_mask_texture_uav);
+    grfx.device.CreateShaderResourceView(grfx.getResource(shadow_mask_texture), null, shadow_mask_texture_srv);
 
     var mipgen_rgba8 = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
 
@@ -599,8 +680,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.endFrame();
 
     grfx.beginFrame();
-
-    pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
@@ -696,7 +775,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     }
 
     // Create "Bottom Level Acceleration Structure" (blas).
-    const blas_buffer = blas_blk: {
+    const blas_buffer = blk_blas: {
         var geometry_descs = std.ArrayList(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
             &arena_allocator.allocator,
             all_meshes.items.len,
@@ -710,7 +789,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
                 .Flags = d3d12.RAYTRACING_GEOMETRY_FLAG_OPAQUE,
                 .Type = .TRIANGLES,
                 .u = .{
-                    .Triangles = .{
+                    .Triangles = d3d12.RAYTRACING_GEOMETRY_TRIANGLES_DESC{
                         .Transform3x4 = 0,
                         .IndexFormat = .R32_UINT,
                         .VertexFormat = .R32G32B32_FLOAT,
@@ -780,7 +859,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             },
         );
 
-        break :blas_blk blas_buffer;
+        break :blk_blas blas_buffer;
     };
 
     // Create "Top Level Acceleration Structure" (tlas).
@@ -840,10 +919,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         const tlas_scratch_buffer = grfx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
-            &desc_blk: {
+            &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(tlas_build_info.ScratchDataSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-                break :desc_blk desc;
+                break :blk desc;
             },
             d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
             null,
@@ -853,10 +932,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         const tlas_buffer = grfx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
-            &desc_blk: {
+            &blk: {
                 var desc = d3d12.RESOURCE_DESC.initBuffer(tlas_build_info.ResultDataMaxSizeInBytes);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-                break :desc_blk desc;
+                break :blk desc;
             },
             d3d12.RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
             null,
@@ -879,55 +958,15 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk_tlas tlas_buffer;
     };
 
-    // Create 'trace shadow rays' RT state object.
-    var trace_shadow_rays_stateobj: *d3d12.IStateObject = undefined;
-    var trace_shadow_rays_rs: *d3d12.IRootSignature = undefined;
-    {
-        const cso_file = std.fs.cwd().openFile("content/shaders/trace_shadow_rays.lib.cso", .{}) catch unreachable;
-        defer cso_file.close();
-
-        const cso_code = cso_file.reader().readAllAlloc(&arena_allocator.allocator, 256 * 1024) catch unreachable;
-
-        const lib_desc = d3d12.DXIL_LIBRARY_DESC{
-            .DXILLibrary = .{ .pShaderBytecode = cso_code.ptr, .BytecodeLength = cso_code.len },
-            .NumExports = 0,
-            .pExports = null,
-        };
-
-        const subobject = d3d12.STATE_SUBOBJECT{
-            .Type = .DXIL_LIBRARY,
-            .pDesc = &lib_desc,
-        };
-
-        const state_object_desc = d3d12.STATE_OBJECT_DESC{
-            .Type = .RAYTRACING_PIPELINE,
-            .NumSubobjects = 1,
-            .pSubobjects = @ptrCast([*]const d3d12.STATE_SUBOBJECT, &subobject),
-        };
-
-        hrPanicOnFail(grfx.device.CreateStateObject(
-            &state_object_desc,
-            &d3d12.IID_IStateObject,
-            @ptrCast(*?*c_void, &trace_shadow_rays_stateobj),
-        ));
-        hrPanicOnFail(grfx.device.CreateRootSignature(
-            0,
-            cso_code.ptr,
-            cso_code.len,
-            &d3d12.IID_IRootSignature,
-            @ptrCast(*?*c_void, &trace_shadow_rays_rs),
-        ));
-    }
-
     drawLoadingScreen(&grfx, large_tfmt, brush);
     grfx.endFrame();
     w.kernel32.Sleep(100);
     grfx.finishGpuCommands();
 
+    _ = pix.endCapture();
+
     mipgen_rgba8.deinit(&grfx);
     _ = large_tfmt.Release();
-
-    _ = pix.endCapture();
 
     return .{
         .grfx = grfx,
@@ -938,9 +977,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .gen_shadow_rays_pso = gen_shadow_rays_pso,
         .trace_shadow_rays_stateobj = trace_shadow_rays_stateobj,
         .trace_shadow_rays_rs = trace_shadow_rays_rs,
-        .shadow_rays_buffer = shadow_rays_buffer,
-        .shadow_rays_buffer_uav = shadow_rays_buffer_uav,
-        .shadow_rays_buffer_srv = shadow_rays_buffer_srv,
+        .trace_shadow_rays_table = trace_shadow_rays_table,
+        .shadow_rays_texture = shadow_rays_texture,
+        .shadow_rays_texture_rtv = shadow_rays_texture_rtv,
+        .shadow_rays_texture_srv = shadow_rays_texture_srv,
+        .shadow_mask_texture = shadow_mask_texture,
+        .shadow_mask_texture_uav = shadow_mask_texture_uav,
+        .shadow_mask_texture_srv = shadow_mask_texture_srv,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .meshes = all_meshes,
@@ -970,10 +1013,12 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.trace_shadow_rays_stateobj.Release();
     _ = demo.trace_shadow_rays_rs.Release();
+    _ = demo.grfx.releaseResource(demo.trace_shadow_rays_table);
     _ = demo.grfx.releaseResource(demo.tlas_buffer);
     _ = demo.grfx.releaseResource(demo.blas_buffer);
     _ = demo.grfx.releaseResource(demo.depth_texture);
-    _ = demo.grfx.releaseResource(demo.shadow_rays_buffer);
+    _ = demo.grfx.releaseResource(demo.shadow_rays_texture);
+    _ = demo.grfx.releaseResource(demo.shadow_mask_texture);
     _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
     _ = demo.grfx.releaseResource(demo.index_buffer.resource);
     _ = demo.grfx.releasePipeline(demo.static_mesh_pso);
@@ -1101,10 +1146,26 @@ fn draw(demo: *DemoState) void {
         }
     }
 
+    grfx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    grfx.flushResourceBarriers();
+
     // Generate shadow rays.
     {
         pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Generate shadow rays.");
         defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+
+        grfx.cmdlist.OMSetRenderTargets(
+            1,
+            &[_]d3d12.CPU_DESCRIPTOR_HANDLE{demo.shadow_rays_texture_rtv},
+            w.TRUE,
+            &demo.depth_texture_dsv,
+        );
+        grfx.cmdlist.ClearRenderTargetView(
+            demo.shadow_rays_texture_rtv,
+            &[4]f32{ 0.0, 0.0, 0.0, 0.0 },
+            0,
+            null,
+        );
 
         const object_to_clip = cam_world_to_clip;
 
@@ -1121,12 +1182,99 @@ fn draw(demo: *DemoState) void {
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
             break :blk table;
         });
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(3, grfx.copyDescriptorsToGpuHeap(1, demo.shadow_rays_buffer_uav));
         for (demo.meshes.items) |mesh| {
             grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
             grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
         }
     }
+
+    grfx.cmdlist.OMSetRenderTargets(
+        1,
+        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        w.TRUE,
+        &demo.depth_texture_dsv,
+    );
+
+    grfx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    grfx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    grfx.flushResourceBarriers();
+
+    // Trace shadow rays.
+    {
+        pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Trace Shadow Rays");
+        defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+
+        // Upload 'shader table' content.
+        {
+            grfx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_COPY_DEST);
+            grfx.flushResourceBarriers();
+
+            const upload = grfx.allocateUploadBufferRegion(u8, 192);
+
+            var properties: *d3d12.IStateObjectProperties = undefined;
+            hrPanicOnFail(demo.trace_shadow_rays_stateobj.QueryInterface(
+                &d3d12.IID_IStateObjectProperties,
+                @ptrCast(*?*c_void, &properties),
+            ));
+            defer _ = properties.Release();
+
+            // --------------------------------------------------------------------------------------
+            // | raygen (32 B) | 0 (32 B) | miss (32 B) | 0 (32 B) | hitgroup (32 B) | 0 (32 B) |
+            // --------------------------------------------------------------------------------------
+            @memcpy(
+                upload.cpu_slice.ptr,
+                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("generateShadowRay"))),
+                32,
+            );
+            @memset(upload.cpu_slice.ptr + 32, 0, 32);
+            @memcpy(
+                upload.cpu_slice.ptr + 64,
+                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("shadowMiss"))),
+                32,
+            );
+            @memset(upload.cpu_slice.ptr + 64 + 32, 0, 32);
+            @memcpy(
+                upload.cpu_slice.ptr + 2 * 64,
+                @ptrCast([*]const u8, properties.GetShaderIdentifier(L("g_shadow_hit_group"))),
+                32,
+            );
+            @memset(upload.cpu_slice.ptr + 2 * 64 + 32, 0, 32);
+
+            grfx.cmdlist.CopyBufferRegion(
+                grfx.getResource(demo.trace_shadow_rays_table),
+                0,
+                upload.buffer,
+                upload.buffer_offset,
+                192,
+            );
+            grfx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            grfx.flushResourceBarriers();
+        }
+
+        grfx.cmdlist.SetPipelineState1(demo.trace_shadow_rays_stateobj);
+        grfx.cmdlist.SetComputeRootSignature(demo.trace_shadow_rays_rs);
+        grfx.cmdlist.SetComputeRootShaderResourceView(0, grfx.getResource(demo.tlas_buffer).GetGPUVirtualAddress());
+        grfx.cmdlist.SetComputeRootDescriptorTable(1, blk: {
+            const table = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_rays_texture_srv);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_uav);
+            break :blk table;
+        });
+
+        const base_addr = grfx.getResource(demo.trace_shadow_rays_table).GetGPUVirtualAddress();
+        const dispatch_desc = d3d12.DISPATCH_RAYS_DESC{
+            .RayGenerationShaderRecord = .{ .StartAddress = base_addr, .SizeInBytes = 32 },
+            .MissShaderTable = .{ .StartAddress = base_addr + 64, .SizeInBytes = 32, .StrideInBytes = 32 },
+            .HitGroupTable = .{ .StartAddress = base_addr + 128, .SizeInBytes = 32, .StrideInBytes = 32 },
+            .CallableShaderTable = .{ .StartAddress = 0, .SizeInBytes = 0, .StrideInBytes = 0 },
+            .Width = grfx.viewport_width,
+            .Height = grfx.viewport_height,
+            .Depth = 1,
+        };
+        grfx.cmdlist.DispatchRays(&dispatch_desc);
+    }
+
+    grfx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.flushResourceBarriers();
 
     // Draw Sponza.
     {
@@ -1150,7 +1298,10 @@ fn draw(demo: *DemoState) void {
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
             break :blk table;
         });
-        //grfx.cmdlist.SetGraphicsRootShaderResourceView(4, grfx.getResource(demo.tlas_buffer).GetGPUVirtualAddress());
+        grfx.cmdlist.SetGraphicsRootDescriptorTable(
+            4,
+            grfx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_srv),
+        );
         for (demo.meshes.items) |mesh| {
             grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
             grfx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {
