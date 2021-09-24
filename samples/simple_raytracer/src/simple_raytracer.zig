@@ -64,9 +64,11 @@ const PsoStaticMesh_FrameConst = struct {
     object_to_world: Mat4,
     camera_position: Vec3,
     padding0: f32 = 0.0,
+    light_position: Vec3,
+    padding1: f32 = 0.0,
 };
 comptime {
-    assert(@sizeOf(PsoStaticMesh_FrameConst) == 128 + 16);
+    assert(@sizeOf(PsoStaticMesh_FrameConst) == 128 + 32);
 }
 
 const PsoZPrePass_FrameConst = struct {
@@ -76,6 +78,11 @@ const PsoZPrePass_FrameConst = struct {
 const PsoGenShadowRays_FrameConst = struct {
     object_to_clip: Mat4,
     object_to_world: Mat4,
+};
+
+const PsoTraceShadowRays_FrameConst = struct {
+    light_position: Vec3,
+    padding0: f32 = 0.0,
 };
 
 const DemoState = struct {
@@ -126,6 +133,7 @@ const DemoState = struct {
         cursor_prev_x: i32,
         cursor_prev_y: i32,
     },
+    light_position: Vec3,
 };
 
 fn parseAndLoadGltfFile(gltf_path: []const u8) *c.cgltf_data {
@@ -960,7 +968,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     drawLoadingScreen(&grfx, large_tfmt, brush);
     grfx.endFrame();
-    w.kernel32.Sleep(100);
+    w.kernel32.Sleep(50);
     grfx.finishGpuCommands();
 
     _ = pix.endCapture();
@@ -1006,6 +1014,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .cursor_prev_x = 0,
             .cursor_prev_y = 0,
         },
+        .light_position = Vec3.init(0.0, 5.0, 0.0),
     };
 }
 
@@ -1082,6 +1091,8 @@ fn update(demo: *DemoState) void {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
+
+    demo.light_position.v[0] = @floatCast(f32, 0.5 * math.sin(0.25 * demo.frame_stats.time));
 }
 
 fn draw(demo: *DemoState) void {
@@ -1097,7 +1108,7 @@ fn draw(demo: *DemoState) void {
         math.pi / 3.0,
         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
         0.1,
-        20.0,
+        50.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
@@ -1204,7 +1215,7 @@ fn draw(demo: *DemoState) void {
         pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Trace Shadow Rays");
         defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
-        // Upload 'shader table' content.
+        // Upload 'shader table' content (in this demo it could be done only once at init time).
         {
             grfx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_COPY_DEST);
             grfx.flushResourceBarriers();
@@ -1218,9 +1229,9 @@ fn draw(demo: *DemoState) void {
             ));
             defer _ = properties.Release();
 
-            // --------------------------------------------------------------------------------------
+            // ----------------------------------------------------------------------------------
             // | raygen (32 B) | 0 (32 B) | miss (32 B) | 0 (32 B) | hitgroup (32 B) | 0 (32 B) |
-            // --------------------------------------------------------------------------------------
+            // ----------------------------------------------------------------------------------
             @memcpy(
                 upload.cpu_slice.ptr,
                 @ptrCast([*]const u8, properties.GetShaderIdentifier(L("generateShadowRay"))),
@@ -1251,6 +1262,11 @@ fn draw(demo: *DemoState) void {
             grfx.flushResourceBarriers();
         }
 
+        const mem = grfx.allocateUploadMemory(PsoTraceShadowRays_FrameConst, 1);
+        mem.cpu_slice[0] = .{
+            .light_position = demo.light_position,
+        };
+
         grfx.cmdlist.SetPipelineState1(demo.trace_shadow_rays_stateobj);
         grfx.cmdlist.SetComputeRootSignature(demo.trace_shadow_rays_rs);
         grfx.cmdlist.SetComputeRootShaderResourceView(0, grfx.getResource(demo.tlas_buffer).GetGPUVirtualAddress());
@@ -1259,6 +1275,7 @@ fn draw(demo: *DemoState) void {
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_uav);
             break :blk table;
         });
+        grfx.cmdlist.SetComputeRootConstantBufferView(2, mem.gpu_base);
 
         const base_addr = grfx.getResource(demo.trace_shadow_rays_table).GetGPUVirtualAddress();
         const dispatch_desc = d3d12.DISPATCH_RAYS_DESC{
@@ -1289,6 +1306,7 @@ fn draw(demo: *DemoState) void {
             .object_to_clip = object_to_clip.transpose(),
             .object_to_world = object_to_world.transpose(),
             .camera_position = demo.camera.position,
+            .light_position = demo.light_position,
         };
 
         grfx.setCurrentPipeline(demo.static_mesh_pso);

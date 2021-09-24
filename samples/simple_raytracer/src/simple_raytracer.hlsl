@@ -1,8 +1,6 @@
 #define GAMMA 2.2
 #define PI 3.1415926
-#define FLT_MAX 10000.0
-
-static const float3 g_light_position = float3(0.0, 5.0, 0.0);
+#define FLT_MAX 100000.0
 
 struct Vertex {
     float3 position;
@@ -31,6 +29,7 @@ struct FrameConst {
     float4x4 object_to_clip;
     float4x4 object_to_world;
     float3 camera_position;
+    float3 light_position;
 };
 ConstantBuffer<FrameConst> cbv_frame : register(b1);
 
@@ -125,7 +124,7 @@ void psRastStaticMesh(
 
     float3 lo = 0.0;
 
-    const float3 l_vec = g_light_position - position;
+    const float3 l_vec = cbv_frame.light_position - position;
     const float l_vec_len_sq = dot(l_vec, l_vec);
     const float l_vec_len = sqrt(l_vec_len_sq);
 
@@ -268,6 +267,7 @@ RaytracingPipelineConfig g_pipeline_config = {
 GlobalRootSignature g_global_signature = {
     "SRV(t0),"
     "DescriptorTable(SRV(t1), UAV(u0)),"
+    "CBV(b0),"
 };
 
 SubobjectToExportsAssociation g_assoc = {
@@ -279,9 +279,14 @@ TriangleHitGroup g_shadow_hit_group = {
 };
 
 RaytracingAccelerationStructure srv_bvh : register(t0);
-Texture2D<float3> srv_shadow_rays : register(t1);
+Texture2D<float4> srv_shadow_rays : register(t1);
 
 RWTexture2D<float> uav_shadow_mask : register(u0);
+
+struct FrameConst {
+    float3 light_position;
+};
+ConstantBuffer<FrameConst> cbv_frame : register(b0);
 
 struct Payload {
     float t;
@@ -289,11 +294,11 @@ struct Payload {
 
 [shader("raygeneration")]
 void generateShadowRay() {
-    float3 ro = srv_shadow_rays[DispatchRaysIndex().xy];
+    float3 ro = srv_shadow_rays[DispatchRaysIndex().xy].xyz;
 
     RayDesc ray;
     ray.Origin = ro;
-    ray.Direction = g_light_position - ro;
+    ray.Direction = normalize(cbv_frame.light_position - ro);
     ray.TMin = 0.0;
     ray.TMax = 100.0;
 
