@@ -15,7 +15,7 @@ pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 pub fn main() !void {
-    const window_name = "zig-gamedev: triangle ui";
+    const window_name = "zig-gamedev: triangle";
     const window_width = 900;
     const window_height = 900;
 
@@ -58,8 +58,8 @@ pub fn main() !void {
         break :blk grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,
             &pso_desc,
-            "content/shaders/triangle_ui.vs.cso",
-            "content/shaders/triangle_ui.ps.cso",
+            "content/shaders/triangle.vs.cso",
+            "content/shaders/triangle.ps.cso",
         );
     };
     defer {

@@ -35,16 +35,16 @@ pub fn build(b: *std.build.Builder) void {
     const shader_dir = "content/shaders/";
     const shader_ver = "6_6";
 
-    hlsl_command[1] = "src/triangle_ui.hlsl";
-    hlsl_command[2] = "/E vsMain";
-    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle_ui.vs.cso";
+    hlsl_command[1] = "src/triangle.hlsl";
+    hlsl_command[2] = "/E vsTriangle";
+    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle.vs.cso";
     hlsl_command[4] = "/T vs_" ++ shader_ver;
     hlsl_command[5] = "";
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 
-    hlsl_command[1] = "src/triangle_ui.hlsl";
-    hlsl_command[2] = "/E psMain";
-    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle_ui.ps.cso";
+    hlsl_command[1] = "src/triangle.hlsl";
+    hlsl_command[2] = "/E psTriangle";
+    hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle.ps.cso";
     hlsl_command[4] = "/T ps_" ++ shader_ver;
     hlsl_command[5] = "";
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
@@ -75,7 +75,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("triangle_ui", "src/triangle_ui.zig");
+    const exe = b.addExecutable("triangle", "src/triangle.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
 

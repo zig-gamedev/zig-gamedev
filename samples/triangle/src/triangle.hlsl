@@ -3,7 +3,7 @@
     "RootConstants(b0, num32BitConstants = 1, visibility = SHADER_VISIBILITY_PIXEL)"
 
 [RootSignature(root_signature)]
-void vsMain(
+void vsTriangle(
     float3 position : POSITION,
     out float4 out_position : SV_Position
 ) {
@@ -16,7 +16,7 @@ struct Const {
 ConstantBuffer<Const> cbv_const : register(b0);
 
 [RootSignature(root_signature)]
-void psMain(
+void psTriangle(
     float4 position : SV_Position,
     out float4 out_color : SV_Target0
 ) {
