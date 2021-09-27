@@ -434,7 +434,7 @@ test "cross" {
     }
 }
 
-test "add, sub, scale" {
+test "VecN add, sub, scale" {
     {
         const a = Vec2.init(1.0, 2.0);
         const b = Vec2.init(3.0, 4.0);
@@ -479,7 +479,7 @@ test "add, sub, scale" {
     }
 }
 
-test "transpose" {
+test "Mat4 transpose" {
     const m = Mat4.initVec4(
         Vec4.init(1.0, 2.0, 3.0, 4.0),
         Vec4.init(5.0, 6.0, 7.0, 8.0),
@@ -493,4 +493,29 @@ test "transpose" {
             0.00001,
         ),
     );
+}
+
+test "Mat4 mul" {
+    const a = Mat4.initVec4(
+        Vec4.init(0.1, 0.2, 0.3, 0.4),
+        Vec4.init(0.5, 0.6, 0.7, 0.8),
+        Vec4.init(0.9, 1.0, 1.1, 1.2),
+        Vec4.init(1.3, 1.4, 1.5, 1.6),
+    );
+    const b = Mat4.initVec4(
+        Vec4.init(1.7, 1.8, 1.9, 2.0),
+        Vec4.init(2.1, 2.2, 2.3, 2.4),
+        Vec4.init(2.5, 2.6, 2.7, 2.8),
+        Vec4.init(2.9, 3.0, 3.1, 3.2),
+    );
+    const c = a.mul(b);
+    assert(c.approxEq(
+        Mat4.initVec4(
+            Vec4.init(2.5, 2.6, 2.7, 2.8),
+            Vec4.init(6.18, 6.44, 6.7, 6.96),
+            Vec4.init(9.86, 10.28, 10.7, 11.12),
+            Vec4.init(13.54, 14.12, 14.7, 15.28),
+        ),
+        0.0001,
+    ));
 }
