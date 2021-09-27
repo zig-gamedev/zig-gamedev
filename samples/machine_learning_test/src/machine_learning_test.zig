@@ -18,6 +18,7 @@ const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const enable_dx_debug = @import("build_options").enable_dx_debug;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -71,7 +72,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var dml_device: *dml.IDevice1 = undefined;
     hrPanicOnFail(dml.createDevice(
         @ptrCast(*d3d12.IDevice, grfx.device),
-        0, //if (comptime builtin.mode == .Debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
+        if (enable_dx_debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
         .FL_4_1,
         &dml.IID_IDevice1,
         @ptrCast(*?*c_void, &dml_device),

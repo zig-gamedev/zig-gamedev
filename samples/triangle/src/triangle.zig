@@ -144,24 +144,10 @@ pub const GraphicsContext = struct {
     pub fn init(window: w.HWND) GraphicsContext {
         const factory = blk: {
             var factory: *dxgi.IFactory1 = undefined;
-            hrPanicOnFail(dxgi.CreateDXGIFactory2(
-                if (comptime builtin.mode == .Debug) dxgi.CREATE_FACTORY_DEBUG else 0,
-                &dxgi.IID_IFactory1,
-                @ptrCast(*?*c_void, &factory),
-            ));
+            hrPanicOnFail(dxgi.CreateDXGIFactory2(0, &dxgi.IID_IFactory1, @ptrCast(*?*c_void, &factory)));
             break :blk factory;
         };
         defer _ = factory.Release();
-
-        if (comptime builtin.mode == .Debug) {
-            var maybe_debug: ?*d3d12d.IDebug1 = null;
-            _ = d3d12.D3D12GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(*?*c_void, &maybe_debug));
-            if (maybe_debug) |debug| {
-                debug.EnableDebugLayer();
-                debug.SetEnableGPUBasedValidation(w.TRUE);
-                _ = debug.Release();
-            }
-        }
 
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;

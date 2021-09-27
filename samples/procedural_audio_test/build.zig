@@ -66,12 +66,16 @@ pub fn build(b: *std.build.Builder) void {
     exe.setBuildMode(mode);
 
     const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
-    const tracy = b.option([]const u8, "tracy", "Enable Tracy integration. Supply path to Tracy source.");
+    const enable_dx_debug = b.option(bool, "enable-dx-debug", "Enable debug layer for D3D12, D2D1, DirectML and DXGI") orelse false;
+    const enable_dx_gpu_debug = b.option(bool, "enable-dx-gpu-debug", "Enable GPU-based validation for D3D12") orelse false;
+    const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
 
     exe_options.addOption(bool, "enable_pix", enable_pix);
+    exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
+    exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_tracy", tracy != null);
     if (tracy) |tracy_path| {
         const client_cpp = std.fs.path.join(
