@@ -45,12 +45,18 @@ pub fn build(b: *std.build.Builder) void {
 
     const dxc_step = b.step("dxc", "Build shaders");
 
-    var dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "vsMain", "imgui.vs.cso", "vs", "");
+    var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("../../libs/common/imgui.hlsl", "psMain", "imgui.ps.cso", "ps", "");
+    dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd("../../libs/common/generate_mipmaps.hlsl", "main", "generate_mipmaps.cs.cso", "cs", "");
+    dxc_command = makeDxcCmd(
+        "../../libs/common/common.hlsl",
+        "csGenerateMipmaps",
+        "generate_mipmaps.cs.cso",
+        "cs",
+        "PSO__GENERATE_MIPMAPS",
+    );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(

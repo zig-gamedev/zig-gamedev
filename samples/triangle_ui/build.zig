@@ -27,6 +27,7 @@ pub fn build(b: *std.build.Builder) void {
         "entry point name",
         "path to output file",
         "target profile",
+        "/D",
         "/WX",
         "/Ges",
         "/O3",
@@ -38,24 +39,28 @@ pub fn build(b: *std.build.Builder) void {
     hlsl_command[2] = "/E vsMain";
     hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle_ui.vs.cso";
     hlsl_command[4] = "/T vs_" ++ shader_ver;
+    hlsl_command[5] = "";
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 
     hlsl_command[1] = "src/triangle_ui.hlsl";
     hlsl_command[2] = "/E psMain";
     hlsl_command[3] = "/Fo " ++ shader_dir ++ "triangle_ui.ps.cso";
     hlsl_command[4] = "/T ps_" ++ shader_ver;
+    hlsl_command[5] = "";
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 
-    hlsl_command[1] = "../../libs/common/imgui.hlsl";
-    hlsl_command[2] = "/E vsMain";
+    hlsl_command[1] = "../../libs/common/common.hlsl";
+    hlsl_command[2] = "/E vsImGui";
     hlsl_command[3] = "/Fo " ++ shader_dir ++ "imgui.vs.cso";
     hlsl_command[4] = "/T vs_" ++ shader_ver;
+    hlsl_command[5] = "/D PSO__IMGUI";
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 
-    hlsl_command[1] = "../../libs/common/imgui.hlsl";
-    hlsl_command[2] = "/E psMain";
+    hlsl_command[1] = "../../libs/common/common.hlsl";
+    hlsl_command[2] = "/E psImGui";
     hlsl_command[3] = "/Fo " ++ shader_dir ++ "imgui.ps.cso";
     hlsl_command[4] = "/T ps_" ++ shader_ver;
+    hlsl_command[5] = "/D PSO__IMGUI";
     hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
 
     b.getInstallStep().dependOn(hlsl_step);

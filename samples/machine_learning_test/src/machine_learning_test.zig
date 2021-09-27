@@ -71,7 +71,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var dml_device: *dml.IDevice1 = undefined;
     hrPanicOnFail(dml.createDevice(
         @ptrCast(*d3d12.IDevice, grfx.device),
-        if (comptime builtin.mode == .Debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
+        0, //if (comptime builtin.mode == .Debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
         .FL_4_1,
         &dml.IID_IDevice1,
         @ptrCast(*?*c_void, &dml_device),
