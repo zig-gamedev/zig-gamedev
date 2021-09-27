@@ -472,19 +472,19 @@ pub const SWAP_EFFECT = enum(UINT) {
 };
 
 pub const SWAP_CHAIN_FLAG = UINT;
-pub const SWAP_CHAIN_FLAG_NONPREROTATED = 1;
-pub const SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH = 2;
-pub const SWAP_CHAIN_FLAG_GDI_COMPATIBLE = 4;
-pub const SWAP_CHAIN_FLAG_RESTRICTED_CONTENT = 8;
-pub const SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER = 16;
-pub const SWAP_CHAIN_FLAG_DISPLAY_ONLY = 32;
-pub const SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT = 64;
-pub const SWAP_CHAIN_FLAG_FOREGROUND_LAYER = 128;
-pub const SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO = 256;
-pub const SWAP_CHAIN_FLAG_YUV_VIDEO = 512;
-pub const SWAP_CHAIN_FLAG_HW_PROTECTED = 1024;
-pub const SWAP_CHAIN_FLAG_ALLOW_TEARING = 2048;
-pub const SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS = 4096;
+pub const SWAP_CHAIN_FLAG_NONPREROTATED: SWAP_CHAIN_FLAG = 1;
+pub const SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: SWAP_CHAIN_FLAG = 2;
+pub const SWAP_CHAIN_FLAG_GDI_COMPATIBLE: SWAP_CHAIN_FLAG = 4;
+pub const SWAP_CHAIN_FLAG_RESTRICTED_CONTENT: SWAP_CHAIN_FLAG = 8;
+pub const SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER: SWAP_CHAIN_FLAG = 16;
+pub const SWAP_CHAIN_FLAG_DISPLAY_ONLY: SWAP_CHAIN_FLAG = 32;
+pub const SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT: SWAP_CHAIN_FLAG = 64;
+pub const SWAP_CHAIN_FLAG_FOREGROUND_LAYER: SWAP_CHAIN_FLAG = 128;
+pub const SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO: SWAP_CHAIN_FLAG = 256;
+pub const SWAP_CHAIN_FLAG_YUV_VIDEO: SWAP_CHAIN_FLAG = 512;
+pub const SWAP_CHAIN_FLAG_HW_PROTECTED: SWAP_CHAIN_FLAG = 1024;
+pub const SWAP_CHAIN_FLAG_ALLOW_TEARING: SWAP_CHAIN_FLAG = 2048;
+pub const SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS: SWAP_CHAIN_FLAG = 4096;
 
 pub const SWAP_CHAIN_DESC = extern struct {
     BufferDesc: MODE_DESC,
@@ -793,15 +793,15 @@ pub const IOutput = extern struct {
 
 pub const MAX_SWAP_CHAIN_BUFFERS = 16;
 
-pub const PRESENT_TEST = 0x00000001;
-pub const PRESENT_DO_NOT_SEQUENCE = 0x00000002;
-pub const PRESENT_RESTART = 0x00000004;
-pub const PRESENT_DO_NOT_WAIT = 0x00000008;
-pub const PRESENT_STEREO_PREFER_RIGHT = 0x00000010;
-pub const PRESENT_STEREO_TEMPORARY_MONO = 0x00000020;
-pub const PRESENT_RESTRICT_TO_OUTPUT = 0x00000040;
-pub const PRESENT_USE_DURATION = 0x00000100;
-pub const PRESENT_ALLOW_TEARING = 0x00000200;
+pub const PRESENT_TEST: UINT = 0x00000001;
+pub const PRESENT_DO_NOT_SEQUENCE: UINT = 0x00000002;
+pub const PRESENT_RESTART: UINT = 0x00000004;
+pub const PRESENT_DO_NOT_WAIT: UINT = 0x00000008;
+pub const PRESENT_STEREO_PREFER_RIGHT: UINT = 0x00000010;
+pub const PRESENT_STEREO_TEMPORARY_MONO: UINT = 0x00000020;
+pub const PRESENT_RESTRICT_TO_OUTPUT: UINT = 0x00000040;
+pub const PRESENT_USE_DURATION: UINT = 0x00000100;
+pub const PRESENT_ALLOW_TEARING: UINT = 0x00000200;
 
 pub const ISwapChain = extern struct {
     const Self = @This();
@@ -1032,6 +1032,153 @@ pub const IFactory1 = extern struct {
     }
 };
 
+pub const IFactory2 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        factory: IFactory.VTable(Self),
+        factory1: IFactory1.VTable(Self),
+        factory2: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IFactory.Methods(Self);
+    usingnamespace IFactory1.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            IsWindowedStereoEnabled: *c_void,
+            CreateSwapChainForHwnd: *c_void,
+            CreateSwapChainForCoreWindow: *c_void,
+            GetSharedResourceAdapterLuid: *c_void,
+            RegisterStereoStatusWindow: *c_void,
+            RegisterStereoStatusEvent: *c_void,
+            UnregisterStereoStatus: *c_void,
+            RegisterOcclusionStatusWindow: *c_void,
+            RegisterOcclusionStatusEvent: *c_void,
+            UnregisterOcclusionStatus: *c_void,
+            CreateSwapChainForComposition: *c_void,
+        };
+    }
+};
+
+pub const IFactory3 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        factory: IFactory.VTable(Self),
+        factory1: IFactory1.VTable(Self),
+        factory2: IFactory2.VTable(Self),
+        factory3: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IFactory.Methods(Self);
+    usingnamespace IFactory1.Methods(Self);
+    usingnamespace IFactory2.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetCreationFlags: *c_void,
+        };
+    }
+};
+
+pub const IFactory4 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        factory: IFactory.VTable(Self),
+        factory1: IFactory1.VTable(Self),
+        factory2: IFactory2.VTable(Self),
+        factory3: IFactory3.VTable(Self),
+        factory4: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IFactory.Methods(Self);
+    usingnamespace IFactory1.Methods(Self);
+    usingnamespace IFactory2.Methods(Self);
+    usingnamespace IFactory3.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            EnumAdapterByLuid: *c_void,
+            EnumWarpAdapter: *c_void,
+        };
+    }
+};
+
+pub const FEATURE = enum(UINT) {
+    PRESENT_ALLOW_TEARING = 0,
+};
+
+pub const IID_IFactory5 = GUID.parse("{7632e1f5-ee65-4dca-87fd-84cd75f8838d}");
+pub const IFactory5 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        factory: IFactory.VTable(Self),
+        factory1: IFactory1.VTable(Self),
+        factory2: IFactory2.VTable(Self),
+        factory3: IFactory3.VTable(Self),
+        factory4: IFactory4.VTable(Self),
+        factory5: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IFactory.Methods(Self);
+    usingnamespace IFactory1.Methods(Self);
+    usingnamespace IFactory2.Methods(Self);
+    usingnamespace IFactory3.Methods(Self);
+    usingnamespace IFactory4.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn CheckFeatureSupport(
+                self: *T,
+                feature: FEATURE,
+                support_data: *c_void,
+                support_data_size: UINT,
+            ) HRESULT {
+                return self.v.factory5.CheckFeatureSupport(self, feature, support_data, support_data_size);
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            CheckFeatureSupport: fn (*T, FEATURE, *c_void, UINT) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
 pub const IAdapter1 = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -1113,7 +1260,7 @@ pub const IID_ISurface = GUID{
     .Data4 = .{ 0xbf, 0x47, 0x9e, 0x23, 0xbb, 0xd2, 0x60, 0xec },
 };
 
-pub const CREATE_FACTORY_DEBUG = 0x1;
+pub const CREATE_FACTORY_DEBUG: UINT = 0x1;
 pub extern "dxgi" fn CreateDXGIFactory2(UINT, *const GUID, *?*c_void) callconv(WINAPI) HRESULT;
 
 pub const SCALING = enum(UINT) {

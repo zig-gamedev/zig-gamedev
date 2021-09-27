@@ -86,6 +86,7 @@ pub const GraphicsContext = struct {
     },
     dwrite_factory: *dwrite.IFactory,
     wic_factory: *wic.IImagingFactory,
+    present_flags: w.UINT,
 
     pub fn init(window: w.HWND) GraphicsContext {
         const wic_factory = blk: {
@@ -110,6 +111,30 @@ pub const GraphicsContext = struct {
             break :blk factory;
         };
         defer _ = factory.Release();
+
+        var present_flags: w.UINT = 0;
+        {
+            var maybe_factory5: ?*dxgi.IFactory5 = null;
+            var hr = factory.QueryInterface(&dxgi.IID_IFactory5, @ptrCast(*?*c_void, &maybe_factory5));
+            defer {
+                if (maybe_factory5 != null) {
+                    _ = maybe_factory5.?.Release();
+                }
+            }
+
+            if (hr == w.S_OK and maybe_factory5 != null) {
+                var allow_tearing: w.BOOL = w.FALSE;
+                hr = maybe_factory5.?.CheckFeatureSupport(
+                    .PRESENT_ALLOW_TEARING,
+                    &allow_tearing,
+                    @sizeOf(@TypeOf(allow_tearing)),
+                );
+
+                if (hr == w.S_OK and allow_tearing == w.TRUE) {
+                    present_flags |= dxgi.PRESENT_ALLOW_TEARING;
+                }
+            }
+        }
 
         if (enable_dx_debug) {
             var maybe_debug: ?*d3d12d.IDebug1 = null;
@@ -169,7 +194,10 @@ pub const GraphicsContext = struct {
                     .OutputWindow = window,
                     .Windowed = w.TRUE,
                     .SwapEffect = .FLIP_DISCARD,
-                    .Flags = 0,
+                    .Flags = if ((present_flags & dxgi.PRESENT_ALLOW_TEARING) != 0)
+                        dxgi.SWAP_CHAIN_FLAG_ALLOW_TEARING
+                    else
+                        0,
                 },
                 @ptrCast(*?*dxgi.ISwapChain, &swapchain),
             ));
@@ -465,6 +493,7 @@ pub const GraphicsContext = struct {
             },
             .dwrite_factory = dwrite_factory,
             .wic_factory = wic_factory,
+            .present_flags = present_flags,
         };
     }
 
@@ -531,7 +560,7 @@ pub const GraphicsContext = struct {
         gr.flushGpuCommands();
 
         gr.frame_fence_counter += 1;
-        hrPanicOnFail(gr.swapchain.Present(0, 0));
+        hrPanicOnFail(gr.swapchain.Present(0, gr.present_flags));
         tracy.frameMark();
         hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
