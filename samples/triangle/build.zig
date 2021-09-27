@@ -20,6 +20,10 @@ pub fn build(b: *std.build.Builder) void {
         ) catch unreachable;
     }
 
+    //const test_step = b.step("test", "Run all tests");
+    //const tests = b.addTest("../../libs/common/vectormath.zig");
+    //test_step.dependOn(&tests.step);
+
     const hlsl_step = b.step("hlsl", "Build shaders");
     var hlsl_command = [_][]const u8{
         "../../external/bin/dxc/dxc.exe",

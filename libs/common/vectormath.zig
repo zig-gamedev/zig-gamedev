@@ -19,6 +19,17 @@ pub const Vec2 = extern struct {
     pub fn init(x: f32, y: f32) Vec2 {
         return .{ .v = [_]f32{ x, y } };
     }
+
+    pub inline fn initZero() Vec2 {
+        const static = struct {
+            const zero = init(0.0, 0.0);
+        };
+        return static.zero;
+    }
+
+    pub fn dot(a: Vec2, b: Vec2) f32 {
+        return a.v[0] * b.v[0] + a.v[1] * b.v[1];
+    }
 };
 
 pub const Vec3 = extern struct {
@@ -98,6 +109,17 @@ pub const Vec4 = extern struct {
 
     pub fn init(x: f32, y: f32, z: f32, w: f32) Vec4 {
         return .{ .v = [_]f32{ x, y, z, w } };
+    }
+
+    pub inline fn initZero() Vec4 {
+        const static = struct {
+            const zero = init(0.0, 0.0, 0.0, 0.0);
+        };
+        return static.zero;
+    }
+
+    pub fn dot(a: Vec4, b: Vec4) f32 {
+        return a.v[0] * b.v[0] + a.v[1] * b.v[1] + a.v[2] * b.v[2] + a.v[3] * b.v[3];
     }
 };
 
@@ -262,17 +284,35 @@ pub const Mat4 = extern struct {
         assert(!math.approxEq(f32, view_top, view_bottom, 0.00001));
         assert(!math.approxEq(f32, far_z, near_z, 0.00001));
 
-        const rcp_width = 1.0 / (view_right - view_left);
-        const rcp_height = 1.0 / (view_top - view_bottom);
+        const rcp_w = 1.0 / (view_right - view_left);
+        const rcp_h = 1.0 / (view_top - view_bottom);
         const range = 1.0 / (far_z - near_z);
 
         return .{
             .m = [_][4]f32{
-                [_]f32{ rcp_width + rcp_width, 0.0, 0.0, 0.0 },
-                [_]f32{ 0.0, rcp_height + rcp_height, 0.0, 0.0 },
+                [_]f32{ rcp_w + rcp_w, 0.0, 0.0, 0.0 },
+                [_]f32{ 0.0, rcp_h + rcp_h, 0.0, 0.0 },
                 [_]f32{ 0.0, 0.0, range, 0.0 },
-                [_]f32{ -(view_left + view_right) * rcp_width, -(view_top + view_bottom) * rcp_height, -range * near_z, 1.0 },
+                [_]f32{ -(view_left + view_right) * rcp_w, -(view_top + view_bottom) * rcp_h, -range * near_z, 1.0 },
             },
         };
     }
 };
+
+test "dot" {
+    {
+        const a = Vec2.init(1.0, 2.0);
+        const b = Vec2.init(3.0, 4.0);
+        assert(math.approxEq(f32, a.dot(b), 11.0, 0.0001));
+    }
+    {
+        const a = Vec3.init(1.0, 2.0, 3.0);
+        const b = Vec3.init(4.0, 5.0, 6.0);
+        assert(math.approxEq(f32, a.dot(b), 32.0, 0.0001));
+    }
+    {
+        const a = Vec4.init(1.0, 2.0, 3.0, 4.0);
+        const b = Vec4.init(5.0, 6.0, 7.0, 8.0);
+        assert(math.approxEq(f32, a.dot(b), 70.0, 0.0001));
+    }
+}
