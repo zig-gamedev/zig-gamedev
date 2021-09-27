@@ -1372,6 +1372,9 @@ pub const GuiContext = struct {
                 .NumElements = input_layout_desc.len,
             };
             pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+            pso_desc.NumRenderTargets = 1;
+            pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+            pso_desc.PrimitiveTopologyType = .TRIANGLE;
             break :blk gr.createGraphicsShaderPipeline(
                 arena,
                 &pso_desc,

@@ -435,6 +435,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .NumElements = input_layout_desc.len,
         };
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+
         break :blk grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,
             &pso_desc,
@@ -456,10 +460,14 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .NumElements = input_layout_desc.len,
         };
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.RasterizerState.CullMode = .FRONT;
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.DepthStencilState.DepthWriteMask = .ZERO;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+
         break :blk grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,
             &pso_desc,
@@ -481,8 +489,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .NumElements = input_layout_desc.len,
         };
         pso_desc.RTVFormats[0] = .R16G16B16A16_FLOAT;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.DepthStencilState.DepthEnable = w.FALSE;
         pso_desc.RasterizerState.CullMode = .FRONT;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
         const generate_env_texture_pso = grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,

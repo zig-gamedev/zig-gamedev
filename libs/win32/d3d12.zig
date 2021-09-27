@@ -869,16 +869,15 @@ pub const GRAPHICS_PIPELINE_STATE_DESC = extern struct {
             .DepthStencilState = DEPTH_STENCIL_DESC.initDefault(),
             .InputLayout = INPUT_LAYOUT_DESC.initZero(),
             .IBStripCutValue = .DISABLED,
-            .PrimitiveTopologyType = .TRIANGLE,
-            .NumRenderTargets = 1,
-            .RTVFormats = [_]dxgi.FORMAT{.R8G8B8A8_UNORM} ++ [_]dxgi.FORMAT{.UNKNOWN} ** 7,
+            .PrimitiveTopologyType = .UNDEFINED,
+            .NumRenderTargets = 0,
+            .RTVFormats = [_]dxgi.FORMAT{.UNKNOWN} ** 8,
             .DSVFormat = .UNKNOWN,
             .SampleDesc = .{ .Count = 1, .Quality = 0 },
             .NodeMask = 0,
             .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
             .Flags = PIPELINE_STATE_FLAG_NONE,
         };
-        v.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         return v;
     }
 };

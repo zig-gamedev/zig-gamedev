@@ -60,12 +60,17 @@ const DemoState = struct {
                 d3d12.INPUT_ELEMENT_DESC.init("_Texcoords", 0, .R32G32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
             };
             var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+            pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+            pso_desc.NumRenderTargets = 1;
+            pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+            pso_desc.PrimitiveTopologyType = .TRIANGLE;
             pso_desc.RasterizerState.CullMode = .NONE;
             pso_desc.DepthStencilState.DepthEnable = w.FALSE;
             pso_desc.InputLayout = .{
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
             };
+
             break :blk grfx.createGraphicsShaderPipeline(
                 &arena_allocator.allocator,
                 &pso_desc,
