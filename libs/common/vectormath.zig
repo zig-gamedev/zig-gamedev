@@ -47,6 +47,17 @@ pub const Vec2 = extern struct {
     pub fn dot(a: Vec2, b: Vec2) f32 {
         return a.v[0] * b.v[0] + a.v[1] * b.v[1];
     }
+
+    pub fn length(a: Vec2) f32 {
+        return math.sqrt(dot(a, a));
+    }
+
+    pub fn normalize(a: Vec2) Vec2 {
+        const len = length(a);
+        assert(!math.approxEq(f32, len, 0.0, 0.0001));
+        const rcplen = 1.0 / len;
+        return .{ .v = [_]f32{ rcplen * a.v[0], rcplen * a.v[1] } };
+    }
 };
 
 pub const Vec3 = extern struct {
@@ -162,6 +173,17 @@ pub const Vec4 = extern struct {
 
     pub fn dot(a: Vec4, b: Vec4) f32 {
         return a.v[0] * b.v[0] + a.v[1] * b.v[1] + a.v[2] * b.v[2] + a.v[3] * b.v[3];
+    }
+
+    pub fn length(a: Vec4) f32 {
+        return math.sqrt(dot(a, a));
+    }
+
+    pub fn normalize(a: Vec4) Vec4 {
+        const len = length(a);
+        assert(!math.approxEq(f32, len, 0.0, 0.0001));
+        const rcplen = 1.0 / len;
+        return .{ .v = [_]f32{ rcplen * a.v[0], rcplen * a.v[1], rcplen * a.v[2], rcplen * a.v[3] } };
     }
 };
 
@@ -476,6 +498,33 @@ test "VecN add, sub, scale" {
     {
         const a = Vec4.init(1.0, 2.0, 3.0, -1.0);
         assert(a.scale(3.0).approxEq(Vec4.init(3.0, 6.0, 9.0, -3.0), 0.00001));
+    }
+}
+
+test "length, normalize" {
+    {
+        const a = Vec2.init(2.0, 3.0).length();
+        assert(math.approxEq(f32, a, 3.60555, 0.0001));
+    }
+    {
+        const a = Vec3.init(1.0, 1.0, 1.0).length();
+        assert(math.approxEq(f32, a, 1.73205, 0.0001));
+    }
+    {
+        const a = Vec4.init(1.0, 1.0, 1.0, 1.0).length();
+        assert(math.approxEq(f32, a, 2.0, 0.0001));
+    }
+    {
+        const a = Vec2.init(2.0, 4.0).normalize();
+        assert(Vec2.approxEq(a, Vec2.init(0.447214, 0.894427), 0.0001));
+    }
+    {
+        const a = Vec3.init(2.0, -5.0, 4.0).normalize();
+        assert(Vec3.approxEq(a, Vec3.init(0.298142, -0.745356, 0.596285), 0.0001));
+    }
+    {
+        const a = Vec4.init(-1.0, 2.0, -5.0, 4.0).normalize();
+        assert(Vec4.approxEq(a, Vec4.init(-0.147442, 0.294884, -0.73721, 0.589768), 0.0001));
     }
 }
 
