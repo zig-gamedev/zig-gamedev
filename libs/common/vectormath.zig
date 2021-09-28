@@ -493,7 +493,12 @@ pub const Mat4 = extern struct {
         if (det != null) {
             det.?.* = d;
         }
-        const rcp_d = if (math.approxEq(f32, d, 0.0, 0.00001)) 0.0 else 1.0 / d;
+
+        if (math.approxEq(f32, d, 0.0, 0.00001)) {
+            return initZero();
+        }
+
+        const rcp_d = 1.0 / d;
 
         r.m[0][0] *= rcp_d;
         r.m[0][1] *= rcp_d;
