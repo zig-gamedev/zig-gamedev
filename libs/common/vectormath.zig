@@ -57,8 +57,22 @@ pub const Vec2 = extern struct {
 
     pub inline fn negMulAdd(a: Vec2, b: Vec2, c: Vec2) Vec2 {
         return .{ .v = [_]f32{
-            a.v[0] * (-b.v[0]) + c.v[0],
-            a.v[1] * (-b.v[1]) + c.v[1],
+            -a.v[0] * b.v[0] + c.v[0],
+            -a.v[1] * b.v[1] + c.v[1],
+        } };
+    }
+
+    pub inline fn mulSub(a: Vec2, b: Vec2, c: Vec2) Vec2 {
+        return .{ .v = [_]f32{
+            a.v[0] * b.v[0] - c.v[0],
+            a.v[1] * b.v[1] - c.v[1],
+        } };
+    }
+
+    pub inline fn negMulSub(a: Vec2, b: Vec2, c: Vec2) Vec2 {
+        return .{ .v = [_]f32{
+            -a.v[0] * b.v[0] - c.v[0],
+            -a.v[1] * b.v[1] - c.v[1],
         } };
     }
 
@@ -166,9 +180,25 @@ pub const Vec3 = extern struct {
 
     pub inline fn negMulAdd(a: Vec3, b: Vec3, c: Vec3) Vec3 {
         return .{ .v = [_]f32{
-            a.v[0] * (-b.v[0]) + c.v[0],
-            a.v[1] * (-b.v[1]) + c.v[1],
-            a.v[2] * (-b.v[2]) + c.v[2],
+            -a.v[0] * b.v[0] + c.v[0],
+            -a.v[1] * b.v[1] + c.v[1],
+            -a.v[2] * b.v[2] + c.v[2],
+        } };
+    }
+
+    pub inline fn mulSub(a: Vec3, b: Vec3, c: Vec3) Vec3 {
+        return .{ .v = [_]f32{
+            a.v[0] * b.v[0] - c.v[0],
+            a.v[1] * b.v[1] - c.v[1],
+            a.v[2] * b.v[2] - c.v[2],
+        } };
+    }
+
+    pub inline fn negMulSub(a: Vec3, b: Vec3, c: Vec3) Vec3 {
+        return .{ .v = [_]f32{
+            -a.v[0] * b.v[0] - c.v[0],
+            -a.v[1] * b.v[1] - c.v[1],
+            -a.v[2] * b.v[2] - c.v[2],
         } };
     }
 
@@ -267,10 +297,28 @@ pub const Vec4 = extern struct {
 
     pub inline fn negMulAdd(a: Vec4, b: Vec4, c: Vec4) Vec4 {
         return .{ .v = [_]f32{
-            a.v[0] * (-b.v[0]) + c.v[0],
-            a.v[1] * (-b.v[1]) + c.v[1],
-            a.v[2] * (-b.v[2]) + c.v[2],
-            a.v[3] * (-b.v[3]) + c.v[3],
+            -a.v[0] * b.v[0] + c.v[0],
+            -a.v[1] * b.v[1] + c.v[1],
+            -a.v[2] * b.v[2] + c.v[2],
+            -a.v[3] * b.v[3] + c.v[3],
+        } };
+    }
+
+    pub inline fn mulSub(a: Vec4, b: Vec4, c: Vec4) Vec4 {
+        return .{ .v = [_]f32{
+            a.v[0] * b.v[0] - c.v[0],
+            a.v[1] * b.v[1] - c.v[1],
+            a.v[2] * b.v[2] - c.v[2],
+            a.v[3] * b.v[3] - c.v[3],
+        } };
+    }
+
+    pub inline fn negMulSub(a: Vec4, b: Vec4, c: Vec4) Vec4 {
+        return .{ .v = [_]f32{
+            -a.v[0] * b.v[0] - c.v[0],
+            -a.v[1] * b.v[1] - c.v[1],
+            -a.v[2] * b.v[2] - c.v[2],
+            -a.v[3] * b.v[3] - c.v[3],
         } };
     }
 
