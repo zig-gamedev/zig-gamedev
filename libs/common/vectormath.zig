@@ -728,7 +728,7 @@ pub const Mat4 = extern struct {
                 [_]f32{ 1.0, 0.0, 0.0, 0.0 },
                 [_]f32{ 0.0, 1.0, 0.0, 0.0 },
                 [_]f32{ 0.0, 0.0, 1.0, 0.0 },
-                [_]f32{ a[0], a[1], a[2], 1.0 },
+                [_]f32{ a.v[0], a.v[1], a.v[2], 1.0 },
             },
         };
     }
@@ -950,4 +950,12 @@ test "Quat mul" {
     const b = Quat.init(6.0, 7.0, 8.0, 5.0);
     assert(a.mul(b).approxEq(Quat.init(20.0, 14.0, 32.0, -60.0), 0.0001));
     assert(b.mul(a).approxEq(Quat.init(12.0, 30.0, 24.0, -60.0), 0.0001));
+}
+
+test "transforms" {
+    const a = Mat4.initTranslation(Vec3.init(1.0, 0.0, 0.0));
+    const b = Mat4.initRotationY(math.pi * 0.5);
+    const c = Vec3.init(1.0, 0.0, 0.0);
+    const d = c.transform(a.mul(b));
+    assert(d.approxEq(Vec3.init(0.0, 0.0, -2.0), 0.001));
 }
