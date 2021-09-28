@@ -361,6 +361,32 @@ pub const Vec4 = extern struct {
     }
 };
 
+pub const Quat = extern struct {
+    q: [4]f32,
+
+    pub inline fn init(x: f32, y: f32, z: f32, w: f32) Quat {
+        return .{ .q = [_]f32{ x, y, z, w } };
+    }
+
+    pub inline fn approxEq(a: Quat, b: Quat, eps: f32) bool {
+        return math.approxEq(f32, a.q[0], b.q[0], eps) and
+            math.approxEq(f32, a.q[1], b.q[1], eps) and
+            math.approxEq(f32, a.q[2], b.q[2], eps) and
+            math.approxEq(f32, a.q[3], b.q[3], eps);
+    }
+
+    pub inline fn mul(a: Quat, b: Quat) Quat {
+        // From DirectXMath:
+        // Returns the product b * a (which is the concatenation of a rotation 'a' followed by the rotation 'b').
+        return .{ .q = [_]f32{
+            (b.q[3] * a.q[0]) + (b.q[0] * a.q[3]) + (b.q[1] * a.q[2]) - (b.q[2] * a.q[1]),
+            (b.q[3] * a.q[1]) - (b.q[0] * a.q[2]) + (b.q[1] * a.q[3]) + (b.q[2] * a.q[0]),
+            (b.q[3] * a.q[2]) + (b.q[0] * a.q[1]) - (b.q[1] * a.q[0]) + (b.q[2] * a.q[3]),
+            (b.q[3] * a.q[3]) - (b.q[0] * a.q[0]) - (b.q[1] * a.q[1]) - (b.q[2] * a.q[2]),
+        } };
+    }
+};
+
 pub const Mat4 = extern struct {
     m: [4][4]f32,
 
@@ -917,4 +943,11 @@ test "Mat4 inv, det" {
         ),
         0.0001,
     ));
+}
+
+test "Quat mul" {
+    const a = Quat.init(2.0, 3.0, 4.0, 1.0);
+    const b = Quat.init(6.0, 7.0, 8.0, 5.0);
+    assert(a.mul(b).approxEq(Quat.init(20.0, 14.0, 32.0, -60.0), 0.0001));
+    assert(b.mul(a).approxEq(Quat.init(12.0, 30.0, 24.0, -60.0), 0.0001));
 }
