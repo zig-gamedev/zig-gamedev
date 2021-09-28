@@ -48,6 +48,20 @@ pub const Vec2 = extern struct {
         return .{ .v = [_]f32{ -a.v[0], -a.v[1] } };
     }
 
+    pub inline fn mulAdd(a: Vec2, b: Vec2, c: Vec2) Vec2 {
+        return .{ .v = [_]f32{
+            a.v[0] * b.v[0] + c.v[0],
+            a.v[1] * b.v[1] + c.v[1],
+        } };
+    }
+
+    pub inline fn negMulAdd(a: Vec2, b: Vec2, c: Vec2) Vec2 {
+        return .{ .v = [_]f32{
+            a.v[0] * (-b.v[0]) + c.v[0],
+            a.v[1] * (-b.v[1]) + c.v[1],
+        } };
+    }
+
     pub inline fn rcp(a: Vec2) Vec2 {
         assert(!math.approxEq(f32, a.v[0], 0.0, 0.0001));
         assert(!math.approxEq(f32, a.v[1], 0.0, 0.0001));
@@ -142,6 +156,22 @@ pub const Vec3 = extern struct {
         return .{ .v = [_]f32{ -a.v[0], -a.v[1], -a.v[2] } };
     }
 
+    pub inline fn mulAdd(a: Vec3, b: Vec3, c: Vec3) Vec3 {
+        return .{ .v = [_]f32{
+            a.v[0] * b.v[0] + c.v[0],
+            a.v[1] * b.v[1] + c.v[1],
+            a.v[2] * b.v[2] + c.v[2],
+        } };
+    }
+
+    pub inline fn negMulAdd(a: Vec3, b: Vec3, c: Vec3) Vec3 {
+        return .{ .v = [_]f32{
+            a.v[0] * (-b.v[0]) + c.v[0],
+            a.v[1] * (-b.v[1]) + c.v[1],
+            a.v[2] * (-b.v[2]) + c.v[2],
+        } };
+    }
+
     pub inline fn rcp(a: Vec3) Vec3 {
         assert(!math.approxEq(f32, a.v[0], 0.0, 0.0001));
         assert(!math.approxEq(f32, a.v[1], 0.0, 0.0001));
@@ -214,12 +244,34 @@ pub const Vec4 = extern struct {
         return .{ .v = [_]f32{ a.v[0] - b.v[0], a.v[1] - b.v[1], a.v[2] - b.v[2], a.v[3] - b.v[3] } };
     }
 
+    pub inline fn mul(a: Vec4, b: Vec4) Vec4 {
+        return .{ .v = [_]f32{ a.v[0] * b.v[0], a.v[1] * b.v[1], a.v[2] * b.v[2], a.v[3] * b.v[3] } };
+    }
+
     pub inline fn scale(a: Vec4, b: f32) Vec4 {
         return .{ .v = [_]f32{ a.v[0] * b, a.v[1] * b, a.v[2] * b, a.v[3] * b } };
     }
 
     pub inline fn neg(a: Vec4) Vec4 {
         return .{ .v = [_]f32{ -a.v[0], -a.v[1], -a.v[2], -a.v[3] } };
+    }
+
+    pub inline fn mulAdd(a: Vec4, b: Vec4, c: Vec4) Vec4 {
+        return .{ .v = [_]f32{
+            a.v[0] * b.v[0] + c.v[0],
+            a.v[1] * b.v[1] + c.v[1],
+            a.v[2] * b.v[2] + c.v[2],
+            a.v[3] * b.v[3] + c.v[3],
+        } };
+    }
+
+    pub inline fn negMulAdd(a: Vec4, b: Vec4, c: Vec4) Vec4 {
+        return .{ .v = [_]f32{
+            a.v[0] * (-b.v[0]) + c.v[0],
+            a.v[1] * (-b.v[1]) + c.v[1],
+            a.v[2] * (-b.v[2]) + c.v[2],
+            a.v[3] * (-b.v[3]) + c.v[3],
+        } };
     }
 
     pub inline fn rcp(a: Vec4) Vec4 {
@@ -352,6 +404,115 @@ pub const Mat4 = extern struct {
                 },
             },
         };
+    }
+
+    pub fn inv(a: Mat4, det: ?*f32) Mat4 {
+        const mt = a.transpose();
+        var v0: [4]Vec4 = undefined;
+        var v1: [4]Vec4 = undefined;
+
+        v0[0] = Vec4.init(mt.m[2][0], mt.m[2][0], mt.m[2][1], mt.m[2][1]);
+        v1[0] = Vec4.init(mt.m[3][2], mt.m[3][3], mt.m[3][2], mt.m[3][3]);
+        v0[1] = Vec4.init(mt.m[0][0], mt.m[0][0], mt.m[0][1], mt.m[0][1]);
+        v1[1] = Vec4.init(mt.m[1][2], mt.m[1][3], mt.m[1][2], mt.m[1][3]);
+        v0[2] = Vec4.init(mt.m[2][0], mt.m[2][2], mt.m[0][0], mt.m[0][2]);
+        v1[2] = Vec4.init(mt.m[3][1], mt.m[3][3], mt.m[1][1], mt.m[1][3]);
+
+        var d0 = v0[0].mul(v1[0]);
+        var d1 = v0[1].mul(v1[1]);
+        var d2 = v0[2].mul(v1[2]);
+
+        v0[0] = Vec4.init(mt.m[2][2], mt.m[2][3], mt.m[2][2], mt.m[2][3]);
+        v1[0] = Vec4.init(mt.m[3][0], mt.m[3][0], mt.m[3][1], mt.m[3][1]);
+        v0[1] = Vec4.init(mt.m[0][2], mt.m[0][3], mt.m[0][2], mt.m[0][3]);
+        v1[1] = Vec4.init(mt.m[1][0], mt.m[1][0], mt.m[1][1], mt.m[1][1]);
+        v0[2] = Vec4.init(mt.m[2][1], mt.m[2][3], mt.m[0][1], mt.m[0][3]);
+        v1[2] = Vec4.init(mt.m[3][0], mt.m[3][2], mt.m[1][0], mt.m[1][2]);
+
+        d0 = v0[0].negMulAdd(v1[0], d0);
+        d1 = v0[1].negMulAdd(v1[1], d1);
+        d2 = v0[2].negMulAdd(v1[2], d2);
+
+        v0[0] = Vec4.init(mt.m[1][1], mt.m[1][2], mt.m[1][0], mt.m[1][1]);
+        v1[0] = Vec4.init(d2.v[1], d0.v[1], d0.v[3], d0.v[0]);
+        v0[1] = Vec4.init(mt.m[0][2], mt.m[0][0], mt.m[0][1], mt.m[0][0]);
+        v1[1] = Vec4.init(d0.v[3], d2.v[1], d0.v[1], d0.v[2]);
+        v0[2] = Vec4.init(mt.m[3][1], mt.m[3][2], mt.m[3][0], mt.m[3][1]);
+        v1[2] = Vec4.init(d2.v[3], d1.v[1], d1.v[3], d1.v[0]);
+        v0[3] = Vec4.init(mt.m[2][2], mt.m[2][0], mt.m[2][1], mt.m[2][0]);
+        v1[3] = Vec4.init(d1.v[3], d2.v[3], d1.v[1], d1.v[2]);
+
+        var c0 = v0[0].mul(v1[0]);
+        var c2 = v0[1].mul(v1[1]);
+        var c4 = v0[2].mul(v1[2]);
+        var c6 = v0[3].mul(v1[3]);
+
+        v0[0] = Vec4.init(mt.m[1][2], mt.m[1][3], mt.m[1][1], mt.m[1][2]);
+        v1[0] = Vec4.init(d0.v[3], d0.v[0], d0.v[1], d2.v[0]);
+        v0[1] = Vec4.init(mt.m[0][3], mt.m[0][2], mt.m[0][3], mt.m[0][1]);
+        v1[1] = Vec4.init(d0.v[2], d0.v[1], d2.v[0], d0.v[0]);
+        v0[2] = Vec4.init(mt.m[3][2], mt.m[3][3], mt.m[3][1], mt.m[3][2]);
+        v1[2] = Vec4.init(d1.v[3], d1.v[0], d1.v[1], d2.v[2]);
+        v0[3] = Vec4.init(mt.m[2][3], mt.m[2][2], mt.m[2][3], mt.m[2][1]);
+        v1[3] = Vec4.init(d1.v[2], d1.v[1], d2.v[2], d1.v[0]);
+
+        c0 = v0[0].negMulAdd(v1[0], c0);
+        c2 = v0[1].negMulAdd(v1[1], c2);
+        c4 = v0[2].negMulAdd(v1[2], c4);
+        c6 = v0[3].negMulAdd(v1[3], c6);
+
+        v0[0] = Vec4.init(mt.m[1][3], mt.m[1][0], mt.m[1][3], mt.m[1][0]);
+        v1[0] = Vec4.init(d0.v[2], d2.v[1], d2.v[0], d0.v[2]);
+        v0[1] = Vec4.init(mt.m[0][1], mt.m[0][3], mt.m[0][0], mt.m[0][2]);
+        v1[1] = Vec4.init(d2.v[1], d0.v[0], d0.v[3], d2.v[0]);
+        v0[2] = Vec4.init(mt.m[3][3], mt.m[3][0], mt.m[3][3], mt.m[3][0]);
+        v1[2] = Vec4.init(d1.v[2], d2.v[3], d2.v[2], d1.v[2]);
+        v0[3] = Vec4.init(mt.m[2][1], mt.m[2][3], mt.m[2][0], mt.m[2][2]);
+        v1[3] = Vec4.init(d2.v[3], d1.v[0], d1.v[3], d2.v[2]);
+
+        const c1 = v0[0].negMulAdd(v1[0], c0);
+        c0 = v0[0].mulAdd(v1[0], c0);
+
+        const c3 = v0[1].mulAdd(v1[1], c2);
+        c2 = v0[1].negMulAdd(v1[1], c2);
+
+        const c5 = v0[2].negMulAdd(v1[2], c4);
+        c4 = v0[2].mulAdd(v1[2], c4);
+
+        const c7 = v0[3].mulAdd(v1[3], c6);
+        c6 = v0[3].negMulAdd(v1[3], c6);
+
+        var r = Mat4.initVec4(
+            Vec4.init(c0.v[0], c1.v[1], c0.v[2], c1.v[3]),
+            Vec4.init(c2.v[0], c3.v[1], c2.v[2], c3.v[3]),
+            Vec4.init(c4.v[0], c5.v[1], c4.v[2], c5.v[3]),
+            Vec4.init(c6.v[0], c7.v[1], c6.v[2], c7.v[3]),
+        );
+
+        const d = r.m[0][0] * mt.m[0][0] + r.m[0][1] * mt.m[0][1] + r.m[0][2] * mt.m[0][2] + r.m[0][3] * mt.m[0][3];
+        if (det != null) {
+            det.?.* = d;
+        }
+        const rcp_d = if (math.approxEq(f32, d, 0.0, 0.00001)) 0.0 else 1.0 / d;
+
+        r.m[0][0] *= rcp_d;
+        r.m[0][1] *= rcp_d;
+        r.m[0][2] *= rcp_d;
+        r.m[0][3] *= rcp_d;
+        r.m[1][0] *= rcp_d;
+        r.m[1][1] *= rcp_d;
+        r.m[1][2] *= rcp_d;
+        r.m[1][3] *= rcp_d;
+        r.m[2][0] *= rcp_d;
+        r.m[2][1] *= rcp_d;
+        r.m[2][2] *= rcp_d;
+        r.m[2][3] *= rcp_d;
+        r.m[3][0] *= rcp_d;
+        r.m[3][1] *= rcp_d;
+        r.m[3][2] *= rcp_d;
+        r.m[3][3] *= rcp_d;
+
+        return r;
     }
 
     pub fn initRotationX(angle: f32) Mat4 {
@@ -638,6 +799,27 @@ test "Mat4 mul" {
             Vec4.init(6.18, 6.44, 6.7, 6.96),
             Vec4.init(9.86, 10.28, 10.7, 11.12),
             Vec4.init(13.54, 14.12, 14.7, 15.28),
+        ),
+        0.0001,
+    ));
+}
+
+test "Mat4 inverse" {
+    var m = Mat4.initVec4(
+        Vec4.init(10.0, -9.0, -12.0, 1.0),
+        Vec4.init(7.0, -12.0, 11.0, 1.0),
+        Vec4.init(-10.0, 10.0, 3.0, 1.0),
+        Vec4.init(1.0, 2.0, 3.0, 4.0),
+    );
+    var det: f32 = 0.0;
+    m = m.inv(&det);
+    assert(math.approxEq(f32, det, 2939.0, 0.0001));
+    assert(m.approxEq(
+        Mat4.initVec4(
+            Vec4.init(-0.170806, -0.13576, -0.349439, 0.164001),
+            Vec4.init(-0.163661, -0.14801, -0.253147, 0.141204),
+            Vec4.init(-0.0871045, 0.00646478, -0.0785982, 0.0398095),
+            Vec4.init(0.18986, 0.103096, 0.272882, 0.10854),
         ),
         0.0001,
     ));
