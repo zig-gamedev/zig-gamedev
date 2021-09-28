@@ -956,6 +956,7 @@ test "transforms" {
     const a = Mat4.initTranslation(Vec3.init(1.0, 0.0, 0.0));
     const b = Mat4.initRotationY(math.pi * 0.5);
     const c = Vec3.init(1.0, 0.0, 0.0);
-    const d = c.transform(a.mul(b));
-    assert(d.approxEq(Vec3.init(0.0, 0.0, -2.0), 0.001));
+    const e = Mat4.initTranslation(Vec3.init(0.0, 1.0, 0.0));
+    const d = c.transform(a.mul(b).mul(e));
+    assert(d.approxEq(Vec3.init(0.0, 1.0, -2.0), 0.001));
 }
