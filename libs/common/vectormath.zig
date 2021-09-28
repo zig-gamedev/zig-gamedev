@@ -406,7 +406,7 @@ pub const Mat4 = extern struct {
         };
     }
 
-    pub fn inv(a: Mat4, det: ?*f32) Mat4 {
+    pub fn inv(a: Mat4, out_det: ?*f32) Mat4 {
         const mt = a.transpose();
         var v0: [4]Vec4 = undefined;
         var v1: [4]Vec4 = undefined;
@@ -490,8 +490,8 @@ pub const Mat4 = extern struct {
         );
 
         const d = r.m[0][0] * mt.m[0][0] + r.m[0][1] * mt.m[0][1] + r.m[0][2] * mt.m[0][2] + r.m[0][3] * mt.m[0][3];
-        if (det != null) {
-            det.?.* = d;
+        if (out_det != null) {
+            out_det.?.* = d;
         }
 
         if (math.approxEq(f32, d, 0.0, 0.00001)) {
@@ -518,6 +518,45 @@ pub const Mat4 = extern struct {
         r.m[3][3] *= rcp_d;
 
         return r;
+    }
+
+    pub fn det(a: Mat4) f32 {
+        const static = struct {
+            const sign = Vec4.init(1.0, -1.0, 1.0, -1.0);
+        };
+
+        var v0 = Vec4.init(a.m[2][1], a.m[2][0], a.m[2][0], a.m[2][0]);
+        var v1 = Vec4.init(a.m[3][2], a.m[3][2], a.m[3][1], a.m[3][1]);
+        var v2 = Vec4.init(a.m[2][1], a.m[2][0], a.m[2][0], a.m[2][0]);
+        var v3 = Vec4.init(a.m[3][3], a.m[3][3], a.m[3][3], a.m[3][2]);
+        var v4 = Vec4.init(a.m[2][2], a.m[2][2], a.m[2][1], a.m[2][1]);
+        var v5 = Vec4.init(a.m[3][3], a.m[3][3], a.m[3][3], a.m[3][2]);
+
+        var p0 = v0.mul(v1);
+        var p1 = v2.mul(v3);
+        var p2 = v4.mul(v5);
+
+        v0 = Vec4.init(a.m[2][2], a.m[2][2], a.m[2][1], a.m[2][1]);
+        v1 = Vec4.init(a.m[3][1], a.m[3][0], a.m[3][0], a.m[3][0]);
+        v2 = Vec4.init(a.m[2][3], a.m[2][3], a.m[2][3], a.m[2][2]);
+        v3 = Vec4.init(a.m[3][1], a.m[3][0], a.m[3][0], a.m[3][0]);
+        v4 = Vec4.init(a.m[2][3], a.m[2][3], a.m[2][3], a.m[2][2]);
+        v5 = Vec4.init(a.m[3][2], a.m[3][2], a.m[3][1], a.m[3][1]);
+
+        p0 = v0.negMulAdd(v1, p0);
+        p1 = v2.negMulAdd(v3, p1);
+        p2 = v4.negMulAdd(v5, p2);
+
+        v0 = Vec4.init(a.m[1][3], a.m[1][3], a.m[1][3], a.m[1][2]);
+        v1 = Vec4.init(a.m[1][2], a.m[1][2], a.m[1][1], a.m[1][1]);
+        v2 = Vec4.init(a.m[1][1], a.m[1][0], a.m[1][0], a.m[1][0]);
+
+        var s = Vec4.init(a.m[0][0], a.m[0][1], a.m[0][2], a.m[0][3]).mul(static.sign);
+        var r = v0.mul(p0);
+        r = v1.negMulAdd(p1, r);
+        r = v2.mulAdd(p2, r);
+
+        return s.dot(r);
     }
 
     pub fn initRotationX(angle: f32) Mat4 {
@@ -809,13 +848,15 @@ test "Mat4 mul" {
     ));
 }
 
-test "Mat4 inverse" {
+test "Mat4 inv, det" {
     var m = Mat4.initVec4(
         Vec4.init(10.0, -9.0, -12.0, 1.0),
         Vec4.init(7.0, -12.0, 11.0, 1.0),
         Vec4.init(-10.0, 10.0, 3.0, 1.0),
         Vec4.init(1.0, 2.0, 3.0, 4.0),
     );
+    assert(math.approxEq(f32, m.det(), 2939.0, 0.0001));
+
     var det: f32 = 0.0;
     m = m.inv(&det);
     assert(math.approxEq(f32, det, 2939.0, 0.0001));
