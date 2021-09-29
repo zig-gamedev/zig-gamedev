@@ -1,3 +1,4 @@
+// Most of below code is ported from DirectXMath: https://github.com/microsoft/DirectXMath
 const std = @import("std");
 const assert = std.debug.assert;
 const math = std.math;
@@ -442,16 +443,65 @@ pub const Quat = extern struct {
         return .{ .q = [_]f32{ rcplen * a.q[0], rcplen * a.q[1], rcplen * a.q[2], rcplen * a.q[3] } };
     }
 
-    pub inline fn conjugate(a: Quat) Quat {
+    pub inline fn conj(a: Quat) Quat {
         return .{ .q = [_]f32{ -a.q[0], -a.q[1], -a.q[2], a.q[3] } };
     }
 
     pub inline fn inv(a: Quat) Quat {
         const lensq = lengthSq(a);
-        const conj = conjugate(a);
+        const con = conj(a);
         assert(!math.approxEq(f32, lensq, 0.0, epsilon));
         const rcp_lensq = 1.0 / lensq;
-        return conj.scale(rcp_lensq);
+        return con.scale(rcp_lensq);
+    }
+
+    pub fn initRotationMat4(m: Mat4) Quat {
+        var q: Quat = undefined;
+        const r22 = m.m[2][2];
+        if (r22 <= 0.0) // x^2 + y^2 >= z^2 + w^2
+        {
+            const dif10 = m.m[1][1] - m.m[0][0];
+            const omr22 = 1.0 - r22;
+            if (dif10 <= 0.0) // x^2 >= y^2
+            {
+                const fourXSqr = omr22 - dif10;
+                const inv4x = 0.5 / math.sqrt(fourXSqr);
+                q.q[0] = fourXSqr * inv4x;
+                q.q[1] = (m.m[0][1] + m.m[1][0]) * inv4x;
+                q.q[2] = (m.m[0][2] + m.m[2][0]) * inv4x;
+                q.q[3] = (m.m[1][2] - m.m[2][1]) * inv4x;
+            } else // y^2 >= x^2
+            {
+                const fourYSqr = omr22 + dif10;
+                const inv4y = 0.5 / math.sqrt(fourYSqr);
+                q.q[0] = (m.m[0][1] + m.m[1][0]) * inv4y;
+                q.q[1] = fourYSqr * inv4y;
+                q.q[2] = (m.m[1][2] + m.m[2][1]) * inv4y;
+                q.q[3] = (m.m[2][0] - m.m[0][2]) * inv4y;
+            }
+        } else // z^2 + w^2 >= x^2 + y^2
+        {
+            const sum10 = m.m[1][1] + m.m[0][0];
+            const opr22 = 1.0 + r22;
+            if (sum10 <= 0.0) // z^2 >= w^2
+            {
+                const fourZSqr = opr22 - sum10;
+                const inv4z = 0.5 / math.sqrt(fourZSqr);
+                q.q[0] = (m.m[0][2] + m.m[2][0]) * inv4z;
+                q.q[1] = (m.m[1][2] + m.m[2][1]) * inv4z;
+                q.q[2] = fourZSqr * inv4z;
+                q.q[3] = (m.m[0][1] - m.m[1][0]) * inv4z;
+            } else // w^2 >= z^2
+            {
+                const fourWSqr = opr22 + sum10;
+                const inv4w = 0.5 / math.sqrt(fourWSqr);
+                q.q[0] = (m.m[1][2] - m.m[2][1]) * inv4w;
+                q.q[1] = (m.m[2][0] - m.m[0][2]) * inv4w;
+                q.q[2] = (m.m[0][1] - m.m[1][0]) * inv4w;
+                q.q[3] = fourWSqr * inv4w;
+            }
+        }
+        return q;
     }
 };
 
@@ -738,6 +788,42 @@ pub const Mat4 = extern struct {
                 [_]f32{ 0.0, 0.0, 0.0, 1.0 },
             },
         };
+    }
+
+    pub fn initRotationQuat(q: Quat) Mat4 {
+        const static = struct {
+            const const1110 = Vec4.init(1.0, 1.0, 1.0, 0.0);
+        };
+        const vin = Vec4.init(q.q[0], q.q[1], q.q[2], q.q[3]);
+
+        const q0 = vin.add(vin);
+        const q1 = vin.mul(q0);
+
+        var v0 = Vec4.init(q1.v[1], q1.v[0], q1.v[0], static.const1110.v[3]);
+        var v1 = Vec4.init(q1.v[2], q1.v[2], q1.v[1], static.const1110.v[3]);
+        var r0 = static.const1110.sub(v0);
+        r0 = r0.sub(v1);
+
+        v0 = Vec4.init(vin.v[0], vin.v[0], vin.v[1], vin.v[3]);
+        v1 = Vec4.init(q0.v[2], q0.v[1], q0.v[2], q0.v[3]);
+        v0 = v0.mul(v1);
+
+        v1 = Vec4.init(vin.v[3], vin.v[3], vin.v[3], vin.v[3]);
+        var v2 = Vec4.init(q0.v[1], q0.v[2], q0.v[0], q0.v[3]);
+        v1 = v1.mul(v2);
+
+        var r1 = v0.add(v1);
+        var r2 = v0.sub(v1);
+
+        v0 = Vec4.init(r1.v[1], r2.v[0], r2.v[1], r1.v[2]);
+        v1 = Vec4.init(r1.v[0], r2.v[2], r1.v[0], r2.v[2]);
+
+        return Mat4.initVec4(
+            Vec4.init(r0.v[0], v0.v[0], v0.v[1], r0.v[3]),
+            Vec4.init(v0.v[2], r0.v[1], v0.v[3], r0.v[3]),
+            Vec4.init(v1.v[0], v1.v[1], r0.v[2], r0.v[3]),
+            Vec4.init(0.0, 0.0, 0.0, 1.0),
+        );
     }
 
     pub fn initPerspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat4 {
@@ -1032,11 +1118,46 @@ test "Quat mul, inv" {
     }
 }
 
-test "transforms" {
+test "Mat4 transforms" {
     const a = Mat4.initTranslation(Vec3.init(1.0, 0.0, 0.0));
     const b = Mat4.initRotationY(math.pi * 0.5);
     const c = Vec3.init(1.0, 0.0, 0.0);
     const e = Mat4.initTranslation(Vec3.init(0.0, 1.0, 0.0));
     const d = c.transform(a.mul(b).mul(e));
     assert(d.approxEq(Vec3.init(0.0, 1.0, -2.0), epsilon));
+}
+
+test "Mat4 <-> Quat" {
+    {
+        const a = Quat.initRotationMat4(Mat4.initIdentity());
+        assert(a.approxEq(Quat.initIdentity(), epsilon));
+        const b = Mat4.initRotationQuat(a);
+        assert(b.approxEq(Mat4.initIdentity(), epsilon));
+    }
+    {
+        const a = Quat.initRotationMat4(Mat4.initTranslation(Vec3.init(1.0, 2.0, 3.0)));
+        assert(a.approxEq(Quat.initIdentity(), epsilon));
+        const b = Mat4.initRotationQuat(a);
+        assert(b.approxEq(Mat4.initIdentity(), epsilon));
+    }
+    {
+        const a = Quat.initRotationMat4(Mat4.initRotationY(math.pi * 0.5));
+        const b = Mat4.initRotationQuat(a);
+        assert(b.approxEq(Mat4.initRotationY(math.pi * 0.5), epsilon));
+    }
+    {
+        const m0 = Mat4.initRotationX(math.pi * 0.125);
+        const m1 = Mat4.initRotationY(math.pi * 0.25);
+        const m2 = Mat4.initRotationZ(math.pi * 0.5);
+
+        const q0 = Quat.initRotationMat4(m0);
+        const q1 = Quat.initRotationMat4(m1);
+        const q2 = Quat.initRotationMat4(m2);
+
+        const mr = m0.mul(m1).mul(m2);
+        const qr = q0.mul(q1).mul(q2);
+
+        assert(mr.approxEq(Mat4.initRotationQuat(qr), epsilon));
+        assert(qr.approxEq(Quat.initRotationMat4(mr), epsilon));
+    }
 }
