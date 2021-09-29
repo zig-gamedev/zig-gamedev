@@ -18,6 +18,7 @@
 !*.png
 !*.jpg
 !*.hdr
+!*.wav
 
 !README
 !.ignore
