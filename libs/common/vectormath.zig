@@ -410,7 +410,6 @@ pub const Quat = extern struct {
     }
 
     pub inline fn mul(a: Quat, b: Quat) Quat {
-        // From DirectXMath:
         // Returns the product b * a (which is the concatenation of a rotation 'a' followed by the rotation 'b').
         return .{ .q = [_]f32{
             (b.q[3] * a.q[0]) + (b.q[0] * a.q[3]) + (b.q[1] * a.q[2]) - (b.q[2] * a.q[1]),
@@ -502,6 +501,25 @@ pub const Quat = extern struct {
             }
         }
         return q;
+    }
+
+    pub fn initRotationNormal(normal_axis: Vec3, angle: f32) Quat {
+        const half_angle = 0.5 * angle;
+        const sinv = math.sin(half_angle);
+        const cosv = math.cos(half_angle);
+
+        return .{ .q = [_]f32{
+            normal_axis.v[0] * sinv,
+            normal_axis.v[1] * sinv,
+            normal_axis.v[2] * sinv,
+            cosv,
+        } };
+    }
+
+    pub fn initRotationAxis(axis: Vec3, angle: f32) Quat {
+        assert(!axis.approxEq(Vec3.initZero(), epsilon));
+        const n = axis.normalize();
+        return initRotationNormal(n, angle);
     }
 };
 
@@ -887,6 +905,17 @@ pub const Mat4 = extern struct {
         };
     }
 
+    pub fn initScaling(a: Vec3) Mat4 {
+        return .{
+            .m = [_][4]f32{
+                [_]f32{ a.v[0], 0.0, 0.0, 0.0 },
+                [_]f32{ 0.0, a.v[1], 0.0, 0.0 },
+                [_]f32{ 0.0, 0.0, a.v[2], 0.0 },
+                [_]f32{ 0.0, 0.0, 0.0, 1.0 },
+            },
+        };
+    }
+
     pub fn initLookToLh(eye_pos: Vec3, eye_dir: Vec3, up_dir: Vec3) Mat4 {
         const az = Vec3.normalize(eye_dir);
         const ax = Vec3.normalize(Vec3.cross(up_dir, az));
@@ -1144,6 +1173,11 @@ test "Mat4 <-> Quat" {
         const a = Quat.initRotationMat4(Mat4.initRotationY(math.pi * 0.5));
         const b = Mat4.initRotationQuat(a);
         assert(b.approxEq(Mat4.initRotationY(math.pi * 0.5), epsilon));
+    }
+    {
+        const a = Quat.initRotationMat4(Mat4.initRotationY(math.pi * 0.25));
+        const b = Quat.initRotationAxis(Vec3.init(0.0, 1.0, 0.0), math.pi * 0.25);
+        assert(a.approxEq(b, epsilon));
     }
     {
         const m0 = Mat4.initRotationX(math.pi * 0.125);
