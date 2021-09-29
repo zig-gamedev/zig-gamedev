@@ -2,6 +2,8 @@ const std = @import("std");
 const assert = std.debug.assert;
 const math = std.math;
 
+const epsilon: f32 = 0.00001;
+
 pub fn modAngle(in_angle: f32) f32 {
     const angle = in_angle + math.pi;
     var temp: f32 = math.fabs(angle);
@@ -38,6 +40,15 @@ pub const Vec2 = extern struct {
 
     pub inline fn sub(a: Vec2, b: Vec2) Vec2 {
         return .{ .v = [_]f32{ a.v[0] - b.v[0], a.v[1] - b.v[1] } };
+    }
+
+    pub inline fn mul(a: Vec2, b: Vec2) Vec2 {
+        return .{ .v = [_]f32{ a.v[0] * b.v[0], a.v[1] * b.v[1] } };
+    }
+
+    pub inline fn div(a: Vec2, b: Vec2) Vec2 {
+        assert(!approxEq(b, initZero(), epsilon));
+        return .{ .v = [_]f32{ a.v[0] / b.v[0], a.v[1] / b.v[1] } };
     }
 
     pub inline fn scale(a: Vec2, b: f32) Vec2 {
@@ -77,8 +88,7 @@ pub const Vec2 = extern struct {
     }
 
     pub inline fn rcp(a: Vec2) Vec2 {
-        assert(!math.approxEq(f32, a.v[0], 0.0, 0.0001));
-        assert(!math.approxEq(f32, a.v[1], 0.0, 0.0001));
+        assert(!approxEq(a, initZero(), epsilon));
         return .{ .v = [_]f32{ 1.0 / a.v[0], 1.0 / a.v[1] } };
     }
 
@@ -96,7 +106,7 @@ pub const Vec2 = extern struct {
 
     pub inline fn normalize(a: Vec2) Vec2 {
         const len = length(a);
-        assert(!math.approxEq(f32, len, 0.0, 0.0001));
+        assert(!math.approxEq(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
         return .{ .v = [_]f32{ rcplen * a.v[0], rcplen * a.v[1] } };
     }
@@ -162,6 +172,15 @@ pub const Vec3 = extern struct {
         return .{ .v = [_]f32{ a.v[0] - b.v[0], a.v[1] - b.v[1], a.v[2] - b.v[2] } };
     }
 
+    pub inline fn mul(a: Vec3, b: Vec3) Vec3 {
+        return .{ .v = [_]f32{ a.v[0] * b.v[0], a.v[1] * b.v[1], a.v[2] * b.v[2] } };
+    }
+
+    pub inline fn div(a: Vec3, b: Vec3) Vec3 {
+        assert(!approxEq(b, initZero(), epsilon));
+        return .{ .v = [_]f32{ a.v[0] / b.v[0], a.v[1] / b.v[1], a.v[2] / b.v[2] } };
+    }
+
     pub inline fn scale(a: Vec3, b: f32) Vec3 {
         return .{ .v = [_]f32{ a.v[0] * b, a.v[1] * b, a.v[2] * b } };
     }
@@ -203,9 +222,7 @@ pub const Vec3 = extern struct {
     }
 
     pub inline fn rcp(a: Vec3) Vec3 {
-        assert(!math.approxEq(f32, a.v[0], 0.0, 0.0001));
-        assert(!math.approxEq(f32, a.v[1], 0.0, 0.0001));
-        assert(!math.approxEq(f32, a.v[2], 0.0, 0.0001));
+        assert(!approxEq(a, initZero(), epsilon));
         return .{ .v = [_]f32{ 1.0 / a.v[0], 1.0 / a.v[1], 1.0 / a.v[2] } };
     }
 
@@ -219,7 +236,7 @@ pub const Vec3 = extern struct {
 
     pub inline fn normalize(a: Vec3) Vec3 {
         const len = length(a);
-        assert(!math.approxEq(f32, len, 0.0, 0.0001));
+        assert(!math.approxEq(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
         return .{ .v = [_]f32{ rcplen * a.v[0], rcplen * a.v[1], rcplen * a.v[2] } };
     }
@@ -278,6 +295,11 @@ pub const Vec4 = extern struct {
         return .{ .v = [_]f32{ a.v[0] * b.v[0], a.v[1] * b.v[1], a.v[2] * b.v[2], a.v[3] * b.v[3] } };
     }
 
+    pub inline fn div(a: Vec4, b: Vec4) Vec4 {
+        assert(!approxEq(b, initZero(), epsilon));
+        return .{ .v = [_]f32{ a.v[0] / b.v[0], a.v[1] / b.v[1], a.v[2] / b.v[2], a.v[3] / b.v[3] } };
+    }
+
     pub inline fn scale(a: Vec4, b: f32) Vec4 {
         return .{ .v = [_]f32{ a.v[0] * b, a.v[1] * b, a.v[2] * b, a.v[3] * b } };
     }
@@ -323,10 +345,7 @@ pub const Vec4 = extern struct {
     }
 
     pub inline fn rcp(a: Vec4) Vec4 {
-        assert(!math.approxEq(f32, a.v[0], 0.0, 0.0001));
-        assert(!math.approxEq(f32, a.v[1], 0.0, 0.0001));
-        assert(!math.approxEq(f32, a.v[2], 0.0, 0.0001));
-        assert(!math.approxEq(f32, a.v[3], 0.0, 0.0001));
+        assert(!approxEq(a, initZero(), epsilon));
         return .{ .v = [_]f32{ 1.0 / a.v[0], 1.0 / a.v[1], 1.0 / a.v[2], 1.0 / a.v[3] } };
     }
 
@@ -344,7 +363,7 @@ pub const Vec4 = extern struct {
 
     pub inline fn normalize(a: Vec4) Vec4 {
         const len = length(a);
-        assert(!math.approxEq(f32, len, 0.0, 0.0001));
+        assert(!math.approxEq(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
         return .{ .v = [_]f32{ rcplen * a.v[0], rcplen * a.v[1], rcplen * a.v[2], rcplen * a.v[3] } };
     }
@@ -368,6 +387,20 @@ pub const Quat = extern struct {
         return .{ .q = [_]f32{ x, y, z, w } };
     }
 
+    pub inline fn initZero() Quat {
+        const static = struct {
+            const zero = init(0.0, 0.0, 0.0, 0.0);
+        };
+        return static.zero;
+    }
+
+    pub inline fn initIdentity() Quat {
+        const static = struct {
+            const identity = init(0.0, 0.0, 0.0, 1.0);
+        };
+        return static.identity;
+    }
+
     pub inline fn approxEq(a: Quat, b: Quat, eps: f32) bool {
         return math.approxEq(f32, a.q[0], b.q[0], eps) and
             math.approxEq(f32, a.q[1], b.q[1], eps) and
@@ -384,6 +417,41 @@ pub const Quat = extern struct {
             (b.q[3] * a.q[2]) + (b.q[0] * a.q[1]) - (b.q[1] * a.q[0]) + (b.q[2] * a.q[3]),
             (b.q[3] * a.q[3]) - (b.q[0] * a.q[0]) - (b.q[1] * a.q[1]) - (b.q[2] * a.q[2]),
         } };
+    }
+
+    pub inline fn scale(a: Quat, b: f32) Quat {
+        return .{ .q = [_]f32{ a.q[0] * b, a.q[1] * b, a.q[2] * b, a.q[3] * b } };
+    }
+
+    pub inline fn dot(a: Quat, b: Quat) f32 {
+        return a.q[0] * b.q[0] + a.q[1] * b.q[1] + a.q[2] * b.q[2] + a.q[3] * b.q[3];
+    }
+
+    pub inline fn length(a: Quat) f32 {
+        return math.sqrt(dot(a, a));
+    }
+
+    pub inline fn lengthSq(a: Quat) f32 {
+        return dot(a, a);
+    }
+
+    pub inline fn normalize(a: Quat) Quat {
+        const len = length(a);
+        assert(!math.approxEq(f32, len, 0.0, epsilon));
+        const rcplen = 1.0 / len;
+        return .{ .q = [_]f32{ rcplen * a.q[0], rcplen * a.q[1], rcplen * a.q[2], rcplen * a.q[3] } };
+    }
+
+    pub inline fn conjugate(a: Quat) Quat {
+        return .{ .q = [_]f32{ -a.q[0], -a.q[1], -a.q[2], a.q[3] } };
+    }
+
+    pub inline fn inv(a: Quat) Quat {
+        const lensq = lengthSq(a);
+        const conj = conjugate(a);
+        assert(!math.approxEq(f32, lensq, 0.0, epsilon));
+        const rcp_lensq = 1.0 / lensq;
+        return conj.scale(rcp_lensq);
     }
 };
 
@@ -568,7 +636,7 @@ pub const Mat4 = extern struct {
             out_det.?.* = d;
         }
 
-        if (math.approxEq(f32, d, 0.0, 0.00001)) {
+        if (math.approxEq(f32, d, 0.0, epsilon)) {
             return initZero();
         }
 
@@ -677,7 +745,7 @@ pub const Mat4 = extern struct {
         const cosfov = math.cos(0.5 * fovy);
 
         assert(near > 0.0 and far > 0.0 and far > near);
-        assert(!math.approxEq(f32, sinfov, 0.0, 0.0001));
+        assert(!math.approxEq(f32, sinfov, 0.0, 0.001));
         assert(!math.approxEq(f32, far, near, 0.001));
         assert(!math.approxEq(f32, aspect, 0.0, 0.01));
 
@@ -759,9 +827,9 @@ pub const Mat4 = extern struct {
         near_z: f32,
         far_z: f32,
     ) Mat4 {
-        assert(!math.approxEq(f32, view_right, view_left, 0.00001));
-        assert(!math.approxEq(f32, view_top, view_bottom, 0.00001));
-        assert(!math.approxEq(f32, far_z, near_z, 0.00001));
+        assert(!math.approxEq(f32, view_right, view_left, 0.001));
+        assert(!math.approxEq(f32, view_top, view_bottom, 0.001));
+        assert(!math.approxEq(f32, far_z, near_z, 0.001));
 
         const rcp_w = 1.0 / (view_right - view_left);
         const rcp_h = 1.0 / (view_top - view_bottom);
@@ -782,17 +850,17 @@ test "dot" {
     {
         const a = Vec2.init(1.0, 2.0);
         const b = Vec2.init(3.0, 4.0);
-        assert(math.approxEq(f32, a.dot(b), 11.0, 0.0001));
+        assert(math.approxEq(f32, a.dot(b), 11.0, epsilon));
     }
     {
         const a = Vec3.init(1.0, 2.0, 3.0);
         const b = Vec3.init(4.0, 5.0, 6.0);
-        assert(math.approxEq(f32, a.dot(b), 32.0, 0.0001));
+        assert(math.approxEq(f32, a.dot(b), 32.0, epsilon));
     }
     {
         const a = Vec4.init(1.0, 2.0, 3.0, 4.0);
         const b = Vec4.init(5.0, 6.0, 7.0, 8.0);
-        assert(math.approxEq(f32, a.dot(b), 70.0, 0.0001));
+        assert(math.approxEq(f32, a.dot(b), 70.0, epsilon));
     }
 }
 
@@ -800,12 +868,12 @@ test "cross" {
     {
         const a = Vec3.init(1.0, 0.0, 0.0);
         const b = Vec3.init(0.0, 1.0, 0.0);
-        assert(a.cross(b).approxEq(Vec3.init(0.0, 0.0, 1.0), 0.00001));
+        assert(a.cross(b).approxEq(Vec3.init(0.0, 0.0, 1.0), epsilon));
     }
     {
         const a = Vec3.init(0.0, 0.0, -1.0);
         const b = Vec3.init(1.0, 0.0, 0.0);
-        assert(a.cross(b).approxEq(Vec3.init(0.0, -1.0, 0.0), 0.00001));
+        assert(a.cross(b).approxEq(Vec3.init(0.0, -1.0, 0.0), epsilon));
     }
 }
 
@@ -813,71 +881,75 @@ test "VecN add, sub, scale" {
     {
         const a = Vec2.init(1.0, 2.0);
         const b = Vec2.init(3.0, 4.0);
-        assert(a.add(b).approxEq(Vec2.init(4.0, 6.0), 0.00001));
+        assert(a.add(b).approxEq(Vec2.init(4.0, 6.0), epsilon));
     }
     {
         const a = Vec3.init(1.0, 2.0, 3.0);
         const b = Vec3.init(3.0, 4.0, 5.0);
-        assert(a.add(b).approxEq(Vec3.init(4.0, 6.0, 8.0), 0.00001));
+        assert(a.add(b).approxEq(Vec3.init(4.0, 6.0, 8.0), epsilon));
     }
     {
         const a = Vec4.init(1.0, 2.0, 3.0, -1.0);
         const b = Vec4.init(3.0, 4.0, 5.0, 2.0);
-        assert(a.add(b).approxEq(Vec4.init(4.0, 6.0, 8.0, 1.0), 0.00001));
+        assert(a.add(b).approxEq(Vec4.init(4.0, 6.0, 8.0, 1.0), epsilon));
     }
     {
         const a = Vec2.init(1.0, 2.0);
         const b = Vec2.init(3.0, 4.0);
-        assert(a.sub(b).approxEq(Vec2.init(-2.0, -2.0), 0.00001));
+        assert(a.sub(b).approxEq(Vec2.init(-2.0, -2.0), epsilon));
     }
     {
         const a = Vec3.init(1.0, 2.0, 3.0);
         const b = Vec3.init(3.0, 4.0, 5.0);
-        assert(a.sub(b).approxEq(Vec3.init(-2.0, -2.0, -2.0), 0.00001));
+        assert(a.sub(b).approxEq(Vec3.init(-2.0, -2.0, -2.0), epsilon));
     }
     {
         const a = Vec4.init(1.0, 2.0, 3.0, -1.0);
         const b = Vec4.init(3.0, 4.0, 5.0, 2.0);
-        assert(a.sub(b).approxEq(Vec4.init(-2.0, -2.0, -2.0, -3.0), 0.00001));
+        assert(a.sub(b).approxEq(Vec4.init(-2.0, -2.0, -2.0, -3.0), epsilon));
     }
     {
         const a = Vec2.init(1.0, 2.0);
-        assert(a.scale(2.0).approxEq(Vec2.init(2.0, 4.0), 0.00001));
+        assert(a.scale(2.0).approxEq(Vec2.init(2.0, 4.0), epsilon));
     }
     {
         const a = Vec3.init(1.0, 2.0, 3.0);
-        assert(a.scale(-1.0).approxEq(Vec3.init(-1.0, -2.0, -3.0), 0.00001));
+        assert(a.scale(-1.0).approxEq(Vec3.init(-1.0, -2.0, -3.0), epsilon));
     }
     {
         const a = Vec4.init(1.0, 2.0, 3.0, -1.0);
-        assert(a.scale(3.0).approxEq(Vec4.init(3.0, 6.0, 9.0, -3.0), 0.00001));
+        assert(a.scale(3.0).approxEq(Vec4.init(3.0, 6.0, 9.0, -3.0), epsilon));
     }
 }
 
 test "length, normalize" {
     {
         const a = Vec2.init(2.0, 3.0).length();
-        assert(math.approxEq(f32, a, 3.60555, 0.0001));
+        assert(math.approxEq(f32, a, 3.60555, epsilon));
     }
     {
         const a = Vec3.init(1.0, 1.0, 1.0).length();
-        assert(math.approxEq(f32, a, 1.73205, 0.0001));
+        assert(math.approxEq(f32, a, 1.73205, epsilon));
     }
     {
         const a = Vec4.init(1.0, 1.0, 1.0, 1.0).length();
-        assert(math.approxEq(f32, a, 2.0, 0.0001));
+        assert(math.approxEq(f32, a, 2.0, epsilon));
     }
     {
         const a = Vec2.init(2.0, 4.0).normalize();
-        assert(Vec2.approxEq(a, Vec2.init(0.447214, 0.894427), 0.0001));
+        assert(Vec2.approxEq(a, Vec2.init(0.447214, 0.894427), epsilon));
     }
     {
         const a = Vec3.init(2.0, -5.0, 4.0).normalize();
-        assert(Vec3.approxEq(a, Vec3.init(0.298142, -0.745356, 0.596285), 0.0001));
+        assert(Vec3.approxEq(a, Vec3.init(0.298142, -0.745356, 0.596285), epsilon));
     }
     {
         const a = Vec4.init(-1.0, 2.0, -5.0, 4.0).normalize();
-        assert(Vec4.approxEq(a, Vec4.init(-0.147442, 0.294884, -0.73721, 0.589768), 0.0001));
+        assert(Vec4.approxEq(a, Vec4.init(-0.147442, 0.294884, -0.73721, 0.589768), epsilon));
+    }
+    {
+        const a = Quat.init(-1.0, 2.0, -5.0, 4.0).normalize();
+        assert(Quat.approxEq(a, Quat.init(-0.147442, 0.294884, -0.73721, 0.589768), epsilon));
     }
 }
 
@@ -892,7 +964,7 @@ test "Mat4 transpose" {
     assert(
         mt.approxEq(
             Mat4.init(1.0, 5.0, 9.0, 13.0, 2.0, 6.0, 10.0, 14.0, 3.0, 7.0, 11.0, 15.0, 4.0, 8.0, 12.0, 16.0),
-            0.00001,
+            epsilon,
         ),
     );
 }
@@ -918,7 +990,7 @@ test "Mat4 mul" {
             Vec4.init(9.86, 10.28, 10.7, 11.12),
             Vec4.init(13.54, 14.12, 14.7, 15.28),
         ),
-        0.0001,
+        epsilon,
     ));
 }
 
@@ -929,11 +1001,11 @@ test "Mat4 inv, det" {
         Vec4.init(-10.0, 10.0, 3.0, 1.0),
         Vec4.init(1.0, 2.0, 3.0, 4.0),
     );
-    assert(math.approxEq(f32, m.det(), 2939.0, 0.0001));
+    assert(math.approxEq(f32, m.det(), 2939.0, epsilon));
 
     var det: f32 = 0.0;
     m = m.inv(&det);
-    assert(math.approxEq(f32, det, 2939.0, 0.0001));
+    assert(math.approxEq(f32, det, 2939.0, epsilon));
     assert(m.approxEq(
         Mat4.initVec4(
             Vec4.init(-0.170806, -0.13576, -0.349439, 0.164001),
@@ -941,15 +1013,23 @@ test "Mat4 inv, det" {
             Vec4.init(-0.0871045, 0.00646478, -0.0785982, 0.0398095),
             Vec4.init(0.18986, 0.103096, 0.272882, 0.10854),
         ),
-        0.0001,
+        epsilon,
     ));
 }
 
-test "Quat mul" {
-    const a = Quat.init(2.0, 3.0, 4.0, 1.0);
-    const b = Quat.init(6.0, 7.0, 8.0, 5.0);
-    assert(a.mul(b).approxEq(Quat.init(20.0, 14.0, 32.0, -60.0), 0.0001));
-    assert(b.mul(a).approxEq(Quat.init(12.0, 30.0, 24.0, -60.0), 0.0001));
+test "Quat mul, inv" {
+    {
+        const a = Quat.init(2.0, 3.0, 4.0, 1.0);
+        const b = Quat.init(6.0, 7.0, 8.0, 5.0);
+        assert(a.mul(b).approxEq(Quat.init(20.0, 14.0, 32.0, -60.0), epsilon));
+        assert(b.mul(a).approxEq(Quat.init(12.0, 30.0, 24.0, -60.0), epsilon));
+    }
+    {
+        const a = Quat.init(2.0, 3.0, 4.0, 1.0);
+        const b = a.inv();
+        assert(a.approxEq(Quat.init(2.0, 3.0, 4.0, 1.0), epsilon));
+        assert(b.approxEq(Quat.init(-0.0666667, -0.1, -0.133333, 0.0333333), epsilon));
+    }
 }
 
 test "transforms" {
@@ -958,5 +1038,5 @@ test "transforms" {
     const c = Vec3.init(1.0, 0.0, 0.0);
     const e = Mat4.initTranslation(Vec3.init(0.0, 1.0, 0.0));
     const d = c.transform(a.mul(b).mul(e));
-    assert(d.approxEq(Vec3.init(0.0, 1.0, -2.0), 0.001));
+    assert(d.approxEq(Vec3.init(0.0, 1.0, -2.0), epsilon));
 }
