@@ -310,17 +310,19 @@ pub fn main() !void {
     var native_media_type: *mf.IMediaType = undefined;
     hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &native_media_type));
 
-    //var major_type: w.GUID = undefined;
-    //hrPanicOnFail(native_media_type.GetGUID(&mf.MT_MAJOR_TYPE, &major_type));
-    //std.log.info("MT_MAJOR_TYPE: {}", .{major_type});
-
-    //var subtype: w.GUID = undefined;
-    //hrPanicOnFail(native_media_type.GetGUID(&mf.MT_SUBTYPE, &subtype));
-    //std.log.info("MT_SUBTYPE: {}", .{subtype});
-
     hrPanicOnFail(native_media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
     hrPanicOnFail(native_media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_Float));
     hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, native_media_type));
+
+    hrPanicOnFail(source_reader.GetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, &native_media_type));
+
+    var major_type: w.GUID = undefined;
+    hrPanicOnFail(native_media_type.GetGUID(&mf.MT_MAJOR_TYPE, &major_type));
+    std.log.info("MT_MAJOR_TYPE: {}", .{major_type});
+
+    var subtype: w.GUID = undefined;
+    hrPanicOnFail(native_media_type.GetGUID(&mf.MT_SUBTYPE, &subtype));
+    std.log.info("MT_SUBTYPE: {}", .{subtype});
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

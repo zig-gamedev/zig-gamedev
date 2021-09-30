@@ -109,6 +109,13 @@ pub const ISourceReader = extern struct {
             ) HRESULT {
                 return self.v.reader.GetNativeMediaType(self, stream_index, media_type_index, media_type);
             }
+            pub inline fn GetCurrentMediaType(
+                self: *T,
+                stream_index: DWORD,
+                media_type: **IMediaType,
+            ) HRESULT {
+                return self.v.reader.GetCurrentMediaType(self, stream_index, media_type);
+            }
             pub inline fn SetCurrentMediaType(
                 self: *T,
                 stream_index: DWORD,
@@ -125,7 +132,7 @@ pub const ISourceReader = extern struct {
             GetStreamSelection: *c_void,
             SetStreamSelection: *c_void,
             GetNativeMediaType: fn (*T, DWORD, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
-            GetCurrentMediaType: *c_void,
+            GetCurrentMediaType: fn (*T, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentMediaType: fn (*T, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentPosition: *c_void,
             ReadSample: *c_void,
@@ -173,4 +180,4 @@ pub const AudioFormat_Base = GUID.parse("{00000000-0000-0010-8000-00aa00389b71}"
 pub const AudioFormat_PCM = GUID.parse("{00000001-0000-0010-8000-00aa00389b71}");
 pub const AudioFormat_Float = GUID.parse("{00000003-0000-0010-8000-00aa00389b71}");
 
-pub const MediaType_Audio = GUID.parse("{73647561-0000-0010-8000-00AA00389B71}");
+pub const MediaType_Audio = GUID.parse("{73647561-0000-0010-8000-00aa00389b71}");
