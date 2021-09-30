@@ -5,6 +5,7 @@ const d2d1 = win32.d2d1;
 const d3d12 = win32.d3d12;
 const dwrite = win32.dwrite;
 const wasapi = win32.wasapi;
+const mf = win32.mf;
 const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
@@ -286,11 +287,40 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    // WIC requires below call (when we pass COINIT_MULTITHREADED '_ = wic_factory.Release()' crashes on exit).
-    _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
+    _ = w.ole32.CoInitializeEx(
+        null,
+        @enumToInt(w.COINIT_APARTMENTTHREADED) | @enumToInt(w.COINIT_DISABLE_OLE1DDE),
+    );
     defer w.ole32.CoUninitialize();
 
     _ = w.SetProcessDPIAware();
+
+    hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
+    defer _ = mf.MFShutdown();
+
+    var attr: *mf.IAttributes = undefined;
+    hrPanicOnFail(mf.MFCreateAttributes(&attr, 1));
+    defer _ = attr.Release();
+    hrPanicOnFail(attr.SetUINT32(&mf.LOW_LATENCY, w.TRUE));
+
+    var source_reader: *mf.ISourceReader = undefined;
+    hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/acid_walk.mp3"), attr, &source_reader));
+    defer _ = source_reader.Release();
+
+    var native_media_type: *mf.IMediaType = undefined;
+    hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &native_media_type));
+
+    //var major_type: w.GUID = undefined;
+    //hrPanicOnFail(native_media_type.GetGUID(&mf.MT_MAJOR_TYPE, &major_type));
+    //std.log.info("MT_MAJOR_TYPE: {}", .{major_type});
+
+    //var subtype: w.GUID = undefined;
+    //hrPanicOnFail(native_media_type.GetGUID(&mf.MT_SUBTYPE, &subtype));
+    //std.log.info("MT_SUBTYPE: {}", .{subtype});
+
+    hrPanicOnFail(native_media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
+    hrPanicOnFail(native_media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_Float));
+    hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, native_media_type));
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
