@@ -88,6 +88,12 @@ pub const Vec2 = extern struct {
         } };
     }
 
+    pub inline fn lerp(a: Vec2, b: Vec2, t: f32) Vec2 {
+        const s = Vec2.init(t, t);
+        const ab = b.sub(a);
+        return ab.mulAdd(s, a);
+    }
+
     pub inline fn rcp(a: Vec2) Vec2 {
         assert(!approxEq(a, initZero(), epsilon));
         return .{ .v = [_]f32{ 1.0 / a.v[0], 1.0 / a.v[1] } };
@@ -222,6 +228,12 @@ pub const Vec3 = extern struct {
         } };
     }
 
+    pub inline fn lerp(a: Vec3, b: Vec3, t: f32) Vec3 {
+        const s = Vec3.init(t, t, t);
+        const ab = b.sub(a);
+        return ab.mulAdd(s, a);
+    }
+
     pub inline fn rcp(a: Vec3) Vec3 {
         assert(!approxEq(a, initZero(), epsilon));
         return .{ .v = [_]f32{ 1.0 / a.v[0], 1.0 / a.v[1], 1.0 / a.v[2] } };
@@ -345,6 +357,12 @@ pub const Vec4 = extern struct {
         } };
     }
 
+    pub inline fn lerp(a: Vec4, b: Vec4, t: f32) Vec4 {
+        const s = Vec4.init(t, t, t, t);
+        const ab = b.sub(a);
+        return ab.mulAdd(s, a);
+    }
+
     pub inline fn rcp(a: Vec4) Vec4 {
         assert(!approxEq(a, initZero(), epsilon));
         return .{ .v = [_]f32{ 1.0 / a.v[0], 1.0 / a.v[1], 1.0 / a.v[2], 1.0 / a.v[3] } };
@@ -409,6 +427,10 @@ pub const Quat = extern struct {
             math.approxEq(f32, a.q[3], b.q[3], eps);
     }
 
+    pub inline fn add(a: Quat, b: Quat) Quat {
+        return .{ .q = [_]f32{ a.q[0] + b.q[0], a.q[1] + b.q[1], a.q[2] + b.q[2], a.q[3] + b.q[3] } };
+    }
+
     pub inline fn mul(a: Quat, b: Quat) Quat {
         // Returns the product b * a (which is the concatenation of a rotation 'a' followed by the rotation 'b').
         return .{ .q = [_]f32{
@@ -452,6 +474,22 @@ pub const Quat = extern struct {
         assert(!math.approxEq(f32, lensq, 0.0, epsilon));
         const rcp_lensq = 1.0 / lensq;
         return con.scale(rcp_lensq);
+    }
+
+    pub inline fn slerp(a: Quat, b: Quat, t: f32) Quat {
+        const cos_angle = dot(a, b);
+        const angle = math.acos(cos_angle);
+
+        const fa = math.sin((1.0 - t) * angle);
+        const fb = math.sin(t * angle);
+
+        const sin_angle = math.sin(angle);
+        assert(!math.approxEq(f32, sin_angle, 0.0, epsilon));
+        const rcp_sin_angle = 1.0 / sin_angle;
+
+        const ra = a.scale(fa);
+        const rb = b.scale(fb);
+        return ra.add(rb).scale(rcp_sin_angle);
     }
 
     pub fn initRotationMat4(m: Mat4) Quat {
@@ -1194,4 +1232,11 @@ test "Mat4 <-> Quat" {
         assert(mr.approxEq(Mat4.initRotationQuat(qr), epsilon));
         assert(qr.approxEq(Quat.initRotationMat4(mr), epsilon));
     }
+}
+
+test "slerp" {
+    const from = Quat.init(0.0, 0.0, 0.0, 1.0);
+    const to = Quat.init(0.5, 0.5, -0.5, 0.5);
+    const result = from.slerp(to, 0.5);
+    assert(result.approxEq(Quat.init(0.28867513, 0.28867513, -0.28867513, 0.86602540), epsilon));
 }
