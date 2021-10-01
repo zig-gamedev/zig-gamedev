@@ -29,6 +29,8 @@ const AudioContex = struct {
     buffer_ready_event: w.HANDLE,
     buffer_size_in_frames: u32,
     thread_handle: ?w.HANDLE,
+    samples: std.ArrayList(i16),
+    current_frame_index: u32,
 };
 
 const DemoState = struct {
@@ -42,35 +44,38 @@ const DemoState = struct {
     audio: AudioContex,
 };
 
-fn fillAudioBuffer(audio: AudioContex) void {
-    const static = struct {
-        var time: f64 = 0.0;
-    };
+fn fillAudioBuffer(audio: *AudioContex) void {
     var buffer_padding_in_frames: w.UINT = 0;
     hrPanicOnFail(audio.client.GetCurrentPadding(&buffer_padding_in_frames));
 
     const num_frames = audio.buffer_size_in_frames - buffer_padding_in_frames;
-    var ptr: [*]f32 = undefined;
 
-    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @ptrCast(*?*w.BYTE, &ptr)));
+    var ptr: [*]f32 = undefined;
+    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @ptrCast(*?[*]w.BYTE, &ptr)));
+
     var i: u32 = 0;
     while (i < num_frames) : (i += 1) {
-        const t = static.time + @intToFloat(f64, i) * (1.0 / 48_000.0);
-        ptr[i * 2 + 0] = @floatCast(f32, 0.25 * math.sin(2.0 * math.pi * 440.0 * t));
-        ptr[i * 2 + 1] = @floatCast(f32, 0.25 * math.sin(2.0 * math.pi * 440.0 * t));
+        var frame = (audio.current_frame_index + i) * 2;
+        if (frame >= audio.samples.items.len) {
+            frame = 0;
+            audio.current_frame_index = 0;
+        }
+
+        ptr[i * 2 + 0] = @intToFloat(f32, audio.samples.items[frame + 0]) / @intToFloat(f32, 0x7fff);
+        ptr[i * 2 + 1] = @intToFloat(f32, audio.samples.items[frame + 1]) / @intToFloat(f32, 0x7fff);
     }
     hrPanicOnFail(audio.render_client.ReleaseBuffer(num_frames, 0));
 
-    static.time += @intToFloat(f64, num_frames) * (1.0 / 48_000.0);
+    audio.current_frame_index += num_frames;
 }
 
 fn audioThread(ctx: ?*c_void) callconv(.C) w.DWORD {
     const audio = @ptrCast(*AudioContex, @alignCast(8, ctx));
 
-    fillAudioBuffer(audio.*);
+    fillAudioBuffer(audio);
     while (true) {
         w.WaitForSingleObject(audio.buffer_ready_event, w.INFINITE) catch unreachable;
-        fillAudioBuffer(audio.*);
+        fillAudioBuffer(audio);
     }
     return 0;
 }
@@ -91,6 +96,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         ));
         break :blk maybe_brush.?;
     };
+
     const textformat = blk: {
         var maybe_textformat: ?*dwrite.ITextFormat = null;
         hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
@@ -189,6 +195,68 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var audio_buffer_size_in_frames: w.UINT = 0;
     hrPanicOnFail(audio_client.GetBufferSize(&audio_buffer_size_in_frames));
 
+    const audio_samples = blk: {
+        hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
+        defer _ = mf.MFShutdown();
+
+        var config_attribs: *mf.IAttributes = undefined;
+        hrPanicOnFail(mf.MFCreateAttributes(&config_attribs, 1));
+        defer _ = config_attribs.Release();
+        hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, w.TRUE));
+
+        var source_reader: *mf.ISourceReader = undefined;
+        hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/acid_walk.mp3"), config_attribs, &source_reader));
+        defer _ = source_reader.Release();
+
+        var media_type: *mf.IMediaType = undefined;
+        hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &media_type));
+        defer _ = media_type.Release();
+
+        hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
+        hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
+        hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
+        hrPanicOnFail(media_type.SetUINT32(&mf.MT_FIXED_SIZE_SAMPLES, w.TRUE));
+        hrPanicOnFail(media_type.SetUINT32(&mf.MT_SAMPLE_SIZE, 16));
+        hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
+
+        var audio_samples = std.ArrayList(i16).init(gpa);
+        while (true) {
+            var flags: w.DWORD = 0;
+            var sample: ?*mf.ISample = null;
+            defer {
+                if (sample != null) {
+                    _ = sample.?.Release();
+                }
+            }
+            hrPanicOnFail(source_reader.ReadSample(
+                mf.SOURCE_READER_FIRST_AUDIO_STREAM,
+                0,
+                null,
+                &flags,
+                null,
+                &sample,
+            ));
+            if ((flags & mf.SOURCE_READERF_ENDOFSTREAM) != 0) {
+                break;
+            }
+
+            var buffer: *mf.IMediaBuffer = undefined;
+            hrPanicOnFail(sample.?.ConvertToContiguousBuffer(&buffer));
+            defer _ = buffer.Release();
+
+            var data_ptr: [*]i16 = undefined;
+            var data_len: u32 = 0;
+            hrPanicOnFail(buffer.Lock(@ptrCast(*[*]u8, &data_ptr), null, &data_len));
+            const data = data_ptr[0..@divExact(data_len, 2)];
+
+            for (data) |s| {
+                audio_samples.append(s) catch unreachable;
+            }
+            hrPanicOnFail(buffer.Unlock());
+        }
+        break :blk audio_samples;
+    };
+
     grfx.beginFrame();
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
@@ -207,6 +275,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .buffer_ready_event = audio_buffer_ready_event,
             .buffer_size_in_frames = audio_buffer_size_in_frames,
             .thread_handle = null,
+            .samples = audio_samples,
+            .current_frame_index = 0,
         },
     };
 }
@@ -217,6 +287,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     w.CloseHandle(demo.audio.buffer_ready_event);
     _ = demo.audio.render_client.Release();
     _ = demo.audio.client.Release();
+    demo.audio.samples.deinit();
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
@@ -295,39 +366,10 @@ pub fn main() !void {
 
     _ = w.SetProcessDPIAware();
 
-    hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
-    defer _ = mf.MFShutdown();
-
-    var attr: *mf.IAttributes = undefined;
-    hrPanicOnFail(mf.MFCreateAttributes(&attr, 1));
-    defer _ = attr.Release();
-    hrPanicOnFail(attr.SetUINT32(&mf.LOW_LATENCY, w.TRUE));
-
-    var source_reader: *mf.ISourceReader = undefined;
-    hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/acid_walk.mp3"), attr, &source_reader));
-    defer _ = source_reader.Release();
-
-    var native_media_type: *mf.IMediaType = undefined;
-    hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &native_media_type));
-
-    hrPanicOnFail(native_media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
-    hrPanicOnFail(native_media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_Float));
-    hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, native_media_type));
-
-    hrPanicOnFail(source_reader.GetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, &native_media_type));
-
-    var major_type: w.GUID = undefined;
-    hrPanicOnFail(native_media_type.GetGUID(&mf.MT_MAJOR_TYPE, &major_type));
-    std.log.info("MT_MAJOR_TYPE: {}", .{major_type});
-
-    var subtype: w.GUID = undefined;
-    hrPanicOnFail(native_media_type.GetGUID(&mf.MT_SUBTYPE, &subtype));
-    std.log.info("MT_SUBTYPE: {}", .{subtype});
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const leaked = gpa.deinit();
-        std.debug.assert(leaked == false);
+        assert(leaked == false);
     }
     const allocator = &gpa.allocator;
 

@@ -19,6 +19,7 @@
 !*.jpg
 !*.hdr
 !*.wav
+!*.mp3
 
 !README
 !.ignore

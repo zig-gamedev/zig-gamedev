@@ -8,6 +8,8 @@ const DWORD = windows.DWORD;
 const WINAPI = windows.WINAPI;
 const GUID = windows.GUID;
 const LPCWSTR = windows.LPCWSTR;
+const BYTE = windows.BYTE;
+const LONGLONG = windows.LONGLONG;
 
 // 0x0002 for Windows 7+
 pub const SDK_VERSION: UINT = 0x0002;
@@ -20,6 +22,14 @@ pub const SOURCE_READER_ANY_STREAM: DWORD = 0xfffffffe;
 pub const SOURCE_READER_FIRST_AUDIO_STREAM: DWORD = 0xfffffffd;
 pub const SOURCE_READER_FIRST_VIDEO_STREAM: DWORD = 0xfffffffc;
 pub const SOURCE_READER_MEDIASOURCE: DWORD = 0xffffffff;
+
+pub const SOURCE_READERF_ERROR: DWORD = 0x1;
+pub const SOURCE_READERF_ENDOFSTREAM: DWORD = 0x2;
+pub const SOURCE_READERF_NEWSTREAM: DWORD = 0x4;
+pub const SOURCE_READERF_NATIVEMEDIATYPECHANGED: DWORD = 0x10;
+pub const SOURCE_READERF_CURRENTMEDIATYPECHANGED: DWORD = 0x20;
+pub const SOURCE_READERF_STREAMTICK: DWORD = 0x100;
+pub const SOURCE_READERF_ALLEFFECTSREMOVED: DWORD = 0x200;
 
 pub extern "mfplat" fn MFStartup(version: ULONG, flags: DWORD) callconv(WINAPI) HRESULT;
 pub extern "mfplat" fn MFShutdown() callconv(WINAPI) HRESULT;
@@ -42,6 +52,9 @@ pub const IAttributes = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
+            pub inline fn GetUINT32(self: *T, guid: *const GUID, value: *UINT32) HRESULT {
+                return self.v.attribs.GetUINT32(self, guid, value);
+            }
             pub inline fn GetGUID(self: *T, key: *const GUID, value: *GUID) HRESULT {
                 return self.v.attribs.GetGUID(self, key, value);
             }
@@ -60,7 +73,7 @@ pub const IAttributes = extern struct {
             GetItemType: *c_void,
             CompareItem: *c_void,
             Compare: *c_void,
-            GetUINT32: *c_void,
+            GetUINT32: fn (*T, *const GUID, *UINT32) callconv(WINAPI) HRESULT,
             GetUINT64: *c_void,
             GetDouble: *c_void,
             GetGUID: fn (*T, *const GUID, *GUID) callconv(WINAPI) HRESULT,
@@ -124,6 +137,25 @@ pub const ISourceReader = extern struct {
             ) HRESULT {
                 return self.v.reader.SetCurrentMediaType(self, stream_index, reserved, media_type);
             }
+            pub inline fn ReadSample(
+                self: *T,
+                stream_index: DWORD,
+                control_flags: DWORD,
+                actual_stream_index: ?*DWORD,
+                stream_flags: ?*DWORD,
+                timestamp: ?*LONGLONG,
+                sample: *?*ISample,
+            ) HRESULT {
+                return self.v.reader.ReadSample(
+                    self,
+                    stream_index,
+                    control_flags,
+                    actual_stream_index,
+                    stream_flags,
+                    timestamp,
+                    sample,
+                );
+            }
         };
     }
 
@@ -135,7 +167,7 @@ pub const ISourceReader = extern struct {
             GetCurrentMediaType: fn (*T, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentMediaType: fn (*T, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentPosition: *c_void,
-            ReadSample: *c_void,
+            ReadSample: fn (*T, DWORD, DWORD, ?*DWORD, ?*DWORD, ?*LONGLONG, *?*ISample) callconv(WINAPI) HRESULT,
             Flush: *c_void,
             GetServiceForStream: *c_void,
             GetPresentationAttribute: *c_void,
@@ -171,10 +203,84 @@ pub const IMediaType = extern struct {
     }
 };
 
+pub const ISample = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        attribs: IAttributes.VTable(Self),
+        sample: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IAttributes.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn ConvertToContiguousBuffer(self: *T, buffer: **IMediaBuffer) HRESULT {
+                return self.v.sample.ConvertToContiguousBuffer(self, buffer);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetSampleFlags: *c_void,
+            SetSampleFlags: *c_void,
+            GetSampleTime: *c_void,
+            SetSampleTime: *c_void,
+            GetSampleDuration: *c_void,
+            SetSampleDuration: *c_void,
+            GetBufferCount: *c_void,
+            GetBufferByIndex: *c_void,
+            ConvertToContiguousBuffer: fn (*T, **IMediaBuffer) callconv(WINAPI) HRESULT,
+            AddBuffer: *c_void,
+            RemoveBufferByIndex: *c_void,
+            RemoveAllBuffers: *c_void,
+            GetTotalLength: *c_void,
+            CopyToBuffer: *c_void,
+        };
+    }
+};
+
+pub const IMediaBuffer = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        buffer: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn Lock(self: *T, ptr: *[*]BYTE, max_len: ?*DWORD, current_len: ?*DWORD) HRESULT {
+                return self.v.buffer.Lock(self, ptr, max_len, current_len);
+            }
+            pub inline fn Unlock(self: *T) HRESULT {
+                return self.v.buffer.Unlock(self);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            Lock: fn (*T, *[*]BYTE, ?*DWORD, ?*DWORD) callconv(WINAPI) HRESULT,
+            Unlock: fn (*T) callconv(WINAPI) HRESULT,
+            GetCurrentLength: *c_void,
+            SetCurrentLength: *c_void,
+            GetMaxLength: *c_void,
+        };
+    }
+};
+
 pub const LOW_LATENCY = GUID.parse("{9C27891A-ED7A-40e1-88E8-B22727A024EE}"); // {UINT32 (BOOL)}
 
 pub const MT_MAJOR_TYPE = GUID.parse("{48eba18e-f8c9-4687-bf11-0a74c9f96a8f}"); // {GUID}
 pub const MT_SUBTYPE = GUID.parse("{f7e34c9a-42e8-4714-b74b-cb29d72c35e5}"); // {GUID}
+
+pub const MT_ALL_SAMPLES_INDEPENDENT = GUID.parse("{c9173739-5e56-461c-b713-46fb995cb95f}"); // {UINT32 (BOOL)}
+pub const MT_FIXED_SIZE_SAMPLES = GUID.parse("{b8ebefaf-b718-4e04-b0a9-116775e3321b}"); // {UINT32 (BOOL)}
+pub const MT_SAMPLE_SIZE = GUID.parse("{dad3ab78-1990-408b-bce2-eba673dacc10}"); // {UINT32}
 
 pub const AudioFormat_Base = GUID.parse("{00000000-0000-0010-8000-00aa00389b71}");
 pub const AudioFormat_PCM = GUID.parse("{00000001-0000-0010-8000-00aa00389b71}");

@@ -290,7 +290,7 @@ pub const IAudioRenderClient = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetBuffer(self: *T, num_frames_requested: UINT32, data: ?*?*BYTE) HRESULT {
+            pub inline fn GetBuffer(self: *T, num_frames_requested: UINT32, data: ?*?[*]BYTE) HRESULT {
                 return self.v.renderclient.GetBuffer(self, num_frames_requested, data);
             }
             pub inline fn ReleaseBuffer(self: *T, num_frames_written: UINT32, flags: DWORD) HRESULT {
@@ -301,7 +301,7 @@ pub const IAudioRenderClient = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetBuffer: fn (*T, UINT32, ?*?*BYTE) callconv(WINAPI) HRESULT,
+            GetBuffer: fn (*T, UINT32, ?*?[*]BYTE) callconv(WINAPI) HRESULT,
             ReleaseBuffer: fn (*T, UINT32, DWORD) callconv(WINAPI) HRESULT,
         };
     }
