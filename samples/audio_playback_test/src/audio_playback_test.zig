@@ -332,12 +332,16 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.grfx.releasePipeline(demo.lines_pso);
     _ = demo.grfx.releaseResource(demo.lines_buffer);
+
     while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
-    hrPanicOnFail(demo.audio.client.Stop());
+    _ = w.TerminateThread(demo.audio.thread_handle.?, 0);
     w.CloseHandle(demo.audio.buffer_ready_event);
+    w.CloseHandle(demo.audio.thread_handle.?);
+    hrPanicOnFail(demo.audio.client.Stop());
     _ = demo.audio.render_client.Release();
     _ = demo.audio.client.Release();
     demo.audio.samples.deinit();
+
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
