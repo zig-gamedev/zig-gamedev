@@ -10,11 +10,15 @@ const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
+const vm = common.vectormath;
 const math = std.math;
 const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const Vec2 = vm.Vec2;
+
+const num_vis_samples = 200;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -31,6 +35,7 @@ const AudioContex = struct {
     thread_handle: ?w.HANDLE,
     samples: std.ArrayList(i16),
     current_frame_index: u32,
+    is_locked: bool,
 };
 
 const DemoState = struct {
@@ -42,9 +47,15 @@ const DemoState = struct {
     textformat: *dwrite.ITextFormat,
 
     audio: AudioContex,
+
+    lines_pso: gr.PipelineHandle,
+    lines_buffer: gr.ResourceHandle,
 };
 
 fn fillAudioBuffer(audio: *AudioContex) void {
+    while (@cmpxchgWeak(bool, &audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
+    defer @atomicStore(bool, &audio.is_locked, false, .Release);
+
     var buffer_padding_in_frames: w.UINT = 0;
     hrPanicOnFail(audio.client.GetCurrentPadding(&buffer_padding_in_frames));
 
@@ -74,15 +85,18 @@ fn audioThread(ctx: ?*c_void) callconv(.C) w.DWORD {
 
     fillAudioBuffer(audio);
     while (true) {
-        w.WaitForSingleObject(audio.buffer_ready_event, w.INFINITE) catch unreachable;
+        w.WaitForSingleObject(audio.buffer_ready_event, w.INFINITE) catch return 0;
         fillAudioBuffer(audio);
     }
+
     return 0;
 }
 
 fn init(gpa: *std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
+    grfx.present_flags = 0;
+    grfx.present_interval = 1;
 
     var arena_allocator = std.heap.ArenaAllocator.init(gpa);
     defer arena_allocator.deinit();
@@ -214,9 +228,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
         hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
         hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
-        hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
-        hrPanicOnFail(media_type.SetUINT32(&mf.MT_FIXED_SIZE_SAMPLES, w.TRUE));
-        hrPanicOnFail(media_type.SetUINT32(&mf.MT_SAMPLE_SIZE, 16));
+        hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 2));
+        hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BITS_PER_SAMPLE, 16));
+        hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, 48_000));
         hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
         var audio_samples = std.ArrayList(i16).init(gpa);
@@ -257,6 +271,36 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk audio_samples;
     };
 
+    const lines_pso = blk: {
+        const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
+            d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+        };
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.InputLayout = .{
+            .pInputElementDescs = &input_layout_desc,
+            .NumElements = input_layout_desc.len,
+        };
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .LINE;
+
+        break :blk grfx.createGraphicsShaderPipeline(
+            &arena_allocator.allocator,
+            &pso_desc,
+            "content/shaders/lines.vs.cso",
+            "content/shaders/lines.ps.cso",
+        );
+    };
+
+    const lines_buffer = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(num_vis_samples * @sizeOf(Vec2)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
+
     grfx.beginFrame();
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
@@ -277,12 +321,18 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .thread_handle = null,
             .samples = audio_samples,
             .current_frame_index = 0,
+            .is_locked = true,
         },
+        .lines_pso = lines_pso,
+        .lines_buffer = lines_buffer,
     };
 }
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    _ = demo.grfx.releasePipeline(demo.lines_pso);
+    _ = demo.grfx.releaseResource(demo.lines_buffer);
+    while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
     hrPanicOnFail(demo.audio.client.Stop());
     w.CloseHandle(demo.audio.buffer_ready_event);
     _ = demo.audio.render_client.Release();
@@ -311,6 +361,31 @@ fn draw(demo: *DemoState) void {
     const back_buffer = grfx.getBackBuffer();
 
     grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    grfx.addTransitionBarrier(demo.lines_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
+    grfx.flushResourceBarriers();
+
+    {
+        while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
+        defer @atomicStore(bool, &demo.audio.is_locked, false, .Release);
+
+        const sample_index = demo.audio.current_frame_index * 2;
+
+        const upload = grfx.allocateUploadBufferRegion(Vec2, num_vis_samples);
+        for (upload.cpu_slice) |_, i| {
+            const y = @intToFloat(f32, demo.audio.samples.items[sample_index + i * 2]) / @intToFloat(f32, 0x7fff);
+            const x = -1.0 + 2.0 * @intToFloat(f32, i) / @intToFloat(f32, num_vis_samples - 1);
+            upload.cpu_slice[i] = Vec2.init(x, y);
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(demo.lines_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+    }
+
+    grfx.addTransitionBarrier(demo.lines_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
     grfx.flushResourceBarriers();
 
     grfx.cmdlist.OMSetRenderTargets(
@@ -326,6 +401,15 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
+    grfx.setCurrentPipeline(demo.lines_pso);
+    grfx.cmdlist.IASetPrimitiveTopology(.LINESTRIP);
+    grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+        .BufferLocation = grfx.getResource(demo.lines_buffer).GetGPUVirtualAddress(),
+        .SizeInBytes = num_vis_samples * @sizeOf(Vec2),
+        .StrideInBytes = @sizeOf(Vec2),
+    }});
+    grfx.cmdlist.DrawInstanced(num_vis_samples, 1, 0, 0);
+
     demo.gui.draw(grfx);
 
     grfx.beginDraw2d();
@@ -339,7 +423,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.DrawText(
+        lib.drawText(
             grfx.d2d.context,
             text,
             demo.textformat,
@@ -358,13 +442,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    _ = w.ole32.CoInitializeEx(
-        null,
-        @enumToInt(w.COINIT_APARTMENTTHREADED) | @enumToInt(w.COINIT_DISABLE_OLE1DDE),
-    );
-    defer w.ole32.CoUninitialize();
-
-    _ = w.SetProcessDPIAware();
+    lib.init();
+    defer lib.deinit();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
@@ -384,12 +463,12 @@ pub fn main() !void {
         0,
         null,
     ).?;
-    w.kernel32.Sleep(1);
     hrPanicOnFail(demo.audio.client.Start());
+    @atomicStore(bool, &demo.audio.is_locked, false, .Release);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch unreachable;
+        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch false;
         if (has_message) {
             _ = w.user32.translateMessage(&message);
             _ = w.user32.dispatchMessageA(&message);

@@ -87,6 +87,7 @@ pub const GraphicsContext = struct {
     dwrite_factory: *dwrite.IFactory,
     wic_factory: *wic.IImagingFactory,
     present_flags: w.UINT,
+    present_interval: w.UINT,
 
     pub fn init(window: w.HWND) GraphicsContext {
         const wic_factory = blk: {
@@ -113,6 +114,7 @@ pub const GraphicsContext = struct {
         defer _ = factory.Release();
 
         var present_flags: w.UINT = 0;
+        var present_interval: w.UINT = 0;
         {
             var maybe_factory5: ?*dxgi.IFactory5 = null;
             var hr = factory.QueryInterface(&dxgi.IID_IFactory5, @ptrCast(*?*c_void, &maybe_factory5));
@@ -494,6 +496,7 @@ pub const GraphicsContext = struct {
             .dwrite_factory = dwrite_factory,
             .wic_factory = wic_factory,
             .present_flags = present_flags,
+            .present_interval = present_interval,
         };
     }
 
@@ -560,7 +563,7 @@ pub const GraphicsContext = struct {
         gr.flushGpuCommands();
 
         gr.frame_fence_counter += 1;
-        hrPanicOnFail(gr.swapchain.Present(0, gr.present_flags));
+        hrPanicOnFail(gr.swapchain.Present(gr.present_interval, gr.present_flags));
         tracy.frameMark();
         hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 

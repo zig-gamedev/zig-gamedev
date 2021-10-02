@@ -439,7 +439,7 @@ fn drawLoadingScreen(grfx: *gr.GraphicsContext, textformat: *dwrite.ITextFormat,
 
     grfx.d2d.context.Clear(&d2d1.colorf.Black);
     brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-    lib.DrawText(
+    lib.drawText(
         grfx.d2d.context,
         "Loading...",
         textformat,
@@ -1432,7 +1432,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.DrawText(
+        lib.drawText(
             grfx.d2d.context,
             text,
             demo.normal_tfmt,
@@ -1451,11 +1451,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    // WIC requires below call (when we pass COINIT_MULTITHREADED '_ = wic_factory.Release()' crashes on exit).
-    _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
-    defer w.ole32.CoUninitialize();
-
-    _ = w.SetProcessDPIAware();
+    lib.init();
+    defer lib.deinit();
 
     var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

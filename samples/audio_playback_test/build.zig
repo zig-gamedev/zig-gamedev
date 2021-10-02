@@ -2,6 +2,29 @@ const std = @import("std");
 const Builder = std.build.Builder;
 const Pkg = std.build.Pkg;
 
+fn makeDxcCmd(
+    comptime input_path: []const u8,
+    comptime entry_point: []const u8,
+    comptime output_filename: []const u8,
+    comptime profile: []const u8,
+    comptime define: []const u8,
+) [9][]const u8 {
+    // NOTE(mziulek): PIX reports warning about non-retail shader version. Why?
+    const shader_ver = "6_6";
+    const shader_dir = "content/shaders/";
+    return [_][]const u8{
+        "../../external/bin/dxc/dxc.exe",
+        input_path,
+        if (entry_point.len == 0) "" else "/E " ++ entry_point,
+        "/Fo " ++ shader_dir ++ output_filename,
+        "/T " ++ profile ++ "_" ++ shader_ver,
+        if (define.len == 0) "" else "/D " ++ define,
+        "/WX",
+        "/Ges",
+        "/O3",
+    };
+}
+
 pub fn build(b: *std.build.Builder) void {
     const files = [_][]const u8{
         "D3D12Core.dll",
@@ -20,36 +43,31 @@ pub fn build(b: *std.build.Builder) void {
         ) catch unreachable;
     }
 
-    const hlsl_step = b.step("hlsl", "Build shaders");
-    var hlsl_command = [_][]const u8{
-        "../../external/bin/dxc/dxc.exe",
-        "path to input file",
-        "entry point name",
-        "path to output file",
-        "target profile",
-        "/D ",
-        "/WX",
-        "/Ges",
-        "/O3",
-    };
-    const shader_dir = "content/shaders/";
-    const shader_ver = "6_6";
+    const dxc_step = b.step("dxc", "Build shaders");
 
-    hlsl_command[1] = "../../libs/common/common.hlsl";
-    hlsl_command[2] = "/E vsImGui";
-    hlsl_command[3] = "/Fo " ++ shader_dir ++ "imgui.vs.cso";
-    hlsl_command[4] = "/T vs_" ++ shader_ver;
-    hlsl_command[5] = "/D PSO__IMGUI";
-    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
+    var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    hlsl_command[1] = "../../libs/common/common.hlsl";
-    hlsl_command[2] = "/E psImGui";
-    hlsl_command[3] = "/Fo " ++ shader_dir ++ "imgui.ps.cso";
-    hlsl_command[4] = "/T ps_" ++ shader_ver;
-    hlsl_command[5] = "/D PSO__IMGUI";
-    hlsl_step.dependOn(&b.addSystemCommand(&hlsl_command).step);
+    dxc_command = makeDxcCmd(
+        "src/audio_playback_test.hlsl",
+        "vsLines",
+        "lines.vs.cso",
+        "vs",
+        "PSO__LINES",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/audio_playback_test.hlsl",
+        "psLines",
+        "lines.ps.cso",
+        "ps",
+        "PSO__LINES",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    b.getInstallStep().dependOn(hlsl_step);
+    b.getInstallStep().dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which

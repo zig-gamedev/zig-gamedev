@@ -311,7 +311,7 @@ const DemoState = struct {
             ) catch unreachable;
 
             demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
-            lib.DrawText(
+            lib.drawText(
                 grfx.d2d.context,
                 text,
                 demo.textformat,
@@ -331,11 +331,8 @@ const DemoState = struct {
 };
 
 pub fn main() !void {
-    // WIC requires below call (when we pass COINIT_MULTITHREADED '_ = wic_factory.Release()' crashes on exit).
-    _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
-    defer w.ole32.CoUninitialize();
-
-    _ = w.SetProcessDPIAware();
+    lib.init();
+    defer lib.deinit();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

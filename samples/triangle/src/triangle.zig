@@ -19,10 +19,8 @@ pub fn main() !void {
     const window_width = 900;
     const window_height = 900;
 
-    _ = w.ole32.CoInitializeEx(null, @enumToInt(w.COINIT_APARTMENTTHREADED));
-    defer w.ole32.CoUninitialize();
-
-    _ = w.SetProcessDPIAware();
+    lib.init();
+    defer lib.deinit();
 
     var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

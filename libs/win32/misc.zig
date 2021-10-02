@@ -64,6 +64,8 @@ pub const IUnknown = extern struct {
     }
 };
 
+pub extern "kernel32" fn ExitThread(DWORD) callconv(WINAPI) void;
+
 pub extern "user32" fn SetProcessDPIAware() callconv(WINAPI) BOOL;
 
 pub extern "user32" fn LoadCursorA(

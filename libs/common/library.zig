@@ -359,7 +359,7 @@ pub fn newImGuiFrame(delta_time: f32) void {
     c.igNewFrame();
 }
 
-pub fn DrawText(
+pub fn drawText(
     devctx: *d2d1.IDeviceContext6,
     text: []const u8,
     format: *dwrite.ITextFormat,
@@ -379,4 +379,16 @@ pub fn DrawText(
         d2d1.DRAW_TEXT_OPTIONS_NONE,
         .NATURAL,
     );
+}
+
+pub fn init() void {
+    _ = w.ole32.CoInitializeEx(
+        null,
+        @enumToInt(w.COINIT_APARTMENTTHREADED) | @enumToInt(w.COINIT_DISABLE_OLE1DDE),
+    );
+    _ = w.SetProcessDPIAware();
+}
+
+pub fn deinit() void {
+    w.ole32.CoUninitialize();
 }
