@@ -376,7 +376,11 @@ fn draw(demo: *DemoState) void {
 
         const upload = grfx.allocateUploadBufferRegion(Vec2, num_vis_samples);
         for (upload.cpu_slice) |_, i| {
-            const y = @intToFloat(f32, demo.audio.samples.items[sample_index + i * 2]) / @intToFloat(f32, 0x7fff);
+            const y = if (sample_index + i * 2 >= demo.audio.samples.items.len)
+                0.0
+            else
+                @intToFloat(f32, demo.audio.samples.items[sample_index + i * 2]) / @intToFloat(f32, 0x7fff);
+
             const x = -1.0 + 2.0 * @intToFloat(f32, i) / @intToFloat(f32, num_vis_samples - 1);
             upload.cpu_slice[i] = Vec2.init(x, y);
         }
