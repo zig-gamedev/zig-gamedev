@@ -282,6 +282,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.NumRenderTargets = 1;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .LINE;
+        pso_desc.DepthStencilState.DepthEnable = w.FALSE;
 
         break :blk grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,
