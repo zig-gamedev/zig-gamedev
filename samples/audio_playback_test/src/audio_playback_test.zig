@@ -66,18 +66,16 @@ fn fillAudioBuffer(audio: *AudioContex) void {
 
     var i: u32 = 0;
     while (i < num_frames) : (i += 1) {
-        var frame = (audio.current_frame_index + i) * 2;
-        if (frame >= audio.samples.items.len) {
-            frame = 0;
+        const frame = audio.current_frame_index;
+        ptr[i * 2 + 0] = @intToFloat(f32, audio.samples.items[frame * 2 + 0]) / @intToFloat(f32, 0x7fff);
+        ptr[i * 2 + 1] = @intToFloat(f32, audio.samples.items[frame * 2 + 1]) / @intToFloat(f32, 0x7fff);
+
+        audio.current_frame_index += 1;
+        if (audio.current_frame_index * 2 >= audio.samples.items.len) {
             audio.current_frame_index = 0;
         }
-
-        ptr[i * 2 + 0] = @intToFloat(f32, audio.samples.items[frame + 0]) / @intToFloat(f32, 0x7fff);
-        ptr[i * 2 + 1] = @intToFloat(f32, audio.samples.items[frame + 1]) / @intToFloat(f32, 0x7fff);
     }
     hrPanicOnFail(audio.render_client.ReleaseBuffer(num_frames, 0));
-
-    audio.current_frame_index += num_frames;
 }
 
 fn audioThread(ctx: ?*c_void) callconv(.C) w.DWORD {
@@ -372,14 +370,14 @@ fn draw(demo: *DemoState) void {
         while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
         defer @atomicStore(bool, &demo.audio.is_locked, false, .Release);
 
-        const sample_index = demo.audio.current_frame_index * 2;
+        const frame = demo.audio.current_frame_index;
 
         const upload = grfx.allocateUploadBufferRegion(Vec2, num_vis_samples);
         for (upload.cpu_slice) |_, i| {
-            const y = if (sample_index + i * 2 >= demo.audio.samples.items.len)
+            const y = if ((frame + i) * 2 >= demo.audio.samples.items.len)
                 0.0
             else
-                @intToFloat(f32, demo.audio.samples.items[sample_index + i * 2]) / @intToFloat(f32, 0x7fff);
+                @intToFloat(f32, demo.audio.samples.items[(frame + i) * 2]) / @intToFloat(f32, 0x7fff);
 
             const x = -1.0 + 2.0 * @intToFloat(f32, i) / @intToFloat(f32, num_vis_samples - 1);
             upload.cpu_slice[i] = Vec2.init(x, y);
