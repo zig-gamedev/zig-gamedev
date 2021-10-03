@@ -16,7 +16,7 @@ void psLines(
     float4 position_window : SV_Position,
     out float4 out_color : SV_Target0
 ) {
-    out_color = float4(1.0, 0.5, 0.0, 1.0);
+    out_color = float4(1.0, 1.0, 0.0, 1.0);
 }
 
 #endif

@@ -18,7 +18,7 @@ const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const Vec2 = vm.Vec2;
 
-const num_vis_samples = 200;
+const num_vis_samples = 800;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -353,8 +353,6 @@ fn update(demo: *DemoState) void {
     demo.frame_stats.update();
 
     lib.newImGuiFrame(demo.frame_stats.delta_time);
-
-    c.igShowDemoWindow(null);
 }
 
 fn draw(demo: *DemoState) void {
@@ -375,13 +373,19 @@ fn draw(demo: *DemoState) void {
 
         const upload = grfx.allocateUploadBufferRegion(Vec2, num_vis_samples);
         for (upload.cpu_slice) |_, i| {
-            const y = if ((frame + i) * 2 >= demo.audio.samples.items.len)
-                0.0
-            else
-                @intToFloat(f32, demo.audio.samples.items[(frame + i) * 2]) / @intToFloat(f32, 0x7fff);
-
+            const y = blk: {
+                if ((frame + i) * 2 >= demo.audio.samples.items.len) {
+                    break :blk 0.0;
+                } else {
+                    const l = @intToFloat(f32, demo.audio.samples.items[(frame + i) * 2 + 0]) /
+                        @intToFloat(f32, 0x7fff);
+                    const r = @intToFloat(f32, demo.audio.samples.items[(frame + i) * 2 + 1]) /
+                        @intToFloat(f32, 0x7fff);
+                    break :blk (l + r) * 0.5;
+                }
+            };
             const x = -1.0 + 2.0 * @intToFloat(f32, i) / @intToFloat(f32, num_vis_samples - 1);
-            upload.cpu_slice[i] = Vec2.init(x, y);
+            upload.cpu_slice[i] = Vec2.init(0.95 * x, y);
         }
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(demo.lines_buffer),
