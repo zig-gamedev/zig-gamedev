@@ -6,6 +6,7 @@ const d2d1 = win32.d2d1;
 const c = @import("c.zig");
 const panic = std.debug.panic;
 const assert = std.debug.assert;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 // TODO(mziulek): Handle more error codes from:
 // https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
@@ -387,6 +388,41 @@ pub fn init() void {
         @enumToInt(w.COINIT_APARTMENTTHREADED) | @enumToInt(w.COINIT_DISABLE_OLE1DDE),
     );
     _ = w.SetProcessDPIAware();
+
+    var version: w.OSVERSIONINFOW = undefined;
+    _ = w.ntdll.RtlGetVersion(&version);
+
+    var os_is_supported = false;
+    if (version.dwMajorVersion > 10) {
+        os_is_supported = true;
+    } else if (version.dwMajorVersion == 10 and version.dwBuildNumber >= 18363) {
+        os_is_supported = true;
+    }
+
+    const d3d12core_dll = w.kernel32.LoadLibraryW(L("D3D12Core.dll"));
+    if (d3d12core_dll == null) {
+        os_is_supported = false;
+    } else {
+        _ = w.kernel32.FreeLibrary(d3d12core_dll.?);
+    }
+
+    if (!os_is_supported) {
+        _ = w.user32.messageBoxA(
+            null,
+            \\This application requires:
+            \\
+            \\Windows 10 1909 Build 18363.1350+ or
+            \\Windows 10 2004 Build 19041.789+ or
+            \\Windows 10 20H2 Build 19042.789+ or
+            \\Windows 10 21H1 or newer
+            \\
+            \\Please update your Windows version and try again.
+        ,
+            "Error",
+            w.user32.MB_OK | w.user32.MB_ICONERROR,
+        ) catch 0;
+        w.kernel32.ExitProcess(0);
+    }
 }
 
 pub fn deinit() void {
