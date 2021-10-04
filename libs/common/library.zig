@@ -410,12 +410,12 @@ pub fn init() void {
         _ = w.user32.messageBoxA(
             null,
             \\This application can't run on currently installed version of Windows.
-            \\This application is compatible with:
+            \\Following versions are supported:
             \\
-            \\Windows 10 May 2021 Update (ver. 21H1) or newer
-            \\Windows 10 October 2020 Update (ver. 20H2, Build 19042.789+)
-            \\Windows 10 May 2020 Update (ver. 2004, Build 19041.789+)
-            \\Windows 10 November 2019 Update (ver. 1909, Build 18363.1350+)
+            \\Windows 10 May 2021 Update (Build 19043) or newer
+            \\Windows 10 October 2020 Update (Build 19042.789+)
+            \\Windows 10 May 2020 Update (Build 19041.789+)
+            \\Windows 10 November 2019 Update (Build 18363.1350+)
             \\
             \\Please update your Windows version and try again.
         ,

@@ -3,7 +3,7 @@ This repository contains a collection of graphics samples, libraries and other t
 
 ## Building
 
-The only dependency to build sample applications is [latest Zig compiler (master)](https://ziglang.org/download/). Visual Studio or Windows SDK is *not needed*. This repository is fully standalone.
+The only dependency to build sample applications is [latest Zig compiler (master)](https://ziglang.org/download/). Neither Visual Studio nor Windows SDK need to be installed. This repository is fully standalone.
 
 To build and run sample application (assuming that 'zig.exe' is in PATH):
 
@@ -13,12 +13,12 @@ To build and run sample application (assuming that 'zig.exe' is in PATH):
 
 ## Requirements
 
-This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/) which allows to always use latest DirectX 12 features regardless of Windows version (this will work from Windows 10 November 2019 Update). In particular, following Windows versions are supported:
+This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/) which allows to always use latest DirectX 12 features regardless of Windows version (this works from Windows 10 November 2019 Update). In particular, following Windows versions are supported:
 
-* Windows 10 May 2021 Update (ver. 21H1) or newer
-* Windows 10 October 2020 Update (ver. 20H2, Build 19042.789+)
-* Windows 10 May 2020 Update (ver. 2004, Build 19041.789+)
-* Windows 10 November 2019 Update (ver. 1909, Build 18363.1350+)
+* Windows 10 May 2021 Update (Build 19043) or newer
+* Windows 10 October 2020 Update (Build 19042.789+)
+* Windows 10 May 2020 Update (Build 19041.789+)
+* Windows 10 November 2019 Update (Build 18363.1350+)
 
 ## Samples
 1. [simple raytracer](samples/simple_raytracer): This sample..
