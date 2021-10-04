@@ -1,5 +1,5 @@
 # zig-gamedev project
-This repository contains a collection of graphics samples, libraries and other useful tools for game developers targeting Windows platform. Code is written in [Zig](https://ziglang.org/) programming language.
+This repository contains a collection of graphics samples, libraries and other tools for game developers using [Zig](https://ziglang.org/) programming language and targeting Windows platform. Sample applications use DirectX 12 for 3D rendering, Direct2D and DirectWrite for 2D rendering, WASAPI for audio playback and DirectML for high-performance, GPU-accelerated Machine Learning.
 
 ## Samples
 1. [simple raytracer](samples/simple_raytracer): This sample..
