@@ -409,12 +409,13 @@ pub fn init() void {
     if (!os_is_supported) {
         _ = w.user32.messageBoxA(
             null,
-            \\This application requires:
+            \\This application can't run on currently installed version of Windows.
+            \\This application is compatible with:
             \\
-            \\Windows 10 1909 Build 18363.1350+ or
-            \\Windows 10 2004 Build 19041.789+ or
-            \\Windows 10 20H2 Build 19042.789+ or
-            \\Windows 10 21H1 or newer
+            \\Windows 10 May 2021 Update (ver. 21H1) or newer
+            \\Windows 10 October 2020 Update (ver. 20H2, Build 19042.789+)
+            \\Windows 10 May 2020 Update (ver. 2004, Build 19041.789+)
+            \\Windows 10 November 2019 Update (ver. 1909, Build 18363.1350+)
             \\
             \\Please update your Windows version and try again.
         ,

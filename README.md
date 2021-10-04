@@ -1,6 +1,15 @@
 # zig-gamedev project
 This repository contains a collection of graphics samples, libraries and other tools for game developers using [Zig](https://ziglang.org/) programming language and targeting Windows platform. Sample applications use [DirectX 12](https://docs.microsoft.com/en-us/windows/win32/direct3d12/directx-12-programming-guide) for 3D rendering, [Direct2D and DirectWrite](https://docs.microsoft.com/en-us/windows/win32/direct2d/direct2d-portal) for 2D rendering, [WASAPI](https://docs.microsoft.com/en-us/windows/win32/coreaudio/wasapi) for audio playback and [DirectML](https://docs.microsoft.com/en-us/windows/ai/directml/dml) for high-performance, GPU-accelerated Machine Learning.
 
+## Building
+
+The only dependency to build sample applications is [latest Zig compiler (master)](https://ziglang.org/download/). Visual Studio or Windows SDK is *not needed*. This repository is fully standalone.
+
+To build and run sample application:
+
+1. 'cd' to its root directory (for example `cd samples/simple_raytracer`)
+1. Run `zig build run`
+
 ## Samples
 1. [simple raytracer](samples/simple_raytracer): This sample..
 
