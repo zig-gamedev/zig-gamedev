@@ -26,22 +26,13 @@ fn makeDxcCmd(
 }
 
 pub fn build(b: *std.build.Builder) void {
-    const files = [_][]const u8{
-        "D3D12Core.dll",
-        "D3D12Core.pdb",
-        "D3D12SDKLayers.dll",
-        "D3D12SDKLayers.pdb",
-    };
-    std.fs.cwd().makePath("zig-out/bin/d3d12") catch unreachable;
-    inline for (files) |file| {
-        std.fs.Dir.copyFile(
-            std.fs.cwd(),
-            "../../external/bin/d3d12/" ++ file,
-            std.fs.cwd(),
-            "zig-out/bin/d3d12/" ++ file,
-            .{},
-        ) catch unreachable;
-    }
+    b.installFile("../../external/bin/d3d12/D3D12Core.dll", "bin/d3d12/D3D12Core.dll");
+    b.installFile("../../external/bin/d3d12/D3D12Core.pdb", "bin/d3d12/D3D12Core.pdb");
+    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.dll", "bin/d3d12/D3D12SDKLayers.dll");
+    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.pdb", "bin/d3d12/D3D12SDKLayers.pdb");
+    b.installDirectory(
+        .{ .source_dir = "content", .install_dir = .{ .custom = "" }, .install_subdir = "bin/content" },
+    );
 
     const dxc_step = b.step("dxc", "Build shaders");
 
