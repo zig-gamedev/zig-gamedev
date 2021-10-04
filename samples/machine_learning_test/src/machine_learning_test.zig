@@ -103,7 +103,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         };
 
         var dml_operator: *dml.IOperator = undefined;
-        hrPanicOnFail(dml_device.CreateOperator(&operator_desc, &dml.IID_IOperator, @ptrCast(*?*c_void, &dml_operator)));
+        hrPanicOnFail(dml_device.CreateOperator(
+            &operator_desc,
+            &dml.IID_IOperator,
+            @ptrCast(*?*c_void, &dml_operator),
+        ));
         break :blk dml_operator;
     };
     defer _ = dml_operator.Release();
