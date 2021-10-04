@@ -443,11 +443,13 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
+    // Draw background image.
     grfx.setCurrentPipeline(demo.image_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.image_srv));
     grfx.cmdlist.DrawInstanced(3, 1, 0, 0);
 
+    // Draw audio stream samples.
     grfx.setCurrentPipeline(demo.lines_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.LINESTRIP);
     grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
