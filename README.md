@@ -4,7 +4,7 @@ This repository contains a collection of sample applications, libraries and othe
 
 ## Building sample applications
 
-Except [Zig compiler (master)](https://ziglang.org/download/) -- this repository is fully standalone -- neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build sample applications.
+Except [Zig compiler (master)](https://ziglang.org/download/) - this repository is fully standalone - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build sample applications.
 
 Zig compiler consists of single ~60MB .zip file and needs to be downloaded separately.
 
