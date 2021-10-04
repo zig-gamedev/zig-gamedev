@@ -3,7 +3,7 @@ This repository contains a collection of graphics samples, libraries and other t
 
 ## Building
 
-The only dependency to build sample applications is [latest Zig compiler (master)](https://ziglang.org/download/). Neither Visual Studio nor Windows SDK need to be installed. This repository is fully standalone.
+The only dependency needed to build sample applications is [latest Zig compiler (master)](https://ziglang.org/download/). Neither Visual Studio nor Windows SDK needs to be installed. This repository is fully standalone.
 
 To build and run sample application (assuming that 'zig.exe' is in PATH):
 
