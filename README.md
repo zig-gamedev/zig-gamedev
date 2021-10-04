@@ -4,7 +4,7 @@ This repository contains a collection of sample applications, libraries and othe
 
 ## Building sample applications
 
-Except [Zig compiler (master)](https://ziglang.org/download/) - this repository is fully standalone - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build sample applications.
+Except [Zig compiler (master)](https://ziglang.org/download/) - this repository is fully standalone - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build this project.
 
 Zig compiler consists of single ~60MB .zip file and needs to be downloaded separately. Latest development build must be used (currently zig-0.9.0-dev).
 
@@ -39,5 +39,12 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
     <img src="screenshots/audio_playback_test.png" alt="audio playback test" height="200">
 
 ## Command line options
+
+All sample applications support following command line options:
+
+* `-Denable-pix`
+* `-Denable-tracy`
+* `-Denable-dx-debug`
+* `-Denable-dx-gpu-debug`
 
 ## Libraries
