@@ -18,7 +18,7 @@ const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const Vec2 = vm.Vec2;
 
-const num_vis_samples = 800;
+const num_vis_samples = 400;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -49,7 +49,11 @@ const DemoState = struct {
     audio: AudioContex,
 
     lines_pso: gr.PipelineHandle,
+    image_pso: gr.PipelineHandle,
     lines_buffer: gr.ResourceHandle,
+
+    image: gr.ResourceHandle,
+    image_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
 fn fillAudioBuffer(audio: *AudioContex) void {
@@ -283,12 +287,29 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .LINE;
         pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+        pso_desc.RasterizerState.AntialiasedLineEnable = w.TRUE;
 
         break :blk grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,
             &pso_desc,
             "content/shaders/lines.vs.cso",
             "content/shaders/lines.ps.cso",
+        );
+    };
+
+    const image_pso = blk: {
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+
+        break :blk grfx.createGraphicsShaderPipeline(
+            &arena_allocator.allocator,
+            &pso_desc,
+            "content/shaders/image.vs.cso",
+            "content/shaders/image.ps.cso",
         );
     };
 
@@ -303,6 +324,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.beginFrame();
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+
+    const image = grfx.createAndUploadTex2dFromFile("content/genart_008b.png", 1) catch |err| hrPanic(err);
+    const image_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    grfx.device.CreateShaderResourceView(grfx.getResource(image), null, image_srv);
+    grfx.addTransitionBarrier(image, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     grfx.finishGpuCommands();
 
@@ -323,14 +349,19 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .is_locked = true,
         },
         .lines_pso = lines_pso,
+        .image_pso = image_pso,
         .lines_buffer = lines_buffer,
+        .image = image,
+        .image_srv = image_srv,
     };
 }
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.grfx.releasePipeline(demo.lines_pso);
+    _ = demo.grfx.releasePipeline(demo.image_pso);
     _ = demo.grfx.releaseResource(demo.lines_buffer);
+    _ = demo.grfx.releaseResource(demo.image);
 
     while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
     _ = w.TerminateThread(demo.audio.thread_handle.?, 0);
@@ -411,6 +442,11 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
+
+    grfx.setCurrentPipeline(demo.image_pso);
+    grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.image_srv));
+    grfx.cmdlist.DrawInstanced(3, 1, 0, 0);
 
     grfx.setCurrentPipeline(demo.lines_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.LINESTRIP);

@@ -50,21 +50,14 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd(
-        "src/audio_playback_test.hlsl",
-        "vsLines",
-        "lines.vs.cso",
-        "vs",
-        "PSO__LINES",
-    );
+    dxc_command = makeDxcCmd("src/audio_playback_test.hlsl", "vsLines", "lines.vs.cso", "vs", "PSO__LINES");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "src/audio_playback_test.hlsl",
-        "psLines",
-        "lines.ps.cso",
-        "ps",
-        "PSO__LINES",
-    );
+    dxc_command = makeDxcCmd("src/audio_playback_test.hlsl", "psLines", "lines.ps.cso", "ps", "PSO__LINES");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd("src/audio_playback_test.hlsl", "vsImage", "image.vs.cso", "vs", "PSO__IMAGE");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/audio_playback_test.hlsl", "psImage", "image.ps.cso", "ps", "PSO__IMAGE");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     b.getInstallStep().dependOn(dxc_step);
