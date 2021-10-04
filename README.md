@@ -21,3 +21,11 @@ This repository contains a collection of graphics samples, libraries and other t
 1. [vector graphics test](samples/vector_graphics_test): This sample..
 
     <img src="screenshots/vector_graphics_test.png" alt="vector graphics test" height="200">
+
+1. [textured quad](samples/textured_quad): This sample..
+
+    <img src="screenshots/textured_quad.png" alt="textured quad" height="200">
+
+1. [triangle](samples/triangle): This sample..
+
+    <img src="screenshots/triangle.png" alt="triangle" height="200">
