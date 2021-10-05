@@ -40,7 +40,9 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 * Windows 10 May 2020 Update (Build 19041.789+).
 * Windows 10 November 2019 Update (Build 18363.1350+).
 
-## Some of the sample applications
+## Sample applications
+
+Below you can find a list of more interesting sample applications implemented in Zig. More can be found in [here](samples/).
 
 1. [simple raytracer](samples/simple_raytracer): This sample..
 
