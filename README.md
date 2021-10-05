@@ -42,7 +42,7 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
 ## Sample applications
 
-Below you can find a list of more interesting sample applications implemented in Zig. More can be found in [samples/](samples/) directory.
+Below you can find a list of more interesting samples implemented in Zig. More can be found in [samples/](samples/) directory.
 
 1. [simple raytracer](samples/simple_raytracer): This sample..
 
@@ -56,7 +56,7 @@ Below you can find a list of more interesting sample applications implemented in
 
     <img src="screenshots/audio_playback_test.png" alt="audio playback test" height="200">
 
-### Build options
+#### Build options
 
 All sample applications support following build options:
 
@@ -74,4 +74,13 @@ Examples:
 
 ## Libraries
 
-aaa
+#### graphics
+
+Some of the features:
+* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, interop with Direct2D, etc.)
+* Basic DirectX 12 resource management (handle-based resources and pipelines)
+* Basic resource barriers management
+* Loading images
+* Fast mipmap generator running on the GPU
+
+#### vectormath
