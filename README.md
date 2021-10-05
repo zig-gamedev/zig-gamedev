@@ -42,11 +42,11 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
 Below you can find a list of more interesting samples implemented in Zig. More can be found in [samples](samples/) directory.
 
-1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays. Right Mouse button and W, A, S, D keys can be used to move the camera.
+1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays. Right Mouse button and W, A, S, D keys can be used to control the camera.
 
     <img src="screenshots/simple_raytracer.png" alt="simple raytracer" height="200">
 
-1. [physically based rendering](samples/physically_based_rendering): This sample uses physically based shading and image based lighting to achive realistic looking rendering results. Right Mouse button and W, A, S, D keys can be used to move the camera.
+1. [physically based rendering](samples/physically_based_rendering): This sample uses physically based shading and image based lighting to achive realistic looking rendering results. Right Mouse button and W, A, S, D keys can be used to control the camera.
 
     <img src="screenshots/physically_based_rendering.png" alt="physically based rendering" height="200">
 
@@ -98,7 +98,7 @@ This is a simple libarary that lets you mark named events on the GPU timeline. T
 
 ### [tracy](libs/common/tracy.zig)
 
-This is a simple libarary that lets you mark named events on the CPU timeline. Those events can be then anaylzed in [Tracy](https://github.com/wolfpld/tracy) profiler. Following operation are supported:
+This is a simple libarary that lets you mark named events (zones) on the CPU timeline. Zones can be then anaylzed in [Tracy](https://github.com/wolfpld/tracy) profiler. Following operation are supported:
 
 * zone, zoneN, zoneNC
 * frameMark, frameMarkNamed
