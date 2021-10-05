@@ -4,7 +4,7 @@ This repository contains a collection of sample applications, libraries and othe
 
 Sample applications use:
 * [DirectX 12](https://docs.microsoft.com/en-us/windows/win32/direct3d12/directx-12-programming-guide) for 3D rendering.
-* [Direct2D and DirectWrite](https://docs.microsoft.com/en-us/windows/win32/direct2d/direct2d-portal) for 2D rendering
+* [Direct2D and DirectWrite](https://docs.microsoft.com/en-us/windows/win32/direct2d/direct2d-portal) for 2D rendering and high-quality anti-aliased text rendering.
 * [WASAPI](https://docs.microsoft.com/en-us/windows/win32/coreaudio/wasapi) for lowest level audio processing.
 * [XAudio2](https://docs.microsoft.com/en-us/windows/win32/xaudio2/xaudio2-introduction) for audio signal processing and mixing which modern game require.
 * [DirectML](https://docs.microsoft.com/en-us/windows/ai/directml/dml) for high-performance, GPU-accelerated Machine Learning.
