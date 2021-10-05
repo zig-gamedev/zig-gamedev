@@ -73,7 +73,7 @@ Examples:<br/>
 
 ### [graphics](libs/common/graphics.zig)
 
-Some of the features:
+Some of the features of graphics library:
 
 * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.).
 * Basic DirectX 12 resource management (handle-based resources and pipelines).
@@ -85,7 +85,7 @@ Some of the features:
 
 ### [vectormath](libs/common/vectormath.zig)
 
-All basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
+This libarary implements all basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
 
 ### [pix](libs/common/pix3.zig)
 
