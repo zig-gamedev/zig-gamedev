@@ -50,7 +50,7 @@ Below you can find a list of more interesting samples implemented in Zig. More c
 
     <img src="screenshots/physically_based_rendering.png" alt="physically based rendering" height="200">
 
-1. [audio playback test](samples/audio_playback_test): This sample demonstrates how to decode .mp3 file using Windows Media Foundation and play it back with Windows Audio Session API (WASAPI).
+1. [audio playback test](samples/audio_playback_test): This sample demonstrates how to decode .mp3 file using Microsoft Media Foundation and play it back using Windows Audio Session API (WASAPI).
 
     <img src="screenshots/audio_playback_test.png" alt="audio playback test" height="200">
 
@@ -61,7 +61,7 @@ All sample applications support following build options:
 * `-Drelease-safe=[bool]` - Optimizations on and safety on.
 * `-Drelease-fast=[bool]` - Optimizations on and safety off.
 * `-Denable-pix=[bool]` - PIX markers and events enabled.
-* `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled.
+* `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled.
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled. Requires -Denable-dx-debug=true.
 * `-Dtracy=[path/to/tracy/source]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled.
 
