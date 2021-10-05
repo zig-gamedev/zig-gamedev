@@ -65,9 +65,9 @@ All sample applications support following build options:
 * `-Denable-dx-gpu-debug=[true|false]` - builds an executable with Direct3D 12 GPU-Based Validation enabled. Requires -Denable-dx-debug=true. Default value is false.
 * `-Dtracy=[path/to/tracy/source]` - builds an executable with [Tracy](https://github.com/wolfpld/tracy) profiler instrumentation enabled.
 
-Examples:
-  `zig build -Denable-dx-debug=true`
-  `zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`
+Examples:<br/>
+`zig build -Denable-dx-debug=true`<br/>
+`zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`<br/>
 
 ## Libraries
 
@@ -88,5 +88,12 @@ Some of the features:
 All basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
 
 #### [pix](libs/common/pix3.zig)
+
+This is a simple libarary that lets you mark named events on the GPU timeline. Those events can be then anaylzed in PIX. Additionaly, you can programmatically record PIX traces to file. Following operations are supported:
+
+* beginCapture, endCapture
+* setMarkerOnCommandList, setMarkerOnCommandQueue
+* beginEventOnCommandList, endEventOnCommandList
+* beginEventOnCommandQueue, endEventOnCommandQueue
 
 #### [tracy](libs/common/tracy.zig)
