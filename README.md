@@ -19,7 +19,7 @@ To build a sample application (assuming zig.exe is in the PATH):
 1. Open terminal window.
 1. 'cd' to sample application root directory (for example, `cd samples/simple_raytracer`).
 1. Run `zig build`.
-1. Sample application will be build, assets and build artifacts will be copied to `/samples/<sample_name>/zig-out/bin` folder.
+1. Sample application will be build, assets and build artifacts will be copied to `samples/<sample_name>/zig-out/bin` folder.
 
 Behind the scene `zig build` performs following steps:
 
@@ -71,3 +71,5 @@ Examples:
 <br/>
 
 ## Libraries
+
+aaa
