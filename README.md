@@ -4,7 +4,7 @@ This repository contains a collection of sample applications, libraries and othe
 
 Sample applications use [DirectX 12](https://docs.microsoft.com/en-us/windows/win32/direct3d12/directx-12-programming-guide) for 3D rendering, [Direct2D and DirectWrite](https://docs.microsoft.com/en-us/windows/win32/direct2d/direct2d-portal) for 2D rendering, [WASAPI](https://docs.microsoft.com/en-us/windows/win32/coreaudio/wasapi) for low-latency audio playback and [DirectML](https://docs.microsoft.com/en-us/windows/ai/directml/dml) for high-performance, GPU-accelerated Machine Learning.
 
-Helper libraries implemented in Zig that this project provides are: graphics, vectormath, tracy, pix. See [Libraries](#libraries) section below for more information.
+Helper libraries implemented in Zig that this project provides are: graphics, vectormath, tracy, pix. See [Libraries](#libraries) section below for more informations.
 
 Additionally, Zig compiler can build C/C++ code which then can be easily invoked from Zig code. This project takes advantage of this capability to use some great C/C++ libraries.
 
@@ -12,7 +12,7 @@ Additionally, Zig compiler can build C/C++ code which then can be easily invoked
 
 Not counting [Zig compiler (master)](https://ziglang.org/download/) - this repository is fully standalone - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build this project.
 
-Zig compiler consists of single ~60MB .zip file and needs to be downloaded separately. Latest development build must be used (currently zig-0.9.0-dev).
+Zig compiler consists of single ~60MB .zip file and needs to be downloaded separately. Latest development build must be used (master).
 
 To build a sample application (assuming zig.exe is in the PATH):
 
@@ -21,7 +21,7 @@ To build a sample application (assuming zig.exe is in the PATH):
 1. Run `zig build`.
 1. Sample application will be build, assets and build artifacts will be copied to `samples/<sample_name>/zig-out/bin` folder.
 
-Behind the scene `zig build` performs following steps:
+Behind the scenes `zig build` command performs following steps:
 
 1. `zig cc` builds all C/C++ libraries that application uses (imgui, cgltf).
 1. DirectX Shader Compiler (dxc) which can be found in `external/bin/dxc` folder is invoked to build all HLSL shaders.
@@ -44,11 +44,11 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
 Below you can find a list of more interesting samples implemented in Zig. More can be found in [samples](samples/) directory.
 
-1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays.
+1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays. Right Mouse button and W, A, S, D keys can be used to move the camera.
 
     <img src="screenshots/simple_raytracer.png" alt="simple raytracer" height="200">
 
-1. [physically based rendering](samples/physically_based_rendering): This sample uses physically based shading and image based lighting to achive realistic looking rendering results.
+1. [physically based rendering](samples/physically_based_rendering): This sample uses physically based shading and image based lighting to achive realistic looking rendering results. Right Mouse button and W, A, S, D keys can be used to move the camera.
 
     <img src="screenshots/physically_based_rendering.png" alt="physically based rendering" height="200">
 
