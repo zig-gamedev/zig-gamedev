@@ -58,11 +58,13 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
 All sample applications support following build options:
 
-* `-Denable-pix=[true|false]` - builds a binary with PIX markers and events enabled/disabled. By defualt it is set to `false`.
-* `-Denable-dx-debug=[true|false]` - builds a binary with Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled/disabled. By default it is set to `false`.
-* `-Denable-dx-gpu-debug=[true|false]` - builds a binary with Direct3D 12 GPU-Based Validation enabled. Requires `-Denable-dx-debug=true`. By default it is set to `false`.
-* `-Denable-tracy=[path/to/tracy/source]` - builds a binary with Tracy profiler instrumentation enabled.
+* `-Denable-pix=[true|false]` - builds a binary with PIX markers and events enabled/disabled. Default value is false.
+* `-Denable-dx-debug=[true|false]` - builds a binary with Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled/disabled. Default value is false.
+* `-Denable-dx-gpu-debug=[true|false]` - builds a binary with Direct3D 12 GPU-Based Validation enabled. Requires `-Denable-dx-debug=true`. Default value is false.
+* `-Dtracy=[path/to/tracy/source]` - builds a binary with Tracy profiler instrumentation enabled.
 
-For example: `zig build -Denable-dx-debug=true`.
+Examples:
+`zig build -Denable-dx-debug=true`
+`zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`
 
 ## Libraries
