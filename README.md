@@ -14,7 +14,7 @@ Below you can find a list of more interesting samples implemented in Zig. More c
 
     <img src="screenshots/simple_raytracer.png" alt="simple raytracer" height="200">
 
-1. [physically based rendering](samples/physically_based_rendering): This sample uses physically based shading and image based lighting to achive realistic looking rendering results. Right Mouse button and W, A, S, D keys can be used to control the camera.
+1. [physically based rendering](samples/physically_based_rendering): This sample implements physically based shading and image based lighting to achive realistic looking rendering results. Right Mouse button and W, A, S, D keys can be used to control the camera.
 
     <img src="screenshots/physically_based_rendering.png" alt="physically based rendering" height="200">
 
@@ -26,7 +26,7 @@ Below you can find a list of more interesting samples implemented in Zig. More c
 
 ### [graphics](libs/common/graphics.zig)
 
-Some of the features of graphics library:
+Some features of graphics library are:
 
 * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.).
 * Basic DirectX 12 resource management (handle-based resources and pipelines).
