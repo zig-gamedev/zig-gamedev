@@ -72,12 +72,12 @@ To build a sample application (assuming zig.exe is in the PATH):
 Behind the scenes `zig build` command performs following steps:
 
 1. `zig cc` builds all C/C++ libraries that application uses (imgui, cgltf).
-1. DirectX Shader Compiler (dxc) which can be found in `external/bin/dxc` folder is invoked to build all HLSL shaders.
+1. DirectX Shader Compiler (which can be found in `external/bin/dxc` folder) is invoked to build all HLSL shaders.
 1. Zig code is compiled.
 1. Everything is linked together into single executable.
 1. Assets and build artifacts are copied to destination folder.
 
-You can look at [samples/simple_raytracer/build.zig](samples/simple_raytracer/build.zig) file to see how those steps are implemented in Zig.
+You can look at [samples/simple_raytracer/build.zig](samples/simple_raytracer/build.zig) file to see how those steps are implemented in Zig build script.
 
 #### Build options
 
