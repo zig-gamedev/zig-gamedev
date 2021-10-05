@@ -1,12 +1,6 @@
 # zig-gamedev project
 
-This repository contains a collection of sample applications, libraries and other tools for game developers using **[Zig](https://ziglang.org/) programming language** and targeting **Windows** platform.
-
-Sample applications use:
-* [DirectX 12](https://docs.microsoft.com/en-us/windows/win32/direct3d12/directx-12-programming-guide) for 3D rendering.
-* [Direct2D and DirectWrite](https://docs.microsoft.com/en-us/windows/win32/direct2d/direct2d-portal) for 2D rendering and high-quality anti-aliased text rendering.
-* [WASAPI](https://docs.microsoft.com/en-us/windows/win32/coreaudio/wasapi) for lowest level audio playback.
-* [DirectML](https://docs.microsoft.com/en-us/windows/ai/directml/dml) for high-performance, GPU-accelerated Machine Learning.
+This repository contains a collection of sample applications and libraries for game developers using **[Zig](https://ziglang.org/) programming language** and DirectX 12 API.
 
 Helper libraries implemented in Zig that this project provides are: graphics, vectormath, tracy, pix. See [Libraries](#libraries) section below for more informations.
 
@@ -14,7 +8,7 @@ Additionally, Zig compiler can build C/C++ code which then can be easily invoked
 
 ## Building sample applications
 
-Not counting [Zig compiler](https://ziglang.org/download/) - **this repository is fully standalone** - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build this project.
+Not counting [Zig compiler](https://ziglang.org/download/), **this repository is fully standalone, neither Visual Studio nor Windows SDK needs to be installed to build this project**.
 
 Zig compiler consists of single ~60MB .zip file and needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
 
