@@ -4,7 +4,9 @@ This repository contains a collection of sample applications, libraries and othe
 
 Sample applications use [DirectX 12](https://docs.microsoft.com/en-us/windows/win32/direct3d12/directx-12-programming-guide) for 3D rendering, [Direct2D and DirectWrite](https://docs.microsoft.com/en-us/windows/win32/direct2d/direct2d-portal) for 2D rendering, [WASAPI](https://docs.microsoft.com/en-us/windows/win32/coreaudio/wasapi) for low-latency audio playback and [DirectML](https://docs.microsoft.com/en-us/windows/ai/directml/dml) for high-performance, GPU-accelerated Machine Learning.
 
-Helper libraries this project provides are: graphics, vectormath, tracy, pix. See Libraries section below for more information.
+Helper libraries implemented in Zig that this project provides are: graphics, vectormath, tracy, pix. See Libraries section below for more information.
+
+Additionaly, Zig compiler can build C/C++ code. This code can be then easily invoked from Zig. This project takes advantage of this capability to use some great C/C++ libraries.
 
 ## Building sample applications
 
