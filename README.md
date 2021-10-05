@@ -4,11 +4,11 @@ This repository contains a collection of sample applications, libraries and othe
 
 Sample applications use [DirectX 12](https://docs.microsoft.com/en-us/windows/win32/direct3d12/directx-12-programming-guide) for 3D rendering, [Direct2D and DirectWrite](https://docs.microsoft.com/en-us/windows/win32/direct2d/direct2d-portal) for 2D rendering, [WASAPI](https://docs.microsoft.com/en-us/windows/win32/coreaudio/wasapi) for low-latency audio playback and [DirectML](https://docs.microsoft.com/en-us/windows/ai/directml/dml) for high-performance, GPU-accelerated Machine Learning.
 
-Helper libraries that this project provides are: graphics, vectormath, tracy, pix. See Libraries section for more information.
+Helper libraries this project provides are: graphics, vectormath, tracy, pix. See Libraries section below for more information.
 
 ## Building sample applications
 
-Except [Zig compiler (master)](https://ziglang.org/download/) - this repository is fully standalone - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build this project.
+Not counting [Zig compiler (master)](https://ziglang.org/download/) - this repository is fully standalone - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build this project.
 
 Zig compiler consists of single ~60MB .zip file and needs to be downloaded separately. Latest development build must be used (currently zig-0.9.0-dev).
 
@@ -52,9 +52,9 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
     <img src="screenshots/audio_playback_test.png" alt="audio playback test" height="200">
 
-## Command line options
+## Build options
 
-All sample applications support following command line options:
+All sample applications support following build options:
 
 * `-Denable-pix`
 * `-Denable-tracy`
