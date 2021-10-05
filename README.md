@@ -29,7 +29,7 @@ Behind the scene `zig build` performs following steps:
 1. Everything is linked together into single executable.
 1. Assets and build artifacts are copied to destination folder.
 
-You can look [here](samples/simple_raytracer/build.zig) to see how those steps are implemented in Zig.
+You can look at [samples/simple_raytracer/build.zig](samples/simple_raytracer/build.zig) file to see how those steps are implemented in Zig.
 
 ## Requirements
 
@@ -42,7 +42,7 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
 ## Sample applications
 
-Below you can find a list of more interesting sample applications implemented in Zig. More can be found in [here](samples/).
+Below you can find a list of more interesting sample applications implemented in Zig. More can be found in [samples/](samples/) directory.
 
 1. [simple raytracer](samples/simple_raytracer): This sample..
 
