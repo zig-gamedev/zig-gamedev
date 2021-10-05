@@ -86,10 +86,10 @@ Some of the features:
 * Interop with Direct2D and DirectWrite
 * Custom integration of [dear imgui](https://github.com/ocornut/imgui) library
 
-#### vectormath
+#### [vectormath](libs/common/vectormath.zig)
 
 All basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
 
-#### pix
+#### [pix](libs/common/pix.zig)
 
-#### tracy
+#### [tracy](libs/common/tracy.zig)
