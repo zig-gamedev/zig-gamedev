@@ -64,6 +64,7 @@ All sample applications support following build options:
 * `-Dtracy=[path/to/tracy/source]` - builds a binary with Tracy profiler instrumentation enabled.
 
 Examples:
+<br/>
 `zig build -Denable-dx-debug=true`
 `zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`
 
