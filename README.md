@@ -6,7 +6,7 @@ Sample applications use [DirectX 12](https://docs.microsoft.com/en-us/windows/wi
 
 Helper libraries implemented in Zig that this project provides are: graphics, vectormath, tracy, pix. See Libraries section below for more information.
 
-Additionaly, Zig compiler can build C/C++ code. This code can be then easily invoked from Zig. This project takes advantage of this capability to use some great C/C++ libraries.
+Additionally, Zig compiler can build C/C++ code which then can be easily invoked from Zig code. This project takes advantage of this capability to use some great C/C++ libraries.
 
 ## Building sample applications
 
@@ -58,9 +58,11 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
 All sample applications support following build options:
 
-* `-Denable-pix`
-* `-Denable-tracy`
-* `-Denable-dx-debug`
-* `-Denable-dx-gpu-debug`
+* `-Denable-pix=[true|false]` - builds a binary with PIX markers and events enabled/disabled. By defualt it is set to `false`.
+* `-Denable-dx-debug=[true|false]` - builds a binary with Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled/disabled. By default it is set to `false`.
+* `-Denable-dx-gpu-debug=[true|false]` - builds a binary with Direct3D 12 GPU-Based Validation enabled. Requires `-Denable-dx-debug=true`. By default it is set to `false`.
+* `-Denable-tracy=[path/to/tracy/source]` - builds a binary with Tracy profiler instrumentation enabled.
+
+For example: `zig build -Denable-dx-debug=true`.
 
 ## Libraries
