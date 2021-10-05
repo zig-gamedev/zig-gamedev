@@ -60,15 +60,15 @@ Below you can find a list of more interesting samples implemented in Zig. More c
 
 All sample applications support following build options:
 
-* `-Drelease-safe=[bool]` - Optimizations on and safety on. Default value is false.
-* `-Drelease-fast=[bool]` - Optimizations on and safety off. Default value is false.
-* `-Denable-pix=[bool]` - builds an executable with PIX markers and events enabled/disabled. Default value is false.
-* `-Denable-dx-debug=[bool]` - builds an executable with Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled/disabled. Default value is false.
-* `-Denable-dx-gpu-debug=[bool]` - builds an executable with Direct3D 12 GPU-Based Validation enabled. Requires -Denable-dx-debug=true. Default value is false.
-* `-Dtracy=[path/to/tracy/source]` - builds an executable with [Tracy](https://github.com/wolfpld/tracy) profiler instrumentation enabled.
+* `-Drelease-safe=[bool]` - Optimizations on and safety on.
+* `-Drelease-fast=[bool]` - Optimizations on and safety off.
+* `-Denable-pix=[bool]` - PIX markers and events enabled.
+* `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled.
+* `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled. Requires -Denable-dx-debug=true.
+* `-Dtracy=[path/to/tracy/source]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled.
 
 Examples:<br/>
-`zig build -Denable-dx-debug=true`<br/>
+`zig build -Denable-dx-debug=true -Drelease-fast=true`<br/>
 `zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`<br/>
 
 ## Libraries
