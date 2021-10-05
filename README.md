@@ -66,6 +66,8 @@ All sample applications support following build options:
 Examples:
 <br/>
 `zig build -Denable-dx-debug=true`
+<br/>
 `zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`
+<br/>
 
 ## Libraries
