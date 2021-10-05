@@ -97,4 +97,7 @@ This is a simple libarary that lets you mark named events on the GPU timeline. T
 
 ### [tracy](libs/common/tracy.zig)
 
-This is a simple libarary that lets you mark named events on the CPU timeline. Those events can be then anaylzed in [Tracy](https://github.com/wolfpld/tracy) profiler.
+This is a simple libarary that lets you mark named events on the CPU timeline. Those events can be then anaylzed in [Tracy](https://github.com/wolfpld/tracy) profiler. Following operation are supported:
+
+* zone, zoneN, zoneNC
+* frameMark, frameMarkNamed
