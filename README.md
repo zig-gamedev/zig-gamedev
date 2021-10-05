@@ -2,7 +2,7 @@
 
 This repository contains a collection of sample applications and libraries for game developers using **[Zig](https://ziglang.org/) programming language** and DirectX 12 API.
 
-Helper libraries implemented in Zig that this project provides are: graphics, vectormath, tracy, pix. See [Libraries](#libraries) section below for more informations.
+This project provides several libraries implemented in Zig that are described in [Libraries](#libraries) section below. All sample applications use those libraries.
 
 Additionally, Zig compiler can build C/C++ code which then can be easily invoked from Zig code. This project takes advantage of this capability to use some existing C/C++ libraries (full source code of these libraries can be found in [external/src](external/src) folder).
 
@@ -79,6 +79,7 @@ Some of the features of graphics library:
 * Basic DirectX 12 resource management (handle-based resources and pipelines).
 * Basic resource barriers management with simple state-tracking.
 * Loading images.
+* Uploading data to the GPU.
 * Fast mipmap generator running on the GPU.
 * Interop with Direct2D and DirectWrite.
 * Custom integration of [dear imgui](https://github.com/ocornut/imgui) library.
