@@ -60,7 +60,7 @@ This is a simple libarary that lets you mark named events (zones) on the CPU tim
 
 Not counting [Zig compiler](https://ziglang.org/download/), **this repository is fully standalone, neither Visual Studio nor Windows SDK needs to be installed to build this project**.
 
-Zig compiler consists of single ~60MB .zip file and needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
+Zig compiler consists of a single ~60MB .zip file that needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
 
 To build a sample application (assuming zig.exe is in the PATH):
 
