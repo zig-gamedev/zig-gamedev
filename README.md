@@ -90,6 +90,6 @@ Some of the features:
 
 All basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
 
-#### [pix](libs/common/pix.zig)
+#### [pix](libs/common/pix3.zig)
 
 #### [tracy](libs/common/tracy.zig)
