@@ -44,15 +44,15 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
 Below you can find a list of more interesting samples implemented in Zig. More can be found in [samples](samples/) directory.
 
-1. [simple raytracer](samples/simple_raytracer): This sample..
+1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays.
 
     <img src="screenshots/simple_raytracer.png" alt="simple raytracer" height="200">
 
-1. [physically based rendering](samples/physically_based_rendering): This sample..
+1. [physically based rendering](samples/physically_based_rendering): This sample uses physically based shading and image based lighting to achive realistic looking rendering results.
 
     <img src="screenshots/physically_based_rendering.png" alt="physically based rendering" height="200">
 
-1. [audio playback test](samples/audio_playback_test): This sample..
+1. [audio playback test](samples/audio_playback_test): This sample demonstrates how to decode .mp3 file using Windows Media Foundation and play it back with Windows Audio Session API (WASAPI).
 
     <img src="screenshots/audio_playback_test.png" alt="audio playback test" height="200">
 
@@ -75,13 +75,13 @@ Examples:<br/>
 
 Some of the features:
 
-* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
-* Basic DirectX 12 resource management (handle-based resources and pipelines)
-* Basic resource barriers management with simple state-tracking
-* Loading images
-* Fast mipmap generator running on the GPU
-* Interop with Direct2D and DirectWrite
-* Custom integration of [dear imgui](https://github.com/ocornut/imgui) library
+* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.).
+* Basic DirectX 12 resource management (handle-based resources and pipelines).
+* Basic resource barriers management with simple state-tracking.
+* Loading images.
+* Fast mipmap generator running on the GPU.
+* Interop with Direct2D and DirectWrite.
+* Custom integration of [dear imgui](https://github.com/ocornut/imgui) library.
 
 ### [vectormath](libs/common/vectormath.zig)
 
