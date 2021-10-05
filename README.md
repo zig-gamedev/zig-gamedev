@@ -60,9 +60,11 @@ Below you can find a list of more interesting samples implemented in Zig. More c
 
 All sample applications support following build options:
 
-* `-Denable-pix=[true|false]` - builds an executable with PIX markers and events enabled/disabled. Default value is false.
-* `-Denable-dx-debug=[true|false]` - builds an executable with Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled/disabled. Default value is false.
-* `-Denable-dx-gpu-debug=[true|false]` - builds an executable with Direct3D 12 GPU-Based Validation enabled. Requires -Denable-dx-debug=true. Default value is false.
+* `-Drelease-safe=[bool]` - Optimizations on and safety on. Default value is false.
+* `-Drelease-fast=[bool]` - Optimizations on and safety off. Default value is false.
+* `-Denable-pix=[bool]` - builds an executable with PIX markers and events enabled/disabled. Default value is false.
+* `-Denable-dx-debug=[bool]` - builds an executable with Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled/disabled. Default value is false.
+* `-Denable-dx-gpu-debug=[bool]` - builds an executable with Direct3D 12 GPU-Based Validation enabled. Requires -Denable-dx-debug=true. Default value is false.
 * `-Dtracy=[path/to/tracy/source]` - builds an executable with [Tracy](https://github.com/wolfpld/tracy) profiler instrumentation enabled.
 
 Examples:<br/>
