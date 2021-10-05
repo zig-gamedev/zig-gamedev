@@ -69,6 +69,10 @@ Examples:<br/>
 `zig build -Denable-dx-debug=true -Drelease-fast=true`<br/>
 `zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`<br/>
 
+To build and **run** an application you can use:<br/>
+`zig build run` <- Builds and runs debug build.<br/>
+`zig build run -Drelease-fast=true -Denable-dx-debug=true` <- Builds and runs release build with DirectX debug layers enabled.<br/>
+
 ## Libraries
 
 ### [graphics](libs/common/graphics.zig)
