@@ -10,7 +10,7 @@ Additionally, Zig compiler can build C/C++ code which then can be easily invoked
 
 ## Building sample applications
 
-Not counting [Zig compiler (master)](https://ziglang.org/download/) - **this repository is fully standalone** - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build this project.
+Not counting [Zig compiler](https://ziglang.org/download/) - **this repository is fully standalone** - neither Visual Studio nor Windows SDK needs to be installed to build, modify and re-build this project.
 
 Zig compiler consists of single ~60MB .zip file and needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
 
