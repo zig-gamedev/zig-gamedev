@@ -74,7 +74,7 @@ Examples:
 
 ## Libraries
 
-#### graphics
+#### [graphics](libs/common/graphics.zig)
 
 Some of the features:
 
