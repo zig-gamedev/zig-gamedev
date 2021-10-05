@@ -77,10 +77,19 @@ Examples:
 #### graphics
 
 Some of the features:
-* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, interop with Direct2D, etc.)
+
+* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
 * Basic DirectX 12 resource management (handle-based resources and pipelines)
-* Basic resource barriers management
+* Basic resource barriers management with simple state-tracking
 * Loading images
 * Fast mipmap generator running on the GPU
+* Interop with Direct2D and DirectWrite
+* Custom integration of [dear imgui](https://github.com/ocornut/imgui) library
 
 #### vectormath
+
+All basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
+
+#### pix
+
+#### tracy
