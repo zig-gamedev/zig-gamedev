@@ -42,7 +42,7 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 
 ## Sample applications
 
-Below you can find a list of more interesting samples implemented in Zig. More can be found in [samples/](samples/) directory.
+Below you can find a list of more interesting samples implemented in Zig. More can be found in [samples](samples/) directory.
 
 1. [simple raytracer](samples/simple_raytracer): This sample..
 
@@ -63,7 +63,7 @@ All sample applications support following build options:
 * `-Denable-pix=[true|false]` - builds a binary with PIX markers and events enabled/disabled. Default value is false.
 * `-Denable-dx-debug=[true|false]` - builds a binary with Direct3D 12, Direct2D, DXGI, DirectML debug layers enabled/disabled. Default value is false.
 * `-Denable-dx-gpu-debug=[true|false]` - builds a binary with Direct3D 12 GPU-Based Validation enabled. Requires -Denable-dx-debug=true. Default value is false.
-* `-Dtracy=[path/to/tracy/source]` - builds a binary with Tracy profiler instrumentation enabled.
+* `-Dtracy=[path/to/tracy/source]` - builds a binary with [Tracy](https://github.com/wolfpld/tracy) profiler instrumentation enabled.
 
 Examples:
 <br/>
