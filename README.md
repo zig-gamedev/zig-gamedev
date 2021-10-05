@@ -27,11 +27,11 @@ Behind the scene `zig build` performs following steps:
 1. Everything is linked together into single executable.
 1. Assets and build artifacts are copied to destination folder.
 
-You can look at `samples/simple_raytracer/build.zig` to see how those steps are implemented.
+You can look [here](samples/simple_raytracer/build.zig) to see how those steps are implemented in Zig.
 
 ## Requirements
 
-This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/) which allows to always use latest DirectX 12 features regardless of Windows version (this works from Windows 10 November 2019 Update). In particular, following Windows versions are supported:
+This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/) which allows to always use latest DirectX 12 features regardless of Windows version installed (this works from Windows 10 November 2019 Update). In particular, following Windows versions are supported:
 
 * Windows 10 May 2021 Update (Build 19043) or newer.
 * Windows 10 October 2020 Update (Build 19042.789+).
