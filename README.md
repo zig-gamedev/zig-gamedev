@@ -89,11 +89,12 @@ All basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
 
 #### [pix](libs/common/pix3.zig)
 
-This is a simple libarary that lets you mark named events on the GPU timeline. Those events can be then anaylzed in PIX. Additionaly, you can programmatically record PIX traces to file. Following operations are supported:
+This is a simple libarary that lets you mark named events on the GPU timeline. Those events can be then anaylzed in PIX. Additionaly, you can programmatically record PIX traces to a file. Note, that this library does not require WinPixEventRuntime.dll to work. Following operations are supported:
 
 * beginCapture, endCapture
-* setMarkerOnCommandList, setMarkerOnCommandQueue
-* beginEventOnCommandList, endEventOnCommandList
-* beginEventOnCommandQueue, endEventOnCommandQueue
+* beginEventOnCommandList, endEventOnCommandList, setMarkerOnCommandList
+* beginEventOnCommandQueue, endEventOnCommandQueue, setMarkerOnCommandQueue
 
 #### [tracy](libs/common/tracy.zig)
+
+This is a simple libarary that lets you mark named events on the CPU timeline. Those events can be then anaylzed in [Tracy](https://github.com/wolfpld/tracy) profiler.
