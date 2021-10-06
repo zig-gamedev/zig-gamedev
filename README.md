@@ -1,6 +1,6 @@
 # zig-gamedev project
 
-This repository contains a collection of **sample applications and libraries for game developers** using **[Zig](https://ziglang.org/) programming language** and DirectX 12 API.
+This repository contains a collection of **sample applications and libraries for game developers using [Zig](https://ziglang.org/) programming language** and DirectX 12 API.
 
 This project provides several libraries implemented in Zig that are described in [Libraries](#libraries) section below. All sample applications use those libraries.
 
