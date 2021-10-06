@@ -37,8 +37,8 @@ Some features of graphics library:
 * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.).
 * Basic DirectX 12 resource management (handle-based resources and pipelines).
 * Basic resource barriers management with simple state-tracking.
-* Loading images.
-* Uploading data to the GPU.
+* Fast image loading with WIC (Windows Imaging Component).
+* Helpers for uploading data to the GPU.
 * Fast mipmap generator running on the GPU.
 * Interop with Direct2D and DirectWrite.
 * Custom integration of [dear imgui](https://github.com/ocornut/imgui) library.
