@@ -38,12 +38,13 @@ const DemoState = struct {
     dml_device: *dml.IDevice1,
     dml_compiled_operator: *dml.ICompiledOperator,
     dml_binding_table: *dml.IBindingTable,
-    dml_num_descriptors: u32,
 
-    dml_temp_buffer: ?gr.ResourceHandle,
-    dml_persistent_buffer: ?gr.ResourceHandle,
-    dml_input_buffer: gr.ResourceHandle,
-    dml_output_buffer: gr.ResourceHandle,
+    num_descriptors: u32,
+
+    temp_buffer: ?gr.ResourceHandle,
+    persistent_buffer: ?gr.ResourceHandle,
+    input_buffer: gr.ResourceHandle,
+    output_buffer: gr.ResourceHandle,
 
     dml_cmd_recorder: *dml.ICommandRecorder,
 };
@@ -149,7 +150,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const exec_binding_info = dml_compiled_operator.GetBindingProperties();
     const init_binding_info = dml_init_operator.GetBindingProperties();
-    const dml_num_descriptors = math.max(
+    const num_descriptors = math.max(
         exec_binding_info.RequiredDescriptorCount,
         init_binding_info.RequiredDescriptorCount,
     );
@@ -190,7 +191,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         exec_binding_info.PersistentResourceSize,
     );
 
-    const dml_temp_buffer = if (temp_resource_size > 0) grfx.createCommittedResource(
+    const temp_buffer = if (temp_resource_size > 0) grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
@@ -202,7 +203,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err) else null;
 
-    const dml_persistent_buffer = if (persistent_resource_size > 0) grfx.createCommittedResource(
+    const persistent_buffer = if (persistent_resource_size > 0) grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &d3d12.RESOURCE_DESC.initBuffer(persistent_resource_size),
@@ -210,7 +211,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err) else null;
 
-    const dml_input_buffer = grfx.createCommittedResource(
+    const input_buffer = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
@@ -224,7 +225,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    const dml_output_buffer = grfx.createCommittedResource(
+    const output_buffer = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
@@ -259,13 +260,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
     const dml_binding_table = blk: {
-        const base_descriptor = grfx.allocateGpuDescriptors(dml_num_descriptors);
+        const base_descriptor = grfx.allocateGpuDescriptors(num_descriptors);
 
         const desc = dml.BINDING_TABLE_DESC{
             .Dispatchable = @ptrCast(*dml.IDispatchable, dml_init_operator),
             .CPUDescriptorHandle = base_descriptor.cpu_handle,
             .GPUDescriptorHandle = base_descriptor.gpu_handle,
-            .SizeInDescriptors = dml_num_descriptors,
+            .SizeInDescriptors = num_descriptors,
         };
 
         var table: *dml.IBindingTable = undefined;
@@ -273,24 +274,24 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk table;
     };
 
-    if (dml_temp_buffer != null) {
+    if (temp_buffer != null) {
         dml_binding_table.BindTemporaryResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(dml_temp_buffer.?),
+                .Buffer = grfx.getResource(temp_buffer.?),
                 .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(dml_temp_buffer.?),
+                .SizeInBytes = grfx.getResourceSize(temp_buffer.?),
             },
         });
     }
 
-    if (dml_persistent_buffer != null) {
+    if (persistent_buffer != null) {
         dml_binding_table.BindOutputs(1, &[_]dml.BINDING_DESC{.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(dml_persistent_buffer.?),
+                .Buffer = grfx.getResource(persistent_buffer.?),
                 .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(dml_persistent_buffer.?),
+                .SizeInBytes = grfx.getResourceSize(persistent_buffer.?),
             },
         }});
     }
@@ -316,12 +317,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .info_txtfmt = info_txtfmt,
         .dml_device = dml_device,
         .dml_compiled_operator = dml_compiled_operator,
-        .dml_num_descriptors = dml_num_descriptors,
+        .num_descriptors = num_descriptors,
         .dml_binding_table = dml_binding_table,
-        .dml_temp_buffer = dml_temp_buffer,
-        .dml_persistent_buffer = dml_persistent_buffer,
-        .dml_input_buffer = dml_input_buffer,
-        .dml_output_buffer = dml_output_buffer,
+        .temp_buffer = temp_buffer,
+        .persistent_buffer = persistent_buffer,
+        .input_buffer = input_buffer,
+        .output_buffer = output_buffer,
         .dml_cmd_recorder = dml_cmd_recorder,
     };
 }
@@ -329,10 +330,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.dml_cmd_recorder.Release();
-    _ = demo.grfx.releaseResource(demo.dml_input_buffer);
-    _ = demo.grfx.releaseResource(demo.dml_output_buffer);
-    if (demo.dml_temp_buffer != null) _ = demo.grfx.releaseResource(demo.dml_temp_buffer.?);
-    if (demo.dml_persistent_buffer != null) _ = demo.grfx.releaseResource(demo.dml_persistent_buffer.?);
+    _ = demo.grfx.releaseResource(demo.input_buffer);
+    _ = demo.grfx.releaseResource(demo.output_buffer);
+    if (demo.temp_buffer != null) _ = demo.grfx.releaseResource(demo.temp_buffer.?);
+    if (demo.persistent_buffer != null) _ = demo.grfx.releaseResource(demo.persistent_buffer.?);
     _ = demo.dml_binding_table.Release();
     _ = demo.dml_compiled_operator.Release();
     _ = demo.dml_device.Release();
@@ -356,7 +357,7 @@ fn draw(demo: *DemoState) void {
     const back_buffer = grfx.getBackBuffer();
 
     grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    grfx.addTransitionBarrier(demo.dml_input_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
+    grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
     grfx.flushResourceBarriers();
 
     // Upload the input tensor to the GPU.
@@ -370,7 +371,7 @@ fn draw(demo: *DemoState) void {
         upload.cpu_slice[5] = 987;
 
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(demo.dml_input_buffer),
+            grfx.getResource(demo.input_buffer),
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -378,41 +379,41 @@ fn draw(demo: *DemoState) void {
         );
     }
 
-    grfx.addTransitionBarrier(demo.dml_input_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
     grfx.flushResourceBarriers();
 
     // Reset DML binding table.
     {
-        const base_descriptor = grfx.allocateGpuDescriptors(demo.dml_num_descriptors);
+        const base_descriptor = grfx.allocateGpuDescriptors(demo.num_descriptors);
 
         hrPanicOnFail(demo.dml_binding_table.Reset(&dml.BINDING_TABLE_DESC{
             .Dispatchable = @ptrCast(*dml.IDispatchable, demo.dml_compiled_operator),
             .CPUDescriptorHandle = base_descriptor.cpu_handle,
             .GPUDescriptorHandle = base_descriptor.gpu_handle,
-            .SizeInDescriptors = demo.dml_num_descriptors,
+            .SizeInDescriptors = demo.num_descriptors,
         }));
     }
 
     // If necessary, bind temporary buffer.
-    if (demo.dml_temp_buffer != null) {
+    if (demo.temp_buffer != null) {
         demo.dml_binding_table.BindTemporaryResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.dml_temp_buffer.?),
+                .Buffer = grfx.getResource(demo.temp_buffer.?),
                 .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(demo.dml_temp_buffer.?),
+                .SizeInBytes = grfx.getResourceSize(demo.temp_buffer.?),
             },
         });
     }
 
     // If necessary, bind persistent buffer.
-    if (demo.dml_persistent_buffer != null) {
+    if (demo.persistent_buffer != null) {
         demo.dml_binding_table.BindPersistentResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.dml_persistent_buffer.?),
+                .Buffer = grfx.getResource(demo.persistent_buffer.?),
                 .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(demo.dml_persistent_buffer.?),
+                .SizeInBytes = grfx.getResourceSize(demo.persistent_buffer.?),
             },
         });
     }
@@ -421,9 +422,9 @@ fn draw(demo: *DemoState) void {
     demo.dml_binding_table.BindInputs(1, &[_]dml.BINDING_DESC{.{
         .Type = .BUFFER,
         .Desc = &dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(demo.dml_input_buffer),
+            .Buffer = grfx.getResource(demo.input_buffer),
             .Offset = 0,
-            .SizeInBytes = grfx.getResourceSize(demo.dml_input_buffer),
+            .SizeInBytes = grfx.getResourceSize(demo.input_buffer),
         },
     }});
 
@@ -432,15 +433,15 @@ fn draw(demo: *DemoState) void {
         .{ // Output tensor.
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.dml_output_buffer),
+                .Buffer = grfx.getResource(demo.output_buffer),
                 .Offset = 32, // 24 bytes aligned to 32
-                .SizeInBytes = grfx.getResourceSize(demo.dml_output_buffer) - 32,
+                .SizeInBytes = grfx.getResourceSize(demo.output_buffer) - 32,
             },
         },
         .{ // Output state tensor (first 24 bytes of the buffer).
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.dml_output_buffer),
+                .Buffer = grfx.getResource(demo.output_buffer),
                 .Offset = 0,
                 .SizeInBytes = 6 * @sizeOf(u32),
             },
