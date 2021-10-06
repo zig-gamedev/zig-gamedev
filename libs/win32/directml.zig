@@ -255,6 +255,10 @@ pub const SCALE_BIAS = extern struct {
     Bias: FLOAT,
 };
 
+pub const RANDOM_GENERATOR_TYPE = enum(UINT) {
+    PHILOX_4X32_10,
+};
+
 //
 // Operator descriptions.
 //
@@ -267,6 +271,13 @@ pub const ELEMENT_WISE_IDENTITY_OPERATOR_DESC = extern struct {
     InputTensor: *const TENSOR_DESC,
     OutputTensor: *const TENSOR_DESC,
     ScaleBias: ?*const SCALE_BIAS,
+};
+
+pub const RANDOM_GENERATOR_OPERATOR_DESC = extern struct {
+    InputStateTensor: *const TENSOR_DESC,
+    OutputTensor: *const TENSOR_DESC,
+    OutputStateTensor: ?*const TENSOR_DESC,
+    Type: RANDOM_GENERATOR_TYPE,
 };
 
 //

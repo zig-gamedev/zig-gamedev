@@ -43,8 +43,8 @@ const DemoState = struct {
     dml_binding_table: *dml.IBindingTable,
     dml_num_descriptors: u32,
 
-    dml_temp_buffer: gr.ResourceHandle,
-    dml_persistent_buffer: gr.ResourceHandle,
+    dml_temp_buffer: ?gr.ResourceHandle,
+    dml_persistent_buffer: ?gr.ResourceHandle,
     dml_input_buffer: gr.ResourceHandle,
     dml_output_buffer: gr.ResourceHandle,
 
@@ -170,16 +170,16 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     hrPanicOnFail(info_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(info_tfmt.SetParagraphAlignment(.NEAR));
 
-    const temp_resource_size: u64 = 1 + math.max(
+    const temp_resource_size: u64 = math.max(
         init_binding_info.TemporaryResourceSize,
         exec_binding_info.TemporaryResourceSize,
     );
-    const persistent_resource_size: u64 = 1 + math.max(
+    const persistent_resource_size: u64 = math.max(
         init_binding_info.PersistentResourceSize,
         exec_binding_info.PersistentResourceSize,
     );
 
-    const dml_temp_buffer = grfx.createCommittedResource(
+    const dml_temp_buffer = if (temp_resource_size > 0) grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
@@ -189,15 +189,15 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         },
         d3d12.RESOURCE_STATE_COMMON,
         null,
-    ) catch |err| hrPanic(err);
+    ) catch |err| hrPanic(err) else null;
 
-    const dml_persistent_buffer = grfx.createCommittedResource(
+    const dml_persistent_buffer = if (persistent_resource_size > 0) grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &d3d12.RESOURCE_DESC.initBuffer(persistent_resource_size),
         d3d12.RESOURCE_STATE_COMMON,
         null,
-    ) catch |err| hrPanic(err);
+    ) catch |err| hrPanic(err) else null;
 
     const dml_input_buffer = grfx.createCommittedResource(
         .DEFAULT,
@@ -233,7 +233,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 
     //
-    // Begin frame to init/upload resources on the GPU.
+    // Begin frame to init/upload resources to the GPU.
     //
     grfx.beginFrame();
     grfx.endFrame();
@@ -260,20 +260,20 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk dml_binding_table;
     };
 
-    if (grfx.getResourceSize(dml_temp_buffer) > 1) {
+    if (dml_temp_buffer != null) {
         const binding = dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(dml_temp_buffer),
+            .Buffer = grfx.getResource(dml_temp_buffer.?),
             .Offset = 0,
-            .SizeInBytes = grfx.getResourceSize(dml_temp_buffer),
+            .SizeInBytes = grfx.getResourceSize(dml_temp_buffer.?),
         };
         dml_binding_table.BindTemporaryResource(&.{ .Type = .BUFFER, .Desc = &binding });
     }
 
-    if (grfx.getResourceSize(dml_persistent_buffer) > 1) {
+    if (dml_persistent_buffer != null) {
         const binding = dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(dml_persistent_buffer),
+            .Buffer = grfx.getResource(dml_persistent_buffer.?),
             .Offset = 0,
-            .SizeInBytes = grfx.getResourceSize(dml_persistent_buffer),
+            .SizeInBytes = grfx.getResourceSize(dml_persistent_buffer.?),
         };
         dml_binding_table.BindOutputs(1, &[_]dml.BINDING_DESC{.{ .Type = .BUFFER, .Desc = &binding }});
     }
@@ -314,8 +314,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.dml_cmd_recorder.Release();
     _ = demo.grfx.releaseResource(demo.dml_input_buffer);
     _ = demo.grfx.releaseResource(demo.dml_output_buffer);
-    _ = demo.grfx.releaseResource(demo.dml_temp_buffer);
-    _ = demo.grfx.releaseResource(demo.dml_persistent_buffer);
+    if (demo.dml_temp_buffer != null) _ = demo.grfx.releaseResource(demo.dml_temp_buffer.?);
+    if (demo.dml_persistent_buffer != null) _ = demo.grfx.releaseResource(demo.dml_persistent_buffer.?);
     _ = demo.dml_binding_table.Release();
     _ = demo.dml_compiled_operator.Release();
     _ = demo.dml_device.Release();
@@ -374,21 +374,21 @@ fn draw(demo: *DemoState) void {
     }
 
     // If necessary, bind temporary buffer.
-    if (grfx.getResourceSize(demo.dml_temp_buffer) > 1) {
+    if (demo.dml_temp_buffer != null) {
         const binding = dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(demo.dml_temp_buffer),
+            .Buffer = grfx.getResource(demo.dml_temp_buffer.?),
             .Offset = 0,
-            .SizeInBytes = grfx.getResourceSize(demo.dml_temp_buffer),
+            .SizeInBytes = grfx.getResourceSize(demo.dml_temp_buffer.?),
         };
         demo.dml_binding_table.BindTemporaryResource(&.{ .Type = .BUFFER, .Desc = &binding });
     }
 
     // If necessary, bind persistent buffer.
-    if (grfx.getResourceSize(demo.dml_persistent_buffer) > 1) {
+    if (demo.dml_persistent_buffer != null) {
         const binding = dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(demo.dml_persistent_buffer),
+            .Buffer = grfx.getResource(demo.dml_persistent_buffer.?),
             .Offset = 0,
-            .SizeInBytes = grfx.getResourceSize(demo.dml_persistent_buffer),
+            .SizeInBytes = grfx.getResourceSize(demo.dml_persistent_buffer.?),
         };
         demo.dml_binding_table.BindPersistentResource(&.{ .Type = .BUFFER, .Desc = &binding });
     }
@@ -479,7 +479,7 @@ pub fn main() !void {
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch unreachable;
+        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch false;
         if (has_message) {
             _ = w.user32.translateMessage(&message);
             _ = w.user32.dispatchMessageA(&message);

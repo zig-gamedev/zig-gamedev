@@ -564,6 +564,12 @@ pub const GraphicsContext = struct {
 
         gr.frame_fence_counter += 1;
         hrPanicOnFail(gr.swapchain.Present(gr.present_interval, gr.present_flags));
+        // TODO(mziulek):
+        // Handle DXGI_ERROR_DEVICE_REMOVED and DXGI_ERROR_DEVICE_RESET codes here - we need to re-create
+        // all resources in that case.
+        // Take a look at:
+        // https://github.com/microsoft/DirectML/blob/master/Samples/DirectMLSuperResolution/DeviceResources.cpp
+
         tracy.frameMark();
         hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
 
