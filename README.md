@@ -12,15 +12,15 @@ Below you can find a list of more interesting samples implemented in Zig. More c
 
 1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays. Right Mouse button and W, A, S, D keys can be used to control the camera.
 
-    <img src="screenshots/simple_raytracer.png" alt="simple raytracer" height="200">
+    <img src="samples/simple_raytracer/screenshot.png" alt="simple raytracer" height="200">
 
 1. [physically based rendering](samples/physically_based_rendering): This sample implements physically based shading and image based lighting to achive realistic looking rendering results. Right Mouse button and W, A, S, D keys can be used to control the camera.
 
-    <img src="screenshots/physically_based_rendering.png" alt="physically based rendering" height="200">
+    <img src="samples/physically_based_rendering/screenshot.png" alt="physically based rendering" height="200">
 
 1. [audio playback test](samples/audio_playback_test): This sample demonstrates how to decode .mp3 file using Microsoft Media Foundation and play it back using Windows Audio Session API (WASAPI).
 
-    <img src="screenshots/audio_playback_test.png" alt="audio playback test" height="200">
+    <img src="samples/audio_playback_test/screenshot.png" alt="audio playback test" height="200">
 
 ## Libraries
 
