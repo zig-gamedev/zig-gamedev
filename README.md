@@ -4,11 +4,11 @@ This repository contains a collection of sample applications and libraries for g
 
 This project provides several libraries implemented in Zig that are described in [Libraries](#libraries) section below. All sample applications use those libraries.
 
-Additionally, Zig compiler can build C/C++ code which then can be easily invoked from Zig code. This project takes advantage of this capability to use some existing C/C++ libraries (full source code of these libraries can be found in [external/src](external/src) folder).
+Additionally, Zig compiler can build C/C++ code which can then be easily invoked from Zig code. This project takes advantage of this capability to use some existing C/C++ libraries (full source code of these libraries can be found in [external/src](external/src) directory).
 
 ## Sample applications
 
-Below you can find a list of more interesting samples implemented in Zig. More can be found in [samples](samples/) directory.
+Some of the sample applications are described below. More can be found in [samples](samples/) directory.
 
 1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays. Right Mouse button and W, A, S, D keys can be used to control the camera.
 
@@ -26,7 +26,7 @@ Below you can find a list of more interesting samples implemented in Zig. More c
 
 ### [graphics](libs/common/graphics.zig)
 
-Some features of graphics library are:
+Some features of graphics library:
 
 * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.).
 * Basic DirectX 12 resource management (handle-based resources and pipelines).
@@ -67,15 +67,15 @@ To build a sample application (assuming zig.exe is in the PATH):
 1. Open terminal window.
 1. 'cd' to sample application root directory (for example, `cd samples/simple_raytracer`).
 1. Run `zig build` command.
-1. Sample application will be build, assets and build artifacts will be copied to `samples/<sample_name>/zig-out/bin` folder.
+1. Sample application will be build, assets and build artifacts will be copied to `samples/<sample_name>/zig-out/bin` directory.
 
 Behind the scenes `zig build` command performs following steps:
 
 1. `zig cc` builds all C/C++ libraries that application uses (imgui, cgltf).
-1. DirectX Shader Compiler (which can be found in [external/bin/dxc](external/bin/dxc) folder) is invoked to build all HLSL shaders.
+1. DirectX Shader Compiler (which can be found in [external/bin/dxc](external/bin/dxc) directory) is invoked to build all HLSL shaders.
 1. Zig code is compiled.
 1. Everything is linked together into single executable.
-1. Assets and build artifacts are copied to destination folder.
+1. Assets and build artifacts are copied to destination directory.
 
 You can look at [samples/simple_raytracer/build.zig](samples/simple_raytracer/build.zig) file to see how those steps are implemented in Zig build script.
 
