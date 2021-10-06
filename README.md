@@ -22,6 +22,10 @@ Some of the sample applications are described below. More can be found in [sampl
 
     <img src="samples/audio_playback_test/screenshot.png" alt="audio playback test" height="200">
 
+1. [vector graphics test](samples/vector_graphics_test): This sample demonstrates how to use Direct3D 12 <-> Direct2D interop to render vector graphics and high-quality text.
+
+    <img src="samples/vector_graphics_test/screenshot.png" alt="vector graphics test" height="200">
+
 ## Libraries
 
 ### [graphics](libs/common/graphics.zig)

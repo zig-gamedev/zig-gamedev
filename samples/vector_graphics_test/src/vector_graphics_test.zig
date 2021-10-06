@@ -12,7 +12,7 @@ const c = common.c;
 const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
-const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -42,6 +42,8 @@ const DemoState = struct {
     right_mountain_geo: *d2d1.IGeometry,
     sun_geo: *d2d1.IGeometry,
     river_geo: *d2d1.IGeometry,
+
+    custom_txtfmt: *dwrite.ITextFormat,
 };
 
 fn init(gpa: *std.mem.Allocator) DemoState {
@@ -59,22 +61,40 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         ));
         break :blk maybe_brush.?;
     };
+
     const textformat = blk: {
         var maybe_textformat: ?*dwrite.ITextFormat = null;
         hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
-            utf8ToUtf16LeStringLiteral("Verdana"),
+            L("Verdana"),
             null,
             dwrite.FONT_WEIGHT.NORMAL,
             dwrite.FONT_STYLE.NORMAL,
             dwrite.FONT_STRETCH.NORMAL,
             32.0,
-            utf8ToUtf16LeStringLiteral("en-us"),
+            L("en-us"),
             &maybe_textformat,
         ));
         break :blk maybe_textformat.?;
     };
     hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
     hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
+
+    const custom_txtfmt = blk: {
+        var maybe_textformat: ?*dwrite.ITextFormat = null;
+        hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
+            L("Ink Free"),
+            null,
+            dwrite.FONT_WEIGHT.NORMAL,
+            dwrite.FONT_STYLE.NORMAL,
+            dwrite.FONT_STRETCH.NORMAL,
+            64.0,
+            L("en-us"),
+            &maybe_textformat,
+        ));
+        break :blk maybe_textformat.?;
+    };
+    hrPanicOnFail(custom_txtfmt.SetTextAlignment(.LEADING));
+    hrPanicOnFail(custom_txtfmt.SetParagraphAlignment(.NEAR));
 
     const ellipse = blk: {
         var maybe_ellipse: ?*d2d1.IEllipseGeometry = null;
@@ -84,6 +104,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         ));
         break :blk maybe_ellipse.?;
     };
+
     const stroke_style = blk: {
         var maybe_stroke_style: ?*d2d1.IStrokeStyle = null;
         hrPanicOnFail(grfx.d2d.factory.CreateStrokeStyle(
@@ -102,6 +123,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         ));
         break :blk maybe_stroke_style.?;
     };
+
     const path = blk: {
         var path: *d2d1.IPathGeometry = undefined;
         hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &path)));
@@ -137,6 +159,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         ));
         break :blk ink_style;
     };
+
     const ink = blk: {
         var ink: *d2d1.IInk = undefined;
         hrPanicOnFail(grfx.d2d.context.CreateInk(
@@ -182,6 +205,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
         break :blk ink;
     };
+
     const bezier_lines_path = blk: {
         var bezier_lines_path: *d2d1.IPathGeometry = undefined;
         hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &bezier_lines_path)));
@@ -197,6 +221,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         sink.EndFigure(.OPEN);
         break :blk bezier_lines_path;
     };
+
     const noise_path = blk: {
         var points = std.ArrayList(d2d1.POINT_2F).init(gpa);
         defer points.deinit();
@@ -223,6 +248,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         sink.EndFigure(.CLOSED);
         break :blk noise_path;
     };
+
     const left_mountain_geo = blk: {
         var left_mountain_path: *d2d1.IPathGeometry = undefined;
         hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &left_mountain_path)));
@@ -247,6 +273,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         sink.EndFigure(.CLOSED);
         break :blk @ptrCast(*d2d1.IGeometry, left_mountain_path);
     };
+
     const right_mountain_geo = blk: {
         var right_mountain_path: *d2d1.IPathGeometry = undefined;
         hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &right_mountain_path)));
@@ -273,6 +300,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         sink.EndFigure(.CLOSED);
         break :blk @ptrCast(*d2d1.IGeometry, right_mountain_path);
     };
+
     const sun_geo = blk: {
         var sun_path: *d2d1.IPathGeometry = undefined;
         hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &sun_path)));
@@ -362,6 +390,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
         break :blk @ptrCast(*d2d1.IGeometry, sun_path);
     };
+
     const river_geo = blk: {
         var river_path: *d2d1.IPathGeometry = undefined;
         hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &river_path)));
@@ -398,6 +427,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         sink.EndFigure(.CLOSED);
         break :blk @ptrCast(*d2d1.IGeometry, river_path);
     };
+
     const radial_gradient_brush = blk: {
         const stops = [_]d2d1.GRADIENT_STOP{
             .{ .color = d2d1.colorf.YellowGreen, .position = 0.0 },
@@ -446,6 +476,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .sun_geo = sun_geo,
         .river_geo = river_geo,
         .radial_gradient_brush = radial_gradient_brush,
+        .custom_txtfmt = custom_txtfmt,
     };
 }
 
@@ -612,6 +643,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
+    _ = demo.custom_txtfmt.Release();
     _ = demo.ellipse.Release();
     _ = demo.stroke_style.Release();
     _ = demo.path.Release();
@@ -680,6 +712,25 @@ fn draw(demo: *DemoState) void {
             @ptrCast(*d2d1.IBrush, demo.brush),
         );
 
+        demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.6, .g = 0.0, .b = 1.0, .a = 1.0 });
+        lib.drawText(
+            grfx.d2d.context,
+            \\Lorem ipsum dolor sit amet,
+            \\consectetur adipiscing elit,
+            \\sed do eiusmod tempor incididunt
+            \\ut labore et dolore magna aliqua.
+        ,
+            demo.custom_txtfmt,
+            &d2d1.RECT_F{
+                .left = 1030.0,
+                .top = 220.0,
+                .right = @intToFloat(f32, grfx.viewport_width),
+                .bottom = @intToFloat(f32, grfx.viewport_height),
+            },
+            @ptrCast(*d2d1.IBrush, demo.brush),
+        );
+
+        demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
         drawShapes(demo.*);
     }
     grfx.endDraw2d();
