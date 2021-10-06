@@ -506,7 +506,7 @@ pub const BINDING_TYPE = enum(UINT) {
 
 pub const BINDING_DESC = extern struct {
     Type: BINDING_TYPE,
-    Desc: *const c_void,
+    Desc: ?*const c_void,
 };
 
 pub const BUFFER_BINDING = extern struct {
