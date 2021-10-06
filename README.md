@@ -10,11 +10,11 @@ Additionally, Zig compiler can build C/C++ code which can then be easily invoked
 
 Some of the sample applications are described below. More can be found in [samples](samples/) directory.
 
-1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays. Right Mouse button and W, A, S, D keys can be used to control the camera.
+1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays.
 
     <img src="samples/simple_raytracer/screenshot.png" alt="simple raytracer" height="200">
 
-1. [physically based rendering](samples/physically_based_rendering): This sample implements physically based shading and image based lighting to achive realistic looking rendering results. Right Mouse button and W, A, S, D keys can be used to control the camera.
+1. [physically based rendering](samples/physically_based_rendering): This sample implements physically based shading and image based lighting to achive realistic looking rendering results.
 
     <img src="samples/physically_based_rendering/screenshot.png" alt="physically based rendering" height="200">
 
