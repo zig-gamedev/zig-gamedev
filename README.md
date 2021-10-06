@@ -4,9 +4,9 @@ This repository contains a collection of **sample applications and libraries for
 
 This project provides several libraries implemented in Zig that are described in [Libraries](#libraries) section below. All sample applications use those libraries.
 
-Additionally, Zig compiler can build C/C++ code which can then be easily invoked from Zig code. This project takes advantage of this capability in order to use some existing, well-known C/C++ libraries (full source code of those libraries can be found in [external/src](external/src) directory).
+Additionally, Zig compiler can build C/C++ code which can then be easily invoked from Zig code. This project takes advantage of this capability in order to use some existing, well-known, C/C++ libraries (full source code of those libraries can be found in [external/src](external/src) directory).
 
-Not counting [Zig compiler](https://ziglang.org/download/), **this repository is fully standalone, neither Visual Studio nor Windows SDK needs to be installed to build this project**. Read the details [below](#building-sample-applications).
+Not counting [Zig compiler](https://ziglang.org/download/), **this repository is fully standalone, neither Visual Studio nor Windows SDK needs to be installed to build this project**. Please read the details [below](#building-sample-applications).
 
 ## Sample applications
 
