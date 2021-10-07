@@ -443,37 +443,8 @@ fn update(demo: *DemoState) void {
     lib.newImGuiFrame(demo.frame_stats.delta_time);
 }
 
-fn draw(demo: *DemoState) void {
+fn dispatchRngOperator(demo: *DemoState) void {
     var grfx = &demo.grfx;
-    grfx.beginFrame();
-
-    const back_buffer = grfx.getBackBuffer();
-
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
-    grfx.flushResourceBarriers();
-
-    // Upload the input tensor to the GPU.
-    {
-        const upload = grfx.allocateUploadBufferRegion(u32, 6);
-        upload.cpu_slice[0] = 0;
-        upload.cpu_slice[1] = 0;
-        upload.cpu_slice[2] = 0;
-        upload.cpu_slice[3] = 0;
-        upload.cpu_slice[4] = 123;
-        upload.cpu_slice[5] = 987;
-
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(demo.input_buffer),
-            0,
-            upload.buffer,
-            upload.buffer_offset,
-            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
-        );
-    }
-
-    grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
-    grfx.flushResourceBarriers();
 
     // Reset DML binding table.
     {
@@ -540,71 +511,118 @@ fn draw(demo: *DemoState) void {
         @ptrCast(*dml.IDispatchable, demo.rng_op_state.cop),
         demo.rng_op_state.dtbl,
     );
+}
 
-    if (false) {
-        // Reset DML binding table.
-        {
-            const num_descriptors = demo.cast_info.RequiredDescriptorCount;
-            const base_descriptor = grfx.allocateGpuDescriptors(num_descriptors);
+fn dispatchCastOperator(demo: *DemoState) void {
+    var grfx = &demo.grfx;
 
-            hrPanicOnFail(demo.dml_binding_table.Reset(&dml.BINDING_TABLE_DESC{
-                .Dispatchable = @ptrCast(*dml.IDispatchable, demo.cast_cop),
-                .CPUDescriptorHandle = base_descriptor.cpu_handle,
-                .GPUDescriptorHandle = base_descriptor.gpu_handle,
-                .SizeInDescriptors = num_descriptors,
-            }));
-        }
+    // Reset DML binding table.
+    {
+        const num_descriptors = demo.cast_op_state.info.RequiredDescriptorCount;
+        const base_descriptor = grfx.allocateGpuDescriptors(num_descriptors);
 
-        // If necessary, bind temporary buffer.
-        if (demo.temp_buffer != null and demo.cast_info.TemporaryResourceSize > 0) {
-            demo.dml_binding_table.BindTemporaryResource(&.{
-                .Type = .BUFFER,
-                .Desc = &dml.BUFFER_BINDING{
-                    .Buffer = grfx.getResource(demo.temp_buffer.?),
-                    .Offset = demo.random_generator_info.TemporaryResourceSize,
-                    .SizeInBytes = demo.cast_info.TemporaryResourceSize,
-                },
-            });
-        }
+        hrPanicOnFail(demo.cast_op_state.dtbl.Reset(&dml.BINDING_TABLE_DESC{
+            .Dispatchable = @ptrCast(*dml.IDispatchable, demo.cast_op_state.cop),
+            .CPUDescriptorHandle = base_descriptor.cpu_handle,
+            .GPUDescriptorHandle = base_descriptor.gpu_handle,
+            .SizeInDescriptors = num_descriptors,
+        }));
+    }
 
-        // If necessary, bind persistent buffer.
-        if (demo.persistent_buffer != null and demo.cast_info.PersistentResourceSize > 0) {
-            demo.dml_binding_table.BindPersistentResource(&.{
-                .Type = .BUFFER,
-                .Desc = &dml.BUFFER_BINDING{
-                    .Buffer = grfx.getResource(demo.persistent_buffer.?),
-                    .Offset = demo.random_generator_info.TemporaryResourceSize,
-                    .SizeInBytes = demo.cast_info.PersistentResourceSize,
-                },
-            });
-        }
-
-        // Bind input buffer.
-        demo.dml_binding_table.BindInputs(1, &[_]dml.BINDING_DESC{.{
+    // If necessary, bind temporary buffer.
+    if (demo.temp_buffer != null and demo.cast_op_state.info.TemporaryResourceSize > 0) {
+        demo.cast_op_state.dtbl.BindTemporaryResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.output_buffer),
-                .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(demo.output_buffer),
+                .Buffer = grfx.getResource(demo.temp_buffer.?),
+                .Offset = demo.rng_op_state.info.TemporaryResourceSize,
+                .SizeInBytes = demo.cast_op_state.info.TemporaryResourceSize,
             },
-        }});
+        });
+    }
 
-        // Bind output buffers.
-        demo.dml_binding_table.BindOutputs(1, &[_]dml.BINDING_DESC{.{
+    // If necessary, bind persistent buffer.
+    if (demo.persistent_buffer != null and demo.cast_op_state.info.PersistentResourceSize > 0) {
+        demo.cast_op_state.dtbl.BindPersistentResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.input_buffer),
-                .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(demo.input_buffer),
+                .Buffer = grfx.getResource(demo.persistent_buffer.?),
+                .Offset = demo.rng_op_state.info.TemporaryResourceSize,
+                .SizeInBytes = demo.cast_op_state.info.PersistentResourceSize,
             },
-        }});
+        });
+    }
 
-        demo.dml_cmd_recorder.RecordDispatch(
-            @ptrCast(*d3d12.ICommandList, grfx.cmdlist),
-            @ptrCast(*dml.IDispatchable, demo.cast_cop),
-            demo.dml_binding_table,
+    // Bind input buffer.
+    demo.cast_op_state.dtbl.BindInputs(1, &[_]dml.BINDING_DESC{.{
+        .Type = .BUFFER,
+        .Desc = &dml.BUFFER_BINDING{
+            .Buffer = grfx.getResource(demo.output_buffer),
+            .Offset = 0,
+            .SizeInBytes = grfx.getResourceSize(demo.output_buffer),
+        },
+    }});
+
+    // Bind output buffers.
+    demo.cast_op_state.dtbl.BindOutputs(1, &[_]dml.BINDING_DESC{.{
+        .Type = .BUFFER,
+        .Desc = &dml.BUFFER_BINDING{
+            .Buffer = grfx.getResource(demo.input_buffer),
+            .Offset = 0,
+            .SizeInBytes = grfx.getResourceSize(demo.input_buffer),
+        },
+    }});
+
+    demo.dml_cmd_recorder.RecordDispatch(
+        @ptrCast(*d3d12.ICommandList, grfx.cmdlist),
+        @ptrCast(*dml.IDispatchable, demo.cast_op_state.cop),
+        demo.cast_op_state.dtbl,
+    );
+}
+
+fn draw(demo: *DemoState) void {
+    var grfx = &demo.grfx;
+    grfx.beginFrame();
+
+    const back_buffer = grfx.getBackBuffer();
+
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
+    grfx.flushResourceBarriers();
+
+    // Upload the input tensor to the GPU.
+    {
+        const upload = grfx.allocateUploadBufferRegion(u32, 6);
+        upload.cpu_slice[0] = 0;
+        upload.cpu_slice[1] = 0;
+        upload.cpu_slice[2] = 0;
+        upload.cpu_slice[3] = 0;
+        upload.cpu_slice[4] = 123;
+        upload.cpu_slice[5] = 987;
+
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(demo.input_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
     }
+
+    grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    grfx.flushResourceBarriers();
+
+    dispatchRngOperator(demo);
+
+    grfx.cmdlist.ResourceBarrier(
+        2,
+        &[_]d3d12.RESOURCE_BARRIER{
+            .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(demo.input_buffer) } } },
+            .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(demo.output_buffer) } } },
+        },
+    );
+
+    dispatchCastOperator(demo);
 
     grfx.cmdlist.OMSetRenderTargets(
         1,
