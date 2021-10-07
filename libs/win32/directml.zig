@@ -280,6 +280,11 @@ pub const RANDOM_GENERATOR_OPERATOR_DESC = extern struct {
     Type: RANDOM_GENERATOR_TYPE,
 };
 
+pub const CAST_OPERATOR_DESC = extern struct {
+    InputTensor: *const TENSOR_DESC,
+    OutputTensor: *const TENSOR_DESC,
+};
+
 //
 // Interfaces.
 //

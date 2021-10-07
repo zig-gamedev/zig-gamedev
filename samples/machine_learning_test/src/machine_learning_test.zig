@@ -27,6 +27,12 @@ const window_name = "zig-gamedev: machine learning test";
 const window_width = 1920;
 const window_height = 1080;
 
+const OperatorState = struct {
+    cop: *dml.ICompiledOperator,
+    dtbl: *dml.IBindingTable,
+    info: dml.BINDING_PROPERTIES,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -36,10 +42,9 @@ const DemoState = struct {
     info_txtfmt: *dwrite.ITextFormat,
 
     dml_device: *dml.IDevice1,
-    dml_compiled_operator: *dml.ICompiledOperator,
-    dml_binding_table: *dml.IBindingTable,
 
-    num_descriptors: u32,
+    rng_op_state: OperatorState,
+    cast_op_state: OperatorState,
 
     temp_buffer: ?gr.ResourceHandle,
     persistent_buffer: ?gr.ResourceHandle,
@@ -66,94 +71,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     );
 
     var grfx = gr.GraphicsContext.init(window);
-
-    var dml_device: *dml.IDevice1 = undefined;
-    hrPanicOnFail(dml.createDevice(
-        @ptrCast(*d3d12.IDevice, grfx.device),
-        if (enable_dx_debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
-        .FL_4_1,
-        &dml.IID_IDevice1,
-        @ptrCast(*?*c_void, &dml_device),
-    ));
-
-    const input_state_tensor_desc = dml.TENSOR_DESC{
-        .Type = .BUFFER,
-        .Desc = &dml.BUFFER_TENSOR_DESC{
-            .DataType = .UINT32,
-            .Flags = dml.TENSOR_FLAG_NONE,
-            .DimensionCount = 4,
-            .Sizes = &[_]u32{ 1, 1, 1, 6 },
-            .Strides = null,
-            .TotalTensorSizeInBytes = 6 * @sizeOf(u32),
-            .GuaranteedBaseOffsetAlignment = 0,
-        },
-    };
-
-    const output_tensor_desc = dml.TENSOR_DESC{
-        .Type = .BUFFER,
-        .Desc = &dml.BUFFER_TENSOR_DESC{
-            .DataType = .UINT32,
-            .Flags = dml.TENSOR_FLAG_NONE,
-            .DimensionCount = 1,
-            .Sizes = &[_]u32{128},
-            .Strides = null,
-            .TotalTensorSizeInBytes = 128 * @sizeOf(u32),
-            .GuaranteedBaseOffsetAlignment = 0,
-        },
-    };
-
-    const dml_operator = blk: {
-        const operator_desc = dml.OPERATOR_DESC{
-            .Type = .RANDOM_GENERATOR,
-            .Desc = &dml.RANDOM_GENERATOR_OPERATOR_DESC{
-                .InputStateTensor = &input_state_tensor_desc,
-                .OutputTensor = &output_tensor_desc,
-                .OutputStateTensor = &input_state_tensor_desc,
-                .Type = .PHILOX_4X32_10,
-            },
-        };
-
-        var dml_operator: *dml.IOperator = undefined;
-        hrPanicOnFail(dml_device.CreateOperator(
-            &operator_desc,
-            &dml.IID_IOperator,
-            @ptrCast(*?*c_void, &dml_operator),
-        ));
-        break :blk dml_operator;
-    };
-    defer _ = dml_operator.Release();
-
-    const dml_compiled_operator = blk: {
-        var dml_compiled_operator: *dml.ICompiledOperator = undefined;
-        hrPanicOnFail(dml_device.CompileOperator(
-            dml_operator,
-            dml.EXECUTION_FLAG_NONE,
-            &dml.IID_ICompiledOperator,
-            @ptrCast(*?*c_void, &dml_compiled_operator),
-        ));
-        break :blk dml_compiled_operator;
-    };
-
-    const dml_init_operator = blk: {
-        const operators = [_]*dml.ICompiledOperator{dml_compiled_operator};
-
-        var dml_init_operator: *dml.IOperatorInitializer = undefined;
-        hrPanicOnFail(dml_device.CreateOperatorInitializer(
-            operators.len,
-            &operators,
-            &dml.IID_IOperatorInitializer,
-            @ptrCast(*?*c_void, &dml_init_operator),
-        ));
-        break :blk dml_init_operator;
-    };
-    defer _ = dml_init_operator.Release();
-
-    const exec_binding_info = dml_compiled_operator.GetBindingProperties();
-    const init_binding_info = dml_init_operator.GetBindingProperties();
-    const num_descriptors = math.max(
-        exec_binding_info.RequiredDescriptorCount,
-        init_binding_info.RequiredDescriptorCount,
-    );
 
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
@@ -182,14 +99,131 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     hrPanicOnFail(info_txtfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(info_txtfmt.SetParagraphAlignment(.NEAR));
 
+    var dml_device: *dml.IDevice1 = undefined;
+    hrPanicOnFail(dml.createDevice(
+        @ptrCast(*d3d12.IDevice, grfx.device),
+        if (enable_dx_debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
+        .FL_4_1,
+        &dml.IID_IDevice1,
+        @ptrCast(*?*c_void, &dml_device),
+    ));
+
+    const state_tensor_desc = dml.TENSOR_DESC{
+        .Type = .BUFFER,
+        .Desc = &dml.BUFFER_TENSOR_DESC{
+            .DataType = .UINT32,
+            .Flags = dml.TENSOR_FLAG_NONE,
+            .DimensionCount = 4,
+            .Sizes = &[_]u32{ 1, 1, 1, 6 },
+            .Strides = null,
+            .TotalTensorSizeInBytes = 6 * @sizeOf(u32),
+            .GuaranteedBaseOffsetAlignment = 0,
+        },
+    };
+
+    const u32_data_tensor_desc = dml.TENSOR_DESC{
+        .Type = .BUFFER,
+        .Desc = &dml.BUFFER_TENSOR_DESC{
+            .DataType = .UINT32,
+            .Flags = dml.TENSOR_FLAG_NONE,
+            .DimensionCount = 1,
+            .Sizes = &[_]u32{128},
+            .Strides = null,
+            .TotalTensorSizeInBytes = 128 * @sizeOf(u32),
+            .GuaranteedBaseOffsetAlignment = 0,
+        },
+    };
+
+    const f32_data_tensor_desc = dml.TENSOR_DESC{
+        .Type = .BUFFER,
+        .Desc = &dml.BUFFER_TENSOR_DESC{
+            .DataType = .FLOAT32,
+            .Flags = dml.TENSOR_FLAG_NONE,
+            .DimensionCount = 1,
+            .Sizes = &[_]u32{128},
+            .Strides = null,
+            .TotalTensorSizeInBytes = 128 * @sizeOf(f32),
+            .GuaranteedBaseOffsetAlignment = 0,
+        },
+    };
+
+    const rng_op = blk: {
+        const desc = dml.OPERATOR_DESC{
+            .Type = .RANDOM_GENERATOR,
+            .Desc = &dml.RANDOM_GENERATOR_OPERATOR_DESC{
+                .InputStateTensor = &state_tensor_desc,
+                .OutputTensor = &u32_data_tensor_desc,
+                .OutputStateTensor = null,
+                .Type = .PHILOX_4X32_10,
+            },
+        };
+
+        var op: *dml.IOperator = undefined;
+        hrPanicOnFail(dml_device.CreateOperator(&desc, &dml.IID_IOperator, @ptrCast(*?*c_void, &op)));
+        break :blk op;
+    };
+    defer _ = rng_op.Release();
+
+    const cast_op = blk: {
+        const desc = dml.OPERATOR_DESC{
+            .Type = .CAST,
+            .Desc = &dml.CAST_OPERATOR_DESC{
+                .InputTensor = &u32_data_tensor_desc,
+                .OutputTensor = &f32_data_tensor_desc,
+            },
+        };
+
+        var op: *dml.IOperator = undefined;
+        hrPanicOnFail(dml_device.CreateOperator(&desc, &dml.IID_IOperator, @ptrCast(*?*c_void, &op)));
+        break :blk op;
+    };
+    defer _ = cast_op.Release();
+
+    const rng_cop = blk: {
+        var cop: *dml.ICompiledOperator = undefined;
+        hrPanicOnFail(dml_device.CompileOperator(
+            rng_op,
+            dml.EXECUTION_FLAG_NONE,
+            &dml.IID_ICompiledOperator,
+            @ptrCast(*?*c_void, &cop),
+        ));
+        break :blk cop;
+    };
+
+    const cast_cop = blk: {
+        var cop: *dml.ICompiledOperator = undefined;
+        hrPanicOnFail(dml_device.CompileOperator(
+            cast_op,
+            dml.EXECUTION_FLAG_NONE,
+            &dml.IID_ICompiledOperator,
+            @ptrCast(*?*c_void, &cop),
+        ));
+        break :blk cop;
+    };
+
+    const init_op = blk: {
+        const operators = [_]*dml.ICompiledOperator{ rng_cop, cast_cop };
+
+        var iop: *dml.IOperatorInitializer = undefined;
+        hrPanicOnFail(dml_device.CreateOperatorInitializer(
+            operators.len,
+            &operators,
+            &dml.IID_IOperatorInitializer,
+            @ptrCast(*?*c_void, &iop),
+        ));
+        break :blk iop;
+    };
+    defer _ = init_op.Release();
+
+    const rng_info = rng_cop.GetBindingProperties();
+    const cast_info = cast_cop.GetBindingProperties();
+    const init_info = init_op.GetBindingProperties();
+
     const temp_resource_size: u64 = math.max(
-        init_binding_info.TemporaryResourceSize,
-        exec_binding_info.TemporaryResourceSize,
+        init_info.TemporaryResourceSize,
+        rng_info.TemporaryResourceSize + cast_info.TemporaryResourceSize,
     );
-    const persistent_resource_size: u64 = math.max(
-        init_binding_info.PersistentResourceSize,
-        exec_binding_info.PersistentResourceSize,
-    );
+    const persistent_resource_size: u64 = rng_info.PersistentResourceSize + cast_info.PersistentResourceSize;
 
     const temp_buffer = if (temp_resource_size > 0) grfx.createCommittedResource(
         .DEFAULT,
@@ -216,7 +250,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         d3d12.HEAP_FLAG_NONE,
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initBuffer(
-                @ptrCast(*const dml.BUFFER_TENSOR_DESC, input_state_tensor_desc.Desc).TotalTensorSizeInBytes,
+                @ptrCast(*const dml.BUFFER_TENSOR_DESC, u32_data_tensor_desc.Desc).TotalTensorSizeInBytes,
             );
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             break :blk desc;
@@ -230,7 +264,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         d3d12.HEAP_FLAG_NONE,
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initBuffer(
-                @ptrCast(*const dml.BUFFER_TENSOR_DESC, output_tensor_desc.Desc).TotalTensorSizeInBytes + 32,
+                @ptrCast(*const dml.BUFFER_TENSOR_DESC, u32_data_tensor_desc.Desc).TotalTensorSizeInBytes,
             );
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             break :blk desc;
@@ -259,47 +293,105 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
-    const dml_binding_table = blk: {
-        const base_descriptor = grfx.allocateGpuDescriptors(num_descriptors);
-
+    const rng_op_state = blk: {
+        const base_descriptor = grfx.allocateGpuDescriptors(rng_info.RequiredDescriptorCount);
         const desc = dml.BINDING_TABLE_DESC{
-            .Dispatchable = @ptrCast(*dml.IDispatchable, dml_init_operator),
+            .Dispatchable = @ptrCast(*dml.IDispatchable, rng_cop),
             .CPUDescriptorHandle = base_descriptor.cpu_handle,
             .GPUDescriptorHandle = base_descriptor.gpu_handle,
-            .SizeInDescriptors = num_descriptors,
+            .SizeInDescriptors = rng_info.RequiredDescriptorCount,
+        };
+
+        var table: *dml.IBindingTable = undefined;
+        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*c_void, &table)));
+
+        break :blk .{
+            .cop = rng_cop,
+            .dtbl = table,
+            .info = rng_info,
+        };
+    };
+
+    const cast_op_state = blk: {
+        const base_descriptor = grfx.allocateGpuDescriptors(cast_info.RequiredDescriptorCount);
+        const desc = dml.BINDING_TABLE_DESC{
+            .Dispatchable = @ptrCast(*dml.IDispatchable, cast_cop),
+            .CPUDescriptorHandle = base_descriptor.cpu_handle,
+            .GPUDescriptorHandle = base_descriptor.gpu_handle,
+            .SizeInDescriptors = cast_info.RequiredDescriptorCount,
+        };
+
+        var table: *dml.IBindingTable = undefined;
+        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*c_void, &table)));
+
+        break :blk .{
+            .cop = cast_cop,
+            .dtbl = table,
+            .info = cast_info,
+        };
+    };
+
+    const init_dtbl = blk: {
+        const base_descriptor = grfx.allocateGpuDescriptors(init_info.RequiredDescriptorCount + 1);
+        const desc = dml.BINDING_TABLE_DESC{
+            .Dispatchable = @ptrCast(*dml.IDispatchable, init_op),
+            .CPUDescriptorHandle = base_descriptor.cpu_handle,
+            .GPUDescriptorHandle = base_descriptor.gpu_handle,
+            .SizeInDescriptors = init_info.RequiredDescriptorCount,
         };
 
         var table: *dml.IBindingTable = undefined;
         hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*c_void, &table)));
         break :blk table;
     };
+    defer _ = init_dtbl.Release();
 
-    if (temp_buffer != null) {
-        dml_binding_table.BindTemporaryResource(&.{
+    if (temp_buffer != null and init_info.TemporaryResourceSize > 0) {
+        init_dtbl.BindTemporaryResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
                 .Buffer = grfx.getResource(temp_buffer.?),
                 .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(temp_buffer.?),
+                .SizeInBytes = init_info.TemporaryResourceSize,
             },
         });
     }
 
     if (persistent_buffer != null) {
-        dml_binding_table.BindOutputs(1, &[_]dml.BINDING_DESC{.{
+        var offset: u64 = 0;
+        const binding0 = if (rng_info.PersistentResourceSize == 0) dml.BINDING_DESC{
+            .Type = .NONE,
+            .Desc = null,
+        } else dml.BINDING_DESC{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
                 .Buffer = grfx.getResource(persistent_buffer.?),
-                .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(persistent_buffer.?),
+                .Offset = offset,
+                .SizeInBytes = rng_info.PersistentResourceSize,
             },
-        }});
+        };
+        offset += rng_info.PersistentResourceSize;
+
+        const binding1 = if (cast_info.PersistentResourceSize == 0) dml.BINDING_DESC{
+            .Type = .NONE,
+            .Desc = null,
+        } else dml.BINDING_DESC{
+            .Type = .BUFFER,
+            .Desc = &dml.BUFFER_BINDING{
+                .Buffer = grfx.getResource(persistent_buffer.?),
+                .Offset = offset,
+                .SizeInBytes = cast_info.PersistentResourceSize,
+            },
+        };
+        offset += cast_info.PersistentResourceSize;
+
+        init_dtbl.BindOutputs(2, &[_]dml.BINDING_DESC{ binding0, binding1 });
     }
 
     dml_cmd_recorder.RecordDispatch(
         @ptrCast(*d3d12.ICommandList, grfx.cmdlist),
-        @ptrCast(*dml.IDispatchable, dml_init_operator),
-        dml_binding_table,
+        @ptrCast(*dml.IDispatchable, init_op),
+        init_dtbl,
     );
 
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
@@ -316,9 +408,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .brush = brush,
         .info_txtfmt = info_txtfmt,
         .dml_device = dml_device,
-        .dml_compiled_operator = dml_compiled_operator,
-        .num_descriptors = num_descriptors,
-        .dml_binding_table = dml_binding_table,
+        .rng_op_state = rng_op_state,
+        .cast_op_state = cast_op_state,
         .temp_buffer = temp_buffer,
         .persistent_buffer = persistent_buffer,
         .input_buffer = input_buffer,
@@ -334,8 +425,10 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.output_buffer);
     if (demo.temp_buffer != null) _ = demo.grfx.releaseResource(demo.temp_buffer.?);
     if (demo.persistent_buffer != null) _ = demo.grfx.releaseResource(demo.persistent_buffer.?);
-    _ = demo.dml_binding_table.Release();
-    _ = demo.dml_compiled_operator.Release();
+    _ = demo.rng_op_state.cop.Release();
+    _ = demo.rng_op_state.dtbl.Release();
+    _ = demo.cast_op_state.cop.Release();
+    _ = demo.cast_op_state.dtbl.Release();
     _ = demo.dml_device.Release();
     _ = demo.brush.Release();
     _ = demo.info_txtfmt.Release();
@@ -384,75 +477,134 @@ fn draw(demo: *DemoState) void {
 
     // Reset DML binding table.
     {
-        const base_descriptor = grfx.allocateGpuDescriptors(demo.num_descriptors);
+        const num_descriptors = demo.rng_op_state.info.RequiredDescriptorCount;
+        const base_descriptor = grfx.allocateGpuDescriptors(num_descriptors);
 
-        hrPanicOnFail(demo.dml_binding_table.Reset(&dml.BINDING_TABLE_DESC{
-            .Dispatchable = @ptrCast(*dml.IDispatchable, demo.dml_compiled_operator),
+        hrPanicOnFail(demo.rng_op_state.dtbl.Reset(&dml.BINDING_TABLE_DESC{
+            .Dispatchable = @ptrCast(*dml.IDispatchable, demo.rng_op_state.cop),
             .CPUDescriptorHandle = base_descriptor.cpu_handle,
             .GPUDescriptorHandle = base_descriptor.gpu_handle,
-            .SizeInDescriptors = demo.num_descriptors,
+            .SizeInDescriptors = num_descriptors,
         }));
     }
 
     // If necessary, bind temporary buffer.
-    if (demo.temp_buffer != null) {
-        demo.dml_binding_table.BindTemporaryResource(&.{
+    if (demo.temp_buffer != null and demo.rng_op_state.info.TemporaryResourceSize > 0) {
+        demo.rng_op_state.dtbl.BindTemporaryResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
                 .Buffer = grfx.getResource(demo.temp_buffer.?),
                 .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(demo.temp_buffer.?),
+                .SizeInBytes = demo.rng_op_state.info.TemporaryResourceSize,
             },
         });
     }
 
     // If necessary, bind persistent buffer.
-    if (demo.persistent_buffer != null) {
-        demo.dml_binding_table.BindPersistentResource(&.{
+    if (demo.persistent_buffer != null and demo.rng_op_state.info.PersistentResourceSize > 0) {
+        demo.rng_op_state.dtbl.BindPersistentResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
                 .Buffer = grfx.getResource(demo.persistent_buffer.?),
                 .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(demo.persistent_buffer.?),
+                .SizeInBytes = demo.rng_op_state.info.PersistentResourceSize,
             },
         });
     }
 
     // Bind input buffer.
-    demo.dml_binding_table.BindInputs(1, &[_]dml.BINDING_DESC{.{
+    demo.rng_op_state.dtbl.BindInputs(1, &[_]dml.BINDING_DESC{.{
         .Type = .BUFFER,
         .Desc = &dml.BUFFER_BINDING{
             .Buffer = grfx.getResource(demo.input_buffer),
             .Offset = 0,
-            .SizeInBytes = grfx.getResourceSize(demo.input_buffer),
+            .SizeInBytes = 6 * @sizeOf(u32),
         },
     }});
 
     // Bind output buffers.
-    demo.dml_binding_table.BindOutputs(2, &[_]dml.BINDING_DESC{
+    demo.rng_op_state.dtbl.BindOutputs(2, &[_]dml.BINDING_DESC{
         .{ // Output tensor.
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
                 .Buffer = grfx.getResource(demo.output_buffer),
-                .Offset = 32, // 24 bytes aligned to 32
-                .SizeInBytes = grfx.getResourceSize(demo.output_buffer) - 32,
-            },
-        },
-        .{ // Output state tensor (first 24 bytes of the buffer).
-            .Type = .BUFFER,
-            .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.output_buffer),
                 .Offset = 0,
-                .SizeInBytes = 6 * @sizeOf(u32),
+                .SizeInBytes = grfx.getResourceSize(demo.output_buffer),
             },
         },
+        .{ .Type = .NONE, .Desc = null }, // We do not need output state.
     });
 
     demo.dml_cmd_recorder.RecordDispatch(
         @ptrCast(*d3d12.ICommandList, grfx.cmdlist),
-        @ptrCast(*dml.IDispatchable, demo.dml_compiled_operator),
-        demo.dml_binding_table,
+        @ptrCast(*dml.IDispatchable, demo.rng_op_state.cop),
+        demo.rng_op_state.dtbl,
     );
+
+    if (false) {
+        // Reset DML binding table.
+        {
+            const num_descriptors = demo.cast_info.RequiredDescriptorCount;
+            const base_descriptor = grfx.allocateGpuDescriptors(num_descriptors);
+
+            hrPanicOnFail(demo.dml_binding_table.Reset(&dml.BINDING_TABLE_DESC{
+                .Dispatchable = @ptrCast(*dml.IDispatchable, demo.cast_cop),
+                .CPUDescriptorHandle = base_descriptor.cpu_handle,
+                .GPUDescriptorHandle = base_descriptor.gpu_handle,
+                .SizeInDescriptors = num_descriptors,
+            }));
+        }
+
+        // If necessary, bind temporary buffer.
+        if (demo.temp_buffer != null and demo.cast_info.TemporaryResourceSize > 0) {
+            demo.dml_binding_table.BindTemporaryResource(&.{
+                .Type = .BUFFER,
+                .Desc = &dml.BUFFER_BINDING{
+                    .Buffer = grfx.getResource(demo.temp_buffer.?),
+                    .Offset = demo.random_generator_info.TemporaryResourceSize,
+                    .SizeInBytes = demo.cast_info.TemporaryResourceSize,
+                },
+            });
+        }
+
+        // If necessary, bind persistent buffer.
+        if (demo.persistent_buffer != null and demo.cast_info.PersistentResourceSize > 0) {
+            demo.dml_binding_table.BindPersistentResource(&.{
+                .Type = .BUFFER,
+                .Desc = &dml.BUFFER_BINDING{
+                    .Buffer = grfx.getResource(demo.persistent_buffer.?),
+                    .Offset = demo.random_generator_info.TemporaryResourceSize,
+                    .SizeInBytes = demo.cast_info.PersistentResourceSize,
+                },
+            });
+        }
+
+        // Bind input buffer.
+        demo.dml_binding_table.BindInputs(1, &[_]dml.BINDING_DESC{.{
+            .Type = .BUFFER,
+            .Desc = &dml.BUFFER_BINDING{
+                .Buffer = grfx.getResource(demo.output_buffer),
+                .Offset = 0,
+                .SizeInBytes = grfx.getResourceSize(demo.output_buffer),
+            },
+        }});
+
+        // Bind output buffers.
+        demo.dml_binding_table.BindOutputs(1, &[_]dml.BINDING_DESC{.{
+            .Type = .BUFFER,
+            .Desc = &dml.BUFFER_BINDING{
+                .Buffer = grfx.getResource(demo.input_buffer),
+                .Offset = 0,
+                .SizeInBytes = grfx.getResourceSize(demo.input_buffer),
+            },
+        }});
+
+        demo.dml_cmd_recorder.RecordDispatch(
+            @ptrCast(*d3d12.ICommandList, grfx.cmdlist),
+            @ptrCast(*dml.IDispatchable, demo.cast_cop),
+            demo.dml_binding_table,
+        );
+    }
 
     grfx.cmdlist.OMSetRenderTargets(
         1,
