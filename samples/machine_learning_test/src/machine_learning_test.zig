@@ -443,7 +443,7 @@ fn update(demo: *DemoState) void {
     lib.newImGuiFrame(demo.frame_stats.delta_time);
 }
 
-fn dispatchRngOperator(demo: *DemoState) void {
+fn dispatchRngOperator(demo: *DemoState, in_buffer: gr.ResourceHandle, out_buffer: gr.ResourceHandle) void {
     var grfx = &demo.grfx;
 
     // Reset DML binding table.
@@ -487,7 +487,7 @@ fn dispatchRngOperator(demo: *DemoState) void {
     demo.rng_op_state.dtbl.BindInputs(1, &[_]dml.BINDING_DESC{.{
         .Type = .BUFFER,
         .Desc = &dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(demo.input_buffer),
+            .Buffer = grfx.getResource(in_buffer),
             .Offset = 0,
             .SizeInBytes = 6 * @sizeOf(u32),
         },
@@ -498,9 +498,9 @@ fn dispatchRngOperator(demo: *DemoState) void {
         .{ // Output tensor.
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.output_buffer),
+                .Buffer = grfx.getResource(out_buffer),
                 .Offset = 0,
-                .SizeInBytes = grfx.getResourceSize(demo.output_buffer),
+                .SizeInBytes = grfx.getResourceSize(out_buffer),
             },
         },
         .{ .Type = .NONE, .Desc = null }, // We do not need output state.
@@ -513,7 +513,7 @@ fn dispatchRngOperator(demo: *DemoState) void {
     );
 }
 
-fn dispatchCastOperator(demo: *DemoState) void {
+fn dispatchCastOperator(demo: *DemoState, in_buffer: gr.ResourceHandle, out_buffer: gr.ResourceHandle) void {
     var grfx = &demo.grfx;
 
     // Reset DML binding table.
@@ -557,7 +557,7 @@ fn dispatchCastOperator(demo: *DemoState) void {
     demo.cast_op_state.dtbl.BindInputs(1, &[_]dml.BINDING_DESC{.{
         .Type = .BUFFER,
         .Desc = &dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(demo.output_buffer),
+            .Buffer = grfx.getResource(in_buffer),
             .Offset = 0,
             .SizeInBytes = grfx.getResourceSize(demo.output_buffer),
         },
@@ -567,9 +567,9 @@ fn dispatchCastOperator(demo: *DemoState) void {
     demo.cast_op_state.dtbl.BindOutputs(1, &[_]dml.BINDING_DESC{.{
         .Type = .BUFFER,
         .Desc = &dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(demo.input_buffer),
+            .Buffer = grfx.getResource(out_buffer),
             .Offset = 0,
-            .SizeInBytes = grfx.getResourceSize(demo.input_buffer),
+            .SizeInBytes = grfx.getResourceSize(out_buffer),
         },
     }});
 
@@ -577,6 +577,17 @@ fn dispatchCastOperator(demo: *DemoState) void {
         @ptrCast(*d3d12.ICommandList, grfx.cmdlist),
         @ptrCast(*dml.IDispatchable, demo.cast_op_state.cop),
         demo.cast_op_state.dtbl,
+    );
+}
+
+fn dispatchBarriers(demo: *DemoState) void {
+    var grfx = &demo.grfx;
+    grfx.cmdlist.ResourceBarrier(
+        2,
+        &[_]d3d12.RESOURCE_BARRIER{
+            .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(demo.input_buffer) } } },
+            .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(demo.output_buffer) } } },
+        },
     );
 }
 
@@ -612,17 +623,9 @@ fn draw(demo: *DemoState) void {
     grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
     grfx.flushResourceBarriers();
 
-    dispatchRngOperator(demo);
-
-    grfx.cmdlist.ResourceBarrier(
-        2,
-        &[_]d3d12.RESOURCE_BARRIER{
-            .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(demo.input_buffer) } } },
-            .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(demo.output_buffer) } } },
-        },
-    );
-
-    dispatchCastOperator(demo);
+    dispatchRngOperator(demo, demo.input_buffer, demo.output_buffer);
+    dispatchBarriers(demo);
+    dispatchCastOperator(demo, demo.output_buffer, demo.input_buffer);
 
     grfx.cmdlist.OMSetRenderTargets(
         1,
