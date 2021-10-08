@@ -10,7 +10,7 @@ Not counting ~60 MB [Zig compiler](https://ziglang.org/download/) package, **thi
 
 ## Sample applications
 
-Some of the sample applications are described below. More can be found in [samples](samples/) directory.
+Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
 
 1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays.
 
@@ -37,10 +37,10 @@ Some features of graphics library:
 * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.).
 * Basic DirectX 12 resource management (handle-based resources and pipelines).
 * Basic resource barriers management with simple state-tracking.
-* Fast image loading with WIC (Windows Imaging Component).
+* Fast image loading using WIC (Windows Imaging Component).
 * Helpers for uploading data to the GPU.
 * Fast mipmap generator running on the GPU.
-* Interop with Direct2D and DirectWrite.
+* Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering.
 * Custom integration of [dear imgui](https://github.com/ocornut/imgui) library.
 
 ### [vectormath](libs/common/vectormath.zig)
