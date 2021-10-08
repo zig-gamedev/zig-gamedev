@@ -250,6 +250,28 @@ pub const OPERATOR_TYPE = enum(UINT) {
 //
 // Operator enumerations and structures.
 //
+pub const CONVOLUTION_MODE = enum(UINT) {
+    CONVOLUTION,
+    CROSS_CORRELATION,
+};
+
+pub const CONVOLUTION_DIRECTION = enum(UINT) {
+    FORWARD,
+    BACKWARD,
+};
+
+pub const PADDING_MODE = enum(UINT) {
+    CONSTANT,
+    EDGE,
+    REFLECTION,
+    SYMMETRIC,
+};
+
+pub const INTERPOLATION_MODE = enum(UINT) {
+    NEAREST_NEIGHBOR,
+    LINEAR,
+};
+
 pub const SCALE_BIAS = extern struct {
     Scale: FLOAT,
     Bias: FLOAT,
@@ -283,6 +305,23 @@ pub const RANDOM_GENERATOR_OPERATOR_DESC = extern struct {
 pub const CAST_OPERATOR_DESC = extern struct {
     InputTensor: *const TENSOR_DESC,
     OutputTensor: *const TENSOR_DESC,
+};
+
+pub const CONVOLUTION_OPERATOR_DESC = extern struct {
+    InputTensor: *const TENSOR_DESC,
+    FilterTensor: *const TENSOR_DESC,
+    BiasTensor: ?*const TENSOR_DESC,
+    OutputTensor: *const TENSOR_DESC,
+    Mode: CONVOLUTION_MODE,
+    Direction: CONVOLUTION_DIRECTION,
+    DimensionCount: UINT,
+    Strides: [*]const UINT,
+    Dilations: [*]const UINT,
+    StartPadding: [*]const UINT,
+    EndPadding: [*]const UINT,
+    OutputPadding: [*]const UINT,
+    GroupCount: UINT,
+    FusedActivation: ?*const OPERATOR_DESC,
 };
 
 //
