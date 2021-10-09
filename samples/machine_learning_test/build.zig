@@ -45,6 +45,17 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/machine_learning_test.hlsl", "vsDrawTexture", "draw_texture.vs.cso", "vs", "PSO__DRAW_TEXTURE");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/machine_learning_test.hlsl", "psDrawTexture", "draw_texture.ps.cso", "ps", "PSO__DRAW_TEXTURE");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd("src/machine_learning_test.hlsl", "csTextureToBuffer", "texture_to_buffer.cs.cso", "cs", "PSO__TEXTURE_TO_BUFFER");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd("src/machine_learning_test.hlsl", "csBufferToTexture", "buffer_to_texture.cs.cso", "cs", "PSO__BUFFER_TO_TEXTURE");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     b.getInstallStep().dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose

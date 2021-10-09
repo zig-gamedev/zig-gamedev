@@ -1243,6 +1243,29 @@ pub const UNORDERED_ACCESS_VIEW_DESC = extern struct {
         Texture2DArray: TEX2D_ARRAY_UAV,
         Texture3D: TEX3D_UAV,
     },
+
+    pub fn initTypedBuffer(
+        format: dxgi.FORMAT,
+        first_element: UINT64,
+        num_elements: UINT,
+        counter_offset: UINT64,
+    ) UNORDERED_ACCESS_VIEW_DESC {
+        var desc = std.mem.zeroes(@This());
+        desc = .{
+            .Format = format,
+            .ViewDimension = .BUFFER,
+            .u = .{
+                .Buffer = .{
+                    .FirstElement = first_element,
+                    .NumElements = num_elements,
+                    .StructureByteStride = 0,
+                    .CounterOffsetInBytes = counter_offset,
+                    .Flags = BUFFER_SRV_FLAG_NONE,
+                },
+            },
+        };
+        return desc;
+    }
 };
 
 pub const BUFFER_RTV = extern struct {

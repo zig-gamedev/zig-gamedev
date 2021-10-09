@@ -1226,7 +1226,11 @@ pub const GraphicsContext = struct {
     pub fn createAndUploadTex2dFromFile(
         gr: *GraphicsContext,
         path: []const u8,
-        num_mip_levels: u32,
+        params: struct {
+            num_mip_levels: u32 = 0,
+            texture_flags: d3d12.RESOURCE_FLAGS = d3d12.RESOURCE_FLAG_NONE,
+            //force_num_components = 0,
+        },
     ) HResultError!ResourceHandle {
         assert(gr.is_cmdlist_opened);
 
@@ -1312,7 +1316,11 @@ pub const GraphicsContext = struct {
         const texture = try gr.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
-            &d3d12.RESOURCE_DESC.initTex2d(dxgi_format, image_wh.w, image_wh.h, num_mip_levels),
+            &blk: {
+                var desc = d3d12.RESOURCE_DESC.initTex2d(dxgi_format, image_wh.w, image_wh.h, params.num_mip_levels);
+                desc.Flags = params.texture_flags;
+                break :blk desc;
+            },
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
         );
