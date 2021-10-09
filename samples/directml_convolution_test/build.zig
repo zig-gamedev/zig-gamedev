@@ -45,15 +45,15 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd("src/machine_learning_test.hlsl", "vsDrawTexture", "draw_texture.vs.cso", "vs", "PSO__DRAW_TEXTURE");
+    dxc_command = makeDxcCmd("src/directml_convolution_test.hlsl", "vsDrawTexture", "draw_texture.vs.cso", "vs", "PSO__DRAW_TEXTURE");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/machine_learning_test.hlsl", "psDrawTexture", "draw_texture.ps.cso", "ps", "PSO__DRAW_TEXTURE");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd("src/machine_learning_test.hlsl", "csTextureToBuffer", "texture_to_buffer.cs.cso", "cs", "PSO__TEXTURE_TO_BUFFER");
+    dxc_command = makeDxcCmd("src/directml_convolution_test.hlsl", "psDrawTexture", "draw_texture.ps.cso", "ps", "PSO__DRAW_TEXTURE");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd("src/machine_learning_test.hlsl", "csBufferToTexture", "buffer_to_texture.cs.cso", "cs", "PSO__BUFFER_TO_TEXTURE");
+    dxc_command = makeDxcCmd("src/directml_convolution_test.hlsl", "csTextureToBuffer", "texture_to_buffer.cs.cso", "cs", "PSO__TEXTURE_TO_BUFFER");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd("src/directml_convolution_test.hlsl", "csBufferToTexture", "buffer_to_texture.cs.cso", "cs", "PSO__BUFFER_TO_TEXTURE");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     b.getInstallStep().dependOn(dxc_step);
@@ -68,7 +68,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("machine_learning_test", "src/machine_learning_test.zig");
+    const exe = b.addExecutable("directml_convolution_test", "src/directml_convolution_test.zig");
 
     exe.setTarget(target);
     exe.setBuildMode(mode);

@@ -23,7 +23,7 @@ const enable_dx_debug = @import("build_options").enable_dx_debug;
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const window_name = "zig-gamedev: machine learning test";
+const window_name = "zig-gamedev: DirectML convolution test";
 const window_width = 1920;
 const window_height = 1080;
 
@@ -67,6 +67,9 @@ const DemoState = struct {
     texture_to_buffer_pso: gr.PipelineHandle,
     buffer_to_texture_pso: gr.PipelineHandle,
     draw_texture_pso: gr.PipelineHandle,
+
+    orig_texture: gr.ResourceHandle,
+    orig_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     image_texture: gr.ResourceHandle,
     image_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
@@ -133,7 +136,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
-            dwrite.FONT_WEIGHT.NORMAL,
+            dwrite.FONT_WEIGHT.BOLD,
             dwrite.FONT_STYLE.NORMAL,
             dwrite.FONT_STRETCH.NORMAL,
             32.0,
@@ -346,6 +349,14 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
+    const orig_texture = grfx.createAndUploadTex2dFromFile(
+        "content/genart_0025_5.png",
+        .{ .num_mip_levels = 1 },
+    ) catch |err| hrPanic(err);
+
+    const orig_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    grfx.device.CreateShaderResourceView(grfx.getResource(orig_texture), null, orig_texture_srv);
+
     const image_texture = grfx.createAndUploadTex2dFromFile(
         "content/genart_0025_5.png",
         .{
@@ -471,6 +482,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .draw_texture_pso = draw_texture_pso,
         .texture_to_buffer_pso = texture_to_buffer_pso,
         .buffer_to_texture_pso = buffer_to_texture_pso,
+        .orig_texture = orig_texture,
+        .orig_texture_srv = orig_texture_srv,
         .image_texture = image_texture,
         .image_texture_srv = image_texture_srv,
         .image_texture_uav = image_texture_uav,
@@ -483,6 +496,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releasePipeline(demo.texture_to_buffer_pso);
     _ = demo.grfx.releasePipeline(demo.buffer_to_texture_pso);
     _ = demo.grfx.releaseResource(demo.image_texture);
+    _ = demo.grfx.releaseResource(demo.orig_texture);
     _ = demo.dml_cmd_recorder.Release();
     _ = demo.grfx.releaseResource(demo.input_buffer);
     _ = demo.grfx.releaseResource(demo.filter_buffer);
@@ -659,7 +673,7 @@ fn draw(demo: *DemoState) void {
     );
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
+        &[4]f32{ 0.1, 0.2, 0.4, 1.0 },
         0,
         null,
     );
@@ -667,16 +681,24 @@ fn draw(demo: *DemoState) void {
     grfx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
         .TopLeftX = 0.0,
         .TopLeftY = 0.0,
-        .Width = @intToFloat(f32, 1024),
-        .Height = @intToFloat(f32, 1024),
+        .Width = @intToFloat(f32, grfx.viewport_width / 2),
+        .Height = @intToFloat(f32, grfx.viewport_width / 2),
         .MinDepth = 0.0,
         .MaxDepth = 1.0,
     }});
-    grfx.cmdlist.RSSetScissorRects(1, &[_]d3d12.RECT{.{
-        .left = 0,
-        .top = 0,
-        .right = 1024,
-        .bottom = 1024,
+
+    grfx.setCurrentPipeline(demo.draw_texture_pso);
+    grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.orig_texture_srv));
+    grfx.cmdlist.DrawInstanced(3, 1, 0, 0);
+
+    grfx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
+        .TopLeftX = @intToFloat(f32, grfx.viewport_width / 2),
+        .TopLeftY = 0.0,
+        .Width = @intToFloat(f32, grfx.viewport_width / 2),
+        .Height = @intToFloat(f32, grfx.viewport_width / 2),
+        .MinDepth = 0.0,
+        .MaxDepth = 1.0,
     }});
 
     grfx.setCurrentPipeline(demo.draw_texture_pso);
@@ -696,7 +718,7 @@ fn draw(demo: *DemoState) void {
             .{ stats.fps, stats.average_cpu_time },
         ) catch unreachable;
 
-        demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
+        demo.brush.SetColor(&.{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
         lib.drawText(
             grfx.d2d.context,
             text,
