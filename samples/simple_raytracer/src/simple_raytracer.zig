@@ -407,7 +407,7 @@ fn loadScene(
         var buffer: [64]u8 = undefined;
         const path = std.fmt.bufPrint(buffer[0..], "content/Sponza/{s}", .{image.uri}) catch unreachable;
 
-        const texture = grfx.createAndUploadTex2dFromFile(path, 0) catch unreachable;
+        const texture = grfx.createAndUploadTex2dFromFile(path, .{}) catch unreachable;
         const view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(grfx.getResource(texture), null, view);
 

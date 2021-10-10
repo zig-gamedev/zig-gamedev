@@ -325,7 +325,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
 
-    const image = grfx.createAndUploadTex2dFromFile("content/genart_008b.png", 1) catch |err| hrPanic(err);
+    const image = grfx.createAndUploadTex2dFromFile(
+        "content/genart_008b.png",
+        .{ .num_mip_levels = 1 },
+    ) catch |err| hrPanic(err);
     const image_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     grfx.device.CreateShaderResourceView(grfx.getResource(image), null, image_srv);
     grfx.addTransitionBarrier(image, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);

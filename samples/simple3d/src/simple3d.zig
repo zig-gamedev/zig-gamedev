@@ -240,7 +240,7 @@ const DemoState = struct {
 
         const base_color_texture = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
-            0, // Create complete mipmap chain (up to 1x1).
+            .{}, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 
         mipgen.generateMipmaps(&grfx, base_color_texture);

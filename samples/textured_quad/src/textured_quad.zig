@@ -130,7 +130,7 @@ const DemoState = struct {
 
         const texture = grfx.createAndUploadTex2dFromFile(
             "content/genart_0025_5.png",
-            0, // Create complete mipmap chain (up to 1x1).
+            .{}, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 
         mipgen.generateMipmaps(&grfx, texture);
