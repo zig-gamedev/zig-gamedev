@@ -24,13 +24,26 @@ pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const window_name = "zig-gamedev: DirectML convolution test";
-const window_width = 1920;
-const window_height = 1080;
+const window_width = 1800;
+const window_height = 900;
+const image_size = 1024;
 
-const filter_tensor = [3][3]f16{
-    [3]f16{ -2.0, -2.0, 0.0 },
-    [3]f16{ -2.0, 6.0, 0.0 },
-    [3]f16{ 0.0, 0.0, 0.0 },
+const filter_tensor = [_][3][3]f16{
+    [3][3]f16{
+        [3]f16{ -2.0, -2.0, 0.0 },
+        [3]f16{ -2.0, 6.0, 0.0 },
+        [3]f16{ 0.0, 0.0, 0.0 },
+    },
+    [3][3]f16{ // edge detection
+        [3]f16{ -1.0, -1.0, -1.0 },
+        [3]f16{ 0.0, 0.0, 0.0 },
+        [3]f16{ 1.0, 1.0, 1.0 },
+    },
+    [3][3]f16{ // edge detection 2
+        [3]f16{ -1.0, -1.0, -1.0 },
+        [3]f16{ -1.0, 8.0, -1.0 },
+        [3]f16{ -1.0, -1.0, -1.0 },
+    },
 };
 
 const OperatorState = struct {
@@ -55,7 +68,7 @@ const DemoState = struct {
     persistent_buffer: ?gr.ResourceHandle,
 
     input_buffer: gr.ResourceHandle,
-    input_buffer_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
+    input_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     filter_buffer: gr.ResourceHandle,
 
@@ -67,9 +80,6 @@ const DemoState = struct {
     texture_to_buffer_pso: gr.PipelineHandle,
     buffer_to_texture_pso: gr.PipelineHandle,
     draw_texture_pso: gr.PipelineHandle,
-
-    orig_texture: gr.ResourceHandle,
-    orig_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     image_texture: gr.ResourceHandle,
     image_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
@@ -163,9 +173,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .DataType = .FLOAT16,
             .Flags = dml.TENSOR_FLAG_NONE,
             .DimensionCount = 4,
-            .Sizes = &[_]u32{ 1, 1, 1024, 1024 },
-            .Strides = &[_]u32{ 1024 * 1024, 1024, 1024, 1 },
-            .TotalTensorSizeInBytes = 1024 * 1024 * @sizeOf(f16),
+            .Sizes = &[_]u32{ 1, 1, image_size, image_size },
+            .Strides = &[_]u32{ image_size * image_size, image_size, image_size, 1 },
+            .TotalTensorSizeInBytes = image_size * image_size * @sizeOf(f16),
             .GuaranteedBaseOffsetAlignment = 256,
         },
     };
@@ -176,9 +186,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .DataType = .FLOAT16,
             .Flags = dml.TENSOR_FLAG_NONE,
             .DimensionCount = 4,
-            .Sizes = &[_]u32{ 1, 1, 1022, 1022 },
-            .Strides = &[_]u32{ 1024 * 1024, 1024, 1024, 1 },
-            .TotalTensorSizeInBytes = 1024 * 1024 * @sizeOf(f16),
+            .Sizes = &[_]u32{ 1, 1, image_size - 2, image_size - 2 },
+            .Strides = &[_]u32{ image_size * image_size, image_size, image_size, 1 },
+            .TotalTensorSizeInBytes = image_size * image_size * @sizeOf(f16),
             .GuaranteedBaseOffsetAlignment = 256,
         },
     };
@@ -191,7 +201,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .DimensionCount = 4,
             .Sizes = &[_]u32{ 1, 1, 3, 3 },
             .Strides = null,
-            .TotalTensorSizeInBytes = 3 * 3 * @sizeOf(f16) + 2,
+            .TotalTensorSizeInBytes = std.mem.alignForward(filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
             .GuaranteedBaseOffsetAlignment = 256,
         },
     };
@@ -282,7 +292,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
-            var desc = d3d12.RESOURCE_DESC.initBuffer(1024 * 1024 * @sizeOf(f16));
+            var desc = d3d12.RESOURCE_DESC.initBuffer(image_size * image_size * @sizeOf(f16));
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             break :blk desc;
         },
@@ -290,11 +300,18 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
+    const input_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    grfx.device.CreateShaderResourceView(
+        grfx.getResource(input_buffer),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R16_FLOAT, 0, image_size * image_size),
+        input_buffer_srv,
+    );
+
     const input_buffer_uav = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     grfx.device.CreateUnorderedAccessView(
         grfx.getResource(input_buffer),
         null,
-        &d3d12.UNORDERED_ACCESS_VIEW_DESC.initTypedBuffer(.R16_FLOAT, 0, 1024 * 1024, 0),
+        &d3d12.UNORDERED_ACCESS_VIEW_DESC.initTypedBuffer(.R16_FLOAT, 0, image_size * image_size, 0),
         input_buffer_uav,
     );
 
@@ -302,7 +319,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
-            var desc = d3d12.RESOURCE_DESC.initBuffer(3 * 3 * @sizeOf(f16) + 2);
+            var desc = d3d12.RESOURCE_DESC.initBuffer(std.mem.alignForward(filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32));
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             break :blk desc;
         },
@@ -314,7 +331,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
-            var desc = d3d12.RESOURCE_DESC.initBuffer(1024 * 1024 * @sizeOf(f16));
+            var desc = d3d12.RESOURCE_DESC.initBuffer(image_size * image_size * @sizeOf(f16));
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             break :blk desc;
         },
@@ -325,7 +342,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const output_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     grfx.device.CreateShaderResourceView(
         grfx.getResource(output_buffer),
-        &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R16_FLOAT, 0, 1024 * 1024),
+        &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R16_FLOAT, 0, image_size * image_size),
         output_buffer_srv,
     );
 
@@ -348,14 +365,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
-
-    const orig_texture = grfx.createAndUploadTex2dFromFile(
-        "content/genart_0025_5.png",
-        .{ .num_mip_levels = 1 },
-    ) catch |err| hrPanic(err);
-
-    const orig_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    grfx.device.CreateShaderResourceView(grfx.getResource(orig_texture), null, orig_texture_srv);
 
     const image_texture = grfx.createAndUploadTex2dFromFile(
         "content/genart_0025_5.png",
@@ -381,7 +390,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         _ = grfx.copyDescriptorsToGpuHeap(1, input_buffer_uav);
         break :blk table;
     });
-    grfx.cmdlist.Dispatch(128, 128, 1);
+    grfx.cmdlist.Dispatch((image_size + 7) / 8, (image_size + 7) / 8, 1);
 
     grfx.addTransitionBarrier(image_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     grfx.addTransitionBarrier(input_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
@@ -474,7 +483,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .temp_buffer = temp_buffer,
         .persistent_buffer = persistent_buffer,
         .input_buffer = input_buffer,
-        .input_buffer_uav = input_buffer_uav,
+        .input_buffer_srv = input_buffer_srv,
         .filter_buffer = filter_buffer,
         .output_buffer = output_buffer,
         .output_buffer_srv = output_buffer_srv,
@@ -482,8 +491,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .draw_texture_pso = draw_texture_pso,
         .texture_to_buffer_pso = texture_to_buffer_pso,
         .buffer_to_texture_pso = buffer_to_texture_pso,
-        .orig_texture = orig_texture,
-        .orig_texture_srv = orig_texture_srv,
         .image_texture = image_texture,
         .image_texture_srv = image_texture_srv,
         .image_texture_uav = image_texture_uav,
@@ -496,7 +503,6 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releasePipeline(demo.texture_to_buffer_pso);
     _ = demo.grfx.releasePipeline(demo.buffer_to_texture_pso);
     _ = demo.grfx.releaseResource(demo.image_texture);
-    _ = demo.grfx.releaseResource(demo.orig_texture);
     _ = demo.dml_cmd_recorder.Release();
     _ = demo.grfx.releaseResource(demo.input_buffer);
     _ = demo.grfx.releaseResource(demo.filter_buffer);
@@ -624,15 +630,16 @@ fn draw(demo: *DemoState) void {
     // Upload the input tensor to the GPU.
     {
         const upload = grfx.allocateUploadBufferRegion(f16, 9);
-        upload.cpu_slice[0] = filter_tensor[0][0];
-        upload.cpu_slice[1] = filter_tensor[0][1];
-        upload.cpu_slice[2] = filter_tensor[0][2];
-        upload.cpu_slice[3] = filter_tensor[1][0];
-        upload.cpu_slice[4] = filter_tensor[1][1];
-        upload.cpu_slice[5] = filter_tensor[1][2];
-        upload.cpu_slice[6] = filter_tensor[2][0];
-        upload.cpu_slice[7] = filter_tensor[2][1];
-        upload.cpu_slice[8] = filter_tensor[2][2];
+        const kernel_index = 0;
+        upload.cpu_slice[0] = filter_tensor[kernel_index][0][0];
+        upload.cpu_slice[1] = filter_tensor[kernel_index][0][1];
+        upload.cpu_slice[2] = filter_tensor[kernel_index][0][2];
+        upload.cpu_slice[3] = filter_tensor[kernel_index][1][0];
+        upload.cpu_slice[4] = filter_tensor[kernel_index][1][1];
+        upload.cpu_slice[5] = filter_tensor[kernel_index][1][2];
+        upload.cpu_slice[6] = filter_tensor[kernel_index][2][0];
+        upload.cpu_slice[7] = filter_tensor[kernel_index][2][1];
+        upload.cpu_slice[8] = filter_tensor[kernel_index][2][2];
 
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(demo.filter_buffer),
@@ -643,27 +650,13 @@ fn draw(demo: *DemoState) void {
         );
     }
 
+    grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
     grfx.addTransitionBarrier(demo.filter_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    grfx.addTransitionBarrier(demo.output_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
     grfx.flushResourceBarriers();
 
     dispatchConvOperator(demo);
     dispatchBarriers(demo);
-
-    grfx.addTransitionBarrier(demo.output_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    grfx.addTransitionBarrier(demo.image_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
-    grfx.flushResourceBarriers();
-
-    grfx.setCurrentPipeline(demo.buffer_to_texture_pso);
-    grfx.cmdlist.SetComputeRootDescriptorTable(0, blk: {
-        const table = grfx.copyDescriptorsToGpuHeap(1, demo.output_buffer_srv);
-        _ = grfx.copyDescriptorsToGpuHeap(1, demo.image_texture_uav);
-        break :blk table;
-    });
-    grfx.cmdlist.Dispatch(128, 128, 1);
-
-    grfx.addTransitionBarrier(demo.output_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
-    grfx.addTransitionBarrier(demo.image_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    grfx.flushResourceBarriers();
 
     grfx.cmdlist.OMSetRenderTargets(
         1,
@@ -678,6 +671,24 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
+    //
+    // Draw input buffer.
+    //
+    grfx.addTransitionBarrier(demo.input_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    grfx.addTransitionBarrier(demo.image_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    grfx.flushResourceBarriers();
+
+    grfx.setCurrentPipeline(demo.buffer_to_texture_pso);
+    grfx.cmdlist.SetComputeRootDescriptorTable(0, blk: {
+        const table = grfx.copyDescriptorsToGpuHeap(1, demo.input_buffer_srv);
+        _ = grfx.copyDescriptorsToGpuHeap(1, demo.image_texture_uav);
+        break :blk table;
+    });
+    grfx.cmdlist.Dispatch((image_size + 7) / 8, (image_size + 7) / 8, 1);
+
+    grfx.addTransitionBarrier(demo.image_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.flushResourceBarriers();
+
     grfx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
         .TopLeftX = 0.0,
         .TopLeftY = 0.0,
@@ -689,8 +700,26 @@ fn draw(demo: *DemoState) void {
 
     grfx.setCurrentPipeline(demo.draw_texture_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-    grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.orig_texture_srv));
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.image_texture_srv));
     grfx.cmdlist.DrawInstanced(3, 1, 0, 0);
+
+    //
+    // Draw output buffer.
+    //
+    grfx.addTransitionBarrier(demo.output_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    grfx.addTransitionBarrier(demo.image_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    grfx.flushResourceBarriers();
+
+    grfx.setCurrentPipeline(demo.buffer_to_texture_pso);
+    grfx.cmdlist.SetComputeRootDescriptorTable(0, blk: {
+        const table = grfx.copyDescriptorsToGpuHeap(1, demo.output_buffer_srv);
+        _ = grfx.copyDescriptorsToGpuHeap(1, demo.image_texture_uav);
+        break :blk table;
+    });
+    grfx.cmdlist.Dispatch((image_size + 7) / 8, (image_size + 7) / 8, 1);
+
+    grfx.addTransitionBarrier(demo.image_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    grfx.flushResourceBarriers();
 
     grfx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
         .TopLeftX = @intToFloat(f32, grfx.viewport_width / 2),

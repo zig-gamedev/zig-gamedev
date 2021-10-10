@@ -12,11 +12,15 @@ void csTextureToBuffer(
     uint3 dispatch_id : SV_DispatchThreadID
 ) {
     const uint2 tid = dispatch_id.xy;
+    uint w, h;
+    srv_texture.GetDimensions(w, h);
+
+    if (dispatch_id.x >= w || dispatch_id.y >= h) return;
+
     const float3 c = srv_texture[tid].rgb;
     const float luminance = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;
 
-    // TODO(mziulek): GetDimension
-    uav_buffer[1024 * tid.y + tid.x] = luminance;
+    uav_buffer[w * tid.y + tid.x] = luminance;
 }
 
 #elif defined(PSO__BUFFER_TO_TEXTURE)
@@ -33,10 +37,12 @@ void csBufferToTexture(
     uint3 dispatch_id : SV_DispatchThreadID
 ) {
     const uint2 tid = dispatch_id.xy;
+    uint w, h;
+    uav_texture.GetDimensions(w, h);
 
-    // TODO(mziulek): GetDimension
-    const float luminance = srv_buffer[1024 * tid.y + tid.x];
+    if (dispatch_id.x >= w || dispatch_id.y >= h) return;
 
+    const float luminance = srv_buffer[w * tid.y + tid.x];
     uav_texture[tid] = luminance;
 }
 
