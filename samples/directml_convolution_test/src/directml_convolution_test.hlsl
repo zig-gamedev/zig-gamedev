@@ -1,7 +1,7 @@
 #if defined(PSO__TEXTURE_TO_BUFFER)
 
 #define root_signature \
-    "DescriptorTable(SRV(t0), UAV(u0))"
+    "DescriptorTable(SRV(t0, flags = DESCRIPTORS_VOLATILE), UAV(u0))"
 
 Texture2D<float4> srv_texture : register(t0);
 RWBuffer<float> uav_buffer : register(u0);
@@ -49,7 +49,7 @@ void csBufferToTexture(
 #elif defined(PSO__DRAW_TEXTURE)
 
 #define root_signature \
-    "DescriptorTable(SRV(t0), visibility = SHADER_VISIBILITY_PIXEL), " \
+    "DescriptorTable(SRV(t0, flags = DESCRIPTORS_VOLATILE), visibility = SHADER_VISIBILITY_PIXEL), " \
     "StaticSampler(s0, filter = FILTER_MIN_MAG_LINEAR_MIP_POINT, visibility = SHADER_VISIBILITY_PIXEL)"
 
 [RootSignature(root_signature)]
