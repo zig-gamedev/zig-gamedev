@@ -2,12 +2,12 @@
 
 This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using **[DirectX 12 API](https://docs.microsoft.com/en-us/windows/win32/direct3d12/what-is-directx-12-)**.
 
-* Zero-dependency except Zig compiler (no Visual Studio, no Windows SDK needed).
+* Zero-dependency except [Zig compiler](https://ziglang.org/download/) (no Visual Studio, no Windows SDK needed).
 * Building is as easy as running `zig build`.
-* Helper libraries for working with DirectX 12 and real-time graphics.
-* Support for GPU profiling in PIX (markers, events API).
-* Support for CPU profiling in Tracy (zones API).
-* Using some great C/C++ libraries which are semalessly built by `zig cc` compiler.
+* Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics](#graphics), [vectormath](#vectormath)).
+* Support for GPU profiling in PIX (markers, events API, see: [pix](#pix)).
+* Support for CPU profiling in Tracy (zones API, see: [tracy](#tracy)).
+* Using some great C/C++ libraries which are semalessly built by `zig cc` compiler (see: [external/src](external/src)).
 
 Project provides several helper libraries implemented in Zig that are described below - in [Libraries](#libraries) section. All sample applications use those libraries.
 
