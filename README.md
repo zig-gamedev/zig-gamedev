@@ -1,10 +1,10 @@
 # zig-gamedev project
 
-This repository contains a collection of **sample applications and libraries for game developers using [Zig programming language](https://ziglang.org/)** and DirectX 12 API.
+This repository contains a collection of **sample applications and libraries written in [Zig programming language](https://ziglang.org/)** and using **DirectX 12 API**.
 
 Project provides several helper libraries implemented in Zig that are described below - in [Libraries](#libraries) section. All sample applications use those libraries.
 
-Additionally, Zig compiler can build C/C++ code which can then be easily invoked from Zig code. This project takes advantage of this capability in order to use some existing, well-known, C/C++ libraries (full source code of those libraries can be found in [external/src](external/src) directory).
+Zig compiler can build C/C++ code which can then be easily invoked from Zig code. This project takes advantage of this capability in order to use some existing, well-known, C/C++ libraries (full source code of those libraries can be found in [external/src](external/src) directory).
 
 Not counting ~60 MB [Zig compiler](https://ziglang.org/download/) package, **this repository is fully standalone, neither Visual Studio nor Windows SDK needs to be installed to build this project**. Please read the details [below](#building-sample-applications).
 
@@ -12,7 +12,7 @@ Not counting ~60 MB [Zig compiler](https://ziglang.org/download/) package, **thi
 
 Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
 
-1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing for shadow rays.
+1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing (DXR) for shadow rays.
 
     <img src="samples/simple_raytracer/screenshot.png" alt="simple raytracer" height="200">
 
