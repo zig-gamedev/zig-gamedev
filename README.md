@@ -5,8 +5,8 @@ This repository contains a collection of sample applications and libraries writt
 * Zero dependency except [Zig compiler](https://ziglang.org/download/) (fully standalone; no Visual Studio, no Windows SDK needed)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics](#graphics), [vectormath](#vectormath))
-* Support for GPU profiling in PIX (markers and events API, see: [pix](#pix))
-* Support for CPU profiling in [Tracy](https://github.com/wolfpld/tracy) (zones API, see: [tracy](#tracy))
+* Support for GPU profiling with PIX (markers and events API, see: [pix](#pix))
+* Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) (zones API, see: [tracy](#tracy))
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src))
 
 ## Sample applications
