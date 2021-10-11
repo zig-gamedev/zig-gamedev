@@ -34,9 +34,10 @@ pub fn build(b: *std.build.Builder) void {
     b.installFile("../../external/bin/d3d12/DirectML.pdb", "bin/d3d12/DirectML.pdb");
     b.installFile("../../external/bin/d3d12/DirectML.Debug.dll", "bin/d3d12/DirectML.Debug.dll");
     b.installFile("../../external/bin/d3d12/DirectML.Debug.pdb", "bin/d3d12/DirectML.Debug.pdb");
-    b.installDirectory(
+    const install_content_step = b.addInstallDirectory(
         .{ .source_dir = "content", .install_dir = .{ .custom = "" }, .install_subdir = "bin/content" },
     );
+    b.getInstallStep().dependOn(&install_content_step.step);
 
     const dxc_step = b.step("dxc", "Build shaders");
 
@@ -56,7 +57,7 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("src/directml_convolution_test.hlsl", "csBufferToTexture", "buffer_to_texture.cs.cso", "cs", "PSO__BUFFER_TO_TEXTURE");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    b.getInstallStep().dependOn(dxc_step);
+    install_content_step.step.dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
