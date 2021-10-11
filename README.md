@@ -2,12 +2,12 @@
 
 This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using **[DirectX 12 API](https://docs.microsoft.com/en-us/windows/win32/direct3d12/what-is-directx-12-)**.
 
-* Zero-dependency except [Zig compiler](https://ziglang.org/download/) (fully standalone, no Visual Studio, no Windows SDK needed).
-* Building is as easy as running `zig build` (see: [Building](#building-sample-applications)).
-* Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics](#graphics), [vectormath](#vectormath)).
-* Support for GPU profiling in PIX (markers and events API, see: [pix](#pix)).
-* Support for CPU profiling in [Tracy](https://github.com/wolfpld/tracy) (zones API, see: [tracy](#tracy)).
-* Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src)).
+* Zero dependency except [Zig compiler](https://ziglang.org/download/) (fully standalone; no Visual Studio, no Windows SDK needed)
+* Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
+* Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics](#graphics), [vectormath](#vectormath))
+* Support for GPU profiling in PIX (markers and events API, see: [pix](#pix))
+* Support for CPU profiling in [Tracy](https://github.com/wolfpld/tracy) (zones API, see: [tracy](#tracy))
+* Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src))
 
 ## Sample applications
 
@@ -39,14 +39,14 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 Some features of graphics library:
 
-* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.).
-* Basic DirectX 12 resource management (handle-based resources and pipelines).
-* Basic resource barriers management with simple state-tracking.
-* Fast image loading using WIC (Windows Imaging Component).
-* Helpers for uploading data to the GPU.
-* Fast mipmap generator running on the GPU.
-* Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering.
-* Custom integration of [dear imgui](https://github.com/ocornut/imgui) library.
+* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
+* Basic DirectX 12 resource management (handle-based resources and pipelines)
+* Basic resource barriers management with simple state-tracking
+* Fast image loading using WIC (Windows Imaging Component)
+* Helpers for uploading data to the GPU
+* Fast mipmap generator running on the GPU
+* Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
+* Custom integration of [dear imgui](https://github.com/ocornut/imgui) library
 
 ### [vectormath](libs/common/vectormath.zig)
 
@@ -94,12 +94,12 @@ You can look at [samples/simple_raytracer/build.zig](samples/simple_raytracer/bu
 
 All sample applications support following build options:
 
-* `-Drelease-safe=[bool]` - Optimizations on and safety on.
-* `-Drelease-fast=[bool]` - Optimizations on and safety off.
-* `-Denable-pix=[bool]` - PIX markers and events enabled.
-* `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled.
-* `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled. Requires -Denable-dx-debug=true.
-* `-Dtracy=[path/to/tracy/source]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled.
+* `-Drelease-safe=[bool]` - Optimizations on and safety on
+* `-Drelease-fast=[bool]` - Optimizations on and safety off
+* `-Denable-pix=[bool]` - PIX markers and events enabled
+* `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
+* `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
+* `-Dtracy=[path/to/tracy/source]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
 
 Examples:<br/>
 `zig build -Denable-dx-debug=true -Drelease-fast=true`<br/>
@@ -113,7 +113,7 @@ To build and **run** an application you can use:<br/>
 
 This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/) which allows to always use latest DirectX 12 features regardless of Windows version installed (this works from Windows 10 November 2019 Update). In particular, following Windows versions are supported:
 
-* Windows 10 May 2021 Update (Build 19043) or newer.
-* Windows 10 October 2020 Update (Build 19042.789+).
-* Windows 10 May 2020 Update (Build 19041.789+).
-* Windows 10 November 2019 Update (Build 18363.1350+).
+* Windows 10 May 2021 Update (Build 19043) or newer
+* Windows 10 October 2020 Update (Build 19042.789+)
+* Windows 10 May 2020 Update (Build 19041.789+)
+* Windows 10 November 2019 Update (Build 18363.1350+)
