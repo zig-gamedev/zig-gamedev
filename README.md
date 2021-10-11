@@ -1,3 +1,6 @@
+  | IMPORTANT                                                    |
+  | ------------------------------------------------------------ |
+  | This Project uses Git Large Files Support (LFS) which means that you can not download a zipped version using the green button on Github. Instead, you must Clone the Project with a version of git that has LFS. You can download Git LFS here: <https://git-lfs.github.com/>. |
 # zig-gamedev project
 
 This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using **[DirectX 12 API](https://docs.microsoft.com/en-us/windows/win32/direct3d12/what-is-directx-12-)**. Some features:
