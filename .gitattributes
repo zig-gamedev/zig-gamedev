@@ -1,4 +1,8 @@
 * text eol=lf
+*.cpp text
+*.h text
+*.zig text
+*.txt text
 
 *.png filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
