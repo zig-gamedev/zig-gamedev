@@ -1,17 +1,16 @@
-#include "cbullet.h"
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
 
-cbtDynamicsWorldHandle cbtCreateDynamicsWorld() {
+extern "C" void* cbtCreateDynamicsWorld(void) {
     btDefaultCollisionConfiguration* collision_config = new btDefaultCollisionConfiguration();
     btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_config);
     btBroadphaseInterface* broadphase = new btDbvtBroadphase();
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver();
     btDiscreteDynamicsWorld* world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_config);
-    return (cbtDynamicsWorldHandle)world;
+    return (void*)world;
 }
 
-void cbtDeleteDynamicsWorld(cbtDynamicsWorldHandle world_handle) {
+extern "C" void cbtDeleteDynamicsWorld(void* world_handle) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
 
     btCollisionDispatcher* dispatcher = (btCollisionDispatcher*)world->getDispatcher();
