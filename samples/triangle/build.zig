@@ -78,6 +78,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
+    exe_options.addOption(bool, "c_import_bullet", false);
 
     exe_options.addOption(bool, "enable_pix", enable_pix);
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);

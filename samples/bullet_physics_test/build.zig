@@ -141,7 +141,10 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_demo.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui/cimgui.cpp", &[_][]const u8{""});
 
+    exe_options.addOption(bool, "c_import_bullet", true);
     exe.addIncludeDir("../../external/src/bullet3");
+    exe.addIncludeDir("../../libs/common");
+    exe.addCSourceFile("../../libs/common/bullet.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/bullet3/btLinearMathAll.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/bullet3/btBulletCollisionAll.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/bullet3/btBulletDynamicsAll.cpp", &[_][]const u8{""});

@@ -40,6 +40,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
+    const world = c.plCreateDynamicsWorld();
+    c.plDeleteDynamicsWorld(world);
+
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator = std.heap.ArenaAllocator.init(gpa);
