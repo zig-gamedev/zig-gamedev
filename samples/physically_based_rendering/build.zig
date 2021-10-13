@@ -213,12 +213,12 @@ pub fn build(b: *std.build.Builder) void {
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("c++");
     exe.linkSystemLibrary("imm32");
-    exe.addCSourceFile(external ++ "/cimgui/imgui/imgui.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_widgets.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_tables.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_draw.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/cimgui/imgui/imgui_demo.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/cimgui/cimgui.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui_widgets.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui_tables.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui_draw.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/cimgui.cpp", &[_][]const u8{""});
 
     exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
     exe.addCSourceFile(external ++ "/stb_image.c", &[_][]const u8{"-std=c99"});
