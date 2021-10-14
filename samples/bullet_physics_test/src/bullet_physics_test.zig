@@ -13,7 +13,6 @@ const c = common.c;
 const pix = common.pix;
 const vm = common.vectormath;
 const tracy = common.tracy;
-const bt = common.bullet;
 const math = std.math;
 const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
@@ -41,8 +40,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    const world = bt.createDynamicsWorld();
-    bt.deleteDynamicsWorld(world);
+    const world = c.plWorldCreate();
+    c.plWorldDestroy(world);
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
