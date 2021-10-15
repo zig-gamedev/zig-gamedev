@@ -1,4 +1,5 @@
 #include "cbullet.h"
+#include <assert.h>
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
 
