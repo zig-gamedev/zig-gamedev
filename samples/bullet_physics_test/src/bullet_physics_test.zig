@@ -19,7 +19,6 @@ const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const Vec3 = vm.Vec3;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const enable_dx_debug = @import("build_options").enable_dx_debug;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -36,12 +35,9 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     info_txtfmt: *dwrite.ITextFormat,
 
+    physics_world: c.plWorldHandle,
     physics_debug: *PhysicsDebug,
 };
-
-fn physicsErrorWarningCallback(str: [*c]const u8) callconv(.C) void {
-    std.log.info("{s}", .{str});
-}
 
 const PsoPhysicsDebug_Vertex = struct {
     position: [3]f32,
@@ -75,6 +71,10 @@ const PhysicsDebug = struct {
             Vec3.init(color[0], color[1], color[2]),
         );
     }
+
+    fn errorWarningCallback(str: [*c]const u8) callconv(.C) void {
+        std.log.info("{s}", .{str});
+    }
 };
 
 fn init(gpa: *std.mem.Allocator) DemoState {
@@ -84,11 +84,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var physics_debug = gpa.create(PhysicsDebug) catch unreachable;
     physics_debug.* = PhysicsDebug.init(gpa);
 
-    {
-        const world = c.plWorldCreate();
-        c.plWorldDebugSetErrorWarningCallback(world, physicsErrorWarningCallback);
-        c.plWorldDebugSetDrawLineCallback(world, PhysicsDebug.drawLineCallback, null);
+    const physics_world = c.plWorldCreate();
+    c.plWorldDebugSetErrorWarningCallback(physics_world, PhysicsDebug.errorWarningCallback);
+    c.plWorldDebugSetDrawLineCallback(physics_world, PhysicsDebug.drawLineCallback, null);
 
+    if (false) {
         const sphere = c.plShapeCreateSphere(1.0);
         var trans = [4]c.plVector3{
             c.plVector3{ 1.0, 0.0, 0.0 },
@@ -96,14 +96,14 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             c.plVector3{ 0.0, 0.0, 1.0 },
             c.plVector3{ 2.0, 2.0, 2.0 },
         };
-        const body = c.plBodyCreate(world, 1.0, &trans[0], sphere);
+        const body = c.plBodyCreate(physics_world, 1.0, &trans[0], sphere);
 
         trans[3] = c.plVector3{ 0.0, 0.0, 0.0 };
         c.plBodyGetGraphicsTransform(body, &trans[0]);
 
-        c.plBodyDestroy(world, body);
+        c.plBodyDestroy(physics_world, body);
         c.plShapeDestroy(sphere);
-        c.plWorldDestroy(world);
+        c.plWorldDestroy(physics_world);
     }
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
@@ -171,6 +171,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .info_txtfmt = info_txtfmt,
+        .physics_world = physics_world,
         .physics_debug = physics_debug,
     };
 }
@@ -184,6 +185,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     lib.deinitWindow(gpa);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
+    c.plWorldDestroy(demo.physics_world);
     demo.* = undefined;
 }
 
