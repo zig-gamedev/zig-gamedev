@@ -40,8 +40,24 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    const world = c.plWorldCreate();
-    c.plWorldDestroy(world);
+    {
+        const world = c.plWorldCreate();
+        const sphere = c.plShapeCreateSphere(1.0);
+        var trans = [4]c.plVector3{
+            c.plVector3{ 1.0, 0.0, 0.0 },
+            c.plVector3{ 0.0, 1.0, 0.0 },
+            c.plVector3{ 0.0, 0.0, 1.0 },
+            c.plVector3{ 2.0, 2.0, 2.0 },
+        };
+        const body = c.plBodyCreate(world, 1.0, &trans[0], sphere);
+
+        trans[3] = c.plVector3{ 0.0, 0.0, 0.0 };
+        c.plBodyGetGraphicsTransform(body, &trans[0]);
+
+        c.plBodyDestroy(world, body);
+        c.plShapeDestroy(sphere);
+        c.plWorldDestroy(world);
+    }
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 

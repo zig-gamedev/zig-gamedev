@@ -10,15 +10,27 @@ extern "C" {
 #endif
 
 PL_DECLARE_HANDLE(plWorldHandle);
+PL_DECLARE_HANDLE(plShapeHandle);
+PL_DECLARE_HANDLE(plBodyHandle);
 
-typedef void (*plDrawLineCallback)(plVector3 from, plVector3 to, plVector3 color);
+typedef void (*plDrawLineCallback)(const plVector3 from, const plVector3 to, const plVector3 color);
 typedef void (*plErrorWarningCallback)(const char* str);
 
 plWorldHandle plWorldCreate(void);
-void plWorldDestroy(plWorldHandle world_handle);
+void plWorldDestroy(plWorldHandle handle);
 
-void plWorldDebugSetDrawLineCallback(plWorldHandle world_handle, plDrawLineCallback callback);
-void plWorldDebugSetErrorWarningCallback(plWorldHandle world_handle, plErrorWarningCallback callback);
+void plWorldDebugSetDrawLineCallback(plWorldHandle handle, plDrawLineCallback callback);
+void plWorldDebugSetErrorWarningCallback(plWorldHandle handle, plErrorWarningCallback callback);
+
+plShapeHandle plShapeCreateBox(const plVector3 half_extents);
+plShapeHandle plShapeCreateSphere(float radius);
+void plShapeDestroy(plShapeHandle handle);
+
+int plShapeGetType(plShapeHandle handle);
+
+plBodyHandle plBodyCreate(plWorldHandle world_handle, float mass, const plVector3 transform[4], plShapeHandle shape_handle);
+void plBodyDestroy(plWorldHandle world_handle, plBodyHandle body_handle);
+void plBodyGetGraphicsTransform(plBodyHandle handle, plVector3 transform[4]);
 
 #ifdef __cplusplus
 }
