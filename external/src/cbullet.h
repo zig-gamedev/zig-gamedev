@@ -13,14 +13,15 @@ PL_DECLARE_HANDLE(plWorldHandle);
 PL_DECLARE_HANDLE(plShapeHandle);
 PL_DECLARE_HANDLE(plBodyHandle);
 
-typedef void (*plDrawLineCallback)(const plVector3 from, const plVector3 to, const plVector3 color);
+typedef void (*plDrawLineCallback)(const plVector3 from, const plVector3 to, const plVector3 color, void* user);
 typedef void (*plErrorWarningCallback)(const char* str);
 
 plWorldHandle plWorldCreate(void);
 void plWorldDestroy(plWorldHandle handle);
 
-void plWorldDebugSetDrawLineCallback(plWorldHandle handle, plDrawLineCallback callback);
+void plWorldDebugSetDrawLineCallback(plWorldHandle handle, plDrawLineCallback callback, void* user);
 void plWorldDebugSetErrorWarningCallback(plWorldHandle handle, plErrorWarningCallback callback);
+void plWorldDebugDraw(plWorldHandle handle);
 
 plShapeHandle plShapeCreateBox(const plVector3 half_extents);
 plShapeHandle plShapeCreateSphere(float radius);

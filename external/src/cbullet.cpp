@@ -4,6 +4,8 @@
 
 struct DebugDraw : public btIDebugDraw {
     plDrawLineCallback draw_line_callback = nullptr;
+    void* draw_line_user = nullptr;
+
     plErrorWarningCallback error_warning_callback = nullptr;
 
     virtual void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) override {
@@ -11,7 +13,7 @@ struct DebugDraw : public btIDebugDraw {
             const plVector3 p0 = { from.x(), from.y(), from.z() };
             const plVector3 p1 = { to.x(), to.y(), to.z() };
             const plVector3 c = { color.x(), color.y(), color.z() };
-            draw_line_callback(p0, p1, c);
+            draw_line_callback(p0, p1, c, draw_line_user);
         }
     }
 
@@ -75,12 +77,13 @@ static DebugDraw* getDebug(btDiscreteDynamicsWorld* world) {
     return debug;
 }
 
-void plWorldDebugSetDrawLineCallback(plWorldHandle handle, plDrawLineCallback callback) {
+void plWorldDebugSetDrawLineCallback(plWorldHandle handle, plDrawLineCallback callback, void* user) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
     assert(world);
 
     DebugDraw* debug = getDebug(world);
     debug->draw_line_callback = callback;
+    debug->draw_line_user = user;
 }
 
 void plWorldDebugSetErrorWarningCallback(plWorldHandle handle, plErrorWarningCallback callback) {
@@ -89,6 +92,12 @@ void plWorldDebugSetErrorWarningCallback(plWorldHandle handle, plErrorWarningCal
 
     DebugDraw* debug = getDebug(world);
     debug->error_warning_callback = callback;
+}
+
+void plWorldDebugDraw(plWorldHandle handle) {
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
+    assert(world);
+    world->debugDrawWorld();
 }
 
 int plShapeGetType(plShapeHandle handle) {

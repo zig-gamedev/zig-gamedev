@@ -17,6 +17,7 @@ const math = std.math;
 const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
+const Vec3 = vm.Vec3;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const enable_dx_debug = @import("build_options").enable_dx_debug;
 
@@ -34,14 +35,60 @@ const DemoState = struct {
 
     brush: *d2d1.ISolidColorBrush,
     info_txtfmt: *dwrite.ITextFormat,
+
+    physics_debug: *PhysicsDebug,
+};
+
+fn physicsErrorWarningCallback(str: [*c]const u8) callconv(.C) void {
+    std.log.info("{s}", .{str});
+}
+
+const PsoPhysicsDebug_Vertex = struct {
+    position: [3]f32,
+    color: u32,
+};
+
+const PhysicsDebug = struct {
+    lines: std.ArrayList(PsoPhysicsDebug_Vertex),
+
+    fn init(alloc: *std.mem.Allocator) PhysicsDebug {
+        return .{ .lines = std.ArrayList(PsoPhysicsDebug_Vertex).init(alloc) };
+    }
+
+    fn deinit(debug: *PhysicsDebug) void {
+        debug.lines.deinit();
+        debug.* = undefined;
+    }
+
+    fn drawLine(debug: *PhysicsDebug, p0: Vec3, p1: Vec3, color: Vec3) void {
+        _ = debug;
+        _ = p0;
+        _ = p1;
+        _ = color;
+    }
+
+    fn drawLineCallback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*c_void) callconv(.C) void {
+        const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
+        ptr.drawLine(
+            Vec3.init(p0[0], p0[1], p0[2]),
+            Vec3.init(p1[0], p1[1], p1[2]),
+            Vec3.init(color[0], color[1], color[2]),
+        );
+    }
 };
 
 fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
+    var physics_debug = gpa.create(PhysicsDebug) catch unreachable;
+    physics_debug.* = PhysicsDebug.init(gpa);
+
     {
         const world = c.plWorldCreate();
+        c.plWorldDebugSetErrorWarningCallback(world, physicsErrorWarningCallback);
+        c.plWorldDebugSetDrawLineCallback(world, PhysicsDebug.drawLineCallback, null);
+
         const sphere = c.plShapeCreateSphere(1.0);
         var trans = [4]c.plVector3{
             c.plVector3{ 1.0, 0.0, 0.0 },
@@ -124,6 +171,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .info_txtfmt = info_txtfmt,
+        .physics_debug = physics_debug,
     };
 }
 
@@ -134,6 +182,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
+    demo.physics_debug.deinit();
+    gpa.destroy(demo.physics_debug);
     demo.* = undefined;
 }
 
