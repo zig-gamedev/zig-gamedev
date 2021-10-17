@@ -936,6 +936,22 @@ pub const FEATURE = enum(UINT) {
     OPTIONS11 = 40,
 };
 
+pub const SHADER_MODEL = enum(UINT) {
+    SM_5_1 = 0x51,
+    SM_6_0 = 0x60,
+    SM_6_1 = 0x61,
+    SM_6_2 = 0x62,
+    SM_6_3 = 0x63,
+    SM_6_4 = 0x64,
+    SM_6_5 = 0x65,
+    SM_6_6 = 0x66,
+    SM_6_7 = 0x67,
+};
+
+pub const FEATURE_DATA_SHADER_MODEL = extern struct {
+    HighestShaderModel: SHADER_MODEL,
+};
+
 pub const RENDER_PASS_TIER = enum(UINT) {
     _0 = 0,
     _1 = 1,
