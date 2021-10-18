@@ -13,24 +13,32 @@ struct FrameConst {
     float4x4 world_to_clip;
 };
 
-Texture2D<float4> srv_texture : register(t0);
-RWBuffer<float> uav_buffer : register(u0);
+ConstantBuffer<FrameConst> cbv_frame_const : register(b0);
+StructuredBuffer<Vertex> srv_vertices : register(t0);
 
 [RootSignature(root_signature)]
-[numthreads(8, 8, 1)]
-void csTextureToBuffer(
-    uint3 dispatch_id : SV_DispatchThreadID
+void vsPhysicsDebug(
+    uint vertex_id : SV_VertexID,
+    out float4 out_position_clip : SV_Position,
+    out float3 out_color : _Color
 ) {
-    const uint2 tid = dispatch_id.xy;
-    uint w, h;
-    srv_texture.GetDimensions(w, h);
+    const Vertex v = srv_vertices[vertex_id];
 
-    if (dispatch_id.x >= w || dispatch_id.y >= h) return;
+    out_position_clip = mul(float4(v.position, 1.0), cbv_frame_const.world_to_clip);
+    out_color = float3(
+        (v.color & 0xff) / 255.0,
+        ((v.color >> 8) & 0xff) / 255.0,
+        ((v.color >> 16) & 0xff) / 255.0
+    );
+}
 
-    const float3 c = srv_texture[tid].rgb;
-    const float luminance = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;
-
-    uav_buffer[w * tid.y + tid.x] = luminance;
+[RootSignature(root_signature)]
+void psPhysicsDebug(
+    float4 position_window : SV_Position,
+    float3 color : _Color,
+    out float4 out_color : SV_Target0
+) {
+    out_color = float4(color, 1.0);
 }
 
 #endif

@@ -18,6 +18,7 @@ const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const Vec3 = vm.Vec3;
+const Mat4 = vm.Mat4;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -35,13 +36,24 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     info_txtfmt: *dwrite.ITextFormat,
 
+    physics_debug_pso: gr.PipelineHandle,
+
+    depth_texture: gr.ResourceHandle,
+    depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
+
     physics_world: c.plWorldHandle,
     physics_debug: *PhysicsDebug,
+    sphere_shape: c.plShapeHandle,
+    sphere_body: c.plBodyHandle,
 };
 
 const PsoPhysicsDebug_Vertex = struct {
     position: [3]f32,
     color: u32,
+};
+
+const PsoPhysicsDebug_FrameConst = struct {
+    world_to_clip: Mat4,
 };
 
 const PhysicsDebug = struct {
@@ -57,10 +69,12 @@ const PhysicsDebug = struct {
     }
 
     fn drawLine(debug: *PhysicsDebug, p0: Vec3, p1: Vec3, color: Vec3) void {
-        _ = debug;
-        _ = p0;
-        _ = p1;
-        _ = color;
+        const r = @floatToInt(u32, color.v[0] * 255.0);
+        const g = @floatToInt(u32, color.v[1] * 255.0) << 8;
+        const b = @floatToInt(u32, color.v[2] * 255.0) << 16;
+        const rgb = r | g | b;
+        debug.lines.append(.{ .position = p0.v, .color = rgb }) catch unreachable;
+        debug.lines.append(.{ .position = p1.v, .color = rgb }) catch unreachable;
     }
 
     fn drawLineCallback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*c_void) callconv(.C) void {
@@ -85,8 +99,16 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     physics_debug.* = PhysicsDebug.init(gpa);
 
     const physics_world = c.plWorldCreate();
+    c.plWorldDebugSetDrawLineCallback(physics_world, PhysicsDebug.drawLineCallback, physics_debug);
     c.plWorldDebugSetErrorWarningCallback(physics_world, PhysicsDebug.errorWarningCallback);
-    c.plWorldDebugSetDrawLineCallback(physics_world, PhysicsDebug.drawLineCallback, null);
+
+    const sphere_shape = c.plShapeCreateSphere(1.0);
+    const sphere_body = c.plBodyCreate(physics_world, 0.0, &[4]c.plVector3{
+        c.plVector3{ 1.0, 0.0, 0.0 },
+        c.plVector3{ 0.0, 1.0, 0.0 },
+        c.plVector3{ 0.0, 0.0, 1.0 },
+        c.plVector3{ 0.0, 0.0, 2.0 },
+    }, sphere_shape);
 
     if (false) {
         const sphere = c.plShapeCreateSphere(1.0);
@@ -103,7 +125,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
         c.plBodyDestroy(physics_world, body);
         c.plShapeDestroy(sphere);
-        c.plWorldDestroy(physics_world);
     }
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
@@ -147,6 +168,37 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     hrPanicOnFail(info_txtfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(info_txtfmt.SetParagraphAlignment(.NEAR));
 
+    const physics_debug_pso = blk: {
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .LINE;
+        pso_desc.DSVFormat = .D32_FLOAT;
+
+        break :blk grfx.createGraphicsShaderPipeline(
+            &arena_allocator.allocator,
+            &pso_desc,
+            "content/shaders/physics_debug.vs.cso",
+            "content/shaders/physics_debug.ps.cso",
+        );
+    };
+
+    const depth_texture = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &blk: {
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            break :blk desc;
+        },
+        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+    ) catch |err| hrPanic(err);
+
+    const depth_texture_dsv = grfx.allocateCpuDescriptors(.DSV, 1);
+    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_dsv);
+
     //
     // Begin frame to init/upload resources to the GPU.
     //
@@ -173,6 +225,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .info_txtfmt = info_txtfmt,
         .physics_world = physics_world,
         .physics_debug = physics_debug,
+        .sphere_shape = sphere_shape,
+        .sphere_body = sphere_body,
+        .physics_debug_pso = physics_debug_pso,
+        .depth_texture = depth_texture,
+        .depth_texture_dsv = depth_texture_dsv,
     };
 }
 
@@ -180,9 +237,13 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.brush.Release();
     _ = demo.info_txtfmt.Release();
+    _ = demo.grfx.releasePipeline(demo.physics_debug_pso);
+    _ = demo.grfx.releaseResource(demo.depth_texture);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
+    c.plBodyDestroy(demo.physics_world, demo.sphere_body);
+    c.plShapeDestroy(demo.sphere_shape);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
     c.plWorldDestroy(demo.physics_world);
@@ -207,7 +268,7 @@ fn draw(demo: *DemoState) void {
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
-        null,
+        &demo.depth_texture_dsv,
     );
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
@@ -215,6 +276,12 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
+    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+
+    c.plWorldDebugDraw(demo.physics_world);
+    if (demo.physics_debug.lines.items.len > 0) {
+        demo.physics_debug.lines.resize(0) catch unreachable;
+    }
 
     demo.gui.draw(grfx);
 

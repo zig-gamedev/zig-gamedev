@@ -9,6 +9,8 @@ struct DebugDraw : public btIDebugDraw {
 
     plErrorWarningCallback error_warning_callback = nullptr;
 
+    int debug_mode = 0;
+
     virtual void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) override {
         if (draw_line_callback) {
             const plVector3 p0 = { from.x(), from.y(), from.z() };
@@ -37,10 +39,11 @@ struct DebugDraw : public btIDebugDraw {
     }
 
     virtual void setDebugMode(int in_debug_mode) override {
+        debug_mode = in_debug_mode;
     }
 
     virtual int getDebugMode() const override {
-        return 0;
+        return debug_mode;
     }
 };
 

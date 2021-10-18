@@ -409,8 +409,8 @@ pub const STREAM_OUTPUT_BUFFER_VIEW = extern struct {
 };
 
 pub const CLEAR_FLAGS = UINT;
-pub const CLEAR_FLAG_DEPTH = 0x1;
-pub const CLEAR_FLAG_STENCIL = 0x2;
+pub const CLEAR_FLAG_DEPTH: CLEAR_FLAGS = 0x1;
+pub const CLEAR_FLAG_STENCIL: CLEAR_FLAGS = 0x2;
 
 pub const DISCARD_REGION = extern struct {
     NumRects: UINT,
