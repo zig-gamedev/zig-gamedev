@@ -270,13 +270,13 @@ fn draw(demo: *DemoState) void {
         w.TRUE,
         &demo.depth_texture_dsv,
     );
+    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
         &[4]f32{ 0.1, 0.2, 0.4, 1.0 },
         0,
         null,
     );
-    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
 
     c.plWorldDebugDraw(demo.physics_world);
     if (demo.physics_debug.lines.items.len > 0) {
