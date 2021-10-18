@@ -45,6 +45,17 @@ const DemoState = struct {
     physics_debug: *PhysicsDebug,
     sphere_shape: c.plShapeHandle,
     sphere_body: c.plBodyHandle,
+
+    camera: struct {
+        position: Vec3,
+        forward: Vec3,
+        pitch: f32,
+        yaw: f32,
+    },
+    mouse: struct {
+        cursor_prev_x: i32,
+        cursor_prev_y: i32,
+    },
 };
 
 const PsoPhysicsDebug_Vertex = struct {
@@ -230,6 +241,16 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
+        .camera = .{
+            .position = Vec3.init(0.0, 1.0, 0.0),
+            .forward = Vec3.initZero(),
+            .pitch = 0.0,
+            .yaw = math.pi + 0.25 * math.pi,
+        },
+        .mouse = .{
+            .cursor_prev_x = 0,
+            .cursor_prev_y = 0,
+        },
     };
 }
 
@@ -253,11 +274,66 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     lib.newImGuiFrame(demo.frame_stats.delta_time);
+
+    // Handle camera rotation with mouse.
+    {
+        var pos: w.POINT = undefined;
+        _ = w.GetCursorPos(&pos);
+        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
+        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        demo.mouse.cursor_prev_x = pos.x;
+        demo.mouse.cursor_prev_y = pos.y;
+
+        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+            demo.camera.pitch += 0.0025 * delta_y;
+            demo.camera.yaw += 0.0025 * delta_x;
+            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.yaw = vm.modAngle(demo.camera.yaw);
+        }
+    }
+
+    // Handle camera movement with 'WASD' keys.
+    {
+        const speed: f32 = 5.0;
+        const delta_time = demo.frame_stats.delta_time;
+        const transform = Mat4.initRotationX(demo.camera.pitch).mul(Mat4.initRotationY(demo.camera.yaw));
+        var forward = Vec3.init(0.0, 0.0, 1.0).transform(transform).normalize();
+
+        demo.camera.forward = forward;
+        const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
+        forward = forward.scale(speed * delta_time);
+
+        if (w.GetAsyncKeyState('W') < 0) {
+            demo.camera.position = demo.camera.position.add(forward);
+        } else if (w.GetAsyncKeyState('S') < 0) {
+            demo.camera.position = demo.camera.position.sub(forward);
+        }
+        if (w.GetAsyncKeyState('D') < 0) {
+            demo.camera.position = demo.camera.position.add(right);
+        } else if (w.GetAsyncKeyState('A') < 0) {
+            demo.camera.position = demo.camera.position.sub(right);
+        }
+    }
 }
 
 fn draw(demo: *DemoState) void {
     var grfx = &demo.grfx;
     grfx.beginFrame();
+
+    const cam_world_to_view = vm.Mat4.initLookToLh(
+        demo.camera.position,
+        demo.camera.forward,
+        vm.Vec3.init(0.0, 1.0, 0.0),
+    );
+    const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
+        math.pi / 3.0,
+        @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
+        0.1,
+        50.0,
+    );
+    const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
+    _ = cam_world_to_clip;
 
     const back_buffer = grfx.getBackBuffer();
 
@@ -280,6 +356,9 @@ fn draw(demo: *DemoState) void {
 
     c.plWorldDebugDraw(demo.physics_world);
     if (demo.physics_debug.lines.items.len > 0) {
+        //gr.setCurrentPipeline(gui.pipeline);
+        //gr.cmdlist.IASetPrimitiveTopology(.LINELIST);
+        //const mem = gr.allocateUploadMemory(vm.Mat4, 1);
         demo.physics_debug.lines.resize(0) catch unreachable;
     }
 
