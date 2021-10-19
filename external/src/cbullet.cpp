@@ -3,35 +3,37 @@
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
 
-struct DebugDraw : public btIDebugDraw {
-    plDrawLineCallback draw_line_callback = nullptr;
-    void* draw_line_user = nullptr;
-
-    plErrorWarningCallback error_warning_callback = nullptr;
-
+struct CbtDebugDraw : public btIDebugDraw {
+    CbtDebugDrawCallbacks callbacks = {};
     int debug_mode = 0;
 
     virtual void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) override {
-        if (draw_line_callback) {
-            const plVector3 p0 = { from.x(), from.y(), from.z() };
-            const plVector3 p1 = { to.x(), to.y(), to.z() };
-            const plVector3 c = { color.x(), color.y(), color.z() };
-            draw_line_callback(p0, p1, c, draw_line_user);
+        if (callbacks.drawLine) {
+            const CbtVector3 p0 = { from.x(), from.y(), from.z() };
+            const CbtVector3 p1 = { to.x(), to.y(), to.z() };
+            const CbtVector3 c = { color.x(), color.y(), color.z() };
+            callbacks.drawLine(p0, p1, c, callbacks.user_data);
         }
     }
 
     virtual void drawContactPoint(
-        const btVector3&,
-        const btVector3&,
-        btScalar,
-        int,
-        const btVector3&
+        const btVector3& point,
+        const btVector3& normal,
+        btScalar distance,
+        int life_time,
+        const btVector3& color
     ) override {
+        if (callbacks.drawContactPoint) {
+            const CbtVector3 p = { point.x(), point.y(), point.z() };
+            const CbtVector3 n = { normal.x(), normal.y(), normal.z() };
+            const CbtVector3 c = { color.x(), color.y(), color.z() };
+            callbacks.drawContactPoint(p, n, distance, life_time, c, callbacks.user_data);
+        }
     }
 
     virtual void reportErrorWarning(const char* warning_string) override {
-        if (error_warning_callback && warning_string) {
-            error_warning_callback(warning_string);
+        if (callbacks.reportErrorWarning && warning_string) {
+            callbacks.reportErrorWarning(warning_string, callbacks.user_data);
         }
     }
 
@@ -47,18 +49,22 @@ struct DebugDraw : public btIDebugDraw {
     }
 };
 
-plWorldHandle plWorldCreate(void) {
+CbtWorldHandle cbtWorldCreate(void) {
     btDefaultCollisionConfiguration* collision_config = new btDefaultCollisionConfiguration();
     btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_config);
     btBroadphaseInterface* broadphase = new btDbvtBroadphase();
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver();
     btDiscreteDynamicsWorld* world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_config);
-    return (plWorldHandle)world;
+    return (CbtWorldHandle)world;
 }
 
-void plWorldDestroy(plWorldHandle handle) {
+void cbtWorldDestroy(CbtWorldHandle handle) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
     assert(world);
+
+    if (world->getDebugDrawer()) {
+        delete world->getDebugDrawer();
+    }
 
     btCollisionDispatcher* dispatcher = (btCollisionDispatcher*)world->getDispatcher();
     delete dispatcher->getCollisionConfiguration();
@@ -69,77 +75,86 @@ void plWorldDestroy(plWorldHandle handle) {
     delete world;
 }
 
-void plWorldSetGravity(plWorldHandle handle, float gx, float gy, float gz) {
+void cbtWorldSetGravity(CbtWorldHandle handle, float gx, float gy, float gz) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
     assert(world);
     world->setGravity(btVector3(gx, gy, gz));
 }
 
-int plWorldStepSimulation(plWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step) {
+int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
     assert(world);
     return world->stepSimulation(time_step, max_sub_steps, fixed_time_step);
 }
 
-static DebugDraw* getDebug(btDiscreteDynamicsWorld* world) {
-    assert(world);
-    DebugDraw* debug = (DebugDraw*)world->getDebugDrawer();
+void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallbacks* callbacks) {
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
+    assert(world && callbacks);
+
+    CbtDebugDraw* debug = (CbtDebugDraw*)world->getDebugDrawer();
     if (debug == nullptr) {
-        debug = new DebugDraw();
+        debug = new CbtDebugDraw();
         debug->setDebugMode(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawFrames);
         world->setDebugDrawer(debug);
     }
-    assert(debug);
-    return debug;
+
+    debug->callbacks = *callbacks;
 }
 
-void plWorldDebugSetDrawLineCallback(plWorldHandle handle, plDrawLineCallback callback, void* user) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world);
-
-    DebugDraw* debug = getDebug(world);
-    debug->draw_line_callback = callback;
-    debug->draw_line_user = user;
-}
-
-void plWorldDebugSetErrorWarningCallback(plWorldHandle handle, plErrorWarningCallback callback) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world);
-
-    DebugDraw* debug = getDebug(world);
-    debug->error_warning_callback = callback;
-}
-
-void plWorldDebugDraw(plWorldHandle handle) {
+void cbtWorldDebugDraw(CbtWorldHandle handle) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
     assert(world);
     world->debugDrawWorld();
 }
 
-int plShapeGetType(plShapeHandle handle) {
+void cbtWorldDebugDrawLine(CbtWorldHandle handle, const CbtVector3 p0, const CbtVector3 p1, const CbtVector3 color) {
+    assert(p0 && p1 && color);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
+    assert(world && world->getDebugDrawer());
+
+    world->getDebugDrawer()->drawLine(
+        btVector3(p0[0], p0[1], p0[2]),
+        btVector3(p1[0], p1[1], p1[2]),
+        btVector3(color[0], color[1], color[2])
+    );
+}
+
+void cbtWorldDebugDrawSphere(CbtWorldHandle handle, const CbtVector3 position, float radius, const CbtVector3 color) {
+    assert(position && radius > 0.0 && color);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
+    assert(world && world->getDebugDrawer());
+
+    world->getDebugDrawer()->drawSphere(
+        btVector3(position[0], position[1], position[2]),
+        radius,
+        btVector3(color[0], color[1], color[2])
+    );
+}
+
+int cbtShapeGetType(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
     return shape->getShapeType();
 }
 
-plShapeHandle plShapeCreateBox(float half_x, float half_y, float half_z) {
+CbtShapeHandle cbtShapeCreateBox(float half_x, float half_y, float half_z) {
     assert(half_x > 0.0 && half_y > 0.0 && half_z > 0.0);
     btBoxShape* box = new btBoxShape(btVector3(half_x, half_y, half_z));
-    return (plShapeHandle)box;
+    return (CbtShapeHandle)box;
 }
 
-plShapeHandle plShapeCreateSphere(float radius) {
+CbtShapeHandle cbtShapeCreateSphere(float radius) {
     assert(radius > 0.0f);
     btSphereShape* sphere = new btSphereShape(radius);
-    return (plShapeHandle)sphere;
+    return (CbtShapeHandle)sphere;
 }
 
-plShapeHandle plShapeCreatePlane(float nx, float ny, float nz, float d) {
-    btStaticPlaneShape* plane = new btStaticPlaneShape(btVector3(nx, ny, nz), d);
-    return (plShapeHandle)plane;
+CbtShapeHandle cbtShapeCreatePlane(float nx, float ny, float nz, float d) {
+    btStaticPlaneShape* cbtane = new btStaticPlaneShape(btVector3(nx, ny, nz), d);
+    return (CbtShapeHandle)cbtane;
 }
 
-plShapeHandle plShapeCreateCapsule(float radius, float height, int up_axis) {
+CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int up_axis) {
     assert(up_axis >= 0 && up_axis <= 2);
     assert(radius > 0.0 && height > 0);
 
@@ -151,20 +166,20 @@ plShapeHandle plShapeCreateCapsule(float radius, float height, int up_axis) {
     } else {
         capsule = new btCapsuleShape(radius, height);
     }
-    return (plShapeHandle)capsule;
+    return (CbtShapeHandle)capsule;
 }
 
-void plShapeDestroy(plShapeHandle handle) {
+void cbtShapeDestroy(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
     delete shape;
 }
 
-plBodyHandle plBodyCreate(
-    plWorldHandle world_handle,
+CbtBodyHandle cbtBodyCreate(
+    CbtWorldHandle world_handle,
     float mass,
-    const plVector3 transform[4],
-    plShapeHandle shape_handle
+    const CbtVector3 transform[4],
+    CbtShapeHandle shape_handle
 ) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     btCollisionShape* shape = (btCollisionShape*)shape_handle;
@@ -189,13 +204,12 @@ plBodyHandle plBodyCreate(
 
     btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, local_inertia);
     btRigidBody* body = new btRigidBody(info);
-    body->setUserIndex(-1);
     world->addRigidBody(body);
 
-    return (plBodyHandle)body;
+    return (CbtBodyHandle)body;
 }
 
-void plBodyDestroy(plWorldHandle world_handle, plBodyHandle body_handle) {
+void cbtBodyDestroy(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     btRigidBody* body = (btRigidBody*)body_handle;
     assert(world && body);
@@ -207,7 +221,7 @@ void plBodyDestroy(plWorldHandle world_handle, plBodyHandle body_handle) {
     delete body;
 }
 
-void plBodyGetGraphicsTransform(plBodyHandle handle, plVector3 transform[4]) {
+void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && body->getMotionState() && transform);
 

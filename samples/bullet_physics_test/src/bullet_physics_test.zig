@@ -41,12 +41,12 @@ const DemoState = struct {
     depth_texture: gr.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    physics_world: c.plWorldHandle,
     physics_debug: *PhysicsDebug,
-    sphere_shape: c.plShapeHandle,
-    ground_shape: c.plShapeHandle,
-    sphere_body: c.plBodyHandle,
-    ground_body: c.plBodyHandle,
+    physics_world: c.CbtWorldHandle,
+    sphere_shape: c.CbtShapeHandle,
+    ground_shape: c.CbtShapeHandle,
+    sphere_body: c.CbtBodyHandle,
+    ground_body: c.CbtBodyHandle,
 
     camera: struct {
         position: Vec3,
@@ -99,7 +99,7 @@ const PhysicsDebug = struct {
         );
     }
 
-    fn errorWarningCallback(str: [*c]const u8) callconv(.C) void {
+    fn reportErrorWarningCallback(str: [*c]const u8, _: ?*c_void) callconv(.C) void {
         std.log.info("{s}", .{str});
     }
 };
@@ -111,41 +111,47 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var physics_debug = gpa.create(PhysicsDebug) catch unreachable;
     physics_debug.* = PhysicsDebug.init(gpa);
 
-    const physics_world = c.plWorldCreate();
-    c.plWorldDebugSetDrawLineCallback(physics_world, PhysicsDebug.drawLineCallback, physics_debug);
-    c.plWorldDebugSetErrorWarningCallback(physics_world, PhysicsDebug.errorWarningCallback);
+    const physics_world = c.cbtWorldCreate();
+    c.cbtWorldSetGravity(physics_world, 0.0, -10.0, 0.0);
 
-    const sphere_shape = c.plShapeCreateSphere(1.0);
-    const sphere_body = c.plBodyCreate(physics_world, 0.0, &[4]c.plVector3{
-        c.plVector3{ 1.0, 0.0, 0.0 },
-        c.plVector3{ 0.0, 1.0, 0.0 },
-        c.plVector3{ 0.0, 0.0, 1.0 },
-        c.plVector3{ 0.0, 1.5, 5.0 },
+    c.cbtWorldDebugSetCallbacks(physics_world, &.{
+        .drawLine = PhysicsDebug.drawLineCallback,
+        .drawContactPoint = null,
+        .reportErrorWarning = PhysicsDebug.reportErrorWarningCallback,
+        .user_data = physics_debug,
+    });
+
+    const sphere_shape = c.cbtShapeCreateSphere(1.0);
+    const sphere_body = c.cbtBodyCreate(physics_world, 5.0, &[4]c.CbtVector3{
+        c.CbtVector3{ 1.0, 0.0, 0.0 },
+        c.CbtVector3{ 0.0, 1.0, 0.0 },
+        c.CbtVector3{ 0.0, 0.0, 1.0 },
+        c.CbtVector3{ 0.0, 1.5, 5.0 },
     }, sphere_shape);
 
-    const ground_shape = c.plShapeCreateBox(10.0, 0.2, 10.0);
-    const ground_body = c.plBodyCreate(physics_world, 0.0, &[4]c.plVector3{
-        c.plVector3{ 1.0, 0.0, 0.0 },
-        c.plVector3{ 0.0, 1.0, 0.0 },
-        c.plVector3{ 0.0, 0.0, 1.0 },
-        c.plVector3{ 0.0, 0.0, 0.0 },
+    const ground_shape = c.cbtShapeCreateBox(10.0, 0.2, 10.0);
+    const ground_body = c.cbtBodyCreate(physics_world, 0.0, &[4]c.CbtVector3{
+        c.CbtVector3{ 1.0, 0.0, 0.0 },
+        c.CbtVector3{ 0.0, 1.0, 0.0 },
+        c.CbtVector3{ 0.0, 0.0, 1.0 },
+        c.CbtVector3{ 0.0, 0.0, 0.0 },
     }, ground_shape);
 
     if (false) {
-        const sphere = c.plShapeCreateSphere(1.0);
-        var trans = [4]c.plVector3{
-            c.plVector3{ 1.0, 0.0, 0.0 },
-            c.plVector3{ 0.0, 1.0, 0.0 },
-            c.plVector3{ 0.0, 0.0, 1.0 },
-            c.plVector3{ 2.0, 2.0, 2.0 },
+        const sphere = c.cbtShapeCreateSphere(1.0);
+        var trans = [4]c.CbtVector3{
+            c.CbtVector3{ 1.0, 0.0, 0.0 },
+            c.CbtVector3{ 0.0, 1.0, 0.0 },
+            c.CbtVector3{ 0.0, 0.0, 1.0 },
+            c.CbtVector3{ 2.0, 2.0, 2.0 },
         };
-        const body = c.plBodyCreate(physics_world, 1.0, &trans[0], sphere);
+        const body = c.cbtBodyCreate(physics_world, 1.0, &trans[0], sphere);
 
-        trans[3] = c.plVector3{ 0.0, 0.0, 0.0 };
-        c.plBodyGetGraphicsTransform(body, &trans[0]);
+        trans[3] = c.CbtVector3{ 0.0, 0.0, 0.0 };
+        c.cbtBodyGetGraphicsTransform(body, &trans[0]);
 
-        c.plBodyDestroy(physics_world, body);
-        c.plShapeDestroy(sphere);
+        c.cbtBodyDestroy(physics_world, body);
+        c.cbtShapeDestroy(sphere);
     }
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
@@ -275,19 +281,23 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
-    c.plBodyDestroy(demo.physics_world, demo.sphere_body);
-    c.plBodyDestroy(demo.physics_world, demo.ground_body);
-    c.plShapeDestroy(demo.sphere_shape);
-    c.plShapeDestroy(demo.ground_shape);
+    c.cbtBodyDestroy(demo.physics_world, demo.sphere_body);
+    c.cbtBodyDestroy(demo.physics_world, demo.ground_body);
+    c.cbtShapeDestroy(demo.sphere_shape);
+    c.cbtShapeDestroy(demo.ground_shape);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
-    c.plWorldDestroy(demo.physics_world);
+    c.cbtWorldDestroy(demo.physics_world);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
+    const dt = demo.frame_stats.delta_time;
+
     demo.frame_stats.update();
-    lib.newImGuiFrame(demo.frame_stats.delta_time);
+    lib.newImGuiFrame(dt);
+
+    _ = c.cbtWorldStepSimulation(demo.physics_world, dt, 1, 1.0 / 60.0);
 
     // Handle camera rotation with mouse.
     {
@@ -367,7 +377,7 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
-    c.plWorldDebugDraw(demo.physics_world);
+    c.cbtWorldDebugDraw(demo.physics_world);
     if (demo.physics_debug.lines.items.len > 0) {
         grfx.setCurrentPipeline(demo.physics_debug_pso);
         grfx.cmdlist.IASetPrimitiveTopology(.LINELIST);
