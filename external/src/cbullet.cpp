@@ -110,9 +110,9 @@ int plShapeGetType(plShapeHandle handle) {
     return shape->getShapeType();
 }
 
-plShapeHandle plShapeCreateBox(const plVector3 half_extents) {
-    assert(half_extents);
-    btBoxShape* box = new btBoxShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+plShapeHandle plShapeCreateBox(float half_x, float half_y, float half_z) {
+    assert(half_x > 0.0 && half_y > 0.0 && half_z > 0.0);
+    btBoxShape* box = new btBoxShape(btVector3(half_x, half_y, half_z));
     return (plShapeHandle)box;
 }
 
@@ -120,6 +120,26 @@ plShapeHandle plShapeCreateSphere(float radius) {
     assert(radius > 0.0f);
     btSphereShape* sphere = new btSphereShape(radius);
     return (plShapeHandle)sphere;
+}
+
+plShapeHandle plShapeCreatePlane(float nx, float ny, float nz, float d) {
+    btStaticPlaneShape* plane = new btStaticPlaneShape(btVector3(nx, ny, nz), d);
+    return (plShapeHandle)plane;
+}
+
+plShapeHandle plShapeCreateCapsule(float radius, float height, int up_axis) {
+    assert(up_axis >= 0 && up_axis <= 2);
+    assert(radius > 0.0 && height > 0);
+
+    btCapsuleShape* capsule = nullptr;
+    if (up_axis == 0) {
+        capsule = new btCapsuleShapeX(radius, height);
+    } else if (up_axis == 2) {
+        capsule = new btCapsuleShapeZ(radius, height);
+    } else {
+        capsule = new btCapsuleShape(radius, height);
+    }
+    return (plShapeHandle)capsule;
 }
 
 void plShapeDestroy(plShapeHandle handle) {

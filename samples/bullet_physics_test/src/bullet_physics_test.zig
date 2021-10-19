@@ -44,7 +44,9 @@ const DemoState = struct {
     physics_world: c.plWorldHandle,
     physics_debug: *PhysicsDebug,
     sphere_shape: c.plShapeHandle,
+    ground_shape: c.plShapeHandle,
     sphere_body: c.plBodyHandle,
+    ground_body: c.plBodyHandle,
 
     camera: struct {
         position: Vec3,
@@ -118,8 +120,16 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         c.plVector3{ 1.0, 0.0, 0.0 },
         c.plVector3{ 0.0, 1.0, 0.0 },
         c.plVector3{ 0.0, 0.0, 1.0 },
-        c.plVector3{ 0.0, 0.0, 2.0 },
+        c.plVector3{ 0.0, 1.5, 5.0 },
     }, sphere_shape);
+
+    const ground_shape = c.plShapeCreateBox(10.0, 0.2, 10.0);
+    const ground_body = c.plBodyCreate(physics_world, 0.0, &[4]c.plVector3{
+        c.plVector3{ 1.0, 0.0, 0.0 },
+        c.plVector3{ 0.0, 1.0, 0.0 },
+        c.plVector3{ 0.0, 0.0, 1.0 },
+        c.plVector3{ 0.0, 0.0, 0.0 },
+    }, ground_shape);
 
     if (false) {
         const sphere = c.plShapeCreateSphere(1.0);
@@ -238,6 +248,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_debug = physics_debug,
         .sphere_shape = sphere_shape,
         .sphere_body = sphere_body,
+        .ground_shape = ground_shape,
+        .ground_body = ground_body,
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
@@ -245,7 +257,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .position = Vec3.init(0.0, 1.0, 0.0),
             .forward = Vec3.initZero(),
             .pitch = 0.0,
-            .yaw = math.pi + 0.25 * math.pi,
+            .yaw = 0.0 * math.pi,
         },
         .mouse = .{
             .cursor_prev_x = 0,
@@ -264,7 +276,9 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
     c.plBodyDestroy(demo.physics_world, demo.sphere_body);
+    c.plBodyDestroy(demo.physics_world, demo.ground_body);
     c.plShapeDestroy(demo.sphere_shape);
+    c.plShapeDestroy(demo.ground_shape);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
     c.plWorldDestroy(demo.physics_world);
@@ -333,7 +347,6 @@ fn draw(demo: *DemoState) void {
         50.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
-    _ = cam_world_to_clip;
 
     const back_buffer = grfx.getBackBuffer();
 
@@ -356,9 +369,22 @@ fn draw(demo: *DemoState) void {
 
     c.plWorldDebugDraw(demo.physics_world);
     if (demo.physics_debug.lines.items.len > 0) {
-        //gr.setCurrentPipeline(gui.pipeline);
-        //gr.cmdlist.IASetPrimitiveTopology(.LINELIST);
-        //const mem = gr.allocateUploadMemory(vm.Mat4, 1);
+        grfx.setCurrentPipeline(demo.physics_debug_pso);
+        grfx.cmdlist.IASetPrimitiveTopology(.LINELIST);
+        {
+            const mem = grfx.allocateUploadMemory(Mat4, 1);
+            mem.cpu_slice[0] = cam_world_to_clip.transpose();
+            grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        }
+        const num_vertices = @intCast(u32, demo.physics_debug.lines.items.len);
+        {
+            const mem = grfx.allocateUploadMemory(PsoPhysicsDebug_Vertex, num_vertices);
+            for (demo.physics_debug.lines.items) |p, i| {
+                mem.cpu_slice[i] = p;
+            }
+            grfx.cmdlist.SetGraphicsRootShaderResourceView(1, mem.gpu_base);
+        }
+        grfx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
         demo.physics_debug.lines.resize(0) catch unreachable;
     }
 
