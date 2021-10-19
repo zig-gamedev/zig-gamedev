@@ -69,6 +69,18 @@ void plWorldDestroy(plWorldHandle handle) {
     delete world;
 }
 
+void plWorldSetGravity(plWorldHandle handle, float gx, float gy, float gz) {
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
+    assert(world);
+    world->setGravity(btVector3(gx, gy, gz));
+}
+
+int plWorldStepSimulation(plWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step) {
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
+    assert(world);
+    return world->stepSimulation(time_step, max_sub_steps, fixed_time_step);
+}
+
 static DebugDraw* getDebug(btDiscreteDynamicsWorld* world) {
     assert(world);
     DebugDraw* debug = (DebugDraw*)world->getDebugDrawer();
@@ -188,17 +200,22 @@ void plBodyDestroy(plWorldHandle world_handle, plBodyHandle body_handle) {
     btRigidBody* body = (btRigidBody*)body_handle;
     assert(world && body);
 
+    if (body->getMotionState()) {
+        delete body->getMotionState();
+    }
     world->removeRigidBody(body);
     delete body;
 }
 
 void plBodyGetGraphicsTransform(plBodyHandle handle, plVector3 transform[4]) {
     btRigidBody* body = (btRigidBody*)handle;
-    assert(body && transform);
+    assert(body && body->getMotionState() && transform);
 
-    btDefaultMotionState* ms = (btDefaultMotionState*)body->getMotionState();
-    const btMatrix3x3& basis = ms->m_graphicsWorldTrans.getBasis();
-    const btVector3& origin = ms->m_graphicsWorldTrans.getOrigin();
+    btTransform trans;
+    body->getMotionState()->getWorldTransform(trans);
+
+    const btMatrix3x3& basis = trans.getBasis();
+    const btVector3& origin = trans.getOrigin();
 
     transform[0][0] = basis.getRow(0).x();
     transform[0][1] = basis.getRow(0).y();

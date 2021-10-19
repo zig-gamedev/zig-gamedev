@@ -3,7 +3,6 @@
 #define PL_DECLARE_HANDLE(name) typedef struct name##__ { int unused; } *name
 
 typedef float plVector3[3];
-typedef float plQuaternion[4];
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,6 +17,8 @@ typedef void (*plErrorWarningCallback)(const char* str);
 
 plWorldHandle plWorldCreate(void);
 void plWorldDestroy(plWorldHandle handle);
+void plWorldSetGravity(plWorldHandle handle, float gx, float gy, float gz);
+int plWorldStepSimulation(plWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step);
 void plWorldDebugSetDrawLineCallback(plWorldHandle handle, plDrawLineCallback callback, void* user);
 void plWorldDebugSetErrorWarningCallback(plWorldHandle handle, plErrorWarningCallback callback);
 void plWorldDebugDraw(plWorldHandle handle);
