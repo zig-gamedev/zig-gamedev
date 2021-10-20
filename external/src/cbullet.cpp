@@ -75,10 +75,10 @@ void cbtWorldDestroy(CbtWorldHandle handle) {
     delete world;
 }
 
-void cbtWorldSetGravity(CbtWorldHandle handle, float gx, float gy, float gz) {
+void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
     assert(world);
-    world->setGravity(btVector3(gx, gy, gz));
+    world->setGravity(btVector3(gravity[0], gravity[1], gravity[2]));
 }
 
 int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step) {
@@ -137,9 +137,9 @@ int cbtShapeGetType(CbtShapeHandle handle) {
     return shape->getShapeType();
 }
 
-CbtShapeHandle cbtShapeCreateBox(float half_x, float half_y, float half_z) {
-    assert(half_x > 0.0 && half_y > 0.0 && half_z > 0.0);
-    btBoxShape* box = new btBoxShape(btVector3(half_x, half_y, half_z));
+CbtShapeHandle cbtShapeCreateBox(const CbtVector3 half_extents) {
+    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
+    btBoxShape* box = new btBoxShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
     return (CbtShapeHandle)box;
 }
 
@@ -149,23 +149,26 @@ CbtShapeHandle cbtShapeCreateSphere(float radius) {
     return (CbtShapeHandle)sphere;
 }
 
-CbtShapeHandle cbtShapeCreatePlane(float nx, float ny, float nz, float d) {
-    btStaticPlaneShape* cbtane = new btStaticPlaneShape(btVector3(nx, ny, nz), d);
+CbtShapeHandle cbtShapeCreatePlane(const CbtVector3 normal, float distance) {
+    btStaticPlaneShape* cbtane = new btStaticPlaneShape(btVector3(normal[0], normal[1], normal[2]), distance);
     return (CbtShapeHandle)cbtane;
 }
 
-CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int up_axis) {
-    assert(up_axis >= 0 && up_axis <= 2);
+CbtShapeHandle cbtShapeCreateCapsuleX(float radius, float height) {
     assert(radius > 0.0 && height > 0);
+    btCapsuleShape* capsule = capsule = new btCapsuleShapeX(radius, height);
+    return (CbtShapeHandle)capsule;
+}
 
-    btCapsuleShape* capsule = nullptr;
-    if (up_axis == 0) {
-        capsule = new btCapsuleShapeX(radius, height);
-    } else if (up_axis == 2) {
-        capsule = new btCapsuleShapeZ(radius, height);
-    } else {
-        capsule = new btCapsuleShape(radius, height);
-    }
+CbtShapeHandle cbtShapeCreateCapsuleY(float radius, float height) {
+    assert(radius > 0.0 && height > 0);
+    btCapsuleShape* capsule = capsule = new btCapsuleShape(radius, height);
+    return (CbtShapeHandle)capsule;
+}
+
+CbtShapeHandle cbtShapeCreateCapsuleZ(float radius, float height) {
+    assert(radius > 0.0 && height > 0);
+    btCapsuleShape* capsule = capsule = new btCapsuleShapeZ(radius, height);
     return (CbtShapeHandle)capsule;
 }
 

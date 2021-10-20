@@ -112,7 +112,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     physics_debug.* = PhysicsDebug.init(gpa);
 
     const physics_world = c.cbtWorldCreate();
-    c.cbtWorldSetGravity(physics_world, 0.0, -10.0, 0.0);
+    c.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
 
     c.cbtWorldDebugSetCallbacks(physics_world, &.{
         .drawLine = PhysicsDebug.drawLineCallback,
@@ -129,7 +129,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         c.CbtVector3{ 0.0, 1.5, 5.0 },
     }, sphere_shape);
 
-    const ground_shape = c.cbtShapeCreateBox(10.0, 0.2, 10.0);
+    const ground_shape = c.cbtShapeCreateBox(&Vec3.init(10.0, 0.2, 10.0).c);
     const ground_body = c.cbtBodyCreate(physics_world, 0.0, &[4]c.CbtVector3{
         c.CbtVector3{ 1.0, 0.0, 0.0 },
         c.CbtVector3{ 0.0, 1.0, 0.0 },

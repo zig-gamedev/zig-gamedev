@@ -48,7 +48,7 @@ typedef struct CbtRayCastResult {
 
 CbtWorldHandle cbtWorldCreate(void);
 void cbtWorldDestroy(CbtWorldHandle handle);
-void cbtWorldSetGravity(CbtWorldHandle handle, float gx, float gy, float gz);
+void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity);
 int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step);
 
 void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallbacks* callbacks);
@@ -56,10 +56,12 @@ void cbtWorldDebugDraw(CbtWorldHandle handle);
 void cbtWorldDebugDrawLine(CbtWorldHandle handle, const CbtVector3 p0, const CbtVector3 p1, const CbtVector3 color);
 void cbtWorldDebugDrawSphere(CbtWorldHandle handle, const CbtVector3 position, float radius, const CbtVector3 color);
 
-CbtShapeHandle cbtShapeCreateBox(float half_x, float half_y, float half_z);
+CbtShapeHandle cbtShapeCreateBox(const CbtVector3 half_extents);
 CbtShapeHandle cbtShapeCreateSphere(float radius);
-CbtShapeHandle cbtShapeCreatePlane(float nx, float ny, float nz, float d);
-CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int up_axis);
+CbtShapeHandle cbtShapeCreatePlane(const CbtVector3 normal, float distance);
+CbtShapeHandle cbtShapeCreateCapsuleX(float radius, float height);
+CbtShapeHandle cbtShapeCreateCapsuleY(float radius, float height);
+CbtShapeHandle cbtShapeCreateCapsuleZ(float radius, float height);
 void cbtShapeDestroy(CbtShapeHandle handle);
 int cbtShapeGetType(CbtShapeHandle handle);
 
