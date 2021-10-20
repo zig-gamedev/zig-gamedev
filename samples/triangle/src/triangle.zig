@@ -152,7 +152,7 @@ pub fn main() !void {
                 null,
                 c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
             );
-            _ = c.igColorEdit3("Triangle color", &triangle_color.v, c.ImGuiColorEditFlags_None);
+            _ = c.igColorEdit3("Triangle color", &triangle_color.c, c.ImGuiColorEditFlags_None);
             c.igEnd();
 
             grfx.beginFrame();
@@ -189,7 +189,7 @@ pub fn main() !void {
             grfx.cmdlist.SetGraphicsRoot32BitConstant(
                 0,
                 c.igColorConvertFloat4ToU32(
-                    c.ImVec4{ .x = triangle_color.v[0], .y = triangle_color.v[1], .z = triangle_color.v[2], .w = 1.0 },
+                    c.ImVec4{ .x = triangle_color.c[0], .y = triangle_color.c[1], .z = triangle_color.c[2], .w = 1.0 },
                 ),
                 0,
             );

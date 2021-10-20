@@ -1143,7 +1143,7 @@ fn draw(demo: *DemoState) void {
     // Draw env. cube texture.
     {
         var world_to_view_origin = cam_world_to_view;
-        world_to_view_origin.m[3] = [_]f32{ 0.0, 0.0, 0.0, 1.0 };
+        world_to_view_origin.r[3] = Vec4.init(0.0, 0.0, 0.0, 1.0);
 
         const mem = grfx.allocateUploadMemory(Mat4, 1);
         mem.cpu_slice[0] = world_to_view_origin.mul(cam_view_to_clip).transpose();

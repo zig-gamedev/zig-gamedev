@@ -82,12 +82,12 @@ const PhysicsDebug = struct {
     }
 
     fn drawLine(debug: *PhysicsDebug, p0: Vec3, p1: Vec3, color: Vec3) void {
-        const r = @floatToInt(u32, color.v[0] * 255.0);
-        const g = @floatToInt(u32, color.v[1] * 255.0) << 8;
-        const b = @floatToInt(u32, color.v[2] * 255.0) << 16;
+        const r = @floatToInt(u32, color.c[0] * 255.0);
+        const g = @floatToInt(u32, color.c[1] * 255.0) << 8;
+        const b = @floatToInt(u32, color.c[2] * 255.0) << 16;
         const rgb = r | g | b;
-        debug.lines.append(.{ .position = p0.v, .color = rgb }) catch unreachable;
-        debug.lines.append(.{ .position = p1.v, .color = rgb }) catch unreachable;
+        debug.lines.append(.{ .position = p0.c, .color = rgb }) catch unreachable;
+        debug.lines.append(.{ .position = p1.c, .color = rgb }) catch unreachable;
     }
 
     fn drawLineCallback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*c_void) callconv(.C) void {
