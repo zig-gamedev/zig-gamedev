@@ -88,6 +88,9 @@ void cbtBodySetSpinningFriction(CbtBodyHandle handle, float friction);
 void cbtBodySetAnisotropicFriction(CbtBodyHandle handle, const CbtVector3 friction, int mode);
 void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle handle, float stiffness, float damping);
 
+void cbtBodySetMassProps(CbtBodyHandle handle, float mass, const CbtVector3 inertia);
+void cbtBodySetDamping(CbtBodyHandle handle, float linear, float angular);
+
 float cbtBodyGetRestitution(CbtBodyHandle handle);
 float cbtBodyGetFriction(CbtBodyHandle handle);
 float cbtBodyGetRollingFriction(CbtBodyHandle handle);
@@ -95,6 +98,10 @@ float cbtBodyGetSpinningFriction(CbtBodyHandle handle);
 void cbtBodyGetAnisotropicFriction(CbtBodyHandle handle, CbtVector3 friction);
 float cbtBodyGetContactStiffness(CbtBodyHandle handle);
 float cbtBodyGetContactDamping(CbtBodyHandle handle);
+
+float cbtBodyGetMass(CbtBodyHandle handle);
+float cbtBodyGetLinearDamping(CbtBodyHandle handle);
+float cbtBodyGetAngularDamping(CbtBodyHandle handle);
 
 void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 

@@ -186,11 +186,11 @@ CbtBodyHandle cbtBodyCreate(
 ) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     btCollisionShape* shape = (btCollisionShape*)shape_handle;
-    assert(world && shape && transform && mass >= 0.0f);
+    assert(world && shape && transform && mass >= 0.0);
 
-    const bool is_dynamic = (mass != 0.0f);
+    const bool is_dynamic = (mass != 0.0);
 
-    btVector3 local_inertia(0.0f, 0.0f, 0.0f);
+    btVector3 local_inertia(0.0, 0.0, 0.0);
     if (is_dynamic)
         shape->calculateLocalInertia(mass, local_inertia);
 
@@ -273,6 +273,18 @@ void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle handle, float stiffness,
     body->setContactStiffnessAndDamping(stiffness, damping);
 }
 
+void cbtBodySetMassProps(CbtBodyHandle handle, float mass, const CbtVector3 inertia) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body && inertia);
+    body->setMassProps(mass, btVector3(inertia[0], inertia[1], inertia[2]));
+}
+
+void cbtBodySetDamping(CbtBodyHandle handle, float linear, float angular) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setDamping(linear, angular);
+}
+
 float cbtBodyGetRestitution(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
@@ -316,6 +328,24 @@ float cbtBodyGetContactDamping(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
     return body->getContactDamping();
+}
+
+float cbtBodyGetMass(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getMass();
+}
+
+float cbtBodyGetLinearDamping(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getLinearDamping();
+}
+
+float cbtBodyGetAngularDamping(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getAngularDamping();
 }
 
 void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
