@@ -23,6 +23,10 @@ pub const Vec2 = extern struct {
         return .{ .c = [_]f32{ x, y } };
     }
 
+    pub inline fn initS(s: f32) Vec2 {
+        return init(s, s);
+    }
+
     pub inline fn initZero() Vec2 {
         const static = struct {
             const zero = init(0.0, 0.0);
@@ -88,9 +92,9 @@ pub const Vec2 = extern struct {
     }
 
     pub inline fn lerp(v0: Vec2, v1: Vec2, t: f32) Vec2 {
-        const s = init(t, t);
+        const tt = initS(t);
         const v0v1 = v1.sub(v0);
-        return v0v1.mulAdd(s, v0);
+        return v0v1.mulAdd(tt, v0);
     }
 
     pub inline fn rcp(v: Vec2) Vec2 {
@@ -139,6 +143,10 @@ pub const Vec3 = extern struct {
         return .{ .c = [_]f32{ x, y, z } };
     }
 
+    pub inline fn initS(s: f32) Vec3 {
+        return init(s, s, s);
+    }
+
     pub inline fn initZero() Vec3 {
         const static = struct {
             const zero = init(0.0, 0.0, 0.0);
@@ -146,127 +154,121 @@ pub const Vec3 = extern struct {
         return static.zero;
     }
 
-    pub inline fn approxEq(a: Vec3, b: Vec3, eps: f32) bool {
-        return math.approxEq(f32, a.c[0], b.c[0], eps) and
-            math.approxEq(f32, a.c[1], b.c[1], eps) and
-            math.approxEq(f32, a.c[2], b.c[2], eps);
+    pub inline fn approxEq(v0: Vec3, v1: Vec3, eps: f32) bool {
+        return math.approxEq(f32, v0.c[0], v1.c[0], eps) and
+            math.approxEq(f32, v0.c[1], v1.c[1], eps) and
+            math.approxEq(f32, v0.c[2], v1.c[2], eps);
     }
 
-    pub inline fn dot(a: Vec3, b: Vec3) f32 {
-        return a.c[0] * b.c[0] + a.c[1] * b.c[1] + a.c[2] * b.c[2];
+    pub inline fn dot(v0: Vec3, v1: Vec3) f32 {
+        return v0.c[0] * v1.c[0] + v0.c[1] * v1.c[1] + v0.c[2] * v1.c[2];
     }
 
-    pub inline fn cross(a: Vec3, b: Vec3) Vec3 {
-        return .{
-            .c = [_]f32{
-                a.c[1] * b.c[2] - a.c[2] * b.c[1],
-                a.c[2] * b.c[0] - a.c[0] * b.c[2],
-                a.c[0] * b.c[1] - a.c[1] * b.c[0],
-            },
-        };
+    pub inline fn cross(v0: Vec3, v1: Vec3) Vec3 {
+        return init(
+            v0.c[1] * v1.c[2] - v0.c[2] * v1.c[1],
+            v0.c[2] * v1.c[0] - v0.c[0] * v1.c[2],
+            v0.c[0] * v1.c[1] - v0.c[1] * v1.c[0],
+        );
     }
 
-    pub inline fn add(a: Vec3, b: Vec3) Vec3 {
-        return .{ .c = [_]f32{ a.c[0] + b.c[0], a.c[1] + b.c[1], a.c[2] + b.c[2] } };
+    pub inline fn add(v0: Vec3, v1: Vec3) Vec3 {
+        return init(v0.c[0] + v1.c[0], v0.c[1] + v1.c[1], v0.c[2] + v1.c[2]);
     }
 
-    pub inline fn sub(a: Vec3, b: Vec3) Vec3 {
-        return .{ .c = [_]f32{ a.c[0] - b.c[0], a.c[1] - b.c[1], a.c[2] - b.c[2] } };
+    pub inline fn sub(v0: Vec3, v1: Vec3) Vec3 {
+        return init(v0.c[0] - v1.c[0], v0.c[1] - v1.c[1], v0.c[2] - v1.c[2]);
     }
 
-    pub inline fn mul(a: Vec3, b: Vec3) Vec3 {
-        return .{ .c = [_]f32{ a.c[0] * b.c[0], a.c[1] * b.c[1], a.c[2] * b.c[2] } };
+    pub inline fn mul(v0: Vec3, v1: Vec3) Vec3 {
+        return init(v0.c[0] * v1.c[0], v0.c[1] * v1.c[1], v0.c[2] * v1.c[2]);
     }
 
-    pub inline fn div(a: Vec3, b: Vec3) Vec3 {
-        assert(!approxEq(b, initZero(), epsilon));
-        return .{ .c = [_]f32{ a.c[0] / b.c[0], a.c[1] / b.c[1], a.c[2] / b.c[2] } };
+    pub inline fn div(v0: Vec3, v1: Vec3) Vec3 {
+        assert(!approxEq(v1, initZero(), epsilon));
+        return init(v0.c[0] / v1.c[0], v0.c[1] / v1.c[1], v0.c[2] / v1.c[2]);
     }
 
-    pub inline fn scale(a: Vec3, b: f32) Vec3 {
-        return .{ .c = [_]f32{ a.c[0] * b, a.c[1] * b, a.c[2] * b } };
+    pub inline fn scale(v: Vec3, s: f32) Vec3 {
+        return init(v.c[0] * s, v.c[1] * s, v.c[2] * s);
     }
 
-    pub inline fn neg(a: Vec3) Vec3 {
-        return .{ .c = [_]f32{ -a.c[0], -a.c[1], -a.c[2] } };
+    pub inline fn neg(v: Vec3) Vec3 {
+        return init(-v.c[0], -v.c[1], -v.c[2]);
     }
 
-    pub inline fn mulAdd(a: Vec3, b: Vec3, c: Vec3) Vec3 {
-        return .{ .c = [_]f32{
-            a.c[0] * b.c[0] + c.c[0],
-            a.c[1] * b.c[1] + c.c[1],
-            a.c[2] * b.c[2] + c.c[2],
-        } };
+    pub inline fn mulAdd(v0: Vec3, v1: Vec3, v2: Vec3) Vec3 {
+        return init(
+            v0.c[0] * v1.c[0] + v2.c[0],
+            v0.c[1] * v1.c[1] + v2.c[1],
+            v0.c[2] * v1.c[2] + v2.c[2],
+        );
     }
 
-    pub inline fn negMulAdd(a: Vec3, b: Vec3, c: Vec3) Vec3 {
-        return .{ .c = [_]f32{
-            -a.c[0] * b.c[0] + c.c[0],
-            -a.c[1] * b.c[1] + c.c[1],
-            -a.c[2] * b.c[2] + c.c[2],
-        } };
+    pub inline fn negMulAdd(v0: Vec3, v1: Vec3, v2: Vec3) Vec3 {
+        return init(
+            -v0.c[0] * v1.c[0] + v2.c[0],
+            -v0.c[1] * v1.c[1] + v2.c[1],
+            -v0.c[2] * v1.c[2] + v2.c[2],
+        );
     }
 
-    pub inline fn mulSub(a: Vec3, b: Vec3, c: Vec3) Vec3 {
-        return .{ .c = [_]f32{
-            a.c[0] * b.c[0] - c.c[0],
-            a.c[1] * b.c[1] - c.c[1],
-            a.c[2] * b.c[2] - c.c[2],
-        } };
+    pub inline fn mulSub(v0: Vec3, v1: Vec3, v2: Vec3) Vec3 {
+        return init(
+            v0.c[0] * v1.c[0] - v2.c[0],
+            v0.c[1] * v1.c[1] - v2.c[1],
+            v0.c[2] * v1.c[2] - v2.c[2],
+        );
     }
 
-    pub inline fn negMulSub(a: Vec3, b: Vec3, c: Vec3) Vec3 {
-        return .{ .c = [_]f32{
-            -a.c[0] * b.c[0] - c.c[0],
-            -a.c[1] * b.c[1] - c.c[1],
-            -a.c[2] * b.c[2] - c.c[2],
-        } };
+    pub inline fn negMulSub(v0: Vec3, v1: Vec3, v2: Vec3) Vec3 {
+        return init(
+            -v0.c[0] * v1.c[0] - v2.c[0],
+            -v0.c[1] * v1.c[1] - v2.c[1],
+            -v0.c[2] * v1.c[2] - v2.c[2],
+        );
     }
 
-    pub inline fn lerp(a: Vec3, b: Vec3, t: f32) Vec3 {
-        const s = Vec3.init(t, t, t);
-        const ab = b.sub(a);
-        return ab.mulAdd(s, a);
+    pub inline fn lerp(v0: Vec3, v1: Vec3, t: f32) Vec3 {
+        const ttt = Vec3.initS(t);
+        const v0v1 = v1.sub(v0);
+        return v0v1.mulAdd(ttt, v0);
     }
 
-    pub inline fn rcp(a: Vec3) Vec3 {
-        assert(!approxEq(a, initZero(), epsilon));
-        return .{ .c = [_]f32{ 1.0 / a.c[0], 1.0 / a.c[1], 1.0 / a.c[2] } };
+    pub inline fn rcp(v: Vec3) Vec3 {
+        assert(!approxEq(v, initZero(), epsilon));
+        return init(1.0 / v.c[0], 1.0 / v.c[1], 1.0 / v.c[2]);
     }
 
-    pub inline fn length(a: Vec3) f32 {
-        return math.sqrt(dot(a, a));
+    pub inline fn length(v: Vec3) f32 {
+        return math.sqrt(dot(v, v));
     }
 
-    pub inline fn lengthSq(a: Vec3) f32 {
-        return dot(a, a);
+    pub inline fn lengthSq(v: Vec3) f32 {
+        return dot(v, v);
     }
 
-    pub inline fn normalize(a: Vec3) Vec3 {
-        const len = length(a);
+    pub inline fn normalize(v: Vec3) Vec3 {
+        const len = length(v);
         assert(!math.approxEq(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
-        return .{ .c = [_]f32{ rcplen * a.c[0], rcplen * a.c[1], rcplen * a.c[2] } };
+        return init(rcplen * v.c[0], rcplen * v.c[1], rcplen * v.c[2]);
     }
 
-    pub inline fn transform(a: Vec3, b: Mat4) Vec3 {
-        return .{
-            .c = [_]f32{
-                a.c[0] * b.r[0].c[0] + a.c[1] * b.r[1].c[0] + a.c[2] * b.r[2].c[0] + b.r[3].c[0],
-                a.c[0] * b.r[0].c[1] + a.c[1] * b.r[1].c[1] + a.c[2] * b.r[2].c[1] + b.r[3].c[1],
-                a.c[0] * b.r[0].c[2] + a.c[1] * b.r[1].c[2] + a.c[2] * b.r[2].c[2] + b.r[3].c[2],
-            },
-        };
+    pub inline fn transform(v: Vec3, m: Mat4) Vec3 {
+        return init(
+            v.c[0] * m.r[0].c[0] + v.c[1] * m.r[1].c[0] + v.c[2] * m.r[2].c[0] + m.r[3].c[0],
+            v.c[0] * m.r[0].c[1] + v.c[1] * m.r[1].c[1] + v.c[2] * m.r[2].c[1] + m.r[3].c[1],
+            v.c[0] * m.r[0].c[2] + v.c[1] * m.r[1].c[2] + v.c[2] * m.r[2].c[2] + m.r[3].c[2],
+        );
     }
 
-    pub inline fn transformNormal(a: Vec3, b: Mat4) Vec3 {
-        return .{
-            .c = [_]f32{
-                a.c[0] * b.r[0].c[0] + a.c[1] * b.r[1].c[0] + a.c[2] * b.r[2].c[0],
-                a.c[0] * b.r[0].c[1] + a.c[1] * b.r[1].c[1] + a.c[2] * b.r[2].c[1],
-                a.c[0] * b.r[0].c[2] + a.c[1] * b.r[1].c[2] + a.c[2] * b.r[2].c[2],
-            },
-        };
+    pub inline fn transformNormal(v: Vec3, m: Mat4) Vec3 {
+        return init(
+            v.c[0] * m.r[0].c[0] + v.c[1] * m.r[1].c[0] + v.c[2] * m.r[2].c[0],
+            v.c[0] * m.r[0].c[1] + v.c[1] * m.r[1].c[1] + v.c[2] * m.r[2].c[1],
+            v.c[0] * m.r[0].c[2] + v.c[1] * m.r[1].c[2] + v.c[2] * m.r[2].c[2],
+        );
     }
 };
 
