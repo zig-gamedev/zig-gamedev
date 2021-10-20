@@ -224,6 +224,100 @@ void cbtBodyDestroy(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
     delete body;
 }
 
+void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle) {
+    btRigidBody* body = (btRigidBody*)body_handle;
+    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    assert(body && shape);
+    body->setCollisionShape(shape);
+}
+
+CbtShapeHandle cbtBodyGetShape(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return (CbtShapeHandle)body->getCollisionShape();
+}
+
+void cbtBodySetRestitution(CbtBodyHandle handle, float restitution) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setRestitution(restitution);
+}
+
+void cbtBodySetFriction(CbtBodyHandle handle, float friction) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setFriction(friction);
+}
+
+void cbtBodySetRollingFriction(CbtBodyHandle handle, float friction) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setRollingFriction(friction);
+}
+
+void cbtBodySetSpinningFriction(CbtBodyHandle handle, float friction) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setSpinningFriction(friction);
+}
+
+void cbtBodySetAnisotropicFriction(CbtBodyHandle handle, const CbtVector3 friction, int mode) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body && friction);
+    body->setAnisotropicFriction(btVector3(friction[0], friction[1], friction[2]), mode);
+}
+
+void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle handle, float stiffness, float damping) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setContactStiffnessAndDamping(stiffness, damping);
+}
+
+float cbtBodyGetRestitution(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getRestitution();
+}
+
+float cbtBodyGetFriction(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getFriction();
+}
+
+float cbtBodyGetRollingFriction(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getRollingFriction();
+}
+
+float cbtBodyGetSpinningFriction(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getSpinningFriction();
+}
+
+void cbtBodyGetAnisotropicFriction(CbtBodyHandle handle, CbtVector3 friction) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body && friction);
+    const btVector3& f = body->getAnisotropicFriction();
+    friction[0] = f.x();
+    friction[1] = f.y();
+    friction[2] = f.z();
+}
+
+float cbtBodyGetContactStiffness(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getContactStiffness();
+}
+
+float cbtBodyGetContactDamping(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getContactDamping();
+}
+
 void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && body->getMotionState() && transform);

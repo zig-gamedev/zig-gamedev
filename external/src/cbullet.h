@@ -10,6 +10,11 @@
 #define CBT_COLLISION_FILTER_CHARACTER 32
 #define CBT_COLLISION_FILTER_ALL -1
 
+// 'mode' for cbtBodySetAnisotropicFriction
+#define CBT_ANISOTROPIC_FRICTION_DISABLED 0
+#define CBT_ANISOTROPIC_FRICTION 1
+#define CBT_ANISOTROPIC_ROLLING_FRICTION 2
+
 typedef float CbtVector3[3];
 
 #ifdef __cplusplus
@@ -72,6 +77,25 @@ CbtBodyHandle cbtBodyCreate(
     CbtShapeHandle shape_handle
 );
 void cbtBodyDestroy(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
+
+void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle);
+CbtShapeHandle cbtBodyGetShape(CbtBodyHandle handle);
+
+void cbtBodySetRestitution(CbtBodyHandle handle, float restitution);
+void cbtBodySetFriction(CbtBodyHandle handle, float friction);
+void cbtBodySetRollingFriction(CbtBodyHandle handle, float friction);
+void cbtBodySetSpinningFriction(CbtBodyHandle handle, float friction);
+void cbtBodySetAnisotropicFriction(CbtBodyHandle handle, const CbtVector3 friction, int mode);
+void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle handle, float stiffness, float damping);
+
+float cbtBodyGetRestitution(CbtBodyHandle handle);
+float cbtBodyGetFriction(CbtBodyHandle handle);
+float cbtBodyGetRollingFriction(CbtBodyHandle handle);
+float cbtBodyGetSpinningFriction(CbtBodyHandle handle);
+void cbtBodyGetAnisotropicFriction(CbtBodyHandle handle, CbtVector3 friction);
+float cbtBodyGetContactStiffness(CbtBodyHandle handle);
+float cbtBodyGetContactDamping(CbtBodyHandle handle);
+
 void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 
 #ifdef __cplusplus
