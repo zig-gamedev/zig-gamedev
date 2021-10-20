@@ -35,32 +35,51 @@ pub const Vec2 = extern struct {
     }
 
     pub inline fn approxEq(v0: Vec2, v1: Vec2, eps: f32) bool {
-        return math.approxEq(f32, v0.c[0], v1.c[0], eps) and math.approxEq(f32, v0.c[1], v1.c[1], eps);
+        return math.approxEq(f32, v0.c[0], v1.c[0], eps) and
+            math.approxEq(f32, v0.c[1], v1.c[1], eps);
     }
 
     pub inline fn add(v0: Vec2, v1: Vec2) Vec2 {
-        return init(v0.c[0] + v1.c[0], v0.c[1] + v1.c[1]);
+        return init(
+            v0.c[0] + v1.c[0],
+            v0.c[1] + v1.c[1],
+        );
     }
 
     pub inline fn sub(v0: Vec2, v1: Vec2) Vec2 {
-        return init(v0.c[0] - v1.c[0], v0.c[1] - v1.c[1]);
+        return init(
+            v0.c[0] - v1.c[0],
+            v0.c[1] - v1.c[1],
+        );
     }
 
     pub inline fn mul(v0: Vec2, v1: Vec2) Vec2 {
-        return init(v0.c[0] * v1.c[0], v0.c[1] * v1.c[1]);
+        return init(
+            v0.c[0] * v1.c[0],
+            v0.c[1] * v1.c[1],
+        );
     }
 
     pub inline fn div(v0: Vec2, v1: Vec2) Vec2 {
         assert(!approxEq(v1, initZero(), epsilon));
-        return init(v0.c[0] / v1.c[0], v0.c[1] / v1.c[1]);
+        return init(
+            v0.c[0] / v1.c[0],
+            v0.c[1] / v1.c[1],
+        );
     }
 
     pub inline fn scale(v: Vec2, s: f32) Vec2 {
-        return init(v.c[0] * s, v.c[1] * s);
+        return init(
+            v.c[0] * s,
+            v.c[1] * s,
+        );
     }
 
     pub inline fn neg(v: Vec2) Vec2 {
-        return init(-v.c[0], -v.c[1]);
+        return init(
+            -v.c[0],
+            -v.c[1],
+        );
     }
 
     pub inline fn mulAdd(v0: Vec2, v1: Vec2, v2: Vec2) Vec2 {
@@ -99,11 +118,15 @@ pub const Vec2 = extern struct {
 
     pub inline fn rcp(v: Vec2) Vec2 {
         assert(!approxEq(v, initZero(), epsilon));
-        return init(1.0 / v.c[0], 1.0 / v.c[1]);
+        return init(
+            1.0 / v.c[0],
+            1.0 / v.c[1],
+        );
     }
 
     pub inline fn dot(v0: Vec2, v1: Vec2) f32 {
-        return v0.c[0] * v1.c[0] + v0.c[1] * v1.c[1];
+        return v0.c[0] * v1.c[0] +
+            v0.c[1] * v1.c[1];
     }
 
     pub inline fn length(v: Vec2) f32 {
@@ -118,7 +141,7 @@ pub const Vec2 = extern struct {
         const len = length(v);
         assert(!math.approxEq(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
-        return init(rcplen * v.c[0], rcplen * v.c[1]);
+        return v.scale(rcplen);
     }
 
     pub inline fn transform(v: Vec2, m: Mat4) Vec2 {
@@ -161,7 +184,9 @@ pub const Vec3 = extern struct {
     }
 
     pub inline fn dot(v0: Vec3, v1: Vec3) f32 {
-        return v0.c[0] * v1.c[0] + v0.c[1] * v1.c[1] + v0.c[2] * v1.c[2];
+        return v0.c[0] * v1.c[0] +
+            v0.c[1] * v1.c[1] +
+            v0.c[2] * v1.c[2];
     }
 
     pub inline fn cross(v0: Vec3, v1: Vec3) Vec3 {
@@ -173,28 +198,52 @@ pub const Vec3 = extern struct {
     }
 
     pub inline fn add(v0: Vec3, v1: Vec3) Vec3 {
-        return init(v0.c[0] + v1.c[0], v0.c[1] + v1.c[1], v0.c[2] + v1.c[2]);
+        return init(
+            v0.c[0] + v1.c[0],
+            v0.c[1] + v1.c[1],
+            v0.c[2] + v1.c[2],
+        );
     }
 
     pub inline fn sub(v0: Vec3, v1: Vec3) Vec3 {
-        return init(v0.c[0] - v1.c[0], v0.c[1] - v1.c[1], v0.c[2] - v1.c[2]);
+        return init(
+            v0.c[0] - v1.c[0],
+            v0.c[1] - v1.c[1],
+            v0.c[2] - v1.c[2],
+        );
     }
 
     pub inline fn mul(v0: Vec3, v1: Vec3) Vec3 {
-        return init(v0.c[0] * v1.c[0], v0.c[1] * v1.c[1], v0.c[2] * v1.c[2]);
+        return init(
+            v0.c[0] * v1.c[0],
+            v0.c[1] * v1.c[1],
+            v0.c[2] * v1.c[2],
+        );
     }
 
     pub inline fn div(v0: Vec3, v1: Vec3) Vec3 {
         assert(!approxEq(v1, initZero(), epsilon));
-        return init(v0.c[0] / v1.c[0], v0.c[1] / v1.c[1], v0.c[2] / v1.c[2]);
+        return init(
+            v0.c[0] / v1.c[0],
+            v0.c[1] / v1.c[1],
+            v0.c[2] / v1.c[2],
+        );
     }
 
     pub inline fn scale(v: Vec3, s: f32) Vec3 {
-        return init(v.c[0] * s, v.c[1] * s, v.c[2] * s);
+        return init(
+            v.c[0] * s,
+            v.c[1] * s,
+            v.c[2] * s,
+        );
     }
 
     pub inline fn neg(v: Vec3) Vec3 {
-        return init(-v.c[0], -v.c[1], -v.c[2]);
+        return init(
+            -v.c[0],
+            -v.c[1],
+            -v.c[2],
+        );
     }
 
     pub inline fn mulAdd(v0: Vec3, v1: Vec3, v2: Vec3) Vec3 {
@@ -237,7 +286,11 @@ pub const Vec3 = extern struct {
 
     pub inline fn rcp(v: Vec3) Vec3 {
         assert(!approxEq(v, initZero(), epsilon));
-        return init(1.0 / v.c[0], 1.0 / v.c[1], 1.0 / v.c[2]);
+        return init(
+            1.0 / v.c[0],
+            1.0 / v.c[1],
+            1.0 / v.c[2],
+        );
     }
 
     pub inline fn length(v: Vec3) f32 {
@@ -252,7 +305,7 @@ pub const Vec3 = extern struct {
         const len = length(v);
         assert(!math.approxEq(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
-        return init(rcplen * v.c[0], rcplen * v.c[1], rcplen * v.c[2]);
+        return v.scale(rcplen);
     }
 
     pub inline fn transform(v: Vec3, m: Mat4) Vec3 {
@@ -279,6 +332,10 @@ pub const Vec4 = extern struct {
         return .{ .c = [_]f32{ x, y, z, w } };
     }
 
+    pub inline fn initS(s: f32) Vec4 {
+        return init(s, s, s, s);
+    }
+
     pub inline fn initZero() Vec4 {
         const static = struct {
             const zero = init(0.0, 0.0, 0.0, 0.0);
@@ -286,113 +343,149 @@ pub const Vec4 = extern struct {
         return static.zero;
     }
 
-    pub inline fn approxEq(a: Vec4, b: Vec4, eps: f32) bool {
-        return math.approxEq(f32, a.c[0], b.c[0], eps) and
-            math.approxEq(f32, a.c[1], b.c[1], eps) and
-            math.approxEq(f32, a.c[2], b.c[2], eps) and
-            math.approxEq(f32, a.c[3], b.c[3], eps);
+    pub inline fn approxEq(v0: Vec4, v1: Vec4, eps: f32) bool {
+        return math.approxEq(f32, v0.c[0], v1.c[0], eps) and
+            math.approxEq(f32, v0.c[1], v1.c[1], eps) and
+            math.approxEq(f32, v0.c[2], v1.c[2], eps) and
+            math.approxEq(f32, v0.c[3], v1.c[3], eps);
     }
 
-    pub inline fn add(a: Vec4, b: Vec4) Vec4 {
-        return .{ .c = [_]f32{ a.c[0] + b.c[0], a.c[1] + b.c[1], a.c[2] + b.c[2], a.c[3] + b.c[3] } };
+    pub inline fn add(v0: Vec4, v1: Vec4) Vec4 {
+        return init(
+            v0.c[0] + v1.c[0],
+            v0.c[1] + v1.c[1],
+            v0.c[2] + v1.c[2],
+            v0.c[3] + v1.c[3],
+        );
     }
 
-    pub inline fn sub(a: Vec4, b: Vec4) Vec4 {
-        return .{ .c = [_]f32{ a.c[0] - b.c[0], a.c[1] - b.c[1], a.c[2] - b.c[2], a.c[3] - b.c[3] } };
+    pub inline fn sub(v0: Vec4, v1: Vec4) Vec4 {
+        return init(
+            v0.c[0] - v1.c[0],
+            v0.c[1] - v1.c[1],
+            v0.c[2] - v1.c[2],
+            v0.c[3] - v1.c[3],
+        );
     }
 
-    pub inline fn mul(a: Vec4, b: Vec4) Vec4 {
-        return .{ .c = [_]f32{ a.c[0] * b.c[0], a.c[1] * b.c[1], a.c[2] * b.c[2], a.c[3] * b.c[3] } };
+    pub inline fn mul(v0: Vec4, v1: Vec4) Vec4 {
+        return init(
+            v0.c[0] * v1.c[0],
+            v0.c[1] * v1.c[1],
+            v0.c[2] * v1.c[2],
+            v0.c[3] * v1.c[3],
+        );
     }
 
-    pub inline fn div(a: Vec4, b: Vec4) Vec4 {
-        assert(!approxEq(b, initZero(), epsilon));
-        return .{ .c = [_]f32{ a.c[0] / b.c[0], a.c[1] / b.c[1], a.c[2] / b.c[2], a.c[3] / b.c[3] } };
+    pub inline fn div(v0: Vec4, v1: Vec4) Vec4 {
+        assert(!approxEq(v1, initZero(), epsilon));
+        return init(
+            v0.c[0] / v1.c[0],
+            v0.c[1] / v1.c[1],
+            v0.c[2] / v1.c[2],
+            v0.c[3] / v1.c[3],
+        );
     }
 
-    pub inline fn scale(a: Vec4, b: f32) Vec4 {
-        return .{ .c = [_]f32{ a.c[0] * b, a.c[1] * b, a.c[2] * b, a.c[3] * b } };
+    pub inline fn scale(v: Vec4, s: f32) Vec4 {
+        return init(
+            v.c[0] * s,
+            v.c[1] * s,
+            v.c[2] * s,
+            v.c[3] * s,
+        );
     }
 
-    pub inline fn neg(a: Vec4) Vec4 {
-        return .{ .c = [_]f32{ -a.c[0], -a.c[1], -a.c[2], -a.c[3] } };
+    pub inline fn neg(v: Vec4) Vec4 {
+        return init(
+            -v.c[0],
+            -v.c[1],
+            -v.c[2],
+            -v.c[3],
+        );
     }
 
-    pub inline fn mulAdd(a: Vec4, b: Vec4, c: Vec4) Vec4 {
-        return .{ .c = [_]f32{
-            a.c[0] * b.c[0] + c.c[0],
-            a.c[1] * b.c[1] + c.c[1],
-            a.c[2] * b.c[2] + c.c[2],
-            a.c[3] * b.c[3] + c.c[3],
-        } };
+    pub inline fn mulAdd(v0: Vec4, v1: Vec4, v2: Vec4) Vec4 {
+        return init(
+            v0.c[0] * v1.c[0] + v2.c[0],
+            v0.c[1] * v1.c[1] + v2.c[1],
+            v0.c[2] * v1.c[2] + v2.c[2],
+            v0.c[3] * v1.c[3] + v2.c[3],
+        );
     }
 
-    pub inline fn negMulAdd(a: Vec4, b: Vec4, c: Vec4) Vec4 {
-        return .{ .c = [_]f32{
-            -a.c[0] * b.c[0] + c.c[0],
-            -a.c[1] * b.c[1] + c.c[1],
-            -a.c[2] * b.c[2] + c.c[2],
-            -a.c[3] * b.c[3] + c.c[3],
-        } };
+    pub inline fn negMulAdd(v0: Vec4, v1: Vec4, v2: Vec4) Vec4 {
+        return init(
+            -v0.c[0] * v1.c[0] + v2.c[0],
+            -v0.c[1] * v1.c[1] + v2.c[1],
+            -v0.c[2] * v1.c[2] + v2.c[2],
+            -v0.c[3] * v1.c[3] + v2.c[3],
+        );
     }
 
-    pub inline fn mulSub(a: Vec4, b: Vec4, c: Vec4) Vec4 {
-        return .{ .c = [_]f32{
-            a.c[0] * b.c[0] - c.c[0],
-            a.c[1] * b.c[1] - c.c[1],
-            a.c[2] * b.c[2] - c.c[2],
-            a.c[3] * b.c[3] - c.c[3],
-        } };
+    pub inline fn mulSub(v0: Vec4, v1: Vec4, v2: Vec4) Vec4 {
+        return init(
+            v0.c[0] * v1.c[0] - v2.c[0],
+            v0.c[1] * v1.c[1] - v2.c[1],
+            v0.c[2] * v1.c[2] - v2.c[2],
+            v0.c[3] * v1.c[3] - v2.c[3],
+        );
     }
 
-    pub inline fn negMulSub(a: Vec4, b: Vec4, c: Vec4) Vec4 {
-        return .{ .c = [_]f32{
-            -a.c[0] * b.c[0] - c.c[0],
-            -a.c[1] * b.c[1] - c.c[1],
-            -a.c[2] * b.c[2] - c.c[2],
-            -a.c[3] * b.c[3] - c.c[3],
-        } };
+    pub inline fn negMulSub(v0: Vec4, v1: Vec4, v2: Vec4) Vec4 {
+        return init(
+            -v0.c[0] * v1.c[0] - v2.c[0],
+            -v0.c[1] * v1.c[1] - v2.c[1],
+            -v0.c[2] * v1.c[2] - v2.c[2],
+            -v0.c[3] * v1.c[3] - v2.c[3],
+        );
     }
 
-    pub inline fn lerp(a: Vec4, b: Vec4, t: f32) Vec4 {
-        const s = Vec4.init(t, t, t, t);
-        const ab = b.sub(a);
-        return ab.mulAdd(s, a);
+    pub inline fn lerp(v0: Vec4, v1: Vec4, t: f32) Vec4 {
+        const tttt = Vec4.initS(t);
+        const v0v1 = v1.sub(v0);
+        return v0v1.mulAdd(tttt, v0);
     }
 
-    pub inline fn rcp(a: Vec4) Vec4 {
-        assert(!approxEq(a, initZero(), epsilon));
-        return .{ .c = [_]f32{ 1.0 / a.c[0], 1.0 / a.c[1], 1.0 / a.c[2], 1.0 / a.c[3] } };
+    pub inline fn rcp(v: Vec4) Vec4 {
+        assert(!approxEq(v, initZero(), epsilon));
+        return init(
+            1.0 / v.c[0],
+            1.0 / v.c[1],
+            1.0 / v.c[2],
+            1.0 / v.c[3],
+        );
     }
 
-    pub inline fn dot(a: Vec4, b: Vec4) f32 {
-        return a.c[0] * b.c[0] + a.c[1] * b.c[1] + a.c[2] * b.c[2] + a.c[3] * b.c[3];
+    pub inline fn dot(v0: Vec4, v1: Vec4) f32 {
+        return v0.c[0] * v1.c[0] +
+            v0.c[1] * v1.c[1] +
+            v0.c[2] * v1.c[2] +
+            v0.c[3] * v1.c[3];
     }
 
-    pub inline fn length(a: Vec4) f32 {
-        return math.sqrt(dot(a, a));
+    pub inline fn length(v: Vec4) f32 {
+        return math.sqrt(dot(v, v));
     }
 
-    pub inline fn lengthSq(a: Vec4) f32 {
-        return dot(a, a);
+    pub inline fn lengthSq(v: Vec4) f32 {
+        return dot(v, v);
     }
 
-    pub inline fn normalize(a: Vec4) Vec4 {
-        const len = length(a);
+    pub inline fn normalize(v: Vec4) Vec4 {
+        const len = length(v);
         assert(!math.approxEq(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
-        return .{ .c = [_]f32{ rcplen * a.c[0], rcplen * a.c[1], rcplen * a.c[2], rcplen * a.c[3] } };
+        return v.scale(rcplen);
     }
 
-    pub inline fn transform(a: Vec4, b: Mat4) Vec4 {
-        return .{
-            .c = [_]f32{
-                a.c[0] * b.r[0].c[0] + a.c[1] * b.r[1].c[0] + a.c[2] * b.r[2].c[0] + a.c[3] * b.r[3].c[0],
-                a.c[0] * b.r[0].c[1] + a.c[1] * b.r[1].c[1] + a.c[2] * b.r[2].c[1] + a.c[3] * b.r[3].c[1],
-                a.c[0] * b.r[0].c[2] + a.c[1] * b.r[1].c[2] + a.c[2] * b.r[2].c[2] + a.c[3] * b.r[3].c[2],
-                a.c[0] * b.r[0].c[3] + a.c[1] * b.r[1].c[3] + a.c[2] * b.r[2].c[3] + a.c[3] * b.r[3].c[3],
-            },
-        };
+    pub inline fn transform(v: Vec4, m: Mat4) Vec4 {
+        return init(
+            v.c[0] * m.r[0].c[0] + v.c[1] * m.r[1].c[0] + v.c[2] * m.r[2].c[0] + v.c[3] * m.r[3].c[0],
+            v.c[0] * m.r[0].c[1] + v.c[1] * m.r[1].c[1] + v.c[2] * m.r[2].c[1] + v.c[3] * m.r[3].c[1],
+            v.c[0] * m.r[0].c[2] + v.c[1] * m.r[1].c[2] + v.c[2] * m.r[2].c[2] + v.c[3] * m.r[3].c[2],
+            v.c[0] * m.r[0].c[3] + v.c[1] * m.r[1].c[3] + v.c[2] * m.r[2].c[3] + v.c[3] * m.r[3].c[3],
+        );
     }
 };
 
@@ -425,25 +518,38 @@ pub const Quat = extern struct {
     }
 
     pub inline fn add(a: Quat, b: Quat) Quat {
-        return .{ .q = [_]f32{ a.q[0] + b.q[0], a.q[1] + b.q[1], a.q[2] + b.q[2], a.q[3] + b.q[3] } };
+        return init(
+            a.q[0] + b.q[0],
+            a.q[1] + b.q[1],
+            a.q[2] + b.q[2],
+            a.q[3] + b.q[3],
+        );
     }
 
     pub inline fn mul(a: Quat, b: Quat) Quat {
         // Returns the product b * a (which is the concatenation of a rotation 'a' followed by the rotation 'b').
-        return .{ .q = [_]f32{
+        return init(
             (b.q[3] * a.q[0]) + (b.q[0] * a.q[3]) + (b.q[1] * a.q[2]) - (b.q[2] * a.q[1]),
             (b.q[3] * a.q[1]) - (b.q[0] * a.q[2]) + (b.q[1] * a.q[3]) + (b.q[2] * a.q[0]),
             (b.q[3] * a.q[2]) + (b.q[0] * a.q[1]) - (b.q[1] * a.q[0]) + (b.q[2] * a.q[3]),
             (b.q[3] * a.q[3]) - (b.q[0] * a.q[0]) - (b.q[1] * a.q[1]) - (b.q[2] * a.q[2]),
-        } };
+        );
     }
 
     pub inline fn scale(a: Quat, b: f32) Quat {
-        return .{ .q = [_]f32{ a.q[0] * b, a.q[1] * b, a.q[2] * b, a.q[3] * b } };
+        return init(
+            a.q[0] * b,
+            a.q[1] * b,
+            a.q[2] * b,
+            a.q[3] * b,
+        );
     }
 
     pub inline fn dot(a: Quat, b: Quat) f32 {
-        return a.q[0] * b.q[0] + a.q[1] * b.q[1] + a.q[2] * b.q[2] + a.q[3] * b.q[3];
+        return a.q[0] * b.q[0] +
+            a.q[1] * b.q[1] +
+            a.q[2] * b.q[2] +
+            a.q[3] * b.q[3];
     }
 
     pub inline fn length(a: Quat) f32 {
@@ -458,11 +564,16 @@ pub const Quat = extern struct {
         const len = length(a);
         assert(!math.approxEq(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
-        return .{ .q = [_]f32{ rcplen * a.q[0], rcplen * a.q[1], rcplen * a.q[2], rcplen * a.q[3] } };
+        return a.scale(rcplen);
     }
 
     pub inline fn conj(a: Quat) Quat {
-        return .{ .q = [_]f32{ -a.q[0], -a.q[1], -a.q[2], a.q[3] } };
+        return init(
+            -a.q[0],
+            -a.q[1],
+            -a.q[2],
+            a.q[3],
+        );
     }
 
     pub inline fn inv(a: Quat) Quat {
@@ -543,12 +654,12 @@ pub const Quat = extern struct {
         const sinv = math.sin(half_angle);
         const cosv = math.cos(half_angle);
 
-        return .{ .q = [_]f32{
+        return init(
             normal_axis.c[0] * sinv,
             normal_axis.c[1] * sinv,
             normal_axis.c[2] * sinv,
             cosv,
-        } };
+        );
     }
 
     pub fn initRotationAxis(axis: Vec3, angle: f32) Quat {
@@ -569,14 +680,12 @@ pub const Mat4 = extern struct {
         r3x: f32, r3y: f32, r3z: f32, r3w: f32,
         // zig fmt: on
     ) Mat4 {
-        return .{
-            .r = [4]Vec4{
-                Vec4.init(r0x, r0y, r0z, r0w),
-                Vec4.init(r1x, r1y, r1z, r1w),
-                Vec4.init(r2x, r2y, r2z, r2w),
-                Vec4.init(r3x, r3y, r3z, r3w),
-            },
-        };
+        return initVec4(
+            Vec4.init(r0x, r0y, r0z, r0w),
+            Vec4.init(r1x, r1y, r1z, r1w),
+            Vec4.init(r2x, r2y, r2z, r2w),
+            Vec4.init(r3x, r3y, r3z, r3w),
+        );
     }
 
     pub fn initVec4(r0: Vec4, r1: Vec4, r2: Vec4, r3: Vec4) Mat4 {
@@ -603,14 +712,12 @@ pub const Mat4 = extern struct {
     }
 
     pub fn transpose(a: Mat4) Mat4 {
-        return .{
-            .r = [4]Vec4{
-                Vec4.init(a.r[0].c[0], a.r[1].c[0], a.r[2].c[0], a.r[3].c[0]),
-                Vec4.init(a.r[0].c[1], a.r[1].c[1], a.r[2].c[1], a.r[3].c[1]),
-                Vec4.init(a.r[0].c[2], a.r[1].c[2], a.r[2].c[2], a.r[3].c[2]),
-                Vec4.init(a.r[0].c[3], a.r[1].c[3], a.r[2].c[3], a.r[3].c[3]),
-            },
-        };
+        return initVec4(
+            Vec4.init(a.r[0].c[0], a.r[1].c[0], a.r[2].c[0], a.r[3].c[0]),
+            Vec4.init(a.r[0].c[1], a.r[1].c[1], a.r[2].c[1], a.r[3].c[1]),
+            Vec4.init(a.r[0].c[2], a.r[1].c[2], a.r[2].c[2], a.r[3].c[2]),
+            Vec4.init(a.r[0].c[3], a.r[1].c[3], a.r[2].c[3], a.r[3].c[3]),
+        );
     }
 
     pub fn mul(a: Mat4, b: Mat4) Mat4 {
@@ -636,8 +743,8 @@ pub const Mat4 = extern struct {
         // zig fmt: on
     }
 
-    pub fn inv(a: Mat4, out_det: ?*f32) Mat4 {
-        const mt = a.transpose();
+    pub fn inv(m: Mat4, out_det: ?*f32) Mat4 {
+        const mt = m.transpose();
         var v0: [4]Vec4 = undefined;
         var v1: [4]Vec4 = undefined;
 
@@ -712,14 +819,14 @@ pub const Mat4 = extern struct {
         const c7 = v0[3].mulAdd(v1[3], c6);
         c6 = v0[3].negMulAdd(v1[3], c6);
 
-        var r = Mat4.initVec4(
+        var mr = Mat4.initVec4(
             Vec4.init(c0.c[0], c1.c[1], c0.c[2], c1.c[3]),
             Vec4.init(c2.c[0], c3.c[1], c2.c[2], c3.c[3]),
             Vec4.init(c4.c[0], c5.c[1], c4.c[2], c5.c[3]),
             Vec4.init(c6.c[0], c7.c[1], c6.c[2], c7.c[3]),
         );
 
-        const d = r.r[0].dot(mt.r[0]);
+        const d = mr.r[0].dot(mt.r[0]);
         if (out_det != null) {
             out_det.?.* = d;
         }
@@ -729,25 +836,11 @@ pub const Mat4 = extern struct {
         }
 
         const rcp_d = 1.0 / d;
-
-        r.r[0].c[0] *= rcp_d;
-        r.r[0].c[1] *= rcp_d;
-        r.r[0].c[2] *= rcp_d;
-        r.r[0].c[3] *= rcp_d;
-        r.r[1].c[0] *= rcp_d;
-        r.r[1].c[1] *= rcp_d;
-        r.r[1].c[2] *= rcp_d;
-        r.r[1].c[3] *= rcp_d;
-        r.r[2].c[0] *= rcp_d;
-        r.r[2].c[1] *= rcp_d;
-        r.r[2].c[2] *= rcp_d;
-        r.r[2].c[3] *= rcp_d;
-        r.r[3].c[0] *= rcp_d;
-        r.r[3].c[1] *= rcp_d;
-        r.r[3].c[2] *= rcp_d;
-        r.r[3].c[3] *= rcp_d;
-
-        return r;
+        mr.r[0] = mr.r[0].scale(rcp_d);
+        mr.r[1] = mr.r[1].scale(rcp_d);
+        mr.r[2] = mr.r[2].scale(rcp_d);
+        mr.r[3] = mr.r[3].scale(rcp_d);
+        return mr;
     }
 
     pub fn det(a: Mat4) f32 {
