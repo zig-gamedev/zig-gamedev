@@ -15,6 +15,12 @@
 #define CBT_ANISOTROPIC_FRICTION 1
 #define CBT_ANISOTROPIC_ROLLING_FRICTION 2
 
+// shape types returned by cbtShapeGetType
+#define CBT_SHAPE_TYPE_BOX 0
+#define CBT_SHAPE_TYPE_SPHERE 8
+#define CBT_SHAPE_TYPE_CAPSULE 10
+#define CBT_SHAPE_TYPE_STATIC_PLANE 28
+
 typedef float CbtVector3[3];
 
 #ifdef __cplusplus
@@ -83,16 +89,22 @@ void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle);
 CbtShapeHandle cbtBodyGetShape(CbtBodyHandle handle);
 
 void cbtBodySetRestitution(CbtBodyHandle handle, float restitution);
+
 void cbtBodySetFriction(CbtBodyHandle handle, float friction);
 void cbtBodySetRollingFriction(CbtBodyHandle handle, float friction);
 void cbtBodySetSpinningFriction(CbtBodyHandle handle, float friction);
 void cbtBodySetAnisotropicFriction(CbtBodyHandle handle, const CbtVector3 friction, int mode);
+
 void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle handle, float stiffness, float damping);
 
 void cbtBodySetMassProps(CbtBodyHandle handle, float mass, const CbtVector3 inertia);
+
 void cbtBodySetDamping(CbtBodyHandle handle, float linear, float angular);
+
 void cbtBodySetLinearVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
 void cbtBodySetAngularVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
+void cbtBodySetPushVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
+void cbtBodySetTurnVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
 
 
 void cbtBodyApplyCentralForce(CbtBodyHandle handle, const CbtVector3 force);
@@ -100,6 +112,7 @@ void cbtBodyApplyCentralImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
 void cbtBodyApplyCentralPushImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
 
 void cbtBodyApplyForce(CbtBodyHandle handle, const CbtVector3 force, const CbtVector3 rel_pos);
+void cbtBodyClearForces(CbtBodyHandle handle);
 
 void cbtBodyApplyImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const CbtVector3 rel_pos);
 void cbtBodyApplyPushImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const CbtVector3 rel_pos);
@@ -110,18 +123,27 @@ void cbtBodyApplyTorqueTurnImpulse(CbtBodyHandle handle, const CbtVector3 impuls
 
 
 float cbtBodyGetRestitution(CbtBodyHandle handle);
+
 float cbtBodyGetFriction(CbtBodyHandle handle);
 float cbtBodyGetRollingFriction(CbtBodyHandle handle);
 float cbtBodyGetSpinningFriction(CbtBodyHandle handle);
 void cbtBodyGetAnisotropicFriction(CbtBodyHandle handle, CbtVector3 friction);
+
 float cbtBodyGetContactStiffness(CbtBodyHandle handle);
 float cbtBodyGetContactDamping(CbtBodyHandle handle);
 
 float cbtBodyGetMass(CbtBodyHandle handle);
+
 float cbtBodyGetLinearDamping(CbtBodyHandle handle);
 float cbtBodyGetAngularDamping(CbtBodyHandle handle);
+
 void cbtBodyGetLinearVelocity(CbtBodyHandle handle, CbtVector3 velocity);
 void cbtBodyGetAngularVelocity(CbtBodyHandle handle, CbtVector3 velocity);
+void cbtBodyGetPushVelocity(CbtBodyHandle handle, CbtVector3 velocity);
+void cbtBodyGetTurnVelocity(CbtBodyHandle handle, CbtVector3 velocity);
+
+void cbtBodyGetTotalForce(CbtBodyHandle handle, CbtVector3 force);
+void cbtBodyGetTotalTorque(CbtBodyHandle handle, CbtVector3 torque);
 
 
 void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]);

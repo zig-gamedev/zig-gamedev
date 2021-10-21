@@ -137,6 +137,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         c.CbtVector3{ 0.0, 0.0, 0.0 },
     }, ground_shape);
 
+    assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
+    assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
+
     if (false) {
         const sphere = c.cbtShapeCreateSphere(1.0);
         var trans = [4]c.CbtVector3{
