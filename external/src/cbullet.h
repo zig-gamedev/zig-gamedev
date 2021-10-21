@@ -70,6 +70,7 @@ CbtShapeHandle cbtShapeCreateCapsuleZ(float radius, float height);
 void cbtShapeDestroy(CbtShapeHandle handle);
 int cbtShapeGetType(CbtShapeHandle handle);
 
+
 CbtBodyHandle cbtBodyCreate(
     CbtWorldHandle world_handle,
     float mass,
@@ -90,6 +91,23 @@ void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle handle, float stiffness,
 
 void cbtBodySetMassProps(CbtBodyHandle handle, float mass, const CbtVector3 inertia);
 void cbtBodySetDamping(CbtBodyHandle handle, float linear, float angular);
+void cbtBodySetLinearVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
+void cbtBodySetAngularVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
+
+
+void cbtBodyApplyCentralForce(CbtBodyHandle handle, const CbtVector3 force);
+void cbtBodyApplyCentralImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
+void cbtBodyApplyCentralPushImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
+
+void cbtBodyApplyForce(CbtBodyHandle handle, const CbtVector3 force, const CbtVector3 rel_pos);
+
+void cbtBodyApplyImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const CbtVector3 rel_pos);
+void cbtBodyApplyPushImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const CbtVector3 rel_pos);
+
+void cbtBodyApplyTorque(CbtBodyHandle handle, const CbtVector3 torque);
+void cbtBodyApplyTorqueImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
+void cbtBodyApplyTorqueTurnImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
+
 
 float cbtBodyGetRestitution(CbtBodyHandle handle);
 float cbtBodyGetFriction(CbtBodyHandle handle);
@@ -102,6 +120,9 @@ float cbtBodyGetContactDamping(CbtBodyHandle handle);
 float cbtBodyGetMass(CbtBodyHandle handle);
 float cbtBodyGetLinearDamping(CbtBodyHandle handle);
 float cbtBodyGetAngularDamping(CbtBodyHandle handle);
+void cbtBodyGetLinearVelocity(CbtBodyHandle handle, CbtVector3 velocity);
+void cbtBodyGetAngularVelocity(CbtBodyHandle handle, CbtVector3 velocity);
+
 
 void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 
