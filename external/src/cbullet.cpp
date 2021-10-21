@@ -88,6 +88,26 @@ int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_s
     return world->stepSimulation(time_step, max_sub_steps, fixed_time_step);
 }
 
+/*
+void cbtRayTestClosest(
+    const CbtVector3 ray_from_world,
+    const CbtVector3 ray_to_world,
+    int collision_filter_group,
+    int collision_filter_mask,
+    unsigned int flags,
+    CbtRayCastResult* result
+) {
+    assert(result);
+    btCollisionWorld::ClosestRayResultCallback closest(
+        btVector3(ray_from_world[0], ray_from_world[1], ray_from_world[2]),
+        btVector3(ray_to_world[0], ray_to_world[1], ray_to_world[2])
+    );
+    closest.m_flags = result->flags;
+    closest.m_collisionFilterGroup = result->collision_filter_group;
+    closest.m_collisionFilterMask = result->collision_filter_mask;
+}
+*/
+
 void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallbacks* callbacks) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
     assert(world && callbacks);

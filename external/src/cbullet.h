@@ -2,6 +2,7 @@
 
 #define CBT_DECLARE_HANDLE(name) typedef struct name##__ { int unused; } *name
 
+// CbtRayCastResult
 #define CBT_COLLISION_FILTER_DEFAULT 1
 #define CBT_COLLISION_FILTER_STATIC 2
 #define CBT_COLLISION_FILTER_KINEMATIC 4
@@ -10,12 +11,16 @@
 #define CBT_COLLISION_FILTER_CHARACTER 32
 #define CBT_COLLISION_FILTER_ALL -1
 
-// 'mode' for cbtBodySetAnisotropicFriction
+// CbtRayCastResult::flags
+#define CBT_RAYCAST_FLAG_SKIP_BACKFACES 1
+#define CBT_RAYCAST_FLAG_KEEP_UNFLIPPED_NORMALS 2
+
+// cbtBodySetAnisotropicFriction
 #define CBT_ANISOTROPIC_FRICTION_DISABLED 0
 #define CBT_ANISOTROPIC_FRICTION 1
 #define CBT_ANISOTROPIC_ROLLING_FRICTION 2
 
-// shape types returned by cbtShapeGetType
+// cbtShapeGetType
 #define CBT_SHAPE_TYPE_BOX 0
 #define CBT_SHAPE_TYPE_BOX_2D 17
 #define CBT_SHAPE_TYPE_SPHERE 8
@@ -53,12 +58,11 @@ typedef struct CbtDebugDrawCallbacks {
 } CbtDebugDrawCallbacks;
 
 typedef struct CbtRayCastResult {
-    float closest_hit_fraction;
+    CbtVector3 hit_normal_world;
+    CbtVector3 hit_point_world;
+    float hit_fraction;
     CbtBodyHandle body;
-    int collision_filter_group;
-    int collision_filter_mask;
-    unsigned int flags;
-} cbtRayCastResult;
+} CbtRayCastResult;
 
 //
 // World
@@ -67,6 +71,8 @@ CbtWorldHandle cbtWorldCreate(void);
 void cbtWorldDestroy(CbtWorldHandle handle);
 void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity);
 int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step);
+
+//void cbtRayTestClosest(const CbtVector3 ray_from_world, const CbtVector3 ray_to_world, CbtRayCastResult* result);
 
 void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallbacks* callbacks);
 void cbtWorldDebugDraw(CbtWorldHandle handle);
