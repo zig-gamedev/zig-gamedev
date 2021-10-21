@@ -17,8 +17,12 @@
 
 // shape types returned by cbtShapeGetType
 #define CBT_SHAPE_TYPE_BOX 0
+#define CBT_SHAPE_TYPE_BOX_2D 17
+#define CBT_SHAPE_TYPE_CONVEX_2D 18
 #define CBT_SHAPE_TYPE_SPHERE 8
 #define CBT_SHAPE_TYPE_CAPSULE 10
+#define CBT_SHAPE_TYPE_CONE 11
+#define CBT_SHAPE_TYPE_CYLINDER 13
 #define CBT_SHAPE_TYPE_STATIC_PLANE 28
 
 typedef float CbtVector3[3];
@@ -67,12 +71,24 @@ void cbtWorldDebugDraw(CbtWorldHandle handle);
 void cbtWorldDebugDrawLine(CbtWorldHandle handle, const CbtVector3 p0, const CbtVector3 p1, const CbtVector3 color);
 void cbtWorldDebugDrawSphere(CbtWorldHandle handle, const CbtVector3 position, float radius, const CbtVector3 color);
 
+
 CbtShapeHandle cbtShapeCreateBox(const CbtVector3 half_extents);
+CbtShapeHandle cbtShapeCreateBox2d(float x_half_extent, float y_half_extent);
 CbtShapeHandle cbtShapeCreateSphere(float radius);
 CbtShapeHandle cbtShapeCreatePlane(const CbtVector3 normal, float distance);
+
 CbtShapeHandle cbtShapeCreateCapsuleX(float radius, float height);
 CbtShapeHandle cbtShapeCreateCapsuleY(float radius, float height);
 CbtShapeHandle cbtShapeCreateCapsuleZ(float radius, float height);
+
+CbtShapeHandle cbtShapeCreateCylinderX(const CbtVector3 half_extents);
+CbtShapeHandle cbtShapeCreateCylinderY(const CbtVector3 half_extents);
+CbtShapeHandle cbtShapeCreateCylinderZ(const CbtVector3 half_extents);
+
+CbtShapeHandle cbtShapeCreateConeX(float radius, float height);
+CbtShapeHandle cbtShapeCreateConeY(float radius, float height);
+CbtShapeHandle cbtShapeCreateConeZ(float radius, float height);
+
 void cbtShapeDestroy(CbtShapeHandle handle);
 int cbtShapeGetType(CbtShapeHandle handle);
 

@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
+#include "BulletCollision/CollisionShapes/btBox2dShape.h"
 
 struct CbtDebugDraw : public btIDebugDraw {
     CbtDebugDrawCallbacks callbacks = {};
@@ -143,6 +144,12 @@ CbtShapeHandle cbtShapeCreateBox(const CbtVector3 half_extents) {
     return (CbtShapeHandle)box;
 }
 
+CbtShapeHandle cbtShapeCreateBox2d(float x_half_extent, float y_half_extent) {
+    assert(x_half_extent > 0.0 && y_half_extent > 0.0);
+    btBox2dShape* box = new btBox2dShape(btVector3(x_half_extent, y_half_extent, 0.0));
+    return (CbtShapeHandle)box;
+}
+
 CbtShapeHandle cbtShapeCreateSphere(float radius) {
     assert(radius > 0.0f);
     btSphereShape* sphere = new btSphereShape(radius);
@@ -170,6 +177,42 @@ CbtShapeHandle cbtShapeCreateCapsuleZ(float radius, float height) {
     assert(radius > 0.0 && height > 0);
     btCapsuleShape* capsule = capsule = new btCapsuleShapeZ(radius, height);
     return (CbtShapeHandle)capsule;
+}
+
+CbtShapeHandle cbtShapeCreateCylinderX(const CbtVector3 half_extents) {
+    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
+    btCylinderShape* cylinder = new btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    return (CbtShapeHandle)cylinder;
+}
+
+CbtShapeHandle cbtShapeCreateCylinderY(const CbtVector3 half_extents) {
+    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
+    btCylinderShape* cylinder = new btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    return (CbtShapeHandle)cylinder;
+}
+
+CbtShapeHandle cbtShapeCreateCylinderZ(const CbtVector3 half_extents) {
+    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
+    btCylinderShape* cylinder = new btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    return (CbtShapeHandle)cylinder;
+}
+
+CbtShapeHandle cbtShapeCreateConeX(float radius, float height) {
+    assert(radius > 0.0 && height > 0);
+    btConeShape* cone = new btConeShapeX(radius, height);
+    return (CbtShapeHandle)cone;
+}
+
+CbtShapeHandle cbtShapeCreateConeY(float radius, float height) {
+    assert(radius > 0.0 && height > 0);
+    btConeShape* cone = new btConeShape(radius, height);
+    return (CbtShapeHandle)cone;
+}
+
+CbtShapeHandle cbtShapeCreateConeZ(float radius, float height) {
+    assert(radius > 0.0 && height > 0);
+    btConeShape* cone = new btConeShapeZ(radius, height);
+    return (CbtShapeHandle)cone;
 }
 
 void cbtShapeDestroy(CbtShapeHandle handle) {
