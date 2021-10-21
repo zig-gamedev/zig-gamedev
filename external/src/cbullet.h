@@ -18,7 +18,6 @@
 // shape types returned by cbtShapeGetType
 #define CBT_SHAPE_TYPE_BOX 0
 #define CBT_SHAPE_TYPE_BOX_2D 17
-#define CBT_SHAPE_TYPE_CONVEX_2D 18
 #define CBT_SHAPE_TYPE_SPHERE 8
 #define CBT_SHAPE_TYPE_CAPSULE 10
 #define CBT_SHAPE_TYPE_CONE 11
@@ -61,6 +60,9 @@ typedef struct CbtRayCastResult {
     unsigned int flags;
 } cbtRayCastResult;
 
+//
+// World
+//
 CbtWorldHandle cbtWorldCreate(void);
 void cbtWorldDestroy(CbtWorldHandle handle);
 void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity);
@@ -71,7 +73,9 @@ void cbtWorldDebugDraw(CbtWorldHandle handle);
 void cbtWorldDebugDrawLine(CbtWorldHandle handle, const CbtVector3 p0, const CbtVector3 p1, const CbtVector3 color);
 void cbtWorldDebugDrawSphere(CbtWorldHandle handle, const CbtVector3 position, float radius, const CbtVector3 color);
 
-
+//
+// Shape
+//
 CbtShapeHandle cbtShapeCreateBox(const CbtVector3 half_extents);
 CbtShapeHandle cbtShapeCreateBox2d(float x_half_extent, float y_half_extent);
 CbtShapeHandle cbtShapeCreateSphere(float radius);
@@ -89,10 +93,17 @@ CbtShapeHandle cbtShapeCreateConeX(float radius, float height);
 CbtShapeHandle cbtShapeCreateConeY(float radius, float height);
 CbtShapeHandle cbtShapeCreateConeZ(float radius, float height);
 
+void cbtShapeSetUserPointer(CbtShapeHandle handle, void* user_pointer);
+void cbtShapeSetUserIndex(CbtShapeHandle handle, int user_index);
+void* cbtShapeGetUserPointer(CbtShapeHandle handle);
+int cbtShapeGetUserIndex(CbtShapeHandle handle);
+
 void cbtShapeDestroy(CbtShapeHandle handle);
 int cbtShapeGetType(CbtShapeHandle handle);
 
-
+//
+// Body
+//
 CbtBodyHandle cbtBodyCreate(
     CbtWorldHandle world_handle,
     float mass,

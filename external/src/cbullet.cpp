@@ -215,6 +215,30 @@ CbtShapeHandle cbtShapeCreateConeZ(float radius, float height) {
     return (CbtShapeHandle)cone;
 }
 
+void cbtShapeSetUserPointer(CbtShapeHandle handle, void* user_pointer) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    shape->setUserPointer(user_pointer);
+}
+
+void cbtShapeSetUserIndex(CbtShapeHandle handle, int user_index) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    shape->setUserIndex(user_index);
+}
+
+void* cbtShapeGetUserPointer(CbtShapeHandle handle) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    return shape->getUserPointer();
+}
+
+int cbtShapeGetUserIndex(CbtShapeHandle handle) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    return shape->getUserIndex();
+}
+
 void cbtShapeDestroy(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
