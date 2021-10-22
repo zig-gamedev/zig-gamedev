@@ -88,8 +88,8 @@ int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_s
     return world->stepSimulation(time_step, max_sub_steps, fixed_time_step);
 }
 
-/*
-void cbtRayTestClosest(
+int cbtRayTestClosest(
+    CbtWorldHandle handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,
     int collision_filter_group,
@@ -97,16 +97,29 @@ void cbtRayTestClosest(
     unsigned int flags,
     CbtRayCastResult* result
 ) {
-    assert(result);
-    btCollisionWorld::ClosestRayResultCallback closest(
-        btVector3(ray_from_world[0], ray_from_world[1], ray_from_world[2]),
-        btVector3(ray_to_world[0], ray_to_world[1], ray_to_world[2])
-    );
-    closest.m_flags = result->flags;
-    closest.m_collisionFilterGroup = result->collision_filter_group;
-    closest.m_collisionFilterMask = result->collision_filter_mask;
+    assert(handle && result);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
+
+    const btVector3 from(ray_from_world[0], ray_from_world[1], ray_from_world[2]);
+    const btVector3 to(ray_to_world[0], ray_to_world[1], ray_to_world[2]);
+
+    btCollisionWorld::ClosestRayResultCallback closest(from, to);
+    closest.m_collisionFilterGroup = collision_filter_group;
+    closest.m_collisionFilterMask = collision_filter_mask;
+    closest.m_flags = flags;
+
+    world->rayTest(from, to, closest);
+
+    result->hit_normal_world[0] = closest.m_hitNormalWorld.x();
+    result->hit_normal_world[1] = closest.m_hitNormalWorld.y();
+    result->hit_normal_world[2] = closest.m_hitNormalWorld.z();
+    result->hit_point_world[0] = closest.m_hitPointWorld.x();
+    result->hit_point_world[1] = closest.m_hitPointWorld.y();
+    result->hit_point_world[2] = closest.m_hitPointWorld.z();
+    result->hit_fraction = closest.m_closestHitFraction;
+    result->body = (CbtBodyHandle)closest.m_collisionObject;
+    return closest.m_collisionObject != 0;
 }
-*/
 
 void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallbacks* callbacks) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;

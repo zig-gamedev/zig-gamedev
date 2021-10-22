@@ -2,7 +2,7 @@
 
 #define CBT_DECLARE_HANDLE(name) typedef struct name##__ { int unused; } *name
 
-// CbtRayCastResult
+// cbtRayTestClosest
 #define CBT_COLLISION_FILTER_DEFAULT 1
 #define CBT_COLLISION_FILTER_STATIC 2
 #define CBT_COLLISION_FILTER_KINEMATIC 4
@@ -12,6 +12,7 @@
 #define CBT_COLLISION_FILTER_ALL -1
 
 // CbtRayCastResult::flags
+#define CBT_RAYCAST_FLAG_NONE 0
 #define CBT_RAYCAST_FLAG_SKIP_BACKFACES 1
 #define CBT_RAYCAST_FLAG_KEEP_UNFLIPPED_NORMALS 2
 
@@ -72,7 +73,16 @@ void cbtWorldDestroy(CbtWorldHandle handle);
 void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity);
 int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step);
 
-//void cbtRayTestClosest(const CbtVector3 ray_from_world, const CbtVector3 ray_to_world, CbtRayCastResult* result);
+// Returns 1 when hits something, 0 otherwise
+int cbtRayTestClosest(
+    CbtWorldHandle handle,
+    const CbtVector3 ray_from_world,
+    const CbtVector3 ray_to_world,
+    int collision_filter_group,
+    int collision_filter_mask,
+    unsigned int flags,
+    CbtRayCastResult* result
+);
 
 void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallbacks* callbacks);
 void cbtWorldDebugDraw(CbtWorldHandle handle);
