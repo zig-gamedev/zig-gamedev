@@ -15,6 +15,8 @@
 #define CBT_RAYCAST_FLAG_NONE 0
 #define CBT_RAYCAST_FLAG_SKIP_BACKFACES 1
 #define CBT_RAYCAST_FLAG_KEEP_UNFLIPPED_NORMALS 2
+#define CBT_RAYCAST_FLAG_USE_SUB_SIMPLEX_CONVEX_TEST 4 // default, faster but less accurate
+#define CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST 8
 
 // cbtBodySetAnisotropicFriction
 #define CBT_ANISOTROPIC_FRICTION_DISABLED 0
@@ -29,6 +31,12 @@
 #define CBT_SHAPE_TYPE_CONE 11
 #define CBT_SHAPE_TYPE_CYLINDER 13
 #define CBT_SHAPE_TYPE_STATIC_PLANE 28
+
+// cbtBodyGetActivationState, cbtBodySetActivationState
+#define CBT_ACTIVE_TAG 1
+#define CBT_ISLAND_SLEEPING 2
+#define CBT_DISABLE_DEACTIVATION 4
+#define CBT_DISABLE_SIMULATION 5
 
 typedef float CbtVector3[3];
 
@@ -188,7 +196,19 @@ void cbtBodyGetTurnVelocity(CbtBodyHandle handle, CbtVector3 velocity);
 void cbtBodyGetTotalForce(CbtBodyHandle handle, CbtVector3 force);
 void cbtBodyGetTotalTorque(CbtBodyHandle handle, CbtVector3 torque);
 
+int cbtBodyIsStatic(CbtBodyHandle handle);
+int cbtBodyIsKinematic(CbtBodyHandle handle);
+int cbtBodyIsStaticOrKinematic(CbtBodyHandle handle);
 
+float cbtBodyGetDeactivationTime(CbtBodyHandle handle);
+void cbtBodySetDeactivationTime(CbtBodyHandle handle, float time);
+int cbtBodyGetActivationState(CbtBodyHandle handle);
+void cbtBodySetActivationState(CbtBodyHandle handle, int state);
+int cbtBodyIsActive(CbtBodyHandle handle);
+
+
+void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
+void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 
 #ifdef __cplusplus

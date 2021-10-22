@@ -586,6 +586,100 @@ void cbtBodyGetTotalTorque(CbtBodyHandle handle, CbtVector3 torque) {
     torque[2] = t.z();
 }
 
+int cbtBodyIsStatic(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return (int)body->isStaticObject();
+}
+
+int cbtBodyIsKinematic(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return (int)body->isKinematicObject();
+}
+
+int cbtBodyIsStaticOrKinematic(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return (int)body->isStaticOrKinematicObject();
+}
+
+float cbtBodyGetDeactivationTime(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getDeactivationTime();
+}
+
+void cbtBodySetDeactivationTime(CbtBodyHandle handle, float time) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->setDeactivationTime(time);
+}
+
+int cbtBodyGetActivationState(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getActivationState();
+}
+
+void cbtBodySetActivationState(CbtBodyHandle handle, int state) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->setActivationState(state);
+}
+
+int cbtBodyIsActive(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return (int)body->isActive();
+}
+
+void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body && transform);
+
+    const btTransform& trans = body->getCenterOfMassTransform();
+    const btMatrix3x3& basis = trans.getBasis();
+    const btVector3& origin = trans.getOrigin();
+
+    transform[0][0] = basis.getRow(0).x();
+    transform[0][1] = basis.getRow(0).y();
+    transform[0][2] = basis.getRow(0).z();
+    transform[1][0] = basis.getRow(1).x();
+    transform[1][1] = basis.getRow(1).y();
+    transform[1][2] = basis.getRow(1).z();
+    transform[2][0] = basis.getRow(2).x();
+    transform[2][1] = basis.getRow(2).y();
+    transform[2][2] = basis.getRow(2).z();
+
+    transform[3][0] = origin.x();
+    transform[3][1] = origin.y();
+    transform[3][2] = origin.z();
+}
+
+void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body && transform);
+
+    const btTransform trans = body->getCenterOfMassTransform().inverse();
+    const btMatrix3x3& basis = trans.getBasis();
+    const btVector3& origin = trans.getOrigin();
+
+    transform[0][0] = basis.getRow(0).x();
+    transform[0][1] = basis.getRow(0).y();
+    transform[0][2] = basis.getRow(0).z();
+    transform[1][0] = basis.getRow(1).x();
+    transform[1][1] = basis.getRow(1).y();
+    transform[1][2] = basis.getRow(1).z();
+    transform[2][0] = basis.getRow(2).x();
+    transform[2][1] = basis.getRow(2).y();
+    transform[2][2] = basis.getRow(2).z();
+
+    transform[3][0] = origin.x();
+    transform[3][1] = origin.y();
+    transform[3][2] = origin.z();
+}
+
 void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && body->getMotionState() && transform);
