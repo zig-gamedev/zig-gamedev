@@ -1,6 +1,9 @@
   | IMPORTANT                                                    |
   | ------------------------------------------------------------ |
-  | This Project uses Git Large Files Support (LFS) which means that you can not download a zipped version using the green button on Github. Instead, you must Clone the Project with a version of git that has LFS. You can download Git LFS here: <https://git-lfs.github.com/>.<br/> ** If you just want to download single .7z archive you can use latest [Release](releases/) package. It contains full source code and prebuilt binaries for all sample applications. **|
+  | This Project uses Git Large Files Support (LFS) which means that you can not download a zipped version using the green button on Github. Instead, you must Clone the Project with a version of git that has LFS. You can download Git LFS here: <https://git-lfs.github.com/>.  |
+
+**If you just want to download single .7z archive you can use latest [Release](https://github.com/michal-z/zig-gamedev/releases) package. It contains full source code and prebuilt binaries for all sample applications.**
+
 # zig-gamedev project
 
 This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using **[DirectX 12 API](https://docs.microsoft.com/en-us/windows/win32/direct3d12/what-is-directx-12-)**. Some features:
