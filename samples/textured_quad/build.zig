@@ -25,7 +25,7 @@ pub fn build(b: *std.build.Builder) void {
         "/O3",
     };
     const shader_dir = "content/shaders/";
-    const shader_ver = "6_6";
+    const shader_ver = "6_3";
 
     hlsl_command[1] = "src/textured_quad.hlsl";
     hlsl_command[2] = "/E vsMain";
