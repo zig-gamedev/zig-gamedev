@@ -680,7 +680,7 @@ void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transfo
     transform[3][2] = origin.z();
 }
 
-void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
+void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && body->getMotionState() && transform);
 

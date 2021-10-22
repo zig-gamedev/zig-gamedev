@@ -692,6 +692,17 @@ pub const Mat4 = extern struct {
         return .{ .r = [4]Vec4{ r0, r1, r2, r3 } };
     }
 
+    pub fn initArray4x3(a: [4][3]f32) Mat4 {
+        // zig fmt: off
+        return init(
+            a[0][0], a[0][1], a[0][2], 0.0,
+            a[1][0], a[1][1], a[1][2], 0.0,
+            a[2][0], a[2][1], a[2][2], 0.0,
+            a[3][0], a[3][1], a[3][2], 1.0,
+        );
+        // zig fmt: on
+    }
+
     pub inline fn approxEq(a: Mat4, b: Mat4, eps: f32) bool {
         return math.approxEq(f32, a.r[0].c[0], b.r[0].c[0], eps) and
             math.approxEq(f32, a.r[0].c[1], b.r[0].c[1], eps) and

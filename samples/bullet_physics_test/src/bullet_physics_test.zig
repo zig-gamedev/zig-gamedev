@@ -157,6 +157,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         c.cbtShapeDestroy(sphere);
     }
 
+    var trans: [4]c.CbtVector3 = undefined;
+    c.cbtBodyGetCenterOfMassTransform(sphere_body, &trans);
+    const m = Mat4.initArray4x3(trans);
+    _ = m;
+
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator = std.heap.ArenaAllocator.init(gpa);

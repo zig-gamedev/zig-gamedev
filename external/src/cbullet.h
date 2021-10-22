@@ -209,7 +209,7 @@ int cbtBodyIsActive(CbtBodyHandle handle);
 
 void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
-void cbtBodyGetGraphicsTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
+void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 
 #ifdef __cplusplus
 }
