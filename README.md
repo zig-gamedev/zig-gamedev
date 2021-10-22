@@ -1,8 +1,10 @@
-**Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases)**
-
 # zig-gamedev project
 
-This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using **[DirectX 12 API](https://docs.microsoft.com/en-us/windows/win32/direct3d12/what-is-directx-12-)**. Some features:
+This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using **[DirectX 12 API](https://docs.microsoft.com/en-us/windows/win32/direct3d12/what-is-directx-12-)**.
+
+Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases).
+
+Some features:
 
 * Zero dependency except [Zig compiler](https://ziglang.org/download/) (fully standalone; no Visual Studio, no Windows SDK needed)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
