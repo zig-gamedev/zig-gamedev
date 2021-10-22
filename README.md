@@ -1,8 +1,6 @@
   | IMPORTANT                                                    |
   | ------------------------------------------------------------ |
-  | This Project uses Git Large Files Support (LFS) which means that you can not download a zipped version using the green button on Github. Instead, you must Clone the Project with a version of git that has LFS. You can download Git LFS here: <https://git-lfs.github.com/>.  |
-
-**If you just want to download single .7z archive you can use latest [Release](https://github.com/michal-z/zig-gamedev/releases) package. It contains full source code and prebuilt binaries for all sample applications.**
+  | This Project uses Git Large Files Support (LFS) which means that you can not download a zipped version using the green button on Github. Instead, you must Clone the Project with a version of git that has LFS. You can download Git LFS here: <https://git-lfs.github.com/>. <br />  \*\*If you just want to download single .7z archive you can use latest [Release](https://github.com/michal-z/zig-gamedev/releases) package. It contains full source code and prebuilt binaries for all sample applications.\*\* |
 
 # zig-gamedev project
 
@@ -108,13 +106,13 @@ All sample applications support following build options:
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
 * `-Dtracy=[path/to/tracy/source]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
 
-Examples:<br/>
-`zig build -Denable-dx-debug=true -Drelease-fast=true`<br/>
-`zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`<br/>
+Examples:<br />
+`zig build -Denable-dx-debug=true -Drelease-fast=true`<br />
+`zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`<br />
 
-To build and **run** an application you can use:<br/>
-`zig build run` <- Builds and runs debug build.<br/>
-`zig build run -Drelease-fast=true -Denable-dx-debug=true` <- Builds and runs release build with DirectX debug layers enabled.<br/>
+To build and **run** an application you can use:<br />
+`zig build run` <- Builds and runs debug build.<br />
+`zig build run -Drelease-fast=true -Denable-dx-debug=true` <- Builds and runs release build with DirectX debug layers enabled.<br />
 
 ## Requirements
 
