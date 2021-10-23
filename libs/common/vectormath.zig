@@ -703,6 +703,15 @@ pub const Mat4 = extern struct {
         // zig fmt: on
     }
 
+    pub fn toArray4x3(m: Mat4) [4][3]f32 {
+        return [4][3]f32{
+            [3]f32{ m.r[0].c[0], m.r[0].c[1], m.r[0].c[2] },
+            [3]f32{ m.r[1].c[0], m.r[1].c[1], m.r[1].c[2] },
+            [3]f32{ m.r[2].c[0], m.r[2].c[1], m.r[2].c[2] },
+            [3]f32{ m.r[3].c[0], m.r[3].c[1], m.r[3].c[2] },
+        };
+    }
+
     pub inline fn approxEq(a: Mat4, b: Mat4, eps: f32) bool {
         return math.approxEq(f32, a.r[0].c[0], b.r[0].c[0], eps) and
             math.approxEq(f32, a.r[0].c[1], b.r[0].c[1], eps) and

@@ -162,6 +162,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const m = Mat4.initArray4x3(trans);
     _ = m;
 
+    trans = Mat4.initRotationY(0.5).toArray4x3();
+
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator = std.heap.ArenaAllocator.init(gpa);

@@ -38,6 +38,11 @@
 #define CBT_DISABLE_DEACTIVATION 4
 #define CBT_DISABLE_SIMULATION 5
 
+// cbtShapeCreateCapsule, cbtShapeCreateCylinder, cbtShapeCreateCone
+#define CBT_AXIS_X 0
+#define CBT_AXIS_Y 1
+#define CBT_AXIS_Z 2
+
 typedef float CbtVector3[3];
 
 #ifdef __cplusplus
@@ -104,18 +109,9 @@ CbtShapeHandle cbtShapeCreateBox(const CbtVector3 half_extents);
 CbtShapeHandle cbtShapeCreateBox2d(float x_half_extent, float y_half_extent);
 CbtShapeHandle cbtShapeCreateSphere(float radius);
 CbtShapeHandle cbtShapeCreatePlane(const CbtVector3 normal, float distance);
-
-CbtShapeHandle cbtShapeCreateCapsuleX(float radius, float height);
-CbtShapeHandle cbtShapeCreateCapsuleY(float radius, float height);
-CbtShapeHandle cbtShapeCreateCapsuleZ(float radius, float height);
-
-CbtShapeHandle cbtShapeCreateCylinderX(const CbtVector3 half_extents);
-CbtShapeHandle cbtShapeCreateCylinderY(const CbtVector3 half_extents);
-CbtShapeHandle cbtShapeCreateCylinderZ(const CbtVector3 half_extents);
-
-CbtShapeHandle cbtShapeCreateConeX(float radius, float height);
-CbtShapeHandle cbtShapeCreateConeY(float radius, float height);
-CbtShapeHandle cbtShapeCreateConeZ(float radius, float height);
+CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int axis);
+CbtShapeHandle cbtShapeCreateCylinder(const CbtVector3 half_extents, int axis);
+CbtShapeHandle cbtShapeCreateCone(float radius, float height, int axis);
 
 void cbtShapeSetUserPointer(CbtShapeHandle handle, void* user_pointer);
 void cbtShapeSetUserIndex(CbtShapeHandle handle, int user_index);

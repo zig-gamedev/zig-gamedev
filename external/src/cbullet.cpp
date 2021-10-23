@@ -194,58 +194,43 @@ CbtShapeHandle cbtShapeCreatePlane(const CbtVector3 normal, float distance) {
     return (CbtShapeHandle)cbtane;
 }
 
-CbtShapeHandle cbtShapeCreateCapsuleX(float radius, float height) {
-    assert(radius > 0.0 && height > 0);
-    btCapsuleShape* capsule = capsule = new btCapsuleShapeX(radius, height);
-    return (CbtShapeHandle)capsule;
+CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int axis) {
+    assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
+    btCapsuleShape* shape = nullptr;
+    if (axis == CBT_AXIS_X) {
+        shape = new btCapsuleShapeX(radius, height);
+    } else if (axis == CBT_AXIS_Y) {
+        shape = new btCapsuleShape(radius, height);
+    } else {
+        shape = new btCapsuleShapeZ(radius, height);
+    }
+    return (CbtShapeHandle)shape;
 }
 
-CbtShapeHandle cbtShapeCreateCapsuleY(float radius, float height) {
-    assert(radius > 0.0 && height > 0);
-    btCapsuleShape* capsule = capsule = new btCapsuleShape(radius, height);
-    return (CbtShapeHandle)capsule;
-}
-
-CbtShapeHandle cbtShapeCreateCapsuleZ(float radius, float height) {
-    assert(radius > 0.0 && height > 0);
-    btCapsuleShape* capsule = capsule = new btCapsuleShapeZ(radius, height);
-    return (CbtShapeHandle)capsule;
-}
-
-CbtShapeHandle cbtShapeCreateCylinderX(const CbtVector3 half_extents) {
+CbtShapeHandle cbtShapeCreateCylinder(const CbtVector3 half_extents, int axis) {
     assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    btCylinderShape* cylinder = new btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
-    return (CbtShapeHandle)cylinder;
+    btCylinderShape* shape = nullptr;
+    if (axis == CBT_AXIS_X) {
+        shape = new btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    } else if (axis == CBT_AXIS_Y) {
+        shape = new btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    } else {
+        shape = new btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    }
+    return (CbtShapeHandle)shape;
 }
 
-CbtShapeHandle cbtShapeCreateCylinderY(const CbtVector3 half_extents) {
-    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    btCylinderShape* cylinder = new btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
-    return (CbtShapeHandle)cylinder;
-}
-
-CbtShapeHandle cbtShapeCreateCylinderZ(const CbtVector3 half_extents) {
-    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    btCylinderShape* cylinder = new btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
-    return (CbtShapeHandle)cylinder;
-}
-
-CbtShapeHandle cbtShapeCreateConeX(float radius, float height) {
-    assert(radius > 0.0 && height > 0);
-    btConeShape* cone = new btConeShapeX(radius, height);
-    return (CbtShapeHandle)cone;
-}
-
-CbtShapeHandle cbtShapeCreateConeY(float radius, float height) {
-    assert(radius > 0.0 && height > 0);
-    btConeShape* cone = new btConeShape(radius, height);
-    return (CbtShapeHandle)cone;
-}
-
-CbtShapeHandle cbtShapeCreateConeZ(float radius, float height) {
-    assert(radius > 0.0 && height > 0);
-    btConeShape* cone = new btConeShapeZ(radius, height);
-    return (CbtShapeHandle)cone;
+CbtShapeHandle cbtShapeCreateCone(float radius, float height, int axis) {
+    assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
+    btConeShape* shape = nullptr;
+    if (axis == CBT_AXIS_X) {
+        shape = new btConeShapeX(radius, height);
+    } else if (axis == CBT_AXIS_Y) {
+        shape = new btConeShape(radius, height);
+    } else {
+        shape = new btConeShapeZ(radius, height);
+    }
+    return (CbtShapeHandle)shape;
 }
 
 void cbtShapeSetUserPointer(CbtShapeHandle handle, void* user_pointer) {
