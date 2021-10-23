@@ -233,6 +233,52 @@ CbtShapeHandle cbtShapeCreateCone(float radius, float height, int axis) {
     return (CbtShapeHandle)shape;
 }
 
+int cbtShapeIsPolyhedral(CbtShapeHandle handle) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    return (int)shape->isPolyhedral();
+}
+
+int cbtShapeIsConvex2d(CbtShapeHandle handle) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    return (int)shape->isConvex2d();
+}
+
+int cbtShapeIsConvex(CbtShapeHandle handle) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    return (int)shape->isConvex();
+}
+
+int cbtShapeIsNonMoving(CbtShapeHandle handle) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    return (int)shape->isNonMoving();
+}
+
+int cbtShapeIsConcave(CbtShapeHandle handle) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    return (int)shape->isConcave();
+}
+
+int cbtShapeIsCompound(CbtShapeHandle handle) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    return (int)shape->isCompound();
+}
+
+void cbtShapeCalculateLocalInertia(CbtShapeHandle handle, float mass, CbtVector3 inertia) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape && mass > 0.0);
+    btVector3 ine;
+    shape->calculateLocalInertia(mass, ine);
+    inertia[0] = ine.x();
+    inertia[1] = ine.y();
+    inertia[2] = ine.z();
+}
+
 void cbtShapeSetUserPointer(CbtShapeHandle handle, void* user_pointer) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);

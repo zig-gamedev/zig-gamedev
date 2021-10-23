@@ -113,6 +113,15 @@ CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int axis);
 CbtShapeHandle cbtShapeCreateCylinder(const CbtVector3 half_extents, int axis);
 CbtShapeHandle cbtShapeCreateCone(float radius, float height, int axis);
 
+int cbtShapeIsPolyhedral(CbtShapeHandle handle);
+int cbtShapeIsConvex2d(CbtShapeHandle handle);
+int cbtShapeIsConvex(CbtShapeHandle handle);
+int cbtShapeIsNonMoving(CbtShapeHandle handle);
+int cbtShapeIsConcave(CbtShapeHandle handle);
+int cbtShapeIsCompound(CbtShapeHandle handle);
+
+void cbtShapeCalculateLocalInertia(CbtShapeHandle handle, float mass, CbtVector3 inertia);
+
 void cbtShapeSetUserPointer(CbtShapeHandle handle, void* user_pointer);
 void cbtShapeSetUserIndex(CbtShapeHandle handle, int user_index);
 void* cbtShapeGetUserPointer(CbtShapeHandle handle);
