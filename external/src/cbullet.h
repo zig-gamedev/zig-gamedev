@@ -210,8 +210,10 @@ void cbtBodySetDeactivationTime(CbtBodyHandle handle, float time);
 int cbtBodyGetActivationState(CbtBodyHandle handle);
 void cbtBodySetActivationState(CbtBodyHandle handle, int state);
 int cbtBodyIsActive(CbtBodyHandle handle);
+int cbtBodyIsInWorld(CbtBodyHandle handle);
 
 
+void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]);
 void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle handle, CbtVector3 transform[4]);

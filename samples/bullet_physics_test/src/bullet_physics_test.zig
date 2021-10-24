@@ -129,6 +129,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         c.CbtVector3{ 0.0, 1.5, 5.0 },
     }, sphere_shape);
 
+    c.cbtBodySetCenterOfMassTransform(sphere_body, &Mat4.initTranslation(Vec3.init(0.0, 3.0, 5.0)).toArray4x3());
+
     const ground_shape = c.cbtShapeCreateBox(&Vec3.init(10.0, 0.2, 10.0).c);
     const ground_body = c.cbtBodyCreate(physics_world, 0.0, &[4]c.CbtVector3{
         c.CbtVector3{ 1.0, 0.0, 0.0 },

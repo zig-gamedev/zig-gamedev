@@ -665,6 +665,25 @@ int cbtBodyIsActive(CbtBodyHandle handle) {
     return (int)body->isActive();
 }
 
+int cbtBodyIsInWorld(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return (int)body->isInWorld();
+}
+
+void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setCenterOfMassTransform(btTransform(
+        btMatrix3x3(
+            btVector3(transform[0][0], transform[0][1], transform[0][2]),
+            btVector3(transform[1][0], transform[1][1], transform[1][2]),
+            btVector3(transform[2][0], transform[2][1], transform[2][2])
+        ),
+        btVector3(transform[3][0], transform[3][1], transform[3][2])
+    ));
+}
+
 void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && transform);
