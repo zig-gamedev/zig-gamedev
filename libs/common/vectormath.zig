@@ -740,6 +740,15 @@ pub const Mat4 = extern struct {
         );
     }
 
+    pub fn scale(m: Mat4, s: f32) Mat4 {
+        return initVec4(
+            m.r[0].scale(s),
+            m.r[1].scale(s),
+            m.r[2].scale(s),
+            m.r[3].scale(s),
+        );
+    }
+
     pub fn mul(a: Mat4, b: Mat4) Mat4 {
         // zig fmt: off
         return init(
@@ -855,12 +864,7 @@ pub const Mat4 = extern struct {
             return initZero();
         }
 
-        const rcp_d = 1.0 / d;
-        mr.r[0] = mr.r[0].scale(rcp_d);
-        mr.r[1] = mr.r[1].scale(rcp_d);
-        mr.r[2] = mr.r[2].scale(rcp_d);
-        mr.r[3] = mr.r[3].scale(rcp_d);
-        return mr;
+        return mr.scale(1.0 / d);
     }
 
     pub fn det(a: Mat4) f32 {
@@ -1045,6 +1049,17 @@ pub const Mat4 = extern struct {
             0.0, v.c[1], 0.0, 0.0,
             0.0, 0.0, v.c[2], 0.0,
             0.0, 0.0, 0.0, 1.0,
+        );
+        // zig fmt: on
+    }
+
+    pub fn initDiagonal(s: f32) Mat4 {
+        // zig fmt: off
+        return init(
+            s, 0.0, 0.0, 0.0,
+            0.0, s, 0.0, 0.0,
+            0.0, 0.0, s, 0.0,
+            0.0, 0.0, 0.0, s,
         );
         // zig fmt: on
     }
