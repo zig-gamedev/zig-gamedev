@@ -212,6 +212,11 @@ void cbtBodySetActivationState(CbtBodyHandle handle, int state);
 int cbtBodyIsActive(CbtBodyHandle handle);
 int cbtBodyIsInWorld(CbtBodyHandle handle);
 
+void cbtBodySetUserPointer(CbtBodyHandle handle, void* user_pointer);
+void cbtBodySetUserIndex(CbtBodyHandle handle, int user_index);
+void* cbtBodyGetUserPointer(CbtBodyHandle handle);
+int cbtBodyGetUserIndex(CbtBodyHandle handle);
+
 
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]);
 void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);

@@ -671,6 +671,30 @@ int cbtBodyIsInWorld(CbtBodyHandle handle) {
     return (int)body->isInWorld();
 }
 
+void cbtBodySetUserPointer(CbtBodyHandle handle, void* user_pointer) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setUserPointer(user_pointer);
+}
+
+void cbtBodySetUserIndex(CbtBodyHandle handle, int user_index) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    body->setUserIndex(user_index);
+}
+
+void* cbtBodyGetUserPointer(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getUserPointer();
+}
+
+int cbtBodyGetUserIndex(CbtBodyHandle handle) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->getUserIndex();
+}
+
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
