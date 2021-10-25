@@ -145,29 +145,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
     assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
 
-    if (false) {
-        const sphere = c.cbtShapeCreateSphere(1.0);
-        var trans = [4]c.CbtVector3{
-            c.CbtVector3{ 1.0, 0.0, 0.0 },
-            c.CbtVector3{ 0.0, 1.0, 0.0 },
-            c.CbtVector3{ 0.0, 0.0, 1.0 },
-            c.CbtVector3{ 2.0, 2.0, 2.0 },
-        };
-        const body = c.cbtBodyCreate(1.0, &trans[0], sphere);
-
-        trans[3] = c.CbtVector3{ 0.0, 0.0, 0.0 };
-        c.cbtBodyGetGraphicsTransform(body, &trans[0]);
-
-        c.cbtBodyDestroy(physics_world, body);
-        c.cbtShapeDestroy(sphere);
+    {
+        var trans: [4]c.CbtVector3 = undefined;
+        c.cbtBodyGetCenterOfMassTransform(sphere_body, &trans);
+        const m = Mat4.initArray4x3(trans);
+        _ = m;
+        trans = Mat4.initRotationY(0.5).toArray4x3();
     }
-
-    var trans: [4]c.CbtVector3 = undefined;
-    c.cbtBodyGetCenterOfMassTransform(sphere_body, &trans);
-    const m = Mat4.initArray4x3(trans);
-    _ = m;
-
-    trans = Mat4.initRotationY(0.5).toArray4x3();
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 

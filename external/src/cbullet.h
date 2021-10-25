@@ -238,7 +238,6 @@ void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle handle, CbtVector3 transform
 //
 // Constraints
 //
-
 CbtBodyHandle cbtConGetFixedBody(void);
 
 void cbtConDestroy(CbtConstraintHandle handle);
