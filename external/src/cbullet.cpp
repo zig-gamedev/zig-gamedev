@@ -95,11 +95,29 @@ void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
     world->addRigidBody(body);
 }
 
+void cbtWorldAddConstraint(
+    CbtWorldHandle world_handle,
+    CbtConstraintHandle constraint_handle,
+    int disable_collision_between_linked_bodies
+) {
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
+    btTypedConstraint* constraint = (btTypedConstraint*)constraint_handle;
+    assert(world && constraint);
+    world->addConstraint(constraint, disable_collision_between_linked_bodies ? true : false);
+}
+
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     btRigidBody* body = (btRigidBody*)body_handle;
     assert(world && body);
     world->removeRigidBody(body);
+}
+
+void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle constraint_handle) {
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
+    btTypedConstraint* constraint = (btTypedConstraint*)constraint_handle;
+    assert(world && constraint);
+    world->removeConstraint(constraint);
 }
 
 int cbtRayTestClosest(
@@ -326,14 +344,12 @@ void cbtShapeDestroy(CbtShapeHandle handle) {
 }
 
 CbtBodyHandle cbtBodyCreate(
-    CbtWorldHandle world_handle,
     float mass,
     const CbtVector3 transform[4],
     CbtShapeHandle shape_handle
 ) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     btCollisionShape* shape = (btCollisionShape*)shape_handle;
-    assert(world && shape && transform && mass >= 0.0);
+    assert(shape && transform && mass >= 0.0);
 
     const bool is_dynamic = (mass != 0.0);
 
@@ -354,20 +370,17 @@ CbtBodyHandle cbtBodyCreate(
 
     btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, local_inertia);
     btRigidBody* body = new btRigidBody(info);
-    world->addRigidBody(body);
 
     return (CbtBodyHandle)body;
 }
 
-void cbtBodyDestroy(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
+void cbtBodyDestroy(CbtBodyHandle body_handle) {
     btRigidBody* body = (btRigidBody*)body_handle;
-    assert(world && body);
+    assert(body);
 
     if (body->getMotionState()) {
         delete body->getMotionState();
     }
-    world->removeRigidBody(body);
     delete body;
 }
 
@@ -675,6 +688,12 @@ void cbtBodySetActivationState(CbtBodyHandle handle, int state) {
     return body->setActivationState(state);
 }
 
+void cbtBodyForceActivationState(CbtBodyHandle handle, int state) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    return body->forceActivationState(state);
+}
+
 int cbtBodyIsActive(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
@@ -805,4 +824,62 @@ void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle handle, CbtVector3 transform
     transform[3][0] = origin.x();
     transform[3][1] = origin.y();
     transform[3][2] = origin.z();
+}
+
+CbtBodyHandle cbtConGetFixedBody(void) {
+    return (CbtBodyHandle)&btTypedConstraint::getFixedBody();
+}
+
+void cbtConDestroy(CbtConstraintHandle handle) {
+    btTypedConstraint* con = (btTypedConstraint*)handle;
+    assert(con);
+    delete con;
+}
+
+CbtConstraintHandle cbtConCreatePoint2Point(
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 pivot_a,
+    const CbtVector3 pivot_b
+) {
+    btRigidBody* body_a = (btRigidBody*)body_handle_a;
+    btRigidBody* body_b = (btRigidBody*)body_handle_b;
+    assert(body_a && body_b);
+    btPoint2PointConstraint* constraint = new btPoint2PointConstraint(
+        *body_a,
+        *body_b,
+        btVector3(pivot_a[0], pivot_a[1], pivot_a[2]),
+        btVector3(pivot_b[0], pivot_b[1], pivot_b[2])
+    );
+    return (CbtConstraintHandle)constraint;
+}
+
+void cbtConPoint2PointSetPivotA(CbtConstraintHandle handle, const CbtVector3 pivot) {
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
+    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+    con->setPivotA(btVector3(pivot[0], pivot[1], pivot[2]));
+}
+
+void cbtConPoint2PointSetPivotB(CbtConstraintHandle handle, const CbtVector3 pivot) {
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
+    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+    con->setPivotB(btVector3(pivot[0], pivot[1], pivot[2]));
+}
+
+void cbtConPoint2PointSetTau(CbtConstraintHandle handle, float tau) {
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
+    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+    con->m_setting.m_tau = tau;
+}
+
+void cbtConPoint2PointSetDamping(CbtConstraintHandle handle, float damping) {
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
+    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+    con->m_setting.m_damping = damping;
+}
+
+void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle handle, float impulse_clamp) {
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
+    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+    con->m_setting.m_impulseClamp = impulse_clamp;
 }

@@ -122,23 +122,25 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     });
 
     const sphere_shape = c.cbtShapeCreateSphere(0.5);
-    const sphere_body = c.cbtBodyCreate(physics_world, 1.0, &[4]c.CbtVector3{
+    const sphere_body = c.cbtBodyCreate(1.0, &[4]c.CbtVector3{
         c.CbtVector3{ 1.0, 0.0, 0.0 },
         c.CbtVector3{ 0.0, 1.0, 0.0 },
         c.CbtVector3{ 0.0, 0.0, 1.0 },
         c.CbtVector3{ 0.0, 1.5, 5.0 },
     }, sphere_shape);
+    c.cbtWorldAddBody(physics_world, sphere_body);
 
     c.cbtBodySetCenterOfMassTransform(sphere_body, &Mat4.initTranslation(Vec3.init(0.0, 3.0, 5.0)).toArray4x3());
     c.cbtBodySetActivationState(sphere_body, c.CBT_DISABLE_DEACTIVATION);
 
     const ground_shape = c.cbtShapeCreateBox(&Vec3.init(20.0, 0.2, 20.0).c);
-    const ground_body = c.cbtBodyCreate(physics_world, 0.0, &[4]c.CbtVector3{
+    const ground_body = c.cbtBodyCreate(0.0, &[4]c.CbtVector3{
         c.CbtVector3{ 1.0, 0.0, 0.0 },
         c.CbtVector3{ 0.0, 1.0, 0.0 },
         c.CbtVector3{ 0.0, 0.0, 1.0 },
         c.CbtVector3{ 0.0, 0.0, 0.0 },
     }, ground_shape);
+    c.cbtWorldAddBody(physics_world, ground_body);
 
     assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
     assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
@@ -151,7 +153,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             c.CbtVector3{ 0.0, 0.0, 1.0 },
             c.CbtVector3{ 2.0, 2.0, 2.0 },
         };
-        const body = c.cbtBodyCreate(physics_world, 1.0, &trans[0], sphere);
+        const body = c.cbtBodyCreate(1.0, &trans[0], sphere);
 
         trans[3] = c.CbtVector3{ 0.0, 0.0, 0.0 };
         c.cbtBodyGetGraphicsTransform(body, &trans[0]);
@@ -296,8 +298,10 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
-    c.cbtBodyDestroy(demo.physics_world, demo.sphere_body);
-    c.cbtBodyDestroy(demo.physics_world, demo.ground_body);
+    c.cbtWorldRemoveBody(demo.physics_world, demo.sphere_body);
+    c.cbtWorldRemoveBody(demo.physics_world, demo.ground_body);
+    c.cbtBodyDestroy(demo.sphere_body);
+    c.cbtBodyDestroy(demo.ground_body);
     c.cbtShapeDestroy(demo.sphere_shape);
     c.cbtShapeDestroy(demo.ground_shape);
     demo.physics_debug.deinit();
@@ -386,7 +390,7 @@ fn update(demo: *DemoState) void {
             &to.c,
             c.CBT_COLLISION_FILTER_DEFAULT,
             c.CBT_COLLISION_FILTER_ALL,
-            c.CBT_RAYCAST_FLAG_NONE,
+            c.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST,
             &result,
         );
         if (hit != 0) {

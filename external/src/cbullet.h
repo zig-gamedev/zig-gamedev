@@ -52,6 +52,7 @@ extern "C" {
 CBT_DECLARE_HANDLE(CbtWorldHandle);
 CBT_DECLARE_HANDLE(CbtShapeHandle);
 CBT_DECLARE_HANDLE(CbtBodyHandle);
+CBT_DECLARE_HANDLE(CbtConstraintHandle);
 
 typedef void (*CbtDrawLineCallback)(const CbtVector3 p0, const CbtVector3 p1, const CbtVector3 color, void* user_data);
 typedef void (*CbtDrawContactPointCallback)(
@@ -86,8 +87,15 @@ void cbtWorldDestroy(CbtWorldHandle handle);
 void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity);
 int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step);
 
-void cbtWorldAddBody(CbtWorldHandle handle, CbtBodyHandle body_handle);
-void cbtWorldRemoveBody(CbtWorldHandle handle, CbtBodyHandle body_handle);
+void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
+void cbtWorldAddConstraint(
+    CbtWorldHandle world_handle,
+    CbtConstraintHandle constraint_handle,
+    int disable_collision_between_linked_bodies
+);
+
+void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
+void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle constraint_handle);
 
 // Returns 1 when hits something, 0 otherwise
 int cbtRayTestClosest(
@@ -137,12 +145,11 @@ int cbtShapeGetType(CbtShapeHandle handle);
 // Body
 //
 CbtBodyHandle cbtBodyCreate(
-    CbtWorldHandle world_handle,
     float mass,
     const CbtVector3 transform[4],
     CbtShapeHandle shape_handle
 );
-void cbtBodyDestroy(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
+void cbtBodyDestroy(CbtBodyHandle body_handle);
 
 void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle);
 CbtShapeHandle cbtBodyGetShape(CbtBodyHandle handle);
@@ -212,6 +219,7 @@ float cbtBodyGetDeactivationTime(CbtBodyHandle handle);
 void cbtBodySetDeactivationTime(CbtBodyHandle handle, float time);
 int cbtBodyGetActivationState(CbtBodyHandle handle);
 void cbtBodySetActivationState(CbtBodyHandle handle, int state);
+void cbtBodyForceActivationState(CbtBodyHandle handle, int state);
 int cbtBodyIsActive(CbtBodyHandle handle);
 int cbtBodyIsInWorld(CbtBodyHandle handle);
 
@@ -226,6 +234,26 @@ void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[
 void cbtBodyGetCenterOfMassPosition(CbtBodyHandle handle, CbtVector3 position);
 void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
+
+//
+// Constraints
+//
+
+CbtBodyHandle cbtConGetFixedBody(void);
+
+void cbtConDestroy(CbtConstraintHandle handle);
+
+CbtConstraintHandle cbtConCreatePoint2Point(
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 pivot_a,
+    const CbtVector3 pivot_b
+);
+void cbtConPoint2PointSetPivotA(CbtConstraintHandle handle, const CbtVector3 pivot);
+void cbtConPoint2PointSetPivotB(CbtConstraintHandle handle, const CbtVector3 pivot);
+void cbtConPoint2PointSetTau(CbtConstraintHandle handle, float tau);
+void cbtConPoint2PointSetDamping(CbtConstraintHandle handle, float damping);
+void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle handle, float impulse_clamp);
 
 #ifdef __cplusplus
 }
