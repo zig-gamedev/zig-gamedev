@@ -88,6 +88,20 @@ int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_s
     return world->stepSimulation(time_step, max_sub_steps, fixed_time_step);
 }
 
+void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
+    btRigidBody* body = (btRigidBody*)body_handle;
+    assert(world && body);
+    world->addRigidBody(body);
+}
+
+void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
+    btRigidBody* body = (btRigidBody*)body_handle;
+    assert(world && body);
+    world->removeRigidBody(body);
+}
+
 int cbtRayTestClosest(
     CbtWorldHandle handle,
     const CbtVector3 ray_from_world,
@@ -729,6 +743,18 @@ void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[
     transform[3][0] = origin.x();
     transform[3][1] = origin.y();
     transform[3][2] = origin.z();
+}
+
+void cbtBodyGetCenterOfMassPosition(CbtBodyHandle handle, CbtVector3 position) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body && position);
+
+    const btTransform& trans = body->getCenterOfMassTransform();
+    const btVector3& origin = trans.getOrigin();
+
+    position[0] = origin.x();
+    position[1] = origin.y();
+    position[2] = origin.z();
 }
 
 void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]) {

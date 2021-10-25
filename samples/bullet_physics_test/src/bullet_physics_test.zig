@@ -121,8 +121,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .user_data = physics_debug,
     });
 
-    const sphere_shape = c.cbtShapeCreateSphere(1.0);
-    const sphere_body = c.cbtBodyCreate(physics_world, 5.0, &[4]c.CbtVector3{
+    const sphere_shape = c.cbtShapeCreateSphere(0.5);
+    const sphere_body = c.cbtBodyCreate(physics_world, 1.0, &[4]c.CbtVector3{
         c.CbtVector3{ 1.0, 0.0, 0.0 },
         c.CbtVector3{ 0.0, 1.0, 0.0 },
         c.CbtVector3{ 0.0, 0.0, 1.0 },
@@ -130,8 +130,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     }, sphere_shape);
 
     c.cbtBodySetCenterOfMassTransform(sphere_body, &Mat4.initTranslation(Vec3.init(0.0, 3.0, 5.0)).toArray4x3());
+    c.cbtBodySetActivationState(sphere_body, c.CBT_DISABLE_DEACTIVATION);
 
-    const ground_shape = c.cbtShapeCreateBox(&Vec3.init(10.0, 0.2, 10.0).c);
+    const ground_shape = c.cbtShapeCreateBox(&Vec3.init(20.0, 0.2, 20.0).c);
     const ground_body = c.cbtBodyCreate(physics_world, 0.0, &[4]c.CbtVector3{
         c.CbtVector3{ 1.0, 0.0, 0.0 },
         c.CbtVector3{ 0.0, 1.0, 0.0 },
@@ -179,6 +180,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     );
 
     var grfx = gr.GraphicsContext.init(window);
+    //grfx.present_flags = 0;
+    //grfx.present_interval = 1;
 
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
@@ -350,6 +353,26 @@ fn update(demo: *DemoState) void {
         } else if (w.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
         }
+    }
+
+    if (w.GetAsyncKeyState(w.VK_LEFT) < 0) {
+        c.cbtBodyApplyImpulse(demo.sphere_body, &c.CbtVector3{ 0.0, 20.0 * dt, 0.0 }, &c.CbtVector3{ 0.02, 0, 0 });
+    } else if (w.GetAsyncKeyState(w.VK_RIGHT) < 0) {
+        c.cbtBodyApplyImpulse(demo.sphere_body, &c.CbtVector3{ 0.0, 20.0 * dt, 0.0 }, &c.CbtVector3{ -0.02, 0, 0 });
+    }
+
+    {
+        var position: c.CbtVector3 = undefined;
+        var velocity: c.CbtVector3 = undefined;
+        c.cbtBodyGetCenterOfMassPosition(demo.sphere_body, &position);
+        c.cbtBodyGetLinearVelocity(demo.sphere_body, &velocity);
+
+        c.cbtWorldDebugDrawLine(
+            demo.physics_world,
+            &position,
+            &(Vec3{ .c = position }).add(Vec3{ .c = velocity }).c,
+            &c.CbtVector3{ 1.0, 1.0, 0.0 },
+        );
     }
 }
 

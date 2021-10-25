@@ -86,6 +86,9 @@ void cbtWorldDestroy(CbtWorldHandle handle);
 void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity);
 int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step);
 
+void cbtWorldAddBody(CbtWorldHandle handle, CbtBodyHandle body_handle);
+void cbtWorldRemoveBody(CbtWorldHandle handle, CbtBodyHandle body_handle);
+
 // Returns 1 when hits something, 0 otherwise
 int cbtRayTestClosest(
     CbtWorldHandle handle,
@@ -220,6 +223,7 @@ int cbtBodyGetUserIndex(CbtBodyHandle handle);
 
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]);
 void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
+void cbtBodyGetCenterOfMassPosition(CbtBodyHandle handle, CbtVector3 position);
 void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
 
