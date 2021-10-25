@@ -111,7 +111,7 @@ int cbtRayTestClosest(
     unsigned int flags,
     CbtRayCastResult* result
 ) {
-    assert(handle && result);
+    assert(handle);
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
 
     const btVector3 from(ray_from_world[0], ray_from_world[1], ray_from_world[2]);
@@ -124,14 +124,16 @@ int cbtRayTestClosest(
 
     world->rayTest(from, to, closest);
 
-    result->hit_normal_world[0] = closest.m_hitNormalWorld.x();
-    result->hit_normal_world[1] = closest.m_hitNormalWorld.y();
-    result->hit_normal_world[2] = closest.m_hitNormalWorld.z();
-    result->hit_point_world[0] = closest.m_hitPointWorld.x();
-    result->hit_point_world[1] = closest.m_hitPointWorld.y();
-    result->hit_point_world[2] = closest.m_hitPointWorld.z();
-    result->hit_fraction = closest.m_closestHitFraction;
-    result->body = (CbtBodyHandle)closest.m_collisionObject;
+    if (result) {
+        result->hit_normal_world[0] = closest.m_hitNormalWorld.x();
+        result->hit_normal_world[1] = closest.m_hitNormalWorld.y();
+        result->hit_normal_world[2] = closest.m_hitNormalWorld.z();
+        result->hit_point_world[0] = closest.m_hitPointWorld.x();
+        result->hit_point_world[1] = closest.m_hitPointWorld.y();
+        result->hit_point_world[2] = closest.m_hitPointWorld.z();
+        result->hit_fraction = closest.m_closestHitFraction;
+        result->body = (CbtBodyHandle)closest.m_collisionObject;
+    }
     return closest.m_collisionObject != 0;
 }
 

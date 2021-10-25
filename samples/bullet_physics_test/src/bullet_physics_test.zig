@@ -374,6 +374,30 @@ fn update(demo: *DemoState) void {
             &c.CbtVector3{ 1.0, 1.0, 0.0 },
         );
     }
+
+    {
+        const from = demo.camera.position;
+        const to = from.add(demo.camera.forward.scale(5.0));
+
+        var result: c.CbtRayCastResult = undefined;
+        const hit = c.cbtRayTestClosest(
+            demo.physics_world,
+            &from.c,
+            &to.c,
+            c.CBT_COLLISION_FILTER_DEFAULT,
+            c.CBT_COLLISION_FILTER_ALL,
+            c.CBT_RAYCAST_FLAG_NONE,
+            &result,
+        );
+        if (hit != 0) {
+            c.cbtWorldDebugDrawSphere(
+                demo.physics_world,
+                &result.hit_point_world,
+                0.05,
+                &c.CbtVector3{ 1.0, 1.0, 0.0 },
+            );
+        }
+    }
 }
 
 fn draw(demo: *DemoState) void {
