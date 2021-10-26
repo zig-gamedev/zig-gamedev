@@ -62,6 +62,8 @@ const DemoState = struct {
         body: c.CbtBodyHandle,
         constraint: c.CbtConstraintHandle,
         saved_activation_state: i32,
+        saved_linear_damping: f32,
+        saved_angular_damping: f32,
         distance: f32,
     },
 };
@@ -260,6 +262,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .pick = .{
             .body = null,
             .saved_activation_state = 0,
+            .saved_linear_damping = 0.0,
+            .saved_angular_damping = 0.0,
             .constraint = null,
             .distance = 0.0,
         },
@@ -387,6 +391,10 @@ fn update(demo: *DemoState) void {
         if (hit != 0 and result.body != null and c.cbtBodyIsStaticOrKinematic(result.body) == 0) {
             demo.pick.body = result.body;
 
+            demo.pick.saved_linear_damping = c.cbtBodyGetLinearDamping(result.body);
+            demo.pick.saved_angular_damping = c.cbtBodyGetLinearDamping(result.body);
+            c.cbtBodySetDamping(result.body, 0.4, 0.4);
+
             demo.pick.saved_activation_state = c.cbtBodyGetActivationState(result.body);
             if (demo.pick.saved_activation_state == c.CBT_ISLAND_SLEEPING) {
                 demo.pick.saved_activation_state = c.CBT_ACTIVE_TAG;
@@ -421,6 +429,7 @@ fn update(demo: *DemoState) void {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
         c.cbtBodyForceActivationState(demo.pick.body, demo.pick.saved_activation_state);
+        c.cbtBodySetDamping(demo.pick.body, demo.pick.saved_linear_damping, demo.pick.saved_angular_damping);
         demo.pick.constraint = null;
         demo.pick.body = null;
     }

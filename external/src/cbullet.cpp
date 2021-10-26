@@ -98,7 +98,7 @@ void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
 void cbtWorldAddConstraint(
     CbtWorldHandle world_handle,
     CbtConstraintHandle constraint_handle,
-    int disable_collision_between_linked_bodies
+    CbtBool disable_collision_between_linked_bodies
 ) {
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     btTypedConstraint* constraint = (btTypedConstraint*)constraint_handle;
@@ -120,7 +120,7 @@ void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle c
     world->removeConstraint(constraint);
 }
 
-int cbtRayTestClosest(
+CbtBool cbtRayTestClosest(
     CbtWorldHandle handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,
@@ -267,40 +267,40 @@ CbtShapeHandle cbtShapeCreateCone(float radius, float height, int axis) {
     return (CbtShapeHandle)shape;
 }
 
-int cbtShapeIsPolyhedral(CbtShapeHandle handle) {
+CbtBool cbtShapeIsPolyhedral(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
-    return (int)shape->isPolyhedral();
+    return shape->isPolyhedral() ? CBT_TRUE : CBT_FALSE;
 }
 
-int cbtShapeIsConvex2d(CbtShapeHandle handle) {
+CbtBool cbtShapeIsConvex2d(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
-    return (int)shape->isConvex2d();
+    return shape->isConvex2d() ? CBT_TRUE : CBT_FALSE;
 }
 
-int cbtShapeIsConvex(CbtShapeHandle handle) {
+CbtBool cbtShapeIsConvex(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
-    return (int)shape->isConvex();
+    return shape->isConvex() ? CBT_TRUE : CBT_FALSE;
 }
 
-int cbtShapeIsNonMoving(CbtShapeHandle handle) {
+CbtBool cbtShapeIsNonMoving(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
-    return (int)shape->isNonMoving();
+    return shape->isNonMoving() ? CBT_TRUE : CBT_FALSE;
 }
 
-int cbtShapeIsConcave(CbtShapeHandle handle) {
+CbtBool cbtShapeIsConcave(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
-    return (int)shape->isConcave();
+    return shape->isConcave() ? CBT_TRUE : CBT_FALSE;
 }
 
-int cbtShapeIsCompound(CbtShapeHandle handle) {
+CbtBool cbtShapeIsCompound(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
-    return (int)shape->isCompound();
+    return shape->isCompound() ? CBT_TRUE : CBT_FALSE;
 }
 
 void cbtShapeCalculateLocalInertia(CbtShapeHandle handle, float mass, CbtVector3 inertia) {
@@ -319,22 +319,31 @@ void cbtShapeSetUserPointer(CbtShapeHandle handle, void* user_pointer) {
     shape->setUserPointer(user_pointer);
 }
 
-void cbtShapeSetUserIndex(CbtShapeHandle handle, int user_index) {
-    btCollisionShape* shape = (btCollisionShape*)handle;
-    assert(shape);
-    shape->setUserIndex(user_index);
-}
-
 void* cbtShapeGetUserPointer(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
     return shape->getUserPointer();
 }
 
-int cbtShapeGetUserIndex(CbtShapeHandle handle) {
+void cbtShapeSetUserIndex(CbtShapeHandle handle, int slot, int user_index) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
-    return shape->getUserIndex();
+    assert(slot == 0 || slot == 1);
+    if (slot == 0) {
+        shape->setUserIndex(user_index);
+    } else {
+        shape->setUserIndex2(user_index);
+    }
+}
+
+int cbtShapeGetUserIndex(CbtShapeHandle handle, int slot) {
+    btCollisionShape* shape = (btCollisionShape*)handle;
+    assert(shape);
+    assert(slot == 0 || slot == 1);
+    if (slot == 0) {
+        return shape->getUserIndex();
+    }
+    return shape->getUserIndex2();
 }
 
 void cbtShapeDestroy(CbtShapeHandle handle) {
@@ -467,6 +476,18 @@ void cbtBodySetTurnVelocity(CbtBodyHandle handle, const CbtVector3 velocity) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && velocity);
     body->setTurnVelocity(btVector3(velocity[0], velocity[1], velocity[2]));
+}
+
+void cbtBodySetLinearFactor(CbtBodyHandle handle, const CbtVector3 factor) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body && factor);
+    body->setLinearFactor(btVector3(factor[0], factor[1], factor[2]));
+}
+
+void cbtBodySetAngularFactor(CbtBodyHandle handle, const CbtVector3 factor) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body && factor);
+    body->setAngularFactor(btVector3(factor[0], factor[1], factor[2]));
 }
 
 void cbtBodyApplyCentralForce(CbtBodyHandle handle, const CbtVector3 force) {
@@ -646,22 +667,22 @@ void cbtBodyGetTotalTorque(CbtBodyHandle handle, CbtVector3 torque) {
     torque[2] = t.z();
 }
 
-int cbtBodyIsStatic(CbtBodyHandle handle) {
+CbtBool cbtBodyIsStatic(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
-    return (int)body->isStaticObject();
+    return body->isStaticObject() ? CBT_TRUE : CBT_FALSE;
 }
 
-int cbtBodyIsKinematic(CbtBodyHandle handle) {
+CbtBool cbtBodyIsKinematic(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
-    return (int)body->isKinematicObject();
+    return body->isKinematicObject() ? CBT_TRUE : CBT_FALSE;
 }
 
-int cbtBodyIsStaticOrKinematic(CbtBodyHandle handle) {
+CbtBool cbtBodyIsStaticOrKinematic(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
-    return (int)body->isStaticOrKinematicObject();
+    return body->isStaticOrKinematicObject() ? CBT_TRUE : CBT_FALSE;
 }
 
 float cbtBodyGetDeactivationTime(CbtBodyHandle handle) {
@@ -694,16 +715,16 @@ void cbtBodyForceActivationState(CbtBodyHandle handle, int state) {
     return body->forceActivationState(state);
 }
 
-int cbtBodyIsActive(CbtBodyHandle handle) {
+CbtBool cbtBodyIsActive(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
-    return (int)body->isActive();
+    return body->isActive() ? CBT_TRUE : CBT_FALSE;
 }
 
-int cbtBodyIsInWorld(CbtBodyHandle handle) {
+CbtBool cbtBodyIsInWorld(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
-    return (int)body->isInWorld();
+    return body->isInWorld() ? CBT_TRUE : CBT_FALSE;
 }
 
 void cbtBodySetUserPointer(CbtBodyHandle handle, void* user_pointer) {
@@ -712,22 +733,36 @@ void cbtBodySetUserPointer(CbtBodyHandle handle, void* user_pointer) {
     body->setUserPointer(user_pointer);
 }
 
-void cbtBodySetUserIndex(CbtBodyHandle handle, int user_index) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body);
-    body->setUserIndex(user_index);
-}
-
 void* cbtBodyGetUserPointer(CbtBodyHandle handle) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
     return body->getUserPointer();
 }
 
-int cbtBodyGetUserIndex(CbtBodyHandle handle) {
+void cbtBodySetUserIndex(CbtBodyHandle handle, int slot, int user_index) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
-    return body->getUserIndex();
+    assert(slot >= 0 && slot <= 2);
+    if (slot == 0) {
+        body->setUserIndex(user_index);
+    } else if (slot == 1) {
+        body->setUserIndex2(user_index);
+    } else {
+        body->setUserIndex3(user_index);
+    }
+}
+
+int cbtBodyGetUserIndex(CbtBodyHandle handle, int slot) {
+    btRigidBody* body = (btRigidBody*)handle;
+    assert(body);
+    assert(slot >= 0 && slot <= 2);
+    if (slot == 0) {
+        return body->getUserIndex();
+    }
+    if (slot == 1) {
+        return body->getUserIndex2();
+    }
+    return body->getUserIndex3();
 }
 
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]) {

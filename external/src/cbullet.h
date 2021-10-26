@@ -43,7 +43,11 @@
 #define CBT_AXIS_Y 1
 #define CBT_AXIS_Z 2
 
+#define CBT_FALSE 0
+#define CBT_TRUE 1
+
 typedef float CbtVector3[3];
+typedef int CbtBool;
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,14 +95,14 @@ void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
 void cbtWorldAddConstraint(
     CbtWorldHandle world_handle,
     CbtConstraintHandle constraint_handle,
-    int disable_collision_between_linked_bodies
+    CbtBool disable_collision_between_linked_bodies
 );
 
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
 void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle constraint_handle);
 
-// Returns 1 when hits something, 0 otherwise
-int cbtRayTestClosest(
+// Returns CBT_TRUE when hits something, CBT_FALSE otherwise
+CbtBool cbtRayTestClosest(
     CbtWorldHandle handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,
@@ -124,19 +128,19 @@ CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int axis);
 CbtShapeHandle cbtShapeCreateCylinder(const CbtVector3 half_extents, int axis);
 CbtShapeHandle cbtShapeCreateCone(float radius, float height, int axis);
 
-int cbtShapeIsPolyhedral(CbtShapeHandle handle);
-int cbtShapeIsConvex2d(CbtShapeHandle handle);
-int cbtShapeIsConvex(CbtShapeHandle handle);
-int cbtShapeIsNonMoving(CbtShapeHandle handle);
-int cbtShapeIsConcave(CbtShapeHandle handle);
-int cbtShapeIsCompound(CbtShapeHandle handle);
+CbtBool cbtShapeIsPolyhedral(CbtShapeHandle handle);
+CbtBool cbtShapeIsConvex2d(CbtShapeHandle handle);
+CbtBool cbtShapeIsConvex(CbtShapeHandle handle);
+CbtBool cbtShapeIsNonMoving(CbtShapeHandle handle);
+CbtBool cbtShapeIsConcave(CbtShapeHandle handle);
+CbtBool cbtShapeIsCompound(CbtShapeHandle handle);
 
 void cbtShapeCalculateLocalInertia(CbtShapeHandle handle, float mass, CbtVector3 inertia);
 
 void cbtShapeSetUserPointer(CbtShapeHandle handle, void* user_pointer);
-void cbtShapeSetUserIndex(CbtShapeHandle handle, int user_index);
 void* cbtShapeGetUserPointer(CbtShapeHandle handle);
-int cbtShapeGetUserIndex(CbtShapeHandle handle);
+void cbtShapeSetUserIndex(CbtShapeHandle handle, int slot, int user_index); // slot can be 0 or 1
+int cbtShapeGetUserIndex(CbtShapeHandle handle, int slot);
 
 void cbtShapeDestroy(CbtShapeHandle handle);
 int cbtShapeGetType(CbtShapeHandle handle);
@@ -171,6 +175,9 @@ void cbtBodySetLinearVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
 void cbtBodySetAngularVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
 void cbtBodySetPushVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
 void cbtBodySetTurnVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
+
+void cbtBodySetLinearFactor(CbtBodyHandle handle, const CbtVector3 factor);
+void cbtBodySetAngularFactor(CbtBodyHandle handle, const CbtVector3 factor);
 
 
 void cbtBodyApplyCentralForce(CbtBodyHandle handle, const CbtVector3 force);
@@ -211,22 +218,22 @@ void cbtBodyGetTurnVelocity(CbtBodyHandle handle, CbtVector3 velocity);
 void cbtBodyGetTotalForce(CbtBodyHandle handle, CbtVector3 force);
 void cbtBodyGetTotalTorque(CbtBodyHandle handle, CbtVector3 torque);
 
-int cbtBodyIsStatic(CbtBodyHandle handle);
-int cbtBodyIsKinematic(CbtBodyHandle handle);
-int cbtBodyIsStaticOrKinematic(CbtBodyHandle handle);
+CbtBool cbtBodyIsStatic(CbtBodyHandle handle);
+CbtBool cbtBodyIsKinematic(CbtBodyHandle handle);
+CbtBool cbtBodyIsStaticOrKinematic(CbtBodyHandle handle);
 
 float cbtBodyGetDeactivationTime(CbtBodyHandle handle);
 void cbtBodySetDeactivationTime(CbtBodyHandle handle, float time);
 int cbtBodyGetActivationState(CbtBodyHandle handle);
 void cbtBodySetActivationState(CbtBodyHandle handle, int state);
 void cbtBodyForceActivationState(CbtBodyHandle handle, int state);
-int cbtBodyIsActive(CbtBodyHandle handle);
-int cbtBodyIsInWorld(CbtBodyHandle handle);
+CbtBool cbtBodyIsActive(CbtBodyHandle handle);
+CbtBool cbtBodyIsInWorld(CbtBodyHandle handle);
 
 void cbtBodySetUserPointer(CbtBodyHandle handle, void* user_pointer);
-void cbtBodySetUserIndex(CbtBodyHandle handle, int user_index);
-void* cbtBodyGetUserPointer(CbtBodyHandle handle);
-int cbtBodyGetUserIndex(CbtBodyHandle handle);
+void* cbtBodyGetUserPointer(CbtBodyHandle handle, int slot);
+void cbtBodySetUserIndex(CbtBodyHandle handle, int slot, int user_index); // slot can be 0, 1 or 2
+int cbtBodyGetUserIndex(CbtBodyHandle handle, int slot);
 
 
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]);
