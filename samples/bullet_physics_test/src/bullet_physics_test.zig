@@ -388,7 +388,7 @@ fn update(demo: *DemoState) void {
             &result,
         );
 
-        if (hit != 0 and result.body != null and c.cbtBodyIsStaticOrKinematic(result.body) == 0) {
+        if (hit == c.CBT_TRUE and result.body != null and c.cbtBodyIsStaticOrKinematic(result.body) == 0) {
             demo.pick.body = result.body;
 
             demo.pick.saved_linear_damping = c.cbtBodyGetLinearDamping(result.body);
