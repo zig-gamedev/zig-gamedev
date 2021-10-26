@@ -388,7 +388,7 @@ fn update(demo: *DemoState) void {
             &result,
         );
 
-        if (hit == c.CBT_TRUE and result.body != null and c.cbtBodyIsStaticOrKinematic(result.body) == 0) {
+        if (hit == c.CBT_TRUE and result.body != null and c.cbtBodyIsStaticOrKinematic(result.body) == c.CBT_FALSE) {
             demo.pick.body = result.body;
 
             demo.pick.saved_linear_damping = c.cbtBodyGetLinearDamping(result.body);
@@ -404,7 +404,8 @@ fn update(demo: *DemoState) void {
 
             var inv_trans: [4]c.CbtVector3 = undefined;
             c.cbtBodyGetInvCenterOfMassTransform(result.body, &inv_trans);
-            const pivot_a = (Vec3{ .c = result.hit_point_world }).transform(Mat4.initArray4x3(inv_trans));
+            const hit_point_world = Vec3{ .c = result.hit_point_world };
+            const pivot_a = hit_point_world.transform(Mat4.initArray4x3(inv_trans));
 
             const p2p = c.cbtConCreatePoint2Point(
                 result.body,
@@ -414,7 +415,7 @@ fn update(demo: *DemoState) void {
             );
             c.cbtWorldAddConstraint(demo.physics_world, p2p, 1);
             demo.pick.constraint = p2p;
-            demo.pick.distance = (Vec3{ .c = result.hit_point_world }).sub(from).length();
+            demo.pick.distance = hit_point_world.sub(from).length();
 
             c.cbtConPoint2PointSetImpulseClamp(p2p, 30.0);
             c.cbtConPoint2PointSetTau(p2p, 0.001);
