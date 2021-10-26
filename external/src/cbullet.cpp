@@ -357,16 +357,16 @@ CbtBodyHandle cbtBodyCreate(
     if (is_dynamic)
         shape->calculateLocalInertia(mass, local_inertia);
 
+    // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
     btDefaultMotionState* motion_state = new btDefaultMotionState(
         btTransform(
             btMatrix3x3(
-                btVector3(transform[0][0], transform[0][1], transform[0][2]),
-                btVector3(transform[1][0], transform[1][1], transform[1][2]),
-                btVector3(transform[2][0], transform[2][1], transform[2][2])
+                btVector3(transform[0][0], transform[1][0], transform[2][0]),
+                btVector3(transform[0][1], transform[1][1], transform[2][1]),
+                btVector3(transform[0][2], transform[1][2], transform[2][2])
             ),
             btVector3(transform[3][0], transform[3][1], transform[3][2])
-        )
-    );
+    ));
 
     btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, local_inertia);
     btRigidBody* body = new btRigidBody(info);
@@ -733,11 +733,12 @@ int cbtBodyGetUserIndex(CbtBodyHandle handle) {
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body);
+    // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
     body->setCenterOfMassTransform(btTransform(
         btMatrix3x3(
-            btVector3(transform[0][0], transform[0][1], transform[0][2]),
-            btVector3(transform[1][0], transform[1][1], transform[1][2]),
-            btVector3(transform[2][0], transform[2][1], transform[2][2])
+            btVector3(transform[0][0], transform[1][0], transform[2][0]),
+            btVector3(transform[0][1], transform[1][1], transform[2][1]),
+            btVector3(transform[0][2], transform[1][2], transform[2][2])
         ),
         btVector3(transform[3][0], transform[3][1], transform[3][2])
     ));
@@ -751,14 +752,15 @@ void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[
     const btMatrix3x3& basis = trans.getBasis();
     const btVector3& origin = trans.getOrigin();
 
+    // NOTE(mziulek): We transpose Bullet matrix here to make it compatible with: v * M convention.
     transform[0][0] = basis.getRow(0).x();
-    transform[0][1] = basis.getRow(0).y();
-    transform[0][2] = basis.getRow(0).z();
-    transform[1][0] = basis.getRow(1).x();
+    transform[1][0] = basis.getRow(0).y();
+    transform[2][0] = basis.getRow(0).z();
+    transform[0][1] = basis.getRow(1).x();
     transform[1][1] = basis.getRow(1).y();
-    transform[1][2] = basis.getRow(1).z();
-    transform[2][0] = basis.getRow(2).x();
-    transform[2][1] = basis.getRow(2).y();
+    transform[2][1] = basis.getRow(1).z();
+    transform[0][2] = basis.getRow(2).x();
+    transform[1][2] = basis.getRow(2).y();
     transform[2][2] = basis.getRow(2).z();
 
     transform[3][0] = origin.x();
@@ -786,14 +788,15 @@ void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transfo
     const btMatrix3x3& basis = trans.getBasis();
     const btVector3& origin = trans.getOrigin();
 
+    // NOTE(mziulek): We transpose Bullet matrix here to make it compatible with: v * M convention.
     transform[0][0] = basis.getRow(0).x();
-    transform[0][1] = basis.getRow(0).y();
-    transform[0][2] = basis.getRow(0).z();
-    transform[1][0] = basis.getRow(1).x();
+    transform[1][0] = basis.getRow(0).y();
+    transform[2][0] = basis.getRow(0).z();
+    transform[0][1] = basis.getRow(1).x();
     transform[1][1] = basis.getRow(1).y();
-    transform[1][2] = basis.getRow(1).z();
-    transform[2][0] = basis.getRow(2).x();
-    transform[2][1] = basis.getRow(2).y();
+    transform[2][1] = basis.getRow(1).z();
+    transform[0][2] = basis.getRow(2).x();
+    transform[1][2] = basis.getRow(2).y();
     transform[2][2] = basis.getRow(2).z();
 
     transform[3][0] = origin.x();

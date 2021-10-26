@@ -58,6 +58,12 @@ const DemoState = struct {
         cursor_prev_x: i32,
         cursor_prev_y: i32,
     },
+    pick: struct {
+        body: c.CbtBodyHandle,
+        constraint: c.CbtConstraintHandle,
+        saved_activation_state: i32,
+        distance: f32,
+    },
 };
 
 const PsoPhysicsDebug_Vertex = struct {
@@ -122,36 +128,17 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     });
 
     const sphere_shape = c.cbtShapeCreateSphere(0.5);
-    const sphere_body = c.cbtBodyCreate(1.0, &[4]c.CbtVector3{
-        c.CbtVector3{ 1.0, 0.0, 0.0 },
-        c.CbtVector3{ 0.0, 1.0, 0.0 },
-        c.CbtVector3{ 0.0, 0.0, 1.0 },
-        c.CbtVector3{ 0.0, 1.5, 5.0 },
-    }, sphere_shape);
+    const ground_shape = c.cbtShapeCreateBox(&Vec3.init(20.0, 0.2, 20.0).c);
+
+    const sphere_body = c.cbtBodyCreate(5.0, &Mat4.initTranslation(Vec3.init(0, 1.5, 5)).toArray4x3(), sphere_shape);
+    c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
     c.cbtWorldAddBody(physics_world, sphere_body);
 
-    c.cbtBodySetCenterOfMassTransform(sphere_body, &Mat4.initTranslation(Vec3.init(0.0, 3.0, 5.0)).toArray4x3());
-    c.cbtBodySetActivationState(sphere_body, c.CBT_DISABLE_DEACTIVATION);
-
-    const ground_shape = c.cbtShapeCreateBox(&Vec3.init(20.0, 0.2, 20.0).c);
-    const ground_body = c.cbtBodyCreate(0.0, &[4]c.CbtVector3{
-        c.CbtVector3{ 1.0, 0.0, 0.0 },
-        c.CbtVector3{ 0.0, 1.0, 0.0 },
-        c.CbtVector3{ 0.0, 0.0, 1.0 },
-        c.CbtVector3{ 0.0, 0.0, 0.0 },
-    }, ground_shape);
+    const ground_body = c.cbtBodyCreate(0.0, &Mat4.initIdentity().toArray4x3(), ground_shape);
     c.cbtWorldAddBody(physics_world, ground_body);
 
     assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
     assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
-
-    {
-        var trans: [4]c.CbtVector3 = undefined;
-        c.cbtBodyGetCenterOfMassTransform(sphere_body, &trans);
-        const m = Mat4.initArray4x3(trans);
-        _ = m;
-        trans = Mat4.initRotationY(0.5).toArray4x3();
-    }
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -166,8 +153,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     );
 
     var grfx = gr.GraphicsContext.init(window);
-    //grfx.present_flags = 0;
-    //grfx.present_interval = 1;
+    grfx.present_flags = 0;
+    grfx.present_interval = 1;
 
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
@@ -270,6 +257,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .cursor_prev_x = 0,
             .cursor_prev_y = 0,
         },
+        .pick = .{
+            .body = null,
+            .saved_activation_state = 0,
+            .constraint = null,
+            .distance = 0.0,
+        },
     };
 }
 
@@ -284,6 +277,10 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     lib.deinitWindow(gpa);
     c.cbtWorldRemoveBody(demo.physics_world, demo.sphere_body);
     c.cbtWorldRemoveBody(demo.physics_world, demo.ground_body);
+    if (demo.pick.constraint != null) {
+        c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
+        c.cbtConDestroy(demo.pick.constraint);
+    }
     c.cbtBodyDestroy(demo.sphere_body);
     c.cbtBodyDestroy(demo.ground_body);
     c.cbtShapeDestroy(demo.sphere_shape);
@@ -363,9 +360,18 @@ fn update(demo: *DemoState) void {
         );
     }
 
-    {
+    c.cbtWorldDebugDrawSphere(
+        demo.physics_world,
+        &demo.camera.position.add(demo.camera.forward.scale(5.0)).c,
+        0.05,
+        &c.CbtVector3{ 0.0, 1.0, 1.0 },
+    );
+
+    const space_is_down = w.GetAsyncKeyState(w.VK_SPACE) < 0;
+
+    if (demo.pick.constraint == null and space_is_down) {
         const from = demo.camera.position;
-        const to = from.add(demo.camera.forward.scale(5.0));
+        const to = from.add(demo.camera.forward.scale(50.0));
 
         var result: c.CbtRayCastResult = undefined;
         const hit = c.cbtRayTestClosest(
@@ -374,17 +380,49 @@ fn update(demo: *DemoState) void {
             &to.c,
             c.CBT_COLLISION_FILTER_DEFAULT,
             c.CBT_COLLISION_FILTER_ALL,
-            c.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST,
+            c.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST | c.CBT_RAYCAST_FLAG_SKIP_BACKFACES,
             &result,
         );
-        if (hit != 0) {
-            c.cbtWorldDebugDrawSphere(
-                demo.physics_world,
+
+        if (hit != 0 and result.body != null and c.cbtBodyIsStaticOrKinematic(result.body) == 0) {
+            demo.pick.body = result.body;
+
+            demo.pick.saved_activation_state = c.cbtBodyGetActivationState(result.body);
+            if (demo.pick.saved_activation_state == c.CBT_ISLAND_SLEEPING) {
+                demo.pick.saved_activation_state = c.CBT_ACTIVE_TAG;
+            }
+            c.cbtBodySetActivationState(result.body, c.CBT_DISABLE_DEACTIVATION);
+            c.cbtBodySetDeactivationTime(result.body, 0.0);
+
+            var inv_trans: [4]c.CbtVector3 = undefined;
+            c.cbtBodyGetInvCenterOfMassTransform(result.body, &inv_trans);
+            const pivot_a = (Vec3{ .c = result.hit_point_world }).transform(Mat4.initArray4x3(inv_trans));
+
+            const p2p = c.cbtConCreatePoint2Point(
+                result.body,
+                c.cbtConGetFixedBody(),
+                &pivot_a.c,
                 &result.hit_point_world,
-                0.05,
-                &c.CbtVector3{ 1.0, 1.0, 0.0 },
             );
+            c.cbtWorldAddConstraint(demo.physics_world, p2p, 1);
+            demo.pick.constraint = p2p;
+            demo.pick.distance = (Vec3{ .c = result.hit_point_world }).sub(from).length();
+
+            c.cbtConPoint2PointSetImpulseClamp(p2p, 30.0);
+            c.cbtConPoint2PointSetTau(p2p, 0.001);
         }
+    } else if (demo.pick.constraint != null) {
+        const from = demo.camera.position;
+        const to = from.add(demo.camera.forward.scale(demo.pick.distance));
+        c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
+    }
+
+    if (!space_is_down and demo.pick.constraint != null) {
+        c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
+        c.cbtConDestroy(demo.pick.constraint);
+        c.cbtBodyForceActivationState(demo.pick.body, demo.pick.saved_activation_state);
+        demo.pick.constraint = null;
+        demo.pick.body = null;
     }
 }
 
