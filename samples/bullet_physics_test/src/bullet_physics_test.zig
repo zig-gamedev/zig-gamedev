@@ -345,14 +345,7 @@ fn update(demo: *DemoState) void {
         }
     }
 
-    c.cbtWorldDebugDrawSphere(
-        demo.physics_world,
-        &demo.camera.position.add(demo.camera.forward.scale(5.0)).c,
-        0.05,
-        &c.CbtVector3{ 0.0, 1.0, 1.0 },
-    );
-
-    const space_is_down = w.GetAsyncKeyState(w.VK_LBUTTON) < 0;
+    const mouse_button_is_down = w.GetAsyncKeyState(w.VK_LBUTTON) < 0;
 
     const ray_from = demo.camera.position;
     const ray_to = blk: {
@@ -385,7 +378,7 @@ fn update(demo: *DemoState) void {
         break :blk ray_to;
     };
 
-    if (demo.pick.constraint == null and space_is_down) {
+    if (demo.pick.constraint == null and mouse_button_is_down) {
         var result: c.CbtRayCastResult = undefined;
         const hit = c.cbtRayTestClosest(
             demo.physics_world,
@@ -434,7 +427,7 @@ fn update(demo: *DemoState) void {
         c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
     }
 
-    if (!space_is_down and demo.pick.constraint != null) {
+    if (!mouse_button_is_down and demo.pick.constraint != null) {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
         c.cbtBodyForceActivationState(demo.pick.body, demo.pick.saved_activation_state);

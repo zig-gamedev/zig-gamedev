@@ -173,27 +173,18 @@ void cbtBodySetDamping(CbtBodyHandle handle, float linear, float angular);
 
 void cbtBodySetLinearVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
 void cbtBodySetAngularVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
-void cbtBodySetPushVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
-void cbtBodySetTurnVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
 
 void cbtBodySetLinearFactor(CbtBodyHandle handle, const CbtVector3 factor);
 void cbtBodySetAngularFactor(CbtBodyHandle handle, const CbtVector3 factor);
 
-
 void cbtBodyApplyCentralForce(CbtBodyHandle handle, const CbtVector3 force);
 void cbtBodyApplyCentralImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
-void cbtBodyApplyCentralPushImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
-
 void cbtBodyApplyForce(CbtBodyHandle handle, const CbtVector3 force, const CbtVector3 rel_pos);
-void cbtBodyClearForces(CbtBodyHandle handle);
-
 void cbtBodyApplyImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const CbtVector3 rel_pos);
-void cbtBodyApplyPushImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const CbtVector3 rel_pos);
-
 void cbtBodyApplyTorque(CbtBodyHandle handle, const CbtVector3 torque);
 void cbtBodyApplyTorqueImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
-void cbtBodyApplyTorqueTurnImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
 
+void cbtBodyClearForces(CbtBodyHandle handle);
 
 float cbtBodyGetRestitution(CbtBodyHandle handle);
 
@@ -212,11 +203,6 @@ float cbtBodyGetAngularDamping(CbtBodyHandle handle);
 
 void cbtBodyGetLinearVelocity(CbtBodyHandle handle, CbtVector3 velocity);
 void cbtBodyGetAngularVelocity(CbtBodyHandle handle, CbtVector3 velocity);
-void cbtBodyGetPushVelocity(CbtBodyHandle handle, CbtVector3 velocity);
-void cbtBodyGetTurnVelocity(CbtBodyHandle handle, CbtVector3 velocity);
-
-void cbtBodyGetTotalForce(CbtBodyHandle handle, CbtVector3 force);
-void cbtBodyGetTotalTorque(CbtBodyHandle handle, CbtVector3 torque);
 
 CbtBool cbtBodyIsStatic(CbtBodyHandle handle);
 CbtBool cbtBodyIsKinematic(CbtBodyHandle handle);

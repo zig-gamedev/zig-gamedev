@@ -466,18 +466,6 @@ void cbtBodySetAngularVelocity(CbtBodyHandle handle, const CbtVector3 velocity) 
     body->setAngularVelocity(btVector3(velocity[0], velocity[1], velocity[2]));
 }
 
-void cbtBodySetPushVelocity(CbtBodyHandle handle, const CbtVector3 velocity) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && velocity);
-    body->setPushVelocity(btVector3(velocity[0], velocity[1], velocity[2]));
-}
-
-void cbtBodySetTurnVelocity(CbtBodyHandle handle, const CbtVector3 velocity) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && velocity);
-    body->setTurnVelocity(btVector3(velocity[0], velocity[1], velocity[2]));
-}
-
 void cbtBodySetLinearFactor(CbtBodyHandle handle, const CbtVector3 factor) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && factor);
@@ -502,12 +490,6 @@ void cbtBodyApplyCentralImpulse(CbtBodyHandle handle, const CbtVector3 impulse) 
     body->applyCentralImpulse(btVector3(impulse[0], impulse[1], impulse[2]));
 }
 
-void cbtBodyApplyCentralPushImpulse(CbtBodyHandle handle, const CbtVector3 impulse) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && impulse);
-    body->applyCentralPushImpulse(btVector3(impulse[0], impulse[1], impulse[2]));
-}
-
 void cbtBodyApplyForce(CbtBodyHandle handle, const CbtVector3 force, const CbtVector3 rel_pos) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && force && rel_pos);
@@ -526,12 +508,6 @@ void cbtBodyApplyImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const C
     body->applyImpulse(btVector3(impulse[0], impulse[1], impulse[2]), btVector3(rel_pos[0], rel_pos[1], rel_pos[2]));
 }
 
-void cbtBodyApplyPushImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const CbtVector3 rel_pos) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && impulse && rel_pos);
-    body->applyPushImpulse(btVector3(impulse[0], impulse[1], impulse[2]), btVector3(rel_pos[0], rel_pos[1], rel_pos[2]));
-}
-
 void cbtBodyApplyTorque(CbtBodyHandle handle, const CbtVector3 torque) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && torque);
@@ -542,12 +518,6 @@ void cbtBodyApplyTorqueImpulse(CbtBodyHandle handle, const CbtVector3 impulse) {
     btRigidBody* body = (btRigidBody*)handle;
     assert(body && impulse);
     body->applyTorqueImpulse(btVector3(impulse[0], impulse[1], impulse[2]));
-}
-
-void cbtBodyApplyTorqueTurnImpulse(CbtBodyHandle handle, const CbtVector3 impulse) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && impulse);
-    body->applyTorqueTurnImpulse(btVector3(impulse[0], impulse[1], impulse[2]));
 }
 
 float cbtBodyGetRestitution(CbtBodyHandle handle) {
@@ -629,42 +599,6 @@ void cbtBodyGetAngularVelocity(CbtBodyHandle handle, CbtVector3 velocity) {
     velocity[0] = vel.x();
     velocity[1] = vel.y();
     velocity[2] = vel.z();
-}
-
-void cbtBodyGetPushVelocity(CbtBodyHandle handle, CbtVector3 velocity) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && velocity);
-    const btVector3& vel = body->getPushVelocity();
-    velocity[0] = vel.x();
-    velocity[1] = vel.y();
-    velocity[2] = vel.z();
-}
-
-void cbtBodyGetTurnVelocity(CbtBodyHandle handle, CbtVector3 velocity) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && velocity);
-    const btVector3& vel = body->getTurnVelocity();
-    velocity[0] = vel.x();
-    velocity[1] = vel.y();
-    velocity[2] = vel.z();
-}
-
-void cbtBodyGetTotalForce(CbtBodyHandle handle, CbtVector3 force) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && force);
-    const btVector3& f = body->getTotalForce();
-    force[0] = f.x();
-    force[1] = f.y();
-    force[2] = f.z();
-}
-
-void cbtBodyGetTotalTorque(CbtBodyHandle handle, CbtVector3 torque) {
-    btRigidBody* body = (btRigidBody*)handle;
-    assert(body && torque);
-    const btVector3& t = body->getTotalTorque();
-    torque[0] = t.x();
-    torque[1] = t.y();
-    torque[2] = t.z();
 }
 
 CbtBool cbtBodyIsStatic(CbtBodyHandle handle) {
