@@ -27,6 +27,7 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: bullet physics test";
 const window_width = 1920;
 const window_height = 1080;
+const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
 const DemoState = struct {
     grfx: gr.GraphicsContext,
@@ -344,26 +345,6 @@ fn update(demo: *DemoState) void {
         }
     }
 
-    if (w.GetAsyncKeyState(w.VK_LEFT) < 0) {
-        c.cbtBodyApplyImpulse(demo.sphere_body, &c.CbtVector3{ 0.0, 20.0 * dt, 0.0 }, &c.CbtVector3{ 0.02, 0, 0 });
-    } else if (w.GetAsyncKeyState(w.VK_RIGHT) < 0) {
-        c.cbtBodyApplyImpulse(demo.sphere_body, &c.CbtVector3{ 0.0, 20.0 * dt, 0.0 }, &c.CbtVector3{ -0.02, 0, 0 });
-    }
-
-    {
-        var position: c.CbtVector3 = undefined;
-        var velocity: c.CbtVector3 = undefined;
-        c.cbtBodyGetCenterOfMassPosition(demo.sphere_body, &position);
-        c.cbtBodyGetLinearVelocity(demo.sphere_body, &velocity);
-
-        c.cbtWorldDebugDrawLine(
-            demo.physics_world,
-            &position,
-            &(Vec3{ .c = position }).add(Vec3{ .c = velocity }).c,
-            &c.CbtVector3{ 1.0, 1.0, 0.0 },
-        );
-    }
-
     c.cbtWorldDebugDrawSphere(
         demo.physics_world,
         &demo.camera.position.add(demo.camera.forward.scale(5.0)).c,
@@ -371,17 +352,45 @@ fn update(demo: *DemoState) void {
         &c.CbtVector3{ 0.0, 1.0, 1.0 },
     );
 
-    const space_is_down = w.GetAsyncKeyState(w.VK_SPACE) < 0;
+    const space_is_down = w.GetAsyncKeyState(w.VK_LBUTTON) < 0;
+
+    const ray_from = demo.camera.position;
+    const ray_to = blk: {
+        var ui = c.igGetIO().?;
+        const mousex = ui.*.MousePos.x;
+        const mousey = ui.*.MousePos.y;
+
+        const far_plane: f32 = 10000.0;
+        const tanfov = math.tan(0.5 * camera_fovy);
+        const width = @intToFloat(f32, demo.grfx.viewport_width);
+        const height = @intToFloat(f32, demo.grfx.viewport_height);
+        const aspect = width / height;
+
+        const ray_forward = demo.camera.forward.scale(far_plane);
+
+        var hor = Vec3.init(0, 1, 0).cross(ray_forward).normalize();
+        var vertical = hor.cross(ray_forward).normalize();
+
+        hor = hor.scale(2.0 * far_plane * tanfov * aspect);
+        vertical = vertical.scale(2.0 * far_plane * tanfov);
+
+        const ray_to_center = ray_from.add(ray_forward);
+        const dhor = hor.scale(1.0 / width);
+        const dvert = vertical.scale(1.0 / height);
+
+        var ray_to = ray_to_center.sub(hor.scale(0.5)).sub(vertical.scale(0.5));
+        ray_to = ray_to.add(dhor.scale(mousex));
+        ray_to = ray_to.add(dvert.scale(mousey));
+
+        break :blk ray_to;
+    };
 
     if (demo.pick.constraint == null and space_is_down) {
-        const from = demo.camera.position;
-        const to = from.add(demo.camera.forward.scale(50.0));
-
         var result: c.CbtRayCastResult = undefined;
         const hit = c.cbtRayTestClosest(
             demo.physics_world,
-            &from.c,
-            &to.c,
+            &ray_from.c,
+            &ray_to.c,
             c.CBT_COLLISION_FILTER_DEFAULT,
             c.CBT_COLLISION_FILTER_ALL,
             c.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST | c.CBT_RAYCAST_FLAG_SKIP_BACKFACES,
@@ -415,14 +424,13 @@ fn update(demo: *DemoState) void {
             );
             c.cbtWorldAddConstraint(demo.physics_world, p2p, 1);
             demo.pick.constraint = p2p;
-            demo.pick.distance = hit_point_world.sub(from).length();
+            demo.pick.distance = hit_point_world.sub(ray_from).length();
 
             c.cbtConPoint2PointSetImpulseClamp(p2p, 30.0);
             c.cbtConPoint2PointSetTau(p2p, 0.001);
         }
     } else if (demo.pick.constraint != null) {
-        const from = demo.camera.position;
-        const to = from.add(demo.camera.forward.scale(demo.pick.distance));
+        const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));
         c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
     }
 
@@ -446,7 +454,7 @@ fn draw(demo: *DemoState) void {
         vm.Vec3.init(0.0, 1.0, 0.0),
     );
     const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
-        math.pi / 3.0,
+        camera_fovy,
         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
         0.1,
         50.0,
