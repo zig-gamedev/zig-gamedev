@@ -99,11 +99,33 @@ const PhysicsDebug = struct {
         debug.lines.append(.{ .position = p1.c, .color = rgb }) catch unreachable;
     }
 
+    fn drawContactPoint(debug: *PhysicsDebug, point: Vec3, normal: Vec3, distance: f32, color: Vec3) void {
+        debug.drawLine(point, point.add(normal.scale(distance)), color);
+        debug.drawLine(point, point.add(normal.scale(0.01)), Vec3.init(0, 0, 0));
+    }
+
     fn drawLineCallback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*c_void) callconv(.C) void {
         const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
         ptr.drawLine(
             Vec3.init(p0[0], p0[1], p0[2]),
             Vec3.init(p1[0], p1[1], p1[2]),
+            Vec3.init(color[0], color[1], color[2]),
+        );
+    }
+
+    fn drawContactPointCallback(
+        point: [*c]const f32,
+        normal: [*c]const f32,
+        distance: f32,
+        _: c_int,
+        color: [*c]const f32,
+        user: ?*c_void,
+    ) callconv(.C) void {
+        const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
+        ptr.drawContactPoint(
+            Vec3.init(point[0], point[1], point[2]),
+            Vec3.init(normal[0], normal[1], normal[2]),
+            distance,
             Vec3.init(color[0], color[1], color[2]),
         );
     }
@@ -125,7 +147,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     c.cbtWorldDebugSetCallbacks(physics_world, &.{
         .drawLine = PhysicsDebug.drawLineCallback,
-        .drawContactPoint = null,
+        .drawContactPoint = PhysicsDebug.drawContactPointCallback,
         .reportErrorWarning = PhysicsDebug.reportErrorWarningCallback,
         .user_data = physics_debug,
     });
@@ -386,7 +408,7 @@ fn update(demo: *DemoState) void {
             &ray_to.c,
             c.CBT_COLLISION_FILTER_DEFAULT,
             c.CBT_COLLISION_FILTER_ALL,
-            c.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST | c.CBT_RAYCAST_FLAG_SKIP_BACKFACES,
+            c.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST,
             &result,
         );
 
@@ -441,12 +463,12 @@ fn draw(demo: *DemoState) void {
     var grfx = &demo.grfx;
     grfx.beginFrame();
 
-    const cam_world_to_view = vm.Mat4.initLookToLh(
+    const cam_world_to_view = Mat4.initLookToLh(
         demo.camera.position,
         demo.camera.forward,
-        vm.Vec3.init(0.0, 1.0, 0.0),
+        Vec3.init(0.0, 1.0, 0.0),
     );
-    const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
+    const cam_view_to_clip = Mat4.initPerspectiveFovLh(
         camera_fovy,
         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
         0.1,

@@ -162,7 +162,12 @@ void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallback
     CbtDebugDraw* debug = (CbtDebugDraw*)world->getDebugDrawer();
     if (debug == nullptr) {
         debug = new CbtDebugDraw();
-        debug->setDebugMode(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawFrames);
+        debug->setDebugMode(
+            btIDebugDraw::DBG_DrawWireframe |
+            btIDebugDraw::DBG_DrawFrames |
+            btIDebugDraw::DBG_DrawContactPoints |
+            btIDebugDraw::DBG_DrawConstraints
+        );
         world->setDebugDrawer(debug);
     }
 
