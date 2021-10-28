@@ -148,7 +148,11 @@ int cbtShapeGetType(CbtShapeHandle handle);
 //
 // Body
 //
-CbtBodyHandle cbtBodyCreate(
+void cbtBodyAllocate(unsigned int num, CbtBodyHandle* body_handles);
+void cbtBodyDeallocate(unsigned int num, CbtBodyHandle* body_handles);
+
+void cbtBodyCreate(
+    CbtBodyHandle body_handle,
     float mass,
     const CbtVector3 transform[4],
     CbtShapeHandle shape_handle
@@ -156,77 +160,77 @@ CbtBodyHandle cbtBodyCreate(
 void cbtBodyDestroy(CbtBodyHandle body_handle);
 
 void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle);
-CbtShapeHandle cbtBodyGetShape(CbtBodyHandle handle);
+CbtShapeHandle cbtBodyGetShape(CbtBodyHandle body_handle);
 
-void cbtBodySetRestitution(CbtBodyHandle handle, float restitution);
+void cbtBodySetRestitution(CbtBodyHandle body_handle, float restitution);
 
-void cbtBodySetFriction(CbtBodyHandle handle, float friction);
-void cbtBodySetRollingFriction(CbtBodyHandle handle, float friction);
-void cbtBodySetSpinningFriction(CbtBodyHandle handle, float friction);
-void cbtBodySetAnisotropicFriction(CbtBodyHandle handle, const CbtVector3 friction, int mode);
+void cbtBodySetFriction(CbtBodyHandle body_handle, float friction);
+void cbtBodySetRollingFriction(CbtBodyHandle body_handle, float friction);
+void cbtBodySetSpinningFriction(CbtBodyHandle body_handle, float friction);
+void cbtBodySetAnisotropicFriction(CbtBodyHandle body_handle, const CbtVector3 friction, int mode);
 
-void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle handle, float stiffness, float damping);
+void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle body_handle, float stiffness, float damping);
 
-void cbtBodySetMassProps(CbtBodyHandle handle, float mass, const CbtVector3 inertia);
+void cbtBodySetMassProps(CbtBodyHandle body_handle, float mass, const CbtVector3 inertia);
 
-void cbtBodySetDamping(CbtBodyHandle handle, float linear, float angular);
+void cbtBodySetDamping(CbtBodyHandle body_handle, float linear, float angular);
 
-void cbtBodySetLinearVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
-void cbtBodySetAngularVelocity(CbtBodyHandle handle, const CbtVector3 velocity);
+void cbtBodySetLinearVelocity(CbtBodyHandle body_handle, const CbtVector3 velocity);
+void cbtBodySetAngularVelocity(CbtBodyHandle body_handle, const CbtVector3 velocity);
 
-void cbtBodySetLinearFactor(CbtBodyHandle handle, const CbtVector3 factor);
-void cbtBodySetAngularFactor(CbtBodyHandle handle, const CbtVector3 factor);
+void cbtBodySetLinearFactor(CbtBodyHandle body_handle, const CbtVector3 factor);
+void cbtBodySetAngularFactor(CbtBodyHandle body_handle, const CbtVector3 factor);
 
-void cbtBodyApplyCentralForce(CbtBodyHandle handle, const CbtVector3 force);
-void cbtBodyApplyCentralImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
-void cbtBodyApplyForce(CbtBodyHandle handle, const CbtVector3 force, const CbtVector3 rel_pos);
-void cbtBodyApplyImpulse(CbtBodyHandle handle, const CbtVector3 impulse, const CbtVector3 rel_pos);
-void cbtBodyApplyTorque(CbtBodyHandle handle, const CbtVector3 torque);
-void cbtBodyApplyTorqueImpulse(CbtBodyHandle handle, const CbtVector3 impulse);
+void cbtBodyApplyCentralForce(CbtBodyHandle body_handle, const CbtVector3 force);
+void cbtBodyApplyCentralImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse);
+void cbtBodyApplyForce(CbtBodyHandle body_handle, const CbtVector3 force, const CbtVector3 rel_pos);
+void cbtBodyApplyImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse, const CbtVector3 rel_pos);
+void cbtBodyApplyTorque(CbtBodyHandle body_handle, const CbtVector3 torque);
+void cbtBodyApplyTorqueImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse);
 
-void cbtBodyClearForces(CbtBodyHandle handle);
+void cbtBodyClearForces(CbtBodyHandle body_handle);
 
-float cbtBodyGetRestitution(CbtBodyHandle handle);
+float cbtBodyGetRestitution(CbtBodyHandle body_handle);
 
-float cbtBodyGetFriction(CbtBodyHandle handle);
-float cbtBodyGetRollingFriction(CbtBodyHandle handle);
-float cbtBodyGetSpinningFriction(CbtBodyHandle handle);
-void cbtBodyGetAnisotropicFriction(CbtBodyHandle handle, CbtVector3 friction);
+float cbtBodyGetFriction(CbtBodyHandle body_handle);
+float cbtBodyGetRollingFriction(CbtBodyHandle body_handle);
+float cbtBodyGetSpinningFriction(CbtBodyHandle body_handle);
+void cbtBodyGetAnisotropicFriction(CbtBodyHandle body_handle, CbtVector3 friction);
 
-float cbtBodyGetContactStiffness(CbtBodyHandle handle);
-float cbtBodyGetContactDamping(CbtBodyHandle handle);
+float cbtBodyGetContactStiffness(CbtBodyHandle body_handle);
+float cbtBodyGetContactDamping(CbtBodyHandle body_handle);
 
-float cbtBodyGetMass(CbtBodyHandle handle);
+float cbtBodyGetMass(CbtBodyHandle body_handle);
 
-float cbtBodyGetLinearDamping(CbtBodyHandle handle);
-float cbtBodyGetAngularDamping(CbtBodyHandle handle);
+float cbtBodyGetLinearDamping(CbtBodyHandle body_handle);
+float cbtBodyGetAngularDamping(CbtBodyHandle body_handle);
 
-void cbtBodyGetLinearVelocity(CbtBodyHandle handle, CbtVector3 velocity);
-void cbtBodyGetAngularVelocity(CbtBodyHandle handle, CbtVector3 velocity);
+void cbtBodyGetLinearVelocity(CbtBodyHandle body_handle, CbtVector3 velocity);
+void cbtBodyGetAngularVelocity(CbtBodyHandle body_handle, CbtVector3 velocity);
 
-CbtBool cbtBodyIsStatic(CbtBodyHandle handle);
-CbtBool cbtBodyIsKinematic(CbtBodyHandle handle);
-CbtBool cbtBodyIsStaticOrKinematic(CbtBodyHandle handle);
+CbtBool cbtBodyIsStatic(CbtBodyHandle body_handle);
+CbtBool cbtBodyIsKinematic(CbtBodyHandle body_handle);
+CbtBool cbtBodyIsStaticOrKinematic(CbtBodyHandle body_handle);
 
-float cbtBodyGetDeactivationTime(CbtBodyHandle handle);
-void cbtBodySetDeactivationTime(CbtBodyHandle handle, float time);
-int cbtBodyGetActivationState(CbtBodyHandle handle);
-void cbtBodySetActivationState(CbtBodyHandle handle, int state);
-void cbtBodyForceActivationState(CbtBodyHandle handle, int state);
-CbtBool cbtBodyIsActive(CbtBodyHandle handle);
-CbtBool cbtBodyIsInWorld(CbtBodyHandle handle);
+float cbtBodyGetDeactivationTime(CbtBodyHandle body_handle);
+void cbtBodySetDeactivationTime(CbtBodyHandle body_handle, float time);
+int cbtBodyGetActivationState(CbtBodyHandle body_handle);
+void cbtBodySetActivationState(CbtBodyHandle body_handle, int state);
+void cbtBodyForceActivationState(CbtBodyHandle body_handle, int state);
+CbtBool cbtBodyIsActive(CbtBodyHandle body_handle);
+CbtBool cbtBodyIsInWorld(CbtBodyHandle body_handle);
 
-void cbtBodySetUserPointer(CbtBodyHandle handle, void* user_pointer);
-void* cbtBodyGetUserPointer(CbtBodyHandle handle, int slot);
-void cbtBodySetUserIndex(CbtBodyHandle handle, int slot, int user_index); // slot can be 0, 1 or 2
-int cbtBodyGetUserIndex(CbtBodyHandle handle, int slot);
+void cbtBodySetUserPointer(CbtBodyHandle body_handle, void* user_pointer);
+void* cbtBodyGetUserPointer(CbtBodyHandle body_handle, int slot);
+void cbtBodySetUserIndex(CbtBodyHandle body_handle, int slot, int user_index); // slot can be 0, 1 or 2
+int cbtBodyGetUserIndex(CbtBodyHandle body_handle, int slot);
 
 
-void cbtBodySetCenterOfMassTransform(CbtBodyHandle handle, const CbtVector3 transform[4]);
-void cbtBodyGetCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
-void cbtBodyGetCenterOfMassPosition(CbtBodyHandle handle, CbtVector3 position);
-void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
-void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle handle, CbtVector3 transform[4]);
+void cbtBodySetCenterOfMassTransform(CbtBodyHandle body_handle, const CbtVector3 transform[4]);
+void cbtBodyGetCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]);
+void cbtBodyGetCenterOfMassPosition(CbtBodyHandle body_handle, CbtVector3 position);
+void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]);
+void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]);
 
 //
 // Constraints

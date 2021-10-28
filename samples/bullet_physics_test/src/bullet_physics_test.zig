@@ -46,8 +46,7 @@ const DemoState = struct {
     physics_world: c.CbtWorldHandle,
     sphere_shape: c.CbtShapeHandle,
     ground_shape: c.CbtShapeHandle,
-    sphere_body: c.CbtBodyHandle,
-    ground_body: c.CbtBodyHandle,
+    bodies: [2]c.CbtBodyHandle,
 
     camera: struct {
         position: Vec3,
@@ -155,12 +154,22 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const sphere_shape = c.cbtShapeCreateSphere(0.5);
     const ground_shape = c.cbtShapeCreateBox(&Vec3.init(20.0, 0.2, 20.0).c);
 
-    const sphere_body = c.cbtBodyCreate(5.0, &Mat4.initTranslation(Vec3.init(0, 1.5, 5)).toArray4x3(), sphere_shape);
-    c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
-    c.cbtWorldAddBody(physics_world, sphere_body);
+    var bodies: [2]c.CbtBodyHandle = undefined;
 
-    const ground_body = c.cbtBodyCreate(0.0, &Mat4.initIdentity().toArray4x3(), ground_shape);
-    c.cbtWorldAddBody(physics_world, ground_body);
+    c.cbtBodyAllocate(bodies.len, &bodies);
+
+    c.cbtBodyCreate(bodies[0], 5.0, &Mat4.initTranslation(Vec3.init(0, 1.5, 5)).toArray4x3(), sphere_shape);
+    c.cbtBodySetDamping(bodies[0], 0.2, 0.2);
+
+    c.cbtBodyDestroy(bodies[0]);
+
+    c.cbtBodyCreate(bodies[0], 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
+    c.cbtBodySetDamping(bodies[0], 0.2, 0.2);
+
+    c.cbtWorldAddBody(physics_world, bodies[0]);
+
+    c.cbtBodyCreate(bodies[1], 0.0, &Mat4.initIdentity().toArray4x3(), ground_shape);
+    c.cbtWorldAddBody(physics_world, bodies[1]);
 
     assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
     assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
@@ -266,9 +275,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_world = physics_world,
         .physics_debug = physics_debug,
         .sphere_shape = sphere_shape,
-        .sphere_body = sphere_body,
         .ground_shape = ground_shape,
-        .ground_body = ground_body,
+        .bodies = bodies,
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
@@ -302,14 +310,15 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
-    c.cbtWorldRemoveBody(demo.physics_world, demo.sphere_body);
-    c.cbtWorldRemoveBody(demo.physics_world, demo.ground_body);
     if (demo.pick.constraint != null) {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
     }
-    c.cbtBodyDestroy(demo.sphere_body);
-    c.cbtBodyDestroy(demo.ground_body);
+    for (demo.bodies) |body| {
+        c.cbtWorldRemoveBody(demo.physics_world, body);
+        c.cbtBodyDestroy(body);
+    }
+    c.cbtBodyDeallocate(demo.bodies.len, &demo.bodies);
     c.cbtShapeDestroy(demo.sphere_shape);
     c.cbtShapeDestroy(demo.ground_shape);
     demo.physics_debug.deinit();
