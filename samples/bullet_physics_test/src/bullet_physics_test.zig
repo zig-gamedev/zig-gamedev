@@ -151,8 +151,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .user_data = physics_debug,
     });
 
-    const sphere_shape = c.cbtShapeCreateSphere(0.5);
-    const ground_shape = c.cbtShapeCreateBox(&Vec3.init(20.0, 0.2, 20.0).c);
+    const sphere_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
+    c.cbtShapeCreateSphere(sphere_shape, 0.5);
+
+    const ground_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeCreateBox(ground_shape, &Vec3.init(20.0, 0.2, 20.0).c);
 
     var bodies: [2]c.CbtBodyHandle = undefined;
 
@@ -321,6 +324,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     c.cbtBodyDeallocate(demo.bodies.len, &demo.bodies);
     c.cbtShapeDestroy(demo.sphere_shape);
     c.cbtShapeDestroy(demo.ground_shape);
+    c.cbtShapeDeallocate(demo.ground_shape);
+    c.cbtShapeDeallocate(demo.sphere_shape);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
     c.cbtWorldDestroy(demo.physics_world);

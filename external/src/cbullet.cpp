@@ -207,72 +207,125 @@ void cbtWorldDebugDrawSphere(CbtWorldHandle handle, const CbtVector3 position, f
     );
 }
 
+static_assert(sizeof(btCapsuleShape) == sizeof(btCapsuleShapeX), "wrong size");
+static_assert(sizeof(btCapsuleShape) == sizeof(btCapsuleShapeZ), "wrong size");
+static_assert(sizeof(btConeShape) == sizeof(btConeShapeX), "wrong size");
+static_assert(sizeof(btConeShape) == sizeof(btConeShapeZ), "wrong size");
+static_assert(sizeof(btCylinderShape) == sizeof(btCylinderShapeX), "wrong size");
+static_assert(sizeof(btCylinderShape) == sizeof(btCylinderShapeZ), "wrong size");
+
+CbtShapeHandle cbtShapeAllocate(int shape_type) {
+    size_t size = 0;
+    switch (shape_type) {
+        case CBT_SHAPE_TYPE_BOX: size = sizeof(btBoxShape); break;
+        case CBT_SHAPE_TYPE_BOX_2D: size = sizeof(btBox2dShape); break;
+        case CBT_SHAPE_TYPE_SPHERE: size = sizeof(btSphereShape); break;
+        case CBT_SHAPE_TYPE_CAPSULE: size = sizeof(btCapsuleShape); break;
+        case CBT_SHAPE_TYPE_CONE: size = sizeof(btConeShape); break;
+        case CBT_SHAPE_TYPE_CYLINDER: size = sizeof(btCylinderShape); break;
+        case CBT_SHAPE_TYPE_STATIC_PLANE: size = sizeof(btStaticPlaneShape); break;
+        default: assert(0);
+    }
+    auto shape = (int*)_aligned_malloc(size, 16);
+    shape[0] = 0;
+    shape[1] = 0;
+    shape[2] = shape_type; // btCollisionShape::m_shapeType field is just after vtable (offset: 8)
+    return (CbtShapeHandle)shape;
+}
+
+void cbtShapeDeallocate(CbtShapeHandle shape_handle) {
+    assert(shape_handle);
+    auto shape = (uint64_t*)shape_handle;
+    assert(cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    _aligned_free(shape_handle);
+}
+
+void cbtShapeDestroy(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    auto shape = (btCollisionShape*)shape_handle;
+    shape->~btCollisionShape();
+    ((uint64_t*)shape_handle)[0] = 0;
+}
+
+CbtBool cbtShapeIsCreated(CbtShapeHandle shape_handle) {
+    assert(shape_handle);
+    return ((uint64_t*)shape_handle)[0] == 0 ? CBT_FALSE : CBT_TRUE;
+}
+
+void cbtShapeCreateBox(CbtShapeHandle shape_handle, const CbtVector3 half_extents) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
+    auto shape = (btCollisionShape*)shape_handle;
+    assert(shape->getShapeType() == CBT_SHAPE_TYPE_BOX);
+    new (shape) btBoxShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+}
+
+void cbtShapeCreateBox2d(CbtShapeHandle shape_handle, float x_half_extent, float y_half_extent) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(x_half_extent > 0.0 && y_half_extent > 0.0);
+    auto shape = (btCollisionShape*)shape_handle;
+    assert(shape->getShapeType() == CBT_SHAPE_TYPE_BOX_2D);
+    new (shape) btBox2dShape(btVector3(x_half_extent, y_half_extent, 0.0));
+}
+
+void cbtShapeCreateSphere(CbtShapeHandle shape_handle, float radius) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(radius > 0.0f);
+    auto shape = (btCollisionShape*)shape_handle;
+    assert(shape->getShapeType() == CBT_SHAPE_TYPE_SPHERE);
+    new (shape) btSphereShape(radius);
+}
+
+void cbtShapeCreateStaticPlane(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance) {
+    assert(shape_handle);
+    auto shape = (btCollisionShape*)shape_handle;
+    assert(shape->getShapeType() == CBT_SHAPE_TYPE_STATIC_PLANE);
+    new (shape) btStaticPlaneShape(btVector3(normal[0], normal[1], normal[2]), distance);
+}
+
+void cbtShapeCreateCapsule(CbtShapeHandle shape_handle, float radius, float height, int axis) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
+    auto shape = (btCollisionShape*)shape_handle;
+    if (axis == CBT_AXIS_X) {
+        new (shape) btCapsuleShapeX(radius, height);
+    } else if (axis == CBT_AXIS_Y) {
+        new (shape) btCapsuleShape(radius, height);
+    } else {
+        new (shape) btCapsuleShapeZ(radius, height);
+    }
+}
+
+void cbtShapeCreateCylinder(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
+    auto shape = (btCylinderShape*)shape_handle;
+    if (axis == CBT_AXIS_X) {
+        new (shape) btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    } else if (axis == CBT_AXIS_Y) {
+        new (shape) btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    } else {
+        new (shape) btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    }
+}
+
+void cbtShapeCreateCone(CbtShapeHandle shape_handle, float radius, float height, int axis) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
+    auto shape = (btConeShape*)shape_handle;
+    if (axis == CBT_AXIS_X) {
+        new (shape) btConeShapeX(radius, height);
+    } else if (axis == CBT_AXIS_Y) {
+        new (shape) btConeShape(radius, height);
+    } else {
+        new (shape) btConeShapeZ(radius, height);
+    }
+}
+
 int cbtShapeGetType(CbtShapeHandle handle) {
     btCollisionShape* shape = (btCollisionShape*)handle;
     assert(shape);
     return shape->getShapeType();
-}
-
-CbtShapeHandle cbtShapeCreateBox(const CbtVector3 half_extents) {
-    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    btBoxShape* box = new btBoxShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
-    return (CbtShapeHandle)box;
-}
-
-CbtShapeHandle cbtShapeCreateBox2d(float x_half_extent, float y_half_extent) {
-    assert(x_half_extent > 0.0 && y_half_extent > 0.0);
-    btBox2dShape* box = new btBox2dShape(btVector3(x_half_extent, y_half_extent, 0.0));
-    return (CbtShapeHandle)box;
-}
-
-CbtShapeHandle cbtShapeCreateSphere(float radius) {
-    assert(radius > 0.0f);
-    btSphereShape* sphere = new btSphereShape(radius);
-    return (CbtShapeHandle)sphere;
-}
-
-CbtShapeHandle cbtShapeCreatePlane(const CbtVector3 normal, float distance) {
-    btStaticPlaneShape* cbtane = new btStaticPlaneShape(btVector3(normal[0], normal[1], normal[2]), distance);
-    return (CbtShapeHandle)cbtane;
-}
-
-CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int axis) {
-    assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
-    btCapsuleShape* shape = nullptr;
-    if (axis == CBT_AXIS_X) {
-        shape = new btCapsuleShapeX(radius, height);
-    } else if (axis == CBT_AXIS_Y) {
-        shape = new btCapsuleShape(radius, height);
-    } else {
-        shape = new btCapsuleShapeZ(radius, height);
-    }
-    return (CbtShapeHandle)shape;
-}
-
-CbtShapeHandle cbtShapeCreateCylinder(const CbtVector3 half_extents, int axis) {
-    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    btCylinderShape* shape = nullptr;
-    if (axis == CBT_AXIS_X) {
-        shape = new btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
-    } else if (axis == CBT_AXIS_Y) {
-        shape = new btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
-    } else {
-        shape = new btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
-    }
-    return (CbtShapeHandle)shape;
-}
-
-CbtShapeHandle cbtShapeCreateCone(float radius, float height, int axis) {
-    assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
-    btConeShape* shape = nullptr;
-    if (axis == CBT_AXIS_X) {
-        shape = new btConeShapeX(radius, height);
-    } else if (axis == CBT_AXIS_Y) {
-        shape = new btConeShape(radius, height);
-    } else {
-        shape = new btConeShapeZ(radius, height);
-    }
-    return (CbtShapeHandle)shape;
 }
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle handle) {
@@ -354,12 +407,6 @@ int cbtShapeGetUserIndex(CbtShapeHandle handle, int slot) {
     return shape->getUserIndex2();
 }
 
-void cbtShapeDestroy(CbtShapeHandle handle) {
-    btCollisionShape* shape = (btCollisionShape*)handle;
-    assert(shape);
-    delete shape;
-}
-
 static_assert((sizeof(btRigidBody) % 16) == 0, "sizeof(btRigidBody) is not multiple of 16");
 static_assert((sizeof(btDefaultMotionState) % 16) == 0, "sizeof(btDefaultMotionState) is not multiple of 16");
 static_assert(
@@ -419,7 +466,7 @@ void cbtBodyCreate(
     ));
 
     btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, local_inertia);
-    btRigidBody* body = new (body_mem) btRigidBody(info);
+    new (body_mem) btRigidBody(info);
 }
 
 void cbtBodyDestroy(CbtBodyHandle body_handle) {

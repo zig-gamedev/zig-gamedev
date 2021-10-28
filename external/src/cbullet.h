@@ -120,14 +120,21 @@ void cbtWorldDebugDrawSphere(CbtWorldHandle handle, const CbtVector3 position, f
 //
 // Shape
 //
-CbtShapeHandle cbtShapeCreateBox(const CbtVector3 half_extents);
-CbtShapeHandle cbtShapeCreateBox2d(float x_half_extent, float y_half_extent);
-CbtShapeHandle cbtShapeCreateSphere(float radius);
-CbtShapeHandle cbtShapeCreatePlane(const CbtVector3 normal, float distance);
-CbtShapeHandle cbtShapeCreateCapsule(float radius, float height, int axis);
-CbtShapeHandle cbtShapeCreateCylinder(const CbtVector3 half_extents, int axis);
-CbtShapeHandle cbtShapeCreateCone(float radius, float height, int axis);
+CbtShapeHandle cbtShapeAllocate(int shape_type);
+void cbtShapeDeallocate(CbtShapeHandle shape_handle);
 
+void cbtShapeDestroy(CbtShapeHandle shape_handle);
+CbtBool cbtShapeIsCreated(CbtShapeHandle shape_handle);
+
+void cbtShapeCreateBox(CbtShapeHandle shape_handle, const CbtVector3 half_extents);
+void cbtShapeCreateBox2d(CbtShapeHandle shape_handle, float x_half_extent, float y_half_extent);
+void cbtShapeCreateSphere(CbtShapeHandle shape_handle, float radius);
+void cbtShapeCreateStaticPlane(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance);
+void cbtShapeCreateCapsule(CbtShapeHandle shape_handle, float radius, float height, int axis);
+void cbtShapeCreateCylinder(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis);
+void cbtShapeCreateCone(CbtShapeHandle shape_handle, float radius, float height, int axis);
+
+int cbtShapeGetType(CbtShapeHandle handle);
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle handle);
 CbtBool cbtShapeIsConvex2d(CbtShapeHandle handle);
 CbtBool cbtShapeIsConvex(CbtShapeHandle handle);
@@ -142,8 +149,6 @@ void* cbtShapeGetUserPointer(CbtShapeHandle handle);
 void cbtShapeSetUserIndex(CbtShapeHandle handle, int slot, int user_index); // slot can be 0 or 1
 int cbtShapeGetUserIndex(CbtShapeHandle handle, int slot);
 
-void cbtShapeDestroy(CbtShapeHandle handle);
-int cbtShapeGetType(CbtShapeHandle handle);
 
 //
 // Body
