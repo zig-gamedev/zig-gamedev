@@ -242,6 +242,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.NumRenderTargets = 1;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .LINE;
+        pso_desc.RasterizerState.AntialiasedLineEnable = w.TRUE;
         pso_desc.DSVFormat = .D32_FLOAT;
 
         break :blk grfx.createGraphicsShaderPipeline(
