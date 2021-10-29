@@ -173,6 +173,7 @@ void cbtBodyCreate(
     CbtShapeHandle shape_handle
 );
 void cbtBodyDestroy(CbtBodyHandle body_handle);
+CbtBool cbtBodyIsCreated(CbtBodyHandle body_handle);
 
 void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle);
 CbtShapeHandle cbtBodyGetShape(CbtBodyHandle body_handle);
