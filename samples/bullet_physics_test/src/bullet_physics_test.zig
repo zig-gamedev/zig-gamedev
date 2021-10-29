@@ -47,7 +47,8 @@ const DemoState = struct {
     sphere_shape: c.CbtShapeHandle,
     ground_shape: c.CbtShapeHandle,
     box_shape: c.CbtShapeHandle,
-    bodies: [3]c.CbtBodyHandle,
+    compound_shape: c.CbtShapeHandle,
+    bodies: [4]c.CbtBodyHandle,
 
     camera: struct {
         position: Vec3,
@@ -163,7 +164,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const box_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape, Vec3.init(0.5, 0.5, 0.5).ptr());
 
-    var bodies: [3]c.CbtBodyHandle = undefined;
+    const compound_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_COMPOUND);
+    c.cbtShapeCompoundCreate(compound_shape, c.CBT_TRUE, 2);
+    c.cbtShapeCompoundAddChild(compound_shape, &Mat4.initTranslation(Vec3.init(-0.75, 0, 0)).toArray4x3(), box_shape);
+    c.cbtShapeCompoundAddChild(compound_shape, &Mat4.initTranslation(Vec3.init(0.75, 0, 0)).toArray4x3(), sphere_shape);
+
+    var bodies: [4]c.CbtBodyHandle = undefined;
 
     c.cbtBodyAllocate(bodies.len, &bodies);
     c.cbtBodyCreate(bodies[0], 5.0, &Mat4.initTranslation(Vec3.init(0, 1.5, 5)).toArray4x3(), sphere_shape);
@@ -179,9 +185,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     c.cbtBodyCreate(bodies[2], 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
     c.cbtWorldAddBody(physics_world, bodies[2]);
 
+    c.cbtBodyCreate(bodies[3], 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
+    c.cbtWorldAddBody(physics_world, bodies[3]);
+
     assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
     assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
     assert(c.cbtShapeGetType(box_shape) == c.CBT_SHAPE_TYPE_BOX);
+    assert(c.cbtShapeGetType(compound_shape) == c.CBT_SHAPE_TYPE_COMPOUND);
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -286,6 +296,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .sphere_shape = sphere_shape,
         .ground_shape = ground_shape,
         .box_shape = box_shape,
+        .compound_shape = compound_shape,
         .bodies = bodies,
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
@@ -333,9 +344,11 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     c.cbtShapeDestroy(demo.sphere_shape);
     c.cbtShapeDestroy(demo.ground_shape);
     c.cbtShapeDestroy(demo.box_shape);
+    c.cbtShapeDestroy(demo.compound_shape);
     c.cbtShapeDeallocate(demo.ground_shape);
     c.cbtShapeDeallocate(demo.sphere_shape);
     c.cbtShapeDeallocate(demo.box_shape);
+    c.cbtShapeDeallocate(demo.compound_shape);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
     c.cbtWorldDestroy(demo.physics_world);
