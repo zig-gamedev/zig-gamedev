@@ -99,13 +99,17 @@ void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
 
 void cbtWorldAddConstraint(
     CbtWorldHandle world_handle,
-    CbtConstraintHandle constraint_handle,
+    CbtConstraintHandle con_handle,
     CbtBool disable_collision_between_linked_bodies
 ) {
+    assert(world_handle && con_handle);
+    assert(
+        disable_collision_between_linked_bodies == CBT_FALSE ||
+        disable_collision_between_linked_bodies == CBT_TRUE
+    );
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
-    btTypedConstraint* constraint = (btTypedConstraint*)constraint_handle;
-    assert(world && constraint);
-    world->addConstraint(constraint, disable_collision_between_linked_bodies ? true : false);
+    btTypedConstraint* con = (btTypedConstraint*)con_handle;
+    world->addConstraint(con, disable_collision_between_linked_bodies == CBT_FALSE ? false : true);
 }
 
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
@@ -115,15 +119,15 @@ void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) 
     world->removeRigidBody(body);
 }
 
-void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle constraint_handle) {
+void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle con_handle) {
+    assert(world_handle && con_handle);
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
-    btTypedConstraint* constraint = (btTypedConstraint*)constraint_handle;
-    assert(world && constraint);
-    world->removeConstraint(constraint);
+    btTypedConstraint* con = (btTypedConstraint*)con_handle;
+    world->removeConstraint(con);
 }
 
 CbtBool cbtRayTestClosest(
-    CbtWorldHandle handle,
+    CbtWorldHandle world_handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,
     int collision_filter_group,
@@ -131,8 +135,8 @@ CbtBool cbtRayTestClosest(
     unsigned int flags,
     CbtRayCastResult* result
 ) {
-    assert(handle);
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
+    assert(world_handle);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
 
     const btVector3 from(ray_from_world[0], ray_from_world[1], ray_from_world[2]);
     const btVector3 to(ray_to_world[0], ray_to_world[1], ray_to_world[2]);
@@ -157,9 +161,9 @@ CbtBool cbtRayTestClosest(
     return closest.m_collisionObject == 0 ? CBT_FALSE : CBT_TRUE;
 }
 
-void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallbacks* callbacks) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world && callbacks);
+void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCallbacks* callbacks) {
+    assert(world_handle && callbacks);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
 
     CbtDebugDraw* debug = (CbtDebugDraw*)world->getDebugDrawer();
     if (debug == nullptr) {
@@ -176,16 +180,22 @@ void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallback
     debug->callbacks = *callbacks;
 }
 
-void cbtWorldDebugDraw(CbtWorldHandle handle) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world);
+void cbtWorldDebugDraw(CbtWorldHandle world_handle) {
+    assert(world_handle);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     world->debugDrawWorld();
 }
 
-void cbtWorldDebugDrawLine(CbtWorldHandle handle, const CbtVector3 p0, const CbtVector3 p1, const CbtVector3 color) {
+void cbtWorldDebugDrawLine(
+    CbtWorldHandle world_handle,
+    const CbtVector3 p0,
+    const CbtVector3 p1,
+    const CbtVector3 color
+) {
+    assert(world_handle);
     assert(p0 && p1 && color);
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world && world->getDebugDrawer());
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
+    assert(world->getDebugDrawer());
 
     world->getDebugDrawer()->drawLine(
         btVector3(p0[0], p0[1], p0[2]),
@@ -194,10 +204,16 @@ void cbtWorldDebugDrawLine(CbtWorldHandle handle, const CbtVector3 p0, const Cbt
     );
 }
 
-void cbtWorldDebugDrawSphere(CbtWorldHandle handle, const CbtVector3 position, float radius, const CbtVector3 color) {
+void cbtWorldDebugDrawSphere(
+    CbtWorldHandle world_handle,
+    const CbtVector3 position,
+    float radius,
+    const CbtVector3 color
+) {
+    assert(world_handle);
     assert(position && radius > 0.0 && color);
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world && world->getDebugDrawer());
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
+    assert(world->getDebugDrawer());
 
     world->getDebugDrawer()->drawSphere(
         btVector3(position[0], position[1], position[2]),

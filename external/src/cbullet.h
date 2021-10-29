@@ -99,14 +99,14 @@ typedef struct CbtRayCastResult {
 // World
 //
 CbtWorldHandle cbtWorldCreate(void);
-void cbtWorldDestroy(CbtWorldHandle handle);
-void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity);
-int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step);
+void cbtWorldDestroy(CbtWorldHandle world_handle);
+void cbtWorldSetGravity(CbtWorldHandle world_handle, const CbtVector3 gravity);
+int cbtWorldStepSimulation(CbtWorldHandle world_handle, float time_step, int max_sub_steps, float fixed_time_step);
 
 void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
 void cbtWorldAddConstraint(
     CbtWorldHandle world_handle,
-    CbtConstraintHandle constraint_handle,
+    CbtConstraintHandle con_handle,
     CbtBool disable_collision_between_linked_bodies
 );
 
@@ -115,7 +115,7 @@ void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle c
 
 // Returns CBT_TRUE when hits something, CBT_FALSE otherwise
 CbtBool cbtRayTestClosest(
-    CbtWorldHandle handle,
+    CbtWorldHandle world_handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,
     int collision_filter_group,
@@ -124,10 +124,20 @@ CbtBool cbtRayTestClosest(
     CbtRayCastResult* result
 );
 
-void cbtWorldDebugSetCallbacks(CbtWorldHandle handle, const CbtDebugDrawCallbacks* callbacks);
-void cbtWorldDebugDraw(CbtWorldHandle handle);
-void cbtWorldDebugDrawLine(CbtWorldHandle handle, const CbtVector3 p0, const CbtVector3 p1, const CbtVector3 color);
-void cbtWorldDebugDrawSphere(CbtWorldHandle handle, const CbtVector3 position, float radius, const CbtVector3 color);
+void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCallbacks* callbacks);
+void cbtWorldDebugDraw(CbtWorldHandle world_handle);
+void cbtWorldDebugDrawLine(
+    CbtWorldHandle world_handle,
+    const CbtVector3 p0,
+    const CbtVector3 p1,
+    const CbtVector3 color
+);
+void cbtWorldDebugDrawSphere(
+    CbtWorldHandle world_handle,
+    const CbtVector3 position,
+    float radius,
+    const CbtVector3 color
+);
 
 //
 // Shape
