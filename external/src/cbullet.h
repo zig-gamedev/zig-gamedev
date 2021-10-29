@@ -271,6 +271,14 @@ void cbtConDestroy(CbtConstraintHandle con_handle);
 CbtBool cbtConIsCreated(CbtConstraintHandle con_handle);
 int cbtConGetType(CbtConstraintHandle con_handle);
 
+void cbtConSetEnabled(CbtConstraintHandle con_handle, CbtBool enabled);
+CbtBool cbtConIsEnabled(CbtConstraintHandle con_handle);
+CbtBodyHandle cbtConGetBodyA(CbtConstraintHandle con_handle);
+CbtBodyHandle cbtConGetBodyB(CbtConstraintHandle con_handle);
+
+void cbtConSetDebugDrawSize(CbtConstraintHandle con_handle, float size);
+float cbtConGetDebugDrawSize(CbtConstraintHandle con_handle);
+
 void cbtConCreatePoint2Point(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,

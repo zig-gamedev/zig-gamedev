@@ -455,11 +455,12 @@ fn update(demo: *DemoState) void {
                 &pivot_a.c,
                 &result.hit_point_world,
             );
-            c.cbtWorldAddConstraint(demo.physics_world, demo.pick.constraint, 1);
-            demo.pick.distance = hit_point_world.sub(ray_from).length();
-
             c.cbtConPoint2PointSetImpulseClamp(demo.pick.constraint, 30.0);
             c.cbtConPoint2PointSetTau(demo.pick.constraint, 0.001);
+            c.cbtConSetDebugDrawSize(demo.pick.constraint, 0.15);
+
+            c.cbtWorldAddConstraint(demo.physics_world, demo.pick.constraint, c.CBT_TRUE);
+            demo.pick.distance = hit_point_world.sub(ray_from).length();
         }
     } else if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
         const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));

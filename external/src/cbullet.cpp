@@ -6,8 +6,6 @@
 #include "BulletCollision/CollisionShapes/btBox2dShape.h"
 #include "BulletDynamics/ConstraintSolver/btContactConstraint.h"
 
-#define HANDLE_TO_POINTER(type, handle) ((type*)((uint64_t)handle & ~0x1))
-
 struct CbtDebugDraw : public btIDebugDraw {
     CbtDebugDrawCallbacks callbacks = {};
     int debug_mode = 0;
@@ -95,7 +93,7 @@ int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_s
 void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
     assert(world_handle && body_handle);
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     world->addRigidBody(body);
 }
 
@@ -113,7 +111,7 @@ void cbtWorldAddConstraint(
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
     assert(world_handle && body_handle);
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     world->removeRigidBody(body);
 }
 
@@ -461,8 +459,6 @@ void cbtBodyAllocate(unsigned int num, CbtBodyHandle* body_handles) {
         // Set vtable to 0. This means that body is not created.
         ((uint64_t*)body_handles[i])[0] = 0;
     }
-    // Bit 0 set to '1', means that the body needs to be deallocated with _aligned_free().
-    body_handles[0] = (CbtBodyHandle)((uint64_t)body_handles[0] | 0x1);
 }
 
 void cbtBodyDeallocate(unsigned int num, CbtBodyHandle* body_handles) {
@@ -472,11 +468,8 @@ void cbtBodyDeallocate(unsigned int num, CbtBodyHandle* body_handles) {
         assert(cbtBodyIsCreated(body_handles[i]) == CBT_FALSE);
     }
 #endif
-    for (unsigned int i = 0; i < num; ++i) {
-        if ((uint64_t)body_handles[i] & 0x1) {
-            _aligned_free(HANDLE_TO_POINTER(btRigidBody, body_handles[i]));
-        }
-    }
+    // TODO(mziulek): For now we assume that all handles come from single call to cbtBodyAllocate().
+    _aligned_free(body_handles[0]);
 }
 
 void cbtBodyCreate(
@@ -492,8 +485,8 @@ void cbtBodyCreate(
 
     btCollisionShape* shape = (btCollisionShape*)shape_handle;
 
-    void* body_mem = (void*)HANDLE_TO_POINTER(btRigidBody, body_handle);
-    void* motion_state_mem = (void*)((uint8_t*)HANDLE_TO_POINTER(btRigidBody, body_handle) + sizeof(btRigidBody));
+    void* body_mem = (void*)body_handle;
+    void* motion_state_mem = (void*)((uint8_t*)body_handle + sizeof(btRigidBody));
 
     const bool is_dynamic = (mass != 0.0);
 
@@ -520,9 +513,8 @@ void cbtBodyCreate(
 void cbtBodyDestroy(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
 
-    auto* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
-    auto* motion_state =
-        (btDefaultMotionState*)((uint8_t*)HANDLE_TO_POINTER(btRigidBody, body_handle) + sizeof(btRigidBody));
+    auto body = (btRigidBody*)body_handle;
+    auto motion_state = (btDefaultMotionState*)((uint8_t*)body_handle + sizeof(btRigidBody));
 
     motion_state->~btDefaultMotionState();
     body->~btRigidBody();
@@ -534,177 +526,177 @@ void cbtBodyDestroy(CbtBodyHandle body_handle) {
 CbtBool cbtBodyIsCreated(CbtBodyHandle body_handle) {
     assert(body_handle);
     // vtable == 0 means that object is not created.
-    return ((uint64_t*)HANDLE_TO_POINTER(btRigidBody, body_handle))[0] == 0 ? CBT_FALSE : CBT_TRUE;
+    return ((uint64_t*)body_handle)[0] == 0 ? CBT_FALSE : CBT_TRUE;
 }
 
 void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle) {
     assert(body_handle && shape_handle);
     assert(cbtBodyIsCreated(body_handle) == CBT_TRUE && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     btCollisionShape* shape = (btCollisionShape*)shape_handle;
     body->setCollisionShape(shape);
 }
 
 CbtShapeHandle cbtBodyGetShape(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return (CbtShapeHandle)body->getCollisionShape();
 }
 
 void cbtBodySetRestitution(CbtBodyHandle body_handle, float restitution) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setRestitution(restitution);
 }
 
 void cbtBodySetFriction(CbtBodyHandle body_handle, float friction) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setFriction(friction);
 }
 
 void cbtBodySetRollingFriction(CbtBodyHandle body_handle, float friction) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setRollingFriction(friction);
 }
 
 void cbtBodySetSpinningFriction(CbtBodyHandle body_handle, float friction) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setSpinningFriction(friction);
 }
 
 void cbtBodySetAnisotropicFriction(CbtBodyHandle body_handle, const CbtVector3 friction, int mode) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(friction);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setAnisotropicFriction(btVector3(friction[0], friction[1], friction[2]), mode);
 }
 
 void cbtBodySetContactStiffnessAndDamping(CbtBodyHandle body_handle, float stiffness, float damping) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setContactStiffnessAndDamping(stiffness, damping);
 }
 
 void cbtBodySetMassProps(CbtBodyHandle body_handle, float mass, const CbtVector3 inertia) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(inertia);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setMassProps(mass, btVector3(inertia[0], inertia[1], inertia[2]));
 }
 
 void cbtBodySetDamping(CbtBodyHandle body_handle, float linear, float angular) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setDamping(linear, angular);
 }
 
 void cbtBodySetLinearVelocity(CbtBodyHandle body_handle, const CbtVector3 velocity) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(velocity);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setLinearVelocity(btVector3(velocity[0], velocity[1], velocity[2]));
 }
 
 void cbtBodySetAngularVelocity(CbtBodyHandle body_handle, const CbtVector3 velocity) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(velocity);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setAngularVelocity(btVector3(velocity[0], velocity[1], velocity[2]));
 }
 
 void cbtBodySetLinearFactor(CbtBodyHandle body_handle, const CbtVector3 factor) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(factor);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setLinearFactor(btVector3(factor[0], factor[1], factor[2]));
 }
 
 void cbtBodySetAngularFactor(CbtBodyHandle body_handle, const CbtVector3 factor) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(factor);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setAngularFactor(btVector3(factor[0], factor[1], factor[2]));
 }
 
 void cbtBodyApplyCentralForce(CbtBodyHandle body_handle, const CbtVector3 force) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(force);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->applyCentralForce(btVector3(force[0], force[1], force[2]));
 }
 
 void cbtBodyApplyCentralImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(impulse);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->applyCentralImpulse(btVector3(impulse[0], impulse[1], impulse[2]));
 }
 
 void cbtBodyApplyForce(CbtBodyHandle body_handle, const CbtVector3 force, const CbtVector3 rel_pos) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(force && rel_pos);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->applyForce(btVector3(force[0], force[1], force[2]), btVector3(rel_pos[0], rel_pos[1], rel_pos[2]));
 }
 
 void cbtBodyClearForces(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->clearForces();
 }
 
 void cbtBodyApplyImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse, const CbtVector3 rel_pos) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(impulse && rel_pos);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->applyImpulse(btVector3(impulse[0], impulse[1], impulse[2]), btVector3(rel_pos[0], rel_pos[1], rel_pos[2]));
 }
 
 void cbtBodyApplyTorque(CbtBodyHandle body_handle, const CbtVector3 torque) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(torque);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->applyTorque(btVector3(torque[0], torque[1], torque[2]));
 }
 
 void cbtBodyApplyTorqueImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(impulse);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->applyTorqueImpulse(btVector3(impulse[0], impulse[1], impulse[2]));
 }
 
 float cbtBodyGetRestitution(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getRestitution();
 }
 
 float cbtBodyGetFriction(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getFriction();
 }
 
 float cbtBodyGetRollingFriction(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getRollingFriction();
 }
 
 float cbtBodyGetSpinningFriction(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getSpinningFriction();
 }
 
 void cbtBodyGetAnisotropicFriction(CbtBodyHandle body_handle, CbtVector3 friction) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(friction);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     const btVector3& f = body->getAnisotropicFriction();
     friction[0] = f.x();
     friction[1] = f.y();
@@ -713,38 +705,38 @@ void cbtBodyGetAnisotropicFriction(CbtBodyHandle body_handle, CbtVector3 frictio
 
 float cbtBodyGetContactStiffness(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getContactStiffness();
 }
 
 float cbtBodyGetContactDamping(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getContactDamping();
 }
 
 float cbtBodyGetMass(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getMass();
 }
 
 float cbtBodyGetLinearDamping(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getLinearDamping();
 }
 
 float cbtBodyGetAngularDamping(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getAngularDamping();
 }
 
 void cbtBodyGetLinearVelocity(CbtBodyHandle body_handle, CbtVector3 velocity) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(velocity);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     const btVector3& vel = body->getLinearVelocity();
     velocity[0] = vel.x();
     velocity[1] = vel.y();
@@ -754,7 +746,7 @@ void cbtBodyGetLinearVelocity(CbtBodyHandle body_handle, CbtVector3 velocity) {
 void cbtBodyGetAngularVelocity(CbtBodyHandle body_handle, CbtVector3 velocity) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(body_handle && velocity);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     const btVector3& vel = body->getAngularVelocity();
     velocity[0] = vel.x();
     velocity[1] = vel.y();
@@ -763,81 +755,81 @@ void cbtBodyGetAngularVelocity(CbtBodyHandle body_handle, CbtVector3 velocity) {
 
 CbtBool cbtBodyIsStatic(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->isStaticObject() ? CBT_TRUE : CBT_FALSE;
 }
 
 CbtBool cbtBodyIsKinematic(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->isKinematicObject() ? CBT_TRUE : CBT_FALSE;
 }
 
 CbtBool cbtBodyIsStaticOrKinematic(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->isStaticOrKinematicObject() ? CBT_TRUE : CBT_FALSE;
 }
 
 float cbtBodyGetDeactivationTime(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(body_handle);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getDeactivationTime();
 }
 
 void cbtBodySetDeactivationTime(CbtBodyHandle body_handle, float time) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->setDeactivationTime(time);
 }
 
 int cbtBodyGetActivationState(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getActivationState();
 }
 
 void cbtBodySetActivationState(CbtBodyHandle body_handle, int state) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->setActivationState(state);
 }
 
 void cbtBodyForceActivationState(CbtBodyHandle body_handle, int state) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->forceActivationState(state);
 }
 
 CbtBool cbtBodyIsActive(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->isActive() ? CBT_TRUE : CBT_FALSE;
 }
 
 CbtBool cbtBodyIsInWorld(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->isInWorld() ? CBT_TRUE : CBT_FALSE;
 }
 
 void cbtBodySetUserPointer(CbtBodyHandle body_handle, void* user_pointer) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     body->setUserPointer(user_pointer);
 }
 
 void* cbtBodyGetUserPointer(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     return body->getUserPointer();
 }
 
 void cbtBodySetUserIndex(CbtBodyHandle body_handle, int slot, int user_index) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(slot >= 0 && slot <= 2);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     if (slot == 0) {
         body->setUserIndex(user_index);
     } else if (slot == 1) {
@@ -850,7 +842,7 @@ void cbtBodySetUserIndex(CbtBodyHandle body_handle, int slot, int user_index) {
 int cbtBodyGetUserIndex(CbtBodyHandle body_handle, int slot) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(slot >= 0 && slot <= 2);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     if (slot == 0) {
         return body->getUserIndex();
     }
@@ -862,7 +854,7 @@ int cbtBodyGetUserIndex(CbtBodyHandle body_handle, int slot) {
 
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle body_handle, const CbtVector3 transform[4]) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
     // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
     body->setCenterOfMassTransform(btTransform(
         btMatrix3x3(
@@ -877,7 +869,7 @@ void cbtBodySetCenterOfMassTransform(CbtBodyHandle body_handle, const CbtVector3
 void cbtBodyGetCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(transform);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
 
     const btTransform& trans = body->getCenterOfMassTransform();
     const btMatrix3x3& basis = trans.getBasis();
@@ -902,7 +894,7 @@ void cbtBodyGetCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 trans
 void cbtBodyGetCenterOfMassPosition(CbtBodyHandle body_handle, CbtVector3 position) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(position);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
 
     const btTransform& trans = body->getCenterOfMassTransform();
     const btVector3& origin = trans.getOrigin();
@@ -915,7 +907,7 @@ void cbtBodyGetCenterOfMassPosition(CbtBodyHandle body_handle, CbtVector3 positi
 void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(transform);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
 
     const btTransform trans = body->getCenterOfMassTransform().inverse();
     const btMatrix3x3& basis = trans.getBasis();
@@ -940,7 +932,7 @@ void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 tr
 void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     assert(transform);
-    btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
+    btRigidBody* body = (btRigidBody*)body_handle;
 
     btTransform trans;
     body->getMotionState()->getWorldTransform(trans);
@@ -1018,6 +1010,43 @@ int cbtConGetType(CbtConstraintHandle con_handle) {
     return constraint[2];
 }
 
+void cbtConSetEnabled(CbtConstraintHandle con_handle, CbtBool enabled) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(enabled == CBT_FALSE || enabled == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    con->setEnabled(enabled == CBT_FALSE ? false : true);
+}
+
+CbtBool cbtConIsEnabled(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    return con->isEnabled() ? CBT_TRUE : CBT_FALSE;
+}
+
+CbtBodyHandle cbtConGetBodyA(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    return (CbtBodyHandle)&con->getRigidBodyA();
+}
+
+CbtBodyHandle cbtConGetBodyB(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    return (CbtBodyHandle)&con->getRigidBodyB();
+}
+
+void cbtConSetDebugDrawSize(CbtConstraintHandle con_handle, float size) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    con->setDbgDrawSize(size);
+}
+
+float cbtConGetDebugDrawSize(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    return con->getDbgDrawSize();
+}
+
 void cbtConCreatePoint2Point(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
@@ -1029,8 +1058,8 @@ void cbtConCreatePoint2Point(
     assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
     assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
 
-    btRigidBody* body_a = HANDLE_TO_POINTER(btRigidBody, body_handle_a);
-    btRigidBody* body_b = HANDLE_TO_POINTER(btRigidBody, body_handle_b);
+    btRigidBody* body_a = (btRigidBody*)body_handle_a;
+    btRigidBody* body_b = (btRigidBody*)body_handle_b;
     new (con_handle) btPoint2PointConstraint(
         *body_a,
         *body_b,
