@@ -152,10 +152,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     });
 
     const sphere_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
-    c.cbtShapeCreateSphere(sphere_shape, 0.5);
+    c.cbtShapeSphereCreate(sphere_shape, 0.5);
 
     const ground_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeCreateBox(ground_shape, &Vec3.init(20.0, 0.2, 20.0).c);
+    c.cbtShapeBoxCreate(ground_shape, &Vec3.init(20.0, 0.2, 20.0).c);
 
     var bodies: [2]c.CbtBodyHandle = undefined;
 
