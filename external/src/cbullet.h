@@ -285,11 +285,13 @@ void cbtConSetEnabled(CbtConstraintHandle con_handle, CbtBool enabled);
 CbtBool cbtConIsEnabled(CbtConstraintHandle con_handle);
 CbtBodyHandle cbtConGetBodyA(CbtConstraintHandle con_handle);
 CbtBodyHandle cbtConGetBodyB(CbtConstraintHandle con_handle);
+void cbtConSetBreakingImpulseThreshold(CbtConstraintHandle con_handle, float threshold);
+float cbtConGetBreakingImpulseThreshold(CbtConstraintHandle con_handle);
 
 void cbtConSetDebugDrawSize(CbtConstraintHandle con_handle, float size);
 float cbtConGetDebugDrawSize(CbtConstraintHandle con_handle);
 
-void cbtConCreatePoint2Point(
+void cbtConPoint2PointCreate(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
     CbtBodyHandle body_handle_b,

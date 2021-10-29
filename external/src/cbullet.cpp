@@ -1054,6 +1054,18 @@ CbtBodyHandle cbtConGetBodyB(CbtConstraintHandle con_handle) {
     return (CbtBodyHandle)&con->getRigidBodyB();
 }
 
+void cbtConSetBreakingImpulseThreshold(CbtConstraintHandle con_handle, float threshold) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    con->setBreakingImpulseThreshold(threshold);
+}
+
+float cbtConGetBreakingImpulseThreshold(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    return con->getBreakingImpulseThreshold();
+}
+
 void cbtConSetDebugDrawSize(CbtConstraintHandle con_handle, float size) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
     auto con = (btTypedConstraint*)con_handle;
@@ -1066,7 +1078,7 @@ float cbtConGetDebugDrawSize(CbtConstraintHandle con_handle) {
     return con->getDbgDrawSize();
 }
 
-void cbtConCreatePoint2Point(
+void cbtConPoint2PointCreate(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
     CbtBodyHandle body_handle_b,

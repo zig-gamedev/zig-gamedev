@@ -448,7 +448,7 @@ fn update(demo: *DemoState) void {
             const hit_point_world = Vec3{ .c = result.hit_point_world };
             const pivot_a = hit_point_world.transform(Mat4.initArray4x3(inv_trans));
 
-            c.cbtConCreatePoint2Point(
+            c.cbtConPoint2PointCreate(
                 demo.pick.constraint,
                 result.body,
                 c.cbtConGetFixedBody(),
