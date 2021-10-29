@@ -31,6 +31,7 @@
 #define CBT_SHAPE_TYPE_CONE 11
 #define CBT_SHAPE_TYPE_CYLINDER 13
 #define CBT_SHAPE_TYPE_STATIC_PLANE 28
+#define CBT_SHAPE_TYPE_COMPOUND 32
 
 // cbtConGetType, cbtConAllocate
 #define CBT_CONSTRAINT_TYPE_POINT2POINT 3
@@ -167,6 +168,9 @@ float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle);
 void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis);
 
 void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
+
+void cbtShapeCompoundCreate(CbtShapeHandle shape_handle, CbtBool enable_dynamic_aabb_tree, int initial_child_capacity);
+void cbtShapeCompoundAddChild(CbtShapeHandle shape_handle, const CbtVector3 local_transform[4], CbtShapeHandle shape);
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle);
 CbtBool cbtShapeIsConvex2d(CbtShapeHandle shape_handle);

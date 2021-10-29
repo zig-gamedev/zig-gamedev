@@ -46,7 +46,8 @@ const DemoState = struct {
     physics_world: c.CbtWorldHandle,
     sphere_shape: c.CbtShapeHandle,
     ground_shape: c.CbtShapeHandle,
-    bodies: [2]c.CbtBodyHandle,
+    box_shape: c.CbtShapeHandle,
+    bodies: [3]c.CbtBodyHandle,
 
     camera: struct {
         position: Vec3,
@@ -142,7 +143,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     physics_debug.* = PhysicsDebug.init(gpa);
 
     const physics_world = c.cbtWorldCreate();
-    c.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
+    c.cbtWorldSetGravity(physics_world, Vec3.init(0.0, -10.0, 0.0).ptr());
 
     c.cbtWorldDebugSetCallbacks(physics_world, &.{
         .drawLine = PhysicsDebug.drawLineCallback,
@@ -157,27 +158,30 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     c.cbtShapeSphereCreate(sphere_shape, 0.5);
 
     const ground_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(ground_shape, &Vec3.init(20.0, 0.2, 20.0).c);
+    c.cbtShapeBoxCreate(ground_shape, Vec3.init(20.0, 0.2, 20.0).ptr());
 
-    var bodies: [2]c.CbtBodyHandle = undefined;
+    const box_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(box_shape, Vec3.init(0.5, 0.5, 0.5).ptr());
+
+    var bodies: [3]c.CbtBodyHandle = undefined;
 
     c.cbtBodyAllocate(bodies.len, &bodies);
-
     c.cbtBodyCreate(bodies[0], 5.0, &Mat4.initTranslation(Vec3.init(0, 1.5, 5)).toArray4x3(), sphere_shape);
     c.cbtBodySetDamping(bodies[0], 0.2, 0.2);
-
     c.cbtBodyDestroy(bodies[0]);
-
     c.cbtBodyCreate(bodies[0], 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
     c.cbtBodySetDamping(bodies[0], 0.2, 0.2);
-
     c.cbtWorldAddBody(physics_world, bodies[0]);
 
     c.cbtBodyCreate(bodies[1], 0.0, &Mat4.initIdentity().toArray4x3(), ground_shape);
     c.cbtWorldAddBody(physics_world, bodies[1]);
 
+    c.cbtBodyCreate(bodies[2], 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
+    c.cbtWorldAddBody(physics_world, bodies[2]);
+
     assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
     assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
+    assert(c.cbtShapeGetType(box_shape) == c.CBT_SHAPE_TYPE_BOX);
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -281,6 +285,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_debug = physics_debug,
         .sphere_shape = sphere_shape,
         .ground_shape = ground_shape,
+        .box_shape = box_shape,
         .bodies = bodies,
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
@@ -327,8 +332,10 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     c.cbtBodyDeallocate(demo.bodies.len, &demo.bodies);
     c.cbtShapeDestroy(demo.sphere_shape);
     c.cbtShapeDestroy(demo.ground_shape);
+    c.cbtShapeDestroy(demo.box_shape);
     c.cbtShapeDeallocate(demo.ground_shape);
     c.cbtShapeDeallocate(demo.sphere_shape);
+    c.cbtShapeDeallocate(demo.box_shape);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
     c.cbtWorldDestroy(demo.physics_world);

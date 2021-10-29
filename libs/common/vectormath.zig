@@ -34,6 +34,10 @@ pub const Vec2 = extern struct {
         return static.zero;
     }
 
+    pub inline fn ptr(v: Vec2) *const [2]f32 {
+        return &v.c;
+    }
+
     pub inline fn approxEq(v0: Vec2, v1: Vec2, eps: f32) bool {
         return math.approxEq(f32, v0.c[0], v1.c[0], eps) and
             math.approxEq(f32, v0.c[1], v1.c[1], eps);
@@ -175,6 +179,10 @@ pub const Vec3 = extern struct {
             const zero = init(0.0, 0.0, 0.0);
         };
         return static.zero;
+    }
+
+    pub inline fn ptr(v: Vec3) *const [3]f32 {
+        return &v.c;
     }
 
     pub inline fn approxEq(v0: Vec3, v1: Vec3, eps: f32) bool {

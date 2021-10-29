@@ -242,6 +242,7 @@ CbtShapeHandle cbtShapeAllocate(int shape_type) {
         case CBT_SHAPE_TYPE_CONE: size = sizeof(btConeShape); break;
         case CBT_SHAPE_TYPE_CYLINDER: size = sizeof(btCylinderShape); break;
         case CBT_SHAPE_TYPE_STATIC_PLANE: size = sizeof(btStaticPlaneShape); break;
+        case CBT_SHAPE_TYPE_COMPOUND: size = sizeof(btCompoundShape); break;
         default: assert(0);
     }
     auto shape = (int*)_aligned_malloc(size, 16);
@@ -380,6 +381,45 @@ void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height,
     } else {
         new (shape_handle) btConeShapeZ(radius, height);
     }
+}
+
+void cbtShapeCompoundCreate(
+    CbtShapeHandle shape_handle,
+    CbtBool enable_dynamic_aabb_tree,
+    int initial_child_capacity
+) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(enable_dynamic_aabb_tree == CBT_FALSE || enable_dynamic_aabb_tree == CBT_TRUE);
+    assert(initial_child_capacity >= 0);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_COMPOUND);
+    new (shape_handle) btCompoundShape(enable_dynamic_aabb_tree == CBT_FALSE ? false : true, initial_child_capacity);
+}
+
+void cbtShapeCompoundAddChild(
+    CbtShapeHandle shape_handle,
+    const CbtVector3 transform[4], // local transform
+    CbtShapeHandle shape
+) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(shape && cbtShapeIsCreated(shape) == CBT_TRUE);
+    assert(transform);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_COMPOUND);
+
+    auto parent = (btCompoundShape*)shape_handle;
+    auto child = (btCollisionShape*)shape;
+
+    // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
+    parent->addChildShape(
+        btTransform(
+            btMatrix3x3(
+                btVector3(transform[0][0], transform[1][0], transform[2][0]),
+                btVector3(transform[0][1], transform[1][1], transform[2][1]),
+                btVector3(transform[0][2], transform[1][2], transform[2][2])
+            ),
+            btVector3(transform[3][0], transform[3][1], transform[3][2])
+        ),
+        child
+    );
 }
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle) {
