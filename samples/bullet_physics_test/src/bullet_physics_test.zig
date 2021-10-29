@@ -300,7 +300,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .saved_activation_state = 0,
             .saved_linear_damping = 0.0,
             .saved_angular_damping = 0.0,
-            .constraint = null,
+            .constraint = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_POINT2POINT),
             .distance = 0.0,
         },
     };
@@ -315,10 +315,11 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
-    if (demo.pick.constraint != null) {
+    if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
     }
+    c.cbtConDeallocate(demo.pick.constraint);
     for (demo.bodies) |body| {
         c.cbtWorldRemoveBody(demo.physics_world, body);
         c.cbtBodyDestroy(body);
@@ -416,7 +417,7 @@ fn update(demo: *DemoState) void {
         break :blk ray_to;
     };
 
-    if (demo.pick.constraint == null and mouse_button_is_down) {
+    if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_FALSE and mouse_button_is_down) {
         var result: c.CbtRayCastResult = undefined;
         const hit = c.cbtRayTestClosest(
             demo.physics_world,
@@ -447,30 +448,29 @@ fn update(demo: *DemoState) void {
             const hit_point_world = Vec3{ .c = result.hit_point_world };
             const pivot_a = hit_point_world.transform(Mat4.initArray4x3(inv_trans));
 
-            const p2p = c.cbtConCreatePoint2Point(
+            c.cbtConCreatePoint2Point(
+                demo.pick.constraint,
                 result.body,
                 c.cbtConGetFixedBody(),
                 &pivot_a.c,
                 &result.hit_point_world,
             );
-            c.cbtWorldAddConstraint(demo.physics_world, p2p, 1);
-            demo.pick.constraint = p2p;
+            c.cbtWorldAddConstraint(demo.physics_world, demo.pick.constraint, 1);
             demo.pick.distance = hit_point_world.sub(ray_from).length();
 
-            c.cbtConPoint2PointSetImpulseClamp(p2p, 30.0);
-            c.cbtConPoint2PointSetTau(p2p, 0.001);
+            c.cbtConPoint2PointSetImpulseClamp(demo.pick.constraint, 30.0);
+            c.cbtConPoint2PointSetTau(demo.pick.constraint, 0.001);
         }
-    } else if (demo.pick.constraint != null) {
+    } else if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
         const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));
         c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
     }
 
-    if (!mouse_button_is_down and demo.pick.constraint != null) {
+    if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
         c.cbtBodyForceActivationState(demo.pick.body, demo.pick.saved_activation_state);
         c.cbtBodySetDamping(demo.pick.body, demo.pick.saved_linear_damping, demo.pick.saved_angular_damping);
-        demo.pick.constraint = null;
         demo.pick.body = null;
     }
 }

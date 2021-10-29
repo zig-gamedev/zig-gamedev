@@ -32,6 +32,17 @@
 #define CBT_SHAPE_TYPE_CYLINDER 13
 #define CBT_SHAPE_TYPE_STATIC_PLANE 28
 
+#define CBT_CONSTRAINT_TYPE_POINT2POINT 3
+#define CBT_CONSTRAINT_TYPE_HINGE 4
+#define CBT_CONSTRAINT_TYPE_CONETWIST 5
+#define CBT_CONSTRAINT_TYPE_D6 6
+#define CBT_CONSTRAINT_TYPE_SLIDER 7
+#define CBT_CONSTRAINT_TYPE_CONTACT 8
+#define CBT_CONSTRAINT_TYPE_D6_SPRING 9
+#define CBT_CONSTRAINT_TYPE_GEAR 10
+#define CBT_CONSTRAINT_TYPE_FIXED 11
+#define CBT_CONSTRAINT_TYPE_D6_SPRING_2 12
+
 // cbtBodyGetActivationState, cbtBodySetActivationState
 #define CBT_ACTIVE_TAG 1
 #define CBT_ISLAND_SLEEPING 2
@@ -239,7 +250,7 @@ CbtBool cbtBodyIsInWorld(CbtBodyHandle body_handle);
 void cbtBodySetUserPointer(CbtBodyHandle body_handle, void* user_pointer);
 void* cbtBodyGetUserPointer(CbtBodyHandle body_handle, int slot);
 void cbtBodySetUserIndex(CbtBodyHandle body_handle, int slot, int user_index); // slot can be 0, 1 or 2
-int cbtBodyGetUserIndex(CbtBodyHandle body_handle, int slot);
+int cbtBodyGetUserIndex(CbtBodyHandle body_handle, int slot); // slot can be 0, 1 or 2
 
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle body_handle, const CbtVector3 transform[4]);
 void cbtBodyGetCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]);
@@ -252,19 +263,25 @@ void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle body_handle, CbtVector3 tran
 //
 CbtBodyHandle cbtConGetFixedBody(void);
 
-void cbtConDestroy(CbtConstraintHandle handle);
+CbtConstraintHandle cbtConAllocate(int con_type);
+void cbtConDeallocate(CbtConstraintHandle con_handle);
 
-CbtConstraintHandle cbtConCreatePoint2Point(
+void cbtConDestroy(CbtConstraintHandle con_handle);
+CbtBool cbtConIsCreated(CbtConstraintHandle con_handle);
+int cbtConGetType(CbtConstraintHandle con_handle);
+
+void cbtConCreatePoint2Point(
+    CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
     CbtBodyHandle body_handle_b,
     const CbtVector3 pivot_a,
     const CbtVector3 pivot_b
 );
-void cbtConPoint2PointSetPivotA(CbtConstraintHandle handle, const CbtVector3 pivot);
-void cbtConPoint2PointSetPivotB(CbtConstraintHandle handle, const CbtVector3 pivot);
-void cbtConPoint2PointSetTau(CbtConstraintHandle handle, float tau);
-void cbtConPoint2PointSetDamping(CbtConstraintHandle handle, float damping);
-void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle handle, float impulse_clamp);
+void cbtConPoint2PointSetPivotA(CbtConstraintHandle con_handle, const CbtVector3 pivot);
+void cbtConPoint2PointSetPivotB(CbtConstraintHandle con_handle, const CbtVector3 pivot);
+void cbtConPoint2PointSetTau(CbtConstraintHandle con_handle, float tau);
+void cbtConPoint2PointSetDamping(CbtConstraintHandle con_handle, float damping);
+void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle con_handle, float impulse_clamp);
 
 #ifdef __cplusplus
 }

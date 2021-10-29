@@ -4,6 +4,7 @@
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
 #include "BulletCollision/CollisionShapes/btBox2dShape.h"
+#include "BulletDynamics/ConstraintSolver/btContactConstraint.h"
 
 #define HANDLE_TO_POINTER(type, handle) ((type*)((uint64_t)handle & ~0x1))
 
@@ -266,44 +267,39 @@ void cbtShapeBoxCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extent
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_BOX);
     assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    auto shape = (btCollisionShape*)shape_handle;
-    new (shape) btBoxShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    new (shape_handle) btBoxShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
 }
 
 void cbtShapeBox2dCreate(CbtShapeHandle shape_handle, float x_half_extent, float y_half_extent) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_BOX_2D);
     assert(x_half_extent > 0.0 && y_half_extent > 0.0);
-    auto shape = (btCollisionShape*)shape_handle;
-    new (shape) btBox2dShape(btVector3(x_half_extent, y_half_extent, 0.0));
+    new (shape_handle) btBox2dShape(btVector3(x_half_extent, y_half_extent, 0.0));
 }
 
 void cbtShapeSphereCreate(CbtShapeHandle shape_handle, float radius) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_SPHERE);
     assert(radius > 0.0f);
-    auto shape = (btCollisionShape*)shape_handle;
-    new (shape) btSphereShape(radius);
+    new (shape_handle) btSphereShape(radius);
 }
 
 void cbtShapeStaticPlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_STATIC_PLANE);
-    auto shape = (btCollisionShape*)shape_handle;
-    new (shape) btStaticPlaneShape(btVector3(normal[0], normal[1], normal[2]), distance);
+    new (shape_handle) btStaticPlaneShape(btVector3(normal[0], normal[1], normal[2]), distance);
 }
 
 void cbtShapeCapsuleCreate(CbtShapeHandle shape_handle, float radius, float height, int axis) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CAPSULE);
     assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
-    auto shape = (btCollisionShape*)shape_handle;
     if (axis == CBT_AXIS_X) {
-        new (shape) btCapsuleShapeX(radius, height);
+        new (shape_handle) btCapsuleShapeX(radius, height);
     } else if (axis == CBT_AXIS_Y) {
-        new (shape) btCapsuleShape(radius, height);
+        new (shape_handle) btCapsuleShape(radius, height);
     } else {
-        new (shape) btCapsuleShapeZ(radius, height);
+        new (shape_handle) btCapsuleShapeZ(radius, height);
     }
 }
 
@@ -311,13 +307,12 @@ void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_e
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CYLINDER);
     assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    auto shape = (btCylinderShape*)shape_handle;
     if (axis == CBT_AXIS_X) {
-        new (shape) btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+        new (shape_handle) btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
     } else if (axis == CBT_AXIS_Y) {
-        new (shape) btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+        new (shape_handle) btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
     } else {
-        new (shape) btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+        new (shape_handle) btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
     }
 }
 
@@ -325,13 +320,12 @@ void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height,
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CONE);
     assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
-    auto shape = (btConeShape*)shape_handle;
     if (axis == CBT_AXIS_X) {
-        new (shape) btConeShapeX(radius, height);
+        new (shape_handle) btConeShapeX(radius, height);
     } else if (axis == CBT_AXIS_Y) {
-        new (shape) btConeShape(radius, height);
+        new (shape_handle) btConeShape(radius, height);
     } else {
-        new (shape) btConeShapeZ(radius, height);
+        new (shape_handle) btConeShapeZ(radius, height);
     }
 }
 
@@ -608,7 +602,7 @@ void cbtBodyApplyCentralForce(CbtBodyHandle body_handle, const CbtVector3 force)
 
 void cbtBodyApplyCentralImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    assert(body_handle && impulse);
+    assert(impulse);
     btRigidBody* body = HANDLE_TO_POINTER(btRigidBody, body_handle);
     body->applyCentralImpulse(btVector3(impulse[0], impulse[1], impulse[2]));
 }
@@ -937,56 +931,109 @@ CbtBodyHandle cbtConGetFixedBody(void) {
     return (CbtBodyHandle)&btTypedConstraint::getFixedBody();
 }
 
-void cbtConDestroy(CbtConstraintHandle handle) {
-    btTypedConstraint* con = (btTypedConstraint*)handle;
-    assert(con);
-    delete con;
+CbtConstraintHandle cbtConAllocate(int con_type) {
+    size_t size = 0;
+    switch (con_type) {
+        case CBT_CONSTRAINT_TYPE_POINT2POINT: size = sizeof(btPoint2PointConstraint); break;
+        case CBT_CONSTRAINT_TYPE_HINGE: size = sizeof(btHingeConstraint); break;
+        case CBT_CONSTRAINT_TYPE_CONETWIST: size = sizeof(btConeTwistConstraint); break;
+        case CBT_CONSTRAINT_TYPE_D6: size = sizeof(btGeneric6DofConstraint); break;
+        case CBT_CONSTRAINT_TYPE_SLIDER: size = sizeof(btSliderConstraint); break;
+        case CBT_CONSTRAINT_TYPE_CONTACT: size = sizeof(btContactConstraint); break;
+        case CBT_CONSTRAINT_TYPE_D6_SPRING: size = sizeof(btGeneric6DofSpringConstraint); break;
+        case CBT_CONSTRAINT_TYPE_GEAR: size = sizeof(btGearConstraint); break;
+        case CBT_CONSTRAINT_TYPE_FIXED: size = sizeof(btFixedConstraint); break;
+        case CBT_CONSTRAINT_TYPE_D6_SPRING_2: size = sizeof(btGeneric6DofSpring2Constraint); break;
+        default: assert(0);
+    }
+    auto constraint = (int*)_aligned_malloc(size, 16);
+    // Set vtable to 0, this means that object is not created.
+    constraint[0] = 0; 
+    constraint[1] = 0;
+    // btTypedObject::m_objectType field is just after vtable (offset: 8).
+    constraint[2] = con_type; 
+    return (CbtConstraintHandle)constraint;
 }
 
-CbtConstraintHandle cbtConCreatePoint2Point(
+void cbtConDeallocate(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    _aligned_free(con_handle);
+}
+
+void cbtConDestroy(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto constraint = (btTypedConstraint*)con_handle;
+    constraint->~btTypedConstraint();
+    // Set vtable to 0, this means that object is not created.
+    ((uint64_t*)con_handle)[0] = 0;
+}
+
+CbtBool cbtConIsCreated(CbtConstraintHandle con_handle) {
+    assert(con_handle);
+    // vtable == 0 means that object is not created.
+    return ((uint64_t*)con_handle)[0] == 0 ? CBT_FALSE : CBT_TRUE;
+}
+
+int cbtConGetType(CbtConstraintHandle con_handle) {
+    assert(con_handle);
+    auto constraint = (int*)con_handle;
+    // btTypedObject::m_objectType field is just after vtable (offset: 8).
+    // This function works even for not yet created shapes (cbtConAllocate sets the type).
+    return constraint[2];
+}
+
+void cbtConCreatePoint2Point(
+    CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
     CbtBodyHandle body_handle_b,
     const CbtVector3 pivot_a,
     const CbtVector3 pivot_b
 ) {
-    assert(body_handle_a && body_handle_b);
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
+
     btRigidBody* body_a = HANDLE_TO_POINTER(btRigidBody, body_handle_a);
     btRigidBody* body_b = HANDLE_TO_POINTER(btRigidBody, body_handle_b);
-    btPoint2PointConstraint* constraint = new btPoint2PointConstraint(
+    new (con_handle) btPoint2PointConstraint(
         *body_a,
         *body_b,
         btVector3(pivot_a[0], pivot_a[1], pivot_a[2]),
         btVector3(pivot_b[0], pivot_b[1], pivot_b[2])
     );
-    return (CbtConstraintHandle)constraint;
 }
 
-void cbtConPoint2PointSetPivotA(CbtConstraintHandle handle, const CbtVector3 pivot) {
-    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
-    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+void cbtConPoint2PointSetPivotA(CbtConstraintHandle con_handle, const CbtVector3 pivot) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)con_handle;
     con->setPivotA(btVector3(pivot[0], pivot[1], pivot[2]));
 }
 
-void cbtConPoint2PointSetPivotB(CbtConstraintHandle handle, const CbtVector3 pivot) {
-    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
-    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+void cbtConPoint2PointSetPivotB(CbtConstraintHandle con_handle, const CbtVector3 pivot) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)con_handle;
     con->setPivotB(btVector3(pivot[0], pivot[1], pivot[2]));
 }
 
-void cbtConPoint2PointSetTau(CbtConstraintHandle handle, float tau) {
-    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
-    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+void cbtConPoint2PointSetTau(CbtConstraintHandle con_handle, float tau) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)con_handle;
     con->m_setting.m_tau = tau;
 }
 
-void cbtConPoint2PointSetDamping(CbtConstraintHandle handle, float damping) {
-    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
-    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+void cbtConPoint2PointSetDamping(CbtConstraintHandle con_handle, float damping) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)con_handle;
     con->m_setting.m_damping = damping;
 }
 
-void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle handle, float impulse_clamp) {
-    btPoint2PointConstraint* con = (btPoint2PointConstraint*)handle;
-    assert(con && con->getConstraintType() == POINT2POINT_CONSTRAINT_TYPE);
+void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle con_handle, float impulse_clamp) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)con_handle;
     con->m_setting.m_impulseClamp = impulse_clamp;
 }
