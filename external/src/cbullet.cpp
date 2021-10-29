@@ -280,8 +280,23 @@ void cbtShapeBox2dCreate(CbtShapeHandle shape_handle, float x_half_extent, float
 void cbtShapeSphereCreate(CbtShapeHandle shape_handle, float radius) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_SPHERE);
-    assert(radius > 0.0f);
+    assert(radius > 0.0);
     new (shape_handle) btSphereShape(radius);
+}
+
+void cbtShapeSphereSetUnscaledRadius(CbtShapeHandle shape_handle, float radius) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_SPHERE);
+    assert(radius > 0.0);
+    auto shape = (btSphereShape*)shape_handle;
+    shape->setUnscaledRadius(radius);
+}
+
+float cbtShapeSphereGetRadius(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_SPHERE);
+    auto shape = (btSphereShape*)shape_handle;
+    return shape->getRadius();
 }
 
 void cbtShapeStaticPlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance) {
@@ -301,6 +316,27 @@ void cbtShapeCapsuleCreate(CbtShapeHandle shape_handle, float radius, float heig
     } else {
         new (shape_handle) btCapsuleShapeZ(radius, height);
     }
+}
+
+int cbtShapeCapsuleGetUpAxis(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CAPSULE);
+    auto shape = (btCapsuleShape*)shape_handle;
+    return shape->getUpAxis();
+}
+
+float cbtShapeCapsuleGetHalfHeight(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CAPSULE);
+    auto shape = (btCapsuleShape*)shape_handle;
+    return shape->getHalfHeight();
+}
+
+float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CAPSULE);
+    auto shape = (btCapsuleShape*)shape_handle;
+    return shape->getRadius();
 }
 
 void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis) {

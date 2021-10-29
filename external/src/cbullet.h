@@ -11,7 +11,7 @@
 #define CBT_COLLISION_FILTER_CHARACTER 32
 #define CBT_COLLISION_FILTER_ALL -1
 
-// CbtRayCastResult::flags
+// cbtRayTestClosest
 #define CBT_RAYCAST_FLAG_NONE 0
 #define CBT_RAYCAST_FLAG_TRIMESH_SKIP_BACKFACES 1
 #define CBT_RAYCAST_FLAG_TRIMESH_KEEP_UNFLIPPED_NORMALS 2
@@ -23,7 +23,7 @@
 #define CBT_ANISOTROPIC_FRICTION 1
 #define CBT_ANISOTROPIC_ROLLING_FRICTION 2
 
-// cbtShapeGetType
+// cbtShapeGetType, cbtShapeAllocate
 #define CBT_SHAPE_TYPE_BOX 0
 #define CBT_SHAPE_TYPE_BOX_2D 17
 #define CBT_SHAPE_TYPE_SPHERE 8
@@ -32,6 +32,7 @@
 #define CBT_SHAPE_TYPE_CYLINDER 13
 #define CBT_SHAPE_TYPE_STATIC_PLANE 28
 
+// cbtConGetType, cbtConAllocate
 #define CBT_CONSTRAINT_TYPE_POINT2POINT 3
 #define CBT_CONSTRAINT_TYPE_HINGE 4
 #define CBT_CONSTRAINT_TYPE_CONETWIST 5
@@ -49,7 +50,7 @@
 #define CBT_DISABLE_DEACTIVATION 4
 #define CBT_DISABLE_SIMULATION 5
 
-// cbtShapeCreateCapsule, cbtShapeCreateCylinder, cbtShapeCreateCone
+// cbtShapeCapsuleCreate, cbtShapeCylinderCreate, cbtShapeConeCreate
 #define CBT_AXIS_X 0
 #define CBT_AXIS_Y 1
 #define CBT_AXIS_Z 2
@@ -143,15 +144,15 @@ void cbtShapeBoxCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extent
 void cbtShapeBox2dCreate(CbtShapeHandle shape_handle, float x_half_extent, float y_half_extent);
 
 void cbtShapeSphereCreate(CbtShapeHandle shape_handle, float radius);
-//void cbtShapeSphereSetUnscaledRadius(CbtShapeHandle shape_handle, float radius);
-//float cbtShapeSphereGetRadius(CbtShapeHandle shape_handle);
+void cbtShapeSphereSetUnscaledRadius(CbtShapeHandle shape_handle, float radius);
+float cbtShapeSphereGetRadius(CbtShapeHandle shape_handle);
 
 void cbtShapeStaticPlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance);
 
 void cbtShapeCapsuleCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
-//int cbtShapeCapsuleGetUpAxis(CbtShapeHandle shape_handle);
-//float cbtShapeCapsuleGetHalfHeight(CbtShapeHandle shape_handle);
-//float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle);
+int cbtShapeCapsuleGetUpAxis(CbtShapeHandle shape_handle);
+float cbtShapeCapsuleGetHalfHeight(CbtShapeHandle shape_handle);
+float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle);
 
 void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis);
 
