@@ -61,9 +61,9 @@ CbtWorldHandle cbtWorldCreate(void) {
     return (CbtWorldHandle)world;
 }
 
-void cbtWorldDestroy(CbtWorldHandle handle) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world);
+void cbtWorldDestroy(CbtWorldHandle world_handle) {
+    assert(world_handle);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
 
     if (world->getDebugDrawer()) {
         delete world->getDebugDrawer();
@@ -78,20 +78,21 @@ void cbtWorldDestroy(CbtWorldHandle handle) {
     delete world;
 }
 
-void cbtWorldSetGravity(CbtWorldHandle handle, const CbtVector3 gravity) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world);
+void cbtWorldSetGravity(CbtWorldHandle world_handle, const CbtVector3 gravity) {
+    assert(world_handle);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     world->setGravity(btVector3(gravity[0], gravity[1], gravity[2]));
 }
 
-int cbtWorldStepSimulation(CbtWorldHandle handle, float time_step, int max_sub_steps, float fixed_time_step) {
-    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)handle;
-    assert(world);
+int cbtWorldStepSimulation(CbtWorldHandle world_handle, float time_step, int max_sub_steps, float fixed_time_step) {
+    assert(world_handle);
+    btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     return world->stepSimulation(time_step, max_sub_steps, fixed_time_step);
 }
 
 void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
-    assert(world_handle && body_handle);
+    assert(world_handle);
+    assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     btRigidBody* body = (btRigidBody*)body_handle;
     world->addRigidBody(body);
@@ -102,7 +103,8 @@ void cbtWorldAddConstraint(
     CbtConstraintHandle con_handle,
     CbtBool disable_collision_between_linked_bodies
 ) {
-    assert(world_handle && con_handle);
+    assert(world_handle);
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
     assert(
         disable_collision_between_linked_bodies == CBT_FALSE ||
         disable_collision_between_linked_bodies == CBT_TRUE
@@ -113,7 +115,8 @@ void cbtWorldAddConstraint(
 }
 
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
-    assert(world_handle && body_handle);
+    assert(world_handle);
+    assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     btDiscreteDynamicsWorld* world = (btDiscreteDynamicsWorld*)world_handle;
     btRigidBody* body = (btRigidBody*)body_handle;
     world->removeRigidBody(body);
