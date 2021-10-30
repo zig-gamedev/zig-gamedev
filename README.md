@@ -4,7 +4,7 @@ This repository contains a collection of sample applications and libraries writt
 
 If you like this project and Zig language, please consider [financial support](https://github.com/sponsors/michal-z).
 
-Some features:
+#### Some features:
 
 * Zero dependency except [Zig compiler](https://ziglang.org/download/) (fully standalone; no Visual Studio, no Windows SDK needed)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
