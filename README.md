@@ -2,7 +2,7 @@
 
 This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using DirectX 12, DirectML, XAudio2, WASAPI, Direct2D, DirectWrite. Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases). Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.<br />
 
-I build game development stuff in Zig full-time. If you like my work and my mission to promote Zig, please consider [financial support](https://github.com/sponsors/michal-z).
+I build game development stuff in Zig full-time. If you like my work and my mission to promote the language, please consider [financial support](https://github.com/sponsors/michal-z).
 
 #### Some features:
 
