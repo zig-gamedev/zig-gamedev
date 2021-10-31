@@ -397,29 +397,59 @@ void cbtShapeCompoundCreate(
 
 void cbtShapeCompoundAddChild(
     CbtShapeHandle shape_handle,
-    const CbtVector3 transform[4], // local transform
-    CbtShapeHandle shape
+    const CbtVector3 local_transform[4],
+    CbtShapeHandle child_shape_handle
 ) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    assert(shape && cbtShapeIsCreated(shape) == CBT_TRUE);
-    assert(transform);
+    assert(child_shape_handle && cbtShapeIsCreated(child_shape_handle) == CBT_TRUE);
+    assert(local_transform);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_COMPOUND);
 
     auto parent = (btCompoundShape*)shape_handle;
-    auto child = (btCollisionShape*)shape;
+    auto child = (btCollisionShape*)child_shape_handle;
 
     // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
     parent->addChildShape(
         btTransform(
             btMatrix3x3(
-                btVector3(transform[0][0], transform[1][0], transform[2][0]),
-                btVector3(transform[0][1], transform[1][1], transform[2][1]),
-                btVector3(transform[0][2], transform[1][2], transform[2][2])
+                btVector3(local_transform[0][0], local_transform[1][0], local_transform[2][0]),
+                btVector3(local_transform[0][1], local_transform[1][1], local_transform[2][1]),
+                btVector3(local_transform[0][2], local_transform[1][2], local_transform[2][2])
             ),
-            btVector3(transform[3][0], transform[3][1], transform[3][2])
+            btVector3(local_transform[3][0], local_transform[3][1], local_transform[3][2])
         ),
         child
     );
+}
+
+void cbtShapeCompoundRemoveChild(CbtShapeHandle shape_handle, CbtShapeHandle child_shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(child_shape_handle && cbtShapeIsCreated(child_shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_COMPOUND);
+    auto parent = (btCompoundShape*)shape_handle;
+    auto child = (btCollisionShape*)child_shape_handle;
+    parent->removeChildShape(child);
+}
+
+void cbtShapeCompoundRemoveChildByIndex(CbtShapeHandle shape_handle, int child_shape_index) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_COMPOUND);
+    auto shape = (btCompoundShape*)shape_handle;
+    shape->removeChildShapeByIndex(child_shape_index);
+}
+
+int cbtShapeCompoundGetNumChilds(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_COMPOUND);
+    auto shape = (btCompoundShape*)shape_handle;
+    return shape->getNumChildShapes();
+}
+
+CbtShapeHandle cbtShapeCompoundGetChild(CbtShapeHandle shape_handle, int child_shape_index) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_COMPOUND);
+    auto shape = (btCompoundShape*)shape_handle;
+    return (CbtShapeHandle)shape->getChildShape(child_shape_index);
 }
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle) {

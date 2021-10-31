@@ -170,7 +170,15 @@ void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_e
 void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
 
 void cbtShapeCompoundCreate(CbtShapeHandle shape_handle, CbtBool enable_dynamic_aabb_tree, int initial_child_capacity);
-void cbtShapeCompoundAddChild(CbtShapeHandle shape_handle, const CbtVector3 local_transform[4], CbtShapeHandle shape);
+void cbtShapeCompoundAddChild(
+    CbtShapeHandle shape_handle,
+    const CbtVector3 local_transform[4],
+    CbtShapeHandle child_shape_handle
+);
+void cbtShapeCompoundRemoveChild(CbtShapeHandle shape_handle, CbtShapeHandle child_shape_handle);
+void cbtShapeCompoundRemoveChildByIndex(CbtShapeHandle shape_handle, int child_shape_index);
+int cbtShapeCompoundGetNumChilds(CbtShapeHandle shape_handle);
+CbtShapeHandle cbtShapeCompoundGetChild(CbtShapeHandle shape_handle, int child_shape_index);
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle);
 CbtBool cbtShapeIsConvex2d(CbtShapeHandle shape_handle);
