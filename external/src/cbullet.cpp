@@ -243,14 +243,18 @@ CbtShapeHandle cbtShapeAllocate(int shape_type) {
         case CBT_SHAPE_TYPE_CYLINDER: size = sizeof(btCylinderShape); break;
         case CBT_SHAPE_TYPE_STATIC_PLANE: size = sizeof(btStaticPlaneShape); break;
         case CBT_SHAPE_TYPE_COMPOUND: size = sizeof(btCompoundShape); break;
-        default: assert(0);
+        case CBT_SHAPE_TYPE_TRIANGLE_MESH:
+            size = sizeof(btBvhTriangleMeshShape) + sizeof(btTriangleIndexVertexArray);
+            break;
+        default:
+            assert(0);
     }
     auto shape = (int*)btAlignedAlloc(size, 16);
     // Set vtable to 0, this means that object is not created.
-    shape[0] = 0; 
+    shape[0] = 0;
     shape[1] = 0;
     // btCollisionShape::m_shapeType field is just after vtable (offset: 8).
-    shape[2] = shape_type; 
+    shape[2] = shape_type;
     return (CbtShapeHandle)shape;
 }
 
@@ -261,6 +265,7 @@ void cbtShapeDeallocate(CbtShapeHandle shape_handle) {
 
 void cbtShapeDestroy(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) != CBT_SHAPE_TYPE_TRIANGLE_MESH);
     auto shape = (btCollisionShape*)shape_handle;
     shape->~btCollisionShape();
     // Set vtable to 0, this means that object is not created.
@@ -317,7 +322,7 @@ float cbtShapeSphereGetRadius(CbtShapeHandle shape_handle) {
     return shape->getRadius();
 }
 
-void cbtShapeStaticPlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance) {
+void cbtShapePlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_STATIC_PLANE);
     new (shape_handle) btStaticPlaneShape(btVector3(normal[0], normal[1], normal[2]), distance);
@@ -452,46 +457,128 @@ CbtShapeHandle cbtShapeCompoundGetChild(CbtShapeHandle shape_handle, int child_s
     return (CbtShapeHandle)shape->getChildShape(child_shape_index);
 }
 
+static_assert((sizeof(btBvhTriangleMeshShape) % 16) == 0, "sizeof(btBvhTriangleMeshShape) is not multiple of 16");
+static_assert(
+    (sizeof(btTriangleIndexVertexArray) % 16) == 0,
+    "sizeof(btTriangleIndexVertexArray) is not multiple of 16"
+);
+static_assert(
+    ((sizeof(btBvhTriangleMeshShape) + sizeof(btTriangleIndexVertexArray)) % 16) == 0,
+    "sizeof(btBvhTriangleMeshShape) + sizeof(btTriangleIndexVertexArray) is not multiple of 16"
+);
+
+void cbtShapeTriMeshCreate(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
+
+    // We set vtable to non-zero value to mark this object as created. We will create btBvhTriangleMeshShape object
+    // later, in cbtShapeTriMeshBuildBvh().
+    ((uint64_t*)shape_handle)[0] = 1;
+
+    void* mesh_interface_mem = (void*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
+    new (mesh_interface_mem) btTriangleIndexVertexArray();
+}
+
+void cbtShapeTriMeshDestroy(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
+
+    auto shape = (btBvhTriangleMeshShape*)shape_handle;
+    auto mesh_interface = (btTriangleIndexVertexArray*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
+
+    const IndexedMeshArray& arr = mesh_interface->getIndexedMeshArray();
+    for (size_t i = 0; i < arr.size(); ++i) {
+        btAlignedFree((void*)arr[i].m_triangleIndexBase);
+        btAlignedFree((void*)arr[i].m_vertexBase);
+    }
+
+    mesh_interface->~btTriangleIndexVertexArray();
+    shape->~btBvhTriangleMeshShape();
+
+    // Set vtable to 0, this means that object is not created.
+    ((uint64_t*)shape_handle)[0] = 0;
+}
+
+void cbtShapeTriMeshAddIndexVertexArray(
+    CbtShapeHandle shape_handle,
+    int num_triangles,
+    const void* triangle_base,
+    int triangle_stride,
+    int num_vertices,
+    const void* vertex_base,
+    int vertex_stride
+) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
+    assert(num_triangles > 0 && num_vertices > 0);
+    assert(triangle_base != nullptr && vertex_base != nullptr);
+    assert(triangle_stride > 0 && vertex_stride > 0);
+
+    btIndexedMesh indexed_mesh;
+    indexed_mesh.m_numTriangles = num_triangles;
+    indexed_mesh.m_triangleIndexBase = (unsigned char*)btAlignedAlloc(num_triangles * triangle_stride, 16);
+    indexed_mesh.m_triangleIndexStride = triangle_stride;
+    indexed_mesh.m_numVertices = num_vertices;
+    indexed_mesh.m_vertexBase = (unsigned char*)btAlignedAlloc(num_vertices * vertex_stride, 16);
+    indexed_mesh.m_vertexStride = vertex_stride;
+
+    memcpy((void*)indexed_mesh.m_triangleIndexBase, triangle_base, num_triangles * triangle_stride);
+    memcpy((void*)indexed_mesh.m_vertexBase, vertex_base, num_vertices * vertex_stride);
+
+    auto mesh_interface = (btTriangleIndexVertexArray*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
+    mesh_interface->addIndexedMesh(indexed_mesh, PHY_INTEGER);
+}
+
+void cbtShapeTriMeshBuildBvh(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
+
+    auto mesh_interface = (btTriangleIndexVertexArray*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
+    assert(mesh_interface->getNumSubParts() > 0);
+
+    new (shape_handle) btBvhTriangleMeshShape(mesh_interface, false, true);
+}
+
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     return shape->isPolyhedral() ? CBT_TRUE : CBT_FALSE;
 }
 
 CbtBool cbtShapeIsConvex2d(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     return shape->isConvex2d() ? CBT_TRUE : CBT_FALSE;
 }
 
 CbtBool cbtShapeIsConvex(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     return shape->isConvex() ? CBT_TRUE : CBT_FALSE;
 }
 
 CbtBool cbtShapeIsNonMoving(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     return shape->isNonMoving() ? CBT_TRUE : CBT_FALSE;
 }
 
 CbtBool cbtShapeIsConcave(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     return shape->isConcave() ? CBT_TRUE : CBT_FALSE;
 }
 
 CbtBool cbtShapeIsCompound(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     return shape->isCompound() ? CBT_TRUE : CBT_FALSE;
 }
 
 void cbtShapeCalculateLocalInertia(CbtShapeHandle shape_handle, float mass, CbtVector3 inertia) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
     assert(mass > 0.0);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     btVector3 ine;
     shape->calculateLocalInertia(mass, ine);
     inertia[0] = ine.x();
@@ -501,20 +588,20 @@ void cbtShapeCalculateLocalInertia(CbtShapeHandle shape_handle, float mass, CbtV
 
 void cbtShapeSetUserPointer(CbtShapeHandle shape_handle, void* user_pointer) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     shape->setUserPointer(user_pointer);
 }
 
 void* cbtShapeGetUserPointer(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     return shape->getUserPointer();
 }
 
 void cbtShapeSetUserIndex(CbtShapeHandle shape_handle, int slot, int user_index) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
     assert(slot == 0 || slot == 1);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     if (slot == 0) {
         shape->setUserIndex(user_index);
     } else {
@@ -525,7 +612,7 @@ void cbtShapeSetUserIndex(CbtShapeHandle shape_handle, int slot, int user_index)
 int cbtShapeGetUserIndex(CbtShapeHandle shape_handle, int slot) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
     assert(slot == 0 || slot == 1);
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     if (slot == 0) {
         return shape->getUserIndex();
     }
@@ -557,7 +644,7 @@ void cbtBodyDeallocate(unsigned int num, CbtBodyHandle* body_handles) {
         assert(cbtBodyIsCreated(body_handles[i]) == CBT_FALSE);
     }
 #endif
-    // TODO(mziulek): For now we assume that all handles come from single call to cbtBodyAllocate().
+    // TODO(mziulek): For now we assume that all handles come from a single call to cbtBodyAllocate().
     btAlignedFree(body_handles[0]);
 }
 
@@ -572,7 +659,7 @@ void cbtBodyCreate(
     assert(cbtBodyIsCreated(body_handle) == CBT_FALSE);
     assert(cbtShapeIsCreated(shape_handle) == CBT_TRUE);
 
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
 
     void* body_mem = (void*)body_handle;
     void* motion_state_mem = (void*)((uint8_t*)body_handle + sizeof(btRigidBody));
@@ -622,7 +709,7 @@ void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle) {
     assert(body_handle && shape_handle);
     assert(cbtBodyIsCreated(body_handle) == CBT_TRUE && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
     btRigidBody* body = (btRigidBody*)body_handle;
-    btCollisionShape* shape = (btCollisionShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     body->setCollisionShape(shape);
 }
 

@@ -32,6 +32,7 @@
 #define CBT_SHAPE_TYPE_CYLINDER 13
 #define CBT_SHAPE_TYPE_STATIC_PLANE 28
 #define CBT_SHAPE_TYPE_COMPOUND 31
+#define CBT_SHAPE_TYPE_TRIANGLE_MESH 21
 
 // cbtConGetType, cbtConAllocate
 #define CBT_CONSTRAINT_TYPE_POINT2POINT 3
@@ -158,7 +159,7 @@ void cbtShapeSphereCreate(CbtShapeHandle shape_handle, float radius);
 void cbtShapeSphereSetUnscaledRadius(CbtShapeHandle shape_handle, float radius);
 float cbtShapeSphereGetRadius(CbtShapeHandle shape_handle);
 
-void cbtShapeStaticPlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance);
+void cbtShapePlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance);
 
 void cbtShapeCapsuleCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
 int cbtShapeCapsuleGetUpAxis(CbtShapeHandle shape_handle);
@@ -179,6 +180,19 @@ void cbtShapeCompoundRemoveChild(CbtShapeHandle shape_handle, CbtShapeHandle chi
 void cbtShapeCompoundRemoveChildByIndex(CbtShapeHandle shape_handle, int child_shape_index);
 int cbtShapeCompoundGetNumChilds(CbtShapeHandle shape_handle);
 CbtShapeHandle cbtShapeCompoundGetChild(CbtShapeHandle shape_handle, int child_shape_index);
+
+void cbtShapeTriMeshCreate(CbtShapeHandle shape_handle);
+void cbtShapeTriMeshDestroy(CbtShapeHandle shape_handle);
+void cbtShapeTriMeshAddIndexVertexArray(
+    CbtShapeHandle shape_handle,
+    int num_triangles,
+    const void* triangle_base,
+    int triangle_stride,
+    int num_vertices,
+    const void* vertex_base,
+    int vertex_stride
+);
+void cbtShapeTriMeshBuildBvh(CbtShapeHandle shape_handle);
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle);
 CbtBool cbtShapeIsConvex2d(CbtShapeHandle shape_handle);
