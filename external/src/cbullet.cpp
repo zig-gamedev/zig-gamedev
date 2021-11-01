@@ -245,7 +245,7 @@ CbtShapeHandle cbtShapeAllocate(int shape_type) {
         case CBT_SHAPE_TYPE_COMPOUND: size = sizeof(btCompoundShape); break;
         default: assert(0);
     }
-    auto shape = (int*)_aligned_malloc(size, 16);
+    auto shape = (int*)btAlignedAlloc(size, 16);
     // Set vtable to 0, this means that object is not created.
     shape[0] = 0; 
     shape[1] = 0;
@@ -542,7 +542,7 @@ static_assert(
 void cbtBodyAllocate(unsigned int num, CbtBodyHandle* body_handles) {
     assert(num > 0 && body_handles);
     const size_t element_size = sizeof(btRigidBody) + sizeof(btDefaultMotionState);
-    uint8_t* base = (uint8_t*)_aligned_malloc(num * element_size, 16);
+    uint8_t* base = (uint8_t*)btAlignedAlloc(num * element_size, 16);
     for (unsigned int i = 0; i < num; ++i) {
         body_handles[i] = (CbtBodyHandle)(base + i * element_size);
         // Set vtable to 0. This means that body is not created.
@@ -1063,7 +1063,7 @@ CbtConstraintHandle cbtConAllocate(int con_type) {
         case CBT_CONSTRAINT_TYPE_D6_SPRING_2: size = sizeof(btGeneric6DofSpring2Constraint); break;
         default: assert(0);
     }
-    auto constraint = (int*)_aligned_malloc(size, 16);
+    auto constraint = (int*)btAlignedAlloc(size, 16);
     // Set vtable to 0, this means that object is not created.
     constraint[0] = 0; 
     constraint[1] = 0;
