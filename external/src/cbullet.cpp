@@ -256,7 +256,7 @@ CbtShapeHandle cbtShapeAllocate(int shape_type) {
 
 void cbtShapeDeallocate(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
-    _aligned_free(shape_handle);
+    btAlignedFree(shape_handle);
 }
 
 void cbtShapeDestroy(CbtShapeHandle shape_handle) {
@@ -558,7 +558,7 @@ void cbtBodyDeallocate(unsigned int num, CbtBodyHandle* body_handles) {
     }
 #endif
     // TODO(mziulek): For now we assume that all handles come from single call to cbtBodyAllocate().
-    _aligned_free(body_handles[0]);
+    btAlignedFree(body_handles[0]);
 }
 
 void cbtBodyCreate(
@@ -1074,7 +1074,7 @@ CbtConstraintHandle cbtConAllocate(int con_type) {
 
 void cbtConDeallocate(CbtConstraintHandle con_handle) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
-    _aligned_free(con_handle);
+    btAlignedFree(con_handle);
 }
 
 void cbtConDestroy(CbtConstraintHandle con_handle) {
