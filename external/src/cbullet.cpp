@@ -175,6 +175,7 @@ void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCa
             btIDebugDraw::DBG_DrawWireframe |
             btIDebugDraw::DBG_DrawFrames |
             btIDebugDraw::DBG_DrawContactPoints |
+            //btIDebugDraw::DBG_DrawNormals |
             btIDebugDraw::DBG_DrawConstraints
         );
         world->setDebugDrawer(debug);
@@ -250,11 +251,17 @@ CbtShapeHandle cbtShapeAllocate(int shape_type) {
             assert(0);
     }
     auto shape = (int*)btAlignedAlloc(size, 16);
+
     // Set vtable to 0, this means that object is not created.
     shape[0] = 0;
     shape[1] = 0;
     // btCollisionShape::m_shapeType field is just after vtable (offset: 8).
     shape[2] = shape_type;
+
+    if (shape_type == CBT_SHAPE_TYPE_TRIANGLE_MESH) {
+        ((uint64_t*)((uint8_t*)shape + sizeof(btBvhTriangleMeshShape)))[0] = 0;
+    }
+
     return (CbtShapeHandle)shape;
 }
 
@@ -467,16 +474,24 @@ static_assert(
     "sizeof(btBvhTriangleMeshShape) + sizeof(btTriangleIndexVertexArray) is not multiple of 16"
 );
 
-void cbtShapeTriMeshCreate(CbtShapeHandle shape_handle) {
+void cbtShapeTriMeshCreateBegin(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
-
-    // We set vtable to non-zero value to mark this object as created. We will create btBvhTriangleMeshShape object
-    // later, in cbtShapeTriMeshBuildBvh().
-    ((uint64_t*)shape_handle)[0] = 1;
+    assert((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape))[0] == 0);
 
     void* mesh_interface_mem = (void*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
     new (mesh_interface_mem) btTriangleIndexVertexArray();
+}
+
+void cbtShapeTriMeshCreateEnd(CbtShapeHandle shape_handle) {
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
+    assert((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape))[0] != 0);
+
+    auto mesh_interface = (btTriangleIndexVertexArray*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
+    assert(mesh_interface->getNumSubParts() > 0);
+
+    new (shape_handle) btBvhTriangleMeshShape(mesh_interface, false, true);
 }
 
 void cbtShapeTriMeshDestroy(CbtShapeHandle shape_handle) {
@@ -508,12 +523,17 @@ void cbtShapeTriMeshAddIndexVertexArray(
     const void* vertex_base,
     int vertex_stride
 ) {
-    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
+    assert((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape))[0] != 0);
     assert(num_triangles > 0 && num_vertices > 0);
     assert(triangle_base != nullptr && vertex_base != nullptr);
     assert(triangle_stride > 0 && vertex_stride > 0);
 
+    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
+    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
+
+    // TODO(mziulek): Optimize, make only one allocation.
     btIndexedMesh indexed_mesh;
     indexed_mesh.m_numTriangles = num_triangles;
     indexed_mesh.m_triangleIndexBase = (unsigned char*)btAlignedAlloc(num_triangles * triangle_stride, 16);
@@ -527,16 +547,6 @@ void cbtShapeTriMeshAddIndexVertexArray(
 
     auto mesh_interface = (btTriangleIndexVertexArray*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
     mesh_interface->addIndexedMesh(indexed_mesh, PHY_INTEGER);
-}
-
-void cbtShapeTriMeshBuildBvh(CbtShapeHandle shape_handle) {
-    assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_TRUE);
-    assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
-
-    auto mesh_interface = (btTriangleIndexVertexArray*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
-    assert(mesh_interface->getNumSubParts() > 0);
-
-    new (shape_handle) btBvhTriangleMeshShape(mesh_interface, false, true);
 }
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle) {

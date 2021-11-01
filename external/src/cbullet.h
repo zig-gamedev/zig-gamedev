@@ -181,7 +181,8 @@ void cbtShapeCompoundRemoveChildByIndex(CbtShapeHandle shape_handle, int child_s
 int cbtShapeCompoundGetNumChilds(CbtShapeHandle shape_handle);
 CbtShapeHandle cbtShapeCompoundGetChild(CbtShapeHandle shape_handle, int child_shape_index);
 
-void cbtShapeTriMeshCreate(CbtShapeHandle shape_handle);
+void cbtShapeTriMeshCreateBegin(CbtShapeHandle shape_handle);
+void cbtShapeTriMeshCreateEnd(CbtShapeHandle shape_handle);
 void cbtShapeTriMeshDestroy(CbtShapeHandle shape_handle);
 void cbtShapeTriMeshAddIndexVertexArray(
     CbtShapeHandle shape_handle,
@@ -192,7 +193,6 @@ void cbtShapeTriMeshAddIndexVertexArray(
     const void* vertex_base,
     int vertex_stride
 );
-void cbtShapeTriMeshBuildBvh(CbtShapeHandle shape_handle);
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle);
 CbtBool cbtShapeIsConvex2d(CbtShapeHandle shape_handle);
