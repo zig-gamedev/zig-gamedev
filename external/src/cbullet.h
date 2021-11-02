@@ -115,6 +115,11 @@ void cbtWorldAddConstraint(
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
 void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle constraint_handle);
 
+int cbtWorldGetNumBodies(CbtWorldHandle world_handle);
+int cbtWorldGetNumConstraints(CbtWorldHandle world_handle);
+CbtBodyHandle cbtWorldGetBody(CbtWorldHandle world_handle, int body_index);
+CbtConstraintHandle cbtWorldGetConstraint(CbtWorldHandle world_handle, int con_index);
+
 // Returns CBT_TRUE when hits something, CBT_FALSE otherwise
 CbtBool cbtRayTestClosest(
     CbtWorldHandle world_handle,

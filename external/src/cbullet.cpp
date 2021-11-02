@@ -129,6 +129,30 @@ void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle c
     world->removeConstraint(con);
 }
 
+int cbtWorldGetNumBodies(CbtWorldHandle world_handle) {
+    assert(world_handle);
+    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    return (int)world->getCollisionObjectArray().size();
+}
+
+int cbtWorldGetNumConstraints(CbtWorldHandle world_handle) {
+    assert(world_handle);
+    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    return world->getNumConstraints();
+}
+
+CbtBodyHandle cbtWorldGetBody(CbtWorldHandle world_handle, int body_index) {
+    assert(world_handle);
+    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    return (CbtBodyHandle)world->getCollisionObjectArray()[body_index];
+}
+
+CbtConstraintHandle cbtWorldGetConstraint(CbtWorldHandle world_handle, int con_index) {
+    assert(world_handle);
+    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    return (CbtConstraintHandle)world->getConstraint(con_index);
+}
+
 CbtBool cbtRayTestClosest(
     CbtWorldHandle world_handle,
     const CbtVector3 ray_from_world,
