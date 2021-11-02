@@ -211,8 +211,10 @@ int cbtShapeGetUserIndex(CbtShapeHandle shape_handle, int slot); // slot can be 
 //
 // Body
 //
-void cbtBodyAllocate(unsigned int num, CbtBodyHandle* body_handles);
-void cbtBodyDeallocate(unsigned int num, CbtBodyHandle* body_handles);
+CbtBodyHandle cbtBodyAllocate(void);
+void cbtBodyAllocateBatch(unsigned int num, CbtBodyHandle* body_handles);
+void cbtBodyDeallocate(CbtBodyHandle body_handle);
+void cbtBodyDeallocateBatch(unsigned int num, CbtBodyHandle* body_handles);
 
 void cbtBodyCreate(
     CbtBodyHandle body_handle,

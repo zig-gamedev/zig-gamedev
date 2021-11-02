@@ -653,7 +653,19 @@ static_assert(
     "sizeof(btRigidBody) + sizeof(btDefaultMotionState) is not multiple of 16"
 );
 
-void cbtBodyAllocate(unsigned int num, CbtBodyHandle* body_handles) {
+CbtBodyHandle cbtBodyAllocate(void) {
+    auto base = (uint64_t*)btAlignedAlloc(sizeof(btRigidBody) + sizeof(btDefaultMotionState), 16);
+    // Set vtable to 0. This means that body is not created.
+    base[0] = 0;
+    return (CbtBodyHandle)base;
+}
+
+void cbtBodyDeallocate(CbtBodyHandle body_handle) {
+    assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_FALSE);
+    btAlignedFree(body_handle);
+}
+
+void cbtBodyAllocateBatch(unsigned int num, CbtBodyHandle* body_handles) {
     assert(num > 0 && body_handles);
     const size_t element_size = sizeof(btRigidBody) + sizeof(btDefaultMotionState);
     uint8_t* base = (uint8_t*)btAlignedAlloc(num * element_size, 16);
@@ -664,14 +676,14 @@ void cbtBodyAllocate(unsigned int num, CbtBodyHandle* body_handles) {
     }
 }
 
-void cbtBodyDeallocate(unsigned int num, CbtBodyHandle* body_handles) {
+void cbtBodyDeallocateBatch(unsigned int num, CbtBodyHandle* body_handles) {
     assert(num > 0 && body_handles);
 #ifdef _DEBUG
     for (unsigned int i = 0; i < num; ++i) {
         assert(cbtBodyIsCreated(body_handles[i]) == CBT_FALSE);
     }
 #endif
-    // TODO(mziulek): For now we assume that all handles come from a single call to cbtBodyAllocate().
+    // NOTE(mziulek): All handles must come from a single 'batch'.
     btAlignedFree(body_handles[0]);
 }
 

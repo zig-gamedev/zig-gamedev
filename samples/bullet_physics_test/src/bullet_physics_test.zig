@@ -44,12 +44,8 @@ const DemoState = struct {
 
     physics_debug: *PhysicsDebug,
     physics_world: c.CbtWorldHandle,
-    sphere_shape: c.CbtShapeHandle,
-    ground_shape: c.CbtShapeHandle,
-    box_shape: c.CbtShapeHandle,
-    compound_shape: c.CbtShapeHandle,
-    trimesh_shape: c.CbtShapeHandle,
-    bodies: [5]c.CbtBodyHandle,
+    physics_shapes: std.ArrayList(c.CbtShapeHandle),
+    physics_bodies: std.ArrayList(c.CbtBodyHandle),
 
     camera: struct {
         position: Vec3,
@@ -154,21 +150,27 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .user_data = physics_debug,
     });
 
+    var physics_shapes = std.ArrayList(c.CbtShapeHandle).init(gpa);
+
     const sphere_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
     c.cbtShapeSphereCreate(sphere_shape, 0.5);
     c.cbtShapeDestroy(sphere_shape);
     c.cbtShapeSphereCreate(sphere_shape, 0.5);
+    physics_shapes.append(sphere_shape) catch unreachable;
 
     const ground_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(ground_shape, Vec3.init(20.0, 0.2, 20.0).ptr());
+    physics_shapes.append(ground_shape) catch unreachable;
 
     const box_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape, Vec3.init(0.5, 0.5, 0.5).ptr());
+    physics_shapes.append(box_shape) catch unreachable;
 
     const compound_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_COMPOUND);
     c.cbtShapeCompoundCreate(compound_shape, c.CBT_TRUE, 2);
     c.cbtShapeCompoundAddChild(compound_shape, &Mat4.initTranslation(Vec3.init(-0.75, 0, 0)).toArray4x3(), box_shape);
     c.cbtShapeCompoundAddChild(compound_shape, &Mat4.initTranslation(Vec3.init(0.75, 0, 0)).toArray4x3(), sphere_shape);
+    physics_shapes.append(compound_shape) catch unreachable;
 
     const vertices = [4]Vec3{
         Vec3.init(-10.0, 0.0, -10.0),
@@ -182,28 +184,35 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     c.cbtShapeTriMeshCreateBegin(trimesh_shape);
     c.cbtShapeTriMeshAddIndexVertexArray(trimesh_shape, 2, &indices, 12, 4, &vertices, 12);
     c.cbtShapeTriMeshCreateEnd(trimesh_shape);
+    physics_shapes.append(trimesh_shape) catch unreachable;
 
-    var bodies: [5]c.CbtBodyHandle = undefined;
+    var physics_bodies = std.ArrayList(c.CbtBodyHandle).init(gpa);
 
-    c.cbtBodyAllocate(bodies.len, &bodies);
-    c.cbtBodyCreate(bodies[0], 5.0, &Mat4.initTranslation(Vec3.init(0, 1.5, 5)).toArray4x3(), sphere_shape);
-    c.cbtBodySetDamping(bodies[0], 0.2, 0.2);
-    c.cbtBodyDestroy(bodies[0]);
-    c.cbtBodyCreate(bodies[0], 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
-    c.cbtBodySetDamping(bodies[0], 0.2, 0.2);
-    c.cbtWorldAddBody(physics_world, bodies[0]);
+    const sphere_body = c.cbtBodyAllocate();
+    c.cbtBodyCreate(sphere_body, 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
+    c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
+    c.cbtWorldAddBody(physics_world, sphere_body);
+    physics_bodies.append(sphere_body) catch unreachable;
 
-    c.cbtBodyCreate(bodies[1], 0.0, &Mat4.initIdentity().toArray4x3(), trimesh_shape);
-    c.cbtWorldAddBody(physics_world, bodies[1]);
+    const trimesh_body = c.cbtBodyAllocate();
+    c.cbtBodyCreate(trimesh_body, 0.0, &Mat4.initIdentity().toArray4x3(), trimesh_shape);
+    c.cbtWorldAddBody(physics_world, trimesh_body);
+    physics_bodies.append(trimesh_body) catch unreachable;
 
-    c.cbtBodyCreate(bodies[2], 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
-    c.cbtWorldAddBody(physics_world, bodies[2]);
+    const box_body = c.cbtBodyAllocate();
+    c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
+    c.cbtWorldAddBody(physics_world, box_body);
+    physics_bodies.append(box_body) catch unreachable;
 
-    c.cbtBodyCreate(bodies[3], 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
-    c.cbtWorldAddBody(physics_world, bodies[3]);
+    const compound_body = c.cbtBodyAllocate();
+    c.cbtBodyCreate(compound_body, 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
+    c.cbtWorldAddBody(physics_world, compound_body);
+    physics_bodies.append(compound_body) catch unreachable;
 
-    c.cbtBodyCreate(bodies[4], 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
-    c.cbtWorldAddBody(physics_world, bodies[4]);
+    const ground_body = c.cbtBodyAllocate();
+    c.cbtBodyCreate(ground_body, 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
+    c.cbtWorldAddBody(physics_world, ground_body);
+    physics_bodies.append(ground_body) catch unreachable;
 
     assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
     assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
@@ -312,12 +321,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .info_txtfmt = info_txtfmt,
         .physics_world = physics_world,
         .physics_debug = physics_debug,
-        .sphere_shape = sphere_shape,
-        .ground_shape = ground_shape,
-        .box_shape = box_shape,
-        .compound_shape = compound_shape,
-        .trimesh_shape = trimesh_shape,
-        .bodies = bodies,
+        .physics_shapes = physics_shapes,
+        .physics_bodies = physics_bodies,
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
@@ -356,21 +361,21 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         c.cbtConDestroy(demo.pick.constraint);
     }
     c.cbtConDeallocate(demo.pick.constraint);
-    for (demo.bodies) |body| {
+    for (demo.physics_bodies.items) |body| {
         c.cbtWorldRemoveBody(demo.physics_world, body);
         c.cbtBodyDestroy(body);
+        c.cbtBodyDeallocate(body);
     }
-    c.cbtBodyDeallocate(demo.bodies.len, &demo.bodies);
-    c.cbtShapeDestroy(demo.sphere_shape);
-    c.cbtShapeDestroy(demo.ground_shape);
-    c.cbtShapeDestroy(demo.box_shape);
-    c.cbtShapeDestroy(demo.compound_shape);
-    c.cbtShapeTriMeshDestroy(demo.trimesh_shape);
-    c.cbtShapeDeallocate(demo.ground_shape);
-    c.cbtShapeDeallocate(demo.sphere_shape);
-    c.cbtShapeDeallocate(demo.box_shape);
-    c.cbtShapeDeallocate(demo.compound_shape);
-    c.cbtShapeDeallocate(demo.trimesh_shape);
+    demo.physics_bodies.deinit();
+    for (demo.physics_shapes.items) |shape| {
+        if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH) {
+            c.cbtShapeTriMeshDestroy(shape);
+        } else {
+            c.cbtShapeDestroy(shape);
+        }
+        c.cbtShapeDeallocate(shape);
+    }
+    demo.physics_shapes.deinit();
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
     c.cbtWorldDestroy(demo.physics_world);
@@ -475,7 +480,7 @@ fn update(demo: *DemoState) void {
             demo.pick.body = result.body;
 
             demo.pick.saved_linear_damping = c.cbtBodyGetLinearDamping(result.body);
-            demo.pick.saved_angular_damping = c.cbtBodyGetLinearDamping(result.body);
+            demo.pick.saved_angular_damping = c.cbtBodyGetAngularDamping(result.body);
             c.cbtBodySetDamping(result.body, 0.4, 0.4);
 
             demo.pick.saved_activation_state = c.cbtBodyGetActivationState(result.body);
