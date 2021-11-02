@@ -365,6 +365,15 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
             c.cbtBodyDeallocate(body);
         }
     }
+    {
+        var i = c.cbtWorldGetNumConstraints(demo.physics_world) - 1;
+        while (i >= 0) : (i -= 1) {
+            const constraint = c.cbtWorldGetConstraint(demo.physics_world, i);
+            c.cbtWorldRemoveConstraint(demo.physics_world, constraint);
+            c.cbtConDestroy(constraint);
+            c.cbtConDeallocate(constraint);
+        }
+    }
     for (demo.physics_shapes.items) |shape| {
         if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH) {
             c.cbtShapeTriMeshDestroy(shape);
