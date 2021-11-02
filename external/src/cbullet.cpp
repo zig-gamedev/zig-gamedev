@@ -477,7 +477,7 @@ static_assert(
 void cbtShapeTriMeshCreateBegin(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
-    assert((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape))[0] == 0);
+    assert(((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape)))[0] == 0);
 
     void* mesh_interface_mem = (void*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
     new (mesh_interface_mem) btTriangleIndexVertexArray();
@@ -486,7 +486,7 @@ void cbtShapeTriMeshCreateBegin(CbtShapeHandle shape_handle) {
 void cbtShapeTriMeshCreateEnd(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
-    assert((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape))[0] != 0);
+    assert(((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape)))[0] != 0);
 
     auto mesh_interface = (btTriangleIndexVertexArray*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
     assert(mesh_interface->getNumSubParts() > 0);
@@ -503,8 +503,8 @@ void cbtShapeTriMeshDestroy(CbtShapeHandle shape_handle) {
 
     const IndexedMeshArray& arr = mesh_interface->getIndexedMeshArray();
     for (size_t i = 0; i < arr.size(); ++i) {
+        // We keep triangles and vertices in one memory buffer, so only one deallocation is needed.
         btAlignedFree((void*)arr[i].m_triangleIndexBase);
-        btAlignedFree((void*)arr[i].m_vertexBase);
     }
 
     mesh_interface->~btTriangleIndexVertexArray();
@@ -517,36 +517,53 @@ void cbtShapeTriMeshDestroy(CbtShapeHandle shape_handle) {
 void cbtShapeTriMeshAddIndexVertexArray(
     CbtShapeHandle shape_handle,
     int num_triangles,
-    const void* triangle_base,
+    const void* triangles_base,
     int triangle_stride,
     int num_vertices,
-    const void* vertex_base,
+    const void* vertices_base,
     int vertex_stride
 ) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
-    assert((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape))[0] != 0);
+    assert(((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape)))[0] != 0);
     assert(num_triangles > 0 && num_vertices > 0);
-    assert(triangle_base != nullptr && vertex_base != nullptr);
-    assert(triangle_stride > 0 && vertex_stride > 0);
+    assert(triangles_base != nullptr && vertices_base != nullptr);
+    assert(vertex_stride >= 12);
+    // NOTE(mziulek): We currently require triangles to be tightly packed.
+    assert(triangle_stride == 3 || triangle_stride == 6 || triangle_stride == 12);
 
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_TRIANGLE_MESH);
 
-    // TODO(mziulek): Optimize, make only one allocation.
+    const size_t vertices_size = num_vertices * 3 * sizeof(float);
+    const size_t indices_size = num_triangles * triangle_stride;
+    const size_t vertices_size_aligned = (vertices_size + 15) & ~15;
+    const size_t indices_size_aligned = (indices_size + 15) & ~15;
+
+    auto mem = (uint8_t*)btAlignedAlloc(vertices_size_aligned + indices_size_aligned, 16);
+
     btIndexedMesh indexed_mesh;
     indexed_mesh.m_numTriangles = num_triangles;
-    indexed_mesh.m_triangleIndexBase = (unsigned char*)btAlignedAlloc(num_triangles * triangle_stride, 16);
+    indexed_mesh.m_triangleIndexBase = mem;
     indexed_mesh.m_triangleIndexStride = triangle_stride;
     indexed_mesh.m_numVertices = num_vertices;
-    indexed_mesh.m_vertexBase = (unsigned char*)btAlignedAlloc(num_vertices * vertex_stride, 16);
-    indexed_mesh.m_vertexStride = vertex_stride;
+    indexed_mesh.m_vertexBase = mem + indices_size_aligned;
+    indexed_mesh.m_vertexStride = 3 * sizeof(float);
 
-    memcpy((void*)indexed_mesh.m_triangleIndexBase, triangle_base, num_triangles * triangle_stride);
-    memcpy((void*)indexed_mesh.m_vertexBase, vertex_base, num_vertices * vertex_stride);
+    for (int i = 0; i < num_vertices; ++i) {
+        const float* src_vertex = (const float*)((uint8_t*)vertices_base + i * vertex_stride);
+        float* dst_vertex = (float*)((uint8_t*)indexed_mesh.m_vertexBase + i * 3 * sizeof(float));
+        dst_vertex[0] = src_vertex[0];
+        dst_vertex[1] = src_vertex[1];
+        dst_vertex[2] = src_vertex[2];
+    }
+    memcpy((void*)indexed_mesh.m_triangleIndexBase, triangles_base, indices_size);
 
     auto mesh_interface = (btTriangleIndexVertexArray*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape));
-    mesh_interface->addIndexedMesh(indexed_mesh, PHY_INTEGER);
+    mesh_interface->addIndexedMesh(
+        indexed_mesh,
+        triangle_stride == 12 ? PHY_INTEGER : (triangle_stride == 6 ? PHY_SHORT : PHY_UCHAR)
+    );
 }
 
 CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle) {
