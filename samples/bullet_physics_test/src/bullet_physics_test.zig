@@ -32,19 +32,54 @@ const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 const PhysicsObjectsPool = struct {
     const max_num_bodies = 32;
     const max_num_constraints = 4;
+    const max_num_shapes = 13;
     bodies: []c.CbtBodyHandle,
     constraints: []c.CbtConstraintHandle,
+    shapes: []c.CbtShapeHandle,
 
     fn init() PhysicsObjectsPool {
         var pool = PhysicsObjectsPool{
             .bodies = std.heap.page_allocator.alloc(c.CbtBodyHandle, max_num_bodies) catch unreachable,
             .constraints = std.heap.page_allocator.alloc(c.CbtConstraintHandle, max_num_constraints) catch unreachable,
+            .shapes = std.heap.page_allocator.alloc(c.CbtShapeHandle, max_num_shapes) catch unreachable,
         };
         c.cbtBodyAllocateBatch(max_num_bodies, pool.bodies.ptr);
+
         pool.constraints[0] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
         pool.constraints[1] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
         pool.constraints[2] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_GEAR);
         pool.constraints[3] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_GEAR);
+
+        {
+            var counter: u32 = 0;
+            var i: u32 = 0;
+            while (i < 3) : (i += 1) {
+                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 3) : (i += 1) {
+                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 1) : (i += 1) {
+                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_STATIC_PLANE);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 3) : (i += 1) {
+                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_COMPOUND);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 3) : (i += 1) {
+                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
+                counter += 1;
+            }
+            assert(counter == max_num_shapes);
+        }
+
         return pool;
     }
 
@@ -53,8 +88,12 @@ const PhysicsObjectsPool = struct {
         for (pool.constraints) |con| {
             c.cbtConDeallocate(con);
         }
+        for (pool.shapes) |shape| {
+            c.cbtShapeDeallocate(shape);
+        }
         std.heap.page_allocator.free(pool.bodies);
         std.heap.page_allocator.free(pool.constraints);
+        std.heap.page_allocator.free(pool.shapes);
         pool.* = undefined;
     }
 
@@ -67,13 +106,34 @@ const PhysicsObjectsPool = struct {
         unreachable;
     }
 
-    fn getConstraint(pool: PhysicsObjectsPool, con_type: i32) c.CbtBodyHandle {
+    fn getConstraint(pool: PhysicsObjectsPool, con_type: i32) c.CbtConstraintHandle {
         for (pool.constraints) |con| {
             if (c.cbtConIsCreated(con) == c.CBT_FALSE and c.cbtConGetType(con) == con_type) {
                 return con;
             }
         }
         unreachable;
+    }
+
+    fn getShape(pool: PhysicsObjectsPool, shape_type: i32) c.CbtShapeHandle {
+        for (pool.shapes) |shape| {
+            if (c.cbtShapeIsCreated(shape) == c.CBT_FALSE and c.cbtShapeGetType(shape) == shape_type) {
+                return shape;
+            }
+        }
+        unreachable;
+    }
+
+    fn destroyAllShapes(pool: PhysicsObjectsPool) void {
+        for (pool.shapes) |shape| {
+            if (c.cbtShapeIsCreated(shape) == c.CBT_TRUE) {
+                if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH) {
+                    c.cbtShapeTriMeshDestroy(shape);
+                } else {
+                    c.cbtShapeDestroy(shape);
+                }
+            }
+        }
     }
 };
 
@@ -92,7 +152,6 @@ const DemoState = struct {
 
     physics_debug: *PhysicsDebug,
     physics_world: c.CbtWorldHandle,
-    physics_shapes: std.ArrayList(c.CbtShapeHandle),
     physics_objects_pool: PhysicsObjectsPool,
 
     camera: struct {
@@ -198,21 +257,18 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .user_data = physics_debug,
     });
 
-    var physics_shapes = std.ArrayList(c.CbtShapeHandle).init(gpa);
+    const physics_objects_pool = PhysicsObjectsPool.init();
 
-    const sphere_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
+    const sphere_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_SPHERE);
     c.cbtShapeSphereCreate(sphere_shape, 0.5);
-    physics_shapes.append(sphere_shape) catch unreachable;
 
-    const ground_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
+    const ground_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(ground_shape, Vec3.init(20.0, 0.2, 20.0).ptr());
-    physics_shapes.append(ground_shape) catch unreachable;
 
-    const box_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
+    const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape, Vec3.init(0.5, 0.5, 0.5).ptr());
-    physics_shapes.append(box_shape) catch unreachable;
 
-    const compound_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_COMPOUND);
+    const compound_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
     c.cbtShapeCompoundCreate(compound_shape, c.CBT_TRUE, 2);
     c.cbtShapeCompoundAddChild(compound_shape, &Mat4.initTranslation(Vec3.init(-0.75, 0, 0)).toArray4x3(), box_shape);
     c.cbtShapeCompoundAddChild(
@@ -220,7 +276,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         &Mat4.initTranslation(Vec3.init(0.75, 0, 0)).toArray4x3(),
         sphere_shape,
     );
-    physics_shapes.append(compound_shape) catch unreachable;
 
     const vertices = [4]Vec3{
         Vec3.init(-10.0, 0.0, -10.0),
@@ -230,40 +285,39 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
     const indices = [6]i32{ 0, 1, 2, 0, 2, 3 };
 
-    const trimesh_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
+    const trimesh_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
     c.cbtShapeTriMeshCreateBegin(trimesh_shape);
     c.cbtShapeTriMeshAddIndexVertexArray(trimesh_shape, 2, &indices, 12, 4, &vertices, 12);
     c.cbtShapeTriMeshCreateEnd(trimesh_shape);
-    physics_shapes.append(trimesh_shape) catch unreachable;
-
-    const physics_objects_pool = PhysicsObjectsPool.init();
-
-    const sphere_body = physics_objects_pool.getBody();
-    c.cbtBodyCreate(sphere_body, 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
-    c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
-    c.cbtWorldAddBody(physics_world, sphere_body);
-
-    const trimesh_body = physics_objects_pool.getBody();
-    c.cbtBodyCreate(trimesh_body, 0.0, &Mat4.initIdentity().toArray4x3(), trimesh_shape);
-    c.cbtWorldAddBody(physics_world, trimesh_body);
-
-    const box_body = physics_objects_pool.getBody();
-    c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
-    c.cbtWorldAddBody(physics_world, box_body);
-
-    const compound_body = physics_objects_pool.getBody();
-    c.cbtBodyCreate(compound_body, 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
-    c.cbtWorldAddBody(physics_world, compound_body);
-
-    const ground_body = physics_objects_pool.getBody();
-    c.cbtBodyCreate(ground_body, 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
-    c.cbtWorldAddBody(physics_world, ground_body);
 
     assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
     assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
     assert(c.cbtShapeGetType(box_shape) == c.CBT_SHAPE_TYPE_BOX);
     assert(c.cbtShapeGetType(compound_shape) == c.CBT_SHAPE_TYPE_COMPOUND);
     assert(c.cbtShapeGetType(trimesh_shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
+
+    {
+        const sphere_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(sphere_body, 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
+        c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
+        c.cbtWorldAddBody(physics_world, sphere_body);
+
+        const trimesh_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(trimesh_body, 0.0, &Mat4.initIdentity().toArray4x3(), trimesh_shape);
+        c.cbtWorldAddBody(physics_world, trimesh_body);
+
+        const box_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
+        c.cbtWorldAddBody(physics_world, box_body);
+
+        const compound_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(compound_body, 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
+        c.cbtWorldAddBody(physics_world, compound_body);
+
+        const ground_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(ground_body, 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
+        c.cbtWorldAddBody(physics_world, ground_body);
+    }
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -366,7 +420,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .info_txtfmt = info_txtfmt,
         .physics_world = physics_world,
         .physics_debug = physics_debug,
-        .physics_shapes = physics_shapes,
         .physics_objects_pool = physics_objects_pool,
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
@@ -392,7 +445,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
-fn emptyPhysicsWorld(world: c.CbtWorldHandle) void {
+fn emptyPhysicsWorld(world: c.CbtWorldHandle, physics_objects_pool: PhysicsObjectsPool) void {
     {
         var i = c.cbtWorldGetNumBodies(world) - 1;
         while (i >= 0) : (i -= 1) {
@@ -409,6 +462,7 @@ fn emptyPhysicsWorld(world: c.CbtWorldHandle) void {
             c.cbtConDestroy(constraint);
         }
     }
+    physics_objects_pool.destroyAllShapes();
 }
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
@@ -425,17 +479,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         c.cbtConDestroy(demo.pick.constraint);
     }
     c.cbtConDeallocate(demo.pick.constraint);
-    emptyPhysicsWorld(demo.physics_world);
+    emptyPhysicsWorld(demo.physics_world, demo.physics_objects_pool);
     demo.physics_objects_pool.deinit();
-    for (demo.physics_shapes.items) |shape| {
-        if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH) {
-            c.cbtShapeTriMeshDestroy(shape);
-        } else {
-            c.cbtShapeDestroy(shape);
-        }
-        c.cbtShapeDeallocate(shape);
-    }
-    demo.physics_shapes.deinit();
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
     c.cbtWorldDestroy(demo.physics_world);
