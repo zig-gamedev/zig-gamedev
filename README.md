@@ -37,6 +37,10 @@ Some of the sample applications are listed below. More can be found in [samples]
 1. [DirectML convolution test](samples/directml_convolution_test): This sample demonstrates how to perform GPU-accelerated convolution operation using DirectML.
 
     <img src="samples/directml_convolution_test/screenshot.png" alt="directml convolution test" height="200">
+    
+## GitHub Sponsors
+Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
+* Zig Software Foundation (ziglang)
 
 ## Libraries
 
