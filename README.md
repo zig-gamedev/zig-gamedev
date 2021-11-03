@@ -122,3 +122,7 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 * Windows 10 October 2020 Update (Build 19042.789+)
 * Windows 10 May 2020 Update (Build 19041.789+)
 * Windows 10 November 2019 Update (Build 18363.1350+)
+
+## GitHub Sponsors
+Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
+* Zig Software Foundation (ziglang)
