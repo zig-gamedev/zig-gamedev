@@ -29,6 +29,54 @@ const window_width = 1920;
 const window_height = 1080;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
+const PhysicsObjectsPool = struct {
+    const max_num_bodies = 32;
+    const max_num_constraints = 4;
+    bodies: []c.CbtBodyHandle,
+    constraints: []c.CbtConstraintHandle,
+
+    fn init() PhysicsObjectsPool {
+        var pool = PhysicsObjectsPool{
+            .bodies = std.heap.page_allocator.alloc(c.CbtBodyHandle, max_num_bodies) catch unreachable,
+            .constraints = std.heap.page_allocator.alloc(c.CbtConstraintHandle, max_num_constraints) catch unreachable,
+        };
+        c.cbtBodyAllocateBatch(max_num_bodies, pool.bodies.ptr);
+        pool.constraints[0] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
+        pool.constraints[1] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
+        pool.constraints[2] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_GEAR);
+        pool.constraints[3] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_GEAR);
+        return pool;
+    }
+
+    fn deinit(pool: *PhysicsObjectsPool) void {
+        c.cbtBodyDeallocateBatch(@intCast(u32, pool.bodies.len), pool.bodies.ptr);
+        for (pool.constraints) |con| {
+            c.cbtConDeallocate(con);
+        }
+        std.heap.page_allocator.free(pool.bodies);
+        std.heap.page_allocator.free(pool.constraints);
+        pool.* = undefined;
+    }
+
+    fn getBody(pool: PhysicsObjectsPool) c.CbtBodyHandle {
+        for (pool.bodies) |body| {
+            if (c.cbtBodyIsCreated(body) == c.CBT_FALSE) {
+                return body;
+            }
+        }
+        unreachable;
+    }
+
+    fn getConstraint(pool: PhysicsObjectsPool, con_type: i32) c.CbtBodyHandle {
+        for (pool.constraints) |con| {
+            if (c.cbtConIsCreated(con) == c.CBT_FALSE and c.cbtConGetType(con) == con_type) {
+                return con;
+            }
+        }
+        unreachable;
+    }
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -45,6 +93,7 @@ const DemoState = struct {
     physics_debug: *PhysicsDebug,
     physics_world: c.CbtWorldHandle,
     physics_shapes: std.ArrayList(c.CbtShapeHandle),
+    physics_objects_pool: PhysicsObjectsPool,
 
     camera: struct {
         position: Vec3,
@@ -153,8 +202,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const sphere_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
     c.cbtShapeSphereCreate(sphere_shape, 0.5);
-    c.cbtShapeDestroy(sphere_shape);
-    c.cbtShapeSphereCreate(sphere_shape, 0.5);
     physics_shapes.append(sphere_shape) catch unreachable;
 
     const ground_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
@@ -189,24 +236,26 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     c.cbtShapeTriMeshCreateEnd(trimesh_shape);
     physics_shapes.append(trimesh_shape) catch unreachable;
 
-    const sphere_body = c.cbtBodyAllocate();
+    const physics_objects_pool = PhysicsObjectsPool.init();
+
+    const sphere_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(sphere_body, 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
     c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
     c.cbtWorldAddBody(physics_world, sphere_body);
 
-    const trimesh_body = c.cbtBodyAllocate();
+    const trimesh_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(trimesh_body, 0.0, &Mat4.initIdentity().toArray4x3(), trimesh_shape);
     c.cbtWorldAddBody(physics_world, trimesh_body);
 
-    const box_body = c.cbtBodyAllocate();
+    const box_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
     c.cbtWorldAddBody(physics_world, box_body);
 
-    const compound_body = c.cbtBodyAllocate();
+    const compound_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(compound_body, 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
     c.cbtWorldAddBody(physics_world, compound_body);
 
-    const ground_body = c.cbtBodyAllocate();
+    const ground_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(ground_body, 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
     c.cbtWorldAddBody(physics_world, ground_body);
 
@@ -318,6 +367,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_world = physics_world,
         .physics_debug = physics_debug,
         .physics_shapes = physics_shapes,
+        .physics_objects_pool = physics_objects_pool,
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
@@ -342,6 +392,25 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
+fn emptyPhysicsWorld(world: c.CbtWorldHandle) void {
+    {
+        var i = c.cbtWorldGetNumBodies(world) - 1;
+        while (i >= 0) : (i -= 1) {
+            const body = c.cbtWorldGetBody(world, i);
+            c.cbtWorldRemoveBody(world, body);
+            c.cbtBodyDestroy(body);
+        }
+    }
+    {
+        var i = c.cbtWorldGetNumConstraints(world) - 1;
+        while (i >= 0) : (i -= 1) {
+            const constraint = c.cbtWorldGetConstraint(world, i);
+            c.cbtWorldRemoveConstraint(world, constraint);
+            c.cbtConDestroy(constraint);
+        }
+    }
+}
+
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.brush.Release();
@@ -356,24 +425,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         c.cbtConDestroy(demo.pick.constraint);
     }
     c.cbtConDeallocate(demo.pick.constraint);
-    {
-        var i = c.cbtWorldGetNumBodies(demo.physics_world) - 1;
-        while (i >= 0) : (i -= 1) {
-            const body = c.cbtWorldGetBody(demo.physics_world, i);
-            c.cbtWorldRemoveBody(demo.physics_world, body);
-            c.cbtBodyDestroy(body);
-            c.cbtBodyDeallocate(body);
-        }
-    }
-    {
-        var i = c.cbtWorldGetNumConstraints(demo.physics_world) - 1;
-        while (i >= 0) : (i -= 1) {
-            const constraint = c.cbtWorldGetConstraint(demo.physics_world, i);
-            c.cbtWorldRemoveConstraint(demo.physics_world, constraint);
-            c.cbtConDestroy(constraint);
-            c.cbtConDeallocate(constraint);
-        }
-    }
+    emptyPhysicsWorld(demo.physics_world);
+    demo.physics_objects_pool.deinit();
     for (demo.physics_shapes.items) |shape| {
         if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH) {
             c.cbtShapeTriMeshDestroy(shape);
