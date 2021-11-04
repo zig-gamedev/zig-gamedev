@@ -83,7 +83,8 @@ const PhysicsObjectsPool = struct {
         return pool;
     }
 
-    fn deinit(pool: *PhysicsObjectsPool) void {
+    fn deinit(pool: *PhysicsObjectsPool, world: c.CbtWorldHandle) void {
+        pool.destroyAllObjects(world);
         c.cbtBodyDeallocateBatch(@intCast(u32, pool.bodies.len), pool.bodies.ptr);
         for (pool.constraints) |con| {
             c.cbtConDeallocate(con);
@@ -134,6 +135,26 @@ const PhysicsObjectsPool = struct {
                 }
             }
         }
+    }
+
+    fn destroyAllObjects(pool: PhysicsObjectsPool, world: c.CbtWorldHandle) void {
+        {
+            var i = c.cbtWorldGetNumBodies(world) - 1;
+            while (i >= 0) : (i -= 1) {
+                const body = c.cbtWorldGetBody(world, i);
+                c.cbtWorldRemoveBody(world, body);
+                c.cbtBodyDestroy(body);
+            }
+        }
+        {
+            var i = c.cbtWorldGetNumConstraints(world) - 1;
+            while (i >= 0) : (i -= 1) {
+                const constraint = c.cbtWorldGetConstraint(world, i);
+                c.cbtWorldRemoveConstraint(world, constraint);
+                c.cbtConDestroy(constraint);
+            }
+        }
+        pool.destroyAllShapes();
     }
 };
 
@@ -445,26 +466,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
-fn emptyPhysicsWorld(world: c.CbtWorldHandle, physics_objects_pool: PhysicsObjectsPool) void {
-    {
-        var i = c.cbtWorldGetNumBodies(world) - 1;
-        while (i >= 0) : (i -= 1) {
-            const body = c.cbtWorldGetBody(world, i);
-            c.cbtWorldRemoveBody(world, body);
-            c.cbtBodyDestroy(body);
-        }
-    }
-    {
-        var i = c.cbtWorldGetNumConstraints(world) - 1;
-        while (i >= 0) : (i -= 1) {
-            const constraint = c.cbtWorldGetConstraint(world, i);
-            c.cbtWorldRemoveConstraint(world, constraint);
-            c.cbtConDestroy(constraint);
-        }
-    }
-    physics_objects_pool.destroyAllShapes();
-}
-
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.brush.Release();
@@ -479,8 +480,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         c.cbtConDestroy(demo.pick.constraint);
     }
     c.cbtConDeallocate(demo.pick.constraint);
-    emptyPhysicsWorld(demo.physics_world, demo.physics_objects_pool);
-    demo.physics_objects_pool.deinit();
+    demo.physics_objects_pool.deinit(demo.physics_world);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
     c.cbtWorldDestroy(demo.physics_world);
