@@ -38,10 +38,21 @@ const PhysicsObjectsPool = struct {
     shapes: []c.CbtShapeHandle,
 
     fn init() PhysicsObjectsPool {
+        const mem = std.heap.page_allocator.alloc(
+            c.CbtBodyHandle,
+            max_num_bodies + max_num_constraints + max_num_shapes,
+        ) catch unreachable;
+
+        const bodies = mem[0..max_num_bodies];
+        const constraints = @ptrCast([*]c.CbtConstraintHandle, mem.ptr)[max_num_bodies .. max_num_bodies +
+            max_num_constraints];
+        const shapes = @ptrCast([*]c.CbtShapeHandle, mem.ptr)[max_num_bodies + max_num_constraints .. max_num_bodies +
+            max_num_constraints + max_num_shapes];
+
         var pool = PhysicsObjectsPool{
-            .bodies = std.heap.page_allocator.alloc(c.CbtBodyHandle, max_num_bodies) catch unreachable,
-            .constraints = std.heap.page_allocator.alloc(c.CbtConstraintHandle, max_num_constraints) catch unreachable,
-            .shapes = std.heap.page_allocator.alloc(c.CbtShapeHandle, max_num_shapes) catch unreachable,
+            .bodies = bodies,
+            .constraints = constraints,
+            .shapes = shapes,
         };
         c.cbtBodyAllocateBatch(max_num_bodies, pool.bodies.ptr);
 
@@ -93,8 +104,6 @@ const PhysicsObjectsPool = struct {
             c.cbtShapeDeallocate(shape);
         }
         std.heap.page_allocator.free(pool.bodies);
-        std.heap.page_allocator.free(pool.constraints);
-        std.heap.page_allocator.free(pool.shapes);
         pool.* = undefined;
     }
 
@@ -125,18 +134,6 @@ const PhysicsObjectsPool = struct {
         unreachable;
     }
 
-    fn destroyAllShapes(pool: PhysicsObjectsPool) void {
-        for (pool.shapes) |shape| {
-            if (c.cbtShapeIsCreated(shape) == c.CBT_TRUE) {
-                if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH) {
-                    c.cbtShapeTriMeshDestroy(shape);
-                } else {
-                    c.cbtShapeDestroy(shape);
-                }
-            }
-        }
-    }
-
     fn destroyAllObjects(pool: PhysicsObjectsPool, world: c.CbtWorldHandle) void {
         {
             var i = c.cbtWorldGetNumBodies(world) - 1;
@@ -154,7 +151,15 @@ const PhysicsObjectsPool = struct {
                 c.cbtConDestroy(constraint);
             }
         }
-        pool.destroyAllShapes();
+        for (pool.shapes) |shape| {
+            if (c.cbtShapeIsCreated(shape) == c.CBT_TRUE) {
+                if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH) {
+                    c.cbtShapeTriMeshDestroy(shape);
+                } else {
+                    c.cbtShapeDestroy(shape);
+                }
+            }
+        }
     }
 };
 
