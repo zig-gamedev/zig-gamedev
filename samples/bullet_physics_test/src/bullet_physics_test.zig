@@ -6,6 +6,7 @@ const d2d1 = win32.d2d1;
 const d3d12 = win32.d3d12;
 const dwrite = win32.dwrite;
 const dml = win32.directml;
+//const xaudio2 = win32.xaudio2;
 const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
@@ -304,28 +305,26 @@ fn createScene1(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
     assert(c.cbtShapeGetType(compound_shape) == c.CBT_SHAPE_TYPE_COMPOUND);
     assert(c.cbtShapeGetType(trimesh_shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
 
-    {
-        const sphere_body = physics_objects_pool.getBody();
-        c.cbtBodyCreate(sphere_body, 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
-        c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
-        c.cbtWorldAddBody(physics_world, sphere_body);
+    const sphere_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(sphere_body, 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
+    c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
+    c.cbtWorldAddBody(physics_world, sphere_body);
 
-        const trimesh_body = physics_objects_pool.getBody();
-        c.cbtBodyCreate(trimesh_body, 0.0, &Mat4.initIdentity().toArray4x3(), trimesh_shape);
-        c.cbtWorldAddBody(physics_world, trimesh_body);
+    const trimesh_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(trimesh_body, 0.0, &Mat4.initIdentity().toArray4x3(), trimesh_shape);
+    c.cbtWorldAddBody(physics_world, trimesh_body);
 
-        const box_body = physics_objects_pool.getBody();
-        c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
-        c.cbtWorldAddBody(physics_world, box_body);
+    const box_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
+    c.cbtWorldAddBody(physics_world, box_body);
 
-        const compound_body = physics_objects_pool.getBody();
-        c.cbtBodyCreate(compound_body, 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
-        c.cbtWorldAddBody(physics_world, compound_body);
+    const compound_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(compound_body, 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
+    c.cbtWorldAddBody(physics_world, compound_body);
 
-        const ground_body = physics_objects_pool.getBody();
-        c.cbtBodyCreate(ground_body, 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
-        c.cbtWorldAddBody(physics_world, ground_body);
-    }
+    const ground_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(ground_body, 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
+    c.cbtWorldAddBody(physics_world, ground_body);
 }
 
 fn init(gpa: *std.mem.Allocator) DemoState {
@@ -350,6 +349,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     createScene1(physics_world, physics_objects_pool);
     physics_objects_pool.destroyAllObjects(physics_world);
     createScene1(physics_world, physics_objects_pool);
+
+    //var xa2: *xaudio2.IXAudio2 = undefined;
+    //_ = xaudio2.create(@ptrCast(*?*xaudio2.IXAudio2, &xa2), 0, 0);
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 

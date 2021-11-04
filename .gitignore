@@ -37,6 +37,7 @@
 !/external/bin/d3d12/DirectML.pdb
 !/external/bin/d3d12/DirectML.Debug.dll
 !/external/bin/d3d12/DirectML.Debug.pdb
+!/external/bin/d3d12/xaudio2_9redist.dll
 
 # Ignore some special directories
 zig-cache

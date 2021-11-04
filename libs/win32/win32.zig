@@ -11,3 +11,4 @@ pub const wic = @import("wincodec.zig");
 pub const wasapi = @import("wasapi.zig");
 pub const directml = @import("directml.zig");
 pub const mf = @import("mf.zig");
+pub const xaudio2 = @import("xaudio2.zig");
