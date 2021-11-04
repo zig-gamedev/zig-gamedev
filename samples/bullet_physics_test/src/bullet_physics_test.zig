@@ -261,25 +261,7 @@ const PhysicsDebug = struct {
     }
 };
 
-fn init(gpa: *std.mem.Allocator) DemoState {
-    const tracy_zone = tracy.zone(@src(), 1);
-    defer tracy_zone.end();
-
-    var physics_debug = gpa.create(PhysicsDebug) catch unreachable;
-    physics_debug.* = PhysicsDebug.init(gpa);
-
-    const physics_world = c.cbtWorldCreate();
-    c.cbtWorldSetGravity(physics_world, Vec3.init(0.0, -10.0, 0.0).ptr());
-
-    c.cbtWorldDebugSetCallbacks(physics_world, &.{
-        .drawLine = PhysicsDebug.drawLineCallback,
-        .drawContactPoint = PhysicsDebug.drawContactPointCallback,
-        .reportErrorWarning = PhysicsDebug.reportErrorWarningCallback,
-        .user_data = physics_debug,
-    });
-
-    const physics_objects_pool = PhysicsObjectsPool.init();
-
+fn createScene1(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsObjectsPool) void {
     const sphere_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_SPHERE);
     c.cbtShapeSphereCreate(sphere_shape, 0.5);
 
@@ -339,6 +321,30 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         c.cbtBodyCreate(ground_body, 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
         c.cbtWorldAddBody(physics_world, ground_body);
     }
+}
+
+fn init(gpa: *std.mem.Allocator) DemoState {
+    const tracy_zone = tracy.zone(@src(), 1);
+    defer tracy_zone.end();
+
+    var physics_debug = gpa.create(PhysicsDebug) catch unreachable;
+    physics_debug.* = PhysicsDebug.init(gpa);
+
+    const physics_world = c.cbtWorldCreate();
+    c.cbtWorldSetGravity(physics_world, Vec3.init(0.0, -10.0, 0.0).ptr());
+
+    c.cbtWorldDebugSetCallbacks(physics_world, &.{
+        .drawLine = PhysicsDebug.drawLineCallback,
+        .drawContactPoint = PhysicsDebug.drawContactPointCallback,
+        .reportErrorWarning = PhysicsDebug.reportErrorWarningCallback,
+        .user_data = physics_debug,
+    });
+
+    const physics_objects_pool = PhysicsObjectsPool.init();
+
+    createScene1(physics_world, physics_objects_pool);
+    physics_objects_pool.destroyAllObjects(physics_world);
+    createScene1(physics_world, physics_objects_pool);
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 

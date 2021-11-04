@@ -536,6 +536,7 @@ void cbtShapeTriMeshDestroy(CbtShapeHandle shape_handle) {
 
     // Set vtable to 0, this means that object is not created.
     ((uint64_t*)shape_handle)[0] = 0;
+    ((uint64_t*)((uint8_t*)shape_handle + sizeof(btBvhTriangleMeshShape)))[0] = 0;
 }
 
 void cbtShapeTriMeshAddIndexVertexArray(
