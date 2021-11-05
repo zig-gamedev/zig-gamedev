@@ -277,10 +277,10 @@ fn createScene1(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
     c.cbtShapeSphereCreate(sphere_shape, 0.5);
 
     const ground_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(ground_shape, Vec3.init(20.0, 0.2, 20.0).ptr());
+    c.cbtShapeBoxCreate(ground_shape, &Vec3.init(20.0, 0.2, 20.0).c);
 
     const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(box_shape, Vec3.init(0.5, 0.5, 0.5).ptr());
+    c.cbtShapeBoxCreate(box_shape, &Vec3.init(0.5, 0.5, 0.5).c);
 
     const compound_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
     c.cbtShapeCompoundCreate(compound_shape, c.CBT_TRUE, 2);
@@ -342,10 +342,10 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 
     const body_a = blk: {
         const cyl_a = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-        c.cbtShapeCylinderCreate(cyl_a, Vec3.init(0.2, 0.25, 0.2).ptr(), c.CBT_AXIS_Y);
+        c.cbtShapeCylinderCreate(cyl_a, &Vec3.init(0.2, 0.25, 0.2).c, c.CBT_AXIS_Y);
 
         const cyl_b = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-        c.cbtShapeCylinderCreate(cyl_b, Vec3.init(l1, 0.025, l1).ptr(), c.CBT_AXIS_Y);
+        c.cbtShapeCylinderCreate(cyl_b, &Vec3.init(l1, 0.025, l1).c, c.CBT_AXIS_Y);
 
         const cyl = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
         c.cbtShapeCompoundCreate(cyl, c.CBT_TRUE, 2);
@@ -354,18 +354,18 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 
         const body = physics_objects_pool.getBody();
         c.cbtBodyCreate(body, 6.28, &Mat4.initTranslation(Vec3.init(-8.0, 1.0, 8.0)).toArray4x3(), cyl);
-        c.cbtBodySetLinearFactor(body, Vec3.initZero().ptr());
-        c.cbtBodySetAngularFactor(body, Vec3.init(0, 1, 0).ptr());
+        c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+        c.cbtBodySetAngularFactor(body, &Vec3.init(0, 1, 0).c);
         c.cbtWorldAddBody(physics_world, body);
         break :blk body;
     };
 
     const body_b = blk: {
         const cyl_a = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-        c.cbtShapeCylinderCreate(cyl_a, Vec3.init(0.2, 0.26, 0.2).ptr(), c.CBT_AXIS_Y);
+        c.cbtShapeCylinderCreate(cyl_a, &Vec3.init(0.2, 0.26, 0.2).c, c.CBT_AXIS_Y);
 
         const cyl_b = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-        c.cbtShapeCylinderCreate(cyl_b, Vec3.init(l2, 0.025, l2).ptr(), c.CBT_AXIS_Y);
+        c.cbtShapeCylinderCreate(cyl_b, &Vec3.init(l2, 0.025, l2).c, c.CBT_AXIS_Y);
 
         const cyl = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
         c.cbtShapeCompoundCreate(cyl, c.CBT_TRUE, 2);
@@ -379,19 +379,19 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
             &Mat4.initRotationZ(-theta).mul(Mat4.initTranslation(Vec3.init(-10.0, 2.0, 8.0))).toArray4x3(),
             cyl,
         );
-        c.cbtBodySetLinearFactor(body, Vec3.initZero().ptr());
-        c.cbtBodySetAngularVelocity(body, Vec3.init(0, 3, 0).ptr());
+        c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+        c.cbtBodySetAngularVelocity(body, &Vec3.init(0, 3, 0).c);
         c.cbtWorldAddBody(physics_world, body);
 
         const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
-        c.cbtConHingeCreate2(hinge, body, Vec3.init(0, 0, 0).ptr(), Vec3.init(0, 1, 0).ptr(), c.CBT_TRUE);
+        c.cbtConHingeCreate2(hinge, body, &Vec3.init(0, 0, 0).c, &Vec3.init(0, 1, 0).c, c.CBT_TRUE);
         c.cbtWorldAddConstraint(physics_world, hinge, c.CBT_FALSE);
         break :blk body;
     };
 
     const r = Mat4.initRotationZ(-theta).r[1].toVec3();
     const gear = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
-    c.cbtConGearCreate(gear, body_a, body_b, Vec3.init(0, 1, 0).ptr(), r.ptr(), ratio);
+    c.cbtConGearCreate(gear, body_a, body_b, &Vec3.init(0, 1, 0).c, &r.c, ratio);
     c.cbtWorldAddConstraint(physics_world, gear, c.CBT_TRUE);
 }
 
@@ -403,7 +403,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     physics_debug.* = PhysicsDebug.init(gpa);
 
     const physics_world = c.cbtWorldCreate();
-    c.cbtWorldSetGravity(physics_world, Vec3.init(0.0, -10.0, 0.0).ptr());
+    c.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
 
     c.cbtWorldDebugSetCallbacks(physics_world, &.{
         .drawLine = PhysicsDebug.drawLineCallback,
@@ -652,8 +652,8 @@ fn update(demo: *DemoState) void {
         var result: c.CbtRayCastResult = undefined;
         const hit = c.cbtRayTestClosest(
             demo.physics_world,
-            ray_from.ptr(),
-            ray_to.ptr(),
+            &ray_from.c,
+            &ray_to.c,
             c.CBT_COLLISION_FILTER_DEFAULT,
             c.CBT_COLLISION_FILTER_ALL,
             c.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST,
@@ -679,7 +679,7 @@ fn update(demo: *DemoState) void {
             const hit_point_world = Vec3{ .c = result.hit_point_world };
             const pivot_a = hit_point_world.transform(Mat4.initArray4x3(inv_trans));
 
-            c.cbtConPoint2PointCreate1(demo.pick.constraint, result.body, pivot_a.ptr());
+            c.cbtConPoint2PointCreate1(demo.pick.constraint, result.body, &pivot_a.c);
             c.cbtConPoint2PointSetImpulseClamp(demo.pick.constraint, 30.0);
             c.cbtConPoint2PointSetTau(demo.pick.constraint, 0.001);
             c.cbtConSetDebugDrawSize(demo.pick.constraint, 0.15);
@@ -689,7 +689,7 @@ fn update(demo: *DemoState) void {
         }
     } else if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
         const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));
-        c.cbtConPoint2PointSetPivotB(demo.pick.constraint, to.ptr());
+        c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
     }
 
     if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
