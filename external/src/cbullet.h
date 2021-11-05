@@ -367,6 +367,23 @@ void cbtConHingeCreate3(
     const CbtVector3 frame_a[4],
     CbtBool use_reference_frame_a
 );
+void cbtConHingeSetAngularOnly(CbtConstraintHandle con_handle, CbtBool angular_only);
+void cbtConHingeEnableAngularMotor(
+    CbtConstraintHandle con_handle,
+    CbtBool enable,
+    float target_velocity,
+    float max_motor_impulse
+);
+
+// Gear
+void cbtConGearCreate(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 axis_a,
+    const CbtVector3 axis_b,
+    float ratio
+);
 
 #ifdef __cplusplus
 }

@@ -1421,3 +1421,46 @@ void cbtConHingeCreate3(
         use_reference_frame_a == CBT_FALSE ? false : true
     );
 }
+
+void cbtConHingeSetAngularOnly(CbtConstraintHandle con_handle, CbtBool angular_only) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(angular_only == CBT_FALSE || angular_only == CBT_TRUE);
+    auto con = (btHingeConstraint*)con_handle;
+    con->setAngularOnly(angular_only == CBT_FALSE ? false : true);
+}
+
+void cbtConHingeEnableAngularMotor(
+    CbtConstraintHandle con_handle,
+    CbtBool enable,
+    float target_velocity,
+    float max_motor_impulse
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(enable == CBT_FALSE || enable == CBT_TRUE);
+    auto con = (btHingeConstraint*)con_handle;
+    con->enableAngularMotor(enable == CBT_FALSE ? false : true, target_velocity, max_motor_impulse);
+}
+
+void cbtConGearCreate(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 axis_a,
+    const CbtVector3 axis_b,
+    float ratio
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
+    assert(axis_a && axis_b);
+
+    btRigidBody* body_a = (btRigidBody*)body_handle_a;
+    btRigidBody* body_b = (btRigidBody*)body_handle_b;
+    new (con_handle) btGearConstraint(
+        *body_a,
+        *body_b,
+        btVector3(axis_a[0], axis_a[1], axis_a[2]),
+        btVector3(axis_b[0], axis_b[1], axis_b[2]),
+        ratio
+    );
+}

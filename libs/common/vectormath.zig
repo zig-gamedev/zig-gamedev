@@ -351,6 +351,10 @@ pub const Vec4 = extern struct {
         return static.zero;
     }
 
+    pub inline fn toVec3(v: Vec4) Vec3 {
+        return Vec3.init(v.c[0], v.c[1], v.c[2]);
+    }
+
     pub inline fn approxEq(v0: Vec4, v1: Vec4, eps: f32) bool {
         return math.approxEq(f32, v0.c[0], v1.c[0], eps) and
             math.approxEq(f32, v0.c[1], v1.c[1], eps) and

@@ -33,7 +33,7 @@ const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 const PhysicsObjectsPool = struct {
     const max_num_bodies = 32;
     const max_num_constraints = 4;
-    const max_num_shapes = 13;
+    const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
     constraints: []c.CbtConstraintHandle,
     shapes: []c.CbtShapeHandle,
@@ -65,28 +65,33 @@ const PhysicsObjectsPool = struct {
         {
             var counter: u32 = 0;
             var i: u32 = 0;
-            while (i < 3) : (i += 1) {
+            while (i < 8) : (i += 1) {
                 pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
                 counter += 1;
             }
             i = 0;
-            while (i < 3) : (i += 1) {
+            while (i < 8) : (i += 1) {
                 pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
                 counter += 1;
             }
             i = 0;
-            while (i < 1) : (i += 1) {
+            while (i < 8) : (i += 1) {
                 pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_STATIC_PLANE);
                 counter += 1;
             }
             i = 0;
-            while (i < 3) : (i += 1) {
+            while (i < 8) : (i += 1) {
                 pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_COMPOUND);
                 counter += 1;
             }
             i = 0;
-            while (i < 3) : (i += 1) {
+            while (i < 8) : (i += 1) {
                 pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 8) : (i += 1) {
+                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_CYLINDER);
                 counter += 1;
             }
             assert(counter == max_num_shapes);
@@ -137,19 +142,19 @@ const PhysicsObjectsPool = struct {
 
     fn destroyAllObjects(pool: PhysicsObjectsPool, world: c.CbtWorldHandle) void {
         {
-            var i = c.cbtWorldGetNumBodies(world) - 1;
-            while (i >= 0) : (i -= 1) {
-                const body = c.cbtWorldGetBody(world, i);
-                c.cbtWorldRemoveBody(world, body);
-                c.cbtBodyDestroy(body);
-            }
-        }
-        {
             var i = c.cbtWorldGetNumConstraints(world) - 1;
             while (i >= 0) : (i -= 1) {
                 const constraint = c.cbtWorldGetConstraint(world, i);
                 c.cbtWorldRemoveConstraint(world, constraint);
                 c.cbtConDestroy(constraint);
+            }
+        }
+        {
+            var i = c.cbtWorldGetNumBodies(world) - 1;
+            while (i >= 0) : (i -= 1) {
+                const body = c.cbtWorldGetBody(world, i);
+                c.cbtWorldRemoveBody(world, body);
+                c.cbtBodyDestroy(body);
             }
         }
         for (pool.shapes) |shape| {
@@ -327,6 +332,69 @@ fn createScene1(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
     c.cbtWorldAddBody(physics_world, ground_body);
 }
 
+fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsObjectsPool) void {
+    const theta = math.pi * @as(f32, 0.25);
+    const l1 = 2.0 - math.tan(theta);
+    const l2 = 1.0 / math.cos(theta);
+    const ratio = l2 / l1;
+
+    std.log.info("l1: {d}  l2: {d}", .{ l1, l2 });
+
+    const body_a = blk: {
+        const cyl_a = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(cyl_a, Vec3.init(0.2, 0.25, 0.2).ptr(), c.CBT_AXIS_Y);
+
+        const cyl_b = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(cyl_b, Vec3.init(l1, 0.025, l1).ptr(), c.CBT_AXIS_Y);
+
+        const cyl = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+        c.cbtShapeCompoundCreate(cyl, c.CBT_TRUE, 2);
+        c.cbtShapeCompoundAddChild(cyl, &Mat4.initIdentity().toArray4x3(), cyl_a);
+        c.cbtShapeCompoundAddChild(cyl, &Mat4.initIdentity().toArray4x3(), cyl_b);
+
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 6.28, &Mat4.initTranslation(Vec3.init(-8.0, 1.0, 8.0)).toArray4x3(), cyl);
+        c.cbtBodySetLinearFactor(body, Vec3.initZero().ptr());
+        c.cbtBodySetAngularFactor(body, Vec3.init(0, 1, 0).ptr());
+        c.cbtWorldAddBody(physics_world, body);
+        break :blk body;
+    };
+
+    const body_b = blk: {
+        const cyl_a = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(cyl_a, Vec3.init(0.2, 0.26, 0.2).ptr(), c.CBT_AXIS_Y);
+
+        const cyl_b = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(cyl_b, Vec3.init(l2, 0.025, l2).ptr(), c.CBT_AXIS_Y);
+
+        const cyl = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+        c.cbtShapeCompoundCreate(cyl, c.CBT_TRUE, 2);
+        c.cbtShapeCompoundAddChild(cyl, &Mat4.initIdentity().toArray4x3(), cyl_a);
+        c.cbtShapeCompoundAddChild(cyl, &Mat4.initIdentity().toArray4x3(), cyl_b);
+
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            body,
+            6.28,
+            &Mat4.initRotationZ(-theta).mul(Mat4.initTranslation(Vec3.init(-10.0, 2.0, 8.0))).toArray4x3(),
+            cyl,
+        );
+        c.cbtBodySetLinearFactor(body, Vec3.initZero().ptr());
+        c.cbtBodySetAngularVelocity(body, Vec3.init(0, 3, 0).ptr());
+        c.cbtWorldAddBody(physics_world, body);
+
+        const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+        c.cbtConHingeCreate2(hinge, body, Vec3.init(0, 0, 0).ptr(), Vec3.init(0, 1, 0).ptr(), c.CBT_TRUE);
+        c.cbtWorldAddConstraint(physics_world, hinge, c.CBT_FALSE);
+        break :blk body;
+    };
+
+    const r = Mat4.initRotationZ(-theta).r[1].toVec3();
+    const gear = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
+    c.cbtConGearCreate(gear, body_a, body_b, Vec3.init(0, 1, 0).ptr(), r.ptr(), ratio);
+    c.cbtWorldAddConstraint(physics_world, gear, c.CBT_TRUE);
+}
+
 fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
@@ -346,9 +414,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const physics_objects_pool = PhysicsObjectsPool.init();
 
-    createScene1(physics_world, physics_objects_pool);
-    physics_objects_pool.destroyAllObjects(physics_world);
-    createScene1(physics_world, physics_objects_pool);
+    createScene2(physics_world, physics_objects_pool);
 
     //var xa2: *xaudio2.IXAudio2 = undefined;
     //_ = xaudio2.create(@ptrCast(*?*xaudio2.IXAudio2, &xa2), 0, 0);
