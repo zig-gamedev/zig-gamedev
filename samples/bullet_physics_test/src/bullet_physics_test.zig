@@ -32,7 +32,7 @@ const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
 const PhysicsObjectsPool = struct {
     const max_num_bodies = 32;
-    const max_num_constraints = 6;
+    const max_num_constraints = 9;
     const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
     constraints: []c.CbtConstraintHandle,
@@ -55,15 +55,32 @@ const PhysicsObjectsPool = struct {
             .constraints = constraints,
             .shapes = shapes,
         };
+
+        // Bodies
         c.cbtBodyAllocateBatch(max_num_bodies, pool.bodies.ptr);
 
-        pool.constraints[0] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
-        pool.constraints[1] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
-        pool.constraints[2] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_GEAR);
-        pool.constraints[3] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_GEAR);
-        pool.constraints[4] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
-        pool.constraints[5] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+        // Constraints
+        {
+            var counter: u32 = 0;
+            var i: u32 = 0;
+            while (i < 3) : (i += 1) {
+                pool.constraints[counter] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 3) : (i += 1) {
+                pool.constraints[counter] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_GEAR);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 3) : (i += 1) {
+                pool.constraints[counter] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
+                counter += 1;
+            }
+            assert(counter == max_num_constraints);
+        }
 
+        // Shapes
         {
             var counter: u32 = 0;
             var i: u32 = 0;
