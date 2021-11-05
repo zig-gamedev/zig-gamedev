@@ -431,7 +431,7 @@ void cbtShapeCompoundCreate(
     new (shape_handle) btCompoundShape(enable_dynamic_aabb_tree == CBT_FALSE ? false : true, initial_child_capacity);
 }
 
-inline btTransform makeBtTransform(const CbtVector3 transform[4]) {
+static inline btTransform makeBtTransform(const CbtVector3 transform[4]) {
     // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
     return btTransform(
         btMatrix3x3(
@@ -1163,14 +1163,15 @@ void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle body_handle, CbtVector3 tran
     const btMatrix3x3& basis = trans.getBasis();
     const btVector3& origin = trans.getOrigin();
 
+    // NOTE(mziulek): We transpose Bullet matrix here to make it compatible with: v * M convention.
     transform[0][0] = basis.getRow(0).x();
-    transform[0][1] = basis.getRow(0).y();
-    transform[0][2] = basis.getRow(0).z();
-    transform[1][0] = basis.getRow(1).x();
+    transform[1][0] = basis.getRow(0).y();
+    transform[2][0] = basis.getRow(0).z();
+    transform[0][1] = basis.getRow(1).x();
     transform[1][1] = basis.getRow(1).y();
-    transform[1][2] = basis.getRow(1).z();
-    transform[2][0] = basis.getRow(2).x();
-    transform[2][1] = basis.getRow(2).y();
+    transform[2][1] = basis.getRow(1).z();
+    transform[0][2] = basis.getRow(2).x();
+    transform[1][2] = basis.getRow(2).y();
     transform[2][2] = basis.getRow(2).z();
 
     transform[3][0] = origin.x();
@@ -1288,6 +1289,7 @@ void cbtConPoint2PointCreate1(
     const CbtVector3 pivot_a
 ) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
     assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
     assert(pivot_a);
 
@@ -1303,6 +1305,7 @@ void cbtConPoint2PointCreate2(
     const CbtVector3 pivot_b
 ) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
     assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
     assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
     assert(pivot_a && pivot_b);
@@ -1363,6 +1366,7 @@ void cbtConHingeCreate1(
     CbtBool use_reference_frame_a
 ) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_HINGE);
     assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
     assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
     assert(pivot_a && pivot_b);
@@ -1390,6 +1394,7 @@ void cbtConHingeCreate2(
     CbtBool use_reference_frame_a
 ) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_HINGE);
     assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
     assert(pivot_a && axis_a);
     assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
@@ -1410,6 +1415,7 @@ void cbtConHingeCreate3(
     CbtBool use_reference_frame_a
 ) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_HINGE);
     assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
     assert(frame_a);
     assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
@@ -1424,6 +1430,7 @@ void cbtConHingeCreate3(
 
 void cbtConHingeSetAngularOnly(CbtConstraintHandle con_handle, CbtBool angular_only) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_HINGE);
     assert(angular_only == CBT_FALSE || angular_only == CBT_TRUE);
     auto con = (btHingeConstraint*)con_handle;
     con->setAngularOnly(angular_only == CBT_FALSE ? false : true);
@@ -1436,6 +1443,7 @@ void cbtConHingeEnableAngularMotor(
     float max_motor_impulse
 ) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_HINGE);
     assert(enable == CBT_FALSE || enable == CBT_TRUE);
     auto con = (btHingeConstraint*)con_handle;
     con->enableAngularMotor(enable == CBT_FALSE ? false : true, target_velocity, max_motor_impulse);
@@ -1450,6 +1458,7 @@ void cbtConGearCreate(
     float ratio
 ) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_GEAR);
     assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
     assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
     assert(axis_a && axis_b);
@@ -1463,4 +1472,106 @@ void cbtConGearCreate(
         btVector3(axis_b[0], axis_b[1], axis_b[2]),
         ratio
     );
+}
+
+void cbtConSliderCreate1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 frame_b[4],
+    CbtBool use_reference_frame_a
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
+    assert(frame_b);
+    assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
+
+    btRigidBody* body_b = (btRigidBody*)body_handle_b;
+    new (con_handle) btSliderConstraint(
+        *body_b,
+        makeBtTransform(frame_b),
+        use_reference_frame_a == CBT_FALSE ? false : true
+    );
+}
+
+void cbtConSliderCreate2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 frame_a[4],
+    const CbtVector3 frame_b[4],
+    CbtBool use_reference_frame_a
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
+    assert(frame_a && frame_b);
+    assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
+
+    btRigidBody* body_a = (btRigidBody*)body_handle_a;
+    btRigidBody* body_b = (btRigidBody*)body_handle_b;
+    new (con_handle) btSliderConstraint(
+        *body_a,
+        *body_b,
+        makeBtTransform(frame_a),
+        makeBtTransform(frame_b),
+        use_reference_frame_a == CBT_FALSE ? false : true
+    );
+}
+
+void cbtConSliderSetLowerLinearLimit(CbtConstraintHandle con_handle, float limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    con->setLowerLinLimit(limit);
+}
+
+void cbtConSliderSetUpperLinearLimit(CbtConstraintHandle con_handle, float limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    con->setUpperLinLimit(limit);
+}
+
+float cbtConSliderGetLowerLinearLimit(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    return con->getLowerLinLimit();
+}
+
+float cbtConSliderGetUpperLinearLimit(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    return con->getUpperLinLimit();
+}
+
+void cbtConSliderSetLowerAngularLimit(CbtConstraintHandle con_handle, float limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    con->setLowerAngLimit(limit);
+}
+
+void cbtConSliderSetUpperAngularLimit(CbtConstraintHandle con_handle, float limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    con->setUpperAngLimit(limit);
+}
+
+float cbtConSliderGetLowerAngularLimit(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    return con->getLowerAngLimit();
+}
+
+float cbtConSliderGetUpperAngularLimit(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    return con->getUpperAngLimit();
 }

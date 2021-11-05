@@ -385,6 +385,31 @@ void cbtConGearCreate(
     float ratio
 );
 
+// Slider
+void cbtConSliderCreate1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 frame_b[4],
+    CbtBool use_reference_frame_a
+);
+void cbtConSliderCreate2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 frame_a[4],
+    const CbtVector3 frame_b[4],
+    CbtBool use_reference_frame_a
+);
+void cbtConSliderSetLowerLinearLimit(CbtConstraintHandle con_handle, float limit);
+void cbtConSliderSetUpperLinearLimit(CbtConstraintHandle con_handle, float limit);
+float cbtConSliderGetLowerLinearLimit(CbtConstraintHandle con_handle);
+float cbtConSliderGetUpperLinearLimit(CbtConstraintHandle con_handle);
+
+void cbtConSliderSetLowerAngularLimit(CbtConstraintHandle con_handle, float limit);
+void cbtConSliderSetUpperAngularLimit(CbtConstraintHandle con_handle, float limit);
+float cbtConSliderGetLowerAngularLimit(CbtConstraintHandle con_handle);
+float cbtConSliderGetUpperAngularLimit(CbtConstraintHandle con_handle);
+
 #ifdef __cplusplus
 }
 #endif

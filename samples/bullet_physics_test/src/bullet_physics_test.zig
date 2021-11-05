@@ -431,6 +431,18 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
         c.cbtConSetDebugDrawSize(p2p, 5.0);
         c.cbtWorldAddConstraint(physics_world, p2p, c.CBT_FALSE);
     }
+
+    {
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 1.0, &Mat4.initTranslation(Vec3.init(2, 2, 10)).toArray4x3(), shape);
+        c.cbtWorldAddBody(physics_world, body);
+
+        const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+        c.cbtConHingeCreate2(hinge, body, &Vec3.init(0, 1, 1).c, &Vec3.init(1, 0, 0).c, c.CBT_FALSE);
+        c.cbtConHingeEnableAngularMotor(hinge, c.CBT_TRUE, 1.0, 1.0);
+        c.cbtConSetDebugDrawSize(hinge, 2.5);
+        c.cbtWorldAddConstraint(physics_world, hinge, c.CBT_FALSE);
+    }
 }
 
 fn init(gpa: *std.mem.Allocator) DemoState {
