@@ -431,6 +431,18 @@ void cbtShapeCompoundCreate(
     new (shape_handle) btCompoundShape(enable_dynamic_aabb_tree == CBT_FALSE ? false : true, initial_child_capacity);
 }
 
+inline btTransform makeBtTransform(const CbtVector3 transform[4]) {
+    // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
+    return btTransform(
+        btMatrix3x3(
+            btVector3(transform[0][0], transform[1][0], transform[2][0]),
+            btVector3(transform[0][1], transform[1][1], transform[2][1]),
+            btVector3(transform[0][2], transform[1][2], transform[2][2])
+        ),
+        btVector3(transform[3][0], transform[3][1], transform[3][2])
+    );
+}
+
 void cbtShapeCompoundAddChild(
     CbtShapeHandle shape_handle,
     const CbtVector3 local_transform[4],
@@ -444,18 +456,7 @@ void cbtShapeCompoundAddChild(
     auto parent = (btCompoundShape*)shape_handle;
     auto child = (btCollisionShape*)child_shape_handle;
 
-    // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
-    parent->addChildShape(
-        btTransform(
-            btMatrix3x3(
-                btVector3(local_transform[0][0], local_transform[1][0], local_transform[2][0]),
-                btVector3(local_transform[0][1], local_transform[1][1], local_transform[2][1]),
-                btVector3(local_transform[0][2], local_transform[1][2], local_transform[2][2])
-            ),
-            btVector3(local_transform[3][0], local_transform[3][1], local_transform[3][2])
-        ),
-        child
-    );
+    parent->addChildShape(makeBtTransform(local_transform), child);
 }
 
 void cbtShapeCompoundRemoveChild(CbtShapeHandle shape_handle, CbtShapeHandle child_shape_handle) {
@@ -735,17 +736,7 @@ void cbtBodyCreate(
         shape->calculateLocalInertia(mass, local_inertia);
     }
 
-    // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
-    btDefaultMotionState* motion_state = new (motion_state_mem) btDefaultMotionState(
-        btTransform(
-            btMatrix3x3(
-                btVector3(transform[0][0], transform[1][0], transform[2][0]),
-                btVector3(transform[0][1], transform[1][1], transform[2][1]),
-                btVector3(transform[0][2], transform[1][2], transform[2][2])
-            ),
-            btVector3(transform[3][0], transform[3][1], transform[3][2])
-    ));
-
+    btDefaultMotionState* motion_state = new (motion_state_mem) btDefaultMotionState(makeBtTransform(transform));
     btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, local_inertia);
     new (body_mem) btRigidBody(info);
 }
@@ -1095,15 +1086,7 @@ int cbtBodyGetUserIndex(CbtBodyHandle body_handle, int slot) {
 void cbtBodySetCenterOfMassTransform(CbtBodyHandle body_handle, const CbtVector3 transform[4]) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     btRigidBody* body = (btRigidBody*)body_handle;
-    // NOTE(mziulek): Bullet uses M * v order/convention so we need to transpose matrix.
-    body->setCenterOfMassTransform(btTransform(
-        btMatrix3x3(
-            btVector3(transform[0][0], transform[1][0], transform[2][0]),
-            btVector3(transform[0][1], transform[1][1], transform[2][1]),
-            btVector3(transform[0][2], transform[1][2], transform[2][2])
-        ),
-        btVector3(transform[3][0], transform[3][1], transform[3][2])
-    ));
+    body->setCenterOfMassTransform(makeBtTransform(transform));
 }
 
 void cbtBodyGetCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]) {
@@ -1299,7 +1282,20 @@ float cbtConGetDebugDrawSize(CbtConstraintHandle con_handle) {
     return con->getDbgDrawSize();
 }
 
-void cbtConPoint2PointCreate(
+void cbtConPoint2PointCreate1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    const CbtVector3 pivot_a
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(pivot_a);
+
+    btRigidBody* body_a = (btRigidBody*)body_handle_a;
+    new (con_handle) btPoint2PointConstraint( *body_a, btVector3(pivot_a[0], pivot_a[1], pivot_a[2]));
+}
+
+void cbtConPoint2PointCreate2(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
     CbtBodyHandle body_handle_b,
@@ -1309,6 +1305,7 @@ void cbtConPoint2PointCreate(
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
     assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
     assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
+    assert(pivot_a && pivot_b);
 
     btRigidBody* body_a = (btRigidBody*)body_handle_a;
     btRigidBody* body_b = (btRigidBody*)body_handle_b;
@@ -1353,4 +1350,74 @@ void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle con_handle, float impu
     assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
     btPoint2PointConstraint* con = (btPoint2PointConstraint*)con_handle;
     con->m_setting.m_impulseClamp = impulse_clamp;
+}
+
+void cbtConHingeCreate1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 pivot_a,
+    const CbtVector3 pivot_b,
+    const CbtVector3 axis_a,
+    const CbtVector3 axis_b,
+    CbtBool use_reference_frame_a
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
+    assert(pivot_a && pivot_b);
+    assert(axis_a && axis_b);
+    assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
+
+    btRigidBody* body_a = (btRigidBody*)body_handle_a;
+    btRigidBody* body_b = (btRigidBody*)body_handle_b;
+    new (con_handle) btHingeConstraint(
+        *body_a,
+        *body_b,
+        btVector3(pivot_a[0], pivot_a[1], pivot_a[2]),
+        btVector3(pivot_b[0], pivot_b[1], pivot_b[2]),
+        btVector3(axis_a[0], axis_a[1], axis_a[2]),
+        btVector3(axis_b[0], axis_b[1], axis_b[2]),
+        use_reference_frame_a == CBT_FALSE ? false : true
+    );
+}
+
+void cbtConHingeCreate2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    const CbtVector3 pivot_a,
+    const CbtVector3 axis_a,
+    CbtBool use_reference_frame_a
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(pivot_a && axis_a);
+    assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
+
+    btRigidBody* body_a = (btRigidBody*)body_handle_a;
+    new (con_handle) btHingeConstraint(
+        *body_a,
+        btVector3(pivot_a[0], pivot_a[1], pivot_a[2]),
+        btVector3(axis_a[0], axis_a[1], axis_a[2]),
+        use_reference_frame_a == CBT_FALSE ? false : true
+    );
+}
+
+void cbtConHingeCreate3(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    const CbtVector3 frame_a[4],
+    CbtBool use_reference_frame_a
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(frame_a);
+    assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
+
+    btRigidBody* body_a = (btRigidBody*)body_handle_a;
+    new (con_handle) btHingeConstraint(
+        *body_a,
+        makeBtTransform(frame_a),
+        use_reference_frame_a == CBT_FALSE ? false : true
+    );
 }

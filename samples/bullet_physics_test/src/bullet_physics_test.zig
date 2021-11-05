@@ -586,8 +586,8 @@ fn update(demo: *DemoState) void {
         var result: c.CbtRayCastResult = undefined;
         const hit = c.cbtRayTestClosest(
             demo.physics_world,
-            &ray_from.c,
-            &ray_to.c,
+            ray_from.ptr(),
+            ray_to.ptr(),
             c.CBT_COLLISION_FILTER_DEFAULT,
             c.CBT_COLLISION_FILTER_ALL,
             c.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST,
@@ -613,13 +613,7 @@ fn update(demo: *DemoState) void {
             const hit_point_world = Vec3{ .c = result.hit_point_world };
             const pivot_a = hit_point_world.transform(Mat4.initArray4x3(inv_trans));
 
-            c.cbtConPoint2PointCreate(
-                demo.pick.constraint,
-                result.body,
-                c.cbtConGetFixedBody(),
-                &pivot_a.c,
-                &result.hit_point_world,
-            );
+            c.cbtConPoint2PointCreate1(demo.pick.constraint, result.body, pivot_a.ptr());
             c.cbtConPoint2PointSetImpulseClamp(demo.pick.constraint, 30.0);
             c.cbtConPoint2PointSetTau(demo.pick.constraint, 0.001);
             c.cbtConSetDebugDrawSize(demo.pick.constraint, 0.15);
@@ -629,7 +623,7 @@ fn update(demo: *DemoState) void {
         }
     } else if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
         const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));
-        c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
+        c.cbtConPoint2PointSetPivotB(demo.pick.constraint, to.ptr());
     }
 
     if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {

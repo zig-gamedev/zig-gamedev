@@ -324,7 +324,13 @@ float cbtConGetBreakingImpulseThreshold(CbtConstraintHandle con_handle);
 void cbtConSetDebugDrawSize(CbtConstraintHandle con_handle, float size);
 float cbtConGetDebugDrawSize(CbtConstraintHandle con_handle);
 
-void cbtConPoint2PointCreate(
+// Point2Point
+void cbtConPoint2PointCreate1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    const CbtVector3 pivot_a
+);
+void cbtConPoint2PointCreate2(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
     CbtBodyHandle body_handle_b,
@@ -336,6 +342,31 @@ void cbtConPoint2PointSetPivotB(CbtConstraintHandle con_handle, const CbtVector3
 void cbtConPoint2PointSetTau(CbtConstraintHandle con_handle, float tau);
 void cbtConPoint2PointSetDamping(CbtConstraintHandle con_handle, float damping);
 void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle con_handle, float impulse_clamp);
+
+// Hinge
+void cbtConHingeCreate1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 pivot_a,
+    const CbtVector3 pivot_b,
+    const CbtVector3 axis_a,
+    const CbtVector3 axis_b,
+    CbtBool use_reference_frame_a
+);
+void cbtConHingeCreate2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    const CbtVector3 pivot_a,
+    const CbtVector3 axis_a,
+    CbtBool use_reference_frame_a
+);
+void cbtConHingeCreate3(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    const CbtVector3 frame_a[4],
+    CbtBool use_reference_frame_a
+);
 
 #ifdef __cplusplus
 }
