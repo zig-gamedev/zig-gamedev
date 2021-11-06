@@ -57,6 +57,14 @@
 #define CBT_AXIS_Y 1
 #define CBT_AXIS_Z 2
 
+// cbtCon6DofSpring2Create1
+#define CBT_ROTATE_ORDER_XYZ 0
+#define CBT_ROTATE_ORDER_XZY 1
+#define CBT_ROTATE_ORDER_YXZ 2
+#define CBT_ROTATE_ORDER_YZX 3
+#define CBT_ROTATE_ORDER_ZXY 4
+#define CBT_ROTATE_ORDER_ZYX 5
+
 #define CBT_FALSE 0
 #define CBT_TRUE 1
 
@@ -400,15 +408,31 @@ void cbtConSliderCreate2(
     const CbtVector3 frame_b[4],
     CbtBool use_reference_frame_a
 );
-void cbtConSliderSetLowerLinearLimit(CbtConstraintHandle con_handle, float limit);
-void cbtConSliderSetUpperLinearLimit(CbtConstraintHandle con_handle, float limit);
-float cbtConSliderGetLowerLinearLimit(CbtConstraintHandle con_handle);
-float cbtConSliderGetUpperLinearLimit(CbtConstraintHandle con_handle);
+void cbtConSliderSetLinearLowerLimit(CbtConstraintHandle con_handle, float limit);
+void cbtConSliderSetLinearUpperLimit(CbtConstraintHandle con_handle, float limit);
+float cbtConSliderGetLinearLowerLimit(CbtConstraintHandle con_handle);
+float cbtConSliderGetLinearUpperLimit(CbtConstraintHandle con_handle);
 
-void cbtConSliderSetLowerAngularLimit(CbtConstraintHandle con_handle, float limit);
-void cbtConSliderSetUpperAngularLimit(CbtConstraintHandle con_handle, float limit);
-float cbtConSliderGetLowerAngularLimit(CbtConstraintHandle con_handle);
-float cbtConSliderGetUpperAngularLimit(CbtConstraintHandle con_handle);
+void cbtConSliderSetAngularLowerLimit(CbtConstraintHandle con_handle, float limit);
+void cbtConSliderSetAngularUpperLimit(CbtConstraintHandle con_handle, float limit);
+float cbtConSliderGetAngularLowerLimit(CbtConstraintHandle con_handle);
+float cbtConSliderGetAngularUpperLimit(CbtConstraintHandle con_handle);
+
+// Generic 6Dof Spring Constraint (ver. 2)
+void cbtConD6Spring2Create1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 frame_b[4],
+    int rotate_order
+);
+void cbtConD6Spring2Create2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 frame_a[4],
+    const CbtVector3 frame_b[4],
+    int rotate_order
+);
 
 #ifdef __cplusplus
 }

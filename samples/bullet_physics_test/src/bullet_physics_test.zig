@@ -471,10 +471,10 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 
         const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
         c.cbtConSliderCreate2(slider, body0, body1, &Mat4.initIdentity().toArray4x3(), &Mat4.initIdentity().toArray4x3(), c.CBT_TRUE);
-        c.cbtConSliderSetLowerLinearLimit(slider, -15.0);
-        c.cbtConSliderSetUpperLinearLimit(slider, -5.0);
-        c.cbtConSliderSetLowerAngularLimit(slider, -math.pi / 3.0);
-        c.cbtConSliderSetUpperAngularLimit(slider, math.pi / 3.0);
+        c.cbtConSliderSetLinearLowerLimit(slider, -15.0);
+        c.cbtConSliderSetLinearUpperLimit(slider, -5.0);
+        c.cbtConSliderSetAngularLowerLimit(slider, -math.pi / 3.0);
+        c.cbtConSliderSetAngularUpperLimit(slider, math.pi / 3.0);
         c.cbtConSetDebugDrawSize(slider, 5.0);
 
         c.cbtWorldAddConstraint(physics_world, slider, c.CBT_TRUE);
