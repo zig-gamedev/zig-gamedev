@@ -32,7 +32,7 @@ const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
 const PhysicsObjectsPool = struct {
     const max_num_bodies = 32;
-    const max_num_constraints = 9;
+    const max_num_constraints = 12;
     const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
     constraints: []c.CbtConstraintHandle,
@@ -75,6 +75,11 @@ const PhysicsObjectsPool = struct {
             i = 0;
             while (i < 3) : (i += 1) {
                 pool.constraints[counter] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 3) : (i += 1) {
+                pool.constraints[counter] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_SLIDER);
                 counter += 1;
             }
             assert(counter == max_num_constraints);
@@ -353,6 +358,15 @@ fn createScene1(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 
 fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsObjectsPool) void {
     {
+        const plane = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_STATIC_PLANE);
+        c.cbtShapePlaneCreate(plane, &Vec3.init(0.0, 1.0, 0.0).c, -10.0);
+
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 0.0, &Mat4.initIdentity().toArray4x3(), plane);
+        c.cbtWorldAddBody(physics_world, body);
+    }
+
+    {
         const theta = math.pi * @as(f32, 0.25);
         const l1 = 2.0 - math.tan(theta);
         const l2 = 1.0 / math.cos(theta);
@@ -442,6 +456,28 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
         c.cbtConHingeEnableAngularMotor(hinge, c.CBT_TRUE, 1.0, 1.0);
         c.cbtConSetDebugDrawSize(hinge, 2.5);
         c.cbtWorldAddConstraint(physics_world, hinge, c.CBT_FALSE);
+    }
+
+    {
+        const body0 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(-20, 0, 30)).toArray4x3(), shape);
+        c.cbtBodySetActivationState(body0, c.CBT_DISABLE_DEACTIVATION);
+        c.cbtWorldAddBody(physics_world, body0);
+
+        const body1 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-30, 0, 30)).toArray4x3(), shape);
+        c.cbtBodySetActivationState(body1, c.CBT_DISABLE_DEACTIVATION);
+        c.cbtWorldAddBody(physics_world, body1);
+
+        const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
+        c.cbtConSliderCreate2(slider, body0, body1, &Mat4.initIdentity().toArray4x3(), &Mat4.initIdentity().toArray4x3(), c.CBT_TRUE);
+        c.cbtConSliderSetLowerLinearLimit(slider, -15.0);
+        c.cbtConSliderSetUpperLinearLimit(slider, -5.0);
+        c.cbtConSliderSetLowerAngularLimit(slider, -math.pi / 3.0);
+        c.cbtConSliderSetUpperAngularLimit(slider, math.pi / 3.0);
+        c.cbtConSetDebugDrawSize(slider, 5.0);
+
+        c.cbtWorldAddConstraint(physics_world, slider, c.CBT_TRUE);
     }
 }
 

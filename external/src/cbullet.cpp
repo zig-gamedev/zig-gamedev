@@ -356,6 +356,7 @@ float cbtShapeSphereGetRadius(CbtShapeHandle shape_handle) {
 void cbtShapePlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_STATIC_PLANE);
+    assert(normal);
     new (shape_handle) btStaticPlaneShape(btVector3(normal[0], normal[1], normal[2]), distance);
 }
 
