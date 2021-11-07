@@ -42,16 +42,25 @@
 #define CBT_CONSTRAINT_TYPE_GEAR 10
 #define CBT_CONSTRAINT_TYPE_D6_SPRING_2 12
 
+// cbtConSetParam
+#define CBT_CONSTRAINT_PARAM_ERP 1
+#define CBT_CONSTRAINT_PARAM_STOP_ERP 2
+#define CBT_CONSTRAINT_PARAM_CFM 3
+#define CBT_CONSTRAINT_PARAM_STOP_CFM 4
+
 // cbtBodyGetActivationState, cbtBodySetActivationState
 #define CBT_ACTIVE_TAG 1
 #define CBT_ISLAND_SLEEPING 2
 #define CBT_DISABLE_DEACTIVATION 4
 #define CBT_DISABLE_SIMULATION 5
 
-// cbtShapeCapsuleCreate, cbtShapeCylinderCreate, cbtShapeConeCreate
-#define CBT_AXIS_X 0
-#define CBT_AXIS_Y 1
-#define CBT_AXIS_Z 2
+// cbtShapeCapsuleCreate, cbtShapeCylinderCreate, cbtShapeConeCreate, cbtConSetParam
+#define CBT_LINEAR_AXIS_X 0
+#define CBT_LINEAR_AXIS_Y 1
+#define CBT_LINEAR_AXIS_Z 2
+#define CBT_ANGULAR_AXIS_X 3
+#define CBT_ANGULAR_AXIS_Y 4
+#define CBT_ANGULAR_AXIS_Z 5
 
 // cbtCon6DofSpring2Create
 #define CBT_ROTATE_ORDER_XYZ 0
@@ -322,6 +331,9 @@ void cbtConDeallocate(CbtConstraintHandle con_handle);
 void cbtConDestroy(CbtConstraintHandle con_handle);
 CbtBool cbtConIsCreated(CbtConstraintHandle con_handle);
 int cbtConGetType(CbtConstraintHandle con_handle);
+
+void cbtConSetParam(CbtConstraintHandle con_handle, int param, float value, int axis /* -1 */);
+float cbtConGetParam(CbtConstraintHandle con_handle, int param, int axis /* -1 */);
 
 void cbtConSetEnabled(CbtConstraintHandle con_handle, CbtBool enabled);
 CbtBool cbtConIsEnabled(CbtConstraintHandle con_handle);

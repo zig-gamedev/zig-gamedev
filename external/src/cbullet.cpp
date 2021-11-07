@@ -363,10 +363,11 @@ void cbtShapePlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, f
 void cbtShapeCapsuleCreate(CbtShapeHandle shape_handle, float radius, float height, int axis) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CAPSULE);
-    assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
-    if (axis == CBT_AXIS_X) {
+    assert(radius > 0.0 && height > 0 && axis >= CBT_LINEAR_AXIS_X && axis <= CBT_LINEAR_AXIS_Z);
+
+    if (axis == CBT_LINEAR_AXIS_X) {
         new (shape_handle) btCapsuleShapeX(radius, height);
-    } else if (axis == CBT_AXIS_Y) {
+    } else if (axis == CBT_LINEAR_AXIS_Y) {
         new (shape_handle) btCapsuleShape(radius, height);
     } else {
         new (shape_handle) btCapsuleShapeZ(radius, height);
@@ -397,10 +398,12 @@ float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle) {
 void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CYLINDER);
-    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    if (axis == CBT_AXIS_X) {
+    assert(half_extents && half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
+    assert(axis >= CBT_LINEAR_AXIS_X && axis <= CBT_LINEAR_AXIS_Z);
+
+    if (axis == CBT_LINEAR_AXIS_X) {
         new (shape_handle) btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
-    } else if (axis == CBT_AXIS_Y) {
+    } else if (axis == CBT_LINEAR_AXIS_Y) {
         new (shape_handle) btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
     } else {
         new (shape_handle) btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
@@ -410,10 +413,11 @@ void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_e
 void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int axis) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CONE);
-    assert(radius > 0.0 && height > 0 && axis >= CBT_AXIS_X && axis <= CBT_AXIS_Z);
-    if (axis == CBT_AXIS_X) {
+    assert(radius > 0.0 && height > 0 && axis >= CBT_LINEAR_AXIS_X && axis <= CBT_LINEAR_AXIS_Z);
+
+    if (axis == CBT_LINEAR_AXIS_X) {
         new (shape_handle) btConeShapeX(radius, height);
-    } else if (axis == CBT_AXIS_Y) {
+    } else if (axis == CBT_LINEAR_AXIS_Y) {
         new (shape_handle) btConeShape(radius, height);
     } else {
         new (shape_handle) btConeShapeZ(radius, height);
@@ -1231,6 +1235,18 @@ int cbtConGetType(CbtConstraintHandle con_handle) {
     return constraint[2];
 }
 
+void cbtConSetParam(CbtConstraintHandle con_handle, int param, float value, int axis) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    con->setParam(param, value, axis);
+}
+
+float cbtConGetParam(CbtConstraintHandle con_handle, int param, int axis) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    auto con = (btTypedConstraint*)con_handle;
+    return con->getParam(param, axis);
+}
+
 void cbtConSetEnabled(CbtConstraintHandle con_handle, CbtBool enabled) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
     assert(enabled == CBT_FALSE || enabled == CBT_TRUE);
@@ -1755,9 +1771,9 @@ void cbtConConeTwistSetLimit(
     float swing_span1,
     float swing_span2,
     float twist_span,
-    float softness, // 1.0
-    float bias_factor, // 0.3
-    float relaxation_factor // 1.0
+    float softness,
+    float bias_factor,
+    float relaxation_factor
 ) {
     assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
     assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_CONETWIST);
