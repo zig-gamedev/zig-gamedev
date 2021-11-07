@@ -38,12 +38,8 @@
 #define CBT_CONSTRAINT_TYPE_POINT2POINT 3
 #define CBT_CONSTRAINT_TYPE_HINGE 4
 #define CBT_CONSTRAINT_TYPE_CONETWIST 5
-#define CBT_CONSTRAINT_TYPE_D6 6
 #define CBT_CONSTRAINT_TYPE_SLIDER 7
-#define CBT_CONSTRAINT_TYPE_CONTACT 8
-#define CBT_CONSTRAINT_TYPE_D6_SPRING 9
 #define CBT_CONSTRAINT_TYPE_GEAR 10
-#define CBT_CONSTRAINT_TYPE_FIXED 11
 #define CBT_CONSTRAINT_TYPE_D6_SPRING_2 12
 
 // cbtBodyGetActivationState, cbtBodySetActivationState
@@ -57,7 +53,7 @@
 #define CBT_AXIS_Y 1
 #define CBT_AXIS_Z 2
 
-// cbtCon6DofSpring2Create1
+// cbtCon6DofSpring2Create
 #define CBT_ROTATE_ORDER_XYZ 0
 #define CBT_ROTATE_ORDER_XZY 1
 #define CBT_ROTATE_ORDER_YXZ 2
@@ -111,13 +107,18 @@ typedef struct CbtRayCastResult {
 CbtWorldHandle cbtWorldCreate(void);
 void cbtWorldDestroy(CbtWorldHandle world_handle);
 void cbtWorldSetGravity(CbtWorldHandle world_handle, const CbtVector3 gravity);
-int cbtWorldStepSimulation(CbtWorldHandle world_handle, float time_step, int max_sub_steps, float fixed_time_step);
+int cbtWorldStepSimulation(
+    CbtWorldHandle world_handle,
+    float time_step,
+    int max_sub_steps, // 1
+    float fixed_time_step // 1.0 / 60.0
+);
 
 void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
 void cbtWorldAddConstraint(
     CbtWorldHandle world_handle,
     CbtConstraintHandle con_handle,
-    CbtBool disable_collision_between_linked_bodies
+    CbtBool disable_collision_between_linked_bodies // CBT_FALSE
 );
 
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);

@@ -1190,12 +1190,8 @@ CbtConstraintHandle cbtConAllocate(int con_type) {
         case CBT_CONSTRAINT_TYPE_POINT2POINT: size = sizeof(btPoint2PointConstraint); break;
         case CBT_CONSTRAINT_TYPE_HINGE: size = sizeof(btHingeConstraint); break;
         case CBT_CONSTRAINT_TYPE_CONETWIST: size = sizeof(btConeTwistConstraint); break;
-        case CBT_CONSTRAINT_TYPE_D6: size = sizeof(btGeneric6DofConstraint); break;
         case CBT_CONSTRAINT_TYPE_SLIDER: size = sizeof(btSliderConstraint); break;
-        case CBT_CONSTRAINT_TYPE_CONTACT: size = sizeof(btContactConstraint); break;
-        case CBT_CONSTRAINT_TYPE_D6_SPRING: size = sizeof(btGeneric6DofSpringConstraint); break;
         case CBT_CONSTRAINT_TYPE_GEAR: size = sizeof(btGearConstraint); break;
-        case CBT_CONSTRAINT_TYPE_FIXED: size = sizeof(btFixedConstraint); break;
         case CBT_CONSTRAINT_TYPE_D6_SPRING_2: size = sizeof(btGeneric6DofSpring2Constraint); break;
         default: assert(0);
     }
