@@ -1359,6 +1359,28 @@ void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle con_handle, float impu
 void cbtConHingeCreate1(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
+    const CbtVector3 pivot_a,
+    const CbtVector3 axis_a,
+    CbtBool use_reference_frame_a
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_HINGE);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(pivot_a && axis_a);
+    assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
+
+    auto body_a = (btRigidBody*)body_handle_a;
+    new (con_handle) btHingeConstraint(
+        *body_a,
+        btVector3(pivot_a[0], pivot_a[1], pivot_a[2]),
+        btVector3(axis_a[0], axis_a[1], axis_a[2]),
+        use_reference_frame_a == CBT_FALSE ? false : true
+    );
+}
+
+void cbtConHingeCreate2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
     CbtBodyHandle body_handle_b,
     const CbtVector3 pivot_a,
     const CbtVector3 pivot_b,
@@ -1383,28 +1405,6 @@ void cbtConHingeCreate1(
         btVector3(pivot_b[0], pivot_b[1], pivot_b[2]),
         btVector3(axis_a[0], axis_a[1], axis_a[2]),
         btVector3(axis_b[0], axis_b[1], axis_b[2]),
-        use_reference_frame_a == CBT_FALSE ? false : true
-    );
-}
-
-void cbtConHingeCreate2(
-    CbtConstraintHandle con_handle,
-    CbtBodyHandle body_handle_a,
-    const CbtVector3 pivot_a,
-    const CbtVector3 axis_a,
-    CbtBool use_reference_frame_a
-) {
-    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
-    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_HINGE);
-    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
-    assert(pivot_a && axis_a);
-    assert(use_reference_frame_a == CBT_FALSE || use_reference_frame_a == CBT_TRUE);
-
-    auto body_a = (btRigidBody*)body_handle_a;
-    new (con_handle) btHingeConstraint(
-        *body_a,
-        btVector3(pivot_a[0], pivot_a[1], pivot_a[2]),
-        btVector3(axis_a[0], axis_a[1], axis_a[2]),
         use_reference_frame_a == CBT_FALSE ? false : true
     );
 }
@@ -1621,4 +1621,136 @@ void cbtConD6Spring2Create2(
         makeBtTransform(frame_b),
         (RotateOrder)rotate_order
     );
+}
+
+void cbtConD6Spring2SetLinearLowerLimit(CbtConstraintHandle con_handle, const CbtVector3 limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_D6_SPRING_2);
+    assert(limit);
+    auto con = (btGeneric6DofSpring2Constraint*)con_handle;
+    con->setLinearLowerLimit(btVector3(limit[0], limit[1], limit[2]));
+}
+
+void cbtConD6Spring2SetLinearUpperLimit(CbtConstraintHandle con_handle, const CbtVector3 limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_D6_SPRING_2);
+    assert(limit);
+    auto con = (btGeneric6DofSpring2Constraint*)con_handle;
+    con->setLinearUpperLimit(btVector3(limit[0], limit[1], limit[2]));
+}
+
+void cbtConD6Spring2GetLinearLowerLimit(CbtConstraintHandle con_handle, CbtVector3 limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_D6_SPRING_2);
+    assert(limit);
+    auto con = (btGeneric6DofSpring2Constraint*)con_handle;
+    btVector3 lim;
+    con->getLinearLowerLimit(lim);
+    limit[0] = lim.x();
+    limit[1] = lim.y();
+    limit[2] = lim.z();
+}
+
+void cbtConD6Spring2GetLinearUpperLimit(CbtConstraintHandle con_handle, CbtVector3 limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_D6_SPRING_2);
+    assert(limit);
+    auto con = (btGeneric6DofSpring2Constraint*)con_handle;
+    btVector3 lim;
+    con->getLinearUpperLimit(lim);
+    limit[0] = lim.x();
+    limit[1] = lim.y();
+    limit[2] = lim.z();
+}
+
+void cbtConD6Spring2SetAngularLowerLimit(CbtConstraintHandle con_handle, const CbtVector3 limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_D6_SPRING_2);
+    assert(limit);
+    auto con = (btGeneric6DofSpring2Constraint*)con_handle;
+    con->setAngularLowerLimit(btVector3(limit[0], limit[1], limit[2]));
+}
+
+void cbtConD6Spring2SetAngularUpperLimit(CbtConstraintHandle con_handle, const CbtVector3 limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_D6_SPRING_2);
+    assert(limit);
+    auto con = (btGeneric6DofSpring2Constraint*)con_handle;
+    con->setAngularUpperLimit(btVector3(limit[0], limit[1], limit[2]));
+}
+
+void cbtConD6Spring2GetAngularLowerLimit(CbtConstraintHandle con_handle, CbtVector3 limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_D6_SPRING_2);
+    assert(limit);
+    auto con = (btGeneric6DofSpring2Constraint*)con_handle;
+    btVector3 lim;
+    con->getAngularLowerLimit(lim);
+    limit[0] = lim.x();
+    limit[1] = lim.y();
+    limit[2] = lim.z();
+}
+
+void cbtConD6Spring2GetAngularUpperLimit(CbtConstraintHandle con_handle, CbtVector3 limit) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_D6_SPRING_2);
+    assert(limit);
+    auto con = (btGeneric6DofSpring2Constraint*)con_handle;
+    btVector3 lim;
+    con->getAngularUpperLimit(lim);
+    limit[0] = lim.x();
+    limit[1] = lim.y();
+    limit[2] = lim.z();
+}
+
+void cbtConConeTwistCreate1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    const CbtVector3 frame_a[4]
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_CONETWIST);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(frame_a);
+
+    auto body_a = (btRigidBody*)body_handle_a;
+    new (con_handle) btConeTwistConstraint(*body_a, makeBtTransform(frame_a));
+}
+
+void cbtConConeTwistCreate2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 frame_a[4],
+    const CbtVector3 frame_b[4]
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_FALSE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_CONETWIST);
+    assert(body_handle_a && cbtBodyIsCreated(body_handle_a) == CBT_TRUE);
+    assert(body_handle_b && cbtBodyIsCreated(body_handle_b) == CBT_TRUE);
+    assert(frame_a && frame_b);
+
+    auto body_a = (btRigidBody*)body_handle_a;
+    auto body_b = (btRigidBody*)body_handle_b;
+    new (con_handle) btConeTwistConstraint(
+        *body_a,
+        *body_b,
+        makeBtTransform(frame_a),
+        makeBtTransform(frame_b)
+    );
+}
+
+void cbtConConeTwistSetLimit(
+    CbtConstraintHandle con_handle,
+    float swing_span1,
+    float swing_span2,
+    float twist_span,
+    float softness, // 1.0
+    float bias_factor, // 0.3
+    float relaxation_factor // 1.0
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_CONETWIST);
+    auto con = (btConeTwistConstraint*)con_handle;
+    con->setLimit(swing_span1, swing_span2, twist_span, softness, bias_factor, relaxation_factor);
 }

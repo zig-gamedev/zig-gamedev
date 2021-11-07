@@ -355,25 +355,25 @@ void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle con_handle, float impu
 void cbtConHingeCreate1(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
+    const CbtVector3 pivot_a,
+    const CbtVector3 axis_a,
+    CbtBool use_reference_frame_a // CBT_FALSE
+);
+void cbtConHingeCreate2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
     CbtBodyHandle body_handle_b,
     const CbtVector3 pivot_a,
     const CbtVector3 pivot_b,
     const CbtVector3 axis_a,
     const CbtVector3 axis_b,
-    CbtBool use_reference_frame_a
-);
-void cbtConHingeCreate2(
-    CbtConstraintHandle con_handle,
-    CbtBodyHandle body_handle_a,
-    const CbtVector3 pivot_a,
-    const CbtVector3 axis_a,
-    CbtBool use_reference_frame_a
+    CbtBool use_reference_frame_a // CBT_FALSE
 );
 void cbtConHingeCreate3(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
     const CbtVector3 frame_a[4],
-    CbtBool use_reference_frame_a
+    CbtBool use_reference_frame_a // CBT_FALSE
 );
 void cbtConHingeSetAngularOnly(CbtConstraintHandle con_handle, CbtBool angular_only);
 void cbtConHingeEnableAngularMotor(
@@ -390,7 +390,7 @@ void cbtConGearCreate(
     CbtBodyHandle body_handle_b,
     const CbtVector3 axis_a,
     const CbtVector3 axis_b,
-    float ratio
+    float ratio // 1.0
 );
 
 // Slider
@@ -423,7 +423,7 @@ void cbtConD6Spring2Create1(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_b,
     const CbtVector3 frame_b[4],
-    int rotate_order
+    int rotate_order // CBT_ROTATE_ORDER_XYZ
 );
 void cbtConD6Spring2Create2(
     CbtConstraintHandle con_handle,
@@ -431,7 +431,39 @@ void cbtConD6Spring2Create2(
     CbtBodyHandle body_handle_b,
     const CbtVector3 frame_a[4],
     const CbtVector3 frame_b[4],
-    int rotate_order
+    int rotate_order // CBT_ROTATE_ORDER_XYZ
+);
+void cbtConD6Spring2SetLinearLowerLimit(CbtConstraintHandle con_handle, const CbtVector3 limit);
+void cbtConD6Spring2SetLinearUpperLimit(CbtConstraintHandle con_handle, const CbtVector3 limit);
+void cbtConD6Spring2GetLinearLowerLimit(CbtConstraintHandle con_handle, CbtVector3 limit);
+void cbtConD6Spring2GetLinearUpperLimit(CbtConstraintHandle con_handle, CbtVector3 limit);
+
+void cbtConD6Spring2SetAngularLowerLimit(CbtConstraintHandle con_handle, const CbtVector3 limit);
+void cbtConD6Spring2SetAngularUpperLimit(CbtConstraintHandle con_handle, const CbtVector3 limit);
+void cbtConD6Spring2GetAngularLowerLimit(CbtConstraintHandle con_handle, CbtVector3 limit);
+void cbtConD6Spring2GetAngularUpperLimit(CbtConstraintHandle con_handle, CbtVector3 limit);
+
+// Cone Twist
+void cbtConConeTwistCreate1(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    const CbtVector3 frame_a[4]
+);
+void cbtConConeTwistCreate2(
+    CbtConstraintHandle con_handle,
+    CbtBodyHandle body_handle_a,
+    CbtBodyHandle body_handle_b,
+    const CbtVector3 frame_a[4],
+    const CbtVector3 frame_b[4]
+);
+void cbtConConeTwistSetLimit(
+    CbtConstraintHandle con_handle,
+    float swing_span1,
+    float swing_span2,
+    float twist_span,
+    float softness, // 1.0
+    float bias_factor, // 0.3
+    float relaxation_factor // 1.0
 );
 
 #ifdef __cplusplus
