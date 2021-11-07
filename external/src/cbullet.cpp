@@ -1201,10 +1201,10 @@ CbtConstraintHandle cbtConAllocate(int con_type) {
     }
     auto constraint = (int*)btAlignedAlloc(size, 16);
     // Set vtable to 0, this means that object is not created.
-    constraint[0] = 0; 
+    constraint[0] = 0;
     constraint[1] = 0;
     // btTypedObject::m_objectType field is just after vtable (offset: 8).
-    constraint[2] = con_type; 
+    constraint[2] = con_type;
     return (CbtConstraintHandle)constraint;
 }
 
@@ -1448,6 +1448,20 @@ void cbtConHingeEnableAngularMotor(
     assert(enable == CBT_FALSE || enable == CBT_TRUE);
     auto con = (btHingeConstraint*)con_handle;
     con->enableAngularMotor(enable == CBT_FALSE ? false : true, target_velocity, max_motor_impulse);
+}
+
+void cbtConHingeSetLimit(
+    CbtConstraintHandle con_handle,
+    float low,
+    float high,
+    float softness,
+    float bias_factor,
+    float relaxation_factor
+) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_HINGE);
+    auto con = (btHingeConstraint*)con_handle;
+    con->setLimit(low, high, softness, bias_factor, relaxation_factor);
 }
 
 void cbtConGearCreate(

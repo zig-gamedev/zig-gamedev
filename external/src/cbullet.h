@@ -382,6 +382,14 @@ void cbtConHingeEnableAngularMotor(
     float target_velocity,
     float max_motor_impulse
 );
+void cbtConHingeSetLimit(
+    CbtConstraintHandle con_handle,
+    float low,
+    float high,
+    float softness, // 0.9
+    float bias_factor, // 0.3
+    float relaxation_factor // 1.0
+);
 
 // Gear
 void cbtConGearCreate(
