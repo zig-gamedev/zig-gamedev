@@ -487,14 +487,14 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 
     {
         const body0 = physics_objects_pool.getBody();
-        c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(-10, 5, 0)).toArray4x3(), shape);
+        c.cbtBodyCreate(body0, 0.0, &Mat4.initTranslation(Vec3.init(-10, 5, 0)).toArray4x3(), shape);
         c.cbtBodySetActivationState(body0, c.CBT_DISABLE_DEACTIVATION);
-        c.cbtBodySetDamping(body0, 0.2, 0.2);
         c.cbtWorldAddBody(physics_world, body0);
 
         const body1 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-10, -5, 0)).toArray4x3(), shape);
         c.cbtBodySetActivationState(body1, c.CBT_DISABLE_DEACTIVATION);
+        c.cbtBodySetDamping(body1, 0.2, 0.2);
         c.cbtWorldAddBody(physics_world, body1);
 
         const frame0 = Mat4.initRotationZ(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(0, -5, 0)));
