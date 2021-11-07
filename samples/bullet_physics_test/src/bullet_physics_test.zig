@@ -493,7 +493,7 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
         c.cbtWorldAddBody(physics_world, body0);
 
         const body1 = physics_objects_pool.getBody();
-        c.cbtBodyCreate(body1, 0.0, &Mat4.initTranslation(Vec3.init(-10, -5, 0)).toArray4x3(), shape);
+        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-10, -5, 0)).toArray4x3(), shape);
         c.cbtBodySetActivationState(body1, c.CBT_DISABLE_DEACTIVATION);
         c.cbtWorldAddBody(physics_world, body1);
 
@@ -502,7 +502,7 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 
         const constraint = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_CONETWIST);
         c.cbtConConeTwistCreate2(constraint, body0, body1, &frame0.toArray4x3(), &frame1.toArray4x3());
-        c.cbtConConeTwistSetLimit(constraint, math.pi * 0.25 * 0.6, math.pi * 0.25, math.pi * 0.8, 0.9, 0.3, 1.0);
+        c.cbtConConeTwistSetLimit(constraint, math.pi * 0.25 * 0.6, math.pi * 0.25, math.pi * 0.8, 0.5, 0.3, 1.0);
         c.cbtConSetDebugDrawSize(constraint, 5.0);
 
         c.cbtWorldAddConstraint(physics_world, constraint, c.CBT_TRUE);
