@@ -981,12 +981,32 @@ void cbtBodyGetLinearVelocity(CbtBodyHandle body_handle, CbtVector3 velocity) {
 
 void cbtBodyGetAngularVelocity(CbtBodyHandle body_handle, CbtVector3 velocity) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
-    assert(body_handle && velocity);
+    assert(velocity);
     auto body = (btRigidBody*)body_handle;
     const btVector3& vel = body->getAngularVelocity();
     velocity[0] = vel.x();
     velocity[1] = vel.y();
     velocity[2] = vel.z();
+}
+
+void cbtBodyGetTotalForce(CbtBodyHandle body_handle, CbtVector3 force) {
+    assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
+    assert(force);
+    auto body = (btRigidBody*)body_handle;
+    auto tmp = body->getTotalForce();
+    force[0] = tmp.x();
+    force[1] = tmp.y();
+    force[2] = tmp.z();
+}
+
+void cbtBodyGetTotalTorque(CbtBodyHandle body_handle, CbtVector3 torque) {
+    assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
+    assert(torque);
+    auto body = (btRigidBody*)body_handle;
+    auto tmp = body->getTotalTorque();
+    torque[0] = tmp.x();
+    torque[1] = tmp.y();
+    torque[2] = tmp.z();
 }
 
 CbtBool cbtBodyIsStatic(CbtBodyHandle body_handle) {

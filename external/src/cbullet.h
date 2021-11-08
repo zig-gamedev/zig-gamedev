@@ -193,7 +193,11 @@ void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_e
 
 void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
 
-void cbtShapeCompoundCreate(CbtShapeHandle shape_handle, CbtBool enable_dynamic_aabb_tree, int initial_child_capacity);
+void cbtShapeCompoundCreate(
+    CbtShapeHandle shape_handle,
+    CbtBool enable_dynamic_aabb_tree, // CBT_TRUE
+    int initial_child_capacity // 0
+);
 void cbtShapeCompoundAddChild(
     CbtShapeHandle shape_handle,
     const CbtVector3 local_transform[4],
@@ -277,8 +281,6 @@ void cbtBodyApplyImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse, co
 void cbtBodyApplyTorque(CbtBodyHandle body_handle, const CbtVector3 torque);
 void cbtBodyApplyTorqueImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse);
 
-void cbtBodyClearForces(CbtBodyHandle body_handle);
-
 float cbtBodyGetRestitution(CbtBodyHandle body_handle);
 
 float cbtBodyGetFriction(CbtBodyHandle body_handle);
@@ -296,6 +298,9 @@ float cbtBodyGetAngularDamping(CbtBodyHandle body_handle);
 
 void cbtBodyGetLinearVelocity(CbtBodyHandle body_handle, CbtVector3 velocity);
 void cbtBodyGetAngularVelocity(CbtBodyHandle body_handle, CbtVector3 velocity);
+
+void cbtBodyGetTotalForce(CbtBodyHandle body_handle, CbtVector3 force);
+void cbtBodyGetTotalTorque(CbtBodyHandle body_handle, CbtVector3 torque);
 
 CbtBool cbtBodyIsStatic(CbtBodyHandle body_handle);
 CbtBool cbtBodyIsKinematic(CbtBodyHandle body_handle);

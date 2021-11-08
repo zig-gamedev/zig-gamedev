@@ -214,6 +214,7 @@ const DemoState = struct {
     physics_debug: *PhysicsDebug,
     physics_world: c.CbtWorldHandle,
     physics_objects_pool: PhysicsObjectsPool,
+    physics_ui_bodies: std.ArrayList(c.CbtBodyHandle),
 
     camera: struct {
         position: Vec3,
@@ -509,6 +510,106 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
     }
 }
 
+fn createGearsScene(
+    physics_world: c.CbtWorldHandle,
+    physics_objects_pool: PhysicsObjectsPool,
+    ui_bodies: *std.ArrayList(c.CbtBodyHandle),
+) void {
+    {
+        const plane = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_STATIC_PLANE);
+        c.cbtShapePlaneCreate(plane, &Vec3.init(0.0, 1.0, 0.0).c, -10.0);
+
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 0.0, &Mat4.initIdentity().toArray4x3(), plane);
+        c.cbtWorldAddBody(physics_world, body);
+    }
+
+    const gear_thickness: f32 = 0.03;
+    const gear_support_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+    c.cbtShapeCylinderCreate(gear_support_shape, &Vec3.init(0.2, 0.2, 0.25).c, c.CBT_LINEAR_AXIS_Z);
+
+    {
+        const r0 = 0.5;
+        const r1 = 0.7;
+        const r2 = 1.5;
+        const x0 = -(r1 + r2);
+
+        const gear_body_0 = blk: {
+            const gear_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(gear_shape, &Vec3.init(r0, r0, gear_thickness).c, c.CBT_LINEAR_AXIS_Z);
+
+            const gear = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+            c.cbtShapeCompoundCreate(gear, c.CBT_TRUE, 2);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_support_shape);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_shape);
+
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(body, 6.28, &Mat4.initTranslation(Vec3.init(x0, 1.0, 5.0)).toArray4x3(), gear);
+            c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+            c.cbtBodySetAngularFactor(body, &Vec3.init(0, 0, 1).c);
+            c.cbtBodySetActivationState(body, c.CBT_DISABLE_DEACTIVATION);
+            c.cbtWorldAddBody(physics_world, body);
+            break :blk body;
+        };
+
+        const gear_body_1 = blk: {
+            const gear_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(gear_shape, &Vec3.init(r1, r1, gear_thickness).c, c.CBT_LINEAR_AXIS_Z);
+
+            const gear = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+            c.cbtShapeCompoundCreate(gear, c.CBT_TRUE, 2);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_support_shape);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_shape);
+
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(body, 6.28, &Mat4.initTranslation(Vec3.init(x0 + r0 + r1, 1.0, 5.0)).toArray4x3(), gear);
+            c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+            c.cbtBodySetAngularFactor(body, &Vec3.init(0, 0, 1).c);
+            c.cbtBodySetActivationState(body, c.CBT_DISABLE_DEACTIVATION);
+            c.cbtWorldAddBody(physics_world, body);
+            break :blk body;
+        };
+
+        const gear_body_2 = blk: {
+            const gear_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(gear_shape, &Vec3.init(r2, r2, gear_thickness).c, c.CBT_LINEAR_AXIS_Z);
+
+            const gear = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+            c.cbtShapeCompoundCreate(gear, c.CBT_TRUE, 2);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_support_shape);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_shape);
+
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(
+                body,
+                6.28,
+                &Mat4.initTranslation(Vec3.init(x0 + r0 + 2 * r1 + r2, 1.0, 5.0)).toArray4x3(),
+                gear,
+            );
+            c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+            c.cbtBodySetAngularFactor(body, &Vec3.init(0, 0, 1).c);
+            c.cbtBodySetActivationState(body, c.CBT_DISABLE_DEACTIVATION);
+            c.cbtWorldAddBody(physics_world, body);
+            break :blk body;
+        };
+
+        const gear_0 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
+        c.cbtConGearCreate(gear_0, gear_body_0, gear_body_1, &Vec3.init(0, 0, 1).c, &Vec3.init(0, 0, 1).c, r1 / r0);
+
+        const gear_1 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
+        c.cbtConGearCreate(gear_1, gear_body_1, gear_body_2, &Vec3.init(0, 0, 1).c, &Vec3.init(0, 0, 1).c, r2 / r1);
+
+        c.cbtWorldAddConstraint(physics_world, gear_0, c.CBT_TRUE);
+        c.cbtWorldAddConstraint(physics_world, gear_1, c.CBT_TRUE);
+
+        ui_bodies.append(gear_body_0) catch unreachable;
+        ui_bodies.append(gear_body_1) catch unreachable;
+        ui_bodies.append(gear_body_2) catch unreachable;
+
+        c.cbtBodyApplyTorqueImpulse(gear_body_0, &Vec3.init(0, 0, 5).c);
+    }
+}
+
 fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
@@ -528,7 +629,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const physics_objects_pool = PhysicsObjectsPool.init();
 
-    createScene2(physics_world, physics_objects_pool);
+    //createScene2(physics_world, physics_objects_pool);
+    var ui_bodies = std.ArrayList(c.CbtBodyHandle).init(gpa);
+    createGearsScene(physics_world, physics_objects_pool, &ui_bodies);
 
     //var xa2: *xaudio2.IXAudio2 = undefined;
     //_ = xaudio2.create(@ptrCast(*?*xaudio2.IXAudio2, &xa2), 0, 0);
@@ -635,6 +738,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_world = physics_world,
         .physics_debug = physics_debug,
         .physics_objects_pool = physics_objects_pool,
+        .physics_ui_bodies = ui_bodies,
         .physics_debug_pso = physics_debug_pso,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
@@ -673,6 +777,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         c.cbtConDestroy(demo.pick.constraint);
     }
     c.cbtConDeallocate(demo.pick.constraint);
+    demo.physics_ui_bodies.deinit();
     demo.physics_objects_pool.deinit(demo.physics_world);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
@@ -683,10 +788,31 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
 fn update(demo: *DemoState) void {
     const dt = demo.frame_stats.delta_time;
 
+    _ = c.cbtWorldStepSimulation(demo.physics_world, dt, 1, 1.0 / 60.0);
+
     demo.frame_stats.update();
     lib.newImGuiFrame(dt);
 
-    _ = c.cbtWorldStepSimulation(demo.physics_world, dt, 1, 1.0 / 60.0);
+    c.igSetNextWindowPos(
+        c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImGuiCond_FirstUseEver,
+        c.ImVec2{ .x = 0.0, .y = 0.0 },
+    );
+    c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);
+    _ = c.igBegin(
+        "Demo Settings",
+        null,
+        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+    );
+    {
+        var i: u32 = 0;
+        while (i < 3) : (i += 1) {
+            var v3: c.CbtVector3 = undefined;
+            c.cbtBodyGetAngularVelocity(demo.physics_ui_bodies.items[i], &v3);
+            _ = c.igInputFloat3("Angular Velocity", &v3, null, c.ImGuiInputTextFlags_ReadOnly);
+        }
+    }
+    c.igEnd();
 
     // Handle camera rotation with mouse.
     {
@@ -828,7 +954,7 @@ fn draw(demo: *DemoState) void {
         camera_fovy,
         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
         0.1,
-        50.0,
+        100.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
