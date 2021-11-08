@@ -141,6 +141,8 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/bullet/btBulletCollisionAll.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/bullet/btBulletDynamicsAll.cpp", &[_][]const u8{""});
 
+    exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
+
     exe.install();
 
     const run_cmd = exe.run();

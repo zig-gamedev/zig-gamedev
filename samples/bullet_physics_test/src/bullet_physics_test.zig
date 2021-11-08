@@ -198,6 +198,52 @@ const PhysicsObjectsPool = struct {
     }
 };
 
+const Vertex = struct {
+    position: Vec3,
+    normal: Vec3,
+};
+
+const Mesh = struct {
+    index_offset: u32,
+    vertex_offset: u32,
+    num_indices: u32,
+    num_vertices: u32,
+};
+
+fn loadAllMeshes(
+    arena: *std.mem.Allocator,
+    all_meshes: *std.ArrayList(Mesh),
+    all_vertices: *std.ArrayList(Vertex),
+    all_indices: *std.ArrayList(u32),
+) void {
+    var positions = std.ArrayList(Vec3).init(arena);
+    var normals = std.ArrayList(Vec3).init(arena);
+
+    {
+        const pre_indices_len = all_indices.items.len;
+        const pre_positions_len = positions.items.len;
+
+        const data = lib.parseAndLoadGltfFile("content/cube.gltf");
+        defer c.cgltf_free(data);
+        lib.appendMeshPrimitive(data, 0, 0, all_indices, &positions, &normals, null, null);
+
+        all_meshes.append(.{
+            .index_offset = @intCast(u32, pre_indices_len),
+            .vertex_offset = @intCast(u32, pre_positions_len),
+            .num_indices = @intCast(u32, all_indices.items.len - pre_indices_len),
+            .num_vertices = @intCast(u32, positions.items.len - pre_positions_len),
+        }) catch unreachable;
+    }
+
+    all_vertices.ensureTotalCapacity(positions.items.len) catch unreachable;
+    for (positions.items) |_, index| {
+        all_vertices.appendAssumeCapacity(.{
+            .position = positions.items[index],
+            .normal = normals.items[index],
+        });
+    }
+}
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -215,6 +261,8 @@ const DemoState = struct {
     physics_world: c.CbtWorldHandle,
     physics_objects_pool: PhysicsObjectsPool,
     physics_ui_bodies: std.ArrayList(c.CbtBodyHandle),
+
+    meshes: std.ArrayList(Mesh),
 
     camera: struct {
         position: Vec3,
@@ -711,6 +759,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const depth_texture_dsv = grfx.allocateCpuDescriptors(.DSV, 1);
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_dsv);
 
+    var all_meshes = std.ArrayList(Mesh).init(gpa);
+    var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
+    var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
+    loadAllMeshes(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices);
+
     //
     // Begin frame to init/upload resources to the GPU.
     //
@@ -740,6 +793,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_objects_pool = physics_objects_pool,
         .physics_ui_bodies = ui_bodies,
         .physics_debug_pso = physics_debug_pso,
+        .meshes = all_meshes,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
         .camera = .{
@@ -765,6 +819,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    demo.meshes.deinit();
     _ = demo.brush.Release();
     _ = demo.info_txtfmt.Release();
     _ = demo.grfx.releasePipeline(demo.physics_debug_pso);
