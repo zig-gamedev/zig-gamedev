@@ -379,10 +379,10 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 
         const body_a = blk: {
             const cyl_a = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-            c.cbtShapeCylinderCreate(cyl_a, &Vec3.init(0.2, 0.25, 0.2).c, c.CBT_AXIS_Y);
+            c.cbtShapeCylinderCreate(cyl_a, &Vec3.init(0.2, 0.25, 0.2).c, c.CBT_LINEAR_AXIS_Y);
 
             const cyl_b = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-            c.cbtShapeCylinderCreate(cyl_b, &Vec3.init(l1, 0.025, l1).c, c.CBT_AXIS_Y);
+            c.cbtShapeCylinderCreate(cyl_b, &Vec3.init(l1, 0.025, l1).c, c.CBT_LINEAR_AXIS_Y);
 
             const cyl = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
             c.cbtShapeCompoundCreate(cyl, c.CBT_TRUE, 2);
@@ -399,10 +399,10 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 
         const body_b = blk: {
             const cyl_a = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-            c.cbtShapeCylinderCreate(cyl_a, &Vec3.init(0.2, 0.26, 0.2).c, c.CBT_AXIS_Y);
+            c.cbtShapeCylinderCreate(cyl_a, &Vec3.init(0.2, 0.26, 0.2).c, c.CBT_LINEAR_AXIS_Y);
 
             const cyl_b = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-            c.cbtShapeCylinderCreate(cyl_b, &Vec3.init(l2, 0.025, l2).c, c.CBT_AXIS_Y);
+            c.cbtShapeCylinderCreate(cyl_b, &Vec3.init(l2, 0.025, l2).c, c.CBT_LINEAR_AXIS_Y);
 
             const cyl = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
             c.cbtShapeCompoundCreate(cyl, c.CBT_TRUE, 2);
