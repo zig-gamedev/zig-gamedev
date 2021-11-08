@@ -1501,6 +1501,61 @@ void cbtConGearCreate(
     );
 }
 
+void cbtConGearSetAxisA(CbtConstraintHandle con_handle, const CbtVector3 axis) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_GEAR);
+    assert(axis);
+    auto con = (btGearConstraint*)con_handle;
+    auto tmp = btVector3(axis[0], axis[1], axis[2]);
+    con->setAxisA(tmp);
+}
+
+void cbtConGearSetAxisB(CbtConstraintHandle con_handle, const CbtVector3 axis) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_GEAR);
+    assert(axis);
+    auto con = (btGearConstraint*)con_handle;
+    auto tmp = btVector3(axis[0], axis[1], axis[2]);
+    con->setAxisB(tmp);
+}
+
+void cbtConGearSetRatio(CbtConstraintHandle con_handle, float ratio) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_GEAR);
+    assert(ratio > 0.0);
+    auto con = (btGearConstraint*)con_handle;
+    con->setRatio(ratio);
+}
+
+void cbtConGearGetAxisA(CbtConstraintHandle con_handle, CbtVector3 axis) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_GEAR);
+    assert(axis);
+    auto con = (btGearConstraint*)con_handle;
+    auto tmp = con->getAxisA();
+    axis[0] = tmp.x();
+    axis[1] = tmp.y();
+    axis[2] = tmp.z();
+}
+
+void cbtConGearGetAxisB(CbtConstraintHandle con_handle, CbtVector3 axis) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_GEAR);
+    assert(axis);
+    auto con = (btGearConstraint*)con_handle;
+    auto tmp = con->getAxisB();
+    axis[0] = tmp.x();
+    axis[1] = tmp.y();
+    axis[2] = tmp.z();
+}
+
+float cbtConGearGetRatio(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle) == CBT_TRUE);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_GEAR);
+    auto con = (btGearConstraint*)con_handle;
+    return con->getRatio();
+}
+
 void cbtConSliderCreate1(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_b,

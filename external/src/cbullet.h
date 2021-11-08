@@ -413,6 +413,12 @@ void cbtConGearCreate(
     const CbtVector3 axis_b,
     float ratio // 1.0
 );
+void cbtConGearSetAxisA(CbtConstraintHandle con_handle, const CbtVector3 axis);
+void cbtConGearSetAxisB(CbtConstraintHandle con_handle, const CbtVector3 axis);
+void cbtConGearSetRatio(CbtConstraintHandle con_handle, float ratio);
+void cbtConGearGetAxisA(CbtConstraintHandle con_handle, CbtVector3 axis);
+void cbtConGearGetAxisB(CbtConstraintHandle con_handle, CbtVector3 axis);
+float cbtConGearGetRatio(CbtConstraintHandle con_handle);
 
 // Slider
 void cbtConSliderCreate1(
