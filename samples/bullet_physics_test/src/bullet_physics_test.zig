@@ -524,7 +524,7 @@ fn createGearsScene(
         c.cbtWorldAddBody(physics_world, body);
     }
 
-    const gear_thickness: f32 = 0.03;
+    const gear_thickness: f32 = 0.05;
     const gear_support_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
     c.cbtShapeCylinderCreate(gear_support_shape, &Vec3.init(0.2, 0.2, 0.25).c, c.CBT_LINEAR_AXIS_Z);
 
@@ -953,7 +953,7 @@ fn draw(demo: *DemoState) void {
     const cam_view_to_clip = Mat4.initPerspectiveFovLh(
         camera_fovy,
         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
-        0.1,
+        0.01,
         100.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
