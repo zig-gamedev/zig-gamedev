@@ -75,7 +75,7 @@ void vsSimpleEntity(
     const float4x4 object_to_clip = mul(cbv_draw_const.object_to_world, cbv_frame_const.world_to_clip);
     out_position_clip = mul(float4(position, 1.0), object_to_clip);
     out_position = mul(float4(position, 1.0), cbv_draw_const.object_to_world).xyz;
-    out_normal = mul(normal, (float3x3)cbv_draw_const.object_to_world);
+    out_normal = normal;//mul(normal, (float3x3)cbv_draw_const.object_to_world);
 }
 
 [RootSignature(root_signature)]

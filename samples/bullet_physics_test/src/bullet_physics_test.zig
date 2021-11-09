@@ -671,7 +671,7 @@ fn createBoxesScene(
 ) void {
     {
         const plane = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_STATIC_PLANE);
-        c.cbtShapePlaneCreate(plane, &Vec3.init(0.0, 1.0, 0.0).c, -10.0);
+        c.cbtShapePlaneCreate(plane, &Vec3.init(0.0, 1.0, 0.0).c, -4.0);
 
         const body = physics_objects_pool.getBody();
         c.cbtBodyCreate(body, 0.0, &Mat4.initIdentity().toArray4x3(), plane);
@@ -682,11 +682,17 @@ fn createBoxesScene(
     c.cbtShapeBoxCreate(box_shape, &Vec3.init(1.0, 1.0, 1.0).c);
 
     {
-        const box_body = physics_objects_pool.getBody();
-        c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
-        c.cbtWorldAddBody(physics_world, box_body);
+        const body0 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
 
-        entities.append(.{ .body = box_body, .mesh_index = 0 }) catch unreachable;
+        const body1 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
+
+        c.cbtWorldAddBody(physics_world, body0);
+        c.cbtWorldAddBody(physics_world, body1);
+
+        entities.append(.{ .body = body0, .mesh_index = 0 }) catch unreachable;
+        entities.append(.{ .body = body1, .mesh_index = 0 }) catch unreachable;
     }
 }
 
