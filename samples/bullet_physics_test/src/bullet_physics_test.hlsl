@@ -48,11 +48,6 @@ void psPhysicsDebug(
     "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
     "CBV(b1, visibility = SHADER_VISIBILITY_VERTEX)"
 
-struct Vertex {
-    float3 position;
-    float3 normal;
-};
-
 struct DrawConst {
     float4x4 object_to_world;
 };
