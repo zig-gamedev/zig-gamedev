@@ -211,38 +211,32 @@ const Mesh = struct {
 };
 
 fn loadAllMeshes(
-    arena: *std.mem.Allocator,
     all_meshes: *std.ArrayList(Mesh),
-    all_vertices: *std.ArrayList(Vertex),
+    all_positions: *std.ArrayList(Vec3),
+    all_normals: *std.ArrayList(Vec3),
     all_indices: *std.ArrayList(u32),
 ) void {
-    var positions = std.ArrayList(Vec3).init(arena);
-    var normals = std.ArrayList(Vec3).init(arena);
-
     {
         const pre_indices_len = all_indices.items.len;
-        const pre_positions_len = positions.items.len;
+        const pre_positions_len = all_positions.items.len;
 
         const data = lib.parseAndLoadGltfFile("content/cube.gltf");
         defer c.cgltf_free(data);
-        lib.appendMeshPrimitive(data, 0, 0, all_indices, &positions, &normals, null, null);
+        lib.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
 
         all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
             .vertex_offset = @intCast(u32, pre_positions_len),
             .num_indices = @intCast(u32, all_indices.items.len - pre_indices_len),
-            .num_vertices = @intCast(u32, positions.items.len - pre_positions_len),
+            .num_vertices = @intCast(u32, all_positions.items.len - pre_positions_len),
         }) catch unreachable;
     }
-
-    all_vertices.ensureTotalCapacity(positions.items.len) catch unreachable;
-    for (positions.items) |_, index| {
-        all_vertices.appendAssumeCapacity(.{
-            .position = positions.items[index],
-            .normal = normals.items[index],
-        });
-    }
 }
+
+const Entity = struct {
+    body: c.CbtBodyHandle,
+    mesh_index: u32,
+};
 
 const DemoState = struct {
     grfx: gr.GraphicsContext,
@@ -253,15 +247,19 @@ const DemoState = struct {
     info_txtfmt: *dwrite.ITextFormat,
 
     physics_debug_pso: gr.PipelineHandle,
+    simple_entity_pso: gr.PipelineHandle,
 
     depth_texture: gr.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
+    vertex_buffer: gr.ResourceHandle,
+    index_buffer: gr.ResourceHandle,
+
     physics_debug: *PhysicsDebug,
     physics_world: c.CbtWorldHandle,
     physics_objects_pool: PhysicsObjectsPool,
-    physics_ui_bodies: std.ArrayList(c.CbtBodyHandle),
 
+    entities: std.ArrayList(Entity),
     meshes: std.ArrayList(Mesh),
 
     camera: struct {
@@ -290,6 +288,14 @@ const PsoPhysicsDebug_Vertex = struct {
 };
 
 const PsoPhysicsDebug_FrameConst = struct {
+    world_to_clip: Mat4,
+};
+
+const PsoSimpleEntity_DrawConst = struct {
+    object_to_world: Mat4,
+};
+
+const PsoSimpleEntity_FrameConst = struct {
     world_to_clip: Mat4,
 };
 
@@ -561,7 +567,7 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
 fn createGearsScene(
     physics_world: c.CbtWorldHandle,
     physics_objects_pool: PhysicsObjectsPool,
-    ui_bodies: *std.ArrayList(c.CbtBodyHandle),
+    entities: *std.ArrayList(Entity),
 ) void {
     {
         const plane = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_STATIC_PLANE);
@@ -650,11 +656,37 @@ fn createGearsScene(
         c.cbtWorldAddConstraint(physics_world, gear_0, c.CBT_TRUE);
         c.cbtWorldAddConstraint(physics_world, gear_1, c.CBT_TRUE);
 
-        ui_bodies.append(gear_body_0) catch unreachable;
-        ui_bodies.append(gear_body_1) catch unreachable;
-        ui_bodies.append(gear_body_2) catch unreachable;
+        entities.append(gear_body_0) catch unreachable;
+        entities.append(gear_body_1) catch unreachable;
+        entities.append(gear_body_2) catch unreachable;
 
         c.cbtBodyApplyTorqueImpulse(gear_body_0, &Vec3.init(0, 0, 5).c);
+    }
+}
+
+fn createBoxesScene(
+    physics_world: c.CbtWorldHandle,
+    physics_objects_pool: PhysicsObjectsPool,
+    entities: *std.ArrayList(Entity),
+) void {
+    {
+        const plane = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_STATIC_PLANE);
+        c.cbtShapePlaneCreate(plane, &Vec3.init(0.0, 1.0, 0.0).c, -10.0);
+
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 0.0, &Mat4.initIdentity().toArray4x3(), plane);
+        c.cbtWorldAddBody(physics_world, body);
+    }
+
+    const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(box_shape, &Vec3.init(1.0, 1.0, 1.0).c);
+
+    {
+        const box_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
+        c.cbtWorldAddBody(physics_world, box_body);
+
+        entities.append(.{ .body = box_body, .mesh_index = 0 }) catch unreachable;
     }
 }
 
@@ -678,8 +710,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const physics_objects_pool = PhysicsObjectsPool.init();
 
     //createScene2(physics_world, physics_objects_pool);
-    var ui_bodies = std.ArrayList(c.CbtBodyHandle).init(gpa);
-    createGearsScene(physics_world, physics_objects_pool, &ui_bodies);
+    var entities = std.ArrayList(Entity).init(gpa);
+    //createGearsScene(physics_world, physics_objects_pool, &entities);
+    createBoxesScene(physics_world, physics_objects_pool, &entities);
 
     //var xa2: *xaudio2.IXAudio2 = undefined;
     //_ = xaudio2.create(@ptrCast(*?*xaudio2.IXAudio2, &xa2), 0, 0);
@@ -744,6 +777,31 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         );
     };
 
+    const simple_entity_pso = blk: {
+        const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
+            d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+            d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
+        };
+
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.InputLayout = .{
+            .pInputElementDescs = &input_layout_desc,
+            .NumElements = input_layout_desc.len,
+        };
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.DSVFormat = .D32_FLOAT;
+
+        break :blk grfx.createGraphicsShaderPipeline(
+            &arena_allocator.allocator,
+            &pso_desc,
+            "content/shaders/simple_entity.vs.cso",
+            "content/shaders/simple_entity.ps.cso",
+        );
+    };
+
     const depth_texture = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
@@ -760,9 +818,26 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_dsv);
 
     var all_meshes = std.ArrayList(Mesh).init(gpa);
-    var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
+    var all_positions = std.ArrayList(Vec3).init(&arena_allocator.allocator);
+    var all_normals = std.ArrayList(Vec3).init(&arena_allocator.allocator);
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
-    loadAllMeshes(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices);
+    loadAllMeshes(&all_meshes, &all_positions, &all_normals, &all_indices);
+
+    var vertex_buffer = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(all_positions.items.len * @sizeOf(Vertex)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
+
+    var index_buffer = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
 
     //
     // Begin frame to init/upload resources to the GPU.
@@ -774,6 +849,37 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
     var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+
+    {
+        const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_positions.items.len));
+        for (all_positions.items) |_, i| {
+            upload.cpu_slice[i].position = all_positions.items[i];
+            upload.cpu_slice[i].normal = all_normals.items[i];
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(vertex_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    }
+
+    {
+        const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        for (all_indices.items) |_, i| {
+            upload.cpu_slice[i] = all_indices.items[i];
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(index_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+    }
 
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
@@ -791,8 +897,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_world = physics_world,
         .physics_debug = physics_debug,
         .physics_objects_pool = physics_objects_pool,
-        .physics_ui_bodies = ui_bodies,
+        .entities = entities,
         .physics_debug_pso = physics_debug_pso,
+        .simple_entity_pso = simple_entity_pso,
+        .vertex_buffer = vertex_buffer,
+        .index_buffer = index_buffer,
         .meshes = all_meshes,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
@@ -823,7 +932,10 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.brush.Release();
     _ = demo.info_txtfmt.Release();
     _ = demo.grfx.releasePipeline(demo.physics_debug_pso);
+    _ = demo.grfx.releasePipeline(demo.simple_entity_pso);
     _ = demo.grfx.releaseResource(demo.depth_texture);
+    _ = demo.grfx.releaseResource(demo.vertex_buffer);
+    _ = demo.grfx.releaseResource(demo.index_buffer);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
@@ -832,7 +944,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
         c.cbtConDestroy(demo.pick.constraint);
     }
     c.cbtConDeallocate(demo.pick.constraint);
-    demo.physics_ui_bodies.deinit();
+    demo.entities.deinit();
     demo.physics_objects_pool.deinit(demo.physics_world);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
@@ -859,11 +971,11 @@ fn update(demo: *DemoState) void {
         null,
         c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
     );
-    {
+    if (false) { //(demo.entities.items.len >= 3) {
         var i: u32 = 0;
         while (i < 3) : (i += 1) {
             var v3: c.CbtVector3 = undefined;
-            c.cbtBodyGetAngularVelocity(demo.physics_ui_bodies.items[i], &v3);
+            c.cbtBodyGetAngularVelocity(demo.entities.items[i], &v3);
             _ = c.igInputFloat3("Angular Velocity", &v3, null, c.ImGuiInputTextFlags_ReadOnly);
         }
     }
@@ -1031,6 +1143,43 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
+
+    {
+        grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+            .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+            .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.vertex_buffer)),
+            .StrideInBytes = @sizeOf(Vertex),
+        }});
+        grfx.cmdlist.IASetIndexBuffer(&.{
+            .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+            .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
+            .Format = .R32_UINT,
+        });
+
+        grfx.setCurrentPipeline(demo.simple_entity_pso);
+        grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+        {
+            const mem = grfx.allocateUploadMemory(PsoSimpleEntity_FrameConst, 1);
+            mem.cpu_slice[0].world_to_clip = cam_world_to_clip.transpose();
+            grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+        }
+        for (demo.entities.items) |entity| {
+            var transform: [4]c.CbtVector3 = undefined;
+            c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
+
+            const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
+            mem.cpu_slice[0].object_to_world = Mat4.initArray4x3(transform).transpose();
+
+            grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+            grfx.cmdlist.DrawIndexedInstanced(
+                demo.meshes.items[entity.mesh_index].num_indices,
+                1,
+                demo.meshes.items[entity.mesh_index].index_offset,
+                @intCast(i32, demo.meshes.items[entity.mesh_index].vertex_offset),
+                0,
+            );
+        }
+    }
 
     c.cbtWorldDebugDraw(demo.physics_world);
     if (demo.physics_debug.lines.items.len > 0) {

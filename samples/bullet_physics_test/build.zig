@@ -47,6 +47,11 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "psPhysicsDebug", "physics_debug.ps.cso", "ps", "PSO__PHYSICS_DEBUG");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "vsSimpleEntity", "simple_entity.vs.cso", "vs", "PSO__SIMPLE_ENTITY");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "psSimpleEntity", "simple_entity.ps.cso", "ps", "PSO__SIMPLE_ENTITY");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     install_content_step.step.dependOn(dxc_step);
 
     // Standard target options allows the person running `zig build` to choose
