@@ -235,6 +235,7 @@ fn loadAllMeshes(
 
 const Entity = struct {
     body: c.CbtBodyHandle,
+    size: Vec3,
     mesh_index: u32,
 };
 
@@ -678,21 +679,26 @@ fn createBoxesScene(
         c.cbtWorldAddBody(physics_world, body);
     }
 
-    const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(box_shape, &Vec3.init(1.0, 1.0, 1.0).c);
+    const box_shape0_size = Vec3.initS(1.0);
+    const box_shape0 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(box_shape0, &box_shape0_size.c);
+
+    const box_shape1_size = Vec3.init(0.5, 1.0, 2.0);
+    const box_shape1 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(box_shape1, &box_shape1_size.c);
 
     {
         const body0 = physics_objects_pool.getBody();
-        c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
+        c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape0);
 
         const body1 = physics_objects_pool.getBody();
-        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
+        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape1);
 
         c.cbtWorldAddBody(physics_world, body0);
         c.cbtWorldAddBody(physics_world, body1);
 
-        entities.append(.{ .body = body0, .mesh_index = 0 }) catch unreachable;
-        entities.append(.{ .body = body1, .mesh_index = 0 }) catch unreachable;
+        entities.append(.{ .body = body0, .size = box_shape0_size, .mesh_index = 0 }) catch unreachable;
+        entities.append(.{ .body = body1, .size = box_shape1_size, .mesh_index = 0 }) catch unreachable;
     }
 }
 
@@ -1173,8 +1179,10 @@ fn draw(demo: *DemoState) void {
             var transform: [4]c.CbtVector3 = undefined;
             c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
 
+            const scaling = Mat4.initScaling(entity.size);
+
             const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
-            mem.cpu_slice[0].object_to_world = Mat4.initArray4x3(transform).transpose();
+            mem.cpu_slice[0].object_to_world = scaling.mul(Mat4.initArray4x3(transform)).transpose();
 
             grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
             grfx.cmdlist.DrawIndexedInstanced(
