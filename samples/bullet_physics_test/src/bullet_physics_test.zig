@@ -212,6 +212,7 @@ const Mesh = struct {
 
 const mesh_cube = 0;
 const mesh_sphere = 1;
+const mesh_world = 2;
 
 fn loadAllMeshes(
     all_meshes: *std.ArrayList(Mesh),
@@ -222,6 +223,7 @@ fn loadAllMeshes(
     const paths = [_][]const u8{
         "content/cube.gltf",
         "content/sphere.gltf",
+        "content/cube.gltf",
     };
     for (paths) |path| {
         const pre_indices_len = all_indices.items.len;
@@ -682,6 +684,7 @@ fn createGearsScene(
 }
 
 var shape_sphere_r1: c.CbtShapeHandle = undefined;
+var shape_world: c.CbtShapeHandle = undefined;
 
 fn createBoxesScene(
     physics_world: c.CbtWorldHandle,
@@ -696,6 +699,12 @@ fn createBoxesScene(
         c.cbtBodyCreate(body, 0.0, &Mat4.initIdentity().toArray4x3(), plane);
         c.cbtWorldAddBody(physics_world, body);
     }
+    {
+        const world = physics_objects_pool.getBody();
+        c.cbtBodyCreate(world, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
+        c.cbtWorldAddBody(physics_world, world);
+        entities.append(.{ .body = world, .size = Vec3.initS(1.0), .mesh_index = mesh_world }) catch unreachable;
+    }
 
     const box_shape0_size = Vec3.initS(1.0);
     const box_shape0 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
@@ -704,9 +713,6 @@ fn createBoxesScene(
     const box_shape1_size = Vec3.init(0.5, 1.0, 2.0);
     const box_shape1 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape1, &box_shape1_size.c);
-
-    shape_sphere_r1 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_SPHERE);
-    c.cbtShapeSphereCreate(shape_sphere_r1, 1.0);
 
     {
         const body0 = physics_objects_pool.getBody();
@@ -735,26 +741,6 @@ fn createBoxesScene(
 fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
-
-    var physics_debug = gpa.create(PhysicsDebug) catch unreachable;
-    physics_debug.* = PhysicsDebug.init(gpa);
-
-    const physics_world = c.cbtWorldCreate();
-    c.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
-
-    c.cbtWorldDebugSetCallbacks(physics_world, &.{
-        .drawLine = PhysicsDebug.drawLineCallback,
-        .drawContactPoint = PhysicsDebug.drawContactPointCallback,
-        .reportErrorWarning = PhysicsDebug.reportErrorWarningCallback,
-        .user_data = physics_debug,
-    });
-
-    const physics_objects_pool = PhysicsObjectsPool.init();
-
-    //createScene2(physics_world, physics_objects_pool);
-    var entities = std.ArrayList(Entity).init(gpa);
-    //createGearsScene(physics_world, physics_objects_pool, &entities);
-    createBoxesScene(physics_world, physics_objects_pool, &entities);
 
     //var xa2: *xaudio2.IXAudio2 = undefined;
     //_ = xaudio2.create(@ptrCast(*?*xaudio2.IXAudio2, &xa2), 0, 0);
@@ -864,6 +850,39 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var all_normals = std.ArrayList(Vec3).init(&arena_allocator.allocator);
     var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
     loadAllMeshes(&all_meshes, &all_positions, &all_normals, &all_indices);
+
+    var physics_debug = gpa.create(PhysicsDebug) catch unreachable;
+    physics_debug.* = PhysicsDebug.init(gpa);
+
+    const physics_world = c.cbtWorldCreate();
+    c.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
+
+    c.cbtWorldDebugSetCallbacks(physics_world, &.{
+        .drawLine = PhysicsDebug.drawLineCallback,
+        .drawContactPoint = PhysicsDebug.drawContactPointCallback,
+        .reportErrorWarning = PhysicsDebug.reportErrorWarningCallback,
+        .user_data = physics_debug,
+    });
+
+    const physics_objects_pool = PhysicsObjectsPool.init();
+    shape_world = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
+    c.cbtShapeTriMeshCreateBegin(shape_world);
+    c.cbtShapeTriMeshAddIndexVertexArray(
+        shape_world,
+        @intCast(i32, all_meshes.items[mesh_world].num_indices / 3),
+        &all_indices.items[all_meshes.items[mesh_world].index_offset],
+        3 * @sizeOf(u32),
+        @intCast(i32, all_meshes.items[mesh_world].num_vertices),
+        &all_positions.items[all_meshes.items[mesh_world].vertex_offset],
+        3 * @sizeOf(f32),
+    );
+    c.cbtShapeTriMeshCreateEnd(shape_world);
+
+    shape_sphere_r1 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_SPHERE);
+    c.cbtShapeSphereCreate(shape_sphere_r1, 1.0);
+
+    var entities = std.ArrayList(Entity).init(gpa);
+    createBoxesScene(physics_world, physics_objects_pool, &entities);
 
     var vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
