@@ -9,4 +9,6 @@
 *.hdr
 *.wav
 *.mp3
+*.blend
+*.hiplc
 .gitkeep

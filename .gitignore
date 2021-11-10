@@ -21,6 +21,8 @@
 !*.hdr
 !*.wav
 !*.mp3
+!*.blend
+!*.hiplc
 
 !.ignore
 !.vimrc
@@ -42,3 +44,4 @@
 # Ignore some special directories
 zig-cache
 zig-out
+backup
