@@ -31,7 +31,7 @@ const window_height = 1080;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
 const PhysicsObjectsPool = struct {
-    const max_num_bodies = 32;
+    const max_num_bodies = 256;
     const max_num_constraints = 15;
     const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
@@ -269,6 +269,8 @@ const DemoState = struct {
 
     entities: std.ArrayList(Entity),
     meshes: std.ArrayList(Mesh),
+
+    keyboard_delay: f32,
 
     camera: struct {
         position: Vec3,
@@ -679,6 +681,8 @@ fn createGearsScene(
     }
 }
 
+var shape_sphere_r1: c.CbtShapeHandle = undefined;
+
 fn createBoxesScene(
     physics_world: c.CbtWorldHandle,
     physics_objects_pool: PhysicsObjectsPool,
@@ -701,9 +705,8 @@ fn createBoxesScene(
     const box_shape1 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape1, &box_shape1_size.c);
 
-    const sphere_shape0_size: f32 = 1.0;
-    const sphere_shape0 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_SPHERE);
-    c.cbtShapeSphereCreate(sphere_shape0, sphere_shape0_size);
+    shape_sphere_r1 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_SPHERE);
+    c.cbtShapeSphereCreate(shape_sphere_r1, 1.0);
 
     {
         const body0 = physics_objects_pool.getBody();
@@ -713,7 +716,7 @@ fn createBoxesScene(
         c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape1);
 
         const body2 = physics_objects_pool.getBody();
-        c.cbtBodyCreate(body2, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), sphere_shape0);
+        c.cbtBodyCreate(body2, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), shape_sphere_r1);
 
         c.cbtWorldAddBody(physics_world, body0);
         c.cbtWorldAddBody(physics_world, body1);
@@ -723,7 +726,7 @@ fn createBoxesScene(
         entities.append(.{ .body = body1, .size = box_shape1_size, .mesh_index = mesh_cube }) catch unreachable;
         entities.append(.{
             .body = body2,
-            .size = Vec3.initS(sphere_shape0_size),
+            .size = Vec3.initS(1.0),
             .mesh_index = mesh_sphere,
         }) catch unreachable;
     }
@@ -962,6 +965,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .constraint = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_POINT2POINT),
             .distance = 0.0,
         },
+        .keyboard_delay = 0.0,
     };
 }
 
@@ -1058,6 +1062,22 @@ fn update(demo: *DemoState) void {
             demo.camera.position = demo.camera.position.add(right);
         } else if (w.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
+        }
+    }
+
+    demo.keyboard_delay += dt;
+    if (demo.keyboard_delay >= 0.5) {
+        if (w.GetAsyncKeyState(w.VK_SPACE) < 0) {
+            demo.keyboard_delay = 0.0;
+            const body = demo.physics_objects_pool.getBody();
+            c.cbtBodyCreate(body, 1.0, &Mat4.initTranslation(demo.camera.position).toArray4x3(), shape_sphere_r1);
+            c.cbtBodyApplyCentralImpulse(body, &demo.camera.forward.scale(50.0).c);
+            c.cbtWorldAddBody(demo.physics_world, body);
+            demo.entities.append(.{
+                .body = body,
+                .size = Vec3.initS(1.0),
+                .mesh_index = mesh_sphere,
+            }) catch unreachable;
         }
     }
 
@@ -1160,7 +1180,7 @@ fn draw(demo: *DemoState) void {
         camera_fovy,
         @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
         0.01,
-        100.0,
+        200.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
