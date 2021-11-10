@@ -196,9 +196,9 @@ void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCa
     if (debug == nullptr) {
         debug = new CbtDebugDraw();
         debug->setDebugMode(
-            btIDebugDraw::DBG_DrawWireframe |
-            btIDebugDraw::DBG_DrawFrames |
-            btIDebugDraw::DBG_DrawContactPoints |
+            //btIDebugDraw::DBG_DrawWireframe |
+            //btIDebugDraw::DBG_DrawFrames |
+            //btIDebugDraw::DBG_DrawContactPoints |
             //btIDebugDraw::DBG_DrawNormals |
             btIDebugDraw::DBG_DrawConstraints
         );

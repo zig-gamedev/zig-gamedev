@@ -210,17 +210,24 @@ const Mesh = struct {
     num_vertices: u32,
 };
 
+const mesh_cube = 0;
+const mesh_sphere = 1;
+
 fn loadAllMeshes(
     all_meshes: *std.ArrayList(Mesh),
     all_positions: *std.ArrayList(Vec3),
     all_normals: *std.ArrayList(Vec3),
     all_indices: *std.ArrayList(u32),
 ) void {
-    {
+    const paths = [_][]const u8{
+        "content/cube.gltf",
+        "content/sphere.gltf",
+    };
+    for (paths) |path| {
         const pre_indices_len = all_indices.items.len;
         const pre_positions_len = all_positions.items.len;
 
-        const data = lib.parseAndLoadGltfFile("content/cube.gltf");
+        const data = lib.parseAndLoadGltfFile(path);
         defer c.cgltf_free(data);
         lib.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
 
@@ -531,7 +538,14 @@ fn createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsOb
         c.cbtWorldAddBody(physics_world, body1);
 
         const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
-        c.cbtConSliderCreate2(slider, body0, body1, &Mat4.initIdentity().toArray4x3(), &Mat4.initIdentity().toArray4x3(), c.CBT_TRUE);
+        c.cbtConSliderCreate2(
+            slider,
+            body0,
+            body1,
+            &Mat4.initIdentity().toArray4x3(),
+            &Mat4.initIdentity().toArray4x3(),
+            c.CBT_TRUE,
+        );
         c.cbtConSliderSetLinearLowerLimit(slider, -15.0);
         c.cbtConSliderSetLinearUpperLimit(slider, -5.0);
         c.cbtConSliderSetAngularLowerLimit(slider, -math.pi / 3.0);
@@ -687,6 +701,10 @@ fn createBoxesScene(
     const box_shape1 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape1, &box_shape1_size.c);
 
+    const sphere_shape0_size: f32 = 1.0;
+    const sphere_shape0 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_SPHERE);
+    c.cbtShapeSphereCreate(sphere_shape0, sphere_shape0_size);
+
     {
         const body0 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape0);
@@ -694,11 +712,20 @@ fn createBoxesScene(
         const body1 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape1);
 
+        const body2 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body2, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), sphere_shape0);
+
         c.cbtWorldAddBody(physics_world, body0);
         c.cbtWorldAddBody(physics_world, body1);
+        c.cbtWorldAddBody(physics_world, body2);
 
-        entities.append(.{ .body = body0, .size = box_shape0_size, .mesh_index = 0 }) catch unreachable;
-        entities.append(.{ .body = body1, .size = box_shape1_size, .mesh_index = 0 }) catch unreachable;
+        entities.append(.{ .body = body0, .size = box_shape0_size, .mesh_index = mesh_cube }) catch unreachable;
+        entities.append(.{ .body = body1, .size = box_shape1_size, .mesh_index = mesh_cube }) catch unreachable;
+        entities.append(.{
+            .body = body2,
+            .size = Vec3.initS(sphere_shape0_size),
+            .mesh_index = mesh_sphere,
+        }) catch unreachable;
     }
 }
 
