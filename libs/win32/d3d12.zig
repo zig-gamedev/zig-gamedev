@@ -953,15 +953,40 @@ pub const FEATURE_DATA_SHADER_MODEL = extern struct {
 };
 
 pub const RENDER_PASS_TIER = enum(UINT) {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
+    TIER_0 = 0,
+    TIER_1 = 1,
+    TIER_2 = 2,
 };
 
 pub const RAYTRACING_TIER = enum(UINT) {
     NOT_SUPPORTED = 0,
-    _1_0 = 10,
-    _1_1 = 11,
+    TIER_1_0 = 10,
+    TIER_1_1 = 11,
+};
+
+pub const COMMAND_LIST_SUPPORT_FLAGS = UINT;
+pub const COMMAND_LIST_SUPPORT_FLAG_NONE: COMMAND_LIST_SUPPORT_FLAGS = 0x0;
+pub const COMMAND_LIST_SUPPORT_FLAG_DIRECT: COMMAND_LIST_SUPPORT_FLAGS = 0x1;
+pub const COMMAND_LIST_SUPPORT_FLAG_BUNDLE: COMMAND_LIST_SUPPORT_FLAGS = 0x2;
+pub const COMMAND_LIST_SUPPORT_FLAG_COMPUTE: COMMAND_LIST_SUPPORT_FLAGS = 0x4;
+pub const COMMAND_LIST_SUPPORT_FLAG_COPY: COMMAND_LIST_SUPPORT_FLAGS = 0x8;
+pub const COMMAND_LIST_SUPPORT_FLAG_VIDEO_DECODE: COMMAND_LIST_SUPPORT_FLAGS = 0x10;
+pub const COMMAND_LIST_SUPPORT_FLAG_VIDEO_PROCESS: COMMAND_LIST_SUPPORT_FLAGS = 0x20;
+pub const COMMAND_LIST_SUPPORT_FLAG_VIDEO_ENCODE: COMMAND_LIST_SUPPORT_FLAGS = 0x40;
+
+pub const VIEW_INSTANCING_TIER = enum(UINT) {
+    NOT_SUPPORTED = 0,
+    TIER_1 = 1,
+    TIER_2 = 2,
+    TIER_3 = 3,
+};
+
+pub const FEATURE_DATA_D3D12_OPTIONS3 = extern struct {
+    CopyQueueTimestampQueriesSupported: BOOL,
+    CastingFullyTypedFormatSupported: BOOL,
+    WriteBufferImmediateSupportFlags: COMMAND_LIST_SUPPORT_FLAGS,
+    ViewInstancingTier: VIEW_INSTANCING_TIER,
+    BarycentricsSupported: BOOL,
 };
 
 pub const FEATURE_DATA_D3D12_OPTIONS5 = extern struct {

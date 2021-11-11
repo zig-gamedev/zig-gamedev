@@ -196,7 +196,7 @@ void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCa
     if (debug == nullptr) {
         debug = new CbtDebugDraw();
         debug->setDebugMode(
-            btIDebugDraw::DBG_DrawWireframe |
+            //btIDebugDraw::DBG_DrawWireframe |
             //btIDebugDraw::DBG_DrawFrames |
             //btIDebugDraw::DBG_DrawContactPoints |
             //btIDebugDraw::DBG_DrawNormals |
@@ -581,12 +581,16 @@ void cbtShapeTriMeshAddIndexVertexArray(
     indexed_mesh.m_vertexBase = mem + indices_size_aligned;
     indexed_mesh.m_vertexStride = 3 * sizeof(float);
 
-    for (int i = 0; i < num_vertices; ++i) {
-        const float* src_vertex = (const float*)((uint8_t*)vertices_base + i * vertex_stride);
-        float* dst_vertex = (float*)((uint8_t*)indexed_mesh.m_vertexBase + i * 3 * sizeof(float));
-        dst_vertex[0] = src_vertex[0];
-        dst_vertex[1] = src_vertex[1];
-        dst_vertex[2] = src_vertex[2];
+    if (vertex_stride == 3 * sizeof(float)) {
+        memcpy((void*)indexed_mesh.m_vertexBase, vertices_base, vertices_size);
+    } else {
+        for (int i = 0; i < num_vertices; ++i) {
+            const float* src_vertex = (const float*)((uint8_t*)vertices_base + i * vertex_stride);
+            float* dst_vertex = (float*)((uint8_t*)indexed_mesh.m_vertexBase + i * 3 * sizeof(float));
+            dst_vertex[0] = src_vertex[0];
+            dst_vertex[1] = src_vertex[1];
+            dst_vertex[2] = src_vertex[2];
+        }
     }
     memcpy((void*)indexed_mesh.m_triangleIndexBase, triangles_base, indices_size);
 

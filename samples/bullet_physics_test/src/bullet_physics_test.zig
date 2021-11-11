@@ -223,7 +223,7 @@ fn loadAllMeshes(
     const paths = [_][]const u8{
         "content/cube.gltf",
         "content/sphere.gltf",
-        "content/cube.gltf",
+        "content/world.gltf",
     };
     for (paths) |path| {
         const pre_indices_len = all_indices.items.len;
@@ -692,14 +692,6 @@ fn createBoxesScene(
     entities: *std.ArrayList(Entity),
 ) void {
     {
-        const plane = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_STATIC_PLANE);
-        c.cbtShapePlaneCreate(plane, &Vec3.init(0.0, 1.0, 0.0).c, -4.0);
-
-        const body = physics_objects_pool.getBody();
-        c.cbtBodyCreate(body, 0.0, &Mat4.initIdentity().toArray4x3(), plane);
-        c.cbtWorldAddBody(physics_world, body);
-    }
-    {
         const world = physics_objects_pool.getBody();
         c.cbtBodyCreate(world, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
         c.cbtWorldAddBody(physics_world, world);
@@ -760,6 +752,23 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var grfx = gr.GraphicsContext.init(window);
     grfx.present_flags = 0;
     grfx.present_interval = 1;
+
+    const barycentrics_supported = blk: {
+        var options3: d3d12.FEATURE_DATA_D3D12_OPTIONS3 = undefined;
+        const res = grfx.device.CheckFeatureSupport(.OPTIONS3, &options3, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS3));
+        break :blk options3.BarycentricsSupported != w.FALSE and res == w.S_OK;
+    };
+    if (!barycentrics_supported) {
+        _ = w.user32.messageBoxA(
+            window,
+            \\Your graphics card does not support required feature.
+            \\Please update your graphics card driver and try again.
+        ,
+            "Your graphics card driver may be old",
+            w.user32.MB_OK | w.user32.MB_ICONERROR,
+        ) catch 0;
+        w.kernel32.ExitProcess(0);
+    }
 
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
@@ -967,7 +976,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
         .camera = .{
-            .position = Vec3.init(0.0, 1.0, 0.0),
+            .position = Vec3.init(0.0, 2.0, 0.0),
             .forward = Vec3.initZero(),
             .pitch = 0.0,
             .yaw = 0.0 * math.pi,

@@ -73,15 +73,27 @@ void vsSimpleEntity(
     out_normal = normal;
 }
 
+static const float g_wireframe_smoothing = 1.0;
+static const float g_wireframe_thickness = 0.25;
+
 [RootSignature(root_signature)]
 void psSimpleEntity(
+    float3 barycentrics : SV_Barycentrics,
     float4 position_window : SV_Position,
     float3 position : _Position,
     float3 normal : _Normal,
     out float4 out_color : SV_Target0
 ) {
+    float3 barys = barycentrics;
+    barys.z = 1.0 - barys.x - barys.y;
+	float3 deltas = fwidth(barys);
+    float3 smoothing = deltas * g_wireframe_smoothing;
+	float3 thickness = deltas * g_wireframe_thickness;
+	barys = smoothstep(thickness, thickness + smoothing, barys);
+	float min_bary = min(barys.x, min(barys.y, barys.z));
+
     float3 color = abs(normalize(normal));
-    out_color = float4(color, 1.0);
+    out_color = float4(min_bary * color, 1.0);
 }
 
 #endif
