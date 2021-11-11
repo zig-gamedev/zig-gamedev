@@ -19,6 +19,7 @@ const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const Vec3 = vm.Vec3;
+const Vec4 = vm.Vec4;
 const Mat4 = vm.Mat4;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
@@ -245,8 +246,9 @@ fn loadAllMeshes(
     }
 }
 
-const Entity = struct {
+const Entity = extern struct {
     body: c.CbtBodyHandle,
+    base_color_roughness: Vec4,
     size: Vec3,
     mesh_index: u32,
 };
@@ -308,10 +310,12 @@ const PsoPhysicsDebug_FrameConst = struct {
 
 const PsoSimpleEntity_DrawConst = struct {
     object_to_world: Mat4,
+    base_color_roughness: Vec4,
 };
 
-const PsoSimpleEntity_FrameConst = struct {
+const PsoSimpleEntity_FrameConst = extern struct {
     world_to_clip: Mat4,
+    camera_position: Vec3,
 };
 
 const PhysicsDebug = struct {
@@ -698,7 +702,12 @@ fn createBoxesScene(
         const world = physics_objects_pool.getBody();
         c.cbtBodyCreate(world, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
         c.cbtWorldAddBody(physics_world, world);
-        entities.append(.{ .body = world, .size = Vec3.initS(1.0), .mesh_index = mesh_world }) catch unreachable;
+        entities.append(.{
+            .body = world,
+            .base_color_roughness = Vec4.init(0.25, 0.25, 0.25, 0.125),
+            .size = Vec3.initS(1.0),
+            .mesh_index = mesh_world,
+        }) catch unreachable;
     }
 
     const box_shape0_size = Vec3.initS(1.0);
@@ -726,10 +735,21 @@ fn createBoxesScene(
         c.cbtWorldAddBody(physics_world, body1);
         c.cbtWorldAddBody(physics_world, body2);
 
-        entities.append(.{ .body = body0, .size = box_shape0_size, .mesh_index = mesh_cube }) catch unreachable;
-        entities.append(.{ .body = body1, .size = box_shape1_size, .mesh_index = mesh_cube }) catch unreachable;
+        entities.append(.{
+            .body = body0,
+            .base_color_roughness = Vec4.init(0.5, 0.0, 0.0, 0.5),
+            .size = box_shape0_size,
+            .mesh_index = mesh_cube,
+        }) catch unreachable;
+        entities.append(.{
+            .body = body1,
+            .base_color_roughness = Vec4.init(0.7, 0.6, 0.0, 0.75),
+            .size = box_shape1_size,
+            .mesh_index = mesh_cube,
+        }) catch unreachable;
         entities.append(.{
             .body = body2,
+            .base_color_roughness = Vec4.init(0.0, 0.1, 1.0, 0.25),
             .size = Vec3.initS(1.0),
             .mesh_index = mesh_sphere,
         }) catch unreachable;
@@ -1110,6 +1130,7 @@ fn update(demo: *DemoState) void {
             c.cbtWorldAddBody(demo.physics_world, body);
             demo.entities.append(.{
                 .body = body,
+                .base_color_roughness = Vec4.init(0, 0.7, 0.1, 0.7),
                 .size = Vec3.initS(1.0),
                 .mesh_index = mesh_sphere,
             }) catch unreachable;
@@ -1233,7 +1254,7 @@ fn draw(demo: *DemoState) void {
     grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.1, 0.2, 0.4, 1.0 },
+        &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
         null,
     );
@@ -1255,6 +1276,7 @@ fn draw(demo: *DemoState) void {
         {
             const mem = grfx.allocateUploadMemory(PsoSimpleEntity_FrameConst, 1);
             mem.cpu_slice[0].world_to_clip = cam_world_to_clip.transpose();
+            mem.cpu_slice[0].camera_position = demo.camera.position;
             grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
         }
         for (demo.entities.items) |entity| {
@@ -1265,6 +1287,7 @@ fn draw(demo: *DemoState) void {
 
             const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
             mem.cpu_slice[0].object_to_world = scaling.mul(Mat4.initArray4x3(transform)).transpose();
+            mem.cpu_slice[0].base_color_roughness = entity.base_color_roughness;
 
             grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
             grfx.cmdlist.DrawIndexedInstanced(
