@@ -30,8 +30,11 @@ const window_width = 1920;
 const window_height = 1080;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
+const default_linear_damping: f32 = 0.1;
+const default_angular_damping: f32 = 0.1;
+
 const PhysicsObjectsPool = struct {
-    const max_num_bodies = 256;
+    const max_num_bodies = 1024;
     const max_num_constraints = 15;
     const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
@@ -709,12 +712,15 @@ fn createBoxesScene(
     {
         const body0 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape0);
+        c.cbtBodySetDamping(body0, default_linear_damping, default_angular_damping);
 
         const body1 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape1);
+        c.cbtBodySetDamping(body1, default_linear_damping, default_angular_damping);
 
         const body2 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body2, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), shape_sphere_r1);
+        c.cbtBodySetDamping(body2, default_linear_damping, default_angular_damping);
 
         c.cbtWorldAddBody(physics_world, body0);
         c.cbtWorldAddBody(physics_world, body1);
@@ -1099,6 +1105,7 @@ fn update(demo: *DemoState) void {
             demo.keyboard_delay = 0.0;
             const body = demo.physics_objects_pool.getBody();
             c.cbtBodyCreate(body, 1.0, &Mat4.initTranslation(demo.camera.position).toArray4x3(), shape_sphere_r1);
+            c.cbtBodySetDamping(body, default_linear_damping, default_angular_damping);
             c.cbtBodyApplyCentralImpulse(body, &demo.camera.forward.scale(50.0).c);
             c.cbtWorldAddBody(demo.physics_world, body);
             demo.entities.append(.{
@@ -1166,7 +1173,7 @@ fn update(demo: *DemoState) void {
                 demo.pick.saved_activation_state = c.CBT_ACTIVE_TAG;
             }
             c.cbtBodySetActivationState(result.body, c.CBT_DISABLE_DEACTIVATION);
-            c.cbtBodySetDeactivationTime(result.body, 0.0);
+            //c.cbtBodySetDeactivationTime(result.body, 0.0);
 
             var inv_trans: [4]c.CbtVector3 = undefined;
             c.cbtBodyGetInvCenterOfMassTransform(result.body, &inv_trans);
