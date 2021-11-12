@@ -40,7 +40,7 @@ const Scene = enum {
 };
 
 const PhysicsObjectsPool = struct {
-    const max_num_bodies = 1024;
+    const max_num_bodies = 2 * 1024;
     const max_num_constraints = 15;
     const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
@@ -258,6 +258,13 @@ const Entity = extern struct {
     mesh_index: u32,
 };
 
+const Camera = struct {
+    position: Vec3,
+    forward: Vec3,
+    pitch: f32,
+    yaw: f32,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -285,12 +292,7 @@ const DemoState = struct {
     current_scene_index: i32,
     keyboard_delay: f32,
 
-    camera: struct {
-        position: Vec3,
-        forward: Vec3,
-        pitch: f32,
-        yaw: f32,
-    },
+    camera: Camera,
     mouse: struct {
         cursor_prev_x: i32,
         cursor_prev_y: i32,
@@ -720,6 +722,7 @@ fn createScene1(
     physics_world: c.CbtWorldHandle,
     physics_objects_pool: PhysicsObjectsPool,
     entities: *std.ArrayList(Entity),
+    camera: *Camera,
 ) void {
     createWorldBody(physics_world, physics_objects_pool, entities);
 
@@ -763,14 +766,57 @@ fn createScene1(
             .mesh_index = mesh_sphere,
         }) catch unreachable;
     }
+
+    camera.* = .{
+        .position = Vec3.init(0.0, 3.0, 0.0),
+        .forward = Vec3.initZero(),
+        .pitch = math.pi * 0.05,
+        .yaw = 0.0,
+    };
 }
 
 fn createScene2(
     physics_world: c.CbtWorldHandle,
     physics_objects_pool: PhysicsObjectsPool,
     entities: *std.ArrayList(Entity),
+    camera: *Camera,
 ) void {
     createWorldBody(physics_world, physics_objects_pool, entities);
+
+    var level: u32 = 0;
+    var y: f32 = 2.0;
+    while (y <= 14.0) : (y += 2.0) {
+        const bound: f32 = 16.0 - y;
+        var z: f32 = -bound;
+        const base_color_roughness = if (level % 2 == 1)
+            Vec4.init(0.5, 0.0, 0.0, 0.5)
+        else
+            Vec4.init(0.7, 0.6, 0.0, 0.75);
+        level += 1;
+        while (z <= bound) : (z += 2.0) {
+            var x: f32 = -bound;
+            while (x <= bound) : (x += 2.0) {
+                const body = physics_objects_pool.getBody();
+                c.cbtBodyCreate(body, 1.0, &Mat4.initTranslation(Vec3.init(x, y, z)).toArray4x3(), shape_box_e111);
+                c.cbtBodySetDamping(body, default_linear_damping, default_angular_damping);
+                c.cbtWorldAddBody(physics_world, body);
+
+                entities.append(.{
+                    .body = body,
+                    .base_color_roughness = base_color_roughness,
+                    .size = Vec3.initS(1.0),
+                    .mesh_index = mesh_cube,
+                }) catch unreachable;
+            }
+        }
+    }
+
+    camera.* = .{
+        .position = Vec3.init(30.0, 30.0, -30.0),
+        .forward = Vec3.initZero(),
+        .pitch = math.pi * 0.2,
+        .yaw = -math.pi * 0.25,
+    };
 }
 
 fn init(gpa: *std.mem.Allocator) DemoState {
@@ -939,8 +985,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     }
 
     const physics_objects_pool = PhysicsObjectsPool.init();
+    var camera: Camera = undefined;
     var entities = std.ArrayList(Entity).init(gpa);
-    createScene1(physics_world, physics_objects_pool, &entities);
+    createScene1(physics_world, physics_objects_pool, &entities, &camera);
 
     var vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
@@ -1024,12 +1071,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .meshes = all_meshes,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
-        .camera = .{
-            .position = Vec3.init(0.0, 2.0, 0.0),
-            .forward = Vec3.initZero(),
-            .pitch = 0.0,
-            .yaw = 0.0 * math.pi,
-        },
+        .camera = camera,
         .mouse = .{
             .cursor_prev_x = 0,
             .cursor_prev_y = 0,
@@ -1100,8 +1142,8 @@ fn update(demo: *DemoState) void {
             demo.entities.resize(0) catch unreachable;
             const scene = @intToEnum(Scene, demo.current_scene_index);
             switch (scene) {
-                .scene1 => createScene1(demo.physics_world, demo.physics_objects_pool, &demo.entities),
-                .scene2 => createScene2(demo.physics_world, demo.physics_objects_pool, &demo.entities),
+                .scene1 => createScene1(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
+                .scene2 => createScene2(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
             }
         }
     }
@@ -1161,9 +1203,9 @@ fn update(demo: *DemoState) void {
         if (w.GetAsyncKeyState(w.VK_SPACE) < 0) {
             demo.keyboard_delay = 0.0;
             const body = demo.physics_objects_pool.getBody();
-            c.cbtBodyCreate(body, 1.0, &Mat4.initTranslation(demo.camera.position).toArray4x3(), shape_sphere_r1);
+            c.cbtBodyCreate(body, 2.0, &Mat4.initTranslation(demo.camera.position).toArray4x3(), shape_sphere_r1);
             c.cbtBodySetDamping(body, default_linear_damping, default_angular_damping);
-            c.cbtBodyApplyCentralImpulse(body, &demo.camera.forward.scale(50.0).c);
+            c.cbtBodyApplyCentralImpulse(body, &demo.camera.forward.scale(100.0).c);
             c.cbtWorldAddBody(demo.physics_world, body);
             demo.entities.append(.{
                 .body = body,
