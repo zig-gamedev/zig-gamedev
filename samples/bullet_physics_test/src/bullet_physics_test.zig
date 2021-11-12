@@ -1329,11 +1329,11 @@ fn draw(demo: *DemoState) void {
         var buffer = [_]u8{0} ** 64;
         const text = std.fmt.bufPrint(
             buffer[0..],
-            "FPS: {d:.1}\nCPU time: {d:.3} ms",
-            .{ stats.fps, stats.average_cpu_time },
+            "FPS: {d:.1}\nCPU time: {d:.3} ms\nRigid bodies: {d}",
+            .{ stats.fps, stats.average_cpu_time, c.cbtWorldGetNumBodies(demo.physics_world) },
         ) catch unreachable;
 
-        demo.brush.SetColor(&.{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
+        demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
         lib.drawText(
             grfx.d2d.context,
             text,
