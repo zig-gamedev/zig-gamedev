@@ -42,7 +42,7 @@ const Scene = enum {
 const PhysicsObjectsPool = struct {
     const max_num_bodies = 2 * 1024;
     const max_num_constraints = 15;
-    const max_num_shapes = 48;
+    const max_num_shapes = 56;
     bodies: []c.CbtBodyHandle,
     constraints: []c.CbtConstraintHandle,
     shapes: []c.CbtShapeHandle,
@@ -130,6 +130,16 @@ const PhysicsObjectsPool = struct {
             i = 0;
             while (i < 8) : (i += 1) {
                 pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_CYLINDER);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 4) : (i += 1) {
+                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_CAPSULE);
+                counter += 1;
+            }
+            i = 0;
+            while (i < 4) : (i += 1) {
+                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_CONE);
                 counter += 1;
             }
             assert(counter == max_num_shapes);
@@ -221,7 +231,10 @@ const Mesh = struct {
 
 const mesh_cube = 0;
 const mesh_sphere = 1;
-const mesh_world = 2;
+const mesh_capsule = 2;
+const mesh_cylinder = 3;
+const mesh_cone = 4;
+const mesh_world = 5;
 
 fn loadAllMeshes(
     all_meshes: *std.ArrayList(Mesh),
@@ -232,6 +245,9 @@ fn loadAllMeshes(
     const paths = [_][]const u8{
         "content/cube.gltf",
         "content/sphere.gltf",
+        "content/capsule.gltf",
+        "content/cylinder.gltf",
+        "content/cone.gltf",
         "content/world.gltf",
     };
     for (paths) |path| {
@@ -726,9 +742,18 @@ fn createScene1(
 ) void {
     createWorldBody(physics_world, physics_objects_pool, entities);
 
-    const box_shape1_size = Vec3.init(0.5, 1.0, 2.0);
-    const box_shape1 = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(box_shape1, &box_shape1_size.c);
+    const box_shape_size = Vec3.init(0.5, 1.0, 2.0);
+    const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(box_shape, &box_shape_size.c);
+
+    const capsule_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CAPSULE);
+    c.cbtShapeCapsuleCreate(capsule_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
+
+    const cylinder_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+    c.cbtShapeCylinderCreate(cylinder_shape, &Vec3.init(1, 1, 1).c, c.CBT_LINEAR_AXIS_Y);
+
+    const cone_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CONE);
+    c.cbtShapeConeCreate(cone_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
 
     {
         const body0 = physics_objects_pool.getBody();
@@ -736,27 +761,42 @@ fn createScene1(
         c.cbtBodySetDamping(body0, default_linear_damping, default_angular_damping);
 
         const body1 = physics_objects_pool.getBody();
-        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape1);
+        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
         c.cbtBodySetDamping(body1, default_linear_damping, default_angular_damping);
 
         const body2 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body2, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), shape_sphere_r1);
         c.cbtBodySetDamping(body2, default_linear_damping, default_angular_damping);
 
+        const body3 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body3, 1.0, &Mat4.initTranslation(Vec3.init(-5, 3.5, 10)).toArray4x3(), capsule_shape);
+        c.cbtBodySetDamping(body3, default_linear_damping, default_angular_damping);
+
+        const body4 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body4, 1.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
+        c.cbtBodySetDamping(body4, default_linear_damping, default_angular_damping);
+
+        const body5 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body5, 1.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 7)).toArray4x3(), cone_shape);
+        c.cbtBodySetDamping(body5, default_linear_damping, default_angular_damping);
+
         c.cbtWorldAddBody(physics_world, body0);
         c.cbtWorldAddBody(physics_world, body1);
         c.cbtWorldAddBody(physics_world, body2);
+        c.cbtWorldAddBody(physics_world, body3);
+        c.cbtWorldAddBody(physics_world, body4);
+        c.cbtWorldAddBody(physics_world, body5);
 
         entities.append(.{
             .body = body0,
-            .base_color_roughness = Vec4.init(0.5, 0.0, 0.0, 0.5),
+            .base_color_roughness = Vec4.init(0.75, 0.0, 0.0, 0.5),
             .size = Vec3.initS(1.0),
             .mesh_index = mesh_cube,
         }) catch unreachable;
         entities.append(.{
             .body = body1,
-            .base_color_roughness = Vec4.init(0.7, 0.6, 0.0, 0.75),
-            .size = box_shape1_size,
+            .base_color_roughness = Vec4.init(1.0, 0.9, 0.0, 0.75),
+            .size = box_shape_size,
             .mesh_index = mesh_cube,
         }) catch unreachable;
         entities.append(.{
@@ -764,6 +804,24 @@ fn createScene1(
             .base_color_roughness = Vec4.init(0.0, 0.1, 1.0, 0.25),
             .size = Vec3.initS(1.0),
             .mesh_index = mesh_sphere,
+        }) catch unreachable;
+        entities.append(.{
+            .body = body3,
+            .base_color_roughness = Vec4.init(0.0, 1.0, 0.0, 0.25),
+            .size = Vec3.initS(1.0),
+            .mesh_index = mesh_capsule,
+        }) catch unreachable;
+        entities.append(.{
+            .body = body4,
+            .base_color_roughness = Vec4.init(1.0, 1.0, 1.0, 0.75),
+            .size = Vec3.initS(1.0),
+            .mesh_index = mesh_cylinder,
+        }) catch unreachable;
+        entities.append(.{
+            .body = body5,
+            .base_color_roughness = Vec4.init(1.0, 0.5, 0.0, 0.8),
+            .size = Vec3.initS(1.0),
+            .mesh_index = mesh_cone,
         }) catch unreachable;
     }
 
@@ -1135,9 +1193,9 @@ fn update(demo: *DemoState) void {
         c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
     );
     {
-        _ = c.igCombo_Str("Scene", &demo.current_scene_index, "Scene 1\x00Scene 2\x00\x00", -1);
+        _ = c.igCombo_Str("Scene", &demo.current_scene_index, "Collision Shapes\x00Stack of Boxes\x00\x00", -1);
         c.igSameLine(0.0, -1.0);
-        if (c.igButton("Load", .{ .x = 0, .y = 0 })) {
+        if (c.igButton("  Load  ", .{ .x = 0, .y = 0 })) {
             demo.physics_objects_pool.destroyAllObjects(demo.physics_world);
             demo.entities.resize(0) catch unreachable;
             const scene = @intToEnum(Scene, demo.current_scene_index);
@@ -1209,7 +1267,7 @@ fn update(demo: *DemoState) void {
             c.cbtWorldAddBody(demo.physics_world, body);
             demo.entities.append(.{
                 .body = body,
-                .base_color_roughness = Vec4.init(0, 0.7, 0.1, 0.7),
+                .base_color_roughness = Vec4.init(0, 1.0, 0.0, 0.7),
                 .size = Vec3.initS(1.0),
                 .mesh_index = mesh_sphere,
             }) catch unreachable;
