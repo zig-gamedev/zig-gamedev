@@ -903,8 +903,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     );
 
     var grfx = gr.GraphicsContext.init(window);
-    grfx.present_flags = 0;
-    grfx.present_interval = 1;
+    //grfx.present_flags = 0;
+    //grfx.present_interval = 1;
 
     const barycentrics_supported = blk: {
         var options3: d3d12.FEATURE_DATA_D3D12_OPTIONS3 = undefined;
