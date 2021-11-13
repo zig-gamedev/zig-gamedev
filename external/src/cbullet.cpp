@@ -317,18 +317,18 @@ int cbtShapeGetType(CbtShapeHandle shape_handle) {
     return shape[2];
 }
 
-void cbtShapeBoxCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents) {
+void cbtShapeBoxCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y, float half_extent_z) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_BOX);
-    assert(half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
-    new (shape_handle) btBoxShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+    assert(half_extent_x > 0.0 && half_extent_y > 0.0 && half_extent_z > 0.0);
+    new (shape_handle) btBoxShape(btVector3(half_extent_x, half_extent_y, half_extent_z));
 }
 
-void cbtShapeBox2dCreate(CbtShapeHandle shape_handle, float x_half_extent, float y_half_extent) {
+void cbtShapeBox2dCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_BOX_2D);
-    assert(x_half_extent > 0.0 && y_half_extent > 0.0);
-    new (shape_handle) btBox2dShape(btVector3(x_half_extent, y_half_extent, 0.0));
+    assert(half_extent_x > 0.0 && half_extent_y > 0.0);
+    new (shape_handle) btBox2dShape(btVector3(half_extent_x, half_extent_y, 0.0));
 }
 
 void cbtShapeSphereCreate(CbtShapeHandle shape_handle, float radius) {
@@ -395,18 +395,18 @@ float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle) {
     return shape->getRadius();
 }
 
-void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis) {
+void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y, float half_extent_z, int axis) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle) == CBT_FALSE);
     assert(cbtShapeGetType(shape_handle) == CBT_SHAPE_TYPE_CYLINDER);
-    assert(half_extents && half_extents[0] > 0.0 && half_extents[1] > 0.0 && half_extents[2] > 0.0);
+    assert(half_extent_x > 0.0 && half_extent_y > 0.0 && half_extent_z > 0.0);
     assert(axis >= CBT_LINEAR_AXIS_X && axis <= CBT_LINEAR_AXIS_Z);
 
     if (axis == CBT_LINEAR_AXIS_X) {
-        new (shape_handle) btCylinderShapeX(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+        new (shape_handle) btCylinderShapeX(btVector3(half_extent_x, half_extent_y, half_extent_z));
     } else if (axis == CBT_LINEAR_AXIS_Y) {
-        new (shape_handle) btCylinderShape(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+        new (shape_handle) btCylinderShape(btVector3(half_extent_x, half_extent_y, half_extent_z));
     } else {
-        new (shape_handle) btCylinderShapeZ(btVector3(half_extents[0], half_extents[1], half_extents[2]));
+        new (shape_handle) btCylinderShapeZ(btVector3(half_extent_x, half_extent_y, half_extent_z));
     }
 }
 

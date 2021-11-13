@@ -404,10 +404,10 @@ fn _createScene1(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsO
     c.cbtShapeSphereCreate(sphere_shape, 0.5);
 
     const ground_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(ground_shape, &Vec3.init(20.0, 0.2, 20.0).c);
+    c.cbtShapeBoxCreate(ground_shape, 20.0, 0.2, 20.0);
 
     const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(box_shape, &Vec3.init(0.5, 0.5, 0.5).c);
+    c.cbtShapeBoxCreate(box_shape, 0.5, 0.5, 0.5);
 
     const compound_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
     c.cbtShapeCompoundCreate(compound_shape, c.CBT_TRUE, 2);
@@ -531,7 +531,7 @@ fn _createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsO
     }
 
     const shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(shape, &Vec3.init(1, 1, 1).c);
+    c.cbtShapeBoxCreate(shape, 1.0, 1.0, 1.0);
 
     {
         const body0 = physics_objects_pool.getBody();
@@ -742,15 +742,14 @@ fn createScene1(
 ) void {
     createWorldBody(physics_world, physics_objects_pool, entities);
 
-    const box_shape_size = Vec3.init(0.5, 1.0, 2.0);
     const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(box_shape, &box_shape_size.c);
+    c.cbtShapeBoxCreate(box_shape, 0.5, 1.0, 2.0);
 
     const capsule_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CAPSULE);
     c.cbtShapeCapsuleCreate(capsule_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
 
     const cylinder_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-    c.cbtShapeCylinderCreate(cylinder_shape, &Vec3.init(1, 1, 1).c, c.CBT_LINEAR_AXIS_Y);
+    c.cbtShapeCylinderCreate(cylinder_shape, 1.0, 1.0, 1.0, c.CBT_LINEAR_AXIS_Y);
 
     const cone_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CONE);
     c.cbtShapeConeCreate(cone_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
@@ -796,7 +795,7 @@ fn createScene1(
         entities.append(.{
             .body = body1,
             .base_color_roughness = Vec4.init(1.0, 0.9, 0.0, 0.75),
-            .size = box_shape_size,
+            .size = Vec3.init(0.5, 1.0, 2.0),
             .mesh_index = mesh_cube,
         }) catch unreachable;
         entities.append(.{
@@ -1039,7 +1038,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         c.cbtShapeSphereCreate(shape_sphere_r1, 1.0);
 
         shape_box_e111 = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
-        c.cbtShapeBoxCreate(shape_box_e111, &Vec3.initS(1.0).c);
+        c.cbtShapeBoxCreate(shape_box_e111, 1.0, 1.0, 1.0);
     }
 
     const physics_objects_pool = PhysicsObjectsPool.init();

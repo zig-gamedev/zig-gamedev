@@ -174,9 +174,9 @@ void cbtShapeDestroy(CbtShapeHandle shape_handle);
 CbtBool cbtShapeIsCreated(CbtShapeHandle shape_handle);
 int cbtShapeGetType(CbtShapeHandle shape_handle);
 
-void cbtShapeBoxCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents);
+void cbtShapeBoxCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y, float half_extent_z);
 
-void cbtShapeBox2dCreate(CbtShapeHandle shape_handle, float x_half_extent, float y_half_extent);
+void cbtShapeBox2dCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y);
 
 void cbtShapeSphereCreate(CbtShapeHandle shape_handle, float radius);
 void cbtShapeSphereSetUnscaledRadius(CbtShapeHandle shape_handle, float radius);
@@ -189,7 +189,7 @@ int cbtShapeCapsuleGetUpAxis(CbtShapeHandle shape_handle);
 float cbtShapeCapsuleGetHalfHeight(CbtShapeHandle shape_handle);
 float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle);
 
-void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis);
+void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y, float half_extent_z, int axis);
 
 void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
 

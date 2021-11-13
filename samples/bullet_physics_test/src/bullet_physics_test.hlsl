@@ -173,11 +173,11 @@ void psSimpleEntity(
     // wireframe
     float3 barys = barycentrics;
     barys.z = 1.0 - barys.x - barys.y;
-	float3 deltas = fwidth(barys);
+    float3 deltas = fwidth(barys);
     float3 smoothing = deltas * g_wireframe_smoothing;
-	float3 thickness = deltas * g_wireframe_thickness;
-	barys = smoothstep(thickness, thickness + smoothing, barys);
-	float min_bary = min(barys.x, min(barys.y, barys.z));
+    float3 thickness = deltas * g_wireframe_thickness;
+    barys = smoothstep(thickness, thickness + smoothing, barys);
+    float min_bary = min(barys.x, min(barys.y, barys.z));
 
     out_color = float4(min_bary * color, 1.0);
 }
