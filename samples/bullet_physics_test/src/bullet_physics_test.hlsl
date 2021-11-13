@@ -1,3 +1,7 @@
+#if defined(PSO__SIMPLE_ENTITY_WITH_GS)
+#define PSO__SIMPLE_ENTITY
+#endif
+
 #if defined(PSO__PHYSICS_DEBUG)
 
 #define root_signature \
@@ -75,6 +79,37 @@ void vsSimpleEntity(
     out_normal = mul(normal, (float3x3)cbv_draw_const.object_to_world);
 }
 
+struct GsInput {
+    float4 position_clip : SV_Position;
+    float3 position : _Position;
+    float3 normal : _Normal;
+};
+
+struct GsOutput {
+    float4 position_clip : SV_Position;
+    float3 position : _Position;
+    float3 normal : _Normal;
+    float3 barycentrics : _Barycentrics;
+};
+
+[RootSignature(root_signature)]
+[maxvertexcount(3)]
+void gsSimpleEntity(
+    triangle GsInput input[3],
+    inout TriangleStream<GsOutput> triangle_stream
+) {
+    for (int i = 0; i < 3; ++i) {
+        GsOutput output;
+        output.position_clip = input[i].position_clip;
+        output.position = input[i].position;
+        output.normal = input[i].normal;
+        if (i == 0) output.barycentrics = float3(1.0, 0.0, 0.0);
+        else if (i == 1) output.barycentrics = float3(0.0, 1.0, 0.0);
+        else if (i == 2) output.barycentrics = float3(0.0, 0.0, 1.0);
+        triangle_stream.Append(output);
+    }
+}
+
 static const float g_wireframe_smoothing = 1.0;
 static const float g_wireframe_thickness = 0.25;
 
@@ -104,10 +139,14 @@ float3 fresnelSchlick(float h_dot_v, float3 f0) {
 
 [RootSignature(root_signature)]
 void psSimpleEntity(
-    float3 barycentrics : SV_Barycentrics,
     float4 position_window : SV_Position,
     float3 position : _Position,
     float3 normal : _Normal,
+#if defined(PSO__SIMPLE_ENTITY_WITH_GS)
+    float3 barycentrics : _Barycentrics,
+#else
+    float3 barycentrics : SV_Barycentrics,
+#endif
     out float4 out_color : SV_Target0
 ) {
     float3 v = normalize(cbv_frame_const.camera_position - position);

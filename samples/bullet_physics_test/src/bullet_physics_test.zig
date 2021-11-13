@@ -758,26 +758,32 @@ fn createScene1(
         const body0 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), shape_box_e111);
         c.cbtBodySetDamping(body0, default_linear_damping, default_angular_damping);
+        c.cbtBodySetActivationState(body0, c.CBT_DISABLE_DEACTIVATION);
 
         const body1 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
         c.cbtBodySetDamping(body1, default_linear_damping, default_angular_damping);
+        c.cbtBodySetActivationState(body1, c.CBT_DISABLE_DEACTIVATION);
 
         const body2 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body2, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), shape_sphere_r1);
         c.cbtBodySetDamping(body2, default_linear_damping, default_angular_damping);
+        c.cbtBodySetActivationState(body2, c.CBT_DISABLE_DEACTIVATION);
 
         const body3 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body3, 1.0, &Mat4.initTranslation(Vec3.init(-5, 3.5, 10)).toArray4x3(), capsule_shape);
         c.cbtBodySetDamping(body3, default_linear_damping, default_angular_damping);
+        c.cbtBodySetActivationState(body3, c.CBT_DISABLE_DEACTIVATION);
 
         const body4 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body4, 1.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
         c.cbtBodySetDamping(body4, default_linear_damping, default_angular_damping);
+        c.cbtBodySetActivationState(body4, c.CBT_DISABLE_DEACTIVATION);
 
         const body5 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body5, 1.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 7)).toArray4x3(), cone_shape);
         c.cbtBodySetDamping(body5, default_linear_damping, default_angular_damping);
+        c.cbtBodySetActivationState(body5, c.CBT_DISABLE_DEACTIVATION);
 
         c.cbtWorldAddBody(physics_world, body0);
         c.cbtWorldAddBody(physics_world, body1);
@@ -856,6 +862,7 @@ fn createScene2(
                 const body = physics_objects_pool.getBody();
                 c.cbtBodyCreate(body, 1.0, &Mat4.initTranslation(Vec3.init(x, y, z)).toArray4x3(), shape_box_e111);
                 c.cbtBodySetDamping(body, default_linear_damping, default_angular_damping);
+                c.cbtBodySetActivationState(body, c.CBT_DISABLE_DEACTIVATION);
                 c.cbtWorldAddBody(physics_world, body);
 
                 entities.append(.{
@@ -904,17 +911,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         const res = grfx.device.CheckFeatureSupport(.OPTIONS3, &options3, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS3));
         break :blk options3.BarycentricsSupported != w.FALSE and res == w.S_OK;
     };
-    if (!barycentrics_supported) {
-        _ = w.user32.messageBoxA(
-            window,
-            \\Your graphics card does not support required feature.
-            \\Please update your graphics card driver and try again.
-        ,
-            "Your graphics card driver may be old",
-            w.user32.MB_OK | w.user32.MB_ICONERROR,
-        ) catch 0;
-        w.kernel32.ExitProcess(0);
-    }
 
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
@@ -977,12 +973,22 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.DSVFormat = .D32_FLOAT;
 
-        break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
-            &pso_desc,
-            "content/shaders/simple_entity.vs.cso",
-            "content/shaders/simple_entity.ps.cso",
-        );
+        if (!barycentrics_supported) {
+            break :blk grfx.createGraphicsShaderPipelineAllStages(
+                &arena_allocator.allocator,
+                &pso_desc,
+                "content/shaders/simple_entity.vs.cso",
+                "content/shaders/simple_entity.gs.cso",
+                "content/shaders/simple_entity_with_gs.ps.cso",
+            );
+        } else {
+            break :blk grfx.createGraphicsShaderPipeline(
+                &arena_allocator.allocator,
+                &pso_desc,
+                "content/shaders/simple_entity.vs.cso",
+                "content/shaders/simple_entity.ps.cso",
+            );
+        }
     };
 
     const depth_texture = grfx.createCommittedResource(
@@ -1329,7 +1335,7 @@ fn update(demo: *DemoState) void {
             if (demo.pick.saved_activation_state == c.CBT_ISLAND_SLEEPING) {
                 demo.pick.saved_activation_state = c.CBT_ACTIVE_TAG;
             }
-            c.cbtBodySetActivationState(result.body, c.CBT_DISABLE_DEACTIVATION);
+            //c.cbtBodySetActivationState(result.body, c.CBT_DISABLE_DEACTIVATION);
             //c.cbtBodySetDeactivationTime(result.body, 0.0);
 
             var inv_trans: [4]c.CbtVector3 = undefined;
@@ -1353,7 +1359,7 @@ fn update(demo: *DemoState) void {
     if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
-        c.cbtBodyForceActivationState(demo.pick.body, demo.pick.saved_activation_state);
+        //c.cbtBodyForceActivationState(demo.pick.body, demo.pick.saved_activation_state);
         c.cbtBodySetDamping(demo.pick.body, demo.pick.saved_linear_damping, demo.pick.saved_angular_damping);
         demo.pick.body = null;
     }

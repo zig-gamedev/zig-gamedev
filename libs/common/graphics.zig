@@ -861,6 +861,17 @@ pub const GraphicsContext = struct {
         vs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
+        return createGraphicsShaderPipelineAllStages(gr, arena, pso_desc, vs_cso_path, null, ps_cso_path);
+    }
+
+    pub fn createGraphicsShaderPipelineAllStages(
+        gr: *GraphicsContext,
+        arena: *std.mem.Allocator,
+        pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
+        vs_cso_path: ?[]const u8,
+        gs_cso_path: ?[]const u8,
+        ps_cso_path: ?[]const u8,
+    ) PipelineHandle {
         const tracy_zone = tracy.zone(@src(), 1);
         defer tracy_zone.end();
 
@@ -874,6 +885,18 @@ pub const GraphicsContext = struct {
                 break :blk vs_code;
             } else {
                 assert(pso_desc.VS.pShaderBytecode != null);
+                break :blk null;
+            }
+        };
+        const gs_code = blk: {
+            if (gs_cso_path) |path| {
+                assert(pso_desc.GS.pShaderBytecode == null);
+                const gs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+                defer gs_file.close();
+                const gs_code = gs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+                pso_desc.GS = .{ .pShaderBytecode = gs_code.ptr, .BytecodeLength = gs_code.len };
+                break :blk gs_code;
+            } else {
                 break :blk null;
             }
         };
@@ -894,6 +917,9 @@ pub const GraphicsContext = struct {
             if (vs_code != null) {
                 pso_desc.VS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
             }
+            if (gs_code != null) {
+                pso_desc.GS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
+            }
             if (ps_code != null) {
                 pso_desc.PS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
             }
@@ -904,6 +930,11 @@ pub const GraphicsContext = struct {
             hasher.update(
                 @ptrCast([*]const u8, pso_desc.VS.pShaderBytecode.?)[0..pso_desc.VS.BytecodeLength],
             );
+            if (gs_code != null) {
+                hasher.update(
+                    @ptrCast([*]const u8, pso_desc.GS.pShaderBytecode.?)[0..pso_desc.GS.BytecodeLength],
+                );
+            }
             hasher.update(
                 @ptrCast([*]const u8, pso_desc.PS.pShaderBytecode.?)[0..pso_desc.PS.BytecodeLength],
             );

@@ -49,7 +49,11 @@ pub fn build(b: *std.build.Builder) void {
 
     dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "vsSimpleEntity", "simple_entity.vs.cso", "vs", "PSO__SIMPLE_ENTITY");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "gsSimpleEntity", "simple_entity.gs.cso", "gs", "PSO__SIMPLE_ENTITY");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "psSimpleEntity", "simple_entity.ps.cso", "ps", "PSO__SIMPLE_ENTITY");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "psSimpleEntity", "simple_entity_with_gs.ps.cso", "ps", "PSO__SIMPLE_ENTITY_WITH_GS");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     install_content_step.step.dependOn(dxc_step);
