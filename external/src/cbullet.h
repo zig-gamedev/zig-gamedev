@@ -315,7 +315,7 @@ CbtBool cbtBodyIsActive(CbtBodyHandle body_handle);
 CbtBool cbtBodyIsInWorld(CbtBodyHandle body_handle);
 
 void cbtBodySetUserPointer(CbtBodyHandle body_handle, void* user_pointer);
-void* cbtBodyGetUserPointer(CbtBodyHandle body_handle, int slot);
+void* cbtBodyGetUserPointer(CbtBodyHandle body_handle);
 void cbtBodySetUserIndex(CbtBodyHandle body_handle, int slot, int user_index); // slot can be 0, 1 or 2
 int cbtBodyGetUserIndex(CbtBodyHandle body_handle, int slot); // slot can be 0, 1 or 2
 

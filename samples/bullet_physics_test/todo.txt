@@ -1,0 +1,314 @@
+fn _createScene1(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsObjectsPool) void {
+    const sphere_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_SPHERE);
+    c.cbtShapeSphereCreate(sphere_shape, 0.5);
+
+    const ground_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(ground_shape, 20.0, 0.2, 20.0);
+
+    const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(box_shape, 0.5, 0.5, 0.5);
+
+    const compound_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+    c.cbtShapeCompoundCreate(compound_shape, c.CBT_TRUE, 2);
+    c.cbtShapeCompoundAddChild(compound_shape, &Mat4.initTranslation(Vec3.init(-0.75, 0, 0)).toArray4x3(), box_shape);
+    c.cbtShapeCompoundAddChild(
+        compound_shape,
+        &Mat4.initTranslation(Vec3.init(0.75, 0, 0)).toArray4x3(),
+        sphere_shape,
+    );
+
+    const vertices = [4]Vec3{
+        Vec3.init(-10.0, 0.0, -10.0),
+        Vec3.init(-10.0, 0.0, 10.0),
+        Vec3.init(10.0, 0.0, 10.0),
+        Vec3.init(10.0, 0.0, -10.0),
+    };
+    const indices = [6]i32{ 0, 1, 2, 0, 2, 3 };
+
+    const trimesh_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
+    c.cbtShapeTriMeshCreateBegin(trimesh_shape);
+    c.cbtShapeTriMeshAddIndexVertexArray(trimesh_shape, 2, &indices, 12, 4, &vertices, 12);
+    c.cbtShapeTriMeshCreateEnd(trimesh_shape);
+
+    assert(c.cbtShapeGetType(sphere_shape) == c.CBT_SHAPE_TYPE_SPHERE);
+    assert(c.cbtShapeGetType(ground_shape) == c.CBT_SHAPE_TYPE_BOX);
+    assert(c.cbtShapeGetType(box_shape) == c.CBT_SHAPE_TYPE_BOX);
+    assert(c.cbtShapeGetType(compound_shape) == c.CBT_SHAPE_TYPE_COMPOUND);
+    assert(c.cbtShapeGetType(trimesh_shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH);
+
+    const sphere_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(sphere_body, 5.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 5)).toArray4x3(), sphere_shape);
+    c.cbtBodySetDamping(sphere_body, 0.2, 0.2);
+    c.cbtWorldAddBody(physics_world, sphere_body);
+
+    const trimesh_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(trimesh_body, 0.0, &Mat4.initIdentity().toArray4x3(), trimesh_shape);
+    c.cbtWorldAddBody(physics_world, trimesh_body);
+
+    const box_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(box_body, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), box_shape);
+    c.cbtWorldAddBody(physics_world, box_body);
+
+    const compound_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(compound_body, 1.0, &Mat4.initTranslation(Vec3.init(5, 5, 5)).toArray4x3(), compound_shape);
+    c.cbtWorldAddBody(physics_world, compound_body);
+
+    const ground_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(ground_body, 0.0, &Mat4.initTranslation(Vec3.init(0, -2, 0)).toArray4x3(), ground_shape);
+    c.cbtWorldAddBody(physics_world, ground_body);
+}
+
+fn _createScene2(physics_world: c.CbtWorldHandle, physics_objects_pool: PhysicsObjectsPool) void {
+    {
+        const plane = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_STATIC_PLANE);
+        c.cbtShapePlaneCreate(plane, &Vec3.init(0.0, 1.0, 0.0).c, -10.0);
+
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 0.0, &Mat4.initIdentity().toArray4x3(), plane);
+        c.cbtWorldAddBody(physics_world, body);
+    }
+
+    {
+        const theta = math.pi * @as(f32, 0.25);
+        const l1 = 2.0 - math.tan(theta);
+        const l2 = 1.0 / math.cos(theta);
+        const ratio = l2 / l1;
+
+        const body_a = blk: {
+            const cyl_a = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(cyl_a, &Vec3.init(0.2, 0.25, 0.2).c, c.CBT_LINEAR_AXIS_Y);
+
+            const cyl_b = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(cyl_b, &Vec3.init(l1, 0.025, l1).c, c.CBT_LINEAR_AXIS_Y);
+
+            const cyl = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+            c.cbtShapeCompoundCreate(cyl, c.CBT_TRUE, 2);
+            c.cbtShapeCompoundAddChild(cyl, &Mat4.initIdentity().toArray4x3(), cyl_a);
+            c.cbtShapeCompoundAddChild(cyl, &Mat4.initIdentity().toArray4x3(), cyl_b);
+
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(body, 6.28, &Mat4.initTranslation(Vec3.init(-8.0, 1.0, 8.0)).toArray4x3(), cyl);
+            c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+            c.cbtBodySetAngularFactor(body, &Vec3.init(0, 1, 0).c);
+            c.cbtWorldAddBody(physics_world, body);
+            break :blk body;
+        };
+
+        const body_b = blk: {
+            const cyl_a = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(cyl_a, &Vec3.init(0.2, 0.26, 0.2).c, c.CBT_LINEAR_AXIS_Y);
+
+            const cyl_b = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(cyl_b, &Vec3.init(l2, 0.025, l2).c, c.CBT_LINEAR_AXIS_Y);
+
+            const cyl = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+            c.cbtShapeCompoundCreate(cyl, c.CBT_TRUE, 2);
+            c.cbtShapeCompoundAddChild(cyl, &Mat4.initIdentity().toArray4x3(), cyl_a);
+            c.cbtShapeCompoundAddChild(cyl, &Mat4.initIdentity().toArray4x3(), cyl_b);
+
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(
+                body,
+                6.28,
+                &Mat4.initRotationZ(-theta).mul(Mat4.initTranslation(Vec3.init(-10.0, 2.0, 8.0))).toArray4x3(),
+                cyl,
+            );
+            c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+            c.cbtBodySetAngularVelocity(body, &Vec3.init(0, 3, 0).c);
+            c.cbtWorldAddBody(physics_world, body);
+
+            const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+            c.cbtConHingeCreate1(hinge, body, &Vec3.init(0, 0, 0).c, &Vec3.init(0, 1, 0).c, c.CBT_TRUE);
+            c.cbtWorldAddConstraint(physics_world, hinge, c.CBT_FALSE);
+            break :blk body;
+        };
+
+        const row1 = Mat4.initRotationZ(-theta).r[1].toVec3();
+        const gear = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
+        c.cbtConGearCreate(gear, body_a, body_b, &Vec3.init(0, 1, 0).c, &row1.c, ratio);
+        c.cbtWorldAddConstraint(physics_world, gear, c.CBT_TRUE);
+    }
+
+    const shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(shape, 1.0, 1.0, 1.0);
+
+    {
+        const body0 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(1, 30, 5)).toArray4x3(), shape);
+        c.cbtWorldAddBody(physics_world, body0);
+
+        const body1 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(0, 0, 5)).toArray4x3(), shape);
+        c.cbtWorldAddBody(physics_world, body1);
+
+        const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+        c.cbtConPoint2PointCreate1(p2p, body1, &Vec3.init(1, 1, 1).c);
+        c.cbtConSetBreakingImpulseThreshold(p2p, 10.2);
+        c.cbtConSetDebugDrawSize(p2p, 5.0);
+        c.cbtWorldAddConstraint(physics_world, p2p, c.CBT_FALSE);
+    }
+
+    {
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 1.0, &Mat4.initTranslation(Vec3.init(2, 2, 10)).toArray4x3(), shape);
+        c.cbtWorldAddBody(physics_world, body);
+
+        const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+        c.cbtConHingeCreate1(hinge, body, &Vec3.init(0, 1, 1).c, &Vec3.init(1, 0, 0).c, c.CBT_FALSE);
+        c.cbtConHingeEnableAngularMotor(hinge, c.CBT_TRUE, 1.0, 1.0);
+        c.cbtConSetDebugDrawSize(hinge, 2.5);
+        c.cbtWorldAddConstraint(physics_world, hinge, c.CBT_FALSE);
+    }
+
+    {
+        const body0 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(-20, 0, 30)).toArray4x3(), shape);
+        c.cbtBodySetActivationState(body0, c.CBT_DISABLE_DEACTIVATION);
+        c.cbtWorldAddBody(physics_world, body0);
+
+        const body1 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-30, 0, 30)).toArray4x3(), shape);
+        c.cbtBodySetActivationState(body1, c.CBT_DISABLE_DEACTIVATION);
+        c.cbtWorldAddBody(physics_world, body1);
+
+        const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
+        c.cbtConSliderCreate2(
+            slider,
+            body0,
+            body1,
+            &Mat4.initIdentity().toArray4x3(),
+            &Mat4.initIdentity().toArray4x3(),
+            c.CBT_TRUE,
+        );
+        c.cbtConSliderSetLinearLowerLimit(slider, -15.0);
+        c.cbtConSliderSetLinearUpperLimit(slider, -5.0);
+        c.cbtConSliderSetAngularLowerLimit(slider, -math.pi / 3.0);
+        c.cbtConSliderSetAngularUpperLimit(slider, math.pi / 3.0);
+        c.cbtConSetDebugDrawSize(slider, 5.0);
+
+        c.cbtWorldAddConstraint(physics_world, slider, c.CBT_TRUE);
+    }
+
+    {
+        const body0 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body0, 0.0, &Mat4.initTranslation(Vec3.init(-10, 5, 0)).toArray4x3(), shape);
+        c.cbtBodySetActivationState(body0, c.CBT_DISABLE_DEACTIVATION);
+        c.cbtWorldAddBody(physics_world, body0);
+
+        const body1 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-10, -5, 0)).toArray4x3(), shape);
+        c.cbtBodySetActivationState(body1, c.CBT_DISABLE_DEACTIVATION);
+        c.cbtBodySetDamping(body1, 0.2, 0.2);
+        c.cbtWorldAddBody(physics_world, body1);
+
+        const frame0 = Mat4.initRotationZ(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(0, -5, 0)));
+        const frame1 = Mat4.initRotationZ(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(0, 5, 0)));
+
+        const constraint = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_CONETWIST);
+        c.cbtConConeTwistCreate2(constraint, body0, body1, &frame0.toArray4x3(), &frame1.toArray4x3());
+        c.cbtConConeTwistSetLimit(constraint, math.pi * 0.25 * 0.6, math.pi * 0.25, math.pi * 0.8, 0.5, 0.3, 1.0);
+        c.cbtConSetDebugDrawSize(constraint, 5.0);
+
+        c.cbtWorldAddConstraint(physics_world, constraint, c.CBT_TRUE);
+    }
+}
+
+fn createGearsScene(
+    physics_world: c.CbtWorldHandle,
+    physics_objects_pool: PhysicsObjectsPool,
+    entities: *std.ArrayList(Entity),
+) void {
+    {
+        const plane = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_STATIC_PLANE);
+        c.cbtShapePlaneCreate(plane, &Vec3.init(0.0, 1.0, 0.0).c, -10.0);
+
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 0.0, &Mat4.initIdentity().toArray4x3(), plane);
+        c.cbtWorldAddBody(physics_world, body);
+    }
+
+    const gear_thickness: f32 = 0.05;
+    const gear_support_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+    c.cbtShapeCylinderCreate(gear_support_shape, &Vec3.init(0.2, 0.2, 0.25).c, c.CBT_LINEAR_AXIS_Z);
+
+    {
+        const r0 = 0.5;
+        const r1 = 0.7;
+        const r2 = 1.5;
+        const x0 = -(r1 + r2);
+
+        const gear_body_0 = blk: {
+            const gear_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(gear_shape, &Vec3.init(r0, r0, gear_thickness).c, c.CBT_LINEAR_AXIS_Z);
+
+            const gear = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+            c.cbtShapeCompoundCreate(gear, c.CBT_TRUE, 2);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_support_shape);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_shape);
+
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(body, 6.28, &Mat4.initTranslation(Vec3.init(x0, 1.0, 5.0)).toArray4x3(), gear);
+            c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+            c.cbtBodySetAngularFactor(body, &Vec3.init(0, 0, 1).c);
+            c.cbtBodySetActivationState(body, c.CBT_DISABLE_DEACTIVATION);
+            c.cbtWorldAddBody(physics_world, body);
+            break :blk body;
+        };
+
+        const gear_body_1 = blk: {
+            const gear_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(gear_shape, &Vec3.init(r1, r1, gear_thickness).c, c.CBT_LINEAR_AXIS_Z);
+
+            const gear = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+            c.cbtShapeCompoundCreate(gear, c.CBT_TRUE, 2);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_support_shape);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_shape);
+
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(body, 6.28, &Mat4.initTranslation(Vec3.init(x0 + r0 + r1, 1.0, 5.0)).toArray4x3(), gear);
+            c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+            c.cbtBodySetAngularFactor(body, &Vec3.init(0, 0, 1).c);
+            c.cbtBodySetActivationState(body, c.CBT_DISABLE_DEACTIVATION);
+            c.cbtWorldAddBody(physics_world, body);
+            break :blk body;
+        };
+
+        const gear_body_2 = blk: {
+            const gear_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+            c.cbtShapeCylinderCreate(gear_shape, &Vec3.init(r2, r2, gear_thickness).c, c.CBT_LINEAR_AXIS_Z);
+
+            const gear = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+            c.cbtShapeCompoundCreate(gear, c.CBT_TRUE, 2);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_support_shape);
+            c.cbtShapeCompoundAddChild(gear, &Mat4.initIdentity().toArray4x3(), gear_shape);
+
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(
+                body,
+                6.28,
+                &Mat4.initTranslation(Vec3.init(x0 + r0 + 2 * r1 + r2, 1.0, 5.0)).toArray4x3(),
+                gear,
+            );
+            c.cbtBodySetLinearFactor(body, &Vec3.initZero().c);
+            c.cbtBodySetAngularFactor(body, &Vec3.init(0, 0, 1).c);
+            c.cbtBodySetActivationState(body, c.CBT_DISABLE_DEACTIVATION);
+            c.cbtWorldAddBody(physics_world, body);
+            break :blk body;
+        };
+
+        const gear_0 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
+        c.cbtConGearCreate(gear_0, gear_body_0, gear_body_1, &Vec3.init(0, 0, 1).c, &Vec3.init(0, 0, 1).c, r1 / r0);
+
+        const gear_1 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
+        c.cbtConGearCreate(gear_1, gear_body_1, gear_body_2, &Vec3.init(0, 0, 1).c, &Vec3.init(0, 0, 1).c, r2 / r1);
+
+        c.cbtWorldAddConstraint(physics_world, gear_0, c.CBT_TRUE);
+        c.cbtWorldAddConstraint(physics_world, gear_1, c.CBT_TRUE);
+
+        entities.append(gear_body_0) catch unreachable;
+        entities.append(gear_body_1) catch unreachable;
+        entities.append(gear_body_2) catch unreachable;
+
+        c.cbtBodyApplyTorqueImpulse(gear_body_0, &Vec3.init(0, 0, 5).c);
+    }
+}
