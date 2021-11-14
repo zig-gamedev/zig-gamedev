@@ -55,6 +55,7 @@ void psPhysicsDebug(
 struct DrawConst {
     float4x4 object_to_world;
     float4 base_color_roughness;
+    uint flags;
 };
 
 struct FrameConst {
@@ -217,6 +218,11 @@ void psSimpleEntity(
     float3 thickness = deltas * g_wireframe_thickness;
     barys = smoothstep(thickness, thickness + smoothing, barys);
     float min_bary = min(barys.x, min(barys.y, barys.z));
+
+    if (cbv_draw_const.flags) {
+        color = lerp(float3(0.7, 0.7, 0.7), color, min_bary);
+        min_bary = 1.0;
+    }
 
     out_color = float4(min_bary * color, 1.0);
 }

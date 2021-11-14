@@ -306,6 +306,7 @@ const DemoState = struct {
     meshes: std.ArrayList(Mesh),
 
     current_scene_index: i32,
+    selected_entity_index: i32,
     keyboard_delay: f32,
 
     camera: Camera,
@@ -322,18 +323,20 @@ const DemoState = struct {
     },
 };
 
-const PsoPhysicsDebug_Vertex = struct {
+const PsoPhysicsDebug_Vertex = extern struct {
     position: [3]f32,
     color: u32,
 };
 
-const PsoPhysicsDebug_FrameConst = struct {
+const PsoPhysicsDebug_FrameConst = extern struct {
     world_to_clip: Mat4,
 };
 
-const PsoSimpleEntity_DrawConst = struct {
+const PsoSimpleEntity_DrawConst = extern struct {
     object_to_world: Mat4,
     base_color_roughness: Vec4,
+    flags: u32,
+    padding: [3]u32 = undefined,
 };
 
 const PsoSimpleEntity_FrameConst = extern struct {
@@ -754,6 +757,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .distance = 0.0,
         },
         .current_scene_index = 0,
+        .selected_entity_index = -1,
         .keyboard_delay = 0.0,
     };
 }
@@ -886,15 +890,15 @@ fn update(demo: *DemoState) void {
             demo.keyboard_delay = 0.0;
             const body = demo.physics_objects_pool.getBody();
             c.cbtBodyCreate(body, 2.0, &Mat4.initTranslation(demo.camera.position).toArray4x3(), shape_sphere_r1);
-            c.cbtBodySetDamping(body, default_linear_damping, default_angular_damping);
             c.cbtBodyApplyCentralImpulse(body, &demo.camera.forward.scale(100.0).c);
-            c.cbtWorldAddBody(demo.physics_world, body);
-            demo.entities.append(.{
-                .body = body,
-                .base_color_roughness = Vec4.init(0, 1.0, 0.0, 0.7),
-                .size = Vec3.initS(1.0),
-                .mesh_index = mesh_sphere,
-            }) catch unreachable;
+            createAddEntity(
+                demo.physics_world,
+                body,
+                Vec4.init(0, 1.0, 0.0, 0.7),
+                Vec3.initS(1.0),
+                mesh_sphere,
+                &demo.entities,
+            );
         }
     }
 
@@ -943,25 +947,34 @@ fn update(demo: *DemoState) void {
             &result,
         );
 
-        if (hit == c.CBT_TRUE and result.body != null and c.cbtBodyIsStaticOrKinematic(result.body) == c.CBT_FALSE) {
+        if (hit == c.CBT_TRUE and result.body != null) {
             demo.pick.body = result.body;
 
-            demo.pick.saved_linear_damping = c.cbtBodyGetLinearDamping(result.body);
-            demo.pick.saved_angular_damping = c.cbtBodyGetAngularDamping(result.body);
-            c.cbtBodySetDamping(result.body, 0.4, 0.4);
+            const entity_index = c.cbtBodyGetUserIndex(result.body, 0);
+            if (demo.selected_entity_index > -1) {
+                demo.entities.items[@intCast(u32, demo.selected_entity_index)].flags = 0;
+            }
+            demo.entities.items[@intCast(u32, entity_index)].flags = 1;
+            demo.selected_entity_index = entity_index;
 
-            var inv_trans: [4]c.CbtVector3 = undefined;
-            c.cbtBodyGetInvCenterOfMassTransform(result.body, &inv_trans);
-            const hit_point_world = Vec3{ .c = result.hit_point_world };
-            const pivot_a = hit_point_world.transform(Mat4.initArray4x3(inv_trans));
+            if (c.cbtBodyIsStaticOrKinematic(result.body) == c.CBT_FALSE) {
+                demo.pick.saved_linear_damping = c.cbtBodyGetLinearDamping(result.body);
+                demo.pick.saved_angular_damping = c.cbtBodyGetAngularDamping(result.body);
+                c.cbtBodySetDamping(result.body, 0.4, 0.4);
 
-            c.cbtConPoint2PointCreate1(demo.pick.constraint, result.body, &pivot_a.c);
-            c.cbtConPoint2PointSetImpulseClamp(demo.pick.constraint, 30.0);
-            c.cbtConPoint2PointSetTau(demo.pick.constraint, 0.001);
-            c.cbtConSetDebugDrawSize(demo.pick.constraint, 0.15);
+                var inv_trans: [4]c.CbtVector3 = undefined;
+                c.cbtBodyGetInvCenterOfMassTransform(result.body, &inv_trans);
+                const hit_point_world = Vec3{ .c = result.hit_point_world };
+                const pivot_a = hit_point_world.transform(Mat4.initArray4x3(inv_trans));
 
-            c.cbtWorldAddConstraint(demo.physics_world, demo.pick.constraint, c.CBT_TRUE);
-            demo.pick.distance = hit_point_world.sub(ray_from).length();
+                c.cbtConPoint2PointCreate1(demo.pick.constraint, result.body, &pivot_a.c);
+                c.cbtConPoint2PointSetImpulseClamp(demo.pick.constraint, 30.0);
+                c.cbtConPoint2PointSetTau(demo.pick.constraint, 0.001);
+                c.cbtConSetDebugDrawSize(demo.pick.constraint, 0.15);
+
+                c.cbtWorldAddConstraint(demo.physics_world, demo.pick.constraint, c.CBT_TRUE);
+                demo.pick.distance = hit_point_world.sub(ray_from).length();
+            }
         }
     } else if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
         const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));
@@ -1041,6 +1054,7 @@ fn draw(demo: *DemoState) void {
             const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
             mem.cpu_slice[0].object_to_world = scaling.mul(Mat4.initArray4x3(transform)).transpose();
             mem.cpu_slice[0].base_color_roughness = entity.base_color_roughness;
+            mem.cpu_slice[0].flags = entity.flags;
 
             grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
             grfx.cmdlist.DrawIndexedInstanced(
