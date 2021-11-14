@@ -950,10 +950,10 @@ fn update(demo: *DemoState) void {
         if (hit == c.CBT_TRUE and result.body != null) {
             demo.pick.body = result.body;
 
-            const entity_index = c.cbtBodyGetUserIndex(result.body, 0);
             if (demo.selected_entity_index > -1) {
                 demo.entities.items[@intCast(u32, demo.selected_entity_index)].flags = 0;
             }
+            const entity_index = c.cbtBodyGetUserIndex(result.body, 0);
             demo.entities.items[@intCast(u32, entity_index)].flags = 1;
             demo.selected_entity_index = entity_index;
 
