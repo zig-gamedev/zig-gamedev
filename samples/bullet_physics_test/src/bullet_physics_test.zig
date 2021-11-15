@@ -414,6 +414,7 @@ fn createScene1(
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
     createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), Vec3.initS(1.0), mesh_world, entities);
+    c.cbtBodySetFriction(world_body, 0.2);
 
     const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape, 0.5, 1.0, 2.0);
@@ -469,6 +470,7 @@ fn createScene2(
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
     createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), Vec3.initS(1.0), mesh_world, entities);
+    c.cbtBodySetFriction(world_body, 0.2);
 
     var level: u32 = 0;
     var y: f32 = 2.0;
@@ -849,21 +851,28 @@ fn update(demo: *DemoState) void {
         const body = demo.entities.items[demo.selected_entity_index].body;
 
         var restitution = c.cbtBodyGetRestitution(body);
-        _ = c.igSliderFloat("Restitution", &restitution, 0.0, 1.0, null, c.ImGuiSliderFlags_None);
-        c.cbtBodySetRestitution(body, restitution);
+        if (c.igSliderFloat("Restitution", &restitution, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
+            c.cbtBodySetRestitution(body, restitution);
+        }
 
         var friction = c.cbtBodyGetFriction(body);
-        _ = c.igSliderFloat("Friction", &friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None);
-        c.cbtBodySetFriction(body, friction);
+        if (c.igSliderFloat("Friction", &friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
+            c.cbtBodySetFriction(body, friction);
+        }
 
+        const mass_flag = if (c.cbtBodyIsStaticOrKinematic(body))
+            c.ImGuiInputTextFlags_ReadOnly
+        else
+            c.ImGuiInputTextFlags_EnterReturnsTrue;
         var mass = c.cbtBodyGetMass(body);
-        _ = c.igInputFloat("Mass", &mass, 1.0, 1.0, null, if (c.cbtBodyIsStaticOrKinematic(body)) c.ImGuiInputTextFlags_ReadOnly else c.ImGuiInputTextFlags_EnterReturnsTrue);
-
-        var inertia = c.CbtVector3{ 0, 0, 0 };
-        if (mass > 0.0)
-            c.cbtShapeCalculateLocalInertia(c.cbtBodyGetShape(body), mass, &inertia);
-        _ = c.igInputFloat3("Inertia", &inertia, null, c.ImGuiInputTextFlags_ReadOnly);
-        c.cbtBodySetMassProps(body, mass, &inertia);
+        if (c.igInputFloat("Mass", &mass, 1.0, 1.0, null, mass_flag)) {
+            var inertia = c.CbtVector3{ 0, 0, 0 };
+            if (mass > 0.0) {
+                c.cbtShapeCalculateLocalInertia(c.cbtBodyGetShape(body), mass, &inertia);
+            }
+            _ = c.igInputFloat3("Inertia", &inertia, null, c.ImGuiInputTextFlags_ReadOnly);
+            c.cbtBodySetMassProps(body, mass, &inertia);
+        }
     }
     c.igEnd();
 
