@@ -852,9 +852,10 @@ fn update(demo: *DemoState) void {
 
         var linear_damping = c.cbtBodyGetLinearDamping(body);
         var angular_damping = c.cbtBodyGetAngularDamping(body);
-        if (c.igSliderFloat("Linear Damping", &linear_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None) or
-            c.igSliderFloat("Angular Damping", &angular_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None))
-        {
+        if (c.igSliderFloat("Linear Damping", &linear_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
+            c.cbtBodySetDamping(body, linear_damping, angular_damping);
+        }
+        if (c.igSliderFloat("Angular Damping", &angular_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
             c.cbtBodySetDamping(body, linear_damping, angular_damping);
         }
 
