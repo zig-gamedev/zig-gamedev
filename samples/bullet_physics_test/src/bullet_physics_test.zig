@@ -850,14 +850,22 @@ fn update(demo: *DemoState) void {
     {
         const body = demo.entities.items[demo.selected_entity_index].body;
 
-        var restitution = c.cbtBodyGetRestitution(body);
-        if (c.igSliderFloat("Restitution", &restitution, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
-            c.cbtBodySetRestitution(body, restitution);
+        var linear_damping = c.cbtBodyGetLinearDamping(body);
+        var angular_damping = c.cbtBodyGetAngularDamping(body);
+        if (c.igSliderFloat("Linear Damping", &linear_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None) or
+            c.igSliderFloat("Angular Damping", &angular_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None))
+        {
+            c.cbtBodySetDamping(body, linear_damping, angular_damping);
         }
 
         var friction = c.cbtBodyGetFriction(body);
         if (c.igSliderFloat("Friction", &friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
             c.cbtBodySetFriction(body, friction);
+        }
+
+        var restitution = c.cbtBodyGetRestitution(body);
+        if (c.igSliderFloat("Restitution", &restitution, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
+            c.cbtBodySetRestitution(body, restitution);
         }
 
         const mass_flag = if (c.cbtBodyIsStaticOrKinematic(body))
