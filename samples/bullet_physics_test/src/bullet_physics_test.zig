@@ -32,6 +32,7 @@ const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
 const default_linear_damping: f32 = 0.1;
 const default_angular_damping: f32 = 0.1;
+const default_world_friction: f32 = 0.15;
 
 const Scene = enum {
     scene1,
@@ -414,7 +415,7 @@ fn createScene1(
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
     createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), Vec3.initS(1.0), mesh_world, entities);
-    c.cbtBodySetFriction(world_body, 0.2);
+    c.cbtBodySetFriction(world_body, default_world_friction);
 
     const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape, 0.5, 1.0, 2.0);
@@ -470,7 +471,7 @@ fn createScene2(
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
     createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), Vec3.initS(1.0), mesh_world, entities);
-    c.cbtBodySetFriction(world_body, 0.2);
+    c.cbtBodySetFriction(world_body, default_world_friction);
 
     var level: u32 = 0;
     var y: f32 = 2.0;
