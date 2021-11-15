@@ -70,11 +70,7 @@
 #define CBT_ROTATE_ORDER_ZXY 4
 #define CBT_ROTATE_ORDER_ZYX 5
 
-#define CBT_FALSE 0
-#define CBT_TRUE 1
-
 typedef float CbtVector3[3];
-typedef int CbtBool;
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,7 +125,7 @@ void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
 void cbtWorldAddConstraint(
     CbtWorldHandle world_handle,
     CbtConstraintHandle con_handle,
-    CbtBool disable_collision_between_linked_bodies // CBT_FALSE
+    bool disable_collision_between_linked_bodies // false
 );
 
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle);
@@ -140,7 +136,7 @@ int cbtWorldGetNumConstraints(CbtWorldHandle world_handle);
 CbtBodyHandle cbtWorldGetBody(CbtWorldHandle world_handle, int body_index);
 CbtConstraintHandle cbtWorldGetConstraint(CbtWorldHandle world_handle, int con_index);
 
-// Returns CBT_TRUE when hits something, CBT_FALSE otherwise
+// Returns `true` when hits something, `false` otherwise
 bool cbtRayTestClosest(
     CbtWorldHandle world_handle,
     const CbtVector3 ray_from_world,
@@ -173,7 +169,7 @@ CbtShapeHandle cbtShapeAllocate(int shape_type);
 void cbtShapeDeallocate(CbtShapeHandle shape_handle);
 
 void cbtShapeDestroy(CbtShapeHandle shape_handle);
-CbtBool cbtShapeIsCreated(CbtShapeHandle shape_handle);
+bool cbtShapeIsCreated(CbtShapeHandle shape_handle);
 int cbtShapeGetType(CbtShapeHandle shape_handle);
 
 void cbtShapeBoxCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y, float half_extent_z);
@@ -203,7 +199,7 @@ void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height,
 
 void cbtShapeCompoundCreate(
     CbtShapeHandle shape_handle,
-    CbtBool enable_dynamic_aabb_tree, // CBT_TRUE
+    bool enable_dynamic_aabb_tree, // true
     int initial_child_capacity // 0
 );
 void cbtShapeCompoundAddChild(
@@ -229,12 +225,12 @@ void cbtShapeTriMeshAddIndexVertexArray(
     int vertex_stride
 );
 
-CbtBool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle);
-CbtBool cbtShapeIsConvex2d(CbtShapeHandle shape_handle);
-CbtBool cbtShapeIsConvex(CbtShapeHandle shape_handle);
-CbtBool cbtShapeIsNonMoving(CbtShapeHandle shape_handle);
-CbtBool cbtShapeIsConcave(CbtShapeHandle shape_handle);
-CbtBool cbtShapeIsCompound(CbtShapeHandle shape_handle);
+bool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle);
+bool cbtShapeIsConvex2d(CbtShapeHandle shape_handle);
+bool cbtShapeIsConvex(CbtShapeHandle shape_handle);
+bool cbtShapeIsNonMoving(CbtShapeHandle shape_handle);
+bool cbtShapeIsConcave(CbtShapeHandle shape_handle);
+bool cbtShapeIsCompound(CbtShapeHandle shape_handle);
 
 void cbtShapeCalculateLocalInertia(CbtShapeHandle shape_handle, float mass, CbtVector3 inertia);
 
@@ -258,7 +254,7 @@ void cbtBodyCreate(
     CbtShapeHandle shape_handle
 );
 void cbtBodyDestroy(CbtBodyHandle body_handle);
-CbtBool cbtBodyIsCreated(CbtBodyHandle body_handle);
+bool cbtBodyIsCreated(CbtBodyHandle body_handle);
 
 void cbtBodySetShape(CbtBodyHandle body_handle, CbtShapeHandle shape_handle);
 CbtShapeHandle cbtBodyGetShape(CbtBodyHandle body_handle);
@@ -319,8 +315,8 @@ void cbtBodySetDeactivationTime(CbtBodyHandle body_handle, float time);
 int cbtBodyGetActivationState(CbtBodyHandle body_handle);
 void cbtBodySetActivationState(CbtBodyHandle body_handle, int state);
 void cbtBodyForceActivationState(CbtBodyHandle body_handle, int state);
-CbtBool cbtBodyIsActive(CbtBodyHandle body_handle);
-CbtBool cbtBodyIsInWorld(CbtBodyHandle body_handle);
+bool cbtBodyIsActive(CbtBodyHandle body_handle);
+bool cbtBodyIsInWorld(CbtBodyHandle body_handle);
 
 void cbtBodySetUserPointer(CbtBodyHandle body_handle, void* user_pointer);
 void* cbtBodyGetUserPointer(CbtBodyHandle body_handle);
@@ -342,14 +338,14 @@ CbtConstraintHandle cbtConAllocate(int con_type);
 void cbtConDeallocate(CbtConstraintHandle con_handle);
 
 void cbtConDestroy(CbtConstraintHandle con_handle);
-CbtBool cbtConIsCreated(CbtConstraintHandle con_handle);
+bool cbtConIsCreated(CbtConstraintHandle con_handle);
 int cbtConGetType(CbtConstraintHandle con_handle);
 
 void cbtConSetParam(CbtConstraintHandle con_handle, int param, float value, int axis /* -1 */);
 float cbtConGetParam(CbtConstraintHandle con_handle, int param, int axis /* -1 */);
 
-void cbtConSetEnabled(CbtConstraintHandle con_handle, CbtBool enabled);
-CbtBool cbtConIsEnabled(CbtConstraintHandle con_handle);
+void cbtConSetEnabled(CbtConstraintHandle con_handle, bool enabled);
+bool cbtConIsEnabled(CbtConstraintHandle con_handle);
 CbtBodyHandle cbtConGetBodyA(CbtConstraintHandle con_handle);
 CbtBodyHandle cbtConGetBodyB(CbtConstraintHandle con_handle);
 void cbtConSetBreakingImpulseThreshold(CbtConstraintHandle con_handle, float threshold);
@@ -383,7 +379,7 @@ void cbtConHingeCreate1(
     CbtBodyHandle body_handle_a,
     const CbtVector3 pivot_a,
     const CbtVector3 axis_a,
-    CbtBool use_reference_frame_a // CBT_FALSE
+    bool use_reference_frame_a // false
 );
 void cbtConHingeCreate2(
     CbtConstraintHandle con_handle,
@@ -393,18 +389,18 @@ void cbtConHingeCreate2(
     const CbtVector3 pivot_b,
     const CbtVector3 axis_a,
     const CbtVector3 axis_b,
-    CbtBool use_reference_frame_a // CBT_FALSE
+    bool use_reference_frame_a // false
 );
 void cbtConHingeCreate3(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,
     const CbtVector3 frame_a[4],
-    CbtBool use_reference_frame_a // CBT_FALSE
+    bool use_reference_frame_a // false
 );
-void cbtConHingeSetAngularOnly(CbtConstraintHandle con_handle, CbtBool angular_only);
+void cbtConHingeSetAngularOnly(CbtConstraintHandle con_handle, bool angular_only);
 void cbtConHingeEnableAngularMotor(
     CbtConstraintHandle con_handle,
-    CbtBool enable,
+    bool enable,
     float target_velocity,
     float max_motor_impulse
 );
@@ -438,7 +434,7 @@ void cbtConSliderCreate1(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_b,
     const CbtVector3 frame_b[4],
-    CbtBool use_reference_frame_a
+    bool use_reference_frame_a
 );
 void cbtConSliderCreate2(
     CbtConstraintHandle con_handle,
@@ -446,7 +442,7 @@ void cbtConSliderCreate2(
     CbtBodyHandle body_handle_b,
     const CbtVector3 frame_a[4],
     const CbtVector3 frame_b[4],
-    CbtBool use_reference_frame_a
+    bool use_reference_frame_a
 );
 void cbtConSliderSetLinearLowerLimit(CbtConstraintHandle con_handle, float limit);
 void cbtConSliderSetLinearUpperLimit(CbtConstraintHandle con_handle, float limit);

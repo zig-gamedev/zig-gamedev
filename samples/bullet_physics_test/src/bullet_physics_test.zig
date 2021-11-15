@@ -162,7 +162,7 @@ const PhysicsObjectsPool = struct {
 
     fn getBody(pool: PhysicsObjectsPool) c.CbtBodyHandle {
         for (pool.bodies) |body| {
-            if (c.cbtBodyIsCreated(body) == c.CBT_FALSE) {
+            if (!c.cbtBodyIsCreated(body)) {
                 return body;
             }
         }
@@ -171,7 +171,7 @@ const PhysicsObjectsPool = struct {
 
     fn getConstraint(pool: PhysicsObjectsPool, con_type: i32) c.CbtConstraintHandle {
         for (pool.constraints) |con| {
-            if (c.cbtConIsCreated(con) == c.CBT_FALSE and c.cbtConGetType(con) == con_type) {
+            if (!c.cbtConIsCreated(con) and c.cbtConGetType(con) == con_type) {
                 return con;
             }
         }
@@ -180,7 +180,7 @@ const PhysicsObjectsPool = struct {
 
     fn getShape(pool: PhysicsObjectsPool, shape_type: i32) c.CbtShapeHandle {
         for (pool.shapes) |shape| {
-            if (c.cbtShapeIsCreated(shape) == c.CBT_FALSE and c.cbtShapeGetType(shape) == shape_type) {
+            if (!c.cbtShapeIsCreated(shape) and c.cbtShapeGetType(shape) == shape_type) {
                 return shape;
             }
         }
@@ -205,7 +205,7 @@ const PhysicsObjectsPool = struct {
             }
         }
         for (pool.shapes) |shape| {
-            if (c.cbtShapeIsCreated(shape) == c.CBT_TRUE) {
+            if (c.cbtShapeIsCreated(shape)) {
                 if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_TRIANGLE_MESH) {
                     c.cbtShapeTriMeshDestroy(shape);
                 } else {
@@ -778,7 +778,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa);
-    if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
+    if (c.cbtConIsCreated(demo.pick.constraint)) {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
     }
@@ -968,7 +968,7 @@ fn update(demo: *DemoState) void {
         break :blk ray_to;
     };
 
-    if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_FALSE and mouse_button_is_down) {
+    if (!c.cbtConIsCreated(demo.pick.constraint) and mouse_button_is_down) {
         var result: c.CbtRayCastResult = undefined;
         const hit = c.cbtRayTestClosest(
             demo.physics_world,
@@ -1003,16 +1003,16 @@ fn update(demo: *DemoState) void {
                 c.cbtConPoint2PointSetTau(demo.pick.constraint, 0.001);
                 c.cbtConSetDebugDrawSize(demo.pick.constraint, 0.15);
 
-                c.cbtWorldAddConstraint(demo.physics_world, demo.pick.constraint, c.CBT_TRUE);
+                c.cbtWorldAddConstraint(demo.physics_world, demo.pick.constraint, true);
                 demo.pick.distance = hit_point_world.sub(ray_from).length();
             }
         }
-    } else if (c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
+    } else if (c.cbtConIsCreated(demo.pick.constraint)) {
         const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));
         c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
     }
 
-    if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint) == c.CBT_TRUE) {
+    if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint)) {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
         c.cbtBodySetDamping(demo.pick.body, demo.pick.saved_linear_damping, demo.pick.saved_angular_damping);
