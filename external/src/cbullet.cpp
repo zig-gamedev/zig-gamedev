@@ -153,7 +153,7 @@ CbtConstraintHandle cbtWorldGetConstraint(CbtWorldHandle world_handle, int con_i
     return (CbtConstraintHandle)world->getConstraint(con_index);
 }
 
-CbtBool cbtRayTestClosest(
+bool cbtRayTestClosest(
     CbtWorldHandle world_handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,
@@ -185,7 +185,7 @@ CbtBool cbtRayTestClosest(
         result->hit_fraction = closest.m_closestHitFraction;
         result->body = (CbtBodyHandle)closest.m_collisionObject;
     }
-    return closest.m_collisionObject == 0 ? CBT_FALSE : CBT_TRUE;
+    return closest.m_collisionObject != 0;
 }
 
 void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCallbacks* callbacks) {
@@ -1013,22 +1013,22 @@ void cbtBodyGetTotalTorque(CbtBodyHandle body_handle, CbtVector3 torque) {
     torque[2] = tmp.z();
 }
 
-CbtBool cbtBodyIsStatic(CbtBodyHandle body_handle) {
+bool cbtBodyIsStatic(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     auto body = (btRigidBody*)body_handle;
-    return body->isStaticObject() ? CBT_TRUE : CBT_FALSE;
+    return body->isStaticObject();
 }
 
-CbtBool cbtBodyIsKinematic(CbtBodyHandle body_handle) {
+bool cbtBodyIsKinematic(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     auto body = (btRigidBody*)body_handle;
-    return body->isKinematicObject() ? CBT_TRUE : CBT_FALSE;
+    return body->isKinematicObject();
 }
 
-CbtBool cbtBodyIsStaticOrKinematic(CbtBodyHandle body_handle) {
+bool cbtBodyIsStaticOrKinematic(CbtBodyHandle body_handle) {
     assert(body_handle && cbtBodyIsCreated(body_handle) == CBT_TRUE);
     auto body = (btRigidBody*)body_handle;
-    return body->isStaticOrKinematicObject() ? CBT_TRUE : CBT_FALSE;
+    return body->isStaticOrKinematicObject();
 }
 
 float cbtBodyGetDeactivationTime(CbtBodyHandle body_handle) {

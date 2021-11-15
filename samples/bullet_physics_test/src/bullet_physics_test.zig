@@ -306,7 +306,7 @@ const DemoState = struct {
     meshes: std.ArrayList(Mesh),
 
     current_scene_index: i32,
-    selected_entity_index: i32,
+    selected_entity_index: u32,
     keyboard_delay: f32,
 
     camera: Camera,
@@ -661,6 +661,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var camera: Camera = undefined;
     var entities = std.ArrayList(Entity).init(gpa);
     createScene1(physics_world, physics_objects_pool, &entities, &camera);
+    entities.items[0].flags = 1;
 
     var vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
@@ -757,7 +758,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .distance = 0.0,
         },
         .current_scene_index = 0,
-        .selected_entity_index = -1,
+        .selected_entity_index = 0,
         .keyboard_delay = 0.0,
     };
 }
@@ -839,7 +840,30 @@ fn update(demo: *DemoState) void {
                 .scene1 => createScene1(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
                 .scene2 => createScene2(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
             }
+            demo.selected_entity_index = 0;
+            demo.entities.items[demo.selected_entity_index].flags = 1;
         }
+        c.igNewLine();
+    }
+    {
+        const body = demo.entities.items[demo.selected_entity_index].body;
+
+        var restitution = c.cbtBodyGetRestitution(body);
+        _ = c.igSliderFloat("Restitution", &restitution, 0.0, 1.0, null, c.ImGuiSliderFlags_None);
+        c.cbtBodySetRestitution(body, restitution);
+
+        var friction = c.cbtBodyGetFriction(body);
+        _ = c.igSliderFloat("Friction", &friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None);
+        c.cbtBodySetFriction(body, friction);
+
+        var mass = c.cbtBodyGetMass(body);
+        _ = c.igInputFloat("Mass", &mass, 1.0, 1.0, null, if (c.cbtBodyIsStaticOrKinematic(body)) c.ImGuiInputTextFlags_ReadOnly else c.ImGuiInputTextFlags_EnterReturnsTrue);
+
+        var inertia = c.CbtVector3{ 0, 0, 0 };
+        if (mass > 0.0)
+            c.cbtShapeCalculateLocalInertia(c.cbtBodyGetShape(body), mass, &inertia);
+        _ = c.igInputFloat3("Inertia", &inertia, null, c.ImGuiInputTextFlags_ReadOnly);
+        c.cbtBodySetMassProps(body, mass, &inertia);
     }
     c.igEnd();
 
@@ -902,7 +926,7 @@ fn update(demo: *DemoState) void {
         }
     }
 
-    const mouse_button_is_down = w.GetAsyncKeyState(w.VK_LBUTTON) < 0;
+    const mouse_button_is_down = c.igIsMouseDown(c.ImGuiMouseButton_Left) and !c.igGetIO().?.*.WantCaptureMouse;
 
     const ray_from = demo.camera.position;
     const ray_to = blk: {
@@ -947,17 +971,15 @@ fn update(demo: *DemoState) void {
             &result,
         );
 
-        if (hit == c.CBT_TRUE and result.body != null) {
+        if (hit and result.body != null) {
             demo.pick.body = result.body;
 
-            if (demo.selected_entity_index > -1) {
-                demo.entities.items[@intCast(u32, demo.selected_entity_index)].flags = 0;
-            }
+            demo.entities.items[demo.selected_entity_index].flags = 0;
             const entity_index = c.cbtBodyGetUserIndex(result.body, 0);
             demo.entities.items[@intCast(u32, entity_index)].flags = 1;
-            demo.selected_entity_index = entity_index;
+            demo.selected_entity_index = @intCast(u32, entity_index);
 
-            if (c.cbtBodyIsStaticOrKinematic(result.body) == c.CBT_FALSE) {
+            if (!c.cbtBodyIsStaticOrKinematic(result.body)) {
                 demo.pick.saved_linear_damping = c.cbtBodyGetLinearDamping(result.body);
                 demo.pick.saved_angular_damping = c.cbtBodyGetAngularDamping(result.body);
                 c.cbtBodySetDamping(result.body, 0.4, 0.4);

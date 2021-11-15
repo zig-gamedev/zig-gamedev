@@ -78,6 +78,8 @@ typedef int CbtBool;
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#include <stdbool.h>
 #endif
 
 CBT_DECLARE_HANDLE(CbtWorldHandle);
@@ -139,7 +141,7 @@ CbtBodyHandle cbtWorldGetBody(CbtWorldHandle world_handle, int body_index);
 CbtConstraintHandle cbtWorldGetConstraint(CbtWorldHandle world_handle, int con_index);
 
 // Returns CBT_TRUE when hits something, CBT_FALSE otherwise
-CbtBool cbtRayTestClosest(
+bool cbtRayTestClosest(
     CbtWorldHandle world_handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,
@@ -189,7 +191,13 @@ int cbtShapeCapsuleGetUpAxis(CbtShapeHandle shape_handle);
 float cbtShapeCapsuleGetHalfHeight(CbtShapeHandle shape_handle);
 float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle);
 
-void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y, float half_extent_z, int axis);
+void cbtShapeCylinderCreate(
+    CbtShapeHandle shape_handle,
+    float half_extent_x,
+    float half_extent_y,
+    float half_extent_z,
+    int axis
+);
 
 void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
 
@@ -302,9 +310,9 @@ void cbtBodyGetAngularVelocity(CbtBodyHandle body_handle, CbtVector3 velocity);
 void cbtBodyGetTotalForce(CbtBodyHandle body_handle, CbtVector3 force);
 void cbtBodyGetTotalTorque(CbtBodyHandle body_handle, CbtVector3 torque);
 
-CbtBool cbtBodyIsStatic(CbtBodyHandle body_handle);
-CbtBool cbtBodyIsKinematic(CbtBodyHandle body_handle);
-CbtBool cbtBodyIsStaticOrKinematic(CbtBodyHandle body_handle);
+bool cbtBodyIsStatic(CbtBodyHandle body_handle);
+bool cbtBodyIsKinematic(CbtBodyHandle body_handle);
+bool cbtBodyIsStaticOrKinematic(CbtBodyHandle body_handle);
 
 float cbtBodyGetDeactivationTime(CbtBodyHandle body_handle);
 void cbtBodySetDeactivationTime(CbtBodyHandle body_handle, float time);
