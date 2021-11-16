@@ -1118,25 +1118,6 @@ fn update(demo: *DemoState) void {
     } else if (c.cbtConIsCreated(demo.pick.constraint)) {
         const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));
         c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
-
-        const body_a = c.cbtConGetBodyA(demo.pick.constraint);
-        const body_b = c.cbtConGetBodyB(demo.pick.constraint);
-
-        var trans_a: [4]c.CbtVector3 = undefined;
-        var trans_b: [4]c.CbtVector3 = undefined;
-        c.cbtBodyGetCenterOfMassTransform(body_a, &trans_a);
-        c.cbtBodyGetCenterOfMassTransform(body_b, &trans_b);
-
-        var pivot_a: c.CbtVector3 = undefined;
-        var pivot_b: c.CbtVector3 = undefined;
-        c.cbtConPoint2PointGetPivotA(demo.pick.constraint, &pivot_a);
-        c.cbtConPoint2PointGetPivotB(demo.pick.constraint, &pivot_b);
-
-        const position_a = (Vec3{ .c = pivot_a }).transform(Mat4.initArray4x3(trans_a));
-        const position_b = (Vec3{ .c = pivot_b }).transform(Mat4.initArray4x3(trans_b));
-
-        const color = c.CbtVector3{ 1.0, 1.0, 0.0 };
-        c.cbtWorldDebugDrawLine(demo.physics_world, &position_a.c, &position_b.c, &color);
     }
 
     if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint)) {
@@ -1144,6 +1125,35 @@ fn update(demo: *DemoState) void {
         c.cbtConDestroy(demo.pick.constraint);
         c.cbtBodySetDamping(demo.pick.body, demo.pick.saved_linear_damping, demo.pick.saved_angular_damping);
         demo.pick.body = null;
+    }
+
+    // Draw all Point2Point constraints as lines
+    {
+        const num_constraints: i32 = c.cbtWorldGetNumConstraints(demo.physics_world);
+        var i: i32 = 0;
+        while (i < num_constraints) : (i += 1) {
+            const constraint = c.cbtWorldGetConstraint(demo.physics_world, i);
+            if (c.cbtConGetType(constraint) != c.CBT_CONSTRAINT_TYPE_POINT2POINT) continue;
+
+            const body_a = c.cbtConGetBodyA(constraint);
+            const body_b = c.cbtConGetBodyB(constraint);
+
+            var trans_a: [4]c.CbtVector3 = undefined;
+            var trans_b: [4]c.CbtVector3 = undefined;
+            c.cbtBodyGetCenterOfMassTransform(body_a, &trans_a);
+            c.cbtBodyGetCenterOfMassTransform(body_b, &trans_b);
+
+            var pivot_a: c.CbtVector3 = undefined;
+            var pivot_b: c.CbtVector3 = undefined;
+            c.cbtConPoint2PointGetPivotA(constraint, &pivot_a);
+            c.cbtConPoint2PointGetPivotB(constraint, &pivot_b);
+
+            const position_a = (Vec3{ .c = pivot_a }).transform(Mat4.initArray4x3(trans_a));
+            const position_b = (Vec3{ .c = pivot_b }).transform(Mat4.initArray4x3(trans_b));
+
+            const color = c.CbtVector3{ 1.0, 1.0, 0.0 };
+            c.cbtWorldDebugDrawLine(demo.physics_world, &position_a.c, &position_b.c, &color);
+        }
     }
 }
 
