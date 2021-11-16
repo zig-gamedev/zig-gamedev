@@ -1395,6 +1395,26 @@ void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle con_handle, float impu
     con->m_setting.m_impulseClamp = impulse_clamp;
 }
 
+void cbtConPoint2PointGetPivotA(CbtConstraintHandle con_handle, CbtVector3 pivot) {
+    assert(con_handle && cbtConIsCreated(con_handle) && pivot);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)con_handle;
+    auto tmp = con->getPivotInA();
+    pivot[0] = tmp.x();
+    pivot[1] = tmp.y();
+    pivot[2] = tmp.z();
+}
+
+void cbtConPoint2PointGetPivotB(CbtConstraintHandle con_handle, CbtVector3 pivot) {
+    assert(con_handle && cbtConIsCreated(con_handle) && pivot);
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_POINT2POINT);
+    btPoint2PointConstraint* con = (btPoint2PointConstraint*)con_handle;
+    auto tmp = con->getPivotInB();
+    pivot[0] = tmp.x();
+    pivot[1] = tmp.y();
+    pivot[2] = tmp.z();
+}
+
 void cbtConHingeCreate1(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_a,

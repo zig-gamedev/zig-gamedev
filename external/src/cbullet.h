@@ -374,6 +374,9 @@ void cbtConPoint2PointSetTau(CbtConstraintHandle con_handle, float tau);
 void cbtConPoint2PointSetDamping(CbtConstraintHandle con_handle, float damping);
 void cbtConPoint2PointSetImpulseClamp(CbtConstraintHandle con_handle, float impulse_clamp);
 
+void cbtConPoint2PointGetPivotA(CbtConstraintHandle con_handle, CbtVector3 pivot);
+void cbtConPoint2PointGetPivotB(CbtConstraintHandle con_handle, CbtVector3 pivot);
+
 // Hinge
 void cbtConHingeCreate1(
     CbtConstraintHandle con_handle,

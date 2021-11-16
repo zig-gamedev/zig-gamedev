@@ -436,22 +436,22 @@ fn createScene1(
     c.cbtShapeConeCreate(cone_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
 
     const body0 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body0, 1.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), shape_box_e111);
+    c.cbtBodyCreate(body0, 10.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), shape_box_e111);
 
     const body1 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body1, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
+    c.cbtBodyCreate(body1, 100.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
 
     const body2 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body2, 1.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), shape_sphere_r1);
+    c.cbtBodyCreate(body2, 10.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), shape_sphere_r1);
 
     const body3 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body3, 1.0, &Mat4.initTranslation(Vec3.init(-5, 3.5, 10)).toArray4x3(), capsule_shape);
+    c.cbtBodyCreate(body3, 10.0, &Mat4.initTranslation(Vec3.init(-5, 3.5, 10)).toArray4x3(), capsule_shape);
 
     const body4 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body4, 1.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
+    c.cbtBodyCreate(body4, 10.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
 
     const body5 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body5, 1.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 7)).toArray4x3(), cone_shape);
+    c.cbtBodyCreate(body5, 10.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 7)).toArray4x3(), cone_shape);
 
     createAddEntity(world, body0, Vec4.init(0.75, 0.0, 0.0, 0.5), Vec3.initS(1.0), mesh_cube, entities);
     createAddEntity(world, body1, Vec4.init(1.0, 0.9, 0.0, 0.75), Vec3.init(0.5, 1.0, 2.0), mesh_cube, entities);
@@ -1072,6 +1072,25 @@ fn update(demo: *DemoState) void {
     } else if (c.cbtConIsCreated(demo.pick.constraint)) {
         const to = ray_from.add(ray_to.normalize().scale(demo.pick.distance));
         c.cbtConPoint2PointSetPivotB(demo.pick.constraint, &to.c);
+
+        const body_a = c.cbtConGetBodyA(demo.pick.constraint);
+        const body_b = c.cbtConGetBodyB(demo.pick.constraint);
+
+        var trans_a: [4]c.CbtVector3 = undefined;
+        var trans_b: [4]c.CbtVector3 = undefined;
+        c.cbtBodyGetCenterOfMassTransform(body_a, &trans_a);
+        c.cbtBodyGetCenterOfMassTransform(body_b, &trans_b);
+
+        var pivot_a: c.CbtVector3 = undefined;
+        var pivot_b: c.CbtVector3 = undefined;
+        c.cbtConPoint2PointGetPivotA(demo.pick.constraint, &pivot_a);
+        c.cbtConPoint2PointGetPivotB(demo.pick.constraint, &pivot_b);
+
+        const position_a = (Vec3{ .c = pivot_a }).transform(Mat4.initArray4x3(trans_a));
+        const position_b = (Vec3{ .c = pivot_b }).transform(Mat4.initArray4x3(trans_b));
+
+        const color = c.CbtVector3{ 1.0, 1.0, 0.0 };
+        c.cbtWorldDebugDrawLine(demo.physics_world, &position_a.c, &position_b.c, &color);
     }
 
     if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint)) {
