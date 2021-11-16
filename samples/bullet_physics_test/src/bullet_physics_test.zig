@@ -313,6 +313,8 @@ const DemoState = struct {
     current_scene_index: i32,
     selected_entity_index: u32,
     keyboard_delay: f32,
+    pause_simulation: bool,
+    step_simulation: bool,
 
     camera: Camera,
     mouse: struct {
@@ -788,6 +790,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .current_scene_index = 0,
         .selected_entity_index = 0,
         .keyboard_delay = 0.0,
+        .pause_simulation = false,
+        .step_simulation = false,
     };
 }
 
@@ -842,7 +846,12 @@ fn createAddEntity(
 fn update(demo: *DemoState) void {
     const dt = demo.frame_stats.delta_time;
 
-    _ = c.cbtWorldStepSimulation(demo.physics_world, dt, 1, 1.0 / 60.0);
+    if (!demo.pause_simulation) {
+        _ = c.cbtWorldStepSimulation(demo.physics_world, dt, 1, 1.0 / 60.0);
+    } else if (demo.step_simulation) {
+        _ = c.cbtWorldStepSimulation(demo.physics_world, 1.0 / 60.0, 1, 1.0 / 60.0);
+        demo.step_simulation = false;
+    }
 
     demo.frame_stats.update();
     lib.newImGuiFrame(dt);
@@ -876,6 +885,18 @@ fn update(demo: *DemoState) void {
         c.cbtWorldGetGravity(demo.physics_world, &gravity);
         if (c.igSliderFloat("Gravity", &gravity[1], -15.0, 15.0, null, c.ImGuiSliderFlags_None)) {
             c.cbtWorldSetGravity(demo.physics_world, &gravity);
+        }
+        if (c.igButton(
+            if (demo.pause_simulation) "  Resume Simulation  " else "  Pause Simulation  ",
+            .{ .x = 0, .y = 0 },
+        )) {
+            demo.pause_simulation = !demo.pause_simulation;
+        }
+        if (demo.pause_simulation) {
+            c.igSameLine(0.0, -1.0);
+            if (c.igButton("  Step  ", .{ .x = 0, .y = 0 })) {
+                demo.step_simulation = true;
+            }
         }
         c.igNewLine();
     }
