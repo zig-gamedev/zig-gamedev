@@ -1419,7 +1419,7 @@ pub const GuiContext = struct {
     vb_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
     ib_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
-    pub fn init(arena: *std.mem.Allocator, gr: *GraphicsContext) GuiContext {
+    pub fn init(arena: *std.mem.Allocator, gr: *GraphicsContext, num_msaa_samples: u32) GuiContext {
         assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
@@ -1476,6 +1476,7 @@ pub const GuiContext = struct {
             pso_desc.NumRenderTargets = 1;
             pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
             pso_desc.PrimitiveTopologyType = .TRIANGLE;
+            pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
             break :blk gr.createGraphicsShaderPipeline(
                 arena,
                 &pso_desc,

@@ -28,6 +28,8 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: bullet physics test";
 const window_width = 1920;
 const window_height = 1080;
+const num_msaa_samples = 4;
+
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
 const default_linear_damping: f32 = 0.1;
@@ -293,7 +295,9 @@ const DemoState = struct {
     physics_debug_pso: gr.PipelineHandle,
     simple_entity_pso: gr.PipelineHandle,
 
+    color_texture: gr.ResourceHandle,
     depth_texture: gr.ResourceHandle,
+    color_texture_rtv: d3d12.CPU_DESCRIPTOR_HANDLE,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     vertex_buffer: gr.ResourceHandle,
@@ -560,6 +564,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.PrimitiveTopologyType = .LINE;
         pso_desc.RasterizerState.AntialiasedLineEnable = w.TRUE;
         pso_desc.DSVFormat = .D32_FLOAT;
+        pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
 
         break :blk grfx.createGraphicsShaderPipeline(
             &arena_allocator.allocator,
@@ -585,6 +590,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.DSVFormat = .D32_FLOAT;
+        pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
 
         if (!barycentrics_supported) {
             break :blk grfx.createGraphicsShaderPipelineAllStages(
@@ -604,12 +610,29 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         }
     };
 
+    const color_texture = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &blk: {
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, grfx.viewport_width, grfx.viewport_height, 1);
+            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+            desc.SampleDesc.Count = num_msaa_samples;
+            break :blk desc;
+        },
+        d3d12.RESOURCE_STATE_RENDER_TARGET,
+        &d3d12.CLEAR_VALUE.initColor(.R8G8B8A8_UNORM, &.{ 0.0, 0.0, 0.0, 1.0 }),
+    ) catch |err| hrPanic(err);
+
+    const color_texture_rtv = grfx.allocateCpuDescriptors(.RTV, 1);
+    grfx.device.CreateRenderTargetView(grfx.getResource(color_texture), null, color_texture_rtv);
+
     const depth_texture = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            desc.SampleDesc.Count = num_msaa_samples;
             break :blk desc;
         },
         d3d12.RESOURCE_STATE_DEPTH_WRITE,
@@ -691,7 +714,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, num_msaa_samples);
 
     {
         const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_positions.items.len));
@@ -746,7 +769,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .meshes = all_meshes,
+        .color_texture = color_texture,
         .depth_texture = depth_texture,
+        .color_texture_rtv = color_texture_rtv,
         .depth_texture_dsv = depth_texture_dsv,
         .camera = camera,
         .mouse = .{
@@ -773,6 +798,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.info_txtfmt.Release();
     _ = demo.grfx.releasePipeline(demo.physics_debug_pso);
     _ = demo.grfx.releasePipeline(demo.simple_entity_pso);
+    _ = demo.grfx.releaseResource(demo.color_texture);
     _ = demo.grfx.releaseResource(demo.depth_texture);
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
@@ -1047,20 +1073,18 @@ fn draw(demo: *DemoState) void {
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
-    const back_buffer = grfx.getBackBuffer();
-
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    grfx.addTransitionBarrier(demo.color_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
     grfx.flushResourceBarriers();
 
     grfx.cmdlist.OMSetRenderTargets(
         1,
-        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
+        &[_]d3d12.CPU_DESCRIPTOR_HANDLE{demo.color_texture_rtv},
         w.TRUE,
         &demo.depth_texture_dsv,
     );
     grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
     grfx.cmdlist.ClearRenderTargetView(
-        back_buffer.descriptor_handle,
+        demo.color_texture_rtv,
         &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
         null,
@@ -1130,6 +1154,21 @@ fn draw(demo: *DemoState) void {
     }
 
     demo.gui.draw(grfx);
+
+    const back_buffer = grfx.getBackBuffer();
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RESOLVE_DEST);
+    grfx.addTransitionBarrier(demo.color_texture, d3d12.RESOURCE_STATE_RESOLVE_SOURCE);
+    grfx.flushResourceBarriers();
+
+    grfx.cmdlist.ResolveSubresource(
+        grfx.getResource(back_buffer.resource_handle),
+        0,
+        grfx.getResource(demo.color_texture),
+        0,
+        .R8G8B8A8_UNORM,
+    );
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    grfx.flushResourceBarriers();
 
     grfx.beginDraw2d();
     {
