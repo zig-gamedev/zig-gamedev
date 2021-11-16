@@ -706,7 +706,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
 
     var all_meshes = std.ArrayList(Mesh).init(gpa);
     var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);

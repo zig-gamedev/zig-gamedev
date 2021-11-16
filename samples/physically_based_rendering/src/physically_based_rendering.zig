@@ -556,7 +556,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
 
     const vertex_buffer = blk: {
         var vertex_buffer = grfx.createCommittedResource(

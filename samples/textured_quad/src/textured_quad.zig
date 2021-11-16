@@ -126,7 +126,7 @@ const DemoState = struct {
 
         grfx.beginFrame();
 
-        const gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+        const gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
 
         const texture = grfx.createAndUploadTex2dFromFile(
             "content/genart_0025_5.png",

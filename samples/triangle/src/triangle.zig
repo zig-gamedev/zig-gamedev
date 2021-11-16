@@ -84,7 +84,7 @@ pub fn main() !void {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
     defer gui.deinit(&grfx);
 
     const upload_verts = grfx.allocateUploadBufferRegion(vm.Vec3, 3);

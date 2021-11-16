@@ -236,7 +236,7 @@ const DemoState = struct {
 
         grfx.beginFrame();
 
-        var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+        var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
 
         const base_color_texture = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_BaseColor.png",

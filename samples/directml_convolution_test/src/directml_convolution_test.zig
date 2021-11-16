@@ -364,7 +364,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx);
+    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
 
     const image_texture = grfx.createAndUploadTex2dFromFile(
         "content/genart_0025_5.png",
