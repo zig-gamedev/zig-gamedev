@@ -145,7 +145,7 @@ pub fn main() !void {
             }
             lib.newImGuiFrame(stats.delta_time);
 
-            c.igSetNextWindowPos(c.ImVec2{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, c.ImVec2{ .x = 0.0, .y = 0.0 });
+            c.igSetNextWindowPos(.{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
             c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);
             _ = c.igBegin(
                 "Demo Settings",
@@ -189,7 +189,7 @@ pub fn main() !void {
             grfx.cmdlist.SetGraphicsRoot32BitConstant(
                 0,
                 c.igColorConvertFloat4ToU32(
-                    c.ImVec4{ .x = triangle_color.c[0], .y = triangle_color.c[1], .z = triangle_color.c[2], .w = 1.0 },
+                    .{ .x = triangle_color.c[0], .y = triangle_color.c[1], .z = triangle_color.c[2], .w = 1.0 },
                 ),
                 0,
             );
