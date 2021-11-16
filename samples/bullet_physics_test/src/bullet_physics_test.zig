@@ -313,8 +313,8 @@ const DemoState = struct {
     current_scene_index: i32,
     selected_entity_index: u32,
     keyboard_delay: f32,
-    pause_simulation: bool,
-    step_simulation: bool,
+    simulation_is_paused: bool,
+    do_simulation_step: bool,
 
     camera: Camera,
     mouse: struct {
@@ -790,8 +790,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .current_scene_index = 0,
         .selected_entity_index = 0,
         .keyboard_delay = 0.0,
-        .pause_simulation = false,
-        .step_simulation = false,
+        .simulation_is_paused = false,
+        .do_simulation_step = false,
     };
 }
 
@@ -846,11 +846,11 @@ fn createAddEntity(
 fn update(demo: *DemoState) void {
     const dt = demo.frame_stats.delta_time;
 
-    if (!demo.pause_simulation) {
+    if (!demo.simulation_is_paused) {
         _ = c.cbtWorldStepSimulation(demo.physics_world, dt, 1, 1.0 / 60.0);
-    } else if (demo.step_simulation) {
+    } else if (demo.do_simulation_step) {
         _ = c.cbtWorldStepSimulation(demo.physics_world, 1.0 / 60.0, 1, 1.0 / 60.0);
-        demo.step_simulation = false;
+        demo.do_simulation_step = false;
     }
 
     demo.frame_stats.update();
@@ -887,15 +887,15 @@ fn update(demo: *DemoState) void {
             c.cbtWorldSetGravity(demo.physics_world, &gravity);
         }
         if (c.igButton(
-            if (demo.pause_simulation) "  Resume Simulation  " else "  Pause Simulation  ",
+            if (demo.simulation_is_paused) "  Resume Simulation  " else "  Pause Simulation  ",
             .{ .x = 0, .y = 0 },
         )) {
-            demo.pause_simulation = !demo.pause_simulation;
+            demo.simulation_is_paused = !demo.simulation_is_paused;
         }
-        if (demo.pause_simulation) {
+        if (demo.simulation_is_paused) {
             c.igSameLine(0.0, -1.0);
             if (c.igButton("  Step  ", .{ .x = 0, .y = 0 })) {
-                demo.step_simulation = true;
+                demo.do_simulation_step = true;
             }
         }
         c.igNewLine();
@@ -937,6 +937,25 @@ fn update(demo: *DemoState) void {
         }
     }
     c.igEnd();
+
+    if (demo.simulation_is_paused and demo.selected_entity_index > 0) { // index 0 is static world
+        const body = demo.entities.items[demo.selected_entity_index].body;
+
+        var linear_velocity: c.CbtVector3 = undefined;
+        var angular_velocity: c.CbtVector3 = undefined;
+        var position: c.CbtVector3 = undefined;
+        c.cbtBodyGetLinearVelocity(body, &linear_velocity);
+        c.cbtBodyGetAngularVelocity(body, &angular_velocity);
+        c.cbtBodyGetCenterOfMassPosition(body, &position);
+
+        const p1_linear = (Vec3{ .c = position }).add(Vec3{ .c = linear_velocity }).c;
+        const p1_angular = (Vec3{ .c = position }).add(Vec3{ .c = angular_velocity }).c;
+        const color_linear = c.CbtVector3{ 1.0, 0.0, 1.0 };
+        const color_angular = c.CbtVector3{ 0.0, 1.0, 1.0 };
+
+        c.cbtWorldDebugDrawLine(demo.physics_world, &position, &p1_linear, &color_linear);
+        c.cbtWorldDebugDrawLine(demo.physics_world, &position, &p1_angular, &color_angular);
+    }
 
     // Handle camera rotation with mouse.
     {
