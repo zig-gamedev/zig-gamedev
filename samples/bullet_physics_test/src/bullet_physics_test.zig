@@ -872,6 +872,11 @@ fn update(demo: *DemoState) void {
             demo.selected_entity_index = 0;
             demo.entities.items[demo.selected_entity_index].flags = 1;
         }
+        var gravity: c.CbtVector3 = undefined;
+        c.cbtWorldGetGravity(demo.physics_world, &gravity);
+        if (c.igSliderFloat("Gravity", &gravity[1], -15.0, 15.0, null, c.ImGuiSliderFlags_None)) {
+            c.cbtWorldSetGravity(demo.physics_world, &gravity);
+        }
         c.igNewLine();
     }
     {

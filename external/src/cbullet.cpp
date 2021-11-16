@@ -79,9 +79,18 @@ void cbtWorldDestroy(CbtWorldHandle world_handle) {
 }
 
 void cbtWorldSetGravity(CbtWorldHandle world_handle, const CbtVector3 gravity) {
-    assert(world_handle);
+    assert(world_handle && gravity);
     auto world = (btDiscreteDynamicsWorld*)world_handle;
     world->setGravity(btVector3(gravity[0], gravity[1], gravity[2]));
+}
+
+void cbtWorldGetGravity(CbtWorldHandle world_handle, CbtVector3 gravity) {
+    assert(world_handle && gravity);
+    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto tmp = world->getGravity();
+    gravity[0] = tmp.x();
+    gravity[1] = tmp.y();
+    gravity[2] = tmp.z();
 }
 
 int cbtWorldStepSimulation(CbtWorldHandle world_handle, float time_step, int max_sub_steps, float fixed_time_step) {

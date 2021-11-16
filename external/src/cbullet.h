@@ -114,6 +114,7 @@ typedef struct CbtRayCastResult {
 CbtWorldHandle cbtWorldCreate(void);
 void cbtWorldDestroy(CbtWorldHandle world_handle);
 void cbtWorldSetGravity(CbtWorldHandle world_handle, const CbtVector3 gravity);
+void cbtWorldGetGravity(CbtWorldHandle world_handle, CbtVector3 gravity);
 int cbtWorldStepSimulation(
     CbtWorldHandle world_handle,
     float time_step,
