@@ -439,7 +439,7 @@ fn createScene1(
     c.cbtBodyCreate(body0, 10.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), shape_box_e111);
 
     const body1 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body1, 100.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
+    c.cbtBodyCreate(body1, 50.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
 
     const body2 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body2, 10.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), shape_sphere_r1);
@@ -868,7 +868,12 @@ fn update(demo: *DemoState) void {
         c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
     );
     {
-        _ = c.igCombo_Str("Scene", &demo.current_scene_index, "Collision Shapes\x00Stack of Boxes\x00\x00", -1);
+        _ = c.igCombo_Str(
+            "",
+            &demo.current_scene_index,
+            "Scene: Collision Shapes\x00Scene: Stack of Boxes\x00\x00",
+            -1,
+        );
         c.igSameLine(0.0, -1.0);
         if (c.igButton("  Load  ", .{ .x = 0, .y = 0 })) {
             demo.physics_objects_pool.destroyAllObjects(demo.physics_world);
@@ -881,6 +886,12 @@ fn update(demo: *DemoState) void {
             demo.selected_entity_index = 0;
             demo.entities.items[demo.selected_entity_index].flags = 1;
         }
+        c.igNewLine();
+
+        c.igText("Scene Settings:", "");
+        c.igDummy(.{ .x = 0, .y = 2 });
+        c.igSeparator();
+
         var gravity: c.CbtVector3 = undefined;
         c.cbtWorldGetGravity(demo.physics_world, &gravity);
         if (c.igSliderFloat("Gravity", &gravity[1], -15.0, 15.0, null, c.ImGuiSliderFlags_None)) {
@@ -898,10 +909,15 @@ fn update(demo: *DemoState) void {
                 demo.do_simulation_step = true;
             }
         }
+        c.igSeparator();
         c.igNewLine();
     }
     {
         const body = demo.entities.items[demo.selected_entity_index].body;
+
+        c.igText("Selected Object Settings:", "");
+        c.igDummy(.{ .x = 0, .y = 2 });
+        c.igSeparator();
 
         var linear_damping = c.cbtBodyGetLinearDamping(body);
         var angular_damping = c.cbtBodyGetAngularDamping(body);
@@ -911,16 +927,27 @@ fn update(demo: *DemoState) void {
         if (c.igSliderFloat("Angular Damping", &angular_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
             c.cbtBodySetDamping(body, linear_damping, angular_damping);
         }
+        c.igSeparator();
 
         var friction = c.cbtBodyGetFriction(body);
         if (c.igSliderFloat("Friction", &friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
             c.cbtBodySetFriction(body, friction);
         }
+        var rolling_friction = c.cbtBodyGetRollingFriction(body);
+        if (c.igSliderFloat("Rolling Friction", &rolling_friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
+            c.cbtBodySetRollingFriction(body, rolling_friction);
+        }
+        var spinning_friction = c.cbtBodyGetSpinningFriction(body);
+        if (c.igSliderFloat("Spinning Friction", &spinning_friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
+            c.cbtBodySetSpinningFriction(body, spinning_friction);
+        }
+        c.igSeparator();
 
         var restitution = c.cbtBodyGetRestitution(body);
         if (c.igSliderFloat("Restitution", &restitution, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
             c.cbtBodySetRestitution(body, restitution);
         }
+        c.igSeparator();
 
         const mass_flag = if (c.cbtBodyIsStaticOrKinematic(body))
             c.ImGuiInputTextFlags_ReadOnly
