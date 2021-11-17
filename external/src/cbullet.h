@@ -208,6 +208,7 @@ void cbtShapeCompoundRemoveChild(CbtShapeHandle shape_handle, CbtShapeHandle chi
 void cbtShapeCompoundRemoveChildByIndex(CbtShapeHandle shape_handle, int child_shape_index);
 int cbtShapeCompoundGetNumChilds(CbtShapeHandle shape_handle);
 CbtShapeHandle cbtShapeCompoundGetChild(CbtShapeHandle shape_handle, int child_shape_index);
+void cbtShapeCompoundGetChildTransform(CbtShapeHandle shape_handle, int child_shape_index, CbtVector3 transform[4]);
 
 void cbtShapeTriMeshCreateBegin(CbtShapeHandle shape_handle);
 void cbtShapeTriMeshCreateEnd(CbtShapeHandle shape_handle);
