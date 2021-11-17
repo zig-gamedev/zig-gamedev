@@ -45,7 +45,7 @@ const Scene = enum {
 const PhysicsObjectsPool = struct {
     const max_num_bodies = 2 * 1024;
     const max_num_constraints = 44;
-    const max_num_shapes = 56;
+    const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
     constraints: []c.CbtConstraintHandle,
     shapes: []c.CbtShapeHandle,
@@ -113,11 +113,6 @@ const PhysicsObjectsPool = struct {
             i = 0;
             while (i < 8) : (i += 1) {
                 pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
-                counter += 1;
-            }
-            i = 0;
-            while (i < 8) : (i += 1) {
-                pool.shapes[counter] = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_STATIC_PLANE);
                 counter += 1;
             }
             i = 0;
@@ -425,13 +420,13 @@ fn createScene1(
     c.cbtBodySetFriction(world_body, default_world_friction);
 
     const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(box_shape, 0.5, 1.0, 2.0);
+    c.cbtShapeBoxCreate(box_shape, &Vec3.init(0.5, 1.0, 2.0).c);
 
     const capsule_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CAPSULE);
     c.cbtShapeCapsuleCreate(capsule_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
 
     const cylinder_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-    c.cbtShapeCylinderCreate(cylinder_shape, 1.0, 1.0, 1.0, c.CBT_LINEAR_AXIS_Y);
+    c.cbtShapeCylinderCreate(cylinder_shape, &Vec3.init(1.0, 1.0, 1.0).c, c.CBT_LINEAR_AXIS_Y);
 
     const cone_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CONE);
     c.cbtShapeConeCreate(cone_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
@@ -546,7 +541,7 @@ fn createScene3(
 
         if (prev_body != null) {
             const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
-            c.cbtConPoint2PointCreate2(p2p, prev_body, body, &Vec3.init(1.2, 0, 0).c, &Vec3.init(-1.2, 0, 0).c);
+            c.cbtConPoint2PointCreate2(p2p, prev_body, body, &Vec3.init(1.1, 0, 0).c, &Vec3.init(-1.1, 0, 0).c);
             c.cbtConPoint2PointSetTau(p2p, 0.001);
             c.cbtWorldAddConstraint(world, p2p, false);
         }
@@ -763,7 +758,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         c.cbtShapeSphereCreate(shape_sphere_r1, 1.0);
 
         shape_box_e111 = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_BOX);
-        c.cbtShapeBoxCreate(shape_box_e111, 1.0, 1.0, 1.0);
+        c.cbtShapeBoxCreate(shape_box_e111, &Vec3.init(1.0, 1.0, 1.0).c);
     }
 
     const physics_objects_pool = PhysicsObjectsPool.init();

@@ -25,12 +25,10 @@
 
 // cbtShapeGetType, cbtShapeAllocate
 #define CBT_SHAPE_TYPE_BOX 0
-#define CBT_SHAPE_TYPE_BOX_2D 17
 #define CBT_SHAPE_TYPE_SPHERE 8
 #define CBT_SHAPE_TYPE_CAPSULE 10
 #define CBT_SHAPE_TYPE_CONE 11
 #define CBT_SHAPE_TYPE_CYLINDER 13
-#define CBT_SHAPE_TYPE_STATIC_PLANE 28
 #define CBT_SHAPE_TYPE_COMPOUND 31
 #define CBT_SHAPE_TYPE_TRIANGLE_MESH 21
 
@@ -172,31 +170,29 @@ void cbtShapeDeallocate(CbtShapeHandle shape_handle);
 void cbtShapeDestroy(CbtShapeHandle shape_handle);
 bool cbtShapeIsCreated(CbtShapeHandle shape_handle);
 int cbtShapeGetType(CbtShapeHandle shape_handle);
+void cbtShapeSetMargin(CbtShapeHandle shape_handle, float margin);
+float cbtShapeGetMargin(CbtShapeHandle shape_handle);
 
-void cbtShapeBoxCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y, float half_extent_z);
-
-void cbtShapeBox2dCreate(CbtShapeHandle shape_handle, float half_extent_x, float half_extent_y);
+void cbtShapeBoxCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents);
+void cbtShapeBoxGetHalfExtentsWithoutMargin(CbtShapeHandle shape_handle, CbtVector3 half_extents);
+void cbtShapeBoxGetHalfExtentsWithMargin(CbtShapeHandle shape_handle, CbtVector3 half_extents);
 
 void cbtShapeSphereCreate(CbtShapeHandle shape_handle, float radius);
 void cbtShapeSphereSetUnscaledRadius(CbtShapeHandle shape_handle, float radius);
 float cbtShapeSphereGetRadius(CbtShapeHandle shape_handle);
-
-void cbtShapePlaneCreate(CbtShapeHandle shape_handle, const CbtVector3 normal, float distance);
 
 void cbtShapeCapsuleCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
 int cbtShapeCapsuleGetUpAxis(CbtShapeHandle shape_handle);
 float cbtShapeCapsuleGetHalfHeight(CbtShapeHandle shape_handle);
 float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle);
 
-void cbtShapeCylinderCreate(
-    CbtShapeHandle shape_handle,
-    float half_extent_x,
-    float half_extent_y,
-    float half_extent_z,
-    int axis
-);
+void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis);
+void cbtShapeCylinderGetHalfExtentsWithoutMargin(CbtShapeHandle shape_handle, CbtVector3 half_extents);
+void cbtShapeCylinderGetHalfExtentsWithMargin(CbtShapeHandle shape_handle, CbtVector3 half_extents);
 
 void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
+float cbtShapeConeGetRadius(CbtShapeHandle shape_handle);
+float cbtShapeConeGetHeight(CbtShapeHandle shape_handle);
 
 void cbtShapeCompoundCreate(
     CbtShapeHandle shape_handle,
