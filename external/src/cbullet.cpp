@@ -199,14 +199,16 @@ void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCa
     auto debug = (CbtDebugDraw*)world->getDebugDrawer();
     if (debug == nullptr) {
         debug = new CbtDebugDraw();
+#if 0
         debug->setDebugMode(
-            0
-            //btIDebugDraw::DBG_DrawWireframe |
+            btIDebugDraw::DBG_DrawWireframe |
             //btIDebugDraw::DBG_DrawFrames |
             //btIDebugDraw::DBG_DrawContactPoints |
             //btIDebugDraw::DBG_DrawNormals |
-            //btIDebugDraw::DBG_DrawConstraints
+            //btIDebugDraw::DBG_DrawConstraints |
+            0
         );
+#endif
         world->setDebugDrawer(debug);
     }
 

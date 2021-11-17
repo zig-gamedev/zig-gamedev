@@ -906,10 +906,17 @@ fn createAddEntity(
     mesh_index: u16,
     entities: *std.ArrayList(Entity),
 ) void {
+    var tweaked_size = size;
+    // TODO(mziulek): Tweak size for boxes.
+    //const shape = c.cbtBodyGetShape(body);
+    //if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_BOX) {
+    //tweaked_size = tweaked_size.scale();
+    //c.cbtShapeBoxGetHalfExtentsWithMargin(shape, &tweaked_size.c);
+    //}
     entities.append(.{
         .body = body,
         .base_color_roughness = base_color_roughness,
-        .size = size,
+        .size = tweaked_size,
         .mesh_index = mesh_index,
     }) catch unreachable;
     const entity_index = @intCast(i32, entities.items.len - 1);
