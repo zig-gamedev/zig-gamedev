@@ -935,7 +935,7 @@ fn createAddEntity(
     body: c.CbtBodyHandle,
     base_color_roughness: Vec4,
     size: Vec3,
-    mesh_index: u16,
+    mesh_index: u16, // TODO(mziulek): Remove `mesh_index` param - use body's shape to figure it out.
     entities: *std.ArrayList(Entity),
 ) void {
     var tweaked_size = size;
