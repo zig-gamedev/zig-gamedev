@@ -546,7 +546,34 @@ fn createScene3(
 
         if (prev_body != null) {
             const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
-            c.cbtConPoint2PointCreate2(p2p, prev_body, body, &Vec3.init(1.25, 0, 0).c, &Vec3.init(-1.25, 0, 0).c);
+            c.cbtConPoint2PointCreate2(p2p, prev_body, body, &Vec3.init(1.2, 0, 0).c, &Vec3.init(-1.2, 0, 0).c);
+            c.cbtConPoint2PointSetTau(p2p, 0.001);
+            c.cbtWorldAddConstraint(world, p2p, false);
+        }
+        prev_body = body;
+    }
+
+    // Fixed chain of spheres
+    var y: f32 = 16.0;
+    prev_body = null;
+
+    const static_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(static_body, 0.0, &Mat4.initTranslation(Vec3.init(10, y, 10)).toArray4x3(), shape_box_e111);
+    createAddEntity(world, static_body, Vec4.init(0.75, 0.75, 0.0, 0.5), Vec3.initS(1.0), mesh_cube, entities);
+
+    while (y >= 1.0) : (y -= 4.0) {
+        const body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body, 10.0, &Mat4.initTranslation(Vec3.init(10, y, 10)).toArray4x3(), shape_sphere_r1);
+        createAddEntity(world, body, Vec4.init(0.0, 0.25, 1.0, 0.25), Vec3.initS(1.0), mesh_sphere, entities);
+
+        if (prev_body != null) {
+            const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+            c.cbtConPoint2PointCreate2(p2p, body, prev_body, &Vec3.init(0, 1.25, 0).c, &Vec3.init(0, -1.25, 0).c);
+            c.cbtConPoint2PointSetTau(p2p, 0.001);
+            c.cbtWorldAddConstraint(world, p2p, false);
+        } else {
+            const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+            c.cbtConPoint2PointCreate2(p2p, body, static_body, &Vec3.init(0, 1.25, 0).c, &Vec3.init(0, -1.25, 0).c);
             c.cbtConPoint2PointSetTau(p2p, 0.001);
             c.cbtWorldAddConstraint(world, p2p, false);
         }
