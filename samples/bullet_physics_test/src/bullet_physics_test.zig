@@ -359,7 +359,7 @@ const PhysicsDebug = struct {
         debug.* = undefined;
     }
 
-    fn drawLine(debug: *PhysicsDebug, p0: Vec3, p1: Vec3, color: Vec3) void {
+    fn drawLine1(debug: *PhysicsDebug, p0: Vec3, p1: Vec3, color: Vec3) void {
         const r = @floatToInt(u32, color.c[0] * 255.0);
         const g = @floatToInt(u32, color.c[1] * 255.0) << 8;
         const b = @floatToInt(u32, color.c[2] * 255.0) << 16;
@@ -368,17 +368,48 @@ const PhysicsDebug = struct {
         debug.lines.append(.{ .position = p1.c, .color = rgb }) catch unreachable;
     }
 
-    fn drawContactPoint(debug: *PhysicsDebug, point: Vec3, normal: Vec3, distance: f32, color: Vec3) void {
-        debug.drawLine(point, point.add(normal.scale(distance)), color);
-        debug.drawLine(point, point.add(normal.scale(0.01)), Vec3.init(0, 0, 0));
+    fn drawLine2(debug: *PhysicsDebug, p0: Vec3, p1: Vec3, color0: Vec3, color1: Vec3) void {
+        const r0 = @floatToInt(u32, color0.c[0] * 255.0);
+        const g0 = @floatToInt(u32, color0.c[1] * 255.0) << 8;
+        const b0 = @floatToInt(u32, color0.c[2] * 255.0) << 16;
+        const rgb0 = r0 | g0 | b0;
+
+        const r1 = @floatToInt(u32, color1.c[0] * 255.0);
+        const g1 = @floatToInt(u32, color1.c[1] * 255.0) << 8;
+        const b1 = @floatToInt(u32, color1.c[2] * 255.0) << 16;
+        const rgb1 = r1 | g1 | b1;
+
+        debug.lines.append(.{ .position = p0.c, .color = rgb0 }) catch unreachable;
+        debug.lines.append(.{ .position = p1.c, .color = rgb1 }) catch unreachable;
     }
 
-    fn drawLineCallback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*c_void) callconv(.C) void {
+    fn drawContactPoint(debug: *PhysicsDebug, point: Vec3, normal: Vec3, distance: f32, color: Vec3) void {
+        debug.drawLine1(point, point.add(normal.scale(distance)), color);
+        debug.drawLine1(point, point.add(normal.scale(0.01)), Vec3.init(0, 0, 0));
+    }
+
+    fn drawLine1Callback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*c_void) callconv(.C) void {
         const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
-        ptr.drawLine(
+        ptr.drawLine1(
             Vec3.init(p0[0], p0[1], p0[2]),
             Vec3.init(p1[0], p1[1], p1[2]),
             Vec3.init(color[0], color[1], color[2]),
+        );
+    }
+
+    fn drawLine2Callback(
+        p0: [*c]const f32,
+        p1: [*c]const f32,
+        color0: [*c]const f32,
+        color1: [*c]const f32,
+        user: ?*c_void,
+    ) callconv(.C) void {
+        const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
+        ptr.drawLine2(
+            Vec3.init(p0[0], p0[1], p0[2]),
+            Vec3.init(p1[0], p1[1], p1[2]),
+            Vec3.init(color0[0], color0[1], color0[2]),
+            Vec3.init(color1[0], color1[1], color1[2]),
         );
     }
 
@@ -733,7 +764,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     c.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
 
     c.cbtWorldDebugSetCallbacks(physics_world, &.{
-        .drawLine = PhysicsDebug.drawLineCallback,
+        .drawLine1 = PhysicsDebug.drawLine1Callback,
+        .drawLine2 = PhysicsDebug.drawLine2Callback,
         .drawContactPoint = PhysicsDebug.drawContactPointCallback,
         .reportErrorWarning = PhysicsDebug.reportErrorWarningCallback,
         .user_data = physics_debug,
@@ -1058,8 +1090,8 @@ fn update(demo: *DemoState) void {
         const color_linear = c.CbtVector3{ 1.0, 0.0, 1.0 };
         const color_angular = c.CbtVector3{ 0.0, 1.0, 1.0 };
 
-        c.cbtWorldDebugDrawLine(demo.physics_world, &position, &p1_linear, &color_linear);
-        c.cbtWorldDebugDrawLine(demo.physics_world, &position, &p1_angular, &color_angular);
+        c.cbtWorldDebugDrawLine1(demo.physics_world, &position, &p1_linear, &color_linear);
+        c.cbtWorldDebugDrawLine1(demo.physics_world, &position, &p1_angular, &color_angular);
     }
 
     // Handle camera rotation with mouse.
@@ -1213,8 +1245,9 @@ fn update(demo: *DemoState) void {
         const position_a = (Vec3{ .c = pivot_a }).transform(Mat4.initArray4x3(trans_a));
         const position_b = (Vec3{ .c = pivot_b }).transform(Mat4.initArray4x3(trans_b));
 
-        const color = c.CbtVector3{ 1.0, 1.0, 0.0 };
-        c.cbtWorldDebugDrawLine(demo.physics_world, &position_a.c, &position_b.c, &color);
+        const color0 = c.CbtVector3{ 1.0, 1.0, 0.0 };
+        const color1 = c.CbtVector3{ 1.0, 0.0, 0.0 };
+        c.cbtWorldDebugDrawLine2(demo.physics_world, &position_a.c, &position_b.c, &color0, &color1);
     }
 
     if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint)) {
@@ -1255,9 +1288,9 @@ fn update(demo: *DemoState) void {
             const position_b = (Vec3{ .c = pivot_b }).transform(Mat4.initArray4x3(trans_b));
 
             const color = c.CbtVector3{ 1.0, 1.0, 0.0 };
-            c.cbtWorldDebugDrawLine(demo.physics_world, &position_a.c, &position_b.c, &color);
-            c.cbtWorldDebugDrawLine(demo.physics_world, &body_position_a, &position_a.c, &color);
-            c.cbtWorldDebugDrawLine(demo.physics_world, &body_position_b, &position_b.c, &color);
+            c.cbtWorldDebugDrawLine1(demo.physics_world, &position_a.c, &position_b.c, &color);
+            c.cbtWorldDebugDrawLine1(demo.physics_world, &body_position_a, &position_a.c, &color);
+            c.cbtWorldDebugDrawLine1(demo.physics_world, &body_position_b, &position_b.c, &color);
         }
     }
 }

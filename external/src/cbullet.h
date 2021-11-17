@@ -81,7 +81,19 @@ CBT_DECLARE_HANDLE(CbtShapeHandle);
 CBT_DECLARE_HANDLE(CbtBodyHandle);
 CBT_DECLARE_HANDLE(CbtConstraintHandle);
 
-typedef void (*CbtDrawLineCallback)(const CbtVector3 p0, const CbtVector3 p1, const CbtVector3 color, void* user_data);
+typedef void (*CbtDrawLine1Callback)(
+    const CbtVector3 p0,
+    const CbtVector3 p1,
+    const CbtVector3 color,
+    void* user_data
+);
+typedef void (*CbtDrawLine2Callback)(
+    const CbtVector3 p0,
+    const CbtVector3 p1,
+    const CbtVector3 color0,
+    const CbtVector3 color1,
+    void* user_data
+);
 typedef void (*CbtDrawContactPointCallback)(
     const CbtVector3 point,
     const CbtVector3 normal,
@@ -93,7 +105,8 @@ typedef void (*CbtDrawContactPointCallback)(
 typedef void (*CbtReportErrorWarningCallback)(const char* str, void* user_data);
 
 typedef struct CbtDebugDrawCallbacks {
-    CbtDrawLineCallback drawLine;
+    CbtDrawLine1Callback drawLine1;
+    CbtDrawLine2Callback drawLine2;
     CbtDrawContactPointCallback drawContactPoint;
     CbtReportErrorWarningCallback reportErrorWarning;
     void* user_data;
@@ -148,11 +161,18 @@ bool cbtRayTestClosest(
 
 void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCallbacks* callbacks);
 void cbtWorldDebugDraw(CbtWorldHandle world_handle);
-void cbtWorldDebugDrawLine(
+void cbtWorldDebugDrawLine1(
     CbtWorldHandle world_handle,
     const CbtVector3 p0,
     const CbtVector3 p1,
     const CbtVector3 color
+);
+void cbtWorldDebugDrawLine2(
+    CbtWorldHandle world_handle,
+    const CbtVector3 p0,
+    const CbtVector3 p1,
+    const CbtVector3 color0,
+    const CbtVector3 color1
 );
 void cbtWorldDebugDrawSphere(
     CbtWorldHandle world_handle,

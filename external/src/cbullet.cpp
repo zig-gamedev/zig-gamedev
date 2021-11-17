@@ -10,11 +10,26 @@ struct CbtDebugDraw : public btIDebugDraw {
     int debug_mode = 0;
 
     virtual void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) override {
-        if (callbacks.drawLine) {
+        if (callbacks.drawLine1) {
             const CbtVector3 p0 = { from.x(), from.y(), from.z() };
             const CbtVector3 p1 = { to.x(), to.y(), to.z() };
             const CbtVector3 c = { color.x(), color.y(), color.z() };
-            callbacks.drawLine(p0, p1, c, callbacks.user_data);
+            callbacks.drawLine1(p0, p1, c, callbacks.user_data);
+        }
+    }
+
+    virtual void drawLine(
+        const btVector3& from,
+        const btVector3& to,
+        const btVector3& color0,
+        const btVector3& color1
+    ) override {
+        if (callbacks.drawLine2) {
+            const CbtVector3 p0 = { from.x(), from.y(), from.z() };
+            const CbtVector3 p1 = { to.x(), to.y(), to.z() };
+            const CbtVector3 c0 = { color0.x(), color0.y(), color0.z() };
+            const CbtVector3 c1 = { color1.x(), color1.y(), color1.z() };
+            callbacks.drawLine2(p0, p1, c0, c1, callbacks.user_data);
         }
     }
 
@@ -221,7 +236,7 @@ void cbtWorldDebugDraw(CbtWorldHandle world_handle) {
     world->debugDrawWorld();
 }
 
-void cbtWorldDebugDrawLine(
+void cbtWorldDebugDrawLine1(
     CbtWorldHandle world_handle,
     const CbtVector3 p0,
     const CbtVector3 p1,
@@ -236,6 +251,26 @@ void cbtWorldDebugDrawLine(
         btVector3(p0[0], p0[1], p0[2]),
         btVector3(p1[0], p1[1], p1[2]),
         btVector3(color[0], color[1], color[2])
+    );
+}
+
+void cbtWorldDebugDrawLine2(
+    CbtWorldHandle world_handle,
+    const CbtVector3 p0,
+    const CbtVector3 p1,
+    const CbtVector3 color0,
+    const CbtVector3 color1
+) {
+    assert(world_handle);
+    assert(p0 && p1 && color0 && color1);
+    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    assert(world->getDebugDrawer());
+
+    world->getDebugDrawer()->drawLine(
+        btVector3(p0[0], p0[1], p0[2]),
+        btVector3(p1[0], p1[1], p1[2]),
+        btVector3(color0[0], color0[1], color0[2]),
+        btVector3(color1[0], color1[1], color1[2])
     );
 }
 
