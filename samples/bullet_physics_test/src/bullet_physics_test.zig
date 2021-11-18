@@ -1064,8 +1064,8 @@ fn update(demo: *DemoState) void {
     );
     c.igText("Left Mouse Button :  select object", "");
     c.igText("Left Mouse Button + drag :  pick up and move object", "");
-    c.igText("Right Mouse Button + drag :  rotate", "");
-    c.igText("W, A, S, D :  move", "");
+    c.igText("Right Mouse Button + drag :  rotate camera", "");
+    c.igText("W, A, S, D :  move camera", "");
     c.igText("SPACE :  shoot", "");
     c.igSpacing();
     {
