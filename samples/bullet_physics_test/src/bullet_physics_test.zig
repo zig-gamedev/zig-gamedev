@@ -494,7 +494,7 @@ fn createScene1(
     // Create bodies and entities
     //
     const body0 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body0, 10.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), shape_box_e111);
+    c.cbtBodyCreate(body0, 15.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), shape_box_e111);
     createAddEntity(world, body0, Vec4.init(0.75, 0.0, 0.0, 0.5), entities);
 
     const body1 = physics_objects_pool.getBody();
@@ -506,7 +506,7 @@ fn createScene1(
     createAddEntity(world, body2, Vec4.init(0.0, 0.1, 1.0, 0.25), entities);
 
     const body3 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body3, 10.0, &Mat4.initTranslation(Vec3.init(-5, 3.5, 10)).toArray4x3(), capsule_shape);
+    c.cbtBodyCreate(body3, 30.0, &Mat4.initTranslation(Vec3.init(-5, 3.5, 10)).toArray4x3(), capsule_shape);
     createAddEntity(world, body3, Vec4.init(0.0, 1.0, 0.0, 0.25), entities);
 
     const body4 = physics_objects_pool.getBody();
@@ -514,7 +514,7 @@ fn createScene1(
     createAddEntity(world, body4, Vec4.init(1.0, 1.0, 1.0, 0.75), entities);
 
     const body5 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body5, 10.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 7)).toArray4x3(), cone_shape);
+    c.cbtBodyCreate(body5, 15.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 7)).toArray4x3(), cone_shape);
     createAddEntity(world, body5, Vec4.init(1.0, 0.5, 0.0, 0.8), entities);
 
     const body6 = physics_objects_pool.getBody();
