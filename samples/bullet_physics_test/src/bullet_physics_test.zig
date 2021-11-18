@@ -467,7 +467,7 @@ fn createScene1(
     c.cbtShapeCylinderCreate(cylinder_shape, &Vec3.init(1.5, 2.0, 1.5).c, c.CBT_LINEAR_AXIS_Y);
 
     const thin_cylinder_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-    c.cbtShapeCylinderCreate(thin_cylinder_shape, &Vec3.init(0.25, 1.1, 0.25).c, c.CBT_LINEAR_AXIS_Y);
+    c.cbtShapeCylinderCreate(thin_cylinder_shape, &Vec3.init(0.3, 1.1, 0.3).c, c.CBT_LINEAR_AXIS_Y);
 
     const cone_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CONE);
     c.cbtShapeConeCreate(cone_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
@@ -510,7 +510,7 @@ fn createScene1(
     createAddEntity(world, body3, Vec4.init(0.0, 1.0, 0.0, 0.25), entities);
 
     const body4 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body4, 10.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
+    c.cbtBodyCreate(body4, 25.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
     createAddEntity(world, body4, Vec4.init(1.0, 1.0, 1.0, 0.75), entities);
 
     const body5 = physics_objects_pool.getBody();
@@ -518,8 +518,8 @@ fn createScene1(
     createAddEntity(world, body5, Vec4.init(1.0, 0.5, 0.0, 0.8), entities);
 
     const body6 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body6, 10.0, &Mat4.initTranslation(Vec3.init(0, 5, 12)).toArray4x3(), compound_shape);
-    createAddEntity(world, body6, Vec4.init(0.25, 0.0, 1.0, 0.1), entities);
+    c.cbtBodyCreate(body6, 50.0, &Mat4.initTranslation(Vec3.init(0, 5, 12)).toArray4x3(), compound_shape);
+    createAddEntity(world, body6, Vec4.init(1.0, 0.0, 0.0, 0.1), entities);
 
     camera.* = .{
         .position = Vec3.init(0.0, 3.0, 0.0),
@@ -1434,7 +1434,7 @@ fn draw(demo: *DemoState) void {
         // Draw all entities
         //
         for (demo.entities.items) |entity| {
-            if (entity.mesh_index == mesh_compound) { // Meshes that consists of multiple simple shapes
+            if (entity.mesh_index == mesh_compound) { // Meshes that consist of multiple simple shapes
                 const world_transform = blk: {
                     var transform: [4]c.CbtVector3 = undefined;
                     c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
@@ -1495,7 +1495,7 @@ fn draw(demo: *DemoState) void {
                         0,
                     );
                 }
-            } else { // Meshes that consists of single shape
+            } else { // Meshes that consist of single shape
                 var transform: [4]c.CbtVector3 = undefined;
                 c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
 
