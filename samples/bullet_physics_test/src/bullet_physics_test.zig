@@ -448,9 +448,12 @@ fn createScene1(
 ) void {
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
-    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
     c.cbtBodySetFriction(world_body, default_world_friction);
+    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
 
+    //
+    // Create shapes
+    //
     const sphere_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
     c.cbtShapeSphereCreate(sphere_shape, 1.5);
 
@@ -466,30 +469,49 @@ fn createScene1(
     const cone_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CONE);
     c.cbtShapeConeCreate(cone_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
 
+    const compound_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+    c.cbtShapeCompoundCreate(compound_shape, true, 2);
+    c.cbtShapeCompoundAddChild(
+        compound_shape,
+        &Mat4.initTranslation(Vec3.init(-1.25, 0, 0)).toArray4x3(),
+        shape_box_e111,
+    );
+    c.cbtShapeCompoundAddChild(
+        compound_shape,
+        &Mat4.initTranslation(Vec3.init(1.25, 0, 0)).toArray4x3(),
+        shape_box_e111,
+    );
+
+    //
+    // Create bodies and entities
+    //
     const body0 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body0, 10.0, &Mat4.initTranslation(Vec3.init(3, 3.5, 5)).toArray4x3(), shape_box_e111);
+    createAddEntity(world, body0, Vec4.init(0.75, 0.0, 0.0, 0.5), entities);
 
     const body1 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body1, 50.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
+    createAddEntity(world, body1, Vec4.init(1.0, 0.9, 0.0, 0.75), entities);
 
     const body2 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body2, 15.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), sphere_shape);
+    createAddEntity(world, body2, Vec4.init(0.0, 0.1, 1.0, 0.25), entities);
 
     const body3 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body3, 10.0, &Mat4.initTranslation(Vec3.init(-5, 3.5, 10)).toArray4x3(), capsule_shape);
+    createAddEntity(world, body3, Vec4.init(0.0, 1.0, 0.0, 0.25), entities);
 
     const body4 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body4, 10.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
+    createAddEntity(world, body4, Vec4.init(1.0, 1.0, 1.0, 0.75), entities);
 
     const body5 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body5, 10.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 7)).toArray4x3(), cone_shape);
-
-    createAddEntity(world, body0, Vec4.init(0.75, 0.0, 0.0, 0.5), entities);
-    createAddEntity(world, body1, Vec4.init(1.0, 0.9, 0.0, 0.75), entities);
-    createAddEntity(world, body2, Vec4.init(0.0, 0.1, 1.0, 0.25), entities);
-    createAddEntity(world, body3, Vec4.init(0.0, 1.0, 0.0, 0.25), entities);
-    createAddEntity(world, body4, Vec4.init(1.0, 1.0, 1.0, 0.75), entities);
     createAddEntity(world, body5, Vec4.init(1.0, 0.5, 0.0, 0.8), entities);
+
+    const body6 = physics_objects_pool.getBody();
+    c.cbtBodyCreate(body6, 10.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 12)).toArray4x3(), compound_shape);
+    createAddEntity(world, body6, Vec4.init(1.0, 0.0, 1.0, 0.1), entities);
 
     camera.* = .{
         .position = Vec3.init(0.0, 3.0, 0.0),
