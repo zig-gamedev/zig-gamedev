@@ -1327,7 +1327,7 @@ fn update(demo: *DemoState) void {
         c.cbtWorldDebugDrawLine2(demo.physics_world, &position_a.c, &position_b.c, &color0, &color1);
 
         const color2 = c.CbtVector3{ 0.0, 1.0, 0.0 };
-        c.cbtWorldDebugDrawSphere(demo.physics_world, &position_a.c, 0.07, &color2);
+        c.cbtWorldDebugDrawSphere(demo.physics_world, &position_a.c, 0.05, &color2);
     }
 
     if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint)) {
