@@ -1062,6 +1062,11 @@ fn update(demo: *DemoState) void {
         null,
         c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
     );
+    c.igText("Left Mouse Button + drag :  pick up and move object", "");
+    c.igText("Right Mouse Button + drag :  rotate", "");
+    c.igText("W, A, S, D :  move", "");
+    c.igText("SPACE :  shoot", "");
+    c.igSpacing();
     {
         _ = c.igCombo_Str(
             "",
