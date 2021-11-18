@@ -502,7 +502,7 @@ fn createScene1(
     createAddEntity(world, body1, Vec4.init(1.0, 0.9, 0.0, 0.75), entities);
 
     const body2 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body2, 15.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), sphere_shape);
+    c.cbtBodyCreate(body2, 25.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), sphere_shape);
     createAddEntity(world, body2, Vec4.init(0.0, 0.1, 1.0, 0.25), entities);
 
     const body3 = physics_objects_pool.getBody();
@@ -510,7 +510,7 @@ fn createScene1(
     createAddEntity(world, body3, Vec4.init(0.0, 1.0, 0.0, 0.25), entities);
 
     const body4 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body4, 25.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
+    c.cbtBodyCreate(body4, 60.0, &Mat4.initTranslation(Vec3.init(5, 3.5, 10)).toArray4x3(), cylinder_shape);
     createAddEntity(world, body4, Vec4.init(1.0, 1.0, 1.0, 0.75), entities);
 
     const body5 = physics_objects_pool.getBody();
@@ -1062,6 +1062,7 @@ fn update(demo: *DemoState) void {
         null,
         c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
     );
+    c.igText("Left Mouse Button :  select object", "");
     c.igText("Left Mouse Button + drag :  pick up and move object", "");
     c.igText("Right Mouse Button + drag :  rotate", "");
     c.igText("W, A, S, D :  move", "");
