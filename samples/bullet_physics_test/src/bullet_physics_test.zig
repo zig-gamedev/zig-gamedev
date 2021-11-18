@@ -482,7 +482,7 @@ fn createScene1(
     c.cbtShapeCompoundAddChild(
         compound_shape,
         &Mat4.initTranslation(Vec3.init(0, 2, 0)).toArray4x3(),
-        shape_box_e111,
+        shape_sphere_r1,
     );
     c.cbtShapeCompoundAddChild(
         compound_shape,
@@ -996,10 +996,10 @@ fn createAddEntity(
             break :blk Vec3.initS(c.cbtShapeSphereGetRadius(shape));
         },
         c.CBT_SHAPE_TYPE_CONE => blk: {
-            // TODO(mziulek): Cone mesh seems wrong, fix it.
             assert(c.cbtShapeConeGetUpAxis(shape) == c.CBT_LINEAR_AXIS_Y);
             const radius = c.cbtShapeConeGetRadius(shape);
             const height = c.cbtShapeConeGetHeight(shape);
+            assert(radius == 1.0 and height == 2.0);
             break :blk Vec3.init(radius, 0.5 * height, radius);
         },
         c.CBT_SHAPE_TYPE_CYLINDER => blk: {
@@ -1010,11 +1010,11 @@ fn createAddEntity(
             break :blk half_extents;
         },
         c.CBT_SHAPE_TYPE_CAPSULE => blk: {
-            // TODO(mziulek): Capsule mesh seems wrong, fix it.
             assert(c.cbtShapeCapsuleGetUpAxis(shape) == c.CBT_LINEAR_AXIS_Y);
             const radius = c.cbtShapeCapsuleGetRadius(shape);
-            const height = c.cbtShapeCapsuleGetHalfHeight(shape);
-            break :blk Vec3.init(radius, height, radius);
+            const half_height = c.cbtShapeCapsuleGetHalfHeight(shape);
+            assert(radius == 1.0 and half_height == 1.0);
+            break :blk Vec3.init(radius, half_height, radius);
         },
         c.CBT_SHAPE_TYPE_TRIANGLE_MESH => Vec3.initS(1),
         c.CBT_SHAPE_TYPE_COMPOUND => Vec3.initS(1),
@@ -1455,6 +1455,7 @@ fn draw(demo: *DemoState) void {
                     const mesh_index = switch (c.cbtShapeGetType(child_shape)) {
                         c.CBT_SHAPE_TYPE_BOX => mesh_cube,
                         c.CBT_SHAPE_TYPE_CYLINDER => mesh_cylinder,
+                        c.CBT_SHAPE_TYPE_SPHERE => mesh_sphere,
                         else => blk: {
                             assert(false);
                             break :blk 0;
@@ -1472,6 +1473,10 @@ fn draw(demo: *DemoState) void {
                             c.cbtShapeCylinderGetHalfExtentsWithoutMargin(child_shape, &half_extents.c);
                             assert(half_extents.c[0] == half_extents.c[2]);
                             break :blk half_extents;
+                        },
+                        c.CBT_SHAPE_TYPE_SPHERE => blk: {
+                            const radius = c.cbtShapeSphereGetRadius(child_shape);
+                            break :blk Vec3.initS(radius);
                         },
                         else => blk: {
                             assert(false);
