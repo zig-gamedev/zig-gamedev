@@ -466,19 +466,27 @@ fn createScene1(
     const cylinder_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
     c.cbtShapeCylinderCreate(cylinder_shape, &Vec3.init(1.5, 2.0, 1.5).c, c.CBT_LINEAR_AXIS_Y);
 
+    const thin_cylinder_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+    c.cbtShapeCylinderCreate(thin_cylinder_shape, &Vec3.init(0.25, 1.1, 0.25).c, c.CBT_LINEAR_AXIS_Y);
+
     const cone_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CONE);
     c.cbtShapeConeCreate(cone_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
 
     const compound_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
-    c.cbtShapeCompoundCreate(compound_shape, true, 2);
+    c.cbtShapeCompoundCreate(compound_shape, true, 3);
     c.cbtShapeCompoundAddChild(
         compound_shape,
-        &Mat4.initTranslation(Vec3.init(-1.25, 0, 0)).toArray4x3(),
+        &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(),
+        thin_cylinder_shape,
+    );
+    c.cbtShapeCompoundAddChild(
+        compound_shape,
+        &Mat4.initTranslation(Vec3.init(0, 2, 0)).toArray4x3(),
         shape_box_e111,
     );
     c.cbtShapeCompoundAddChild(
         compound_shape,
-        &Mat4.initTranslation(Vec3.init(1.25, 0, 0)).toArray4x3(),
+        &Mat4.initTranslation(Vec3.init(0, -2, 0.0)).toArray4x3(),
         shape_box_e111,
     );
 
@@ -510,8 +518,8 @@ fn createScene1(
     createAddEntity(world, body5, Vec4.init(1.0, 0.5, 0.0, 0.8), entities);
 
     const body6 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body6, 10.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 12)).toArray4x3(), compound_shape);
-    createAddEntity(world, body6, Vec4.init(1.0, 0.0, 1.0, 0.1), entities);
+    c.cbtBodyCreate(body6, 10.0, &Mat4.initTranslation(Vec3.init(0, 5, 12)).toArray4x3(), compound_shape);
+    createAddEntity(world, body6, Vec4.init(0.25, 0.0, 1.0, 0.1), entities);
 
     camera.* = .{
         .position = Vec3.init(0.0, 3.0, 0.0),
@@ -998,8 +1006,8 @@ fn createAddEntity(
         c.CBT_SHAPE_TYPE_CYLINDER => blk: {
             var half_extents: Vec3 = undefined;
             assert(c.cbtShapeCylinderGetUpAxis(shape) == c.CBT_LINEAR_AXIS_Y);
-            assert(half_extents.c[0] == half_extents.c[2]);
             c.cbtShapeCylinderGetHalfExtentsWithoutMargin(shape, &half_extents.c);
+            assert(half_extents.c[0] == half_extents.c[2]);
             break :blk half_extents;
         },
         c.CBT_SHAPE_TYPE_CAPSULE => blk: {
@@ -1422,6 +1430,10 @@ fn draw(demo: *DemoState) void {
             mem.cpu_slice[0].camera_position = demo.camera.position;
             grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
         }
+
+        //
+        // Draw all entities
+        //
         for (demo.entities.items) |entity| {
             if (entity.mesh_index == mesh_compound) {
                 const world_transform = blk: {
@@ -1443,18 +1455,35 @@ fn draw(demo: *DemoState) void {
                     const child_shape = c.cbtShapeCompoundGetChild(shape, child_index);
                     const mesh_index = switch (c.cbtShapeGetType(child_shape)) {
                         c.CBT_SHAPE_TYPE_BOX => mesh_cube,
-                        c.CBT_SHAPE_TYPE_SPHERE => mesh_sphere,
-                        c.CBT_SHAPE_TYPE_CONE => mesh_cone,
                         c.CBT_SHAPE_TYPE_CYLINDER => mesh_cylinder,
-                        c.CBT_SHAPE_TYPE_CAPSULE => mesh_capsule,
                         else => blk: {
                             assert(false);
                             break :blk 0;
                         },
                     };
+                    const mesh_size = switch (c.cbtShapeGetType(child_shape)) {
+                        c.CBT_SHAPE_TYPE_BOX => blk: {
+                            var half_extents: Vec3 = undefined;
+                            c.cbtShapeBoxGetHalfExtentsWithoutMargin(child_shape, &half_extents.c);
+                            break :blk half_extents;
+                        },
+                        c.CBT_SHAPE_TYPE_CYLINDER => blk: {
+                            assert(c.cbtShapeCylinderGetUpAxis(child_shape) == c.CBT_LINEAR_AXIS_Y);
+                            var half_extents: Vec3 = undefined;
+                            c.cbtShapeCylinderGetHalfExtentsWithoutMargin(child_shape, &half_extents.c);
+                            assert(half_extents.c[0] == half_extents.c[2]);
+                            break :blk half_extents;
+                        },
+                        else => blk: {
+                            assert(false);
+                            break :blk Vec3.initS(1);
+                        },
+                    };
+
+                    const scaling = Mat4.initScaling(mesh_size);
 
                     const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
-                    mem.cpu_slice[0].object_to_world = local_transform.mul(world_transform).transpose();
+                    mem.cpu_slice[0].object_to_world = scaling.mul(local_transform.mul(world_transform)).transpose();
                     mem.cpu_slice[0].base_color_roughness = entity.base_color_roughness;
                     mem.cpu_slice[0].flags = entity.flags;
 
