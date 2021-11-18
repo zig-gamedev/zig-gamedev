@@ -227,12 +227,13 @@ const Mesh = struct {
     num_vertices: u32,
 };
 
-const mesh_cube = 0;
-const mesh_sphere = 1;
-const mesh_capsule = 2;
-const mesh_cylinder = 3;
-const mesh_cone = 4;
-const mesh_world = 5;
+const mesh_cube: u16 = 0;
+const mesh_sphere: u16 = 1;
+const mesh_capsule: u16 = 2;
+const mesh_cylinder: u16 = 3;
+const mesh_cone: u16 = 4;
+const mesh_world: u16 = 5;
+const mesh_compound: u16 = 0xffff;
 
 fn loadAllMeshes(
     all_meshes: *std.ArrayList(Mesh),
@@ -447,8 +448,11 @@ fn createScene1(
 ) void {
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
-    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), Vec3.initS(1.0), mesh_world, entities);
+    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
     c.cbtBodySetFriction(world_body, default_world_friction);
+
+    const sphere_shape = c.cbtShapeAllocate(c.CBT_SHAPE_TYPE_SPHERE);
+    c.cbtShapeSphereCreate(sphere_shape, 1.5);
 
     const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
     c.cbtShapeBoxCreate(box_shape, &Vec3.init(0.5, 1.0, 2.0).c);
@@ -457,7 +461,7 @@ fn createScene1(
     c.cbtShapeCapsuleCreate(capsule_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
 
     const cylinder_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-    c.cbtShapeCylinderCreate(cylinder_shape, &Vec3.init(1.0, 1.0, 1.0).c, c.CBT_LINEAR_AXIS_Y);
+    c.cbtShapeCylinderCreate(cylinder_shape, &Vec3.init(1.5, 2.0, 1.5).c, c.CBT_LINEAR_AXIS_Y);
 
     const cone_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CONE);
     c.cbtShapeConeCreate(cone_shape, 1.0, 2.0, c.CBT_LINEAR_AXIS_Y);
@@ -469,7 +473,7 @@ fn createScene1(
     c.cbtBodyCreate(body1, 50.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 5)).toArray4x3(), box_shape);
 
     const body2 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body2, 10.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), shape_sphere_r1);
+    c.cbtBodyCreate(body2, 15.0, &Mat4.initTranslation(Vec3.init(-3, 3.5, 10)).toArray4x3(), sphere_shape);
 
     const body3 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body3, 10.0, &Mat4.initTranslation(Vec3.init(-5, 3.5, 10)).toArray4x3(), capsule_shape);
@@ -480,12 +484,12 @@ fn createScene1(
     const body5 = physics_objects_pool.getBody();
     c.cbtBodyCreate(body5, 10.0, &Mat4.initTranslation(Vec3.init(0, 3.5, 7)).toArray4x3(), cone_shape);
 
-    createAddEntity(world, body0, Vec4.init(0.75, 0.0, 0.0, 0.5), Vec3.initS(1.0), mesh_cube, entities);
-    createAddEntity(world, body1, Vec4.init(1.0, 0.9, 0.0, 0.75), Vec3.init(0.5, 1.0, 2.0), mesh_cube, entities);
-    createAddEntity(world, body2, Vec4.init(0.0, 0.1, 1.0, 0.25), Vec3.initS(1.0), mesh_sphere, entities);
-    createAddEntity(world, body3, Vec4.init(0.0, 1.0, 0.0, 0.25), Vec3.initS(1.0), mesh_capsule, entities);
-    createAddEntity(world, body4, Vec4.init(1.0, 1.0, 1.0, 0.75), Vec3.initS(1.0), mesh_cylinder, entities);
-    createAddEntity(world, body5, Vec4.init(1.0, 0.5, 0.0, 0.8), Vec3.initS(1.0), mesh_cone, entities);
+    createAddEntity(world, body0, Vec4.init(0.75, 0.0, 0.0, 0.5), entities);
+    createAddEntity(world, body1, Vec4.init(1.0, 0.9, 0.0, 0.75), entities);
+    createAddEntity(world, body2, Vec4.init(0.0, 0.1, 1.0, 0.25), entities);
+    createAddEntity(world, body3, Vec4.init(0.0, 1.0, 0.0, 0.25), entities);
+    createAddEntity(world, body4, Vec4.init(1.0, 1.0, 1.0, 0.75), entities);
+    createAddEntity(world, body5, Vec4.init(1.0, 0.5, 0.0, 0.8), entities);
 
     camera.* = .{
         .position = Vec3.init(0.0, 3.0, 0.0),
@@ -503,7 +507,7 @@ fn createScene2(
 ) void {
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
-    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), Vec3.initS(1.0), mesh_world, entities);
+    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
     c.cbtBodySetFriction(world_body, default_world_friction);
 
     var level: u32 = 0;
@@ -521,7 +525,7 @@ fn createScene2(
             while (x <= bound) : (x += 2.0) {
                 const body = physics_objects_pool.getBody();
                 c.cbtBodyCreate(body, 1.0, &Mat4.initTranslation(Vec3.init(x, y, z)).toArray4x3(), shape_box_e111);
-                createAddEntity(world, body, base_color_roughness, Vec3.initS(1.0), mesh_cube, entities);
+                createAddEntity(world, body, base_color_roughness, entities);
             }
         }
     }
@@ -542,7 +546,7 @@ fn createScene3(
 ) void {
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
-    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), Vec3.initS(1.0), mesh_world, entities);
+    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
     c.cbtBodySetFriction(world_body, default_world_friction);
 
     // Chain of boxes
@@ -551,7 +555,7 @@ fn createScene3(
     while (x <= 14.0) : (x += 4.0) {
         const body = physics_objects_pool.getBody();
         c.cbtBodyCreate(body, 10.0, &Mat4.initTranslation(Vec3.init(x, 3.5, 5)).toArray4x3(), shape_box_e111);
-        createAddEntity(world, body, Vec4.init(0.75, 0.0, 0.0, 0.5), Vec3.initS(1.0), mesh_cube, entities);
+        createAddEntity(world, body, Vec4.init(0.75, 0.0, 0.0, 0.5), entities);
 
         if (prev_body != null) {
             const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
@@ -568,7 +572,7 @@ fn createScene3(
     while (x <= 14.0) : (x += 4.0) {
         const body = physics_objects_pool.getBody();
         c.cbtBodyCreate(body, 10.0, &Mat4.initTranslation(Vec3.init(x, 3.5, 10)).toArray4x3(), shape_sphere_r1);
-        createAddEntity(world, body, Vec4.init(0.0, 0.75, 0.0, 0.5), Vec3.initS(1.0), mesh_sphere, entities);
+        createAddEntity(world, body, Vec4.init(0.0, 0.75, 0.0, 0.5), entities);
 
         if (prev_body != null) {
             const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
@@ -585,12 +589,12 @@ fn createScene3(
 
     const static_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(static_body, 0.0, &Mat4.initTranslation(Vec3.init(10, y, 10)).toArray4x3(), shape_box_e111);
-    createAddEntity(world, static_body, Vec4.init(0.75, 0.75, 0.0, 0.5), Vec3.initS(1.0), mesh_cube, entities);
+    createAddEntity(world, static_body, Vec4.init(0.75, 0.75, 0.0, 0.5), entities);
 
     while (y >= 1.0) : (y -= 4.0) {
         const body = physics_objects_pool.getBody();
         c.cbtBodyCreate(body, 10.0, &Mat4.initTranslation(Vec3.init(10, y, 10)).toArray4x3(), shape_sphere_r1);
-        createAddEntity(world, body, Vec4.init(0.0, 0.25, 1.0, 0.25), Vec3.initS(1.0), mesh_sphere, entities);
+        createAddEntity(world, body, Vec4.init(0.0, 0.25, 1.0, 0.25), entities);
 
         if (prev_body != null) {
             const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
@@ -934,21 +938,67 @@ fn createAddEntity(
     world: c.CbtWorldHandle,
     body: c.CbtBodyHandle,
     base_color_roughness: Vec4,
-    size: Vec3,
-    mesh_index: u16, // TODO(mziulek): Remove `mesh_index` param - use body's shape to figure it out.
     entities: *std.ArrayList(Entity),
 ) void {
-    var tweaked_size = size;
-    // TODO(mziulek): Tweak size for boxes.
-    //const shape = c.cbtBodyGetShape(body);
-    //if (c.cbtShapeGetType(shape) == c.CBT_SHAPE_TYPE_BOX) {
-    //tweaked_size = tweaked_size.scale();
-    //c.cbtShapeBoxGetHalfExtentsWithMargin(shape, &tweaked_size.c);
-    //}
+    //var tweaked_size = size;
+    const shape = c.cbtBodyGetShape(body);
+    const shape_type = c.cbtShapeGetType(shape);
+
+    const mesh_index = switch (shape_type) {
+        c.CBT_SHAPE_TYPE_BOX => mesh_cube,
+        c.CBT_SHAPE_TYPE_SPHERE => mesh_sphere,
+        c.CBT_SHAPE_TYPE_CONE => mesh_cone,
+        c.CBT_SHAPE_TYPE_CYLINDER => mesh_cylinder,
+        c.CBT_SHAPE_TYPE_CAPSULE => mesh_capsule,
+        c.CBT_SHAPE_TYPE_TRIANGLE_MESH => mesh_world,
+        c.CBT_SHAPE_TYPE_COMPOUND => mesh_compound,
+        else => blk: {
+            assert(false);
+            break :blk 0;
+        },
+    };
+    const mesh_size = switch (shape_type) {
+        c.CBT_SHAPE_TYPE_BOX => blk: {
+            var half_extents: Vec3 = undefined;
+            c.cbtShapeBoxGetHalfExtentsWithoutMargin(shape, &half_extents.c);
+            break :blk half_extents;
+        },
+        c.CBT_SHAPE_TYPE_SPHERE => blk: {
+            break :blk Vec3.initS(c.cbtShapeSphereGetRadius(shape));
+        },
+        c.CBT_SHAPE_TYPE_CONE => blk: {
+            // TODO(mziulek): Cone mesh seems wrong, fix it.
+            assert(c.cbtShapeConeGetUpAxis(shape) == c.CBT_LINEAR_AXIS_Y);
+            const radius = c.cbtShapeConeGetRadius(shape);
+            const height = c.cbtShapeConeGetHeight(shape);
+            break :blk Vec3.init(radius, 0.5 * height, radius);
+        },
+        c.CBT_SHAPE_TYPE_CYLINDER => blk: {
+            var half_extents: Vec3 = undefined;
+            assert(c.cbtShapeCylinderGetUpAxis(shape) == c.CBT_LINEAR_AXIS_Y);
+            assert(half_extents.c[0] == half_extents.c[2]);
+            c.cbtShapeCylinderGetHalfExtentsWithoutMargin(shape, &half_extents.c);
+            break :blk half_extents;
+        },
+        c.CBT_SHAPE_TYPE_CAPSULE => blk: {
+            // TODO(mziulek): Capsule mesh seems wrong, fix it.
+            assert(c.cbtShapeCapsuleGetUpAxis(shape) == c.CBT_LINEAR_AXIS_Y);
+            const radius = c.cbtShapeCapsuleGetRadius(shape);
+            const height = c.cbtShapeCapsuleGetHalfHeight(shape);
+            break :blk Vec3.init(radius, height, radius);
+        },
+        c.CBT_SHAPE_TYPE_TRIANGLE_MESH => Vec3.initS(1),
+        c.CBT_SHAPE_TYPE_COMPOUND => Vec3.initS(1),
+        else => blk: {
+            assert(false);
+            break :blk Vec3.initS(1);
+        },
+    };
+
     entities.append(.{
         .body = body,
         .base_color_roughness = base_color_roughness,
-        .size = tweaked_size,
+        .size = mesh_size,
         .mesh_index = mesh_index,
     }) catch unreachable;
     const entity_index = @intCast(i32, entities.items.len - 1);
@@ -1146,8 +1196,6 @@ fn update(demo: *DemoState) void {
                 demo.physics_world,
                 body,
                 Vec4.init(0, 1.0, 0.0, 0.7),
-                Vec3.initS(1.0),
-                mesh_sphere,
                 &demo.entities,
             );
         }
@@ -1248,6 +1296,9 @@ fn update(demo: *DemoState) void {
         const color0 = c.CbtVector3{ 1.0, 1.0, 0.0 };
         const color1 = c.CbtVector3{ 1.0, 0.0, 0.0 };
         c.cbtWorldDebugDrawLine2(demo.physics_world, &position_a.c, &position_b.c, &color0, &color1);
+
+        const color2 = c.CbtVector3{ 0.0, 1.0, 0.0 };
+        c.cbtWorldDebugDrawSphere(demo.physics_world, &position_a.c, 0.07, &color2);
     }
 
     if (!mouse_button_is_down and c.cbtConIsCreated(demo.pick.constraint)) {
@@ -1350,24 +1401,70 @@ fn draw(demo: *DemoState) void {
             grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
         }
         for (demo.entities.items) |entity| {
-            var transform: [4]c.CbtVector3 = undefined;
-            c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
+            if (entity.mesh_index == mesh_compound) {
+                const world_transform = blk: {
+                    var transform: [4]c.CbtVector3 = undefined;
+                    c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
+                    break :blk Mat4.initArray4x3(transform);
+                };
+                const shape = c.cbtBodyGetShape(entity.body);
 
-            const scaling = Mat4.initScaling(entity.size);
+                const num_childs = c.cbtShapeCompoundGetNumChilds(shape);
+                var child_index: i32 = 0;
+                while (child_index < num_childs) : (child_index += 1) {
+                    const local_transform = blk: {
+                        var transform: [4]c.CbtVector3 = undefined;
+                        c.cbtShapeCompoundGetChildTransform(shape, child_index, &transform);
+                        break :blk Mat4.initArray4x3(transform);
+                    };
 
-            const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
-            mem.cpu_slice[0].object_to_world = scaling.mul(Mat4.initArray4x3(transform)).transpose();
-            mem.cpu_slice[0].base_color_roughness = entity.base_color_roughness;
-            mem.cpu_slice[0].flags = entity.flags;
+                    const child_shape = c.cbtShapeCompoundGetChild(shape, child_index);
+                    const mesh_index = switch (c.cbtShapeGetType(child_shape)) {
+                        c.CBT_SHAPE_TYPE_BOX => mesh_cube,
+                        c.CBT_SHAPE_TYPE_SPHERE => mesh_sphere,
+                        c.CBT_SHAPE_TYPE_CONE => mesh_cone,
+                        c.CBT_SHAPE_TYPE_CYLINDER => mesh_cylinder,
+                        c.CBT_SHAPE_TYPE_CAPSULE => mesh_capsule,
+                        else => blk: {
+                            assert(false);
+                            break :blk 0;
+                        },
+                    };
 
-            grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
-            grfx.cmdlist.DrawIndexedInstanced(
-                demo.meshes.items[entity.mesh_index].num_indices,
-                1,
-                demo.meshes.items[entity.mesh_index].index_offset,
-                @intCast(i32, demo.meshes.items[entity.mesh_index].vertex_offset),
-                0,
-            );
+                    const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
+                    mem.cpu_slice[0].object_to_world = local_transform.mul(world_transform).transpose();
+                    mem.cpu_slice[0].base_color_roughness = entity.base_color_roughness;
+                    mem.cpu_slice[0].flags = entity.flags;
+
+                    grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+                    grfx.cmdlist.DrawIndexedInstanced(
+                        demo.meshes.items[mesh_index].num_indices,
+                        1,
+                        demo.meshes.items[mesh_index].index_offset,
+                        @intCast(i32, demo.meshes.items[mesh_index].vertex_offset),
+                        0,
+                    );
+                }
+            } else {
+                var transform: [4]c.CbtVector3 = undefined;
+                c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
+
+                const scaling = Mat4.initScaling(entity.size);
+
+                const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
+                mem.cpu_slice[0].object_to_world = scaling.mul(Mat4.initArray4x3(transform)).transpose();
+                mem.cpu_slice[0].base_color_roughness = entity.base_color_roughness;
+                mem.cpu_slice[0].flags = entity.flags;
+
+                grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+                grfx.cmdlist.DrawIndexedInstanced(
+                    demo.meshes.items[entity.mesh_index].num_indices,
+                    1,
+                    demo.meshes.items[entity.mesh_index].index_offset,
+                    @intCast(i32, demo.meshes.items[entity.mesh_index].vertex_offset),
+                    0,
+                );
+            }
         }
     }
 

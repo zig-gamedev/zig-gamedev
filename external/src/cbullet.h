@@ -201,18 +201,20 @@ void cbtShapeSphereCreate(CbtShapeHandle shape_handle, float radius);
 void cbtShapeSphereSetUnscaledRadius(CbtShapeHandle shape_handle, float radius);
 float cbtShapeSphereGetRadius(CbtShapeHandle shape_handle);
 
-void cbtShapeCapsuleCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
+void cbtShapeCapsuleCreate(CbtShapeHandle shape_handle, float radius, float height, int up_axis);
 int cbtShapeCapsuleGetUpAxis(CbtShapeHandle shape_handle);
 float cbtShapeCapsuleGetHalfHeight(CbtShapeHandle shape_handle);
 float cbtShapeCapsuleGetRadius(CbtShapeHandle shape_handle);
 
-void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int axis);
+void cbtShapeCylinderCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents, int up_axis);
 void cbtShapeCylinderGetHalfExtentsWithoutMargin(CbtShapeHandle shape_handle, CbtVector3 half_extents);
 void cbtShapeCylinderGetHalfExtentsWithMargin(CbtShapeHandle shape_handle, CbtVector3 half_extents);
+int cbtShapeCylinderGetUpAxis(CbtShapeHandle shape_handle);
 
-void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int axis);
+void cbtShapeConeCreate(CbtShapeHandle shape_handle, float radius, float height, int up_axis);
 float cbtShapeConeGetRadius(CbtShapeHandle shape_handle);
 float cbtShapeConeGetHeight(CbtShapeHandle shape_handle);
+int cbtShapeConeGetUpAxis(CbtShapeHandle shape_handle);
 
 void cbtShapeCompoundCreate(
     CbtShapeHandle shape_handle,
