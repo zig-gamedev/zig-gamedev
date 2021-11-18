@@ -970,7 +970,6 @@ fn createAddEntity(
     base_color_roughness: Vec4,
     entities: *std.ArrayList(Entity),
 ) void {
-    //var tweaked_size = size;
     const shape = c.cbtBodyGetShape(body);
     const shape_type = c.cbtShapeGetType(shape);
 
@@ -1435,7 +1434,7 @@ fn draw(demo: *DemoState) void {
         // Draw all entities
         //
         for (demo.entities.items) |entity| {
-            if (entity.mesh_index == mesh_compound) {
+            if (entity.mesh_index == mesh_compound) { // Meshes that consists of multiple simple shapes
                 const world_transform = blk: {
                     var transform: [4]c.CbtVector3 = undefined;
                     c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
@@ -1496,7 +1495,7 @@ fn draw(demo: *DemoState) void {
                         0,
                     );
                 }
-            } else {
+            } else { // Meshes that consists of single shape
                 var transform: [4]c.CbtVector3 = undefined;
                 c.cbtBodyGetGraphicsWorldTransform(entity.body, &transform);
 
