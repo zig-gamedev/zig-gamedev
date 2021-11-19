@@ -36,6 +36,11 @@ const default_linear_damping: f32 = 0.1;
 const default_angular_damping: f32 = 0.1;
 const default_world_friction: f32 = 0.15;
 
+const BodyWithPivot = struct {
+    body: c.CbtBodyHandle,
+    pivot: Vec3,
+};
+
 const Scene = enum {
     scene1,
     scene2,
@@ -307,6 +312,7 @@ const DemoState = struct {
 
     entities: std.ArrayList(Entity),
     meshes: std.ArrayList(Mesh),
+    connected_bodies: std.ArrayList(BodyWithPivot),
 
     current_scene_index: i32,
     selected_entity_index: u32,
@@ -654,64 +660,114 @@ fn createScene4(
     physics_objects_pool: PhysicsObjectsPool,
     entities: *std.ArrayList(Entity),
     camera: *Camera,
+    connected_bodies: *std.ArrayList(BodyWithPivot),
 ) void {
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
     c.cbtBodySetFriction(world_body, default_world_friction);
     createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
 
-    // Newton pendulum
     {
-        const long_thin_box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-        c.cbtShapeBoxCreate(long_thin_box_shape, &Vec3.init(0.2, 6.0, 0.8).c);
-
         const support_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-        c.cbtShapeCylinderCreate(support_shape, &Vec3.init(0.7, 1.0, 0.7).c, c.CBT_LINEAR_AXIS_Y);
+        c.cbtShapeCylinderCreate(support_shape, &Vec3.init(0.7, 3.5, 0.7).c, c.CBT_LINEAR_AXIS_Y);
 
-        const common_support_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-        c.cbtShapeBoxCreate(common_support_shape, &Vec3.init(6.0, 1.0, 3.0).c);
-
-        const common_support_body = physics_objects_pool.getBody();
+        const support_body = physics_objects_pool.getBody();
         c.cbtBodyCreate(
-            common_support_body,
+            support_body,
             0.0,
-            &Mat4.initTranslation(Vec3.init(-1, 18.7, 12)).toArray4x3(),
-            common_support_shape,
-        );
-        createAddEntity(world, common_support_body, Vec4.init(1.0, 1.0, 1.0, 0.7), entities);
-
-        const bottom_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-        c.cbtShapeBoxCreate(bottom_shape, &Vec3.init(0.5, 0.9, 1.5).c);
-
-        const pendulum_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
-        c.cbtShapeCompoundCreate(pendulum_shape, true, 3);
-        c.cbtShapeCompoundAddChild(
-            pendulum_shape,
-            &Mat4.initTranslation(Vec3.init(0, 6, 0)).toArray4x3(),
-            long_thin_box_shape,
-        );
-        c.cbtShapeCompoundAddChild(
-            pendulum_shape,
-            &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(),
-            bottom_shape,
-        );
-        c.cbtShapeCompoundAddChild(
-            pendulum_shape,
-            &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(0, 12, 0))).toArray4x3(),
+            &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(1, 17.7, 12))).toArray4x3(),
             support_shape,
         );
+        createAddEntity(world, support_body, Vec4.init(1.0, 1.0, 1.0, -0.5), entities);
 
-        var x: f32 = -3.0;
-        while (x < 3.0) : (x += 2.3) {
+        const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+        c.cbtShapeBoxCreate(box_shape, &Vec3.init(0.2, 2.0, 3.0).c);
+
+        const body0 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body0, 50.0, &Mat4.initTranslation(Vec3.init(1.0, 15.0, 12)).toArray4x3(), box_shape);
+        createAddEntity(world, body0, Vec4.init(1.0, 1.0, 1.0, 0.7), entities);
+
+        const body1 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body1, 50.0, &Mat4.initTranslation(Vec3.init(1.0, 11.0, 12)).toArray4x3(), box_shape);
+        createAddEntity(world, body1, Vec4.init(1.0, 1.0, 1.0, 0.7), entities);
+
+        const body2 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(body2, 50.0, &Mat4.initTranslation(Vec3.init(1.0, 7.0, 12)).toArray4x3(), box_shape);
+        createAddEntity(world, body2, Vec4.init(1.0, 1.0, 1.0, 0.7), entities);
+
+        const hinge0 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+        c.cbtConHingeCreate1(hinge0, body0, &Vec3.init(0, 2.8, 0).c, &Vec3.init(0, 0, 1).c, false);
+        c.cbtWorldAddConstraint(world, hinge0, true);
+
+        const hinge1 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+        c.cbtConHingeCreate2(
+            hinge1,
+            body0,
+            body1,
+            &Vec3.init(0, -2.1, 0).c,
+            &Vec3.init(0, 2.1, 0).c,
+            &Vec3.init(0, 0, 1).c,
+            &Vec3.init(0, 0, 1).c,
+            false,
+        );
+        c.cbtConHingeSetLimit(hinge1, -math.pi * 0.5, math.pi * 0.5, 0.9, 0.3, 1.0);
+        c.cbtWorldAddConstraint(world, hinge1, true);
+
+        const hinge2 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+        c.cbtConHingeCreate2(
+            hinge2,
+            body1,
+            body2,
+            &Vec3.init(0, -2.1, 0).c,
+            &Vec3.init(0, 2.1, 0).c,
+            &Vec3.init(0, 0, 1).c,
+            &Vec3.init(0, 0, 1).c,
+            false,
+        );
+        c.cbtConHingeSetLimit(hinge2, -math.pi * 0.5, math.pi * 0.5, 0.9, 0.3, 1.0);
+        c.cbtWorldAddConstraint(world, hinge2, true);
+    }
+
+    {
+        const support_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(support_shape, &Vec3.init(0.7, 0.7, 0.7).c, c.CBT_LINEAR_AXIS_Y);
+
+        var i: u32 = 0;
+        while (i < 3) : (i += 1) {
+            const x = -3 + @intToFloat(f32, i) * 2.025;
             const body = physics_objects_pool.getBody();
-            c.cbtBodyCreate(body, 50.0, &Mat4.initTranslation(Vec3.init(x, 5, 12)).toArray4x3(), pendulum_shape);
+            c.cbtBodyCreate(
+                body,
+                200.0,
+                &Mat4.initTranslation(Vec3.init(x, 5, 5)).toArray4x3(),
+                shape_sphere_r1,
+            );
             c.cbtBodySetRestitution(body, 1.0);
-            c.cbtBodySetDamping(body, 0.05, 0.05);
+            c.cbtBodySetFriction(body, 0.0);
+            c.cbtBodySetDamping(body, 0.1, 0.1);
             createAddEntity(world, body, Vec4.init(1.0, 1.0, 1.0, -0.5), entities);
 
-            const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
-            c.cbtConHingeCreate1(hinge, body, &Vec3.init(0, 12, 0).c, &Vec3.init(0, 0, 1).c, false);
-            c.cbtWorldAddConstraint(world, hinge, true);
+            const ref = Mat4.initRotationY(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(0, 12, 0)));
+
+            const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
+            c.cbtConSliderCreate1(slider, body, &ref.toArray4x3(), true);
+            c.cbtConSliderSetLinearLowerLimit(slider, 0.0);
+            c.cbtConSliderSetLinearUpperLimit(slider, 0.0);
+            c.cbtConSliderSetAngularLowerLimit(slider, -math.pi * 0.5);
+            c.cbtConSliderSetAngularUpperLimit(slider, math.pi * 0.5);
+            c.cbtWorldAddConstraint(world, slider, true);
+
+            const support_body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(
+                support_body,
+                0.0,
+                &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(x, 17, 5))).toArray4x3(),
+                support_shape,
+            );
+            createAddEntity(world, support_body, Vec4.init(1.0, 1.0, 1.0, -0.5), entities);
+
+            connected_bodies.append(.{ .body = body, .pivot = Vec3.init(0, 1, 0) }) catch unreachable;
+            connected_bodies.append(.{ .body = support_body, .pivot = Vec3.initZero() }) catch unreachable;
         }
     }
 
@@ -740,6 +796,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     );
 
     var grfx = gr.GraphicsContext.init(window);
+    grfx.present_flags = 0;
+    grfx.present_interval = 1;
 
     const barycentrics_supported = blk: {
         var options3: d3d12.FEATURE_DATA_D3D12_OPTIONS3 = undefined;
@@ -908,6 +966,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     createScene1(physics_world, physics_objects_pool, &entities, &camera);
     entities.items[0].flags = 1;
 
+    var connected_bodies = std.ArrayList(BodyWithPivot).init(gpa);
+
     var vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
@@ -983,6 +1043,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_debug = physics_debug,
         .physics_objects_pool = physics_objects_pool,
         .entities = entities,
+        .connected_bodies = connected_bodies,
         .physics_debug_pso = physics_debug_pso,
         .simple_entity_pso = simple_entity_pso,
         .vertex_buffer = vertex_buffer,
@@ -1032,6 +1093,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     }
     c.cbtConDeallocate(demo.pick.constraint);
     demo.entities.deinit();
+    demo.connected_bodies.deinit();
     demo.physics_objects_pool.deinit(demo.physics_world);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
@@ -1154,12 +1216,19 @@ fn update(demo: *DemoState) void {
         if (c.igButton("  Load  ", .{ .x = 0, .y = 0 })) {
             demo.physics_objects_pool.destroyAllObjects(demo.physics_world);
             demo.entities.resize(0) catch unreachable;
+            demo.connected_bodies.resize(0) catch unreachable;
             const scene = @intToEnum(Scene, demo.current_scene_index);
             switch (scene) {
                 .scene1 => createScene1(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
                 .scene2 => createScene2(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
                 .scene3 => createScene3(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
-                .scene4 => createScene4(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
+                .scene4 => createScene4(
+                    demo.physics_world,
+                    demo.physics_objects_pool,
+                    &demo.entities,
+                    &demo.camera,
+                    &demo.connected_bodies,
+                ),
             }
             demo.selected_entity_index = 0;
             demo.entities.items[demo.selected_entity_index].flags = 1;
@@ -1419,7 +1488,7 @@ fn update(demo: *DemoState) void {
         demo.pick.body = null;
     }
 
-    // Draw all Point2Point constraints as lines
+    // Draw Point2Point constraints as lines
     {
         const num_constraints: i32 = c.cbtWorldGetNumConstraints(demo.physics_world);
         var i: i32 = 0;
@@ -1453,6 +1522,29 @@ fn update(demo: *DemoState) void {
             c.cbtWorldDebugDrawLine1(demo.physics_world, &position_a.c, &position_b.c, &color);
             c.cbtWorldDebugDrawLine1(demo.physics_world, &body_position_a, &position_a.c, &color);
             c.cbtWorldDebugDrawLine1(demo.physics_world, &body_position_b, &position_b.c, &color);
+        }
+    }
+
+    // Draw lines that connect 'connected_bodies'
+    {
+        var i: u32 = 0;
+        const num_bodies = @intCast(u32, demo.connected_bodies.items.len);
+        while (i < num_bodies) : (i += 2) {
+            const body0 = demo.connected_bodies.items[i].body;
+            const body1 = demo.connected_bodies.items[i + 1].body;
+            const pivot0 = demo.connected_bodies.items[i].pivot;
+            const pivot1 = demo.connected_bodies.items[i + 1].pivot;
+
+            var trans0: [4]c.CbtVector3 = undefined;
+            var trans1: [4]c.CbtVector3 = undefined;
+            c.cbtBodyGetCenterOfMassTransform(body0, &trans0);
+            c.cbtBodyGetCenterOfMassTransform(body1, &trans1);
+
+            const color = c.CbtVector3{ 1.0, 1.0, 1.0 };
+            const p0 = pivot0.transform(Mat4.initArray4x3(trans0));
+            const p1 = pivot1.transform(Mat4.initArray4x3(trans1));
+
+            c.cbtWorldDebugDrawLine1(demo.physics_world, &p0.c, &p1.c, &color);
         }
     }
 }
