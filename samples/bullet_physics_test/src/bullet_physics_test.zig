@@ -678,22 +678,22 @@ fn createScene4(
             &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(1, 17.7, 12))).toArray4x3(),
             support_shape,
         );
-        createAddEntity(world, support_body, Vec4.init(1.0, 1.0, 1.0, -0.5), entities);
+        createAddEntity(world, support_body, Vec4.init(0.1, 0.1, 0.1, 0.5), entities);
 
         const box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
         c.cbtShapeBoxCreate(box_shape, &Vec3.init(0.2, 2.0, 3.0).c);
 
         const body0 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body0, 50.0, &Mat4.initTranslation(Vec3.init(1.0, 15.0, 12)).toArray4x3(), box_shape);
-        createAddEntity(world, body0, Vec4.init(1.0, 1.0, 1.0, 0.7), entities);
+        createAddEntity(world, body0, Vec4.init(1.0, 0.0, 0.0, 0.7), entities);
 
         const body1 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body1, 50.0, &Mat4.initTranslation(Vec3.init(1.0, 11.0, 12)).toArray4x3(), box_shape);
-        createAddEntity(world, body1, Vec4.init(1.0, 1.0, 1.0, 0.7), entities);
+        createAddEntity(world, body1, Vec4.init(0.0, 1.0, 0.0, 0.7), entities);
 
         const body2 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body2, 50.0, &Mat4.initTranslation(Vec3.init(1.0, 7.0, 12)).toArray4x3(), box_shape);
-        createAddEntity(world, body2, Vec4.init(1.0, 1.0, 1.0, 0.7), entities);
+        createAddEntity(world, body2, Vec4.init(0.0, 0.2, 1.0, 0.7), entities);
 
         const hinge0 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
         c.cbtConHingeCreate1(hinge0, body0, &Vec3.init(0, 2.8, 0).c, &Vec3.init(0, 0, 1).c, false);
@@ -738,14 +738,14 @@ fn createScene4(
             const body = physics_objects_pool.getBody();
             c.cbtBodyCreate(
                 body,
-                200.0,
+                100.0,
                 &Mat4.initTranslation(Vec3.init(x, 5, 5)).toArray4x3(),
                 shape_sphere_r1,
             );
             c.cbtBodySetRestitution(body, 1.0);
             c.cbtBodySetFriction(body, 0.0);
             c.cbtBodySetDamping(body, 0.1, 0.1);
-            createAddEntity(world, body, Vec4.init(1.0, 1.0, 1.0, -0.5), entities);
+            createAddEntity(world, body, Vec4.init(1.0, 0.0, 0.0, 0.25), entities);
 
             const ref = Mat4.initRotationY(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(0, 12, 0)));
 
@@ -764,7 +764,7 @@ fn createScene4(
                 &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(x, 17, 5))).toArray4x3(),
                 support_shape,
             );
-            createAddEntity(world, support_body, Vec4.init(1.0, 1.0, 1.0, -0.5), entities);
+            createAddEntity(world, support_body, Vec4.init(0.1, 0.1, 0.1, 0.5), entities);
 
             connected_bodies.append(.{ .body = body, .pivot = Vec3.init(0, 1, 0) }) catch unreachable;
             connected_bodies.append(.{ .body = support_body, .pivot = Vec3.initZero() }) catch unreachable;
@@ -772,7 +772,7 @@ fn createScene4(
     }
 
     camera.* = .{
-        .position = Vec3.init(0.0, 7.0, -5.0),
+        .position = Vec3.init(0.0, 7.0, -7.0),
         .forward = Vec3.initZero(),
         .pitch = 0.0,
         .yaw = 0.0,
