@@ -40,6 +40,7 @@ const Scene = enum {
     scene1,
     scene2,
     scene3,
+    scene4,
 };
 
 const PhysicsObjectsPool = struct {
@@ -537,8 +538,8 @@ fn createScene2(
 ) void {
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
-    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
     c.cbtBodySetFriction(world_body, default_world_friction);
+    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
 
     var level: u32 = 0;
     var y: f32 = 2.0;
@@ -576,8 +577,8 @@ fn createScene3(
 ) void {
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
-    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
     c.cbtBodySetFriction(world_body, default_world_friction);
+    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
 
     // Chain of boxes
     var x: f32 = -14.0;
@@ -639,6 +640,54 @@ fn createScene3(
         }
         prev_body = body;
     }
+
+    camera.* = .{
+        .position = Vec3.init(0.0, 7.0, -5.0),
+        .forward = Vec3.initZero(),
+        .pitch = math.pi * 0.125,
+        .yaw = 0.0,
+    };
+}
+
+fn createScene4(
+    world: c.CbtWorldHandle,
+    physics_objects_pool: PhysicsObjectsPool,
+    entities: *std.ArrayList(Entity),
+    camera: *Camera,
+) void {
+    const world_body = physics_objects_pool.getBody();
+    c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
+    c.cbtBodySetFriction(world_body, default_world_friction);
+    createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
+
+    const long_thin_box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+    c.cbtShapeBoxCreate(long_thin_box_shape, &Vec3.init(0.1, 6.0, 0.1).c);
+
+    const pendulum_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+    c.cbtShapeCompoundCreate(pendulum_shape, true, 3);
+    c.cbtShapeCompoundAddChild(
+        pendulum_shape,
+        &Mat4.initTranslation(Vec3.init(0, 6, 0)).toArray4x3(),
+        long_thin_box_shape,
+    );
+    c.cbtShapeCompoundAddChild(
+        pendulum_shape,
+        &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(),
+        shape_sphere_r1,
+    );
+    c.cbtShapeCompoundAddChild(
+        pendulum_shape,
+        &Mat4.initTranslation(Vec3.init(0, 12, 0)).toArray4x3(),
+        shape_box_e111,
+    );
+
+    const body0 = physics_objects_pool.getBody();
+    c.cbtBodyCreate(body0, 50.0, &Mat4.initTranslation(Vec3.init(0, 5, 12)).toArray4x3(), pendulum_shape);
+    createAddEntity(world, body0, Vec4.init(1.0, 0.0, 0.0, 0.1), entities);
+
+    const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+    c.cbtConHingeCreate1(hinge, body0, &Vec3.init(0, 12, 0).c, &Vec3.init(0, 0, 1).c, false);
+    c.cbtWorldAddConstraint(world, hinge, true);
 
     camera.* = .{
         .position = Vec3.init(0.0, 7.0, -5.0),
@@ -1072,7 +1121,7 @@ fn update(demo: *DemoState) void {
         _ = c.igCombo_Str(
             "",
             &demo.current_scene_index,
-            "Scene: Collision Shapes\x00Scene: Stack of Boxes\x00Scene: Chains\x00\x00",
+            "Scene: Collision Shapes\x00Scene: Stack of Boxes\x00Scene: Chains\x00Scene: Constraints\x00\x00",
             -1,
         );
         c.igSameLine(0.0, -1.0);
@@ -1084,6 +1133,7 @@ fn update(demo: *DemoState) void {
                 .scene1 => createScene1(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
                 .scene2 => createScene2(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
                 .scene3 => createScene3(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
+                .scene4 => createScene4(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
             }
             demo.selected_entity_index = 0;
             demo.entities.items[demo.selected_entity_index].flags = 1;
