@@ -45,7 +45,7 @@ const Scene = enum {
 
 const PhysicsObjectsPool = struct {
     const max_num_bodies = 2 * 1024;
-    const max_num_constraints = 44;
+    const max_num_constraints = 49;
     const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
     constraints: []c.CbtConstraintHandle,
@@ -86,7 +86,7 @@ const PhysicsObjectsPool = struct {
                 counter += 1;
             }
             i = 0;
-            while (i < 3) : (i += 1) {
+            while (i < 8) : (i += 1) {
                 pool.constraints[counter] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_HINGE);
                 counter += 1;
             }
@@ -660,39 +660,55 @@ fn createScene4(
     c.cbtBodySetFriction(world_body, default_world_friction);
     createAddEntity(world, world_body, Vec4.init(0.25, 0.25, 0.25, 0.125), entities);
 
-    const long_thin_box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
-    c.cbtShapeBoxCreate(long_thin_box_shape, &Vec3.init(0.1, 6.0, 0.1).c);
+    // Pendulum
+    {
+        const long_thin_box_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+        c.cbtShapeBoxCreate(long_thin_box_shape, &Vec3.init(0.1, 6.0, 0.1).c);
 
-    const pendulum_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
-    c.cbtShapeCompoundCreate(pendulum_shape, true, 3);
-    c.cbtShapeCompoundAddChild(
-        pendulum_shape,
-        &Mat4.initTranslation(Vec3.init(0, 6, 0)).toArray4x3(),
-        long_thin_box_shape,
-    );
-    c.cbtShapeCompoundAddChild(
-        pendulum_shape,
-        &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(),
-        shape_sphere_r1,
-    );
-    c.cbtShapeCompoundAddChild(
-        pendulum_shape,
-        &Mat4.initTranslation(Vec3.init(0, 12, 0)).toArray4x3(),
-        shape_box_e111,
-    );
+        const support_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+        c.cbtShapeBoxCreate(support_shape, &Vec3.init(0.7, 0.7, 0.7).c);
 
-    const body0 = physics_objects_pool.getBody();
-    c.cbtBodyCreate(body0, 50.0, &Mat4.initTranslation(Vec3.init(0, 5, 12)).toArray4x3(), pendulum_shape);
-    createAddEntity(world, body0, Vec4.init(1.0, 0.0, 0.0, 0.1), entities);
+        const pendulum_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+        c.cbtShapeCompoundCreate(pendulum_shape, true, 3);
+        c.cbtShapeCompoundAddChild(
+            pendulum_shape,
+            &Mat4.initTranslation(Vec3.init(0, 6, 0)).toArray4x3(),
+            long_thin_box_shape,
+        );
+        c.cbtShapeCompoundAddChild(
+            pendulum_shape,
+            &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(),
+            shape_sphere_r1,
+        );
+        c.cbtShapeCompoundAddChild(
+            pendulum_shape,
+            &Mat4.initTranslation(Vec3.init(0, 12, 0)).toArray4x3(),
+            support_shape,
+        );
 
-    const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
-    c.cbtConHingeCreate1(hinge, body0, &Vec3.init(0, 12, 0).c, &Vec3.init(0, 0, 1).c, false);
-    c.cbtWorldAddConstraint(world, hinge, true);
+        var x: f32 = -7.0;
+        while (x < 7.0) : (x += 2.2) {
+            const body = physics_objects_pool.getBody();
+            c.cbtBodyCreate(body, 50.0, &Mat4.initTranslation(Vec3.init(x, 5, 12)).toArray4x3(), pendulum_shape);
+            c.cbtBodySetRestitution(body, 1.0);
+            c.cbtBodySetDamping(body, 0.2, 0.2);
+            createAddEntity(
+                world,
+                body,
+                Vec4.init(1.0, 1.0, 1.0, -0.7),
+                entities,
+            );
+
+            const hinge = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
+            c.cbtConHingeCreate1(hinge, body, &Vec3.init(0, 12, 0).c, &Vec3.init(0, 0, 1).c, false);
+            c.cbtWorldAddConstraint(world, hinge, true);
+        }
+    }
 
     camera.* = .{
         .position = Vec3.init(0.0, 7.0, -5.0),
         .forward = Vec3.initZero(),
-        .pitch = math.pi * 0.125,
+        .pitch = 0.0,
         .yaw = 0.0,
     };
 }

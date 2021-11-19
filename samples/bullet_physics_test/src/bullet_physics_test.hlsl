@@ -155,7 +155,8 @@ void psSimpleEntity(
 
     float3 base_color = cbv_draw_const.base_color_roughness.rgb;
     float roughness = cbv_draw_const.base_color_roughness.a;
-    float metallic = 0.0;
+    float metallic = roughness < 0.0 ? 1.0 : 0.0;
+    roughness = abs(roughness);
     float ao = 1.0;
 
     float alpha = roughness * roughness;
