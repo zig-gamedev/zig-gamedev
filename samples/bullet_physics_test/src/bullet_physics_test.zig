@@ -768,6 +768,10 @@ fn createScene4(
 
             connected_bodies.append(.{ .body = body, .pivot = Vec3.init(0, 1, 0) }) catch unreachable;
             connected_bodies.append(.{ .body = support_body, .pivot = Vec3.initZero() }) catch unreachable;
+
+            if (i == 2) {
+                c.cbtBodyApplyCentralImpulse(body, &c.CbtVector3{ 300, 0, 0 });
+            }
         }
     }
 
@@ -1213,7 +1217,8 @@ fn update(demo: *DemoState) void {
             -1,
         );
         c.igSameLine(0.0, -1.0);
-        if (c.igButton("  Load  ", .{ .x = 0, .y = 0 })) {
+        c.igPushStyleColor_U32(c.ImGuiCol_Text, 0xff_00_ff_ff);
+        if (c.igButton("  Load Scene  ", .{ .x = 0, .y = 0 })) {
             demo.physics_objects_pool.destroyAllObjects(demo.physics_world);
             demo.entities.resize(0) catch unreachable;
             demo.connected_bodies.resize(0) catch unreachable;
@@ -1233,6 +1238,7 @@ fn update(demo: *DemoState) void {
             demo.selected_entity_index = 0;
             demo.entities.items[demo.selected_entity_index].flags = 1;
         }
+        c.igPopStyleColor(1);
         c.igSpacing();
 
         if (c.igCollapsingHeader_TreeNodeFlags("Scene Settings", c.ImGuiTreeNodeFlags_None)) {
