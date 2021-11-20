@@ -1,8 +1,11 @@
-## Bullet physics test (work in progress)
+## Bullet physics test
 
-**Left Mouse** button can be used to pick up objects.<br />
-**Right Mouse** button and **W, A, S, D** keys can be used to control the camera.<br />
-**SPACE** key can be used to throw spheres.<br />
+**Left Mouse Button** :  select object<br />
+**Left Mouse Button + drag** :  pick up and move object<br />
+**Right Mouse Button + drag** :  rotate camera<br />
+**W, A, S, D** :  move camera<br />
+**SPACE** :  shoot<br />
 
 ![image](screenshot1.png)
 ![image](screenshot2.png)
+![image](screenshot3.png)
