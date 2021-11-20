@@ -477,6 +477,13 @@ void cbtConSliderSetAngularUpperLimit(CbtConstraintHandle con_handle, float limi
 float cbtConSliderGetAngularLowerLimit(CbtConstraintHandle con_handle);
 float cbtConSliderGetAngularUpperLimit(CbtConstraintHandle con_handle);
 
+void cbtConSliderEnableAngularMotor(
+    CbtConstraintHandle con_handle,
+    bool enable,
+    float target_velocity,
+    float max_motor_force
+);
+
 // Generic 6Dof Spring Constraint (ver. 2)
 void cbtConD6Spring2Create1(
     CbtConstraintHandle con_handle,

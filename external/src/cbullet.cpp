@@ -1824,6 +1824,20 @@ float cbtConSliderGetAngularUpperLimit(CbtConstraintHandle con_handle) {
     return con->getUpperAngLimit();
 }
 
+void cbtConSliderEnableAngularMotor(
+    CbtConstraintHandle con_handle,
+    bool enable,
+    float target_velocity,
+    float max_motor_force
+) {
+    assert(con_handle && cbtConIsCreated(con_handle));
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    con->setPoweredAngMotor(enable);
+    con->setTargetAngMotorVelocity(target_velocity);
+    con->setMaxAngMotorForce(max_motor_force);
+}
+
 void cbtConD6Spring2Create1(
     CbtConstraintHandle con_handle,
     CbtBodyHandle body_handle_b,

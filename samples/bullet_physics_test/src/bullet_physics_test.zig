@@ -853,6 +853,7 @@ fn createScene4(
         c.cbtConSliderSetLinearUpperLimit(slider2, 4.0);
         c.cbtConSliderSetAngularLowerLimit(slider2, math.pi);
         c.cbtConSliderSetAngularUpperLimit(slider2, -math.pi);
+        c.cbtConSliderEnableAngularMotor(slider2, true, 2.0, 10.0);
         c.cbtWorldAddConstraint(world, slider2, true);
     }
 
