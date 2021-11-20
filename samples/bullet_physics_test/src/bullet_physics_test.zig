@@ -857,6 +857,58 @@ fn createScene4(
         c.cbtWorldAddConstraint(world, slider2, true);
     }
 
+    // TODO(mziulek): Gears...
+    if (false) {
+        const gear0_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(gear0_shape, &Vec3.init(2.0, 0.3, 2.0).c, c.CBT_LINEAR_AXIS_Y);
+
+        const gear1_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(gear1_shape, &Vec3.init(1.0, 0.3, 1.0).c, c.CBT_LINEAR_AXIS_Y);
+
+        const gear0_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            gear0_body,
+            50.0,
+            &Mat4.initTranslation(Vec3.init(-10, 3, 7)).toArray4x3(),
+            gear0_shape,
+        );
+        c.cbtBodySetAngularFactor(gear0_body, &Vec3.init(0, 1, 0).c);
+        {
+            const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+            c.cbtConPoint2PointCreate1(p2p, gear0_body, &c.CbtVector3{ 0, 0, 0 });
+            c.cbtWorldAddConstraint(world, p2p, true);
+        }
+        createAddEntity(world, gear0_body, Vec4.init(1.0, 0.0, 0.0, 0.7), entities);
+
+        const gear1_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            gear1_body,
+            50.0,
+            &Mat4.initRotationX(0.5 * math.pi).mul(Mat4.initTranslation(Vec3.init(-13.0, 5, 7))).toArray4x3(),
+            gear1_shape,
+        );
+        c.cbtBodySetAngularFactor(gear1_body, &Vec3.init(0, 1, 0).c);
+        {
+            const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+            c.cbtConPoint2PointCreate1(p2p, gear1_body, &c.CbtVector3{ 0, 0, 0 });
+            c.cbtWorldAddConstraint(world, p2p, true);
+        }
+        createAddEntity(world, gear1_body, Vec4.init(0.0, 1.0, 0.0, 0.7), entities);
+
+        const gear = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
+        c.cbtConGearCreate(gear, gear0_body, gear1_body, &Vec3.init(0, 1, 0).c, &Vec3.init(0, 1, 0).c, 0.5);
+        c.cbtWorldAddConstraint(world, gear, true);
+
+        const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
+        c.cbtConSliderCreate1(slider, gear1_body, &Mat4.initRotationZ(math.pi * 0.5).toArray4x3(), true);
+        c.cbtConSliderSetLinearLowerLimit(slider, 0.0);
+        c.cbtConSliderSetLinearUpperLimit(slider, 0.0);
+        c.cbtConSliderSetAngularLowerLimit(slider, math.pi);
+        c.cbtConSliderSetAngularUpperLimit(slider, -math.pi);
+        c.cbtConSliderEnableAngularMotor(slider, true, 4.0, 50.0);
+        c.cbtWorldAddConstraint(world, slider, true);
+    }
+
     camera.* = .{
         .position = Vec3.init(0.0, 7.0, -7.0),
         .forward = Vec3.initZero(),
@@ -1586,6 +1638,7 @@ fn update(demo: *DemoState) void {
 
             const body_a = c.cbtConGetBodyA(constraint);
             const body_b = c.cbtConGetBodyB(constraint);
+            if (body_a == c.cbtConGetFixedBody() or body_b == c.cbtConGetFixedBody()) continue;
 
             var trans_a: [4]c.CbtVector3 = undefined;
             var trans_b: [4]c.CbtVector3 = undefined;
