@@ -50,7 +50,7 @@ const Scene = enum {
 
 const PhysicsObjectsPool = struct {
     const max_num_bodies = 2 * 1024;
-    const max_num_constraints = 49;
+    const max_num_constraints = 54;
     const max_num_shapes = 48;
     bodies: []c.CbtBodyHandle,
     constraints: []c.CbtConstraintHandle,
@@ -96,7 +96,7 @@ const PhysicsObjectsPool = struct {
                 counter += 1;
             }
             i = 0;
-            while (i < 3) : (i += 1) {
+            while (i < 8) : (i += 1) {
                 pool.constraints[counter] = c.cbtConAllocate(c.CBT_CONSTRAINT_TYPE_SLIDER);
                 counter += 1;
             }
@@ -775,6 +775,87 @@ fn createScene4(
         }
     }
 
+    {
+        const support_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+        c.cbtShapeBoxCreate(support_shape, &Vec3.init(0.3, 5.0, 0.3).c);
+
+        const support_body0 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            support_body0,
+            0.0,
+            &Mat4.initTranslation(Vec3.init(10, 5.0, 7)).toArray4x3(),
+            support_shape,
+        );
+        createAddEntity(world, support_body0, Vec4.init(0.1, 0.1, 0.1, 0.5), entities);
+
+        const support_body1 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            support_body1,
+            0.0,
+            &Mat4.initTranslation(Vec3.init(20, 5.0, 7)).toArray4x3(),
+            support_shape,
+        );
+        createAddEntity(world, support_body1, Vec4.init(0.1, 0.1, 0.1, 0.5), entities);
+
+        connected_bodies.append(.{ .body = support_body0, .pivot = Vec3.init(0, 4, 0) }) catch unreachable;
+        connected_bodies.append(.{ .body = support_body1, .pivot = Vec3.init(0, 4, 0) }) catch unreachable;
+
+        connected_bodies.append(.{ .body = support_body0, .pivot = Vec3.init(0, 1, 0) }) catch unreachable;
+        connected_bodies.append(.{ .body = support_body1, .pivot = Vec3.init(0, 1, 0) }) catch unreachable;
+
+        connected_bodies.append(.{ .body = support_body0, .pivot = Vec3.init(0, -2, 0) }) catch unreachable;
+        connected_bodies.append(.{ .body = support_body1, .pivot = Vec3.init(0, -2, 0) }) catch unreachable;
+
+        const body0 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            body0,
+            50.0,
+            &Mat4.initTranslation(Vec3.init(15, 9.0, 7)).toArray4x3(),
+            shape_box_e111,
+        );
+        createAddEntity(world, body0, Vec4.init(0.0, 0.2, 1.0, 0.7), entities);
+
+        const slider0 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
+        c.cbtConSliderCreate1(slider0, body0, &Mat4.initIdentity().toArray4x3(), true);
+        c.cbtConSliderSetLinearLowerLimit(slider0, -4.0);
+        c.cbtConSliderSetLinearUpperLimit(slider0, 4.0);
+        c.cbtConSliderSetAngularLowerLimit(slider0, math.pi);
+        c.cbtConSliderSetAngularUpperLimit(slider0, -math.pi);
+        c.cbtWorldAddConstraint(world, slider0, true);
+
+        const body1 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            body1,
+            50.0,
+            &Mat4.initTranslation(Vec3.init(15, 6, 7)).toArray4x3(),
+            shape_box_e111,
+        );
+        createAddEntity(world, body1, Vec4.init(0.0, 1.0, 0.0, 0.7), entities);
+
+        const slider1 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
+        c.cbtConSliderCreate1(slider1, body1, &Mat4.initIdentity().toArray4x3(), true);
+        c.cbtConSliderSetLinearLowerLimit(slider1, -4.0);
+        c.cbtConSliderSetLinearUpperLimit(slider1, 4.0);
+        c.cbtWorldAddConstraint(world, slider1, true);
+
+        const body2 = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            body2,
+            50.0,
+            &Mat4.initTranslation(Vec3.init(15, 3, 7)).toArray4x3(),
+            shape_box_e111,
+        );
+        createAddEntity(world, body2, Vec4.init(1.0, 0.0, 0.0, 0.7), entities);
+
+        const slider2 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
+        c.cbtConSliderCreate1(slider2, body2, &Mat4.initIdentity().toArray4x3(), true);
+        c.cbtConSliderSetLinearLowerLimit(slider2, -4.0);
+        c.cbtConSliderSetLinearUpperLimit(slider2, 4.0);
+        c.cbtConSliderSetAngularLowerLimit(slider2, math.pi);
+        c.cbtConSliderSetAngularUpperLimit(slider2, -math.pi);
+        c.cbtWorldAddConstraint(world, slider2, true);
+    }
+
     camera.* = .{
         .position = Vec3.init(0.0, 7.0, -7.0),
         .forward = Vec3.initZero(),
@@ -842,7 +923,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.NumRenderTargets = 1;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .LINE;
-        pso_desc.RasterizerState.AntialiasedLineEnable = w.TRUE;
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
 
