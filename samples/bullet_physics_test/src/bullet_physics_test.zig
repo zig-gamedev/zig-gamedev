@@ -693,6 +693,7 @@ fn createScene4(
 
         const body2 = physics_objects_pool.getBody();
         c.cbtBodyCreate(body2, 50.0, &Mat4.initTranslation(Vec3.init(1.0, 7.0, 12)).toArray4x3(), box_shape);
+        c.cbtBodyApplyCentralImpulse(body2, &c.CbtVector3{ 1000, 0, 0 });
         createAddEntity(world, body2, Vec4.init(0.0, 0.2, 1.0, 0.7), entities);
 
         const hinge0 = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_HINGE);
