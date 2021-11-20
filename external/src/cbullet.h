@@ -298,6 +298,9 @@ void cbtBodySetAngularVelocity(CbtBodyHandle body_handle, const CbtVector3 veloc
 void cbtBodySetLinearFactor(CbtBodyHandle body_handle, const CbtVector3 factor);
 void cbtBodySetAngularFactor(CbtBodyHandle body_handle, const CbtVector3 factor);
 
+void cbtBodySetGravity(CbtBodyHandle body_handle, const CbtVector3 gravity);
+void cbtBodyGetGravity(CbtBodyHandle body_handle, CbtVector3 gravity);
+
 void cbtBodyApplyCentralForce(CbtBodyHandle body_handle, const CbtVector3 force);
 void cbtBodyApplyCentralImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse);
 void cbtBodyApplyForce(CbtBodyHandle body_handle, const CbtVector3 force, const CbtVector3 rel_pos);

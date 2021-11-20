@@ -991,6 +991,23 @@ void cbtBodySetAngularFactor(CbtBodyHandle body_handle, const CbtVector3 factor)
     body->setAngularFactor(btVector3(factor[0], factor[1], factor[2]));
 }
 
+void cbtBodySetGravity(CbtBodyHandle body_handle, const CbtVector3 gravity) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    assert(gravity);
+    auto body = (btRigidBody*)body_handle;
+    body->setGravity(btVector3(gravity[0], gravity[1], gravity[2]));
+}
+
+void cbtBodyGetGravity(CbtBodyHandle body_handle, CbtVector3 gravity) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    assert(gravity);
+    auto body = (btRigidBody*)body_handle;
+    auto tmp = body->getGravity();
+    gravity[0] = tmp.x();
+    gravity[1] = tmp.y();
+    gravity[2] = tmp.z();
+}
+
 void cbtBodyApplyCentralForce(CbtBodyHandle body_handle, const CbtVector3 force) {
     assert(body_handle && cbtBodyIsCreated(body_handle));
     assert(force);

@@ -28,7 +28,7 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: bullet physics test";
 const window_width = 1920;
 const window_height = 1080;
-const num_msaa_samples = 8;
+const num_msaa_samples = 4;
 
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
@@ -857,22 +857,37 @@ fn createScene4(
         c.cbtWorldAddConstraint(world, slider2, true);
     }
 
-    // TODO(mziulek): Gears...
-    if (false) {
-        const gear0_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-        c.cbtShapeCylinderCreate(gear0_shape, &Vec3.init(2.0, 0.3, 2.0).c, c.CBT_LINEAR_AXIS_Y);
+    {
+        const gear00_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(gear00_shape, &Vec3.init(1.5, 0.3, 1.5).c, c.CBT_LINEAR_AXIS_Y);
+
+        const gear01_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
+        c.cbtShapeCylinderCreate(gear01_shape, &Vec3.init(1.65, 0.15, 1.65).c, c.CBT_LINEAR_AXIS_Y);
+
+        const gear0_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_COMPOUND);
+        c.cbtShapeCompoundCreate(gear0_shape, true, 2);
+        c.cbtShapeCompoundAddChild(
+            gear0_shape,
+            &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(),
+            gear00_shape,
+        );
+        c.cbtShapeCompoundAddChild(
+            gear0_shape,
+            &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(),
+            gear01_shape,
+        );
 
         const gear1_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_CYLINDER);
-        c.cbtShapeCylinderCreate(gear1_shape, &Vec3.init(1.0, 0.3, 1.0).c, c.CBT_LINEAR_AXIS_Y);
+        c.cbtShapeCylinderCreate(gear1_shape, &Vec3.init(1.5, 0.3, 1.5).c, c.CBT_LINEAR_AXIS_Y);
 
         const gear0_body = physics_objects_pool.getBody();
         c.cbtBodyCreate(
             gear0_body,
             50.0,
-            &Mat4.initTranslation(Vec3.init(-10, 3, 7)).toArray4x3(),
+            &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(-15.0, 5, 7))).toArray4x3(),
             gear0_shape,
         );
-        c.cbtBodySetAngularFactor(gear0_body, &Vec3.init(0, 1, 0).c);
+        c.cbtBodySetAngularFactor(gear0_body, &Vec3.init(0, 0, 1).c);
         {
             const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
             c.cbtConPoint2PointCreate1(p2p, gear0_body, &c.CbtVector3{ 0, 0, 0 });
@@ -880,14 +895,23 @@ fn createScene4(
         }
         createAddEntity(world, gear0_body, Vec4.init(1.0, 0.0, 0.0, 0.7), entities);
 
+        const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
+        c.cbtConSliderCreate1(slider, gear0_body, &Mat4.initRotationZ(math.pi * 0.5).toArray4x3(), true);
+        c.cbtConSliderSetLinearLowerLimit(slider, 0.0);
+        c.cbtConSliderSetLinearUpperLimit(slider, 0.0);
+        c.cbtConSliderSetAngularLowerLimit(slider, math.pi);
+        c.cbtConSliderSetAngularUpperLimit(slider, -math.pi);
+        c.cbtConSliderEnableAngularMotor(slider, true, 32.0, 400.0);
+        c.cbtWorldAddConstraint(world, slider, true);
+
         const gear1_body = physics_objects_pool.getBody();
         c.cbtBodyCreate(
             gear1_body,
-            50.0,
-            &Mat4.initRotationX(0.5 * math.pi).mul(Mat4.initTranslation(Vec3.init(-13.0, 5, 7))).toArray4x3(),
+            200.0,
+            &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(-10.0, 5, 7))).toArray4x3(),
             gear1_shape,
         );
-        c.cbtBodySetAngularFactor(gear1_body, &Vec3.init(0, 1, 0).c);
+        c.cbtBodySetAngularFactor(gear1_body, &Vec3.init(0, 0, 1).c);
         {
             const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
             c.cbtConPoint2PointCreate1(p2p, gear1_body, &c.CbtVector3{ 0, 0, 0 });
@@ -895,18 +919,39 @@ fn createScene4(
         }
         createAddEntity(world, gear1_body, Vec4.init(0.0, 1.0, 0.0, 0.7), entities);
 
-        const gear = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_GEAR);
-        c.cbtConGearCreate(gear, gear0_body, gear1_body, &Vec3.init(0, 1, 0).c, &Vec3.init(0, 1, 0).c, 0.5);
-        c.cbtWorldAddConstraint(world, gear, true);
+        const connection_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
+        c.cbtShapeBoxCreate(connection_shape, &Vec3.init(2.5, 0.2, 0.1).c);
 
-        const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
-        c.cbtConSliderCreate1(slider, gear1_body, &Mat4.initRotationZ(math.pi * 0.5).toArray4x3(), true);
-        c.cbtConSliderSetLinearLowerLimit(slider, 0.0);
-        c.cbtConSliderSetLinearUpperLimit(slider, 0.0);
-        c.cbtConSliderSetAngularLowerLimit(slider, math.pi);
-        c.cbtConSliderSetAngularUpperLimit(slider, -math.pi);
-        c.cbtConSliderEnableAngularMotor(slider, true, 4.0, 50.0);
-        c.cbtWorldAddConstraint(world, slider, true);
+        const connection_body = physics_objects_pool.getBody();
+        c.cbtBodyCreate(
+            connection_body,
+            50.0,
+            &Mat4.initTranslation(Vec3.init(-12.5, 6, 6)).toArray4x3(),
+            connection_shape,
+        );
+        createAddEntity(world, connection_body, Vec4.init(0.0, 0.0, 0.0, 0.5), entities);
+        {
+            const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+            c.cbtConPoint2PointCreate2(
+                p2p,
+                gear0_body,
+                connection_body,
+                &c.CbtVector3{ 0.0, -0.4, -1.0 },
+                &c.CbtVector3{ -2.5, 0, 0 },
+            );
+            c.cbtWorldAddConstraint(world, p2p, true);
+        }
+        {
+            const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
+            c.cbtConPoint2PointCreate2(
+                p2p,
+                gear1_body,
+                connection_body,
+                &c.CbtVector3{ 0.0, -0.4, -1.0 },
+                &c.CbtVector3{ 2.5, 0, 0 },
+            );
+            c.cbtWorldAddConstraint(world, p2p, true);
+        }
     }
 
     camera.* = .{
