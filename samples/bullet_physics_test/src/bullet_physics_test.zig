@@ -313,6 +313,7 @@ const DemoState = struct {
     entities: std.ArrayList(Entity),
     meshes: std.ArrayList(Mesh),
     connected_bodies: std.ArrayList(BodyWithPivot),
+    motors: std.ArrayList(c.CbtConstraintHandle),
 
     current_scene_index: i32,
     selected_entity_index: u32,
@@ -661,6 +662,7 @@ fn createScene4(
     entities: *std.ArrayList(Entity),
     camera: *Camera,
     connected_bodies: *std.ArrayList(BodyWithPivot),
+    motors: *std.ArrayList(c.CbtConstraintHandle),
 ) void {
     const world_body = physics_objects_pool.getBody();
     c.cbtBodyCreate(world_body, 0.0, &Mat4.initTranslation(Vec3.init(0, 0, 0)).toArray4x3(), shape_world);
@@ -855,7 +857,10 @@ fn createScene4(
         c.cbtConSliderSetAngularLowerLimit(slider2, math.pi);
         c.cbtConSliderSetAngularUpperLimit(slider2, -math.pi);
         c.cbtConSliderEnableAngularMotor(slider2, true, 2.0, 10.0);
+        c.cbtConSliderEnableLinearMotor(slider2, true, 2.0, 10.0);
         c.cbtWorldAddConstraint(world, slider2, true);
+
+        motors.append(slider2) catch unreachable;
     }
 
     {
@@ -904,6 +909,8 @@ fn createScene4(
         c.cbtConSliderSetAngularUpperLimit(slider, -math.pi);
         c.cbtConSliderEnableAngularMotor(slider, true, 32.0, 400.0);
         c.cbtWorldAddConstraint(world, slider, true);
+
+        motors.append(slider) catch unreachable;
 
         const gear1_body = physics_objects_pool.getBody();
         c.cbtBodyCreate(
@@ -1150,6 +1157,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     entities.items[0].flags = 1;
 
     var connected_bodies = std.ArrayList(BodyWithPivot).init(gpa);
+    var motors = std.ArrayList(c.CbtConstraintHandle).init(gpa);
 
     var vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
@@ -1227,6 +1235,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .physics_objects_pool = physics_objects_pool,
         .entities = entities,
         .connected_bodies = connected_bodies,
+        .motors = motors,
         .physics_debug_pso = physics_debug_pso,
         .simple_entity_pso = simple_entity_pso,
         .vertex_buffer = vertex_buffer,
@@ -1277,6 +1286,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     c.cbtConDeallocate(demo.pick.constraint);
     demo.entities.deinit();
     demo.connected_bodies.deinit();
+    demo.motors.deinit();
     demo.physics_objects_pool.deinit(demo.physics_world);
     demo.physics_debug.deinit();
     gpa.destroy(demo.physics_debug);
@@ -1426,6 +1436,7 @@ fn update(demo: *DemoState) void {
             demo.physics_objects_pool.destroyAllObjects(demo.physics_world);
             demo.entities.resize(0) catch unreachable;
             demo.connected_bodies.resize(0) catch unreachable;
+            demo.motors.resize(0) catch unreachable;
             const scene = @intToEnum(Scene, demo.current_scene_index);
             switch (scene) {
                 .scene1 => createScene1(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
@@ -1437,6 +1448,7 @@ fn update(demo: *DemoState) void {
                     &demo.entities,
                     &demo.camera,
                     &demo.connected_bodies,
+                    &demo.motors,
                 ),
             }
             demo.selected_entity_index = 0;

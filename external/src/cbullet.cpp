@@ -1841,6 +1841,20 @@ float cbtConSliderGetAngularUpperLimit(CbtConstraintHandle con_handle) {
     return con->getUpperAngLimit();
 }
 
+void cbtConSliderEnableLinearMotor(
+    CbtConstraintHandle con_handle,
+    bool enable,
+    float target_velocity,
+    float max_motor_force
+) {
+    assert(con_handle && cbtConIsCreated(con_handle));
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    con->setPoweredLinMotor(enable);
+    con->setTargetLinMotorVelocity(target_velocity);
+    con->setMaxLinMotorForce(max_motor_force);
+}
+
 void cbtConSliderEnableAngularMotor(
     CbtConstraintHandle con_handle,
     bool enable,
@@ -1853,6 +1867,34 @@ void cbtConSliderEnableAngularMotor(
     con->setPoweredAngMotor(enable);
     con->setTargetAngMotorVelocity(target_velocity);
     con->setMaxAngMotorForce(max_motor_force);
+}
+
+bool cbtConSliderIsLinearMotorEnabled(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle));
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    return con->getPoweredLinMotor();
+}
+
+bool cbtConSliderIsAngularMotorEnabled(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle));
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    return con->getPoweredAngMotor();
+}
+
+float cbtConSliderGetLinearPosition(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle));
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    return con->getLinearPos();
+}
+
+float cbtConSliderGetAngularPosition(CbtConstraintHandle con_handle) {
+    assert(con_handle && cbtConIsCreated(con_handle));
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    return con->getAngularPos();
 }
 
 void cbtConD6Spring2Create1(
