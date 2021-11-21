@@ -1527,23 +1527,26 @@ fn update(demo: *DemoState) void {
                         var target_velocity: f32 = undefined;
                         var max_force: f32 = undefined;
                         c.cbtConSliderGetAngularMotor(constraint, &target_velocity, &max_force);
-                        _ = c.igSliderFloat(
+                        if (c.igSliderFloat(
                             "Target Velocity",
                             &target_velocity,
                             0.0,
                             10.0,
                             null,
                             c.ImGuiSliderFlags_None,
-                        );
-                        _ = c.igSliderFloat(
+                        )) {
+                            c.cbtConSliderEnableAngularMotor(constraint, true, target_velocity, max_force);
+                        }
+                        if (c.igSliderFloat(
                             "Max Force",
                             &max_force,
                             0.0,
                             100.0,
                             null,
                             c.ImGuiSliderFlags_None,
-                        );
-                        c.cbtConSliderEnableAngularMotor(constraint, true, target_velocity, max_force);
+                        )) {
+                            c.cbtConSliderEnableAngularMotor(constraint, true, target_velocity, max_force);
+                        }
                     }
                 }
             }
