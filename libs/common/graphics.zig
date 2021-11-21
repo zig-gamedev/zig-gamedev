@@ -1425,7 +1425,7 @@ pub const GuiContext = struct {
 
         const io = c.igGetIO().?;
 
-        _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, "content/Roboto-Medium.ttf", 24.0, null, null);
+        _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, "content/Roboto-Medium.ttf", 25.0, null, null);
         const font_info = blk: {
             var pp: [*c]u8 = undefined;
             var ww: i32 = undefined;

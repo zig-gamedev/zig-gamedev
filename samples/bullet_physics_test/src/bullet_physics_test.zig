@@ -1413,7 +1413,6 @@ fn update(demo: *DemoState) void {
     c.igSameLine(0, -1);
     c.igText(" :  shoot", "");
 
-    c.igSpacing();
     {
         _ = c.igCombo_Str(
             "",
@@ -1447,7 +1446,6 @@ fn update(demo: *DemoState) void {
         }
         c.igPopStyleColor(1);
 
-        c.igSpacing();
         if (c.igCollapsingHeader_TreeNodeFlags("Scene Properties", c.ImGuiTreeNodeFlags_None)) {
             var gravity: c.CbtVector3 = undefined;
             c.cbtWorldGetGravity(demo.physics_world, &gravity);
@@ -1471,10 +1469,7 @@ fn update(demo: *DemoState) void {
     {
         const body = demo.entities.items[demo.selected_entity_index].body;
 
-        c.igSpacing();
         if (c.igCollapsingHeader_TreeNodeFlags("Object Properties", c.ImGuiTreeNodeFlags_None)) {
-            c.igSeparator();
-
             var linear_damping = c.cbtBodyGetLinearDamping(body);
             var angular_damping = c.cbtBodyGetAngularDamping(body);
             if (c.igSliderFloat("Linear Damping", &linear_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
@@ -1483,7 +1478,6 @@ fn update(demo: *DemoState) void {
             if (c.igSliderFloat("Angular Damping", &angular_damping, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
                 c.cbtBodySetDamping(body, linear_damping, angular_damping);
             }
-            c.igSeparator();
 
             var friction = c.cbtBodyGetFriction(body);
             if (c.igSliderFloat("Friction", &friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
@@ -1493,13 +1487,11 @@ fn update(demo: *DemoState) void {
             if (c.igSliderFloat("Rolling Friction", &rolling_friction, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
                 c.cbtBodySetRollingFriction(body, rolling_friction);
             }
-            c.igSeparator();
 
             var restitution = c.cbtBodyGetRestitution(body);
             if (c.igSliderFloat("Restitution", &restitution, 0.0, 1.0, null, c.ImGuiSliderFlags_None)) {
                 c.cbtBodySetRestitution(body, restitution);
             }
-            c.igSeparator();
 
             const mass_flag = if (c.cbtBodyIsStaticOrKinematic(body))
                 c.ImGuiInputTextFlags_ReadOnly
@@ -1523,7 +1515,6 @@ fn update(demo: *DemoState) void {
                 if (c.cbtConGetType(constraint) == c.CBT_CONSTRAINT_TYPE_SLIDER and
                     c.cbtConSliderIsAngularMotorEnabled(constraint))
                 {
-                    c.igSpacing();
                     if (c.igCollapsingHeader_TreeNodeFlags("Motor Properties", c.ImGuiTreeNodeFlags_None)) {
                         var angular_velocity: c.CbtVector3 = undefined;
                         c.cbtBodyGetAngularVelocity(selected_body, &angular_velocity);
