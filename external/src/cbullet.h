@@ -301,6 +301,9 @@ void cbtBodySetAngularFactor(CbtBodyHandle body_handle, const CbtVector3 factor)
 void cbtBodySetGravity(CbtBodyHandle body_handle, const CbtVector3 gravity);
 void cbtBodyGetGravity(CbtBodyHandle body_handle, CbtVector3 gravity);
 
+int cbtBodyGetNumConstraints(CbtBodyHandle body_handle);
+CbtConstraintHandle cbtBodyGetConstraint(CbtBodyHandle body_handle, int index);
+
 void cbtBodyApplyCentralForce(CbtBodyHandle body_handle, const CbtVector3 force);
 void cbtBodyApplyCentralImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse);
 void cbtBodyApplyForce(CbtBodyHandle body_handle, const CbtVector3 force, const CbtVector3 rel_pos);
@@ -490,10 +493,12 @@ void cbtConSliderEnableAngularMotor(
     CbtConstraintHandle con_handle,
     bool enable,
     float target_velocity,
-    float max_motor_force
+    float max_force
 );
 bool cbtConSliderIsLinearMotorEnabled(CbtConstraintHandle con_handle);
 bool cbtConSliderIsAngularMotorEnabled(CbtConstraintHandle con_handle);
+
+void cbtConSliderGetAngularMotor(CbtConstraintHandle con_handle, float* target_velocity, float* max_force);
 
 float cbtConSliderGetLinearPosition(CbtConstraintHandle con_handle);
 float cbtConSliderGetAngularPosition(CbtConstraintHandle con_handle);

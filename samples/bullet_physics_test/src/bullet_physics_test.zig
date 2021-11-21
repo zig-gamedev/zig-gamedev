@@ -857,7 +857,6 @@ fn createScene4(
         c.cbtConSliderSetAngularLowerLimit(slider2, math.pi);
         c.cbtConSliderSetAngularUpperLimit(slider2, -math.pi);
         c.cbtConSliderEnableAngularMotor(slider2, true, 2.0, 10.0);
-        c.cbtConSliderEnableLinearMotor(slider2, true, 2.0, 10.0);
         c.cbtWorldAddConstraint(world, slider2, true);
 
         motors.append(slider2) catch unreachable;
@@ -889,16 +888,12 @@ fn createScene4(
         const gear0_body = physics_objects_pool.getBody();
         c.cbtBodyCreate(
             gear0_body,
-            50.0,
+            1.0,
             &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(-15.0, 5, 7))).toArray4x3(),
             gear0_shape,
         );
+        c.cbtBodySetLinearFactor(gear0_body, &Vec3.init(0, 0, 0).c);
         c.cbtBodySetAngularFactor(gear0_body, &Vec3.init(0, 0, 1).c);
-        {
-            const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
-            c.cbtConPoint2PointCreate1(p2p, gear0_body, &c.CbtVector3{ 0, 0, 0 });
-            c.cbtWorldAddConstraint(world, p2p, true);
-        }
         createAddEntity(world, gear0_body, Vec4.init(1.0, 0.0, 0.0, 0.7), entities);
 
         const slider = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_SLIDER);
@@ -907,7 +902,7 @@ fn createScene4(
         c.cbtConSliderSetLinearUpperLimit(slider, 0.0);
         c.cbtConSliderSetAngularLowerLimit(slider, math.pi);
         c.cbtConSliderSetAngularUpperLimit(slider, -math.pi);
-        c.cbtConSliderEnableAngularMotor(slider, true, 32.0, 400.0);
+        c.cbtConSliderEnableAngularMotor(slider, true, 3.2, 40.0);
         c.cbtWorldAddConstraint(world, slider, true);
 
         motors.append(slider) catch unreachable;
@@ -915,16 +910,12 @@ fn createScene4(
         const gear1_body = physics_objects_pool.getBody();
         c.cbtBodyCreate(
             gear1_body,
-            200.0,
+            2.0,
             &Mat4.initRotationX(math.pi * 0.5).mul(Mat4.initTranslation(Vec3.init(-10.0, 5, 7))).toArray4x3(),
             gear1_shape,
         );
+        c.cbtBodySetLinearFactor(gear1_body, &Vec3.init(0, 0, 0).c);
         c.cbtBodySetAngularFactor(gear1_body, &Vec3.init(0, 0, 1).c);
-        {
-            const p2p = physics_objects_pool.getConstraint(c.CBT_CONSTRAINT_TYPE_POINT2POINT);
-            c.cbtConPoint2PointCreate1(p2p, gear1_body, &c.CbtVector3{ 0, 0, 0 });
-            c.cbtWorldAddConstraint(world, p2p, true);
-        }
         createAddEntity(world, gear1_body, Vec4.init(0.0, 1.0, 0.0, 0.7), entities);
 
         const connection_shape = physics_objects_pool.getShape(c.CBT_SHAPE_TYPE_BOX);
@@ -933,7 +924,7 @@ fn createScene4(
         const connection_body = physics_objects_pool.getBody();
         c.cbtBodyCreate(
             connection_body,
-            50.0,
+            1.0,
             &Mat4.initTranslation(Vec3.init(-12.5, 6, 6)).toArray4x3(),
             connection_shape,
         );
@@ -944,7 +935,7 @@ fn createScene4(
                 p2p,
                 gear0_body,
                 connection_body,
-                &c.CbtVector3{ 0.0, -0.4, -1.0 },
+                &c.CbtVector3{ 0.0, -0.4, 1.0 },
                 &c.CbtVector3{ -2.5, 0, 0 },
             );
             c.cbtWorldAddConstraint(world, p2p, true);
@@ -1455,8 +1446,8 @@ fn update(demo: *DemoState) void {
             demo.entities.items[demo.selected_entity_index].flags = 1;
         }
         c.igPopStyleColor(1);
-        c.igSpacing();
 
+        c.igSpacing();
         if (c.igCollapsingHeader_TreeNodeFlags("Scene Properties", c.ImGuiTreeNodeFlags_None)) {
             var gravity: c.CbtVector3 = undefined;
             c.cbtWorldGetGravity(demo.physics_world, &gravity);
@@ -1476,11 +1467,11 @@ fn update(demo: *DemoState) void {
                 }
             }
         }
-        c.igSpacing();
     }
     {
         const body = demo.entities.items[demo.selected_entity_index].body;
 
+        c.igSpacing();
         if (c.igCollapsingHeader_TreeNodeFlags("Object Properties", c.ImGuiTreeNodeFlags_None)) {
             c.igSeparator();
 
@@ -1522,6 +1513,48 @@ fn update(demo: *DemoState) void {
                 }
                 _ = c.igInputFloat3("Inertia", &inertia, null, c.ImGuiInputTextFlags_ReadOnly);
                 c.cbtBodySetMassProps(body, mass, &inertia);
+            }
+        }
+
+        if (demo.motors.items.len > 0) {
+            const selected_body = demo.entities.items[demo.selected_entity_index].body;
+            if (c.cbtBodyGetNumConstraints(selected_body) > 0) {
+                const constraint = c.cbtBodyGetConstraint(selected_body, 0);
+                if (c.cbtConGetType(constraint) == c.CBT_CONSTRAINT_TYPE_SLIDER and
+                    c.cbtConSliderIsAngularMotorEnabled(constraint))
+                {
+                    c.igSpacing();
+                    if (c.igCollapsingHeader_TreeNodeFlags("Motor Properties", c.ImGuiTreeNodeFlags_None)) {
+                        var angular_velocity: c.CbtVector3 = undefined;
+                        c.cbtBodyGetAngularVelocity(selected_body, &angular_velocity);
+                        _ = c.igInputFloat3(
+                            "Angular Velocity",
+                            &angular_velocity,
+                            null,
+                            c.ImGuiInputTextFlags_ReadOnly,
+                        );
+                        var target_velocity: f32 = undefined;
+                        var max_force: f32 = undefined;
+                        c.cbtConSliderGetAngularMotor(constraint, &target_velocity, &max_force);
+                        _ = c.igSliderFloat(
+                            "Target Velocity",
+                            &target_velocity,
+                            0.0,
+                            10.0,
+                            null,
+                            c.ImGuiSliderFlags_None,
+                        );
+                        _ = c.igSliderFloat(
+                            "Max Force",
+                            &max_force,
+                            0.0,
+                            100.0,
+                            null,
+                            c.ImGuiSliderFlags_None,
+                        );
+                        c.cbtConSliderEnableAngularMotor(constraint, true, target_velocity, max_force);
+                    }
+                }
             }
         }
     }

@@ -1008,6 +1008,18 @@ void cbtBodyGetGravity(CbtBodyHandle body_handle, CbtVector3 gravity) {
     gravity[2] = tmp.z();
 }
 
+int cbtBodyGetNumConstraints(CbtBodyHandle body_handle) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    auto body = (btRigidBody*)body_handle;
+    return body->getNumConstraintRefs();
+}
+
+CbtConstraintHandle cbtBodyGetConstraint(CbtBodyHandle body_handle, int index) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    auto body = (btRigidBody*)body_handle;
+    return (CbtConstraintHandle)body->getConstraintRef(index);
+}
+
 void cbtBodyApplyCentralForce(CbtBodyHandle body_handle, const CbtVector3 force) {
     assert(body_handle && cbtBodyIsCreated(body_handle));
     assert(force);
@@ -1859,14 +1871,14 @@ void cbtConSliderEnableAngularMotor(
     CbtConstraintHandle con_handle,
     bool enable,
     float target_velocity,
-    float max_motor_force
+    float max_force
 ) {
     assert(con_handle && cbtConIsCreated(con_handle));
     assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
     auto con = (btSliderConstraint*)con_handle;
     con->setPoweredAngMotor(enable);
     con->setTargetAngMotorVelocity(target_velocity);
-    con->setMaxAngMotorForce(max_motor_force);
+    con->setMaxAngMotorForce(max_force);
 }
 
 bool cbtConSliderIsLinearMotorEnabled(CbtConstraintHandle con_handle) {
@@ -1881,6 +1893,18 @@ bool cbtConSliderIsAngularMotorEnabled(CbtConstraintHandle con_handle) {
     assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
     auto con = (btSliderConstraint*)con_handle;
     return con->getPoweredAngMotor();
+}
+
+void cbtConSliderGetAngularMotor(CbtConstraintHandle con_handle, float* target_velocity, float* max_force) {
+    assert(con_handle && cbtConIsCreated(con_handle));
+    assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
+    auto con = (btSliderConstraint*)con_handle;
+    if (target_velocity) {
+        *target_velocity = con->getTargetAngMotorVelocity();
+    }
+    if (max_force) {
+        *max_force = con->getMaxAngMotorForce();
+    }
 }
 
 float cbtConSliderGetLinearPosition(CbtConstraintHandle con_handle) {
