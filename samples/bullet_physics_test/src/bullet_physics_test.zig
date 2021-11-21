@@ -1382,11 +1382,36 @@ fn update(demo: *DemoState) void {
         null,
         c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
     );
-    c.igText("Left Mouse Button :  select object", "");
-    c.igText("Left Mouse Button + drag :  pick up and move object", "");
-    c.igText("Right Mouse Button + drag :  rotate camera", "");
-    c.igText("W, A, S, D :  move camera", "");
-    c.igText("SPACE :  shoot", "");
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Left Mouse Button", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  select object", "");
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Left Mouse Button + Drag", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  pick up and move object", "");
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + Drag", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  rotate camera", "");
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  move camera", "");
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "SPACE", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  shoot", "");
+
     c.igSpacing();
     {
         _ = c.igCombo_Str(
@@ -1420,7 +1445,7 @@ fn update(demo: *DemoState) void {
         c.igPopStyleColor(1);
         c.igSpacing();
 
-        if (c.igCollapsingHeader_TreeNodeFlags("Scene Settings", c.ImGuiTreeNodeFlags_None)) {
+        if (c.igCollapsingHeader_TreeNodeFlags("Scene Properties", c.ImGuiTreeNodeFlags_None)) {
             var gravity: c.CbtVector3 = undefined;
             c.cbtWorldGetGravity(demo.physics_world, &gravity);
             if (c.igSliderFloat("Gravity", &gravity[1], -15.0, 15.0, null, c.ImGuiSliderFlags_None)) {
@@ -1444,7 +1469,7 @@ fn update(demo: *DemoState) void {
     {
         const body = demo.entities.items[demo.selected_entity_index].body;
 
-        if (c.igCollapsingHeader_TreeNodeFlags("Selected Object Settings", c.ImGuiTreeNodeFlags_None)) {
+        if (c.igCollapsingHeader_TreeNodeFlags("Object Properties", c.ImGuiTreeNodeFlags_None)) {
             c.igSeparator();
 
             var linear_damping = c.cbtBodyGetLinearDamping(body);
