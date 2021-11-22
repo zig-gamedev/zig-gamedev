@@ -24,23 +24,23 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing (DXR) for shadow rays.
 
-    <img src="samples/simple_raytracer/screenshot.png" alt="simple raytracer" height="200">
+    <a href="samples/simple_raytracer"><img src="samples/simple_raytracer/screenshot.png" alt="simple raytracer" height="200"></a>
 
 1. [physically based rendering](samples/physically_based_rendering): This sample implements physically based shading and image based lighting to achive realistic looking rendering results.
 
-    <img src="samples/physically_based_rendering/screenshot.png" alt="physically based rendering" height="200">
+    <a href="samples/physically_based_rendering"><img src="samples/physically_based_rendering/screenshot.png" alt="physically based rendering" height="200"></a>
 
 1. [audio playback test](samples/audio_playback_test): This sample demonstrates how to decode .mp3 file using Microsoft Media Foundation and play it back using Windows Audio Session API (WASAPI).
 
-    <img src="samples/audio_playback_test/screenshot.png" alt="audio playback test" height="200">
+    <a href="samples/audio_playback_test"><img src="samples/audio_playback_test/screenshot.png" alt="audio playback test" height="200"></a>
 
 1. [vector graphics test](samples/vector_graphics_test): This sample demonstrates how to use Direct3D 12 <-> Direct2D interop to render vector graphics and high-quality text.
 
-    <img src="samples/vector_graphics_test/screenshot.png" alt="vector graphics test" height="200">
+    <a href="samples/vector_graphics_test"><img src="samples/vector_graphics_test/screenshot.png" alt="vector graphics test" height="200"></a>
 
 1. [DirectML convolution test](samples/directml_convolution_test): This sample demonstrates how to perform GPU-accelerated convolution operation using DirectML.
 
-    <img src="samples/directml_convolution_test/screenshot.png" alt="directml convolution test" height="200">
+    <a href="directml_convolution_test"><img src="samples/directml_convolution_test/screenshot.png" alt="directml convolution test" height="200"></a>
     
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
