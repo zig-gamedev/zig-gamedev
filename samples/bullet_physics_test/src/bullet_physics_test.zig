@@ -28,7 +28,7 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: bullet physics test";
 const window_width = 1920;
 const window_height = 1080;
-const num_msaa_samples = 8;
+const num_msaa_samples = 4;
 
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
