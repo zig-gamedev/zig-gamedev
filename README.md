@@ -2,7 +2,7 @@
 
 This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using DirectX 12, DirectML, XAudio2, WASAPI, Direct2D, DirectWrite, Bullet. Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases). Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.<br />
 
-*I build game development stuff in Zig full-time. As a sample of my work please see: [Physically Based Rendering (Showcase Video)](https://drive.google.com/file/d/1uwqINVhKPDbRN0aasrsIcueCKmHJcTZj/view?usp=sharing) and [Raytracing Demo (Showcase Video)](https://drive.google.com/file/d/1ktcKUrfLw5Yc68eT27sMCxcWYXBWmNu1/view?usp=sharing). If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
+*I build game development stuff in Zig full-time. As a sample of my work please see: [Virtual Physics Lab (Video)](https://youtu.be/9Ri6xS2-9k8), [Physically Based Rendering (Video)](https://drive.google.com/file/d/1uwqINVhKPDbRN0aasrsIcueCKmHJcTZj/view?usp=sharing) and [Raytracing Demo (Video)](https://drive.google.com/file/d/1ktcKUrfLw5Yc68eT27sMCxcWYXBWmNu1/view?usp=sharing). If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
 
 #### Some features:
 
