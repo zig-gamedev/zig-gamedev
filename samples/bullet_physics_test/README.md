@@ -5,6 +5,8 @@ This demo shows how to use [Bullet](https://github.com/bulletphysics/bullet3) ph
 * [cbullet.h](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.h)
 * [cbullet.cpp](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.cpp)
 
+Demo consists of 4 scenes where user can interact and experiment with physics objects. In particular we show how to setup Newton's Cradle, simple machines with motors, hinges, sliders, etc. All basic properties like mass, friction, damping, gravity can be changed in real-time to observe how those affect object's behaviour.
+
 ![image](screenshot1.png)
 ![image](screenshot2.png)
 ![image](screenshot3.png)
