@@ -273,7 +273,7 @@ pub fn initWindow(allocator: *std.mem.Allocator, name: [*:0]const u8, width: u32
         w.user32.WS_MINIMIZEBOX;
 
     var rect = w.RECT{ .left = 0, .top = 0, .right = @intCast(i32, width), .bottom = @intCast(i32, height) };
-    // NOTE(mziulek): For exact FullHD window size it is better to stick to requested total window size (looks better on 1920x1080 displays).
+    // HACK(mziulek): For exact FullHD window size it is better to stick to requested total window size (looks better on 1920x1080 displays).
     if (width != 1920 and height != 1080) {
         try w.user32.adjustWindowRectEx(&rect, style, false, 0);
     }

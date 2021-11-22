@@ -1,6 +1,6 @@
 ## virtual physics lab (Bullet physics test)
 
-[Video showing demo in action](https://www.youtube.com/watch?v=GUaaXHSfDTE)
+[Video showing demo in action](https://youtu.be/9Ri6xS2-9k8)
 
 Demo consists of 4 scenes where user can interact and experiment with physics objects. In particular we show how to setup Newton's Cradle, simple machines with motors, hinges, sliders, etc. All basic properties like mass, friction, damping, gravity can be changed in real-time to observe how those affect object's behavior.
 
