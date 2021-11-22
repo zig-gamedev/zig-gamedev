@@ -40,6 +40,7 @@ Some of the sample applications are listed below. More can be found in [samples]
     
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
+* [mzet (mzet-)](https://github.com/mzet-)
 * Zig Software Foundation (ziglang)
 * Ian (LinuXY)
 
