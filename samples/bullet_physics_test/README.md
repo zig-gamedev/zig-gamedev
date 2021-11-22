@@ -1,6 +1,8 @@
 ## virtual physics lab (Bullet physics test)
 
-Demo consists of 4 scenes where user can interact and experiment with physics objects. In particular we show how to setup Newton's Cradle, simple machines with motors, hinges, sliders, etc. All basic properties like mass, friction, damping, gravity can be changed in real-time to observe how those affect object's behaviour.
+[Video showing demo in action](https://www.youtube.com/watch?v=GUaaXHSfDTE)
+
+Demo consists of 4 scenes where user can interact and experiment with physics objects. In particular we show how to setup Newton's Cradle, simple machines with motors, hinges, sliders, etc. All basic properties like mass, friction, damping, gravity can be changed in real-time to observe how those affect object's behavior.
 
 This demo shows how to use [Bullet](https://github.com/bulletphysics/bullet3) physics library from Zig. As part of the demo we have developed cbullet - a simple C API for Bullet physics library (which is written in C++):
 
