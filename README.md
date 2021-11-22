@@ -20,7 +20,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 1. [virtual physics lab](samples/bullet_physics_test): This sample applications demonstrates how to use full 3D physics engine in your Zig applications.
 
-    <img src="samples/bullet_physics_test/screenshot1.png" alt="virtual physics lab" height="200">
+    <img src="samples/bullet_physics_test/screenshot1.png" alt="virtual physics lab" height="200" link="samples/bullet_physics_test">
 
 1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing (DXR) for shadow rays.
 
