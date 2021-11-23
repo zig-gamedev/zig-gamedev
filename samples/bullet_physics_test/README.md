@@ -12,7 +12,7 @@ This demo shows how to use [Bullet](https://github.com/bulletphysics/bullet3) ph
 Some features:
 * Most collision shapes
 * Rigid bodies
-* Most constraints types
+* Most constraint types
 * Tries to minimize number of memory allocations
   * Multiple rigid bodies and motion states can be created with only one memory allocation
   * New physics objects can re-use existing memory
