@@ -9,14 +9,14 @@ This demo shows how to use [Bullet](https://github.com/bulletphysics/bullet3) ph
 * [cbullet.h](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.h)
 * [cbullet.cpp](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.cpp)
 
-Currently cbullet supports:
+Some features:
 * Most collision shapes
 * Rigid bodies
 * Most constraints types
-* Low number of memory allocations
+* Tries to minimize number of memory allocations
   * Multiple rigid bodies and motion states can be created with only one memory allocation
   * New physics objects can re-use existing memory
-* Error checks in debug builds
+* Lots of error checks in debug builds
 
 ![image](screenshot1.png)
 ![image](screenshot2.png)
