@@ -41,8 +41,8 @@ pub const IXAudio2 = extern struct {
 
 pub fn create(
     ppv: *?*IXAudio2,
-    flags: UINT32,
-    processor: UINT32,
+    flags: UINT32, // 0
+    processor: UINT32, // 0
 ) HRESULT {
     var xaudio2_dll = windows.kernel32.GetModuleHandleW(L("xaudio2_9redist.dll"));
     if (xaudio2_dll == null) {
