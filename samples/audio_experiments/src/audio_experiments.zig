@@ -6,6 +6,7 @@ const d2d1 = win32.d2d1;
 const d3d12 = win32.d3d12;
 const dwrite = win32.dwrite;
 const dml = win32.directml;
+const xaudio2 = win32.xaudio2;
 const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
@@ -29,6 +30,7 @@ const window_height = 1080;
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
+    audio: *xaudio2.IXAudio2,
     frame_stats: lib.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
@@ -38,6 +40,12 @@ const DemoState = struct {
 fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
+
+    const audio = blk: {
+        var audio: ?*xaudio2.IXAudio2 = null;
+        hrPanicOnFail(xaudio2.create(&audio, 0, 0));
+        break :blk audio.?;
+    };
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -103,6 +111,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     return .{
         .grfx = grfx,
         .gui = gui,
+        .audio = audio,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .info_tfmt = info_tfmt,
@@ -115,6 +124,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
+    _ = demo.audio.Release();
     lib.deinitWindow(gpa);
     demo.* = undefined;
 }
