@@ -22,6 +22,32 @@ pub const LOOP_INFINITE: UINT32 = 255;
 pub const DEFAULT_CHANNELS: UINT32 = 0;
 pub const DEFAULT_SAMPLERATE: UINT32 = 0;
 
+pub const MAX_BUFFER_BYTES: UINT32 = 0x8000_0000;
+pub const MAX_QUEUED_BUFFERS: UINT32 = 64;
+pub const MAX_BUFFERS_SYSTEM: UINT32 = 2;
+pub const MAX_AUDIO_CHANNELS: UINT32 = 64;
+pub const MIN_SAMPLE_RATE: UINT32 = 1000;
+pub const MAX_SAMPLE_RATE: UINT32 = 200000;
+pub const MAX_VOLUME_LEVEL: f32 = 16777216.0;
+pub const MIN_FREQ_RATIO: f32 = 1.0 / 1024.0;
+pub const MAX_FREQ_RATIO: f32 = 1024.0;
+pub const DEFAULT_FREQ_RATIO: f32 = 2.0;
+pub const MAX_FILTER_ONEOVERQ: f32 = 1.5;
+pub const MAX_FILTER_FREQUENCY: f32 = 1.0;
+pub const MAX_LOOP_COUNT: UINT32 = 254;
+pub const MAX_INSTANCES: UINT32 = 8;
+
+pub const DEBUG_ENGINE: UINT32 = 0x0001;
+pub const VOICE_NOPITCH: UINT32 = 0x0002;
+pub const VOICE_NOSRC: UINT32 = 0x0004;
+pub const VOICE_USEFILTER: UINT32 = 0x0008;
+pub const PLAY_TAILS: UINT32 = 0x0020;
+pub const END_OF_STREAM: UINT32 = 0x0040;
+pub const SEND_USEFILTER: UINT32 = 0x0080;
+pub const VOICE_NOSAMPLESPLAYED: UINT32 = 0x0100;
+pub const STOP_ENGINE_WHEN_IDLE: UINT32 = 0x2000;
+pub const NO_VIRTUAL_AUDIO_CLIENT: UINT32 = 0x10000;
+
 pub const VOICE_DETAILS = struct {
     CreationFlags: UINT32,
     ActiveFlags: UINT32,
@@ -102,6 +128,32 @@ pub const VOICE_STATE = struct {
     SamplesPlayed: UINT64,
 };
 
+pub const PERFORMANCE_DATA = struct {
+    AudioCyclesSinceLastQuery: UINT64,
+    TotalCyclesSinceLastQuery: UINT64,
+    MinimumCyclesPerQuantum: UINT32,
+    MaximumCyclesPerQuantum: UINT32,
+    MemoryUsageInBytes: UINT32,
+    CurrentLatencyInSamples: UINT32,
+    GlitchesSinceEngineStarted: UINT32,
+    ActiveSourceVoiceCount: UINT32,
+    TotalSourceVoiceCount: UINT32,
+    ActiveSubmixVoiceCount: UINT32,
+    ActiveResamplerCount: UINT32,
+    ActiveMatrixMixCount: UINT32,
+    ActiveXmaSourceVoices: UINT32,
+    ActiveXmaStreams: UINT32,
+};
+
+pub const DEBUG_CONFIGURATION = struct {
+    TraceMask: UINT32,
+    BreakMask: UINT32,
+    LogThreadID: BOOL,
+    LogFileline: BOOL,
+    LogFunctionName: BOOL,
+    LogTiming: BOOL,
+};
+
 pub const IXAudio2 = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -180,6 +232,25 @@ pub const IXAudio2 = extern struct {
                     stream_category,
                 );
             }
+            pub inline fn StartEngine(self: *T) HRESULT {
+                return self.v.xaudio2.StartEngine(self);
+            }
+            pub inline fn StopEngine(self: *T) void {
+                self.v.xaudio2.StopEngine(self);
+            }
+            pub inline fn CommitChanges(self: *T, operation_set: UINT32) HRESULT {
+                return self.v.xaudio2.CommitChanges(self, operation_set);
+            }
+            pub inline fn GetPerformanceData(self: *T, data: *PERFORMANCE_DATA) void {
+                self.v.xaudio2.GetPerformanceData(self, data);
+            }
+            pub inline fn SetDebugConfiguration(
+                self: *T,
+                config: ?*const DEBUG_CONFIGURATION,
+                reserved: ?*c_void,
+            ) void {
+                self.v.xaudio2.SetDebugConfiguration(self, config, reserved);
+            }
         };
     }
 
@@ -216,11 +287,11 @@ pub const IXAudio2 = extern struct {
                 ?*const EFFECT_CHAIN,
                 AUDIO_STREAM_CATEGORY,
             ) callconv(WINAPI) HRESULT,
-            StartEngine: *c_void,
-            StopEngine: *c_void,
-            CommitChanges: *c_void,
-            GetPerformanceData: *c_void,
-            SetDebugConfiguration: *c_void,
+            StartEngine: fn (*T) callconv(WINAPI) HRESULT,
+            StopEngine: fn (*T) callconv(WINAPI) void,
+            CommitChanges: fn (*T, UINT32) callconv(WINAPI) HRESULT,
+            GetPerformanceData: fn (*T, *PERFORMANCE_DATA) callconv(WINAPI) void,
+            SetDebugConfiguration: fn (*T, ?*const DEBUG_CONFIGURATION, ?*c_void) callconv(WINAPI) void,
         };
     }
 };
