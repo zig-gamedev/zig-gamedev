@@ -1,8 +1,10 @@
 const std = @import("std");
 const windows = @import("windows.zig");
 const IUnknown = windows.IUnknown;
+const BYTE = windows.BYTE;
 const UINT = windows.UINT;
 const UINT32 = windows.UINT32;
+const UINT64 = windows.UINT64;
 const WINAPI = windows.WINAPI;
 const BOOL = windows.BOOL;
 const GUID = windows.GUID;
@@ -61,6 +63,29 @@ pub const FILTER_PARAMETERS = struct {
     OneOverQ: f32,
 };
 
+pub const BUFFER = struct {
+    Flags: UINT32,
+    AudioBytes: UINT32,
+    pAudioData: *const BYTE,
+    PlayBegin: UINT32,
+    PlayLength: UINT32,
+    LoopBegin: UINT32,
+    LoopLength: UINT32,
+    LoopCount: UINT32,
+    pContext: *c_void,
+};
+
+pub const BUFFER_WMA = struct {
+    pDecodedPacketCumulativeBytes: *const UINT32,
+    PacketCount: UINT32,
+};
+
+pub const VOICE_STATE = struct {
+    pCurrentBufferContext: *c_void,
+    BuffersQueued: UINT32,
+    SamplesPlayed: UINT64,
+};
+
 pub const IXAudio2 = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -78,6 +103,25 @@ pub const IXAudio2 = extern struct {
             pub inline fn UnregisterForCallbacks(self: *T, cb: *IEngineCallback) void {
                 self.v.xaudio2.UnregisterForCallbacks(self, cb);
             }
+            pub inline fn CreateSourceVoice(
+                self: *T,
+                source_voice: *?*ISourceVoice,
+                flags: UINT32,
+                max_frequency_ratio: f32,
+                callback: ?*IVoiceCallback,
+                send_list: ?*const VOICE_SENDS,
+                effect_chain: ?*const EFFECT_CHAIN,
+            ) HRESULT {
+                return self.v.xaudio2.CreateSourceVoice(
+                    self,
+                    source_voice,
+                    flags,
+                    max_frequency_ratio,
+                    callback,
+                    send_list,
+                    effect_chain,
+                );
+            }
         };
     }
 
@@ -85,7 +129,15 @@ pub const IXAudio2 = extern struct {
         return extern struct {
             RegisterForCallbacks: fn (*T, *IEngineCallback) callconv(WINAPI) HRESULT,
             UnregisterForCallbacks: fn (*T, *IEngineCallback) callconv(WINAPI) void,
-            CreateSourceVoice: *c_void,
+            CreateSourceVoice: fn (
+                *T,
+                *?*ISourceVoice,
+                UINT32,
+                f32,
+                ?*IVoiceCallback,
+                ?*const VOICE_SENDS,
+                ?*const EFFECT_CHAIN,
+            ) callconv(WINAPI) HRESULT,
             CreateSubmixVoice: *c_void,
             CreateMasteringVoice: *c_void,
             StartEngine: *c_void,
@@ -206,6 +258,66 @@ pub const IVoice = extern struct {
             SetOutputMatrix: *c_void,
             GetOutputMatrix: *c_void,
             DestroyVoice: fn (*T) callconv(WINAPI) void,
+        };
+    }
+};
+
+pub const ISourceVoice = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        voice: IVoice.VTable(Self),
+        srcvoice: VTable(Self),
+    },
+    usingnamespace IVoice.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn Start(self: *T, flags: UINT32, operation_set: UINT32) HRESULT {
+                return self.v.srcvoice.Start(self, flags, operation_set);
+            }
+            pub inline fn Stop(self: *T, flags: UINT32, operation_set: UINT32) HRESULT {
+                return self.v.srcvoice.Stop(self, flags, operation_set);
+            }
+            pub inline fn SubmitSourceBuffer(self: *T, buffer: *const BUFFER, wmabuffer: ?*const BUFFER_WMA) HRESULT {
+                return self.v.srcvoice.SubmitSourceBuffer(self, buffer, wmabuffer);
+            }
+            pub inline fn FlushSourceBuffers(self: *T) HRESULT {
+                return self.v.srcvoice.FlushSourceBuffers(self);
+            }
+            pub inline fn Discontinuity(self: *T) HRESULT {
+                return self.v.srcvoice.Discontinuity(self);
+            }
+            pub inline fn ExitLoop(self: *T, operation_set: UINT32) HRESULT {
+                return self.v.srcvoice.ExitLoop(self, operation_set);
+            }
+            pub inline fn GetState(self: *T, state: *VOICE_STATE, flags: UINT32) void {
+                self.v.srcvoice.GetState(self, state, flags);
+            }
+            pub inline fn SetFrequencyRatio(self: *T, ratio: f32, operation_set: UINT32) HRESULT {
+                return self.v.srcvoice.SetFrequencyRatio(self, ratio, operation_set);
+            }
+            pub inline fn GetFrequencyRatio(self: *T, ratio: *f32) void {
+                self.v.srcvoice.GetFrequencyRatio(self, ratio);
+            }
+            pub inline fn SetSourceSampleRate(self: *T, sample_rate: UINT32) HRESULT {
+                return self.v.srcvoice.SetSourceSampleRate(self, sample_rate);
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            Start: fn (*T, UINT32, UINT32) callconv(WINAPI) HRESULT,
+            Stop: fn (*T, UINT32, UINT32) callconv(WINAPI) HRESULT,
+            SubmitSourceBuffer: fn (*T, *const BUFFER, ?*const BUFFER_WMA) callconv(WINAPI) HRESULT,
+            FlushSourceBuffers: fn (*T) callconv(WINAPI) HRESULT,
+            Discontinuity: fn (*T) callconv(WINAPI) HRESULT,
+            ExitLoop: fn (*T, UINT32) callconv(WINAPI) HRESULT,
+            GetState: fn (*T, *VOICE_STATE, UINT32) callconv(WINAPI) void,
+            SetFrequencyRatio: fn (*T, f32, UINT32) callconv(WINAPI) HRESULT,
+            GetFrequencyRatio: fn (*T, *f32) callconv(WINAPI) void,
+            SetSourceSampleRate: fn (*T, UINT32) callconv(WINAPI) HRESULT,
         };
     }
 };
