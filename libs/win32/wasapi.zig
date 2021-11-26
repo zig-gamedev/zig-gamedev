@@ -68,7 +68,12 @@ pub const IMMDeviceEnumerator = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetDefaultAudioEndpoint(self: *T, flow: EDataFlow, role: ERole, endpoint: *?*IMMDevice) HRESULT {
+            pub inline fn GetDefaultAudioEndpoint(
+                self: *T,
+                flow: EDataFlow,
+                role: ERole,
+                endpoint: *?*IMMDevice,
+            ) HRESULT {
                 return self.v.devenum.GetDefaultAudioEndpoint(self, flow, role, endpoint);
             }
         };
@@ -212,7 +217,12 @@ pub const IAudioClient = extern struct {
             GetBufferSize: fn (*T, *UINT32) callconv(WINAPI) HRESULT,
             GetStreamLatency: fn (*T, *REFERENCE_TIME) callconv(WINAPI) HRESULT,
             GetCurrentPadding: fn (*T, *UINT32) callconv(WINAPI) HRESULT,
-            IsFormatSupported: fn (*T, AUDCLNT_SHAREMODE, *const WAVEFORMATEX, ?*?*WAVEFORMATEX) callconv(WINAPI) HRESULT,
+            IsFormatSupported: fn (
+                *T,
+                AUDCLNT_SHAREMODE,
+                *const WAVEFORMATEX,
+                ?*?*WAVEFORMATEX,
+            ) callconv(WINAPI) HRESULT,
             GetMixFormat: fn (*T, **WAVEFORMATEX) callconv(WINAPI) HRESULT,
             GetDevicePeriod: fn (*T, ?*REFERENCE_TIME, ?*REFERENCE_TIME) callconv(WINAPI) HRESULT,
             Start: fn (*T) callconv(WINAPI) HRESULT,
