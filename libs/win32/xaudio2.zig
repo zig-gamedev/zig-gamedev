@@ -6,7 +6,9 @@ const UINT = windows.UINT;
 const UINT32 = windows.UINT32;
 const UINT64 = windows.UINT64;
 const WINAPI = windows.WINAPI;
+const LPCWSTR = windows.LPCWSTR;
 const BOOL = windows.BOOL;
+const DWORD = windows.DWORD;
 const GUID = windows.GUID;
 const HRESULT = windows.HRESULT;
 const WAVEFORMATEX = @import("wasapi.zig").WAVEFORMATEX;
@@ -55,6 +57,20 @@ pub const FILTER_TYPE = enum(UINT32) {
     NotchFilter,
     LowPassOnePoleFilter,
     HighPassOnePoleFilter,
+};
+
+pub const AUDIO_STREAM_CATEGORY = enum(UINT32) {
+    Other = 0,
+    ForegroundOnlyMedia = 1,
+    Communications = 3,
+    Alerts = 4,
+    SoundEffects = 5,
+    GameEffects = 6,
+    GameMedia = 7,
+    GameChat = 8,
+    Speech = 9,
+    Movie = 10,
+    Media = 11,
 };
 
 pub const FILTER_PARAMETERS = struct {
@@ -122,6 +138,48 @@ pub const IXAudio2 = extern struct {
                     effect_chain,
                 );
             }
+            pub inline fn CreateSubmixVoice(
+                self: *T,
+                submix_voice: *?*ISubmixVoice,
+                input_channels: UINT32,
+                input_sample_rate: UINT32,
+                flags: UINT32,
+                processing_stage: UINT32,
+                send_list: ?*const VOICE_SENDS,
+                effect_chain: ?*const EFFECT_CHAIN,
+            ) HRESULT {
+                return self.v.xaudio2.CreateSubmixVoice(
+                    self,
+                    submix_voice,
+                    input_channels,
+                    input_sample_rate,
+                    flags,
+                    processing_stage,
+                    send_list,
+                    effect_chain,
+                );
+            }
+            pub inline fn CreateMasteringVoice(
+                self: *T,
+                mastering_voice: *?*ISubmixVoice,
+                input_channels: UINT32,
+                input_sample_rate: UINT32,
+                flags: UINT32,
+                device_id: ?LPCWSTR,
+                effect_chain: ?*const EFFECT_CHAIN,
+                stream_category: AUDIO_STREAM_CATEGORY,
+            ) HRESULT {
+                return self.v.xaudio2.CreateMasteringVoice(
+                    self,
+                    mastering_voice,
+                    input_channels,
+                    input_sample_rate,
+                    flags,
+                    device_id,
+                    effect_chain,
+                    stream_category,
+                );
+            }
         };
     }
 
@@ -138,8 +196,26 @@ pub const IXAudio2 = extern struct {
                 ?*const VOICE_SENDS,
                 ?*const EFFECT_CHAIN,
             ) callconv(WINAPI) HRESULT,
-            CreateSubmixVoice: *c_void,
-            CreateMasteringVoice: *c_void,
+            CreateSubmixVoice: fn (
+                *T,
+                *?*ISubmixVoice,
+                UINT32,
+                UINT32,
+                UINT32,
+                UINT32,
+                ?*const VOICE_SENDS,
+                ?*const EFFECT_CHAIN,
+            ) callconv(WINAPI) HRESULT,
+            CreateMasteringVoice: fn (
+                *T,
+                *?*IMasteringVoice,
+                UINT32,
+                UINT32,
+                UINT32,
+                ?LPCWSTR,
+                ?*const EFFECT_CHAIN,
+                AUDIO_STREAM_CATEGORY,
+            ) callconv(WINAPI) HRESULT,
             StartEngine: *c_void,
             StopEngine: *c_void,
             CommitChanges: *c_void,
@@ -318,6 +394,50 @@ pub const ISourceVoice = extern struct {
             SetFrequencyRatio: fn (*T, f32, UINT32) callconv(WINAPI) HRESULT,
             GetFrequencyRatio: fn (*T, *f32) callconv(WINAPI) void,
             SetSourceSampleRate: fn (*T, UINT32) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const ISubmixVoice = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        voice: IVoice.VTable(Self),
+        submixvoice: VTable(Self),
+    },
+    usingnamespace IVoice.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+};
+
+pub const IMasteringVoice = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        voice: IVoice.VTable(Self),
+        mastervoice: VTable(Self),
+    },
+    usingnamespace IVoice.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetChannelMask(self: *T, channel_mask: *DWORD) HRESULT {
+                return self.v.mastervoice.GetChannelMask(self, channel_mask);
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            GetChannelMask: fn (*T, *DWORD) callconv(WINAPI) HRESULT,
         };
     }
 };
