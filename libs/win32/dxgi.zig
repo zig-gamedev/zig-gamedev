@@ -987,6 +987,12 @@ pub const IDevice = extern struct {
     }
 };
 
+pub const DXGI_ADAPTER_FLAGS = UINT;
+pub const DXGI_ADAPTER_FLAG_NONE = 0;
+pub const DXGI_ADAPTER_FLAG_REMOTE = 0x1;
+pub const DXGI_ADAPTER_FLAG_SOFTWARE = 0x2;
+pub const DXGI_ADAPTER_FLAG_FORCE_DWORD = 0x4;
+
 pub const ADAPTER_DESC1 = extern struct {
     Description: [128]WCHAR,
     VendorId: UINT,
@@ -997,7 +1003,7 @@ pub const ADAPTER_DESC1 = extern struct {
     DedicatedSystemMemory: SIZE_T,
     SharedSystemMemory: SIZE_T,
     AdapterLuid: LUID,
-    Flags: UINT,
+    Flags: DXGI_ADAPTER_FLAGS,
 };
 
 pub const IFactory1 = extern struct {
@@ -1026,7 +1032,7 @@ pub const IFactory1 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumAdapters1: fn (*T, UINT, *?*IAdapter) callconv(WINAPI) HRESULT,
+            EnumAdapters1: fn (*T, UINT, *?*IAdapter1) callconv(WINAPI) HRESULT,
             IsCurrent: fn (*T) callconv(WINAPI) BOOL,
         };
     }
