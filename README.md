@@ -6,7 +6,7 @@ This repository contains a collection of sample applications and libraries writt
 
 #### Some features:
 
-* Zero dependency except [Zig compiler](https://ziglang.org/download/) (repository content is fully standalone and can be build on any machine - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing)
+* Zero dependency except [Zig compiler](https://ziglang.org/download/) - repository content is fully standalone and can be build on any machine - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics](#graphics), [vectormath](#vectormath))
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
@@ -66,6 +66,18 @@ Some features of graphics library:
 ### [vectormath](libs/common/vectormath.zig)
 
 This libarary implements all basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
+
+### [cbullet](external/src/cbullet.h)
+
+A simple C API for Bullet physics library that can be used by any project. Some features:
+* Most collision shapes
+* Rigid bodies
+* Most constraint types
+* Tries to minimize number of memory allocations
+  * Multiple rigid bodies and motion states can be created with one memory allocation
+  * New physics objects can re-use existing memory
+* Lots of error checks in debug builds
+
 
 ### [pix](libs/common/pix3.zig)
 
