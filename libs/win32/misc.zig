@@ -136,6 +136,7 @@ pub const VK_MENU = 0x12;
 pub const VK_SPACE = 0x20;
 pub const VK_INSERT = 0x2D;
 
+pub const S_FALSE = @bitCast(HRESULT, @as(c_ulong, 0x00000001));
 pub const E_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x80070002));
 pub const D3D12_ERROR_ADAPTER_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887E0001));
 pub const D3D12_ERROR_DRIVER_VERSION_MISMATCH = @bitCast(HRESULT, @as(c_ulong, 0x887E0002));
