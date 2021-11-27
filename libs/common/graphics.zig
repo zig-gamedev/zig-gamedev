@@ -150,14 +150,55 @@ pub const GraphicsContext = struct {
             }
         }
 
+        const suitable_adapter = blk: {
+            var adapter: ?*dxgi.IAdapter1 = null;
+
+            var adapter_index: u32 = 0;
+            var optional_adapter1: ?*dxgi.IAdapter1 = undefined;
+            var max_video_memory: usize = 0;
+            while (factory.EnumAdapters1(adapter_index, &optional_adapter1) != w.DXGI_ERROR_NOT_FOUND) {
+                if (optional_adapter1) |adapter1| {
+                    var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
+                    if (adapter1.GetDesc1(&adapter1_desc) == w.S_OK) {
+                        if ((adapter1_desc.Flags & dxgi.DXGI_ADAPTER_FLAG_SOFTWARE) == 0 and adapter1_desc.DedicatedVideoMemory > max_video_memory) {
+                            var hr = d3d12.D3D12CreateDevice(@ptrCast(*w.IUnknown, adapter1), .FL_11_1, &d3d12.IID_IDevice9, null);
+                            // NOTE(gmodarelli): D3D12CreateDevice seems to return S_FALSE (0x01) when the output device is null.
+                            // I think that in this case S_FALSE is a valid success result.
+                            const S_FALSE = 0x01;
+                            if (hr == w.S_OK or hr == S_FALSE) {
+                                max_video_memory = adapter1_desc.DedicatedVideoMemory;
+                                adapter = adapter1;
+                            }
+                        }
+                    }
+                }
+
+                adapter_index += 1;
+            }
+
+            break :blk adapter;
+        };
+
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
-            const hr = d3d12.D3D12CreateDevice(
-                null,
-                .FL_11_1,
-                &d3d12.IID_IDevice9,
-                @ptrCast(*?*c_void, &device),
-            );
+            const hr = innerblk: {
+                if (suitable_adapter) |adapter| {
+                    break :innerblk d3d12.D3D12CreateDevice(
+                        @ptrCast(*w.IUnknown, adapter),
+                        .FL_11_1,
+                        &d3d12.IID_IDevice9,
+                        @ptrCast(*?*c_void, &device),
+                    );
+                } else {
+                    break :innerblk d3d12.D3D12CreateDevice(
+                        null,
+                        .FL_11_1,
+                        &d3d12.IID_IDevice9,
+                        @ptrCast(*?*c_void, &device),
+                    );
+                }
+            };
+
             if (hr != w.S_OK) {
                 _ = w.user32.messageBoxA(
                     window,
@@ -236,6 +277,7 @@ pub const GraphicsContext = struct {
             ));
             break :blk swapchain3;
         };
+
 
         const dx11 = blk: {
             var device11: *d3d11.IDevice = undefined;
