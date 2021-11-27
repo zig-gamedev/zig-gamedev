@@ -162,8 +162,8 @@ pub const GraphicsContext = struct {
                     if (adapter1.GetDesc1(&adapter1_desc) == w.S_OK) {
                         if ((adapter1_desc.Flags & dxgi.DXGI_ADAPTER_FLAG_SOFTWARE) == 0 and adapter1_desc.DedicatedVideoMemory > max_video_memory) {
                             var hr = d3d12.D3D12CreateDevice(@ptrCast(*w.IUnknown, adapter1), .FL_11_1, &d3d12.IID_IDevice9, null);
-                            // NOTE(gmodarelli): D3D12CreateDevice seems to return S_FALSE (0x01) when the output device is null.
-                            // I think that in this case S_FALSE is a valid success result.
+                            // NOTE(gmodarelli): D3D12CreateDevice returns S_FALSE (0x01) when the output device is null.
+                            // https://docs.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice#return-value
                             const S_FALSE = 0x01;
                             if (hr == w.S_OK or hr == S_FALSE) {
                                 max_video_memory = adapter1_desc.DedicatedVideoMemory;
