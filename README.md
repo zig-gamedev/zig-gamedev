@@ -69,7 +69,7 @@ This libarary implements all basic linear algebra operations for Vec2, Vec3, Vec
 
 #### [cbullet](external/src/cbullet.h)
 
-A simple C API for Bullet physics library that can be used by any project. Some features:
+A simple C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used by any project. Some features:
 * Most collision shapes
 * Rigid bodies
 * Most constraint types
