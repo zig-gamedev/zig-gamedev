@@ -42,12 +42,6 @@ Some of the sample applications are listed below. More can be found in [samples]
 
     <a href="samples/directml_convolution_test"><img src="samples/directml_convolution_test/screenshot.png" alt="directml convolution test" height="200"></a>
     
-## GitHub Sponsors
-Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
-* [mzet (mzet-)](https://github.com/mzet-)
-* Zig Software Foundation (ziglang)
-* Ian (LinuXY)
-
 ## Libraries
 
 #### [graphics](libs/common/graphics.zig)
@@ -77,7 +71,6 @@ A simple C API for [Bullet physics library](https://github.com/bulletphysics/bul
   * Multiple rigid bodies and motion states can be created with one memory allocation
   * New physics objects can re-use existing memory
 * Lots of error checks in debug builds
-
 
 #### [pix](libs/common/pix3.zig)
 
@@ -144,3 +137,9 @@ This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/direct
 * Windows 10 October 2020 (Build 19042.789+)
 * Windows 10 May 2020 (Build 19041.789+)
 * Windows 10 November 2019 (Build 18363.1350+)
+
+## GitHub Sponsors
+Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
+* [mzet (mzet-)](https://github.com/mzet-)
+* Zig Software Foundation (ziglang)
+* Ian (LinuXY)
