@@ -987,6 +987,12 @@ pub const IDevice = extern struct {
     }
 };
 
+pub const ADAPTER_FLAGS = UINT;
+pub const ADAPTER_FLAG_NONE = 0;
+pub const ADAPTER_FLAG_REMOTE = 0x1;
+pub const ADAPTER_FLAG_SOFTWARE = 0x2;
+pub const ADAPTER_FLAG_FORCE_DWORD = 0x4;
+
 pub const ADAPTER_DESC1 = extern struct {
     Description: [128]WCHAR,
     VendorId: UINT,
@@ -997,7 +1003,7 @@ pub const ADAPTER_DESC1 = extern struct {
     DedicatedSystemMemory: SIZE_T,
     SharedSystemMemory: SIZE_T,
     AdapterLuid: LUID,
-    Flags: UINT,
+    Flags: ADAPTER_FLAGS,
 };
 
 pub const IFactory1 = extern struct {
@@ -1026,7 +1032,7 @@ pub const IFactory1 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumAdapters1: fn (*T, UINT, *?*IAdapter) callconv(WINAPI) HRESULT,
+            EnumAdapters1: fn (*T, UINT, *?*IAdapter1) callconv(WINAPI) HRESULT,
             IsCurrent: fn (*T) callconv(WINAPI) BOOL,
         };
     }
@@ -1179,6 +1185,57 @@ pub const IFactory5 = extern struct {
     }
 };
 
+pub const GPU_PREFERENCE = UINT;
+pub const GPU_PREFERENCE_UNSPECIFIED = 0;
+pub const GPU_PREFERENCE_MINIMUM = 1;
+pub const GPU_PREFERENCE_HIGH_PERFORMANCE = 2;
+
+pub const IID_IFactory6 = GUID.parse("{c1b6694f-ff09-44a9-b03c-77900a0a1d17}");
+pub const IFactory6 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        factory: IFactory.VTable(Self),
+        factory1: IFactory1.VTable(Self),
+        factory2: IFactory2.VTable(Self),
+        factory3: IFactory3.VTable(Self),
+        factory4: IFactory4.VTable(Self),
+        factory5: IFactory5.VTable(Self),
+        factory6: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IFactory.Methods(Self);
+    usingnamespace IFactory1.Methods(Self);
+    usingnamespace IFactory2.Methods(Self);
+    usingnamespace IFactory3.Methods(Self);
+    usingnamespace IFactory4.Methods(Self);
+    usingnamespace IFactory5.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn EnumAdapterByGpuPreference(
+                self: *T,
+                adapter_index: UINT,
+                gpu_preference: GPU_PREFERENCE,
+                riid: *const GUID,
+                adapter: *?*IAdapter1,
+            ) HRESULT {
+                return self.v.factory6.EnumAdapterByGpuPreference(self, adapter_index, gpu_preference, riid, adapter);
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            EnumAdapterByGpuPreference: fn (*T, UINT, GPU_PREFERENCE, *const GUID, *?*IAdapter1) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const IID_IAdapter1 = GUID.parse("{29038f61-3839-4626-91fd-086879011a05}");
 pub const IAdapter1 = extern struct {
     const Self = @This();
     v: *const extern struct {

@@ -103,10 +103,10 @@ pub const GraphicsContext = struct {
         };
 
         const factory = blk: {
-            var factory: *dxgi.IFactory1 = undefined;
+            var factory: *dxgi.IFactory6 = undefined;
             hrPanicOnFail(dxgi.CreateDXGIFactory2(
                 if (enable_dx_debug) dxgi.CREATE_FACTORY_DEBUG else 0,
-                &dxgi.IID_IFactory1,
+                &dxgi.IID_IFactory6,
                 @ptrCast(*?*c_void, &factory),
             ));
             break :blk factory;
@@ -116,25 +116,15 @@ pub const GraphicsContext = struct {
         var present_flags: w.UINT = 0;
         var present_interval: w.UINT = 0;
         {
-            var maybe_factory5: ?*dxgi.IFactory5 = null;
-            var hr = factory.QueryInterface(&dxgi.IID_IFactory5, @ptrCast(*?*c_void, &maybe_factory5));
-            defer {
-                if (maybe_factory5 != null) {
-                    _ = maybe_factory5.?.Release();
-                }
-            }
+            var allow_tearing: w.BOOL = w.FALSE;
+            var hr = factory.CheckFeatureSupport(
+                .PRESENT_ALLOW_TEARING,
+                &allow_tearing,
+                @sizeOf(@TypeOf(allow_tearing)),
+            );
 
-            if (hr == w.S_OK and maybe_factory5 != null) {
-                var allow_tearing: w.BOOL = w.FALSE;
-                hr = maybe_factory5.?.CheckFeatureSupport(
-                    .PRESENT_ALLOW_TEARING,
-                    &allow_tearing,
-                    @sizeOf(@TypeOf(allow_tearing)),
-                );
-
-                if (hr == w.S_OK and allow_tearing == w.TRUE) {
-                    present_flags |= dxgi.PRESENT_ALLOW_TEARING;
-                }
+            if (hr == w.S_OK and allow_tearing == w.TRUE) {
+                present_flags |= dxgi.PRESENT_ALLOW_TEARING;
             }
         }
 
@@ -150,14 +140,46 @@ pub const GraphicsContext = struct {
             }
         }
 
+        const suitable_adapter = blk: {
+            var adapter: ?*dxgi.IAdapter1 = null;
+
+            var adapter_index: u32 = 0;
+            var optional_adapter1: ?*dxgi.IAdapter1 = null;
+
+            while (factory.EnumAdapterByGpuPreference(adapter_index, dxgi.GPU_PREFERENCE_HIGH_PERFORMANCE, &dxgi.IID_IAdapter1, &optional_adapter1) == w.S_OK) {
+                if (optional_adapter1) |adapter1| {
+                    var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
+                    if (adapter1.GetDesc1(&adapter1_desc) == w.S_OK) {
+                        if ((adapter1_desc.Flags & dxgi.ADAPTER_FLAG_SOFTWARE) != 0) {
+                            // Don't select the Basic Render Driver adapter.
+                            continue;
+                        }
+
+                        var hr = d3d12.D3D12CreateDevice(@ptrCast(*w.IUnknown, adapter1), .FL_11_1, &d3d12.IID_IDevice9, null);
+                        // NOTE(gmodarelli): D3D12CreateDevice returns S_FALSE when the output device is null.
+                        // https://docs.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice#return-value
+                        if (hr == w.S_OK or hr == w.S_FALSE) {
+                            adapter = adapter1;
+                            break;
+                        }
+                    }
+                }
+
+                adapter_index += 1;
+            }
+
+            break :blk adapter;
+        };
+
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
             const hr = d3d12.D3D12CreateDevice(
-                null,
+                if (suitable_adapter) |adapter| @ptrCast(*w.IUnknown, adapter) else null,
                 .FL_11_1,
                 &d3d12.IID_IDevice9,
                 @ptrCast(*?*c_void, &device),
             );
+
             if (hr != w.S_OK) {
                 _ = w.user32.messageBoxA(
                     window,
@@ -236,6 +258,7 @@ pub const GraphicsContext = struct {
             ));
             break :blk swapchain3;
         };
+
 
         const dx11 = blk: {
             var device11: *d3d11.IDevice = undefined;

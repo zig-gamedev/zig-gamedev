@@ -136,10 +136,12 @@ pub const VK_MENU = 0x12;
 pub const VK_SPACE = 0x20;
 pub const VK_INSERT = 0x2D;
 
+pub const S_FALSE = @bitCast(HRESULT, @as(c_ulong, 0x00000001));
 pub const E_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x80070002));
 pub const D3D12_ERROR_ADAPTER_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887E0001));
 pub const D3D12_ERROR_DRIVER_VERSION_MISMATCH = @bitCast(HRESULT, @as(c_ulong, 0x887E0002));
 pub const DXGI_ERROR_INVALID_CALL = @bitCast(HRESULT, @as(c_ulong, 0x887A0001));
+pub const DXGI_ERROR_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887A0002));
 pub const DXGI_ERROR_WAS_STILL_DRAWING = @bitCast(HRESULT, @as(c_ulong, 0x887A000A));
 pub const DXGI_STATUS_MODE_CHANGED = @bitCast(HRESULT, @as(c_ulong, 0x087A0007));
 pub const DWRITE_E_FILEFORMAT = @bitCast(HRESULT, @as(c_ulong, 0x88985000));
