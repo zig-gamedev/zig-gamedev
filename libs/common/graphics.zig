@@ -173,7 +173,7 @@ pub const GraphicsContext = struct {
 
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
-            var hr = d3d12.D3D12CreateDevice(
+            const hr = d3d12.D3D12CreateDevice(
                 if (suitable_adapter) |adapter| @ptrCast(*w.IUnknown, adapter) else null,
                 .FL_11_1,
                 &d3d12.IID_IDevice9,
