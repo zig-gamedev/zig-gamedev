@@ -44,7 +44,7 @@ Some of the sample applications are listed below. More can be found in [samples]
     
 ## Libraries
 
-#### [graphics](libs/common/graphics.zig)
+#### [graphics lib](libs/common/graphics.zig)
 
 Some features of graphics library:
 
@@ -57,11 +57,11 @@ Some features of graphics library:
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
 * Custom integration of [dear imgui](https://github.com/ocornut/imgui) library
 
-#### [vectormath](libs/common/vectormath.zig)
+#### [vectormath lib](libs/common/vectormath.zig)
 
 This libarary implements all basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
 
-#### [cbullet](external/src/cbullet.h)
+#### [cbullet lib](external/src/cbullet.h)
 
 A simple C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used by any project. Some features:
 * Most collision shapes
@@ -72,7 +72,7 @@ A simple C API for [Bullet physics library](https://github.com/bulletphysics/bul
   * New physics objects can re-use existing memory
 * Lots of error checks in debug builds
 
-#### [pix](libs/common/pix3.zig)
+#### [pix lib](libs/common/pix3.zig)
 
 This is a simple libarary that lets you mark named events on the GPU timeline. Those events can be then anaylzed in PIX. Additionaly, you can programmatically record PIX traces to a file. Note, that this library does not require WinPixEventRuntime.dll to work. Following operations are supported:
 
@@ -80,7 +80,7 @@ This is a simple libarary that lets you mark named events on the GPU timeline. T
 * beginEventOnCommandList, endEventOnCommandList, setMarkerOnCommandList
 * beginEventOnCommandQueue, endEventOnCommandQueue, setMarkerOnCommandQueue
 
-#### [tracy](libs/common/tracy.zig)
+#### [tracy lib](libs/common/tracy.zig)
 
 This is a simple libarary that lets you mark named events (zones) on the CPU timeline. Zones can be then anaylzed in [Tracy](https://github.com/wolfpld/tracy) profiler. Following operation are supported:
 
