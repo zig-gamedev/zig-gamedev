@@ -144,13 +144,13 @@ pub const GraphicsContext = struct {
             var adapter: ?*dxgi.IAdapter1 = null;
 
             var adapter_index: u32 = 0;
-            var optional_adapter1: ?*dxgi.IAdapter1 = undefined;
+            var optional_adapter1: ?*dxgi.IAdapter1 = null;
 
-            while (factory.EnumAdapterByGpuPreference(adapter_index, dxgi.DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, &dxgi.IID_IAdapter1, &optional_adapter1) == w.S_OK) {
+            while (factory.EnumAdapterByGpuPreference(adapter_index, dxgi.GPU_PREFERENCE_HIGH_PERFORMANCE, &dxgi.IID_IAdapter1, &optional_adapter1) == w.S_OK) {
                 if (optional_adapter1) |adapter1| {
                     var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
                     if (adapter1.GetDesc1(&adapter1_desc) == w.S_OK) {
-                        if ((adapter1_desc.Flags & dxgi.DXGI_ADAPTER_FLAG_SOFTWARE) != 0) {
+                        if ((adapter1_desc.Flags & dxgi.ADAPTER_FLAG_SOFTWARE) != 0) {
                             // Don't select the Basic Render Driver adapter.
                             continue;
                         }

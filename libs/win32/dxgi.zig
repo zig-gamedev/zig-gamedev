@@ -987,11 +987,11 @@ pub const IDevice = extern struct {
     }
 };
 
-pub const DXGI_ADAPTER_FLAGS = UINT;
-pub const DXGI_ADAPTER_FLAG_NONE = 0;
-pub const DXGI_ADAPTER_FLAG_REMOTE = 0x1;
-pub const DXGI_ADAPTER_FLAG_SOFTWARE = 0x2;
-pub const DXGI_ADAPTER_FLAG_FORCE_DWORD = 0x4;
+pub const ADAPTER_FLAGS = UINT;
+pub const ADAPTER_FLAG_NONE = 0;
+pub const ADAPTER_FLAG_REMOTE = 0x1;
+pub const ADAPTER_FLAG_SOFTWARE = 0x2;
+pub const ADAPTER_FLAG_FORCE_DWORD = 0x4;
 
 pub const ADAPTER_DESC1 = extern struct {
     Description: [128]WCHAR,
@@ -1003,7 +1003,7 @@ pub const ADAPTER_DESC1 = extern struct {
     DedicatedSystemMemory: SIZE_T,
     SharedSystemMemory: SIZE_T,
     AdapterLuid: LUID,
-    Flags: DXGI_ADAPTER_FLAGS,
+    Flags: ADAPTER_FLAGS,
 };
 
 pub const IFactory1 = extern struct {
@@ -1185,10 +1185,10 @@ pub const IFactory5 = extern struct {
     }
 };
 
-pub const DXGI_GPU_PREFERENCE = UINT;
-pub const DXGI_GPU_PREFERENCE_UNSPECIFIED = 0;
-pub const DXGI_GPU_PREFERENCE_MINIMUM = 1;
-pub const DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE = 2;
+pub const GPU_PREFERENCE = UINT;
+pub const GPU_PREFERENCE_UNSPECIFIED = 0;
+pub const GPU_PREFERENCE_MINIMUM = 1;
+pub const GPU_PREFERENCE_HIGH_PERFORMANCE = 2;
 
 pub const IID_IFactory6 = GUID.parse("{c1b6694f-ff09-44a9-b03c-77900a0a1d17}");
 pub const IFactory6 = extern struct {
@@ -1219,7 +1219,7 @@ pub const IFactory6 = extern struct {
             pub inline fn EnumAdapterByGpuPreference(
                 self: *T,
                 adapter_index: UINT,
-                gpu_preference: DXGI_GPU_PREFERENCE,
+                gpu_preference: GPU_PREFERENCE,
                 riid: *const GUID,
                 adapter: *?*IAdapter1,
             ) HRESULT {
@@ -1230,7 +1230,7 @@ pub const IFactory6 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumAdapterByGpuPreference: fn (*T, UINT, DXGI_GPU_PREFERENCE, *const GUID, *?*IAdapter1) callconv(WINAPI) HRESULT,
+            EnumAdapterByGpuPreference: fn (*T, UINT, GPU_PREFERENCE, *const GUID, *?*IAdapter1) callconv(WINAPI) HRESULT,
         };
     }
 };
