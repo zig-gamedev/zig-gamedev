@@ -103,10 +103,10 @@ pub const GraphicsContext = struct {
         };
 
         const factory = blk: {
-            var factory: *dxgi.IFactory1 = undefined;
+            var factory: *dxgi.IFactory6 = undefined;
             hrPanicOnFail(dxgi.CreateDXGIFactory2(
                 if (enable_dx_debug) dxgi.CREATE_FACTORY_DEBUG else 0,
-                &dxgi.IID_IFactory1,
+                &dxgi.IID_IFactory6,
                 @ptrCast(*?*c_void, &factory),
             ));
             break :blk factory;
@@ -116,25 +116,15 @@ pub const GraphicsContext = struct {
         var present_flags: w.UINT = 0;
         var present_interval: w.UINT = 0;
         {
-            var maybe_factory5: ?*dxgi.IFactory5 = null;
-            var hr = factory.QueryInterface(&dxgi.IID_IFactory5, @ptrCast(*?*c_void, &maybe_factory5));
-            defer {
-                if (maybe_factory5 != null) {
-                    _ = maybe_factory5.?.Release();
-                }
-            }
+            var allow_tearing: w.BOOL = w.FALSE;
+            var hr = factory.CheckFeatureSupport(
+                .PRESENT_ALLOW_TEARING,
+                &allow_tearing,
+                @sizeOf(@TypeOf(allow_tearing)),
+            );
 
-            if (hr == w.S_OK and maybe_factory5 != null) {
-                var allow_tearing: w.BOOL = w.FALSE;
-                hr = maybe_factory5.?.CheckFeatureSupport(
-                    .PRESENT_ALLOW_TEARING,
-                    &allow_tearing,
-                    @sizeOf(@TypeOf(allow_tearing)),
-                );
-
-                if (hr == w.S_OK and allow_tearing == w.TRUE) {
-                    present_flags |= dxgi.PRESENT_ALLOW_TEARING;
-                }
+            if (hr == w.S_OK and allow_tearing == w.TRUE) {
+                present_flags |= dxgi.PRESENT_ALLOW_TEARING;
             }
         }
 

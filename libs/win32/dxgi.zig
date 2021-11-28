@@ -1185,6 +1185,58 @@ pub const IFactory5 = extern struct {
     }
 };
 
+pub const DXGI_GPU_PREFERENCE = enum(UINT) {
+    DXGI_GPU_PREFERENCE_UNSPECIFIED = 0,
+    DXGI_GPU_PREFERENCE_MINIMUM = 1,
+    DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE = 2,
+};
+
+pub const IID_IFactory6 = GUID.parse("{c1b6694f-ff09-44a9-b03c-77900a0a1d17}");
+pub const IFactory6 = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        object: IObject.VTable(Self),
+        factory: IFactory.VTable(Self),
+        factory1: IFactory1.VTable(Self),
+        factory2: IFactory2.VTable(Self),
+        factory3: IFactory3.VTable(Self),
+        factory4: IFactory4.VTable(Self),
+        factory5: IFactory5.VTable(Self),
+        factory6: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IObject.Methods(Self);
+    usingnamespace IFactory.Methods(Self);
+    usingnamespace IFactory1.Methods(Self);
+    usingnamespace IFactory2.Methods(Self);
+    usingnamespace IFactory3.Methods(Self);
+    usingnamespace IFactory4.Methods(Self);
+    usingnamespace IFactory5.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn EnumAdapterByGpuPreference(
+                self: *T,
+                adapter_index: UINT,
+                gpu_preference: DXGI_GPU_PREFERENCE,
+                riid: *const GUID,
+                adapter: *?*IAdapter1,
+            ) HRESULT {
+                return self.v.factory6.EnumAdapterByGpuPreference(self, adapter_index, gpu_preference, riid, adapter);
+            }
+        };
+    }
+
+    pub fn VTable(comptime T: type) type {
+        return extern struct {
+            EnumAdapterByGpuPreference: fn (*T, UINT, DXGI_GPU_PREFERENCE, *const GUID, *?*IAdapter1) callconv(WINAPI) HRESULT,
+        };
+    }
+};
+
+pub const IID_IAdapter1 = GUID.parse("{29038f61-3839-4626-91fd-086879011a05}");
 pub const IAdapter1 = extern struct {
     const Self = @This();
     v: *const extern struct {
