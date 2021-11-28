@@ -173,23 +173,12 @@ pub const GraphicsContext = struct {
 
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
-            const hr = innerblk: {
-                if (suitable_adapter) |adapter| {
-                    break :innerblk d3d12.D3D12CreateDevice(
-                        @ptrCast(*w.IUnknown, adapter),
-                        .FL_11_1,
-                        &d3d12.IID_IDevice9,
-                        @ptrCast(*?*c_void, &device),
-                    );
-                } else {
-                    break :innerblk d3d12.D3D12CreateDevice(
-                        null,
-                        .FL_11_1,
-                        &d3d12.IID_IDevice9,
-                        @ptrCast(*?*c_void, &device),
-                    );
-                }
-            };
+            var hr = d3d12.D3D12CreateDevice(
+                if (suitable_adapter) |adapter| @ptrCast(*w.IUnknown, adapter) else null,
+                .FL_11_1,
+                &d3d12.IID_IDevice9,
+                @ptrCast(*?*c_void, &device),
+            );
 
             if (hr != w.S_OK) {
                 _ = w.user32.messageBoxA(
