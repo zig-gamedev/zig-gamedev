@@ -145,19 +145,22 @@ pub const GraphicsContext = struct {
 
             var adapter_index: u32 = 0;
             var optional_adapter1: ?*dxgi.IAdapter1 = undefined;
-            var max_video_memory: usize = 0;
-            while (factory.EnumAdapters1(adapter_index, &optional_adapter1) != w.DXGI_ERROR_NOT_FOUND) {
+
+            while (factory.EnumAdapterByGpuPreference(adapter_index, dxgi.DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, &dxgi.IID_IAdapter1, &optional_adapter1) == w.S_OK) {
                 if (optional_adapter1) |adapter1| {
                     var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
                     if (adapter1.GetDesc1(&adapter1_desc) == w.S_OK) {
-                        if ((adapter1_desc.Flags & dxgi.DXGI_ADAPTER_FLAG_SOFTWARE) == 0 and adapter1_desc.DedicatedVideoMemory > max_video_memory) {
-                            var hr = d3d12.D3D12CreateDevice(@ptrCast(*w.IUnknown, adapter1), .FL_11_1, &d3d12.IID_IDevice9, null);
-                            // NOTE(gmodarelli): D3D12CreateDevice returns S_FALSE when the output device is null.
-                            // https://docs.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice#return-value
-                            if (hr == w.S_OK or hr == w.S_FALSE) {
-                                max_video_memory = adapter1_desc.DedicatedVideoMemory;
-                                adapter = adapter1;
-                            }
+                        if ((adapter1_desc.Flags & dxgi.DXGI_ADAPTER_FLAG_SOFTWARE) != 0) {
+                            // Don't select the Basic Render Driver adapter.
+                            continue;
+                        }
+
+                        var hr = d3d12.D3D12CreateDevice(@ptrCast(*w.IUnknown, adapter1), .FL_11_1, &d3d12.IID_IDevice9, null);
+                        // NOTE(gmodarelli): D3D12CreateDevice returns S_FALSE when the output device is null.
+                        // https://docs.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice#return-value
+                        if (hr == w.S_OK or hr == w.S_FALSE) {
+                            adapter = adapter1;
+                            break;
                         }
                     }
                 }

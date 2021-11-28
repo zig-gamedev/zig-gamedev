@@ -1185,11 +1185,10 @@ pub const IFactory5 = extern struct {
     }
 };
 
-pub const DXGI_GPU_PREFERENCE = enum(UINT) {
-    DXGI_GPU_PREFERENCE_UNSPECIFIED = 0,
-    DXGI_GPU_PREFERENCE_MINIMUM = 1,
-    DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE = 2,
-};
+pub const DXGI_GPU_PREFERENCE = UINT;
+pub const DXGI_GPU_PREFERENCE_UNSPECIFIED = 0;
+pub const DXGI_GPU_PREFERENCE_MINIMUM = 1;
+pub const DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE = 2;
 
 pub const IID_IFactory6 = GUID.parse("{c1b6694f-ff09-44a9-b03c-77900a0a1d17}");
 pub const IFactory6 = extern struct {
