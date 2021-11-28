@@ -293,8 +293,8 @@ pub const RATIONAL = extern struct {
 };
 
 // The following values are used with SAMPLE_DESC::Quality:
-pub const STANDARD_MULTISAMPLE_QUALITY_PATTERN = 0xffffffff;
-pub const CENTER_MULTISAMPLE_QUALITY_PATTERN = 0xfffffffe;
+pub const STANDARD_MULTISAMPLE_QUALITY_PATTERN: UINT = 0xffffffff;
+pub const CENTER_MULTISAMPLE_QUALITY_PATTERN: UINT = 0xfffffffe;
 
 pub const SAMPLE_DESC = extern struct {
     Count: UINT,
@@ -398,13 +398,13 @@ pub const MODE_DESC = extern struct {
 };
 
 pub const USAGE = UINT;
-pub const USAGE_SHADER_INPUT = 0x00000010;
-pub const USAGE_RENDER_TARGET_OUTPUT = 0x00000020;
-pub const USAGE_BACK_BUFFER = 0x00000040;
-pub const USAGE_SHARED = 0x00000080;
-pub const USAGE_READ_ONLY = 0x00000100;
-pub const USAGE_DISCARD_ON_PRESENT = 0x00000200;
-pub const USAGE_UNORDERED_ACCESS = 0x00000400;
+pub const USAGE_SHADER_INPUT: USAGE = 0x00000010;
+pub const USAGE_RENDER_TARGET_OUTPUT: USAGE = 0x00000020;
+pub const USAGE_BACK_BUFFER: USAGE = 0x00000040;
+pub const USAGE_SHARED: USAGE = 0x00000080;
+pub const USAGE_READ_ONLY: USAGE = 0x00000100;
+pub const USAGE_DISCARD_ON_PRESENT: USAGE = 0x00000200;
+pub const USAGE_UNORDERED_ACCESS: USAGE = 0x00000400;
 
 pub const FRAME_STATISTICS = extern struct {
     PresentCount: UINT,
@@ -631,9 +631,9 @@ pub const IKeyedMutex = extern struct {
     }
 };
 
-pub const MAP_READ = 0x1;
-pub const MAP_WRITE = 0x2;
-pub const MAP_DISCARD = 0x4;
+pub const MAP_READ: UINT = 0x1;
+pub const MAP_WRITE: UINT = 0x2;
+pub const MAP_DISCARD: UINT = 0x4;
 
 pub const ISurface = extern struct {
     const Self = @This();
@@ -705,10 +705,10 @@ pub const IAdapter = extern struct {
     }
 };
 
-pub const ENUM_MODES_INTERLACED = 0x1;
-pub const ENUM_MODES_SCALING = 0x2;
-pub const ENUM_MODES_STEREO = 0x4;
-pub const ENUM_MODES_DISABLED_STEREO = 0x8;
+pub const ENUM_MODES_INTERLACED: UINT = 0x1;
+pub const ENUM_MODES_SCALING: UINT = 0x2;
+pub const ENUM_MODES_STEREO: UINT = 0x4;
+pub const ENUM_MODES_DISABLED_STEREO: UINT = 0x8;
 
 pub const IOutput = extern struct {
     const Self = @This();
@@ -988,10 +988,9 @@ pub const IDevice = extern struct {
 };
 
 pub const ADAPTER_FLAGS = UINT;
-pub const ADAPTER_FLAG_NONE = 0;
-pub const ADAPTER_FLAG_REMOTE = 0x1;
-pub const ADAPTER_FLAG_SOFTWARE = 0x2;
-pub const ADAPTER_FLAG_FORCE_DWORD = 0x4;
+pub const ADAPTER_FLAG_NONE: ADAPTER_FLAGS = 0;
+pub const ADAPTER_FLAG_REMOTE: ADAPTER_FLAGS = 0x1;
+pub const ADAPTER_FLAG_SOFTWARE: ADAPTER_FLAGS = 0x2;
 
 pub const ADAPTER_DESC1 = extern struct {
     Description: [128]WCHAR,
@@ -1186,9 +1185,9 @@ pub const IFactory5 = extern struct {
 };
 
 pub const GPU_PREFERENCE = UINT;
-pub const GPU_PREFERENCE_UNSPECIFIED = 0;
-pub const GPU_PREFERENCE_MINIMUM = 1;
-pub const GPU_PREFERENCE_HIGH_PERFORMANCE = 2;
+pub const GPU_PREFERENCE_UNSPECIFIED: GPU_PREFERENCE = 0;
+pub const GPU_PREFERENCE_MINIMUM: GPU_PREFERENCE = 1;
+pub const GPU_PREFERENCE_HIGH_PERFORMANCE: GPU_PREFERENCE = 2;
 
 pub const IID_IFactory6 = GUID.parse("{c1b6694f-ff09-44a9-b03c-77900a0a1d17}");
 pub const IFactory6 = extern struct {
