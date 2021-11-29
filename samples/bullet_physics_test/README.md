@@ -14,7 +14,7 @@ Some features:
 * Rigid bodies
 * Most constraint types
 * Tries to minimize number of memory allocations
-  * Multiple rigid bodies and motion states can be created with only one memory allocation
+  * Multiple rigid bodies and motion states can be created with one memory allocation
   * New physics objects can re-use existing memory
 * Lots of error checks in debug builds
 

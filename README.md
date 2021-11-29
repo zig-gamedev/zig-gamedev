@@ -1,17 +1,17 @@
 # zig-gamedev project
 
-This repository contains a collection of sample applications and libraries written in **[Zig programming language](https://ziglang.org/)** and using DirectX 12, DirectML, XAudio2, WASAPI, Direct2D, DirectWrite, Bullet. Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases). Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.<br />
+This repository contains a collection of [sample applications](#sample-applications) and [libraries](#libraries) written in **[Zig programming language](https://ziglang.org/)** and using DirectX 12, DirectML, XAudio2, WASAPI, Direct2D, DirectWrite, Bullet Physics SDK. Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases). Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.<br />
 
-*I build game development stuff in Zig full-time. As a sample of my work please see: [Virtual Physics Lab (Video)](https://youtu.be/9Ri6xS2-9k8), [Physically Based Rendering (Video)](https://drive.google.com/file/d/1uwqINVhKPDbRN0aasrsIcueCKmHJcTZj/view?usp=sharing) and [Raytracing Demo (Video)](https://drive.google.com/file/d/1ktcKUrfLw5Yc68eT27sMCxcWYXBWmNu1/view?usp=sharing). If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
+*I build game development stuff in Zig full-time. As a sample of my work please see [this video](https://www.youtube.com/watch?v=1hYIzFVdA2o). If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
 
 #### Some features:
 
 * Zero dependency except [Zig compiler](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
-* Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics](#graphics), [vectormath](#vectormath))
+* Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics lib](#graphics-lib), [vectormath lib](#vectormath-lib))
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
-* Support for GPU profiling with PIX (markers and events API, see: [pix](#pix))
-* Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) (zones API, see: [tracy](#tracy))
+* Support for GPU profiling with PIX (markers and events API, see: [pix lib](#pix-lib))
+* Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) (zones API, see: [tracy lib](#tracy-lib))
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src))
 
 ## Sample applications
