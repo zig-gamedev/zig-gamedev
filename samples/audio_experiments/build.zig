@@ -25,46 +25,13 @@ fn makeDxcCmd(
 }
 
 pub fn build(b: *std.build.Builder) void {
-    b.installFile("../../external/bin/d3d12/D3D12Core.dll", "bin/d3d12/D3D12Core.dll");
-    b.installFile("../../external/bin/d3d12/D3D12Core.pdb", "bin/d3d12/D3D12Core.pdb");
-    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.dll", "bin/d3d12/D3D12SDKLayers.dll");
-    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.pdb", "bin/d3d12/D3D12SDKLayers.pdb");
-    b.installFile("../../external/bin/d3d12/xaudio2_9redist.dll", "bin/d3d12/xaudio2_9redist.dll");
-    const install_content_step = b.addInstallDirectory(
-        .{ .source_dir = "content", .install_dir = .{ .custom = "" }, .install_subdir = "bin/content" },
-    );
-    b.getInstallStep().dependOn(&install_content_step.step);
-
-    const dxc_step = b.step("dxc", "Build shaders");
-
-    var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    install_content_step.step.dependOn(dxc_step);
-
-    // Standard target options allows the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
-    const target = b.standardTargetOptions(.{});
-
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
-
-    const exe = b.addExecutable("audio_experiments", "src/audio_experiments.zig");
-
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-
     const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
     const enable_dx_debug = b.option(bool, "enable-dx-debug", "Enable debug layer for D3D12, D2D1, DirectML and DXGI") orelse false;
     const enable_dx_gpu_debug = b.option(bool, "enable-dx-gpu-debug", "Enable GPU-based validation for D3D12") orelse false;
     const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
 
     const exe_options = b.addOptions();
+    const exe = b.addExecutable("audio_experiments", "src/audio_experiments.zig");
     exe.addOptions("build_options", exe_options);
 
     exe_options.addOption(bool, "enable_pix", enable_pix);
@@ -85,6 +52,35 @@ pub fn build(b: *std.build.Builder) void {
         exe.linkSystemLibrary("ws2_32");
         exe.linkSystemLibrary("dbghelp");
     }
+
+    b.installFile("../../external/bin/d3d12/D3D12Core.dll", "bin/d3d12/D3D12Core.dll");
+    b.installFile("../../external/bin/d3d12/D3D12Core.pdb", "bin/d3d12/D3D12Core.pdb");
+    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.dll", "bin/d3d12/D3D12SDKLayers.dll");
+    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.pdb", "bin/d3d12/D3D12SDKLayers.pdb");
+    if (enable_dx_debug) {
+        b.installFile("../../external/bin/d3d12/xaudio2_9redist_debug.dll", "bin/d3d12/xaudio2_9redist.dll");
+    } else {
+        b.installFile("../../external/bin/d3d12/xaudio2_9redist.dll", "bin/d3d12/xaudio2_9redist.dll");
+    }
+    const install_content_step = b.addInstallDirectory(
+        .{ .source_dir = "content", .install_dir = .{ .custom = "" }, .install_subdir = "bin/content" },
+    );
+    b.getInstallStep().dependOn(&install_content_step.step);
+
+    const dxc_step = b.step("dxc", "Build shaders");
+
+    var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    install_content_step.step.dependOn(dxc_step);
+
+    const target = b.standardTargetOptions(.{});
+    const mode = b.standardReleaseOptions();
+
+    exe.setTarget(target);
+    exe.setBuildMode(mode);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which

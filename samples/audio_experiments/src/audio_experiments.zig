@@ -1,4 +1,3 @@
-const builtin = @import("builtin");
 const std = @import("std");
 const win32 = @import("win32");
 const w = win32.base;
@@ -19,6 +18,8 @@ const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
+
+const enable_dx_debug = @import("build_options").enable_dx_debug;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -43,9 +44,21 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const audio = blk: {
         var audio: ?*xaudio2.IXAudio2 = null;
-        hrPanicOnFail(xaudio2.create(&audio, 0, 0));
+        hrPanicOnFail(xaudio2.create(&audio, if (enable_dx_debug) xaudio2.DEBUG_ENGINE else 0, 0));
         break :blk audio.?;
     };
+    if (enable_dx_debug) {
+        audio.SetDebugConfiguration(&.{
+            .TraceMask = xaudio2.LOG_DETAIL | xaudio2.LOG_API_CALLS,
+            .BreakMask = 0,
+            .LogThreadID = w.TRUE,
+            .LogFileline = w.TRUE,
+            .LogFunctionName = w.TRUE,
+            .LogTiming = w.TRUE,
+        }, null);
+        _ = audio.StartEngine();
+        audio.StopEngine();
+    }
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -157,9 +170,6 @@ fn draw(demo: *DemoState) void {
     );
 
     demo.gui.draw(grfx);
-
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
-    grfx.flushResourceBarriers();
 
     grfx.beginDraw2d();
     {

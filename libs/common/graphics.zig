@@ -1,4 +1,3 @@
-const builtin = @import("builtin");
 const std = @import("std");
 const win32 = @import("win32");
 const w = win32.base;
@@ -142,11 +141,15 @@ pub const GraphicsContext = struct {
 
         const suitable_adapter = blk: {
             var adapter: ?*dxgi.IAdapter1 = null;
-
             var adapter_index: u32 = 0;
             var optional_adapter1: ?*dxgi.IAdapter1 = null;
 
-            while (factory.EnumAdapterByGpuPreference(adapter_index, dxgi.GPU_PREFERENCE_HIGH_PERFORMANCE, &dxgi.IID_IAdapter1, &optional_adapter1) == w.S_OK) {
+            while (factory.EnumAdapterByGpuPreference(
+                adapter_index,
+                dxgi.GPU_PREFERENCE_HIGH_PERFORMANCE,
+                &dxgi.IID_IAdapter1,
+                &optional_adapter1,
+            ) == w.S_OK) {
                 if (optional_adapter1) |adapter1| {
                     var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
                     if (adapter1.GetDesc1(&adapter1_desc) == w.S_OK) {
@@ -155,7 +158,12 @@ pub const GraphicsContext = struct {
                             continue;
                         }
 
-                        var hr = d3d12.D3D12CreateDevice(@ptrCast(*w.IUnknown, adapter1), .FL_11_1, &d3d12.IID_IDevice9, null);
+                        const hr = d3d12.D3D12CreateDevice(
+                            @ptrCast(*w.IUnknown, adapter1),
+                            .FL_11_1,
+                            &d3d12.IID_IDevice9,
+                            null,
+                        );
                         // NOTE(gmodarelli): D3D12CreateDevice returns S_FALSE when the output device is null.
                         // https://docs.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice#return-value
                         if (hr == w.S_OK or hr == w.S_FALSE) {
@@ -164,12 +172,13 @@ pub const GraphicsContext = struct {
                         }
                     }
                 }
-
                 adapter_index += 1;
             }
-
             break :blk adapter;
         };
+        defer {
+            if (suitable_adapter) |adapter| _ = adapter.Release();
+        }
 
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
@@ -258,7 +267,6 @@ pub const GraphicsContext = struct {
             ));
             break :blk swapchain3;
         };
-
 
         const dx11 = blk: {
             var device11: *d3d11.IDevice = undefined;
