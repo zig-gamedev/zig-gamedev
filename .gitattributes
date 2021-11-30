@@ -18,3 +18,4 @@
 *.mp3 filter=lfs diff=lfs merge=lfs -text
 *.hiplc filter=lfs diff=lfs merge=lfs -text
 *.blend filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
