@@ -6,6 +6,7 @@ const d3d12 = win32.d3d12;
 const dwrite = win32.dwrite;
 const dml = win32.directml;
 const xaudio2 = win32.xaudio2;
+const wasapi = win32.wasapi;
 const mf = win32.mf;
 const common = @import("common");
 const gr = common.graphics;
@@ -29,13 +30,15 @@ const window_name = "zig-gamedev: audio experiments";
 const window_width = 1920;
 const window_height = 1080;
 
+const sample_rate: u32 = 48_000;
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
 
     audio: *xaudio2.IXAudio2,
-    mastering_voice: *xaudio2.IMasteringVoice,
+    master_voice: *xaudio2.IMasteringVoice,
 
     brush: *d2d1.ISolidColorBrush,
     info_tfmt: *dwrite.ITextFormat,
@@ -58,10 +61,10 @@ fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.
     hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
     hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
     hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 1));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, 44_100));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, sample_rate));
     hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BITS_PER_SAMPLE, 16));
     hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BLOCK_ALIGNMENT, 2));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * 44_100));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * sample_rate));
     hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
     hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
@@ -84,11 +87,7 @@ fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.
         var data_ptr: [*]u8 = undefined;
         var data_len: u32 = 0;
         hrPanicOnFail(buffer.Lock(&data_ptr, null, &data_len));
-
-        const data = data_ptr[0..data_len];
-        for (data) |s| {
-            audio_samples.append(s) catch unreachable;
-        }
+        audio_samples.appendSlice(data_ptr[0..data_len]) catch unreachable;
         hrPanicOnFail(buffer.Unlock());
     }
     return audio_samples;
@@ -115,17 +114,54 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         }, null);
     }
 
-    const mastering_voice = blk: {
-        var mastering_voice: ?*xaudio2.IMasteringVoice = undefined;
-        hrPanicOnFail(audio.CreateMasteringVoice(&mastering_voice, 2, 48_000, 0, null, null, .GameEffects));
-        break :blk mastering_voice.?;
-    };
-
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
     defer _ = mf.MFShutdown();
 
     const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac")[0.. :0]);
     defer samples.deinit();
+
+    const master_voice = blk: {
+        var master_voice: ?*xaudio2.IMasteringVoice = null;
+        hrPanicOnFail(audio.CreateMasteringVoice(
+            &master_voice,
+            xaudio2.DEFAULT_CHANNELS,
+            xaudio2.DEFAULT_SAMPLERATE,
+            0,
+            null,
+            null,
+            .GameEffects,
+        ));
+        break :blk master_voice.?;
+    };
+
+    const source_voice = blk: {
+        var source_voice: ?*xaudio2.ISourceVoice = null;
+        hrPanicOnFail(audio.CreateSourceVoice(&source_voice, &.{
+            .wFormatTag = wasapi.WAVE_FORMAT_PCM,
+            .nChannels = 1,
+            .nSamplesPerSec = sample_rate,
+            .nAvgBytesPerSec = 2 * sample_rate,
+            .nBlockAlign = 2,
+            .wBitsPerSample = 16,
+            .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
+        }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
+        break :blk source_voice.?;
+    };
+    defer source_voice.DestroyVoice();
+
+    hrPanicOnFail(source_voice.SubmitSourceBuffer(&.{
+        .Flags = 0,
+        .AudioBytes = @intCast(u32, samples.items.len),
+        .pAudioData = samples.items.ptr,
+        .PlayBegin = 0,
+        .PlayLength = 0,
+        .LoopBegin = 0,
+        .LoopLength = 0,
+        .LoopCount = 0,
+        .pContext = null,
+    }, null));
+
+    hrPanicOnFail(source_voice.Start(0, xaudio2.COMMIT_NOW));
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -192,7 +228,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .grfx = grfx,
         .gui = gui,
         .audio = audio,
-        .mastering_voice = mastering_voice,
+        .master_voice = master_voice,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .info_tfmt = info_tfmt,
@@ -205,7 +241,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    demo.mastering_voice.DestroyVoice();
+    demo.audio.StopEngine();
+    demo.master_voice.DestroyVoice();
     _ = demo.audio.Release();
     lib.deinitWindow(gpa);
     demo.* = undefined;

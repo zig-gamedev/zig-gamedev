@@ -108,13 +108,13 @@ pub const FILTER_PARAMETERS = extern struct {
 pub const BUFFER = extern struct {
     Flags: UINT32,
     AudioBytes: UINT32,
-    pAudioData: *const BYTE,
+    pAudioData: [*]const BYTE,
     PlayBegin: UINT32,
     PlayLength: UINT32,
     LoopBegin: UINT32,
     LoopLength: UINT32,
     LoopCount: UINT32,
-    pContext: *c_void,
+    pContext: ?*c_void,
 };
 
 pub const BUFFER_WMA = extern struct {
@@ -123,7 +123,7 @@ pub const BUFFER_WMA = extern struct {
 };
 
 pub const VOICE_STATE = extern struct {
-    pCurrentBufferContext: *c_void,
+    pCurrentBufferContext: ?*c_void,
     BuffersQueued: UINT32,
     SamplesPlayed: UINT64,
 };
@@ -185,6 +185,7 @@ pub const IXAudio2 = extern struct {
             pub inline fn CreateSourceVoice(
                 self: *T,
                 source_voice: *?*ISourceVoice,
+                source_format: *const WAVEFORMATEX,
                 flags: UINT32,
                 max_frequency_ratio: f32,
                 callback: ?*IVoiceCallback,
@@ -194,6 +195,7 @@ pub const IXAudio2 = extern struct {
                 return self.v.xaudio2.CreateSourceVoice(
                     self,
                     source_voice,
+                    source_format,
                     flags,
                     max_frequency_ratio,
                     callback,
@@ -272,6 +274,7 @@ pub const IXAudio2 = extern struct {
             CreateSourceVoice: fn (
                 *T,
                 *?*ISourceVoice,
+                *const WAVEFORMATEX,
                 UINT32,
                 f32,
                 ?*IVoiceCallback,
