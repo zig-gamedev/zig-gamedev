@@ -45,6 +45,9 @@ const DemoState = struct {
 };
 
 fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
+    const tracy_zone = tracy.zone(@src(), 1);
+    defer tracy_zone.end();
+
     var config_attribs: *mf.IAttributes = undefined;
     hrPanicOnFail(mf.MFCreateAttributes(&config_attribs, 1));
     defer _ = config_attribs.Release();
@@ -105,7 +108,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     if (enable_dx_debug) {
         audio.SetDebugConfiguration(&.{
-            .TraceMask = xaudio2.LOG_DETAIL | xaudio2.LOG_API_CALLS,
+            .TraceMask = xaudio2.LOG_DETAIL | xaudio2.LOG_API_CALLS | xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS,
             .BreakMask = 0,
             .LogThreadID = w.TRUE,
             .LogFileline = w.TRUE,
@@ -149,6 +152,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
     defer source_voice.DestroyVoice();
 
+    hrPanicOnFail(source_voice.Start(0, xaudio2.COMMIT_NOW));
+
     hrPanicOnFail(source_voice.SubmitSourceBuffer(&.{
         .Flags = 0,
         .AudioBytes = @intCast(u32, samples.items.len),
@@ -161,7 +166,19 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .pContext = null,
     }, null));
 
-    hrPanicOnFail(source_voice.Start(0, xaudio2.COMMIT_NOW));
+    hrPanicOnFail(source_voice.SubmitSourceBuffer(&.{
+        .Flags = 0,
+        .AudioBytes = @intCast(u32, samples.items.len),
+        .pAudioData = samples.items.ptr,
+        .PlayBegin = 0,
+        .PlayLength = 0,
+        .LoopBegin = 0,
+        .LoopLength = 0,
+        .LoopCount = 0,
+        .pContext = null,
+    }, null));
+
+    w.kernel32.Sleep(1000);
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -249,8 +266,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
 }
 
 fn update(demo: *DemoState) void {
-    const dt = demo.frame_stats.delta_time;
     demo.frame_stats.update();
+    const dt = demo.frame_stats.delta_time;
     lib.newImGuiFrame(dt);
 }
 
