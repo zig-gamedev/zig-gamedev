@@ -108,12 +108,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     if (enable_dx_debug) {
         audio.SetDebugConfiguration(&.{
-            .TraceMask = xaudio2.LOG_DETAIL | xaudio2.LOG_API_CALLS | xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS,
+            .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS,
             .BreakMask = 0,
-            .LogThreadID = w.TRUE,
-            .LogFileline = w.TRUE,
-            .LogFunctionName = w.TRUE,
-            .LogTiming = w.TRUE,
+            .LogThreadID = w.FALSE,
+            .LogFileline = w.FALSE,
+            .LogFunctionName = w.FALSE,
+            .LogTiming = w.FALSE,
         }, null);
     }
 
@@ -137,7 +137,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk master_voice.?;
     };
 
-    const source_voice = blk: {
+    const source_voice0 = blk: {
         var source_voice: ?*xaudio2.ISourceVoice = null;
         hrPanicOnFail(audio.CreateSourceVoice(&source_voice, &.{
             .wFormatTag = wasapi.WAVE_FORMAT_PCM,
@@ -150,11 +150,24 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
         break :blk source_voice.?;
     };
-    defer source_voice.DestroyVoice();
+    defer source_voice0.DestroyVoice();
 
-    hrPanicOnFail(source_voice.Start(0, xaudio2.COMMIT_NOW));
+    const source_voice1 = blk: {
+        var source_voice: ?*xaudio2.ISourceVoice = null;
+        hrPanicOnFail(audio.CreateSourceVoice(&source_voice, &.{
+            .wFormatTag = wasapi.WAVE_FORMAT_PCM,
+            .nChannels = 1,
+            .nSamplesPerSec = sample_rate,
+            .nAvgBytesPerSec = 2 * sample_rate,
+            .nBlockAlign = 2,
+            .wBitsPerSample = 16,
+            .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
+        }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
+        break :blk source_voice.?;
+    };
+    defer source_voice1.DestroyVoice();
 
-    hrPanicOnFail(source_voice.SubmitSourceBuffer(&.{
+    hrPanicOnFail(source_voice0.SubmitSourceBuffer(&.{
         .Flags = 0,
         .AudioBytes = @intCast(u32, samples.items.len),
         .pAudioData = samples.items.ptr,
@@ -165,8 +178,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .LoopCount = 0,
         .pContext = null,
     }, null));
+    hrPanicOnFail(source_voice0.Discontinuity());
+    hrPanicOnFail(source_voice0.Start(0, xaudio2.COMMIT_NOW));
 
-    hrPanicOnFail(source_voice.SubmitSourceBuffer(&.{
+    w.kernel32.Sleep(100);
+
+    hrPanicOnFail(source_voice1.SubmitSourceBuffer(&.{
         .Flags = 0,
         .AudioBytes = @intCast(u32, samples.items.len),
         .pAudioData = samples.items.ptr,
@@ -177,6 +194,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .LoopCount = 0,
         .pContext = null,
     }, null));
+    hrPanicOnFail(source_voice1.Discontinuity());
+    hrPanicOnFail(source_voice1.Start(0, xaudio2.COMMIT_NOW));
 
     w.kernel32.Sleep(1000);
 
