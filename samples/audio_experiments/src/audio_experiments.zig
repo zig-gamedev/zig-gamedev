@@ -6,6 +6,7 @@ const d3d12 = win32.d3d12;
 const dwrite = win32.dwrite;
 const dml = win32.directml;
 const xaudio2 = win32.xaudio2;
+const mf = win32.mf;
 const common = @import("common");
 const gr = common.graphics;
 const lib = common.library;
@@ -31,12 +32,64 @@ const window_height = 1080;
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
-    audio: *xaudio2.IXAudio2,
     frame_stats: lib.FrameStats,
+
+    audio: *xaudio2.IXAudio2,
+    mastering_voice: *xaudio2.IMasteringVoice,
 
     brush: *d2d1.ISolidColorBrush,
     info_tfmt: *dwrite.ITextFormat,
 };
+
+fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
+    var config_attribs: *mf.IAttributes = undefined;
+    hrPanicOnFail(mf.MFCreateAttributes(&config_attribs, 1));
+    defer _ = config_attribs.Release();
+    hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, w.TRUE));
+
+    var source_reader: *mf.ISourceReader = undefined;
+    hrPanicOnFail(mf.MFCreateSourceReaderFromURL(audio_file_path, config_attribs, &source_reader));
+    defer _ = source_reader.Release();
+
+    var media_type: *mf.IMediaType = undefined;
+    hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &media_type));
+    defer _ = media_type.Release();
+
+    hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
+    hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 2));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BITS_PER_SAMPLE, 16));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, 48_000));
+    hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
+
+    var audio_samples = std.ArrayList(u8).init(gpa);
+    while (true) {
+        var flags: w.DWORD = 0;
+        var sample: ?*mf.ISample = null;
+        defer {
+            if (sample) |s| _ = s.Release();
+        }
+        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, &flags, null, &sample));
+        if ((flags & mf.SOURCE_READERF_ENDOFSTREAM) != 0) {
+            break;
+        }
+
+        var buffer: *mf.IMediaBuffer = undefined;
+        hrPanicOnFail(sample.?.ConvertToContiguousBuffer(&buffer));
+        defer _ = buffer.Release();
+
+        var data_ptr: [*]u8 = undefined;
+        var data_len: u32 = 0;
+        hrPanicOnFail(buffer.Lock(&data_ptr, null, &data_len));
+
+        const data = data_ptr[0..data_len];
+        for (data) |s| {
+            audio_samples.append(s) catch unreachable;
+        }
+        hrPanicOnFail(buffer.Unlock());
+    }
+    return audio_samples;
+}
 
 fn init(gpa: *std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
@@ -47,6 +100,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         hrPanicOnFail(xaudio2.create(&audio, if (enable_dx_debug) xaudio2.DEBUG_ENGINE else 0, 0));
         break :blk audio.?;
     };
+
     if (enable_dx_debug) {
         audio.SetDebugConfiguration(&.{
             .TraceMask = xaudio2.LOG_DETAIL | xaudio2.LOG_API_CALLS,
@@ -56,9 +110,19 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .LogFunctionName = w.TRUE,
             .LogTiming = w.TRUE,
         }, null);
-        _ = audio.StartEngine();
-        audio.StopEngine();
     }
+
+    const mastering_voice = blk: {
+        var mastering_voice: ?*xaudio2.IMasteringVoice = undefined;
+        hrPanicOnFail(audio.CreateMasteringVoice(&mastering_voice, 2, 48_000, 0, null, null, .GameEffects));
+        break :blk mastering_voice.?;
+    };
+
+    hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
+    defer _ = mf.MFShutdown();
+
+    const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac")[0.. :0]);
+    _ = samples;
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -125,6 +189,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .grfx = grfx,
         .gui = gui,
         .audio = audio,
+        .mastering_voice = mastering_voice,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .info_tfmt = info_tfmt,
@@ -137,6 +202,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
+    demo.mastering_voice.DestroyVoice();
     _ = demo.audio.Release();
     lib.deinitWindow(gpa);
     demo.* = undefined;

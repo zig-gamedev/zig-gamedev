@@ -224,7 +224,7 @@ pub const IXAudio2 = extern struct {
             }
             pub inline fn CreateMasteringVoice(
                 self: *T,
-                mastering_voice: *?*ISubmixVoice,
+                mastering_voice: *?*IMasteringVoice,
                 input_channels: UINT32,
                 input_sample_rate: UINT32,
                 flags: UINT32,
