@@ -108,7 +108,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     if (enable_dx_debug) {
         audio.SetDebugConfiguration(&.{
-            .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS,
+            .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS | xaudio2.LOG_INFO,
             .BreakMask = 0,
             .LogThreadID = w.FALSE,
             .LogFileline = w.FALSE,
@@ -168,7 +168,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     defer source_voice1.DestroyVoice();
 
     hrPanicOnFail(source_voice0.SubmitSourceBuffer(&.{
-        .Flags = 0,
+        .Flags = xaudio2.END_OF_STREAM,
         .AudioBytes = @intCast(u32, samples.items.len),
         .pAudioData = samples.items.ptr,
         .PlayBegin = 0,
@@ -178,13 +178,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .LoopCount = 0,
         .pContext = null,
     }, null));
-    hrPanicOnFail(source_voice0.Discontinuity());
     hrPanicOnFail(source_voice0.Start(0, xaudio2.COMMIT_NOW));
 
     w.kernel32.Sleep(100);
 
     hrPanicOnFail(source_voice1.SubmitSourceBuffer(&.{
-        .Flags = 0,
+        .Flags = xaudio2.END_OF_STREAM,
         .AudioBytes = @intCast(u32, samples.items.len),
         .pAudioData = samples.items.ptr,
         .PlayBegin = 0,
@@ -194,7 +193,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .LoopCount = 0,
         .pContext = null,
     }, null));
-    hrPanicOnFail(source_voice1.Discontinuity());
     hrPanicOnFail(source_voice1.Start(0, xaudio2.COMMIT_NOW));
 
     w.kernel32.Sleep(1000);
