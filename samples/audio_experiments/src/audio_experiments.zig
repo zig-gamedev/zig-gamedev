@@ -57,9 +57,12 @@ fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.
 
     hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
     hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 2));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 1));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, 44_100));
     hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BITS_PER_SAMPLE, 16));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, 48_000));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BLOCK_ALIGNMENT, 2));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * 44_100));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
     hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
     var audio_samples = std.ArrayList(u8).init(gpa);
@@ -122,7 +125,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     defer _ = mf.MFShutdown();
 
     const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac")[0.. :0]);
-    _ = samples;
+    defer samples.deinit();
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
