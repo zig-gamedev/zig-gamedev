@@ -65,6 +65,8 @@ const MySourceReaderCallback = struct {
         _ = self;
         _ = guid;
         _ = outobj;
+        //assert(false);
+        //if (eql(u8, asBytes(&pixel_format), asBytes(&wic.GUID_PixelFormat24bppRGB))) break :blk 4;
         return w.S_OK;
     }
 
@@ -113,16 +115,8 @@ fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    var my: MySourceReaderCallback = .{};
-    _ = my;
-
-    var config_attribs: *mf.IAttributes = undefined;
-    hrPanicOnFail(mf.MFCreateAttributes(&config_attribs, 1));
-    defer _ = config_attribs.Release();
-    hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, w.TRUE));
-
     var source_reader: *mf.ISourceReader = undefined;
-    hrPanicOnFail(mf.MFCreateSourceReaderFromURL(audio_file_path, config_attribs, &source_reader));
+    hrPanicOnFail(mf.MFCreateSourceReaderFromURL(audio_file_path, null, &source_reader));
     defer _ = source_reader.Release();
 
     var media_type: *mf.IMediaType = undefined;
@@ -190,6 +184,21 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac")[0.. :0]);
     defer samples.deinit();
+
+    {
+        var my: MySourceReaderCallback = .{};
+        _ = my;
+
+        var attribs: *mf.IAttributes = undefined;
+        hrPanicOnFail(mf.MFCreateAttributes(&attribs, 1));
+        defer _ = attribs.Release();
+
+        hrPanicOnFail(attribs.SetUnknown(&mf.SOURCE_READER_ASYNC_CALLBACK, @ptrCast(*w.IUnknown, &my)));
+
+        var source_reader: *mf.ISourceReader = undefined;
+        hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/drum_bass_hard.flac"), attribs, &source_reader));
+        defer _ = source_reader.Release();
+    }
 
     const master_voice = blk: {
         var master_voice: ?*xaudio2.IMasteringVoice = null;

@@ -65,6 +65,9 @@ pub const IAttributes = extern struct {
             pub inline fn SetGUID(self: *T, key: *const GUID, value: *const GUID) HRESULT {
                 return self.v.attribs.SetGUID(self, key, value);
             }
+            pub inline fn SetUnknown(self: *T, guid: *const GUID, unknown: ?*IUnknown) HRESULT {
+                return self.v.attribs.SetUnknown(self, guid, unknown);
+            }
         };
     }
 
@@ -94,7 +97,7 @@ pub const IAttributes = extern struct {
             SetGUID: fn (*T, *const GUID, *const GUID) callconv(WINAPI) HRESULT,
             SetString: *c_void,
             SetBlob: *c_void,
-            SetUnknown: *c_void,
+            SetUnknown: fn (*T, *const GUID, ?*IUnknown) callconv(WINAPI) HRESULT,
             LockStore: *c_void,
             UnlockStore: *c_void,
             GetCount: *c_void,
@@ -327,6 +330,7 @@ pub fn ISourceReaderCallbackVTable(comptime T: type) type {
 }
 
 pub const LOW_LATENCY = GUID.parse("{9C27891A-ED7A-40e1-88E8-B22727A024EE}"); // {UINT32 (BOOL)}
+pub const SOURCE_READER_ASYNC_CALLBACK = GUID.parse("{1e3dbeac-bb43-4c35-b507-cd644464c965}"); // {*IUnknown}
 
 pub const MT_MAJOR_TYPE = GUID.parse("{48eba18e-f8c9-4687-bf11-0a74c9f96a8f}"); // {GUID}
 pub const MT_SUBTYPE = GUID.parse("{f7e34c9a-42e8-4714-b74b-cb29d72c35e5}"); // {GUID}
