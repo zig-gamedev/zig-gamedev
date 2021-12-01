@@ -34,6 +34,7 @@ pub inline fn GET_WHEEL_DELTA_WPARAM(wparam: WPARAM) i16 {
     return @bitCast(i16, @intCast(u16, ((wparam >> 16) & 0xffff)));
 }
 
+pub const IID_IUnknown = GUID.parse("{00000000-0000-0000-C000-000000000046}");
 pub const IUnknown = extern struct {
     const Self = @This();
     v: *const extern struct {

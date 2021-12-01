@@ -44,9 +44,77 @@ const DemoState = struct {
     info_tfmt: *dwrite.ITextFormat,
 };
 
+const MySourceReaderCallback = struct {
+    vtable: *const mf.ISourceReaderCallbackVTable(Self) = &vtable_instance,
+
+    const Self = @This();
+    const vtable_instance = mf.ISourceReaderCallbackVTable(Self){
+        .unknown = .{
+            .QueryInterface = QueryInterface,
+            .AddRef = AddRef,
+            .Release = Release,
+        },
+        .cb = .{
+            .OnReadSample = OnReadSample,
+            .OnFlush = OnFlush,
+            .OnEvent = OnEvent,
+        },
+    };
+
+    fn QueryInterface(self: *Self, guid: *const w.GUID, outobj: ?*?*c_void) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = guid;
+        _ = outobj;
+        return w.S_OK;
+    }
+
+    fn AddRef(self: *Self) callconv(w.WINAPI) w.ULONG {
+        _ = self;
+        return 0;
+    }
+
+    fn Release(self: *Self) callconv(w.WINAPI) w.ULONG {
+        _ = self;
+        return 0;
+    }
+
+    fn OnReadSample(
+        self: *Self,
+        status: w.HRESULT,
+        stream_index: w.DWORD,
+        stream_flags: w.DWORD,
+        timestamp: w.LONGLONG,
+        sample: ?*mf.ISample,
+    ) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = status;
+        _ = stream_index;
+        _ = stream_flags;
+        _ = timestamp;
+        _ = sample;
+        return w.S_OK;
+    }
+
+    fn OnFlush(self: *Self, stream_index: w.DWORD) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = stream_index;
+        return w.S_OK;
+    }
+
+    fn OnEvent(self: *Self, stream_index: w.DWORD, event: *mf.IMediaEvent) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = stream_index;
+        _ = event;
+        return w.S_OK;
+    }
+};
+
 fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
+
+    var my: MySourceReaderCallback = .{};
+    _ = my;
 
     var config_attribs: *mf.IAttributes = undefined;
     hrPanicOnFail(mf.MFCreateAttributes(&config_attribs, 1));

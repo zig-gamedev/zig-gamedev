@@ -10,6 +10,7 @@ const GUID = windows.GUID;
 const LPCWSTR = windows.LPCWSTR;
 const BYTE = windows.BYTE;
 const LONGLONG = windows.LONGLONG;
+const PROPVARIANT = windows.PROPVARIANT;
 
 // 0x0002 for Windows 7+
 pub const SDK_VERSION: UINT = 0x0002;
@@ -99,6 +100,44 @@ pub const IAttributes = extern struct {
             GetCount: *c_void,
             GetItemByIndex: *c_void,
             CopyAllItems: *c_void,
+        };
+    }
+};
+
+pub const IMediaEvent = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        attribs: IAttributes.VTable(Self),
+        event: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IAttributes.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn GetType(self: *T, met: *MediaEventType) HRESULT {
+                return self.v.event.GetType(self, met);
+            }
+            pub inline fn GetExtendedType(self: *T, ex_met: *GUID) HRESULT {
+                return self.v.event.GetExtendedType(self, ex_met);
+            }
+            pub inline fn GetStatus(self: *T, status: *HRESULT) HRESULT {
+                return self.v.event.GetStatus(self, status);
+            }
+            pub inline fn GetValue(self: *T, value: *PROPVARIANT) HRESULT {
+                return self.v.event.GetValue(self, value);
+            }
+        };
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            GetType: fn (*T, *MediaEventType) callconv(WINAPI) HRESULT,
+            GetExtendedType: fn (*T, *GUID) callconv(WINAPI) HRESULT,
+            GetStatus: fn (*T, *HRESULT) callconv(WINAPI) HRESULT,
+            GetValue: fn (*T, *PROPVARIANT) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -272,6 +311,20 @@ pub const IMediaBuffer = extern struct {
         };
     }
 };
+
+pub const MediaEventType = DWORD;
+
+pub const IID_ISourceReaderCallback = GUID.parse("{deec8d99-fa1d-4d82-84c2-2c8969944867}");
+pub fn ISourceReaderCallbackVTable(comptime T: type) type {
+    return extern struct {
+        unknown: IUnknown.VTable(T),
+        cb: extern struct {
+            OnReadSample: fn (*T, HRESULT, DWORD, DWORD, LONGLONG, ?*ISample) callconv(WINAPI) HRESULT,
+            OnFlush: fn (*T, DWORD) callconv(WINAPI) HRESULT,
+            OnEvent: fn (*T, DWORD, *IMediaEvent) callconv(WINAPI) HRESULT,
+        },
+    };
+}
 
 pub const LOW_LATENCY = GUID.parse("{9C27891A-ED7A-40e1-88E8-B22727A024EE}"); // {UINT32 (BOOL)}
 
