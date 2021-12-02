@@ -114,6 +114,7 @@ const MySourceReaderCallback = struct {
         _ = stream_flags;
         _ = timestamp;
         _ = sample;
+        std.log.info("OnReadSample {}", .{status});
         return w.S_OK;
     }
 
@@ -201,8 +202,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     defer samples.deinit();
 
     {
-        var my = gpa.create(MySourceReaderCallback) catch unreachable;
-        my.* = MySourceReaderCallback.init(gpa);
+        const my = blk: {
+            var my = gpa.create(MySourceReaderCallback) catch unreachable;
+            my.* = MySourceReaderCallback.init(gpa);
+            break :blk my;
+        };
         defer _ = my.Release();
 
         var attribs: *mf.IAttributes = undefined;
@@ -214,6 +218,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         var source_reader: *mf.ISourceReader = undefined;
         hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/drum_bass_hard.flac"), attribs, &source_reader));
         defer _ = source_reader.Release();
+
+        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+        w.kernel32.Sleep(1000);
     }
 
     const master_voice = blk: {

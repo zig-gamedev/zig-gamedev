@@ -186,7 +186,7 @@ pub const ISourceReader = extern struct {
                 actual_stream_index: ?*DWORD,
                 stream_flags: ?*DWORD,
                 timestamp: ?*LONGLONG,
-                sample: *?*ISample,
+                sample: ?*?*ISample,
             ) HRESULT {
                 return self.v.reader.ReadSample(
                     self,
@@ -209,7 +209,7 @@ pub const ISourceReader = extern struct {
             GetCurrentMediaType: fn (*T, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentMediaType: fn (*T, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentPosition: *c_void,
-            ReadSample: fn (*T, DWORD, DWORD, ?*DWORD, ?*DWORD, ?*LONGLONG, *?*ISample) callconv(WINAPI) HRESULT,
+            ReadSample: fn (*T, DWORD, DWORD, ?*DWORD, ?*DWORD, ?*LONGLONG, ?*?*ISample) callconv(WINAPI) HRESULT,
             Flush: *c_void,
             GetServiceForStream: *c_void,
             GetPresentationAttribute: *c_void,
