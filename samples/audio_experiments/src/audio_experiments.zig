@@ -46,6 +46,14 @@ const DemoState = struct {
 
 const MySourceReaderCallback = struct {
     vtable: *const mf.ISourceReaderCallbackVTable(Self) = &vtable_instance,
+    refcount: u32 = 1,
+    gpa: *std.mem.Allocator,
+
+    fn init(gpa: *std.mem.Allocator) Self {
+        return Self{
+            .gpa = gpa,
+        };
+    }
 
     const Self = @This();
     const vtable_instance = mf.ISourceReaderCallbackVTable(Self){
@@ -62,22 +70,34 @@ const MySourceReaderCallback = struct {
     };
 
     fn QueryInterface(self: *Self, guid: *const w.GUID, outobj: ?*?*c_void) callconv(w.WINAPI) w.HRESULT {
-        _ = self;
-        _ = guid;
-        _ = outobj;
-        //assert(false);
-        //if (eql(u8, asBytes(&pixel_format), asBytes(&wic.GUID_PixelFormat24bppRGB))) break :blk 4;
-        return w.S_OK;
+        assert(outobj != null);
+
+        if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w.IID_IUnknown))) {
+            outobj.?.* = self;
+            _ = self.AddRef();
+            return w.S_OK;
+        } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&mf.IID_ISourceReaderCallback))) {
+            outobj.?.* = self;
+            _ = self.AddRef();
+            return w.S_OK;
+        }
+
+        outobj.?.* = null;
+        return w.E_NOINTERFACE;
     }
 
     fn AddRef(self: *Self) callconv(w.WINAPI) w.ULONG {
-        _ = self;
-        return 0;
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic);
+        return prev_refcount + 1;
     }
 
     fn Release(self: *Self) callconv(w.WINAPI) w.ULONG {
-        _ = self;
-        return 0;
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
+        assert(prev_refcount > 0);
+        if (prev_refcount == 1) {
+            self.gpa.destroy(self);
+        }
+        return prev_refcount - 1;
     }
 
     fn OnReadSample(
@@ -97,16 +117,11 @@ const MySourceReaderCallback = struct {
         return w.S_OK;
     }
 
-    fn OnFlush(self: *Self, stream_index: w.DWORD) callconv(w.WINAPI) w.HRESULT {
-        _ = self;
-        _ = stream_index;
+    fn OnFlush(_: *Self, _: w.DWORD) callconv(w.WINAPI) w.HRESULT {
         return w.S_OK;
     }
 
-    fn OnEvent(self: *Self, stream_index: w.DWORD, event: *mf.IMediaEvent) callconv(w.WINAPI) w.HRESULT {
-        _ = self;
-        _ = stream_index;
-        _ = event;
+    fn OnEvent(_: *Self, _: w.DWORD, _: *mf.IMediaEvent) callconv(w.WINAPI) w.HRESULT {
         return w.S_OK;
     }
 };
@@ -186,14 +201,15 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     defer samples.deinit();
 
     {
-        var my: MySourceReaderCallback = .{};
-        _ = my;
+        var my = gpa.create(MySourceReaderCallback) catch unreachable;
+        my.* = MySourceReaderCallback.init(gpa);
+        defer _ = my.Release();
 
         var attribs: *mf.IAttributes = undefined;
         hrPanicOnFail(mf.MFCreateAttributes(&attribs, 1));
         defer _ = attribs.Release();
 
-        hrPanicOnFail(attribs.SetUnknown(&mf.SOURCE_READER_ASYNC_CALLBACK, @ptrCast(*w.IUnknown, &my)));
+        hrPanicOnFail(attribs.SetUnknown(&mf.SOURCE_READER_ASYNC_CALLBACK, @ptrCast(*w.IUnknown, my)));
 
         var source_reader: *mf.ISourceReader = undefined;
         hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/drum_bass_hard.flac"), attribs, &source_reader));
