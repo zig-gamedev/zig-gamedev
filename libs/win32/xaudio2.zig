@@ -527,11 +527,20 @@ pub const IMasteringVoice = extern struct {
     }
 };
 
+pub fn IEngineCallbackVTable(comptime T: type) type {
+    return extern struct {
+        ecb: extern struct {
+            OnProcessingPassStart: fn (*T) callconv(WINAPI) void,
+            OnProcessingPassEnd: fn (*T) callconv(WINAPI) void,
+            OnCriticalError: fn (*T, HRESULT) callconv(WINAPI) void,
+        },
+    };
+}
+
 pub const IEngineCallback = extern struct {
+    v: *const IEngineCallbackVTable(Self),
+
     const Self = @This();
-    v: *const extern struct {
-        ecb: VTable(Self),
-    },
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
@@ -547,21 +556,26 @@ pub const IEngineCallback = extern struct {
             }
         };
     }
-
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            OnProcessingPassStart: fn (*T) callconv(WINAPI) void,
-            OnProcessingPassEnd: fn (*T) callconv(WINAPI) void,
-            OnCriticalError: fn (*T, HRESULT) callconv(WINAPI) void,
-        };
-    }
 };
 
+pub fn IVoiceCallbackVTable(comptime T: type) type {
+    return extern struct {
+        vcb: extern struct {
+            OnVoiceProcessingPassStart: fn (*T, UINT32) callconv(WINAPI) void,
+            OnVoiceProcessingPassEnd: fn (*T) callconv(WINAPI) void,
+            OnStreamEnd: fn (*T) callconv(WINAPI) void,
+            OnBufferStart: fn (*T, ?*c_void) callconv(WINAPI) void,
+            OnBufferEnd: fn (*T, ?*c_void) callconv(WINAPI) void,
+            OnLoopEnd: fn (*T, ?*c_void) callconv(WINAPI) void,
+            OnVoiceError: fn (*T, ?*c_void, HRESULT) callconv(WINAPI) void,
+        },
+    };
+}
+
 pub const IVoiceCallback = extern struct {
+    v: *const IVoiceCallbackVTable(Self),
+
     const Self = @This();
-    v: *const extern struct {
-        vcb: VTable(Self),
-    },
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
@@ -575,30 +589,18 @@ pub const IVoiceCallback = extern struct {
             pub inline fn OnStreamEnd(self: *T) void {
                 self.v.vcb.OnStreamEnd(self);
             }
-            pub inline fn OnBufferStart(self: *T, context: *c_void) void {
+            pub inline fn OnBufferStart(self: *T, context: ?*c_void) void {
                 self.v.vcb.OnBufferStart(self, context);
             }
-            pub inline fn OnBufferEnd(self: *T, context: *c_void) void {
+            pub inline fn OnBufferEnd(self: *T, context: ?*c_void) void {
                 self.v.vcb.OnBufferEnd(self, context);
             }
-            pub inline fn OnLoopEnd(self: *T, context: *c_void) void {
+            pub inline fn OnLoopEnd(self: *T, context: ?*c_void) void {
                 self.v.vcb.OnLoopEnd(self, context);
             }
-            pub inline fn OnVoiceError(self: *T, context: *c_void, err: HRESULT) void {
+            pub inline fn OnVoiceError(self: *T, context: ?*c_void, err: HRESULT) void {
                 self.v.vcb.OnVoiceError(self, context, err);
             }
-        };
-    }
-
-    pub fn VTable(comptime T: type) type {
-        return extern struct {
-            OnVoiceProcessingPassStart: fn (*T, UINT32) callconv(WINAPI) void,
-            OnVoiceProcessingPassEnd: fn (*T) callconv(WINAPI) void,
-            OnStreamEnd: fn (*T) callconv(WINAPI) void,
-            OnBufferStart: fn (*T, *c_void) callconv(WINAPI) void,
-            OnBufferEnd: fn (*T, *c_void) callconv(WINAPI) void,
-            OnLoopEnd: fn (*T, *c_void) callconv(WINAPI) void,
-            OnVoiceError: fn (*T, *c_void, HRESULT) callconv(WINAPI) void,
         };
     }
 };

@@ -317,7 +317,6 @@ pub const IMediaBuffer = extern struct {
 
 pub const MediaEventType = DWORD;
 
-pub const IID_ISourceReaderCallback = GUID.parse("{deec8d99-fa1d-4d82-84c2-2c8969944867}");
 pub fn ISourceReaderCallbackVTable(comptime T: type) type {
     return extern struct {
         unknown: IUnknown.VTable(T),
@@ -328,6 +327,36 @@ pub fn ISourceReaderCallbackVTable(comptime T: type) type {
         },
     };
 }
+
+pub const IID_ISourceReaderCallback = GUID.parse("{deec8d99-fa1d-4d82-84c2-2c8969944867}");
+pub const ISourceReaderCallback = extern struct {
+    v: *const ISourceReaderCallbackVTable(Self),
+
+    const Self = @This();
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn OnReadSample(
+                self: *T,
+                status: HRESULT,
+                stream_index: DWORD,
+                stream_flags: DWORD,
+                timestamp: LONGLONG,
+                sample: ?*ISample,
+            ) HRESULT {
+                return self.v.cb.OnReadSample(self, status, stream_index, stream_flags, timestamp, sample);
+            }
+            pub inline fn OnFlush(self: *T, stream_index: DWORD) HRESULT {
+                return self.v.cb.OnFlush(self, stream_index);
+            }
+            pub inline fn OnEvent(self: *T, stream_index: DWORD, event: *IMediaEvent) HRESULT {
+                return self.v.cb.OnEvent(self, stream_index, event);
+            }
+        };
+    }
+};
 
 pub const LOW_LATENCY = GUID.parse("{9C27891A-ED7A-40e1-88E8-B22727A024EE}"); // {UINT32 (BOOL)}
 pub const SOURCE_READER_ASYNC_CALLBACK = GUID.parse("{1e3dbeac-bb43-4c35-b507-cd644464c965}"); // {*IUnknown}

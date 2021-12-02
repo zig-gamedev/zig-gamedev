@@ -44,14 +44,47 @@ const DemoState = struct {
     info_tfmt: *dwrite.ITextFormat,
 };
 
+const MyVoiceCallback = struct {
+    vtable: *const xaudio2.IVoiceCallbackVTable(Self) = &vtable_instance,
+
+    fn OnBufferEnd(self: *Self, context: ?*c_void) callconv(w.WINAPI) void {
+        _ = self;
+        _ = context;
+    }
+
+    const Self = @This();
+    const vtable_instance = xaudio2.IVoiceCallbackVTable(Self){
+        .vcb = .{
+            .OnVoiceProcessingPassStart = OnVoiceProcessingPassStart,
+            .OnVoiceProcessingPassEnd = OnVoiceProcessingPassEnd,
+            .OnStreamEnd = OnStreamEnd,
+            .OnBufferStart = OnBufferStart,
+            .OnBufferEnd = OnBufferEnd,
+            .OnLoopEnd = OnLoopEnd,
+            .OnVoiceError = OnVoiceError,
+        },
+    };
+
+    fn OnVoiceProcessingPassStart(_: *Self, _: w.UINT32) callconv(w.WINAPI) void {}
+    fn OnVoiceProcessingPassEnd(_: *Self) callconv(w.WINAPI) void {}
+    fn OnStreamEnd(_: *Self) callconv(w.WINAPI) void {}
+    fn OnBufferStart(_: *Self, _: ?*c_void) callconv(w.WINAPI) void {}
+    fn OnLoopEnd(_: *Self, _: ?*c_void) callconv(w.WINAPI) void {}
+    fn OnVoiceError(_: *Self, _: ?*c_void, _: w.HRESULT) callconv(w.WINAPI) void {}
+};
+
 const MySourceReaderCallback = struct {
     vtable: *const mf.ISourceReaderCallbackVTable(Self) = &vtable_instance,
     refcount: u32 = 1,
+    critical_section: w.CRITICAL_SECTION,
     gpa: *std.mem.Allocator,
 
     fn init(gpa: *std.mem.Allocator) Self {
+        var cs: w.CRITICAL_SECTION = undefined;
+        w.kernel32.InitializeCriticalSection(&cs);
         return Self{
             .gpa = gpa,
+            .critical_section = cs,
         };
     }
 
@@ -95,6 +128,7 @@ const MySourceReaderCallback = struct {
         const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
         assert(prev_refcount > 0);
         if (prev_refcount == 1) {
+            w.kernel32.DeleteCriticalSection(&self.critical_section);
             self.gpa.destroy(self);
         }
         return prev_refcount - 1;
@@ -108,13 +142,21 @@ const MySourceReaderCallback = struct {
         timestamp: w.LONGLONG,
         sample: ?*mf.ISample,
     ) callconv(w.WINAPI) w.HRESULT {
+        if (status != w.S_OK or sample == null) {
+            return w.S_OK;
+        }
+
+        w.kernel32.EnterCriticalSection(&self.critical_section);
+        defer w.kernel32.LeaveCriticalSection(&self.critical_section);
+
         _ = self;
         _ = status;
         _ = stream_index;
         _ = stream_flags;
         _ = timestamp;
         _ = sample;
-        std.log.info("OnReadSample {}", .{status});
+        std.log.info("OnReadSample {} {}", .{ status, @ptrToInt(sample) });
+
         return w.S_OK;
     }
 
@@ -198,7 +240,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
     defer _ = mf.MFShutdown();
 
-    const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac")[0.. :0]);
+    const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac"));
     defer samples.deinit();
 
     {
@@ -208,6 +250,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             break :blk my;
         };
         defer _ = my.Release();
+
+        var my_voice_callback: MyVoiceCallback = .{};
+        _ = my_voice_callback;
 
         var attribs: *mf.IAttributes = undefined;
         hrPanicOnFail(mf.MFCreateAttributes(&attribs, 1));
@@ -220,6 +265,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         defer _ = source_reader.Release();
 
         hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+        w.kernel32.Sleep(500);
+        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+        w.kernel32.Sleep(500);
+        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+
         w.kernel32.Sleep(1000);
     }
 
