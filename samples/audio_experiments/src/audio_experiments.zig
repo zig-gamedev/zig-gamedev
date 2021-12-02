@@ -47,6 +47,10 @@ const DemoState = struct {
 const MyVoiceCallback = struct {
     vtable: *const xaudio2.IVoiceCallbackVTable(Self) = &vtable_instance,
 
+    fn init() Self {
+        return .{};
+    }
+
     fn OnBufferEnd(self: *Self, context: ?*c_void) callconv(w.WINAPI) void {
         _ = self;
         _ = context;
@@ -78,14 +82,77 @@ const MySourceReaderCallback = struct {
     refcount: u32 = 1,
     critical_section: w.CRITICAL_SECTION,
     gpa: *std.mem.Allocator,
+    voice: *xaudio2.ISourceVoice,
+    voice_cb: *MyVoiceCallback,
+    music_reader: *mf.ISourceReader,
 
-    fn init(gpa: *std.mem.Allocator) Self {
+    fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2) *Self {
+        const voice_cb = blk: {
+            var cb = gpa.create(MyVoiceCallback) catch unreachable;
+            cb.* = MyVoiceCallback.init();
+            break :blk cb;
+        };
+        const voice = blk: {
+            var voice: ?*xaudio2.ISourceVoice = null;
+            hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
+                .wFormatTag = wasapi.WAVE_FORMAT_PCM,
+                .nChannels = 2,
+                .nSamplesPerSec = sample_rate,
+                .nAvgBytesPerSec = 4 * sample_rate,
+                .nBlockAlign = 4,
+                .wBitsPerSample = 16,
+                .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
+            }, 0, xaudio2.DEFAULT_FREQ_RATIO, @ptrCast(*xaudio2.IVoiceCallback, voice_cb), null, null));
+            break :blk voice.?;
+        };
+
         var cs: w.CRITICAL_SECTION = undefined;
         w.kernel32.InitializeCriticalSection(&cs);
-        return Self{
-            .gpa = gpa,
+
+        var self = gpa.create(MySourceReaderCallback) catch unreachable;
+        self.* = .{
             .critical_section = cs,
+            .gpa = gpa,
+            .voice = voice,
+            .voice_cb = voice_cb,
+            .music_reader = undefined, // This will be set below
         };
+
+        const music_reader = blk: {
+            var attribs: *mf.IAttributes = undefined;
+            hrPanicOnFail(mf.MFCreateAttributes(&attribs, 1));
+            defer _ = attribs.Release();
+
+            hrPanicOnFail(attribs.SetUnknown(&mf.SOURCE_READER_ASYNC_CALLBACK, @ptrCast(*w.IUnknown, self)));
+
+            var source_reader: *mf.ISourceReader = undefined;
+            hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/acid_walk.mp3"), attribs, &source_reader));
+
+            var media_type: *mf.IMediaType = undefined;
+            hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &media_type));
+            defer _ = media_type.Release();
+
+            hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
+            hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
+            hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 2));
+            hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, sample_rate));
+            hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BITS_PER_SAMPLE, 16));
+            hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BLOCK_ALIGNMENT, 4));
+            hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_AVG_BYTES_PER_SECOND, 4 * sample_rate));
+            hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
+            hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
+
+            break :blk source_reader;
+        };
+
+        self.music_reader = music_reader;
+        return self;
+    }
+
+    fn destroy(self: *Self) void {
+        _ = self.music_reader.Release();
+        const refcount = self.Release();
+        assert(refcount == 0);
     }
 
     const Self = @This();
@@ -129,6 +196,8 @@ const MySourceReaderCallback = struct {
         assert(prev_refcount > 0);
         if (prev_refcount == 1) {
             w.kernel32.DeleteCriticalSection(&self.critical_section);
+            self.voice.DestroyVoice();
+            self.gpa.destroy(self.voice_cb);
             self.gpa.destroy(self);
         }
         return prev_refcount - 1;
@@ -149,13 +218,30 @@ const MySourceReaderCallback = struct {
         w.kernel32.EnterCriticalSection(&self.critical_section);
         defer w.kernel32.LeaveCriticalSection(&self.critical_section);
 
-        _ = self;
-        _ = status;
         _ = stream_index;
         _ = stream_flags;
         _ = timestamp;
-        _ = sample;
         std.log.info("OnReadSample {} {}", .{ status, @ptrToInt(sample) });
+
+        var buffer: *mf.IMediaBuffer = undefined;
+        hrPanicOnFail(sample.?.ConvertToContiguousBuffer(&buffer));
+        defer _ = buffer.Release();
+
+        var data_ptr: [*]u8 = undefined;
+        var data_len: u32 = 0;
+        hrPanicOnFail(buffer.Lock(&data_ptr, null, &data_len));
+
+        hrPanicOnFail(self.voice.SubmitSourceBuffer(&.{
+            .Flags = 0,
+            .AudioBytes = data_len,
+            .pAudioData = data_ptr,
+            .PlayBegin = 0,
+            .PlayLength = 0,
+            .LoopBegin = 0,
+            .LoopLength = 0,
+            .LoopCount = 0,
+            .pContext = null,
+        }, null));
 
         return w.S_OK;
     }
@@ -237,42 +323,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         }, null);
     }
 
-    hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
-    defer _ = mf.MFShutdown();
-
-    const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac"));
-    defer samples.deinit();
-
-    {
-        const my = blk: {
-            var my = gpa.create(MySourceReaderCallback) catch unreachable;
-            my.* = MySourceReaderCallback.init(gpa);
-            break :blk my;
-        };
-        defer _ = my.Release();
-
-        var my_voice_callback: MyVoiceCallback = .{};
-        _ = my_voice_callback;
-
-        var attribs: *mf.IAttributes = undefined;
-        hrPanicOnFail(mf.MFCreateAttributes(&attribs, 1));
-        defer _ = attribs.Release();
-
-        hrPanicOnFail(attribs.SetUnknown(&mf.SOURCE_READER_ASYNC_CALLBACK, @ptrCast(*w.IUnknown, my)));
-
-        var source_reader: *mf.ISourceReader = undefined;
-        hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/drum_bass_hard.flac"), attribs, &source_reader));
-        defer _ = source_reader.Release();
-
-        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
-        w.kernel32.Sleep(500);
-        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
-        w.kernel32.Sleep(500);
-        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
-
-        w.kernel32.Sleep(1000);
-    }
-
     const master_voice = blk: {
         var master_voice: ?*xaudio2.IMasteringVoice = null;
         hrPanicOnFail(audio.CreateMasteringVoice(
@@ -287,9 +337,25 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         break :blk master_voice.?;
     };
 
+    hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
+    defer _ = mf.MFShutdown();
+
+    const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac"));
+    defer samples.deinit();
+
+    var music = MySourceReaderCallback.create(gpa, audio);
+
+    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+    w.kernel32.Sleep(100);
+    hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
+
+    w.kernel32.Sleep(1000);
+
+    music.destroy();
+
     const source_voice0 = blk: {
-        var source_voice: ?*xaudio2.ISourceVoice = null;
-        hrPanicOnFail(audio.CreateSourceVoice(&source_voice, &.{
+        var voice: ?*xaudio2.ISourceVoice = null;
+        hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
             .wFormatTag = wasapi.WAVE_FORMAT_PCM,
             .nChannels = 1,
             .nSamplesPerSec = sample_rate,
@@ -298,13 +364,13 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .wBitsPerSample = 16,
             .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
         }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
-        break :blk source_voice.?;
+        break :blk voice.?;
     };
     defer source_voice0.DestroyVoice();
 
     const source_voice1 = blk: {
-        var source_voice: ?*xaudio2.ISourceVoice = null;
-        hrPanicOnFail(audio.CreateSourceVoice(&source_voice, &.{
+        var voice: ?*xaudio2.ISourceVoice = null;
+        hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
             .wFormatTag = wasapi.WAVE_FORMAT_PCM,
             .nChannels = 1,
             .nSamplesPerSec = sample_rate,
@@ -313,7 +379,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             .wBitsPerSample = 16,
             .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
         }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
-        break :blk source_voice.?;
+        break :blk voice.?;
     };
     defer source_voice1.DestroyVoice();
 
