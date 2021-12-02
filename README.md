@@ -6,7 +6,7 @@ This repository contains a collection of [sample applications](#sample-applicati
 
 #### Some features:
 
-* Zero dependency except [Zig compiler](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
+* Zero dependency except [Zig compiler (master)](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics lib](#graphics-lib), [vectormath lib](#vectormath-lib))
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
