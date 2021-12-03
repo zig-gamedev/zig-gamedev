@@ -44,59 +44,24 @@ const DemoState = struct {
     info_tfmt: *dwrite.ITextFormat,
 };
 
-const MyVoiceCallback = struct {
-    vtable: *const xaudio2.IVoiceCallbackVTable(Self) = &vtable_instance,
-    player: ?*MySourceReaderCallback,
-
-    fn init() Self {
-        return .{ .player = null };
-    }
-
-    fn OnBufferEnd(self: *Self, _: ?*c_void) callconv(w.WINAPI) void {
-        self.player.?.OnBufferEnd();
-    }
-
-    const Self = @This();
-    const vtable_instance = xaudio2.IVoiceCallbackVTable(Self){
-        .vcb = .{
-            .OnVoiceProcessingPassStart = OnVoiceProcessingPassStart,
-            .OnVoiceProcessingPassEnd = OnVoiceProcessingPassEnd,
-            .OnStreamEnd = OnStreamEnd,
-            .OnBufferStart = OnBufferStart,
-            .OnBufferEnd = OnBufferEnd,
-            .OnLoopEnd = OnLoopEnd,
-            .OnVoiceError = OnVoiceError,
-        },
-    };
-
-    fn OnVoiceProcessingPassStart(_: *Self, _: w.UINT32) callconv(w.WINAPI) void {}
-    fn OnVoiceProcessingPassEnd(_: *Self) callconv(w.WINAPI) void {}
-    fn OnStreamEnd(_: *Self) callconv(w.WINAPI) void {}
-    fn OnBufferStart(_: *Self, _: ?*c_void) callconv(w.WINAPI) void {}
-    fn OnLoopEnd(_: *Self, _: ?*c_void) callconv(w.WINAPI) void {}
-    fn OnVoiceError(_: *Self, _: ?*c_void, _: w.HRESULT) callconv(w.WINAPI) void {}
-};
-
-const MySourceReaderCallback = struct {
-    vtable: *const mf.ISourceReaderCallbackVTable(Self) = &vtable_instance,
-    refcount: u32 = 1,
+const MusicPlayer = struct {
     critical_section: w.CRITICAL_SECTION,
     gpa: *std.mem.Allocator,
     voice: *xaudio2.ISourceVoice,
-    voice_cb: *MyVoiceCallback,
+    voice_cb: *VoiceCallback,
     music_reader: *mf.ISourceReader,
-    music_buffers: [num_music_buffers]?*mf.IMediaBuffer,
+    music_reader_cb: *SourceReaderCallback,
+    music_buffers: [4]?*mf.IMediaBuffer,
     music_buffers_head: u32,
     music_buffers_tail: u32,
 
-    const num_music_buffers = 4;
-
-    fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2) *Self {
+    fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2) *MusicPlayer {
         const voice_cb = blk: {
-            var cb = gpa.create(MyVoiceCallback) catch unreachable;
-            cb.* = MyVoiceCallback.init();
+            var cb = gpa.create(VoiceCallback) catch unreachable;
+            cb.* = VoiceCallback.init();
             break :blk cb;
         };
+
         const voice = blk: {
             var voice: ?*xaudio2.ISourceVoice = null;
             hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
@@ -114,24 +79,21 @@ const MySourceReaderCallback = struct {
         var cs: w.CRITICAL_SECTION = undefined;
         w.kernel32.InitializeCriticalSection(&cs);
 
-        var self = gpa.create(MySourceReaderCallback) catch unreachable;
-        self.* = .{
-            .critical_section = cs,
-            .gpa = gpa,
-            .voice = voice,
-            .voice_cb = voice_cb,
-            .music_buffers = [_]?*mf.IMediaBuffer{null} ** num_music_buffers,
-            .music_buffers_head = 0,
-            .music_buffers_tail = 0,
-            .music_reader = undefined, // This will be set below
+        const source_reader_cb = blk: {
+            var cb = gpa.create(SourceReaderCallback) catch unreachable;
+            cb.* = SourceReaderCallback.init(gpa);
+            break :blk cb;
         };
 
-        const music_reader = blk: {
+        const source_reader = blk: {
             var attribs: *mf.IAttributes = undefined;
             hrPanicOnFail(mf.MFCreateAttributes(&attribs, 1));
             defer _ = attribs.Release();
 
-            hrPanicOnFail(attribs.SetUnknown(&mf.SOURCE_READER_ASYNC_CALLBACK, @ptrCast(*w.IUnknown, self)));
+            hrPanicOnFail(attribs.SetUnknown(
+                &mf.SOURCE_READER_ASYNC_CALLBACK,
+                @ptrCast(*w.IUnknown, source_reader_cb),
+            ));
 
             var source_reader: *mf.ISourceReader = undefined;
             hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/acid_walk.mp3"), attribs, &source_reader));
@@ -153,93 +115,68 @@ const MySourceReaderCallback = struct {
             break :blk source_reader;
         };
 
-        self.music_reader = music_reader;
-        voice_cb.player = self;
-        return self;
+        var player = gpa.create(MusicPlayer) catch unreachable;
+        player.* = .{
+            .critical_section = cs,
+            .gpa = gpa,
+            .voice = voice,
+            .voice_cb = voice_cb,
+            .music_buffers = [_]?*mf.IMediaBuffer{null} ** player.music_buffers.len,
+            .music_buffers_head = 0,
+            .music_buffers_tail = 0,
+            .music_reader = source_reader,
+            .music_reader_cb = source_reader_cb,
+        };
+
+        voice_cb.player = player;
+        source_reader_cb.player = player;
+
+        return player;
     }
 
-    fn destroy(self: *Self) void {
-        _ = self.music_reader.Release();
-        const refcount = self.Release();
-        assert(refcount == 0);
-    }
-
-    const Self = @This();
-    const vtable_instance = mf.ISourceReaderCallbackVTable(Self){
-        .unknown = .{
-            .QueryInterface = QueryInterface,
-            .AddRef = AddRef,
-            .Release = Release,
-        },
-        .cb = .{
-            .OnReadSample = OnReadSample,
-            .OnFlush = OnFlush,
-            .OnEvent = OnEvent,
-        },
-    };
-
-    fn QueryInterface(self: *Self, guid: *const w.GUID, outobj: ?*?*c_void) callconv(w.WINAPI) w.HRESULT {
-        assert(outobj != null);
-
-        if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w.IID_IUnknown))) {
-            outobj.?.* = self;
-            _ = self.AddRef();
-            return w.S_OK;
-        } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&mf.IID_ISourceReaderCallback))) {
-            outobj.?.* = self;
-            _ = self.AddRef();
-            return w.S_OK;
+    fn destroy(player: *MusicPlayer) void {
+        {
+            const refcount = player.music_reader.Release();
+            assert(refcount == 0);
         }
-
-        outobj.?.* = null;
-        return w.E_NOINTERFACE;
-    }
-
-    fn AddRef(self: *Self) callconv(w.WINAPI) w.ULONG {
-        const prev_refcount = @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic);
-        return prev_refcount + 1;
-    }
-
-    fn Release(self: *Self) callconv(w.WINAPI) w.ULONG {
-        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
-        assert(prev_refcount > 0);
-        if (prev_refcount == 1) {
-            self.voice.DestroyVoice();
-            w.kernel32.DeleteCriticalSection(&self.critical_section);
-            self.gpa.destroy(self.voice_cb);
-            self.gpa.destroy(self);
+        {
+            const refcount = player.music_reader_cb.Release();
+            assert(refcount == 0);
         }
-        return prev_refcount - 1;
+        w.kernel32.DeleteCriticalSection(&player.critical_section);
+        player.voice.DestroyVoice();
+        player.gpa.destroy(player.voice_cb);
+        player.gpa.destroy(player);
     }
 
-    fn OnBufferEnd(self: *Self) void {
-        w.kernel32.EnterCriticalSection(&self.critical_section);
-        defer w.kernel32.LeaveCriticalSection(&self.critical_section);
+    fn onBufferEnd(player: *MusicPlayer) void {
+        w.kernel32.EnterCriticalSection(&player.critical_section);
+        defer w.kernel32.LeaveCriticalSection(&player.critical_section);
 
-        const buffer = self.music_buffers[self.music_buffers_head].?;
-        self.music_buffers_head = (self.music_buffers_head + 1) % @intCast(u32, self.music_buffers.len);
+        const buffer = player.music_buffers[player.music_buffers_head].?;
+        player.music_buffers_head = (player.music_buffers_head + 1) % @intCast(u32, player.music_buffers.len);
 
         hrPanicOnFail(buffer.Unlock());
         const refcount = buffer.Release();
         assert(refcount == 0);
 
-        hrPanicOnFail(self.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+        hrPanicOnFail(player.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
     }
 
-    fn OnReadSample(
-        self: *Self,
+    fn onReadSample(
+        player: *MusicPlayer,
         status: w.HRESULT,
         _: w.DWORD,
         stream_flags: w.DWORD,
         _: w.LONGLONG,
         sample: ?*mf.ISample,
-    ) callconv(w.WINAPI) w.HRESULT {
+    ) void {
         if (status != w.S_OK or sample == null) {
-            return w.S_OK;
+            return;
         }
 
-        w.kernel32.EnterCriticalSection(&self.critical_section);
-        defer w.kernel32.LeaveCriticalSection(&self.critical_section);
+        w.kernel32.EnterCriticalSection(&player.critical_section);
+        defer w.kernel32.LeaveCriticalSection(&player.critical_section);
 
         _ = stream_flags;
 
@@ -250,7 +187,7 @@ const MySourceReaderCallback = struct {
         var data_len: u32 = 0;
         hrPanicOnFail(buffer.Lock(&data_ptr, null, &data_len));
 
-        hrPanicOnFail(self.voice.SubmitSourceBuffer(&.{
+        hrPanicOnFail(player.voice.SubmitSourceBuffer(&.{
             .Flags = 0,
             .AudioBytes = data_len,
             .pAudioData = data_ptr,
@@ -262,19 +199,123 @@ const MySourceReaderCallback = struct {
             .pContext = null,
         }, null));
 
-        self.music_buffers[self.music_buffers_tail] = buffer;
-        self.music_buffers_tail = (self.music_buffers_tail + 1) % @intCast(u32, self.music_buffers.len);
-
-        return w.S_OK;
+        player.music_buffers[player.music_buffers_tail] = buffer;
+        player.music_buffers_tail = (player.music_buffers_tail + 1) % @intCast(u32, player.music_buffers.len);
     }
 
-    fn OnFlush(_: *Self, _: w.DWORD) callconv(w.WINAPI) w.HRESULT {
-        return w.S_OK;
-    }
+    const VoiceCallback = struct {
+        vtable: *const xaudio2.IVoiceCallbackVTable(VoiceCallback) = &vtable_voice_cb,
+        player: ?*MusicPlayer,
 
-    fn OnEvent(_: *Self, _: w.DWORD, _: *mf.IMediaEvent) callconv(w.WINAPI) w.HRESULT {
-        return w.S_OK;
-    }
+        fn init() VoiceCallback {
+            return .{ .player = null };
+        }
+
+        fn OnBufferEnd(voice_cb: *VoiceCallback, _: ?*c_void) callconv(w.WINAPI) void {
+            voice_cb.player.?.onBufferEnd();
+        }
+
+        const vtable_voice_cb = xaudio2.IVoiceCallbackVTable(VoiceCallback){
+            .vcb = .{
+                .OnVoiceProcessingPassStart = VoiceCallback.OnVoiceProcessingPassStart,
+                .OnVoiceProcessingPassEnd = OnVoiceProcessingPassEnd,
+                .OnStreamEnd = VoiceCallback.OnStreamEnd,
+                .OnBufferStart = VoiceCallback.OnBufferStart,
+                .OnBufferEnd = VoiceCallback.OnBufferEnd,
+                .OnLoopEnd = VoiceCallback.OnLoopEnd,
+                .OnVoiceError = VoiceCallback.OnVoiceError,
+            },
+        };
+
+        fn OnVoiceProcessingPassStart(_: *VoiceCallback, _: w.UINT32) callconv(w.WINAPI) void {}
+        fn OnVoiceProcessingPassEnd(_: *VoiceCallback) callconv(w.WINAPI) void {}
+        fn OnStreamEnd(_: *VoiceCallback) callconv(w.WINAPI) void {}
+        fn OnBufferStart(_: *VoiceCallback, _: ?*c_void) callconv(w.WINAPI) void {}
+        fn OnLoopEnd(_: *VoiceCallback, _: ?*c_void) callconv(w.WINAPI) void {}
+        fn OnVoiceError(_: *VoiceCallback, _: ?*c_void, _: w.HRESULT) callconv(w.WINAPI) void {}
+    };
+
+    const SourceReaderCallback = struct {
+        vtable: *const mf.ISourceReaderCallbackVTable(SourceReaderCallback) = &vtable_source_reader_cb,
+        refcount: u32 = 1,
+        gpa: *std.mem.Allocator,
+        player: ?*MusicPlayer,
+
+        fn init(gpa: *std.mem.Allocator) SourceReaderCallback {
+            return .{
+                .gpa = gpa,
+                .player = null,
+            };
+        }
+
+        const vtable_source_reader_cb = mf.ISourceReaderCallbackVTable(SourceReaderCallback){
+            .unknown = .{
+                .QueryInterface = SourceReaderCallback.QueryInterface,
+                .AddRef = SourceReaderCallback.AddRef,
+                .Release = SourceReaderCallback.Release,
+            },
+            .cb = .{
+                .OnReadSample = SourceReaderCallback.OnReadSample,
+                .OnFlush = SourceReaderCallback.OnFlush,
+                .OnEvent = SourceReaderCallback.OnEvent,
+            },
+        };
+
+        fn QueryInterface(
+            source_reader_cb: *SourceReaderCallback,
+            guid: *const w.GUID,
+            outobj: ?*?*c_void,
+        ) callconv(w.WINAPI) w.HRESULT {
+            assert(outobj != null);
+
+            if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w.IID_IUnknown))) {
+                outobj.?.* = source_reader_cb;
+                _ = source_reader_cb.AddRef();
+                return w.S_OK;
+            } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&mf.IID_ISourceReaderCallback))) {
+                outobj.?.* = source_reader_cb;
+                _ = source_reader_cb.AddRef();
+                return w.S_OK;
+            }
+
+            outobj.?.* = null;
+            return w.E_NOINTERFACE;
+        }
+
+        fn AddRef(source_reader_cb: *SourceReaderCallback) callconv(w.WINAPI) w.ULONG {
+            const prev_refcount = @atomicRmw(u32, &source_reader_cb.refcount, .Add, 1, .Monotonic);
+            return prev_refcount + 1;
+        }
+
+        fn Release(source_reader_cb: *SourceReaderCallback) callconv(w.WINAPI) w.ULONG {
+            const prev_refcount = @atomicRmw(u32, &source_reader_cb.refcount, .Sub, 1, .Monotonic);
+            assert(prev_refcount > 0);
+            if (prev_refcount == 1) {
+                source_reader_cb.gpa.destroy(source_reader_cb);
+            }
+            return prev_refcount - 1;
+        }
+
+        fn OnReadSample(
+            source_reader_cb: *SourceReaderCallback,
+            status: w.HRESULT,
+            stream_index: w.DWORD,
+            stream_flags: w.DWORD,
+            timestamp: w.LONGLONG,
+            sample: ?*mf.ISample,
+        ) callconv(w.WINAPI) w.HRESULT {
+            source_reader_cb.player.?.onReadSample(status, stream_index, stream_flags, timestamp, sample);
+            return w.S_OK;
+        }
+
+        fn OnFlush(_: *SourceReaderCallback, _: w.DWORD) callconv(w.WINAPI) w.HRESULT {
+            return w.S_OK;
+        }
+
+        fn OnEvent(_: *SourceReaderCallback, _: w.DWORD, _: *mf.IMediaEvent) callconv(w.WINAPI) w.HRESULT {
+            return w.S_OK;
+        }
+    };
 };
 
 fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
@@ -365,7 +406,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac"));
     defer samples.deinit();
 
-    var music = MySourceReaderCallback.create(gpa, audio);
+    var music = MusicPlayer.create(gpa, audio);
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
@@ -374,7 +415,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     std.log.info("Playing music...", .{});
 
-    w.kernel32.Sleep(30000);
+    w.kernel32.Sleep(3000);
     hrPanicOnFail(music.voice.Stop(0, xaudio2.COMMIT_NOW));
 
     music.destroy();
