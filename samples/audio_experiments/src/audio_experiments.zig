@@ -371,7 +371,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
     hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
     hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
-    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
 
     std.log.info("Playing music...", .{});
 
