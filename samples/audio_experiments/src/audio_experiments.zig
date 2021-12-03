@@ -46,9 +46,10 @@ const DemoState = struct {
 
 const MyVoiceCallback = struct {
     vtable: *const xaudio2.IVoiceCallbackVTable(Self) = &vtable_instance,
+    music_reader: ?*mf.ISourceReader,
 
     fn init() Self {
-        return .{};
+        return .{ .music_reader = null };
     }
 
     fn OnBufferEnd(self: *Self, context: ?*c_void) callconv(w.WINAPI) void {
@@ -146,6 +147,7 @@ const MySourceReaderCallback = struct {
         };
 
         self.music_reader = music_reader;
+        voice_cb.music_reader = music_reader;
         return self;
     }
 
