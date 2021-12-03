@@ -261,6 +261,9 @@ pub const ISample = extern struct {
             pub inline fn ConvertToContiguousBuffer(self: *T, buffer: **IMediaBuffer) HRESULT {
                 return self.v.sample.ConvertToContiguousBuffer(self, buffer);
             }
+            pub inline fn GetBufferByIndex(self: *T, index: DWORD, buffer: **IMediaBuffer) HRESULT {
+                return self.v.sample.GetBufferByIndex(self, index, buffer);
+            }
         };
     }
 
@@ -273,7 +276,7 @@ pub const ISample = extern struct {
             GetSampleDuration: *c_void,
             SetSampleDuration: *c_void,
             GetBufferCount: *c_void,
-            GetBufferByIndex: *c_void,
+            GetBufferByIndex: fn (*T, DWORD, **IMediaBuffer) callconv(WINAPI) HRESULT,
             ConvertToContiguousBuffer: fn (*T, **IMediaBuffer) callconv(WINAPI) HRESULT,
             AddBuffer: *c_void,
             RemoveBufferByIndex: *c_void,

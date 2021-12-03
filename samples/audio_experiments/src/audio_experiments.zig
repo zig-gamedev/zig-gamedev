@@ -46,15 +46,14 @@ const DemoState = struct {
 
 const MyVoiceCallback = struct {
     vtable: *const xaudio2.IVoiceCallbackVTable(Self) = &vtable_instance,
-    music_reader: ?*mf.ISourceReader,
+    player: ?*MySourceReaderCallback,
 
     fn init() Self {
-        return .{ .music_reader = null };
+        return .{ .player = null };
     }
 
-    fn OnBufferEnd(self: *Self, context: ?*c_void) callconv(w.WINAPI) void {
-        _ = self;
-        _ = context;
+    fn OnBufferEnd(self: *Self, _: ?*c_void) callconv(w.WINAPI) void {
+        self.player.?.OnBufferEnd();
     }
 
     const Self = @This();
@@ -86,6 +85,11 @@ const MySourceReaderCallback = struct {
     voice: *xaudio2.ISourceVoice,
     voice_cb: *MyVoiceCallback,
     music_reader: *mf.ISourceReader,
+    music_buffers: [num_music_buffers]?*mf.IMediaBuffer,
+    music_buffers_head: u32,
+    music_buffers_tail: u32,
+
+    const num_music_buffers = 4;
 
     fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2) *Self {
         const voice_cb = blk: {
@@ -116,6 +120,9 @@ const MySourceReaderCallback = struct {
             .gpa = gpa,
             .voice = voice,
             .voice_cb = voice_cb,
+            .music_buffers = [_]?*mf.IMediaBuffer{null} ** num_music_buffers,
+            .music_buffers_head = 0,
+            .music_buffers_tail = 0,
             .music_reader = undefined, // This will be set below
         };
 
@@ -147,7 +154,7 @@ const MySourceReaderCallback = struct {
         };
 
         self.music_reader = music_reader;
-        voice_cb.music_reader = music_reader;
+        voice_cb.player = self;
         return self;
     }
 
@@ -197,20 +204,34 @@ const MySourceReaderCallback = struct {
         const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
         assert(prev_refcount > 0);
         if (prev_refcount == 1) {
-            w.kernel32.DeleteCriticalSection(&self.critical_section);
             self.voice.DestroyVoice();
+            w.kernel32.DeleteCriticalSection(&self.critical_section);
             self.gpa.destroy(self.voice_cb);
             self.gpa.destroy(self);
         }
         return prev_refcount - 1;
     }
 
+    fn OnBufferEnd(self: *Self) void {
+        w.kernel32.EnterCriticalSection(&self.critical_section);
+        defer w.kernel32.LeaveCriticalSection(&self.critical_section);
+
+        const buffer = self.music_buffers[self.music_buffers_head].?;
+        self.music_buffers_head = (self.music_buffers_head + 1) % @intCast(u32, self.music_buffers.len);
+
+        hrPanicOnFail(buffer.Unlock());
+        const refcount = buffer.Release();
+        assert(refcount == 0);
+
+        hrPanicOnFail(self.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+    }
+
     fn OnReadSample(
         self: *Self,
         status: w.HRESULT,
-        stream_index: w.DWORD,
+        _: w.DWORD,
         stream_flags: w.DWORD,
-        timestamp: w.LONGLONG,
+        _: w.LONGLONG,
         sample: ?*mf.ISample,
     ) callconv(w.WINAPI) w.HRESULT {
         if (status != w.S_OK or sample == null) {
@@ -220,14 +241,10 @@ const MySourceReaderCallback = struct {
         w.kernel32.EnterCriticalSection(&self.critical_section);
         defer w.kernel32.LeaveCriticalSection(&self.critical_section);
 
-        _ = stream_index;
         _ = stream_flags;
-        _ = timestamp;
-        std.log.info("OnReadSample {} {}", .{ status, @ptrToInt(sample) });
 
         var buffer: *mf.IMediaBuffer = undefined;
         hrPanicOnFail(sample.?.ConvertToContiguousBuffer(&buffer));
-        defer _ = buffer.Release();
 
         var data_ptr: [*]u8 = undefined;
         var data_len: u32 = 0;
@@ -244,6 +261,9 @@ const MySourceReaderCallback = struct {
             .LoopCount = 0,
             .pContext = null,
         }, null));
+
+        self.music_buffers[self.music_buffers_tail] = buffer;
+        self.music_buffers_tail = (self.music_buffers_tail + 1) % @intCast(u32, self.music_buffers.len);
 
         return w.S_OK;
     }
@@ -316,9 +336,9 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     if (enable_dx_debug) {
         audio.SetDebugConfiguration(&.{
-            .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS | xaudio2.LOG_INFO,
+            .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS | xaudio2.LOG_INFO | xaudio2.LOG_API_CALLS,
             .BreakMask = 0,
-            .LogThreadID = w.FALSE,
+            .LogThreadID = w.TRUE,
             .LogFileline = w.FALSE,
             .LogFunctionName = w.FALSE,
             .LogTiming = w.FALSE,
@@ -346,12 +366,17 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     defer samples.deinit();
 
     var music = MySourceReaderCallback.create(gpa, audio);
-
-    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
-    w.kernel32.Sleep(100);
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
-    w.kernel32.Sleep(1000);
+    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+
+    std.log.info("Playing music...", .{});
+
+    w.kernel32.Sleep(30000);
+    hrPanicOnFail(music.voice.Stop(0, xaudio2.COMMIT_NOW));
 
     music.destroy();
 
