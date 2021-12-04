@@ -40,6 +40,8 @@ const DemoState = struct {
     audio: *xaudio2.IXAudio2,
     master_voice: *xaudio2.IMasteringVoice,
 
+    music: *MusicPlayer,
+
     brush: *d2d1.ISolidColorBrush,
     info_tfmt: *dwrite.ITextFormat,
 };
@@ -130,6 +132,10 @@ const MusicPlayer = struct {
 
         voice_cb.player = player;
         source_reader_cb.player = player;
+
+        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
 
         return player;
     }
@@ -401,24 +407,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
-    defer _ = mf.MFShutdown();
 
     const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac"));
     defer samples.deinit();
 
     var music = MusicPlayer.create(gpa, audio);
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
-
-    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
-    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
-    hrPanicOnFail(music.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
-
-    std.log.info("Playing music...", .{});
-
-    w.kernel32.Sleep(3000);
-    hrPanicOnFail(music.voice.Stop(0, xaudio2.COMMIT_NOW));
-
-    music.destroy();
 
     const source_voice0 = blk: {
         var voice: ?*xaudio2.ISourceVoice = null;
@@ -477,8 +471,6 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .pContext = null,
     }, null));
     hrPanicOnFail(source_voice1.Start(0, xaudio2.COMMIT_NOW));
-
-    w.kernel32.Sleep(1000);
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -546,6 +538,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         .gui = gui,
         .audio = audio,
         .master_voice = master_voice,
+        .music = music,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .info_tfmt = info_tfmt,
@@ -558,6 +551,8 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.info_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
+    demo.music.destroy();
+    hrPanicOnFail(mf.MFShutdown());
     demo.audio.StopEngine();
     demo.master_voice.DestroyVoice();
     _ = demo.audio.Release();
