@@ -177,14 +177,29 @@ const MusicPlayer = struct {
         _: w.LONGLONG,
         sample: ?*mf.ISample,
     ) void {
-        if (status != w.S_OK or sample == null) {
-            return;
-        }
-
         w.kernel32.EnterCriticalSection(&player.critical_section);
         defer w.kernel32.LeaveCriticalSection(&player.critical_section);
 
-        _ = stream_flags;
+        //var state: xaudio2.VOICE_STATE = undefined;
+        //player.voice.GetState(&state, 0);
+        //std.log.info("{}", .{state});
+
+        if ((stream_flags & mf.SOURCE_READERF_ENDOFSTREAM) != 0) {
+            const pos = w.PROPVARIANT{ .vt = w.VT_I8, .u = .{ .hVal = 0 } };
+            hrPanicOnFail(player.music_reader.SetCurrentPosition(&w.GUID_NULL, &pos));
+            hrPanicOnFail(player.music_reader.ReadSample(
+                mf.SOURCE_READER_FIRST_AUDIO_STREAM,
+                0,
+                null,
+                null,
+                null,
+                null,
+            ));
+            return;
+        }
+        if (status != w.S_OK or sample == null) {
+            return;
+        }
 
         var buffer: *mf.IMediaBuffer = undefined;
         hrPanicOnFail(sample.?.ConvertToContiguousBuffer(&buffer));
@@ -383,7 +398,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     if (enable_dx_debug) {
         audio.SetDebugConfiguration(&.{
-            .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS | xaudio2.LOG_INFO | xaudio2.LOG_API_CALLS,
+            .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS | xaudio2.LOG_INFO,
             .BreakMask = 0,
             .LogThreadID = w.TRUE,
             .LogFileline = w.FALSE,

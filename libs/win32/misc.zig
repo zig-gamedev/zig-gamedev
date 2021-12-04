@@ -1,4 +1,6 @@
-const windows = @import("std").os.windows;
+const std = @import("std");
+const windows = std.os.windows;
+const WORD = windows.WORD;
 const DWORD = windows.DWORD;
 const HANDLE = windows.HANDLE;
 const LONG = windows.LONG;
@@ -22,12 +24,35 @@ pub const UINT16 = c_ushort;
 pub const UINT32 = c_uint;
 pub const UINT64 = c_ulonglong;
 pub const HMONITOR = HANDLE;
-pub const PROPVARIANT = opaque {};
 pub const REFERENCE_TIME = c_longlong;
 pub const LUID = extern struct {
     LowPart: DWORD,
     HighPart: LONG,
 };
+
+pub const VT_UI4 = 19;
+pub const VT_I8 = 20;
+pub const VT_UI8 = 21;
+pub const VT_INT = 22;
+pub const VT_UINT = 23;
+
+pub const VARTYPE = u16;
+
+pub const PROPVARIANT = extern struct {
+    vt: VARTYPE,
+    wReserved1: WORD = 0,
+    wReserved2: WORD = 0,
+    wReserved3: WORD = 0,
+    u: extern union {
+        intVal: i32,
+        uintVal: u32,
+        hVal: i64,
+    },
+    decVal: u64 = 0,
+};
+comptime {
+    std.debug.assert(@sizeOf(PROPVARIANT) == 24);
+}
 
 pub const WHEEL_DELTA = 120;
 pub inline fn GET_WHEEL_DELTA_WPARAM(wparam: WPARAM) i16 {
@@ -146,3 +171,5 @@ pub const DXGI_ERROR_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887A0002));
 pub const DXGI_ERROR_WAS_STILL_DRAWING = @bitCast(HRESULT, @as(c_ulong, 0x887A000A));
 pub const DXGI_STATUS_MODE_CHANGED = @bitCast(HRESULT, @as(c_ulong, 0x087A0007));
 pub const DWRITE_E_FILEFORMAT = @bitCast(HRESULT, @as(c_ulong, 0x88985000));
+
+pub const GUID_NULL = GUID.parse("{00000000-0000-0000-0000-000000000000}");

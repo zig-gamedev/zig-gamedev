@@ -198,6 +198,9 @@ pub const ISourceReader = extern struct {
                     sample,
                 );
             }
+            pub inline fn SetCurrentPosition(self: *T, guid: *const GUID, prop: *const PROPVARIANT) HRESULT {
+                return self.v.reader.SetCurrentPosition(self, guid, prop);
+            }
         };
     }
 
@@ -208,7 +211,7 @@ pub const ISourceReader = extern struct {
             GetNativeMediaType: fn (*T, DWORD, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
             GetCurrentMediaType: fn (*T, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentMediaType: fn (*T, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
-            SetCurrentPosition: *c_void,
+            SetCurrentPosition: fn (*T, *const GUID, *const PROPVARIANT) callconv(WINAPI) HRESULT,
             ReadSample: fn (*T, DWORD, DWORD, ?*DWORD, ?*DWORD, ?*LONGLONG, ?*?*ISample) callconv(WINAPI) HRESULT,
             Flush: *c_void,
             GetServiceForStream: *c_void,
