@@ -40,13 +40,13 @@ const DemoState = struct {
     audio: *xaudio2.IXAudio2,
     master_voice: *xaudio2.IMasteringVoice,
 
-    music: *MusicPlayer,
+    music: *AudioStream,
 
     brush: *d2d1.ISolidColorBrush,
     info_tfmt: *dwrite.ITextFormat,
 };
 
-const MusicPlayer = struct {
+const AudioStream = struct {
     critical_section: w.CRITICAL_SECTION,
     gpa: *std.mem.Allocator,
     voice: *xaudio2.ISourceVoice,
@@ -57,7 +57,7 @@ const MusicPlayer = struct {
     music_buffers_head: u32,
     music_buffers_tail: u32,
 
-    fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2) *MusicPlayer {
+    fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2, file_path: [:0]const u16) *AudioStream {
         const voice_cb = blk: {
             var cb = gpa.create(VoiceCallback) catch unreachable;
             cb.* = VoiceCallback.init();
@@ -98,7 +98,7 @@ const MusicPlayer = struct {
             ));
 
             var source_reader: *mf.ISourceReader = undefined;
-            hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/acid_walk.mp3"), attribs, &source_reader));
+            hrPanicOnFail(mf.MFCreateSourceReaderFromURL(file_path, attribs, &source_reader));
 
             var media_type: *mf.IMediaType = undefined;
             hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &media_type));
@@ -117,7 +117,7 @@ const MusicPlayer = struct {
             break :blk source_reader;
         };
 
-        var player = gpa.create(MusicPlayer) catch unreachable;
+        var player = gpa.create(AudioStream) catch unreachable;
         player.* = .{
             .critical_section = cs,
             .gpa = gpa,
@@ -140,7 +140,7 @@ const MusicPlayer = struct {
         return player;
     }
 
-    fn destroy(player: *MusicPlayer) void {
+    fn destroy(player: *AudioStream) void {
         {
             const refcount = player.music_reader.Release();
             assert(refcount == 0);
@@ -155,7 +155,7 @@ const MusicPlayer = struct {
         player.gpa.destroy(player);
     }
 
-    fn onBufferEnd(player: *MusicPlayer) void {
+    fn onBufferEnd(player: *AudioStream) void {
         w.kernel32.EnterCriticalSection(&player.critical_section);
         defer w.kernel32.LeaveCriticalSection(&player.critical_section);
 
@@ -170,7 +170,7 @@ const MusicPlayer = struct {
     }
 
     fn onReadSample(
-        player: *MusicPlayer,
+        player: *AudioStream,
         status: w.HRESULT,
         _: w.DWORD,
         stream_flags: w.DWORD,
@@ -226,7 +226,7 @@ const MusicPlayer = struct {
 
     const VoiceCallback = struct {
         vtable: *const xaudio2.IVoiceCallbackVTable(VoiceCallback) = &vtable_voice_cb,
-        player: ?*MusicPlayer,
+        player: ?*AudioStream,
 
         fn init() VoiceCallback {
             return .{ .player = null };
@@ -260,7 +260,7 @@ const MusicPlayer = struct {
         vtable: *const mf.ISourceReaderCallbackVTable(SourceReaderCallback) = &vtable_source_reader_cb,
         refcount: u32 = 1,
         gpa: *std.mem.Allocator,
-        player: ?*MusicPlayer,
+        player: ?*AudioStream,
 
         fn init(gpa: *std.mem.Allocator) SourceReaderCallback {
             return .{
@@ -426,7 +426,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac"));
     defer samples.deinit();
 
-    var music = MusicPlayer.create(gpa, audio);
+    var music = AudioStream.create(gpa, audio, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     const source_voice0 = blk: {
