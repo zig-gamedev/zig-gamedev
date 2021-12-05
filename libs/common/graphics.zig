@@ -201,14 +201,29 @@ pub const GraphicsContext = struct {
             break :blk device;
         };
 
-        // Check for Shader Model 6.3 support.
+        // Check for Shader Model 6.6 support.
         {
             var data: d3d12.FEATURE_DATA_SHADER_MODEL = .{ .HighestShaderModel = .SM_6_7 };
             const hr = device.CheckFeatureSupport(.SHADER_MODEL, &data, @sizeOf(d3d12.FEATURE_DATA_SHADER_MODEL));
-            if (hr != w.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.SM_6_3)) {
+            if (hr != w.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.SM_6_6)) {
                 _ = w.user32.messageBoxA(
                     window,
-                    "This applications requires graphics card driver that supports Shader Model 6.3. Please update your graphics driver and try again.",
+                    "This applications requires graphics card driver that supports Shader Model 6.6. Please update your graphics driver and try again.",
+                    "Your graphics card driver may be old",
+                    w.user32.MB_OK | w.user32.MB_ICONERROR,
+                ) catch 0;
+                w.kernel32.ExitProcess(0);
+            }
+        }
+
+        // Check for Resource Binding Tier 3 support.
+        {
+            var data: d3d12.FEATURE_DATA_D3D12_OPTIONS = std.mem.zeroes(d3d12.FEATURE_DATA_D3D12_OPTIONS);
+            const hr = device.CheckFeatureSupport(.OPTIONS, &data, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS));
+            if (hr != w.S_OK or @enumToInt(data.ResourceBindingTier) < @enumToInt(d3d12.RESOURCE_BINDING_TIER.TIER_3)) {
+                _ = w.user32.messageBoxA(
+                    window,
+                    "This applications requires graphics card driver that supports Resource Binding Tier 3. Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
                     w.user32.MB_OK | w.user32.MB_ICONERROR,
                 ) catch 0;
