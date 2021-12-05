@@ -30,8 +30,6 @@ const window_name = "zig-gamedev: audio experiments";
 const window_width = 1920;
 const window_height = 1080;
 
-const sample_rate: u32 = 48_000;
-
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -64,20 +62,6 @@ const AudioStream = struct {
             break :blk cb;
         };
 
-        const voice = blk: {
-            var voice: ?*xaudio2.ISourceVoice = null;
-            hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
-                .wFormatTag = wasapi.WAVE_FORMAT_PCM,
-                .nChannels = 2,
-                .nSamplesPerSec = sample_rate,
-                .nAvgBytesPerSec = 4 * sample_rate,
-                .nBlockAlign = 4,
-                .wBitsPerSample = 16,
-                .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
-            }, 0, xaudio2.DEFAULT_FREQ_RATIO, @ptrCast(*xaudio2.IVoiceCallback, voice_cb), null, null));
-            break :blk voice.?;
-        };
-
         var cs: w.CRITICAL_SECTION = undefined;
         w.kernel32.InitializeCriticalSection(&cs);
 
@@ -87,6 +71,7 @@ const AudioStream = struct {
             break :blk cb;
         };
 
+        var sample_rate: u32 = 0;
         const source_reader = blk: {
             var attribs: *mf.IAttributes = undefined;
             hrPanicOnFail(mf.MFCreateAttributes(&attribs, 1));
@@ -104,6 +89,8 @@ const AudioStream = struct {
             hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &media_type));
             defer _ = media_type.Release();
 
+            hrPanicOnFail(media_type.GetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, &sample_rate));
+
             hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
             hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
             hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 2));
@@ -115,6 +102,21 @@ const AudioStream = struct {
             hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
             break :blk source_reader;
+        };
+        assert(sample_rate != 0);
+
+        const voice = blk: {
+            var voice: ?*xaudio2.ISourceVoice = null;
+            hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
+                .wFormatTag = wasapi.WAVE_FORMAT_PCM,
+                .nChannels = 2,
+                .nSamplesPerSec = sample_rate,
+                .nAvgBytesPerSec = 4 * sample_rate,
+                .nBlockAlign = 4,
+                .wBitsPerSample = 16,
+                .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
+            }, 0, xaudio2.DEFAULT_FREQ_RATIO, @ptrCast(*xaudio2.IVoiceCallback, voice_cb), null, null));
+            break :blk voice.?;
         };
 
         var player = gpa.create(AudioStream) catch unreachable;
@@ -339,7 +341,7 @@ const AudioStream = struct {
     };
 };
 
-fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
+fn loadAudioSamples(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
@@ -351,6 +353,7 @@ fn loadAudioBuffer(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.
     hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &media_type));
     defer _ = media_type.Release();
 
+    const sample_rate = 48_000;
     hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
     hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
     hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 1));
@@ -423,7 +426,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
 
-    const samples = loadAudioBuffer(gpa, L("content/drum_bass_hard.flac"));
+    const samples = loadAudioSamples(gpa, L("content/drum_bass_hard.flac"));
     defer samples.deinit();
 
     var music = AudioStream.create(gpa, audio, L("content/Broke For Free - Night Owl.mp3"));
@@ -434,8 +437,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
             .wFormatTag = wasapi.WAVE_FORMAT_PCM,
             .nChannels = 1,
-            .nSamplesPerSec = sample_rate,
-            .nAvgBytesPerSec = 2 * sample_rate,
+            .nSamplesPerSec = 48_000,
+            .nAvgBytesPerSec = 2 * 48_000,
             .nBlockAlign = 2,
             .wBitsPerSample = 16,
             .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
@@ -449,8 +452,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
             .wFormatTag = wasapi.WAVE_FORMAT_PCM,
             .nChannels = 1,
-            .nSamplesPerSec = sample_rate,
-            .nAvgBytesPerSec = 2 * sample_rate,
+            .nSamplesPerSec = 48_000,
+            .nAvgBytesPerSec = 2 * 48_000,
             .nBlockAlign = 2,
             .wBitsPerSample = 16,
             .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
