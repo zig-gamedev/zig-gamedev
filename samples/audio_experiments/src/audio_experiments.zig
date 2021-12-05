@@ -51,9 +51,6 @@ const AudioStream = struct {
     voice_cb: *VoiceCallback,
     music_reader: *mf.ISourceReader,
     music_reader_cb: *SourceReaderCallback,
-    music_buffers: [4]?*mf.IMediaBuffer,
-    music_buffers_head: u32,
-    music_buffers_tail: u32,
 
     fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2, file_path: [:0]const u16) *AudioStream {
         const voice_cb = blk: {
@@ -125,9 +122,6 @@ const AudioStream = struct {
             .gpa = gpa,
             .voice = voice,
             .voice_cb = voice_cb,
-            .music_buffers = [_]?*mf.IMediaBuffer{null} ** player.music_buffers.len,
-            .music_buffers_head = 0,
-            .music_buffers_tail = 0,
             .music_reader = source_reader,
             .music_reader_cb = source_reader_cb,
         };
@@ -157,12 +151,9 @@ const AudioStream = struct {
         player.gpa.destroy(player);
     }
 
-    fn onBufferEnd(player: *AudioStream) void {
+    fn onBufferEnd(player: *AudioStream, buffer: *mf.IMediaBuffer) void {
         w.kernel32.EnterCriticalSection(&player.critical_section);
         defer w.kernel32.LeaveCriticalSection(&player.critical_section);
-
-        const buffer = player.music_buffers[player.music_buffers_head].?;
-        player.music_buffers_head = (player.music_buffers_head + 1) % @intCast(u32, player.music_buffers.len);
 
         hrPanicOnFail(buffer.Unlock());
         const refcount = buffer.Release();
@@ -181,10 +172,6 @@ const AudioStream = struct {
     ) void {
         w.kernel32.EnterCriticalSection(&player.critical_section);
         defer w.kernel32.LeaveCriticalSection(&player.critical_section);
-
-        //var state: xaudio2.VOICE_STATE = undefined;
-        //player.voice.GetState(&state, 0);
-        //std.log.info("{}", .{state});
 
         if ((stream_flags & mf.SOURCE_READERF_ENDOFSTREAM) != 0) {
             const pos = w.PROPVARIANT{ .vt = w.VT_I8, .u = .{ .hVal = 0 } };
@@ -219,11 +206,8 @@ const AudioStream = struct {
             .LoopBegin = 0,
             .LoopLength = 0,
             .LoopCount = 0,
-            .pContext = null,
+            .pContext = buffer,
         }, null));
-
-        player.music_buffers[player.music_buffers_tail] = buffer;
-        player.music_buffers_tail = (player.music_buffers_tail + 1) % @intCast(u32, player.music_buffers.len);
     }
 
     const VoiceCallback = struct {
@@ -234,8 +218,8 @@ const AudioStream = struct {
             return .{ .player = null };
         }
 
-        fn OnBufferEnd(voice_cb: *VoiceCallback, _: ?*c_void) callconv(w.WINAPI) void {
-            voice_cb.player.?.onBufferEnd();
+        fn OnBufferEnd(voice_cb: *VoiceCallback, context: ?*c_void) callconv(w.WINAPI) void {
+            voice_cb.player.?.onBufferEnd(@ptrCast(*mf.IMediaBuffer, @alignCast(8, context)));
         }
 
         const vtable_voice_cb = xaudio2.IVoiceCallbackVTable(VoiceCallback){
@@ -432,63 +416,65 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     var music = AudioStream.create(gpa, audio, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
-    const source_voice0 = blk: {
-        var voice: ?*xaudio2.ISourceVoice = null;
-        hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
-            .wFormatTag = wasapi.WAVE_FORMAT_PCM,
-            .nChannels = 1,
-            .nSamplesPerSec = 48_000,
-            .nAvgBytesPerSec = 2 * 48_000,
-            .nBlockAlign = 2,
-            .wBitsPerSample = 16,
-            .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
-        }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
-        break :blk voice.?;
-    };
-    defer source_voice0.DestroyVoice();
+    if (false) {
+        const source_voice0 = blk: {
+            var voice: ?*xaudio2.ISourceVoice = null;
+            hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
+                .wFormatTag = wasapi.WAVE_FORMAT_PCM,
+                .nChannels = 1,
+                .nSamplesPerSec = 48_000,
+                .nAvgBytesPerSec = 2 * 48_000,
+                .nBlockAlign = 2,
+                .wBitsPerSample = 16,
+                .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
+            }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
+            break :blk voice.?;
+        };
+        defer source_voice0.DestroyVoice();
 
-    const source_voice1 = blk: {
-        var voice: ?*xaudio2.ISourceVoice = null;
-        hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
-            .wFormatTag = wasapi.WAVE_FORMAT_PCM,
-            .nChannels = 1,
-            .nSamplesPerSec = 48_000,
-            .nAvgBytesPerSec = 2 * 48_000,
-            .nBlockAlign = 2,
-            .wBitsPerSample = 16,
-            .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
-        }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
-        break :blk voice.?;
-    };
-    defer source_voice1.DestroyVoice();
+        const source_voice1 = blk: {
+            var voice: ?*xaudio2.ISourceVoice = null;
+            hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
+                .wFormatTag = wasapi.WAVE_FORMAT_PCM,
+                .nChannels = 1,
+                .nSamplesPerSec = 48_000,
+                .nAvgBytesPerSec = 2 * 48_000,
+                .nBlockAlign = 2,
+                .wBitsPerSample = 16,
+                .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
+            }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
+            break :blk voice.?;
+        };
+        defer source_voice1.DestroyVoice();
 
-    hrPanicOnFail(source_voice0.SubmitSourceBuffer(&.{
-        .Flags = xaudio2.END_OF_STREAM,
-        .AudioBytes = @intCast(u32, samples.items.len),
-        .pAudioData = samples.items.ptr,
-        .PlayBegin = 0,
-        .PlayLength = 0,
-        .LoopBegin = 0,
-        .LoopLength = 0,
-        .LoopCount = 0,
-        .pContext = null,
-    }, null));
-    hrPanicOnFail(source_voice0.Start(0, xaudio2.COMMIT_NOW));
+        hrPanicOnFail(source_voice0.SubmitSourceBuffer(&.{
+            .Flags = xaudio2.END_OF_STREAM,
+            .AudioBytes = @intCast(u32, samples.items.len),
+            .pAudioData = samples.items.ptr,
+            .PlayBegin = 0,
+            .PlayLength = 0,
+            .LoopBegin = 0,
+            .LoopLength = 0,
+            .LoopCount = 0,
+            .pContext = null,
+        }, null));
+        hrPanicOnFail(source_voice0.Start(0, xaudio2.COMMIT_NOW));
 
-    w.kernel32.Sleep(100);
+        w.kernel32.Sleep(100);
 
-    hrPanicOnFail(source_voice1.SubmitSourceBuffer(&.{
-        .Flags = xaudio2.END_OF_STREAM,
-        .AudioBytes = @intCast(u32, samples.items.len),
-        .pAudioData = samples.items.ptr,
-        .PlayBegin = 0,
-        .PlayLength = 0,
-        .LoopBegin = 0,
-        .LoopLength = 0,
-        .LoopCount = 0,
-        .pContext = null,
-    }, null));
-    hrPanicOnFail(source_voice1.Start(0, xaudio2.COMMIT_NOW));
+        hrPanicOnFail(source_voice1.SubmitSourceBuffer(&.{
+            .Flags = xaudio2.END_OF_STREAM,
+            .AudioBytes = @intCast(u32, samples.items.len),
+            .pAudioData = samples.items.ptr,
+            .PlayBegin = 0,
+            .PlayLength = 0,
+            .LoopBegin = 0,
+            .LoopLength = 0,
+            .LoopCount = 0,
+            .pContext = null,
+        }, null));
+        hrPanicOnFail(source_voice1.Start(0, xaudio2.COMMIT_NOW));
+    }
 
     const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
 
@@ -582,6 +568,10 @@ fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
     lib.newImGuiFrame(dt);
+
+    //var state: xaudio2.VOICE_STATE = std.mem.zeroes(xaudio2.VOICE_STATE);
+    //demo.music.voice.GetState(&state, 0);
+    //std.log.info("{}", .{state});
 }
 
 fn draw(demo: *DemoState) void {

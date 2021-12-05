@@ -48,30 +48,30 @@ pub const VOICE_NOSAMPLESPLAYED: UINT32 = 0x0100;
 pub const STOP_ENGINE_WHEN_IDLE: UINT32 = 0x2000;
 pub const NO_VIRTUAL_AUDIO_CLIENT: UINT32 = 0x10000;
 
-pub const VOICE_DETAILS = extern struct {
+pub const VOICE_DETAILS = packed struct {
     CreationFlags: UINT32,
     ActiveFlags: UINT32,
     InputChannels: UINT32,
     InputSampleRate: UINT32,
 };
 
-pub const SEND_DESCRIPTOR = extern struct {
+pub const SEND_DESCRIPTOR = packed struct {
     Flags: UINT32,
     pOutputVoice: *IVoice,
 };
 
-pub const VOICE_SENDS = extern struct {
+pub const VOICE_SENDS = packed struct {
     SendCount: UINT32,
     pSends: [*]SEND_DESCRIPTOR,
 };
 
-pub const EFFECT_DESCRIPTOR = extern struct {
+pub const EFFECT_DESCRIPTOR = packed struct {
     pEffect: *IUnknown,
     InitialState: BOOL,
     OutputChannels: UINT32,
 };
 
-pub const EFFECT_CHAIN = extern struct {
+pub const EFFECT_CHAIN = packed struct {
     EffectCount: UINT32,
     pEffectDescriptors: [*]EFFECT_DESCRIPTOR,
 };
@@ -99,13 +99,13 @@ pub const AUDIO_STREAM_CATEGORY = enum(UINT32) {
     Media = 11,
 };
 
-pub const FILTER_PARAMETERS = extern struct {
+pub const FILTER_PARAMETERS = packed struct {
     Type: FILTER_TYPE,
     Frequency: f32,
     OneOverQ: f32,
 };
 
-pub const BUFFER = extern struct {
+pub const BUFFER = packed struct {
     Flags: UINT32,
     AudioBytes: UINT32,
     pAudioData: [*]const BYTE,
@@ -117,18 +117,18 @@ pub const BUFFER = extern struct {
     pContext: ?*c_void,
 };
 
-pub const BUFFER_WMA = extern struct {
+pub const BUFFER_WMA = packed struct {
     pDecodedPacketCumulativeBytes: *const UINT32,
     PacketCount: UINT32,
 };
 
-pub const VOICE_STATE = extern struct {
+pub const VOICE_STATE = packed struct {
     pCurrentBufferContext: ?*c_void,
     BuffersQueued: UINT32,
     SamplesPlayed: UINT64,
 };
 
-pub const PERFORMANCE_DATA = extern struct {
+pub const PERFORMANCE_DATA = packed struct {
     AudioCyclesSinceLastQuery: UINT64,
     TotalCyclesSinceLastQuery: UINT64,
     MinimumCyclesPerQuantum: UINT32,
@@ -156,7 +156,7 @@ pub const LOG_LOCKS: UINT = 0x0080;
 pub const LOG_MEMORY: UINT = 0x0100;
 pub const LOG_STREAMING: UINT = 0x1000;
 
-pub const DEBUG_CONFIGURATION = extern struct {
+pub const DEBUG_CONFIGURATION = packed struct {
     TraceMask: UINT32,
     BreakMask: UINT32,
     LogThreadID: BOOL,
