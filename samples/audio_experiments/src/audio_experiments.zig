@@ -49,8 +49,8 @@ const AudioStream = struct {
     gpa: *std.mem.Allocator,
     voice: *xaudio2.ISourceVoice,
     voice_cb: *VoiceCallback,
-    music_reader: *mf.ISourceReader,
-    music_reader_cb: *SourceReaderCallback,
+    reader: *mf.ISourceReader,
+    reader_cb: *SourceReaderCallback,
 
     fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2, file_path: [:0]const u16) *AudioStream {
         const voice_cb = blk: {
@@ -116,67 +116,68 @@ const AudioStream = struct {
             break :blk voice.?;
         };
 
-        var player = gpa.create(AudioStream) catch unreachable;
-        player.* = .{
+        var audio_stream = gpa.create(AudioStream) catch unreachable;
+        audio_stream.* = .{
             .critical_section = cs,
             .gpa = gpa,
             .voice = voice,
             .voice_cb = voice_cb,
-            .music_reader = source_reader,
-            .music_reader_cb = source_reader_cb,
+            .reader = source_reader,
+            .reader_cb = source_reader_cb,
         };
 
-        voice_cb.player = player;
-        source_reader_cb.player = player;
+        voice_cb.audio_stream = audio_stream;
+        source_reader_cb.audio_stream = audio_stream;
 
         hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
         hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
         hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
 
-        return player;
+        return audio_stream;
     }
 
-    fn destroy(player: *AudioStream) void {
+    fn destroy(audio_stream: *AudioStream) void {
         {
-            const refcount = player.music_reader.Release();
+            const refcount = audio_stream.reader.Release();
             assert(refcount == 0);
         }
         {
-            const refcount = player.music_reader_cb.Release();
+            const refcount = audio_stream.reader_cb.Release();
             assert(refcount == 0);
         }
-        w.kernel32.DeleteCriticalSection(&player.critical_section);
-        player.voice.DestroyVoice();
-        player.gpa.destroy(player.voice_cb);
-        player.gpa.destroy(player);
+        w.kernel32.DeleteCriticalSection(&audio_stream.critical_section);
+        audio_stream.voice.DestroyVoice();
+        audio_stream.gpa.destroy(audio_stream.voice_cb);
+        audio_stream.gpa.destroy(audio_stream);
     }
 
-    fn onBufferEnd(player: *AudioStream, buffer: *mf.IMediaBuffer) void {
-        w.kernel32.EnterCriticalSection(&player.critical_section);
-        defer w.kernel32.LeaveCriticalSection(&player.critical_section);
+    fn onBufferEnd(audio_stream: *AudioStream, buffer: *mf.IMediaBuffer) void {
+        w.kernel32.EnterCriticalSection(&audio_stream.critical_section);
+        defer w.kernel32.LeaveCriticalSection(&audio_stream.critical_section);
 
         hrPanicOnFail(buffer.Unlock());
         const refcount = buffer.Release();
         assert(refcount == 0);
 
-        hrPanicOnFail(player.music_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+        // Request new audio buffer
+        hrPanicOnFail(audio_stream.reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
     }
 
     fn onReadSample(
-        player: *AudioStream,
+        audio_stream: *AudioStream,
         status: w.HRESULT,
         _: w.DWORD,
         stream_flags: w.DWORD,
         _: w.LONGLONG,
         sample: ?*mf.ISample,
     ) void {
-        w.kernel32.EnterCriticalSection(&player.critical_section);
-        defer w.kernel32.LeaveCriticalSection(&player.critical_section);
+        w.kernel32.EnterCriticalSection(&audio_stream.critical_section);
+        defer w.kernel32.LeaveCriticalSection(&audio_stream.critical_section);
 
         if ((stream_flags & mf.SOURCE_READERF_ENDOFSTREAM) != 0) {
             const pos = w.PROPVARIANT{ .vt = w.VT_I8, .u = .{ .hVal = 0 } };
-            hrPanicOnFail(player.music_reader.SetCurrentPosition(&w.GUID_NULL, &pos));
-            hrPanicOnFail(player.music_reader.ReadSample(
+            hrPanicOnFail(audio_stream.reader.SetCurrentPosition(&w.GUID_NULL, &pos));
+            hrPanicOnFail(audio_stream.reader.ReadSample(
                 mf.SOURCE_READER_FIRST_AUDIO_STREAM,
                 0,
                 null,
@@ -197,7 +198,8 @@ const AudioStream = struct {
         var data_len: u32 = 0;
         hrPanicOnFail(buffer.Lock(&data_ptr, null, &data_len));
 
-        hrPanicOnFail(player.voice.SubmitSourceBuffer(&.{
+        // Submit decoded buffer
+        hrPanicOnFail(audio_stream.voice.SubmitSourceBuffer(&.{
             .Flags = 0,
             .AudioBytes = data_len,
             .pAudioData = data_ptr,
@@ -206,20 +208,20 @@ const AudioStream = struct {
             .LoopBegin = 0,
             .LoopLength = 0,
             .LoopCount = 0,
-            .pContext = buffer,
+            .pContext = buffer, // Store pointer to the buffer so that we can release it in onBufferEnd()
         }, null));
     }
 
     const VoiceCallback = struct {
         vtable: *const xaudio2.IVoiceCallbackVTable(VoiceCallback) = &vtable_voice_cb,
-        player: ?*AudioStream,
+        audio_stream: ?*AudioStream,
 
         fn init() VoiceCallback {
-            return .{ .player = null };
+            return .{ .audio_stream = null };
         }
 
         fn OnBufferEnd(voice_cb: *VoiceCallback, context: ?*c_void) callconv(w.WINAPI) void {
-            voice_cb.player.?.onBufferEnd(@ptrCast(*mf.IMediaBuffer, @alignCast(8, context)));
+            voice_cb.audio_stream.?.onBufferEnd(@ptrCast(*mf.IMediaBuffer, @alignCast(8, context)));
         }
 
         const vtable_voice_cb = xaudio2.IVoiceCallbackVTable(VoiceCallback){
@@ -246,12 +248,12 @@ const AudioStream = struct {
         vtable: *const mf.ISourceReaderCallbackVTable(SourceReaderCallback) = &vtable_source_reader_cb,
         refcount: u32 = 1,
         gpa: *std.mem.Allocator,
-        player: ?*AudioStream,
+        audio_stream: ?*AudioStream,
 
         fn init(gpa: *std.mem.Allocator) SourceReaderCallback {
             return .{
                 .gpa = gpa,
-                .player = null,
+                .audio_stream = null,
             };
         }
 
@@ -311,7 +313,7 @@ const AudioStream = struct {
             timestamp: w.LONGLONG,
             sample: ?*mf.ISample,
         ) callconv(w.WINAPI) w.HRESULT {
-            source_reader_cb.player.?.onReadSample(status, stream_index, stream_flags, timestamp, sample);
+            source_reader_cb.audio_stream.?.onReadSample(status, stream_index, stream_flags, timestamp, sample);
             return w.S_OK;
         }
 
