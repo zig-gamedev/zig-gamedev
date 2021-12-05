@@ -307,6 +307,9 @@ pub const IMediaBuffer = extern struct {
             pub inline fn Unlock(self: *T) HRESULT {
                 return self.v.buffer.Unlock(self);
             }
+            pub inline fn GetCurrentLength(self: *T, length: *DWORD) HRESULT {
+                return self.v.buffer.GetCurrentLength(self, length);
+            }
         };
     }
 
@@ -314,7 +317,7 @@ pub const IMediaBuffer = extern struct {
         return extern struct {
             Lock: fn (*T, *[*]BYTE, ?*DWORD, ?*DWORD) callconv(WINAPI) HRESULT,
             Unlock: fn (*T) callconv(WINAPI) HRESULT,
-            GetCurrentLength: *c_void,
+            GetCurrentLength: fn (*T, *DWORD) callconv(WINAPI) HRESULT,
             SetCurrentLength: *c_void,
             GetMaxLength: *c_void,
         };
