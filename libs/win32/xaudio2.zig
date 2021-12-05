@@ -14,6 +14,10 @@ const HRESULT = windows.HRESULT;
 const WAVEFORMATEX = @import("wasapi.zig").WAVEFORMATEX;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
+// NOTE(mziulek):
+// xaudio2redist.h uses tight field packing so we need to use 'packed struct' instead of 'extern struct' in
+// all non-interface structure definitions.
+
 pub const COMMIT_NOW: UINT32 = 0;
 pub const COMMIT_ALL: UINT32 = 0;
 pub const INVALID_OPSET: UINT32 = 0xffff_ffff;
