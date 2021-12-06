@@ -530,7 +530,10 @@ pub const GraphicsContext = struct {
                 TransitionResourceBarrier,
                 max_num_buffered_resource_barriers,
             ) catch unreachable,
-            .resources_to_release = std.ArrayList(ResourceWithCounter).initCapacity(std.heap.page_allocator, 64) catch unreachable,
+            .resources_to_release = std.ArrayList(ResourceWithCounter).initCapacity(
+                std.heap.page_allocator,
+                64,
+            ) catch unreachable,
             .num_transition_resource_barriers = 0,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
@@ -1277,7 +1280,16 @@ pub const GraphicsContext = struct {
 
         var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
         var required_size: u64 = undefined;
-        gr.device.GetCopyableFootprints(&resource.desc, subresource, layout.len, 0, &layout, null, null, &required_size);
+        gr.device.GetCopyableFootprints(
+            &resource.desc,
+            subresource,
+            layout.len,
+            0,
+            &layout,
+            null,
+            null,
+            &required_size,
+        );
 
         const upload = gr.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
         layout[0].Offset = upload.buffer_offset;
@@ -1839,7 +1851,10 @@ pub const MipmapGenerator = struct {
                         .left = 0,
                         .top = 0,
                         .front = 0,
-                        .right = @intCast(u32, texture_desc.Width) >> @intCast(u5, mip_index + 1 + current_src_mip_level),
+                        .right = @intCast(u32, texture_desc.Width) >> @intCast(
+                            u5,
+                            mip_index + 1 + current_src_mip_level,
+                        ),
                         .bottom = texture_desc.Height >> @intCast(u5, mip_index + 1 + current_src_mip_level),
                         .back = 1,
                     };
