@@ -94,14 +94,15 @@ fn audioThread(ctx: ?*c_void) callconv(.C) w.DWORD {
     return 0;
 }
 
-fn init(gpa: *std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+fn init(gpa_allocator: std.mem.Allocator) DemoState {
+    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
     grfx.present_flags = 0;
     grfx.present_interval = 1;
 
-    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-    defer arena_allocator.deinit();
+    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    defer arena_allocator_state.deinit();
+    const arena_allocator = arena_allocator_state.allocator();
 
     const brush = blk: {
         var maybe_brush: ?*d2d1.ISolidColorBrush = null;
@@ -235,7 +236,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, 48_000));
         hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
-        var audio_samples = std.ArrayList(i16).init(gpa);
+        var audio_samples = std.ArrayList(i16).init(gpa_allocator);
         while (true) {
             var flags: w.DWORD = 0;
             var sample: ?*mf.ISample = null;
@@ -290,7 +291,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.RasterizerState.AntialiasedLineEnable = w.TRUE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/lines.vs.cso",
             "content/shaders/lines.ps.cso",
@@ -306,7 +307,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.DepthStencilState.DepthEnable = w.FALSE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/image.vs.cso",
             "content/shaders/image.ps.cso",
@@ -323,7 +324,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
+    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
 
     const image = grfx.createAndUploadTex2dFromFile(
         "content/genart_008b.png",
@@ -359,7 +360,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.grfx.releasePipeline(demo.lines_pso);
     _ = demo.grfx.releasePipeline(demo.image_pso);
@@ -379,7 +380,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa);
+    lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -497,15 +498,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa.deinit();
+        const leaked = gpa_allocator_state.deinit();
         assert(leaked == false);
     }
-    const allocator = &gpa.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = init(allocator);
-    defer deinit(&demo, allocator);
+    var demo = init(gpa_allocator);
+    defer deinit(&demo, gpa_allocator);
 
     demo.audio.thread_handle = w.kernel32.CreateThread(
         null,

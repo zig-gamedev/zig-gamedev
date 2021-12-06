@@ -887,7 +887,7 @@ pub const GraphicsContext = struct {
 
     pub fn createGraphicsShaderPipeline(
         gr: *GraphicsContext,
-        arena: *std.mem.Allocator,
+        arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         vs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
@@ -897,7 +897,7 @@ pub const GraphicsContext = struct {
 
     pub fn createGraphicsShaderPipelineAllStages(
         gr: *GraphicsContext,
-        arena: *std.mem.Allocator,
+        arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         vs_cso_path: ?[]const u8,
         gs_cso_path: ?[]const u8,
@@ -1035,7 +1035,7 @@ pub const GraphicsContext = struct {
 
     pub fn createComputeShaderPipeline(
         gr: *GraphicsContext,
-        arena: *std.mem.Allocator,
+        arena: std.mem.Allocator,
         pso_desc: *d3d12.COMPUTE_PIPELINE_STATE_DESC,
         cs_cso_path: ?[]const u8,
     ) PipelineHandle {
@@ -1450,7 +1450,7 @@ pub const GuiContext = struct {
     vb_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
     ib_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
-    pub fn init(arena: *std.mem.Allocator, gr: *GraphicsContext, num_msaa_samples: u32) GuiContext {
+    pub fn init(arena: std.mem.Allocator, gr: *GraphicsContext, num_msaa_samples: u32) GuiContext {
         assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
@@ -1706,7 +1706,7 @@ pub const MipmapGenerator = struct {
     base_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
     format: dxgi.FORMAT,
 
-    pub fn init(arena: *std.mem.Allocator, gr: *GraphicsContext, format: dxgi.FORMAT) MipmapGenerator {
+    pub fn init(arena: std.mem.Allocator, gr: *GraphicsContext, format: dxgi.FORMAT) MipmapGenerator {
         var width: u32 = 2048 / 2;
         var height: u32 = 2048 / 2;
 

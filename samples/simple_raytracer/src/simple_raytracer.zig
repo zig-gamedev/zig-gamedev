@@ -270,7 +270,7 @@ fn appendMeshPrimitive(
 }
 
 fn loadScene(
-    arena: *std.mem.Allocator,
+    arena: std.mem.Allocator,
     grfx: *gr.GraphicsContext,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
@@ -454,11 +454,12 @@ fn drawLoadingScreen(grfx: *gr.GraphicsContext, textformat: *dwrite.ITextFormat,
     grfx.endDraw2d();
 }
 
-fn init(gpa: *std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+fn init(gpa_allocator: std.mem.Allocator) DemoState {
+    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
-    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-    defer arena_allocator.deinit();
+    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    defer arena_allocator_state.deinit();
+    const arena_allocator = arena_allocator_state.allocator();
 
     _ = pix.loadGpuCapturerLibrary();
     _ = pix.setTargetWindow(window);
@@ -531,7 +532,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/rast_static_mesh.vs.cso",
             "content/shaders/rast_static_mesh.ps.cso",
@@ -547,7 +548,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/z_pre_pass.vs.cso",
             "content/shaders/z_pre_pass.ps.cso",
@@ -565,7 +566,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/gen_shadow_rays.vs.cso",
             "content/shaders/gen_shadow_rays.ps.cso",
@@ -579,7 +580,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         const cso_file = std.fs.cwd().openFile("content/shaders/trace_shadow_rays.lib.cso", .{}) catch unreachable;
         defer cso_file.close();
 
-        const cso_code = cso_file.reader().readAllAlloc(&arena_allocator.allocator, 256 * 1024) catch unreachable;
+        const cso_code = cso_file.reader().readAllAlloc(arena_allocator, 256 * 1024) catch unreachable;
 
         const lib_desc = d3d12.DXIL_LIBRARY_DESC{
             .DXILLibrary = .{ .pShaderBytecode = cso_code.ptr, .BytecodeLength = cso_code.len },
@@ -695,7 +696,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     grfx.device.CreateUnorderedAccessView(grfx.getResource(shadow_mask_texture), null, null, shadow_mask_texture_uav);
     grfx.device.CreateShaderResourceView(grfx.getResource(shadow_mask_texture), null, shadow_mask_texture_srv);
 
-    var mipgen_rgba8 = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
+    var mipgen_rgba8 = gr.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
 
     //
     // Begin frame to init/upload resources on the GPU.
@@ -706,15 +707,15 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
+    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
 
-    var all_meshes = std.ArrayList(Mesh).init(gpa);
-    var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
-    var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
-    var all_materials = std.ArrayList(Material).init(gpa);
-    var all_textures = std.ArrayList(ResourceView).init(gpa);
+    var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
+    var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
+    var all_indices = std.ArrayList(u32).init(arena_allocator);
+    var all_materials = std.ArrayList(Material).init(gpa_allocator);
+    var all_textures = std.ArrayList(ResourceView).init(gpa_allocator);
     loadScene(
-        &arena_allocator.allocator,
+        arena_allocator,
         &grfx,
         &all_meshes,
         &all_vertices,
@@ -802,7 +803,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     // Create "Bottom Level Acceleration Structure" (blas).
     const blas_buffer = if (dxr_is_supported) blk_blas: {
         var geometry_descs = std.ArrayList(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
-            &arena_allocator.allocator,
+            arena_allocator,
             all_meshes.items.len,
         ) catch unreachable;
 
@@ -1055,7 +1056,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     if (demo.dxr_is_supported) {
         _ = demo.trace_shadow_rays_stateobj.?.Release();
@@ -1082,7 +1083,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.normal_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa);
+    lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -1454,15 +1455,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa_allocator.deinit();
+        const leaked = gpa_allocator_state.deinit();
         std.debug.assert(leaked == false);
     }
-    const gpa = &gpa_allocator.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = init(gpa);
-    defer deinit(&demo, gpa);
+    var demo = init(gpa_allocator);
+    defer deinit(&demo, gpa_allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);

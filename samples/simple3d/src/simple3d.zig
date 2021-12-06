@@ -158,12 +158,13 @@ const DemoState = struct {
     num_mesh_vertices: u32,
     num_mesh_indices: u32,
 
-    fn init(gpa: *std.mem.Allocator) DemoState {
-        const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+    fn init(gpa_allocator: std.mem.Allocator) DemoState {
+        const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
         var grfx = gr.GraphicsContext.init(window);
 
-        var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-        defer arena_allocator.deinit();
+        var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+        defer arena_allocator_state.deinit();
+        const arena_allocator = arena_allocator_state.allocator();
 
         const pipeline = blk: {
             const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -183,7 +184,7 @@ const DemoState = struct {
             pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
             break :blk grfx.createGraphicsShaderPipeline(
-                &arena_allocator.allocator,
+                arena_allocator,
                 &pso_desc,
                 "content/shaders/simple3d.vs.cso",
                 "content/shaders/simple3d.ps.cso",
@@ -232,11 +233,11 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        var mipgen = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
+        var mipgen = gr.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
 
         grfx.beginFrame();
 
-        var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
+        var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
 
         const base_color_texture = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
@@ -264,13 +265,13 @@ const DemoState = struct {
         grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_srv);
 
         const buffers = blk: {
-            var indices = std.ArrayList(u32).init(&arena_allocator.allocator);
+            var indices = std.ArrayList(u32).init(arena_allocator);
             defer indices.deinit();
-            var positions = std.ArrayList(vm.Vec3).init(&arena_allocator.allocator);
+            var positions = std.ArrayList(vm.Vec3).init(arena_allocator);
             defer positions.deinit();
-            var normals = std.ArrayList(vm.Vec3).init(&arena_allocator.allocator);
+            var normals = std.ArrayList(vm.Vec3).init(arena_allocator);
             defer normals.deinit();
-            var texcoords0 = std.ArrayList(vm.Vec2).init(&arena_allocator.allocator);
+            var texcoords0 = std.ArrayList(vm.Vec2).init(arena_allocator);
             defer texcoords0.deinit();
             loadMesh("content/SciFiHelmet/SciFiHelmet.gltf", &indices, &positions, &normals, &texcoords0);
 
@@ -358,7 +359,7 @@ const DemoState = struct {
         };
     }
 
-    fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+    fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
         demo.grfx.finishGpuCommands();
         _ = demo.brush.Release();
         _ = demo.textformat.Release();
@@ -370,7 +371,7 @@ const DemoState = struct {
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit();
-        lib.deinitWindow(gpa);
+        lib.deinitWindow(gpa_allocator);
         demo.* = undefined;
     }
 
@@ -488,15 +489,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa.deinit();
+        const leaked = gpa_allocator_state.deinit();
         std.debug.assert(leaked == false);
     }
-    const allocator = &gpa.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = DemoState.init(allocator);
-    defer demo.deinit(allocator);
+    var demo = DemoState.init(gpa_allocator);
+    defer demo.deinit(gpa_allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);

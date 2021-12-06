@@ -238,7 +238,7 @@ const GuiBackendState = struct {
     mouse_tracked: bool,
 };
 
-pub fn initWindow(allocator: *std.mem.Allocator, name: [*:0]const u8, width: u32, height: u32) !w.HWND {
+pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32, height: u32) !w.HWND {
     assert(c.igGetCurrentContext() == null);
     _ = c.igCreateContext(null);
 
@@ -330,7 +330,7 @@ pub fn initWindow(allocator: *std.mem.Allocator, name: [*:0]const u8, width: u32
     return window;
 }
 
-pub fn deinitWindow(allocator: *std.mem.Allocator) void {
+pub fn deinitWindow(allocator: std.mem.Allocator) void {
     var ui = c.igGetIO().?;
     assert(ui.*.BackendPlatformUserData != null);
     allocator.destroy(@ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData)));

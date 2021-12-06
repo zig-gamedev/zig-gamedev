@@ -46,11 +46,11 @@ const DemoState = struct {
     custom_txtfmt: *dwrite.ITextFormat,
 };
 
-fn init(gpa: *std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+fn init(gpa_allocator: std.mem.Allocator) DemoState {
+    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
 
-    var ink_points = std.ArrayList(d2d1.POINT_2F).init(gpa);
+    var ink_points = std.ArrayList(d2d1.POINT_2F).init(gpa_allocator);
 
     const brush = blk: {
         var maybe_brush: ?*d2d1.ISolidColorBrush = null;
@@ -223,7 +223,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 
     const noise_path = blk: {
-        var points = std.ArrayList(d2d1.POINT_2F).init(gpa);
+        var points = std.ArrayList(d2d1.POINT_2F).init(gpa_allocator);
         defer points.deinit();
 
         var i: u32 = 0;
@@ -639,7 +639,7 @@ fn drawShapes(demo: DemoState) void {
     grfx.d2d.context.SetTransform(&d2d1.MATRIX_3X2_F.initIdentity());
 }
 
-fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
@@ -658,7 +658,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.radial_gradient_brush.Release();
     demo.ink_points.deinit();
     demo.grfx.deinit();
-    lib.deinitWindow(gpa);
+    lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -742,15 +742,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa.deinit();
+        const leaked = gpa_allocator_state.deinit();
         assert(leaked == false);
     }
-    const allocator = &gpa.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = init(allocator);
-    defer deinit(&demo, allocator);
+    var demo = init(gpa_allocator);
+    defer deinit(&demo, gpa_allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);

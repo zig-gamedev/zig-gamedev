@@ -46,15 +46,15 @@ const DemoState = struct {
 
 const AudioStream = struct {
     critical_section: w.CRITICAL_SECTION,
-    gpa: *std.mem.Allocator,
+    gpa_allocator: std.mem.Allocator,
     voice: *xaudio2.ISourceVoice,
     voice_cb: *VoiceCallback,
     reader: *mf.ISourceReader,
     reader_cb: *SourceReaderCallback,
 
-    fn create(gpa: *std.mem.Allocator, audio: *xaudio2.IXAudio2, file_path: [:0]const u16) *AudioStream {
+    fn create(gpa_allocator: std.mem.Allocator, audio: *xaudio2.IXAudio2, file_path: [:0]const u16) *AudioStream {
         const voice_cb = blk: {
-            var cb = gpa.create(VoiceCallback) catch unreachable;
+            var cb = gpa_allocator.create(VoiceCallback) catch unreachable;
             cb.* = VoiceCallback.init();
             break :blk cb;
         };
@@ -63,8 +63,8 @@ const AudioStream = struct {
         w.kernel32.InitializeCriticalSection(&cs);
 
         const source_reader_cb = blk: {
-            var cb = gpa.create(SourceReaderCallback) catch unreachable;
-            cb.* = SourceReaderCallback.init(gpa);
+            var cb = gpa_allocator.create(SourceReaderCallback) catch unreachable;
+            cb.* = SourceReaderCallback.init(gpa_allocator);
             break :blk cb;
         };
 
@@ -116,10 +116,10 @@ const AudioStream = struct {
             break :blk voice.?;
         };
 
-        var audio_stream = gpa.create(AudioStream) catch unreachable;
+        var audio_stream = gpa_allocator.create(AudioStream) catch unreachable;
         audio_stream.* = .{
             .critical_section = cs,
-            .gpa = gpa,
+            .gpa_allocator = gpa_allocator,
             .voice = voice,
             .voice_cb = voice_cb,
             .reader = source_reader,
@@ -147,8 +147,8 @@ const AudioStream = struct {
         }
         w.kernel32.DeleteCriticalSection(&audio_stream.critical_section);
         audio_stream.voice.DestroyVoice();
-        audio_stream.gpa.destroy(audio_stream.voice_cb);
-        audio_stream.gpa.destroy(audio_stream);
+        audio_stream.gpa_allocator.destroy(audio_stream.voice_cb);
+        audio_stream.gpa_allocator.destroy(audio_stream);
     }
 
     fn onBufferEnd(audio_stream: *AudioStream, buffer: *mf.IMediaBuffer) void {
@@ -247,12 +247,12 @@ const AudioStream = struct {
     const SourceReaderCallback = struct {
         vtable: *const mf.ISourceReaderCallbackVTable(SourceReaderCallback) = &vtable_source_reader_cb,
         refcount: u32 = 1,
-        gpa: *std.mem.Allocator,
+        gpa_allocator: std.mem.Allocator,
         audio_stream: ?*AudioStream,
 
-        fn init(gpa: *std.mem.Allocator) SourceReaderCallback {
+        fn init(gpa_allocator: std.mem.Allocator) SourceReaderCallback {
             return .{
-                .gpa = gpa,
+                .gpa_allocator = gpa_allocator,
                 .audio_stream = null,
             };
         }
@@ -300,7 +300,7 @@ const AudioStream = struct {
             const prev_refcount = @atomicRmw(u32, &source_reader_cb.refcount, .Sub, 1, .Monotonic);
             assert(prev_refcount > 0);
             if (prev_refcount == 1) {
-                source_reader_cb.gpa.destroy(source_reader_cb);
+                source_reader_cb.gpa_allocator.destroy(source_reader_cb);
             }
             return prev_refcount - 1;
         }
@@ -327,7 +327,7 @@ const AudioStream = struct {
     };
 };
 
-fn loadAudioSamples(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
+fn loadAudioSamples(gpa_allocator: std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
@@ -350,7 +350,7 @@ fn loadAudioSamples(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std
     hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
     hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
-    var audio_samples = std.ArrayList(u8).init(gpa);
+    var audio_samples = std.ArrayList(u8).init(gpa_allocator);
     while (true) {
         var flags: w.DWORD = 0;
         var sample: ?*mf.ISample = null;
@@ -375,7 +375,7 @@ fn loadAudioSamples(gpa: *std.mem.Allocator, audio_file_path: [:0]const u16) std
     return audio_samples;
 }
 
-fn init(gpa: *std.mem.Allocator) DemoState {
+fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
@@ -412,10 +412,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
 
-    const samples = loadAudioSamples(gpa, L("content/drum_bass_hard.flac"));
+    const samples = loadAudioSamples(gpa_allocator, L("content/drum_bass_hard.flac"));
     defer samples.deinit();
 
-    var music = AudioStream.create(gpa, audio, L("content/Broke For Free - Night Owl.mp3"));
+    var music = AudioStream.create(gpa_allocator, audio, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     if (false) {
@@ -478,10 +478,11 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         hrPanicOnFail(source_voice1.Start(0, xaudio2.COMMIT_NOW));
     }
 
-    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
-    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-    defer arena_allocator.deinit();
+    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    defer arena_allocator_state.deinit();
+    const arena_allocator = arena_allocator_state.allocator();
 
     _ = pix.loadGpuCapturerLibrary();
     _ = pix.setTargetWindow(window);
@@ -530,7 +531,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
+    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
 
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
@@ -551,7 +552,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
@@ -562,7 +563,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.audio.StopEngine();
     demo.master_voice.DestroyVoice();
     _ = demo.audio.Release();
-    lib.deinitWindow(gpa);
+    lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -632,15 +633,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa_allocator.deinit();
+        const leaked = gpa_allocator_state.deinit();
         std.debug.assert(leaked == false);
     }
-    const gpa = &gpa_allocator.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = init(gpa);
-    defer deinit(&demo, gpa);
+    var demo = init(gpa_allocator);
+    defer deinit(&demo, gpa_allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
