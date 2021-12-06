@@ -356,7 +356,7 @@ pub const IVoice = extern struct {
                 params: *c_void,
                 params_size: UINT32,
             ) HRESULT {
-                self.v.voice.GetEffectParameters(self, effect_index, params, params_size);
+                return self.v.voice.GetEffectParameters(self, effect_index, params, params_size);
             }
             pub inline fn SetFilterParameters(
                 self: *T,

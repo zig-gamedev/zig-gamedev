@@ -6,6 +6,7 @@ const d3d12 = win32.d3d12;
 const dwrite = win32.dwrite;
 const dml = win32.directml;
 const xaudio2 = win32.xaudio2;
+const xaudio2fx = win32.xaudio2fx;
 const wasapi = win32.wasapi;
 const mf = win32.mf;
 const common = @import("common");
@@ -417,6 +418,27 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     var music = AudioStream.create(gpa_allocator, audio, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
+
+    {
+        var reverb_apo: ?*w.IUnknown = null;
+        hrPanicOnFail(xaudio2fx.createReverb(&reverb_apo, 0));
+        defer _ = reverb_apo.?.Release();
+
+        var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
+            .pEffect = reverb_apo.?,
+            .InitialState = w.TRUE,
+            .OutputChannels = 2,
+        }};
+        const effect_chain = xaudio2.EFFECT_CHAIN{ .EffectCount = 1, .pEffectDescriptors = &effect_descriptor };
+        hrPanicOnFail(music.voice.SetEffectChain(&effect_chain));
+
+        hrPanicOnFail(music.voice.SetEffectParameters(
+            0,
+            &xaudio2fx.REVERB_PARAMETERS.initDefault(),
+            @sizeOf(xaudio2fx.REVERB_PARAMETERS),
+            xaudio2.COMMIT_NOW,
+        ));
+    }
 
     if (false) {
         const source_voice0 = blk: {

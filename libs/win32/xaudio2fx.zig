@@ -44,7 +44,7 @@ pub const REVERB_PARAMETERS = packed struct {
     RoomSize: f32,
     DisableLateField: BOOL,
 
-    fn initDefault() REVERB_PARAMETERS {
+    pub fn initDefault() REVERB_PARAMETERS {
         return .{
             .WetDryMix = REVERB_DEFAULT_WET_DRY_MIX,
             .ReflectionsDelay = REVERB_DEFAULT_REFLECTIONS_DELAY,
