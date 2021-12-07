@@ -1051,7 +1051,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
 
         if (!barycentrics_supported) {
-            break :blk grfx.createGraphicsShaderPipelineAllStages(
+            break :blk grfx.createGraphicsShaderPipelineVsGsPs(
                 arena_allocator,
                 &pso_desc,
                 "content/shaders/simple_entity.vs.cso",

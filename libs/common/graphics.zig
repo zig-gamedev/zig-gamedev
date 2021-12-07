@@ -895,10 +895,10 @@ pub const GraphicsContext = struct {
         vs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
-        return createGraphicsShaderPipelineAllStages(gr, arena, pso_desc, vs_cso_path, null, ps_cso_path);
+        return createGraphicsShaderPipelineVsGsPs(gr, arena, pso_desc, vs_cso_path, null, ps_cso_path);
     }
 
-    pub fn createGraphicsShaderPipelineAllStages(
+    pub fn createGraphicsShaderPipelineVsGsPs(
         gr: *GraphicsContext,
         arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
@@ -909,54 +909,29 @@ pub const GraphicsContext = struct {
         const tracy_zone = tracy.zone(@src(), 1);
         defer tracy_zone.end();
 
-        const vs_code = blk: {
-            if (vs_cso_path) |path| {
-                assert(pso_desc.VS.pShaderBytecode == null);
-                const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
-                defer vs_file.close();
-                const vs_code = vs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
-                pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
-                break :blk vs_code;
-            } else {
-                assert(pso_desc.VS.pShaderBytecode != null);
-                break :blk null;
-            }
-        };
-        const gs_code = blk: {
-            if (gs_cso_path) |path| {
-                assert(pso_desc.GS.pShaderBytecode == null);
-                const gs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
-                defer gs_file.close();
-                const gs_code = gs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
-                pso_desc.GS = .{ .pShaderBytecode = gs_code.ptr, .BytecodeLength = gs_code.len };
-                break :blk gs_code;
-            } else {
-                break :blk null;
-            }
-        };
-        const ps_code = blk: {
-            if (ps_cso_path) |path| {
-                assert(pso_desc.PS.pShaderBytecode == null);
-                const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
-                defer ps_file.close();
-                const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
-                pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
-                break :blk ps_code;
-            } else {
-                assert(pso_desc.PS.pShaderBytecode != null);
-                break :blk null;
-            }
-        };
-        defer {
-            if (vs_code != null) {
-                pso_desc.VS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
-            }
-            if (gs_code != null) {
-                pso_desc.GS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
-            }
-            if (ps_code != null) {
-                pso_desc.PS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
-            }
+        if (vs_cso_path) |path| {
+            const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer vs_file.close();
+            const vs_code = vs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
+        } else {
+            assert(pso_desc.VS.pShaderBytecode != null);
+        }
+
+        if (gs_cso_path) |path| {
+            const gs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer gs_file.close();
+            const gs_code = gs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.GS = .{ .pShaderBytecode = gs_code.ptr, .BytecodeLength = gs_code.len };
+        }
+
+        if (ps_cso_path) |path| {
+            const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer ps_file.close();
+            const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
+        } else {
+            assert(pso_desc.PS.pShaderBytecode != null);
         }
 
         const hash = compute_hash: {
@@ -964,7 +939,7 @@ pub const GraphicsContext = struct {
             hasher.update(
                 @ptrCast([*]const u8, pso_desc.VS.pShaderBytecode.?)[0..pso_desc.VS.BytecodeLength],
             );
-            if (gs_code != null) {
+            if (pso_desc.GS.pShaderBytecode != null) {
                 hasher.update(
                     @ptrCast([*]const u8, pso_desc.GS.pShaderBytecode.?)[0..pso_desc.GS.BytecodeLength],
                 );
@@ -1048,7 +1023,6 @@ pub const GraphicsContext = struct {
         defer tracy_zone.end();
 
         if (as_cso_path) |path| {
-            assert(pso_desc.AS.pShaderBytecode == null);
             const as_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
             defer as_file.close();
             const as_code = as_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
@@ -1056,7 +1030,6 @@ pub const GraphicsContext = struct {
         }
 
         if (ms_cso_path) |path| {
-            assert(pso_desc.MS.pShaderBytecode == null);
             const ms_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
             defer ms_file.close();
             const ms_code = ms_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
@@ -1066,7 +1039,6 @@ pub const GraphicsContext = struct {
         }
 
         if (ps_cso_path) |path| {
-            assert(pso_desc.PS.pShaderBytecode == null);
             const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
             defer ps_file.close();
             const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
@@ -1150,23 +1122,13 @@ pub const GraphicsContext = struct {
         const tracy_zone = tracy.zone(@src(), 1);
         defer tracy_zone.end();
 
-        const cs_code = blk: {
-            if (cs_cso_path) |path| {
-                assert(pso_desc.CS.pShaderBytecode == null);
-                const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
-                defer cs_file.close();
-                const cs_code = cs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
-                pso_desc.CS = .{ .pShaderBytecode = cs_code.ptr, .BytecodeLength = cs_code.len };
-                break :blk cs_code;
-            } else {
-                assert(pso_desc.CS.pShaderBytecode != null);
-                break :blk null;
-            }
-        };
-        defer {
-            if (cs_code != null) {
-                pso_desc.CS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
-            }
+        if (cs_cso_path) |path| {
+            const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer cs_file.close();
+            const cs_code = cs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.CS = .{ .pShaderBytecode = cs_code.ptr, .BytecodeLength = cs_code.len };
+        } else {
+            assert(pso_desc.CS.pShaderBytecode != null);
         }
 
         const hash = compute_hash: {
