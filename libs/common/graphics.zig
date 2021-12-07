@@ -1001,7 +1001,7 @@ pub const GraphicsContext = struct {
         std.log.info("[graphics] Graphics pipeline hash: {d}", .{hash});
 
         if (gr.pipeline.map.contains(hash)) {
-            std.log.info("[graphics] Graphics pipeline hit detected.", .{});
+            std.log.info("[graphics] Graphics pipeline cache hit detected.", .{});
             const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
             _ = incrementPipelineRefcount(gr.*, handle);
             return handle;
@@ -1025,6 +1025,111 @@ pub const GraphicsContext = struct {
             var pso: *d3d12.IPipelineState = undefined;
             hrPanicOnFail(gr.device.CreateGraphicsPipelineState(
                 pso_desc,
+                &d3d12.IID_IPipelineState,
+                @ptrCast(*?*c_void, &pso),
+            ));
+            break :blk pso;
+        };
+
+        const handle = gr.pipeline.pool.addPipeline(pso, rs, .Graphics);
+        gr.pipeline.map.putAssumeCapacity(hash, handle);
+        return handle;
+    }
+
+    pub fn createMeshShaderPipeline(
+        gr: *GraphicsContext,
+        arena: std.mem.Allocator,
+        pso_desc: *d3d12.MESH_SHADER_PIPELINE_STATE_DESC,
+        as_cso_path: ?[]const u8,
+        ms_cso_path: ?[]const u8,
+        ps_cso_path: ?[]const u8,
+    ) PipelineHandle {
+        const tracy_zone = tracy.zone(@src(), 1);
+        defer tracy_zone.end();
+
+        if (as_cso_path) |path| {
+            assert(pso_desc.AS.pShaderBytecode == null);
+            const as_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer as_file.close();
+            const as_code = as_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.AS = .{ .pShaderBytecode = as_code.ptr, .BytecodeLength = as_code.len };
+        }
+
+        if (ms_cso_path) |path| {
+            assert(pso_desc.MS.pShaderBytecode == null);
+            const ms_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer ms_file.close();
+            const ms_code = ms_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.MS = .{ .pShaderBytecode = ms_code.ptr, .BytecodeLength = ms_code.len };
+        } else {
+            assert(pso_desc.MS.pShaderBytecode != null);
+        }
+
+        if (ps_cso_path) |path| {
+            assert(pso_desc.PS.pShaderBytecode == null);
+            const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer ps_file.close();
+            const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
+        } else {
+            assert(pso_desc.PS.pShaderBytecode != null);
+        }
+
+        const hash = compute_hash: {
+            var hasher = std.hash.Adler32.init();
+            hasher.update(
+                @ptrCast([*]const u8, pso_desc.MS.pShaderBytecode.?)[0..pso_desc.MS.BytecodeLength],
+            );
+            if (pso_desc.AS.pShaderBytecode != null) {
+                hasher.update(
+                    @ptrCast([*]const u8, pso_desc.AS.pShaderBytecode.?)[0..pso_desc.AS.BytecodeLength],
+                );
+            }
+            hasher.update(
+                @ptrCast([*]const u8, pso_desc.PS.pShaderBytecode.?)[0..pso_desc.PS.BytecodeLength],
+            );
+            hasher.update(std.mem.asBytes(&pso_desc.BlendState));
+            hasher.update(std.mem.asBytes(&pso_desc.SampleMask));
+            hasher.update(std.mem.asBytes(&pso_desc.RasterizerState));
+            hasher.update(std.mem.asBytes(&pso_desc.DepthStencilState));
+            hasher.update(std.mem.asBytes(&pso_desc.PrimitiveTopologyType));
+            hasher.update(std.mem.asBytes(&pso_desc.NumRenderTargets));
+            hasher.update(std.mem.asBytes(&pso_desc.RTVFormats));
+            hasher.update(std.mem.asBytes(&pso_desc.DSVFormat));
+            hasher.update(std.mem.asBytes(&pso_desc.SampleDesc));
+            break :compute_hash hasher.final();
+        };
+        std.log.info("[graphics] Mesh shader pipeline hash: {d}", .{hash});
+
+        if (gr.pipeline.map.contains(hash)) {
+            std.log.info("[graphics] Mesh shader pipeline cache hit detected.", .{});
+            const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
+            _ = incrementPipelineRefcount(gr.*, handle);
+            return handle;
+        }
+
+        const rs = blk: {
+            var rs: *d3d12.IRootSignature = undefined;
+            hrPanicOnFail(gr.device.CreateRootSignature(
+                0,
+                pso_desc.MS.pShaderBytecode.?,
+                pso_desc.MS.BytecodeLength,
+                &d3d12.IID_IRootSignature,
+                @ptrCast(*?*c_void, &rs),
+            ));
+            break :blk rs;
+        };
+
+        pso_desc.pRootSignature = rs;
+
+        const pso = blk: {
+            var stream = d3d12.PIPELINE_MESH_STATE_STREAM.init(pso_desc.*);
+            var pso: *d3d12.IPipelineState = undefined;
+            hrPanicOnFail(gr.device.CreatePipelineState(
+                &d3d12.PIPELINE_STATE_STREAM_DESC{
+                    .SizeInBytes = @sizeOf(@TypeOf(stream)),
+                    .pPipelineStateSubobjectStream = &stream,
+                },
                 &d3d12.IID_IPipelineState,
                 @ptrCast(*?*c_void, &pso),
             ));
