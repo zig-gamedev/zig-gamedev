@@ -164,8 +164,6 @@ pub const GraphicsContext = struct {
                             &d3d12.IID_IDevice9,
                             null,
                         );
-                        // NOTE(gmodarelli): D3D12CreateDevice returns S_FALSE when the output device is null.
-                        // https://docs.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice#return-value
                         if (hr == w.S_OK or hr == w.S_FALSE) {
                             adapter = adapter1;
                             break;
@@ -192,7 +190,8 @@ pub const GraphicsContext = struct {
             if (hr != w.S_OK) {
                 _ = w.user32.messageBoxA(
                     window,
-                    "Failed to create Direct3D 12 Device. This applications requires graphics card with DirectX 12 support.",
+                    "Failed to create Direct3D 12 Device. This applications requires graphics card with DirectX 12" ++
+                        "support.",
                     "Your graphics card driver may be old",
                     w.user32.MB_OK | w.user32.MB_ICONERROR,
                 ) catch 0;
@@ -208,7 +207,8 @@ pub const GraphicsContext = struct {
             if (hr != w.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.SM_6_3)) {
                 _ = w.user32.messageBoxA(
                     window,
-                    "This applications requires graphics card driver that supports Shader Model 6.3. Please update your graphics driver and try again.",
+                    "This applications requires graphics card driver that supports Shader Model 6.3. " ++
+                        "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
                     w.user32.MB_OK | w.user32.MB_ICONERROR,
                 ) catch 0;
