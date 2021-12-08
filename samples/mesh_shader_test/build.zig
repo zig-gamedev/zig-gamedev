@@ -82,6 +82,11 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("src/mesh_shader_test.hlsl", "psMain", "mesh_shader.ps.cso", "ps", "PSO__MESH_SHADER");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/mesh_shader_test.hlsl", "vsMain", "vertex_shader.vs.cso", "vs", "PSO__VERTEX_SHADER");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/mesh_shader_test.hlsl", "psMain", "vertex_shader.ps.cso", "ps", "PSO__VERTEX_SHADER");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     install_content_step.step.dependOn(dxc_step);
 
     const target = b.standardTargetOptions(.{});

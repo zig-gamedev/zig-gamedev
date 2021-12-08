@@ -58,6 +58,9 @@ const DemoState = struct {
     frame_stats: lib.FrameStats,
 
     mesh_shader_pso: gr.PipelineHandle,
+    vertex_shader_pso: gr.PipelineHandle,
+
+    meshes: std.ArrayList(Mesh),
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
@@ -124,16 +127,17 @@ fn loadMeshAndGenerateMeshlets(
         @sizeOf(Vertex),
     );
 
-    if (false) {
-        const pre_indices_len = all_indices.items.len;
-        const pre_vertices_len = all_vertices.items.len;
-        all_meshes.append(.{
-            .index_offset = @intCast(u32, pre_indices_len),
-            .vertex_offset = @intCast(u32, pre_vertices_len),
-            .num_indices = @intCast(u32, all_indices.items.len - pre_indices_len),
-            .num_vertices = @intCast(u32, all_vertices.items.len - pre_vertices_len),
-        }) catch unreachable;
-    }
+    all_meshes.append(.{
+        .index_offset = @intCast(u32, all_indices.items.len),
+        .vertex_offset = @intCast(u32, all_vertices.items.len),
+        .meshlet_offset = 0,
+        .num_indices = @intCast(u32, opt_indices.items.len),
+        .num_vertices = @intCast(u32, opt_vertices.items.len),
+        .num_meshlets = 0,
+    }) catch unreachable;
+
+    all_indices.appendSlice(opt_indices.items) catch unreachable;
+    all_vertices.appendSlice(opt_vertices.items) catch unreachable;
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
@@ -200,6 +204,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         );
     };
 
+    const vertex_shader_pso = blk: {
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.DSVFormat = .D32_FLOAT;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.SampleDesc = .{ .Count = 1, .Quality = 0 };
+
+        break :blk grfx.createGraphicsShaderPipeline(
+            arena_allocator,
+            &pso_desc,
+            "content/shaders/vertex_shader.vs.cso",
+            "content/shaders/vertex_shader.ps.cso",
+        );
+    };
+
     var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
@@ -229,6 +250,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .gui = gui,
         .frame_stats = lib.FrameStats.init(),
         .mesh_shader_pso = mesh_shader_pso,
+        .vertex_shader_pso = vertex_shader_pso,
+        .meshes = all_meshes,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
     };
@@ -236,9 +259,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    demo.meshes.deinit();
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
     _ = demo.grfx.releasePipeline(demo.mesh_shader_pso);
+    _ = demo.grfx.releasePipeline(demo.vertex_shader_pso);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa_allocator);
