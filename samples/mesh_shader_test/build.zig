@@ -140,6 +140,8 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/meshoptimizer/vcacheoptimizer.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/meshoptimizer/vfetchoptimizer.cpp", &[_][]const u8{""});
 
+    exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
+
     exe.install();
 
     const run_cmd = exe.run();

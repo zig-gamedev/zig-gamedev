@@ -16,6 +16,9 @@ const math = std.math;
 const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
+const Vec3 = vm.Vec3;
+const Vec4 = vm.Vec4;
+const Mat4 = vm.Mat4;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -24,6 +27,30 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: mesh shader test";
 const window_width = 1920;
 const window_height = 1080;
+
+const Vertex = struct {
+    position: Vec3,
+    normal: Vec3,
+};
+
+const Mesh = struct {
+    index_offset: u32,
+    vertex_offset: u32,
+    meshlet_offset: u32,
+    num_indices: u32,
+    num_vertices: u32,
+    num_meshlets: u32,
+};
+
+const Meshlet = packed struct {
+    data_offset: u18 align(4),
+    num_vertices: u7,
+    num_triangles: u7,
+};
+comptime {
+    assert(@sizeOf(Meshlet) == 4);
+    assert(@alignOf(Meshlet) == 4);
+}
 
 const DemoState = struct {
     grfx: gr.GraphicsContext,
@@ -35,6 +62,79 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 };
+
+fn loadMeshAndGenerateMeshlets(
+    arena_allocator: std.mem.Allocator,
+    file_path: []const u8,
+    all_meshes: *std.ArrayList(Mesh),
+    all_vertices: *std.ArrayList(Vertex),
+    all_indices: *std.ArrayList(u32),
+) void {
+    var src_positions = std.ArrayList(Vec3).init(arena_allocator);
+    var src_normals = std.ArrayList(Vec3).init(arena_allocator);
+    var src_indices = std.ArrayList(u32).init(arena_allocator);
+
+    const data = lib.parseAndLoadGltfFile(file_path);
+    defer c.cgltf_free(data);
+    lib.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
+
+    var src_vertices = std.ArrayList(Vertex).initCapacity(arena_allocator, src_positions.items.len) catch unreachable;
+
+    for (src_positions.items) |_, index| {
+        src_vertices.appendAssumeCapacity(.{
+            .position = src_positions.items[index],
+            .normal = src_normals.items[index],
+        });
+    }
+
+    var remap = std.ArrayList(u32).initCapacity(arena_allocator, src_indices.items.len) catch unreachable;
+    const num_unique_vertices = c.meshopt_generateVertexRemap(
+        remap.items.ptr,
+        src_indices.items.ptr,
+        src_indices.items.len,
+        src_vertices.items.ptr,
+        src_vertices.items.len,
+        @sizeOf(Vertex),
+    );
+
+    var opt_vertices = std.ArrayList(Vertex).initCapacity(arena_allocator, num_unique_vertices) catch unreachable;
+    c.meshopt_remapVertexBuffer(
+        opt_vertices.items.ptr,
+        src_vertices.items.ptr,
+        src_vertices.items.len,
+        @sizeOf(Vertex),
+        remap.items.ptr,
+    );
+
+    var opt_indices = std.ArrayList(u32).initCapacity(arena_allocator, src_indices.items.len) catch unreachable;
+    c.meshopt_remapIndexBuffer(opt_indices.items.ptr, src_indices.items.ptr, src_indices.items.len, remap.items.ptr);
+
+    c.meshopt_optimizeVertexCache(
+        opt_indices.items.ptr,
+        opt_indices.items.ptr,
+        opt_indices.items.len,
+        opt_vertices.items.len,
+    );
+    _ = c.meshopt_optimizeVertexFetch(
+        opt_vertices.items.ptr,
+        opt_indices.items.ptr,
+        opt_indices.items.len,
+        opt_vertices.items.ptr,
+        opt_vertices.items.len,
+        @sizeOf(Vertex),
+    );
+
+    if (false) {
+        const pre_indices_len = all_indices.items.len;
+        const pre_vertices_len = all_vertices.items.len;
+        all_meshes.append(.{
+            .index_offset = @intCast(u32, pre_indices_len),
+            .vertex_offset = @intCast(u32, pre_vertices_len),
+            .num_indices = @intCast(u32, all_indices.items.len - pre_indices_len),
+            .num_vertices = @intCast(u32, all_vertices.items.len - pre_vertices_len),
+        }) catch unreachable;
+    }
+}
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
@@ -99,6 +199,17 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             "content/shaders/mesh_shader.ps.cso",
         );
     };
+
+    var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
+    var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
+    var all_indices = std.ArrayList(u32).init(arena_allocator);
+    loadMeshAndGenerateMeshlets(
+        arena_allocator,
+        "content/SciFiHelmet/SciFiHelmet.gltf",
+        &all_meshes,
+        &all_vertices,
+        &all_indices,
+    );
 
     grfx.beginFrame();
 
