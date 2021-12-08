@@ -976,6 +976,63 @@ pub const SHADER_MODEL = enum(UINT) {
     SM_6_7 = 0x67,
 };
 
+pub const RESOURCE_BINDING_TIER = enum(UINT) {
+    TIER_1 = 1,
+    TIER_2 = 2,
+    TIER_3 = 3,
+};
+
+pub const RESOURCE_HEAP_TIER = enum(UINT) {
+    TIER_1 = 1,
+    TIER_2 = 2,
+};
+
+pub const SHADER_MIN_PRECISION_SUPPORT = UINT;
+pub const SHADER_MIN_PRECISION_SUPPORT_NONE: SHADER_MIN_PRECISION_SUPPORT = 0;
+pub const SHADER_MIN_PRECISION_SUPPORT_10_BIT: SHADER_MIN_PRECISION_SUPPORT = 0x1;
+pub const SHADER_MIN_PRECISION_SUPPORT_16_BIT: SHADER_MIN_PRECISION_SUPPORT = 0x2;
+
+pub const TILED_RESOURCES_TIER = enum(UINT) {
+    NOT_SUPPORTED = 0,
+    TIER_1 = 1,
+    TIER_2 = 2,
+    TIER_3 = 3,
+    TIER_4 = 4,
+};
+
+pub const CONSERVATIVE_RASTERIZATION_TIER = enum(UINT) {
+    NOT_SUPPORTED = 0,
+    TIER_1 = 1,
+    TIER_2 = 2,
+    TIER_3 = 3,
+};
+
+pub const CROSS_NODE_SHARING_TIER = enum(UINT) {
+    NOT_SUPPORTED = 0,
+    TIER_1_EMULATED = 1,
+    TIER_1 = 2,
+    TIER_2 = 3,
+    TIER_3 = 4,
+};
+
+pub const FEATURE_DATA_D3D12_OPTIONS = extern struct {
+    DoublePrecisionFloatShaderOps: BOOL,
+    OutputMergerLogicOp: BOOL,
+    MinPrecisionSupport: SHADER_MIN_PRECISION_SUPPORT,
+    TiledResourcesTier: TILED_RESOURCES_TIER,
+    ResourceBindingTier: RESOURCE_BINDING_TIER,
+    PSSpecifiedStencilRefSupported: BOOL,
+    TypedUAVLoadAdditionalFormats: BOOL,
+    ROVsSupported: BOOL,
+    ConservativeRasterizationTier: CONSERVATIVE_RASTERIZATION_TIER,
+    MaxGPUVirtualAddressBitsPerResource: UINT,
+    StandardSwizzle64KBSupported: BOOL,
+    CrossNodeSharingTier: CROSS_NODE_SHARING_TIER,
+    CrossAdapterRowMajorTextureSupported: BOOL,
+    VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation: BOOL,
+    ResourceHeapTier: RESOURCE_HEAP_TIER,
+};
+
 pub const FEATURE_DATA_SHADER_MODEL = extern struct {
     HighestShaderModel: SHADER_MODEL,
 };
