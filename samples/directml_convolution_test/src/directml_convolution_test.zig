@@ -86,14 +86,15 @@ const DemoState = struct {
     image_texture_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
-fn init(gpa: *std.mem.Allocator) DemoState {
+fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
-    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-    defer arena_allocator.deinit();
+    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    defer arena_allocator_state.deinit();
+    const arena_allocator = arena_allocator_state.allocator();
 
     _ = pix.loadGpuCapturerLibrary();
     _ = pix.setTargetWindow(window);
@@ -113,7 +114,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.DepthStencilState.DepthEnable = w.FALSE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/draw_texture.vs.cso",
             "content/shaders/draw_texture.ps.cso",
@@ -121,12 +122,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 
     const texture_to_buffer_pso = grfx.createComputeShaderPipeline(
-        &arena_allocator.allocator,
+        arena_allocator,
         &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
         "content/shaders/texture_to_buffer.cs.cso",
     );
     const buffer_to_texture_pso = grfx.createComputeShaderPipeline(
-        &arena_allocator.allocator,
+        arena_allocator,
         &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
         "content/shaders/buffer_to_texture.cs.cso",
     );
@@ -364,7 +365,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
+    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
 
     const image_texture = grfx.createAndUploadTex2dFromFile(
         "content/genart_0025_5.png",
@@ -497,7 +498,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     _ = demo.grfx.releasePipeline(demo.draw_texture_pso);
     _ = demo.grfx.releasePipeline(demo.texture_to_buffer_pso);
@@ -516,7 +517,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.info_txtfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa);
+    lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -770,15 +771,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa_allocator.deinit();
+        const leaked = gpa_allocator_state.deinit();
         std.debug.assert(leaked == false);
     }
-    const gpa = &gpa_allocator.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = init(gpa);
-    defer deinit(&demo, gpa);
+    var demo = init(gpa_allocator);
+    defer deinit(&demo, gpa_allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);

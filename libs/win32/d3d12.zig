@@ -771,6 +771,34 @@ pub const DEPTH_STENCIL_DESC = extern struct {
     }
 };
 
+pub const DEPTH_STENCIL_DESC1 = extern struct {
+    DepthEnable: BOOL,
+    DepthWriteMask: DEPTH_WRITE_MASK,
+    DepthFunc: COMPARISON_FUNC,
+    StencilEnable: BOOL,
+    StencilReadMask: UINT8,
+    StencilWriteMask: UINT8,
+    FrontFace: DEPTH_STENCILOP_DESC,
+    BackFace: DEPTH_STENCILOP_DESC,
+    DepthBoundsTestEnable: BOOL,
+
+    pub fn initDefault() DEPTH_STENCIL_DESC1 {
+        var desc = std.mem.zeroes(@This());
+        desc = .{
+            .DepthEnable = TRUE,
+            .DepthWriteMask = .ALL,
+            .DepthFunc = .LESS,
+            .StencilEnable = FALSE,
+            .StencilReadMask = 0xff,
+            .StencilWriteMask = 0xff,
+            .FrontFace = DEPTH_STENCILOP_DESC.initDefault(),
+            .BackFace = DEPTH_STENCILOP_DESC.initDefault(),
+            .DepthBoundsTestEnable = FALSE,
+        };
+        return desc;
+    }
+};
+
 pub const INPUT_LAYOUT_DESC = extern struct {
     pInputElementDescs: ?[*]const INPUT_ELEMENT_DESC,
     NumElements: UINT,
@@ -4394,9 +4422,108 @@ pub const PIPELINE_STATE_SUBOBJECT_TYPE = enum(UINT) {
     MAX_VALID,
 };
 
+pub const RT_FORMAT_ARRAY = extern struct {
+    RTFormats: [8]dxgi.FORMAT,
+    NumRenderTargets: UINT,
+};
+
 pub const PIPELINE_STATE_STREAM_DESC = extern struct {
     SizeInBytes: SIZE_T,
     pPipelineStateSubobjectStream: *c_void,
+};
+
+// NOTE(mziulek): Helper structures for defining Mesh Shaders.
+pub const MESH_SHADER_PIPELINE_STATE_DESC = extern struct {
+    pRootSignature: ?*IRootSignature,
+    AS: SHADER_BYTECODE,
+    MS: SHADER_BYTECODE,
+    PS: SHADER_BYTECODE,
+    BlendState: BLEND_DESC,
+    SampleMask: UINT,
+    RasterizerState: RASTERIZER_DESC,
+    DepthStencilState: DEPTH_STENCIL_DESC1,
+    PrimitiveTopologyType: PRIMITIVE_TOPOLOGY_TYPE,
+    NumRenderTargets: UINT,
+    RTVFormats: [8]dxgi.FORMAT,
+    DSVFormat: dxgi.FORMAT,
+    SampleDesc: dxgi.SAMPLE_DESC,
+    NodeMask: UINT,
+    CachedPSO: CACHED_PIPELINE_STATE,
+    Flags: PIPELINE_STATE_FLAGS,
+
+    pub fn initDefault() MESH_SHADER_PIPELINE_STATE_DESC {
+        var v = std.mem.zeroes(@This());
+        v = .{
+            .pRootSignature = null,
+            .AS = SHADER_BYTECODE.initZero(),
+            .MS = SHADER_BYTECODE.initZero(),
+            .PS = SHADER_BYTECODE.initZero(),
+            .BlendState = BLEND_DESC.initDefault(),
+            .SampleMask = 0xffff_ffff,
+            .RasterizerState = RASTERIZER_DESC.initDefault(),
+            .DepthStencilState = DEPTH_STENCIL_DESC1.initDefault(),
+            .PrimitiveTopologyType = .UNDEFINED,
+            .NumRenderTargets = 0,
+            .RTVFormats = [_]dxgi.FORMAT{.UNKNOWN} ** 8,
+            .DSVFormat = .UNKNOWN,
+            .SampleDesc = .{ .Count = 1, .Quality = 0 },
+            .NodeMask = 0,
+            .CachedPSO = CACHED_PIPELINE_STATE.initZero(),
+            .Flags = PIPELINE_STATE_FLAG_NONE,
+        };
+        return v;
+    }
+};
+
+pub const PIPELINE_MESH_STATE_STREAM = extern struct {
+    Flags_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .FLAGS,
+    Flags: PIPELINE_STATE_FLAGS,
+    NodeMask_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .NODE_MASK,
+    NodeMask: UINT,
+    pRootSignature_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .ROOT_SIGNATURE,
+    pRootSignature: ?*IRootSignature,
+    PS_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .PS,
+    PS: SHADER_BYTECODE,
+    AS_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .AS,
+    AS: SHADER_BYTECODE,
+    MS_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .MS,
+    MS: SHADER_BYTECODE,
+    BlendState_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .BLEND,
+    BlendState: BLEND_DESC,
+    DepthStencilState_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .DEPTH_STENCIL1,
+    DepthStencilState: DEPTH_STENCIL_DESC1,
+    DSVFormat_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .DEPTH_STENCIL_FORMAT,
+    DSVFormat: dxgi.FORMAT,
+    RasterizerState_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .RASTERIZER,
+    RasterizerState: RASTERIZER_DESC,
+    RTVFormats_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .RENDER_TARGET_FORMATS,
+    RTVFormats: RT_FORMAT_ARRAY,
+    SampleDesc_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .SAMPLE_DESC,
+    SampleDesc: dxgi.SAMPLE_DESC,
+    SampleMask_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .SAMPLE_MASK,
+    SampleMask: UINT,
+    CachedPSO_type: PIPELINE_STATE_SUBOBJECT_TYPE align(8) = .CACHED_PSO,
+    CachedPSO: CACHED_PIPELINE_STATE,
+
+    pub fn init(desc: MESH_SHADER_PIPELINE_STATE_DESC) PIPELINE_MESH_STATE_STREAM {
+        const stream = PIPELINE_MESH_STATE_STREAM{
+            .Flags = desc.Flags,
+            .NodeMask = desc.NodeMask,
+            .pRootSignature = desc.pRootSignature,
+            .PS = desc.PS,
+            .AS = desc.AS,
+            .MS = desc.MS,
+            .BlendState = desc.BlendState,
+            .DepthStencilState = desc.DepthStencilState,
+            .DSVFormat = desc.DSVFormat,
+            .RasterizerState = desc.RasterizerState,
+            .RTVFormats = .{ .RTFormats = desc.RTVFormats, .NumRenderTargets = desc.NumRenderTargets },
+            .SampleDesc = desc.SampleDesc,
+            .SampleMask = desc.SampleMask,
+            .CachedPSO = desc.CachedPSO,
+        };
+        return stream;
+    }
 };
 
 pub const IDevice2 = extern struct {

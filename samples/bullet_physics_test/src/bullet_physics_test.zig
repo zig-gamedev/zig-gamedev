@@ -359,7 +359,7 @@ const PsoSimpleEntity_FrameConst = extern struct {
 const PhysicsDebug = struct {
     lines: std.ArrayList(PsoPhysicsDebug_Vertex),
 
-    fn init(alloc: *std.mem.Allocator) PhysicsDebug {
+    fn init(alloc: std.mem.Allocator) PhysicsDebug {
         return .{ .lines = std.ArrayList(PsoPhysicsDebug_Vertex).init(alloc) };
     }
 
@@ -961,14 +961,15 @@ fn createScene4(
     };
 }
 
-fn init(gpa: *std.mem.Allocator) DemoState {
+fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
-    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-    defer arena_allocator.deinit();
+    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    defer arena_allocator_state.deinit();
+    const arena_allocator = arena_allocator_state.allocator();
 
     _ = pix.loadGpuCapturerLibrary();
     _ = pix.setTargetWindow(window);
@@ -1024,7 +1025,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/physics_debug.vs.cso",
             "content/shaders/physics_debug.ps.cso",
@@ -1050,8 +1051,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
 
         if (!barycentrics_supported) {
-            break :blk grfx.createGraphicsShaderPipelineAllStages(
-                &arena_allocator.allocator,
+            break :blk grfx.createGraphicsShaderPipelineVsGsPs(
+                arena_allocator,
                 &pso_desc,
                 "content/shaders/simple_entity.vs.cso",
                 "content/shaders/simple_entity.gs.cso",
@@ -1059,7 +1060,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
             );
         } else {
             break :blk grfx.createGraphicsShaderPipeline(
-                &arena_allocator.allocator,
+                arena_allocator,
                 &pso_desc,
                 "content/shaders/simple_entity.vs.cso",
                 "content/shaders/simple_entity.ps.cso",
@@ -1099,14 +1100,14 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     const depth_texture_dsv = grfx.allocateCpuDescriptors(.DSV, 1);
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_dsv);
 
-    var all_meshes = std.ArrayList(Mesh).init(gpa);
-    var all_positions = std.ArrayList(Vec3).init(&arena_allocator.allocator);
-    var all_normals = std.ArrayList(Vec3).init(&arena_allocator.allocator);
-    var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
+    var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
+    var all_positions = std.ArrayList(Vec3).init(arena_allocator);
+    var all_normals = std.ArrayList(Vec3).init(arena_allocator);
+    var all_indices = std.ArrayList(u32).init(arena_allocator);
     loadAllMeshes(&all_meshes, &all_positions, &all_normals, &all_indices);
 
-    var physics_debug = gpa.create(PhysicsDebug) catch unreachable;
-    physics_debug.* = PhysicsDebug.init(gpa);
+    var physics_debug = gpa_allocator.create(PhysicsDebug) catch unreachable;
+    physics_debug.* = PhysicsDebug.init(gpa_allocator);
 
     const physics_world = c.cbtWorldCreate();
     c.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
@@ -1143,12 +1144,12 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     const physics_objects_pool = PhysicsObjectsPool.init();
     var camera: Camera = undefined;
-    var entities = std.ArrayList(Entity).init(gpa);
+    var entities = std.ArrayList(Entity).init(gpa_allocator);
     createScene1(physics_world, physics_objects_pool, &entities, &camera);
     entities.items[0].flags = 1;
 
-    var connected_bodies = std.ArrayList(BodyWithPivot).init(gpa);
-    var motors = std.ArrayList(c.CbtConstraintHandle).init(gpa);
+    var connected_bodies = std.ArrayList(BodyWithPivot).init(gpa_allocator);
+    var motors = std.ArrayList(c.CbtConstraintHandle).init(gpa_allocator);
 
     var vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
@@ -1175,7 +1176,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, num_msaa_samples);
+    var gui = gr.GuiContext.init(arena_allocator, &grfx, num_msaa_samples);
 
     {
         const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_positions.items.len));
@@ -1256,7 +1257,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
     _ = demo.brush.Release();
@@ -1269,7 +1270,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.index_buffer);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa);
+    lib.deinitWindow(gpa_allocator);
     if (c.cbtConIsCreated(demo.pick.constraint)) {
         c.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         c.cbtConDestroy(demo.pick.constraint);
@@ -1280,7 +1281,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     demo.motors.deinit();
     demo.physics_objects_pool.deinit(demo.physics_world);
     demo.physics_debug.deinit();
-    gpa.destroy(demo.physics_debug);
+    gpa_allocator.destroy(demo.physics_debug);
     c.cbtWorldDestroy(demo.physics_world);
     demo.* = undefined;
 }
@@ -2018,15 +2019,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa_allocator.deinit();
+        const leaked = gpa_allocator_state.deinit();
         std.debug.assert(leaked == false);
     }
-    const gpa = &gpa_allocator.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = init(gpa);
-    defer deinit(&demo, gpa);
+    var demo = init(gpa_allocator);
+    defer deinit(&demo, gpa_allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);

@@ -164,8 +164,6 @@ pub const GraphicsContext = struct {
                             &d3d12.IID_IDevice9,
                             null,
                         );
-                        // NOTE(gmodarelli): D3D12CreateDevice returns S_FALSE when the output device is null.
-                        // https://docs.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice#return-value
                         if (hr == w.S_OK or hr == w.S_FALSE) {
                             adapter = adapter1;
                             break;
@@ -192,7 +190,8 @@ pub const GraphicsContext = struct {
             if (hr != w.S_OK) {
                 _ = w.user32.messageBoxA(
                     window,
-                    "Failed to create Direct3D 12 Device. This applications requires graphics card with DirectX 12 support.",
+                    "Failed to create Direct3D 12 Device. This applications requires graphics card with DirectX 12" ++
+                        "support.",
                     "Your graphics card driver may be old",
                     w.user32.MB_OK | w.user32.MB_ICONERROR,
                 ) catch 0;
@@ -208,7 +207,8 @@ pub const GraphicsContext = struct {
             if (hr != w.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.SM_6_6)) {
                 _ = w.user32.messageBoxA(
                     window,
-                    "This applications requires graphics card driver that supports Shader Model 6.6. Please update your graphics driver and try again.",
+                    "This applications requires graphics card driver that supports Shader Model 6.6. " ++
+                        "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
                     w.user32.MB_OK | w.user32.MB_ICONERROR,
                 ) catch 0;
@@ -223,7 +223,8 @@ pub const GraphicsContext = struct {
             if (hr != w.S_OK or @enumToInt(data.ResourceBindingTier) < @enumToInt(d3d12.RESOURCE_BINDING_TIER.TIER_3)) {
                 _ = w.user32.messageBoxA(
                     window,
-                    "This applications requires graphics card driver that supports Resource Binding Tier 3. Please update your graphics driver and try again.",
+                    "This applications requires graphics card driver that supports Resource Binding Tier 3. " ++
+                        "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
                     w.user32.MB_OK | w.user32.MB_ICONERROR,
                 ) catch 0;
@@ -545,7 +546,10 @@ pub const GraphicsContext = struct {
                 TransitionResourceBarrier,
                 max_num_buffered_resource_barriers,
             ) catch unreachable,
-            .resources_to_release = std.ArrayList(ResourceWithCounter).initCapacity(std.heap.page_allocator, 64) catch unreachable,
+            .resources_to_release = std.ArrayList(ResourceWithCounter).initCapacity(
+                std.heap.page_allocator,
+                64,
+            ) catch unreachable,
             .num_transition_resource_barriers = 0,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
@@ -902,17 +906,17 @@ pub const GraphicsContext = struct {
 
     pub fn createGraphicsShaderPipeline(
         gr: *GraphicsContext,
-        arena: *std.mem.Allocator,
+        arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         vs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
-        return createGraphicsShaderPipelineAllStages(gr, arena, pso_desc, vs_cso_path, null, ps_cso_path);
+        return createGraphicsShaderPipelineVsGsPs(gr, arena, pso_desc, vs_cso_path, null, ps_cso_path);
     }
 
-    pub fn createGraphicsShaderPipelineAllStages(
+    pub fn createGraphicsShaderPipelineVsGsPs(
         gr: *GraphicsContext,
-        arena: *std.mem.Allocator,
+        arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         vs_cso_path: ?[]const u8,
         gs_cso_path: ?[]const u8,
@@ -921,54 +925,29 @@ pub const GraphicsContext = struct {
         const tracy_zone = tracy.zone(@src(), 1);
         defer tracy_zone.end();
 
-        const vs_code = blk: {
-            if (vs_cso_path) |path| {
-                assert(pso_desc.VS.pShaderBytecode == null);
-                const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
-                defer vs_file.close();
-                const vs_code = vs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
-                pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
-                break :blk vs_code;
-            } else {
-                assert(pso_desc.VS.pShaderBytecode != null);
-                break :blk null;
-            }
-        };
-        const gs_code = blk: {
-            if (gs_cso_path) |path| {
-                assert(pso_desc.GS.pShaderBytecode == null);
-                const gs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
-                defer gs_file.close();
-                const gs_code = gs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
-                pso_desc.GS = .{ .pShaderBytecode = gs_code.ptr, .BytecodeLength = gs_code.len };
-                break :blk gs_code;
-            } else {
-                break :blk null;
-            }
-        };
-        const ps_code = blk: {
-            if (ps_cso_path) |path| {
-                assert(pso_desc.PS.pShaderBytecode == null);
-                const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
-                defer ps_file.close();
-                const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
-                pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
-                break :blk ps_code;
-            } else {
-                assert(pso_desc.PS.pShaderBytecode != null);
-                break :blk null;
-            }
-        };
-        defer {
-            if (vs_code != null) {
-                pso_desc.VS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
-            }
-            if (gs_code != null) {
-                pso_desc.GS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
-            }
-            if (ps_code != null) {
-                pso_desc.PS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
-            }
+        if (vs_cso_path) |path| {
+            const vs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer vs_file.close();
+            const vs_code = vs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.VS = .{ .pShaderBytecode = vs_code.ptr, .BytecodeLength = vs_code.len };
+        } else {
+            assert(pso_desc.VS.pShaderBytecode != null);
+        }
+
+        if (gs_cso_path) |path| {
+            const gs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer gs_file.close();
+            const gs_code = gs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.GS = .{ .pShaderBytecode = gs_code.ptr, .BytecodeLength = gs_code.len };
+        }
+
+        if (ps_cso_path) |path| {
+            const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer ps_file.close();
+            const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
+        } else {
+            assert(pso_desc.PS.pShaderBytecode != null);
         }
 
         const hash = compute_hash: {
@@ -976,7 +955,7 @@ pub const GraphicsContext = struct {
             hasher.update(
                 @ptrCast([*]const u8, pso_desc.VS.pShaderBytecode.?)[0..pso_desc.VS.BytecodeLength],
             );
-            if (gs_code != null) {
+            if (pso_desc.GS.pShaderBytecode != null) {
                 hasher.update(
                     @ptrCast([*]const u8, pso_desc.GS.pShaderBytecode.?)[0..pso_desc.GS.BytecodeLength],
                 );
@@ -1013,7 +992,7 @@ pub const GraphicsContext = struct {
         std.log.info("[graphics] Graphics pipeline hash: {d}", .{hash});
 
         if (gr.pipeline.map.contains(hash)) {
-            std.log.info("[graphics] Graphics pipeline hit detected.", .{});
+            std.log.info("[graphics] Graphics pipeline cache hit detected.", .{});
             const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
             _ = incrementPipelineRefcount(gr.*, handle);
             return handle;
@@ -1048,32 +1027,124 @@ pub const GraphicsContext = struct {
         return handle;
     }
 
+    pub fn createMeshShaderPipeline(
+        gr: *GraphicsContext,
+        arena: std.mem.Allocator,
+        pso_desc: *d3d12.MESH_SHADER_PIPELINE_STATE_DESC,
+        as_cso_path: ?[]const u8,
+        ms_cso_path: ?[]const u8,
+        ps_cso_path: ?[]const u8,
+    ) PipelineHandle {
+        const tracy_zone = tracy.zone(@src(), 1);
+        defer tracy_zone.end();
+
+        if (as_cso_path) |path| {
+            const as_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer as_file.close();
+            const as_code = as_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.AS = .{ .pShaderBytecode = as_code.ptr, .BytecodeLength = as_code.len };
+        }
+
+        if (ms_cso_path) |path| {
+            const ms_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer ms_file.close();
+            const ms_code = ms_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.MS = .{ .pShaderBytecode = ms_code.ptr, .BytecodeLength = ms_code.len };
+        } else {
+            assert(pso_desc.MS.pShaderBytecode != null);
+        }
+
+        if (ps_cso_path) |path| {
+            const ps_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer ps_file.close();
+            const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
+        } else {
+            assert(pso_desc.PS.pShaderBytecode != null);
+        }
+
+        const hash = compute_hash: {
+            var hasher = std.hash.Adler32.init();
+            hasher.update(
+                @ptrCast([*]const u8, pso_desc.MS.pShaderBytecode.?)[0..pso_desc.MS.BytecodeLength],
+            );
+            if (pso_desc.AS.pShaderBytecode != null) {
+                hasher.update(
+                    @ptrCast([*]const u8, pso_desc.AS.pShaderBytecode.?)[0..pso_desc.AS.BytecodeLength],
+                );
+            }
+            hasher.update(
+                @ptrCast([*]const u8, pso_desc.PS.pShaderBytecode.?)[0..pso_desc.PS.BytecodeLength],
+            );
+            hasher.update(std.mem.asBytes(&pso_desc.BlendState));
+            hasher.update(std.mem.asBytes(&pso_desc.SampleMask));
+            hasher.update(std.mem.asBytes(&pso_desc.RasterizerState));
+            hasher.update(std.mem.asBytes(&pso_desc.DepthStencilState));
+            hasher.update(std.mem.asBytes(&pso_desc.PrimitiveTopologyType));
+            hasher.update(std.mem.asBytes(&pso_desc.NumRenderTargets));
+            hasher.update(std.mem.asBytes(&pso_desc.RTVFormats));
+            hasher.update(std.mem.asBytes(&pso_desc.DSVFormat));
+            hasher.update(std.mem.asBytes(&pso_desc.SampleDesc));
+            break :compute_hash hasher.final();
+        };
+        std.log.info("[graphics] Mesh shader pipeline hash: {d}", .{hash});
+
+        if (gr.pipeline.map.contains(hash)) {
+            std.log.info("[graphics] Mesh shader pipeline cache hit detected.", .{});
+            const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
+            _ = incrementPipelineRefcount(gr.*, handle);
+            return handle;
+        }
+
+        const rs = blk: {
+            var rs: *d3d12.IRootSignature = undefined;
+            hrPanicOnFail(gr.device.CreateRootSignature(
+                0,
+                pso_desc.MS.pShaderBytecode.?,
+                pso_desc.MS.BytecodeLength,
+                &d3d12.IID_IRootSignature,
+                @ptrCast(*?*c_void, &rs),
+            ));
+            break :blk rs;
+        };
+
+        pso_desc.pRootSignature = rs;
+
+        const pso = blk: {
+            var stream = d3d12.PIPELINE_MESH_STATE_STREAM.init(pso_desc.*);
+            var pso: *d3d12.IPipelineState = undefined;
+            hrPanicOnFail(gr.device.CreatePipelineState(
+                &d3d12.PIPELINE_STATE_STREAM_DESC{
+                    .SizeInBytes = @sizeOf(@TypeOf(stream)),
+                    .pPipelineStateSubobjectStream = &stream,
+                },
+                &d3d12.IID_IPipelineState,
+                @ptrCast(*?*c_void, &pso),
+            ));
+            break :blk pso;
+        };
+
+        const handle = gr.pipeline.pool.addPipeline(pso, rs, .Graphics);
+        gr.pipeline.map.putAssumeCapacity(hash, handle);
+        return handle;
+    }
+
     pub fn createComputeShaderPipeline(
         gr: *GraphicsContext,
-        arena: *std.mem.Allocator,
+        arena: std.mem.Allocator,
         pso_desc: *d3d12.COMPUTE_PIPELINE_STATE_DESC,
         cs_cso_path: ?[]const u8,
     ) PipelineHandle {
         const tracy_zone = tracy.zone(@src(), 1);
         defer tracy_zone.end();
 
-        const cs_code = blk: {
-            if (cs_cso_path) |path| {
-                assert(pso_desc.CS.pShaderBytecode == null);
-                const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
-                defer cs_file.close();
-                const cs_code = cs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
-                pso_desc.CS = .{ .pShaderBytecode = cs_code.ptr, .BytecodeLength = cs_code.len };
-                break :blk cs_code;
-            } else {
-                assert(pso_desc.CS.pShaderBytecode != null);
-                break :blk null;
-            }
-        };
-        defer {
-            if (cs_code != null) {
-                pso_desc.CS = .{ .pShaderBytecode = null, .BytecodeLength = 0 };
-            }
+        if (cs_cso_path) |path| {
+            const cs_file = std.fs.cwd().openFile(path, .{}) catch unreachable;
+            defer cs_file.close();
+            const cs_code = cs_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
+            pso_desc.CS = .{ .pShaderBytecode = cs_code.ptr, .BytecodeLength = cs_code.len };
+        } else {
+            assert(pso_desc.CS.pShaderBytecode != null);
         }
 
         const hash = compute_hash: {
@@ -1292,7 +1363,16 @@ pub const GraphicsContext = struct {
 
         var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
         var required_size: u64 = undefined;
-        gr.device.GetCopyableFootprints(&resource.desc, subresource, layout.len, 0, &layout, null, null, &required_size);
+        gr.device.GetCopyableFootprints(
+            &resource.desc,
+            subresource,
+            layout.len,
+            0,
+            &layout,
+            null,
+            null,
+            &required_size,
+        );
 
         const upload = gr.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
         layout[0].Offset = upload.buffer_offset;
@@ -1465,7 +1545,7 @@ pub const GuiContext = struct {
     vb_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
     ib_cpu_addr: [GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
-    pub fn init(arena: *std.mem.Allocator, gr: *GraphicsContext, num_msaa_samples: u32) GuiContext {
+    pub fn init(arena: std.mem.Allocator, gr: *GraphicsContext, num_msaa_samples: u32) GuiContext {
         assert(gr.is_cmdlist_opened);
         assert(c.igGetCurrentContext() != null);
 
@@ -1721,7 +1801,7 @@ pub const MipmapGenerator = struct {
     base_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
     format: dxgi.FORMAT,
 
-    pub fn init(arena: *std.mem.Allocator, gr: *GraphicsContext, format: dxgi.FORMAT) MipmapGenerator {
+    pub fn init(arena: std.mem.Allocator, gr: *GraphicsContext, format: dxgi.FORMAT) MipmapGenerator {
         var width: u32 = 2048 / 2;
         var height: u32 = 2048 / 2;
 
@@ -1854,7 +1934,10 @@ pub const MipmapGenerator = struct {
                         .left = 0,
                         .top = 0,
                         .front = 0,
-                        .right = @intCast(u32, texture_desc.Width) >> @intCast(u5, mip_index + 1 + current_src_mip_level),
+                        .right = @intCast(u32, texture_desc.Width) >> @intCast(
+                            u5,
+                            mip_index + 1 + current_src_mip_level,
+                        ),
                         .bottom = texture_desc.Height >> @intCast(u5, mip_index + 1 + current_src_mip_level),
                         .back = 1,
                     };

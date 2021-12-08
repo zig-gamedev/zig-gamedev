@@ -22,18 +22,19 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa_allocator.deinit();
+        const leaked = gpa_allocator_state.deinit();
         std.debug.assert(leaked == false);
     }
-    const gpa = &gpa_allocator.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-    defer arena_allocator.deinit();
+    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    defer arena_allocator_state.deinit();
+    const arena_allocator = arena_allocator_state.allocator();
 
-    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
-    defer lib.deinitWindow(gpa);
+    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    defer lib.deinitWindow(gpa_allocator);
 
     var grfx = gr.GraphicsContext.init(window);
     defer grfx.deinit();
@@ -54,7 +55,7 @@ pub fn main() !void {
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/triangle.vs.cso",
             "content/shaders/triangle.ps.cso",
@@ -84,7 +85,7 @@ pub fn main() !void {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
+    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
     defer gui.deinit(&grfx);
 
     const upload_verts = grfx.allocateUploadBufferRegion(vm.Vec3, 3);

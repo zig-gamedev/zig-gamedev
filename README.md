@@ -1,3 +1,5 @@
+**NOTE: To compile this project you need latest version of Zig compiler (zig-windows-x86_64-0.9.0-dev.1903 or newer). You can download it [here](https://ziglang.org/download/).**
+
 # zig-gamedev project
 
 This repository contains a collection of [sample applications](#sample-applications) and [libraries](#libraries) written in **[Zig programming language](https://ziglang.org/)** and using DirectX 12, DirectML, XAudio2, WASAPI, Direct2D, DirectWrite, Bullet Physics SDK. Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases). Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.<br />

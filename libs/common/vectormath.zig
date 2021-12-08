@@ -43,8 +43,8 @@ pub const Vec2 = extern struct {
     }
 
     pub inline fn approxEq(v0: Vec2, v1: Vec2, eps: f32) bool {
-        return math.approxEq(f32, v0.c[0], v1.c[0], eps) and
-            math.approxEq(f32, v0.c[1], v1.c[1], eps);
+        return math.approxEqAbs(f32, v0.c[0], v1.c[0], eps) and
+            math.approxEqAbs(f32, v0.c[1], v1.c[1], eps);
     }
 
     pub inline fn add(v0: Vec2, v1: Vec2) Vec2 {
@@ -147,7 +147,7 @@ pub const Vec2 = extern struct {
 
     pub inline fn normalize(v: Vec2) Vec2 {
         const len = length(v);
-        assert(!math.approxEq(f32, len, 0.0, epsilon));
+        assert(!math.approxEqAbs(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
         return v.scale(rcplen);
     }
@@ -194,9 +194,9 @@ pub const Vec3 = extern struct {
     }
 
     pub inline fn approxEq(v0: Vec3, v1: Vec3, eps: f32) bool {
-        return math.approxEq(f32, v0.c[0], v1.c[0], eps) and
-            math.approxEq(f32, v0.c[1], v1.c[1], eps) and
-            math.approxEq(f32, v0.c[2], v1.c[2], eps);
+        return math.approxEqAbs(f32, v0.c[0], v1.c[0], eps) and
+            math.approxEqAbs(f32, v0.c[1], v1.c[1], eps) and
+            math.approxEqAbs(f32, v0.c[2], v1.c[2], eps);
     }
 
     pub inline fn dot(v0: Vec3, v1: Vec3) f32 {
@@ -319,7 +319,7 @@ pub const Vec3 = extern struct {
 
     pub inline fn normalize(v: Vec3) Vec3 {
         const len = length(v);
-        assert(!math.approxEq(f32, len, 0.0, epsilon));
+        assert(!math.approxEqAbs(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
         return v.scale(rcplen);
     }
@@ -368,10 +368,10 @@ pub const Vec4 = extern struct {
     }
 
     pub inline fn approxEq(v0: Vec4, v1: Vec4, eps: f32) bool {
-        return math.approxEq(f32, v0.c[0], v1.c[0], eps) and
-            math.approxEq(f32, v0.c[1], v1.c[1], eps) and
-            math.approxEq(f32, v0.c[2], v1.c[2], eps) and
-            math.approxEq(f32, v0.c[3], v1.c[3], eps);
+        return math.approxEqAbs(f32, v0.c[0], v1.c[0], eps) and
+            math.approxEqAbs(f32, v0.c[1], v1.c[1], eps) and
+            math.approxEqAbs(f32, v0.c[2], v1.c[2], eps) and
+            math.approxEqAbs(f32, v0.c[3], v1.c[3], eps);
     }
 
     pub inline fn add(v0: Vec4, v1: Vec4) Vec4 {
@@ -498,7 +498,7 @@ pub const Vec4 = extern struct {
 
     pub inline fn normalize(v: Vec4) Vec4 {
         const len = length(v);
-        assert(!math.approxEq(f32, len, 0.0, epsilon));
+        assert(!math.approxEqAbs(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
         return v.scale(rcplen);
     }
@@ -535,10 +535,10 @@ pub const Quat = extern struct {
     }
 
     pub inline fn approxEq(a: Quat, b: Quat, eps: f32) bool {
-        return math.approxEq(f32, a.q[0], b.q[0], eps) and
-            math.approxEq(f32, a.q[1], b.q[1], eps) and
-            math.approxEq(f32, a.q[2], b.q[2], eps) and
-            math.approxEq(f32, a.q[3], b.q[3], eps);
+        return math.approxEqAbs(f32, a.q[0], b.q[0], eps) and
+            math.approxEqAbs(f32, a.q[1], b.q[1], eps) and
+            math.approxEqAbs(f32, a.q[2], b.q[2], eps) and
+            math.approxEqAbs(f32, a.q[3], b.q[3], eps);
     }
 
     pub inline fn add(a: Quat, b: Quat) Quat {
@@ -586,7 +586,7 @@ pub const Quat = extern struct {
 
     pub inline fn normalize(a: Quat) Quat {
         const len = length(a);
-        assert(!math.approxEq(f32, len, 0.0, epsilon));
+        assert(!math.approxEqAbs(f32, len, 0.0, epsilon));
         const rcplen = 1.0 / len;
         return a.scale(rcplen);
     }
@@ -603,7 +603,7 @@ pub const Quat = extern struct {
     pub inline fn inv(a: Quat) Quat {
         const lensq = lengthSq(a);
         const con = conj(a);
-        assert(!math.approxEq(f32, lensq, 0.0, epsilon));
+        assert(!math.approxEqAbs(f32, lensq, 0.0, epsilon));
         const rcp_lensq = 1.0 / lensq;
         return con.scale(rcp_lensq);
     }
@@ -616,7 +616,7 @@ pub const Quat = extern struct {
         const fb = math.sin(t * angle);
 
         const sin_angle = math.sin(angle);
-        assert(!math.approxEq(f32, sin_angle, 0.0, epsilon));
+        assert(!math.approxEqAbs(f32, sin_angle, 0.0, epsilon));
         const rcp_sin_angle = 1.0 / sin_angle;
 
         const ra = a.scale(fa);
@@ -737,22 +737,22 @@ pub const Mat4 = extern struct {
     }
 
     pub inline fn approxEq(a: Mat4, b: Mat4, eps: f32) bool {
-        return math.approxEq(f32, a.r[0].c[0], b.r[0].c[0], eps) and
-            math.approxEq(f32, a.r[0].c[1], b.r[0].c[1], eps) and
-            math.approxEq(f32, a.r[0].c[2], b.r[0].c[2], eps) and
-            math.approxEq(f32, a.r[0].c[3], b.r[0].c[3], eps) and
-            math.approxEq(f32, a.r[1].c[0], b.r[1].c[0], eps) and
-            math.approxEq(f32, a.r[1].c[1], b.r[1].c[1], eps) and
-            math.approxEq(f32, a.r[1].c[2], b.r[1].c[2], eps) and
-            math.approxEq(f32, a.r[1].c[3], b.r[1].c[3], eps) and
-            math.approxEq(f32, a.r[2].c[0], b.r[2].c[0], eps) and
-            math.approxEq(f32, a.r[2].c[1], b.r[2].c[1], eps) and
-            math.approxEq(f32, a.r[2].c[2], b.r[2].c[2], eps) and
-            math.approxEq(f32, a.r[2].c[3], b.r[2].c[3], eps) and
-            math.approxEq(f32, a.r[3].c[0], b.r[3].c[0], eps) and
-            math.approxEq(f32, a.r[3].c[1], b.r[3].c[1], eps) and
-            math.approxEq(f32, a.r[3].c[2], b.r[3].c[2], eps) and
-            math.approxEq(f32, a.r[3].c[3], b.r[3].c[3], eps);
+        return math.approxEqAbs(f32, a.r[0].c[0], b.r[0].c[0], eps) and
+            math.approxEqAbs(f32, a.r[0].c[1], b.r[0].c[1], eps) and
+            math.approxEqAbs(f32, a.r[0].c[2], b.r[0].c[2], eps) and
+            math.approxEqAbs(f32, a.r[0].c[3], b.r[0].c[3], eps) and
+            math.approxEqAbs(f32, a.r[1].c[0], b.r[1].c[0], eps) and
+            math.approxEqAbs(f32, a.r[1].c[1], b.r[1].c[1], eps) and
+            math.approxEqAbs(f32, a.r[1].c[2], b.r[1].c[2], eps) and
+            math.approxEqAbs(f32, a.r[1].c[3], b.r[1].c[3], eps) and
+            math.approxEqAbs(f32, a.r[2].c[0], b.r[2].c[0], eps) and
+            math.approxEqAbs(f32, a.r[2].c[1], b.r[2].c[1], eps) and
+            math.approxEqAbs(f32, a.r[2].c[2], b.r[2].c[2], eps) and
+            math.approxEqAbs(f32, a.r[2].c[3], b.r[2].c[3], eps) and
+            math.approxEqAbs(f32, a.r[3].c[0], b.r[3].c[0], eps) and
+            math.approxEqAbs(f32, a.r[3].c[1], b.r[3].c[1], eps) and
+            math.approxEqAbs(f32, a.r[3].c[2], b.r[3].c[2], eps) and
+            math.approxEqAbs(f32, a.r[3].c[3], b.r[3].c[3], eps);
     }
 
     pub fn transpose(a: Mat4) Mat4 {
@@ -884,7 +884,7 @@ pub const Mat4 = extern struct {
             out_det.?.* = d;
         }
 
-        if (math.approxEq(f32, d, 0.0, epsilon)) {
+        if (math.approxEqAbs(f32, d, 0.0, epsilon)) {
             return initZero();
         }
 
@@ -1010,9 +1010,9 @@ pub const Mat4 = extern struct {
         const cosfov = math.cos(0.5 * fovy);
 
         assert(near > 0.0 and far > 0.0 and far > near);
-        assert(!math.approxEq(f32, sinfov, 0.0, 0.001));
-        assert(!math.approxEq(f32, far, near, 0.001));
-        assert(!math.approxEq(f32, aspect, 0.0, 0.01));
+        assert(!math.approxEqAbs(f32, sinfov, 0.0, 0.001));
+        assert(!math.approxEqAbs(f32, far, near, 0.001));
+        assert(!math.approxEqAbs(f32, aspect, 0.0, 0.01));
 
         const h = cosfov / sinfov;
         const w = h / aspect;
@@ -1114,9 +1114,9 @@ pub const Mat4 = extern struct {
         near_z: f32,
         far_z: f32,
     ) Mat4 {
-        assert(!math.approxEq(f32, view_right, view_left, 0.001));
-        assert(!math.approxEq(f32, view_top, view_bottom, 0.001));
-        assert(!math.approxEq(f32, far_z, near_z, 0.001));
+        assert(!math.approxEqAbs(f32, view_right, view_left, 0.001));
+        assert(!math.approxEqAbs(f32, view_top, view_bottom, 0.001));
+        assert(!math.approxEqAbs(f32, far_z, near_z, 0.001));
 
         const rcp_w = 1.0 / (view_right - view_left);
         const rcp_h = 1.0 / (view_top - view_bottom);
@@ -1137,17 +1137,17 @@ test "dot" {
     {
         const a = Vec2.init(1.0, 2.0);
         const b = Vec2.init(3.0, 4.0);
-        assert(math.approxEq(f32, a.dot(b), 11.0, epsilon));
+        assert(math.approxEqAbs(f32, a.dot(b), 11.0, epsilon));
     }
     {
         const a = Vec3.init(1.0, 2.0, 3.0);
         const b = Vec3.init(4.0, 5.0, 6.0);
-        assert(math.approxEq(f32, a.dot(b), 32.0, epsilon));
+        assert(math.approxEqAbs(f32, a.dot(b), 32.0, epsilon));
     }
     {
         const a = Vec4.init(1.0, 2.0, 3.0, 4.0);
         const b = Vec4.init(5.0, 6.0, 7.0, 8.0);
-        assert(math.approxEq(f32, a.dot(b), 70.0, epsilon));
+        assert(math.approxEqAbs(f32, a.dot(b), 70.0, epsilon));
     }
 }
 
@@ -1212,15 +1212,15 @@ test "VecN add, sub, scale" {
 test "length, normalize" {
     {
         const a = Vec2.init(2.0, 3.0).length();
-        assert(math.approxEq(f32, a, 3.60555, epsilon));
+        assert(math.approxEqAbs(f32, a, 3.60555, epsilon));
     }
     {
         const a = Vec3.init(1.0, 1.0, 1.0).length();
-        assert(math.approxEq(f32, a, 1.73205, epsilon));
+        assert(math.approxEqAbs(f32, a, 1.73205, epsilon));
     }
     {
         const a = Vec4.init(1.0, 1.0, 1.0, 1.0).length();
-        assert(math.approxEq(f32, a, 2.0, epsilon));
+        assert(math.approxEqAbs(f32, a, 2.0, epsilon));
     }
     {
         const a = Vec2.init(2.0, 4.0).normalize();
@@ -1288,11 +1288,11 @@ test "Mat4 inv, det" {
         Vec4.init(-10.0, 10.0, 3.0, 1.0),
         Vec4.init(1.0, 2.0, 3.0, 4.0),
     );
-    assert(math.approxEq(f32, m.det(), 2939.0, epsilon));
+    assert(math.approxEqAbs(f32, m.det(), 2939.0, epsilon));
 
     var det: f32 = 0.0;
     m = m.inv(&det);
-    assert(math.approxEq(f32, det, 2939.0, epsilon));
+    assert(math.approxEqAbs(f32, det, 2939.0, epsilon));
     assert(m.approxEq(
         Mat4.initVec4(
             Vec4.init(-0.170806, -0.13576, -0.349439, 0.164001),

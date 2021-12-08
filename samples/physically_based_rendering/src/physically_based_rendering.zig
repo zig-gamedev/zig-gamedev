@@ -243,7 +243,7 @@ const DemoState = struct {
 };
 
 fn loadAllMeshes(
-    arena: *std.mem.Allocator,
+    arena: std.mem.Allocator,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
@@ -370,12 +370,13 @@ fn drawToCubeTexture(grfx: *gr.GraphicsContext, dest_texture: gr.ResourceHandle,
     grfx.flushResourceBarriers();
 }
 
-fn init(gpa: *std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+fn init(gpa_allocator: std.mem.Allocator) DemoState {
+    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
     var grfx = gr.GraphicsContext.init(window);
 
-    var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-    defer arena_allocator.deinit();
+    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    defer arena_allocator_state.deinit();
+    const arena_allocator = arena_allocator_state.allocator();
 
     const brush = blk: {
         var maybe_brush: ?*d2d1.ISolidColorBrush = null;
@@ -440,7 +441,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/mesh_pbr.vs.cso",
             "content/shaders/mesh_pbr.ps.cso",
@@ -469,7 +470,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
         break :blk grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/sample_env_texture.vs.cso",
             "content/shaders/sample_env_texture.ps.cso",
@@ -496,25 +497,25 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
         const generate_env_texture_pso = grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/generate_env_texture.vs.cso",
             "content/shaders/generate_env_texture.ps.cso",
         );
         const generate_irradiance_texture_pso = grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/generate_irradiance_texture.vs.cso",
             "content/shaders/generate_irradiance_texture.ps.cso",
         );
         const generate_prefiltered_env_texture_pso = grfx.createGraphicsShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &pso_desc,
             "content/shaders/generate_prefiltered_env_texture.vs.cso",
             "content/shaders/generate_prefiltered_env_texture.ps.cso",
         );
         const generate_brdf_integration_texture_pso = grfx.createComputeShaderPipeline(
-            &arena_allocator.allocator,
+            arena_allocator,
             &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
             "content/shaders/generate_brdf_integration_texture.cs.cso",
         );
@@ -526,10 +527,10 @@ fn init(gpa: *std.mem.Allocator) DemoState {
         };
     };
 
-    var all_meshes = std.ArrayList(Mesh).init(gpa);
-    var all_vertices = std.ArrayList(Vertex).init(&arena_allocator.allocator);
-    var all_indices = std.ArrayList(u32).init(&arena_allocator.allocator);
-    loadAllMeshes(&arena_allocator.allocator, &all_meshes, &all_vertices, &all_indices);
+    var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
+    var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
+    var all_indices = std.ArrayList(u32).init(arena_allocator);
+    loadAllMeshes(arena_allocator, &all_meshes, &all_vertices, &all_indices);
 
     const depth_texture = .{
         .resource = grfx.createCommittedResource(
@@ -547,8 +548,8 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
 
-    var mipgen_rgba8 = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
-    var mipgen_rgba16f = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R16G16B16A16_FLOAT);
+    var mipgen_rgba8 = gr.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
+    var mipgen_rgba16f = gr.MipmapGenerator.init(arena_allocator, &grfx, .R16G16B16A16_FLOAT);
 
     grfx.beginFrame();
     drawLoadingScreen(&grfx, title_tfmt, brush);
@@ -556,7 +557,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
+    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
 
     const vertex_buffer = blk: {
         var vertex_buffer = grfx.createCommittedResource(
@@ -940,7 +941,7 @@ fn init(gpa: *std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
     _ = demo.grfx.releasePipeline(demo.mesh_pbr_pso);
@@ -960,7 +961,7 @@ fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
     _ = demo.title_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa);
+    lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -1196,15 +1197,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa_allocator.deinit();
+        const leaked = gpa_allocator_state.deinit();
         std.debug.assert(leaked == false);
     }
-    const gpa = &gpa_allocator.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = init(gpa);
-    defer deinit(&demo, gpa);
+    var demo = init(gpa_allocator);
+    defer deinit(&demo, gpa_allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);

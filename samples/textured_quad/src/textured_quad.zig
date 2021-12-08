@@ -47,12 +47,13 @@ const DemoState = struct {
     textformat: *dwrite.ITextFormat,
     mipmap_level: i32,
 
-    fn init(gpa: *std.mem.Allocator) DemoState {
-        const window = lib.initWindow(gpa, window_name, window_width, window_height) catch unreachable;
+    fn init(gpa_allocator: std.mem.Allocator) DemoState {
+        const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
         var grfx = gr.GraphicsContext.init(window);
 
-        var arena_allocator = std.heap.ArenaAllocator.init(gpa);
-        defer arena_allocator.deinit();
+        var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+        defer arena_allocator_state.deinit();
+        const arena_allocator = arena_allocator_state.allocator();
 
         const pipeline = blk: {
             const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -72,7 +73,7 @@ const DemoState = struct {
             };
 
             break :blk grfx.createGraphicsShaderPipeline(
-                &arena_allocator.allocator,
+                arena_allocator,
                 &pso_desc,
                 "content/shaders/textured_quad.vs.cso",
                 "content/shaders/textured_quad.ps.cso",
@@ -122,11 +123,11 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        var mipgen = gr.MipmapGenerator.init(&arena_allocator.allocator, &grfx, .R8G8B8A8_UNORM);
+        var mipgen = gr.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
 
         grfx.beginFrame();
 
-        const gui = gr.GuiContext.init(&arena_allocator.allocator, &grfx, 1);
+        const gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
 
         const texture = grfx.createAndUploadTex2dFromFile(
             "content/genart_0025_5.png",
@@ -232,7 +233,7 @@ const DemoState = struct {
         };
     }
 
-    fn deinit(demo: *DemoState, gpa: *std.mem.Allocator) void {
+    fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
         demo.grfx.finishGpuCommands();
         _ = demo.brush.Release();
         _ = demo.textformat.Release();
@@ -242,7 +243,7 @@ const DemoState = struct {
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit();
-        lib.deinitWindow(gpa);
+        lib.deinitWindow(gpa_allocator);
         demo.* = undefined;
     }
 
@@ -334,15 +335,15 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa.deinit();
+        const leaked = gpa_allocator_state.deinit();
         std.debug.assert(leaked == false);
     }
-    const allocator = &gpa.allocator;
+    const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = DemoState.init(allocator);
-    defer demo.deinit(allocator);
+    var demo = DemoState.init(gpa_allocator);
+    defer demo.deinit(gpa_allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
