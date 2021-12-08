@@ -135,6 +135,11 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui.cpp", &[_][]const u8{""});
 
+    exe.addCSourceFile(external ++ "/meshoptimizer/clusterizer.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/meshoptimizer/indexgenerator.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/meshoptimizer/vcacheoptimizer.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/meshoptimizer/vfetchoptimizer.cpp", &[_][]const u8{""});
+
     exe.install();
 
     const run_cmd = exe.run();

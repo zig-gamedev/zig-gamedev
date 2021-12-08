@@ -4,6 +4,7 @@ pub usingnamespace @cImport({
     @cInclude("cimgui.h");
     @cInclude("cgltf.h");
     @cInclude("cbullet.h");
+    @cInclude("meshoptimizer.h");
     @cInclude("stb_perlin.h");
     @cInclude("stb_image.h");
 });
