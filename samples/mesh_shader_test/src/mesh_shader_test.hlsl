@@ -48,8 +48,8 @@ Buffer<uint> srv_indices : register(t1);
 #define MAX_NUM_PRIMITIVES 126
 
 struct RootConst {
-    uint meshlet_offset;
     uint vertex_offset;
+    uint meshlet_offset;
 };
 
 ConstantBuffer<RootConst> cbv_root_const : register(b0);
@@ -105,8 +105,8 @@ void msMain(
 #elif defined(PSO__VERTEX_SHADER)
 
 struct RootConst {
-    uint index_offset;
     uint vertex_offset;
+    uint index_offset;
 };
 
 ConstantBuffer<RootConst> cbv_root_const : register(b0);

@@ -1360,6 +1360,7 @@ fn createAddEntity(
 }
 
 fn update(demo: *DemoState) void {
+    demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
 
     if (!demo.simulation_is_paused) {
@@ -1369,7 +1370,6 @@ fn update(demo: *DemoState) void {
         demo.do_simulation_step = false;
     }
 
-    demo.frame_stats.update();
     lib.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(

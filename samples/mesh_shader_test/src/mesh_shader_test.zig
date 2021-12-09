@@ -52,6 +52,14 @@ comptime {
     assert(@alignOf(Meshlet) == 4);
 }
 
+const Pso_DrawConst = extern struct {
+    object_to_world: Mat4,
+};
+
+const Pso_FrameConst = extern struct {
+    world_to_clip: Mat4,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -61,12 +69,28 @@ const DemoState = struct {
     vertex_shader_pso: gr.PipelineHandle,
 
     vertex_buffer: gr.ResourceHandle,
+    vertex_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
     index_buffer: gr.ResourceHandle,
+    index_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
+
+    depth_texture: gr.ResourceHandle,
+    depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     meshes: std.ArrayList(Mesh),
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
+
+    camera: struct {
+        position: Vec3,
+        forward: Vec3,
+        pitch: f32,
+        yaw: f32,
+    },
+    mouse: struct {
+        cursor_prev_x: i32,
+        cursor_prev_y: i32,
+    },
 };
 
 fn loadMeshAndGenerateMeshlets(
@@ -234,6 +258,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.SampleDesc = .{ .Count = 1, .Quality = 0 };
+        pso_desc.RasterizerState.FillMode = .WIREFRAME;
 
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
@@ -262,6 +287,20 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
+    const vertex_buffer_srv = blk: {
+        const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(
+            grfx.getResource(vertex_buffer),
+            &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
+                0,
+                @intCast(u32, all_vertices.items.len),
+                @sizeOf(Vertex),
+            ),
+            srv,
+        );
+        break :blk srv;
+    };
+
     const index_buffer = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
@@ -270,11 +309,76 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
+    const index_buffer_srv = blk: {
+        const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(
+            grfx.getResource(index_buffer),
+            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_indices.items.len)),
+            srv,
+        );
+        break :blk srv;
+    };
+
+    const depth_texture = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &blk: {
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            break :blk desc;
+        },
+        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+    ) catch |err| hrPanic(err);
+
+    const depth_texture_dsv = blk: {
+        const dsv = grfx.allocateCpuDescriptors(.DSV, 1);
+        grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, dsv);
+        break :blk dsv;
+    };
+
+    //
+    // Begin data upload to the GPU.
+    //
     grfx.beginFrame();
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
     var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+
+    // Upload vertex buffer.
+    {
+        const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
+        for (all_vertices.items) |vertex, i| {
+            upload.cpu_slice[i] = vertex;
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(vertex_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
+    }
+
+    // Upload index buffer.
+    {
+        const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        for (all_indices.items) |index, i| {
+            upload.cpu_slice[i] = index;
+        }
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(index_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
+    }
 
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
@@ -290,10 +394,24 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .mesh_shader_pso = mesh_shader_pso,
         .vertex_shader_pso = vertex_shader_pso,
         .vertex_buffer = vertex_buffer,
+        .vertex_buffer_srv = vertex_buffer_srv,
+        .depth_texture = depth_texture,
+        .depth_texture_dsv = depth_texture_dsv,
         .index_buffer = index_buffer,
+        .index_buffer_srv = index_buffer_srv,
         .meshes = all_meshes,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
+        .camera = .{
+            .position = Vec3.init(0.0, 0.0, -4.0),
+            .forward = Vec3.init(0.0, 0.0, 1.0),
+            .pitch = 0.0,
+            .yaw = 0.0,
+        },
+        .mouse = .{
+            .cursor_prev_x = 0,
+            .cursor_prev_y = 0,
+        },
     };
 }
 
@@ -304,6 +422,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.normal_tfmt.Release();
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
+    _ = demo.grfx.releaseResource(demo.depth_texture);
     _ = demo.grfx.releasePipeline(demo.mesh_shader_pso);
     _ = demo.grfx.releasePipeline(demo.vertex_shader_pso);
     demo.gui.deinit(&demo.grfx);
@@ -316,11 +435,66 @@ fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
     lib.newImGuiFrame(dt);
+
+    // Handle camera rotation with mouse.
+    {
+        var pos: w.POINT = undefined;
+        _ = w.GetCursorPos(&pos);
+        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
+        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        demo.mouse.cursor_prev_x = pos.x;
+        demo.mouse.cursor_prev_y = pos.y;
+
+        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+            demo.camera.pitch += 0.0025 * delta_y;
+            demo.camera.yaw += 0.0025 * delta_x;
+            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.yaw = vm.modAngle(demo.camera.yaw);
+        }
+    }
+
+    // Handle camera movement with 'WASD' keys.
+    {
+        const speed: f32 = 5.0;
+        const delta_time = demo.frame_stats.delta_time;
+        const transform = Mat4.initRotationX(demo.camera.pitch).mul(Mat4.initRotationY(demo.camera.yaw));
+        var forward = Vec3.init(0.0, 0.0, 1.0).transform(transform).normalize();
+
+        demo.camera.forward = forward;
+        const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
+        forward = forward.scale(speed * delta_time);
+
+        if (w.GetAsyncKeyState('W') < 0) {
+            demo.camera.position = demo.camera.position.add(forward);
+        } else if (w.GetAsyncKeyState('S') < 0) {
+            demo.camera.position = demo.camera.position.sub(forward);
+        }
+        if (w.GetAsyncKeyState('D') < 0) {
+            demo.camera.position = demo.camera.position.add(right);
+        } else if (w.GetAsyncKeyState('A') < 0) {
+            demo.camera.position = demo.camera.position.sub(right);
+        }
+    }
 }
 
 fn draw(demo: *DemoState) void {
     var grfx = &demo.grfx;
     grfx.beginFrame();
+
+    const cam_world_to_view = Mat4.initLookToLh(
+        demo.camera.position,
+        demo.camera.forward,
+        Vec3.init(0.0, 1.0, 0.0),
+    );
+    const cam_view_to_clip = Mat4.initPerspectiveFovLh(
+        math.pi / 3.0,
+        @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
+        0.01,
+        200.0,
+    );
+    const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
+    _ = cam_world_to_clip;
 
     const back_buffer = grfx.getBackBuffer();
     grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
@@ -330,14 +504,38 @@ fn draw(demo: *DemoState) void {
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
-        null,
+        &demo.depth_texture_dsv,
     );
+    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
         &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
         null,
     );
+
+    grfx.setCurrentPipeline(demo.vertex_shader_pso);
+    grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(3, blk: {
+        const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
+        _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
+        break :blk table;
+    });
+    {
+        const mem = grfx.allocateUploadMemory(Pso_FrameConst, 1);
+        mem.cpu_slice[0].world_to_clip = cam_world_to_clip.transpose();
+        grfx.cmdlist.SetGraphicsRootConstantBufferView(2, mem.gpu_base);
+    }
+    {
+        const mem = grfx.allocateUploadMemory(Pso_DrawConst, 1);
+        mem.cpu_slice[0].object_to_world = Mat4.initIdentity();
+        grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+    }
+    grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{
+        demo.meshes.items[0].vertex_offset,
+        demo.meshes.items[0].index_offset,
+    }, 0);
+    grfx.cmdlist.DrawInstanced(demo.meshes.items[0].num_indices, 1, 0, 0);
 
     demo.gui.draw(grfx);
 
