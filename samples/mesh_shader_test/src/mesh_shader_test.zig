@@ -60,6 +60,9 @@ const DemoState = struct {
     mesh_shader_pso: gr.PipelineHandle,
     vertex_shader_pso: gr.PipelineHandle,
 
+    vertex_buffer: gr.ResourceHandle,
+    index_buffer: gr.ResourceHandle,
+
     meshes: std.ArrayList(Mesh),
 
     brush: *d2d1.ISolidColorBrush,
@@ -90,7 +93,8 @@ fn loadMeshAndGenerateMeshlets(
         });
     }
 
-    var remap = std.ArrayList(u32).initCapacity(arena_allocator, src_indices.items.len) catch unreachable;
+    var remap = std.ArrayList(u32).init(arena_allocator);
+    remap.resize(src_indices.items.len) catch unreachable;
     const num_unique_vertices = c.meshopt_generateVertexRemap(
         remap.items.ptr,
         src_indices.items.ptr,
@@ -100,7 +104,8 @@ fn loadMeshAndGenerateMeshlets(
         @sizeOf(Vertex),
     );
 
-    var opt_vertices = std.ArrayList(Vertex).initCapacity(arena_allocator, num_unique_vertices) catch unreachable;
+    var opt_vertices = std.ArrayList(Vertex).init(arena_allocator);
+    opt_vertices.resize(num_unique_vertices) catch unreachable;
     c.meshopt_remapVertexBuffer(
         opt_vertices.items.ptr,
         src_vertices.items.ptr,
@@ -109,7 +114,8 @@ fn loadMeshAndGenerateMeshlets(
         remap.items.ptr,
     );
 
-    var opt_indices = std.ArrayList(u32).initCapacity(arena_allocator, src_indices.items.len) catch unreachable;
+    var opt_indices = std.ArrayList(u32).init(arena_allocator);
+    opt_indices.resize(src_indices.items.len) catch unreachable;
     c.meshopt_remapIndexBuffer(opt_indices.items.ptr, src_indices.items.ptr, src_indices.items.len, remap.items.ptr);
 
     c.meshopt_optimizeVertexCache(
@@ -248,6 +254,22 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &all_indices,
     );
 
+    const vertex_buffer = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
+
+    const index_buffer = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
+
     grfx.beginFrame();
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
@@ -267,6 +289,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .mesh_shader_pso = mesh_shader_pso,
         .vertex_shader_pso = vertex_shader_pso,
+        .vertex_buffer = vertex_buffer,
+        .index_buffer = index_buffer,
         .meshes = all_meshes,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
@@ -278,6 +302,8 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.meshes.deinit();
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
+    _ = demo.grfx.releaseResource(demo.vertex_buffer);
+    _ = demo.grfx.releaseResource(demo.index_buffer);
     _ = demo.grfx.releasePipeline(demo.mesh_shader_pso);
     _ = demo.grfx.releasePipeline(demo.vertex_shader_pso);
     demo.gui.deinit(&demo.grfx);
