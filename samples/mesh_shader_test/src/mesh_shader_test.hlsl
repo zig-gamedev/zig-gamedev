@@ -47,7 +47,7 @@ Buffer<uint> srv_indices : register(t1);
 
 #define NUM_THREADS 32
 #define MAX_NUM_VERTICES 64
-#define MAX_NUM_PRIMITIVES 126
+#define MAX_NUM_PRIMITIVES 128
 
 struct RootConst {
     uint vertex_offset;
