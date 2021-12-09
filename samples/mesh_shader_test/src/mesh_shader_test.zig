@@ -54,10 +54,12 @@ comptime {
 
 const Pso_DrawConst = extern struct {
     object_to_world: Mat4,
+    base_color_roughness: Vec4,
 };
 
 const Pso_FrameConst = extern struct {
     world_to_clip: Mat4,
+    camera_position: Vec3,
 };
 
 const DemoState = struct {
@@ -258,7 +260,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.SampleDesc = .{ .Count = 1, .Quality = 0 };
-        pso_desc.RasterizerState.FillMode = .WIREFRAME;
+        //pso_desc.RasterizerState.FillMode = .WIREFRAME;
 
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
@@ -273,7 +275,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var all_indices = std.ArrayList(u32).init(arena_allocator);
     loadMeshAndGenerateMeshlets(
         arena_allocator,
-        "content/SciFiHelmet/SciFiHelmet.gltf",
+        "content/rubber_toy.gltf",
         &all_meshes,
         &all_vertices,
         &all_indices,
@@ -494,7 +496,6 @@ fn draw(demo: *DemoState) void {
         200.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
-    _ = cam_world_to_clip;
 
     const back_buffer = grfx.getBackBuffer();
     grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
@@ -523,12 +524,18 @@ fn draw(demo: *DemoState) void {
     });
     {
         const mem = grfx.allocateUploadMemory(Pso_FrameConst, 1);
-        mem.cpu_slice[0].world_to_clip = cam_world_to_clip.transpose();
+        mem.cpu_slice[0] = .{
+            .world_to_clip = cam_world_to_clip.transpose(),
+            .camera_position = demo.camera.position,
+        };
         grfx.cmdlist.SetGraphicsRootConstantBufferView(2, mem.gpu_base);
     }
     {
         const mem = grfx.allocateUploadMemory(Pso_DrawConst, 1);
-        mem.cpu_slice[0].object_to_world = Mat4.initIdentity();
+        mem.cpu_slice[0] = .{
+            .object_to_world = Mat4.initIdentity(),
+            .base_color_roughness = Vec4.init(0.8, 0.4, 0.2, 0.5),
+        };
         grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
     }
     grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{
