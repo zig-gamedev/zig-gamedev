@@ -159,6 +159,22 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     var grfx = gr.GraphicsContext.init(window);
 
+    // Check for Mesh Shader support.
+    {
+        var options7: d3d12.FEATURE_DATA_D3D12_OPTIONS7 = undefined;
+        const res = grfx.device.CheckFeatureSupport(.OPTIONS7, &options7, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS7));
+        if (options7.MeshShaderTier == .NOT_SUPPORTED or res != w.S_OK) {
+            _ = w.user32.messageBoxA(
+                window,
+                "This applications requires graphics card that supports Mesh Shader " ++
+                    "(NVIDIA GeForce Turing or newer, AMD Radeon RX 6000 or newer).",
+                "No DirectX 12 Mesh Shader support",
+                w.user32.MB_OK | w.user32.MB_ICONERROR,
+            ) catch 0;
+            w.kernel32.ExitProcess(0);
+        }
+    }
+
     const brush = blk: {
         var brush: ?*d2d1.ISolidColorBrush = null;
         hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(

@@ -1049,6 +1049,22 @@ pub const RAYTRACING_TIER = enum(UINT) {
     TIER_1_1 = 11,
 };
 
+pub const MESH_SHADER_TIER = enum(UINT) {
+    NOT_SUPPORTED = 0,
+    TIER_1 = 10,
+};
+
+pub const SAMPLER_FEEDBACK_TIER = enum(UINT) {
+    NOT_SUPPORTED = 0,
+    TIER_0_9 = 90,
+    TIER_1_0 = 100,
+};
+
+pub const FEATURE_DATA_D3D12_OPTIONS7 = extern struct {
+    MeshShaderTier: MESH_SHADER_TIER,
+    SamplerFeedbackTier: SAMPLER_FEEDBACK_TIER,
+};
+
 pub const COMMAND_LIST_SUPPORT_FLAGS = UINT;
 pub const COMMAND_LIST_SUPPORT_FLAG_NONE: COMMAND_LIST_SUPPORT_FLAGS = 0x0;
 pub const COMMAND_LIST_SUPPORT_FLAG_DIRECT: COMMAND_LIST_SUPPORT_FLAGS = 0x1;
