@@ -161,6 +161,7 @@ float3 fresnelSchlick(float h_dot_v, float3 f0) {
 
 [RootSignature(ROOT_SIGNATURE)]
 void psMain(
+    float3 barycentrics : SV_Barycentrics,
     Vertex vertex,
     out float4 out_color : SV_Target0
 ) {
@@ -225,5 +226,14 @@ void psMain(
     color = color / (color + 1.0);
     color = pow(color, 1.0 / 2.2);
 
-    out_color = float4(color, 1.0);
+    // wireframe
+    float3 barys = barycentrics;
+    barys.z = 1.0 - barys.x - barys.y;
+    float3 deltas = fwidth(barys);
+    float3 smoothing = deltas;
+    float3 thickness = deltas * 0.25;
+    barys = smoothstep(thickness, thickness + smoothing, barys);
+    float min_bary = min(barys.x, min(barys.y, barys.z));
+
+    out_color = float4(color * min_bary, 1.0);
 }

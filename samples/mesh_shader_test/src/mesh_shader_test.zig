@@ -327,7 +327,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.SampleDesc = .{ .Count = 1, .Quality = 0 };
-        //pso_desc.RasterizerState.FillMode = .WIREFRAME;
 
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
@@ -344,7 +343,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var all_meshlets_data = std.ArrayList(u32).init(arena_allocator);
     loadMeshAndGenerateMeshlets(
         arena_allocator,
-        "content/rubber_toy.gltf",
+        "content/box.gltf",
         &all_meshes,
         &all_vertices,
         &all_indices,
@@ -542,7 +541,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .camera = .{
-            .position = Vec3.init(0.0, 0.0, -4.0),
+            .position = Vec3.init(0.0, 0.0, -3.0),
             .forward = Vec3.init(0.0, 0.0, 1.0),
             .pitch = 0.0,
             .yaw = 0.0,
@@ -649,7 +648,7 @@ fn draw(demo: *DemoState) void {
     grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
+        &[4]f32{ 0.2, 0.4, 0.6, 1.0 },
         0,
         null,
     );
@@ -677,19 +676,21 @@ fn draw(demo: *DemoState) void {
         const mem = grfx.allocateUploadMemory(Pso_DrawConst, 1);
         mem.cpu_slice[0] = .{
             .object_to_world = Mat4.initIdentity(),
-            .base_color_roughness = Vec4.init(0.8, 0.4, 0.2, 0.5),
+            .base_color_roughness = Vec4.init(1.0, 0.0, 0.0, 0.25),
         };
         grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
     }
+
+    const mesh = demo.meshes.items[0];
     grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{
-        demo.meshes.items[0].vertex_offset,
-        if (use_mesh_shader) demo.meshes.items[0].meshlet_offset else demo.meshes.items[0].index_offset,
+        mesh.vertex_offset,
+        if (use_mesh_shader) mesh.meshlet_offset else mesh.index_offset,
     }, 0);
 
     if (use_mesh_shader) {
-        grfx.cmdlist.DispatchMesh(demo.meshes.items[0].num_meshlets, 1, 1);
+        grfx.cmdlist.DispatchMesh(mesh.num_meshlets, 1, 1);
     } else {
-        grfx.cmdlist.DrawInstanced(demo.meshes.items[0].num_indices, 1, 0, 0);
+        grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
     }
 
     demo.gui.draw(grfx);
