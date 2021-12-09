@@ -28,6 +28,8 @@ const window_name = "zig-gamedev: mesh shader test";
 const window_width = 1920;
 const window_height = 1080;
 
+const use_mesh_shader = true;
+
 const Vertex = struct {
     position: Vec3,
     normal: Vec3,
@@ -75,6 +77,11 @@ const DemoState = struct {
     index_buffer: gr.ResourceHandle,
     index_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
+    meshlet_buffer: gr.ResourceHandle,
+    meshlet_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
+    meshlet_data_buffer: gr.ResourceHandle,
+    meshlet_data_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
+
     depth_texture: gr.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
@@ -101,7 +108,12 @@ fn loadMeshAndGenerateMeshlets(
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
+    all_meshlets: *std.ArrayList(Meshlet),
+    all_meshlets_data: *std.ArrayList(u32),
 ) void {
+    const tracy_zone = tracy.zone(@src(), 1);
+    defer tracy_zone.end();
+
     var src_positions = std.ArrayList(Vec3).init(arena_allocator);
     var src_normals = std.ArrayList(Vec3).init(arena_allocator);
     var src_indices = std.ArrayList(u32).init(arena_allocator);
@@ -150,7 +162,7 @@ fn loadMeshAndGenerateMeshlets(
         opt_indices.items.len,
         opt_vertices.items.len,
     );
-    _ = c.meshopt_optimizeVertexFetch(
+    const num_opt_vertices = c.meshopt_optimizeVertexFetch(
         opt_vertices.items.ptr,
         opt_indices.items.ptr,
         opt_indices.items.len,
@@ -158,15 +170,70 @@ fn loadMeshAndGenerateMeshlets(
         opt_vertices.items.len,
         @sizeOf(Vertex),
     );
+    assert(num_opt_vertices == opt_vertices.items.len);
+
+    const max_num_meshlet_vertices = 64;
+    const max_num_meshlet_triangles = 128;
+    const max_num_meshlets = c.meshopt_buildMeshletsBound(
+        opt_indices.items.len,
+        max_num_meshlet_vertices,
+        max_num_meshlet_triangles,
+    );
+
+    var meshlets = std.ArrayList(c.meshopt_Meshlet).init(arena_allocator);
+    var meshlet_vertices = std.ArrayList(u32).init(arena_allocator);
+    var meshlet_triangles = std.ArrayList(u8).init(arena_allocator);
+    meshlets.resize(max_num_meshlets) catch unreachable;
+    meshlet_vertices.resize(max_num_meshlets * max_num_meshlet_vertices) catch unreachable;
+    meshlet_triangles.resize(max_num_meshlets * max_num_meshlet_triangles * 3) catch unreachable;
+
+    const num_meshlets = c.meshopt_buildMeshlets(
+        meshlets.items.ptr,
+        meshlet_vertices.items.ptr,
+        meshlet_triangles.items.ptr,
+        opt_indices.items.ptr,
+        opt_indices.items.len,
+        @ptrCast([*c]const f32, opt_vertices.items.ptr),
+        opt_vertices.items.len,
+        @sizeOf(Vertex),
+        max_num_meshlet_vertices,
+        max_num_meshlet_triangles,
+        0.0,
+    );
+    assert(num_meshlets <= max_num_meshlets);
+    meshlets.resize(num_meshlets) catch unreachable;
 
     all_meshes.append(.{
         .index_offset = @intCast(u32, all_indices.items.len),
         .vertex_offset = @intCast(u32, all_vertices.items.len),
-        .meshlet_offset = 0,
+        .meshlet_offset = @intCast(u32, all_meshlets.items.len),
         .num_indices = @intCast(u32, opt_indices.items.len),
         .num_vertices = @intCast(u32, opt_vertices.items.len),
-        .num_meshlets = 0,
+        .num_meshlets = @intCast(u32, meshlets.items.len),
     }) catch unreachable;
+
+    for (meshlets.items) |src_meshlet| {
+        const meshlet = Meshlet{
+            .data_offset = @intCast(u18, all_meshlets_data.items.len),
+            .num_vertices = @intCast(u7, src_meshlet.vertex_count),
+            .num_triangles = @intCast(u7, src_meshlet.triangle_count),
+        };
+        all_meshlets.append(meshlet) catch unreachable;
+
+        var i: u32 = 0;
+        while (i < src_meshlet.vertex_count) : (i += 1) {
+            all_meshlets_data.append(meshlet_vertices.items[src_meshlet.vertex_offset + i]) catch unreachable;
+        }
+
+        i = 0;
+        while (i < src_meshlet.triangle_count) : (i += 1) {
+            const index0 = @intCast(u10, meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 0]);
+            const index1 = @intCast(u10, meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 1]);
+            const index2 = @intCast(u10, meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 2]);
+            const prim = @intCast(u32, index0) | (@intCast(u32, index1) << 10) | (@intCast(u32, index2) << 20);
+            all_meshlets_data.append(prim) catch unreachable;
+        }
+    }
 
     all_indices.appendSlice(opt_indices.items) catch unreachable;
     all_vertices.appendSlice(opt_vertices.items) catch unreachable;
@@ -273,12 +340,16 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
+    var all_meshlets = std.ArrayList(Meshlet).init(arena_allocator);
+    var all_meshlets_data = std.ArrayList(u32).init(arena_allocator);
     loadMeshAndGenerateMeshlets(
         arena_allocator,
         "content/rubber_toy.gltf",
         &all_meshes,
         &all_vertices,
         &all_indices,
+        &all_meshlets,
+        &all_meshlets_data,
     );
 
     const vertex_buffer = grfx.createCommittedResource(
@@ -321,6 +392,42 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk srv;
     };
 
+    const meshlet_buffer = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(all_meshlets.items.len * @sizeOf(Meshlet)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
+
+    const meshlet_buffer_srv = blk: {
+        const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(
+            grfx.getResource(meshlet_buffer),
+            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_meshlets.items.len)),
+            srv,
+        );
+        break :blk srv;
+    };
+
+    const meshlet_data_buffer = grfx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(all_meshlets_data.items.len * @sizeOf(u32)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
+
+    const meshlet_data_buffer_srv = blk: {
+        const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        grfx.device.CreateShaderResourceView(
+            grfx.getResource(meshlet_data_buffer),
+            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_meshlets_data.items.len)),
+            srv,
+        );
+        break :blk srv;
+    };
+
     const depth_texture = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
@@ -351,9 +458,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Upload vertex buffer.
     {
         const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
-        for (all_vertices.items) |vertex, i| {
-            upload.cpu_slice[i] = vertex;
-        }
+        for (all_vertices.items) |vertex, i| upload.cpu_slice[i] = vertex;
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(vertex_buffer),
             0,
@@ -368,9 +473,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Upload index buffer.
     {
         const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
-        for (all_indices.items) |index, i| {
-            upload.cpu_slice[i] = index;
-        }
+        for (all_indices.items) |index, i| upload.cpu_slice[i] = index;
         grfx.cmdlist.CopyBufferRegion(
             grfx.getResource(index_buffer),
             0,
@@ -379,6 +482,36 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
         grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
+    }
+
+    // Upload meshlet buffer.
+    {
+        const upload = grfx.allocateUploadBufferRegion(Meshlet, @intCast(u32, all_meshlets.items.len));
+        for (all_meshlets.items) |meshlet, i| upload.cpu_slice[i] = meshlet;
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(meshlet_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(meshlet_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        grfx.flushResourceBarriers();
+    }
+
+    // Upload meshlet data buffer.
+    {
+        const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_meshlets_data.items.len));
+        for (all_meshlets_data.items) |meshlet_data, i| upload.cpu_slice[i] = meshlet_data;
+        grfx.cmdlist.CopyBufferRegion(
+            grfx.getResource(meshlet_data_buffer),
+            0,
+            upload.buffer,
+            upload.buffer_offset,
+            upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
+        );
+        grfx.addTransitionBarrier(meshlet_data_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         grfx.flushResourceBarriers();
     }
 
@@ -401,6 +534,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .depth_texture_dsv = depth_texture_dsv,
         .index_buffer = index_buffer,
         .index_buffer_srv = index_buffer_srv,
+        .meshlet_buffer = meshlet_buffer,
+        .meshlet_buffer_srv = meshlet_buffer_srv,
+        .meshlet_data_buffer = meshlet_data_buffer,
+        .meshlet_data_buffer_srv = meshlet_data_buffer_srv,
         .meshes = all_meshes,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
@@ -424,6 +561,8 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.normal_tfmt.Release();
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
+    _ = demo.grfx.releaseResource(demo.meshlet_buffer);
+    _ = demo.grfx.releaseResource(demo.meshlet_data_buffer);
     _ = demo.grfx.releaseResource(demo.depth_texture);
     _ = demo.grfx.releasePipeline(demo.mesh_shader_pso);
     _ = demo.grfx.releasePipeline(demo.vertex_shader_pso);
@@ -515,11 +654,15 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
-    grfx.setCurrentPipeline(demo.vertex_shader_pso);
+    grfx.setCurrentPipeline(if (use_mesh_shader) demo.mesh_shader_pso else demo.vertex_shader_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     grfx.cmdlist.SetGraphicsRootDescriptorTable(3, blk: {
         const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
         _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
+        if (use_mesh_shader) {
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.meshlet_buffer_srv);
+            _ = grfx.copyDescriptorsToGpuHeap(1, demo.meshlet_data_buffer_srv);
+        }
         break :blk table;
     });
     {
@@ -540,9 +683,14 @@ fn draw(demo: *DemoState) void {
     }
     grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{
         demo.meshes.items[0].vertex_offset,
-        demo.meshes.items[0].index_offset,
+        if (use_mesh_shader) demo.meshes.items[0].meshlet_offset else demo.meshes.items[0].index_offset,
     }, 0);
-    grfx.cmdlist.DrawInstanced(demo.meshes.items[0].num_indices, 1, 0, 0);
+
+    if (use_mesh_shader) {
+        grfx.cmdlist.DispatchMesh(demo.meshes.items[0].num_meshlets, 1, 1);
+    } else {
+        grfx.cmdlist.DrawInstanced(demo.meshes.items[0].num_indices, 1, 0, 0);
+    }
 
     demo.gui.draw(grfx);
 
