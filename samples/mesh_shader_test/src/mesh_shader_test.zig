@@ -28,8 +28,6 @@ const window_name = "zig-gamedev: mesh shader test";
 const window_width = 1920;
 const window_height = 1080;
 
-const use_mesh_shader = true;
-
 const Vertex = struct {
     position: Vec3,
     normal: Vec3,
@@ -96,6 +94,8 @@ const DemoState = struct {
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
+
+    use_mesh_shader: bool,
 
     camera: struct {
         position: Vec3,
@@ -296,7 +296,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
-            dwrite.FONT_WEIGHT.NORMAL,
+            dwrite.FONT_WEIGHT.BOLD,
             dwrite.FONT_STYLE.NORMAL,
             dwrite.FONT_STRETCH.NORMAL,
             32.0,
@@ -429,7 +429,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
             grfx.getResource(meshlet_buffer),
-            &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(0, @intCast(u32, all_meshlets.items.len), @sizeOf(Meshlet)),
+            &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
+                0,
+                @intCast(u32, all_meshlets.items.len),
+                @sizeOf(Meshlet),
+            ),
             srv,
         );
         break :blk srv;
@@ -567,6 +571,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .entities = entities,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
+        .use_mesh_shader = true,
         .camera = .{
             .position = Vec3.init(0.0, 0.0, -world_half_extent),
             .forward = Vec3.init(0.0, 0.0, 1.0),
@@ -603,6 +608,38 @@ fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
     lib.newImGuiFrame(dt);
+
+    c.igSetNextWindowPos(
+        c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImGuiCond_FirstUseEver,
+        c.ImVec2{ .x = 0.0, .y = 0.0 },
+    );
+    c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
+
+    _ = c.igBegin(
+        "Demo Settings",
+        null,
+        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+    );
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + Drag", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  rotate camera", "");
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  move camera", "");
+
+    var draw_mode: i32 = if (demo.use_mesh_shader) 0 else 1;
+    _ = c.igRadioButton_IntPtr("Use Mesh Shader", &draw_mode, 0);
+    _ = c.igRadioButton_IntPtr("Use Vertex Shader with programmable vertex fetch", &draw_mode, 1);
+    demo.use_mesh_shader = if (draw_mode == 0) true else false;
+
+    c.igEnd();
 
     // Handle camera rotation with mouse.
     {
@@ -684,6 +721,7 @@ fn draw(demo: *DemoState) void {
     //
     // Draw all entities.
     //
+    const use_mesh_shader = demo.use_mesh_shader;
     grfx.setCurrentPipeline(if (use_mesh_shader) demo.mesh_shader_pso else demo.vertex_shader_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
 
@@ -722,7 +760,7 @@ fn draw(demo: *DemoState) void {
         const mesh = &demo.meshes.items[entity.mesh_index];
 
         // Select a mesh to draw by specifying offsets in global buffers.
-        grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{
+        grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &[_]u32{
             mesh.vertex_offset,
             if (use_mesh_shader) mesh.meshlet_offset else mesh.index_offset,
         }, 0);

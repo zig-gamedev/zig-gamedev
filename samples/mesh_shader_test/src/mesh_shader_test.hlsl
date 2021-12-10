@@ -7,7 +7,7 @@ struct Vertex {
     float4 position_sv : SV_Position;
     float3 position : _Position;
     float3 normal : _Normal;
-    float3 meshlet_color : _MeshletColor;
+    float3 color : _Color;
 };
 
 struct DrawConst {
@@ -83,7 +83,7 @@ void msMain(
     const uint meshlet_index = group_id.x + cbv_root_const.meshlet_offset;
 
     const uint64_t offset_vertices_triangles = srv_meshlets[meshlet_index];
-    const uint data_offset = (uint)(offset_vertices_triangles & 0xffffffff);
+    const uint data_offset = (uint)offset_vertices_triangles;
     const uint num_vertices = (uint)((offset_vertices_triangles >> 32) & 0xffff);
     const uint num_triangles = (uint)((offset_vertices_triangles >> 48) & 0xffff);
 
@@ -96,7 +96,7 @@ void msMain(
     SetMeshOutputCounts(num_vertices, num_triangles);
 
     const uint hash = computeHash(meshlet_index);
-    float3 meshlet_color = float3(hash & 0xff, (hash >> 8) & 0xff, (hash >> 16) & 0xff) / 255.0;
+    float3 color = float3(hash & 0xff, (hash >> 8) & 0xff, (hash >> 16) & 0xff) / 255.0;
 
     uint i;
     for (i = thread_index; i < num_vertices; i += NUM_THREADS) {
@@ -110,7 +110,7 @@ void msMain(
         position = mul(position, world_to_clip);
         out_vertices[i].position_sv = position;
         out_vertices[i].normal = mul(srv_vertices[vertex_index].normal, (float3x3)object_to_world);
-        out_vertices[i].meshlet_color = meshlet_color;
+        out_vertices[i].color = color;
     }
 
     for (i = thread_index; i < num_triangles; i += NUM_THREADS) {
@@ -146,7 +146,7 @@ void vsMain(
     position = mul(position, world_to_clip);
     out_vertex.position_sv = position;
     out_vertex.normal = mul(srv_vertices[vertex_index].normal, (float3x3)object_to_world);
-    out_vertex.meshlet_color = 1.0;
+    out_vertex.color = 1.0;
 }
 
 #endif
@@ -172,7 +172,7 @@ float geometrySmith(float3 n, float3 v, float3 l, float k) {
 }
 
 float3 fresnelSchlick(float h_dot_v, float3 f0) {
-    return f0 + (float3(1.0, 1.0, 1.0) - f0) * pow(1.0 - h_dot_v, 5.0);
+    return f0 + (1.0 - f0) * pow(1.0 - h_dot_v, 5.0);
 }
 
 [RootSignature(ROOT_SIGNATURE)]
@@ -202,9 +202,9 @@ void psMain(
         float3(-25.0, 15.0, -25.0),
     };
     const float3 light_radiance[4] = {
-        10.0 * float3(150.0, 150.0, 5.0),
+        4.0 * float3(150.0, 75.0, 0.0),
         10.0 * float3(150.0, 150.0, 150.0),
-        10.0 * float3(150.0, 150.0, 5.0),
+        4.0 * float3(150.0, 75.0, 0.0),
         10.0 * float3(150.0, 150.0, 150.0),
     };
 
@@ -241,5 +241,5 @@ void psMain(
     color = color / (color + 1.0);
     color = pow(color, 1.0 / 2.2);
 
-    out_color = float4(color * vertex.meshlet_color, 1.0);
+    out_color = float4(color * vertex.color, 1.0);
 }
