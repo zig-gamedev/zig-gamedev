@@ -31,6 +31,8 @@ const window_height = 1080;
 const max_num_meshlet_vertices: usize = 64;
 const max_num_meshlet_triangles: usize = 128;
 
+const mesh_engine = 1;
+
 const Vertex = struct {
     position: Vec3,
     normal: Vec3,
@@ -339,6 +341,15 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var all_meshlets_data = std.ArrayList(u32).init(arena_allocator);
     loadMeshAndGenerateMeshlets(
         arena_allocator,
+        "content/cube.gltf",
+        &all_meshes,
+        &all_vertices,
+        &all_indices,
+        &all_meshlets,
+        &all_meshlets_data,
+    );
+    loadMeshAndGenerateMeshlets(
+        arena_allocator,
         "content/engine.gltf",
         &all_meshes,
         &all_vertices,
@@ -603,6 +614,10 @@ fn update(demo: *DemoState) void {
     c.igSameLine(0, -1);
     c.igText(" :  move camera", "");
 
+    c.igSpacing();
+    c.igSpacing();
+
+    c.igText("Draw mode:", "");
     var draw_mode: i32 = if (demo.use_mesh_shader) 0 else 1;
     _ = c.igRadioButton_IntPtr("Use Mesh Shader", &draw_mode, 0);
     _ = c.igRadioButton_IntPtr("Use Vertex Shader with programmable vertex fetch", &draw_mode, 1);
@@ -612,6 +627,7 @@ fn update(demo: *DemoState) void {
 
     c.igSpacing();
     c.igSpacing();
+    c.igSpacing();
 
     c.igText("Triangles: ");
     c.igSameLine(0, -1);
@@ -619,7 +635,7 @@ fn update(demo: *DemoState) void {
         .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
         "%.3f M",
         @intToFloat(f64, demo.num_objects_to_draw) *
-            @intToFloat(f64, demo.meshes.items[0].num_indices / 3) / 1_000_000.0,
+            @intToFloat(f64, demo.meshes.items[mesh_engine].num_indices / 3) / 1_000_000.0,
     );
 
     c.igText("Vertices: ");
@@ -628,7 +644,7 @@ fn update(demo: *DemoState) void {
         .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
         "%.3f M",
         @intToFloat(f64, demo.num_objects_to_draw) *
-            @intToFloat(f64, demo.meshes.items[0].num_vertices) / 1_000_000.0,
+            @intToFloat(f64, demo.meshes.items[mesh_engine].num_vertices) / 1_000_000.0,
     );
 
     if (demo.use_mesh_shader) {
@@ -638,7 +654,7 @@ fn update(demo: *DemoState) void {
             .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
             "%.3f K",
             @intToFloat(f64, demo.num_objects_to_draw) *
-                @intToFloat(f64, demo.meshes.items[0].num_meshlets) / 1_000.0,
+                @intToFloat(f64, demo.meshes.items[mesh_engine].num_meshlets) / 1_000.0,
         );
 
         c.igSpacing();
@@ -756,7 +772,7 @@ fn draw(demo: *DemoState) void {
             grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
         }
 
-        const mesh = &demo.meshes.items[0];
+        const mesh = &demo.meshes.items[mesh_engine];
 
         // Select a mesh to draw by specifying offsets in global buffers.
         grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &[_]u32{

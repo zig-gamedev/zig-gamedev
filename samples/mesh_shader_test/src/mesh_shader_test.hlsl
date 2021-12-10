@@ -127,7 +127,7 @@ void vsMain(
     position = mul(position, object_to_clip);
 
     out_vertex.position_sv = position;
-    out_vertex.color = 1.0;
+    out_vertex.color = 0.9;
 }
 
 #endif
@@ -140,10 +140,9 @@ void psMain(
 ) {
     // wireframe
     float3 barys = barycentrics;
-    barys.z = 1.0 - barys.x - barys.y;
-    float3 deltas = fwidth(barys);
-    float3 smoothing = deltas * 1.0;
-    float3 thickness = deltas * 0.25;
+    const float3 deltas = fwidth(barys);
+    const float3 smoothing = deltas * 1.0;
+    const float3 thickness = deltas * 0.25;
     barys = smoothstep(thickness, thickness + smoothing, barys);
     float min_bary = min(barys.x, min(barys.y, barys.z));
 
