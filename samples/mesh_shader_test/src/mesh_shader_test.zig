@@ -28,6 +28,9 @@ const window_name = "zig-gamedev: mesh shader test";
 const window_width = 1920;
 const window_height = 1080;
 
+const max_num_meshlet_vertices: usize = 64;
+const max_num_meshlet_triangles: usize = 128;
+
 const Vertex = struct {
     position: Vec3,
     normal: Vec3,
@@ -53,19 +56,7 @@ comptime {
 }
 
 const Pso_DrawConst = extern struct {
-    object_to_world: Mat4,
-    base_color_roughness: Vec4,
-};
-
-const Pso_FrameConst = extern struct {
-    world_to_clip: Mat4,
-    camera_position: Vec3,
-};
-
-const Entity = struct {
-    position: Vec3,
-    base_color_roughness: Vec4,
-    mesh_index: u32,
+    object_to_clip: Mat4,
 };
 
 const DemoState = struct {
@@ -90,12 +81,12 @@ const DemoState = struct {
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     meshes: std.ArrayList(Mesh),
-    entities: std.ArrayList(Entity),
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
     use_mesh_shader: bool,
+    num_objects_to_draw: i32,
 
     camera: struct {
         position: Vec3,
@@ -179,8 +170,6 @@ fn loadMeshAndGenerateMeshlets(
     );
     assert(num_opt_vertices == opt_vertices.items.len);
 
-    const max_num_meshlet_vertices = 64;
-    const max_num_meshlet_triangles = 128;
     const max_num_meshlets = c.meshopt_buildMeshletsBound(
         opt_indices.items.len,
         max_num_meshlet_vertices,
@@ -357,25 +346,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &all_meshlets,
         &all_meshlets_data,
     );
-
-    var entities = std.ArrayList(Entity).init(gpa_allocator);
-
-    const world_half_extent: f32 = 5.01;
-    {
-        const spread: f32 = 2.5;
-
-        var y: f32 = -world_half_extent;
-        while (y < world_half_extent) : (y += spread) {
-            var x: f32 = -world_half_extent;
-            while (x < world_half_extent) : (x += spread) {
-                entities.append(.{
-                    .position = Vec3.init(x, y, 0),
-                    .base_color_roughness = Vec4.init(1.0, 1.0, 1.0, -0.5),
-                    .mesh_index = 0,
-                }) catch unreachable;
-            }
-        }
-    }
 
     const vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
@@ -568,12 +538,12 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .meshlet_data_buffer = meshlet_data_buffer,
         .meshlet_data_buffer_srv = meshlet_data_buffer_srv,
         .meshes = all_meshes,
-        .entities = entities,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .use_mesh_shader = true,
+        .num_objects_to_draw = 16,
         .camera = .{
-            .position = Vec3.init(0.0, 0.0, -world_half_extent),
+            .position = Vec3.init(0.0, 0.0, -2.0),
             .forward = Vec3.init(0.0, 0.0, 1.0),
             .pitch = 0.0,
             .yaw = 0.0,
@@ -587,7 +557,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
-    demo.entities.deinit();
     demo.meshes.deinit();
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
@@ -639,6 +608,45 @@ fn update(demo: *DemoState) void {
     _ = c.igRadioButton_IntPtr("Use Vertex Shader with programmable vertex fetch", &draw_mode, 1);
     demo.use_mesh_shader = if (draw_mode == 0) true else false;
 
+    _ = c.igSliderInt("Num. objects", &demo.num_objects_to_draw, 1, 1000, null, c.ImGuiSliderFlags_None);
+
+    c.igSpacing();
+    c.igSpacing();
+
+    c.igText("Triangles: ");
+    c.igSameLine(0, -1);
+    c.igTextColored(
+        .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
+        "%.3f M",
+        @intToFloat(f64, demo.num_objects_to_draw) *
+            @intToFloat(f64, demo.meshes.items[0].num_indices / 3) / 1_000_000.0,
+    );
+
+    c.igText("Vertices: ");
+    c.igSameLine(0, -1);
+    c.igTextColored(
+        .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
+        "%.3f M",
+        @intToFloat(f64, demo.num_objects_to_draw) *
+            @intToFloat(f64, demo.meshes.items[0].num_vertices) / 1_000_000.0,
+    );
+
+    if (demo.use_mesh_shader) {
+        c.igText("Meshlets: ");
+        c.igSameLine(0, -1);
+        c.igTextColored(
+            .{ .x = 0, .y = 0.8, .z = 0, .w = 1 },
+            "%.3f K",
+            @intToFloat(f64, demo.num_objects_to_draw) *
+                @intToFloat(f64, demo.meshes.items[0].num_meshlets) / 1_000.0,
+        );
+
+        c.igSpacing();
+        c.igSpacing();
+        c.igText("Max. vertices / meshlet: %d", max_num_meshlet_vertices);
+        c.igText("Max. triangles / meshlet: %d", max_num_meshlet_triangles);
+    }
+
     c.igEnd();
 
     // Handle camera rotation with mouse.
@@ -661,7 +669,7 @@ fn update(demo: *DemoState) void {
 
     // Handle camera movement with 'WASD' keys.
     {
-        const speed: f32 = 5.0;
+        const speed: f32 = 0.25;
         const delta_time = demo.frame_stats.delta_time;
         const transform = Mat4.initRotationX(demo.camera.pitch).mul(Mat4.initRotationY(demo.camera.yaw));
         var forward = Vec3.init(0.0, 0.0, 1.0).transform(transform).normalize();
@@ -719,14 +727,14 @@ fn draw(demo: *DemoState) void {
     );
 
     //
-    // Draw all entities.
+    // Draw all objects.
     //
     const use_mesh_shader = demo.use_mesh_shader;
     grfx.setCurrentPipeline(if (use_mesh_shader) demo.mesh_shader_pso else demo.vertex_shader_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
 
     // Bind global buffers that contain data for *all meshes* and *all meshlets*.
-    grfx.cmdlist.SetGraphicsRootDescriptorTable(3, blk: {
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
         const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
         _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
         if (use_mesh_shader) {
@@ -736,28 +744,19 @@ fn draw(demo: *DemoState) void {
         break :blk table;
     });
 
-    // Upload per-frame constant data.
-    {
-        const mem = grfx.allocateUploadMemory(Pso_FrameConst, 1);
-        mem.cpu_slice[0] = .{
-            .world_to_clip = cam_world_to_clip.transpose(),
-            .camera_position = demo.camera.position,
-        };
-        grfx.cmdlist.SetGraphicsRootConstantBufferView(2, mem.gpu_base);
-    }
-
-    for (demo.entities.items) |entity| {
+    var entity_index: i32 = 0;
+    while (entity_index < demo.num_objects_to_draw) : (entity_index += 1) {
         // Upload per-draw constant data.
         {
+            const position = Vec3.init(0.0, 0.0, @intToFloat(f32, entity_index) * 2.5);
             const mem = grfx.allocateUploadMemory(Pso_DrawConst, 1);
             mem.cpu_slice[0] = .{
-                .object_to_world = Mat4.initTranslation(entity.position).transpose(),
-                .base_color_roughness = entity.base_color_roughness,
+                .object_to_clip = Mat4.initTranslation(position).mul(cam_world_to_clip).transpose(),
             };
             grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
         }
 
-        const mesh = &demo.meshes.items[entity.mesh_index];
+        const mesh = &demo.meshes.items[0];
 
         // Select a mesh to draw by specifying offsets in global buffers.
         grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &[_]u32{
