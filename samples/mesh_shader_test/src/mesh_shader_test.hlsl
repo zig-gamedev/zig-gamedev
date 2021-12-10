@@ -7,6 +7,7 @@ struct Vertex {
     float4 position_sv : SV_Position;
     float3 position : _Position;
     float3 normal : _Normal;
+    float3 meshlet_color : _MeshletColor;
 };
 
 struct DrawConst {
@@ -56,8 +57,18 @@ struct RootConst {
 
 ConstantBuffer<RootConst> cbv_root_const : register(b0);
 
-Buffer<uint> srv_meshlets : register(t2);
+StructuredBuffer<uint64_t> srv_meshlets : register(t2);
 Buffer<uint> srv_meshlets_data : register(t3);
+
+uint computeHash(uint a) {
+    a = (a + 0x7ed55d16) + (a << 12);
+    a = (a ^ 0xc761c23c) ^ (a >> 19);
+    a = (a + 0x165667b1) + (a << 5);
+    a = (a + 0xd3a2646c) ^ (a << 9);
+    a = (a + 0xfd7046c5) + (a << 3);
+    a = (a ^ 0xb55a4f09) ^ (a >> 16);
+    return a;
+}
 
 [RootSignature(ROOT_SIGNATURE)]
 [outputtopology("triangle")]
@@ -71,10 +82,10 @@ void msMain(
     const uint thread_index = group_index;
     const uint meshlet_index = group_id.x + cbv_root_const.meshlet_offset;
 
-    const uint offset_vertices_triangles = srv_meshlets[meshlet_index];
-    const uint data_offset = offset_vertices_triangles & 0x3ffff;
-    const uint num_vertices = (offset_vertices_triangles >> 18) & 0x7f;
-    const uint num_triangles = (offset_vertices_triangles >> 25) & 0x7f;
+    const uint64_t offset_vertices_triangles = srv_meshlets[meshlet_index];
+    const uint data_offset = (uint)(offset_vertices_triangles & 0xffffffff);
+    const uint num_vertices = (uint)((offset_vertices_triangles >> 32) & 0xffff);
+    const uint num_triangles = (uint)((offset_vertices_triangles >> 48) & 0xffff);
 
     const uint vertex_offset = data_offset;
     const uint index_offset = data_offset + num_vertices;
@@ -83,6 +94,9 @@ void msMain(
     const float4x4 world_to_clip = cbv_frame_const.world_to_clip;
 
     SetMeshOutputCounts(num_vertices, num_triangles);
+
+    const uint hash = computeHash(meshlet_index);
+    float3 meshlet_color = float3(hash & 0xff, (hash >> 8) & 0xff, (hash >> 16) & 0xff) / 255.0;
 
     uint i;
     for (i = thread_index; i < num_vertices; i += NUM_THREADS) {
@@ -96,6 +110,7 @@ void msMain(
         position = mul(position, world_to_clip);
         out_vertices[i].position_sv = position;
         out_vertices[i].normal = mul(srv_vertices[vertex_index].normal, (float3x3)object_to_world);
+        out_vertices[i].meshlet_color = meshlet_color;
     }
 
     for (i = thread_index; i < num_triangles; i += NUM_THREADS) {
@@ -131,6 +146,7 @@ void vsMain(
     position = mul(position, world_to_clip);
     out_vertex.position_sv = position;
     out_vertex.normal = mul(srv_vertices[vertex_index].normal, (float3x3)object_to_world);
+    out_vertex.meshlet_color = 1.0;
 }
 
 #endif
@@ -161,7 +177,6 @@ float3 fresnelSchlick(float h_dot_v, float3 f0) {
 
 [RootSignature(ROOT_SIGNATURE)]
 void psMain(
-    float3 barycentrics : SV_Barycentrics,
     Vertex vertex,
     out float4 out_color : SV_Target0
 ) {
@@ -177,20 +192,20 @@ void psMain(
     float alpha = roughness * roughness;
     float k = alpha + 1.0;
     k = (k * k) / 8.0;
-    float3 f0 = float3(0.04, 0.04, 0.04);
+    float3 f0 = 0.04;
     f0 = lerp(f0, base_color, metallic);
 
     const float3 light_positions[4] = {
-        float3(25.0, 15.0, 25.0),
-        float3(-25.0, 15.0, 25.0),
-        float3(25.0, 15.0, -25.0),
+        float3(0.0, 0.0, 15.0),
+        float3(0.0, 0.0, -25.0),
+        float3(25.0, 25.0, -25.0),
         float3(-25.0, 15.0, -25.0),
     };
     const float3 light_radiance[4] = {
-        4.0 * float3(0.0, 100.0, 250.0),
-        8.0 * float3(200.0, 150.0, 250.0),
-        3.0 * float3(200.0, 0.0, 0.0),
-        9.0 * float3(200.0, 150.0, 0.0),
+        10.0 * float3(150.0, 150.0, 5.0),
+        10.0 * float3(150.0, 150.0, 150.0),
+        10.0 * float3(150.0, 150.0, 5.0),
+        10.0 * float3(150.0, 150.0, 150.0),
     };
 
     float3 lo = 0.0;
@@ -214,26 +229,17 @@ void psMain(
         float3 specular = numerator / max(denominator, 0.001);
 
         float3 ks = f;
-        float3 kd = float3(1.0, 1.0, 1.0) - ks;
+        float3 kd = 1.0 - ks;
         kd *= 1.0 - metallic;
 
         float n_dot_l = saturate(dot(n, l));
         lo += (kd * base_color / PI + specular) * radiance * n_dot_l;
     }
 
-    float3 ambient = float3(0.03, 0.03, 0.03) * base_color * ao;
+    float3 ambient = 0.03 * base_color * ao;
     float3 color = ambient + lo;
     color = color / (color + 1.0);
     color = pow(color, 1.0 / 2.2);
 
-    // wireframe
-    float3 barys = barycentrics;
-    barys.z = 1.0 - barys.x - barys.y;
-    float3 deltas = fwidth(barys);
-    float3 smoothing = deltas;
-    float3 thickness = deltas * 0.25;
-    barys = smoothstep(thickness, thickness + smoothing, barys);
-    float min_bary = min(barys.x, min(barys.y, barys.z));
-
-    out_color = float4(color * min_bary, 1.0);
+    out_color = float4(color * vertex.meshlet_color, 1.0);
 }

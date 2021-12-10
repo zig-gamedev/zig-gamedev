@@ -45,13 +45,13 @@ const Mesh = struct {
 };
 
 const Meshlet = packed struct {
-    data_offset: u18 align(4),
-    num_vertices: u7,
-    num_triangles: u7,
+    data_offset: u32 align(8),
+    num_vertices: u16,
+    num_triangles: u16,
 };
 comptime {
-    assert(@sizeOf(Meshlet) == 4);
-    assert(@alignOf(Meshlet) == 4);
+    assert(@sizeOf(Meshlet) == 8);
+    assert(@alignOf(Meshlet) == 8);
 }
 
 const Pso_DrawConst = extern struct {
@@ -221,9 +221,9 @@ fn loadMeshAndGenerateMeshlets(
 
     for (meshlets.items) |src_meshlet| {
         const meshlet = Meshlet{
-            .data_offset = @intCast(u18, all_meshlets_data.items.len),
-            .num_vertices = @intCast(u7, src_meshlet.vertex_count),
-            .num_triangles = @intCast(u7, src_meshlet.triangle_count),
+            .data_offset = @intCast(u32, all_meshlets_data.items.len),
+            .num_vertices = @intCast(u16, src_meshlet.vertex_count),
+            .num_triangles = @intCast(u16, src_meshlet.triangle_count),
         };
         all_meshlets.append(meshlet) catch unreachable;
 
@@ -350,7 +350,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var all_meshlets_data = std.ArrayList(u32).init(arena_allocator);
     loadMeshAndGenerateMeshlets(
         arena_allocator,
-        "content/box.gltf",
+        "content/engine.gltf",
         &all_meshes,
         &all_vertices,
         &all_indices,
@@ -359,17 +359,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     );
 
     var entities = std.ArrayList(Entity).init(gpa_allocator);
-    entities.append(.{
-        .position = Vec3.init(0.0, 0.0, 0.0),
-        .base_color_roughness = Vec4.init(1.0, 0.0, 0.0, 0.25),
-        .mesh_index = 0,
-    }) catch unreachable;
 
-    entities.append(.{
-        .position = Vec3.init(2.0, 2.0, 2.0),
-        .base_color_roughness = Vec4.init(0.0, 1.0, 0.0, 0.5),
-        .mesh_index = 0,
-    }) catch unreachable;
+    const world_half_extent: f32 = 5.01;
+    {
+        const spread: f32 = 2.5;
+
+        var y: f32 = -world_half_extent;
+        while (y < world_half_extent) : (y += spread) {
+            var x: f32 = -world_half_extent;
+            while (x < world_half_extent) : (x += spread) {
+                entities.append(.{
+                    .position = Vec3.init(x, y, 0),
+                    .base_color_roughness = Vec4.init(1.0, 1.0, 1.0, -0.5),
+                    .mesh_index = 0,
+                }) catch unreachable;
+            }
+        }
+    }
 
     const vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
@@ -423,7 +429,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
             grfx.getResource(meshlet_buffer),
-            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_meshlets.items.len)),
+            &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(0, @intCast(u32, all_meshlets.items.len), @sizeOf(Meshlet)),
             srv,
         );
         break :blk srv;
@@ -562,7 +568,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .camera = .{
-            .position = Vec3.init(0.0, 0.0, -3.0),
+            .position = Vec3.init(0.0, 0.0, -world_half_extent),
             .forward = Vec3.init(0.0, 0.0, 1.0),
             .pitch = 0.0,
             .yaw = 0.0,
@@ -670,7 +676,7 @@ fn draw(demo: *DemoState) void {
     grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.2, 0.4, 0.6, 1.0 },
+        &[4]f32{ 0.1, 0.2, 0.4, 1.0 },
         0,
         null,
     );
