@@ -64,6 +64,12 @@ const Pso_FrameConst = extern struct {
     camera_position: Vec3,
 };
 
+const Entity = struct {
+    position: Vec3,
+    base_color_roughness: Vec4,
+    mesh_index: u32,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -86,6 +92,7 @@ const DemoState = struct {
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     meshes: std.ArrayList(Mesh),
+    entities: std.ArrayList(Entity),
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
@@ -351,6 +358,19 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &all_meshlets_data,
     );
 
+    var entities = std.ArrayList(Entity).init(gpa_allocator);
+    entities.append(.{
+        .position = Vec3.init(0.0, 0.0, 0.0),
+        .base_color_roughness = Vec4.init(1.0, 0.0, 0.0, 0.25),
+        .mesh_index = 0,
+    }) catch unreachable;
+
+    entities.append(.{
+        .position = Vec3.init(2.0, 2.0, 2.0),
+        .base_color_roughness = Vec4.init(0.0, 1.0, 0.0, 0.5),
+        .mesh_index = 0,
+    }) catch unreachable;
+
     const vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
@@ -538,6 +558,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .meshlet_data_buffer = meshlet_data_buffer,
         .meshlet_data_buffer_srv = meshlet_data_buffer_srv,
         .meshes = all_meshes,
+        .entities = entities,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .camera = .{
@@ -555,6 +576,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
+    demo.entities.deinit();
     demo.meshes.deinit();
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
@@ -653,8 +675,13 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
+    //
+    // Draw all entities.
+    //
     grfx.setCurrentPipeline(if (use_mesh_shader) demo.mesh_shader_pso else demo.vertex_shader_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+
+    // Bind global buffers that contain data for *all meshes* and *all meshlets*.
     grfx.cmdlist.SetGraphicsRootDescriptorTable(3, blk: {
         const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
         _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
@@ -664,6 +691,8 @@ fn draw(demo: *DemoState) void {
         }
         break :blk table;
     });
+
+    // Upload per-frame constant data.
     {
         const mem = grfx.allocateUploadMemory(Pso_FrameConst, 1);
         mem.cpu_slice[0] = .{
@@ -672,25 +701,31 @@ fn draw(demo: *DemoState) void {
         };
         grfx.cmdlist.SetGraphicsRootConstantBufferView(2, mem.gpu_base);
     }
-    {
-        const mem = grfx.allocateUploadMemory(Pso_DrawConst, 1);
-        mem.cpu_slice[0] = .{
-            .object_to_world = Mat4.initIdentity(),
-            .base_color_roughness = Vec4.init(1.0, 0.0, 0.0, 0.25),
-        };
-        grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
-    }
 
-    const mesh = demo.meshes.items[0];
-    grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{
-        mesh.vertex_offset,
-        if (use_mesh_shader) mesh.meshlet_offset else mesh.index_offset,
-    }, 0);
+    for (demo.entities.items) |entity| {
+        // Upload per-draw constant data.
+        {
+            const mem = grfx.allocateUploadMemory(Pso_DrawConst, 1);
+            mem.cpu_slice[0] = .{
+                .object_to_world = Mat4.initTranslation(entity.position).transpose(),
+                .base_color_roughness = entity.base_color_roughness,
+            };
+            grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+        }
 
-    if (use_mesh_shader) {
-        grfx.cmdlist.DispatchMesh(mesh.num_meshlets, 1, 1);
-    } else {
-        grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+        const mesh = &demo.meshes.items[entity.mesh_index];
+
+        // Select a mesh to draw by specifying offsets in global buffers.
+        grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{
+            mesh.vertex_offset,
+            if (use_mesh_shader) mesh.meshlet_offset else mesh.index_offset,
+        }, 0);
+
+        if (use_mesh_shader) {
+            grfx.cmdlist.DispatchMesh(mesh.num_meshlets, 1, 1);
+        } else {
+            grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+        }
     }
 
     demo.gui.draw(grfx);
