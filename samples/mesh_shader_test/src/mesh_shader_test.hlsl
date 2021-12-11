@@ -153,14 +153,14 @@ void vsMain(
 
     out_vertex.position_sv = position;
 
-    out_vertex.color = float3(0.529411793, 0.807843208, 0.980392218);
+    out_vertex.color = float3(1.000000000, 0.549019635, 0.000000000);
 }
 
 #endif
 
 [RootSignature(ROOT_SIGNATURE)]
 void psMain(
-    float3 barycentrics : SV_Barycentrics,
+        float3 barycentrics : SV_Barycentrics,
     Vertex vertex,
     out float4 out_color : SV_Target0
 ) {

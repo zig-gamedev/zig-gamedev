@@ -656,7 +656,7 @@ fn update(demo: *DemoState) void {
 
     c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + Drag", "");
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + drag", "");
     c.igSameLine(0, -1);
     c.igText(" :  rotate camera", "");
 
