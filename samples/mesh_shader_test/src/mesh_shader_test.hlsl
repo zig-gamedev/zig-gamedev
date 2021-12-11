@@ -1,6 +1,6 @@
 struct InputVertex {
-    float3 position;
-    float3 normal;
+    float3 position : Position;
+    float3 normal : _Normal;
 };
 
 struct Vertex {
@@ -12,23 +12,29 @@ struct DrawConst {
     float4x4 object_to_clip;
 };
 
-ConstantBuffer<DrawConst> cbv_draw_const : register(b1);
+ConstantBuffer<DrawConst> cbv_draw_const : register(b0);
 
 StructuredBuffer<InputVertex> srv_vertices : register(t0);
 Buffer<uint> srv_indices : register(t1);
 
 #define ROOT_SIGNATURE_VS \
-    "RootConstants(b0, num32BitConstants = 2, visibility = SHADER_VISIBILITY_VERTEX), " \
-    "CBV(b1, visibility = SHADER_VISIBILITY_VERTEX), " \
+    "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
+    "RootConstants(b1, num32BitConstants = 2, visibility = SHADER_VISIBILITY_VERTEX), " \
     "DescriptorTable(SRV(t0, numDescriptors = 2), visibility = SHADER_VISIBILITY_VERTEX)"
 
+#define ROOT_SIGNATURE_VS_FIXED \
+    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
+    "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX)"
+
 #define ROOT_SIGNATURE_MS \
-    "RootConstants(b0, num32BitConstants = 2, visibility = SHADER_VISIBILITY_MESH), " \
-    "CBV(b1, visibility = SHADER_VISIBILITY_MESH), " \
+    "CBV(b0, visibility = SHADER_VISIBILITY_MESH), " \
+    "RootConstants(b1, num32BitConstants = 2, visibility = SHADER_VISIBILITY_MESH), " \
     "DescriptorTable(SRV(t0, numDescriptors = 4), visibility = SHADER_VISIBILITY_MESH)"
 
 #if defined(PSO__VERTEX_SHADER)
 #define ROOT_SIGNATURE ROOT_SIGNATURE_VS
+#elif defined(PSO__VERTEX_SHADER_FIXED)
+#define ROOT_SIGNATURE ROOT_SIGNATURE_VS_FIXED
 #elif defined(PSO__MESH_SHADER)
 #define ROOT_SIGNATURE ROOT_SIGNATURE_MS
 #endif
@@ -36,15 +42,16 @@ Buffer<uint> srv_indices : register(t1);
 #if defined(PSO__MESH_SHADER)
 
 #define NUM_THREADS 32
+// Also need to change max_num_meshlet_vertices and max_num_meshlet_triangles in mesh_shader_test.zig
 #define MAX_NUM_VERTICES 64
-#define MAX_NUM_PRIMITIVES 128
+#define MAX_NUM_TRIANGLES 128
 
 struct RootConst {
     uint vertex_offset;
     uint meshlet_offset;
 };
 
-ConstantBuffer<RootConst> cbv_root_const : register(b0);
+ConstantBuffer<RootConst> cbv_root_const : register(b1);
 
 StructuredBuffer<uint64_t> srv_meshlets : register(t2);
 Buffer<uint> srv_meshlets_data : register(t3);
@@ -66,7 +73,7 @@ void msMain(
     uint group_index : SV_GroupIndex,
     uint3 group_id : SV_GroupID,
     out vertices Vertex out_vertices[MAX_NUM_VERTICES],
-    out indices uint3 out_triangles[MAX_NUM_PRIMITIVES]
+    out indices uint3 out_triangles[MAX_NUM_TRIANGLES]
 ) {
     const uint thread_index = group_index;
     const uint meshlet_index = group_id.x + cbv_root_const.meshlet_offset;
@@ -111,7 +118,7 @@ struct RootConst {
     uint index_offset;
 };
 
-ConstantBuffer<RootConst> cbv_root_const : register(b0);
+ConstantBuffer<RootConst> cbv_root_const : register(b1);
 
 [RootSignature(ROOT_SIGNATURE)]
 void vsMain(
@@ -127,7 +134,26 @@ void vsMain(
     position = mul(position, object_to_clip);
 
     out_vertex.position_sv = position;
-    out_vertex.color = 0.9;
+
+    out_vertex.color = float3(0.603921592, 0.803921640, 0.196078449);
+}
+
+#elif defined(PSO__VERTEX_SHADER_FIXED)
+
+[RootSignature(ROOT_SIGNATURE)]
+void vsMain(
+    InputVertex vertex,
+    out Vertex out_vertex
+) {
+    float4 position = float4(vertex.position, 1.0);
+
+    const float4x4 object_to_clip = cbv_draw_const.object_to_clip;
+
+    position = mul(position, object_to_clip);
+
+    out_vertex.position_sv = position;
+
+    out_vertex.color = float3(0.529411793, 0.807843208, 0.980392218);
 }
 
 #endif

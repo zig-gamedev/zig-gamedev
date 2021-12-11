@@ -28,6 +28,7 @@ const window_name = "zig-gamedev: mesh shader test";
 const window_width = 1920;
 const window_height = 1080;
 
+// Also need to change MAX_NUM_VERTICES and MAX_NUM_TRIANGLES in mesh_shader_test.hlsl
 const max_num_meshlet_vertices: usize = 64;
 const max_num_meshlet_triangles: usize = 128;
 
@@ -61,6 +62,12 @@ const Pso_DrawConst = extern struct {
     object_to_clip: Mat4,
 };
 
+const DrawMode = enum {
+    mesh_shader,
+    vertex_shader,
+    vertex_shader_fixed,
+};
+
 const DemoState = struct {
     grfx: gr.GraphicsContext,
     gui: gr.GuiContext,
@@ -68,6 +75,7 @@ const DemoState = struct {
 
     mesh_shader_pso: gr.PipelineHandle,
     vertex_shader_pso: gr.PipelineHandle,
+    vertex_shader_fixed_pso: gr.PipelineHandle,
 
     vertex_buffer: gr.ResourceHandle,
     vertex_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
@@ -87,7 +95,7 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
-    use_mesh_shader: bool,
+    draw_mode: DrawMode,
     num_objects_to_draw: i32,
 
     camera: struct {
@@ -334,6 +342,32 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         );
     };
 
+    const vertex_shader_fixed_pso = blk: {
+        const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
+            d3d12.INPUT_ELEMENT_DESC.init("Position", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+            d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
+        };
+
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.InputLayout = .{
+            .pInputElementDescs = &input_layout_desc,
+            .NumElements = input_layout_desc.len,
+        };
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.DSVFormat = .D32_FLOAT;
+        pso_desc.SampleDesc = .{ .Count = 1, .Quality = 0 };
+
+        break :blk grfx.createGraphicsShaderPipeline(
+            arena_allocator,
+            &pso_desc,
+            "content/shaders/vertex_shader_fixed.vs.cso",
+            "content/shaders/vertex_shader_fixed.ps.cso",
+        );
+    };
+
     var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
@@ -432,7 +466,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
             grfx.getResource(meshlet_data_buffer),
-            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_meshlets_data.items.len)),
+            &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(
+                .R32_UINT,
+                0,
+                @intCast(u32, all_meshlets_data.items.len),
+            ),
             srv,
         );
         break :blk srv;
@@ -538,6 +576,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .mesh_shader_pso = mesh_shader_pso,
         .vertex_shader_pso = vertex_shader_pso,
+        .vertex_shader_fixed_pso = vertex_shader_fixed_pso,
         .vertex_buffer = vertex_buffer,
         .vertex_buffer_srv = vertex_buffer_srv,
         .depth_texture = depth_texture,
@@ -551,7 +590,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .meshes = all_meshes,
         .brush = brush,
         .normal_tfmt = normal_tfmt,
-        .use_mesh_shader = true,
+        .draw_mode = .mesh_shader,
         .num_objects_to_draw = 16,
         .camera = .{
             .position = Vec3.init(0.0, 0.0, -2.0),
@@ -578,6 +617,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.depth_texture);
     _ = demo.grfx.releasePipeline(demo.mesh_shader_pso);
     _ = demo.grfx.releasePipeline(demo.vertex_shader_pso);
+    _ = demo.grfx.releasePipeline(demo.vertex_shader_fixed_pso);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     lib.deinitWindow(gpa_allocator);
@@ -618,10 +658,11 @@ fn update(demo: *DemoState) void {
     c.igSpacing();
 
     c.igText("Draw mode:", "");
-    var draw_mode: i32 = if (demo.use_mesh_shader) 0 else 1;
+    var draw_mode: i32 = @enumToInt(demo.draw_mode);
     _ = c.igRadioButton_IntPtr("Use Mesh Shader", &draw_mode, 0);
-    _ = c.igRadioButton_IntPtr("Use Vertex Shader with programmable vertex fetch", &draw_mode, 1);
-    demo.use_mesh_shader = if (draw_mode == 0) true else false;
+    _ = c.igRadioButton_IntPtr("Use Vertex Shader with programmable vertex fetching", &draw_mode, 1);
+    _ = c.igRadioButton_IntPtr("Use Vertex Shader", &draw_mode, 2);
+    demo.draw_mode = @intToEnum(DrawMode, draw_mode);
 
     _ = c.igSliderInt("Num. objects", &demo.num_objects_to_draw, 1, 1000, null, c.ImGuiSliderFlags_None);
 
@@ -647,7 +688,7 @@ fn update(demo: *DemoState) void {
             @intToFloat(f64, demo.meshes.items[mesh_engine].num_vertices) / 1_000_000.0,
     );
 
-    if (demo.use_mesh_shader) {
+    if (demo.draw_mode == .mesh_shader) {
         c.igText("Meshlets: ");
         c.igSameLine(0, -1);
         c.igTextColored(
@@ -745,20 +786,45 @@ fn draw(demo: *DemoState) void {
     //
     // Draw all objects.
     //
-    const use_mesh_shader = demo.use_mesh_shader;
-    grfx.setCurrentPipeline(if (use_mesh_shader) demo.mesh_shader_pso else demo.vertex_shader_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    switch (demo.draw_mode) {
+        .mesh_shader => {
+            grfx.setCurrentPipeline(demo.mesh_shader_pso);
 
-    // Bind global buffers that contain data for *all meshes* and *all meshlets*.
-    grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
-        const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
-        _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
-        if (use_mesh_shader) {
-            _ = grfx.copyDescriptorsToGpuHeap(1, demo.meshlet_buffer_srv);
-            _ = grfx.copyDescriptorsToGpuHeap(1, demo.meshlet_data_buffer_srv);
-        }
-        break :blk table;
-    });
+            // Bind global buffers that contain data for *all meshes* and *all meshlets*.
+            grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
+                const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
+                _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
+                _ = grfx.copyDescriptorsToGpuHeap(1, demo.meshlet_buffer_srv);
+                _ = grfx.copyDescriptorsToGpuHeap(1, demo.meshlet_data_buffer_srv);
+                break :blk table;
+            });
+        },
+        .vertex_shader => {
+            grfx.setCurrentPipeline(demo.vertex_shader_pso);
+
+            // Bind global buffers that contain data for *all meshes*.
+            grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
+                const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer_srv);
+                _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer_srv);
+                break :blk table;
+            });
+        },
+        .vertex_shader_fixed => {
+            grfx.setCurrentPipeline(demo.vertex_shader_fixed_pso);
+
+            grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+                .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+                .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.vertex_buffer)),
+                .StrideInBytes = @sizeOf(Vertex),
+            }});
+            grfx.cmdlist.IASetIndexBuffer(&.{
+                .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+                .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
+                .Format = .R32_UINT,
+            });
+        },
+    }
 
     var entity_index: i32 = 0;
     while (entity_index < demo.num_objects_to_draw) : (entity_index += 1) {
@@ -769,21 +835,37 @@ fn draw(demo: *DemoState) void {
             mem.cpu_slice[0] = .{
                 .object_to_clip = Mat4.initTranslation(position).mul(cam_world_to_clip).transpose(),
             };
-            grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+            grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         }
 
         const mesh = &demo.meshes.items[mesh_engine];
 
-        // Select a mesh to draw by specifying offsets in global buffers.
-        grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &[_]u32{
-            mesh.vertex_offset,
-            if (use_mesh_shader) mesh.meshlet_offset else mesh.index_offset,
-        }, 0);
-
-        if (use_mesh_shader) {
-            grfx.cmdlist.DispatchMesh(mesh.num_meshlets, 1, 1);
-        } else {
-            grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+        switch (demo.draw_mode) {
+            .mesh_shader => {
+                // Select a mesh to draw by specifying offsets in global buffers.
+                grfx.cmdlist.SetGraphicsRoot32BitConstants(1, 2, &[_]u32{
+                    mesh.vertex_offset,
+                    mesh.meshlet_offset,
+                }, 0);
+                grfx.cmdlist.DispatchMesh(mesh.num_meshlets, 1, 1);
+            },
+            .vertex_shader => {
+                // Select a mesh to draw by specifying offsets in global buffers.
+                grfx.cmdlist.SetGraphicsRoot32BitConstants(1, 2, &[_]u32{
+                    mesh.vertex_offset,
+                    mesh.index_offset,
+                }, 0);
+                grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+            },
+            .vertex_shader_fixed => {
+                grfx.cmdlist.DrawIndexedInstanced(
+                    mesh.num_indices,
+                    1,
+                    mesh.index_offset,
+                    @intCast(i32, mesh.vertex_offset),
+                    0,
+                );
+            },
         }
     }
 
