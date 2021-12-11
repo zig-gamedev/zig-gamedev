@@ -30,7 +30,7 @@ const window_height = 1080;
 
 // Also need to change MAX_NUM_VERTICES and MAX_NUM_TRIANGLES in mesh_shader_test.hlsl
 const max_num_meshlet_vertices: usize = 64;
-const max_num_meshlet_triangles: usize = 128;
+const max_num_meshlet_triangles: usize = 64;
 
 const mesh_engine = 1;
 

@@ -44,7 +44,7 @@ Buffer<uint> srv_indices : register(t1);
 #define NUM_THREADS 32
 // Also need to change max_num_meshlet_vertices and max_num_meshlet_triangles in mesh_shader_test.zig
 #define MAX_NUM_VERTICES 64
-#define MAX_NUM_TRIANGLES 128
+#define MAX_NUM_TRIANGLES 64
 
 struct RootConst {
     uint vertex_offset;
@@ -135,7 +135,7 @@ void vsMain(
 
     out_vertex.position_sv = position;
 
-    out_vertex.color = float3(0.603921592, 0.803921640, 0.196078449);
+    out_vertex.color = abs(srv_vertices[vertex_index].normal);
 }
 
 #elif defined(PSO__VERTEX_SHADER_FIXED)
@@ -153,7 +153,7 @@ void vsMain(
 
     out_vertex.position_sv = position;
 
-    out_vertex.color = float3(1.000000000, 0.549019635, 0.000000000);
+    out_vertex.color = 1.0 - abs(vertex.normal);
 }
 
 #endif
