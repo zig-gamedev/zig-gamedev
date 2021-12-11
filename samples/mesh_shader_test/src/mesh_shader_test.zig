@@ -130,7 +130,10 @@ fn loadMeshAndGenerateMeshlets(
     defer c.cgltf_free(data);
     lib.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 
-    var src_vertices = std.ArrayList(Vertex).initCapacity(arena_allocator, src_positions.items.len) catch unreachable;
+    var src_vertices = std.ArrayList(Vertex).initCapacity(
+        arena_allocator,
+        src_positions.items.len,
+    ) catch unreachable;
 
     for (src_positions.items) |_, index| {
         src_vertices.appendAssumeCapacity(.{
@@ -162,7 +165,12 @@ fn loadMeshAndGenerateMeshlets(
 
     var opt_indices = std.ArrayList(u32).init(arena_allocator);
     opt_indices.resize(src_indices.items.len) catch unreachable;
-    c.meshopt_remapIndexBuffer(opt_indices.items.ptr, src_indices.items.ptr, src_indices.items.len, remap.items.ptr);
+    c.meshopt_remapIndexBuffer(
+        opt_indices.items.ptr,
+        src_indices.items.ptr,
+        src_indices.items.len,
+        remap.items.ptr,
+    );
 
     c.meshopt_optimizeVertexCache(
         opt_indices.items.ptr,
@@ -267,7 +275,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Check for Mesh Shader support.
     {
         var options7: d3d12.FEATURE_DATA_D3D12_OPTIONS7 = undefined;
-        const res = grfx.device.CheckFeatureSupport(.OPTIONS7, &options7, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS7));
+        const res = grfx.device.CheckFeatureSupport(
+            .OPTIONS7,
+            &options7,
+            @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS7),
+        );
         if (options7.MeshShaderTier == .NOT_SUPPORTED or res != w.S_OK) {
             _ = w.user32.messageBoxA(
                 window,
@@ -659,9 +671,9 @@ fn update(demo: *DemoState) void {
 
     c.igText("Draw mode:", "");
     var draw_mode: i32 = @enumToInt(demo.draw_mode);
-    _ = c.igRadioButton_IntPtr("Use Mesh Shader", &draw_mode, 0);
-    _ = c.igRadioButton_IntPtr("Use Vertex Shader with programmable vertex fetching", &draw_mode, 1);
-    _ = c.igRadioButton_IntPtr("Use Vertex Shader", &draw_mode, 2);
+    _ = c.igRadioButton_IntPtr("Mesh Shader", &draw_mode, 0);
+    _ = c.igRadioButton_IntPtr("Vertex Shader with programmable vertex fetching", &draw_mode, 1);
+    _ = c.igRadioButton_IntPtr("Vertex Shader with fixed function vertex fetching", &draw_mode, 2);
     demo.draw_mode = @intToEnum(DrawMode, draw_mode);
 
     _ = c.igSliderInt("Num. objects", &demo.num_objects_to_draw, 1, 1000, null, c.ImGuiSliderFlags_None);
