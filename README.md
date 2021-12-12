@@ -20,10 +20,6 @@ This repository contains a collection of [sample applications](#sample-applicati
 
 Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
 
-1. [virtual physics lab](samples/bullet_physics_test): This sample applications demonstrates how to use full 3D physics engine in your Zig applications.
-
-    <a href="samples/bullet_physics_test"><img src="samples/bullet_physics_test/screenshot1.png" alt="virtual physics lab" height="200"></a>
-
 1. [physically based rendering](samples/physically_based_rendering): This sample implements physically based shading and image based lighting to achive realistic looking rendering results.
 
     <a href="samples/physically_based_rendering"><img src="samples/physically_based_rendering/screenshot.png" alt="physically based rendering" height="200"></a>
@@ -36,17 +32,21 @@ Some of the sample applications are listed below. More can be found in [samples]
 
     <a href="samples/mesh_shader_test"><img src="samples/mesh_shader_test/screenshot.png" alt="mesh shader test" height="200"></a>
 
+1. [virtual physics lab](samples/bullet_physics_test): This sample applications demonstrates how to use full 3D physics engine in your Zig applications.
+
+    <a href="samples/bullet_physics_test"><img src="samples/bullet_physics_test/screenshot1.png" alt="virtual physics lab" height="200"></a>
+
 1. [audio playback test](samples/audio_playback_test): This sample demonstrates how to decode .mp3 file using Microsoft Media Foundation and play it back using Windows Audio Session API (WASAPI).
 
     <a href="samples/audio_playback_test"><img src="samples/audio_playback_test/screenshot.png" alt="audio playback test" height="200"></a>
 
-1. [vector graphics test](samples/vector_graphics_test): This sample demonstrates how to use Direct3D 12 <-> Direct2D interop to render vector graphics and high-quality text.
-
-    <a href="samples/vector_graphics_test"><img src="samples/vector_graphics_test/screenshot.png" alt="vector graphics test" height="200"></a>
-
 1. [DirectML convolution test](samples/directml_convolution_test): This sample demonstrates how to perform GPU-accelerated convolution operation using DirectML.
 
     <a href="samples/directml_convolution_test"><img src="samples/directml_convolution_test/screenshot.png" alt="directml convolution test" height="200"></a>
+
+1. [vector graphics test](samples/vector_graphics_test): This sample demonstrates how to use Direct3D 12 <-> Direct2D interop to render vector graphics and high-quality text.
+
+    <a href="samples/vector_graphics_test"><img src="samples/vector_graphics_test/screenshot.png" alt="vector graphics test" height="200"></a>
     
 ## Libraries
 
@@ -69,7 +69,7 @@ This libarary implements all basic linear algebra operations for Vec2, Vec3, Vec
 
 #### [cbullet lib](external/src/cbullet.h)
 
-A simple C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used by any project. Some features:
+Easy to use C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used by any project. Some features:
 * Most collision shapes
 * Rigid bodies
 * Most constraint types
