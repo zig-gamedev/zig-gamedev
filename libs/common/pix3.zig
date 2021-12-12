@@ -163,14 +163,15 @@ const impl = struct {
         defer ole32.CoTaskMemFree(program_files_path_ptr);
 
         var alloc_buffer: [2048]u8 = undefined;
-        var alloc = std.heap.FixedBufferAllocator.init(alloc_buffer[0..]);
+        var alloc_state = std.heap.FixedBufferAllocator.init(alloc_buffer[0..]);
+        var alloc = alloc_state.allocator();
 
         const program_files_path = std.unicode.utf16leToUtf8AllocZ(
-            &alloc.allocator,
-            std.mem.spanZ(program_files_path_ptr),
+            alloc,
+            std.mem.span(program_files_path_ptr),
         ) catch unreachable;
         const pix_path = std.fs.path.joinZ(
-            &alloc.allocator,
+            alloc,
             &[_][]const u8{ program_files_path, "Microsoft PIX" },
         ) catch unreachable;
 
@@ -194,8 +195,8 @@ const impl = struct {
         }
 
         const dll_path = std.fs.path.joinZ(
-            &alloc.allocator,
-            &[_][]const u8{ pix_path, std.mem.spanZ(&newest_ver_name), "WinPixGpuCapturer.dll" },
+            alloc,
+            &[_][]const u8{ pix_path, std.mem.sliceTo(&newest_ver_name, 0), "WinPixGpuCapturer.dll" },
         ) catch unreachable;
 
         const lib = std.DynLib.openZ(dll_path.ptr) catch return null;
