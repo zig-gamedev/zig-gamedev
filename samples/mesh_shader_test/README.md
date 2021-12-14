@@ -12,4 +12,6 @@ When drawing **200M triangles on RX 6800**:
 - Vertex Shader with programmable vertex fetching (no HW index buffer): ~13.5 ms
 - Vertex Shader with fixed function vertex fetching: ~12.4 ms
 
+<br />
+
 ![image](screenshot.png)
