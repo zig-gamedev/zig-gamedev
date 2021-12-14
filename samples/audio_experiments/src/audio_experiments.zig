@@ -426,7 +426,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
             .pEffect = reverb_apo.?,
-            .InitialState = w.TRUE,
+            .InitialState = w.FALSE,
             .OutputChannels = 2,
         }};
         const effect_chain = xaudio2.EFFECT_CHAIN{ .EffectCount = 1, .pEffectDescriptors = &effect_descriptor };

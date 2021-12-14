@@ -671,9 +671,9 @@ fn update(demo: *DemoState) void {
 
     c.igText("Draw mode:", "");
     var draw_mode: i32 = @enumToInt(demo.draw_mode);
-    _ = c.igRadioButton_IntPtr("Mesh Shader", &draw_mode, 0);
-    _ = c.igRadioButton_IntPtr("Vertex Shader with programmable vertex fetching", &draw_mode, 1);
-    _ = c.igRadioButton_IntPtr("Vertex Shader with fixed function vertex fetching", &draw_mode, 2);
+    _ = c.igRadioButton_IntPtr("Mesh Shader emulating VS", &draw_mode, 0);
+    _ = c.igRadioButton_IntPtr("VS with manual vertex fetching (no HW index buffer)", &draw_mode, 1);
+    _ = c.igRadioButton_IntPtr("VS with fixed function vertex fetching", &draw_mode, 2);
     demo.draw_mode = @intToEnum(DrawMode, draw_mode);
 
     _ = c.igSliderInt("Num. objects", &demo.num_objects_to_draw, 1, 1000, null, c.ImGuiSliderFlags_None);
