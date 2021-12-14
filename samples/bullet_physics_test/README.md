@@ -9,7 +9,7 @@ This demo shows how to use [Bullet](https://github.com/bulletphysics/bullet3) ph
 * [cbullet.h](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.h)
 * [cbullet.cpp](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.cpp)
 
-Some features:
+Some cbullet features:
 * Most collision shapes
 * Rigid bodies
 * Most constraint types
