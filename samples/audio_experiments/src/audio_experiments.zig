@@ -11,6 +11,7 @@ const wasapi = win32.wasapi;
 const mf = win32.mf;
 const common = @import("common");
 const gr = common.graphics;
+const aud = common.audio;
 const lib = common.library;
 const c = common.c;
 const pix = common.pix;
@@ -21,8 +22,6 @@ const assert = std.debug.assert;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-
-const enable_dx_debug = @import("build_options").enable_dx_debug;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -36,9 +35,7 @@ const DemoState = struct {
     gui: gr.GuiContext,
     frame_stats: lib.FrameStats,
 
-    audio: *xaudio2.IXAudio2,
-    master_voice: *xaudio2.IMasteringVoice,
-
+    audio: aud.AudioContext,
     music: *AudioStream,
 
     brush: *d2d1.ISolidColorBrush,
@@ -380,43 +377,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    const audio = blk: {
-        var audio: ?*xaudio2.IXAudio2 = null;
-        hrPanicOnFail(xaudio2.create(&audio, if (enable_dx_debug) xaudio2.DEBUG_ENGINE else 0, 0));
-        break :blk audio.?;
-    };
-
-    if (enable_dx_debug) {
-        audio.SetDebugConfiguration(&.{
-            .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS | xaudio2.LOG_INFO,
-            .BreakMask = 0,
-            .LogThreadID = w.TRUE,
-            .LogFileline = w.FALSE,
-            .LogFunctionName = w.FALSE,
-            .LogTiming = w.FALSE,
-        }, null);
-    }
-
-    const master_voice = blk: {
-        var master_voice: ?*xaudio2.IMasteringVoice = null;
-        hrPanicOnFail(audio.CreateMasteringVoice(
-            &master_voice,
-            xaudio2.DEFAULT_CHANNELS,
-            xaudio2.DEFAULT_SAMPLERATE,
-            0,
-            null,
-            null,
-            .GameEffects,
-        ));
-        break :blk master_voice.?;
-    };
+    const audio = aud.AudioContext.init();
 
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
 
     const samples = loadAudioSamples(gpa_allocator, L("content/drum_bass_hard.flac"));
     defer samples.deinit();
 
-    var music = AudioStream.create(gpa_allocator, audio, L("content/Broke For Free - Night Owl.mp3"));
+    var music = AudioStream.create(gpa_allocator, audio.device, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     {
@@ -566,7 +534,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .grfx = grfx,
         .gui = gui,
         .audio = audio,
-        .master_voice = master_voice,
         .music = music,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
@@ -582,9 +549,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.deinit();
     demo.music.destroy();
     hrPanicOnFail(mf.MFShutdown());
-    demo.audio.StopEngine();
-    demo.master_voice.DestroyVoice();
-    _ = demo.audio.Release();
+    demo.audio.deinit();
     lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }

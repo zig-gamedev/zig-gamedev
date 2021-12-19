@@ -1,4 +1,5 @@
 pub const graphics = @import("graphics.zig");
+pub const audio = @import("audio.zig");
 pub const library = @import("library.zig");
 pub const vectormath = @import("vectormath.zig");
 pub const pix = @import("pix3.zig");
