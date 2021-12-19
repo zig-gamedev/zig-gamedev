@@ -56,16 +56,16 @@ pub const IPalette = extern struct {
     fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            InitializePredefined: *c_void,
-            InitializeCustom: *c_void,
-            InitializeFromBitmap: *c_void,
-            InitializeFromPalette: *c_void,
-            GetType: *c_void,
-            GetColorCount: *c_void,
-            GetColors: *c_void,
-            IsBlackWhite: *c_void,
-            IsGrayscale: *c_void,
-            HasAlpha: *c_void,
+            InitializePredefined: *anyopaque,
+            InitializeCustom: *anyopaque,
+            InitializeFromBitmap: *anyopaque,
+            InitializeFromPalette: *anyopaque,
+            GetType: *anyopaque,
+            GetColorCount: *anyopaque,
+            GetColors: *anyopaque,
+            IsBlackWhite: *anyopaque,
+            IsGrayscale: *anyopaque,
+            HasAlpha: *anyopaque,
         };
     }
 };
@@ -89,16 +89,16 @@ pub const IBitmapDecoder = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            QueryCapability: *c_void,
-            Initialize: *c_void,
-            GetContainerFormat: *c_void,
-            GetDecoderInfo: *c_void,
-            CopyPalette: *c_void,
-            GetMetadataQueryReader: *c_void,
-            GetPreview: *c_void,
-            GetColorContexts: *c_void,
-            GetThumbnail: *c_void,
-            GetFrameCount: *c_void,
+            QueryCapability: *anyopaque,
+            Initialize: *anyopaque,
+            GetContainerFormat: *anyopaque,
+            GetDecoderInfo: *anyopaque,
+            CopyPalette: *anyopaque,
+            GetMetadataQueryReader: *anyopaque,
+            GetPreview: *anyopaque,
+            GetColorContexts: *anyopaque,
+            GetThumbnail: *anyopaque,
+            GetFrameCount: *anyopaque,
             GetFrame: fn (*T, UINT, ?*?*IBitmapFrameDecode) callconv(WINAPI) HRESULT,
         };
     }
@@ -131,8 +131,8 @@ pub const IBitmapSource = extern struct {
         return extern struct {
             GetSize: fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
             GetPixelFormat: fn (*T, *GUID) callconv(WINAPI) HRESULT,
-            GetResolution: *c_void,
-            CopyPalette: *c_void,
+            GetResolution: *anyopaque,
+            CopyPalette: *anyopaque,
             CopyPixels: fn (*T, ?*const Rect, UINT, UINT, [*]BYTE) callconv(WINAPI) HRESULT,
         };
     }
@@ -157,9 +157,9 @@ pub const IBitmapFrameDecode = extern struct {
     fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            GetMetadataQueryReader: *c_void,
-            GetColorContexts: *c_void,
-            GetThumbnail: *c_void,
+            GetMetadataQueryReader: *anyopaque,
+            GetColorContexts: *anyopaque,
+            GetThumbnail: *anyopaque,
         };
     }
 };
@@ -183,9 +183,9 @@ pub const IBitmap = extern struct {
     fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            Lock: *c_void,
-            SetPalette: *c_void,
-            SetResolution: *c_void,
+            Lock: *anyopaque,
+            SetPalette: *anyopaque,
+            SetResolution: *anyopaque,
         };
     }
 };
@@ -248,7 +248,7 @@ pub const IFormatConverter = extern struct {
                 f64,
                 BitmapPaletteType,
             ) callconv(WINAPI) HRESULT,
-            CanConvert: *c_void,
+            CanConvert: *anyopaque,
         };
     }
 };
@@ -290,30 +290,30 @@ pub const IImagingFactory = extern struct {
                 DecodeOptions,
                 ?*?*IBitmapDecoder,
             ) callconv(WINAPI) HRESULT,
-            CreateDecoderFromStream: *c_void,
-            CreateDecoderFromFileHandle: *c_void,
-            CreateComponentInfo: *c_void,
-            CreateDecoder: *c_void,
-            CreateEncoder: *c_void,
-            CreatePalette: *c_void,
+            CreateDecoderFromStream: *anyopaque,
+            CreateDecoderFromFileHandle: *anyopaque,
+            CreateComponentInfo: *anyopaque,
+            CreateDecoder: *anyopaque,
+            CreateEncoder: *anyopaque,
+            CreatePalette: *anyopaque,
             CreateFormatConverter: fn (*T, ?*?*IFormatConverter) callconv(WINAPI) HRESULT,
-            CreateBitmapScaler: *c_void,
-            CreateBitmapClipper: *c_void,
-            CreateBitmapFlipRotator: *c_void,
-            CreateStream: *c_void,
-            CreateColorContext: *c_void,
-            CreateColorTransformer: *c_void,
-            CreateBitmap: *c_void,
-            CreateBitmapFromSource: *c_void,
-            CreateBitmapFromSourceRect: *c_void,
-            CreateBitmapFromMemory: *c_void,
-            CreateBitmapFromHBITMAP: *c_void,
-            CreateBitmapFromHICON: *c_void,
-            CreateComponentEnumerator: *c_void,
-            CreateFastMetadataEncoderFromDecoder: *c_void,
-            CreateFastMetadataEncoderFromFrameDecode: *c_void,
-            CreateQueryWriter: *c_void,
-            CreateQueryWriterFromReader: *c_void,
+            CreateBitmapScaler: *anyopaque,
+            CreateBitmapClipper: *anyopaque,
+            CreateBitmapFlipRotator: *anyopaque,
+            CreateStream: *anyopaque,
+            CreateColorContext: *anyopaque,
+            CreateColorTransformer: *anyopaque,
+            CreateBitmap: *anyopaque,
+            CreateBitmapFromSource: *anyopaque,
+            CreateBitmapFromSourceRect: *anyopaque,
+            CreateBitmapFromMemory: *anyopaque,
+            CreateBitmapFromHBITMAP: *anyopaque,
+            CreateBitmapFromHICON: *anyopaque,
+            CreateComponentEnumerator: *anyopaque,
+            CreateFastMetadataEncoderFromDecoder: *anyopaque,
+            CreateFastMetadataEncoderFromFrameDecode: *anyopaque,
+            CreateQueryWriter: *anyopaque,
+            CreateQueryWriterFromReader: *anyopaque,
         };
     }
 };

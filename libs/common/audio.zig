@@ -239,7 +239,7 @@ pub const Stream = struct {
             return .{ .stream = null };
         }
 
-        fn OnBufferEnd(voice_cb: *VoiceCallback, context: ?*c_void) callconv(w.WINAPI) void {
+        fn OnBufferEnd(voice_cb: *VoiceCallback, context: ?*anyopaque) callconv(w.WINAPI) void {
             voice_cb.stream.?.onBufferEnd(@ptrCast(*mf.IMediaBuffer, @alignCast(8, context)));
         }
 
@@ -258,9 +258,9 @@ pub const Stream = struct {
         fn OnVoiceProcessingPassStart(_: *VoiceCallback, _: w.UINT32) callconv(w.WINAPI) void {}
         fn OnVoiceProcessingPassEnd(_: *VoiceCallback) callconv(w.WINAPI) void {}
         fn OnStreamEnd(_: *VoiceCallback) callconv(w.WINAPI) void {}
-        fn OnBufferStart(_: *VoiceCallback, _: ?*c_void) callconv(w.WINAPI) void {}
-        fn OnLoopEnd(_: *VoiceCallback, _: ?*c_void) callconv(w.WINAPI) void {}
-        fn OnVoiceError(_: *VoiceCallback, _: ?*c_void, _: w.HRESULT) callconv(w.WINAPI) void {}
+        fn OnBufferStart(_: *VoiceCallback, _: ?*anyopaque) callconv(w.WINAPI) void {}
+        fn OnLoopEnd(_: *VoiceCallback, _: ?*anyopaque) callconv(w.WINAPI) void {}
+        fn OnVoiceError(_: *VoiceCallback, _: ?*anyopaque, _: w.HRESULT) callconv(w.WINAPI) void {}
     };
 
     const SourceReaderCallback = struct {
@@ -292,7 +292,7 @@ pub const Stream = struct {
         fn QueryInterface(
             source_reader_cb: *SourceReaderCallback,
             guid: *const w.GUID,
-            outobj: ?*?*c_void,
+            outobj: ?*?*anyopaque,
         ) callconv(w.WINAPI) w.HRESULT {
             assert(outobj != null);
 

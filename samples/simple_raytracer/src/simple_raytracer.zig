@@ -602,14 +602,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(grfx.device.CreateStateObject(
             &state_object_desc,
             &d3d12.IID_IStateObject,
-            @ptrCast(*?*c_void, &trace_shadow_rays_stateobj),
+            @ptrCast(*?*anyopaque, &trace_shadow_rays_stateobj),
         ));
         hrPanicOnFail(grfx.device.CreateRootSignature(
             0,
             cso_code.ptr,
             cso_code.len,
             &d3d12.IID_IRootSignature,
-            @ptrCast(*?*c_void, &trace_shadow_rays_rs),
+            @ptrCast(*?*anyopaque, &trace_shadow_rays_rs),
         ));
     }
 
@@ -1298,7 +1298,7 @@ fn draw(demo: *DemoState) void {
             var properties: *d3d12.IStateObjectProperties = undefined;
             hrPanicOnFail(demo.trace_shadow_rays_stateobj.?.QueryInterface(
                 &d3d12.IID_IStateObjectProperties,
-                @ptrCast(*?*c_void, &properties),
+                @ptrCast(*?*anyopaque, &properties),
             ));
             defer _ = properties.Release();
 

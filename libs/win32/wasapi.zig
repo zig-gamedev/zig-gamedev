@@ -40,7 +40,7 @@ pub const IMMDevice = extern struct {
                 guid: *const GUID,
                 clsctx: DWORD,
                 params: ?*PROPVARIANT,
-                iface: *?*c_void,
+                iface: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.Activate(self, guid, clsctx, params, iface);
             }
@@ -49,10 +49,10 @@ pub const IMMDevice = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            Activate: fn (*T, *const GUID, DWORD, ?*PROPVARIANT, *?*c_void) callconv(WINAPI) HRESULT,
-            OpenPropertyStore: *c_void,
-            GetId: *c_void,
-            GetState: *c_void,
+            Activate: fn (*T, *const GUID, DWORD, ?*PROPVARIANT, *?*anyopaque) callconv(WINAPI) HRESULT,
+            OpenPropertyStore: *anyopaque,
+            GetId: *anyopaque,
+            GetState: *anyopaque,
         };
     }
 };
@@ -81,11 +81,11 @@ pub const IMMDeviceEnumerator = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumAudioEndpoints: *c_void,
+            EnumAudioEndpoints: *anyopaque,
             GetDefaultAudioEndpoint: fn (*T, EDataFlow, ERole, *?*IMMDevice) callconv(WINAPI) HRESULT,
-            GetDevice: *c_void,
-            RegisterEndpointNotificationCallback: *c_void,
-            UnregisterEndpointNotificationCallback: *c_void,
+            GetDevice: *anyopaque,
+            RegisterEndpointNotificationCallback: *anyopaque,
+            UnregisterEndpointNotificationCallback: *anyopaque,
         };
     }
 };
@@ -197,7 +197,7 @@ pub const IAudioClient = extern struct {
             pub inline fn SetEventHandle(self: *T, handle: HANDLE) HRESULT {
                 return self.v.audioclient.SetEventHandle(self, handle);
             }
-            pub inline fn GetService(self: *T, guid: *const GUID, iface: *?*c_void) HRESULT {
+            pub inline fn GetService(self: *T, guid: *const GUID, iface: *?*anyopaque) HRESULT {
                 return self.v.audioclient.GetService(self, guid, iface);
             }
         };
@@ -229,7 +229,7 @@ pub const IAudioClient = extern struct {
             Stop: fn (*T) callconv(WINAPI) HRESULT,
             Reset: fn (*T) callconv(WINAPI) HRESULT,
             SetEventHandle: fn (*T, HANDLE) callconv(WINAPI) HRESULT,
-            GetService: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetService: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -253,9 +253,9 @@ pub const IAudioClient2 = extern struct {
     pub fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            IsOffloadCapable: *c_void,
-            SetClientProperties: *c_void,
-            GetBufferSizeLimits: *c_void,
+            IsOffloadCapable: *anyopaque,
+            SetClientProperties: *anyopaque,
+            GetBufferSizeLimits: *anyopaque,
         };
     }
 };
@@ -282,9 +282,9 @@ pub const IAudioClient3 = extern struct {
     pub fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            GetSharedModeEnginePeriod: *c_void,
-            GetCurrentSharedModeEnginePeriod: *c_void,
-            InitializeSharedAudioStream: *c_void,
+            GetSharedModeEnginePeriod: *anyopaque,
+            GetCurrentSharedModeEnginePeriod: *anyopaque,
+            InitializeSharedAudioStream: *anyopaque,
         };
     }
 };

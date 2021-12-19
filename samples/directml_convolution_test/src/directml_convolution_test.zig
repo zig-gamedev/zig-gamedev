@@ -165,7 +165,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         if (enable_dx_debug) dml.CREATE_DEVICE_FLAG_DEBUG else dml.CREATE_DEVICE_FLAG_NONE,
         .FL_4_1,
         &dml.IID_IDevice1,
-        @ptrCast(*?*c_void, &dml_device),
+        @ptrCast(*?*anyopaque, &dml_device),
     ));
 
     const input_tensor_desc = dml.TENSOR_DESC{
@@ -229,7 +229,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         };
 
         var op: *dml.IOperator = undefined;
-        hrPanicOnFail(dml_device.CreateOperator(&desc, &dml.IID_IOperator, @ptrCast(*?*c_void, &op)));
+        hrPanicOnFail(dml_device.CreateOperator(&desc, &dml.IID_IOperator, @ptrCast(*?*anyopaque, &op)));
         break :blk op;
     };
     defer _ = conv_op.Release();
@@ -240,7 +240,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             conv_op,
             dml.EXECUTION_FLAG_NONE,
             &dml.IID_ICompiledOperator,
-            @ptrCast(*?*c_void, &cop),
+            @ptrCast(*?*anyopaque, &cop),
         ));
         break :blk cop;
     };
@@ -253,7 +253,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             operators.len,
             &operators,
             &dml.IID_IOperatorInitializer,
-            @ptrCast(*?*c_void, &iop),
+            @ptrCast(*?*anyopaque, &iop),
         ));
         break :blk iop;
     };
@@ -351,7 +351,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         var dml_cmd_recorder: *dml.ICommandRecorder = undefined;
         hrPanicOnFail(dml_device.CreateCommandRecorder(
             &dml.IID_ICommandRecorder,
-            @ptrCast(*?*c_void, &dml_cmd_recorder),
+            @ptrCast(*?*anyopaque, &dml_cmd_recorder),
         ));
         break :blk dml_cmd_recorder;
     };
@@ -407,7 +407,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         };
 
         var table: *dml.IBindingTable = undefined;
-        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*c_void, &table)));
+        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*anyopaque, &table)));
 
         break :blk .{
             .cop = conv_cop,
@@ -426,7 +426,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         };
 
         var table: *dml.IBindingTable = undefined;
-        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*c_void, &table)));
+        hrPanicOnFail(dml_device.CreateBindingTable(&desc, &dml.IID_IBindingTable, @ptrCast(*?*anyopaque, &table)));
         break :blk table;
     };
     defer _ = init_dtbl.Release();

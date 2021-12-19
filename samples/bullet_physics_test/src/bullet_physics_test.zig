@@ -397,7 +397,7 @@ const PhysicsDebug = struct {
         debug.drawLine1(point, point.add(normal.scale(0.01)), Vec3.init(0, 0, 0));
     }
 
-    fn drawLine1Callback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*c_void) callconv(.C) void {
+    fn drawLine1Callback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*anyopaque) callconv(.C) void {
         const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
         ptr.drawLine1(
             Vec3.init(p0[0], p0[1], p0[2]),
@@ -411,7 +411,7 @@ const PhysicsDebug = struct {
         p1: [*c]const f32,
         color0: [*c]const f32,
         color1: [*c]const f32,
-        user: ?*c_void,
+        user: ?*anyopaque,
     ) callconv(.C) void {
         const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
         ptr.drawLine2(
@@ -428,7 +428,7 @@ const PhysicsDebug = struct {
         distance: f32,
         _: c_int,
         color: [*c]const f32,
-        user: ?*c_void,
+        user: ?*anyopaque,
     ) callconv(.C) void {
         const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
         ptr.drawContactPoint(
@@ -439,7 +439,7 @@ const PhysicsDebug = struct {
         );
     }
 
-    fn reportErrorWarningCallback(str: [*c]const u8, _: ?*c_void) callconv(.C) void {
+    fn reportErrorWarningCallback(str: [*c]const u8, _: ?*anyopaque) callconv(.C) void {
         std.log.info("{s}", .{str});
     }
 };

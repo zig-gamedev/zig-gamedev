@@ -96,7 +96,7 @@ pub const GraphicsContext = struct {
                 null,
                 w.CLSCTX_INPROC_SERVER,
                 &wic.IID_IImagingFactory,
-                @ptrCast(*?*c_void, &wic_factory),
+                @ptrCast(*?*anyopaque, &wic_factory),
             ));
             break :blk wic_factory;
         };
@@ -106,7 +106,7 @@ pub const GraphicsContext = struct {
             hrPanicOnFail(dxgi.CreateDXGIFactory2(
                 if (enable_dx_debug) dxgi.CREATE_FACTORY_DEBUG else 0,
                 &dxgi.IID_IFactory6,
-                @ptrCast(*?*c_void, &factory),
+                @ptrCast(*?*anyopaque, &factory),
             ));
             break :blk factory;
         };
@@ -129,7 +129,7 @@ pub const GraphicsContext = struct {
 
         if (enable_dx_debug) {
             var maybe_debug: ?*d3d12d.IDebug1 = null;
-            _ = d3d12.D3D12GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(*?*c_void, &maybe_debug));
+            _ = d3d12.D3D12GetDebugInterface(&d3d12d.IID_IDebug1, @ptrCast(*?*anyopaque, &maybe_debug));
             if (maybe_debug) |debug| {
                 debug.EnableDebugLayer();
                 if (enable_dx_gpu_debug) {
@@ -184,7 +184,7 @@ pub const GraphicsContext = struct {
                 if (suitable_adapter) |adapter| @ptrCast(*w.IUnknown, adapter) else null,
                 .FL_11_1,
                 &d3d12.IID_IDevice9,
-                @ptrCast(*?*c_void, &device),
+                @ptrCast(*?*anyopaque, &device),
             );
 
             if (hr != w.S_OK) {
@@ -239,7 +239,7 @@ pub const GraphicsContext = struct {
                 .Priority = @enumToInt(d3d12.COMMAND_QUEUE_PRIORITY.NORMAL),
                 .Flags = d3d12.COMMAND_QUEUE_FLAG_NONE,
                 .NodeMask = 0,
-            }, &d3d12.IID_ICommandQueue, @ptrCast(*?*c_void, &cmdqueue)));
+            }, &d3d12.IID_ICommandQueue, @ptrCast(*?*anyopaque, &cmdqueue)));
             break :blk cmdqueue;
         };
 
@@ -279,7 +279,7 @@ pub const GraphicsContext = struct {
             var swapchain3: *dxgi.ISwapChain3 = undefined;
             hrPanicOnFail(swapchain.QueryInterface(
                 &dxgi.IID_ISwapChain3,
-                @ptrCast(*?*c_void, &swapchain3),
+                @ptrCast(*?*anyopaque, &swapchain3),
             ));
             break :blk swapchain3;
         };
@@ -309,7 +309,7 @@ pub const GraphicsContext = struct {
             var device11on12: *d3d11on12.IDevice2 = undefined;
             hrPanicOnFail(dx11.device.QueryInterface(
                 &d3d11on12.IID_IDevice2,
-                @ptrCast(*?*c_void, &device11on12),
+                @ptrCast(*?*anyopaque, &device11on12),
             ));
             break :blk device11on12;
         };
@@ -323,7 +323,7 @@ pub const GraphicsContext = struct {
                     &d2d1.FACTORY_OPTIONS{ .debugLevel = .INFORMATION }
                 else
                     &d2d1.FACTORY_OPTIONS{ .debugLevel = .NONE },
-                @ptrCast(*?*c_void, &d2d_factory),
+                @ptrCast(*?*anyopaque, &d2d_factory),
             ));
             break :blk d2d_factory;
         };
@@ -332,7 +332,7 @@ pub const GraphicsContext = struct {
             var dxgi_device: *dxgi.IDevice = undefined;
             hrPanicOnFail(device11on12.QueryInterface(
                 &dxgi.IID_IDevice,
-                @ptrCast(*?*c_void, &dxgi_device),
+                @ptrCast(*?*anyopaque, &dxgi_device),
             ));
             break :blk dxgi_device;
         };
@@ -361,7 +361,7 @@ pub const GraphicsContext = struct {
             hrPanicOnFail(dwrite.DWriteCreateFactory(
                 .SHARED,
                 &dwrite.IID_IFactory,
-                @ptrCast(*?*c_void, &dwrite_factory),
+                @ptrCast(*?*anyopaque, &dwrite_factory),
             ));
             break :blk dwrite_factory;
         };
@@ -401,7 +401,7 @@ pub const GraphicsContext = struct {
                 hrPanicOnFail(swapchain.GetBuffer(
                     @intCast(u32, buffer_index),
                     &d3d12.IID_IResource,
-                    @ptrCast(*?*c_void, &swapbuffers[buffer_index]),
+                    @ptrCast(*?*anyopaque, &swapbuffers[buffer_index]),
                 ));
                 device.CreateRenderTargetView(
                     swapbuffers[buffer_index],
@@ -439,7 +439,7 @@ pub const GraphicsContext = struct {
                     d3d12.RESOURCE_STATE_RENDER_TARGET,
                     d3d12.RESOURCE_STATE_PRESENT,
                     &d3d11.IID_IResource,
-                    @ptrCast(*?*c_void, &swapbuffers11[buffer_index]),
+                    @ptrCast(*?*anyopaque, &swapbuffers11[buffer_index]),
                 ));
             }
             break :blk swapbuffers11;
@@ -453,7 +453,7 @@ pub const GraphicsContext = struct {
                 var surface: *dxgi.ISurface = undefined;
                 hrPanicOnFail(swapbuffer11.QueryInterface(
                     &dxgi.IID_ISurface,
-                    @ptrCast(*?*c_void, &surface),
+                    @ptrCast(*?*anyopaque, &surface),
                 ));
                 defer _ = surface.Release();
 
@@ -478,7 +478,7 @@ pub const GraphicsContext = struct {
                 0,
                 d3d12.FENCE_FLAG_NONE,
                 &d3d12.IID_IFence,
-                @ptrCast(*?*c_void, &frame_fence),
+                @ptrCast(*?*anyopaque, &frame_fence),
             ));
             break :blk frame_fence;
         };
@@ -496,7 +496,7 @@ pub const GraphicsContext = struct {
                 hrPanicOnFail(device.CreateCommandAllocator(
                     .DIRECT,
                     &d3d12.IID_ICommandAllocator,
-                    @ptrCast(*?*c_void, &cmdallocs[cmdalloc_index]),
+                    @ptrCast(*?*anyopaque, &cmdallocs[cmdalloc_index]),
                 ));
             }
             break :blk cmdallocs;
@@ -510,7 +510,7 @@ pub const GraphicsContext = struct {
                 cmdallocs[0],
                 null,
                 &d3d12.IID_IGraphicsCommandList6,
-                @ptrCast(*?*c_void, &cmdlist),
+                @ptrCast(*?*anyopaque, &cmdlist),
             ));
             break :blk cmdlist;
         };
@@ -686,7 +686,7 @@ pub const GraphicsContext = struct {
         if (enable_dx_debug) {
             // NOTE(mziulek): D2D1 is slow. It creates and destroys resources every frame. To see create/destroy
             // messages in debug output set 'mute_d2d_completely' to 'false'.
-            hrPanicOnFail(gr.device.QueryInterface(&d3d12d.IID_IInfoQueue, @ptrCast(*?*c_void, &info_queue)));
+            hrPanicOnFail(gr.device.QueryInterface(&d3d12d.IID_IInfoQueue, @ptrCast(*?*anyopaque, &info_queue)));
 
             if (mute_d2d_completely) {
                 info_queue.SetMuteDebugOutput(w.TRUE);
@@ -821,7 +821,7 @@ pub const GraphicsContext = struct {
                 initial_state,
                 clear_value,
                 &d3d12.IID_IResource,
-                @ptrCast(*?*c_void, &resource),
+                @ptrCast(*?*anyopaque, &resource),
             ));
             break :blk resource;
         };
@@ -1005,7 +1005,7 @@ pub const GraphicsContext = struct {
                 pso_desc.VS.pShaderBytecode.?,
                 pso_desc.VS.BytecodeLength,
                 &d3d12.IID_IRootSignature,
-                @ptrCast(*?*c_void, &rs),
+                @ptrCast(*?*anyopaque, &rs),
             ));
             break :blk rs;
         };
@@ -1017,7 +1017,7 @@ pub const GraphicsContext = struct {
             hrPanicOnFail(gr.device.CreateGraphicsPipelineState(
                 pso_desc,
                 &d3d12.IID_IPipelineState,
-                @ptrCast(*?*c_void, &pso),
+                @ptrCast(*?*anyopaque, &pso),
             ));
             break :blk pso;
         };
@@ -1103,7 +1103,7 @@ pub const GraphicsContext = struct {
                 pso_desc.MS.pShaderBytecode.?,
                 pso_desc.MS.BytecodeLength,
                 &d3d12.IID_IRootSignature,
-                @ptrCast(*?*c_void, &rs),
+                @ptrCast(*?*anyopaque, &rs),
             ));
             break :blk rs;
         };
@@ -1119,7 +1119,7 @@ pub const GraphicsContext = struct {
                     .pPipelineStateSubobjectStream = &stream,
                 },
                 &d3d12.IID_IPipelineState,
-                @ptrCast(*?*c_void, &pso),
+                @ptrCast(*?*anyopaque, &pso),
             ));
             break :blk pso;
         };
@@ -1170,7 +1170,7 @@ pub const GraphicsContext = struct {
                 pso_desc.CS.pShaderBytecode.?,
                 pso_desc.CS.BytecodeLength,
                 &d3d12.IID_IRootSignature,
-                @ptrCast(*?*c_void, &rs),
+                @ptrCast(*?*anyopaque, &rs),
             ));
             break :blk rs;
         };
@@ -1182,7 +1182,7 @@ pub const GraphicsContext = struct {
             hrPanicOnFail(gr.device.CreateComputePipelineState(
                 pso_desc,
                 &d3d12.IID_IPipelineState,
-                @ptrCast(*?*c_void, &pso),
+                @ptrCast(*?*anyopaque, &pso),
             ));
             break :blk pso;
         };
@@ -1661,7 +1661,7 @@ pub const GuiContext = struct {
                 hrPanicOnFail(gr.getResource(vb).Map(
                     0,
                     &.{ .Begin = 0, .End = 0 },
-                    @ptrCast(*?*c_void, &ptr),
+                    @ptrCast(*?*anyopaque, &ptr),
                 ));
                 break :blk ptr.?[0..new_size];
             };
@@ -1682,7 +1682,7 @@ pub const GuiContext = struct {
                 hrPanicOnFail(gr.getResource(ib).Map(
                     0,
                     &.{ .Begin = 0, .End = 0 },
-                    @ptrCast(*?*c_void, &ptr),
+                    @ptrCast(*?*anyopaque, &ptr),
                 ));
                 break :blk ptr.?[0..new_size];
             };
@@ -2184,7 +2184,7 @@ const DescriptorHeap = struct {
                 .NumDescriptors = capacity,
                 .Flags = flags,
                 .NodeMask = 0,
-            }, &d3d12.IID_IDescriptorHeap, @ptrCast(*?*c_void, &heap)));
+            }, &d3d12.IID_IDescriptorHeap, @ptrCast(*?*anyopaque, &heap)));
             break :blk heap;
         };
         return DescriptorHeap{
@@ -2249,7 +2249,7 @@ const GpuMemoryHeap = struct {
                 d3d12.RESOURCE_STATE_GENERIC_READ,
                 null,
                 &d3d12.IID_IResource,
-                @ptrCast(*?*c_void, &resource),
+                @ptrCast(*?*anyopaque, &resource),
             ));
             break :blk resource;
         };
@@ -2258,7 +2258,7 @@ const GpuMemoryHeap = struct {
             hrPanicOnFail(resource.Map(
                 0,
                 &d3d12.RANGE{ .Begin = 0, .End = 0 },
-                @ptrCast(*?*c_void, &cpu_base),
+                @ptrCast(*?*anyopaque, &cpu_base),
             ));
             break :blk cpu_base;
         };

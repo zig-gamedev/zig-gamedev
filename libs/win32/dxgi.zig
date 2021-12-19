@@ -508,16 +508,16 @@ pub const IObject = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: *const c_void) HRESULT {
+            pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: *const anyopaque) HRESULT {
                 return self.v.object.SetPrivateData(self, guid, data_size, data);
             }
             pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const IUnknown) HRESULT {
                 return self.v.object.SetPrivateDataInterface(self, guid, data);
             }
-            pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: *c_void) HRESULT {
+            pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: *anyopaque) HRESULT {
                 return self.v.object.GetPrivateData(self, guid, data_size, data);
             }
-            pub inline fn GetParent(self: *T, guid: *const GUID, parent: *?*c_void) HRESULT {
+            pub inline fn GetParent(self: *T, guid: *const GUID, parent: *?*anyopaque) HRESULT {
                 return self.v.object.GetParent(self, guid, parent);
             }
         };
@@ -525,10 +525,10 @@ pub const IObject = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetPrivateData: fn (*T, *const GUID, UINT, *const c_void) callconv(WINAPI) HRESULT,
+            SetPrivateData: fn (*T, *const GUID, UINT, *const anyopaque) callconv(WINAPI) HRESULT,
             SetPrivateDataInterface: fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
-            GetPrivateData: fn (*T, *const GUID, *UINT, *c_void) callconv(WINAPI) HRESULT,
-            GetParent: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetPrivateData: fn (*T, *const GUID, *UINT, *anyopaque) callconv(WINAPI) HRESULT,
+            GetParent: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -546,7 +546,7 @@ pub const IDeviceSubObject = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetDevice(self: *T, guid: *const GUID, parent: *?*c_void) HRESULT {
+            pub inline fn GetDevice(self: *T, guid: *const GUID, parent: *?*anyopaque) HRESULT {
                 return self.v.devsubobj.GetDevice(self, guid, parent);
             }
         };
@@ -554,7 +554,7 @@ pub const IDeviceSubObject = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetDevice: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetDevice: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -821,7 +821,7 @@ pub const ISwapChain = extern struct {
             pub inline fn Present(self: *T, sync_interval: UINT, flags: UINT) HRESULT {
                 return self.v.swapchain.Present(self, sync_interval, flags);
             }
-            pub inline fn GetBuffer(self: *T, index: u32, guid: *const GUID, surface: *?*c_void) HRESULT {
+            pub inline fn GetBuffer(self: *T, index: u32, guid: *const GUID, surface: *?*anyopaque) HRESULT {
                 return self.v.swapchain.GetBuffer(self, index, guid, surface);
             }
             pub inline fn SetFullscreenState(self: *T, target: ?*IOutput) HRESULT {
@@ -861,7 +861,7 @@ pub const ISwapChain = extern struct {
     pub fn VTable(comptime T: type) type {
         return extern struct {
             Present: fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
-            GetBuffer: fn (*T, u32, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetBuffer: fn (*T, u32, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             SetFullscreenState: fn (*T, ?*IOutput) callconv(WINAPI) HRESULT,
             GetFullscreenState: fn (*T, ?*BOOL, ?*?*IOutput) callconv(WINAPI) HRESULT,
             GetDesc: fn (*T, *SWAP_CHAIN_DESC) callconv(WINAPI) HRESULT,
@@ -1060,17 +1060,17 @@ pub const IFactory2 = extern struct {
     pub fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            IsWindowedStereoEnabled: *c_void,
-            CreateSwapChainForHwnd: *c_void,
-            CreateSwapChainForCoreWindow: *c_void,
-            GetSharedResourceAdapterLuid: *c_void,
-            RegisterStereoStatusWindow: *c_void,
-            RegisterStereoStatusEvent: *c_void,
-            UnregisterStereoStatus: *c_void,
-            RegisterOcclusionStatusWindow: *c_void,
-            RegisterOcclusionStatusEvent: *c_void,
-            UnregisterOcclusionStatus: *c_void,
-            CreateSwapChainForComposition: *c_void,
+            IsWindowedStereoEnabled: *anyopaque,
+            CreateSwapChainForHwnd: *anyopaque,
+            CreateSwapChainForCoreWindow: *anyopaque,
+            GetSharedResourceAdapterLuid: *anyopaque,
+            RegisterStereoStatusWindow: *anyopaque,
+            RegisterStereoStatusEvent: *anyopaque,
+            UnregisterStereoStatus: *anyopaque,
+            RegisterOcclusionStatusWindow: *anyopaque,
+            RegisterOcclusionStatusEvent: *anyopaque,
+            UnregisterOcclusionStatus: *anyopaque,
+            CreateSwapChainForComposition: *anyopaque,
         };
     }
 };
@@ -1100,7 +1100,7 @@ pub const IFactory3 = extern struct {
     pub fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            GetCreationFlags: *c_void,
+            GetCreationFlags: *anyopaque,
         };
     }
 };
@@ -1132,8 +1132,8 @@ pub const IFactory4 = extern struct {
     pub fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            EnumAdapterByLuid: *c_void,
-            EnumWarpAdapter: *c_void,
+            EnumAdapterByLuid: *anyopaque,
+            EnumWarpAdapter: *anyopaque,
         };
     }
 };
@@ -1169,7 +1169,7 @@ pub const IFactory5 = extern struct {
             pub inline fn CheckFeatureSupport(
                 self: *T,
                 feature: FEATURE,
-                support_data: *c_void,
+                support_data: *anyopaque,
                 support_data_size: UINT,
             ) HRESULT {
                 return self.v.factory5.CheckFeatureSupport(self, feature, support_data, support_data_size);
@@ -1179,7 +1179,7 @@ pub const IFactory5 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            CheckFeatureSupport: fn (*T, FEATURE, *c_void, UINT) callconv(WINAPI) HRESULT,
+            CheckFeatureSupport: fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1317,7 +1317,7 @@ pub const IID_ISurface = GUID{
 };
 
 pub const CREATE_FACTORY_DEBUG: UINT = 0x1;
-pub extern "dxgi" fn CreateDXGIFactory2(UINT, *const GUID, *?*c_void) callconv(WINAPI) HRESULT;
+pub extern "dxgi" fn CreateDXGIFactory2(UINT, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT;
 
 pub const SCALING = enum(UINT) {
     STRETCH = 0,
@@ -1386,7 +1386,7 @@ pub const ISwapChain1 = extern struct {
             pub inline fn GetHwnd(self: *T, hwnd: *HWND) HRESULT {
                 return self.v.swapchain1.GetHwnd(self, hwnd);
             }
-            pub inline fn GetCoreWindow(self: *T, guid: *const GUID, unknown: *?*c_void) HRESULT {
+            pub inline fn GetCoreWindow(self: *T, guid: *const GUID, unknown: *?*anyopaque) HRESULT {
                 return self.v.swapchain1.GetCoreWindow(self, guid, unknown);
             }
             pub inline fn Present1(
@@ -1423,7 +1423,7 @@ pub const ISwapChain1 = extern struct {
             GetDesc1: fn (*T, *SWAP_CHAIN_DESC1) callconv(WINAPI) HRESULT,
             GetFullscreenDesc: fn (*T, *SWAP_CHAIN_FULLSCREEN_DESC) callconv(WINAPI) HRESULT,
             GetHwnd: fn (*T, *HWND) callconv(WINAPI) HRESULT,
-            GetCoreWindow: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetCoreWindow: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             Present1: fn (*T, UINT, UINT, *const PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
             IsTemporaryMonoSupported: fn (*T) callconv(WINAPI) BOOL,
             GetRestrictToOutput: fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,

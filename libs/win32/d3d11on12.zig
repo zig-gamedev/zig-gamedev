@@ -33,7 +33,7 @@ pub const IDevice = extern struct {
                 in_state: RESOURCE_STATES,
                 out_state: RESOURCE_STATES,
                 guid: *const GUID,
-                resource11: ?*?*c_void,
+                resource11: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.on12dev.CreateWrappedResource(
                     self,
@@ -71,7 +71,7 @@ pub const IDevice = extern struct {
                 RESOURCE_STATES,
                 RESOURCE_STATES,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             ReleaseWrappedResources: fn (*T, [*]const *d3d11.IResource, UINT) callconv(WINAPI) void,
             AcquireWrappedResources: fn (*T, [*]const *d3d11.IResource, UINT) callconv(WINAPI) void,
@@ -98,7 +98,7 @@ pub const IDevice1 = extern struct {
     pub fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            GetD3D12Device: *c_void,
+            GetD3D12Device: *anyopaque,
         };
     }
 };
@@ -124,8 +124,8 @@ pub const IDevice2 = extern struct {
     pub fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            UnwrapUnderlyingResource: *c_void,
-            ReturnUnderlyingResource: *c_void,
+            UnwrapUnderlyingResource: *anyopaque,
+            ReturnUnderlyingResource: *anyopaque,
         };
     }
 };
