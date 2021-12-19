@@ -10,8 +10,8 @@ const xaudio2fx = win32.xaudio2fx;
 const wasapi = win32.wasapi;
 const mf = win32.mf;
 const common = @import("common");
-const gr = common.graphics;
-const audio = common.audio;
+const gfx = common.graphics;
+const sfx = common.audio;
 const lib = common.library;
 const c = common.c;
 const pix = common.pix;
@@ -31,12 +31,12 @@ const window_width = 1920;
 const window_height = 1080;
 
 const DemoState = struct {
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    gctx: gfx.GraphicsContext,
+    actx: sfx.AudioContext,
+    gui: gfx.GuiContext,
     frame_stats: lib.FrameStats,
 
-    actx: audio.AudioContext,
-    music: *audio.Stream,
+    music: *sfx.Stream,
 
     brush: *d2d1.ISolidColorBrush,
     info_tfmt: *dwrite.ITextFormat,
@@ -46,14 +46,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    const actx = audio.AudioContext.init();
+    const actx = sfx.AudioContext.init();
 
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
 
-    const samples = audio.loadSamples(gpa_allocator, L("content/drum_bass_hard.flac"));
+    const samples = sfx.loadSamples(gpa_allocator, L("content/drum_bass_hard.flac"));
     defer samples.deinit();
 
-    var music = audio.Stream.create(gpa_allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
+    var music = sfx.Stream.create(gpa_allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     {
@@ -77,66 +77,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ));
     }
 
-    if (false) {
-        const source_voice0 = blk: {
-            var voice: ?*xaudio2.ISourceVoice = null;
-            hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
-                .wFormatTag = wasapi.WAVE_FORMAT_PCM,
-                .nChannels = 1,
-                .nSamplesPerSec = 48_000,
-                .nAvgBytesPerSec = 2 * 48_000,
-                .nBlockAlign = 2,
-                .wBitsPerSample = 16,
-                .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
-            }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
-            break :blk voice.?;
-        };
-        defer source_voice0.DestroyVoice();
-
-        const source_voice1 = blk: {
-            var voice: ?*xaudio2.ISourceVoice = null;
-            hrPanicOnFail(audio.CreateSourceVoice(&voice, &.{
-                .wFormatTag = wasapi.WAVE_FORMAT_PCM,
-                .nChannels = 1,
-                .nSamplesPerSec = 48_000,
-                .nAvgBytesPerSec = 2 * 48_000,
-                .nBlockAlign = 2,
-                .wBitsPerSample = 16,
-                .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
-            }, 0, xaudio2.DEFAULT_FREQ_RATIO, null, null, null));
-            break :blk voice.?;
-        };
-        defer source_voice1.DestroyVoice();
-
-        hrPanicOnFail(source_voice0.SubmitSourceBuffer(&.{
-            .Flags = xaudio2.END_OF_STREAM,
-            .AudioBytes = @intCast(u32, samples.items.len),
-            .pAudioData = samples.items.ptr,
-            .PlayBegin = 0,
-            .PlayLength = 0,
-            .LoopBegin = 0,
-            .LoopLength = 0,
-            .LoopCount = 0,
-            .pContext = null,
-        }, null));
-        hrPanicOnFail(source_voice0.Start(0, xaudio2.COMMIT_NOW));
-
-        w.kernel32.Sleep(100);
-
-        hrPanicOnFail(source_voice1.SubmitSourceBuffer(&.{
-            .Flags = xaudio2.END_OF_STREAM,
-            .AudioBytes = @intCast(u32, samples.items.len),
-            .pAudioData = samples.items.ptr,
-            .PlayBegin = 0,
-            .PlayLength = 0,
-            .LoopBegin = 0,
-            .LoopLength = 0,
-            .LoopCount = 0,
-            .pContext = null,
-        }, null));
-        hrPanicOnFail(source_voice1.Start(0, xaudio2.COMMIT_NOW));
-    }
-
     const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
@@ -150,13 +90,13 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var grfx = gr.GraphicsContext.init(window);
-    grfx.present_flags = 0;
-    grfx.present_interval = 1;
+    var gctx = gfx.GraphicsContext.init(window);
+    gctx.present_flags = 0;
+    gctx.present_interval = 1;
 
     const brush = blk: {
         var brush: *d2d1.ISolidColorBrush = undefined;
-        hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
+        hrPanicOnFail(gctx.d2d.context.CreateSolidColorBrush(
             &.{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
             null,
             @ptrCast(*?*d2d1.ISolidColorBrush, &brush),
@@ -166,7 +106,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const info_tfmt = blk: {
         var info_txtfmt: *dwrite.ITextFormat = undefined;
-        hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
+        hrPanicOnFail(gctx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
             dwrite.FONT_WEIGHT.BOLD,
@@ -184,23 +124,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     // Begin frame to init/upload resources to the GPU.
     //
-    grfx.beginFrame();
-    grfx.endFrame();
-    grfx.beginFrame();
+    gctx.beginFrame();
+    gctx.endFrame();
+    gctx.beginFrame();
 
-    pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
+    pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, gctx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = gfx.GuiContext.init(arena_allocator, &gctx, 1);
 
-    _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+    _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, gctx.cmdlist));
 
-    grfx.endFrame();
-    grfx.finishGpuCommands();
+    gctx.endFrame();
+    gctx.finishGpuCommands();
 
     _ = pix.endCapture();
 
     return .{
-        .grfx = grfx,
+        .gctx = gctx,
         .gui = gui,
         .actx = actx,
         .music = music,
@@ -211,11 +151,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 }
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
-    demo.grfx.finishGpuCommands();
+    demo.gctx.finishGpuCommands();
     _ = demo.brush.Release();
     _ = demo.info_tfmt.Release();
-    demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit();
+    demo.gui.deinit(&demo.gctx);
+    demo.gctx.deinit();
     demo.music.destroy();
     hrPanicOnFail(mf.MFShutdown());
     demo.actx.deinit();
@@ -234,29 +174,29 @@ fn update(demo: *DemoState) void {
 }
 
 fn draw(demo: *DemoState) void {
-    var grfx = &demo.grfx;
-    grfx.beginFrame();
+    var gctx = &demo.gctx;
+    gctx.beginFrame();
 
-    const back_buffer = grfx.getBackBuffer();
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    grfx.flushResourceBarriers();
+    const back_buffer = gctx.getBackBuffer();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.flushResourceBarriers();
 
-    grfx.cmdlist.OMSetRenderTargets(
+    gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
         null,
     );
-    grfx.cmdlist.ClearRenderTargetView(
+    gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
         &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
         null,
     );
 
-    demo.gui.draw(grfx);
+    demo.gui.draw(gctx);
 
-    grfx.beginDraw2d();
+    gctx.beginDraw2d();
     {
         const stats = &demo.frame_stats;
         var buffer = [_]u8{0} ** 64;
@@ -268,21 +208,21 @@ fn draw(demo: *DemoState) void {
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
         lib.drawText(
-            grfx.d2d.context,
+            gctx.d2d.context,
             text,
             demo.info_tfmt,
             &d2d1.RECT_F{
                 .left = 10.0,
                 .top = 10.0,
-                .right = @intToFloat(f32, grfx.viewport_width),
-                .bottom = @intToFloat(f32, grfx.viewport_height),
+                .right = @intToFloat(f32, gctx.viewport_width),
+                .bottom = @intToFloat(f32, gctx.viewport_height),
             },
             @ptrCast(*d2d1.IBrush, demo.brush),
         );
     }
-    grfx.endDraw2d();
+    gctx.endDraw2d();
 
-    grfx.endFrame();
+    gctx.endFrame();
 }
 
 pub fn main() !void {
