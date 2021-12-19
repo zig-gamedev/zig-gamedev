@@ -33,13 +33,13 @@ const window_height = 1080;
 const DemoState = struct {
     gctx: gfx.GraphicsContext,
     actx: sfx.AudioContext,
-    gui: gfx.GuiContext,
+    guictx: gfx.GuiContext,
     frame_stats: lib.FrameStats,
 
     music: *sfx.Stream,
 
     brush: *d2d1.ISolidColorBrush,
-    info_tfmt: *dwrite.ITextFormat,
+    normal_tfmt: *dwrite.ITextFormat,
 };
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
@@ -104,7 +104,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk brush;
     };
 
-    const info_tfmt = blk: {
+    const normal_tfmt = blk: {
         var info_txtfmt: *dwrite.ITextFormat = undefined;
         hrPanicOnFail(gctx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
@@ -118,8 +118,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ));
         break :blk info_txtfmt;
     };
-    hrPanicOnFail(info_tfmt.SetTextAlignment(.LEADING));
-    hrPanicOnFail(info_tfmt.SetParagraphAlignment(.NEAR));
+    hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
+    hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
 
     //
     // Begin frame to init/upload resources to the GPU.
@@ -130,7 +130,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, gctx.cmdlist), "GPU init");
 
-    var gui = gfx.GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
 
     _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, gctx.cmdlist));
 
@@ -141,20 +141,20 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     return .{
         .gctx = gctx,
-        .gui = gui,
         .actx = actx,
+        .guictx = guictx,
         .music = music,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
-        .info_tfmt = info_tfmt,
+        .normal_tfmt = normal_tfmt,
     };
 }
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     _ = demo.brush.Release();
-    _ = demo.info_tfmt.Release();
-    demo.gui.deinit(&demo.gctx);
+    _ = demo.normal_tfmt.Release();
+    demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     demo.music.destroy();
     hrPanicOnFail(mf.MFShutdown());
@@ -194,7 +194,7 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
-    demo.gui.draw(gctx);
+    demo.guictx.draw(gctx);
 
     gctx.beginDraw2d();
     {
@@ -210,7 +210,7 @@ fn draw(demo: *DemoState) void {
         lib.drawText(
             gctx.d2d.context,
             text,
-            demo.info_tfmt,
+            demo.normal_tfmt,
             &d2d1.RECT_F{
                 .left = 10.0,
                 .top = 10.0,
