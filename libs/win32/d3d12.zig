@@ -226,6 +226,178 @@ pub const DESCRIPTOR_HEAP_DESC = extern struct {
     NodeMask: UINT,
 };
 
+pub const DESCRIPTOR_RANGE_TYPE = enum(UINT) {
+    SRV = 0,
+    UAV = 1,
+    CBV = 2,
+    SAMPLER = 3,
+};
+
+pub const DESCRIPTOR_RANGE = extern struct {
+    RangeType: DESCRIPTOR_RANGE_TYPE,
+    NumDescriptors: UINT,
+    BaseShaderRegister: UINT,
+    RegisterSpace: UINT,
+    OffsetInDescriptorsFromStart: UINT,
+};
+
+pub const ROOT_DESCRIPTOR_TABLE = extern struct {
+    NumDescriptorRanges: UINT,
+    pDescriptorRanges: ?[*]const DESCRIPTOR_RANGE,
+};
+
+pub const ROOT_CONSTANTS = extern struct {
+    ShaderRegister: UINT,
+    RegisterSpace: UINT,
+    Num32BitValues: UINT,
+};
+
+pub const ROOT_DESCRIPTOR = extern struct {
+    ShaderRegister: UINT,
+    RegisterSpace: UINT,
+};
+
+pub const ROOT_PARAMETER_TYPE = enum(UINT) {
+    DESCRIPTOR_TABLE = 0,
+    _32BIT_CONSTANTS = 1,
+    CBV = 2,
+    SRV = 3,
+    UAV = 4,
+};
+
+pub const SHADER_VISIBILITY = enum(UINT) {
+    ALL = 0,
+    VERTEX = 1,
+    HULL = 2,
+    DOMAIN = 3,
+    GEOMETRY = 4,
+    PIXEL = 5,
+    AMPLIFICATION = 6,
+    MESH = 7
+};
+
+pub const ROOT_PARAMETER = extern struct {
+    ParameterType: ROOT_PARAMETER_TYPE,
+    u: extern union {
+        DescriptorTable: ROOT_DESCRIPTOR_TABLE,
+        Constants: ROOT_CONSTANTS,
+        Descriptor: ROOT_DESCRIPTOR,
+    },
+    ShaderVisibility: SHADER_VISIBILITY,
+};
+
+pub const STATIC_BORDER_COLOR = enum(UINT) {
+    TRANSPARENT_BLACK = 0,
+    OPAQUE_BLACK = 1,
+    OPAQUE_WHITE = 2,
+};
+
+pub const STATIC_SAMPLER_DESC = extern struct {
+    Filter: FILTER,
+    AddressU: TEXTURE_ADDRESS_MODE,
+    AddressV: TEXTURE_ADDRESS_MODE,
+    AddressW: TEXTURE_ADDRESS_MODE,
+    MipLODBias: FLOAT,
+    MaxAnisotropy: UINT,
+    ComparisonFunc: COMPARISON_FUNC,
+    BorderColor: STATIC_BORDER_COLOR,
+    MinLOD: FLOAT,
+    MaxLOD: FLOAT,
+    ShaderRegister: UINT,
+    RegisterSpace: UINT,
+    ShaderVisibility: SHADER_VISIBILITY,
+};
+
+pub const ROOT_SIGNATURE_FLAGS = UINT;
+pub const ROOT_SIGNATURE_FLAG_NONE: ROOT_SIGNATURE_FLAGS = 0;
+pub const ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT: ROOT_SIGNATURE_FLAGS = 0x1;
+pub const ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x2;
+pub const ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x4;
+pub const ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x8;
+pub const ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x10;
+pub const ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x20;
+pub const ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT: ROOT_SIGNATURE_FLAGS = 0x40;
+pub const ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE: ROOT_SIGNATURE_FLAGS = 0x80;
+pub const ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x100;
+pub const ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS: ROOT_SIGNATURE_FLAGS = 0x200;
+pub const ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED: ROOT_SIGNATURE_FLAGS = 0x400;
+pub const ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED: ROOT_SIGNATURE_FLAGS = 0x800;
+
+pub const ROOT_SIGNATURE_DESC = extern struct {
+    NumParamenters: UINT,
+    pParameters: ?[*]const ROOT_PARAMETER,
+    NumStaticSamplers: UINT,
+    pStaticSamplers: ?[*]const STATIC_SAMPLER_DESC,
+    Flags: ROOT_SIGNATURE_FLAGS,
+};
+
+pub const DESCRIPTOR_RANGE_FLAGS = UINT;
+pub const DESCRIPTOR_RANGE_FLAG_NONE: DESCRIPTOR_RANGE_FLAGS = 0;
+pub const DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE: DESCRIPTOR_RANGE_FLAGS = 0x1;
+pub const DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE: DESCRIPTOR_RANGE_FLAGS = 0x2;
+pub const DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE: DESCRIPTOR_RANGE_FLAGS = 0x4;
+pub const DESCRIPTOR_RANGE_FLAG_DATA_STATIC: DESCRIPTOR_RANGE_FLAGS = 0x8;
+pub const DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS: DESCRIPTOR_RANGE_FLAGS = 0x10000;
+
+pub const DESCRIPTOR_RANGE1 = extern struct {
+    RangeType: DESCRIPTOR_RANGE_TYPE,
+    NumDescriptors: UINT,
+    BaseShaderRegister: UINT,
+    RegisterSpace: UINT,
+    Flags: DESCRIPTOR_RANGE_FLAGS,
+    OffsetInDescriptorsFromTableStart: UINT,
+};
+
+pub const ROOT_DESCRIPTOR_TABLE1 = extern struct {
+    NumDescriptorRanges: UINT,
+    pDescriptorRanges: ?[*]const DESCRIPTOR_RANGE1,
+};
+
+pub const ROOT_DESCRIPTOR_FLAGS = UINT;
+pub const ROOT_DESCRIPTOR_FLAG_NONE: ROOT_DESCRIPTOR_FLAGS = 0;
+pub const ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE: ROOT_DESCRIPTOR_FLAGS = 0x2;
+pub const ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE: ROOT_DESCRIPTOR_FLAGS = 0x4;
+pub const ROOT_DESCRIPTOR_FLAG_DATA_STATIC: ROOT_DESCRIPTOR_FLAGS = 0x8;
+
+pub const ROOT_DESCRIPTOR1 = extern struct {
+    ShaderRegister: UINT,
+    RegisterSpace: UINT,
+    Flags: ROOT_DESCRIPTOR_FLAGS,
+};
+
+pub const ROOT_PARAMETER1 = extern struct {
+    ParameterType: ROOT_PARAMETER_TYPE,
+    u: extern union {
+        DescriptorTable: ROOT_DESCRIPTOR_TABLE1,
+        Constants: ROOT_CONSTANTS,
+        Descriptor: ROOT_DESCRIPTOR1,
+    },
+    ShaderVisibility: SHADER_VISIBILITY,
+};
+
+pub const ROOT_SIGNATURE_DESC1 = extern struct {
+    NumParamenters: UINT,
+    pParameters: ?[*]const ROOT_PARAMETER1,
+    NumStaticSamplers: UINT,
+    pStaticSamplers: ?[*]const STATIC_SAMPLER_DESC,
+    Flags: ROOT_SIGNATURE_FLAGS,
+};
+
+// NOTE(gmodarelli): ROOT_SIGNATURE_VERSION should be an enum(UINT), but
+// ROOT_SIGNATURE_VERSION_1 and ROOT_SIGNATURE_VERSION_1_0 have the same value.
+pub const ROOT_SIGNATURE_VERSION = UINT;
+pub const ROOT_SIGNATURE_VERSION_1: ROOT_SIGNATURE_VERSION = 0x1;
+pub const ROOT_SIGNATURE_VERSION_1_0: ROOT_SIGNATURE_VERSION = 0x1;
+pub const ROOT_SIGNATURE_VERSION_1_1: ROOT_SIGNATURE_VERSION = 0x2;
+
+pub const VERSIONED_ROOT_SIGNATURE_DESC = extern struct {
+    Version: ROOT_SIGNATURE_VERSION,
+    u: extern union {
+        Desc_1_0: ROOT_SIGNATURE_DESC,
+        Desc_1_1: ROOT_SIGNATURE_DESC1,
+    },
+};
+
 pub const COMMAND_LIST_TYPE = enum(UINT) {
     DIRECT = 0,
     BUNDLE = 1,
@@ -2004,7 +2176,7 @@ pub const IPipelineState = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetCachedBlob(self: *T, blob: **d3d.ID3DBlob) HRESULT {
+            pub inline fn GetCachedBlob(self: *T, blob: **d3d.IBlob) HRESULT {
                 return self.v.pstate.GetCachedBlob(self, blob);
             }
         };
@@ -5545,6 +5717,11 @@ pub extern "d3d12" fn D3D12CreateDevice(
     d3d.FEATURE_LEVEL,
     *const GUID,
     ?*?*c_void,
+) callconv(WINAPI) HRESULT;
+pub extern "d3d12" fn D3D12SerializeVersionedRootSignature(
+    *const VERSIONED_ROOT_SIGNATURE_DESC,
+    ?*?*d3d.IBlob,
+    ?*?*d3d.IBlob
 ) callconv(WINAPI) HRESULT;
 
 pub const IID_IDevice = GUID{

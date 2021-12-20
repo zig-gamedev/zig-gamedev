@@ -65,7 +65,7 @@ pub const FEATURE_LEVEL = enum(UINT) {
 
 pub const IBlob = extern struct {
     const Self = @This();
-    vtbl: *const extern struct {
+    v: *const extern struct {
         unknown: IUnknown.VTable(Self),
         blob: VTable(Self),
     },
