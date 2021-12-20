@@ -37,6 +37,7 @@ const DemoState = struct {
     frame_stats: lib.FrameStats,
 
     music: *sfx.Stream,
+    sound_data: []const u8,
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
@@ -46,12 +47,13 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    const actx = sfx.AudioContext.init();
+    var actx = sfx.AudioContext.init(gpa_allocator);
 
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
 
-    const samples = sfx.loadSamples(gpa_allocator, L("content/drum_bass_hard.flac"));
-    defer samples.deinit();
+    const sound_data = sfx.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));
+
+    actx.playBuffer(.{ .data = sound_data });
 
     var music = sfx.Stream.create(gpa_allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
@@ -144,6 +146,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .actx = actx,
         .guictx = guictx,
         .music = music,
+        .sound_data = sound_data,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
@@ -158,6 +161,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.deinit();
     demo.music.destroy();
     hrPanicOnFail(mf.MFShutdown());
+    gpa_allocator.free(demo.sound_data);
     demo.actx.deinit();
     lib.deinitWindow(gpa_allocator);
     demo.* = undefined;

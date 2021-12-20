@@ -13,11 +13,53 @@ const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const enable_dx_debug = @import("build_options").enable_dx_debug;
 
+const optimal_voice_format = wasapi.WAVEFORMATEX{
+    .wFormatTag = wasapi.WAVE_FORMAT_PCM,
+    .nChannels = 1,
+    .nSamplesPerSec = 48_000,
+    .nAvgBytesPerSec = 2 * 48_000,
+    .nBlockAlign = 2,
+    .wBitsPerSample = 16,
+    .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
+};
+
+const StopOnBufferEnd_VoiceCallback = struct {
+    vtable: *const xaudio2.IVoiceCallbackVTable(Self) = &vtable_instance,
+
+    const Self = @This();
+
+    fn OnBufferEnd(_: *Self, context: ?*anyopaque) callconv(w.WINAPI) void {
+        const voice = @ptrCast(*xaudio2.ISourceVoice, @alignCast(8, context));
+        hrPanicOnFail(voice.Stop(0, xaudio2.COMMIT_NOW));
+    }
+
+    const vtable_instance = xaudio2.IVoiceCallbackVTable(Self){
+        .vcb = .{
+            .OnVoiceProcessingPassStart = OnVoiceProcessingPassStart,
+            .OnVoiceProcessingPassEnd = OnVoiceProcessingPassEnd,
+            .OnStreamEnd = OnStreamEnd,
+            .OnBufferStart = OnBufferStart,
+            .OnBufferEnd = OnBufferEnd,
+            .OnLoopEnd = OnLoopEnd,
+            .OnVoiceError = OnVoiceError,
+        },
+    };
+
+    fn OnVoiceProcessingPassStart(_: *Self, _: w.UINT32) callconv(w.WINAPI) void {}
+    fn OnVoiceProcessingPassEnd(_: *Self) callconv(w.WINAPI) void {}
+    fn OnStreamEnd(_: *Self) callconv(w.WINAPI) void {}
+    fn OnBufferStart(_: *Self, _: ?*anyopaque) callconv(w.WINAPI) void {}
+    fn OnLoopEnd(_: *Self, _: ?*anyopaque) callconv(w.WINAPI) void {}
+    fn OnVoiceError(_: *Self, _: ?*anyopaque, _: w.HRESULT) callconv(w.WINAPI) void {}
+};
+var stop_on_buffer_end_vcb: StopOnBufferEnd_VoiceCallback = .{};
+
 pub const AudioContext = struct {
     device: *xaudio2.IXAudio2,
     master_voice: *xaudio2.IMasteringVoice,
+    source_voices: std.ArrayList(*xaudio2.ISourceVoice),
 
-    pub fn init() AudioContext {
+    pub fn init(allocator: std.mem.Allocator) AudioContext {
         const device = blk: {
             var device: ?*xaudio2.IXAudio2 = null;
             hrPanicOnFail(xaudio2.create(&device, if (enable_dx_debug) xaudio2.DEBUG_ENGINE else 0, 0));
@@ -49,18 +91,90 @@ pub const AudioContext = struct {
             break :blk voice.?;
         };
 
+        var source_voices = std.ArrayList(*xaudio2.ISourceVoice).init(allocator);
+        {
+            var i: u32 = 0;
+            while (i < 32) : (i += 1) {
+                var voice: ?*xaudio2.ISourceVoice = null;
+                hrPanicOnFail(device.CreateSourceVoice(
+                    &voice,
+                    &optimal_voice_format,
+                    0,
+                    xaudio2.DEFAULT_FREQ_RATIO,
+                    @ptrCast(*xaudio2.IVoiceCallback, &stop_on_buffer_end_vcb),
+                    null,
+                    null,
+                ));
+                source_voices.append(voice.?) catch unreachable;
+            }
+        }
+
         return .{
             .device = device,
             .master_voice = master_voice,
+            .source_voices = source_voices,
         };
     }
 
     pub fn deinit(audio: *AudioContext) void {
         audio.device.StopEngine();
+        for (audio.source_voices.items) |voice| {
+            voice.DestroyVoice();
+        }
+        audio.source_voices.deinit();
         audio.master_voice.DestroyVoice();
         _ = audio.device.Release();
         audio.* = undefined;
     }
+
+    pub fn getSourceVoice(audio: *AudioContext) *xaudio2.ISourceVoice {
+        const idle_voice = blk: {
+            for (audio.source_voices.items) |voice| {
+                var state: xaudio2.VOICE_STATE = undefined;
+                voice.GetState(&state, xaudio2.VOICE_NOSAMPLESPLAYED);
+                if (state.BuffersQueued == 0) {
+                    break :blk voice;
+                }
+            }
+
+            var voice: ?*xaudio2.ISourceVoice = null;
+            hrPanicOnFail(audio.device.CreateSourceVoice(
+                &voice,
+                &optimal_voice_format,
+                0,
+                xaudio2.DEFAULT_FREQ_RATIO,
+                @ptrCast(*xaudio2.IVoiceCallback, &stop_on_buffer_end_vcb),
+                null,
+                null,
+            ));
+            audio.source_voices.append(voice.?) catch unreachable;
+            break :blk voice.?;
+        };
+
+        // Reset voice state
+        hrPanicOnFail(idle_voice.SetEffectChain(null));
+        hrPanicOnFail(idle_voice.SetVolume(1.0));
+        hrPanicOnFail(idle_voice.SetSourceSampleRate(optimal_voice_format.nSamplesPerSec));
+        hrPanicOnFail(idle_voice.SetChannelVolumes(1, &[1]f32{1.0}, xaudio2.COMMIT_NOW));
+        hrPanicOnFail(idle_voice.SetFrequencyRatio(1.0, xaudio2.COMMIT_NOW));
+
+        return idle_voice;
+    }
+
+    pub fn playBuffer(audio: *AudioContext, buffer: Buffer) void {
+        const voice = audio.getSourceVoice();
+        submitBuffer(voice, buffer);
+        hrPanicOnFail(voice.Start(0, xaudio2.COMMIT_NOW));
+    }
+};
+
+pub const Buffer = struct {
+    data: []const u8,
+    play_begin: u32 = 0,
+    play_length: u32 = 0,
+    loop_begin: u32 = 0,
+    loop_length: u32 = 0,
+    loop_count: u32 = 0,
 };
 
 pub const Stream = struct {
@@ -246,7 +360,7 @@ pub const Stream = struct {
         const vtable_voice_cb = xaudio2.IVoiceCallbackVTable(VoiceCallback){
             .vcb = .{
                 .OnVoiceProcessingPassStart = VoiceCallback.OnVoiceProcessingPassStart,
-                .OnVoiceProcessingPassEnd = OnVoiceProcessingPassEnd,
+                .OnVoiceProcessingPassEnd = VoiceCallback.OnVoiceProcessingPassEnd,
                 .OnStreamEnd = VoiceCallback.OnStreamEnd,
                 .OnBufferStart = VoiceCallback.OnBufferStart,
                 .OnBufferEnd = VoiceCallback.OnBufferEnd,
@@ -346,7 +460,7 @@ pub const Stream = struct {
     };
 };
 
-pub fn loadSamples(allocator: std.mem.Allocator, audio_file_path: [:0]const u16) std.ArrayList(u8) {
+pub fn loadBufferData(allocator: std.mem.Allocator, audio_file_path: [:0]const u16) []const u8 {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
@@ -358,18 +472,20 @@ pub fn loadSamples(allocator: std.mem.Allocator, audio_file_path: [:0]const u16)
     hrPanicOnFail(source_reader.GetNativeMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, &media_type));
     defer _ = media_type.Release();
 
-    const sample_rate = 48_000;
     hrPanicOnFail(media_type.SetGUID(&mf.MT_MAJOR_TYPE, &mf.MediaType_Audio));
     hrPanicOnFail(media_type.SetGUID(&mf.MT_SUBTYPE, &mf.AudioFormat_PCM));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, 1));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, sample_rate));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BITS_PER_SAMPLE, 16));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BLOCK_ALIGNMENT, 2));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * sample_rate));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_NUM_CHANNELS, optimal_voice_format.nChannels));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, optimal_voice_format.nSamplesPerSec));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BITS_PER_SAMPLE, optimal_voice_format.wBitsPerSample));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BLOCK_ALIGNMENT, optimal_voice_format.nBlockAlign));
+    hrPanicOnFail(media_type.SetUINT32(
+        &mf.MT_AUDIO_AVG_BYTES_PER_SECOND,
+        optimal_voice_format.nBlockAlign * optimal_voice_format.nSamplesPerSec,
+    ));
     hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
     hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
-    var samples = std.ArrayList(u8).init(allocator);
+    var data = std.ArrayList(u8).init(allocator);
     while (true) {
         var flags: w.DWORD = 0;
         var sample: ?*mf.ISample = null;
@@ -388,8 +504,22 @@ pub fn loadSamples(allocator: std.mem.Allocator, audio_file_path: [:0]const u16)
         var data_ptr: [*]u8 = undefined;
         var data_len: u32 = 0;
         hrPanicOnFail(buffer.Lock(&data_ptr, null, &data_len));
-        samples.appendSlice(data_ptr[0..data_len]) catch unreachable;
+        data.appendSlice(data_ptr[0..data_len]) catch unreachable;
         hrPanicOnFail(buffer.Unlock());
     }
-    return samples;
+    return data.toOwnedSlice();
+}
+
+pub fn submitBuffer(voice: *xaudio2.ISourceVoice, buffer: Buffer) void {
+    hrPanicOnFail(voice.SubmitSourceBuffer(&.{
+        .Flags = xaudio2.END_OF_STREAM,
+        .AudioBytes = @intCast(u32, buffer.data.len),
+        .pAudioData = buffer.data.ptr,
+        .PlayBegin = buffer.play_begin,
+        .PlayLength = buffer.play_length,
+        .LoopBegin = buffer.loop_begin,
+        .LoopLength = buffer.loop_length,
+        .LoopCount = buffer.loop_count,
+        .pContext = voice,
+    }, null));
 }
