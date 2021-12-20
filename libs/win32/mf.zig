@@ -73,36 +73,36 @@ pub const IAttributes = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetItem: *c_void,
-            GetItemType: *c_void,
-            CompareItem: *c_void,
-            Compare: *c_void,
+            GetItem: *anyopaque,
+            GetItemType: *anyopaque,
+            CompareItem: *anyopaque,
+            Compare: *anyopaque,
             GetUINT32: fn (*T, *const GUID, *UINT32) callconv(WINAPI) HRESULT,
-            GetUINT64: *c_void,
-            GetDouble: *c_void,
+            GetUINT64: *anyopaque,
+            GetDouble: *anyopaque,
             GetGUID: fn (*T, *const GUID, *GUID) callconv(WINAPI) HRESULT,
-            GetStringLength: *c_void,
-            GetString: *c_void,
-            GetAllocatedString: *c_void,
-            GetBlobSize: *c_void,
-            GetBlob: *c_void,
-            GetAllocatedBlob: *c_void,
-            GetUnknown: *c_void,
-            SetItem: *c_void,
-            DeleteItem: *c_void,
-            DeleteAllItems: *c_void,
+            GetStringLength: *anyopaque,
+            GetString: *anyopaque,
+            GetAllocatedString: *anyopaque,
+            GetBlobSize: *anyopaque,
+            GetBlob: *anyopaque,
+            GetAllocatedBlob: *anyopaque,
+            GetUnknown: *anyopaque,
+            SetItem: *anyopaque,
+            DeleteItem: *anyopaque,
+            DeleteAllItems: *anyopaque,
             SetUINT32: fn (*T, *const GUID, UINT32) callconv(WINAPI) HRESULT,
-            SetUINT64: *c_void,
-            SetDouble: *c_void,
+            SetUINT64: *anyopaque,
+            SetDouble: *anyopaque,
             SetGUID: fn (*T, *const GUID, *const GUID) callconv(WINAPI) HRESULT,
-            SetString: *c_void,
-            SetBlob: *c_void,
+            SetString: *anyopaque,
+            SetBlob: *anyopaque,
             SetUnknown: fn (*T, *const GUID, ?*IUnknown) callconv(WINAPI) HRESULT,
-            LockStore: *c_void,
-            UnlockStore: *c_void,
-            GetCount: *c_void,
-            GetItemByIndex: *c_void,
-            CopyAllItems: *c_void,
+            LockStore: *anyopaque,
+            UnlockStore: *anyopaque,
+            GetCount: *anyopaque,
+            GetItemByIndex: *anyopaque,
+            CopyAllItems: *anyopaque,
         };
     }
 };
@@ -206,16 +206,16 @@ pub const ISourceReader = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetStreamSelection: *c_void,
-            SetStreamSelection: *c_void,
+            GetStreamSelection: *anyopaque,
+            SetStreamSelection: *anyopaque,
             GetNativeMediaType: fn (*T, DWORD, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
             GetCurrentMediaType: fn (*T, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentMediaType: fn (*T, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
             SetCurrentPosition: fn (*T, *const GUID, *const PROPVARIANT) callconv(WINAPI) HRESULT,
             ReadSample: fn (*T, DWORD, DWORD, ?*DWORD, ?*DWORD, ?*LONGLONG, ?*?*ISample) callconv(WINAPI) HRESULT,
-            Flush: *c_void,
-            GetServiceForStream: *c_void,
-            GetPresentationAttribute: *c_void,
+            Flush: *anyopaque,
+            GetServiceForStream: *anyopaque,
+            GetPresentationAttribute: *anyopaque,
         };
     }
 };
@@ -239,11 +239,11 @@ pub const IMediaType = extern struct {
     fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {
-            GetMajorType: *c_void,
-            IsCompressedFormat: *c_void,
-            IsEqual: *c_void,
-            GetRepresentation: *c_void,
-            FreeRepresentation: *c_void,
+            GetMajorType: *anyopaque,
+            IsCompressedFormat: *anyopaque,
+            IsEqual: *anyopaque,
+            GetRepresentation: *anyopaque,
+            FreeRepresentation: *anyopaque,
         };
     }
 };
@@ -272,20 +272,20 @@ pub const ISample = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetSampleFlags: *c_void,
-            SetSampleFlags: *c_void,
-            GetSampleTime: *c_void,
-            SetSampleTime: *c_void,
-            GetSampleDuration: *c_void,
-            SetSampleDuration: *c_void,
-            GetBufferCount: *c_void,
+            GetSampleFlags: *anyopaque,
+            SetSampleFlags: *anyopaque,
+            GetSampleTime: *anyopaque,
+            SetSampleTime: *anyopaque,
+            GetSampleDuration: *anyopaque,
+            SetSampleDuration: *anyopaque,
+            GetBufferCount: *anyopaque,
             GetBufferByIndex: fn (*T, DWORD, **IMediaBuffer) callconv(WINAPI) HRESULT,
             ConvertToContiguousBuffer: fn (*T, **IMediaBuffer) callconv(WINAPI) HRESULT,
-            AddBuffer: *c_void,
-            RemoveBufferByIndex: *c_void,
-            RemoveAllBuffers: *c_void,
-            GetTotalLength: *c_void,
-            CopyToBuffer: *c_void,
+            AddBuffer: *anyopaque,
+            RemoveBufferByIndex: *anyopaque,
+            RemoveAllBuffers: *anyopaque,
+            GetTotalLength: *anyopaque,
+            CopyToBuffer: *anyopaque,
         };
     }
 };
@@ -318,8 +318,8 @@ pub const IMediaBuffer = extern struct {
             Lock: fn (*T, *[*]BYTE, ?*DWORD, ?*DWORD) callconv(WINAPI) HRESULT,
             Unlock: fn (*T) callconv(WINAPI) HRESULT,
             GetCurrentLength: fn (*T, *DWORD) callconv(WINAPI) HRESULT,
-            SetCurrentLength: *c_void,
-            GetMaxLength: *c_void,
+            SetCurrentLength: *anyopaque,
+            GetMaxLength: *anyopaque,
         };
     }
 };

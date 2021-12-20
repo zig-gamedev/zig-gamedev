@@ -74,7 +74,7 @@ pub const IBlob = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetBufferPointer(self: *T) *c_void {
+            pub inline fn GetBufferPointer(self: *T) *anyopaque {
                 return self.v.blob.GetBufferPointer(self);
             }
             pub inline fn GetBufferSize(self: *T) SIZE_T {
@@ -85,7 +85,7 @@ pub const IBlob = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetBufferPointer: fn (*T) callconv(WINAPI) *c_void,
+            GetBufferPointer: fn (*T) callconv(WINAPI) *anyopaque,
             GetBufferSize: fn (*T) callconv(WINAPI) SIZE_T,
         };
     }

@@ -691,7 +691,7 @@ pub const COMMAND_QUEUE_DESC = extern struct {
 };
 
 pub const SHADER_BYTECODE = extern struct {
-    pShaderBytecode: ?*const c_void,
+    pShaderBytecode: ?*const anyopaque,
     BytecodeLength: UINT64,
 
     pub inline fn initZero() SHADER_BYTECODE {
@@ -1018,7 +1018,7 @@ pub const INPUT_ELEMENT_DESC = extern struct {
 };
 
 pub const CACHED_PIPELINE_STATE = extern struct {
-    pCachedBlob: ?*const c_void,
+    pCachedBlob: ?*const anyopaque,
     CachedBlobSizeInBytes: UINT64,
 
     pub inline fn initZero() CACHED_PIPELINE_STATE {
@@ -1756,10 +1756,10 @@ pub const IObject = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: ?*c_void) HRESULT {
+            pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: ?*anyopaque) HRESULT {
                 return self.v.object.GetPrivateData(self, guid, data_size, data);
             }
-            pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: ?*const c_void) HRESULT {
+            pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: ?*const anyopaque) HRESULT {
                 return self.v.object.SetPrivateData(self, guid, data_size, data);
             }
             pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const IUnknown) HRESULT {
@@ -1773,8 +1773,8 @@ pub const IObject = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetPrivateData: fn (*T, *const GUID, *UINT, ?*c_void) callconv(WINAPI) HRESULT,
-            SetPrivateData: fn (*T, *const GUID, UINT, ?*const c_void) callconv(WINAPI) HRESULT,
+            GetPrivateData: fn (*T, *const GUID, *UINT, ?*anyopaque) callconv(WINAPI) HRESULT,
+            SetPrivateData: fn (*T, *const GUID, UINT, ?*const anyopaque) callconv(WINAPI) HRESULT,
             SetPrivateDataInterface: fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
             SetName: fn (*T, LPCWSTR) callconv(WINAPI) HRESULT,
         };
@@ -1794,7 +1794,7 @@ pub const IDeviceChild = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetDevice(self: *T, guid: *const GUID, device: *?*c_void) HRESULT {
+            pub inline fn GetDevice(self: *T, guid: *const GUID, device: *?*anyopaque) HRESULT {
                 return self.v.devchild.GetDevice(self, guid, device);
             }
         };
@@ -1802,7 +1802,7 @@ pub const IDeviceChild = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDevice: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetDevice: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1956,7 +1956,7 @@ pub const IResource = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn Map(self: *T, subresource: UINT, read_range: ?*const RANGE, data: *?*c_void) HRESULT {
+            pub inline fn Map(self: *T, subresource: UINT, read_range: ?*const RANGE, data: *?*anyopaque) HRESULT {
                 return self.v.resource.Map(self, subresource, read_range, data);
             }
             pub inline fn Unmap(self: *T, subresource: UINT, written_range: ?*const RANGE) void {
@@ -1974,7 +1974,7 @@ pub const IResource = extern struct {
                 self: *T,
                 dst_subresource: UINT,
                 dst_box: ?*const BOX,
-                src_data: *const c_void,
+                src_data: *const anyopaque,
                 src_row_pitch: UINT,
                 src_depth_pitch: UINT,
             ) HRESULT {
@@ -1989,7 +1989,7 @@ pub const IResource = extern struct {
             }
             pub inline fn ReadFromSubresource(
                 self: *T,
-                dst_data: *c_void,
+                dst_data: *anyopaque,
                 dst_row_pitch: UINT,
                 dst_depth_pitch: UINT,
                 src_subresource: UINT,
@@ -2016,12 +2016,12 @@ pub const IResource = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Map: fn (*T, UINT, ?*const RANGE, *?*c_void) callconv(WINAPI) HRESULT,
+            Map: fn (*T, UINT, ?*const RANGE, *?*anyopaque) callconv(WINAPI) HRESULT,
             Unmap: fn (*T, UINT, ?*const RANGE) callconv(WINAPI) void,
             GetDesc: fn (*T, *RESOURCE_DESC) callconv(WINAPI) *RESOURCE_DESC,
             GetGPUVirtualAddress: fn (*T) callconv(WINAPI) GPU_VIRTUAL_ADDRESS,
-            WriteToSubresource: fn (*T, UINT, ?*const BOX, *const c_void, UINT, UINT) callconv(WINAPI) HRESULT,
-            ReadFromSubresource: fn (*T, *c_void, UINT, UINT, UINT, ?*const BOX) callconv(WINAPI) HRESULT,
+            WriteToSubresource: fn (*T, UINT, ?*const BOX, *const anyopaque, UINT, UINT) callconv(WINAPI) HRESULT,
+            ReadFromSubresource: fn (*T, *anyopaque, UINT, UINT, UINT, ?*const BOX) callconv(WINAPI) HRESULT,
             GetHeapProperties: fn (*T, ?*HEAP_PROPERTIES, ?*HEAP_FLAGS) callconv(WINAPI) HRESULT,
         };
     }
@@ -2046,7 +2046,7 @@ pub const IResource1 = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetProtectedResourceSession(self: *T, guid: *const GUID, session: *?*c_void) HRESULT {
+            pub inline fn GetProtectedResourceSession(self: *T, guid: *const GUID, session: *?*anyopaque) HRESULT {
                 return self.v.resource1.GetProtectedResourceSession(self, guid, session);
             }
         };
@@ -2054,7 +2054,7 @@ pub const IResource1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetProtectedResourceSession: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetProtectedResourceSession: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -2452,7 +2452,7 @@ pub const IGraphicsCommandList = extern struct {
                 self: *T,
                 root_index: UINT,
                 num: UINT,
-                data: *const c_void,
+                data: *const anyopaque,
                 offset: UINT,
             ) void {
                 self.v.grcmdlist.SetComputeRoot32BitConstants(self, root_index, num, data, offset);
@@ -2461,7 +2461,7 @@ pub const IGraphicsCommandList = extern struct {
                 self: *T,
                 root_index: UINT,
                 num: UINT,
-                data: *const c_void,
+                data: *const anyopaque,
                 offset: UINT,
             ) void {
                 self.v.grcmdlist.SetGraphicsRoot32BitConstants(self, root_index, num, data, offset);
@@ -2644,10 +2644,10 @@ pub const IGraphicsCommandList = extern struct {
             ) void {
                 self.v.grcmdlist.SetPredication(self, buffer, buffer_offset, operation);
             }
-            pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
+            pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
                 self.v.grcmdlist.SetMarker(self, metadata, data, size);
             }
-            pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
+            pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
                 self.v.grcmdlist.BeginEvent(self, metadata, data, size);
             }
             pub inline fn EndEvent(self: *T) void {
@@ -2719,8 +2719,8 @@ pub const IGraphicsCommandList = extern struct {
             SetGraphicsRootDescriptorTable: fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
             SetComputeRoot32BitConstant: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
             SetGraphicsRoot32BitConstant: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-            SetComputeRoot32BitConstants: fn (*T, UINT, UINT, *const c_void, UINT) callconv(WINAPI) void,
-            SetGraphicsRoot32BitConstants: fn (*T, UINT, UINT, *const c_void, UINT) callconv(WINAPI) void,
+            SetComputeRoot32BitConstants: fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
+            SetGraphicsRoot32BitConstants: fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
             SetComputeRootConstantBufferView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
             SetGraphicsRootConstantBufferView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
             SetComputeRootShaderResourceView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
@@ -2784,8 +2784,8 @@ pub const IGraphicsCommandList = extern struct {
                 UINT64,
             ) callconv(WINAPI) void,
             SetPredication: fn (*T, ?*IResource, UINT64, PREDICATION_OP) callconv(WINAPI) void,
-            SetMarker: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
-            BeginEvent: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
+            SetMarker: fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+            BeginEvent: fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
             EndEvent: fn (*T) callconv(WINAPI) void,
             ExecuteIndirect: fn (
                 *T,
@@ -3236,7 +3236,7 @@ pub const STATE_SUBOBJECT_TYPE = enum(UINT) {
 
 pub const STATE_SUBOBJECT = extern struct {
     Type: STATE_SUBOBJECT_TYPE,
-    pDesc: *const c_void,
+    pDesc: *const anyopaque,
 };
 
 pub const STATE_OBJECT_FLAGS = UINT;
@@ -3562,7 +3562,7 @@ pub const IStateObjectProperties = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetShaderIdentifier(self: *T, export_name: LPCWSTR) *c_void {
+            pub inline fn GetShaderIdentifier(self: *T, export_name: LPCWSTR) *anyopaque {
                 return self.v.properties.GetShaderIdentifier(self, export_name);
             }
             pub inline fn GetShaderStackSize(self: *T, export_name: LPCWSTR) UINT64 {
@@ -3579,7 +3579,7 @@ pub const IStateObjectProperties = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetShaderIdentifier: fn (*T, LPCWSTR) callconv(WINAPI) *c_void,
+            GetShaderIdentifier: fn (*T, LPCWSTR) callconv(WINAPI) *anyopaque,
             GetShaderStackSize: fn (*T, LPCWSTR) callconv(WINAPI) UINT64,
             GetPipelineStackSize: fn (*T) callconv(WINAPI) UINT64,
             SetPipelineStackSize: fn (*T, UINT64) callconv(WINAPI) void,
@@ -3637,7 +3637,7 @@ pub const IGraphicsCommandList4 = extern struct {
             pub inline fn InitializeMetaCommand(
                 self: *T,
                 meta_cmd: *IMetaCommand,
-                init_param_data: ?*const c_void,
+                init_param_data: ?*const anyopaque,
                 data_size: SIZE_T,
             ) void {
                 self.v.grcmdlist4.InitializeMetaCommand(self, meta_cmd, init_param_data, data_size);
@@ -3645,7 +3645,7 @@ pub const IGraphicsCommandList4 = extern struct {
             pub inline fn ExecuteMetaCommand(
                 self: *T,
                 meta_cmd: *IMetaCommand,
-                exe_param_data: ?*const c_void,
+                exe_param_data: ?*const anyopaque,
                 data_size: SIZE_T,
             ) void {
                 self.v.grcmdlist4.InitializeMetaCommand(self, meta_cmd, exe_param_data, data_size);
@@ -3698,8 +3698,8 @@ pub const IGraphicsCommandList4 = extern struct {
                 RENDER_PASS_FLAGS,
             ) callconv(WINAPI) void,
             EndRenderPass: fn (*T) callconv(WINAPI) void,
-            InitializeMetaCommand: fn (*T, *IMetaCommand, ?*const c_void, SIZE_T) callconv(WINAPI) void,
-            ExecuteMetaCommand: fn (*T, *IMetaCommand, ?*const c_void, SIZE_T) callconv(WINAPI) void,
+            InitializeMetaCommand: fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
+            ExecuteMetaCommand: fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
             BuildRaytracingAccelerationStructure: fn (
                 *T,
                 *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
@@ -3909,10 +3909,10 @@ pub const ICommandQueue = extern struct {
             pub inline fn ExecuteCommandLists(self: *T, num: UINT, cmdlists: [*]const *ICommandList) void {
                 self.v.cmdqueue.ExecuteCommandLists(self, num, cmdlists);
             }
-            pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
+            pub inline fn SetMarker(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
                 self.v.cmdqueue.SetMarker(self, metadata, data, size);
             }
-            pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const c_void, size: UINT) void {
+            pub inline fn BeginEvent(self: *T, metadata: UINT, data: ?*const anyopaque, size: UINT) void {
                 self.v.cmdqueue.BeginEvent(self, metadata, data, size);
             }
             pub inline fn EndEvent(self: *T) void {
@@ -3963,8 +3963,8 @@ pub const ICommandQueue = extern struct {
                 TILE_MAPPING_FLAGS,
             ) callconv(WINAPI) void,
             ExecuteCommandLists: fn (*T, UINT, [*]const *ICommandList) callconv(WINAPI) void,
-            SetMarker: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
-            BeginEvent: fn (*T, UINT, ?*const c_void, UINT) callconv(WINAPI) void,
+            SetMarker: fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+            BeginEvent: fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
             EndEvent: fn (*T) callconv(WINAPI) void,
             Signal: fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
             Wait: fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
@@ -3995,7 +3995,7 @@ pub const IDevice = extern struct {
                 self: *T,
                 desc: *const COMMAND_QUEUE_DESC,
                 guid: *const GUID,
-                obj: *?*c_void,
+                obj: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateCommandQueue(self, desc, guid, obj);
             }
@@ -4003,7 +4003,7 @@ pub const IDevice = extern struct {
                 self: *T,
                 cmdlist_type: COMMAND_LIST_TYPE,
                 guid: *const GUID,
-                obj: *?*c_void,
+                obj: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateCommandAllocator(self, cmdlist_type, guid, obj);
             }
@@ -4011,7 +4011,7 @@ pub const IDevice = extern struct {
                 self: *T,
                 desc: *const GRAPHICS_PIPELINE_STATE_DESC,
                 guid: *const GUID,
-                pso: *?*c_void,
+                pso: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateGraphicsPipelineState(self, desc, guid, pso);
             }
@@ -4019,7 +4019,7 @@ pub const IDevice = extern struct {
                 self: *T,
                 desc: *const COMPUTE_PIPELINE_STATE_DESC,
                 guid: *const GUID,
-                pso: *?*c_void,
+                pso: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateComputePipelineState(self, desc, guid, pso);
             }
@@ -4030,18 +4030,18 @@ pub const IDevice = extern struct {
                 cmdalloc: *ICommandAllocator,
                 initial_state: ?*IPipelineState,
                 guid: *const GUID,
-                cmdlist: *?*c_void,
+                cmdlist: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateCommandList(self, node_mask, cmdlist_type, cmdalloc, initial_state, guid, cmdlist);
             }
-            pub inline fn CheckFeatureSupport(self: *T, feature: FEATURE, data: *c_void, data_size: UINT) HRESULT {
+            pub inline fn CheckFeatureSupport(self: *T, feature: FEATURE, data: *anyopaque, data_size: UINT) HRESULT {
                 return self.v.device.CheckFeatureSupport(self, feature, data, data_size);
             }
             pub inline fn CreateDescriptorHeap(
                 self: *T,
                 desc: *const DESCRIPTOR_HEAP_DESC,
                 guid: *const GUID,
-                heap: *?*c_void,
+                heap: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateDescriptorHeap(self, desc, guid, heap);
             }
@@ -4051,10 +4051,10 @@ pub const IDevice = extern struct {
             pub inline fn CreateRootSignature(
                 self: *T,
                 node_mask: UINT,
-                blob: *const c_void,
+                blob: *const anyopaque,
                 blob_size: UINT64,
                 guid: *const GUID,
-                signature: *?*c_void,
+                signature: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateRootSignature(self, node_mask, blob, blob_size, guid, signature);
             }
@@ -4168,7 +4168,7 @@ pub const IDevice = extern struct {
                 state: RESOURCE_STATES,
                 clear_value: ?*const CLEAR_VALUE,
                 guid: *const GUID,
-                resource: ?*?*c_void,
+                resource: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateCommittedResource(
                     self,
@@ -4181,7 +4181,7 @@ pub const IDevice = extern struct {
                     resource,
                 );
             }
-            pub inline fn CreateHeap(self: *T, desc: *const HEAP_DESC, guid: *const GUID, heap: ?*?*c_void) HRESULT {
+            pub inline fn CreateHeap(self: *T, desc: *const HEAP_DESC, guid: *const GUID, heap: ?*?*anyopaque) HRESULT {
                 return self.v.device.CreateHeap(self, desc, guid, heap);
             }
             pub inline fn CreatePlacedResource(
@@ -4192,7 +4192,7 @@ pub const IDevice = extern struct {
                 state: RESOURCE_STATES,
                 clear_value: ?*const CLEAR_VALUE,
                 guid: *const GUID,
-                resource: ?*?*c_void,
+                resource: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreatePlacedResource(
                     self,
@@ -4211,7 +4211,7 @@ pub const IDevice = extern struct {
                 state: RESOURCE_STATES,
                 clear_value: ?*const CLEAR_VALUE,
                 guid: *const GUID,
-                resource: ?*?*c_void,
+                resource: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateReservedResource(self, desc, state, clear_value, guid, resource);
             }
@@ -4225,7 +4225,7 @@ pub const IDevice = extern struct {
             ) HRESULT {
                 return self.v.device.CreateSharedHandle(self, object, attributes, access, name, handle);
             }
-            pub inline fn OpenSharedHandle(self: *T, handle: HANDLE, guid: *const GUID, object: ?*?*c_void) HRESULT {
+            pub inline fn OpenSharedHandle(self: *T, handle: HANDLE, guid: *const GUID, object: ?*?*anyopaque) HRESULT {
                 return self.v.device.OpenSharedHandle(self, handle, guid, object);
             }
             pub inline fn OpenSharedHandleByName(self: *T, name: LPCWSTR, access: DWORD, handle: ?*HANDLE) HRESULT {
@@ -4242,7 +4242,7 @@ pub const IDevice = extern struct {
                 initial_value: UINT64,
                 flags: FENCE_FLAGS,
                 guid: *const GUID,
-                fence: *?*c_void,
+                fence: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateFence(self, initial_value, flags, guid, fence);
             }
@@ -4276,7 +4276,7 @@ pub const IDevice = extern struct {
                 self: *T,
                 desc: *const QUERY_HEAP_DESC,
                 guid: *const GUID,
-                query_heap: ?*?*c_void,
+                query_heap: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateQueryHeap(self, desc, guid, query_heap);
             }
@@ -4288,7 +4288,7 @@ pub const IDevice = extern struct {
                 desc: *const COMMAND_SIGNATURE_DESC,
                 root_signature: ?*IRootSignature,
                 guid: *const GUID,
-                cmd_signature: ?*?*c_void,
+                cmd_signature: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateCommandSignature(self, desc, root_signature, guid, cmd_signature);
             }
@@ -4324,19 +4324,19 @@ pub const IDevice = extern struct {
     fn VTable(comptime T: type) type {
         return extern struct {
             GetNodeCount: fn (*T) callconv(WINAPI) UINT,
-            CreateCommandQueue: fn (*T, *const COMMAND_QUEUE_DESC, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
-            CreateCommandAllocator: fn (*T, COMMAND_LIST_TYPE, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateCommandQueue: fn (*T, *const COMMAND_QUEUE_DESC, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            CreateCommandAllocator: fn (*T, COMMAND_LIST_TYPE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             CreateGraphicsPipelineState: fn (
                 *T,
                 *const GRAPHICS_PIPELINE_STATE_DESC,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateComputePipelineState: fn (
                 *T,
                 *const COMPUTE_PIPELINE_STATE_DESC,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateCommandList: fn (
                 *T,
@@ -4345,17 +4345,17 @@ pub const IDevice = extern struct {
                 *ICommandAllocator,
                 ?*IPipelineState,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CheckFeatureSupport: fn (*T, FEATURE, *c_void, UINT) callconv(WINAPI) HRESULT,
+            CheckFeatureSupport: fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
             CreateDescriptorHeap: fn (
                 *T,
                 *const DESCRIPTOR_HEAP_DESC,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             GetDescriptorHandleIncrementSize: fn (*T, DESCRIPTOR_HEAP_TYPE) callconv(WINAPI) UINT,
-            CreateRootSignature: fn (*T, UINT, *const c_void, UINT64, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateRootSignature: fn (*T, UINT, *const anyopaque, UINT64, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             CreateConstantBufferView: fn (
                 *T,
                 ?*const CONSTANT_BUFFER_VIEW_DESC,
@@ -4425,9 +4425,9 @@ pub const IDevice = extern struct {
                 RESOURCE_STATES,
                 ?*const CLEAR_VALUE,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateHeap: fn (*T, *const HEAP_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CreateHeap: fn (*T, *const HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
             CreatePlacedResource: fn (
                 *T,
                 *IHeap,
@@ -4436,7 +4436,7 @@ pub const IDevice = extern struct {
                 RESOURCE_STATES,
                 ?*const CLEAR_VALUE,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateReservedResource: fn (
                 *T,
@@ -4444,7 +4444,7 @@ pub const IDevice = extern struct {
                 RESOURCE_STATES,
                 ?*const CLEAR_VALUE,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateSharedHandle: fn (
                 *T,
@@ -4454,11 +4454,11 @@ pub const IDevice = extern struct {
                 ?LPCWSTR,
                 ?*HANDLE,
             ) callconv(WINAPI) HRESULT,
-            OpenSharedHandle: fn (*T, HANDLE, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            OpenSharedHandle: fn (*T, HANDLE, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
             OpenSharedHandleByName: fn (*T, LPCWSTR, DWORD, ?*HANDLE) callconv(WINAPI) HRESULT,
             MakeResident: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
             Evict: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
-            CreateFence: fn (*T, UINT64, FENCE_FLAGS, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateFence: fn (*T, UINT64, FENCE_FLAGS, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             GetDeviceRemovedReason: fn (*T) callconv(WINAPI) HRESULT,
             GetCopyableFootprints: fn (
                 *T,
@@ -4471,14 +4471,14 @@ pub const IDevice = extern struct {
                 ?[*]UINT64,
                 ?*UINT64,
             ) callconv(WINAPI) void,
-            CreateQueryHeap: fn (*T, *const QUERY_HEAP_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CreateQueryHeap: fn (*T, *const QUERY_HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
             SetStablePowerState: fn (*T, BOOL) callconv(WINAPI) HRESULT,
             CreateCommandSignature: fn (
                 *T,
                 *const COMMAND_SIGNATURE_DESC,
                 ?*IRootSignature,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             GetResourceTiling: fn (
                 *T,
@@ -4525,10 +4525,10 @@ pub const IDevice1 = extern struct {
         return extern struct {
             pub inline fn CreatePipelineLibrary(
                 self: *T,
-                blob: *const c_void,
+                blob: *const anyopaque,
                 blob_length: SIZE_T,
                 guid: *const GUID,
-                library: *?*c_void,
+                library: *?*anyopaque,
             ) HRESULT {
                 return self.v.device1.CreatePipelineLibrary(self, blob, blob_length, guid, library);
             }
@@ -4562,7 +4562,7 @@ pub const IDevice1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreatePipelineLibrary: fn (*T, *const c_void, SIZE_T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreatePipelineLibrary: fn (*T, *const anyopaque, SIZE_T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             SetEventOnMultipleFenceCompletion: fn (
                 *T,
                 [*]const *IFence,
@@ -4617,7 +4617,7 @@ pub const RT_FORMAT_ARRAY = extern struct {
 
 pub const PIPELINE_STATE_STREAM_DESC = extern struct {
     SizeInBytes: SIZE_T,
-    pPipelineStateSubobjectStream: *c_void,
+    pPipelineStateSubobjectStream: *anyopaque,
 };
 
 // NOTE(mziulek): Helper structures for defining Mesh Shaders.
@@ -4735,7 +4735,7 @@ pub const IDevice2 = extern struct {
                 self: *T,
                 desc: *const PIPELINE_STATE_STREAM_DESC,
                 guid: *const GUID,
-                pso: *?*c_void,
+                pso: *?*anyopaque,
             ) HRESULT {
                 return self.v.device2.CreatePipelineState(self, desc, guid, pso);
             }
@@ -4748,7 +4748,7 @@ pub const IDevice2 = extern struct {
                 *T,
                 *const PIPELINE_STATE_STREAM_DESC,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
         };
     }
@@ -4779,9 +4779,9 @@ pub const IDevice3 = extern struct {
         return extern struct {
             pub inline fn OpenExistingHeapFromAddress(
                 self: *T,
-                address: *const c_void,
+                address: *const anyopaque,
                 guid: *const GUID,
-                heap: *?*c_void,
+                heap: *?*anyopaque,
             ) HRESULT {
                 return self.v.device3.OpenExistingHeapFromAddress(self, address, guid, heap);
             }
@@ -4789,7 +4789,7 @@ pub const IDevice3 = extern struct {
                 self: *T,
                 file_mapping: HANDLE,
                 guid: *const GUID,
-                heap: *?*c_void,
+                heap: *?*anyopaque,
             ) HRESULT {
                 return self.v.device3.OpenExistingHeapFromFileMapping(self, file_mapping, guid, heap);
             }
@@ -4815,8 +4815,8 @@ pub const IDevice3 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            OpenExistingHeapFromAddress: fn (*T, *const c_void, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
-            OpenExistingHeapFromFileMapping: fn (*T, HANDLE, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            OpenExistingHeapFromAddress: fn (*T, *const anyopaque, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            OpenExistingHeapFromFileMapping: fn (*T, HANDLE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             EnqueueMakeResident: fn (
                 *T,
                 RESIDENCY_FLAGS,
@@ -4864,7 +4864,7 @@ pub const IDevice4 = extern struct {
                 cmdlist_type: COMMAND_LIST_TYPE,
                 flags: COMMAND_LIST_FLAGS,
                 guid: *const GUID,
-                cmdlist: *?*c_void,
+                cmdlist: *?*anyopaque,
             ) HRESULT {
                 return self.v.device4.CreateCommandList1(self, node_mask, cmdlist_type, flags, guid, cmdlist);
             }
@@ -4872,7 +4872,7 @@ pub const IDevice4 = extern struct {
                 self: *T,
                 desc: *const PROTECTED_RESOURCE_SESSION_DESC,
                 guid: *const GUID,
-                session: *?*c_void,
+                session: *?*anyopaque,
             ) HRESULT {
                 return self.v.device4.CreateProtectedResourceSession(self, desc, guid, session);
             }
@@ -4885,7 +4885,7 @@ pub const IDevice4 = extern struct {
                 clear_value: ?*const CLEAR_VALUE,
                 psession: ?*IProtectedResourceSession,
                 guid: *const GUID,
-                resource: ?*?*c_void,
+                resource: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device4.CreateCommittedResource1(
                     self,
@@ -4904,7 +4904,7 @@ pub const IDevice4 = extern struct {
                 desc: *const HEAP_DESC,
                 psession: ?*IProtectedResourceSession,
                 guid: *const GUID,
-                heap: ?*?*c_void,
+                heap: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device4.CreateHeap1(self, desc, psession, guid, heap);
             }
@@ -4915,7 +4915,7 @@ pub const IDevice4 = extern struct {
                 clear_value: ?*const CLEAR_VALUE,
                 psession: ?*IProtectedResourceSession,
                 guid: *const GUID,
-                resource: ?*?*c_void,
+                resource: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device4.CreateReservedResource1(
                     self,
@@ -4956,13 +4956,13 @@ pub const IDevice4 = extern struct {
                 COMMAND_LIST_TYPE,
                 COMMAND_LIST_FLAGS,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateProtectedResourceSession: fn (
                 *T,
                 *const PROTECTED_RESOURCE_SESSION_DESC,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateCommittedResource1: fn (
                 *T,
@@ -4973,14 +4973,14 @@ pub const IDevice4 = extern struct {
                 ?*const CLEAR_VALUE,
                 ?*IProtectedResourceSession,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateHeap1: fn (
                 *T,
                 *const HEAP_DESC,
                 ?*IProtectedResourceSession,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateReservedResource1: fn (
                 *T,
@@ -4989,7 +4989,7 @@ pub const IDevice4 = extern struct {
                 ?*const CLEAR_VALUE,
                 ?*IProtectedResourceSession,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             GetResourceAllocationInfo1: fn (
                 *T,
@@ -5059,7 +5059,7 @@ pub const IDevice5 = extern struct {
                 self: *T,
                 owner: *ILifetimeOwner,
                 guid: *const GUID,
-                tracker: *?*c_void,
+                tracker: *?*anyopaque,
             ) HRESULT {
                 return self.v.device5.CreateLifetimeTracker(self, owner, guid, tracker);
             }
@@ -5094,10 +5094,10 @@ pub const IDevice5 = extern struct {
                 self: *T,
                 cmd_id: *const GUID,
                 node_mask: UINT,
-                creation_param_data: ?*const c_void,
+                creation_param_data: ?*const anyopaque,
                 creation_param_data_size: SIZE_T,
                 guid: *const GUID,
-                meta_cmd: *?*c_void,
+                meta_cmd: *?*anyopaque,
             ) HRESULT {
                 return self.v.device5.CreateMetaCommand(
                     self,
@@ -5113,7 +5113,7 @@ pub const IDevice5 = extern struct {
                 self: *T,
                 desc: *const STATE_OBJECT_DESC,
                 guid: *const GUID,
-                state_object: *?*c_void,
+                state_object: *?*anyopaque,
             ) HRESULT {
                 return self.v.device5.CreateStateObject(self, desc, guid, state_object);
             }
@@ -5136,7 +5136,7 @@ pub const IDevice5 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreateLifetimeTracker: fn (*T, *ILifetimeOwner, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateLifetimeTracker: fn (*T, *ILifetimeOwner, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             RemoveDevice: fn (self: *T) callconv(WINAPI) void,
             EnumerateMetaCommands: fn (*T, *UINT, ?[*]META_COMMAND_DESC) callconv(WINAPI) HRESULT,
             EnumerateMetaCommandParameters: fn (
@@ -5151,16 +5151,16 @@ pub const IDevice5 = extern struct {
                 *T,
                 *const GUID,
                 UINT,
-                ?*const c_void,
+                ?*const anyopaque,
                 SIZE_T,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateStateObject: fn (
                 *T,
                 *const STATE_OBJECT_DESC,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             GetRaytracingAccelerationStructurePrebuildInfo: fn (
                 *T,
@@ -5284,7 +5284,7 @@ pub const IDevice7 = extern struct {
                 addition: *const STATE_OBJECT_DESC,
                 state_object: *IStateObject,
                 guid: *const GUID,
-                new_state_object: *?*c_void,
+                new_state_object: *?*anyopaque,
             ) HRESULT {
                 return self.v.device7.AddToStateObject(self, addition, state_object, guid, new_state_object);
             }
@@ -5292,7 +5292,7 @@ pub const IDevice7 = extern struct {
                 self: *T,
                 desc: *const PROTECTED_RESOURCE_SESSION_DESC1,
                 guid: *const GUID,
-                session: *?*c_void,
+                session: *?*anyopaque,
             ) HRESULT {
                 return self.v.device7.CreateProtectedResourceSession1(self, desc, guid, session);
             }
@@ -5306,13 +5306,13 @@ pub const IDevice7 = extern struct {
                 *const STATE_OBJECT_DESC,
                 *IStateObject,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateProtectedResourceSession1: fn (
                 *T,
                 *const PROTECTED_RESOURCE_SESSION_DESC1,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
         };
     }
@@ -5394,7 +5394,7 @@ pub const IDevice8 = extern struct {
                 clear_value: ?*const CLEAR_VALUE,
                 prsession: ?*IProtectedResourceSession,
                 guid: *const GUID,
-                resource: ?*?*c_void,
+                resource: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device8.CreateCommittedResource2(
                     self,
@@ -5416,7 +5416,7 @@ pub const IDevice8 = extern struct {
                 initial_state: RESOURCE_STATES,
                 clear_value: ?*const CLEAR_VALUE,
                 guid: *const GUID,
-                resource: ?*?*c_void,
+                resource: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device8.CreatePlacedResource1(
                     self,
@@ -5486,7 +5486,7 @@ pub const IDevice8 = extern struct {
                 ?*const CLEAR_VALUE,
                 ?*IProtectedResourceSession,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreatePlacedResource1: fn (
                 *T,
@@ -5496,7 +5496,7 @@ pub const IDevice8 = extern struct {
                 RESOURCE_STATES,
                 ?*const CLEAR_VALUE,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             CreateSamplerFeedbackUnorderedAccessView: fn (
                 *T,
@@ -5585,7 +5585,7 @@ pub const IDevice9 = extern struct {
                 self: *T,
                 desc: *const SHADER_CACHE_SESSION_DESC,
                 guid: *const GUID,
-                session: ?*?*c_void,
+                session: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device9.CreateShaderCacheSession(self, desc, guid, session);
             }
@@ -5601,7 +5601,7 @@ pub const IDevice9 = extern struct {
                 desc: *const COMMAND_QUEUE_DESC,
                 creator_id: *const GUID,
                 guid: *const GUID,
-                cmdqueue: *?*c_void,
+                cmdqueue: *?*anyopaque,
             ) HRESULT {
                 return self.v.device9.CreateCommandQueue1(self, desc, creator_id, guid, cmdqueue);
             }
@@ -5614,7 +5614,7 @@ pub const IDevice9 = extern struct {
                 *T,
                 *const SHADER_CACHE_SESSION_DESC,
                 *const GUID,
-                ?*?*c_void,
+                ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
             ShaderCacheControl: fn (
                 *T,
@@ -5626,7 +5626,7 @@ pub const IDevice9 = extern struct {
                 *const COMMAND_QUEUE_DESC,
                 *const GUID,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
         };
     }
@@ -5652,7 +5652,7 @@ pub const IProtectedSession = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetStatusFence(self: *T, guid: *const GUID, fence: ?*?*c_void) HRESULT {
+            pub inline fn GetStatusFence(self: *T, guid: *const GUID, fence: ?*?*anyopaque) HRESULT {
                 return self.v.psession.GetStatusFence(self, guid, fence);
             }
             pub inline fn GetSessionStatus(self: *T) PROTECTED_SESSION_STATUS {
@@ -5663,7 +5663,7 @@ pub const IProtectedSession = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetStatusFence: fn (*T, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            GetStatusFence: fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
             GetSessionStatus: fn (*T) callconv(WINAPI) PROTECTED_SESSION_STATUS,
         };
     }
@@ -5711,12 +5711,12 @@ pub const IProtectedResourceSession = extern struct {
     }
 };
 
-pub extern "d3d12" fn D3D12GetDebugInterface(*const GUID, ?*?*c_void) callconv(WINAPI) HRESULT;
+pub extern "d3d12" fn D3D12GetDebugInterface(*const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT;
 pub extern "d3d12" fn D3D12CreateDevice(
     ?*IUnknown,
     d3d.FEATURE_LEVEL,
     *const GUID,
-    ?*?*c_void,
+    ?*?*anyopaque,
 ) callconv(WINAPI) HRESULT;
 pub extern "d3d12" fn D3D12SerializeVersionedRootSignature(
     *const VERSIONED_ROOT_SIGNATURE_DESC,

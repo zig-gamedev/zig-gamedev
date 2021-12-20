@@ -118,7 +118,7 @@ pub const BUFFER = packed struct {
     LoopBegin: UINT32,
     LoopLength: UINT32,
     LoopCount: UINT32,
-    pContext: ?*c_void,
+    pContext: ?*anyopaque,
 };
 
 pub const BUFFER_WMA = packed struct {
@@ -127,7 +127,7 @@ pub const BUFFER_WMA = packed struct {
 };
 
 pub const VOICE_STATE = packed struct {
-    pCurrentBufferContext: ?*c_void,
+    pCurrentBufferContext: ?*anyopaque,
     BuffersQueued: UINT32,
     SamplesPlayed: UINT64,
 };
@@ -264,7 +264,7 @@ pub const IXAudio2 = extern struct {
             pub inline fn SetDebugConfiguration(
                 self: *T,
                 config: ?*const DEBUG_CONFIGURATION,
-                reserved: ?*c_void,
+                reserved: ?*anyopaque,
             ) void {
                 self.v.xaudio2.SetDebugConfiguration(self, config, reserved);
             }
@@ -309,7 +309,7 @@ pub const IXAudio2 = extern struct {
             StopEngine: fn (*T) callconv(WINAPI) void,
             CommitChanges: fn (*T, UINT32) callconv(WINAPI) HRESULT,
             GetPerformanceData: fn (*T, *PERFORMANCE_DATA) callconv(WINAPI) void,
-            SetDebugConfiguration: fn (*T, ?*const DEBUG_CONFIGURATION, ?*c_void) callconv(WINAPI) void,
+            SetDebugConfiguration: fn (*T, ?*const DEBUG_CONFIGURATION, ?*anyopaque) callconv(WINAPI) void,
         };
     }
 };
@@ -344,7 +344,7 @@ pub const IVoice = extern struct {
             pub inline fn SetEffectParameters(
                 self: *T,
                 effect_index: UINT32,
-                params: *const c_void,
+                params: *const anyopaque,
                 params_size: UINT32,
                 operation_set: UINT32,
             ) HRESULT {
@@ -353,7 +353,7 @@ pub const IVoice = extern struct {
             pub inline fn GetEffectParameters(
                 self: *T,
                 effect_index: UINT32,
-                params: *c_void,
+                params: *anyopaque,
                 params_size: UINT32,
             ) HRESULT {
                 return self.v.voice.GetEffectParameters(self, effect_index, params, params_size);
@@ -410,8 +410,8 @@ pub const IVoice = extern struct {
             EnableEffect: fn (*T, UINT32, UINT32) callconv(WINAPI) HRESULT,
             DisableEffect: fn (*T, UINT32, UINT32) callconv(WINAPI) HRESULT,
             GetEffectState: fn (*T, UINT32, *BOOL) callconv(WINAPI) void,
-            SetEffectParameters: fn (*T, UINT32, *const c_void, UINT32, UINT32) callconv(WINAPI) HRESULT,
-            GetEffectParameters: fn (*T, UINT32, *c_void, UINT32) callconv(WINAPI) HRESULT,
+            SetEffectParameters: fn (*T, UINT32, *const anyopaque, UINT32, UINT32) callconv(WINAPI) HRESULT,
+            GetEffectParameters: fn (*T, UINT32, *anyopaque, UINT32) callconv(WINAPI) HRESULT,
             SetFilterParameters: fn (*T, *const FILTER_PARAMETERS, UINT32) callconv(WINAPI) HRESULT,
             GetFilterParameters: fn (*T, *FILTER_PARAMETERS) callconv(WINAPI) void,
             SetOutputFilterParameters: fn (*T, ?*IVoice, *const FILTER_PARAMETERS, UINT32) callconv(WINAPI) HRESULT,
@@ -420,8 +420,8 @@ pub const IVoice = extern struct {
             GetVolume: fn (*T, *f32) callconv(WINAPI) void,
             SetChannelVolumes: fn (*T, UINT32, [*]const f32, UINT32) callconv(WINAPI) HRESULT,
             GetChannelVolumes: fn (*T, UINT32, [*]f32) callconv(WINAPI) void,
-            SetOutputMatrix: *c_void,
-            GetOutputMatrix: *c_void,
+            SetOutputMatrix: *anyopaque,
+            GetOutputMatrix: *anyopaque,
             DestroyVoice: fn (*T) callconv(WINAPI) void,
         };
     }
@@ -568,10 +568,10 @@ pub fn IVoiceCallbackVTable(comptime T: type) type {
             OnVoiceProcessingPassStart: fn (*T, UINT32) callconv(WINAPI) void,
             OnVoiceProcessingPassEnd: fn (*T) callconv(WINAPI) void,
             OnStreamEnd: fn (*T) callconv(WINAPI) void,
-            OnBufferStart: fn (*T, ?*c_void) callconv(WINAPI) void,
-            OnBufferEnd: fn (*T, ?*c_void) callconv(WINAPI) void,
-            OnLoopEnd: fn (*T, ?*c_void) callconv(WINAPI) void,
-            OnVoiceError: fn (*T, ?*c_void, HRESULT) callconv(WINAPI) void,
+            OnBufferStart: fn (*T, ?*anyopaque) callconv(WINAPI) void,
+            OnBufferEnd: fn (*T, ?*anyopaque) callconv(WINAPI) void,
+            OnLoopEnd: fn (*T, ?*anyopaque) callconv(WINAPI) void,
+            OnVoiceError: fn (*T, ?*anyopaque, HRESULT) callconv(WINAPI) void,
         },
     };
 }
@@ -593,16 +593,16 @@ pub const IVoiceCallback = extern struct {
             pub inline fn OnStreamEnd(self: *T) void {
                 self.v.vcb.OnStreamEnd(self);
             }
-            pub inline fn OnBufferStart(self: *T, context: ?*c_void) void {
+            pub inline fn OnBufferStart(self: *T, context: ?*anyopaque) void {
                 self.v.vcb.OnBufferStart(self, context);
             }
-            pub inline fn OnBufferEnd(self: *T, context: ?*c_void) void {
+            pub inline fn OnBufferEnd(self: *T, context: ?*anyopaque) void {
                 self.v.vcb.OnBufferEnd(self, context);
             }
-            pub inline fn OnLoopEnd(self: *T, context: ?*c_void) void {
+            pub inline fn OnLoopEnd(self: *T, context: ?*anyopaque) void {
                 self.v.vcb.OnLoopEnd(self, context);
             }
-            pub inline fn OnVoiceError(self: *T, context: ?*c_void, err: HRESULT) void {
+            pub inline fn OnVoiceError(self: *T, context: ?*anyopaque, err: HRESULT) void {
                 self.v.vcb.OnVoiceError(self, context, err);
             }
         };

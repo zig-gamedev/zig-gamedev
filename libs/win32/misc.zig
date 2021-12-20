@@ -69,7 +69,7 @@ pub const IUnknown = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn QueryInterface(self: *T, guid: *const GUID, outobj: ?*?*c_void) HRESULT {
+            pub inline fn QueryInterface(self: *T, guid: *const GUID, outobj: ?*?*anyopaque) HRESULT {
                 return self.v.unknown.QueryInterface(self, guid, outobj);
             }
             pub inline fn AddRef(self: *T) ULONG {
@@ -83,7 +83,7 @@ pub const IUnknown = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            QueryInterface: fn (*T, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            QueryInterface: fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
             AddRef: fn (*T) callconv(WINAPI) ULONG,
             Release: fn (*T) callconv(WINAPI) ULONG,
         };
@@ -137,7 +137,7 @@ pub extern "ole32" fn CoCreateInstance(
     pUnkOuter: ?*IUnknown,
     dwClsContext: DWORD,
     riid: *const GUID,
-    ppv: *?*c_void,
+    ppv: *?*anyopaque,
 ) callconv(WINAPI) HRESULT;
 
 pub const VK_LBUTTON = 0x01;

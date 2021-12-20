@@ -1,4 +1,4 @@
-**NOTE: To compile this project you need latest version of Zig compiler (zig-windows-x86_64-0.9.0-dev.1903 or newer). You can download it [here](https://ziglang.org/download/).**
+**NOTE: To compile this project you need latest version of Zig compiler (zig-windows-x86_64-0.9.0-dev.2023 or newer). You can download it [here](https://ziglang.org/download/).**
 
 # zig-gamedev project
 

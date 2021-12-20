@@ -66,7 +66,7 @@ pub const BUFFER_TENSOR_DESC = extern struct {
 
 pub const TENSOR_DESC = extern struct {
     Type: TENSOR_TYPE,
-    Desc: *const c_void,
+    Desc: *const anyopaque,
 };
 
 //
@@ -286,7 +286,7 @@ pub const RANDOM_GENERATOR_TYPE = enum(UINT) {
 //
 pub const OPERATOR_DESC = extern struct {
     Type: OPERATOR_TYPE,
-    Desc: *const c_void,
+    Desc: *const anyopaque,
 };
 
 pub const ELEMENT_WISE_IDENTITY_OPERATOR_DESC = extern struct {
@@ -339,10 +339,10 @@ pub const IObject = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: ?*c_void) HRESULT {
+            pub inline fn GetPrivateData(self: *T, guid: *const GUID, data_size: *UINT, data: ?*anyopaque) HRESULT {
                 return self.v.object.GetPrivateData(self, guid, data_size, data);
             }
-            pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: ?*const c_void) HRESULT {
+            pub inline fn SetPrivateData(self: *T, guid: *const GUID, data_size: UINT, data: ?*const anyopaque) HRESULT {
                 return self.v.object.SetPrivateData(self, guid, data_size, data);
             }
             pub inline fn SetPrivateDataInterface(self: *T, guid: *const GUID, data: ?*const IUnknown) HRESULT {
@@ -356,8 +356,8 @@ pub const IObject = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetPrivateData: fn (*T, *const GUID, *UINT, ?*c_void) callconv(WINAPI) HRESULT,
-            SetPrivateData: fn (*T, *const GUID, UINT, ?*const c_void) callconv(WINAPI) HRESULT,
+            GetPrivateData: fn (*T, *const GUID, *UINT, ?*anyopaque) callconv(WINAPI) HRESULT,
+            SetPrivateData: fn (*T, *const GUID, UINT, ?*const anyopaque) callconv(WINAPI) HRESULT,
             SetPrivateDataInterface: fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
             SetName: fn (*T, LPCWSTR) callconv(WINAPI) HRESULT,
         };
@@ -378,7 +378,7 @@ pub const IDeviceChild = extern struct {
 
     fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn GetDevice(self: *T, guid: *const GUID, device: *?*c_void) HRESULT {
+            pub inline fn GetDevice(self: *T, guid: *const GUID, device: *?*anyopaque) HRESULT {
                 return self.v.devchild.GetDevice(self, guid, device);
             }
         };
@@ -386,7 +386,7 @@ pub const IDeviceChild = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDevice: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetDevice: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -550,7 +550,7 @@ pub const BINDING_TYPE = enum(UINT) {
 
 pub const BINDING_DESC = extern struct {
     Type: BINDING_TYPE,
-    Desc: ?*const c_void,
+    Desc: ?*const anyopaque,
 };
 
 pub const BUFFER_BINDING = extern struct {
@@ -686,9 +686,9 @@ pub const IDevice = extern struct {
                 self: *T,
                 feature: FEATURE,
                 feature_query_data_size: UINT,
-                feature_query_data: ?*const c_void,
+                feature_query_data: ?*const anyopaque,
                 feature_support_data_size: UINT,
-                feature_support_data: *c_void,
+                feature_support_data: *anyopaque,
             ) HRESULT {
                 return self.v.device.CheckFeatureSupport(
                     self,
@@ -699,7 +699,7 @@ pub const IDevice = extern struct {
                     feature_support_data,
                 );
             }
-            pub inline fn CreateOperator(self: *T, desc: *const OPERATOR_DESC, guid: *const GUID, ppv: ?*?*c_void) HRESULT {
+            pub inline fn CreateOperator(self: *T, desc: *const OPERATOR_DESC, guid: *const GUID, ppv: ?*?*anyopaque) HRESULT {
                 return self.v.device.CreateOperator(self, desc, guid, ppv);
             }
             pub inline fn CompileOperator(
@@ -707,7 +707,7 @@ pub const IDevice = extern struct {
                 op: *IOperator,
                 flags: EXECUTION_FLAGS,
                 guid: *const GUID,
-                ppv: ?*?*c_void,
+                ppv: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device.CompileOperator(self, op, flags, guid, ppv);
             }
@@ -716,18 +716,18 @@ pub const IDevice = extern struct {
                 num_ops: UINT,
                 ops: ?[*]const *ICompiledOperator,
                 guid: *const GUID,
-                ppv: *?*c_void,
+                ppv: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateOperatorInitializer(self, num_ops, ops, guid, ppv);
             }
-            pub inline fn CreateCommandRecorder(self: *T, guid: *const GUID, ppv: *?*c_void) HRESULT {
+            pub inline fn CreateCommandRecorder(self: *T, guid: *const GUID, ppv: *?*anyopaque) HRESULT {
                 return self.v.device.CreateCommandRecorder(self, guid, ppv);
             }
             pub inline fn CreateBindingTable(
                 self: *T,
                 desc: ?*const BINDING_TABLE_DESC,
                 guid: *const GUID,
-                ppv: *?*c_void,
+                ppv: *?*anyopaque,
             ) HRESULT {
                 return self.v.device.CreateBindingTable(self, desc, guid, ppv);
             }
@@ -740,7 +740,7 @@ pub const IDevice = extern struct {
             pub inline fn GetDeviceRemovedReason(self: *T) HRESULT {
                 return self.v.device.GetDeviceRemovedReason(self);
             }
-            pub inline fn GetParentDevice(self: *T, guid: *const GUID, ppv: *?*c_void) HRESULT {
+            pub inline fn GetParentDevice(self: *T, guid: *const GUID, ppv: *?*anyopaque) HRESULT {
                 return self.v.device.GetParentDevice(self, guid, ppv);
             }
         };
@@ -748,22 +748,22 @@ pub const IDevice = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CheckFeatureSupport: fn (*T, FEATURE, UINT, ?*const c_void, UINT, *c_void) callconv(WINAPI) HRESULT,
-            CreateOperator: fn (*T, *const OPERATOR_DESC, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
-            CompileOperator: fn (*T, *IOperator, EXECUTION_FLAGS, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CheckFeatureSupport: fn (*T, FEATURE, UINT, ?*const anyopaque, UINT, *anyopaque) callconv(WINAPI) HRESULT,
+            CreateOperator: fn (*T, *const OPERATOR_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            CompileOperator: fn (*T, *IOperator, EXECUTION_FLAGS, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
             CreateOperatorInitializer: fn (
                 *T,
                 UINT,
                 ?[*]const *ICompiledOperator,
                 *const GUID,
-                *?*c_void,
+                *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateCommandRecorder: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
-            CreateBindingTable: fn (*T, ?*const BINDING_TABLE_DESC, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            CreateCommandRecorder: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            CreateBindingTable: fn (*T, ?*const BINDING_TABLE_DESC, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
             Evict: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
             MakeResident: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
             GetDeviceRemovedReason: fn (*T) callconv(WINAPI) HRESULT,
-            GetParentDevice: fn (*T, *const GUID, *?*c_void) callconv(WINAPI) HRESULT,
+            GetParentDevice: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -777,7 +777,7 @@ pub const GRAPH_EDGE_TYPE = enum(UINT) {
 
 pub const GRAPH_EDGE_DESC = extern struct {
     Type: GRAPH_EDGE_TYPE,
-    Desc: *const c_void,
+    Desc: *const anyopaque,
 };
 
 pub const INPUT_GRAPH_EDGE_DESC = extern struct {
@@ -809,7 +809,7 @@ pub const GRAPH_NODE_TYPE = enum(UINT) {
 
 pub const GRAPH_NODE_DESC = extern struct {
     Type: GRAPH_NODE_TYPE,
-    Desc: *const c_void,
+    Desc: *const anyopaque,
 };
 
 pub const OPERATOR_GRAPH_NODE_DESC = extern struct {
@@ -855,7 +855,7 @@ pub const IDevice1 = extern struct {
                 desc: *const GRAPH_DESC,
                 flags: EXECUTION_FLAGS,
                 guid: *const GUID,
-                ppv: ?*?*c_void,
+                ppv: ?*?*anyopaque,
             ) HRESULT {
                 return self.v.device1.CompileGraph(self, desc, flags, guid, ppv);
             }
@@ -864,7 +864,7 @@ pub const IDevice1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CompileGraph: fn (*T, *const GRAPH_DESC, EXECUTION_FLAGS, *const GUID, ?*?*c_void) callconv(WINAPI) HRESULT,
+            CompileGraph: fn (*T, *const GRAPH_DESC, EXECUTION_FLAGS, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -929,14 +929,14 @@ pub fn createDevice(
     flags: CREATE_DEVICE_FLAGS,
     min_feature_level: FEATURE_LEVEL,
     guid: *const GUID,
-    ppv: ?*?*c_void,
+    ppv: ?*?*anyopaque,
 ) HRESULT {
     var DMLCreateDevice1: fn (
         *d3d12.IDevice,
         CREATE_DEVICE_FLAGS,
         FEATURE_LEVEL,
         *const GUID,
-        ?*?*c_void,
+        ?*?*anyopaque,
     ) callconv(WINAPI) HRESULT = undefined;
 
     var directml_dll = windows.kernel32.GetModuleHandleW(L("DirectML.dll"));

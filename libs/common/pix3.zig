@@ -266,7 +266,7 @@ const impl = struct {
         dest[num_name_qwords + 0] = 0;
         @memcpy(@ptrCast([*]u8, dest), name.ptr, name.len);
 
-        context.SetMarker(D3D12_EVENT_METADATA, @ptrCast(*c_void, &buffer), (3 + num_name_qwords) * 8);
+        context.SetMarker(D3D12_EVENT_METADATA, @ptrCast(*anyopaque, &buffer), (3 + num_name_qwords) * 8);
     }
 
     fn setMarkerOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {
@@ -297,7 +297,7 @@ const impl = struct {
         dest[num_name_qwords + 0] = 0;
         @memcpy(@ptrCast([*]u8, dest), name.ptr, name.len);
 
-        context.BeginEvent(D3D12_EVENT_METADATA, @ptrCast(*c_void, &buffer), (3 + num_name_qwords) * 8);
+        context.BeginEvent(D3D12_EVENT_METADATA, @ptrCast(*anyopaque, &buffer), (3 + num_name_qwords) * 8);
     }
 
     fn beginEventOnCommandList(cmdlist: *d3d12.IGraphicsCommandList, name: []const u8) void {

@@ -82,7 +82,7 @@ fn fillAudioBuffer(audio: *AudioContex) void {
     hrPanicOnFail(audio.render_client.ReleaseBuffer(num_frames, 0));
 }
 
-fn audioThread(ctx: ?*c_void) callconv(.C) w.DWORD {
+fn audioThread(ctx: ?*anyopaque) callconv(.C) w.DWORD {
     const audio = @ptrCast(*AudioContex, @alignCast(8, ctx));
 
     fillAudioBuffer(audio);
@@ -138,7 +138,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             null,
             w.CLSCTX_INPROC_SERVER,
             &wasapi.IID_IMMDeviceEnumerator,
-            @ptrCast(*?*c_void, &audio_device_enumerator),
+            @ptrCast(*?*anyopaque, &audio_device_enumerator),
         ));
         break :blk audio_device_enumerator;
     };
@@ -161,7 +161,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             &wasapi.IID_IAudioClient3,
             w.CLSCTX_INPROC_SERVER,
             null,
-            @ptrCast(*?*c_void, &audio_client),
+            @ptrCast(*?*anyopaque, &audio_client),
         ));
         break :blk audio_client;
     };
@@ -195,7 +195,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         var audio_render_client: *wasapi.IAudioRenderClient = undefined;
         hrPanicOnFail(audio_client.GetService(
             &wasapi.IID_IAudioRenderClient,
-            @ptrCast(*?*c_void, &audio_render_client),
+            @ptrCast(*?*anyopaque, &audio_render_client),
         ));
         break :blk audio_render_client;
     };
@@ -512,7 +512,7 @@ pub fn main() !void {
         null,
         0,
         audioThread,
-        @ptrCast(*c_void, &demo.audio),
+        @ptrCast(*anyopaque, &demo.audio),
         0,
         null,
     ).?;
