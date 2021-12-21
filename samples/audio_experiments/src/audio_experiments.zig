@@ -38,6 +38,7 @@ const DemoState = struct {
 
     music: *sfx.Stream,
     music_is_playing: bool = true,
+    music_has_reverb: bool = false,
     sound1_data: []const u8,
     sound2_data: []const u8,
     sound3_data: []const u8,
@@ -207,6 +208,18 @@ fn update(demo: *DemoState) void {
     c.igSameLine(0.0, -1.0);
     if (c.igButton("  Rewind  ", .{ .x = 0, .y = 0 })) {
         demo.music.setCurrentPosition(0);
+    }
+    c.igSameLine(0.0, -1.0);
+    if (c.igButton(
+        if (demo.music_has_reverb) "  No Reverb  " else "  Reverb  ",
+        .{ .x = 0, .y = 0 },
+    )) {
+        demo.music_has_reverb = !demo.music_has_reverb;
+        if (demo.music_has_reverb) {
+            hrPanicOnFail(demo.music.voice.EnableEffect(0, xaudio2.COMMIT_NOW));
+        } else {
+            hrPanicOnFail(demo.music.voice.DisableEffect(0, xaudio2.COMMIT_NOW));
+        }
     }
     c.igSpacing();
 
