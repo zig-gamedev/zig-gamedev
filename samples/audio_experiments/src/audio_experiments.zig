@@ -37,7 +37,10 @@ const DemoState = struct {
     frame_stats: lib.FrameStats,
 
     music: *sfx.Stream,
-    sound_data: []const u8,
+    music_is_playing: bool = true,
+    sound1_data: []const u8,
+    sound2_data: []const u8,
+    sound3_data: []const u8,
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
@@ -51,9 +54,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
 
-    const sound_data = sfx.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));
-
-    actx.playBuffer(.{ .data = sound_data });
+    const sound1_data = sfx.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));
+    const sound2_data = sfx.loadBufferData(gpa_allocator, L("content/tabla_tas1.flac"));
+    const sound3_data = sfx.loadBufferData(gpa_allocator, L("content/loop_mika.flac"));
 
     var music = sfx.Stream.create(gpa_allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
@@ -146,7 +149,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .actx = actx,
         .guictx = guictx,
         .music = music,
-        .sound_data = sound_data,
+        .sound1_data = sound1_data,
+        .sound2_data = sound2_data,
+        .sound3_data = sound3_data,
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
@@ -161,7 +166,9 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.deinit();
     demo.music.destroy();
     hrPanicOnFail(mf.MFShutdown());
-    gpa_allocator.free(demo.sound_data);
+    gpa_allocator.free(demo.sound1_data);
+    gpa_allocator.free(demo.sound2_data);
+    gpa_allocator.free(demo.sound3_data);
     demo.actx.deinit();
     lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
@@ -171,6 +178,52 @@ fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
     lib.newImGuiFrame(dt);
+
+    c.igSetNextWindowPos(
+        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImGuiCond_FirstUseEver,
+        c.ImVec2{ .x = 0.0, .y = 0.0 },
+    );
+    c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
+
+    _ = c.igBegin(
+        "Demo Settings",
+        null,
+        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+    );
+
+    c.igText("Music:", "");
+    if (c.igButton(
+        if (demo.music_is_playing) "  Pause  " else "  Play  ",
+        .{ .x = 0, .y = 0 },
+    )) {
+        demo.music_is_playing = !demo.music_is_playing;
+        if (demo.music_is_playing) {
+            hrPanicOnFail(demo.music.voice.Start(0, xaudio2.COMMIT_NOW));
+        } else {
+            hrPanicOnFail(demo.music.voice.Stop(0, xaudio2.COMMIT_NOW));
+        }
+    }
+    c.igSameLine(0.0, -1.0);
+    if (c.igButton("  Rewind  ", .{ .x = 0, .y = 0 })) {
+        demo.music.setCurrentPosition(0);
+    }
+    c.igSpacing();
+
+    c.igText("Sounds:", "");
+    if (c.igButton("  Play Sound 1  ", .{ .x = 0, .y = 0 })) {
+        demo.actx.playBuffer(.{ .data = demo.sound1_data });
+    }
+    c.igSameLine(0.0, -1.0);
+    if (c.igButton("  Play Sound 2  ", .{ .x = 0, .y = 0 })) {
+        demo.actx.playBuffer(.{ .data = demo.sound2_data });
+    }
+    c.igSameLine(0.0, -1.0);
+    if (c.igButton("  Play Sound 3  ", .{ .x = 0, .y = 0 })) {
+        demo.actx.playBuffer(.{ .data = demo.sound3_data });
+    }
+
+    c.igEnd();
 
     //var state: xaudio2.VOICE_STATE = std.mem.zeroes(xaudio2.VOICE_STATE);
     //demo.music.voice.GetState(&state, 0);

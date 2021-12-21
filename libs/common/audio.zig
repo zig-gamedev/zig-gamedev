@@ -262,7 +262,7 @@ pub const Stream = struct {
         voice_cb.stream = stream;
         source_reader_cb.stream = stream;
 
-        hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
+        // Start async loading/decoding
         hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
         hrPanicOnFail(source_reader.ReadSample(mf.SOURCE_READER_FIRST_AUDIO_STREAM, 0, null, null, null, null));
 
@@ -282,6 +282,22 @@ pub const Stream = struct {
         stream.voice.DestroyVoice();
         stream.allocator.destroy(stream.voice_cb);
         stream.allocator.destroy(stream);
+    }
+
+    pub fn setCurrentPosition(stream: *Stream, position: i64) void {
+        w.kernel32.EnterCriticalSection(&stream.critical_section);
+        defer w.kernel32.LeaveCriticalSection(&stream.critical_section);
+
+        const pos = w.PROPVARIANT{ .vt = w.VT_I8, .u = .{ .hVal = position } };
+        hrPanicOnFail(stream.reader.SetCurrentPosition(&w.GUID_NULL, &pos));
+        hrPanicOnFail(stream.reader.ReadSample(
+            mf.SOURCE_READER_FIRST_AUDIO_STREAM,
+            0,
+            null,
+            null,
+            null,
+            null,
+        ));
     }
 
     fn onBufferEnd(stream: *Stream, buffer: *mf.IMediaBuffer) void {
@@ -308,16 +324,7 @@ pub const Stream = struct {
         defer w.kernel32.LeaveCriticalSection(&stream.critical_section);
 
         if ((stream_flags & mf.SOURCE_READERF_ENDOFSTREAM) != 0) {
-            const pos = w.PROPVARIANT{ .vt = w.VT_I8, .u = .{ .hVal = 0 } };
-            hrPanicOnFail(stream.reader.SetCurrentPosition(&w.GUID_NULL, &pos));
-            hrPanicOnFail(stream.reader.ReadSample(
-                mf.SOURCE_READER_FIRST_AUDIO_STREAM,
-                0,
-                null,
-                null,
-                null,
-                null,
-            ));
+            setCurrentPosition(stream, 0);
             return;
         }
         if (status != w.S_OK or sample == null) {
