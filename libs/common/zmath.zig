@@ -5,7 +5,6 @@ const assert = std.debug.assert;
 pub const Vec = @Vector(4, f32);
 
 pub inline fn vecZero() Vec {
-    // _mm_setzero_ps()
     return @splat(4, @as(f32, 0));
 }
 
@@ -27,22 +26,19 @@ pub inline fn vecReplicateInt(value: u32) Vec {
 }
 
 pub inline fn vecTrueInt() Vec {
-    const static = struct {
-        const v = vecReplicateInt(0xffff_ffff);
-    };
-    return static.v;
+    return @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff)));
 }
 
 pub inline fn vecFalseInt() Vec {
-    return vecZero();
+    return @splat(4, @as(f32, 0));
 }
 
 pub inline fn vecLess(v0: Vec, v1: Vec) Vec {
-    return @select(f32, v0 < v1, vecTrueInt(), vecFalseInt());
+    return @select(f32, v0 < v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
 }
 
 pub inline fn vecLessOrEqual(v0: Vec, v1: Vec) Vec {
-    return @select(f32, v0 <= v1, vecTrueInt(), vecFalseInt());
+    return @select(f32, v0 <= v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
 }
 
 pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) Vec {
@@ -71,16 +67,42 @@ fn vecApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
         math.approxEqAbs(f32, v0[3], v1[3], eps);
 }
 
-pub inline fn vecLoadFloat2(ptr: []const f32) Vec {
-    return vecSet(ptr[0], ptr[1], 0.0, 0.0);
+pub inline fn vecLoadFloat(mem: []const f32) Vec {
+    return [4]f32{ mem[0], 0, 0, 0 };
 }
 
-pub inline fn vecLoadFloat3(ptr: []const f32) Vec {
-    return vecSet(ptr[0], ptr[1], ptr[2], 0.0);
+pub inline fn vecLoadFloat2(mem: []const f32) Vec {
+    return [4]f32{ mem[0], mem[1], 0, 0 };
 }
 
-pub inline fn vecLoadFloat4(ptr: []const f32) Vec {
-    return vecSet(ptr[0], ptr[1], ptr[2], ptr[4]);
+pub inline fn vecLoadFloat3(mem: []const f32) Vec {
+    return vecSet(mem[0], mem[1], mem[2], 0.0);
+}
+
+pub inline fn vecLoadFloat4(mem: []const f32) Vec {
+    return vecSet(mem[0], mem[1], mem[2], mem[4]);
+}
+
+pub inline fn vecStoreFloat(mem: []f32, v: Vec) void {
+    mem[0] = v[0];
+}
+
+pub inline fn vecStoreFloat2(mem: []f32, v: Vec) void {
+    mem[0] = v[0];
+    mem[1] = v[1];
+}
+
+pub inline fn vecStoreFloat3(mem: []f32, v: Vec) void {
+    mem[0] = v[0];
+    mem[1] = v[1];
+    mem[2] = v[2];
+}
+
+pub inline fn vecStoreFloat4(mem: []f32, v: Vec) void {
+    mem[0] = v[0];
+    mem[1] = v[1];
+    mem[2] = v[2];
+    mem[3] = v[3];
 }
 
 test "basic" {
@@ -134,6 +156,15 @@ test "basic" {
         assert(vecApproxEqAbs(vv, [4]f32{ 1.0, 0.0, 0.0, 7.0 }, 0.0));
     }
     {
+        const v0 = vecSet(1.0, 3.0, -2.0, 7.0);
+        const v1 = vecSet(1.0, 1.0, 2.0, 7.001);
+        const v = vecLess(v0, v1);
+        assert(@bitCast(u32, v[0]) == 0x0000_0000);
+        assert(@bitCast(u32, v[1]) == 0x0000_0000);
+        assert(@bitCast(u32, v[2]) == 0xffff_ffff);
+        assert(@bitCast(u32, v[3]) == 0xffff_ffff);
+    }
+    {
         const a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
         var ptr = &a;
         var i: u32 = 0;
@@ -149,5 +180,16 @@ test "basic" {
         i += 1;
         const v4 = vecLoadFloat2(ptr[i .. i + 2]);
         assert(vecApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
+    }
+    {
+        var a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+        const v = vecLoadFloat3(a[1..]);
+        vecStoreFloat4(a[2..], v);
+        assert(a[0] == 1.0);
+        assert(a[1] == 2.0);
+        assert(a[2] == 2.0);
+        assert(a[3] == 3.0);
+        assert(a[4] == 4.0);
+        assert(a[5] == 0.0);
     }
 }
