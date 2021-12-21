@@ -6,7 +6,7 @@ pub const Vec = @Vector(4, f32);
 
 pub inline fn vecZero() Vec {
     // _mm_setzero_ps()
-    return [4]f32{ 0.0, 0.0, 0.0, 0.0 };
+    return @splat(4, @as(f32, 0));
 }
 
 pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
@@ -14,27 +14,16 @@ pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
 }
 
 pub inline fn vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec {
-    const xx = @bitCast(f32, x);
-    const yy = @bitCast(f32, y);
-    const zz = @bitCast(f32, z);
-    const ww = @bitCast(f32, w);
-    return [4]f32{ xx, yy, zz, ww };
+    const vu = [4]u32{ x, y, z, w };
+    return @bitCast(Vec, vu);
 }
 
 pub inline fn vecReplicate(value: f32) Vec {
     return @splat(4, value);
 }
 
-pub inline fn vecReplicatePtr(ptr: *const f32) Vec {
-    return @splat(4, ptr.*);
-}
-
 pub inline fn vecReplicateInt(value: u32) Vec {
     return @splat(4, @bitCast(f32, value));
-}
-
-pub inline fn vecReplicateIntPtr(ptr: *const u32) Vec {
-    return @splat(4, @bitCast(f32, ptr.*));
 }
 
 pub inline fn vecTrueInt() Vec {
@@ -82,6 +71,18 @@ fn vecApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
         math.approxEqAbs(f32, v0[3], v1[3], eps);
 }
 
+pub inline fn vecLoadFloat2(ptr: []const f32) Vec {
+    return vecSet(ptr[0], ptr[1], 0.0, 0.0);
+}
+
+pub inline fn vecLoadFloat3(ptr: []const f32) Vec {
+    return vecSet(ptr[0], ptr[1], ptr[2], 0.0);
+}
+
+pub inline fn vecLoadFloat4(ptr: []const f32) Vec {
+    return vecSet(ptr[0], ptr[1], ptr[2], ptr[4]);
+}
+
 test "basic" {
     {
         const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
@@ -102,16 +103,6 @@ test "basic" {
     {
         const v = vecReplicateInt(0x4000_0000);
         assert(vecApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
-    }
-    {
-        const f: f32 = 7.0;
-        const v = vecReplicatePtr(&f);
-        assert(vecApproxEqAbs(v, [4]f32{ 7.0, 7.0, 7.0, 7.0 }, 0.0));
-    }
-    {
-        const u: u32 = 0x3f80_0000;
-        const v = vecReplicateIntPtr(&u);
-        assert(vecApproxEqAbs(v, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
     }
     {
         const v = vecSetInt(0x3f80_0000, 0x4000_0000, 0x4040_0000, 0x4080_0000);
@@ -140,5 +131,23 @@ test "basic" {
         assert(vv[1] == 0.0);
         assert(vv[2] == 0.0);
         assert(vv[3] == 7.0);
+        assert(vecApproxEqAbs(vv, [4]f32{ 1.0, 0.0, 0.0, 7.0 }, 0.0));
+    }
+    {
+        const a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+        var ptr = &a;
+        var i: u32 = 0;
+        const v0 = vecLoadFloat2(a[i..]);
+        assert(vecApproxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
+        i += 2;
+        const v1 = vecLoadFloat2(a[i .. i + 2]);
+        assert(vecApproxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
+        const v2 = vecLoadFloat2(a[5..7]);
+        assert(vecApproxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
+        const v3 = vecLoadFloat2(ptr[1..]);
+        assert(vecApproxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
+        i += 1;
+        const v4 = vecLoadFloat2(ptr[i .. i + 2]);
+        assert(vecApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
     }
 }
