@@ -3,6 +3,7 @@ const math = std.math;
 const assert = std.debug.assert;
 
 pub const Vec = @Vector(4, f32);
+const VecU32 = @Vector(4, u32);
 
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
@@ -33,12 +34,14 @@ pub inline fn vecFalseInt() Vec {
     return @splat(4, @as(f32, 0));
 }
 
-pub inline fn vecLess(v0: Vec, v1: Vec) Vec {
-    return @select(f32, v0 < v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
+pub inline fn vecEqual(v0: Vec, v1: Vec) Vec {
+    return @select(f32, v0 == v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
 }
 
-pub inline fn vecLessOrEqual(v0: Vec, v1: Vec) Vec {
-    return @select(f32, v0 <= v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
+pub inline fn vecEqualInt(v0: Vec, v1: Vec) Vec {
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return @select(f32, v0u == v1u, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
 }
 
 pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) Vec {
@@ -47,6 +50,32 @@ pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) Vec {
     temp = temp - delta;
     temp = @maximum(temp, delta);
     return vecLessOrEqual(temp, epsilon);
+}
+
+pub inline fn vecNotEqual(v0: Vec, v1: Vec) Vec {
+    return @select(f32, v0 != v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
+}
+
+pub inline fn vecNotEqualInt(v0: Vec, v1: Vec) Vec {
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return @select(f32, v0u != v1u, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
+}
+
+pub inline fn vecGreater(v0: Vec, v1: Vec) Vec {
+    return @select(f32, v0 > v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
+}
+
+pub inline fn vecGreaterOrEqual(v0: Vec, v1: Vec) Vec {
+    return @select(f32, v0 >= v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
+}
+
+pub inline fn vecLess(v0: Vec, v1: Vec) Vec {
+    return @select(f32, v0 < v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
+}
+
+pub inline fn vecLessOrEqual(v0: Vec, v1: Vec) Vec {
+    return @select(f32, v0 <= v1, @bitCast(Vec, @splat(4, @as(u32, 0xffff_ffff))), @splat(4, @as(f32, 0)));
 }
 
 pub inline fn vecAnd(v0: Vec, v1: Vec) Vec {
@@ -76,7 +105,7 @@ pub inline fn vecLoadFloat2(mem: []const f32) Vec {
 }
 
 pub inline fn vecLoadFloat3(mem: []const f32) Vec {
-    return vecSet(mem[0], mem[1], mem[2], 0.0);
+    return vecSet(mem[0], mem[1], mem[2], 0);
 }
 
 pub inline fn vecLoadFloat4(mem: []const f32) Vec {
@@ -141,6 +170,36 @@ test "basic" {
         assert(less[0] == true and less[1] == false and less[2] == true and less[3] == false);
     }
     {
+        const v0 = vecSet(1.0, 3.0, -2.0, 7.0);
+        const v1 = vecSet(1.0, 1.0, 2.0, 7.001);
+        var v = vecEqual(v0, v1);
+        assert(@bitCast(u32, v[0]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[1]) == 0);
+        assert(@bitCast(u32, v[2]) == 0);
+        assert(@bitCast(u32, v[3]) == 0);
+        v = vecEqualInt(v, vecSetInt(~@as(u32, 0), 0, 0, 0));
+        assert(@bitCast(u32, v[0]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[1]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[2]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[3]) == ~@as(u32, 0));
+        assert(@reduce(.And, @bitCast(VecU32, v)) == ~@as(u32, 0));
+    }
+    {
+        const v0 = vecSet(1.0, 3.0, -2.0, 7.0);
+        const v1 = vecSet(1.0, 1.0, 2.0, 7.001);
+        var v = vecNotEqual(v0, v1);
+        assert(@bitCast(u32, v[0]) == 0);
+        assert(@bitCast(u32, v[1]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[2]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[3]) == ~@as(u32, 0));
+        v = vecNotEqualInt(v, vecSetInt(~@as(u32, 0), 0, 0, 0));
+        assert(@bitCast(u32, v[0]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[1]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[2]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[3]) == ~@as(u32, 0));
+        assert(@reduce(.And, @bitCast(VecU32, v)) == ~@as(u32, 0));
+    }
+    {
         const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
         const v1 = vecSet(1.0, 1.0, -2.0, 7.001);
         const v = vecNearEqual(v0, v1, vecReplicate(0.01));
@@ -163,6 +222,24 @@ test "basic" {
         assert(@bitCast(u32, v[1]) == 0x0000_0000);
         assert(@bitCast(u32, v[2]) == 0xffff_ffff);
         assert(@bitCast(u32, v[3]) == 0xffff_ffff);
+    }
+    {
+        const v0 = vecSet(1.0, 3.0, -2.0, 7.002);
+        const v1 = vecSet(1.0, 1.0, 2.0, 7.001);
+        const v = vecGreater(v0, v1);
+        assert(@bitCast(u32, v[0]) == 0);
+        assert(@bitCast(u32, v[1]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[2]) == 0);
+        assert(@bitCast(u32, v[3]) == ~@as(u32, 0));
+    }
+    {
+        const v0 = vecSet(1.0, 3.0, -2.0, 7.002);
+        const v1 = vecSet(1.0, 1.0, 2.0, 7.001);
+        const v = vecGreaterOrEqual(v0, v1);
+        assert(@bitCast(u32, v[0]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[1]) == ~@as(u32, 0));
+        assert(@bitCast(u32, v[2]) == 0);
+        assert(@bitCast(u32, v[3]) == ~@as(u32, 0));
     }
     {
         const a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
