@@ -63,9 +63,10 @@ pub inline fn vecSplatW(v: Vec) Vec {
 }
 
 // zig fmt: off
-pub inline fn vecSplatInfinity() Vec { return vecSplatInt(0x7f80_0000); }
-pub inline fn vecSplatQnan() Vec { return vecSplatInt(0x7fc0_0000); }
-pub inline fn vecSplatEpsilon() Vec { return vecSplatInt(0x3400_0000); }
+pub inline fn vecSplatInfinity() Vec { return vecSplat(math.inf_f32); }
+pub inline fn vecSplatNan() Vec { return vecSplat(math.nan_f32); }
+pub inline fn vecSplatQnan() Vec { return vecSplat(math.qnan_f32); }
+pub inline fn vecSplatEpsilon() Vec { return vecSplat(math.epsilon_f32); }
 pub inline fn vecSplatSignMask() Vec { return vecSplatInt(0x8000_0000); }
 pub inline fn vecSplatAbsMask() Vec { return vecSplatInt(0x7fff_ffff); }
 pub inline fn vecSplatNoFraction() Vec { return vecSplat(8388608.0); }
@@ -111,6 +112,26 @@ pub inline fn vecIsNan(v: Vec) VecBool {
 
 pub inline fn vecIsInfinite(v: Vec) VecBool {
     return vecAnd(v, vecSplatAbsMask()) == vecSplatInfinity();
+}
+
+// Private, helper function
+inline fn vecFloatToIntAndBack(v: Vec) Vec {
+    // This won't handle nan, inf and numbers greater than 8388608
+    @setRuntimeSafety(false);
+    // cvttps2dq
+    const vi = [4]i32{
+        @floatToInt(i32, v[0]),
+        @floatToInt(i32, v[1]),
+        @floatToInt(i32, v[2]),
+        @floatToInt(i32, v[3]),
+    };
+    // cvtdq2ps
+    return [4]f32{
+        @intToFloat(f32, vi[0]),
+        @intToFloat(f32, vi[1]),
+        @intToFloat(f32, vi[2]),
+        @intToFloat(f32, vi[3]),
+    };
 }
 
 fn vec3ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
@@ -348,4 +369,17 @@ test "vecXor" {
     assert(@bitCast(u32, v[1]) == ~@as(u32, 0));
     assert(v[2] == 0.0);
     assert(v[3] == 0.0);
+}
+
+test "vecFloatToIntAndBack" {
+    const v0 = vecSet(1.1, 2.9, 3.0, -4.5);
+    var v = vecFloatToIntAndBack(v0);
+    assert(v[0] == 1.0);
+    assert(v[1] == 2.0);
+    assert(v[2] == 3.0);
+    assert(v[3] == -4.0);
+
+    const v1 = vecSet(math.inf_f32, 2.9, math.nan_f32, math.qnan_f32);
+    v = vecFloatToIntAndBack(v1);
+    assert(v[1] == 2.0);
 }
