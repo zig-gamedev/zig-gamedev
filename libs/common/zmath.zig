@@ -265,19 +265,15 @@ test "vecMin and vecMax" {
 }
 
 test "vecIsNan" {
-    const v0 = vecSplatQnan();
-    const v1 = vecSplatInfinity();
-    const v2 = @select(f32, vecBoolSet(true, false, true, false), v1, v0);
-    const b = vecIsNan(v2);
-    assert(vecBoolEqual(b, vecBoolSet(false, true, false, true)));
+    const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
+    const b = vecIsNan(v0);
+    assert(vecBoolEqual(b, vecBoolSet(false, true, true, false)));
 }
 
 test "vecIsInfinite" {
-    const v0 = vecSplatInfinity();
-    const v1 = vecSet(2.0, 1.0, 4.0, 7.0);
-    const v2 = @select(f32, vecBoolSet(true, false, true, false), v1, v0);
-    const b = vecIsInfinite(v2);
-    assert(vecBoolEqual(b, vecBoolSet(false, true, false, true)));
+    const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
+    const b = vecIsInfinite(v0);
+    assert(vecBoolEqual(b, vecBoolSet(true, false, false, false)));
 }
 
 test "vecLoadFloat2" {
