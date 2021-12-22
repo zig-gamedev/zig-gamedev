@@ -5,10 +5,6 @@ pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
 const VecU32 = @Vector(4, u32);
 
-fn check(result: bool) !void {
-    try std.testing.expectEqual(result, true);
-}
-
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
 }
@@ -66,7 +62,7 @@ pub inline fn vecSplatQnan() Vec { return vecSplat(math.qnan_f32); }
 pub inline fn vecSplatEpsilon() Vec { return vecSplat(math.epsilon_f32); }
 pub inline fn vecSplatSignMask() Vec { return vecSplatInt(0x8000_0000); }
 pub inline fn vecSplatAbsMask() Vec { return vecSplatInt(0x7fff_ffff); }
-pub inline fn vecSplatNoFraction() Vec { return vecSplat(8388608.0); }
+pub inline fn vecSplatNoFraction() Vec { return vecSplat(8_388_608.0); }
 // zig fmt: on
 
 pub inline fn vecSplatInt(value: u32) Vec {
@@ -173,15 +169,29 @@ pub inline fn vecMax(v0: Vec, v1: Vec) Vec {
     return @maximum(v0, v1);
 }
 
+pub inline fn vecSelect(b: VecBool, v0: Vec, v1: Vec) Vec {
+    return @select(f32, b, v0, v1);
+}
+
 pub inline fn vecInBounds(v: Vec, bounds: Vec) VecBool {
     const b0 = v <= bounds;
     const b1 = (bounds * vecSplat(-1.0)) <= v;
     return vecBoolAnd(b0, b1);
 }
 
+pub inline fn vecRound(v: Vec) Vec {
+    const sign = vecAnd(v, vecSplatSignMask());
+    const magic = vecOr(vecSplatNoFraction(), sign);
+    var r1 = v + magic;
+    r1 = r1 - magic;
+    const r2 = vecAnd(v, vecSplatAbsMask());
+    const mask = r2 <= vecSplatNoFraction();
+    return vecSelect(mask, r1, v);
+}
+
 // Private, helper functions
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
-    // This won't handle nan, inf and numbers greater than 8388608
+    // This won't handle nan, inf and numbers greater than 8_388_608.0
     @setRuntimeSafety(false);
     // cvttps2dq
     const vi = [4]i32{
@@ -214,6 +224,10 @@ inline fn vec4ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
 
 inline fn vecBoolSet(x: bool, y: bool, z: bool, w: bool) VecBool {
     return [4]bool{ x, y, z, w };
+}
+
+inline fn check(result: bool) !void {
+    try std.testing.expectEqual(result, true);
 }
 
 test "vecZero" {
@@ -407,4 +421,29 @@ test "vecFloatToIntAndBack" {
     const v1 = vecSet(math.inf_f32, 2.9, math.nan_f32, math.qnan_f32);
     v = vecFloatToIntAndBack(v1);
     try check(v[1] == 2.0);
+}
+
+test "vecRound" {
+    const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
+    var v = vecRound(v0);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
+
+    const v1 = vecSet(-10_000_000.1, -10_000_001.4, 10_000_001.5, math.inf_f32);
+    v = vecRound(v1);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_000.0, -10_000_001.0, 10_000_002.0, math.inf_f32 }, 0.0));
+
+    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
+    v = vecRound(v2);
+    try check(math.isNan(v2[0]));
+    try check(math.isNan(v2[1]));
+    try check(math.isNan(v2[2]));
+    try check(v2[3] == -math.inf_f32);
+
+    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.50001);
+    v = vecRound(v3);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1001.0, -201.0, -10001.0, 101.0 }, 0.0));
+
+    const v4 = vecSet(-8_388_609.9, 8_388_609.1, 8_388_109.5, 8_388_609.432);
+    v = vecRound(v4);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -8_388_610.0, 8_388_609.0, 8_388_110.0, 8_388_609.0 }, 0.0));
 }
