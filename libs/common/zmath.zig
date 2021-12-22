@@ -14,20 +14,14 @@ pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
     return [4]f32{ x, y, z, w };
 }
 
-pub inline fn vecBoolSet(x: bool, y: bool, z: bool, w: bool) VecBool {
-    return [4]bool{ x, y, z, w };
-}
-
 pub inline fn vecBoolAnd(b0: VecBool, b1: VecBool) VecBool {
-    return vecBoolSet(b0[0] and b1[0], b0[1] and b1[1], b0[2] and b1[2], b0[3] and b1[3]);
+    // andps
+    return [4]bool{ b0[0] and b1[0], b0[1] and b1[1], b0[2] and b1[2], b0[3] and b1[3] };
 }
 
 pub inline fn vecBoolOr(b0: VecBool, b1: VecBool) VecBool {
-    return vecBoolSet(b0[0] or b1[0], b0[1] or b1[1], b0[2] or b1[2], b0[3] or b1[3]);
-}
-
-pub inline fn vecBoolNot(b: VecBool) VecBool {
-    return vecBoolSet(!b[0], !b[1], !b[2], !b[3]);
+    // orps
+    return [4]bool{ b0[0] or b1[0], b0[1] or b1[1], b0[2] or b1[2], b0[3] or b1[3] };
 }
 
 pub inline fn vecBoolAllTrue(b: VecBool) bool {
@@ -192,17 +186,21 @@ inline fn vecFloatToIntAndBack(v: Vec) Vec {
     };
 }
 
-fn vec3ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
+inline fn vec3ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
     return math.approxEqAbs(f32, v0[0], v1[0], eps) and
         math.approxEqAbs(f32, v0[1], v1[1], eps) and
         math.approxEqAbs(f32, v0[2], v1[2], eps);
 }
 
-fn vec4ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
+inline fn vec4ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
     return math.approxEqAbs(f32, v0[0], v1[0], eps) and
         math.approxEqAbs(f32, v0[1], v1[1], eps) and
         math.approxEqAbs(f32, v0[2], v1[2], eps) and
         math.approxEqAbs(f32, v0[3], v1[3], eps);
+}
+
+inline fn vecBoolSet(x: bool, y: bool, z: bool, w: bool) VecBool {
+    return [4]bool{ x, y, z, w };
 }
 
 test "vecZero" {
