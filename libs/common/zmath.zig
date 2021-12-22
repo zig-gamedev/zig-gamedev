@@ -189,7 +189,9 @@ pub inline fn vecRound(v: Vec) Vec {
     return vecSelect(mask, r1, v);
 }
 
+//
 // Private, helper functions
+//
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
     // This won't handle nan, inf and numbers greater than 8_388_608.0
     @setRuntimeSafety(false);
@@ -446,4 +448,8 @@ test "vecRound" {
     const v4 = vecSet(-8_388_609.9, 8_388_609.1, 8_388_109.5, 8_388_609.432);
     v = vecRound(v4);
     try check(vec4ApproxEqAbs(v, [4]f32{ -8_388_610.0, 8_388_609.0, 8_388_110.0, 8_388_609.0 }, 0.0));
+
+    const v5 = vecSet(-8_388_602.9, 8_388_602.4, 8_388_602.7, 8_388_602.532);
+    v = vecRound(v5);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -8_388_603.0, 8_388_602.0, 8_388_603.0, 8_388_603.0 }, 0.0));
 }
