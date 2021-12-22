@@ -13,6 +13,7 @@ const common = @import("common");
 const gfx = common.graphics;
 const sfx = common.audio;
 const lib = common.library;
+const zm = common.zmath;
 const c = common.c;
 const pix = common.pix;
 const vm = common.vectormath;

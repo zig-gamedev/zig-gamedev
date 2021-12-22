@@ -83,24 +83,28 @@ pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool {
 }
 
 pub inline fn vecAnd(v0: Vec, v1: Vec) Vec {
+    // andps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u & v1u);
 }
 
 pub inline fn vecAndNot(v0: Vec, v1: Vec) Vec {
+    // andnps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, ~v0u & v1u);
 }
 
 pub inline fn vecOr(v0: Vec, v1: Vec) Vec {
+    // orps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u | v1u);
 }
 
 pub inline fn vecXor(v0: Vec, v1: Vec) Vec {
+    // xorps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u ^ v1u);
@@ -112,39 +116,6 @@ pub inline fn vecIsNan(v: Vec) VecBool {
 
 pub inline fn vecIsInfinite(v: Vec) VecBool {
     return vecAnd(v, vecSplatAbsMask()) == vecSplatInfinity();
-}
-
-// Private, helper function
-inline fn vecFloatToIntAndBack(v: Vec) Vec {
-    // This won't handle nan, inf and numbers greater than 8388608
-    @setRuntimeSafety(false);
-    // cvttps2dq
-    const vi = [4]i32{
-        @floatToInt(i32, v[0]),
-        @floatToInt(i32, v[1]),
-        @floatToInt(i32, v[2]),
-        @floatToInt(i32, v[3]),
-    };
-    // cvtdq2ps
-    return [4]f32{
-        @intToFloat(f32, vi[0]),
-        @intToFloat(f32, vi[1]),
-        @intToFloat(f32, vi[2]),
-        @intToFloat(f32, vi[3]),
-    };
-}
-
-fn vec3ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
-    return math.approxEqAbs(f32, v0[0], v1[0], eps) and
-        math.approxEqAbs(f32, v0[1], v1[1], eps) and
-        math.approxEqAbs(f32, v0[2], v1[2], eps);
-}
-
-fn vec4ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
-    return math.approxEqAbs(f32, v0[0], v1[0], eps) and
-        math.approxEqAbs(f32, v0[1], v1[1], eps) and
-        math.approxEqAbs(f32, v0[2], v1[2], eps) and
-        math.approxEqAbs(f32, v0[3], v1[3], eps);
 }
 
 pub inline fn vecLoadFloat(mem: []const f32) Vec {
@@ -186,10 +157,12 @@ pub inline fn vecStoreFloat4(mem: []f32, v: Vec) void {
 }
 
 pub inline fn vecMin(v0: Vec, v1: Vec) Vec {
+    // This will handle inf & nan
     return @minimum(v0, v1);
 }
 
 pub inline fn vecMax(v0: Vec, v1: Vec) Vec {
+    // This will handle inf & nan
     return @maximum(v0, v1);
 }
 
@@ -197,6 +170,39 @@ pub inline fn vecInBounds(v: Vec, bounds: Vec) VecBool {
     const b0 = v <= bounds;
     const b1 = (bounds * vecSplat(-1.0)) <= v;
     return vecBoolAnd(b0, b1);
+}
+
+// Private, helper functions
+inline fn vecFloatToIntAndBack(v: Vec) Vec {
+    // This won't handle nan, inf and numbers greater than 8388608
+    @setRuntimeSafety(false);
+    // cvttps2dq
+    const vi = [4]i32{
+        @floatToInt(i32, v[0]),
+        @floatToInt(i32, v[1]),
+        @floatToInt(i32, v[2]),
+        @floatToInt(i32, v[3]),
+    };
+    // cvtdq2ps
+    return [4]f32{
+        @intToFloat(f32, vi[0]),
+        @intToFloat(f32, vi[1]),
+        @intToFloat(f32, vi[2]),
+        @intToFloat(f32, vi[3]),
+    };
+}
+
+fn vec3ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
+    return math.approxEqAbs(f32, v0[0], v1[0], eps) and
+        math.approxEqAbs(f32, v0[1], v1[1], eps) and
+        math.approxEqAbs(f32, v0[2], v1[2], eps);
+}
+
+fn vec4ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
+    return math.approxEqAbs(f32, v0[0], v1[0], eps) and
+        math.approxEqAbs(f32, v0[1], v1[1], eps) and
+        math.approxEqAbs(f32, v0[2], v1[2], eps) and
+        math.approxEqAbs(f32, v0[3], v1[3], eps);
 }
 
 test "vecZero" {
@@ -240,13 +246,24 @@ test "vecSplatInt" {
 
 test "vecMin and vecMax" {
     const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
-    const v1 = vecSet(2.0, 1.0, 4.0, 7.0);
+    const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
     const vmin = vecMin(v0, v1);
     const vmax = vecMax(v0, v1);
     const less = v0 < v1;
     assert(vec4ApproxEqAbs(vmin, [4]f32{ 1.0, 1.0, 2.0, 7.0 }, 0.0));
-    assert(vec4ApproxEqAbs(vmax, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
-    assert(less[0] == true and less[1] == false and less[2] == true and less[3] == false);
+    assert(vec4ApproxEqAbs(vmax, [4]f32{ 2.0, 3.0, 4.0, math.inf_f32 }, 0.0));
+    assert(less[0] == true and less[1] == false and less[2] == true and less[3] == true);
+
+    const v2 = vecSet(2.0, math.nan_f32, 4.0, math.qnan_f32);
+    const vmax_nan = vecMax(v2, v0);
+    assert(vec4ApproxEqAbs(vmax_nan, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
+
+    const v3 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
+    const vmin_nan = vecMin(v2, v3);
+    assert(vmin_nan[0] == 1.0);
+    assert(math.isNan(vmin_nan[1]));
+    assert(vmin_nan[2] == 4.0);
+    assert(math.isNan(vmin_nan[3]));
 }
 
 test "vecIsNan" {
@@ -338,17 +355,18 @@ test "vec @sin" {
 }
 
 test "vecAnd" {
-    const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
-    const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
+    const v1 = vecSet(1.0, 2.0, 3.0, math.inf_f32);
     const v = vecAnd(v0, v1);
-    assert(vec4ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, 0.0 }, 0.0));
+    assert(v[3] == math.inf_f32);
+    assert(vec3ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
 }
 
 test "vecAndNot" {
-    const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
+    const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
     const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
     const v = vecAndNot(v0, v1);
-    assert(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 4.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 0.0 }, 0.0));
 }
 
 test "vecOr" {
