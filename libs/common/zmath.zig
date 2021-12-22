@@ -5,10 +5,8 @@ pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
 const VecU32 = @Vector(4, u32);
 
-fn check(b: bool) void {
-    if (!b) {
-        @panic("error");
-    }
+fn check(result: bool) !void {
+    try std.testing.expectEqual(result, true);
 }
 
 pub inline fn vecZero() Vec {
@@ -220,24 +218,24 @@ inline fn vecBoolSet(x: bool, y: bool, z: bool, w: bool) VecBool {
 
 test "vecZero" {
     const v = vecZero();
-    check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
 }
 
 test "vecSet" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
     const v1 = vecSet(5.0, -6.0, 7.0, 8.0);
-    check(v0[0] == 1.0 and v0[1] == 2.0 and v0[2] == 3.0 and v0[3] == 4.0);
-    check(v1[0] == 5.0 and v1[1] == -6.0 and v1[2] == 7.0 and v1[3] == 8.0);
+    try check(v0[0] == 1.0 and v0[1] == 2.0 and v0[2] == 3.0 and v0[3] == 4.0);
+    try check(v1[0] == 5.0 and v1[1] == -6.0 and v1[2] == 7.0 and v1[3] == 8.0);
 }
 
 test "vecSetInt" {
     const v = vecSetInt(0x3f80_0000, 0x4000_0000, 0x4040_0000, 0x4080_0000);
-    check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 2.0, 3.0, 4.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 2.0, 3.0, 4.0 }, 0.0));
 }
 
 test "vecSplat" {
     const v = vecSplat(123.0);
-    check(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
 }
 
 test "vecSplatXYZW" {
@@ -246,15 +244,15 @@ test "vecSplatXYZW" {
     const vy = vecSplatY(v0);
     const vz = vecSplatZ(v0);
     const vw = vecSplatW(v0);
-    check(vec4ApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
-    check(vec4ApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
-    check(vec4ApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
-    check(vec4ApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
+    try check(vec4ApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
+    try check(vec4ApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
+    try check(vec4ApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
+    try check(vec4ApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
 }
 
 test "vecSplatInt" {
     const v = vecSplatInt(0x4000_0000);
-    check(vec4ApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
 }
 
 test "vecMin and vecMax" {
@@ -263,32 +261,32 @@ test "vecMin and vecMax" {
     const vmin = vecMin(v0, v1);
     const vmax = vecMax(v0, v1);
     const less = v0 < v1;
-    check(vec4ApproxEqAbs(vmin, [4]f32{ 1.0, 1.0, 2.0, 7.0 }, 0.0));
-    check(vec4ApproxEqAbs(vmax, [4]f32{ 2.0, 3.0, 4.0, math.inf_f32 }, 0.0));
-    check(less[0] == true and less[1] == false and less[2] == true and less[3] == true);
+    try check(vec4ApproxEqAbs(vmin, [4]f32{ 1.0, 1.0, 2.0, 7.0 }, 0.0));
+    try check(vec4ApproxEqAbs(vmax, [4]f32{ 2.0, 3.0, 4.0, math.inf_f32 }, 0.0));
+    try check(less[0] == true and less[1] == false and less[2] == true and less[3] == true);
 
     const v2 = vecSet(2.0, math.nan_f32, 4.0, math.qnan_f32);
     const vmax_nan = vecMax(v2, v0);
-    check(vec4ApproxEqAbs(vmax_nan, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
+    try check(vec4ApproxEqAbs(vmax_nan, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
 
     const v3 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
     const vmin_nan = vecMin(v2, v3);
-    check(vmin_nan[0] == 1.0);
-    check(math.isNan(vmin_nan[1]));
-    check(vmin_nan[2] == 4.0);
-    check(math.isNan(vmin_nan[3]));
+    try check(vmin_nan[0] == 1.0);
+    try check(math.isNan(vmin_nan[1]));
+    try check(vmin_nan[2] == 4.0);
+    try check(math.isNan(vmin_nan[3]));
 }
 
 test "vecIsNan" {
     const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
     const b = vecIsNan(v0);
-    check(vecBoolEqual(b, vecBoolSet(false, true, true, false)));
+    try check(vecBoolEqual(b, vecBoolSet(false, true, true, false)));
 }
 
 test "vecIsInfinite" {
     const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
     const b = vecIsInfinite(v0);
-    check(vecBoolEqual(b, vecBoolSet(true, false, false, false)));
+    try check(vecBoolEqual(b, vecBoolSet(true, false, false, false)));
 }
 
 test "vecLoadFloat2" {
@@ -296,41 +294,41 @@ test "vecLoadFloat2" {
     var ptr = &a;
     var i: u32 = 0;
     const v0 = vecLoadFloat2(a[i..]);
-    check(vec4ApproxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
     i += 2;
     const v1 = vecLoadFloat2(a[i .. i + 2]);
-    check(vec4ApproxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
     const v2 = vecLoadFloat2(a[5..7]);
-    check(vec4ApproxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
     const v3 = vecLoadFloat2(ptr[1..]);
-    check(vec4ApproxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
     i += 1;
     const v4 = vecLoadFloat2(ptr[i .. i + 2]);
-    check(vec4ApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
 }
 
 test "vecStoreFloat3" {
     var a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
     const v = vecLoadFloat3(a[1..]);
     vecStoreFloat4(a[2..], v);
-    check(a[0] == 1.0);
-    check(a[1] == 2.0);
-    check(a[2] == 2.0);
-    check(a[3] == 3.0);
-    check(a[4] == 4.0);
-    check(a[5] == 0.0);
+    try check(a[0] == 1.0);
+    try check(a[1] == 2.0);
+    try check(a[2] == 2.0);
+    try check(a[3] == 3.0);
+    try check(a[4] == 4.0);
+    try check(a[5] == 0.0);
 }
 
 test "vecNearEqual" {
     const v0 = vecSet(1.0, 2.0, -3.0, 4.001);
     const v1 = vecSet(1.0, 2.1, 3.0, 4.0);
     const b = vecNearEqual(v0, v1, vecSplat(0.01));
-    check(b[0] == true);
-    check(b[1] == false);
-    check(b[2] == false);
-    check(b[3] == true);
-    check(@reduce(.And, b == vecBoolSet(true, false, false, true)));
-    check(vecBoolAllTrue(b == vecBoolSet(true, false, false, true)));
+    try check(b[0] == true);
+    try check(b[1] == false);
+    try check(b[2] == false);
+    try check(b[3] == true);
+    try check(@reduce(.And, b == vecBoolSet(true, false, false, true)));
+    try check(vecBoolAllTrue(b == vecBoolSet(true, false, false, true)));
 }
 
 test "vecInBounds" {
@@ -339,74 +337,74 @@ test "vecInBounds" {
     const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
     const b0 = vecInBounds(v0, bounds);
     const b1 = vecInBounds(v1, bounds);
-    check(vecBoolEqual(b0, vecBoolSet(true, true, true, true)));
-    check(vecBoolEqual(b1, vecBoolSet(false, false, true, true)));
+    try check(vecBoolEqual(b0, vecBoolSet(true, true, true, true)));
+    try check(vecBoolEqual(b1, vecBoolSet(false, false, true, true)));
 }
 
 test "vecBoolAnd" {
     const b0 = vecBoolSet(true, false, true, false);
     const b1 = vecBoolSet(true, true, false, false);
     const b = vecBoolAnd(b0, b1);
-    check(b[0] == true and b[1] == false and b[2] == false and b[3] == false);
+    try check(b[0] == true and b[1] == false and b[2] == false and b[3] == false);
 }
 
 test "vecBoolOr" {
     const b0 = vecBoolSet(true, false, true, false);
     const b1 = vecBoolSet(true, true, false, false);
     const b = vecBoolOr(b0, b1);
-    check(b[0] == true and b[1] == true and b[2] == true and b[3] == false);
+    try check(b[0] == true and b[1] == true and b[2] == true and b[3] == false);
 }
 
 test "vec @sin" {
     const v0 = vecSplat(0.5 * math.pi);
     const v = @sin(v0);
-    check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.001));
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.001));
 }
 
 test "vecAnd" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
     const v1 = vecSet(1.0, 2.0, 3.0, math.inf_f32);
     const v = vecAnd(v0, v1);
-    check(v[3] == math.inf_f32);
-    check(vec3ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
+    try check(v[3] == math.inf_f32);
+    try check(vec3ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
 }
 
 test "vecAndNot" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
     const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
     const v = vecAndNot(v0, v1);
-    check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 0.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 0.0 }, 0.0));
 }
 
 test "vecOr" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
     const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
     const v = vecOr(v0, v1);
-    check(v[0] == 1.0);
-    check(@bitCast(u32, v[1]) == ~@as(u32, 0));
-    check(v[2] == 3.0);
-    check(v[3] == 4.0);
+    try check(v[0] == 1.0);
+    try check(@bitCast(u32, v[1]) == ~@as(u32, 0));
+    try check(v[2] == 3.0);
+    try check(v[3] == 4.0);
 }
 
 test "vecXor" {
     const v0 = vecSetInt(@bitCast(u32, @as(f32, 1.0)), ~@as(u32, 0), 0, 0);
     const v1 = vecSet(1.0, 0, 0, 0);
     const v = vecXor(v0, v1);
-    check(v[0] == 0.0);
-    check(@bitCast(u32, v[1]) == ~@as(u32, 0));
-    check(v[2] == 0.0);
-    check(v[3] == 0.0);
+    try check(v[0] == 0.0);
+    try check(@bitCast(u32, v[1]) == ~@as(u32, 0));
+    try check(v[2] == 0.0);
+    try check(v[3] == 0.0);
 }
 
 test "vecFloatToIntAndBack" {
     const v0 = vecSet(1.1, 2.9, 3.0, -4.5);
     var v = vecFloatToIntAndBack(v0);
-    check(v[0] == 1.0);
-    check(v[1] == 2.0);
-    check(v[2] == 3.0);
-    check(v[3] == -4.0);
+    try check(v[0] == 1.0);
+    try check(v[1] == 2.0);
+    try check(v[2] == 3.0);
+    try check(v[3] == -4.0);
 
     const v1 = vecSet(math.inf_f32, 2.9, math.nan_f32, math.qnan_f32);
     v = vecFloatToIntAndBack(v1);
-    check(v[1] == 2.0);
+    try check(v[1] == 2.0);
 }
