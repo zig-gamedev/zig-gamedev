@@ -184,7 +184,7 @@ pub inline fn vecRound(v: Vec) Vec {
     const magic = vecOr(vecSplatNoFraction(), sign);
     var r1 = v + magic;
     r1 = r1 - magic;
-    var r2 = vecAnd(v, vecSplatAbsMask());
+    const r2 = vecAnd(v, vecSplatAbsMask());
     const mask = r2 <= vecSplatNoFraction();
     return vecSelect(mask, r1, v);
 }
