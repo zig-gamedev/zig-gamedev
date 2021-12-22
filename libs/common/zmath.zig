@@ -184,7 +184,7 @@ pub inline fn vecRound(v: Vec) Vec {
     const magic = vecOr(vecSplatNoFraction(), sign);
     var r1 = v + magic;
     r1 = r1 - magic;
-    const r2 = vecAnd(v, vecSplatAbsMask());
+    var r2 = vecAnd(v, vecSplatAbsMask());
     const mask = r2 <= vecSplatNoFraction();
     return vecSelect(mask, r1, v);
 }
@@ -448,8 +448,4 @@ test "vecRound" {
     const v4 = vecSet(-8_388_609.9, 8_388_609.1, 8_388_109.5, 8_388_609.432);
     v = vecRound(v4);
     try check(vec4ApproxEqAbs(v, [4]f32{ -8_388_610.0, 8_388_609.0, 8_388_110.0, 8_388_609.0 }, 0.0));
-
-    const v5 = vecSet(-8_388_602.9, 8_388_602.4, 8_388_602.7, 8_388_602.532);
-    v = vecRound(v5);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -8_388_603.0, 8_388_602.0, 8_388_603.0, 8_388_603.0 }, 0.0));
 }
