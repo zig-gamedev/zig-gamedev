@@ -4,6 +4,7 @@ const assert = std.debug.assert;
 
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
+const VecU32 = @Vector(4, u32);
 
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
@@ -25,8 +26,16 @@ pub inline fn vecBoolOr(b0: VecBool, b1: VecBool) VecBool {
     return vecBoolSet(b0[0] or b1[0], b0[1] or b1[1], b0[2] or b1[2], b0[3] or b1[3]);
 }
 
+pub inline fn vecBoolNot(b: VecBool) VecBool {
+    return vecBoolSet(!b[0], !b[1], !b[2], !b[3]);
+}
+
 pub inline fn vecBoolAllTrue(b: VecBool) bool {
     return @reduce(.And, b);
+}
+
+pub inline fn vecBoolEqual(b0: VecBool, b1: VecBool) bool {
+    return vecBoolAllTrue(b0 == b1);
 }
 
 pub inline fn vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec {
@@ -53,19 +62,64 @@ pub inline fn vecSplatW(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
 }
 
+// zig fmt: off
+pub inline fn vecSplatInfinity() Vec { return vecSplatInt(0x7f80_0000); }
+pub inline fn vecSplatQnan() Vec { return vecSplatInt(0x7fc0_0000); }
+pub inline fn vecSplatEpsilon() Vec { return vecSplatInt(0x3400_0000); }
+pub inline fn vecSplatSignMask() Vec { return vecSplatInt(0x8000_0000); }
+pub inline fn vecSplatAbsMask() Vec { return vecSplatInt(0x7fff_ffff); }
+pub inline fn vecSplatNoFraction() Vec { return vecSplat(8388608.0); }
+// zig fmt: on
+
 pub inline fn vecSplatInt(value: u32) Vec {
     return @splat(4, @bitCast(f32, value));
 }
 
 pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool {
     const delta = v0 - v1;
-    var temp = vecZero();
-    temp = temp - delta;
-    temp = vecMax(temp, delta);
+    const temp = vecMax(delta, vecZero() - delta);
     return temp <= epsilon;
 }
 
-fn vecApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
+pub inline fn vecAnd(v0: Vec, v1: Vec) Vec {
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return @bitCast(Vec, v0u & v1u);
+}
+
+pub inline fn vecAndNot(v0: Vec, v1: Vec) Vec {
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return @bitCast(Vec, ~v0u & v1u);
+}
+
+pub inline fn vecOr(v0: Vec, v1: Vec) Vec {
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return @bitCast(Vec, v0u | v1u);
+}
+
+pub inline fn vecXor(v0: Vec, v1: Vec) Vec {
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return @bitCast(Vec, v0u ^ v1u);
+}
+
+pub inline fn vecIsNan(v: Vec) VecBool {
+    return v != v;
+}
+
+pub inline fn vecIsInfinite(v: Vec) VecBool {
+    return vecAnd(v, vecSplatAbsMask()) == vecSplatInfinity();
+}
+
+fn vec3ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
+    return math.approxEqAbs(f32, v0[0], v1[0], eps) and
+        math.approxEqAbs(f32, v0[1], v1[1], eps) and
+        math.approxEqAbs(f32, v0[2], v1[2], eps);
+}
+
+fn vec4ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
     return math.approxEqAbs(f32, v0[0], v1[0], eps) and
         math.approxEqAbs(f32, v0[1], v1[1], eps) and
         math.approxEqAbs(f32, v0[2], v1[2], eps) and
@@ -118,15 +172,15 @@ pub inline fn vecMax(v0: Vec, v1: Vec) Vec {
     return @maximum(v0, v1);
 }
 
-pub inline fn vecInBounds(v: Vec, bounds: Vec) bool {
+pub inline fn vecInBounds(v: Vec, bounds: Vec) VecBool {
     const b0 = v <= bounds;
     const b1 = (bounds * vecSplat(-1.0)) <= v;
-    return vecBoolAllTrue(vecBoolAnd(b0, b1));
+    return vecBoolAnd(b0, b1);
 }
 
 test "vecZero" {
     const v = vecZero();
-    assert(vecApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
 }
 
 test "vecSet" {
@@ -138,12 +192,12 @@ test "vecSet" {
 
 test "vecSetInt" {
     const v = vecSetInt(0x3f80_0000, 0x4000_0000, 0x4040_0000, 0x4080_0000);
-    assert(vecApproxEqAbs(v, [4]f32{ 1.0, 2.0, 3.0, 4.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v, [4]f32{ 1.0, 2.0, 3.0, 4.0 }, 0.0));
 }
 
 test "vecSplat" {
     const v = vecSplat(123.0);
-    assert(vecApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
 }
 
 test "vecSplatXYZW" {
@@ -152,15 +206,15 @@ test "vecSplatXYZW" {
     const vy = vecSplatY(v0);
     const vz = vecSplatZ(v0);
     const vw = vecSplatW(v0);
-    assert(vecApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
-    assert(vecApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
-    assert(vecApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
-    assert(vecApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
+    assert(vec4ApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
+    assert(vec4ApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
+    assert(vec4ApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
+    assert(vec4ApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
 }
 
 test "vecSplatInt" {
     const v = vecSplatInt(0x4000_0000);
-    assert(vecApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
 }
 
 test "vecMin and vecMax" {
@@ -169,9 +223,25 @@ test "vecMin and vecMax" {
     const vmin = vecMin(v0, v1);
     const vmax = vecMax(v0, v1);
     const less = v0 < v1;
-    assert(vecApproxEqAbs(vmin, [4]f32{ 1.0, 1.0, 2.0, 7.0 }, 0.0));
-    assert(vecApproxEqAbs(vmax, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
+    assert(vec4ApproxEqAbs(vmin, [4]f32{ 1.0, 1.0, 2.0, 7.0 }, 0.0));
+    assert(vec4ApproxEqAbs(vmax, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
     assert(less[0] == true and less[1] == false and less[2] == true and less[3] == false);
+}
+
+test "vecIsNan" {
+    const v0 = vecSplatQnan();
+    const v1 = vecSplatInfinity();
+    const v2 = @select(f32, vecBoolSet(true, false, true, false), v1, v0);
+    const b = vecIsNan(v2);
+    assert(vecBoolEqual(b, vecBoolSet(false, true, false, true)));
+}
+
+test "vecIsInfinite" {
+    const v0 = vecSplatInfinity();
+    const v1 = vecSet(2.0, 1.0, 4.0, 7.0);
+    const v2 = @select(f32, vecBoolSet(true, false, true, false), v1, v0);
+    const b = vecIsInfinite(v2);
+    assert(vecBoolEqual(b, vecBoolSet(false, true, false, true)));
 }
 
 test "vecLoadFloat2" {
@@ -179,17 +249,17 @@ test "vecLoadFloat2" {
     var ptr = &a;
     var i: u32 = 0;
     const v0 = vecLoadFloat2(a[i..]);
-    assert(vecApproxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
     i += 2;
     const v1 = vecLoadFloat2(a[i .. i + 2]);
-    assert(vecApproxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
     const v2 = vecLoadFloat2(a[5..7]);
-    assert(vecApproxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
     const v3 = vecLoadFloat2(ptr[1..]);
-    assert(vecApproxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
     i += 1;
     const v4 = vecLoadFloat2(ptr[i .. i + 2]);
-    assert(vecApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
+    assert(vec4ApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
 }
 
 test "vecStoreFloat3" {
@@ -218,12 +288,12 @@ test "vecNearEqual" {
 
 test "vecInBounds" {
     const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
-    const v1 = vecSet(0.5, -2.001, -1.0, 1.9);
+    const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
     const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
     const b0 = vecInBounds(v0, bounds);
     const b1 = vecInBounds(v1, bounds);
-    assert(b0 == true);
-    assert(b1 == false);
+    assert(vecBoolEqual(b0, vecBoolSet(true, true, true, true)));
+    assert(vecBoolEqual(b1, vecBoolSet(false, false, true, true)));
 }
 
 test "vecBoolAnd" {
@@ -243,5 +313,39 @@ test "vecBoolOr" {
 test "vec @sin" {
     const v0 = vecSplat(0.5 * math.pi);
     const v = @sin(v0);
-    assert(vecApproxEqAbs(v, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.001));
+    assert(vec4ApproxEqAbs(v, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.001));
+}
+
+test "vecAnd" {
+    const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
+    const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v = vecAnd(v0, v1);
+    assert(vec4ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, 0.0 }, 0.0));
+}
+
+test "vecAndNot" {
+    const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
+    const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v = vecAndNot(v0, v1);
+    assert(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 4.0 }, 0.0));
+}
+
+test "vecOr" {
+    const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
+    const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v = vecOr(v0, v1);
+    assert(v[0] == 1.0);
+    assert(@bitCast(u32, v[1]) == ~@as(u32, 0));
+    assert(v[2] == 3.0);
+    assert(v[3] == 4.0);
+}
+
+test "vecXor" {
+    const v0 = vecSetInt(@bitCast(u32, @as(f32, 1.0)), ~@as(u32, 0), 0, 0);
+    const v1 = vecSet(1.0, 0, 0, 0);
+    const v = vecXor(v0, v1);
+    assert(v[0] == 0.0);
+    assert(@bitCast(u32, v[1]) == ~@as(u32, 0));
+    assert(v[2] == 0.0);
+    assert(v[3] == 0.0);
 }
