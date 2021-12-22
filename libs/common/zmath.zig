@@ -25,12 +25,32 @@ pub inline fn vecBoolOr(b0: VecBool, b1: VecBool) VecBool {
     return vecBoolSet(b0[0] or b1[0], b0[1] or b1[1], b0[2] or b1[2], b0[3] or b1[3]);
 }
 
+pub inline fn vecBoolAllTrue(b: VecBool) bool {
+    return @reduce(.And, b);
+}
+
 pub inline fn vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec {
     return @bitCast(Vec, [4]u32{ x, y, z, w });
 }
 
 pub inline fn vecSplat(value: f32) Vec {
     return @splat(4, value);
+}
+
+pub inline fn vecSplatX(v: Vec) Vec {
+    return @shuffle(f32, v, undefined, [4]i32{ 0, 0, 0, 0 });
+}
+
+pub inline fn vecSplatY(v: Vec) Vec {
+    return @shuffle(f32, v, undefined, [4]i32{ 1, 1, 1, 1 });
+}
+
+pub inline fn vecSplatZ(v: Vec) Vec {
+    return @shuffle(f32, v, undefined, [4]i32{ 2, 2, 2, 2 });
+}
+
+pub inline fn vecSplatW(v: Vec) Vec {
+    return @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
 }
 
 pub inline fn vecSplatInt(value: u32) Vec {
@@ -98,6 +118,12 @@ pub inline fn vecMax(v0: Vec, v1: Vec) Vec {
     return @maximum(v0, v1);
 }
 
+pub inline fn vecInBounds(v: Vec, bounds: Vec) bool {
+    const b0 = v <= bounds;
+    const b1 = (bounds * vecSplat(-1.0)) <= v;
+    return vecBoolAllTrue(vecBoolAnd(b0, b1));
+}
+
 test "vecZero" {
     const v = vecZero();
     assert(vecApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
@@ -118,6 +144,18 @@ test "vecSetInt" {
 test "vecSplat" {
     const v = vecSplat(123.0);
     assert(vecApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
+}
+
+test "vecSplatXYZW" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const vx = vecSplatX(v0);
+    const vy = vecSplatY(v0);
+    const vz = vecSplatZ(v0);
+    const vw = vecSplatW(v0);
+    assert(vecApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
+    assert(vecApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
+    assert(vecApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
+    assert(vecApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
 }
 
 test "vecSplatInt" {
@@ -175,6 +213,17 @@ test "vecNearEqual" {
     assert(b[2] == false);
     assert(b[3] == true);
     assert(@reduce(.And, b == vecBoolSet(true, false, false, true)));
+    assert(vecBoolAllTrue(b == vecBoolSet(true, false, false, true)));
+}
+
+test "vecInBounds" {
+    const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
+    const v1 = vecSet(0.5, -2.001, -1.0, 1.9);
+    const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+    const b0 = vecInBounds(v0, bounds);
+    const b1 = vecInBounds(v1, bounds);
+    assert(b0 == true);
+    assert(b1 == false);
 }
 
 test "vecBoolAnd" {
