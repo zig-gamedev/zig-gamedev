@@ -183,19 +183,19 @@ pub inline fn vecRound(v: Vec) Vec {
     const magic = vecOr(vecSplatNoFraction(), sign);
     var r1 = v + magic;
     r1 = r1 - magic;
-    const r2 = vecAnd(v, vecSplatAbsMask());
+    const r2 = vecAbs(v);
     const mask = r2 <= vecSplatNoFraction();
     return vecSelect(mask, r1, v);
 }
 
 pub inline fn vecTrunc(v: Vec) Vec {
-    const mask = vecAnd(v, vecSplatAbsMask()) < vecSplatNoFraction();
+    const mask = vecAbs(v) < vecSplatNoFraction();
     const result = vecFloatToIntAndBack(v);
     return vecSelect(mask, result, v);
 }
 
 pub inline fn vecFloor(v: Vec) Vec {
-    const mask = vecAnd(v, vecSplatAbsMask()) < vecSplatNoFraction();
+    const mask = vecAbs(v) < vecSplatNoFraction();
     var result = vecFloatToIntAndBack(v);
     const larger_mask = result > v;
     const larger = vecSelect(larger_mask, vecSplat(-1.0), vecZero());
@@ -204,12 +204,66 @@ pub inline fn vecFloor(v: Vec) Vec {
 }
 
 pub inline fn vecCeil(v: Vec) Vec {
-    const mask = vecAnd(v, vecSplatAbsMask()) < vecSplatNoFraction();
+    const mask = vecAbs(v) < vecSplatNoFraction();
     var result = vecFloatToIntAndBack(v);
     const smaller_mask = result < v;
     const smaller = vecSelect(smaller_mask, vecSplat(-1.0), vecZero());
     result = result - smaller;
     return vecSelect(mask, result, v);
+}
+
+// TODO(mziulek): Test
+pub inline fn vecClamp(v: Vec, min: Vec, max: Vec) Vec {
+    var result = vecMax(min, v);
+    result = vecMin(max, result);
+    return result;
+}
+
+// TODO(mziulek): Test
+pub inline fn vecClampFast(v: Vec, min: Vec, max: Vec) Vec {
+    var result = vecMaxFast(min, v);
+    result = vecMinFast(max, result);
+    return result;
+}
+
+// TODO(mziulek): Test
+pub inline fn vecSaturate(v: Vec) Vec {
+    var result = vecMax(v, vecZero());
+    result = vecMin(result, vecSplat(1.0));
+    return result;
+}
+
+// TODO(mziulek): Test
+pub inline fn vecSaturateFast(v: Vec) Vec {
+    var result = vecMaxFast(v, vecZero());
+    result = vecMinFast(result, vecSplat(1.0));
+    return result;
+}
+
+pub inline fn vecNeg(v: Vec) Vec {
+    // xorps, subps
+    return vecZero() - v;
+}
+
+pub inline fn vecAbs(v: Vec) Vec {
+    // andps with const
+    return @fabs(v);
+}
+
+pub inline fn vecSqrt(v: Vec) Vec {
+    // sqrtps
+    return @sqrt(v);
+}
+
+pub inline fn vecRcp(v: Vec) Vec {
+    // load, divps
+    return vecSplat(1.0) / v;
+}
+
+pub inline fn vecRcpFast(v: Vec) Vec {
+    // load, rcpps, 2 x mulps, addps, subps
+    @setFloatMode(.Optimized);
+    return vecSplat(1.0) / v;
 }
 
 //
