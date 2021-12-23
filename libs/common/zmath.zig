@@ -266,6 +266,11 @@ pub inline fn vecRcpFast(v: Vec) Vec {
     return vecSplat(1.0) / v;
 }
 
+pub inline fn vecScale(v: Vec, s: f32) Vec {
+    // shufps, mulps
+    return v * vecSplat(s);
+}
+
 //
 // Private types and functions
 //
