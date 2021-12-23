@@ -462,9 +462,9 @@ test "vecRound" {
     var v = vecRound(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
 
-    const v1 = vecSet(-10_000_000.1, -10_000_001.4, 10_000_001.5, math.inf_f32);
+    const v1 = vecSet(-10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
     v = vecRound(v1);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_000.0, -10_000_001.0, 10_000_002.0, math.inf_f32 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
 
     const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
     v = vecRound(v2);
@@ -473,13 +473,13 @@ test "vecRound" {
     try check(math.isNan(v2[2]));
     try check(v2[3] == -math.inf_f32);
 
-    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.50001);
+    const v3 = vecSet(1001.5, -201.499, -10000.99, -101.5);
     v = vecRound(v3);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1001.0, -201.0, -10001.0, 101.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1002.0, -201.0, -10001.0, -102.0 }, 0.0));
 
-    const v4 = vecSet(-8_388_609.9, 8_388_609.1, 8_388_109.5, 8_388_609.432);
+    const v4 = vecSet(-1_388_609.9, 1_388_609.5, 1_388_109.01, 2_388_609.5);
     v = vecRound(v4);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -8_388_610.0, 8_388_609.0, 8_388_110.0, 8_388_609.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ -1_388_610.0, 1_388_610.0, 1_388_109.0, 2_388_610.0 }, 0.0));
 
     var f: f32 = -100.0;
     var i: u32 = 0;
@@ -499,9 +499,9 @@ test "vecTrunc" {
     var v = vecTrunc(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -1.0, 1.0 }, 0.0));
 
-    const v1 = vecSet(-10_000_002.1, -10_000_000.1, 10_000_001.1, math.inf_f32);
+    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
     v = vecTrunc(v1);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.0, -10_000_000.0, 10_000_001.0, math.inf_f32 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
 
     const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
     v = vecTrunc(v2);
@@ -514,9 +514,9 @@ test "vecTrunc" {
     v = vecTrunc(v3);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1000.0, -201.0, -10000.0, 100.0 }, 0.0));
 
-    const v4 = vecSet(-7_388_609.7, 8_388_609.1, 8_388_109.5, -8_388_509.7);
+    const v4 = vecSet(-7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5);
     v = vecTrunc(v4);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -7_388_609.0, 8_388_609.0, 8_388_109.0, -8_388_509.0 }, 0.0));
+    try check(vec4ApproxEqAbs(v, [4]f32{ -7_388_609.0, 7_388_609.0, 8_388_109.0, -8_388_509.0 }, 0.0));
 
     var f: f32 = -100.0;
     var i: u32 = 0;
