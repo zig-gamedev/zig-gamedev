@@ -448,4 +448,16 @@ test "vecRound" {
     const v4 = vecSet(-8_388_609.9, 8_388_609.1, 8_388_109.5, 8_388_609.432);
     v = vecRound(v4);
     try check(vec4ApproxEqAbs(v, [4]f32{ -8_388_610.0, 8_388_609.0, 8_388_110.0, 8_388_609.0 }, 0.0));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = vecRound(vecSplat(f));
+        const fr = @round(f);
+        try check(vr[0] == fr);
+        try check(vr[1] == fr);
+        try check(vr[2] == fr);
+        try check(vr[3] == fr);
+        f += 0.12345 * @intToFloat(f32, i);
+    }
 }
