@@ -281,16 +281,38 @@ test "vecMin and vecMax" {
     try check(vec4ApproxEqAbs(vmax, [4]f32{ 2.0, 3.0, 4.0, math.inf_f32 }, 0.0));
     try check(less[0] == true and less[1] == false and less[2] == true and less[3] == true);
 
-    const v2 = vecSet(2.0, math.nan_f32, 4.0, math.qnan_f32);
-    const vmax_nan = vecMax(v2, v0);
-    try check(vec4ApproxEqAbs(vmax_nan, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
+    {
+        const v2 = vecSet(2.0, math.nan_f32, 4.0, math.qnan_f32);
+        const vmax_nan = vecMax(v2, v0);
+        try check(vec4ApproxEqAbs(vmax_nan, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
 
-    const v3 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
-    const vmin_nan = vecMin(v2, v3);
-    try check(vmin_nan[0] == 1.0);
-    try check(math.isNan(vmin_nan[1]));
-    try check(vmin_nan[2] == 4.0);
-    try check(math.isNan(vmin_nan[3]));
+        const v3 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
+        const vmin_nan = vecMin(v2, v3);
+        try check(vmin_nan[0] == 1.0);
+        try check(math.isNan(vmin_nan[1]));
+        try check(vmin_nan[2] == 4.0);
+        try check(math.isNan(vmin_nan[3]));
+    }
+
+    {
+        const v4 = vecSet(-math.inf_f32, math.inf_f32, math.inf_f32, math.qnan_f32);
+        const v5 = vecSet(math.qnan_f32, -math.inf_f32, math.qnan_f32, math.nan_f32);
+        const vmin_nan = vecMin(v4, v5);
+        try check(vmin_nan[0] == -math.inf_f32);
+        try check(vmin_nan[1] == -math.inf_f32);
+        try check(vmin_nan[2] == math.inf_f32);
+        try check(!math.isNan(vmin_nan[2]));
+        try check(math.isNan(vmin_nan[3]));
+        try check(!math.isInf(vmin_nan[3]));
+
+        const vmax_nan = vecMax(v4, v5);
+        try check(vmax_nan[0] == -math.inf_f32);
+        try check(vmax_nan[1] == math.inf_f32);
+        try check(vmax_nan[2] == math.inf_f32);
+        try check(!math.isNan(vmax_nan[2]));
+        try check(math.isNan(vmax_nan[3]));
+        try check(!math.isInf(vmax_nan[3]));
+    }
 }
 
 test "vecIsNan" {
