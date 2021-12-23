@@ -194,6 +194,15 @@ pub inline fn vecTrunc(v: Vec) Vec {
     return vecSelect(mask, result, v);
 }
 
+pub inline fn vecFloor(v: Vec) Vec {
+    const mask = vecAnd(v, vecSplatAbsMask()) < vecSplatNoFraction();
+    var result = vecFloatToIntAndBack(v);
+    const larger_mask = result > v;
+    const larger = vecSelect(larger_mask, vecSplat(-1.0), vecZero());
+    result = result + larger;
+    return vecSelect(mask, result, v);
+}
+
 //
 // Private types and functions
 //
@@ -404,9 +413,12 @@ test "vecBoolOr" {
 }
 
 test "vec @sin" {
-    const v0 = vecSplat(0.5 * math.pi);
+    const v0 = vecSet(math.inf_f32, -math.inf_f32, math.inf_f32, 9_388_608.0);
     const v = @sin(v0);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.001));
+    try check(math.isNan(v[0]));
+    try check(math.isNan(v[1]));
+    try check(math.isNan(v[2]));
+    try check(math.approxEqAbs(f32, v[3], 0.7205, 0.001));
 }
 
 test "vecAnd" {
@@ -523,6 +535,43 @@ test "vecTrunc" {
     while (i < 100) : (i += 1) {
         const vr = vecTrunc(vecSplat(f));
         const fr = @trunc(f);
+        try check(vr[0] == fr);
+        try check(vr[1] == fr);
+        try check(vr[2] == fr);
+        try check(vr[3] == fr);
+        f += 0.12345 * @intToFloat(f32, i);
+    }
+}
+
+test "vecFloor" {
+    const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
+    var v = vecFloor(v0);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -2.0, -2.0, -3.0 }, 0.0));
+
+    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
+    v = vecFloor(v1);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+
+    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
+    v = vecFloor(v2);
+    try check(math.isNan(v2[0]));
+    try check(math.isNan(v2[1]));
+    try check(math.isNan(v2[2]));
+    try check(v2[3] == -math.inf_f32);
+
+    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.75001);
+    v = vecFloor(v3);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1000.0, -202.0, -10001.0, 100.0 }, 0.0));
+
+    const v4 = vecSet(-7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5);
+    v = vecFloor(v4);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -7_388_610.0, 7_388_609.0, 8_388_109.0, -8_388_510.0 }, 0.0));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = vecFloor(vecSplat(f));
+        const fr = @floor(f);
         try check(vr[0] == fr);
         try check(vr[1] == fr);
         try check(vr[2] == fr);
