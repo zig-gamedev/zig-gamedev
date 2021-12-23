@@ -203,6 +203,15 @@ pub inline fn vecFloor(v: Vec) Vec {
     return vecSelect(mask, result, v);
 }
 
+pub inline fn vecCeil(v: Vec) Vec {
+    const mask = vecAnd(v, vecSplatAbsMask()) < vecSplatNoFraction();
+    var result = vecFloatToIntAndBack(v);
+    const smaller_mask = result < v;
+    const smaller = vecSelect(smaller_mask, vecSplat(-1.0), vecZero());
+    result = result - smaller;
+    return vecSelect(mask, result, v);
+}
+
 //
 // Private types and functions
 //
@@ -572,6 +581,43 @@ test "vecFloor" {
     while (i < 100) : (i += 1) {
         const vr = vecFloor(vecSplat(f));
         const fr = @floor(f);
+        try check(vr[0] == fr);
+        try check(vr[1] == fr);
+        try check(vr[2] == fr);
+        try check(vr[3] == fr);
+        f += 0.12345 * @intToFloat(f32, i);
+    }
+}
+
+test "vecCeil" {
+    const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
+    var v = vecCeil(v0);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, -1.0, -1.0, -2.0 }, 0.0));
+
+    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
+    v = vecCeil(v1);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+
+    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
+    v = vecCeil(v2);
+    try check(math.isNan(v2[0]));
+    try check(math.isNan(v2[1]));
+    try check(math.isNan(v2[2]));
+    try check(v2[3] == -math.inf_f32);
+
+    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.75001);
+    v = vecCeil(v3);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1001.0, -201.0, -10000.0, 101.0 }, 0.0));
+
+    const v4 = vecSet(-1_388_609.5, 1_388_609.1, 1_388_109.9, -1_388_509.9);
+    v = vecCeil(v4);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -1_388_609.0, 1_388_610.0, 1_388_110.0, -1_388_509.0 }, 0.0));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = vecCeil(vecSplat(f));
+        const fr = @ceil(f);
         try check(vr[0] == fr);
         try check(vr[1] == fr);
         try check(vr[2] == fr);
