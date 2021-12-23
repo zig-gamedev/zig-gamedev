@@ -246,7 +246,7 @@ pub inline fn vecNeg(v: Vec) Vec {
 }
 
 pub inline fn vecAbs(v: Vec) Vec {
-    // andps with const
+    // load, andps
     return @fabs(v);
 }
 
@@ -269,6 +269,15 @@ pub inline fn vecRcpFast(v: Vec) Vec {
 pub inline fn vecScale(v: Vec, s: f32) Vec {
     // shufps, mulps
     return v * vecSplat(s);
+}
+
+pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
+    var dot = v0 * v1;
+    var temp = @shuffle(f32, dot, undefined, [4]i32{ 1, 2, 1, 2 });
+    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]);
+    temp = @shuffle(f32, temp, undefined, [4]i32{ 1, 1, 1, 1 });
+    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]);
+    return vecSplatX(dot);
 }
 
 //
@@ -683,4 +692,11 @@ test "vecCeil" {
         try check(vr[3] == fr);
         f += 0.12345 * @intToFloat(f32, i);
     }
+}
+
+test "vec3Dot" {
+    const v0 = vecSet(-1.0, 2.0, 3.0, 1.0);
+    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
+    var v = vec3Dot(v0, v1);
+    try check(vec4ApproxEqAbs(v, vecSplat(24.0), 0.0001));
 }
