@@ -55,7 +55,7 @@ pub inline fn vecSplatW(v: Vec) Vec {
 }
 
 // zig fmt: off
-pub inline fn vecSplatInfinity() Vec { return vecSplat(math.inf_f32); }
+pub inline fn vecSplatInf() Vec { return vecSplat(math.inf_f32); }
 pub inline fn vecSplatNan() Vec { return vecSplat(math.nan_f32); }
 pub inline fn vecSplatQnan() Vec { return vecSplat(math.qnan_f32); }
 pub inline fn vecSplatEpsilon() Vec { return vecSplat(math.epsilon_f32); }
@@ -106,42 +106,42 @@ pub inline fn vecIsNan(v: Vec) VecBool {
     return v != v;
 }
 
-pub inline fn vecIsInfinite(v: Vec) VecBool {
-    return vecAnd(v, vecSplatAbsMask()) == vecSplatInfinity();
+pub inline fn vecIsInf(v: Vec) VecBool {
+    return vecAnd(v, vecSplatAbsMask()) == vecSplatInf();
 }
 
-pub inline fn vecLoadFloat(mem: []const f32) Vec {
+pub inline fn vecLoadF32(mem: []const f32) Vec {
     return [4]f32{ mem[0], 0, 0, 0 };
 }
 
-pub inline fn vecLoadFloat2(mem: []const f32) Vec {
+pub inline fn vecLoadF32x2(mem: []const f32) Vec {
     return [4]f32{ mem[0], mem[1], 0, 0 };
 }
 
-pub inline fn vecLoadFloat3(mem: []const f32) Vec {
+pub inline fn vecLoadF32x3(mem: []const f32) Vec {
     return vecSet(mem[0], mem[1], mem[2], 0);
 }
 
-pub inline fn vecLoadFloat4(mem: []const f32) Vec {
+pub inline fn vecLoadF32x4(mem: []const f32) Vec {
     return vecSet(mem[0], mem[1], mem[2], mem[4]);
 }
 
-pub inline fn vecStoreFloat(mem: []f32, v: Vec) void {
+pub inline fn vecStoreF32(mem: []f32, v: Vec) void {
     mem[0] = v[0];
 }
 
-pub inline fn vecStoreFloat2(mem: []f32, v: Vec) void {
+pub inline fn vecStoreF32x2(mem: []f32, v: Vec) void {
     mem[0] = v[0];
     mem[1] = v[1];
 }
 
-pub inline fn vecStoreFloat3(mem: []f32, v: Vec) void {
+pub inline fn vecStoreF32x3(mem: []f32, v: Vec) void {
     mem[0] = v[0];
     mem[1] = v[1];
     mem[2] = v[2];
 }
 
-pub inline fn vecStoreFloat4(mem: []f32, v: Vec) void {
+pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
     mem[0] = v[0];
     mem[1] = v[1];
     mem[2] = v[2];
@@ -349,34 +349,34 @@ test "vecIsNan" {
     try check(vecBoolEqual(b, vecBoolSet(false, true, true, false)));
 }
 
-test "vecIsInfinite" {
+test "vecIsInf" {
     const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
-    const b = vecIsInfinite(v0);
+    const b = vecIsInf(v0);
     try check(vecBoolEqual(b, vecBoolSet(true, false, false, false)));
 }
 
-test "vecLoadFloat2" {
+test "vecLoadF32x2" {
     const a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
     var ptr = &a;
     var i: u32 = 0;
-    const v0 = vecLoadFloat2(a[i..]);
+    const v0 = vecLoadF32x2(a[i..]);
     try check(vec4ApproxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
     i += 2;
-    const v1 = vecLoadFloat2(a[i .. i + 2]);
+    const v1 = vecLoadF32x2(a[i .. i + 2]);
     try check(vec4ApproxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
-    const v2 = vecLoadFloat2(a[5..7]);
+    const v2 = vecLoadF32x2(a[5..7]);
     try check(vec4ApproxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
-    const v3 = vecLoadFloat2(ptr[1..]);
+    const v3 = vecLoadF32x2(ptr[1..]);
     try check(vec4ApproxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
     i += 1;
-    const v4 = vecLoadFloat2(ptr[i .. i + 2]);
+    const v4 = vecLoadF32x2(ptr[i .. i + 2]);
     try check(vec4ApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
 }
 
-test "vecStoreFloat3" {
+test "vecStoreF32x3" {
     var a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
-    const v = vecLoadFloat3(a[1..]);
-    vecStoreFloat4(a[2..], v);
+    const v = vecLoadF32x3(a[1..]);
+    vecStoreF32x4(a[2..], v);
     try check(a[0] == 1.0);
     try check(a[1] == 2.0);
     try check(a[2] == 2.0);
