@@ -76,11 +76,12 @@ pub fn build(b: *std.build.Builder) void {
 
     install_content_step.step.dependOn(dxc_step);
 
-    const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
-
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
+    exe.setBuildMode(b.standardReleaseOptions());
+    exe.setTarget(.{
+        .cpu_arch = .x86_64,
+        .os_tag = .windows,
+        .abi = .gnu,
+    });
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which

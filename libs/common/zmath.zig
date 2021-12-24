@@ -1,8 +1,11 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const math = std.math;
 
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
+
+const use_inline_asm = (builtin.target.cpu.arch == .x86_64);
 
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
@@ -271,12 +274,30 @@ pub inline fn vecScale(v: Vec, s: f32) Vec {
     return v * vecSplat(s);
 }
 
+pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
+    if (use_inline_asm) {
+        const b = asm (
+            \\  cmpltps %[v1], %[v0]
+            \\  movmskps %[v0], %%eax
+            \\  cmp $7, %%al
+            \\  sete %%al
+            : [ret] "={rax}" (-> bool),
+            : [v0] "{xmm0}" (v0),
+              [v1] "{xmm1}" (v1),
+        );
+        return b;
+    } else {
+        const mask = v0 < v1;
+        return mask[0] and mask[1] and mask[2];
+    }
+}
+
 pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
     var dot = v0 * v1;
     var temp = @shuffle(f32, dot, undefined, [4]i32{ 1, 2, 1, 2 });
-    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]);
+    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
     temp = @shuffle(f32, temp, undefined, [4]i32{ 1, 1, 1, 1 });
-    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]);
+    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
     return vecSplatX(dot);
 }
 
@@ -699,4 +720,22 @@ test "vec3Dot" {
     const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
     var v = vec3Dot(v0, v1);
     try check(vec4ApproxEqAbs(v, vecSplat(24.0), 0.0001));
+}
+
+test "vec3Less" {
+    const v0 = vecSet(-1.0, 2.0, 3.0, 5.0);
+    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
+    try check(vec3Less(v0, v1) == true);
+
+    const v2 = vecSet(-1.0, 2.0, 3.0, 5.0);
+    const v3 = vecSet(4.0, -5.0, 6.0, 1.0);
+    try check(vec3Less(v2, v3) == false);
+
+    const v4 = vecSet(100.0, 200.0, 300.0, 50000.0);
+    const v5 = vecSet(400.0, 500.0, 600.0, 1.0);
+    try check(vec3Less(v4, v5) == true);
+
+    const v6 = vecSet(100.0, -math.inf_f32, -math.inf_f32, 50000.0);
+    const v7 = vecSet(400.0, math.inf_f32, 600.0, 1.0);
+    try check(vec3Less(v6, v7) == true);
 }
