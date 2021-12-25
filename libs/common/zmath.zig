@@ -80,28 +80,49 @@ pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool {
     return temp <= epsilon;
 }
 
-pub inline fn vecAnd(v0: Vec, v1: Vec) Vec {
+pub inline fn vecEqualInt(v0: Vec, v1: Vec) VecBool {
+    // pcmpeqd
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return v0u == v1u;
+}
+
+pub inline fn vecNotEqualInt(v0: Vec, v1: Vec) VecBool {
+    // 2 x pcmpeqd, pxor
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return v0u != v1u;
+}
+
+pub inline fn vecAndInt(v0: Vec, v1: Vec) Vec {
     // andps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u & v1u);
 }
 
-pub inline fn vecAndNot(v0: Vec, v1: Vec) Vec {
+pub inline fn vecAndCInt(v0: Vec, v1: Vec) Vec {
     // andnps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
-    return @bitCast(Vec, ~v0u & v1u);
+    return @bitCast(Vec, v0u & ~v1u);
 }
 
-pub inline fn vecOr(v0: Vec, v1: Vec) Vec {
+pub inline fn vecOrInt(v0: Vec, v1: Vec) Vec {
     // orps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u | v1u);
 }
 
-pub inline fn vecXor(v0: Vec, v1: Vec) Vec {
+pub inline fn vecNorInt(v0: Vec, v1: Vec) Vec {
+    // orps
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    return @bitCast(Vec, ~(v0u | v1u));
+}
+
+pub inline fn vecXorInt(v0: Vec, v1: Vec) Vec {
     // xorps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
@@ -113,7 +134,7 @@ pub inline fn vecIsNan(v: Vec) VecBool {
 }
 
 pub inline fn vecIsInf(v: Vec) VecBool {
-    return vecAnd(v, vecSplatAbsMask()) == vecSplatInf();
+    return vecAndInt(v, vecSplatAbsMask()) == vecSplatInf();
 }
 
 pub inline fn vecMinFast(v0: Vec, v1: Vec) Vec {
@@ -147,8 +168,8 @@ pub inline fn vecInBounds(v: Vec, bounds: Vec) VecBool {
 }
 
 pub inline fn vecRound(v: Vec) Vec {
-    const sign = vecAnd(v, vecSplatSignMask());
-    const magic = vecOr(vecSplatNoFraction(), sign);
+    const sign = vecAndInt(v, vecSplatSignMask());
+    const magic = vecOrInt(vecSplatNoFraction(), sign);
     var r1 = v + magic;
     r1 = r1 - magic;
     const r2 = vecAbs(v);
@@ -241,6 +262,16 @@ pub inline fn vecRcpFast(v: Vec) Vec {
 pub inline fn vecScale(v: Vec, s: f32) Vec {
     // shufps, mulps
     return v * vecSplat(s);
+}
+
+pub inline fn vecLerp(v0: Vec, v1: Vec, t: f32) Vec {
+    // subps, shufps, addps, mulps
+    return v0 + (v1 - v0) * vecSplat(t);
+}
+
+pub inline fn vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec {
+    // subps, addps, mulps
+    return v0 + (v1 - v0) * t;
 }
 
 //
@@ -531,35 +562,35 @@ test "vec @sin" {
     try check(math.approxEqAbs(f32, v[3], 0.7205, 0.001));
 }
 
-test "vecAnd" {
+test "vecAndInt" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
     const v1 = vecSet(1.0, 2.0, 3.0, math.inf_f32);
-    const v = vecAnd(v0, v1);
+    const v = vecAndInt(v0, v1);
     try check(v[3] == math.inf_f32);
     try check(vec3ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
 }
 
-test "vecAndNot" {
-    const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
-    const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v = vecAndNot(v0, v1);
+test "vecAndCInt" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v1 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
+    const v = vecAndCInt(v0, v1);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 0.0 }, 0.0));
 }
 
-test "vecOr" {
+test "vecOrInt" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
     const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v = vecOr(v0, v1);
+    const v = vecOrInt(v0, v1);
     try check(v[0] == 1.0);
     try check(@bitCast(u32, v[1]) == ~@as(u32, 0));
     try check(v[2] == 3.0);
     try check(v[3] == 4.0);
 }
 
-test "vecXor" {
+test "vecXorInt" {
     const v0 = vecSetInt(@bitCast(u32, @as(f32, 1.0)), ~@as(u32, 0), 0, 0);
     const v1 = vecSet(1.0, 0, 0, 0);
-    const v = vecXor(v0, v1);
+    const v = vecXorInt(v0, v1);
     try check(v[0] == 0.0);
     try check(@bitCast(u32, v[1]) == ~@as(u32, 0));
     try check(v[2] == 0.0);
