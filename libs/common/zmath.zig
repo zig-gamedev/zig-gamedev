@@ -4,14 +4,9 @@ const math = std.math;
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
 
-pub inline fn vecZero() Vec {
-    return @splat(4, @as(f32, 0));
-}
-
-pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
-    return [4]f32{ x, y, z, w };
-}
-
+//
+// VecBool functions
+//
 pub inline fn vecBoolAnd(b0: VecBool, b1: VecBool) VecBool {
     // andps
     return [4]bool{ b0[0] and b1[0], b0[1] and b1[1], b0[2] and b1[2], b0[3] and b1[3] };
@@ -28,6 +23,17 @@ pub inline fn vecBoolAllTrue(b: VecBool) bool {
 
 pub inline fn vecBoolEqual(b0: VecBool, b1: VecBool) bool {
     return vecBoolAllTrue(b0 == b1);
+}
+
+//
+// General Vec functions (always work on all vector components)
+//
+pub inline fn vecZero() Vec {
+    return @splat(4, @as(f32, 0));
+}
+
+pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
+    return [4]f32{ x, y, z, w };
 }
 
 pub inline fn vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec {
@@ -108,44 +114,6 @@ pub inline fn vecIsNan(v: Vec) VecBool {
 
 pub inline fn vecIsInf(v: Vec) VecBool {
     return vecAnd(v, vecSplatAbsMask()) == vecSplatInf();
-}
-
-pub inline fn vecLoadF32(mem: []const f32) Vec {
-    return [4]f32{ mem[0], 0, 0, 0 };
-}
-
-pub inline fn vecLoadF32x2(mem: []const f32) Vec {
-    return [4]f32{ mem[0], mem[1], 0, 0 };
-}
-
-pub inline fn vecLoadF32x3(mem: []const f32) Vec {
-    return vecSet(mem[0], mem[1], mem[2], 0);
-}
-
-pub inline fn vecLoadF32x4(mem: []const f32) Vec {
-    return vecSet(mem[0], mem[1], mem[2], mem[4]);
-}
-
-pub inline fn vecStoreF32(mem: []f32, v: Vec) void {
-    mem[0] = v[0];
-}
-
-pub inline fn vecStoreF32x2(mem: []f32, v: Vec) void {
-    mem[0] = v[0];
-    mem[1] = v[1];
-}
-
-pub inline fn vecStoreF32x3(mem: []f32, v: Vec) void {
-    mem[0] = v[0];
-    mem[1] = v[1];
-    mem[2] = v[2];
-}
-
-pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
-    mem[0] = v[0];
-    mem[1] = v[1];
-    mem[2] = v[2];
-    mem[3] = v[3];
 }
 
 pub inline fn vecMinFast(v0: Vec, v1: Vec) Vec {
@@ -275,6 +243,50 @@ pub inline fn vecScale(v: Vec, s: f32) Vec {
     return v * vecSplat(s);
 }
 
+//
+// Load/store functions
+//
+pub inline fn vecLoadF32(mem: []const f32) Vec {
+    return [4]f32{ mem[0], 0, 0, 0 };
+}
+
+pub inline fn vecLoadF32x2(mem: []const f32) Vec {
+    return [4]f32{ mem[0], mem[1], 0, 0 };
+}
+
+pub inline fn vecLoadF32x3(mem: []const f32) Vec {
+    return vecSet(mem[0], mem[1], mem[2], 0);
+}
+
+pub inline fn vecLoadF32x4(mem: []const f32) Vec {
+    return vecSet(mem[0], mem[1], mem[2], mem[4]);
+}
+
+pub inline fn vecStoreF32(mem: []f32, v: Vec) void {
+    mem[0] = v[0];
+}
+
+pub inline fn vecStoreF32x2(mem: []f32, v: Vec) void {
+    mem[0] = v[0];
+    mem[1] = v[1];
+}
+
+pub inline fn vecStoreF32x3(mem: []f32, v: Vec) void {
+    mem[0] = v[0];
+    mem[1] = v[1];
+    mem[2] = v[2];
+}
+
+pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
+    mem[0] = v[0];
+    mem[1] = v[1];
+    mem[2] = v[2];
+    mem[3] = v[3];
+}
+
+//
+// Vec3 functions
+//
 pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
     return asm (
         \\  cmpltps %[v1], %[v0]
@@ -318,6 +330,11 @@ inline fn vecFloatToIntAndBack(v: Vec) Vec {
         @intToFloat(f32, vi[2]),
         @intToFloat(f32, vi[3]),
     };
+}
+
+inline fn vec2ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
+    return math.approxEqAbs(f32, v0[0], v1[0], eps) and
+        math.approxEqAbs(f32, v0[1], v1[1], eps);
 }
 
 inline fn vec3ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
@@ -781,8 +798,32 @@ test "vecClamp" {
 }
 
 test "vecRcpSqrt" {
-    const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
-    const v = vecRcpSqrt(v0);
-    const vf = vecRcpSqrtFast(v0);
-    try check(vec4ApproxEqAbs(v, vf, 0.0005));
+    {
+        const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
+        const v = vecRcpSqrt(v0);
+        const vf = vecRcpSqrtFast(v0);
+        try check(vec4ApproxEqAbs(v, vf, 0.0005));
+    }
+    {
+        const v0 = vecSet(math.inf_f32, 0.2, 123.1, math.nan_f32);
+        const v = vecRcpSqrt(v0);
+        try check(vec3ApproxEqAbs(v, vecSet(0.0, 1.0 / math.sqrt(0.2), 1.0 / math.sqrt(123.1), 0.0), 0.0005));
+        try check(math.isNan(v[3]));
+    }
+}
+
+test "vecRcp" {
+    {
+        const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
+        const v = vecRcp(v0);
+        const vf = vecRcpFast(v0);
+        try check(vec4ApproxEqAbs(v, vf, 0.0005));
+    }
+    {
+        const v0 = vecSet(math.inf_f32, -math.inf_f32, math.qnan_f32, math.nan_f32);
+        const v = vecRcp(v0);
+        try check(vec2ApproxEqAbs(v, vecSet(0.0, 0.0, 0.0, 0.0), 0.0005));
+        try check(math.isNan(v[2]));
+        try check(math.isNan(v[3]));
+    }
 }
