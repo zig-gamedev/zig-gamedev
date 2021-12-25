@@ -239,11 +239,6 @@ pub inline fn vecSaturateFast(v: Vec) Vec {
     return result;
 }
 
-pub inline fn vecNeg(v: Vec) Vec {
-    // xorps, subps
-    return vecZero() - v;
-}
-
 pub inline fn vecAbs(v: Vec) Vec {
     // load, andps
     return @fabs(v);

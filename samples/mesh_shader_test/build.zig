@@ -38,8 +38,16 @@ pub fn build(b: *std.build.Builder) void {
     ) orelse false;
     const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
 
-    const exe_options = b.addOptions();
     const exe = b.addExecutable("mesh_shader_test", "src/mesh_shader_test.zig");
+
+    exe.setBuildMode(b.standardReleaseOptions());
+    exe.setTarget(.{
+        .cpu_arch = .x86_64,
+        .os_tag = .windows,
+        .abi = .gnu,
+    });
+
+    const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
 
     exe_options.addOption(bool, "enable_pix", enable_pix);
@@ -93,12 +101,6 @@ pub fn build(b: *std.build.Builder) void {
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     install_content_step.step.dependOn(dxc_step);
-
-    const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
-
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which

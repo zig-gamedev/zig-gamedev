@@ -8,19 +8,14 @@ pub fn build(b: *std.build.Builder) void {
     b.installFile("../../external/bin/d3d12/D3D12SDKLayers.dll", "bin/d3d12/D3D12SDKLayers.dll");
     b.installFile("../../external/bin/d3d12/D3D12SDKLayers.pdb", "bin/d3d12/D3D12SDKLayers.pdb");
 
-    // Standard target options allows the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
-    const target = b.standardTargetOptions(.{});
-
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
-
     const exe = b.addExecutable("vector_graphics_test", "src/vector_graphics_test.zig");
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
+
+    exe.setBuildMode(b.standardReleaseOptions());
+    exe.setTarget(.{
+        .cpu_arch = .x86_64,
+        .os_tag = .windows,
+        .abi = .gnu,
+    });
 
     const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
     const enable_dx_debug = b.option(bool, "enable-dx-debug", "Enable debug layer for D3D12, D2D1, DirectML and DXGI") orelse false;
