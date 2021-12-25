@@ -215,28 +215,24 @@ pub inline fn vecCeil(v: Vec) Vec {
     return vecSelect(mask, result, v);
 }
 
-// TODO(mziulek): Test
 pub inline fn vecClamp(v: Vec, min: Vec, max: Vec) Vec {
     var result = vecMax(min, v);
     result = vecMin(max, result);
     return result;
 }
 
-// TODO(mziulek): Test
 pub inline fn vecClampFast(v: Vec, min: Vec, max: Vec) Vec {
     var result = vecMaxFast(min, v);
     result = vecMinFast(max, result);
     return result;
 }
 
-// TODO(mziulek): Test
 pub inline fn vecSaturate(v: Vec) Vec {
     var result = vecMax(v, vecZero());
     result = vecMin(result, vecSplat(1.0));
     return result;
 }
 
-// TODO(mziulek): Test
 pub inline fn vecSaturateFast(v: Vec) Vec {
     var result = vecMaxFast(v, vecZero());
     result = vecMinFast(result, vecSplat(1.0));
@@ -738,4 +734,49 @@ test "vec3Less" {
     const v6 = vecSet(100.0, -math.inf_f32, -math.inf_f32, 50000.0);
     const v7 = vecSet(400.0, math.inf_f32, 600.0, 1.0);
     try check(vec3Less(v6, v7) == true);
+}
+
+test "vecSaturate" {
+    {
+        const v0 = vecSet(-1.0, 0.2, 1.1, -0.3);
+        const v = vecSaturate(v0);
+        const vf = vecSaturateFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(0.0, 0.2, 1.0, 0.0), 0.0001));
+        try check(vec4ApproxEqAbs(vf, vecSet(0.0, 0.2, 1.0, 0.0), 0.0001));
+    }
+    {
+        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.nan_f32, math.qnan_f32);
+        const v = vecSaturate(v0);
+        const vf = vecSaturateFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(0.0, 1.0, 0.0, 0.0), 0.0001));
+        try check(vec4ApproxEqAbs(vf, vecSet(0.0, 1.0, 0.0, 0.0), 0.0001));
+    }
+    {
+        const v0 = vecSet(math.inf_f32, math.inf_f32, -math.nan_f32, -math.qnan_f32);
+        const v = vecSaturate(v0);
+        const vf = vecSaturateFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, 0.0, 0.0), 0.0001));
+        try check(vec4ApproxEqAbs(vf, vecSet(1.0, 1.0, 0.0, 0.0), 0.0001));
+    }
+}
+
+test "vecClamp" {
+    {
+        const v0 = vecSet(-1.0, 0.2, 1.1, -0.3);
+        const v = vecClamp(v0, vecSplat(-0.5), vecSplat(0.5));
+        const vf = vecClampFast(v0, vecSplat(-0.5), vecSplat(0.5));
+        try check(vec4ApproxEqAbs(v, vecSet(-0.5, 0.2, 0.5, -0.3), 0.0001));
+        try check(vec4ApproxEqAbs(vf, vecSet(-0.5, 0.2, 0.5, -0.3), 0.0001));
+    }
+    {
+        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.nan_f32, math.qnan_f32);
+        const v = vecClamp(v0, vecSet(-100.0, 0.0, -100.0, 0.0), vecSet(0.0, 100.0, 0.0, 100.0));
+        try check(vec4ApproxEqAbs(v, vecSet(-100.0, 100.0, -100.0, 0.0), 0.0001));
+    }
+
+    {
+        const v0 = vecSet(math.inf_f32, math.inf_f32, -math.nan_f32, -math.qnan_f32);
+        const v = vecClamp(v0, vecSplat(-1.0), vecSplat(1.0));
+        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, -1.0, -1.0), 0.0001));
+    }
 }
