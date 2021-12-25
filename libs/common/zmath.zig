@@ -116,7 +116,7 @@ pub inline fn vecOrInt(v0: Vec, v1: Vec) Vec {
 }
 
 pub inline fn vecNorInt(v0: Vec, v1: Vec) Vec {
-    // orps
+    // por, pcmpeqd, pxor
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, ~(v0u | v1u));
