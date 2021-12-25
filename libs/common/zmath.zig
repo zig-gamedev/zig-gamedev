@@ -242,7 +242,7 @@ pub inline fn vecRcpSqrt(v: Vec) Vec {
 
 pub inline fn vecRcpSqrtFast(v: Vec) Vec {
     return asm (
-        \\  rsqrtps %[v], %[v]
+        \\  rsqrtps     %%xmm0, %%xmm0
         : [ret] "={xmm0}" (-> Vec),
         : [v] "{xmm0}" (v),
     );
@@ -318,12 +318,90 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 //
 // Vec3 functions
 //
+pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
+    return asm (
+        \\  cmpeqps     %%xmm1, %%xmm0
+        \\  movmskps    %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+        : [ret] "={rax}" (-> bool),
+        : [v0] "{xmm0}" (v0),
+          [v1] "{xmm1}" (v1),
+    );
+}
+
+pub inline fn vec3EqualInt(v0: Vec, v1: Vec) bool {
+    return asm (
+        \\  pcmpeqd     %%xmm1, %%xmm0
+        \\  movmskps    %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+        : [ret] "={rax}" (-> bool),
+        : [v0] "{xmm0}" (v0),
+          [v1] "{xmm1}" (v1),
+    );
+}
+
+pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
+    // Won't handle inf & nan
+    return asm (
+        \\  subps       %%xmm1, %%xmm0          # xmm0 = delta
+        \\  xorps       %%xmm1, %%xmm1          # xmm1 = 0
+        \\  subps       %%xmm0, %%xmm1          # xmm1 = 0 - delta
+        \\  maxps       %%xmm1, %%xmm0          # xmm0 = abs(delta)
+        \\  cmpleps     %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
+        \\  movmskps    %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+        : [ret] "={rax}" (-> bool),
+        : [v0] "{xmm0}" (v0),
+          [v1] "{xmm1}" (v1),
+          [epsilon] "{xmm2}" (epsilon),
+    );
+}
+
 pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
     return asm (
-        \\  cmpltps %[v1], %[v0]
-        \\  movmskps %[v0], %%eax
-        \\  cmp $7, %%al
-        \\  sete %%al
+        \\  cmpltps     %%xmm1, %%xmm0
+        \\  movmskps    %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+        : [ret] "={rax}" (-> bool),
+        : [v0] "{xmm0}" (v0),
+          [v1] "{xmm1}" (v1),
+    );
+}
+
+pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
+    return asm (
+        \\  cmpleps     %%xmm1, %%xmm0
+        \\  movmskps    %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+        : [ret] "={rax}" (-> bool),
+        : [v0] "{xmm0}" (v0),
+          [v1] "{xmm1}" (v1),
+    );
+}
+
+pub inline fn vec3Greater(v0: Vec, v1: Vec) bool {
+    return asm (
+        \\  cmpgtps     %%xmm1, %%xmm0
+        \\  movmskps    %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+        : [ret] "={rax}" (-> bool),
+        : [v0] "{xmm0}" (v0),
+          [v1] "{xmm1}" (v1),
+    );
+}
+
+pub inline fn vec3GreaterOrEqual(v0: Vec, v1: Vec) bool {
+    return asm (
+        \\  cmpgeps     %%xmm1, %%xmm0
+        \\  movmskps    %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
         : [ret] "={rax}" (-> bool),
         : [v0] "{xmm0}" (v0),
           [v1] "{xmm1}" (v1),
@@ -856,5 +934,21 @@ test "vecRcp" {
         try check(vec2ApproxEqAbs(v, vecSet(0.0, 0.0, 0.0, 0.0), 0.0005));
         try check(math.isNan(v[2]));
         try check(math.isNan(v[3]));
+    }
+}
+
+test "vec3Equal" {
+    {
+        const v0 = vecSet(1.0, math.inf_f32, -3.0, 1000.001);
+        const v1 = vecSet(1.0, math.inf_f32, -3.0, 4.0);
+        try check(vec3Equal(v0, v1));
+    }
+}
+
+test "vec3NearEqual" {
+    {
+        const v0 = vecSet(1.0, 2.0, -3.0001, 1000.001);
+        const v1 = vecSet(1.0, 2.001, -3.0, 4.0);
+        try check(vec3NearEqual(v0, v1, vecSplat(0.01)));
     }
 }
