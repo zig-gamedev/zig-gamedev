@@ -1,5 +1,12 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const math = std.math;
+
+comptime {
+    // Currently we support x86_64 arch (both, non-VEX and VEX paths in inline assembly)
+    std.debug.assert(builtin.cpu.arch == .x86_64);
+}
+const has_avx = std.Target.x86.featureSetHas(builtin.cpu.features, .avx);
 
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
@@ -75,6 +82,7 @@ pub inline fn vecSplatInt(value: u32) Vec {
 }
 
 pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool {
+    // Won't handle inf & nan
     const delta = v0 - v1;
     const temp = vecMax(delta, vecZero() - delta);
     return temp <= epsilon;
@@ -241,8 +249,12 @@ pub inline fn vecRcpSqrt(v: Vec) Vec {
 }
 
 pub inline fn vecRcpSqrtFast(v: Vec) Vec {
-    return asm (
+    const code = if (has_avx)
+        \\  vrsqrtps    %%xmm0, %%xmm0
+    else
         \\  rsqrtps     %%xmm0, %%xmm0
+        ;
+    return asm (code
         : [ret] "={xmm0}" (-> Vec),
         : [v] "{xmm0}" (v),
     );
@@ -319,11 +331,18 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 // Vec3 functions
 //
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
-    return asm (
+    const code = if (has_avx)
+        \\  vcmpeqps    %%xmm1, %%xmm0, %%xmm0
+        \\  vmovmskps   %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+    else
         \\  cmpeqps     %%xmm1, %%xmm0
         \\  movmskps    %%xmm0, %%eax
         \\  cmp         $7, %%al
         \\  sete        %%al
+        ;
+    return asm (code
         : [ret] "={rax}" (-> bool),
         : [v0] "{xmm0}" (v0),
           [v1] "{xmm1}" (v1),
@@ -331,11 +350,18 @@ pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
 }
 
 pub inline fn vec3EqualInt(v0: Vec, v1: Vec) bool {
-    return asm (
+    const code = if (has_avx)
+        \\  vpcmpeqd    %%xmm1, %%xmm0, %xmm0
+        \\  vmovmskps   %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+    else
         \\  pcmpeqd     %%xmm1, %%xmm0
         \\  movmskps    %%xmm0, %%eax
         \\  cmp         $7, %%al
         \\  sete        %%al
+        ;
+    return asm (code
         : [ret] "={rax}" (-> bool),
         : [v0] "{xmm0}" (v0),
           [v1] "{xmm1}" (v1),
@@ -344,7 +370,16 @@ pub inline fn vec3EqualInt(v0: Vec, v1: Vec) bool {
 
 pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
     // Won't handle inf & nan
-    return asm (
+    const code = if (has_avx)
+        \\  vsubps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = delta
+        \\  vxorps      %%xmm1, %%xmm1, %%xmm1  # xmm1 = 0
+        \\  vsubps      %%xmm0, %%xmm1, %%xmm1  # xmm1 = 0 - delta
+        \\  vmaxps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
+        \\  vcmpleps    %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
+        \\  vmovmskps   %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+    else
         \\  subps       %%xmm1, %%xmm0          # xmm0 = delta
         \\  xorps       %%xmm1, %%xmm1          # xmm1 = 0
         \\  subps       %%xmm0, %%xmm1          # xmm1 = 0 - delta
@@ -353,6 +388,8 @@ pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
         \\  movmskps    %%xmm0, %%eax
         \\  cmp         $7, %%al
         \\  sete        %%al
+        ;
+    return asm (code
         : [ret] "={rax}" (-> bool),
         : [v0] "{xmm0}" (v0),
           [v1] "{xmm1}" (v1),
@@ -361,11 +398,18 @@ pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
 }
 
 pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
-    return asm (
+    const code = if (has_avx)
+        \\  vcmpltps    %%xmm1, %%xmm0, %%xmm0
+        \\  vmovmskps   %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+    else
         \\  cmpltps     %%xmm1, %%xmm0
         \\  movmskps    %%xmm0, %%eax
         \\  cmp         $7, %%al
         \\  sete        %%al
+        ;
+    return asm (code
         : [ret] "={rax}" (-> bool),
         : [v0] "{xmm0}" (v0),
           [v1] "{xmm1}" (v1),
@@ -373,11 +417,13 @@ pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
 }
 
 pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
-    return asm (
+    const code =
         \\  cmpleps     %%xmm1, %%xmm0
         \\  movmskps    %%xmm0, %%eax
         \\  cmp         $7, %%al
         \\  sete        %%al
+    ;
+    return asm (code
         : [ret] "={rax}" (-> bool),
         : [v0] "{xmm0}" (v0),
           [v1] "{xmm1}" (v1),
@@ -385,11 +431,18 @@ pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
 }
 
 pub inline fn vec3Greater(v0: Vec, v1: Vec) bool {
-    return asm (
+    const code = if (has_avx)
+        \\  vcmpgtps    %%xmm1, %%xmm0, %%xmm0
+        \\  vmovmskps   %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+    else
         \\  cmpgtps     %%xmm1, %%xmm0
         \\  movmskps    %%xmm0, %%eax
         \\  cmp         $7, %%al
         \\  sete        %%al
+        ;
+    return asm (code
         : [ret] "={rax}" (-> bool),
         : [v0] "{xmm0}" (v0),
           [v1] "{xmm1}" (v1),
@@ -397,11 +450,18 @@ pub inline fn vec3Greater(v0: Vec, v1: Vec) bool {
 }
 
 pub inline fn vec3GreaterOrEqual(v0: Vec, v1: Vec) bool {
-    return asm (
+    const code = if (has_avx)
+        \\  vcmpgeps    %%xmm1, %%xmm0, %%xmm0
+        \\  vmovmskps   %%xmm0, %%eax
+        \\  cmp         $7, %%al
+        \\  sete        %%al
+    else
         \\  cmpgeps     %%xmm1, %%xmm0
         \\  movmskps    %%xmm0, %%eax
         \\  cmp         $7, %%al
         \\  sete        %%al
+        ;
+    return asm (code
         : [ret] "={rax}" (-> bool),
         : [v0] "{xmm0}" (v0),
           [v1] "{xmm1}" (v1),
