@@ -1,11 +1,8 @@
-const builtin = @import("builtin");
 const std = @import("std");
 const math = std.math;
 
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
-
-const use_inline_asm = (builtin.target.cpu.arch == .x86_64);
 
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
@@ -249,6 +246,19 @@ pub inline fn vecSqrt(v: Vec) Vec {
     return @sqrt(v);
 }
 
+pub inline fn vecRcpSqrt(v: Vec) Vec {
+    // load, divps, sqrtps
+    return vecSplat(1.0) / vecSqrt(v);
+}
+
+pub inline fn vecRcpSqrtFast(v: Vec) Vec {
+    return asm (
+        \\  rsqrtps %[v], %[v]
+        : [ret] "={xmm0}" (-> Vec),
+        : [v] "{xmm0}" (v),
+    );
+}
+
 pub inline fn vecRcp(v: Vec) Vec {
     // load, divps
     return vecSplat(1.0) / v;
@@ -266,21 +276,15 @@ pub inline fn vecScale(v: Vec, s: f32) Vec {
 }
 
 pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
-    if (use_inline_asm) {
-        const b = asm (
-            \\  cmpltps %[v1], %[v0]
-            \\  movmskps %[v0], %%eax
-            \\  cmp $7, %%al
-            \\  sete %%al
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-        return b;
-    } else {
-        const mask = v0 < v1;
-        return mask[0] and mask[1] and mask[2];
-    }
+    return asm (
+        \\  cmpltps %[v1], %[v0]
+        \\  movmskps %[v0], %%eax
+        \\  cmp $7, %%al
+        \\  sete %%al
+        : [ret] "={rax}" (-> bool),
+        : [v0] "{xmm0}" (v0),
+          [v1] "{xmm1}" (v1),
+    );
 }
 
 pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
@@ -774,4 +778,11 @@ test "vecClamp" {
         const v = vecClamp(v0, vecSplat(-1.0), vecSplat(1.0));
         try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, -1.0, -1.0), 0.0001));
     }
+}
+
+test "vecRcpSqrt" {
+    const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
+    const v = vecRcpSqrt(v0);
+    const vf = vecRcpSqrtFast(v0);
+    try check(vec4ApproxEqAbs(v, vf, 0.0005));
 }
