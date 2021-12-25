@@ -624,14 +624,14 @@ void cbtShapeCompoundGetChildTransform(CbtShapeHandle shape_handle, int child_sh
     transform[3][2] = origin.z();
 }
 
-static_assert((sizeof(btBvhTriangleMeshShape) % 16) == 0, "sizeof(btBvhTriangleMeshShape) is not multiple of 16");
+static_assert((sizeof(btBvhTriangleMeshShape) % 8) == 0, "sizeof(btBvhTriangleMeshShape) is not multiple of 8");
 static_assert(
-    (sizeof(btTriangleIndexVertexArray) % 16) == 0,
-    "sizeof(btTriangleIndexVertexArray) is not multiple of 16"
+    (sizeof(btTriangleIndexVertexArray) % 8) == 0,
+    "sizeof(btTriangleIndexVertexArray) is not multiple of 8"
 );
 static_assert(
-    ((sizeof(btBvhTriangleMeshShape) + sizeof(btTriangleIndexVertexArray)) % 16) == 0,
-    "sizeof(btBvhTriangleMeshShape) + sizeof(btTriangleIndexVertexArray) is not multiple of 16"
+    ((sizeof(btBvhTriangleMeshShape) + sizeof(btTriangleIndexVertexArray)) % 8) == 0,
+    "sizeof(btBvhTriangleMeshShape) + sizeof(btTriangleIndexVertexArray) is not multiple of 8"
 );
 
 void cbtShapeTriMeshCreateBegin(CbtShapeHandle shape_handle) {
@@ -811,11 +811,11 @@ int cbtShapeGetUserIndex(CbtShapeHandle shape_handle, int slot) {
     return shape->getUserIndex2();
 }
 
-static_assert((sizeof(btRigidBody) % 16) == 0, "sizeof(btRigidBody) is not multiple of 16");
-static_assert((sizeof(btDefaultMotionState) % 16) == 0, "sizeof(btDefaultMotionState) is not multiple of 16");
+static_assert((sizeof(btRigidBody) % 8) == 0, "sizeof(btRigidBody) is not multiple of 8");
+static_assert((sizeof(btDefaultMotionState) % 8) == 0, "sizeof(btDefaultMotionState) is not multiple of 8");
 static_assert(
-    ((sizeof(btRigidBody) + sizeof(btDefaultMotionState)) % 16) == 0,
-    "sizeof(btRigidBody) + sizeof(btDefaultMotionState) is not multiple of 16"
+    ((sizeof(btRigidBody) + sizeof(btDefaultMotionState)) % 8) == 0,
+    "sizeof(btRigidBody) + sizeof(btDefaultMotionState) is not multiple of 8"
 );
 
 CbtBodyHandle cbtBodyAllocate(void) {
