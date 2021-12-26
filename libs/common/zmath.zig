@@ -579,11 +579,41 @@ pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
 // Vec4 functions
 //
 pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
-    // 2 x cmpleps, movmskps, andps, xorps, pslld
-    const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
-    const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
-    const b = b0 & b1;
-    return b[0] > 0 and b[1] > 0 and b[2] > 0 and b[3] > 0;
+    if (cpu_arch == .x86_64) {
+        const x8000_0000 = vecSplat_0x8000_0000();
+        const code = if (has_avx)
+            \\  vmovaps     %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\  vxorps      %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
+            \\  vcmpleps    %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
+            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
+            \\  vandps      %%xmm2, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  cmp         $15, %%al
+            \\  sete        %%al
+        else
+            \\  movaps      %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\  xorps       %[x8000_0000], %%xmm2           # xmm2 = -bounds
+            \\  cmpleps     %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
+            \\  cmpleps     %%xmm1, %%xmm0                  # xmm0 = v <= bounds
+            \\  andps       %%xmm2, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  cmp         $15, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v] "{xmm0}" (v),
+              [bounds] "{xmm1}" (bounds),
+              [x8000_0000] "{memory}" (x8000_0000),
+            : "xmm2"
+        );
+    } else {
+        // 2 x cmpleps, movmskps, andps, xorps, pslld, load
+        const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
+        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
+        const b = b0 & b1;
+        return b[0] > 0 and b[1] > 0 and b[2] > 0 and b[3] > 0;
+    }
 }
 
 //
@@ -1123,17 +1153,31 @@ test "vec3NearEqual" {
 }
 
 test "vec4InBounds" {
-    const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
-    const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
-    const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
-    try check(vec4InBounds(v0, bounds) == true);
-    try check(vec4InBounds(v1, bounds) == false);
+    {
+        const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
+        const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
+        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+        try check(vec4InBounds(v0, bounds) == true);
+        try check(vec4InBounds(v1, bounds) == false);
+    }
+    {
+        const v0 = vecSet(10000.0, -1000.0, -1.0, 2.0);
+        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
+        try check(vec4InBounds(v0, bounds) == true);
+    }
 }
 
 test "vec3InBounds" {
-    const v0 = vecSet(0.5, -2.0, -1.0, 1000.0);
-    const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
-    const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
-    try check(vec3InBounds(v0, bounds) == true);
-    try check(vec3InBounds(v1, bounds) == false);
+    {
+        const v0 = vecSet(0.5, -2.0, -1.0, 1000.0);
+        const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
+        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+        try check(vec3InBounds(v0, bounds) == true);
+        try check(vec3InBounds(v1, bounds) == false);
+    }
+    {
+        const v0 = vecSet(10000.0, -1000.0, -1.0, 1000.0);
+        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
+        try check(vec3InBounds(v0, bounds) == true);
+    }
 }
