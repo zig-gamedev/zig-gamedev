@@ -581,13 +581,12 @@ test "zmath.vecClamp" {
         const v = vecClamp(v0, vecSplat(-0.5), vecSplat(0.5));
         try check(vec4ApproxEqAbs(v, vecSet(-0.5, 0.2, 0.5, -0.3), 0.0001));
     }
-    if (false) {
+    {
         const v0 = vecSet(-math.inf_f32, math.inf_f32, math.nan_f32, math.qnan_f32);
         const v = vecClamp(v0, vecSet(-100.0, 0.0, -100.0, 0.0), vecSet(0.0, 100.0, 0.0, 100.0));
         try check(vec4ApproxEqAbs(v, vecSet(-100.0, 100.0, -100.0, 0.0), 0.0001));
     }
-
-    if (false) {
+    {
         const v0 = vecSet(math.inf_f32, math.inf_f32, -math.nan_f32, -math.qnan_f32);
         const v = vecClamp(v0, vecSplat(-1.0), vecSplat(1.0));
         try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, -1.0, -1.0), 0.0001));
