@@ -7,6 +7,7 @@ const has_avx = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cp
 
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
+pub const VecU32 = @Vector(4, u32);
 
 //
 // VecBool functions
@@ -32,36 +33,126 @@ pub inline fn vecBoolEqual(b0: VecBool, b1: VecBool) bool {
 //
 // General Vec functions (always work on all vector components)
 //
+// vecZero() Vec
+// vecSet(x: f32, y: f32, z: f32, w: f32) Vec
+// vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec
+// vecSplat(value: f32) Vec
+// vecSplatX(v: Vec) Vec
+// vecSplatY(v: Vec) Vec
+// vecSplatZ(v: Vec) Vec
+// vecSplatW(v: Vec) Vec
+// vecSplatInf() Vec
+// vecSplatNan() Vec
+// vecSplatQnan() Vec
+// vecSplatEpsilon() Vec
+// vecSplatNoFraction() Vec
+// vecSplat_0x8000_0000() Vec
+// vecSplat_0x7fff_ffff() Vec
+// vecU32Splat_0xffff_ffff() VecU32
+// vecU32Splat_0x0000_0000() VecU32
+// vecSplatInt(value: u32) Vec
+// vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool
+// vecEqualInt(v0: Vec, v1: Vec) VecBool
+// vecNotEqualInt(v0: Vec, v1: Vec) VecBool
+// vecAndInt(v0: Vec, v1: Vec) Vec
+// vecAndCInt(v0: Vec, v1: Vec) Vec
+// vecOrInt(v0: Vec, v1: Vec) Vec
+// vecNorInt(v0: Vec, v1: Vec) Vec
+// vecXorInt(v0: Vec, v1: Vec) Vec
+// vecIsNan(v: Vec) VecBool
+// vecIsInf(v: Vec) VecBool
+// vecMinFast(v0: Vec, v1: Vec) Vec
+// vecMaxFast(v0: Vec, v1: Vec) Vec
+// vecMin(v0: Vec, v1: Vec) Vec
+// vecMax(v0: Vec, v1: Vec) Vec
+// vecSelect(b: VecBool, v0: Vec, v1: Vec) Vec
+// vecInBounds(v: Vec, bounds: Vec) VecBool
+// vecRound(v: Vec) Vec
+// vecTrunc(v: Vec) Vec
+// vecFloor(v: Vec) Vec
+// vecCeil(v: Vec) Vec
+// vecClamp(v: Vec, min: Vec, max: Vec) Vec
+// vecClampFast(v: Vec, min: Vec, max: Vec) Vec
+// vecSaturate(v: Vec) Vec
+// vecSaturateFast(v: Vec) Vec
+// vecAbs(v: Vec) Vec
+// vecSqrt(v: Vec) Vec
+// vecRcpSqrt(v: Vec) Vec
+// vecRcpSqrtFast(v: Vec) Vec
+// vecRcp(v: Vec) Vec
+// vecRcpFast(v: Vec) Vec
+// vecScale(v: Vec, s: f32) Vec
+// vecLerp(v0: Vec, v1: Vec, t: f32) Vec
+// vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
+
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
+}
+test "vecZero" {
+    const v = vecZero();
+    try check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
 }
 
 pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
     return [4]f32{ x, y, z, w };
 }
+test "vecSet" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v1 = vecSet(5.0, -6.0, 7.0, 8.0);
+    try check(v0[0] == 1.0 and v0[1] == 2.0 and v0[2] == 3.0 and v0[3] == 4.0);
+    try check(v1[0] == 5.0 and v1[1] == -6.0 and v1[2] == 7.0 and v1[3] == 8.0);
+}
 
 pub inline fn vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec {
     return @bitCast(Vec, [4]u32{ x, y, z, w });
+}
+test "vecSetInt" {
+    const v = vecSetInt(0x3f80_0000, 0x4000_0000, 0x4040_0000, 0x4080_0000);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 2.0, 3.0, 4.0 }, 0.0));
 }
 
 pub inline fn vecSplat(value: f32) Vec {
     return @splat(4, value);
 }
+test "vecSplat" {
+    const v = vecSplat(123.0);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
+}
 
 pub inline fn vecSplatX(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 0, 0, 0, 0 });
+}
+test "vecSplatX" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const vx = vecSplatX(v0);
+    try check(vec4ApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
 }
 
 pub inline fn vecSplatY(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 1, 1, 1, 1 });
 }
+test "vecSplatY" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const vy = vecSplatY(v0);
+    try check(vec4ApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
+}
 
 pub inline fn vecSplatZ(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 2, 2, 2, 2 });
 }
+test "vecSplatZ" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const vz = vecSplatZ(v0);
+    try check(vec4ApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
+}
 
 pub inline fn vecSplatW(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
+}
+test "vecSplatW" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const vw = vecSplatW(v0);
+    try check(vec4ApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
 }
 
 // zig fmt: off
@@ -80,12 +171,27 @@ pub inline fn vecU32Splat_0x0000_0000() VecU32 { return @splat(4, @as(u32, 0)); 
 pub inline fn vecSplatInt(value: u32) Vec {
     return @splat(4, @bitCast(f32, value));
 }
+test "vecSplatInt" {
+    const v = vecSplatInt(0x4000_0000);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
+}
 
 pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool {
     // Won't handle inf & nan
     const delta = v0 - v1;
     const temp = vecMaxFast(delta, vecZero() - delta);
     return temp <= epsilon;
+}
+test "vecNearEqual" {
+    const v0 = vecSet(1.0, 2.0, -3.0, 4.001);
+    const v1 = vecSet(1.0, 2.1, 3.0, 4.0);
+    const b = vecNearEqual(v0, v1, vecSplat(0.01));
+    try check(b[0] == true);
+    try check(b[1] == false);
+    try check(b[2] == false);
+    try check(b[3] == true);
+    try check(@reduce(.And, b == vecBoolSet(true, false, false, true)));
+    try check(vecBoolAllTrue(b == vecBoolSet(true, false, false, true)));
 }
 
 pub inline fn vecEqualInt(v0: Vec, v1: Vec) VecBool {
@@ -108,6 +214,13 @@ pub inline fn vecAndInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u & v1u);
 }
+test "vecAndInt" {
+    const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
+    const v1 = vecSet(1.0, 2.0, 3.0, math.inf_f32);
+    const v = vecAndInt(v0, v1);
+    try check(v[3] == math.inf_f32);
+    try check(vec3ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
+}
 
 pub inline fn vecAndCInt(v0: Vec, v1: Vec) Vec {
     // andnps
@@ -115,12 +228,27 @@ pub inline fn vecAndCInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u & ~v1u);
 }
+test "vecAndCInt" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v1 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
+    const v = vecAndCInt(v0, v1);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 0.0 }, 0.0));
+}
 
 pub inline fn vecOrInt(v0: Vec, v1: Vec) Vec {
     // orps
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u | v1u);
+}
+test "vecOrInt" {
+    const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
+    const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v = vecOrInt(v0, v1);
+    try check(v[0] == 1.0);
+    try check(@bitCast(u32, v[1]) == ~@as(u32, 0));
+    try check(v[2] == 3.0);
+    try check(v[3] == 4.0);
 }
 
 pub inline fn vecNorInt(v0: Vec, v1: Vec) Vec {
@@ -136,13 +264,32 @@ pub inline fn vecXorInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u ^ v1u);
 }
+test "vecXorInt" {
+    const v0 = vecSetInt(@bitCast(u32, @as(f32, 1.0)), ~@as(u32, 0), 0, 0);
+    const v1 = vecSet(1.0, 0, 0, 0);
+    const v = vecXorInt(v0, v1);
+    try check(v[0] == 0.0);
+    try check(@bitCast(u32, v[1]) == ~@as(u32, 0));
+    try check(v[2] == 0.0);
+    try check(v[3] == 0.0);
+}
 
 pub inline fn vecIsNan(v: Vec) VecBool {
     return v != v;
 }
+test "vecIsNan" {
+    const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
+    const b = vecIsNan(v0);
+    try check(vecBoolEqual(b, vecBoolSet(false, true, true, false)));
+}
 
 pub inline fn vecIsInf(v: Vec) VecBool {
     return vecAndInt(v, vecSplat_0x7fff_ffff()) == vecSplatInf();
+}
+test "vecIsInf" {
+    const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
+    const b = vecIsInf(v0);
+    try check(vecBoolEqual(b, vecBoolSet(true, false, false, false)));
 }
 
 pub inline fn vecMinFast(v0: Vec, v1: Vec) Vec {
@@ -175,6 +322,15 @@ pub inline fn vecInBounds(v: Vec, bounds: Vec) VecBool {
     const b1 = (bounds * vecSplat(-1.0)) <= v;
     return vecBoolAnd(b0, b1);
 }
+test "vecInBounds" {
+    const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
+    const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
+    const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+    const b0 = vecInBounds(v0, bounds);
+    const b1 = vecInBounds(v1, bounds);
+    try check(vecBoolEqual(b0, vecBoolSet(true, true, true, true)));
+    try check(vecBoolEqual(b1, vecBoolSet(false, false, true, true)));
+}
 
 pub inline fn vecRound(v: Vec) Vec {
     const sign = vecAndInt(v, vecSplat_0x8000_0000());
@@ -185,11 +341,83 @@ pub inline fn vecRound(v: Vec) Vec {
     const mask = r2 <= vecSplatNoFraction();
     return vecSelect(mask, r1, v);
 }
+test "vecRound" {
+    const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
+    var v = vecRound(v0);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
+
+    const v1 = vecSet(-10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
+    v = vecRound(v1);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+
+    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
+    v = vecRound(v2);
+    try check(math.isNan(v2[0]));
+    try check(math.isNan(v2[1]));
+    try check(math.isNan(v2[2]));
+    try check(v2[3] == -math.inf_f32);
+
+    const v3 = vecSet(1001.5, -201.499, -10000.99, -101.5);
+    v = vecRound(v3);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1002.0, -201.0, -10001.0, -102.0 }, 0.0));
+
+    const v4 = vecSet(-1_388_609.9, 1_388_609.5, 1_388_109.01, 2_388_609.5);
+    v = vecRound(v4);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -1_388_610.0, 1_388_610.0, 1_388_109.0, 2_388_610.0 }, 0.0));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = vecRound(vecSplat(f));
+        const fr = @round(f);
+        try check(vr[0] == fr);
+        try check(vr[1] == fr);
+        try check(vr[2] == fr);
+        try check(vr[3] == fr);
+        f += 0.12345 * @intToFloat(f32, i);
+    }
+}
 
 pub inline fn vecTrunc(v: Vec) Vec {
     const mask = vecAbs(v) < vecSplatNoFraction();
     const result = vecFloatToIntAndBack(v);
     return vecSelect(mask, result, v);
+}
+test "vecTrunc" {
+    const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
+    var v = vecTrunc(v0);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -1.0, 1.0 }, 0.0));
+
+    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
+    v = vecTrunc(v1);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+
+    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
+    v = vecTrunc(v2);
+    try check(math.isNan(v2[0]));
+    try check(math.isNan(v2[1]));
+    try check(math.isNan(v2[2]));
+    try check(v2[3] == -math.inf_f32);
+
+    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.750001);
+    v = vecTrunc(v3);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1000.0, -201.0, -10000.0, 100.0 }, 0.0));
+
+    const v4 = vecSet(-7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5);
+    v = vecTrunc(v4);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -7_388_609.0, 7_388_609.0, 8_388_109.0, -8_388_509.0 }, 0.0));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = vecTrunc(vecSplat(f));
+        const fr = @trunc(f);
+        try check(vr[0] == fr);
+        try check(vr[1] == fr);
+        try check(vr[2] == fr);
+        try check(vr[3] == fr);
+        f += 0.12345 * @intToFloat(f32, i);
+    }
 }
 
 pub inline fn vecFloor(v: Vec) Vec {
@@ -200,6 +428,42 @@ pub inline fn vecFloor(v: Vec) Vec {
     result = result + larger;
     return vecSelect(mask, result, v);
 }
+test "vecFloor" {
+    const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
+    var v = vecFloor(v0);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -2.0, -2.0, -3.0 }, 0.0));
+
+    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
+    v = vecFloor(v1);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+
+    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
+    v = vecFloor(v2);
+    try check(math.isNan(v2[0]));
+    try check(math.isNan(v2[1]));
+    try check(math.isNan(v2[2]));
+    try check(v2[3] == -math.inf_f32);
+
+    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.75001);
+    v = vecFloor(v3);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1000.0, -202.0, -10001.0, 100.0 }, 0.0));
+
+    const v4 = vecSet(-7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5);
+    v = vecFloor(v4);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -7_388_610.0, 7_388_609.0, 8_388_109.0, -8_388_510.0 }, 0.0));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = vecFloor(vecSplat(f));
+        const fr = @floor(f);
+        try check(vr[0] == fr);
+        try check(vr[1] == fr);
+        try check(vr[2] == fr);
+        try check(vr[3] == fr);
+        f += 0.12345 * @intToFloat(f32, i);
+    }
+}
 
 pub inline fn vecCeil(v: Vec) Vec {
     const mask = vecAbs(v) < vecSplatNoFraction();
@@ -208,6 +472,42 @@ pub inline fn vecCeil(v: Vec) Vec {
     const smaller = vecSelect(smaller_mask, vecSplat(-1.0), vecZero());
     result = result - smaller;
     return vecSelect(mask, result, v);
+}
+test "vecCeil" {
+    const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
+    var v = vecCeil(v0);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, -1.0, -1.0, -2.0 }, 0.0));
+
+    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
+    v = vecCeil(v1);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+
+    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
+    v = vecCeil(v2);
+    try check(math.isNan(v2[0]));
+    try check(math.isNan(v2[1]));
+    try check(math.isNan(v2[2]));
+    try check(v2[3] == -math.inf_f32);
+
+    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.75001);
+    v = vecCeil(v3);
+    try check(vec4ApproxEqAbs(v, [4]f32{ 1001.0, -201.0, -10000.0, 101.0 }, 0.0));
+
+    const v4 = vecSet(-1_388_609.5, 1_388_609.1, 1_388_109.9, -1_388_509.9);
+    v = vecCeil(v4);
+    try check(vec4ApproxEqAbs(v, [4]f32{ -1_388_609.0, 1_388_610.0, 1_388_110.0, -1_388_509.0 }, 0.0));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = vecCeil(vecSplat(f));
+        const fr = @ceil(f);
+        try check(vr[0] == fr);
+        try check(vr[1] == fr);
+        try check(vr[2] == fr);
+        try check(vr[3] == fr);
+        f += 0.12345 * @intToFloat(f32, i);
+    }
 }
 
 pub inline fn vecClamp(v: Vec, min: Vec, max: Vec) Vec {
@@ -294,6 +594,15 @@ pub inline fn vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec {
 //
 // Load/store functions
 //
+// vecLoadF32(mem: []const f32) Vec
+// vecLoadF32x2(mem: []const f32) Vec
+// vecLoadF32x3(mem: []const f32) Vec
+// vecLoadF32x4(mem: []const f32) Vec
+// vecStoreF32(mem: []f32, v: Vec) void
+// vecStoreF32x2(mem: []f32, v: Vec) void
+// vecStoreF32x3(mem: []f32, v: Vec) void
+// vecStoreF32x4(mem: []f32, v: Vec) void
+
 pub inline fn vecLoadF32(mem: []const f32) Vec {
     return [4]f32{ mem[0], 0, 0, 0 };
 }
@@ -335,6 +644,16 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 //
 // Vec3 functions
 //
+// vec3Equal(v0: Vec, v1: Vec) bool
+// vec3EqualInt(v0: Vec, v1: Vec) bool
+// vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool
+// vec3Less(v0: Vec, v1: Vec) bool
+// vec3LessOrEqual(v0: Vec, v1: Vec) bool
+// vec3Greater(v0: Vec, v1: Vec) bool
+// vec3GreaterOrEqual(v0: Vec, v1: Vec) bool
+// vec3InBounds(v: Vec, bounds: Vec) bool
+// vec3Dot(v0: Vec, v1: Vec) Vec
+
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
@@ -578,6 +897,8 @@ pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
 //
 // Vec4 functions
 //
+// vec4InBounds(v: Vec, bounds: Vec) bool
+
 pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
     if (cpu_arch == .x86_64) {
         const x8000_0000 = vecSplat_0x8000_0000();
@@ -619,7 +940,6 @@ pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
 //
 // Private types and functions
 //
-const VecU32 = @Vector(4, u32);
 
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
     // This won't handle nan, inf and numbers greater than 8_388_608.0
@@ -669,44 +989,6 @@ inline fn check(result: bool) !void {
 //
 // Tests
 //
-test "vecZero" {
-    const v = vecZero();
-    try check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
-}
-
-test "vecSet" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v1 = vecSet(5.0, -6.0, 7.0, 8.0);
-    try check(v0[0] == 1.0 and v0[1] == 2.0 and v0[2] == 3.0 and v0[3] == 4.0);
-    try check(v1[0] == 5.0 and v1[1] == -6.0 and v1[2] == 7.0 and v1[3] == 8.0);
-}
-
-test "vecSetInt" {
-    const v = vecSetInt(0x3f80_0000, 0x4000_0000, 0x4040_0000, 0x4080_0000);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 2.0, 3.0, 4.0 }, 0.0));
-}
-
-test "vecSplat" {
-    const v = vecSplat(123.0);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
-}
-
-test "vecSplatXYZW" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const vx = vecSplatX(v0);
-    const vy = vecSplatY(v0);
-    const vz = vecSplatZ(v0);
-    const vw = vecSplatW(v0);
-    try check(vec4ApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
-    try check(vec4ApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
-    try check(vec4ApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
-    try check(vec4ApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
-}
-
-test "vecSplatInt" {
-    const v = vecSplatInt(0x4000_0000);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
-}
 
 test "vecMin and vecMax" {
     const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
@@ -752,18 +1034,6 @@ test "vecMin and vecMax" {
     }
 }
 
-test "vecIsNan" {
-    const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
-    const b = vecIsNan(v0);
-    try check(vecBoolEqual(b, vecBoolSet(false, true, true, false)));
-}
-
-test "vecIsInf" {
-    const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
-    const b = vecIsInf(v0);
-    try check(vecBoolEqual(b, vecBoolSet(true, false, false, false)));
-}
-
 test "vecLoadF32x2" {
     const a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
     var ptr = &a;
@@ -794,28 +1064,6 @@ test "vecStoreF32x3" {
     try check(a[5] == 0.0);
 }
 
-test "vecNearEqual" {
-    const v0 = vecSet(1.0, 2.0, -3.0, 4.001);
-    const v1 = vecSet(1.0, 2.1, 3.0, 4.0);
-    const b = vecNearEqual(v0, v1, vecSplat(0.01));
-    try check(b[0] == true);
-    try check(b[1] == false);
-    try check(b[2] == false);
-    try check(b[3] == true);
-    try check(@reduce(.And, b == vecBoolSet(true, false, false, true)));
-    try check(vecBoolAllTrue(b == vecBoolSet(true, false, false, true)));
-}
-
-test "vecInBounds" {
-    const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
-    const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
-    const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
-    const b0 = vecInBounds(v0, bounds);
-    const b1 = vecInBounds(v1, bounds);
-    try check(vecBoolEqual(b0, vecBoolSet(true, true, true, true)));
-    try check(vecBoolEqual(b1, vecBoolSet(false, false, true, true)));
-}
-
 test "vecBoolAnd" {
     const b0 = vecBoolSet(true, false, true, false);
     const b1 = vecBoolSet(true, true, false, false);
@@ -839,41 +1087,6 @@ test "vec @sin" {
     try check(math.approxEqAbs(f32, v[3], 0.7205, 0.001));
 }
 
-test "vecAndInt" {
-    const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
-    const v1 = vecSet(1.0, 2.0, 3.0, math.inf_f32);
-    const v = vecAndInt(v0, v1);
-    try check(v[3] == math.inf_f32);
-    try check(vec3ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
-}
-
-test "vecAndCInt" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v1 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
-    const v = vecAndCInt(v0, v1);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 0.0 }, 0.0));
-}
-
-test "vecOrInt" {
-    const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
-    const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v = vecOrInt(v0, v1);
-    try check(v[0] == 1.0);
-    try check(@bitCast(u32, v[1]) == ~@as(u32, 0));
-    try check(v[2] == 3.0);
-    try check(v[3] == 4.0);
-}
-
-test "vecXorInt" {
-    const v0 = vecSetInt(@bitCast(u32, @as(f32, 1.0)), ~@as(u32, 0), 0, 0);
-    const v1 = vecSet(1.0, 0, 0, 0);
-    const v = vecXorInt(v0, v1);
-    try check(v[0] == 0.0);
-    try check(@bitCast(u32, v[1]) == ~@as(u32, 0));
-    try check(v[2] == 0.0);
-    try check(v[3] == 0.0);
-}
-
 test "vecFloatToIntAndBack" {
     const v0 = vecSet(1.1, 2.9, 3.0, -4.5);
     var v = vecFloatToIntAndBack(v0);
@@ -885,154 +1098,6 @@ test "vecFloatToIntAndBack" {
     const v1 = vecSet(math.inf_f32, 2.9, math.nan_f32, math.qnan_f32);
     v = vecFloatToIntAndBack(v1);
     try check(v[1] == 2.0);
-}
-
-test "vecRound" {
-    const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
-    var v = vecRound(v0);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
-
-    const v1 = vecSet(-10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
-    v = vecRound(v1);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
-
-    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
-    v = vecRound(v2);
-    try check(math.isNan(v2[0]));
-    try check(math.isNan(v2[1]));
-    try check(math.isNan(v2[2]));
-    try check(v2[3] == -math.inf_f32);
-
-    const v3 = vecSet(1001.5, -201.499, -10000.99, -101.5);
-    v = vecRound(v3);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1002.0, -201.0, -10001.0, -102.0 }, 0.0));
-
-    const v4 = vecSet(-1_388_609.9, 1_388_609.5, 1_388_109.01, 2_388_609.5);
-    v = vecRound(v4);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -1_388_610.0, 1_388_610.0, 1_388_109.0, 2_388_610.0 }, 0.0));
-
-    var f: f32 = -100.0;
-    var i: u32 = 0;
-    while (i < 100) : (i += 1) {
-        const vr = vecRound(vecSplat(f));
-        const fr = @round(f);
-        try check(vr[0] == fr);
-        try check(vr[1] == fr);
-        try check(vr[2] == fr);
-        try check(vr[3] == fr);
-        f += 0.12345 * @intToFloat(f32, i);
-    }
-}
-
-test "vecTrunc" {
-    const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
-    var v = vecTrunc(v0);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -1.0, 1.0 }, 0.0));
-
-    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
-    v = vecTrunc(v1);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
-
-    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
-    v = vecTrunc(v2);
-    try check(math.isNan(v2[0]));
-    try check(math.isNan(v2[1]));
-    try check(math.isNan(v2[2]));
-    try check(v2[3] == -math.inf_f32);
-
-    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.750001);
-    v = vecTrunc(v3);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1000.0, -201.0, -10000.0, 100.0 }, 0.0));
-
-    const v4 = vecSet(-7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5);
-    v = vecTrunc(v4);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -7_388_609.0, 7_388_609.0, 8_388_109.0, -8_388_509.0 }, 0.0));
-
-    var f: f32 = -100.0;
-    var i: u32 = 0;
-    while (i < 100) : (i += 1) {
-        const vr = vecTrunc(vecSplat(f));
-        const fr = @trunc(f);
-        try check(vr[0] == fr);
-        try check(vr[1] == fr);
-        try check(vr[2] == fr);
-        try check(vr[3] == fr);
-        f += 0.12345 * @intToFloat(f32, i);
-    }
-}
-
-test "vecFloor" {
-    const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
-    var v = vecFloor(v0);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -2.0, -2.0, -3.0 }, 0.0));
-
-    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
-    v = vecFloor(v1);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
-
-    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
-    v = vecFloor(v2);
-    try check(math.isNan(v2[0]));
-    try check(math.isNan(v2[1]));
-    try check(math.isNan(v2[2]));
-    try check(v2[3] == -math.inf_f32);
-
-    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.75001);
-    v = vecFloor(v3);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1000.0, -202.0, -10001.0, 100.0 }, 0.0));
-
-    const v4 = vecSet(-7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5);
-    v = vecFloor(v4);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -7_388_610.0, 7_388_609.0, 8_388_109.0, -8_388_510.0 }, 0.0));
-
-    var f: f32 = -100.0;
-    var i: u32 = 0;
-    while (i < 100) : (i += 1) {
-        const vr = vecFloor(vecSplat(f));
-        const fr = @floor(f);
-        try check(vr[0] == fr);
-        try check(vr[1] == fr);
-        try check(vr[2] == fr);
-        try check(vr[3] == fr);
-        f += 0.12345 * @intToFloat(f32, i);
-    }
-}
-
-test "vecCeil" {
-    const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
-    var v = vecCeil(v0);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, -1.0, -1.0, -2.0 }, 0.0));
-
-    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
-    v = vecCeil(v1);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
-
-    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
-    v = vecCeil(v2);
-    try check(math.isNan(v2[0]));
-    try check(math.isNan(v2[1]));
-    try check(math.isNan(v2[2]));
-    try check(v2[3] == -math.inf_f32);
-
-    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.75001);
-    v = vecCeil(v3);
-    try check(vec4ApproxEqAbs(v, [4]f32{ 1001.0, -201.0, -10000.0, 101.0 }, 0.0));
-
-    const v4 = vecSet(-1_388_609.5, 1_388_609.1, 1_388_109.9, -1_388_509.9);
-    v = vecCeil(v4);
-    try check(vec4ApproxEqAbs(v, [4]f32{ -1_388_609.0, 1_388_610.0, 1_388_110.0, -1_388_509.0 }, 0.0));
-
-    var f: f32 = -100.0;
-    var i: u32 = 0;
-    while (i < 100) : (i += 1) {
-        const vr = vecCeil(vecSplat(f));
-        const fr = @ceil(f);
-        try check(vr[0] == fr);
-        try check(vr[1] == fr);
-        try check(vr[2] == fr);
-        try check(vr[3] == fr);
-        f += 0.12345 * @intToFloat(f32, i);
-    }
 }
 
 test "vec3Dot" {
