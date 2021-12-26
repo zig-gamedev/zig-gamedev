@@ -58,15 +58,6 @@ pub inline fn vecBoolEqual(b0: VecBool, b1: VecBool) bool {
 // vecSplatY(v: Vec) Vec
 // vecSplatZ(v: Vec) Vec
 // vecSplatW(v: Vec) Vec
-// vecSplatInf() Vec
-// vecSplatNan() Vec
-// vecSplatQnan() Vec
-// vecSplatEpsilon() Vec
-// vecSplatNoFraction() Vec
-// vecSplat_0x8000_0000() Vec
-// vecSplat_0x7fff_ffff() Vec
-// vecU32Splat_0xffff_ffff() VecU32
-// vecU32Splat_0x0000_0000() VecU32
 // vecSplatInt(value: u32) Vec
 // vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool
 // vecEqualInt(v0: Vec, v1: Vec) VecBool
@@ -175,17 +166,6 @@ test "zmath.vecSplatW" {
     const vw = vecSplatW(v0);
     try check(vec4ApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
 }
-
-// zig fmt: off
-pub inline fn vecSplatInf() Vec { return vecSplat(math.inf_f32); }
-pub inline fn vecSplatNan() Vec { return vecSplat(math.nan_f32); }
-pub inline fn vecSplatQnan() Vec { return vecSplat(math.qnan_f32); }
-pub inline fn vecSplatEpsilon() Vec { return vecSplat(math.epsilon_f32); }
-pub inline fn vecSplatNoFraction() Vec { return vecSplat(8_388_608.0); }
-pub inline fn vecSplat_0x8000_0000() Vec { return vecSplatInt(0x8000_0000); }
-pub inline fn vecSplat_0x7fff_ffff() Vec { return vecSplatInt(0x7fff_ffff); }
-pub inline fn vecU32Splat_0xffff_ffff() VecU32 { return @splat(4, ~@as(u32, 0)); }
-// zig fmt: on
 
 pub inline fn vecSplatInt(value: u32) Vec {
     return @splat(4, @bitCast(f32, value));
@@ -303,7 +283,7 @@ test "zmath.vecIsNan" {
 }
 
 pub inline fn vecIsInf(v: Vec) VecBool {
-    return vecAndInt(v, vecSplat_0x7fff_ffff()) == vecSplatInf();
+    return vecAndInt(v, f32x4_0x7fff_ffff) == f32x4_inf;
 }
 test "zmath.vecIsInf" {
     const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
@@ -360,6 +340,7 @@ test "zmath.vecMaxFast" {
 
 pub inline fn vecMin(v0: Vec, v1: Vec) Vec {
     // This will handle inf & nan
+    // minps, cmpunordps, andps, andnps, orps
     return @minimum(v0, v1);
 }
 test "zmath.vecMin" {
@@ -395,6 +376,7 @@ test "zmath.vecMin" {
 
 pub inline fn vecMax(v0: Vec, v1: Vec) Vec {
     // This will handle inf & nan
+    // maxps, cmpunordps, andps, andnps, orps
     return @maximum(v0, v1);
 }
 test "zmath.vecMax" {
@@ -448,12 +430,12 @@ test "zmath.vecInBounds" {
 }
 
 pub inline fn vecRound(v: Vec) Vec {
-    const sign = vecAndInt(v, vecSplat_0x8000_0000());
-    const magic = vecOrInt(vecSplatNoFraction(), sign);
+    const sign = vecAndInt(v, f32x4_0x8000_0000);
+    const magic = vecOrInt(f32x4_8_388_608, sign);
     var r1 = v + magic;
     r1 = r1 - magic;
     const r2 = vecAbs(v);
-    const mask = r2 <= vecSplatNoFraction();
+    const mask = r2 <= f32x4_8_388_608;
     return vecSelect(mask, r1, v);
 }
 test "zmath.vecRound" {
@@ -494,7 +476,7 @@ test "zmath.vecRound" {
 }
 
 pub inline fn vecTrunc(v: Vec) Vec {
-    const mask = vecAbs(v) < vecSplatNoFraction();
+    const mask = vecAbs(v) < f32x4_8_388_608;
     const result = vecFloatToIntAndBack(v);
     return vecSelect(mask, result, v);
 }
@@ -536,7 +518,7 @@ test "zmath.vecTrunc" {
 }
 
 pub inline fn vecFloor(v: Vec) Vec {
-    const mask = vecAbs(v) < vecSplatNoFraction();
+    const mask = vecAbs(v) < f32x4_8_388_608;
     var result = vecFloatToIntAndBack(v);
     const larger_mask = result > v;
     const larger = vecSelect(larger_mask, vecSplat(-1.0), vecZero());
@@ -581,7 +563,7 @@ test "zmath.vecFloor" {
 }
 
 pub inline fn vecCeil(v: Vec) Vec {
-    const mask = vecAbs(v) < vecSplatNoFraction();
+    const mask = vecAbs(v) < f32x4_8_388_608;
     var result = vecFloatToIntAndBack(v);
     const smaller_mask = result < v;
     const smaller = vecSelect(smaller_mask, vecSplat(-1.0), vecZero());
@@ -1143,7 +1125,6 @@ pub inline fn vec3GreaterOrEqual(v0: Vec, v1: Vec) bool {
 
 pub inline fn vec3InBounds(v: Vec, bounds: Vec) bool {
     if (cpu_arch == .x86_64) {
-        const x8000_0000 = vecSplat_0x8000_0000();
         const code = if (has_avx)
             \\  vmovaps     %%xmm1, %%xmm2                  # xmm2 = bounds
             \\  vxorps      %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
@@ -1167,13 +1148,13 @@ pub inline fn vec3InBounds(v: Vec, bounds: Vec) bool {
             : [ret] "={rax}" (-> bool),
             : [v] "{xmm0}" (v),
               [bounds] "{xmm1}" (bounds),
-              [x8000_0000] "{memory}" (x8000_0000),
+              [x8000_0000] "{memory}" (f32x4_0x8000_0000),
             : "xmm2"
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Zero());
-        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Zero());
+        const b0 = @select(u32, v <= bounds, u32x4_0xffff_ffff, vecU32Zero());
+        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, u32x4_0xffff_ffff, vecU32Zero());
         const b = b0 & b1;
         return b[0] > 0 and b[1] > 0 and b[2] > 0;
 
@@ -1227,7 +1208,6 @@ test "zmath.vec3Dot" {
 
 pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
     if (cpu_arch == .x86_64) {
-        const x8000_0000 = vecSplat_0x8000_0000();
         const code = if (has_avx)
             \\  vmovaps     %%xmm1, %%xmm2                  # xmm2 = bounds
             \\  vxorps      %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
@@ -1251,13 +1231,13 @@ pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
             : [ret] "={rax}" (-> bool),
             : [v] "{xmm0}" (v),
               [bounds] "{xmm1}" (bounds),
-              [x8000_0000] "{memory}" (x8000_0000),
+              [x8000_0000] "{memory}" (f32x4_0x8000_0000),
             : "xmm2"
         );
     } else {
         // 2 x cmpleps, movmskps, andps, xorps, pslld, load
-        const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Zero());
-        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Zero());
+        const b0 = @select(u32, v <= bounds, u32x4_0xffff_ffff, vecU32Zero());
+        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, u32x4_0xffff_ffff, vecU32Zero());
         const b = b0 & b1;
         return b[0] > 0 and b[1] > 0 and b[2] > 0 and b[3] > 0;
     }
@@ -1310,8 +1290,17 @@ pub inline fn vec4GreaterOrEqual(v0: Vec, v1: Vec) bool {
 }
 
 //
-// Private functions
+// Private functions and constants
 //
+
+const u32x4_0xffff_ffff: VecU32 = @splat(4, ~@as(u32, 0));
+const f32x4_0x8000_0000: Vec = vecSplatInt(0x8000_0000);
+const f32x4_0x7fff_ffff: Vec = vecSplatInt(0x7fff_ffff);
+const f32x4_inf: Vec = vecSplat(math.inf_f32);
+const f32x4_nan: Vec = vecSplat(math.nan_f32);
+const f32x4_qnan: Vec = vecSplat(math.qnan_f32);
+const f32x4_epsilon: Vec = vecSplat(math.epsilon_f32);
+const f32x4_8_388_608: Vec = vecSplat(8_388_608.0);
 
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
     // This won't handle nan, inf and numbers greater than 8_388_608.0
