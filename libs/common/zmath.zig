@@ -441,12 +441,17 @@ pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
 
 pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
-        const code =
+        const code = if (has_avx)
+            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  cmp         $7, %%al
+            \\  sete        %%al
+        else
             \\  cmpleps     %%xmm1, %%xmm0
             \\  movmskps    %%xmm0, %%eax
             \\  cmp         $7, %%al
             \\  sete        %%al
-        ;
+            ;
         return asm (code
             : [ret] "={rax}" (-> bool),
             : [v0] "{xmm0}" (v0),
