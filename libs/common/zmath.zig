@@ -13,7 +13,6 @@ const VecU32 = @Vector(4, u32);
 // General Vec functions (always work on all vector components)
 //
 // vecZero() Vec
-// vecU32Zero() VecU32
 // vecSet(x: f32, y: f32, z: f32, w: f32) Vec
 // vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec
 // vecSplat(value: f32) Vec
@@ -62,10 +61,6 @@ pub inline fn vecZero() Vec {
 test "zmath.vecZero" {
     const v = vecZero();
     try check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
-}
-
-pub inline fn vecU32Zero() VecU32 {
-    return @splat(4, @as(u32, 0));
 }
 
 pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
@@ -1301,6 +1296,10 @@ const f32x4_nan: Vec = vecSplat(math.nan_f32);
 const f32x4_qnan: Vec = vecSplat(math.qnan_f32);
 const f32x4_epsilon: Vec = vecSplat(math.epsilon_f32);
 const f32x4_8_388_608: Vec = vecSplat(8_388_608.0);
+
+inline fn vecU32Zero() VecU32 {
+    return @splat(4, @as(u32, 0));
+}
 
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
     // This won't handle nan, inf and numbers greater than 8_388_608.0
