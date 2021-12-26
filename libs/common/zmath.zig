@@ -69,9 +69,12 @@ pub inline fn vecSplatInf() Vec { return vecSplat(math.inf_f32); }
 pub inline fn vecSplatNan() Vec { return vecSplat(math.nan_f32); }
 pub inline fn vecSplatQnan() Vec { return vecSplat(math.qnan_f32); }
 pub inline fn vecSplatEpsilon() Vec { return vecSplat(math.epsilon_f32); }
-pub inline fn vecSplatSignMask() Vec { return vecSplatInt(0x8000_0000); }
-pub inline fn vecSplatAbsMask() Vec { return vecSplatInt(0x7fff_ffff); }
 pub inline fn vecSplatNoFraction() Vec { return vecSplat(8_388_608.0); }
+pub inline fn vecSplat_0x8000_0000() Vec { return vecSplatInt(0x8000_0000); }
+pub inline fn vecSplat_0x7fff_ffff() Vec { return vecSplatInt(0x7fff_ffff); }
+
+pub inline fn vecU32Splat_0xffff_ffff() VecU32 { return @splat(4, ~@as(u32, 0)); }
+pub inline fn vecU32Splat_0x0000_0000() VecU32 { return @splat(4, @as(u32, 0)); }
 // zig fmt: on
 
 pub inline fn vecSplatInt(value: u32) Vec {
@@ -139,7 +142,7 @@ pub inline fn vecIsNan(v: Vec) VecBool {
 }
 
 pub inline fn vecIsInf(v: Vec) VecBool {
-    return vecAndInt(v, vecSplatAbsMask()) == vecSplatInf();
+    return vecAndInt(v, vecSplat_0x7fff_ffff()) == vecSplatInf();
 }
 
 pub inline fn vecMinFast(v0: Vec, v1: Vec) Vec {
@@ -167,13 +170,14 @@ pub inline fn vecSelect(b: VecBool, v0: Vec, v1: Vec) Vec {
 }
 
 pub inline fn vecInBounds(v: Vec, bounds: Vec) VecBool {
+    // 2 x cmpleps, xorps, load, andps
     const b0 = v <= bounds;
     const b1 = (bounds * vecSplat(-1.0)) <= v;
     return vecBoolAnd(b0, b1);
 }
 
 pub inline fn vecRound(v: Vec) Vec {
-    const sign = vecAndInt(v, vecSplatSignMask());
+    const sign = vecAndInt(v, vecSplat_0x8000_0000());
     const magic = vecOrInt(vecSplatNoFraction(), sign);
     var r1 = v + magic;
     r1 = r1 - magic;
@@ -518,6 +522,17 @@ pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
     temp = @shuffle(f32, temp, undefined, [4]i32{ 1, 1, 1, 1 });
     dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
     return vecSplatX(dot);
+}
+
+//
+// Vec4 functions
+//
+pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
+    // 2 x cmpleps, movmskps, andps, xorps, pslld
+    const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
+    const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
+    const b = b0 & b1;
+    return b[0] > 0 and b[1] > 0 and b[2] > 0 and b[3] > 0;
 }
 
 //
@@ -1054,4 +1069,12 @@ test "vec3NearEqual" {
         const v1 = vecSet(1.0, 2.001, -3.0, 4.0);
         try check(vec3NearEqual(v0, v1, vecSplat(0.01)));
     }
+}
+
+test "vec4InBounds" {
+    const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
+    const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
+    const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+    try check(vec4InBounds(v0, bounds) == true);
+    try check(vec4InBounds(v1, bounds) == false);
 }
