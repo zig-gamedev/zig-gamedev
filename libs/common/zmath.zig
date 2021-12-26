@@ -12,14 +12,30 @@ pub const VecU32 = @Vector(4, u32);
 //
 // VecBool functions
 //
+// vecBoolAnd(b0: VecBool, b1: VecBool) VecBool
+// vecBoolOr(b0: VecBool, b1: VecBool) VecBool
+// vecBoolAllTrue(b: VecBool) bool
+// vecBoolEqual(b: VecBool) bool
 pub inline fn vecBoolAnd(b0: VecBool, b1: VecBool) VecBool {
     // andps
     return [4]bool{ b0[0] and b1[0], b0[1] and b1[1], b0[2] and b1[2], b0[3] and b1[3] };
+}
+test "zmath.vecBoolAnd" {
+    const b0 = vecBoolSet(true, false, true, false);
+    const b1 = vecBoolSet(true, true, false, false);
+    const b = vecBoolAnd(b0, b1);
+    try check(b[0] == true and b[1] == false and b[2] == false and b[3] == false);
 }
 
 pub inline fn vecBoolOr(b0: VecBool, b1: VecBool) VecBool {
     // orps
     return [4]bool{ b0[0] or b1[0], b0[1] or b1[1], b0[2] or b1[2], b0[3] or b1[3] };
+}
+test "zmath.vecBoolOr" {
+    const b0 = vecBoolSet(true, false, true, false);
+    const b1 = vecBoolSet(true, true, false, false);
+    const b = vecBoolOr(b0, b1);
+    try check(b[0] == true and b[1] == true and b[2] == true and b[3] == false);
 }
 
 pub inline fn vecBoolAllTrue(b: VecBool) bool {
@@ -88,7 +104,7 @@ pub inline fn vecBoolEqual(b0: VecBool, b1: VecBool) bool {
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
 }
-test "vecZero" {
+test "zmath.vecZero" {
     const v = vecZero();
     try check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
 }
@@ -96,7 +112,7 @@ test "vecZero" {
 pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
     return [4]f32{ x, y, z, w };
 }
-test "vecSet" {
+test "zmath.vecSet" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
     const v1 = vecSet(5.0, -6.0, 7.0, 8.0);
     try check(v0[0] == 1.0 and v0[1] == 2.0 and v0[2] == 3.0 and v0[3] == 4.0);
@@ -106,7 +122,7 @@ test "vecSet" {
 pub inline fn vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec {
     return @bitCast(Vec, [4]u32{ x, y, z, w });
 }
-test "vecSetInt" {
+test "zmath.vecSetInt" {
     const v = vecSetInt(0x3f80_0000, 0x4000_0000, 0x4040_0000, 0x4080_0000);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, 2.0, 3.0, 4.0 }, 0.0));
 }
@@ -114,7 +130,7 @@ test "vecSetInt" {
 pub inline fn vecSplat(value: f32) Vec {
     return @splat(4, value);
 }
-test "vecSplat" {
+test "zmath.vecSplat" {
     const v = vecSplat(123.0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
 }
@@ -122,7 +138,7 @@ test "vecSplat" {
 pub inline fn vecSplatX(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 0, 0, 0, 0 });
 }
-test "vecSplatX" {
+test "zmath.vecSplatX" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
     const vx = vecSplatX(v0);
     try check(vec4ApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
@@ -131,7 +147,7 @@ test "vecSplatX" {
 pub inline fn vecSplatY(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 1, 1, 1, 1 });
 }
-test "vecSplatY" {
+test "zmath.vecSplatY" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
     const vy = vecSplatY(v0);
     try check(vec4ApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
@@ -140,7 +156,7 @@ test "vecSplatY" {
 pub inline fn vecSplatZ(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 2, 2, 2, 2 });
 }
-test "vecSplatZ" {
+test "zmath.vecSplatZ" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
     const vz = vecSplatZ(v0);
     try check(vec4ApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
@@ -149,7 +165,7 @@ test "vecSplatZ" {
 pub inline fn vecSplatW(v: Vec) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
 }
-test "vecSplatW" {
+test "zmath.vecSplatW" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
     const vw = vecSplatW(v0);
     try check(vec4ApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
@@ -171,7 +187,7 @@ pub inline fn vecU32Splat_0x0000_0000() VecU32 { return @splat(4, @as(u32, 0)); 
 pub inline fn vecSplatInt(value: u32) Vec {
     return @splat(4, @bitCast(f32, value));
 }
-test "vecSplatInt" {
+test "zmath.vecSplatInt" {
     const v = vecSplatInt(0x4000_0000);
     try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
 }
@@ -182,7 +198,7 @@ pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool {
     const temp = vecMaxFast(delta, vecZero() - delta);
     return temp <= epsilon;
 }
-test "vecNearEqual" {
+test "zmath.vecNearEqual" {
     const v0 = vecSet(1.0, 2.0, -3.0, 4.001);
     const v1 = vecSet(1.0, 2.1, 3.0, 4.0);
     const b = vecNearEqual(v0, v1, vecSplat(0.01));
@@ -214,7 +230,7 @@ pub inline fn vecAndInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u & v1u);
 }
-test "vecAndInt" {
+test "zmath.vecAndInt" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
     const v1 = vecSet(1.0, 2.0, 3.0, math.inf_f32);
     const v = vecAndInt(v0, v1);
@@ -228,7 +244,7 @@ pub inline fn vecAndCInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u & ~v1u);
 }
-test "vecAndCInt" {
+test "zmath.vecAndCInt" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
     const v1 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
     const v = vecAndCInt(v0, v1);
@@ -241,7 +257,7 @@ pub inline fn vecOrInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u | v1u);
 }
-test "vecOrInt" {
+test "zmath.vecOrInt" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
     const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
     const v = vecOrInt(v0, v1);
@@ -264,7 +280,7 @@ pub inline fn vecXorInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u ^ v1u);
 }
-test "vecXorInt" {
+test "zmath.vecXorInt" {
     const v0 = vecSetInt(@bitCast(u32, @as(f32, 1.0)), ~@as(u32, 0), 0, 0);
     const v1 = vecSet(1.0, 0, 0, 0);
     const v = vecXorInt(v0, v1);
@@ -277,7 +293,7 @@ test "vecXorInt" {
 pub inline fn vecIsNan(v: Vec) VecBool {
     return v != v;
 }
-test "vecIsNan" {
+test "zmath.vecIsNan" {
     const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
     const b = vecIsNan(v0);
     try check(vecBoolEqual(b, vecBoolSet(false, true, true, false)));
@@ -286,7 +302,7 @@ test "vecIsNan" {
 pub inline fn vecIsInf(v: Vec) VecBool {
     return vecAndInt(v, vecSplat_0x7fff_ffff()) == vecSplatInf();
 }
-test "vecIsInf" {
+test "zmath.vecIsInf" {
     const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
     const b = vecIsInf(v0);
     try check(vecBoolEqual(b, vecBoolSet(true, false, false, false)));
@@ -296,20 +312,116 @@ pub inline fn vecMinFast(v0: Vec, v1: Vec) Vec {
     // minps
     return @select(f32, v0 < v1, v0, v1);
 }
+test "zmath.vecMinFast" {
+    {
+        const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
+        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
+        const v = vecMinFast(v0, v1);
+        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, 2.0, 7.0), 0.0));
+    }
+    {
+        const v0 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
+        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
+        const v = vecMinFast(v0, v1);
+        try check(v[0] == 1.0);
+        try check(v[1] == 1.0);
+        try check(!math.isNan(v[1]));
+        try check(v[2] == 4.0);
+        try check(v[3] == math.inf_f32);
+        try check(!math.isNan(v[3]));
+    }
+}
 
 pub inline fn vecMaxFast(v0: Vec, v1: Vec) Vec {
     // maxps
     return @select(f32, v0 > v1, v0, v1);
+}
+test "zmath.vecMaxFast" {
+    {
+        const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
+        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
+        const v = vecMaxFast(v0, v1);
+        try check(vec4ApproxEqAbs(v, vecSet(2.0, 3.0, 4.0, math.inf_f32), 0.0));
+    }
+    {
+        const v0 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
+        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
+        const v = vecMaxFast(v0, v1);
+        try check(v[0] == 2.0);
+        try check(v[1] == 1.0);
+        try check(v[2] == 5.0);
+        try check(v[3] == math.inf_f32);
+        try check(!math.isNan(v[3]));
+    }
 }
 
 pub inline fn vecMin(v0: Vec, v1: Vec) Vec {
     // This will handle inf & nan
     return @minimum(v0, v1);
 }
+test "zmath.vecMin" {
+    {
+        const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
+        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
+        const v = vecMin(v0, v1);
+        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, 2.0, 7.0), 0.0));
+    }
+    {
+        const v0 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
+        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
+        const v = vecMin(v0, v1);
+        try check(v[0] == 1.0);
+        try check(v[1] == 1.0);
+        try check(!math.isNan(v[1]));
+        try check(v[2] == 4.0);
+        try check(v[3] == math.inf_f32);
+        try check(!math.isNan(v[3]));
+    }
+    {
+        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.inf_f32, math.qnan_f32);
+        const v1 = vecSet(math.qnan_f32, -math.inf_f32, math.qnan_f32, math.nan_f32);
+        const v = vecMin(v0, v1);
+        try check(v[0] == -math.inf_f32);
+        try check(v[1] == -math.inf_f32);
+        try check(v[2] == math.inf_f32);
+        try check(!math.isNan(v[2]));
+        try check(math.isNan(v[3]));
+        try check(!math.isInf(v[3]));
+    }
+}
 
 pub inline fn vecMax(v0: Vec, v1: Vec) Vec {
     // This will handle inf & nan
     return @maximum(v0, v1);
+}
+test "zmath.vecMax" {
+    {
+        const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
+        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
+        const v = vecMax(v0, v1);
+        try check(vec4ApproxEqAbs(v, vecSet(2.0, 3.0, 4.0, math.inf_f32), 0.0));
+    }
+    {
+        const v0 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
+        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
+        const v = vecMax(v0, v1);
+        try check(v[0] == 2.0);
+        try check(v[1] == 1.0);
+        try check(v[2] == 5.0);
+        try check(v[3] == math.inf_f32);
+        try check(!math.isNan(v[3]));
+    }
+    {
+        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.inf_f32, math.qnan_f32);
+        const v1 = vecSet(math.qnan_f32, -math.inf_f32, math.qnan_f32, math.nan_f32);
+        const v = vecMax(v0, v1);
+        try check(v[0] == -math.inf_f32);
+        try check(v[1] == math.inf_f32);
+        try check(v[2] == math.inf_f32);
+        try check(!math.isNan(v[2]));
+        try check(math.isNan(v[3]));
+        try check(!math.isInf(v[3]));
+    }
 }
 
 pub inline fn vecSelect(b: VecBool, v0: Vec, v1: Vec) Vec {
@@ -322,7 +434,7 @@ pub inline fn vecInBounds(v: Vec, bounds: Vec) VecBool {
     const b1 = (bounds * vecSplat(-1.0)) <= v;
     return vecBoolAnd(b0, b1);
 }
-test "vecInBounds" {
+test "zmath.vecInBounds" {
     const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
     const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
     const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
@@ -341,7 +453,7 @@ pub inline fn vecRound(v: Vec) Vec {
     const mask = r2 <= vecSplatNoFraction();
     return vecSelect(mask, r1, v);
 }
-test "vecRound" {
+test "zmath.vecRound" {
     const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
     var v = vecRound(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
@@ -383,7 +495,7 @@ pub inline fn vecTrunc(v: Vec) Vec {
     const result = vecFloatToIntAndBack(v);
     return vecSelect(mask, result, v);
 }
-test "vecTrunc" {
+test "zmath.vecTrunc" {
     const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
     var v = vecTrunc(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -1.0, 1.0 }, 0.0));
@@ -428,7 +540,7 @@ pub inline fn vecFloor(v: Vec) Vec {
     result = result + larger;
     return vecSelect(mask, result, v);
 }
-test "vecFloor" {
+test "zmath.vecFloor" {
     const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
     var v = vecFloor(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -2.0, -2.0, -3.0 }, 0.0));
@@ -473,7 +585,7 @@ pub inline fn vecCeil(v: Vec) Vec {
     result = result - smaller;
     return vecSelect(mask, result, v);
 }
-test "vecCeil" {
+test "zmath.vecCeil" {
     const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
     var v = vecCeil(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, -1.0, -1.0, -2.0 }, 0.0));
@@ -515,11 +627,36 @@ pub inline fn vecClamp(v: Vec, min: Vec, max: Vec) Vec {
     result = vecMin(max, result);
     return result;
 }
+test "zmath.vecClamp" {
+    {
+        const v0 = vecSet(-1.0, 0.2, 1.1, -0.3);
+        const v = vecClamp(v0, vecSplat(-0.5), vecSplat(0.5));
+        try check(vec4ApproxEqAbs(v, vecSet(-0.5, 0.2, 0.5, -0.3), 0.0001));
+    }
+    if (false) {
+        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.nan_f32, math.qnan_f32);
+        const v = vecClamp(v0, vecSet(-100.0, 0.0, -100.0, 0.0), vecSet(0.0, 100.0, 0.0, 100.0));
+        try check(vec4ApproxEqAbs(v, vecSet(-100.0, 100.0, -100.0, 0.0), 0.0001));
+    }
+
+    if (false) {
+        const v0 = vecSet(math.inf_f32, math.inf_f32, -math.nan_f32, -math.qnan_f32);
+        const v = vecClamp(v0, vecSplat(-1.0), vecSplat(1.0));
+        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, -1.0, -1.0), 0.0001));
+    }
+}
 
 pub inline fn vecClampFast(v: Vec, min: Vec, max: Vec) Vec {
     var result = vecMaxFast(min, v);
     result = vecMinFast(max, result);
     return result;
+}
+test "zmath.vecClampFast" {
+    {
+        const v0 = vecSet(-1.0, 0.2, 1.1, -0.3);
+        const v = vecClampFast(v0, vecSplat(-0.5), vecSplat(0.5));
+        try check(vec4ApproxEqAbs(v, vecSet(-0.5, 0.2, 0.5, -0.3), 0.0001));
+    }
 }
 
 pub inline fn vecSaturate(v: Vec) Vec {
@@ -527,11 +664,45 @@ pub inline fn vecSaturate(v: Vec) Vec {
     result = vecMin(result, vecSplat(1.0));
     return result;
 }
+test "zmath.vecSaturate" {
+    {
+        const v0 = vecSet(-1.0, 0.2, 1.1, -0.3);
+        const v = vecSaturate(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(0.0, 0.2, 1.0, 0.0), 0.0001));
+    }
+    {
+        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.nan_f32, math.qnan_f32);
+        const v = vecSaturate(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(0.0, 1.0, 0.0, 0.0), 0.0001));
+    }
+    {
+        const v0 = vecSet(math.inf_f32, math.inf_f32, -math.nan_f32, -math.qnan_f32);
+        const v = vecSaturate(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, 0.0, 0.0), 0.0001));
+    }
+}
 
 pub inline fn vecSaturateFast(v: Vec) Vec {
     var result = vecMaxFast(v, vecZero());
     result = vecMinFast(result, vecSplat(1.0));
     return result;
+}
+test "zmath.vecSaturateFast" {
+    {
+        const v0 = vecSet(-1.0, 0.2, 1.1, -0.3);
+        const v = vecSaturateFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(0.0, 0.2, 1.0, 0.0), 0.0001));
+    }
+    {
+        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.nan_f32, math.qnan_f32);
+        const v = vecSaturateFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(0.0, 1.0, 0.0, 0.0), 0.0001));
+    }
+    {
+        const v0 = vecSet(math.inf_f32, math.inf_f32, -math.nan_f32, -math.qnan_f32);
+        const v = vecSaturateFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, 0.0, 0.0), 0.0001));
+    }
 }
 
 pub inline fn vecAbs(v: Vec) Vec {
@@ -547,6 +718,28 @@ pub inline fn vecSqrt(v: Vec) Vec {
 pub inline fn vecRcpSqrt(v: Vec) Vec {
     // load, divps, sqrtps
     return vecSplat(1.0) / vecSqrt(v);
+}
+test "zmath.vecRcpSqrt" {
+    {
+        const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
+        const v = vecRcpSqrt(v0);
+        try check(vec4ApproxEqAbs(
+            v,
+            vecSet(
+                1.0 / math.sqrt(v0[0]),
+                1.0 / math.sqrt(v0[1]),
+                1.0 / math.sqrt(v0[2]),
+                1.0 / math.sqrt(v0[3]),
+            ),
+            0.0005,
+        ));
+    }
+    {
+        const v0 = vecSet(math.inf_f32, 0.2, 123.1, math.nan_f32);
+        const v = vecRcpSqrt(v0);
+        try check(vec3ApproxEqAbs(v, vecSet(0.0, 1.0 / math.sqrt(v0[1]), 1.0 / math.sqrt(v0[2]), 0.0), 0.0005));
+        try check(math.isNan(v[3]));
+    }
 }
 
 pub inline fn vecRcpSqrtFast(v: Vec) Vec {
@@ -564,16 +757,61 @@ pub inline fn vecRcpSqrtFast(v: Vec) Vec {
         return vecSplat(1.0) / vecSqrt(v);
     }
 }
+test "zmath.vecRcpSqrtFast" {
+    {
+        const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
+        const v = vecRcpSqrtFast(v0);
+        try check(vec4ApproxEqAbs(
+            v,
+            vecSet(
+                1.0 / math.sqrt(v0[0]),
+                1.0 / math.sqrt(v0[1]),
+                1.0 / math.sqrt(v0[2]),
+                1.0 / math.sqrt(v0[3]),
+            ),
+            0.0005,
+        ));
+    }
+    {
+        const v0 = vecSet(math.inf_f32, 0.2, 123.1, math.nan_f32);
+        const v = vecRcpSqrtFast(v0);
+        try check(vec3ApproxEqAbs(v, vecSet(0.0, 1.0 / math.sqrt(v0[1]), 1.0 / math.sqrt(v0[2]), 0.0), 0.0005));
+        try check(math.isNan(v[3]));
+    }
+}
 
 pub inline fn vecRcp(v: Vec) Vec {
+    // Will handle inf & nan
     // load, divps
     return vecSplat(1.0) / v;
 }
+test "zmath.vecRcp" {
+    {
+        const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
+        const v = vecRcp(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(1.0 / v0[0], 1.0 / v0[1], 1.0 / v0[2], 1.0 / v0[3]), 0.0005));
+    }
+    {
+        const v0 = vecSet(math.inf_f32, -math.inf_f32, math.qnan_f32, math.nan_f32);
+        const v = vecRcp(v0);
+        try check(vec2ApproxEqAbs(v, vecSet(0.0, 0.0, 0.0, 0.0), 0.0005));
+        try check(math.isNan(v[2]));
+        try check(math.isNan(v[3]));
+    }
+}
 
 pub inline fn vecRcpFast(v: Vec) Vec {
+    // Will not handle inf & nan
     // load, rcpps, 2 x mulps, addps, subps
     @setFloatMode(.Optimized);
     return vecSplat(1.0) / v;
+}
+test "zmath.vecRcpFast" {
+    {
+        const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
+        const v = vecRcpFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSet(1.0 / v0[0], 1.0 / v0[1], 1.0 / v0[2], 1.0 / v0[3]), 0.0005));
+    }
 }
 
 pub inline fn vecScale(v: Vec, s: f32) Vec {
@@ -610,6 +848,23 @@ pub inline fn vecLoadF32(mem: []const f32) Vec {
 pub inline fn vecLoadF32x2(mem: []const f32) Vec {
     return [4]f32{ mem[0], mem[1], 0, 0 };
 }
+test "zmath.vecLoadF32x2" {
+    const a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+    var ptr = &a;
+    var i: u32 = 0;
+    const v0 = vecLoadF32x2(a[i..]);
+    try check(vec4ApproxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
+    i += 2;
+    const v1 = vecLoadF32x2(a[i .. i + 2]);
+    try check(vec4ApproxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
+    const v2 = vecLoadF32x2(a[5..7]);
+    try check(vec4ApproxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
+    const v3 = vecLoadF32x2(ptr[1..]);
+    try check(vec4ApproxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
+    i += 1;
+    const v4 = vecLoadF32x2(ptr[i .. i + 2]);
+    try check(vec4ApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
+}
 
 pub inline fn vecLoadF32x3(mem: []const f32) Vec {
     return vecSet(mem[0], mem[1], mem[2], 0);
@@ -632,6 +887,17 @@ pub inline fn vecStoreF32x3(mem: []f32, v: Vec) void {
     mem[0] = v[0];
     mem[1] = v[1];
     mem[2] = v[2];
+}
+test "zmath.vecStoreF32x3" {
+    var a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+    const v = vecLoadF32x3(a[1..]);
+    vecStoreF32x4(a[2..], v);
+    try check(a[0] == 1.0);
+    try check(a[1] == 2.0);
+    try check(a[2] == 2.0);
+    try check(a[3] == 3.0);
+    try check(a[4] == 4.0);
+    try check(a[5] == 0.0);
 }
 
 pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
@@ -676,6 +942,13 @@ pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
         // NOTE(mziulek): Generated code is not optimal
         const mask = v0 == v1;
         return mask[0] and mask[1] and mask[2];
+    }
+}
+test "zmath.vec3Equal" {
+    {
+        const v0 = vecSet(1.0, math.inf_f32, -3.0, 1000.001);
+        const v1 = vecSet(1.0, math.inf_f32, -3.0, 4.0);
+        try check(vec3Equal(v0, v1));
     }
 }
 
@@ -740,6 +1013,13 @@ pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
         return mask[0] and mask[1] and mask[2];
     }
 }
+test "zmath.vec3NearEqual" {
+    {
+        const v0 = vecSet(1.0, 2.0, -3.0001, 1000.001);
+        const v1 = vecSet(1.0, 2.001, -3.0, 4.0);
+        try check(vec3NearEqual(v0, v1, vecSplat(0.01)));
+    }
+}
 
 pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -764,6 +1044,23 @@ pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
         const mask = v0 < v1;
         return mask[0] and mask[1] and mask[2];
     }
+}
+test "zmath.vec3Less" {
+    const v0 = vecSet(-1.0, 2.0, 3.0, 5.0);
+    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
+    try check(vec3Less(v0, v1) == true);
+
+    const v2 = vecSet(-1.0, 2.0, 3.0, 5.0);
+    const v3 = vecSet(4.0, -5.0, 6.0, 1.0);
+    try check(vec3Less(v2, v3) == false);
+
+    const v4 = vecSet(100.0, 200.0, 300.0, 50000.0);
+    const v5 = vecSet(400.0, 500.0, 600.0, 1.0);
+    try check(vec3Less(v4, v5) == true);
+
+    const v6 = vecSet(100.0, -math.inf_f32, -math.inf_f32, 50000.0);
+    const v7 = vecSet(400.0, math.inf_f32, 600.0, 1.0);
+    try check(vec3Less(v6, v7) == true);
 }
 
 pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
@@ -884,6 +1181,20 @@ pub inline fn vec3InBounds(v: Vec, bounds: Vec) bool {
         // return b[0] and b[1] and b[2];
     }
 }
+test "zmath.vec3InBounds" {
+    {
+        const v0 = vecSet(0.5, -2.0, -1.0, 1000.0);
+        const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
+        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+        try check(vec3InBounds(v0, bounds) == true);
+        try check(vec3InBounds(v1, bounds) == false);
+    }
+    {
+        const v0 = vecSet(10000.0, -1000.0, -1.0, 1000.0);
+        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
+        try check(vec3InBounds(v0, bounds) == true);
+    }
+}
 
 pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
     var dot = v0 * v1;
@@ -892,6 +1203,12 @@ pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
     temp = @shuffle(f32, temp, undefined, [4]i32{ 1, 1, 1, 1 });
     dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
     return vecSplatX(dot);
+}
+test "zmath.vec3Dot" {
+    const v0 = vecSet(-1.0, 2.0, 3.0, 1.0);
+    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
+    var v = vec3Dot(v0, v1);
+    try check(vec4ApproxEqAbs(v, vecSplat(24.0), 0.0001));
 }
 
 //
@@ -936,9 +1253,23 @@ pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
         return b[0] > 0 and b[1] > 0 and b[2] > 0 and b[3] > 0;
     }
 }
+test "zmath.vec4InBounds" {
+    {
+        const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
+        const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
+        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+        try check(vec4InBounds(v0, bounds) == true);
+        try check(vec4InBounds(v1, bounds) == false);
+    }
+    {
+        const v0 = vecSet(10000.0, -1000.0, -1.0, 0.0);
+        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
+        try check(vec4InBounds(v0, bounds) == true);
+    }
+}
 
 //
-// Private types and functions
+// Private functions
 //
 
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
@@ -958,6 +1289,18 @@ inline fn vecFloatToIntAndBack(v: Vec) Vec {
         @intToFloat(f32, vi[2]),
         @intToFloat(f32, vi[3]),
     };
+}
+test "zmath.vecFloatToIntAndBack" {
+    const v0 = vecSet(1.1, 2.9, 3.0, -4.5);
+    var v = vecFloatToIntAndBack(v0);
+    try check(v[0] == 1.0);
+    try check(v[1] == 2.0);
+    try check(v[2] == 3.0);
+    try check(v[3] == -4.0);
+
+    const v1 = vecSet(math.inf_f32, 2.9, math.nan_f32, math.qnan_f32);
+    v = vecFloatToIntAndBack(v1);
+    try check(v[1] == 2.0);
 }
 
 inline fn vec2ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
@@ -984,265 +1327,4 @@ inline fn vecBoolSet(x: bool, y: bool, z: bool, w: bool) VecBool {
 
 inline fn check(result: bool) !void {
     try std.testing.expectEqual(result, true);
-}
-
-//
-// Tests
-//
-
-test "vecMin and vecMax" {
-    const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
-    const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
-    const vmin = vecMin(v0, v1);
-    const vmax = vecMax(v0, v1);
-    const less = v0 < v1;
-    try check(vec4ApproxEqAbs(vmin, [4]f32{ 1.0, 1.0, 2.0, 7.0 }, 0.0));
-    try check(vec4ApproxEqAbs(vmax, [4]f32{ 2.0, 3.0, 4.0, math.inf_f32 }, 0.0));
-    try check(less[0] == true and less[1] == false and less[2] == true and less[3] == true);
-
-    {
-        const v2 = vecSet(2.0, math.nan_f32, 4.0, math.qnan_f32);
-        const vmax_nan = vecMax(v2, v0);
-        try check(vec4ApproxEqAbs(vmax_nan, [4]f32{ 2.0, 3.0, 4.0, 7.0 }, 0.0));
-
-        const v3 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
-        const vmin_nan = vecMin(v2, v3);
-        try check(vmin_nan[0] == 1.0);
-        try check(math.isNan(vmin_nan[1]));
-        try check(vmin_nan[2] == 4.0);
-        try check(math.isNan(vmin_nan[3]));
-    }
-
-    {
-        const v4 = vecSet(-math.inf_f32, math.inf_f32, math.inf_f32, math.qnan_f32);
-        const v5 = vecSet(math.qnan_f32, -math.inf_f32, math.qnan_f32, math.nan_f32);
-        const vmin_nan = vecMin(v4, v5);
-        try check(vmin_nan[0] == -math.inf_f32);
-        try check(vmin_nan[1] == -math.inf_f32);
-        try check(vmin_nan[2] == math.inf_f32);
-        try check(!math.isNan(vmin_nan[2]));
-        try check(math.isNan(vmin_nan[3]));
-        try check(!math.isInf(vmin_nan[3]));
-
-        const vmax_nan = vecMax(v4, v5);
-        try check(vmax_nan[0] == -math.inf_f32);
-        try check(vmax_nan[1] == math.inf_f32);
-        try check(vmax_nan[2] == math.inf_f32);
-        try check(!math.isNan(vmax_nan[2]));
-        try check(math.isNan(vmax_nan[3]));
-        try check(!math.isInf(vmax_nan[3]));
-    }
-}
-
-test "vecLoadF32x2" {
-    const a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
-    var ptr = &a;
-    var i: u32 = 0;
-    const v0 = vecLoadF32x2(a[i..]);
-    try check(vec4ApproxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
-    i += 2;
-    const v1 = vecLoadF32x2(a[i .. i + 2]);
-    try check(vec4ApproxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
-    const v2 = vecLoadF32x2(a[5..7]);
-    try check(vec4ApproxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
-    const v3 = vecLoadF32x2(ptr[1..]);
-    try check(vec4ApproxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
-    i += 1;
-    const v4 = vecLoadF32x2(ptr[i .. i + 2]);
-    try check(vec4ApproxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
-}
-
-test "vecStoreF32x3" {
-    var a = [7]f32{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
-    const v = vecLoadF32x3(a[1..]);
-    vecStoreF32x4(a[2..], v);
-    try check(a[0] == 1.0);
-    try check(a[1] == 2.0);
-    try check(a[2] == 2.0);
-    try check(a[3] == 3.0);
-    try check(a[4] == 4.0);
-    try check(a[5] == 0.0);
-}
-
-test "vecBoolAnd" {
-    const b0 = vecBoolSet(true, false, true, false);
-    const b1 = vecBoolSet(true, true, false, false);
-    const b = vecBoolAnd(b0, b1);
-    try check(b[0] == true and b[1] == false and b[2] == false and b[3] == false);
-}
-
-test "vecBoolOr" {
-    const b0 = vecBoolSet(true, false, true, false);
-    const b1 = vecBoolSet(true, true, false, false);
-    const b = vecBoolOr(b0, b1);
-    try check(b[0] == true and b[1] == true and b[2] == true and b[3] == false);
-}
-
-test "vec @sin" {
-    const v0 = vecSet(math.inf_f32, -math.inf_f32, math.inf_f32, 9_388_608.0);
-    const v = @sin(v0);
-    try check(math.isNan(v[0]));
-    try check(math.isNan(v[1]));
-    try check(math.isNan(v[2]));
-    try check(math.approxEqAbs(f32, v[3], 0.7205, 0.001));
-}
-
-test "vecFloatToIntAndBack" {
-    const v0 = vecSet(1.1, 2.9, 3.0, -4.5);
-    var v = vecFloatToIntAndBack(v0);
-    try check(v[0] == 1.0);
-    try check(v[1] == 2.0);
-    try check(v[2] == 3.0);
-    try check(v[3] == -4.0);
-
-    const v1 = vecSet(math.inf_f32, 2.9, math.nan_f32, math.qnan_f32);
-    v = vecFloatToIntAndBack(v1);
-    try check(v[1] == 2.0);
-}
-
-test "vec3Dot" {
-    const v0 = vecSet(-1.0, 2.0, 3.0, 1.0);
-    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
-    var v = vec3Dot(v0, v1);
-    try check(vec4ApproxEqAbs(v, vecSplat(24.0), 0.0001));
-}
-
-test "vec3Less" {
-    const v0 = vecSet(-1.0, 2.0, 3.0, 5.0);
-    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
-    try check(vec3Less(v0, v1) == true);
-
-    const v2 = vecSet(-1.0, 2.0, 3.0, 5.0);
-    const v3 = vecSet(4.0, -5.0, 6.0, 1.0);
-    try check(vec3Less(v2, v3) == false);
-
-    const v4 = vecSet(100.0, 200.0, 300.0, 50000.0);
-    const v5 = vecSet(400.0, 500.0, 600.0, 1.0);
-    try check(vec3Less(v4, v5) == true);
-
-    const v6 = vecSet(100.0, -math.inf_f32, -math.inf_f32, 50000.0);
-    const v7 = vecSet(400.0, math.inf_f32, 600.0, 1.0);
-    try check(vec3Less(v6, v7) == true);
-}
-
-test "vecSaturate" {
-    {
-        const v0 = vecSet(-1.0, 0.2, 1.1, -0.3);
-        const v = vecSaturate(v0);
-        const vf = vecSaturateFast(v0);
-        try check(vec4ApproxEqAbs(v, vecSet(0.0, 0.2, 1.0, 0.0), 0.0001));
-        try check(vec4ApproxEqAbs(vf, vecSet(0.0, 0.2, 1.0, 0.0), 0.0001));
-    }
-    {
-        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.nan_f32, math.qnan_f32);
-        const v = vecSaturate(v0);
-        const vf = vecSaturateFast(v0);
-        try check(vec4ApproxEqAbs(v, vecSet(0.0, 1.0, 0.0, 0.0), 0.0001));
-        try check(vec4ApproxEqAbs(vf, vecSet(0.0, 1.0, 0.0, 0.0), 0.0001));
-    }
-    {
-        const v0 = vecSet(math.inf_f32, math.inf_f32, -math.nan_f32, -math.qnan_f32);
-        const v = vecSaturate(v0);
-        const vf = vecSaturateFast(v0);
-        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, 0.0, 0.0), 0.0001));
-        try check(vec4ApproxEqAbs(vf, vecSet(1.0, 1.0, 0.0, 0.0), 0.0001));
-    }
-}
-
-test "vecClamp" {
-    {
-        const v0 = vecSet(-1.0, 0.2, 1.1, -0.3);
-        const v = vecClamp(v0, vecSplat(-0.5), vecSplat(0.5));
-        const vf = vecClampFast(v0, vecSplat(-0.5), vecSplat(0.5));
-        try check(vec4ApproxEqAbs(v, vecSet(-0.5, 0.2, 0.5, -0.3), 0.0001));
-        try check(vec4ApproxEqAbs(vf, vecSet(-0.5, 0.2, 0.5, -0.3), 0.0001));
-    }
-    {
-        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.nan_f32, math.qnan_f32);
-        const v = vecClamp(v0, vecSet(-100.0, 0.0, -100.0, 0.0), vecSet(0.0, 100.0, 0.0, 100.0));
-        try check(vec4ApproxEqAbs(v, vecSet(-100.0, 100.0, -100.0, 0.0), 0.0001));
-    }
-
-    {
-        const v0 = vecSet(math.inf_f32, math.inf_f32, -math.nan_f32, -math.qnan_f32);
-        const v = vecClamp(v0, vecSplat(-1.0), vecSplat(1.0));
-        try check(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, -1.0, -1.0), 0.0001));
-    }
-}
-
-test "vecRcpSqrt" {
-    {
-        const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
-        const v = vecRcpSqrt(v0);
-        const vf = vecRcpSqrtFast(v0);
-        try check(vec4ApproxEqAbs(v, vf, 0.0005));
-    }
-    {
-        const v0 = vecSet(math.inf_f32, 0.2, 123.1, math.nan_f32);
-        const v = vecRcpSqrt(v0);
-        try check(vec3ApproxEqAbs(v, vecSet(0.0, 1.0 / math.sqrt(0.2), 1.0 / math.sqrt(123.1), 0.0), 0.0005));
-        try check(math.isNan(v[3]));
-    }
-}
-
-test "vecRcp" {
-    {
-        const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
-        const v = vecRcp(v0);
-        const vf = vecRcpFast(v0);
-        try check(vec4ApproxEqAbs(v, vf, 0.0005));
-    }
-    {
-        const v0 = vecSet(math.inf_f32, -math.inf_f32, math.qnan_f32, math.nan_f32);
-        const v = vecRcp(v0);
-        try check(vec2ApproxEqAbs(v, vecSet(0.0, 0.0, 0.0, 0.0), 0.0005));
-        try check(math.isNan(v[2]));
-        try check(math.isNan(v[3]));
-    }
-}
-
-test "vec3Equal" {
-    {
-        const v0 = vecSet(1.0, math.inf_f32, -3.0, 1000.001);
-        const v1 = vecSet(1.0, math.inf_f32, -3.0, 4.0);
-        try check(vec3Equal(v0, v1));
-    }
-}
-
-test "vec3NearEqual" {
-    {
-        const v0 = vecSet(1.0, 2.0, -3.0001, 1000.001);
-        const v1 = vecSet(1.0, 2.001, -3.0, 4.0);
-        try check(vec3NearEqual(v0, v1, vecSplat(0.01)));
-    }
-}
-
-test "vec4InBounds" {
-    {
-        const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
-        const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
-        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
-        try check(vec4InBounds(v0, bounds) == true);
-        try check(vec4InBounds(v1, bounds) == false);
-    }
-    {
-        const v0 = vecSet(10000.0, -1000.0, -1.0, 2.0);
-        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
-        try check(vec4InBounds(v0, bounds) == true);
-    }
-}
-
-test "vec3InBounds" {
-    {
-        const v0 = vecSet(0.5, -2.0, -1.0, 1000.0);
-        const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
-        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
-        try check(vec3InBounds(v0, bounds) == true);
-        try check(vec3InBounds(v1, bounds) == false);
-    }
-    {
-        const v0 = vecSet(10000.0, -1000.0, -1.0, 1000.0);
-        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
-        try check(vec3InBounds(v0, bounds) == true);
-    }
 }
