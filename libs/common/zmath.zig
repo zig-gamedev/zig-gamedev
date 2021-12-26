@@ -7,44 +7,7 @@ const has_avx = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cp
 
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
-pub const VecU32 = @Vector(4, u32);
-
-//
-// VecBool functions
-//
-// vecBoolAnd(b0: VecBool, b1: VecBool) VecBool
-// vecBoolOr(b0: VecBool, b1: VecBool) VecBool
-// vecBoolAllTrue(b: VecBool) bool
-// vecBoolEqual(b: VecBool) bool
-pub inline fn vecBoolAnd(b0: VecBool, b1: VecBool) VecBool {
-    // andps
-    return [4]bool{ b0[0] and b1[0], b0[1] and b1[1], b0[2] and b1[2], b0[3] and b1[3] };
-}
-test "zmath.vecBoolAnd" {
-    const b0 = vecBoolSet(true, false, true, false);
-    const b1 = vecBoolSet(true, true, false, false);
-    const b = vecBoolAnd(b0, b1);
-    try check(b[0] == true and b[1] == false and b[2] == false and b[3] == false);
-}
-
-pub inline fn vecBoolOr(b0: VecBool, b1: VecBool) VecBool {
-    // orps
-    return [4]bool{ b0[0] or b1[0], b0[1] or b1[1], b0[2] or b1[2], b0[3] or b1[3] };
-}
-test "zmath.vecBoolOr" {
-    const b0 = vecBoolSet(true, false, true, false);
-    const b1 = vecBoolSet(true, true, false, false);
-    const b = vecBoolOr(b0, b1);
-    try check(b[0] == true and b[1] == true and b[2] == true and b[3] == false);
-}
-
-pub inline fn vecBoolAllTrue(b: VecBool) bool {
-    return @reduce(.And, b);
-}
-
-pub inline fn vecBoolEqual(b0: VecBool, b1: VecBool) bool {
-    return vecBoolAllTrue(b0 == b1);
-}
+const VecU32 = @Vector(4, u32);
 
 //
 // General Vec functions (always work on all vector components)
@@ -812,6 +775,44 @@ pub inline fn vecLerp(v0: Vec, v1: Vec, t: f32) Vec {
 pub inline fn vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec {
     // subps, addps, mulps
     return v0 + (v1 - v0) * t;
+}
+
+//
+// VecBool functions
+//
+// vecBoolAnd(b0: VecBool, b1: VecBool) VecBool
+// vecBoolOr(b0: VecBool, b1: VecBool) VecBool
+// vecBoolAllTrue(b: VecBool) bool
+// vecBoolEqual(b: VecBool) bool
+
+pub inline fn vecBoolAnd(b0: VecBool, b1: VecBool) VecBool {
+    // andps
+    return [4]bool{ b0[0] and b1[0], b0[1] and b1[1], b0[2] and b1[2], b0[3] and b1[3] };
+}
+test "zmath.vecBoolAnd" {
+    const b0 = vecBoolSet(true, false, true, false);
+    const b1 = vecBoolSet(true, true, false, false);
+    const b = vecBoolAnd(b0, b1);
+    try check(b[0] == true and b[1] == false and b[2] == false and b[3] == false);
+}
+
+pub inline fn vecBoolOr(b0: VecBool, b1: VecBool) VecBool {
+    // orps
+    return [4]bool{ b0[0] or b1[0], b0[1] or b1[1], b0[2] or b1[2], b0[3] or b1[3] };
+}
+test "zmath.vecBoolOr" {
+    const b0 = vecBoolSet(true, false, true, false);
+    const b1 = vecBoolSet(true, true, false, false);
+    const b = vecBoolOr(b0, b1);
+    try check(b[0] == true and b[1] == true and b[2] == true and b[3] == false);
+}
+
+pub inline fn vecBoolAllTrue(b: VecBool) bool {
+    return @reduce(.And, b);
+}
+
+pub inline fn vecBoolEqual(b0: VecBool, b1: VecBool) bool {
+    return vecBoolAllTrue(b0 == b1);
 }
 
 //
