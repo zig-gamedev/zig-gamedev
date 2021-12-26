@@ -50,6 +50,7 @@ pub inline fn vecBoolEqual(b0: VecBool, b1: VecBool) bool {
 // General Vec functions (always work on all vector components)
 //
 // vecZero() Vec
+// vecU32Zero() VecU32
 // vecSet(x: f32, y: f32, z: f32, w: f32) Vec
 // vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec
 // vecSplat(value: f32) Vec
@@ -107,6 +108,10 @@ pub inline fn vecZero() Vec {
 test "zmath.vecZero" {
     const v = vecZero();
     try check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
+}
+
+pub inline fn vecU32Zero() VecU32 {
+    return @splat(4, @as(u32, 0));
 }
 
 pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
@@ -179,9 +184,7 @@ pub inline fn vecSplatEpsilon() Vec { return vecSplat(math.epsilon_f32); }
 pub inline fn vecSplatNoFraction() Vec { return vecSplat(8_388_608.0); }
 pub inline fn vecSplat_0x8000_0000() Vec { return vecSplatInt(0x8000_0000); }
 pub inline fn vecSplat_0x7fff_ffff() Vec { return vecSplatInt(0x7fff_ffff); }
-
 pub inline fn vecU32Splat_0xffff_ffff() VecU32 { return @splat(4, ~@as(u32, 0)); }
-pub inline fn vecU32Splat_0x0000_0000() VecU32 { return @splat(4, @as(u32, 0)); }
 // zig fmt: on
 
 pub inline fn vecSplatInt(value: u32) Vec {
@@ -1169,8 +1172,8 @@ pub inline fn vec3InBounds(v: Vec, bounds: Vec) bool {
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
-        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
+        const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Zero());
+        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Zero());
         const b = b0 & b1;
         return b[0] > 0 and b[1] > 0 and b[2] > 0;
 
@@ -1214,6 +1217,12 @@ test "zmath.vec3Dot" {
 //
 // Vec4 functions
 //
+// vec4Equal(v0: Vec, v1: Vec) bool
+// vec4EqualInt(v0: Vec, v1: Vec) bool
+// vec4Less(v0: Vec, v1: Vec) bool
+// vec4LessOrEqual(v0: Vec, v1: Vec) bool
+// vec4Greater(v0: Vec, v1: Vec) bool
+// vec4GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec4InBounds(v: Vec, bounds: Vec) bool
 
 pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
@@ -1247,8 +1256,8 @@ pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
         );
     } else {
         // 2 x cmpleps, movmskps, andps, xorps, pslld, load
-        const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
-        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
+        const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Zero());
+        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Zero());
         const b = b0 & b1;
         return b[0] > 0 and b[1] > 0 and b[2] > 0 and b[3] > 0;
     }
@@ -1266,6 +1275,38 @@ test "zmath.vec4InBounds" {
         const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
         try check(vec4InBounds(v0, bounds) == true);
     }
+}
+
+pub inline fn vec4Equal(v0: Vec, v1: Vec) bool {
+    const mask = v0 == v1;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4EqualInt(v0: Vec, v1: Vec) bool {
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    const mask = v0u == v1u;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4Less(v0: Vec, v1: Vec) bool {
+    const mask = v0 < v1;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4LessOrEqual(v0: Vec, v1: Vec) bool {
+    const mask = v0 <= v1;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4Greater(v0: Vec, v1: Vec) bool {
+    const mask = v0 > v1;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4GreaterOrEqual(v0: Vec, v1: Vec) bool {
+    const mask = v0 >= v1;
+    return @reduce(.And, mask);
 }
 
 //
