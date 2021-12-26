@@ -354,6 +354,7 @@ pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
               [v1] "{xmm1}" (v1),
         );
     } else {
+        // NOTE(mziulek): Generated code is not optimal
         const mask = v0 == v1;
         return mask[0] and mask[1] and mask[2];
     }
@@ -378,6 +379,7 @@ pub inline fn vec3EqualInt(v0: Vec, v1: Vec) bool {
               [v1] "{xmm1}" (v1),
         );
     } else {
+        // NOTE(mziulek): Generated code is not optimal
         const v0u = @bitCast(VecU32, v0);
         const v1u = @bitCast(VecU32, v1);
         const mask = v0u == v1u;
@@ -414,6 +416,7 @@ pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
               [epsilon] "{xmm2}" (epsilon),
         );
     } else {
+        // NOTE(mziulek): Generated code is not optimal
         const mask = vecNearEqual(v0, v1, epsilon);
         return mask[0] and mask[1] and mask[2];
     }
@@ -438,6 +441,7 @@ pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
               [v1] "{xmm1}" (v1),
         );
     } else {
+        // NOTE(mziulek): Generated code is not optimal
         const mask = v0 < v1;
         return mask[0] and mask[1] and mask[2];
     }
@@ -462,6 +466,7 @@ pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
               [v1] "{xmm1}" (v1),
         );
     } else {
+        // NOTE(mziulek): Generated code is not optimal
         const mask = v0 <= v1;
         return mask[0] and mask[1] and mask[2];
     }
@@ -486,6 +491,7 @@ pub inline fn vec3Greater(v0: Vec, v1: Vec) bool {
               [v1] "{xmm1}" (v1),
         );
     } else {
+        // NOTE(mziulek): Generated code is not optimal
         const mask = v0 > v1;
         return mask[0] and mask[1] and mask[2];
     }
@@ -510,8 +516,53 @@ pub inline fn vec3GreaterOrEqual(v0: Vec, v1: Vec) bool {
               [v1] "{xmm1}" (v1),
         );
     } else {
+        // NOTE(mziulek): Generated code is not optimal
         const mask = v0 >= v1;
         return mask[0] and mask[1] and mask[2];
+    }
+}
+
+pub inline fn vec3InBounds(v: Vec, bounds: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const x8000_0000 = vecSplat_0x8000_0000();
+        const code = if (has_avx)
+            \\  vmovaps     %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\  vxorps      %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
+            \\  vcmpleps    %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
+            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
+            \\  vandps      %%xmm2, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  cmp         $7, %%al
+            \\  sete        %%al
+        else
+            \\  movaps      %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\  xorps       %[x8000_0000], %%xmm2           # xmm2 = -bounds
+            \\  cmpleps     %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
+            \\  cmpleps     %%xmm1, %%xmm0                  # xmm0 = v <= bounds
+            \\  andps       %%xmm2, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  cmp         $7, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v] "{xmm0}" (v),
+              [bounds] "{xmm1}" (bounds),
+              [x8000_0000] "{memory}" (x8000_0000),
+            : "xmm2"
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const b0 = @select(u32, v <= bounds, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
+        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, vecU32Splat_0xffff_ffff(), vecU32Splat_0x0000_0000());
+        const b = b0 & b1;
+        return b[0] > 0 and b[1] > 0 and b[2] > 0;
+
+        // I've also tried this (generated asm is different but still not great):
+        // const b0 = v <= bounds;
+        // const b1 = bounds * vecSplat(-1.0) <= v;
+        // const b = vecBoolAnd(b0, b1);
+        // return b[0] and b[1] and b[2];
     }
 }
 
@@ -1077,4 +1128,12 @@ test "vec4InBounds" {
     const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
     try check(vec4InBounds(v0, bounds) == true);
     try check(vec4InBounds(v1, bounds) == false);
+}
+
+test "vec3InBounds" {
+    const v0 = vecSet(0.5, -2.0, -1.0, 1000.0);
+    const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
+    const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+    try check(vec3InBounds(v0, bounds) == true);
+    try check(vec3InBounds(v1, bounds) == false);
 }
