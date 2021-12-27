@@ -888,6 +888,323 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 }
 
 //
+// Vec2 functions
+//
+// vec2Equal(v0: Vec, v1: Vec) bool
+// vec2EqualInt(v0: Vec, v1: Vec) bool
+// vec2NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool
+// vec2Less(v0: Vec, v1: Vec) bool
+// vec2LessOrEqual(v0: Vec, v1: Vec) bool
+// vec2Greater(v0: Vec, v1: Vec) bool
+// vec2GreaterOrEqual(v0: Vec, v1: Vec) bool
+// vec2InBounds(v: Vec, bounds: Vec) bool
+// vec2Dot(v0: Vec, v1: Vec) Vec
+
+pub inline fn vec2Equal(v0: Vec, v1: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vcmpeqps    %%xmm1, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+        else
+            \\  cmpeqps     %%xmm1, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v0] "{xmm0}" (v0),
+              [v1] "{xmm1}" (v1),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const mask = v0 == v1;
+        return mask[0] and mask[1];
+    }
+}
+test "zmath.vec2Equal" {
+    {
+        const v0 = vecSet(1.0, math.inf_f32, -3.0, 1000.001);
+        const v1 = vecSet(1.0, math.inf_f32, -6.0, 4.0);
+        try check(vec2Equal(v0, v1));
+    }
+}
+
+pub inline fn vec2EqualInt(v0: Vec, v1: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vpcmpeqd    %%xmm1, %%xmm0, %xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+        else
+            \\  pcmpeqd     %%xmm1, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v0] "{xmm0}" (v0),
+              [v1] "{xmm1}" (v1),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const v0u = @bitCast(VecU32, v0);
+        const v1u = @bitCast(VecU32, v1);
+        const mask = v0u == v1u;
+        return mask[0] and mask[1];
+    }
+}
+
+pub inline fn vec2NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
+    // Won't handle inf & nan
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vsubps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = delta
+            \\  vxorps      %%xmm1, %%xmm1, %%xmm1  # xmm1 = 0
+            \\  vsubps      %%xmm0, %%xmm1, %%xmm1  # xmm1 = 0 - delta
+            \\  vmaxps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
+            \\  vcmpleps    %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+        else
+            \\  subps       %%xmm1, %%xmm0          # xmm0 = delta
+            \\  xorps       %%xmm1, %%xmm1          # xmm1 = 0
+            \\  subps       %%xmm0, %%xmm1          # xmm1 = 0 - delta
+            \\  maxps       %%xmm1, %%xmm0          # xmm0 = abs(delta)
+            \\  cmpleps     %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
+            \\  movmskps    %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v0] "{xmm0}" (v0),
+              [v1] "{xmm1}" (v1),
+              [epsilon] "{xmm2}" (epsilon),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const mask = vecNearEqual(v0, v1, epsilon);
+        return mask[0] and mask[1];
+    }
+}
+test "zmath.vec2NearEqual" {
+    {
+        const v0 = vecSet(1.0, 2.0, -6.0001, 1000.001);
+        const v1 = vecSet(1.0, 2.001, -3.0, 4.0);
+        const v2 = vecSet(1.001, 2.001, -3.001, 4.001);
+        try check(vec2NearEqual(v0, v1, vecSplat(0.01)));
+        try check(vec2NearEqual(v2, v1, vecSplat(0.01)));
+    }
+}
+
+pub inline fn vec2Less(v0: Vec, v1: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vcmpltps    %%xmm1, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+        else
+            \\  cmpltps     %%xmm1, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v0] "{xmm0}" (v0),
+              [v1] "{xmm1}" (v1),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const mask = v0 < v1;
+        return mask[0] and mask[1];
+    }
+}
+test "zmath.vec2Less" {
+    const v0 = vecSet(-1.0, 2.0, 3.0, 5.0);
+    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
+    try check(vec2Less(v0, v1) == true);
+
+    const v2 = vecSet(-1.0, 2.0, 3.0, 5.0);
+    const v3 = vecSet(4.0, -5.0, 6.0, 1.0);
+    try check(vec2Less(v2, v3) == false);
+
+    const v4 = vecSet(100.0, 200.0, 300.0, 50000.0);
+    const v5 = vecSet(400.0, 500.0, 600.0, 1.0);
+    try check(vec2Less(v4, v5) == true);
+
+    const v6 = vecSet(100.0, -math.inf_f32, -math.inf_f32, 50000.0);
+    const v7 = vecSet(400.0, math.inf_f32, 600.0, 1.0);
+    try check(vec2Less(v6, v7) == true);
+}
+
+pub inline fn vec2LessOrEqual(v0: Vec, v1: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+        else
+            \\  cmpleps     %%xmm1, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v0] "{xmm0}" (v0),
+              [v1] "{xmm1}" (v1),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const mask = v0 <= v1;
+        return mask[0] and mask[1];
+    }
+}
+
+pub inline fn vec2Greater(v0: Vec, v1: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vcmpgtps    %%xmm1, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+        else
+            \\  cmpgtps     %%xmm1, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v0] "{xmm0}" (v0),
+              [v1] "{xmm1}" (v1),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const mask = v0 > v1;
+        return mask[0] and mask[1];
+    }
+}
+
+pub inline fn vec2GreaterOrEqual(v0: Vec, v1: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vcmpgeps    %%xmm1, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+        else
+            \\  cmpgeps     %%xmm1, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v0] "{xmm0}" (v0),
+              [v1] "{xmm1}" (v1),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const mask = v0 >= v1;
+        return mask[0] and mask[1];
+    }
+}
+
+pub inline fn vec2InBounds(v: Vec, bounds: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vmovaps     %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\  vxorps      %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
+            \\  vcmpleps    %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
+            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
+            \\  vandps      %%xmm2, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+        else
+            \\  movaps      %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\  xorps       %[x8000_0000], %%xmm2           # xmm2 = -bounds
+            \\  cmpleps     %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
+            \\  cmpleps     %%xmm1, %%xmm0                  # xmm0 = v <= bounds
+            \\  andps       %%xmm2, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  and         $3, %%al
+            \\  cmp         $3, %%al
+            \\  sete        %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v] "{xmm0}" (v),
+              [bounds] "{xmm1}" (bounds),
+              [x8000_0000] "{memory}" (f32x4_0x8000_0000),
+            : "xmm2"
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const b0 = @select(u32, v <= bounds, u32x4_0xffff_ffff, vecU32Zero());
+        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, u32x4_0xffff_ffff, vecU32Zero());
+        const b = b0 & b1;
+        return b[0] > 0 and b[1] > 0;
+
+        // I've also tried this (generated asm is different but still not great):
+        // const b0 = v <= bounds;
+        // const b1 = bounds * vecSplat(-1.0) <= v;
+        // const b = vecBoolAnd(b0, b1);
+        // return b[0] and b[1];
+    }
+}
+test "zmath.vec2InBounds" {
+    {
+        const v0 = vecSet(0.5, -2.0, -100.0, 1000.0);
+        const v1 = vecSet(-1.6, -2.001, 1.0, 1.9);
+        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
+        try check(vec2InBounds(v0, bounds) == true);
+        try check(vec2InBounds(v1, bounds) == false);
+    }
+    {
+        const v0 = vecSet(10000.0, -1000.0, -10.0, 1000.0);
+        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
+        try check(vec2InBounds(v0, bounds) == true);
+    }
+}
+
+pub inline fn vec2Dot(v0: Vec, v1: Vec) Vec {
+    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
+    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 0, 0 }); // | y0*y1 | -- | -- | -- |
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
+    return vecSplatX(xmm0);
+}
+test "zmath.vec2Dot" {
+    const v0 = vecSet(-1.0, 2.0, 300.0, -2.0);
+    const v1 = vecSet(4.0, 5.0, 600.0, 2.0);
+    var v = vec2Dot(v0, v1);
+    try check(vec4ApproxEqAbs(v, vecSplat(6.0), 0.0001));
+}
+
+//
 // Vec3 functions
 //
 // vec3Equal(v0: Vec, v1: Vec) bool
@@ -905,11 +1222,13 @@ pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
         const code = if (has_avx)
             \\  vcmpeqps    %%xmm1, %%xmm0, %%xmm0
             \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
         else
             \\  cmpeqps     %%xmm1, %%xmm0
             \\  movmskps    %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
             ;
@@ -937,11 +1256,13 @@ pub inline fn vec3EqualInt(v0: Vec, v1: Vec) bool {
         const code = if (has_avx)
             \\  vpcmpeqd    %%xmm1, %%xmm0, %xmm0
             \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
         else
             \\  pcmpeqd     %%xmm1, %%xmm0
             \\  movmskps    %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
             ;
@@ -969,6 +1290,7 @@ pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
             \\  vmaxps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
             \\  vcmpleps    %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
             \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
         else
@@ -978,6 +1300,7 @@ pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
             \\  maxps       %%xmm1, %%xmm0          # xmm0 = abs(delta)
             \\  cmpleps     %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
             \\  movmskps    %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
             ;
@@ -1006,11 +1329,13 @@ pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
         const code = if (has_avx)
             \\  vcmpltps    %%xmm1, %%xmm0, %%xmm0
             \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
         else
             \\  cmpltps     %%xmm1, %%xmm0
             \\  movmskps    %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
             ;
@@ -1034,7 +1359,7 @@ test "zmath.vec3Less" {
     const v3 = vecSet(4.0, -5.0, 6.0, 1.0);
     try check(vec3Less(v2, v3) == false);
 
-    const v4 = vecSet(100.0, 200.0, 300.0, 50000.0);
+    const v4 = vecSet(100.0, 200.0, 300.0, -500.0);
     const v5 = vecSet(400.0, 500.0, 600.0, 1.0);
     try check(vec3Less(v4, v5) == true);
 
@@ -1048,11 +1373,13 @@ pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
         const code = if (has_avx)
             \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0
             \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
         else
             \\  cmpleps     %%xmm1, %%xmm0
             \\  movmskps    %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
             ;
@@ -1073,11 +1400,13 @@ pub inline fn vec3Greater(v0: Vec, v1: Vec) bool {
         const code = if (has_avx)
             \\  vcmpgtps    %%xmm1, %%xmm0, %%xmm0
             \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
         else
             \\  cmpgtps     %%xmm1, %%xmm0
             \\  movmskps    %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
             ;
@@ -1098,11 +1427,13 @@ pub inline fn vec3GreaterOrEqual(v0: Vec, v1: Vec) bool {
         const code = if (has_avx)
             \\  vcmpgeps    %%xmm1, %%xmm0, %%xmm0
             \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
         else
             \\  cmpgeps     %%xmm1, %%xmm0
             \\  movmskps    %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
             ;
@@ -1127,6 +1458,7 @@ pub inline fn vec3InBounds(v: Vec, bounds: Vec) bool {
             \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
             \\  vandps      %%xmm2, %%xmm0, %%xmm0
             \\  vmovmskps   %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
         else
@@ -1136,6 +1468,7 @@ pub inline fn vec3InBounds(v: Vec, bounds: Vec) bool {
             \\  cmpleps     %%xmm1, %%xmm0                  # xmm0 = v <= bounds
             \\  andps       %%xmm2, %%xmm0
             \\  movmskps    %%xmm0, %%eax
+            \\  and         $7, %%al
             \\  cmp         $7, %%al
             \\  sete        %%al
             ;
@@ -1162,11 +1495,13 @@ pub inline fn vec3InBounds(v: Vec, bounds: Vec) bool {
 }
 test "zmath.vec3InBounds" {
     {
-        const v0 = vecSet(0.5, -2.0, -1.0, 1000.0);
-        const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
+        const v0 = vecSet(0.5, -2.0, -1.0, 1.0);
+        const v1 = vecSet(-1.6, 1.1, -0.1, 2.9);
+        const v2 = vecSet(0.5, -2.0, -1.0, 10.0);
         const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
         try check(vec3InBounds(v0, bounds) == true);
         try check(vec3InBounds(v1, bounds) == false);
+        try check(vec3InBounds(v2, bounds) == true);
     }
     {
         const v0 = vecSet(10000.0, -1000.0, -1.0, 1000.0);
@@ -1195,11 +1530,52 @@ test "zmath.vec3Dot" {
 //
 // vec4Equal(v0: Vec, v1: Vec) bool
 // vec4EqualInt(v0: Vec, v1: Vec) bool
+// vec4NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool
 // vec4Less(v0: Vec, v1: Vec) bool
 // vec4LessOrEqual(v0: Vec, v1: Vec) bool
 // vec4Greater(v0: Vec, v1: Vec) bool
 // vec4GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec4InBounds(v: Vec, bounds: Vec) bool
+// vec4Dot(v0: Vec, v1: Vec) Vec
+
+pub inline fn vec4Equal(v0: Vec, v1: Vec) bool {
+    const mask = v0 == v1;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4EqualInt(v0: Vec, v1: Vec) bool {
+    const v0u = @bitCast(VecU32, v0);
+    const v1u = @bitCast(VecU32, v1);
+    const mask = v0u == v1u;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
+    // Won't handle inf & nan
+    const delta = v0 - v1;
+    const temp = vecMaxFast(delta, vecZero() - delta);
+    return @reduce(.And, temp <= epsilon);
+}
+
+pub inline fn vec4Less(v0: Vec, v1: Vec) bool {
+    const mask = v0 < v1;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4LessOrEqual(v0: Vec, v1: Vec) bool {
+    const mask = v0 <= v1;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4Greater(v0: Vec, v1: Vec) bool {
+    const mask = v0 > v1;
+    return @reduce(.And, mask);
+}
+
+pub inline fn vec4GreaterOrEqual(v0: Vec, v1: Vec) bool {
+    const mask = v0 >= v1;
+    return @reduce(.And, mask);
+}
 
 pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1252,36 +1628,19 @@ test "zmath.vec4InBounds" {
     }
 }
 
-pub inline fn vec4Equal(v0: Vec, v1: Vec) bool {
-    const mask = v0 == v1;
-    return @reduce(.And, mask);
+pub inline fn vec4Dot(v0: Vec, v1: Vec) Vec {
+    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
+    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 3, 0 }); // | y0*y1 | -- | w0*w1 | -- |
+    xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
+    xmm0 = @shuffle(f32, xmm1, undefined, [4]i32{ 2, 0, 0, 0 }); // | z0*z1 + w0*w1 | -- | -- | -- |
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2]); // addss
+    return vecSplatX(xmm0);
 }
-
-pub inline fn vec4EqualInt(v0: Vec, v1: Vec) bool {
-    const v0u = @bitCast(VecU32, v0);
-    const v1u = @bitCast(VecU32, v1);
-    const mask = v0u == v1u;
-    return @reduce(.And, mask);
-}
-
-pub inline fn vec4Less(v0: Vec, v1: Vec) bool {
-    const mask = v0 < v1;
-    return @reduce(.And, mask);
-}
-
-pub inline fn vec4LessOrEqual(v0: Vec, v1: Vec) bool {
-    const mask = v0 <= v1;
-    return @reduce(.And, mask);
-}
-
-pub inline fn vec4Greater(v0: Vec, v1: Vec) bool {
-    const mask = v0 > v1;
-    return @reduce(.And, mask);
-}
-
-pub inline fn vec4GreaterOrEqual(v0: Vec, v1: Vec) bool {
-    const mask = v0 >= v1;
-    return @reduce(.And, mask);
+test "zmath.vec4Dot" {
+    const v0 = vecSet(-1.0, 2.0, 3.0, -2.0);
+    const v1 = vecSet(4.0, 5.0, 6.0, 2.0);
+    var v = vec4Dot(v0, v1);
+    try check(vec4ApproxEqAbs(v, vecSplat(20.0), 0.0001));
 }
 
 //
