@@ -241,7 +241,7 @@ test "zmath.vecIsNan" {
 }
 
 pub inline fn vecIsInf(v: Vec) VecBool {
-    return vecAndInt(v, f32x4_0x7fff_ffff) == f32x4_inf;
+    return vecAbs(v) == f32x4_inf;
 }
 test "zmath.vecIsInf" {
     const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
@@ -959,8 +959,9 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 // vec2Greater(v0: Vec, v1: Vec) bool
 // vec2GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec2InBounds(v: Vec, bounds: Vec) bool
-// vec2Dot(v0: Vec, v1: Vec) Vec
 // vec2IsNan(v: Vec) bool
+// vec2IsInf(v: Vec) bool {
+// vec2Dot(v0: Vec, v1: Vec) Vec
 
 pub inline fn vec2Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1253,19 +1254,6 @@ test "zmath.vec2InBounds" {
     }
 }
 
-pub inline fn vec2Dot(v0: Vec, v1: Vec) Vec {
-    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
-    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 0, 0 }); // | y0*y1 | -- | -- | -- |
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
-    return vecSplatX(xmm0);
-}
-test "zmath.vec2Dot" {
-    const v0 = vecSet(-1.0, 2.0, 300.0, -2.0);
-    const v1 = vecSet(4.0, 5.0, 600.0, 2.0);
-    var v = vec2Dot(v0, v1);
-    try check(vec4ApproxEqAbs(v, vecSplat(6.0), 0.0001));
-}
-
 pub inline fn vec2IsNan(v: Vec) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
@@ -1298,6 +1286,47 @@ test "zmath.vec2IsNan" {
     try check(vec2IsNan(vecSet(-1.0, 1.0, 3.0, math.qnan_f32)) == false);
 }
 
+pub inline fn vec2IsInf(v: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vandps      %[x7fff_ffff], %%xmm0, %%xmm0
+            \\  vcmpeqps    %[inf], %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  test        $3, %%al
+            \\  setne       %%al
+        else
+            \\  andps       %[x7fff_ffff], %%xmm0
+            \\  cmpeqps     %[inf], %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  test        $3, %%al
+            \\  setne       %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v] "{xmm0}" (v),
+              [x7fff_ffff] "{memory}" (f32x4_0x7fff_ffff),
+              [inf] "{memory}" (f32x4_inf),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const b = vecIsInf(v);
+        return b[0] or b[1];
+    }
+}
+
+pub inline fn vec2Dot(v0: Vec, v1: Vec) Vec {
+    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
+    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 0, 0 }); // | y0*y1 | -- | -- | -- |
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
+    return vecSplatX(xmm0);
+}
+test "zmath.vec2Dot" {
+    const v0 = vecSet(-1.0, 2.0, 300.0, -2.0);
+    const v1 = vecSet(4.0, 5.0, 600.0, 2.0);
+    var v = vec2Dot(v0, v1);
+    try check(vec4ApproxEqAbs(v, vecSplat(6.0), 0.0001));
+}
+
 //
 // Vec3 functions
 //
@@ -1309,8 +1338,9 @@ test "zmath.vec2IsNan" {
 // vec3Greater(v0: Vec, v1: Vec) bool
 // vec3GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec3InBounds(v: Vec, bounds: Vec) bool
-// vec3Dot(v0: Vec, v1: Vec) Vec
 // vec3IsNan(v: Vec) bool
+// vec3IsInf(v: Vec) bool
+// vec3Dot(v0: Vec, v1: Vec) Vec
 
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1605,21 +1635,6 @@ test "zmath.vec3InBounds" {
     }
 }
 
-pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
-    var dot = v0 * v1;
-    var temp = @shuffle(f32, dot, undefined, [4]i32{ 1, 2, 1, 2 });
-    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
-    temp = @shuffle(f32, temp, undefined, [4]i32{ 1, 1, 1, 1 });
-    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
-    return vecSplatX(dot);
-}
-test "zmath.vec3Dot" {
-    const v0 = vecSet(-1.0, 2.0, 3.0, 1.0);
-    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
-    var v = vec3Dot(v0, v1);
-    try check(vec4ApproxEqAbs(v, vecSplat(24.0), 0.0001));
-}
-
 pub inline fn vec3IsNan(v: Vec) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
@@ -1652,6 +1667,62 @@ test "zmath.vec3IsNan" {
     try check(vec3IsNan(vecSet(-1.0, 1.0, 3.0, math.qnan_f32)) == false);
 }
 
+pub inline fn vec3IsInf(v: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vandps      %[x7fff_ffff], %%xmm0, %%xmm0
+            \\  vcmpeqps    %[inf], %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  test        $7, %%al
+            \\  setne       %%al
+        else
+            \\  andps       %[x7fff_ffff], %%xmm0
+            \\  cmpeqps     %[inf], %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  test        $7, %%al
+            \\  setne       %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v] "{xmm0}" (v),
+              [x7fff_ffff] "{memory}" (f32x4_0x7fff_ffff),
+              [inf] "{memory}" (f32x4_inf),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const b = vecIsInf(v);
+        return b[0] or b[1] or b[2];
+    }
+}
+test "zmath.vec3IsInf" {
+    try check(vec3IsInf(vecSplat(math.inf_f32)) == true);
+    try check(vec3IsInf(vecSplat(-math.inf_f32)) == true);
+    try check(vec3IsInf(vecSplat(math.nan_f32)) == false);
+    try check(vec3IsInf(vecSplat(-math.nan_f32)) == false);
+    try check(vec3IsInf(vecSplat(math.qnan_f32)) == false);
+    try check(vec3IsInf(vecSplat(-math.qnan_f32)) == false);
+    try check(vec3IsInf(vecSet(1.0, 2.0, 3.0, 4.0)) == false);
+    try check(vec3IsInf(vecSet(1.0, 2.0, 3.0, math.inf_f32)) == false);
+    try check(vec3IsInf(vecSet(1.0, 2.0, math.inf_f32, 1.0)) == true);
+    try check(vec3IsInf(vecSet(-math.inf_f32, math.inf_f32, math.inf_f32, 1.0)) == true);
+    try check(vec3IsInf(vecSet(-math.inf_f32, math.nan_f32, math.inf_f32, 1.0)) == true);
+}
+
+pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
+    var dot = v0 * v1;
+    var temp = @shuffle(f32, dot, undefined, [4]i32{ 1, 2, 1, 2 });
+    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
+    temp = @shuffle(f32, temp, undefined, [4]i32{ 1, 1, 1, 1 });
+    dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
+    return vecSplatX(dot);
+}
+test "zmath.vec3Dot" {
+    const v0 = vecSet(-1.0, 2.0, 3.0, 1.0);
+    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
+    var v = vec3Dot(v0, v1);
+    try check(vec4ApproxEqAbs(v, vecSplat(24.0), 0.0001));
+}
+
 //
 // Vec4 functions
 //
@@ -1663,8 +1734,9 @@ test "zmath.vec3IsNan" {
 // vec4Greater(v0: Vec, v1: Vec) bool
 // vec4GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec4InBounds(v: Vec, bounds: Vec) bool
-// vec4Dot(v0: Vec, v1: Vec) Vec
 // vec4IsNan(v: Vec) bool
+// vec4IsInf(v: Vec) bool
+// vec4Dot(v0: Vec, v1: Vec) Vec
 
 pub inline fn vec4Equal(v0: Vec, v1: Vec) bool {
     const mask = v0 == v1;
@@ -1756,21 +1828,6 @@ test "zmath.vec4InBounds" {
     }
 }
 
-pub inline fn vec4Dot(v0: Vec, v1: Vec) Vec {
-    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
-    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 3, 0 }); // | y0*y1 | -- | w0*w1 | -- |
-    xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
-    xmm0 = @shuffle(f32, xmm1, undefined, [4]i32{ 2, 0, 0, 0 }); // | z0*z1 + w0*w1 | -- | -- | -- |
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2]); // addss
-    return vecSplatX(xmm0);
-}
-test "zmath.vec4Dot" {
-    const v0 = vecSet(-1.0, 2.0, 3.0, -2.0);
-    const v1 = vecSet(4.0, 5.0, 6.0, 2.0);
-    var v = vec4Dot(v0, v1);
-    try check(vec4ApproxEqAbs(v, vecSplat(20.0), 0.0001));
-}
-
 pub inline fn vec4IsNan(v: Vec) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
@@ -1798,6 +1855,27 @@ test "zmath.vec4IsNan" {
     try check(vec4IsNan(vecSet(-1.0, math.nan_f32, 3.0, -2.0)) == true);
     try check(vec4IsNan(vecSet(-1.0, 100.0, 3.0, -2.0)) == false);
     try check(vec4IsNan(vecSet(-1.0, math.inf_f32, 3.0, -2.0)) == false);
+}
+
+pub inline fn vec4IsInf(v: Vec) bool {
+    // andps, cmpeqps, movmskps, test, setne
+    const b = vecIsInf(v);
+    return b[0] or b[1] or b[2] or b[3];
+}
+
+pub inline fn vec4Dot(v0: Vec, v1: Vec) Vec {
+    var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
+    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 3, 0 }); // | y0*y1 | -- | w0*w1 | -- |
+    xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
+    xmm0 = @shuffle(f32, xmm1, undefined, [4]i32{ 2, 0, 0, 0 }); // | z0*z1 + w0*w1 | -- | -- | -- |
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2]); // addss
+    return vecSplatX(xmm0);
+}
+test "zmath.vec4Dot" {
+    const v0 = vecSet(-1.0, 2.0, 3.0, -2.0);
+    const v1 = vecSet(4.0, 5.0, 6.0, 2.0);
+    var v = vec4Dot(v0, v1);
+    try check(vec4ApproxEqAbs(v, vecSplat(20.0), 0.0001));
 }
 
 //
