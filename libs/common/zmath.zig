@@ -1723,6 +1723,36 @@ test "zmath.vec3Dot" {
     try check(vec4ApproxEqAbs(v, vecSplat(24.0), 0.0001));
 }
 
+pub inline fn vec3Cross(v0: Vec, v1: Vec) Vec {
+    var temp1 = @shuffle(f32, v0, undefined, [4]i32{ 1, 2, 0, 3 });
+    var temp2 = @shuffle(f32, v1, undefined, [4]i32{ 2, 0, 1, 3 });
+    var result = temp1 * temp2;
+    temp1 = @shuffle(f32, temp1, undefined, [4]i32{ 1, 2, 0, 3 });
+    temp2 = @shuffle(f32, temp2, undefined, [4]i32{ 2, 0, 1, 3 });
+    result = result - temp1 * temp2;
+    return @bitCast(Vec, @bitCast(VecU32, result) & u32x4_mask3);
+}
+test "zmath.vec3Cross" {
+    {
+        const v0 = vecSet(1.0, 0.0, 0.0, 1.0);
+        const v1 = vecSet(0.0, 1.0, 0.0, 1.0);
+        var v = vec3Cross(v0, v1);
+        try check(vec4ApproxEqAbs(v, vecSet(0.0, 0.0, 1.0, 0.0), 0.0001));
+    }
+    {
+        const v0 = vecSet(1.0, 0.0, 0.0, 1.0);
+        const v1 = vecSet(0.0, -1.0, 0.0, 1.0);
+        var v = vec3Cross(v0, v1);
+        try check(vec4ApproxEqAbs(v, vecSet(0.0, 0.0, -1.0, 0.0), 0.0001));
+    }
+    {
+        const v0 = vecSet(-3.0, 0, -2.0, 1.0);
+        const v1 = vecSet(5.0, -1.0, 2.0, 1.0);
+        var v = vec3Cross(v0, v1);
+        try check(vec4ApproxEqAbs(v, vecSet(-2.0, -4.0, 3.0, 0.0), 0.0001));
+    }
+}
+
 //
 // Vec4 functions
 //
@@ -1890,6 +1920,7 @@ const f32x4_nan: Vec = vecSplat(math.nan_f32);
 const f32x4_qnan: Vec = vecSplat(math.qnan_f32);
 const f32x4_epsilon: Vec = vecSplat(math.epsilon_f32);
 const f32x4_8_388_608: Vec = vecSplat(8_388_608.0);
+const u32x4_mask3: VecU32 = [4]u32{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
 
 inline fn vecU32Zero() VecU32 {
     return @splat(4, @as(u32, 0));
