@@ -973,6 +973,8 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 // vec2IsNan(v: Vec) bool
 // vec2IsInf(v: Vec) bool {
 // vec2Dot(v0: Vec, v1: Vec) Vec
+// vec2LengthSq(v: Vec) Vec
+// vec2RcpLengthFast(v: Vec) Vec
 
 pub inline fn vec2Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1338,6 +1340,24 @@ test "zmath.vec2Dot" {
     try check(vec4ApproxEqAbs(v, vecSplat(6.0), 0.0001));
 }
 
+pub inline fn vec2LengthSq(v: Vec) Vec {
+    return vec2Dot(v, v);
+}
+
+pub inline fn vec2RcpLengthFast(v: Vec) Vec {
+    var xmm0 = v * v; // | x*x | y*y | -- | -- |
+    var xmm1 = vecPermute(xmm0, [4]i32{ 1, 0, 0, 0 }); // | y*y | -- | -- | -- |
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + y*y | -- | -- | -- |
+    return vecRcpSqrtFast(vecSplatX(xmm0));
+}
+test "zmath.vec2RcpLengthFast" {
+    {
+        const v0 = vecSet(1.0, -2.0, 300.0, -400.0);
+        var v = vec2RcpLengthFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(5.0)), 0.001));
+    }
+}
+
 //
 // Vec3 functions
 //
@@ -1354,6 +1374,7 @@ test "zmath.vec2Dot" {
 // vec3Dot(v0: Vec, v1: Vec) Vec
 // vec3Cross(v0: Vec, v1: Vec) Vec
 // vec3LengthSq(v: Vec) Vec
+// vec3RcpLengthFast(v: Vec) Vec
 
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1800,6 +1821,8 @@ test "zmath.vec3RcpLengthFast" {
 // vec4IsNan(v: Vec) bool
 // vec4IsInf(v: Vec) bool
 // vec4Dot(v0: Vec, v1: Vec) Vec
+// vec4LengthSq(v: Vec) Vec
+// vec4RcpLengthFast(v: Vec) Vec
 
 pub inline fn vec4Equal(v0: Vec, v1: Vec) bool {
     const mask = v0 == v1;
@@ -1939,6 +1962,26 @@ test "zmath.vec4Dot" {
     const v1 = vecSet(4.0, 5.0, 6.0, 2.0);
     var v = vec4Dot(v0, v1);
     try check(vec4ApproxEqAbs(v, vecSplat(20.0), 0.0001));
+}
+
+pub inline fn vec4LengthSq(v: Vec) Vec {
+    return vec4Dot(v, v);
+}
+
+pub inline fn vec4RcpLengthFast(v: Vec) Vec {
+    var xmm0 = v * v; // | x*x | y*y | z*z | w*w |
+    var xmm1 = vecPermute(xmm0, [4]i32{ 2, 1, 2, 1 }); // | z*z | y*y | z*z | y*y |
+    xmm0 = xmm0 + xmm1; // | x*x + z*z | -- | -- | y*y + w*w |
+    xmm1 = vecPermute(xmm0, [4]i32{ 3, 0, 0, 0 }); // | y*y + w*w | -- | -- | -- |
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // addss
+    return vecRcpSqrtFast(vecSplatX(xmm0));
+}
+test "zmath.vec4RcpLengthFast" {
+    {
+        const v0 = vecSet(1.0, -2.0, 3.0, 4.0);
+        var v = vec4RcpLengthFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(30.0)), 0.001));
+    }
 }
 
 //
