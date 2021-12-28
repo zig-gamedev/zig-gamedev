@@ -388,21 +388,37 @@ test "zmath.vecInBounds" {
 }
 
 pub inline fn vecRound(v: Vec) Vec {
-    const sign = vecAndInt(v, f32x4_0x8000_0000);
-    const magic = vecOrInt(f32x4_8_388_608, sign);
-    var r1 = v + magic;
-    r1 = r1 - magic;
-    const r2 = vecAbs(v);
-    const mask = r2 <= f32x4_8_388_608;
-    return vecSelect(mask, r1, v);
+    if (cpu_arch == .x86_64 and has_avx) {
+        return asm ("vroundps $0, %%xmm0, %%xmm0"
+            : [ret] "={xmm0}" (-> Vec),
+            : [v] "{xmm0}" (v),
+        );
+    } else {
+        const sign = vecAndInt(v, f32x4_0x8000_0000);
+        const magic = vecOrInt(f32x4_8_388_608, sign);
+        var r1 = v + magic;
+        r1 = r1 - magic;
+        const r2 = vecAbs(v);
+        const mask = r2 <= f32x4_8_388_608;
+        return vecSelect(mask, r1, v);
+    }
 }
 test "zmath.vecRound" {
+    {
+        try check(vec4Equal(vecRound(vecSplat(math.inf_f32)), vecSplat(math.inf_f32)));
+        try check(vec4Equal(vecRound(vecSplat(-math.inf_f32)), vecSplat(-math.inf_f32)));
+        try check(vec4IsNan(vecRound(vecSplat(math.nan_f32))));
+        try check(vec4IsNan(vecRound(vecSplat(-math.nan_f32))));
+        try check(vec4IsNan(vecRound(vecSplat(math.qnan_f32))));
+        try check(vec4IsNan(vecRound(vecSplat(-math.qnan_f32))));
+    }
     const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
     var v = vecRound(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
 
     const v1 = vecSet(-10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
     v = vecRound(v1);
+    try check(v[3] == math.inf_f32);
     try check(vec4ApproxEqAbs(v, [4]f32{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
 
     const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
@@ -434,11 +450,26 @@ test "zmath.vecRound" {
 }
 
 pub inline fn vecTrunc(v: Vec) Vec {
-    const mask = vecAbs(v) < f32x4_8_388_608;
-    const result = vecFloatToIntAndBack(v);
-    return vecSelect(mask, result, v);
+    if (cpu_arch == .x86_64 and has_avx) {
+        return asm ("vroundps $3, %%xmm0, %%xmm0"
+            : [ret] "={xmm0}" (-> Vec),
+            : [v] "{xmm0}" (v),
+        );
+    } else {
+        const mask = vecAbs(v) < f32x4_8_388_608;
+        const result = vecFloatToIntAndBack(v);
+        return vecSelect(mask, result, v);
+    }
 }
 test "zmath.vecTrunc" {
+    {
+        try check(vec4Equal(vecTrunc(vecSplat(math.inf_f32)), vecSplat(math.inf_f32)));
+        try check(vec4Equal(vecTrunc(vecSplat(-math.inf_f32)), vecSplat(-math.inf_f32)));
+        try check(vec4IsNan(vecTrunc(vecSplat(math.nan_f32))));
+        try check(vec4IsNan(vecTrunc(vecSplat(-math.nan_f32))));
+        try check(vec4IsNan(vecTrunc(vecSplat(math.qnan_f32))));
+        try check(vec4IsNan(vecTrunc(vecSplat(-math.qnan_f32))));
+    }
     const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
     var v = vecTrunc(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -1.0, 1.0 }, 0.0));
@@ -476,14 +507,29 @@ test "zmath.vecTrunc" {
 }
 
 pub inline fn vecFloor(v: Vec) Vec {
-    const mask = vecAbs(v) < f32x4_8_388_608;
-    var result = vecFloatToIntAndBack(v);
-    const larger_mask = result > v;
-    const larger = vecSelect(larger_mask, vecSplat(-1.0), vecZero());
-    result = result + larger;
-    return vecSelect(mask, result, v);
+    if (cpu_arch == .x86_64 and has_avx) {
+        return asm ("vroundps $1, %%xmm0, %%xmm0"
+            : [ret] "={xmm0}" (-> Vec),
+            : [v] "{xmm0}" (v),
+        );
+    } else {
+        const mask = vecAbs(v) < f32x4_8_388_608;
+        var result = vecFloatToIntAndBack(v);
+        const larger_mask = result > v;
+        const larger = vecSelect(larger_mask, vecSplat(-1.0), vecZero());
+        result = result + larger;
+        return vecSelect(mask, result, v);
+    }
 }
 test "zmath.vecFloor" {
+    {
+        try check(vec4Equal(vecFloor(vecSplat(math.inf_f32)), vecSplat(math.inf_f32)));
+        try check(vec4Equal(vecFloor(vecSplat(-math.inf_f32)), vecSplat(-math.inf_f32)));
+        try check(vec4IsNan(vecFloor(vecSplat(math.nan_f32))));
+        try check(vec4IsNan(vecFloor(vecSplat(-math.nan_f32))));
+        try check(vec4IsNan(vecFloor(vecSplat(math.qnan_f32))));
+        try check(vec4IsNan(vecFloor(vecSplat(-math.qnan_f32))));
+    }
     const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
     var v = vecFloor(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 1.0, -2.0, -2.0, -3.0 }, 0.0));
@@ -521,14 +567,29 @@ test "zmath.vecFloor" {
 }
 
 pub inline fn vecCeil(v: Vec) Vec {
-    const mask = vecAbs(v) < f32x4_8_388_608;
-    var result = vecFloatToIntAndBack(v);
-    const smaller_mask = result < v;
-    const smaller = vecSelect(smaller_mask, vecSplat(-1.0), vecZero());
-    result = result - smaller;
-    return vecSelect(mask, result, v);
+    if (cpu_arch == .x86_64 and has_avx) {
+        return asm ("vroundps $2, %%xmm0, %%xmm0"
+            : [ret] "={xmm0}" (-> Vec),
+            : [v] "{xmm0}" (v),
+        );
+    } else {
+        const mask = vecAbs(v) < f32x4_8_388_608;
+        var result = vecFloatToIntAndBack(v);
+        const smaller_mask = result < v;
+        const smaller = vecSelect(smaller_mask, vecSplat(-1.0), vecZero());
+        result = result - smaller;
+        return vecSelect(mask, result, v);
+    }
 }
 test "zmath.vecCeil" {
+    {
+        try check(vec4Equal(vecCeil(vecSplat(math.inf_f32)), vecSplat(math.inf_f32)));
+        try check(vec4Equal(vecCeil(vecSplat(-math.inf_f32)), vecSplat(-math.inf_f32)));
+        try check(vec4IsNan(vecCeil(vecSplat(math.nan_f32))));
+        try check(vec4IsNan(vecCeil(vecSplat(-math.nan_f32))));
+        try check(vec4IsNan(vecCeil(vecSplat(math.qnan_f32))));
+        try check(vec4IsNan(vecCeil(vecSplat(-math.qnan_f32))));
+    }
     const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
     var v = vecCeil(v0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 2.0, -1.0, -1.0, -2.0 }, 0.0));
@@ -899,6 +960,7 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 // vec2GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec2InBounds(v: Vec, bounds: Vec) bool
 // vec2Dot(v0: Vec, v1: Vec) Vec
+// vec2IsNan(v: Vec) bool
 
 pub inline fn vec2Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1204,6 +1266,38 @@ test "zmath.vec2Dot" {
     try check(vec4ApproxEqAbs(v, vecSplat(6.0), 0.0001));
 }
 
+pub inline fn vec2IsNan(v: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vcmpneqps   %%xmm0, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  test        $3, %%al
+            \\  setne       %%al
+        else
+            \\  cmpneqps    %%xmm0, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  test        $3, %%al
+            \\  setne       %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v] "{xmm0}" (v),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const b = v != v;
+        return b[0] or b[1];
+    }
+}
+test "zmath.vec2IsNan" {
+    try check(vec2IsNan(vecSet(-1.0, math.nan_f32, 3.0, -2.0)) == true);
+    try check(vec2IsNan(vecSet(-1.0, 100.0, 3.0, math.nan_f32)) == false);
+    try check(vec2IsNan(vecSet(-1.0, math.inf_f32, 3.0, -2.0)) == false);
+    try check(vec2IsNan(vecSet(-1.0, math.qnan_f32, 3.0, -2.0)) == true);
+    try check(vec2IsNan(vecSet(-1.0, 1.0, 3.0, -2.0)) == false);
+    try check(vec2IsNan(vecSet(-1.0, 1.0, 3.0, math.qnan_f32)) == false);
+}
+
 //
 // Vec3 functions
 //
@@ -1216,6 +1310,7 @@ test "zmath.vec2Dot" {
 // vec3GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec3InBounds(v: Vec, bounds: Vec) bool
 // vec3Dot(v0: Vec, v1: Vec) Vec
+// vec3IsNan(v: Vec) bool
 
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1525,6 +1620,38 @@ test "zmath.vec3Dot" {
     try check(vec4ApproxEqAbs(v, vecSplat(24.0), 0.0001));
 }
 
+pub inline fn vec3IsNan(v: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vcmpneqps   %%xmm0, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  test        $7, %%al
+            \\  setne       %%al
+        else
+            \\  cmpneqps    %%xmm0, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  test        $7, %%al
+            \\  setne       %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v] "{xmm0}" (v),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const b = v != v;
+        return b[0] or b[1] or b[2];
+    }
+}
+test "zmath.vec3IsNan" {
+    try check(vec3IsNan(vecSet(-1.0, math.nan_f32, 3.0, -2.0)) == true);
+    try check(vec3IsNan(vecSet(-1.0, 100.0, 3.0, math.nan_f32)) == false);
+    try check(vec3IsNan(vecSet(-1.0, math.inf_f32, 3.0, -2.0)) == false);
+    try check(vec3IsNan(vecSet(-1.0, math.qnan_f32, 3.0, -2.0)) == true);
+    try check(vec3IsNan(vecSet(-1.0, 1.0, 3.0, -2.0)) == false);
+    try check(vec3IsNan(vecSet(-1.0, 1.0, 3.0, math.qnan_f32)) == false);
+}
+
 //
 // Vec4 functions
 //
@@ -1537,6 +1664,7 @@ test "zmath.vec3Dot" {
 // vec4GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec4InBounds(v: Vec, bounds: Vec) bool
 // vec4Dot(v0: Vec, v1: Vec) Vec
+// vec4IsNan(v: Vec) bool
 
 pub inline fn vec4Equal(v0: Vec, v1: Vec) bool {
     const mask = v0 == v1;
@@ -1641,6 +1769,35 @@ test "zmath.vec4Dot" {
     const v1 = vecSet(4.0, 5.0, 6.0, 2.0);
     var v = vec4Dot(v0, v1);
     try check(vec4ApproxEqAbs(v, vecSplat(20.0), 0.0001));
+}
+
+pub inline fn vec4IsNan(v: Vec) bool {
+    if (cpu_arch == .x86_64) {
+        const code = if (has_avx)
+            \\  vcmpneqps   %%xmm0, %%xmm0, %%xmm0
+            \\  vmovmskps   %%xmm0, %%eax
+            \\  test        $15, %%al
+            \\  setne       %%al
+        else
+            \\  cmpneqps    %%xmm0, %%xmm0
+            \\  movmskps    %%xmm0, %%eax
+            \\  test        $15, %%al
+            \\  setne       %%al
+            ;
+        return asm (code
+            : [ret] "={rax}" (-> bool),
+            : [v] "{xmm0}" (v),
+        );
+    } else {
+        // NOTE(mziulek): Generated code is not optimal
+        const b = v != v;
+        return b[0] or b[1] or b[2] or b[3];
+    }
+}
+test "zmath.vec4IsNan" {
+    try check(vec4IsNan(vecSet(-1.0, math.nan_f32, 3.0, -2.0)) == true);
+    try check(vec4IsNan(vecSet(-1.0, 100.0, 3.0, -2.0)) == false);
+    try check(vec4IsNan(vecSet(-1.0, math.inf_f32, 3.0, -2.0)) == false);
 }
 
 //
