@@ -1792,16 +1792,31 @@ pub inline fn vec3LengthSq(v: Vec) Vec {
 }
 
 pub inline fn vec3RcpLengthFast(v: Vec) Vec {
-    var xmm0 = v * v;
-    var xmm1 = vecPermute(xmm0, [4]i32{ 2, 1, 2, 1 });
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // addss
-    xmm1 = vecSplatY(xmm1);
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // addss
+    var xmm0 = v * v; // | x*x | y*y | z*z | -- |
+    var xmm1 = vecPermute(xmm0, [4]i32{ 2, 1, 2, 1 }); // | z*z | y*y | z*z | -- |
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + z*z | -- | -- | -- |
+    xmm1 = vecSplatY(xmm1); // | y*y | -- | -- | -- |
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + y*y + z*z | -- | -- | -- |
     return vecRcpSqrtFast(vecSplatX(xmm0));
 }
 test "zmath.vec3RcpLengthFast" {
     {
         const v0 = vecSet(1.0, -2.0, 3.0, 1000.0);
+        var v = vec3RcpLengthFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(14.0)), 0.001));
+    }
+    {
+        const v0 = vecSet(1.0, math.nan_f32, math.inf_f32, 1000.0);
+        var v = vec3RcpLengthFast(v0);
+        try check(vec4IsNan(v));
+    }
+    {
+        const v0 = vecSet(1.0, math.inf_f32, 3.0, 1000.0);
+        var v = vec3RcpLengthFast(v0);
+        try check(vec4ApproxEqAbs(v, vecZero(), 0.001));
+    }
+    {
+        const v0 = vecSet(3.0, 2.0, 1.0, math.nan_f32);
         var v = vec3RcpLengthFast(v0);
         try check(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(14.0)), 0.001));
     }
@@ -1981,6 +1996,16 @@ test "zmath.vec4RcpLengthFast" {
         const v0 = vecSet(1.0, -2.0, 3.0, 4.0);
         var v = vec4RcpLengthFast(v0);
         try check(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(30.0)), 0.001));
+    }
+    {
+        const v0 = vecSet(1.0, math.nan_f32, math.inf_f32, 1000.0);
+        var v = vec4RcpLengthFast(v0);
+        try check(vec4IsNan(v));
+    }
+    {
+        const v0 = vecSet(1.0, math.inf_f32, 3.0, 1000.0);
+        var v = vec4RcpLengthFast(v0);
+        try check(vec4ApproxEqAbs(v, vecZero(), 0.001));
     }
 }
 
