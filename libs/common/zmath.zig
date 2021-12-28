@@ -15,6 +15,7 @@ pub const VecU32 = @Vector(4, u32);
 // General Vec functions (always work on all vector components)
 //
 // vecZero() Vec
+// vecU32Zero() VecU32
 // vecSet(x: f32, y: f32, z: f32, w: f32) Vec
 // vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec
 // vecSplat(value: f32) Vec
@@ -64,6 +65,10 @@ pub inline fn vecZero() Vec {
 test "zmath.vecZero" {
     const v = vecZero();
     try check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
+}
+
+pub inline fn vecU32Zero() VecU32 {
+    return @splat(4, @as(u32, 0));
 }
 
 pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
@@ -2010,22 +2015,23 @@ test "zmath.vec4RcpLengthFast" {
 }
 
 //
+// Public constants
+//
+
+pub const u32x4_0xffff_ffff: VecU32 = @splat(4, ~@as(u32, 0));
+pub const f32x4_0x8000_0000: Vec = vecSplatInt(0x8000_0000);
+pub const f32x4_0x7fff_ffff: Vec = vecSplatInt(0x7fff_ffff);
+pub const f32x4_inf: Vec = vecSplat(math.inf_f32);
+pub const f32x4_nan: Vec = vecSplat(math.nan_f32);
+pub const f32x4_qnan: Vec = vecSplat(math.qnan_f32);
+pub const f32x4_epsilon: Vec = vecSplat(math.epsilon_f32);
+pub const u32x4_mask3: VecU32 = [4]u32{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
+
+//
 // Private functions and constants
 //
 
-const u32x4_0xffff_ffff: VecU32 = @splat(4, ~@as(u32, 0));
-const f32x4_0x8000_0000: Vec = vecSplatInt(0x8000_0000);
-const f32x4_0x7fff_ffff: Vec = vecSplatInt(0x7fff_ffff);
-const f32x4_inf: Vec = vecSplat(math.inf_f32);
-const f32x4_nan: Vec = vecSplat(math.nan_f32);
-const f32x4_qnan: Vec = vecSplat(math.qnan_f32);
-const f32x4_epsilon: Vec = vecSplat(math.epsilon_f32);
 const f32x4_8_388_608: Vec = vecSplat(8_388_608.0);
-const u32x4_mask3: VecU32 = [4]u32{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
-
-inline fn vecU32Zero() VecU32 {
-    return @splat(4, @as(u32, 0));
-}
 
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
     // This won't handle nan, inf and numbers greater than 8_388_608.0
