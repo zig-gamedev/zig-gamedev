@@ -1,13 +1,15 @@
 const builtin = @import("builtin");
 const std = @import("std");
 const math = std.math;
+const assert = std.debug.assert;
 
 const cpu_arch = builtin.cpu.arch;
 const has_avx = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .avx) else false;
 
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
-const VecU32 = @Vector(4, u32);
+pub const VecI32 = @Vector(4, i32);
+pub const VecU32 = @Vector(4, u32);
 
 //
 // General Vec functions (always work on all vector components)
@@ -54,6 +56,7 @@ const VecU32 = @Vector(4, u32);
 // vecScale(v: Vec, s: f32) Vec
 // vecLerp(v0: Vec, v1: Vec, t: f32) Vec
 // vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
+// vecPermute(v: Vec, comptime mask: VecI32) Vec
 
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
@@ -90,7 +93,7 @@ test "zmath.vecSplat" {
 }
 
 pub inline fn vecSplatX(v: Vec) Vec {
-    return @shuffle(f32, v, undefined, [4]i32{ 0, 0, 0, 0 });
+    return vecPermute(v, [4]i32{ 0, 0, 0, 0 });
 }
 test "zmath.vecSplatX" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
@@ -99,7 +102,7 @@ test "zmath.vecSplatX" {
 }
 
 pub inline fn vecSplatY(v: Vec) Vec {
-    return @shuffle(f32, v, undefined, [4]i32{ 1, 1, 1, 1 });
+    return vecPermute(v, [4]i32{ 1, 1, 1, 1 });
 }
 test "zmath.vecSplatY" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
@@ -108,7 +111,7 @@ test "zmath.vecSplatY" {
 }
 
 pub inline fn vecSplatZ(v: Vec) Vec {
-    return @shuffle(f32, v, undefined, [4]i32{ 2, 2, 2, 2 });
+    return vecPermute(v, [4]i32{ 2, 2, 2, 2 });
 }
 test "zmath.vecSplatZ" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
@@ -117,7 +120,7 @@ test "zmath.vecSplatZ" {
 }
 
 pub inline fn vecSplatW(v: Vec) Vec {
-    return @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
+    return vecPermute(v, [4]i32{ 3, 3, 3, 3 });
 }
 test "zmath.vecSplatW" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
@@ -832,6 +835,14 @@ pub inline fn vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec {
     return v0 + (v1 - v0) * t;
 }
 
+pub inline fn vecPermute(v: Vec, comptime mask: VecI32) Vec {
+    assert(mask[0] >= 0 and mask[0] <= 3 and
+        mask[1] >= 0 and mask[1] <= 3 and
+        mask[2] >= 0 and mask[2] <= 3 and
+        mask[3] >= 0 and mask[3] <= 3);
+    return @shuffle(f32, v, undefined, mask);
+}
+
 //
 // VecBool functions
 //
@@ -1316,7 +1327,7 @@ pub inline fn vec2IsInf(v: Vec) bool {
 
 pub inline fn vec2Dot(v0: Vec, v1: Vec) Vec {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
-    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 0, 0 }); // | y0*y1 | -- | -- | -- |
+    var xmm1 = vecPermute(xmm0, [4]i32{ 1, 0, 0, 0 }); // | y0*y1 | -- | -- | -- |
     xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
     return vecSplatX(xmm0);
 }
@@ -1710,9 +1721,9 @@ test "zmath.vec3IsInf" {
 
 pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
     var dot = v0 * v1;
-    var temp = @shuffle(f32, dot, undefined, [4]i32{ 1, 2, 1, 2 });
+    var temp = vecPermute(dot, [4]i32{ 1, 2, 1, 2 });
     dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
-    temp = @shuffle(f32, temp, undefined, [4]i32{ 1, 1, 1, 1 });
+    temp = vecPermute(temp, [4]i32{ 1, 1, 1, 1 });
     dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
     return vecSplatX(dot);
 }
@@ -1724,12 +1735,12 @@ test "zmath.vec3Dot" {
 }
 
 pub inline fn vec3Cross(v0: Vec, v1: Vec) Vec {
-    var temp1 = @shuffle(f32, v0, undefined, [4]i32{ 1, 2, 0, 3 });
-    var temp2 = @shuffle(f32, v1, undefined, [4]i32{ 2, 0, 1, 3 });
-    var result = temp1 * temp2;
-    temp1 = @shuffle(f32, temp1, undefined, [4]i32{ 1, 2, 0, 3 });
-    temp2 = @shuffle(f32, temp2, undefined, [4]i32{ 2, 0, 1, 3 });
-    result = result - temp1 * temp2;
+    var xmm0 = vecPermute(v0, [4]i32{ 1, 2, 0, 3 });
+    var xmm1 = vecPermute(v1, [4]i32{ 2, 0, 1, 3 });
+    var result = xmm0 * xmm1;
+    xmm0 = vecPermute(xmm0, [4]i32{ 1, 2, 0, 3 });
+    xmm1 = vecPermute(xmm1, [4]i32{ 2, 0, 1, 3 });
+    result = result - xmm0 * xmm1;
     return @bitCast(Vec, @bitCast(VecU32, result) & u32x4_mask3);
 }
 test "zmath.vec3Cross" {
@@ -1895,9 +1906,9 @@ pub inline fn vec4IsInf(v: Vec) bool {
 
 pub inline fn vec4Dot(v0: Vec, v1: Vec) Vec {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
-    var xmm1 = @shuffle(f32, xmm0, undefined, [4]i32{ 1, 0, 3, 0 }); // | y0*y1 | -- | w0*w1 | -- |
+    var xmm1 = vecPermute(xmm0, [4]i32{ 1, 0, 3, 0 }); // | y0*y1 | -- | w0*w1 | -- |
     xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
-    xmm0 = @shuffle(f32, xmm1, undefined, [4]i32{ 2, 0, 0, 0 }); // | z0*z1 + w0*w1 | -- | -- | -- |
+    xmm0 = vecPermute(xmm1, [4]i32{ 2, 0, 0, 0 }); // | z0*z1 + w0*w1 | -- | -- | -- |
     xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2]); // addss
     return vecSplatX(xmm0);
 }
