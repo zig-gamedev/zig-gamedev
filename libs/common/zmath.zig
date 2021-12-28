@@ -1352,6 +1352,8 @@ test "zmath.vec2Dot" {
 // vec3IsNan(v: Vec) bool
 // vec3IsInf(v: Vec) bool
 // vec3Dot(v0: Vec, v1: Vec) Vec
+// vec3Cross(v0: Vec, v1: Vec) Vec
+// vec3LengthSq(v: Vec) Vec
 
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1761,6 +1763,26 @@ test "zmath.vec3Cross" {
         const v1 = vecSet(5.0, -1.0, 2.0, 1.0);
         var v = vec3Cross(v0, v1);
         try check(vec4ApproxEqAbs(v, vecSet(-2.0, -4.0, 3.0, 0.0), 0.0001));
+    }
+}
+
+pub inline fn vec3LengthSq(v: Vec) Vec {
+    return vec3Dot(v, v);
+}
+
+pub inline fn vec3RcpLengthFast(v: Vec) Vec {
+    var xmm0 = v * v;
+    var xmm1 = vecPermute(xmm0, [4]i32{ 2, 1, 2, 1 });
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // addss
+    xmm1 = vecSplatY(xmm1);
+    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // addss
+    return vecRcpSqrtFast(vecSplatX(xmm0));
+}
+test "zmath.vec3RcpLengthFast" {
+    {
+        const v0 = vecSet(1.0, -2.0, 3.0, 1000.0);
+        var v = vec3RcpLengthFast(v0);
+        try check(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(14.0)), 0.001));
     }
 }
 
