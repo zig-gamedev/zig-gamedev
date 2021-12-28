@@ -15,6 +15,7 @@ pub const VecU32 = @Vector(4, u32);
 // General Vec functions (always work on all vector components)
 //
 // vecZero() Vec
+// vecI32Zero() VecI32
 // vecU32Zero() VecU32
 // vecSet(x: f32, y: f32, z: f32, w: f32) Vec
 // vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec
@@ -53,18 +54,20 @@ pub const VecU32 = @Vector(4, u32);
 // vecScale(v: Vec, s: f32) Vec
 // vecLerp(v0: Vec, v1: Vec, t: f32) Vec
 // vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
-// vecSwizzle(v: Vec, comptime mask: VecI32) Vec
+// vecSwizzle( v: Vec, xyzw: VecComponent) Vec
 
-pub inline fn vecZero() Vec {
-    return @splat(4, @as(f32, 0));
-}
+// zig fmt: off
+pub inline fn vecZero() Vec { return @splat(4, @as(f32, 0)); }
+pub inline fn vecI32Zero() VecI32 { return @splat(4, @as(i32, 0)); }
+pub inline fn vecU32Zero() VecU32 { return @splat(4, @as(u32, 0)); }
+// zig fmt: on
 test "zmath.vecZero" {
     const v = vecZero();
-    try check(vec4ApproxEqAbs(v, [4]f32{ 0.0, 0.0, 0.0, 0.0 }, 0.0));
-}
-
-pub inline fn vecU32Zero() VecU32 {
-    return @splat(4, @as(u32, 0));
+    const vi = vecI32Zero();
+    const vu = vecU32Zero();
+    try check(v[0] == 0 and v[1] == 0 and v[2] == 0 and v[3] == 0);
+    try check(vi[0] == 0 and vi[1] == 0 and vi[2] == 0 and vi[3] == 0);
+    try check(vu[0] == 0 and vu[1] == 0 and vu[2] == 0 and vu[3] == 0);
 }
 
 pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
