@@ -943,7 +943,7 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 // vec2GreaterOrEqual(v0: Vec, v1: Vec) bool
 // vec2InBounds(v: Vec, bounds: Vec) bool
 // vec2IsNan(v: Vec) bool
-// vec2IsInf(v: Vec) bool {
+// vec2IsInf(v: Vec) bool
 // vec2Dot(v0: Vec, v1: Vec) Vec
 // vec2LengthSq(v: Vec) Vec
 // vec2RcpLengthFast(v: Vec) Vec
@@ -1317,10 +1317,7 @@ pub inline fn vec2LengthSq(v: Vec) Vec {
 }
 
 pub inline fn vec2RcpLengthFast(v: Vec) Vec {
-    var xmm0 = v * v; // | x*x | y*y | -- | -- |
-    var xmm1 = vecSwizzle(xmm0, .y, .x, .x, .x); // | y*y | -- | -- | -- |
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + y*y | -- | -- | -- |
-    return vecRcpSqrtFast(vecSwizzle(xmm0, .x, .x, .x, .x));
+    return vecRcpSqrtFast(vec2Dot(v, v));
 }
 test "zmath.vec2RcpLengthFast" {
     {
@@ -1764,12 +1761,7 @@ pub inline fn vec3LengthSq(v: Vec) Vec {
 }
 
 pub inline fn vec3RcpLengthFast(v: Vec) Vec {
-    var xmm0 = v * v; // | x*x | y*y | z*z | -- |
-    var xmm1 = vecSwizzle(xmm0, .z, .y, .z, .y); // | z*z | y*y | z*z | -- |
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + z*z | -- | -- | -- |
-    xmm1 = vecSwizzle(xmm1, .y, .y, .y, .y); // | y*y | -- | -- | -- |
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + y*y + z*z | -- | -- | -- |
-    return vecRcpSqrtFast(vecSwizzle(xmm0, .x, .x, .x, .x));
+    return vecRcpSqrtFast(vec3Dot(v, v));
 }
 test "zmath.vec3RcpLengthFast" {
     {
@@ -1956,12 +1948,7 @@ pub inline fn vec4LengthSq(v: Vec) Vec {
 }
 
 pub inline fn vec4RcpLengthFast(v: Vec) Vec {
-    var xmm0 = v * v; // | x*x | y*y | z*z | w*w |
-    var xmm1 = vecSwizzle(xmm0, .z, .y, .z, .y); // | z*z | y*y | z*z | y*y |
-    xmm0 = xmm0 + xmm1; // | x*x + z*z | -- | -- | y*y + w*w |
-    xmm1 = vecSwizzle(xmm0, .w, .x, .x, .x); // | y*y + w*w | -- | -- | -- |
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // addss
-    return vecRcpSqrtFast(vecSwizzle(xmm0, .x, .x, .x, .x));
+    return vecRcpSqrtFast(vec4Dot(v, v));
 }
 test "zmath.vec4RcpLengthFast" {
     {
