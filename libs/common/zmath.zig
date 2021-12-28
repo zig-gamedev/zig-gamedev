@@ -19,10 +19,6 @@ pub const VecU32 = @Vector(4, u32);
 // vecSet(x: f32, y: f32, z: f32, w: f32) Vec
 // vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec
 // vecSplat(value: f32) Vec
-// vecSplatX(v: Vec) Vec
-// vecSplatY(v: Vec) Vec
-// vecSplatZ(v: Vec) Vec
-// vecSplatW(v: Vec) Vec
 // vecSplatInt(value: u32) Vec
 // vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool
 // vecEqualInt(v0: Vec, v1: Vec) VecBool
@@ -57,7 +53,7 @@ pub const VecU32 = @Vector(4, u32);
 // vecScale(v: Vec, s: f32) Vec
 // vecLerp(v0: Vec, v1: Vec, t: f32) Vec
 // vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
-// vecPermute(v: Vec, comptime mask: VecI32) Vec
+// vecSwizzle(v: Vec, comptime mask: VecI32) Vec
 
 pub inline fn vecZero() Vec {
     return @splat(4, @as(f32, 0));
@@ -95,42 +91,6 @@ pub inline fn vecSplat(value: f32) Vec {
 test "zmath.vecSplat" {
     const v = vecSplat(123.0);
     try check(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
-}
-
-pub inline fn vecSplatX(v: Vec) Vec {
-    return vecPermute(v, [4]i32{ 0, 0, 0, 0 });
-}
-test "zmath.vecSplatX" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const vx = vecSplatX(v0);
-    try check(vec4ApproxEqAbs(vx, [4]f32{ 1.0, 1.0, 1.0, 1.0 }, 0.0));
-}
-
-pub inline fn vecSplatY(v: Vec) Vec {
-    return vecPermute(v, [4]i32{ 1, 1, 1, 1 });
-}
-test "zmath.vecSplatY" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const vy = vecSplatY(v0);
-    try check(vec4ApproxEqAbs(vy, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
-}
-
-pub inline fn vecSplatZ(v: Vec) Vec {
-    return vecPermute(v, [4]i32{ 2, 2, 2, 2 });
-}
-test "zmath.vecSplatZ" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const vz = vecSplatZ(v0);
-    try check(vec4ApproxEqAbs(vz, [4]f32{ 3.0, 3.0, 3.0, 3.0 }, 0.0));
-}
-
-pub inline fn vecSplatW(v: Vec) Vec {
-    return vecPermute(v, [4]i32{ 3, 3, 3, 3 });
-}
-test "zmath.vecSplatW" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const vw = vecSplatW(v0);
-    try check(vec4ApproxEqAbs(vw, [4]f32{ 4.0, 4.0, 4.0, 4.0 }, 0.0));
 }
 
 pub inline fn vecSplatInt(value: u32) Vec {
@@ -840,12 +800,16 @@ pub inline fn vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec {
     return v0 + (v1 - v0) * t;
 }
 
-pub inline fn vecPermute(v: Vec, comptime mask: VecI32) Vec {
-    assert(mask[0] >= 0 and mask[0] <= 3 and
-        mask[1] >= 0 and mask[1] <= 3 and
-        mask[2] >= 0 and mask[2] <= 3 and
-        mask[3] >= 0 and mask[3] <= 3);
-    return @shuffle(f32, v, undefined, mask);
+pub const VecComponent = enum { x, y, z, w };
+
+pub inline fn vecSwizzle(
+    v: Vec,
+    comptime x: VecComponent,
+    comptime y: VecComponent,
+    comptime z: VecComponent,
+    comptime w: VecComponent,
+) Vec {
+    return @shuffle(f32, v, undefined, [4]i32{ @enumToInt(x), @enumToInt(y), @enumToInt(z), @enumToInt(w) });
 }
 
 //
@@ -1334,9 +1298,9 @@ pub inline fn vec2IsInf(v: Vec) bool {
 
 pub inline fn vec2Dot(v0: Vec, v1: Vec) Vec {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
-    var xmm1 = vecPermute(xmm0, [4]i32{ 1, 0, 0, 0 }); // | y0*y1 | -- | -- | -- |
+    var xmm1 = vecSwizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
     xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
-    return vecSplatX(xmm0);
+    return vecSwizzle(xmm0, .x, .x, .x, .x);
 }
 test "zmath.vec2Dot" {
     const v0 = vecSet(-1.0, 2.0, 300.0, -2.0);
@@ -1351,9 +1315,9 @@ pub inline fn vec2LengthSq(v: Vec) Vec {
 
 pub inline fn vec2RcpLengthFast(v: Vec) Vec {
     var xmm0 = v * v; // | x*x | y*y | -- | -- |
-    var xmm1 = vecPermute(xmm0, [4]i32{ 1, 0, 0, 0 }); // | y*y | -- | -- | -- |
+    var xmm1 = vecSwizzle(xmm0, .y, .x, .x, .x); // | y*y | -- | -- | -- |
     xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + y*y | -- | -- | -- |
-    return vecRcpSqrtFast(vecSplatX(xmm0));
+    return vecRcpSqrtFast(vecSwizzle(xmm0, .x, .x, .x, .x));
 }
 test "zmath.vec2RcpLengthFast" {
     {
@@ -1749,11 +1713,11 @@ test "zmath.vec3IsInf" {
 
 pub inline fn vec3Dot(v0: Vec, v1: Vec) Vec {
     var dot = v0 * v1;
-    var temp = vecPermute(dot, [4]i32{ 1, 2, 1, 2 });
+    var temp = vecSwizzle(dot, .y, .z, .y, .z);
     dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
-    temp = vecPermute(temp, [4]i32{ 1, 1, 1, 1 });
+    temp = vecSwizzle(temp, .y, .y, .y, .y);
     dot = vecSet(dot[0] + temp[0], dot[1], dot[2], dot[2]); // addss
-    return vecSplatX(dot);
+    return vecSwizzle(dot, .x, .x, .x, .x);
 }
 test "zmath.vec3Dot" {
     const v0 = vecSet(-1.0, 2.0, 3.0, 1.0);
@@ -1763,11 +1727,11 @@ test "zmath.vec3Dot" {
 }
 
 pub inline fn vec3Cross(v0: Vec, v1: Vec) Vec {
-    var xmm0 = vecPermute(v0, [4]i32{ 1, 2, 0, 3 });
-    var xmm1 = vecPermute(v1, [4]i32{ 2, 0, 1, 3 });
+    var xmm0 = vecSwizzle(v0, .y, .z, .x, .w);
+    var xmm1 = vecSwizzle(v1, .z, .x, .y, .w);
     var result = xmm0 * xmm1;
-    xmm0 = vecPermute(xmm0, [4]i32{ 1, 2, 0, 3 });
-    xmm1 = vecPermute(xmm1, [4]i32{ 2, 0, 1, 3 });
+    xmm0 = vecSwizzle(xmm0, .y, .z, .x, .w);
+    xmm1 = vecSwizzle(xmm1, .z, .x, .y, .w);
     result = result - xmm0 * xmm1;
     return @bitCast(Vec, @bitCast(VecU32, result) & u32x4_mask3);
 }
@@ -1798,11 +1762,11 @@ pub inline fn vec3LengthSq(v: Vec) Vec {
 
 pub inline fn vec3RcpLengthFast(v: Vec) Vec {
     var xmm0 = v * v; // | x*x | y*y | z*z | -- |
-    var xmm1 = vecPermute(xmm0, [4]i32{ 2, 1, 2, 1 }); // | z*z | y*y | z*z | -- |
+    var xmm1 = vecSwizzle(xmm0, .z, .y, .z, .y); // | z*z | y*y | z*z | -- |
     xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + z*z | -- | -- | -- |
-    xmm1 = vecSplatY(xmm1); // | y*y | -- | -- | -- |
+    xmm1 = vecSwizzle(xmm1, .y, .y, .y, .y); // | y*y | -- | -- | -- |
     xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x*x + y*y + z*z | -- | -- | -- |
-    return vecRcpSqrtFast(vecSplatX(xmm0));
+    return vecRcpSqrtFast(vecSwizzle(xmm0, .x, .x, .x, .x));
 }
 test "zmath.vec3RcpLengthFast" {
     {
@@ -1971,11 +1935,11 @@ pub inline fn vec4IsInf(v: Vec) bool {
 
 pub inline fn vec4Dot(v0: Vec, v1: Vec) Vec {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
-    var xmm1 = vecPermute(xmm0, [4]i32{ 1, 0, 3, 0 }); // | y0*y1 | -- | w0*w1 | -- |
+    var xmm1 = vecSwizzle(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
     xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
-    xmm0 = vecPermute(xmm1, [4]i32{ 2, 0, 0, 0 }); // | z0*z1 + w0*w1 | -- | -- | -- |
+    xmm0 = vecSwizzle(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
     xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2]); // addss
-    return vecSplatX(xmm0);
+    return vecSwizzle(xmm0, .x, .x, .x, .x);
 }
 test "zmath.vec4Dot" {
     const v0 = vecSet(-1.0, 2.0, 3.0, -2.0);
@@ -1990,11 +1954,11 @@ pub inline fn vec4LengthSq(v: Vec) Vec {
 
 pub inline fn vec4RcpLengthFast(v: Vec) Vec {
     var xmm0 = v * v; // | x*x | y*y | z*z | w*w |
-    var xmm1 = vecPermute(xmm0, [4]i32{ 2, 1, 2, 1 }); // | z*z | y*y | z*z | y*y |
+    var xmm1 = vecSwizzle(xmm0, .z, .y, .z, .y); // | z*z | y*y | z*z | y*y |
     xmm0 = xmm0 + xmm1; // | x*x + z*z | -- | -- | y*y + w*w |
-    xmm1 = vecPermute(xmm0, [4]i32{ 3, 0, 0, 0 }); // | y*y + w*w | -- | -- | -- |
+    xmm1 = vecSwizzle(xmm0, .w, .x, .x, .x); // | y*y + w*w | -- | -- | -- |
     xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // addss
-    return vecRcpSqrtFast(vecSplatX(xmm0));
+    return vecRcpSqrtFast(vecSwizzle(xmm0, .x, .x, .x, .x));
 }
 test "zmath.vec4RcpLengthFast" {
     {
