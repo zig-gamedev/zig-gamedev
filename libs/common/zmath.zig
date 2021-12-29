@@ -947,6 +947,8 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 // vec2Dot(v0: Vec, v1: Vec) Vec
 // vec2LengthSq(v: Vec) Vec
 // vec2RcpLengthFast(v: Vec) Vec
+// vec2RcpLength(v: Vec) Vec
+// vec2Length(v: Vec) Vec
 
 pub inline fn vec2Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1312,20 +1314,12 @@ test "zmath.vec2Dot" {
     try check(vec4ApproxEqAbs(v, vecSplat(6.0), 0.0001));
 }
 
-pub inline fn vec2LengthSq(v: Vec) Vec {
-    return vec2Dot(v, v);
-}
-
-pub inline fn vec2RcpLengthFast(v: Vec) Vec {
-    return vecRcpSqrtFast(vec2Dot(v, v));
-}
-test "zmath.vec2RcpLengthFast" {
-    {
-        const v0 = vecSet(1.0, -2.0, 300.0, -400.0);
-        var v = vec2RcpLengthFast(v0);
-        try check(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(5.0)), 0.001));
-    }
-}
+// zig fmt: off
+pub inline fn vec2LengthSq(v: Vec) Vec { return vec2Dot(v, v); }
+pub inline fn vec2RcpLengthFast(v: Vec) Vec { return vecRcpSqrtFast(vec2Dot(v, v)); }
+pub inline fn vec2RcpLength(v: Vec) Vec { return vecRcpSqrt(vec2Dot(v, v)); }
+pub inline fn vec2Length(v: Vec) Vec { return vecSqrt(vec2Dot(v, v)); }
+// zig fmt: on
 
 //
 // Vec3 functions
@@ -1344,6 +1338,8 @@ test "zmath.vec2RcpLengthFast" {
 // vec3Cross(v0: Vec, v1: Vec) Vec
 // vec3LengthSq(v: Vec) Vec
 // vec3RcpLengthFast(v: Vec) Vec
+// vec3RcpLength(v: Vec) Vec
+// vec3Length(v: Vec) Vec
 
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1756,13 +1752,13 @@ test "zmath.vec3Cross" {
     }
 }
 
-pub inline fn vec3LengthSq(v: Vec) Vec {
-    return vec3Dot(v, v);
-}
+// zig fmt: off
+pub inline fn vec3LengthSq(v: Vec) Vec { return vec3Dot(v, v); }
+pub inline fn vec3RcpLengthFast(v: Vec) Vec { return vecRcpSqrtFast(vec3Dot(v, v)); }
+pub inline fn vec3RcpLength(v: Vec) Vec { return vecRcpSqrt(vec3Dot(v, v)); }
+pub inline fn vec3Length(v: Vec) Vec { return vecSqrt(vec3Dot(v, v)); }
+// zig fmt: on
 
-pub inline fn vec3RcpLengthFast(v: Vec) Vec {
-    return vecRcpSqrtFast(vec3Dot(v, v));
-}
 test "zmath.vec3RcpLengthFast" {
     {
         const v0 = vecSet(1.0, -2.0, 3.0, 1000.0);
@@ -1786,6 +1782,29 @@ test "zmath.vec3RcpLengthFast" {
     }
 }
 
+test "zmath.vec3Length" {
+    {
+        const v0 = vecSet(1.0, -2.0, 3.0, 1000.0);
+        var v = vec3Length(v0);
+        try check(vec4ApproxEqAbs(v, vecSplat(math.sqrt(14.0)), 0.001));
+    }
+    {
+        const v0 = vecSet(1.0, math.nan_f32, math.inf_f32, 1000.0);
+        var v = vec3Length(v0);
+        try check(vec4IsNan(v));
+    }
+    {
+        const v0 = vecSet(1.0, math.inf_f32, 3.0, 1000.0);
+        var v = vec3Length(v0);
+        try check(vec4IsInf(v));
+    }
+    {
+        const v0 = vecSet(3.0, 2.0, 1.0, math.nan_f32);
+        var v = vec3Length(v0);
+        try check(vec4ApproxEqAbs(v, vecSplat(math.sqrt(14.0)), 0.001));
+    }
+}
+
 //
 // Vec4 functions
 //
@@ -1802,6 +1821,8 @@ test "zmath.vec3RcpLengthFast" {
 // vec4Dot(v0: Vec, v1: Vec) Vec
 // vec4LengthSq(v: Vec) Vec
 // vec4RcpLengthFast(v: Vec) Vec
+// vec4RcpLength(v: Vec) Vec
+// vec4Length(v: Vec) Vec
 
 pub inline fn vec4Equal(v0: Vec, v1: Vec) bool {
     const mask = v0 == v1;
@@ -1943,13 +1964,13 @@ test "zmath.vec4Dot" {
     try check(vec4ApproxEqAbs(v, vecSplat(20.0), 0.0001));
 }
 
-pub inline fn vec4LengthSq(v: Vec) Vec {
-    return vec4Dot(v, v);
-}
+// zig fmt: off
+pub inline fn vec4LengthSq(v: Vec) Vec { return vec4Dot(v, v); }
+pub inline fn vec4RcpLengthFast(v: Vec) Vec { return vecRcpSqrtFast(vec4Dot(v, v)); }
+pub inline fn vec4RcpLength(v: Vec) Vec { return vecRcpSqrt(vec4Dot(v, v)); }
+pub inline fn vec4Length(v: Vec) Vec { return vecSqrt(vec4Dot(v, v)); }
+// zig fmt: on
 
-pub inline fn vec4RcpLengthFast(v: Vec) Vec {
-    return vecRcpSqrtFast(vec4Dot(v, v));
-}
 test "zmath.vec4RcpLengthFast" {
     {
         const v0 = vecSet(1.0, -2.0, 3.0, 4.0);
@@ -1964,6 +1985,24 @@ test "zmath.vec4RcpLengthFast" {
     {
         const v0 = vecSet(1.0, math.inf_f32, 3.0, 1000.0);
         var v = vec4RcpLengthFast(v0);
+        try check(vec4ApproxEqAbs(v, vecZero(), 0.001));
+    }
+}
+
+test "zmath.vec4RcpLength" {
+    {
+        const v0 = vecSet(1.0, -2.0, 3.0, 4.0);
+        var v = vec4RcpLength(v0);
+        try check(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(30.0)), 0.001));
+    }
+    {
+        const v0 = vecSet(1.0, math.nan_f32, math.inf_f32, 1000.0);
+        var v = vec4RcpLength(v0);
+        try check(vec4IsNan(v));
+    }
+    {
+        const v0 = vecSet(1.0, math.inf_f32, 3.0, 1000.0);
+        var v = vec4RcpLength(v0);
         try check(vec4ApproxEqAbs(v, vecZero(), 0.001));
     }
 }
