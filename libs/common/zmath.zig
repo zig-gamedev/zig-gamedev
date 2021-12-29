@@ -837,7 +837,7 @@ test "zmath.vecMod" {
 
 pub inline fn vecModAngles(v: Vec) Vec {
     // 2 x vmulps, 2 x load, vroundps, vaddps
-    return v - f32x4_2pi * vecRound(v * f32x4_rcp_2pi);
+    return v - f32x4_two_pi * vecRound(v * f32x4_rcp_two_pi);
 }
 test "zmath.vecModAngles" {
     try check(vec4ApproxEqAbs(vecModAngles(vecSplat(math.tau)), vecSplat(0.0), 0.0005));
@@ -846,6 +846,66 @@ test "zmath.vecModAngles" {
     try check(vec4ApproxEqAbs(vecModAngles(vecSplat(11 * math.pi)), vecSplat(math.pi), 0.0005));
     try check(vec4ApproxEqAbs(vecModAngles(vecSplat(3.5 * math.pi)), vecSplat(-0.5 * math.pi), 0.0005));
     try check(vec4ApproxEqAbs(vecModAngles(vecSplat(2.5 * math.pi)), vecSplat(0.5 * math.pi), 0.0005));
+}
+
+pub inline fn vecSin(v: Vec) Vec {
+    if (cpu_arch == .x86_64 and has_avx) {
+        const code =
+            \\vmovaps       %%xmm0, %%xmm1
+            \\vmulps        %[rcp_two_pi], %%xmm0, %%xmm0
+            \\vroundps      $0, %%xmm0, %%xmm0
+            \\vmulps        %[two_pi], %%xmm0, %%xmm0
+            \\vsubps        %%xmm0, %%xmm1, %%xmm0
+            \\vandps        %[x8000_0000], %%xmm0, %%xmm1
+            \\vorps         %[pi], %%xmm1, %%xmm2
+            \\vandnps       %%xmm0, %%xmm1, %%xmm3
+            \\vsubps        %%xmm0, %%xmm2, %%xmm4
+            \\vcmpleps      %[half_pi], %%xmm3, %%xmm5
+            \\vblendvps     %%xmm5, %%xmm0, %%xmm4, %%xmm0
+            \\vmulps        %%xmm0, %%xmm0, %%xmm1
+            \\vbroadcastss  %[sin_c4], %%xmm2
+            \\vbroadcastss  %[sin_c3], %%xmm3
+            \\vbroadcastss  %[sin_c2], %%xmm4
+            \\vbroadcastss  %[sin_c1], %%xmm5
+            \\vbroadcastss  %[sin_c0], %%xmm6
+            \\vfmadd213ps   %%xmm3, %%xmm1, %%xmm2
+            \\vfmadd213ps   %%xmm4, %%xmm1, %%xmm2
+            \\vfmadd213ps   %%xmm5, %%xmm1, %%xmm2
+            \\vfmadd213ps   %%xmm6, %%xmm1, %%xmm2
+            \\vfmadd213ps   %[one], %%xmm1, %%xmm2
+            \\vmulps        %%xmm0, %%xmm2, %%xmm0
+        ;
+        return asm (code
+            : [ret] "={xmm0}" (-> Vec),
+            : [v] "{xmm0}" (v),
+              [sin_c0] "{memory}" (f32x4_sin_c0123[0]),
+              [sin_c1] "{memory}" (f32x4_sin_c0123[1]),
+              [sin_c2] "{memory}" (f32x4_sin_c0123[2]),
+              [sin_c3] "{memory}" (f32x4_sin_c0123[3]),
+              [sin_c4] "{memory}" (f32x4_sin_c4567[0]),
+              [half_pi] "{memory}" (f32x4_half_pi),
+              [pi] "{memory}" (f32x4_pi),
+              [two_pi] "{memory}" (f32x4_two_pi),
+              [rcp_two_pi] "{memory}" (f32x4_rcp_two_pi),
+              [x8000_0000] "{memory}" (f32x4_0x8000_0000),
+              [one] "{memory}" (f32x4_one),
+            : "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6"
+        );
+    } else {
+        //
+    }
+}
+test "vecSin" {
+    try check(vec4ApproxEqAbs(vecSin(vecSplat(0.5 * math.pi)), vecSplat(1.0), 0.0005));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = vecSin(vecSplat(f));
+        const fr = @sin(vecSplat(f));
+        try check(vec4ApproxEqAbs(vr, fr, 0.0005));
+        f += 0.12345 * @intToFloat(f32, i);
+    }
 }
 
 //
@@ -2142,8 +2202,11 @@ pub const f32x4_inf: Vec = vecSplat(math.inf_f32);
 pub const f32x4_nan: Vec = vecSplat(math.nan_f32);
 pub const f32x4_qnan: Vec = vecSplat(math.qnan_f32);
 pub const f32x4_epsilon: Vec = vecSplat(math.epsilon_f32);
-pub const f32x4_rcp_2pi: Vec = vecSplat(1.0 / math.tau);
-pub const f32x4_2pi: Vec = vecSplat(math.tau);
+pub const f32x4_one: Vec = vecSplat(1.0);
+pub const f32x4_half_pi: Vec = vecSplat(0.5 * math.pi);
+pub const f32x4_pi: Vec = vecSplat(math.pi);
+pub const f32x4_two_pi: Vec = vecSplat(math.tau);
+pub const f32x4_rcp_two_pi: Vec = vecSplat(1.0 / math.tau);
 pub const u32x4_mask3: VecU32 = [4]u32{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
 
 //
@@ -2151,6 +2214,8 @@ pub const u32x4_mask3: VecU32 = [4]u32{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0
 //
 
 const f32x4_8_388_608: Vec = vecSplat(8_388_608.0);
+const f32x4_sin_c0123: Vec = vecSet(-0.16666667, 0.0083333310, -0.00019840874, 2.7525562e-06);
+const f32x4_sin_c4567: Vec = vecSet(-2.3889859e-08, -0.16665852, 0.0083139502, -0.00018524670);
 
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
     // This won't handle nan, inf and numbers greater than 8_388_608.0
