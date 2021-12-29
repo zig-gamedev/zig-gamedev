@@ -949,6 +949,8 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 // vec2RcpLengthFast(v: Vec) Vec
 // vec2RcpLength(v: Vec) Vec
 // vec2Length(v: Vec) Vec
+// vec2NormalizeFast(v: Vec) Vec
+// vec2Normalize(v: Vec) Vec
 
 pub inline fn vec2Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1319,6 +1321,8 @@ pub inline fn vec2LengthSq(v: Vec) Vec { return vec2Dot(v, v); }
 pub inline fn vec2RcpLengthFast(v: Vec) Vec { return vecRcpSqrtFast(vec2Dot(v, v)); }
 pub inline fn vec2RcpLength(v: Vec) Vec { return vecRcpSqrt(vec2Dot(v, v)); }
 pub inline fn vec2Length(v: Vec) Vec { return vecSqrt(vec2Dot(v, v)); }
+pub inline fn vec2NormalizeFast(v: Vec) Vec { return v * vecRcpSqrtFast(vec2Dot(v, v)); }
+pub inline fn vec2Normalize(v: Vec) Vec { return v * vecRcpSqrt(vec2Dot(v, v)); }
 // zig fmt: on
 
 //
@@ -1340,6 +1344,8 @@ pub inline fn vec2Length(v: Vec) Vec { return vecSqrt(vec2Dot(v, v)); }
 // vec3RcpLengthFast(v: Vec) Vec
 // vec3RcpLength(v: Vec) Vec
 // vec3Length(v: Vec) Vec
+// vec3NormalizeFast(v: Vec) Vec
+// vec3Normalize(v: Vec) Vec
 
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1757,6 +1763,8 @@ pub inline fn vec3LengthSq(v: Vec) Vec { return vec3Dot(v, v); }
 pub inline fn vec3RcpLengthFast(v: Vec) Vec { return vecRcpSqrtFast(vec3Dot(v, v)); }
 pub inline fn vec3RcpLength(v: Vec) Vec { return vecRcpSqrt(vec3Dot(v, v)); }
 pub inline fn vec3Length(v: Vec) Vec { return vecSqrt(vec3Dot(v, v)); }
+pub inline fn vec3NormalizeFast(v: Vec) Vec { return v * vecRcpSqrtFast(vec3Dot(v, v)); }
+pub inline fn vec3Normalize(v: Vec) Vec { return v * vecRcpSqrt(vec3Dot(v, v)); }
 // zig fmt: on
 
 test "zmath.vec3RcpLengthFast" {
@@ -1805,6 +1813,34 @@ test "zmath.vec3Length" {
     }
 }
 
+test "zmath.vec3NormalizeFast" {
+    {
+        const v0 = vecSet(1.0, -2.0, 3.0, 1000.0);
+        var v = vec3NormalizeFast(v0);
+        try check(vec4ApproxEqAbs(v, vecScale(v0, 1.0 / math.sqrt(14.0)), 0.05));
+    }
+    {
+        try check(vec4IsNan(vec3NormalizeFast(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
+        try check(vec4IsNan(vec3NormalizeFast(vecSet(-math.inf_f32, math.inf_f32, 0.0, 0.0))));
+        try check(vec4IsNan(vec3NormalizeFast(vecSet(-math.nan_f32, math.qnan_f32, 0.0, 0.0))));
+        try check(vec4IsNan(vec3NormalizeFast(vecZero())));
+    }
+}
+
+test "zmath.vec3Normalize" {
+    {
+        const v0 = vecSet(1.0, -2.0, 3.0, 1000.0);
+        var v = vec3Normalize(v0);
+        try check(vec4ApproxEqAbs(v, vecScale(v0, 1.0 / math.sqrt(14.0)), 0.0005));
+    }
+    {
+        try check(vec4IsNan(vec3Normalize(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
+        try check(vec4IsNan(vec3Normalize(vecSet(-math.inf_f32, math.inf_f32, 0.0, 0.0))));
+        try check(vec4IsNan(vec3Normalize(vecSet(-math.nan_f32, math.qnan_f32, 0.0, 0.0))));
+        try check(vec4IsNan(vec3Normalize(vecZero())));
+    }
+}
+
 //
 // Vec4 functions
 //
@@ -1823,6 +1859,8 @@ test "zmath.vec3Length" {
 // vec4RcpLengthFast(v: Vec) Vec
 // vec4RcpLength(v: Vec) Vec
 // vec4Length(v: Vec) Vec
+// vec4NormalizeFast(v: Vec) Vec
+// vec4Normalize(v: Vec) Vec
 
 pub inline fn vec4Equal(v0: Vec, v1: Vec) bool {
     const mask = v0 == v1;
@@ -1969,6 +2007,8 @@ pub inline fn vec4LengthSq(v: Vec) Vec { return vec4Dot(v, v); }
 pub inline fn vec4RcpLengthFast(v: Vec) Vec { return vecRcpSqrtFast(vec4Dot(v, v)); }
 pub inline fn vec4RcpLength(v: Vec) Vec { return vecRcpSqrt(vec4Dot(v, v)); }
 pub inline fn vec4Length(v: Vec) Vec { return vecSqrt(vec4Dot(v, v)); }
+pub inline fn vec4NormalizeFast(v: Vec) Vec { return v * vecRcpSqrtFast(vec4Dot(v, v)); }
+pub inline fn vec4Normalize(v: Vec) Vec { return v * vecRcpSqrt(vec4Dot(v, v)); }
 // zig fmt: on
 
 test "zmath.vec4RcpLengthFast" {
@@ -2004,6 +2044,34 @@ test "zmath.vec4RcpLength" {
         const v0 = vecSet(1.0, math.inf_f32, 3.0, 1000.0);
         var v = vec4RcpLength(v0);
         try check(vec4ApproxEqAbs(v, vecZero(), 0.001));
+    }
+}
+
+test "zmath.vec4NormalizeFast" {
+    {
+        const v0 = vecSet(1.0, -2.0, 3.0, 10.0);
+        var v = vec4NormalizeFast(v0);
+        try check(vec4ApproxEqAbs(v, vecScale(v0, 1.0 / math.sqrt(114.0)), 0.001));
+    }
+    {
+        try check(vec4IsNan(vec4NormalizeFast(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
+        try check(vec4IsNan(vec4NormalizeFast(vecSet(-math.inf_f32, math.inf_f32, 0.0, 0.0))));
+        try check(vec4IsNan(vec4NormalizeFast(vecSet(-math.nan_f32, math.qnan_f32, 0.0, 0.0))));
+        try check(vec4IsNan(vec4NormalizeFast(vecZero())));
+    }
+}
+
+test "zmath.vec4Normalize" {
+    {
+        const v0 = vecSet(1.0, -2.0, 3.0, 10.0);
+        var v = vec4Normalize(v0);
+        try check(vec4ApproxEqAbs(v, vecScale(v0, 1.0 / math.sqrt(114.0)), 0.0005));
+    }
+    {
+        try check(vec4IsNan(vec4Normalize(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
+        try check(vec4IsNan(vec4Normalize(vecSet(-math.inf_f32, math.inf_f32, 0.0, 0.0))));
+        try check(vec4IsNan(vec4Normalize(vecSet(-math.nan_f32, math.qnan_f32, 0.0, 0.0))));
+        try check(vec4IsNan(vec4Normalize(vecZero())));
     }
 }
 
