@@ -55,6 +55,7 @@ pub const VecU32 = @Vector(4, u32);
 // vecLerp(v0: Vec, v1: Vec, t: f32) Vec
 // vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
 // vecSwizzle( v: Vec, xyzw: VecComponent) Vec
+// vecMod(v0: Vec, v1: Vec) Vec
 
 // zig fmt: off
 pub inline fn vecZero() Vec { return @splat(4, @as(f32, 0)); }
@@ -788,11 +789,6 @@ test "zmath.vecRcpFast" {
     }
 }
 
-pub inline fn vecScale(v: Vec, s: f32) Vec {
-    // shufps, mulps
-    return v * vecSplat(s);
-}
-
 pub inline fn vecLerp(v0: Vec, v1: Vec, t: f32) Vec {
     // subps, shufps, addps, mulps
     return v0 + (v1 - v0) * vecSplat(t);
@@ -813,6 +809,22 @@ pub inline fn vecSwizzle(
     comptime w: VecComponent,
 ) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ @enumToInt(x), @enumToInt(y), @enumToInt(z), @enumToInt(w) });
+}
+
+pub inline fn vecMod(v0: Vec, v1: Vec) Vec {
+    // vdivps, vroundps, vmulps, vsubps
+    return v0 - v1 * vecTrunc(v0 / v1);
+}
+test "zmath.vecMod" {
+    try check(vec4ApproxEqAbs(vecMod(vecSplat(3.1), vecSplat(1.7)), vecSplat(1.4), 0.0005));
+    try check(vec4ApproxEqAbs(vecMod(vecSplat(-3.0), vecSplat(2.0)), vecSplat(-1.0), 0.0005));
+    try check(vec4ApproxEqAbs(vecMod(vecSplat(-3.0), vecSplat(-2.0)), vecSplat(-1.0), 0.0005));
+    try check(vec4ApproxEqAbs(vecMod(vecSplat(3.0), vecSplat(-2.0)), vecSplat(1.0), 0.0005));
+    try check(vec4IsNan(vecMod(vecSplat(math.inf_f32), vecSplat(1.0))));
+    try check(vec4IsNan(vecMod(vecSplat(-math.inf_f32), vecSplat(123.456))));
+    try check(vec4IsNan(vecMod(vecSplat(math.nan_f32), vecSplat(123.456))));
+    try check(vec4IsNan(vecMod(vecSplat(math.qnan_f32), vecSplat(123.456))));
+    try check(vec4IsNan(vecMod(vecSplat(-math.qnan_f32), vecSplat(123.456))));
 }
 
 //
@@ -1378,7 +1390,12 @@ test "zmath.vec3Equal" {
     {
         const v0 = vecSet(1.0, math.inf_f32, -3.0, 1000.001);
         const v1 = vecSet(1.0, math.inf_f32, -3.0, 4.0);
-        try check(vec3Equal(v0, v1));
+        try check(vec3Equal(v0, v1) == true);
+    }
+    {
+        const v0 = vecSet(1.0, math.inf_f32, -3.0, 4.0);
+        const v1 = vecSet(1.0, -math.inf_f32, -3.0, 4.0);
+        try check(vec3Equal(v0, v1) == false);
     }
 }
 
@@ -1818,7 +1835,7 @@ test "zmath.vec3NormalizeFast" {
     {
         const v0 = vecSet(1.0, -2.0, 3.0, 1000.0);
         var v = vec3NormalizeFast(v0);
-        try check(vec4ApproxEqAbs(v, vecScale(v0, 1.0 / math.sqrt(14.0)), 0.05));
+        try check(vec4ApproxEqAbs(v, v0 * vecSplat(1.0 / math.sqrt(14.0)), 0.05));
     }
     {
         try check(vec4IsNan(vec3NormalizeFast(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
@@ -1832,7 +1849,7 @@ test "zmath.vec3Normalize" {
     {
         const v0 = vecSet(1.0, -2.0, 3.0, 1000.0);
         var v = vec3Normalize(v0);
-        try check(vec4ApproxEqAbs(v, vecScale(v0, 1.0 / math.sqrt(14.0)), 0.0005));
+        try check(vec4ApproxEqAbs(v, v0 * vecSplat(1.0 / math.sqrt(14.0)), 0.0005));
     }
     {
         try check(vec4IsNan(vec3Normalize(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
@@ -2069,7 +2086,7 @@ test "zmath.vec4NormalizeFast" {
     {
         const v0 = vecSet(1.0, -2.0, 3.0, 10.0);
         var v = vec4NormalizeFast(v0);
-        try check(vec4ApproxEqAbs(v, vecScale(v0, 1.0 / math.sqrt(114.0)), 0.001));
+        try check(vec4ApproxEqAbs(v, v0 * vecSplat(1.0 / math.sqrt(114.0)), 0.001));
     }
     {
         try check(vec4IsNan(vec4NormalizeFast(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
@@ -2083,7 +2100,7 @@ test "zmath.vec4Normalize" {
     {
         const v0 = vecSet(1.0, -2.0, 3.0, 10.0);
         var v = vec4Normalize(v0);
-        try check(vec4ApproxEqAbs(v, vecScale(v0, 1.0 / math.sqrt(114.0)), 0.0005));
+        try check(vec4ApproxEqAbs(v, v0 * vecSplat(1.0 / math.sqrt(114.0)), 0.0005));
     }
     {
         try check(vec4IsNan(vec4Normalize(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
