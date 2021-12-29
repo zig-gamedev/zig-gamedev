@@ -1346,6 +1346,7 @@ pub inline fn vec2Normalize(v: Vec) Vec { return v * vecRcpSqrt(vec2Dot(v, v)); 
 // vec3Length(v: Vec) Vec
 // vec3NormalizeFast(v: Vec) Vec
 // vec3Normalize(v: Vec) Vec
+// vec3LinePointDistance(line_pt0: Vec, line_pt1: Vec, pt: Vec) Vec
 
 pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
     if (cpu_arch == .x86_64) {
@@ -1838,6 +1839,23 @@ test "zmath.vec3Normalize" {
         try check(vec4IsNan(vec3Normalize(vecSet(-math.inf_f32, math.inf_f32, 0.0, 0.0))));
         try check(vec4IsNan(vec3Normalize(vecSet(-math.nan_f32, math.qnan_f32, 0.0, 0.0))));
         try check(vec4IsNan(vec3Normalize(vecZero())));
+    }
+}
+
+pub inline fn vec3LinePointDistance(line_pt0: Vec, line_pt1: Vec, pt: Vec) Vec {
+    const pt_vec = pt - line_pt0;
+    const line_vec = line_pt1 - line_pt0;
+    const scale = vec3Dot(pt_vec, line_vec) / vec3LengthSq(line_vec);
+    return vec3Length(pt_vec - line_vec * scale);
+}
+
+test "zmath.vec3LinePointDistance" {
+    {
+        const line_pt0 = vecSet(-1.0, -2.0, -3.0, 1.0);
+        const line_pt1 = vecSet(1.0, 2.0, 3.0, 1.0);
+        const pt = vecSet(1.0, 1.0, 1.0, 1.0);
+        var v = vec3LinePointDistance(line_pt0, line_pt1, pt);
+        try check(vec4ApproxEqAbs(v, vecSplat(0.654), 0.001));
     }
 }
 
