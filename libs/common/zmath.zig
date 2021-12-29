@@ -756,7 +756,6 @@ test "zmath.vecRcpSqrtFast" {
 }
 
 pub inline fn vecRcp(v: Vec) Vec {
-    // Will handle inf & nan
     // load, divps
     return vecSplat(1.0) / v;
 }
@@ -776,7 +775,6 @@ test "zmath.vecRcp" {
 }
 
 pub inline fn vecRcpFast(v: Vec) Vec {
-    // Will not handle inf & nan
     // load, rcpps, 2 x mulps, addps, subps
     @setFloatMode(.Optimized);
     return vecSplat(1.0) / v;
@@ -786,6 +784,11 @@ test "zmath.vecRcpFast" {
         const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
         const v = vecRcpFast(v0);
         try check(vec4ApproxEqAbs(v, vecSet(1.0 / v0[0], 1.0 / v0[1], 1.0 / v0[2], 1.0 / v0[3]), 0.0005));
+    }
+    {
+        try check(vec4IsNan(vecRcpFast(vecSplat(math.inf_f32))) == true);
+        try check(vec4IsNan(vecRcpFast(vecSplat(-math.inf_f32))) == true);
+        try check(vec4IsNan(vecRcpFast(vecSplat(math.nan_f32))) == true);
     }
 }
 
@@ -833,6 +836,7 @@ test "zmath.vecMod" {
 }
 
 pub inline fn vecModAngles(v: Vec) Vec {
+    // 2 x vmulps, 2 x load, vroundps, vaddps
     return v - f32x4_2pi * vecRound(v * f32x4_rcp_2pi);
 }
 test "zmath.vecModAngles" {
