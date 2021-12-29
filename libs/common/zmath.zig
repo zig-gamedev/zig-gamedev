@@ -825,6 +825,23 @@ test "zmath.vecMod" {
     try check(vec4IsNan(vecMod(vecSplat(math.nan_f32), vecSplat(123.456))));
     try check(vec4IsNan(vecMod(vecSplat(math.qnan_f32), vecSplat(123.456))));
     try check(vec4IsNan(vecMod(vecSplat(-math.qnan_f32), vecSplat(123.456))));
+    try check(vec4IsNan(vecMod(vecSplat(123.456), vecSplat(math.inf_f32))));
+    try check(vec4IsNan(vecMod(vecSplat(123.456), vecSplat(-math.inf_f32))));
+    try check(vec4IsNan(vecMod(vecSplat(123.456), vecSplat(math.nan_f32))));
+    try check(vec4IsNan(vecMod(vecSplat(math.inf_f32), vecSplat(math.inf_f32))));
+    try check(vec4IsNan(vecMod(vecSplat(math.inf_f32), vecSplat(math.nan_f32))));
+}
+
+pub inline fn vecModAngles(v: Vec) Vec {
+    return v - f32x4_2pi * vecRound(v * f32x4_rcp_2pi);
+}
+test "zmath.vecModAngles" {
+    try check(vec4ApproxEqAbs(vecModAngles(vecSplat(math.tau)), vecSplat(0.0), 0.0005));
+    try check(vec4ApproxEqAbs(vecModAngles(vecSplat(0.0)), vecSplat(0.0), 0.0005));
+    try check(vec4ApproxEqAbs(vecModAngles(vecSplat(math.pi)), vecSplat(math.pi), 0.0005));
+    try check(vec4ApproxEqAbs(vecModAngles(vecSplat(11 * math.pi)), vecSplat(math.pi), 0.0005));
+    try check(vec4ApproxEqAbs(vecModAngles(vecSplat(3.5 * math.pi)), vecSplat(-0.5 * math.pi), 0.0005));
+    try check(vec4ApproxEqAbs(vecModAngles(vecSplat(2.5 * math.pi)), vecSplat(0.5 * math.pi), 0.0005));
 }
 
 //
@@ -2121,6 +2138,8 @@ pub const f32x4_inf: Vec = vecSplat(math.inf_f32);
 pub const f32x4_nan: Vec = vecSplat(math.nan_f32);
 pub const f32x4_qnan: Vec = vecSplat(math.qnan_f32);
 pub const f32x4_epsilon: Vec = vecSplat(math.epsilon_f32);
+pub const f32x4_rcp_2pi: Vec = vecSplat(1.0 / math.tau);
+pub const f32x4_2pi: Vec = vecSplat(math.tau);
 pub const u32x4_mask3: VecU32 = [4]u32{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
 
 //
