@@ -57,6 +57,7 @@ pub const VecU32 = @Vector(4, u32);
 // vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
 // vecSwizzle( v: Vec, xyzw: VecComponent) Vec
 // vecMod(v0: Vec, v1: Vec) Vec
+// vecMulAdd(v0: Vec, v1: Vec, v2: Vec) Vec
 // vecSin(v: Vec) Vec
 
 // zig fmt: off
@@ -850,71 +851,34 @@ test "zmath.vecModAngles" {
     try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(2.5 * math.pi)), vecSplat(0.5 * math.pi), 0.0005));
 }
 
+pub inline fn vecMulAdd(v0: Vec, v1: Vec, v2: Vec) Vec {
+    if (cpu_arch == .x86_64 and has_avx) {
+        return @mulAdd(Vec, v0, v1, v2);
+    } else {
+        // NOTE(mziulek): On .x86_64 without HW fma instructions @mulAdd maps to really slow code!
+        return v0 * v1 + v2;
+    }
+}
+
 pub inline fn vecSin(v: Vec) Vec {
     // 11-degree minimax approximation
-    if (cpu_arch == .x86_64 and has_avx) {
-        // According to llvm-mca this routine will take (on average):
-        //  zen2: 67 cycles, zen3: 63 cycles, skylake: 67 cycles
-        const code =
-            \\ vmovaps      %%xmm0, %%xmm1
-            \\ vmulps       %[rcp_two_pi], %%xmm0, %%xmm0
-            \\ vroundps     $0, %%xmm0, %%xmm0
-            \\ vmulps       %[two_pi], %%xmm0, %%xmm0
-            \\ vsubps       %%xmm0, %%xmm1, %%xmm0              # xmm0 = v in [-0.5*pi; 0.5pi] range
-            \\ vandps       %[x8000_0000], %%xmm0, %%xmm1
-            \\ vorps        %[pi], %%xmm1, %%xmm2
-            \\ vandnps      %%xmm0, %%xmm1, %%xmm3
-            \\ vsubps       %%xmm0, %%xmm2, %%xmm4
-            \\ vcmpleps     %[half_pi], %%xmm3, %%xmm5
-            \\ vblendvps    %%xmm5, %%xmm0, %%xmm4, %%xmm0      # xmm0 = x mapped to [0; 0.5*pi] with a sign
-            \\ vmulps       %%xmm0, %%xmm0, %%xmm1              # xmm1 = x*x
-            \\ vbroadcastss %[sin_c4], %%xmm2
-            \\ vbroadcastss %[sin_c3], %%xmm3
-            \\ vbroadcastss %[sin_c2], %%xmm4
-            \\ vbroadcastss %[sin_c1], %%xmm5
-            \\ vbroadcastss %[sin_c0], %%xmm6
-            \\ vfmadd213ps  %%xmm3, %%xmm1, %%xmm2
-            \\ vfmadd213ps  %%xmm4, %%xmm1, %%xmm2
-            \\ vfmadd213ps  %%xmm5, %%xmm1, %%xmm2
-            \\ vfmadd213ps  %%xmm6, %%xmm1, %%xmm2
-            \\ vfmadd213ps  %[one], %%xmm1, %%xmm2
-            \\ vmulps       %%xmm0, %%xmm2, %%xmm0              # xmm0 = x * polynomial_approx(x*x)
-        ;
-        return asm (code
-            : [ret] "={xmm0}" (-> Vec),
-            : [v] "{xmm0}" (v),
-              [sin_c0] "{memory}" (f32x4_sin_c0123[0]),
-              [sin_c1] "{memory}" (f32x4_sin_c0123[1]),
-              [sin_c2] "{memory}" (f32x4_sin_c0123[2]),
-              [sin_c3] "{memory}" (f32x4_sin_c0123[3]),
-              [sin_c4] "{memory}" (f32x4_sin_c4567[0]),
-              [half_pi] "{memory}" (f32x4_half_pi),
-              [pi] "{memory}" (f32x4_pi),
-              [two_pi] "{memory}" (f32x4_two_pi),
-              [rcp_two_pi] "{memory}" (f32x4_rcp_two_pi),
-              [x8000_0000] "{memory}" (f32x4_0x8000_0000),
-              [one] "{memory}" (f32x4_one),
-            : "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6"
-        );
-    } else {
-        // This path compiled for .x86_64 will take on average ~93 cycles
-        var x = vecModAngles(v);
+    // According to llvm-mca this routine will take ~57 cycles on average (zen3, skylake)
+    var x = vecModAngles(v);
 
-        const sign = vecAndInt(x, f32x4_0x8000_0000);
-        const c = vecOrInt(sign, f32x4_pi);
-        const absx = vecAndCInt(x, sign);
-        const rflx = c - x;
-        const comp = absx <= f32x4_half_pi;
-        x = vecSelect(comp, x, rflx);
-        const x2 = x * x;
+    const sign = vecAndInt(x, f32x4_0x8000_0000);
+    const c = vecOrInt(sign, f32x4_pi);
+    const absx = vecAndCInt(x, sign);
+    const rflx = c - x;
+    const comp = absx <= f32x4_half_pi;
+    x = vecSelect(comp, x, rflx);
+    const x2 = x * x;
 
-        var result = vecSplat(f32x4_sin_c4567[0]) * x2 + vecSplat(f32x4_sin_c0123[3]);
-        result = result * x2 + vecSplat(f32x4_sin_c0123[2]);
-        result = result * x2 + vecSplat(f32x4_sin_c0123[1]);
-        result = result * x2 + vecSplat(f32x4_sin_c0123[0]);
-        result = result * x2 + vecSplat(1.0);
-        return x * result;
-    }
+    var result = vecMulAdd(vecSplat(f32x4_sin_c4567[0]), x2, vecSplat(f32x4_sin_c0123[3]));
+    result = vecMulAdd(result, x2, vecSplat(f32x4_sin_c0123[2]));
+    result = vecMulAdd(result, x2, vecSplat(f32x4_sin_c0123[1]));
+    result = vecMulAdd(result, x2, vecSplat(f32x4_sin_c0123[0]));
+    result = vecMulAdd(result, x2, vecSplat(1.0));
+    return x * result;
 }
 test "vecSin" {
     const epsilon = 0.0001;
