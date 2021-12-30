@@ -1356,6 +1356,10 @@ pub const GraphicsContext = struct {
         return gr.cbv_srv_uav_gpu_heaps[gr.frame_index].allocateDescriptors(num_descriptors);
     }
 
+    pub inline fn reserveGpuDescriptorHeaps(gr: *GraphicsContext, num_descriptors: u32) PersistentDescriptorHeap {
+        return PersistentDescriptorHeap.reserve(gr, num_descriptors);
+    }
+
     pub fn copyDescriptorsToGpuHeap(
         gr: *GraphicsContext,
         num: u32,
@@ -2176,6 +2180,90 @@ const PipelinePool = struct {
 const Descriptor = struct {
     cpu_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
     gpu_handle: d3d12.GPU_DESCRIPTOR_HANDLE,
+};
+
+pub const PersistentDescriptorAllocation = struct {
+    handles: [GraphicsContext.max_num_buffered_frames]d3d12.CPU_DESCRIPTOR_HANDLE,
+    index: u32 = 0xffff_ffff,
+};
+
+pub const PersistentDescriptorHeap = struct {
+    num_heaps: u32 = GraphicsContext.max_num_buffered_frames,
+    cpu_handles: [GraphicsContext.max_num_buffered_frames]d3d12.CPU_DESCRIPTOR_HANDLE,
+    gpu_handles: [GraphicsContext.max_num_buffered_frames]d3d12.GPU_DESCRIPTOR_HANDLE,
+
+    descriptor_size: u32,
+    size: u32,
+    allocated: u32,
+    dead_list: []u32,
+
+    pub fn reserve(gr: *GraphicsContext, num_descriptors: u32) PersistentDescriptorHeap {
+        var i: u32 = 0;
+        while (i < GraphicsContext.max_num_buffered_frames) : (i += 1) {
+            assert(gr.cbv_srv_uav_gpu_heaps[i].size == 0);
+            assert(gr.cbv_srv_uav_gpu_heaps[i].capacity > num_descriptors);
+            assert(gr.cbv_srv_uav_gpu_heaps[i].base.cpu_handle.ptr != 0);
+            assert(gr.cbv_srv_uav_gpu_heaps[i].base.gpu_handle.ptr != 0);
+        }
+
+        var pdh: PersistentDescriptorHeap = undefined;
+        pdh.num_heaps = GraphicsContext.max_num_buffered_frames;
+        pdh.descriptor_size = gr.cbv_srv_uav_gpu_heaps[0].descriptor_size;
+        pdh.size = num_descriptors;
+        pdh.allocated = 0;
+
+        pdh.dead_list = std.heap.page_allocator.alloc(u32, num_descriptors) catch unreachable;
+        i = 0;
+        while (i < num_descriptors) : (i += 1) {
+            pdh.dead_list[i] = i;
+        }
+
+        i = 0;
+        while (i < GraphicsContext.max_num_buffered_frames) : (i += 1) {
+            const descriptor = gr.cbv_srv_uav_gpu_heaps[i].allocateDescriptors(num_descriptors);
+            pdh.cpu_handles[i] = descriptor.cpu_handle;
+            pdh.gpu_handles[i] = descriptor.gpu_handle;
+        }
+
+        return pdh;
+    }
+
+    pub fn allocate(pdh: *PersistentDescriptorHeap) PersistentDescriptorAllocation {
+        assert(pdh.cpu_handles[0].ptr != 0);
+        assert(pdh.gpu_handles[0].ptr != 0);
+
+        assert(pdh.size > 0);
+        assert((pdh.allocated + 1) < pdh.size);
+
+        const index = pdh.dead_list[pdh.allocated];
+        pdh.allocated += 1;
+
+        var alloc = PersistentDescriptorAllocation{
+            .index = index,
+            .handles = undefined,
+        };
+        var i: u32 = 0;
+        while (i < pdh.num_heaps) : (i += 1) {
+            alloc.handles[i] = pdh.cpu_handles[i];
+            alloc.handles[i].ptr += index * pdh.descriptor_size;
+        }
+        
+        return alloc;
+    }
+
+    pub fn free(pdh: *PersistentDescriptorHeap, index: *u32) void {
+        if (index == 0xffff_ffff) {
+            return;
+        }
+
+        assert(pdh.cpu_handles[0].ptr != 0);
+        assert(index < pdh.size);
+
+        pdh.dead_list[pdh.allocated - 1] = index;
+        pdh.allocated -= 1;
+
+        index = 0xffff_ffff;
+    }
 };
 
 const DescriptorHeap = struct {
