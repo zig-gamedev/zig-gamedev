@@ -922,6 +922,18 @@ pub const GraphicsContext = struct {
         gs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
+        return createGraphicsShaderPipelineRsVsGsPs(gr, arena, pso_desc, null, vs_cso_path, gs_cso_path, ps_cso_path);
+    }
+
+    pub fn createGraphicsShaderPipelineRsVsGsPs(
+        gr: *GraphicsContext,
+        arena: std.mem.Allocator,
+        pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
+        root_signature: ?*d3d12.IRootSignature,
+        vs_cso_path: ?[]const u8,
+        gs_cso_path: ?[]const u8,
+        ps_cso_path: ?[]const u8,
+    ) PipelineHandle {
         const tracy_zone = tracy.zone(@src(), 1);
         defer tracy_zone.end();
 
@@ -999,15 +1011,19 @@ pub const GraphicsContext = struct {
         }
 
         const rs = blk: {
-            var rs: *d3d12.IRootSignature = undefined;
-            hrPanicOnFail(gr.device.CreateRootSignature(
-                0,
-                pso_desc.VS.pShaderBytecode.?,
-                pso_desc.VS.BytecodeLength,
-                &d3d12.IID_IRootSignature,
-                @ptrCast(*?*anyopaque, &rs),
-            ));
-            break :blk rs;
+            if (root_signature) |rs| {
+                break :blk rs;
+            } else {
+                var rs: *d3d12.IRootSignature = undefined;
+                hrPanicOnFail(gr.device.CreateRootSignature(
+                    0,
+                    pso_desc.VS.pShaderBytecode.?,
+                    pso_desc.VS.BytecodeLength,
+                    &d3d12.IID_IRootSignature,
+                    @ptrCast(*?*anyopaque, &rs),
+                ));
+                break :blk rs;
+            }
         };
 
         pso_desc.pRootSignature = rs;
