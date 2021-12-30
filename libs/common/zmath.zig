@@ -57,6 +57,7 @@ pub const VecU32 = @Vector(4, u32);
 // vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
 // vecSwizzle( v: Vec, xyzw: VecComponent) Vec
 // vecMod(v0: Vec, v1: Vec) Vec
+// vecSin(v: Vec) Vec
 
 // zig fmt: off
 pub inline fn vecZero() Vec { return @splat(4, @as(f32, 0)); }
@@ -850,20 +851,23 @@ test "zmath.vecModAngles" {
 }
 
 pub inline fn vecSin(v: Vec) Vec {
+    // 11-degree minimax approximation
     if (cpu_arch == .x86_64 and has_avx) {
+        // According to llvm-mca this routine will take (on average):
+        //  zen2: 67 cycles, zen3: 63 cycles, skylake: 67 cycles
         const code =
             \\ vmovaps      %%xmm0, %%xmm1
             \\ vmulps       %[rcp_two_pi], %%xmm0, %%xmm0
             \\ vroundps     $0, %%xmm0, %%xmm0
             \\ vmulps       %[two_pi], %%xmm0, %%xmm0
-            \\ vsubps       %%xmm0, %%xmm1, %%xmm0
+            \\ vsubps       %%xmm0, %%xmm1, %%xmm0              # xmm0 = v in [-0.5*pi; 0.5pi] range
             \\ vandps       %[x8000_0000], %%xmm0, %%xmm1
             \\ vorps        %[pi], %%xmm1, %%xmm2
             \\ vandnps      %%xmm0, %%xmm1, %%xmm3
             \\ vsubps       %%xmm0, %%xmm2, %%xmm4
             \\ vcmpleps     %[half_pi], %%xmm3, %%xmm5
-            \\ vblendvps    %%xmm5, %%xmm0, %%xmm4, %%xmm0
-            \\ vmulps       %%xmm0, %%xmm0, %%xmm1
+            \\ vblendvps    %%xmm5, %%xmm0, %%xmm4, %%xmm0      # xmm0 = x mapped to [0; 0.5*pi] with a sign
+            \\ vmulps       %%xmm0, %%xmm0, %%xmm1              # xmm1 = x*x
             \\ vbroadcastss %[sin_c4], %%xmm2
             \\ vbroadcastss %[sin_c3], %%xmm3
             \\ vbroadcastss %[sin_c2], %%xmm4
@@ -874,7 +878,7 @@ pub inline fn vecSin(v: Vec) Vec {
             \\ vfmadd213ps  %%xmm5, %%xmm1, %%xmm2
             \\ vfmadd213ps  %%xmm6, %%xmm1, %%xmm2
             \\ vfmadd213ps  %[one], %%xmm1, %%xmm2
-            \\ vmulps       %%xmm0, %%xmm2, %%xmm0
+            \\ vmulps       %%xmm0, %%xmm2, %%xmm0              # xmm0 = x * polynomial_approx(x*x)
         ;
         return asm (code
             : [ret] "={xmm0}" (-> Vec),
@@ -893,7 +897,23 @@ pub inline fn vecSin(v: Vec) Vec {
             : "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6"
         );
     } else {
-        //
+        // This path compiled for .x86_64 will take on average ~93 cycles
+        var x = vecModAngles(v);
+
+        const sign = vecAndInt(x, f32x4_0x8000_0000);
+        const c = vecOrInt(sign, f32x4_pi);
+        const absx = vecAndCInt(x, sign);
+        const rflx = c - x;
+        const comp = absx <= f32x4_half_pi;
+        x = vecSelect(comp, x, rflx);
+        const x2 = x * x;
+
+        var result = vecSplat(f32x4_sin_c4567[0]) * x2 + vecSplat(f32x4_sin_c0123[3]);
+        result = result * x2 + vecSplat(f32x4_sin_c0123[2]);
+        result = result * x2 + vecSplat(f32x4_sin_c0123[1]);
+        result = result * x2 + vecSplat(f32x4_sin_c0123[0]);
+        result = result * x2 + vecSplat(1.0);
+        return x * result;
     }
 }
 test "vecSin" {
@@ -2206,6 +2226,7 @@ test "zmath.vec4Normalize" {
 //
 
 pub const u32x4_0xffff_ffff: VecU32 = @splat(4, ~@as(u32, 0));
+pub const u32x4_0x8000_0000: VecU32 = @splat(4, @as(u32, 0x8000_0000));
 pub const f32x4_0x8000_0000: Vec = vecSplatInt(0x8000_0000);
 pub const f32x4_0x7fff_ffff: Vec = vecSplatInt(0x7fff_ffff);
 pub const f32x4_inf: Vec = vecSplat(math.inf_f32);
