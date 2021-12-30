@@ -786,12 +786,7 @@ test "zmath.vecRcpFast" {
     {
         const v0 = vecSet(1.0, 0.2, 123.1, 0.72);
         const v = vecRcpFast(v0);
-        try expect(vec4ApproxEqAbs(v, vecSet(1.0 / v0[0], 1.0 / v0[1], 1.0 / v0[2], 1.0 / v0[3]), 0.0005));
-    }
-    {
-        try expect(vec4IsNan(vecRcpFast(vecSplat(math.inf_f32))) == true);
-        try expect(vec4IsNan(vecRcpFast(vecSplat(-math.inf_f32))) == true);
-        try expect(vec4IsNan(vecRcpFast(vecSplat(math.nan_f32))) == true);
+        try expect(vec4ApproxEqAbs(v, vecSet(1.0 / v0[0], 1.0 / v0[1], 1.0 / v0[2], 1.0 / v0[3]), 0.001));
     }
 }
 
@@ -862,7 +857,9 @@ pub inline fn vecMulAdd(v0: Vec, v1: Vec, v2: Vec) Vec {
 
 pub inline fn vecSin(v: Vec) Vec {
     // 11-degree minimax approximation
-    // According to llvm-mca this routine will take ~57 cycles on average (zen3, skylake)
+    // According to llvm-mca this routine will take on average:
+    // AVX: ~57 cycles (zen3, skylake)
+    // x86_64: ~93 cycles
     var x = vecModAngles(v);
 
     const sign = vecAndInt(x, f32x4_0x8000_0000);
