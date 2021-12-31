@@ -12,6 +12,9 @@ pub const VecBool = @Vector(4, bool);
 pub const VecI32 = @Vector(4, i32);
 pub const VecU32 = @Vector(4, u32);
 
+pub const f32x4 = @Vector(4, f32);
+pub const f32x8 = @Vector(8, f32);
+
 //
 // General Vec functions (always work on all vector components)
 //
@@ -84,6 +87,13 @@ test "zmath.vecSet" {
     try expect(v1[0] == 5.0 and v1[1] == -6.0 and v1[2] == 7.0 and v1[3] == 8.0);
 }
 
+test "zmath.vecSet" {
+    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
+    const v1 = vecSet(5.0, -6.0, 7.0, 8.0);
+    try expect(v0[0] == 1.0 and v0[1] == 2.0 and v0[2] == 3.0 and v0[3] == 4.0);
+    try expect(v1[0] == 5.0 and v1[1] == -6.0 and v1[2] == 7.0 and v1[3] == 8.0);
+}
+
 pub inline fn vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec {
     return @bitCast(Vec, [4]u32{ x, y, z, w });
 }
@@ -146,6 +156,14 @@ pub inline fn vecAndInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u & v1u);
 }
+pub inline fn andInt(v0: anytype, v1: anytype) @TypeOf(v0) {
+    const T = @TypeOf(v0);
+    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const v0u = @bitCast(Tu, v0);
+    const v1u = @bitCast(Tu, v1);
+    // andps
+    return @bitCast(T, v0u & v1u);
+}
 test "zmath.vecAndInt" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
     const v1 = vecSet(1.0, 2.0, 3.0, math.inf_f32);
@@ -160,6 +178,14 @@ pub inline fn vecAndCInt(v0: Vec, v1: Vec) Vec {
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u & ~v1u);
 }
+pub inline fn andCInt(v0: anytype, v1: anytype) @TypeOf(v0) {
+    const T = @TypeOf(v0);
+    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const v0u = @bitCast(Tu, v0);
+    const v1u = @bitCast(Tu, v1);
+    // andnps
+    return @bitCast(Vec, v0u & ~v1u);
+}
 test "zmath.vecAndCInt" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
     const v1 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
@@ -172,6 +198,14 @@ pub inline fn vecOrInt(v0: Vec, v1: Vec) Vec {
     const v0u = @bitCast(VecU32, v0);
     const v1u = @bitCast(VecU32, v1);
     return @bitCast(Vec, v0u | v1u);
+}
+pub inline fn orInt(v0: anytype, v1: anytype) @TypeOf(v0) {
+    const T = @TypeOf(v0);
+    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const v0u = @bitCast(Tu, v0);
+    const v1u = @bitCast(Tu, v1);
+    // orps
+    return @bitCast(T, v0u | v1u);
 }
 test "zmath.vecOrInt" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
@@ -414,12 +448,14 @@ test "zmath.vecRound" {
     var f: f32 = -100.0;
     var i: u32 = 0;
     while (i < 100) : (i += 1) {
-        const vr = vecRound(vecSplat(f));
+        //const vr = vecRound(vecSplat(f));
+        const vr = round(@splat(8, f));
         const fr = @round(f);
         try expect(vr[0] == fr);
         try expect(vr[1] == fr);
         try expect(vr[2] == fr);
         try expect(vr[3] == fr);
+        try expect(vr[7] == fr);
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
@@ -833,9 +869,70 @@ test "zmath.vecMod" {
     try expect(vec4IsNan(vecMod(vecSplat(math.inf_f32), vecSplat(math.nan_f32))));
 }
 
+inline fn checkType(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+    if (T == f32x4 or T == f32x8) {
+        return v;
+    } else {
+        @compileError("wrong type");
+    }
+}
+
+pub inline fn splatHalfPi(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @as(f32, 0.5 * math.pi));
+}
+pub inline fn splatPi(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @as(f32, math.pi));
+}
+pub inline fn splatTwoPi(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @as(f32, math.pi));
+}
+pub inline fn splatRcpTwoPi(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @as(f32, 1.0 / math.pi));
+}
+pub inline fn splatNegativeZero(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x8000_0000)));
+}
+pub inline fn splatNoFraction(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @as(f32, 8_388_608.0));
+}
+pub inline fn splatAbsMask(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x7fff_ffff)));
+}
+
+pub inline fn round(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(checkType(v));
+    if (cpu_arch == .x86_64 and has_avx) {
+        if (T == f32x4) {
+            return asm ("vroundps $0, %%xmm0, %%xmm0"
+                : [ret] "={xmm0}" (-> T),
+                : [v] "{xmm0}" (v),
+            );
+        } else if (T == f32x8) {
+            return asm ("vroundps $0, %%ymm0, %%ymm0"
+                : [ret] "={ymm0}" (-> T),
+                : [v] "{ymm0}" (v),
+            );
+        }
+    } else {
+        const sign = andInt(v, splatNegativeZero(T));
+        const magic = orInt(splatNoFraction(T), sign);
+        var r1 = v + magic;
+        r1 = r1 - magic;
+        const r2 = @fabs(v);
+        const mask = r2 <= splatNoFraction(T);
+        return @select(f32, mask, r1, v);
+    }
+}
+
 pub inline fn vecModAngles(v: Vec) Vec {
     // 2 x vmulps, 2 x load, vroundps, vaddps
     return v - f32x4_two_pi * vecRound(v * f32x4_rcp_two_pi);
+}
+pub inline fn modAngles(v: anytype) @TypeOf(v) {
+    // 2 x vmulps, 2 x load, vroundps, vaddps
+    const T = @TypeOf(checkType(v));
+    return v - splatTwoPi(T) * round(v * splatRcpTwoPi(T));
 }
 test "zmath.vecModAngles" {
     try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(math.tau)), vecSplat(0.0), 0.0005));
@@ -844,6 +941,10 @@ test "zmath.vecModAngles" {
     try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(11 * math.pi)), vecSplat(math.pi), 0.0005));
     try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(3.5 * math.pi)), vecSplat(-0.5 * math.pi), 0.0005));
     try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(2.5 * math.pi)), vecSplat(0.5 * math.pi), 0.0005));
+
+    _ = modAngles(@splat(8, @as(f32, math.pi)));
+    _ = round(@splat(8, @as(f32, math.pi)));
+    _ = splatNegativeZero(f32x8);
 }
 
 pub inline fn vecMulAdd(v0: Vec, v1: Vec, v2: Vec) Vec {
@@ -853,6 +954,23 @@ pub inline fn vecMulAdd(v0: Vec, v1: Vec, v2: Vec) Vec {
         // NOTE(mziulek): On .x86_64 without HW fma instructions @mulAdd maps to really slow code!
         return v0 * v1 + v2;
     }
+}
+
+pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
+    const T = @TypeOf(checkType(v0));
+    if (cpu_arch == .x86_64 and has_avx) {
+        return @mulAdd(T, v0, v1, v2);
+    } else {
+        // NOTE(mziulek): On .x86_64 without HW fma instructions @mulAdd maps to really slow code!
+        return v0 * v1 + v2;
+    }
+}
+test "zmath.mulAdd" {
+    const v0: f32x4 = [4]f32{ 1.0, 2.0, 3.0, 4.0 };
+    const v1 = @splat(4, @as(f32, 1.0));
+    const v2 = @splat(4, @as(f32, 1.0));
+    const v = mulAdd(v0, v1, v2);
+    _ = v;
 }
 
 pub inline fn vecSin(v: Vec) Vec {
