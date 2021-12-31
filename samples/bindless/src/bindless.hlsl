@@ -1,3 +1,10 @@
+#define root_signature \
+    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
+    "CBV(b0), " \
+    "CBV(b1), " \
+    "DescriptorTable(SRV(t0, numDescriptors = unbounded, space = 0, offset = 0), visibility = SHADER_VISIBILITY_ALL), " \
+    "StaticSampler(s0, filter = FILTER_ANISOTROPIC, maxAnisotropy = 16, visibility = SHADER_VISIBILITY_ALL)"
+
 #define PI 3.1415926
 
 #define GAMMA 2.2
@@ -40,6 +47,7 @@ struct InputPS {
     float3 position_world : POSITION;
 };
 
+[RootSignature(root_signature)]
 void BindlessVS(InputVS input, out InputPS output) {
     const float4x4 object_to_clip = mul(draw_const.object_to_world, scene_const.world_to_clip);
     output.position_clip = mul(float4(input.position, 1.0), object_to_clip);
@@ -49,6 +57,7 @@ void BindlessVS(InputVS input, out InputPS output) {
     output.uv = input.uv;
 }
 
+[RootSignature(root_signature)]
 void BindlessPS(in InputPS input, out float4 out_color : SV_Target0) {
     Texture2D srv_ao_texture = Textures[draw_const.ao_index];
     Texture2D srv_base_color_texture = Textures[draw_const.base_color_index];
