@@ -40,7 +40,7 @@ pub const GraphicsContext = struct {
     const num_rtv_descriptors = 128;
     const num_dsv_descriptors = 128;
     const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
-    const num_cbv_srv_uav_gpu_descriptors = 4 * 1024;
+    const num_cbv_srv_uav_gpu_descriptors = 8 * 1024;
     const max_num_buffered_resource_barriers = 16;
     const upload_heap_capacity = 18 * 1024 * 1024;
 
@@ -53,7 +53,8 @@ pub const GraphicsContext = struct {
     rtv_heap: DescriptorHeap,
     dsv_heap: DescriptorHeap,
     cbv_srv_uav_cpu_heap: DescriptorHeap,
-    cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap,
+    p_cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap, // persistent descriptor heaps
+    cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap, // non-persistent descriptor heaps
     upload_memory_heaps: [max_num_buffered_frames]GpuMemoryHeap,
     resource_pool: ResourcePool,
     pipeline: struct {
@@ -220,7 +221,9 @@ pub const GraphicsContext = struct {
         {
             var data: d3d12.FEATURE_DATA_D3D12_OPTIONS = std.mem.zeroes(d3d12.FEATURE_DATA_D3D12_OPTIONS);
             const hr = device.CheckFeatureSupport(.OPTIONS, &data, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS));
-            if (hr != w.S_OK or @enumToInt(data.ResourceBindingTier) < @enumToInt(d3d12.RESOURCE_BINDING_TIER.TIER_3)) {
+            if (hr != w.S_OK or
+                @enumToInt(data.ResourceBindingTier) < @enumToInt(d3d12.RESOURCE_BINDING_TIER.TIER_3))
+            {
                 _ = w.user32.messageBoxA(
                     window,
                     "This applications requires graphics card driver that supports Resource Binding Tier 3. " ++
@@ -379,14 +382,28 @@ pub const GraphicsContext = struct {
             d3d12.DESCRIPTOR_HEAP_FLAG_NONE,
         );
 
+        var p_cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap = undefined;
         var cbv_srv_uav_gpu_heaps: [max_num_buffered_frames]DescriptorHeap = undefined;
-        for (cbv_srv_uav_gpu_heaps) |_, heap_index| {
-            cbv_srv_uav_gpu_heaps[heap_index] = DescriptorHeap.init(
+        for (p_cbv_srv_uav_gpu_heaps) |_, heap_index| {
+            // We create one descriptor heap and then split it into two:
+            //   - persistent heap (each descriptor lives until descriptor heap is destroyed)
+            //   - non-persistent heap (each descriptor lives only one frame)
+            p_cbv_srv_uav_gpu_heaps[heap_index] = DescriptorHeap.init(
                 device,
                 num_cbv_srv_uav_gpu_descriptors,
                 .CBV_SRV_UAV,
                 d3d12.DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
             );
+            p_cbv_srv_uav_gpu_heaps[heap_index].capacity /= 2;
+
+            const half_capacity = p_cbv_srv_uav_gpu_heaps[heap_index].capacity;
+            const descriptor_size = p_cbv_srv_uav_gpu_heaps[heap_index].descriptor_size;
+
+            // Non-persistent heap does not own memory it is just a sub-range in a persistent heap
+            cbv_srv_uav_gpu_heaps[heap_index] = p_cbv_srv_uav_gpu_heaps[heap_index];
+            cbv_srv_uav_gpu_heaps[heap_index].heap = null;
+            cbv_srv_uav_gpu_heaps[heap_index].base.cpu_handle.ptr += half_capacity * descriptor_size;
+            cbv_srv_uav_gpu_heaps[heap_index].base.gpu_handle.ptr += half_capacity * descriptor_size;
         }
 
         var upload_heaps: [max_num_buffered_frames]GpuMemoryHeap = undefined;
@@ -530,6 +547,7 @@ pub const GraphicsContext = struct {
             .rtv_heap = rtv_heap,
             .dsv_heap = dsv_heap,
             .cbv_srv_uav_cpu_heap = cbv_srv_uav_cpu_heap,
+            .p_cbv_srv_uav_gpu_heaps = p_cbv_srv_uav_gpu_heaps,
             .cbv_srv_uav_gpu_heaps = cbv_srv_uav_gpu_heaps,
             .upload_memory_heaps = upload_heaps,
             .resource_pool = resource_pool,
@@ -595,6 +613,7 @@ pub const GraphicsContext = struct {
         for (gr.d2d.targets) |target| _ = target.Release();
         for (gr.d2d.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
         for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
+        for (gr.p_cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
         for (gr.upload_memory_heaps) |*heap| heap.*.deinit();
         _ = gr.device.Release();
         _ = gr.cmdqueue.Release();
@@ -614,7 +633,7 @@ pub const GraphicsContext = struct {
         gr.is_cmdlist_opened = true;
         gr.cmdlist.SetDescriptorHeaps(
             1,
-            &[_]*d3d12.IDescriptorHeap{gr.cbv_srv_uav_gpu_heaps[gr.frame_index].heap},
+            &[_]*d3d12.IDescriptorHeap{gr.p_cbv_srv_uav_gpu_heaps[gr.frame_index].heap.?},
         );
         gr.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
             .TopLeftX = 0.0,
@@ -656,6 +675,7 @@ pub const GraphicsContext = struct {
         gr.frame_index = (gr.frame_index + 1) % max_num_buffered_frames;
         gr.back_buffer_index = gr.swapchain.GetCurrentBackBufferIndex();
 
+        // Reset non-persistent heaps
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index].size = 0;
         gr.upload_memory_heaps[gr.frame_index].size = 0;
 
@@ -1337,7 +1357,24 @@ pub const GraphicsContext = struct {
     }
 
     pub inline fn allocateGpuDescriptors(gr: *GraphicsContext, num_descriptors: u32) Descriptor {
+        // Allocate non-persistent descriptors
         return gr.cbv_srv_uav_gpu_heaps[gr.frame_index].allocateDescriptors(num_descriptors);
+    }
+
+    pub fn allocatePersistentGpuDescriptors(
+        gr: *GraphicsContext,
+        num_descriptors: u32,
+        base_cpu_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
+    ) u32 {
+        const index = gr.p_cbv_srv_uav_gpu_heaps[gr.frame_index].size;
+        // We need to allocate `num_descriptors` in every heap, copy descriptors pointed by `base_cpu_handle`
+        // and return stable `index` to the user
+        var i: u32 = 0;
+        while (i < max_num_buffered_frames) : (i += 1) {
+            const dst = gr.p_cbv_srv_uav_gpu_heaps[i].allocateDescriptors(num_descriptors);
+            gr.device.CopyDescriptorsSimple(num_descriptors, dst.cpu_handle, base_cpu_handle, .CBV_SRV_UAV);
+        }
+        return index; // stable index in the bound descriptor heap (SetDescriptorHeaps)
     }
 
     pub fn copyDescriptorsToGpuHeap(
@@ -2163,7 +2200,7 @@ const Descriptor = struct {
 };
 
 const DescriptorHeap = struct {
-    heap: *d3d12.IDescriptorHeap,
+    heap: ?*d3d12.IDescriptorHeap,
     base: Descriptor,
     size: u32,
     size_temp: u32,
@@ -2178,14 +2215,14 @@ const DescriptorHeap = struct {
     ) DescriptorHeap {
         assert(capacity > 0);
         const heap = blk: {
-            var heap: *d3d12.IDescriptorHeap = undefined;
+            var heap: ?*d3d12.IDescriptorHeap = null;
             hrPanicOnFail(device.CreateDescriptorHeap(&.{
                 .Type = heap_type,
                 .NumDescriptors = capacity,
                 .Flags = flags,
                 .NodeMask = 0,
             }, &d3d12.IID_IDescriptorHeap, @ptrCast(*?*anyopaque, &heap)));
-            break :blk heap;
+            break :blk heap.?;
         };
         return DescriptorHeap{
             .heap = heap,
@@ -2205,7 +2242,9 @@ const DescriptorHeap = struct {
     }
 
     fn deinit(dheap: *DescriptorHeap) void {
-        _ = dheap.heap.Release();
+        if (dheap.heap != null) {
+            _ = dheap.heap.?.Release();
+        }
         dheap.* = undefined;
     }
 
