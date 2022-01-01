@@ -1368,7 +1368,8 @@ pub const GraphicsContext = struct {
         const index = gr.cbv_srv_uav_gpu_heaps[0].size;
         const base = gr.cbv_srv_uav_gpu_heaps[0].allocateDescriptors(num_descriptors);
         return .{
-            .descriptor = base,
+            .cpu_handle = base.cpu_handle,
+            .gpu_handle = base.gpu_handle,
             .index = index,
         };
     }
@@ -2190,13 +2191,14 @@ const PipelinePool = struct {
     }
 };
 
-pub const Descriptor = struct {
+const Descriptor = struct {
     cpu_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
     gpu_handle: d3d12.GPU_DESCRIPTOR_HANDLE,
 };
 
 pub const PersistentDescriptor = struct {
-    descriptor: Descriptor,
+    cpu_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
+    gpu_handle: d3d12.GPU_DESCRIPTOR_HANDLE,
     index: u32,
 };
 
