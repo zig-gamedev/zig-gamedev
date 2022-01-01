@@ -84,8 +84,7 @@ const DemoState = struct {
     depth_texture: ResourceView,
 
     bindless_pso: gr.PipelineHandle,
-    bindless_descriptor_heap: gr.PersistentDescriptorHeap,
-    max_bindless_gpu_descriptors: u32 = 1024,
+    bindless_descriptor_gpu_start: d3d12.GPU_DESCRIPTOR_HANDLE,
 
     meshes: std.ArrayList(Mesh),
     mesh_textures: [4]Texture,
@@ -160,10 +159,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
-
-    // Reserving the first N descriptors on the GPU SRV heaps for bindless resources
-    const max_bindless_gpu_descriptors: u32 = 1024;
-    var bindless_descriptor_heap = grfx.reserveGpuDescriptorHeaps(max_bindless_gpu_descriptors);
 
     const bindless_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -270,6 +265,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
 
     var mesh_textures: [4]Texture = undefined;
+    var bindless_descriptor_gpu_start: d3d12.GPU_DESCRIPTOR_HANDLE = undefined;
 
     {
         const resource = grfx.createAndUploadTex2dFromFile(
@@ -279,12 +275,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         _ = grfx.getResource(resource).SetName(L("content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png"));
 
         mesh_textures[texture_ao] = blk: {
-            const srv_allocation = bindless_descriptor_heap.allocate();
-
-            var i: u32 = 0;
-            while (i < bindless_descriptor_heap.num_heaps) : (i += 1) {
-                grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.handles[i]);
-            }
+            const srv_allocation = grfx.allocatePersistentGpuDescriptors(1);
+            bindless_descriptor_gpu_start = srv_allocation.gpu_handle;
+            grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
             // mipgen_rgba8.generateMipmaps(&grfx, resource);
             // grfx.addTransitionBarrier(resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -305,12 +298,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         _ = grfx.getResource(resource).SetName(L("content/SciFiHelmet/SciFiHelmet_BaseColor.png"));
 
         mesh_textures[texture_base_color] = blk: {
-            const srv_allocation = bindless_descriptor_heap.allocate();
-
-            var i: u32 = 0;
-            while (i < bindless_descriptor_heap.num_heaps) : (i += 1) {
-                grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.handles[i]);
-            }
+            const srv_allocation = grfx.allocatePersistentGpuDescriptors(1);
+            grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
             // mipgen_rgba8.generateMipmaps(&grfx, resource);
             // grfx.addTransitionBarrier(resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -331,12 +320,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err);
         _ = grfx.getResource(resource).SetName(L("content/SciFiHelmet/SciFiHelmet_MetallicRoughness.png"));
         mesh_textures[texture_metallic_roughness] = blk: {
-            const srv_allocation = bindless_descriptor_heap.allocate();
-
-            var i: u32 = 0;
-            while (i < bindless_descriptor_heap.num_heaps) : (i += 1) {
-                grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.handles[i]);
-            }
+            const srv_allocation = grfx.allocatePersistentGpuDescriptors(1);
+            grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
             // mipgen_rgba8.generateMipmaps(&grfx, resource);
             // grfx.addTransitionBarrier(resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -358,12 +343,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         _ = grfx.getResource(resource).SetName(L("content/SciFiHelmet/SciFiHelmet_Normal.png"));
 
         mesh_textures[texture_normal] = blk: {
-            const srv_allocation = bindless_descriptor_heap.allocate();
-
-            var i: u32 = 0;
-            while (i < bindless_descriptor_heap.num_heaps) : (i += 1) {
-                grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.handles[i]);
-            }
+            const srv_allocation = grfx.allocatePersistentGpuDescriptors(1);
+            grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
             // mipgen_rgba8.generateMipmaps(&grfx, resource);
             // grfx.addTransitionBarrier(resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -392,8 +373,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .depth_texture = depth_texture,
         .bindless_pso = bindless_pso,
-        .bindless_descriptor_heap = bindless_descriptor_heap,
-        .max_bindless_gpu_descriptors = max_bindless_gpu_descriptors,
+        .bindless_descriptor_gpu_start = bindless_descriptor_gpu_start,
         .meshes = all_meshes,
         .mesh_textures = mesh_textures,
         .vertex_buffer = vertex_buffer,
@@ -540,7 +520,7 @@ fn draw(demo: *DemoState) void {
     }
 
     // Bind bindless texture descriptor table
-    grfx.cmdlist.SetGraphicsRootDescriptorTable(2, demo.bindless_descriptor_heap.gpu_handles[grfx.frame_index]);
+    grfx.cmdlist.SetGraphicsRootDescriptorTable(2, demo.bindless_descriptor_gpu_start);
 
     // Draw SciFiHelmet.
     {

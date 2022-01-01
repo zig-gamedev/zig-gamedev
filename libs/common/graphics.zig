@@ -1390,10 +1390,6 @@ pub const GraphicsContext = struct {
         };
     }
 
-    pub inline fn reserveGpuDescriptorHeaps(gr: *GraphicsContext, num_descriptors: u32) PersistentDescriptorHeap {
-        return PersistentDescriptorHeap.reserve(gr, num_descriptors);
-    }
-
     pub fn copyDescriptorsToGpuHeap(
         gr: *GraphicsContext,
         num: u32,
