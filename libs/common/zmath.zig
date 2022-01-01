@@ -14,6 +14,7 @@ pub const VecU32 = @Vector(4, u32);
 
 pub const f32x4 = @Vector(4, f32);
 pub const f32x8 = @Vector(8, f32);
+pub const u32x4 = @Vector(4, u32);
 
 //
 // General Vec functions (always work on all vector components)
@@ -113,6 +114,12 @@ test "zmath.vecSplat" {
     try expect(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
 }
 
+pub inline fn usplat(comptime T: type, value: u32) T {
+    return @splat(@typeInfo(T).Vector.len, value);
+}
+pub inline fn splatInt(comptime T: type, value: u32) T {
+    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, value));
+}
 pub inline fn vecSplatInt(value: u32) Vec {
     return @splat(4, @bitCast(f32, value));
 }
@@ -1105,20 +1112,20 @@ pub inline fn vecStoreF32x4(mem: []f32, v: Vec) void {
 // vec2NormalizeFast(v: Vec) Vec
 // vec2Normalize(v: Vec) Vec
 
-pub inline fn vec2Equal(v0: Vec, v1: Vec) bool {
+pub inline fn isEqual2(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpeqps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ vcmpeqps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
         else
-            \\  cmpeqps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ cmpeqps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1131,28 +1138,28 @@ pub inline fn vec2Equal(v0: Vec, v1: Vec) bool {
         return mask[0] and mask[1];
     }
 }
-test "zmath.vec2Equal" {
+test "zmath.isEqual2" {
     {
-        const v0 = vecSet(1.0, math.inf_f32, -3.0, 1000.001);
-        const v1 = vecSet(1.0, math.inf_f32, -6.0, 4.0);
-        try expect(vec2Equal(v0, v1));
+        const v0 = f32x4{ 1.0, math.inf_f32, -3.0, 1000.001 };
+        const v1 = f32x4{ 1.0, math.inf_f32, -6.0, 4.0 };
+        try expect(isEqual2(v0, v1));
     }
 }
 
-pub inline fn vec2EqualInt(v0: Vec, v1: Vec) bool {
+pub inline fn isEqualInt2(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vpcmpeqd    %%xmm1, %%xmm0, %xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ vpcmpeqd     %%xmm1, %%xmm0, %xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
         else
-            \\  pcmpeqd     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ pcmpeqd      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1161,36 +1168,36 @@ pub inline fn vec2EqualInt(v0: Vec, v1: Vec) bool {
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const v0u = @bitCast(VecU32, v0);
-        const v1u = @bitCast(VecU32, v1);
+        const v0u = @bitCast(u32x4, v0);
+        const v1u = @bitCast(u32x4, v1);
         const mask = v0u == v1u;
         return mask[0] and mask[1];
     }
 }
 
-pub inline fn vec2NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
+pub inline fn isNearEqual2(v0: f32x4, v1: f32x4, epsilon: f32x4) bool {
     // Won't handle inf & nan
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vsubps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = delta
-            \\  vxorps      %%xmm1, %%xmm1, %%xmm1  # xmm1 = 0
-            \\  vsubps      %%xmm0, %%xmm1, %%xmm1  # xmm1 = 0 - delta
-            \\  vmaxps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
-            \\  vcmpleps    %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ vsubps       %%xmm1, %%xmm0, %%xmm0  # xmm0 = delta
+            \\ vxorps       %%xmm1, %%xmm1, %%xmm1  # xmm1 = 0
+            \\ vsubps       %%xmm0, %%xmm1, %%xmm1  # xmm1 = 0 - delta
+            \\ vmaxps       %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
+            \\ vcmpleps     %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
         else
-            \\  subps       %%xmm1, %%xmm0          # xmm0 = delta
-            \\  xorps       %%xmm1, %%xmm1          # xmm1 = 0
-            \\  subps       %%xmm0, %%xmm1          # xmm1 = 0 - delta
-            \\  maxps       %%xmm1, %%xmm0          # xmm0 = abs(delta)
-            \\  cmpleps     %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ subps        %%xmm1, %%xmm0          # xmm0 = delta
+            \\ xorps        %%xmm1, %%xmm1          # xmm1 = 0
+            \\ subps        %%xmm0, %%xmm1          # xmm1 = 0 - delta
+            \\ maxps        %%xmm1, %%xmm0          # xmm0 = abs(delta)
+            \\ cmpleps      %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1204,30 +1211,30 @@ pub inline fn vec2NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
         return mask[0] and mask[1];
     }
 }
-test "zmath.vec2NearEqual" {
+test "zmath.isNearEqual2" {
     {
-        const v0 = vecSet(1.0, 2.0, -6.0001, 1000.001);
-        const v1 = vecSet(1.0, 2.001, -3.0, 4.0);
-        const v2 = vecSet(1.001, 2.001, -3.001, 4.001);
-        try expect(vec2NearEqual(v0, v1, vecSplat(0.01)));
-        try expect(vec2NearEqual(v2, v1, vecSplat(0.01)));
+        const v0 = f32x4{ 1.0, 2.0, -6.0001, 1000.001 };
+        const v1 = f32x4{ 1.0, 2.001, -3.0, 4.0 };
+        const v2 = f32x4{ 1.001, 2.001, -3.001, 4.001 };
+        try expect(isNearEqual2(v0, v1, splat(f32x4, 0.01)));
+        try expect(isNearEqual2(v2, v1, splat(f32x4, 0.01)));
     }
 }
 
-pub inline fn vec2Less(v0: Vec, v1: Vec) bool {
+pub inline fn isLess2(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpltps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ vcmpltps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
         else
-            \\  cmpltps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ cmpltps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1240,36 +1247,36 @@ pub inline fn vec2Less(v0: Vec, v1: Vec) bool {
         return mask[0] and mask[1];
     }
 }
-test "zmath.vec2Less" {
-    const v0 = vecSet(-1.0, 2.0, 3.0, 5.0);
-    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
-    try expect(vec2Less(v0, v1) == true);
+test "zmath.isLess2" {
+    const v0 = f32x4{ -1.0, 2.0, 3.0, 5.0 };
+    const v1 = f32x4{ 4.0, 5.0, 6.0, 1.0 };
+    try expect(isLess2(v0, v1) == true);
 
-    const v2 = vecSet(-1.0, 2.0, 3.0, 5.0);
-    const v3 = vecSet(4.0, -5.0, 6.0, 1.0);
-    try expect(vec2Less(v2, v3) == false);
+    const v2 = f32x4{ -1.0, 2.0, 3.0, 5.0 };
+    const v3 = f32x4{ 4.0, -5.0, 6.0, 1.0 };
+    try expect(isLess2(v2, v3) == false);
 
-    const v4 = vecSet(100.0, 200.0, 300.0, 50000.0);
-    const v5 = vecSet(400.0, 500.0, 600.0, 1.0);
-    try expect(vec2Less(v4, v5) == true);
+    const v4 = f32x4{ 100.0, 200.0, 300.0, 50000.0 };
+    const v5 = f32x4{ 400.0, 500.0, 600.0, 1.0 };
+    try expect(isLess2(v4, v5) == true);
 
-    const v6 = vecSet(100.0, -math.inf_f32, -math.inf_f32, 50000.0);
-    const v7 = vecSet(400.0, math.inf_f32, 600.0, 1.0);
-    try expect(vec2Less(v6, v7) == true);
+    const v6 = f32x4{ 100.0, -math.inf_f32, -math.inf_f32, 50000.0 };
+    const v7 = f32x4{ 400.0, math.inf_f32, 600.0, 1.0 };
+    try expect(isLess2(v6, v7) == true);
 }
 
-pub inline fn vec2LessOrEqual(v0: Vec, v1: Vec) bool {
+pub inline fn isLessEqual2(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ cmp          $3, %%al
+            \\ sete         %%al
         else
-            \\  cmpleps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ cmpleps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ cmp          $3, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1283,20 +1290,20 @@ pub inline fn vec2LessOrEqual(v0: Vec, v1: Vec) bool {
     }
 }
 
-pub inline fn vec2Greater(v0: Vec, v1: Vec) bool {
+pub inline fn isGreater2(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpgtps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ vcmpgtps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
         else
-            \\  cmpgtps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ cmpgtps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1310,20 +1317,20 @@ pub inline fn vec2Greater(v0: Vec, v1: Vec) bool {
     }
 }
 
-pub inline fn vec2GreaterOrEqual(v0: Vec, v1: Vec) bool {
+pub inline fn isGreaterEqual2(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpgeps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ vcmpgeps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
         else
-            \\  cmpgeps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ cmpgeps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1337,28 +1344,28 @@ pub inline fn vec2GreaterOrEqual(v0: Vec, v1: Vec) bool {
     }
 }
 
-pub inline fn vec2InBounds(v: Vec, bounds: Vec) bool {
+pub inline fn isInBounds2(v: f32x4, bounds: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vmovaps     %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\  vxorps      %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
-            \\  vcmpleps    %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
-            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
-            \\  vandps      %%xmm2, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ vmovaps      %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\ vxorps       %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
+            \\ vcmpleps     %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
+            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
+            \\ vandps       %%xmm2, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
         else
-            \\  movaps      %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\  xorps       %[x8000_0000], %%xmm2           # xmm2 = -bounds
-            \\  cmpleps     %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
-            \\  cmpleps     %%xmm1, %%xmm0                  # xmm0 = v <= bounds
-            \\  andps       %%xmm2, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $3, %%al
-            \\  cmp         $3, %%al
-            \\  sete        %%al
+            \\ movaps       %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\ xorps        %[x8000_0000], %%xmm2           # xmm2 = -bounds
+            \\ cmpleps      %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
+            \\ cmpleps      %%xmm1, %%xmm0                  # xmm0 = v <= bounds
+            \\ andps        %%xmm2, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $3, %%al
+            \\ cmp          $3, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1369,8 +1376,8 @@ pub inline fn vec2InBounds(v: Vec, bounds: Vec) bool {
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const b0 = @select(u32, v <= bounds, u32x4_0xffff_ffff, vecU32Zero());
-        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, u32x4_0xffff_ffff, vecU32Zero());
+        const b0 = @select(u32, v <= bounds, usplat(u32x4, ~@as(u32, 0)), usplat(u32x4, 0));
+        const b1 = @select(u32, bounds * splat(f32x4, -1.0) <= v, usplat(u32x4, ~@as(u32, 0)), usplat(u32x4, 0));
         const b = b0 & b1;
         return b[0] > 0 and b[1] > 0;
 
@@ -1381,33 +1388,33 @@ pub inline fn vec2InBounds(v: Vec, bounds: Vec) bool {
         // return b[0] and b[1];
     }
 }
-test "zmath.vec2InBounds" {
+test "zmath.isInBounds2" {
     {
-        const v0 = vecSet(0.5, -2.0, -100.0, 1000.0);
-        const v1 = vecSet(-1.6, -2.001, 1.0, 1.9);
-        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
-        try expect(vec2InBounds(v0, bounds) == true);
-        try expect(vec2InBounds(v1, bounds) == false);
+        const v0 = f32x4{ 0.5, -2.0, -100.0, 1000.0 };
+        const v1 = f32x4{ -1.6, -2.001, 1.0, 1.9 };
+        const bounds = f32x4{ 1.0, 2.0, 1.0, 2.0 };
+        try expect(isInBounds2(v0, bounds) == true);
+        try expect(isInBounds2(v1, bounds) == false);
     }
     {
-        const v0 = vecSet(10000.0, -1000.0, -10.0, 1000.0);
-        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
-        try expect(vec2InBounds(v0, bounds) == true);
+        const v0 = f32x4{ 10000.0, -1000.0, -10.0, 1000.0 };
+        const bounds = f32x4{ math.inf_f32, math.inf_f32, 1.0, 2.0 };
+        try expect(isInBounds2(v0, bounds) == true);
     }
 }
 
-pub inline fn vec2IsNan(v: Vec) bool {
+pub inline fn isNan2(v: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpneqps   %%xmm0, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  test        $3, %%al
-            \\  setne       %%al
+            \\ vcmpneqps    %%xmm0, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ test         $3, %%al
+            \\ setne        %%al
         else
-            \\  cmpneqps    %%xmm0, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  test        $3, %%al
-            \\  setne       %%al
+            \\ cmpneqps     %%xmm0, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ test         $3, %%al
+            \\ setne        %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1419,29 +1426,29 @@ pub inline fn vec2IsNan(v: Vec) bool {
         return b[0] or b[1];
     }
 }
-test "zmath.vec2IsNan" {
-    try expect(vec2IsNan(vecSet(-1.0, math.nan_f32, 3.0, -2.0)) == true);
-    try expect(vec2IsNan(vecSet(-1.0, 100.0, 3.0, math.nan_f32)) == false);
-    try expect(vec2IsNan(vecSet(-1.0, math.inf_f32, 3.0, -2.0)) == false);
-    try expect(vec2IsNan(vecSet(-1.0, math.qnan_f32, 3.0, -2.0)) == true);
-    try expect(vec2IsNan(vecSet(-1.0, 1.0, 3.0, -2.0)) == false);
-    try expect(vec2IsNan(vecSet(-1.0, 1.0, 3.0, math.qnan_f32)) == false);
+test "zmath.isNan2" {
+    try expect(isNan2(f32x4{ -1.0, math.nan_f32, 3.0, -2.0 }) == true);
+    try expect(isNan2(f32x4{ -1.0, 100.0, 3.0, math.nan_f32 }) == false);
+    try expect(isNan2(f32x4{ -1.0, math.inf_f32, 3.0, -2.0 }) == false);
+    try expect(isNan2(f32x4{ -1.0, math.qnan_f32, 3.0, -2.0 }) == true);
+    try expect(isNan2(f32x4{ -1.0, 1.0, 3.0, -2.0 }) == false);
+    try expect(isNan2(f32x4{ -1.0, 1.0, 3.0, math.qnan_f32 }) == false);
 }
 
-pub inline fn vec2IsInf(v: Vec) bool {
+pub inline fn isInf2(v: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vandps      %[x7fff_ffff], %%xmm0, %%xmm0
-            \\  vcmpeqps    %[inf], %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  test        $3, %%al
-            \\  setne       %%al
+            \\ vandps       %[x7fff_ffff], %%xmm0, %%xmm0
+            \\ vcmpeqps     %[inf], %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ test         $3, %%al
+            \\ setne        %%al
         else
-            \\  andps       %[x7fff_ffff], %%xmm0
-            \\  cmpeqps     %[inf], %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  test        $3, %%al
-            \\  setne       %%al
+            \\ andps        %[x7fff_ffff], %%xmm0
+            \\ cmpeqps      %[inf], %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ test         $3, %%al
+            \\ setne        %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1456,26 +1463,26 @@ pub inline fn vec2IsInf(v: Vec) bool {
     }
 }
 
-pub inline fn vec2Dot(v0: Vec, v1: Vec) Vec {
+pub inline fn dot2(v0: f32x4, v1: f32x4) f32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
     var xmm1 = vecSwizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3]); // | x0*x1 + y0*y1 | -- | -- | -- |
+    xmm0 = f32x4{ xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3] }; // | x0*x1 + y0*y1 | -- | -- | -- |
     return vecSwizzle(xmm0, .x, .x, .x, .x);
 }
-test "zmath.vec2Dot" {
-    const v0 = vecSet(-1.0, 2.0, 300.0, -2.0);
-    const v1 = vecSet(4.0, 5.0, 600.0, 2.0);
-    var v = vec2Dot(v0, v1);
-    try expect(vec4ApproxEqAbs(v, vecSplat(6.0), 0.0001));
+test "zmath.dot2" {
+    const v0 = f32x4{ -1.0, 2.0, 300.0, -2.0 };
+    const v1 = f32x4{ 4.0, 5.0, 600.0, 2.0 };
+    var v = dot2(v0, v1);
+    try expect(approxEqAbs(v, splat(f32x4, 6.0), 0.0001));
 }
 
 // zig fmt: off
-pub inline fn vec2LengthSq(v: Vec) Vec { return vec2Dot(v, v); }
-pub inline fn vec2RcpLengthFast(v: Vec) Vec { return vecRcpSqrtFast(vec2Dot(v, v)); }
-pub inline fn vec2RcpLength(v: Vec) Vec { return vecRcpSqrt(vec2Dot(v, v)); }
-pub inline fn vec2Length(v: Vec) Vec { return vecSqrt(vec2Dot(v, v)); }
-pub inline fn vec2NormalizeFast(v: Vec) Vec { return v * vecRcpSqrtFast(vec2Dot(v, v)); }
-pub inline fn vec2Normalize(v: Vec) Vec { return v * vecRcpSqrt(vec2Dot(v, v)); }
+pub inline fn lengthSq2(v: f32x4) f32x4 { return dot2(v, v); }
+pub inline fn rcpLengthFast2(v: f32x4) f32x4 { return vecRcpSqrtFast(dot2(v, v)); }
+pub inline fn rcpLength2(v: f32x4) f32x4 { return vecRcpSqrt(dot2(v, v)); }
+pub inline fn length2(v: f32x4) f32x4 { return vecSqrt(dot2(v, v)); }
+pub inline fn normalizeFast2(v: f32x4) f32x4 { return v * vecRcpSqrtFast(dot2(v, v)); }
+pub inline fn normalize2(v: f32x4) f32x4 { return v * vecRcpSqrt(dot2(v, v)); }
 // zig fmt: on
 
 //
@@ -2077,26 +2084,26 @@ pub inline fn vec4GreaterOrEqual(v0: Vec, v1: Vec) bool {
     return @reduce(.And, mask);
 }
 
-pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
+pub inline fn isInBounds4(v: f32x4, bounds: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vmovaps     %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\  vxorps      %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
-            \\  vcmpleps    %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
-            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
-            \\  vandps      %%xmm2, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  cmp         $15, %%al
-            \\  sete        %%al
+            \\ vmovaps      %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\ vxorps       %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
+            \\ vcmpleps     %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
+            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
+            \\ vandps       %%xmm2, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ cmp          $15, %%al
+            \\ sete         %%al
         else
-            \\  movaps      %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\  xorps       %[x8000_0000], %%xmm2           # xmm2 = -bounds
-            \\  cmpleps     %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
-            \\  cmpleps     %%xmm1, %%xmm0                  # xmm0 = v <= bounds
-            \\  andps       %%xmm2, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  cmp         $15, %%al
-            \\  sete        %%al
+            \\ movaps       %%xmm1, %%xmm2                  # xmm2 = bounds
+            \\ xorps        %[x8000_0000], %%xmm2           # xmm2 = -bounds
+            \\ cmpleps      %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
+            \\ cmpleps      %%xmm1, %%xmm0                  # xmm0 = v <= bounds
+            \\ andps        %%xmm2, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ cmp          $15, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -2107,24 +2114,24 @@ pub inline fn vec4InBounds(v: Vec, bounds: Vec) bool {
         );
     } else {
         // 2 x cmpleps, movmskps, andps, xorps, pslld, load
-        const b0 = @select(u32, v <= bounds, u32x4_0xffff_ffff, vecU32Zero());
-        const b1 = @select(u32, bounds * vecSplat(-1.0) <= v, u32x4_0xffff_ffff, vecU32Zero());
+        const b0 = @select(u32, v <= bounds, usplat(u32x4, ~@as(u32, 0)), usplat(u32x4, 0));
+        const b1 = @select(u32, bounds * splat(f32x4, -1.0) <= v, usplat(u32x4, ~@as(u32, 0)), usplat(u32x4, 0));
         const b = b0 & b1;
         return b[0] > 0 and b[1] > 0 and b[2] > 0 and b[3] > 0;
     }
 }
-test "zmath.vec4InBounds" {
+test "zmath.isInBounds4" {
     {
-        const v0 = vecSet(0.5, -2.0, -1.0, 1.9);
-        const v1 = vecSet(-1.6, -2.001, -1.0, 1.9);
-        const bounds = vecSet(1.0, 2.0, 1.0, 2.0);
-        try expect(vec4InBounds(v0, bounds) == true);
-        try expect(vec4InBounds(v1, bounds) == false);
+        const v0 = f32x4{ 0.5, -2.0, -1.0, 1.9 };
+        const v1 = f32x4{ -1.6, -2.001, -1.0, 1.9 };
+        const bounds = f32x4{ 1.0, 2.0, 1.0, 2.0 };
+        try expect(isInBounds4(v0, bounds) == true);
+        try expect(isInBounds4(v1, bounds) == false);
     }
     {
-        const v0 = vecSet(10000.0, -1000.0, -1.0, 0.0);
-        const bounds = vecSet(math.inf_f32, math.inf_f32, 1.0, 2.0);
-        try expect(vec4InBounds(v0, bounds) == true);
+        const v0 = f32x4{ 10000.0, -1000.0, -1.0, 0.0 };
+        const bounds = f32x4{ math.inf_f32, math.inf_f32, 1.0, 2.0 };
+        try expect(isInBounds4(v0, bounds) == true);
     }
 }
 
