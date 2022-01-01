@@ -1508,20 +1508,20 @@ pub inline fn normalize2(v: f32x4) f32x4 { return v * vecRcpSqrt(dot2(v, v)); }
 // vec3Normalize(v: Vec) Vec
 // vec3LinePointDistance(line_pt0: Vec, line_pt1: Vec, pt: Vec) Vec
 
-pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
+pub inline fn isEqual3(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpeqps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ vcmpeqps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
         else
-            \\  cmpeqps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ cmpeqps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1534,33 +1534,33 @@ pub inline fn vec3Equal(v0: Vec, v1: Vec) bool {
         return mask[0] and mask[1] and mask[2];
     }
 }
-test "zmath.vec3Equal" {
+test "zmath.isEqual3" {
     {
-        const v0 = vecSet(1.0, math.inf_f32, -3.0, 1000.001);
-        const v1 = vecSet(1.0, math.inf_f32, -3.0, 4.0);
-        try expect(vec3Equal(v0, v1) == true);
+        const v0 = f32x4{ 1.0, math.inf_f32, -3.0, 1000.001 };
+        const v1 = f32x4{ 1.0, math.inf_f32, -3.0, 4.0 };
+        try expect(isEqual3(v0, v1) == true);
     }
     {
-        const v0 = vecSet(1.0, math.inf_f32, -3.0, 4.0);
-        const v1 = vecSet(1.0, -math.inf_f32, -3.0, 4.0);
-        try expect(vec3Equal(v0, v1) == false);
+        const v0 = f32x4{ 1.0, math.inf_f32, -3.0, 4.0 };
+        const v1 = f32x4{ 1.0, -math.inf_f32, -3.0, 4.0 };
+        try expect(isEqual3(v0, v1) == false);
     }
 }
 
-pub inline fn vec3EqualInt(v0: Vec, v1: Vec) bool {
+pub inline fn isEqualInt3(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vpcmpeqd    %%xmm1, %%xmm0, %xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ vpcmpeqd     %%xmm1, %%xmm0, %xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
         else
-            \\  pcmpeqd     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ pcmpeqd      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1569,36 +1569,36 @@ pub inline fn vec3EqualInt(v0: Vec, v1: Vec) bool {
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const v0u = @bitCast(VecU32, v0);
-        const v1u = @bitCast(VecU32, v1);
+        const v0u = @bitCast(u32x4, v0);
+        const v1u = @bitCast(u32x4, v1);
         const mask = v0u == v1u;
         return mask[0] and mask[1] and mask[2];
     }
 }
 
-pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
+pub inline fn isNearEqual3(v0: f32x4, v1: f32x4, epsilon: f32x4) bool {
     // Won't handle inf & nan
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vsubps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = delta
-            \\  vxorps      %%xmm1, %%xmm1, %%xmm1  # xmm1 = 0
-            \\  vsubps      %%xmm0, %%xmm1, %%xmm1  # xmm1 = 0 - delta
-            \\  vmaxps      %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
-            \\  vcmpleps    %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ vsubps       %%xmm1, %%xmm0, %%xmm0  # xmm0 = delta
+            \\ vxorps       %%xmm1, %%xmm1, %%xmm1  # xmm1 = 0
+            \\ vsubps       %%xmm0, %%xmm1, %%xmm1  # xmm1 = 0 - delta
+            \\ vmaxps       %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
+            \\ vcmpleps     %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
         else
-            \\  subps       %%xmm1, %%xmm0          # xmm0 = delta
-            \\  xorps       %%xmm1, %%xmm1          # xmm1 = 0
-            \\  subps       %%xmm0, %%xmm1          # xmm1 = 0 - delta
-            \\  maxps       %%xmm1, %%xmm0          # xmm0 = abs(delta)
-            \\  cmpleps     %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ subps        %%xmm1, %%xmm0          # xmm0 = delta
+            \\ xorps        %%xmm1, %%xmm1          # xmm1 = 0
+            \\ subps        %%xmm0, %%xmm1          # xmm1 = 0 - delta
+            \\ maxps        %%xmm1, %%xmm0          # xmm0 = abs(delta)
+            \\ cmpleps      %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1612,28 +1612,28 @@ pub inline fn vec3NearEqual(v0: Vec, v1: Vec, epsilon: Vec) bool {
         return mask[0] and mask[1] and mask[2];
     }
 }
-test "zmath.vec3NearEqual" {
+test "zmath.isNearEqual3" {
     {
-        const v0 = vecSet(1.0, 2.0, -3.0001, 1000.001);
-        const v1 = vecSet(1.0, 2.001, -3.0, 4.0);
-        try expect(vec3NearEqual(v0, v1, vecSplat(0.01)));
+        const v0 = f32x4{ 1.0, 2.0, -3.0001, 1000.001 };
+        const v1 = f32x4{ 1.0, 2.001, -3.0, 4.0 };
+        try expect(isNearEqual3(v0, v1, splat(f32x4, 0.01)));
     }
 }
 
-pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
+pub inline fn isLess3(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpltps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ vcmpltps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
         else
-            \\  cmpltps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ cmpltps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1646,38 +1646,38 @@ pub inline fn vec3Less(v0: Vec, v1: Vec) bool {
         return mask[0] and mask[1] and mask[2];
     }
 }
-test "zmath.vec3Less" {
-    const v0 = vecSet(-1.0, 2.0, 3.0, 5.0);
-    const v1 = vecSet(4.0, 5.0, 6.0, 1.0);
-    try expect(vec3Less(v0, v1) == true);
+test "zmath.isLess3" {
+    const v0 = f32x4{ -1.0, 2.0, 3.0, 5.0 };
+    const v1 = f32x4{ 4.0, 5.0, 6.0, 1.0 };
+    try expect(isLess3(v0, v1) == true);
 
-    const v2 = vecSet(-1.0, 2.0, 3.0, 5.0);
-    const v3 = vecSet(4.0, -5.0, 6.0, 1.0);
-    try expect(vec3Less(v2, v3) == false);
+    const v2 = f32x4{ -1.0, 2.0, 3.0, 5.0 };
+    const v3 = f32x4{ 4.0, -5.0, 6.0, 1.0 };
+    try expect(isLess3(v2, v3) == false);
 
-    const v4 = vecSet(100.0, 200.0, 300.0, -500.0);
-    const v5 = vecSet(400.0, 500.0, 600.0, 1.0);
-    try expect(vec3Less(v4, v5) == true);
+    const v4 = f32x4{ 100.0, 200.0, 300.0, -500.0 };
+    const v5 = f32x4{ 400.0, 500.0, 600.0, 1.0 };
+    try expect(isLess3(v4, v5) == true);
 
-    const v6 = vecSet(100.0, -math.inf_f32, -math.inf_f32, 50000.0);
-    const v7 = vecSet(400.0, math.inf_f32, 600.0, 1.0);
-    try expect(vec3Less(v6, v7) == true);
+    const v6 = f32x4{ 100.0, -math.inf_f32, -math.inf_f32, 50000.0 };
+    const v7 = f32x4{ 400.0, math.inf_f32, 600.0, 1.0 };
+    try expect(isLess3(v6, v7) == true);
 }
 
-pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
+pub inline fn isLessEqual3(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpleps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
         else
-            \\  cmpleps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ cmpleps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1691,20 +1691,20 @@ pub inline fn vec3LessOrEqual(v0: Vec, v1: Vec) bool {
     }
 }
 
-pub inline fn vec3Greater(v0: Vec, v1: Vec) bool {
+pub inline fn isGreater3(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpgtps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ vcmpgtps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
         else
-            \\  cmpgtps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ cmpgtps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
@@ -1718,20 +1718,20 @@ pub inline fn vec3Greater(v0: Vec, v1: Vec) bool {
     }
 }
 
-pub inline fn vec3GreaterOrEqual(v0: Vec, v1: Vec) bool {
+pub inline fn isGreaterEqual3(v0: f32x4, v1: f32x4) bool {
     if (cpu_arch == .x86_64) {
         const code = if (has_avx)
-            \\  vcmpgeps    %%xmm1, %%xmm0, %%xmm0
-            \\  vmovmskps   %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ vcmpgeps     %%xmm1, %%xmm0, %%xmm0
+            \\ vmovmskps    %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
         else
-            \\  cmpgeps     %%xmm1, %%xmm0
-            \\  movmskps    %%xmm0, %%eax
-            \\  and         $7, %%al
-            \\  cmp         $7, %%al
-            \\  sete        %%al
+            \\ cmpgeps      %%xmm1, %%xmm0
+            \\ movmskps     %%xmm0, %%eax
+            \\ and          $7, %%al
+            \\ cmp          $7, %%al
+            \\ sete         %%al
             ;
         return asm (code
             : [ret] "={rax}" (-> bool),
