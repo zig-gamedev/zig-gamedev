@@ -105,6 +105,9 @@ test "zmath.vecSetInt" {
 pub inline fn vecSplat(value: f32) Vec {
     return @splat(4, value);
 }
+pub inline fn splat(comptime T: type, value: f32) T {
+    return @splat(@typeInfo(T).Vector.len, value);
+}
 test "zmath.vecSplat" {
     const v = vecSplat(123.0);
     try expect(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
@@ -183,8 +186,7 @@ pub inline fn andCInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const Tu = @Vector(@typeInfo(T).Vector.len, u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
-    // andnps
-    return @bitCast(Vec, v0u & ~v1u);
+    return @bitCast(T, v0u & ~v1u); // andnps
 }
 test "zmath.vecAndCInt" {
     const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
@@ -204,8 +206,7 @@ pub inline fn orInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const Tu = @Vector(@typeInfo(T).Vector.len, u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
-    // orps
-    return @bitCast(T, v0u | v1u);
+    return @bitCast(T, v0u | v1u); // orps
 }
 test "zmath.vecOrInt" {
     const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
@@ -396,243 +397,221 @@ test "zmath.vecInBounds" {
     try expect(vecBoolEqual(b1, vecBoolSet(false, false, true, true)));
 }
 
-pub inline fn vecRound(v: Vec) Vec {
-    if (cpu_arch == .x86_64 and has_avx) {
-        return asm ("vroundps $0, %%xmm0, %%xmm0"
-            : [ret] "={xmm0}" (-> Vec),
-            : [v] "{xmm0}" (v),
-        );
-    } else {
-        const sign = vecAndInt(v, f32x4_0x8000_0000);
-        const magic = vecOrInt(f32x4_8_388_608, sign);
-        var r1 = v + magic;
-        r1 = r1 - magic;
-        const r2 = vecAbs(v);
-        const mask = r2 <= f32x4_8_388_608;
-        return vecSelect(mask, r1, v);
-    }
-}
-test "zmath.vecRound" {
+test "zmath.round" {
     {
-        try expect(vec4Equal(vecRound(vecSplat(math.inf_f32)), vecSplat(math.inf_f32)));
-        try expect(vec4Equal(vecRound(vecSplat(-math.inf_f32)), vecSplat(-math.inf_f32)));
-        try expect(vec4IsNan(vecRound(vecSplat(math.nan_f32))));
-        try expect(vec4IsNan(vecRound(vecSplat(-math.nan_f32))));
-        try expect(vec4IsNan(vecRound(vecSplat(math.qnan_f32))));
-        try expect(vec4IsNan(vecRound(vecSplat(-math.qnan_f32))));
+        try expect(vec4Equal(round(splat(f32x4, math.inf_f32)), splat(f32x4, math.inf_f32)));
+        try expect(vec4Equal(round(splat(f32x4, -math.inf_f32)), splat(f32x4, -math.inf_f32)));
+        try expect(vec4IsNan(round(splat(f32x4, math.nan_f32))));
+        try expect(vec4IsNan(round(splat(f32x4, -math.nan_f32))));
+        try expect(vec4IsNan(round(splat(f32x4, math.qnan_f32))));
+        try expect(vec4IsNan(round(splat(f32x4, -math.qnan_f32))));
     }
-    const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
-    var v = vecRound(v0);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
+    var v = round(f32x4{ 1.1, -1.1, -1.5, 1.5 });
+    try expect(approxEqAbs(v, f32x4{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
 
-    const v1 = vecSet(-10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
-    v = vecRound(v1);
+    const v1 = f32x4{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 };
+    v = round(v1);
     try expect(v[3] == math.inf_f32);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+    try expect(approxEqAbs(v, f32x4{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
 
-    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
-    v = vecRound(v2);
+    const v2 = f32x4{ -math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32 };
+    v = round(v2);
     try expect(math.isNan(v2[0]));
     try expect(math.isNan(v2[1]));
     try expect(math.isNan(v2[2]));
     try expect(v2[3] == -math.inf_f32);
 
-    const v3 = vecSet(1001.5, -201.499, -10000.99, -101.5);
-    v = vecRound(v3);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1002.0, -201.0, -10001.0, -102.0 }, 0.0));
+    const v3 = f32x4{ 1001.5, -201.499, -10000.99, -101.5 };
+    v = round(v3);
+    try expect(approxEqAbs(v, f32x4{ 1002.0, -201.0, -10001.0, -102.0 }, 0.0));
 
-    const v4 = vecSet(-1_388_609.9, 1_388_609.5, 1_388_109.01, 2_388_609.5);
-    v = vecRound(v4);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ -1_388_610.0, 1_388_610.0, 1_388_109.0, 2_388_610.0 }, 0.0));
+    const v4 = f32x4{ -1_388_609.9, 1_388_609.5, 1_388_109.01, 2_388_609.5 };
+    v = round(v4);
+    try expect(approxEqAbs(v, f32x4{ -1_388_610.0, 1_388_610.0, 1_388_109.0, 2_388_610.0 }, 0.0));
 
     var f: f32 = -100.0;
     var i: u32 = 0;
     while (i < 100) : (i += 1) {
-        //const vr = vecRound(vecSplat(f));
-        const vr = round(@splat(8, f));
-        const fr = @round(f);
-        try expect(vr[0] == fr);
-        try expect(vr[1] == fr);
-        try expect(vr[2] == fr);
-        try expect(vr[3] == fr);
-        try expect(vr[7] == fr);
+        const vr = round(splat(f32x4, f));
+        const fr = @round(splat(f32x4, f));
+        try expect(approxEqAbs(vr, fr, 0.0));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
 
-pub inline fn vecTrunc(v: Vec) Vec {
+pub inline fn trunc(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
     if (cpu_arch == .x86_64 and has_avx) {
-        return asm ("vroundps $3, %%xmm0, %%xmm0"
-            : [ret] "={xmm0}" (-> Vec),
-            : [v] "{xmm0}" (v),
-        );
+        if (T == f32x4) {
+            return asm ("vroundps $3, %%xmm0, %%xmm0"
+                : [ret] "={xmm0}" (-> T),
+                : [v] "{xmm0}" (v),
+            );
+        } else if (T == f32x8) {
+            return asm ("vroundps $3, %%ymm0, %%ymm0"
+                : [ret] "={ymm0}" (-> T),
+                : [v] "{ymm0}" (v),
+            );
+        }
     } else {
-        const mask = vecAbs(v) < f32x4_8_388_608;
-        const result = vecFloatToIntAndBack(v);
-        return vecSelect(mask, result, v);
+        const mask = @fabs(v) < splatNoFraction(T);
+        const result = floatToIntAndBack(v);
+        return @select(f32, mask, result, v);
     }
 }
-test "zmath.vecTrunc" {
+test "zmath.trunc" {
     {
-        try expect(vec4Equal(vecTrunc(vecSplat(math.inf_f32)), vecSplat(math.inf_f32)));
-        try expect(vec4Equal(vecTrunc(vecSplat(-math.inf_f32)), vecSplat(-math.inf_f32)));
-        try expect(vec4IsNan(vecTrunc(vecSplat(math.nan_f32))));
-        try expect(vec4IsNan(vecTrunc(vecSplat(-math.nan_f32))));
-        try expect(vec4IsNan(vecTrunc(vecSplat(math.qnan_f32))));
-        try expect(vec4IsNan(vecTrunc(vecSplat(-math.qnan_f32))));
+        try expect(vec4Equal(trunc(splat(f32x4, math.inf_f32)), splat(f32x4, math.inf_f32)));
+        try expect(vec4Equal(trunc(splat(f32x4, -math.inf_f32)), splat(f32x4, -math.inf_f32)));
+        try expect(vec4IsNan(trunc(splat(f32x4, math.nan_f32))));
+        try expect(vec4IsNan(trunc(splat(f32x4, -math.nan_f32))));
+        try expect(vec4IsNan(trunc(splat(f32x4, math.qnan_f32))));
+        try expect(vec4IsNan(trunc(splat(f32x4, -math.qnan_f32))));
     }
-    const v0 = vecSet(1.1, -1.1, -1.5, 1.5);
-    var v = vecTrunc(v0);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1.0, -1.0, -1.0, 1.0 }, 0.0));
+    var v = trunc(f32x4{ 1.1, -1.1, -1.5, 1.5 });
+    try expect(approxEqAbs(v, f32x4{ 1.0, -1.0, -1.0, 1.0 }, 0.0));
 
-    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
-    v = vecTrunc(v1);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+    v = trunc(f32x4{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 });
+    try expect(approxEqAbs(v, f32x4{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
 
-    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
-    v = vecTrunc(v2);
-    try expect(math.isNan(v2[0]));
-    try expect(math.isNan(v2[1]));
-    try expect(math.isNan(v2[2]));
-    try expect(v2[3] == -math.inf_f32);
+    v = trunc(f32x4{ -math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32 });
+    try expect(math.isNan(v[0]));
+    try expect(math.isNan(v[1]));
+    try expect(math.isNan(v[2]));
+    try expect(v[3] == -math.inf_f32);
 
-    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.750001);
-    v = vecTrunc(v3);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1000.0, -201.0, -10000.0, 100.0 }, 0.0));
+    v = trunc(f32x4{ 1000.5001, -201.499, -10000.99, 100.750001 });
+    try expect(approxEqAbs(v, f32x4{ 1000.0, -201.0, -10000.0, 100.0 }, 0.0));
 
-    const v4 = vecSet(-7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5);
-    v = vecTrunc(v4);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ -7_388_609.0, 7_388_609.0, 8_388_109.0, -8_388_509.0 }, 0.0));
+    v = trunc(f32x4{ -7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5 });
+    try expect(approxEqAbs(v, f32x4{ -7_388_609.0, 7_388_609.0, 8_388_109.0, -8_388_509.0 }, 0.0));
 
     var f: f32 = -100.0;
     var i: u32 = 0;
     while (i < 100) : (i += 1) {
-        const vr = vecTrunc(vecSplat(f));
-        const fr = @trunc(f);
-        try expect(vr[0] == fr);
-        try expect(vr[1] == fr);
-        try expect(vr[2] == fr);
-        try expect(vr[3] == fr);
+        const vr = trunc(splat(f32x4, f));
+        const fr = @trunc(splat(f32x4, f));
+        try expect(approxEqAbs(vr, fr, 0.0));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
 
-pub inline fn vecFloor(v: Vec) Vec {
+pub inline fn floor(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
     if (cpu_arch == .x86_64 and has_avx) {
-        return asm ("vroundps $1, %%xmm0, %%xmm0"
-            : [ret] "={xmm0}" (-> Vec),
-            : [v] "{xmm0}" (v),
-        );
+        if (T == f32x4) {
+            return asm ("vroundps $1, %%xmm0, %%xmm0"
+                : [ret] "={xmm0}" (-> T),
+                : [v] "{xmm0}" (v),
+            );
+        } else if (T == f32x8) {
+            return asm ("vroundps $1, %%ymm0, %%ymm0"
+                : [ret] "={ymm0}" (-> T),
+                : [v] "{ymm0}" (v),
+            );
+        }
     } else {
-        const mask = vecAbs(v) < f32x4_8_388_608;
-        var result = vecFloatToIntAndBack(v);
+        const mask = @fabs(v) < splatNoFraction(T);
+        var result = floatToIntAndBack(v);
         const larger_mask = result > v;
-        const larger = vecSelect(larger_mask, vecSplat(-1.0), vecZero());
+        const larger = @select(f32, larger_mask, splat(T, -1.0), splat(T, 0.0));
         result = result + larger;
-        return vecSelect(mask, result, v);
+        return @select(f32, mask, result, v);
     }
 }
-test "zmath.vecFloor" {
+test "zmath.floor" {
     {
-        try expect(vec4Equal(vecFloor(vecSplat(math.inf_f32)), vecSplat(math.inf_f32)));
-        try expect(vec4Equal(vecFloor(vecSplat(-math.inf_f32)), vecSplat(-math.inf_f32)));
-        try expect(vec4IsNan(vecFloor(vecSplat(math.nan_f32))));
-        try expect(vec4IsNan(vecFloor(vecSplat(-math.nan_f32))));
-        try expect(vec4IsNan(vecFloor(vecSplat(math.qnan_f32))));
-        try expect(vec4IsNan(vecFloor(vecSplat(-math.qnan_f32))));
+        try expect(vec4Equal(floor(splat(f32x4, math.inf_f32)), splat(f32x4, math.inf_f32)));
+        try expect(vec4Equal(floor(splat(f32x4, -math.inf_f32)), splat(f32x4, -math.inf_f32)));
+        try expect(vec4IsNan(floor(splat(f32x4, math.nan_f32))));
+        try expect(vec4IsNan(floor(splat(f32x4, -math.nan_f32))));
+        try expect(vec4IsNan(floor(splat(f32x4, math.qnan_f32))));
+        try expect(vec4IsNan(floor(splat(f32x4, -math.qnan_f32))));
     }
-    const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
-    var v = vecFloor(v0);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1.0, -2.0, -2.0, -3.0 }, 0.0));
+    var v = floor(f32x4{ 1.5, -1.5, -1.7, -2.1 });
+    try expect(approxEqAbs(v, f32x4{ 1.0, -2.0, -2.0, -3.0 }, 0.0));
 
-    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
-    v = vecFloor(v1);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+    v = floor(f32x4{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 });
+    try expect(approxEqAbs(v, f32x4{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
 
-    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
-    v = vecFloor(v2);
-    try expect(math.isNan(v2[0]));
-    try expect(math.isNan(v2[1]));
-    try expect(math.isNan(v2[2]));
-    try expect(v2[3] == -math.inf_f32);
+    v = floor(f32x4{ -math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32 });
+    try expect(math.isNan(v[0]));
+    try expect(math.isNan(v[1]));
+    try expect(math.isNan(v[2]));
+    try expect(v[3] == -math.inf_f32);
 
-    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.75001);
-    v = vecFloor(v3);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1000.0, -202.0, -10001.0, 100.0 }, 0.0));
+    v = floor(f32x4{ 1000.5001, -201.499, -10000.99, 100.75001 });
+    try expect(approxEqAbs(v, f32x4{ 1000.0, -202.0, -10001.0, 100.0 }, 0.0));
 
-    const v4 = vecSet(-7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5);
-    v = vecFloor(v4);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ -7_388_610.0, 7_388_609.0, 8_388_109.0, -8_388_510.0 }, 0.0));
+    v = floor(f32x4{ -7_388_609.5, 7_388_609.1, 8_388_109.5, -8_388_509.5 });
+    try expect(approxEqAbs(v, f32x4{ -7_388_610.0, 7_388_609.0, 8_388_109.0, -8_388_510.0 }, 0.0));
 
     var f: f32 = -100.0;
     var i: u32 = 0;
     while (i < 100) : (i += 1) {
-        const vr = vecFloor(vecSplat(f));
-        const fr = @floor(f);
-        try expect(vr[0] == fr);
-        try expect(vr[1] == fr);
-        try expect(vr[2] == fr);
-        try expect(vr[3] == fr);
+        const vr = floor(splat(f32x4, f));
+        const fr = @floor(splat(f32x4, f));
+        try expect(approxEqAbs(vr, fr, 0.0));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
 
-pub inline fn vecCeil(v: Vec) Vec {
+pub inline fn ceil(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
     if (cpu_arch == .x86_64 and has_avx) {
-        return asm ("vroundps $2, %%xmm0, %%xmm0"
-            : [ret] "={xmm0}" (-> Vec),
-            : [v] "{xmm0}" (v),
-        );
+        if (T == f32x4) {
+            return asm ("vroundps $2, %%xmm0, %%xmm0"
+                : [ret] "={xmm0}" (-> T),
+                : [v] "{xmm0}" (v),
+            );
+        } else if (T == f32x8) {
+            return asm ("vroundps $2, %%ymm0, %%ymm0"
+                : [ret] "={ymm0}" (-> T),
+                : [v] "{ymm0}" (v),
+            );
+        }
     } else {
-        const mask = vecAbs(v) < f32x4_8_388_608;
-        var result = vecFloatToIntAndBack(v);
+        const mask = @fabs(v) < splatNoFraction(T);
+        var result = floatToIntAndBack(v);
         const smaller_mask = result < v;
-        const smaller = vecSelect(smaller_mask, vecSplat(-1.0), vecZero());
+        const smaller = @select(f32, smaller_mask, splat(T, -1.0), splat(T, 0.0));
         result = result - smaller;
-        return vecSelect(mask, result, v);
+        return @select(f32, mask, result, v);
     }
 }
 test "zmath.vecCeil" {
     {
-        try expect(vec4Equal(vecCeil(vecSplat(math.inf_f32)), vecSplat(math.inf_f32)));
-        try expect(vec4Equal(vecCeil(vecSplat(-math.inf_f32)), vecSplat(-math.inf_f32)));
-        try expect(vec4IsNan(vecCeil(vecSplat(math.nan_f32))));
-        try expect(vec4IsNan(vecCeil(vecSplat(-math.nan_f32))));
-        try expect(vec4IsNan(vecCeil(vecSplat(math.qnan_f32))));
-        try expect(vec4IsNan(vecCeil(vecSplat(-math.qnan_f32))));
+        try expect(vec4Equal(ceil(splat(f32x4, math.inf_f32)), splat(f32x4, math.inf_f32)));
+        try expect(vec4Equal(ceil(splat(f32x4, -math.inf_f32)), splat(f32x4, -math.inf_f32)));
+        try expect(vec4IsNan(ceil(splat(f32x4, math.nan_f32))));
+        try expect(vec4IsNan(ceil(splat(f32x4, -math.nan_f32))));
+        try expect(vec4IsNan(ceil(splat(f32x4, math.qnan_f32))));
+        try expect(vec4IsNan(ceil(splat(f32x4, -math.qnan_f32))));
     }
-    const v0 = vecSet(1.5, -1.5, -1.7, -2.1);
-    var v = vecCeil(v0);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 2.0, -1.0, -1.0, -2.0 }, 0.0));
+    var v = ceil(f32x4{ 1.5, -1.5, -1.7, -2.1 });
+    try expect(approxEqAbs(v, f32x4{ 2.0, -1.0, -1.0, -2.0 }, 0.0));
 
-    const v1 = vecSet(-10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32);
-    v = vecCeil(v1);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+    v = ceil(f32x4{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 });
+    try expect(approxEqAbs(v, f32x4{ -10_000_002.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
 
-    const v2 = vecSet(-math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32);
-    v = vecCeil(v2);
-    try expect(math.isNan(v2[0]));
-    try expect(math.isNan(v2[1]));
-    try expect(math.isNan(v2[2]));
-    try expect(v2[3] == -math.inf_f32);
+    v = ceil(f32x4{ -math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32 });
+    try expect(math.isNan(v[0]));
+    try expect(math.isNan(v[1]));
+    try expect(math.isNan(v[2]));
+    try expect(v[3] == -math.inf_f32);
 
-    const v3 = vecSet(1000.5001, -201.499, -10000.99, 100.75001);
-    v = vecCeil(v3);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1001.0, -201.0, -10000.0, 101.0 }, 0.0));
+    v = ceil(f32x4{ 1000.5001, -201.499, -10000.99, 100.75001 });
+    try expect(approxEqAbs(v, f32x4{ 1001.0, -201.0, -10000.0, 101.0 }, 0.0));
 
-    const v4 = vecSet(-1_388_609.5, 1_388_609.1, 1_388_109.9, -1_388_509.9);
-    v = vecCeil(v4);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ -1_388_609.0, 1_388_610.0, 1_388_110.0, -1_388_509.0 }, 0.0));
+    v = ceil(f32x4{ -1_388_609.5, 1_388_609.1, 1_388_109.9, -1_388_509.9 });
+    try expect(approxEqAbs(v, f32x4{ -1_388_609.0, 1_388_610.0, 1_388_110.0, -1_388_509.0 }, 0.0));
 
     var f: f32 = -100.0;
     var i: u32 = 0;
     while (i < 100) : (i += 1) {
-        const vr = vecCeil(vecSplat(f));
-        const fr = @ceil(f);
-        try expect(vr[0] == fr);
-        try expect(vr[1] == fr);
-        try expect(vr[2] == fr);
-        try expect(vr[3] == fr);
+        const vr = ceil(splat(f32x4, f));
+        const fr = @ceil(splat(f32x4, f));
+        try expect(approxEqAbs(vr, fr, 0.0));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
@@ -848,36 +827,30 @@ pub inline fn vecSwizzle(
     return @shuffle(f32, v, undefined, [4]i32{ @enumToInt(x), @enumToInt(y), @enumToInt(z), @enumToInt(w) });
 }
 
-pub inline fn vecMod(v0: Vec, v1: Vec) Vec {
+pub inline fn mod(v0: anytype, v1: anytype) @TypeOf(v0) {
     // vdivps, vroundps, vmulps, vsubps
-    return v0 - v1 * vecTrunc(v0 / v1);
+    return v0 - v1 * trunc(v0 / v1);
 }
-test "zmath.vecMod" {
-    try expect(vec4ApproxEqAbs(vecMod(vecSplat(3.1), vecSplat(1.7)), vecSplat(1.4), 0.0005));
-    try expect(vec4ApproxEqAbs(vecMod(vecSplat(-3.0), vecSplat(2.0)), vecSplat(-1.0), 0.0005));
-    try expect(vec4ApproxEqAbs(vecMod(vecSplat(-3.0), vecSplat(-2.0)), vecSplat(-1.0), 0.0005));
-    try expect(vec4ApproxEqAbs(vecMod(vecSplat(3.0), vecSplat(-2.0)), vecSplat(1.0), 0.0005));
-    try expect(vec4IsNan(vecMod(vecSplat(math.inf_f32), vecSplat(1.0))));
-    try expect(vec4IsNan(vecMod(vecSplat(-math.inf_f32), vecSplat(123.456))));
-    try expect(vec4IsNan(vecMod(vecSplat(math.nan_f32), vecSplat(123.456))));
-    try expect(vec4IsNan(vecMod(vecSplat(math.qnan_f32), vecSplat(123.456))));
-    try expect(vec4IsNan(vecMod(vecSplat(-math.qnan_f32), vecSplat(123.456))));
-    try expect(vec4IsNan(vecMod(vecSplat(123.456), vecSplat(math.inf_f32))));
-    try expect(vec4IsNan(vecMod(vecSplat(123.456), vecSplat(-math.inf_f32))));
-    try expect(vec4IsNan(vecMod(vecSplat(123.456), vecSplat(math.nan_f32))));
-    try expect(vec4IsNan(vecMod(vecSplat(math.inf_f32), vecSplat(math.inf_f32))));
-    try expect(vec4IsNan(vecMod(vecSplat(math.inf_f32), vecSplat(math.nan_f32))));
-}
-
-inline fn checkType(v: anytype) @TypeOf(v) {
-    const T = @TypeOf(v);
-    if (T == f32x4 or T == f32x8) {
-        return v;
-    } else {
-        @compileError("wrong type");
-    }
+test "zmath.mod" {
+    try expect(approxEqAbs(mod(splat(f32x4, 3.1), splat(f32x4, 1.7)), splat(f32x4, 1.4), 0.0005));
+    try expect(approxEqAbs(mod(splat(f32x4, -3.0), splat(f32x4, 2.0)), splat(f32x4, -1.0), 0.0005));
+    try expect(approxEqAbs(mod(splat(f32x4, -3.0), splat(f32x4, -2.0)), splat(f32x4, -1.0), 0.0005));
+    try expect(approxEqAbs(mod(splat(f32x4, 3.0), splat(f32x4, -2.0)), splat(f32x4, 1.0), 0.0005));
+    try expect(vec4IsNan(mod(splat(f32x4, math.inf_f32), splat(f32x4, 1.0))));
+    try expect(vec4IsNan(mod(splat(f32x4, -math.inf_f32), splat(f32x4, 123.456))));
+    try expect(vec4IsNan(mod(splat(f32x4, math.nan_f32), splat(f32x4, 123.456))));
+    try expect(vec4IsNan(mod(splat(f32x4, math.qnan_f32), splat(f32x4, 123.456))));
+    try expect(vec4IsNan(mod(splat(f32x4, -math.qnan_f32), splat(f32x4, 123.456))));
+    try expect(vec4IsNan(mod(splat(f32x4, 123.456), splat(f32x4, math.inf_f32))));
+    try expect(vec4IsNan(mod(splat(f32x4, 123.456), splat(f32x4, -math.inf_f32))));
+    try expect(vec4IsNan(mod(splat(f32x4, 123.456), splat(f32x4, math.nan_f32))));
+    try expect(vec4IsNan(mod(splat(f32x4, math.inf_f32), splat(f32x4, math.inf_f32))));
+    try expect(vec4IsNan(mod(splat(f32x4, math.inf_f32), splat(f32x4, math.nan_f32))));
 }
 
+pub inline fn splatOne(comptime T: type) T {
+    return splat(T, 1.0);
+}
 pub inline fn splatHalfPi(comptime T: type) T {
     return @splat(@typeInfo(T).Vector.len, @as(f32, 0.5 * math.pi));
 }
@@ -885,10 +858,10 @@ pub inline fn splatPi(comptime T: type) T {
     return @splat(@typeInfo(T).Vector.len, @as(f32, math.pi));
 }
 pub inline fn splatTwoPi(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @as(f32, math.pi));
+    return @splat(@typeInfo(T).Vector.len, @as(f32, math.tau));
 }
 pub inline fn splatRcpTwoPi(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @as(f32, 1.0 / math.pi));
+    return @splat(@typeInfo(T).Vector.len, @as(f32, 1.0 / math.tau));
 }
 pub inline fn splatNegativeZero(comptime T: type) T {
     return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x8000_0000)));
@@ -901,7 +874,7 @@ pub inline fn splatAbsMask(comptime T: type) T {
 }
 
 pub inline fn round(v: anytype) @TypeOf(v) {
-    const T = @TypeOf(checkType(v));
+    const T = @TypeOf(v);
     if (cpu_arch == .x86_64 and has_avx) {
         if (T == f32x4) {
             return asm ("vroundps $0, %%xmm0, %%xmm0"
@@ -925,39 +898,22 @@ pub inline fn round(v: anytype) @TypeOf(v) {
     }
 }
 
-pub inline fn vecModAngles(v: Vec) Vec {
-    // 2 x vmulps, 2 x load, vroundps, vaddps
-    return v - f32x4_two_pi * vecRound(v * f32x4_rcp_two_pi);
-}
 pub inline fn modAngles(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
     // 2 x vmulps, 2 x load, vroundps, vaddps
-    const T = @TypeOf(checkType(v));
     return v - splatTwoPi(T) * round(v * splatRcpTwoPi(T));
 }
-test "zmath.vecModAngles" {
-    try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(math.tau)), vecSplat(0.0), 0.0005));
-    try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(0.0)), vecSplat(0.0), 0.0005));
-    try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(math.pi)), vecSplat(math.pi), 0.0005));
-    try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(11 * math.pi)), vecSplat(math.pi), 0.0005));
-    try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(3.5 * math.pi)), vecSplat(-0.5 * math.pi), 0.0005));
-    try expect(vec4ApproxEqAbs(vecModAngles(vecSplat(2.5 * math.pi)), vecSplat(0.5 * math.pi), 0.0005));
-
-    _ = modAngles(@splat(8, @as(f32, math.pi)));
-    _ = round(@splat(8, @as(f32, math.pi)));
-    _ = splatNegativeZero(f32x8);
-}
-
-pub inline fn vecMulAdd(v0: Vec, v1: Vec, v2: Vec) Vec {
-    if (cpu_arch == .x86_64 and has_avx) {
-        return @mulAdd(Vec, v0, v1, v2);
-    } else {
-        // NOTE(mziulek): On .x86_64 without HW fma instructions @mulAdd maps to really slow code!
-        return v0 * v1 + v2;
-    }
+test "zmath.modAngles" {
+    try expect(approxEqAbs(modAngles(splat(f32x4, math.tau)), splat(f32x4, 0.0), 0.0005));
+    try expect(approxEqAbs(modAngles(splat(f32x4, 0.0)), splat(f32x4, 0.0), 0.0005));
+    try expect(approxEqAbs(modAngles(splat(f32x4, math.pi)), splat(f32x4, math.pi), 0.0005));
+    try expect(vec4ApproxEqAbs(modAngles(splat(f32x4, 11 * math.pi)), splat(f32x4, math.pi), 0.0005));
+    try expect(vec4ApproxEqAbs(modAngles(splat(f32x4, 3.5 * math.pi)), splat(f32x4, -0.5 * math.pi), 0.0005));
+    try expect(vec4ApproxEqAbs(modAngles(splat(f32x4, 2.5 * math.pi)), splat(f32x4, 0.5 * math.pi), 0.0005));
 }
 
 pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
-    const T = @TypeOf(checkType(v0));
+    const T = @TypeOf(v0);
     if (cpu_arch == .x86_64 and has_avx) {
         return @mulAdd(T, v0, v1, v2);
     } else {
@@ -965,54 +921,49 @@ pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
         return v0 * v1 + v2;
     }
 }
-test "zmath.mulAdd" {
-    const v0: f32x4 = [4]f32{ 1.0, 2.0, 3.0, 4.0 };
-    const v1 = @splat(4, @as(f32, 1.0));
-    const v2 = @splat(4, @as(f32, 1.0));
-    const v = mulAdd(v0, v1, v2);
-    _ = v;
-}
 
-pub inline fn vecSin(v: Vec) Vec {
+pub inline fn sin(v: anytype) @TypeOf(v) {
     // 11-degree minimax approximation
     // According to llvm-mca this routine will take on average:
-    // AVX: ~57 cycles (zen3, skylake)
-    // x86_64: ~93 cycles
-    var x = vecModAngles(v);
+    // * zen2 (AVX, SIMDx4, SIMDx8): ~51 cycles
+    // * skylake (AVX, SIMDx4, SIMDx8): ~57 cycles
+    // * x86_64 (SIMDx4): ~100 cycles
+    const T = @TypeOf(v);
+    var x = modAngles(v);
 
-    const sign = vecAndInt(x, f32x4_0x8000_0000);
-    const c = vecOrInt(sign, f32x4_pi);
-    const absx = vecAndCInt(x, sign);
+    const sign = andInt(x, splatNegativeZero(T));
+    const c = orInt(sign, splatPi(T));
+    const absx = andCInt(x, sign);
     const rflx = c - x;
-    const comp = absx <= f32x4_half_pi;
-    x = vecSelect(comp, x, rflx);
+    const comp = absx <= splatHalfPi(T);
+    x = @select(f32, comp, x, rflx);
     const x2 = x * x;
 
-    var result = vecMulAdd(vecSplat(f32x4_sin_c4567[0]), x2, vecSplat(f32x4_sin_c0123[3]));
-    result = vecMulAdd(result, x2, vecSplat(f32x4_sin_c0123[2]));
-    result = vecMulAdd(result, x2, vecSplat(f32x4_sin_c0123[1]));
-    result = vecMulAdd(result, x2, vecSplat(f32x4_sin_c0123[0]));
-    result = vecMulAdd(result, x2, vecSplat(1.0));
+    var result = mulAdd(splatSinC4(T), x2, splatSinC3(T));
+    result = mulAdd(result, x2, splatSinC2(T));
+    result = mulAdd(result, x2, splatSinC1(T));
+    result = mulAdd(result, x2, splatSinC0(T));
+    result = mulAdd(result, x2, splatOne(T));
     return x * result;
 }
-test "vecSin" {
+test "sin" {
     const epsilon = 0.0001;
 
-    try expect(vec4ApproxEqAbs(vecSin(vecSplat(0.5 * math.pi)), vecSplat(1.0), epsilon));
-    try expect(vec4ApproxEqAbs(vecSin(vecSplat(0.0)), vecSplat(0.0), epsilon));
-    try expect(vec4ApproxEqAbs(vecSin(vecSplat(-0.0)), vecSplat(-0.0), epsilon));
-    try expect(vec4ApproxEqAbs(vecSin(vecSplat(89.123)), vecSplat(0.916166), epsilon));
-    try expect(vec4IsNan(vecSin(vecSplat(math.inf_f32))) == true);
-    try expect(vec4IsNan(vecSin(vecSplat(-math.inf_f32))) == true);
-    try expect(vec4IsNan(vecSin(vecSplat(math.nan_f32))) == true);
-    try expect(vec4IsNan(vecSin(vecSplat(math.qnan_f32))) == true);
+    try expect(approxEqAbs(sin(splat(f32x4, 0.5 * math.pi)), splat(f32x4, 1.0), epsilon));
+    try expect(approxEqAbs(sin(splat(f32x4, 0.0)), splat(f32x4, 0.0), epsilon));
+    try expect(approxEqAbs(sin(splat(f32x4, -0.0)), splat(f32x4, -0.0), epsilon));
+    try expect(approxEqAbs(sin(splat(f32x4, 89.123)), splat(f32x4, 0.916166), epsilon));
+    try expect(vec4IsNan(sin(splat(f32x4, math.inf_f32))) == true);
+    try expect(vec4IsNan(sin(splat(f32x4, -math.inf_f32))) == true);
+    try expect(vec4IsNan(sin(splat(f32x4, math.nan_f32))) == true);
+    try expect(vec4IsNan(sin(splat(f32x4, math.qnan_f32))) == true);
 
     var f: f32 = -100.0;
     var i: u32 = 0;
     while (i < 100) : (i += 1) {
-        const vr = vecSin(vecSplat(f));
-        const fr = @sin(vecSplat(f));
-        try expect(vec4ApproxEqAbs(vr, fr, epsilon));
+        const vr = sin(splat(f32x4, f));
+        const fr = @sin(splat(f32x4, f));
+        try expect(approxEqAbs(vr, fr, epsilon));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
@@ -2327,6 +2278,14 @@ const f32x4_8_388_608: Vec = vecSplat(8_388_608.0);
 const f32x4_sin_c0123: Vec = vecSet(-0.16666667, 0.0083333310, -0.00019840874, 2.7525562e-06);
 const f32x4_sin_c4567: Vec = vecSet(-2.3889859e-08, -0.16665852, 0.0083139502, -0.00018524670);
 
+// zig fmt: off
+pub inline fn splatSinC0(comptime T: type) T { return splat(T, -0.16666667); }
+pub inline fn splatSinC1(comptime T: type) T { return splat(T, 0.0083333310); }
+pub inline fn splatSinC2(comptime T: type) T { return splat(T, -0.00019840874); }
+pub inline fn splatSinC3(comptime T: type) T { return splat(T, 2.7525562e-06); }
+pub inline fn splatSinC4(comptime T: type) T { return splat(T, -2.3889859e-08); }
+// zig fmt: on
+
 inline fn vecFloatToIntAndBack(v: Vec) Vec {
     // This won't handle nan, inf and numbers greater than 8_388_608.0
     @setRuntimeSafety(false);
@@ -2344,6 +2303,51 @@ inline fn vecFloatToIntAndBack(v: Vec) Vec {
         @intToFloat(f32, vi[2]),
         @intToFloat(f32, vi[3]),
     };
+}
+inline fn floatToIntAndBack(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+    // This won't handle nan, inf and numbers greater than 8_388_608.0
+    @setRuntimeSafety(false);
+    // TODO(mziulek): use inline while or something..
+    if (T == f32x4) {
+        // cvttps2dq
+        const vi = [4]i32{
+            @floatToInt(i32, v[0]),
+            @floatToInt(i32, v[1]),
+            @floatToInt(i32, v[2]),
+            @floatToInt(i32, v[3]),
+        };
+        // cvtdq2ps
+        return [4]f32{
+            @intToFloat(f32, vi[0]),
+            @intToFloat(f32, vi[1]),
+            @intToFloat(f32, vi[2]),
+            @intToFloat(f32, vi[3]),
+        };
+    } else if (T == f32x8) {
+        // cvttps2dq
+        const vi = [8]i32{
+            @floatToInt(i32, v[0]),
+            @floatToInt(i32, v[1]),
+            @floatToInt(i32, v[2]),
+            @floatToInt(i32, v[3]),
+            @floatToInt(i32, v[4]),
+            @floatToInt(i32, v[5]),
+            @floatToInt(i32, v[6]),
+            @floatToInt(i32, v[7]),
+        };
+        // cvtdq2ps
+        return [8]f32{
+            @intToFloat(f32, vi[0]),
+            @intToFloat(f32, vi[1]),
+            @intToFloat(f32, vi[2]),
+            @intToFloat(f32, vi[3]),
+            @intToFloat(f32, vi[4]),
+            @intToFloat(f32, vi[5]),
+            @intToFloat(f32, vi[6]),
+            @intToFloat(f32, vi[7]),
+        };
+    }
 }
 test "zmath.vecFloatToIntAndBack" {
     const v0 = vecSet(1.1, 2.9, 3.0, -4.5);
@@ -2367,6 +2371,16 @@ inline fn vec3ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
     return math.approxEqAbs(f32, v0[0], v1[0], eps) and
         math.approxEqAbs(f32, v0[1], v1[1], eps) and
         math.approxEqAbs(f32, v0[2], v1[2], eps);
+}
+
+inline fn approxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
+    const T = @TypeOf(v0);
+    comptime var i: comptime_int = 0;
+    inline while (i < @typeInfo(T).Vector.len) : (i += 1) {
+        if (!math.approxEqAbs(f32, v0[i], v1[i], eps))
+            return false;
+    }
+    return true;
 }
 
 inline fn vec4ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
