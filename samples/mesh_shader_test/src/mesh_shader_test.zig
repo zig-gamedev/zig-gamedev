@@ -272,6 +272,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     var grfx = gr.GraphicsContext.init(window);
 
+    _ = grfx.allocatePersistentGpuDescriptors(10);
+
     // Check for Mesh Shader support.
     {
         var options7: d3d12.FEATURE_DATA_D3D12_OPTIONS7 = undefined;
