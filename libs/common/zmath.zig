@@ -182,54 +182,52 @@ test "zmath.isNotEqualInt" {
     }
 }
 
-pub inline fn vecAndInt(v0: Vec, v1: Vec) Vec {
-    // andps
-    const v0u = @bitCast(VecU32, v0);
-    const v1u = @bitCast(VecU32, v1);
-    return @bitCast(Vec, v0u & v1u);
-}
 pub inline fn andInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
     const Tu = @Vector(@typeInfo(T).Vector.len, u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
-    // andps
-    return @bitCast(T, v0u & v1u);
+    return @bitCast(T, v0u & v1u); // andps
 }
-test "zmath.vecAndInt" {
-    const v0 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
-    const v1 = vecSet(1.0, 2.0, 3.0, math.inf_f32);
-    const v = vecAndInt(v0, v1);
-    try expect(v[3] == math.inf_f32);
-    try expect(vec3ApproxEqAbs(v, [4]f32{ 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
+test "zmath.andInt" {
+    {
+        const v0 = f32x4{ 0, @bitCast(f32, ~@as(u32, 0)), 0, @bitCast(f32, ~@as(u32, 0)) };
+        const v1 = f32x4{ 1.0, 2.0, 3.0, math.inf_f32 };
+        const v = andInt(v0, v1);
+        try expect(v[3] == math.inf_f32);
+        try expect(approxEqAbs(v, f32x4{ 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
+    }
+    {
+        const v0 = f32x8{ 0, 0, 0, 0, 0, @bitCast(f32, ~@as(u32, 0)), 0, @bitCast(f32, ~@as(u32, 0)) };
+        const v1 = f32x8{ 0, 0, 0, 0, 1.0, 2.0, 3.0, math.inf_f32 };
+        const v = andInt(v0, v1);
+        try expect(v[7] == math.inf_f32);
+        try expect(approxEqAbs(v, f32x8{ 0, 0, 0, 0, 0.0, 2.0, 0.0, math.inf_f32 }, 0.0));
+    }
 }
 
-pub inline fn vecAndCInt(v0: Vec, v1: Vec) Vec {
-    // andnps
-    const v0u = @bitCast(VecU32, v0);
-    const v1u = @bitCast(VecU32, v1);
-    return @bitCast(Vec, v0u & ~v1u);
-}
-pub inline fn andCInt(v0: anytype, v1: anytype) @TypeOf(v0) {
+pub inline fn andNotInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
     const Tu = @Vector(@typeInfo(T).Vector.len, u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
-    return @bitCast(T, v0u & ~v1u); // andnps
+    return @bitCast(T, ~v0u & v1u); // andnps
 }
-test "zmath.vecAndCInt" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v1 = vecSetInt(0, ~@as(u32, 0), 0, ~@as(u32, 0));
-    const v = vecAndCInt(v0, v1);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1.0, 0.0, 3.0, 0.0 }, 0.0));
+test "zmath.andNotInt" {
+    {
+        const v0 = f32x4{ 1.0, 2.0, 3.0, 4.0 };
+        const v1 = f32x4{ 0, @bitCast(f32, ~@as(u32, 0)), 0, @bitCast(f32, ~@as(u32, 0)) };
+        const v = andNotInt(v1, v0);
+        try expect(approxEqAbs(v, f32x4{ 1.0, 0.0, 3.0, 0.0 }, 0.0));
+    }
+    {
+        const v0 = f32x8{ 0, 0, 0, 0, 1.0, 2.0, 3.0, 4.0 };
+        const v1 = f32x8{ 0, 0, 0, 0, 0, @bitCast(f32, ~@as(u32, 0)), 0, @bitCast(f32, ~@as(u32, 0)) };
+        const v = andNotInt(v1, v0);
+        try expect(approxEqAbs(v, f32x8{ 0, 0, 0, 0, 1.0, 0.0, 3.0, 0.0 }, 0.0));
+    }
 }
 
-pub inline fn vecOrInt(v0: Vec, v1: Vec) Vec {
-    // orps
-    const v0u = @bitCast(VecU32, v0);
-    const v1u = @bitCast(VecU32, v1);
-    return @bitCast(Vec, v0u | v1u);
-}
 pub inline fn orInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
     const Tu = @Vector(@typeInfo(T).Vector.len, u32);
@@ -237,37 +235,61 @@ pub inline fn orInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const v1u = @bitCast(Tu, v1);
     return @bitCast(T, v0u | v1u); // orps
 }
-test "zmath.vecOrInt" {
-    const v0 = vecSetInt(0, ~@as(u32, 0), 0, 0);
-    const v1 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v = vecOrInt(v0, v1);
-    try expect(v[0] == 1.0);
-    try expect(@bitCast(u32, v[1]) == ~@as(u32, 0));
-    try expect(v[2] == 3.0);
-    try expect(v[3] == 4.0);
+test "zmath.orInt" {
+    {
+        const v0 = f32x4{ 0, @bitCast(f32, ~@as(u32, 0)), 0, 0 };
+        const v1 = f32x4{ 1.0, 2.0, 3.0, 4.0 };
+        const v = orInt(v0, v1);
+        try expect(v[0] == 1.0);
+        try expect(@bitCast(u32, v[1]) == ~@as(u32, 0));
+        try expect(v[2] == 3.0);
+        try expect(v[3] == 4.0);
+    }
+    {
+        const v0 = f32x8{ 0, 0, 0, 0, 0, @bitCast(f32, ~@as(u32, 0)), 0, 0 };
+        const v1 = f32x8{ 0, 0, 0, 0, 1.0, 2.0, 3.0, 4.0 };
+        const v = orInt(v0, v1);
+        try expect(v[4] == 1.0);
+        try expect(@bitCast(u32, v[5]) == ~@as(u32, 0));
+        try expect(v[6] == 3.0);
+        try expect(v[7] == 4.0);
+    }
 }
 
-pub inline fn vecNorInt(v0: Vec, v1: Vec) Vec {
-    // por, pcmpeqd, pxor
-    const v0u = @bitCast(VecU32, v0);
-    const v1u = @bitCast(VecU32, v1);
-    return @bitCast(Vec, ~(v0u | v1u));
+pub inline fn norInt(v0: anytype, v1: anytype) @TypeOf(v0) {
+    const T = @TypeOf(v0);
+    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const v0u = @bitCast(Tu, v0);
+    const v1u = @bitCast(Tu, v1);
+    return @bitCast(T, ~(v0u | v1u)); // por, pcmpeqd, pxor
 }
 
-pub inline fn vecXorInt(v0: Vec, v1: Vec) Vec {
-    // xorps
-    const v0u = @bitCast(VecU32, v0);
-    const v1u = @bitCast(VecU32, v1);
-    return @bitCast(Vec, v0u ^ v1u);
+pub inline fn xorInt(v0: anytype, v1: anytype) @TypeOf(v0) {
+    const T = @TypeOf(v0);
+    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const v0u = @bitCast(Tu, v0);
+    const v1u = @bitCast(Tu, v1);
+    return @bitCast(T, v0u ^ v1u); // xorps
 }
-test "zmath.vecXorInt" {
-    const v0 = vecSetInt(@bitCast(u32, @as(f32, 1.0)), ~@as(u32, 0), 0, 0);
-    const v1 = vecSet(1.0, 0, 0, 0);
-    const v = vecXorInt(v0, v1);
-    try expect(v[0] == 0.0);
-    try expect(@bitCast(u32, v[1]) == ~@as(u32, 0));
-    try expect(v[2] == 0.0);
-    try expect(v[3] == 0.0);
+test "zmath.xorInt" {
+    {
+        const v0 = f32x4{ 1.0, @bitCast(f32, ~@as(u32, 0)), 0, 0 };
+        const v1 = f32x4{ 1.0, 0, 0, 0 };
+        const v = xorInt(v0, v1);
+        try expect(v[0] == 0.0);
+        try expect(@bitCast(u32, v[1]) == ~@as(u32, 0));
+        try expect(v[2] == 0.0);
+        try expect(v[3] == 0.0);
+    }
+    {
+        const v0 = f32x8{ 0, 0, 0, 0, 1.0, @bitCast(f32, ~@as(u32, 0)), 0, 0 };
+        const v1 = f32x8{ 0, 0, 0, 0, 1.0, 0, 0, 0 };
+        const v = xorInt(v0, v1);
+        try expect(v[4] == 0.0);
+        try expect(@bitCast(u32, v[5]) == ~@as(u32, 0));
+        try expect(v[6] == 0.0);
+        try expect(v[7] == 0.0);
+    }
 }
 
 pub inline fn vecIsNan(v: Vec) VecBool {
@@ -848,14 +870,14 @@ pub inline fn vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec {
     return v0 + (v1 - v0) * t;
 }
 
-pub const VecComponent = enum { x, y, z, w };
+pub const F32x4Component = enum { x, y, z, w };
 
 pub inline fn swizzle4(
     v: f32x4,
-    comptime x: VecComponent,
-    comptime y: VecComponent,
-    comptime z: VecComponent,
-    comptime w: VecComponent,
+    comptime x: F32x4Component,
+    comptime y: F32x4Component,
+    comptime z: F32x4Component,
+    comptime w: F32x4Component,
 ) Vec {
     return @shuffle(f32, v, undefined, [4]i32{ @enumToInt(x), @enumToInt(y), @enumToInt(z), @enumToInt(w) });
 }
@@ -966,7 +988,7 @@ pub inline fn sin(v: anytype) @TypeOf(v) {
 
     const sign = andInt(x, splatNegativeZero(T));
     const c = orInt(sign, splatPi(T));
-    const absx = andCInt(x, sign);
+    const absx = andNotInt(sign, x);
     const rflx = c - x;
     const comp = absx <= splatHalfPi(T);
     x = @select(f32, comp, x, rflx);
