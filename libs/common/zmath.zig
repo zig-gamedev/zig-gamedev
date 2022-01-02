@@ -6,6 +6,7 @@ const expect = std.testing.expect;
 
 const cpu_arch = builtin.cpu.arch;
 const has_avx = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .avx) else false;
+const has_avx512 = false; //if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .avx512) else false;
 
 pub const Vec = @Vector(4, f32);
 pub const VecBool = @Vector(4, bool);
@@ -329,21 +330,20 @@ test "zmath.isInf" {
     }
 }
 
-pub inline fn vecMinFast(v0: Vec, v1: Vec) Vec {
-    // minps
-    return @select(f32, v0 < v1, v0, v1);
+pub inline fn minFast(v0: anytype, v1: anytype) @TypeOf(v0) {
+    return @select(f32, v0 < v1, v0, v1); // minps
 }
-test "zmath.vecMinFast" {
+test "zmath.minFast" {
     {
         const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
         const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
-        const v = vecMinFast(v0, v1);
+        const v = minFast(v0, v1);
         try expect(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, 2.0, 7.0), 0.0));
     }
     {
         const v0 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
         const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
-        const v = vecMinFast(v0, v1);
+        const v = minFast(v0, v1);
         try expect(v[0] == 1.0);
         try expect(v[1] == 1.0);
         try expect(!math.isNan(v[1]));
@@ -354,24 +354,19 @@ test "zmath.vecMinFast" {
 }
 
 pub inline fn maxFast(v0: anytype, v1: anytype) @TypeOf(v0) {
-    // maxps
-    return @select(f32, v0 > v1, v0, v1);
+    return @select(f32, v0 > v1, v0, v1); // maxps
 }
-pub inline fn vecMaxFast(v0: Vec, v1: Vec) Vec {
-    // maxps
-    return @select(f32, v0 > v1, v0, v1);
-}
-test "zmath.vecMaxFast" {
+test "zmath.maxFast" {
     {
-        const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
-        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
-        const v = vecMaxFast(v0, v1);
-        try expect(vec4ApproxEqAbs(v, vecSet(2.0, 3.0, 4.0, math.inf_f32), 0.0));
+        const v0 = f32x4{ 1.0, 3.0, 2.0, 7.0 };
+        const v1 = f32x4{ 2.0, 1.0, 4.0, math.inf_f32 };
+        const v = maxFast(v0, v1);
+        try expect(approxEqAbs(v, f32x4{ 2.0, 3.0, 4.0, math.inf_f32 }, 0.0));
     }
     {
-        const v0 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
-        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
-        const v = vecMaxFast(v0, v1);
+        const v0 = f32x4{ 1.0, math.nan_f32, 5.0, math.qnan_f32 };
+        const v1 = f32x4{ 2.0, 1.0, 4.0, math.inf_f32 };
+        const v = maxFast(v0, v1);
         try expect(v[0] == 2.0);
         try expect(v[1] == 1.0);
         try expect(v[2] == 5.0);
@@ -380,22 +375,27 @@ test "zmath.vecMaxFast" {
     }
 }
 
-pub inline fn vecMin(v0: Vec, v1: Vec) Vec {
+pub inline fn min(v0: anytype, v1: anytype) @TypeOf(v0) {
     // This will handle inf & nan
-    // minps, cmpunordps, andps, andnps, orps
-    return @minimum(v0, v1);
+    return @minimum(v0, v1); // minps, cmpunordps, andps, andnps, orps
 }
-test "zmath.vecMin" {
+test "zmath.min" {
     {
-        const v0 = vecSet(1.0, 3.0, 2.0, 7.0);
-        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
-        const v = vecMin(v0, v1);
-        try expect(vec4ApproxEqAbs(v, vecSet(1.0, 1.0, 2.0, 7.0), 0.0));
+        const v0 = f32x4{ 1.0, 3.0, 2.0, 7.0 };
+        const v1 = f32x4{ 2.0, 1.0, 4.0, math.inf_f32 };
+        const v = min(v0, v1);
+        try expect(approxEqAbs(v, f32x4{ 1.0, 1.0, 2.0, 7.0 }, 0.0));
     }
     {
-        const v0 = vecSet(1.0, math.nan_f32, 5.0, math.qnan_f32);
-        const v1 = vecSet(2.0, 1.0, 4.0, math.inf_f32);
-        const v = vecMin(v0, v1);
+        const v0 = f32x8{ 0, 0, -2.0, 0, 1.0, 3.0, 2.0, 7.0 };
+        const v1 = f32x8{ 0, 1.0, 0, 0, 2.0, 1.0, 4.0, math.inf_f32 };
+        const v = min(v0, v1);
+        try expect(approxEqAbs(v, f32x8{ 0.0, 0.0, -2.0, 0.0, 1.0, 1.0, 2.0, 7.0 }, 0.0));
+    }
+    {
+        const v0 = f32x4{ 1.0, math.nan_f32, 5.0, math.qnan_f32 };
+        const v1 = f32x4{ 2.0, 1.0, 4.0, math.inf_f32 };
+        const v = min(v0, v1);
         try expect(v[0] == 1.0);
         try expect(v[1] == 1.0);
         try expect(!math.isNan(v[1]));
@@ -404,9 +404,9 @@ test "zmath.vecMin" {
         try expect(!math.isNan(v[3]));
     }
     {
-        const v0 = vecSet(-math.inf_f32, math.inf_f32, math.inf_f32, math.qnan_f32);
-        const v1 = vecSet(math.qnan_f32, -math.inf_f32, math.qnan_f32, math.nan_f32);
-        const v = vecMin(v0, v1);
+        const v0 = f32x4{ -math.inf_f32, math.inf_f32, math.inf_f32, math.qnan_f32 };
+        const v1 = f32x4{ math.qnan_f32, -math.inf_f32, math.qnan_f32, math.nan_f32 };
+        const v = min(v0, v1);
         try expect(v[0] == -math.inf_f32);
         try expect(v[1] == -math.inf_f32);
         try expect(v[2] == math.inf_f32);
@@ -418,8 +418,7 @@ test "zmath.vecMin" {
 
 pub inline fn vecMax(v0: Vec, v1: Vec) Vec {
     // This will handle inf & nan
-    // maxps, cmpunordps, andps, andnps, orps
-    return @maximum(v0, v1);
+    return @maximum(v0, v1); // maxps, cmpunordps, andps, andnps, orps
 }
 test "zmath.vecMax" {
     {
@@ -690,9 +689,9 @@ test "zmath.vecCeil" {
     }
 }
 
-pub inline fn vecClamp(v: Vec, min: Vec, max: Vec) Vec {
-    var result = vecMax(min, v);
-    result = vecMin(max, result);
+pub inline fn vecClamp(v: Vec, vmin: Vec, vmax: Vec) Vec {
+    var result = vecMax(vmin, v);
+    result = min(vmax, result);
     return result;
 }
 test "zmath.vecClamp" {
@@ -713,9 +712,9 @@ test "zmath.vecClamp" {
     }
 }
 
-pub inline fn vecClampFast(v: Vec, min: Vec, max: Vec) Vec {
-    var result = vecMaxFast(min, v);
-    result = vecMinFast(max, result);
+pub inline fn vecClampFast(v: Vec, vmin: Vec, vmax: Vec) Vec {
+    var result = maxFast(vmin, v);
+    result = minFast(vmax, result);
     return result;
 }
 test "zmath.vecClampFast" {
@@ -728,7 +727,7 @@ test "zmath.vecClampFast" {
 
 pub inline fn vecSaturate(v: Vec) Vec {
     var result = vecMax(v, vecZero());
-    result = vecMin(result, vecSplat(1.0));
+    result = min(result, vecSplat(1.0));
     return result;
 }
 test "zmath.vecSaturate" {
@@ -750,8 +749,8 @@ test "zmath.vecSaturate" {
 }
 
 pub inline fn vecSaturateFast(v: Vec) Vec {
-    var result = vecMaxFast(v, vecZero());
-    result = vecMinFast(result, vecSplat(1.0));
+    var result = maxFast(v, vecZero());
+    result = minFast(result, vecSplat(1.0));
     return result;
 }
 test "zmath.vecSaturateFast" {
@@ -922,21 +921,6 @@ test "zmath.mod" {
     try expect(isNan4(mod(splat(f32x4, math.inf_f32), splat(f32x4, math.nan_f32))));
 }
 
-pub inline fn splatOne(comptime T: type) T {
-    return splat(T, 1.0);
-}
-pub inline fn splatHalfPi(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @as(f32, 0.5 * math.pi));
-}
-pub inline fn splatPi(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @as(f32, math.pi));
-}
-pub inline fn splatTwoPi(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @as(f32, math.tau));
-}
-pub inline fn splatRcpTwoPi(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @as(f32, 1.0 / math.tau));
-}
 pub inline fn splatNegativeZero(comptime T: type) T {
     return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x8000_0000)));
 }
@@ -974,8 +958,7 @@ pub inline fn round(v: anytype) @TypeOf(v) {
 
 pub inline fn modAngles(v: anytype) @TypeOf(v) {
     const T = @TypeOf(v);
-    // 2 x vmulps, 2 x load, vroundps, vaddps
-    return v - splatTwoPi(T) * round(v * splatRcpTwoPi(T));
+    return v - splat(T, math.tau) * round(v * splat(T, 1.0 / math.tau)); // 2 x vmulps, 2 x load, vroundps, vaddps
 }
 test "zmath.modAngles" {
     try expect(approxEqAbs(modAngles(splat(f32x4, math.tau)), splat(f32x4, 0.0), 0.0005));
@@ -1006,18 +989,18 @@ pub inline fn sin(v: anytype) @TypeOf(v) {
     var x = modAngles(v);
 
     const sign = andInt(x, splatNegativeZero(T));
-    const c = orInt(sign, splatPi(T));
+    const c = orInt(sign, splat(T, math.pi));
     const absx = andNotInt(sign, x);
     const rflx = c - x;
-    const comp = absx <= splatHalfPi(T);
+    const comp = absx <= splat(T, 0.5 * math.pi);
     x = @select(f32, comp, x, rflx);
     const x2 = x * x;
 
-    var result = mulAdd(splatSinC4(T), x2, splatSinC3(T));
-    result = mulAdd(result, x2, splatSinC2(T));
-    result = mulAdd(result, x2, splatSinC1(T));
-    result = mulAdd(result, x2, splatSinC0(T));
-    result = mulAdd(result, x2, splatOne(T));
+    var result = mulAdd(splat(T, -2.3889859e-08), x2, splat(T, 2.7525562e-06));
+    result = mulAdd(result, x2, splat(T, -0.00019840874));
+    result = mulAdd(result, x2, splat(T, 0.0083333310));
+    result = mulAdd(result, x2, splat(T, -0.16666667));
+    result = mulAdd(result, x2, splat(T, 1.0));
     return x * result;
 }
 test "sin" {
@@ -2123,7 +2106,7 @@ pub inline fn isEqual4Int(v0: f32x4, v1: f32x4) bool {
 pub inline fn isNearEqual4(v0: f32x4, v1: f32x4, epsilon: f32x4) bool {
     // Won't handle inf & nan
     const delta = v0 - v1;
-    const temp = vecMaxFast(delta, splat(f32x4, 0.0) - delta);
+    const temp = maxFast(delta, splat(f32x4, 0.0) - delta);
     return @reduce(.And, temp <= epsilon);
 }
 
@@ -2337,14 +2320,6 @@ pub const u32x4_mask3: u32x4 = u32x4{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 }
 //
 // Private functions and constants
 //
-
-// zig fmt: off
-pub inline fn splatSinC0(comptime T: type) T { return splat(T, -0.16666667); }
-pub inline fn splatSinC1(comptime T: type) T { return splat(T, 0.0083333310); }
-pub inline fn splatSinC2(comptime T: type) T { return splat(T, -0.00019840874); }
-pub inline fn splatSinC3(comptime T: type) T { return splat(T, 2.7525562e-06); }
-pub inline fn splatSinC4(comptime T: type) T { return splat(T, -2.3889859e-08); }
-// zig fmt: on
 
 inline fn floatToIntAndBack(v: anytype) @TypeOf(v) {
     // This routine won't handle nan, inf and numbers greater than 8_388_608.0 (will generate undefined values)
