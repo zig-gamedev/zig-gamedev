@@ -62,7 +62,7 @@ pub const b8x8 = @Vector(8, bool);
 // vecScale(v: Vec, s: f32) Vec
 // vecLerp(v0: Vec, v1: Vec, t: f32) Vec
 // vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
-// swizzle( v: Vec, xyzw: VecComponent) Vec
+// swizzle4( v: Vec, xyzw: VecComponent) Vec
 // vecMod(v0: Vec, v1: Vec) Vec
 // vecMulAdd(v0: Vec, v1: Vec, v2: Vec) Vec
 // vecSin(v: Vec) Vec
@@ -850,8 +850,8 @@ pub inline fn vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec {
 
 pub const VecComponent = enum { x, y, z, w };
 
-pub inline fn swizzle(
-    v: Vec,
+pub inline fn swizzle4(
+    v: f32x4,
     comptime x: VecComponent,
     comptime y: VecComponent,
     comptime z: VecComponent,
@@ -1495,9 +1495,9 @@ pub inline fn isInf2(v: f32x4) bool {
 
 pub inline fn dot2(v0: f32x4, v1: f32x4) f32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
-    var xmm1 = swizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
+    var xmm1 = swizzle4(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
     xmm0 = f32x4{ xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3] }; // | x0*x1 + y0*y1 | -- | -- | -- |
-    return swizzle(xmm0, .x, .x, .x, .x);
+    return swizzle4(xmm0, .x, .x, .x, .x);
 }
 test "zmath.dot2" {
     const v0 = f32x4{ -1.0, 2.0, 300.0, -2.0 };
@@ -1911,11 +1911,11 @@ test "zmath.isInf3" {
 
 pub inline fn dot3(v0: f32x4, v1: f32x4) f32x4 {
     var dot = v0 * v1;
-    var temp = swizzle(dot, .y, .z, .y, .z);
+    var temp = swizzle4(dot, .y, .z, .y, .z);
     dot = f32x4{ dot[0] + temp[0], dot[1], dot[2], dot[2] }; // addss
-    temp = swizzle(temp, .y, .y, .y, .y);
+    temp = swizzle4(temp, .y, .y, .y, .y);
     dot = f32x4{ dot[0] + temp[0], dot[1], dot[2], dot[2] }; // addss
-    return swizzle(dot, .x, .x, .x, .x);
+    return swizzle4(dot, .x, .x, .x, .x);
 }
 test "zmath.dot3" {
     const v0 = f32x4{ -1.0, 2.0, 3.0, 1.0 };
@@ -1925,11 +1925,11 @@ test "zmath.dot3" {
 }
 
 pub inline fn cross3(v0: f32x4, v1: f32x4) f32x4 {
-    var xmm0 = swizzle(v0, .y, .z, .x, .w);
-    var xmm1 = swizzle(v1, .z, .x, .y, .w);
+    var xmm0 = swizzle4(v0, .y, .z, .x, .w);
+    var xmm1 = swizzle4(v1, .z, .x, .y, .w);
     var result = xmm0 * xmm1;
-    xmm0 = swizzle(xmm0, .y, .z, .x, .w);
-    xmm1 = swizzle(xmm1, .z, .x, .y, .w);
+    xmm0 = swizzle4(xmm0, .y, .z, .x, .w);
+    xmm1 = swizzle4(xmm1, .z, .x, .y, .w);
     result = result - xmm0 * xmm1;
     return @bitCast(f32x4, @bitCast(u32x4, result) & u32x4_mask3);
 }
@@ -2194,11 +2194,11 @@ pub inline fn isInf4(v: f32x4) bool {
 
 pub inline fn dot4(v0: f32x4, v1: f32x4) f32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
-    var xmm1 = swizzle(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
+    var xmm1 = swizzle4(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
     xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
-    xmm0 = swizzle(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
+    xmm0 = swizzle4(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
     xmm0 = f32x4{ xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2] }; // addss
-    return swizzle(xmm0, .x, .x, .x, .x);
+    return swizzle4(xmm0, .x, .x, .x, .x);
 }
 test "zmath.dot4" {
     const v0 = f32x4{ -1.0, 2.0, 3.0, -2.0 };
