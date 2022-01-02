@@ -292,22 +292,41 @@ test "zmath.xorInt" {
     }
 }
 
-pub inline fn vecIsNan(v: Vec) VecBool {
+pub inline fn isNan(
+    v: anytype,
+) @Vector(@typeInfo(@TypeOf(v)).Vector.len, bool) {
     return v != v;
 }
-test "zmath.vecIsNan" {
-    const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
-    const b = vecIsNan(v0);
-    try expect(vecBoolEqual(b, vecBoolSet(false, true, true, false)));
+test "zmath.isNan" {
+    {
+        const v0 = f32x4{ math.inf_f32, math.nan_f32, math.qnan_f32, 7.0 };
+        const b = isNan(v0);
+        try expect(@reduce(.And, b == b8x4{ false, true, true, false }));
+    }
+    {
+        const v0 = f32x8{ 0, math.nan_f32, 0, 0, math.inf_f32, math.nan_f32, math.qnan_f32, 7.0 };
+        const b = isNan(v0);
+        try expect(@reduce(.And, b == b8x8{ false, true, false, false, false, true, true, false }));
+    }
 }
 
-pub inline fn vecIsInf(v: Vec) VecBool {
-    return vecAbs(v) == f32x4_inf;
+pub inline fn isInf(
+    v: anytype,
+) @Vector(@typeInfo(@TypeOf(v)).Vector.len, bool) {
+    const T = @TypeOf(v);
+    return @fabs(v) == splat(T, math.inf_f32);
 }
-test "zmath.vecIsInf" {
-    const v0 = vecSet(math.inf_f32, math.nan_f32, math.qnan_f32, 7.0);
-    const b = vecIsInf(v0);
-    try expect(vecBoolEqual(b, vecBoolSet(true, false, false, false)));
+test "zmath.isInf" {
+    {
+        const v0 = f32x4{ math.inf_f32, math.nan_f32, math.qnan_f32, 7.0 };
+        const b = isInf(v0);
+        try expect(@reduce(.And, b == b8x4{ true, false, false, false }));
+    }
+    {
+        const v0 = f32x8{ 0, math.inf_f32, 0, 0, math.inf_f32, math.nan_f32, math.qnan_f32, 7.0 };
+        const b = isInf(v0);
+        try expect(@reduce(.And, b == b8x8{ false, true, false, false, true, false, false, false }));
+    }
 }
 
 pub inline fn vecMinFast(v0: Vec, v1: Vec) Vec {
@@ -1510,7 +1529,7 @@ pub inline fn isInf2(v: f32x4) bool {
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const b = vecIsInf(v);
+        const b = isInf(v);
         return b[0] or b[1];
     }
 }
@@ -1913,7 +1932,7 @@ pub inline fn isInf3(v: f32x4) bool {
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const b = vecIsInf(v);
+        const b = isInf(v);
         return b[0] or b[1] or b[2];
     }
 }
@@ -2210,7 +2229,7 @@ test "zmath.isNan4" {
 
 pub inline fn isInf4(v: f32x4) bool {
     // andps, cmpeqps, movmskps, test, setne
-    const b = vecIsInf(v);
+    const b = isInf(v);
     return b[0] or b[1] or b[2] or b[3];
 }
 
