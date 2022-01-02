@@ -2162,91 +2162,85 @@ pub inline fn isInf4(v: f32x4) bool {
     return b[0] or b[1] or b[2] or b[3];
 }
 
-pub inline fn vec4Dot(v0: Vec, v1: Vec) Vec {
+pub inline fn dot4(v0: f32x4, v1: f32x4) f32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
     var xmm1 = vecSwizzle(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
     xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
     xmm0 = vecSwizzle(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
-    xmm0 = vecSet(xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2]); // addss
+    xmm0 = f32x4{ xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2] }; // addss
     return vecSwizzle(xmm0, .x, .x, .x, .x);
 }
-test "zmath.vec4Dot" {
-    const v0 = vecSet(-1.0, 2.0, 3.0, -2.0);
-    const v1 = vecSet(4.0, 5.0, 6.0, 2.0);
-    var v = vec4Dot(v0, v1);
-    try expect(vec4ApproxEqAbs(v, vecSplat(20.0), 0.0001));
+test "zmath.dot4" {
+    const v0 = f32x4{ -1.0, 2.0, 3.0, -2.0 };
+    const v1 = f32x4{ 4.0, 5.0, 6.0, 2.0 };
+    var v = dot4(v0, v1);
+    try expect(approxEqAbs(v, splat(f32x4, 20.0), 0.0001));
 }
 
 // zig fmt: off
-pub inline fn vec4LengthSq(v: Vec) Vec { return vec4Dot(v, v); }
-pub inline fn vec4RcpLengthFast(v: Vec) Vec { return vecRcpSqrtFast(vec4Dot(v, v)); }
-pub inline fn vec4RcpLength(v: Vec) Vec { return vecRcpSqrt(vec4Dot(v, v)); }
-pub inline fn vec4Length(v: Vec) Vec { return vecSqrt(vec4Dot(v, v)); }
-pub inline fn vec4NormalizeFast(v: Vec) Vec { return v * vecRcpSqrtFast(vec4Dot(v, v)); }
-pub inline fn vec4Normalize(v: Vec) Vec { return v * vecRcpSqrt(vec4Dot(v, v)); }
+pub inline fn lengthSq4(v: Vec) Vec { return dot4(v, v); }
+pub inline fn rcpLengthFast4(v: Vec) Vec { return vecRcpSqrtFast(dot4(v, v)); }
+pub inline fn rcpLength4(v: Vec) Vec { return vecRcpSqrt(dot4(v, v)); }
+pub inline fn length4(v: Vec) Vec { return vecSqrt(dot4(v, v)); }
+pub inline fn normalizeFast4(v: Vec) Vec { return v * vecRcpSqrtFast(dot4(v, v)); }
+pub inline fn normalize4(v: Vec) Vec { return v * vecRcpSqrt(dot4(v, v)); }
 // zig fmt: on
 
 test "zmath.vec4RcpLengthFast" {
     {
-        const v0 = vecSet(1.0, -2.0, 3.0, 4.0);
-        var v = vec4RcpLengthFast(v0);
-        try expect(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(30.0)), 0.001));
+        var v = rcpLengthFast4(f32x4{ 1.0, -2.0, 3.0, 4.0 });
+        try expect(approxEqAbs(v, splat(f32x4, 1.0 / math.sqrt(30.0)), 0.001));
     }
     {
-        const v0 = vecSet(1.0, math.nan_f32, math.inf_f32, 1000.0);
-        var v = vec4RcpLengthFast(v0);
+        var v = rcpLengthFast4(f32x4{ 1.0, math.nan_f32, math.inf_f32, 1000.0 });
         try expect(isNan4(v));
     }
     {
-        const v0 = vecSet(1.0, math.inf_f32, 3.0, 1000.0);
-        var v = vec4RcpLengthFast(v0);
-        try expect(vec4ApproxEqAbs(v, vecZero(), 0.001));
+        var v = rcpLengthFast4(f32x4{ 1.0, math.inf_f32, 3.0, 1000.0 });
+        try expect(approxEqAbs(v, splat(f32x4, 0.0), 0.001));
     }
 }
 
 test "zmath.vec4RcpLength" {
     {
-        const v0 = vecSet(1.0, -2.0, 3.0, 4.0);
-        var v = vec4RcpLength(v0);
-        try expect(vec4ApproxEqAbs(v, vecSplat(1.0 / math.sqrt(30.0)), 0.001));
+        var v = rcpLength4(f32x4{ 1.0, -2.0, 3.0, 4.0 });
+        try expect(approxEqAbs(v, splat(f32x4, 1.0 / math.sqrt(30.0)), 0.001));
     }
     {
-        const v0 = vecSet(1.0, math.nan_f32, math.inf_f32, 1000.0);
-        var v = vec4RcpLength(v0);
+        var v = rcpLength4(f32x4{ 1.0, math.nan_f32, math.inf_f32, 1000.0 });
         try expect(isNan4(v));
     }
     {
-        const v0 = vecSet(1.0, math.inf_f32, 3.0, 1000.0);
-        var v = vec4RcpLength(v0);
-        try expect(vec4ApproxEqAbs(v, vecZero(), 0.001));
+        var v = rcpLength4(f32x4{ 1.0, math.inf_f32, 3.0, 1000.0 });
+        try expect(approxEqAbs(v, splat(f32x4, 0.0), 0.001));
     }
 }
 
 test "zmath.vec4NormalizeFast" {
     {
-        const v0 = vecSet(1.0, -2.0, 3.0, 10.0);
-        var v = vec4NormalizeFast(v0);
-        try expect(vec4ApproxEqAbs(v, v0 * vecSplat(1.0 / math.sqrt(114.0)), 0.001));
+        const v0 = f32x4{ 1.0, -2.0, 3.0, 10.0 };
+        var v = normalizeFast4(v0);
+        try expect(approxEqAbs(v, v0 * splat(f32x4, 1.0 / math.sqrt(114.0)), 0.001));
     }
     {
-        try expect(isNan4(vec4NormalizeFast(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
-        try expect(isNan4(vec4NormalizeFast(vecSet(-math.inf_f32, math.inf_f32, 0.0, 0.0))));
-        try expect(isNan4(vec4NormalizeFast(vecSet(-math.nan_f32, math.qnan_f32, 0.0, 0.0))));
-        try expect(isNan4(vec4NormalizeFast(vecZero())));
+        try expect(isNan4(normalizeFast4(f32x4{ 1.0, math.inf_f32, 1.0, 1.0 })));
+        try expect(isNan4(normalizeFast4(f32x4{ -math.inf_f32, math.inf_f32, 0.0, 0.0 })));
+        try expect(isNan4(normalizeFast4(f32x4{ -math.nan_f32, math.qnan_f32, 0.0, 0.0 })));
+        try expect(isNan4(normalizeFast4(splat(f32x4, 0.0))));
     }
 }
 
 test "zmath.vec4Normalize" {
     {
-        const v0 = vecSet(1.0, -2.0, 3.0, 10.0);
-        var v = vec4Normalize(v0);
-        try expect(vec4ApproxEqAbs(v, v0 * vecSplat(1.0 / math.sqrt(114.0)), 0.0005));
+        const v0 = f32x4{ 1.0, -2.0, 3.0, 10.0 };
+        var v = normalize4(v0);
+        try expect(approxEqAbs(v, v0 * splat(f32x4, 1.0 / math.sqrt(114.0)), 0.0005));
     }
     {
-        try expect(isNan4(vec4Normalize(vecSet(1.0, math.inf_f32, 1.0, 1.0))));
-        try expect(isNan4(vec4Normalize(vecSet(-math.inf_f32, math.inf_f32, 0.0, 0.0))));
-        try expect(isNan4(vec4Normalize(vecSet(-math.nan_f32, math.qnan_f32, 0.0, 0.0))));
-        try expect(isNan4(vec4Normalize(vecZero())));
+        try expect(isNan4(normalize4(f32x4{ 1.0, math.inf_f32, 1.0, 1.0 })));
+        try expect(isNan4(normalize4(f32x4{ -math.inf_f32, math.inf_f32, 0.0, 0.0 })));
+        try expect(isNan4(normalize4(f32x4{ -math.nan_f32, math.qnan_f32, 0.0, 0.0 })));
+        try expect(isNan4(normalize4(splat(f32x4, 0.0))));
     }
 }
 
