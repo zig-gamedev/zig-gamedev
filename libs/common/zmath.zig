@@ -15,6 +15,9 @@ pub const VecU32 = @Vector(4, u32);
 pub const f32x4 = @Vector(4, f32);
 pub const f32x8 = @Vector(8, f32);
 pub const u32x4 = @Vector(4, u32);
+pub const u32x8 = @Vector(8, u32);
+pub const b8x4 = @Vector(4, bool);
+pub const b8x8 = @Vector(8, bool);
 
 //
 // General Vec functions (always work on all vector components)
@@ -26,7 +29,7 @@ pub const u32x4 = @Vector(4, u32);
 // vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec
 // vecSplat(value: f32) Vec
 // vecSplatInt(value: u32) Vec
-// vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool
+// isNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool
 // vecEqualInt(v0: Vec, v1: Vec) VecBool
 // vecNotEqualInt(v0: Vec, v1: Vec) VecBool
 // vecAndInt(v0: Vec, v1: Vec) Vec
@@ -59,7 +62,7 @@ pub const u32x4 = @Vector(4, u32);
 // vecScale(v: Vec, s: f32) Vec
 // vecLerp(v0: Vec, v1: Vec, t: f32) Vec
 // vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec
-// vecSwizzle( v: Vec, xyzw: VecComponent) Vec
+// swizzle( v: Vec, xyzw: VecComponent) Vec
 // vecMod(v0: Vec, v1: Vec) Vec
 // vecMulAdd(v0: Vec, v1: Vec, v2: Vec) Vec
 // vecSin(v: Vec) Vec
@@ -69,38 +72,13 @@ pub inline fn vecZero() Vec { return @splat(4, @as(f32, 0)); }
 pub inline fn vecI32Zero() VecI32 { return @splat(4, @as(i32, 0)); }
 pub inline fn vecU32Zero() VecU32 { return @splat(4, @as(u32, 0)); }
 // zig fmt: on
-test "zmath.vecZero" {
-    const v = vecZero();
-    const vi = vecI32Zero();
-    const vu = vecU32Zero();
-    try expect(v[0] == 0 and v[1] == 0 and v[2] == 0 and v[3] == 0);
-    try expect(vi[0] == 0 and vi[1] == 0 and vi[2] == 0 and vi[3] == 0);
-    try expect(vu[0] == 0 and vu[1] == 0 and vu[2] == 0 and vu[3] == 0);
-}
 
 pub inline fn vecSet(x: f32, y: f32, z: f32, w: f32) Vec {
     return [4]f32{ x, y, z, w };
 }
-test "zmath.vecSet" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v1 = vecSet(5.0, -6.0, 7.0, 8.0);
-    try expect(v0[0] == 1.0 and v0[1] == 2.0 and v0[2] == 3.0 and v0[3] == 4.0);
-    try expect(v1[0] == 5.0 and v1[1] == -6.0 and v1[2] == 7.0 and v1[3] == 8.0);
-}
-
-test "zmath.vecSet" {
-    const v0 = vecSet(1.0, 2.0, 3.0, 4.0);
-    const v1 = vecSet(5.0, -6.0, 7.0, 8.0);
-    try expect(v0[0] == 1.0 and v0[1] == 2.0 and v0[2] == 3.0 and v0[3] == 4.0);
-    try expect(v1[0] == 5.0 and v1[1] == -6.0 and v1[2] == 7.0 and v1[3] == 8.0);
-}
 
 pub inline fn vecSetInt(x: u32, y: u32, z: u32, w: u32) Vec {
     return @bitCast(Vec, [4]u32{ x, y, z, w });
-}
-test "zmath.vecSetInt" {
-    const v = vecSetInt(0x3f80_0000, 0x4000_0000, 0x4040_0000, 0x4080_0000);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 1.0, 2.0, 3.0, 4.0 }, 0.0));
 }
 
 pub inline fn vecSplat(value: f32) Vec {
@@ -108,10 +86,6 @@ pub inline fn vecSplat(value: f32) Vec {
 }
 pub inline fn splat(comptime T: type, value: f32) T {
     return @splat(@typeInfo(T).Vector.len, value);
-}
-test "zmath.vecSplat" {
-    const v = vecSplat(123.0);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 123.0, 123.0, 123.0, 123.0 }, 0.0));
 }
 
 pub inline fn usplat(comptime T: type, value: u32) T {
@@ -123,41 +97,89 @@ pub inline fn splatInt(comptime T: type, value: u32) T {
 pub inline fn vecSplatInt(value: u32) Vec {
     return @splat(4, @bitCast(f32, value));
 }
-test "zmath.vecSplatInt" {
-    const v = vecSplatInt(0x4000_0000);
-    try expect(vec4ApproxEqAbs(v, [4]f32{ 2.0, 2.0, 2.0, 2.0 }, 0.0));
-}
 
-pub inline fn vecNearEqual(v0: Vec, v1: Vec, epsilon: Vec) VecBool {
+pub inline fn isNearEqual(
+    v0: anytype,
+    v1: anytype,
+    epsilon: anytype,
+) @Vector(@typeInfo(@TypeOf(v0)).Vector.len, bool) {
     // Won't handle inf & nan
+    const T = @TypeOf(v0);
     const delta = v0 - v1;
-    const temp = vecMaxFast(delta, vecZero() - delta);
+    const temp = maxFast(delta, splat(T, 0.0) - delta);
     return temp <= epsilon;
 }
-test "zmath.vecNearEqual" {
-    const v0 = vecSet(1.0, 2.0, -3.0, 4.001);
-    const v1 = vecSet(1.0, 2.1, 3.0, 4.0);
-    const b = vecNearEqual(v0, v1, vecSplat(0.01));
-    try expect(b[0] == true);
-    try expect(b[1] == false);
-    try expect(b[2] == false);
-    try expect(b[3] == true);
-    try expect(@reduce(.And, b == vecBoolSet(true, false, false, true)));
-    try expect(vecBoolAllTrue(b == vecBoolSet(true, false, false, true)));
+test "zmath.isNearEqual" {
+    {
+        const v0 = f32x4{ 1.0, 2.0, -3.0, 4.001 };
+        const v1 = f32x4{ 1.0, 2.1, 3.0, 4.0 };
+        const b = isNearEqual(v0, v1, splat(f32x4, 0.01));
+        try expect(@reduce(.And, b == b8x4{ true, false, false, true }));
+    }
+    {
+        const v0 = f32x8{ 1.0, 2.0, -3.0, 4.001, 1.001, 2.3, -0.0, 0.0 };
+        const v1 = f32x8{ 1.0, 2.1, 3.0, 4.0, -1.001, 2.1, 0.0, 0.0 };
+        const b = isNearEqual(v0, v1, splat(f32x8, 0.01));
+        try expect(@reduce(.And, b == b8x8{ true, false, false, true, false, false, true, true }));
+    }
 }
 
-pub inline fn vecEqualInt(v0: Vec, v1: Vec) VecBool {
-    // pcmpeqd
-    const v0u = @bitCast(VecU32, v0);
-    const v1u = @bitCast(VecU32, v1);
-    return v0u == v1u;
+pub inline fn isEqualInt(
+    v0: anytype,
+    v1: anytype,
+) @Vector(@typeInfo(@TypeOf(v0)).Vector.len, bool) {
+    const T = @TypeOf(v0);
+    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const v0u = @bitCast(Tu, v0);
+    const v1u = @bitCast(Tu, v1);
+    return v0u == v1u; // pcmpeqd
+}
+test "zmath.isEqualInt" {
+    {
+        const v0 = f32x4{ 1.0, -0.0, 3.0, 4.001 };
+        const v1 = f32x4{ 1.0, 0.0, -3.0, 4.0 };
+        const b0 = isEqualInt(v0, v1);
+        const b1 = v0 == v1;
+        try expect(@reduce(.And, b0 == b8x4{ true, false, false, false }));
+        try expect(@reduce(.And, b1 == b8x4{ true, true, false, false }));
+    }
+    {
+        const v0 = f32x8{ 1.0, 2.0, -3.0, 4.001, 1.001, 2.3, -0.0, 0.0 };
+        const v1 = f32x8{ 1.0, 2.1, 3.0, 4.0, -1.001, 2.1, 0.0, 0.0 };
+        const b0 = isEqualInt(v0, v1);
+        const b1 = v0 == v1;
+        try expect(@reduce(.And, b0 == b8x8{ true, false, false, false, false, false, false, true }));
+        try expect(@reduce(.And, b1 == b8x8{ true, false, false, false, false, false, true, true }));
+    }
 }
 
-pub inline fn vecNotEqualInt(v0: Vec, v1: Vec) VecBool {
-    // 2 x pcmpeqd, pxor
-    const v0u = @bitCast(VecU32, v0);
-    const v1u = @bitCast(VecU32, v1);
-    return v0u != v1u;
+pub inline fn isNotEqualInt(
+    v0: anytype,
+    v1: anytype,
+) @Vector(@typeInfo(@TypeOf(v0)).Vector.len, bool) {
+    const T = @TypeOf(v0);
+    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const v0u = @bitCast(Tu, v0);
+    const v1u = @bitCast(Tu, v1);
+    return v0u != v1u; // 2 x pcmpeqd, pxor
+}
+test "zmath.isNotEqualInt" {
+    {
+        const v0 = f32x4{ 1.0, -0.0, 3.0, 4.001 };
+        const v1 = f32x4{ 1.0, 0.0, -3.0, 4.0 };
+        const b0 = isNotEqualInt(v0, v1);
+        const b1 = v0 != v1;
+        try expect(@reduce(.And, b0 == b8x4{ false, true, true, true }));
+        try expect(@reduce(.And, b1 == b8x4{ false, false, true, true }));
+    }
+    {
+        const v0 = f32x8{ 1.0, 2.0, -3.0, 4.001, 1.001, 2.3, -0.0, 0.0 };
+        const v1 = f32x8{ 1.0, 2.1, 3.0, 4.0, -1.001, 2.1, 0.0, 0.0 };
+        const b0 = isNotEqualInt(v0, v1);
+        const b1 = v0 != v1;
+        try expect(@reduce(.And, b0 == b8x8{ false, true, true, true, true, true, true, false }));
+        try expect(@reduce(.And, b1 == b8x8{ false, true, true, true, true, true, false, false }));
+    }
 }
 
 pub inline fn vecAndInt(v0: Vec, v1: Vec) Vec {
@@ -290,6 +312,10 @@ test "zmath.vecMinFast" {
     }
 }
 
+pub inline fn maxFast(v0: anytype, v1: anytype) @TypeOf(v0) {
+    // maxps
+    return @select(f32, v0 > v1, v0, v1);
+}
 pub inline fn vecMaxFast(v0: Vec, v1: Vec) Vec {
     // maxps
     return @select(f32, v0 > v1, v0, v1);
@@ -824,7 +850,7 @@ pub inline fn vecLerpV(v0: Vec, v1: Vec, t: Vec) Vec {
 
 pub const VecComponent = enum { x, y, z, w };
 
-pub inline fn vecSwizzle(
+pub inline fn swizzle(
     v: Vec,
     comptime x: VecComponent,
     comptime y: VecComponent,
@@ -1211,7 +1237,7 @@ pub inline fn isNearEqual2(v0: f32x4, v1: f32x4, epsilon: f32x4) bool {
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const mask = vecNearEqual(v0, v1, epsilon);
+        const mask = isNearEqual(v0, v1, epsilon);
         return mask[0] and mask[1];
     }
 }
@@ -1469,9 +1495,9 @@ pub inline fn isInf2(v: f32x4) bool {
 
 pub inline fn dot2(v0: f32x4, v1: f32x4) f32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
-    var xmm1 = vecSwizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
+    var xmm1 = swizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
     xmm0 = f32x4{ xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3] }; // | x0*x1 + y0*y1 | -- | -- | -- |
-    return vecSwizzle(xmm0, .x, .x, .x, .x);
+    return swizzle(xmm0, .x, .x, .x, .x);
 }
 test "zmath.dot2" {
     const v0 = f32x4{ -1.0, 2.0, 300.0, -2.0 };
@@ -1612,7 +1638,7 @@ pub inline fn isNearEqual3(v0: f32x4, v1: f32x4, epsilon: f32x4) bool {
         );
     } else {
         // NOTE(mziulek): Generated code is not optimal
-        const mask = vecNearEqual(v0, v1, epsilon);
+        const mask = isNearEqual(v0, v1, epsilon);
         return mask[0] and mask[1] and mask[2];
     }
 }
@@ -1885,11 +1911,11 @@ test "zmath.isInf3" {
 
 pub inline fn dot3(v0: f32x4, v1: f32x4) f32x4 {
     var dot = v0 * v1;
-    var temp = vecSwizzle(dot, .y, .z, .y, .z);
+    var temp = swizzle(dot, .y, .z, .y, .z);
     dot = f32x4{ dot[0] + temp[0], dot[1], dot[2], dot[2] }; // addss
-    temp = vecSwizzle(temp, .y, .y, .y, .y);
+    temp = swizzle(temp, .y, .y, .y, .y);
     dot = f32x4{ dot[0] + temp[0], dot[1], dot[2], dot[2] }; // addss
-    return vecSwizzle(dot, .x, .x, .x, .x);
+    return swizzle(dot, .x, .x, .x, .x);
 }
 test "zmath.dot3" {
     const v0 = f32x4{ -1.0, 2.0, 3.0, 1.0 };
@@ -1899,11 +1925,11 @@ test "zmath.dot3" {
 }
 
 pub inline fn cross3(v0: f32x4, v1: f32x4) f32x4 {
-    var xmm0 = vecSwizzle(v0, .y, .z, .x, .w);
-    var xmm1 = vecSwizzle(v1, .z, .x, .y, .w);
+    var xmm0 = swizzle(v0, .y, .z, .x, .w);
+    var xmm1 = swizzle(v1, .z, .x, .y, .w);
     var result = xmm0 * xmm1;
-    xmm0 = vecSwizzle(xmm0, .y, .z, .x, .w);
-    xmm1 = vecSwizzle(xmm1, .z, .x, .y, .w);
+    xmm0 = swizzle(xmm0, .y, .z, .x, .w);
+    xmm1 = swizzle(xmm1, .z, .x, .y, .w);
     result = result - xmm0 * xmm1;
     return @bitCast(f32x4, @bitCast(u32x4, result) & u32x4_mask3);
 }
@@ -2168,11 +2194,11 @@ pub inline fn isInf4(v: f32x4) bool {
 
 pub inline fn dot4(v0: f32x4, v1: f32x4) f32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
-    var xmm1 = vecSwizzle(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
+    var xmm1 = swizzle(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
     xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
-    xmm0 = vecSwizzle(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
+    xmm0 = swizzle(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
     xmm0 = f32x4{ xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2] }; // addss
-    return vecSwizzle(xmm0, .x, .x, .x, .x);
+    return swizzle(xmm0, .x, .x, .x, .x);
 }
 test "zmath.dot4" {
     const v0 = f32x4{ -1.0, 2.0, 3.0, -2.0 };
