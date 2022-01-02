@@ -960,6 +960,7 @@ test "sin" {
     try expect(approxEqAbs(sin(splat(f32x4, 0.0)), splat(f32x4, 0.0), epsilon));
     try expect(approxEqAbs(sin(splat(f32x4, -0.0)), splat(f32x4, -0.0), epsilon));
     try expect(approxEqAbs(sin(splat(f32x4, 89.123)), splat(f32x4, 0.916166), epsilon));
+    try expect(approxEqAbs(sin(splat(f32x8, 89.123)), splat(f32x8, 0.916166), epsilon));
     try expect(isNan4(sin(splat(f32x4, math.inf_f32))) == true);
     try expect(isNan4(sin(splat(f32x4, -math.inf_f32))) == true);
     try expect(isNan4(sin(splat(f32x4, math.nan_f32))) == true);
@@ -970,7 +971,10 @@ test "sin" {
     while (i < 100) : (i += 1) {
         const vr = sin(splat(f32x4, f));
         const fr = @sin(splat(f32x4, f));
+        const vr8 = sin(splat(f32x8, f));
+        const fr8 = @sin(splat(f32x8, f));
         try expect(approxEqAbs(vr, fr, epsilon));
+        try expect(approxEqAbs(vr8, fr8, epsilon));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
@@ -2248,28 +2252,24 @@ test "zmath.vec4Normalize" {
 // Public constants
 //
 
-pub const u32x4_0xffff_ffff: VecU32 = @splat(4, ~@as(u32, 0));
-pub const u32x4_0x8000_0000: VecU32 = @splat(4, @as(u32, 0x8000_0000));
-pub const f32x4_0x8000_0000: Vec = vecSplatInt(0x8000_0000);
-pub const f32x4_0x7fff_ffff: Vec = vecSplatInt(0x7fff_ffff);
-pub const f32x4_inf: Vec = vecSplat(math.inf_f32);
-pub const f32x4_nan: Vec = vecSplat(math.nan_f32);
-pub const f32x4_qnan: Vec = vecSplat(math.qnan_f32);
-pub const f32x4_epsilon: Vec = vecSplat(math.epsilon_f32);
-pub const f32x4_one: Vec = vecSplat(1.0);
-pub const f32x4_half_pi: Vec = vecSplat(0.5 * math.pi);
-pub const f32x4_pi: Vec = vecSplat(math.pi);
-pub const f32x4_two_pi: Vec = vecSplat(math.tau);
-pub const f32x4_rcp_two_pi: Vec = vecSplat(1.0 / math.tau);
-pub const u32x4_mask3: VecU32 = [4]u32{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
+pub const u32x4_0xffff_ffff: u32x4 = usplat(u32x4, ~@as(u32, 0));
+pub const u32x4_0x8000_0000: u32x4 = splat(u32x4, 0x8000_0000);
+pub const f32x4_0x8000_0000: f32x4 = splatInt(f32x4, 0x8000_0000);
+pub const f32x4_0x7fff_ffff: f32x4 = splatInt(f32x4, 0x7fff_ffff);
+pub const f32x4_inf: f32x4 = splat(f32x4, math.inf_f32);
+pub const f32x4_nan: f32x4 = splat(f32x4, math.nan_f32);
+pub const f32x4_qnan: f32x4 = splat(f32x4, math.qnan_f32);
+pub const f32x4_epsilon: f32x4 = splat(f32x4, math.epsilon_f32);
+pub const f32x4_one: f32x4 = splat(f32x4, 1.0);
+pub const f32x4_half_pi: f32x4 = splat(f32x4, 0.5 * math.pi);
+pub const f32x4_pi: f32x4 = splat(f32x4, math.pi);
+pub const f32x4_two_pi: f32x4 = splat(f32x4, math.tau);
+pub const f32x4_rcp_two_pi: f32x4 = splat(f32x4, 1.0 / math.tau);
+pub const u32x4_mask3: u32x4 = u32x4{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
 
 //
 // Private functions and constants
 //
-
-const f32x4_8_388_608: Vec = vecSplat(8_388_608.0);
-const f32x4_sin_c0123: Vec = vecSet(-0.16666667, 0.0083333310, -0.00019840874, 2.7525562e-06);
-const f32x4_sin_c4567: Vec = vecSet(-2.3889859e-08, -0.16665852, 0.0083139502, -0.00018524670);
 
 // zig fmt: off
 pub inline fn splatSinC0(comptime T: type) T { return splat(T, -0.16666667); }
@@ -2279,80 +2279,42 @@ pub inline fn splatSinC3(comptime T: type) T { return splat(T, 2.7525562e-06); }
 pub inline fn splatSinC4(comptime T: type) T { return splat(T, -2.3889859e-08); }
 // zig fmt: on
 
-inline fn vecFloatToIntAndBack(v: Vec) Vec {
-    // This won't handle nan, inf and numbers greater than 8_388_608.0
-    @setRuntimeSafety(false);
-    // cvttps2dq
-    const vi = [4]i32{
-        @floatToInt(i32, v[0]),
-        @floatToInt(i32, v[1]),
-        @floatToInt(i32, v[2]),
-        @floatToInt(i32, v[3]),
-    };
-    // cvtdq2ps
-    return [4]f32{
-        @intToFloat(f32, vi[0]),
-        @intToFloat(f32, vi[1]),
-        @intToFloat(f32, vi[2]),
-        @intToFloat(f32, vi[3]),
-    };
-}
 inline fn floatToIntAndBack(v: anytype) @TypeOf(v) {
-    const T = @TypeOf(v);
-    // This won't handle nan, inf and numbers greater than 8_388_608.0
+    // This routine won't handle nan, inf and numbers greater than 8_388_608.0 (will generate undefined values)
     @setRuntimeSafety(false);
-    // TODO(mziulek): use inline while or something..
-    if (T == f32x4) {
-        // cvttps2dq
-        const vi = [4]i32{
-            @floatToInt(i32, v[0]),
-            @floatToInt(i32, v[1]),
-            @floatToInt(i32, v[2]),
-            @floatToInt(i32, v[3]),
-        };
-        // cvtdq2ps
-        return [4]f32{
-            @intToFloat(f32, vi[0]),
-            @intToFloat(f32, vi[1]),
-            @intToFloat(f32, vi[2]),
-            @intToFloat(f32, vi[3]),
-        };
-    } else if (T == f32x8) {
-        // cvttps2dq
-        const vi = [8]i32{
-            @floatToInt(i32, v[0]),
-            @floatToInt(i32, v[1]),
-            @floatToInt(i32, v[2]),
-            @floatToInt(i32, v[3]),
-            @floatToInt(i32, v[4]),
-            @floatToInt(i32, v[5]),
-            @floatToInt(i32, v[6]),
-            @floatToInt(i32, v[7]),
-        };
-        // cvtdq2ps
-        return [8]f32{
-            @intToFloat(f32, vi[0]),
-            @intToFloat(f32, vi[1]),
-            @intToFloat(f32, vi[2]),
-            @intToFloat(f32, vi[3]),
-            @intToFloat(f32, vi[4]),
-            @intToFloat(f32, vi[5]),
-            @intToFloat(f32, vi[6]),
-            @intToFloat(f32, vi[7]),
-        };
-    }
-}
-test "zmath.vecFloatToIntAndBack" {
-    const v0 = vecSet(1.1, 2.9, 3.0, -4.5);
-    var v = vecFloatToIntAndBack(v0);
-    try expect(v[0] == 1.0);
-    try expect(v[1] == 2.0);
-    try expect(v[2] == 3.0);
-    try expect(v[3] == -4.0);
 
-    const v1 = vecSet(math.inf_f32, 2.9, math.nan_f32, math.qnan_f32);
-    v = vecFloatToIntAndBack(v1);
-    try expect(v[1] == 2.0);
+    const T = @TypeOf(v);
+    const len = @typeInfo(T).Vector.len;
+
+    var vi32: [len]i32 = undefined;
+    comptime var i: u32 = 0;
+    // vcvttps2dq
+    inline while (i < len) : (i += 1) {
+        vi32[i] = @floatToInt(i32, v[i]);
+    }
+
+    var vf32: [len]f32 = undefined;
+    i = 0;
+    // vcvtdq2ps
+    inline while (i < len) : (i += 1) {
+        vf32[i] = @intToFloat(f32, vi32[i]);
+    }
+
+    return vf32;
+}
+test "zmath.floatToIntAndBack" {
+    {
+        const v = floatToIntAndBack(f32x4{ 1.1, 2.9, 3.0, -4.5 });
+        try expect(approxEqAbs(v, f32x4{ 1.0, 2.0, 3.0, -4.0 }, 0.0));
+    }
+    {
+        const v = floatToIntAndBack(f32x8{ 1.1, 2.9, 3.0, -4.5, 2.5, -2.5, 1.1, -100.2 });
+        try expect(approxEqAbs(v, f32x8{ 1.0, 2.0, 3.0, -4.0, 2.0, -2.0, 1.0, -100.0 }, 0.0));
+    }
+    {
+        const v = floatToIntAndBack(f32x4{ math.inf_f32, 2.9, math.nan_f32, math.qnan_f32 });
+        try expect(v[1] == 2.0);
+    }
 }
 
 inline fn vec2ApproxEqAbs(v0: Vec, v1: Vec, eps: f32) bool {
