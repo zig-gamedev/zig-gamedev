@@ -435,6 +435,7 @@ test "zmath.min" {
         try expect(!math.isInf(v[3]));
     }
 }
+
 pub inline fn max(v0: anytype, v1: anytype) @TypeOf(v0) {
     // This will handle inf & nan
     return @maximum(v0, v1); // maxps, cmpunordps, andps, andnps, orps
@@ -473,10 +474,6 @@ test "zmath.max" {
         try expect(math.isNan(v[3]));
         try expect(!math.isInf(v[3]));
     }
-}
-
-pub inline fn vecSelect(b: VecBool, v0: Vec, v1: Vec) Vec {
-    return @select(f32, b, v0, v1);
 }
 
 pub inline fn vecInBounds(v: Vec, bounds: Vec) VecBool {
