@@ -59,6 +59,8 @@ const U1x4 = @Vector(4, u1);
 // cos(v: F32xN) F32xN [TODO(mziulek)]
 // sincos(v: F32xN) [2]F32xN [TODO(mziulek)]
 //
+// swizzle4(v: F32x4, c, c, c, c) F32x4 (c = .x | .y | .z | .w)
+//
 // isEqual2(v0: F32x4, v1: F32x4) bool
 // isEqual3(v0: F32x4, v1: F32x4) bool
 // isEqual4(v0: F32x4, v1: F32x4) bool
@@ -893,16 +895,6 @@ test "zmath.mod" {
     try expect(isNan4(mod(splat(F32x4, 123.456), splat(F32x4, math.nan_f32))));
     try expect(isNan4(mod(splat(F32x4, math.inf_f32), splat(F32x4, math.inf_f32))));
     try expect(isNan4(mod(splat(F32x4, math.inf_f32), splat(F32x4, math.nan_f32))));
-}
-
-pub inline fn splatNegativeZero(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x8000_0000)));
-}
-pub inline fn splatNoFraction(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @as(f32, 8_388_608.0));
-}
-pub inline fn splatAbsMask(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x7fff_ffff)));
 }
 
 pub inline fn round(v: anytype) @TypeOf(v) {
@@ -2069,17 +2061,27 @@ test "zmath.normalize4" {
 }
 
 //
-// Public constants
+// Constants
 //
 
-pub const f32x4_0x8000_0000: F32x4 = splatInt(F32x4, 0x8000_0000);
-pub const f32x4_0x7fff_ffff: F32x4 = splatInt(F32x4, 0x7fff_ffff);
-pub const f32x4_inf: F32x4 = splat(F32x4, math.inf_f32);
-pub const u32x4_mask3: U32x4 = U32x4{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
+const f32x4_0x8000_0000: F32x4 = splatInt(F32x4, 0x8000_0000);
+const f32x4_0x7fff_ffff: F32x4 = splatInt(F32x4, 0x7fff_ffff);
+const f32x4_inf: F32x4 = splat(F32x4, math.inf_f32);
+const u32x4_mask3: U32x4 = U32x4{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
 
 //
 // Private functions and constants
 //
+
+inline fn splatNegativeZero(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x8000_0000)));
+}
+inline fn splatNoFraction(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @as(f32, 8_388_608.0));
+}
+inline fn splatAbsMask(comptime T: type) T {
+    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x7fff_ffff)));
+}
 
 inline fn floatToIntAndBack(v: anytype) @TypeOf(v) {
     // This routine won't handle nan, inf and numbers greater than 8_388_608.0 (will generate undefined values)
