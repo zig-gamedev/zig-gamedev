@@ -58,6 +58,7 @@ const U1x4 = @Vector(4, u1);
 // sin(v: F32xN) F32xN
 // cos(v: F32xN) F32xN [TODO(mziulek)]
 // sincos(v: F32xN) [2]F32xN [TODO(mziulek)]
+// select(mask: BoolxN, v0: F32xN, v1: F32xN)
 //
 // swizzle4(v: F32x4, c, c, c, c) F32x4 (c = .x | .y | .z | .w)
 //
@@ -371,7 +372,7 @@ test "zmath.isInf" {
 }
 
 pub inline fn minFast(v0: anytype, v1: anytype) @TypeOf(v0) {
-    return @select(f32, v0 < v1, v0, v1); // minps
+    return select(v0 < v1, v0, v1); // minps
 }
 test "zmath.minFast" {
     {
@@ -394,7 +395,7 @@ test "zmath.minFast" {
 }
 
 pub inline fn maxFast(v0: anytype, v1: anytype) @TypeOf(v0) {
-    return @select(f32, v0 > v1, v0, v1); // maxps
+    return select(v0 > v1, v0, v1); // maxps
 }
 test "zmath.maxFast" {
     {
@@ -588,7 +589,7 @@ pub inline fn trunc(v: anytype) @TypeOf(v) {
     } else {
         const mask = abs(v) < splatNoFraction(T);
         const result = floatToIntAndBack(v);
-        return @select(f32, mask, result, v);
+        return select(mask, result, v);
     }
 }
 test "zmath.trunc" {
@@ -646,9 +647,9 @@ pub inline fn floor(v: anytype) @TypeOf(v) {
         const mask = abs(v) < splatNoFraction(T);
         var result = floatToIntAndBack(v);
         const larger_mask = result > v;
-        const larger = @select(f32, larger_mask, splat(T, -1.0), splat(T, 0.0));
+        const larger = select(larger_mask, splat(T, -1.0), splat(T, 0.0));
         result = result + larger;
-        return @select(f32, mask, result, v);
+        return select(mask, result, v);
     }
 }
 test "zmath.floor" {
@@ -706,9 +707,9 @@ pub inline fn ceil(v: anytype) @TypeOf(v) {
         const mask = abs(v) < splatNoFraction(T);
         var result = floatToIntAndBack(v);
         const smaller_mask = result < v;
-        const smaller = @select(f32, smaller_mask, splat(T, -1.0), splat(T, 0.0));
+        const smaller = select(smaller_mask, splat(T, -1.0), splat(T, 0.0));
         result = result - smaller;
-        return @select(f32, mask, result, v);
+        return select(mask, result, v);
     }
 }
 test "zmath.ceil" {
@@ -855,6 +856,10 @@ pub inline fn abs(v: anytype) @TypeOf(v) {
     return @fabs(v); // load, andps
 }
 
+pub inline fn select(mask: anytype, v0: anytype, v1: anytype) @TypeOf(v0) {
+    return @select(f32, mask, v0, v1);
+}
+
 pub inline fn lerp(v0: anytype, v1: anytype, t: f32) @TypeOf(v0) {
     const T = @TypeOf(v0);
     return v0 + (v1 - v0) * splat(T, t); // subps, shufps, addps, mulps
@@ -918,7 +923,7 @@ pub inline fn round(v: anytype) @TypeOf(v) {
         r1 = r1 - magic;
         const r2 = abs(v);
         const mask = r2 <= splatNoFraction(T);
-        return @select(f32, mask, r1, v);
+        return select(mask, r1, v);
     }
 }
 
@@ -959,7 +964,7 @@ pub inline fn sin(v: anytype) @TypeOf(v) {
     const absx = andNotInt(sign, x);
     const rflx = c - x;
     const comp = absx <= splat(T, 0.5 * math.pi);
-    x = @select(f32, comp, x, rflx);
+    x = select(comp, x, rflx);
     const x2 = x * x;
 
     var result = mulAdd(splat(T, -2.3889859e-08), x2, splat(T, 2.7525562e-06));
