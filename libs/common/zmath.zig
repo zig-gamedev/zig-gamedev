@@ -5,9 +5,9 @@ pub const U32x8 = @Vector(8, u32);
 pub const Boolx4 = @Vector(4, bool);
 pub const Boolx8 = @Vector(8, bool);
 
-// ---------------------------
+// ------------------------------------------------------------------------------
 // 1. Initialization functions
-// ---------------------------
+// ------------------------------------------------------------------------------
 //
 // f32x4(e0: f32, e1: f32, e2: f32, e3: f32) F32x4
 // f32x8(e0: f32, e1: f32, e2: f32, e3: f32, e4: f32, e5: f32, e6: f32, e7: f32) F32x8
@@ -25,9 +25,9 @@ pub const Boolx8 = @Vector(8, bool);
 // splatInt(comptime T: type, value: u32) T
 // usplat(comptime T: type, value: u32) T
 //
-// -----------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // 2. Functions that work on all vector components (F32xN = F32x4 | F32x8)
-// -----------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 //
 // isNearEqual(v0: F32xN, v1: F32xN, epsilon: F32xN) BoolxN
 // isEqualInt(v0: F32xN, v1: F32xN, epsilon: F32xN) BoolxN
@@ -66,9 +66,9 @@ pub const Boolx8 = @Vector(8, bool);
 // sincos(v: F32xN) [2]F32xN [TODO(mziulek)]
 // select(mask: BoolxN, v0: F32xN, v1: F32xN)
 //
-// --------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // 3. Functions that process N components of F32x4 (N = function name suffix)
-// --------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 //
 // swizzle4(v: F32x4, c, c, c, c) F32x4 (c = .x | .y | .z | .w)
 // isEqual2(v0: F32x4, v1: F32x4) bool
@@ -126,6 +126,7 @@ const U1x4 = @Vector(4, u1);
 
 const cpu_arch = builtin.cpu.arch;
 const has_avx = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .avx) else false;
+const has_fma = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .fma) else false;
 
 pub inline fn f32x4(e0: f32, e1: f32, e2: f32, e3: f32) F32x4 {
     return .{ e0, e1, e2, e3 };
@@ -959,7 +960,7 @@ test "zmath.modAngles" {
 
 pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
-    if (cpu_arch == .x86_64 and has_avx) {
+    if (cpu_arch == .x86_64 and has_avx and has_fma) {
         return @mulAdd(T, v0, v1, v2);
     } else {
         // NOTE(mziulek): On .x86_64 without HW fma instructions @mulAdd maps to really slow code!
