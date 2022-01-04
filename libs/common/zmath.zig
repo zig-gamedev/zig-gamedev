@@ -12,6 +12,10 @@ pub const Boolx4 = @Vector(4, bool);
 pub const Boolx8 = @Vector(8, bool);
 const U1x4 = @Vector(4, u1);
 
+// ---------------------------
+// 1. Initialization functions
+// ---------------------------
+//
 // f32x4(e0: f32, e1: f32, e2: f32, e3: f32) F32x4
 // f32x8(e0: f32, e1: f32, e2: f32, e3: f32, e4: f32, e5: f32, e6: f32, e7: f32) F32x8
 // u32x4(e0: u32, e1: u32, e2: u32, e3: u32) U32x4
@@ -19,9 +23,18 @@ const U1x4 = @Vector(4, u1);
 // boolx4(e0: bool, e1: bool, e2: bool, e3: bool) Boolx4
 // boolx8(e0: bool, e1: bool, e2: bool, e3: bool, e4: bool, e5: bool, e6: bool, e7: bool) Boolx8
 //
+// loadF32x4(mem: []const f32, comptime len: u32) F32x4
+// loadF32x8(mem: []const f32, comptime len: u32) F32x4
+// storeF32x4(mem: []f32, v: F32x4, comptime len: u32) void
+// storeF32x8(mem: []f32, v: F32x4, comptime len: u32) void
+//
 // splat(comptime T: type, value: f32) T
 // splatInt(comptime T: type, value: u32) T
 // usplat(comptime T: type, value: u32) T
+//
+// -----------------------------------------------------------------------
+// 2. Functions that work on all vector components (F32xN = F32x4 | F32x8)
+// -----------------------------------------------------------------------
 //
 // isNearEqual(v0: F32xN, v1: F32xN, epsilon: F32xN) BoolxN
 // isEqualInt(v0: F32xN, v1: F32xN, epsilon: F32xN) BoolxN
@@ -60,8 +73,11 @@ const U1x4 = @Vector(4, u1);
 // sincos(v: F32xN) [2]F32xN [TODO(mziulek)]
 // select(mask: BoolxN, v0: F32xN, v1: F32xN)
 //
-// swizzle4(v: F32x4, c, c, c, c) F32x4 (c = .x | .y | .z | .w)
+// --------------------------------------------------------------------------
+// 3. Functions that process N components of F32x4 (N = function name suffix)
+// --------------------------------------------------------------------------
 //
+// swizzle4(v: F32x4, c, c, c, c) F32x4 (c = .x | .y | .z | .w)
 // isEqual2(v0: F32x4, v1: F32x4) bool
 // isEqual3(v0: F32x4, v1: F32x4) bool
 // isEqual4(v0: F32x4, v1: F32x4) bool
@@ -1031,7 +1047,22 @@ test "zmath.loadF32x4" {
     try expect(approxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
 }
 
+pub inline fn loadF32x8(mem: []const f32, comptime len: u32) F32x8 {
+    switch (len) {
+        1 => return f32x8(mem[0], 0, 0, 0, 0, 0, 0, 0),
+        2 => return f32x8(mem[0], mem[1], 0, 0, 0, 0, 0, 0),
+        3 => return f32x8(mem[0], mem[1], mem[2], 0, 0, 0, 0, 0),
+        4 => return f32x8(mem[0], mem[1], mem[2], mem[3], 0, 0, 0, 0),
+        5 => return f32x8(mem[0], mem[1], mem[2], mem[3], mem[4], 0, 0, 0),
+        6 => return f32x8(mem[0], mem[1], mem[2], mem[3], mem[4], mem[5], 0, 0),
+        7 => return f32x8(mem[0], mem[1], mem[2], mem[3], mem[4], mem[5], mem[6], 0),
+        8 => return f32x8(mem[0], mem[1], mem[2], mem[3], mem[4], mem[5], mem[6], mem[7]),
+        else => unreachable,
+    }
+}
+
 pub inline fn storeF32x4(mem: []f32, v: F32x4, comptime len: u32) void {
+    assert(len >= 1 and len <= 4);
     comptime var i: u32 = 0;
     inline while (i < len) : (i += 1) {
         mem[i] = v[i];
@@ -1047,6 +1078,14 @@ test "zmath.storeF32x4" {
     try expect(a[3] == 3.0);
     try expect(a[4] == 4.0);
     try expect(a[5] == 0.0);
+}
+
+pub inline fn storeF32x8(mem: []f32, v: F32x8, comptime len: u32) void {
+    assert(len >= 1 and len <= 8);
+    comptime var i: u32 = 0;
+    inline while (i < len) : (i += 1) {
+        mem[i] = v[i];
+    }
 }
 
 //
