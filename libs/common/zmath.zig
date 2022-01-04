@@ -1,16 +1,9 @@
-const builtin = @import("builtin");
-const std = @import("std");
-const math = std.math;
-const assert = std.debug.assert;
-const expect = std.testing.expect;
-
 pub const F32x4 = @Vector(4, f32);
 pub const F32x8 = @Vector(8, f32);
 pub const U32x4 = @Vector(4, u32);
 pub const U32x8 = @Vector(8, u32);
 pub const Boolx4 = @Vector(4, bool);
 pub const Boolx8 = @Vector(8, bool);
-const U1x4 = @Vector(4, u1);
 
 // ---------------------------
 // 1. Initialization functions
@@ -122,6 +115,14 @@ const U1x4 = @Vector(4, u1);
 // normalize4(v: F32x4) F32x4
 //
 // linePointDistance(line_pt0: F32x4, line_pt1: F32x4, pt: F32x4) F32x4
+
+const builtin = @import("builtin");
+const std = @import("std");
+const math = std.math;
+const assert = std.debug.assert;
+const expect = std.testing.expect;
+
+const U1x4 = @Vector(4, u1);
 
 const cpu_arch = builtin.cpu.arch;
 const has_avx = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .avx) else false;
