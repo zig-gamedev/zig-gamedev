@@ -1018,6 +1018,55 @@ test "sin" {
     }
 }
 
+pub inline fn cos(v: anytype) @TypeOf(v) {
+    // 10-degree minimax approximation
+    // According to llvm-mca this routine will take on average:
+    // * zen2 (AVX, SIMDx4, SIMDx8): ~51 cycles
+    // * skylake (AVX, SIMDx4, SIMDx8): ~57 cycles
+    // * x86_64 (SIMDx4): ~100 cycles
+    const T = @TypeOf(v);
+    var x = modAngles(v);
+
+    var sign = andInt(x, splatNegativeZero(T));
+    const c = orInt(sign, splat(T, math.pi));
+    const absx = andNotInt(sign, x);
+    const rflx = c - x;
+    const comp = absx <= splat(T, 0.5 * math.pi);
+    x = select(comp, x, rflx);
+    sign = select(comp, splat(T, 1.0), splat(T, -1.0));
+    const x2 = x * x;
+
+    var result = mulAdd(splat(T, -2.6051615e-07), x2, splat(T, 2.4760495e-05));
+    result = mulAdd(result, x2, splat(T, -0.0013888378));
+    result = mulAdd(result, x2, splat(T, 0.041666638));
+    result = mulAdd(result, x2, splat(T, -0.5));
+    result = mulAdd(result, x2, splat(T, 1.0));
+    return sign * result;
+}
+test "zmath.cos" {
+    const epsilon = 0.0001;
+
+    try expect(approxEqAbs(cos(splat(F32x4, 0.5 * math.pi)), splat(F32x4, 0.0), epsilon));
+    try expect(approxEqAbs(cos(splat(F32x4, 0.0)), splat(F32x4, 1.0), epsilon));
+    try expect(approxEqAbs(cos(splat(F32x4, -0.0)), splat(F32x4, 1.0), epsilon));
+    try expect(isNan4(cos(splat(F32x4, math.inf_f32))) == true);
+    try expect(isNan4(cos(splat(F32x4, -math.inf_f32))) == true);
+    try expect(isNan4(cos(splat(F32x4, math.nan_f32))) == true);
+    try expect(isNan4(cos(splat(F32x4, math.qnan_f32))) == true);
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = cos(splat(F32x4, f));
+        const fr = @cos(splat(F32x4, f));
+        const vr8 = cos(splat(F32x8, f));
+        const fr8 = @cos(splat(F32x8, f));
+        try expect(approxEqAbs(vr, fr, epsilon));
+        try expect(approxEqAbs(vr8, fr8, epsilon));
+        f += 0.12345 * @intToFloat(f32, i);
+    }
+}
+
 //
 // Load/store functions
 //
