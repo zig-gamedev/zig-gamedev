@@ -970,13 +970,9 @@ pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
 
 pub inline fn sin(v: anytype) @TypeOf(v) {
     // 11-degree minimax approximation
-    // According to llvm-mca this routine will take on average:
-    // * zen2 (AVX, SIMDx4, SIMDx8): ~51 cycles
-    // * skylake (AVX, SIMDx4, SIMDx8): ~57 cycles
-    // * x86_64 (SIMDx4): ~100 cycles
     const T = @TypeOf(v);
-    var x = modAngles(v);
 
+    var x = modAngles(v);
     const sign = andInt(x, splatNegativeZero(T));
     const c = orInt(sign, splat(T, math.pi));
     const absx = andNotInt(sign, x);
@@ -1021,8 +1017,8 @@ test "sin" {
 pub inline fn cos(v: anytype) @TypeOf(v) {
     // 10-degree minimax approximation
     const T = @TypeOf(v);
-    var x = modAngles(v);
 
+    var x = modAngles(v);
     var sign = andInt(x, splatNegativeZero(T));
     const c = orInt(sign, splat(T, math.pi));
     const absx = andNotInt(sign, x);
@@ -1065,8 +1061,8 @@ test "zmath.cos" {
 
 pub inline fn sincos(v: anytype) [2]@TypeOf(v) {
     const T = @TypeOf(v);
-    var x = modAngles(v);
 
+    var x = modAngles(v);
     var sign = andInt(x, splatNegativeZero(T));
     const c = orInt(sign, splat(T, math.pi));
     const absx = andNotInt(sign, x);
