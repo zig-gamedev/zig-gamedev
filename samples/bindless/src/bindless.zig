@@ -1020,7 +1020,7 @@ fn draw(demo: *DemoState) void {
     );
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{0.8, 0.8, 0.2, 1.0},
+        &[4]f32{0.0, 0.0, 0.0, 0.0},
         0,
         null,
     );
