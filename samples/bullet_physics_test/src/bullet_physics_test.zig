@@ -1416,7 +1416,7 @@ fn update(demo: *DemoState) void {
 
     {
         _ = c.igCombo_Str(
-            "",
+            "##",
             &demo.current_scene_index,
             "Scene: Collision Shapes\x00Scene: Stack of Boxes\x00Scene: Chains\x00Scene: Constraints\x00\x00",
             -1,
