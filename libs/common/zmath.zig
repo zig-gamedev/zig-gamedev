@@ -62,8 +62,8 @@ pub const Boolx8 = @Vector(8, bool);
 // modAngles(v: F32xN) F32xN
 // mulAdd(v0: F32xN, v1: F32xN, v2: F32xN) F32xN
 // sin(v: F32xN) F32xN
-// cos(v: F32xN) F32xN [TODO(mziulek)]
-// sincos(v: F32xN) [2]F32xN [TODO(mziulek)]
+// cos(v: F32xN) F32xN
+// sincos(v: F32xN) [2]F32xN
 // select(mask: BoolxN, v0: F32xN, v1: F32xN)
 //
 // ------------------------------------------------------------------------------
@@ -1020,10 +1020,6 @@ test "sin" {
 
 pub inline fn cos(v: anytype) @TypeOf(v) {
     // 10-degree minimax approximation
-    // According to llvm-mca this routine will take on average:
-    // * zen2 (AVX, SIMDx4, SIMDx8): ~51 cycles
-    // * skylake (AVX, SIMDx4, SIMDx8): ~57 cycles
-    // * x86_64 (SIMDx4): ~100 cycles
     const T = @TypeOf(v);
     var x = modAngles(v);
 
@@ -1063,6 +1059,53 @@ test "zmath.cos" {
         const fr8 = @cos(splat(F32x8, f));
         try expect(approxEqAbs(vr, fr, epsilon));
         try expect(approxEqAbs(vr8, fr8, epsilon));
+        f += 0.12345 * @intToFloat(f32, i);
+    }
+}
+
+pub inline fn sincos(v: anytype) [2]@TypeOf(v) {
+    const T = @TypeOf(v);
+    var x = modAngles(v);
+
+    var sign = andInt(x, splatNegativeZero(T));
+    const c = orInt(sign, splat(T, math.pi));
+    const absx = andNotInt(sign, x);
+    const rflx = c - x;
+    const comp = absx <= splat(T, 0.5 * math.pi);
+    x = select(comp, x, rflx);
+    sign = select(comp, splat(T, 1.0), splat(T, -1.0));
+    const x2 = x * x;
+
+    var sresult = mulAdd(splat(T, -2.3889859e-08), x2, splat(T, 2.7525562e-06));
+    sresult = mulAdd(sresult, x2, splat(T, -0.00019840874));
+    sresult = mulAdd(sresult, x2, splat(T, 0.0083333310));
+    sresult = mulAdd(sresult, x2, splat(T, -0.16666667));
+    sresult = x * mulAdd(sresult, x2, splat(T, 1.0));
+
+    var cresult = mulAdd(splat(T, -2.6051615e-07), x2, splat(T, 2.4760495e-05));
+    cresult = mulAdd(cresult, x2, splat(T, -0.0013888378));
+    cresult = mulAdd(cresult, x2, splat(T, 0.041666638));
+    cresult = mulAdd(cresult, x2, splat(T, -0.5));
+    cresult = sign * mulAdd(cresult, x2, splat(T, 1.0));
+
+    return .{ sresult, cresult };
+}
+test "sincos" {
+    const epsilon = 0.0001;
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const sc = sincos(splat(F32x4, f));
+        const sc8 = sincos(splat(F32x8, f));
+        const s4 = @sin(splat(F32x4, f));
+        const s8 = @sin(splat(F32x8, f));
+        const c4 = @cos(splat(F32x4, f));
+        const c8 = @cos(splat(F32x8, f));
+        try expect(approxEqAbs(sc[0], s4, epsilon));
+        try expect(approxEqAbs(sc8[0], s8, epsilon));
+        try expect(approxEqAbs(sc[1], c4, epsilon));
+        try expect(approxEqAbs(sc8[1], c8, epsilon));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
