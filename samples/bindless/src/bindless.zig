@@ -533,7 +533,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     {
         const resource = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
-            .{.num_mip_levels = 1},
+            .{},
         ) catch |err| hrPanic(err);
         _ = grfx.getResource(resource).SetName(L("content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png"));
 
@@ -542,7 +542,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             bindless_descriptor_gpu_start = srv_allocation.gpu_handle;
             grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
-            // mipgen_rgba8.generateMipmaps(&grfx, resource);
+            mipgen_rgba8.generateMipmaps(&grfx, resource);
             grfx.addTransitionBarrier(resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             const t = Texture{
@@ -557,7 +557,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     {
         const resource = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
-            .{.num_mip_levels = 1},
+            .{},
         ) catch |err| hrPanic(err);
         _ = grfx.getResource(resource).SetName(L("content/SciFiHelmet/SciFiHelmet_BaseColor.png"));
 
@@ -565,7 +565,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             const srv_allocation = grfx.allocatePersistentGpuDescriptors(1);
             grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
-            // mipgen_rgba8.generateMipmaps(&grfx, resource);
+            mipgen_rgba8.generateMipmaps(&grfx, resource);
             grfx.addTransitionBarrier(resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             const t = Texture{
@@ -580,14 +580,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     {
         const resource = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
-            .{.num_mip_levels = 1},
+            .{},
         ) catch |err| hrPanic(err);
         _ = grfx.getResource(resource).SetName(L("content/SciFiHelmet/SciFiHelmet_MetallicRoughness.png"));
         mesh_textures[texture_metallic_roughness] = blk: {
             const srv_allocation = grfx.allocatePersistentGpuDescriptors(1);
             grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
-            // mipgen_rgba8.generateMipmaps(&grfx, resource);
+            mipgen_rgba8.generateMipmaps(&grfx, resource);
             grfx.addTransitionBarrier(resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             const t = Texture{
@@ -602,7 +602,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     {
         const resource = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_Normal.png",
-            .{.num_mip_levels = 1},
+            .{},
         ) catch |err| hrPanic(err);
         _ = grfx.getResource(resource).SetName(L("content/SciFiHelmet/SciFiHelmet_Normal.png"));
 
@@ -610,7 +610,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             const srv_allocation = grfx.allocatePersistentGpuDescriptors(1);
             grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
-            // mipgen_rgba8.generateMipmaps(&grfx, resource);
+            mipgen_rgba8.generateMipmaps(&grfx, resource);
             grfx.addTransitionBarrier(resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             const t = Texture{
