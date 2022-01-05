@@ -44,9 +44,86 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd("src/bindless.hlsl", "BindlessVS", "bindless.vs.cso", "vs", "");
+    dxc_command = makeDxcCmd("src/physically_based_rendering.hlsl", "vsMeshPbr", "mesh_pbr.vs.cso", "vs", "PSO__MESH_PBR");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/bindless.hlsl", "BindlessPS", "bindless.ps.cso", "ps", "");
+    dxc_command = makeDxcCmd("src/physically_based_rendering.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "PSO__MESH_PBR");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "vsGenerateEnvTexture",
+        "generate_env_texture.vs.cso",
+        "vs",
+        "PSO__GENERATE_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "psGenerateEnvTexture",
+        "generate_env_texture.ps.cso",
+        "ps",
+        "PSO__GENERATE_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "vsSampleEnvTexture",
+        "sample_env_texture.vs.cso",
+        "vs",
+        "PSO__SAMPLE_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "psSampleEnvTexture",
+        "sample_env_texture.ps.cso",
+        "ps",
+        "PSO__SAMPLE_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "vsGenerateIrradianceTexture",
+        "generate_irradiance_texture.vs.cso",
+        "vs",
+        "PSO__GENERATE_IRRADIANCE_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "psGenerateIrradianceTexture",
+        "generate_irradiance_texture.ps.cso",
+        "ps",
+        "PSO__GENERATE_IRRADIANCE_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "vsGeneratePrefilteredEnvTexture",
+        "generate_prefiltered_env_texture.vs.cso",
+        "vs",
+        "PSO__GENERATE_PREFILTERED_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "psGeneratePrefilteredEnvTexture",
+        "generate_prefiltered_env_texture.ps.cso",
+        "ps",
+        "PSO__GENERATE_PREFILTERED_ENV_TEXTURE",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/physically_based_rendering.hlsl",
+        "csGenerateBrdfIntegrationTexture",
+        "generate_brdf_integration_texture.cs.cso",
+        "cs",
+        "PSO__GENERATE_BRDF_INTEGRATION_TEXTURE",
+    );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
