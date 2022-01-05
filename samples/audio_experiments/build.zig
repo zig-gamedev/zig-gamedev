@@ -33,11 +33,7 @@ pub fn build(b: *std.build.Builder) void {
     const exe = b.addExecutable("audio_experiments", "src/audio_experiments.zig");
 
     exe.setBuildMode(b.standardReleaseOptions());
-    exe.setTarget(.{
-        .cpu_arch = .x86_64,
-        .os_tag = .windows,
-        .abi = .gnu,
-    });
+    exe.setTarget(b.standardTargetOptions(.{}));
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);

@@ -67,11 +67,7 @@ pub fn build(b: *std.build.Builder) void {
     const exe = b.addExecutable("simple3d", "src/simple3d.zig");
 
     exe.setBuildMode(b.standardReleaseOptions());
-    exe.setTarget(.{
-        .cpu_arch = .x86_64,
-        .os_tag = .windows,
-        .abi = .gnu,
-    });
+    exe.setTarget(b.standardTargetOptions(.{}));
 
     const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
     const enable_dx_debug = b.option(bool, "enable-dx-debug", "Enable debug layer for D3D12, D2D1, DirectML and DXGI") orelse false;
