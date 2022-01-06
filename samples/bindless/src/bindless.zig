@@ -96,8 +96,6 @@ const DemoState = struct {
     info_tfmt: *dwrite.ITextFormat,
     title_tfmt: *dwrite.ITextFormat,
 
-    bindless_descriptor_gpu_start: d3d12.GPU_DESCRIPTOR_HANDLE,
-
     mesh_pbr_pso: gr.PipelineHandle,
     sample_env_texture_pso: gr.PipelineHandle,
 
@@ -295,7 +293,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
     hrPanicOnFail(title_tfmt.SetTextAlignment(.CENTER));
     hrPanicOnFail(title_tfmt.SetParagraphAlignment(.CENTER));
-
 
     const mesh_pbr_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -528,7 +525,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
 
     var mesh_textures: [4]Texture = undefined;
-    var bindless_descriptor_gpu_start: d3d12.GPU_DESCRIPTOR_HANDLE = undefined;
 
     {
         const resource = grfx.createAndUploadTex2dFromFile(
@@ -539,7 +535,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
         mesh_textures[texture_ao] = blk: {
             const srv_allocation = grfx.allocatePersistentGpuDescriptors(1);
-            bindless_descriptor_gpu_start = srv_allocation.gpu_handle;
             grfx.device.CreateShaderResourceView(grfx.getResource(resource), null, srv_allocation.cpu_handle);
 
             mipgen_rgba8.generateMipmaps(&grfx, resource);
@@ -850,7 +845,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .brush = brush,
         .info_tfmt = info_tfmt,
         .title_tfmt = title_tfmt,
-        .bindless_descriptor_gpu_start = bindless_descriptor_gpu_start,
         .mesh_pbr_pso = mesh_pbr_pso,
         .sample_env_texture_pso = sample_env_texture_pso,
         .meshes = all_meshes,
@@ -1020,7 +1014,7 @@ fn draw(demo: *DemoState) void {
     );
     grfx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{0.0, 0.0, 0.0, 0.0},
+        &[4]f32{ 0.0, 0.0, 0.0, 0.0 },
         0,
         null,
     );

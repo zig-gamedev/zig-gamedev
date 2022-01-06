@@ -4,6 +4,7 @@ pub const U32x4 = @Vector(4, u32);
 pub const U32x8 = @Vector(8, u32);
 pub const Boolx4 = @Vector(4, bool);
 pub const Boolx8 = @Vector(8, bool);
+pub const Mat = [4]F32x4;
 
 // ------------------------------------------------------------------------------
 // 1. Initialization functions
@@ -2192,6 +2193,26 @@ test "zmath.normalize4" {
         try expect(isNan4(normalize4(F32x4{ -math.nan_f32, math.qnan_f32, 0.0, 0.0 })));
         try expect(isNan4(normalize4(splat(F32x4, 0.0))));
     }
+}
+
+pub inline fn mul(m0: Mat, m1: Mat) Mat {
+    var result: Mat = undefined;
+    comptime var row: u32 = 0;
+    inline while (row < 4) : (row += 1) {
+        var vx = swizzle4(m0[row], .x, .x, .x, .x);
+        var vy = swizzle4(m0[row], .y, .y, .y, .y);
+        var vz = swizzle4(m0[row], .z, .z, .z, .z);
+        var vw = swizzle4(m0[row], .w, .w, .w, .w);
+        vx = vx * m1[0];
+        vy = vy * m1[1];
+        vz = vz * m1[2];
+        vw = vw * m1[3];
+        vx = vx + vz;
+        vy = vy + vw;
+        vx = vx + vy;
+        result[row] = vx;
+    }
+    return result;
 }
 
 //
