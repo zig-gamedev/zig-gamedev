@@ -44,13 +44,13 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd("src/physically_based_rendering.hlsl", "vsMeshPbr", "mesh_pbr.vs.cso", "vs", "PSO__MESH_PBR");
+    dxc_command = makeDxcCmd("src/bindless.hlsl", "vsMeshPbr", "mesh_pbr.vs.cso", "vs", "PSO__MESH_PBR");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/physically_based_rendering.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "PSO__MESH_PBR");
+    dxc_command = makeDxcCmd("src/bindless.hlsl", "psMeshPbr", "mesh_pbr.ps.cso", "ps", "PSO__MESH_PBR");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "vsGenerateEnvTexture",
         "generate_env_texture.vs.cso",
         "vs",
@@ -58,7 +58,7 @@ pub fn build(b: *std.build.Builder) void {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "psGenerateEnvTexture",
         "generate_env_texture.ps.cso",
         "ps",
@@ -67,7 +67,7 @@ pub fn build(b: *std.build.Builder) void {
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "vsSampleEnvTexture",
         "sample_env_texture.vs.cso",
         "vs",
@@ -75,7 +75,7 @@ pub fn build(b: *std.build.Builder) void {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "psSampleEnvTexture",
         "sample_env_texture.ps.cso",
         "ps",
@@ -84,7 +84,7 @@ pub fn build(b: *std.build.Builder) void {
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "vsGenerateIrradianceTexture",
         "generate_irradiance_texture.vs.cso",
         "vs",
@@ -92,7 +92,7 @@ pub fn build(b: *std.build.Builder) void {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "psGenerateIrradianceTexture",
         "generate_irradiance_texture.ps.cso",
         "ps",
@@ -101,7 +101,7 @@ pub fn build(b: *std.build.Builder) void {
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "vsGeneratePrefilteredEnvTexture",
         "generate_prefiltered_env_texture.vs.cso",
         "vs",
@@ -109,7 +109,7 @@ pub fn build(b: *std.build.Builder) void {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "psGeneratePrefilteredEnvTexture",
         "generate_prefiltered_env_texture.ps.cso",
         "ps",
@@ -118,7 +118,7 @@ pub fn build(b: *std.build.Builder) void {
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
-        "src/physically_based_rendering.hlsl",
+        "src/bindless.hlsl",
         "csGenerateBrdfIntegrationTexture",
         "generate_brdf_integration_texture.cs.cso",
         "cs",
