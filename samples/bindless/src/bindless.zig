@@ -1071,9 +1071,6 @@ fn draw(demo: *DemoState) void {
 
         grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
 
-        // Bind bindless texture descriptor table
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(3, demo.bindless_descriptor_gpu_start);
-
         grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
             const table = grfx.copyDescriptorsToGpuHeap(1, demo.irradiance_texture.view);
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.prefiltered_env_texture.view);

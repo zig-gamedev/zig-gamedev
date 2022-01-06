@@ -46,11 +46,10 @@ float geometrySmith(float n_dot_l, float n_dot_v, float roughness) {
 #if defined(PSO__MESH_PBR)
 
 #define root_signature \
-    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
+    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED), " \
     "CBV(b0), " \
     "CBV(b1), " \
     "DescriptorTable(SRV(t0, numDescriptors = 3), visibility = SHADER_VISIBILITY_PIXEL), " \
-    "DescriptorTable(SRV(t3, numDescriptors = unbounded, space = 0, offset = 0, flags = DESCRIPTORS_VOLATILE), visibility = SHADER_VISIBILITY_ALL), " \
     "StaticSampler(s0, filter = FILTER_ANISOTROPIC, maxAnisotropy = 16, visibility = SHADER_VISIBILITY_PIXEL)"
 
 struct SceneConst {
@@ -69,8 +68,6 @@ struct DrawConst {
 
 ConstantBuffer<SceneConst> scene_const : register(b0);
 ConstantBuffer<DrawConst> draw_const : register(b1);
-
-Texture2D Textures[] : register(t3, space0);
 
 [RootSignature(root_signature)]
 void vsMeshPbr(
@@ -111,10 +108,10 @@ void psMeshPbr(
     float4 tangent : _Tangent,
     out float4 out_color : SV_Target0
 ) {
-    Texture2D srv_ao_texture = Textures[draw_const.ao_index];
-    Texture2D srv_base_color_texture = Textures[draw_const.base_color_index];
-    Texture2D srv_metallic_roughness_texture = Textures[draw_const.metallic_roughness_index];
-    Texture2D srv_normal_texture = Textures[draw_const.normal_index];
+    Texture2D srv_ao_texture = ResourceDescriptorHeap[draw_const.ao_index];
+    Texture2D srv_base_color_texture = ResourceDescriptorHeap[draw_const.base_color_index];
+    Texture2D srv_metallic_roughness_texture = ResourceDescriptorHeap[draw_const.metallic_roughness_index];
+    Texture2D srv_normal_texture = ResourceDescriptorHeap[draw_const.normal_index];
 
     if (scene_const.draw_mode == 1) {
         out_color = pow(srv_ao_texture.Sample(sam_aniso, texcoords0), 1.0 / GAMMA);
