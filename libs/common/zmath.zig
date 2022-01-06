@@ -2199,10 +2199,10 @@ pub inline fn mul(m0: Mat, m1: Mat) Mat {
     var result: Mat = undefined;
     comptime var row: u32 = 0;
     inline while (row < 4) : (row += 1) {
-        var vx = swizzle4(m0[row], .x, .x, .x, .x);
-        var vy = swizzle4(m0[row], .y, .y, .y, .y);
-        var vz = swizzle4(m0[row], .z, .z, .z, .z);
-        var vw = swizzle4(m0[row], .w, .w, .w, .w);
+        var vx = @shuffle(f32, m0[row], undefined, [4]i32{ 0, 0, 0, 0 });
+        var vy = @shuffle(f32, m0[row], undefined, [4]i32{ 1, 1, 1, 1 });
+        var vz = @shuffle(f32, m0[row], undefined, [4]i32{ 2, 2, 2, 2 });
+        var vw = @shuffle(f32, m0[row], undefined, [4]i32{ 3, 3, 3, 3 });
         vx = vx * m1[0];
         vy = vy * m1[1];
         vz = vz * m1[2];
@@ -2213,6 +2213,25 @@ pub inline fn mul(m0: Mat, m1: Mat) Mat {
         result[row] = vx;
     }
     return result;
+}
+test "zmath.matrix.mul" {
+    const a = Mat{
+        f32x4(0.1, 0.2, 0.3, 0.4),
+        f32x4(0.5, 0.6, 0.7, 0.8),
+        f32x4(0.9, 1.0, 1.1, 1.2),
+        f32x4(1.3, 1.4, 1.5, 1.6),
+    };
+    const b = Mat{
+        f32x4(1.7, 1.8, 1.9, 2.0),
+        f32x4(2.1, 2.2, 2.3, 2.4),
+        f32x4(2.5, 2.6, 2.7, 2.8),
+        f32x4(2.9, 3.0, 3.1, 3.2),
+    };
+    const c = mul(a, b);
+    try expect(approxEqAbs(c[0], f32x4(2.5, 2.6, 2.7, 2.8), 0.0001));
+    try expect(approxEqAbs(c[1], f32x4(6.18, 6.44, 6.7, 6.96), 0.0001));
+    try expect(approxEqAbs(c[2], f32x4(9.86, 10.28, 10.7, 11.12), 0.0001));
+    try expect(approxEqAbs(c[3], f32x4(13.54, 14.12, 14.7, 15.28), 0.0001));
 }
 
 //
