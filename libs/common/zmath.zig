@@ -2322,6 +2322,60 @@ test "zmath.matrix.transpose" {
     try expect(approxEqAbs(mt[3], f32x4(4.0, 8.0, 12.0, 16.0), 0.0001));
 }
 
+pub fn rotationX(angle: f32) Mat {
+    const sc = sincos(angle);
+    return .{
+        f32x4(1.0, 0.0, 0.0, 0.0),
+        f32x4(0.0, sc[1], sc[0], 0.0),
+        f32x4(0.0, -sc[0], sc[1], 0.0),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    };
+}
+
+pub fn rotationY(angle: f32) Mat {
+    const sc = sincos(angle);
+    return .{
+        f32x4(sc[1], 0.0, -sc[0], 0.0),
+        f32x4(0.0, 1.0, 0.0, 0.0),
+        f32x4(sc[0], 0.0, sc[1], 0.0),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    };
+}
+
+pub fn rotationZ(angle: f32) Mat {
+    const sc = sincos(angle);
+    return .{
+        f32x4(sc[1], sc[0], 0.0, 0.0),
+        f32x4(-sc[0], sc[1], 0.0, 0.0),
+        f32x4(0.0, 0.0, 1.0, 0.0),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    };
+}
+
+pub fn translation(x: f32, y: f32, z: f32) Mat {
+    return .{
+        f32x4(1.0, 0.0, 0.0, 0.0),
+        f32x4(0.0, 1.0, 0.0, 0.0),
+        f32x4(0.0, 0.0, 1.0, 0.0),
+        f32x4(x, y, z, 1.0),
+    };
+}
+pub fn translationV(v: F32x4) Mat {
+    return translation(v[0], v[1], v[2]);
+}
+
+pub fn scaling(x: f32, y: f32, z: f32) Mat {
+    return .{
+        f32x4(x, 0.0, 0.0, 0.0),
+        f32x4(0.0, y, 0.0, 0.0),
+        f32x4(0.0, 0.0, z, 0.0),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    };
+}
+pub fn scalingV(v: F32x4) Mat {
+    return scaling(v[0], v[1], v[2]);
+}
+
 //
 // Constants
 //
