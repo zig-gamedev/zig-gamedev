@@ -969,7 +969,7 @@ pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
     }
 }
 
-pub inline fn sin(v: anytype) @TypeOf(v) {
+pub fn sin(v: anytype) @TypeOf(v) {
     // 11-degree minimax approximation
     const T = @TypeOf(v);
 
@@ -1015,7 +1015,7 @@ test "sin" {
     }
 }
 
-pub inline fn cos(v: anytype) @TypeOf(v) {
+pub fn cos(v: anytype) @TypeOf(v) {
     // 10-degree minimax approximation
     const T = @TypeOf(v);
 
@@ -1060,7 +1060,16 @@ test "zmath.cos" {
     }
 }
 
-pub inline fn sincos(v: anytype) [2]@TypeOf(v) {
+pub fn sincos(v: anytype) [2]@TypeOf(v) {
+    const T = @TypeOf(v);
+    return switch (T) {
+        f32 => sincos32(v),
+        F32x4, F32x8 => sincos32xN(v),
+        else => @compileError("zmath.sincos not implemented for " ++ @typeName(T)),
+    };
+}
+
+fn sincos32xN(v: anytype) [2]@TypeOf(v) {
     const T = @TypeOf(v);
 
     var x = modAngles(v);
@@ -1087,7 +1096,7 @@ pub inline fn sincos(v: anytype) [2]@TypeOf(v) {
 
     return .{ sresult, cresult };
 }
-test "sincos" {
+test "zmath.sincos32xN" {
     const epsilon = 0.0001;
 
     var f: f32 = -100.0;
@@ -1103,6 +1112,51 @@ test "sincos" {
         try expect(approxEqAbs(sc8[0], s8, epsilon));
         try expect(approxEqAbs(sc[1], c4, epsilon));
         try expect(approxEqAbs(sc8[1], c8, epsilon));
+        f += 0.12345 * @intToFloat(f32, i);
+    }
+}
+
+fn sincos32(v: f32) [2]f32 {
+    var quotient = 1.0 / math.tau * v;
+    if (v >= 0.0) {
+        quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
+    } else {
+        quotient = @intToFloat(f32, @floatToInt(i32, quotient - 0.5));
+    }
+    var y = v - math.tau * quotient;
+
+    const sign = blk: {
+        if (y > 0.5 * math.pi) {
+            y = math.pi - y;
+            break :blk @as(f32, -1.0);
+        } else if (y < -math.pi * 0.5) {
+            y = -math.pi - y;
+            break :blk @as(f32, -1.0);
+        } else {
+            break :blk @as(f32, 1.0);
+        }
+    };
+    const y2 = y * y;
+
+    // 11-degree minimax approximation
+    const sinv = (((((-2.3889859e-08 * y2 + 2.7525562e-06) * y2 - 0.00019840874) * y2 + 0.0083333310) * y2 - 0.16666667) * y2 + 1.0) * y;
+
+    // 10-degree minimax approximation
+    const cosv = ((((-2.6051615e-07 * y2 + 2.4760495e-05) * y2 - 0.0013888378) * y2 + 0.041666638) * y2 - 0.5) * y2 + 1.0;
+
+    return .{ sinv, sign * cosv };
+}
+test "zmath.sincos32" {
+    const epsilon = 0.0001;
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const sc = sincos32(f);
+        const s = @sin(f);
+        const c = @cos(f);
+        try expect(math.approxEqAbs(f32, sc[0], s, epsilon));
+        try expect(math.approxEqAbs(f32, sc[1], c, epsilon));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
@@ -2195,7 +2249,7 @@ test "zmath.normalize4" {
     }
 }
 
-pub inline fn mul(m0: Mat, m1: Mat) Mat {
+pub fn mul(m0: Mat, m1: Mat) Mat {
     var result: Mat = undefined;
     comptime var row: u32 = 0;
     inline while (row < 4) : (row += 1) {
