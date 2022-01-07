@@ -1139,12 +1139,20 @@ fn sincos32(v: f32) [2]f32 {
     const y2 = y * y;
 
     // 11-degree minimax approximation
-    const sinv = (((((-2.3889859e-08 * y2 + 2.7525562e-06) * y2 - 0.00019840874) * y2 + 0.0083333310) * y2 - 0.16666667) * y2 + 1.0) * y;
+    var sinv = mulAdd(@as(f32, -2.3889859e-08), y2, 2.7525562e-06);
+    sinv = mulAdd(sinv, y2, -0.00019840874);
+    sinv = mulAdd(sinv, y2, 0.0083333310);
+    sinv = mulAdd(sinv, y2, -0.16666667);
+    sinv = y * mulAdd(sinv, y2, 1.0);
 
     // 10-degree minimax approximation
-    const cosv = ((((-2.6051615e-07 * y2 + 2.4760495e-05) * y2 - 0.0013888378) * y2 + 0.041666638) * y2 - 0.5) * y2 + 1.0;
+    var cosv = mulAdd(@as(f32, -2.6051615e-07), y2, 2.4760495e-05);
+    cosv = mulAdd(cosv, y2, -0.0013888378);
+    cosv = mulAdd(cosv, y2, 0.041666638);
+    cosv = mulAdd(cosv, y2, -0.5);
+    cosv = sign * mulAdd(cosv, y2, 1.0);
 
-    return .{ sinv, sign * cosv };
+    return .{ sinv, cosv };
 }
 test "zmath.sincos32" {
     const epsilon = 0.0001;
