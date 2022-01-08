@@ -2450,7 +2450,7 @@ pub fn determinant(m: Mat) F32x4 {
     r = mulAdd(v2, p2, r);
     return dot4(s, r);
 }
-test "zmath.determinant" {
+test "zmath.matrix.determinant" {
     const m = Mat{
         f32x4(10.0, -9.0, -12.0, 1.0),
         f32x4(7.0, -12.0, 11.0, 1.0),
@@ -2458,6 +2458,127 @@ test "zmath.determinant" {
         f32x4(1.0, 2.0, 3.0, 4.0),
     };
     try expect(approxEqAbs(determinant(m), splat(F32x4, 2939.0), 0.0001));
+}
+
+pub fn inverse(m: Mat, out_det: ?*F32x4) Mat {
+    const mt = transpose(m);
+    var v0: [4]F32x4 = undefined;
+    var v1: [4]F32x4 = undefined;
+
+    v0[0] = swizzle4(mt[2], .x, .x, .y, .y);
+    v1[0] = swizzle4(mt[3], .z, .w, .z, .w);
+    v0[1] = swizzle4(mt[0], .x, .x, .y, .y);
+    v1[1] = swizzle4(mt[1], .z, .w, .z, .w);
+    v0[2] = @shuffle(f32, mt[2], mt[0], [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
+    v1[2] = @shuffle(f32, mt[3], mt[1], [4]i32{ 1, 3, ~@as(i32, 1), ~@as(i32, 3) });
+
+    var d0 = v0[0] * v1[0];
+    var d1 = v0[1] * v1[1];
+    var d2 = v0[2] * v1[2];
+
+    v0[0] = swizzle4(mt[2], .z, .w, .z, .w);
+    v1[0] = swizzle4(mt[3], .x, .x, .y, .y);
+    v0[1] = swizzle4(mt[0], .z, .w, .z, .w);
+    v1[1] = swizzle4(mt[1], .x, .x, .y, .y);
+    v0[2] = @shuffle(f32, mt[2], mt[0], [4]i32{ 1, 3, ~@as(i32, 1), ~@as(i32, 3) });
+    v1[2] = @shuffle(f32, mt[3], mt[1], [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
+
+    d0 = mulAdd(-v0[0], v1[0], d0);
+    d1 = mulAdd(-v0[1], v1[1], d1);
+    d2 = mulAdd(-v0[2], v1[2], d2);
+
+    v0[0] = swizzle4(mt[1], .y, .z, .x, .y);
+    v1[0] = @shuffle(f32, d0, d2, [4]i32{ ~@as(i32, 1), 1, 3, 0 });
+    v0[1] = swizzle4(mt[0], .z, .x, .y, .x);
+    v1[1] = @shuffle(f32, d0, d2, [4]i32{ 3, ~@as(i32, 1), 1, 2 });
+    v0[2] = swizzle4(mt[3], .y, .z, .x, .y);
+    v1[2] = @shuffle(f32, d1, d2, [4]i32{ ~@as(i32, 3), 1, 3, 0 });
+    v0[3] = swizzle4(mt[2], .z, .x, .y, .x);
+    v1[3] = @shuffle(f32, d1, d2, [4]i32{ 3, ~@as(i32, 3), 1, 2 });
+
+    var c0 = v0[0] * v1[0];
+    var c2 = v0[1] * v1[1];
+    var c4 = v0[2] * v1[2];
+    var c6 = v0[3] * v1[3];
+
+    v0[0] = swizzle4(mt[1], .z, .w, .y, .z);
+    v1[0] = @shuffle(f32, d0, d2, [4]i32{ 3, 0, 1, ~@as(i32, 0) });
+    v0[1] = swizzle4(mt[0], .w, .z, .w, .y);
+    v1[1] = @shuffle(f32, d0, d2, [4]i32{ 2, 1, ~@as(i32, 0), 0 });
+    v0[2] = swizzle4(mt[3], .z, .w, .y, .z);
+    v1[2] = @shuffle(f32, d1, d2, [4]i32{ 3, 0, 1, ~@as(i32, 2) });
+    v0[3] = swizzle4(mt[2], .w, .z, .w, .y);
+    v1[3] = @shuffle(f32, d1, d2, [4]i32{ 2, 1, ~@as(i32, 2), 0 });
+
+    c0 = mulAdd(-v0[0], v1[0], c0);
+    c2 = mulAdd(-v0[1], v1[1], c2);
+    c4 = mulAdd(-v0[2], v1[2], c4);
+    c6 = mulAdd(-v0[3], v1[3], c6);
+
+    v0[0] = swizzle4(mt[1], .w, .x, .w, .x);
+    v1[0] = @shuffle(f32, d0, d2, [4]i32{ 2, ~@as(i32, 1), ~@as(i32, 0), 2 });
+    v0[1] = swizzle4(mt[0], .y, .w, .x, .z);
+    v1[1] = @shuffle(f32, d0, d2, [4]i32{ ~@as(i32, 1), 0, 3, ~@as(i32, 0) });
+    v0[2] = swizzle4(mt[3], .w, .x, .w, .x);
+    v1[2] = @shuffle(f32, d1, d2, [4]i32{ 2, ~@as(i32, 3), ~@as(i32, 2), 2 });
+    v0[3] = swizzle4(mt[2], .y, .w, .x, .z);
+    v1[3] = @shuffle(f32, d1, d2, [4]i32{ ~@as(i32, 3), 0, 3, ~@as(i32, 2) });
+
+    const c1 = mulAdd(-v0[0], v1[0], c0);
+    c0 = mulAdd(v0[0], v1[0], c0);
+
+    const c3 = mulAdd(v0[1], v1[1], c2);
+    c2 = mulAdd(-v0[1], v1[1], c2);
+
+    const c5 = mulAdd(-v0[2], v1[2], c4);
+    c4 = mulAdd(v0[2], v1[2], c4);
+
+    const c7 = mulAdd(v0[3], v1[3], c6);
+    c6 = mulAdd(-v0[3], v1[3], c6);
+
+    var mr = Mat{
+        f32x4(c0[0], c1[1], c0[2], c1[3]),
+        f32x4(c2[0], c3[1], c2[2], c3[3]),
+        f32x4(c4[0], c5[1], c4[2], c5[3]),
+        f32x4(c6[0], c7[1], c6[2], c7[3]),
+    };
+
+    const det = dot4(mr[0], mt[0]);
+    if (out_det != null) {
+        out_det.?.* = det;
+    }
+
+    if (math.approxEqAbs(f32, det[0], 0.0, 0.0001)) {
+        return .{
+            f32x4(0.0, 0.0, 0.0, 0.0),
+            f32x4(0.0, 0.0, 0.0, 0.0),
+            f32x4(0.0, 0.0, 0.0, 0.0),
+            f32x4(0.0, 0.0, 0.0, 0.0),
+        };
+    }
+
+    const scale = splat(F32x4, 1.0) / det;
+    mr[0] *= scale;
+    mr[1] *= scale;
+    mr[2] *= scale;
+    mr[3] *= scale;
+    return mr;
+}
+test "zmath.matrix.inverse" {
+    const m = Mat{
+        f32x4(10.0, -9.0, -12.0, 1.0),
+        f32x4(7.0, -12.0, 11.0, 1.0),
+        f32x4(-10.0, 10.0, 3.0, 1.0),
+        f32x4(1.0, 2.0, 3.0, 4.0),
+    };
+    var det: F32x4 = undefined;
+    const mi = inverse(m, &det);
+    try expect(approxEqAbs(det, splat(F32x4, 2939.0), 0.0001));
+
+    try expect(approxEqAbs(mi[0], f32x4(-0.170806, -0.13576, -0.349439, 0.164001), 0.001));
+    try expect(approxEqAbs(mi[1], f32x4(-0.163661, -0.14801, -0.253147, 0.141204), 0.001));
+    try expect(approxEqAbs(mi[2], f32x4(-0.0871045, 0.00646478, -0.0785982, 0.0398095), 0.001));
+    try expect(approxEqAbs(mi[3], f32x4(0.18986, 0.103096, 0.272882, 0.10854), 0.001));
 }
 
 //
