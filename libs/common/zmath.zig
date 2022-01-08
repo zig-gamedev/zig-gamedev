@@ -115,6 +115,29 @@ pub const Mat = [4]F32x4;
 // normalize3(v: F32x4) F32x4
 // normalize4(v: F32x4) F32x4
 //
+// ------------------------------------------------------------------------------
+// 4. Matrix functions
+// ------------------------------------------------------------------------------
+//
+// mul(m0: Mat, m1: Mat) Mat
+// transpose(m: Mat) Mat
+// rotationX(angle: f32) Mat
+// rotationY(angle: f32) Mat
+// rotationZ(angle: f32) Mat
+// translation(x: f32, y: f32, z: f32) Mat
+// translationV(v: F32x4) Mat
+// scaling(x: f32, y: f32, z: f32) Mat
+// scalingV(v: F32x4) Mat
+// lookToLh(eye_pos: F32x4, eye_dir: F32x4, up_dir: F32x4) Mat
+// lookAtLh(eye_pos: F32x4, focus_pos: F32x4, up_dir: F32x4) Mat
+// perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
+// determinant(m: Mat) F32x4
+// inverse(m: Mat, out_det: ?*F32x4) Mat
+//
+// ------------------------------------------------------------------------------
+// X. Misc functions
+// ------------------------------------------------------------------------------
+//
 // linePointDistance(line_pt0: F32x4, line_pt1: F32x4, pt: F32x4) F32x4
 
 const builtin = @import("builtin");
