@@ -2376,6 +2376,47 @@ pub fn scalingV(v: F32x4) Mat {
     return scaling(v[0], v[1], v[2]);
 }
 
+pub fn lookToLh(eye_pos: F32x4, eye_dir: F32x4, up_dir: F32x4) Mat {
+    const az = normalize3(eye_dir);
+    const ax = normalize3(cross3(up_dir, az));
+    const ay = normalize3(cross3(az, ax));
+    return transpose(.{
+        f32x4(ax[0], ax[1], ax[2], -dot3(ax, eye_pos)[0]),
+        f32x4(ay[0], ay[1], ay[2], -dot3(ay, eye_pos)[0]),
+        f32x4(az[0], az[1], az[2], -dot3(az, eye_pos)[0]),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    });
+}
+pub fn lookAtLh(eye_pos: F32x4, focus_pos: F32x4, up_dir: F32x4) Mat {
+    return lookToLh(eye_pos, focus_pos - eye_pos, up_dir);
+}
+test "zmath.lookToLh" {
+    const m = lookToLh(f32x4(0.0, 0.0, -3.0, 1.0), f32x4(0.0, 0.0, 1.0, 0.0), f32x4(0.0, 1.0, 0.0, 0.0));
+    try expect(approxEqAbs(m[0], f32x4(1.0, 0.0, 0.0, 0.0), 0.001));
+    try expect(approxEqAbs(m[1], f32x4(0.0, 1.0, 0.0, 0.0), 0.001));
+    try expect(approxEqAbs(m[2], f32x4(0.0, 0.0, 1.0, 0.0), 0.001));
+    try expect(approxEqAbs(m[3], f32x4(0.0, 0.0, 3.0, 1.0), 0.001));
+}
+
+pub fn perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
+    const scfov = sincos(0.5 * fovy);
+
+    assert(near > 0.0 and far > 0.0 and far > near);
+    assert(!math.approxEqAbs(f32, scfov[0], 0.0, 0.001));
+    assert(!math.approxEqAbs(f32, far, near, 0.001));
+    assert(!math.approxEqAbs(f32, aspect, 0.0, 0.01));
+
+    const h = scfov[1] / scfov[0];
+    const w = h / aspect;
+    const r = far / (far - near);
+    return .{
+        f32x4(w, 0.0, 0.0, 0.0),
+        f32x4(0.0, h, 0.0, 0.0),
+        f32x4(0.0, 0.0, r, 1.0),
+        f32x4(0.0, 0.0, -r * near, 0.0),
+    };
+}
+
 //
 // Constants
 //
