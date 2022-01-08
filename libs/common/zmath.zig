@@ -2417,6 +2417,49 @@ pub fn perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
     };
 }
 
+pub fn determinant(m: Mat) F32x4 {
+    var v0 = swizzle4(m[2], .y, .x, .x, .x);
+    var v1 = swizzle4(m[3], .z, .z, .y, .y);
+    var v2 = swizzle4(m[2], .y, .x, .x, .x);
+    var v3 = swizzle4(m[3], .w, .w, .w, .z);
+    var v4 = swizzle4(m[2], .z, .z, .y, .y);
+    var v5 = swizzle4(m[3], .w, .w, .w, .z);
+
+    var p0 = v0 * v1;
+    var p1 = v2 * v3;
+    var p2 = v4 * v5;
+
+    v0 = swizzle4(m[2], .z, .z, .y, .y);
+    v1 = swizzle4(m[3], .y, .x, .x, .x);
+    v2 = swizzle4(m[2], .w, .w, .w, .z);
+    v3 = swizzle4(m[3], .y, .x, .x, .x);
+    v4 = swizzle4(m[2], .w, .w, .w, .z);
+    v5 = swizzle4(m[3], .z, .z, .y, .y);
+
+    p0 = mulAdd(-v0, v1, p0);
+    p1 = mulAdd(-v2, v3, p1);
+    p2 = mulAdd(-v4, v5, p2);
+
+    v0 = swizzle4(m[1], .w, .w, .w, .z);
+    v1 = swizzle4(m[1], .z, .z, .y, .y);
+    v2 = swizzle4(m[1], .y, .x, .x, .x);
+
+    var s = m[0] * f32x4(1.0, -1.0, 1.0, -1.0);
+    var r = v0 * p0;
+    r = mulAdd(-v1, p1, r);
+    r = mulAdd(v2, p2, r);
+    return dot4(s, r);
+}
+test "zmath.determinant" {
+    const m = Mat{
+        f32x4(10.0, -9.0, -12.0, 1.0),
+        f32x4(7.0, -12.0, 11.0, 1.0),
+        f32x4(-10.0, 10.0, 3.0, 1.0),
+        f32x4(1.0, 2.0, 3.0, 4.0),
+    };
+    try expect(approxEqAbs(determinant(m), splat(F32x4, 2939.0), 0.0001));
+}
+
 //
 // Constants
 //
