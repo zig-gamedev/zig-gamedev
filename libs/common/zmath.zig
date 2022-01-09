@@ -125,11 +125,14 @@
 // perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // determinant(m: Mat) F32x4
 // inverse(m: Mat, out_det: ?*F32x4) Mat
-// matFromAxisAngle(axis: F32x4, angle: f32);
+// matFromAxisAngle(axis: F32x4, angle: f32) Mat
+// matFromQuat(quat: F32x4) Mat
 //
 // ------------------------------------------------------------------------------
 // 5. Quaternion functions
 // ------------------------------------------------------------------------------
+//
+// quatToMat(quat: F32x4) Mat
 //
 // ------------------------------------------------------------------------------
 // X. Misc functions
@@ -2676,6 +2679,62 @@ test "zmath.matrix.matFromAxisAngle" {
         try expect(approxEqAbs(m0[1], m1[1], 0.001));
         try expect(approxEqAbs(m0[2], m1[2], 0.001));
         try expect(approxEqAbs(m0[3], m1[3], 0.001));
+    }
+}
+
+pub fn matFromQuat(quat: F32x4) Mat {
+    var q0 = quat + quat;
+    var q1 = quat * q0;
+
+    var v0 = swizzle(q1, .y, .x, .x, .w);
+    v0 = @bitCast(F32x4, @bitCast(U32x4, v0) & u32x4_mask3);
+
+    var v1 = swizzle(q1, .z, .z, .y, .w);
+    v1 = @bitCast(F32x4, @bitCast(U32x4, v1) & u32x4_mask3);
+
+    var r0 = (f32x4(1.0, 1.0, 1.0, 0.0) - v0) - v1;
+
+    v0 = swizzle(quat, .x, .x, .y, .w);
+    v1 = swizzle(q0, .z, .y, .z, .w);
+    v0 = v0 * v1;
+
+    v1 = swizzle(quat, .w, .w, .w, .w);
+    var v2 = swizzle(q0, .y, .z, .x, .w);
+    v1 = v1 * v2;
+
+    var r1 = v0 + v1;
+    var r2 = v0 - v1;
+
+    v0 = @shuffle(f32, r1, r2, [4]i32{ 1, 2, ~@as(i32, 0), ~@as(i32, 1) });
+    v0 = swizzle(v0, .x, .z, .w, .y);
+    v1 = @shuffle(f32, r1, r2, [4]i32{ 0, 0, ~@as(i32, 2), ~@as(i32, 2) });
+    v1 = swizzle(v1, .x, .z, .x, .z);
+
+    q1 = @shuffle(f32, r0, v0, [4]i32{ 0, 3, ~@as(i32, 0), ~@as(i32, 1) });
+    q1 = swizzle(q1, .x, .z, .w, .y);
+
+    var m: Mat = undefined;
+    m[0] = q1;
+
+    q1 = @shuffle(f32, r0, v0, [4]i32{ 1, 3, ~@as(i32, 2), ~@as(i32, 3) });
+    q1 = swizzle(q1, .z, .x, .w, .y);
+    m[1] = q1;
+
+    q1 = @shuffle(f32, v1, r0, [4]i32{ 0, 1, ~@as(i32, 2), ~@as(i32, 3) });
+    m[2] = q1;
+    m[3] = f32x4(0.0, 0.0, 0.0, 1.0);
+    return m;
+}
+pub fn quatToMat(quat: F32x4) Mat {
+    return matFromQuat(quat);
+}
+test "zmath.matrix.matFromQuat" {
+    {
+        const m = matFromQuat(f32x4(0.0, 0.0, 0.0, 1.0));
+        try expect(approxEqAbs(m[0], f32x4(1.0, 0.0, 0.0, 0.0), 0.001));
+        try expect(approxEqAbs(m[1], f32x4(0.0, 1.0, 0.0, 0.0), 0.001));
+        try expect(approxEqAbs(m[2], f32x4(0.0, 0.0, 1.0, 0.0), 0.001));
+        try expect(approxEqAbs(m[3], f32x4(0.0, 0.0, 0.0, 1.0), 0.001));
     }
 }
 
