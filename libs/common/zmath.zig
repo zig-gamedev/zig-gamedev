@@ -1,11 +1,3 @@
-pub const F32x4 = @Vector(4, f32);
-pub const F32x8 = @Vector(8, f32);
-pub const U32x4 = @Vector(4, u32);
-pub const U32x8 = @Vector(8, u32);
-pub const Boolx4 = @Vector(4, bool);
-pub const Boolx8 = @Vector(8, bool);
-pub const Mat = [4]F32x4;
-
 // ------------------------------------------------------------------------------
 // 1. Initialization functions
 // ------------------------------------------------------------------------------
@@ -71,7 +63,7 @@ pub const Mat = [4]F32x4;
 // 3. Functions that process N components of F32x4 (N = function name suffix)
 // ------------------------------------------------------------------------------
 //
-// swizzle4(v: F32x4, c, c, c, c) F32x4 (c = .x | .y | .z | .w)
+// swizzle(v: F32x4, c, c, c, c) F32x4 (c = .x | .y | .z | .w)
 // isEqual2(v0: F32x4, v1: F32x4) bool
 // isEqual3(v0: F32x4, v1: F32x4) bool
 // isEqual4(v0: F32x4, v1: F32x4) bool
@@ -133,12 +125,26 @@ pub const Mat = [4]F32x4;
 // perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // determinant(m: Mat) F32x4
 // inverse(m: Mat, out_det: ?*F32x4) Mat
+// matFromAxisAngle(axis: F32x4, angle: f32);
+//
+// ------------------------------------------------------------------------------
+// 5. Quaternion functions
+// ------------------------------------------------------------------------------
 //
 // ------------------------------------------------------------------------------
 // X. Misc functions
 // ------------------------------------------------------------------------------
 //
 // linePointDistance(line_pt0: F32x4, line_pt1: F32x4, pt: F32x4) F32x4
+
+pub const F32x4 = @Vector(4, f32);
+pub const F32x8 = @Vector(8, f32);
+pub const U32x4 = @Vector(4, u32);
+pub const U32x8 = @Vector(8, u32);
+pub const Boolx4 = @Vector(4, bool);
+pub const Boolx8 = @Vector(8, bool);
+pub const Mat = [4]F32x4;
+pub const Quat = F32x4;
 
 const builtin = @import("builtin");
 const std = @import("std");
@@ -913,7 +919,7 @@ pub inline fn lerpV(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0) {
 
 pub const F32x4Component = enum { x, y, z, w };
 
-pub inline fn swizzle4(
+pub inline fn swizzle(
     v: F32x4,
     comptime x: F32x4Component,
     comptime y: F32x4Component,
@@ -1615,9 +1621,9 @@ pub inline fn isInf2(v: F32x4) bool {
 
 pub inline fn dot2(v0: F32x4, v1: F32x4) F32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
-    var xmm1 = swizzle4(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
+    var xmm1 = swizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
     xmm0 = F32x4{ xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[3] }; // | x0*x1 + y0*y1 | -- | -- | -- |
-    return swizzle4(xmm0, .x, .x, .x, .x);
+    return swizzle(xmm0, .x, .x, .x, .x);
 }
 test "zmath.dot2" {
     const v0 = F32x4{ -1.0, 2.0, 300.0, -2.0 };
@@ -2009,11 +2015,11 @@ test "zmath.isInf3" {
 
 pub inline fn dot3(v0: F32x4, v1: F32x4) F32x4 {
     var dot = v0 * v1;
-    var temp = swizzle4(dot, .y, .z, .y, .z);
+    var temp = swizzle(dot, .y, .z, .y, .z);
     dot = F32x4{ dot[0] + temp[0], dot[1], dot[2], dot[2] }; // addss
-    temp = swizzle4(temp, .y, .y, .y, .y);
+    temp = swizzle(temp, .y, .y, .y, .y);
     dot = F32x4{ dot[0] + temp[0], dot[1], dot[2], dot[2] }; // addss
-    return swizzle4(dot, .x, .x, .x, .x);
+    return swizzle(dot, .x, .x, .x, .x);
 }
 test "zmath.dot3" {
     const v0 = F32x4{ -1.0, 2.0, 3.0, 1.0 };
@@ -2023,11 +2029,11 @@ test "zmath.dot3" {
 }
 
 pub inline fn cross3(v0: F32x4, v1: F32x4) F32x4 {
-    var xmm0 = swizzle4(v0, .y, .z, .x, .w);
-    var xmm1 = swizzle4(v1, .z, .x, .y, .w);
+    var xmm0 = swizzle(v0, .y, .z, .x, .w);
+    var xmm1 = swizzle(v1, .z, .x, .y, .w);
     var result = xmm0 * xmm1;
-    xmm0 = swizzle4(xmm0, .y, .z, .x, .w);
-    xmm1 = swizzle4(xmm1, .z, .x, .y, .w);
+    xmm0 = swizzle(xmm0, .y, .z, .x, .w);
+    xmm1 = swizzle(xmm1, .z, .x, .y, .w);
     result = result - xmm0 * xmm1;
     return @bitCast(F32x4, @bitCast(U32x4, result) & u32x4_mask3);
 }
@@ -2242,11 +2248,11 @@ pub inline fn isInf4(v: F32x4) bool {
 
 pub inline fn dot4(v0: F32x4, v1: F32x4) F32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | z0*z1 | w0*w1 |
-    var xmm1 = swizzle4(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
+    var xmm1 = swizzle(xmm0, .y, .x, .w, .x); // | y0*y1 | -- | w0*w1 | -- |
     xmm1 = xmm0 + xmm1; // | x0*x1 + y0*y1 | -- | z0*z1 + w0*w1 | -- |
-    xmm0 = swizzle4(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
+    xmm0 = swizzle(xmm1, .z, .x, .x, .x); // | z0*z1 + w0*w1 | -- | -- | -- |
     xmm0 = F32x4{ xmm0[0] + xmm1[0], xmm0[1], xmm0[2], xmm0[2] }; // addss
-    return swizzle4(xmm0, .x, .x, .x, .x);
+    return swizzle(xmm0, .x, .x, .x, .x);
 }
 test "zmath.dot4" {
     const v0 = F32x4{ -1.0, 2.0, 3.0, -2.0 };
@@ -2413,7 +2419,7 @@ pub fn lookToLh(eye_pos: F32x4, eye_dir: F32x4, up_dir: F32x4) Mat {
 pub fn lookAtLh(eye_pos: F32x4, focus_pos: F32x4, up_dir: F32x4) Mat {
     return lookToLh(eye_pos, focus_pos - eye_pos, up_dir);
 }
-test "zmath.lookToLh" {
+test "zmath.matrix.lookToLh" {
     const m = lookToLh(f32x4(0.0, 0.0, -3.0, 1.0), f32x4(0.0, 0.0, 1.0, 0.0), f32x4(0.0, 1.0, 0.0, 0.0));
     try expect(approxEqAbs(m[0], f32x4(1.0, 0.0, 0.0, 0.0), 0.001));
     try expect(approxEqAbs(m[1], f32x4(0.0, 1.0, 0.0, 0.0), 0.001));
@@ -2441,31 +2447,31 @@ pub fn perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
 }
 
 pub fn determinant(m: Mat) F32x4 {
-    var v0 = swizzle4(m[2], .y, .x, .x, .x);
-    var v1 = swizzle4(m[3], .z, .z, .y, .y);
-    var v2 = swizzle4(m[2], .y, .x, .x, .x);
-    var v3 = swizzle4(m[3], .w, .w, .w, .z);
-    var v4 = swizzle4(m[2], .z, .z, .y, .y);
-    var v5 = swizzle4(m[3], .w, .w, .w, .z);
+    var v0 = swizzle(m[2], .y, .x, .x, .x);
+    var v1 = swizzle(m[3], .z, .z, .y, .y);
+    var v2 = swizzle(m[2], .y, .x, .x, .x);
+    var v3 = swizzle(m[3], .w, .w, .w, .z);
+    var v4 = swizzle(m[2], .z, .z, .y, .y);
+    var v5 = swizzle(m[3], .w, .w, .w, .z);
 
     var p0 = v0 * v1;
     var p1 = v2 * v3;
     var p2 = v4 * v5;
 
-    v0 = swizzle4(m[2], .z, .z, .y, .y);
-    v1 = swizzle4(m[3], .y, .x, .x, .x);
-    v2 = swizzle4(m[2], .w, .w, .w, .z);
-    v3 = swizzle4(m[3], .y, .x, .x, .x);
-    v4 = swizzle4(m[2], .w, .w, .w, .z);
-    v5 = swizzle4(m[3], .z, .z, .y, .y);
+    v0 = swizzle(m[2], .z, .z, .y, .y);
+    v1 = swizzle(m[3], .y, .x, .x, .x);
+    v2 = swizzle(m[2], .w, .w, .w, .z);
+    v3 = swizzle(m[3], .y, .x, .x, .x);
+    v4 = swizzle(m[2], .w, .w, .w, .z);
+    v5 = swizzle(m[3], .z, .z, .y, .y);
 
     p0 = mulAdd(-v0, v1, p0);
     p1 = mulAdd(-v2, v3, p1);
     p2 = mulAdd(-v4, v5, p2);
 
-    v0 = swizzle4(m[1], .w, .w, .w, .z);
-    v1 = swizzle4(m[1], .z, .z, .y, .y);
-    v2 = swizzle4(m[1], .y, .x, .x, .x);
+    v0 = swizzle(m[1], .w, .w, .w, .z);
+    v1 = swizzle(m[1], .z, .z, .y, .y);
+    v2 = swizzle(m[1], .y, .x, .x, .x);
 
     var s = m[0] * f32x4(1.0, -1.0, 1.0, -1.0);
     var r = v0 * p0;
@@ -2488,10 +2494,10 @@ pub fn inverse(m: Mat, out_det: ?*F32x4) Mat {
     var v0: [4]F32x4 = undefined;
     var v1: [4]F32x4 = undefined;
 
-    v0[0] = swizzle4(mt[2], .x, .x, .y, .y);
-    v1[0] = swizzle4(mt[3], .z, .w, .z, .w);
-    v0[1] = swizzle4(mt[0], .x, .x, .y, .y);
-    v1[1] = swizzle4(mt[1], .z, .w, .z, .w);
+    v0[0] = swizzle(mt[2], .x, .x, .y, .y);
+    v1[0] = swizzle(mt[3], .z, .w, .z, .w);
+    v0[1] = swizzle(mt[0], .x, .x, .y, .y);
+    v1[1] = swizzle(mt[1], .z, .w, .z, .w);
     v0[2] = @shuffle(f32, mt[2], mt[0], [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
     v1[2] = @shuffle(f32, mt[3], mt[1], [4]i32{ 1, 3, ~@as(i32, 1), ~@as(i32, 3) });
 
@@ -2499,10 +2505,10 @@ pub fn inverse(m: Mat, out_det: ?*F32x4) Mat {
     var d1 = v0[1] * v1[1];
     var d2 = v0[2] * v1[2];
 
-    v0[0] = swizzle4(mt[2], .z, .w, .z, .w);
-    v1[0] = swizzle4(mt[3], .x, .x, .y, .y);
-    v0[1] = swizzle4(mt[0], .z, .w, .z, .w);
-    v1[1] = swizzle4(mt[1], .x, .x, .y, .y);
+    v0[0] = swizzle(mt[2], .z, .w, .z, .w);
+    v1[0] = swizzle(mt[3], .x, .x, .y, .y);
+    v0[1] = swizzle(mt[0], .z, .w, .z, .w);
+    v1[1] = swizzle(mt[1], .x, .x, .y, .y);
     v0[2] = @shuffle(f32, mt[2], mt[0], [4]i32{ 1, 3, ~@as(i32, 1), ~@as(i32, 3) });
     v1[2] = @shuffle(f32, mt[3], mt[1], [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
 
@@ -2510,13 +2516,13 @@ pub fn inverse(m: Mat, out_det: ?*F32x4) Mat {
     d1 = mulAdd(-v0[1], v1[1], d1);
     d2 = mulAdd(-v0[2], v1[2], d2);
 
-    v0[0] = swizzle4(mt[1], .y, .z, .x, .y);
+    v0[0] = swizzle(mt[1], .y, .z, .x, .y);
     v1[0] = @shuffle(f32, d0, d2, [4]i32{ ~@as(i32, 1), 1, 3, 0 });
-    v0[1] = swizzle4(mt[0], .z, .x, .y, .x);
+    v0[1] = swizzle(mt[0], .z, .x, .y, .x);
     v1[1] = @shuffle(f32, d0, d2, [4]i32{ 3, ~@as(i32, 1), 1, 2 });
-    v0[2] = swizzle4(mt[3], .y, .z, .x, .y);
+    v0[2] = swizzle(mt[3], .y, .z, .x, .y);
     v1[2] = @shuffle(f32, d1, d2, [4]i32{ ~@as(i32, 3), 1, 3, 0 });
-    v0[3] = swizzle4(mt[2], .z, .x, .y, .x);
+    v0[3] = swizzle(mt[2], .z, .x, .y, .x);
     v1[3] = @shuffle(f32, d1, d2, [4]i32{ 3, ~@as(i32, 3), 1, 2 });
 
     var c0 = v0[0] * v1[0];
@@ -2524,13 +2530,13 @@ pub fn inverse(m: Mat, out_det: ?*F32x4) Mat {
     var c4 = v0[2] * v1[2];
     var c6 = v0[3] * v1[3];
 
-    v0[0] = swizzle4(mt[1], .z, .w, .y, .z);
+    v0[0] = swizzle(mt[1], .z, .w, .y, .z);
     v1[0] = @shuffle(f32, d0, d2, [4]i32{ 3, 0, 1, ~@as(i32, 0) });
-    v0[1] = swizzle4(mt[0], .w, .z, .w, .y);
+    v0[1] = swizzle(mt[0], .w, .z, .w, .y);
     v1[1] = @shuffle(f32, d0, d2, [4]i32{ 2, 1, ~@as(i32, 0), 0 });
-    v0[2] = swizzle4(mt[3], .z, .w, .y, .z);
+    v0[2] = swizzle(mt[3], .z, .w, .y, .z);
     v1[2] = @shuffle(f32, d1, d2, [4]i32{ 3, 0, 1, ~@as(i32, 2) });
-    v0[3] = swizzle4(mt[2], .w, .z, .w, .y);
+    v0[3] = swizzle(mt[2], .w, .z, .w, .y);
     v1[3] = @shuffle(f32, d1, d2, [4]i32{ 2, 1, ~@as(i32, 2), 0 });
 
     c0 = mulAdd(-v0[0], v1[0], c0);
@@ -2538,25 +2544,23 @@ pub fn inverse(m: Mat, out_det: ?*F32x4) Mat {
     c4 = mulAdd(-v0[2], v1[2], c4);
     c6 = mulAdd(-v0[3], v1[3], c6);
 
-    v0[0] = swizzle4(mt[1], .w, .x, .w, .x);
+    v0[0] = swizzle(mt[1], .w, .x, .w, .x);
     v1[0] = @shuffle(f32, d0, d2, [4]i32{ 2, ~@as(i32, 1), ~@as(i32, 0), 2 });
-    v0[1] = swizzle4(mt[0], .y, .w, .x, .z);
+    v0[1] = swizzle(mt[0], .y, .w, .x, .z);
     v1[1] = @shuffle(f32, d0, d2, [4]i32{ ~@as(i32, 1), 0, 3, ~@as(i32, 0) });
-    v0[2] = swizzle4(mt[3], .w, .x, .w, .x);
+    v0[2] = swizzle(mt[3], .w, .x, .w, .x);
     v1[2] = @shuffle(f32, d1, d2, [4]i32{ 2, ~@as(i32, 3), ~@as(i32, 2), 2 });
-    v0[3] = swizzle4(mt[2], .y, .w, .x, .z);
+    v0[3] = swizzle(mt[2], .y, .w, .x, .z);
     v1[3] = @shuffle(f32, d1, d2, [4]i32{ ~@as(i32, 3), 0, 3, ~@as(i32, 2) });
 
     const c1 = mulAdd(-v0[0], v1[0], c0);
-    c0 = mulAdd(v0[0], v1[0], c0);
-
     const c3 = mulAdd(v0[1], v1[1], c2);
-    c2 = mulAdd(-v0[1], v1[1], c2);
-
     const c5 = mulAdd(-v0[2], v1[2], c4);
-    c4 = mulAdd(v0[2], v1[2], c4);
-
     const c7 = mulAdd(v0[3], v1[3], c6);
+
+    c0 = mulAdd(v0[0], v1[0], c0);
+    c2 = mulAdd(-v0[1], v1[1], c2);
+    c4 = mulAdd(v0[2], v1[2], c4);
     c6 = mulAdd(-v0[3], v1[3], c6);
 
     var mr = Mat{
@@ -2598,10 +2602,81 @@ test "zmath.matrix.inverse" {
     const mi = inverse(m, &det);
     try expect(approxEqAbs(det, splat(F32x4, 2939.0), 0.0001));
 
-    try expect(approxEqAbs(mi[0], f32x4(-0.170806, -0.13576, -0.349439, 0.164001), 0.001));
-    try expect(approxEqAbs(mi[1], f32x4(-0.163661, -0.14801, -0.253147, 0.141204), 0.001));
-    try expect(approxEqAbs(mi[2], f32x4(-0.0871045, 0.00646478, -0.0785982, 0.0398095), 0.001));
-    try expect(approxEqAbs(mi[3], f32x4(0.18986, 0.103096, 0.272882, 0.10854), 0.001));
+    try expect(approxEqAbs(mi[0], f32x4(-0.170806, -0.13576, -0.349439, 0.164001), 0.0001));
+    try expect(approxEqAbs(mi[1], f32x4(-0.163661, -0.14801, -0.253147, 0.141204), 0.0001));
+    try expect(approxEqAbs(mi[2], f32x4(-0.0871045, 0.00646478, -0.0785982, 0.0398095), 0.0001));
+    try expect(approxEqAbs(mi[3], f32x4(0.18986, 0.103096, 0.272882, 0.10854), 0.0001));
+}
+
+pub fn matFromNormAxisAngle(axis: F32x4, angle: f32) Mat {
+    const sincos_angle = sincos(angle);
+
+    const c2 = splat(F32x4, 1.0 - sincos_angle[1]);
+    const c1 = splat(F32x4, sincos_angle[1]);
+    const c0 = splat(F32x4, sincos_angle[0]);
+
+    const n0 = swizzle(axis, .y, .z, .x, .w);
+    const n1 = swizzle(axis, .z, .x, .y, .w);
+
+    var v0 = c2 * n0 * n1;
+    const r0 = c2 * axis * axis + c1;
+    const r1 = c0 * axis + v0;
+    var r2 = v0 - c0 * axis;
+
+    v0 = @bitCast(F32x4, @bitCast(U32x4, r0) & u32x4_mask3);
+
+    var v1 = @shuffle(f32, r1, r2, [4]i32{ 0, 2, ~@as(i32, 1), ~@as(i32, 2) });
+    v1 = swizzle(v1, .y, .z, .w, .x);
+
+    var v2 = @shuffle(f32, r1, r2, [4]i32{ 1, 1, ~@as(i32, 0), ~@as(i32, 0) });
+    v2 = swizzle(v2, .x, .z, .x, .z);
+
+    r2 = @shuffle(f32, v0, v1, [4]i32{ 0, 3, ~@as(i32, 0), ~@as(i32, 1) });
+    r2 = swizzle(r2, .x, .z, .w, .y);
+
+    var m: Mat = undefined;
+    m[0] = r2;
+
+    r2 = @shuffle(f32, v0, v1, [4]i32{ 1, 3, ~@as(i32, 2), ~@as(i32, 3) });
+    r2 = swizzle(r2, .z, .x, .w, .y);
+    m[1] = r2;
+
+    v2 = @shuffle(f32, v2, v0, [4]i32{ 0, 1, ~@as(i32, 2), ~@as(i32, 3) });
+    m[2] = v2;
+    m[3] = f32x4(0.0, 0.0, 0.0, 1.0);
+    return m;
+}
+pub fn matFromAxisAngle(axis: F32x4, angle: f32) Mat {
+    assert(!isEqual3(axis, splat(F32x4, 0.0)));
+    assert(!isInf3(axis));
+    const normal = normalize3(axis);
+    return matFromNormAxisAngle(normal, angle);
+}
+test "zmath.matrix.matFromAxisAngle" {
+    {
+        const m0 = matFromAxisAngle(f32x4(1.0, 0.0, 0.0, 0.0), math.pi * 0.25);
+        const m1 = rotationX(math.pi * 0.25);
+        try expect(approxEqAbs(m0[0], m1[0], 0.001));
+        try expect(approxEqAbs(m0[1], m1[1], 0.001));
+        try expect(approxEqAbs(m0[2], m1[2], 0.001));
+        try expect(approxEqAbs(m0[3], m1[3], 0.001));
+    }
+    {
+        const m0 = matFromAxisAngle(f32x4(0.0, 1.0, 0.0, 0.0), math.pi * 0.125);
+        const m1 = rotationY(math.pi * 0.125);
+        try expect(approxEqAbs(m0[0], m1[0], 0.001));
+        try expect(approxEqAbs(m0[1], m1[1], 0.001));
+        try expect(approxEqAbs(m0[2], m1[2], 0.001));
+        try expect(approxEqAbs(m0[3], m1[3], 0.001));
+    }
+    {
+        const m0 = matFromAxisAngle(f32x4(0.0, 0.0, 1.0, 0.0), math.pi * 0.333);
+        const m1 = rotationZ(math.pi * 0.333);
+        try expect(approxEqAbs(m0[0], m1[0], 0.001));
+        try expect(approxEqAbs(m0[1], m1[1], 0.001));
+        try expect(approxEqAbs(m0[2], m1[2], 0.001));
+        try expect(approxEqAbs(m0[3], m1[3], 0.001));
+    }
 }
 
 //
