@@ -119,14 +119,17 @@
 
 pub const F32x4 = @Vector(4, f32);
 pub const F32x8 = @Vector(8, f32);
+pub const F32x16 = @Vector(16, f32);
 pub const Boolx4 = @Vector(4, bool);
 pub const Boolx8 = @Vector(8, bool);
+pub const Boolx16 = @Vector(16, bool);
 pub const Vec = F32x4;
 pub const Mat = [4]F32x4;
 pub const Quat = F32x4;
 
 pub const U32x4 = @Vector(4, u32);
 pub const U32x8 = @Vector(8, u32);
+pub const U32x16 = @Vector(16, u32);
 
 const builtin = @import("builtin");
 const std = @import("std");
@@ -134,11 +137,9 @@ const math = std.math;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
 
-const U1x4 = @Vector(4, u1);
-const U1x8 = @Vector(8, u1);
-
 const cpu_arch = builtin.cpu.arch;
 const has_avx = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .avx) else false;
+const has_avx512f = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .avx512f) else false;
 const has_fma = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .fma) else false;
 
 // ------------------------------------------------------------------------------
@@ -258,16 +259,14 @@ pub fn all(comptime len: u32, vb: anytype) bool {
     if (len > veclen(T)) {
         @compileError("zmath.all(): 'len' is greater than vector len of type " ++ @typeName(T));
     }
-    if (len == 0 or len == veclen(T)) {
-        return @reduce(.And, vb);
-    } else {
-        var result = true;
-        comptime var i: u32 = 0;
-        inline while (i < len) : (i += 1) {
-            result = result and vb[i];
-        }
-        return result;
+    comptime var loop_len = if (len == 0) veclen(T) else len;
+    const ab: [veclen(T)]bool = vb;
+    comptime var i: u32 = 0;
+    var result = true;
+    inline while (i < loop_len) : (i += 1) {
+        result = result and ab[i];
     }
+    return result;
 }
 test "zmath.all" {
     try expect(all(5, boolx8(true, true, true, true, true, false, true, false)) == true);
@@ -277,6 +276,9 @@ test "zmath.all" {
     try expect(all(1, boolx4(true, true, true, false)) == true);
     try expect(all(1, boolx4(true, false, false, false)) == true);
     try expect(all(1, boolx4(false, true, false, false)) == false);
+    try expect(all(0, boolx8(true, true, true, true, true, false, true, false)) == false);
+    try expect(all(0, boolx4(false, true, false, false)) == false);
+    try expect(all(0, boolx4(true, true, true, true)) == true);
 }
 
 pub fn any(comptime len: u32, vb: anytype) bool {
@@ -284,16 +286,14 @@ pub fn any(comptime len: u32, vb: anytype) bool {
     if (len > veclen(T)) {
         @compileError("zmath.any(): 'len' is greater than vector len of type " ++ @typeName(T));
     }
-    if (len == 0 or len == veclen(T)) {
-        return @reduce(.Or, vb);
-    } else {
-        var result = false;
-        comptime var i: u32 = 0;
-        inline while (i < len) : (i += 1) {
-            result = result or vb[i];
-        }
-        return result;
+    comptime var loop_len = if (len == 0) veclen(T) else len;
+    const ab: [veclen(T)]bool = vb;
+    comptime var i: u32 = 0;
+    var result = false;
+    inline while (i < loop_len) : (i += 1) {
+        result = result or ab[i];
     }
+    return result;
 }
 test "zmath.any" {
     try expect(any(0, boolx8(true, true, true, true, true, false, true, false)) == true);
@@ -630,48 +630,6 @@ test "zmath.max" {
         try expect(!math.isNan(v[2]));
         try expect(math.isNan(v[3]));
         try expect(!math.isInf(v[3]));
-    }
-}
-
-test "zmath.round" {
-    {
-        try expect(all(0, round(splat(F32x4, math.inf_f32)) == splat(F32x4, math.inf_f32)));
-        try expect(all(0, round(splat(F32x4, -math.inf_f32)) == splat(F32x4, -math.inf_f32)));
-        try expect(all(0, isNan(round(splat(F32x4, math.nan_f32)))));
-        try expect(all(0, isNan(round(splat(F32x4, -math.nan_f32)))));
-        try expect(all(0, isNan(round(splat(F32x4, math.qnan_f32)))));
-        try expect(all(0, isNan(round(splat(F32x4, -math.qnan_f32)))));
-    }
-    var v = round(F32x4{ 1.1, -1.1, -1.5, 1.5 });
-    try expect(approxEqAbs(v, F32x4{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
-
-    const v1 = F32x4{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 };
-    v = round(v1);
-    try expect(v[3] == math.inf_f32);
-    try expect(approxEqAbs(v, F32x4{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
-
-    const v2 = F32x4{ -math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32 };
-    v = round(v2);
-    try expect(math.isNan(v2[0]));
-    try expect(math.isNan(v2[1]));
-    try expect(math.isNan(v2[2]));
-    try expect(v2[3] == -math.inf_f32);
-
-    const v3 = F32x4{ 1001.5, -201.499, -10000.99, -101.5 };
-    v = round(v3);
-    try expect(approxEqAbs(v, F32x4{ 1002.0, -201.0, -10001.0, -102.0 }, 0.0));
-
-    const v4 = F32x4{ -1_388_609.9, 1_388_609.5, 1_388_109.01, 2_388_609.5 };
-    v = round(v4);
-    try expect(approxEqAbs(v, F32x4{ -1_388_610.0, 1_388_610.0, 1_388_109.0, 2_388_610.0 }, 0.0));
-
-    var f: f32 = -100.0;
-    var i: u32 = 0;
-    while (i < 100) : (i += 1) {
-        const vr = round(splat(F32x4, f));
-        const fr = @round(splat(F32x4, f));
-        try expect(approxEqAbs(vr, fr, 0.0));
-        f += 0.12345 * @intToFloat(f32, i);
     }
 }
 
@@ -1018,6 +976,24 @@ pub fn round(v: anytype) @TypeOf(v) {
                 : [ret] "={ymm0}" (-> T),
                 : [v] "{ymm0}" (v),
             );
+        } else if (T == F32x16 and has_avx512f) {
+            return asm ("vrndscaleps $0, %%zmm0, %%zmm0"
+                : [ret] "={zmm0}" (-> T),
+                : [v] "{zmm0}" (v),
+            );
+        } else if (T == F32x16 and !has_avx512f) {
+            const arr: [16]f32 = v;
+            var ymm0 = @as(F32x8, arr[0..8].*);
+            var ymm1 = @as(F32x8, arr[8..16].*);
+            ymm0 = asm ("vroundps $0, %%ymm0, %%ymm0"
+                : [ret] "={ymm0}" (-> F32x8),
+                : [v] "{ymm0}" (ymm0),
+            );
+            ymm1 = asm ("vroundps $0, %%ymm1, %%ymm1"
+                : [ret] "={ymm1}" (-> F32x8),
+                : [v] "{ymm1}" (ymm1),
+            );
+            return @shuffle(f32, ymm0, ymm1, [16]i32{ 0, 1, 2, 3, 4, 5, 6, 7, -1, -2, -3, -4, -5, -6, -7, -8 });
         }
     } else {
         const sign = andInt(v, splatNegativeZero(T));
@@ -1027,6 +1003,61 @@ pub fn round(v: anytype) @TypeOf(v) {
         const r2 = abs(v);
         const mask = r2 <= splatNoFraction(T);
         return select(mask, r1, v);
+    }
+}
+test "zmath.round" {
+    {
+        try expect(all(0, round(splat(F32x4, math.inf_f32)) == splat(F32x4, math.inf_f32)));
+        try expect(all(0, round(splat(F32x4, -math.inf_f32)) == splat(F32x4, -math.inf_f32)));
+        try expect(all(0, isNan(round(splat(F32x4, math.nan_f32)))));
+        try expect(all(0, isNan(round(splat(F32x4, -math.nan_f32)))));
+        try expect(all(0, isNan(round(splat(F32x4, math.qnan_f32)))));
+        try expect(all(0, isNan(round(splat(F32x4, -math.qnan_f32)))));
+    }
+    {
+        var v = round(F32x16{ 1.1, -1.1, -1.5, 1.5, 2.1, 2.8, 2.9, 4.1, 5.8, 6.1, 7.9, 8.9, 10.1, 11.2, 12.7, 13.1 });
+        try expect(approxEqAbs(
+            v,
+            F32x16{ 1.0, -1.0, -2.0, 2.0, 2.0, 3.0, 3.0, 4.0, 6.0, 6.0, 8.0, 9.0, 10.0, 11.0, 13.0, 13.0 },
+            0.0,
+        ));
+    }
+    var v = round(F32x4{ 1.1, -1.1, -1.5, 1.5 });
+    try expect(approxEqAbs(v, F32x4{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
+
+    const v1 = F32x4{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 };
+    v = round(v1);
+    try expect(v[3] == math.inf_f32);
+    try expect(approxEqAbs(v, F32x4{ -10_000_000.1, -math.inf_f32, 10_000_001.5, math.inf_f32 }, 0.0));
+
+    const v2 = F32x4{ -math.qnan_f32, math.qnan_f32, math.nan_f32, -math.inf_f32 };
+    v = round(v2);
+    try expect(math.isNan(v2[0]));
+    try expect(math.isNan(v2[1]));
+    try expect(math.isNan(v2[2]));
+    try expect(v2[3] == -math.inf_f32);
+
+    const v3 = F32x4{ 1001.5, -201.499, -10000.99, -101.5 };
+    v = round(v3);
+    try expect(approxEqAbs(v, F32x4{ 1002.0, -201.0, -10001.0, -102.0 }, 0.0));
+
+    const v4 = F32x4{ -1_388_609.9, 1_388_609.5, 1_388_109.01, 2_388_609.5 };
+    v = round(v4);
+    try expect(approxEqAbs(v, F32x4{ -1_388_610.0, 1_388_610.0, 1_388_109.0, 2_388_610.0 }, 0.0));
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const vr = round(splat(F32x4, f));
+        const fr = @round(splat(F32x4, f));
+        const vr8 = round(splat(F32x8, f));
+        const fr8 = @round(splat(F32x8, f));
+        const vr16 = round(splat(F32x16, f));
+        const fr16 = @round(splat(F32x16, f));
+        try expect(approxEqAbs(vr, fr, 0.0));
+        try expect(approxEqAbs(vr8, fr8, 0.0));
+        try expect(approxEqAbs(vr16, fr16, 0.0));
+        f += 0.12345 * @intToFloat(f32, i);
     }
 }
 
@@ -1081,6 +1112,7 @@ test "sin" {
     try expect(approxEqAbs(sin(splat(F32x4, -0.0)), splat(F32x4, -0.0), epsilon));
     try expect(approxEqAbs(sin(splat(F32x4, 89.123)), splat(F32x4, 0.916166), epsilon));
     try expect(approxEqAbs(sin(splat(F32x8, 89.123)), splat(F32x8, 0.916166), epsilon));
+    try expect(approxEqAbs(sin(splat(F32x16, 89.123)), splat(F32x16, 0.916166), epsilon));
     try expect(all(0, isNan(sin(splat(F32x4, math.inf_f32)))) == true);
     try expect(all(0, isNan(sin(splat(F32x4, -math.inf_f32)))) == true);
     try expect(all(0, isNan(sin(splat(F32x4, math.nan_f32)))) == true);
@@ -1148,7 +1180,7 @@ pub fn sincos(v: anytype) [2]@TypeOf(v) {
     const T = @TypeOf(v);
     return switch (T) {
         f32 => sincos32(v),
-        F32x4, F32x8 => sincos32xN(v),
+        F32x4, F32x8, F32x16 => sincos32xN(v),
         else => @compileError("zmath.sincos not implemented for " ++ @typeName(T)),
     };
 }
@@ -2023,8 +2055,9 @@ fn approxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
     const T = @TypeOf(v0);
     comptime var i: comptime_int = 0;
     inline while (i < veclen(T)) : (i += 1) {
-        if (!math.approxEqAbs(f32, v0[i], v1[i], eps))
+        if (!math.approxEqAbs(f32, v0[i], v1[i], eps)) {
             return false;
+        }
     }
     return true;
 }
