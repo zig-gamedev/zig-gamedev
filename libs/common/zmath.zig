@@ -98,6 +98,7 @@
 // determinant(m: Mat) F32x4
 // inverse(m: Mat, out_det: ?*F32x4) Mat
 // matFromAxisAngle(axis: Vec, angle: f32) Mat
+// matFromNormAxisAngle(axis: Vec, angle: f32) Mat
 // matFromQuat(quat: Quat) Mat
 //
 // ------------------------------------------------------------------------------
@@ -105,6 +106,9 @@
 // ------------------------------------------------------------------------------
 //
 // quatToMat(quat: Quat) Mat
+// mul(q0: Quat, q1: Quat) Quat
+// quatFromAxisAngle(axis: Vec, angle: f32) Quat
+// quatFromNormAxisAngle(axis: Vec, angle: f32) Quat
 //
 // ------------------------------------------------------------------------------
 // X. Misc functions
@@ -1332,7 +1336,18 @@ test "zmath.normalize4" {
 //
 // ------------------------------------------------------------------------------
 
-pub fn mul(m0: Mat, m1: Mat) Mat {
+pub fn mul(a: anytype, b: anytype) @TypeOf(a) {
+    const T = @TypeOf(a);
+    if (T == Mat) {
+        return mulMat(a, b);
+    } else if (T == Quat) {
+        return mulQuat(a, b);
+    } else {
+        @compileError("zmath.mul not implemented for " ++ @typeName(T));
+    }
+}
+
+fn mulMat(m0: Mat, m1: Mat) Mat {
     var result: Mat = undefined;
     comptime var row: u32 = 0;
     inline while (row < 4) : (row += 1) {
@@ -1771,10 +1786,10 @@ pub fn matFromQuat(quat: Quat) Mat {
 test "zmath.matrix.matFromQuat" {
     {
         const m = matFromQuat(f32x4(0.0, 0.0, 0.0, 1.0));
-        try expect(approxEqAbs(m[0], f32x4(1.0, 0.0, 0.0, 0.0), 0.001));
-        try expect(approxEqAbs(m[1], f32x4(0.0, 1.0, 0.0, 0.0), 0.001));
-        try expect(approxEqAbs(m[2], f32x4(0.0, 0.0, 1.0, 0.0), 0.001));
-        try expect(approxEqAbs(m[3], f32x4(0.0, 0.0, 0.0, 1.0), 0.001));
+        try expect(approxEqAbs(m[0], f32x4(1.0, 0.0, 0.0, 0.0), 0.0001));
+        try expect(approxEqAbs(m[1], f32x4(0.0, 1.0, 0.0, 0.0), 0.0001));
+        try expect(approxEqAbs(m[2], f32x4(0.0, 0.0, 1.0, 0.0), 0.0001));
+        try expect(approxEqAbs(m[3], f32x4(0.0, 0.0, 0.0, 1.0), 0.0001));
     }
 }
 
@@ -1786,6 +1801,57 @@ test "zmath.matrix.matFromQuat" {
 
 pub fn quatToMat(quat: Quat) Mat {
     return matFromQuat(quat);
+}
+
+fn mulQuat(q0: Quat, q1: Quat) Quat {
+    var result = swizzle(q1, .w, .w, .w, .w);
+    var q1x = swizzle(q1, .x, .x, .x, .x);
+    var q1y = swizzle(q1, .y, .y, .y, .y);
+    var q1z = swizzle(q1, .z, .z, .z, .z);
+    result = result * q0;
+    var q0_shuf = swizzle(q0, .w, .z, .y, .x);
+    q1x = q1x * q0_shuf;
+    q0_shuf = swizzle(q0_shuf, .y, .x, .w, .z);
+    result = mulAdd(q1x, f32x4(1.0, -1.0, 1.0, -1.0), result);
+    q1y = q1y * q0_shuf;
+    q0_shuf = swizzle(q0_shuf, .w, .z, .y, .x);
+    q1y = q1y * f32x4(1.0, 1.0, -1.0, -1.0);
+    q1z = q1z * q0_shuf;
+    q1y = mulAdd(q1z, f32x4(-1.0, 1.0, 1.0, -1.0), q1y);
+    return result + q1y;
+}
+test "zmath.quaternion.mul" {
+    {
+        const q0 = f32x4(0.0, 0.0, 0.0, 1.0);
+        const q1 = f32x4(0.0, 0.0, 0.0, 1.0);
+        try expect(approxEqAbs(mul(q0, q1), f32x4(0.0, 0.0, 0.0, 1.0), 0.0001));
+    }
+}
+
+pub fn quatFromNormAxisAngle(axis: Vec, angle: f32) Quat {
+    var n = f32x4(axis[0], axis[1], axis[2], 1.0);
+    const sc = sincos(0.5 * angle);
+    return n * f32x4(sc[0], sc[0], sc[0], sc[1]);
+}
+pub fn quatFromAxisAngle(axis: Vec, angle: f32) Quat {
+    assert(!all(3, axis == splat(F32x4, 0.0)));
+    assert(!all(3, isInf(axis)));
+    const normal = normalize3(axis);
+    return quatFromNormAxisAngle(normal, angle);
+}
+test "zmath.quaternion.quatFromNormAxisAngle" {
+    {
+        const q0 = quatFromAxisAngle(f32x4(1.0, 0.0, 0.0, 0.0), 0.25 * math.pi);
+        const q1 = quatFromAxisAngle(f32x4(0.0, 1.0, 0.0, 0.0), 0.125 * math.pi);
+        const m0 = rotationX(0.25 * math.pi);
+        const m1 = rotationY(0.125 * math.pi);
+        const mr0 = quatToMat(mul(q0, q1));
+        const mr1 = mul(m0, m1);
+        try expect(approxEqAbs(mr0[0], mr1[0], 0.0001));
+        try expect(approxEqAbs(mr0[1], mr1[1], 0.0001));
+        try expect(approxEqAbs(mr0[2], mr1[2], 0.0001));
+        try expect(approxEqAbs(mr0[3], mr1[3], 0.0001));
+    }
 }
 
 // ------------------------------------------------------------------------------
