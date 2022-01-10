@@ -273,6 +273,10 @@ test "zmath.all" {
     try expect(all(5, boolx8(true, true, true, true, true, false, true, false)) == true);
     try expect(all(6, boolx8(true, true, true, true, true, false, true, false)) == false);
     try expect(all(4, boolx8(true, true, true, true, false, false, false, false)) == true);
+    try expect(all(3, boolx4(true, true, true, false)) == true);
+    try expect(all(1, boolx4(true, true, true, false)) == true);
+    try expect(all(1, boolx4(true, false, false, false)) == true);
+    try expect(all(1, boolx4(false, true, false, false)) == false);
 }
 
 pub fn any(comptime len: u32, vb: anytype) bool {
