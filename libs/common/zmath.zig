@@ -258,7 +258,7 @@ pub fn all(comptime len: u32, vb: anytype) bool {
     if (len > veclen(T)) {
         @compileError("zmath.all(): 'len' is greater than vector len of type " ++ @typeName(T));
     }
-    if (len == 0 or (len % 4) == 0) {
+    if (len == 0 or len == veclen(T)) {
         return @reduce(.And, vb);
     } else {
         var result = true;
@@ -272,6 +272,7 @@ pub fn all(comptime len: u32, vb: anytype) bool {
 test "zmath.all" {
     try expect(all(5, boolx8(true, true, true, true, true, false, true, false)) == true);
     try expect(all(6, boolx8(true, true, true, true, true, false, true, false)) == false);
+    try expect(all(4, boolx8(true, true, true, true, false, false, false, false)) == true);
 }
 
 pub fn any(comptime len: u32, vb: anytype) bool {
@@ -279,7 +280,7 @@ pub fn any(comptime len: u32, vb: anytype) bool {
     if (len > veclen(T)) {
         @compileError("zmath.any(): 'len' is greater than vector len of type " ++ @typeName(T));
     }
-    if (len == 0 or (len % 4) == 0) {
+    if (len == 0 or len == veclen(T)) {
         return @reduce(.Or, vb);
     } else {
         var result = false;
@@ -293,6 +294,7 @@ pub fn any(comptime len: u32, vb: anytype) bool {
 test "zmath.any" {
     try expect(any(0, boolx8(true, true, true, true, true, false, true, false)) == true);
     try expect(any(3, boolx8(false, false, false, true, true, false, true, false)) == false);
+    try expect(any(4, boolx8(false, false, false, false, false, true, false, false)) == false);
 }
 
 pub inline fn isNearEqual(
