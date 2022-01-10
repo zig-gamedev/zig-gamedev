@@ -299,7 +299,7 @@ pub inline fn isNearEqual(
     v0: anytype,
     v1: anytype,
     epsilon: anytype,
-) @Vector(@typeInfo(@TypeOf(v0)).Vector.len, bool) {
+) @Vector(veclen(@TypeOf(v0)), bool) {
     // Won't handle inf & nan
     const T = @TypeOf(v0);
     const delta = v0 - v1;
@@ -323,7 +323,7 @@ test "zmath.isNearEqual" {
 
 pub inline fn isNan(
     v: anytype,
-) @Vector(@typeInfo(@TypeOf(v)).Vector.len, bool) {
+) @Vector(veclen(@TypeOf(v)), bool) {
     return v != v;
 }
 test "zmath.isNan" {
@@ -341,7 +341,7 @@ test "zmath.isNan" {
 
 pub inline fn isInf(
     v: anytype,
-) @Vector(@typeInfo(@TypeOf(v)).Vector.len, bool) {
+) @Vector(veclen(@TypeOf(v)), bool) {
     const T = @TypeOf(v);
     return abs(v) == splat(T, math.inf_f32);
 }
@@ -361,10 +361,10 @@ test "zmath.isInf" {
 pub inline fn isInBounds(
     v: anytype,
     bounds: anytype,
-) @Vector(@typeInfo(@TypeOf(v)).Vector.len, bool) {
+) @Vector(veclen(@TypeOf(v)), bool) {
     const T = @TypeOf(v);
-    const Tu = @Vector(@typeInfo(T).Vector.len, u1);
-    const Tr = @Vector(@typeInfo(T).Vector.len, bool);
+    const Tu = @Vector(veclen(T), u1);
+    const Tr = @Vector(veclen(T), bool);
 
     // 2 x cmpleps, xorps, load, andps
     const b0 = v <= bounds;
@@ -393,7 +393,7 @@ test "zmath.isInBounds" {
 
 pub inline fn andInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
-    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
     return @bitCast(T, v0u & v1u); // andps
@@ -417,7 +417,7 @@ test "zmath.andInt" {
 
 pub inline fn andNotInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
-    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
     return @bitCast(T, ~v0u & v1u); // andnps
@@ -439,7 +439,7 @@ test "zmath.andNotInt" {
 
 pub inline fn orInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
-    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
     return @bitCast(T, v0u | v1u); // orps
@@ -467,7 +467,7 @@ test "zmath.orInt" {
 
 pub inline fn norInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
-    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
     return @bitCast(T, ~(v0u | v1u)); // por, pcmpeqd, pxor
@@ -475,7 +475,7 @@ pub inline fn norInt(v0: anytype, v1: anytype) @TypeOf(v0) {
 
 pub inline fn xorInt(v0: anytype, v1: anytype) @TypeOf(v0) {
     const T = @TypeOf(v0);
-    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
+    const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
     return @bitCast(T, v0u ^ v1u); // xorps
@@ -1966,13 +1966,13 @@ const f32x4_inf: F32x4 = splat(F32x4, math.inf_f32);
 const u32x4_mask3: U32x4 = U32x4{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
 
 inline fn splatNegativeZero(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x8000_0000)));
+    return @splat(veclen(T), @bitCast(f32, @as(u32, 0x8000_0000)));
 }
 inline fn splatNoFraction(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @as(f32, 8_388_608.0));
+    return @splat(veclen(T), @as(f32, 8_388_608.0));
 }
 inline fn splatAbsMask(comptime T: type) T {
-    return @splat(@typeInfo(T).Vector.len, @bitCast(f32, @as(u32, 0x7fff_ffff)));
+    return @splat(veclen(T), @bitCast(f32, @as(u32, 0x7fff_ffff)));
 }
 
 fn floatToIntAndBack(v: anytype) @TypeOf(v) {
@@ -1980,7 +1980,7 @@ fn floatToIntAndBack(v: anytype) @TypeOf(v) {
     @setRuntimeSafety(false);
 
     const T = @TypeOf(v);
-    const len = @typeInfo(T).Vector.len;
+    const len = veclen(T);
 
     var vi32: [len]i32 = undefined;
     comptime var i: u32 = 0;
@@ -2016,7 +2016,7 @@ test "zmath.floatToIntAndBack" {
 fn approxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
     const T = @TypeOf(v0);
     comptime var i: comptime_int = 0;
-    inline while (i < @typeInfo(T).Vector.len) : (i += 1) {
+    inline while (i < veclen(T)) : (i += 1) {
         if (!math.approxEqAbs(f32, v0[i], v1[i], eps))
             return false;
     }
