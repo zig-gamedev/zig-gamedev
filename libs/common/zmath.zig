@@ -1804,21 +1804,15 @@ pub fn quatToMat(quat: Quat) Mat {
 }
 
 fn mulQuat(q0: Quat, q1: Quat) Quat {
-    var result = swizzle(q1, .w, .w, .w, .w);
-    var q1x = swizzle(q1, .x, .x, .x, .x);
-    var q1y = swizzle(q1, .y, .y, .y, .y);
-    var q1z = swizzle(q1, .z, .z, .z, .z);
-    result = result * q0;
-    var q0_shuf = swizzle(q0, .w, .z, .y, .x);
-    q1x = q1x * q0_shuf;
-    q0_shuf = swizzle(q0_shuf, .y, .x, .w, .z);
-    result = mulAdd(q1x, f32x4(1.0, -1.0, 1.0, -1.0), result);
-    q1y = q1y * q0_shuf;
-    q0_shuf = swizzle(q0_shuf, .w, .z, .y, .x);
-    q1y = q1y * f32x4(1.0, 1.0, -1.0, -1.0);
-    q1z = q1z * q0_shuf;
-    q1y = mulAdd(q1z, f32x4(-1.0, 1.0, 1.0, -1.0), q1y);
-    return result + q1y;
+    const c0 = swizzle(q1, .w, .w, .w, .w) * swizzle(q0, .x, .y, .z, .w);
+    const c1 = swizzle(q1, .x, .x, .x, .x) * swizzle(q0, .w, .z, .y, .x);
+    const c2 = swizzle(q1, .y, .y, .y, .y) * swizzle(q0, .z, .w, .x, .y);
+    const c3 = swizzle(q1, .z, .z, .z, .z) * swizzle(q0, .y, .x, .w, .z);
+
+    const h0 = mulAdd(c1, f32x4(1.0, -1.0, 1.0, -1.0), c0);
+    const h1 = mulAdd(c3, f32x4(-1.0, 1.0, 1.0, -1.0), c2);
+
+    return mulAdd(h1, f32x4(1.0, 1.0, -1.0, -1.0), h0);
 }
 test "zmath.quaternion.mul" {
     {
