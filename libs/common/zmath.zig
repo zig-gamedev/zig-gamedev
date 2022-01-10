@@ -22,9 +22,10 @@
 // 2. Functions that work on all vector components (F32xN = F32x4 | F32x8)
 // ------------------------------------------------------------------------------
 //
+// all(comptime len: u32, vb: anytype) bool
+// any(comptime len: u32, vb: anytype) bool
+//
 // isNearEqual(v0: F32xN, v1: F32xN, epsilon: F32xN) BoolxN
-// isEqualInt(v0: F32xN, v1: F32xN, epsilon: F32xN) BoolxN
-// isNotEqualInt(v0: F32xN, v1: F32xN, epsilon: F32xN) BoolxN
 // isNan(v: F32xN) BoolxN
 // isInf(v: F32xN) BoolxN
 // isInBounds(v: F32xN, bounds: F32xN) BoolxN
@@ -63,40 +64,11 @@
 // 3. Functions that process N components of F32x4 (N = function name suffix)
 // ------------------------------------------------------------------------------
 //
-// swizzle(v: F32x4, c, c, c, c) F32x4 (c = .x | .y | .z | .w)
-// isEqual2(v0: F32x4, v1: F32x4) bool
-// isEqual3(v0: F32x4, v1: F32x4) bool
-// isEqual4(v0: F32x4, v1: F32x4) bool
-// isEqualInt2(v0: F32x4, v1: F32x4) bool
-// isEqualInt3(v0: F32x4, v1: F32x4) bool
-// isEqualInt4(v0: F32x4, v1: F32x4) bool
-// isNearEqual2(v0: F32x4, v1: F32x4, epsilon: F32x4) bool
-// isNearEqual3(v0: F32x4, v1: F32x4, epsilon: F32x4) bool
-// isNearEqual4(v0: F32x4, v1: F32x4, epsilon: F32x4) bool
-// isLess2(v0: F32x4, v1: F32x4) bool
-// isLess3(v0: F32x4, v1: F32x4) bool
-// isLess4(v0: F32x4, v1: F32x4) bool
-// isLessEqual2(v0: F32x4, v1: F32x4) bool
-// isLessEqual3(v0: F32x4, v1: F32x4) bool
-// isLessEqual4(v0: F32x4, v1: F32x4) bool
-// isGreater2(v0: F32x4, v1: F32x4) bool
-// isGreater3(v0: F32x4, v1: F32x4) bool
-// isGreater4(v0: F32x4, v1: F32x4) bool
-// isGreaterEqual2(v0: F32x4, v1: F32x4) bool
-// isGreaterEqual3(v0: F32x4, v1: F32x4) bool
-// isGreaterEqual4(v0: F32x4, v1: F32x4) bool
-// isInBounds2(v: F32x4, bounds: F32x4) bool
-// isInBounds3(v: F32x4, bounds: F32x4) bool
-// isInBounds4(v: F32x4, bounds: F32x4) bool
-// isNan2(v: F32x4) bool
-// isNan3(v: F32x4) bool
-// isNan4(v: F32x4) bool
-// isInf2(v: F32x4) bool
-// isInf3(v: F32x4) bool
-// isInf4(v: F32x4) bool
+// swizzle(v: F32x4, c, c, c, c) F32x4 (comptime c = .x | .y | .z | .w)
 // dot2(v0: F32x4, v1: F32x4) F32x4
 // dot3(v0: F32x4, v1: F32x4) F32x4
 // dot4(v0: F32x4, v1: F32x4) F32x4
+// cross3(v0: F32x4, v1: F32x4) F32x4
 // lengthSq2(v: F32x4) F32x4
 // lengthSq3(v: F32x4) F32x4
 // lengthSq4(v: F32x4) F32x4
@@ -156,6 +128,7 @@ const assert = std.debug.assert;
 const expect = std.testing.expect;
 
 const U1x4 = @Vector(4, u1);
+const U1x8 = @Vector(8, u1);
 
 const cpu_arch = builtin.cpu.arch;
 const has_avx = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cpu.features, .avx) else false;
@@ -214,64 +187,6 @@ test "zmath.isNearEqual" {
         const v1 = f32x8(1.0, 2.1, 3.0, 4.0, -1.001, 2.1, 0.0, 0.0);
         const b = isNearEqual(v0, v1, splat(F32x8, 0.01));
         try expect(@reduce(.And, b == Boolx8{ true, false, false, true, false, false, true, true }));
-    }
-}
-
-pub inline fn isEqualInt(
-    v0: anytype,
-    v1: anytype,
-) @Vector(@typeInfo(@TypeOf(v0)).Vector.len, bool) {
-    const T = @TypeOf(v0);
-    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
-    const v0u = @bitCast(Tu, v0);
-    const v1u = @bitCast(Tu, v1);
-    return v0u == v1u; // pcmpeqd
-}
-test "zmath.isEqualInt" {
-    {
-        const v0 = f32x4(1.0, -0.0, 3.0, 4.001);
-        const v1 = f32x4(1.0, 0.0, -3.0, 4.0);
-        const b0 = isEqualInt(v0, v1);
-        const b1 = v0 == v1;
-        try expect(@reduce(.And, b0 == boolx4(true, false, false, false)));
-        try expect(@reduce(.And, b1 == boolx4(true, true, false, false)));
-    }
-    {
-        const v0 = f32x8(1.0, 2.0, -3.0, 4.001, 1.001, 2.3, -0.0, 0.0);
-        const v1 = f32x8(1.0, 2.1, 3.0, 4.0, -1.001, 2.1, 0.0, 0.0);
-        const b0 = isEqualInt(v0, v1);
-        const b1 = v0 == v1;
-        try expect(@reduce(.And, b0 == boolx8(true, false, false, false, false, false, false, true)));
-        try expect(@reduce(.And, b1 == boolx8(true, false, false, false, false, false, true, true)));
-    }
-}
-
-pub inline fn isNotEqualInt(
-    v0: anytype,
-    v1: anytype,
-) @Vector(@typeInfo(@TypeOf(v0)).Vector.len, bool) {
-    const T = @TypeOf(v0);
-    const Tu = @Vector(@typeInfo(T).Vector.len, u32);
-    const v0u = @bitCast(Tu, v0);
-    const v1u = @bitCast(Tu, v1);
-    return v0u != v1u; // 2 x pcmpeqd, pxor
-}
-test "zmath.isNotEqualInt" {
-    {
-        const v0 = f32x4(1.0, -0.0, 3.0, 4.001);
-        const v1 = f32x4(1.0, 0.0, -3.0, 4.0);
-        const b0 = isNotEqualInt(v0, v1);
-        const b1 = v0 != v1;
-        try expect(@reduce(.And, b0 == boolx4(false, true, true, true)));
-        try expect(@reduce(.And, b1 == boolx4(false, false, true, true)));
-    }
-    {
-        const v0 = f32x8(1.0, 2.0, -3.0, 4.001, 1.001, 2.3, -0.0, 0.0);
-        const v1 = f32x8(1.0, 2.1, 3.0, 4.0, -1.001, 2.1, 0.0, 0.0);
-        const b0 = isNotEqualInt(v0, v1);
-        const b1 = v0 != v1;
-        try expect(@reduce(.And, b0 == boolx8(false, true, true, true, true, true, true, false)));
-        try expect(@reduce(.And, b1 == boolx8(false, true, true, true, true, true, false, false)));
     }
 }
 
@@ -583,12 +498,12 @@ test "zmath.isInBounds" {
 
 test "zmath.round" {
     {
-        try expect(isEqual4(round(splat(F32x4, math.inf_f32)), splat(F32x4, math.inf_f32)));
-        try expect(isEqual4(round(splat(F32x4, -math.inf_f32)), splat(F32x4, -math.inf_f32)));
-        try expect(isNan4(round(splat(F32x4, math.nan_f32))));
-        try expect(isNan4(round(splat(F32x4, -math.nan_f32))));
-        try expect(isNan4(round(splat(F32x4, math.qnan_f32))));
-        try expect(isNan4(round(splat(F32x4, -math.qnan_f32))));
+        try expect(all(4, round(splat(F32x4, math.inf_f32)) == splat(F32x4, math.inf_f32)));
+        try expect(all(4, round(splat(F32x4, -math.inf_f32)) == splat(F32x4, -math.inf_f32)));
+        try expect(all(4, isNan(round(splat(F32x4, math.nan_f32)))));
+        try expect(all(4, isNan(round(splat(F32x4, -math.nan_f32)))));
+        try expect(all(4, isNan(round(splat(F32x4, math.qnan_f32)))));
+        try expect(all(4, isNan(round(splat(F32x4, -math.qnan_f32)))));
     }
     var v = round(F32x4{ 1.1, -1.1, -1.5, 1.5 });
     try expect(approxEqAbs(v, F32x4{ 1.0, -1.0, -2.0, 2.0 }, 0.0));
@@ -645,12 +560,12 @@ pub inline fn trunc(v: anytype) @TypeOf(v) {
 }
 test "zmath.trunc" {
     {
-        try expect(isEqual4(trunc(splat(F32x4, math.inf_f32)), splat(F32x4, math.inf_f32)));
-        try expect(isEqual4(trunc(splat(F32x4, -math.inf_f32)), splat(F32x4, -math.inf_f32)));
-        try expect(isNan4(trunc(splat(F32x4, math.nan_f32))));
-        try expect(isNan4(trunc(splat(F32x4, -math.nan_f32))));
-        try expect(isNan4(trunc(splat(F32x4, math.qnan_f32))));
-        try expect(isNan4(trunc(splat(F32x4, -math.qnan_f32))));
+        try expect(all(4, trunc(splat(F32x4, math.inf_f32)) == splat(F32x4, math.inf_f32)));
+        try expect(all(4, trunc(splat(F32x4, -math.inf_f32)) == splat(F32x4, -math.inf_f32)));
+        try expect(all(4, isNan(trunc(splat(F32x4, math.nan_f32)))));
+        try expect(all(4, isNan(trunc(splat(F32x4, -math.nan_f32)))));
+        try expect(all(4, isNan(trunc(splat(F32x4, math.qnan_f32)))));
+        try expect(all(4, isNan(trunc(splat(F32x4, -math.qnan_f32)))));
     }
     var v = trunc(F32x4{ 1.1, -1.1, -1.5, 1.5 });
     try expect(approxEqAbs(v, F32x4{ 1.0, -1.0, -1.0, 1.0 }, 0.0));
@@ -705,12 +620,12 @@ pub inline fn floor(v: anytype) @TypeOf(v) {
 }
 test "zmath.floor" {
     {
-        try expect(isEqual4(floor(splat(F32x4, math.inf_f32)), splat(F32x4, math.inf_f32)));
-        try expect(isEqual4(floor(splat(F32x4, -math.inf_f32)), splat(F32x4, -math.inf_f32)));
-        try expect(isNan4(floor(splat(F32x4, math.nan_f32))));
-        try expect(isNan4(floor(splat(F32x4, -math.nan_f32))));
-        try expect(isNan4(floor(splat(F32x4, math.qnan_f32))));
-        try expect(isNan4(floor(splat(F32x4, -math.qnan_f32))));
+        try expect(all(4, floor(splat(F32x4, math.inf_f32)) == splat(F32x4, math.inf_f32)));
+        try expect(all(4, floor(splat(F32x4, -math.inf_f32)) == splat(F32x4, -math.inf_f32)));
+        try expect(all(4, isNan(floor(splat(F32x4, math.nan_f32)))));
+        try expect(all(4, isNan(floor(splat(F32x4, -math.nan_f32)))));
+        try expect(all(4, isNan(floor(splat(F32x4, math.qnan_f32)))));
+        try expect(all(4, isNan(floor(splat(F32x4, -math.qnan_f32)))));
     }
     var v = floor(F32x4{ 1.5, -1.5, -1.7, -2.1 });
     try expect(approxEqAbs(v, F32x4{ 1.0, -2.0, -2.0, -3.0 }, 0.0));
@@ -765,12 +680,12 @@ pub inline fn ceil(v: anytype) @TypeOf(v) {
 }
 test "zmath.ceil" {
     {
-        try expect(isEqual4(ceil(splat(F32x4, math.inf_f32)), splat(F32x4, math.inf_f32)));
-        try expect(isEqual4(ceil(splat(F32x4, -math.inf_f32)), splat(F32x4, -math.inf_f32)));
-        try expect(isNan4(ceil(splat(F32x4, math.nan_f32))));
-        try expect(isNan4(ceil(splat(F32x4, -math.nan_f32))));
-        try expect(isNan4(ceil(splat(F32x4, math.qnan_f32))));
-        try expect(isNan4(ceil(splat(F32x4, -math.qnan_f32))));
+        try expect(all(4, ceil(splat(F32x4, math.inf_f32)) == splat(F32x4, math.inf_f32)));
+        try expect(all(4, ceil(splat(F32x4, -math.inf_f32)) == splat(F32x4, -math.inf_f32)));
+        try expect(all(4, isNan(ceil(splat(F32x4, math.nan_f32)))));
+        try expect(all(4, isNan(ceil(splat(F32x4, -math.nan_f32)))));
+        try expect(all(4, isNan(ceil(splat(F32x4, math.qnan_f32)))));
+        try expect(all(4, isNan(ceil(splat(F32x4, -math.qnan_f32)))));
     }
     var v = ceil(F32x4{ 1.5, -1.5, -1.7, -2.1 });
     try expect(approxEqAbs(v, F32x4{ 2.0, -1.0, -1.0, -2.0 }, 0.0));
@@ -941,16 +856,16 @@ test "zmath.mod" {
     try expect(approxEqAbs(mod(splat(F32x4, -3.0), splat(F32x4, 2.0)), splat(F32x4, -1.0), 0.0005));
     try expect(approxEqAbs(mod(splat(F32x4, -3.0), splat(F32x4, -2.0)), splat(F32x4, -1.0), 0.0005));
     try expect(approxEqAbs(mod(splat(F32x4, 3.0), splat(F32x4, -2.0)), splat(F32x4, 1.0), 0.0005));
-    try expect(isNan4(mod(splat(F32x4, math.inf_f32), splat(F32x4, 1.0))));
-    try expect(isNan4(mod(splat(F32x4, -math.inf_f32), splat(F32x4, 123.456))));
-    try expect(isNan4(mod(splat(F32x4, math.nan_f32), splat(F32x4, 123.456))));
-    try expect(isNan4(mod(splat(F32x4, math.qnan_f32), splat(F32x4, 123.456))));
-    try expect(isNan4(mod(splat(F32x4, -math.qnan_f32), splat(F32x4, 123.456))));
-    try expect(isNan4(mod(splat(F32x4, 123.456), splat(F32x4, math.inf_f32))));
-    try expect(isNan4(mod(splat(F32x4, 123.456), splat(F32x4, -math.inf_f32))));
-    try expect(isNan4(mod(splat(F32x4, 123.456), splat(F32x4, math.nan_f32))));
-    try expect(isNan4(mod(splat(F32x4, math.inf_f32), splat(F32x4, math.inf_f32))));
-    try expect(isNan4(mod(splat(F32x4, math.inf_f32), splat(F32x4, math.nan_f32))));
+    try expect(all(4, isNan(mod(splat(F32x4, math.inf_f32), splat(F32x4, 1.0)))));
+    try expect(all(4, isNan(mod(splat(F32x4, -math.inf_f32), splat(F32x4, 123.456)))));
+    try expect(all(4, isNan(mod(splat(F32x4, math.nan_f32), splat(F32x4, 123.456)))));
+    try expect(all(4, isNan(mod(splat(F32x4, math.qnan_f32), splat(F32x4, 123.456)))));
+    try expect(all(4, isNan(mod(splat(F32x4, -math.qnan_f32), splat(F32x4, 123.456)))));
+    try expect(all(4, isNan(mod(splat(F32x4, 123.456), splat(F32x4, math.inf_f32)))));
+    try expect(all(4, isNan(mod(splat(F32x4, 123.456), splat(F32x4, -math.inf_f32)))));
+    try expect(all(4, isNan(mod(splat(F32x4, 123.456), splat(F32x4, math.nan_f32)))));
+    try expect(all(4, isNan(mod(splat(F32x4, math.inf_f32), splat(F32x4, math.inf_f32)))));
+    try expect(all(4, isNan(mod(splat(F32x4, math.inf_f32), splat(F32x4, math.nan_f32)))));
 }
 
 pub inline fn round(v: anytype) @TypeOf(v) {
@@ -1029,10 +944,10 @@ test "sin" {
     try expect(approxEqAbs(sin(splat(F32x4, -0.0)), splat(F32x4, -0.0), epsilon));
     try expect(approxEqAbs(sin(splat(F32x4, 89.123)), splat(F32x4, 0.916166), epsilon));
     try expect(approxEqAbs(sin(splat(F32x8, 89.123)), splat(F32x8, 0.916166), epsilon));
-    try expect(isNan4(sin(splat(F32x4, math.inf_f32))) == true);
-    try expect(isNan4(sin(splat(F32x4, -math.inf_f32))) == true);
-    try expect(isNan4(sin(splat(F32x4, math.nan_f32))) == true);
-    try expect(isNan4(sin(splat(F32x4, math.qnan_f32))) == true);
+    try expect(all(4, isNan(sin(splat(F32x4, math.inf_f32)))) == true);
+    try expect(all(4, isNan(sin(splat(F32x4, -math.inf_f32)))) == true);
+    try expect(all(4, isNan(sin(splat(F32x4, math.nan_f32)))) == true);
+    try expect(all(4, isNan(sin(splat(F32x4, math.qnan_f32)))) == true);
 
     var f: f32 = -100.0;
     var i: u32 = 0;
@@ -1074,10 +989,10 @@ test "zmath.cos" {
     try expect(approxEqAbs(cos(splat(F32x4, 0.5 * math.pi)), splat(F32x4, 0.0), epsilon));
     try expect(approxEqAbs(cos(splat(F32x4, 0.0)), splat(F32x4, 1.0), epsilon));
     try expect(approxEqAbs(cos(splat(F32x4, -0.0)), splat(F32x4, 1.0), epsilon));
-    try expect(isNan4(cos(splat(F32x4, math.inf_f32))) == true);
-    try expect(isNan4(cos(splat(F32x4, -math.inf_f32))) == true);
-    try expect(isNan4(cos(splat(F32x4, math.nan_f32))) == true);
-    try expect(isNan4(cos(splat(F32x4, math.qnan_f32))) == true);
+    try expect(all(4, isNan(cos(splat(F32x4, math.inf_f32)))) == true);
+    try expect(all(4, isNan(cos(splat(F32x4, -math.inf_f32)))) == true);
+    try expect(all(4, isNan(cos(splat(F32x4, math.nan_f32)))) == true);
+    try expect(all(4, isNan(cos(splat(F32x4, math.qnan_f32)))) == true);
 
     var f: f32 = -100.0;
     var i: u32 = 0;
@@ -1201,6 +1116,35 @@ test "zmath.sincos32" {
     }
 }
 
+pub fn all(comptime len: u32, vb: anytype) bool {
+    if (len == 4 or len == 8) {
+        return @reduce(.And, vb);
+    } else {
+        var result = true;
+        comptime var i: u32 = 0;
+        inline while (i < len) : (i += 1) {
+            result = result and vb[i];
+        }
+        return result;
+    }
+}
+test "zmath.all" {
+    try expect(all(5, boolx8(true, true, true, true, true, false, true, false)) == true);
+}
+
+pub fn any(comptime len: u32, v: anytype) bool {
+    if (len == 4 or len == 8) {
+        return @reduce(.Or, v);
+    } else {
+        var result = false;
+        comptime var i: u32 = 0;
+        inline while (i < len) : (i += 1) {
+            result = result or v[i];
+        }
+        return result;
+    }
+}
+
 //
 // Load/store functions
 //
@@ -1277,351 +1221,6 @@ pub inline fn storeF32x8(mem: []f32, v: F32x8, comptime len: u32) void {
 // Functions working on 2 components
 //
 
-pub inline fn isEqual2(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpeqps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-        else
-            \\ cmpeqps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 == v1;
-        return mask[0] and mask[1];
-    }
-}
-test "zmath.isEqual2" {
-    {
-        const v0 = F32x4{ 1.0, math.inf_f32, -3.0, 1000.001 };
-        const v1 = F32x4{ 1.0, math.inf_f32, -6.0, 4.0 };
-        try expect(isEqual2(v0, v1));
-    }
-}
-
-pub inline fn isEqualInt2(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vpcmpeqd     %%xmm1, %%xmm0, %xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-        else
-            \\ pcmpeqd      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const v0u = @bitCast(U32x4, v0);
-        const v1u = @bitCast(U32x4, v1);
-        const mask = v0u == v1u;
-        return mask[0] and mask[1];
-    }
-}
-
-pub inline fn isNearEqual2(v0: F32x4, v1: F32x4, epsilon: F32x4) bool {
-    // Won't handle inf & nan
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vsubps       %%xmm1, %%xmm0, %%xmm0  # xmm0 = delta
-            \\ vxorps       %%xmm1, %%xmm1, %%xmm1  # xmm1 = 0
-            \\ vsubps       %%xmm0, %%xmm1, %%xmm1  # xmm1 = 0 - delta
-            \\ vmaxps       %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
-            \\ vcmpleps     %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-        else
-            \\ subps        %%xmm1, %%xmm0          # xmm0 = delta
-            \\ xorps        %%xmm1, %%xmm1          # xmm1 = 0
-            \\ subps        %%xmm0, %%xmm1          # xmm1 = 0 - delta
-            \\ maxps        %%xmm1, %%xmm0          # xmm0 = abs(delta)
-            \\ cmpleps      %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-              [epsilon] "{xmm2}" (epsilon),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = isNearEqual(v0, v1, epsilon);
-        return mask[0] and mask[1];
-    }
-}
-test "zmath.isNearEqual2" {
-    {
-        const v0 = F32x4{ 1.0, 2.0, -6.0001, 1000.001 };
-        const v1 = F32x4{ 1.0, 2.001, -3.0, 4.0 };
-        const v2 = F32x4{ 1.001, 2.001, -3.001, 4.001 };
-        try expect(isNearEqual2(v0, v1, splat(F32x4, 0.01)));
-        try expect(isNearEqual2(v2, v1, splat(F32x4, 0.01)));
-    }
-}
-
-pub inline fn isLess2(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpltps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-        else
-            \\ cmpltps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 < v1;
-        return mask[0] and mask[1];
-    }
-}
-test "zmath.isLess2" {
-    const v0 = F32x4{ -1.0, 2.0, 3.0, 5.0 };
-    const v1 = F32x4{ 4.0, 5.0, 6.0, 1.0 };
-    try expect(isLess2(v0, v1) == true);
-
-    const v2 = F32x4{ -1.0, 2.0, 3.0, 5.0 };
-    const v3 = F32x4{ 4.0, -5.0, 6.0, 1.0 };
-    try expect(isLess2(v2, v3) == false);
-
-    const v4 = F32x4{ 100.0, 200.0, 300.0, 50000.0 };
-    const v5 = F32x4{ 400.0, 500.0, 600.0, 1.0 };
-    try expect(isLess2(v4, v5) == true);
-
-    const v6 = F32x4{ 100.0, -math.inf_f32, -math.inf_f32, 50000.0 };
-    const v7 = F32x4{ 400.0, math.inf_f32, 600.0, 1.0 };
-    try expect(isLess2(v6, v7) == true);
-}
-
-pub inline fn isLessEqual2(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-        else
-            \\ cmpleps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 <= v1;
-        return mask[0] and mask[1];
-    }
-}
-
-pub inline fn isGreater2(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpgtps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-        else
-            \\ cmpgtps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 > v1;
-        return mask[0] and mask[1];
-    }
-}
-
-pub inline fn isGreaterEqual2(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpgeps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-        else
-            \\ cmpgeps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 >= v1;
-        return mask[0] and mask[1];
-    }
-}
-
-pub inline fn isInBounds2(v: F32x4, bounds: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vmovaps      %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\ vxorps       %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
-            \\ vcmpleps     %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
-            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
-            \\ vandps       %%xmm2, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-        else
-            \\ movaps       %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\ xorps        %[x8000_0000], %%xmm2           # xmm2 = -bounds
-            \\ cmpleps      %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
-            \\ cmpleps      %%xmm1, %%xmm0                  # xmm0 = v <= bounds
-            \\ andps        %%xmm2, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $3, %%al
-            \\ cmp          $3, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v] "{xmm0}" (v),
-              [bounds] "{xmm1}" (bounds),
-              [x8000_0000] "{memory}" (f32x4_0x8000_0000),
-            : "xmm2"
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const b0 = v <= bounds;
-        const b1 = bounds * splat(F32x4, -1.0) <= v;
-        const b = @bitCast(Boolx4, (@bitCast(U1x4, b0) & @bitCast(U1x4, b1)) | U1x4{ 0, 0, 1, 1 });
-        return @reduce(.And, b);
-    }
-}
-test "zmath.isInBounds2" {
-    {
-        const v0 = F32x4{ 0.5, -2.0, -100.0, 1000.0 };
-        const v1 = F32x4{ -1.6, -2.001, 1.0, 1.9 };
-        const bounds = F32x4{ 1.0, 2.0, 1.0, 2.0 };
-        try expect(isInBounds2(v0, bounds) == true);
-        try expect(isInBounds2(v1, bounds) == false);
-    }
-    {
-        const v0 = F32x4{ 10000.0, -1000.0, -10.0, 1000.0 };
-        const bounds = F32x4{ math.inf_f32, math.inf_f32, 1.0, 2.0 };
-        try expect(isInBounds2(v0, bounds) == true);
-    }
-}
-
-pub inline fn isNan2(v: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpneqps    %%xmm0, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ test         $3, %%al
-            \\ setne        %%al
-        else
-            \\ cmpneqps     %%xmm0, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ test         $3, %%al
-            \\ setne        %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v] "{xmm0}" (v),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const b = v != v;
-        return b[0] or b[1];
-    }
-}
-test "zmath.isNan2" {
-    try expect(isNan2(F32x4{ -1.0, math.nan_f32, 3.0, -2.0 }) == true);
-    try expect(isNan2(F32x4{ -1.0, 100.0, 3.0, math.nan_f32 }) == false);
-    try expect(isNan2(F32x4{ -1.0, math.inf_f32, 3.0, -2.0 }) == false);
-    try expect(isNan2(F32x4{ -1.0, math.qnan_f32, 3.0, -2.0 }) == true);
-    try expect(isNan2(F32x4{ -1.0, 1.0, 3.0, -2.0 }) == false);
-    try expect(isNan2(F32x4{ -1.0, 1.0, 3.0, math.qnan_f32 }) == false);
-}
-
-pub inline fn isInf2(v: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vandps       %[x7fff_ffff], %%xmm0, %%xmm0
-            \\ vcmpeqps     %[inf], %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ test         $3, %%al
-            \\ setne        %%al
-        else
-            \\ andps        %[x7fff_ffff], %%xmm0
-            \\ cmpeqps      %[inf], %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ test         $3, %%al
-            \\ setne        %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v] "{xmm0}" (v),
-              [x7fff_ffff] "{memory}" (f32x4_0x7fff_ffff),
-              [inf] "{memory}" (f32x4_inf),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const b = isInf(v);
-        return b[0] or b[1];
-    }
-}
-
 pub inline fn dot2(v0: F32x4, v1: F32x4) F32x4 {
     var xmm0 = v0 * v1; // | x0*x1 | y0*y1 | -- | -- |
     var xmm1 = swizzle(xmm0, .y, .x, .x, .x); // | y0*y1 | -- | -- | -- |
@@ -1650,371 +1249,6 @@ pub inline fn normalize2(v: F32x4) F32x4 {
 //
 // Functions working on 3 components
 //
-
-pub inline fn isEqual3(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpeqps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-        else
-            \\ cmpeqps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 == v1;
-        return mask[0] and mask[1] and mask[2];
-    }
-}
-test "zmath.isEqual3" {
-    {
-        const v0 = F32x4{ 1.0, math.inf_f32, -3.0, 1000.001 };
-        const v1 = F32x4{ 1.0, math.inf_f32, -3.0, 4.0 };
-        try expect(isEqual3(v0, v1) == true);
-    }
-    {
-        const v0 = F32x4{ 1.0, math.inf_f32, -3.0, 4.0 };
-        const v1 = F32x4{ 1.0, -math.inf_f32, -3.0, 4.0 };
-        try expect(isEqual3(v0, v1) == false);
-    }
-}
-
-pub inline fn isEqualInt3(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vpcmpeqd     %%xmm1, %%xmm0, %xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-        else
-            \\ pcmpeqd      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const v0u = @bitCast(U32x4, v0);
-        const v1u = @bitCast(U32x4, v1);
-        const mask = v0u == v1u;
-        return mask[0] and mask[1] and mask[2];
-    }
-}
-
-pub inline fn isNearEqual3(v0: F32x4, v1: F32x4, epsilon: F32x4) bool {
-    // Won't handle inf & nan
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vsubps       %%xmm1, %%xmm0, %%xmm0  # xmm0 = delta
-            \\ vxorps       %%xmm1, %%xmm1, %%xmm1  # xmm1 = 0
-            \\ vsubps       %%xmm0, %%xmm1, %%xmm1  # xmm1 = 0 - delta
-            \\ vmaxps       %%xmm1, %%xmm0, %%xmm0  # xmm0 = abs(delta)
-            \\ vcmpleps     %%xmm2, %%xmm0, %%xmm0  # xmm0 = abs(delta) <= epsilon
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-        else
-            \\ subps        %%xmm1, %%xmm0          # xmm0 = delta
-            \\ xorps        %%xmm1, %%xmm1          # xmm1 = 0
-            \\ subps        %%xmm0, %%xmm1          # xmm1 = 0 - delta
-            \\ maxps        %%xmm1, %%xmm0          # xmm0 = abs(delta)
-            \\ cmpleps      %%xmm2, %%xmm0          # xmm0 = abs(delta) <= epsilon
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-              [epsilon] "{xmm2}" (epsilon),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = isNearEqual(v0, v1, epsilon);
-        return mask[0] and mask[1] and mask[2];
-    }
-}
-test "zmath.isNearEqual3" {
-    {
-        const v0 = F32x4{ 1.0, 2.0, -3.0001, 1000.001 };
-        const v1 = F32x4{ 1.0, 2.001, -3.0, 4.0 };
-        try expect(isNearEqual3(v0, v1, splat(F32x4, 0.01)));
-    }
-}
-
-pub inline fn isLess3(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpltps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-        else
-            \\ cmpltps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 < v1;
-        return mask[0] and mask[1] and mask[2];
-    }
-}
-test "zmath.isLess3" {
-    const v0 = F32x4{ -1.0, 2.0, 3.0, 5.0 };
-    const v1 = F32x4{ 4.0, 5.0, 6.0, 1.0 };
-    try expect(isLess3(v0, v1) == true);
-
-    const v2 = F32x4{ -1.0, 2.0, 3.0, 5.0 };
-    const v3 = F32x4{ 4.0, -5.0, 6.0, 1.0 };
-    try expect(isLess3(v2, v3) == false);
-
-    const v4 = F32x4{ 100.0, 200.0, 300.0, -500.0 };
-    const v5 = F32x4{ 400.0, 500.0, 600.0, 1.0 };
-    try expect(isLess3(v4, v5) == true);
-
-    const v6 = F32x4{ 100.0, -math.inf_f32, -math.inf_f32, 50000.0 };
-    const v7 = F32x4{ 400.0, math.inf_f32, 600.0, 1.0 };
-    try expect(isLess3(v6, v7) == true);
-}
-
-pub inline fn isLessEqual3(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-        else
-            \\ cmpleps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 <= v1;
-        return mask[0] and mask[1] and mask[2];
-    }
-}
-
-pub inline fn isGreater3(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpgtps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-        else
-            \\ cmpgtps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 > v1;
-        return mask[0] and mask[1] and mask[2];
-    }
-}
-
-pub inline fn isGreaterEqual3(v0: F32x4, v1: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpgeps     %%xmm1, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-        else
-            \\ cmpgeps      %%xmm1, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v0] "{xmm0}" (v0),
-              [v1] "{xmm1}" (v1),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const mask = v0 >= v1;
-        return mask[0] and mask[1] and mask[2];
-    }
-}
-
-pub inline fn isInBounds3(v: F32x4, bounds: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vmovaps      %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\ vxorps       %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
-            \\ vcmpleps     %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
-            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
-            \\ vandps       %%xmm2, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-        else
-            \\ movaps       %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\ xorps        %[x8000_0000], %%xmm2           # xmm2 = -bounds
-            \\ cmpleps      %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
-            \\ cmpleps      %%xmm1, %%xmm0                  # xmm0 = v <= bounds
-            \\ andps        %%xmm2, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ and          $7, %%al
-            \\ cmp          $7, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v] "{xmm0}" (v),
-              [bounds] "{xmm1}" (bounds),
-              [x8000_0000] "{memory}" (f32x4_0x8000_0000),
-            : "xmm2"
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const b0 = v <= bounds;
-        const b1 = bounds * splat(F32x4, -1.0) <= v;
-        const b = @bitCast(Boolx4, (@bitCast(U1x4, b0) & @bitCast(U1x4, b1)) | U1x4{ 0, 0, 0, 1 });
-        return @reduce(.And, b);
-    }
-}
-test "zmath.isInBounds3" {
-    {
-        const v0 = F32x4{ 0.5, -2.0, -1.0, 1.0 };
-        const v1 = F32x4{ -1.6, 1.1, -0.1, 2.9 };
-        const v2 = F32x4{ 0.5, -2.0, -1.0, 10.0 };
-        const bounds = F32x4{ 1.0, 2.0, 1.0, 2.0 };
-        try expect(isInBounds3(v0, bounds) == true);
-        try expect(isInBounds3(v1, bounds) == false);
-        try expect(isInBounds3(v2, bounds) == true);
-    }
-    {
-        const v0 = F32x4{ 10000.0, -1000.0, -1.0, 1000.0 };
-        const bounds = F32x4{ math.inf_f32, math.inf_f32, 1.0, 2.0 };
-        try expect(isInBounds3(v0, bounds) == true);
-    }
-}
-
-pub inline fn isNan3(v: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpneqps    %%xmm0, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ test         $7, %%al
-            \\ setne        %%al
-        else
-            \\ cmpneqps     %%xmm0, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ test         $7, %%al
-            \\ setne        %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v] "{xmm0}" (v),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const b = v != v;
-        return b[0] or b[1] or b[2];
-    }
-}
-test "zmath.isNan3" {
-    try expect(isNan3(F32x4{ -1.0, math.nan_f32, 3.0, -2.0 }) == true);
-    try expect(isNan3(F32x4{ -1.0, 100.0, 3.0, math.nan_f32 }) == false);
-    try expect(isNan3(F32x4{ -1.0, math.inf_f32, 3.0, -2.0 }) == false);
-    try expect(isNan3(F32x4{ -1.0, math.qnan_f32, 3.0, -2.0 }) == true);
-    try expect(isNan3(F32x4{ -1.0, 1.0, 3.0, -2.0 }) == false);
-    try expect(isNan3(F32x4{ -1.0, 1.0, 3.0, math.qnan_f32 }) == false);
-}
-
-pub inline fn isInf3(v: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vandps       %[x7fff_ffff], %%xmm0, %%xmm0
-            \\ vcmpeqps     %[inf], %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ test         $7, %%al
-            \\ setne        %%al
-        else
-            \\ andps        %[x7fff_ffff], %%xmm0
-            \\ cmpeqps      %[inf], %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ test         $7, %%al
-            \\ setne        %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v] "{xmm0}" (v),
-              [x7fff_ffff] "{memory}" (f32x4_0x7fff_ffff),
-              [inf] "{memory}" (f32x4_inf),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const b = isInf(v);
-        return b[0] or b[1] or b[2];
-    }
-}
-test "zmath.isInf3" {
-    try expect(isInf3(splat(F32x4, math.inf_f32)) == true);
-    try expect(isInf3(splat(F32x4, -math.inf_f32)) == true);
-    try expect(isInf3(splat(F32x4, math.nan_f32)) == false);
-    try expect(isInf3(splat(F32x4, -math.nan_f32)) == false);
-    try expect(isInf3(splat(F32x4, math.qnan_f32)) == false);
-    try expect(isInf3(splat(F32x4, -math.qnan_f32)) == false);
-    try expect(isInf3(F32x4{ 1.0, 2.0, 3.0, 4.0 }) == false);
-    try expect(isInf3(F32x4{ 1.0, 2.0, 3.0, math.inf_f32 }) == false);
-    try expect(isInf3(F32x4{ 1.0, 2.0, math.inf_f32, 1.0 }) == true);
-    try expect(isInf3(F32x4{ -math.inf_f32, math.inf_f32, math.inf_f32, 1.0 }) == true);
-    try expect(isInf3(F32x4{ -math.inf_f32, math.nan_f32, math.inf_f32, 1.0 }) == true);
-}
 
 pub inline fn dot3(v0: F32x4, v1: F32x4) F32x4 {
     var dot = v0 * v1;
@@ -2075,11 +1309,11 @@ test "zmath.length3" {
     }
     {
         var v = length3(F32x4{ 1.0, math.nan_f32, math.inf_f32, 1000.0 });
-        try expect(isNan4(v));
+        try expect(all(4, isNan(v)));
     }
     {
         var v = length3(F32x4{ 1.0, math.inf_f32, 3.0, 1000.0 });
-        try expect(isInf4(v));
+        try expect(all(4, isInf(v)));
     }
     {
         var v = length3(F32x4{ 3.0, 2.0, 1.0, math.nan_f32 });
@@ -2097,10 +1331,10 @@ test "zmath.normalize3" {
         try expect(approxEqAbs(v, v0 * splat(F32x4, 1.0 / math.sqrt(14.0)), 0.0005));
     }
     {
-        try expect(isNan4(normalize3(F32x4{ 1.0, math.inf_f32, 1.0, 1.0 })));
-        try expect(isNan4(normalize3(F32x4{ -math.inf_f32, math.inf_f32, 0.0, 0.0 })));
-        try expect(isNan4(normalize3(F32x4{ -math.nan_f32, math.qnan_f32, 0.0, 0.0 })));
-        try expect(isNan4(normalize3(splat(F32x4, 0.0))));
+        try expect(any(4, isNan(normalize3(F32x4{ 1.0, math.inf_f32, 1.0, 1.0 }))));
+        try expect(any(4, isNan(normalize3(F32x4{ -math.inf_f32, math.inf_f32, 0.0, 0.0 }))));
+        try expect(any(4, isNan(normalize3(F32x4{ -math.nan_f32, math.qnan_f32, 0.0, 0.0 }))));
+        try expect(any(4, isNan(normalize3(splat(F32x4, 0.0)))));
     }
 }
 
@@ -2125,128 +1359,9 @@ test "zmath.linePointDistance" {
 // Functions working on 4 components
 //
 
-pub inline fn isEqual4(v0: F32x4, v1: F32x4) bool {
-    const mask = v0 == v1;
-    return @reduce(.And, mask);
-}
-
-pub inline fn isEqual4Int(v0: F32x4, v1: F32x4) bool {
-    const v0u = @bitCast(U32x4, v0);
-    const v1u = @bitCast(U32x4, v1);
-    const mask = v0u == v1u;
-    return @reduce(.And, mask);
-}
-
-pub inline fn isNearEqual4(v0: F32x4, v1: F32x4, epsilon: F32x4) bool {
-    // Won't handle inf & nan
-    const delta = v0 - v1;
-    const temp = maxFast(delta, splat(F32x4, 0.0) - delta);
-    return @reduce(.And, temp <= epsilon);
-}
-
-pub inline fn isLess4(v0: F32x4, v1: F32x4) bool {
-    const mask = v0 < v1;
-    return @reduce(.And, mask);
-}
-
-pub inline fn isLessEqual4(v0: F32x4, v1: F32x4) bool {
-    const mask = v0 <= v1;
-    return @reduce(.And, mask);
-}
-
-pub inline fn isGreater4(v0: F32x4, v1: F32x4) bool {
-    const mask = v0 > v1;
-    return @reduce(.And, mask);
-}
-
 pub inline fn isGreaterEqual(v0: F32x4, v1: F32x4) bool {
     const mask = v0 >= v1;
     return @reduce(.And, mask);
-}
-
-pub inline fn isInBounds4(v: F32x4, bounds: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vmovaps      %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\ vxorps       %[x8000_0000], %%xmm2, %%xmm2   # xmm2 = -bounds
-            \\ vcmpleps     %%xmm0, %%xmm2, %%xmm2          # xmm2 = -bounds <= v
-            \\ vcmpleps     %%xmm1, %%xmm0, %%xmm0          # xmm0 = v <= bounds
-            \\ vandps       %%xmm2, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ cmp          $15, %%al
-            \\ sete         %%al
-        else
-            \\ movaps       %%xmm1, %%xmm2                  # xmm2 = bounds
-            \\ xorps        %[x8000_0000], %%xmm2           # xmm2 = -bounds
-            \\ cmpleps      %%xmm0, %%xmm2                  # xmm2 = -bounds <= v
-            \\ cmpleps      %%xmm1, %%xmm0                  # xmm0 = v <= bounds
-            \\ andps        %%xmm2, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ cmp          $15, %%al
-            \\ sete         %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v] "{xmm0}" (v),
-              [bounds] "{xmm1}" (bounds),
-              [x8000_0000] "{memory}" (f32x4_0x8000_0000),
-            : "xmm2"
-        );
-    } else {
-        const b0 = v <= bounds;
-        const b1 = bounds * splat(F32x4, -1.0) <= v;
-        const b = @bitCast(Boolx4, @bitCast(U1x4, b0) & @bitCast(U1x4, b1));
-        return @reduce(.And, b);
-    }
-}
-test "zmath.isInBounds4" {
-    {
-        const v0 = F32x4{ 0.5, -2.0, -1.0, 1.9 };
-        const v1 = F32x4{ -1.6, -2.001, -1.0, 1.9 };
-        const bounds = F32x4{ 1.0, 2.0, 1.0, 2.0 };
-        try expect(isInBounds4(v0, bounds) == true);
-        try expect(isInBounds4(v1, bounds) == false);
-    }
-    {
-        const v0 = F32x4{ 10000.0, -1000.0, -1.0, 0.0 };
-        const bounds = F32x4{ math.inf_f32, math.inf_f32, 1.0, 2.0 };
-        try expect(isInBounds4(v0, bounds) == true);
-    }
-}
-
-pub inline fn isNan4(v: F32x4) bool {
-    if (cpu_arch == .x86_64) {
-        const code = if (has_avx)
-            \\ vcmpneqps    %%xmm0, %%xmm0, %%xmm0
-            \\ vmovmskps    %%xmm0, %%eax
-            \\ test         $15, %%al
-            \\ setne        %%al
-        else
-            \\ cmpneqps     %%xmm0, %%xmm0
-            \\ movmskps     %%xmm0, %%eax
-            \\ test         $15, %%al
-            \\ setne        %%al
-            ;
-        return asm (code
-            : [ret] "={rax}" (-> bool),
-            : [v] "{xmm0}" (v),
-        );
-    } else {
-        // NOTE(mziulek): Generated code is not optimal
-        const b = v != v;
-        return b[0] or b[1] or b[2] or b[3];
-    }
-}
-test "zmath.isNan4" {
-    try expect(isNan4(F32x4{ -1.0, math.nan_f32, 3.0, -2.0 }) == true);
-    try expect(isNan4(F32x4{ -1.0, 100.0, 3.0, -2.0 }) == false);
-    try expect(isNan4(F32x4{ -1.0, math.inf_f32, 3.0, -2.0 }) == false);
-}
-
-pub inline fn isInf4(v: F32x4) bool {
-    // andps, cmpeqps, movmskps, test, setne
-    const b = isInf(v);
-    return b[0] or b[1] or b[2] or b[3];
 }
 
 pub inline fn dot4(v0: F32x4, v1: F32x4) F32x4 {
@@ -2282,10 +1397,10 @@ test "zmath.normalize4" {
         try expect(approxEqAbs(v, v0 * splat(F32x4, 1.0 / math.sqrt(114.0)), 0.0005));
     }
     {
-        try expect(isNan4(normalize4(F32x4{ 1.0, math.inf_f32, 1.0, 1.0 })));
-        try expect(isNan4(normalize4(F32x4{ -math.inf_f32, math.inf_f32, 0.0, 0.0 })));
-        try expect(isNan4(normalize4(F32x4{ -math.nan_f32, math.qnan_f32, 0.0, 0.0 })));
-        try expect(isNan4(normalize4(splat(F32x4, 0.0))));
+        try expect(any(4, isNan(normalize4(F32x4{ 1.0, math.inf_f32, 1.0, 1.0 }))));
+        try expect(any(4, isNan(normalize4(F32x4{ -math.inf_f32, math.inf_f32, 0.0, 0.0 }))));
+        try expect(any(4, isNan(normalize4(F32x4{ -math.nan_f32, math.qnan_f32, 0.0, 0.0 }))));
+        try expect(any(4, isNan(normalize4(splat(F32x4, 0.0)))));
     }
 }
 
@@ -2650,8 +1765,8 @@ pub fn matFromNormAxisAngle(axis: F32x4, angle: f32) Mat {
     return m;
 }
 pub fn matFromAxisAngle(axis: F32x4, angle: f32) Mat {
-    assert(!isEqual3(axis, splat(F32x4, 0.0)));
-    assert(!isInf3(axis));
+    assert(!all(3, axis == splat(F32x4, 0.0)));
+    assert(!all(3, isInf(axis)));
     const normal = normalize3(axis);
     return matFromNormAxisAngle(normal, angle);
 }
