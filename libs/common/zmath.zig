@@ -1852,6 +1852,14 @@ test "zmath.quaternion.quatFromNormAxisAngle" {
         try expect(approxEqAbs(mr0[2], mr1[2], 0.0001));
         try expect(approxEqAbs(mr0[3], mr1[3], 0.0001));
     }
+    {
+        const m0 = quatToMat(quatFromAxisAngle(f32x4(1.0, 2.0, 0.5, 0.0), 0.25 * math.pi));
+        const m1 = matFromAxisAngle(f32x4(1.0, 2.0, 0.5, 0.0), 0.25 * math.pi);
+        try expect(approxEqAbs(m0[0], m1[0], 0.0001));
+        try expect(approxEqAbs(m0[1], m1[1], 0.0001));
+        try expect(approxEqAbs(m0[2], m1[2], 0.0001));
+        try expect(approxEqAbs(m0[3], m1[3], 0.0001));
+    }
 }
 
 // ------------------------------------------------------------------------------
