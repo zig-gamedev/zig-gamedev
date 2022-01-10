@@ -111,6 +111,7 @@
 // ------------------------------------------------------------------------------
 //
 // linePointDistance(line_pt0: Vec, line_pt1: Vec, pt: Vec) F32x4
+// sincos(v: f32) [2]f32
 
 pub const F32x4 = @Vector(4, f32);
 pub const F32x8 = @Vector(8, f32);
@@ -1172,59 +1173,6 @@ test "zmath.sincos32xN" {
     }
 }
 
-fn sincos32(v: f32) [2]f32 {
-    var quotient = 1.0 / math.tau * v;
-    if (v >= 0.0) {
-        quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
-    } else {
-        quotient = @intToFloat(f32, @floatToInt(i32, quotient - 0.5));
-    }
-    var y = v - math.tau * quotient;
-
-    const sign = blk: {
-        if (y > 0.5 * math.pi) {
-            y = math.pi - y;
-            break :blk @as(f32, -1.0);
-        } else if (y < -math.pi * 0.5) {
-            y = -math.pi - y;
-            break :blk @as(f32, -1.0);
-        } else {
-            break :blk @as(f32, 1.0);
-        }
-    };
-    const y2 = y * y;
-
-    // 11-degree minimax approximation
-    var sinv = mulAdd(@as(f32, -2.3889859e-08), y2, 2.7525562e-06);
-    sinv = mulAdd(sinv, y2, -0.00019840874);
-    sinv = mulAdd(sinv, y2, 0.0083333310);
-    sinv = mulAdd(sinv, y2, -0.16666667);
-    sinv = y * mulAdd(sinv, y2, 1.0);
-
-    // 10-degree minimax approximation
-    var cosv = mulAdd(@as(f32, -2.6051615e-07), y2, 2.4760495e-05);
-    cosv = mulAdd(cosv, y2, -0.0013888378);
-    cosv = mulAdd(cosv, y2, 0.041666638);
-    cosv = mulAdd(cosv, y2, -0.5);
-    cosv = sign * mulAdd(cosv, y2, 1.0);
-
-    return .{ sinv, cosv };
-}
-test "zmath.sincos32" {
-    const epsilon = 0.0001;
-
-    var f: f32 = -100.0;
-    var i: u32 = 0;
-    while (i < 100) : (i += 1) {
-        const sc = sincos32(f);
-        const s = @sin(f);
-        const c = @cos(f);
-        try expect(math.approxEqAbs(f32, sc[0], s, epsilon));
-        try expect(math.approxEqAbs(f32, sc[1], c, epsilon));
-        f += 0.12345 * @intToFloat(f32, i);
-    }
-}
-
 // ------------------------------------------------------------------------------
 //
 // 3. 2D, 3D, 4D vector functions
@@ -1859,6 +1807,59 @@ test "zmath.linePointDistance" {
         const pt = F32x4{ 1.0, 1.0, 1.0, 1.0 };
         var v = linePointDistance(line_pt0, line_pt1, pt);
         try expect(approxEqAbs(v, splat(F32x4, 0.654), 0.001));
+    }
+}
+
+fn sincos32(v: f32) [2]f32 {
+    var quotient = 1.0 / math.tau * v;
+    if (v >= 0.0) {
+        quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
+    } else {
+        quotient = @intToFloat(f32, @floatToInt(i32, quotient - 0.5));
+    }
+    var y = v - math.tau * quotient;
+
+    const sign = blk: {
+        if (y > 0.5 * math.pi) {
+            y = math.pi - y;
+            break :blk @as(f32, -1.0);
+        } else if (y < -math.pi * 0.5) {
+            y = -math.pi - y;
+            break :blk @as(f32, -1.0);
+        } else {
+            break :blk @as(f32, 1.0);
+        }
+    };
+    const y2 = y * y;
+
+    // 11-degree minimax approximation
+    var sinv = mulAdd(@as(f32, -2.3889859e-08), y2, 2.7525562e-06);
+    sinv = mulAdd(sinv, y2, -0.00019840874);
+    sinv = mulAdd(sinv, y2, 0.0083333310);
+    sinv = mulAdd(sinv, y2, -0.16666667);
+    sinv = y * mulAdd(sinv, y2, 1.0);
+
+    // 10-degree minimax approximation
+    var cosv = mulAdd(@as(f32, -2.6051615e-07), y2, 2.4760495e-05);
+    cosv = mulAdd(cosv, y2, -0.0013888378);
+    cosv = mulAdd(cosv, y2, 0.041666638);
+    cosv = mulAdd(cosv, y2, -0.5);
+    cosv = sign * mulAdd(cosv, y2, 1.0);
+
+    return .{ sinv, cosv };
+}
+test "zmath.sincos32" {
+    const epsilon = 0.0001;
+
+    var f: f32 = -100.0;
+    var i: u32 = 0;
+    while (i < 100) : (i += 1) {
+        const sc = sincos32(f);
+        const s = @sin(f);
+        const c = @cos(f);
+        try expect(math.approxEqAbs(f32, sc[0], s, epsilon));
+        try expect(math.approxEqAbs(f32, sc[1], c, epsilon));
+        f += 0.12345 * @intToFloat(f32, i);
     }
 }
 
