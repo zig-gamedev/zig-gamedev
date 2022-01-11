@@ -106,7 +106,8 @@
 // lookAtLh(eye_pos: Vec, focus_pos: Vec, up_dir: Vec) Mat
 // perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // determinant(m: Mat) F32x4
-// inverse(m: Mat, out_det: ?*F32x4) Mat
+// inverse(m: Mat) Mat
+// inverseDet(m: Mat, out_det: ?*F32x4) Mat {
 // matFromAxisAngle(axis: Vec, angle: f32) Mat
 // matFromNormAxisAngle(axis: Vec, angle: f32) Mat
 // matFromQuat(quat: Quat) Mat
@@ -119,6 +120,7 @@
 // mul(q0: Quat, q1: Quat) Quat
 // quatFromAxisAngle(axis: Vec, angle: f32) Quat
 // quatFromNormAxisAngle(axis: Vec, angle: f32) Quat
+// inverse(q: Quat) Quat
 //
 // ------------------------------------------------------------------------------
 // X. Misc functions
@@ -1302,7 +1304,7 @@ pub fn sincos(v: anytype) [2]@TypeOf(v) {
     return switch (T) {
         f32 => sincos32(v),
         F32x4, F32x8, F32x16 => sincos32xN(v),
-        else => @compileError("zmath.sincos not implemented for " ++ @typeName(T)),
+        else => @compileError("zmath.sincos() not implemented for " ++ @typeName(T)),
     };
 }
 
@@ -1524,7 +1526,7 @@ pub fn mul(a: anytype, b: anytype) @TypeOf(a) {
     } else if (T == Quat) {
         return mulQuat(a, b);
     } else {
-        @compileError("zmath.mul not implemented for " ++ @typeName(T));
+        @compileError("zmath.mul() not implemented for " ++ @typeName(T));
     }
 }
 
@@ -1731,7 +1733,20 @@ test "zmath.matrix.determinant" {
     try expect(approxEqAbs(determinant(m), splat(F32x4, 2939.0), 0.0001));
 }
 
-pub fn inverse(m: Mat, out_det: ?*F32x4) Mat {
+pub fn inverse(a: anytype) @TypeOf(a) {
+    const T = @TypeOf(a);
+    return switch (T) {
+        Mat => inverseMat(a),
+        Quat => inverseQuat(a),
+        else => @compileError("zmath.inverse() not implemented for " ++ @typeName(T)),
+    };
+}
+
+fn inverseMat(m: Mat) Mat {
+    return inverseDet(m, null);
+}
+
+pub fn inverseDet(m: Mat, out_det: ?*F32x4) Mat {
     const mt = transpose(m);
     var v0: [4]F32x4 = undefined;
     var v1: [4]F32x4 = undefined;
@@ -1841,7 +1856,7 @@ test "zmath.matrix.inverse" {
         f32x4(1.0, 2.0, 3.0, 4.0),
     };
     var det: F32x4 = undefined;
-    const mi = inverse(m, &det);
+    const mi = inverseDet(m, &det);
     try expect(approxEqAbs(det, splat(F32x4, 2939.0), 0.0001));
 
     try expect(approxEqAbs(mi[0], f32x4(-0.170806, -0.13576, -0.349439, 0.164001), 0.0001));
@@ -2041,6 +2056,23 @@ test "zmath.quaternion.quatFromNormAxisAngle" {
         try expect(approxEqAbs(m0[2], m1[2], 0.0001));
         try expect(approxEqAbs(m0[3], m1[3], 0.0001));
     }
+}
+
+pub fn conjugate(quat: Quat) Quat {
+    return quat * f32x4(-1.0, -1.0, -1.0, 1.0);
+}
+
+fn inverseQuat(quat: Quat) Quat {
+    const l = lengthSq4(quat);
+    const conj = conjugate(quat);
+    return select(l <= splat(F32x4, math.f32_epsilon), splat(F32x4, 0.0), conj / l);
+}
+test "zmath.quaternion.inverse" {
+    try expect(approxEqAbs(
+        inverse(f32x4(2.0, 3.0, 4.0, 1.0)),
+        f32x4(-1.0 / 15.0, -1.0 / 10.0, -2.0 / 15.0, 1.0 / 30.0),
+        0.0001,
+    ));
 }
 
 // ------------------------------------------------------------------------------
