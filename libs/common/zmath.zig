@@ -222,8 +222,9 @@ pub inline fn usplat(comptime T: type, value: u32) T {
 
 pub fn load(mem: []const f32, comptime T: type, comptime len: u32) T {
     var v = splat(T, 0.0);
+    comptime var loop_len = if (len == 0) veclen(T) else len;
     comptime var i: u32 = 0;
-    inline while (i < len) : (i += 1) {
+    inline while (i < loop_len) : (i += 1) {
         v[i] = mem[i];
     }
     return v;
@@ -247,8 +248,10 @@ test "zmath.load" {
 }
 
 pub fn store(mem: []f32, v: anytype, comptime len: u32) void {
+    const T = @TypeOf(v);
+    comptime var loop_len = if (len == 0) veclen(T) else len;
     comptime var i: u32 = 0;
-    inline while (i < len) : (i += 1) {
+    inline while (i < loop_len) : (i += 1) {
         mem[i] = v[i];
     }
 }
