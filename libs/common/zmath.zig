@@ -116,6 +116,7 @@
 // determinant(m: Mat) F32x4
 // inverse(m: Mat) Mat
 // inverseDet(m: Mat, det: ?*F32x4) Mat
+// matToQuat(m: Mat) Quat
 // matFromAxisAngle(axis: Vec, angle: f32) Mat
 // matFromNormAxisAngle(axis: Vec, angle: f32) Mat
 // matFromQuat(quat: Quat) Mat
@@ -2177,6 +2178,10 @@ pub fn matFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Mat {
 }
 pub fn matFromRollPitchYawV(angles: Vec) Mat {
     return matFromQuat(quatFromRollPitchYawV(angles));
+}
+
+pub fn matToQuat(m: Mat) Quat {
+    return quatFromMat(m);
 }
 
 // ------------------------------------------------------------------------------
