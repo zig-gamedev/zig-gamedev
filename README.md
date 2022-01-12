@@ -149,3 +149,4 @@ Thanks to all people who sponsor zig-gamedev project! In particular, these fine 
 * [mzet (mzet-)](https://github.com/mzet-)
 * Zig Software Foundation (ziglang)
 * Ian (LinuXY)
+* Simon A. Nielsen Knights (tauoverpi)
