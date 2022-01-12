@@ -1372,6 +1372,8 @@ test "zmath.sincos32xN" {
 }
 
 pub fn atan(v: anytype) @TypeOf(v) {
+    assert(!any(isNan(v), 0));
+
     // 17-degree minimax approximation
     const T = @TypeOf(v);
 
@@ -1401,6 +1403,35 @@ test "zmath.atan" {
         const v = f32x4(0.25, 0.5, 1.0, 1.25);
         const e = f32x4(math.atan(v[0]), math.atan(v[1]), math.atan(v[2]), math.atan(v[3]));
         try expect(approxEqAbs(e, atan(v), epsilon));
+    }
+    {
+        const v = f32x8(-0.25, 0.5, -1.0, 1.25, 100.0, -200.0, 300.0, 400.0);
+        // zig fmt: off
+        const e = f32x8(
+            math.atan(v[0]), math.atan(v[1]), math.atan(v[2]), math.atan(v[3]),
+            math.atan(v[4]), math.atan(v[5]), math.atan(v[6]), math.atan(v[7]),
+        );
+        // zig fmt: on
+        try expect(approxEqAbs(e, atan(v), epsilon));
+    }
+    {
+        // zig fmt: off
+        const v = f32x16(
+            -0.25, 0.5, -1.0, 0.0, 100.0, -200.0, 300.0, 400.0,
+            -0.25, 0.5, -1.0, -0.0, 100.0, -2000.0, 300.0, 4000.0
+        );
+        const e = f32x16(
+            math.atan(v[0]), math.atan(v[1]), math.atan(v[2]), math.atan(v[3]),
+            math.atan(v[4]), math.atan(v[5]), math.atan(v[6]), math.atan(v[7]),
+            math.atan(v[8]), math.atan(v[9]), math.atan(v[10]), math.atan(v[11]),
+            math.atan(v[12]), math.atan(v[13]), math.atan(v[14]), math.atan(v[15]),
+        );
+        // zig fmt: on
+        try expect(approxEqAbs(e, atan(v), epsilon));
+    }
+    {
+        try expect(approxEqAbs(atan(splat(F32x4, math.inf_f32)), splat(F32x4, 0.5 * math.pi), epsilon));
+        try expect(approxEqAbs(atan(splat(F32x4, -math.inf_f32)), splat(F32x4, -0.5 * math.pi), epsilon));
     }
 }
 
