@@ -1,6 +1,7 @@
 // ==============================================================================
 //
-// zmath v0.2 - https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig
+// zmath v0.2 - Fast SIMD math library for game developers
+// https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig
 //
 // ------------------------------------------------------------------------------
 // 1. Initialization functions
@@ -88,6 +89,9 @@
 // normalize2(v: Vec) Vec
 // normalize3(v: Vec) Vec
 // normalize4(v: Vec) Vec
+// mul(v: Vec, m: Mat) Vec
+// mul(v: Vec, s: f32) Vec
+// mul(s: f32, v: Vec) Vec
 //
 // ------------------------------------------------------------------------------
 // 4. Matrix functions
@@ -1518,20 +1522,76 @@ test "zmath.normalize4" {
     }
 }
 
+fn vecMulMat(v: Vec, m: Mat) Vec {
+    var vx = @shuffle(f32, v, undefined, [4]i32{ 0, 0, 0, 0 });
+    var vy = @shuffle(f32, v, undefined, [4]i32{ 1, 1, 1, 1 });
+    var vz = @shuffle(f32, v, undefined, [4]i32{ 2, 2, 2, 2 });
+    var vw = @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
+    return vx * m[0] + vy * m[1] + vz * m[2] + vw * m[3];
+}
+
 // ------------------------------------------------------------------------------
 //
 // 4. Matrix functions
 //
 // ------------------------------------------------------------------------------
 
-pub fn mul(a: anytype, b: anytype) @TypeOf(a) {
-    const T = @TypeOf(a);
-    if (T == Mat) {
+fn mulRetType(comptime Ta: type, comptime Tb: type) type {
+    if (Ta == Mat and Tb == Mat) {
+        return Mat;
+    } else if (Ta == Quat and Tb == Quat) {
+        return Quat;
+    } else if ((Ta == f32 and Tb == Mat) or (Ta == Mat and Tb == f32)) {
+        return Mat;
+    } else if ((Ta == f32 and Tb == Vec) or (Ta == Vec and Tb == f32)) {
+        return Vec;
+    } else if (Ta == Vec and Tb == Mat) {
+        return Vec;
+    }
+    @compileError("zmath.mul() not implemented for types: " ++ @typeName(Ta) ++ @typeName(Tb));
+}
+
+pub fn mul(a: anytype, b: anytype) mulRetType(@TypeOf(a), @TypeOf(b)) {
+    const Ta = @TypeOf(a);
+    const Tb = @TypeOf(b);
+    if (Ta == Mat and Tb == Mat) {
         return mulMat(a, b);
-    } else if (T == Quat) {
+    } else if (Ta == Quat and Tb == Quat) {
         return mulQuat(a, b);
+    } else if (Ta == f32 and Tb == Mat) {
+        const va = splat(F32x4, a);
+        return Mat{ va * b[0], va * b[1], va * b[2], va * b[3] };
+    } else if (Ta == Mat and Tb == f32) {
+        const vb = splat(F32x4, b);
+        return Mat{ a[0] * vb, a[1] * vb, a[2] * vb, a[3] * vb };
+    } else if (Ta == f32 and Tb == Vec) {
+        return splat(F32x4, a) * b;
+    } else if (Ta == Vec and Tb == f32) {
+        return a * splat(F32x4, b);
+    } else if (Ta == Vec and Tb == Mat) {
+        return vecMulMat(a, b);
     } else {
-        @compileError("zmath.mul() not implemented for " ++ @typeName(T));
+        @compileError("zmath.mul() not implemented for types: " ++ @typeName(Ta) ++ @typeName(Tb));
+    }
+}
+test "zmath.mul" {
+    {
+        const s: f32 = 2.0;
+        try expect(approxEqAbs(mul(s, f32x4(1.0, 2.0, 3.0, 4.0)), f32x4(2.0, 4.0, 6.0, 8.0), 0.0001));
+        try expect(approxEqAbs(mul(f32x4(1.0, 2.0, 3.0, 4.0), s), f32x4(2.0, 4.0, 6.0, 8.0), 0.0001));
+    }
+    {
+        const m = Mat{
+            f32x4(0.1, 0.2, 0.3, 0.4),
+            f32x4(0.5, 0.6, 0.7, 0.8),
+            f32x4(0.9, 1.0, 1.1, 1.2),
+            f32x4(1.3, 1.4, 1.5, 1.6),
+        };
+        const ms = mul(@as(f32, 2.0), m);
+        try expect(approxEqAbs(ms[0], f32x4(0.2, 0.4, 0.6, 0.8), 0.0001));
+        try expect(approxEqAbs(ms[1], f32x4(1.0, 1.2, 1.4, 1.6), 0.0001));
+        try expect(approxEqAbs(ms[2], f32x4(1.8, 2.0, 2.2, 2.4), 0.0001));
+        try expect(approxEqAbs(ms[3], f32x4(2.6, 2.8, 3.0, 3.2), 0.0001));
     }
 }
 
