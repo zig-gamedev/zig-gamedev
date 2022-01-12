@@ -1372,8 +1372,6 @@ test "zmath.sincos32xN" {
 }
 
 pub fn atan(v: anytype) @TypeOf(v) {
-    assert(!any(isNan(v), 0));
-
     // 17-degree minimax approximation
     const T = @TypeOf(v);
 
@@ -1432,6 +1430,8 @@ test "zmath.atan" {
     {
         try expect(approxEqAbs(atan(splat(F32x4, math.inf_f32)), splat(F32x4, 0.5 * math.pi), epsilon));
         try expect(approxEqAbs(atan(splat(F32x4, -math.inf_f32)), splat(F32x4, -0.5 * math.pi), epsilon));
+        try expect(all(isNan(atan(splat(F32x4, math.nan_f32))), 0) == true);
+        try expect(all(isNan(atan(splat(F32x4, -math.nan_f32))), 0) == true);
     }
 }
 
