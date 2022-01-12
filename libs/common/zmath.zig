@@ -70,6 +70,7 @@
 // cos(v: F32xN) F32xN
 // sincos(v: F32xN) [2]F32xN
 // atan(v: F32xN) F32xN
+// atan2(vy: F32xN, vx: F32xN) F32xN
 // select(mask: BoolxN, v0: F32xN, v1: F32xN)
 //
 // ------------------------------------------------------------------------------
@@ -278,6 +279,38 @@ test "zmath.store" {
     try expect(a[3] == 3.0);
     try expect(a[4] == 4.0);
     try expect(a[5] == 0.0);
+}
+
+pub fn loadF32x4x4(mem: []const f32) Mat {
+    return Mat{
+        load(mem[0..4], F32x4, 0),
+        load(mem[4..8], F32x4, 0),
+        load(mem[8..12], F32x4, 0),
+        load(mem[12..16], F32x4, 0),
+    };
+}
+test "zmath.loadF32x4x4" {
+    // zig fmt: off
+    const a = [18]f32{
+        1.0, 2.0, 3.0, 4.0,
+        5.0, 6.0, 7.0, 8.0,
+        9.0, 10.0, 11.0, 12.0,
+        13.0, 14.0, 15.0, 16.0,
+        17.0, 18.0
+    };
+    // zig fmt: on
+    const m = loadF32x4x4(a[1..]);
+    try expect(approxEqAbs(m[0], [4]f32{ 2.0, 3.0, 4.0, 5.0 }, 0.0));
+    try expect(approxEqAbs(m[1], [4]f32{ 6.0, 7.0, 8.0, 9.0 }, 0.0));
+    try expect(approxEqAbs(m[2], [4]f32{ 10.0, 11.0, 12.0, 13.0 }, 0.0));
+    try expect(approxEqAbs(m[3], [4]f32{ 14.0, 15.0, 16.0, 17.0 }, 0.0));
+}
+
+pub fn storeF32x4x4(mem: []f32, m: Mat) void {
+    store(mem[0..4], m[0], 0);
+    store(mem[4..8], m[1], 0);
+    store(mem[8..12], m[2], 0);
+    store(mem[12..16], m[3], 0);
 }
 
 // ------------------------------------------------------------------------------
@@ -1433,6 +1466,12 @@ test "zmath.atan" {
         try expect(all(isNan(atan(splat(F32x4, math.nan_f32))), 0) == true);
         try expect(all(isNan(atan(splat(F32x4, -math.nan_f32))), 0) == true);
     }
+}
+
+pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx) {
+    // TODO(mziulek): Implement
+    _ = vy;
+    _ = vx;
 }
 
 // ------------------------------------------------------------------------------
