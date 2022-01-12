@@ -111,6 +111,8 @@
 // matFromAxisAngle(axis: Vec, angle: f32) Mat
 // matFromNormAxisAngle(axis: Vec, angle: f32) Mat
 // matFromQuat(quat: Quat) Mat
+// matFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Mat
+// matFromRollPitchYawV(angles: Vec) Mat
 //
 // ------------------------------------------------------------------------------
 // 5. Quaternion functions
@@ -1990,6 +1992,13 @@ test "zmath.matrix.matFromQuat" {
         try expect(approxEqAbs(m[2], f32x4(0.0, 0.0, 1.0, 0.0), 0.0001));
         try expect(approxEqAbs(m[3], f32x4(0.0, 0.0, 0.0, 1.0), 0.0001));
     }
+}
+
+pub fn matFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Mat {
+    return matFromRollPitchYawV(f32x4(pitch, yaw, roll, 0.0));
+}
+pub fn matFromRollPitchYawV(angles: Vec) Mat {
+    return matFromQuat(quatFromRollPitchYawV(angles));
 }
 
 // ------------------------------------------------------------------------------
