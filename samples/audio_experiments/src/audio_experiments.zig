@@ -64,10 +64,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     {
-        const q0 = zm.f32x4(2.0, 3.0, 4.0, 1.0);
-        const q1 = zm.f32x4(3.0, 2.0, 1.0, 4.0);
-        const q = zm.mul(q0, q1);
-        std.log.info("{any}", .{q});
+        const m0 = zm.quatToMat(zm.quatFromRollPitchYaw(zm.f32x4(0.1 * math.pi, 0.2 * math.pi, 0.3 * math.pi, 0.0)));
+        std.log.info("{any}", .{m0});
     }
 
     {

@@ -102,12 +102,12 @@
 // translationV(v: Vec) Mat
 // scaling(x: f32, y: f32, z: f32) Mat
 // scalingV(v: Vec) Mat
-// lookToLh(eye_pos: Vec, eye_dir: Vec, up_dir: Vec) Mat
-// lookAtLh(eye_pos: Vec, focus_pos: Vec, up_dir: Vec) Mat
+// lookToLh(eyepos: Vec, eyedir: Vec, updir: Vec) Mat
+// lookAtLh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat
 // perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // determinant(m: Mat) F32x4
 // inverse(m: Mat) Mat
-// inverseDet(m: Mat, out_det: ?*F32x4) Mat
+// inverseDet(m: Mat, det: ?*F32x4) Mat
 // matFromAxisAngle(axis: Vec, angle: f32) Mat
 // matFromNormAxisAngle(axis: Vec, angle: f32) Mat
 // matFromQuat(quat: Quat) Mat
@@ -120,6 +120,8 @@
 // mul(q0: Quat, q1: Quat) Quat
 // quatFromAxisAngle(axis: Vec, angle: f32) Quat
 // quatFromNormAxisAngle(axis: Vec, angle: f32) Quat
+// quatFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Quat
+// quatFromRollPitchYawV(angles: Vec) Quat
 // conjugate(quat: Quat) Quat
 // inverse(q: Quat) Quat
 //
@@ -127,7 +129,7 @@
 // X. Misc functions
 // ------------------------------------------------------------------------------
 //
-// linePointDistance(line_pt0: Vec, line_pt1: Vec, pt: Vec) F32x4
+// linePointDistance(linept0: Vec, linept1: Vec, pt: Vec) F32x4
 // sincos(v: f32) [2]f32
 //
 // ==============================================================================
@@ -1650,19 +1652,19 @@ pub fn scalingV(v: Vec) Mat {
     return scaling(v[0], v[1], v[2]);
 }
 
-pub fn lookToLh(eye_pos: Vec, eye_dir: Vec, up_dir: Vec) Mat {
-    const az = normalize3(eye_dir);
-    const ax = normalize3(cross3(up_dir, az));
+pub fn lookToLh(eyepos: Vec, eyedir: Vec, updir: Vec) Mat {
+    const az = normalize3(eyedir);
+    const ax = normalize3(cross3(updir, az));
     const ay = normalize3(cross3(az, ax));
     return transpose(.{
-        f32x4(ax[0], ax[1], ax[2], -dot3(ax, eye_pos)[0]),
-        f32x4(ay[0], ay[1], ay[2], -dot3(ay, eye_pos)[0]),
-        f32x4(az[0], az[1], az[2], -dot3(az, eye_pos)[0]),
+        f32x4(ax[0], ax[1], ax[2], -dot3(ax, eyepos)[0]),
+        f32x4(ay[0], ay[1], ay[2], -dot3(ay, eyepos)[0]),
+        f32x4(az[0], az[1], az[2], -dot3(az, eyepos)[0]),
         f32x4(0.0, 0.0, 0.0, 1.0),
     });
 }
-pub fn lookAtLh(eye_pos: Vec, focus_pos: Vec, up_dir: Vec) Mat {
-    return lookToLh(eye_pos, focus_pos - eye_pos, up_dir);
+pub fn lookAtLh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat {
+    return lookToLh(eyepos, focuspos - eyepos, updir);
 }
 test "zmath.matrix.lookToLh" {
     const m = lookToLh(f32x4(0.0, 0.0, -3.0, 1.0), f32x4(0.0, 0.0, 1.0, 0.0), f32x4(0.0, 1.0, 0.0, 0.0));
@@ -2068,12 +2070,49 @@ fn inverseQuat(quat: Quat) Quat {
     const conj = conjugate(quat);
     return select(l <= splat(F32x4, math.f32_epsilon), splat(F32x4, 0.0), conj / l);
 }
-test "zmath.quaternion.inverse" {
+test "zmath.quaternion.inverseQuat" {
     try expect(approxEqAbs(
         inverse(f32x4(2.0, 3.0, 4.0, 1.0)),
         f32x4(-1.0 / 15.0, -1.0 / 10.0, -2.0 / 15.0, 1.0 / 30.0),
         0.0001,
     ));
+}
+
+pub fn quatFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Quat {
+    return quatFromRollPitchYawV(f32x4(pitch, yaw, roll, 0.0));
+}
+pub fn quatFromRollPitchYawV(angles: Vec) Quat { // | pitch | yaw | roll | 0 |
+    const sc = sincos(splat(Vec, 0.5) * angles);
+    const p0 = @shuffle(f32, sc[1], sc[0], [4]i32{ ~@as(i32, 0), 0, 0, 0 });
+    const p1 = @shuffle(f32, sc[0], sc[1], [4]i32{ ~@as(i32, 0), 0, 0, 0 });
+    const y0 = @shuffle(f32, sc[1], sc[0], [4]i32{ 1, ~@as(i32, 1), 1, 1 });
+    const y1 = @shuffle(f32, sc[0], sc[1], [4]i32{ 1, ~@as(i32, 1), 1, 1 });
+    const r0 = @shuffle(f32, sc[1], sc[0], [4]i32{ 2, 2, ~@as(i32, 2), 2 });
+    const r1 = @shuffle(f32, sc[0], sc[1], [4]i32{ 2, 2, ~@as(i32, 2), 2 });
+    const q1 = p1 * f32x4(1.0, -1.0, -1.0, 1.0) * y1;
+    const q0 = p0 * y0 * r0;
+    return mulAdd(q1, r1, q0);
+}
+test "zmath.quaternion.quatFromRollPitchYawV" {
+    {
+        const m0 = quatToMat(quatFromRollPitchYawV(f32x4(0.25 * math.pi, 0.0, 0.0, 0.0)));
+        const m1 = rotationX(0.25 * math.pi);
+        try expect(approxEqAbs(m0[0], m1[0], 0.0001));
+        try expect(approxEqAbs(m0[1], m1[1], 0.0001));
+        try expect(approxEqAbs(m0[2], m1[2], 0.0001));
+        try expect(approxEqAbs(m0[3], m1[3], 0.0001));
+    }
+    {
+        const m0 = quatToMat(quatFromRollPitchYaw(0.1 * math.pi, 0.2 * math.pi, 0.3 * math.pi));
+        const m1 = mul(
+            rotationZ(0.3 * math.pi),
+            mul(rotationX(0.1 * math.pi), rotationY(0.2 * math.pi)),
+        );
+        try expect(approxEqAbs(m0[0], m1[0], 0.0001));
+        try expect(approxEqAbs(m0[1], m1[1], 0.0001));
+        try expect(approxEqAbs(m0[2], m1[2], 0.0001));
+        try expect(approxEqAbs(m0[3], m1[3], 0.0001));
+    }
 }
 
 // ------------------------------------------------------------------------------
@@ -2082,18 +2121,18 @@ test "zmath.quaternion.inverse" {
 //
 // ------------------------------------------------------------------------------
 
-pub inline fn linePointDistance(line_pt0: Vec, line_pt1: Vec, pt: Vec) F32x4 {
-    const pt_vec = pt - line_pt0;
-    const line_vec = line_pt1 - line_pt0;
-    const scale = dot3(pt_vec, line_vec) / lengthSq3(line_vec);
-    return length3(pt_vec - line_vec * scale);
+pub inline fn linePointDistance(linept0: Vec, linept1: Vec, pt: Vec) F32x4 {
+    const ptvec = pt - linept0;
+    const linevec = linept1 - linept0;
+    const scale = dot3(ptvec, linevec) / lengthSq3(linevec);
+    return length3(ptvec - linevec * scale);
 }
 test "zmath.linePointDistance" {
     {
-        const line_pt0 = F32x4{ -1.0, -2.0, -3.0, 1.0 };
-        const line_pt1 = F32x4{ 1.0, 2.0, 3.0, 1.0 };
+        const linept0 = F32x4{ -1.0, -2.0, -3.0, 1.0 };
+        const linept1 = F32x4{ 1.0, 2.0, 3.0, 1.0 };
         const pt = F32x4{ 1.0, 1.0, 1.0, 1.0 };
-        var v = linePointDistance(line_pt0, line_pt1, pt);
+        var v = linePointDistance(linept0, linept1, pt);
         try expect(approxEqAbs(v, splat(F32x4, 0.654), 0.001));
     }
 }
