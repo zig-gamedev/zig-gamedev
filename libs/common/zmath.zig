@@ -23,7 +23,9 @@
 //         e8: bool, e9: bool, ea: bool, eb: bool, ec: bool, ed: bool, ee: bool, ef: bool) Boolx16
 //
 // load(mem: []const f32, comptime T: type, comptime len: u32) T
+// loadF32x4x4(mem: []const f32) Mat
 // store(mem: []f32, v: anytype, comptime len: u32) void
+// storeF32x4x4(mem: []f32, m: Mat) void
 //
 // splat(comptime T: type, value: f32) T
 // splatInt(comptime T: type, value: u32) T
@@ -1469,6 +1471,7 @@ test "zmath.atan" {
 }
 
 pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx) {
+    assert(false);
     // TODO(mziulek): Implement
     _ = vy;
     _ = vx;
