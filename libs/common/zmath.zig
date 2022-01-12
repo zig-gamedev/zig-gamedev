@@ -122,8 +122,9 @@
 // 5. Quaternion functions
 // ------------------------------------------------------------------------------
 //
-// quatToMat(quat: Quat) Mat
 // mul(q0: Quat, q1: Quat) Quat
+// quatToMat(quat: Quat) Mat
+// quatFromMat(m: Mat) Quat
 // quatFromAxisAngle(axis: Vec, angle: f32) Quat
 // quatFromNormAxisAngle(axis: Vec, angle: f32) Quat
 // quatFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Quat
@@ -1529,6 +1530,16 @@ fn vecMulMat(v: Vec, m: Mat) Vec {
     var vw = @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
     return vx * m[0] + vy * m[1] + vz * m[2] + vw * m[3];
 }
+test "zmath.vecMulMat" {
+    const m = Mat{
+        f32x4(1.0, 0.0, 0.0, 0.0),
+        f32x4(0.0, 1.0, 0.0, 0.0),
+        f32x4(0.0, 0.0, 1.0, 0.0),
+        f32x4(2.0, 3.0, 4.0, 1.0),
+    };
+    const v = mul(f32x4(1.0, 2.0, 3.0, 1.0), m);
+    try expect(approxEqAbs(v, f32x4(3.0, 5.0, 7.0, 1.0), 0.0001));
+}
 
 // ------------------------------------------------------------------------------
 //
@@ -2067,10 +2078,6 @@ pub fn matFromRollPitchYawV(angles: Vec) Mat {
 //
 // ------------------------------------------------------------------------------
 
-pub fn quatToMat(quat: Quat) Mat {
-    return matFromQuat(quat);
-}
-
 fn mulQuat(q0: Quat, q1: Quat) Quat {
     var result = swizzle(q1, .w, .w, .w, .w);
     var q1x = swizzle(q1, .x, .x, .x, .x);
@@ -2093,6 +2100,70 @@ test "zmath.quaternion.mul" {
         const q0 = f32x4(2.0, 3.0, 4.0, 1.0);
         const q1 = f32x4(3.0, 2.0, 1.0, 4.0);
         try expect(approxEqAbs(mul(q0, q1), f32x4(16.0, 4.0, 22.0, -12.0), 0.0001));
+    }
+}
+
+pub fn quatToMat(quat: Quat) Mat {
+    return matFromQuat(quat);
+}
+
+pub fn quatFromMat(m: Mat) Quat {
+    const r0 = m[0];
+    const r1 = m[1];
+    const r2 = m[2];
+    const r00 = swizzle(r0, .x, .x, .x, .x);
+    const r11 = swizzle(r1, .y, .y, .y, .y);
+    const r22 = swizzle(r2, .z, .z, .z, .z);
+
+    const x2gey2 = (r11 - r00) <= splat(F32x4, 0.0);
+    const z2gew2 = (r11 + r00) <= splat(F32x4, 0.0);
+    const x2py2gez2pw2 = r22 <= splat(F32x4, 0.0);
+
+    var t0 = mulAdd(r00, f32x4(1.0, -1.0, -1.0, 1.0), splat(F32x4, 1.0));
+    var t1 = r11 * f32x4(-1.0, 1.0, -1.0, 1.0);
+    var t2 = mulAdd(r22, f32x4(-1.0, -1.0, 1.0, 1.0), t0);
+    const x2y2z2w2 = t1 + t2;
+
+    t0 = @shuffle(f32, r0, r1, [4]i32{ 1, 2, ~@as(i32, 2), ~@as(i32, 1) });
+    t1 = @shuffle(f32, r1, r2, [4]i32{ 0, 0, ~@as(i32, 0), ~@as(i32, 1) });
+    t1 = swizzle(t1, .x, .z, .w, .y);
+    const xyxzyz = t0 + t1;
+
+    t0 = @shuffle(f32, r2, r1, [4]i32{ 1, 0, ~@as(i32, 0), ~@as(i32, 0) });
+    t1 = @shuffle(f32, r1, r0, [4]i32{ 2, 2, ~@as(i32, 2), ~@as(i32, 1) });
+    t1 = swizzle(t1, .x, .z, .w, .y);
+    const xwywzw = (t0 - t1) * f32x4(-1.0, 1.0, -1.0, 1.0);
+
+    t0 = @shuffle(f32, x2y2z2w2, xyxzyz, [4]i32{ 0, 1, ~@as(i32, 0), ~@as(i32, 0) });
+    t1 = @shuffle(f32, x2y2z2w2, xwywzw, [4]i32{ 2, 3, ~@as(i32, 2), ~@as(i32, 0) });
+    t2 = @shuffle(f32, xyxzyz, xwywzw, [4]i32{ 1, 2, ~@as(i32, 0), ~@as(i32, 1) });
+
+    const tensor0 = @shuffle(f32, t0, t2, [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
+    const tensor1 = @shuffle(f32, t0, t2, [4]i32{ 2, 1, ~@as(i32, 1), ~@as(i32, 3) });
+    const tensor2 = @shuffle(f32, t2, t1, [4]i32{ 0, 1, ~@as(i32, 0), ~@as(i32, 2) });
+    const tensor3 = @shuffle(f32, t2, t1, [4]i32{ 2, 3, ~@as(i32, 2), ~@as(i32, 1) });
+
+    t0 = select(x2gey2, tensor0, tensor1);
+    t1 = select(z2gew2, tensor2, tensor3);
+    t2 = select(x2py2gez2pw2, t0, t1);
+
+    return t2 / length4(t2);
+}
+test "zmath.quatFromMat" {
+    {
+        const q0 = quatFromAxisAngle(f32x4(1.0, 0.0, 0.0, 0.0), 0.25 * math.pi);
+        const q1 = quatFromMat(rotationX(0.25 * math.pi));
+        try expect(approxEqAbs(q0, q1, 0.0001));
+    }
+    {
+        const q0 = quatFromAxisAngle(f32x4(1.0, 2.0, 0.5, 0.0), 0.25 * math.pi);
+        const q1 = quatFromMat(matFromAxisAngle(f32x4(1.0, 2.0, 0.5, 0.0), 0.25 * math.pi));
+        try expect(approxEqAbs(q0, q1, 0.0001));
+    }
+    {
+        const q0 = quatFromRollPitchYaw(0.1 * math.pi, -0.2 * math.pi, 0.3 * math.pi);
+        const q1 = quatFromMat(matFromRollPitchYaw(0.1 * math.pi, -0.2 * math.pi, 0.3 * math.pi));
+        try expect(approxEqAbs(q0, q1, 0.0001));
     }
 }
 
