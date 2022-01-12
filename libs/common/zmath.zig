@@ -69,6 +69,7 @@
 // sin(v: F32xN) F32xN
 // cos(v: F32xN) F32xN
 // sincos(v: F32xN) [2]F32xN
+// atan(v: F32xN) F32xN
 // select(mask: BoolxN, v0: F32xN, v1: F32xN)
 //
 // ------------------------------------------------------------------------------
@@ -123,14 +124,14 @@
 // ------------------------------------------------------------------------------
 //
 // mul(q0: Quat, q1: Quat) Quat
+// conjugate(quat: Quat) Quat
+// inverse(q: Quat) Quat
 // quatToMat(quat: Quat) Mat
 // quatFromMat(m: Mat) Quat
 // quatFromAxisAngle(axis: Vec, angle: f32) Quat
 // quatFromNormAxisAngle(axis: Vec, angle: f32) Quat
 // quatFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Quat
 // quatFromRollPitchYawV(angles: Vec) Quat
-// conjugate(quat: Quat) Quat
-// inverse(q: Quat) Quat
 //
 // ------------------------------------------------------------------------------
 // X. Misc functions
@@ -1367,6 +1368,39 @@ test "zmath.sincos32xN" {
         try expect(approxEqAbs(sc8[1], c8, epsilon));
         try expect(approxEqAbs(sc16[1], c16, epsilon));
         f += 0.12345 * @intToFloat(f32, i);
+    }
+}
+
+pub fn atan(v: anytype) @TypeOf(v) {
+    // 17-degree minimax approximation
+    const T = @TypeOf(v);
+
+    const vabs = abs(v);
+    const vinv = splat(T, 1.0) / v;
+    var sign = select(v > splat(T, 1.0), splat(T, 1.0), splat(T, -1.0));
+    const comp = vabs <= splat(T, 1.0);
+    sign = select(comp, splat(T, 0.0), sign);
+    const x = select(comp, v, vinv);
+    const x2 = x * x;
+
+    var result = mulAdd(splat(T, 0.0028662257), x2, splat(T, -0.0161657367));
+    result = mulAdd(result, x2, splat(T, 0.0429096138));
+    result = mulAdd(result, x2, splat(T, -0.0752896400));
+    result = mulAdd(result, x2, splat(T, 0.1065626393));
+    result = mulAdd(result, x2, splat(T, -0.1420889944));
+    result = mulAdd(result, x2, splat(T, 0.1999355085));
+    result = mulAdd(result, x2, splat(T, -0.3333314528));
+    result = x * mulAdd(result, x2, splat(T, 1.0));
+
+    const result1 = sign * splat(T, 0.5 * math.pi) - result;
+    return select(sign == splat(T, 0.0), result, result1);
+}
+test "zmath.atan" {
+    const epsilon = 0.0001;
+    {
+        const v = f32x4(0.25, 0.5, 1.0, 1.25);
+        const e = f32x4(math.atan(v[0]), math.atan(v[1]), math.atan(v[2]), math.atan(v[3]));
+        try expect(approxEqAbs(e, atan(v), epsilon));
     }
 }
 
