@@ -68,12 +68,12 @@
 // mod(v0: F32xN, v1: F32xN) F32xN
 // modAngles(v: F32xN) F32xN
 // mulAdd(v0: F32xN, v1: F32xN, v2: F32xN) F32xN
+// select(mask: BoolxN, v0: F32xN, v1: F32xN)
 // sin(v: F32xN) F32xN
 // cos(v: F32xN) F32xN
 // sincos(v: F32xN) [2]F32xN
 // atan(v: F32xN) F32xN
 // atan2(vy: F32xN, vx: F32xN) F32xN
-// select(mask: BoolxN, v0: F32xN, v1: F32xN)
 //
 // ------------------------------------------------------------------------------
 // 3. 2D, 3D, 4D vector functions
@@ -133,6 +133,7 @@
 // slerp(q0: Quat, q1: Quat, t: f32) Quat
 // slerpV(q0: Quat, q1: Quat, t: F32x4) Quat
 // quatToMat(quat: Quat) Mat
+// quatToAxisAngle(quat: Quat, axis: *Vec, angle: *f32) void
 // quatFromMat(m: Mat) Quat
 // quatFromAxisAngle(axis: Vec, angle: f32) Quat
 // quatFromNormAxisAngle(axis: Vec, angle: f32) Quat
@@ -144,8 +145,11 @@
 // ------------------------------------------------------------------------------
 //
 // linePointDistance(linept0: Vec, linept1: Vec, pt: Vec) F32x4
+// sin(v: f32) f32
+// cos(v: f32) f32
 // sincos(v: f32) [2]f32
 // asin(v: f32) f32
+// acos(v: f32) f32
 //
 // ==============================================================================
 
@@ -1251,7 +1255,7 @@ pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
     }
 }
 
-pub fn sin(v: anytype) @TypeOf(v) {
+fn sin32xN(v: anytype) @TypeOf(v) {
     // 11-degree minimax approximation
     const T = @TypeOf(v);
 
@@ -1301,7 +1305,7 @@ test "sin" {
     }
 }
 
-pub fn cos(v: anytype) @TypeOf(v) {
+fn cos32xN(v: anytype) @TypeOf(v) {
     // 10-degree minimax approximation
     const T = @TypeOf(v);
 
@@ -1349,6 +1353,24 @@ test "zmath.cos" {
     }
 }
 
+pub fn sin(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+    return switch (T) {
+        f32 => sin32(v),
+        F32x4, F32x8, F32x16 => sin32xN(v),
+        else => @compileError("zmath.sin() not implemented for " ++ @typeName(T)),
+    };
+}
+
+pub fn cos(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+    return switch (T) {
+        f32 => cos32(v),
+        F32x4, F32x8, F32x16 => cos32xN(v),
+        else => @compileError("zmath.cos() not implemented for " ++ @typeName(T)),
+    };
+}
+
 pub fn sincos(v: anytype) [2]@TypeOf(v) {
     const T = @TypeOf(v);
     return switch (T) {
@@ -1364,6 +1386,15 @@ pub fn asin(v: anytype) @TypeOf(v) {
         f32 => asin32(v),
         //F32x4, F32x8, F32x16 => asin32xN(v),
         else => @compileError("zmath.asin() not implemented for " ++ @typeName(T)),
+    };
+}
+
+pub fn acos(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+    return switch (T) {
+        f32 => acos32(v),
+        //F32x4, F32x8, F32x16 => asin32xN(v),
+        else => @compileError("zmath.acos() not implemented for " ++ @typeName(T)),
     };
 }
 
@@ -2342,6 +2373,23 @@ pub fn quatToMat(quat: Quat) Mat {
     return matFromQuat(quat);
 }
 
+pub fn quatToAxisAngle(quat: Quat, axis: *Vec, angle: *f32) void {
+    axis.* = quat;
+    angle.* = 2.0 * acos(quat[3]);
+}
+test "zmath.quaternion.quatToAxisAngle" {
+    {
+        const q0 = quatFromNormAxisAngle(f32x4(1.0, 0.0, 0.0, 0.0), 0.25 * math.pi);
+        var axis: Vec = f32x4(4.0, 3.0, 2.0, 1.0);
+        var angle: f32 = 10.0;
+        quatToAxisAngle(q0, &axis, &angle);
+        try expect(math.approxEqAbs(f32, axis[0], math.sin(@as(f32, 0.25) * math.pi * 0.5), 0.0001));
+        try expect(axis[1] == 0.0);
+        try expect(axis[2] == 0.0);
+        try expect(math.approxEqAbs(f32, angle, 0.25 * math.pi, 0.0001));
+    }
+}
+
 pub fn quatFromMat(m: Mat) Quat {
     const r0 = m[0];
     const r1 = m[1];
@@ -2543,7 +2591,68 @@ test "zmath.linePointDistance" {
     }
 }
 
+fn sin32(v: f32) f32 {
+    assert(!math.isInf(v));
+    assert(!math.isNan(v));
+
+    var quotient = 1.0 / math.tau * v;
+    if (v >= 0.0) {
+        quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
+    } else {
+        quotient = @intToFloat(f32, @floatToInt(i32, quotient - 0.5));
+    }
+    var y = v - math.tau * quotient;
+
+    if (y > 0.5 * math.pi) {
+        y = math.pi - y;
+    } else if (y < -math.pi * 0.5) {
+        y = -math.pi - y;
+    }
+    const y2 = y * y;
+
+    // 11-degree minimax approximation
+    var sinv = mulAdd(@as(f32, -2.3889859e-08), y2, 2.7525562e-06);
+    sinv = mulAdd(sinv, y2, -0.00019840874);
+    sinv = mulAdd(sinv, y2, 0.0083333310);
+    sinv = mulAdd(sinv, y2, -0.16666667);
+    return y * mulAdd(sinv, y2, 1.0);
+}
+fn cos32(v: f32) f32 {
+    assert(!math.isInf(v));
+    assert(!math.isNan(v));
+
+    var quotient = 1.0 / math.tau * v;
+    if (v >= 0.0) {
+        quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
+    } else {
+        quotient = @intToFloat(f32, @floatToInt(i32, quotient - 0.5));
+    }
+    var y = v - math.tau * quotient;
+
+    const sign = blk: {
+        if (y > 0.5 * math.pi) {
+            y = math.pi - y;
+            break :blk @as(f32, -1.0);
+        } else if (y < -math.pi * 0.5) {
+            y = -math.pi - y;
+            break :blk @as(f32, -1.0);
+        } else {
+            break :blk @as(f32, 1.0);
+        }
+    };
+    const y2 = y * y;
+
+    // 10-degree minimax approximation
+    var cosv = mulAdd(@as(f32, -2.6051615e-07), y2, 2.4760495e-05);
+    cosv = mulAdd(cosv, y2, -0.0013888378);
+    cosv = mulAdd(cosv, y2, 0.041666638);
+    cosv = mulAdd(cosv, y2, -0.5);
+    return sign * mulAdd(cosv, y2, 1.0);
+}
 fn sincos32(v: f32) [2]f32 {
+    assert(!math.isInf(v));
+    assert(!math.isNan(v));
+
     var quotient = 1.0 / math.tau * v;
     if (v >= 0.0) {
         quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
@@ -2588,10 +2697,14 @@ test "zmath.sincos32" {
     var i: u32 = 0;
     while (i < 100) : (i += 1) {
         const sc = sincos32(f);
+        const s0 = sin32(f);
+        const c0 = cos32(f);
         const s = @sin(f);
         const c = @cos(f);
         try expect(math.approxEqAbs(f32, sc[0], s, epsilon));
         try expect(math.approxEqAbs(f32, sc[1], c, epsilon));
+        try expect(math.approxEqAbs(f32, s0, s, epsilon));
+        try expect(math.approxEqAbs(f32, c0, c, epsilon));
         f += 0.12345 * @intToFloat(f32, i);
     }
 }
@@ -2620,12 +2733,59 @@ test "zmath.asin32" {
 
     try expect(math.approxEqAbs(f32, asin(@as(f32, -1.1)), -0.5 * math.pi, epsilon));
     try expect(math.approxEqAbs(f32, asin(@as(f32, 1.1)), 0.5 * math.pi, epsilon));
+    try expect(math.approxEqAbs(f32, asin(@as(f32, -1000.1)), -0.5 * math.pi, epsilon));
+    try expect(math.approxEqAbs(f32, asin(@as(f32, 100000.1)), 0.5 * math.pi, epsilon));
+    try expect(math.isNan(asin(math.inf_f32)));
+    try expect(math.isNan(asin(-math.inf_f32)));
+    try expect(math.isNan(asin(math.nan_f32)));
+    try expect(math.isNan(asin(-math.nan_f32)));
 
     var f: f32 = -1.0;
     var i: u32 = 0;
     while (i < 8) : (i += 1) {
         const r0 = asin32(f);
         const r1 = math.asin(f);
+        try expect(math.approxEqAbs(f32, r0, r1, epsilon));
+        f += 0.09 * @intToFloat(f32, i);
+    }
+}
+
+fn acos32(v: f32) f32 {
+    const x = @fabs(v);
+    var omx = 1.0 - x;
+    if (omx < 0.0) {
+        omx = 0.0;
+    }
+    const root = @sqrt(omx);
+
+    // 7-degree minimax approximation
+    var result = mulAdd(@as(f32, -0.0012624911), x, 0.0066700901);
+    result = mulAdd(result, x, -0.0170881256);
+    result = mulAdd(result, x, 0.0308918810);
+    result = mulAdd(result, x, -0.0501743046);
+    result = mulAdd(result, x, 0.0889789874);
+    result = mulAdd(result, x, -0.2145988016);
+    result = root * mulAdd(result, x, 1.5707963050);
+
+    return if (v >= 0.0) result else math.pi - result;
+}
+test "zmath.acos32" {
+    const epsilon = 0.1;
+
+    try expect(math.approxEqAbs(f32, acos(@as(f32, -1.1)), math.pi, epsilon));
+    try expect(math.approxEqAbs(f32, acos(@as(f32, -10000.1)), math.pi, epsilon));
+    try expect(math.approxEqAbs(f32, acos(@as(f32, 1.1)), 0.0, epsilon));
+    try expect(math.approxEqAbs(f32, acos(@as(f32, 1000.1)), 0.0, epsilon));
+    try expect(math.isNan(acos(math.inf_f32)));
+    try expect(math.isNan(acos(-math.inf_f32)));
+    try expect(math.isNan(acos(math.nan_f32)));
+    try expect(math.isNan(acos(-math.nan_f32)));
+
+    var f: f32 = -1.0;
+    var i: u32 = 0;
+    while (i < 8) : (i += 1) {
+        const r0 = acos32(f);
+        const r1 = math.acos(f);
         try expect(math.approxEqAbs(f32, r0, r1, epsilon));
         f += 0.09 * @intToFloat(f32, i);
     }
