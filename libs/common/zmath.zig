@@ -1472,10 +1472,121 @@ test "zmath.atan" {
 }
 
 pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx) {
-    assert(false);
-    // TODO(mziulek): Implement
-    _ = vy;
-    _ = vx;
+    const T = @TypeOf(vy);
+    const Tu = @Vector(veclen(T), u32);
+
+    const vx_is_positive =
+        (@bitCast(Tu, vx) & @splat(veclen(T), @as(u32, 0x8000_0000))) == @splat(veclen(T), @as(u32, 0));
+
+    const vy_sign = andInt(vy, splatNegativeZero(T));
+    const c0_25pi = orInt(vy_sign, splat(T, 0.25 * math.pi));
+    const c0_50pi = orInt(vy_sign, splat(T, 0.50 * math.pi));
+    const c0_75pi = orInt(vy_sign, splat(T, 0.75 * math.pi));
+    const c1_00pi = orInt(vy_sign, splat(T, 1.00 * math.pi));
+
+    var r1 = select(vx_is_positive, vy_sign, c1_00pi);
+    var r2 = select(vx == splat(T, 0.0), c0_50pi, splatInt(T, 0xffff_ffff));
+    const r3 = select(vy == splat(T, 0.0), r1, r2);
+    const r4 = select(vx_is_positive, c0_25pi, c0_75pi);
+    const r5 = select(isInf(vx), r4, c0_50pi);
+    const result = select(isInf(vy), r5, r3);
+    const result_valid = @bitCast(Tu, result) == @splat(veclen(T), @as(u32, 0xffff_ffff));
+
+    const v = vy / vx;
+    const r0 = atan(v);
+
+    r1 = select(vx_is_positive, splatNegativeZero(T), c1_00pi);
+    r2 = r0 + r1;
+
+    return select(result_valid, r2, result);
+}
+test "zmath.atan2" {
+    // From DirectXMath XMVectorATan2():
+    //
+    // Return the inverse tangent of Y / X in the range of -Pi to Pi with the following exceptions:
+
+    //     Y == 0 and X is Negative         -> Pi with the sign of Y
+    //     y == 0 and x is positive         -> 0 with the sign of y
+    //     Y != 0 and X == 0                -> Pi / 2 with the sign of Y
+    //     Y != 0 and X is Negative         -> atan(y/x) + (PI with the sign of Y)
+    //     X == -Infinity and Finite Y      -> Pi with the sign of Y
+    //     X == +Infinity and Finite Y      -> 0 with the sign of Y
+    //     Y == Infinity and X is Finite    -> Pi / 2 with the sign of Y
+    //     Y == Infinity and X == -Infinity -> 3Pi / 4 with the sign of Y
+    //     Y == Infinity and X == +Infinity -> Pi / 4 with the sign of Y
+
+    const epsilon = 0.0001;
+    try expect(approxEqAbs(atan2(splat(F32x4, 0.0), splat(F32x4, -1.0)), splat(F32x4, math.pi), epsilon));
+    try expect(approxEqAbs(atan2(splat(F32x4, -0.0), splat(F32x4, -1.0)), splat(F32x4, -math.pi), epsilon));
+    try expect(approxEqAbs(atan2(splat(F32x4, 1.0), splat(F32x4, 0.0)), splat(F32x4, 0.5 * math.pi), epsilon));
+    try expect(approxEqAbs(atan2(splat(F32x4, -1.0), splat(F32x4, 0.0)), splat(F32x4, -0.5 * math.pi), epsilon));
+    try expect(approxEqAbs(
+        atan2(splat(F32x4, 1.0), splat(F32x4, -1.0)),
+        splat(F32x4, math.atan(@as(f32, -1.0)) + math.pi),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        atan2(splat(F32x4, -10.0), splat(F32x4, -2.0)),
+        splat(F32x4, math.atan(@as(f32, 5.0)) - math.pi),
+        epsilon,
+    ));
+    try expect(approxEqAbs(atan2(splat(F32x4, 1.0), splat(F32x4, -math.inf_f32)), splat(F32x4, math.pi), epsilon));
+    try expect(approxEqAbs(atan2(splat(F32x4, -1.0), splat(F32x4, -math.inf_f32)), splat(F32x4, -math.pi), epsilon));
+    try expect(approxEqAbs(atan2(splat(F32x4, 1.0), splat(F32x4, math.inf_f32)), splat(F32x4, 0.0), epsilon));
+    try expect(approxEqAbs(atan2(splat(F32x4, -1.0), splat(F32x4, math.inf_f32)), splat(F32x4, -0.0), epsilon));
+    try expect(approxEqAbs(
+        atan2(splat(F32x4, math.inf_f32), splat(F32x4, 2.0)),
+        splat(F32x4, 0.5 * math.pi),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        atan2(splat(F32x4, -math.inf_f32), splat(F32x4, 2.0)),
+        splat(F32x4, -0.5 * math.pi),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        atan2(splat(F32x4, math.inf_f32), splat(F32x4, -math.inf_f32)),
+        splat(F32x4, 0.75 * math.pi),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        atan2(splat(F32x4, -math.inf_f32), splat(F32x4, -math.inf_f32)),
+        splat(F32x4, -0.75 * math.pi),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        atan2(splat(F32x4, math.inf_f32), splat(F32x4, math.inf_f32)),
+        splat(F32x4, 0.25 * math.pi),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        atan2(splat(F32x4, -math.inf_f32), splat(F32x4, math.inf_f32)),
+        splat(F32x4, -0.25 * math.pi),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        atan2(
+            f32x8(0.0, -math.inf_f32, -0.0, 2.0, math.inf_f32, math.inf_f32, 1.0, -math.inf_f32),
+            f32x8(-2.0, math.inf_f32, 1.0, 0.0, 10.0, -math.inf_f32, 1.0, -math.inf_f32),
+        ),
+        f32x8(
+            math.pi,
+            -0.25 * math.pi,
+            -0.0,
+            0.5 * math.pi,
+            0.5 * math.pi,
+            0.75 * math.pi,
+            math.atan(@as(f32, 1.0)),
+            -0.75 * math.pi,
+        ),
+        epsilon,
+    ));
+    try expect(approxEqAbs(atan2(splat(F32x4, 0.0), splat(F32x4, 0.0)), splat(F32x4, 0.0), epsilon));
+    try expect(approxEqAbs(atan2(splat(F32x4, -0.0), splat(F32x4, 0.0)), splat(F32x4, 0.0), epsilon));
+    try expect(all(isNan(atan2(splat(F32x4, 1.0), splat(F32x4, math.nan_f32))), 0) == true);
+    try expect(all(isNan(atan2(splat(F32x4, -1.0), splat(F32x4, math.nan_f32))), 0) == true);
+    try expect(all(isNan(atan2(splat(F32x4, math.nan_f32), splat(F32x4, -1.0))), 0) == true);
+    try expect(all(isNan(atan2(splat(F32x4, -math.nan_f32), splat(F32x4, 1.0))), 0) == true);
 }
 
 // ------------------------------------------------------------------------------
