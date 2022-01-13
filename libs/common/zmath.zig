@@ -2592,16 +2592,7 @@ test "zmath.linePointDistance" {
 }
 
 fn sin32(v: f32) f32 {
-    assert(!math.isInf(v));
-    assert(!math.isNan(v));
-
-    var quotient = 1.0 / math.tau * v;
-    if (v >= 0.0) {
-        quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
-    } else {
-        quotient = @intToFloat(f32, @floatToInt(i32, quotient - 0.5));
-    }
-    var y = v - math.tau * quotient;
+    var y = v - math.tau * @round(v * 1.0 / math.tau);
 
     if (y > 0.5 * math.pi) {
         y = math.pi - y;
@@ -2618,16 +2609,7 @@ fn sin32(v: f32) f32 {
     return y * mulAdd(sinv, y2, 1.0);
 }
 fn cos32(v: f32) f32 {
-    assert(!math.isInf(v));
-    assert(!math.isNan(v));
-
-    var quotient = 1.0 / math.tau * v;
-    if (v >= 0.0) {
-        quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
-    } else {
-        quotient = @intToFloat(f32, @floatToInt(i32, quotient - 0.5));
-    }
-    var y = v - math.tau * quotient;
+    var y = v - math.tau * @round(v * 1.0 / math.tau);
 
     const sign = blk: {
         if (y > 0.5 * math.pi) {
@@ -2650,16 +2632,7 @@ fn cos32(v: f32) f32 {
     return sign * mulAdd(cosv, y2, 1.0);
 }
 fn sincos32(v: f32) [2]f32 {
-    assert(!math.isInf(v));
-    assert(!math.isNan(v));
-
-    var quotient = 1.0 / math.tau * v;
-    if (v >= 0.0) {
-        quotient = @intToFloat(f32, @floatToInt(i32, quotient + 0.5));
-    } else {
-        quotient = @intToFloat(f32, @floatToInt(i32, quotient - 0.5));
-    }
-    var y = v - math.tau * quotient;
+    var y = v - math.tau * @round(v * 1.0 / math.tau);
 
     const sign = blk: {
         if (y > 0.5 * math.pi) {
@@ -2692,6 +2665,20 @@ fn sincos32(v: f32) [2]f32 {
 }
 test "zmath.sincos32" {
     const epsilon = 0.0001;
+
+    try expect(math.isNan(sincos32(math.inf_f32)[0]));
+    try expect(math.isNan(sincos32(math.inf_f32)[1]));
+    try expect(math.isNan(sincos32(-math.inf_f32)[0]));
+    try expect(math.isNan(sincos32(-math.inf_f32)[1]));
+    try expect(math.isNan(sincos32(math.nan_f32)[0]));
+    try expect(math.isNan(sincos32(-math.nan_f32)[1]));
+
+    try expect(math.isNan(sin32(math.inf_f32)));
+    try expect(math.isNan(cos32(math.inf_f32)));
+    try expect(math.isNan(sin32(-math.inf_f32)));
+    try expect(math.isNan(cos32(-math.inf_f32)));
+    try expect(math.isNan(sin32(math.nan_f32)));
+    try expect(math.isNan(cos32(-math.nan_f32)));
 
     var f: f32 = -100.0;
     var i: u32 = 0;
