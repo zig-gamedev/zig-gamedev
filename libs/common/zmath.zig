@@ -130,6 +130,8 @@
 // mul(q0: Quat, q1: Quat) Quat
 // conjugate(quat: Quat) Quat
 // inverse(q: Quat) Quat
+// slerp(q0: Quat, q1: Quat, t: f32) Quat
+// slerpV(q0: Quat, q1: Quat, t: F32x4) Quat
 // quatToMat(quat: Quat) Mat
 // quatFromMat(m: Mat) Quat
 // quatFromAxisAngle(axis: Vec, angle: f32) Quat
@@ -2441,6 +2443,37 @@ test "zmath.quaternion.inverseQuat" {
     ));
 }
 
+pub fn slerp(q0: Quat, q1: Quat, t: f32) Quat {
+    return slerpV(q0, q1, splat(F32x4, t));
+}
+pub fn slerpV(q0: Quat, q1: Quat, t: F32x4) Quat {
+    var cos_omega = dot4(q0, q1);
+    const sign = select(cos_omega < splat(F32x4, 0.0), splat(F32x4, -1.0), splat(F32x4, 1.0));
+
+    cos_omega = cos_omega * sign;
+    const sin_omega = sqrt(splat(F32x4, 1.0) - cos_omega * cos_omega);
+
+    const omega = atan2(sin_omega, cos_omega);
+
+    var v01 = t;
+    v01 = @bitCast(F32x4, (@bitCast(U32x4, v01) & u32x4_mask2) ^ u32x4_sign_mask1);
+    v01 = f32x4(1.0, 0.0, 0.0, 0.0) + v01;
+
+    var s0 = sin(v01 * omega) / sin_omega;
+    s0 = select(cos_omega < splat(F32x4, 1.0 - 0.00001), s0, v01);
+
+    var s1 = swizzle(s0, .y, .y, .y, .y);
+    s0 = swizzle(s0, .x, .x, .x, .x);
+
+    return q0 * s0 + sign * q1 * s1;
+}
+test "zmath.quaternion.slerp" {
+    const from = f32x4(0.0, 0.0, 0.0, 1.0);
+    const to = f32x4(0.5, 0.5, -0.5, 0.5);
+    const result = slerp(from, to, 0.5);
+    try expect(approxEqAbs(result, f32x4(0.28867513, 0.28867513, -0.28867513, 0.86602540), 0.0001));
+}
+
 pub fn quatFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Quat {
     return quatFromRollPitchYawV(f32x4(pitch, yaw, roll, 0.0));
 }
@@ -2563,6 +2596,8 @@ const f32x4_0x8000_0000: F32x4 = splatInt(F32x4, 0x8000_0000);
 const f32x4_0x7fff_ffff: F32x4 = splatInt(F32x4, 0x7fff_ffff);
 const f32x4_inf: F32x4 = splat(F32x4, math.inf_f32);
 const u32x4_mask3: U32x4 = U32x4{ 0xffff_ffff, 0xffff_ffff, 0xffff_ffff, 0 };
+const u32x4_mask2: U32x4 = U32x4{ 0xffff_ffff, 0xffff_ffff, 0, 0 };
+const u32x4_sign_mask1: U32x4 = U32x4{ 0x8000_0000, 0, 0, 0 };
 
 inline fn splatNegativeZero(comptime T: type) T {
     return @splat(veclen(T), @bitCast(f32, @as(u32, 0x8000_0000)));
