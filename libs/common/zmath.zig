@@ -72,6 +72,11 @@
 // sin(v: F32xN) F32xN
 // cos(v: F32xN) F32xN
 // sincos(v: F32xN) [2]F32xN
+// asin(v: F32xN) F32xN [TODO(mziulek)]
+// acos(v: F32xN) F32xN [TODO(mziulek)]
+// log2(v: F32xN) F32xN [TODO(mziulek)]
+// log10(v: F32xN) F32xN [TODO(mziulek)]
+// logE(v: F32xN) F32xN [TODO(mziulek)]
 // atan(v: F32xN) F32xN
 // atan2(vy: F32xN, vx: F32xN) F32xN
 //
