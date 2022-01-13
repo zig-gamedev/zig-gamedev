@@ -145,6 +145,7 @@
 //
 // linePointDistance(linept0: Vec, linept1: Vec, pt: Vec) F32x4
 // sincos(v: f32) [2]f32
+// asin(v: f32) f32
 //
 // ==============================================================================
 
@@ -1354,6 +1355,15 @@ pub fn sincos(v: anytype) [2]@TypeOf(v) {
         f32 => sincos32(v),
         F32x4, F32x8, F32x16 => sincos32xN(v),
         else => @compileError("zmath.sincos() not implemented for " ++ @typeName(T)),
+    };
+}
+
+pub fn asin(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+    return switch (T) {
+        f32 => asin32(v),
+        //F32x4, F32x8, F32x16 => asin32xN(v),
+        else => @compileError("zmath.asin() not implemented for " ++ @typeName(T)),
     };
 }
 
@@ -2583,6 +2593,41 @@ test "zmath.sincos32" {
         try expect(math.approxEqAbs(f32, sc[0], s, epsilon));
         try expect(math.approxEqAbs(f32, sc[1], c, epsilon));
         f += 0.12345 * @intToFloat(f32, i);
+    }
+}
+
+fn asin32(v: f32) f32 {
+    const x = @fabs(v);
+    var omx = 1.0 - x;
+    if (omx < 0.0) {
+        omx = 0.0;
+    }
+    const root = @sqrt(omx);
+
+    // 7-degree minimax approximation
+    var result = mulAdd(@as(f32, -0.0012624911), x, 0.0066700901);
+    result = mulAdd(result, x, -0.0170881256);
+    result = mulAdd(result, x, 0.0308918810);
+    result = mulAdd(result, x, -0.0501743046);
+    result = mulAdd(result, x, 0.0889789874);
+    result = mulAdd(result, x, -0.2145988016);
+    result = root * mulAdd(result, x, 1.5707963050);
+
+    return if (v >= 0.0) 0.5 * math.pi - result else result - 0.5 * math.pi;
+}
+test "zmath.asin32" {
+    const epsilon = 0.1;
+
+    try expect(math.approxEqAbs(f32, asin(@as(f32, -1.1)), -0.5 * math.pi, epsilon));
+    try expect(math.approxEqAbs(f32, asin(@as(f32, 1.1)), 0.5 * math.pi, epsilon));
+
+    var f: f32 = -1.0;
+    var i: u32 = 0;
+    while (i < 8) : (i += 1) {
+        const r0 = asin32(f);
+        const r1 = math.asin(f);
+        try expect(math.approxEqAbs(f32, r0, r1, epsilon));
+        f += 0.09 * @intToFloat(f32, i);
     }
 }
 
