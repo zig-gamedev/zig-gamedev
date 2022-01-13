@@ -381,7 +381,6 @@ pub inline fn isNearEqual(
     v1: anytype,
     epsilon: anytype,
 ) @Vector(veclen(@TypeOf(v0)), bool) {
-    // Won't handle inf & nan
     const T = @TypeOf(v0);
     const delta = v0 - v1;
     const temp = maxFast(delta, splat(T, 0.0) - delta);
@@ -400,6 +399,26 @@ test "zmath.isNearEqual" {
         const b = isNearEqual(v0, v1, splat(F32x8, 0.01));
         try expect(@reduce(.And, b == Boolx8{ true, false, false, true, false, false, true, true }));
     }
+    try expect(all(isNearEqual(
+        splat(F32x4, math.inf_f32),
+        splat(F32x4, math.inf_f32),
+        splat(F32x4, 0.0001),
+    ), 0) == false);
+    try expect(all(isNearEqual(
+        splat(F32x4, -math.inf_f32),
+        splat(F32x4, math.inf_f32),
+        splat(F32x4, 0.0001),
+    ), 0) == false);
+    try expect(all(isNearEqual(
+        splat(F32x4, -math.inf_f32),
+        splat(F32x4, -math.inf_f32),
+        splat(F32x4, 0.0001),
+    ), 0) == false);
+    try expect(all(isNearEqual(
+        splat(F32x4, -math.nan_f32),
+        splat(F32x4, math.inf_f32),
+        splat(F32x4, 0.0001),
+    ), 0) == false);
 }
 
 pub inline fn isNan(
@@ -466,9 +485,9 @@ test "zmath.isInBounds" {
     }
     {
         const v0 = f32x8(2.0, 1.0, 2.0, 1.0, 0.5, -2.0, -1.0, 1.9);
-        const bounds = f32x8(1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0);
+        const bounds = f32x8(1.0, 1.0, 1.0, math.inf_f32, 1.0, math.nan_f32, 1.0, 2.0);
         const b0 = isInBounds(v0, bounds);
-        try expect(@reduce(.And, b0 == boolx8(false, true, false, true, true, true, true, true)));
+        try expect(@reduce(.And, b0 == boolx8(false, true, false, true, true, false, true, true)));
     }
 }
 
