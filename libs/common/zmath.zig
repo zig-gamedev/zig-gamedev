@@ -23,6 +23,8 @@
 // const b = va < vb;
 // if (all(b, 0)) { ... } // '0' means check all vector components; if all are 'true'
 // if (all(b, 3)) { ... } // '3' means check first three vector components; if all first three are 'true'
+// if (any(b, 0)) { ... } // '0' means check all vector components; if any is 'true'
+// if (any(b, 3)) { ... } // '3' means check first three vector components; if any from first three is 'true'
 //
 // const v4 = f32x4(...);
 // const v8 = f32x8(...);
