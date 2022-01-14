@@ -96,6 +96,7 @@
 // normalize3(v: Vec) Vec
 // normalize4(v: Vec) Vec
 // mul(v: Vec, m: Mat) Vec
+// mul(m: Mat, v: Vec) Vec
 // mul(v: Vec, s: f32) Vec
 // mul(s: f32, v: Vec) Vec
 //
@@ -1851,6 +1852,9 @@ fn vecMulMat(v: Vec, m: Mat) Vec {
     var vw = @shuffle(f32, v, undefined, [4]i32{ 3, 3, 3, 3 });
     return vx * m[0] + vy * m[1] + vz * m[2] + vw * m[3];
 }
+fn matMulVec(m: Mat, v: Vec) Vec {
+    return .{ dot4(m[0], v)[0], dot4(m[1], v)[0], dot4(m[2], v)[0], dot4(m[3], v)[0] };
+}
 test "zmath.vecMulMat" {
     const m = Mat{
         f32x4(1.0, 0.0, 0.0, 0.0),
@@ -1858,8 +1862,10 @@ test "zmath.vecMulMat" {
         f32x4(0.0, 0.0, 1.0, 0.0),
         f32x4(2.0, 3.0, 4.0, 1.0),
     };
-    const v = mul(f32x4(1.0, 2.0, 3.0, 1.0), m);
-    try expect(approxEqAbs(v, f32x4(3.0, 5.0, 7.0, 1.0), 0.0001));
+    const vm = mul(f32x4(1.0, 2.0, 3.0, 1.0), m);
+    const mv = mul(m, f32x4(1.0, 2.0, 3.0, 1.0));
+    try expect(approxEqAbs(vm, f32x4(3.0, 5.0, 7.0, 1.0), 0.0001));
+    try expect(approxEqAbs(mv, f32x4(1.0, 2.0, 3.0, 21.0), 0.0001));
 }
 
 // ------------------------------------------------------------------------------
@@ -1877,7 +1883,7 @@ fn mulRetType(comptime Ta: type, comptime Tb: type) type {
         return Mat;
     } else if ((Ta == f32 and Tb == Vec) or (Ta == Vec and Tb == f32)) {
         return Vec;
-    } else if (Ta == Vec and Tb == Mat) {
+    } else if ((Ta == Vec and Tb == Mat) or (Ta == Mat and Tb == Vec)) {
         return Vec;
     }
     @compileError("zmath.mul() not implemented for types: " ++ @typeName(Ta) ++ @typeName(Tb));
@@ -1902,8 +1908,10 @@ pub fn mul(a: anytype, b: anytype) mulRetType(@TypeOf(a), @TypeOf(b)) {
         return a * splat(F32x4, b);
     } else if (Ta == Vec and Tb == Mat) {
         return vecMulMat(a, b);
+    } else if (Ta == Mat and Tb == Vec) {
+        return matMulVec(a, b);
     } else {
-        @compileError("zmath.mul() not implemented for types: " ++ @typeName(Ta) ++ @typeName(Tb));
+        @compileError("zmath.mul() not implemented for types: " ++ @typeName(Ta) ++ ", " ++ @typeName(Tb));
     }
 }
 test "zmath.mul" {
