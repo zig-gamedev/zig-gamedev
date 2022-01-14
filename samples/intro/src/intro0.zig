@@ -1,4 +1,6 @@
 const std = @import("std");
+const math = std.math;
+const assert = std.debug.assert;
 const win32 = @import("win32");
 const w = win32.base;
 const d2d1 = win32.d2d1;
@@ -9,8 +11,7 @@ const gfx = common.graphics;
 const lib = common.library;
 const zm = common.zmath;
 const c = common.c;
-const math = std.math;
-const assert = std.debug.assert;
+
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;

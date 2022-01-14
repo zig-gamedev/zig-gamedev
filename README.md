@@ -1,4 +1,3 @@
-**NOTE: To compile this project you need latest version of Zig compiler (zig-windows-x86_64-0.9.0-dev.2023 or newer). You can download it [here](https://ziglang.org/download/).**
 
 # zig-gamedev project
 
@@ -10,7 +9,9 @@ This repository contains a collection of [sample applications](#sample-applicati
 
 * Zero dependency except [Zig compiler (master)](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
-* Helper libraries for working with DirectX 12 and real-time graphics (see: [graphics lib](#graphics-lib), [vectormath lib](#vectormath-lib))
+* Fast SIMD math library for game developers written in Zig: [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig)
+* Helper library for working with DirectX 12: [graphics lib](#graphics-lib)
+* Easy to use C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used in Zig/C/C++: [cbullet](#cbullet-lib)
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
 * Support for GPU profiling with PIX (markers and events API, see: [pix lib](#pix-lib))
 * Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) (zones API, see: [tracy lib](#tracy-lib))

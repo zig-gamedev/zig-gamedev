@@ -422,10 +422,10 @@ pub fn init() void {
             \\This application can't run on currently installed version of Windows.
             \\Following versions are supported:
             \\
-            \\Windows 10 May 2021 Update (Build 19043) or newer
-            \\Windows 10 October 2020 Update (Build 19042.789+)
-            \\Windows 10 May 2020 Update (Build 19041.789+)
-            \\Windows 10 November 2019 Update (Build 18363.1350+)
+            \\Windows 10 May 2021 (Build 19043) or newer
+            \\Windows 10 October 2020 (Build 19042.789+)
+            \\Windows 10 May 2020 (Build 19041.789+)
+            \\Windows 10 November 2019 (Build 18363.1350+)
             \\
             \\Please update your Windows version and try again.
         ,
