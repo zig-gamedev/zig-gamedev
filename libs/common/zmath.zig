@@ -3,7 +3,7 @@
 // zmath v0.2 - Fast SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig
 //
-// zmath uses row-major matrices, row vectors, and pre-multiplication.
+// zmath uses row-major matrices, row vectors (each row is stored in SIMD register).
 // Handedness is determined by which function version is used (Rh vs. Lh),
 // otherwise the function works with either left-handed or right-handed view coordinates.
 //
@@ -19,6 +19,10 @@
 // const v1 = mul(m, v); // 'v' treated as column vector
 // mul(v, m) == mul(transpose(m), v)
 // const f = m[row][column];
+//
+// const b = va < vb;
+// if (all(b, 0)) { ... } // '0' means check all vector components; if all are 'true'
+// if (all(b, 3)) { ... } // '3' means check first three vector components; if all first three are 'true'
 //
 // const v4 = f32x4(...);
 // const v8 = f32x8(...);
@@ -139,7 +143,10 @@
 // scalingV(v: Vec) Mat
 // lookToLh(eyepos: Vec, eyedir: Vec, updir: Vec) Mat
 // lookAtLh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat
+// lookToRh(eyepos: Vec, eyedir: Vec, updir: Vec) Mat
+// lookAtRh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat
 // perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
+// perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // determinant(m: Mat) F32x4
 // inverse(m: Mat) Mat
 // inverseDet(m: Mat, det: ?*F32x4) Mat
@@ -2091,8 +2098,14 @@ pub fn lookToLh(eyepos: Vec, eyedir: Vec, updir: Vec) Mat {
         f32x4(0.0, 0.0, 0.0, 1.0),
     });
 }
+pub fn lookToRh(eyepos: Vec, eyedir: Vec, updir: Vec) Mat {
+    return lookToLh(eyepos, -eyedir, updir);
+}
 pub fn lookAtLh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat {
     return lookToLh(eyepos, focuspos - eyepos, updir);
+}
+pub fn lookAtRh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat {
+    return lookToLh(eyepos, eyepos - focuspos, updir);
 }
 test "zmath.matrix.lookToLh" {
     const m = lookToLh(f32x4(0.0, 0.0, -3.0, 1.0), f32x4(0.0, 0.0, 1.0, 0.0), f32x4(0.0, 1.0, 0.0, 0.0));
@@ -2118,6 +2131,24 @@ pub fn perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
         f32x4(0.0, h, 0.0, 0.0),
         f32x4(0.0, 0.0, r, 1.0),
         f32x4(0.0, 0.0, -r * near, 0.0),
+    };
+}
+pub fn perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
+    const scfov = sincos(0.5 * fovy);
+
+    assert(near > 0.0 and far > 0.0 and far > near);
+    assert(!math.approxEqAbs(f32, scfov[0], 0.0, 0.001));
+    assert(!math.approxEqAbs(f32, far, near, 0.001));
+    assert(!math.approxEqAbs(f32, aspect, 0.0, 0.01));
+
+    const h = scfov[1] / scfov[0];
+    const w = h / aspect;
+    const r = far / (near - far);
+    return .{
+        f32x4(w, 0.0, 0.0, 0.0),
+        f32x4(0.0, h, 0.0, 0.0),
+        f32x4(0.0, 0.0, r, -1.0),
+        f32x4(0.0, 0.0, r * near, 0.0),
     };
 }
 
