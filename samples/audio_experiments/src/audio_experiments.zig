@@ -64,14 +64,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     {
-        const r0 = zm.asin(math.nan_f32);
-        const r1 = math.asin(math.nan_f32);
-
-        std.log.info("{any}", .{r0});
-        std.log.info("{any}", .{r1});
-    }
-
-    {
         var reverb_apo: ?*w.IUnknown = null;
         hrPanicOnFail(xaudio2fx.createReverb(&reverb_apo, 0));
         defer _ = reverb_apo.?.Release();

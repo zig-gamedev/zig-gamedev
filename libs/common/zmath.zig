@@ -72,17 +72,10 @@
 // sin(v: F32xN) F32xN
 // cos(v: F32xN) F32xN
 // sincos(v: F32xN) [2]F32xN
-// atan(v: F32xN) F32xN
-// atan2(vy: F32xN, vx: F32xN) F32xN
-// tan(v: F32xN) F32xN [TODO(mziulek)]
 // asin(v: F32xN) F32xN
 // acos(v: F32xN) F32xN
-// log2(v: F32xN) F32xN [TODO(mziulek)]
-// log10(v: F32xN) F32xN [TODO(mziulek)]
-// logE(v: F32xN) F32xN [TODO(mziulek)]
-// exp2(v: F32xN) F32xN [TODO(mziulek)]
-// exp10(v: F32xN) F32xN [TODO(mziulek)]
-// expE(v: F32xN) F32xN [TODO(mziulek)]
+// atan(v: F32xN) F32xN
+// atan2(vy: F32xN, vx: F32xN) F32xN
 //
 // ------------------------------------------------------------------------------
 // 3. 2D, 3D, 4D vector functions
