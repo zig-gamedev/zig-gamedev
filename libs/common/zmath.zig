@@ -14,8 +14,10 @@
 // const s0 = dot3(va, vb);
 //
 // const m = rotationX(math.pi * 0.25);
-// const vt0 = mul(va, m); // 'va' treated as row vector
-// const vt1 = mul(m, va); // 'va' treated as column vector
+// const v = f32x4(...);
+// const v0 = mul(v, m); // 'v' treated as row vector
+// const v1 = mul(m, v); // 'v' treated as column vector
+// mul(v, m) == mul(transpose(m), v)
 // const f = m[row][column];
 //
 // const v4 = f32x4(...);
@@ -1886,8 +1888,10 @@ test "zmath.vecMulMat" {
     };
     const vm = mul(f32x4(1.0, 2.0, 3.0, 1.0), m);
     const mv = mul(m, f32x4(1.0, 2.0, 3.0, 1.0));
+    const v = mul(transpose(m), f32x4(1.0, 2.0, 3.0, 1.0));
     try expect(approxEqAbs(vm, f32x4(3.0, 5.0, 7.0, 1.0), 0.0001));
     try expect(approxEqAbs(mv, f32x4(1.0, 2.0, 3.0, 21.0), 0.0001));
+    try expect(approxEqAbs(v, f32x4(3.0, 5.0, 7.0, 1.0), 0.0001));
 }
 
 // ------------------------------------------------------------------------------
