@@ -64,10 +64,6 @@ Some features of graphics library:
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
 * Custom integration of [dear imgui](https://github.com/ocornut/imgui) library
 
-#### [vectormath lib](libs/common/vectormath.zig)
-
-This libarary implements all basic linear algebra operations for Vec2, Vec3, Vec4, Mat4 and Quat.
-
 #### [cbullet lib](external/src/cbullet.h)
 
 Easy to use C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used by any project. Some features:
