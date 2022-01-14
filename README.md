@@ -45,10 +45,6 @@ Some of the sample applications are listed below. More can be found in [samples]
 
     <a href="samples/directml_convolution_test"><img src="samples/directml_convolution_test/screenshot.png" alt="directml convolution test" height="200"></a>
 
-1. [vector graphics test](samples/vector_graphics_test): This sample demonstrates how to use Direct3D 12 <-> Direct2D interop to render vector graphics and high-quality text.
-
-    <a href="samples/vector_graphics_test"><img src="samples/vector_graphics_test/screenshot.png" alt="vector graphics test" height="200"></a>
-    
 ## Building sample applications
 
 As mentioned above, the only dependency needed to build this project is [Zig compiler](https://ziglang.org/download/), neither Visual Studio nor Windows SDK has to be installed.
