@@ -75,7 +75,7 @@
 // atan(v: F32xN) F32xN
 // atan2(vy: F32xN, vx: F32xN) F32xN
 // tan(v: F32xN) F32xN [TODO(mziulek)]
-// asin(v: F32xN) F32xN [TODO(mziulek)]
+// asin(v: F32xN) F32xN
 // acos(v: F32xN) F32xN [TODO(mziulek)]
 // log2(v: F32xN) F32xN [TODO(mziulek)]
 // log10(v: F32xN) F32xN [TODO(mziulek)]
@@ -1412,7 +1412,7 @@ pub fn asin(v: anytype) @TypeOf(v) {
     const T = @TypeOf(v);
     return switch (T) {
         f32 => asin32(v),
-        //F32x4, F32x8, F32x16 => asin32xN(v),
+        F32x4, F32x8, F32x16 => asin32xN(v),
         else => @compileError("zmath.asin() not implemented for " ++ @typeName(T)),
     };
 }
@@ -1476,6 +1476,24 @@ test "zmath.sincos32xN" {
         try expect(approxEqAbs(sc16[1], c16, epsilon));
         f += 0.12345 * @intToFloat(f32, i);
     }
+}
+
+fn asin32xN(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+
+    const x = abs(v);
+    const root = sqrt(maxFast(splat(T, 0.0), splat(T, 1.0) - x));
+
+    var t0 = mulAdd(splat(T, -0.0012624911), x, splat(T, 0.0066700901));
+    t0 = mulAdd(t0, x, splat(T, -0.0170881256));
+    t0 = mulAdd(t0, x, splat(T, 0.0308918810));
+    t0 = mulAdd(t0, x, splat(T, -0.0501743046));
+    t0 = mulAdd(t0, x, splat(T, 0.0889789874));
+    t0 = mulAdd(t0, x, splat(T, -0.2145988016));
+    t0 = root * mulAdd(t0, x, splat(T, 1.5707963050));
+
+    const t1 = splat(T, math.pi) - t0;
+    return splat(T, 0.5 * math.pi) - select(v >= splat(T, 0.0), t0, t1);
 }
 
 pub fn atan(v: anytype) @TypeOf(v) {
@@ -2744,7 +2762,7 @@ fn asin32(v: f32) f32 {
     return if (v >= 0.0) 0.5 * math.pi - result else result - 0.5 * math.pi;
 }
 test "zmath.asin32" {
-    const epsilon = 0.1;
+    const epsilon = 0.0001;
 
     try expect(math.approxEqAbs(f32, asin(@as(f32, -1.1)), -0.5 * math.pi, epsilon));
     try expect(math.approxEqAbs(f32, asin(@as(f32, 1.1)), 0.5 * math.pi, epsilon));
@@ -2755,12 +2773,25 @@ test "zmath.asin32" {
     try expect(math.isNan(asin(math.nan_f32)));
     try expect(math.isNan(asin(-math.nan_f32)));
 
+    try expect(approxEqAbs(asin(splat(F32x8, -100.0)), splat(F32x8, -0.5 * math.pi), epsilon));
+    try expect(approxEqAbs(asin(splat(F32x16, 100.0)), splat(F32x16, 0.5 * math.pi), epsilon));
+    try expect(all(isNan(asin(splat(F32x4, math.inf_f32))), 0) == true);
+    try expect(all(isNan(asin(splat(F32x4, -math.inf_f32))), 0) == true);
+    try expect(all(isNan(asin(splat(F32x4, math.nan_f32))), 0) == true);
+    try expect(all(isNan(asin(splat(F32x4, math.qnan_f32))), 0) == true);
+
     var f: f32 = -1.0;
     var i: u32 = 0;
     while (i < 8) : (i += 1) {
         const r0 = asin32(f);
         const r1 = math.asin(f);
+        const r4 = asin(splat(F32x4, f));
+        const r8 = asin(splat(F32x8, f));
+        const r16 = asin(splat(F32x16, f));
         try expect(math.approxEqAbs(f32, r0, r1, epsilon));
+        try expect(approxEqAbs(r4, splat(F32x4, r1), epsilon));
+        try expect(approxEqAbs(r8, splat(F32x8, r1), epsilon));
+        try expect(approxEqAbs(r16, splat(F32x16, r1), epsilon));
         f += 0.09 * @intToFloat(f32, i);
     }
 }
