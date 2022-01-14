@@ -10,10 +10,10 @@ This repository contains a collection of [sample applications](#sample-applicati
 * Zero dependency except [Zig compiler (master)](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * [zmath lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig) - fast SIMD math library for game developers
-* [graphics lib](#graphics-lib) - helper library for working with DirectX 12
-* [cbullet lib](#cbullet-lib) - C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used in Zig/C/C++
-* [pix lib](#pix-lib) - support for GPU profiling with PIX
-* [tracy lib](#tracy-lib) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
+* [graphics lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/graphics.zig) - helper library for working with DirectX 12
+* [cbullet lib](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.h) - C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used in Zig/C/C++
+* [pix lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/pix3.zig) - support for GPU profiling with PIX
+* [tracy lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/tracy.zig) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src))
 
@@ -49,47 +49,6 @@ Some of the sample applications are listed below. More can be found in [samples]
 
     <a href="samples/vector_graphics_test"><img src="samples/vector_graphics_test/screenshot.png" alt="vector graphics test" height="200"></a>
     
-## Libraries
-
-#### [graphics lib](libs/common/graphics.zig)
-
-Some features of graphics library:
-
-* Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
-* Basic DirectX 12 resource management (handle-based resources and pipelines)
-* Basic resource barriers management with simple state-tracking
-* Fast image loading using WIC (Windows Imaging Component)
-* Helpers for uploading data to the GPU
-* Fast mipmap generator running on the GPU
-* Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
-* Custom integration of [dear imgui](https://github.com/ocornut/imgui) library
-
-#### [cbullet lib](external/src/cbullet.h)
-
-Easy to use C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used by any project. Some features:
-* Most collision shapes
-* Rigid bodies
-* Most constraint types
-* Tries to minimize number of memory allocations
-  * Multiple rigid bodies and motion states can be created with one memory allocation
-  * New physics objects can re-use existing memory
-* Lots of error checks in debug builds
-
-#### [pix lib](libs/common/pix3.zig)
-
-This is a simple libarary that lets you mark named events on the GPU timeline. Those events can be then anaylzed in PIX. Additionaly, you can programmatically record PIX traces to a file. Note, that this library does not require WinPixEventRuntime.dll to work. Following operations are supported:
-
-* beginCapture, endCapture
-* beginEventOnCommandList, endEventOnCommandList, setMarkerOnCommandList
-* beginEventOnCommandQueue, endEventOnCommandQueue, setMarkerOnCommandQueue
-
-#### [tracy lib](libs/common/tracy.zig)
-
-This is a simple libarary that lets you mark named events (zones) on the CPU timeline. Zones can be then anaylzed in [Tracy](https://github.com/wolfpld/tracy) profiler. Following operation are supported:
-
-* zone, zoneN, zoneNC
-* frameMark, frameMarkNamed
-
 ## Building sample applications
 
 As mentioned above, the only dependency needed to build this project is [Zig compiler](https://ziglang.org/download/), neither Visual Studio nor Windows SDK has to be installed.
