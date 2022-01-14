@@ -3,6 +3,28 @@
 // zmath v0.2 - Fast SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig
 //
+// zmath uses row-major matrices, row vectors, and pre-multiplication.
+// Handedness is determined by which function version is used (Rh vs. Lh),
+// otherwise the function works with either left-handed or right-handed view coordinates.
+//
+// const va = f32x4(1.0, 2.0, 3.0, 1.0);
+// const vb = f32x4(-1.0, 1.0, -1.0, 1.0);
+// const v0 = va + vb - f32x4(0.0, 1.0, 0.0, 1.0) * splat(F32x4, 3.0);
+// const v1 = cross(va, vb) + f32x4(1.0, 1.0, 1.0, 1.0);
+// const s0 = dot3(va, vb);
+//
+// const m = rotationX(math.pi * 0.25);
+// const vt0 = mul(va, m); // 'va' treated as row vector
+// const vt1 = mul(m, va); // 'va' treated as column vector
+// const f = m[row][column];
+//
+// const v4 = f32x4(...);
+// const v8 = f32x8(...);
+// const v16 = f32x16(...);
+// const v4r = sin(v4);
+// const v8r = sin(v8);
+// const v16r = sin(v16);
+//
 // ------------------------------------------------------------------------------
 // 1. Initialization functions
 // ------------------------------------------------------------------------------
