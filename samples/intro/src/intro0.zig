@@ -9,13 +9,11 @@ const dwrite = win32.dwrite;
 const common = @import("common");
 const gfx = common.graphics;
 const lib = common.library;
-const zm = common.zmath;
-const c = common.c;
 
-const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
+// We need to export below symbols for DirectX 12 Agility SDK.
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
@@ -33,28 +31,36 @@ const DemoState = struct {
 };
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
+    // Create application window and initialize dear imgui library.
     const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
+    // Create temporary memory allocator for use during initialization. We pass this allocator to all
+    // subsystems that need memory and then free everyting with a single deallocation.
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
+    // Create DirectX 12 context.
     var gctx = gfx.GraphicsContext.init(window);
+
+    // Enable vsync.
     gctx.present_flags = 0;
     gctx.present_interval = 1;
 
+    // Create Direct2D brush which will be needed to display text.
     const brush = blk: {
-        var brush: *d2d1.ISolidColorBrush = undefined;
+        var brush: ?*d2d1.ISolidColorBrush = null;
         hrPanicOnFail(gctx.d2d.context.CreateSolidColorBrush(
             &.{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
             null,
-            @ptrCast(*?*d2d1.ISolidColorBrush, &brush),
+            &brush,
         ));
-        break :blk brush;
+        break :blk brush.?;
     };
 
+    // Create Direct2D text format which will be needed to display text.
     const normal_tfmt = blk: {
-        var info_txtfmt: *dwrite.ITextFormat = undefined;
+        var info_txtfmt: ?*dwrite.ITextFormat = null;
         hrPanicOnFail(gctx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
@@ -63,21 +69,24 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             dwrite.FONT_STRETCH.NORMAL,
             32.0,
             L("en-us"),
-            @ptrCast(*?*dwrite.ITextFormat, &info_txtfmt),
+            &info_txtfmt,
         ));
-        break :blk info_txtfmt;
+        break :blk info_txtfmt.?;
     };
     hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
 
-    //
-    // Begin frame to init/upload resources to the GPU.
-    //
+    // Open D3D12 command list, setup descriptor heap, etc. After this call we can upload resources to the GPU,
+    // draw 3D graphics etc.
     gctx.beginFrame();
 
+    // Create and upload graphics resources for dear imgui renderer.
     var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
 
+    // This will send command list to the GPU, call 'Present' and do some other bookkeeping.
     gctx.endFrame();
+
+    // Wait for the GPU to finish all commands.
     gctx.finishGpuCommands();
 
     return .{
@@ -100,15 +109,21 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
 }
 
 fn update(demo: *DemoState) void {
+    // Update frame counter and fps stats.
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
+
+    // Update dear imgui lib. After this call we can define our widgets.
     lib.newImGuiFrame(dt);
 }
 
 fn draw(demo: *DemoState) void {
     var gctx = &demo.gctx;
+
+    // Begin DirectX 12 rendering.
     gctx.beginFrame();
 
+    // Get current back buffer resource and transition it to 'render target' state.
     const back_buffer = gctx.getBackBuffer();
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
     gctx.flushResourceBarriers();
@@ -128,8 +143,11 @@ fn draw(demo: *DemoState) void {
 
     demo.guictx.draw(gctx);
 
+    // Begin Direct2D rendering to the back buffer.
     gctx.beginDraw2d();
     {
+        // Display average fps and frame time.
+
         const stats = &demo.frame_stats;
         var buffer = [_]u8{0} ** 64;
         const text = std.fmt.bufPrint(
@@ -152,15 +170,20 @@ fn draw(demo: *DemoState) void {
             @ptrCast(*d2d1.IBrush, demo.brush),
         );
     }
+    // End Direct2D rendering and transition back buffer to 'present' state.
     gctx.endDraw2d();
 
+    // Call 'Present' and prepare for the next frame.
     gctx.endFrame();
 }
 
 pub fn main() !void {
+    // Initialize some low-level Windows stuff (DPI awarness, COM), check Windows version and also check
+    // if DirectX 12 Agility SDK is supported.
     lib.init();
     defer lib.deinit();
 
+    // Create main memory allocater for our application.
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const leaked = gpa_allocator_state.deinit();
