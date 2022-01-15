@@ -10,6 +10,7 @@ This repository contains a collection of [sample applications](#sample-applicati
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * [zmath lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig) - fast SIMD math library for game developers
 * [graphics lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/graphics.zig) - helper library for working with DirectX 12
+* [audio lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/audio.zig) - helper library for working with XAudio2
 * [cbullet lib](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.h) - C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) that can be used in Zig/C/C++
 * [pix lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/pix3.zig) - support for GPU profiling with PIX
 * [tracy lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/tracy.zig) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
