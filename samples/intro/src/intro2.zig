@@ -60,6 +60,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Create DirectX 12 context.
     var gctx = gfx.GraphicsContext.init(window);
 
+    // Enable vsync.
+    // gctx.present_flags = 0;
+    // gctx.present_interval = 1;
+
     // Create Direct2D brush which will be needed to display text.
     const brush = blk: {
         var brush: ?*d2d1.ISolidColorBrush = null;

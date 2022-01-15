@@ -47,8 +47,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var gctx = gfx.GraphicsContext.init(window);
 
     // Enable vsync.
-    gctx.present_flags = 0;
-    gctx.present_interval = 1;
+    // gctx.present_flags = 0;
+    // gctx.present_interval = 1;
 
     // Create Direct2D brush which will be needed to display text.
     const brush = blk: {
@@ -70,14 +70,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             .BOLD,
             .NORMAL,
             .NORMAL,
-            32.0,
+            96.0,
             L("en-us"),
             &info_txtfmt,
         ));
         break :blk info_txtfmt.?;
     };
-    hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
-    hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
+    hrPanicOnFail(normal_tfmt.SetTextAlignment(.CENTER));
+    hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.CENTER));
 
     // Open D3D12 command list, setup descriptor heap, etc. After this call we can upload resources to the GPU,
     // draw 3D graphics etc.
@@ -139,7 +139,7 @@ fn draw(demo: *DemoState) void {
     );
     gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
+        &[4]f32{ 0.2, 0.4, 0.8, 1.0 },
         0,
         null,
     );
@@ -156,7 +156,7 @@ fn draw(demo: *DemoState) void {
         var buffer = [_]u8{0} ** 64;
         const text = std.fmt.bufPrint(
             buffer[0..],
-            "FPS: {d:.1}\nCPU time: {d:.3} ms",
+            "FPS: {d:.1}\nCPU time: {d:.3} ms\n\nmagic is everywhere",
             .{ stats.fps, stats.average_cpu_time },
         ) catch unreachable;
 
@@ -166,8 +166,8 @@ fn draw(demo: *DemoState) void {
             text,
             demo.normal_tfmt,
             &d2d1.RECT_F{
-                .left = 10.0,
-                .top = 10.0,
+                .left = 0.0,
+                .top = 0.0,
                 .right = @intToFloat(f32, gctx.viewport_width),
                 .bottom = @intToFloat(f32, gctx.viewport_height),
             },

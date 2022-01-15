@@ -53,8 +53,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var gctx = gfx.GraphicsContext.init(window);
 
     // Enable vsync.
-    gctx.present_flags = 0;
-    gctx.present_interval = 1;
+    // gctx.present_flags = 0;
+    // gctx.present_interval = 1;
 
     // Create Direct2D brush which will be needed to display text.
     const brush = blk: {
