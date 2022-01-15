@@ -1,5 +1,5 @@
 //
-// This intro application shows how to draw 2D triangle.
+// This intro application shows how to draw rotating, 3D triangle. It also shows how to setup a zbuffer.
 //
 const std = @import("std");
 const math = std.math;
@@ -12,6 +12,7 @@ const dwrite = win32.dwrite;
 const common = @import("common");
 const gfx = common.graphics;
 const lib = common.library;
+const zm = common.zmath;
 
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
@@ -21,9 +22,13 @@ const L = std.unicode.utf8ToUtf16LeStringLiteral;
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const window_name = "zig-gamedev: intro 1";
+const window_name = "zig-gamedev: intro 2";
 const window_width = 1920;
 const window_height = 1080;
+
+const Pso_DrawConst = struct {
+    object_to_clip: [16]f32,
+};
 
 const DemoState = struct {
     gctx: gfx.GraphicsContext,
@@ -33,10 +38,13 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
-    intro1_pso: gfx.PipelineHandle,
+    intro2_pso: gfx.PipelineHandle,
 
     vertex_buffer: gfx.ResourceHandle,
     index_buffer: gfx.ResourceHandle,
+
+    depth_texture: gfx.ResourceHandle,
+    depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
@@ -51,10 +59,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     // Create DirectX 12 context.
     var gctx = gfx.GraphicsContext.init(window);
-
-    // Enable vsync.
-    gctx.present_flags = 0;
-    gctx.present_interval = 1;
 
     // Create Direct2D brush which will be needed to display text.
     const brush = blk: {
@@ -87,7 +91,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     // Create pipeline state object (pso) which is needed to draw geometry - it contains vertex shader,
     // pixel shader and draw state data all linked together.
-    const intro1_pso = blk: {
+    const intro2_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
         };
@@ -99,15 +103,16 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         };
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
-        pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+        pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.RasterizerState.CullMode = .NONE;
 
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/intro1.vs.cso",
-            "content/shaders/intro1.ps.cso",
+            "content/shaders/intro2.vs.cso",
+            "content/shaders/intro2.ps.cso",
         );
     };
 
@@ -128,6 +133,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
+
+    // Create depth texture resource.
+    const depth_texture = gctx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &blk: {
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
+            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            break :blk desc;
+        },
+        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+    ) catch |err| hrPanic(err);
+
+    // Create depth texture 'view' - a descriptor which can be send to Direct3D12 API.
+    const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
+    gctx.device.CreateDepthStencilView(gctx.getResource(depth_texture), null, depth_texture_dsv);
 
     // Open D3D12 command list, setup descriptor heap, etc. After this call we can upload resources to the GPU,
     // draw 3D graphics etc.
@@ -191,17 +213,20 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
-        .intro1_pso = intro1_pso,
+        .intro2_pso = intro2_pso,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
+        .depth_texture = depth_texture,
+        .depth_texture_dsv = depth_texture_dsv,
     };
 }
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
+    _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
-    _ = demo.gctx.releasePipeline(demo.intro1_pso);
+    _ = demo.gctx.releasePipeline(demo.intro2_pso);
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
     demo.guictx.deinit(&demo.gctx);
@@ -234,7 +259,7 @@ fn draw(demo: *DemoState) void {
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
-        null,
+        &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
@@ -242,9 +267,10 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
+    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
 
     // Set graphics state and draw.
-    gctx.setCurrentPipeline(demo.intro1_pso);
+    gctx.setCurrentPipeline(demo.intro2_pso);
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
@@ -256,9 +282,40 @@ fn draw(demo: *DemoState) void {
         .SizeInBytes = 3 * @sizeOf(u32),
         .Format = .R32_UINT,
     });
+
+    // Upload per-draw constant data.
+    {
+        // Compute transformation matrices.
+        const object_to_world = zm.rotationY(@floatCast(f32, demo.frame_stats.time));
+        const world_to_view = zm.lookAtLh(
+            zm.f32x4(2.0, 2.0, -2.0, 1.0), // eye position
+            zm.f32x4(0.0, 0.0, 0.0, 1.0), // focus point
+            zm.f32x4(0.0, 1.0, 0.0, 0.0), // up direction ('w' coord is zero because this is a vector not a point)
+        );
+        const view_to_clip = zm.perspectiveFovLh(
+            0.25 * math.pi,
+            @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+            0.1,
+            20.0,
+        );
+
+        const object_to_view = zm.mul(object_to_world, world_to_view);
+        const object_to_clip = zm.mul(object_to_view, view_to_clip);
+
+        // Allocate memory for one instance of Pso_DrawConst structure.
+        const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
+
+        // Copy 'object_to_clip' matrix to upload memory. We need to transpose it because
+        // HLSL uses column-major matrices by default (zmath uses row-major matrices).
+        zm.storeF32x4x4(mem.cpu_slice[0].object_to_clip[0..], zm.transpose(object_to_clip));
+
+        // Set GPU handle of our allocated memory region so that it is visible to the shader.
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+    }
+
     gctx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
 
-    // Draw dear imgui (not used in this demo).
+    // Draw dear imgui widgets (not used in this demo).
     demo.guictx.draw(gctx);
 
     // Begin Direct2D rendering to the back buffer.

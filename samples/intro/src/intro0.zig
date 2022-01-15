@@ -1,3 +1,6 @@
+//
+// This intro application shows how to create window, setup DirectX 12 context and clear the window.
+//
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
@@ -64,9 +67,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(gctx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
-            dwrite.FONT_WEIGHT.BOLD,
-            dwrite.FONT_STYLE.NORMAL,
-            dwrite.FONT_STRETCH.NORMAL,
+            .BOLD,
+            .NORMAL,
+            .NORMAL,
             32.0,
             L("en-us"),
             &info_txtfmt,
@@ -141,6 +144,7 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
+    // Draw dear imgui (not used in this demo).
     demo.guictx.draw(gctx);
 
     // Begin Direct2D rendering to the back buffer.

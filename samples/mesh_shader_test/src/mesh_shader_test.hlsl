@@ -160,7 +160,7 @@ void vsMain(
 
 [RootSignature(ROOT_SIGNATURE)]
 void psMain(
-        float3 barycentrics : SV_Barycentrics,
+    float3 barycentrics : SV_Barycentrics,
     Vertex vertex,
     out float4 out_color : SV_Target0
 ) {

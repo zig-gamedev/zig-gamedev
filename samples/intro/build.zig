@@ -65,13 +65,19 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("src/intro1.hlsl", "psMain", "intro1.ps.cso", "ps", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/intro2.hlsl", "vsMain", "intro2.vs.cso", "vs", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/intro2.hlsl", "psMain", "intro2.ps.cso", "ps", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     install_content_step.step.dependOn(dxc_step);
 
-    const progs = [2]*std.build.LibExeObjStep{
+    const progs = [_]*std.build.LibExeObjStep{
         b.addExecutable("intro0", "src/intro0.zig"),
         b.addExecutable("intro1", "src/intro1.zig"),
+        b.addExecutable("intro2", "src/intro2.zig"),
     };
-    const active_prog = progs[1];
+    const active_prog = progs[2];
     const target_options = b.standardTargetOptions(.{});
     const release_options = b.standardReleaseOptions();
 
