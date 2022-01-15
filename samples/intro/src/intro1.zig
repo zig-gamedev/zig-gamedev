@@ -239,7 +239,7 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
-    // Set graphics state and draw
+    // Set graphics state and draw.
     gctx.setCurrentPipeline(demo.intro1_pso);
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
