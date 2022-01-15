@@ -183,7 +183,7 @@ pub fn main() !void {
     lib.init();
     defer lib.deinit();
 
-    // Create main memory allocater for our application.
+    // Create main memory allocator for our application.
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const leaked = gpa_allocator_state.deinit();

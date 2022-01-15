@@ -33,7 +33,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
     <a href="samples/mesh_shader_test"><img src="samples/mesh_shader_test/screenshot.png" alt="mesh shader test" height="200"></a>
 
-1. [virtual physics lab](samples/bullet_physics_test): This sample applications demonstrates how to use full 3D physics engine in your Zig applications.
+1. [virtual physics lab](samples/bullet_physics_test): This sample application demonstrates how to use full 3D physics engine in your Zig programs.
 
     <a href="samples/bullet_physics_test"><img src="samples/bullet_physics_test/screenshot1.png" alt="virtual physics lab" height="200"></a>
 
