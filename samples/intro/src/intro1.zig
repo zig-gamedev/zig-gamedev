@@ -10,6 +10,7 @@ const common = @import("common");
 const gfx = common.graphics;
 const lib = common.library;
 
+const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
@@ -28,6 +29,11 @@ const DemoState = struct {
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
+
+    intro1_pso: gfx.PipelineHandle,
+
+    vertex_buffer: gfx.ResourceHandle,
+    index_buffer: gfx.ResourceHandle,
 };
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
@@ -64,9 +70,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(gctx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
-            dwrite.FONT_WEIGHT.BOLD,
-            dwrite.FONT_STYLE.NORMAL,
-            dwrite.FONT_STRETCH.NORMAL,
+            .BOLD,
+            .NORMAL,
+            .NORMAL,
             32.0,
             L("en-us"),
             &info_txtfmt,
@@ -76,12 +82,98 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
 
+    // Create pipeline state object (pso) which is needed to draw geometry - it contains vertex shader,
+    // pixel shader and draw state data all linked together.
+    const intro1_pso = blk: {
+        const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
+            d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+        };
+
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.InputLayout = .{
+            .pInputElementDescs = &input_layout_desc,
+            .NumElements = input_layout_desc.len,
+        };
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+
+        break :blk gctx.createGraphicsShaderPipeline(
+            arena_allocator,
+            &pso_desc,
+            "content/shaders/intro1.vs.cso",
+            "content/shaders/intro1.ps.cso",
+        );
+    };
+
+    // Create vertex buffer and return a *handle* to the underlying Direct3D12 resource.
+    const vertex_buffer = gctx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf([3]f32)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
+
+    // Create index buffer and return a *handle* to the underlying Direct3D12 resource.
+    const index_buffer = gctx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
+        d3d12.RESOURCE_STATE_COPY_DEST,
+        null,
+    ) catch |err| hrPanic(err);
+
     // Open D3D12 command list, setup descriptor heap, etc. After this call we can upload resources to the GPU,
     // draw 3D graphics etc.
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
     var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
+
+    // Fill vertex buffer with vertex data.
+    {
+        // Allocate memory from upload heap and fill it with vertex data.
+        const verts = gctx.allocateUploadBufferRegion([3]f32, 3);
+        verts.cpu_slice[0] = [3]f32{ -0.7, -0.7, 0.0 };
+        verts.cpu_slice[1] = [3]f32{ 0.0, 0.7, 0.0 };
+        verts.cpu_slice[2] = [3]f32{ 0.7, -0.7, 0.0 };
+
+        // Copy vertex data from upload heap to vertex buffer resource that resides in high-performance memory
+        // on the GPU.
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.getResource(vertex_buffer),
+            0,
+            verts.buffer,
+            verts.buffer_offset,
+            verts.cpu_slice.len * @sizeOf(@TypeOf(verts.cpu_slice[0])),
+        );
+    }
+
+    // Fill index buffer with index data.
+    {
+        // Allocate memory from upload heap and fill it with index data.
+        const indices = gctx.allocateUploadBufferRegion(u32, 3);
+        indices.cpu_slice[0] = 0;
+        indices.cpu_slice[1] = 1;
+        indices.cpu_slice[2] = 2;
+
+        // Copy index data from upload heap to index buffer resource that resides in high-performance memory
+        // on the GPU.
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.getResource(index_buffer),
+            0,
+            indices.buffer,
+            indices.buffer_offset,
+            indices.cpu_slice.len * @sizeOf(@TypeOf(indices.cpu_slice[0])),
+        );
+    }
+
+    // Transition vertex and index buffers from 'copy dest' state to the state appropriate for rendering.
+    gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+    gctx.flushResourceBarriers();
 
     // This will send command list to the GPU, call 'Present' and do some other bookkeeping.
     gctx.endFrame();
@@ -95,11 +187,17 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
+        .intro1_pso = intro1_pso,
+        .vertex_buffer = vertex_buffer,
+        .index_buffer = index_buffer,
     };
 }
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
+    _ = demo.gctx.releaseResource(demo.vertex_buffer);
+    _ = demo.gctx.releaseResource(demo.index_buffer);
+    _ = demo.gctx.releasePipeline(demo.intro1_pso);
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
     demo.guictx.deinit(&demo.gctx);
@@ -141,6 +239,22 @@ fn draw(demo: *DemoState) void {
         null,
     );
 
+    // Set graphics state and draw
+    gctx.setCurrentPipeline(demo.intro1_pso);
+    gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+        .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+        .SizeInBytes = 3 * @sizeOf([3]f32),
+        .StrideInBytes = @sizeOf([3]f32),
+    }});
+    gctx.cmdlist.IASetIndexBuffer(&.{
+        .BufferLocation = gctx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+        .SizeInBytes = 3 * @sizeOf(u32),
+        .Format = .R32_UINT,
+    });
+    gctx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
+
+    // Draw dear imgui (not used in this demo).
     demo.guictx.draw(gctx);
 
     // Begin Direct2D rendering to the back buffer.
