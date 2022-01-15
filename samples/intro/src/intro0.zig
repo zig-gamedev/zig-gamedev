@@ -1,5 +1,6 @@
 //
-// This intro application shows how to create window, setup DirectX 12 context and clear the window.
+// This intro application shows how to create window, setup DirectX 12 context and clear the window
+// and draw text using Direct2D.
 //
 const std = @import("std");
 const math = std.math;

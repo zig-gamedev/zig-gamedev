@@ -1,5 +1,5 @@
 //
-// This intro application shows how to draw rotating, 3D triangle. It also shows how to setup a zbuffer.
+// This intro application shows how to draw rotating 3D triangle and how to setup a zbuffer.
 //
 const std = @import("std");
 const math = std.math;
