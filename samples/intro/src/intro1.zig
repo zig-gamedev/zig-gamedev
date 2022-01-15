@@ -96,6 +96,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         };
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
+        pso_desc.DepthStencilState.DepthEnable = w.FALSE;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
