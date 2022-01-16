@@ -1,6 +1,5 @@
-//
 // This intro application shows how to setup a zbuffer, how to load a mesh from file and how to draw it in 3D space.
-//
+
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;

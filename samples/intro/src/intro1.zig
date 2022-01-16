@@ -1,6 +1,5 @@
-//
 // This intro application shows how to draw 2D triangle.
-//
+
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
