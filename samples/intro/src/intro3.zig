@@ -316,18 +316,17 @@ fn update(demo: *DemoState) void {
 
     // Handle camera movement with 'WASD' keys.
     {
-        const speed: f32 = 10.0;
-        const delta_time = demo.frame_stats.delta_time;
+        const speed = zm.f32x4s(10.0);
+        const delta_time = zm.f32x4s(demo.frame_stats.delta_time);
         const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
 
         zm.store(demo.camera.forward[0..], forward, 3);
 
-        const scale = zm.f32x4s(speed * delta_time);
-        const right = scale * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
-        forward = scale * forward;
+        const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
+        forward = speed * delta_time * forward;
 
-        var cpos = zm.load(demo.camera.position[0..], zm.F32x4, 3);
+        var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
         if (w.GetAsyncKeyState('W') < 0) {
             cpos += forward;
