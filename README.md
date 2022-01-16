@@ -1,3 +1,5 @@
+**If you would like to learn graphics programming or how to use zig-gamedev code framework I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).**
+
 # zig-gamedev project
 
 This repository contains a collection of [sample applications](#sample-applications) and libraries written in **[Zig programming language](https://ziglang.org/)** and using DirectX 12, DirectML, XAudio2, WASAPI, Direct2D, DirectWrite, Bullet Physics SDK. Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases). Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.<br />
@@ -16,8 +18,6 @@ This repository contains a collection of [sample applications](#sample-applicati
 * [tracy lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/tracy.zig) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src))
-
-If you would like to learn graphics programming or zig-gamedev framework I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).
 
 ## Sample applications
 
