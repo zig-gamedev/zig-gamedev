@@ -9,7 +9,7 @@ fn makeDxcCmd(
     comptime profile: []const u8,
     comptime define: []const u8,
 ) [9][]const u8 {
-    const shader_ver = "6_3";
+    const shader_ver = "6_6";
     const shader_dir = "content/shaders/";
     return [9][]const u8{
         "../../external/bin/dxc/dxc.exe",
@@ -70,14 +70,20 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("src/intro2.hlsl", "psMain", "intro2.ps.cso", "ps", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/intro3.hlsl", "vsMain", "intro3.vs.cso", "vs", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/intro3.hlsl", "psMain", "intro3.ps.cso", "ps", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     install_content_step.step.dependOn(dxc_step);
 
     const progs = [_]*std.build.LibExeObjStep{
         b.addExecutable("intro0", "src/intro0.zig"),
         b.addExecutable("intro1", "src/intro1.zig"),
         b.addExecutable("intro2", "src/intro2.zig"),
+        b.addExecutable("intro3", "src/intro3.zig"),
     };
-    const active_prog = progs[2];
+    const active_prog = progs[3];
     const target_options = b.standardTargetOptions(.{});
     const release_options = b.standardReleaseOptions();
 

@@ -96,7 +96,7 @@
 // sqrt(v: F32xN) F32xN
 // abs(v: F32xN) F32xN
 // mod(v0: F32xN, v1: F32xN) F32xN
-// modAngles(v: F32xN) F32xN
+// modAngle(v: F32xN) F32xN
 // mulAdd(v0: F32xN, v1: F32xN, v2: F32xN) F32xN
 // select(mask: BoolxN, v0: F32xN, v1: F32xN)
 // sin(v: F32xN) F32xN
@@ -224,6 +224,9 @@ const has_fma = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cp
 //
 // ------------------------------------------------------------------------------
 
+pub inline fn f32x4s(e0: f32) F32x4 {
+    return .{ e0, e0, e0, e0 };
+}
 pub inline fn f32x4(e0: f32, e1: f32, e2: f32, e3: f32) F32x4 {
     return .{ e0, e1, e2, e3 };
 }
@@ -1287,17 +1290,26 @@ test "zmath.mod" {
     try expect(all(isNan(mod(splat(F32x4, math.inf_f32), splat(F32x4, math.nan_f32))), 0));
 }
 
-pub inline fn modAngles(v: anytype) @TypeOf(v) {
+pub fn modAngle(v: anytype) @TypeOf(v) {
+    const T = @TypeOf(v);
+    return switch (T) {
+        f32 => modAngle32(v),
+        F32x4, F32x8, F32x16 => modAngle32xN(v),
+        else => @compileError("zmath.modAngle() not implemented for " ++ @typeName(T)),
+    };
+}
+
+pub inline fn modAngle32xN(v: anytype) @TypeOf(v) {
     const T = @TypeOf(v);
     return v - splat(T, math.tau) * round(v * splat(T, 1.0 / math.tau)); // 2 x vmulps, 2 x load, vroundps, vaddps
 }
-test "zmath.modAngles" {
-    try expect(approxEqAbs(modAngles(splat(F32x4, math.tau)), splat(F32x4, 0.0), 0.0005));
-    try expect(approxEqAbs(modAngles(splat(F32x4, 0.0)), splat(F32x4, 0.0), 0.0005));
-    try expect(approxEqAbs(modAngles(splat(F32x4, math.pi)), splat(F32x4, math.pi), 0.0005));
-    try expect(approxEqAbs(modAngles(splat(F32x4, 11 * math.pi)), splat(F32x4, math.pi), 0.0005));
-    try expect(approxEqAbs(modAngles(splat(F32x4, 3.5 * math.pi)), splat(F32x4, -0.5 * math.pi), 0.0005));
-    try expect(approxEqAbs(modAngles(splat(F32x4, 2.5 * math.pi)), splat(F32x4, 0.5 * math.pi), 0.0005));
+test "zmath.modAngle" {
+    try expect(approxEqAbs(modAngle(splat(F32x4, math.tau)), splat(F32x4, 0.0), 0.0005));
+    try expect(approxEqAbs(modAngle(splat(F32x4, 0.0)), splat(F32x4, 0.0), 0.0005));
+    try expect(approxEqAbs(modAngle(splat(F32x4, math.pi)), splat(F32x4, math.pi), 0.0005));
+    try expect(approxEqAbs(modAngle(splat(F32x4, 11 * math.pi)), splat(F32x4, math.pi), 0.0005));
+    try expect(approxEqAbs(modAngle(splat(F32x4, 3.5 * math.pi)), splat(F32x4, -0.5 * math.pi), 0.0005));
+    try expect(approxEqAbs(modAngle(splat(F32x4, 2.5 * math.pi)), splat(F32x4, 0.5 * math.pi), 0.0005));
 }
 
 pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
@@ -1314,7 +1326,7 @@ fn sin32xN(v: anytype) @TypeOf(v) {
     // 11-degree minimax approximation
     const T = @TypeOf(v);
 
-    var x = modAngles(v);
+    var x = modAngle(v);
     const sign = andInt(x, splatNegativeZero(T));
     const c = orInt(sign, splat(T, math.pi));
     const absx = andNotInt(sign, x);
@@ -1364,7 +1376,7 @@ fn cos32xN(v: anytype) @TypeOf(v) {
     // 10-degree minimax approximation
     const T = @TypeOf(v);
 
-    var x = modAngles(v);
+    var x = modAngle(v);
     var sign = andInt(x, splatNegativeZero(T));
     const c = orInt(sign, splat(T, math.pi));
     const absx = andNotInt(sign, x);
@@ -1456,7 +1468,7 @@ pub fn acos(v: anytype) @TypeOf(v) {
 fn sincos32xN(v: anytype) [2]@TypeOf(v) {
     const T = @TypeOf(v);
 
-    var x = modAngles(v);
+    var x = modAngle(v);
     var sign = andInt(x, splatNegativeZero(T));
     const c = orInt(sign, splat(T, math.pi));
     const absx = andNotInt(sign, x);
@@ -2928,6 +2940,17 @@ test "zmath.acos32" {
         try expect(approxEqAbs(r16, splat(F32x16, r1), epsilon));
         f += 0.09 * @intToFloat(f32, i);
     }
+}
+
+pub fn modAngle32(in_angle: f32) f32 {
+    const angle = in_angle + math.pi;
+    var temp: f32 = math.fabs(angle);
+    temp = temp - (2.0 * math.pi * @intToFloat(f32, @floatToInt(i32, temp / math.pi)));
+    temp = temp - math.pi;
+    if (angle < 0.0) {
+        temp = -temp;
+    }
+    return temp;
 }
 
 // ------------------------------------------------------------------------------

@@ -19,3 +19,9 @@ This intro application shows how to draw 2D triangle.
 This intro application shows how to setup a zbuffer, how to load a mesh from file and how to draw it in 3D space.
 
 ![image](screenshot2.png)
+
+### intro 3
+
+This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement.
+
+![image](screenshot3.png)
