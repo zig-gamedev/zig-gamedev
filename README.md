@@ -104,3 +104,4 @@ Thanks to all people who sponsor zig-gamedev project! In particular, these fine 
 * Zig Software Foundation (ziglang)
 * Ian (LinuXY)
 * Simon A. Nielsen Knights (tauoverpi)
+* shintales (shintales)
