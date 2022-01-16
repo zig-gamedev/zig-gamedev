@@ -77,7 +77,7 @@ pub fn build(b: *std.build.Builder) void {
         b.addExecutable("intro1", "src/intro1.zig"),
         b.addExecutable("intro2", "src/intro2.zig"),
     };
-    const active_prog = progs[2];
+    const active_prog = progs[1];
     const target_options = b.standardTargetOptions(.{});
     const release_options = b.standardReleaseOptions();
 

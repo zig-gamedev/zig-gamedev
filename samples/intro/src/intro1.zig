@@ -25,6 +25,11 @@ const window_name = "zig-gamedev: intro 1";
 const window_width = 1920;
 const window_height = 1080;
 
+const Vertex = struct {
+    position: [3]f32,
+    color: u32,
+};
+
 const DemoState = struct {
     gctx: gfx.GraphicsContext,
     guictx: gfx.GuiContext,
@@ -90,6 +95,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const intro1_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+            d3d12.INPUT_ELEMENT_DESC.init("_Color", 0, .R32_UINT, 0, 12, .PER_VERTEX_DATA, 0),
         };
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -115,7 +121,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf([3]f32)),
+        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(Vertex)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -124,7 +130,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
+        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(u16)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -139,10 +145,13 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Fill vertex buffer with vertex data.
     {
         // Allocate memory from upload heap and fill it with vertex data.
-        const verts = gctx.allocateUploadBufferRegion([3]f32, 3);
-        verts.cpu_slice[0] = [3]f32{ -0.7, -0.7, 0.0 };
-        verts.cpu_slice[1] = [3]f32{ 0.0, 0.7, 0.0 };
-        verts.cpu_slice[2] = [3]f32{ 0.7, -0.7, 0.0 };
+        const verts = gctx.allocateUploadBufferRegion(Vertex, 3);
+        verts.cpu_slice[0].position = [3]f32{ -0.7, -0.7, 0.0 };
+        verts.cpu_slice[1].position = [3]f32{ 0.0, 0.7, 0.0 };
+        verts.cpu_slice[2].position = [3]f32{ 0.7, -0.7, 0.0 };
+        verts.cpu_slice[0].color = 0x00_00_00_ff;
+        verts.cpu_slice[1].color = 0x00_00_ff_00;
+        verts.cpu_slice[2].color = 0x00_ff_00_00;
 
         // Copy vertex data from upload heap to vertex buffer resource that resides in high-performance memory
         // on the GPU.
@@ -158,7 +167,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Fill index buffer with index data.
     {
         // Allocate memory from upload heap and fill it with index data.
-        const indices = gctx.allocateUploadBufferRegion(u32, 3);
+        const indices = gctx.allocateUploadBufferRegion(u16, 3);
         indices.cpu_slice[0] = 0;
         indices.cpu_slice[1] = 1;
         indices.cpu_slice[2] = 2;
@@ -248,13 +257,13 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
-        .SizeInBytes = 3 * @sizeOf([3]f32),
-        .StrideInBytes = @sizeOf([3]f32),
+        .SizeInBytes = 3 * @sizeOf(Vertex),
+        .StrideInBytes = @sizeOf(Vertex),
     }});
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
-        .SizeInBytes = 3 * @sizeOf(u32),
-        .Format = .R32_UINT,
+        .SizeInBytes = 3 * @sizeOf(u16),
+        .Format = .R16_UINT,
     });
     gctx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
 

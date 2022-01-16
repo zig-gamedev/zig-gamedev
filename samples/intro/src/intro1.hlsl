@@ -4,18 +4,16 @@
 [RootSignature(ROOT_SIGNATURE)]
 void vsMain(
     float3 position : POSITION,
-    uint vertex_id : SV_VertexID,
+    uint color : _Color,
     out float4 out_position_sv : SV_Position,
     out float3 out_color : _Color
 ) {
-    // Note, this is not efficient and not robust way of generating vertex colors.
-    const float3 colors[3] = {
-        float3(1.0, 0.0, 0.0),
-        float3(0.0, 1.0, 0.0),
-        float3(0.0, 0.0, 1.0),
-    };
     out_position_sv = float4(position, 1.0);
-    out_color = colors[vertex_id];
+    out_color = float3(
+        (color & 0xff) / 255.0,
+        ((color >> 8) & 0xff) / 255.0,
+        ((color >> 16) & 0xff) / 255.0
+    );
 }
 
 [RootSignature(ROOT_SIGNATURE)]
