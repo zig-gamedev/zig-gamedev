@@ -26,10 +26,13 @@ const window_name = "zig-gamedev: intro 2";
 const window_width = 1920;
 const window_height = 1080;
 
+// By convention, we use 'Pso_' prefix for structures that are also defined in HLSL code
+// (see 'DrawConst' in intro2.hlsl).
 const Pso_DrawConst = struct {
     object_to_clip: [16]f32,
 };
 
+// In this intro application vertex consists of position and normal vector.
 const Vertex = struct {
     position: [3]f32,
     normal: [3]f32,
@@ -173,7 +176,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     // Create depth texture 'view' - a descriptor which can be send to Direct3D12 API.
     const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
-    gctx.device.CreateDepthStencilView(gctx.getResource(depth_texture), null, depth_texture_dsv);
+    gctx.device.CreateDepthStencilView(
+        gctx.getResource(depth_texture), // Get the D3D12 resource from a handle.
+        null,
+        depth_texture_dsv,
+    );
 
     // Open D3D12 command list, setup descriptor heap, etc. After this call we can upload resources to the GPU,
     // draw 3D graphics etc.
