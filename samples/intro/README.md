@@ -1,10 +1,10 @@
 ## intro applications
 
-Intro applications have been designed to help people learn graphics programming and zig-gamedev framework.
+Intro applications have been designed to help people learn graphics programming and zig-gamedev framework. I've tried to keep the code simple and add comments in key points.
 
 ### intro 0
 
-This intro application shows how to create window, setup DirectX 12 context and clear the window and draw text using Direct2D.
+This intro application shows how to create window, setup DirectX 12 context, clear the window and draw text using Direct2D.
 
 ![image](screenshot0.png)
 
