@@ -1,4 +1,5 @@
-// This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement.
+// This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement
+// (WASD, Right Mouse Button + drag).
 
 const std = @import("std");
 const math = std.math;
