@@ -1,6 +1,6 @@
 ## intro applications
 
-Intro applications have been designed to help people learn graphics programming and zig-gamedev framework. I've tried to keep the code simple and put comments in key points.
+Intro applications have been designed to help people learn graphics programming and zig-gamedev framework. I try to keep code simple and add comments in key points.
 
 ### intro 0
 
