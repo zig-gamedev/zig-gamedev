@@ -1,4 +1,4 @@
-**If you would like to learn graphics programming or how to use zig-gamedev code framework I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).**
+**If you would like to learn graphics programming or learn how to use zig-gamedev code framework I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).**
 
 # zig-gamedev project
 
