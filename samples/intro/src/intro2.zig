@@ -1,5 +1,5 @@
 //
-// This intro application shows how to setup a zbuffer and how to draw rotating triangle in 3D.
+// This intro application shows how to setup a zbuffer, how to load a mesh from file and how to draw it in 3D space.
 //
 const std = @import("std");
 const math = std.math;
@@ -13,6 +13,7 @@ const common = @import("common");
 const gfx = common.graphics;
 const lib = common.library;
 const zm = common.zmath;
+const c = common.c;
 
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
@@ -30,6 +31,11 @@ const Pso_DrawConst = struct {
     object_to_clip: [16]f32,
 };
 
+const Vertex = struct {
+    position: [3]f32,
+    normal: [3]f32,
+};
+
 const DemoState = struct {
     gctx: gfx.GraphicsContext,
     guictx: gfx.GuiContext,
@@ -45,6 +51,9 @@ const DemoState = struct {
 
     depth_texture: gfx.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
+
+    mesh_num_vertices: u32,
+    mesh_num_indices: u32,
 };
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
@@ -98,6 +107,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const intro2_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+            d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
         };
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -110,7 +120,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
-        pso_desc.RasterizerState.CullMode = .NONE;
 
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
@@ -120,11 +129,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         );
     };
 
+    // Load a mesh from file and store the data in temporary arrays.
+    var mesh_indices = std.ArrayList(u32).init(arena_allocator);
+    var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
+    var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
+    {
+        const data = lib.parseAndLoadGltfFile("content/cube.gltf");
+        defer c.cgltf_free(data);
+        lib.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, null, null);
+    }
+    const mesh_num_indices = @intCast(u32, mesh_indices.items.len);
+    const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);
+
     // Create vertex buffer and return a *handle* to the underlying Direct3D12 resource.
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf([3]f32)),
+        &d3d12.RESOURCE_DESC.initBuffer(mesh_num_vertices * @sizeOf(Vertex)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -133,7 +154,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(3 * @sizeOf(u32)),
+        &d3d12.RESOURCE_DESC.initBuffer(mesh_num_indices * @sizeOf(u32)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -165,10 +186,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Fill vertex buffer with vertex data.
     {
         // Allocate memory from upload heap and fill it with vertex data.
-        const verts = gctx.allocateUploadBufferRegion([3]f32, 3);
-        verts.cpu_slice[0] = [3]f32{ -0.7, -0.7, 0.0 };
-        verts.cpu_slice[1] = [3]f32{ 0.0, 0.7, 0.0 };
-        verts.cpu_slice[2] = [3]f32{ 0.7, -0.7, 0.0 };
+        const verts = gctx.allocateUploadBufferRegion(Vertex, mesh_num_vertices);
+        for (mesh_positions.items) |_, i| {
+            verts.cpu_slice[i].position = mesh_positions.items[i];
+            verts.cpu_slice[i].normal = mesh_normals.items[i];
+        }
 
         // Copy vertex data from upload heap to vertex buffer resource that resides in high-performance memory
         // on the GPU.
@@ -184,10 +206,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Fill index buffer with index data.
     {
         // Allocate memory from upload heap and fill it with index data.
-        const indices = gctx.allocateUploadBufferRegion(u32, 3);
-        indices.cpu_slice[0] = 0;
-        indices.cpu_slice[1] = 1;
-        indices.cpu_slice[2] = 2;
+        const indices = gctx.allocateUploadBufferRegion(u32, mesh_num_indices);
+        for (mesh_indices.items) |_, i| {
+            indices.cpu_slice[i] = mesh_indices.items[i];
+        }
 
         // Copy index data from upload heap to index buffer resource that resides in high-performance memory
         // on the GPU.
@@ -222,6 +244,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .index_buffer = index_buffer,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
+        .mesh_num_vertices = mesh_num_vertices,
+        .mesh_num_indices = mesh_num_indices,
     };
 }
 
@@ -278,12 +302,12 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
-        .SizeInBytes = 3 * @sizeOf([3]f32),
-        .StrideInBytes = @sizeOf([3]f32),
+        .SizeInBytes = demo.mesh_num_vertices * @sizeOf(Vertex),
+        .StrideInBytes = @sizeOf(Vertex),
     }});
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
-        .SizeInBytes = 3 * @sizeOf(u32),
+        .SizeInBytes = demo.mesh_num_indices * @sizeOf(u32),
         .Format = .R32_UINT,
     });
 
@@ -292,7 +316,7 @@ fn draw(demo: *DemoState) void {
         // Compute transformation matrices.
         const object_to_world = zm.rotationY(@floatCast(f32, demo.frame_stats.time));
         const world_to_view = zm.lookAtLh(
-            zm.f32x4(2.0, 2.0, -2.0, 1.0), // eye position
+            zm.f32x4(3.0, 3.0, -3.0, 1.0), // eye position
             zm.f32x4(0.0, 0.0, 0.0, 1.0), // focus point
             zm.f32x4(0.0, 1.0, 0.0, 0.0), // up direction ('w' coord is zero because this is a vector not a point)
         );
@@ -317,7 +341,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
     }
 
-    gctx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
+    gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
 
     // Draw dear imgui widgets (not used in this demo).
     demo.guictx.draw(gctx);

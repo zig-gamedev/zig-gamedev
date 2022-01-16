@@ -39,10 +39,10 @@ const mesh_cube = 0;
 const mesh_helmet = 1;
 
 const Vertex = struct {
-    position: Vec3,
-    normal: Vec3,
-    texcoords0: Vec2,
-    tangent: Vec4,
+    position: [3]f32,
+    normal: [3]f32,
+    texcoords0: [2]f32,
+    tangent: [4]f32,
 };
 comptime {
     assert(@sizeOf([2]Vertex) == 2 * 48);
@@ -133,10 +133,10 @@ fn loadMesh(
     all_indices: *std.ArrayList(u32),
 ) void {
     var indices = std.ArrayList(u32).init(arena);
-    var positions = std.ArrayList(Vec3).init(arena);
-    var normals = std.ArrayList(Vec3).init(arena);
-    var texcoords0 = std.ArrayList(Vec2).init(arena);
-    var tangents = std.ArrayList(Vec4).init(arena);
+    var positions = std.ArrayList([3]f32).init(arena);
+    var normals = std.ArrayList([3]f32).init(arena);
+    var texcoords0 = std.ArrayList([2]f32).init(arena);
+    var tangents = std.ArrayList([4]f32).init(arena);
 
     const pre_indices_len = all_indices.items.len;
     const pre_positions_len = all_vertices.items.len;

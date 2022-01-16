@@ -222,8 +222,8 @@ const PhysicsObjectsPool = struct {
 };
 
 const Vertex = struct {
-    position: Vec3,
-    normal: Vec3,
+    position: [3]f32,
+    normal: [3]f32,
 };
 
 const Mesh = struct {
@@ -243,8 +243,8 @@ const mesh_compound: u16 = 0xffff;
 
 fn loadAllMeshes(
     all_meshes: *std.ArrayList(Mesh),
-    all_positions: *std.ArrayList(Vec3),
-    all_normals: *std.ArrayList(Vec3),
+    all_positions: *std.ArrayList([3]f32),
+    all_normals: *std.ArrayList([3]f32),
     all_indices: *std.ArrayList(u32),
 ) void {
     const paths = [_][]const u8{
@@ -1101,8 +1101,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_dsv);
 
     var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
-    var all_positions = std.ArrayList(Vec3).init(arena_allocator);
-    var all_normals = std.ArrayList(Vec3).init(arena_allocator);
+    var all_positions = std.ArrayList([3]f32).init(arena_allocator);
+    var all_normals = std.ArrayList([3]f32).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
     loadAllMeshes(&all_meshes, &all_positions, &all_normals, &all_indices);
 

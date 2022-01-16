@@ -35,8 +35,8 @@ const max_num_meshlet_triangles: usize = 64;
 const mesh_engine = 1;
 
 const Vertex = struct {
-    position: Vec3,
-    normal: Vec3,
+    position: [3]f32,
+    normal: [3]f32,
 };
 
 const Mesh = struct {
@@ -122,8 +122,8 @@ fn loadMeshAndGenerateMeshlets(
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
 
-    var src_positions = std.ArrayList(Vec3).init(arena_allocator);
-    var src_normals = std.ArrayList(Vec3).init(arena_allocator);
+    var src_positions = std.ArrayList([3]f32).init(arena_allocator);
+    var src_normals = std.ArrayList([3]f32).init(arena_allocator);
     var src_indices = std.ArrayList(u32).init(arena_allocator);
 
     const data = lib.parseAndLoadGltfFile(file_path);

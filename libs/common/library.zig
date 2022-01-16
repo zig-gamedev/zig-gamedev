@@ -1,16 +1,13 @@
 const std = @import("std");
+const panic = std.debug.panic;
+const assert = std.debug.assert;
 const win32 = @import("win32");
 const w = win32.base;
 const dwrite = win32.dwrite;
 const d2d1 = win32.d2d1;
 const c = @import("c.zig");
-const vm = @import("vectormath.zig");
-const panic = std.debug.panic;
-const assert = std.debug.assert;
+
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const Vec2 = vm.Vec2;
-const Vec3 = vm.Vec3;
-const Vec4 = vm.Vec4;
 
 // TODO(mziulek): Handle more error codes from:
 // https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
@@ -461,10 +458,10 @@ pub fn appendMeshPrimitive(
     mesh_index: u32,
     prim_index: u32,
     indices: *std.ArrayList(u32),
-    positions: *std.ArrayList(Vec3),
-    normals: ?*std.ArrayList(Vec3),
-    texcoords0: ?*std.ArrayList(Vec2),
-    tangents: ?*std.ArrayList(Vec4),
+    positions: *std.ArrayList([3]f32),
+    normals: ?*std.ArrayList([3]f32),
+    texcoords0: ?*std.ArrayList([2]f32),
+    tangents: ?*std.ArrayList([4]f32),
 ) void {
     assert(mesh_index < data.meshes_count);
     assert(prim_index < data.meshes[mesh_index].primitives_count);
