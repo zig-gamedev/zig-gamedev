@@ -17,6 +17,8 @@ This repository contains a collection of [sample applications](#sample-applicati
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src))
 
+If you would like to learn graphics programming or zig-gamedev framework I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).
+
 ## Sample applications
 
 Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
