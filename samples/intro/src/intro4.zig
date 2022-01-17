@@ -1,4 +1,5 @@
-// This intro application shows how to load a texture image and how to draw 3D textured objects.
+// This intro application shows how to load a texture image from file, generate mipmaps on the GPU
+// and draw 3D textured objects.
 
 const std = @import("std");
 const math = std.math;
