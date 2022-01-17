@@ -24,6 +24,6 @@ This intro application shows how to setup a zbuffer, how to load a mesh from fil
 
 ### intro 3
 
-This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement (WASD, Right Mouse Button + drag).
+This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement.
 
 ![image](screenshot3.png)
