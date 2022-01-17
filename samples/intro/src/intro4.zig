@@ -28,7 +28,7 @@ const window_width = 1920;
 const window_height = 1080;
 
 // By convention, we use 'Pso_' prefix for structures that are also defined in HLSL code
-// (see 'DrawConst' and 'FrameConst' in intro3.hlsl).
+// (see 'DrawConst' and 'FrameConst' in intro4.hlsl).
 const Pso_DrawConst = struct {
     object_to_world: [16]f32,
 };
@@ -51,7 +51,7 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
-    intro3_pso: gfx.PipelineHandle,
+    intro4_pso: gfx.PipelineHandle,
 
     vertex_buffer: gfx.ResourceHandle,
     index_buffer: gfx.ResourceHandle,
@@ -118,7 +118,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
 
-    const intro3_pso = blk: {
+    const intro4_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
             d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
@@ -207,18 +207,20 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // to high-performance GPU memory where resource resides.
     const mesh_texture = gctx.createAndUploadTex2dFromFile(
         "content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
-        .{},
+        .{}, // Default parameters mean that we want whole mipmap chain.
     ) catch |err| hrPanic(err);
 
     // Allocate one CPU descriptor handle that will be copied to GPU descriptor heap at draw time
     // (this is non-bindless approach).
     const mesh_texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
+    // Generate mipmaps on the GPU.
     {
+        // Our generator uses fast compute shader to generate all texture levels.
         var mipgen = gfx.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
         defer mipgen.deinit(&gctx);
         mipgen.generateMipmaps(&gctx, mesh_texture);
-        gctx.finishGpuCommands();
+        gctx.finishGpuCommands(); // Wait for the GPU so that we can release the generator.
     }
 
     gctx.device.CreateShaderResourceView(gctx.getResource(mesh_texture), null, mesh_texture_srv);
@@ -281,7 +283,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
-        .intro3_pso = intro3_pso,
+        .intro4_pso = intro4_pso,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .depth_texture = depth_texture,
@@ -309,7 +311,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
-    _ = demo.gctx.releasePipeline(demo.intro3_pso);
+    _ = demo.gctx.releasePipeline(demo.intro4_pso);
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
     demo.guictx.deinit(&demo.gctx);
@@ -440,7 +442,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
 
     // Set graphics state and draw.
-    gctx.setCurrentPipeline(demo.intro3_pso);
+    gctx.setCurrentPipeline(demo.intro4_pso);
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
@@ -453,7 +455,11 @@ fn draw(demo: *DemoState) void {
         .Format = .R32_UINT,
     });
 
-    gctx.cmdlist.SetGraphicsRootDescriptorTable(2, gctx.copyDescriptorsToGpuHeap(1, demo.mesh_texture_srv));
+    // Bind mesh texture (copy CPU descriptor handle to GPU descriptor heap).
+    gctx.cmdlist.SetGraphicsRootDescriptorTable(
+        2, // Slot index 2 in Root Signature (SRV(t0), see intro4.hlsl)
+        gctx.copyDescriptorsToGpuHeap(1, demo.mesh_texture_srv),
+    );
 
     // Upload per-frame constant data (camera xform).
     {
@@ -466,7 +472,7 @@ fn draw(demo: *DemoState) void {
 
         // Set GPU handle of our allocated memory region so that it is visible to the shader.
         gctx.cmdlist.SetGraphicsRootConstantBufferView(
-            1, // Slot index 1 in Root Signature (CBV(b1), see intro3.hlsl)
+            1, // Slot index 1 in Root Signature (CBV(b1), see intro4.hlsl)
             mem.gpu_base,
         );
     }
@@ -489,7 +495,7 @@ fn draw(demo: *DemoState) void {
 
                 // Set GPU handle of our allocated memory region so that it is visible to the shader.
                 gctx.cmdlist.SetGraphicsRootConstantBufferView(
-                    0, // Slot index 0 in Root Signature (CBV(b0), see intro3.hlsl)
+                    0, // Slot index 0 in Root Signature (CBV(b0), see intro4.hlsl)
                     mem.gpu_base,
                 );
 
