@@ -1,7 +1,7 @@
 #define ROOT_SIGNATURE \
     "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
-    "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
-    "CBV(b1, visibility = SHADER_VISIBILITY_VERTEX)"
+    "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " /* index 0 */ \
+    "CBV(b1, visibility = SHADER_VISIBILITY_VERTEX)"   /* index 1 */
 
 struct DrawConst {
     float4x4 object_to_world;

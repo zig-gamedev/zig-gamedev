@@ -296,6 +296,32 @@ fn update(demo: *DemoState) void {
     // Update dear imgui lib. After this call we can define our widgets.
     lib.newImGuiFrame(dt);
 
+    c.igSetNextWindowPos(
+        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImGuiCond_FirstUseEver,
+        c.ImVec2{ .x = 0.0, .y = 0.0 },
+    );
+    c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
+
+    _ = c.igBegin(
+        "Demo Settings",
+        null,
+        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+    );
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + Drag", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  rotate camera", "");
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  move camera", "");
+
+    c.igEnd();
+
     // Handle camera rotation with mouse.
     {
         var pos: w.POINT = undefined;
@@ -326,6 +352,7 @@ fn update(demo: *DemoState) void {
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
+        // Load camera position from memory to SIMD register ('3' means that we want to load three components)
         var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
         if (w.GetAsyncKeyState('W') < 0) {
@@ -339,6 +366,7 @@ fn update(demo: *DemoState) void {
             cpos -= right;
         }
 
+        // Copy updated position from SIMD register to memory
         zm.store(demo.camera.position[0..], cpos, 3);
     }
 }
@@ -405,16 +433,19 @@ fn draw(demo: *DemoState) void {
         zm.storeF32x4x4(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
 
         // Set GPU handle of our allocated memory region so that it is visible to the shader.
-        gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(
+            1, // Slot index 1 in Root Signature (CBV(b1), see intro3.hlsl)
+            mem.gpu_base,
+        );
     }
 
-    // Upload per-draw constant data (object to world xform) and draw bunch of objects.
+    // For each object, upload per-draw constant data (object to world xform) and draw.
     {
         var z: f32 = -10.5;
         while (z <= 10.5) : (z += 3.0) {
             var x: f32 = -10.5;
             while (x <= 10.5) : (x += 3.0) {
-                // Compute transformation matrices.
+                // Compute translation matrix.
                 const object_to_world = zm.translation(x, 0.0, z);
 
                 // Allocate memory for one instance of Pso_DrawConst structure.
@@ -425,14 +456,17 @@ fn draw(demo: *DemoState) void {
                 zm.storeF32x4x4(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
 
                 // Set GPU handle of our allocated memory region so that it is visible to the shader.
-                gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+                gctx.cmdlist.SetGraphicsRootConstantBufferView(
+                    0, // Slot index 0 in Root Signature (CBV(b0), see intro3.hlsl)
+                    mem.gpu_base,
+                );
 
                 gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
             }
         }
     }
 
-    // Draw dear imgui widgets (not used in this demo).
+    // Draw dear imgui widgets.
     demo.guictx.draw(gctx);
 
     // Begin Direct2D rendering to the back buffer.
