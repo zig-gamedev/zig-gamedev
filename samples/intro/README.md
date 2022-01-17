@@ -30,6 +30,6 @@ This intro application shows how to draw multiple objects in 3D space and how to
 
 ### intro 4
 
-This intro application shows how to load a texture image from file, generate mipmaps on the GPU and draw 3D textured objects. Texture is used in two modes: traditional and 'bindless'. In bindless mode we use HLSL 6.6 Dynamic Resources feature.
+This intro application shows how to load a texture image from file, generate mipmaps on the GPU and draw 3D textured objects. Texture is used in two modes: traditional and 'bindless'. In bindless mode we use [HLSL 6.6 Dynamic Resources](https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_DynamicResources.html) feature.
 
 ![image](screenshot4.png)
