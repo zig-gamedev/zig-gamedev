@@ -75,6 +75,22 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("src/intro3.hlsl", "psMain", "intro3.ps.cso", "ps", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/intro4.hlsl", "vsMain", "intro4.vs.cso", "vs", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/intro4.hlsl", "psMain", "intro4.ps.cso", "ps", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/intro4.hlsl", "psMain", "intro4_bindless.ps.cso", "ps", "PSO__BINDLESS");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "../../libs/common/common.hlsl",
+        "csGenerateMipmaps",
+        "generate_mipmaps.cs.cso",
+        "cs",
+        "PSO__GENERATE_MIPMAPS",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     install_content_step.step.dependOn(dxc_step);
 
     const progs = [_]*std.build.LibExeObjStep{
@@ -82,8 +98,9 @@ pub fn build(b: *std.build.Builder) void {
         b.addExecutable("intro1", "src/intro1.zig"),
         b.addExecutable("intro2", "src/intro2.zig"),
         b.addExecutable("intro3", "src/intro3.zig"),
+        b.addExecutable("intro4", "src/intro4.zig"),
     };
-    const active_prog = progs[3];
+    const active_prog = progs[4];
     const target_options = b.standardTargetOptions(.{});
     const release_options = b.standardReleaseOptions();
 

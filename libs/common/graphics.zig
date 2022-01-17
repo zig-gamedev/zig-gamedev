@@ -763,7 +763,7 @@ pub const GraphicsContext = struct {
             d3d12.RESOURCE_STATE_PRESENT;
     }
 
-    pub fn flushGpuCommands(gr: *GraphicsContext) void {
+    fn flushGpuCommands(gr: *GraphicsContext) void {
         if (gr.is_cmdlist_opened) {
             gr.flushResourceBarriers();
             hrPanicOnFail(gr.cmdlist.Close());
@@ -776,6 +776,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn finishGpuCommands(gr: *GraphicsContext) void {
+        const was_cmdlist_opened = gr.is_cmdlist_opened;
         gr.flushGpuCommands();
 
         gr.frame_fence_counter += 1;
@@ -793,6 +794,10 @@ pub const GraphicsContext = struct {
                 _ = gr.releaseResource(res.resource);
             }
             gr.resources_to_release.resize(0) catch unreachable;
+        }
+
+        if (was_cmdlist_opened) {
+            beginFrame(gr);
         }
     }
 
@@ -1295,7 +1300,6 @@ pub const GraphicsContext = struct {
             std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
 
             gr.finishGpuCommands();
-            gr.beginFrame();
 
             memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
         }

@@ -608,9 +608,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     // BEGIN: Upload texture data to the GPU.
     //
-    // NOTE(mziulek): Uploading data to a GPU can cause cmdlist state reset (when we run out of mem.).
-    // This is why, in general, we should group all upload operations together to minimize the risk
-    // of state bugs.
     const equirect_texture = blk: {
         var width: u32 = 0;
         var height: u32 = 0;

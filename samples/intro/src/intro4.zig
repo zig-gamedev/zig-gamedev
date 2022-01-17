@@ -1,4 +1,4 @@
-// This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement.
+// This intro application shows how to load a texture image and how to draw 3D textured objects.
 
 const std = @import("std");
 const math = std.math;
@@ -22,7 +22,7 @@ const L = std.unicode.utf8ToUtf16LeStringLiteral;
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
-const window_name = "zig-gamedev: intro 3";
+const window_name = "zig-gamedev: intro 4";
 const window_width = 1920;
 const window_height = 1080;
 
@@ -39,6 +39,7 @@ const Pso_FrameConst = struct {
 const Vertex = struct {
     position: [3]f32,
     normal: [3]f32,
+    texcoord: [2]f32,
 };
 
 const DemoState = struct {
@@ -59,6 +60,8 @@ const DemoState = struct {
 
     mesh_num_vertices: u32,
     mesh_num_indices: u32,
+    mesh_texture: gfx.ResourceHandle,
+    mesh_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     camera: struct {
         position: [3]f32,
@@ -118,6 +121,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
             d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
+            d3d12.INPUT_ELEMENT_DESC.init("_Texcoord", 0, .R32G32B32_FLOAT, 0, 24, .PER_VERTEX_DATA, 0),
         };
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -134,8 +138,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/intro3.vs.cso",
-            "content/shaders/intro3.ps.cso",
+            "content/shaders/intro4.vs.cso",
+            "content/shaders/intro4.ps.cso",
         );
     };
 
@@ -143,10 +147,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var mesh_indices = std.ArrayList(u32).init(arena_allocator);
     var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
     var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
+    var mesh_texcoords = std.ArrayList([2]f32).init(arena_allocator);
     {
-        const data = lib.parseAndLoadGltfFile("content/cube.gltf");
+        const data = lib.parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
         defer c.cgltf_free(data);
-        lib.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, null, null);
+        lib.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, &mesh_texcoords, null);
     }
     const mesh_num_indices = @intCast(u32, mesh_indices.items.len);
     const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);
@@ -182,7 +187,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
-    // Create depth texture 'view' - a descriptor which can be send to Direct3D12 API.
+    // Create depth texture 'view' - a descriptor which can be send to Direct3D 12 API.
     const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
     gctx.device.CreateDepthStencilView(
         gctx.getResource(depth_texture), // Get the D3D12 resource from a handle.
@@ -197,6 +202,27 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Create and upload graphics resources for dear imgui renderer.
     var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
 
+    // Create texture resource and submit GPU commands which copies texture data from CPU
+    // to high-performance GPU memory where resource resides.
+    const mesh_texture = gctx.createAndUploadTex2dFromFile(
+        "content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
+        .{},
+    ) catch |err| hrPanic(err);
+
+    // Allocate one CPU descriptor handle that will be copied to GPU descriptor heap at draw time
+    // (this is non-bindless approach).
+    const mesh_texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+
+    {
+        var mipgen = gfx.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
+        defer mipgen.deinit(&gctx);
+        mipgen.generateMipmaps(&gctx, mesh_texture);
+        gctx.finishGpuCommands();
+    }
+
+    gctx.device.CreateShaderResourceView(gctx.getResource(mesh_texture), null, mesh_texture_srv);
+    gctx.addTransitionBarrier(mesh_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
     // Fill vertex buffer with vertex data.
     {
         // Allocate memory from upload heap and fill it with vertex data.
@@ -204,6 +230,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         for (mesh_positions.items) |_, i| {
             verts.cpu_slice[i].position = mesh_positions.items[i];
             verts.cpu_slice[i].normal = mesh_normals.items[i];
+            verts.cpu_slice[i].texcoord = mesh_texcoords.items[i];
         }
 
         // Copy vertex data from upload heap to vertex buffer resource that resides in high-performance memory
@@ -260,10 +287,12 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .depth_texture_dsv = depth_texture_dsv,
         .mesh_num_vertices = mesh_num_vertices,
         .mesh_num_indices = mesh_num_indices,
+        .mesh_texture = mesh_texture,
+        .mesh_texture_srv = mesh_texture_srv,
         .camera = .{
-            .position = [3]f32{ 0.0, 10.0, -10.0 },
+            .position = [3]f32{ 0.0, 5.0, -5.0 },
             .forward = [3]f32{ 0.0, 0.0, 1.0 },
-            .pitch = 0.25 * math.pi,
+            .pitch = 0.175 * math.pi,
             .yaw = 0.0,
         },
         .mouse = .{
@@ -275,6 +304,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
+    _ = demo.gctx.releaseResource(demo.mesh_texture);
     _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
@@ -402,7 +432,7 @@ fn draw(demo: *DemoState) void {
     );
     gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
+        &[4]f32{ 0.2, 0.2, 0.2, 1.0 },
         0,
         null,
     );
@@ -422,6 +452,8 @@ fn draw(demo: *DemoState) void {
         .Format = .R32_UINT,
     });
 
+    gctx.cmdlist.SetGraphicsRootDescriptorTable(2, gctx.copyDescriptorsToGpuHeap(1, demo.mesh_texture_srv));
+
     // Upload per-frame constant data (camera xform).
     {
         // Allocate memory for one instance of Pso_FrameConst structure.
@@ -440,10 +472,10 @@ fn draw(demo: *DemoState) void {
 
     // For each object, upload per-draw constant data (object to world xform) and draw.
     {
-        var z: f32 = -10.5;
-        while (z <= 10.5) : (z += 3.0) {
-            var x: f32 = -10.5;
-            while (x <= 10.5) : (x += 3.0) {
+        var z: f32 = -9.0;
+        while (z <= 9.0) : (z += 3.0) {
+            var x: f32 = -9.0;
+            while (x <= 9.0) : (x += 3.0) {
                 // Compute translation matrix.
                 const object_to_world = zm.translation(x, 0.0, z);
 
