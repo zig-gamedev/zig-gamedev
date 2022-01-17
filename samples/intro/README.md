@@ -1,6 +1,8 @@
 ## zig-gamedev project: intro
 
 Learn low-level graphics programming, game programming and zig-gamedev framework. Intro applications have been designed for learning purposes, I try to keep code as simple as possible and comment new functionality added in each subsequent program.
+<br />
+<br />
 
 ### intro 0
 
