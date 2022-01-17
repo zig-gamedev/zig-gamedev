@@ -1,5 +1,6 @@
 // This intro application shows how to load a texture image from file, generate mipmaps on the GPU
-// and draw 3D textured objects.
+// and draw 3D textured objects. Texture is used in two modes: traditional and 'bindless'. In bindless mode
+// we use HLSL 6.6 Dynamic Resources feature.
 
 const std = @import("std");
 const math = std.math;
