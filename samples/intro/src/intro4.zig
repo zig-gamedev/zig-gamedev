@@ -51,7 +51,9 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
-    intro4_pso: gfx.PipelineHandle,
+    non_bindless_pso: gfx.PipelineHandle,
+    bindless_pso: gfx.PipelineHandle,
+    is_bindless_mode_active: bool,
 
     vertex_buffer: gfx.ResourceHandle,
     index_buffer: gfx.ResourceHandle,
@@ -118,7 +120,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
 
-    const intro4_pso = blk: {
+    var non_bindless_pso: gfx.PipelineHandle = undefined;
+    var bindless_pso: gfx.PipelineHandle = undefined;
+    {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
             d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
@@ -136,13 +140,19 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
-        break :blk gctx.createGraphicsShaderPipeline(
+        non_bindless_pso = gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
             "content/shaders/intro4.vs.cso",
             "content/shaders/intro4.ps.cso",
         );
-    };
+        bindless_pso = gctx.createGraphicsShaderPipeline(
+            arena_allocator,
+            &pso_desc,
+            "content/shaders/intro4_bindless.vs.cso",
+            "content/shaders/intro4_bindless.ps.cso",
+        );
+    }
 
     // Load a mesh from file and store the data in temporary arrays.
     var mesh_indices = std.ArrayList(u32).init(arena_allocator);
@@ -210,11 +220,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .{}, // Default parameters mean that we want whole mipmap chain.
     ) catch |err| hrPanic(err);
 
-    // Allocate one CPU descriptor handle that will be copied to GPU descriptor heap at draw time
-    // (this is non-bindless approach).
-    const mesh_texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-
-    // Generate mipmaps on the GPU.
+    // Generate mipmaps for the mesh texture.
     {
         // Our generator uses fast compute shader to generate all texture levels.
         var mipgen = gfx.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
@@ -223,8 +229,24 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         gctx.finishGpuCommands(); // Wait for the GPU so that we can release the generator.
     }
 
-    gctx.device.CreateShaderResourceView(gctx.getResource(mesh_texture), null, mesh_texture_srv);
     gctx.addTransitionBarrier(mesh_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+    // Non-bindless path init.
+    // Allocate one (uninitialized) CPU descriptor handle that will be copied to the GPU descriptor heap
+    // just before a drawcall.
+    const mesh_texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+
+    // Initialize descriptor handle - after below call `mesh_texture_srv' will be a valid descriptor handle
+    // which will be used to identify and interpret data stored in texture resource.
+    gctx.device.CreateShaderResourceView(gctx.getResource(mesh_texture), null, mesh_texture_srv);
+
+    // Bindless path init.
+    {
+        // Allocate one persistent, GPU descriptor handle. It will be allocated at slot 0 and automatically
+        // available in the shader via 'ResourceDescriptorHeap' array ('ResourceDescriptorHeap[0]' in this case).
+        const bindless_descriptor = gctx.allocatePersistentGpuDescriptors(1);
+        gctx.device.CreateShaderResourceView(gctx.getResource(mesh_texture), null, bindless_descriptor.cpu_handle);
+    }
 
     // Fill vertex buffer with vertex data.
     {
@@ -283,7 +305,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
-        .intro4_pso = intro4_pso,
+        .bindless_pso = bindless_pso,
+        .non_bindless_pso = non_bindless_pso,
+        .is_bindless_mode_active = false,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .depth_texture = depth_texture,
@@ -311,7 +335,8 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
-    _ = demo.gctx.releasePipeline(demo.intro4_pso);
+    _ = demo.gctx.releasePipeline(demo.non_bindless_pso);
+    _ = demo.gctx.releasePipeline(demo.bindless_pso);
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
     demo.guictx.deinit(&demo.gctx);
@@ -351,6 +376,8 @@ fn update(demo: *DemoState) void {
     c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
     c.igSameLine(0, -1);
     c.igText(" :  move camera", "");
+
+    _ = c.igCheckbox("Use bindless texture", &demo.is_bindless_mode_active);
 
     c.igEnd();
 
@@ -441,8 +468,11 @@ fn draw(demo: *DemoState) void {
     );
     gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
 
-    // Set graphics state and draw.
-    gctx.setCurrentPipeline(demo.intro4_pso);
+    if (demo.is_bindless_mode_active)
+        gctx.setCurrentPipeline(demo.bindless_pso)
+    else
+        gctx.setCurrentPipeline(demo.non_bindless_pso);
+
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
@@ -455,11 +485,13 @@ fn draw(demo: *DemoState) void {
         .Format = .R32_UINT,
     });
 
-    // Bind mesh texture (copy CPU descriptor handle to GPU descriptor heap).
-    gctx.cmdlist.SetGraphicsRootDescriptorTable(
-        2, // Slot index 2 in Root Signature (SRV(t0), see intro4.hlsl)
-        gctx.copyDescriptorsToGpuHeap(1, demo.mesh_texture_srv),
-    );
+    if (!demo.is_bindless_mode_active) {
+        // Bind mesh texture (copy CPU descriptor handle to GPU descriptor heap).
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(
+            2, // Slot index 2 in Root Signature (SRV(t0), see intro4.hlsl)
+            gctx.copyDescriptorsToGpuHeap(1, demo.mesh_texture_srv),
+        );
+    }
 
     // Upload per-frame constant data (camera xform).
     {

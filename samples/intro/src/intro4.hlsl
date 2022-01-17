@@ -1,9 +1,17 @@
+#if defined(PSO__BINDLESS)
+#define ROOT_SIGNATURE \
+    "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED), " \
+    "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
+    "CBV(b1, visibility = SHADER_VISIBILITY_VERTEX), " \
+    "StaticSampler(s0, filter = FILTER_ANISOTROPIC, maxAnisotropy = 16, visibility = SHADER_VISIBILITY_PIXEL)"
+#else
 #define ROOT_SIGNATURE \
     "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), " \
     "CBV(b0, visibility = SHADER_VISIBILITY_VERTEX), " \
     "CBV(b1, visibility = SHADER_VISIBILITY_VERTEX), " \
     "DescriptorTable(SRV(t0), visibility = SHADER_VISIBILITY_PIXEL), " \
     "StaticSampler(s0, filter = FILTER_ANISOTROPIC, maxAnisotropy = 16, visibility = SHADER_VISIBILITY_PIXEL)"
+#endif
 
 struct DrawConst {
     float4x4 object_to_world;
@@ -15,7 +23,9 @@ struct FrameConst {
 };
 ConstantBuffer<FrameConst> cbv_frame_const : register(b1);
 
+#if !defined(PSO__BINDLESS)
 Texture2D srv_ao_texture : register(t0);
+#endif
 SamplerState sam_aniso : register(s0);
 
 [RootSignature(ROOT_SIGNATURE)]
@@ -37,5 +47,8 @@ void psMain(
     float2 texcoord : _Texcoord,
     out float4 out_color : SV_Target0
 ) {
+#if defined(PSO__BINDLESS)
+    Texture2D srv_ao_texture = ResourceDescriptorHeap[0];
+#endif
     out_color = float4(srv_ao_texture.Sample(sam_aniso, texcoord).rgb, 1.0);
 }
