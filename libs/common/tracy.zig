@@ -35,7 +35,10 @@ pub const Ctx = if (enable) ___tracy_c_zone_context else struct {
     }
 };
 
-pub inline fn zone(comptime src: std.builtin.SourceLocation, active: c_int) Ctx {
+pub inline fn zone(
+    comptime src: std.builtin.SourceLocation,
+    comptime active: c_int,
+) Ctx {
     if (!enable) return .{};
 
     const loc = ___tracy_source_location_data{
@@ -48,7 +51,11 @@ pub inline fn zone(comptime src: std.builtin.SourceLocation, active: c_int) Ctx 
     return ___tracy_emit_zone_begin_callstack(&loc, 1, active);
 }
 
-pub inline fn zoneN(comptime src: std.builtin.SourceLocation, name: ?[*:0]const u8, active: c_int) Ctx {
+pub inline fn zoneN(
+    comptime src: std.builtin.SourceLocation,
+    comptime name: ?[*:0]const u8,
+    comptime active: c_int,
+) Ctx {
     if (!enable) return .{};
 
     const loc = ___tracy_source_location_data{
@@ -61,7 +68,12 @@ pub inline fn zoneN(comptime src: std.builtin.SourceLocation, name: ?[*:0]const 
     return ___tracy_emit_zone_begin_callstack(&loc, 1, active);
 }
 
-pub inline fn zoneNC(comptime src: std.builtin.SourceLocation, name: ?[*:0]const u8, color: u32, active: c_int) Ctx {
+pub inline fn zoneNC(
+    comptime src: std.builtin.SourceLocation,
+    comptime name: ?[*:0]const u8,
+    comptime color: u32,
+    comptime active: c_int,
+) Ctx {
     if (!enable) return .{};
 
     const loc = ___tracy_source_location_data{
@@ -79,7 +91,7 @@ pub inline fn frameMark() void {
     ___tracy_emit_frame_mark(null);
 }
 
-pub inline fn frameMarkNamed(name: [*:0]const u8) void {
+pub inline fn frameMarkNamed(comptime name: [*:0]const u8) void {
     if (!enable) return;
     ___tracy_emit_frame_mark(name);
 }

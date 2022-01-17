@@ -1,5 +1,4 @@
-// This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement
-// (WASD, Right Mouse Button + drag).
+// This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement.
 
 const std = @import("std");
 const math = std.math;
@@ -14,6 +13,7 @@ const gfx = common.graphics;
 const lib = common.library;
 const zm = common.zmath;
 const c = common.c;
+const tracy = common.tracy;
 
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
@@ -352,7 +352,7 @@ fn update(demo: *DemoState) void {
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
-        // Load camera position from memory to SIMD register ('3' means that we want to load three components)
+        // Load camera position from memory to SIMD register ('3' means that we want to load three components).
         var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
         if (w.GetAsyncKeyState('W') < 0) {
@@ -366,7 +366,7 @@ fn update(demo: *DemoState) void {
             cpos -= right;
         }
 
-        // Copy updated position from SIMD register to memory
+        // Copy updated position from SIMD register to memory.
         zm.store(demo.camera.position[0..], cpos, 3);
     }
 }
