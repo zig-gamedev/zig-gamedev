@@ -1,7 +1,7 @@
 // ==============================================================================
 //
 // zmath lib 0.2
-// Fast SIMD math library for game developers
+// Fast, multi-platform, SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig
 //
 // zmath uses row-major matrices, row vectors (each row vector is stored in SIMD register).
