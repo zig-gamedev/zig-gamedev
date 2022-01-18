@@ -12,7 +12,7 @@
 // const vb = f32x4(-1.0, 1.0, -1.0, 1.0);
 // const v0 = va + vb - f32x4(0.0, 1.0, 0.0, 1.0) * f32x4s(3.0);
 // const v1 = cross(va, vb) + f32x4(1.0, 1.0, 1.0, 1.0);
-// const s0 = dot3(va, vb);
+// const v2 = va + dot3(va, vb) / v1; // dotN() returns scalar replicated on all vector components
 //
 // const m = rotationX(math.pi * 0.25);
 // const v = f32x4(...);
@@ -27,12 +27,17 @@
 // if (any(b, 0)) { ... } // '0' means check all vector components; if any is 'true'
 // if (any(b, 3)) { ... } // '3' means check first three vector components; if any from first three is 'true'
 //
-// const v4 = f32x4(...);
-// const v8 = f32x8(...);
-// const v16 = f32x16(...);
-// const v4r = sin(v4);
-// const v8r = sin(v8);
-// const v16r = sin(v16);
+// var v4 = load(mem[0..], F32x4, 0);
+// var v8 = load(mem[100..], F32x8, 0);
+// var v16 = load(mem[200..], F32x16, 0);
+//
+// v4 = sin(v4);
+// v8 = cos(v8);
+// v16 = atan(v16);
+//
+// store(mem[0..], v4, 0);
+// store(mem[100..], v8, 0);
+// store(mem[200..], v16, 0);
 //
 // ------------------------------------------------------------------------------
 // 1. Initialization functions
