@@ -1,3 +1,21 @@
+// ==============================================================================
+//
+// graphics lib
+//
+// Some features of the graphics library:
+//
+//  * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
+//  * Basic DirectX 12 resource management (handle-based resources and pipelines)
+//  * Basic resource barriers management with simple state-tracking
+//  * Fast image loading using WIC (Windows Imaging Component)
+//  * Helpers for uploading data to the GPU
+//  * Fast mipmap generator running on the GPU
+//  * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
+//  * Custom integration of dear imgui library
+//
+//  Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intro
+//
+// ==============================================================================
 const std = @import("std");
 const win32 = @import("win32");
 const w = win32.base;

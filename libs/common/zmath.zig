@@ -1,9 +1,10 @@
 // ==============================================================================
 //
-// zmath v0.2 - Fast SIMD math library for game developers
+// zmath lib 0.2
+// Fast SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig
 //
-// zmath uses row-major matrices, row vectors (each row is stored in SIMD register).
+// zmath uses row-major matrices, row vectors (each row vector is stored in SIMD register).
 // Handedness is determined by which function version is used (Rh vs. Lh),
 // otherwise the function works with either left-handed or right-handed view coordinates.
 //
