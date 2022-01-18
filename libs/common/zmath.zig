@@ -42,6 +42,10 @@
 // f32x16(e0: f32, e1: f32, e2: f32, e3: f32, e4: f32, e5: f32, e6: f32, e7: f32,
 //        e8: f32, e9: f32, ea: f32, eb: f32, ec: f32, ed: f32, ee: f32, ef: f32) F32x16
 //
+// f32x4s(e0: f32) F32x4
+// f32x8s(e0: f32) F32x8
+// f32x16s(e0: f32) F32x16
+//
 // u32x4(e0: u32, e1: u32, e2: u32, e3: u32) U32x4
 // u32x8(e0: u32, e1: u32, e2: u32, e3: u32, e4: u32, e5: u32, e6: u32, e7: u32) U32x8
 // u32x16(e0: u32, e1: u32, e2: u32, e3: u32, e4: u32, e5: u32, e6: u32, e7: u32,
@@ -224,9 +228,6 @@ const has_fma = if (cpu_arch == .x86_64) std.Target.x86.featureSetHas(builtin.cp
 //
 // ------------------------------------------------------------------------------
 
-pub inline fn f32x4s(e0: f32) F32x4 {
-    return .{ e0, e0, e0, e0 };
-}
 pub inline fn f32x4(e0: f32, e1: f32, e2: f32, e3: f32) F32x4 {
     return .{ e0, e1, e2, e3 };
 }
@@ -240,6 +241,16 @@ pub inline fn f32x16(
     return .{ e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, ea, eb, ec, ed, ee, ef };
 }
 // zig fmt: on
+
+pub inline fn f32x4s(e0: f32) F32x4 {
+    return splat(F32x4, e0);
+}
+pub inline fn f32x8s(e0: f32) F32x8 {
+    return splat(F32x8, e0);
+}
+pub inline fn f32x16s(e0: f32) F32x16 {
+    return splat(F32x16, e0);
+}
 
 pub inline fn u32x4(e0: u32, e1: u32, e2: u32, e3: u32) U32x4 {
     return .{ e0, e1, e2, e3 };
