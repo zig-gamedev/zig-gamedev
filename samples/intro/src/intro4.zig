@@ -479,6 +479,7 @@ fn draw(demo: *DemoState) void {
     else
         gctx.setCurrentPipeline(demo.non_bindless_pso);
 
+    // Set input assembler (IA) state.
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
