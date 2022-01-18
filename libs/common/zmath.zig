@@ -10,7 +10,7 @@
 //
 // const va = f32x4(1.0, 2.0, 3.0, 1.0);
 // const vb = f32x4(-1.0, 1.0, -1.0, 1.0);
-// const v0 = va + vb - f32x4(0.0, 1.0, 0.0, 1.0) * splat(F32x4, 3.0);
+// const v0 = va + vb - f32x4(0.0, 1.0, 0.0, 1.0) * f32x4s(3.0);
 // const v1 = cross(va, vb) + f32x4(1.0, 1.0, 1.0, 1.0);
 // const s0 = dot3(va, vb);
 //
