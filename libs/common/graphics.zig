@@ -7,6 +7,7 @@
 //  * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
 //  * Basic DirectX 12 resource management (handle-based resources and pipelines)
 //  * Basic resource barriers management with simple state-tracking
+//  * Transient and persistent descriptor allocation
 //  * Fast image loading using WIC (Windows Imaging Component)
 //  * Helpers for uploading data to the GPU
 //  * Fast mipmap generator running on the GPU

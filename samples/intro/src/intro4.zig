@@ -243,7 +243,12 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     // Bindless path init.
     {
-        // Allocate one persistent, GPU descriptor handle. It will be allocated at slot 0 and automatically
+        // pub const PersistentDescriptor = struct {
+        //     cpu_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
+        //     gpu_handle: d3d12.GPU_DESCRIPTOR_HANDLE,
+        //     index: u32, // index in the 'ResourceDescriptorHeap' array
+        // };
+        // Allocate one persistent, GPU descriptor handle. It will be automatically
         // available in the shader via 'ResourceDescriptorHeap' array ('ResourceDescriptorHeap[0]' in this case).
         const bindless_descriptor = gctx.allocatePersistentGpuDescriptors(1);
         gctx.device.CreateShaderResourceView(gctx.getResource(mesh_texture), null, bindless_descriptor.cpu_handle);
