@@ -344,7 +344,10 @@ fn draw(demo: *DemoState) void {
         zm.storeF32x4x4(mem.cpu_slice[0].object_to_clip[0..], zm.transpose(object_to_clip));
 
         // Set GPU handle of our allocated memory region so that it is visible to the shader.
-        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(
+            0, // Slot index 0 in Root Signature (CBV(b0), see intro2.hlsl).
+            mem.gpu_base,
+        );
     }
 
     gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);

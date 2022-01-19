@@ -433,7 +433,7 @@ fn draw(demo: *DemoState) void {
 
         // Set GPU handle of our allocated memory region so that it is visible to the shader.
         gctx.cmdlist.SetGraphicsRootConstantBufferView(
-            1, // Slot index 1 in Root Signature (CBV(b1), see intro3.hlsl)
+            1, // Slot index 1 in Root Signature (CBV(b1), see intro3.hlsl).
             mem.gpu_base,
         );
     }
@@ -456,7 +456,7 @@ fn draw(demo: *DemoState) void {
 
                 // Set GPU handle of our allocated memory region so that it is visible to the shader.
                 gctx.cmdlist.SetGraphicsRootConstantBufferView(
-                    0, // Slot index 0 in Root Signature (CBV(b0), see intro3.hlsl)
+                    0, // Slot index 0 in Root Signature (CBV(b0), see intro3.hlsl).
                     mem.gpu_base,
                 );
 

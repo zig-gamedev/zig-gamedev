@@ -248,7 +248,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         //     gpu_handle: d3d12.GPU_DESCRIPTOR_HANDLE,
         //     index: u32, // index in the 'ResourceDescriptorHeap' array
         // };
-        // Allocate one persistent, GPU descriptor handle. It will be automatically
+        // Allocate one persistent GPU descriptor handle. It will be automatically
         // available in the shader via 'ResourceDescriptorHeap' array ('ResourceDescriptorHeap[0]' in this case).
         const bindless_descriptor = gctx.allocatePersistentGpuDescriptors(1);
         gctx.device.CreateShaderResourceView(gctx.getResource(mesh_texture), null, bindless_descriptor.cpu_handle);
@@ -495,7 +495,7 @@ fn draw(demo: *DemoState) void {
     if (!demo.is_bindless_mode_active) {
         // Bind mesh texture (copy CPU descriptor handle to GPU descriptor heap).
         gctx.cmdlist.SetGraphicsRootDescriptorTable(
-            2, // Slot index 2 in Root Signature (SRV(t0), see intro4.hlsl)
+            2, // Slot index 2 in Root Signature (SRV(t0), see intro4.hlsl).
             gctx.copyDescriptorsToGpuHeap(1, demo.mesh_texture_srv),
         );
     }
@@ -511,7 +511,7 @@ fn draw(demo: *DemoState) void {
 
         // Set GPU handle of our allocated memory region so that it is visible to the shader.
         gctx.cmdlist.SetGraphicsRootConstantBufferView(
-            1, // Slot index 1 in Root Signature (CBV(b1), see intro4.hlsl)
+            1, // Slot index 1 in Root Signature (CBV(b1), see intro4.hlsl).
             mem.gpu_base,
         );
     }
@@ -534,7 +534,7 @@ fn draw(demo: *DemoState) void {
 
                 // Set GPU handle of our allocated memory region so that it is visible to the shader.
                 gctx.cmdlist.SetGraphicsRootConstantBufferView(
-                    0, // Slot index 0 in Root Signature (CBV(b0), see intro4.hlsl)
+                    0, // Slot index 0 in Root Signature (CBV(b0), see intro4.hlsl).
                     mem.gpu_base,
                 );
 
