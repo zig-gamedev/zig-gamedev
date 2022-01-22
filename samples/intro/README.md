@@ -33,3 +33,9 @@ This intro application shows how to draw multiple objects in 3D space and how to
 This intro application shows how to load a texture image from file, generate mipmaps on the GPU and draw 3D textured objects. Texture is used in two modes: traditional and 'bindless'. In bindless mode we use [HLSL 6.6 Dynamic Resources](https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_DynamicResources.html) feature.
 
 ![image](screenshots/screenshot4.png)
+
+### intro 5
+
+This intro application shows how to use zmath lib and std.MultiArrayList to efficiently generate dynamic wave consisting of more than 1M points on the CPU.
+
+![image](screenshots/screenshot5.png)

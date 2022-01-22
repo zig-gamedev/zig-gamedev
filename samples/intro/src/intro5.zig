@@ -1,3 +1,6 @@
+// This intro application shows how to use zmath lib and std.MultiArrayList to efficiently generate dynamic wave
+// consisting of more than 1M points on the CPU.
+
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
