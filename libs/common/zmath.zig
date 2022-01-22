@@ -11,7 +11,7 @@
 // const va = f32x4(1.0, 2.0, 3.0, 1.0);
 // const vb = f32x4(-1.0, 1.0, -1.0, 1.0);
 // const v0 = va + vb - f32x4(0.0, 1.0, 0.0, 1.0) * f32x4s(3.0);
-// const v1 = cross(va, vb) + f32x4(1.0, 1.0, 1.0, 1.0);
+// const v1 = cross3(va, vb) + f32x4(1.0, 1.0, 1.0, 1.0);
 // const v2 = va + dot3(va, vb) / v1; // dotN() returns scalar replicated on all vector components
 //
 // const m = rotationX(math.pi * 0.25);
