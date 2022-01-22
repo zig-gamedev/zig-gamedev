@@ -85,6 +85,11 @@ pub fn build(b: *std.build.Builder) void {
     dxc_command = makeDxcCmd("src/intro4.hlsl", "psMain", "intro4_bindless.ps.cso", "ps", "PSO__BINDLESS");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/intro5.hlsl", "vsMain", "intro5.vs.cso", "vs", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/intro5.hlsl", "psMain", "intro5.ps.cso", "ps", "");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     dxc_command = makeDxcCmd(
         "../../libs/common/common.hlsl",
         "csGenerateMipmaps",
@@ -102,8 +107,9 @@ pub fn build(b: *std.build.Builder) void {
         b.addExecutable("intro2", "src/intro2.zig"),
         b.addExecutable("intro3", "src/intro3.zig"),
         b.addExecutable("intro4", "src/intro4.zig"),
+        b.addExecutable("intro5", "src/intro5.zig"),
     };
-    const active_prog = progs[4];
+    const active_prog = progs[5];
     const target_options = b.standardTargetOptions(.{});
     const release_options = b.standardReleaseOptions();
 
