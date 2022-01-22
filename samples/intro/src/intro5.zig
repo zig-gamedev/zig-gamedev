@@ -271,9 +271,9 @@ fn update(demo: *DemoState) void {
     c.igSameLine(0, -1);
     c.igText(" :  move camera", "");
 
-    _ = c.igRadioButton_IntPtr("Vector width 4", &demo.simd_width, 4);
-    _ = c.igRadioButton_IntPtr("Vector width 8", &demo.simd_width, 8);
-    _ = c.igRadioButton_IntPtr("Vector width 16", &demo.simd_width, 16);
+    _ = c.igRadioButton_IntPtr("SIMD vector width 4", &demo.simd_width, 4);
+    _ = c.igRadioButton_IntPtr("SIMD vector width 8", &demo.simd_width, 8);
+    _ = c.igRadioButton_IntPtr("SIMD vector width 16", &demo.simd_width, 16);
 
     c.igEnd();
 
