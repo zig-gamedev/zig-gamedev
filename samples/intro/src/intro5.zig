@@ -342,17 +342,16 @@ fn computeWaves(comptime T: type, vertex_data: std.MultiArrayList(Vertex), time:
     var z_index: i32 = 0;
     while (z_index < grid_size) : (z_index += 1) {
         const z: f32 = scale * @intToFloat(f32, z_index - grid_size / 2);
+        const vz = zm.splat(T, z);
+
         var x_index: i32 = 0;
         while (x_index < grid_size) : (x_index += zm.veclen(T)) {
             const x: f32 = scale * @intToFloat(f32, x_index - grid_size / 2);
-
-            var vx = zm.splat(T, x) + voffset * zm.splat(T, scale);
-            var vy = zm.splat(T, 0.0);
-            var vz = zm.splat(T, z);
+            const vx = zm.splat(T, x) + voffset * zm.splat(T, scale);
 
             const d = zm.sqrt(vx * vx + vz * vz);
 
-            vy = zm.sin(d - vtime);
+            const vy = zm.sin(d - vtime);
 
             const index = @intCast(usize, x_index + z_index * grid_size);
             zm.store(xslice[index..], vx, 0);
