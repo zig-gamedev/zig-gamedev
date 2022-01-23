@@ -337,28 +337,24 @@ fn computeWaves(comptime T: type, vertex_data: std.MultiArrayList(Vertex), time:
     const yslice = vertex_data.items(.y);
     const zslice = vertex_data.items(.z);
 
-    var z: f32 = -0.5 * 0.1 * @intToFloat(f32, grid_size);
-    var z_index: u32 = 0;
-    while (z_index < grid_size) : ({
-        z_index += 1;
-        z += 0.1;
-    }) {
-        var x: f32 = -0.5 * 0.1 * @intToFloat(f32, grid_size);
-        var x_index: u32 = 0;
-        while (x_index < grid_size) : ({
-            x_index += zm.veclen(T);
-            x += 0.1 * @intToFloat(f32, zm.veclen(T));
-        }) {
-            const index = x_index + z_index * grid_size;
+    const scale: f32 = 0.05;
 
-            var vx = zm.splat(T, x) + voffset * zm.splat(T, 0.1);
+    var z_index: i32 = 0;
+    while (z_index < grid_size) : (z_index += 1) {
+        const z: f32 = scale * @intToFloat(f32, z_index - grid_size / 2);
+        var x_index: i32 = 0;
+        while (x_index < grid_size) : (x_index += zm.veclen(T)) {
+            const x: f32 = scale * @intToFloat(f32, x_index - grid_size / 2);
+
+            var vx = zm.splat(T, x) + voffset * zm.splat(T, scale);
             var vy = zm.splat(T, 0.0);
             var vz = zm.splat(T, z);
 
-            const d = zm.sqrt(vx * vx + vy * vy + vz * vz);
+            const d = zm.sqrt(vx * vx + vz * vz);
 
             vy = zm.sin(d - vtime);
 
+            const index = @intCast(usize, x_index + z_index * grid_size);
             zm.store(xslice[index..], vx, 0);
             zm.store(yslice[index..], vy, 0);
             zm.store(zslice[index..], vz, 0);
