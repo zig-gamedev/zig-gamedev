@@ -31,13 +31,15 @@
 // var v8 = load(mem[100..], F32x8, 0);
 // var v16 = load(mem[200..], F32x16, 0);
 //
-// v4 = sin(v4);
-// v8 = cos(v8);
-// v16 = atan(v16);
+// v4 = sin(v4); // on .x86_64 will compile to 1 x SIMDx4
+// v8 = cos(v8); // on .x86_64 will compile to 2 x SIMDx4
+// v16 = atan(v16); // on .x86_64 will compile to 4 x SIMDx4
 //
 // store(mem[0..], v4, 0);
 // store(mem[100..], v8, 0);
 // store(mem[200..], v16, 0);
+//
+// Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intro
 //
 // ------------------------------------------------------------------------------
 // 1. Initialization functions
