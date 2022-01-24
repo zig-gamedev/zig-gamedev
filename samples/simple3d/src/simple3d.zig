@@ -335,6 +335,7 @@ const DemoState = struct {
         grfx.addTransitionBarrier(base_color_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         grfx.flushResourceBarriers();
 
+        grfx.endFrame();
         grfx.finishGpuCommands();
 
         mipgen.deinit(&grfx);

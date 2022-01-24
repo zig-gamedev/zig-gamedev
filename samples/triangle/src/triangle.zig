@@ -118,6 +118,7 @@ pub fn main() !void {
     grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
     grfx.flushResourceBarriers();
 
+    grfx.endFrame();
     grfx.finishGpuCommands();
 
     var triangle_color = vm.Vec3.init(0.0, 1.0, 0.0);

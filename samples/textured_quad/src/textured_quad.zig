@@ -210,6 +210,7 @@ const DemoState = struct {
         grfx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         grfx.flushResourceBarriers();
 
+        grfx.endFrame();
         grfx.finishGpuCommands();
 
         // NOTE(mziulek):
