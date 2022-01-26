@@ -1004,8 +1004,6 @@ pub const GraphicsContext = struct {
             defer ps_file.close();
             const ps_code = ps_file.reader().readAllAlloc(arena, 256 * 1024) catch unreachable;
             pso_desc.PS = .{ .pShaderBytecode = ps_code.ptr, .BytecodeLength = ps_code.len };
-        } else {
-            assert(pso_desc.PS.pShaderBytecode != null);
         }
 
         const hash = compute_hash: {
@@ -1018,9 +1016,11 @@ pub const GraphicsContext = struct {
                     @ptrCast([*]const u8, pso_desc.GS.pShaderBytecode.?)[0..pso_desc.GS.BytecodeLength],
                 );
             }
-            hasher.update(
-                @ptrCast([*]const u8, pso_desc.PS.pShaderBytecode.?)[0..pso_desc.PS.BytecodeLength],
-            );
+            if (pso_desc.PS.pShaderBytecode != null) {
+                hasher.update(
+                    @ptrCast([*]const u8, pso_desc.PS.pShaderBytecode.?)[0..pso_desc.PS.BytecodeLength],
+                );
+            }
             hasher.update(std.mem.asBytes(&pso_desc.BlendState));
             hasher.update(std.mem.asBytes(&pso_desc.SampleMask));
             hasher.update(std.mem.asBytes(&pso_desc.RasterizerState));

@@ -273,7 +273,7 @@ pub const SHADER_VISIBILITY = enum(UINT) {
     GEOMETRY = 4,
     PIXEL = 5,
     AMPLIFICATION = 6,
-    MESH = 7
+    MESH = 7,
 };
 
 pub const ROOT_PARAMETER = extern struct {
@@ -441,6 +441,12 @@ pub const RESOURCE_BARRIER = extern struct {
         Aliasing: RESOURCE_ALIASING_BARRIER,
         UAV: RESOURCE_UAV_BARRIER,
     },
+
+    pub fn initUav(resource: *IResource) RESOURCE_BARRIER {
+        var v = std.mem.zeroes(@This());
+        v = .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = resource } } };
+        return v;
+    }
 };
 
 pub const SUBRESOURCE_FOOTPRINT = extern struct {
@@ -1577,6 +1583,29 @@ pub const UNORDERED_ACCESS_VIEW_DESC = extern struct {
             },
         };
         return desc;
+    }
+
+    pub fn initStructuredBuffer(
+        first_element: UINT64,
+        num_elements: UINT,
+        stride: UINT,
+        counter_offset: UINT64,
+    ) UNORDERED_ACCESS_VIEW_DESC {
+        var v = std.mem.zeroes(@This());
+        v = .{
+            .Format = .UNKNOWN,
+            .ViewDimension = .BUFFER,
+            .u = .{
+                .Buffer = .{
+                    .FirstElement = first_element,
+                    .NumElements = num_elements,
+                    .StructureByteStride = stride,
+                    .CounterOffsetInBytes = counter_offset,
+                    .Flags = BUFFER_SRV_FLAG_NONE,
+                },
+            },
+        };
+        return v;
     }
 };
 
@@ -5719,7 +5748,7 @@ pub extern "d3d12" fn D3D12CreateDevice(
 pub extern "d3d12" fn D3D12SerializeVersionedRootSignature(
     *const VERSIONED_ROOT_SIGNATURE_DESC,
     ?*?*d3d.IBlob,
-    ?*?*d3d.IBlob
+    ?*?*d3d.IBlob,
 ) callconv(WINAPI) HRESULT;
 
 pub const IID_IDevice = GUID{
