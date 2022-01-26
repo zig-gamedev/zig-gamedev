@@ -459,9 +459,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .num_pixel_groups = 0,
         .raster_speed = 4,
         .camera = .{
-            .position = [3]f32{ 3.0, 4.0, -3.0 },
+            .position = [3]f32{ 3.0, 0.0, -3.0 },
             .forward = [3]f32{ 0.0, 0.0, 0.0 },
-            .pitch = 0.25 * math.pi,
+            .pitch = 0.0 * math.pi,
             .yaw = -0.25 * math.pi,
         },
         .mouse = .{
