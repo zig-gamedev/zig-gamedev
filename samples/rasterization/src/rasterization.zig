@@ -23,6 +23,9 @@ const window_name = "zig-gamedev: rasterization";
 const window_width = 1920;
 const window_height = 1080;
 
+// Compute shader group size in 'csClearPixels' and 'csDrawPixels' (rasterization.hlsl).
+const compute_group_size = 32;
+
 const Pso_DrawConst = struct {
     object_to_world: [16]f32,
 };
@@ -618,7 +621,6 @@ fn draw(demo: *DemoState) void {
         .Format = .R32_UINT,
     });
 
-    const back_buffer = gctx.getBackBuffer();
     if (demo.draw_wireframe) {
         gctx.cmdlist.OMSetRenderTargets(
             0,
@@ -628,8 +630,10 @@ fn draw(demo: *DemoState) void {
         );
         gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
 
+        //
+        // Z pre pass for wireframe mesh.
+        //
         gctx.setCurrentPipeline(demo.z_pre_pass_pso);
-
         // Upload per-frame constant data (camera xform).
         {
             const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
@@ -661,6 +665,9 @@ fn draw(demo: *DemoState) void {
             null,
         );
 
+        //
+        // Draw wireframe mesh.
+        //
         gctx.setCurrentPipeline(demo.draw_mesh_pso);
         // Upload per-frame constant data (camera xform).
         {
@@ -698,7 +705,7 @@ fn draw(demo: *DemoState) void {
                 0,
                 gctx.copyDescriptorsToGpuHeap(1, demo.pixel_buffer_uav),
             );
-            gctx.cmdlist.Dispatch(gctx.viewport_width * gctx.viewport_height / 32, 1, 1);
+            gctx.cmdlist.Dispatch(gctx.viewport_width * gctx.viewport_height / compute_group_size, 1, 1);
             gctx.cmdlist.ResourceBarrier(
                 1,
                 &[_]d3d12.RESOURCE_BARRIER{
@@ -709,8 +716,10 @@ fn draw(demo: *DemoState) void {
             gctx.cmdlist.OMSetRenderTargets(0, null, w.TRUE, &demo.depth_texture_dsv);
             gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
 
+            //
+            // Z pre pass.
+            //
             gctx.setCurrentPipeline(demo.z_pre_pass_pso);
-
             // Upload per-frame constant data (camera xform).
             {
                 const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
@@ -726,8 +735,10 @@ fn draw(demo: *DemoState) void {
             }
             gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
 
+            //
+            // Record pixels to linear pixel buffer
+            //
             gctx.setCurrentPipeline(demo.record_pixels_pso);
-
             // Bind pixel buffer UAV.
             gctx.cmdlist.SetGraphicsRootDescriptorTable(
                 2,
@@ -751,16 +762,20 @@ fn draw(demo: *DemoState) void {
             }
             gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
         }
+
+        // Increase number of drawn pixels to achieve animation effect.
         demo.num_pixel_groups += @intCast(u32, demo.raster_speed);
-        if (demo.num_pixel_groups > gctx.viewport_width * gctx.viewport_height / 32) {
-            demo.num_pixel_groups = gctx.viewport_width * gctx.viewport_height / 32;
+        if (demo.num_pixel_groups > gctx.viewport_width * gctx.viewport_height / compute_group_size) {
+            demo.num_pixel_groups = gctx.viewport_width * gctx.viewport_height / compute_group_size;
         }
 
         gctx.addTransitionBarrier(demo.pixel_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         gctx.addTransitionBarrier(demo.pixel_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
         gctx.flushResourceBarriers();
 
+        //
         // Draw pixels to the pixel texture.
+        //
         gctx.setCurrentPipeline(demo.draw_pixels_pso);
         gctx.cmdlist.SetComputeRootDescriptorTable(
             0,
@@ -772,6 +787,8 @@ fn draw(demo: *DemoState) void {
         );
         gctx.cmdlist.Dispatch(demo.num_pixel_groups, 1, 1);
     }
+
+    const back_buffer = gctx.getBackBuffer();
 
     // Copy pixel texture to the back buffer.
     gctx.addTransitionBarrier(demo.pixel_texture, d3d12.RESOURCE_STATE_COPY_SOURCE);

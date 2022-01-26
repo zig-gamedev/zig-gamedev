@@ -1,3 +1,5 @@
+#define COMPUTE_GROUP_SZIE 32
+
 struct Pixel {
     float2 position;
     float3 color;
@@ -174,7 +176,7 @@ StructuredBuffer<Pixel> srv_pixels : register(t0);
 RWTexture2D<float4> uav_pixels : register(u0);
 
 [RootSignature(ROOT_SIGNATURE)]
-[numthreads(32, 1, 1)]
+[numthreads(COMPUTE_GROUP_SZIE, 1, 1)]
 void csDrawPixels(
     uint3 dispatch_id : SV_DispatchThreadID
 ) {
@@ -190,7 +192,7 @@ void csDrawPixels(
 RWStructuredBuffer<Pixel> uav_pixels : register(u0);
 
 [RootSignature(ROOT_SIGNATURE)]
-[numthreads(32, 1, 1)]
+[numthreads(COMPUTE_GROUP_SZIE, 1, 1)]
 void csClearPixels(
     uint3 dispatch_id : SV_DispatchThreadID
 ) {
