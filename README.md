@@ -23,6 +23,10 @@ This repository contains a collection of [sample applications](#sample-applicati
 
 Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
 
+1. [rasterization](samples/rasterization): This sample application shows how GPU rasterizes triangles in slow motion.
+
+    <a href="samples/rasterization"><img src="samples/rasterization/screenshot.png" alt="rasterization" height="200"></a>
+
 1. [physically based rendering](samples/physically_based_rendering): This sample implements physically based shading and image based lighting to achive realistic looking rendering results.
 
     <a href="samples/physically_based_rendering"><img src="samples/physically_based_rendering/screenshot.png" alt="physically based rendering" height="200"></a>
