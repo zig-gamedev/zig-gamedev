@@ -10,10 +10,10 @@ This repository contains a collection of [sample applications](#sample-applicati
 
 * Zero dependency except [Zig compiler (master)](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
-* [zmath lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig) - fast SIMD math library for game developers
+* [zmath lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig) - fast SIMD math library for game developers (**cross-platform and standalone**)
+* [cbullet lib](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.h) - C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) (**cross-platform and standalone**)
 * [graphics lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/graphics.zig) - helper library for working with DirectX 12
 * [audio lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/audio.zig) - helper library for working with XAudio2
-* [cbullet lib](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.h) - C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) which can be used in Zig/C/C++ programs
 * [pix lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/pix3.zig) - support for GPU profiling with PIX
 * [tracy lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/tracy.zig) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
