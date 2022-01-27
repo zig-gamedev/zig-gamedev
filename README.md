@@ -15,7 +15,7 @@ This repository contains a collection of [sample applications](#sample-applicati
 * [graphics lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/graphics.zig) - helper library for working with DirectX 12
 * [audio lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/audio.zig) - helper library for working with XAudio2
 * [pix lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/pix3.zig) - support for GPU profiling with PIX
-* [tracy lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/tracy.zig) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
+* [tracy lib](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/tracy.zig) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) (**cross-platform and standalone**)
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src))
 
