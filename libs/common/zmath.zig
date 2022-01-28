@@ -143,6 +143,8 @@
 // ------------------------------------------------------------------------------
 //
 // mul(m0: Mat, m1: Mat) Mat
+// mul(s: f32, m: Mat) Mat
+// mul(m: Mat, s: f32) Mat
 // mul(v: Vec, m: Mat) Vec
 // mul(m: Mat, v: Vec) Vec
 // transpose(m: Mat) Mat
