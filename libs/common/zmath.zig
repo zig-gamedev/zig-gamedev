@@ -31,9 +31,9 @@
 // var v8 = load(mem[100..], F32x8, 0);
 // var v16 = load(mem[200..], F32x16, 0);
 //
-// v4 = sin(v4); // on .x86_64 will compile to 1 x SIMDx4
-// v8 = cos(v8); // on .x86_64 will compile to 2 x SIMDx4
-// v16 = atan(v16); // on .x86_64 will compile to 4 x SIMDx4
+// v4 = sin(v4); // SIMDx4
+// v8 = cos(v8); // .x86_64 -> 2 x SIMDx4, .x86_64+avx+fma -> SIMDx8
+// v16 = atan(v16); // .x86_64 -> 4 x SIMDx4, .x86_64+avx+fma -> 2 x SIMDx8, .x86_64+avx512f -> SIMDx16
 //
 // store(mem[0..], v4, 0);
 // store(mem[100..], v8, 0);
@@ -175,7 +175,7 @@
 // 5. Quaternion functions
 // ------------------------------------------------------------------------------
 //
-// mul(q0: Quat, q1: Quat) Quat
+// qmul(q0: Quat, q1: Quat) Quat
 // conjugate(quat: Quat) Quat
 // inverse(q: Quat) Quat
 // slerp(q0: Quat, q1: Quat, t: f32) Quat
@@ -1960,8 +1960,6 @@ pub fn mul(a: anytype, b: anytype) mulRetType(@TypeOf(a), @TypeOf(b)) {
     const Tb = @TypeOf(b);
     if (Ta == Mat and Tb == Mat) {
         return mulMat(a, b);
-    } else if (Ta == Quat and Tb == Quat) {
-        return mulQuat(a, b);
     } else if (Ta == f32 and Tb == Mat) {
         const va = splat(F32x4, a);
         return Mat{ va * b[0], va * b[1], va * b[2], va * b[3] };
@@ -2501,7 +2499,7 @@ pub fn matToQuat(m: Mat) Quat {
 //
 // ------------------------------------------------------------------------------
 
-fn mulQuat(q0: Quat, q1: Quat) Quat {
+fn qmul(q0: Quat, q1: Quat) Quat {
     var result = swizzle(q1, .w, .w, .w, .w);
     var q1x = swizzle(q1, .x, .x, .x, .x);
     var q1y = swizzle(q1, .y, .y, .y, .y);
@@ -2522,7 +2520,7 @@ test "zmath.quaternion.mul" {
     {
         const q0 = f32x4(2.0, 3.0, 4.0, 1.0);
         const q1 = f32x4(3.0, 2.0, 1.0, 4.0);
-        try expect(approxEqAbs(mul(q0, q1), f32x4(16.0, 4.0, 22.0, -12.0), 0.0001));
+        try expect(approxEqAbs(qmul(q0, q1), f32x4(16.0, 4.0, 22.0, -12.0), 0.0001));
     }
 }
 
@@ -2624,7 +2622,7 @@ test "zmath.quaternion.quatFromNormAxisAngle" {
         const q1 = quatFromAxisAngle(f32x4(0.0, 1.0, 0.0, 0.0), 0.125 * math.pi);
         const m0 = rotationX(0.25 * math.pi);
         const m1 = rotationY(0.125 * math.pi);
-        const mr0 = quatToMat(mul(q0, q1));
+        const mr0 = quatToMat(qmul(q0, q1));
         const mr1 = mul(m0, m1);
         try expect(approxEqAbs(mr0[0], mr1[0], 0.0001));
         try expect(approxEqAbs(mr0[1], mr1[1], 0.0001));
