@@ -137,16 +137,14 @@
 // normalize2(v: Vec) Vec
 // normalize3(v: Vec) Vec
 // normalize4(v: Vec) Vec
-// mul(v: Vec, m: Mat) Vec
-// mul(m: Mat, v: Vec) Vec
-// mul(v: Vec, s: f32) Vec
-// mul(s: f32, v: Vec) Vec
 //
 // ------------------------------------------------------------------------------
 // 4. Matrix functions
 // ------------------------------------------------------------------------------
 //
 // mul(m0: Mat, m1: Mat) Mat
+// mul(v: Vec, m: Mat) Vec
+// mul(m: Mat, v: Vec) Vec
 // transpose(m: Mat) Mat
 // rotationX(angle: f32) Mat
 // rotationY(angle: f32) Mat
@@ -1966,10 +1964,6 @@ pub fn mul(a: anytype, b: anytype) mulRetType(@TypeOf(a), @TypeOf(b)) {
     } else if (Ta == Mat and Tb == f32) {
         const vb = splat(F32x4, b);
         return Mat{ a[0] * vb, a[1] * vb, a[2] * vb, a[3] * vb };
-    } else if (Ta == f32 and Tb == Vec) {
-        return splat(F32x4, a) * b;
-    } else if (Ta == Vec and Tb == f32) {
-        return a * splat(F32x4, b);
     } else if (Ta == Vec and Tb == Mat) {
         return vecMulMat(a, b);
     } else if (Ta == Mat and Tb == Vec) {
@@ -1979,11 +1973,6 @@ pub fn mul(a: anytype, b: anytype) mulRetType(@TypeOf(a), @TypeOf(b)) {
     }
 }
 test "zmath.mul" {
-    {
-        const s: f32 = 2.0;
-        try expect(approxEqAbs(mul(s, f32x4(1.0, 2.0, 3.0, 4.0)), f32x4(2.0, 4.0, 6.0, 8.0), 0.0001));
-        try expect(approxEqAbs(mul(f32x4(1.0, 2.0, 3.0, 4.0), s), f32x4(2.0, 4.0, 6.0, 8.0), 0.0001));
-    }
     {
         const m = Mat{
             f32x4(0.1, 0.2, 0.3, 0.4),
