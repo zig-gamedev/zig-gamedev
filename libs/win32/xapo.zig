@@ -1,17 +1,17 @@
 const std = @import("std");
-const windows = @import("windows.zig");
-const IUnknown = windows.IUnknown;
-const BYTE = windows.BYTE;
-const HRESULT = windows.HRESULT;
-const WINAPI = windows.WINAPI;
-const UINT32 = windows.UINT32;
-const BOOL = windows.BOOL;
-const FALSE = windows.FALSE;
-const WCHAR = windows.WCHAR;
-const GUID = windows.GUID;
-const WAVEFORMATEX = @import("wasapi.zig").WAVEFORMATEX;
-
+const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const w = @import("windows.zig");
+const BYTE = w.BYTE;
+const HRESULT = w.HRESULT;
+const WINAPI = w.WINAPI;
+const UINT32 = w.UINT32;
+const BOOL = w.BOOL;
+const FALSE = w.FALSE;
+const WCHAR = w.WCHAR;
+const GUID = w.GUID;
+const ULONG = w.ULONG;
+const WAVEFORMATEX = @import("wasapi.zig").WAVEFORMATEX;
 
 pub const MIN_CHANNELS: UINT32 = 1;
 pub const MAX_CHANNELS: UINT32 = 64;
@@ -59,7 +59,7 @@ pub const PROCESS_BUFFER_PARAMETERS = packed struct {
 
 pub fn IXAPOVTable(comptime T: type) type {
     return extern struct {
-        unknown: IUnknown.VTable(T),
+        unknown: w.IUnknown.VTable(T),
         xapo: extern struct {
             GetRegistrationProperties: fn (*T, *?*REGISTRATION_PROPERTIES) callconv(WINAPI) HRESULT,
             IsInputFormatSupported: fn (
@@ -98,11 +98,12 @@ pub fn IXAPOVTable(comptime T: type) type {
     };
 }
 
+pub const IID_IXAPO = GUID.parse("{A410B984-9839-4819-A0BE-2856AE6B3ADB}");
 pub const IXAPO = extern struct {
     v: *const IXAPOVTable(Self),
 
     const Self = @This();
-    usingnamespace IUnknown.Methods(Self);
+    usingnamespace w.IUnknown.Methods(Self);
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
@@ -182,6 +183,76 @@ pub const IXAPO = extern struct {
             }
             pub inline fn CalcOutputFrames(self: *T, num_input_frames: UINT32) UINT32 {
                 return self.v.xapo.CalcOutputFrames(self, num_input_frames);
+            }
+        };
+    }
+};
+
+pub fn CXAPOBase(comptime T: type) type {
+    return extern struct {
+        refcount: u32 = 1,
+
+        pub fn QueryInterface(
+            self: *T,
+            guid: *const GUID,
+            outobj: ?*?*anyopaque,
+        ) callconv(WINAPI) HRESULT {
+            assert(outobj != null);
+
+            if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w.IID_IUnknown))) {
+                outobj.?.* = self;
+                _ = self.AddRef();
+                return w.S_OK;
+            } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&IID_IXAPO))) {
+                outobj.?.* = self;
+                _ = self.AddRef();
+                return w.S_OK;
+            }
+
+            outobj.?.* = null;
+            return w.E_NOINTERFACE;
+        }
+
+        pub fn AddRef(self: *T) callconv(WINAPI) ULONG {
+            const prev_refcount = @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic);
+            return prev_refcount + 1;
+        }
+
+        pub fn Release(self: *T) callconv(WINAPI) ULONG {
+            const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
+            assert(prev_refcount > 0);
+            if (prev_refcount == 1) {
+                w.ole32.CoTaskMemFree(self);
+            }
+            return prev_refcount - 1;
+        }
+    };
+}
+
+pub fn IXAPOParametersVTable(comptime T: type) type {
+    return extern struct {
+        unknown: w.IUnknown.VTable(T),
+        params: extern struct {
+            SetParameters: fn (*T, *const anyopaque, UINT32) callconv(WINAPI) void,
+            GetParameters: fn (*T, *anyopaque, UINT32) callconv(WINAPI) void,
+        },
+    };
+}
+
+pub const IXAPOParameters = extern struct {
+    v: *const IXAPOParametersVTable(Self),
+
+    const Self = @This();
+    usingnamespace w.IUnknown.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        return extern struct {
+            pub inline fn SetParameters(self: *T, params: *const anyopaque, size: UINT32) void {
+                self.v.params.SetParameters(self, params, size);
+            }
+            pub inline fn GetParameters(self: *T, params: *anyopaque, size: UINT32) void {
+                self.v.params.GetParameters(self, params, size);
             }
         };
     }

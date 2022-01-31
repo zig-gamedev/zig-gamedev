@@ -13,3 +13,4 @@ pub const directml = @import("directml.zig");
 pub const mf = @import("mf.zig");
 pub const xaudio2 = @import("xaudio2.zig");
 pub const xaudio2fx = @import("xaudio2fx.zig");
+pub const xapo = @import("xapo.zig");

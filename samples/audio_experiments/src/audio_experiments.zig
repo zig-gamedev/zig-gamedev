@@ -1,4 +1,6 @@
 const std = @import("std");
+const math = std.math;
+const assert = std.debug.assert;
 const win32 = @import("win32");
 const w = win32.base;
 const d2d1 = win32.d2d1;
@@ -7,6 +9,7 @@ const dwrite = win32.dwrite;
 const dml = win32.directml;
 const xaudio2 = win32.xaudio2;
 const xaudio2fx = win32.xaudio2fx;
+const xapo = win32.xapo;
 const wasapi = win32.wasapi;
 const mf = win32.mf;
 const common = @import("common");
@@ -16,10 +19,9 @@ const lib = common.library;
 const zm = common.zmath;
 const c = common.c;
 const pix = common.pix;
-const vm = common.vectormath;
 const tracy = common.tracy;
-const math = std.math;
-const assert = std.debug.assert;
+
+const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
@@ -30,6 +32,155 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: audio experiments";
 const window_width = 1920;
 const window_height = 1080;
+
+const AudioProcessor = extern struct {
+    v: *const xapo.IXAPOVTable(AudioProcessor) = &vtable,
+    refcount: u32 = 1,
+
+    const Self = @This();
+
+    const vtable = xapo.IXAPOVTable(AudioProcessor){
+        .unknown = .{
+            .QueryInterface = QueryInterface,
+            .AddRef = AddRef,
+            .Release = Release,
+        },
+        .xapo = .{
+            .GetRegistrationProperties = GetRegistrationProperties,
+            .IsInputFormatSupported = IsInputFormatSupported,
+            .IsOutputFormatSupported = IsOutputFormatSupported,
+            .Initialize = Initialize,
+            .Reset = Reset,
+            .LockForProcess = LockForProcess,
+            .UnlockForProcess = UnlockForProcess,
+            .Process = Process,
+            .CalcInputFrames = CalcInputFrames,
+            .CalcOutputFrames = CalcOutputFrames,
+        },
+    };
+
+    fn QueryInterface(
+        self: *Self,
+        guid: *const w.GUID,
+        outobj: ?*?*anyopaque,
+    ) callconv(w.WINAPI) w.HRESULT {
+        assert(outobj != null);
+
+        if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w.IID_IUnknown))) {
+            outobj.?.* = self;
+            _ = self.AddRef();
+            return w.S_OK;
+        } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&xapo.IID_IXAPO))) {
+            outobj.?.* = self;
+            _ = self.AddRef();
+            return w.S_OK;
+        }
+
+        outobj.?.* = null;
+        return w.E_NOINTERFACE;
+    }
+
+    fn AddRef(self: *Self) callconv(w.WINAPI) w.ULONG {
+        return @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic) + 1;
+    }
+
+    fn Release(self: *Self) callconv(w.WINAPI) w.ULONG {
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
+        if (prev_refcount == 1) {
+            w.ole32.CoTaskMemFree(self);
+        }
+        return prev_refcount - 1;
+    }
+
+    fn GetRegistrationProperties(
+        self: *Self,
+        props: *?*xapo.REGISTRATION_PROPERTIES,
+    ) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = props;
+        return w.S_OK;
+    }
+
+    fn IsInputFormatSupported(
+        self: *Self,
+        output_format: *const WAVEFORMATEX,
+        requested_input_format: *const WAVEFORMATEX,
+        supported_input_format: ?*?*WAVEFORMATEX,
+    ) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = output_format;
+        _ = requested_input_format;
+        _ = supported_input_format;
+        return w.S_OK;
+    }
+
+    fn IsOutputFormatSupported(
+        self: *Self,
+        input_format: *const WAVEFORMATEX,
+        requested_output_format: *const WAVEFORMATEX,
+        supported_output_format: ?*?*WAVEFORMATEX,
+    ) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = input_format;
+        _ = requested_output_format;
+        _ = supported_output_format;
+        return w.S_OK;
+    }
+
+    fn Initialize(self: *Self, data: ?*const anyopaque, data_size: w.UINT32) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = data;
+        _ = data_size;
+        return w.S_OK;
+    }
+
+    fn Reset(self: *Self) callconv(w.WINAPI) void {
+        _ = self;
+    }
+
+    fn LockForProcess(
+        self: *Self,
+        num_input_params: w.UINT32,
+        input_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
+        num_output_params: w.UINT32,
+        output_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
+    ) callconv(w.WINAPI) w.HRESULT {
+        _ = self;
+        _ = num_input_params;
+        _ = input_params;
+        _ = num_output_params;
+        _ = output_params;
+        return w.S_OK;
+    }
+
+    fn UnlockForProcess(self: *Self) callconv(w.WINAPI) void {
+        _ = self;
+    }
+
+    fn Process(
+        self: *Self,
+        num_input_params: w.UINT32,
+        input_params: ?[*]const xapo.PROCESS_BUFFER_PARAMETERS,
+        num_output_params: w.UINT32,
+        output_params: ?[*]const xapo.PROCESS_BUFFER_PARAMETERS,
+        is_enabled: w.BOOL,
+    ) callconv(w.WINAPI) void {
+        _ = self;
+        _ = num_input_params;
+        _ = input_params;
+        _ = num_output_params;
+        _ = output_params;
+        _ = is_enabled;
+    }
+
+    fn CalcInputFrames(_: *Self, num_output_frames: w.UINT32) callconv(w.WINAPI) w.UINT32 {
+        return num_output_frames;
+    }
+
+    fn CalcOutputFrames(_: *Self, num_input_frames: w.UINT32) callconv(w.WINAPI) w.UINT32 {
+        return num_input_frames;
+    }
+};
 
 const DemoState = struct {
     gctx: gfx.GraphicsContext,
@@ -51,6 +202,10 @@ const DemoState = struct {
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const tracy_zone = tracy.zone(@src(), 1);
     defer tracy_zone.end();
+
+    const comptr = @ptrCast(*AudioProcessor, @alignCast(8, w.CoTaskMemAlloc(@sizeOf(AudioProcessor)).?));
+    comptr.* = .{};
+    defer _ = comptr.Release();
 
     var actx = sfx.AudioContext.init(gpa_allocator);
 

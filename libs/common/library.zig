@@ -25,6 +25,7 @@ pub const HResultError = error{
     DXGI_ERROR_WAS_STILL_DRAWING,
     DXGI_STATUS_MODE_CHANGED,
     DWRITE_E_FILEFORMAT,
+    XAPO_E_FORMAT_UNSUPPORTED,
 };
 
 pub fn hrPanic(err: HResultError) noreturn {
@@ -61,6 +62,7 @@ fn hrErrorToCode(err: HResultError) w.HRESULT {
         HResultError.E_NOTIMPL => w.E_NOTIMPL,
         HResultError.E_FILE_NOT_FOUND => w.E_FILE_NOT_FOUND,
         HResultError.E_NOINTERFACE => w.E_NOINTERFACE,
+        HResultError.XAPO_E_FORMAT_UNSUPPORTED => w.XAPO_E_FORMAT_UNSUPPORTED,
     };
 }
 
@@ -80,6 +82,7 @@ fn hrCodeToError(hr: w.HRESULT) HResultError {
         @bitCast(c_ulong, w.E_NOTIMPL) => HResultError.E_NOTIMPL,
         @bitCast(c_ulong, w.E_FILE_NOT_FOUND) => HResultError.E_FILE_NOT_FOUND,
         @bitCast(c_ulong, w.E_NOINTERFACE) => HResultError.E_NOINTERFACE,
+        @bitCast(c_ulong, w.XAPO_E_FORMAT_UNSUPPORTED) => HResultError.XAPO_E_FORMAT_UNSUPPORTED,
         else => blk: {
             std.debug.print("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
             break :blk HResultError.E_FAIL;

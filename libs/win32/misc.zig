@@ -17,6 +17,8 @@ const SHORT = windows.SHORT;
 const POINT = windows.POINT;
 const HINSTANCE = windows.HINSTANCE;
 const HCURSOR = windows.HCURSOR;
+const SIZE_T = windows.SIZE_T;
+const LPVOID = windows.LPVOID;
 
 pub const INT8 = i8;
 pub const UINT8 = u8;
@@ -59,12 +61,21 @@ pub inline fn GET_WHEEL_DELTA_WPARAM(wparam: WPARAM) i16 {
     return @bitCast(i16, @intCast(u16, ((wparam >> 16) & 0xffff)));
 }
 
+pub fn IUnknownVTable(comptime T: type) type {
+    return extern struct {
+        unknown: extern struct {
+            QueryInterface: fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            AddRef: fn (*T) callconv(WINAPI) ULONG,
+            Release: fn (*T) callconv(WINAPI) ULONG,
+        },
+    };
+}
+
 pub const IID_IUnknown = GUID.parse("{00000000-0000-0000-C000-000000000046}");
 pub const IUnknown = extern struct {
+    v: *const IUnknownVTable(Self),
+
     const Self = @This();
-    v: *const extern struct {
-        unknown: VTable(Self),
-    },
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
@@ -140,6 +151,8 @@ pub extern "ole32" fn CoCreateInstance(
     ppv: *?*anyopaque,
 ) callconv(WINAPI) HRESULT;
 
+pub extern "ole32" fn CoTaskMemAlloc(size: SIZE_T) callconv(WINAPI) ?LPVOID;
+
 pub const VK_LBUTTON = 0x01;
 pub const VK_RBUTTON = 0x02;
 
@@ -171,5 +184,6 @@ pub const DXGI_ERROR_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887A0002));
 pub const DXGI_ERROR_WAS_STILL_DRAWING = @bitCast(HRESULT, @as(c_ulong, 0x887A000A));
 pub const DXGI_STATUS_MODE_CHANGED = @bitCast(HRESULT, @as(c_ulong, 0x087A0007));
 pub const DWRITE_E_FILEFORMAT = @bitCast(HRESULT, @as(c_ulong, 0x88985000));
+pub const XAPO_E_FORMAT_UNSUPPORTED = @bitCast(HRESULT, @as(c_ulong, 0x88970001));
 
 pub const GUID_NULL = GUID.parse("{00000000-0000-0000-0000-000000000000}");
