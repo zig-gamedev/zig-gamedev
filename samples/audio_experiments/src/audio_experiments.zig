@@ -44,13 +44,15 @@ const DemoState = struct {
     normal_tfmt: *dwrite.ITextFormat,
 };
 
-fn processAudio0(samples: []f32, _: ?*anyopaque) void {
+fn processAudio0(samples: []f32, num_channels: u32, _: ?*anyopaque) void {
+    _ = num_channels;
     for (samples) |*sample| {
         sample.* *= 0.5;
     }
 }
 
-fn processAudio1(samples: []f32, _: ?*anyopaque) void {
+fn processAudio1(samples: []f32, num_channels: u32, _: ?*anyopaque) void {
+    _ = num_channels;
     for (samples) |*sample| {
         sample.* *= 2.0;
     }

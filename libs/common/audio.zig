@@ -540,7 +540,9 @@ pub fn submitBuffer(voice: *xaudio2.ISourceVoice, buffer: Buffer) void {
 const SimpleAudioProcessor = extern struct {
     v: *const xapo.IXAPOVTable(SimpleAudioProcessor) = &vtable,
     refcount: u32 = 1,
-    process: *const fn ([]f32, ?*anyopaque) void,
+    is_locked: bool = false,
+    num_channels: u16 = 0,
+    process: *const fn ([]f32, u32, ?*anyopaque) void,
     context: ?*anyopaque,
 
     const Self = @This();
@@ -635,19 +637,19 @@ const SimpleAudioProcessor = extern struct {
         requested_input_format: *const WAVEFORMATEX,
         supported_input_format: ?**WAVEFORMATEX,
     ) callconv(w.WINAPI) w.HRESULT {
-        if (requested_input_format.wFormatTag != wasapi.WAVE_FORMAT_IEEE_FLOAT or
-            requested_input_format.nChannels != 2 or
-            requested_input_format.nSamplesPerSec < xapo.MIN_FRAMERATE or
-            requested_input_format.nSamplesPerSec > xapo.MAX_FRAMERATE or
-            requested_input_format.wBitsPerSample != 32)
-        {
-            if (supported_input_format != null) {
-                supported_input_format.?.*.wFormatTag = wasapi.WAVE_FORMAT_IEEE_FLOAT;
-                supported_input_format.?.*.nChannels = 2;
-                supported_input_format.?.*.nSamplesPerSec = 48_000;
-                supported_input_format.?.*.wBitsPerSample = 32;
-            }
-            return w.XAPO_E_FORMAT_UNSUPPORTED;
+        if (supported_input_format != null) {
+            supported_input_format.?.*.wFormatTag = wasapi.WAVE_FORMAT_IEEE_FLOAT;
+            supported_input_format.?.*.wBitsPerSample = 32;
+            supported_input_format.?.*.nChannels = std.math.clamp(
+                requested_input_format.nChannels,
+                @intCast(u16, xapo.MIN_CHANNELS),
+                @intCast(u16, xapo.MAX_CHANNELS),
+            );
+            supported_input_format.?.*.nSamplesPerSec = std.math.clamp(
+                requested_input_format.nSamplesPerSec,
+                xapo.MIN_FRAMERATE,
+                xapo.MAX_FRAMERATE,
+            );
         }
         return w.S_OK;
     }
@@ -659,16 +661,25 @@ const SimpleAudioProcessor = extern struct {
         supported_output_format: ?**WAVEFORMATEX,
     ) callconv(w.WINAPI) w.HRESULT {
         if (requested_output_format.wFormatTag != wasapi.WAVE_FORMAT_IEEE_FLOAT or
-            requested_output_format.nChannels != 2 or
+            requested_output_format.nChannels < xapo.MIN_CHANNELS or
+            requested_output_format.nChannels > xapo.MAX_CHANNELS or
             requested_output_format.nSamplesPerSec < xapo.MIN_FRAMERATE or
             requested_output_format.nSamplesPerSec > xapo.MAX_FRAMERATE or
             requested_output_format.wBitsPerSample != 32)
         {
             if (supported_output_format != null) {
                 supported_output_format.?.*.wFormatTag = wasapi.WAVE_FORMAT_IEEE_FLOAT;
-                supported_output_format.?.*.nChannels = 2;
-                supported_output_format.?.*.nSamplesPerSec = 48_000;
                 supported_output_format.?.*.wBitsPerSample = 32;
+                supported_output_format.?.*.nChannels = std.math.clamp(
+                    requested_output_format.nChannels,
+                    @intCast(u16, xapo.MIN_CHANNELS),
+                    @intCast(u16, xapo.MAX_CHANNELS),
+                );
+                supported_output_format.?.*.nSamplesPerSec = std.math.clamp(
+                    requested_output_format.nSamplesPerSec,
+                    xapo.MIN_FRAMERATE,
+                    xapo.MAX_FRAMERATE,
+                );
             }
             return w.XAPO_E_FORMAT_UNSUPPORTED;
         }
@@ -684,24 +695,32 @@ const SimpleAudioProcessor = extern struct {
     fn Reset(_: *Self) callconv(w.WINAPI) void {}
 
     fn LockForProcess(
-        _: *Self,
+        self: *Self,
         num_input_params: w.UINT32,
         input_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
         num_output_params: w.UINT32,
         output_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
     ) callconv(w.WINAPI) w.HRESULT {
+        assert(self.is_locked == false);
         assert(num_input_params == 1 and num_output_params == 1);
         assert(input_params != null and output_params != null);
         assert(input_params.?[0].pFormat.wFormatTag == output_params.?[0].pFormat.wFormatTag);
         assert(input_params.?[0].pFormat.nChannels == output_params.?[0].pFormat.nChannels);
         assert(input_params.?[0].pFormat.nSamplesPerSec == output_params.?[0].pFormat.nSamplesPerSec);
         assert(input_params.?[0].pFormat.wBitsPerSample == output_params.?[0].pFormat.wBitsPerSample);
-        assert(input_params.?[0].pFormat.nChannels == 2);
         assert(input_params.?[0].pFormat.wBitsPerSample == 32);
+
+        self.num_channels = input_params.?[0].pFormat.nChannels;
+        self.is_locked = true;
+
         return w.S_OK;
     }
 
-    fn UnlockForProcess(_: *Self) callconv(w.WINAPI) void {}
+    fn UnlockForProcess(self: *Self) callconv(w.WINAPI) void {
+        assert(self.is_locked == true);
+        self.num_channels = 0;
+        self.is_locked = false;
+    }
 
     fn Process(
         self: *Self,
@@ -711,15 +730,16 @@ const SimpleAudioProcessor = extern struct {
         output_params: ?[*]xapo.PROCESS_BUFFER_PARAMETERS,
         is_enabled: w.BOOL,
     ) callconv(w.WINAPI) void {
+        assert(self.is_locked and self.num_channels > 0);
         assert(num_input_params == 1 and num_output_params == 1);
         assert(input_params != null and output_params != null);
         assert(input_params.?[0].pBuffer == output_params.?[0].pBuffer);
 
         if (input_params.?[0].BufferFlags == .VALID and is_enabled == w.TRUE) {
             var samples = @ptrCast([*]f32, @alignCast(16, input_params.?[0].pBuffer)); // XAudio2 aligns data to 16.
-            const num_samples = input_params.?[0].ValidFrameCount * 2; // We support 2 channels only.
+            const num_samples = input_params.?[0].ValidFrameCount * self.num_channels;
 
-            self.process.*(samples[0..num_samples], self.context);
+            self.process.*(samples[0..num_samples], self.num_channels, self.context);
         }
 
         output_params.?[0].ValidFrameCount = input_params.?[0].ValidFrameCount;
@@ -736,7 +756,7 @@ const SimpleAudioProcessor = extern struct {
 };
 
 pub fn createSimpleProcessor(
-    process: *const fn ([]f32, ?*anyopaque) void,
+    process: *const fn ([]f32, u32, ?*anyopaque) void,
     context: ?*anyopaque,
 ) *w.IUnknown {
     const ptr = w.CoTaskMemAlloc(@sizeOf(SimpleAudioProcessor)).?;
