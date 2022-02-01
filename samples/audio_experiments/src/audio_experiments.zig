@@ -88,10 +88,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     }
 
     {
-        const p0 = xapo.createSimpleProcessor(&processAudio0, null);
+        const p0 = sfx.createSimpleProcessor(&processAudio0, null);
         defer _ = p0.Release();
 
-        const p1 = xapo.createSimpleProcessor(&processAudio1, null);
+        const p1 = sfx.createSimpleProcessor(&processAudio1, null);
         defer _ = p1.Release();
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{

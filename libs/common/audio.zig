@@ -1,26 +1,29 @@
 const std = @import("std");
+const assert = std.debug.assert;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const win32 = @import("win32");
 const w = win32.base;
 const xaudio2 = win32.xaudio2;
 const mf = win32.mf;
 const wasapi = win32.wasapi;
-const assert = std.debug.assert;
+const xapo = win32.xapo;
 const lib = @import("library.zig");
-const tracy = @import("tracy.zig");
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const tracy = @import("tracy.zig");
+
+const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
 const enable_dx_debug = @import("build_options").enable_dx_debug;
 
-const optimal_voice_format = wasapi.WAVEFORMATEX{
+const optimal_voice_format = WAVEFORMATEX{
     .wFormatTag = wasapi.WAVE_FORMAT_PCM,
     .nChannels = 1,
     .nSamplesPerSec = 48_000,
     .nAvgBytesPerSec = 2 * 48_000,
     .nBlockAlign = 2,
     .wBitsPerSample = 16,
-    .cbSize = @sizeOf(wasapi.WAVEFORMATEX),
+    .cbSize = @sizeOf(WAVEFORMATEX),
 };
 
 const StopOnBufferEnd_VoiceCallback = struct {
@@ -532,4 +535,215 @@ pub fn submitBuffer(voice: *xaudio2.ISourceVoice, buffer: Buffer) void {
         .LoopCount = buffer.loop_count,
         .pContext = voice,
     }, null));
+}
+
+const SimpleAudioProcessor = extern struct {
+    v: *const xapo.IXAPOVTable(SimpleAudioProcessor) = &vtable,
+    refcount: u32 = 1,
+    process: *const fn ([]f32, ?*anyopaque) void,
+    context: ?*anyopaque,
+
+    const Self = @This();
+
+    const vtable = xapo.IXAPOVTable(SimpleAudioProcessor){
+        .unknown = .{
+            .QueryInterface = QueryInterface,
+            .AddRef = AddRef,
+            .Release = Release,
+        },
+        .xapo = .{
+            .GetRegistrationProperties = GetRegistrationProperties,
+            .IsInputFormatSupported = IsInputFormatSupported,
+            .IsOutputFormatSupported = IsOutputFormatSupported,
+            .Initialize = Initialize,
+            .Reset = Reset,
+            .LockForProcess = LockForProcess,
+            .UnlockForProcess = UnlockForProcess,
+            .Process = Process,
+            .CalcInputFrames = CalcInputFrames,
+            .CalcOutputFrames = CalcOutputFrames,
+        },
+    };
+
+    const info = xapo.REGISTRATION_PROPERTIES{
+        .clsid = w.GUID_NULL,
+        .FriendlyName = [_]w.WCHAR{0} ** xapo.REGISTRATION_STRING_LENGTH,
+        .CopyrightInfo = [_]w.WCHAR{0} ** xapo.REGISTRATION_STRING_LENGTH,
+        .MajorVersion = 1,
+        .MinorVersion = 0,
+        .Flags = xapo.FLAG_CHANNELS_MUST_MATCH |
+            xapo.FLAG_FRAMERATE_MUST_MATCH |
+            xapo.FLAG_BITSPERSAMPLE_MUST_MATCH |
+            xapo.FLAG_BUFFERCOUNT_MUST_MATCH |
+            xapo.FLAG_INPLACE_SUPPORTED |
+            xapo.FLAG_INPLACE_REQUIRED,
+        .MinInputBufferCount = 1,
+        .MaxInputBufferCount = 1,
+        .MinOutputBufferCount = 1,
+        .MaxOutputBufferCount = 1,
+    };
+
+    fn QueryInterface(
+        self: *Self,
+        guid: *const w.GUID,
+        outobj: ?*?*anyopaque,
+    ) callconv(w.WINAPI) w.HRESULT {
+        assert(outobj != null);
+
+        if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w.IID_IUnknown))) {
+            outobj.?.* = self;
+            _ = self.AddRef();
+            return w.S_OK;
+        } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&xapo.IID_IXAPO))) {
+            outobj.?.* = self;
+            _ = self.AddRef();
+            return w.S_OK;
+        }
+
+        outobj.?.* = null;
+        return w.E_NOINTERFACE;
+    }
+
+    fn AddRef(self: *Self) callconv(w.WINAPI) w.ULONG {
+        return @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic) + 1;
+    }
+
+    fn Release(self: *Self) callconv(w.WINAPI) w.ULONG {
+        const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
+        if (prev_refcount == 1) {
+            w.ole32.CoTaskMemFree(self);
+        }
+        return prev_refcount - 1;
+    }
+
+    fn GetRegistrationProperties(
+        _: *Self,
+        props: **xapo.REGISTRATION_PROPERTIES,
+    ) callconv(w.WINAPI) w.HRESULT {
+        const ptr = w.CoTaskMemAlloc(@sizeOf(xapo.REGISTRATION_PROPERTIES));
+        if (ptr != null) {
+            props.* = @ptrCast(*xapo.REGISTRATION_PROPERTIES, @alignCast(8, ptr.?));
+            props.*.* = info;
+            return w.S_OK;
+        }
+        return w.E_FAIL;
+    }
+
+    fn IsInputFormatSupported(
+        _: *Self,
+        _: *const WAVEFORMATEX,
+        requested_input_format: *const WAVEFORMATEX,
+        supported_input_format: ?**WAVEFORMATEX,
+    ) callconv(w.WINAPI) w.HRESULT {
+        if (requested_input_format.wFormatTag != wasapi.WAVE_FORMAT_IEEE_FLOAT or
+            requested_input_format.nChannels != 2 or
+            requested_input_format.nSamplesPerSec < xapo.MIN_FRAMERATE or
+            requested_input_format.nSamplesPerSec > xapo.MAX_FRAMERATE or
+            requested_input_format.wBitsPerSample != 32)
+        {
+            if (supported_input_format != null) {
+                supported_input_format.?.*.wFormatTag = wasapi.WAVE_FORMAT_IEEE_FLOAT;
+                supported_input_format.?.*.nChannels = 2;
+                supported_input_format.?.*.nSamplesPerSec = 48_000;
+                supported_input_format.?.*.wBitsPerSample = 32;
+            }
+            return w.XAPO_E_FORMAT_UNSUPPORTED;
+        }
+        return w.S_OK;
+    }
+
+    fn IsOutputFormatSupported(
+        _: *Self,
+        _: *const WAVEFORMATEX,
+        requested_output_format: *const WAVEFORMATEX,
+        supported_output_format: ?**WAVEFORMATEX,
+    ) callconv(w.WINAPI) w.HRESULT {
+        if (requested_output_format.wFormatTag != wasapi.WAVE_FORMAT_IEEE_FLOAT or
+            requested_output_format.nChannels != 2 or
+            requested_output_format.nSamplesPerSec < xapo.MIN_FRAMERATE or
+            requested_output_format.nSamplesPerSec > xapo.MAX_FRAMERATE or
+            requested_output_format.wBitsPerSample != 32)
+        {
+            if (supported_output_format != null) {
+                supported_output_format.?.*.wFormatTag = wasapi.WAVE_FORMAT_IEEE_FLOAT;
+                supported_output_format.?.*.nChannels = 2;
+                supported_output_format.?.*.nSamplesPerSec = 48_000;
+                supported_output_format.?.*.wBitsPerSample = 32;
+            }
+            return w.XAPO_E_FORMAT_UNSUPPORTED;
+        }
+        return w.S_OK;
+    }
+
+    fn Initialize(_: *Self, data: ?*const anyopaque, data_size: w.UINT32) callconv(w.WINAPI) w.HRESULT {
+        _ = data;
+        _ = data_size;
+        return w.S_OK;
+    }
+
+    fn Reset(_: *Self) callconv(w.WINAPI) void {}
+
+    fn LockForProcess(
+        _: *Self,
+        num_input_params: w.UINT32,
+        input_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
+        num_output_params: w.UINT32,
+        output_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
+    ) callconv(w.WINAPI) w.HRESULT {
+        assert(num_input_params == 1 and num_output_params == 1);
+        assert(input_params != null and output_params != null);
+        assert(input_params.?[0].pFormat.wFormatTag == output_params.?[0].pFormat.wFormatTag);
+        assert(input_params.?[0].pFormat.nChannels == output_params.?[0].pFormat.nChannels);
+        assert(input_params.?[0].pFormat.nSamplesPerSec == output_params.?[0].pFormat.nSamplesPerSec);
+        assert(input_params.?[0].pFormat.wBitsPerSample == output_params.?[0].pFormat.wBitsPerSample);
+        assert(input_params.?[0].pFormat.nChannels == 2);
+        assert(input_params.?[0].pFormat.wBitsPerSample == 32);
+        return w.S_OK;
+    }
+
+    fn UnlockForProcess(_: *Self) callconv(w.WINAPI) void {}
+
+    fn Process(
+        self: *Self,
+        num_input_params: w.UINT32,
+        input_params: ?[*]const xapo.PROCESS_BUFFER_PARAMETERS,
+        num_output_params: w.UINT32,
+        output_params: ?[*]xapo.PROCESS_BUFFER_PARAMETERS,
+        is_enabled: w.BOOL,
+    ) callconv(w.WINAPI) void {
+        assert(num_input_params == 1 and num_output_params == 1);
+        assert(input_params != null and output_params != null);
+        assert(input_params.?[0].pBuffer == output_params.?[0].pBuffer);
+
+        if (input_params.?[0].BufferFlags == .VALID and is_enabled == w.TRUE) {
+            var samples = @ptrCast([*]f32, @alignCast(16, input_params.?[0].pBuffer)); // XAudio2 aligns data to 16.
+            const num_samples = input_params.?[0].ValidFrameCount * 2; // We support 2 channels only.
+
+            self.process.*(samples[0..num_samples], self.context);
+        }
+
+        output_params.?[0].ValidFrameCount = input_params.?[0].ValidFrameCount;
+        output_params.?[0].BufferFlags = input_params.?[0].BufferFlags;
+    }
+
+    fn CalcInputFrames(_: *Self, num_output_frames: w.UINT32) callconv(w.WINAPI) w.UINT32 {
+        return num_output_frames;
+    }
+
+    fn CalcOutputFrames(_: *Self, num_input_frames: w.UINT32) callconv(w.WINAPI) w.UINT32 {
+        return num_input_frames;
+    }
+};
+
+pub fn createSimpleProcessor(
+    process: *const fn ([]f32, ?*anyopaque) void,
+    context: ?*anyopaque,
+) *w.IUnknown {
+    const ptr = w.CoTaskMemAlloc(@sizeOf(SimpleAudioProcessor)).?;
+    const comptr = @ptrCast(*SimpleAudioProcessor, @alignCast(8, ptr));
+    comptr.* = .{
+        .process = process,
+        .context = context,
+    };
+    return @ptrCast(*w.IUnknown, comptr);
 }
