@@ -637,19 +637,28 @@ const SimpleAudioProcessor = extern struct {
         requested_input_format: *const WAVEFORMATEX,
         supported_input_format: ?**WAVEFORMATEX,
     ) callconv(w.WINAPI) w.HRESULT {
-        if (supported_input_format != null) {
-            supported_input_format.?.*.wFormatTag = wasapi.WAVE_FORMAT_IEEE_FLOAT;
-            supported_input_format.?.*.wBitsPerSample = 32;
-            supported_input_format.?.*.nChannels = std.math.clamp(
-                requested_input_format.nChannels,
-                @intCast(u16, xapo.MIN_CHANNELS),
-                @intCast(u16, xapo.MAX_CHANNELS),
-            );
-            supported_input_format.?.*.nSamplesPerSec = std.math.clamp(
-                requested_input_format.nSamplesPerSec,
-                xapo.MIN_FRAMERATE,
-                xapo.MAX_FRAMERATE,
-            );
+        if (requested_input_format.wFormatTag != wasapi.WAVE_FORMAT_IEEE_FLOAT or
+            requested_input_format.nChannels < xapo.MIN_CHANNELS or
+            requested_input_format.nChannels > xapo.MAX_CHANNELS or
+            requested_input_format.nSamplesPerSec < xapo.MIN_FRAMERATE or
+            requested_input_format.nSamplesPerSec > xapo.MAX_FRAMERATE or
+            requested_input_format.wBitsPerSample != 32)
+        {
+            if (supported_input_format != null) {
+                supported_input_format.?.*.wFormatTag = wasapi.WAVE_FORMAT_IEEE_FLOAT;
+                supported_input_format.?.*.wBitsPerSample = 32;
+                supported_input_format.?.*.nChannels = std.math.clamp(
+                    requested_input_format.nChannels,
+                    @intCast(u16, xapo.MIN_CHANNELS),
+                    @intCast(u16, xapo.MAX_CHANNELS),
+                );
+                supported_input_format.?.*.nSamplesPerSec = std.math.clamp(
+                    requested_input_format.nSamplesPerSec,
+                    xapo.MIN_FRAMERATE,
+                    xapo.MAX_FRAMERATE,
+                );
+            }
+            return w.XAPO_E_FORMAT_UNSUPPORTED;
         }
         return w.S_OK;
     }
