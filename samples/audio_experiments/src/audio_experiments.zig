@@ -9,15 +9,12 @@ const dwrite = win32.dwrite;
 const xaudio2 = win32.xaudio2;
 const xaudio2fx = win32.xaudio2fx;
 const xapo = win32.xapo;
-const mf = win32.mf;
 const common = @import("common");
 const gfx = common.graphics;
 const sfx = common.audio;
 const lib = common.library;
 const zm = common.zmath;
 const c = common.c;
-const pix = common.pix;
-const tracy = common.tracy;
 
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
@@ -47,19 +44,20 @@ const DemoState = struct {
     normal_tfmt: *dwrite.ITextFormat,
 };
 
-fn processAudio(samples: []f32, _: ?*anyopaque) void {
+fn processAudio0(samples: []f32, _: ?*anyopaque) void {
     for (samples) |*sample| {
-        sample.* *= 1.0;
+        sample.* *= 0.5;
+    }
+}
+
+fn processAudio1(samples: []f32, _: ?*anyopaque) void {
+    for (samples) |*sample| {
+        sample.* *= 2.0;
     }
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const tracy_zone = tracy.zone(@src(), 1);
-    defer tracy_zone.end();
-
     var actx = sfx.AudioContext.init(gpa_allocator);
-
-    hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
 
     const sound1_data = sfx.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));
     const sound2_data = sfx.loadBufferData(gpa_allocator, L("content/tabla_tas1.flac"));
@@ -90,15 +88,28 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     }
 
     {
-        const p = xapo.createSimpleProcessor(&processAudio, null);
-        defer _ = p.Release();
+        const p0 = xapo.createSimpleProcessor(&processAudio0, null);
+        defer _ = p0.Release();
 
-        var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
-            .pEffect = p,
-            .InitialState = w.TRUE,
-            .OutputChannels = 2,
-        }};
-        const effect_chain = xaudio2.EFFECT_CHAIN{ .EffectCount = 1, .pEffectDescriptors = &effect_descriptor };
+        const p1 = xapo.createSimpleProcessor(&processAudio1, null);
+        defer _ = p1.Release();
+
+        var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{
+            .{
+                .pEffect = p0,
+                .InitialState = w.TRUE,
+                .OutputChannels = 2,
+            },
+            .{
+                .pEffect = p1,
+                .InitialState = w.TRUE,
+                .OutputChannels = 2,
+            },
+        };
+        const effect_chain = xaudio2.EFFECT_CHAIN{
+            .EffectCount = effect_descriptor.len,
+            .pEffectDescriptors = &effect_descriptor,
+        };
 
         hrPanicOnFail(actx.master_voice.SetEffectChain(&effect_chain));
     }
@@ -108,13 +119,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
-
-    _ = pix.loadGpuCapturerLibrary();
-    _ = pix.setTargetWindow(window);
-    _ = pix.beginCapture(
-        pix.CAPTURE_GPU,
-        &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
-    );
 
     var gctx = gfx.GraphicsContext.init(window);
     gctx.present_flags = 0;
@@ -151,19 +155,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Begin frame to init/upload resources to the GPU.
     //
     gctx.beginFrame();
-    gctx.endFrame();
-    gctx.beginFrame();
-
-    pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, gctx.cmdlist), "GPU init");
 
     var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
 
-    _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, gctx.cmdlist));
-
     gctx.endFrame();
     gctx.finishGpuCommands();
-
-    _ = pix.endCapture();
 
     return .{
         .gctx = gctx,
@@ -187,7 +183,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     demo.music.destroy();
-    hrPanicOnFail(mf.MFShutdown());
     gpa_allocator.free(demo.sound1_data);
     gpa_allocator.free(demo.sound2_data);
     gpa_allocator.free(demo.sound3_data);
@@ -258,10 +253,6 @@ fn update(demo: *DemoState) void {
     }
 
     c.igEnd();
-
-    //var state: xaudio2.VOICE_STATE = std.mem.zeroes(xaudio2.VOICE_STATE);
-    //demo.music.voice.GetState(&state, 0);
-    //std.log.info("{}", .{state});
 }
 
 fn draw(demo: *DemoState) void {

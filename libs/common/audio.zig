@@ -109,6 +109,8 @@ pub const AudioContext = struct {
             }
         }
 
+        hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
+
         return .{
             .device = device,
             .master_voice = master_voice,
@@ -118,6 +120,7 @@ pub const AudioContext = struct {
 
     pub fn deinit(audio: *AudioContext) void {
         audio.device.StopEngine();
+        hrPanicOnFail(mf.MFShutdown());
         for (audio.source_voices.items) |voice| {
             voice.DestroyVoice();
         }

@@ -9,7 +9,7 @@ fn makeDxcCmd(
     comptime profile: []const u8,
     comptime define: []const u8,
 ) [9][]const u8 {
-    const shader_ver = "6_3";
+    const shader_ver = "6_6";
     const shader_dir = "content/shaders/";
     return [9][]const u8{
         "../../external/bin/dxc/dxc.exe",
@@ -26,36 +26,23 @@ fn makeDxcCmd(
 
 pub fn build(b: *std.build.Builder) void {
     const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
-    const enable_dx_debug = b.option(bool, "enable-dx-debug", "Enable debug layer for D3D12, D2D1, DirectML and DXGI") orelse false;
-    const enable_dx_gpu_debug = b.option(bool, "enable-dx-gpu-debug", "Enable GPU-based validation for D3D12") orelse false;
+    const enable_dx_debug = b.option(
+        bool,
+        "enable-dx-debug",
+        "Enable debug layer for D3D12, D2D1, DirectML and DXGI",
+    ) orelse false;
+    const enable_dx_gpu_debug = b.option(
+        bool,
+        "enable-dx-gpu-debug",
+        "Enable GPU-based validation for D3D12",
+    ) orelse false;
     const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
 
-    const exe = b.addExecutable("audio_experiments", "src/audio_experiments.zig");
-
-    exe.setBuildMode(b.standardReleaseOptions());
-    exe.setTarget(b.standardTargetOptions(.{}));
-
     const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
-
     exe_options.addOption(bool, "enable_pix", enable_pix);
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_tracy", tracy != null);
-    if (tracy) |tracy_path| {
-        const client_cpp = std.fs.path.join(
-            b.allocator,
-            &[_][]const u8{ tracy_path, "TracyClient.cpp" },
-        ) catch unreachable;
-        exe.addIncludeDir(tracy_path);
-        exe.addCSourceFile(client_cpp, &[_][]const u8{
-            "-DTRACY_ENABLE=1",
-            "-fno-sanitize=undefined",
-            "-D_WIN32_WINNT=0x601",
-        });
-        exe.linkSystemLibrary("ws2_32");
-        exe.linkSystemLibrary("dbghelp");
-    }
 
     b.installFile("../../external/bin/d3d12/D3D12Core.dll", "bin/d3d12/D3D12Core.dll");
     b.installFile("../../external/bin/d3d12/D3D12Core.pdb", "bin/d3d12/D3D12Core.pdb");
@@ -80,11 +67,31 @@ pub fn build(b: *std.build.Builder) void {
 
     install_content_step.step.dependOn(dxc_step);
 
+    const exe = b.addExecutable("audio_experiments", "src/audio_experiments.zig");
+
+    exe.setBuildMode(b.standardReleaseOptions());
+    exe.setTarget(b.standardTargetOptions(.{}));
+    exe.addOptions("build_options", exe_options);
+
+    if (tracy) |tracy_path| {
+        const client_cpp = std.fs.path.join(
+            b.allocator,
+            &[_][]const u8{ tracy_path, "TracyClient.cpp" },
+        ) catch unreachable;
+        exe.addIncludeDir(tracy_path);
+        exe.addCSourceFile(client_cpp, &[_][]const u8{
+            "-DTRACY_ENABLE=1",
+            "-fno-sanitize=undefined",
+            "-D_WIN32_WINNT=0x601",
+        });
+        exe.linkSystemLibrary("ws2_32");
+        exe.linkSystemLibrary("dbghelp");
+    }
+
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
-
     exe.want_lto = false;
 
     const pkg_win32 = Pkg{
