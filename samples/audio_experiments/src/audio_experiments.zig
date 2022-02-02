@@ -16,6 +16,7 @@ const lib = common.library;
 const zm = common.zmath;
 const c = common.c;
 
+const Mutex = std.Thread.Mutex;
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
@@ -26,6 +27,11 @@ pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 const window_name = "zig-gamedev: audio experiments";
 const window_width = 1920;
 const window_height = 1080;
+
+const AudioData = struct {
+    mutex: Mutex = .{},
+    data: std.ArrayList(f32),
+};
 
 const DemoState = struct {
     gctx: gfx.GraphicsContext,
@@ -42,22 +48,20 @@ const DemoState = struct {
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
+
+    audio_data: *AudioData,
 };
 
-fn processAudio0(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
+fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
     _ = num_channels;
-    _ = context;
-    for (samples) |*sample| {
-        sample.* *= 0.5;
-    }
-}
 
-fn processAudio1(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
-    _ = num_channels;
-    _ = context;
-    for (samples) |*sample| {
-        sample.* *= 2.0;
-    }
+    const audio_data = @ptrCast(*AudioData, @alignCast(@sizeOf(usize), context));
+
+    audio_data.mutex.lock();
+    defer audio_data.mutex.unlock();
+
+    audio_data.data.resize(0) catch unreachable;
+    audio_data.data.appendSlice(samples) catch unreachable;
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
@@ -91,21 +95,18 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ));
     }
 
-    {
-        const p0 = sfx.createSimpleProcessor(&processAudio0, null);
-        defer _ = p0.Release();
+    const audio_data = gpa_allocator.create(AudioData) catch unreachable;
+    audio_data.* = .{
+        .data = std.ArrayList(f32).init(gpa_allocator),
+    };
 
-        const p1 = sfx.createSimpleProcessor(&processAudio1, null);
-        defer _ = p1.Release();
+    {
+        const p0 = sfx.createSimpleProcessor(&processAudio, audio_data);
+        defer _ = p0.Release();
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{
             .{
                 .pEffect = p0,
-                .InitialState = w.TRUE,
-                .OutputChannels = 2,
-            },
-            .{
-                .pEffect = p1,
                 .InitialState = w.TRUE,
                 .OutputChannels = 2,
             },
@@ -176,6 +177,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .frame_stats = lib.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
+        .audio_data = audio_data,
     };
 }
 
@@ -190,6 +192,8 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     gpa_allocator.free(demo.sound1_data);
     gpa_allocator.free(demo.sound2_data);
     gpa_allocator.free(demo.sound3_data);
+    demo.audio_data.data.deinit();
+    gpa_allocator.destroy(demo.audio_data);
     demo.actx.deinit();
     lib.deinitWindow(gpa_allocator);
     demo.* = undefined;
