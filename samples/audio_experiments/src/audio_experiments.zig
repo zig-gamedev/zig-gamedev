@@ -28,9 +28,22 @@ const window_name = "zig-gamedev: audio experiments";
 const window_width = 1920;
 const window_height = 1080;
 
+const Pso_DrawConst = struct {
+    object_to_world: [16]f32,
+};
+
+const Pso_FrameConst = struct {
+    world_to_clip: [16]f32,
+};
+
+const Pso_Vertex = struct {
+    position: [3]f32,
+};
+
 const AudioData = struct {
     mutex: Mutex = .{},
-    data: std.ArrayList(f32),
+    left: std.ArrayList(f32),
+    right: std.ArrayList(f32),
 };
 
 const DemoState = struct {
@@ -49,7 +62,23 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
+    lines_pso: gfx.PipelineHandle,
+
+    depth_texture: gfx.ResourceHandle,
+    depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
+
     audio_data: *AudioData,
+
+    camera: struct {
+        position: [3]f32 = .{ 0.0, 10.0, -10.0 },
+        forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
+        pitch: f32 = 0.25 * math.pi,
+        yaw: f32 = 0.0,
+    } = .{},
+    mouse: struct {
+        cursor_prev_x: i32 = 0,
+        cursor_prev_y: i32 = 0,
+    } = .{},
 };
 
 fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
@@ -60,8 +89,16 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
     audio_data.mutex.lock();
     defer audio_data.mutex.unlock();
 
-    audio_data.data.resize(0) catch unreachable;
-    audio_data.data.appendSlice(samples) catch unreachable;
+    audio_data.left.resize(0) catch unreachable;
+    audio_data.right.resize(0) catch unreachable;
+
+    for (samples) |sample, i| {
+        if (i & 1 == 1) {
+            audio_data.right.append(sample) catch unreachable;
+        } else {
+            audio_data.left.append(sample) catch unreachable;
+        }
+    }
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
@@ -97,7 +134,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const audio_data = gpa_allocator.create(AudioData) catch unreachable;
     audio_data.* = .{
-        .data = std.ArrayList(f32).init(gpa_allocator),
+        .left = std.ArrayList(f32).init(gpa_allocator),
+        .right = std.ArrayList(f32).init(gpa_allocator),
     };
 
     {
@@ -130,31 +168,76 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     gctx.present_interval = 1;
 
     const brush = blk: {
-        var brush: *d2d1.ISolidColorBrush = undefined;
+        var brush: ?*d2d1.ISolidColorBrush = null;
         hrPanicOnFail(gctx.d2d.context.CreateSolidColorBrush(
             &.{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
             null,
-            @ptrCast(*?*d2d1.ISolidColorBrush, &brush),
+            &brush,
         ));
-        break :blk brush;
+        break :blk brush.?;
     };
 
     const normal_tfmt = blk: {
-        var info_txtfmt: *dwrite.ITextFormat = undefined;
+        var info_txtfmt: ?*dwrite.ITextFormat = null;
         hrPanicOnFail(gctx.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
-            dwrite.FONT_WEIGHT.BOLD,
-            dwrite.FONT_STYLE.NORMAL,
-            dwrite.FONT_STRETCH.NORMAL,
+            .BOLD,
+            .NORMAL,
+            .NORMAL,
             32.0,
             L("en-us"),
-            @ptrCast(*?*dwrite.ITextFormat, &info_txtfmt),
+            &info_txtfmt,
         ));
-        break :blk info_txtfmt;
+        break :blk info_txtfmt.?;
     };
     hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
+
+    const lines_pso = blk: {
+        const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
+            d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+        };
+
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.InputLayout = .{
+            .pInputElementDescs = &input_layout_desc,
+            .NumElements = input_layout_desc.len,
+        };
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.DSVFormat = .D32_FLOAT;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .LINE;
+
+        break :blk gctx.createGraphicsShaderPipeline(
+            arena_allocator,
+            &pso_desc,
+            "content/shaders/lines.vs.cso",
+            "content/shaders/lines.ps.cso",
+        );
+    };
+
+    // Create depth texture resource.
+    const depth_texture = gctx.createCommittedResource(
+        .DEFAULT,
+        d3d12.HEAP_FLAG_NONE,
+        &blk: {
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
+            desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            break :blk desc;
+        },
+        d3d12.RESOURCE_STATE_DEPTH_WRITE,
+        &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
+    ) catch |err| hrPanic(err);
+
+    // Create depth texture view.
+    const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
+    gctx.device.CreateDepthStencilView(
+        gctx.getResource(depth_texture),
+        null,
+        depth_texture_dsv,
+    );
 
     //
     // Begin frame to init/upload resources to the GPU.
@@ -178,12 +261,17 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .audio_data = audio_data,
+        .lines_pso = lines_pso,
+        .depth_texture = depth_texture,
+        .depth_texture_dsv = depth_texture_dsv,
     };
 }
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.actx.device.StopEngine();
+    _ = demo.gctx.releasePipeline(demo.lines_pso);
+    _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.brush.Release();
     _ = demo.normal_tfmt.Release();
     demo.guictx.deinit(&demo.gctx);
@@ -192,7 +280,8 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     gpa_allocator.free(demo.sound1_data);
     gpa_allocator.free(demo.sound2_data);
     gpa_allocator.free(demo.sound3_data);
-    demo.audio_data.data.deinit();
+    demo.audio_data.left.deinit();
+    demo.audio_data.right.deinit();
     gpa_allocator.destroy(demo.audio_data);
     demo.actx.deinit();
     lib.deinitWindow(gpa_allocator);
@@ -216,6 +305,17 @@ fn update(demo: *DemoState) void {
         null,
         c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
     );
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + drag", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  rotate camera", "");
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  move camera", "");
 
     c.igText("Music:", "");
     if (c.igButton(
@@ -261,10 +361,72 @@ fn update(demo: *DemoState) void {
     }
 
     c.igEnd();
+
+    // Handle camera rotation with mouse.
+    {
+        var pos: w.POINT = undefined;
+        _ = w.GetCursorPos(&pos);
+        const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
+        const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
+        demo.mouse.cursor_prev_x = pos.x;
+        demo.mouse.cursor_prev_y = pos.y;
+
+        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+            demo.camera.pitch += 0.0025 * delta_y;
+            demo.camera.yaw += 0.0025 * delta_x;
+            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.yaw = zm.modAngle(demo.camera.yaw);
+        }
+    }
+
+    // Handle camera movement with 'WASD' keys.
+    {
+        const speed = zm.f32x4s(10.0);
+        const delta_time = zm.f32x4s(demo.frame_stats.delta_time);
+        const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
+        var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
+
+        zm.store(demo.camera.forward[0..], forward, 3);
+
+        const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
+        forward = speed * delta_time * forward;
+
+        // Load camera position from memory to SIMD register ('3' means that we want to load three components).
+        var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
+
+        if (w.GetAsyncKeyState('W') < 0) {
+            cpos += forward;
+        } else if (w.GetAsyncKeyState('S') < 0) {
+            cpos -= forward;
+        }
+        if (w.GetAsyncKeyState('D') < 0) {
+            cpos += right;
+        } else if (w.GetAsyncKeyState('A') < 0) {
+            cpos -= right;
+        }
+
+        // Copy updated position from SIMD register to memory.
+        zm.store(demo.camera.position[0..], cpos, 3);
+    }
 }
 
 fn draw(demo: *DemoState) void {
     var gctx = &demo.gctx;
+
+    const cam_world_to_view = zm.lookToLh(
+        zm.load(demo.camera.position[0..], zm.Vec, 3),
+        zm.load(demo.camera.forward[0..], zm.Vec, 3),
+        zm.f32x4(0.0, 1.0, 0.0, 0.0),
+    );
+    const cam_view_to_clip = zm.perspectiveFovLh(
+        0.25 * math.pi,
+        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
+        0.01,
+        200.0,
+    );
+    const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
+
     gctx.beginFrame();
 
     const back_buffer = gctx.getBackBuffer();
@@ -275,7 +437,7 @@ fn draw(demo: *DemoState) void {
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
         w.TRUE,
-        null,
+        &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
@@ -283,6 +445,47 @@ fn draw(demo: *DemoState) void {
         0,
         null,
     );
+    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+
+    gctx.setCurrentPipeline(demo.lines_pso);
+    gctx.cmdlist.IASetPrimitiveTopology(.LINESTRIP);
+
+    // Upload per-frame constant data (camera xform).
+    {
+        const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
+        zm.storeF32x4x4(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+    }
+
+    // Upload per-draw constant data (object to world xform).
+    {
+        const object_to_world = zm.translation(0.0, 0.0, 0.0);
+        const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
+        zm.storeF32x4x4(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+    }
+
+    // Upload vertex data and draw.
+    {
+        demo.audio_data.mutex.lock();
+        defer demo.audio_data.mutex.unlock();
+
+        const num_vertices = @intCast(u32, demo.audio_data.left.items.len);
+        const mem = gctx.allocateUploadMemory(Pso_Vertex, num_vertices);
+
+        for (demo.audio_data.left.items) |sample, i| {
+            mem.cpu_slice[i] = Pso_Vertex{
+                .position = [_]f32{ 0.1 * @intToFloat(f32, i), 10.0 * sample, 0.0 },
+            };
+        }
+
+        gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+            .BufferLocation = mem.gpu_base,
+            .SizeInBytes = num_vertices * @sizeOf(Pso_Vertex),
+            .StrideInBytes = @sizeOf(Pso_Vertex),
+        }});
+        gctx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
+    }
 
     demo.guictx.draw(gctx);
 
