@@ -744,11 +744,15 @@ const SimpleAudioProcessor = extern struct {
         assert(input_params != null and output_params != null);
         assert(input_params.?[0].pBuffer == output_params.?[0].pBuffer);
 
-        if (input_params.?[0].BufferFlags == .VALID and is_enabled == w.TRUE) {
+        if (is_enabled == w.TRUE) {
             var samples = @ptrCast([*]f32, @alignCast(16, input_params.?[0].pBuffer)); // XAudio2 aligns data to 16.
             const num_samples = input_params.?[0].ValidFrameCount * self.num_channels;
 
-            self.process.*(samples[0..num_samples], self.num_channels, self.context);
+            self.process.*(
+                samples[0..num_samples],
+                if (input_params.?[0].BufferFlags == .VALID) self.num_channels else 0,
+                self.context,
+            );
         }
 
         output_params.?[0].ValidFrameCount = input_params.?[0].ValidFrameCount;
