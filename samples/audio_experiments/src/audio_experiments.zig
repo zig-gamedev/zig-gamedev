@@ -494,13 +494,17 @@ fn draw(demo: *DemoState) void {
             const mem = gctx.allocateUploadMemory(Pso_Vertex, num_vertices);
 
             const z = (demo.audio_data.cursor_position + row) % 100;
-            const f: f32 = 0.01 * @intToFloat(f32, row);
+            const f: f32 = if (row == 0) 1.0 else 0.01 * @intToFloat(f32, row);
 
             var x: u32 = 0;
-            while (x < 480) : (x += 1) {
-                const sample = demo.audio_data.left.items[x + z * 480];
+            while (x < num_vertices) : (x += 1) {
+                const sample = demo.audio_data.left.items[x + z * num_vertices];
                 mem.cpu_slice[x] = Pso_Vertex{
-                    .position = [_]f32{ 0.1 * @intToFloat(f32, x), f * 10.0 * sample, 0.5 * @intToFloat(f32, z) },
+                    .position = [_]f32{
+                        0.1 * @intToFloat(f32, x),
+                        f * f * f * 10.0 * sample,
+                        0.5 * @intToFloat(f32, z),
+                    },
                 };
             }
 
