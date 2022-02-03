@@ -42,8 +42,32 @@ const Pso_Vertex = struct {
 
 const AudioData = struct {
     mutex: Mutex = .{},
+    cursor_position: u32 = 99,
     left: std.ArrayList(f32),
     right: std.ArrayList(f32),
+
+    fn init(allocator: std.mem.Allocator) AudioData {
+        const size = 100 * 480;
+
+        var left = std.ArrayList(f32).initCapacity(allocator, size) catch unreachable;
+        left.resize(size) catch unreachable;
+        for (left.items) |*s| s.* = 0.0;
+
+        var right = std.ArrayList(f32).initCapacity(allocator, size) catch unreachable;
+        right.resize(size) catch unreachable;
+        for (right.items) |*s| s.* = 0.0;
+
+        return .{
+            .left = left,
+            .right = right,
+        };
+    }
+
+    fn deinit(audio_data: *AudioData) void {
+        audio_data.left.deinit();
+        audio_data.right.deinit();
+        audio_data.* = undefined;
+    }
 };
 
 const DemoState = struct {
@@ -70,10 +94,10 @@ const DemoState = struct {
     audio_data: *AudioData,
 
     camera: struct {
-        position: [3]f32 = .{ 0.0, 10.0, -10.0 },
+        position: [3]f32 = .{ -10.0, 15.0, -10.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
-        pitch: f32 = 0.25 * math.pi,
-        yaw: f32 = 0.0,
+        pitch: f32 = 0.15 * math.pi,
+        yaw: f32 = 0.25 * math.pi,
     } = .{},
     mouse: struct {
         cursor_prev_x: i32 = 0,
@@ -82,22 +106,20 @@ const DemoState = struct {
 };
 
 fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
-    _ = num_channels;
+    assert(num_channels == 2);
 
     const audio_data = @ptrCast(*AudioData, @alignCast(@sizeOf(usize), context));
 
     audio_data.mutex.lock();
     defer audio_data.mutex.unlock();
 
-    audio_data.left.resize(0) catch unreachable;
-    audio_data.right.resize(0) catch unreachable;
+    audio_data.cursor_position = (audio_data.cursor_position + 1) % 100;
 
-    for (samples) |sample, i| {
-        if (i & 1 == 1) {
-            audio_data.right.append(sample) catch unreachable;
-        } else {
-            audio_data.left.append(sample) catch unreachable;
-        }
+    const base_index = 480 * audio_data.cursor_position;
+    var i: u32 = 0;
+    while (i < 480) : (i += 1) {
+        audio_data.left.items[base_index + i] = samples[i * 2];
+        audio_data.right.items[base_index + i] = samples[i * 2 + 1];
     }
 }
 
@@ -133,10 +155,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     }
 
     const audio_data = gpa_allocator.create(AudioData) catch unreachable;
-    audio_data.* = .{
-        .left = std.ArrayList(f32).init(gpa_allocator),
-        .right = std.ArrayList(f32).init(gpa_allocator),
-    };
+    audio_data.* = AudioData.init(gpa_allocator);
 
     {
         const p0 = sfx.createSimpleProcessor(&processAudio, audio_data);
@@ -280,8 +299,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     gpa_allocator.free(demo.sound1_data);
     gpa_allocator.free(demo.sound2_data);
     gpa_allocator.free(demo.sound3_data);
-    demo.audio_data.left.deinit();
-    demo.audio_data.right.deinit();
+    demo.audio_data.deinit();
     gpa_allocator.destroy(demo.audio_data);
     demo.actx.deinit();
     lib.deinitWindow(gpa_allocator);
@@ -470,21 +488,29 @@ fn draw(demo: *DemoState) void {
         demo.audio_data.mutex.lock();
         defer demo.audio_data.mutex.unlock();
 
-        const num_vertices = @intCast(u32, demo.audio_data.left.items.len);
-        const mem = gctx.allocateUploadMemory(Pso_Vertex, num_vertices);
+        var row: u32 = 0;
+        while (row < 100) : (row += 1) {
+            const num_vertices: u32 = 480;
+            const mem = gctx.allocateUploadMemory(Pso_Vertex, num_vertices);
 
-        for (demo.audio_data.left.items) |sample, i| {
-            mem.cpu_slice[i] = Pso_Vertex{
-                .position = [_]f32{ 0.1 * @intToFloat(f32, i), 10.0 * sample, 0.0 },
-            };
+            const z = (demo.audio_data.cursor_position + row) % 100;
+            const f: f32 = 0.01 * @intToFloat(f32, row);
+
+            var x: u32 = 0;
+            while (x < 480) : (x += 1) {
+                const sample = demo.audio_data.left.items[x + z * 480];
+                mem.cpu_slice[x] = Pso_Vertex{
+                    .position = [_]f32{ 0.1 * @intToFloat(f32, x), f * 10.0 * sample, 0.5 * @intToFloat(f32, z) },
+                };
+            }
+
+            gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+                .BufferLocation = mem.gpu_base,
+                .SizeInBytes = num_vertices * @sizeOf(Pso_Vertex),
+                .StrideInBytes = @sizeOf(Pso_Vertex),
+            }});
+            gctx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
         }
-
-        gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = mem.gpu_base,
-            .SizeInBytes = num_vertices * @sizeOf(Pso_Vertex),
-            .StrideInBytes = @sizeOf(Pso_Vertex),
-        }});
-        gctx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
     }
 
     demo.guictx.draw(gctx);
