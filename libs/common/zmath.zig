@@ -2961,6 +2961,49 @@ pub fn modAngle32(in_angle: f32) f32 {
     return temp;
 }
 
+fn fftInitUnityTable(out_unity_table: []F32x4) void {
+    var unity_table = out_unity_table;
+
+    const v0123 = f32x4(0.0, 1.0, 2.0, 3.0);
+    var length = out_unity_table.len / 4;
+    var vlstep = f32x4s(0.5 * math.pi / @intToFloat(f32, length));
+
+    while (true) {
+        length /= 4;
+        var vjp = v0123;
+
+        var j: u32 = 0;
+        while (j < length) : (j += 1) {
+            unity_table[j] = f32x4s(1.0);
+            unity_table[j + length * 4] = f32x4s(0.0);
+
+            var vls = vjp * vlstep;
+            var sin_cos = sincos(vls);
+            unity_table[j + length] = sin_cos[1];
+            unity_table[j + length * 5] = sin_cos[0] * f32x4s(-1.0);
+
+            var vijp = vjp + vjp;
+            vls = vijp * vlstep;
+            sin_cos = sincos(vls);
+            unity_table[j + length * 2] = sin_cos[1];
+            unity_table[j + length * 6] = sin_cos[0] * f32x4s(-1.0);
+
+            vijp = vijp + vjp;
+            vls = vijp * vlstep;
+            sin_cos = sincos(vls);
+            unity_table[j + length * 3] = sin_cos[1];
+            unity_table[j + length * 7] = sin_cos[0] * f32x4s(-1.0);
+
+            vjp += f32x4s(4.0);
+        }
+        vlstep *= f32x4s(4.0);
+        unity_table = unity_table[8 * length ..];
+
+        if (length <= 4)
+            break;
+    }
+}
+
 // ------------------------------------------------------------------------------
 //
 // Private functions and constants
