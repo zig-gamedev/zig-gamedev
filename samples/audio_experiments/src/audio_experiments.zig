@@ -38,6 +38,7 @@ const Pso_FrameConst = struct {
 
 const Pso_Vertex = struct {
     position: [3]f32,
+    color: [3]f32,
 };
 
 const AudioData = struct {
@@ -221,6 +222,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const lines_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+            d3d12.INPUT_ELEMENT_DESC.init("_Color", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
         };
 
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -504,12 +506,21 @@ fn draw(demo: *DemoState) void {
             var x: u32 = 0;
             while (x < num_vertices) : (x += 1) {
                 const sample = demo.audio_data.left.items[x + z * num_vertices];
+
+                var color: [3]f32 = undefined;
+                zm.store(color[0..], zm.lerp(
+                    zm.f32x4(0.2, 1.0, 0.0, 0.0),
+                    zm.f32x4(1.0, 0.0, 0.0, 0.0),
+                    1.2 * math.sqrt(f) * math.fabs(sample),
+                ), 3);
+
                 mem.cpu_slice[x] = Pso_Vertex{
                     .position = [_]f32{
                         0.1 * @intToFloat(f32, x),
                         f * f * f * 10.0 * sample,
                         0.5 * @intToFloat(f32, z),
                     },
+                    .color = color,
                 };
             }
 
