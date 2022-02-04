@@ -2961,7 +2961,10 @@ pub fn modAngle32(in_angle: f32) f32 {
     return temp;
 }
 
-fn fftInitUnityTable(out_unity_table: []F32x4) void {
+pub fn fftInitUnityTable(out_unity_table: []F32x4) void {
+    assert(std.math.isPowerOfTwo(out_unity_table.len));
+    assert(out_unity_table.len > 16);
+
     var unity_table = out_unity_table;
 
     const v0123 = f32x4(0.0, 1.0, 2.0, 3.0);

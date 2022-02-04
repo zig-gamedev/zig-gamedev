@@ -131,9 +131,9 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     {
-        //var t = [_]zm.F32x4{zm.f32x4s(0.0)} ** 32;
-        //zm.fftInitUnityTable(t[0..]);
-        //std.log.info("{any}", .{t});
+        var t = [_]zm.F32x4{zm.f32x4s(0.0)} ** 32;
+        zm.fftInitUnityTable(t[0..]);
+        std.log.info("{any}", .{t});
     }
 
     var actx = sfx.AudioContext.init(gpa_allocator);
