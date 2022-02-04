@@ -115,9 +115,16 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
 
     const base_index = 480 * audio_data.cursor_position;
     var i: u32 = 0;
-    while (i < 480) : (i += 1) {
-        audio_data.left.items[base_index + i] = if (num_channels >= 1) samples[i * num_channels] else 0.0;
-        audio_data.right.items[base_index + i] = if (num_channels >= 2) samples[i * num_channels + 1] else 0.0;
+    if (num_channels == 0) { // silence, 'samples' may contain invalid data
+        while (i < 480) : (i += 1) {
+            audio_data.left.items[base_index + i] = 0.0;
+            audio_data.right.items[base_index + i] = 0.0;
+        }
+    } else {
+        while (i < 480) : (i += 1) {
+            audio_data.left.items[base_index + i] = samples[i * num_channels];
+            audio_data.right.items[base_index + i] = samples[i * num_channels + 1];
+        }
     }
 }
 
@@ -481,7 +488,7 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
     }
 
-    // Upload vertex data and draw.
+    // Upload vertex data and record draw commands.
     {
         demo.audio_data.mutex.lock();
         defer demo.audio_data.mutex.unlock();
@@ -492,7 +499,7 @@ fn draw(demo: *DemoState) void {
             const mem = gctx.allocateUploadMemory(Pso_Vertex, num_vertices);
 
             const z = (demo.audio_data.cursor_position + row) % 100;
-            const f: f32 = if (row == 0) 1.0 else 0.010101 * @intToFloat(f32, row - 1);
+            const f = if (row == 0) 1.0 else 0.010101 * @intToFloat(f32, row - 1);
 
             var x: u32 = 0;
             while (x < num_vertices) : (x += 1) {
