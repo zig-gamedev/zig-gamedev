@@ -118,6 +118,7 @@
 // acos(v: F32xN) F32xN
 // atan(v: F32xN) F32xN
 // atan2(vy: F32xN, vx: F32xN) F32xN
+// cmulSoa(re0: F32xN, im0: F32xN, re1: F32xN, im1: F32xN) [2]F32xN
 //
 // ------------------------------------------------------------------------------
 // 3. 2D, 3D, 4D vector functions
@@ -2961,9 +2962,18 @@ pub fn modAngle32(in_angle: f32) f32 {
     return temp;
 }
 
+pub fn cmulSoa(re0: anytype, im0: anytype, re1: anytype, im1: anytype) [2]@TypeOf(re0) {
+    const re0_re1 = re0 * re1;
+    const re0_im1 = re0 * im1;
+    return .{
+        mulAdd(-im0, im1, re0_re1), // re
+        mulAdd(re1, im0, re0_im1), // im
+    };
+}
+
 pub fn fftInitUnityTable(out_unity_table: []F32x4) void {
     assert(std.math.isPowerOfTwo(out_unity_table.len));
-    assert(out_unity_table.len > 16);
+    assert(out_unity_table.len >= 32 and out_unity_table.len <= 512);
 
     var unity_table = out_unity_table;
 
