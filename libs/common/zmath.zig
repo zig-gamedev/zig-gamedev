@@ -2972,11 +2972,11 @@ pub fn cmulSoa(re0: anytype, im0: anytype, re1: anytype, im1: anytype) [2]@TypeO
 }
 
 fn fftButterflyDit4_1(re0: *F32x4, im0: *F32x4) void {
-    const re0l = swizzle(re0, .x, .x, .y, .y);
-    const re0h = swizzle(re0, .z, .z, .w, .w);
+    const re0l = swizzle(re0.*, .x, .x, .y, .y);
+    const re0h = swizzle(re0.*, .z, .z, .w, .w);
 
-    const im0l = swizzle(im0, .x, .x, .y, .y);
-    const im0h = swizzle(im0, .z, .z, .w, .w);
+    const im0l = swizzle(im0.*, .x, .x, .y, .y);
+    const im0h = swizzle(im0.*, .z, .z, .w, .w);
 
     const re_temp = mulAdd(re0h, f32x4(1.0, -1.0, 1.0, -1.0), re0l);
     const im_temp = mulAdd(im0h, f32x4(1.0, -1.0, 1.0, -1.0), im0l);
