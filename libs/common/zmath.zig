@@ -3067,10 +3067,72 @@ fn fftButterflyDit4_4(
 }
 
 pub fn fft4(re: []F32x4, im: []F32x4, count: u32) void {
-    var i: u32 = 0;
-    while (i < count) : (i += 1) {
-        fftButterflyDit4_1(&re[i], &im[i]);
+    assert(std.math.isPowerOfTwo(count));
+    assert(re.len == count);
+    assert(im.len == count);
+
+    var index: u32 = 0;
+    while (index < count) : (index += 1) {
+        fftButterflyDit4_1(&re[index], &im[index]);
     }
+}
+test "zmath.fft4" {
+    const epsilon = 0.0001;
+    var re = [_]F32x4{f32x4(1.0, 2.0, 3.0, 4.0)};
+    var im = [_]F32x4{f32x4s(0.0)};
+    fft4(re[0..], im[0..], 1);
+    try expect(approxEqAbs(re[0], f32x4(10.0, -2.0, -2.0, -2.0), epsilon));
+    try expect(approxEqAbs(im[0], f32x4(0.0, 2.0, 0.0, -2.0), epsilon));
+}
+
+pub fn fft8(re: []F32x4, im: []F32x4, count: u32) void {
+    assert(std.math.isPowerOfTwo(count));
+    assert(re.len == 2 * count);
+    assert(im.len == 2 * count);
+
+    var index: u32 = 0;
+    while (index < count) : (index += 1) {
+        var pre = re[index * 2 ..];
+        var pim = im[index * 2 ..];
+
+        var odds_re = @shuffle(f32, pre[0], pre[1], [4]i32{ 1, 3, ~@as(i32, 1), ~@as(i32, 3) });
+        var evens_re = @shuffle(f32, pre[0], pre[1], [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
+        var odds_im = @shuffle(f32, pim[0], pim[1], [4]i32{ 1, 3, ~@as(i32, 1), ~@as(i32, 3) });
+        var evens_im = @shuffle(f32, pim[0], pim[1], [4]i32{ 0, 2, ~@as(i32, 0), ~@as(i32, 2) });
+        fftButterflyDit4_1(&odds_re, &odds_im);
+        fftButterflyDit4_1(&evens_re, &evens_im);
+
+        {
+            const re_im = cmulSoa(
+                odds_re,
+                odds_im,
+                f32x4(1.0, 0.70710677, 0.0, -0.70710677),
+                f32x4(0.0, -0.70710677, -1.0, -0.70710677),
+            );
+            pre[0] = evens_re + re_im[0];
+            pim[0] = evens_im + re_im[1];
+        }
+        {
+            const re_im = cmulSoa(
+                odds_re,
+                odds_im,
+                f32x4(-1.0, -0.70710677, 0.0, 0.70710677),
+                f32x4(0.0, 0.70710677, 1.0, 0.70710677),
+            );
+            pre[1] = evens_re + re_im[0];
+            pim[1] = evens_im + re_im[1];
+        }
+    }
+}
+test "zmath.fft8" {
+    const epsilon = 0.0001;
+    var re = [_]F32x4{ f32x4(1.0, 2.0, 3.0, 4.0), f32x4(5.0, 6.0, 7.0, 8.0) };
+    var im = [_]F32x4{ f32x4s(0.0), f32x4s(0.0) };
+    fft8(re[0..], im[0..], 1);
+    try expect(approxEqAbs(re[0], f32x4(36.0, -4.0, -4.0, -4.0), epsilon));
+    try expect(approxEqAbs(re[1], f32x4(-4.0, -4.0, -4.0, -4.0), epsilon));
+    try expect(approxEqAbs(im[0], f32x4(0.0, 9.656854, 4.0, 1.656854), epsilon));
+    try expect(approxEqAbs(im[1], f32x4(0.0, -1.656854, -4.0, -9.656854), epsilon));
 }
 
 fn fftInitUnityTable(out_unity_table: []F32x4) void {
