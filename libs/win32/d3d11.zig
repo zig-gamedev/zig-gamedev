@@ -3,6 +3,7 @@ const IUnknown = windows.IUnknown;
 const UINT = windows.UINT;
 const WINAPI = windows.WINAPI;
 const GUID = windows.GUID;
+const HRESULT = windows.HRESULT;
 
 pub const CREATE_DEVICE_FLAG = UINT;
 pub const CREATE_DEVICE_SINGLETHREADED = 0x1;
@@ -278,3 +279,9 @@ pub const IID_IResource = GUID{
     .Data3 = 0x4952,
     .Data4 = .{ 0xb4, 0x7b, 0x5e, 0x45, 0x02, 0x6a, 0x86, 0x2d },
 };
+
+// Return codes as defined here: https://docs.microsoft.com/en-us/windows/win32/direct3d11/d3d11-graphics-reference-returnvalues
+pub const ERROR_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887C0002));
+pub const ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS = @bitCast(HRESULT, @as(c_ulong, 0x887C0001));
+pub const ERROR_TOO_MANY_UNIQUE_VIEW_OBJECTS = @bitCast(HRESULT, @as(c_ulong, 0x887C0003));
+pub const ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD = @bitCast(HRESULT, @as(c_ulong, 0x887C0004));

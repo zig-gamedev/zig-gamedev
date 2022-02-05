@@ -1593,3 +1593,29 @@ pub const IID_ISwapChain3 = GUID{
     .Data3 = 0x4ab0,
     .Data4 = .{ 0xb2, 0x36, 0x7d, 0xa0, 0x17, 0x0e, 0xda, 0xb1 },
 };
+
+// Return codes as defined here: https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-error
+pub const ERROR_ACCESS_DENIED = @bitCast(HRESULT, @as(c_ulong, 0x887A002B));
+pub const ERROR_ACCESS_LOST = @bitCast(HRESULT, @as(c_ulong, 0x887A0026));
+pub const ERROR_ALREADY_EXISTS = @bitCast(HRESULT, @as(c_ulong, 0x887A0036));
+pub const ERROR_CANNOT_PROTECT_CONTENT = @bitCast(HRESULT, @as(c_ulong, 0x887A002A));
+pub const ERROR_DEVICE_HUNG = @bitCast(HRESULT, @as(c_ulong, 0x887A0006));
+pub const ERROR_DEVICE_REMOVED = @bitCast(HRESULT, @as(c_ulong, 0x887A0005));
+pub const ERROR_DEVICE_RESET = @bitCast(HRESULT, @as(c_ulong, 0x887A0007));
+pub const ERROR_DRIVER_INTERNAL_ERROR = @bitCast(HRESULT, @as(c_ulong, 0x887A0020));
+pub const ERROR_FRAME_STATISTICS_DISJOINT = @bitCast(HRESULT, @as(c_ulong, 0x887A000B));
+pub const ERROR_GRAPHICS_VIDPN_SOURCE_IN_USE = @bitCast(HRESULT, @as(c_ulong, 0x887A000C));
+pub const ERROR_INVALID_CALL = @bitCast(HRESULT, @as(c_ulong, 0x887A0001));
+pub const ERROR_MORE_DATA = @bitCast(HRESULT, @as(c_ulong, 0x887A0003));
+pub const ERROR_NAME_ALREADY_EXISTS = @bitCast(HRESULT, @as(c_ulong, 0x887A002C));
+pub const ERROR_NONEXCLUSIVE = @bitCast(HRESULT, @as(c_ulong, 0x887A0021));
+pub const ERROR_NOT_CURRENTLY_AVAILABLE = @bitCast(HRESULT, @as(c_ulong, 0x887A0022));
+pub const ERROR_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887A0002));
+pub const ERROR_REMOTE_CLIENT_DISCONNECTED = @bitCast(HRESULT, @as(c_ulong, 0x887A0023));
+pub const ERROR_REMOTE_OUTOFMEMORY = @bitCast(HRESULT, @as(c_ulong, 0x887A0024));
+pub const ERROR_RESTRICT_TO_OUTPUT_STALE = @bitCast(HRESULT, @as(c_ulong, 0x887A0029));
+pub const ERROR_SDK_COMPONENT_MISSING = @bitCast(HRESULT, @as(c_ulong, 0x887A002D));
+pub const ERROR_SESSION_DISCONNECTED = @bitCast(HRESULT, @as(c_ulong, 0x887A0028));
+pub const ERROR_UNSUPPORTED = @bitCast(HRESULT, @as(c_ulong, 0x887A0004));
+pub const ERROR_WAIT_TIMEOUT = @bitCast(HRESULT, @as(c_ulong, 0x887A0027));
+pub const ERROR_WAS_STILL_DRAWING = @bitCast(HRESULT, @as(c_ulong, 0x887A000A));
