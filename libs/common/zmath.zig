@@ -2971,7 +2971,28 @@ pub fn cmulSoa(re0: anytype, im0: anytype, re1: anytype, im1: anytype) [2]@TypeO
     };
 }
 
-pub fn fftInitUnityTable(out_unity_table: []F32x4) void {
+fn fftButterflyDit4_1(re0: *F32x4, im0: *F32x4) void {
+    const re0l = swizzle(re0, .x, .x, .y, .y);
+    const re0h = swizzle(re0, .z, .z, .w, .w);
+
+    const im0l = swizzle(im0, .x, .x, .y, .y);
+    const im0h = swizzle(im0, .z, .z, .w, .w);
+
+    const re_temp = mulAdd(re0h, f32x4(1.0, -1.0, 1.0, -1.0), re0l);
+    const im_temp = mulAdd(im0h, f32x4(1.0, -1.0, 1.0, -1.0), im0l);
+
+    const re_shuf0 = @shuffle(f32, re_temp, im_temp, [4]i32{ 2, 3, ~@as(i32, 2), ~@as(i32, 3) });
+    const re_shuf = swizzle(re_shuf0, .x, .w, .x, .w);
+    const im_shuf = swizzle(re_shuf0, .z, .y, .z, .y);
+
+    const re_templ = swizzle(re_temp, .x, .y, .x, .y);
+    const im_templ = swizzle(im_temp, .x, .y, .x, .y);
+
+    re0.* = mulAdd(re_shuf, f32x4(1.0, 1.0, -1.0, -1.0), re_templ);
+    im0.* = mulAdd(im_shuf, f32x4(1.0, -1.0, -1.0, 1.0), im_templ);
+}
+
+fn fftInitUnityTable(out_unity_table: []F32x4) void {
     assert(std.math.isPowerOfTwo(out_unity_table.len));
     assert(out_unity_table.len >= 32 and out_unity_table.len <= 512);
 
