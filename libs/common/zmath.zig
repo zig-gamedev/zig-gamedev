@@ -2992,6 +2992,87 @@ fn fftButterflyDit4_1(re0: *F32x4, im0: *F32x4) void {
     im0.* = mulAdd(im_shuf, f32x4(1.0, -1.0, -1.0, 1.0), im_templ);
 }
 
+fn fftButterflyDit4_4(
+    re0: *F32x4,
+    re1: *F32x4,
+    re2: *F32x4,
+    re3: *F32x4,
+    im0: *F32x4,
+    im1: *F32x4,
+    im2: *F32x4,
+    im3: *F32x4,
+    unity_table_re: []const F32x4,
+    unity_table_im: []const F32x4,
+    stride: u32,
+    last: bool,
+) void {
+    const re_temp0 = re0.* + re2.*;
+    const im_temp0 = im0.* + im2.*;
+
+    const re_temp2 = re1.* + re3.*;
+    const im_temp2 = im1.* + im3.*;
+
+    const re_temp1 = re0.* - re2.*;
+    const im_temp1 = im0.* - im2.*;
+
+    const re_temp3 = re1.* - re3.*;
+    const im_temp3 = im1.* - im3.*;
+
+    var re_temp4 = re_temp0 + re_temp2;
+    var im_temp4 = im_temp0 + im_temp2;
+
+    var re_temp5 = re_temp1 + im_temp3;
+    var im_temp5 = im_temp1 - re_temp3;
+
+    var re_temp6 = re_temp0 - re_temp2;
+    var im_temp6 = im_temp0 - im_temp2;
+
+    var re_temp7 = re_temp1 - im_temp3;
+    var im_temp7 = im_temp1 + re_temp3;
+
+    {
+        const re_im = cmulSoa(re_temp5, im_temp5, unity_table_re[stride], unity_table_im[stride]);
+        re_temp5 = re_im[0];
+        im_temp5 = re_im[1];
+    }
+    {
+        const re_im = cmulSoa(re_temp6, im_temp6, unity_table_re[stride * 2], unity_table_im[stride * 2]);
+        re_temp6 = re_im[0];
+        im_temp6 = re_im[1];
+    }
+    {
+        const re_im = cmulSoa(re_temp7, im_temp7, unity_table_re[stride * 3], unity_table_im[stride * 3]);
+        re_temp7 = re_im[0];
+        im_temp7 = re_im[1];
+    }
+
+    if (last) {
+        fftButterflyDit4_1(&re_temp4, &im_temp4);
+        fftButterflyDit4_1(&re_temp5, &im_temp5);
+        fftButterflyDit4_1(&re_temp6, &im_temp6);
+        fftButterflyDit4_1(&re_temp7, &im_temp7);
+    }
+
+    re0.* = re_temp4;
+    im0.* = im_temp4;
+
+    re1.* = re_temp5;
+    im1.* = im_temp5;
+
+    re2.* = re_temp6;
+    im2.* = im_temp6;
+
+    re3.* = re_temp7;
+    im3.* = im_temp7;
+}
+
+pub fn fft4(re: []F32x4, im: []F32x4, count: u32) void {
+    var i: u32 = 0;
+    while (i < count) : (i += 1) {
+        fftButterflyDit4_1(&re[i], &im[i]);
+    }
+}
+
 fn fftInitUnityTable(out_unity_table: []F32x4) void {
     assert(std.math.isPowerOfTwo(out_unity_table.len));
     assert(out_unity_table.len >= 32 and out_unity_table.len <= 512);

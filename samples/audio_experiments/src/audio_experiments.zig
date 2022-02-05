@@ -131,6 +131,11 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     {
+        var in = [_]zm.F32x4{zm.f32x4(1.0, 2.0, 3.0, 4.0)};
+        var out = [_]zm.F32x4{zm.f32x4(0.0, 0.0, 0.0, 0.0)};
+        zm.fft4(in[0..], out[0..], 1);
+        std.log.info("{any}", .{in});
+        std.log.info("{any}", .{out});
         //var t = [_]zm.F32x4{zm.f32x4s(0.0)} ** 32;
         //zm.fftInitUnityTable(t[0..]);
         //std.log.info("{any}", .{t});
