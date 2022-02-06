@@ -4,6 +4,13 @@ const UINT = windows.UINT;
 const WINAPI = windows.WINAPI;
 const GUID = windows.GUID;
 const HRESULT = windows.HRESULT;
+const HINSTANCE = windows.HINSTANCE;
+
+const d3dcommon = @import("d3dcommon.zig");
+const FEATURE_LEVEL = d3dcommon.FEATURE_LEVEL;
+const DRIVER_TYPE = d3dcommon.DRIVER_TYPE;
+
+const dxgi = @import("dxgi.zig");
 
 pub const CREATE_DEVICE_FLAG = UINT;
 pub const CREATE_DEVICE_SINGLETHREADED = 0x1;
@@ -15,6 +22,8 @@ pub const CREATE_DEVICE_DEBUGGABLE = 0x40;
 pub const CREATE_DEVICE_PREVENT_ALTERING_LAYER_SETTINGS_FROM_REGISTRY = 0x80;
 pub const CREATE_DEVICE_DISABLE_GPU_TIMEOUT = 0x100;
 pub const CREATE_DEVICE_VIDEO_SUPPORT = 0x800;
+
+pub const D3D11_SDK_VERSION: UINT = 7;
 
 pub const BIND_FLAG = UINT;
 pub const BIND_VERTEX_BUFFER = 0x1;
@@ -28,6 +37,88 @@ pub const BIND_UNORDERED_ACCESS = 0x80;
 pub const BIND_DECODER = 0x200;
 pub const BIND_VIDEO_ENCODER = 0x400;
 
+pub const RESOURCE_DIMENSION = enum(UINT) {
+    UNKNOWN = 0,
+    BUFFER = 1,
+    TEXTURE1D = 2,
+    TEXTURE2D = 3,
+    TEXTURE3D = 4,
+};
+
+pub const RTV_DIMENSION = enum(UINT) {
+    UNKNOWN = 0,
+    BUFFER = 1,
+    TEXTURE1D = 2,
+    TEXTURE1DARRAY = 3,
+    TEXTURE2D = 4,
+    TEXTURE2DARRAY = 5,
+    TEXTURE2DMS = 6,
+    TEXTURE2DMSARRAY = 7,
+    TEXTURE3D = 8,
+};
+
+pub const BUFFER_RTV = extern struct {
+    u0: extern union {
+        FirstElement: UINT,
+        ElementOffset: UINT,
+    },
+    u1: extern union {
+        NumElements: UINT,
+        ElementWidth: UINT,
+    },
+};
+
+pub const TEX1D_RTV = extern struct {
+    MipSlice: UINT,
+};
+
+pub const TEX1D_ARRAY_RTV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const TEX2D_RTV = extern struct {
+    MipSlice: UINT,
+};
+
+pub const TEX2D_ARRAY_RTV = extern struct {
+    MipSlice: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const TEX2DMS_RTV = extern struct {
+    UnusedField_NothingToDefine: UINT = undefined,
+};
+
+pub const TEX2DMS_ARRAY_RTV = extern struct {
+    FirstArraySlice: UINT,
+    ArraySlice: UINT,
+};
+
+pub const TEX3D_RTV = extern struct {
+    MipSlice: UINT,
+    FirstWSlice: UINT,
+    WSize: UINT,
+};
+
+pub const RENDER_TARGET_VIEW_DESC = extern struct {
+    Format: dxgi.FORMAT,
+    ViewDimension: RTV_DIMENSION,
+    u: extern union {
+        Buffer: BUFFER_RTV,
+        Texture1D: TEX1D_RTV,
+        Texture1DArray: TEX1D_ARRAY_RTV,
+        Texture2D: TEX2D_RTV,
+        Texture2DArray: TEX2D_ARRAY_RTV,
+        Texture2DMS: TEX2DMS_RTV,
+        Texture2DMSArray: TEX2DMS_ARRAY_RTV,
+        Texture3D: TEX3D_RTV,
+    },
+};
+
+pub const IID_IDeviceChild = GUID.parse("{1841e5c8-16b0-489b-bcc8-44cfb0d5deae}");
 pub const IDeviceChild = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -53,6 +144,7 @@ pub const IDeviceChild = extern struct {
     }
 };
 
+pub const IID_IResource = GUID.parse("{dc8e63f3-d12b-4952-b47b-5e45026a862d}");
 pub const IResource = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -79,6 +171,7 @@ pub const IResource = extern struct {
     }
 };
 
+pub const IID_IDeviceContext = GUID.parse("{c0bfa96c-e089-44fb-8eaf-26f8796190da}");
 pub const IDeviceContext = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -212,6 +305,7 @@ pub const IDeviceContext = extern struct {
     }
 };
 
+pub const IID_IDevice = GUID.parse("{db6f6ddb-ac77-4e88-8253-819df9bbf140}");
 pub const IDevice = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -223,7 +317,11 @@ pub const IDevice = extern struct {
 
     pub fn Methods(comptime T: type) type {
         _ = T;
-        return extern struct {};
+        return extern struct {
+            pub inline fn CreateRenderTargetView(self: *const T, pResource: ?*IResource, pDesc: ?*const RENDER_TARGET_VIEW_DESC, ppRTView: ?*?*IRenderTargetView) HRESULT {
+                return self.v.device.CreateRenderTargetView(self, pResource, pDesc, ppRTView);
+            }
+        };
     }
 
     pub fn VTable(comptime T: type) type {
@@ -235,7 +333,7 @@ pub const IDevice = extern struct {
             CreateTexture3D: *anyopaque,
             CreateShaderResourceView: *anyopaque,
             CreateUnorderedAccessView: *anyopaque,
-            CreateRenderTargetView: *anyopaque,
+            CreateRenderTargetView: fn (*const IDevice, ?*IResource, ?*const RENDER_TARGET_VIEW_DESC, ?*?*IRenderTargetView) callconv(WINAPI) HRESULT,
             CreateDepthStencilView: *anyopaque,
             CreateInputLayout: *anyopaque,
             CreateVertexShader: *anyopaque,
@@ -273,12 +371,100 @@ pub const IDevice = extern struct {
     }
 };
 
-pub const IID_IResource = GUID{
-    .Data1 = 0xdc8e63f3,
-    .Data2 = 0xd12b,
-    .Data3 = 0x4952,
-    .Data4 = .{ 0xb4, 0x7b, 0x5e, 0x45, 0x02, 0x6a, 0x86, 0x2d },
+pub const IID_IView = GUID.parse("{839d1216-bb2e-412b-b7f4-a9dbebe08ed1}");
+pub const IView = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        view: VTable(Self),
+    },
+
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetResource: *anyopaque,
+        };
+    }
 };
+
+pub const IID_IRenderTargetView = GUID.parse("{dfdba067-0b8d-4865-875b-d7b4516cc164}");
+pub const IRenderTargetView = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        view: IView.VTable(Self),
+        rendertargetview: VTable(Self),
+    },
+
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IView.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetDesc: *anyopaque,
+        };
+    }
+};
+
+pub const IID_ITexture2D = GUID.parse("{6f15aaf2-d208-4e89-9ab4-489535d34f9c}");
+pub const ITexture2D = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        resource: IResource.VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IResource.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetDesc: *anyopaque,
+        };
+    }
+};
+
+pub extern "d3d11" fn D3D11CreateDeviceAndSwapChain(
+    pAdapter: ?*dxgi.IAdapter,
+    DriverType: DRIVER_TYPE,
+    Software: ?HINSTANCE,
+    Flags: CREATE_DEVICE_FLAG,
+    pFeatureLevels: ?[*]const FEATURE_LEVEL,
+    FeatureLevels: UINT,
+    SDKVersion: UINT,
+    pSwapChainDesc: ?*const dxgi.SWAP_CHAIN_DESC,
+    ppSwapChain: ?*?*dxgi.ISwapChain,
+    ppDevice: ?*?*IDevice,
+    pFeatureLevel: ?*FEATURE_LEVEL,
+    ppImmediateContext: ?*?*IDeviceContext,
+) callconv(WINAPI) HRESULT;
 
 // Return codes as defined here: https://docs.microsoft.com/en-us/windows/win32/direct3d11/d3d11-graphics-reference-returnvalues
 pub const ERROR_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887C0002));
