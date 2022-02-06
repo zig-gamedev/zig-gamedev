@@ -658,7 +658,7 @@ const SimpleAudioProcessor = extern struct {
                     xapo.MAX_FRAMERATE,
                 );
             }
-            return w.XAPO_E_FORMAT_UNSUPPORTED;
+            return xapo.E_FORMAT_UNSUPPORTED;
         }
         return w.S_OK;
     }
@@ -690,7 +690,7 @@ const SimpleAudioProcessor = extern struct {
                     xapo.MAX_FRAMERATE,
                 );
             }
-            return w.XAPO_E_FORMAT_UNSUPPORTED;
+            return xapo.E_FORMAT_UNSUPPORTED;
         }
         return w.S_OK;
     }
