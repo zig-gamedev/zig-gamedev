@@ -9,86 +9,10 @@ const c = @import("c.zig");
 
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
-// TODO(mziulek): Handle more error codes from:
-// https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
-pub const HResultError = error{
-    E_FAIL,
-    E_OUTOFMEMORY,
-    E_INVALIDARG,
-    E_NOTIMPL,
-    E_FILE_NOT_FOUND,
-    E_NOINTERFACE,
-    D3D12_ERROR_ADAPTER_NOT_FOUND,
-    D3D12_ERROR_DRIVER_VERSION_MISMATCH,
-    DXGI_ERROR_INVALID_CALL,
-    DXGI_ERROR_NOT_FOUND,
-    DXGI_ERROR_WAS_STILL_DRAWING,
-    DXGI_STATUS_MODE_CHANGED,
-    DWRITE_E_FILEFORMAT,
-    XAPO_E_FORMAT_UNSUPPORTED,
-};
-
-pub fn hrPanic(err: HResultError) noreturn {
-    panic(
-        "HRESULT error detected (0x{x}, {}).",
-        .{ @bitCast(c_ulong, hrErrorToCode(err)), err },
-    );
-}
-
-pub inline fn hrPanicOnFail(hr: w.HRESULT) void {
-    if (hr != w.S_OK) {
-        hrPanic(hrCodeToError(hr));
-    }
-}
-
-pub inline fn hrErrorOnFail(hr: w.HRESULT) HResultError!void {
-    if (hr != w.S_OK) {
-        return hrCodeToError(hr);
-    }
-}
-
-fn hrErrorToCode(err: HResultError) w.HRESULT {
-    return switch (err) {
-        HResultError.D3D12_ERROR_ADAPTER_NOT_FOUND => w.D3D12_ERROR_ADAPTER_NOT_FOUND,
-        HResultError.D3D12_ERROR_DRIVER_VERSION_MISMATCH => w.D3D12_ERROR_DRIVER_VERSION_MISMATCH,
-        HResultError.DXGI_ERROR_INVALID_CALL => w.DXGI_ERROR_INVALID_CALL,
-        HResultError.DXGI_ERROR_NOT_FOUND => w.DXGI_ERROR_NOT_FOUND,
-        HResultError.DXGI_ERROR_WAS_STILL_DRAWING => w.DXGI_ERROR_WAS_STILL_DRAWING,
-        HResultError.DXGI_STATUS_MODE_CHANGED => w.DXGI_STATUS_MODE_CHANGED,
-        HResultError.DWRITE_E_FILEFORMAT => w.DWRITE_E_FILEFORMAT,
-        HResultError.E_FAIL => w.E_FAIL,
-        HResultError.E_OUTOFMEMORY => w.E_OUTOFMEMORY,
-        HResultError.E_INVALIDARG => w.E_INVALIDARG,
-        HResultError.E_NOTIMPL => w.E_NOTIMPL,
-        HResultError.E_FILE_NOT_FOUND => w.E_FILE_NOT_FOUND,
-        HResultError.E_NOINTERFACE => w.E_NOINTERFACE,
-        HResultError.XAPO_E_FORMAT_UNSUPPORTED => w.XAPO_E_FORMAT_UNSUPPORTED,
-    };
-}
-
-fn hrCodeToError(hr: w.HRESULT) HResultError {
-    assert(hr != w.S_OK);
-    const code = @bitCast(c_ulong, hr);
-    return switch (code) {
-        @bitCast(c_ulong, w.D3D12_ERROR_ADAPTER_NOT_FOUND) => HResultError.D3D12_ERROR_ADAPTER_NOT_FOUND,
-        @bitCast(c_ulong, w.D3D12_ERROR_DRIVER_VERSION_MISMATCH) => HResultError.D3D12_ERROR_DRIVER_VERSION_MISMATCH,
-        @bitCast(c_ulong, w.DXGI_ERROR_INVALID_CALL) => HResultError.DXGI_ERROR_INVALID_CALL,
-        @bitCast(c_ulong, w.DXGI_ERROR_NOT_FOUND) => HResultError.DXGI_ERROR_NOT_FOUND,
-        @bitCast(c_ulong, w.DXGI_ERROR_WAS_STILL_DRAWING) => HResultError.DXGI_ERROR_WAS_STILL_DRAWING,
-        @bitCast(c_ulong, w.DXGI_STATUS_MODE_CHANGED) => HResultError.DXGI_STATUS_MODE_CHANGED,
-        @bitCast(c_ulong, w.DWRITE_E_FILEFORMAT) => HResultError.DWRITE_E_FILEFORMAT,
-        @bitCast(c_ulong, w.E_OUTOFMEMORY) => HResultError.E_OUTOFMEMORY,
-        @bitCast(c_ulong, w.E_INVALIDARG) => HResultError.E_INVALIDARG,
-        @bitCast(c_ulong, w.E_NOTIMPL) => HResultError.E_NOTIMPL,
-        @bitCast(c_ulong, w.E_FILE_NOT_FOUND) => HResultError.E_FILE_NOT_FOUND,
-        @bitCast(c_ulong, w.E_NOINTERFACE) => HResultError.E_NOINTERFACE,
-        @bitCast(c_ulong, w.XAPO_E_FORMAT_UNSUPPORTED) => HResultError.XAPO_E_FORMAT_UNSUPPORTED,
-        else => blk: {
-            std.debug.print("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
-            break :blk HResultError.E_FAIL;
-        },
-    };
-}
+pub const HResultError = win32.HResultError;
+pub const hrPanic = win32.hrPanic;
+pub const hrPanicOnFail = win32.hrPanicOnFail;
+pub const hrErrorOnFail = win32.hrErrorOnFail;
 
 pub const FrameStats = struct {
     time: f64,

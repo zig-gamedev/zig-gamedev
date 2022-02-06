@@ -479,3 +479,11 @@ pub const ERROR_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887C0002));
 pub const ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS = @bitCast(HRESULT, @as(c_ulong, 0x887C0001));
 pub const ERROR_TOO_MANY_UNIQUE_VIEW_OBJECTS = @bitCast(HRESULT, @as(c_ulong, 0x887C0003));
 pub const ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD = @bitCast(HRESULT, @as(c_ulong, 0x887C0004));
+
+// error set corresponding to the above return codes
+pub const Error = error{
+    FILE_NOT_FOUND,
+    TOO_MANY_UNIQUE_STATE_OBJECTS,
+    TOO_MANY_UNIQUE_VIEW_OBJECTS,
+    DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD,
+};

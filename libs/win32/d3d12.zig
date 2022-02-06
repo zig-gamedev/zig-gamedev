@@ -5895,3 +5895,13 @@ pub const IID_IGraphicsCommandList6 = GUID{
     .Data3 = 0x4cfa,
     .Data4 = .{ 0x96, 0xcf, 0x56, 0x89, 0xa9, 0x37, 0x0f, 0x80 },
 };
+
+// Error return codes from https://docs.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues
+pub const ERROR_ADAPTER_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x887E0001));
+pub const ERROR_DRIVER_VERSION_MISMATCH = @bitCast(HRESULT, @as(c_ulong, 0x887E0002));
+
+// Error set corresponding to the above error return codes
+pub const Error = error{
+    ADAPTER_NOT_FOUND,
+    DRIVER_VERSION_MISMATCH,
+};
