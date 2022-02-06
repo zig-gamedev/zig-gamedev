@@ -1594,6 +1594,11 @@ pub const IID_ISwapChain3 = GUID{
     .Data4 = .{ 0xb2, 0x36, 0x7d, 0xa0, 0x17, 0x0e, 0xda, 0xb1 },
 };
 
+// Status return codes as defined here: https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-status
+pub const STATUS_OCCLUDED = @bitCast(HRESULT, @as(c_ulong, 0x087A0001));
+pub const STATUS_MODE_CHANGED = @bitCast(HRESULT, @as(c_ulong, 0x087A0007));
+pub const STATUS_MODE_CHANGE_IN_PROGRESS = @bitCast(HRESULT, @as(c_ulong, 0x087A0008));
+
 // Return codes as defined here: https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-error
 pub const ERROR_ACCESS_DENIED = @bitCast(HRESULT, @as(c_ulong, 0x887A002B));
 pub const ERROR_ACCESS_LOST = @bitCast(HRESULT, @as(c_ulong, 0x887A0026));
@@ -1619,3 +1624,31 @@ pub const ERROR_SESSION_DISCONNECTED = @bitCast(HRESULT, @as(c_ulong, 0x887A0028
 pub const ERROR_UNSUPPORTED = @bitCast(HRESULT, @as(c_ulong, 0x887A0004));
 pub const ERROR_WAIT_TIMEOUT = @bitCast(HRESULT, @as(c_ulong, 0x887A0027));
 pub const ERROR_WAS_STILL_DRAWING = @bitCast(HRESULT, @as(c_ulong, 0x887A000A));
+
+// Error set corresponding to the above error return codes
+pub const Error = error{
+    ACCESS_DENIED,
+    ACCESS_LOST,
+    ALREADY_EXISTS,
+    CANNOT_PROTECT_CONTENT,
+    DEVICE_HUNG,
+    DEVICE_REMOVED,
+    DEVICE_RESET,
+    DRIVER_INTERNAL_ERROR,
+    FRAME_STATISTICS_DISJOINT,
+    GRAPHICS_VIDPN_SOURCE_IN_USE,
+    INVALID_CALL,
+    MORE_DATA,
+    NAME_ALREADY_EXISTS,
+    NONEXCLUSIVE,
+    NOT_CURRENTLY_AVAILABLE,
+    NOT_FOUND,
+    REMOTE_CLIENT_DISCONNECTED,
+    REMOTE_OUTOFMEMORY,
+    RESTRICT_TO_OUTPUT_STALE,
+    SDK_COMPONENT_MISSING,
+    SESSION_DISCONNECTED,
+    UNSUPPORTED,
+    WAIT_TIMEOUT,
+    WAS_STILL_DRAWING,
+};

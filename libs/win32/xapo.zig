@@ -217,3 +217,9 @@ pub const IXAPOParameters = extern struct {
         };
     }
 };
+
+pub const E_FORMAT_UNSUPPORTED = @bitCast(HRESULT, @as(c_ulong, 0x88970001));
+
+pub const Error = error{
+    E_FORMAT_UNSUPPORTED,
+};

@@ -226,3 +226,9 @@ pub extern "dwrite" fn DWriteCreateFactory(
     guid: *const GUID,
     factory: *?*anyopaque,
 ) callconv(WINAPI) HRESULT;
+
+pub const E_FILEFORMAT = @bitCast(HRESULT, @as(c_ulong, 0x88985000));
+
+pub const Error = error{
+    E_FILEFORMAT,
+};
