@@ -2962,7 +2962,7 @@ pub fn modAngle32(in_angle: f32) f32 {
     return temp;
 }
 
-pub fn cmulSoa(re0: anytype, im0: anytype, re1: anytype, im1: anytype) [2]@TypeOf(re0) {
+pub fn cmulSoa(re0: anytype, im0: anytype, re1: anytype, im1: anytype) [2]@TypeOf(re0, im0, re1, im1) {
     const re0_re1 = re0 * re1;
     const re0_im1 = re0 * im1;
     return .{
@@ -3081,8 +3081,14 @@ test "zmath.fft4" {
     var re = [_]F32x4{f32x4(1.0, 2.0, 3.0, 4.0)};
     var im = [_]F32x4{f32x4s(0.0)};
     fft4(re[0..], im[0..], 1);
-    try expect(approxEqAbs(re[0], f32x4(10.0, -2.0, -2.0, -2.0), epsilon));
-    try expect(approxEqAbs(im[0], f32x4(0.0, 2.0, 0.0, -2.0), epsilon));
+
+    var re_uns: [1]F32x4 = undefined;
+    var im_uns: [1]F32x4 = undefined;
+    fftUnswizzle(re[0..], re_uns[0..]);
+    fftUnswizzle(im[0..], im_uns[0..]);
+
+    try expect(approxEqAbs(re_uns[0], f32x4(10.0, -2.0, -2.0, -2.0), epsilon));
+    try expect(approxEqAbs(im_uns[0], f32x4(0.0, 2.0, 0.0, -2.0), epsilon));
 }
 
 pub fn fft8(re: []F32x4, im: []F32x4, count: u32) void {
@@ -3129,10 +3135,16 @@ test "zmath.fft8" {
     var re = [_]F32x4{ f32x4(1.0, 2.0, 3.0, 4.0), f32x4(5.0, 6.0, 7.0, 8.0) };
     var im = [_]F32x4{ f32x4s(0.0), f32x4s(0.0) };
     fft8(re[0..], im[0..], 1);
-    try expect(approxEqAbs(re[0], f32x4(36.0, -4.0, -4.0, -4.0), epsilon));
-    try expect(approxEqAbs(re[1], f32x4(-4.0, -4.0, -4.0, -4.0), epsilon));
-    try expect(approxEqAbs(im[0], f32x4(0.0, 9.656854, 4.0, 1.656854), epsilon));
-    try expect(approxEqAbs(im[1], f32x4(0.0, -1.656854, -4.0, -9.656854), epsilon));
+
+    var re_uns: [2]F32x4 = undefined;
+    var im_uns: [2]F32x4 = undefined;
+    fftUnswizzle(re[0..], re_uns[0..]);
+    fftUnswizzle(im[0..], im_uns[0..]);
+
+    try expect(approxEqAbs(re_uns[0], f32x4(36.0, -4.0, -4.0, -4.0), epsilon));
+    try expect(approxEqAbs(re_uns[1], f32x4(-4.0, -4.0, -4.0, -4.0), epsilon));
+    try expect(approxEqAbs(im_uns[0], f32x4(0.0, 9.656854, 4.0, 1.656854), epsilon));
+    try expect(approxEqAbs(im_uns[1], f32x4(0.0, -1.656854, -4.0, -9.656854), epsilon));
 }
 
 pub fn fft16(re: []F32x4, im: []F32x4, count: u32) void {
@@ -3204,9 +3216,12 @@ test "zmath.fft16" {
 fn fftUnswizzle(input: []const F32x4, output: []F32x4) void {
     assert(std.math.isPowerOfTwo(input.len));
     assert(input.len == output.len);
+    assert(input.ptr != output.ptr);
 
-    const log2_length = std.math.log2_int(u32, @intCast(u32, input.len * 4));
-    const length = @intCast(u32, input.len);
+    const log2_length = std.math.log2_int(usize, input.len * 4);
+    assert(log2_length >= 2);
+
+    const length = input.len;
 
     const f32_output = @ptrCast([*]f32, output.ptr)[0 .. output.len * 4];
 
@@ -3231,19 +3246,41 @@ fn fftUnswizzle(input: []const F32x4, output: []F32x4) void {
         };
     };
 
-    const rev32 = @intCast(u5, @as(u32, 32) - log2_length);
-    var index: u32 = 0;
-    while (index < length) : (index += 1) {
-        const n = index * 4;
-        const addr =
-            (@intCast(u32, static.swizzle_table[n & 0xff]) << 24) |
-            (@intCast(u32, static.swizzle_table[(n >> 8) & 0xff]) << 16) |
-            (@intCast(u32, static.swizzle_table[(n >> 16) & 0xff]) << 8) |
-            @intCast(u32, static.swizzle_table[(n >> 24) & 0xff]);
-        f32_output[addr >> rev32] = input[index][0];
-        f32_output[(0x40000000 | addr) >> rev32] = input[index][1];
-        f32_output[(0x80000000 | addr) >> rev32] = input[index][2];
-        f32_output[(0xC0000000 | addr) >> rev32] = input[index][3];
+    if ((log2_length & 1) == 0) {
+        const rev32 = @intCast(u6, 32 - log2_length);
+        var index: usize = 0;
+        while (index < length) : (index += 1) {
+            const n = index * 4;
+            const addr =
+                (@intCast(usize, static.swizzle_table[n & 0xff]) << 24) |
+                (@intCast(usize, static.swizzle_table[(n >> 8) & 0xff]) << 16) |
+                (@intCast(usize, static.swizzle_table[(n >> 16) & 0xff]) << 8) |
+                @intCast(usize, static.swizzle_table[(n >> 24) & 0xff]);
+            f32_output[addr >> rev32] = input[index][0];
+            f32_output[(0x40000000 | addr) >> rev32] = input[index][1];
+            f32_output[(0x80000000 | addr) >> rev32] = input[index][2];
+            f32_output[(0xC0000000 | addr) >> rev32] = input[index][3];
+        }
+    } else {
+        const rev7 = @as(usize, 1) << @intCast(u6, log2_length - 3);
+        const rev32 = @intCast(u6, 32 - (log2_length - 3));
+        var index: usize = 0;
+        while (index < length) : (index += 1) {
+            const n = index / 2;
+            var addr =
+                (((@intCast(usize, static.swizzle_table[n & 0xff]) << 24) |
+                (@intCast(usize, static.swizzle_table[(n >> 8) & 0xff]) << 16) |
+                (@intCast(usize, static.swizzle_table[(n >> 16) & 0xff]) << 8) |
+                (@intCast(usize, static.swizzle_table[(n >> 24) & 0xff]))) >> rev32) |
+                ((index & 1) * rev7 * 4);
+            f32_output[addr] = input[index][0];
+            addr += rev7;
+            f32_output[addr] = input[index][1];
+            addr += rev7;
+            f32_output[addr] = input[index][2];
+            addr += rev7;
+            f32_output[addr] = input[index][3];
+        }
     }
 }
 
