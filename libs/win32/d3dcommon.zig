@@ -63,6 +63,15 @@ pub const FEATURE_LEVEL = enum(UINT) {
     FL_12_2 = 0xc200,
 };
 
+pub const DRIVER_TYPE = enum(UINT) {
+    UNKNOWN = 0,
+    HARDWARE = 1,
+    REFERENCE = 2,
+    NULL = 3,
+    SOFTWARE = 4,
+    WARP = 5,
+};
+
 pub const IBlob = extern struct {
     const Self = @This();
     v: *const extern struct {
