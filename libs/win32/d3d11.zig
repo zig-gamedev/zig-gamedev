@@ -316,16 +316,19 @@ pub const IDevice = extern struct {
     usingnamespace Methods(Self);
 
     pub fn Methods(comptime T: type) type {
-        _ = T;
         return extern struct {
-            pub inline fn CreateRenderTargetView(self: *const T, pResource: ?*IResource, pDesc: ?*const RENDER_TARGET_VIEW_DESC, ppRTView: ?*?*IRenderTargetView) HRESULT {
+            pub inline fn CreateRenderTargetView(
+                self: *T,
+                pResource: ?*IResource,
+                pDesc: ?*const RENDER_TARGET_VIEW_DESC,
+                ppRTView: ?*?*IRenderTargetView,
+            ) HRESULT {
                 return self.v.device.CreateRenderTargetView(self, pResource, pDesc, ppRTView);
             }
         };
     }
 
     pub fn VTable(comptime T: type) type {
-        _ = T;
         return extern struct {
             CreateBuffer: *anyopaque,
             CreateTexture1D: *anyopaque,
@@ -333,7 +336,12 @@ pub const IDevice = extern struct {
             CreateTexture3D: *anyopaque,
             CreateShaderResourceView: *anyopaque,
             CreateUnorderedAccessView: *anyopaque,
-            CreateRenderTargetView: fn (*const IDevice, ?*IResource, ?*const RENDER_TARGET_VIEW_DESC, ?*?*IRenderTargetView) callconv(WINAPI) HRESULT,
+            CreateRenderTargetView: fn (
+                *T,
+                ?*IResource,
+                ?*const RENDER_TARGET_VIEW_DESC,
+                ?*?*IRenderTargetView,
+            ) callconv(WINAPI) HRESULT,
             CreateDepthStencilView: *anyopaque,
             CreateInputLayout: *anyopaque,
             CreateVertexShader: *anyopaque,
