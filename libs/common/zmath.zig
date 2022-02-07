@@ -317,17 +317,17 @@ test "zmath.load" {
     var ptr = &a;
     var i: u32 = 0;
     const v0 = load(a[i..], F32x4, 2);
-    try expect(approxEqAbs(v0, [4]f32{ 1.0, 2.0, 0.0, 0.0 }, 0.0));
+    try expect(approxEqAbs(v0, f32x4(1.0, 2.0, 0.0, 0.0), 0.0));
     i += 2;
     const v1 = load(a[i .. i + 2], F32x4, 2);
-    try expect(approxEqAbs(v1, [4]f32{ 3.0, 4.0, 0.0, 0.0 }, 0.0));
+    try expect(approxEqAbs(v1, f32x4(3.0, 4.0, 0.0, 0.0), 0.0));
     const v2 = load(a[5..7], F32x4, 2);
-    try expect(approxEqAbs(v2, [4]f32{ 6.0, 7.0, 0.0, 0.0 }, 0.0));
+    try expect(approxEqAbs(v2, f32x4(6.0, 7.0, 0.0, 0.0), 0.0));
     const v3 = load(ptr[1..], F32x4, 2);
-    try expect(approxEqAbs(v3, [4]f32{ 2.0, 3.0, 0.0, 0.0 }, 0.0));
+    try expect(approxEqAbs(v3, f32x4(2.0, 3.0, 0.0, 0.0), 0.0));
     i += 1;
     const v4 = load(ptr[i .. i + 2], F32x4, 2);
-    try expect(approxEqAbs(v4, [4]f32{ 4.0, 5.0, 0.0, 0.0 }, 0.0));
+    try expect(approxEqAbs(v4, f32x4(4.0, 5.0, 0.0, 0.0), 0.0));
 }
 
 pub fn store(mem: []f32, v: anytype, comptime len: u32) void {
@@ -369,10 +369,10 @@ test "zmath.loadF32x4x4" {
     };
     // zig fmt: on
     const m = loadF32x4x4(a[1..]);
-    try expect(approxEqAbs(m[0], [4]f32{ 2.0, 3.0, 4.0, 5.0 }, 0.0));
-    try expect(approxEqAbs(m[1], [4]f32{ 6.0, 7.0, 8.0, 9.0 }, 0.0));
-    try expect(approxEqAbs(m[2], [4]f32{ 10.0, 11.0, 12.0, 13.0 }, 0.0));
-    try expect(approxEqAbs(m[3], [4]f32{ 14.0, 15.0, 16.0, 17.0 }, 0.0));
+    try expect(approxEqAbs(m[0], f32x4(2.0, 3.0, 4.0, 5.0), 0.0));
+    try expect(approxEqAbs(m[1], f32x4(6.0, 7.0, 8.0, 9.0), 0.0));
+    try expect(approxEqAbs(m[2], f32x4(10.0, 11.0, 12.0, 13.0), 0.0));
+    try expect(approxEqAbs(m[3], f32x4(14.0, 15.0, 16.0, 17.0), 0.0));
 }
 
 pub fn storeF32x4x4(mem: []f32, m: Mat) void {
@@ -574,8 +574,8 @@ test "zmath.andInt" {
     }
 }
 
-pub inline fn andNotInt(v0: anytype, v1: anytype) @TypeOf(v0) {
-    const T = @TypeOf(v0);
+pub inline fn andNotInt(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
+    const T = @TypeOf(v0, v1);
     const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
@@ -1269,7 +1269,7 @@ pub inline fn select(mask: anytype, v0: anytype, v1: anytype) @TypeOf(v0, v1) {
 }
 
 pub inline fn lerp(v0: anytype, v1: anytype, t: f32) @TypeOf(v0, v1) {
-    const T = @TypeOf(v0);
+    const T = @TypeOf(v0, v1);
     return v0 + (v1 - v0) * splat(T, t); // subps, shufps, addps, mulps
 }
 
@@ -1333,7 +1333,7 @@ test "zmath.modAngle" {
 }
 
 pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0, v1, v2) {
-    const T = @TypeOf(v0);
+    const T = @TypeOf(v0, v1, v2);
     if (cpu_arch == .x86_64 and has_avx and has_fma) {
         return @mulAdd(T, v0, v1, v2);
     } else {
@@ -3388,7 +3388,7 @@ test "zmath.floatToIntAndBack" {
 }
 
 fn approxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
-    const T = @TypeOf(v0);
+    const T = @TypeOf(v0, v1);
     comptime var i: comptime_int = 0;
     inline while (i < veclen(T)) : (i += 1) {
         if (!math.approxEqAbs(f32, v0[i], v1[i], eps)) {
