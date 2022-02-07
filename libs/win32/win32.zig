@@ -15,6 +15,9 @@ pub const xaudio2 = @import("xaudio2.zig");
 pub const xaudio2fx = @import("xaudio2fx.zig");
 pub const xapo = @import("xapo.zig");
 
+/// Disclaimer: You should probably precompile your shaders with dxc and not use d3dcompiler!
+pub const d3dcompiler = @import("d3dcompiler.zig");
+
 const HRESULT = base.HRESULT;
 const S_OK = base.S_OK;
 
