@@ -440,7 +440,7 @@ pub inline fn isNearEqual(
     v1: anytype,
     epsilon: anytype,
 ) @Vector(veclen(@TypeOf(v0)), bool) {
-    const T = @TypeOf(v0);
+    const T = @TypeOf(v0, v1);
     const delta = v0 - v1;
     const temp = maxFast(delta, splat(T, 0.0) - delta);
     return temp <= epsilon;
@@ -521,7 +521,7 @@ pub inline fn isInBounds(
     v: anytype,
     bounds: anytype,
 ) @Vector(veclen(@TypeOf(v)), bool) {
-    const T = @TypeOf(v);
+    const T = @TypeOf(v, bounds);
     const Tu = @Vector(veclen(T), u1);
     const Tr = @Vector(veclen(T), bool);
 
@@ -550,8 +550,8 @@ test "zmath.isInBounds" {
     }
 }
 
-pub inline fn andInt(v0: anytype, v1: anytype) @TypeOf(v0) {
-    const T = @TypeOf(v0);
+pub inline fn andInt(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
+    const T = @TypeOf(v0, v1);
     const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
@@ -596,8 +596,8 @@ test "zmath.andNotInt" {
     }
 }
 
-pub inline fn orInt(v0: anytype, v1: anytype) @TypeOf(v0) {
-    const T = @TypeOf(v0);
+pub inline fn orInt(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
+    const T = @TypeOf(v0, v1);
     const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
@@ -624,16 +624,16 @@ test "zmath.orInt" {
     }
 }
 
-pub inline fn norInt(v0: anytype, v1: anytype) @TypeOf(v0) {
-    const T = @TypeOf(v0);
+pub inline fn norInt(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
+    const T = @TypeOf(v0, v1);
     const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
     return @bitCast(T, ~(v0u | v1u)); // por, pcmpeqd, pxor
 }
 
-pub inline fn xorInt(v0: anytype, v1: anytype) @TypeOf(v0) {
-    const T = @TypeOf(v0);
+pub inline fn xorInt(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
+    const T = @TypeOf(v0, v1);
     const Tu = @Vector(veclen(T), u32);
     const v0u = @bitCast(Tu, v0);
     const v1u = @bitCast(Tu, v1);
@@ -660,7 +660,7 @@ test "zmath.xorInt" {
     }
 }
 
-pub inline fn minFast(v0: anytype, v1: anytype) @TypeOf(v0) {
+pub inline fn minFast(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     return select(v0 < v1, v0, v1); // minps
 }
 test "zmath.minFast" {
@@ -683,7 +683,7 @@ test "zmath.minFast" {
     }
 }
 
-pub inline fn maxFast(v0: anytype, v1: anytype) @TypeOf(v0) {
+pub inline fn maxFast(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     return select(v0 > v1, v0, v1); // maxps
 }
 test "zmath.maxFast" {
@@ -705,7 +705,7 @@ test "zmath.maxFast" {
     }
 }
 
-pub inline fn min(v0: anytype, v1: anytype) @TypeOf(v0) {
+pub inline fn min(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     // This will handle inf & nan
     return @minimum(v0, v1); // minps, cmpunordps, andps, andnps, orps
 }
@@ -746,7 +746,7 @@ test "zmath.min" {
     }
 }
 
-pub inline fn max(v0: anytype, v1: anytype) @TypeOf(v0) {
+pub inline fn max(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     // This will handle inf & nan
     return @maximum(v0, v1); // maxps, cmpunordps, andps, andnps, orps
 }
@@ -1157,7 +1157,7 @@ test "zmath.ceil" {
     }
 }
 
-pub inline fn clamp(v: anytype, vmin: anytype, vmax: anytype) @TypeOf(v) {
+pub inline fn clamp(v: anytype, vmin: anytype, vmax: anytype) @TypeOf(v, vmin, vmax) {
     var result = max(vmin, v);
     result = min(vmax, result);
     return result;
@@ -1185,7 +1185,7 @@ test "zmath.clamp" {
     }
 }
 
-pub inline fn clampFast(v: anytype, vmin: anytype, vmax: anytype) @TypeOf(v) {
+pub inline fn clampFast(v: anytype, vmin: anytype, vmax: anytype) @TypeOf(v, vmin, vmax) {
     var result = maxFast(vmin, v);
     result = minFast(vmax, result);
     return result;
@@ -1264,16 +1264,16 @@ pub inline fn abs(v: anytype) @TypeOf(v) {
     return @fabs(v); // load, andps
 }
 
-pub inline fn select(mask: anytype, v0: anytype, v1: anytype) @TypeOf(v0) {
+pub inline fn select(mask: anytype, v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     return @select(f32, mask, v0, v1);
 }
 
-pub inline fn lerp(v0: anytype, v1: anytype, t: f32) @TypeOf(v0) {
+pub inline fn lerp(v0: anytype, v1: anytype, t: f32) @TypeOf(v0, v1) {
     const T = @TypeOf(v0);
     return v0 + (v1 - v0) * splat(T, t); // subps, shufps, addps, mulps
 }
 
-pub inline fn lerpV(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0) {
+pub inline fn lerpV(v0: anytype, v1: anytype, t: anytype) @TypeOf(v0, v1, t) {
     return v0 + (v1 - v0) * t; // subps, addps, mulps
 }
 
@@ -1289,7 +1289,7 @@ pub inline fn swizzle(
     return @shuffle(f32, v, undefined, [4]i32{ @enumToInt(x), @enumToInt(y), @enumToInt(z), @enumToInt(w) });
 }
 
-pub inline fn mod(v0: anytype, v1: anytype) @TypeOf(v0) {
+pub inline fn mod(v0: anytype, v1: anytype) @TypeOf(v0, v1) {
     // vdivps, vroundps, vmulps, vsubps
     return v0 - v1 * trunc(v0 / v1);
 }
@@ -1332,7 +1332,7 @@ test "zmath.modAngle" {
     try expect(approxEqAbs(modAngle(splat(F32x4, 2.5 * math.pi)), splat(F32x4, 0.5 * math.pi), 0.0005));
 }
 
-pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0) {
+pub inline fn mulAdd(v0: anytype, v1: anytype, v2: anytype) @TypeOf(v0, v1, v2) {
     const T = @TypeOf(v0);
     if (cpu_arch == .x86_64 and has_avx and has_fma) {
         return @mulAdd(T, v0, v1, v2);
@@ -1362,7 +1362,7 @@ fn sin32xN(v: anytype) @TypeOf(v) {
     result = mulAdd(result, x2, splat(T, 1.0));
     return x * result;
 }
-test "sin" {
+test "zmath.sin" {
     const epsilon = 0.0001;
 
     try expect(approxEqAbs(sin(splat(F32x4, 0.5 * math.pi)), splat(F32x4, 1.0), epsilon));
@@ -1639,8 +1639,8 @@ test "zmath.atan" {
     }
 }
 
-pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx) {
-    const T = @TypeOf(vy);
+pub fn atan2(vy: anytype, vx: anytype) @TypeOf(vx, vy) {
+    const T = @TypeOf(vx, vy);
     const Tu = @Vector(veclen(T), u32);
 
     const vx_is_positive =
@@ -1944,12 +1944,8 @@ test "zmath.vecMulMat" {
 fn mulRetType(comptime Ta: type, comptime Tb: type) type {
     if (Ta == Mat and Tb == Mat) {
         return Mat;
-    } else if (Ta == Quat and Tb == Quat) {
-        return Quat;
     } else if ((Ta == f32 and Tb == Mat) or (Ta == Mat and Tb == f32)) {
         return Mat;
-    } else if ((Ta == f32 and Tb == Vec) or (Ta == Vec and Tb == f32)) {
-        return Vec;
     } else if ((Ta == Vec and Tb == Mat) or (Ta == Mat and Tb == Vec)) {
         return Vec;
     }
