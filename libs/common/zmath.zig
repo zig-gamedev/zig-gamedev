@@ -1,6 +1,6 @@
 // ==============================================================================
 //
-// zmath lib 0.2
+// zmath lib 0.3 (wip)
 // Fast, multi-platform, SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig
 //
@@ -199,6 +199,9 @@
 // sincos(v: f32) [2]f32
 // asin(v: f32) f32
 // acos(v: f32) f32
+//
+// fftInitUnityTable(unitytable: []F32x4) void
+// fft(re: []F32x4, im: []F32x4, unitytable: []const F32x4) void
 //
 // ==============================================================================
 
@@ -3278,29 +3281,24 @@ test "zmath.fftN" {
         };
 
         fftInitUnityTable(unity_table[0..32]);
-        fftN(re[0..], im[0..], unity_table[0..], 32, 1);
+        fft(re[0..], im[0..], unity_table[0..32]);
 
-        var re_uns: [8]F32x4 = undefined;
-        var im_uns: [8]F32x4 = undefined;
-        fftUnswizzle(re[0..], re_uns[0..]);
-        fftUnswizzle(im[0..], im_uns[0..]);
-
-        try expect(approxEqAbs(re_uns[0], f32x4(528.0, -16.0, -16.0, -16.0), epsilon));
-        try expect(approxEqAbs(re_uns[1], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
-        try expect(approxEqAbs(re_uns[2], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
-        try expect(approxEqAbs(re_uns[3], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
-        try expect(approxEqAbs(re_uns[4], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
-        try expect(approxEqAbs(re_uns[5], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
-        try expect(approxEqAbs(re_uns[6], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
-        try expect(approxEqAbs(re_uns[7], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
-        try expect(approxEqAbs(im_uns[0], f32x4(0.0, 162.450726, 80.437432, 52.744931), epsilon));
-        try expect(approxEqAbs(im_uns[1], f32x4(38.627417, 29.933895, 23.945692, 19.496056), epsilon));
-        try expect(approxEqAbs(im_uns[2], f32x4(16.0, 13.130861, 10.690858, 8.552178), epsilon));
-        try expect(approxEqAbs(im_uns[3], f32x4(6.627417, 4.853547, 3.182598, 1.575862), epsilon));
-        try expect(approxEqAbs(im_uns[4], f32x4(0.0, -1.575862, -3.182598, -4.853547), epsilon));
-        try expect(approxEqAbs(im_uns[5], f32x4(-6.627417, -8.552178, -10.690858, -13.130861), epsilon));
-        try expect(approxEqAbs(im_uns[6], f32x4(-16.0, -19.496056, -23.945692, -29.933895), epsilon));
-        try expect(approxEqAbs(im_uns[7], f32x4(-38.627417, -52.744931, -80.437432, -162.450726), epsilon));
+        try expect(approxEqAbs(re[0], f32x4(528.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re[1], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re[2], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re[3], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re[4], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re[5], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re[6], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re[7], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(im[0], f32x4(0.0, 162.450726, 80.437432, 52.744931), epsilon));
+        try expect(approxEqAbs(im[1], f32x4(38.627417, 29.933895, 23.945692, 19.496056), epsilon));
+        try expect(approxEqAbs(im[2], f32x4(16.0, 13.130861, 10.690858, 8.552178), epsilon));
+        try expect(approxEqAbs(im[3], f32x4(6.627417, 4.853547, 3.182598, 1.575862), epsilon));
+        try expect(approxEqAbs(im[4], f32x4(0.0, -1.575862, -3.182598, -4.853547), epsilon));
+        try expect(approxEqAbs(im[5], f32x4(-6.627417, -8.552178, -10.690858, -13.130861), epsilon));
+        try expect(approxEqAbs(im[6], f32x4(-16.0, -19.496056, -23.945692, -29.933895), epsilon));
+        try expect(approxEqAbs(im[7], f32x4(-38.627417, -52.744931, -80.437432, -162.450726), epsilon));
     }
 
     // 64 samples
@@ -3323,17 +3321,12 @@ test "zmath.fftN" {
         };
 
         fftInitUnityTable(unity_table[0..64]);
-        fftN(re[0..], im[0..], unity_table[0..], 64, 1);
+        fft(re[0..], im[0..], unity_table[0..64]);
 
-        var re_uns: [16]F32x4 = undefined;
-        var im_uns: [16]F32x4 = undefined;
-        fftUnswizzle(re[0..], re_uns[0..]);
-        fftUnswizzle(im[0..], im_uns[0..]);
-
-        try expect(approxEqAbs(re_uns[0], f32x4(1056.0, 0.0, -32.0, 0.0), epsilon));
+        try expect(approxEqAbs(re[0], f32x4(1056.0, 0.0, -32.0, 0.0), epsilon));
         var i: u32 = 1;
         while (i < 16) : (i += 1) {
-            try expect(approxEqAbs(re_uns[i], f32x4(-32.0, 0.0, -32.0, 0.0), epsilon));
+            try expect(approxEqAbs(re[i], f32x4(-32.0, 0.0, -32.0, 0.0), epsilon));
         }
 
         const expected = [_]f32{
@@ -3347,7 +3340,7 @@ test "zmath.fftN" {
             -77.254834, 0.000000, -105.489863, 0.000000, -160.874864, 0.000000, -324.901452, 0.000000,
         };
         for (expected) |e, ie| {
-            try expect(std.math.approxEqAbs(f32, e, im_uns[(ie / 4)][ie % 4], epsilon));
+            try expect(std.math.approxEqAbs(f32, e, im[(ie / 4)][ie % 4], epsilon));
         }
     }
 
@@ -3383,17 +3376,12 @@ test "zmath.fftN" {
         };
 
         fftInitUnityTable(unity_table[0..128]);
-        fftN(re[0..], im[0..], unity_table[0..], 128, 1);
+        fft(re[0..], im[0..], unity_table[0..128]);
 
-        var re_uns: [32]F32x4 = undefined;
-        var im_uns: [32]F32x4 = undefined;
-        fftUnswizzle(re[0..], re_uns[0..]);
-        fftUnswizzle(im[0..], im_uns[0..]);
-
-        try expect(approxEqAbs(re_uns[0], f32x4(2112.0, 0.0, 0.0, 0.0), epsilon));
+        try expect(approxEqAbs(re[0], f32x4(2112.0, 0.0, 0.0, 0.0), epsilon));
         var i: u32 = 1;
         while (i < 32) : (i += 1) {
-            try expect(approxEqAbs(re_uns[i], f32x4(-64.0, 0.0, 0.0, 0.0), epsilon));
+            try expect(approxEqAbs(re[i], f32x4(-64.0, 0.0, 0.0, 0.0), epsilon));
         }
 
         const expected = [_]f32{
@@ -3415,7 +3403,7 @@ test "zmath.fftN" {
             -321.749727, 0.000000, 0.000000, 0.000000, -649.802905, 0.000000, 0.000000, 0.000000,
         };
         for (expected) |e, ie| {
-            try expect(std.math.approxEqAbs(f32, e, im_uns[(ie / 4)][ie % 4], epsilon));
+            try expect(std.math.approxEqAbs(f32, e, im[(ie / 4)][ie % 4], epsilon));
         }
     }
 }
@@ -3535,6 +3523,32 @@ pub fn fftInitUnityTable(out_unity_table: []F32x4) void {
         if (length <= 4)
             break;
     }
+}
+
+pub fn fft(re: []F32x4, im: []F32x4, unity_table: []const F32x4) void {
+    const length = @intCast(u32, re.len * 4);
+    assert(std.math.isPowerOfTwo(length));
+    assert(length >= 4 and length <= 512);
+    assert(re.len == im.len);
+
+    var re_temp: [128]F32x4 = undefined;
+    var im_temp: [128]F32x4 = undefined;
+    std.mem.copy(F32x4, re_temp[0..re.len], re);
+    std.mem.copy(F32x4, im_temp[0..im.len], im);
+
+    if (length > 16) {
+        assert(unity_table.len == length);
+        fftN(re_temp[0..re.len], im_temp[0..im.len], unity_table, length, 1);
+    } else if (length == 16) {
+        fft16(re_temp[0..re.len], im_temp[0..im.len], 1);
+    } else if (length == 8) {
+        fft8(re_temp[0..re.len], im_temp[0..im.len], 1);
+    } else if (length == 4) {
+        fft4(re_temp[0..re.len], im_temp[0..im.len], 1);
+    }
+
+    fftUnswizzle(re_temp[0..re.len], re);
+    fftUnswizzle(im_temp[0..im.len], im);
 }
 
 // ------------------------------------------------------------------------------
