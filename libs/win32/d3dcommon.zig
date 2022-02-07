@@ -3,6 +3,8 @@ const IUnknown = windows.IUnknown;
 const UINT = windows.UINT;
 const WINAPI = windows.WINAPI;
 const SIZE_T = windows.SIZE_T;
+const LPCSTR = windows.LPCSTR;
+const GUID = windows.GUID;
 
 pub const PRIMITIVE_TOPOLOGY = enum(UINT) {
     UNDEFINED = 0,
@@ -72,6 +74,17 @@ pub const DRIVER_TYPE = enum(UINT) {
     WARP = 5,
 };
 
+pub const SHADER_MACRO = extern struct {
+    Name: LPCSTR,
+    Definition: LPCSTR,
+};
+
+pub const INCLUDE_TYPE = enum(UINT) {
+    INCLUDE_LOCAL = 0,
+    INCLUDE_SYSTEM = 1,
+};
+
+pub const IID_IBlob = GUID("{8BA5FB08-5195-40e2-AC58-0D989C3A0102}");
 pub const IBlob = extern struct {
     const Self = @This();
     v: *const extern struct {
@@ -96,6 +109,26 @@ pub const IBlob = extern struct {
         return extern struct {
             GetBufferPointer: fn (*T) callconv(WINAPI) *anyopaque,
             GetBufferSize: fn (*T) callconv(WINAPI) SIZE_T,
+        };
+    }
+};
+
+pub const IInclude = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        include: VTable(Self),
+    },
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        return extern struct {
+            Open: fn (*T, INCLUDE_TYPE, LPCSTR, *anyopaque, **anyopaque, *UINT) callconv(WINAPI) void,
+            Close: fn (*T, *anyopaque) callconv(WINAPI) void,
         };
     }
 };
