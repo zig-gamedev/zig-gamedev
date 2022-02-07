@@ -3531,24 +3531,27 @@ pub fn fft(re: []F32x4, im: []F32x4, unity_table: []const F32x4) void {
     assert(length >= 4 and length <= 512);
     assert(re.len == im.len);
 
-    var re_temp: [128]F32x4 = undefined;
-    var im_temp: [128]F32x4 = undefined;
-    std.mem.copy(F32x4, re_temp[0..re.len], re);
-    std.mem.copy(F32x4, im_temp[0..im.len], im);
+    var re_temp_storage: [128]F32x4 = undefined;
+    var im_temp_storage: [128]F32x4 = undefined;
+    var re_temp = re_temp_storage[0..re.len];
+    var im_temp = im_temp_storage[0..im.len];
+
+    std.mem.copy(F32x4, re_temp, re);
+    std.mem.copy(F32x4, im_temp, im);
 
     if (length > 16) {
         assert(unity_table.len == length);
-        fftN(re_temp[0..re.len], im_temp[0..im.len], unity_table, length, 1);
+        fftN(re_temp, im_temp, unity_table, length, 1);
     } else if (length == 16) {
-        fft16(re_temp[0..re.len], im_temp[0..im.len], 1);
+        fft16(re_temp, im_temp, 1);
     } else if (length == 8) {
-        fft8(re_temp[0..re.len], im_temp[0..im.len], 1);
+        fft8(re_temp, im_temp, 1);
     } else if (length == 4) {
-        fft4(re_temp[0..re.len], im_temp[0..im.len], 1);
+        fft4(re_temp, im_temp, 1);
     }
 
-    fftUnswizzle(re_temp[0..re.len], re);
-    fftUnswizzle(im_temp[0..im.len], im);
+    fftUnswizzle(re_temp, re);
+    fftUnswizzle(im_temp, im);
 }
 
 // ------------------------------------------------------------------------------
