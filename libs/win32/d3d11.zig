@@ -5,6 +5,7 @@ const WINAPI = windows.WINAPI;
 const GUID = windows.GUID;
 const HRESULT = windows.HRESULT;
 const HINSTANCE = windows.HINSTANCE;
+const SIZE_T = windows.SIZE_T;
 
 const d3dcommon = @import("d3dcommon.zig");
 const FEATURE_LEVEL = d3dcommon.FEATURE_LEVEL;
@@ -140,6 +141,32 @@ pub const IDeviceChild = extern struct {
             GetPrivateData: *anyopaque,
             SetPrivateData: *anyopaque,
             SetPrivateDataInterface: *anyopaque,
+        };
+    }
+};
+
+pub const IID_IClassLinkage = GUID.parse("{ddf57cba-9543-46e4-a12b-f207a0fe7fed}");
+pub const IClassLinkage = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        classlinkage: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetClassInstance: *anyopaque,
+            CreateClassInstance: *anyopaque,
         };
     }
 };
@@ -325,6 +352,24 @@ pub const IDevice = extern struct {
             ) HRESULT {
                 return self.v.device.CreateRenderTargetView(self, pResource, pDesc, ppRTView);
             }
+            pub inline fn CreateVertexShader(
+                self: *T,
+                pShaderBytecode: *anyopaque,
+                BytecodeLength: SIZE_T,
+                pClassLinkage: ?*IClassLinkage,
+                ppVertexShader: ?*?*IVertexShader,
+            ) HRESULT {
+                return self.v.device.CreateVertexShader(self, pShaderBytecode, BytecodeLength, pClassLinkage, ppVertexShader);
+            }
+            pub inline fn CreatePixelShader(
+                self: *T,
+                pShaderBytecode: *anyopaque,
+                BytecodeLength: SIZE_T,
+                pClassLinkage: ?*IClassLinkage,
+                ppPixelShader: ?*?*IPixelShader,
+            ) HRESULT {
+                return self.v.device.CreatePixelShader(self, pShaderBytecode, BytecodeLength, pClassLinkage, ppPixelShader);
+            }
         };
     }
 
@@ -344,10 +389,22 @@ pub const IDevice = extern struct {
             ) callconv(WINAPI) HRESULT,
             CreateDepthStencilView: *anyopaque,
             CreateInputLayout: *anyopaque,
-            CreateVertexShader: *anyopaque,
+            CreateVertexShader: fn (
+                *T,
+                ?*anyopaque,
+                SIZE_T,
+                ?*IClassLinkage,
+                ?*?*IVertexShader,
+            ) callconv(WINAPI) HRESULT,
             CreateGeometryShader: *anyopaque,
             CreateGeometryShaderWithStreamOutput: *anyopaque,
-            CreatePixelShader: *anyopaque,
+            CreatePixelShader: fn (
+                *T,
+                ?*anyopaque,
+                SIZE_T,
+                ?*IClassLinkage,
+                ?*?*IPixelShader,
+            ) callconv(WINAPI) HRESULT,
             CreateHullShader: *anyopaque,
             CreateDomainShader: *anyopaque,
             CreateComputeShader: *anyopaque,
@@ -430,6 +487,52 @@ pub const IRenderTargetView = extern struct {
         return extern struct {
             GetDesc: *anyopaque,
         };
+    }
+};
+
+pub const IID_IVertexShader = GUID("{3b301d64-d678-4289-8897-22f8928b72f3}");
+pub const IVertexShader = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        vertexshader: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.VTable(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+};
+
+pub const IID_IPixelShader = GUID("{ea82e40d-51dc-4f33-93d4-db7c9125ae8c}");
+pub const IPixelShader = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        pixelshader: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.VTable(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
     }
 };
 
