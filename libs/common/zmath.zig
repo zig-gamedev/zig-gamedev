@@ -3583,8 +3583,7 @@ pub fn ifft(re: []F32x4, im: []const F32x4, unity_table: []const F32x4) void {
         fft4(re_temp, im_temp, 1);
     }
 
-    fftUnswizzle(re_temp, im_temp);
-    std.mem.copy(F32x4, re, im_temp);
+    fftUnswizzle(re_temp, re);
 }
 test "zmath.ifft" {
     var unity_table: [64]F32x4 = undefined;
