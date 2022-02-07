@@ -2972,7 +2972,7 @@ pub fn cmulSoa(re0: anytype, im0: anytype, re1: anytype, im1: anytype) [2]@TypeO
 
 // ------------------------------------------------------------------------------
 //
-// FFT
+// FFT (implementation based on xdsp.h from DirectXMath)
 //
 // ------------------------------------------------------------------------------
 
