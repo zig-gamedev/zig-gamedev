@@ -3610,10 +3610,23 @@ test "zmath.ifft" {
 
         fftInitUnityTable(unity_table[0..64]);
         fft(re[0..], im[0..], unity_table[0..64]);
+
+        try expect(approxEqAbs(re[0], f32x4(1056.0, 0.0, -32.0, 0.0), epsilon));
+        var i: u32 = 1;
+        while (i < 16) : (i += 1) {
+            try expect(approxEqAbs(re[i], f32x4(-32.0, 0.0, -32.0, 0.0), epsilon));
+        }
+
         ifft(re[0..], im[0..], unity_table[0..64]);
 
         try expect(approxEqAbs(re[0], f32x4(1.0, 2.0, 3.0, 4.0), epsilon));
         try expect(approxEqAbs(re[1], f32x4(5.0, 6.0, 7.0, 8.0), epsilon));
+        try expect(approxEqAbs(re[2], f32x4(9.0, 10.0, 11.0, 12.0), epsilon));
+        try expect(approxEqAbs(re[3], f32x4(13.0, 14.0, 15.0, 16.0), epsilon));
+        try expect(approxEqAbs(re[4], f32x4(17.0, 18.0, 19.0, 20.0), epsilon));
+        try expect(approxEqAbs(re[5], f32x4(21.0, 22.0, 23.0, 24.0), epsilon));
+        try expect(approxEqAbs(re[6], f32x4(25.0, 26.0, 27.0, 28.0), epsilon));
+        try expect(approxEqAbs(re[7], f32x4(29.0, 30.0, 31.0, 32.0), epsilon));
     }
 }
 
