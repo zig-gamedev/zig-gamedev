@@ -130,20 +130,6 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    {
-        var re = [_]zm.F32x4{
-            zm.f32x4(1.0, 2.0, 3.0, 4.0),
-            zm.f32x4(5.0, 6.0, 7.0, 8.0),
-            zm.f32x4(9.0, 10.0, 11.0, 12.0),
-            zm.f32x4(13.0, 14.0, 15.0, 16.0),
-        };
-        var im = [_]zm.F32x4{ zm.f32x4s(0.0), zm.f32x4s(0.0), zm.f32x4s(0.0), zm.f32x4s(0.0) };
-        zm.fft16(re[0..], im[0..], 1);
-        std.log.info("{any}", .{im[0]});
-        std.log.info("{any}", .{im[1]});
-        std.log.info("{any}", .{im[2]});
-        std.log.info("{any}", .{im[3]});
-    }
     var actx = sfx.AudioContext.init(gpa_allocator);
 
     const sound1_data = sfx.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));

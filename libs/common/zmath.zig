@@ -3062,10 +3062,10 @@ fn fftButterflyDit4_4(
     im3.* = im_temp7;
 }
 
-pub fn fft4(re: []F32x4, im: []F32x4, count: u32) void {
+fn fft4(re: []F32x4, im: []F32x4, count: u32) void {
     assert(std.math.isPowerOfTwo(count));
-    assert(re.len == count);
-    assert(im.len == count);
+    assert(re.len >= count);
+    assert(im.len >= count);
 
     var index: u32 = 0;
     while (index < count) : (index += 1) {
@@ -3087,10 +3087,10 @@ test "zmath.fft4" {
     try expect(approxEqAbs(im_uns[0], f32x4(0.0, 2.0, 0.0, -2.0), epsilon));
 }
 
-pub fn fft8(re: []F32x4, im: []F32x4, count: u32) void {
+fn fft8(re: []F32x4, im: []F32x4, count: u32) void {
     assert(std.math.isPowerOfTwo(count));
-    assert(re.len == 2 * count);
-    assert(im.len == 2 * count);
+    assert(re.len >= 2 * count);
+    assert(im.len >= 2 * count);
 
     var index: u32 = 0;
     while (index < count) : (index += 1) {
@@ -3143,10 +3143,10 @@ test "zmath.fft8" {
     try expect(approxEqAbs(im_uns[1], f32x4(0.0, -1.656854, -4.0, -9.656854), epsilon));
 }
 
-pub fn fft16(re: []F32x4, im: []F32x4, count: u32) void {
+fn fft16(re: []F32x4, im: []F32x4, count: u32) void {
     assert(std.math.isPowerOfTwo(count));
-    assert(re.len == 4 * count);
-    assert(im.len == 4 * count);
+    assert(re.len >= 4 * count);
+    assert(im.len >= 4 * count);
 
     const static = struct {
         const unity_table_re = [4]F32x4{
@@ -3197,8 +3197,6 @@ test "zmath.fft16" {
     fftUnswizzle(re[0..], re_uns[0..]);
     fftUnswizzle(im[0..], im_uns[0..]);
 
-    try expect(std.math.log2_int(u32, 8) == 3);
-
     try expect(approxEqAbs(re_uns[0], f32x4(136.0, -8.0, -8.0, -8.0), epsilon));
     try expect(approxEqAbs(re_uns[1], f32x4(-8.0, -8.0, -8.0, -8.0), epsilon));
     try expect(approxEqAbs(re_uns[2], f32x4(-8.0, -8.0, -8.0, -8.0), epsilon));
@@ -3207,6 +3205,241 @@ test "zmath.fft16" {
     try expect(approxEqAbs(im_uns[1], f32x4(8.0, 5.345429, 3.313708, 1.591299), epsilon));
     try expect(approxEqAbs(im_uns[2], f32x4(0.0, -1.591299, -3.313708, -5.345429), epsilon));
     try expect(approxEqAbs(im_uns[3], f32x4(-8.0, -11.972846, -19.313708, -40.218716), epsilon));
+}
+
+fn fftN(re: []F32x4, im: []F32x4, unity_table: []const F32x4, length: u32, count: u32) void {
+    assert(length > 16);
+    assert(std.math.isPowerOfTwo(length));
+    assert(std.math.isPowerOfTwo(count));
+    assert(re.len >= length * count / 4);
+    assert(re.len == im.len);
+
+    const total = count * length;
+    const total_vectors = total / 4;
+    const stage_vectors = length / 4;
+    const stage_vectors_mask = stage_vectors - 1;
+    const stride = length / 16;
+    const stride_mask = stride - 1;
+    const stride_inv_mask = ~stride_mask;
+
+    var unity_table_re = unity_table;
+    var unity_table_im = unity_table[length / 4 ..];
+
+    var index: u32 = 0;
+    while (index < total_vectors / 4) : (index += 1) {
+        const n = (index & stride_inv_mask) * 4 + (index & stride_mask);
+        fftButterflyDit4_4(
+            &re[n],
+            &re[n + stride],
+            &re[n + stride * 2],
+            &re[n + stride * 3],
+            &im[n],
+            &im[n + stride],
+            &im[n + stride * 2],
+            &im[n + stride * 3],
+            unity_table_re[(n & stage_vectors_mask)..],
+            unity_table_im[(n & stage_vectors_mask)..],
+            stride,
+            false,
+        );
+    }
+
+    if (length > 16 * 4) {
+        fftN(re, im, unity_table[(length / 2)..], length / 4, count * 4);
+    } else if (length == 16 * 4) {
+        fft16(re, im, count * 4);
+    } else if (length == 8 * 4) {
+        fft8(re, im, count * 4);
+    } else if (length == 4 * 4) {
+        fft4(re, im, count * 4);
+    }
+}
+test "zmath.fftN" {
+    var unity_table: [128]F32x4 = undefined;
+    const epsilon = 0.0001;
+
+    // 32 samples
+    {
+        var re = [_]F32x4{
+            f32x4(1.0, 2.0, 3.0, 4.0),
+            f32x4(5.0, 6.0, 7.0, 8.0),
+            f32x4(9.0, 10.0, 11.0, 12.0),
+            f32x4(13.0, 14.0, 15.0, 16.0),
+            f32x4(17.0, 18.0, 19.0, 20.0),
+            f32x4(21.0, 22.0, 23.0, 24.0),
+            f32x4(25.0, 26.0, 27.0, 28.0),
+            f32x4(29.0, 30.0, 31.0, 32.0),
+        };
+        var im = [_]F32x4{
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+        };
+
+        fftInitUnityTable(unity_table[0..32]);
+        fftN(re[0..], im[0..], unity_table[0..], 32, 1);
+
+        var re_uns: [8]F32x4 = undefined;
+        var im_uns: [8]F32x4 = undefined;
+        fftUnswizzle(re[0..], re_uns[0..]);
+        fftUnswizzle(im[0..], im_uns[0..]);
+
+        try expect(approxEqAbs(re_uns[0], f32x4(528.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re_uns[1], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re_uns[2], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re_uns[3], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re_uns[4], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re_uns[5], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re_uns[6], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(re_uns[7], f32x4(-16.0, -16.0, -16.0, -16.0), epsilon));
+        try expect(approxEqAbs(im_uns[0], f32x4(0.0, 162.450726, 80.437432, 52.744931), epsilon));
+        try expect(approxEqAbs(im_uns[1], f32x4(38.627417, 29.933895, 23.945692, 19.496056), epsilon));
+        try expect(approxEqAbs(im_uns[2], f32x4(16.0, 13.130861, 10.690858, 8.552178), epsilon));
+        try expect(approxEqAbs(im_uns[3], f32x4(6.627417, 4.853547, 3.182598, 1.575862), epsilon));
+        try expect(approxEqAbs(im_uns[4], f32x4(0.0, -1.575862, -3.182598, -4.853547), epsilon));
+        try expect(approxEqAbs(im_uns[5], f32x4(-6.627417, -8.552178, -10.690858, -13.130861), epsilon));
+        try expect(approxEqAbs(im_uns[6], f32x4(-16.0, -19.496056, -23.945692, -29.933895), epsilon));
+        try expect(approxEqAbs(im_uns[7], f32x4(-38.627417, -52.744931, -80.437432, -162.450726), epsilon));
+    }
+
+    // 64 samples
+    {
+        var re = [_]F32x4{
+            f32x4(1.0, 2.0, 3.0, 4.0),
+            f32x4(5.0, 6.0, 7.0, 8.0),
+            f32x4(9.0, 10.0, 11.0, 12.0),
+            f32x4(13.0, 14.0, 15.0, 16.0),
+            f32x4(17.0, 18.0, 19.0, 20.0),
+            f32x4(21.0, 22.0, 23.0, 24.0),
+            f32x4(25.0, 26.0, 27.0, 28.0),
+            f32x4(29.0, 30.0, 31.0, 32.0),
+            f32x4(1.0, 2.0, 3.0, 4.0),
+            f32x4(5.0, 6.0, 7.0, 8.0),
+            f32x4(9.0, 10.0, 11.0, 12.0),
+            f32x4(13.0, 14.0, 15.0, 16.0),
+            f32x4(17.0, 18.0, 19.0, 20.0),
+            f32x4(21.0, 22.0, 23.0, 24.0),
+            f32x4(25.0, 26.0, 27.0, 28.0),
+            f32x4(29.0, 30.0, 31.0, 32.0),
+        };
+        var im = [_]F32x4{
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+        };
+
+        fftInitUnityTable(unity_table[0..64]);
+        fftN(re[0..], im[0..], unity_table[0..], 64, 1);
+
+        var re_uns: [16]F32x4 = undefined;
+        var im_uns: [16]F32x4 = undefined;
+        fftUnswizzle(re[0..], re_uns[0..]);
+        fftUnswizzle(im[0..], im_uns[0..]);
+
+        try expect(approxEqAbs(re_uns[0], f32x4(1056.0, 0.0, -32.0, 0.0), epsilon));
+        var i: u32 = 1;
+        while (i < 16) : (i += 1) {
+            try expect(approxEqAbs(re_uns[i], f32x4(-32.0, 0.0, -32.0, 0.0), epsilon));
+        }
+
+        const expected = [_]f32{
+            0.0,        0.0,      324.901452,  0.000000, 160.874864,  0.0,      105.489863,  0.000000,
+            77.254834,  0.0,      59.867789,   0.0,      47.891384,   0.0,      38.992113,   0.0,
+            32.000000,  0.000000, 26.261721,   0.000000, 21.381716,   0.000000, 17.104356,   0.000000,
+            13.254834,  0.000000, 9.707094,    0.000000, 6.365196,    0.000000, 3.151725,    0.000000,
+            0.000000,   0.000000, -3.151725,   0.000000, -6.365196,   0.000000, -9.707094,   0.000000,
+            -13.254834, 0.000000, -17.104356,  0.000000, -21.381716,  0.000000, -26.261721,  0.000000,
+            -32.000000, 0.000000, -38.992113,  0.000000, -47.891384,  0.000000, -59.867789,  0.000000,
+            -77.254834, 0.000000, -105.489863, 0.000000, -160.874864, 0.000000, -324.901452, 0.000000,
+        };
+        for (expected) |e, ie| {
+            try expect(std.math.approxEqAbs(f32, e, im_uns[(ie / 4)][ie % 4], epsilon));
+        }
+    }
+
+    // 128 samples
+    {
+        var re = [_]F32x4{
+            f32x4(1.0, 2.0, 3.0, 4.0),
+            f32x4(5.0, 6.0, 7.0, 8.0),
+            f32x4(9.0, 10.0, 11.0, 12.0),
+            f32x4(13.0, 14.0, 15.0, 16.0),
+            f32x4(17.0, 18.0, 19.0, 20.0),
+            f32x4(21.0, 22.0, 23.0, 24.0),
+            f32x4(25.0, 26.0, 27.0, 28.0),
+            f32x4(29.0, 30.0, 31.0, 32.0),
+            f32x4(1.0, 2.0, 3.0, 4.0),
+            f32x4(5.0, 6.0, 7.0, 8.0),
+            f32x4(9.0, 10.0, 11.0, 12.0),
+            f32x4(13.0, 14.0, 15.0, 16.0),
+            f32x4(17.0, 18.0, 19.0, 20.0),
+            f32x4(21.0, 22.0, 23.0, 24.0),
+            f32x4(25.0, 26.0, 27.0, 28.0),
+            f32x4(29.0, 30.0, 31.0, 32.0),
+            f32x4(1.0, 2.0, 3.0, 4.0),
+            f32x4(5.0, 6.0, 7.0, 8.0),
+            f32x4(9.0, 10.0, 11.0, 12.0),
+            f32x4(13.0, 14.0, 15.0, 16.0),
+            f32x4(17.0, 18.0, 19.0, 20.0),
+            f32x4(21.0, 22.0, 23.0, 24.0),
+            f32x4(25.0, 26.0, 27.0, 28.0),
+            f32x4(29.0, 30.0, 31.0, 32.0),
+            f32x4(1.0, 2.0, 3.0, 4.0),
+            f32x4(5.0, 6.0, 7.0, 8.0),
+            f32x4(9.0, 10.0, 11.0, 12.0),
+            f32x4(13.0, 14.0, 15.0, 16.0),
+            f32x4(17.0, 18.0, 19.0, 20.0),
+            f32x4(21.0, 22.0, 23.0, 24.0),
+            f32x4(25.0, 26.0, 27.0, 28.0),
+            f32x4(29.0, 30.0, 31.0, 32.0),
+        };
+        var im = [_]F32x4{
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+            f32x4s(0.0), f32x4s(0.0), f32x4s(0.0), f32x4s(0.0),
+        };
+
+        fftInitUnityTable(unity_table[0..128]);
+        fftN(re[0..], im[0..], unity_table[0..], 128, 1);
+
+        var re_uns: [32]F32x4 = undefined;
+        var im_uns: [32]F32x4 = undefined;
+        fftUnswizzle(re[0..], re_uns[0..]);
+        fftUnswizzle(im[0..], im_uns[0..]);
+
+        try expect(approxEqAbs(re_uns[0], f32x4(2112.0, 0.0, 0.0, 0.0), epsilon));
+        var i: u32 = 1;
+        while (i < 32) : (i += 1) {
+            try expect(approxEqAbs(re_uns[i], f32x4(-64.0, 0.0, 0.0, 0.0), epsilon));
+        }
+
+        const expected = [_]f32{
+            0.000000,    0.000000, 0.000000, 0.000000, 649.802905,  0.000000, 0.000000, 0.000000,
+            321.749727,  0.000000, 0.000000, 0.000000, 210.979725,  0.000000, 0.000000, 0.000000,
+            154.509668,  0.000000, 0.000000, 0.000000, 119.735578,  0.000000, 0.000000, 0.000000,
+            95.782769,   0.000000, 0.000000, 0.000000, 77.984226,   0.000000, 0.000000, 0.000000,
+            64.000000,   0.000000, 0.000000, 0.000000, 52.523443,   0.000000, 0.000000, 0.000000,
+            42.763433,   0.000000, 0.000000, 0.000000, 34.208713,   0.000000, 0.000000, 0.000000,
+            26.509668,   0.000000, 0.000000, 0.000000, 19.414188,   0.000000, 0.000000, 0.000000,
+            12.730392,   0.000000, 0.000000, 0.000000, 6.303450,    0.000000, 0.000000, 0.000000,
+            0.000000,    0.000000, 0.000000, 0.000000, -6.303450,   0.000000, 0.000000, 0.000000,
+            -12.730392,  0.000000, 0.000000, 0.000000, -19.414188,  0.000000, 0.000000, 0.000000,
+            -26.509668,  0.000000, 0.000000, 0.000000, -34.208713,  0.000000, 0.000000, 0.000000,
+            -42.763433,  0.000000, 0.000000, 0.000000, -52.523443,  0.000000, 0.000000, 0.000000,
+            -64.000000,  0.000000, 0.000000, 0.000000, -77.984226,  0.000000, 0.000000, 0.000000,
+            -95.782769,  0.000000, 0.000000, 0.000000, -119.735578, 0.000000, 0.000000, 0.000000,
+            -154.509668, 0.000000, 0.000000, 0.000000, -210.979725, 0.000000, 0.000000, 0.000000,
+            -321.749727, 0.000000, 0.000000, 0.000000, -649.802905, 0.000000, 0.000000, 0.000000,
+        };
+        for (expected) |e, ie| {
+            try expect(std.math.approxEqAbs(f32, e, im_uns[(ie / 4)][ie % 4], epsilon));
+        }
+    }
 }
 
 fn fftUnswizzle(input: []const F32x4, output: []F32x4) void {
