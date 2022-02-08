@@ -265,14 +265,14 @@ pub const IDeviceContext = extern struct {
             pub inline fn RSSetViewports(
                 self: *T,
                 NumViewports: UINT,
-                pViewports: *const VIEWPORT,
+                pViewports: [*]const VIEWPORT,
             ) void {
                 self.v.devctx.RSSetViewports(self, NumViewports, pViewports);
             }
             pub inline fn ClearRenderTargetView(
                 self: *T,
                 pRenderTargetView: *IRenderTargetView,
-                ColorRGBA: [4]FLOAT,
+                ColorRGBA: *const [4]FLOAT,
             ) void {
                 self.v.devctx.ClearRenderTargetView(self, pRenderTargetView, ColorRGBA);
             }
@@ -318,13 +318,13 @@ pub const IDeviceContext = extern struct {
             Dispatch: *anyopaque,
             DispatchIndirect: *anyopaque,
             RSSetState: *anyopaque,
-            RSSetViewports: fn (*T, UINT, *const VIEWPORT) callconv(WINAPI) void,
+            RSSetViewports: fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
             RSSetScissorRects: *anyopaque,
             CopySubresourceRegion: *anyopaque,
             CopyResource: *anyopaque,
             UpdateSubresource: *anyopaque,
             CopyStructureCount: *anyopaque,
-            ClearRenderTargetView: fn (*T, *IRenderTargetView, [4]FLOAT) callconv(WINAPI) void,
+            ClearRenderTargetView: fn (*T, *IRenderTargetView, *const [4]FLOAT) callconv(WINAPI) void,
             ClearUnorderedAccessViewUint: *anyopaque,
             ClearUnorderedAccessViewFloat: *anyopaque,
             ClearDepthStencilView: *anyopaque,

@@ -202,7 +202,7 @@
 //
 // fftInitUnityTable(unitytable: []F32x4) void
 // fft(re: []F32x4, im: []F32x4, unitytable: []const F32x4) void
-// ifft(re: []F32x4, im: []const F32x4, unity_table: []const F32x4) void
+// ifft(re: []F32x4, im: []const F32x4, unitytable: []const F32x4) void
 //
 // ==============================================================================
 
