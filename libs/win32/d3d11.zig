@@ -6,6 +6,8 @@ const GUID = windows.GUID;
 const HRESULT = windows.HRESULT;
 const HINSTANCE = windows.HINSTANCE;
 const SIZE_T = windows.SIZE_T;
+const LPCSTR = windows.LPCSTR;
+const FLOAT = windows.FLOAT;
 
 const d3dcommon = @import("d3dcommon.zig");
 const FEATURE_LEVEL = d3dcommon.FEATURE_LEVEL;
@@ -119,6 +121,51 @@ pub const RENDER_TARGET_VIEW_DESC = extern struct {
     },
 };
 
+pub const INPUT_CLASSIFICATION = enum(UINT) {
+    INPUT_PER_VERTEX_DATA = 0,
+    INPUT_PER_INSTNACE_DATA = 1,
+};
+
+pub const INPUT_ELEMENT_DESC = extern struct {
+    SemanticName: LPCSTR,
+    SemanticIndex: UINT,
+    Format: dxgi.FORMAT,
+    InputSlot: UINT,
+    AlignedByteOffset: UINT,
+    InputSlotClass: INPUT_CLASSIFICATION,
+    InstanceDataStepRate: UINT,
+};
+
+pub const SUBRESOURCE_DATA = extern struct {
+    pSysMem: ?*const anyopaque,
+    SysMemPitch: UINT = 0,
+    SysMemSlicePitch: UINT = 0,
+};
+
+pub const USAGE = UINT;
+pub const USAGE_DEFAULT = 0;
+pub const USAGE_IMMUTABLE = 1;
+pub const USAGE_DYNAMIC = 2;
+pub const USAGE_STAGING = 3;
+
+pub const BUFFER_DESC = extern struct {
+    ByteWidth: UINT,
+    Usage: USAGE,
+    BindFlags: BIND_FLAG,
+    CPUAccessFlags: UINT = 0,
+    MiscFlags: UINT = 0,
+    StructureByteStride: UINT = 0,
+};
+
+pub const VIEWPORT = extern struct {
+    TopLeftX: FLOAT,
+    TopLeftY: FLOAT,
+    Width: FLOAT,
+    Height: FLOAT,
+    MinDepth: FLOAT,
+    MaxDepth: FLOAT,
+};
+
 pub const IID_IDeviceChild = GUID.parse("{1841e5c8-16b0-489b-bcc8-44cfb0d5deae}");
 pub const IDeviceChild = extern struct {
     const Self = @This();
@@ -215,6 +262,20 @@ pub const IDeviceContext = extern struct {
             pub inline fn Flush(self: *T) void {
                 self.v.devctx.Flush(self);
             }
+            pub inline fn RSSetViewports(
+                self: *T,
+                NumViewports: UINT,
+                pViewports: *const VIEWPORT,
+            ) void {
+                self.v.devctx.RSSetViewports(self, NumViewports, pViewports);
+            }
+            pub inline fn ClearRenderTargetView(
+                self: *T,
+                pRenderTargetView: *IRenderTargetView,
+                ColorRGBA: [4]FLOAT,
+            ) void {
+                self.v.devctx.ClearRenderTargetView(self, pRenderTargetView, ColorRGBA);
+            }
         };
     }
 
@@ -257,13 +318,13 @@ pub const IDeviceContext = extern struct {
             Dispatch: *anyopaque,
             DispatchIndirect: *anyopaque,
             RSSetState: *anyopaque,
-            RSSetViewports: *anyopaque,
+            RSSetViewports: fn (*T, UINT, *const VIEWPORT) callconv(WINAPI) void,
             RSSetScissorRects: *anyopaque,
             CopySubresourceRegion: *anyopaque,
             CopyResource: *anyopaque,
             UpdateSubresource: *anyopaque,
             CopyStructureCount: *anyopaque,
-            ClearRenderTargetView: *anyopaque,
+            ClearRenderTargetView: fn (*T, *IRenderTargetView, [4]FLOAT) callconv(WINAPI) void,
             ClearUnorderedAccessViewUint: *anyopaque,
             ClearUnorderedAccessViewFloat: *anyopaque,
             ClearDepthStencilView: *anyopaque,
@@ -344,13 +405,48 @@ pub const IDevice = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub inline fn CreateBuffer(
+                self: *T,
+                pDesc: *const BUFFER_DESC,
+                pInitialData: ?*const SUBRESOURCE_DATA,
+                ppBuffer: *?*IBuffer,
+            ) HRESULT {
+                return self.v.device.CreateBuffer(
+                    self,
+                    pDesc,
+                    pInitialData,
+                    ppBuffer,
+                );
+            }
             pub inline fn CreateRenderTargetView(
                 self: *T,
                 pResource: ?*IResource,
                 pDesc: ?*const RENDER_TARGET_VIEW_DESC,
                 ppRTView: ?*?*IRenderTargetView,
             ) HRESULT {
-                return self.v.device.CreateRenderTargetView(self, pResource, pDesc, ppRTView);
+                return self.v.device.CreateRenderTargetView(
+                    self,
+                    pResource,
+                    pDesc,
+                    ppRTView,
+                );
+            }
+            pub inline fn CreateInputLayout(
+                self: *T,
+                pInputElementDescs: *const INPUT_ELEMENT_DESC,
+                NumElements: UINT,
+                pShaderBytecodeWithInputSignature: *anyopaque,
+                BytecodeLength: SIZE_T,
+                ppInputLayout: *?*IInputLayout,
+            ) HRESULT {
+                return self.v.device.CreateInputLayout(
+                    self,
+                    pInputElementDescs,
+                    NumElements,
+                    pShaderBytecodeWithInputSignature,
+                    BytecodeLength,
+                    ppInputLayout,
+                );
             }
             pub inline fn CreateVertexShader(
                 self: *T,
@@ -359,7 +455,13 @@ pub const IDevice = extern struct {
                 pClassLinkage: ?*IClassLinkage,
                 ppVertexShader: ?*?*IVertexShader,
             ) HRESULT {
-                return self.v.device.CreateVertexShader(self, pShaderBytecode, BytecodeLength, pClassLinkage, ppVertexShader);
+                return self.v.device.CreateVertexShader(
+                    self,
+                    pShaderBytecode,
+                    BytecodeLength,
+                    pClassLinkage,
+                    ppVertexShader,
+                );
             }
             pub inline fn CreatePixelShader(
                 self: *T,
@@ -368,14 +470,25 @@ pub const IDevice = extern struct {
                 pClassLinkage: ?*IClassLinkage,
                 ppPixelShader: ?*?*IPixelShader,
             ) HRESULT {
-                return self.v.device.CreatePixelShader(self, pShaderBytecode, BytecodeLength, pClassLinkage, ppPixelShader);
+                return self.v.device.CreatePixelShader(
+                    self,
+                    pShaderBytecode,
+                    BytecodeLength,
+                    pClassLinkage,
+                    ppPixelShader,
+                );
             }
         };
     }
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            CreateBuffer: *anyopaque,
+            CreateBuffer: fn (
+                *T,
+                *const BUFFER_DESC,
+                ?*const SUBRESOURCE_DATA,
+                *?*IBuffer,
+            ) callconv(WINAPI) HRESULT,
             CreateTexture1D: *anyopaque,
             CreateTexture2D: *anyopaque,
             CreateTexture3D: *anyopaque,
@@ -388,7 +501,14 @@ pub const IDevice = extern struct {
                 ?*?*IRenderTargetView,
             ) callconv(WINAPI) HRESULT,
             CreateDepthStencilView: *anyopaque,
-            CreateInputLayout: *anyopaque,
+            CreateInputLayout: fn (
+                *T,
+                *const INPUT_ELEMENT_DESC,
+                UINT,
+                *anyopaque,
+                SIZE_T,
+                *?*IInputLayout,
+            ) callconv(WINAPI) HRESULT,
             CreateVertexShader: fn (
                 *T,
                 ?*anyopaque,
@@ -536,6 +656,56 @@ pub const IPixelShader = extern struct {
     }
 };
 
+pub const IID_IInputLayout = GUID.parse("{e4819ddc-4cf0-4025-bd26-5de82a3e07b7}");
+pub const IInputLayout = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        inputlayout: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.VTable(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+};
+
+pub const IID_IBuffer = GUID.parse("{48570b85-d1ee-4fcd-a250-eb350722b037}");
+pub const IBuffer = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        resource: IResource.VTable(Self),
+        buffer: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IResource.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetDesc: *anyopaque,
+        };
+    }
+};
+
 pub const IID_ITexture2D = GUID.parse("{6f15aaf2-d208-4e89-9ab4-489535d34f9c}");
 pub const ITexture2D = extern struct {
     const Self = @This();
@@ -543,6 +713,7 @@ pub const ITexture2D = extern struct {
         unknown: IUnknown.VTable(Self),
         devchild: IDeviceChild.VTable(Self),
         resource: IResource.VTable(Self),
+        texture: VTable(Self),
     },
     usingnamespace IUnknown.Methods(Self);
     usingnamespace IDeviceChild.Methods(Self);
