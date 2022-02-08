@@ -78,10 +78,11 @@ fn processWindowMessage(
             if (message == w.user32.WM_LBUTTONDOWN or message == w.user32.WM_LBUTTONDBLCLK) button = 0;
             if (message == w.user32.WM_RBUTTONDOWN or message == w.user32.WM_RBUTTONDBLCLK) button = 1;
             if (message == w.user32.WM_MBUTTONDOWN or message == w.user32.WM_MBUTTONDBLCLK) button = 2;
-            if (c.igIsAnyMouseDown() == false and w.GetCapture() == null) {
+            if (ui_backend.*.mouse_buttons_down == 0 and w.GetCapture() == null) {
                 _ = w.SetCapture(window);
             }
-            ui.*.MouseDown[button] = true;
+            ui_backend.*.mouse_buttons_down |= @as(u32, 1) << @intCast(u5, button);
+            c.ImGuiIO_AddMouseButtonEvent(ui, @intCast(i32, button), true);
         },
         w.user32.WM_LBUTTONUP,
         w.user32.WM_RBUTTONUP,
@@ -91,13 +92,18 @@ fn processWindowMessage(
             if (message == w.user32.WM_LBUTTONUP) button = 0;
             if (message == w.user32.WM_RBUTTONUP) button = 1;
             if (message == w.user32.WM_MBUTTONUP) button = 2;
-            ui.*.MouseDown[button] = false;
-            if (c.igIsAnyMouseDown() == false and w.GetCapture() == window) {
+            ui_backend.*.mouse_buttons_down &= ~(@as(u32, 1) << @intCast(u5, button));
+            if (ui_backend.*.mouse_buttons_down == 0 and w.GetCapture() == window) {
                 _ = w.ReleaseCapture();
             }
+            c.ImGuiIO_AddMouseButtonEvent(ui, @intCast(i32, button), false);
         },
         w.user32.WM_MOUSEWHEEL => {
-            ui.*.MouseWheel += @intToFloat(f32, w.GET_WHEEL_DELTA_WPARAM(wparam)) / @intToFloat(f32, w.WHEEL_DELTA);
+            c.ImGuiIO_AddMouseWheelEvent(
+                ui,
+                0.0,
+                @intToFloat(f32, w.GET_WHEEL_DELTA_WPARAM(wparam)) / @intToFloat(f32, w.WHEEL_DELTA),
+            );
         },
         w.user32.WM_MOUSEMOVE => {
             ui_backend.*.mouse_window = window;
@@ -111,12 +117,18 @@ fn processWindowMessage(
                 _ = w.TrackMouseEvent(&tme);
                 ui_backend.*.mouse_tracked = true;
             }
+            c.ImGuiIO_AddMousePosEvent(
+                ui,
+                @intToFloat(f32, w.GET_X_LPARAM(lparam)),
+                @intToFloat(f32, w.GET_Y_LPARAM(lparam)),
+            );
         },
         w.user32.WM_MOUSELEAVE => {
             if (ui_backend.*.mouse_window == window) {
                 ui_backend.*.mouse_window = null;
             }
             ui_backend.*.mouse_tracked = false;
+            c.ImGuiIO_AddMousePosEvent(ui, -c.igGET_FLT_MAX(), -c.igGET_FLT_MAX());
         },
         w.user32.WM_KEYDOWN,
         w.user32.WM_KEYUP,
@@ -127,14 +139,38 @@ fn processWindowMessage(
                 w.user32.PostQuitMessage(0);
             }
             const down = if (message == w.user32.WM_KEYDOWN or message == w.user32.WM_SYSKEYDOWN) true else false;
-            if (wparam < 256)
-                ui.*.KeysDown[wparam] = down;
-            if (wparam == w.VK_CONTROL)
-                ui.*.KeyCtrl = down;
-            if (wparam == w.VK_SHIFT)
-                ui.*.KeyShift = down;
-            if (wparam == w.VK_MENU)
-                ui.*.KeyAlt = down;
+            if (wparam < 256) {
+                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModCtrl, isVkKeyDown(w.VK_CONTROL));
+                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModShift, isVkKeyDown(w.VK_SHIFT));
+                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModAlt, isVkKeyDown(w.VK_MENU));
+                c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_ModSuper, isVkKeyDown(w.VK_APPS));
+
+                var vk = @intCast(i32, wparam);
+                if (wparam == w.VK_RETURN and (((lparam >> 16) & 0xffff) & w.KF_EXTENDED) != 0) {
+                    vk = w.IM_VK_KEYPAD_ENTER;
+                }
+                const key = vkKeyToImGuiKey(wparam);
+
+                if (key != c.ImGuiKey_None)
+                    c.ImGuiIO_AddKeyEvent(ui, key, down);
+
+                if (vk == w.VK_SHIFT) {
+                    if (isVkKeyDown(w.VK_LSHIFT) == down)
+                        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftShift, down);
+                    if (isVkKeyDown(w.VK_RSHIFT) == down)
+                        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightShift, down);
+                } else if (vk == w.VK_CONTROL) {
+                    if (isVkKeyDown(w.VK_LCONTROL) == down)
+                        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftCtrl, down);
+                    if (isVkKeyDown(w.VK_RCONTROL) == down)
+                        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightCtrl, down);
+                } else if (vk == w.VK_MENU) {
+                    if (isVkKeyDown(w.VK_LMENU) == down)
+                        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftAlt, down);
+                    if (isVkKeyDown(w.VK_RMENU) == down)
+                        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightAlt, down);
+                }
+            }
         },
         w.user32.WM_SETFOCUS,
         w.user32.WM_KILLFOCUS,
@@ -160,6 +196,7 @@ const GuiBackendState = struct {
     window: ?w.HWND,
     mouse_window: ?w.HWND,
     mouse_tracked: bool,
+    mouse_buttons_down: u32,
 };
 
 pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32, height: u32) !w.HWND {
@@ -171,10 +208,12 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
 
     const ui_backend = allocator.create(GuiBackendState) catch unreachable;
     errdefer allocator.destroy(ui_backend);
-
-    ui_backend.*.window = null;
-    ui_backend.*.mouse_window = null;
-    ui_backend.*.mouse_tracked = false;
+    ui_backend.* = .{
+        .window = null,
+        .mouse_window = null,
+        .mouse_tracked = false,
+        .mouse_buttons_down = 0,
+    };
 
     ui.*.BackendPlatformUserData = ui_backend;
     ui.*.BackendFlags |= c.ImGuiBackendFlags_RendererHasVtxOffset;
@@ -200,7 +239,8 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
         w.user32.WS_MINIMIZEBOX;
 
     var rect = w.RECT{ .left = 0, .top = 0, .right = @intCast(i32, width), .bottom = @intCast(i32, height) };
-    // HACK(mziulek): For exact FullHD window size it is better to stick to requested total window size (looks better on 1920x1080 displays).
+    // HACK(mziulek): For exact FullHD window size it is better to stick to requested total window size
+    // (looks better on 1920x1080 displays).
     if (width != 1920 and height != 1080) {
         try w.user32.adjustWindowRectEx(&rect, style, false, 0);
     }
@@ -221,34 +261,6 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
     );
     ui_backend.*.window = window;
 
-    var actual_rect: w.RECT = undefined;
-    _ = w.GetClientRect(window, &actual_rect);
-    const viewport_width = @intCast(u32, actual_rect.right - actual_rect.left);
-    const viewport_height = @intCast(u32, actual_rect.bottom - actual_rect.top);
-
-    ui.*.KeyMap[c.ImGuiKey_Tab] = w.VK_TAB;
-    ui.*.KeyMap[c.ImGuiKey_LeftArrow] = w.VK_LEFT;
-    ui.*.KeyMap[c.ImGuiKey_RightArrow] = w.VK_RIGHT;
-    ui.*.KeyMap[c.ImGuiKey_UpArrow] = w.VK_UP;
-    ui.*.KeyMap[c.ImGuiKey_DownArrow] = w.VK_DOWN;
-    ui.*.KeyMap[c.ImGuiKey_PageUp] = w.VK_PRIOR;
-    ui.*.KeyMap[c.ImGuiKey_PageDown] = w.VK_NEXT;
-    ui.*.KeyMap[c.ImGuiKey_Home] = w.VK_HOME;
-    ui.*.KeyMap[c.ImGuiKey_End] = w.VK_END;
-    ui.*.KeyMap[c.ImGuiKey_Delete] = w.VK_DELETE;
-    ui.*.KeyMap[c.ImGuiKey_Backspace] = w.VK_BACK;
-    ui.*.KeyMap[c.ImGuiKey_Enter] = w.VK_RETURN;
-    ui.*.KeyMap[c.ImGuiKey_Escape] = w.VK_ESCAPE;
-    ui.*.KeyMap[c.ImGuiKey_Space] = w.VK_SPACE;
-    ui.*.KeyMap[c.ImGuiKey_Insert] = w.VK_INSERT;
-    ui.*.KeyMap[c.ImGuiKey_A] = 'A';
-    ui.*.KeyMap[c.ImGuiKey_C] = 'C';
-    ui.*.KeyMap[c.ImGuiKey_V] = 'V';
-    ui.*.KeyMap[c.ImGuiKey_X] = 'X';
-    ui.*.KeyMap[c.ImGuiKey_Y] = 'Y';
-    ui.*.KeyMap[c.ImGuiKey_Z] = 'Z';
-    ui.*.ImeWindowHandle = window;
-    ui.*.DisplaySize = .{ .x = @intToFloat(f32, viewport_width), .y = @intToFloat(f32, viewport_height) };
     c.igGetStyle().?.*.WindowRounding = 0.0;
 
     return window;
@@ -257,37 +269,149 @@ pub fn initWindow(allocator: std.mem.Allocator, name: [*:0]const u8, width: u32,
 pub fn deinitWindow(allocator: std.mem.Allocator) void {
     var ui = c.igGetIO().?;
     assert(ui.*.BackendPlatformUserData != null);
-    allocator.destroy(@ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData)));
+    allocator.destroy(@ptrCast(*GuiBackendState, @alignCast(@sizeOf(usize), ui.*.BackendPlatformUserData)));
     c.igDestroyContext(null);
+}
+
+fn isVkKeyDown(vk: c_int) bool {
+    return (@bitCast(u16, w.GetKeyState(vk)) & 0x8000) != 0;
+}
+
+fn vkKeyToImGuiKey(wparam: w.WPARAM) c.ImGuiKey {
+    switch (wparam) {
+        w.VK_TAB => return c.ImGuiKey_Tab,
+        w.VK_LEFT => return c.ImGuiKey_LeftArrow,
+        w.VK_RIGHT => return c.ImGuiKey_RightArrow,
+        w.VK_UP => return c.ImGuiKey_UpArrow,
+        w.VK_DOWN => return c.ImGuiKey_DownArrow,
+        w.VK_PRIOR => return c.ImGuiKey_PageUp,
+        w.VK_NEXT => return c.ImGuiKey_PageDown,
+        w.VK_HOME => return c.ImGuiKey_Home,
+        w.VK_END => return c.ImGuiKey_End,
+        w.VK_INSERT => return c.ImGuiKey_Insert,
+        w.VK_DELETE => return c.ImGuiKey_Delete,
+        w.VK_BACK => return c.ImGuiKey_Backspace,
+        w.VK_SPACE => return c.ImGuiKey_Space,
+        w.VK_RETURN => return c.ImGuiKey_Enter,
+        w.VK_ESCAPE => return c.ImGuiKey_Escape,
+        w.VK_OEM_7 => return c.ImGuiKey_Apostrophe,
+        w.VK_OEM_COMMA => return c.ImGuiKey_Comma,
+        w.VK_OEM_MINUS => return c.ImGuiKey_Minus,
+        w.VK_OEM_PERIOD => return c.ImGuiKey_Period,
+        w.VK_OEM_2 => return c.ImGuiKey_Slash,
+        w.VK_OEM_1 => return c.ImGuiKey_Semicolon,
+        w.VK_OEM_PLUS => return c.ImGuiKey_Equal,
+        w.VK_OEM_4 => return c.ImGuiKey_LeftBracket,
+        w.VK_OEM_5 => return c.ImGuiKey_Backslash,
+        w.VK_OEM_6 => return c.ImGuiKey_RightBracket,
+        w.VK_OEM_3 => return c.ImGuiKey_GraveAccent,
+        w.VK_CAPITAL => return c.ImGuiKey_CapsLock,
+        w.VK_SCROLL => return c.ImGuiKey_ScrollLock,
+        w.VK_NUMLOCK => return c.ImGuiKey_NumLock,
+        w.VK_SNAPSHOT => return c.ImGuiKey_PrintScreen,
+        w.VK_PAUSE => return c.ImGuiKey_Pause,
+        w.VK_NUMPAD0 => return c.ImGuiKey_Keypad0,
+        w.VK_NUMPAD1 => return c.ImGuiKey_Keypad1,
+        w.VK_NUMPAD2 => return c.ImGuiKey_Keypad2,
+        w.VK_NUMPAD3 => return c.ImGuiKey_Keypad3,
+        w.VK_NUMPAD4 => return c.ImGuiKey_Keypad4,
+        w.VK_NUMPAD5 => return c.ImGuiKey_Keypad5,
+        w.VK_NUMPAD6 => return c.ImGuiKey_Keypad6,
+        w.VK_NUMPAD7 => return c.ImGuiKey_Keypad7,
+        w.VK_NUMPAD8 => return c.ImGuiKey_Keypad8,
+        w.VK_NUMPAD9 => return c.ImGuiKey_Keypad9,
+        w.VK_DECIMAL => return c.ImGuiKey_KeypadDecimal,
+        w.VK_DIVIDE => return c.ImGuiKey_KeypadDivide,
+        w.VK_MULTIPLY => return c.ImGuiKey_KeypadMultiply,
+        w.VK_SUBTRACT => return c.ImGuiKey_KeypadSubtract,
+        w.VK_ADD => return c.ImGuiKey_KeypadAdd,
+        w.IM_VK_KEYPAD_ENTER => return c.ImGuiKey_KeypadEnter,
+        w.VK_LSHIFT => return c.ImGuiKey_LeftShift,
+        w.VK_LCONTROL => return c.ImGuiKey_LeftCtrl,
+        w.VK_LMENU => return c.ImGuiKey_LeftAlt,
+        w.VK_LWIN => return c.ImGuiKey_LeftSuper,
+        w.VK_RSHIFT => return c.ImGuiKey_RightShift,
+        w.VK_RCONTROL => return c.ImGuiKey_RightCtrl,
+        w.VK_RMENU => return c.ImGuiKey_RightAlt,
+        w.VK_RWIN => return c.ImGuiKey_RightSuper,
+        w.VK_APPS => return c.ImGuiKey_Menu,
+        '0' => return c.ImGuiKey_0,
+        '1' => return c.ImGuiKey_1,
+        '2' => return c.ImGuiKey_2,
+        '3' => return c.ImGuiKey_3,
+        '4' => return c.ImGuiKey_4,
+        '5' => return c.ImGuiKey_5,
+        '6' => return c.ImGuiKey_6,
+        '7' => return c.ImGuiKey_7,
+        '8' => return c.ImGuiKey_8,
+        '9' => return c.ImGuiKey_9,
+        'A' => return c.ImGuiKey_A,
+        'B' => return c.ImGuiKey_B,
+        'C' => return c.ImGuiKey_C,
+        'D' => return c.ImGuiKey_D,
+        'E' => return c.ImGuiKey_E,
+        'F' => return c.ImGuiKey_F,
+        'G' => return c.ImGuiKey_G,
+        'H' => return c.ImGuiKey_H,
+        'I' => return c.ImGuiKey_I,
+        'J' => return c.ImGuiKey_J,
+        'K' => return c.ImGuiKey_K,
+        'L' => return c.ImGuiKey_L,
+        'M' => return c.ImGuiKey_M,
+        'N' => return c.ImGuiKey_N,
+        'O' => return c.ImGuiKey_O,
+        'P' => return c.ImGuiKey_P,
+        'Q' => return c.ImGuiKey_Q,
+        'R' => return c.ImGuiKey_R,
+        'S' => return c.ImGuiKey_S,
+        'T' => return c.ImGuiKey_T,
+        'U' => return c.ImGuiKey_U,
+        'V' => return c.ImGuiKey_V,
+        'W' => return c.ImGuiKey_W,
+        'X' => return c.ImGuiKey_X,
+        'Y' => return c.ImGuiKey_Y,
+        'Z' => return c.ImGuiKey_Z,
+        w.VK_F1 => return c.ImGuiKey_F1,
+        w.VK_F2 => return c.ImGuiKey_F2,
+        w.VK_F3 => return c.ImGuiKey_F3,
+        w.VK_F4 => return c.ImGuiKey_F4,
+        w.VK_F5 => return c.ImGuiKey_F5,
+        w.VK_F6 => return c.ImGuiKey_F6,
+        w.VK_F7 => return c.ImGuiKey_F7,
+        w.VK_F8 => return c.ImGuiKey_F8,
+        w.VK_F9 => return c.ImGuiKey_F9,
+        w.VK_F10 => return c.ImGuiKey_F10,
+        w.VK_F11 => return c.ImGuiKey_F11,
+        w.VK_F12 => return c.ImGuiKey_F12,
+        else => return c.ImGuiKey_None,
+    }
 }
 
 pub fn newImGuiFrame(delta_time: f32) void {
     assert(c.igGetCurrentContext() != null);
 
     var ui = c.igGetIO().?;
-    var ui_backend = @ptrCast(*GuiBackendState, @alignCast(8, ui.*.BackendPlatformUserData));
+    var ui_backend = @ptrCast(*GuiBackendState, @alignCast(@sizeOf(usize), ui.*.BackendPlatformUserData));
     assert(ui_backend.*.window != null);
 
-    ui.*.MousePos = c.ImVec2{ .x = -c.igGET_FLT_MAX(), .y = -c.igGET_FLT_MAX() };
+    var rect: w.RECT = undefined;
+    _ = w.GetClientRect(ui_backend.*.window.?, &rect);
+    const viewport_width = @intToFloat(f32, rect.right - rect.left);
+    const viewport_height = @intToFloat(f32, rect.bottom - rect.top);
+    ui.*.DisplaySize = c.ImVec2{ .x = viewport_width, .y = viewport_height };
 
-    const focused_window = w.GetForegroundWindow();
-    const hovered_window = ui_backend.*.mouse_window;
-    var mouse_window: ?w.HWND = null;
-    if (hovered_window != null and
-        (hovered_window == ui_backend.*.window or w.IsChild(hovered_window, ui_backend.*.window) == w.TRUE))
-    {
-        mouse_window = hovered_window;
-    } else if (focused_window != null and
-        (focused_window == ui_backend.*.window or w.IsChild(focused_window, ui_backend.*.window) == w.TRUE))
-    {
-        mouse_window = focused_window;
+    if (c.igIsKeyDown(c.ImGuiKey_LeftShift) and !isVkKeyDown(w.VK_LSHIFT)) {
+        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftShift, false);
+    }
+    if (c.igIsKeyDown(c.ImGuiKey_RightShift) and !isVkKeyDown(w.VK_RSHIFT)) {
+        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightShift, false);
     }
 
-    if (mouse_window != null) {
-        var pos: w.POINT = undefined;
-        if (w.GetCursorPos(&pos) == w.TRUE and w.ScreenToClient(mouse_window, &pos) == w.TRUE) {
-            ui.*.MousePos = c.ImVec2{ .x = @intToFloat(f32, pos.x), .y = @intToFloat(f32, pos.y) };
-        }
+    if (c.igIsKeyDown(c.ImGuiKey_LeftSuper) and !isVkKeyDown(w.VK_LWIN)) {
+        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftSuper, false);
+    }
+    if (c.igIsKeyDown(c.ImGuiKey_LeftSuper) and !isVkKeyDown(w.VK_RWIN)) {
+        c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightSuper, false);
     }
 
     ui.*.DeltaTime = delta_time;
