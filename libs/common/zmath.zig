@@ -3586,7 +3586,7 @@ pub fn ifft(re: []F32x4, im: []const F32x4, unity_table: []const F32x4) void {
     fftUnswizzle(re_temp, re);
 }
 test "zmath.ifft" {
-    var unity_table: [64]F32x4 = undefined;
+    var unity_table: [512]F32x4 = undefined;
     const epsilon = 0.0001;
 
     // 64 samples
@@ -3627,6 +3627,32 @@ test "zmath.ifft" {
         try expect(approxEqAbs(re[5], f32x4(21.0, 22.0, 23.0, 24.0), epsilon));
         try expect(approxEqAbs(re[6], f32x4(25.0, 26.0, 27.0, 28.0), epsilon));
         try expect(approxEqAbs(re[7], f32x4(29.0, 30.0, 31.0, 32.0), epsilon));
+    }
+
+    // 512 samples
+    {
+        var re: [128]F32x4 = undefined;
+        var im = [_]F32x4{f32x4s(0.0)} ** 128;
+
+        for (re) |*v, i| {
+            const f = @intToFloat(f32, i * 4);
+            v.* = f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0);
+        }
+
+        fftInitUnityTable(unity_table[0..512]);
+        fft(re[0..], im[0..], unity_table[0..512]);
+
+        for (re) |v, i| {
+            const f = @intToFloat(f32, i * 4);
+            try expect(!approxEqAbs(v, f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0), epsilon));
+        }
+
+        ifft(re[0..], im[0..], unity_table[0..512]);
+
+        for (re) |v, i| {
+            const f = @intToFloat(f32, i * 4);
+            try expect(approxEqAbs(v, f32x4(f + 1.0, f + 2.0, f + 3.0, f + 4.0), epsilon));
+        }
     }
 }
 
