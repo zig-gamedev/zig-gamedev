@@ -8,6 +8,10 @@ const HINSTANCE = windows.HINSTANCE;
 const SIZE_T = windows.SIZE_T;
 const LPCSTR = windows.LPCSTR;
 const FLOAT = windows.FLOAT;
+const BOOL = windows.BOOL;
+const TRUE = windows.TRUE;
+const FALSE = windows.FALSE;
+const INT = windows.INT;
 
 const d3dcommon = @import("d3dcommon.zig");
 const FEATURE_LEVEL = d3dcommon.FEATURE_LEVEL;
@@ -148,11 +152,15 @@ pub const USAGE_IMMUTABLE = 1;
 pub const USAGE_DYNAMIC = 2;
 pub const USAGE_STAGING = 3;
 
+pub const CPU_ACCCESS_FLAG = UINT;
+pub const CPU_ACCESS_WRITE = 0x10000;
+pub const CPU_ACCESS_READ = 0x20000;
+
 pub const BUFFER_DESC = extern struct {
     ByteWidth: UINT,
     Usage: USAGE,
     BindFlags: BIND_FLAG,
-    CPUAccessFlags: UINT = 0,
+    CPUAccessFlags: CPU_ACCCESS_FLAG = 0,
     MiscFlags: UINT = 0,
     StructureByteStride: UINT = 0,
 };
@@ -164,6 +172,96 @@ pub const VIEWPORT = extern struct {
     Height: FLOAT,
     MinDepth: FLOAT,
     MaxDepth: FLOAT,
+};
+
+pub const CPU_DESCRIPTOR_HANDLE = extern struct {
+    ptr: SIZE_T,
+};
+
+pub const MAP = enum(UINT) {
+    READ = 1,
+    WRITE = 2,
+    READ_WRITE = 3,
+    WRITE_DISCARD = 4,
+    WRITE_NO_OVERWRITE = 5,
+};
+
+pub const MAP_FLAG = UINT;
+pub const MAP_FLAG_DO_NOT_WAIT = 0x100000;
+
+pub const MAPPED_SUBRESOURCE = extern struct {
+    pData: *anyopaque,
+    RowPitch: UINT,
+    DepthPitch: UINT,
+};
+
+pub const PRIMITIVE_TOPOLOGY = enum(UINT) {
+    UNDEFINED = 0,
+    POINTLIST = 1,
+    LINELIST = 2,
+    LINESTRIP = 3,
+    TRIANGLELIST = 4,
+    TRIANGLESTRIP = 5,
+    LINELIST_ADJ = 10,
+    LINESTRIP_ADJ = 11,
+    TRIANGLELIST_ADJ = 12,
+    TRIANGLESTRIP_ADJ = 13,
+    _1_CONTROL_POINT_PATCHLIST = 33,
+    _2_CONTROL_POINT_PATCHLIST = 34,
+    _3_CONTROL_POINT_PATCHLIST = 35,
+    _4_CONTROL_POINT_PATCHLIST = 36,
+    _5_CONTROL_POINT_PATCHLIST = 37,
+    _6_CONTROL_POINT_PATCHLIST = 38,
+    _7_CONTROL_POINT_PATCHLIST = 39,
+    _8_CONTROL_POINT_PATCHLIST = 40,
+    _9_CONTROL_POINT_PATCHLIST = 41,
+    _10_CONTROL_POINT_PATCHLIST = 42,
+    _11_CONTROL_POINT_PATCHLIST = 43,
+    _12_CONTROL_POINT_PATCHLIST = 44,
+    _13_CONTROL_POINT_PATCHLIST = 45,
+    _14_CONTROL_POINT_PATCHLIST = 46,
+    _15_CONTROL_POINT_PATCHLIST = 47,
+    _16_CONTROL_POINT_PATCHLIST = 48,
+    _17_CONTROL_POINT_PATCHLIST = 49,
+    _18_CONTROL_POINT_PATCHLIST = 50,
+    _19_CONTROL_POINT_PATCHLIST = 51,
+    _20_CONTROL_POINT_PATCHLIST = 52,
+    _21_CONTROL_POINT_PATCHLIST = 53,
+    _22_CONTROL_POINT_PATCHLIST = 54,
+    _23_CONTROL_POINT_PATCHLIST = 55,
+    _24_CONTROL_POINT_PATCHLIST = 56,
+    _25_CONTROL_POINT_PATCHLIST = 57,
+    _26_CONTROL_POINT_PATCHLIST = 58,
+    _27_CONTROL_POINT_PATCHLIST = 59,
+    _28_CONTROL_POINT_PATCHLIST = 60,
+    _29_CONTROL_POINT_PATCHLIST = 61,
+    _30_CONTROL_POINT_PATCHLIST = 62,
+    _31_CONTROL_POINT_PATCHLIST = 63,
+    _32_CONTROL_POINT_PATCHLIST = 64,
+};
+
+pub const FILL_MODE = enum(UINT) {
+    WIREFRAME = 2,
+    SOLID = 3,
+};
+
+pub const CULL_MODE = enum(UINT) {
+    NONE = 1,
+    FRONT = 2,
+    BACK = 3,
+};
+
+pub const RASTERIZER_DESC = extern struct {
+    FillMode: FILL_MODE = FILL_MODE.SOLID,
+    CullMode: CULL_MODE = CULL_MODE.BACK,
+    FrontCounterClockwise: BOOL = FALSE,
+    DepthBias: INT = 0,
+    DepthBiasClamp: FLOAT = 0,
+    SlopeScaledDepthBias: FLOAT = 0,
+    DepthClipEnable: BOOL = TRUE,
+    ScissorEnable: BOOL = FALSE,
+    MultisampleEndable: BOOL = FALSE,
+    AntialiasedLineEnable: BOOL = FALSE,
 };
 
 pub const IID_IDeviceChild = GUID.parse("{1841e5c8-16b0-489b-bcc8-44cfb0d5deae}");
@@ -218,6 +316,34 @@ pub const IClassLinkage = extern struct {
     }
 };
 
+pub const IID_IClassInstance = GUID.parse("{a6cd7faa-b0b7-4a2f-9436-8662a65797cb}");
+pub const IClassInstance = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        classinst: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetClassLinkage: *anyopaque,
+            GetDesc: *anyopaque,
+            GetInstanceName: *anyopaque,
+            GetTypeName: *anyopaque,
+        };
+    }
+};
+
 pub const IID_IResource = GUID.parse("{dc8e63f3-d12b-4952-b47b-5e45026a862d}");
 pub const IResource = extern struct {
     const Self = @This();
@@ -259,8 +385,97 @@ pub const IDeviceContext = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
-            pub inline fn Flush(self: *T) void {
-                self.v.devctx.Flush(self);
+            pub inline fn PSSetShader(
+                self: *T,
+                pPixelShader: ?*IPixelShader,
+                ppClassInstance: ?[*]const *IClassInstance,
+                NumClassInstances: UINT,
+            ) void {
+                self.v.devctx.PSSetShader(
+                    self,
+                    pPixelShader,
+                    ppClassInstance,
+                    NumClassInstances,
+                );
+            }
+            pub inline fn VSSetShader(
+                self: *T,
+                pVertexShader: ?*IVertexShader,
+                ppClassInstance: ?[*]const *IClassInstance,
+                NumClassInstances: UINT,
+            ) void {
+                self.v.devctx.VSSetShader(
+                    self,
+                    pVertexShader,
+                    ppClassInstance,
+                    NumClassInstances,
+                );
+            }
+            pub inline fn Draw(
+                self: *T,
+                VertexCount: UINT,
+                StartVertexLocation: UINT,
+            ) void {
+                self.v.devctx.Draw(self, VertexCount, StartVertexLocation);
+            }
+            pub inline fn Map(
+                self: *T,
+                pResource: *IResource,
+                Subresource: UINT,
+                MapType: MAP,
+                MapFlags: MAP_FLAG,
+                pMappedResource: ?*MAPPED_SUBRESOURCE,
+            ) HRESULT {
+                return self.v.devctx.Map(
+                    self,
+                    pResource,
+                    Subresource,
+                    MapType,
+                    MapFlags,
+                    pMappedResource,
+                );
+            }
+            pub inline fn Unmap(self: *T, pResource: *IResource, Subresource: UINT) void {
+                self.v.devctx.Unmap(self, pResource, Subresource);
+            }
+            pub inline fn IASetInputLayout(self: *T, pInputLayout: ?*IInputLayout) void {
+                self.v.devctx.IASetInputLayout(self, pInputLayout);
+            }
+            pub inline fn IASetVertexBuffers(
+                self: *T,
+                StartSlot: UINT,
+                NumBuffers: UINT,
+                ppVertexBuffers: ?[*]const *IBuffer,
+                pStrides: ?[*]const UINT,
+                pOffsets: ?[*]const UINT,
+            ) void {
+                self.v.devctx.IASetVertexBuffers(
+                    self,
+                    StartSlot,
+                    NumBuffers,
+                    ppVertexBuffers,
+                    pStrides,
+                    pOffsets,
+                );
+            }
+            pub inline fn IASetPrimitiveTopology(self: *T, Topology: PRIMITIVE_TOPOLOGY) void {
+                self.v.devctx.IASetPrimitiveTopology(self, Topology);
+            }
+            pub inline fn OMSetRenderTargets(
+                self: *T,
+                NumViews: UINT,
+                ppRenderTargetViews: ?[*]const IRenderTargetView,
+                pDepthStencilView: ?*IDepthStencilView,
+            ) void {
+                self.v.devctx.OMSetRenderTargets(
+                    self,
+                    NumViews,
+                    ppRenderTargetViews,
+                    pDepthStencilView,
+                );
+            }
+            pub inline fn RSSetState(self: *T, pRasterizerState: ?*IRasterizerState) void {
+                self.v.devctx.RSSetState(self, pRasterizerState);
             }
             pub inline fn RSSetViewports(
                 self: *T,
@@ -276,6 +491,9 @@ pub const IDeviceContext = extern struct {
             ) void {
                 self.v.devctx.ClearRenderTargetView(self, pRenderTargetView, ColorRGBA);
             }
+            pub inline fn Flush(self: *T) void {
+                self.v.devctx.Flush(self);
+            }
         };
     }
 
@@ -283,22 +501,46 @@ pub const IDeviceContext = extern struct {
         return extern struct {
             VSSetConstantBuffers: *anyopaque,
             PSSetShaderResources: *anyopaque,
-            PSSetShader: *anyopaque,
+            PSSetShader: fn (
+                *T,
+                ?*IPixelShader,
+                ?[*]const *IClassInstance,
+                UINT,
+            ) callconv(WINAPI) void,
             PSSetSamplers: *anyopaque,
-            VSSetShader: *anyopaque,
+            VSSetShader: fn (
+                *T,
+                ?*IVertexShader,
+                ?[*]const *IClassInstance,
+                UINT,
+            ) callconv(WINAPI) void,
             DrawIndexed: *anyopaque,
-            Draw: *anyopaque,
-            Map: *anyopaque,
-            Unmap: *anyopaque,
+            Draw: fn (*T, UINT, UINT) callconv(WINAPI) void,
+            Map: fn (
+                *T,
+                *IResource,
+                UINT,
+                MAP,
+                MAP_FLAG,
+                ?*MAPPED_SUBRESOURCE,
+            ) callconv(WINAPI) HRESULT,
+            Unmap: fn (*T, *IResource, UINT) callconv(WINAPI) void,
             PSSetConstantBuffers: *anyopaque,
-            IASetInputLayout: *anyopaque,
-            IASetVertexBuffers: *anyopaque,
+            IASetInputLayout: fn (*T, ?*IInputLayout) callconv(WINAPI) void,
+            IASetVertexBuffers: fn (
+                *T,
+                UINT,
+                UINT,
+                ?[*]const *IBuffer,
+                ?[*]const UINT,
+                ?[*]const UINT,
+            ) callconv(WINAPI) void,
             IASetIndexBuffer: *anyopaque,
             DrawIndexedInstanced: *anyopaque,
             DrawInstanced: *anyopaque,
             GSSetConstantBuffers: *anyopaque,
             GSSetShader: *anyopaque,
-            IASetPrimitiveTopology: *anyopaque,
+            IASetPrimitiveTopology: fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
             VSSetShaderResources: *anyopaque,
             VSSetSamplers: *anyopaque,
             Begin: *anyopaque,
@@ -307,7 +549,12 @@ pub const IDeviceContext = extern struct {
             SetPredication: *anyopaque,
             GSSetShaderResources: *anyopaque,
             GSSetSamplers: *anyopaque,
-            OMSetRenderTargets: *anyopaque,
+            OMSetRenderTargets: fn (
+                *T,
+                UINT,
+                ?[*]const IRenderTargetView,
+                ?*IDepthStencilView,
+            ) callconv(WINAPI) void,
             OMSetRenderTargetsAndUnorderedAccessViews: *anyopaque,
             OMSetBlendState: *anyopaque,
             OMSetDepthStencilState: *anyopaque,
@@ -317,7 +564,7 @@ pub const IDeviceContext = extern struct {
             DrawInstancedIndirect: *anyopaque,
             Dispatch: *anyopaque,
             DispatchIndirect: *anyopaque,
-            RSSetState: *anyopaque,
+            RSSetState: fn (*T, ?*IRasterizerState) callconv(WINAPI) void,
             RSSetViewports: fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
             RSSetScissorRects: *anyopaque,
             CopySubresourceRegion: *anyopaque,
@@ -478,6 +725,17 @@ pub const IDevice = extern struct {
                     ppPixelShader,
                 );
             }
+            pub inline fn CreateRasterizerState(
+                self: *T,
+                pRasterizerDesc: *const RASTERIZER_DESC,
+                ppRasterizerState: ?*?*IRasterizerState,
+            ) HRESULT {
+                return self.v.device.CreateRasterizerState(
+                    self,
+                    pRasterizerDesc,
+                    ppRasterizerState,
+                );
+            }
         };
     }
 
@@ -531,7 +789,11 @@ pub const IDevice = extern struct {
             CreateClassLinkage: *anyopaque,
             CreateBlendState: *anyopaque,
             CreateDepthStencilState: *anyopaque,
-            CreateRasterizerState: *anyopaque,
+            CreateRasterizerState: fn (
+                *T,
+                *const RASTERIZER_DESC,
+                ?*?*IRasterizerState,
+            ) callconv(WINAPI) HRESULT,
             CreateSamplerState: *anyopaque,
             CreateQuery: *anyopaque,
             CreatePredicate: *anyopaque,
@@ -590,6 +852,34 @@ pub const IRenderTargetView = extern struct {
         devchild: IDeviceChild.VTable(Self),
         view: IView.VTable(Self),
         rendertargetview: VTable(Self),
+    },
+
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IView.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetDesc: *anyopaque,
+        };
+    }
+};
+
+pub const IID_IDepthStencilView = GUID.parse("{9fdac92a-1876-48c3-afad-25b94f84a9b6}");
+pub const IDepthStencilView = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        view: IView.VTable(Self),
+        dsv: VTable(Self),
     },
 
     usingnamespace IUnknown.Methods(Self);
@@ -676,6 +966,31 @@ pub const IInputLayout = extern struct {
     fn VTable(comptime T: type) type {
         _ = T;
         return extern struct {};
+    }
+};
+
+pub const IID_IRasterizerState = GUID.parse("{9bb4ab81-ab1a-4d8f-b506-fc04200b6ee7}");
+pub const IRasterizerState = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        state: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.VTable(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetDesc: *anyopaque,
+        };
     }
 };
 
