@@ -398,7 +398,10 @@ pub fn newImGuiFrame(delta_time: f32) void {
     _ = w.GetClientRect(ui_backend.*.window.?, &rect);
     const viewport_width = @intToFloat(f32, rect.right - rect.left);
     const viewport_height = @intToFloat(f32, rect.bottom - rect.top);
+
     ui.*.DisplaySize = c.ImVec2{ .x = viewport_width, .y = viewport_height };
+    ui.*.DeltaTime = delta_time;
+    c.igNewFrame();
 
     if (c.igIsKeyDown(c.ImGuiKey_LeftShift) and !isVkKeyDown(w.VK_LSHIFT)) {
         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_LeftShift, false);
@@ -413,9 +416,6 @@ pub fn newImGuiFrame(delta_time: f32) void {
     if (c.igIsKeyDown(c.ImGuiKey_LeftSuper) and !isVkKeyDown(w.VK_RWIN)) {
         c.ImGuiIO_AddKeyEvent(ui, c.ImGuiKey_RightSuper, false);
     }
-
-    ui.*.DeltaTime = delta_time;
-    c.igNewFrame();
 }
 
 pub fn drawText(

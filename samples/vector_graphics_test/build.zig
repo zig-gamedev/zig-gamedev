@@ -84,8 +84,6 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui.cpp", &[_][]const u8{""});
 
-    exe.addCSourceFile(external ++ "/stb_perlin.c", &[_][]const u8{"-std=c99"});
-
     exe.install();
 
     const run_cmd = exe.run();

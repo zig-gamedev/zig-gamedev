@@ -1635,9 +1635,11 @@ fn update(demo: *DemoState) void {
 
     const ray_from = demo.camera.position;
     const ray_to = blk: {
-        var ui = c.igGetIO().?;
-        const mousex = ui.*.MousePos.x;
-        const mousey = ui.*.MousePos.y;
+        var pos: w.POINT = undefined;
+        _ = w.GetCursorPos(&pos);
+        _ = w.ScreenToClient(demo.grfx.window, &pos);
+        const mousex = @intToFloat(f32, pos.x);
+        const mousey = @intToFloat(f32, pos.y);
 
         const far_plane: f32 = 10000.0;
         const tanfov = math.tan(0.5 * camera_fovy);

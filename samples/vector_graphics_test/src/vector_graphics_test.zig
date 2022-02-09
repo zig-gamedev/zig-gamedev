@@ -34,7 +34,6 @@ const DemoState = struct {
     ink: *d2d1.IInk,
     ink_style: *d2d1.IInkStyle,
     bezier_lines_path: *d2d1.IPathGeometry,
-    noise_path: *d2d1.IPathGeometry,
 
     ink_points: std.ArrayList(d2d1.POINT_2F),
 
@@ -220,33 +219,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         sink.AddLines(ink_points.items.ptr + 1, @intCast(u32, ink_points.items.len - 1));
         sink.EndFigure(.OPEN);
         break :blk bezier_lines_path;
-    };
-
-    const noise_path = blk: {
-        var points = std.ArrayList(d2d1.POINT_2F).init(gpa_allocator);
-        defer points.deinit();
-
-        var i: u32 = 0;
-        while (i < 100) : (i += 1) {
-            const frac = @intToFloat(f32, (i + 1)) / 100.0;
-            const y = 150.0 * c.stb_perlin_fbm_noise3(4.0 * frac, 0.0, 0.0, 2.0, 0.5, 2);
-            points.append(.{ .x = 400.0 * frac, .y = y }) catch unreachable;
-        }
-        points.append(.{ .x = 400.0, .y = 100.0 }) catch unreachable;
-
-        var noise_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(grfx.d2d.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &noise_path)));
-
-        var sink: *d2d1.IGeometrySink = undefined;
-        hrPanicOnFail(noise_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
-        defer {
-            hrPanicOnFail(sink.Close());
-            _ = sink.Release();
-        }
-        sink.BeginFigure(.{ .x = 0.0, .y = 100.0 }, .FILLED);
-        sink.AddLines(points.items.ptr, @intCast(u32, points.items.len));
-        sink.EndFigure(.CLOSED);
-        break :blk noise_path;
     };
 
     const left_mountain_geo = blk: {
@@ -470,7 +442,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .ink = ink,
         .ink_points = ink_points,
         .bezier_lines_path = bezier_lines_path,
-        .noise_path = noise_path,
         .left_mountain_geo = left_mountain_geo,
         .right_mountain_geo = right_mountain_geo,
         .sun_geo = sun_geo,
@@ -578,22 +549,6 @@ fn drawShapes(demo: DemoState) void {
     grfx.d2d.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(750.0, 900.0));
     grfx.d2d.context.DrawInk(demo.ink, @ptrCast(*d2d1.IBrush, demo.brush), demo.ink_style);
 
-    grfx.d2d.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(1000.0, 600.0));
-
-    demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.2, .g = 0.4, .b = 0.8, .a = 1.0 });
-    grfx.d2d.context.FillGeometry(
-        @ptrCast(*d2d1.IGeometry, demo.noise_path),
-        @ptrCast(*d2d1.IBrush, demo.brush),
-        null,
-    );
-    demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.8, .g = 0.0, .b = 0.0, .a = 1.0 });
-    grfx.d2d.context.DrawGeometry(
-        @ptrCast(*d2d1.IGeometry, demo.noise_path),
-        @ptrCast(*d2d1.IBrush, demo.brush),
-        5.0,
-        null,
-    );
-
     grfx.d2d.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(1080.0, 640.0));
 
     // Draw background.
@@ -650,7 +605,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.ink.Release();
     _ = demo.ink_style.Release();
     _ = demo.bezier_lines_path.Release();
-    _ = demo.noise_path.Release();
     _ = demo.left_mountain_geo.Release();
     _ = demo.right_mountain_geo.Release();
     _ = demo.sun_geo.Release();
