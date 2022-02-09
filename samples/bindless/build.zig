@@ -138,15 +138,15 @@ pub fn build(b: *std.build.Builder) void {
     install_content_step.step.dependOn(dxc_step);
 
     exe.setBuildMode(b.standardReleaseOptions());
-    exe.setTarget(.{
-        .cpu_arch = .x86_64,
-        .os_tag = .windows,
-        .abi = .gnu,
-    });
+    exe.setTarget(b.standardTargetOptions(.{}));
 
     const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
     const enable_dx_debug = b.option(bool, "enable-dx-debug", "Enable debug layer for D3D12, D2D1, DirectML and DXGI") orelse false;
-    const enable_dx_gpu_debug = b.option(bool, "enable-dx-gpu-debug", "Enable GPU-based validation for D3D12") orelse false;
+    const enable_dx_gpu_debug = b.option(
+        bool,
+        "enable-dx-gpu-debug",
+        "Enable GPU-based validation for D3D12",
+    ) orelse false;
     const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
 
     const exe_options = b.addOptions();

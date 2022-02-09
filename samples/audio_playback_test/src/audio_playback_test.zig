@@ -334,6 +334,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     grfx.device.CreateShaderResourceView(grfx.getResource(image), null, image_srv);
     grfx.addTransitionBarrier(image, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
+    grfx.endFrame();
     grfx.finishGpuCommands();
 
     return .{
