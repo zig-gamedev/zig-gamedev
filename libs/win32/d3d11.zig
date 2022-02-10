@@ -342,6 +342,19 @@ pub const IDeviceContext = extern struct {
 
     pub fn Methods(comptime T: type) type {
         return extern struct {
+            pub inline fn VSSetConstantBuffers(
+                self: *T,
+                StartSlot: UINT,
+                NumBuffers: UINT,
+                ppConstantBuffers: ?[*]const *IBuffer,
+            ) void {
+                self.v.devctx.VSSetConstantBuffers(
+                    self,
+                    StartSlot,
+                    NumBuffers,
+                    ppConstantBuffers,
+                );
+            }
             pub inline fn PSSetShader(
                 self: *T,
                 pPixelShader: ?*IPixelShader,
@@ -394,6 +407,19 @@ pub const IDeviceContext = extern struct {
             }
             pub inline fn Unmap(self: *T, pResource: *IResource, Subresource: UINT) void {
                 self.v.devctx.Unmap(self, pResource, Subresource);
+            }
+            pub inline fn PSSetConstantBuffers(
+                self: *T,
+                StartSlot: UINT,
+                NumBuffers: UINT,
+                ppConstantBuffers: ?[*]const *IBuffer,
+            ) void {
+                self.v.devctx.PSSetConstantBuffers(
+                    self,
+                    StartSlot,
+                    NumBuffers,
+                    ppConstantBuffers,
+                );
             }
             pub inline fn IASetInputLayout(self: *T, pInputLayout: ?*IInputLayout) void {
                 self.v.devctx.IASetInputLayout(self, pInputLayout);
@@ -456,7 +482,12 @@ pub const IDeviceContext = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            VSSetConstantBuffers: *anyopaque,
+            VSSetConstantBuffers: fn (
+                *T,
+                UINT,
+                UINT,
+                ?[*]const *IBuffer,
+            ) callconv(WINAPI) void,
             PSSetShaderResources: *anyopaque,
             PSSetShader: fn (
                 *T,
@@ -482,7 +513,12 @@ pub const IDeviceContext = extern struct {
                 ?*MAPPED_SUBRESOURCE,
             ) callconv(WINAPI) HRESULT,
             Unmap: fn (*T, *IResource, UINT) callconv(WINAPI) void,
-            PSSetConstantBuffers: *anyopaque,
+            PSSetConstantBuffers: fn (
+                *T,
+                UINT,
+                UINT,
+                ?[*]const *IBuffer,
+            ) callconv(WINAPI) void,
             IASetInputLayout: fn (*T, ?*IInputLayout) callconv(WINAPI) void,
             IASetVertexBuffers: fn (
                 *T,
