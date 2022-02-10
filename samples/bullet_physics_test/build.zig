@@ -1,7 +1,6 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 const Pkg = std.build.Pkg;
-const zbullet = @import("libs/zbullet/build.zig");
 
 fn makeDxcCmd(
     comptime input_path: []const u8,
@@ -147,7 +146,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
 
     exe.addPackagePath("zbullet", "libs/zbullet/src/zbullet.zig");
-    zbullet.link(b, exe);
+    @import("libs/zbullet/build.zig").link(b, exe);
 
     exe.install();
 
