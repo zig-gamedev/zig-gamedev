@@ -1,6 +1,7 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 const Pkg = std.build.Pkg;
+const zbullet = @import("libs/zbullet/build.zig");
 
 fn makeDxcCmd(
     comptime input_path: []const u8,
@@ -64,8 +65,16 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(b.standardTargetOptions(.{}));
 
     const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
-    const enable_dx_debug = b.option(bool, "enable-dx-debug", "Enable debug layer for D3D12, D2D1, DirectML and DXGI") orelse false;
-    const enable_dx_gpu_debug = b.option(bool, "enable-dx-gpu-debug", "Enable GPU-based validation for D3D12") orelse false;
+    const enable_dx_debug = b.option(
+        bool,
+        "enable-dx-debug",
+        "Enable debug layer for D3D12, D2D1, DirectML and DXGI",
+    ) orelse false;
+    const enable_dx_gpu_debug = b.option(
+        bool,
+        "enable-dx-gpu-debug",
+        "Enable GPU-based validation for D3D12",
+    ) orelse false;
     const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
 
     const exe_options = b.addOptions();
@@ -135,13 +144,10 @@ pub fn build(b: *std.build.Builder) void {
     exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &[_][]const u8{""});
     exe.addCSourceFile(external ++ "/cimgui.cpp", &[_][]const u8{""});
 
-    exe.addIncludeDir(external ++ "/bullet");
-    exe.addCSourceFile(external ++ "/cbullet.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/bullet/btLinearMathAll.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/bullet/btBulletCollisionAll.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/bullet/btBulletDynamicsAll.cpp", &[_][]const u8{""});
-
     exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
+
+    exe.addPackagePath("zbullet", "libs/zbullet/src/zbullet.zig");
+    zbullet.link(b, exe);
 
     exe.install();
 
