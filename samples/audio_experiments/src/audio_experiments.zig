@@ -13,8 +13,8 @@ const common = @import("common");
 const gfx = common.graphics;
 const sfx = common.audio;
 const lib = common.library;
-const zm = common.zmath;
 const c = common.c;
+const zm = @import("zmath");
 
 const Mutex = std.Thread.Mutex;
 const hrPanic = lib.hrPanic;

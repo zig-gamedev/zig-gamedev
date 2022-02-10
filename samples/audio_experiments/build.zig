@@ -105,6 +105,12 @@ pub fn build(b: *std.build.Builder) void {
     };
     exe.addPackage(pkg_win32);
 
+    const pkg_zmath = Pkg{
+        .name = "zmath",
+        .path = .{ .path = "../../libs/zmath/zmath.zig" },
+    };
+    exe.addPackage(pkg_zmath);
+
     const pkg_common = Pkg{
         .name = "common",
         .path = .{ .path = "../../libs/common/common.zig" },

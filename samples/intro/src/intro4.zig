@@ -13,8 +13,8 @@ const dwrite = win32.dwrite;
 const common = @import("common");
 const gfx = common.graphics;
 const lib = common.library;
-const zm = common.zmath;
 const c = common.c;
+const zm = @import("zmath");
 
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
