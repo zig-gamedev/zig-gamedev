@@ -20,15 +20,15 @@ fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.buil
     lib.setBuildMode(step.build_mode);
     lib.setTarget(step.target);
     lib.want_lto = false;
-    lib.addIncludeDir(thisDir() ++ "/src");
-    lib.addIncludeDir(thisDir() ++ "/bullet");
+    lib.addIncludeDir(thisDir() ++ "/libs/cbullet");
+    lib.addIncludeDir(thisDir() ++ "/libs/bullet");
     lib.linkSystemLibrary("c");
     lib.linkSystemLibrary("c++");
 
-    lib.addCSourceFile(thisDir() ++ "/src/cbullet.cpp", &.{});
-    lib.addCSourceFile(thisDir() ++ "/bullet/btLinearMathAll.cpp", &.{});
-    lib.addCSourceFile(thisDir() ++ "/bullet/btBulletCollisionAll.cpp", &.{});
-    lib.addCSourceFile(thisDir() ++ "/bullet/btBulletDynamicsAll.cpp", &.{});
+    lib.addCSourceFile(thisDir() ++ "/libs/cbullet/cbullet.cpp", &.{});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btLinearMathAll.cpp", &.{});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp", &.{});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp", &.{});
 
     lib.install();
     return lib;
@@ -37,5 +37,5 @@ fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.buil
 pub fn link(b: *std.build.Builder, step: *std.build.LibExeObjStep) void {
     const lib = buildLibrary(b, step);
     step.linkLibrary(lib);
-    step.addIncludeDir(thisDir() ++ "/src");
+    step.addIncludeDir(thisDir() ++ "/libs/cbullet");
 }
