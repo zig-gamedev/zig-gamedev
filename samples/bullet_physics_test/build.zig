@@ -136,17 +136,21 @@ pub fn build(b: *std.build.Builder) void {
     exe.linkSystemLibrary("c++");
     exe.linkSystemLibrary("imm32");
 
-    exe.addCSourceFile(external ++ "/imgui/imgui.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_widgets.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_tables.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_draw.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/cimgui.cpp", &[_][]const u8{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui.cpp", &.{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui_widgets.cpp", &.{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui_tables.cpp", &.{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui_draw.cpp", &.{""});
+    exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &.{""});
+    exe.addCSourceFile(external ++ "/cimgui.cpp", &.{""});
 
-    exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{"-std=c99"});
+    exe.addCSourceFile(external ++ "/cgltf.c", &.{"-std=c99"});
 
-    exe.addPackagePath("zbullet", "libs/zbullet/src/zbullet.zig");
-    @import("libs/zbullet/build.zig").link(b, exe);
+    exe.addIncludeDir("../../libs/zbullet/libs/cbullet");
+    exe.addIncludeDir("../../libs/zbullet/libs/bullet");
+    exe.addCSourceFile("../../libs/zbullet/libs/cbullet/cbullet.cpp", &.{""});
+    exe.addCSourceFile("../../libs/zbullet/libs/bullet/btLinearMathAll.cpp", &.{""});
+    exe.addCSourceFile("../../libs/zbullet/libs/bullet/btBulletCollisionAll.cpp", &.{""});
+    exe.addCSourceFile("../../libs/zbullet/libs/bullet/btBulletDynamicsAll.cpp", &.{""});
 
     exe.install();
 

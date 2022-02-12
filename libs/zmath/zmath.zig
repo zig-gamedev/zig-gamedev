@@ -377,6 +377,15 @@ test "zmath.loadF32x4x4" {
     try expect(approxEqAbs(m[3], f32x4(14.0, 15.0, 16.0, 17.0), 0.0));
 }
 
+pub fn loadMat4x3(mem: []const f32) Mat {
+    return Mat{
+        load(mem[0..4], F32x4, 0),
+        load(mem[4..8], F32x4, 0),
+        load(mem[8..12], F32x4, 0),
+        load(mem[12..16], F32x4, 0),
+    };
+}
+
 pub fn storeF32x4x4(mem: []f32, m: Mat) void {
     store(mem[0..4], m[0], 0);
     store(mem[4..8], m[1], 0);

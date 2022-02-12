@@ -2,6 +2,11 @@ const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
     const tests = b.addTest("src/zbullet.zig");
+    const zmath = std.build.Pkg{
+        .name = "zmath",
+        .path = .{ .path = thisDir() ++ "/../zmath/zmath.zig" },
+    };
+    tests.addPackage(zmath);
     tests.setBuildMode(b.standardReleaseOptions());
     tests.setTarget(b.standardTargetOptions(.{}));
     link(b, tests);
@@ -25,10 +30,10 @@ fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.buil
     lib.linkSystemLibrary("c");
     lib.linkSystemLibrary("c++");
 
-    lib.addCSourceFile(thisDir() ++ "/libs/cbullet/cbullet.cpp", &.{});
-    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btLinearMathAll.cpp", &.{});
-    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp", &.{});
-    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp", &.{});
+    lib.addCSourceFile(thisDir() ++ "/libs/cbullet/cbullet.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btLinearMathAll.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp", &.{""});
 
     lib.install();
     return lib;
