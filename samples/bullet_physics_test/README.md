@@ -6,8 +6,8 @@ Demo consists of 4 scenes where user can interact and experiment with physics ob
 
 This demo shows how to use [Bullet](https://github.com/bulletphysics/bullet3) physics library in Zig language. As part of the effort we have developed cbullet - a simple C API for Bullet physics library:
 
-* [cbullet.h](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.h)
-* [cbullet.cpp](https://github.com/michal-z/zig-gamedev/blob/main/external/src/cbullet.cpp)
+* [cbullet.h](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet/libs/cbullet/cbullet.h)
+* [cbullet.cpp](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet/libs/cbullet/cbullet.cpp)
 
 Some cbullet features:
 * Most collision shapes
