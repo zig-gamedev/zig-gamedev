@@ -5,46 +5,55 @@ const c = @cImport({
     @cInclude("cbullet.h");
 });
 
-pub const Vector3 = [3]f32;
-
 pub const World = struct {
     handle: c.CbtWorldHandle,
 
-    pub fn create() World {
+    pub fn allocateAndCreate() World {
         return .{ .handle = c.cbtWorldCreate() };
     }
 
-    pub fn destroy(world: World) void {
+    pub fn destroyAndDeallocate(world: World) void {
         c.cbtWorldDestroy(world.handle);
     }
 
-    pub fn setGravity(world: World, gravity: []const f32) void {
-        assert(gravity.len >= 3);
-        c.cbtWorldSetGravity(world.handle, gravity.ptr);
+    pub fn setGravity(world: World, gravity: [3]f32) void {
+        c.cbtWorldSetGravity(world.handle, &gravity);
     }
 
-    pub fn getGravity(world: World, gravity: []f32) void {
-        assert(gravity.len >= 3);
-        c.cbtWorldGetGravity(world.handle, gravity.ptr);
+    pub fn getGravity(world: World) [3]f32 {
+        var gravity: [3]f32 = undefined;
+        c.cbtWorldGetGravity(world.handle, &gravity);
+        return gravity;
+    }
+
+    pub fn stepSimulation(world: World, time_step: f32, max_sub_steps: u32, fixed_time_step: f32) u32 {
+        return @intCast(u32, c.cbtWorldStepSimulation(
+            world.handle,
+            time_step,
+            @intCast(c_int, max_sub_steps),
+            fixed_time_step,
+        ));
     }
 };
 
 test "zbullet.world.gravity" {
     const zm = @import("zmath");
 
-    const world = World.create();
-    defer world.destroy();
+    const world = World.allocateAndCreate();
+    defer world.destroyAndDeallocate();
 
     {
         const v = zm.f32x4(0.0, -10.0, 0.0, 0.0);
         var gravity: [3]f32 = undefined;
         zm.store(gravity[0..], v, 3);
-        world.setGravity(gravity[0..]);
+        world.setGravity(gravity);
     }
 
+    const num_steps = world.stepSimulation(1.0 / 60.0, 1, 1.0 / 60.0);
+    try expect(num_steps == 1);
+
     const gravity = blk: {
-        var gravity: [3]f32 = undefined;
-        world.getGravity(gravity[0..]);
+        const gravity = world.getGravity();
         break :blk zm.load(gravity[0..], zm.F32x4, 3);
     };
     try expect(gravity[0] == 0.0 and gravity[1] == -10.0 and gravity[2] == 0.0);

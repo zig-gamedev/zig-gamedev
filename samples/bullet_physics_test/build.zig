@@ -111,6 +111,12 @@ pub fn build(b: *std.build.Builder) void {
     };
     exe.addPackage(pkg_win32);
 
+    const pkg_zbullet = Pkg{
+        .name = "zbullet",
+        .path = .{ .path = "../../libs/zbullet/src/zbullet.zig" },
+    };
+    exe.addPackage(pkg_zbullet);
+
     const pkg_common = Pkg{
         .name = "common",
         .path = .{ .path = "../../libs/common/common.zig" },
