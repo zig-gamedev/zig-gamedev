@@ -103,6 +103,7 @@ test "zbullet.world.gravity" {
 test "zbullet.shape.box" {
     {
         const box = BoxShape.init(&.{ 4.0, 4.0, 4.0 });
+        defer box.deinit();
         try expect(box.isCreated());
         try expect(box.getType() == .box);
         box.setMargin(0.1);
@@ -114,8 +115,6 @@ test "zbullet.shape.box" {
 
         box.getHalfExtentsWithMargin(&half_extents);
         try expect(half_extents[0] == 4.0 and half_extents[1] == 4.0 and half_extents[2] == 4.0);
-
-        defer box.deinit();
     }
     {
         const box = BoxShape.allocate();
