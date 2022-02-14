@@ -146,6 +146,10 @@ test "zbullet.shape.box" {
 
         box.getHalfExtentsWithMargin(&half_extents);
         try expect(half_extents[0] == 4.0 and half_extents[1] == 4.0 and half_extents[2] == 4.0);
+
+        const shape = @ptrCast(*const Shape, box);
+        try expect(shape.getType() == .box);
+        try expect(shape.isCreated());
     }
     {
         const box = BoxShape.allocate();
@@ -172,6 +176,10 @@ test "zbullet.shape.sphere" {
 
         sphere.setUnscaledRadius(1.0);
         try expect(sphere.getRadius() == 1.0);
+
+        const shape = @ptrCast(*const Shape, sphere);
+        try expect(shape.getType() == .sphere);
+        try expect(shape.isCreated());
     }
     {
         const sphere = SphereShape.allocate();
