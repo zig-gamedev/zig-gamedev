@@ -81,7 +81,7 @@ pub const BoxShape = opaque {
     pub fn getType(shape: *const BoxShape) ShapeType { return @ptrCast(*const Shape, shape).getType(); }
     pub fn setMargin(shape: *const BoxShape, margin: f32) void { @ptrCast(*const Shape, shape).setMargin(margin); }
     pub fn getMargin(shape: *const BoxShape) f32 { return @ptrCast(*const Shape, shape).getMargin(); }
-    pub fn upcast(shape: *const BoxShape) *const Shape { return @ptrCast(*const Shape, shape); }
+    pub fn asShape(shape: *const BoxShape) *const Shape { return @ptrCast(*const Shape, shape); }
     // zig fmt: on
 };
 
@@ -114,7 +114,7 @@ pub const SphereShape = opaque {
     pub fn getType(shape: *const SphereShape) ShapeType { return @ptrCast(*const Shape, shape).getType(); }
     pub fn setMargin(shape: *const SphereShape, margin: f32) void { @ptrCast(*const Shape, shape).setMargin(margin); }
     pub fn getMargin(shape: *const SphereShape) f32 { return @ptrCast(*const Shape, shape).getMargin(); }
-    pub fn upcast(shape: *const SphereShape) *const Shape { return @ptrCast(*const Shape, shape); }
+    pub fn asShape(shape: *const SphereShape) *const Shape { return @ptrCast(*const Shape, shape); }
     // zig fmt: on
 };
 
@@ -141,6 +141,15 @@ pub const Body = opaque {
 
     pub const destroy = cbtBodyDestroy;
     extern fn cbtBodyDestroy(body: *const Body) void;
+
+    pub const isCreated = cbtBodyIsCreated;
+    extern fn cbtBodyIsCreated(body: *const Body) bool;
+
+    pub const setShape = cbtBodySetShape;
+    extern fn cbtBodySetShape(body: *const Body, shape: *const Shape) void;
+
+    pub const getShape = cbtBodyGetShape;
+    extern fn cbtBodyGetShape(body: *const Body) *const Shape;
 };
 
 test "zbullet.world.gravity" {
@@ -174,7 +183,7 @@ test "zbullet.shape.box" {
         box.getHalfExtentsWithMargin(&half_extents);
         try expect(half_extents[0] == 4.0 and half_extents[1] == 4.0 and half_extents[2] == 4.0);
 
-        const shape = box.upcast();
+        const shape = box.asShape();
         try expect(shape.getType() == .box);
         try expect(shape.isCreated());
     }
@@ -204,7 +213,7 @@ test "zbullet.shape.sphere" {
         sphere.setUnscaledRadius(1.0);
         try expect(sphere.getRadius() == 1.0);
 
-        const shape = sphere.upcast();
+        const shape = sphere.asShape();
         try expect(shape.getType() == .sphere);
         try expect(shape.isCreated());
     }
@@ -242,7 +251,9 @@ test "zbullet.body.basic" {
             0.0, 0.0, 1.0,
             2.0, 2.0, 2.0,
         };
-        const body = Body.init(1.0, &transform, sphere.upcast());
+        const body = Body.init(1.0, &transform, sphere.asShape());
         defer body.deinit();
+        try expect(body.isCreated() == true);
+        try expect(body.getShape() == sphere.asShape());
     }
 }

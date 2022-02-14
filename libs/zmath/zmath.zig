@@ -65,9 +65,14 @@
 //         e8: bool, e9: bool, ea: bool, eb: bool, ec: bool, ed: bool, ee: bool, ef: bool) Boolx16
 //
 // load(mem: []const f32, comptime T: type, comptime len: u32) T
-// loadF32x4x4(mem: []const f32) Mat
 // store(mem: []f32, v: anytype, comptime len: u32) void
-// storeF32x4x4(mem: []f32, m: Mat) void
+//
+// loadMat(mem: []const f32) Mat
+// loadMat43(mem: []const f32) Mat
+// loadMat34(mem: []const f32) Mat
+// storeMat(mem: []f32, m: Mat) void
+// storeMat43(mem: []f32, m: Mat) void
+// storeMat34(mem: []f32, m: Mat) void
 //
 // splat(comptime T: type, value: f32) T
 // splatInt(comptime T: type, value: u32) T
@@ -354,15 +359,15 @@ test "zmath.store" {
     try expect(a[5] == 0.0);
 }
 
-pub fn loadF32x4x4(mem: []const f32) Mat {
-    return Mat{
+pub fn loadMat(mem: []const f32) Mat {
+    return .{
         load(mem[0..4], F32x4, 0),
         load(mem[4..8], F32x4, 0),
         load(mem[8..12], F32x4, 0),
         load(mem[12..16], F32x4, 0),
     };
 }
-test "zmath.loadF32x4x4" {
+test "zmath.loadMat" {
     const a = [18]f32{
         1.0,  2.0,  3.0,  4.0,
         5.0,  6.0,  7.0,  8.0,
@@ -370,27 +375,49 @@ test "zmath.loadF32x4x4" {
         13.0, 14.0, 15.0, 16.0,
         17.0, 18.0,
     };
-    const m = loadF32x4x4(a[1..]);
+    const m = loadMat(a[1..]);
     try expect(approxEqAbs(m[0], f32x4(2.0, 3.0, 4.0, 5.0), 0.0));
     try expect(approxEqAbs(m[1], f32x4(6.0, 7.0, 8.0, 9.0), 0.0));
     try expect(approxEqAbs(m[2], f32x4(10.0, 11.0, 12.0, 13.0), 0.0));
     try expect(approxEqAbs(m[3], f32x4(14.0, 15.0, 16.0, 17.0), 0.0));
 }
 
-pub fn loadMat4x3(mem: []const f32) Mat {
-    return Mat{
-        load(mem[0..4], F32x4, 0),
-        load(mem[4..8], F32x4, 0),
-        load(mem[8..12], F32x4, 0),
-        load(mem[12..16], F32x4, 0),
-    };
-}
-
-pub fn storeF32x4x4(mem: []f32, m: Mat) void {
+pub fn storeMat(mem: []f32, m: Mat) void {
     store(mem[0..4], m[0], 0);
     store(mem[4..8], m[1], 0);
     store(mem[8..12], m[2], 0);
     store(mem[12..16], m[3], 0);
+}
+
+pub fn loadMat43(mem: []const f32) Mat {
+    return .{
+        f32x4(mem[0], mem[1], mem[2], 0.0),
+        f32x4(mem[3], mem[4], mem[5], 0.0),
+        f32x4(mem[6], mem[7], mem[8], 0.0),
+        f32x4(mem[9], mem[10], mem[11], 1.0),
+    };
+}
+
+pub fn storeMat43(mem: []f32, m: Mat) void {
+    store(mem[0..3], m[0], 3);
+    store(mem[3..6], m[1], 3);
+    store(mem[6..9], m[2], 3);
+    store(mem[9..12], m[3], 3);
+}
+
+pub fn loadMat34(mem: []const f32) Mat {
+    return .{
+        load(mem[0..4], F32x4, 0),
+        load(mem[4..8], F32x4, 0),
+        load(mem[8..12], F32x4, 0),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    };
+}
+
+pub fn storeMat34(mem: []f32, m: Mat) void {
+    store(mem[0..4], m[0], 0);
+    store(mem[4..8], m[1], 0);
+    store(mem[8..12], m[2], 0);
 }
 
 // ------------------------------------------------------------------------------

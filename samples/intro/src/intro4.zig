@@ -507,7 +507,7 @@ fn draw(demo: *DemoState) void {
 
         // Copy 'cam_world_to_clip' matrix to upload memory. We need to transpose it because
         // HLSL uses column-major matrices by default (zmath uses row-major matrices).
-        zm.storeF32x4x4(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+        zm.storeMat(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
 
         // Set GPU handle of our allocated memory region so that it is visible to the shader.
         gctx.cmdlist.SetGraphicsRootConstantBufferView(
@@ -530,7 +530,7 @@ fn draw(demo: *DemoState) void {
 
                 // Copy 'object_to_world' matrix to upload memory. We need to transpose it because
                 // HLSL uses column-major matrices by default (zmath uses row-major matrices).
-                zm.storeF32x4x4(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+                zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
 
                 // Set GPU handle of our allocated memory region so that it is visible to the shader.
                 gctx.cmdlist.SetGraphicsRootConstantBufferView(

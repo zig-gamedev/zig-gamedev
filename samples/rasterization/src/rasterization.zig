@@ -637,14 +637,14 @@ fn draw(demo: *DemoState) void {
         // Upload per-frame constant data (camera xform).
         {
             const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
-            zm.storeF32x4x4(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+            zm.storeMat(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
             gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
         }
         // Upload per-draw constant data (object to world xform) and draw.
         {
             const object_to_world = zm.translation(0.0, 0.0, 0.0);
             const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
-            zm.storeF32x4x4(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+            zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
             gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         }
         gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
@@ -672,14 +672,14 @@ fn draw(demo: *DemoState) void {
         // Upload per-frame constant data (camera xform).
         {
             const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
-            zm.storeF32x4x4(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+            zm.storeMat(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
             gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
         }
         // Upload per-draw constant data (object to world xform) and draw.
         {
             const object_to_world = zm.translation(0.0, 0.0, 0.0);
             const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
-            zm.storeF32x4x4(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+            zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
             gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         }
         gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
@@ -723,14 +723,14 @@ fn draw(demo: *DemoState) void {
             // Upload per-frame constant data (camera xform).
             {
                 const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
-                zm.storeF32x4x4(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+                zm.storeMat(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
                 gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
             }
             // Upload per-draw constant data (object to world xform) and draw.
             {
                 const object_to_world = zm.translation(0.0, 0.0, 0.0);
                 const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
-                zm.storeF32x4x4(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+                zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
                 gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
             }
             gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
@@ -748,7 +748,7 @@ fn draw(demo: *DemoState) void {
             {
                 const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
 
-                zm.storeF32x4x4(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+                zm.storeMat(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
                 mem.cpu_slice[0].camera_position = demo.camera.position;
 
                 gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
@@ -757,7 +757,7 @@ fn draw(demo: *DemoState) void {
             {
                 const object_to_world = zm.translation(0.0, 0.0, 0.0);
                 const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
-                zm.storeF32x4x4(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+                zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
                 gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
             }
             gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
