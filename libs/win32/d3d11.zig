@@ -12,6 +12,7 @@ const BOOL = windows.BOOL;
 const TRUE = windows.TRUE;
 const FALSE = windows.FALSE;
 const INT = windows.INT;
+const UINT8 = windows.UINT8;
 
 const d3dcommon = @import("d3dcommon.zig");
 const FEATURE_LEVEL = d3dcommon.FEATURE_LEVEL;
@@ -221,6 +222,239 @@ pub const RASTERIZER_DESC = extern struct {
     AntialiasedLineEnable: BOOL = FALSE,
 };
 
+pub const BLEND = enum(UINT) {
+    ZERO = 1,
+    ONE = 2,
+    SRC_COLOR = 3,
+    INV_SRC_COLOR = 4,
+    SRC_ALPHA = 5,
+    INV_SRC_ALPHA = 6,
+    DEST_ALPHA = 7,
+    INV_DEST_ALPHA = 8,
+    DEST_COLOR = 9,
+    INV_DEST_COLOR = 10,
+    SRC_ALPHA_SAT = 11,
+    BLEND_FACTOR = 14,
+    INV_BLEND_FACTOR = 15,
+    SRC1_COLOR = 16,
+    INV_SRC1_COLOR = 17,
+    SRC1_ALPHA = 18,
+    INV_SRC1_ALPHA = 19,
+};
+
+pub const BLEND_OP = enum(UINT) {
+    ADD = 1,
+    SUBTRACT = 2,
+    REV_SUBTRACT = 3,
+    MIN = 4,
+    MAX = 5,
+};
+
+pub const COLOR_WRITE_ENABLE = UINT;
+pub const COLOR_WRITE_ENABLE_RED = 1;
+pub const COLOR_WRITE_ENABLE_GREEN = 2;
+pub const COLOR_WRITE_ENABLE_BLUE = 4;
+pub const COLOR_WRITE_ENABLE_ALPHA = 8;
+pub const COLOR_WRITE_ENABLE_ALL = COLOR_WRITE_ENABLE_RED | COLOR_WRITE_ENABLE_GREEN | COLOR_WRITE_ENABLE_BLUE | COLOR_WRITE_ENABLE_ALPHA;
+
+pub const RENDER_TARGET_BLEND_DESC = extern struct {
+    BlendEnable: BOOL,
+    SrcBlend: BLEND,
+    DestBlend: BLEND,
+    BlendOp: BLEND_OP,
+    SrcBlendAlpha: BLEND,
+    DestBlendAlpha: BLEND,
+    BlendOpAlpha: BLEND_OP,
+    RenderTargetWriteMask: UINT8,
+};
+
+pub const BLEND_DESC = extern struct {
+    AlphaToCoverageEnable: BOOL,
+    IndependentBlendEnable: BOOL,
+    RenderTarget: [8]RENDER_TARGET_BLEND_DESC,
+};
+
+pub const TEXTURE2D_DESC = struct {
+    Width: UINT,
+    Height: UINT,
+    MipLevels: UINT,
+    ArraySize: UINT,
+    Format: dxgi.FORMAT,
+    SampleDesc: dxgi.SAMPLE_DESC,
+    Usage: USAGE,
+    BindFlags: BIND_FLAG,
+    CPUAccessFlags: CPU_ACCCESS_FLAG,
+    MiscFlags: UINT,
+};
+
+pub const BUFFER_SRV = extern struct {
+    FirstElement: UINT,
+    NumElements: UINT,
+};
+
+pub const TEX1D_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+};
+
+pub const TEX1D_ARRAY_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const TEX2D_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+};
+
+pub const TEX2D_ARRAY_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const TEX3D_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+};
+
+pub const TEXCUBE_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+};
+
+pub const TEXCUBE_ARRAY_SRV = extern struct {
+    MostDetailedMip: UINT,
+    MipLevels: UINT,
+    First2DArrayFace: UINT,
+    NumCubes: UINT,
+};
+
+pub const TEX2DMS_SRV = extern struct {
+    UnusedField_NothingToDefine: UINT,
+};
+
+pub const TEX2DMS_ARRAY_SRV = extern struct {
+    FirstArraySlice: UINT,
+    ArraySize: UINT,
+};
+
+pub const BUFFEREX_SRV_FLAG = UINT;
+pub const BUFFEREX_SRV_FLAG_RAW = 0x1;
+
+pub const BUFFEREX_SRV = extern struct {
+    FirstElement: UINT,
+    NumElements: UINT,
+    Flags: BUFFEREX_SRV_FLAG,
+};
+
+pub const SRV_DIMENSION = enum(UINT) {
+    UNKNOWN = 0,
+    BUFFER = 1,
+    TEXTURE1D = 2,
+    TEXTURE1DARRAY = 3,
+    TEXTURE2D = 4,
+    TEXTURE2DARRAY = 5,
+    TEXTURE2DMS = 6,
+    TEXTURE2DMSARRAY = 7,
+    TEXTURE3D = 8,
+    TEXTURECUBE = 9,
+    TEXTURECUBEARRAY = 10,
+    BUFFEREX = 11,
+};
+
+pub const SHADER_RESOURCE_VIEW_DESC = extern struct {
+    Format: dxgi.FORMAT,
+    ViewDimension: SRV_DIMENSION,
+    u: extern union {
+        Buffer: BUFFER_SRV,
+        Texture1D: TEX1D_SRV,
+        Texture1DArray: TEX1D_ARRAY_SRV,
+        Texture2D: TEX2D_SRV,
+        Texture2DArray: TEX2D_ARRAY_SRV,
+        Texture2DMS: TEX2DMS_SRV,
+        Texture2DMSArray: TEX2DMS_ARRAY_SRV,
+        Texture3D: TEX3D_SRV,
+        TextureCube: TEXCUBE_SRV,
+        TextureCubeArray: TEXCUBE_ARRAY_SRV,
+        BufferEx: BUFFEREX_SRV,
+    },
+};
+
+pub const FILTER = enum(UINT) {
+    MIN_MAG_MIP_POINT = 0,
+    MIN_MAG_POINT_MIP_LINEAR = 0x1,
+    MIN_POINT_MAG_LINEAR_MIP_POINT = 0x4,
+    MIN_POINT_MAG_MIP_LINEAR = 0x5,
+    MIN_LINEAR_MAG_MIP_POINT = 0x10,
+    MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x11,
+    MIN_MAG_LINEAR_MIP_POINT = 0x14,
+    MIN_MAG_MIP_LINEAR = 0x15,
+    ANISOTROPIC = 0x55,
+    COMPARISON_MIN_MAG_MIP_POINT = 0x80,
+    COMPARISON_MIN_MAG_POINT_MIP_LINEAR = 0x81,
+    COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT = 0x84,
+    COMPARISON_MIN_POINT_MAG_MIP_LINEAR = 0x85,
+    COMPARISON_MIN_LINEAR_MAG_MIP_POINT = 0x90,
+    COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x91,
+    COMPARISON_MIN_MAG_LINEAR_MIP_POINT = 0x94,
+    COMPARISON_MIN_MAG_MIP_LINEAR = 0x95,
+    COMPARISON_ANISOTROPIC = 0xd5,
+    MINIMUM_MIN_MAG_MIP_POINT = 0x100,
+    MINIMUM_MIN_MAG_POINT_MIP_LINEAR = 0x101,
+    MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT = 0x104,
+    MINIMUM_MIN_POINT_MAG_MIP_LINEAR = 0x105,
+    MINIMUM_MIN_LINEAR_MAG_MIP_POINT = 0x110,
+    MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x111,
+    MINIMUM_MIN_MAG_LINEAR_MIP_POINT = 0x114,
+    MINIMUM_MIN_MAG_MIP_LINEAR = 0x115,
+    MINIMUM_ANISOTROPIC = 0x155,
+    MAXIMUM_MIN_MAG_MIP_POINT = 0x180,
+    MAXIMUM_MIN_MAG_POINT_MIP_LINEAR = 0x181,
+    MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT = 0x184,
+    MAXIMUM_MIN_POINT_MAG_MIP_LINEAR = 0x185,
+    MAXIMUM_MIN_LINEAR_MAG_MIP_POINT = 0x190,
+    MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x191,
+    MAXIMUM_MIN_MAG_LINEAR_MIP_POINT = 0x194,
+    MAXIMUM_MIN_MAG_MIP_LINEAR = 0x195,
+    MAXIMUM_ANISOTROPIC = 0x1d5,
+};
+
+pub const TEXTURE_ADDRESS_MODE = enum(UINT) {
+    WRAP = 1,
+    MIRROR = 2,
+    CLAMP = 3,
+    BORDER = 4,
+    MIRROR_ONCE = 5,
+};
+
+pub const COMPARISON_FUNC = enum(UINT) {
+    NEVER = 1,
+    LESS = 2,
+    EQUAL = 3,
+    LESS_EQUAL = 4,
+    GREATER = 5,
+    NOT_EQUAL = 6,
+    GREATER_EQUAL = 7,
+    ALWAYS = 8,
+};
+
+pub const SAMPLER_DESC = extern struct {
+    Filter: FILTER,
+    AddressU: TEXTURE_ADDRESS_MODE,
+    AddressV: TEXTURE_ADDRESS_MODE,
+    AddressW: TEXTURE_ADDRESS_MODE,
+    MipLODBias: FLOAT,
+    MaxAnisotropy: UINT,
+    ComparisonFunc: COMPARISON_FUNC,
+    BorderColor: [4]FLOAT,
+    MinLOD: FLOAT,
+    MaxLOD: FLOAT,
+};
+
 pub const IID_IDeviceChild = GUID.parse("{1841e5c8-16b0-489b-bcc8-44cfb0d5deae}");
 pub const IDeviceChild = extern struct {
     const Self = @This();
@@ -355,6 +589,19 @@ pub const IDeviceContext = extern struct {
                     ppConstantBuffers,
                 );
             }
+            pub inline fn PSSetShaderResources(
+                self: *T,
+                StartSlot: UINT,
+                NumViews: UINT,
+                ppShaderResourceViews: ?[*]const *IShaderResourceView,
+            ) void {
+                self.v.devctx.PSSetShaderResources(
+                    self,
+                    StartSlot,
+                    NumViews,
+                    ppShaderResourceViews,
+                );
+            }
             pub inline fn PSSetShader(
                 self: *T,
                 pPixelShader: ?*IPixelShader,
@@ -366,6 +613,19 @@ pub const IDeviceContext = extern struct {
                     pPixelShader,
                     ppClassInstance,
                     NumClassInstances,
+                );
+            }
+            pub inline fn PSSetSamplers(
+                self: *T,
+                StartSlot: UINT,
+                NumSamplers: UINT,
+                ppSamplers: ?[*]const *ISamplerState,
+            ) void {
+                self.v.devctx.PSSetSamplers(
+                    self,
+                    StartSlot,
+                    NumSamplers,
+                    ppSamplers,
                 );
             }
             pub inline fn VSSetShader(
@@ -444,6 +704,19 @@ pub const IDeviceContext = extern struct {
             pub inline fn IASetPrimitiveTopology(self: *T, Topology: PRIMITIVE_TOPOLOGY) void {
                 self.v.devctx.IASetPrimitiveTopology(self, Topology);
             }
+            pub inline fn VSSetShaderResources(
+                self: *T,
+                StartSlot: UINT,
+                NumViews: UINT,
+                ppShaderResourceViews: ?[*]const *IShaderResourceView,
+            ) void {
+                self.v.devctx.VSSetShaderResources(
+                    self,
+                    StartSlot,
+                    NumViews,
+                    ppShaderResourceViews,
+                );
+            }
             pub inline fn OMSetRenderTargets(
                 self: *T,
                 NumViews: UINT,
@@ -455,6 +728,19 @@ pub const IDeviceContext = extern struct {
                     NumViews,
                     ppRenderTargetViews,
                     pDepthStencilView,
+                );
+            }
+            pub inline fn OMSetBlendState(
+                self: *T,
+                pBlendState: ?*IBlendState,
+                BlendFactor: ?*const [4]FLOAT,
+                SampleMask: UINT,
+            ) void {
+                self.v.devctx.OMSetBlendState(
+                    self,
+                    pBlendState,
+                    BlendFactor,
+                    SampleMask,
                 );
             }
             pub inline fn RSSetState(self: *T, pRasterizerState: ?*IRasterizerState) void {
@@ -488,14 +774,24 @@ pub const IDeviceContext = extern struct {
                 UINT,
                 ?[*]const *IBuffer,
             ) callconv(WINAPI) void,
-            PSSetShaderResources: *anyopaque,
+            PSSetShaderResources: fn (
+                *T,
+                UINT,
+                UINT,
+                ?[*]const *IShaderResourceView,
+            ) callconv(WINAPI) void,
             PSSetShader: fn (
                 *T,
                 ?*IPixelShader,
                 ?[*]const *IClassInstance,
                 UINT,
             ) callconv(WINAPI) void,
-            PSSetSamplers: *anyopaque,
+            PSSetSamplers: fn (
+                *T,
+                UINT,
+                UINT,
+                ?[*]const *ISamplerState,
+            ) callconv(WINAPI) void,
             VSSetShader: fn (
                 *T,
                 ?*IVertexShader,
@@ -534,7 +830,12 @@ pub const IDeviceContext = extern struct {
             GSSetConstantBuffers: *anyopaque,
             GSSetShader: *anyopaque,
             IASetPrimitiveTopology: fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
-            VSSetShaderResources: *anyopaque,
+            VSSetShaderResources: fn (
+                *T,
+                UINT,
+                UINT,
+                ?[*]const *IShaderResourceView,
+            ) callconv(WINAPI) void,
             VSSetSamplers: *anyopaque,
             Begin: *anyopaque,
             End: *anyopaque,
@@ -549,7 +850,12 @@ pub const IDeviceContext = extern struct {
                 ?*IDepthStencilView,
             ) callconv(WINAPI) void,
             OMSetRenderTargetsAndUnorderedAccessViews: *anyopaque,
-            OMSetBlendState: *anyopaque,
+            OMSetBlendState: fn (
+                *T,
+                ?*IBlendState,
+                ?*const [4]FLOAT,
+                UINT,
+            ) callconv(WINAPI) void,
             OMSetDepthStencilState: *anyopaque,
             SOSetTargets: *anyopaque,
             DrawAuto: *anyopaque,
@@ -658,6 +964,32 @@ pub const IDevice = extern struct {
                     ppBuffer,
                 );
             }
+            pub inline fn CreateTexture2D(
+                self: *T,
+                pDesc: *const TEXTURE2D_DESC,
+                pInitialData: ?*const SUBRESOURCE_DATA,
+                ppTexture2D: ?*?*ITexture2D,
+            ) HRESULT {
+                return self.v.device.CreateTexture2D(
+                    self,
+                    pDesc,
+                    pInitialData,
+                    ppTexture2D,
+                );
+            }
+            pub inline fn CreateShaderResourceView(
+                self: *T,
+                pResource: *IResource,
+                pDesc: ?*const SHADER_RESOURCE_VIEW_DESC,
+                ppSRView: ?*?*IShaderResourceView,
+            ) HRESULT {
+                return self.v.device.CreateShaderResourceView(
+                    self,
+                    pResource,
+                    pDesc,
+                    ppSRView,
+                );
+            }
             pub inline fn CreateRenderTargetView(
                 self: *T,
                 pResource: ?*IResource,
@@ -718,6 +1050,13 @@ pub const IDevice = extern struct {
                     ppPixelShader,
                 );
             }
+            pub inline fn CreateBlendState(
+                self: *T,
+                pBlendStateDesc: *const BLEND_DESC,
+                ppBlendState: ?*?*IBlendState,
+            ) HRESULT {
+                return self.v.device.CreateBlendState(self, pBlendStateDesc, ppBlendState);
+            }
             pub inline fn CreateRasterizerState(
                 self: *T,
                 pRasterizerDesc: *const RASTERIZER_DESC,
@@ -727,6 +1066,17 @@ pub const IDevice = extern struct {
                     self,
                     pRasterizerDesc,
                     ppRasterizerState,
+                );
+            }
+            pub inline fn CreateSamplerState(
+                self: *T,
+                pSamplerDesc: *const SAMPLER_DESC,
+                ppSamplerState: ?*?*ISamplerState,
+            ) HRESULT {
+                return self.v.device.CreateSamplerState(
+                    self,
+                    pSamplerDesc,
+                    ppSamplerState,
                 );
             }
         };
@@ -741,9 +1091,19 @@ pub const IDevice = extern struct {
                 *?*IBuffer,
             ) callconv(WINAPI) HRESULT,
             CreateTexture1D: *anyopaque,
-            CreateTexture2D: *anyopaque,
+            CreateTexture2D: fn (
+                *T,
+                *const TEXTURE2D_DESC,
+                ?*const SUBRESOURCE_DATA,
+                ?*?*ITexture2D,
+            ) callconv(WINAPI) HRESULT,
             CreateTexture3D: *anyopaque,
-            CreateShaderResourceView: *anyopaque,
+            CreateShaderResourceView: fn (
+                *T,
+                *IResource,
+                ?*const SHADER_RESOURCE_VIEW_DESC,
+                ?*?*IShaderResourceView,
+            ) callconv(WINAPI) HRESULT,
             CreateUnorderedAccessView: *anyopaque,
             CreateRenderTargetView: fn (
                 *T,
@@ -780,14 +1140,22 @@ pub const IDevice = extern struct {
             CreateDomainShader: *anyopaque,
             CreateComputeShader: *anyopaque,
             CreateClassLinkage: *anyopaque,
-            CreateBlendState: *anyopaque,
+            CreateBlendState: fn (
+                *T,
+                *const BLEND_DESC,
+                ?*?*IBlendState,
+            ) callconv(WINAPI) HRESULT,
             CreateDepthStencilState: *anyopaque,
             CreateRasterizerState: fn (
                 *T,
                 *const RASTERIZER_DESC,
                 ?*?*IRasterizerState,
             ) callconv(WINAPI) HRESULT,
-            CreateSamplerState: *anyopaque,
+            CreateSamplerState: fn (
+                *T,
+                *const SAMPLER_DESC,
+                ?*?*ISamplerState,
+            ) callconv(WINAPI) HRESULT,
             CreateQuery: *anyopaque,
             CreatePredicate: *anyopaque,
             CreateCounter: *anyopaque,
@@ -893,6 +1261,34 @@ pub const IDepthStencilView = extern struct {
     }
 };
 
+pub const IID_IShaderResourceView = GUID.parse("{b0e06fe0-8192-4e1a-b1ca-36d7414710b}");
+pub const IShaderResourceView = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        view: IView.VTable(Self),
+        shader_res_view: VTable(Self),
+    },
+
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.Methods(Self);
+    usingnamespace IView.Methods(Self);
+    usingnamespace Methods(Self);
+
+    pub fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    pub fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetDesc: *anyopaque,
+        };
+    }
+};
+
 pub const IID_IVertexShader = GUID("{3b301d64-d678-4289-8897-22f8928b72f3}");
 pub const IVertexShader = extern struct {
     const Self = @This();
@@ -964,6 +1360,56 @@ pub const IInputLayout = extern struct {
 
 pub const IID_IRasterizerState = GUID.parse("{9bb4ab81-ab1a-4d8f-b506-fc04200b6ee7}");
 pub const IRasterizerState = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        state: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.VTable(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetDesc: *anyopaque,
+        };
+    }
+};
+
+pub const IID_BlendState = GUID.parse("{75b68faa-347d-4159-8f45-a0640f01cd9a}");
+pub const IBlendState = extern struct {
+    const Self = @This();
+    v: *const extern struct {
+        unknown: IUnknown.VTable(Self),
+        devchild: IDeviceChild.VTable(Self),
+        state: VTable(Self),
+    },
+    usingnamespace IUnknown.Methods(Self);
+    usingnamespace IDeviceChild.VTable(Self);
+    usingnamespace Methods(Self);
+
+    fn Methods(comptime T: type) type {
+        _ = T;
+        return extern struct {};
+    }
+
+    fn VTable(comptime T: type) type {
+        _ = T;
+        return extern struct {
+            GetDesc: *anyopaque,
+        };
+    }
+};
+
+pub const IID_SamplerState = GUID.parse("{da6fea51-564c-4487-9810-f0d0f9b4e3a5}");
+pub const ISamplerState = extern struct {
     const Self = @This();
     v: *const extern struct {
         unknown: IUnknown.VTable(Self),
