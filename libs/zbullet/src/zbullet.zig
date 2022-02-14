@@ -27,7 +27,6 @@ pub const World = opaque {
 pub const ShapeType = enum(c_int) {
     box = 0,
     sphere = 8,
-    capsule = 11,
 };
 
 pub const Shape = opaque {
@@ -76,12 +75,44 @@ pub const BoxShape = opaque {
 
     // zig fmt: off
     pub fn allocate() *const BoxShape { return @ptrCast(*const BoxShape, Shape.allocate(.box)); }
-    pub fn deallocate(box: *const BoxShape) void { @ptrCast(*const Shape, box).deallocate(); }
-    pub fn destroy(box: *const BoxShape) void { @ptrCast(*const Shape, box).destroy(); }
-    pub fn isCreated(box: *const BoxShape) bool { return @ptrCast(*const Shape, box).isCreated(); }
-    pub fn getType(box: *const BoxShape) ShapeType { return @ptrCast(*const Shape, box).getType(); }
-    pub fn setMargin(box: *const BoxShape, margin: f32) void { @ptrCast(*const Shape, box).setMargin(margin); }
-    pub fn getMargin(box: *const BoxShape) f32 { return @ptrCast(*const Shape, box).getMargin(); }
+    pub fn deallocate(shape: *const BoxShape) void { @ptrCast(*const Shape, shape).deallocate(); }
+    pub fn destroy(shape: *const BoxShape) void { @ptrCast(*const Shape, shape).destroy(); }
+    pub fn isCreated(shape: *const BoxShape) bool { return @ptrCast(*const Shape, shape).isCreated(); }
+    pub fn getType(shape: *const BoxShape) ShapeType { return @ptrCast(*const Shape, shape).getType(); }
+    pub fn setMargin(shape: *const BoxShape, margin: f32) void { @ptrCast(*const Shape, shape).setMargin(margin); }
+    pub fn getMargin(shape: *const BoxShape) f32 { return @ptrCast(*const Shape, shape).getMargin(); }
+    // zig fmt: on
+};
+
+pub const SphereShape = opaque {
+    pub fn init(radius: f32) *const SphereShape {
+        const sphere = allocate();
+        sphere.create(radius);
+        return sphere;
+    }
+
+    pub fn deinit(sphere: *const SphereShape) void {
+        sphere.destroy();
+        sphere.deallocate();
+    }
+
+    pub const create = cbtShapeSphereCreate;
+    extern fn cbtShapeSphereCreate(sphere: *const SphereShape, radius: f32) void;
+
+    pub const getRadius = cbtShapeSphereGetRadius;
+    extern fn cbtShapeSphereGetRadius(sphere: *const SphereShape) f32;
+
+    pub const setUnscaledRadius = cbtShapeSphereSetUnscaledRadius;
+    extern fn cbtShapeSphereSetUnscaledRadius(sphere: *const SphereShape, radius: f32) void;
+
+    // zig fmt: off
+    pub fn allocate() *const SphereShape { return @ptrCast(*const SphereShape, Shape.allocate(.sphere)); }
+    pub fn deallocate(shape: *const SphereShape) void { @ptrCast(*const Shape, shape).deallocate(); }
+    pub fn destroy(shape: *const SphereShape) void { @ptrCast(*const Shape, shape).destroy(); }
+    pub fn isCreated(shape: *const SphereShape) bool { return @ptrCast(*const Shape, shape).isCreated(); }
+    pub fn getType(shape: *const SphereShape) ShapeType { return @ptrCast(*const Shape, shape).getType(); }
+    pub fn setMargin(shape: *const SphereShape, margin: f32) void { @ptrCast(*const Shape, shape).setMargin(margin); }
+    pub fn getMargin(shape: *const SphereShape) f32 { return @ptrCast(*const Shape, shape).getMargin(); }
     // zig fmt: on
 };
 
@@ -120,9 +151,47 @@ test "zbullet.shape.box" {
         const box = BoxShape.allocate();
         defer box.deallocate();
         try expect(box.isCreated() == false);
+
         box.create(&.{ 1.0, 2.0, 3.0 });
-        try expect(box.getType() == .box);
         defer box.destroy();
+        try expect(box.getType() == .box);
         try expect(box.isCreated() == true);
+    }
+}
+
+test "zbullet.shape.sphere" {
+    {
+        const sphere = SphereShape.init(3.0);
+        defer sphere.deinit();
+        try expect(sphere.isCreated());
+        try expect(sphere.getType() == .sphere);
+        sphere.setMargin(0.1);
+        try expect(sphere.getMargin() == 3.0); // For spheres margin == radius.
+
+        try expect(sphere.getRadius() == 3.0);
+
+        sphere.setUnscaledRadius(1.0);
+        try expect(sphere.getRadius() == 1.0);
+    }
+    {
+        const sphere = SphereShape.allocate();
+        try expect(sphere.isCreated() == false);
+
+        sphere.create(1.0);
+        try expect(sphere.getType() == .sphere);
+        try expect(sphere.isCreated() == true);
+        try expect(sphere.getRadius() == 1.0);
+
+        sphere.destroy();
+        try expect(sphere.isCreated() == false);
+
+        sphere.create(2.0);
+        try expect(sphere.getType() == .sphere);
+        try expect(sphere.isCreated() == true);
+        try expect(sphere.getRadius() == 2.0);
+
+        sphere.destroy();
+        try expect(sphere.isCreated() == false);
+        sphere.deallocate();
     }
 }

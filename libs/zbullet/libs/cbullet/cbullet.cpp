@@ -359,13 +359,13 @@ int cbtShapeGetType(CbtShapeHandle shape_handle) {
 
 void cbtShapeSetMargin(CbtShapeHandle shape_handle, float margin) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle));
-    auto shape = (btSphereShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     shape->setMargin(margin);
 }
 
 float cbtShapeGetMargin(CbtShapeHandle shape_handle) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle));
-    auto shape = (btSphereShape*)shape_handle;
+    auto shape = (btCollisionShape*)shape_handle;
     return shape->getMargin();
 }
 
