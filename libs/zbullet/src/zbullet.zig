@@ -256,4 +256,23 @@ test "zbullet.body.basic" {
         try expect(body.isCreated() == true);
         try expect(body.getShape() == sphere.asShape());
     }
+    {
+        const zm = @import("zmath");
+
+        const sphere = SphereShape.init(3.0);
+        defer sphere.deinit();
+
+        var transform: [12]f32 = undefined;
+        zm.storeMat43(transform[0..], zm.translation(2.0, 3.0, 4.0));
+
+        const body = Body.init(1.0, &transform, sphere.asShape());
+
+        try expect(body.isCreated() == true);
+        try expect(body.getShape() == sphere.asShape());
+
+        body.destroy();
+        try expect(body.isCreated() == false);
+
+        body.deallocate();
+    }
 }

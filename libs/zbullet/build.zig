@@ -2,11 +2,11 @@ const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
     const tests = b.addTest("src/zbullet.zig");
-    //const zmath = std.build.Pkg{
-    //    .name = "zmath",
-    //    .path = .{ .path = thisDir() ++ "/../zmath/zmath.zig" },
-    //};
-    //tests.addPackage(zmath);
+    const zmath = std.build.Pkg{
+        .name = "zmath",
+        .path = .{ .path = thisDir() ++ "/../zmath/zmath.zig" },
+    };
+    tests.addPackage(zmath);
     tests.setBuildMode(b.standardReleaseOptions());
     tests.setTarget(b.standardTargetOptions(.{}));
     link(b, tests);
