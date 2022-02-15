@@ -68,6 +68,18 @@ pub const Shape = opaque {
 
     pub const isCompound = cbtShapeIsCompound;
     extern fn cbtShapeIsCompound(shape: *const Shape) bool;
+
+    pub const setUserPointer = cbtShapeSetUserPointer;
+    extern fn cbtShapeSetUserPointer(shape: *const Shape, ptr: ?*anyopaque) void;
+
+    pub const getUserPointer = cbtShapeGetUserPointer;
+    extern fn cbtShapeGetUserPointer(shape: *const Shape) ?*anyopaque;
+
+    pub const setUserIndex = cbtShapeSetUserIndex;
+    extern fn cbtShapeSetUserIndex(shape: *const Shape, slot: c_int, index: c_int) void;
+
+    pub const getUserIndex = cbtShapeGetUserIndex;
+    extern fn cbtShapeGetUserIndex(shape: *const Shape, slot: c_int) c_int;
 };
 
 fn ShapeFunctions(comptime T: type) type {
@@ -110,6 +122,18 @@ fn ShapeFunctions(comptime T: type) type {
         }
         pub fn isCompound(shape: *const T) bool {
             return shape.asShape().isCompound();
+        }
+        pub fn setUserPointer(shape: *const T, ptr: ?*anyopaque) void {
+            shape.asShape().setUserPointer(ptr);
+        }
+        pub fn getUserPointer(shape: *const T) ?*anyopaque {
+            return shape.asShape().getUserPointer();
+        }
+        pub fn setUserIndex(shape: *const T, slot: c_int, index: c_int) void {
+            shape.asShape().setUserIndex(slot, index);
+        }
+        pub fn getUserIndex(shape: *const T, slot: c_int) c_int {
+            return shape.asShape().getUserIndex(slot);
         }
     };
 }
@@ -234,6 +258,15 @@ test "zbullet.shape.box" {
 
         box.getHalfExtentsWithMargin(&half_extents);
         try expect(half_extents[0] == 4.0 and half_extents[1] == 4.0 and half_extents[2] == 4.0);
+
+        box.setUserIndex(0, 123);
+        try expect(box.getUserIndex(0) == 123);
+
+        box.setUserPointer(null);
+        try expect(box.getUserPointer() == null);
+
+        box.setUserPointer(&half_extents);
+        try expect(box.getUserPointer() == @ptrCast(*anyopaque, &half_extents));
 
         const shape = box.asShape();
         try expect(shape.getType() == .box);
