@@ -39,6 +39,13 @@ pub const World = opaque {
 pub const ShapeType = enum(c_int) {
     box = 0,
     sphere = 8,
+    capsule = 10,
+};
+
+pub const Axis = enum(c_int) {
+    x = 0,
+    y = 1,
+    z = 2,
 };
 
 pub const Shape = opaque {
@@ -212,6 +219,37 @@ pub const SphereShape = opaque {
     usingnamespace ShapeFunctions(@This());
 };
 
+pub const CapsuleShape = opaque {
+    pub fn init(radius: f32, height: f32, upaxis: Axis) *const CapsuleShape {
+        const capsule = allocate();
+        capsule.create(radius, height, upaxis);
+        return capsule;
+    }
+
+    pub fn deinit(capsule: *const CapsuleShape) void {
+        capsule.destroy();
+        capsule.deallocate();
+    }
+
+    pub fn allocate() *const CapsuleShape {
+        return @ptrCast(*const CapsuleShape, Shape.allocate(.capsule));
+    }
+
+    pub const create = cbtShapeCapsuleCreate;
+    extern fn cbtShapeCapsuleCreate(capsule: *const CapsuleShape, radius: f32, height: f32, upaxis: Axis) void;
+
+    pub const getUpAxis = cbtShapeCapsuleGetUpAxis;
+    extern fn cbtShapeCapsuleGetUpAxis(capsule: *const CapsuleShape) Axis;
+
+    pub const getHalfHeight = cbtShapeCapsuleGetHalfHeight;
+    extern fn cbtShapeCapsuleGetHalfHeight(capsule: *const CapsuleShape) f32;
+
+    pub const getRadius = cbtShapeCapsuleGetRadius;
+    extern fn cbtShapeCapsuleGetRadius(capsule: *const CapsuleShape) f32;
+
+    usingnamespace ShapeFunctions(@This());
+};
+
 pub const Body = opaque {
     pub fn init(mass: f32, transform: *const [12]f32, shape: *const Shape) *const Body {
         const body = allocate();
@@ -349,6 +387,18 @@ test "zbullet.shape.sphere" {
         try expect(sphere.isCreated() == false);
         sphere.deallocate();
     }
+}
+
+test "zbullet.shape.capsule" {
+    const capsule = CapsuleShape.init(2.0, 1.0, .y);
+    defer capsule.deinit();
+    try expect(capsule.isCreated());
+    try expect(capsule.getType() == .capsule);
+    capsule.setMargin(0.1);
+    try expect(capsule.getMargin() == 2.0); // For capsules margin == radius.
+    try expect(capsule.getRadius() == 2.0);
+    try expect(capsule.getHalfHeight() == 0.5);
+    try expect(capsule.getUpAxis() == .y);
 }
 
 test "zbullet.body.basic" {
