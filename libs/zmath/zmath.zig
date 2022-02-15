@@ -67,13 +67,6 @@
 // load(mem: []const f32, comptime T: type, comptime len: u32) T
 // store(mem: []f32, v: anytype, comptime len: u32) void
 //
-// loadMat(mem: []const f32) Mat
-// loadMat43(mem: []const f32) Mat
-// loadMat34(mem: []const f32) Mat
-// storeMat(mem: []f32, m: Mat) void
-// storeMat43(mem: []f32, m: Mat) void
-// storeMat34(mem: []f32, m: Mat) void
-//
 // splat(comptime T: type, value: f32) T
 // splatInt(comptime T: type, value: u32) T
 // usplat(comptime T: type, value: u32) T
@@ -176,6 +169,17 @@
 // matFromQuat(quat: Quat) Mat
 // matFromRollPitchYaw(pitch: f32, yaw: f32, roll: f32) Mat
 // matFromRollPitchYawV(angles: Vec) Mat
+//
+// loadMat(mem: []const f32) Mat
+// loadMat43(mem: []const f32) Mat
+// loadMat34(mem: []const f32) Mat
+// storeMat(mem: []f32, m: Mat) void
+// storeMat43(mem: []f32, m: Mat) void
+// storeMat34(mem: []f32, m: Mat) void
+//
+// matToArray(m: Mat) [16]f32
+// mat43ToArray(m: Mat) [12]f32
+// mat34ToArray(m: Mat) [12]f32
 //
 // ------------------------------------------------------------------------------
 // 5. Quaternion functions
@@ -357,67 +361,6 @@ test "zmath.store" {
     try expect(a[3] == 3.0);
     try expect(a[4] == 4.0);
     try expect(a[5] == 0.0);
-}
-
-pub fn loadMat(mem: []const f32) Mat {
-    return .{
-        load(mem[0..4], F32x4, 0),
-        load(mem[4..8], F32x4, 0),
-        load(mem[8..12], F32x4, 0),
-        load(mem[12..16], F32x4, 0),
-    };
-}
-test "zmath.loadMat" {
-    const a = [18]f32{
-        1.0,  2.0,  3.0,  4.0,
-        5.0,  6.0,  7.0,  8.0,
-        9.0,  10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0, 16.0,
-        17.0, 18.0,
-    };
-    const m = loadMat(a[1..]);
-    try expect(approxEqAbs(m[0], f32x4(2.0, 3.0, 4.0, 5.0), 0.0));
-    try expect(approxEqAbs(m[1], f32x4(6.0, 7.0, 8.0, 9.0), 0.0));
-    try expect(approxEqAbs(m[2], f32x4(10.0, 11.0, 12.0, 13.0), 0.0));
-    try expect(approxEqAbs(m[3], f32x4(14.0, 15.0, 16.0, 17.0), 0.0));
-}
-
-pub fn storeMat(mem: []f32, m: Mat) void {
-    store(mem[0..4], m[0], 0);
-    store(mem[4..8], m[1], 0);
-    store(mem[8..12], m[2], 0);
-    store(mem[12..16], m[3], 0);
-}
-
-pub fn loadMat43(mem: []const f32) Mat {
-    return .{
-        f32x4(mem[0], mem[1], mem[2], 0.0),
-        f32x4(mem[3], mem[4], mem[5], 0.0),
-        f32x4(mem[6], mem[7], mem[8], 0.0),
-        f32x4(mem[9], mem[10], mem[11], 1.0),
-    };
-}
-
-pub fn storeMat43(mem: []f32, m: Mat) void {
-    store(mem[0..3], m[0], 3);
-    store(mem[3..6], m[1], 3);
-    store(mem[6..9], m[2], 3);
-    store(mem[9..12], m[3], 3);
-}
-
-pub fn loadMat34(mem: []const f32) Mat {
-    return .{
-        load(mem[0..4], F32x4, 0),
-        load(mem[4..8], F32x4, 0),
-        load(mem[8..12], F32x4, 0),
-        f32x4(0.0, 0.0, 0.0, 1.0),
-    };
-}
-
-pub fn storeMat34(mem: []f32, m: Mat) void {
-    store(mem[0..4], m[0], 0);
-    store(mem[4..8], m[1], 0);
-    store(mem[8..12], m[2], 0);
 }
 
 // ------------------------------------------------------------------------------
@@ -2519,6 +2462,85 @@ pub fn matToQuat(m: Mat) Quat {
     return quatFromMat(m);
 }
 
+pub inline fn loadMat(mem: []const f32) Mat {
+    return .{
+        load(mem[0..4], F32x4, 0),
+        load(mem[4..8], F32x4, 0),
+        load(mem[8..12], F32x4, 0),
+        load(mem[12..16], F32x4, 0),
+    };
+}
+test "zmath.loadMat" {
+    const a = [18]f32{
+        1.0,  2.0,  3.0,  4.0,
+        5.0,  6.0,  7.0,  8.0,
+        9.0,  10.0, 11.0, 12.0,
+        13.0, 14.0, 15.0, 16.0,
+        17.0, 18.0,
+    };
+    const m = loadMat(a[1..]);
+    try expect(approxEqAbs(m[0], f32x4(2.0, 3.0, 4.0, 5.0), 0.0));
+    try expect(approxEqAbs(m[1], f32x4(6.0, 7.0, 8.0, 9.0), 0.0));
+    try expect(approxEqAbs(m[2], f32x4(10.0, 11.0, 12.0, 13.0), 0.0));
+    try expect(approxEqAbs(m[3], f32x4(14.0, 15.0, 16.0, 17.0), 0.0));
+}
+
+pub inline fn storeMat(mem: []f32, m: Mat) void {
+    store(mem[0..4], m[0], 0);
+    store(mem[4..8], m[1], 0);
+    store(mem[8..12], m[2], 0);
+    store(mem[12..16], m[3], 0);
+}
+
+pub inline fn loadMat43(mem: []const f32) Mat {
+    return .{
+        f32x4(mem[0], mem[1], mem[2], 0.0),
+        f32x4(mem[3], mem[4], mem[5], 0.0),
+        f32x4(mem[6], mem[7], mem[8], 0.0),
+        f32x4(mem[9], mem[10], mem[11], 1.0),
+    };
+}
+
+pub inline fn storeMat43(mem: []f32, m: Mat) void {
+    store(mem[0..3], m[0], 3);
+    store(mem[3..6], m[1], 3);
+    store(mem[6..9], m[2], 3);
+    store(mem[9..12], m[3], 3);
+}
+
+pub inline fn loadMat34(mem: []const f32) Mat {
+    return .{
+        load(mem[0..4], F32x4, 0),
+        load(mem[4..8], F32x4, 0),
+        load(mem[8..12], F32x4, 0),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    };
+}
+
+pub inline fn storeMat34(mem: []f32, m: Mat) void {
+    store(mem[0..4], m[0], 0);
+    store(mem[4..8], m[1], 0);
+    store(mem[8..12], m[2], 0);
+}
+
+pub inline fn matToArray(m: Mat) [16]f32 {
+    var array: [16]f32 = undefined;
+    storeMat(array[0..], m);
+    return array;
+}
+
+pub inline fn mat43ToArray(m: Mat) [12]f32 {
+    var array: [12]f32 = undefined;
+    storeMat43(array[0..], m);
+    return array;
+}
+
+pub inline fn mat34ToArray(m: Mat) [12]f32 {
+    var array: [12]f32 = undefined;
+    storeMat34(array[0..], m);
+    return array;
+}
+
 // ------------------------------------------------------------------------------
 //
 // 5. Quaternion functions
@@ -3753,7 +3775,7 @@ test "zmath.floatToIntAndBack" {
     }
 }
 
-fn approxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
+pub fn approxEqAbs(v0: anytype, v1: anytype, eps: f32) bool {
     const T = @TypeOf(v0, v1);
     comptime var i: comptime_int = 0;
     inline while (i < veclen(T)) : (i += 1) {

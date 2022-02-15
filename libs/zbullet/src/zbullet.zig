@@ -69,6 +69,9 @@ pub const Shape = opaque {
     pub const isCompound = cbtShapeIsCompound;
     extern fn cbtShapeIsCompound(shape: *const Shape) bool;
 
+    pub const calculateLocalInertia = cbtShapeCalculateLocalInertia;
+    extern fn cbtShapeCalculateLocalInertia(shape: *const Shape, mass: f32, inertia: *[3]f32) void;
+
     pub const setUserPointer = cbtShapeSetUserPointer;
     extern fn cbtShapeSetUserPointer(shape: *const Shape, ptr: ?*anyopaque) void;
 
@@ -122,6 +125,9 @@ fn ShapeFunctions(comptime T: type) type {
         }
         pub fn isCompound(shape: *const T) bool {
             return shape.asShape().isCompound();
+        }
+        pub fn calculateLocalInertia(shape: *const Shape, mass: f32, inertia: *[3]f32) void {
+            shape.asShape().calculateLocalInertia(shape, mass, inertia);
         }
         pub fn setUserPointer(shape: *const T, ptr: ?*anyopaque) void {
             shape.asShape().setUserPointer(ptr);
@@ -226,6 +232,9 @@ pub const Body = opaque {
 
     pub const getShape = cbtBodyGetShape;
     extern fn cbtBodyGetShape(body: *const Body) *const Shape;
+
+    pub const getGraphicsWorldTransform = cbtBodyGetGraphicsWorldTransform;
+    extern fn cbtBodyGetGraphicsWorldTransform(body: *const Body, transform: *[12]f32) void;
 };
 
 test "zbullet.world.gravity" {
@@ -359,5 +368,27 @@ test "zbullet.body.basic" {
         try expect(body.isCreated() == false);
 
         body.deallocate();
+    }
+    {
+        const zm = @import("zmath");
+
+        const sphere = SphereShape.init(3.0);
+        defer sphere.deinit();
+
+        const body = Body.init(
+            0.0, // static body
+            &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
+            sphere.asShape(),
+        );
+        defer body.deinit();
+
+        var transform: [12]f32 = undefined;
+        body.getGraphicsWorldTransform(&transform);
+
+        const m = zm.loadMat43(transform[0..]);
+        try expect(zm.approxEqAbs(m[0], zm.f32x4(1.0, 0.0, 0.0, 0.0), 0.0001));
+        try expect(zm.approxEqAbs(m[1], zm.f32x4(0.0, 1.0, 0.0, 0.0), 0.0001));
+        try expect(zm.approxEqAbs(m[2], zm.f32x4(0.0, 0.0, 1.0, 0.0), 0.0001));
+        try expect(zm.approxEqAbs(m[3], zm.f32x4(2.0, 3.0, 4.0, 1.0), 0.0001));
     }
 }
