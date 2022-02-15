@@ -1,6 +1,5 @@
 const std = @import("std");
 const expect = std.testing.expect;
-const assert = std.debug.assert;
 
 pub const World = opaque {
     pub const init = cbtWorldCreate;
@@ -40,6 +39,7 @@ pub const ShapeType = enum(c_int) {
     box = 0,
     sphere = 8,
     capsule = 10,
+    cylinder = 13,
 };
 
 pub const Axis = enum(c_int) {
@@ -250,6 +250,37 @@ pub const CapsuleShape = opaque {
     usingnamespace ShapeFunctions(@This());
 };
 
+pub const CylinderShape = opaque {
+    pub fn init(half_extents: *const [3]f32, upaxis: Axis) *const CylinderShape {
+        const cylinder = allocate();
+        cylinder.create(half_extents, upaxis);
+        return cylinder;
+    }
+
+    pub fn deinit(cylinder: *const CylinderShape) void {
+        cylinder.destroy();
+        cylinder.deallocate();
+    }
+
+    pub fn allocate() *const CylinderShape {
+        return @ptrCast(*const CylinderShape, Shape.allocate(.cylinder));
+    }
+
+    pub const create = cbtShapeCylinderCreate;
+    extern fn cbtShapeCylinderCreate(cylinder: *const CylinderShape, half_extents: *const [3]f32, upaxis: Axis) void;
+
+    pub const getHalfExtentsWithoutMargin = cbtShapeCylinderGetHalfExtentsWithoutMargin;
+    extern fn cbtShapeCylinderGetHalfExtentsWithoutMargin(cylinder: *const CylinderShape, half_extents: *[3]f32) void;
+
+    pub const getHalfExtentsWithMargin = cbtShapeCylinderGetHalfExtentsWithMargin;
+    extern fn cbtShapeCylinderGetHalfExtentsWithMargin(cylinder: *const CylinderShape, half_extents: *[3]f32) void;
+
+    pub const getUpAxis = cbtShapeCylinderGetUpAxis;
+    extern fn cbtShapeCylinderGetUpAxis(capsule: *const CylinderShape) Axis;
+
+    usingnamespace ShapeFunctions(@This());
+};
+
 pub const Body = opaque {
     pub fn init(mass: f32, transform: *const [12]f32, shape: *const Shape) *const Body {
         const body = allocate();
@@ -399,6 +430,23 @@ test "zbullet.shape.capsule" {
     try expect(capsule.getRadius() == 2.0);
     try expect(capsule.getHalfHeight() == 0.5);
     try expect(capsule.getUpAxis() == .y);
+}
+
+test "zbullet.shape.cylinder" {
+    const cylinder = CylinderShape.init(&.{ 1.0, 2.0, 3.0 }, .y);
+    defer cylinder.deinit();
+    try expect(cylinder.isCreated());
+    try expect(cylinder.getType() == .cylinder);
+    cylinder.setMargin(0.1);
+    try expect(cylinder.getMargin() == 0.1);
+    try expect(cylinder.getUpAxis() == .y);
+
+    var half_extents: [3]f32 = undefined;
+    cylinder.getHalfExtentsWithoutMargin(&half_extents);
+    try expect(half_extents[0] == 0.9 and half_extents[1] == 1.9 and half_extents[2] == 2.9);
+
+    cylinder.getHalfExtentsWithMargin(&half_extents);
+    try expect(half_extents[0] == 1.0 and half_extents[1] == 2.0 and half_extents[2] == 3.0);
 }
 
 test "zbullet.body.basic" {
