@@ -71,6 +71,8 @@
 // splatInt(comptime T: type, value: u32) T
 // usplat(comptime T: type, value: u32) T
 //
+// vec3ToArray(v: Vec) [3]f32
+//
 // ------------------------------------------------------------------------------
 // 2. Functions that work on all vector components (F32xN = F32x4 or F32x8 or F32x16)
 // ------------------------------------------------------------------------------

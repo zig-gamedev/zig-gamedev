@@ -314,6 +314,12 @@ pub const Body = opaque {
     pub const getShape = cbtBodyGetShape;
     extern fn cbtBodyGetShape(body: *const Body) *const Shape;
 
+    pub const setRestitution = cbtBodySetRestitution;
+    extern fn cbtBodySetRestitution(body: *const Body, restitution: f32) void;
+
+    pub const getRestitution = cbtBodyGetRestitution;
+    extern fn cbtBodyGetRestitution(body: *const Body) f32;
+
     pub const getGraphicsWorldTransform = cbtBodyGetGraphicsWorldTransform;
     extern fn cbtBodyGetGraphicsWorldTransform(body: *const Body, transform: *[12]f32) void;
 };
@@ -353,6 +359,9 @@ test "zbullet.shape.box" {
 
         box.getHalfExtentsWithMargin(&half_extents);
         try expect(half_extents[0] == 4.0 and half_extents[1] == 4.0 and half_extents[2] == 4.0);
+
+        try expect(box.isPolyhedral() == true);
+        try expect(box.isConvex() == true);
 
         box.setUserIndex(0, 123);
         try expect(box.getUserIndex(0) == 123);
@@ -440,6 +449,9 @@ test "zbullet.shape.cylinder" {
     cylinder.setMargin(0.1);
     try expect(cylinder.getMargin() == 0.1);
     try expect(cylinder.getUpAxis() == .y);
+
+    try expect(cylinder.isPolyhedral() == false);
+    try expect(cylinder.isConvex() == true);
 
     var half_extents: [3]f32 = undefined;
     cylinder.getHalfExtentsWithoutMargin(&half_extents);
