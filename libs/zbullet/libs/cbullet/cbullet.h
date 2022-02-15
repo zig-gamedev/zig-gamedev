@@ -193,6 +193,20 @@ int cbtShapeGetType(CbtShapeHandle shape_handle);
 void cbtShapeSetMargin(CbtShapeHandle shape_handle, float margin);
 float cbtShapeGetMargin(CbtShapeHandle shape_handle);
 
+bool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle);
+bool cbtShapeIsConvex2d(CbtShapeHandle shape_handle);
+bool cbtShapeIsConvex(CbtShapeHandle shape_handle);
+bool cbtShapeIsNonMoving(CbtShapeHandle shape_handle);
+bool cbtShapeIsConcave(CbtShapeHandle shape_handle);
+bool cbtShapeIsCompound(CbtShapeHandle shape_handle);
+
+void cbtShapeCalculateLocalInertia(CbtShapeHandle shape_handle, float mass, CbtVector3 inertia);
+
+void cbtShapeSetUserPointer(CbtShapeHandle shape_handle, void* user_pointer);
+void* cbtShapeGetUserPointer(CbtShapeHandle shape_handle);
+void cbtShapeSetUserIndex(CbtShapeHandle shape_handle, int slot, int user_index); // slot can be 0 or 1
+int cbtShapeGetUserIndex(CbtShapeHandle shape_handle, int slot); // slot can be 0 or 1
+
 void cbtShapeBoxCreate(CbtShapeHandle shape_handle, const CbtVector3 half_extents);
 void cbtShapeBoxGetHalfExtentsWithoutMargin(CbtShapeHandle shape_handle, CbtVector3 half_extents);
 void cbtShapeBoxGetHalfExtentsWithMargin(CbtShapeHandle shape_handle, CbtVector3 half_extents);
@@ -244,20 +258,6 @@ void cbtShapeTriMeshAddIndexVertexArray(
     const void* vertex_base,
     int vertex_stride
 );
-
-bool cbtShapeIsPolyhedral(CbtShapeHandle shape_handle);
-bool cbtShapeIsConvex2d(CbtShapeHandle shape_handle);
-bool cbtShapeIsConvex(CbtShapeHandle shape_handle);
-bool cbtShapeIsNonMoving(CbtShapeHandle shape_handle);
-bool cbtShapeIsConcave(CbtShapeHandle shape_handle);
-bool cbtShapeIsCompound(CbtShapeHandle shape_handle);
-
-void cbtShapeCalculateLocalInertia(CbtShapeHandle shape_handle, float mass, CbtVector3 inertia);
-
-void cbtShapeSetUserPointer(CbtShapeHandle shape_handle, void* user_pointer);
-void* cbtShapeGetUserPointer(CbtShapeHandle shape_handle);
-void cbtShapeSetUserIndex(CbtShapeHandle shape_handle, int slot, int user_index); // slot can be 0 or 1
-int cbtShapeGetUserIndex(CbtShapeHandle shape_handle, int slot); // slot can be 0 or 1
 
 //
 // Body

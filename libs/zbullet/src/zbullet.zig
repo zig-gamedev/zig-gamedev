@@ -50,7 +50,69 @@ pub const Shape = opaque {
 
     pub const getMargin = cbtShapeGetMargin;
     extern fn cbtShapeGetMargin(shape: *const Shape) f32;
+
+    pub const isPolyhedral = cbtShapeIsPolyhedral;
+    extern fn cbtShapeIsPolyhedral(shape: *const Shape) bool;
+
+    pub const isConvex2d = cbtShapeIsConvex2d;
+    extern fn cbtShapeIsConvex2d(shape: *const Shape) bool;
+
+    pub const isConvex = cbtShapeIsConvex;
+    extern fn cbtShapeIsConvex(shape: *const Shape) bool;
+
+    pub const isNonMoving = cbtShapeIsNonMoving;
+    extern fn cbtShapeIsNonMoving(shape: *const Shape) bool;
+
+    pub const isConcave = cbtShapeIsConcave;
+    extern fn cbtShapeIsConcave(shape: *const Shape) bool;
+
+    pub const isCompound = cbtShapeIsCompound;
+    extern fn cbtShapeIsCompound(shape: *const Shape) bool;
 };
+
+fn ShapeFunctions(comptime T: type) type {
+    return struct {
+        pub fn asShape(shape: *const T) *const Shape {
+            return @ptrCast(*const Shape, shape);
+        }
+        pub fn deallocate(shape: *const T) void {
+            shape.asShape().deallocate();
+        }
+        pub fn destroy(shape: *const T) void {
+            shape.asShape().destroy();
+        }
+        pub fn isCreated(shape: *const T) bool {
+            return shape.asShape().isCreated();
+        }
+        pub fn getType(shape: *const T) ShapeType {
+            return shape.asShape().getType();
+        }
+        pub fn setMargin(shape: *const T, margin: f32) void {
+            shape.asShape().setMargin(margin);
+        }
+        pub fn getMargin(shape: *const T) f32 {
+            return shape.asShape().getMargin();
+        }
+        pub fn isPolyhedral(shape: *const T) bool {
+            return shape.asShape().isPolyhedral();
+        }
+        pub fn isConvex2d(shape: *const T) bool {
+            return shape.asShape().isConvex2d();
+        }
+        pub fn isConvex(shape: *const T) bool {
+            return shape.asShape().isConvex();
+        }
+        pub fn isNonMoving(shape: *const T) bool {
+            return shape.asShape().isNonMoving();
+        }
+        pub fn isConcave(shape: *const T) bool {
+            return shape.asShape().isConcave();
+        }
+        pub fn isCompound(shape: *const T) bool {
+            return shape.asShape().isCompound();
+        }
+    };
+}
 
 pub const BoxShape = opaque {
     pub fn init(half_extents: *const [3]f32) *const BoxShape {
@@ -64,6 +126,10 @@ pub const BoxShape = opaque {
         box.deallocate();
     }
 
+    pub fn allocate() *const BoxShape {
+        return @ptrCast(*const BoxShape, Shape.allocate(.box));
+    }
+
     pub const create = cbtShapeBoxCreate;
     extern fn cbtShapeBoxCreate(box: *const BoxShape, half_extents: *const [3]f32) void;
 
@@ -73,16 +139,7 @@ pub const BoxShape = opaque {
     pub const getHalfExtentsWithMargin = cbtShapeBoxGetHalfExtentsWithMargin;
     extern fn cbtShapeBoxGetHalfExtentsWithMargin(box: *const BoxShape, half_extents: *[3]f32) void;
 
-    // zig fmt: off
-    pub fn allocate() *const BoxShape { return @ptrCast(*const BoxShape, Shape.allocate(.box)); }
-    pub fn deallocate(shape: *const BoxShape) void { @ptrCast(*const Shape, shape).deallocate(); }
-    pub fn destroy(shape: *const BoxShape) void { @ptrCast(*const Shape, shape).destroy(); }
-    pub fn isCreated(shape: *const BoxShape) bool { return @ptrCast(*const Shape, shape).isCreated(); }
-    pub fn getType(shape: *const BoxShape) ShapeType { return @ptrCast(*const Shape, shape).getType(); }
-    pub fn setMargin(shape: *const BoxShape, margin: f32) void { @ptrCast(*const Shape, shape).setMargin(margin); }
-    pub fn getMargin(shape: *const BoxShape) f32 { return @ptrCast(*const Shape, shape).getMargin(); }
-    pub fn asShape(shape: *const BoxShape) *const Shape { return @ptrCast(*const Shape, shape); }
-    // zig fmt: on
+    usingnamespace ShapeFunctions(@This());
 };
 
 pub const SphereShape = opaque {
@@ -97,6 +154,10 @@ pub const SphereShape = opaque {
         sphere.deallocate();
     }
 
+    pub fn allocate() *const SphereShape {
+        return @ptrCast(*const SphereShape, Shape.allocate(.sphere));
+    }
+
     pub const create = cbtShapeSphereCreate;
     extern fn cbtShapeSphereCreate(sphere: *const SphereShape, radius: f32) void;
 
@@ -106,16 +167,7 @@ pub const SphereShape = opaque {
     pub const setUnscaledRadius = cbtShapeSphereSetUnscaledRadius;
     extern fn cbtShapeSphereSetUnscaledRadius(sphere: *const SphereShape, radius: f32) void;
 
-    // zig fmt: off
-    pub fn allocate() *const SphereShape { return @ptrCast(*const SphereShape, Shape.allocate(.sphere)); }
-    pub fn deallocate(shape: *const SphereShape) void { @ptrCast(*const Shape, shape).deallocate(); }
-    pub fn destroy(shape: *const SphereShape) void { @ptrCast(*const Shape, shape).destroy(); }
-    pub fn isCreated(shape: *const SphereShape) bool { return @ptrCast(*const Shape, shape).isCreated(); }
-    pub fn getType(shape: *const SphereShape) ShapeType { return @ptrCast(*const Shape, shape).getType(); }
-    pub fn setMargin(shape: *const SphereShape, margin: f32) void { @ptrCast(*const Shape, shape).setMargin(margin); }
-    pub fn getMargin(shape: *const SphereShape) f32 { return @ptrCast(*const Shape, shape).getMargin(); }
-    pub fn asShape(shape: *const SphereShape) *const Shape { return @ptrCast(*const Shape, shape); }
-    // zig fmt: on
+    usingnamespace ShapeFunctions(@This());
 };
 
 pub const Body = opaque {
