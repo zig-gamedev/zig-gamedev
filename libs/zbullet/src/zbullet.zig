@@ -22,6 +22,18 @@ pub const World = opaque {
         max_sub_steps: c_int,
         fixed_time_step: f32,
     ) c_int;
+
+    pub const addBody = cbtWorldAddBody;
+    extern fn cbtWorldAddBody(world: *const World, body: *const Body) void;
+
+    pub const removeBody = cbtWorldRemoveBody;
+    extern fn cbtWorldRemoveBody(world: *const World, body: *const Body) void;
+
+    pub const getBody = cbtWorldGetBody;
+    extern fn cbtWorldGetBody(world: *const World, index: c_int) *const Body;
+
+    pub const getNumBodies = cbtWorldGetNumBodies;
+    extern fn cbtWorldGetNumBodies(world: *const World) c_int;
 };
 
 pub const ShapeType = enum(c_int) {
@@ -238,6 +250,8 @@ pub const Body = opaque {
 };
 
 test "zbullet.world.gravity" {
+    const zm = @import("zmath");
+
     const world = World.init();
     defer world.deinit();
 
@@ -248,8 +262,11 @@ test "zbullet.world.gravity" {
 
     var gravity: [3]f32 = undefined;
     world.getGravity(&gravity);
-
     try expect(gravity[0] == 0.0 and gravity[1] == -10.0 and gravity[2] == 0.0);
+
+    world.setGravity(&zm.vec3ToArray(zm.f32x4(1.0, 2.0, 3.0, 0.0)));
+    world.getGravity(&gravity);
+    try expect(gravity[0] == 1.0 and gravity[1] == 2.0 and gravity[2] == 3.0);
 }
 
 test "zbullet.shape.box" {
@@ -336,6 +353,9 @@ test "zbullet.shape.sphere" {
 
 test "zbullet.body.basic" {
     {
+        const world = World.init();
+        defer world.deinit();
+
         const sphere = SphereShape.init(3.0);
         defer sphere.deinit();
 
@@ -349,6 +369,13 @@ test "zbullet.body.basic" {
         defer body.deinit();
         try expect(body.isCreated() == true);
         try expect(body.getShape() == sphere.asShape());
+
+        world.addBody(body);
+        try expect(world.getNumBodies() == 1);
+        try expect(world.getBody(0) == body);
+
+        world.removeBody(body);
+        try expect(world.getNumBodies() == 0);
     }
     {
         const zm = @import("zmath");
