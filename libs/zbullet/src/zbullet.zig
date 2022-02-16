@@ -40,6 +40,7 @@ pub const ShapeType = enum(c_int) {
     sphere = 8,
     capsule = 10,
     cylinder = 13,
+    compound = 31,
 };
 
 pub const Axis = enum(c_int) {
@@ -281,6 +282,63 @@ pub const CylinderShape = opaque {
     usingnamespace ShapeFunctions(@This());
 };
 
+pub const CompoundShape = opaque {
+    pub fn init(
+        params: struct {
+            enable_dynamic_aabb_tree: bool = true,
+            initial_child_capacity: c_int = 0,
+        },
+    ) *const CompoundShape {
+        const cshape = allocate();
+        cshape.create(params.enable_dynamic_aabb_tree, params.initial_child_capacity);
+        return cshape;
+    }
+
+    pub fn deinit(cshape: *const CompoundShape) void {
+        cshape.destroy();
+        cshape.deallocate();
+    }
+
+    pub fn allocate() *const CompoundShape {
+        return @ptrCast(*const CompoundShape, Shape.allocate(.compound));
+    }
+
+    pub const create = cbtShapeCompoundCreate;
+    extern fn cbtShapeCompoundCreate(
+        cshape: *const CompoundShape,
+        enable_dynamic_aabb_tree: bool,
+        initial_child_capacity: c_int,
+    ) void;
+
+    pub const addChild = cbtShapeCompoundAddChild;
+    extern fn cbtShapeCompoundAddChild(
+        cshape: *const CompoundShape,
+        local_transform: *[12]f32,
+        child_shape: *const Shape,
+    ) void;
+
+    pub const removeChild = cbtShapeCompoundRemoveChild;
+    extern fn cbtShapeCompoundRemoveChild(cshape: *const CompoundShape, child_shape: *const Shape) void;
+
+    pub const removeChildByIndex = cbtShapeCompoundRemoveChildByIndex;
+    extern fn cbtShapeCompoundRemoveChildByIndex(cshape: *const CompoundShape, index: c_int) void;
+
+    pub const getNumChilds = cbtShapeCompoundGetNumChilds;
+    extern fn cbtShapeCompoundGetNumChilds(cshape: *const CompoundShape) c_int;
+
+    pub const getChild = cbtShapeCompoundGetChild;
+    extern fn cbtShapeCompoundGetChild(cshape: *const CompoundShape, index: c_int) *const Shape;
+
+    pub const getChildTransform = cbtShapeCompoundGetChildTransform;
+    extern fn cbtShapeCompoundGetChildTransform(
+        cshape: *const CompoundShape,
+        index: c_int,
+        local_transform: *[12]f32,
+    ) void;
+
+    usingnamespace ShapeFunctions(@This());
+};
+
 pub const Body = opaque {
     pub fn init(mass: f32, transform: *const [12]f32, shape: *const Shape) *const Body {
         const body = allocate();
@@ -459,6 +517,48 @@ test "zbullet.shape.cylinder" {
 
     cylinder.getHalfExtentsWithMargin(&half_extents);
     try expect(half_extents[0] == 1.0 and half_extents[1] == 2.0 and half_extents[2] == 3.0);
+}
+
+test "zbullet.shape.compound" {
+    const zm = @import("zmath");
+
+    const cshape = CompoundShape.init(.{});
+    defer cshape.deinit();
+    try expect(cshape.isCreated());
+    try expect(cshape.getType() == .compound);
+
+    try expect(cshape.isPolyhedral() == false);
+    try expect(cshape.isConvex() == false);
+    try expect(cshape.isCompound() == true);
+
+    const sphere = SphereShape.init(3.0);
+    defer sphere.deinit();
+
+    const box = BoxShape.init(&.{ 1.0, 2.0, 3.0 });
+    defer box.deinit();
+
+    cshape.addChild(&zm.mat43ToArray(zm.translation(1.0, 2.0, 3.0)), sphere.asShape());
+    cshape.addChild(&zm.mat43ToArray(zm.translation(-1.0, -2.0, -3.0)), box.asShape());
+    try expect(cshape.getNumChilds() == 2);
+
+    try expect(cshape.getChild(0) == sphere.asShape());
+    try expect(cshape.getChild(1) == box.asShape());
+
+    var transform: [12]f32 = undefined;
+    cshape.getChildTransform(1, &transform);
+
+    const m = zm.loadMat43(transform[0..]);
+    try expect(zm.approxEqAbs(m[0], zm.f32x4(1.0, 0.0, 0.0, 0.0), 0.0001));
+    try expect(zm.approxEqAbs(m[1], zm.f32x4(0.0, 1.0, 0.0, 0.0), 0.0001));
+    try expect(zm.approxEqAbs(m[2], zm.f32x4(0.0, 0.0, 1.0, 0.0), 0.0001));
+    try expect(zm.approxEqAbs(m[3], zm.f32x4(-1.0, -2.0, -3.0, 1.0), 0.0001));
+
+    cshape.removeChild(sphere.asShape());
+    try expect(cshape.getNumChilds() == 1);
+    try expect(cshape.getChild(0) == box.asShape());
+
+    cshape.removeChildByIndex(0);
+    try expect(cshape.getNumChilds() == 0);
 }
 
 test "zbullet.body.basic" {
