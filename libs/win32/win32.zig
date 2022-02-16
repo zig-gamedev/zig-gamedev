@@ -2,6 +2,7 @@ pub const base = @import("windows.zig");
 pub const dwrite = @import("dwrite.zig");
 pub const dxgi = @import("dxgi.zig");
 pub const d3d11 = @import("d3d11.zig");
+pub const d3d11d = @import("d3d11sdklayers.zig");
 pub const d3d12 = @import("d3d12.zig");
 pub const d3d12d = @import("d3d12sdklayers.zig");
 pub const d3d = @import("d3dcommon.zig");
