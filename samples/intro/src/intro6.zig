@@ -56,6 +56,10 @@ const DemoState = struct {
     mesh_num_vertices: u32,
     mesh_num_indices: u32,
 
+    physics: struct {
+        world: *const zbt.World,
+        shapes: std.ArrayList(*const zbt.Shape),
+    },
     camera: struct {
         position: [3]f32,
         forward: [3]f32,
@@ -158,7 +162,21 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     );
 
     const physics_world = zbt.World.init(.{});
-    defer physics_world.deinit();
+    const physics_shapes = blk: {
+        var shapes = std.ArrayList(*const zbt.Shape).init(gpa_allocator);
+
+        const box_shape = zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 }).asShape();
+        shapes.append(box_shape) catch unreachable;
+
+        const body = zbt.Body.init(
+            1.0,
+            &zm.mat43ToArray(zm.translation(0.0, 3.0, 0.0)),
+            box_shape,
+        );
+        physics_world.addBody(body);
+
+        break :blk shapes;
+    };
 
     // Open D3D12 command list, setup descriptor heap, etc. After this call we can upload resources to the GPU,
     // draw 3D graphics etc.
@@ -228,6 +246,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .depth_texture_dsv = depth_texture_dsv,
         .mesh_num_vertices = mesh_num_vertices,
         .mesh_num_indices = mesh_num_indices,
+        .physics = .{
+            .world = physics_world,
+            .shapes = physics_shapes,
+        },
         .camera = .{
             .position = [3]f32{ 0.0, 10.0, -10.0 },
             .forward = [3]f32{ 0.0, 0.0, 1.0 },
@@ -243,6 +265,17 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
+    {
+        var i = demo.physics.world.getNumBodies() - 1;
+        while (i >= 0) : (i -= 1) {
+            const body = demo.physics.world.getBody(i);
+            demo.physics.world.removeBody(body);
+            body.deinit();
+        }
+    }
+    for (demo.physics.shapes.items) |shape| shape.deinit();
+    demo.physics.shapes.deinit();
+    demo.physics.world.deinit();
     _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);

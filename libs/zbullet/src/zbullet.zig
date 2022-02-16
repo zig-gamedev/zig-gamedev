@@ -8,7 +8,10 @@ pub const World = opaque {
     }
     extern fn cbtWorldCreate() *const World;
 
-    pub const deinit = cbtWorldDestroy;
+    pub fn deinit(world: *const World) void {
+        std.debug.assert(world.getNumBodies() == 0);
+        cbtWorldDestroy(world);
+    }
     extern fn cbtWorldDestroy(world: *const World) void;
 
     pub const setGravity = cbtWorldSetGravity;
@@ -59,6 +62,11 @@ pub const Shape = opaque {
 
     pub const deallocate = cbtShapeDeallocate;
     extern fn cbtShapeDeallocate(shape: *const Shape) void;
+
+    pub fn deinit(shape: *const Shape) void {
+        shape.destroy();
+        shape.deallocate();
+    }
 
     pub fn destroy(shape: *const Shape) void {
         switch (shape.getType()) {
@@ -131,6 +139,9 @@ fn ShapeFunctions(comptime T: type) type {
         pub fn destroy(shape: *const T) void {
             shape.asShape().destroy();
         }
+        pub fn deinit(shape: *const T) void {
+            shape.asShape().deinit();
+        }
         pub fn isCreated(shape: *const T) bool {
             return shape.asShape().isCreated();
         }
@@ -186,11 +197,6 @@ pub const BoxShape = opaque {
         return box;
     }
 
-    pub fn deinit(box: *const BoxShape) void {
-        box.destroy();
-        box.deallocate();
-    }
-
     pub fn allocate() *const BoxShape {
         return @ptrCast(*const BoxShape, Shape.allocate(.box));
     }
@@ -214,11 +220,6 @@ pub const SphereShape = opaque {
         return sphere;
     }
 
-    pub fn deinit(sphere: *const SphereShape) void {
-        sphere.destroy();
-        sphere.deallocate();
-    }
-
     pub fn allocate() *const SphereShape {
         return @ptrCast(*const SphereShape, Shape.allocate(.sphere));
     }
@@ -240,11 +241,6 @@ pub const CapsuleShape = opaque {
         const capsule = allocate();
         capsule.create(radius, height, upaxis);
         return capsule;
-    }
-
-    pub fn deinit(capsule: *const CapsuleShape) void {
-        capsule.destroy();
-        capsule.deallocate();
     }
 
     pub fn allocate() *const CapsuleShape {
@@ -271,11 +267,6 @@ pub const CylinderShape = opaque {
         const cylinder = allocate();
         cylinder.create(half_extents, upaxis);
         return cylinder;
-    }
-
-    pub fn deinit(cylinder: *const CylinderShape) void {
-        cylinder.destroy();
-        cylinder.deallocate();
     }
 
     pub fn allocate() *const CylinderShape {
@@ -307,11 +298,6 @@ pub const CompoundShape = opaque {
         const cshape = allocate();
         cshape.create(params.enable_dynamic_aabb_tree, params.initial_child_capacity);
         return cshape;
-    }
-
-    pub fn deinit(cshape: *const CompoundShape) void {
-        cshape.destroy();
-        cshape.deallocate();
     }
 
     pub fn allocate() *const CompoundShape {
@@ -359,11 +345,6 @@ pub const TriangleMeshShape = opaque {
         const trimesh = allocate();
         trimesh.createBegin();
         return trimesh;
-    }
-
-    pub fn deinit(trimesh: *const TriangleMeshShape) void {
-        trimesh.destroy();
-        trimesh.deallocate();
     }
 
     pub fn finalize(trimesh: *const TriangleMeshShape) void {
