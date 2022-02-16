@@ -101,55 +101,64 @@ pub fn build(b: *std.build.Builder) void {
 
     install_content_step.step.dependOn(dxc_step);
 
-    const progs = [_]*std.build.LibExeObjStep{
-        b.addExecutable("intro0", "src/intro0.zig"),
-        b.addExecutable("intro1", "src/intro1.zig"),
-        b.addExecutable("intro2", "src/intro2.zig"),
-        b.addExecutable("intro3", "src/intro3.zig"),
-        b.addExecutable("intro4", "src/intro4.zig"),
-        b.addExecutable("intro5", "src/intro5.zig"),
+    const Program = struct {
+        exe: *std.build.LibExeObjStep,
+        deps: struct {
+            cgltf: bool = false,
+            zbullet: bool = false,
+        },
+    };
+
+    const progs = [_]Program{
+        .{ .exe = b.addExecutable("intro0", "src/intro0.zig"), .deps = .{} },
+        .{ .exe = b.addExecutable("intro1", "src/intro1.zig"), .deps = .{} },
+        .{ .exe = b.addExecutable("intro2", "src/intro2.zig"), .deps = .{ .cgltf = true } },
+        .{ .exe = b.addExecutable("intro3", "src/intro3.zig"), .deps = .{ .cgltf = true } },
+        .{ .exe = b.addExecutable("intro4", "src/intro4.zig"), .deps = .{ .cgltf = true } },
+        .{ .exe = b.addExecutable("intro5", "src/intro5.zig"), .deps = .{ .cgltf = true } },
+        .{ .exe = b.addExecutable("intro6", "src/intro6.zig"), .deps = .{ .cgltf = true, .zbullet = true } },
     };
     const active_prog = progs[5];
     const target_options = b.standardTargetOptions(.{});
     const release_options = b.standardReleaseOptions();
 
-    for (progs) |exe| {
-        exe.setBuildMode(release_options);
-        exe.setTarget(target_options);
-        exe.addOptions("build_options", exe_options);
+    for (progs) |prog| {
+        prog.exe.setBuildMode(release_options);
+        prog.exe.setTarget(target_options);
+        prog.exe.addOptions("build_options", exe_options);
 
         if (tracy) |tracy_path| {
             const client_cpp = std.fs.path.join(
                 b.allocator,
                 &[_][]const u8{ tracy_path, "TracyClient.cpp" },
             ) catch unreachable;
-            exe.addIncludeDir(tracy_path);
-            exe.addCSourceFile(client_cpp, &[_][]const u8{
+            prog.exe.addIncludeDir(tracy_path);
+            prog.exe.addCSourceFile(client_cpp, &[_][]const u8{
                 "-DTRACY_ENABLE=1",
                 "-fno-sanitize=undefined",
                 "-D_WIN32_WINNT=0x601",
             });
-            exe.linkSystemLibrary("ws2_32");
-            exe.linkSystemLibrary("dbghelp");
+            prog.exe.linkSystemLibrary("ws2_32");
+            prog.exe.linkSystemLibrary("dbghelp");
         }
 
         // This is needed to export symbols from an .exe file.
         // We export D3D12SDKVersion and D3D12SDKPath symbols which
         // is required by DirectX 12 Agility SDK.
-        exe.rdynamic = true;
-        exe.want_lto = false;
+        prog.exe.rdynamic = true;
+        prog.exe.want_lto = false;
 
         const pkg_win32 = Pkg{
             .name = "win32",
             .path = .{ .path = "../../libs/win32/win32.zig" },
         };
-        exe.addPackage(pkg_win32);
+        prog.exe.addPackage(pkg_win32);
 
         const pkg_zmath = Pkg{
             .name = "zmath",
             .path = .{ .path = "../../libs/zmath/zmath.zig" },
         };
-        exe.addPackage(pkg_zmath);
+        prog.exe.addPackage(pkg_zmath);
 
         const pkg_common = Pkg{
             .name = "common",
@@ -167,28 +176,45 @@ pub fn build(b: *std.build.Builder) void {
                 },
             },
         };
-        exe.addPackage(pkg_common);
+        prog.exe.addPackage(pkg_common);
 
         const external = "../../external/src";
-        exe.addIncludeDir(external);
+        prog.exe.addIncludeDir(external);
 
-        exe.linkSystemLibrary("c");
-        exe.linkSystemLibrary("c++");
-        exe.linkSystemLibrary("imm32");
+        prog.exe.linkSystemLibrary("c");
+        prog.exe.linkSystemLibrary("c++");
+        prog.exe.linkSystemLibrary("imm32");
 
-        exe.addCSourceFile(external ++ "/imgui/imgui.cpp", &[_][]const u8{""});
-        exe.addCSourceFile(external ++ "/imgui/imgui_widgets.cpp", &[_][]const u8{""});
-        exe.addCSourceFile(external ++ "/imgui/imgui_tables.cpp", &[_][]const u8{""});
-        exe.addCSourceFile(external ++ "/imgui/imgui_draw.cpp", &[_][]const u8{""});
-        exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &[_][]const u8{""});
-        exe.addCSourceFile(external ++ "/cimgui.cpp", &[_][]const u8{""});
+        prog.exe.addCSourceFile(external ++ "/imgui/imgui.cpp", &.{""});
+        prog.exe.addCSourceFile(external ++ "/imgui/imgui_widgets.cpp", &.{""});
+        prog.exe.addCSourceFile(external ++ "/imgui/imgui_tables.cpp", &.{""});
+        prog.exe.addCSourceFile(external ++ "/imgui/imgui_draw.cpp", &.{""});
+        prog.exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &.{""});
+        prog.exe.addCSourceFile(external ++ "/cimgui.cpp", &.{""});
 
-        exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{""});
+        if (prog.deps.cgltf) {
+            prog.exe.addCSourceFile(external ++ "/cgltf.c", &.{""});
+        }
 
-        exe.install();
+        if (prog.deps.zbullet) {
+            const zbullet = Pkg{
+                .name = "zbullet",
+                .path = .{ .path = "../../libs/zbullet/src/zbullet.zig" },
+            };
+            prog.exe.addPackage(zbullet);
+
+            prog.exe.addIncludeDir("../../libs/zbullet/libs/cbullet");
+            prog.exe.addIncludeDir("../../libs/zbullet/libs/bullet");
+            prog.exe.addCSourceFile("../../libs/zbullet/libs/cbullet/cbullet.cpp", &.{""});
+            prog.exe.addCSourceFile("../../libs/zbullet/libs/bullet/btLinearMathAll.cpp", &.{""});
+            prog.exe.addCSourceFile("../../libs/zbullet/libs/bullet/btBulletCollisionAll.cpp", &.{""});
+            prog.exe.addCSourceFile("../../libs/zbullet/libs/bullet/btBulletDynamicsAll.cpp", &.{""});
+        }
+
+        prog.exe.install();
     }
 
-    const run_cmd = active_prog.run();
+    const run_cmd = active_prog.exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);

@@ -2,7 +2,10 @@ const std = @import("std");
 const expect = std.testing.expect;
 
 pub const World = opaque {
-    pub const init = cbtWorldCreate;
+    pub fn init(params: struct {}) *const World {
+        _ = params;
+        return cbtWorldCreate();
+    }
     extern fn cbtWorldCreate() *const World;
 
     pub const deinit = cbtWorldDestroy;
@@ -437,7 +440,7 @@ pub const Body = opaque {
 test "zbullet.world.gravity" {
     const zm = @import("zmath");
 
-    const world = World.init();
+    const world = World.init(.{});
     defer world.deinit();
 
     world.setGravity(&.{ 0.0, -10.0, 0.0 });
@@ -634,7 +637,7 @@ test "zbullet.shape.trimesh" {
 
 test "zbullet.body.basic" {
     {
-        const world = World.init();
+        const world = World.init(.{});
         defer world.deinit();
 
         const sphere = SphereShape.init(3.0);
