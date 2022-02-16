@@ -191,6 +191,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         depth_texture_dsv,
     );
 
+    const physics_world = zbt.World.init(.{});
+    defer physics_world.deinit();
+
     // Open D3D12 command list, setup descriptor heap, etc. After this call we can upload resources to the GPU,
     // draw 3D graphics etc.
     gctx.beginFrame();
@@ -386,9 +389,6 @@ fn draw(demo: *DemoState) void {
         200.0,
     );
     const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
-
-    const physics_world = zbt.World.init(.{});
-    defer physics_world.deinit();
 
     // Begin DirectX 12 rendering.
     gctx.beginFrame();
