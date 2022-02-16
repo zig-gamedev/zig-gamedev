@@ -41,6 +41,7 @@ pub const ShapeType = enum(c_int) {
     capsule = 10,
     cylinder = 13,
     compound = 31,
+    trimesh = 21,
 };
 
 pub const Axis = enum(c_int) {
@@ -56,8 +57,19 @@ pub const Shape = opaque {
     pub const deallocate = cbtShapeDeallocate;
     extern fn cbtShapeDeallocate(shape: *const Shape) void;
 
-    pub const destroy = cbtShapeDestroy;
+    pub fn destroy(shape: *const Shape) void {
+        switch (shape.getType()) {
+            .box,
+            .sphere,
+            .capsule,
+            .cylinder,
+            .compound,
+            => cbtShapeDestroy(shape),
+            .trimesh => cbtShapeTriMeshDestroy(shape),
+        }
+    }
     extern fn cbtShapeDestroy(shape: *const Shape) void;
+    extern fn cbtShapeTriMeshDestroy(shape: *const Shape) void;
 
     pub const isCreated = cbtShapeIsCreated;
     extern fn cbtShapeIsCreated(shape: *const Shape) bool;
@@ -339,6 +351,46 @@ pub const CompoundShape = opaque {
     usingnamespace ShapeFunctions(@This());
 };
 
+pub const TriangleMeshShape = opaque {
+    pub fn init() *const TriangleMeshShape {
+        const trimesh = allocate();
+        trimesh.createBegin();
+        return trimesh;
+    }
+
+    pub fn deinit(trimesh: *const TriangleMeshShape) void {
+        trimesh.destroy();
+        trimesh.deallocate();
+    }
+
+    pub fn finalize(trimesh: *const TriangleMeshShape) void {
+        trimesh.createEnd();
+    }
+
+    pub fn allocate() *const TriangleMeshShape {
+        return @ptrCast(*const TriangleMeshShape, Shape.allocate(.trimesh));
+    }
+
+    pub const addIndexVertexArray = cbtShapeTriMeshAddIndexVertexArray;
+    extern fn cbtShapeTriMeshAddIndexVertexArray(
+        trimesh: *const TriangleMeshShape,
+        num_triangles: c_int,
+        triangles_base: *const anyopaque,
+        triangle_stride: c_int,
+        num_vertices: c_int,
+        vertices_base: *const anyopaque,
+        vertex_stride: c_int,
+    ) void;
+
+    pub const createBegin = cbtShapeTriMeshCreateBegin;
+    extern fn cbtShapeTriMeshCreateBegin(trimesh: *const TriangleMeshShape) void;
+
+    pub const createEnd = cbtShapeTriMeshCreateEnd;
+    extern fn cbtShapeTriMeshCreateEnd(trimesh: *const TriangleMeshShape) void;
+
+    usingnamespace ShapeFunctions(@This());
+};
+
 pub const Body = opaque {
     pub fn init(mass: f32, transform: *const [12]f32, shape: *const Shape) *const Body {
         const body = allocate();
@@ -559,6 +611,25 @@ test "zbullet.shape.compound" {
 
     cshape.removeChildByIndex(0);
     try expect(cshape.getNumChilds() == 0);
+}
+
+test "zbullet.shape.trimesh" {
+    const trimesh = TriangleMeshShape.init();
+    const triangles = [3]u32{ 0, 1, 2 };
+    const vertices = [_]f32{0.0} ** 9;
+    trimesh.addIndexVertexArray(
+        1, // num_triangles
+        &triangles, // triangles_base
+        12, // triangle_stride
+        3, // num_vertices
+        &vertices, // vertices_base
+        12, // vertex_stride
+    );
+    trimesh.finalize();
+    defer trimesh.deinit();
+    try expect(trimesh.isCreated());
+    try expect(trimesh.isNonMoving());
+    try expect(trimesh.getType() == .trimesh);
 }
 
 test "zbullet.body.basic" {
