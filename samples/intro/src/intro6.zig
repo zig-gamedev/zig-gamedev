@@ -1,5 +1,3 @@
-// This intro application shows how to draw multiple objects in 3D space and how to implement simple camera movement.
-
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
@@ -47,9 +45,6 @@ const DemoState = struct {
     guictx: gfx.GuiContext,
     frame_stats: lib.FrameStats,
 
-    brush: *d2d1.ISolidColorBrush,
-    normal_tfmt: *dwrite.ITextFormat,
-
     intro3_pso: gfx.PipelineHandle,
 
     vertex_buffer: gfx.ResourceHandle,
@@ -85,35 +80,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     // Create DirectX 12 context.
     var gctx = gfx.GraphicsContext.init(window);
-
-    // Create Direct2D brush which will be needed to display text.
-    const brush = blk: {
-        var brush: ?*d2d1.ISolidColorBrush = null;
-        hrPanicOnFail(gctx.d2d.context.CreateSolidColorBrush(
-            &.{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
-            null,
-            &brush,
-        ));
-        break :blk brush.?;
-    };
-
-    // Create Direct2D text format which will be needed to display text.
-    const normal_tfmt = blk: {
-        var info_txtfmt: ?*dwrite.ITextFormat = null;
-        hrPanicOnFail(gctx.dwrite_factory.CreateTextFormat(
-            L("Verdana"),
-            null,
-            .BOLD,
-            .NORMAL,
-            .NORMAL,
-            32.0,
-            L("en-us"),
-            &info_txtfmt,
-        ));
-        break :blk info_txtfmt.?;
-    };
-    hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
-    hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
 
     const intro3_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -255,8 +221,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .gctx = gctx,
         .guictx = guictx,
         .frame_stats = lib.FrameStats.init(),
-        .brush = brush,
-        .normal_tfmt = normal_tfmt,
         .intro3_pso = intro3_pso,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
@@ -283,8 +247,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
     _ = demo.gctx.releasePipeline(demo.intro3_pso);
-    _ = demo.brush.Release();
-    _ = demo.normal_tfmt.Release();
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     lib.deinitWindow(gpa_allocator);
@@ -412,8 +374,7 @@ fn draw(demo: *DemoState) void {
     );
     gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
 
-    // Set graphics state and draw.
-    gctx.setCurrentPipeline(demo.intro3_pso);
+    // Set input assembler (IA) state.
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
@@ -425,6 +386,8 @@ fn draw(demo: *DemoState) void {
         .SizeInBytes = demo.mesh_num_indices * @sizeOf(u32),
         .Format = .R32_UINT,
     });
+
+    gctx.setCurrentPipeline(demo.intro3_pso);
 
     // Upload per-frame constant data (camera xform).
     {
@@ -472,35 +435,8 @@ fn draw(demo: *DemoState) void {
     // Draw dear imgui widgets.
     demo.guictx.draw(gctx);
 
-    // Begin Direct2D rendering to the back buffer.
-    gctx.beginDraw2d();
-    {
-        // Display average fps and frame time.
-
-        const stats = &demo.frame_stats;
-        var buffer = [_]u8{0} ** 64;
-        const text = std.fmt.bufPrint(
-            buffer[0..],
-            "FPS: {d:.1}\nCPU time: {d:.3} ms",
-            .{ stats.fps, stats.average_cpu_time },
-        ) catch unreachable;
-
-        demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
-            gctx.d2d.context,
-            text,
-            demo.normal_tfmt,
-            &d2d1.RECT_F{
-                .left = 10.0,
-                .top = 10.0,
-                .right = @intToFloat(f32, gctx.viewport_width),
-                .bottom = @intToFloat(f32, gctx.viewport_height),
-            },
-            @ptrCast(*d2d1.IBrush, demo.brush),
-        );
-    }
-    // End Direct2D rendering and transition back buffer to 'present' state.
-    gctx.endDraw2d();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.flushResourceBarriers();
 
     // Call 'Present' and prepare for the next frame.
     gctx.endFrame();
