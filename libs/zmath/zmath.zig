@@ -1932,12 +1932,15 @@ test "zmath.vecMulMat" {
 // ------------------------------------------------------------------------------
 
 pub fn identity() Mat {
-    return .{
-        f32x4(1.0, 0.0, 0.0, 0.0),
-        f32x4(0.0, 1.0, 0.0, 0.0),
-        f32x4(0.0, 0.0, 1.0, 0.0),
-        f32x4(0.0, 0.0, 0.0, 1.0),
+    const static = struct {
+        const identity = Mat{
+            f32x4(1.0, 0.0, 0.0, 0.0),
+            f32x4(0.0, 1.0, 0.0, 0.0),
+            f32x4(0.0, 0.0, 1.0, 0.0),
+            f32x4(0.0, 0.0, 0.0, 1.0),
+        };
     };
+    return static.identity;
 }
 
 fn mulRetType(comptime Ta: type, comptime Tb: type) type {
@@ -2171,7 +2174,6 @@ pub fn perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
 }
 
 pub fn orthographicLh(w: f32, h: f32, near: f32, far: f32) Mat {
-    assert(near >= 0 and far > near);
     assert(!math.approxEqAbs(f32, w, 0.0, 0.001));
     assert(!math.approxEqAbs(f32, h, 0.0, 0.001));
     assert(!math.approxEqAbs(f32, far, near, 0.001));
@@ -2185,7 +2187,6 @@ pub fn orthographicLh(w: f32, h: f32, near: f32, far: f32) Mat {
     };
 }
 pub fn orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat {
-    assert(near >= 0 and far > near);
     assert(!math.approxEqAbs(f32, w, 0.0, 0.001));
     assert(!math.approxEqAbs(f32, h, 0.0, 0.001));
     assert(!math.approxEqAbs(f32, far, near, 0.001));
