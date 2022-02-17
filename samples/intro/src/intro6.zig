@@ -161,18 +161,18 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         depth_texture_dsv,
     );
 
-    const physics_world = zbt.World.init(.{});
+    const physics_world = zbt.World.init(.{}) catch unreachable;
     const physics_shapes = blk: {
         var shapes = std.ArrayList(*const zbt.Shape).init(gpa_allocator);
 
-        const box_shape = zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 }).asShape();
-        shapes.append(box_shape) catch unreachable;
+        const box_shape = zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 }) catch unreachable;
+        shapes.append(box_shape.asShape()) catch unreachable;
 
         const body = zbt.Body.init(
             1.0,
             &zm.mat43ToArray(zm.translation(0.0, 3.0, 0.0)),
-            box_shape,
-        );
+            box_shape.asShape(),
+        ) catch unreachable;
         physics_world.addBody(body);
 
         break :blk shapes;

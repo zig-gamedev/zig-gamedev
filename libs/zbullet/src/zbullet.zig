@@ -2,11 +2,15 @@ const std = @import("std");
 const expect = std.testing.expect;
 
 pub const World = opaque {
-    pub fn init(params: struct {}) *const World {
+    pub fn init(params: struct {}) Error!*const World {
         _ = params;
-        return cbtWorldCreate();
+        const ptr = cbtWorldCreate();
+        if (ptr == null) {
+            return error.OutOfMemory;
+        }
+        return ptr.?;
     }
-    extern fn cbtWorldCreate() *const World;
+    extern fn cbtWorldCreate() ?*const World;
 
     pub fn deinit(world: *const World) void {
         std.debug.assert(world.getNumBodies() == 0);
@@ -56,9 +60,17 @@ pub const Axis = enum(c_int) {
     z = 2,
 };
 
+pub const Error = error{OutOfMemory};
+
 pub const Shape = opaque {
-    pub const allocate = cbtShapeAllocate;
-    extern fn cbtShapeAllocate(stype: ShapeType) *const Shape;
+    pub fn allocate(stype: ShapeType) Error!*const Shape {
+        const ptr = cbtShapeAllocate(stype);
+        if (ptr == null) {
+            return error.OutOfMemory;
+        }
+        return ptr.?;
+    }
+    extern fn cbtShapeAllocate(stype: ShapeType) ?*const Shape;
 
     pub const deallocate = cbtShapeDeallocate;
     extern fn cbtShapeDeallocate(shape: *const Shape) void;
@@ -191,14 +203,14 @@ fn ShapeFunctions(comptime T: type) type {
 }
 
 pub const BoxShape = opaque {
-    pub fn init(half_extents: *const [3]f32) *const BoxShape {
-        const box = allocate();
+    pub fn init(half_extents: *const [3]f32) Error!*const BoxShape {
+        const box = try allocate();
         box.create(half_extents);
         return box;
     }
 
-    pub fn allocate() *const BoxShape {
-        return @ptrCast(*const BoxShape, Shape.allocate(.box));
+    pub fn allocate() Error!*const BoxShape {
+        return @ptrCast(*const BoxShape, try Shape.allocate(.box));
     }
 
     pub const create = cbtShapeBoxCreate;
@@ -214,14 +226,14 @@ pub const BoxShape = opaque {
 };
 
 pub const SphereShape = opaque {
-    pub fn init(radius: f32) *const SphereShape {
-        const sphere = allocate();
+    pub fn init(radius: f32) Error!*const SphereShape {
+        const sphere = try allocate();
         sphere.create(radius);
         return sphere;
     }
 
-    pub fn allocate() *const SphereShape {
-        return @ptrCast(*const SphereShape, Shape.allocate(.sphere));
+    pub fn allocate() Error!*const SphereShape {
+        return @ptrCast(*const SphereShape, try Shape.allocate(.sphere));
     }
 
     pub const create = cbtShapeSphereCreate;
@@ -237,14 +249,14 @@ pub const SphereShape = opaque {
 };
 
 pub const CapsuleShape = opaque {
-    pub fn init(radius: f32, height: f32, upaxis: Axis) *const CapsuleShape {
-        const capsule = allocate();
+    pub fn init(radius: f32, height: f32, upaxis: Axis) Error!*const CapsuleShape {
+        const capsule = try allocate();
         capsule.create(radius, height, upaxis);
         return capsule;
     }
 
-    pub fn allocate() *const CapsuleShape {
-        return @ptrCast(*const CapsuleShape, Shape.allocate(.capsule));
+    pub fn allocate() Error!*const CapsuleShape {
+        return @ptrCast(*const CapsuleShape, try Shape.allocate(.capsule));
     }
 
     pub const create = cbtShapeCapsuleCreate;
@@ -263,14 +275,14 @@ pub const CapsuleShape = opaque {
 };
 
 pub const CylinderShape = opaque {
-    pub fn init(half_extents: *const [3]f32, upaxis: Axis) *const CylinderShape {
-        const cylinder = allocate();
+    pub fn init(half_extents: *const [3]f32, upaxis: Axis) Error!*const CylinderShape {
+        const cylinder = try allocate();
         cylinder.create(half_extents, upaxis);
         return cylinder;
     }
 
-    pub fn allocate() *const CylinderShape {
-        return @ptrCast(*const CylinderShape, Shape.allocate(.cylinder));
+    pub fn allocate() Error!*const CylinderShape {
+        return @ptrCast(*const CylinderShape, try Shape.allocate(.cylinder));
     }
 
     pub const create = cbtShapeCylinderCreate;
@@ -294,14 +306,14 @@ pub const CompoundShape = opaque {
             enable_dynamic_aabb_tree: bool = true,
             initial_child_capacity: c_int = 0,
         },
-    ) *const CompoundShape {
-        const cshape = allocate();
+    ) Error!*const CompoundShape {
+        const cshape = try allocate();
         cshape.create(params.enable_dynamic_aabb_tree, params.initial_child_capacity);
         return cshape;
     }
 
-    pub fn allocate() *const CompoundShape {
-        return @ptrCast(*const CompoundShape, Shape.allocate(.compound));
+    pub fn allocate() Error!*const CompoundShape {
+        return @ptrCast(*const CompoundShape, try Shape.allocate(.compound));
     }
 
     pub const create = cbtShapeCompoundCreate;
@@ -341,8 +353,8 @@ pub const CompoundShape = opaque {
 };
 
 pub const TriangleMeshShape = opaque {
-    pub fn init() *const TriangleMeshShape {
-        const trimesh = allocate();
+    pub fn init() Error!*const TriangleMeshShape {
+        const trimesh = try allocate();
         trimesh.createBegin();
         return trimesh;
     }
@@ -351,8 +363,8 @@ pub const TriangleMeshShape = opaque {
         trimesh.createEnd();
     }
 
-    pub fn allocate() *const TriangleMeshShape {
-        return @ptrCast(*const TriangleMeshShape, Shape.allocate(.trimesh));
+    pub fn allocate() Error!*const TriangleMeshShape {
+        return @ptrCast(*const TriangleMeshShape, try Shape.allocate(.trimesh));
     }
 
     pub const addIndexVertexArray = cbtShapeTriMeshAddIndexVertexArray;
@@ -376,8 +388,8 @@ pub const TriangleMeshShape = opaque {
 };
 
 pub const Body = opaque {
-    pub fn init(mass: f32, transform: *const [12]f32, shape: *const Shape) *const Body {
-        const body = allocate();
+    pub fn init(mass: f32, transform: *const [12]f32, shape: *const Shape) Error!*const Body {
+        const body = try allocate();
         body.create(mass, transform, shape);
         return body;
     }
@@ -387,8 +399,14 @@ pub const Body = opaque {
         body.deallocate();
     }
 
-    pub const allocate = cbtBodyAllocate;
-    extern fn cbtBodyAllocate() *const Body;
+    pub fn allocate() Error!*const Body {
+        const ptr = cbtBodyAllocate();
+        if (ptr == null) {
+            return error.OutOfMemory;
+        }
+        return ptr.?;
+    }
+    extern fn cbtBodyAllocate() ?*const Body;
 
     pub const deallocate = cbtBodyDeallocate;
     extern fn cbtBodyDeallocate(body: *const Body) void;
@@ -421,7 +439,7 @@ pub const Body = opaque {
 test "zbullet.world.gravity" {
     const zm = @import("zmath");
 
-    const world = World.init(.{});
+    const world = try World.init(.{});
     defer world.deinit();
 
     world.setGravity(&.{ 0.0, -10.0, 0.0 });
@@ -440,7 +458,7 @@ test "zbullet.world.gravity" {
 
 test "zbullet.shape.box" {
     {
-        const box = BoxShape.init(&.{ 4.0, 4.0, 4.0 });
+        const box = try BoxShape.init(&.{ 4.0, 4.0, 4.0 });
         defer box.deinit();
         try expect(box.isCreated());
         try expect(box.getType() == .box);
@@ -471,7 +489,7 @@ test "zbullet.shape.box" {
         try expect(shape.isCreated());
     }
     {
-        const box = BoxShape.allocate();
+        const box = try BoxShape.allocate();
         defer box.deallocate();
         try expect(box.isCreated() == false);
 
@@ -484,7 +502,7 @@ test "zbullet.shape.box" {
 
 test "zbullet.shape.sphere" {
     {
-        const sphere = SphereShape.init(3.0);
+        const sphere = try SphereShape.init(3.0);
         defer sphere.deinit();
         try expect(sphere.isCreated());
         try expect(sphere.getType() == .sphere);
@@ -501,7 +519,8 @@ test "zbullet.shape.sphere" {
         try expect(shape.isCreated());
     }
     {
-        const sphere = SphereShape.allocate();
+        const sphere = try SphereShape.allocate();
+        errdefer sphere.deallocate();
         try expect(sphere.isCreated() == false);
 
         sphere.create(1.0);
@@ -524,7 +543,7 @@ test "zbullet.shape.sphere" {
 }
 
 test "zbullet.shape.capsule" {
-    const capsule = CapsuleShape.init(2.0, 1.0, .y);
+    const capsule = try CapsuleShape.init(2.0, 1.0, .y);
     defer capsule.deinit();
     try expect(capsule.isCreated());
     try expect(capsule.getType() == .capsule);
@@ -536,7 +555,7 @@ test "zbullet.shape.capsule" {
 }
 
 test "zbullet.shape.cylinder" {
-    const cylinder = CylinderShape.init(&.{ 1.0, 2.0, 3.0 }, .y);
+    const cylinder = try CylinderShape.init(&.{ 1.0, 2.0, 3.0 }, .y);
     defer cylinder.deinit();
     try expect(cylinder.isCreated());
     try expect(cylinder.getType() == .cylinder);
@@ -558,7 +577,7 @@ test "zbullet.shape.cylinder" {
 test "zbullet.shape.compound" {
     const zm = @import("zmath");
 
-    const cshape = CompoundShape.init(.{});
+    const cshape = try CompoundShape.init(.{});
     defer cshape.deinit();
     try expect(cshape.isCreated());
     try expect(cshape.getType() == .compound);
@@ -567,10 +586,10 @@ test "zbullet.shape.compound" {
     try expect(cshape.isConvex() == false);
     try expect(cshape.isCompound() == true);
 
-    const sphere = SphereShape.init(3.0);
+    const sphere = try SphereShape.init(3.0);
     defer sphere.deinit();
 
-    const box = BoxShape.init(&.{ 1.0, 2.0, 3.0 });
+    const box = try BoxShape.init(&.{ 1.0, 2.0, 3.0 });
     defer box.deinit();
 
     cshape.addChild(&zm.mat43ToArray(zm.translation(1.0, 2.0, 3.0)), sphere.asShape());
@@ -598,7 +617,7 @@ test "zbullet.shape.compound" {
 }
 
 test "zbullet.shape.trimesh" {
-    const trimesh = TriangleMeshShape.init();
+    const trimesh = try TriangleMeshShape.init();
     const triangles = [3]u32{ 0, 1, 2 };
     const vertices = [_]f32{0.0} ** 9;
     trimesh.addIndexVertexArray(
@@ -618,10 +637,10 @@ test "zbullet.shape.trimesh" {
 
 test "zbullet.body.basic" {
     {
-        const world = World.init(.{});
+        const world = try World.init(.{});
         defer world.deinit();
 
-        const sphere = SphereShape.init(3.0);
+        const sphere = try SphereShape.init(3.0);
         defer sphere.deinit();
 
         const transform = [12]f32{
@@ -630,7 +649,7 @@ test "zbullet.body.basic" {
             0.0, 0.0, 1.0,
             2.0, 2.0, 2.0,
         };
-        const body = Body.init(1.0, &transform, sphere.asShape());
+        const body = try Body.init(1.0, &transform, sphere.asShape());
         defer body.deinit();
         try expect(body.isCreated() == true);
         try expect(body.getShape() == sphere.asShape());
@@ -645,13 +664,14 @@ test "zbullet.body.basic" {
     {
         const zm = @import("zmath");
 
-        const sphere = SphereShape.init(3.0);
+        const sphere = try SphereShape.init(3.0);
         defer sphere.deinit();
 
         var transform: [12]f32 = undefined;
         zm.storeMat43(transform[0..], zm.translation(2.0, 3.0, 4.0));
 
-        const body = Body.init(1.0, &transform, sphere.asShape());
+        const body = try Body.init(1.0, &transform, sphere.asShape());
+        errdefer body.deinit();
 
         try expect(body.isCreated() == true);
         try expect(body.getShape() == sphere.asShape());
@@ -664,10 +684,10 @@ test "zbullet.body.basic" {
     {
         const zm = @import("zmath");
 
-        const sphere = SphereShape.init(3.0);
+        const sphere = try SphereShape.init(3.0);
         defer sphere.deinit();
 
-        const body = Body.init(
+        const body = try Body.init(
             0.0, // static body
             &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
