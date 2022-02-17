@@ -118,7 +118,7 @@ pub fn build(b: *std.build.Builder) void {
         .{ .exe = b.addExecutable("intro5", "src/intro5.zig"), .deps = .{ .cgltf = true } },
         .{ .exe = b.addExecutable("intro6", "src/intro6.zig"), .deps = .{ .cgltf = true, .zbullet = true } },
     };
-    const active_prog = progs[5];
+    const active_prog = progs[6];
     const target_options = b.standardTargetOptions(.{});
     const release_options = b.standardReleaseOptions();
 

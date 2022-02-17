@@ -45,7 +45,7 @@ const DemoState = struct {
     guictx: gfx.GuiContext,
     frame_stats: lib.FrameStats,
 
-    intro3_pso: gfx.PipelineHandle,
+    simple_pso: gfx.PipelineHandle,
 
     vertex_buffer: gfx.ResourceHandle,
     index_buffer: gfx.ResourceHandle,
@@ -85,7 +85,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     // Create DirectX 12 context.
     var gctx = gfx.GraphicsContext.init(window);
 
-    const intro3_pso = blk: {
+    const simple_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
             d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
@@ -168,12 +168,22 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
         const box_shape = try zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 });
         try shapes.append(box_shape.asShape());
 
-        const body = try zbt.Body.init(
+        const ground_shape = try zbt.BoxShape.init(&.{ 100.0, 0.2, 100.0 });
+        try shapes.append(ground_shape.asShape());
+
+        const box_body = try zbt.Body.init(
             1.0,
             &zm.mat43ToArray(zm.translation(0.0, 3.0, 0.0)),
             box_shape.asShape(),
         );
-        physics_world.addBody(body);
+        physics_world.addBody(box_body);
+
+        const ground_body = try zbt.Body.init(
+            0.0,
+            &zm.mat43ToArray(zm.identity()),
+            ground_shape.asShape(),
+        );
+        physics_world.addBody(ground_body);
 
         break :blk shapes;
     };
@@ -239,7 +249,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
         .gctx = gctx,
         .guictx = guictx,
         .frame_stats = lib.FrameStats.init(),
-        .intro3_pso = intro3_pso,
+        .simple_pso = simple_pso,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .depth_texture = depth_texture,
@@ -279,7 +289,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
-    _ = demo.gctx.releasePipeline(demo.intro3_pso);
+    _ = demo.gctx.releasePipeline(demo.simple_pso);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     lib.deinitWindow(gpa_allocator);
@@ -290,6 +300,8 @@ fn update(demo: *DemoState) void {
     // Update frame counter and fps stats.
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
+
+    _ = demo.physics.world.stepSimulation(dt, 1, 1.0 / 60.0);
 
     // Update dear imgui lib. After this call we can define our widgets.
     lib.newImGuiFrame(dt);
@@ -420,7 +432,7 @@ fn draw(demo: *DemoState) void {
         .Format = .R32_UINT,
     });
 
-    gctx.setCurrentPipeline(demo.intro3_pso);
+    gctx.setCurrentPipeline(demo.simple_pso);
 
     // Upload per-frame constant data (camera xform).
     {
@@ -440,29 +452,29 @@ fn draw(demo: *DemoState) void {
 
     // For each object, upload per-draw constant data (object to world xform) and draw.
     {
-        var z: f32 = -10.5;
-        while (z <= 10.5) : (z += 3.0) {
-            var x: f32 = -10.5;
-            while (x <= 10.5) : (x += 3.0) {
-                // Compute translation matrix.
-                const object_to_world = zm.translation(x, 0.0, z);
+        const body = demo.physics.world.getBody(0);
 
-                // Allocate memory for one instance of Pso_DrawConst structure.
-                const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
+        // Get transform matrix from the physics simulator.
+        const object_to_world = blk: {
+            var transform: [12]f32 = undefined;
+            body.getGraphicsWorldTransform(&transform);
+            break :blk zm.loadMat43(transform[0..]);
+        };
 
-                // Copy 'object_to_world' matrix to upload memory. We need to transpose it because
-                // HLSL uses column-major matrices by default (zmath uses row-major matrices).
-                zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+        // Allocate memory for one instance of Pso_DrawConst structure.
+        const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
 
-                // Set GPU handle of our allocated memory region so that it is visible to the shader.
-                gctx.cmdlist.SetGraphicsRootConstantBufferView(
-                    0, // Slot index 0 in Root Signature (CBV(b0), see intro3.hlsl).
-                    mem.gpu_base,
-                );
+        // Copy 'object_to_world' matrix to upload memory. We need to transpose it because
+        // HLSL uses column-major matrices by default (zmath uses row-major matrices).
+        zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
 
-                gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
-            }
-        }
+        // Set GPU handle of our allocated memory region so that it is visible to the shader.
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(
+            0, // Slot index 0 in Root Signature (CBV(b0), see intro3.hlsl).
+            mem.gpu_base,
+        );
+
+        gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
     }
 
     // Draw dear imgui widgets.

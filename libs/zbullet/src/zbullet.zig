@@ -28,9 +28,9 @@ pub const World = opaque {
     extern fn cbtWorldStepSimulation(
         world: *const World,
         time_step: f32,
-        max_sub_steps: c_int,
+        max_sub_steps: u32,
         fixed_time_step: f32,
-    ) c_int;
+    ) u32;
 
     pub const addBody = cbtWorldAddBody;
     extern fn cbtWorldAddBody(world: *const World, body: *const Body) void;
@@ -39,10 +39,10 @@ pub const World = opaque {
     extern fn cbtWorldRemoveBody(world: *const World, body: *const Body) void;
 
     pub const getBody = cbtWorldGetBody;
-    extern fn cbtWorldGetBody(world: *const World, index: c_int) *const Body;
+    extern fn cbtWorldGetBody(world: *const World, index: i32) *const Body;
 
     pub const getNumBodies = cbtWorldGetNumBodies;
-    extern fn cbtWorldGetNumBodies(world: *const World) c_int;
+    extern fn cbtWorldGetNumBodies(world: *const World) i32;
 };
 
 pub const ShapeType = enum(c_int) {
@@ -134,10 +134,10 @@ pub const Shape = opaque {
     extern fn cbtShapeGetUserPointer(shape: *const Shape) ?*anyopaque;
 
     pub const setUserIndex = cbtShapeSetUserIndex;
-    extern fn cbtShapeSetUserIndex(shape: *const Shape, slot: c_int, index: c_int) void;
+    extern fn cbtShapeSetUserIndex(shape: *const Shape, slot: u32, index: i32) void;
 
     pub const getUserIndex = cbtShapeGetUserIndex;
-    extern fn cbtShapeGetUserIndex(shape: *const Shape, slot: c_int) c_int;
+    extern fn cbtShapeGetUserIndex(shape: *const Shape, slot: u32) i32;
 };
 
 fn ShapeFunctions(comptime T: type) type {
@@ -193,10 +193,10 @@ fn ShapeFunctions(comptime T: type) type {
         pub fn getUserPointer(shape: *const T) ?*anyopaque {
             return shape.asShape().getUserPointer();
         }
-        pub fn setUserIndex(shape: *const T, slot: c_int, index: c_int) void {
+        pub fn setUserIndex(shape: *const T, slot: u32, index: i32) void {
             shape.asShape().setUserIndex(slot, index);
         }
-        pub fn getUserIndex(shape: *const T, slot: c_int) c_int {
+        pub fn getUserIndex(shape: *const T, slot: u32) i32 {
             return shape.asShape().getUserIndex(slot);
         }
     };
@@ -304,7 +304,7 @@ pub const CompoundShape = opaque {
     pub fn init(
         params: struct {
             enable_dynamic_aabb_tree: bool = true,
-            initial_child_capacity: c_int = 0,
+            initial_child_capacity: u32 = 0,
         },
     ) Error!*const CompoundShape {
         const cshape = try allocate();
@@ -320,7 +320,7 @@ pub const CompoundShape = opaque {
     extern fn cbtShapeCompoundCreate(
         cshape: *const CompoundShape,
         enable_dynamic_aabb_tree: bool,
-        initial_child_capacity: c_int,
+        initial_child_capacity: u32,
     ) void;
 
     pub const addChild = cbtShapeCompoundAddChild;
@@ -334,18 +334,18 @@ pub const CompoundShape = opaque {
     extern fn cbtShapeCompoundRemoveChild(cshape: *const CompoundShape, child_shape: *const Shape) void;
 
     pub const removeChildByIndex = cbtShapeCompoundRemoveChildByIndex;
-    extern fn cbtShapeCompoundRemoveChildByIndex(cshape: *const CompoundShape, index: c_int) void;
+    extern fn cbtShapeCompoundRemoveChildByIndex(cshape: *const CompoundShape, index: i32) void;
 
     pub const getNumChilds = cbtShapeCompoundGetNumChilds;
-    extern fn cbtShapeCompoundGetNumChilds(cshape: *const CompoundShape) c_int;
+    extern fn cbtShapeCompoundGetNumChilds(cshape: *const CompoundShape) i32;
 
     pub const getChild = cbtShapeCompoundGetChild;
-    extern fn cbtShapeCompoundGetChild(cshape: *const CompoundShape, index: c_int) *const Shape;
+    extern fn cbtShapeCompoundGetChild(cshape: *const CompoundShape, index: i32) *const Shape;
 
     pub const getChildTransform = cbtShapeCompoundGetChildTransform;
     extern fn cbtShapeCompoundGetChildTransform(
         cshape: *const CompoundShape,
-        index: c_int,
+        index: i32,
         local_transform: *[12]f32,
     ) void;
 
@@ -370,12 +370,12 @@ pub const TriangleMeshShape = opaque {
     pub const addIndexVertexArray = cbtShapeTriMeshAddIndexVertexArray;
     extern fn cbtShapeTriMeshAddIndexVertexArray(
         trimesh: *const TriangleMeshShape,
-        num_triangles: c_int,
+        num_triangles: u32,
         triangles_base: *const anyopaque,
-        triangle_stride: c_int,
-        num_vertices: c_int,
+        triangle_stride: u32,
+        num_vertices: u32,
         vertices_base: *const anyopaque,
-        vertex_stride: c_int,
+        vertex_stride: u32,
     ) void;
 
     pub const createBegin = cbtShapeTriMeshCreateBegin;
