@@ -44,13 +44,7 @@ pub fn main() !void {
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
-
-        break :blk gctx.createGraphicsShaderPipeline(
-            arena_allocator,
-            &pso_desc,
-            "content/shaders/intro3.vs.cso",
-            "content/shaders/intro3.ps.cso",
-        );
+        ...
     };
 }
 ```
