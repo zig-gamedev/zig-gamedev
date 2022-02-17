@@ -5,7 +5,7 @@ Copy `zbullet` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
-pub fn build(b: *Builder) void {
+pub fn build(b: *std.build.Builder) void {
     ...
     const zbullet = std.build.Pkg{
         .name = "zbullet",
