@@ -36,13 +36,13 @@ pub fn main() !void {
         2.0, 2.0, 2.0, // translation
     };
     const box_body = try zbt.Body.init(
-        1.0,
+        1.0, // mass
         &initial_transform,
         box_shape.asShape(),
     );
     defer body.deinit();
 
-    // Add body to physics world.
+    // Add body to the physics world.
     world.addBody(box_body);
     defer world.removeBody(box_body);
 
