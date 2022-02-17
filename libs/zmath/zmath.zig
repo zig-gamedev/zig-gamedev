@@ -143,6 +143,7 @@
 // 4. Matrix functions
 // ------------------------------------------------------------------------------
 //
+// identity() Mat
 // mul(m0: Mat, m1: Mat) Mat
 // mul(s: f32, m: Mat) Mat
 // mul(m: Mat, s: f32) Mat
@@ -162,6 +163,8 @@
 // lookAtRh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat
 // perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
+// orthographicLh(w: f32, h: f32, near: f32, far: f32) Mat
+// orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat
 // determinant(m: Mat) F32x4
 // inverse(m: Mat) Mat
 // inverseDet(m: Mat, det: ?*F32x4) Mat
@@ -1928,6 +1931,15 @@ test "zmath.vecMulMat" {
 //
 // ------------------------------------------------------------------------------
 
+pub fn identity() Mat {
+    return .{
+        f32x4(1.0, 0.0, 0.0, 0.0),
+        f32x4(0.0, 1.0, 0.0, 0.0),
+        f32x4(0.0, 0.0, 1.0, 0.0),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    };
+}
+
 fn mulRetType(comptime Ta: type, comptime Tb: type) type {
     if (Ta == Mat and Tb == Mat) {
         return Mat;
@@ -2155,6 +2167,35 @@ pub fn perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
         f32x4(0.0, h, 0.0, 0.0),
         f32x4(0.0, 0.0, r, -1.0),
         f32x4(0.0, 0.0, r * near, 0.0),
+    };
+}
+
+pub fn orthographicLh(w: f32, h: f32, near: f32, far: f32) Mat {
+    assert(near >= 0 and far > near);
+    assert(!math.approxEqAbs(f32, w, 0.0, 0.001));
+    assert(!math.approxEqAbs(f32, h, 0.0, 0.001));
+    assert(!math.approxEqAbs(f32, far, near, 0.001));
+
+    const r = 1 / (far - near);
+    return .{
+        f32x4(2 / w, 0.0, 0.0, 0.0),
+        f32x4(0.0, 2 / h, 0.0, 0.0),
+        f32x4(0.0, 0.0, r, 0.0),
+        f32x4(0.0, 0.0, -r * near, 1.0),
+    };
+}
+pub fn orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat {
+    assert(near >= 0 and far > near);
+    assert(!math.approxEqAbs(f32, w, 0.0, 0.001));
+    assert(!math.approxEqAbs(f32, h, 0.0, 0.001));
+    assert(!math.approxEqAbs(f32, far, near, 0.001));
+
+    const r = 1 / (near - far);
+    return .{
+        f32x4(2 / w, 0.0, 0.0, 0.0),
+        f32x4(0.0, 2 / h, 0.0, 0.0),
+        f32x4(0.0, 0.0, r, 0.0),
+        f32x4(0.0, 0.0, r * near, 1.0),
     };
 }
 
