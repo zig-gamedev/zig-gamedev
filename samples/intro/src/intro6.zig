@@ -85,6 +85,10 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     // Create DirectX 12 context.
     var gctx = gfx.GraphicsContext.init(window);
 
+    // Enable vsync.
+    gctx.present_flags = 0;
+    gctx.present_interval = 1;
+
     const simple_pso = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
@@ -307,9 +311,9 @@ fn update(demo: *DemoState) void {
     lib.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        .{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
-        c.ImVec2{ .x = 0.0, .y = 0.0 },
+        .{ .x = 0.0, .y = 0.0 },
     );
     c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
 
@@ -320,7 +324,7 @@ fn update(demo: *DemoState) void {
     );
     c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + Drag", "");
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + drag", "");
     c.igSameLine(0, -1);
     c.igText(" :  rotate camera", "");
 
@@ -413,7 +417,7 @@ fn draw(demo: *DemoState) void {
     );
     gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
+        &.{ 0.1, 0.1, 0.1, 1.0 },
         0,
         null,
     );
