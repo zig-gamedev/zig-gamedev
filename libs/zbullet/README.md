@@ -31,13 +31,13 @@ pub fn main() !void {
 
     // Create rigid body that will use above shape.
     const initial_transform = [_]f32{
-        1.0, 0.0, 0.0, // rotation
+        1.0, 0.0, 0.0, // orientation
         0.0, 1.0, 0.0,
         0.0, 0.0, 1.0,
         2.0, 2.0, 2.0, // translation
     };
     const box_body = try zbt.Body.init(
-        1.0, // mass
+        1.0, // mass (must be 0.0 for static objects)
         &initial_transform,
         box_shape.asShape(),
     );
