@@ -72,9 +72,9 @@ const DemoState = struct {
     },
 };
 
-fn init(gpa_allocator: std.mem.Allocator) DemoState {
+fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     // Create application window and initialize dear imgui library.
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = try lib.initWindow(gpa_allocator, window_name, window_width, window_height);
 
     // Create temporary memory allocator for use during initialization. We pass this allocator to all
     // subsystems that need memory and then free everyting with a single deallocation.
@@ -161,18 +161,18 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         depth_texture_dsv,
     );
 
-    const physics_world = zbt.World.init(.{}) catch unreachable;
+    const physics_world = try zbt.World.init(.{});
     const physics_shapes = blk: {
         var shapes = std.ArrayList(*const zbt.Shape).init(gpa_allocator);
 
-        const box_shape = zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 }) catch unreachable;
-        shapes.append(box_shape.asShape()) catch unreachable;
+        const box_shape = try zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 });
+        try shapes.append(box_shape.asShape());
 
-        const body = zbt.Body.init(
+        const body = try zbt.Body.init(
             1.0,
             &zm.mat43ToArray(zm.translation(0.0, 3.0, 0.0)),
             box_shape.asShape(),
-        ) catch unreachable;
+        );
         physics_world.addBody(body);
 
         break :blk shapes;
@@ -235,7 +235,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Wait for the GPU to finish all commands.
     gctx.finishGpuCommands();
 
-    return .{
+    return DemoState{
         .gctx = gctx,
         .guictx = guictx,
         .frame_stats = lib.FrameStats.init(),
@@ -489,7 +489,7 @@ pub fn main() !void {
     }
     const gpa_allocator = gpa_allocator_state.allocator();
 
-    var demo = init(gpa_allocator);
+    var demo = try init(gpa_allocator);
     defer deinit(&demo, gpa_allocator);
 
     while (true) {
