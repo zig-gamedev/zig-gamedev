@@ -11,6 +11,7 @@ pub fn build(b: *Builder) void {
         .name = "zmath",
         .path = .{ .path = "libs/zmath/zmath.zig" },
     };
+    exe.addPackage(zmath);
 }
 ```
 

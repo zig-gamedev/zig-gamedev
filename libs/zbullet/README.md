@@ -11,6 +11,7 @@ pub fn build(b: *Builder) void {
         .name = "zbullet",
         .path = .{ .path = "libs/zbullet/src/zbullet.zig" },
     };
+    exe.addPackage(zbullet);
     @import("libs/zbullet/build.zig").link(b, exe);
 }
 ```
