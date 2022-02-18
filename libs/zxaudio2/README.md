@@ -57,10 +57,12 @@ pub fn main() !void {
 
 Note that you also need to ship `xaudio2_9redist.dll` file in `d3d12` folder that is placed next to your application executable. Directory structue should look like this:
 
+```
 my-game\
   d3d12\
     xaudio2_9redist.dll
   my-game.exe
+```
 
 You can use below code in your `build.zig` to copy the DLLs:
 

@@ -66,10 +66,12 @@ pub fn main() !void {
 
 Note that you also need to ship `D3D12Core.dll` file in `d3d12` folder that is placed next to your application executable. Directory structue should look like this:
 
+```
 my-game\
   d3d12\
     D3D12Core.dll
   my-game.exe
+```
 
 You can use below code in your `build.zig` to copy the DLLs:
 
