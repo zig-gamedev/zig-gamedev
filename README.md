@@ -6,7 +6,7 @@ This repository contains a collection of [sample applications](#sample-applicati
 
 *I build game development stuff in Zig full-time. As a sample of my work please see [this video](https://www.youtube.com/watch?v=1hYIzFVdA2o). If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
 
-#### Some features and developed libraries:
+#### Some features and libraries we develop:
 
 * Zero dependency except [Zig compiler (master)](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
