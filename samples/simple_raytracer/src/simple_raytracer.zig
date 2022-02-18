@@ -12,10 +12,9 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 const zpix = @import("zpix");
 
 const Vec2 = vm.Vec2;
@@ -87,8 +86,8 @@ const PsoTraceShadowRays_FrameConst = struct {
 
 const DemoState = struct {
     grfx: zd3d12.GraphicsContext,
-    gui: GuiContext,
-    frame_stats: lib.FrameStats,
+    gui: GuiRenderer,
+    frame_stats: common.FrameStats,
 
     static_mesh_pso: zd3d12.PipelineHandle,
     z_pre_pass_pso: zd3d12.PipelineHandle,
@@ -440,7 +439,7 @@ fn drawLoadingScreen(
 
     grfx.d2d.context.Clear(&d2d1.colorf.Black);
     brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-    lib.drawText(
+    common.drawText(
         grfx.d2d.context,
         "Loading...",
         textformat,
@@ -456,7 +455,7 @@ fn drawLoadingScreen(
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
@@ -708,7 +707,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
 
     var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
@@ -1016,7 +1015,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     return .{
         .grfx = grfx,
         .gui = gui,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .static_mesh_pso = static_mesh_pso,
         .z_pre_pass_pso = z_pre_pass_pso,
         .gen_shadow_rays_pso = gen_shadow_rays_pso,
@@ -1084,14 +1083,14 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.normal_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
 
-    lib.newImGuiFrame(demo.frame_stats.delta_time);
+    common.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igSetNextWindowPos(
         c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
@@ -1434,7 +1433,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             grfx.d2d.context,
             text,
             demo.normal_tfmt,
@@ -1453,8 +1452,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

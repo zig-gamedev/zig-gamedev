@@ -11,10 +11,9 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -138,8 +137,8 @@ const DemoState = struct {
     const window_height = 1080;
 
     grfx: zd3d12.GraphicsContext,
-    gui: GuiContext,
-    frame_stats: lib.FrameStats,
+    gui: GuiRenderer,
+    frame_stats: common.FrameStats,
     pipeline: zd3d12.PipelineHandle,
 
     vertex_buffer: zd3d12.ResourceHandle,
@@ -159,7 +158,7 @@ const DemoState = struct {
     num_mesh_indices: u32,
 
     fn init(gpa_allocator: std.mem.Allocator) DemoState {
-        const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+        const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
         var grfx = zd3d12.GraphicsContext.init(window);
 
         var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
@@ -237,7 +236,7 @@ const DemoState = struct {
 
         grfx.beginFrame();
 
-        var gui = GuiContext.init(arena_allocator, &grfx, 1);
+        var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
 
         const base_color_texture = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
@@ -343,7 +342,7 @@ const DemoState = struct {
         return .{
             .grfx = grfx,
             .gui = gui,
-            .frame_stats = lib.FrameStats.init(),
+            .frame_stats = common.FrameStats.init(),
             .pipeline = pipeline,
             .vertex_buffer = buffers.vertex,
             .index_buffer = buffers.index,
@@ -372,14 +371,14 @@ const DemoState = struct {
         _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit();
-        lib.deinitWindow(gpa_allocator);
+        common.deinitWindow(gpa_allocator);
         demo.* = undefined;
     }
 
     fn update(demo: *DemoState) void {
         demo.frame_stats.update();
 
-        lib.newImGuiFrame(demo.frame_stats.delta_time);
+        common.newImGuiFrame(demo.frame_stats.delta_time);
 
         c.igShowDemoWindow(null);
     }
@@ -467,7 +466,7 @@ const DemoState = struct {
             ) catch unreachable;
 
             demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
-            lib.drawText(
+            common.drawText(
                 grfx.d2d.context,
                 text,
                 demo.textformat,
@@ -487,8 +486,8 @@ const DemoState = struct {
 };
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

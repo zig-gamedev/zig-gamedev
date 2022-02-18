@@ -13,10 +13,9 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 
 const Vec2 = vm.Vec2;
 
@@ -42,8 +41,8 @@ const AudioContex = struct {
 
 const DemoState = struct {
     grfx: zd3d12.GraphicsContext,
-    gui: GuiContext,
-    frame_stats: lib.FrameStats,
+    gui: GuiRenderer,
+    frame_stats: common.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
     textformat: *dwrite.ITextFormat,
@@ -97,7 +96,7 @@ fn audioThread(ctx: ?*anyopaque) callconv(.C) w.DWORD {
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
     var grfx = zd3d12.GraphicsContext.init(window);
     grfx.present_flags = 0;
     grfx.present_interval = 1;
@@ -326,7 +325,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
 
     const image = grfx.createAndUploadTex2dFromFile(
         "content/genart_008b.png",
@@ -342,7 +341,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     return .{
         .grfx = grfx,
         .gui = gui,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .brush = brush,
         .textformat = textformat,
         .audio = .{
@@ -383,14 +382,14 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
 
-    lib.newImGuiFrame(demo.frame_stats.delta_time);
+    common.newImGuiFrame(demo.frame_stats.delta_time);
 }
 
 fn draw(demo: *DemoState) void {
@@ -479,7 +478,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             grfx.d2d.context,
             text,
             demo.textformat,
@@ -498,8 +497,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

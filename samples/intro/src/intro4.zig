@@ -15,8 +15,7 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const GuiContext = common.GuiContext;
-const lib = common.library;
+const GuiRenderer = common.GuiRenderer;
 const c = common.c;
 const zm = @import("zmath");
 
@@ -46,8 +45,8 @@ const Vertex = struct {
 
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
-    guictx: GuiContext,
-    frame_stats: lib.FrameStats,
+    guictx: GuiRenderer,
+    frame_stats: common.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
@@ -81,7 +80,7 @@ const DemoState = struct {
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Create application window and initialize dear imgui library.
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     // Create temporary memory allocator for use during initialization. We pass this allocator to all
     // subsystems that need memory and then free everyting with a single deallocation.
@@ -161,9 +160,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
     var mesh_texcoords = std.ArrayList([2]f32).init(arena_allocator);
     {
-        const data = lib.parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
+        const data = common.parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
         defer c.cgltf_free(data);
-        lib.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, &mesh_texcoords, null);
+        common.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, &mesh_texcoords, null);
     }
     const mesh_num_indices = @intCast(u32, mesh_indices.items.len);
     const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);
@@ -212,7 +211,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guictx = GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1);
 
     // Create texture resource and submit GPU commands which copies texture data from CPU
     // to high-performance GPU memory where resource resides.
@@ -308,7 +307,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     return .{
         .gctx = gctx,
         .guictx = guictx,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .bindless_pso = bindless_pso,
@@ -347,7 +346,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.normal_tfmt.Release();
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -356,8 +355,8 @@ fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
 
-    // Update dear imgui lib. After this call we can define our widgets.
-    lib.newImGuiFrame(dt);
+    // Update dear imgui common. After this call we can define our widgets.
+    common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
         c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
@@ -560,7 +559,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             gctx.d2d.context,
             text,
             demo.normal_tfmt,
@@ -583,8 +582,8 @@ fn draw(demo: *DemoState) void {
 pub fn main() !void {
     // Initialize some low-level Windows stuff (DPI awarness, COM), check Windows version and also check
     // if DirectX 12 Agility SDK is supported.
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     // Create main memory allocator for our application.
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};

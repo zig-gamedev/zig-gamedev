@@ -6,10 +6,9 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -19,8 +18,8 @@ pub fn main() !void {
     const window_width = 900;
     const window_height = 900;
 
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
@@ -33,8 +32,8 @@ pub fn main() !void {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    defer lib.deinitWindow(gpa_allocator);
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    defer common.deinitWindow(gpa_allocator);
 
     var grfx = zd3d12.GraphicsContext.init(window);
     defer grfx.deinit();
@@ -85,7 +84,7 @@ pub fn main() !void {
 
     grfx.beginFrame();
 
-    var gui = GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
     defer gui.deinit(&grfx);
 
     const upload_verts = grfx.allocateUploadBufferRegion(vm.Vec3, 3);
@@ -123,7 +122,7 @@ pub fn main() !void {
 
     var triangle_color = vm.Vec3.init(0.0, 1.0, 0.0);
 
-    var stats = lib.FrameStats.init();
+    var stats = common.FrameStats.init();
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
@@ -145,7 +144,7 @@ pub fn main() !void {
                 ) catch unreachable;
                 _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
             }
-            lib.newImGuiFrame(stats.delta_time);
+            common.newImGuiFrame(stats.delta_time);
 
             c.igSetNextWindowPos(.{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
             c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);

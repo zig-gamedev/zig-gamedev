@@ -1,4 +1,4 @@
-pub const GuiContext = @This();
+pub const GuiRenderer = @This();
 
 const std = @import("std");
 const assert = std.debug.assert;
@@ -8,7 +8,7 @@ const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
-const c = @import("c.zig");
+const c = @import("common.zig").c;
 
 font: zd3d12.ResourceHandle,
 font_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
@@ -18,7 +18,7 @@ ib: [zd3d12.GraphicsContext.max_num_buffered_frames]zd3d12.ResourceHandle,
 vb_cpu_addr: [zd3d12.GraphicsContext.max_num_buffered_frames][]align(8) u8,
 ib_cpu_addr: [zd3d12.GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
-pub fn init(arena: std.mem.Allocator, gr: *zd3d12.GraphicsContext, num_msaa_samples: u32) GuiContext {
+pub fn init(arena: std.mem.Allocator, gr: *zd3d12.GraphicsContext, num_msaa_samples: u32) GuiRenderer {
     assert(gr.is_cmdlist_opened);
     assert(c.igGetCurrentContext() != null);
 
@@ -83,7 +83,7 @@ pub fn init(arena: std.mem.Allocator, gr: *zd3d12.GraphicsContext, num_msaa_samp
             "content/shaders/imgui.ps.cso",
         );
     };
-    return GuiContext{
+    return GuiRenderer{
         .font = font,
         .font_srv = font_srv,
         .pipeline = pipeline,
@@ -94,7 +94,7 @@ pub fn init(arena: std.mem.Allocator, gr: *zd3d12.GraphicsContext, num_msaa_samp
     };
 }
 
-pub fn deinit(gui: *GuiContext, gr: *zd3d12.GraphicsContext) void {
+pub fn deinit(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     gr.finishGpuCommands();
     _ = gr.releasePipeline(gui.pipeline);
     _ = gr.releaseResource(gui.font);
@@ -103,7 +103,7 @@ pub fn deinit(gui: *GuiContext, gr: *zd3d12.GraphicsContext) void {
     gui.* = undefined;
 }
 
-pub fn draw(gui: *GuiContext, gr: *zd3d12.GraphicsContext) void {
+pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     assert(gr.is_cmdlist_opened);
     assert(c.igGetCurrentContext() != null);
 

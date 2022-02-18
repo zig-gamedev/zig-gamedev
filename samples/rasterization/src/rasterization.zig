@@ -11,9 +11,8 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 const zm = @import("zmath");
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -49,8 +48,8 @@ const Pso_Vertex = struct {
 
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
-    guictx: GuiContext,
-    frame_stats: lib.FrameStats,
+    guictx: GuiRenderer,
+    frame_stats: common.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
@@ -97,7 +96,7 @@ const DemoState = struct {
 };
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
@@ -232,9 +231,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var mesh_texcoords = std.ArrayList([2]f32).init(arena_allocator);
     var mesh_tangents = std.ArrayList([4]f32).init(arena_allocator);
     {
-        const data = lib.parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
+        const data = common.parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
         defer c.cgltf_free(data);
-        lib.appendMeshPrimitive(
+        common.appendMeshPrimitive(
             data,
             0,
             0,
@@ -351,7 +350,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     gctx.beginFrame();
 
-    var guictx = GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1);
 
     const mesh_textures = [_]zd3d12.ResourceHandle{
         gctx.createAndUploadTex2dFromFile(
@@ -434,7 +433,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     return .{
         .gctx = gctx,
         .guictx = guictx,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .z_pre_pass_pso = z_pre_pass_pso,
@@ -490,7 +489,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.normal_tfmt.Release();
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -498,7 +497,7 @@ fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
 
-    lib.newImGuiFrame(dt);
+    common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
         c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
@@ -822,7 +821,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             gctx.d2d.context,
             text,
             demo.normal_tfmt,
@@ -841,8 +840,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

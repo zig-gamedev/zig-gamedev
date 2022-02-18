@@ -13,10 +13,9 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 
 const Vec2 = vm.Vec2;
 const Vec3 = vm.Vec3;
@@ -88,8 +87,8 @@ const texture_normal: u32 = 3;
 
 const DemoState = struct {
     grfx: zd3d12.GraphicsContext,
-    gui: GuiContext,
-    frame_stats: lib.FrameStats,
+    gui: GuiRenderer,
+    frame_stats: common.FrameStats,
 
     depth_texture: ResourceView,
 
@@ -142,9 +141,9 @@ fn loadMesh(
     const pre_indices_len = all_indices.items.len;
     const pre_positions_len = all_vertices.items.len;
 
-    const data = lib.parseAndLoadGltfFile(file_path);
+    const data = common.parseAndLoadGltfFile(file_path);
     defer c.cgltf_free(data);
-    lib.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+    common.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
     all_meshes.append(.{
         .index_offset = @intCast(u32, pre_indices_len),
@@ -244,7 +243,7 @@ fn drawToCubeTexture(
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
     var grfx = zd3d12.GraphicsContext.init(window);
 
     // V-Sync
@@ -436,7 +435,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
 
     const vertex_buffer = blk: {
         var vertex_buffer = grfx.createCommittedResource(
@@ -842,7 +841,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     return .{
         .grfx = grfx,
         .gui = gui,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .depth_texture = depth_texture,
         .brush = brush,
         .info_tfmt = info_tfmt,
@@ -891,14 +890,14 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.title_tfmt.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
 
-    lib.newImGuiFrame(demo.frame_stats.delta_time);
+    common.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igSetNextWindowPos(
         c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
@@ -975,7 +974,7 @@ fn drawLoadingScreen(
 
     grfx.d2d.context.Clear(&d2d1.colorf.Black);
     brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-    lib.drawText(
+    common.drawText(
         grfx.d2d.context,
         "Loading...",
         textformat,
@@ -1111,8 +1110,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

@@ -13,10 +13,9 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 const zb = @cImport(@cInclude("cbullet.h"));
 
 const Vec3 = vm.Vec3;
@@ -260,9 +259,9 @@ fn loadAllMeshes(
         const pre_indices_len = all_indices.items.len;
         const pre_positions_len = all_positions.items.len;
 
-        const data = lib.parseAndLoadGltfFile(path);
+        const data = common.parseAndLoadGltfFile(path);
         defer c.cgltf_free(data);
-        lib.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
+        common.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
 
         all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
@@ -290,8 +289,8 @@ const Camera = struct {
 
 const DemoState = struct {
     grfx: zd3d12.GraphicsContext,
-    gui: GuiContext,
-    frame_stats: lib.FrameStats,
+    gui: GuiRenderer,
+    frame_stats: common.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
     info_txtfmt: *dwrite.ITextFormat,
@@ -963,7 +962,7 @@ fn createScene4(
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
@@ -1165,7 +1164,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     grfx.endFrame();
     grfx.beginFrame();
 
-    var gui = GuiContext.init(arena_allocator, &grfx, num_msaa_samples);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, num_msaa_samples);
 
     {
         const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_positions.items.len));
@@ -1204,7 +1203,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     return .{
         .grfx = grfx,
         .gui = gui,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .brush = brush,
         .info_txtfmt = info_txtfmt,
         .physics_world = physics_world,
@@ -1255,7 +1254,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.index_buffer);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     if (zb.cbtConIsCreated(demo.pick.constraint)) {
         zb.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         zb.cbtConDestroy(demo.pick.constraint);
@@ -1355,7 +1354,7 @@ fn update(demo: *DemoState) void {
         demo.do_simulation_step = false;
     }
 
-    lib.newImGuiFrame(dt);
+    common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
         c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
@@ -1984,7 +1983,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             grfx.d2d.context,
             text,
             demo.info_txtfmt,
@@ -2003,8 +2002,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

@@ -16,8 +16,7 @@ const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const zxaudio2 = @import("zxaudio2");
 const common = @import("common");
-const lib = common.library;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 const c = common.c;
 const zm = @import("zmath");
 
@@ -74,8 +73,8 @@ const AudioData = struct {
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
     actx: zxaudio2.AudioContext,
-    guictx: GuiContext,
-    frame_stats: lib.FrameStats,
+    guictx: GuiRenderer,
+    frame_stats: common.FrameStats,
 
     music: *zxaudio2.Stream,
     music_is_playing: bool = true,
@@ -182,7 +181,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(actx.master_voice.SetEffectChain(&effect_chain));
     }
 
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
@@ -270,7 +269,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     gctx.beginFrame();
 
-    var guictx = GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1);
 
     gctx.endFrame();
     gctx.finishGpuCommands();
@@ -283,7 +282,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .sound1_data = sound1_data,
         .sound2_data = sound2_data,
         .sound3_data = sound3_data,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .brush = brush,
         .normal_tfmt = normal_tfmt,
         .audio_data = audio_data,
@@ -309,14 +308,14 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.audio_data.deinit();
     gpa_allocator.destroy(demo.audio_data);
     demo.actx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
-    lib.newImGuiFrame(dt);
+    common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
         c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
@@ -546,7 +545,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             gctx.d2d.context,
             text,
             demo.normal_tfmt,
@@ -565,8 +564,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

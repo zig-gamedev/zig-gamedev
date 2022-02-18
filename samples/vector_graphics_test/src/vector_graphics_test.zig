@@ -10,7 +10,6 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -22,7 +21,7 @@ const window_height = 1080;
 
 const DemoState = struct {
     grfx: zd3d12.GraphicsContext,
-    frame_stats: lib.FrameStats,
+    frame_stats: common.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
     radial_gradient_brush: *d2d1.IRadialGradientBrush,
@@ -45,7 +44,7 @@ const DemoState = struct {
 };
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
     var grfx = zd3d12.GraphicsContext.init(window);
 
     var ink_points = std.ArrayList(d2d1.POINT_2F).init(gpa_allocator);
@@ -431,7 +430,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     return .{
         .grfx = grfx,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .brush = brush,
         .textformat = textformat,
         .ellipse = ellipse,
@@ -611,7 +610,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.radial_gradient_brush.Release();
     demo.ink_points.deinit();
     demo.grfx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
@@ -652,7 +651,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             grfx.d2d.context,
             text,
             demo.textformat,
@@ -666,7 +665,7 @@ fn draw(demo: *DemoState) void {
         );
 
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.6, .g = 0.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             grfx.d2d.context,
             \\Lorem ipsum dolor sit amet,
             \\consectetur adipiscing elit,
@@ -692,8 +691,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {

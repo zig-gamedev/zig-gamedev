@@ -12,10 +12,9 @@ const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const GuiContext = common.GuiContext;
+const GuiRenderer = common.GuiRenderer;
 
 const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
@@ -70,8 +69,8 @@ const DrawMode = enum {
 
 const DemoState = struct {
     grfx: zd3d12.GraphicsContext,
-    gui: GuiContext,
-    frame_stats: lib.FrameStats,
+    gui: GuiRenderer,
+    frame_stats: common.FrameStats,
 
     mesh_shader_pso: zd3d12.PipelineHandle,
     vertex_shader_pso: zd3d12.PipelineHandle,
@@ -123,9 +122,9 @@ fn loadMeshAndGenerateMeshlets(
     var src_normals = std.ArrayList([3]f32).init(arena_allocator);
     var src_indices = std.ArrayList(u32).init(arena_allocator);
 
-    const data = lib.parseAndLoadGltfFile(file_path);
+    const data = common.parseAndLoadGltfFile(file_path);
     defer c.cgltf_free(data);
-    lib.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
+    common.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 
     var src_vertices = std.ArrayList(Vertex).initCapacity(
         arena_allocator,
@@ -251,7 +250,7 @@ fn loadMeshAndGenerateMeshlets(
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
@@ -500,7 +499,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     grfx.beginFrame();
 
-    var gui = GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
 
     // Upload vertex buffer.
     {
@@ -568,7 +567,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     return .{
         .grfx = grfx,
         .gui = gui,
-        .frame_stats = lib.FrameStats.init(),
+        .frame_stats = common.FrameStats.init(),
         .mesh_shader_pso = mesh_shader_pso,
         .vertex_shader_pso = vertex_shader_pso,
         .vertex_shader_fixed_pso = vertex_shader_fixed_pso,
@@ -615,14 +614,14 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.grfx.releasePipeline(demo.vertex_shader_fixed_pso);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
-    lib.deinitWindow(gpa_allocator);
+    common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
     demo.frame_stats.update();
     const dt = demo.frame_stats.delta_time;
-    lib.newImGuiFrame(dt);
+    common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
         c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
@@ -877,7 +876,7 @@ fn draw(demo: *DemoState) void {
         ) catch unreachable;
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        lib.drawText(
+        common.drawText(
             grfx.d2d.context,
             text,
             demo.normal_tfmt,
@@ -896,8 +895,8 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    lib.init();
-    defer lib.deinit();
+    common.init();
+    defer common.deinit();
 
     var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
