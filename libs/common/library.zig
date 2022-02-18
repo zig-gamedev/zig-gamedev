@@ -1,18 +1,12 @@
 const std = @import("std");
 const panic = std.debug.panic;
 const assert = std.debug.assert;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
 const w = zwin32.base;
 const dwrite = zwin32.dwrite;
 const d2d1 = zwin32.d2d1;
 const c = @import("c.zig");
-
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
-
-pub const HResultError = zwin32.HResultError;
-pub const hrPanic = zwin32.hrPanic;
-pub const hrPanicOnFail = zwin32.hrPanicOnFail;
-pub const hrErrorOnFail = zwin32.hrErrorOnFail;
 
 pub const FrameStats = struct {
     time: f64,

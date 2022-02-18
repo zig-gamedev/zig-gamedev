@@ -1,6 +1,8 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const Mutex = std.Thread.Mutex;
 const zwin32 = @import("zwin32");
 const w = zwin32.base;
 const d2d1 = zwin32.d2d1;
@@ -9,6 +11,8 @@ const dwrite = zwin32.dwrite;
 const xaudio2 = zwin32.xaudio2;
 const xaudio2fx = zwin32.xaudio2fx;
 const xapo = zwin32.xapo;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
 const common = @import("common");
 const sfx = common.audio;
@@ -16,11 +20,6 @@ const lib = common.library;
 const GuiContext = common.GuiContext;
 const c = common.c;
 const zm = @import("zmath");
-
-const Mutex = std.Thread.Mutex;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";

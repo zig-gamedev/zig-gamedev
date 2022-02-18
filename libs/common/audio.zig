@@ -7,10 +7,10 @@ const xaudio2 = zwin32.xaudio2;
 const mf = zwin32.mf;
 const wasapi = zwin32.wasapi;
 const xapo = zwin32.xapo;
-const lib = @import("library.zig");
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
 const ztracy = @import("ztracy");
+const lib = @import("library.zig");
 
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
