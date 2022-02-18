@@ -51,6 +51,10 @@ Now in your code you may import and use zd3d12:
 ```zig
 const zd3d12 = @import("zd3d12");
 
+// We need to export below symbols for DirectX 12 Agility SDK.
+pub export var D3D12SDKVersion: u32 = 4;
+pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
 pub fn main() !void {
     ...
     var gctx = zd3d12.GraphicsContext.init(window);
@@ -58,4 +62,26 @@ pub fn main() !void {
     gctx.present_interval = 1;
     ...
 }
+```
+
+Note that you also need to ship `D3D12Core.dll` file in `d3d12` folder that is placed next to your application executable. Directory structue should look like this:
+
+my-game\
+  d3d12\
+    D3D12Core.dll
+  my-game.exe
+
+You can use below code in your `build.zig` to copy the DLLs:
+
+```zig
+    // Copy DLLs
+    b.installFile("../../external/bin/d3d12/D3D12Core.dll", "bin/d3d12/D3D12Core.dll");
+    b.installFile("../../external/bin/d3d12/D3D12Core.pdb", "bin/d3d12/D3D12Core.pdb");
+    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.dll", "bin/d3d12/D3D12SDKLayers.dll");
+    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.pdb", "bin/d3d12/D3D12SDKLayers.pdb");
+    // Copy `content` folder
+    const install_content_step = b.addInstallDirectory(
+        .{ .source_dir = "content", .install_dir = .{ .custom = "" }, .install_subdir = "bin/content" },
+    );
+    b.getInstallStep().dependOn(&install_content_step.step);
 ```
