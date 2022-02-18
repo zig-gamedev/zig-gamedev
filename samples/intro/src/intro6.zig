@@ -41,7 +41,7 @@ const Vertex = struct {
 
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
-    guictx: GuiRenderer,
+    guir: GuiRenderer,
     frame_stats: common.FrameStats,
 
     simple_pso: zd3d12.PipelineHandle,
@@ -196,7 +196,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1);
+    var guir = GuiRenderer.init(arena_allocator, &gctx, 1);
 
     // Fill vertex buffer with vertex data.
     {
@@ -250,7 +250,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
 
     return DemoState{
         .gctx = gctx,
-        .guictx = guictx,
+        .guir = guir,
         .frame_stats = common.FrameStats.init(),
         .simple_pso = simple_pso,
         .vertex_buffer = vertex_buffer,
@@ -283,7 +283,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
     _ = demo.gctx.releasePipeline(demo.simple_pso);
-    demo.guictx.deinit(&demo.gctx);
+    demo.guir.deinit(&demo.gctx);
     demo.gctx.deinit();
     common.deinitWindow(gpa_allocator);
     demo.* = undefined;
@@ -296,7 +296,7 @@ fn update(demo: *DemoState) void {
 
     _ = demo.physics.world.stepSimulation(dt, 1, 1.0 / 60.0);
 
-    // Update dear imgui common. After this call we can define our widgets.
+    // After this call we can define our widgets.
     common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
@@ -471,7 +471,7 @@ fn draw(demo: *DemoState) void {
     }
 
     // Draw dear imgui widgets.
-    demo.guictx.draw(gctx);
+    demo.guir.draw(gctx);
 
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
     gctx.flushResourceBarriers();

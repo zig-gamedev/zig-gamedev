@@ -1,22 +1,3 @@
-// ==============================================================================
-//
-// graphics lib
-//
-// Some features of the graphics library:
-//
-//  * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)
-//  * Basic DirectX 12 resource management (handle-based resources and pipelines)
-//  * Basic resource barriers management with simple state-tracking
-//  * Transient and persistent descriptor allocation
-//  * Fast image loading using WIC (Windows Imaging Component)
-//  * Helpers for uploading data to the GPU
-//  * Fast mipmap generator running on the GPU
-//  * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
-//  * Custom integration of dear imgui library
-//
-//  Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intro
-//
-// ==============================================================================
 const std = @import("std");
 const assert = std.debug.assert;
 const zwin32 = @import("zwin32");
@@ -29,12 +10,11 @@ const d3d12d = zwin32.d3d12d;
 const d2d1 = zwin32.d2d1;
 const d3d11on12 = zwin32.d3d11on12;
 const wic = zwin32.wic;
-const ztracy = @import("ztracy");
-
 const HResultError = zwin32.HResultError;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const hrErrorOnFail = zwin32.hrErrorOnFail;
+const ztracy = @import("ztracy");
 
 const enable_dx_debug = @import("build_options").enable_dx_debug;
 const enable_dx_gpu_debug = @import("build_options").enable_dx_gpu_debug;
