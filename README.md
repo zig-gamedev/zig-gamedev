@@ -12,11 +12,11 @@ This repository contains a collection of [sample applications](#sample-applicati
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - fast SIMD math library for game developers (**cross-platform and standalone**)
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) (**cross-platform and standalone**)
-* [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/win32) - standalone Zig bindings for Win32 API
+* [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - standalone Zig bindings for Win32 API
 * [zd3d12](https://github.com/michal-z/zig-gamedev/blob/main/libs/zd3d12/zd3d12.zig) - helper library for working with DirectX 12
 * [zxaudio2](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/audio.zig) - helper library for working with XAudio2
 * [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/pix.zig) - support for GPU profiling with PIX
-* [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/common/tracy.zig) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
+* [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy/ztracy.zig) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [external/src](external/src))
 
