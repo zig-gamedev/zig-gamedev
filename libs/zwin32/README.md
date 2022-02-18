@@ -1,30 +1,30 @@
 ## Getting started
 
-Copy `win32` folder to a `libs` subdirectory of the root of your project.
+Copy `zwin32` folder to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 
 ```zig
 pub fn build(b: *std.build.Builder) void {
     ...
-    const win32 = std.build.Pkg{
-        .name = "win32",
-        .path = .{ .path = "libs/win32/win32.zig" },
+    const zwin32_pkg = std.build.Pkg{
+        .name = "zwin32",
+        .path = .{ .path = "libs/zwin32/zwin32.zig" },
     };
-    exe.addPackage(win32);
+    exe.addPackage(zwin32_pkg);
 }
 ```
 
 Now in your code you may import and use win32:
 
 ```zig
-const win32 = @import("win32");
-const wbase = win32.base;
-const dwrite = win32.dwrite;
-const dxgi = win32.dxgi;
-const d3d12 = win32.d3d12;
-const d3d12d = win32.d3d12d;
-const dml = win32.directml;
+const zwin32 = @import("zwin32");
+const wbase = zwin32.base;
+const dwrite = zwin32.dwrite;
+const dxgi = zwin32.dxgi;
+const d3d12 = zwin32.d3d12;
+const d3d12d = zwin32.d3d12d;
+const dml = zwin32.directml;
 
 pub fn main() !void {
     ...

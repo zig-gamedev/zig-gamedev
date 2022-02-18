@@ -7,11 +7,11 @@ Then in your `build.zig` add:
 ```zig
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zmath = std.build.Pkg{
+    const zmath_pkg = std.build.Pkg{
         .name = "zmath",
         .path = .{ .path = "libs/zmath/zmath.zig" },
     };
-    exe.addPackage(zmath);
+    exe.addPackage(zmath_pkg);
 }
 ```
 

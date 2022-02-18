@@ -7,11 +7,11 @@ Then in your `build.zig` add:
 ```zig
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zbullet = std.build.Pkg{
+    const zbullet_pkg = std.build.Pkg{
         .name = "zbullet",
         .path = .{ .path = "libs/zbullet/src/zbullet.zig" },
     };
-    exe.addPackage(zbullet);
+    exe.addPackage(zbullet_pkg);
     @import("libs/zbullet/build.zig").link(b, exe);
 }
 ```
