@@ -1,21 +1,23 @@
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
-const wasapi = win32.wasapi;
+const math = std.math;
+const assert = std.debug.assert;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const wasapi = zwin32.wasapi;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
 const pix = common.pix;
 const vm = common.vectormath;
-const math = std.math;
-const assert = std.debug.assert;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const GuiContext = common.GuiContext;
+
 const Vec2 = vm.Vec2;
 const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
@@ -38,7 +40,7 @@ const mesh_cube = 0;
 const mesh_helmet = 1;
 
 const ResourceView = struct {
-    resource: gr.ResourceHandle,
+    resource: zd3d12.ResourceHandle,
     view: d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
@@ -203,12 +205,12 @@ const PsoMeshPbr_Const = extern struct {
 };
 
 const DemoState = struct {
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    grfx: zd3d12.GraphicsContext,
+    gui: GuiContext,
     frame_stats: lib.FrameStats,
 
-    mesh_pbr_pso: gr.PipelineHandle,
-    sample_env_texture_pso: gr.PipelineHandle,
+    mesh_pbr_pso: zd3d12.PipelineHandle,
+    sample_env_texture_pso: zd3d12.PipelineHandle,
 
     depth_texture: ResourceView,
 
@@ -218,8 +220,8 @@ const DemoState = struct {
 
     meshes: std.ArrayList(Mesh),
 
-    vertex_buffer: gr.ResourceHandle,
-    index_buffer: gr.ResourceHandle,
+    vertex_buffer: zd3d12.ResourceHandle,
+    index_buffer: zd3d12.ResourceHandle,
 
     mesh_textures: [4]ResourceView,
 
@@ -299,7 +301,7 @@ fn loadAllMeshes(
     }
 }
 
-fn drawToCubeTexture(grfx: *gr.GraphicsContext, dest_texture: gr.ResourceHandle, dest_mip_level: u32) void {
+fn drawToCubeTexture(grfx: *zd3d12.GraphicsContext, dest_texture: zd3d12.ResourceHandle, dest_mip_level: u32) void {
     const desc = grfx.getResourceDesc(dest_texture);
     assert(dest_mip_level < desc.MipLevels);
     const texture_width = @intCast(u32, desc.Width) >> @intCast(u5, dest_mip_level);
@@ -372,7 +374,7 @@ fn drawToCubeTexture(grfx: *gr.GraphicsContext, dest_texture: gr.ResourceHandle,
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    var grfx = gr.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window);
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
@@ -548,8 +550,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
 
-    var mipgen_rgba8 = gr.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
-    var mipgen_rgba16f = gr.MipmapGenerator.init(arena_allocator, &grfx, .R16G16B16A16_FLOAT);
+    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
+    var mipgen_rgba16f = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R16G16B16A16_FLOAT);
 
     grfx.beginFrame();
     drawLoadingScreen(&grfx, title_tfmt, brush);
@@ -557,7 +559,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiContext.init(arena_allocator, &grfx, 1);
 
     const vertex_buffer = blk: {
         var vertex_buffer = grfx.createCommittedResource(
@@ -1028,7 +1030,11 @@ fn update(demo: *DemoState) void {
     }
 }
 
-fn drawLoadingScreen(grfx: *gr.GraphicsContext, textformat: *dwrite.ITextFormat, brush: *d2d1.ISolidColorBrush) void {
+fn drawLoadingScreen(
+    grfx: *zd3d12.GraphicsContext,
+    textformat: *dwrite.ITextFormat,
+    brush: *d2d1.ISolidColorBrush,
+) void {
     const back_buffer = grfx.getBackBuffer();
 
     grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);

@@ -141,8 +141,16 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(b.standardTargetOptions(.{}));
 
     const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
-    const enable_dx_debug = b.option(bool, "enable-dx-debug", "Enable debug layer for D3D12, D2D1, DirectML and DXGI") orelse false;
-    const enable_dx_gpu_debug = b.option(bool, "enable-dx-gpu-debug", "Enable GPU-based validation for D3D12") orelse false;
+    const enable_dx_debug = b.option(
+        bool,
+        "enable-dx-debug",
+        "Enable debug layer for D3D12, D2D1, DirectML and DXGI",
+    ) orelse false;
+    const enable_dx_gpu_debug = b.option(
+        bool,
+        "enable-dx-gpu-debug",
+        "Enable GPU-based validation for D3D12",
+    ) orelse false;
     const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
 
     const exe_options = b.addOptions();
@@ -174,29 +182,46 @@ pub fn build(b: *std.build.Builder) void {
 
     exe.want_lto = false;
 
-    const pkg_win32 = Pkg{
-        .name = "win32",
-        .path = .{ .path = "../../libs/win32/win32.zig" },
+    const zwin32_pkg = Pkg{
+        .name = "zwin32",
+        .path = .{ .path = "../../libs/zwin32/zwin32.zig" },
     };
-    exe.addPackage(pkg_win32);
+    exe.addPackage(zwin32_pkg);
 
-    const pkg_common = Pkg{
+    const options_pkg = Pkg{
+        .name = "build_options",
+        .path = exe_options.getSource(),
+    };
+
+    const ztracy_pkg = Pkg{
+        .name = "ztracy",
+        .path = .{ .path = "../../libs/ztracy/ztracy.zig" },
+        .dependencies = &[_]Pkg{options_pkg},
+    };
+    exe.addPackage(ztracy_pkg);
+
+    const zd3d12_pkg = Pkg{
+        .name = "zd3d12",
+        .path = .{ .path = "../../libs/zd3d12/zd3d12.zig" },
+        .dependencies = &[_]Pkg{
+            zwin32_pkg,
+            ztracy_pkg,
+            options_pkg,
+        },
+    };
+    exe.addPackage(zd3d12_pkg);
+
+    const common_pkg = Pkg{
         .name = "common",
         .path = .{ .path = "../../libs/common/common.zig" },
         .dependencies = &[_]Pkg{
-            Pkg{
-                .name = "win32",
-                .path = .{ .path = "../../libs/win32/win32.zig" },
-                .dependencies = null,
-            },
-            Pkg{
-                .name = "build_options",
-                .path = exe_options.getSource(),
-                .dependencies = null,
-            },
+            zwin32_pkg,
+            zd3d12_pkg,
+            ztracy_pkg,
+            options_pkg,
         },
     };
-    exe.addPackage(pkg_common);
+    exe.addPackage(common_pkg);
 
     const external = "../../external/src";
     exe.addIncludeDir(external);

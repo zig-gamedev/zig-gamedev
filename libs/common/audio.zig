@@ -1,16 +1,16 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const win32 = @import("win32");
-const w = win32.base;
-const xaudio2 = win32.xaudio2;
-const mf = win32.mf;
-const wasapi = win32.wasapi;
-const xapo = win32.xapo;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const xaudio2 = zwin32.xaudio2;
+const mf = zwin32.mf;
+const wasapi = zwin32.wasapi;
+const xapo = zwin32.xapo;
 const lib = @import("library.zig");
 const hrPanic = lib.hrPanic;
 const hrPanicOnFail = lib.hrPanicOnFail;
-const tracy = @import("tracy.zig");
+const ztracy = @import("ztracy");
 
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
@@ -474,7 +474,7 @@ pub const Stream = struct {
 };
 
 pub fn loadBufferData(allocator: std.mem.Allocator, audio_file_path: [:0]const u16) []const u8 {
-    const tracy_zone = tracy.zone(@src(), 1);
+    const tracy_zone = ztracy.zone(@src(), 1);
     defer tracy_zone.end();
 
     var source_reader: *mf.ISourceReader = undefined;

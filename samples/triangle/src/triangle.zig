@@ -1,15 +1,15 @@
-const builtin = @import("builtin");
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d3d12 = win32.d3d12;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d3d12 = zwin32.d3d12;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
+const GuiContext = common.GuiContext;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -36,7 +36,7 @@ pub fn main() !void {
     const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
     defer lib.deinitWindow(gpa_allocator);
 
-    var grfx = gr.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window);
     defer grfx.deinit();
 
     const pipeline = blk: {
@@ -85,7 +85,7 @@ pub fn main() !void {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiContext.init(arena_allocator, &grfx, 1);
     defer gui.deinit(&grfx);
 
     const upload_verts = grfx.allocateUploadBufferRegion(vm.Vec3, 3);

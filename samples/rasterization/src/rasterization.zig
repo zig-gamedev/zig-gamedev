@@ -1,20 +1,20 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gfx = common.graphics;
 const lib = common.library;
 const c = common.c;
+const GuiContext = common.GuiContext;
 const zm = @import("zmath");
-
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -48,30 +48,30 @@ const Pso_Vertex = struct {
 };
 
 const DemoState = struct {
-    gctx: gfx.GraphicsContext,
-    guictx: gfx.GuiContext,
+    gctx: zd3d12.GraphicsContext,
+    guictx: GuiContext,
     frame_stats: lib.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
-    z_pre_pass_pso: gfx.PipelineHandle,
-    record_pixels_pso: gfx.PipelineHandle,
-    draw_pixels_pso: gfx.PipelineHandle,
-    clear_pixels_pso: gfx.PipelineHandle,
-    draw_mesh_pso: gfx.PipelineHandle,
+    z_pre_pass_pso: zd3d12.PipelineHandle,
+    record_pixels_pso: zd3d12.PipelineHandle,
+    draw_pixels_pso: zd3d12.PipelineHandle,
+    clear_pixels_pso: zd3d12.PipelineHandle,
+    draw_mesh_pso: zd3d12.PipelineHandle,
 
-    vertex_buffer: gfx.ResourceHandle,
-    index_buffer: gfx.ResourceHandle,
+    vertex_buffer: zd3d12.ResourceHandle,
+    index_buffer: zd3d12.ResourceHandle,
 
-    depth_texture: gfx.ResourceHandle,
+    depth_texture: zd3d12.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    pixel_buffer: gfx.ResourceHandle,
+    pixel_buffer: zd3d12.ResourceHandle,
     pixel_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
     pixel_buffer_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    pixel_texture: gfx.ResourceHandle,
+    pixel_texture: zd3d12.ResourceHandle,
     pixel_texture_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
     pixel_texture_rtv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
@@ -82,7 +82,7 @@ const DemoState = struct {
     num_pixel_groups: u32,
     raster_speed: i32,
 
-    mesh_textures: [4]gfx.ResourceHandle,
+    mesh_textures: [4]zd3d12.ResourceHandle,
 
     camera: struct {
         position: [3]f32,
@@ -103,7 +103,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = gfx.GraphicsContext.init(window);
+    var gctx = zd3d12.GraphicsContext.init(window);
 
     // Enable vsync.
     gctx.present_flags = 0;
@@ -351,9 +351,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     gctx.beginFrame();
 
-    var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = GuiContext.init(arena_allocator, &gctx, 1);
 
-    const mesh_textures = [_]gfx.ResourceHandle{
+    const mesh_textures = [_]zd3d12.ResourceHandle{
         gctx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
             .{},
@@ -379,7 +379,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     // Generate mipmaps.
     {
-        var mipgen = gfx.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
         defer mipgen.deinit(&gctx);
         for (mesh_textures) |texture| {
             mipgen.generateMipmaps(&gctx, texture);

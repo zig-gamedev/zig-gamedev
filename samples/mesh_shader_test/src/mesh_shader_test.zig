@@ -1,25 +1,26 @@
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
-const dml = win32.directml;
+const assert = std.debug.assert;
+const math = std.math;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const dml = zwin32.directml;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
 const pix = common.pix;
 const vm = common.vectormath;
-const tracy = common.tracy;
-const math = std.math;
-const assert = std.debug.assert;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
+const GuiContext = common.GuiContext;
+
 const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
 const Mat4 = vm.Mat4;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -69,25 +70,25 @@ const DrawMode = enum {
 };
 
 const DemoState = struct {
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    grfx: zd3d12.GraphicsContext,
+    gui: GuiContext,
     frame_stats: lib.FrameStats,
 
-    mesh_shader_pso: gr.PipelineHandle,
-    vertex_shader_pso: gr.PipelineHandle,
-    vertex_shader_fixed_pso: gr.PipelineHandle,
+    mesh_shader_pso: zd3d12.PipelineHandle,
+    vertex_shader_pso: zd3d12.PipelineHandle,
+    vertex_shader_fixed_pso: zd3d12.PipelineHandle,
 
-    vertex_buffer: gr.ResourceHandle,
+    vertex_buffer: zd3d12.ResourceHandle,
     vertex_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
-    index_buffer: gr.ResourceHandle,
+    index_buffer: zd3d12.ResourceHandle,
     index_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    meshlet_buffer: gr.ResourceHandle,
+    meshlet_buffer: zd3d12.ResourceHandle,
     meshlet_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
-    meshlet_data_buffer: gr.ResourceHandle,
+    meshlet_data_buffer: zd3d12.ResourceHandle,
     meshlet_data_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    depth_texture: gr.ResourceHandle,
+    depth_texture: zd3d12.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     meshes: std.ArrayList(Mesh),
@@ -119,9 +120,6 @@ fn loadMeshAndGenerateMeshlets(
     all_meshlets: *std.ArrayList(Meshlet),
     all_meshlets_data: *std.ArrayList(u32),
 ) void {
-    const tracy_zone = tracy.zone(@src(), 1);
-    defer tracy_zone.end();
-
     var src_positions = std.ArrayList([3]f32).init(arena_allocator);
     var src_normals = std.ArrayList([3]f32).init(arena_allocator);
     var src_indices = std.ArrayList(u32).init(arena_allocator);
@@ -254,9 +252,6 @@ fn loadMeshAndGenerateMeshlets(
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const tracy_zone = tracy.zone(@src(), 1);
-    defer tracy_zone.end();
-
     const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
@@ -270,7 +265,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var grfx = gr.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window);
 
     _ = grfx.allocatePersistentGpuDescriptors(10);
 
@@ -515,7 +510,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiContext.init(arena_allocator, &grfx, 1);
 
     // Upload vertex buffer.
     {

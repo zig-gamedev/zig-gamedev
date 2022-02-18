@@ -1,27 +1,28 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
-const dml = win32.directml;
-const common = @import("common");
-const gr = common.graphics;
-const lib = common.library;
-const c = common.c;
-const zb = @cImport(@cInclude("cbullet.h"));
-const pix = common.pix;
-const vm = common.vectormath;
-const tracy = common.tracy;
 const math = std.math;
 const assert = std.debug.assert;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const dml = zwin32.directml;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
+const common = @import("common");
+const lib = common.library;
+const c = common.c;
+const pix = common.pix;
+const vm = common.vectormath;
+const GuiContext = common.GuiContext;
+const zb = @cImport(@cInclude("cbullet.h"));
+
 const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
 const Mat4 = vm.Mat4;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -289,23 +290,23 @@ const Camera = struct {
 };
 
 const DemoState = struct {
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    grfx: zd3d12.GraphicsContext,
+    gui: GuiContext,
     frame_stats: lib.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
     info_txtfmt: *dwrite.ITextFormat,
 
-    physics_debug_pso: gr.PipelineHandle,
-    simple_entity_pso: gr.PipelineHandle,
+    physics_debug_pso: zd3d12.PipelineHandle,
+    simple_entity_pso: zd3d12.PipelineHandle,
 
-    color_texture: gr.ResourceHandle,
-    depth_texture: gr.ResourceHandle,
+    color_texture: zd3d12.ResourceHandle,
+    depth_texture: zd3d12.ResourceHandle,
     color_texture_rtv: d3d12.CPU_DESCRIPTOR_HANDLE,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    vertex_buffer: gr.ResourceHandle,
-    index_buffer: gr.ResourceHandle,
+    vertex_buffer: zd3d12.ResourceHandle,
+    index_buffer: zd3d12.ResourceHandle,
 
     physics_debug: *PhysicsDebug,
     physics_world: zb.CbtWorldHandle,
@@ -963,9 +964,6 @@ fn createScene4(
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const tracy_zone = tracy.zone(@src(), 1);
-    defer tracy_zone.end();
-
     const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
@@ -979,7 +977,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var grfx = gr.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window);
     grfx.present_flags = 0;
     grfx.present_interval = 1;
 
@@ -1177,7 +1175,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(arena_allocator, &grfx, num_msaa_samples);
+    var gui = GuiContext.init(arena_allocator, &grfx, num_msaa_samples);
 
     {
         const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_positions.items.len));

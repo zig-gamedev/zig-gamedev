@@ -5,20 +5,20 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gfx = common.graphics;
+const GuiContext = common.GuiContext;
 const lib = common.library;
 const c = common.c;
 const zm = @import("zmath");
-
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 // We need to export below symbols for DirectX 12 Agility SDK.
 pub export var D3D12SDKVersion: u32 = 4;
@@ -45,26 +45,26 @@ const Vertex = struct {
 };
 
 const DemoState = struct {
-    gctx: gfx.GraphicsContext,
-    guictx: gfx.GuiContext,
+    gctx: zd3d12.GraphicsContext,
+    guictx: GuiContext,
     frame_stats: lib.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
-    non_bindless_pso: gfx.PipelineHandle,
-    bindless_pso: gfx.PipelineHandle,
+    non_bindless_pso: zd3d12.PipelineHandle,
+    bindless_pso: zd3d12.PipelineHandle,
     is_bindless_mode_active: bool,
 
-    vertex_buffer: gfx.ResourceHandle,
-    index_buffer: gfx.ResourceHandle,
+    vertex_buffer: zd3d12.ResourceHandle,
+    index_buffer: zd3d12.ResourceHandle,
 
-    depth_texture: gfx.ResourceHandle,
+    depth_texture: zd3d12.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     mesh_num_vertices: u32,
     mesh_num_indices: u32,
-    mesh_texture: gfx.ResourceHandle,
+    mesh_texture: zd3d12.ResourceHandle,
     mesh_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     camera: struct {
@@ -90,7 +90,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const arena_allocator = arena_allocator_state.allocator();
 
     // Create DirectX 12 context.
-    var gctx = gfx.GraphicsContext.init(window);
+    var gctx = zd3d12.GraphicsContext.init(window);
 
     // Create Direct2D brush which will be needed to display text.
     const brush = blk: {
@@ -121,8 +121,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
     hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
 
-    var non_bindless_pso: gfx.PipelineHandle = undefined;
-    var bindless_pso: gfx.PipelineHandle = undefined;
+    var non_bindless_pso: zd3d12.PipelineHandle = undefined;
+    var bindless_pso: zd3d12.PipelineHandle = undefined;
     {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
             d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
@@ -212,7 +212,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = GuiContext.init(arena_allocator, &gctx, 1);
 
     // Create texture resource and submit GPU commands which copies texture data from CPU
     // to high-performance GPU memory where resource resides.
@@ -224,7 +224,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Generate mipmaps for the mesh texture.
     {
         // Our generator uses fast compute shader to generate all texture levels.
-        var mipgen = gfx.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
         defer mipgen.deinit(&gctx);
         mipgen.generateMipmaps(&gctx, mesh_texture);
         gctx.finishGpuCommands(); // Wait for the GPU so that we can release the generator.

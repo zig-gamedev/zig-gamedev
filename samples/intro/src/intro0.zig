@@ -4,17 +4,17 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
-const common = @import("common");
-const gfx = common.graphics;
-const lib = common.library;
-
-const hrPanicOnFail = lib.hrPanicOnFail;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
+const common = @import("common");
+const GuiContext = common.GuiContext;
+const lib = common.library;
 
 // We need to export below symbols for DirectX 12 Agility SDK.
 pub export var D3D12SDKVersion: u32 = 4;
@@ -25,8 +25,8 @@ const window_width = 1920;
 const window_height = 1080;
 
 const DemoState = struct {
-    gctx: gfx.GraphicsContext,
-    guictx: gfx.GuiContext,
+    gctx: zd3d12.GraphicsContext,
+    guictx: GuiContext,
     frame_stats: lib.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
@@ -44,7 +44,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const arena_allocator = arena_allocator_state.allocator();
 
     // Create DirectX 12 context.
-    var gctx = gfx.GraphicsContext.init(window);
+    var gctx = zd3d12.GraphicsContext.init(window);
 
     // Enable vsync.
     // gctx.present_flags = 0;
@@ -84,7 +84,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = GuiContext.init(arena_allocator, &gctx, 1);
 
     // This will send command list to the GPU, call 'Present' and do some other bookkeeping.
     gctx.endFrame();

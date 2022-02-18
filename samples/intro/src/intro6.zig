@@ -1,21 +1,21 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gfx = common.graphics;
+const GuiContext = common.GuiContext;
 const lib = common.library;
 const c = common.c;
 const zm = @import("zmath");
 const zbt = @import("zbullet");
-
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 
 // We need to export below symbols for DirectX 12 Agility SDK.
 pub export var D3D12SDKVersion: u32 = 4;
@@ -41,16 +41,16 @@ const Vertex = struct {
 };
 
 const DemoState = struct {
-    gctx: gfx.GraphicsContext,
-    guictx: gfx.GuiContext,
+    gctx: zd3d12.GraphicsContext,
+    guictx: GuiContext,
     frame_stats: lib.FrameStats,
 
-    simple_pso: gfx.PipelineHandle,
+    simple_pso: zd3d12.PipelineHandle,
 
-    vertex_buffer: gfx.ResourceHandle,
-    index_buffer: gfx.ResourceHandle,
+    vertex_buffer: zd3d12.ResourceHandle,
+    index_buffer: zd3d12.ResourceHandle,
 
-    depth_texture: gfx.ResourceHandle,
+    depth_texture: zd3d12.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     mesh_num_vertices: u32,
@@ -61,15 +61,15 @@ const DemoState = struct {
         shapes: std.ArrayList(*const zbt.Shape),
     },
     camera: struct {
-        position: [3]f32,
-        forward: [3]f32,
-        pitch: f32,
-        yaw: f32,
-    },
+        position: [3]f32 = .{ 0.0, 10.0, -10.0 },
+        forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
+        pitch: f32 = 0.25 * math.pi,
+        yaw: f32 = 0.0,
+    } = .{},
     mouse: struct {
-        cursor_prev_x: i32,
-        cursor_prev_y: i32,
-    },
+        cursor_prev_x: i32 = 0,
+        cursor_prev_y: i32 = 0,
+    } = .{},
 };
 
 fn init(gpa_allocator: std.mem.Allocator) !DemoState {
@@ -83,7 +83,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     const arena_allocator = arena_allocator_state.allocator();
 
     // Create DirectX 12 context.
-    var gctx = gfx.GraphicsContext.init(window);
+    var gctx = zd3d12.GraphicsContext.init(window);
 
     // Enable vsync.
     gctx.present_flags = 0;
@@ -197,7 +197,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = GuiContext.init(arena_allocator, &gctx, 1);
 
     // Fill vertex buffer with vertex data.
     {
@@ -263,16 +263,6 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
         .physics = .{
             .world = physics_world,
             .shapes = physics_shapes,
-        },
-        .camera = .{
-            .position = [3]f32{ 0.0, 10.0, -10.0 },
-            .forward = [3]f32{ 0.0, 0.0, 1.0 },
-            .pitch = 0.25 * math.pi,
-            .yaw = 0.0,
-        },
-        .mouse = .{
-            .cursor_prev_x = 0,
-            .cursor_prev_y = 0,
         },
     };
 }

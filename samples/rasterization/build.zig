@@ -116,35 +116,52 @@ pub fn build(b: *std.build.Builder) void {
     exe.rdynamic = true;
     exe.want_lto = false;
 
-    const pkg_win32 = Pkg{
-        .name = "win32",
-        .path = .{ .path = "../../libs/win32/win32.zig" },
+    const options_pkg = Pkg{
+        .name = "build_options",
+        .path = exe_options.getSource(),
     };
-    exe.addPackage(pkg_win32);
 
-    const pkg_zmath = Pkg{
+    const zwin32_pkg = Pkg{
+        .name = "zwin32",
+        .path = .{ .path = "../../libs/zwin32/zwin32.zig" },
+    };
+    exe.addPackage(zwin32_pkg);
+
+    const zmath_pkg = Pkg{
         .name = "zmath",
         .path = .{ .path = "../../libs/zmath/zmath.zig" },
     };
-    exe.addPackage(pkg_zmath);
+    exe.addPackage(zmath_pkg);
 
-    const pkg_common = Pkg{
+    const ztracy_pkg = Pkg{
+        .name = "ztracy",
+        .path = .{ .path = "../../libs/ztracy/ztracy.zig" },
+        .dependencies = &[_]Pkg{options_pkg},
+    };
+    exe.addPackage(ztracy_pkg);
+
+    const zd3d12_pkg = Pkg{
+        .name = "zd3d12",
+        .path = .{ .path = "../../libs/zd3d12/zd3d12.zig" },
+        .dependencies = &[_]Pkg{
+            zwin32_pkg,
+            ztracy_pkg,
+            options_pkg,
+        },
+    };
+    exe.addPackage(zd3d12_pkg);
+
+    const common_pkg = Pkg{
         .name = "common",
         .path = .{ .path = "../../libs/common/common.zig" },
         .dependencies = &[_]Pkg{
-            Pkg{
-                .name = "win32",
-                .path = .{ .path = "../../libs/win32/win32.zig" },
-                .dependencies = null,
-            },
-            Pkg{
-                .name = "build_options",
-                .path = exe_options.getSource(),
-                .dependencies = null,
-            },
+            zwin32_pkg,
+            zd3d12_pkg,
+            ztracy_pkg,
+            options_pkg,
         },
     };
-    exe.addPackage(pkg_common);
+    exe.addPackage(common_pkg);
 
     const external = "../../external/src";
     exe.addIncludeDir(external);

@@ -1,18 +1,19 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
-const xaudio2 = win32.xaudio2;
-const xaudio2fx = win32.xaudio2fx;
-const xapo = win32.xapo;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const xaudio2 = zwin32.xaudio2;
+const xaudio2fx = zwin32.xaudio2fx;
+const xapo = zwin32.xapo;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gfx = common.graphics;
 const sfx = common.audio;
 const lib = common.library;
+const GuiContext = common.GuiContext;
 const c = common.c;
 const zm = @import("zmath");
 
@@ -72,9 +73,9 @@ const AudioData = struct {
 };
 
 const DemoState = struct {
-    gctx: gfx.GraphicsContext,
+    gctx: zd3d12.GraphicsContext,
     actx: sfx.AudioContext,
-    guictx: gfx.GuiContext,
+    guictx: GuiContext,
     frame_stats: lib.FrameStats,
 
     music: *sfx.Stream,
@@ -87,9 +88,9 @@ const DemoState = struct {
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
 
-    lines_pso: gfx.PipelineHandle,
+    lines_pso: zd3d12.PipelineHandle,
 
-    depth_texture: gfx.ResourceHandle,
+    depth_texture: zd3d12.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     audio_data: *AudioData,
@@ -188,7 +189,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = gfx.GraphicsContext.init(window);
+    var gctx = zd3d12.GraphicsContext.init(window);
     gctx.present_flags = 0;
     gctx.present_interval = 1;
 
@@ -270,7 +271,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     gctx.beginFrame();
 
-    var guictx = gfx.GuiContext.init(arena_allocator, &gctx, 1);
+    var guictx = GuiContext.init(arena_allocator, &gctx, 1);
 
     gctx.endFrame();
     gctx.finishGpuCommands();

@@ -1,20 +1,20 @@
-const builtin = @import("builtin");
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
+const math = std.math;
+const assert = std.debug.assert;
+const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const math = std.math;
-const assert = std.debug.assert;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
+const GuiContext = common.GuiContext;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -137,17 +137,17 @@ const DemoState = struct {
     const window_width = 1920;
     const window_height = 1080;
 
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    grfx: zd3d12.GraphicsContext,
+    gui: GuiContext,
     frame_stats: lib.FrameStats,
-    pipeline: gr.PipelineHandle,
+    pipeline: zd3d12.PipelineHandle,
 
-    vertex_buffer: gr.ResourceHandle,
-    index_buffer: gr.ResourceHandle,
-    entity_buffer: gr.ResourceHandle,
+    vertex_buffer: zd3d12.ResourceHandle,
+    index_buffer: zd3d12.ResourceHandle,
+    entity_buffer: zd3d12.ResourceHandle,
 
-    base_color_texture: gr.ResourceHandle,
-    depth_texture: gr.ResourceHandle,
+    base_color_texture: zd3d12.ResourceHandle,
+    depth_texture: zd3d12.ResourceHandle,
 
     entity_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
     base_color_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
@@ -160,7 +160,7 @@ const DemoState = struct {
 
     fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-        var grfx = gr.GraphicsContext.init(window);
+        var grfx = zd3d12.GraphicsContext.init(window);
 
         var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
         defer arena_allocator_state.deinit();
@@ -233,11 +233,11 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        var mipgen = gr.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
 
         grfx.beginFrame();
 
-        var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+        var gui = GuiContext.init(arena_allocator, &grfx, 1);
 
         const base_color_texture = grfx.createAndUploadTex2dFromFile(
             "content/SciFiHelmet/SciFiHelmet_BaseColor.png",

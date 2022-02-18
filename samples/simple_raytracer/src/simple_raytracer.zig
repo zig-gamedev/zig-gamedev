@@ -1,23 +1,23 @@
-const builtin = @import("builtin");
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
-const dml = win32.directml;
+const math = std.math;
+const assert = std.debug.assert;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const dml = zwin32.directml;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
 const pix = common.pix;
 const vm = common.vectormath;
-const tracy = common.tracy;
-const math = std.math;
-const assert = std.debug.assert;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const GuiContext = common.GuiContext;
+
 const Vec2 = vm.Vec2;
 const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
@@ -55,7 +55,7 @@ const Material = struct {
 };
 
 const ResourceView = struct {
-    resource: gr.ResourceHandle,
+    resource: zd3d12.ResourceHandle,
     view: d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
@@ -86,35 +86,35 @@ const PsoTraceShadowRays_FrameConst = struct {
 };
 
 const DemoState = struct {
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    grfx: zd3d12.GraphicsContext,
+    gui: GuiContext,
     frame_stats: lib.FrameStats,
 
-    static_mesh_pso: gr.PipelineHandle,
-    z_pre_pass_pso: gr.PipelineHandle,
-    gen_shadow_rays_pso: gr.PipelineHandle,
+    static_mesh_pso: zd3d12.PipelineHandle,
+    z_pre_pass_pso: zd3d12.PipelineHandle,
+    gen_shadow_rays_pso: zd3d12.PipelineHandle,
 
     trace_shadow_rays_stateobj: ?*d3d12.IStateObject,
     trace_shadow_rays_rs: ?*d3d12.IRootSignature,
-    trace_shadow_rays_table: gr.ResourceHandle,
+    trace_shadow_rays_table: zd3d12.ResourceHandle,
 
-    depth_texture: gr.ResourceHandle,
+    depth_texture: zd3d12.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
     depth_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    shadow_rays_texture: gr.ResourceHandle,
+    shadow_rays_texture: zd3d12.ResourceHandle,
     shadow_rays_texture_rtv: d3d12.CPU_DESCRIPTOR_HANDLE,
     shadow_rays_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    shadow_mask_texture: gr.ResourceHandle,
+    shadow_mask_texture: zd3d12.ResourceHandle,
     shadow_mask_texture_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
     shadow_mask_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     vertex_buffer: ResourceView,
     index_buffer: ResourceView,
 
-    blas_buffer: gr.ResourceHandle,
-    tlas_buffer: gr.ResourceHandle,
+    blas_buffer: zd3d12.ResourceHandle,
+    tlas_buffer: zd3d12.ResourceHandle,
 
     brush: *d2d1.ISolidColorBrush,
     normal_tfmt: *dwrite.ITextFormat,
@@ -271,16 +271,13 @@ fn appendMeshPrimitive(
 
 fn loadScene(
     arena: std.mem.Allocator,
-    grfx: *gr.GraphicsContext,
+    grfx: *zd3d12.GraphicsContext,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
     all_materials: *std.ArrayList(Material),
     all_textures: *std.ArrayList(ResourceView),
 ) void {
-    const tracy_zone = tracy.zone(@src(), 1);
-    defer tracy_zone.end();
-
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList(Vec3).init(arena);
     var normals = std.ArrayList(Vec3).init(arena);
@@ -429,7 +426,11 @@ fn loadScene(
     all_textures.appendAssumeCapacity(texture_4x4);
 }
 
-fn drawLoadingScreen(grfx: *gr.GraphicsContext, textformat: *dwrite.ITextFormat, brush: *d2d1.ISolidColorBrush) void {
+fn drawLoadingScreen(
+    grfx: *zd3d12.GraphicsContext,
+    textformat: *dwrite.ITextFormat,
+    brush: *d2d1.ISolidColorBrush,
+) void {
     const back_buffer = grfx.getBackBuffer();
 
     grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
@@ -468,7 +469,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var grfx = gr.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window);
 
     // Check for DirectX Raytracing (DXR) support.
     const dxr_is_supported = blk: {
@@ -696,7 +697,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     grfx.device.CreateUnorderedAccessView(grfx.getResource(shadow_mask_texture), null, null, shadow_mask_texture_uav);
     grfx.device.CreateShaderResourceView(grfx.getResource(shadow_mask_texture), null, shadow_mask_texture_srv);
 
-    var mipgen_rgba8 = gr.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
+    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
 
     //
     // Begin frame to init/upload resources on the GPU.
@@ -707,7 +708,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiContext.init(arena_allocator, &grfx, 1);
 
     var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);

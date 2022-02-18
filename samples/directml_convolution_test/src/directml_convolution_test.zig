@@ -1,23 +1,24 @@
 const builtin = @import("builtin");
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
-const dml = win32.directml;
+const math = std.math;
+const assert = std.debug.assert;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const dml = zwin32.directml;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
 const pix = common.pix;
 const vm = common.vectormath;
-const tracy = common.tracy;
-const math = std.math;
-const assert = std.debug.assert;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const GuiContext = common.GuiContext;
+
 const enable_dx_debug = @import("build_options").enable_dx_debug;
 
 pub export var D3D12SDKVersion: u32 = 4;
@@ -53,8 +54,8 @@ const OperatorState = struct {
 };
 
 const DemoState = struct {
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    grfx: zd3d12.GraphicsContext,
+    gui: GuiContext,
     frame_stats: lib.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
@@ -64,32 +65,29 @@ const DemoState = struct {
 
     conv_op_state: OperatorState,
 
-    temp_buffer: ?gr.ResourceHandle,
-    persistent_buffer: ?gr.ResourceHandle,
+    temp_buffer: ?zd3d12.ResourceHandle,
+    persistent_buffer: ?zd3d12.ResourceHandle,
 
-    input_buffer: gr.ResourceHandle,
+    input_buffer: zd3d12.ResourceHandle,
     input_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    filter_buffer: gr.ResourceHandle,
+    filter_buffer: zd3d12.ResourceHandle,
 
-    output_buffer: gr.ResourceHandle,
+    output_buffer: zd3d12.ResourceHandle,
     output_buffer_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     dml_cmd_recorder: *dml.ICommandRecorder,
 
-    texture_to_buffer_pso: gr.PipelineHandle,
-    buffer_to_texture_pso: gr.PipelineHandle,
-    draw_texture_pso: gr.PipelineHandle,
+    texture_to_buffer_pso: zd3d12.PipelineHandle,
+    buffer_to_texture_pso: zd3d12.PipelineHandle,
+    draw_texture_pso: zd3d12.PipelineHandle,
 
-    image_texture: gr.ResourceHandle,
+    image_texture: zd3d12.ResourceHandle,
     image_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
     image_texture_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const tracy_zone = tracy.zone(@src(), 1);
-    defer tracy_zone.end();
-
     const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
@@ -103,7 +101,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var grfx = gr.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window);
 
     const draw_texture_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -320,7 +318,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
-            var desc = d3d12.RESOURCE_DESC.initBuffer(std.mem.alignForward(filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32));
+            var desc = d3d12.RESOURCE_DESC.initBuffer(
+                std.mem.alignForward(filter_tensor.len * filter_tensor.len * @sizeOf(f16), 32),
+            );
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             break :blk desc;
         },
@@ -365,7 +365,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
 
-    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiContext.init(arena_allocator, &grfx, 1);
 
     const image_texture = grfx.createAndUploadTex2dFromFile(
         "content/genart_0025_5.png",

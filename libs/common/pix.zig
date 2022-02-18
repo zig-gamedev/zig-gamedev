@@ -1,11 +1,11 @@
 const std = @import("std");
-const win32 = @import("win32");
 const windows = std.os.windows;
-const d3d12 = win32.d3d12;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const d3d12 = zwin32.d3d12;
 const kernel32 = windows.kernel32;
 const ole32 = windows.ole32;
 const shell32 = windows.shell32;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const HMODULE = windows.HMODULE;
 const HRESULT = windows.HRESULT;
 const GUID = windows.GUID;
@@ -18,6 +18,7 @@ const WINAPI = windows.WINAPI;
 const UINT32 = u32;
 const BOOL = windows.BOOL;
 const DWORD = windows.DWORD;
+
 const enable_pix = @import("build_options").enable_pix;
 
 pub const CAPTURE_TIMING = (1 << 0);

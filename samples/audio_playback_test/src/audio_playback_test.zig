@@ -1,21 +1,23 @@
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d2d1 = win32.d2d1;
-const d3d12 = win32.d3d12;
-const dwrite = win32.dwrite;
-const wasapi = win32.wasapi;
-const mf = win32.mf;
+const math = std.math;
+const assert = std.debug.assert;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d2d1 = zwin32.d2d1;
+const d3d12 = zwin32.d3d12;
+const dwrite = zwin32.dwrite;
+const wasapi = zwin32.wasapi;
+const mf = zwin32.mf;
+const hrPanic = zwin32.hrPanic;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const math = std.math;
-const assert = std.debug.assert;
-const hrPanic = lib.hrPanic;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const GuiContext = common.GuiContext;
+
 const Vec2 = vm.Vec2;
 
 const num_vis_samples = 400;
@@ -39,8 +41,8 @@ const AudioContex = struct {
 };
 
 const DemoState = struct {
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    grfx: zd3d12.GraphicsContext,
+    gui: GuiContext,
     frame_stats: lib.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
@@ -48,11 +50,11 @@ const DemoState = struct {
 
     audio: AudioContex,
 
-    lines_pso: gr.PipelineHandle,
-    image_pso: gr.PipelineHandle,
-    lines_buffer: gr.ResourceHandle,
+    lines_pso: zd3d12.PipelineHandle,
+    image_pso: zd3d12.PipelineHandle,
+    lines_buffer: zd3d12.ResourceHandle,
 
-    image: gr.ResourceHandle,
+    image: zd3d12.ResourceHandle,
     image_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 };
 
@@ -96,7 +98,7 @@ fn audioThread(ctx: ?*anyopaque) callconv(.C) w.DWORD {
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    var grfx = gr.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window);
     grfx.present_flags = 0;
     grfx.present_interval = 1;
 
@@ -324,7 +326,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+    var gui = GuiContext.init(arena_allocator, &grfx, 1);
 
     const image = grfx.createAndUploadTex2dFromFile(
         "content/genart_008b.png",

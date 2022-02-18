@@ -1,19 +1,19 @@
-const builtin = @import("builtin");
 const std = @import("std");
-const win32 = @import("win32");
-const w = win32.base;
-const d3d12 = win32.d3d12;
-const d2d1 = win32.d2d1;
-const dwrite = win32.dwrite;
+const math = std.math;
+const L = std.unicode.utf8ToUtf16LeStringLiteral;
+const zwin32 = @import("zwin32");
+const w = zwin32.base;
+const d3d12 = zwin32.d3d12;
+const d2d1 = zwin32.d2d1;
+const dwrite = zwin32.dwrite;
+const hrPanicOnFail = zwin32.hrPanicOnFail;
+const hrPanic = zwin32.hrPanic;
+const zd3d12 = @import("zd3d12");
 const common = @import("common");
-const gr = common.graphics;
 const lib = common.library;
 const c = common.c;
 const vm = common.vectormath;
-const math = std.math;
-const hrPanicOnFail = lib.hrPanicOnFail;
-const hrPanic = lib.hrPanic;
-const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
+const GuiContext = common.GuiContext;
 
 pub export var D3D12SDKVersion: u32 = 4;
 pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -35,13 +35,13 @@ const DemoState = struct {
     const window_height = 1024;
 
     window: w.HWND,
-    grfx: gr.GraphicsContext,
-    gui: gr.GuiContext,
+    grfx: zd3d12.GraphicsContext,
+    gui: GuiContext,
     frame_stats: lib.FrameStats,
-    pipeline: gr.PipelineHandle,
-    vertex_buffer: gr.ResourceHandle,
-    index_buffer: gr.ResourceHandle,
-    texture: gr.ResourceHandle,
+    pipeline: zd3d12.PipelineHandle,
+    vertex_buffer: zd3d12.ResourceHandle,
+    index_buffer: zd3d12.ResourceHandle,
+    texture: zd3d12.ResourceHandle,
     texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
     brush: *d2d1.ISolidColorBrush,
     textformat: *dwrite.ITextFormat,
@@ -49,7 +49,7 @@ const DemoState = struct {
 
     fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const window = lib.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-        var grfx = gr.GraphicsContext.init(window);
+        var grfx = zd3d12.GraphicsContext.init(window);
 
         var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
         defer arena_allocator_state.deinit();
@@ -109,13 +109,13 @@ const DemoState = struct {
         const textformat = blk: {
             var maybe_textformat: ?*dwrite.ITextFormat = null;
             hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
-                utf8ToUtf16LeStringLiteral("Verdana"),
+                L("Verdana"),
                 null,
                 dwrite.FONT_WEIGHT.NORMAL,
                 dwrite.FONT_STYLE.NORMAL,
                 dwrite.FONT_STRETCH.NORMAL,
                 32.0,
-                utf8ToUtf16LeStringLiteral("en-us"),
+                L("en-us"),
                 &maybe_textformat,
             ));
             break :blk maybe_textformat.?;
@@ -123,11 +123,11 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        var mipgen = gr.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
 
         grfx.beginFrame();
 
-        const gui = gr.GuiContext.init(arena_allocator, &grfx, 1);
+        const gui = GuiContext.init(arena_allocator, &grfx, 1);
 
         const texture = grfx.createAndUploadTex2dFromFile(
             "content/genart_0025_5.png",
@@ -253,8 +253,8 @@ const DemoState = struct {
 
         lib.newImGuiFrame(demo.frame_stats.delta_time);
 
-        c.igSetNextWindowPos(c.ImVec2{ .x = 10.0, .y = 100.0 }, c.ImGuiCond_FirstUseEver, c.ImVec2{ .x = 0.0, .y = 0.0 });
-        c.igSetNextWindowSize(c.ImVec2{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);
+        c.igSetNextWindowPos(.{ .x = 10.0, .y = 100.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
+        c.igSetNextWindowSize(.{ .x = 600.0, .y = 0.0 }, c.ImGuiCond_FirstUseEver);
         _ = c.igBegin(
             "Demo Settings",
             null,

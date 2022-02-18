@@ -22,7 +22,7 @@ void vsImGui(
     out float2 out_uv : _Uv,
     out float4 out_color : _Color
 ) {
-    out_position = mul(float4(position, 0.0f, 1.0f), cbv_const.screen_to_clip);
+    out_position = mul(cbv_const.screen_to_clip, float4(position, 0.0f, 1.0f));
     out_uv = uv;
     out_color = color;
 }
@@ -34,7 +34,6 @@ void psImGui(
     float4 color : _Color,
     out float4 out_color : SV_Target0
 ) {
-    //color = pow(color, 2.2f);
     out_color = color * srv_t0.Sample(sam_s0, uv);
 }
 
