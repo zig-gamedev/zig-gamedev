@@ -14,8 +14,8 @@ const xapo = zwin32.xapo;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
+const zxaudio2 = @import("zxaudio2");
 const common = @import("common");
-const sfx = common.audio;
 const lib = common.library;
 const GuiContext = common.GuiContext;
 const c = common.c;
@@ -73,11 +73,11 @@ const AudioData = struct {
 
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
-    actx: sfx.AudioContext,
+    actx: zxaudio2.AudioContext,
     guictx: GuiContext,
     frame_stats: lib.FrameStats,
 
-    music: *sfx.Stream,
+    music: *zxaudio2.Stream,
     music_is_playing: bool = true,
     music_has_reverb: bool = false,
     sound1_data: []const u8,
@@ -130,13 +130,13 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
 }
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    var actx = sfx.AudioContext.init(gpa_allocator);
+    var actx = zxaudio2.AudioContext.init(gpa_allocator);
 
-    const sound1_data = sfx.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));
-    const sound2_data = sfx.loadBufferData(gpa_allocator, L("content/tabla_tas1.flac"));
-    const sound3_data = sfx.loadBufferData(gpa_allocator, L("content/loop_mika.flac"));
+    const sound1_data = zxaudio2.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));
+    const sound2_data = zxaudio2.loadBufferData(gpa_allocator, L("content/tabla_tas1.flac"));
+    const sound3_data = zxaudio2.loadBufferData(gpa_allocator, L("content/loop_mika.flac"));
 
-    var music = sfx.Stream.create(gpa_allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
+    var music = zxaudio2.Stream.create(gpa_allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     {
@@ -164,7 +164,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     audio_data.* = AudioData.init(gpa_allocator);
 
     {
-        const p0 = sfx.createSimpleProcessor(&processAudio, audio_data);
+        const p0 = zxaudio2.createSimpleProcessor(&processAudio, audio_data);
         defer _ = p0.Release();
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{

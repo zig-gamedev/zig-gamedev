@@ -9,8 +9,6 @@ const wasapi = zwin32.wasapi;
 const xapo = zwin32.xapo;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
-const ztracy = @import("ztracy");
-const lib = @import("library.zig");
 
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
@@ -474,9 +472,6 @@ pub const Stream = struct {
 };
 
 pub fn loadBufferData(allocator: std.mem.Allocator, audio_file_path: [:0]const u16) []const u8 {
-    const tracy_zone = ztracy.zone(@src(), 1);
-    defer tracy_zone.end();
-
     var source_reader: *mf.ISourceReader = undefined;
     hrPanicOnFail(mf.MFCreateSourceReaderFromURL(audio_file_path, null, &source_reader));
     defer _ = source_reader.Release();

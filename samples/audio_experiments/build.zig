@@ -123,6 +123,16 @@ pub fn build(b: *std.build.Builder) void {
     };
     exe.addPackage(ztracy_pkg);
 
+    const zxaudio2_pkg = Pkg{
+        .name = "zxaudio2",
+        .path = .{ .path = "../../libs/zxaudio2/zxaudio2.zig" },
+        .dependencies = &[_]Pkg{
+            zwin32_pkg,
+            options_pkg,
+        },
+    };
+    exe.addPackage(zxaudio2_pkg);
+
     const zd3d12_pkg = Pkg{
         .name = "zd3d12",
         .path = .{ .path = "../../libs/zd3d12/zd3d12.zig" },

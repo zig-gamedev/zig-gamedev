@@ -177,6 +177,16 @@ pub fn build(b: *std.build.Builder) void {
     };
     exe.addPackage(ztracy_pkg);
 
+    const zpix_pkg = Pkg{
+        .name = "zpix",
+        .path = .{ .path = "../../libs/zpix/zpix.zig" },
+        .dependencies = &[_]Pkg{
+            zwin32_pkg,
+            options_pkg,
+        },
+    };
+    exe.addPackage(zpix_pkg);
+
     const zd3d12_pkg = Pkg{
         .name = "zd3d12",
         .path = .{ .path = "../../libs/zd3d12/zd3d12.zig" },

@@ -14,9 +14,9 @@ const zd3d12 = @import("zd3d12");
 const common = @import("common");
 const lib = common.library;
 const c = common.c;
-const pix = common.pix;
 const vm = common.vectormath;
 const GuiContext = common.GuiContext;
+const zpix = @import("zpix");
 
 const Vec2 = vm.Vec2;
 const Vec3 = vm.Vec3;
@@ -462,11 +462,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    _ = pix.loadGpuCapturerLibrary();
-    _ = pix.setTargetWindow(window);
-    _ = pix.beginCapture(
-        pix.CAPTURE_GPU,
-        &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
+    _ = zpix.loadGpuCapturerLibrary();
+    _ = zpix.setTargetWindow(window);
+    _ = zpix.beginCapture(
+        zpix.CAPTURE_GPU,
+        &zpix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
     var grfx = zd3d12.GraphicsContext.init(window);
@@ -1008,7 +1008,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     w.kernel32.Sleep(50);
     grfx.finishGpuCommands();
 
-    _ = pix.endCapture();
+    _ = zpix.endCapture();
 
     mipgen_rgba8.deinit(&grfx);
     _ = large_tfmt.Release();
@@ -1207,8 +1207,8 @@ fn draw(demo: *DemoState) void {
 
     // Z Pre Pass.
     {
-        pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Z Pre Pass");
-        defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Z Pre Pass");
+        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
         const object_to_clip = cam_world_to_clip;
 
@@ -1235,8 +1235,8 @@ fn draw(demo: *DemoState) void {
 
     // Generate shadow rays.
     if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
-        pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Generate shadow rays.");
-        defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Generate shadow rays.");
+        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
         grfx.cmdlist.OMSetRenderTargets(
             1,
@@ -1285,8 +1285,8 @@ fn draw(demo: *DemoState) void {
 
     // Trace shadow rays.
     if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
-        pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Trace Shadow Rays");
-        defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Trace Shadow Rays");
+        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
         // Upload 'shader table' content (in this demo it could be done only once at init time).
         {
@@ -1379,8 +1379,8 @@ fn draw(demo: *DemoState) void {
 
     // Draw Sponza.
     {
-        pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Main Pass");
-        defer pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Main Pass");
+        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
         const object_to_world = vm.Mat4.initIdentity();
         const object_to_clip = object_to_world.mul(cam_world_to_clip);

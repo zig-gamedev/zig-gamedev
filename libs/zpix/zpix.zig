@@ -137,10 +137,14 @@ const EventsStringIsShortcutWriteMask: u64 = 0x0000000000000001;
 const EventsStringIsShortcutBitShift: u64 = 53;
 
 fn encodeStringInfo(alignment: u64, copy_chunk_size: u64, is_ansi: bool, is_shortcut: bool) u64 {
-    const mask0 = (alignment & EventsStringAlignmentWriteMask) << @intCast(u6, EventsStringAlignmentBitShift);
-    const mask1 = (copy_chunk_size & EventsStringCopyChunkSizeWriteMask) << @intCast(u6, EventsStringCopyChunkSizeBitShift);
-    const mask2 = (@boolToInt(is_ansi) & EventsStringIsANSIWriteMask) << @intCast(u6, EventsStringIsANSIBitShift);
-    const mask3 = (@boolToInt(is_shortcut) & EventsStringIsShortcutWriteMask) << @intCast(u6, EventsStringIsShortcutBitShift);
+    const mask0 = (alignment & EventsStringAlignmentWriteMask) <<
+        @intCast(u6, EventsStringAlignmentBitShift);
+    const mask1 = (copy_chunk_size & EventsStringCopyChunkSizeWriteMask) <<
+        @intCast(u6, EventsStringCopyChunkSizeBitShift);
+    const mask2 = (@boolToInt(is_ansi) & EventsStringIsANSIWriteMask) <<
+        @intCast(u6, EventsStringIsANSIBitShift);
+    const mask3 = (@boolToInt(is_shortcut) & EventsStringIsShortcutWriteMask) <<
+        @intCast(u6, EventsStringIsShortcutBitShift);
     return mask0 | mask1 | mask2 | mask3;
 }
 
@@ -231,7 +235,10 @@ const impl = struct {
     }
 
     fn setTargetWindow(hwnd: HWND) HRESULT {
-        const setGlobalTargetWindow = @ptrCast(?fn (HWND) callconv(WINAPI) void, getFunctionPtr("SetGlobalTargetWindow"));
+        const setGlobalTargetWindow = @ptrCast(
+            ?fn (HWND) callconv(WINAPI) void,
+            getFunctionPtr("SetGlobalTargetWindow"),
+        );
         if (setGlobalTargetWindow == null) {
             return windows.E_FAIL;
         }
@@ -240,7 +247,10 @@ const impl = struct {
     }
 
     fn gpuCaptureNextFrames(file_name: LPCWSTR, num_frames: UINT32) HRESULT {
-        const captureNextFrame = @ptrCast(?fn (LPCWSTR, UINT32) callconv(WINAPI) HRESULT, getFunctionPtr("CaptureNextFrame"));
+        const captureNextFrame = @ptrCast(
+            ?fn (LPCWSTR, UINT32) callconv(WINAPI) HRESULT,
+            getFunctionPtr("CaptureNextFrame"),
+        );
         if (captureNextFrame == null) {
             return windows.E_FAIL;
         }

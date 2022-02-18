@@ -15,7 +15,6 @@ const zd3d12 = @import("zd3d12");
 const common = @import("common");
 const lib = common.library;
 const c = common.c;
-const pix = common.pix;
 const vm = common.vectormath;
 const GuiContext = common.GuiContext;
 
@@ -1039,11 +1038,6 @@ fn draw(demo: *DemoState) void {
         .Format = .R32_UINT,
     });
 
-    pix.beginEventOnCommandList(
-        @ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist),
-        "Draw meshes",
-    );
-
     grfx.setCurrentPipeline(demo.mesh_pbr_pso);
     // Set scene constants
     {
@@ -1107,8 +1101,6 @@ fn draw(demo: *DemoState) void {
             0,
         );
     }
-
-    pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
 
     demo.gui.draw(grfx);
 

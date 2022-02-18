@@ -15,7 +15,6 @@ const zd3d12 = @import("zd3d12");
 const common = @import("common");
 const lib = common.library;
 const c = common.c;
-const pix = common.pix;
 const vm = common.vectormath;
 const GuiContext = common.GuiContext;
 
@@ -93,13 +92,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
-
-    _ = pix.loadGpuCapturerLibrary();
-    _ = pix.setTargetWindow(window);
-    _ = pix.beginCapture(
-        pix.CAPTURE_GPU,
-        &pix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
-    );
 
     var grfx = zd3d12.GraphicsContext.init(window);
 
@@ -363,8 +355,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     grfx.endFrame();
     grfx.beginFrame();
 
-    pix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "GPU init");
-
     var gui = GuiContext.init(arena_allocator, &grfx, 1);
 
     const image_texture = grfx.createAndUploadTex2dFromFile(
@@ -466,12 +456,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         init_dtbl,
     );
 
-    _ = pix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
-
     grfx.endFrame();
     grfx.finishGpuCommands();
-
-    _ = pix.endCapture();
 
     return .{
         .grfx = grfx,
