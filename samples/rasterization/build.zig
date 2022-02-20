@@ -16,15 +16,14 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
     exe.addOptions("build_options", exe_options);
 
-    exe.step.dependOn(
-        &b.addInstallDirectory(.{
-            .source_dir = thisDir() ++ "/" ++ content_dir,
-            .install_dir = .{ .custom = "" },
-            .install_subdir = "bin/" ++ content_dir,
-        }).step,
-    );
-
-    buildShaders(b, exe);
+    const dxc_step = buildShaders(b);
+    const install_content_step = b.addInstallDirectory(.{
+        .source_dir = thisDir() ++ "/" ++ content_dir,
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ content_dir,
+    });
+    install_content_step.step.dependOn(dxc_step);
+    exe.step.dependOn(&install_content_step.step);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
@@ -100,11 +99,13 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
+fn buildShaders(b: *std.build.Builder) *std.build.Step {
+    const dxc_step = b.step("rasterization_dxc", "Build shaders for 'rasterization' demo");
+
     var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "src/rasterization.hlsl",
@@ -113,7 +114,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "vs",
         "PSO__RECORD_PIXELS",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
         "src/rasterization.hlsl",
         "psRecordPixels",
@@ -121,12 +122,12 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "ps",
         "PSO__RECORD_PIXELS",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd("src/rasterization.hlsl", "vsDrawMesh", "draw_mesh.vs.cso", "vs", "PSO__DRAW_MESH");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("src/rasterization.hlsl", "psDrawMesh", "draw_mesh.ps.cso", "ps", "PSO__DRAW_MESH");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "src/rasterization.hlsl",
@@ -135,7 +136,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "cs",
         "PSO__DRAW_PIXELS",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "src/rasterization.hlsl",
@@ -144,7 +145,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "cs",
         "PSO__CLEAR_PIXELS",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "../../libs/common/common.hlsl",
@@ -153,7 +154,8 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "cs",
         "PSO__GENERATE_MIPMAPS",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    return dxc_step;
 }
 
 fn makeDxcCmd(

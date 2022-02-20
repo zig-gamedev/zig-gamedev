@@ -20,15 +20,14 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
     exe.setTarget(options.target);
     exe.addOptions("build_options", exe_options);
 
-    exe.step.dependOn(
-        &b.addInstallDirectory(.{
-            .source_dir = thisDir() ++ "/" ++ content_dir,
-            .install_dir = .{ .custom = "" },
-            .install_subdir = "bin/" ++ content_dir,
-        }).step,
-    );
-
-    buildShaders(b, exe);
+    const dxc_step = buildShaders(b, intro_index_str);
+    const install_content_step = b.addInstallDirectory(.{
+        .source_dir = thisDir() ++ "/" ++ content_dir,
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ content_dir,
+    });
+    install_content_step.step.dependOn(dxc_step);
+    exe.step.dependOn(&install_content_step.step);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
@@ -111,41 +110,46 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
+fn buildShaders(b: *std.build.Builder, comptime intro_index_str: []const u8) *std.build.Step {
+    const dxc_step = b.step(
+        "intro" ++ intro_index_str ++ "_dxc",
+        "Build shaders for 'intro" ++ intro_index_str ++ "' demo",
+    );
+
     var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd("src/intro1.hlsl", "vsMain", "intro1.vs.cso", "vs", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("src/intro1.hlsl", "psMain", "intro1.ps.cso", "ps", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd("src/intro2.hlsl", "vsMain", "intro2.vs.cso", "vs", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("src/intro2.hlsl", "psMain", "intro2.ps.cso", "ps", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd("src/intro3.hlsl", "vsMain", "intro3.vs.cso", "vs", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("src/intro3.hlsl", "psMain", "intro3.ps.cso", "ps", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd("src/intro4.hlsl", "vsMain", "intro4.vs.cso", "vs", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("src/intro4.hlsl", "psMain", "intro4.ps.cso", "ps", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd("src/intro4.hlsl", "vsMain", "intro4_bindless.vs.cso", "vs", "PSO__BINDLESS");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("src/intro4.hlsl", "psMain", "intro4_bindless.ps.cso", "ps", "PSO__BINDLESS");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd("src/intro5.hlsl", "vsMain", "intro5.vs.cso", "vs", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("src/intro5.hlsl", "psMain", "intro5.ps.cso", "ps", "");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "../../libs/common/common.hlsl",
@@ -154,7 +158,8 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "cs",
         "PSO__GENERATE_MIPMAPS",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    return dxc_step;
 }
 
 fn makeDxcCmd(

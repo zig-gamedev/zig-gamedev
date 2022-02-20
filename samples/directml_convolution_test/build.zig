@@ -16,15 +16,14 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
     exe.addOptions("build_options", exe_options);
 
-    exe.step.dependOn(
-        &b.addInstallDirectory(.{
-            .source_dir = thisDir() ++ "/" ++ content_dir,
-            .install_dir = .{ .custom = "" },
-            .install_subdir = "bin/" ++ content_dir,
-        }).step,
-    );
-
-    buildShaders(b, exe);
+    const dxc_step = buildShaders(b);
+    const install_content_step = b.addInstallDirectory(.{
+        .source_dir = thisDir() ++ "/" ++ content_dir,
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ content_dir,
+    });
+    install_content_step.step.dependOn(dxc_step);
+    exe.step.dependOn(&install_content_step.step);
 
     exe.step.dependOn(
         &b.addInstallFile(
@@ -117,11 +116,13 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
+fn buildShaders(b: *std.build.Builder) *std.build.Step {
+    const dxc_step = b.step("directml_convolution_test_dxc", "Build shaders for 'directml_convolution_test' demo");
+
     var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "src/directml_convolution_test.hlsl",
@@ -130,7 +131,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "vs",
         "PSO__DRAW_TEXTURE",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
         "src/directml_convolution_test.hlsl",
         "psDrawTexture",
@@ -138,7 +139,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "ps",
         "PSO__DRAW_TEXTURE",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "src/directml_convolution_test.hlsl",
@@ -147,7 +148,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "cs",
         "PSO__TEXTURE_TO_BUFFER",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "src/directml_convolution_test.hlsl",
@@ -156,7 +157,8 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "cs",
         "PSO__BUFFER_TO_TEXTURE",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    return dxc_step;
 }
 
 fn makeDxcCmd(

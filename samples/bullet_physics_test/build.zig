@@ -16,15 +16,14 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
     exe.addOptions("build_options", exe_options);
 
-    exe.step.dependOn(
-        &b.addInstallDirectory(.{
-            .source_dir = thisDir() ++ "/" ++ content_dir,
-            .install_dir = .{ .custom = "" },
-            .install_subdir = "bin/" ++ content_dir,
-        }).step,
-    );
-
-    buildShaders(b, exe);
+    const dxc_step = buildShaders(b);
+    const install_content_step = b.addInstallDirectory(.{
+        .source_dir = thisDir() ++ "/" ++ content_dir,
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ content_dir,
+    });
+    install_content_step.step.dependOn(dxc_step);
+    exe.step.dependOn(&install_content_step.step);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
@@ -104,11 +103,13 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
+fn buildShaders(b: *std.build.Builder) *std.build.Step {
+    const dxc_step = b.step("bullet_physics_test_dxc", "Build shaders for 'bullet_physics_test' demo");
+
     var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "src/bullet_physics_test.hlsl",
@@ -117,7 +118,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "vs",
         "PSO__PHYSICS_DEBUG",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
         "src/bullet_physics_test.hlsl",
         "psPhysicsDebug",
@@ -125,7 +126,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "ps",
         "PSO__PHYSICS_DEBUG",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "src/bullet_physics_test.hlsl",
@@ -134,7 +135,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "vs",
         "PSO__SIMPLE_ENTITY",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
         "src/bullet_physics_test.hlsl",
         "gsSimpleEntity",
@@ -142,7 +143,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "gs",
         "PSO__SIMPLE_ENTITY",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
         "src/bullet_physics_test.hlsl",
         "psSimpleEntity",
@@ -150,7 +151,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "ps",
         "PSO__SIMPLE_ENTITY",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
         "src/bullet_physics_test.hlsl",
         "psSimpleEntity",
@@ -158,7 +159,9 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "ps",
         "PSO__SIMPLE_ENTITY_WITH_GS",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    return dxc_step;
 }
 
 fn makeDxcCmd(

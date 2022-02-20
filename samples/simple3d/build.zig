@@ -16,15 +16,14 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
     exe.addOptions("build_options", exe_options);
 
-    exe.step.dependOn(
-        &b.addInstallDirectory(.{
-            .source_dir = thisDir() ++ "/" ++ content_dir,
-            .install_dir = .{ .custom = "" },
-            .install_subdir = "bin/" ++ content_dir,
-        }).step,
-    );
-
-    buildShaders(b, exe);
+    const dxc_step = buildShaders(b);
+    const install_content_step = b.addInstallDirectory(.{
+        .source_dir = thisDir() ++ "/" ++ content_dir,
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "bin/" ++ content_dir,
+    });
+    install_content_step.step.dependOn(dxc_step);
+    exe.step.dependOn(&install_content_step.step);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
@@ -94,7 +93,9 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     return exe;
 }
 
-fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
+fn buildShaders(b: *std.build.Builder) *std.build.Step {
+    const dxc_step = b.step("simple3d", "Build shaders for 'simple3d' demo");
+
     var dxc_command = makeDxcCmd(
         "src/simple3d.hlsl",
         "vsTriangle",
@@ -102,7 +103,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "vs",
         "",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
         "src/simple3d.hlsl",
         "psTriangle",
@@ -110,7 +111,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "ps",
         "",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "../../libs/common/common.hlsl",
@@ -119,7 +120,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "vs",
         "PSO__IMGUI",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
         "../../libs/common/common.hlsl",
         "psImGui",
@@ -127,7 +128,7 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "ps",
         "PSO__IMGUI",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
         "../../libs/common/common.hlsl",
@@ -136,7 +137,8 @@ fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
         "cs",
         "PSO__GENERATE_MIPMAPS",
     );
-    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    return dxc_step;
 }
 
 fn makeDxcCmd(
