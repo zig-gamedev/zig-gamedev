@@ -18,13 +18,18 @@ ib: [zd3d12.GraphicsContext.max_num_buffered_frames]zd3d12.ResourceHandle,
 vb_cpu_addr: [zd3d12.GraphicsContext.max_num_buffered_frames][]align(8) u8,
 ib_cpu_addr: [zd3d12.GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
-pub fn init(arena: std.mem.Allocator, gr: *zd3d12.GraphicsContext, num_msaa_samples: u32) GuiRenderer {
+pub fn init(
+    arena: std.mem.Allocator,
+    gr: *zd3d12.GraphicsContext,
+    num_msaa_samples: u32,
+    comptime content_dir: []const u8,
+) GuiRenderer {
     assert(gr.is_cmdlist_opened);
     assert(c.igGetCurrentContext() != null);
 
     const io = c.igGetIO().?;
 
-    _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, "content/Roboto-Medium.ttf", 25.0, null, null);
+    _ = c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, content_dir ++ "Roboto-Medium.ttf", 25.0, null, null);
     const font_info = blk: {
         var pp: [*c]u8 = undefined;
         var ww: i32 = undefined;
@@ -79,8 +84,8 @@ pub fn init(arena: std.mem.Allocator, gr: *zd3d12.GraphicsContext, num_msaa_samp
         break :blk gr.createGraphicsShaderPipeline(
             arena,
             &pso_desc,
-            "content/shaders/imgui.vs.cso",
-            "content/shaders/imgui.ps.cso",
+            content_dir ++ "shaders/imgui.vs.cso",
+            content_dir ++ "shaders/imgui.ps.cso",
         );
     };
     return GuiRenderer{

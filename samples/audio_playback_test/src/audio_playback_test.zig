@@ -21,8 +21,10 @@ const Vec2 = vm.Vec2;
 
 const num_vis_samples = 400;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: audio playback test";
 const window_width = 1920;
@@ -223,7 +225,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, w.TRUE));
 
         var source_reader: *mf.ISourceReader = undefined;
-        hrPanicOnFail(mf.MFCreateSourceReaderFromURL(L("content/acid_walk.mp3"), config_attribs, &source_reader));
+        hrPanicOnFail(mf.MFCreateSourceReaderFromURL(
+            L(content_dir ++ "acid_walk.mp3"),
+            config_attribs,
+            &source_reader,
+        ));
         defer _ = source_reader.Release();
 
         var media_type: *mf.IMediaType = undefined;
@@ -294,8 +300,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/lines.vs.cso",
-            "content/shaders/lines.ps.cso",
+            content_dir ++ "shaders/lines.vs.cso",
+            content_dir ++ "shaders/lines.ps.cso",
         );
     };
 
@@ -310,8 +316,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/image.vs.cso",
-            "content/shaders/image.ps.cso",
+            content_dir ++ "shaders/image.vs.cso",
+            content_dir ++ "shaders/image.ps.cso",
         );
     };
 
@@ -325,10 +331,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
 
     const image = grfx.createAndUploadTex2dFromFile(
-        "content/genart_008b.png",
+        content_dir ++ "genart_008b.png",
         .{ .num_mip_levels = 1 },
     ) catch |err| hrPanic(err);
     const image_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);

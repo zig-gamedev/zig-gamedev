@@ -1595,7 +1595,12 @@ pub const MipmapGenerator = struct {
     base_uav: d3d12.CPU_DESCRIPTOR_HANDLE,
     format: dxgi.FORMAT,
 
-    pub fn init(arena: std.mem.Allocator, gr: *GraphicsContext, format: dxgi.FORMAT) MipmapGenerator {
+    pub fn init(
+        arena: std.mem.Allocator,
+        gr: *GraphicsContext,
+        format: dxgi.FORMAT,
+        comptime content_dir: []const u8,
+    ) MipmapGenerator {
         var width: u32 = 2048 / 2;
         var height: u32 = 2048 / 2;
 
@@ -1629,9 +1634,13 @@ pub const MipmapGenerator = struct {
         }
 
         var desc = d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault();
-        const pipeline = gr.createComputeShaderPipeline(arena, &desc, "content/shaders/generate_mipmaps.cs.cso");
+        const pipeline = gr.createComputeShaderPipeline(
+            arena,
+            &desc,
+            content_dir ++ "shaders/generate_mipmaps.cs.cso",
+        );
 
-        return MipmapGenerator{
+        return .{
             .pipeline = pipeline,
             .scratch_textures = scratch_textures,
             .base_uav = base_uav,

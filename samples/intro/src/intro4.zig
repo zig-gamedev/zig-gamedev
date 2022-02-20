@@ -20,8 +20,10 @@ const c = common.c;
 const zm = @import("zmath");
 
 // We need to export below symbols for DirectX 12 Agility SDK.
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: intro 4";
 const window_width = 1920;
@@ -143,14 +145,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         non_bindless_pso = gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/intro4.vs.cso",
-            "content/shaders/intro4.ps.cso",
+            content_dir ++ "shaders/intro4.vs.cso",
+            content_dir ++ "shaders/intro4.ps.cso",
         );
         bindless_pso = gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/intro4_bindless.vs.cso",
-            "content/shaders/intro4_bindless.ps.cso",
+            content_dir ++ "shaders/intro4_bindless.vs.cso",
+            content_dir ++ "shaders/intro4_bindless.ps.cso",
         );
     }
 
@@ -160,7 +162,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
     var mesh_texcoords = std.ArrayList([2]f32).init(arena_allocator);
     {
-        const data = common.parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
+        const data = common.parseAndLoadGltfFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
         defer c.cgltf_free(data);
         common.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, &mesh_texcoords, null);
     }
@@ -211,19 +213,19 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1);
+    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     // Create texture resource and submit GPU commands which copies texture data from CPU
     // to high-performance GPU memory where resource resides.
     const mesh_texture = gctx.createAndUploadTex2dFromFile(
-        "content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
+        content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
         .{}, // Default parameters mean that we want whole mipmap chain.
     ) catch |err| hrPanic(err);
 
     // Generate mipmaps for the mesh texture.
     {
         // Our generator uses fast compute shader to generate all texture levels.
-        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM, content_dir);
         defer mipgen.deinit(&gctx);
         mipgen.generateMipmaps(&gctx, mesh_texture);
         gctx.finishGpuCommands(); // Wait for the GPU so that we can release the generator.

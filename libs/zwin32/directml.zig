@@ -941,7 +941,7 @@ pub fn createDevice(
 
     var directml_dll = windows.kernel32.GetModuleHandleW(L("DirectML.dll"));
     if (directml_dll == null) {
-        directml_dll = (std.DynLib.openZ("d3d12/DirectML.dll") catch unreachable).dll;
+        directml_dll = (std.DynLib.openZ("DirectML.dll") catch unreachable).dll;
     }
 
     DMLCreateDevice1 = @ptrCast(

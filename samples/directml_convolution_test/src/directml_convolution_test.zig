@@ -19,8 +19,10 @@ const GuiRenderer = common.GuiRenderer;
 
 const enable_dx_debug = @import("build_options").enable_dx_debug;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: DirectML convolution test";
 const window_width = 1800;
@@ -105,20 +107,20 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/draw_texture.vs.cso",
-            "content/shaders/draw_texture.ps.cso",
+            content_dir ++ "shaders/draw_texture.vs.cso",
+            content_dir ++ "shaders/draw_texture.ps.cso",
         );
     };
 
     const texture_to_buffer_pso = grfx.createComputeShaderPipeline(
         arena_allocator,
         &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
-        "content/shaders/texture_to_buffer.cs.cso",
+        content_dir ++ "shaders/texture_to_buffer.cs.cso",
     );
     const buffer_to_texture_pso = grfx.createComputeShaderPipeline(
         arena_allocator,
         &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
-        "content/shaders/buffer_to_texture.cs.cso",
+        content_dir ++ "shaders/buffer_to_texture.cs.cso",
     );
 
     const brush = blk: {
@@ -354,10 +356,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     grfx.endFrame();
     grfx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
 
     const image_texture = grfx.createAndUploadTex2dFromFile(
-        "content/genart_0025_5.png",
+        content_dir ++ "genart_0025_5.png",
         .{
             .num_mip_levels = 1,
             .texture_flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,

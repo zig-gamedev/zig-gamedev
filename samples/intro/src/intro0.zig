@@ -16,8 +16,10 @@ const common = @import("common");
 const GuiRenderer = common.GuiRenderer;
 
 // We need to export below symbols for DirectX 12 Agility SDK.
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: intro 0";
 const window_width = 1920;
@@ -83,7 +85,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1);
+    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     // This will send command list to the GPU, call 'Present' and do some other bookkeeping.
     gctx.endFrame();

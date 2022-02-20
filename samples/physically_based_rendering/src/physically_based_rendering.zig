@@ -21,8 +21,10 @@ const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
 const Mat4 = vm.Mat4;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: physically based rendering";
 const window_width = 1920;
@@ -258,7 +260,7 @@ fn loadAllMeshes(
         const pre_indices_len = indices.items.len;
         const pre_positions_len = positions.items.len;
 
-        const data = parseAndLoadGltfFile("content/cube.gltf");
+        const data = parseAndLoadGltfFile(content_dir ++ "cube.gltf");
         defer c.cgltf_free(data);
         appendMesh(data, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
@@ -272,7 +274,7 @@ fn loadAllMeshes(
         const pre_indices_len = indices.items.len;
         const pre_positions_len = positions.items.len;
 
-        const data = parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
+        const data = parseAndLoadGltfFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
         defer c.cgltf_free(data);
         appendMesh(data, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
@@ -443,8 +445,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/mesh_pbr.vs.cso",
-            "content/shaders/mesh_pbr.ps.cso",
+            content_dir ++ "shaders/mesh_pbr.vs.cso",
+            content_dir ++ "shaders/mesh_pbr.ps.cso",
         );
     };
 
@@ -472,8 +474,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/sample_env_texture.vs.cso",
-            "content/shaders/sample_env_texture.ps.cso",
+            content_dir ++ "shaders/sample_env_texture.vs.cso",
+            content_dir ++ "shaders/sample_env_texture.ps.cso",
         );
     };
 
@@ -499,25 +501,25 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const generate_env_texture_pso = grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/generate_env_texture.vs.cso",
-            "content/shaders/generate_env_texture.ps.cso",
+            content_dir ++ "shaders/generate_env_texture.vs.cso",
+            content_dir ++ "shaders/generate_env_texture.ps.cso",
         );
         const generate_irradiance_texture_pso = grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/generate_irradiance_texture.vs.cso",
-            "content/shaders/generate_irradiance_texture.ps.cso",
+            content_dir ++ "shaders/generate_irradiance_texture.vs.cso",
+            content_dir ++ "shaders/generate_irradiance_texture.ps.cso",
         );
         const generate_prefiltered_env_texture_pso = grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/generate_prefiltered_env_texture.vs.cso",
-            "content/shaders/generate_prefiltered_env_texture.ps.cso",
+            content_dir ++ "shaders/generate_prefiltered_env_texture.vs.cso",
+            content_dir ++ "shaders/generate_prefiltered_env_texture.ps.cso",
         );
         const generate_brdf_integration_texture_pso = grfx.createComputeShaderPipeline(
             arena_allocator,
             &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
-            "content/shaders/generate_brdf_integration_texture.cs.cso",
+            content_dir ++ "shaders/generate_brdf_integration_texture.cs.cso",
         );
         break :blk .{
             .generate_env_texture_pso = generate_env_texture_pso,
@@ -548,8 +550,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
     grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
 
-    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
-    var mipgen_rgba16f = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R16G16B16A16_FLOAT);
+    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
+    var mipgen_rgba16f = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R16G16B16A16_FLOAT, content_dir);
 
     grfx.beginFrame();
     drawLoadingScreen(&grfx, title_tfmt, brush);
@@ -557,7 +559,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
 
     const vertex_buffer = blk: {
         var vertex_buffer = grfx.createCommittedResource(
@@ -613,7 +615,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         var height: u32 = 0;
         c.stbi_set_flip_vertically_on_load(1);
         const image_data = c.stbi_loadf(
-            "content/Newport_Loft.hdr",
+            content_dir ++ "Newport_Loft.hdr",
             @ptrCast(*i32, &width),
             @ptrCast(*i32, &height),
             null,
@@ -650,28 +652,28 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const mesh_textures = [_]ResourceView{
         .{
             .resource = grfx.createAndUploadTex2dFromFile(
-                "content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
+                content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
                 .{},
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
         },
         .{
             .resource = grfx.createAndUploadTex2dFromFile(
-                "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
+                content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.png",
                 .{},
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
         },
         .{
             .resource = grfx.createAndUploadTex2dFromFile(
-                "content/SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
+                content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
                 .{},
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
         },
         .{
             .resource = grfx.createAndUploadTex2dFromFile(
-                "content/SciFiHelmet/SciFiHelmet_Normal.png",
+                content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.png",
                 .{},
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),

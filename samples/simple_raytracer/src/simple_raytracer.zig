@@ -22,8 +22,10 @@ const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
 const Mat4 = vm.Mat4;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: simple raytracer";
 const window_width = 1920;
@@ -283,7 +285,7 @@ fn loadScene(
     var texcoords0 = std.ArrayList(Vec2).init(arena);
     var tangents = std.ArrayList(Vec4).init(arena);
 
-    const data = parseAndLoadGltfFile("content/Sponza/Sponza.gltf");
+    const data = parseAndLoadGltfFile(content_dir ++ "Sponza/Sponza.gltf");
     defer c.cgltf_free(data);
 
     const num_meshes = @intCast(u32, data.meshes_count);
@@ -401,7 +403,11 @@ fn loadScene(
         const image = &data.images[image_index];
 
         var buffer: [64]u8 = undefined;
-        const path = std.fmt.bufPrint(buffer[0..], "content/Sponza/{s}", .{image.uri}) catch unreachable;
+        const path = std.fmt.bufPrint(
+            buffer[0..],
+            content_dir ++ "Sponza/{s}",
+            .{image.uri},
+        ) catch unreachable;
 
         const texture = grfx.createAndUploadTex2dFromFile(path, .{}) catch unreachable;
         const view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
@@ -534,8 +540,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/rast_static_mesh.vs.cso",
-            "content/shaders/rast_static_mesh.ps.cso",
+            content_dir ++ "shaders/rast_static_mesh.vs.cso",
+            content_dir ++ "shaders/rast_static_mesh.ps.cso",
         );
     };
 
@@ -550,8 +556,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/z_pre_pass.vs.cso",
-            "content/shaders/z_pre_pass.ps.cso",
+            content_dir ++ "shaders/z_pre_pass.vs.cso",
+            content_dir ++ "shaders/z_pre_pass.ps.cso",
         );
     };
 
@@ -568,8 +574,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/gen_shadow_rays.vs.cso",
-            "content/shaders/gen_shadow_rays.ps.cso",
+            content_dir ++ "shaders/gen_shadow_rays.vs.cso",
+            content_dir ++ "shaders/gen_shadow_rays.ps.cso",
         );
     };
 
@@ -577,7 +583,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var trace_shadow_rays_stateobj: ?*d3d12.IStateObject = null;
     var trace_shadow_rays_rs: ?*d3d12.IRootSignature = null;
     if (dxr_is_supported) {
-        const cso_file = std.fs.cwd().openFile("content/shaders/trace_shadow_rays.lib.cso", .{}) catch unreachable;
+        const cso_file = std.fs.cwd().openFile(
+            content_dir ++ "shaders/trace_shadow_rays.lib.cso",
+            .{},
+        ) catch unreachable;
         defer cso_file.close();
 
         const cso_code = cso_file.reader().readAllAlloc(arena_allocator, 256 * 1024) catch unreachable;
@@ -696,7 +705,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     grfx.device.CreateUnorderedAccessView(grfx.getResource(shadow_mask_texture), null, null, shadow_mask_texture_uav);
     grfx.device.CreateShaderResourceView(grfx.getResource(shadow_mask_texture), null, shadow_mask_texture_srv);
 
-    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
+    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
 
     //
     // Begin frame to init/upload resources on the GPU.
@@ -707,7 +716,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     grfx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
 
     var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);

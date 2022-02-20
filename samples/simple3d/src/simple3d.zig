@@ -15,8 +15,10 @@ const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const Vertex = struct {
     position: vm.Vec3,
@@ -185,8 +187,8 @@ const DemoState = struct {
             break :blk grfx.createGraphicsShaderPipeline(
                 arena_allocator,
                 &pso_desc,
-                "content/shaders/simple3d.vs.cso",
-                "content/shaders/simple3d.ps.cso",
+                content_dir ++ "shaders/simple3d.vs.cso",
+                content_dir ++ "shaders/simple3d.ps.cso",
             );
         };
 
@@ -232,14 +234,14 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
 
         grfx.beginFrame();
 
-        var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
+        var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
 
         const base_color_texture = grfx.createAndUploadTex2dFromFile(
-            "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
+            content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.png",
             .{}, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 
@@ -272,7 +274,7 @@ const DemoState = struct {
             defer normals.deinit();
             var texcoords0 = std.ArrayList(vm.Vec2).init(arena_allocator);
             defer texcoords0.deinit();
-            loadMesh("content/SciFiHelmet/SciFiHelmet.gltf", &indices, &positions, &normals, &texcoords0);
+            loadMesh(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf", &indices, &positions, &normals, &texcoords0);
 
             const num_vertices = @intCast(u32, positions.items.len);
             const num_indices = @intCast(u32, indices.items.len);

@@ -29,19 +29,7 @@
 !.vimrc
 !.gitkeep
 
-!/external/bin/dxc/dxc.exe
-!/external/bin/dxc/dxcompiler.dll
-!/external/bin/dxc/dxil.dll
-!/external/bin/d3d12/D3D12Core.dll
-!/external/bin/d3d12/D3D12Core.pdb
-!/external/bin/d3d12/D3D12SDKLayers.dll
-!/external/bin/d3d12/D3D12SDKLayers.pdb
-!/external/bin/d3d12/DirectML.dll
-!/external/bin/d3d12/DirectML.pdb
-!/external/bin/d3d12/DirectML.Debug.dll
-!/external/bin/d3d12/DirectML.Debug.pdb
-!/external/bin/d3d12/xaudio2_9redist.dll
-!/external/bin/d3d12/xaudio2_9redist_debug.dll
+!/libs/zwin32/bin/x64/*
 
 # Ignore some special directories
 zig-cache

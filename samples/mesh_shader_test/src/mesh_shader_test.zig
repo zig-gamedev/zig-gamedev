@@ -20,8 +20,10 @@ const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
 const Mat4 = vm.Mat4;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: mesh shader test";
 const window_width = 1920;
@@ -320,8 +322,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             arena_allocator,
             &pso_desc,
             null,
-            "content/shaders/mesh_shader.ms.cso",
-            "content/shaders/mesh_shader.ps.cso",
+            content_dir ++ "shaders/mesh_shader.ms.cso",
+            content_dir ++ "shaders/mesh_shader.ps.cso",
         );
     };
 
@@ -337,8 +339,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/vertex_shader.vs.cso",
-            "content/shaders/vertex_shader.ps.cso",
+            content_dir ++ "shaders/vertex_shader.vs.cso",
+            content_dir ++ "shaders/vertex_shader.ps.cso",
         );
     };
 
@@ -363,8 +365,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/vertex_shader_fixed.vs.cso",
-            "content/shaders/vertex_shader_fixed.ps.cso",
+            content_dir ++ "shaders/vertex_shader_fixed.vs.cso",
+            content_dir ++ "shaders/vertex_shader_fixed.ps.cso",
         );
     };
 
@@ -375,7 +377,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var all_meshlets_data = std.ArrayList(u32).init(arena_allocator);
     loadMeshAndGenerateMeshlets(
         arena_allocator,
-        "content/cube.gltf",
+        content_dir ++ "cube.gltf",
         &all_meshes,
         &all_vertices,
         &all_indices,
@@ -384,7 +386,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     );
     loadMeshAndGenerateMeshlets(
         arena_allocator,
-        "content/engine.gltf",
+        content_dir ++ "engine.gltf",
         &all_meshes,
         &all_vertices,
         &all_indices,
@@ -499,7 +501,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     grfx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
 
     // Upload vertex buffer.
     {

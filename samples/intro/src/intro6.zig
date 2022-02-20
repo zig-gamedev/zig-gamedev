@@ -17,8 +17,10 @@ const zm = @import("zmath");
 const zbt = @import("zbullet");
 
 // We need to export below symbols for DirectX 12 Agility SDK.
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: intro 6";
 const window_width = 1920;
@@ -108,8 +110,8 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/intro3.vs.cso",
-            "content/shaders/intro3.ps.cso",
+            content_dir ++ "shaders/intro3.vs.cso",
+            content_dir ++ "shaders/intro3.ps.cso",
         );
     };
 
@@ -118,7 +120,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
     var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
     {
-        const data = common.parseAndLoadGltfFile("content/cube.gltf");
+        const data = common.parseAndLoadGltfFile(content_dir ++ "cube.gltf");
         defer c.cgltf_free(data);
         common.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, null, null);
     }
@@ -196,7 +198,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guir = GuiRenderer.init(arena_allocator, &gctx, 1);
+    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     // Fill vertex buffer with vertex data.
     {

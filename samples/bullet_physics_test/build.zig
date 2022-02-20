@@ -1,142 +1,72 @@
 const std = @import("std");
-const Builder = std.build.Builder;
-const Pkg = std.build.Pkg;
 
-fn makeDxcCmd(
-    comptime input_path: []const u8,
-    comptime entry_point: []const u8,
-    comptime output_filename: []const u8,
-    comptime profile: []const u8,
-    comptime define: []const u8,
-) [9][]const u8 {
-    const shader_ver = "6_6";
-    const shader_dir = "content/shaders/";
-    return [9][]const u8{
-        "../../external/bin/dxc/dxc.exe",
-        input_path,
-        "/E " ++ entry_point,
-        "/Fo " ++ shader_dir ++ output_filename,
-        "/T " ++ profile ++ "_" ++ shader_ver,
-        if (define.len == 0) "" else "/D " ++ define,
-        "/WX",
-        "/Ges",
-        "/O3",
-    };
-}
+const Options = @import("../../build.zig").Options;
+const content_dir = "bullet_physics_test_content/";
 
-pub fn build(b: *std.build.Builder) void {
-    b.installFile("../../external/bin/d3d12/D3D12Core.dll", "bin/d3d12/D3D12Core.dll");
-    b.installFile("../../external/bin/d3d12/D3D12Core.pdb", "bin/d3d12/D3D12Core.pdb");
-    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.dll", "bin/d3d12/D3D12SDKLayers.dll");
-    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.pdb", "bin/d3d12/D3D12SDKLayers.pdb");
-    const install_content_step = b.addInstallDirectory(
-        .{ .source_dir = "content", .install_dir = .{ .custom = "" }, .install_subdir = "bin/content" },
-    );
-    b.getInstallStep().dependOn(&install_content_step.step);
-
-    const dxc_step = b.step("dxc", "Build shaders");
-
-    var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "vsPhysicsDebug", "physics_debug.vs.cso", "vs", "PSO__PHYSICS_DEBUG");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "psPhysicsDebug", "physics_debug.ps.cso", "ps", "PSO__PHYSICS_DEBUG");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "vsSimpleEntity", "simple_entity.vs.cso", "vs", "PSO__SIMPLE_ENTITY");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "gsSimpleEntity", "simple_entity.gs.cso", "gs", "PSO__SIMPLE_ENTITY");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "psSimpleEntity", "simple_entity.ps.cso", "ps", "PSO__SIMPLE_ENTITY");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("src/bullet_physics_test.hlsl", "psSimpleEntity", "simple_entity_with_gs.ps.cso", "ps", "PSO__SIMPLE_ENTITY_WITH_GS");
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-
-    install_content_step.step.dependOn(dxc_step);
-
-    const exe = b.addExecutable("bullet_physics_test", "src/bullet_physics_test.zig");
-
-    exe.setBuildMode(b.standardReleaseOptions());
-    exe.setTarget(b.standardTargetOptions(.{}));
-
-    const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
-    const enable_dx_debug = b.option(
-        bool,
-        "enable-dx-debug",
-        "Enable debug layer for D3D12, D2D1, DirectML and DXGI",
-    ) orelse false;
-    const enable_dx_gpu_debug = b.option(
-        bool,
-        "enable-dx-gpu-debug",
-        "Enable GPU-based validation for D3D12",
-    ) orelse false;
-    const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
-
+pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const exe_options = b.addOptions();
+    exe_options.addOption(bool, "enable_pix", options.enable_pix);
+    exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
+    exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
+    exe_options.addOption(bool, "enable_tracy", options.tracy != null);
+    exe_options.addOption([]const u8, "content_dir", content_dir);
+
+    const exe = b.addExecutable("bullet_physics_test", thisDir() ++ "/src/bullet_physics_test.zig");
+    exe.setBuildMode(options.build_mode);
+    exe.setTarget(options.target);
     exe.addOptions("build_options", exe_options);
 
-    exe_options.addOption(bool, "enable_pix", enable_pix);
-    exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
-    exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
-    exe_options.addOption(bool, "enable_tracy", tracy != null);
-    if (tracy) |tracy_path| {
-        const client_cpp = std.fs.path.join(
-            b.allocator,
-            &[_][]const u8{ tracy_path, "TracyClient.cpp" },
-        ) catch unreachable;
-        exe.addIncludeDir(tracy_path);
-        exe.addCSourceFile(client_cpp, &[_][]const u8{
-            "-DTRACY_ENABLE=1",
-            "-fno-sanitize=undefined",
-            "-D_WIN32_WINNT=0x601",
-        });
-        exe.linkSystemLibrary("ws2_32");
-        exe.linkSystemLibrary("dbghelp");
-    }
+    exe.step.dependOn(
+        &b.addInstallDirectory(.{
+            .source_dir = thisDir() ++ "/" ++ content_dir,
+            .install_dir = .{ .custom = "" },
+            .install_subdir = "bin/" ++ content_dir,
+        }).step,
+    );
+
+    buildShaders(b, exe);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which
     // is required by DirectX 12 Agility SDK.
     exe.rdynamic = true;
-
     exe.want_lto = false;
 
-    const options_pkg = Pkg{
+    const options_pkg = std.build.Pkg{
         .name = "build_options",
         .path = exe_options.getSource(),
     };
 
-    const zwin32_pkg = Pkg{
+    const zwin32_pkg = std.build.Pkg{
         .name = "zwin32",
-        .path = .{ .path = "../../libs/zwin32/zwin32.zig" },
+        .path = .{ .path = thisDir() ++ "/../../libs/zwin32/zwin32.zig" },
     };
     exe.addPackage(zwin32_pkg);
 
-    const ztracy_pkg = Pkg{
+    const ztracy_pkg = std.build.Pkg{
         .name = "ztracy",
-        .path = .{ .path = "../../libs/ztracy/ztracy.zig" },
-        .dependencies = &[_]Pkg{options_pkg},
+        .path = .{ .path = thisDir() ++ "/../../libs/ztracy/src/ztracy.zig" },
+        .dependencies = &[_]std.build.Pkg{options_pkg},
     };
     exe.addPackage(ztracy_pkg);
+    @import("../../libs/ztracy/build.zig").link(b, exe, .{ .tracy_path = options.tracy });
 
-    const zd3d12_pkg = Pkg{
+    const zd3d12_pkg = std.build.Pkg{
         .name = "zd3d12",
-        .path = .{ .path = "../../libs/zd3d12/zd3d12.zig" },
-        .dependencies = &[_]Pkg{
+        .path = .{ .path = thisDir() ++ "/../../libs/zd3d12/src/zd3d12.zig" },
+        .dependencies = &[_]std.build.Pkg{
             zwin32_pkg,
             ztracy_pkg,
             options_pkg,
         },
     };
     exe.addPackage(zd3d12_pkg);
+    @import("../../libs/zd3d12/build.zig").link(b, exe);
 
-    const common_pkg = Pkg{
+    const common_pkg = std.build.Pkg{
         .name = "common",
-        .path = .{ .path = "../../libs/common/common.zig" },
-        .dependencies = &[_]Pkg{
+        .path = .{ .path = thisDir() ++ "/../../libs/common/common.zig" },
+        .dependencies = &[_]std.build.Pkg{
             zwin32_pkg,
             zd3d12_pkg,
             ztracy_pkg,
@@ -145,7 +75,7 @@ pub fn build(b: *std.build.Builder) void {
     };
     exe.addPackage(common_pkg);
 
-    const external = "../../external/src";
+    const external = thisDir() ++ "/../../external/src";
     exe.addIncludeDir(external);
 
     exe.linkSystemLibrary("c");
@@ -161,21 +91,98 @@ pub fn build(b: *std.build.Builder) void {
 
     exe.addCSourceFile(external ++ "/cgltf.c", &.{"-std=c99"});
 
-    exe.addIncludeDir("../../libs/zbullet/libs/cbullet");
-    exe.addIncludeDir("../../libs/zbullet/libs/bullet");
-    exe.addCSourceFile("../../libs/zbullet/libs/cbullet/cbullet.cpp", &.{""});
-    exe.addCSourceFile("../../libs/zbullet/libs/bullet/btLinearMathAll.cpp", &.{""});
-    exe.addCSourceFile("../../libs/zbullet/libs/bullet/btBulletCollisionAll.cpp", &.{""});
-    exe.addCSourceFile("../../libs/zbullet/libs/bullet/btBulletDynamicsAll.cpp", &.{""});
+    const zbullet_pkg = std.build.Pkg{
+        .name = "zbullet",
+        .path = .{ .path = thisDir() ++ "/../../libs/zbullet/src/zbullet.zig" },
+    };
+    exe.addPackage(zbullet_pkg);
+    @import("../../libs/zbullet/build.zig").link(b, exe);
 
-    exe.install();
+    // We use 'cbullet' directly so we need to add it to the include path.
+    exe.addIncludeDir(thisDir() ++ "/../../libs/zbullet/libs/cbullet");
 
-    const run_cmd = exe.run();
-    run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    return exe;
+}
 
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
+fn buildShaders(b: *std.build.Builder, exe: *std.build.LibExeObjStep) void {
+    var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
+    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
+    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/bullet_physics_test.hlsl",
+        "vsPhysicsDebug",
+        "physics_debug.vs.cso",
+        "vs",
+        "PSO__PHYSICS_DEBUG",
+    );
+    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/bullet_physics_test.hlsl",
+        "psPhysicsDebug",
+        "physics_debug.ps.cso",
+        "ps",
+        "PSO__PHYSICS_DEBUG",
+    );
+    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/bullet_physics_test.hlsl",
+        "vsSimpleEntity",
+        "simple_entity.vs.cso",
+        "vs",
+        "PSO__SIMPLE_ENTITY",
+    );
+    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/bullet_physics_test.hlsl",
+        "gsSimpleEntity",
+        "simple_entity.gs.cso",
+        "gs",
+        "PSO__SIMPLE_ENTITY",
+    );
+    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/bullet_physics_test.hlsl",
+        "psSimpleEntity",
+        "simple_entity.ps.cso",
+        "ps",
+        "PSO__SIMPLE_ENTITY",
+    );
+    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/bullet_physics_test.hlsl",
+        "psSimpleEntity",
+        "simple_entity_with_gs.ps.cso",
+        "ps",
+        "PSO__SIMPLE_ENTITY_WITH_GS",
+    );
+    exe.step.dependOn(&b.addSystemCommand(&dxc_command).step);
+}
+
+fn makeDxcCmd(
+    comptime input_path: []const u8,
+    comptime entry_point: []const u8,
+    comptime output_filename: []const u8,
+    comptime profile: []const u8,
+    comptime define: []const u8,
+) [9][]const u8 {
+    const shader_ver = "6_6";
+    const shader_dir = thisDir() ++ "/" ++ content_dir ++ "shaders/";
+    return [9][]const u8{
+        thisDir() ++ "/../../libs/zwin32/bin/x64/dxc.exe",
+        thisDir() ++ "/" ++ input_path,
+        "/E " ++ entry_point,
+        "/Fo " ++ shader_dir ++ output_filename,
+        "/T " ++ profile ++ "_" ++ shader_ver,
+        if (define.len == 0) "" else "/D " ++ define,
+        "/WX",
+        "/Ges",
+        "/O3",
+    };
+}
+
+fn thisDir() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse ".";
 }

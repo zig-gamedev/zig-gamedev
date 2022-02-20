@@ -10,8 +10,10 @@ const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 pub fn main() !void {
     const window_name = "zig-gamedev: triangle";
@@ -56,8 +58,8 @@ pub fn main() !void {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/triangle.vs.cso",
-            "content/shaders/triangle.ps.cso",
+            content_dir ++ "shaders/triangle.vs.cso",
+            content_dir ++ "shaders/triangle.ps.cso",
         );
     };
     defer {
@@ -84,7 +86,7 @@ pub fn main() !void {
 
     grfx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, 1);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
     defer gui.deinit(&grfx);
 
     const upload_verts = grfx.allocateUploadBufferRegion(vm.Vec3, 3);

@@ -14,8 +14,10 @@ const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const num_mipmaps = 5;
 
@@ -74,8 +76,8 @@ const DemoState = struct {
             break :blk grfx.createGraphicsShaderPipeline(
                 arena_allocator,
                 &pso_desc,
-                "content/shaders/textured_quad.vs.cso",
-                "content/shaders/textured_quad.ps.cso",
+                content_dir ++ "shaders/textured_quad.vs.cso",
+                content_dir ++ "shaders/textured_quad.ps.cso",
             );
         };
 
@@ -122,14 +124,14 @@ const DemoState = struct {
         hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
         hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
-        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
 
         grfx.beginFrame();
 
-        const gui = GuiRenderer.init(arena_allocator, &grfx, 1);
+        const gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
 
         const texture = grfx.createAndUploadTex2dFromFile(
-            "content/genart_0025_5.png",
+            content_dir ++ "genart_0025_5.png",
             .{}, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 

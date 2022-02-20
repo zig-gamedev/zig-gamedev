@@ -20,8 +20,10 @@ const GuiRenderer = common.GuiRenderer;
 const c = common.c;
 const zm = @import("zmath");
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: audio experiments";
 const window_width = 1920;
@@ -131,11 +133,15 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var actx = zxaudio2.AudioContext.init(gpa_allocator);
 
-    const sound1_data = zxaudio2.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));
-    const sound2_data = zxaudio2.loadBufferData(gpa_allocator, L("content/tabla_tas1.flac"));
-    const sound3_data = zxaudio2.loadBufferData(gpa_allocator, L("content/loop_mika.flac"));
+    const sound1_data = zxaudio2.loadBufferData(gpa_allocator, L(content_dir ++ "drum_bass_hard.flac"));
+    const sound2_data = zxaudio2.loadBufferData(gpa_allocator, L(content_dir ++ "tabla_tas1.flac"));
+    const sound3_data = zxaudio2.loadBufferData(gpa_allocator, L(content_dir ++ "loop_mika.flac"));
 
-    var music = zxaudio2.Stream.create(gpa_allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
+    var music = zxaudio2.Stream.create(
+        gpa_allocator,
+        actx.device,
+        L(content_dir ++ "Broke For Free - Night Owl.mp3"),
+    );
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     {
@@ -238,8 +244,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/lines.vs.cso",
-            "content/shaders/lines.ps.cso",
+            content_dir ++ "shaders/lines.vs.cso",
+            content_dir ++ "shaders/lines.ps.cso",
         );
     };
 
@@ -269,7 +275,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     gctx.beginFrame();
 
-    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1);
+    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     gctx.endFrame();
     gctx.finishGpuCommands();

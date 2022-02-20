@@ -22,8 +22,10 @@ const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
 const Mat4 = vm.Mat4;
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: bullet physics test";
 const window_width = 1920;
@@ -248,12 +250,12 @@ fn loadAllMeshes(
     all_indices: *std.ArrayList(u32),
 ) void {
     const paths = [_][]const u8{
-        "content/cube.gltf",
-        "content/sphere.gltf",
-        "content/capsule.gltf",
-        "content/cylinder.gltf",
-        "content/cone.gltf",
-        "content/world.gltf",
+        content_dir ++ "cube.gltf",
+        content_dir ++ "sphere.gltf",
+        content_dir ++ "capsule.gltf",
+        content_dir ++ "cylinder.gltf",
+        content_dir ++ "cone.gltf",
+        content_dir ++ "world.gltf",
     };
     for (paths) |path| {
         const pre_indices_len = all_indices.items.len;
@@ -1017,8 +1019,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk grfx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/physics_debug.vs.cso",
-            "content/shaders/physics_debug.ps.cso",
+            content_dir ++ "shaders/physics_debug.vs.cso",
+            content_dir ++ "shaders/physics_debug.ps.cso",
         );
     };
 
@@ -1044,16 +1046,16 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             break :blk grfx.createGraphicsShaderPipelineVsGsPs(
                 arena_allocator,
                 &pso_desc,
-                "content/shaders/simple_entity.vs.cso",
-                "content/shaders/simple_entity.gs.cso",
-                "content/shaders/simple_entity_with_gs.ps.cso",
+                content_dir ++ "shaders/simple_entity.vs.cso",
+                content_dir ++ "shaders/simple_entity.gs.cso",
+                content_dir ++ "shaders/simple_entity_with_gs.ps.cso",
             );
         } else {
             break :blk grfx.createGraphicsShaderPipeline(
                 arena_allocator,
                 &pso_desc,
-                "content/shaders/simple_entity.vs.cso",
-                "content/shaders/simple_entity.ps.cso",
+                content_dir ++ "shaders/simple_entity.vs.cso",
+                content_dir ++ "shaders/simple_entity.ps.cso",
             );
         }
     };
@@ -1164,7 +1166,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     grfx.endFrame();
     grfx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, num_msaa_samples);
+    var gui = GuiRenderer.init(arena_allocator, &grfx, num_msaa_samples, content_dir);
 
     {
         const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_positions.items.len));

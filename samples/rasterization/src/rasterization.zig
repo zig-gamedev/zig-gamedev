@@ -15,8 +15,10 @@ const c = common.c;
 const GuiRenderer = common.GuiRenderer;
 const zm = @import("zmath");
 
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+
+const content_dir = @import("build_options").content_dir;
 
 const window_name = "zig-gamedev: rasterization";
 const window_width = 1920;
@@ -152,7 +154,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/draw_mesh.vs.cso",
+            content_dir ++ "shaders/draw_mesh.vs.cso",
             null,
         );
     };
@@ -179,8 +181,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/record_pixels.vs.cso",
-            "content/shaders/record_pixels.ps.cso",
+            content_dir ++ "shaders/record_pixels.vs.cso",
+            content_dir ++ "shaders/record_pixels.ps.cso",
         );
     };
 
@@ -208,21 +210,21 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            "content/shaders/draw_mesh.vs.cso",
-            "content/shaders/draw_mesh.ps.cso",
+            content_dir ++ "shaders/draw_mesh.vs.cso",
+            content_dir ++ "shaders/draw_mesh.ps.cso",
         );
     };
 
     const draw_pixels_pso = gctx.createComputeShaderPipeline(
         arena_allocator,
         &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
-        "content/shaders/draw_pixels.cs.cso",
+        content_dir ++ "shaders/draw_pixels.cs.cso",
     );
 
     const clear_pixels_pso = gctx.createComputeShaderPipeline(
         arena_allocator,
         &d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault(),
-        "content/shaders/clear_pixels.cs.cso",
+        content_dir ++ "shaders/clear_pixels.cs.cso",
     );
 
     var mesh_indices = std.ArrayList(u32).init(arena_allocator);
@@ -231,7 +233,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var mesh_texcoords = std.ArrayList([2]f32).init(arena_allocator);
     var mesh_tangents = std.ArrayList([4]f32).init(arena_allocator);
     {
-        const data = common.parseAndLoadGltfFile("content/SciFiHelmet/SciFiHelmet.gltf");
+        const data = common.parseAndLoadGltfFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
         defer c.cgltf_free(data);
         common.appendMeshPrimitive(
             data,
@@ -350,23 +352,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     gctx.beginFrame();
 
-    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1);
+    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     const mesh_textures = [_]zd3d12.ResourceHandle{
         gctx.createAndUploadTex2dFromFile(
-            "content/SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
+            content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
             .{},
         ) catch |err| hrPanic(err),
         gctx.createAndUploadTex2dFromFile(
-            "content/SciFiHelmet/SciFiHelmet_BaseColor.png",
+            content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.png",
             .{},
         ) catch |err| hrPanic(err),
         gctx.createAndUploadTex2dFromFile(
-            "content/SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
+            content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
             .{},
         ) catch |err| hrPanic(err),
         gctx.createAndUploadTex2dFromFile(
-            "content/SciFiHelmet/SciFiHelmet_Normal.png",
+            content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.png",
             .{},
         ) catch |err| hrPanic(err),
     };
@@ -378,7 +380,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     // Generate mipmaps.
     {
-        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM, content_dir);
         defer mipgen.deinit(&gctx);
         for (mesh_textures) |texture| {
             mipgen.generateMipmaps(&gctx, texture);
