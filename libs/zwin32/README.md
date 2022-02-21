@@ -17,7 +17,7 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
-Now in your code you may import and use win32:
+Now in your code you may import and use zwin32:
 
 ```zig
 const zwin32 = @import("zwin32");
