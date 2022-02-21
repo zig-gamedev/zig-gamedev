@@ -64,7 +64,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     const common_pkg = std.build.Pkg{
         .name = "common",
-        .path = .{ .path = thisDir() ++ "/../../libs/common/common.zig" },
+        .path = .{ .path = thisDir() ++ "/../../libs/common/src/common.zig" },
         .dependencies = &[_]std.build.Pkg{
             zwin32_pkg,
             zd3d12_pkg,
@@ -73,23 +73,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         },
     };
     exe.addPackage(common_pkg);
-
-    const external = thisDir() ++ "/../../external/src";
-    exe.addIncludeDir(external);
-
-    exe.linkSystemLibrary("c");
-    exe.linkSystemLibrary("c++");
-    exe.linkSystemLibrary("imm32");
-
-    exe.addCSourceFile(external ++ "/imgui/imgui.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_widgets.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_tables.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_draw.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/cimgui.cpp", &[_][]const u8{""});
-
-    exe.addCSourceFile(external ++ "/cgltf.c", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/stb_image.c", &[_][]const u8{"-std=c99"});
+    @import("../../libs/common/build.zig").link(b, exe);
 
     return exe;
 }
@@ -98,7 +82,7 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
     const dxc_step = b.step("bindless_dxc", "Build shaders for 'bindless' demo");
 
     var dxc_command = makeDxcCmd(
-        "../../libs/common/common.hlsl",
+        "../../libs/common/src/hlsl/common.hlsl",
         "vsImGui",
         "imgui.vs.cso",
         "vs",
@@ -106,7 +90,7 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     dxc_command = makeDxcCmd(
-        "../../libs/common/common.hlsl",
+        "../../libs/common/src/hlsl/common.hlsl",
         "psImGui",
         "imgui.ps.cso",
         "ps",
@@ -115,11 +99,28 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd(
-        "../../libs/common/common.hlsl",
+        "../../libs/common/src/hlsl/common.hlsl",
         "csGenerateMipmaps",
         "generate_mipmaps.cs.cso",
         "cs",
         "PSO__GENERATE_MIPMAPS",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "src/bindless.hlsl",
+        "vsMeshPbr",
+        "mesh_pbr.vs.cso",
+        "vs",
+        "PSO__MESH_PBR",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/bindless.hlsl",
+        "psMeshPbr",
+        "mesh_pbr.ps.cso",
+        "ps",
+        "PSO__MESH_PBR",
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 

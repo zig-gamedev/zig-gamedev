@@ -74,7 +74,7 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
 
     const common_pkg = std.build.Pkg{
         .name = "common",
-        .path = .{ .path = thisDir() ++ "/../../libs/common/common.zig" },
+        .path = .{ .path = thisDir() ++ "/../../libs/common/src/common.zig" },
         .dependencies = &[_]std.build.Pkg{
             zwin32_pkg,
             zd3d12_pkg,
@@ -83,22 +83,7 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
         },
     };
     exe.addPackage(common_pkg);
-
-    const external = thisDir() ++ "/../../external/src";
-    exe.addIncludeDir(external);
-
-    exe.linkSystemLibrary("c");
-    exe.linkSystemLibrary("c++");
-    exe.linkSystemLibrary("imm32");
-
-    exe.addCSourceFile(external ++ "/imgui/imgui.cpp", &.{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_widgets.cpp", &.{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_tables.cpp", &.{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_draw.cpp", &.{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &.{""});
-    exe.addCSourceFile(external ++ "/cimgui.cpp", &.{""});
-
-    exe.addCSourceFile(external ++ "/cgltf.c", &.{"-std=c99"});
+    @import("../../libs/common/build.zig").link(b, exe);
 
     const zbullet_pkg = std.build.Pkg{
         .name = "zbullet",
@@ -116,9 +101,30 @@ fn buildShaders(b: *std.build.Builder, comptime intro_index_str: []const u8) *st
         "Build shaders for 'intro" ++ intro_index_str ++ "' demo",
     );
 
-    var dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "vsImGui", "imgui.vs.cso", "vs", "PSO__IMGUI");
+    var dxc_command = makeDxcCmd(
+        "../../libs/common/src/hlsl/common.hlsl",
+        "vsImGui",
+        "imgui.vs.cso",
+        "vs",
+        "PSO__IMGUI",
+    );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd("../../libs/common/common.hlsl", "psImGui", "imgui.ps.cso", "ps", "PSO__IMGUI");
+    dxc_command = makeDxcCmd(
+        "../../libs/common/src/hlsl/common.hlsl",
+        "psImGui",
+        "imgui.ps.cso",
+        "ps",
+        "PSO__IMGUI",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
+        "../../libs/common/src/hlsl/common.hlsl",
+        "csGenerateMipmaps",
+        "generate_mipmaps.cs.cso",
+        "cs",
+        "PSO__GENERATE_MIPMAPS",
+    );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     dxc_command = makeDxcCmd("src/intro1.hlsl", "vsMain", "intro1.vs.cso", "vs", "");
@@ -151,14 +157,6 @@ fn buildShaders(b: *std.build.Builder, comptime intro_index_str: []const u8) *st
     dxc_command = makeDxcCmd("src/intro5.hlsl", "psMain", "intro5.ps.cso", "ps", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd(
-        "../../libs/common/common.hlsl",
-        "csGenerateMipmaps",
-        "generate_mipmaps.cs.cso",
-        "cs",
-        "PSO__GENERATE_MIPMAPS",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     return dxc_step;
 }
 

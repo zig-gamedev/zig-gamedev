@@ -64,7 +64,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     const common_pkg = std.build.Pkg{
         .name = "common",
-        .path = .{ .path = thisDir() ++ "/../../libs/common/common.zig" },
+        .path = .{ .path = thisDir() ++ "/../../libs/common/src/common.zig" },
         .dependencies = &[_]std.build.Pkg{
             zwin32_pkg,
             zd3d12_pkg,
@@ -73,20 +73,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         },
     };
     exe.addPackage(common_pkg);
-
-    const external = thisDir() ++ "/../../external/src";
-    exe.addIncludeDir(external);
-
-    exe.linkSystemLibrary("c");
-    exe.linkSystemLibrary("c++");
-    exe.linkSystemLibrary("imm32");
-
-    exe.addCSourceFile(external ++ "/imgui/imgui.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_widgets.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_tables.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_draw.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/imgui/imgui_demo.cpp", &[_][]const u8{""});
-    exe.addCSourceFile(external ++ "/cimgui.cpp", &[_][]const u8{""});
+    @import("../../libs/common/build.zig").link(b, exe);
 
     return exe;
 }
@@ -95,6 +82,23 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
     const dxc_step = b.step("triangle_dxc", "Build shaders for 'triangle' demo");
 
     var dxc_command = makeDxcCmd(
+        "../../libs/common/src/hlsl/common.hlsl",
+        "vsImGui",
+        "imgui.vs.cso",
+        "vs",
+        "PSO__IMGUI",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "../../libs/common/src/hlsl/common.hlsl",
+        "psImGui",
+        "imgui.ps.cso",
+        "ps",
+        "PSO__IMGUI",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd(
         "src/triangle.hlsl",
         "vsTriangle",
         "triangle.vs.cso",
@@ -111,22 +115,6 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    dxc_command = makeDxcCmd(
-        "../../libs/common/common.hlsl",
-        "vsImGui",
-        "imgui.vs.cso",
-        "vs",
-        "PSO__IMGUI",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    dxc_command = makeDxcCmd(
-        "../../libs/common/common.hlsl",
-        "psImGui",
-        "imgui.ps.cso",
-        "ps",
-        "PSO__IMGUI",
-    );
-    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
     return dxc_step;
 }
 
