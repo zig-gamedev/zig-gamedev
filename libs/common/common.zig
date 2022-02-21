@@ -488,6 +488,12 @@ pub fn init() void {
         w.kernel32.ExitProcess(0);
     }
 
+    // Change directory to where executable is placed.
+    var exe_path_buffer: [1024]u8 = undefined;
+    const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
+    std.os.chdir(exe_path) catch {};
+
+    // Check if 'd3d12' folder is present.
     const local_d3d12core_dll = w.kernel32.LoadLibraryW(L("d3d12/D3D12Core.dll"));
     if (local_d3d12core_dll == null) {
         _ = w.user32.messageBoxA(
@@ -501,10 +507,6 @@ pub fn init() void {
     } else {
         _ = w.kernel32.FreeLibrary(local_d3d12core_dll.?);
     }
-
-    var exe_path_buffer: [1024]u8 = undefined;
-    const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
-    std.os.chdir(exe_path) catch {};
 }
 
 pub fn deinit() void {
