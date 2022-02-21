@@ -11,14 +11,15 @@ pub fn build(b: *std.build.Builder) void {
 
     const exe_options = b.addOptions();
     exe_options.addOption(bool, "enable_pix", enable_pix);
+
     exe.addOptions("build_options", exe_options);
 
-    const options_pkg = Pkg{
+    const options_pkg = std.build.Pkg{
         .name = "build_options",
         .path = exe_options.getSource(),
     };
 
-    const zwin32_pkg = Pkg{
+    const zwin32_pkg = std.build.Pkg{
         .name = "zwin32",
         .path = .{ .path = "libs/zwin32/zwin32.zig" },
     };
@@ -27,7 +28,7 @@ pub fn build(b: *std.build.Builder) void {
     const zpix_pkg = std.build.Pkg{
         .name = "zpix",
         .path = .{ .path = "libs/zpix/zpix.zig" },
-        .dependencies = &[_]Pkg{
+        .dependencies = &[_]std.build.Pkg{
             zwin32_pkg,
             options_pkg,
         },
