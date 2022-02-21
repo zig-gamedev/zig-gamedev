@@ -13,7 +13,7 @@ Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intr
 
 ## Getting started
 
-Copy `zd3d12` and `zwin32` folders to a `libs` subdirectory of the root of your project.
+Copy `zd3d12`, `zwin32` and `ztracy` folders to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 
@@ -30,32 +30,47 @@ pub fn build(b: *std.build.Builder) void {
         "enable-dx-gpu-debug",
         "Enable GPU-based validation for D3D12",
     ) orelse false;
+    const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
 
     const exe_options = b.addOptions();
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
+    exe_options.addOption(bool, "enable_tracy", tracy != null);
+
     exe.addOptions("build_options", exe_options);
 
-    const options_pkg = Pkg{
+    const options_pkg = std.build.Pkg{
         .name = "build_options",
         .path = exe_options.getSource(),
     };
 
-    const zwin32_pkg = Pkg{
+    const zwin32_pkg = std.build.Pkg{
         .name = "zwin32",
         .path = .{ .path = "libs/zwin32/zwin32.zig" },
     };
     exe.addPackage(zwin32_pkg);
 
+    const ztracy_pkg = std.build.Pkg{
+        .name = "ztracy",
+        .path = .{ .path = "libs/ztracy/ztracy.zig" },
+        .dependencies = &[_]std.build.Pkg{
+            options_pkg,
+        },
+    };
+    exe.addPackage(ztracy_pkg);
+    @import("libs/ztracy/build.zig").link(b, exe, .{ .tracy_path = tracy });
+
     const zd3d12_pkg = std.build.Pkg{
         .name = "zd3d12",
         .path = .{ .path = "libs/zd3d12/zd3d12.zig" },
-        .dependencies = &[_]Pkg{
+        .dependencies = &[_]std.build.Pkg{
             zwin32_pkg,
+            ztracy_pkg,
             options_pkg,
         },
     };
     exe.addPackage(zd3d12_pkg);
+    @import("libs/zd3d12/build.zig").link(b, exe);
 }
 ```
 
@@ -65,8 +80,8 @@ Now in your code you may import and use zd3d12:
 const zd3d12 = @import("zd3d12");
 
 // We need to export below symbols for DirectX 12 Agility SDK.
-pub export var D3D12SDKVersion: u32 = 4;
-pub export var D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
+pub export const D3D12SDKVersion: u32 = 4;
+pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 pub fn main() !void {
     ...
@@ -75,28 +90,4 @@ pub fn main() !void {
     gctx.present_interval = 1;
     ...
 }
-```
-
-Note that you also need to ship `D3D12Core.dll` file in `d3d12` folder that is placed next to your application executable. Directory structue should look like this:
-
-```
-my-game\
-  d3d12\
-    D3D12Core.dll
-  my-game.exe
-```
-
-You can use below code in your `build.zig` to copy the DLLs:
-
-```zig
-    // Copy DLLs
-    b.installFile("../../external/bin/d3d12/D3D12Core.dll", "bin/d3d12/D3D12Core.dll");
-    b.installFile("../../external/bin/d3d12/D3D12Core.pdb", "bin/d3d12/D3D12Core.pdb");
-    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.dll", "bin/d3d12/D3D12SDKLayers.dll");
-    b.installFile("../../external/bin/d3d12/D3D12SDKLayers.pdb", "bin/d3d12/D3D12SDKLayers.pdb");
-    // Copy `content` folder
-    const install_content_step = b.addInstallDirectory(
-        .{ .source_dir = "content", .install_dir = .{ .custom = "" }, .install_subdir = "bin/content" },
-    );
-    b.getInstallStep().dependOn(&install_content_step.step);
 ```

@@ -11,14 +11,15 @@ pub fn build(b: *std.build.Builder) void {
 
     const exe_options = b.addOptions();
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
+
     exe.addOptions("build_options", exe_options);
 
-    const options_pkg = Pkg{
+    const options_pkg = std.build.Pkg{
         .name = "build_options",
         .path = exe_options.getSource(),
     };
 
-    const zwin32_pkg = Pkg{
+    const zwin32_pkg = std.build.Pkg{
         .name = "zwin32",
         .path = .{ .path = "libs/zwin32/zwin32.zig" },
     };
@@ -27,12 +28,13 @@ pub fn build(b: *std.build.Builder) void {
     const zxaudio2_pkg = std.build.Pkg{
         .name = "zxaudio2",
         .path = .{ .path = "libs/zxaudio2/zxaudio2.zig" },
-        .dependencies = &[_]Pkg{
+        .dependencies = &[_]std.build.Pkg{
             zwin32_pkg,
             options_pkg,
         },
     };
     exe.addPackage(zxaudio2_pkg);
+    @import("libs/zxaudio2/build.zig").link(b, exe, .{ .enable_debug_layer = enable_dx_debug });
 }
 ```
 
@@ -53,29 +55,4 @@ pub fn main() !void {
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
     ...
 }
-```
-
-Note that you also need to ship `xaudio2_9redist.dll` file in `d3d12` folder that is placed next to your application executable. Directory structue should look like this:
-
-```
-my-game\
-  d3d12\
-    xaudio2_9redist.dll
-  my-game.exe
-```
-
-You can use below code in your `build.zig` to copy the DLLs:
-
-```zig
-    // Copy DLLs
-    if (enable_dx_debug) {
-        b.installFile("../../external/bin/d3d12/xaudio2_9redist_debug.dll", "bin/d3d12/xaudio2_9redist.dll");
-    } else {
-        b.installFile("../../external/bin/d3d12/xaudio2_9redist.dll", "bin/d3d12/xaudio2_9redist.dll");
-    }
-    // Copy `content` folder
-    const install_content_step = b.addInstallDirectory(
-        .{ .source_dir = "content", .install_dir = .{ .custom = "" }, .install_subdir = "bin/content" },
-    );
-    b.getInstallStep().dependOn(&install_content_step.step);
 ```

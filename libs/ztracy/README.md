@@ -11,24 +11,10 @@ pub fn build(b: *std.build.Builder) void {
 
     const exe_options = b.addOptions();
     exe_options.addOption(bool, "enable_tracy", tracy != null);
+
     exe.addOptions("build_options", exe_options);
 
-    if (tracy) |tracy_path| {
-        const client_cpp = std.fs.path.join(
-            b.allocator,
-            &[_][]const u8{ tracy_path, "TracyClient.cpp" },
-        ) catch unreachable;
-        exe.addIncludeDir(tracy_path);
-        exe.addCSourceFile(client_cpp, &[_][]const u8{
-            "-DTRACY_ENABLE=1",
-            "-fno-sanitize=undefined",
-            "-D_WIN32_WINNT=0x601",
-        });
-        exe.linkSystemLibrary("ws2_32");
-        exe.linkSystemLibrary("dbghelp");
-    }
-
-    const options_pkg = Pkg{
+    const options_pkg = std.build.Pkg{
         .name = "build_options",
         .path = exe_options.getSource(),
     };
@@ -36,11 +22,12 @@ pub fn build(b: *std.build.Builder) void {
     const ztracy_pkg = std.build.Pkg{
         .name = "ztracy",
         .path = .{ .path = "libs/ztracy/ztracy.zig" },
-        .dependencies = &[_]Pkg{
+        .dependencies = &[_]std.build.Pkg{
             options_pkg,
         },
     };
     exe.addPackage(ztracy_pkg);
+    @import("libs/ztracy/build.zig").link(b, exe, .{ .tracy_path = tracy });
 }
 ```
 
