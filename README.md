@@ -64,7 +64,7 @@ To build all sample applications (assuming `zig.exe` is in the PATH):
 1. Run `zig build` command.
 1. Build artifacts will show up in `zig-out/bin` folder.
 
-To build single sample application (assuming `zig.exe` is in the PATH):
+To build/run single sample application (assuming `zig.exe` is in the PATH):
 
 1. Open terminal window in the project root directory.
 1. Type `zig build <sample_name>` to build or `zig build <sample_name>_run` to run chosen demo.
