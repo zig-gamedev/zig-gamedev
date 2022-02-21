@@ -2,8 +2,9 @@
 
 ## Features
 
-See documentation in the [code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath/zmath.zig)
-Read [intro article](https://github.com/michal-z/zig-gamedev/wiki/Fast,-multi-platform,-SIMD-math-library-in-Zig)
+See documentation in the [code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath/zmath.zig).
+
+Read [intro article](https://github.com/michal-z/zig-gamedev/wiki/Fast,-multi-platform,-SIMD-math-library-in-Zig).
 
 ## Getting started
 
