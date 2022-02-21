@@ -66,11 +66,11 @@ To build all sample applications (assuming `zig.exe` is in the PATH):
 
 Build artifacts will show up in `zig-out/bin` folder.
 
-`zig build <sample_name>` will build sample application named `sample_name`.
+`zig build <sample_name>` will build sample application named `<sample_name>`.
 
-`zig build <sample_name>_run` will build and run sample application named `sample_name`.
+`zig build <sample_name>_run` will build and run sample application named `<sample_name>`.
 
-`zig build <sample_name>_dxc` will build shaders for sample application named `sample_name`.
+`zig build <sample_name>_dxc` will build shaders for sample application named `<sample_name>`.
 
 To list all available sample names run `zig build help` and navigate to `Steps` section.
 
