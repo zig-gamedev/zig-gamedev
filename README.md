@@ -60,15 +60,15 @@ Zig compiler consists of a single ~60MB .zip file that needs to be downloaded se
 
 To build all sample applications (assuming `zig.exe` is in the PATH):
 
-1. Open terminal window in the project root directory.
-1. Run `zig build` command.
-1. Build artifacts will show up in `zig-out/bin` folder.
+1. `git clone https://github.com/michal-z/zig-gamedev.git`
+1. `cd zig-gamedev`
+1. `zig build`
 
-To build/run single sample application (assuming `zig.exe` is in the PATH):
+Build artifacts will show up in `zig-out/bin` folder.
 
-1. Open terminal window in the project root directory.
-1. Type `zig build <sample_name>` to build or `zig build <sample_name>_run` to run a demo.
-1. Build artifacts will show up in `zig-out/bin` folder.
+`zig build <sample_name>` will build sample application named `sample_name`.
+`zig build <sample_name>_run` will build and run sample application named `sample_name`.
+`zig build <sample_name>_dxc` will build shaders for sample application named `sample_name`.
 
 To list all available sample names run `zig build help` and navigate to `Steps` section.
 
