@@ -1,3 +1,5 @@
+# zpix - performance markers for PIX
+
 ## Getting started
 
 Copy `zpix` and `zwin32` folders to a `libs` subdirectory of the root of your project.

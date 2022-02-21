@@ -1,3 +1,5 @@
+# zd3d12 - helper library for working with DirectX 12
+
 ## Features
 
 * Basic DirectX 12 context management (descriptor heaps, memory heaps, swapchain, CPU and GPU sync, etc.)

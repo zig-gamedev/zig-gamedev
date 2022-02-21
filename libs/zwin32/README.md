@@ -1,3 +1,5 @@
+# zwin32 - standalone Zig bindings for Win32 API
+
 ## Getting started
 
 Copy `zwin32` folder to a `libs` subdirectory of the root of your project.

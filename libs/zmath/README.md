@@ -1,4 +1,4 @@
-# Fast, multi-platform, SIMD math library
+# zmath - SIMD math library for game developers
 
 ## Features
 

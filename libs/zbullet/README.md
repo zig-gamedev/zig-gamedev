@@ -1,3 +1,5 @@
+# zbullet - Zig bindings for Bullet Physics
+
 ## Getting started
 
 Copy `zbullet` folder to a `libs` subdirectory of the root of your project.

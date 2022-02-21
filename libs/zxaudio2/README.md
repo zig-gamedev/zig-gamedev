@@ -1,3 +1,5 @@
+# zxaudio2 - helper library for working with XAudio2
+
 ## Getting started
 
 Copy `zxaudio2` and `zwin32` folders to a `libs` subdirectory of the root of your project.

@@ -1,3 +1,5 @@
+# ztracy - performance markers for Tracy
+
 ## Getting started
 
 Copy `ztracy` folder to a `libs` subdirectory of the root of your project.
