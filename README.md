@@ -90,7 +90,8 @@ To build and **run** an application you can use:<br />
 Examples:<br />
 `zig build -Denable-dx-debug=true -Drelease-fast=true`<br />
 `zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`<br />
-`zig build simple_raytracer_run`<br />
+`zig build simple_raytracer` <- Builds 'simple_raytracer' sample<br /> 
+`zig build simple_raytracer_run` <- Builds and runs 'simple_raytracer' sample<br />
 
 ## Requirements
 
