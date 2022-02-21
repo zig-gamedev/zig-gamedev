@@ -488,6 +488,20 @@ pub fn init() void {
         w.kernel32.ExitProcess(0);
     }
 
+    const local_d3d12core_dll = w.kernel32.LoadLibraryW(L("d3d12/D3D12Core.dll"));
+    if (local_d3d12core_dll == null) {
+        _ = w.user32.messageBoxA(
+            null,
+            \\Looks like 'd3d12' folder is missing. It has to be distributed together with an application.
+        ,
+            "Error",
+            w.user32.MB_OK | w.user32.MB_ICONERROR,
+        ) catch 0;
+        w.kernel32.ExitProcess(0);
+    } else {
+        _ = w.kernel32.FreeLibrary(local_d3d12core_dll.?);
+    }
+
     var exe_path_buffer: [1024]u8 = undefined;
     const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
     std.os.chdir(exe_path) catch {};
