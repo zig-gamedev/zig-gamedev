@@ -54,7 +54,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 ## Building sample applications
 
-To build all sample applications (assuming `zig.exe` is in the PATH):
+To build all sample applications (assuming `zig.exe` is in the PATH and [Git LFS](https://git-lfs.github.com/) is installed):
 
 1. `git clone https://github.com/michal-z/zig-gamedev.git`
 1. `cd zig-gamedev`
