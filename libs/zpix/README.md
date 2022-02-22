@@ -58,8 +58,8 @@ pub fn main() !void {
     // Z Pre Pass.
     {
         ...
-        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, gctx.cmdlist), "Z Pre Pass");
-        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, gctx.cmdlist));
+        zpix.beginEvent(gctx.cmdlist, "Z Pre Pass");
+        defer zpix.endEvent(gctx.cmdlist);
         ...
     }
 }

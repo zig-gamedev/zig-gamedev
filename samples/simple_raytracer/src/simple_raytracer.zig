@@ -1215,8 +1215,8 @@ fn draw(demo: *DemoState) void {
 
     // Z Pre Pass.
     {
-        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Z Pre Pass");
-        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+        zpix.beginEvent(grfx.cmdlist, "Z Pre Pass");
+        defer zpix.endEvent(grfx.cmdlist);
 
         const object_to_clip = cam_world_to_clip;
 
@@ -1243,8 +1243,8 @@ fn draw(demo: *DemoState) void {
 
     // Generate shadow rays.
     if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
-        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Generate shadow rays.");
-        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+        zpix.beginEvent(grfx.cmdlist, "Generate shadow rays.");
+        defer zpix.endEvent(grfx.cmdlist);
 
         grfx.cmdlist.OMSetRenderTargets(
             1,
@@ -1293,8 +1293,8 @@ fn draw(demo: *DemoState) void {
 
     // Trace shadow rays.
     if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
-        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Trace Shadow Rays");
-        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+        zpix.beginEvent(grfx.cmdlist, "Trace Shadow Rays");
+        defer zpix.endEvent(grfx.cmdlist);
 
         // Upload 'shader table' content (in this demo it could be done only once at init time).
         {
@@ -1387,8 +1387,8 @@ fn draw(demo: *DemoState) void {
 
     // Draw Sponza.
     {
-        zpix.beginEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist), "Main Pass");
-        defer zpix.endEventOnCommandList(@ptrCast(*d3d12.IGraphicsCommandList, grfx.cmdlist));
+        zpix.beginEvent(grfx.cmdlist, "Main Pass");
+        defer zpix.endEvent(grfx.cmdlist);
 
         const object_to_world = vm.Mat4.initIdentity();
         const object_to_clip = object_to_world.mul(cam_world_to_clip);
