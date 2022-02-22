@@ -54,10 +54,6 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 ## Building sample applications
 
-As mentioned above, the only dependency needed to build this project is [Zig compiler](https://ziglang.org/download/), neither Visual Studio nor Windows SDK has to be installed.
-
-Zig compiler consists of a single ~60MB .zip file that needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
-
 To build all sample applications (assuming `zig.exe` is in the PATH):
 
 1. `git clone https://github.com/michal-z/zig-gamedev.git`
@@ -74,9 +70,13 @@ Build artifacts will show up in `zig-out/bin` folder.
 
 To list all available sample names run `zig build help` and navigate to `Steps` section.
 
+As mentioned above, the only dependency needed to build this project is [Zig compiler](https://ziglang.org/download/), neither Visual Studio nor Windows SDK has to be installed.
+
+Zig compiler consists of a single ~60MB .zip file that needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
+
 #### Build options
 
-All sample applications support following build options:
+All sample applications support the following build options:
 
 * `-Drelease-safe=[bool]` - Optimizations on and safety on
 * `-Drelease-fast=[bool]` - Optimizations on and safety off
@@ -85,15 +85,15 @@ All sample applications support following build options:
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
 * `-Dtracy=[path/to/tracy/source]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
 
-To build and **run** an application you can use:<br />
-`zig build <sample_name>_run` <- Builds and runs debug build.<br />
-`zig build <sample_name>_run -Drelease-fast=true -Denable-dx-debug=true` <- Builds and runs release build with DirectX debug layers enabled.<br />
+Examples:
 
-Examples:<br />
-`zig build -Denable-dx-debug=true -Drelease-fast=true`<br />
-`zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`<br />
-`zig build simple_raytracer` <- Builds 'simple_raytracer' sample<br /> 
-`zig build simple_raytracer_run` <- Builds and runs 'simple_raytracer' sample<br />
+`zig build -Denable-dx-debug=true -Drelease-fast=true`
+
+`zig build -Dtracy="C:/Development/tools/Tracy/tracy-0.7.8"`
+
+`zig build simple_raytracer`
+
+`zig build simple_raytracer_run`
 
 ## Requirements
 
