@@ -4,9 +4,7 @@ const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
 const w = zwin32.base;
-const d2d1 = zwin32.d2d1;
 const d3d12 = zwin32.d3d12;
-const dwrite = zwin32.dwrite;
 const dml = zwin32.directml;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
@@ -92,9 +90,6 @@ const DemoState = struct {
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     meshes: std.ArrayList(Mesh),
-
-    brush: *d2d1.ISolidColorBrush,
-    normal_tfmt: *dwrite.ITextFormat,
 
     draw_mode: DrawMode,
     num_objects_to_draw: i32,
@@ -281,33 +276,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             w.kernel32.ExitProcess(0);
         }
     }
-
-    const brush = blk: {
-        var brush: ?*d2d1.ISolidColorBrush = null;
-        hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
-            &.{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
-            null,
-            &brush,
-        ));
-        break :blk brush.?;
-    };
-
-    const normal_tfmt = blk: {
-        var txtfmt: ?*dwrite.ITextFormat = null;
-        hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
-            L("Verdana"),
-            null,
-            dwrite.FONT_WEIGHT.BOLD,
-            dwrite.FONT_STYLE.NORMAL,
-            dwrite.FONT_STRETCH.NORMAL,
-            32.0,
-            L("en-us"),
-            &txtfmt,
-        ));
-        break :blk txtfmt.?;
-    };
-    hrPanicOnFail(normal_tfmt.SetTextAlignment(.LEADING));
-    hrPanicOnFail(normal_tfmt.SetParagraphAlignment(.NEAR));
 
     const mesh_shader_pso = blk: {
         var pso_desc = d3d12.MESH_SHADER_PIPELINE_STATE_DESC.initDefault();
@@ -584,8 +552,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .meshlet_data_buffer = meshlet_data_buffer,
         .meshlet_data_buffer_srv = meshlet_data_buffer_srv,
         .meshes = all_meshes,
-        .brush = brush,
-        .normal_tfmt = normal_tfmt,
         .draw_mode = .mesh_shader,
         .num_objects_to_draw = 16,
         .camera = .{
@@ -604,8 +570,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
-    _ = demo.brush.Release();
-    _ = demo.normal_tfmt.Release();
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
     _ = demo.grfx.releaseResource(demo.meshlet_buffer);
@@ -621,7 +585,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
 }
 
 fn update(demo: *DemoState) void {
-    demo.frame_stats.update();
+    demo.frame_stats.update(demo.grfx.window, window_name);
     const dt = demo.frame_stats.delta_time;
     common.newImGuiFrame(dt);
 
@@ -867,31 +831,8 @@ fn draw(demo: *DemoState) void {
 
     demo.gui.draw(grfx);
 
-    grfx.beginDraw2d();
-    {
-        const stats = &demo.frame_stats;
-        var buffer = [_]u8{0} ** 64;
-        const text = std.fmt.bufPrint(
-            buffer[0..],
-            "FPS: {d:.1}\nCPU time: {d:.3} ms",
-            .{ stats.fps, stats.average_cpu_time },
-        ) catch unreachable;
-
-        demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        common.drawText(
-            grfx.d2d.context,
-            text,
-            demo.normal_tfmt,
-            &d2d1.RECT_F{
-                .left = 10.0,
-                .top = 10.0,
-                .right = @intToFloat(f32, grfx.viewport_width),
-                .bottom = @intToFloat(f32, grfx.viewport_height),
-            },
-            @ptrCast(*d2d1.IBrush, demo.brush),
-        );
-    }
-    grfx.endDraw2d();
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    grfx.flushResourceBarriers();
 
     grfx.endFrame();
 }

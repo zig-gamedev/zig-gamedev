@@ -54,7 +54,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Create Direct2D brush which will be needed to display text.
     const brush = blk: {
         var brush: ?*d2d1.ISolidColorBrush = null;
-        hrPanicOnFail(gctx.d2d.context.CreateSolidColorBrush(
+        hrPanicOnFail(gctx.d2d.?.context.CreateSolidColorBrush(
             &.{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
             null,
             &brush,
@@ -65,7 +65,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Create Direct2D text format which will be needed to display text.
     const normal_tfmt = blk: {
         var info_txtfmt: ?*dwrite.ITextFormat = null;
-        hrPanicOnFail(gctx.dwrite_factory.CreateTextFormat(
+        hrPanicOnFail(gctx.d2d.?.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
             .BOLD,
@@ -114,7 +114,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
 
 fn update(demo: *DemoState) void {
     // Update frame counter and fps stats.
-    demo.frame_stats.update();
+    demo.frame_stats.update(demo.gctx.window, window_name);
     const dt = demo.frame_stats.delta_time;
 
     // Update dear imgui common. After this call we can define our widgets.
@@ -163,7 +163,7 @@ fn draw(demo: *DemoState) void {
 
         demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
         common.drawText(
-            gctx.d2d.context,
+            gctx.d2d.?.context,
             text,
             demo.normal_tfmt,
             &d2d1.RECT_F{

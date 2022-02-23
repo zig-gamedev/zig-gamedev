@@ -4,9 +4,7 @@ const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
 const w = zwin32.base;
-const d2d1 = zwin32.d2d1;
 const d3d12 = zwin32.d3d12;
-const dwrite = zwin32.dwrite;
 const wasapi = zwin32.wasapi;
 const mf = zwin32.mf;
 const hrPanic = zwin32.hrPanic;
@@ -45,9 +43,6 @@ const DemoState = struct {
     grfx: zd3d12.GraphicsContext,
     gui: GuiRenderer,
     frame_stats: common.FrameStats,
-
-    brush: *d2d1.ISolidColorBrush,
-    textformat: *dwrite.ITextFormat,
 
     audio: AudioContex,
 
@@ -106,33 +101,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
-
-    const brush = blk: {
-        var maybe_brush: ?*d2d1.ISolidColorBrush = null;
-        hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
-            &d2d1.COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
-            null,
-            &maybe_brush,
-        ));
-        break :blk maybe_brush.?;
-    };
-
-    const textformat = blk: {
-        var maybe_textformat: ?*dwrite.ITextFormat = null;
-        hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
-            L("Verdana"),
-            null,
-            dwrite.FONT_WEIGHT.NORMAL,
-            dwrite.FONT_STYLE.NORMAL,
-            dwrite.FONT_STRETCH.NORMAL,
-            32.0,
-            L("en-us"),
-            &maybe_textformat,
-        ));
-        break :blk maybe_textformat.?;
-    };
-    hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
-    hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
     const audio_device_enumerator = blk: {
         var audio_device_enumerator: *wasapi.IMMDeviceEnumerator = undefined;
@@ -348,8 +316,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .grfx = grfx,
         .gui = gui,
         .frame_stats = common.FrameStats.init(),
-        .brush = brush,
-        .textformat = textformat,
         .audio = .{
             .client = audio_client,
             .render_client = audio_render_client,
@@ -384,8 +350,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.audio.client.Release();
     demo.audio.samples.deinit();
 
-    _ = demo.brush.Release();
-    _ = demo.textformat.Release();
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     common.deinitWindow(gpa_allocator);
@@ -393,8 +357,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
 }
 
 fn update(demo: *DemoState) void {
-    demo.frame_stats.update();
-
+    demo.frame_stats.update(demo.grfx.window, window_name);
     common.newImGuiFrame(demo.frame_stats.delta_time);
 }
 
@@ -473,31 +436,8 @@ fn draw(demo: *DemoState) void {
 
     demo.gui.draw(grfx);
 
-    grfx.beginDraw2d();
-    {
-        const stats = &demo.frame_stats;
-        var buffer = [_]u8{0} ** 64;
-        const text = std.fmt.bufPrint(
-            buffer[0..],
-            "FPS: {d:.1}\nCPU time: {d:.3} ms",
-            .{ stats.fps, stats.average_cpu_time },
-        ) catch unreachable;
-
-        demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        common.drawText(
-            grfx.d2d.context,
-            text,
-            demo.textformat,
-            &d2d1.RECT_F{
-                .left = 10.0,
-                .top = 10.0,
-                .right = @intToFloat(f32, grfx.viewport_width),
-                .bottom = @intToFloat(f32, grfx.viewport_height),
-            },
-            @ptrCast(*d2d1.IBrush, demo.brush),
-        );
-    }
-    grfx.endDraw2d();
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    grfx.flushResourceBarriers();
 
     grfx.endFrame();
 }

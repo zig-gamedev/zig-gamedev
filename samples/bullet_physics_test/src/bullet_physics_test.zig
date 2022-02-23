@@ -5,10 +5,7 @@ const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
 const w = zwin32.base;
-const d2d1 = zwin32.d2d1;
 const d3d12 = zwin32.d3d12;
-const dwrite = zwin32.dwrite;
-const dml = zwin32.directml;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
@@ -293,9 +290,6 @@ const DemoState = struct {
     grfx: zd3d12.GraphicsContext,
     gui: GuiRenderer,
     frame_stats: common.FrameStats,
-
-    brush: *d2d1.ISolidColorBrush,
-    info_txtfmt: *dwrite.ITextFormat,
 
     physics_debug_pso: zd3d12.PipelineHandle,
     simple_entity_pso: zd3d12.PipelineHandle,
@@ -980,33 +974,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk options3.BarycentricsSupported == w.TRUE and res == w.S_OK;
     };
 
-    const brush = blk: {
-        var brush: *d2d1.ISolidColorBrush = undefined;
-        hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
-            &.{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
-            null,
-            @ptrCast(*?*d2d1.ISolidColorBrush, &brush),
-        ));
-        break :blk brush;
-    };
-
-    const info_txtfmt = blk: {
-        var info_txtfmt: *dwrite.ITextFormat = undefined;
-        hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
-            L("Verdana"),
-            null,
-            dwrite.FONT_WEIGHT.BOLD,
-            dwrite.FONT_STYLE.NORMAL,
-            dwrite.FONT_STRETCH.NORMAL,
-            32.0,
-            L("en-us"),
-            @ptrCast(*?*dwrite.ITextFormat, &info_txtfmt),
-        ));
-        break :blk info_txtfmt;
-    };
-    hrPanicOnFail(info_txtfmt.SetTextAlignment(.LEADING));
-    hrPanicOnFail(info_txtfmt.SetParagraphAlignment(.NEAR));
-
     const physics_debug_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
@@ -1206,8 +1173,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .grfx = grfx,
         .gui = gui,
         .frame_stats = common.FrameStats.init(),
-        .brush = brush,
-        .info_txtfmt = info_txtfmt,
         .physics_world = physics_world,
         .physics_debug = physics_debug,
         .physics_objects_pool = physics_objects_pool,
@@ -1246,8 +1211,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
-    _ = demo.brush.Release();
-    _ = demo.info_txtfmt.Release();
     _ = demo.grfx.releasePipeline(demo.physics_debug_pso);
     _ = demo.grfx.releasePipeline(demo.simple_entity_pso);
     _ = demo.grfx.releaseResource(demo.color_texture);
@@ -1346,7 +1309,7 @@ fn createAddEntity(
 }
 
 fn update(demo: *DemoState) void {
-    demo.frame_stats.update();
+    demo.frame_stats.update(demo.grfx.window, window_name);
     const dt = demo.frame_stats.delta_time;
 
     if (!demo.simulation_is_paused) {
@@ -1971,34 +1934,8 @@ fn draw(demo: *DemoState) void {
         0,
         .R8G8B8A8_UNORM,
     );
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
     grfx.flushResourceBarriers();
-
-    grfx.beginDraw2d();
-    {
-        const stats = &demo.frame_stats;
-        var buffer = [_]u8{0} ** 64;
-        const text = std.fmt.bufPrint(
-            buffer[0..],
-            "FPS: {d:.1}\nCPU time: {d:.3} ms\nRigid bodies: {d}",
-            .{ stats.fps, stats.average_cpu_time, zb.cbtWorldGetNumBodies(demo.physics_world) },
-        ) catch unreachable;
-
-        demo.brush.SetColor(&.{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-        common.drawText(
-            grfx.d2d.context,
-            text,
-            demo.info_txtfmt,
-            &d2d1.RECT_F{
-                .left = 10.0,
-                .top = 10.0,
-                .right = @intToFloat(f32, grfx.viewport_width),
-                .bottom = @intToFloat(f32, grfx.viewport_height),
-            },
-            @ptrCast(*d2d1.IBrush, demo.brush),
-        );
-    }
-    grfx.endDraw2d();
 
     grfx.endFrame();
 }

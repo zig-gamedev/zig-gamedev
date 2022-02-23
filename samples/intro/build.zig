@@ -9,6 +9,11 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_tracy", options.tracy != null);
+    if (intro_index == 0) {
+        exe_options.addOption(bool, "enable_d2d", true);
+    } else {
+        exe_options.addOption(bool, "enable_d2d", false);
+    }
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const intro_index_str = comptime std.fmt.comptimePrint("{}", .{intro_index});

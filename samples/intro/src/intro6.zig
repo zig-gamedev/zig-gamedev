@@ -4,9 +4,7 @@ const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
 const w = zwin32.base;
-const d2d1 = zwin32.d2d1;
 const d3d12 = zwin32.d3d12;
-const dwrite = zwin32.dwrite;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
@@ -293,7 +291,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
 
 fn update(demo: *DemoState) void {
     // Update frame counter and fps stats.
-    demo.frame_stats.update();
+    demo.frame_stats.update(demo.gctx.window, window_name);
     const dt = demo.frame_stats.delta_time;
 
     _ = demo.physics.world.stepSimulation(dt, 1, 1.0 / 60.0);

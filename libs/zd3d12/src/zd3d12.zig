@@ -18,6 +18,7 @@ const ztracy = @import("ztracy");
 
 const enable_dx_debug = @import("build_options").enable_dx_debug;
 const enable_dx_gpu_debug = @import("build_options").enable_dx_gpu_debug;
+const enable_d2d = @import("build_options").enable_d2d;
 
 // TODO(mziulek): For now, we always transition *all* subresources.
 const TransitionResourceBarrier = struct {
@@ -31,9 +32,22 @@ const ResourceWithCounter = struct {
     counter: u32,
 };
 
+const num_swapbuffers = 4;
+
+const D2dState = struct {
+    factory: *d2d1.IFactory7,
+    device: *d2d1.IDevice6,
+    context: *d2d1.IDeviceContext6,
+    device11on12: *d3d11on12.IDevice2,
+    device11: *d3d11.IDevice,
+    context11: *d3d11.IDeviceContext,
+    swapbuffers11: [num_swapbuffers]*d3d11.IResource,
+    targets: [num_swapbuffers]*d2d1.IBitmap1,
+    dwrite_factory: *dwrite.IFactory,
+};
+
 pub const GraphicsContext = struct {
     pub const max_num_buffered_frames = 2;
-    const num_swapbuffers = 4;
     const num_rtv_descriptors = 128;
     const num_dsv_descriptors = 128;
     const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
@@ -70,17 +84,7 @@ pub const GraphicsContext = struct {
     back_buffer_index: u32,
     window: w.HWND,
     is_cmdlist_opened: bool,
-    d2d: struct {
-        factory: *d2d1.IFactory7,
-        device: *d2d1.IDevice6,
-        context: *d2d1.IDeviceContext6,
-        device11on12: *d3d11on12.IDevice2,
-        device11: *d3d11.IDevice,
-        context11: *d3d11.IDeviceContext,
-        swapbuffers11: [num_swapbuffers]*d3d11.IResource,
-        targets: [num_swapbuffers]*d2d1.IBitmap1,
-    },
-    dwrite_factory: *dwrite.IFactory,
+    d2d: ?D2dState,
     wic_factory: *wic.IImagingFactory,
     present_flags: w.UINT,
     present_interval: w.UINT,
@@ -283,88 +287,6 @@ pub const GraphicsContext = struct {
             break :blk swapchain3;
         };
 
-        const dx11 = blk: {
-            var device11: *d3d11.IDevice = undefined;
-            var device_context11: *d3d11.IDeviceContext = undefined;
-            hrPanicOnFail(d3d11on12.D3D11On12CreateDevice(
-                @ptrCast(*w.IUnknown, device),
-                if (enable_dx_debug)
-                    d3d11.CREATE_DEVICE_DEBUG | d3d11.CREATE_DEVICE_BGRA_SUPPORT
-                else
-                    d3d11.CREATE_DEVICE_BGRA_SUPPORT,
-                null,
-                0,
-                &[_]*w.IUnknown{@ptrCast(*w.IUnknown, cmdqueue)},
-                1,
-                0,
-                @ptrCast(*?*d3d11.IDevice, &device11),
-                @ptrCast(*?*d3d11.IDeviceContext, &device_context11),
-                null,
-            ));
-            break :blk .{ .device = device11, .device_context = device_context11 };
-        };
-
-        const device11on12 = blk: {
-            var device11on12: *d3d11on12.IDevice2 = undefined;
-            hrPanicOnFail(dx11.device.QueryInterface(
-                &d3d11on12.IID_IDevice2,
-                @ptrCast(*?*anyopaque, &device11on12),
-            ));
-            break :blk device11on12;
-        };
-
-        const d2d_factory = blk: {
-            var d2d_factory: *d2d1.IFactory7 = undefined;
-            hrPanicOnFail(d2d1.D2D1CreateFactory(
-                .SINGLE_THREADED,
-                &d2d1.IID_IFactory7,
-                if (enable_dx_debug)
-                    &d2d1.FACTORY_OPTIONS{ .debugLevel = .INFORMATION }
-                else
-                    &d2d1.FACTORY_OPTIONS{ .debugLevel = .NONE },
-                @ptrCast(*?*anyopaque, &d2d_factory),
-            ));
-            break :blk d2d_factory;
-        };
-
-        const dxgi_device = blk: {
-            var dxgi_device: *dxgi.IDevice = undefined;
-            hrPanicOnFail(device11on12.QueryInterface(
-                &dxgi.IID_IDevice,
-                @ptrCast(*?*anyopaque, &dxgi_device),
-            ));
-            break :blk dxgi_device;
-        };
-        defer _ = dxgi_device.Release();
-
-        const d2d_device = blk: {
-            var d2d_device: *d2d1.IDevice6 = undefined;
-            hrPanicOnFail(d2d_factory.CreateDevice6(
-                dxgi_device,
-                @ptrCast(*?*d2d1.IDevice6, &d2d_device),
-            ));
-            break :blk d2d_device;
-        };
-
-        const d2d_device_context = blk: {
-            var d2d_device_context: *d2d1.IDeviceContext6 = undefined;
-            hrPanicOnFail(d2d_device.CreateDeviceContext6(
-                d2d1.DEVICE_CONTEXT_OPTIONS_NONE,
-                @ptrCast(*?*d2d1.IDeviceContext6, &d2d_device_context),
-            ));
-            break :blk d2d_device_context;
-        };
-
-        const dwrite_factory = blk: {
-            var dwrite_factory: *dwrite.IFactory = undefined;
-            hrPanicOnFail(dwrite.DWriteCreateFactory(
-                .SHARED,
-                &dwrite.IID_IFactory,
-                @ptrCast(*?*anyopaque, &dwrite_factory),
-            ));
-            break :blk dwrite_factory;
-        };
-
         var resource_pool = ResourcePool.init();
         var pipeline_pool = PipelinePool.init();
 
@@ -442,52 +364,148 @@ pub const GraphicsContext = struct {
             break :blk swapchain_buffers;
         };
 
-        const swapbuffers11 = blk: {
-            var swapbuffers11: [num_swapbuffers]*d3d11.IResource = undefined;
-            for (swapbuffers11) |_, buffer_index| {
-                hrPanicOnFail(device11on12.CreateWrappedResource(
-                    @ptrCast(*w.IUnknown, resource_pool.getResource(swapchain_buffers[buffer_index]).raw.?),
-                    &d3d11on12.RESOURCE_FLAGS{
-                        .BindFlags = d3d11.BIND_RENDER_TARGET,
-                        .MiscFlags = 0,
-                        .CPUAccessFlags = 0,
-                        .StructureByteStride = 0,
-                    },
-                    d3d12.RESOURCE_STATE_RENDER_TARGET,
-                    d3d12.RESOURCE_STATE_PRESENT,
-                    &d3d11.IID_IResource,
-                    @ptrCast(*?*anyopaque, &swapbuffers11[buffer_index]),
+        const d2d_state = if (enable_d2d) blk_d2d: {
+            const dx11 = blk: {
+                var device11: *d3d11.IDevice = undefined;
+                var device_context11: *d3d11.IDeviceContext = undefined;
+                hrPanicOnFail(d3d11on12.D3D11On12CreateDevice(
+                    @ptrCast(*w.IUnknown, device),
+                    if (enable_dx_debug)
+                        d3d11.CREATE_DEVICE_DEBUG | d3d11.CREATE_DEVICE_BGRA_SUPPORT
+                    else
+                        d3d11.CREATE_DEVICE_BGRA_SUPPORT,
+                    null,
+                    0,
+                    &[_]*w.IUnknown{@ptrCast(*w.IUnknown, cmdqueue)},
+                    1,
+                    0,
+                    @ptrCast(*?*d3d11.IDevice, &device11),
+                    @ptrCast(*?*d3d11.IDeviceContext, &device_context11),
+                    null,
                 ));
-            }
-            break :blk swapbuffers11;
-        };
+                break :blk .{ .device = device11, .device_context = device_context11 };
+            };
 
-        const d2d_targets = blk: {
-            var d2d_targets: [num_swapbuffers]*d2d1.IBitmap1 = undefined;
-            for (d2d_targets) |_, target_index| {
-                const swapbuffer11 = swapbuffers11[target_index];
-
-                var surface: *dxgi.ISurface = undefined;
-                hrPanicOnFail(swapbuffer11.QueryInterface(
-                    &dxgi.IID_ISurface,
-                    @ptrCast(*?*anyopaque, &surface),
+            const device11on12 = blk: {
+                var device11on12: *d3d11on12.IDevice2 = undefined;
+                hrPanicOnFail(dx11.device.QueryInterface(
+                    &d3d11on12.IID_IDevice2,
+                    @ptrCast(*?*anyopaque, &device11on12),
                 ));
-                defer _ = surface.Release();
+                break :blk device11on12;
+            };
 
-                hrPanicOnFail(d2d_device_context.CreateBitmapFromDxgiSurface(
-                    surface,
-                    &d2d1.BITMAP_PROPERTIES1{
-                        .pixelFormat = .{ .format = .R8G8B8A8_UNORM, .alphaMode = .PREMULTIPLIED },
-                        .dpiX = 96.0,
-                        .dpiY = 96.0,
-                        .bitmapOptions = d2d1.BITMAP_OPTIONS_TARGET | d2d1.BITMAP_OPTIONS_CANNOT_DRAW,
-                        .colorContext = null,
-                    },
-                    @ptrCast(*?*d2d1.IBitmap1, &d2d_targets[target_index]),
+            const d2d_factory = blk: {
+                var d2d_factory: *d2d1.IFactory7 = undefined;
+                hrPanicOnFail(d2d1.D2D1CreateFactory(
+                    .SINGLE_THREADED,
+                    &d2d1.IID_IFactory7,
+                    if (enable_dx_debug)
+                        &d2d1.FACTORY_OPTIONS{ .debugLevel = .INFORMATION }
+                    else
+                        &d2d1.FACTORY_OPTIONS{ .debugLevel = .NONE },
+                    @ptrCast(*?*anyopaque, &d2d_factory),
                 ));
-            }
-            break :blk d2d_targets;
-        };
+                break :blk d2d_factory;
+            };
+
+            const dxgi_device = blk: {
+                var dxgi_device: *dxgi.IDevice = undefined;
+                hrPanicOnFail(device11on12.QueryInterface(
+                    &dxgi.IID_IDevice,
+                    @ptrCast(*?*anyopaque, &dxgi_device),
+                ));
+                break :blk dxgi_device;
+            };
+            defer _ = dxgi_device.Release();
+
+            const d2d_device = blk: {
+                var d2d_device: *d2d1.IDevice6 = undefined;
+                hrPanicOnFail(d2d_factory.CreateDevice6(
+                    dxgi_device,
+                    @ptrCast(*?*d2d1.IDevice6, &d2d_device),
+                ));
+                break :blk d2d_device;
+            };
+
+            const d2d_device_context = blk: {
+                var d2d_device_context: *d2d1.IDeviceContext6 = undefined;
+                hrPanicOnFail(d2d_device.CreateDeviceContext6(
+                    d2d1.DEVICE_CONTEXT_OPTIONS_NONE,
+                    @ptrCast(*?*d2d1.IDeviceContext6, &d2d_device_context),
+                ));
+                break :blk d2d_device_context;
+            };
+
+            const dwrite_factory = blk: {
+                var dwrite_factory: *dwrite.IFactory = undefined;
+                hrPanicOnFail(dwrite.DWriteCreateFactory(
+                    .SHARED,
+                    &dwrite.IID_IFactory,
+                    @ptrCast(*?*anyopaque, &dwrite_factory),
+                ));
+                break :blk dwrite_factory;
+            };
+
+            const swapbuffers11 = blk: {
+                var swapbuffers11: [num_swapbuffers]*d3d11.IResource = undefined;
+                for (swapbuffers11) |_, buffer_index| {
+                    hrPanicOnFail(device11on12.CreateWrappedResource(
+                        @ptrCast(*w.IUnknown, resource_pool.getResource(swapchain_buffers[buffer_index]).raw.?),
+                        &d3d11on12.RESOURCE_FLAGS{
+                            .BindFlags = d3d11.BIND_RENDER_TARGET,
+                            .MiscFlags = 0,
+                            .CPUAccessFlags = 0,
+                            .StructureByteStride = 0,
+                        },
+                        d3d12.RESOURCE_STATE_RENDER_TARGET,
+                        d3d12.RESOURCE_STATE_PRESENT,
+                        &d3d11.IID_IResource,
+                        @ptrCast(*?*anyopaque, &swapbuffers11[buffer_index]),
+                    ));
+                }
+                break :blk swapbuffers11;
+            };
+
+            const d2d_targets = blk: {
+                var d2d_targets: [num_swapbuffers]*d2d1.IBitmap1 = undefined;
+                for (d2d_targets) |_, target_index| {
+                    const swapbuffer11 = swapbuffers11[target_index];
+
+                    var surface: *dxgi.ISurface = undefined;
+                    hrPanicOnFail(swapbuffer11.QueryInterface(
+                        &dxgi.IID_ISurface,
+                        @ptrCast(*?*anyopaque, &surface),
+                    ));
+                    defer _ = surface.Release();
+
+                    hrPanicOnFail(d2d_device_context.CreateBitmapFromDxgiSurface(
+                        surface,
+                        &d2d1.BITMAP_PROPERTIES1{
+                            .pixelFormat = .{ .format = .R8G8B8A8_UNORM, .alphaMode = .PREMULTIPLIED },
+                            .dpiX = 96.0,
+                            .dpiY = 96.0,
+                            .bitmapOptions = d2d1.BITMAP_OPTIONS_TARGET | d2d1.BITMAP_OPTIONS_CANNOT_DRAW,
+                            .colorContext = null,
+                        },
+                        @ptrCast(*?*d2d1.IBitmap1, &d2d_targets[target_index]),
+                    ));
+                }
+                break :blk d2d_targets;
+            };
+
+            break :blk_d2d .{
+                .factory = d2d_factory,
+                .device = d2d_device,
+                .context = d2d_device_context,
+                .device11on12 = device11on12,
+                .device11 = dx11.device,
+                .context11 = dx11.device_context,
+                .swapbuffers11 = swapbuffers11,
+                .targets = d2d_targets,
+                .dwrite_factory = dwrite_factory,
+            };
+        } else null;
 
         const frame_fence = blk: {
             var frame_fence: *d3d12.IFence = undefined;
@@ -554,7 +572,10 @@ pub const GraphicsContext = struct {
                 .pool = pipeline_pool,
                 .map = blk: {
                     var hm: std.AutoHashMapUnmanaged(u32, PipelineHandle) = .{};
-                    hm.ensureTotalCapacity(std.heap.page_allocator, PipelinePool.max_num_pipelines) catch unreachable;
+                    hm.ensureTotalCapacity(
+                        std.heap.page_allocator,
+                        PipelinePool.max_num_pipelines,
+                    ) catch unreachable;
                     break :blk hm;
                 },
                 .current = .{ .index = 0, .generation = 0 },
@@ -574,17 +595,7 @@ pub const GraphicsContext = struct {
             .back_buffer_index = swapchain.GetCurrentBackBufferIndex(),
             .window = window,
             .is_cmdlist_opened = is_cmdlist_opened,
-            .d2d = .{
-                .factory = d2d_factory,
-                .device = d2d_device,
-                .context = d2d_device_context,
-                .device11on12 = device11on12,
-                .device11 = dx11.device,
-                .context11 = dx11.device_context,
-                .swapbuffers11 = swapbuffers11,
-                .targets = d2d_targets,
-            },
-            .dwrite_factory = dwrite_factory,
+            .d2d = d2d_state,
             .wic_factory = wic_factory,
             .present_flags = present_flags,
             .present_interval = present_interval,
@@ -602,15 +613,17 @@ pub const GraphicsContext = struct {
         gr.rtv_heap.deinit();
         gr.dsv_heap.deinit();
         gr.cbv_srv_uav_cpu_heap.deinit();
-        _ = gr.d2d.factory.Release();
-        _ = gr.d2d.device.Release();
-        _ = gr.d2d.context.Release();
-        _ = gr.d2d.device11on12.Release();
-        _ = gr.d2d.device11.Release();
-        _ = gr.d2d.context11.Release();
-        _ = gr.dwrite_factory.Release();
-        for (gr.d2d.targets) |target| _ = target.Release();
-        for (gr.d2d.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
+        if (enable_d2d) {
+            _ = gr.d2d.?.factory.Release();
+            _ = gr.d2d.?.device.Release();
+            _ = gr.d2d.?.context.Release();
+            _ = gr.d2d.?.device11on12.Release();
+            _ = gr.d2d.?.device11.Release();
+            _ = gr.d2d.?.context11.Release();
+            _ = gr.d2d.?.dwrite_factory.Release();
+            for (gr.d2d.?.targets) |target| _ = target.Release();
+            for (gr.d2d.?.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
+        }
         for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
         for (gr.upload_memory_heaps) |*heap| heap.*.deinit();
         _ = gr.device.Release();
@@ -690,12 +703,12 @@ pub const GraphicsContext = struct {
     pub fn beginDraw2d(gr: *GraphicsContext) void {
         gr.flushGpuCommands();
 
-        gr.d2d.device11on12.AcquireWrappedResources(
-            &[_]*d3d11.IResource{gr.d2d.swapbuffers11[gr.back_buffer_index]},
+        gr.d2d.?.device11on12.AcquireWrappedResources(
+            &[_]*d3d11.IResource{gr.d2d.?.swapbuffers11[gr.back_buffer_index]},
             1,
         );
-        gr.d2d.context.SetTarget(@ptrCast(*d2d1.IImage, gr.d2d.targets[gr.back_buffer_index]));
-        gr.d2d.context.BeginDraw();
+        gr.d2d.?.context.SetTarget(@ptrCast(*d2d1.IImage, gr.d2d.?.targets[gr.back_buffer_index]));
+        gr.d2d.?.context.BeginDraw();
     }
 
     pub fn endDraw2d(gr: *GraphicsContext) void {
@@ -737,13 +750,13 @@ pub const GraphicsContext = struct {
                 }));
             }
         }
-        hrPanicOnFail(gr.d2d.context.EndDraw(null, null));
+        hrPanicOnFail(gr.d2d.?.context.EndDraw(null, null));
 
-        gr.d2d.device11on12.ReleaseWrappedResources(
-            &[_]*d3d11.IResource{gr.d2d.swapbuffers11[gr.back_buffer_index]},
+        gr.d2d.?.device11on12.ReleaseWrappedResources(
+            &[_]*d3d11.IResource{gr.d2d.?.swapbuffers11[gr.back_buffer_index]},
             1,
         );
-        gr.d2d.context11.Flush();
+        gr.d2d.?.context11.Flush();
 
         if (enable_dx_debug) {
             if (mute_d2d_completely) {
@@ -1804,12 +1817,12 @@ const ResourcePool = struct {
 
     fn deinit(pool: *ResourcePool) void {
         for (pool.resources) |resource, i| {
-            if (i > 0 and i <= GraphicsContext.num_swapbuffers) {
+            if (i > 0 and i <= num_swapbuffers) {
                 // Release internally created swapbuffers.
                 if (resource.raw) |raw| {
                     _ = raw.Release();
                 }
-            } else if (i > GraphicsContext.num_swapbuffers) {
+            } else if (i > num_swapbuffers) {
                 // Verify that all resources has been released by a user.
                 assert(resource.raw == null);
             }

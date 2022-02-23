@@ -136,16 +136,7 @@ pub fn main() !void {
                 break;
             }
         } else {
-            stats.update();
-            {
-                var buffer = [_]u8{0} ** 64;
-                const text = std.fmt.bufPrint(
-                    buffer[0..],
-                    "FPS: {d:.1}  CPU time: {d:.3} ms | {s}",
-                    .{ stats.fps, stats.average_cpu_time, window_name },
-                ) catch unreachable;
-                _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
-            }
+            stats.update(window, window_name);
             common.newImGuiFrame(stats.delta_time);
 
             c.igSetNextWindowPos(.{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });

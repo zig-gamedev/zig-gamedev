@@ -4,9 +4,7 @@ const assert = std.debug.assert;
 const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
 const w = zwin32.base;
-const d2d1 = zwin32.d2d1;
 const d3d12 = zwin32.d3d12;
-const dwrite = zwin32.dwrite;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
@@ -154,8 +152,6 @@ const DemoState = struct {
     base_color_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
     depth_texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
-    brush: *d2d1.ISolidColorBrush,
-    textformat: *dwrite.ITextFormat,
     num_mesh_vertices: u32,
     num_mesh_indices: u32,
 
@@ -206,33 +202,6 @@ const DemoState = struct {
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(0, 1, @sizeOf(vm.Mat4)),
             entity_buffer_srv,
         );
-
-        const brush = blk: {
-            var maybe_brush: ?*d2d1.ISolidColorBrush = null;
-            hrPanicOnFail(grfx.d2d.context.CreateSolidColorBrush(
-                &d2d1.COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
-                null,
-                &maybe_brush,
-            ));
-            break :blk maybe_brush.?;
-        };
-
-        const textformat = blk: {
-            var maybe_textformat: ?*dwrite.ITextFormat = null;
-            hrPanicOnFail(grfx.dwrite_factory.CreateTextFormat(
-                utf8ToUtf16LeStringLiteral("Verdana"),
-                null,
-                dwrite.FONT_WEIGHT.NORMAL,
-                dwrite.FONT_STYLE.NORMAL,
-                dwrite.FONT_STRETCH.NORMAL,
-                32.0,
-                utf8ToUtf16LeStringLiteral("en-us"),
-                &maybe_textformat,
-            ));
-            break :blk maybe_textformat.?;
-        };
-        hrPanicOnFail(textformat.SetTextAlignment(.LEADING));
-        hrPanicOnFail(textformat.SetParagraphAlignment(.NEAR));
 
         var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
 
@@ -354,8 +323,6 @@ const DemoState = struct {
             .entity_buffer_srv = entity_buffer_srv,
             .base_color_texture_srv = base_color_texture_srv,
             .depth_texture_srv = depth_texture_srv,
-            .brush = brush,
-            .textformat = textformat,
             .num_mesh_vertices = buffers.num_vertices,
             .num_mesh_indices = buffers.num_indices,
         };
@@ -363,8 +330,6 @@ const DemoState = struct {
 
     fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
         demo.grfx.finishGpuCommands();
-        _ = demo.brush.Release();
-        _ = demo.textformat.Release();
         _ = demo.grfx.releaseResource(demo.vertex_buffer);
         _ = demo.grfx.releaseResource(demo.index_buffer);
         _ = demo.grfx.releaseResource(demo.entity_buffer);
@@ -378,7 +343,7 @@ const DemoState = struct {
     }
 
     fn update(demo: *DemoState) void {
-        demo.frame_stats.update();
+        demo.frame_stats.update(demo.grfx.window, window_name);
 
         common.newImGuiFrame(demo.frame_stats.delta_time);
 
@@ -457,31 +422,8 @@ const DemoState = struct {
 
         demo.gui.draw(grfx);
 
-        grfx.beginDraw2d();
-        {
-            const stats = &demo.frame_stats;
-            var buffer = [_]u8{0} ** 64;
-            const text = std.fmt.bufPrint(
-                buffer[0..],
-                "FPS: {d:.1}\nCPU time: {d:.3} ms",
-                .{ stats.fps, stats.average_cpu_time },
-            ) catch unreachable;
-
-            demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 });
-            common.drawText(
-                grfx.d2d.context,
-                text,
-                demo.textformat,
-                &d2d1.RECT_F{
-                    .left = 10.0,
-                    .top = 10.0,
-                    .right = @intToFloat(f32, grfx.viewport_width),
-                    .bottom = @intToFloat(f32, grfx.viewport_height),
-                },
-                @ptrCast(*d2d1.IBrush, demo.brush),
-            );
-        }
-        grfx.endDraw2d();
+        grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+        grfx.flushResourceBarriers();
 
         grfx.endFrame();
     }

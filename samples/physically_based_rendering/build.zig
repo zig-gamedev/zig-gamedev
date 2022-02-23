@@ -9,6 +9,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_tracy", options.tracy != null);
+    exe_options.addOption(bool, "enable_d2d", false);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const exe = b.addExecutable(

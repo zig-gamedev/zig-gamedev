@@ -42,7 +42,7 @@ pub const FrameStats = struct {
         };
     }
 
-    pub fn update(self: *FrameStats) void {
+    pub fn update(self: *FrameStats, window: w.HWND, window_name: []const u8) void {
         const now_ns = self.timer.read();
         self.time = @intToFloat(f64, now_ns) / std.time.ns_per_s;
         self.delta_time = @intToFloat(f32, now_ns - self.previous_time_ns) / std.time.ns_per_s;
@@ -59,6 +59,16 @@ pub const FrameStats = struct {
             self.frame_counter = 0;
         }
         self.frame_counter += 1;
+
+        {
+            var buffer = [_]u8{0} ** 128;
+            const text = std.fmt.bufPrint(
+                buffer[0..],
+                "FPS: {d:.1}  CPU time: {d:.3} ms | {s}",
+                .{ self.fps, self.average_cpu_time, window_name },
+            ) catch unreachable;
+            _ = w.SetWindowTextA(window, @ptrCast([*:0]const u8, text.ptr));
+        }
     }
 };
 
