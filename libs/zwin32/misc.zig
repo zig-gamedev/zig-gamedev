@@ -239,16 +239,10 @@ pub const VK_F12 = 0x7B;
 pub const IM_VK_KEYPAD_ENTER = VK_RETURN + 256;
 pub const KF_EXTENDED = 0x0100;
 
-pub const S_FALSE = @bitCast(HRESULT, @as(c_ulong, 0x00000001));
 pub const E_FILE_NOT_FOUND = @bitCast(HRESULT, @as(c_ulong, 0x80070002));
 
-pub const HResultError = error{
-    E_FAIL,
-    E_INVALIDARG,
-    E_OUTOFMEMORY,
-    E_NOTIMPL,
+pub const MiscError = error{
     E_FILE_NOT_FOUND,
-    E_NOINTERFACE,
     S_FALSE,
 };
 
