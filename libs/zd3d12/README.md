@@ -9,7 +9,7 @@
 * Fast image loading using WIC (Windows Imaging Component)
 * Helpers for uploading data to the GPU
 * Fast mipmap generator running on the GPU
-* Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering
+* Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 
 Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intro
 
@@ -38,6 +38,7 @@ pub fn build(b: *std.build.Builder) void {
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_tracy", tracy != null);
+    exe_options.addOption(bool, "enable_d2d", false);
 
     exe.addOptions("build_options", exe_options);
 
