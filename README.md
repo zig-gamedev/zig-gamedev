@@ -85,7 +85,7 @@ All sample applications support the following build options:
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
 * `-Dtracy=[path/to/tracy/source]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
 
-Examples:
+#### Examples
 
 `zig build -Denable-dx-debug=true -Drelease-fast=true`
 
@@ -93,7 +93,9 @@ Examples:
 
 `zig build simple_raytracer`
 
-`zig build simple_raytracer_run`
+`zig build simple_raytracer-run`
+
+`zig build simple_raytracer-dxc`
 
 ## Requirements
 
