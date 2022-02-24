@@ -19,8 +19,6 @@ pub const xapo = @import("xapo.zig");
 /// Disclaimer: You should probably precompile your shaders with dxc and not use d3dcompiler!
 pub const d3dcompiler = @import("d3dcompiler.zig");
 
-const winerror = @import("winerror.zig");
-
 const HRESULT = base.HRESULT;
 const S_OK = base.S_OK;
 
@@ -30,7 +28,7 @@ const assert = std.debug.assert;
 
 // TODO: Handle more error codes from https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
 pub const HResultError =
-    winerror.Error || dxgi.Error || d3d12.Error || d3d11.Error || wasapi.Error || dwrite.Error || xapo.Error || base.MiscError;
+    base.Error || dxgi.Error || d3d12.Error || d3d11.Error || wasapi.Error || dwrite.Error || xapo.Error || base.MiscError;
 
 pub fn hrPanic(err: HResultError) noreturn {
     panic(
@@ -55,15 +53,15 @@ pub fn hrToError(hr: HRESULT) HResultError {
     assert(hr != S_OK);
     return switch (hr) {
         //
-        base.E_UNEXPECTED => winerror.Error.UNEXPECTED,
-        base.E_NOTIMPL => winerror.Error.NOTIMPL,
-        base.E_OUTOFMEMORY => winerror.Error.OUTOFMEMORY,
-        base.E_INVALIDARG => winerror.Error.INVALIDARG,
-        base.E_POINTER => winerror.Error.POINTER,
-        base.E_HANDLE => winerror.Error.HANDLE,
-        base.E_ABORT => winerror.Error.ABORT,
-        base.E_FAIL => winerror.Error.FAIL,
-        base.E_ACCESSDENIED => winerror.Error.ACCESSDENIED,
+        base.E_UNEXPECTED => base.Error.UNEXPECTED,
+        base.E_NOTIMPL => base.Error.NOTIMPL,
+        base.E_OUTOFMEMORY => base.Error.OUTOFMEMORY,
+        base.E_INVALIDARG => base.Error.INVALIDARG,
+        base.E_POINTER => base.Error.POINTER,
+        base.E_HANDLE => base.Error.HANDLE,
+        base.E_ABORT => base.Error.ABORT,
+        base.E_FAIL => base.Error.FAIL,
+        base.E_ACCESSDENIED => base.Error.ACCESSDENIED,
         //
         dxgi.ERROR_ACCESS_DENIED => dxgi.Error.ACCESS_DENIED,
         dxgi.ERROR_ACCESS_LOST => dxgi.Error.ACCESS_LOST,
@@ -133,22 +131,22 @@ pub fn hrToError(hr: HRESULT) HResultError {
         // treat unknown error return codes as E_FAIL
         else => blk: {
             std.debug.print("HRESULT error 0x{x} not recognized treating as E_FAIL.", .{@bitCast(c_ulong, hr)});
-            break :blk winerror.Error.FAIL;
+            break :blk base.Error.FAIL;
         },
     };
 }
 
 pub fn errorToHRESULT(err: HResultError) HRESULT {
     return switch (err) {
-        winerror.Error.UNEXPECTED => base.E_UNEXPECTED,
-        winerror.Error.NOTIMPL => base.E_NOTIMPL,
-        winerror.Error.OUTOFMEMORY => base.E_OUTOFMEMORY,
-        winerror.Error.INVALIDARG => base.E_INVALIDARG,
-        winerror.Error.POINTER => base.E_POINTER,
-        winerror.Error.HANDLE => base.E_HANDLE,
-        winerror.Error.ABORT => base.E_ABORT,
-        winerror.Error.FAIL => base.E_FAIL,
-        winerror.Error.ACCESSDENIED => base.E_ACCESSDENIED,
+        base.Error.UNEXPECTED => base.E_UNEXPECTED,
+        base.Error.NOTIMPL => base.E_NOTIMPL,
+        base.Error.OUTOFMEMORY => base.E_OUTOFMEMORY,
+        base.Error.INVALIDARG => base.E_INVALIDARG,
+        base.Error.POINTER => base.E_POINTER,
+        base.Error.HANDLE => base.E_HANDLE,
+        base.Error.ABORT => base.E_ABORT,
+        base.Error.FAIL => base.E_FAIL,
+        base.Error.ACCESSDENIED => base.E_ACCESSDENIED,
         //
         dxgi.Error.ACCESS_DENIED => dxgi.ERROR_ACCESS_DENIED,
         dxgi.Error.ACCESS_LOST => dxgi.ERROR_ACCESS_LOST,
