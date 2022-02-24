@@ -210,7 +210,7 @@ pub fn errorToHRESULT(err: HResultError) HRESULT {
         //
         xapo.Error.E_FORMAT_UNSUPPORTED => xapo.E_FORMAT_UNSUPPORTED,
         //
-        base.MiscError.FILE_NOT_FOUND => base.E_FILE_NOT_FOUND,
+        base.MiscError.E_FILE_NOT_FOUND => base.E_FILE_NOT_FOUND,
         base.MiscError.S_FALSE => base.S_FALSE,
     };
 }
