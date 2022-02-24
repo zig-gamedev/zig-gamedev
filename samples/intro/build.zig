@@ -102,7 +102,7 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
 
 fn buildShaders(b: *std.build.Builder, comptime intro_index_str: []const u8) *std.build.Step {
     const dxc_step = b.step(
-        "intro" ++ intro_index_str ++ "_dxc",
+        "intro" ++ intro_index_str ++ "-dxc",
         "Build shaders for 'intro" ++ intro_index_str ++ "' demo",
     );
 

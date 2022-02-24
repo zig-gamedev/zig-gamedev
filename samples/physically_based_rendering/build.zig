@@ -83,7 +83,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
-    const dxc_step = b.step("physically_based_rendering_dxc", "Build shaders for 'physically_based_rendering' demo");
+    const dxc_step = b.step("physically_based_rendering-dxc", "Build shaders for 'physically_based_rendering' demo");
 
     var dxc_command = makeDxcCmd(
         "../../libs/common/src/hlsl/common.hlsl",

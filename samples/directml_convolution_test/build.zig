@@ -105,7 +105,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
-    const dxc_step = b.step("directml_convolution_test_dxc", "Build shaders for 'directml_convolution_test' demo");
+    const dxc_step = b.step("directml_convolution_test-dxc", "Build shaders for 'directml_convolution_test' demo");
 
     var dxc_command = makeDxcCmd(
         "../../libs/common/src/hlsl/common.hlsl",

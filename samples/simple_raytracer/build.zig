@@ -91,7 +91,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
-    const dxc_step = b.step("simple_raytracer_dxc", "Build shaders for 'simple_raytracer' demo");
+    const dxc_step = b.step("simple_raytracer-dxc", "Build shaders for 'simple_raytracer' demo");
 
     var dxc_command = makeDxcCmd(
         "../../libs/common/src/hlsl/common.hlsl",

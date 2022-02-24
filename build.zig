@@ -73,7 +73,7 @@ fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime na
     const install = b.step(name, "Build '" ++ name ++ "' demo");
     install.dependOn(&b.addInstallArtifact(exe).step);
 
-    const run_step = b.step(name ++ "_run", "Run '" ++ name ++ "' demo");
+    const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
     const run_cmd = exe.run();
     run_cmd.step.dependOn(install);
     run_step.dependOn(&run_cmd.step);

@@ -80,7 +80,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
-    const dxc_step = b.step("triangle_dxc", "Build shaders for 'triangle' demo");
+    const dxc_step = b.step("triangle-dxc", "Build shaders for 'triangle' demo");
 
     var dxc_command = makeDxcCmd(
         "../../libs/common/src/hlsl/common.hlsl",

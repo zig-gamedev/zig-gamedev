@@ -80,7 +80,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
-    const dxc_step = b.step("audio_playback_test_dxc", "Build shaders for 'audio_playback_test' demo");
+    const dxc_step = b.step("audio_playback_test-dxc", "Build shaders for 'audio_playback_test' demo");
 
     var dxc_command = makeDxcCmd(
         "../../libs/common/src/hlsl/common.hlsl",

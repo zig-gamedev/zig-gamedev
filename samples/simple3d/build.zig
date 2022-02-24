@@ -80,7 +80,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
-    const dxc_step = b.step("simple3d_dxc", "Build shaders for 'simple3d' demo");
+    const dxc_step = b.step("simple3d-dxc", "Build shaders for 'simple3d' demo");
 
     var dxc_command = makeDxcCmd(
         "../../libs/common/src/hlsl/common.hlsl",
