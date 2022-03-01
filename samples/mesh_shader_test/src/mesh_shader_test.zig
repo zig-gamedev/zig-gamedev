@@ -47,7 +47,7 @@ const Mesh = struct {
     num_meshlets: u32,
 };
 
-const Meshlet = packed struct {
+const Meshlet = struct {
     data_offset: u32 align(8),
     num_vertices: u16,
     num_triangles: u16,

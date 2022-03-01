@@ -3506,7 +3506,7 @@ pub const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC = e
 };
 
 pub const RAYTRACING_INSTANCE_DESC = packed struct {
-    Transform: [3][4]FLOAT align(16),
+    Transform: [3][4]FLOAT,
     InstanceID: u24,
     InstanceMask: u8,
     InstanceContributionToHitGroupIndex: u24,
@@ -3515,7 +3515,7 @@ pub const RAYTRACING_INSTANCE_DESC = packed struct {
 };
 comptime {
     std.debug.assert(@sizeOf(RAYTRACING_INSTANCE_DESC) == 64);
-    std.debug.assert(@alignOf(RAYTRACING_INSTANCE_DESC) == 16);
+    //std.debug.assert(@alignOf(RAYTRACING_INSTANCE_DESC) == 16);
 }
 
 pub const RAYTRACING_GEOMETRY_DESC = extern struct {
