@@ -71,13 +71,13 @@ const DemoState = struct {
     } = .{},
 };
 
-fn init(gpa_allocator: std.mem.Allocator) !DemoState {
+fn init(allocator: std.mem.Allocator) !DemoState {
     // Create application window and initialize dear imgui library.
-    const window = try common.initWindow(gpa_allocator, window_name, window_width, window_height);
+    const window = try common.initWindow(allocator, window_name, window_width, window_height);
 
     // Create temporary memory allocator for use during initialization. We pass this allocator to all
     // subsystems that need memory and then free everyting with a single deallocation.
-    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
@@ -166,7 +166,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
 
     const physics_world = try zbt.World.init(.{});
     const physics_shapes = blk: {
-        var shapes = std.ArrayList(*const zbt.Shape).init(gpa_allocator);
+        var shapes = std.ArrayList(*const zbt.Shape).init(allocator);
 
         const box_shape = try zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 });
         try shapes.append(box_shape.asShape());
@@ -266,7 +266,7 @@ fn init(gpa_allocator: std.mem.Allocator) !DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
+fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     {
         var i = demo.physics.world.getNumBodies() - 1;
@@ -285,7 +285,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.gctx.releasePipeline(demo.simple_pso);
     demo.guir.deinit(&demo.gctx);
     demo.gctx.deinit();
-    common.deinitWindow(gpa_allocator);
+    common.deinitWindow(allocator);
     demo.* = undefined;
 }
 
@@ -487,15 +487,18 @@ pub fn main() !void {
     defer common.deinit();
 
     // Create main memory allocator for our application.
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
-        const leaked = gpa_allocator_state.deinit();
+        const leaked = gpa.deinit();
         std.debug.assert(leaked == false);
     }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    const allocator = gpa.allocator();
 
-    var demo = try init(gpa_allocator);
-    defer deinit(&demo, gpa_allocator);
+    zbt.init();
+    defer zbt.deinit();
+
+    var demo = try init(allocator);
+    defer deinit(&demo, allocator);
 
     while (true) {
         var message = std.mem.zeroes(w.user32.MSG);
