@@ -1,9 +1,67 @@
+const builtin = @import("builtin");
 const std = @import("std");
+const Mutex = std.Thread.Mutex;
 const expect = std.testing.expect;
+
+extern fn cbtAlignedAllocSetCustomAligned(
+    alloc: fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque,
+    free: fn (memblock: ?*anyopaque) callconv(.C) void,
+) void;
+
+var gpa = std.heap.GeneralPurposeAllocator(.{ .thread_safe = false }){};
+var allocator: ?std.mem.Allocator = null;
+var allocations: ?std.AutoHashMap(usize, usize) = null;
+var mutex: Mutex = .{};
+
+export fn allocFunc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
+    mutex.lock();
+    defer mutex.unlock();
+
+    var memblock = allocator.?.allocBytes(
+        @intCast(u29, alignment),
+        size,
+        0,
+        @returnAddress(),
+    ) catch return null;
+    allocations.?.put(@ptrToInt(memblock.ptr), size) catch unreachable;
+    return memblock.ptr;
+}
+
+export fn freeFunc(memblock: ?*anyopaque) callconv(.C) void {
+    if (memblock != null) {
+        mutex.lock();
+        defer mutex.unlock();
+
+        const size = allocations.?.fetchRemove(@ptrToInt(memblock.?)).?.value;
+        const slice = @ptrCast([*]u8, memblock.?)[0..size];
+        allocator.?.free(slice);
+    }
+}
+
+pub fn init() void {
+    std.debug.assert(allocator == null and allocations == null);
+    allocator = gpa.allocator();
+    allocations = std.AutoHashMap(usize, usize).init(allocator.?);
+    allocations.?.ensureTotalCapacity(1024) catch unreachable;
+    cbtAlignedAllocSetCustomAligned(allocFunc, freeFunc);
+}
+
+pub fn deinit() void {
+    std.debug.assert(allocations.?.count() == 0);
+    allocations.?.deinit();
+    allocations = null;
+    allocator = null;
+    if (gpa.deinit()) {
+        if (builtin.mode == .Debug)
+            @panic("zbullet: Memory leak detected.");
+    }
+    gpa = .{};
+}
 
 pub const World = opaque {
     pub fn init(params: struct {}) Error!*const World {
         _ = params;
+        std.debug.assert(allocator != null and allocations != null);
         const ptr = cbtWorldCreate();
         if (ptr == null) {
             return error.OutOfMemory;
@@ -438,6 +496,8 @@ pub const Body = opaque {
 
 test "zbullet.world.gravity" {
     const zm = @import("zmath");
+    init();
+    defer deinit();
 
     const world = try World.init(.{});
     defer world.deinit();
@@ -457,6 +517,8 @@ test "zbullet.world.gravity" {
 }
 
 test "zbullet.shape.box" {
+    init();
+    defer deinit();
     {
         const box = try BoxShape.init(&.{ 4.0, 4.0, 4.0 });
         defer box.deinit();
@@ -501,6 +563,8 @@ test "zbullet.shape.box" {
 }
 
 test "zbullet.shape.sphere" {
+    init();
+    defer deinit();
     {
         const sphere = try SphereShape.init(3.0);
         defer sphere.deinit();
@@ -543,6 +607,8 @@ test "zbullet.shape.sphere" {
 }
 
 test "zbullet.shape.capsule" {
+    init();
+    defer deinit();
     const capsule = try CapsuleShape.init(2.0, 1.0, .y);
     defer capsule.deinit();
     try expect(capsule.isCreated());
@@ -555,6 +621,8 @@ test "zbullet.shape.capsule" {
 }
 
 test "zbullet.shape.cylinder" {
+    init();
+    defer deinit();
     const cylinder = try CylinderShape.init(&.{ 1.0, 2.0, 3.0 }, .y);
     defer cylinder.deinit();
     try expect(cylinder.isCreated());
@@ -576,6 +644,8 @@ test "zbullet.shape.cylinder" {
 
 test "zbullet.shape.compound" {
     const zm = @import("zmath");
+    init();
+    defer deinit();
 
     const cshape = try CompoundShape.init(.{});
     defer cshape.deinit();
@@ -617,6 +687,8 @@ test "zbullet.shape.compound" {
 }
 
 test "zbullet.shape.trimesh" {
+    init();
+    defer deinit();
     const trimesh = try TriangleMeshShape.init();
     const triangles = [3]u32{ 0, 1, 2 };
     const vertices = [_]f32{0.0} ** 9;
@@ -636,6 +708,8 @@ test "zbullet.shape.trimesh" {
 }
 
 test "zbullet.body.basic" {
+    init();
+    defer deinit();
     {
         const world = try World.init(.{});
         defer world.deinit();
