@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+
 #define CBT_DECLARE_HANDLE(name) typedef struct name##__ { int unused; } *name
 
 // cbtRayTestClosest
@@ -80,6 +82,14 @@ CBT_DECLARE_HANDLE(CbtWorldHandle);
 CBT_DECLARE_HANDLE(CbtShapeHandle);
 CBT_DECLARE_HANDLE(CbtBodyHandle);
 CBT_DECLARE_HANDLE(CbtConstraintHandle);
+
+typedef void* (CbtAlignedAllocFunc)(size_t size, int alignment);
+typedef void (CbtAlignedFreeFunc)(void* memblock);
+typedef void* (CbtAllocFunc)(size_t size);
+typedef void (CbtFreeFunc)(void* memblock);
+
+void cbtAlignedAllocSetCustom(CbtAllocFunc alloc, CbtFreeFunc free);
+void cbtAlignedAllocSetCustomAligned(CbtAlignedAllocFunc alloc, CbtAlignedFreeFunc free);
 
 typedef void (*CbtDrawLine1Callback)(
     const CbtVector3 p0,

@@ -5,6 +5,14 @@
 #include "btBulletDynamicsCommon.h"
 #include "BulletDynamics/ConstraintSolver/btContactConstraint.h"
 
+void cbtAlignedAllocSetCustom(CbtAllocFunc alloc, CbtFreeFunc free) {
+    btAlignedAllocSetCustom(alloc, free);
+}
+
+void cbtAlignedAllocSetCustomAligned(CbtAlignedAllocFunc alloc, CbtAlignedFreeFunc free) {
+    btAlignedAllocSetCustomAligned(alloc, free);
+}
+
 struct CbtDebugDraw : public btIDebugDraw {
     CbtDebugDrawCallbacks callbacks = {};
     int debug_mode = 0;
