@@ -288,6 +288,18 @@ pub fn deinitWindow(allocator: std.mem.Allocator) void {
     c.igDestroyContext(null);
 }
 
+pub fn handleWindowEvents() bool {
+    var message = std.mem.zeroes(w.user32.MSG);
+    while (w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch false) {
+        _ = w.user32.translateMessage(&message);
+        _ = w.user32.dispatchMessageA(&message);
+        if (message.message == w.user32.WM_QUIT) {
+            return false;
+        }
+    }
+    return true;
+}
+
 fn isVkKeyDown(vk: c_int) bool {
     return (@bitCast(u16, w.GetKeyState(vk)) & 0x8000) != 0;
 }

@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const Options = @import("../../build.zig").Options;
-const content_dir = "opengl_test_content/";
+const content_dir = "minimal/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const exe_options = b.addOptions();
@@ -12,7 +12,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe_options.addOption(bool, "enable_d2d", false);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
-    const exe = b.addExecutable("opengl_test", thisDir() ++ "/src/opengl_test.zig");
+    const exe = b.addExecutable("minimal", thisDir() ++ "/src/minimal.zig");
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
     exe.addOptions("build_options", exe_options);
@@ -30,12 +30,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         .path = .{ .path = thisDir() ++ "/../../libs/zwin32/zwin32.zig" },
     };
     exe.addPackage(zwin32_pkg);
-
-    const zmath_pkg = std.build.Pkg{
-        .name = "zmath",
-        .path = .{ .path = thisDir() ++ "/../../libs/zmath/zmath.zig" },
-    };
-    exe.addPackage(zmath_pkg);
 
     const ztracy_pkg = std.build.Pkg{
         .name = "ztracy",
@@ -69,9 +63,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     };
     exe.addPackage(common_pkg);
     @import("../../libs/common/build.zig").link(b, exe);
-
-    exe.addPackagePath("glfw", thisDir() ++ "/../../libs/mach-glfw/src/main.zig");
-    @import("../../libs/mach-glfw/build.zig").link(b, exe, .{ .opengl = false, .vulkan = false, .metal = false });
 
     return exe;
 }

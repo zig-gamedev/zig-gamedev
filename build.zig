@@ -15,7 +15,7 @@ const textured_quad = @import("samples/textured_quad/build.zig");
 const triangle = @import("samples/triangle/build.zig");
 const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const intro = @import("samples/intro/build.zig");
-const opengl_test = @import("samples/opengl_test/build.zig");
+const minimal = @import("samples/minimal/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
@@ -70,8 +70,8 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, intro.build(b, options, 4), "intro4");
         installDemo(b, intro.build(b, options, 5), "intro5");
         installDemo(b, intro.build(b, options, 6), "intro6");
+        installDemo(b, minimal.build(b, options), "minimal");
     }
-    installDemo(b, opengl_test.build(b, options), "opengl_test");
 }
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
