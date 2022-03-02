@@ -49,7 +49,7 @@ pub fn build(b: *std.build.Builder) void {
         .tracy = tracy,
     };
 
-    if (builtin.os.tag == .windows) {
+    if (options.target.isWindows()) {
         installDemo(b, audio_experiments.build(b, options), "audio_experiments");
         installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
         installDemo(b, bindless.build(b, options), "bindless");
@@ -71,6 +71,8 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, intro.build(b, options, 5), "intro5");
         installDemo(b, intro.build(b, options, 6), "intro6");
         installDemo(b, minimal.build(b, options), "minimal");
+    } else {
+        std.log.info("This project requires Windows.", .{});
     }
 }
 
