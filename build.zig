@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 
 const audio_experiments = @import("samples/audio_experiments/build.zig");
@@ -14,6 +15,7 @@ const textured_quad = @import("samples/textured_quad/build.zig");
 const triangle = @import("samples/triangle/build.zig");
 const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const intro = @import("samples/intro/build.zig");
+const opengl_test = @import("samples/opengl_test/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
@@ -47,26 +49,29 @@ pub fn build(b: *std.build.Builder) void {
         .tracy = tracy,
     };
 
-    installDemo(b, audio_experiments.build(b, options), "audio_experiments");
-    installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
-    installDemo(b, bindless.build(b, options), "bindless");
-    installDemo(b, bullet_physics_test.build(b, options), "bullet_physics_test");
-    installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-    installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
-    installDemo(b, physically_based_rendering.build(b, options), "physically_based_rendering");
-    installDemo(b, rasterization.build(b, options), "rasterization");
-    installDemo(b, simple3d.build(b, options), "simple3d");
-    installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
-    installDemo(b, textured_quad.build(b, options), "textured_quad");
-    installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-    installDemo(b, triangle.build(b, options), "triangle");
-    installDemo(b, intro.build(b, options, 0), "intro0");
-    installDemo(b, intro.build(b, options, 1), "intro1");
-    installDemo(b, intro.build(b, options, 2), "intro2");
-    installDemo(b, intro.build(b, options, 3), "intro3");
-    installDemo(b, intro.build(b, options, 4), "intro4");
-    installDemo(b, intro.build(b, options, 5), "intro5");
-    installDemo(b, intro.build(b, options, 6), "intro6");
+    if (builtin.os.tag == .windows) {
+        installDemo(b, audio_experiments.build(b, options), "audio_experiments");
+        installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
+        installDemo(b, bindless.build(b, options), "bindless");
+        installDemo(b, bullet_physics_test.build(b, options), "bullet_physics_test");
+        installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
+        installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
+        installDemo(b, physically_based_rendering.build(b, options), "physically_based_rendering");
+        installDemo(b, rasterization.build(b, options), "rasterization");
+        installDemo(b, simple3d.build(b, options), "simple3d");
+        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
+        installDemo(b, textured_quad.build(b, options), "textured_quad");
+        installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
+        installDemo(b, triangle.build(b, options), "triangle");
+        installDemo(b, intro.build(b, options, 0), "intro0");
+        installDemo(b, intro.build(b, options, 1), "intro1");
+        installDemo(b, intro.build(b, options, 2), "intro2");
+        installDemo(b, intro.build(b, options, 3), "intro3");
+        installDemo(b, intro.build(b, options, 4), "intro4");
+        installDemo(b, intro.build(b, options, 5), "intro5");
+        installDemo(b, intro.build(b, options, 6), "intro6");
+    }
+    installDemo(b, opengl_test.build(b, options), "opengl_test");
 }
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
