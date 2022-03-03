@@ -14,7 +14,6 @@ const c = common.c;
 const zm = @import("zmath");
 const zbt = @import("zbullet");
 
-// We need to export below symbols for DirectX 12 Agility SDK.
 pub export const D3D12SDKVersion: u32 = 4;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
@@ -24,8 +23,6 @@ const window_name = "zig-gamedev: intro 6";
 const window_width = 1920;
 const window_height = 1080;
 
-// By convention, we use 'Pso_' prefix for structures that are also defined in HLSL code
-// (see 'DrawConst' and 'FrameConst' in intro3.hlsl).
 const Pso_DrawConst = struct {
     object_to_world: [16]f32,
 };
@@ -72,16 +69,12 @@ const DemoState = struct {
 };
 
 fn init(allocator: std.mem.Allocator) !DemoState {
-    // Create application window and initialize dear imgui library.
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
 
-    // Create temporary memory allocator for use during initialization. We pass this allocator to all
-    // subsystems that need memory and then free everyting with a single deallocation.
     var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    // Create DirectX 12 context.
     var gctx = zd3d12.GraphicsContext.init(window);
 
     // Enable vsync.
@@ -125,7 +118,6 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const mesh_num_indices = @intCast(u32, mesh_indices.items.len);
     const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);
 
-    // Create vertex buffer and return a *handle* to the underlying Direct3D12 resource.
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
@@ -134,7 +126,6 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    // Create index buffer and return a *handle* to the underlying Direct3D12 resource.
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
@@ -143,7 +134,6 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    // Create depth texture resource.
     const depth_texture = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
@@ -156,10 +146,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
-    // Create depth texture 'view' - a descriptor which can be send to Direct3D12 API.
     const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
     gctx.device.CreateDepthStencilView(
-        gctx.getResource(depth_texture), // Get the D3D12 resource from a handle.
+        gctx.getResource(depth_texture),
         null,
         depth_texture_dsv,
     );
@@ -191,24 +180,18 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         break :blk shapes;
     };
 
-    // Open D3D12 command list, setup descriptor heap, etc. After this call we can upload resources to the GPU,
-    // draw 3D graphics etc.
     gctx.beginFrame();
 
-    // Create and upload graphics resources for dear imgui renderer.
     var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     // Fill vertex buffer with vertex data.
     {
-        // Allocate memory from upload heap and fill it with vertex data.
         const verts = gctx.allocateUploadBufferRegion(Vertex, mesh_num_vertices);
         for (mesh_positions.items) |_, i| {
             verts.cpu_slice[i].position = mesh_positions.items[i];
             verts.cpu_slice[i].normal = mesh_normals.items[i];
         }
 
-        // Copy vertex data from upload heap to vertex buffer resource that resides in high-performance memory
-        // on the GPU.
         gctx.cmdlist.CopyBufferRegion(
             gctx.getResource(vertex_buffer),
             0,
@@ -220,14 +203,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Fill index buffer with index data.
     {
-        // Allocate memory from upload heap and fill it with index data.
         const indices = gctx.allocateUploadBufferRegion(u32, mesh_num_indices);
         for (mesh_indices.items) |_, i| {
             indices.cpu_slice[i] = mesh_indices.items[i];
         }
 
-        // Copy index data from upload heap to index buffer resource that resides in high-performance memory
-        // on the GPU.
         gctx.cmdlist.CopyBufferRegion(
             gctx.getResource(index_buffer),
             0,
@@ -237,15 +217,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         );
     }
 
-    // Transition vertex and index buffers from 'copy dest' state to the state appropriate for rendering.
     gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
     gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
     gctx.flushResourceBarriers();
 
-    // This will send command list to the GPU, call 'Present' and do some other bookkeeping.
     gctx.endFrame();
-
-    // Wait for the GPU to finish all commands.
     gctx.finishGpuCommands();
 
     return DemoState{
@@ -290,13 +266,11 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
 }
 
 fn update(demo: *DemoState) void {
-    // Update frame counter and fps stats.
     demo.frame_stats.update(demo.gctx.window, window_name);
     const dt = demo.frame_stats.delta_time;
 
     _ = demo.physics.world.stepSimulation(dt, 1, 1.0 / 60.0);
 
-    // After this call we can define our widgets.
     common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
@@ -355,7 +329,6 @@ fn update(demo: *DemoState) void {
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
-        // Load camera position from memory to SIMD register ('3' means that we want to load three components).
         var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
         if (w.GetAsyncKeyState('W') < 0) {
@@ -369,7 +342,6 @@ fn update(demo: *DemoState) void {
             cpos -= right;
         }
 
-        // Copy updated position from SIMD register to memory.
         zm.store(demo.camera.position[0..], cpos, 3);
     }
 }
@@ -390,10 +362,8 @@ fn draw(demo: *DemoState) void {
     );
     const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
 
-    // Begin DirectX 12 rendering.
     gctx.beginFrame();
 
-    // Get current back buffer resource and transition it to 'render target' state.
     const back_buffer = gctx.getBackBuffer();
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
     gctx.flushResourceBarriers();
@@ -429,18 +399,10 @@ fn draw(demo: *DemoState) void {
 
     // Upload per-frame constant data (camera xform).
     {
-        // Allocate memory for one instance of Pso_FrameConst structure.
         const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
-
-        // Copy 'cam_world_to_clip' matrix to upload memory. We need to transpose it because
-        // HLSL uses column-major matrices by default (zmath uses row-major matrices).
         zm.storeMat(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
 
-        // Set GPU handle of our allocated memory region so that it is visible to the shader.
-        gctx.cmdlist.SetGraphicsRootConstantBufferView(
-            1, // Slot index 1 in Root Signature (CBV(b1), see intro3.hlsl).
-            mem.gpu_base,
-        );
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
     }
 
     // For each object, upload per-draw constant data (object to world xform) and draw.
@@ -454,64 +416,39 @@ fn draw(demo: *DemoState) void {
             break :blk zm.loadMat43(transform[0..]);
         };
 
-        // Allocate memory for one instance of Pso_DrawConst structure.
         const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
-
-        // Copy 'object_to_world' matrix to upload memory. We need to transpose it because
-        // HLSL uses column-major matrices by default (zmath uses row-major matrices).
         zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
 
-        // Set GPU handle of our allocated memory region so that it is visible to the shader.
-        gctx.cmdlist.SetGraphicsRootConstantBufferView(
-            0, // Slot index 0 in Root Signature (CBV(b0), see intro3.hlsl).
-            mem.gpu_base,
-        );
-
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
     }
 
-    // Draw dear imgui widgets.
     demo.guir.draw(gctx);
 
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
     gctx.flushResourceBarriers();
 
-    // Call 'Present' and prepare for the next frame.
     gctx.endFrame();
 }
 
 pub fn main() !void {
-    // Initialize some low-level Windows stuff (DPI awarness, COM), check Windows version and also check
-    // if DirectX 12 Agility SDK is supported.
     common.init();
     defer common.deinit();
 
-    // Create main memory allocator for our application.
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa.deinit();
-        std.debug.assert(leaked == false);
-    }
+    defer _ = gpa.deinit();
+
     const allocator = gpa.allocator();
 
+    // Init zbullet library.
     zbt.init();
     defer zbt.deinit();
 
     var demo = try init(allocator);
     defer deinit(&demo, allocator);
 
-    while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch false;
-        if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            update(&demo);
-            draw(&demo);
-        }
+    while (common.handleWindowEvents()) {
+        update(&demo);
+        draw(&demo);
     }
 }
