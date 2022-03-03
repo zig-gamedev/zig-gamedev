@@ -82,7 +82,12 @@ pub const World = opaque {
     pub const getGravity = cbtWorldGetGravity;
     extern fn cbtWorldGetGravity(world: *const World, gravity: *[3]f32) void;
 
-    pub const stepSimulation = cbtWorldStepSimulation;
+    pub fn stepSimulation(world: *const World, time_step: f32, params: struct {
+        max_sub_steps: u32 = 1,
+        fixed_time_step: f32 = 1.0 / 60.0,
+    }) u32 {
+        return cbtWorldStepSimulation(world, time_step, params.max_sub_steps, params.fixed_time_step);
+    }
     extern fn cbtWorldStepSimulation(
         world: *const World,
         time_step: f32,

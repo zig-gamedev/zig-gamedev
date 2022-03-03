@@ -1,9 +1,8 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
@@ -31,7 +30,7 @@ const Pso_FrameConst = struct {
     world_to_clip: [16]f32,
 };
 
-const Vertex = struct {
+const Pso_Vertex = struct {
     position: [3]f32,
     normal: [3]f32,
 };
@@ -121,7 +120,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(mesh_num_vertices * @sizeOf(Vertex)),
+        &d3d12.RESOURCE_DESC.initBuffer(mesh_num_vertices * @sizeOf(Pso_Vertex)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -186,7 +185,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Fill vertex buffer with vertex data.
     {
-        const verts = gctx.allocateUploadBufferRegion(Vertex, mesh_num_vertices);
+        const verts = gctx.allocateUploadBufferRegion(Pso_Vertex, mesh_num_vertices);
         for (mesh_positions.items) |_, i| {
             verts.cpu_slice[i].position = mesh_positions.items[i];
             verts.cpu_slice[i].normal = mesh_normals.items[i];
@@ -269,7 +268,7 @@ fn update(demo: *DemoState) void {
     demo.frame_stats.update(demo.gctx.window, window_name);
     const dt = demo.frame_stats.delta_time;
 
-    _ = demo.physics.world.stepSimulation(dt, 1, 1.0 / 60.0);
+    _ = demo.physics.world.stepSimulation(dt, .{});
 
     common.newImGuiFrame(dt);
 
@@ -301,14 +300,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: w.POINT = undefined;
-        _ = w.GetCursorPos(&pos);
+        var pos: w32.POINT = undefined;
+        _ = w32.GetCursorPos(&pos);
         const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
         const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+        if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
@@ -331,14 +330,14 @@ fn update(demo: *DemoState) void {
 
         var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
-        if (w.GetAsyncKeyState('W') < 0) {
+        if (w32.GetAsyncKeyState('W') < 0) {
             cpos += forward;
-        } else if (w.GetAsyncKeyState('S') < 0) {
+        } else if (w32.GetAsyncKeyState('S') < 0) {
             cpos -= forward;
         }
-        if (w.GetAsyncKeyState('D') < 0) {
+        if (w32.GetAsyncKeyState('D') < 0) {
             cpos += right;
-        } else if (w.GetAsyncKeyState('A') < 0) {
+        } else if (w32.GetAsyncKeyState('A') < 0) {
             cpos -= right;
         }
 
@@ -371,7 +370,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        w.TRUE,
+        w32.TRUE,
         &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearRenderTargetView(
@@ -386,8 +385,8 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
         .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
-        .SizeInBytes = demo.mesh_num_vertices * @sizeOf(Vertex),
-        .StrideInBytes = @sizeOf(Vertex),
+        .SizeInBytes = demo.mesh_num_vertices * @sizeOf(Pso_Vertex),
+        .StrideInBytes = @sizeOf(Pso_Vertex),
     }});
     gctx.cmdlist.IASetIndexBuffer(&.{
         .BufferLocation = gctx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
