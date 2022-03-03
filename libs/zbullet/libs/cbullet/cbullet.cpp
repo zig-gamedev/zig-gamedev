@@ -74,6 +74,8 @@ struct CbtDebugDraw : public btIDebugDraw {
     }
 };
 
+static CbtDebugDraw s_debug_drawer;
+
 CbtWorldHandle cbtWorldCreate(void) {
     auto collision_config = new btDefaultCollisionConfiguration();
     auto dispatcher = new btCollisionDispatcher(collision_config);
@@ -87,9 +89,9 @@ void cbtWorldDestroy(CbtWorldHandle world_handle) {
     assert(world_handle);
     auto world = (btDiscreteDynamicsWorld*)world_handle;
 
-    if (world->getDebugDrawer()) {
-        delete world->getDebugDrawer();
-    }
+    //if (world->getDebugDrawer()) {
+    //    delete world->getDebugDrawer();
+    //}
 
     auto dispatcher = (btCollisionDispatcher*)world->getDispatcher();
     delete dispatcher->getCollisionConfiguration();
@@ -219,10 +221,10 @@ void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCa
     assert(world_handle && callbacks);
     auto world = (btDiscreteDynamicsWorld*)world_handle;
 
+#if 0
     auto debug = (CbtDebugDraw*)world->getDebugDrawer();
     if (debug == nullptr) {
         debug = new CbtDebugDraw();
-#if 0
         debug->setDebugMode(
             btIDebugDraw::DBG_DrawWireframe |
             //btIDebugDraw::DBG_DrawFrames |
@@ -231,11 +233,17 @@ void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCa
             //btIDebugDraw::DBG_DrawConstraints |
             0
         );
-#endif
         world->setDebugDrawer(debug);
     }
+#endif
 
-    debug->callbacks = *callbacks;
+    if (callbacks != nullptr) {
+        s_debug_drawer.callbacks = *callbacks;
+        world->setDebugDrawer(&s_debug_drawer);
+    } else {
+        s_debug_drawer.callbacks = {};
+        world->setDebugDrawer(nullptr);
+    }
 }
 
 void cbtWorldDebugDraw(CbtWorldHandle world_handle) {
