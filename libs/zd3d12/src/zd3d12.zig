@@ -27,11 +27,6 @@ const TransitionResourceBarrier = struct {
     resource: ResourceHandle,
 };
 
-const ResourceWithCounter = struct {
-    resource: ResourceHandle,
-    counter: u32,
-};
-
 const num_swapbuffers = 4;
 
 const D2dState = struct {
@@ -74,7 +69,6 @@ pub const GraphicsContext = struct {
     },
     transition_resource_barriers: []TransitionResourceBarrier,
     num_transition_resource_barriers: u32,
-    resources_to_release: std.ArrayList(ResourceWithCounter),
     viewport_width: u32,
     viewport_height: u32,
     frame_fence: *d3d12.IFence,
@@ -451,7 +445,7 @@ pub const GraphicsContext = struct {
                 var swapbuffers11: [num_swapbuffers]*d3d11.IResource = undefined;
                 for (swapbuffers11) |_, buffer_index| {
                     hrPanicOnFail(device11on12.CreateWrappedResource(
-                        @ptrCast(*w.IUnknown, resource_pool.getResource(swapchain_buffers[buffer_index]).raw.?),
+                        @ptrCast(*w.IUnknown, resource_pool.lookup(swapchain_buffers[buffer_index]).raw.?),
                         &d3d11on12.RESOURCE_FLAGS{
                             .BindFlags = d3d11.BIND_RENDER_TARGET,
                             .MiscFlags = 0,
@@ -584,10 +578,6 @@ pub const GraphicsContext = struct {
                 TransitionResourceBarrier,
                 max_num_buffered_resource_barriers,
             ) catch unreachable,
-            .resources_to_release = std.ArrayList(ResourceWithCounter).initCapacity(
-                std.heap.page_allocator,
-                64,
-            ) catch unreachable,
             .num_transition_resource_barriers = 0,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
@@ -605,7 +595,6 @@ pub const GraphicsContext = struct {
     pub fn deinit(gr: *GraphicsContext) void {
         gr.finishGpuCommands();
         std.heap.page_allocator.free(gr.transition_resource_barriers);
-        gr.resources_to_release.deinit();
         w.CloseHandle(gr.frame_fence_event);
         assert(gr.pipeline.map.count() == 0);
         gr.pipeline.map.deinit(std.heap.page_allocator);
@@ -689,15 +678,6 @@ pub const GraphicsContext = struct {
         // Reset current non-persistent heap (+1 because heap 0 is persistent)
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index + 1].size = 0;
         gr.upload_memory_heaps[gr.frame_index].size = 0;
-
-        for (gr.resources_to_release.items) |*res, i| {
-            assert(res.counter > 0);
-            res.counter -= 1;
-            if (res.counter == 0) {
-                _ = gr.releaseResource(res.resource);
-                _ = gr.resources_to_release.swapRemove(i);
-            }
-        }
     }
 
     pub fn beginDraw2d(gr: *GraphicsContext) void {
@@ -769,7 +749,7 @@ pub const GraphicsContext = struct {
 
         // Above calls will set back buffer state to PRESENT. We need to reflect this change
         // in 'resource_pool' by manually setting state.
-        gr.resource_pool.editResource(gr.swapchain_buffers[gr.back_buffer_index]).*.state =
+        gr.resource_pool.lookup(gr.swapchain_buffers[gr.back_buffer_index]).*.state =
             d3d12.RESOURCE_STATE_PRESENT;
     }
 
@@ -799,13 +779,6 @@ pub const GraphicsContext = struct {
         gr.cbv_srv_uav_gpu_heaps[gr.frame_index + 1].size = 0;
         gr.upload_memory_heaps[gr.frame_index].size = 0;
 
-        if (gr.resources_to_release.items.len > 0) {
-            for (gr.resources_to_release.items) |res| {
-                _ = gr.releaseResource(res.resource);
-            }
-            gr.resources_to_release.resize(0) catch unreachable;
-        }
-
         if (was_cmdlist_opened) {
             beginFrame(gr);
         }
@@ -824,12 +797,12 @@ pub const GraphicsContext = struct {
     }
 
     pub inline fn getResource(gr: GraphicsContext, handle: ResourceHandle) *d3d12.IResource {
-        return gr.resource_pool.getResource(handle).raw.?;
+        return gr.resource_pool.lookup(handle).raw.?;
     }
 
     pub fn getResourceSize(gr: GraphicsContext, handle: ResourceHandle) u64 {
-        if (gr.resource_pool.isResourceValid(handle)) {
-            const resource = gr.resource_pool.getResource(handle);
+        if (gr.resource_pool.isValid(handle)) {
+            const resource = gr.resource_pool.lookup(handle);
             assert(resource.desc.Dimension == .BUFFER);
             return resource.desc.Width;
         }
@@ -837,7 +810,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn getResourceDesc(gr: GraphicsContext, handle: ResourceHandle) d3d12.RESOURCE_DESC {
-        const resource = gr.resource_pool.getResource(handle);
+        const resource = gr.resource_pool.lookup(handle);
         return resource.desc;
     }
 
@@ -865,9 +838,9 @@ pub const GraphicsContext = struct {
         return gr.resource_pool.addResource(resource, initial_state);
     }
 
-    pub fn releaseResource(gr: *GraphicsContext, handle: ResourceHandle) u32 {
-        if (gr.resource_pool.isResourceValid(handle)) {
-            var resource = gr.resource_pool.editResource(handle);
+    pub fn releaseResource(gr: GraphicsContext, handle: ResourceHandle) u32 {
+        if (gr.resource_pool.isValid(handle)) {
+            var resource = gr.resource_pool.lookup(handle);
             const refcount = resource.raw.?.Release();
             if (refcount == 0) {
                 resource.* = .{
@@ -881,13 +854,6 @@ pub const GraphicsContext = struct {
         return 0;
     }
 
-    pub fn releaseResourceDeferred(gr: *GraphicsContext, handle: ResourceHandle) void {
-        // TODO(mziulek): Does this make sense? Is there non-growing container?
-        assert(gr.resources_to_release.items.len < gr.resources_to_release.capacity);
-
-        gr.resources_to_release.appendAssumeCapacity(.{ .resource = handle, .counter = max_num_buffered_frames + 2 });
-    }
-
     pub fn flushResourceBarriers(gr: *GraphicsContext) void {
         if (gr.num_transition_resource_barriers > 0) {
             var d3d12_barriers: [max_num_buffered_resource_barriers]d3d12.RESOURCE_BARRIER = undefined;
@@ -897,7 +863,7 @@ pub const GraphicsContext = struct {
             while (barrier_index < gr.num_transition_resource_barriers) : (barrier_index += 1) {
                 const barrier = &gr.transition_resource_barriers[barrier_index];
 
-                if (gr.resource_pool.isResourceValid(barrier.resource)) {
+                if (gr.resource_pool.isValid(barrier.resource)) {
                     d3d12_barriers[num_valid_barriers] = .{
                         .Type = .TRANSITION,
                         .Flags = d3d12.RESOURCE_BARRIER_FLAG_NONE,
@@ -925,7 +891,7 @@ pub const GraphicsContext = struct {
         handle: ResourceHandle,
         state_after: d3d12.RESOURCE_STATES,
     ) void {
-        var resource = gr.resource_pool.editResource(handle);
+        var resource = gr.resource_pool.lookup(handle);
 
         if (state_after != resource.state) {
             if (gr.num_transition_resource_barriers >= gr.transition_resource_barriers.len) {
@@ -1247,7 +1213,7 @@ pub const GraphicsContext = struct {
 
     pub fn setCurrentPipeline(gr: *GraphicsContext, pipeline_handle: PipelineHandle) void {
         assert(gr.is_cmdlist_opened);
-        const pipeline = gr.pipeline.pool.getPipeline(pipeline_handle);
+        const pipeline = gr.pipeline.pool.lookup(pipeline_handle);
 
         if (pipeline_handle.index == gr.pipeline.current.index and
             pipeline_handle.generation == gr.pipeline.current.generation)
@@ -1265,17 +1231,17 @@ pub const GraphicsContext = struct {
     }
 
     pub fn incrementPipelineRefcount(gr: GraphicsContext, handle: PipelineHandle) u32 {
-        const pipeline = gr.pipeline.pool.getPipeline(handle);
+        const pipeline = gr.pipeline.pool.lookup(handle);
         const refcount = pipeline.pso.?.AddRef();
         _ = pipeline.rs.?.AddRef();
         return refcount;
     }
 
     pub fn releasePipeline(gr: *GraphicsContext, handle: PipelineHandle) u32 {
-        if (!gr.pipeline.pool.isPipelineValid(handle)) {
+        if (!gr.pipeline.pool.isValid(handle)) {
             return 0;
         }
-        var pipeline = gr.pipeline.pool.editPipeline(handle);
+        var pipeline = gr.pipeline.pool.lookup(handle);
 
         const refcount = pipeline.pso.?.Release();
         _ = pipeline.rs.?.Release();
@@ -1422,7 +1388,7 @@ pub const GraphicsContext = struct {
         row_pitch: u32,
     ) void {
         assert(gr.is_cmdlist_opened);
-        const resource = gr.resource_pool.getResource(texture);
+        const resource = gr.resource_pool.lookup(texture);
         assert(resource.desc.Dimension == .TEXTURE2D);
 
         var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
@@ -1833,7 +1799,7 @@ const ResourcePool = struct {
     }
 
     fn addResource(
-        pool: *ResourcePool,
+        pool: ResourcePool,
         raw: *d3d12.IResource,
         state: d3d12.RESOURCE_STATES,
     ) ResourceHandle {
@@ -1854,7 +1820,7 @@ const ResourcePool = struct {
         };
     }
 
-    fn isResourceValid(pool: ResourcePool, handle: ResourceHandle) bool {
+    fn isValid(pool: ResourcePool, handle: ResourceHandle) bool {
         return handle.index > 0 and
             handle.index <= max_num_resources and
             handle.generation > 0 and
@@ -1862,13 +1828,8 @@ const ResourcePool = struct {
             pool.resources[handle.index].raw != null;
     }
 
-    fn editResource(pool: *ResourcePool, handle: ResourceHandle) *Resource {
-        assert(pool.isResourceValid(handle));
-        return &pool.resources[handle.index];
-    }
-
-    fn getResource(pool: ResourcePool, handle: ResourceHandle) *const Resource {
-        assert(pool.isResourceValid(handle));
+    fn lookup(pool: ResourcePool, handle: ResourceHandle) *Resource {
+        assert(pool.isValid(handle));
         return &pool.resources[handle.index];
     }
 };
@@ -1930,7 +1891,7 @@ const PipelinePool = struct {
     }
 
     fn addPipeline(
-        pool: *PipelinePool,
+        pool: PipelinePool,
         pso: *d3d12.IPipelineState,
         rs: *d3d12.IRootSignature,
         ptype: PipelineType,
@@ -1952,7 +1913,7 @@ const PipelinePool = struct {
         };
     }
 
-    fn isPipelineValid(pool: PipelinePool, handle: PipelineHandle) bool {
+    fn isValid(pool: PipelinePool, handle: PipelineHandle) bool {
         return handle.index > 0 and
             handle.index <= max_num_pipelines and
             handle.generation > 0 and
@@ -1962,13 +1923,8 @@ const PipelinePool = struct {
             pool.pipelines[handle.index].ptype != null;
     }
 
-    fn editPipeline(pool: PipelinePool, handle: PipelineHandle) *Pipeline {
-        assert(pool.isPipelineValid(handle));
-        return &pool.pipelines[handle.index];
-    }
-
-    fn getPipeline(pool: PipelinePool, handle: PipelineHandle) *const Pipeline {
-        assert(pool.isPipelineValid(handle));
+    fn lookup(pool: PipelinePool, handle: PipelineHandle) *Pipeline {
+        assert(pool.isValid(handle));
         return &pool.pipelines[handle.index];
     }
 };

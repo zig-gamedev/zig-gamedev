@@ -727,6 +727,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         grfx.flushResourceBarriers();
     }
 
+    var temp_resources = std.ArrayList(zd3d12.ResourceHandle).init(arena_allocator);
+
     // Create "Bottom Level Acceleration Structure" (blas).
     const blas_buffer = if (dxr_is_supported) blk_blas: {
         var geometry_descs = std.ArrayList(d3d12.RAYTRACING_GEOMETRY_DESC).initCapacity(
@@ -784,7 +786,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
             null,
         ) catch |err| hrPanic(err);
-        grfx.releaseResourceDeferred(blas_scratch_buffer);
+        temp_resources.append(blas_scratch_buffer) catch unreachable;
 
         const blas_buffer = grfx.createCommittedResource(
             .DEFAULT,
@@ -846,7 +848,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err);
-        grfx.releaseResourceDeferred(instance_buffer);
+        temp_resources.append(instance_buffer) catch unreachable;
 
         // Upload instance desc to instance buffer.
         {
@@ -889,7 +891,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             d3d12.RESOURCE_STATE_UNORDERED_ACCESS,
             null,
         ) catch |err| hrPanic(err);
-        grfx.releaseResourceDeferred(tlas_scratch_buffer);
+        temp_resources.append(tlas_scratch_buffer) catch unreachable;
 
         const tlas_buffer = grfx.createCommittedResource(
             .DEFAULT,
@@ -935,6 +937,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     _ = zpix.endCapture();
 
     mipgen_rgba8.deinit(&grfx);
+    for (temp_resources.items) |resource| {
+        _ = grfx.releaseResource(resource);
+    }
 
     return .{
         .grfx = grfx,
