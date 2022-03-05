@@ -597,7 +597,7 @@ test "zbullet.world.gravity" {
 
     world.setGravity(&.{ 0.0, -10.0, 0.0 });
 
-    const num_substeps = world.stepSimulation(1.0 / 60.0, 1, 1.0 / 60.0);
+    const num_substeps = world.stepSimulation(1.0 / 60.0, .{});
     try expect(num_substeps == 1);
 
     var gravity: [3]f32 = undefined;

@@ -76,13 +76,31 @@ struct WorldData {
 };
 
 CbtWorldHandle cbtWorldCreate(void) {
-    auto collision_config = new btDefaultCollisionConfiguration();
-    auto dispatcher = new btCollisionDispatcher(collision_config);
-    auto broadphase = new btDbvtBroadphase();
-    auto solver = new btSequentialImpulseConstraintSolver();
+    // TODO: Check for oom errors.
 
-    auto world_data = new WorldData();
-    world_data->world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_config);
+    auto collision_config = (btDefaultCollisionConfiguration*)btAlignedAlloc(
+        sizeof(btDefaultCollisionConfiguration),
+        16
+    );
+    new (collision_config) btDefaultCollisionConfiguration();
+
+    auto dispatcher = (btCollisionDispatcher*)btAlignedAlloc(sizeof(btCollisionDispatcher), 16);
+    new (dispatcher) btCollisionDispatcher(collision_config);
+
+    auto broadphase = (btDbvtBroadphase*)btAlignedAlloc(sizeof(btDbvtBroadphase), 16);
+    new (broadphase) btDbvtBroadphase();
+
+    auto solver = (btSequentialImpulseConstraintSolver*)btAlignedAlloc(
+        sizeof(btSequentialImpulseConstraintSolver),
+        16
+    );
+    new (solver) btSequentialImpulseConstraintSolver();
+
+    auto world_data = (WorldData*)btAlignedAlloc(sizeof(WorldData), 16);
+    new (world_data) WorldData();
+
+    world_data->world = (btDiscreteDynamicsWorld*)btAlignedAlloc(sizeof(btDiscreteDynamicsWorld), 16);
+    new (world_data->world) btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_config);
 
     return (CbtWorldHandle)world_data;
 }
@@ -93,15 +111,28 @@ void cbtWorldDestroy(CbtWorldHandle world_handle) {
     auto world = world_data->world;
 
     auto dispatcher = (btCollisionDispatcher*)world->getDispatcher();
-    delete dispatcher->getCollisionConfiguration();
-    delete dispatcher;
+    auto collision_config = (btDefaultCollisionConfiguration*)dispatcher->getCollisionConfiguration();
+    auto broadphase = (btDbvtBroadphase*)world->getBroadphase();
+    auto solver = (btSequentialImpulseConstraintSolver*)world->getConstraintSolver();
 
-    delete world->getBroadphase();
-    delete world->getConstraintSolver();
-    delete world;
+    dispatcher->~btCollisionDispatcher();
+    collision_config->~btDefaultCollisionConfiguration();
+    broadphase->~btDbvtBroadphase();
+    solver->~btSequentialImpulseConstraintSolver();
+    world->~btDiscreteDynamicsWorld();
 
-    delete world_data->debug;
-    delete world_data;
+    btAlignedFree(dispatcher);
+    btAlignedFree(collision_config);
+    btAlignedFree(broadphase);
+    btAlignedFree(solver);
+    btAlignedFree(world);
+
+    if (world_data->debug) {
+        world_data->debug->~DebugDraw();
+        btAlignedFree(world_data->debug);
+    }
+    world_data->~WorldData();
+    btAlignedFree(world_data);
 }
 
 void cbtWorldSetGravity(CbtWorldHandle world_handle, const CbtVector3 gravity) {
@@ -224,7 +255,8 @@ void cbtWorldDebugSetDrawer(CbtWorldHandle world_handle, const CbtDebugDraw* dra
     auto world_data = (WorldData*)world_handle;
 
     if (world_data->debug == nullptr) {
-        world_data->debug = new DebugDraw();
+        world_data->debug = (DebugDraw*)btAlignedAlloc(sizeof(DebugDraw), 16);
+        new (world_data->debug) DebugDraw();
     }
     world_data->debug->drawer = *drawer;
     world_data->debug->setDebugMode(CBT_DBGMODE_NO_DEBUG);
