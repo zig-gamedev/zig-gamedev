@@ -111,10 +111,35 @@ pub const World = opaque {
     extern fn cbtWorldDebugSetDrawer(world: *const World, debug: *const DebugDraw) void;
 
     pub const setDebugMode = cbtWorldDebugSetMode;
-    extern fn cbtWorldDebugSetMode(world: *const World, mode: i32) void;
+    extern fn cbtWorldDebugSetMode(world: *const World, mode: DebugMode) void;
 
-    pub const drawDebug = cbtWorldDebugDraw;
-    extern fn cbtWorldDebugDraw(world: *const World) void;
+    pub const debugDrawAll = cbtWorldDebugDrawAll;
+    extern fn cbtWorldDebugDrawAll(world: *const World) void;
+
+    pub const debugDrawLine1 = cbtWorldDebugDrawLine1;
+    extern fn cbtWorldDebugDrawLine1(
+        world: *const World,
+        p0: *const [3]f32,
+        p1: *const [3]f32,
+        color: *const [3]f32,
+    ) void;
+
+    pub const debugDrawLine2 = cbtWorldDebugDrawLine2;
+    extern fn cbtWorldDebugDrawLine2(
+        world: *const World,
+        p0: *const [3]f32,
+        p1: *const [3]f32,
+        color0: *const [3]f32,
+        color1: *const [3]f32,
+    ) void;
+
+    pub const debugDrawSphere = cbtWorldDebugDrawSphere;
+    extern fn cbtWorldDebugDrawSphere(
+        world: *const World,
+        position: *const [3]f32,
+        radius: f32,
+        color: *const [3]f32,
+    ) void;
 };
 
 pub const ShapeType = enum(c_int) {
@@ -508,10 +533,11 @@ pub const Body = opaque {
     extern fn cbtBodyGetGraphicsWorldTransform(body: *const Body, transform: *[12]f32) void;
 };
 
-pub const dbgmode_disabled: i32 = -1;
-pub const dbgmode_no_debug: i32 = 0;
-pub const dbgmode_draw_wireframe: i32 = 1;
-pub const dbgmode_draw_aabb: i32 = 2;
+pub const DebugMode = i32;
+pub const dbgmode_disabled: DebugMode = -1;
+pub const dbgmode_no_debug: DebugMode = 0;
+pub const dbgmode_draw_wireframe: DebugMode = 1;
+pub const dbgmode_draw_aabb: DebugMode = 2;
 
 pub const DebugDraw = extern struct {
     drawLine1: fn (?*anyopaque, *const [3]f32, *const [3]f32, *const [3]f32) callconv(.C) void,

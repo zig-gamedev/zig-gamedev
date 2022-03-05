@@ -175,7 +175,7 @@ bool cbtRayTestClosest(
 
 void cbtWorldDebugSetDrawer(CbtWorldHandle world_handle, const CbtDebugDraw* drawer);
 void cbtWorldDebugSetMode(CbtWorldHandle world_handle, int mode);
-void cbtWorldDebugDraw(CbtWorldHandle world_handle);
+void cbtWorldDebugDrawAll(CbtWorldHandle world_handle);
 void cbtWorldDebugDrawLine1(
     CbtWorldHandle world_handle,
     const CbtVector3 p0,

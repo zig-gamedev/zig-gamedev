@@ -1864,7 +1864,7 @@ fn draw(demo: *DemoState) void {
         }
     }
 
-    zb.cbtWorldDebugDraw(demo.physics_world);
+    zb.cbtWorldDebugDrawAll(demo.physics_world);
     if (demo.physics_debug.lines.items.len > 0) {
         grfx.setCurrentPipeline(demo.physics_debug_pso);
         grfx.cmdlist.IASetPrimitiveTopology(.LINELIST);

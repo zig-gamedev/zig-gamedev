@@ -278,7 +278,7 @@ void cbtWorldDebugSetMode(CbtWorldHandle world_handle, int mode) {
     }
 }
 
-void cbtWorldDebugDraw(CbtWorldHandle world_handle) {
+void cbtWorldDebugDrawAll(CbtWorldHandle world_handle) {
     assert(world_handle);
     auto world = ((WorldData*)world_handle)->world;
     world->debugDrawWorld();
