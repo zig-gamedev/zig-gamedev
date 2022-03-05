@@ -153,6 +153,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     );
 
     const physics_world = try zbt.World.init(.{});
+
+    //var physics_debug = allocator.create(zbt.DebugDrawer) catch unreachable;
+    //physics_debug.* = zbt.DebugDrawer.init(allocator);
+
+    //physics_world.setDebugDrawer(&physics_debug.getDebugDraw());
+    //physics_world.setDebugMode(zbt.dbgmode_draw_wireframe);
+
     const physics_shapes = blk: {
         var shapes = std.ArrayList(*const zbt.Shape).init(allocator);
 
@@ -423,6 +430,8 @@ fn draw(demo: *DemoState) void {
     }
 
     demo.guir.draw(gctx);
+
+    //demo.physics.world.drawDebug();
 
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
     gctx.flushResourceBarriers();

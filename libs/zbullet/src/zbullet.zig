@@ -106,6 +106,15 @@ pub const World = opaque {
 
     pub const getNumBodies = cbtWorldGetNumBodies;
     extern fn cbtWorldGetNumBodies(world: *const World) i32;
+
+    pub const setDebugDrawer = cbtWorldDebugSetDrawer;
+    extern fn cbtWorldDebugSetDrawer(world: *const World, debug: *const DebugDraw) void;
+
+    pub const setDebugMode = cbtWorldDebugSetMode;
+    extern fn cbtWorldDebugSetMode(world: *const World, mode: i32) void;
+
+    pub const drawDebug = cbtWorldDebugDraw;
+    extern fn cbtWorldDebugDraw(world: *const World) void;
 };
 
 pub const ShapeType = enum(c_int) {
@@ -497,6 +506,85 @@ pub const Body = opaque {
 
     pub const getGraphicsWorldTransform = cbtBodyGetGraphicsWorldTransform;
     extern fn cbtBodyGetGraphicsWorldTransform(body: *const Body, transform: *[12]f32) void;
+};
+
+pub const dbgmode_disabled: i32 = -1;
+pub const dbgmode_no_debug: i32 = 0;
+pub const dbgmode_draw_wireframe: i32 = 1;
+pub const dbgmode_draw_aabb: i32 = 2;
+
+pub const DebugDraw = extern struct {
+    drawLine1: fn (?*anyopaque, *const [3]f32, *const [3]f32, *const [3]f32) callconv(.C) void,
+    drawLine2: ?fn (?*anyopaque, *const [3]f32, *const [3]f32, *const [3]f32, *const [3]f32) callconv(.C) void,
+    drawContactPoint: ?fn (?*anyopaque, *const [3]f32, *const [3]f32, f32, *const [3]f32) callconv(.C) void,
+    context: ?*anyopaque,
+};
+
+pub const DebugDrawer = struct {
+    lines: std.ArrayList(Vertex),
+
+    pub const Vertex = struct {
+        position: [3]f32,
+        color: u32,
+    };
+
+    pub fn init(alloc: std.mem.Allocator) DebugDrawer {
+        return .{ .lines = std.ArrayList(Vertex).init(alloc) };
+    }
+
+    pub fn deinit(debug: *DebugDrawer) void {
+        debug.lines.deinit();
+        debug.* = undefined;
+    }
+
+    pub fn getDebugDraw(debug: *DebugDrawer) DebugDraw {
+        return .{
+            .drawLine1 = drawLine1,
+            .drawLine2 = drawLine2,
+            .drawContactPoint = null,
+            .context = debug,
+        };
+    }
+
+    fn drawLine1(
+        context: ?*anyopaque,
+        p0: *const [3]f32,
+        p1: *const [3]f32,
+        color: *const [3]f32,
+    ) callconv(.C) void {
+        const debug = @ptrCast(*DebugDrawer, @alignCast(@alignOf(DebugDrawer), context.?));
+
+        const r = @floatToInt(u32, color[0] * 255.0);
+        const g = @floatToInt(u32, color[1] * 255.0) << 8;
+        const b = @floatToInt(u32, color[2] * 255.0) << 16;
+        const rgb = r | g | b;
+
+        debug.lines.append(.{ .position = .{ p0[0], p0[1], p0[2] }, .color = rgb }) catch unreachable;
+        debug.lines.append(.{ .position = .{ p1[0], p1[1], p1[2] }, .color = rgb }) catch unreachable;
+    }
+
+    fn drawLine2(
+        context: ?*anyopaque,
+        p0: *const [3]f32,
+        p1: *const [3]f32,
+        color0: *const [3]f32,
+        color1: *const [3]f32,
+    ) callconv(.C) void {
+        const debug = @ptrCast(*DebugDrawer, @alignCast(@alignOf(DebugDrawer), context.?));
+
+        const r0 = @floatToInt(u32, color0[0] * 255.0);
+        const g0 = @floatToInt(u32, color0[1] * 255.0) << 8;
+        const b0 = @floatToInt(u32, color0[2] * 255.0) << 16;
+        const rgb0 = r0 | g0 | b0;
+
+        const r1 = @floatToInt(u32, color1[0] * 255.0);
+        const g1 = @floatToInt(u32, color1[1] * 255.0) << 8;
+        const b1 = @floatToInt(u32, color1[2] * 255.0) << 16;
+        const rgb1 = r1 | g1 | b1;
+
+        debug.lines.append(.{ .position = .{ p0[0], p0[1], p0[2] }, .color = rgb0 }) catch unreachable;
+        debug.lines.append(.{ .position = .{ p1[0], p1[1], p1[2] }, .color = rgb1 }) catch unreachable;
+    }
 };
 
 test "zbullet.world.gravity" {

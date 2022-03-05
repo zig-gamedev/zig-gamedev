@@ -13,17 +13,16 @@ void cbtAlignedAllocSetCustomAligned(CbtAlignedAllocFunc alloc, CbtAlignedFreeFu
     btAlignedAllocSetCustomAligned(alloc, free);
 }
 
-struct CbtDebugDraw : public btIDebugDraw {
-    CbtDebugDrawCallbacks callbacks = {};
-    int debug_mode = 0;
+struct DebugDraw : public btIDebugDraw {
+    CbtDebugDraw drawer = {};
+    int mode = 0;
 
     virtual void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) override {
-        if (callbacks.drawLine1) {
-            const CbtVector3 p0 = { from.x(), from.y(), from.z() };
-            const CbtVector3 p1 = { to.x(), to.y(), to.z() };
-            const CbtVector3 c = { color.x(), color.y(), color.z() };
-            callbacks.drawLine1(p0, p1, c, callbacks.user_data);
-        }
+        assert(drawer.drawLine1);
+        const CbtVector3 p0 = { from.x(), from.y(), from.z() };
+        const CbtVector3 p1 = { to.x(), to.y(), to.z() };
+        const CbtVector3 c = { color.x(), color.y(), color.z() };
+        drawer.drawLine1(drawer.context, p0, p1, c);
     }
 
     virtual void drawLine(
@@ -32,12 +31,14 @@ struct CbtDebugDraw : public btIDebugDraw {
         const btVector3& color0,
         const btVector3& color1
     ) override {
-        if (callbacks.drawLine2) {
+        if (drawer.drawLine2) {
             const CbtVector3 p0 = { from.x(), from.y(), from.z() };
             const CbtVector3 p1 = { to.x(), to.y(), to.z() };
             const CbtVector3 c0 = { color0.x(), color0.y(), color0.z() };
             const CbtVector3 c1 = { color1.x(), color1.y(), color1.z() };
-            callbacks.drawLine2(p0, p1, c0, c1, callbacks.user_data);
+            drawer.drawLine2(drawer.context, p0, p1, c0, c1);
+        } else {
+            btIDebugDraw::drawLine(from, to, color0, color1);
         }
     }
 
@@ -48,50 +49,48 @@ struct CbtDebugDraw : public btIDebugDraw {
         int life_time,
         const btVector3& color
     ) override {
-        if (callbacks.drawContactPoint) {
+        if (drawer.drawContactPoint) {
             const CbtVector3 p = { point.x(), point.y(), point.z() };
             const CbtVector3 n = { normal.x(), normal.y(), normal.z() };
             const CbtVector3 c = { color.x(), color.y(), color.z() };
-            callbacks.drawContactPoint(p, n, distance, life_time, c, callbacks.user_data);
+            drawer.drawContactPoint(drawer.context, p, n, distance, life_time, c);
         }
     }
 
-    virtual void reportErrorWarning(const char* warning_string) override {
-        if (callbacks.reportErrorWarning && warning_string) {
-            callbacks.reportErrorWarning(warning_string, callbacks.user_data);
-        }
-    }
+    virtual void reportErrorWarning(const char*) override {}
 
-    virtual void draw3dText(const btVector3&, const char*) override {
-    }
+    virtual void draw3dText(const btVector3&, const char*) override {}
 
-    virtual void setDebugMode(int in_debug_mode) override {
-        debug_mode = in_debug_mode;
+    virtual void setDebugMode(int in_mode) override {
+        mode = in_mode;
     }
 
     virtual int getDebugMode() const override {
-        return debug_mode;
+        return mode;
     }
 };
 
-static CbtDebugDraw s_debug_drawer;
+struct WorldData {
+    btDiscreteDynamicsWorld* world;
+    DebugDraw* debug = nullptr;
+};
 
 CbtWorldHandle cbtWorldCreate(void) {
     auto collision_config = new btDefaultCollisionConfiguration();
     auto dispatcher = new btCollisionDispatcher(collision_config);
     auto broadphase = new btDbvtBroadphase();
     auto solver = new btSequentialImpulseConstraintSolver();
-    auto world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_config);
-    return (CbtWorldHandle)world;
+
+    auto world_data = new WorldData();
+    world_data->world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_config);
+
+    return (CbtWorldHandle)world_data;
 }
 
 void cbtWorldDestroy(CbtWorldHandle world_handle) {
     assert(world_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
-
-    //if (world->getDebugDrawer()) {
-    //    delete world->getDebugDrawer();
-    //}
+    auto world_data = (WorldData*)world_handle;
+    auto world = world_data->world;
 
     auto dispatcher = (btCollisionDispatcher*)world->getDispatcher();
     delete dispatcher->getCollisionConfiguration();
@@ -100,17 +99,20 @@ void cbtWorldDestroy(CbtWorldHandle world_handle) {
     delete world->getBroadphase();
     delete world->getConstraintSolver();
     delete world;
+
+    delete world_data->debug;
+    delete world_data;
 }
 
 void cbtWorldSetGravity(CbtWorldHandle world_handle, const CbtVector3 gravity) {
     assert(world_handle && gravity);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     world->setGravity(btVector3(gravity[0], gravity[1], gravity[2]));
 }
 
 void cbtWorldGetGravity(CbtWorldHandle world_handle, CbtVector3 gravity) {
     assert(world_handle && gravity);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     auto tmp = world->getGravity();
     gravity[0] = tmp.x();
     gravity[1] = tmp.y();
@@ -119,14 +121,14 @@ void cbtWorldGetGravity(CbtWorldHandle world_handle, CbtVector3 gravity) {
 
 int cbtWorldStepSimulation(CbtWorldHandle world_handle, float time_step, int max_sub_steps, float fixed_time_step) {
     assert(world_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     return world->stepSimulation(time_step, max_sub_steps, fixed_time_step);
 }
 
 void cbtWorldAddBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
     assert(world_handle);
     assert(body_handle && cbtBodyIsCreated(body_handle));
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     auto body = (btRigidBody*)body_handle;
     world->addRigidBody(body);
 }
@@ -138,7 +140,7 @@ void cbtWorldAddConstraint(
 ) {
     assert(world_handle);
     assert(con_handle && cbtConIsCreated(con_handle));
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     auto con = (btTypedConstraint*)con_handle;
     world->addConstraint(con, disable_collision_between_linked_bodies);
 }
@@ -146,39 +148,39 @@ void cbtWorldAddConstraint(
 void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) {
     assert(world_handle);
     assert(body_handle && cbtBodyIsCreated(body_handle));
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     auto body = (btRigidBody*)body_handle;
     world->removeRigidBody(body);
 }
 
 void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle con_handle) {
     assert(world_handle && con_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     auto con = (btTypedConstraint*)con_handle;
     world->removeConstraint(con);
 }
 
 int cbtWorldGetNumBodies(CbtWorldHandle world_handle) {
     assert(world_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     return (int)world->getCollisionObjectArray().size();
 }
 
 int cbtWorldGetNumConstraints(CbtWorldHandle world_handle) {
     assert(world_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     return world->getNumConstraints();
 }
 
 CbtBodyHandle cbtWorldGetBody(CbtWorldHandle world_handle, int body_index) {
     assert(world_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     return (CbtBodyHandle)world->getCollisionObjectArray()[body_index];
 }
 
 CbtConstraintHandle cbtWorldGetConstraint(CbtWorldHandle world_handle, int con_index) {
     assert(world_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     return (CbtConstraintHandle)world->getConstraint(con_index);
 }
 
@@ -192,7 +194,7 @@ bool cbtRayTestClosest(
     CbtRayCastResult* result
 ) {
     assert(world_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
 
     const btVector3 from(ray_from_world[0], ray_from_world[1], ray_from_world[2]);
     const btVector3 to(ray_to_world[0], ray_to_world[1], ray_to_world[2]);
@@ -217,38 +219,36 @@ bool cbtRayTestClosest(
     return closest.m_collisionObject != 0;
 }
 
-void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCallbacks* callbacks) {
-    assert(world_handle && callbacks);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+void cbtWorldDebugSetDrawer(CbtWorldHandle world_handle, const CbtDebugDraw* drawer) {
+    assert(world_handle && drawer);
+    auto world_data = (WorldData*)world_handle;
 
-#if 0
-    auto debug = (CbtDebugDraw*)world->getDebugDrawer();
-    if (debug == nullptr) {
-        debug = new CbtDebugDraw();
-        debug->setDebugMode(
-            btIDebugDraw::DBG_DrawWireframe |
-            //btIDebugDraw::DBG_DrawFrames |
-            //btIDebugDraw::DBG_DrawContactPoints |
-            //btIDebugDraw::DBG_DrawNormals |
-            //btIDebugDraw::DBG_DrawConstraints |
-            0
-        );
-        world->setDebugDrawer(debug);
+    if (world_data->debug == nullptr) {
+        world_data->debug = new DebugDraw();
     }
-#endif
+    world_data->debug->drawer = *drawer;
+    world_data->debug->setDebugMode(CBT_DBGMODE_NO_DEBUG);
 
-    if (callbacks != nullptr) {
-        s_debug_drawer.callbacks = *callbacks;
-        world->setDebugDrawer(&s_debug_drawer);
+    world_data->world->setDebugDrawer(world_data->debug);
+}
+
+void cbtWorldDebugSetMode(CbtWorldHandle world_handle, int mode) {
+    assert(world_handle);
+    auto world_data = (WorldData*)world_handle;
+    assert(world_data->debug != nullptr);
+
+    if (mode == CBT_DBGMODE_DISABLED) {
+        world_data->debug->setDebugMode(CBT_DBGMODE_NO_DEBUG);
+        world_data->world->setDebugDrawer(nullptr);
     } else {
-        s_debug_drawer.callbacks = {};
-        world->setDebugDrawer(nullptr);
+        world_data->debug->setDebugMode(mode);
+        world_data->world->setDebugDrawer(world_data->debug);
     }
 }
 
 void cbtWorldDebugDraw(CbtWorldHandle world_handle) {
     assert(world_handle);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     world->debugDrawWorld();
 }
 
@@ -260,7 +260,7 @@ void cbtWorldDebugDrawLine1(
 ) {
     assert(world_handle);
     assert(p0 && p1 && color);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     assert(world->getDebugDrawer());
 
     world->getDebugDrawer()->drawLine(
@@ -279,7 +279,7 @@ void cbtWorldDebugDrawLine2(
 ) {
     assert(world_handle);
     assert(p0 && p1 && color0 && color1);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     assert(world->getDebugDrawer());
 
     world->getDebugDrawer()->drawLine(
@@ -298,7 +298,7 @@ void cbtWorldDebugDrawSphere(
 ) {
     assert(world_handle);
     assert(position && radius > 0.0 && color);
-    auto world = (btDiscreteDynamicsWorld*)world_handle;
+    auto world = ((WorldData*)world_handle)->world;
     assert(world->getDebugDrawer());
 
     world->getDebugDrawer()->drawSphere(

@@ -354,6 +354,7 @@ const PsoSimpleEntity_FrameConst = extern struct {
 
 const PhysicsDebug = struct {
     lines: std.ArrayList(PsoPhysicsDebug_Vertex),
+    mode: i32 = 0,
 
     fn init(alloc: std.mem.Allocator) PhysicsDebug {
         return .{ .lines = std.ArrayList(PsoPhysicsDebug_Vertex).init(alloc) };
@@ -364,79 +365,44 @@ const PhysicsDebug = struct {
         debug.* = undefined;
     }
 
-    fn drawLine1(debug: *PhysicsDebug, p0: Vec3, p1: Vec3, color: Vec3) void {
-        const r = @floatToInt(u32, color.c[0] * 255.0);
-        const g = @floatToInt(u32, color.c[1] * 255.0) << 8;
-        const b = @floatToInt(u32, color.c[2] * 255.0) << 16;
+    fn drawLine1(
+        context: ?*anyopaque,
+        p0: [*c]const f32,
+        p1: [*c]const f32,
+        color: [*c]const f32,
+    ) callconv(.C) void {
+        const debug = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), context.?));
+
+        const r = @floatToInt(u32, color[0] * 255.0);
+        const g = @floatToInt(u32, color[1] * 255.0) << 8;
+        const b = @floatToInt(u32, color[2] * 255.0) << 16;
         const rgb = r | g | b;
-        debug.lines.append(.{ .position = p0.c, .color = rgb }) catch unreachable;
-        debug.lines.append(.{ .position = p1.c, .color = rgb }) catch unreachable;
+
+        debug.lines.append(.{ .position = .{ p0[0], p0[1], p0[2] }, .color = rgb }) catch unreachable;
+        debug.lines.append(.{ .position = .{ p1[0], p1[1], p1[2] }, .color = rgb }) catch unreachable;
     }
 
-    fn drawLine2(debug: *PhysicsDebug, p0: Vec3, p1: Vec3, color0: Vec3, color1: Vec3) void {
-        const r0 = @floatToInt(u32, color0.c[0] * 255.0);
-        const g0 = @floatToInt(u32, color0.c[1] * 255.0) << 8;
-        const b0 = @floatToInt(u32, color0.c[2] * 255.0) << 16;
-        const rgb0 = r0 | g0 | b0;
-
-        const r1 = @floatToInt(u32, color1.c[0] * 255.0);
-        const g1 = @floatToInt(u32, color1.c[1] * 255.0) << 8;
-        const b1 = @floatToInt(u32, color1.c[2] * 255.0) << 16;
-        const rgb1 = r1 | g1 | b1;
-
-        debug.lines.append(.{ .position = p0.c, .color = rgb0 }) catch unreachable;
-        debug.lines.append(.{ .position = p1.c, .color = rgb1 }) catch unreachable;
-    }
-
-    fn drawContactPoint(debug: *PhysicsDebug, point: Vec3, normal: Vec3, distance: f32, color: Vec3) void {
-        debug.drawLine1(point, point.add(normal.scale(distance)), color);
-        debug.drawLine1(point, point.add(normal.scale(0.01)), Vec3.init(0, 0, 0));
-    }
-
-    fn drawLine1Callback(p0: [*c]const f32, p1: [*c]const f32, color: [*c]const f32, user: ?*anyopaque) callconv(.C) void {
-        const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
-        ptr.drawLine1(
-            Vec3.init(p0[0], p0[1], p0[2]),
-            Vec3.init(p1[0], p1[1], p1[2]),
-            Vec3.init(color[0], color[1], color[2]),
-        );
-    }
-
-    fn drawLine2Callback(
+    fn drawLine2(
+        context: ?*anyopaque,
         p0: [*c]const f32,
         p1: [*c]const f32,
         color0: [*c]const f32,
         color1: [*c]const f32,
-        user: ?*anyopaque,
     ) callconv(.C) void {
-        const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
-        ptr.drawLine2(
-            Vec3.init(p0[0], p0[1], p0[2]),
-            Vec3.init(p1[0], p1[1], p1[2]),
-            Vec3.init(color0[0], color0[1], color0[2]),
-            Vec3.init(color1[0], color1[1], color1[2]),
-        );
-    }
+        const debug = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), context.?));
 
-    fn drawContactPointCallback(
-        point: [*c]const f32,
-        normal: [*c]const f32,
-        distance: f32,
-        _: c_int,
-        color: [*c]const f32,
-        user: ?*anyopaque,
-    ) callconv(.C) void {
-        const ptr = @ptrCast(*PhysicsDebug, @alignCast(@alignOf(PhysicsDebug), user.?));
-        ptr.drawContactPoint(
-            Vec3.init(point[0], point[1], point[2]),
-            Vec3.init(normal[0], normal[1], normal[2]),
-            distance,
-            Vec3.init(color[0], color[1], color[2]),
-        );
-    }
+        const r0 = @floatToInt(u32, color0[0] * 255.0);
+        const g0 = @floatToInt(u32, color0[1] * 255.0) << 8;
+        const b0 = @floatToInt(u32, color0[2] * 255.0) << 16;
+        const rgb0 = r0 | g0 | b0;
 
-    fn reportErrorWarningCallback(str: [*c]const u8, _: ?*anyopaque) callconv(.C) void {
-        std.log.info("{s}", .{str});
+        const r1 = @floatToInt(u32, color1[0] * 255.0);
+        const g1 = @floatToInt(u32, color1[1] * 255.0) << 8;
+        const b1 = @floatToInt(u32, color1[2] * 255.0) << 16;
+        const rgb1 = r1 | g1 | b1;
+
+        debug.lines.append(.{ .position = .{ p0[0], p0[1], p0[2] }, .color = rgb0 }) catch unreachable;
+        debug.lines.append(.{ .position = .{ p1[0], p1[1], p1[2] }, .color = rgb1 }) catch unreachable;
     }
 };
 
@@ -1065,18 +1031,17 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     var all_indices = std.ArrayList(u32).init(arena_allocator);
     loadAllMeshes(&all_meshes, &all_positions, &all_normals, &all_indices);
 
-    var physics_debug = gpa_allocator.create(PhysicsDebug) catch unreachable;
-    physics_debug.* = PhysicsDebug.init(gpa_allocator);
-
     const physics_world = zb.cbtWorldCreate();
     zb.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
 
-    zb.cbtWorldDebugSetCallbacks(physics_world, &.{
-        .drawLine1 = PhysicsDebug.drawLine1Callback,
-        .drawLine2 = PhysicsDebug.drawLine2Callback,
-        .drawContactPoint = PhysicsDebug.drawContactPointCallback,
-        .reportErrorWarning = PhysicsDebug.reportErrorWarningCallback,
-        .user_data = physics_debug,
+    var physics_debug = gpa_allocator.create(PhysicsDebug) catch unreachable;
+    physics_debug.* = PhysicsDebug.init(gpa_allocator);
+
+    zb.cbtWorldDebugSetDrawer(physics_world, &.{
+        .drawLine1 = PhysicsDebug.drawLine1,
+        .drawLine2 = PhysicsDebug.drawLine2,
+        .drawContactPoint = null,
+        .context = physics_debug,
     });
 
     // Create common shapes.

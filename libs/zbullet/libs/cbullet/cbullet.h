@@ -70,6 +70,11 @@
 #define CBT_ROTATE_ORDER_ZXY 4
 #define CBT_ROTATE_ORDER_ZYX 5
 
+#define CBT_DBGMODE_DISABLED -1
+#define CBT_DBGMODE_NO_DEBUG 0
+#define CBT_DBGMODE_DRAW_WIREFRAME 1
+#define CBT_DBGMODE_DRAW_AABB 2
+
 typedef float CbtVector3[3];
 
 #ifdef __cplusplus
@@ -82,6 +87,7 @@ CBT_DECLARE_HANDLE(CbtWorldHandle);
 CBT_DECLARE_HANDLE(CbtShapeHandle);
 CBT_DECLARE_HANDLE(CbtBodyHandle);
 CBT_DECLARE_HANDLE(CbtConstraintHandle);
+CBT_DECLARE_HANDLE(CbtDebugDrawHandle);
 
 typedef void* (CbtAlignedAllocFunc)(size_t size, int alignment);
 typedef void (CbtAlignedFreeFunc)(void* memblock);
@@ -92,35 +98,33 @@ void cbtAlignedAllocSetCustom(CbtAllocFunc alloc, CbtFreeFunc free);
 void cbtAlignedAllocSetCustomAligned(CbtAlignedAllocFunc alloc, CbtAlignedFreeFunc free);
 
 typedef void (*CbtDrawLine1Callback)(
+    void* context,
     const CbtVector3 p0,
     const CbtVector3 p1,
-    const CbtVector3 color,
-    void* user_data
+    const CbtVector3 color
 );
 typedef void (*CbtDrawLine2Callback)(
+    void* context,
     const CbtVector3 p0,
     const CbtVector3 p1,
     const CbtVector3 color0,
-    const CbtVector3 color1,
-    void* user_data
+    const CbtVector3 color1
 );
 typedef void (*CbtDrawContactPointCallback)(
+    void* context,
     const CbtVector3 point,
     const CbtVector3 normal,
     float distance,
     int life_time,
-    const CbtVector3 color,
-    void* user_data
+    const CbtVector3 color
 );
-typedef void (*CbtReportErrorWarningCallback)(const char* str, void* user_data);
 
-typedef struct CbtDebugDrawCallbacks {
+typedef struct CbtDebugDraw {
     CbtDrawLine1Callback drawLine1;
     CbtDrawLine2Callback drawLine2;
     CbtDrawContactPointCallback drawContactPoint;
-    CbtReportErrorWarningCallback reportErrorWarning;
-    void* user_data;
-} CbtDebugDrawCallbacks;
+    void* context;
+} CbtDebugDraw;
 
 typedef struct CbtRayCastResult {
     CbtVector3 hit_normal_world;
@@ -169,7 +173,8 @@ bool cbtRayTestClosest(
     CbtRayCastResult* result
 );
 
-void cbtWorldDebugSetCallbacks(CbtWorldHandle world_handle, const CbtDebugDrawCallbacks* callbacks);
+void cbtWorldDebugSetDrawer(CbtWorldHandle world_handle, const CbtDebugDraw* drawer);
+void cbtWorldDebugSetMode(CbtWorldHandle world_handle, int mode);
 void cbtWorldDebugDraw(CbtWorldHandle world_handle);
 void cbtWorldDebugDrawLine1(
     CbtWorldHandle world_handle,
