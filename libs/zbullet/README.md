@@ -24,6 +24,9 @@ Now in your code you may import and use zbullet:
 const zbt = @import("zbullet");
 
 pub fn main() !void {
+    zbt.init();
+    defer zbt.deinit();
+
     const world = try zbt.World.init(.{});
     defer world.deinit();
 
