@@ -55,7 +55,7 @@ pub fn main() !void {
     while (...) {
         ...
         // Perform a simulation step.
-        _ = world.stepSimulation(time_step, 1, 1.0 / 60.0);
+        _ = world.stepSimulation(time_step, .{});
         ...
     }
 }
