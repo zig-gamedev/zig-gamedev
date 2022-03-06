@@ -997,9 +997,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.shadow_mask_texture);
     _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
     _ = demo.grfx.releaseResource(demo.index_buffer.resource);
-    _ = demo.grfx.releasePipeline(demo.static_mesh_pso);
-    _ = demo.grfx.releasePipeline(demo.z_pre_pass_pso);
-    _ = demo.grfx.releasePipeline(demo.gen_shadow_rays_pso);
     for (demo.textures.items) |texture| {
         _ = demo.grfx.releaseResource(texture.resource);
     }

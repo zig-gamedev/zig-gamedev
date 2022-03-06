@@ -306,8 +306,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
-    _ = demo.gctx.releasePipeline(demo.non_bindless_pso);
-    _ = demo.gctx.releasePipeline(demo.bindless_pso);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     common.deinitWindow(gpa_allocator);

@@ -174,7 +174,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
-    _ = demo.gctx.releasePipeline(demo.intro1_pso);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     common.deinitWindow(gpa_allocator);

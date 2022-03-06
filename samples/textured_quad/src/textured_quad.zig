@@ -207,7 +207,6 @@ const DemoState = struct {
         _ = demo.grfx.releaseResource(demo.vertex_buffer);
         _ = demo.grfx.releaseResource(demo.index_buffer);
         _ = demo.grfx.releaseResource(demo.texture);
-        _ = demo.grfx.releasePipeline(demo.pipeline);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit();
         common.deinitWindow(gpa_allocator);

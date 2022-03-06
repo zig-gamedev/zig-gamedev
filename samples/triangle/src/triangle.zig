@@ -62,9 +62,6 @@ pub fn main() !void {
             content_dir ++ "shaders/triangle.ps.cso",
         );
     };
-    defer {
-        _ = grfx.releasePipeline(pipeline);
-    }
 
     const vertex_buffer = grfx.createCommittedResource(
         .DEFAULT,

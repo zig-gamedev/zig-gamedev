@@ -575,9 +575,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.grfx.releaseResource(demo.meshlet_buffer);
     _ = demo.grfx.releaseResource(demo.meshlet_data_buffer);
     _ = demo.grfx.releaseResource(demo.depth_texture);
-    _ = demo.grfx.releasePipeline(demo.mesh_shader_pso);
-    _ = demo.grfx.releasePipeline(demo.vertex_shader_pso);
-    _ = demo.grfx.releasePipeline(demo.vertex_shader_fixed_pso);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     common.deinitWindow(gpa_allocator);

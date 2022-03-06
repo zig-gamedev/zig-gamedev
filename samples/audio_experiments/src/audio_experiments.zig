@@ -267,7 +267,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.actx.device.StopEngine();
-    _ = demo.gctx.releasePipeline(demo.lines_pso);
     _ = demo.gctx.releaseResource(demo.depth_texture);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();

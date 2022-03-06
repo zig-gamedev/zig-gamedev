@@ -336,8 +336,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
-    _ = demo.grfx.releasePipeline(demo.lines_pso);
-    _ = demo.grfx.releasePipeline(demo.image_pso);
     _ = demo.grfx.releaseResource(demo.lines_buffer);
     _ = demo.grfx.releaseResource(demo.image);
 

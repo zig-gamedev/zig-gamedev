@@ -101,7 +101,7 @@ pub fn init(
 
 pub fn deinit(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     gr.finishGpuCommands();
-    _ = gr.releasePipeline(gui.pipeline);
+    gr.destroyPipeline(gui.pipeline);
     _ = gr.releaseResource(gui.font);
     for (gui.vb) |vb| _ = gr.releaseResource(vb);
     for (gui.ib) |ib| _ = gr.releaseResource(ib);

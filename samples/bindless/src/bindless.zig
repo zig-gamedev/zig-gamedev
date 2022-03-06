@@ -789,10 +789,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     mipgen_rgba8.deinit(&grfx);
     mipgen_rgba16f.deinit(&grfx);
     _ = grfx.releaseResource(equirect_texture.resource);
-    _ = grfx.releasePipeline(temp_pipelines.generate_env_texture_pso);
-    _ = grfx.releasePipeline(temp_pipelines.generate_irradiance_texture_pso);
-    _ = grfx.releasePipeline(temp_pipelines.generate_prefiltered_env_texture_pso);
-    _ = grfx.releasePipeline(temp_pipelines.generate_brdf_integration_texture_pso);
+    grfx.destroyPipeline(temp_pipelines.generate_env_texture_pso);
+    grfx.destroyPipeline(temp_pipelines.generate_irradiance_texture_pso);
+    grfx.destroyPipeline(temp_pipelines.generate_prefiltered_env_texture_pso);
+    grfx.destroyPipeline(temp_pipelines.generate_brdf_integration_texture_pso);
 
     return .{
         .grfx = grfx,
@@ -827,8 +827,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
     _ = demo.grfx.releaseResource(demo.depth_texture.resource);
-    _ = demo.grfx.releasePipeline(demo.mesh_pbr_pso);
-    _ = demo.grfx.releasePipeline(demo.sample_env_texture_pso);
     _ = demo.grfx.releaseResource(demo.vertex_buffer);
     _ = demo.grfx.releaseResource(demo.index_buffer);
     _ = demo.grfx.releaseResource(demo.env_texture.resource);

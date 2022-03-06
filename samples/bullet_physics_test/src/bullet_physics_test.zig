@@ -1176,8 +1176,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
-    _ = demo.grfx.releasePipeline(demo.physics_debug_pso);
-    _ = demo.grfx.releasePipeline(demo.simple_entity_pso);
     _ = demo.grfx.releaseResource(demo.color_texture);
     _ = demo.grfx.releaseResource(demo.depth_texture);
     _ = demo.grfx.releaseResource(demo.vertex_buffer);

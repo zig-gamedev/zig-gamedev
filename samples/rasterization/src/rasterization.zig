@@ -448,11 +448,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.gctx.releaseResource(demo.depth_texture);
     _ = demo.gctx.releaseResource(demo.vertex_buffer);
     _ = demo.gctx.releaseResource(demo.index_buffer);
-    _ = demo.gctx.releasePipeline(demo.draw_mesh_pso);
-    _ = demo.gctx.releasePipeline(demo.clear_pixels_pso);
-    _ = demo.gctx.releasePipeline(demo.z_pre_pass_pso);
-    _ = demo.gctx.releasePipeline(demo.draw_pixels_pso);
-    _ = demo.gctx.releasePipeline(demo.record_pixels_pso);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     common.deinitWindow(gpa_allocator);

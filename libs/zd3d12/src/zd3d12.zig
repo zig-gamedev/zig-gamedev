@@ -62,11 +62,8 @@ pub const GraphicsContext = struct {
     cbv_srv_uav_gpu_heaps: [max_num_buffered_frames + 1]DescriptorHeap,
     upload_memory_heaps: [max_num_buffered_frames]GpuMemoryHeap,
     resource_pool: ResourcePool,
-    pipeline: struct {
-        pool: PipelinePool,
-        map: std.AutoHashMapUnmanaged(u32, PipelineHandle),
-        current: PipelineHandle,
-    },
+    pipeline_pool: PipelinePool,
+    current_pipeline: PipelineHandle,
     transition_resource_barriers: []TransitionResourceBarrier,
     num_transition_resource_barriers: u32,
     viewport_width: u32,
@@ -562,18 +559,8 @@ pub const GraphicsContext = struct {
             .cbv_srv_uav_gpu_heaps = cbv_srv_uav_gpu_heaps,
             .upload_memory_heaps = upload_heaps,
             .resource_pool = resource_pool,
-            .pipeline = .{
-                .pool = pipeline_pool,
-                .map = blk: {
-                    var hm: std.AutoHashMapUnmanaged(u32, PipelineHandle) = .{};
-                    hm.ensureTotalCapacity(
-                        std.heap.page_allocator,
-                        PipelinePool.max_num_pipelines,
-                    ) catch unreachable;
-                    break :blk hm;
-                },
-                .current = .{ .index = 0, .generation = 0 },
-            },
+            .pipeline_pool = pipeline_pool,
+            .current_pipeline = .{ .index = 0, .generation = 0 },
             .transition_resource_barriers = std.heap.page_allocator.alloc(
                 TransitionResourceBarrier,
                 max_num_buffered_resource_barriers,
@@ -596,9 +583,8 @@ pub const GraphicsContext = struct {
         gr.finishGpuCommands();
         std.heap.page_allocator.free(gr.transition_resource_barriers);
         w.CloseHandle(gr.frame_fence_event);
-        assert(gr.pipeline.map.count() == 0);
-        gr.pipeline.map.deinit(std.heap.page_allocator);
         gr.resource_pool.deinit();
+        gr.pipeline_pool.deinit();
         gr.rtv_heap.deinit();
         gr.dsv_heap.deinit();
         gr.cbv_srv_uav_cpu_heap.deinit();
@@ -613,8 +599,8 @@ pub const GraphicsContext = struct {
             for (gr.d2d.?.targets) |target| _ = target.Release();
             for (gr.d2d.?.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
         }
-        for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.*.deinit();
-        for (gr.upload_memory_heaps) |*heap| heap.*.deinit();
+        for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.deinit();
+        for (gr.upload_memory_heaps) |*heap| heap.deinit();
         _ = gr.device.Release();
         _ = gr.cmdqueue.Release();
         _ = gr.swapchain.Release();
@@ -649,7 +635,7 @@ pub const GraphicsContext = struct {
             .right = @intCast(c_long, gr.viewport_width),
             .bottom = @intCast(c_long, gr.viewport_height),
         }});
-        gr.pipeline.current = .{ .index = 0, .generation = 0 };
+        gr.current_pipeline = .{ .index = 0, .generation = 0 };
     }
 
     pub fn endFrame(gr: *GraphicsContext) void {
@@ -1006,10 +992,9 @@ pub const GraphicsContext = struct {
         };
         std.log.info("[graphics] Graphics pipeline hash: {d}", .{hash});
 
-        if (gr.pipeline.map.contains(hash)) {
+        if (gr.pipeline_pool.map.contains(hash)) {
             std.log.info("[graphics] Graphics pipeline cache hit detected.", .{});
-            const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
-            _ = incrementPipelineRefcount(gr.*, handle);
+            const handle = gr.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
             return handle;
         }
 
@@ -1041,9 +1026,7 @@ pub const GraphicsContext = struct {
             break :blk pso;
         };
 
-        const handle = gr.pipeline.pool.addPipeline(pso, rs, .Graphics);
-        gr.pipeline.map.putAssumeCapacity(hash, handle);
-        return handle;
+        return gr.pipeline_pool.addPipeline(pso, rs, .Graphics, hash);
     }
 
     pub fn createMeshShaderPipeline(
@@ -1108,10 +1091,9 @@ pub const GraphicsContext = struct {
         };
         std.log.info("[graphics] Mesh shader pipeline hash: {d}", .{hash});
 
-        if (gr.pipeline.map.contains(hash)) {
+        if (gr.pipeline_pool.map.contains(hash)) {
             std.log.info("[graphics] Mesh shader pipeline cache hit detected.", .{});
-            const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
-            _ = incrementPipelineRefcount(gr.*, handle);
+            const handle = gr.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
             return handle;
         }
 
@@ -1143,9 +1125,7 @@ pub const GraphicsContext = struct {
             break :blk pso;
         };
 
-        const handle = gr.pipeline.pool.addPipeline(pso, rs, .Graphics);
-        gr.pipeline.map.putAssumeCapacity(hash, handle);
-        return handle;
+        return gr.pipeline_pool.addPipeline(pso, rs, .Graphics, hash);
     }
 
     pub fn createComputeShaderPipeline(
@@ -1175,10 +1155,9 @@ pub const GraphicsContext = struct {
         };
         std.log.info("[graphics] Compute pipeline hash: {d}", .{hash});
 
-        if (gr.pipeline.map.contains(hash)) {
+        if (gr.pipeline_pool.map.contains(hash)) {
             std.log.info("[graphics] Compute pipeline hit detected.", .{});
-            const handle = gr.pipeline.map.getEntry(hash).?.value_ptr.*;
-            _ = incrementPipelineRefcount(gr.*, handle);
+            const handle = gr.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
             return handle;
         }
 
@@ -1206,62 +1185,33 @@ pub const GraphicsContext = struct {
             break :blk pso;
         };
 
-        const handle = gr.pipeline.pool.addPipeline(pso, rs, .Compute);
-        gr.pipeline.map.putAssumeCapacity(hash, handle);
-        return handle;
+        return gr.pipeline_pool.addPipeline(pso, rs, .Compute, hash);
     }
 
     pub fn setCurrentPipeline(gr: *GraphicsContext, pipeline_handle: PipelineHandle) void {
         assert(gr.is_cmdlist_opened);
-        const pipeline = gr.pipeline.pool.lookup(pipeline_handle);
 
-        if (pipeline_handle.index == gr.pipeline.current.index and
-            pipeline_handle.generation == gr.pipeline.current.generation)
+        const pipeline = gr.pipeline_pool.lookupPipeline(pipeline_handle);
+        if (pipeline == null)
+            return;
+
+        if (pipeline_handle.index == gr.current_pipeline.index and
+            pipeline_handle.generation == gr.current_pipeline.generation)
         {
             return;
         }
 
-        gr.cmdlist.SetPipelineState(pipeline.pso.?);
-        switch (pipeline.ptype.?) {
-            .Graphics => gr.cmdlist.SetGraphicsRootSignature(pipeline.rs.?),
-            .Compute => gr.cmdlist.SetComputeRootSignature(pipeline.rs.?),
+        gr.cmdlist.SetPipelineState(pipeline.?.pso.?);
+        switch (pipeline.?.ptype.?) {
+            .Graphics => gr.cmdlist.SetGraphicsRootSignature(pipeline.?.rs.?),
+            .Compute => gr.cmdlist.SetComputeRootSignature(pipeline.?.rs.?),
         }
 
-        gr.pipeline.current = pipeline_handle;
+        gr.current_pipeline = pipeline_handle;
     }
 
-    pub fn incrementPipelineRefcount(gr: GraphicsContext, handle: PipelineHandle) u32 {
-        const pipeline = gr.pipeline.pool.lookup(handle);
-        const refcount = pipeline.pso.?.AddRef();
-        _ = pipeline.rs.?.AddRef();
-        return refcount;
-    }
-
-    pub fn releasePipeline(gr: *GraphicsContext, handle: PipelineHandle) u32 {
-        if (!gr.pipeline.pool.isValid(handle)) {
-            return 0;
-        }
-        var pipeline = gr.pipeline.pool.lookup(handle);
-
-        const refcount = pipeline.pso.?.Release();
-        _ = pipeline.rs.?.Release();
-
-        if (refcount == 0) {
-            const hash_to_delete = blk: {
-                var it = gr.pipeline.map.iterator();
-                while (it.next()) |kv| {
-                    if (kv.value_ptr.*.index == handle.index and
-                        kv.value_ptr.*.generation == handle.generation)
-                    {
-                        break :blk kv.key_ptr.*;
-                    }
-                }
-                unreachable;
-            };
-            _ = gr.pipeline.map.remove(hash_to_delete);
-            pipeline.* = .{ .pso = null, .rs = null, .ptype = null };
-        }
-        return refcount;
+    pub fn destroyPipeline(gr: *GraphicsContext, handle: PipelineHandle) void {
+        gr.pipeline_pool.destroyPipeline(handle);
     }
 
     pub fn allocateUploadMemory(
@@ -1631,7 +1581,7 @@ pub const MipmapGenerator = struct {
         for (mipgen.scratch_textures) |_, texture_index| {
             _ = gr.releaseResource(mipgen.scratch_textures[texture_index]);
         }
-        _ = gr.releasePipeline(mipgen.pipeline);
+        gr.destroyPipeline(mipgen.pipeline);
         mipgen.* = undefined;
     }
 
@@ -1855,6 +1805,7 @@ const PipelinePool = struct {
 
     pipelines: []Pipeline,
     generations: []u16,
+    map: std.AutoHashMapUnmanaged(u32, PipelineHandle),
 
     fn init() PipelinePool {
         return .{
@@ -1876,25 +1827,34 @@ const PipelinePool = struct {
                 for (generations) |*gen| gen.* = 0;
                 break :blk generations;
             },
+            .map = blk: {
+                var hm: std.AutoHashMapUnmanaged(u32, PipelineHandle) = .{};
+                hm.ensureTotalCapacity(
+                    std.heap.page_allocator,
+                    max_num_pipelines,
+                ) catch unreachable;
+                break :blk hm;
+            },
         };
     }
 
     fn deinit(pool: *PipelinePool) void {
         for (pool.pipelines) |pipeline| {
-            // Verify that all pipelines has been released by a user.
-            assert(pipeline.pso == null);
-            assert(pipeline.rs == null);
+            if (pipeline.pso != null) _ = pipeline.pso.?.Release();
+            if (pipeline.rs != null) _ = pipeline.rs.?.Release();
         }
+        pool.map.deinit(std.heap.page_allocator);
         std.heap.page_allocator.free(pool.pipelines);
         std.heap.page_allocator.free(pool.generations);
         pool.* = undefined;
     }
 
     fn addPipeline(
-        pool: PipelinePool,
+        pool: *PipelinePool,
         pso: *d3d12.IPipelineState,
         rs: *d3d12.IRootSignature,
         ptype: PipelineType,
+        hash: u32,
     ) PipelineHandle {
         var slot_idx: u32 = 1;
         while (slot_idx <= max_num_pipelines) : (slot_idx += 1) {
@@ -1904,16 +1864,46 @@ const PipelinePool = struct {
         assert(slot_idx <= max_num_pipelines);
 
         pool.pipelines[slot_idx] = .{ .pso = pso, .rs = rs, .ptype = ptype };
-        return .{
+        const handle = PipelineHandle{
             .index = @intCast(u16, slot_idx),
             .generation = blk: {
                 pool.generations[slot_idx] += 1;
                 break :blk pool.generations[slot_idx];
             },
         };
+        pool.map.putAssumeCapacity(hash, handle);
+        return handle;
     }
 
-    fn isValid(pool: PipelinePool, handle: PipelineHandle) bool {
+    pub fn destroyPipeline(pool: *PipelinePool, handle: PipelineHandle) void {
+        var pipeline = pool.lookupPipeline(handle);
+        if (pipeline == null)
+            return;
+
+        _ = pipeline.?.pso.?.Release();
+        _ = pipeline.?.rs.?.Release();
+
+        const hash_to_delete = blk: {
+            var it = pool.map.iterator();
+            while (it.next()) |kv| {
+                if (kv.value_ptr.*.index == handle.index and
+                    kv.value_ptr.*.generation == handle.generation)
+                {
+                    break :blk kv.key_ptr.*;
+                }
+            }
+            unreachable;
+        };
+        _ = pool.map.remove(hash_to_delete);
+
+        pipeline.?.* = .{
+            .pso = null,
+            .rs = null,
+            .ptype = null,
+        };
+    }
+
+    fn isPipelineValid(pool: PipelinePool, handle: PipelineHandle) bool {
         return handle.index > 0 and
             handle.index <= max_num_pipelines and
             handle.generation > 0 and
@@ -1923,9 +1913,11 @@ const PipelinePool = struct {
             pool.pipelines[handle.index].ptype != null;
     }
 
-    fn lookup(pool: PipelinePool, handle: PipelineHandle) *Pipeline {
-        assert(pool.isValid(handle));
-        return &pool.pipelines[handle.index];
+    fn lookupPipeline(pool: PipelinePool, handle: PipelineHandle) ?*Pipeline {
+        if (pool.isPipelineValid(handle)) {
+            return &pool.pipelines[handle.index];
+        }
+        return null;
     }
 };
 
