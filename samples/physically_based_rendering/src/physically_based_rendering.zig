@@ -295,7 +295,11 @@ fn loadAllMeshes(
     }
 }
 
-fn drawToCubeTexture(grfx: *zd3d12.GraphicsContext, dest_texture: zd3d12.ResourceHandle, dest_mip_level: u32) void {
+fn drawToCubeTexture(
+    grfx: *zd3d12.GraphicsContext,
+    dest_texture: zd3d12.ResourceHandle,
+    dest_mip_level: u32,
+) void {
     const desc = grfx.getResourceDesc(dest_texture);
     assert(dest_mip_level < desc.MipLevels);
     const texture_width = @intCast(u32, desc.Width) >> @intCast(u5, dest_mip_level);
@@ -333,7 +337,7 @@ fn drawToCubeTexture(grfx: *zd3d12.GraphicsContext, dest_texture: zd3d12.Resourc
     while (cube_face_idx < 6) : (cube_face_idx += 1) {
         const cube_face_rtv = grfx.allocateTempCpuDescriptors(.RTV, 1);
         grfx.device.CreateRenderTargetView(
-            grfx.getResource(dest_texture),
+            grfx.lookupResource(dest_texture).?,
             &d3d12.RENDER_TARGET_VIEW_DESC{
                 .Format = .UNKNOWN,
                 .ViewDimension = .TEXTURE2DARRAY,
@@ -498,7 +502,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err),
         .view = grfx.allocateCpuDescriptors(.DSV, 1),
     };
-    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture.resource), null, depth_texture.view);
+    grfx.device.CreateDepthStencilView(
+        grfx.lookupResource(depth_texture.resource).?,
+        null,
+        depth_texture.view,
+    );
 
     var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
     var mipgen_rgba16f = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R16G16B16A16_FLOAT, content_dir);
@@ -520,7 +528,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             upload.cpu_slice[i] = vertex;
         }
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(vertex_buffer),
+            grfx.lookupResource(vertex_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -543,7 +551,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             upload.cpu_slice[i] = index;
         }
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(index_buffer),
+            grfx.lookupResource(index_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -579,7 +587,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             ) catch |err| hrPanic(err),
             .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
         };
-        grfx.device.CreateShaderResourceView(grfx.getResource(equirect_texture.resource), null, equirect_texture.view);
+        grfx.device.CreateShaderResourceView(
+            grfx.lookupResource(equirect_texture.resource).?,
+            null,
+            equirect_texture.view,
+        );
 
         grfx.updateTex2dSubresource(
             equirect_texture.resource,
@@ -631,7 +643,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     for (mesh_textures) |texture| {
         mipgen_rgba8.generateMipmaps(&grfx, texture.resource);
-        grfx.device.CreateShaderResourceView(grfx.getResource(texture.resource), null, texture.view);
+        grfx.device.CreateShaderResourceView(grfx.lookupResource(texture.resource).?, null, texture.view);
         grfx.addTransitionBarrier(texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
     grfx.flushResourceBarriers();
@@ -658,7 +670,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(env_texture.resource),
+        grfx.lookupResource(env_texture.resource).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC{
             .Format = .UNKNOWN,
             .ViewDimension = .TEXTURECUBE,
@@ -696,7 +708,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(irradiance_texture.resource),
+        grfx.lookupResource(irradiance_texture.resource).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC{
             .Format = .UNKNOWN,
             .ViewDimension = .TEXTURECUBE,
@@ -734,7 +746,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(prefiltered_env_texture.resource),
+        grfx.lookupResource(prefiltered_env_texture.resource).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC{
             .Format = .UNKNOWN,
             .ViewDimension = .TEXTURECUBE,
@@ -770,18 +782,18 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(brdf_integration_texture.resource),
+        grfx.lookupResource(brdf_integration_texture.resource).?,
         null,
         brdf_integration_texture.view,
     );
 
     grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = grfx.lookupResource(vertex_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(vertex_buffer)),
         .StrideInBytes = @sizeOf(Vertex),
     }});
     grfx.cmdlist.IASetIndexBuffer(&.{
-        .BufferLocation = grfx.getResource(index_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = grfx.lookupResource(index_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(index_buffer)),
         .Format = .R32_UINT,
     });
@@ -828,7 +840,12 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     {
         const uav = grfx.allocateTempCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateUnorderedAccessView(grfx.getResource(brdf_integration_texture.resource), null, null, uav);
+        grfx.device.CreateUnorderedAccessView(
+            grfx.lookupResource(brdf_integration_texture.resource).?,
+            null,
+            null,
+            uav,
+        );
 
         grfx.setCurrentPipeline(temp_pipelines.generate_brdf_integration_texture_pso);
         grfx.cmdlist.SetComputeRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, uav));
@@ -846,7 +863,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Release temporary resources.
     mipgen_rgba8.deinit(&grfx);
     mipgen_rgba16f.deinit(&grfx);
-    _ = grfx.releaseResource(equirect_texture.resource);
+    grfx.destroyResource(equirect_texture.resource);
     grfx.destroyPipeline(temp_pipelines.generate_env_texture_pso);
     grfx.destroyPipeline(temp_pipelines.generate_irradiance_texture_pso);
     grfx.destroyPipeline(temp_pipelines.generate_prefiltered_env_texture_pso);
@@ -884,16 +901,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
-    _ = demo.grfx.releaseResource(demo.depth_texture.resource);
-    _ = demo.grfx.releaseResource(demo.env_texture.resource);
-    _ = demo.grfx.releaseResource(demo.irradiance_texture.resource);
-    _ = demo.grfx.releaseResource(demo.prefiltered_env_texture.resource);
-    _ = demo.grfx.releaseResource(demo.brdf_integration_texture.resource);
-    _ = demo.grfx.releaseResource(demo.vertex_buffer);
-    _ = demo.grfx.releaseResource(demo.index_buffer);
-    for (demo.mesh_textures) |texture| {
-        _ = demo.grfx.releaseResource(texture.resource);
-    }
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     common.deinitWindow(gpa_allocator);
@@ -1003,12 +1010,12 @@ fn draw(demo: *DemoState) void {
     grfx.cmdlist.ClearDepthStencilView(demo.depth_texture.view, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
     grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = grfx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.vertex_buffer)),
         .StrideInBytes = @sizeOf(Vertex),
     }});
     grfx.cmdlist.IASetIndexBuffer(&.{
-        .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = grfx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
         .Format = .R32_UINT,
     });

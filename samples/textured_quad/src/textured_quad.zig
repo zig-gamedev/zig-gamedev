@@ -108,7 +108,7 @@ const DemoState = struct {
 
         const texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
-            grfx.getResource(texture),
+            grfx.lookupResource(texture).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC{
                 .Format = .UNKNOWN,
                 .ViewDimension = .TEXTURE2D,
@@ -151,7 +151,7 @@ const DemoState = struct {
                 r *= 0.5;
             }
             grfx.cmdlist.CopyBufferRegion(
-                grfx.getResource(vertex_buffer),
+                grfx.lookupResource(vertex_buffer).?,
                 0,
                 upload_verts.buffer,
                 upload_verts.buffer_offset,
@@ -167,7 +167,7 @@ const DemoState = struct {
             upload_indices.cpu_slice[3] = 3;
 
             grfx.cmdlist.CopyBufferRegion(
-                grfx.getResource(index_buffer),
+                grfx.lookupResource(index_buffer).?,
                 0,
                 upload_indices.buffer,
                 upload_indices.buffer_offset,
@@ -204,9 +204,6 @@ const DemoState = struct {
 
     fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
         demo.grfx.finishGpuCommands();
-        _ = demo.grfx.releaseResource(demo.vertex_buffer);
-        _ = demo.grfx.releaseResource(demo.index_buffer);
-        _ = demo.grfx.releaseResource(demo.texture);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit();
         common.deinitWindow(gpa_allocator);
@@ -253,12 +250,12 @@ const DemoState = struct {
         grfx.setCurrentPipeline(demo.pipeline);
         grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLESTRIP);
         grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+            .BufferLocation = grfx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = num_mipmaps * 4 * @sizeOf(Vertex),
             .StrideInBytes = @sizeOf(Vertex),
         }});
         grfx.cmdlist.IASetIndexBuffer(&.{
-            .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+            .BufferLocation = grfx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = 4 * @sizeOf(u32),
             .Format = .R32_UINT,
         });

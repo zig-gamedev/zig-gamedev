@@ -262,14 +262,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const input_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(input_buffer),
+        grfx.lookupResource(input_buffer).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R16_FLOAT, 0, image_size * image_size),
         input_buffer_srv,
     );
 
     const input_buffer_uav = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     grfx.device.CreateUnorderedAccessView(
-        grfx.getResource(input_buffer),
+        grfx.lookupResource(input_buffer).?,
         null,
         &d3d12.UNORDERED_ACCESS_VIEW_DESC.initTypedBuffer(.R16_FLOAT, 0, image_size * image_size, 0),
         input_buffer_uav,
@@ -303,7 +303,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const output_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(output_buffer),
+        grfx.lookupResource(output_buffer).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R16_FLOAT, 0, image_size * image_size),
         output_buffer_srv,
     );
@@ -337,8 +337,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const image_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     const image_texture_uav = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
-    grfx.device.CreateShaderResourceView(grfx.getResource(image_texture), null, image_texture_srv);
-    grfx.device.CreateUnorderedAccessView(grfx.getResource(image_texture), null, null, image_texture_uav);
+    grfx.device.CreateShaderResourceView(grfx.lookupResource(image_texture).?, null, image_texture_srv);
+    grfx.device.CreateUnorderedAccessView(grfx.lookupResource(image_texture).?, null, null, image_texture_uav);
 
     grfx.addTransitionBarrier(image_texture, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     grfx.addTransitionBarrier(input_buffer, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
@@ -394,7 +394,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         init_dtbl.BindTemporaryResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(temp_buffer.?),
+                .Buffer = grfx.lookupResource(temp_buffer.?).?,
                 .Offset = 0,
                 .SizeInBytes = init_info.TemporaryResourceSize,
             },
@@ -409,7 +409,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         } else dml.BINDING_DESC{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(persistent_buffer.?),
+                .Buffer = grfx.lookupResource(persistent_buffer.?).?,
                 .Offset = offset,
                 .SizeInBytes = conv_info.PersistentResourceSize,
             },
@@ -453,13 +453,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
-    _ = demo.grfx.releaseResource(demo.image_texture);
     _ = demo.dml_cmd_recorder.Release();
-    _ = demo.grfx.releaseResource(demo.input_buffer);
-    _ = demo.grfx.releaseResource(demo.filter_buffer);
-    _ = demo.grfx.releaseResource(demo.output_buffer);
-    if (demo.temp_buffer != null) _ = demo.grfx.releaseResource(demo.temp_buffer.?);
-    if (demo.persistent_buffer != null) _ = demo.grfx.releaseResource(demo.persistent_buffer.?);
     _ = demo.conv_op_state.cop.Release();
     _ = demo.conv_op_state.dtbl.Release();
     _ = demo.dml_device.Release();
@@ -495,7 +489,7 @@ fn dispatchConvOperator(demo: *DemoState) void {
         demo.conv_op_state.dtbl.BindTemporaryResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.temp_buffer.?),
+                .Buffer = grfx.lookupResource(demo.temp_buffer.?).?,
                 .Offset = 0,
                 .SizeInBytes = demo.conv_op_state.info.TemporaryResourceSize,
             },
@@ -507,7 +501,7 @@ fn dispatchConvOperator(demo: *DemoState) void {
         demo.conv_op_state.dtbl.BindPersistentResource(&.{
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.persistent_buffer.?),
+                .Buffer = grfx.lookupResource(demo.persistent_buffer.?).?,
                 .Offset = 0,
                 .SizeInBytes = demo.conv_op_state.info.PersistentResourceSize,
             },
@@ -519,7 +513,7 @@ fn dispatchConvOperator(demo: *DemoState) void {
         .{ // InputTensor
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.input_buffer),
+                .Buffer = grfx.lookupResource(demo.input_buffer).?,
                 .Offset = 0,
                 .SizeInBytes = grfx.getResourceSize(demo.input_buffer),
             },
@@ -527,7 +521,7 @@ fn dispatchConvOperator(demo: *DemoState) void {
         .{ // FilterTensor
             .Type = .BUFFER,
             .Desc = &dml.BUFFER_BINDING{
-                .Buffer = grfx.getResource(demo.filter_buffer),
+                .Buffer = grfx.lookupResource(demo.filter_buffer).?,
                 .Offset = 0,
                 .SizeInBytes = grfx.getResourceSize(demo.filter_buffer),
             },
@@ -542,7 +536,7 @@ fn dispatchConvOperator(demo: *DemoState) void {
     demo.conv_op_state.dtbl.BindOutputs(1, &[_]dml.BINDING_DESC{.{
         .Type = .BUFFER,
         .Desc = &dml.BUFFER_BINDING{
-            .Buffer = grfx.getResource(demo.output_buffer),
+            .Buffer = grfx.lookupResource(demo.output_buffer).?,
             .Offset = 0,
             .SizeInBytes = grfx.getResourceSize(demo.output_buffer),
         },
@@ -560,8 +554,8 @@ fn dispatchBarriers(demo: *DemoState) void {
     grfx.cmdlist.ResourceBarrier(
         2,
         &[_]d3d12.RESOURCE_BARRIER{
-            .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(demo.input_buffer) } } },
-            .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(demo.output_buffer) } } },
+            d3d12.RESOURCE_BARRIER.initUav(grfx.lookupResource(demo.input_buffer).?),
+            d3d12.RESOURCE_BARRIER.initUav(grfx.lookupResource(demo.output_buffer).?),
         },
     );
 }
@@ -591,7 +585,7 @@ fn draw(demo: *DemoState) void {
         upload.cpu_slice[8] = filter_tensor[kernel_index][2][2];
 
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(demo.filter_buffer),
+            grfx.lookupResource(demo.filter_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,

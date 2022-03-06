@@ -54,7 +54,7 @@ pub fn init(
     gr.addTransitionBarrier(font, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     const font_srv = gr.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    gr.device.CreateShaderResourceView(gr.getResource(font), null, font_srv);
+    gr.device.CreateShaderResourceView(gr.lookupResource(font).?, null, font_srv);
 
     const pipeline = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -102,9 +102,9 @@ pub fn init(
 pub fn deinit(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     gr.finishGpuCommands();
     gr.destroyPipeline(gui.pipeline);
-    _ = gr.releaseResource(gui.font);
-    for (gui.vb) |vb| _ = gr.releaseResource(vb);
-    for (gui.ib) |ib| _ = gr.releaseResource(ib);
+    gr.destroyResource(gui.font);
+    for (gui.vb) |vb| gr.destroyResource(vb);
+    for (gui.ib) |ib| gr.destroyResource(ib);
     gui.* = undefined;
 }
 
@@ -124,7 +124,7 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     var ib = gui.ib[gr.frame_index];
 
     if (gr.getResourceSize(vb) < num_vertices * @sizeOf(c.ImDrawVert)) {
-        _ = gr.releaseResource(vb);
+        gr.destroyResource(vb);
         const new_size = (num_vertices + 5_000) * @sizeOf(c.ImDrawVert);
         vb = gr.createCommittedResource(
             .UPLOAD,
@@ -136,7 +136,7 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
         gui.vb[gr.frame_index] = vb;
         gui.vb_cpu_addr[gr.frame_index] = blk: {
             var ptr: ?[*]align(8) u8 = null;
-            hrPanicOnFail(gr.getResource(vb).Map(
+            hrPanicOnFail(gr.lookupResource(vb).?.Map(
                 0,
                 &.{ .Begin = 0, .End = 0 },
                 @ptrCast(*?*anyopaque, &ptr),
@@ -145,7 +145,7 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
         };
     }
     if (gr.getResourceSize(ib) < num_indices * @sizeOf(c.ImDrawIdx)) {
-        _ = gr.releaseResource(ib);
+        gr.destroyResource(ib);
         const new_size = (num_indices + 10_000) * @sizeOf(c.ImDrawIdx);
         ib = gr.createCommittedResource(
             .UPLOAD,
@@ -157,7 +157,7 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
         gui.ib[gr.frame_index] = ib;
         gui.ib_cpu_addr[gr.frame_index] = blk: {
             var ptr: ?[*]align(8) u8 = null;
-            hrPanicOnFail(gr.getResource(ib).Map(
+            hrPanicOnFail(gr.lookupResource(ib).?.Map(
                 0,
                 &.{ .Begin = 0, .End = 0 },
                 @ptrCast(*?*anyopaque, &ptr),
@@ -223,12 +223,12 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     }
     gr.cmdlist.SetGraphicsRootDescriptorTable(1, gr.copyDescriptorsToGpuHeap(1, gui.font_srv));
     gr.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gr.getResource(vb).GetGPUVirtualAddress(),
+        .BufferLocation = gr.lookupResource(vb).?.GetGPUVirtualAddress(),
         .SizeInBytes = num_vertices * @sizeOf(c.ImDrawVert),
         .StrideInBytes = @sizeOf(c.ImDrawVert),
     }});
     gr.cmdlist.IASetIndexBuffer(&.{
-        .BufferLocation = gr.getResource(ib).GetGPUVirtualAddress(),
+        .BufferLocation = gr.lookupResource(ib).?.GetGPUVirtualAddress(),
         .SizeInBytes = num_indices * @sizeOf(c.ImDrawIdx),
         .Format = if (@sizeOf(c.ImDrawIdx) == 2) .R16_UINT else .R32_UINT,
     });

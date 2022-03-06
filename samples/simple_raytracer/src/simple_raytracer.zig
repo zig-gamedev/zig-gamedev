@@ -406,7 +406,7 @@ fn loadScene(
 
         const texture = grfx.createAndUploadTex2dFromFile(path, .{}) catch unreachable;
         const view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(grfx.getResource(texture), null, view);
+        grfx.device.CreateShaderResourceView(grfx.lookupResource(texture).?, null, view);
 
         all_textures.appendAssumeCapacity(.{ .resource = texture, .view = view });
     }
@@ -421,7 +421,7 @@ fn loadScene(
         ) catch |err| hrPanic(err),
         .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
-    grfx.device.CreateShaderResourceView(grfx.getResource(texture_4x4.resource), null, texture_4x4.view);
+    grfx.device.CreateShaderResourceView(grfx.lookupResource(texture_4x4.resource).?, null, texture_4x4.view);
 
     all_textures.appendAssumeCapacity(texture_4x4);
 }
@@ -567,9 +567,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const depth_texture_dsv = grfx.allocateCpuDescriptors(.DSV, 1);
     const depth_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
-    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_dsv);
+    grfx.device.CreateDepthStencilView(grfx.lookupResource(depth_texture).?, null, depth_texture_dsv);
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(depth_texture),
+        grfx.lookupResource(depth_texture).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC{
             .Format = .R32_FLOAT,
             .ViewDimension = .TEXTURE2D,
@@ -606,8 +606,16 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const shadow_rays_texture_rtv = grfx.allocateCpuDescriptors(.RTV, 1);
     const shadow_rays_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
-    grfx.device.CreateRenderTargetView(grfx.getResource(shadow_rays_texture), null, shadow_rays_texture_rtv);
-    grfx.device.CreateShaderResourceView(grfx.getResource(shadow_rays_texture), null, shadow_rays_texture_srv);
+    grfx.device.CreateRenderTargetView(
+        grfx.lookupResource(shadow_rays_texture).?,
+        null,
+        shadow_rays_texture_rtv,
+    );
+    grfx.device.CreateShaderResourceView(
+        grfx.lookupResource(shadow_rays_texture).?,
+        null,
+        shadow_rays_texture_srv,
+    );
 
     const shadow_mask_texture = grfx.createCommittedResource(
         .DEFAULT,
@@ -624,8 +632,17 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const shadow_mask_texture_uav = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     const shadow_mask_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
-    grfx.device.CreateUnorderedAccessView(grfx.getResource(shadow_mask_texture), null, null, shadow_mask_texture_uav);
-    grfx.device.CreateShaderResourceView(grfx.getResource(shadow_mask_texture), null, shadow_mask_texture_srv);
+    grfx.device.CreateUnorderedAccessView(
+        grfx.lookupResource(shadow_mask_texture).?,
+        null,
+        null,
+        shadow_mask_texture_uav,
+    );
+    grfx.device.CreateShaderResourceView(
+        grfx.lookupResource(shadow_mask_texture).?,
+        null,
+        shadow_mask_texture_srv,
+    );
 
     var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
 
@@ -668,7 +685,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(vertex_buffer.resource),
+        grfx.lookupResource(vertex_buffer.resource).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
             0,
             @intCast(u32, all_vertices.items.len),
@@ -688,7 +705,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
     grfx.device.CreateShaderResourceView(
-        grfx.getResource(index_buffer.resource),
+        grfx.lookupResource(index_buffer.resource).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_indices.items.len)),
         index_buffer.view,
     );
@@ -700,7 +717,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             upload.cpu_slice[i] = vertex;
         }
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(vertex_buffer.resource),
+            grfx.lookupResource(vertex_buffer.resource).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -717,7 +734,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             upload.cpu_slice[i] = index;
         }
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(index_buffer.resource),
+            grfx.lookupResource(index_buffer.resource).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -736,8 +753,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             all_meshes.items.len,
         ) catch unreachable;
 
-        const vertex_buffer_addr = grfx.getResource(vertex_buffer.resource).GetGPUVirtualAddress();
-        const index_buffer_addr = grfx.getResource(index_buffer.resource).GetGPUVirtualAddress();
+        const vertex_buffer_addr = grfx.lookupResource(vertex_buffer.resource).?.GetGPUVirtualAddress();
+        const index_buffer_addr = grfx.lookupResource(index_buffer.resource).?.GetGPUVirtualAddress();
 
         for (all_meshes.items) |mesh| {
             const desc = d3d12.RAYTRACING_GEOMETRY_DESC{
@@ -801,16 +818,16 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err);
 
         const blas_desc = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
-            .DestAccelerationStructureData = grfx.getResource(blas_buffer).GetGPUVirtualAddress(),
+            .DestAccelerationStructureData = grfx.lookupResource(blas_buffer).?.GetGPUVirtualAddress(),
             .Inputs = blas_inputs,
             .SourceAccelerationStructureData = 0,
-            .ScratchAccelerationStructureData = grfx.getResource(blas_scratch_buffer).GetGPUVirtualAddress(),
+            .ScratchAccelerationStructureData = grfx.lookupResource(blas_scratch_buffer).?.GetGPUVirtualAddress(),
         };
         grfx.cmdlist.BuildRaytracingAccelerationStructure(&blas_desc, 0, null);
         grfx.cmdlist.ResourceBarrier(
             1,
             &[_]d3d12.RESOURCE_BARRIER{
-                .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(blas_buffer) } } },
+                d3d12.RESOURCE_BARRIER.initUav(grfx.lookupResource(blas_buffer).?),
             },
         );
 
@@ -838,7 +855,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             .InstanceMask = 1,
             .InstanceContributionToHitGroupIndex = 0,
             .Flags = 0,
-            .AccelerationStructure = grfx.getResource(blas_buffer).GetGPUVirtualAddress(),
+            .AccelerationStructure = grfx.lookupResource(blas_buffer).?.GetGPUVirtualAddress(),
         };
 
         const instance_buffer = grfx.createCommittedResource(
@@ -856,7 +873,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             upload.cpu_slice[0] = instance_desc;
 
             grfx.cmdlist.CopyBufferRegion(
-                grfx.getResource(instance_buffer),
+                grfx.lookupResource(instance_buffer).?,
                 0,
                 upload.buffer,
                 upload.buffer_offset,
@@ -872,7 +889,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             .NumDescs = 1,
             .DescsLayout = .ARRAY,
             .u = .{
-                .InstanceDescs = grfx.getResource(instance_buffer).GetGPUVirtualAddress(),
+                .InstanceDescs = grfx.lookupResource(instance_buffer).?.GetGPUVirtualAddress(),
             },
         };
 
@@ -906,16 +923,16 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err);
 
         const tlas_desc = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
-            .DestAccelerationStructureData = grfx.getResource(tlas_buffer).GetGPUVirtualAddress(),
+            .DestAccelerationStructureData = grfx.lookupResource(tlas_buffer).?.GetGPUVirtualAddress(),
             .Inputs = tlas_inputs,
             .SourceAccelerationStructureData = 0,
-            .ScratchAccelerationStructureData = grfx.getResource(tlas_scratch_buffer).GetGPUVirtualAddress(),
+            .ScratchAccelerationStructureData = grfx.lookupResource(tlas_scratch_buffer).?.GetGPUVirtualAddress(),
         };
         grfx.cmdlist.BuildRaytracingAccelerationStructure(&tlas_desc, 0, null);
         grfx.cmdlist.ResourceBarrier(
             1,
             &[_]d3d12.RESOURCE_BARRIER{
-                .{ .Type = .UAV, .Flags = 0, .u = .{ .UAV = .{ .pResource = grfx.getResource(tlas_buffer) } } },
+                d3d12.RESOURCE_BARRIER.initUav(grfx.lookupResource(tlas_buffer).?),
             },
         );
 
@@ -938,7 +955,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     mipgen_rgba8.deinit(&grfx);
     for (temp_resources.items) |resource| {
-        _ = grfx.releaseResource(resource);
+        grfx.destroyResource(resource);
     }
 
     return .{
@@ -988,17 +1005,6 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     if (demo.dxr_is_supported) {
         _ = demo.trace_shadow_rays_stateobj.?.Release();
         _ = demo.trace_shadow_rays_rs.?.Release();
-    }
-    _ = demo.grfx.releaseResource(demo.trace_shadow_rays_table);
-    _ = demo.grfx.releaseResource(demo.tlas_buffer);
-    _ = demo.grfx.releaseResource(demo.blas_buffer);
-    _ = demo.grfx.releaseResource(demo.depth_texture);
-    _ = demo.grfx.releaseResource(demo.shadow_rays_texture);
-    _ = demo.grfx.releaseResource(demo.shadow_mask_texture);
-    _ = demo.grfx.releaseResource(demo.vertex_buffer.resource);
-    _ = demo.grfx.releaseResource(demo.index_buffer.resource);
-    for (demo.textures.items) |texture| {
-        _ = demo.grfx.releaseResource(texture.resource);
     }
     demo.meshes.deinit();
     demo.materials.deinit();
@@ -1247,7 +1253,7 @@ fn draw(demo: *DemoState) void {
             @memset(upload.cpu_slice.ptr + 2 * 64 + 32, 0, 32);
 
             grfx.cmdlist.CopyBufferRegion(
-                grfx.getResource(demo.trace_shadow_rays_table),
+                grfx.lookupResource(demo.trace_shadow_rays_table).?,
                 0,
                 upload.buffer,
                 upload.buffer_offset,
@@ -1264,7 +1270,10 @@ fn draw(demo: *DemoState) void {
 
         grfx.cmdlist.SetPipelineState1(demo.trace_shadow_rays_stateobj.?);
         grfx.cmdlist.SetComputeRootSignature(demo.trace_shadow_rays_rs.?);
-        grfx.cmdlist.SetComputeRootShaderResourceView(0, grfx.getResource(demo.tlas_buffer).GetGPUVirtualAddress());
+        grfx.cmdlist.SetComputeRootShaderResourceView(
+            0,
+            grfx.lookupResource(demo.tlas_buffer).?.GetGPUVirtualAddress(),
+        );
         grfx.cmdlist.SetComputeRootDescriptorTable(1, blk: {
             const table = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_rays_texture_srv);
             _ = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_uav);
@@ -1272,7 +1281,7 @@ fn draw(demo: *DemoState) void {
         });
         grfx.cmdlist.SetComputeRootConstantBufferView(2, mem.gpu_base);
 
-        const base_addr = grfx.getResource(demo.trace_shadow_rays_table).GetGPUVirtualAddress();
+        const base_addr = grfx.lookupResource(demo.trace_shadow_rays_table).?.GetGPUVirtualAddress();
         const dispatch_desc = d3d12.DISPATCH_RAYS_DESC{
             .RayGenerationShaderRecord = .{ .StartAddress = base_addr, .SizeInBytes = 32 },
             .MissShaderTable = .{ .StartAddress = base_addr + 64, .SizeInBytes = 32, .StrideInBytes = 32 },
@@ -1288,7 +1297,7 @@ fn draw(demo: *DemoState) void {
         grfx.cmdlist.ClearUnorderedAccessViewFloat(
             gpu_view,
             demo.shadow_mask_texture_uav,
-            grfx.getResource(demo.shadow_mask_texture),
+            grfx.lookupResource(demo.shadow_mask_texture).?,
             &.{ 1000.0, 0.0, 0.0, 0.0 },
             0,
             null,

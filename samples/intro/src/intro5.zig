@@ -149,7 +149,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Create depth texture 'view' - a descriptor which can be send to Direct3D 12 API.
     const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
     gctx.device.CreateDepthStencilView(
-        gctx.getResource(depth_texture), // Get the D3D12 resource from a handle.
+        gctx.lookupResource(depth_texture).?, // Get the D3D12 resource from a handle.
         null,
         depth_texture_dsv,
     );
@@ -193,8 +193,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.vertex_data.deinit(gpa_allocator);
-    _ = demo.gctx.releaseResource(demo.depth_texture);
-    _ = demo.gctx.releaseResource(demo.vertex_buffer);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     common.deinitWindow(gpa_allocator);
@@ -383,7 +381,7 @@ fn draw(demo: *DemoState) void {
         gctx.addTransitionBarrier(demo.vertex_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
         gctx.flushResourceBarriers();
         gctx.cmdlist.CopyBufferRegion(
-            gctx.getResource(demo.vertex_buffer),
+            gctx.lookupResource(demo.vertex_buffer).?,
             0,
             verts.buffer,
             verts.buffer_offset,
@@ -398,7 +396,7 @@ fn draw(demo: *DemoState) void {
     // Set input assembler (IA) state.
     gctx.cmdlist.IASetPrimitiveTopology(.POINTLIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = max_num_vertices * @sizeOf(Pso_Vertex),
         .StrideInBytes = @sizeOf(Pso_Vertex),
     }});

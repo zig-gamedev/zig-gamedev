@@ -373,7 +373,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const vertex_buffer_srv = blk: {
         const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
-            grfx.getResource(vertex_buffer),
+            grfx.lookupResource(vertex_buffer).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
                 0,
                 @intCast(u32, all_vertices.items.len),
@@ -395,7 +395,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const index_buffer_srv = blk: {
         const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
-            grfx.getResource(index_buffer),
+            grfx.lookupResource(index_buffer).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_indices.items.len)),
             srv,
         );
@@ -413,7 +413,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const meshlet_buffer_srv = blk: {
         const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
-            grfx.getResource(meshlet_buffer),
+            grfx.lookupResource(meshlet_buffer).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
                 0,
                 @intCast(u32, all_meshlets.items.len),
@@ -435,7 +435,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const meshlet_data_buffer_srv = blk: {
         const srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
-            grfx.getResource(meshlet_data_buffer),
+            grfx.lookupResource(meshlet_data_buffer).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(
                 .R32_UINT,
                 0,
@@ -460,7 +460,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const depth_texture_dsv = blk: {
         const dsv = grfx.allocateCpuDescriptors(.DSV, 1);
-        grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, dsv);
+        grfx.device.CreateDepthStencilView(grfx.lookupResource(depth_texture).?, null, dsv);
         break :blk dsv;
     };
 
@@ -476,7 +476,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
         for (all_vertices.items) |vertex, i| upload.cpu_slice[i] = vertex;
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(vertex_buffer),
+            grfx.lookupResource(vertex_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -491,7 +491,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
         for (all_indices.items) |index, i| upload.cpu_slice[i] = index;
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(index_buffer),
+            grfx.lookupResource(index_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -506,7 +506,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const upload = grfx.allocateUploadBufferRegion(Meshlet, @intCast(u32, all_meshlets.items.len));
         for (all_meshlets.items) |meshlet, i| upload.cpu_slice[i] = meshlet;
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(meshlet_buffer),
+            grfx.lookupResource(meshlet_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -521,7 +521,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_meshlets_data.items.len));
         for (all_meshlets_data.items) |meshlet_data, i| upload.cpu_slice[i] = meshlet_data;
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(meshlet_data_buffer),
+            grfx.lookupResource(meshlet_data_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -570,11 +570,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
-    _ = demo.grfx.releaseResource(demo.vertex_buffer);
-    _ = demo.grfx.releaseResource(demo.index_buffer);
-    _ = demo.grfx.releaseResource(demo.meshlet_buffer);
-    _ = demo.grfx.releaseResource(demo.meshlet_data_buffer);
-    _ = demo.grfx.releaseResource(demo.depth_texture);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     common.deinitWindow(gpa_allocator);
@@ -771,12 +766,12 @@ fn draw(demo: *DemoState) void {
             grfx.setCurrentPipeline(demo.vertex_shader_fixed_pso);
 
             grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-                .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+                .BufferLocation = grfx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
                 .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.vertex_buffer)),
                 .StrideInBytes = @sizeOf(Vertex),
             }});
             grfx.cmdlist.IASetIndexBuffer(&.{
-                .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+                .BufferLocation = grfx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
                 .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
                 .Format = .R32_UINT,
             });

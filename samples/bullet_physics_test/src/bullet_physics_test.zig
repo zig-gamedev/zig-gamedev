@@ -1007,7 +1007,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     ) catch |err| hrPanic(err);
 
     const color_texture_rtv = grfx.allocateCpuDescriptors(.RTV, 1);
-    grfx.device.CreateRenderTargetView(grfx.getResource(color_texture), null, color_texture_rtv);
+    grfx.device.CreateRenderTargetView(grfx.lookupResource(color_texture).?, null, color_texture_rtv);
 
     const depth_texture = grfx.createCommittedResource(
         .DEFAULT,
@@ -1023,7 +1023,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     ) catch |err| hrPanic(err);
 
     const depth_texture_dsv = grfx.allocateCpuDescriptors(.DSV, 1);
-    grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_dsv);
+    grfx.device.CreateDepthStencilView(grfx.lookupResource(depth_texture).?, null, depth_texture_dsv);
 
     var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
     var all_positions = std.ArrayList([3]f32).init(arena_allocator);
@@ -1107,7 +1107,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             upload.cpu_slice[i].normal = all_normals.items[i];
         }
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(vertex_buffer),
+            grfx.lookupResource(vertex_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -1122,7 +1122,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             upload.cpu_slice[i] = all_indices.items[i];
         }
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(index_buffer),
+            grfx.lookupResource(index_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -1176,10 +1176,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
-    _ = demo.grfx.releaseResource(demo.color_texture);
-    _ = demo.grfx.releaseResource(demo.depth_texture);
-    _ = demo.grfx.releaseResource(demo.vertex_buffer);
-    _ = demo.grfx.releaseResource(demo.index_buffer);
     demo.gui.deinit(&demo.grfx);
     demo.grfx.deinit();
     common.deinitWindow(gpa_allocator);
@@ -1750,12 +1746,12 @@ fn draw(demo: *DemoState) void {
 
     {
         grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+            .BufferLocation = grfx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.vertex_buffer)),
             .StrideInBytes = @sizeOf(Vertex),
         }});
         grfx.cmdlist.IASetIndexBuffer(&.{
-            .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+            .BufferLocation = grfx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
             .Format = .R32_UINT,
         });
@@ -1891,9 +1887,9 @@ fn draw(demo: *DemoState) void {
     grfx.flushResourceBarriers();
 
     grfx.cmdlist.ResolveSubresource(
-        grfx.getResource(back_buffer.resource_handle),
+        grfx.lookupResource(back_buffer.resource_handle).?,
         0,
-        grfx.getResource(demo.color_texture),
+        grfx.lookupResource(demo.color_texture).?,
         0,
         .R8G8B8A8_UNORM,
     );

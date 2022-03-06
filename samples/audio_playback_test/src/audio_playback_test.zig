@@ -306,7 +306,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         .{ .num_mip_levels = 1 },
     ) catch |err| hrPanic(err);
     const image_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    grfx.device.CreateShaderResourceView(grfx.getResource(image), null, image_srv);
+    grfx.device.CreateShaderResourceView(grfx.lookupResource(image).?, null, image_srv);
     grfx.addTransitionBarrier(image, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     grfx.endFrame();
@@ -336,8 +336,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
-    _ = demo.grfx.releaseResource(demo.lines_buffer);
-    _ = demo.grfx.releaseResource(demo.image);
 
     while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
     _ = w.TerminateThread(demo.audio.thread_handle.?, 0);
@@ -392,7 +390,7 @@ fn draw(demo: *DemoState) void {
             upload.cpu_slice[i] = Vec2.init(0.95 * x, y);
         }
         grfx.cmdlist.CopyBufferRegion(
-            grfx.getResource(demo.lines_buffer),
+            grfx.lookupResource(demo.lines_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -426,7 +424,7 @@ fn draw(demo: *DemoState) void {
     grfx.setCurrentPipeline(demo.lines_pso);
     grfx.cmdlist.IASetPrimitiveTopology(.LINESTRIP);
     grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = grfx.getResource(demo.lines_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = grfx.lookupResource(demo.lines_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = num_vis_samples * @sizeOf(Vec2),
         .StrideInBytes = @sizeOf(Vec2),
     }});

@@ -70,7 +70,6 @@ pub fn main() !void {
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
-    defer _ = grfx.releaseResource(vertex_buffer);
 
     const index_buffer = grfx.createCommittedResource(
         .DEFAULT,
@@ -79,7 +78,6 @@ pub fn main() !void {
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
-    defer _ = grfx.releaseResource(index_buffer);
 
     grfx.beginFrame();
 
@@ -92,7 +90,7 @@ pub fn main() !void {
     upload_verts.cpu_slice[2] = vm.Vec3.init(0.7, -0.7, 0.0);
 
     grfx.cmdlist.CopyBufferRegion(
-        grfx.getResource(vertex_buffer),
+        grfx.lookupResource(vertex_buffer).?,
         0,
         upload_verts.buffer,
         upload_verts.buffer_offset,
@@ -105,7 +103,7 @@ pub fn main() !void {
     upload_indices.cpu_slice[2] = 2;
 
     grfx.cmdlist.CopyBufferRegion(
-        grfx.getResource(index_buffer),
+        grfx.lookupResource(index_buffer).?,
         0,
         upload_indices.buffer,
         upload_indices.buffer_offset,
@@ -168,12 +166,12 @@ pub fn main() !void {
             grfx.setCurrentPipeline(pipeline);
             grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
             grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-                .BufferLocation = grfx.getResource(vertex_buffer).GetGPUVirtualAddress(),
+                .BufferLocation = grfx.lookupResource(vertex_buffer).?.GetGPUVirtualAddress(),
                 .SizeInBytes = 3 * @sizeOf(vm.Vec3),
                 .StrideInBytes = @sizeOf(vm.Vec3),
             }});
             grfx.cmdlist.IASetIndexBuffer(&.{
-                .BufferLocation = grfx.getResource(index_buffer).GetGPUVirtualAddress(),
+                .BufferLocation = grfx.lookupResource(index_buffer).?.GetGPUVirtualAddress(),
                 .SizeInBytes = 3 * @sizeOf(u32),
                 .Format = .R32_UINT,
             });

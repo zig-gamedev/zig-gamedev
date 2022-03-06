@@ -1,7 +1,6 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const utf8ToUtf16LeStringLiteral = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
 const w = zwin32.base;
 const d3d12 = zwin32.d3d12;
@@ -198,7 +197,7 @@ const DemoState = struct {
 
         const entity_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
         grfx.device.CreateShaderResourceView(
-            grfx.getResource(entity_buffer),
+            grfx.lookupResource(entity_buffer).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(0, 1, @sizeOf(vm.Mat4)),
             entity_buffer_srv,
         );
@@ -217,7 +216,11 @@ const DemoState = struct {
         mipgen.generateMipmaps(&grfx, base_color_texture);
 
         const base_color_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(grfx.getResource(base_color_texture), null, base_color_texture_srv);
+        grfx.device.CreateShaderResourceView(
+            grfx.lookupResource(base_color_texture).?,
+            null,
+            base_color_texture_srv,
+        );
 
         const depth_texture = grfx.createCommittedResource(
             .DEFAULT,
@@ -232,7 +235,7 @@ const DemoState = struct {
         ) catch |err| hrPanic(err);
 
         const depth_texture_srv = grfx.allocateCpuDescriptors(.DSV, 1);
-        grfx.device.CreateDepthStencilView(grfx.getResource(depth_texture), null, depth_texture_srv);
+        grfx.device.CreateDepthStencilView(grfx.lookupResource(depth_texture).?, null, depth_texture_srv);
 
         const buffers = blk: {
             var indices = std.ArrayList(u32).init(arena_allocator);
@@ -273,7 +276,7 @@ const DemoState = struct {
                 };
             }
             grfx.cmdlist.CopyBufferRegion(
-                grfx.getResource(vertex_buffer),
+                grfx.lookupResource(vertex_buffer).?,
                 0,
                 upload_verts.buffer,
                 upload_verts.buffer_offset,
@@ -285,7 +288,7 @@ const DemoState = struct {
                 upload_indices.cpu_slice[i] = index;
             }
             grfx.cmdlist.CopyBufferRegion(
-                grfx.getResource(index_buffer),
+                grfx.lookupResource(index_buffer).?,
                 0,
                 upload_indices.buffer,
                 upload_indices.buffer_offset,
@@ -330,11 +333,6 @@ const DemoState = struct {
 
     fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
         demo.grfx.finishGpuCommands();
-        _ = demo.grfx.releaseResource(demo.vertex_buffer);
-        _ = demo.grfx.releaseResource(demo.index_buffer);
-        _ = demo.grfx.releaseResource(demo.entity_buffer);
-        _ = demo.grfx.releaseResource(demo.base_color_texture);
-        _ = demo.grfx.releaseResource(demo.depth_texture);
         demo.gui.deinit(&demo.grfx);
         demo.grfx.deinit();
         common.deinitWindow(gpa_allocator);
@@ -375,7 +373,7 @@ const DemoState = struct {
                 ),
             ).transpose();
             grfx.cmdlist.CopyBufferRegion(
-                grfx.getResource(demo.entity_buffer),
+                grfx.lookupResource(demo.entity_buffer).?,
                 0,
                 upload_entity.buffer,
                 upload_entity.buffer_offset,
@@ -405,12 +403,12 @@ const DemoState = struct {
         grfx.setCurrentPipeline(demo.pipeline);
         grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
         grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = grfx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+            .BufferLocation = grfx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = demo.num_mesh_vertices * @sizeOf(Vertex),
             .StrideInBytes = @sizeOf(Vertex),
         }});
         grfx.cmdlist.IASetIndexBuffer(&.{
-            .BufferLocation = grfx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+            .BufferLocation = grfx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = demo.num_mesh_indices * @sizeOf(u32),
             .Format = .R32_UINT,
         });

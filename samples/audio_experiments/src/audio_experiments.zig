@@ -233,7 +233,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Create depth texture view.
     const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
     gctx.device.CreateDepthStencilView(
-        gctx.getResource(depth_texture),
+        gctx.lookupResource(depth_texture).?,
         null,
         depth_texture_dsv,
     );
@@ -267,7 +267,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.actx.device.StopEngine();
-    _ = demo.gctx.releaseResource(demo.depth_texture);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     demo.music.destroy();

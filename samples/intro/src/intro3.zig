@@ -152,7 +152,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Create depth texture 'view' - a descriptor which can be send to Direct3D12 API.
     const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
     gctx.device.CreateDepthStencilView(
-        gctx.getResource(depth_texture), // Get the D3D12 resource from a handle.
+        gctx.lookupResource(depth_texture).?, // Get the D3D12 resource from a handle.
         null,
         depth_texture_dsv,
     );
@@ -176,7 +176,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         // Copy vertex data from upload heap to vertex buffer resource that resides in high-performance memory
         // on the GPU.
         gctx.cmdlist.CopyBufferRegion(
-            gctx.getResource(vertex_buffer),
+            gctx.lookupResource(vertex_buffer).?,
             0,
             verts.buffer,
             verts.buffer_offset,
@@ -195,7 +195,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         // Copy index data from upload heap to index buffer resource that resides in high-performance memory
         // on the GPU.
         gctx.cmdlist.CopyBufferRegion(
-            gctx.getResource(index_buffer),
+            gctx.lookupResource(index_buffer).?,
             0,
             indices.buffer,
             indices.buffer_offset,
@@ -240,9 +240,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
-    _ = demo.gctx.releaseResource(demo.depth_texture);
-    _ = demo.gctx.releaseResource(demo.vertex_buffer);
-    _ = demo.gctx.releaseResource(demo.index_buffer);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     common.deinitWindow(gpa_allocator);
@@ -374,12 +371,12 @@ fn draw(demo: *DemoState) void {
     gctx.setCurrentPipeline(demo.intro3_pso);
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = demo.mesh_num_vertices * @sizeOf(Vertex),
         .StrideInBytes = @sizeOf(Vertex),
     }});
     gctx.cmdlist.IASetIndexBuffer(&.{
-        .BufferLocation = gctx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = demo.mesh_num_indices * @sizeOf(u32),
         .Format = .R32_UINT,
     });

@@ -247,7 +247,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
     gctx.device.CreateDepthStencilView(
-        gctx.getResource(depth_texture), // Get the D3D12 resource from a handle.
+        gctx.lookupResource(depth_texture).?, // Get the D3D12 resource from a handle.
         null,
         depth_texture_dsv,
     );
@@ -270,7 +270,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const pixel_buffer_uav = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
     gctx.device.CreateShaderResourceView(
-        gctx.getResource(pixel_buffer),
+        gctx.lookupResource(pixel_buffer).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
             1, // FirstElement
             gctx.viewport_width * gctx.viewport_height, // NumElements
@@ -280,8 +280,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     );
 
     gctx.device.CreateUnorderedAccessView(
-        gctx.getResource(pixel_buffer),
-        gctx.getResource(pixel_buffer),
+        gctx.lookupResource(pixel_buffer).?,
+        gctx.lookupResource(pixel_buffer).?,
         &d3d12.UNORDERED_ACCESS_VIEW_DESC.initStructuredBuffer(
             1,
             gctx.viewport_width * gctx.viewport_height,
@@ -305,7 +305,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const pixel_texture_uav = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
     gctx.device.CreateUnorderedAccessView(
-        gctx.getResource(pixel_texture),
+        gctx.lookupResource(pixel_texture).?,
         null,
         null,
         pixel_texture_uav,
@@ -313,7 +313,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const pixel_texture_rtv = gctx.allocateCpuDescriptors(.RTV, 1);
     gctx.device.CreateRenderTargetView(
-        gctx.getResource(pixel_texture),
+        gctx.lookupResource(pixel_texture).?,
         null,
         pixel_texture_rtv,
     );
@@ -343,7 +343,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     for (mesh_textures) |texture| {
         const descriptor = gctx.allocatePersistentGpuDescriptors(1);
-        gctx.device.CreateShaderResourceView(gctx.getResource(texture), null, descriptor.cpu_handle);
+        gctx.device.CreateShaderResourceView(gctx.lookupResource(texture).?, null, descriptor.cpu_handle);
     }
 
     // Generate mipmaps.
@@ -368,7 +368,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         }
 
         gctx.cmdlist.CopyBufferRegion(
-            gctx.getResource(vertex_buffer),
+            gctx.lookupResource(vertex_buffer).?,
             0,
             verts.buffer,
             verts.buffer_offset,
@@ -384,7 +384,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         }
 
         gctx.cmdlist.CopyBufferRegion(
-            gctx.getResource(index_buffer),
+            gctx.lookupResource(index_buffer).?,
             0,
             indices.buffer,
             indices.buffer_offset,
@@ -440,14 +440,6 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
-    for (demo.mesh_textures) |texture| {
-        _ = demo.gctx.releaseResource(texture);
-    }
-    _ = demo.gctx.releaseResource(demo.pixel_texture);
-    _ = demo.gctx.releaseResource(demo.pixel_buffer);
-    _ = demo.gctx.releaseResource(demo.depth_texture);
-    _ = demo.gctx.releaseResource(demo.vertex_buffer);
-    _ = demo.gctx.releaseResource(demo.index_buffer);
     demo.guictx.deinit(&demo.gctx);
     demo.gctx.deinit();
     common.deinitWindow(gpa_allocator);
@@ -571,12 +563,12 @@ fn draw(demo: *DemoState) void {
     // Set input assembler (IA) state.
     gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
     gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gctx.getResource(demo.vertex_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = demo.mesh_num_vertices * @sizeOf(Pso_Vertex),
         .StrideInBytes = @sizeOf(Pso_Vertex),
     }});
     gctx.cmdlist.IASetIndexBuffer(&.{
-        .BufferLocation = gctx.getResource(demo.index_buffer).GetGPUVirtualAddress(),
+        .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = demo.mesh_num_indices * @sizeOf(u32),
         .Format = .R32_UINT,
     });
@@ -649,7 +641,7 @@ fn draw(demo: *DemoState) void {
             // Reset pixel buffer atomic counter.
             {
                 const param = [_]d3d12.WRITEBUFFERIMMEDIATE_PARAMETER{.{
-                    .Dest = gctx.getResource(demo.pixel_buffer).GetGPUVirtualAddress(),
+                    .Dest = gctx.lookupResource(demo.pixel_buffer).?.GetGPUVirtualAddress(),
                     .Value = 0,
                 }};
                 gctx.addTransitionBarrier(demo.pixel_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
@@ -669,7 +661,7 @@ fn draw(demo: *DemoState) void {
             gctx.cmdlist.ResourceBarrier(
                 1,
                 &[_]d3d12.RESOURCE_BARRIER{
-                    d3d12.RESOURCE_BARRIER.initUav(gctx.getResource(demo.pixel_buffer)),
+                    d3d12.RESOURCE_BARRIER.initUav(gctx.lookupResource(demo.pixel_buffer).?),
                 },
             );
 
@@ -755,7 +747,10 @@ fn draw(demo: *DemoState) void {
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_COPY_DEST);
     gctx.flushResourceBarriers();
 
-    gctx.cmdlist.CopyResource(gctx.getResource(back_buffer.resource_handle), gctx.getResource(demo.pixel_texture));
+    gctx.cmdlist.CopyResource(
+        gctx.lookupResource(back_buffer.resource_handle).?,
+        gctx.lookupResource(demo.pixel_texture).?,
+    );
 
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
     gctx.addTransitionBarrier(demo.pixel_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);

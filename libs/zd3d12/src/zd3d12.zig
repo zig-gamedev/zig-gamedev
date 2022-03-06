@@ -442,7 +442,10 @@ pub const GraphicsContext = struct {
                 var swapbuffers11: [num_swapbuffers]*d3d11.IResource = undefined;
                 for (swapbuffers11) |_, buffer_index| {
                     hrPanicOnFail(device11on12.CreateWrappedResource(
-                        @ptrCast(*w.IUnknown, resource_pool.lookup(swapchain_buffers[buffer_index]).raw.?),
+                        @ptrCast(
+                            *w.IUnknown,
+                            resource_pool.lookupResource(swapchain_buffers[buffer_index]).?.raw.?,
+                        ),
                         &d3d11on12.RESOURCE_FLAGS{
                             .BindFlags = d3d11.BIND_RENDER_TARGET,
                             .MiscFlags = 0,
@@ -735,7 +738,7 @@ pub const GraphicsContext = struct {
 
         // Above calls will set back buffer state to PRESENT. We need to reflect this change
         // in 'resource_pool' by manually setting state.
-        gr.resource_pool.lookup(gr.swapchain_buffers[gr.back_buffer_index]).*.state =
+        gr.resource_pool.lookupResource(gr.swapchain_buffers[gr.back_buffer_index]).?.state =
             d3d12.RESOURCE_STATE_PRESENT;
     }
 
@@ -782,22 +785,33 @@ pub const GraphicsContext = struct {
         };
     }
 
-    pub inline fn getResource(gr: GraphicsContext, handle: ResourceHandle) *d3d12.IResource {
-        return gr.resource_pool.lookup(handle).raw.?;
+    pub inline fn lookupResource(gr: GraphicsContext, handle: ResourceHandle) ?*d3d12.IResource {
+        const resource = gr.resource_pool.lookupResource(handle);
+        if (resource == null)
+            return null;
+
+        return resource.?.raw.?;
+    }
+
+    pub fn isResourceValid(gr: GraphicsContext, handle: ResourceHandle) bool {
+        return gr.resource_pool.isResourceValid(handle);
     }
 
     pub fn getResourceSize(gr: GraphicsContext, handle: ResourceHandle) u64 {
-        if (gr.resource_pool.isValid(handle)) {
-            const resource = gr.resource_pool.lookup(handle);
-            assert(resource.desc.Dimension == .BUFFER);
-            return resource.desc.Width;
-        }
-        return 0;
+        const resource = gr.resource_pool.lookupResource(handle);
+        if (resource == null)
+            return 0;
+
+        assert(resource.?.desc.Dimension == .BUFFER);
+        return resource.?.desc.Width;
     }
 
     pub fn getResourceDesc(gr: GraphicsContext, handle: ResourceHandle) d3d12.RESOURCE_DESC {
-        const resource = gr.resource_pool.lookup(handle);
-        return resource.desc;
+        const resource = gr.resource_pool.lookupResource(handle);
+        if (resource == null)
+            return d3d12.RESOURCE_DESC.initBuffer(0);
+
+        return resource.?.desc;
     }
 
     pub fn createCommittedResource(
@@ -824,20 +838,8 @@ pub const GraphicsContext = struct {
         return gr.resource_pool.addResource(resource, initial_state);
     }
 
-    pub fn releaseResource(gr: GraphicsContext, handle: ResourceHandle) u32 {
-        if (gr.resource_pool.isValid(handle)) {
-            var resource = gr.resource_pool.lookup(handle);
-            const refcount = resource.raw.?.Release();
-            if (refcount == 0) {
-                resource.* = .{
-                    .raw = null,
-                    .state = d3d12.RESOURCE_STATE_COMMON,
-                    .desc = d3d12.RESOURCE_DESC.initBuffer(0),
-                };
-            }
-            return refcount;
-        }
-        return 0;
+    pub fn destroyResource(gr: GraphicsContext, handle: ResourceHandle) void {
+        gr.resource_pool.destroyResource(handle);
     }
 
     pub fn flushResourceBarriers(gr: *GraphicsContext) void {
@@ -849,13 +851,13 @@ pub const GraphicsContext = struct {
             while (barrier_index < gr.num_transition_resource_barriers) : (barrier_index += 1) {
                 const barrier = &gr.transition_resource_barriers[barrier_index];
 
-                if (gr.resource_pool.isValid(barrier.resource)) {
+                if (gr.resource_pool.isResourceValid(barrier.resource)) {
                     d3d12_barriers[num_valid_barriers] = .{
                         .Type = .TRANSITION,
                         .Flags = d3d12.RESOURCE_BARRIER_FLAG_NONE,
                         .u = .{
                             .Transition = .{
-                                .pResource = gr.getResource(barrier.resource),
+                                .pResource = gr.lookupResource(barrier.resource).?,
                                 .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
                                 .StateBefore = barrier.state_before,
                                 .StateAfter = barrier.state_after,
@@ -877,19 +879,21 @@ pub const GraphicsContext = struct {
         handle: ResourceHandle,
         state_after: d3d12.RESOURCE_STATES,
     ) void {
-        var resource = gr.resource_pool.lookup(handle);
+        var resource = gr.resource_pool.lookupResource(handle);
+        if (resource == null)
+            return;
 
-        if (state_after != resource.state) {
+        if (state_after != resource.?.state) {
             if (gr.num_transition_resource_barriers >= gr.transition_resource_barriers.len) {
                 gr.flushResourceBarriers();
             }
             gr.transition_resource_barriers[gr.num_transition_resource_barriers] = .{
                 .resource = handle,
-                .state_before = resource.state,
+                .state_before = resource.?.state,
                 .state_after = state_after,
             };
             gr.num_transition_resource_barriers += 1;
-            resource.*.state = state_after;
+            resource.?.state = state_after;
         }
     }
 
@@ -911,7 +915,15 @@ pub const GraphicsContext = struct {
         gs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
-        return createGraphicsShaderPipelineRsVsGsPs(gr, arena, pso_desc, null, vs_cso_path, gs_cso_path, ps_cso_path);
+        return createGraphicsShaderPipelineRsVsGsPs(
+            gr,
+            arena,
+            pso_desc,
+            null,
+            vs_cso_path,
+            gs_cso_path,
+            ps_cso_path,
+        );
     }
 
     pub fn createGraphicsShaderPipelineRsVsGsPs(
@@ -1338,13 +1350,16 @@ pub const GraphicsContext = struct {
         row_pitch: u32,
     ) void {
         assert(gr.is_cmdlist_opened);
-        const resource = gr.resource_pool.lookup(texture);
-        assert(resource.desc.Dimension == .TEXTURE2D);
+        const resource = gr.resource_pool.lookupResource(texture);
+        if (resource == null)
+            return;
+
+        assert(resource.?.desc.Dimension == .TEXTURE2D);
 
         var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
         var required_size: u64 = undefined;
         gr.device.GetCopyableFootprints(
-            &resource.desc,
+            &resource.?.desc,
             subresource,
             layout.len,
             0,
@@ -1357,7 +1372,7 @@ pub const GraphicsContext = struct {
         const upload = gr.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
         layout[0].Offset = upload.buffer_offset;
 
-        const pixel_size = resource.desc.Format.pixelSizeInBytes();
+        const pixel_size = resource.?.desc.Format.pixelSizeInBytes();
         var y: u32 = 0;
         while (y < layout[0].Footprint.Height) : (y += 1) {
             var x: u32 = 0;
@@ -1370,7 +1385,7 @@ pub const GraphicsContext = struct {
         gr.flushResourceBarriers();
 
         gr.cmdlist.CopyTextureRegion(&d3d12.TEXTURE_COPY_LOCATION{
-            .pResource = gr.getResource(texture),
+            .pResource = gr.lookupResource(texture).?,
             .Type = .SUBRESOURCE_INDEX,
             .u = .{
                 .SubresourceIndex = subresource,
@@ -1486,7 +1501,7 @@ pub const GraphicsContext = struct {
             null,
         );
 
-        const desc = gr.getResource(texture).GetDesc();
+        const desc = gr.lookupResource(texture).?.GetDesc();
 
         var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
         var required_size: u64 = undefined;
@@ -1503,7 +1518,7 @@ pub const GraphicsContext = struct {
         ));
 
         gr.cmdlist.CopyTextureRegion(&d3d12.TEXTURE_COPY_LOCATION{
-            .pResource = gr.getResource(texture),
+            .pResource = gr.lookupResource(texture).?,
             .Type = .SUBRESOURCE_INDEX,
             .u = .{ .SubresourceIndex = 0 },
         }, 0, 0, 0, &d3d12.TEXTURE_COPY_LOCATION{
@@ -1554,7 +1569,7 @@ pub const MipmapGenerator = struct {
         var cpu_handle = base_uav;
         for (scratch_textures) |_, texture_index| {
             gr.device.CreateUnorderedAccessView(
-                gr.getResource(scratch_textures[texture_index]),
+                gr.lookupResource(scratch_textures[texture_index]).?,
                 null,
                 null,
                 cpu_handle,
@@ -1579,14 +1594,17 @@ pub const MipmapGenerator = struct {
 
     pub fn deinit(mipgen: *MipmapGenerator, gr: *GraphicsContext) void {
         for (mipgen.scratch_textures) |_, texture_index| {
-            _ = gr.releaseResource(mipgen.scratch_textures[texture_index]);
+            gr.destroyResource(mipgen.scratch_textures[texture_index]);
         }
         gr.destroyPipeline(mipgen.pipeline);
         mipgen.* = undefined;
     }
 
-    pub fn generateMipmaps(mipgen: *MipmapGenerator, gr: *GraphicsContext, texture: ResourceHandle) void {
-        const texture_desc = gr.getResourceDesc(texture);
+    pub fn generateMipmaps(mipgen: *MipmapGenerator, gr: *GraphicsContext, texture_handle: ResourceHandle) void {
+        if (!gr.resource_pool.isResourceValid(texture_handle))
+            return;
+
+        const texture_desc = gr.getResourceDesc(texture_handle);
         assert(mipgen.format == texture_desc.Format);
         assert(texture_desc.Width <= 2048 and texture_desc.Height <= 2048);
         assert(texture_desc.Width == texture_desc.Height);
@@ -1596,7 +1614,7 @@ pub const MipmapGenerator = struct {
         while (array_slice < texture_desc.DepthOrArraySize) : (array_slice += 1) {
             const texture_srv = gr.allocateTempCpuDescriptors(.CBV_SRV_UAV, 1);
             gr.device.CreateShaderResourceView(
-                gr.getResource(texture),
+                gr.lookupResource(texture_handle).?,
                 &d3d12.SHADER_RESOURCE_VIEW_DESC{
                     .Format = .UNKNOWN,
                     .ViewDimension = .TEXTURE2DARRAY,
@@ -1626,7 +1644,7 @@ pub const MipmapGenerator = struct {
                 for (mipgen.scratch_textures) |scratch_texture| {
                     gr.addTransitionBarrier(scratch_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
                 }
-                gr.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                gr.addTransitionBarrier(texture_handle, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
                 gr.flushResourceBarriers();
 
                 const dispatch_num_mips = if (total_num_mips >= 4) 4 else total_num_mips;
@@ -1646,19 +1664,19 @@ pub const MipmapGenerator = struct {
                 for (mipgen.scratch_textures) |scratch_texture| {
                     gr.addTransitionBarrier(scratch_texture, d3d12.RESOURCE_STATE_COPY_SOURCE);
                 }
-                gr.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_COPY_DEST);
+                gr.addTransitionBarrier(texture_handle, d3d12.RESOURCE_STATE_COPY_DEST);
                 gr.flushResourceBarriers();
 
                 var mip_index: u32 = 0;
                 while (mip_index < dispatch_num_mips) : (mip_index += 1) {
                     const dst = d3d12.TEXTURE_COPY_LOCATION{
-                        .pResource = gr.getResource(texture),
+                        .pResource = gr.lookupResource(texture_handle).?,
                         .Type = .SUBRESOURCE_INDEX,
                         .u = .{ .SubresourceIndex = mip_index + 1 + current_src_mip_level +
                             array_slice * texture_desc.MipLevels },
                     };
                     const src = d3d12.TEXTURE_COPY_LOCATION{
-                        .pResource = gr.getResource(mipgen.scratch_textures[mip_index]),
+                        .pResource = gr.lookupResource(mipgen.scratch_textures[mip_index]).?,
                         .Type = .SUBRESOURCE_INDEX,
                         .u = .{ .SubresourceIndex = 0 },
                     };
@@ -1732,16 +1750,9 @@ const ResourcePool = struct {
     }
 
     fn deinit(pool: *ResourcePool) void {
-        for (pool.resources) |resource, i| {
-            if (i > 0 and i <= num_swapbuffers) {
-                // Release internally created swapbuffers.
-                if (resource.raw) |raw| {
-                    _ = raw.Release();
-                }
-            } else if (i > num_swapbuffers) {
-                // Verify that all resources has been released by a user.
-                assert(resource.raw == null);
-            }
+        for (pool.resources) |resource| {
+            if (resource.raw != null)
+                _ = resource.raw.?.Release();
         }
         std.heap.page_allocator.free(pool.resources);
         std.heap.page_allocator.free(pool.generations);
@@ -1770,7 +1781,20 @@ const ResourcePool = struct {
         };
     }
 
-    fn isValid(pool: ResourcePool, handle: ResourceHandle) bool {
+    fn destroyResource(pool: ResourcePool, handle: ResourceHandle) void {
+        var resource = pool.lookupResource(handle);
+        if (resource == null)
+            return;
+
+        _ = resource.?.raw.?.Release();
+        resource.?.* = .{
+            .raw = null,
+            .state = d3d12.RESOURCE_STATE_COMMON,
+            .desc = d3d12.RESOURCE_DESC.initBuffer(0),
+        };
+    }
+
+    fn isResourceValid(pool: ResourcePool, handle: ResourceHandle) bool {
         return handle.index > 0 and
             handle.index <= max_num_resources and
             handle.generation > 0 and
@@ -1778,9 +1802,11 @@ const ResourcePool = struct {
             pool.resources[handle.index].raw != null;
     }
 
-    fn lookup(pool: ResourcePool, handle: ResourceHandle) *Resource {
-        assert(pool.isValid(handle));
-        return &pool.resources[handle.index];
+    fn lookupResource(pool: ResourcePool, handle: ResourceHandle) ?*Resource {
+        if (pool.isResourceValid(handle)) {
+            return &pool.resources[handle.index];
+        }
+        return null;
     }
 };
 
@@ -1840,8 +1866,10 @@ const PipelinePool = struct {
 
     fn deinit(pool: *PipelinePool) void {
         for (pool.pipelines) |pipeline| {
-            if (pipeline.pso != null) _ = pipeline.pso.?.Release();
-            if (pipeline.rs != null) _ = pipeline.rs.?.Release();
+            if (pipeline.pso != null)
+                _ = pipeline.pso.?.Release();
+            if (pipeline.rs != null)
+                _ = pipeline.rs.?.Release();
         }
         pool.map.deinit(std.heap.page_allocator);
         std.heap.page_allocator.free(pool.pipelines);
