@@ -8,7 +8,6 @@ extern fn cbtAlignedAllocSetCustomAligned(
     free: fn (memblock: ?*anyopaque) callconv(.C) void,
 ) void;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{ .thread_safe = false }){};
 var allocator: ?std.mem.Allocator = null;
 var allocations: ?std.AutoHashMap(usize, usize) = null;
 var mutex: Mutex = .{};
@@ -38,9 +37,9 @@ export fn freeFunc(memblock: ?*anyopaque) callconv(.C) void {
     }
 }
 
-pub fn init() void {
+pub fn init(alloc: std.mem.Allocator) void {
     std.debug.assert(allocator == null and allocations == null);
-    allocator = gpa.allocator();
+    allocator = alloc;
     allocations = std.AutoHashMap(usize, usize).init(allocator.?);
     allocations.?.ensureTotalCapacity(1024) catch unreachable;
     cbtAlignedAllocSetCustomAligned(allocFunc, freeFunc);
@@ -50,11 +49,6 @@ pub fn deinit() void {
     allocations.?.deinit();
     allocations = null;
     allocator = null;
-    if (gpa.deinit()) {
-        if (builtin.mode == .Debug)
-            @panic("zbullet: Memory leak detected.");
-    }
-    gpa = .{};
 }
 
 pub const World = opaque {
@@ -614,7 +608,7 @@ pub const DebugDrawer = struct {
 
 test "zbullet.world.gravity" {
     const zm = @import("zmath");
-    init();
+    init(std.testing.allocator);
     defer deinit();
 
     const world = try World.init(.{});
@@ -635,7 +629,7 @@ test "zbullet.world.gravity" {
 }
 
 test "zbullet.shape.box" {
-    init();
+    init(std.testing.allocator);
     defer deinit();
     {
         const box = try BoxShape.init(&.{ 4.0, 4.0, 4.0 });
@@ -681,7 +675,7 @@ test "zbullet.shape.box" {
 }
 
 test "zbullet.shape.sphere" {
-    init();
+    init(std.testing.allocator);
     defer deinit();
     {
         const sphere = try SphereShape.init(3.0);
@@ -725,7 +719,7 @@ test "zbullet.shape.sphere" {
 }
 
 test "zbullet.shape.capsule" {
-    init();
+    init(std.testing.allocator);
     defer deinit();
     const capsule = try CapsuleShape.init(2.0, 1.0, .y);
     defer capsule.deinit();
@@ -739,7 +733,7 @@ test "zbullet.shape.capsule" {
 }
 
 test "zbullet.shape.cylinder" {
-    init();
+    init(std.testing.allocator);
     defer deinit();
     const cylinder = try CylinderShape.init(&.{ 1.0, 2.0, 3.0 }, .y);
     defer cylinder.deinit();
@@ -762,7 +756,7 @@ test "zbullet.shape.cylinder" {
 
 test "zbullet.shape.compound" {
     const zm = @import("zmath");
-    init();
+    init(std.testing.allocator);
     defer deinit();
 
     const cshape = try CompoundShape.init(.{});
@@ -805,7 +799,7 @@ test "zbullet.shape.compound" {
 }
 
 test "zbullet.shape.trimesh" {
-    init();
+    init(std.testing.allocator);
     defer deinit();
     const trimesh = try TriangleMeshShape.init();
     const triangles = [3]u32{ 0, 1, 2 };
@@ -826,7 +820,7 @@ test "zbullet.shape.trimesh" {
 }
 
 test "zbullet.body.basic" {
-    init();
+    init(std.testing.allocator);
     defer deinit();
     {
         const world = try World.init(.{});

@@ -446,7 +446,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     // Init zbullet library.
-    zbt.init();
+    zbt.init(allocator);
     defer zbt.deinit();
 
     var demo = try init(allocator);
