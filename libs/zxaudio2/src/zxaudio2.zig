@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const xaudio2 = zwin32.xaudio2;
 const mf = zwin32.mf;
 const wasapi = zwin32.wasapi;
@@ -29,7 +29,7 @@ const StopOnBufferEnd_VoiceCallback = struct {
 
     const Self = @This();
 
-    fn OnBufferEnd(_: *Self, context: ?*anyopaque) callconv(w.WINAPI) void {
+    fn OnBufferEnd(_: *Self, context: ?*anyopaque) callconv(w32.WINAPI) void {
         const voice = @ptrCast(*xaudio2.ISourceVoice, @alignCast(8, context));
         hrPanicOnFail(voice.Stop(0, xaudio2.COMMIT_NOW));
     }
@@ -46,12 +46,12 @@ const StopOnBufferEnd_VoiceCallback = struct {
         },
     };
 
-    fn OnVoiceProcessingPassStart(_: *Self, _: w.UINT32) callconv(w.WINAPI) void {}
-    fn OnVoiceProcessingPassEnd(_: *Self) callconv(w.WINAPI) void {}
-    fn OnStreamEnd(_: *Self) callconv(w.WINAPI) void {}
-    fn OnBufferStart(_: *Self, _: ?*anyopaque) callconv(w.WINAPI) void {}
-    fn OnLoopEnd(_: *Self, _: ?*anyopaque) callconv(w.WINAPI) void {}
-    fn OnVoiceError(_: *Self, _: ?*anyopaque, _: w.HRESULT) callconv(w.WINAPI) void {}
+    fn OnVoiceProcessingPassStart(_: *Self, _: w32.UINT32) callconv(w32.WINAPI) void {}
+    fn OnVoiceProcessingPassEnd(_: *Self) callconv(w32.WINAPI) void {}
+    fn OnStreamEnd(_: *Self) callconv(w32.WINAPI) void {}
+    fn OnBufferStart(_: *Self, _: ?*anyopaque) callconv(w32.WINAPI) void {}
+    fn OnLoopEnd(_: *Self, _: ?*anyopaque) callconv(w32.WINAPI) void {}
+    fn OnVoiceError(_: *Self, _: ?*anyopaque, _: w32.HRESULT) callconv(w32.WINAPI) void {}
 };
 var stop_on_buffer_end_vcb: StopOnBufferEnd_VoiceCallback = .{};
 
@@ -71,10 +71,10 @@ pub const AudioContext = struct {
             device.SetDebugConfiguration(&.{
                 .TraceMask = xaudio2.LOG_ERRORS | xaudio2.LOG_WARNINGS | xaudio2.LOG_INFO,
                 .BreakMask = 0,
-                .LogThreadID = w.TRUE,
-                .LogFileline = w.FALSE,
-                .LogFunctionName = w.FALSE,
-                .LogTiming = w.FALSE,
+                .LogThreadID = w32.TRUE,
+                .LogFileline = w32.FALSE,
+                .LogFunctionName = w32.FALSE,
+                .LogTiming = w32.FALSE,
             }, null);
         }
 
@@ -182,7 +182,7 @@ pub const Buffer = struct {
 };
 
 pub const Stream = struct {
-    critical_section: w.CRITICAL_SECTION,
+    critical_section: w32.CRITICAL_SECTION,
     allocator: std.mem.Allocator,
     voice: *xaudio2.ISourceVoice,
     voice_cb: *VoiceCallback,
@@ -196,8 +196,8 @@ pub const Stream = struct {
             break :blk cb;
         };
 
-        var cs: w.CRITICAL_SECTION = undefined;
-        w.kernel32.InitializeCriticalSection(&cs);
+        var cs: w32.CRITICAL_SECTION = undefined;
+        w32.kernel32.InitializeCriticalSection(&cs);
 
         const source_reader_cb = blk: {
             var cb = allocator.create(SourceReaderCallback) catch unreachable;
@@ -213,7 +213,7 @@ pub const Stream = struct {
 
             hrPanicOnFail(attribs.SetUnknown(
                 &mf.SOURCE_READER_ASYNC_CALLBACK,
-                @ptrCast(*w.IUnknown, source_reader_cb),
+                @ptrCast(*w32.IUnknown, source_reader_cb),
             ));
 
             var source_reader: *mf.ISourceReader = undefined;
@@ -232,7 +232,7 @@ pub const Stream = struct {
             hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BITS_PER_SAMPLE, 16));
             hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_BLOCK_ALIGNMENT, 4));
             hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_AVG_BYTES_PER_SECOND, 4 * sample_rate));
-            hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
+            hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w32.TRUE));
             hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
             break :blk source_reader;
@@ -282,18 +282,18 @@ pub const Stream = struct {
             const refcount = stream.reader_cb.Release();
             assert(refcount == 0);
         }
-        w.kernel32.DeleteCriticalSection(&stream.critical_section);
+        w32.kernel32.DeleteCriticalSection(&stream.critical_section);
         stream.voice.DestroyVoice();
         stream.allocator.destroy(stream.voice_cb);
         stream.allocator.destroy(stream);
     }
 
     pub fn setCurrentPosition(stream: *Stream, position: i64) void {
-        w.kernel32.EnterCriticalSection(&stream.critical_section);
-        defer w.kernel32.LeaveCriticalSection(&stream.critical_section);
+        w32.kernel32.EnterCriticalSection(&stream.critical_section);
+        defer w32.kernel32.LeaveCriticalSection(&stream.critical_section);
 
-        const pos = w.PROPVARIANT{ .vt = w.VT_I8, .u = .{ .hVal = position } };
-        hrPanicOnFail(stream.reader.SetCurrentPosition(&w.GUID_NULL, &pos));
+        const pos = w32.PROPVARIANT{ .vt = w32.VT_I8, .u = .{ .hVal = position } };
+        hrPanicOnFail(stream.reader.SetCurrentPosition(&w32.GUID_NULL, &pos));
         hrPanicOnFail(stream.reader.ReadSample(
             mf.SOURCE_READER_FIRST_AUDIO_STREAM,
             0,
@@ -305,8 +305,8 @@ pub const Stream = struct {
     }
 
     fn onBufferEnd(stream: *Stream, buffer: *mf.IMediaBuffer) void {
-        w.kernel32.EnterCriticalSection(&stream.critical_section);
-        defer w.kernel32.LeaveCriticalSection(&stream.critical_section);
+        w32.kernel32.EnterCriticalSection(&stream.critical_section);
+        defer w32.kernel32.LeaveCriticalSection(&stream.critical_section);
 
         hrPanicOnFail(buffer.Unlock());
         const refcount = buffer.Release();
@@ -318,20 +318,20 @@ pub const Stream = struct {
 
     fn onReadSample(
         stream: *Stream,
-        status: w.HRESULT,
-        _: w.DWORD,
-        stream_flags: w.DWORD,
-        _: w.LONGLONG,
+        status: w32.HRESULT,
+        _: w32.DWORD,
+        stream_flags: w32.DWORD,
+        _: w32.LONGLONG,
         sample: ?*mf.ISample,
     ) void {
-        w.kernel32.EnterCriticalSection(&stream.critical_section);
-        defer w.kernel32.LeaveCriticalSection(&stream.critical_section);
+        w32.kernel32.EnterCriticalSection(&stream.critical_section);
+        defer w32.kernel32.LeaveCriticalSection(&stream.critical_section);
 
         if ((stream_flags & mf.SOURCE_READERF_ENDOFSTREAM) != 0) {
             setCurrentPosition(stream, 0);
             return;
         }
-        if (status != w.S_OK or sample == null) {
+        if (status != w32.S_OK or sample == null) {
             return;
         }
 
@@ -364,7 +364,7 @@ pub const Stream = struct {
             return .{ .stream = null };
         }
 
-        fn OnBufferEnd(voice_cb: *VoiceCallback, context: ?*anyopaque) callconv(w.WINAPI) void {
+        fn OnBufferEnd(voice_cb: *VoiceCallback, context: ?*anyopaque) callconv(w32.WINAPI) void {
             voice_cb.stream.?.onBufferEnd(@ptrCast(*mf.IMediaBuffer, @alignCast(8, context)));
         }
 
@@ -380,12 +380,12 @@ pub const Stream = struct {
             },
         };
 
-        fn OnVoiceProcessingPassStart(_: *VoiceCallback, _: w.UINT32) callconv(w.WINAPI) void {}
-        fn OnVoiceProcessingPassEnd(_: *VoiceCallback) callconv(w.WINAPI) void {}
-        fn OnStreamEnd(_: *VoiceCallback) callconv(w.WINAPI) void {}
-        fn OnBufferStart(_: *VoiceCallback, _: ?*anyopaque) callconv(w.WINAPI) void {}
-        fn OnLoopEnd(_: *VoiceCallback, _: ?*anyopaque) callconv(w.WINAPI) void {}
-        fn OnVoiceError(_: *VoiceCallback, _: ?*anyopaque, _: w.HRESULT) callconv(w.WINAPI) void {}
+        fn OnVoiceProcessingPassStart(_: *VoiceCallback, _: w32.UINT32) callconv(w32.WINAPI) void {}
+        fn OnVoiceProcessingPassEnd(_: *VoiceCallback) callconv(w32.WINAPI) void {}
+        fn OnStreamEnd(_: *VoiceCallback) callconv(w32.WINAPI) void {}
+        fn OnBufferStart(_: *VoiceCallback, _: ?*anyopaque) callconv(w32.WINAPI) void {}
+        fn OnLoopEnd(_: *VoiceCallback, _: ?*anyopaque) callconv(w32.WINAPI) void {}
+        fn OnVoiceError(_: *VoiceCallback, _: ?*anyopaque, _: w32.HRESULT) callconv(w32.WINAPI) void {}
     };
 
     const SourceReaderCallback = struct {
@@ -416,31 +416,31 @@ pub const Stream = struct {
 
         fn QueryInterface(
             source_reader_cb: *SourceReaderCallback,
-            guid: *const w.GUID,
+            guid: *const w32.GUID,
             outobj: ?*?*anyopaque,
-        ) callconv(w.WINAPI) w.HRESULT {
+        ) callconv(w32.WINAPI) w32.HRESULT {
             assert(outobj != null);
 
-            if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w.IID_IUnknown))) {
+            if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w32.IID_IUnknown))) {
                 outobj.?.* = source_reader_cb;
                 _ = source_reader_cb.AddRef();
-                return w.S_OK;
+                return w32.S_OK;
             } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&mf.IID_ISourceReaderCallback))) {
                 outobj.?.* = source_reader_cb;
                 _ = source_reader_cb.AddRef();
-                return w.S_OK;
+                return w32.S_OK;
             }
 
             outobj.?.* = null;
-            return w.E_NOINTERFACE;
+            return w32.E_NOINTERFACE;
         }
 
-        fn AddRef(source_reader_cb: *SourceReaderCallback) callconv(w.WINAPI) w.ULONG {
+        fn AddRef(source_reader_cb: *SourceReaderCallback) callconv(w32.WINAPI) w32.ULONG {
             const prev_refcount = @atomicRmw(u32, &source_reader_cb.refcount, .Add, 1, .Monotonic);
             return prev_refcount + 1;
         }
 
-        fn Release(source_reader_cb: *SourceReaderCallback) callconv(w.WINAPI) w.ULONG {
+        fn Release(source_reader_cb: *SourceReaderCallback) callconv(w32.WINAPI) w32.ULONG {
             const prev_refcount = @atomicRmw(u32, &source_reader_cb.refcount, .Sub, 1, .Monotonic);
             assert(prev_refcount > 0);
             if (prev_refcount == 1) {
@@ -451,22 +451,22 @@ pub const Stream = struct {
 
         fn OnReadSample(
             source_reader_cb: *SourceReaderCallback,
-            status: w.HRESULT,
-            stream_index: w.DWORD,
-            stream_flags: w.DWORD,
-            timestamp: w.LONGLONG,
+            status: w32.HRESULT,
+            stream_index: w32.DWORD,
+            stream_flags: w32.DWORD,
+            timestamp: w32.LONGLONG,
             sample: ?*mf.ISample,
-        ) callconv(w.WINAPI) w.HRESULT {
+        ) callconv(w32.WINAPI) w32.HRESULT {
             source_reader_cb.stream.?.onReadSample(status, stream_index, stream_flags, timestamp, sample);
-            return w.S_OK;
+            return w32.S_OK;
         }
 
-        fn OnFlush(_: *SourceReaderCallback, _: w.DWORD) callconv(w.WINAPI) w.HRESULT {
-            return w.S_OK;
+        fn OnFlush(_: *SourceReaderCallback, _: w32.DWORD) callconv(w32.WINAPI) w32.HRESULT {
+            return w32.S_OK;
         }
 
-        fn OnEvent(_: *SourceReaderCallback, _: w.DWORD, _: *mf.IMediaEvent) callconv(w.WINAPI) w.HRESULT {
-            return w.S_OK;
+        fn OnEvent(_: *SourceReaderCallback, _: w32.DWORD, _: *mf.IMediaEvent) callconv(w32.WINAPI) w32.HRESULT {
+            return w32.S_OK;
         }
     };
 };
@@ -490,12 +490,12 @@ pub fn loadBufferData(allocator: std.mem.Allocator, audio_file_path: [:0]const u
         &mf.MT_AUDIO_AVG_BYTES_PER_SECOND,
         optimal_voice_format.nBlockAlign * optimal_voice_format.nSamplesPerSec,
     ));
-    hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w.TRUE));
+    hrPanicOnFail(media_type.SetUINT32(&mf.MT_ALL_SAMPLES_INDEPENDENT, w32.TRUE));
     hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
     var data = std.ArrayList(u8).init(allocator);
     while (true) {
-        var flags: w.DWORD = 0;
+        var flags: w32.DWORD = 0;
         var sample: ?*mf.ISample = null;
         defer {
             if (sample) |s| _ = s.Release();
@@ -563,9 +563,9 @@ const SimpleAudioProcessor = extern struct {
     };
 
     const info = xapo.REGISTRATION_PROPERTIES{
-        .clsid = w.GUID_NULL,
-        .FriendlyName = [_]w.WCHAR{0} ** xapo.REGISTRATION_STRING_LENGTH,
-        .CopyrightInfo = [_]w.WCHAR{0} ** xapo.REGISTRATION_STRING_LENGTH,
+        .clsid = w32.GUID_NULL,
+        .FriendlyName = [_]w32.WCHAR{0} ** xapo.REGISTRATION_STRING_LENGTH,
+        .CopyrightInfo = [_]w32.WCHAR{0} ** xapo.REGISTRATION_STRING_LENGTH,
         .MajorVersion = 1,
         .MinorVersion = 0,
         .Flags = xapo.FLAG_CHANNELS_MUST_MATCH |
@@ -582,33 +582,33 @@ const SimpleAudioProcessor = extern struct {
 
     fn QueryInterface(
         self: *Self,
-        guid: *const w.GUID,
+        guid: *const w32.GUID,
         outobj: ?*?*anyopaque,
-    ) callconv(w.WINAPI) w.HRESULT {
+    ) callconv(w32.WINAPI) w32.HRESULT {
         assert(outobj != null);
 
-        if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w.IID_IUnknown))) {
+        if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&w32.IID_IUnknown))) {
             outobj.?.* = self;
             _ = self.AddRef();
-            return w.S_OK;
+            return w32.S_OK;
         } else if (std.mem.eql(u8, std.mem.asBytes(guid), std.mem.asBytes(&xapo.IID_IXAPO))) {
             outobj.?.* = self;
             _ = self.AddRef();
-            return w.S_OK;
+            return w32.S_OK;
         }
 
         outobj.?.* = null;
-        return w.E_NOINTERFACE;
+        return w32.E_NOINTERFACE;
     }
 
-    fn AddRef(self: *Self) callconv(w.WINAPI) w.ULONG {
+    fn AddRef(self: *Self) callconv(w32.WINAPI) w32.ULONG {
         return @atomicRmw(u32, &self.refcount, .Add, 1, .Monotonic) + 1;
     }
 
-    fn Release(self: *Self) callconv(w.WINAPI) w.ULONG {
+    fn Release(self: *Self) callconv(w32.WINAPI) w32.ULONG {
         const prev_refcount = @atomicRmw(u32, &self.refcount, .Sub, 1, .Monotonic);
         if (prev_refcount == 1) {
-            w.ole32.CoTaskMemFree(self);
+            w32.ole32.CoTaskMemFree(self);
         }
         return prev_refcount - 1;
     }
@@ -616,14 +616,14 @@ const SimpleAudioProcessor = extern struct {
     fn GetRegistrationProperties(
         _: *Self,
         props: **xapo.REGISTRATION_PROPERTIES,
-    ) callconv(w.WINAPI) w.HRESULT {
-        const ptr = w.CoTaskMemAlloc(@sizeOf(xapo.REGISTRATION_PROPERTIES));
+    ) callconv(w32.WINAPI) w32.HRESULT {
+        const ptr = w32.CoTaskMemAlloc(@sizeOf(xapo.REGISTRATION_PROPERTIES));
         if (ptr != null) {
             props.* = @ptrCast(*xapo.REGISTRATION_PROPERTIES, @alignCast(8, ptr.?));
             props.*.* = info;
-            return w.S_OK;
+            return w32.S_OK;
         }
-        return w.E_FAIL;
+        return w32.E_FAIL;
     }
 
     fn IsInputFormatSupported(
@@ -631,7 +631,7 @@ const SimpleAudioProcessor = extern struct {
         _: *const WAVEFORMATEX,
         requested_input_format: *const WAVEFORMATEX,
         supported_input_format: ?**WAVEFORMATEX,
-    ) callconv(w.WINAPI) w.HRESULT {
+    ) callconv(w32.WINAPI) w32.HRESULT {
         if (requested_input_format.wFormatTag != wasapi.WAVE_FORMAT_IEEE_FLOAT or
             requested_input_format.nChannels < xapo.MIN_CHANNELS or
             requested_input_format.nChannels > xapo.MAX_CHANNELS or
@@ -655,7 +655,7 @@ const SimpleAudioProcessor = extern struct {
             }
             return xapo.E_FORMAT_UNSUPPORTED;
         }
-        return w.S_OK;
+        return w32.S_OK;
     }
 
     fn IsOutputFormatSupported(
@@ -663,7 +663,7 @@ const SimpleAudioProcessor = extern struct {
         _: *const WAVEFORMATEX,
         requested_output_format: *const WAVEFORMATEX,
         supported_output_format: ?**WAVEFORMATEX,
-    ) callconv(w.WINAPI) w.HRESULT {
+    ) callconv(w32.WINAPI) w32.HRESULT {
         if (requested_output_format.wFormatTag != wasapi.WAVE_FORMAT_IEEE_FLOAT or
             requested_output_format.nChannels < xapo.MIN_CHANNELS or
             requested_output_format.nChannels > xapo.MAX_CHANNELS or
@@ -687,24 +687,24 @@ const SimpleAudioProcessor = extern struct {
             }
             return xapo.E_FORMAT_UNSUPPORTED;
         }
-        return w.S_OK;
+        return w32.S_OK;
     }
 
-    fn Initialize(_: *Self, data: ?*const anyopaque, data_size: w.UINT32) callconv(w.WINAPI) w.HRESULT {
+    fn Initialize(_: *Self, data: ?*const anyopaque, data_size: w32.UINT32) callconv(w32.WINAPI) w32.HRESULT {
         _ = data;
         _ = data_size;
-        return w.S_OK;
+        return w32.S_OK;
     }
 
-    fn Reset(_: *Self) callconv(w.WINAPI) void {}
+    fn Reset(_: *Self) callconv(w32.WINAPI) void {}
 
     fn LockForProcess(
         self: *Self,
-        num_input_params: w.UINT32,
+        num_input_params: w32.UINT32,
         input_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
-        num_output_params: w.UINT32,
+        num_output_params: w32.UINT32,
         output_params: ?[*]const xapo.LOCKFORPROCESS_BUFFER_PARAMETERS,
-    ) callconv(w.WINAPI) w.HRESULT {
+    ) callconv(w32.WINAPI) w32.HRESULT {
         assert(self.is_locked == false);
         assert(num_input_params == 1 and num_output_params == 1);
         assert(input_params != null and output_params != null);
@@ -717,10 +717,10 @@ const SimpleAudioProcessor = extern struct {
         self.num_channels = input_params.?[0].pFormat.nChannels;
         self.is_locked = true;
 
-        return w.S_OK;
+        return w32.S_OK;
     }
 
-    fn UnlockForProcess(self: *Self) callconv(w.WINAPI) void {
+    fn UnlockForProcess(self: *Self) callconv(w32.WINAPI) void {
         assert(self.is_locked == true);
         self.num_channels = 0;
         self.is_locked = false;
@@ -728,18 +728,18 @@ const SimpleAudioProcessor = extern struct {
 
     fn Process(
         self: *Self,
-        num_input_params: w.UINT32,
+        num_input_params: w32.UINT32,
         input_params: ?[*]const xapo.PROCESS_BUFFER_PARAMETERS,
-        num_output_params: w.UINT32,
+        num_output_params: w32.UINT32,
         output_params: ?[*]xapo.PROCESS_BUFFER_PARAMETERS,
-        is_enabled: w.BOOL,
-    ) callconv(w.WINAPI) void {
+        is_enabled: w32.BOOL,
+    ) callconv(w32.WINAPI) void {
         assert(self.is_locked and self.num_channels > 0);
         assert(num_input_params == 1 and num_output_params == 1);
         assert(input_params != null and output_params != null);
         assert(input_params.?[0].pBuffer == output_params.?[0].pBuffer);
 
-        if (is_enabled == w.TRUE) {
+        if (is_enabled == w32.TRUE) {
             var samples = @ptrCast([*]f32, @alignCast(16, input_params.?[0].pBuffer)); // XAudio2 aligns data to 16.
             const num_samples = input_params.?[0].ValidFrameCount * self.num_channels;
 
@@ -754,11 +754,11 @@ const SimpleAudioProcessor = extern struct {
         output_params.?[0].BufferFlags = input_params.?[0].BufferFlags;
     }
 
-    fn CalcInputFrames(_: *Self, num_output_frames: w.UINT32) callconv(w.WINAPI) w.UINT32 {
+    fn CalcInputFrames(_: *Self, num_output_frames: w32.UINT32) callconv(w32.WINAPI) w32.UINT32 {
         return num_output_frames;
     }
 
-    fn CalcOutputFrames(_: *Self, num_input_frames: w.UINT32) callconv(w.WINAPI) w.UINT32 {
+    fn CalcOutputFrames(_: *Self, num_input_frames: w32.UINT32) callconv(w32.WINAPI) w32.UINT32 {
         return num_input_frames;
     }
 };
@@ -766,12 +766,12 @@ const SimpleAudioProcessor = extern struct {
 pub fn createSimpleProcessor(
     process: *const fn ([]f32, u32, ?*anyopaque) void,
     context: ?*anyopaque,
-) *w.IUnknown {
-    const ptr = w.CoTaskMemAlloc(@sizeOf(SimpleAudioProcessor)).?;
-    const comptr = @ptrCast(*SimpleAudioProcessor, @alignCast(8, ptr));
+) *w32.IUnknown {
+    const ptr = w32.CoTaskMemAlloc(@sizeOf(SimpleAudioProcessor)).?;
+    const comptr = @ptrCast(*SimpleAudioProcessor, @alignCast(@sizeOf(usize), ptr));
     comptr.* = .{
         .process = process,
         .context = context,
     };
-    return @ptrCast(*w.IUnknown, comptr);
+    return @ptrCast(*w32.IUnknown, comptr);
 }

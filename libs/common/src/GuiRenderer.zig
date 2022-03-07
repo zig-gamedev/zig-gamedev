@@ -3,7 +3,7 @@ pub const GuiRenderer = @This();
 const std = @import("std");
 const assert = std.debug.assert;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
@@ -20,11 +20,11 @@ ib_cpu_addr: [zd3d12.GraphicsContext.max_num_buffered_frames][]align(8) u8,
 
 pub fn init(
     arena: std.mem.Allocator,
-    gr: *zd3d12.GraphicsContext,
+    gctx: *zd3d12.GraphicsContext,
     num_msaa_samples: u32,
     comptime content_dir: []const u8,
 ) GuiRenderer {
-    assert(gr.is_cmdlist_opened);
+    assert(gctx.is_cmdlist_opened);
     assert(c.igGetCurrentContext() != null);
 
     const io = c.igGetIO().?;
@@ -42,7 +42,7 @@ pub fn init(
         };
     };
 
-    const font = gr.createCommittedResource(
+    const font = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, font_info.width, font_info.height, 1),
@@ -50,11 +50,11 @@ pub fn init(
         null,
     ) catch |err| hrPanic(err);
 
-    gr.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
-    gr.addTransitionBarrier(font, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    gctx.updateTex2dSubresource(font, 0, font_info.pixels, font_info.width * 4);
+    gctx.addTransitionBarrier(font, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-    const font_srv = gr.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    gr.device.CreateShaderResourceView(gr.lookupResource(font).?, null, font_srv);
+    const font_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    gctx.device.CreateShaderResourceView(gctx.lookupResource(font).?, null, font_srv);
 
     const pipeline = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
@@ -64,8 +64,8 @@ pub fn init(
         };
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
         pso_desc.RasterizerState.CullMode = .NONE;
-        pso_desc.DepthStencilState.DepthEnable = w.FALSE;
-        pso_desc.BlendState.RenderTarget[0].BlendEnable = w.TRUE;
+        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.BlendState.RenderTarget[0].BlendEnable = w32.TRUE;
         pso_desc.BlendState.RenderTarget[0].SrcBlend = .SRC_ALPHA;
         pso_desc.BlendState.RenderTarget[0].DestBlend = .INV_SRC_ALPHA;
         pso_desc.BlendState.RenderTarget[0].BlendOp = .ADD;
@@ -81,7 +81,7 @@ pub fn init(
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
         pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
-        break :blk gr.createGraphicsShaderPipeline(
+        break :blk gctx.createGraphicsShaderPipeline(
             arena,
             &pso_desc,
             content_dir ++ "shaders/imgui.vs.cso",
@@ -99,19 +99,19 @@ pub fn init(
     };
 }
 
-pub fn deinit(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
-    gr.finishGpuCommands();
-    gr.destroyPipeline(gui.pipeline);
-    gr.destroyResource(gui.font);
+pub fn deinit(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
+    gctx.finishGpuCommands();
+    gctx.destroyPipeline(gui.pipeline);
+    gctx.destroyResource(gui.font);
     for (gui.vb) |vb|
-        gr.destroyResource(vb);
+        gctx.destroyResource(vb);
     for (gui.ib) |ib|
-        gr.destroyResource(ib);
+        gctx.destroyResource(ib);
     gui.* = undefined;
 }
 
-pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
-    assert(gr.is_cmdlist_opened);
+pub fn draw(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
+    assert(gctx.is_cmdlist_opened);
     assert(c.igGetCurrentContext() != null);
 
     c.igRender();
@@ -122,23 +122,23 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     const num_vertices = @intCast(u32, draw_data.?.*.TotalVtxCount);
     const num_indices = @intCast(u32, draw_data.?.*.TotalIdxCount);
 
-    var vb = gui.vb[gr.frame_index];
-    var ib = gui.ib[gr.frame_index];
+    var vb = gui.vb[gctx.frame_index];
+    var ib = gui.ib[gctx.frame_index];
 
-    if (gr.getResourceSize(vb) < num_vertices * @sizeOf(c.ImDrawVert)) {
-        gr.destroyResource(vb);
+    if (gctx.getResourceSize(vb) < num_vertices * @sizeOf(c.ImDrawVert)) {
+        gctx.destroyResource(vb);
         const new_size = (num_vertices + 5_000) * @sizeOf(c.ImDrawVert);
-        vb = gr.createCommittedResource(
+        vb = gctx.createCommittedResource(
             .UPLOAD,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(new_size),
             d3d12.RESOURCE_STATE_GENERIC_READ,
             null,
         ) catch |err| hrPanic(err);
-        gui.vb[gr.frame_index] = vb;
-        gui.vb_cpu_addr[gr.frame_index] = blk: {
+        gui.vb[gctx.frame_index] = vb;
+        gui.vb_cpu_addr[gctx.frame_index] = blk: {
             var ptr: ?[*]align(8) u8 = null;
-            hrPanicOnFail(gr.lookupResource(vb).?.Map(
+            hrPanicOnFail(gctx.lookupResource(vb).?.Map(
                 0,
                 &.{ .Begin = 0, .End = 0 },
                 @ptrCast(*?*anyopaque, &ptr),
@@ -146,20 +146,20 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
             break :blk ptr.?[0..new_size];
         };
     }
-    if (gr.getResourceSize(ib) < num_indices * @sizeOf(c.ImDrawIdx)) {
-        gr.destroyResource(ib);
+    if (gctx.getResourceSize(ib) < num_indices * @sizeOf(c.ImDrawIdx)) {
+        gctx.destroyResource(ib);
         const new_size = (num_indices + 10_000) * @sizeOf(c.ImDrawIdx);
-        ib = gr.createCommittedResource(
+        ib = gctx.createCommittedResource(
             .UPLOAD,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(new_size),
             d3d12.RESOURCE_STATE_GENERIC_READ,
             null,
         ) catch |err| hrPanic(err);
-        gui.ib[gr.frame_index] = ib;
-        gui.ib_cpu_addr[gr.frame_index] = blk: {
+        gui.ib[gctx.frame_index] = ib;
+        gui.ib_cpu_addr[gctx.frame_index] = blk: {
             var ptr: ?[*]align(8) u8 = null;
-            hrPanicOnFail(gr.lookupResource(ib).?.Map(
+            hrPanicOnFail(gctx.lookupResource(ib).?.Map(
                 0,
                 &.{ .Begin = 0, .End = 0 },
                 @ptrCast(*?*anyopaque, &ptr),
@@ -169,8 +169,8 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     }
     // Update vertex and index buffers.
     {
-        var vb_slice = std.mem.bytesAsSlice(c.ImDrawVert, gui.vb_cpu_addr[gr.frame_index]);
-        var ib_slice = std.mem.bytesAsSlice(c.ImDrawIdx, gui.ib_cpu_addr[gr.frame_index]);
+        var vb_slice = std.mem.bytesAsSlice(c.ImDrawVert, gui.vb_cpu_addr[gctx.frame_index]);
+        var ib_slice = std.mem.bytesAsSlice(c.ImDrawIdx, gui.ib_cpu_addr[gctx.frame_index]);
         var vb_idx: u32 = 0;
         var ib_idx: u32 = 0;
         var cmdlist_idx: u32 = 0;
@@ -198,7 +198,7 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     const display_y = draw_data.?.*.DisplayPos.y;
     const display_w = draw_data.?.*.DisplaySize.x;
     const display_h = draw_data.?.*.DisplaySize.y;
-    gr.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
+    gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
         .TopLeftX = 0.0,
         .TopLeftY = 0.0,
         .Width = display_w,
@@ -206,31 +206,31 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
         .MinDepth = 0.0,
         .MaxDepth = 1.0,
     }});
-    gr.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-    gr.setCurrentPipeline(gui.pipeline);
+    gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    gctx.setCurrentPipeline(gui.pipeline);
     {
         const l = draw_data.?.*.DisplayPos.x;
         const r = draw_data.?.*.DisplayPos.x + draw_data.?.*.DisplaySize.x;
         const t = draw_data.?.*.DisplayPos.y;
         const b = draw_data.?.*.DisplayPos.y + draw_data.?.*.DisplaySize.y;
 
-        const mem = gr.allocateUploadMemory([4][4]f32, 1);
+        const mem = gctx.allocateUploadMemory([4][4]f32, 1);
         mem.cpu_slice[0] = [4][4]f32{
             [4]f32{ 2.0 / (r - l), 0.0, 0.0, 0.0 },
             [4]f32{ 0.0, 2.0 / (t - b), 0.0, 0.0 },
             [4]f32{ 0.0, 0.0, 0.5, 0.0 },
             [4]f32{ (r + l) / (l - r), (t + b) / (b - t), 0.5, 1.0 },
         };
-        gr.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
     }
-    gr.cmdlist.SetGraphicsRootDescriptorTable(1, gr.copyDescriptorsToGpuHeap(1, gui.font_srv));
-    gr.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = gr.lookupResource(vb).?.GetGPUVirtualAddress(),
+    gctx.cmdlist.SetGraphicsRootDescriptorTable(1, gctx.copyDescriptorsToGpuHeap(1, gui.font_srv));
+    gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+        .BufferLocation = gctx.lookupResource(vb).?.GetGPUVirtualAddress(),
         .SizeInBytes = num_vertices * @sizeOf(c.ImDrawVert),
         .StrideInBytes = @sizeOf(c.ImDrawVert),
     }});
-    gr.cmdlist.IASetIndexBuffer(&.{
-        .BufferLocation = gr.lookupResource(ib).?.GetGPUVirtualAddress(),
+    gctx.cmdlist.IASetIndexBuffer(&.{
+        .BufferLocation = gctx.lookupResource(ib).?.GetGPUVirtualAddress(),
         .SizeInBytes = num_indices * @sizeOf(c.ImDrawIdx),
         .Format = if (@sizeOf(c.ImDrawIdx) == 2) .R16_UINT else .R32_UINT,
     });
@@ -258,8 +258,8 @@ pub fn draw(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
                     .bottom = @floatToInt(i32, cmd.*.ClipRect.w - display_y),
                 }};
                 if (rect[0].right > rect[0].left and rect[0].bottom > rect[0].top) {
-                    gr.cmdlist.RSSetScissorRects(1, &rect);
-                    gr.cmdlist.DrawIndexedInstanced(
+                    gctx.cmdlist.RSSetScissorRects(1, &rect);
+                    gctx.cmdlist.DrawIndexedInstanced(
                         cmd.*.ElemCount,
                         1,
                         cmd.*.IdxOffset + global_idx_offset,
