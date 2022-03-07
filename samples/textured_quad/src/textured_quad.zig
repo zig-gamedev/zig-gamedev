@@ -2,7 +2,7 @@ const std = @import("std");
 const math = std.math;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const hrPanic = zwin32.hrPanic;
@@ -33,9 +33,9 @@ const DemoState = struct {
     const window_width = 1024;
     const window_height = 1024;
 
-    window: w.HWND,
-    grfx: zd3d12.GraphicsContext,
-    gui: GuiRenderer,
+    window: w32.HWND,
+    gctx: zd3d12.GraphicsContext,
+    guir: GuiRenderer,
     frame_stats: common.FrameStats,
     pipeline: zd3d12.PipelineHandle,
     vertex_buffer: zd3d12.ResourceHandle,
@@ -44,11 +44,11 @@ const DemoState = struct {
     texture_srv: d3d12.CPU_DESCRIPTOR_HANDLE,
     mipmap_level: i32,
 
-    fn init(gpa_allocator: std.mem.Allocator) DemoState {
-        const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-        var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
+    fn init(allocator: std.mem.Allocator) !DemoState {
+        const window = try common.initWindow(allocator, window_name, window_width, window_height);
+        var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
-        var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+        var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
         defer arena_allocator_state.deinit();
         const arena_allocator = arena_allocator_state.allocator();
 
@@ -63,13 +63,13 @@ const DemoState = struct {
             pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
             pso_desc.PrimitiveTopologyType = .TRIANGLE;
             pso_desc.RasterizerState.CullMode = .NONE;
-            pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+            pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
             pso_desc.InputLayout = .{
                 .pInputElementDescs = &input_layout_desc,
                 .NumElements = input_layout_desc.len,
             };
 
-            break :blk grfx.createGraphicsShaderPipeline(
+            break :blk gctx.createGraphicsShaderPipeline(
                 arena_allocator,
                 &pso_desc,
                 content_dir ++ "shaders/textured_quad.vs.cso",
@@ -77,7 +77,7 @@ const DemoState = struct {
             );
         };
 
-        const vertex_buffer = grfx.createCommittedResource(
+        const vertex_buffer = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(num_mipmaps * 4 * @sizeOf(Vertex)),
@@ -85,7 +85,7 @@ const DemoState = struct {
             null,
         ) catch |err| hrPanic(err);
 
-        const index_buffer = grfx.createCommittedResource(
+        const index_buffer = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(4 * @sizeOf(u32)),
@@ -93,22 +93,22 @@ const DemoState = struct {
             null,
         ) catch |err| hrPanic(err);
 
-        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM, content_dir);
 
-        grfx.beginFrame();
+        gctx.beginFrame();
 
-        const gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
+        const guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
-        const texture = grfx.createAndUploadTex2dFromFile(
+        const texture = gctx.createAndUploadTex2dFromFile(
             content_dir ++ "genart_0025_5.png",
             .{}, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 
-        mipgen.generateMipmaps(&grfx, texture);
+        mipgen.generateMipmaps(&gctx, texture);
 
-        const texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(
-            grfx.lookupResource(texture).?,
+        const texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        gctx.device.CreateShaderResourceView(
+            gctx.lookupResource(texture).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC{
                 .Format = .UNKNOWN,
                 .ViewDimension = .TEXTURE2D,
@@ -127,7 +127,7 @@ const DemoState = struct {
 
         // Fill vertex buffer.
         {
-            const upload_verts = grfx.allocateUploadBufferRegion(Vertex, num_mipmaps * 4);
+            const upload_verts = gctx.allocateUploadBufferRegion(Vertex, num_mipmaps * 4);
             var mipmap_index: u32 = 0;
             var r: f32 = 1.0;
             while (mipmap_index < num_mipmaps) : (mipmap_index += 1) {
@@ -150,8 +150,8 @@ const DemoState = struct {
                 };
                 r *= 0.5;
             }
-            grfx.cmdlist.CopyBufferRegion(
-                grfx.lookupResource(vertex_buffer).?,
+            gctx.cmdlist.CopyBufferRegion(
+                gctx.lookupResource(vertex_buffer).?,
                 0,
                 upload_verts.buffer,
                 upload_verts.buffer_offset,
@@ -160,14 +160,14 @@ const DemoState = struct {
         }
         // Fill index buffer.
         {
-            const upload_indices = grfx.allocateUploadBufferRegion(u32, 4);
+            const upload_indices = gctx.allocateUploadBufferRegion(u32, 4);
             upload_indices.cpu_slice[0] = 0;
             upload_indices.cpu_slice[1] = 1;
             upload_indices.cpu_slice[2] = 2;
             upload_indices.cpu_slice[3] = 3;
 
-            grfx.cmdlist.CopyBufferRegion(
-                grfx.lookupResource(index_buffer).?,
+            gctx.cmdlist.CopyBufferRegion(
+                gctx.lookupResource(index_buffer).?,
                 0,
                 upload_indices.buffer,
                 upload_indices.buffer_offset,
@@ -175,22 +175,22 @@ const DemoState = struct {
             );
         }
 
-        grfx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
-        grfx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+        gctx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        gctx.flushResourceBarriers();
 
-        grfx.endFrame();
-        grfx.finishGpuCommands();
+        gctx.endFrame();
+        gctx.finishGpuCommands();
 
         // NOTE(mziulek):
         // We need to call 'deinit' explicitly - we can't rely on 'defer' in this case because it runs *after*
-        // 'grfx' is copied in 'return' statement below.
-        mipgen.deinit(&grfx);
+        // 'gctx' is copied in 'return' statement below.
+        mipgen.deinit(&gctx);
 
-        return .{
-            .grfx = grfx,
-            .gui = gui,
+        return DemoState{
+            .gctx = gctx,
+            .guir = guir,
             .window = window,
             .frame_stats = common.FrameStats.init(),
             .pipeline = pipeline,
@@ -202,16 +202,16 @@ const DemoState = struct {
         };
     }
 
-    fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
-        demo.grfx.finishGpuCommands();
-        demo.gui.deinit(&demo.grfx);
-        demo.grfx.deinit(gpa_allocator);
-        common.deinitWindow(gpa_allocator);
+    fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
+        demo.gctx.finishGpuCommands();
+        demo.guir.deinit(&demo.gctx);
+        demo.gctx.deinit(allocator);
+        common.deinitWindow(allocator);
         demo.* = undefined;
     }
 
     fn update(demo: *DemoState) void {
-        demo.frame_stats.update(demo.grfx.window, window_name);
+        demo.frame_stats.update(demo.gctx.window, window_name);
 
         common.newImGuiFrame(demo.frame_stats.delta_time);
 
@@ -227,47 +227,47 @@ const DemoState = struct {
     }
 
     fn draw(demo: *DemoState) void {
-        var grfx = &demo.grfx;
-        grfx.beginFrame();
+        var gctx = &demo.gctx;
+        gctx.beginFrame();
 
-        const back_buffer = grfx.getBackBuffer();
+        const back_buffer = gctx.getBackBuffer();
 
-        grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+        gctx.flushResourceBarriers();
 
-        grfx.cmdlist.OMSetRenderTargets(
+        gctx.cmdlist.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-            w.TRUE,
+            w32.TRUE,
             null,
         );
-        grfx.cmdlist.ClearRenderTargetView(
+        gctx.cmdlist.ClearRenderTargetView(
             back_buffer.descriptor_handle,
             &[4]f32{ 0.2, 0.4, 0.8, 1.0 },
             0,
             null,
         );
-        grfx.setCurrentPipeline(demo.pipeline);
-        grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLESTRIP);
-        grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = grfx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
+        gctx.setCurrentPipeline(demo.pipeline);
+        gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLESTRIP);
+        gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+            .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = num_mipmaps * 4 * @sizeOf(Vertex),
             .StrideInBytes = @sizeOf(Vertex),
         }});
-        grfx.cmdlist.IASetIndexBuffer(&.{
-            .BufferLocation = grfx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
+        gctx.cmdlist.IASetIndexBuffer(&.{
+            .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = 4 * @sizeOf(u32),
             .Format = .R32_UINT,
         });
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.texture_srv));
-        grfx.cmdlist.DrawIndexedInstanced(4, 1, 0, demo.mipmap_level * 4, 0);
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(0, gctx.copyDescriptorsToGpuHeap(1, demo.texture_srv));
+        gctx.cmdlist.DrawIndexedInstanced(4, 1, 0, demo.mipmap_level * 4, 0);
 
-        demo.gui.draw(grfx);
+        demo.guir.draw(gctx);
 
-        grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+        gctx.flushResourceBarriers();
 
-        grfx.endFrame();
+        gctx.endFrame();
     }
 };
 
@@ -275,28 +275,16 @@ pub fn main() !void {
     common.init();
     defer common.deinit();
 
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa_allocator_state.deinit();
-        std.debug.assert(leaked == false);
-    }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var demo = DemoState.init(gpa_allocator);
-    defer demo.deinit(gpa_allocator);
+    const allocator = gpa.allocator();
 
-    while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch unreachable;
-        if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            demo.update();
-            demo.draw();
-        }
+    var demo = try DemoState.init(allocator);
+    defer demo.deinit(allocator);
+
+    while (common.handleWindowEvents()) {
+        demo.update();
+        demo.draw();
     }
 }
