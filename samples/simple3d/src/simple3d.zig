@@ -2,7 +2,7 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
@@ -135,8 +135,8 @@ const DemoState = struct {
     const window_width = 1920;
     const window_height = 1080;
 
-    grfx: zd3d12.GraphicsContext,
-    gui: GuiRenderer,
+    gctx: zd3d12.GraphicsContext,
+    guir: GuiRenderer,
     frame_stats: common.FrameStats,
     pipeline: zd3d12.PipelineHandle,
 
@@ -154,11 +154,11 @@ const DemoState = struct {
     num_mesh_vertices: u32,
     num_mesh_indices: u32,
 
-    fn init(gpa_allocator: std.mem.Allocator) DemoState {
-        const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-        var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
+    fn init(allocator: std.mem.Allocator) !DemoState {
+        const window = try common.initWindow(allocator, window_name, window_width, window_height);
+        var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
-        var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+        var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
         defer arena_allocator_state.deinit();
         const arena_allocator = arena_allocator_state.allocator();
 
@@ -179,7 +179,7 @@ const DemoState = struct {
             pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
             pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
-            break :blk grfx.createGraphicsShaderPipeline(
+            break :blk gctx.createGraphicsShaderPipeline(
                 arena_allocator,
                 &pso_desc,
                 content_dir ++ "shaders/simple3d.vs.cso",
@@ -187,7 +187,7 @@ const DemoState = struct {
             );
         };
 
-        const entity_buffer = grfx.createCommittedResource(
+        const entity_buffer = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(1 * @sizeOf(vm.Mat4)),
@@ -195,38 +195,38 @@ const DemoState = struct {
             null,
         ) catch |err| hrPanic(err);
 
-        const entity_buffer_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(
-            grfx.lookupResource(entity_buffer).?,
+        const entity_buffer_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        gctx.device.CreateShaderResourceView(
+            gctx.lookupResource(entity_buffer).?,
             &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(0, 1, @sizeOf(vm.Mat4)),
             entity_buffer_srv,
         );
 
-        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
+        var mipgen = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM, content_dir);
 
-        grfx.beginFrame();
+        gctx.beginFrame();
 
-        var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
+        var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
-        const base_color_texture = grfx.createAndUploadTex2dFromFile(
+        const base_color_texture = gctx.createAndUploadTex2dFromFile(
             content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.png",
             .{}, // Create complete mipmap chain (up to 1x1).
         ) catch |err| hrPanic(err);
 
-        mipgen.generateMipmaps(&grfx, base_color_texture);
+        mipgen.generateMipmaps(&gctx, base_color_texture);
 
-        const base_color_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(
-            grfx.lookupResource(base_color_texture).?,
+        const base_color_texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        gctx.device.CreateShaderResourceView(
+            gctx.lookupResource(base_color_texture).?,
             null,
             base_color_texture_srv,
         );
 
-        const depth_texture = grfx.createCommittedResource(
+        const depth_texture = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &blk: {
-                var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+                var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
                 desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
                 break :blk desc;
             },
@@ -234,8 +234,8 @@ const DemoState = struct {
             &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
         ) catch |err| hrPanic(err);
 
-        const depth_texture_srv = grfx.allocateCpuDescriptors(.DSV, 1);
-        grfx.device.CreateDepthStencilView(grfx.lookupResource(depth_texture).?, null, depth_texture_srv);
+        const depth_texture_srv = gctx.allocateCpuDescriptors(.DSV, 1);
+        gctx.device.CreateDepthStencilView(gctx.lookupResource(depth_texture).?, null, depth_texture_srv);
 
         const buffers = blk: {
             var indices = std.ArrayList(u32).init(arena_allocator);
@@ -251,7 +251,7 @@ const DemoState = struct {
             const num_vertices = @intCast(u32, positions.items.len);
             const num_indices = @intCast(u32, indices.items.len);
 
-            const vertex_buffer = grfx.createCommittedResource(
+            const vertex_buffer = gctx.createCommittedResource(
                 .DEFAULT,
                 d3d12.HEAP_FLAG_NONE,
                 &d3d12.RESOURCE_DESC.initBuffer(num_vertices * @sizeOf(Vertex)),
@@ -259,7 +259,7 @@ const DemoState = struct {
                 null,
             ) catch |err| hrPanic(err);
 
-            const index_buffer = grfx.createCommittedResource(
+            const index_buffer = gctx.createCommittedResource(
                 .DEFAULT,
                 d3d12.HEAP_FLAG_NONE,
                 &d3d12.RESOURCE_DESC.initBuffer(num_indices * @sizeOf(u32)),
@@ -267,7 +267,7 @@ const DemoState = struct {
                 null,
             ) catch |err| hrPanic(err);
 
-            const upload_verts = grfx.allocateUploadBufferRegion(Vertex, num_vertices);
+            const upload_verts = gctx.allocateUploadBufferRegion(Vertex, num_vertices);
             for (positions.items) |_, i| {
                 upload_verts.cpu_slice[i] = .{
                     .position = positions.items[i],
@@ -275,20 +275,20 @@ const DemoState = struct {
                     .texcoords0 = texcoords0.items[i],
                 };
             }
-            grfx.cmdlist.CopyBufferRegion(
-                grfx.lookupResource(vertex_buffer).?,
+            gctx.cmdlist.CopyBufferRegion(
+                gctx.lookupResource(vertex_buffer).?,
                 0,
                 upload_verts.buffer,
                 upload_verts.buffer_offset,
                 upload_verts.cpu_slice.len * @sizeOf(@TypeOf(upload_verts.cpu_slice[0])),
             );
 
-            const upload_indices = grfx.allocateUploadBufferRegion(u32, num_indices);
+            const upload_indices = gctx.allocateUploadBufferRegion(u32, num_indices);
             for (indices.items) |index, i| {
                 upload_indices.cpu_slice[i] = index;
             }
-            grfx.cmdlist.CopyBufferRegion(
-                grfx.lookupResource(index_buffer).?,
+            gctx.cmdlist.CopyBufferRegion(
+                gctx.lookupResource(index_buffer).?,
                 0,
                 upload_indices.buffer,
                 upload_indices.buffer_offset,
@@ -303,19 +303,19 @@ const DemoState = struct {
             };
         };
 
-        grfx.addTransitionBarrier(buffers.vertex, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        grfx.addTransitionBarrier(buffers.index, d3d12.RESOURCE_STATE_INDEX_BUFFER);
-        grfx.addTransitionBarrier(base_color_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(buffers.vertex, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        gctx.addTransitionBarrier(buffers.index, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+        gctx.addTransitionBarrier(base_color_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        gctx.flushResourceBarriers();
 
-        grfx.endFrame();
-        grfx.finishGpuCommands();
+        gctx.endFrame();
+        gctx.finishGpuCommands();
 
-        mipgen.deinit(&grfx);
+        mipgen.deinit(&gctx);
 
-        return .{
-            .grfx = grfx,
-            .gui = gui,
+        return DemoState{
+            .gctx = gctx,
+            .guir = guir,
             .frame_stats = common.FrameStats.init(),
             .pipeline = pipeline,
             .vertex_buffer = buffers.vertex,
@@ -331,16 +331,16 @@ const DemoState = struct {
         };
     }
 
-    fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
-        demo.grfx.finishGpuCommands();
-        demo.gui.deinit(&demo.grfx);
-        demo.grfx.deinit(gpa_allocator);
-        common.deinitWindow(gpa_allocator);
+    fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
+        demo.gctx.finishGpuCommands();
+        demo.guir.deinit(&demo.gctx);
+        demo.gctx.deinit(allocator);
+        common.deinitWindow(allocator);
         demo.* = undefined;
     }
 
     fn update(demo: *DemoState) void {
-        demo.frame_stats.update(demo.grfx.window, window_name);
+        demo.frame_stats.update(demo.gctx.window, window_name);
 
         common.newImGuiFrame(demo.frame_stats.delta_time);
 
@@ -348,11 +348,11 @@ const DemoState = struct {
     }
 
     fn draw(demo: *DemoState) void {
-        var grfx = &demo.grfx;
-        grfx.beginFrame();
+        var gctx = &demo.gctx;
+        gctx.beginFrame();
 
-        grfx.addTransitionBarrier(demo.entity_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(demo.entity_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
+        gctx.flushResourceBarriers();
 
         {
             const object_to_camera =
@@ -363,17 +363,17 @@ const DemoState = struct {
                     vm.Vec3.init(0.0, 1.0, 0.0),
                 ),
             );
-            const upload_entity = grfx.allocateUploadBufferRegion(vm.Mat4, 1);
+            const upload_entity = gctx.allocateUploadBufferRegion(vm.Mat4, 1);
             upload_entity.cpu_slice[0] = object_to_camera.mul(
                 vm.Mat4.initPerspectiveFovLh(
                     math.pi / 3.0,
-                    @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
+                    @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
                     0.1,
                     100.0,
                 ),
             ).transpose();
-            grfx.cmdlist.CopyBufferRegion(
-                grfx.lookupResource(demo.entity_buffer).?,
+            gctx.cmdlist.CopyBufferRegion(
+                gctx.lookupResource(demo.entity_buffer).?,
                 0,
                 upload_entity.buffer,
                 upload_entity.buffer_offset,
@@ -381,48 +381,48 @@ const DemoState = struct {
             );
         }
 
-        const back_buffer = grfx.getBackBuffer();
+        const back_buffer = gctx.getBackBuffer();
 
-        grfx.addTransitionBarrier(demo.entity_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(demo.entity_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+        gctx.flushResourceBarriers();
 
-        grfx.cmdlist.OMSetRenderTargets(
+        gctx.cmdlist.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-            w.TRUE,
+            w32.TRUE,
             &demo.depth_texture_srv,
         );
-        grfx.cmdlist.ClearRenderTargetView(
+        gctx.cmdlist.ClearRenderTargetView(
             back_buffer.descriptor_handle,
             &[4]f32{ 0.2, 0.4, 0.8, 1.0 },
             0,
             null,
         );
-        grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_srv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
-        grfx.setCurrentPipeline(demo.pipeline);
-        grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-        grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = grfx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
+        gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_srv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+        gctx.setCurrentPipeline(demo.pipeline);
+        gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+        gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+            .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = demo.num_mesh_vertices * @sizeOf(Vertex),
             .StrideInBytes = @sizeOf(Vertex),
         }});
-        grfx.cmdlist.IASetIndexBuffer(&.{
-            .BufferLocation = grfx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
+        gctx.cmdlist.IASetIndexBuffer(&.{
+            .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
             .SizeInBytes = demo.num_mesh_indices * @sizeOf(u32),
             .Format = .R32_UINT,
         });
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(2, grfx.copyDescriptorsToGpuHeap(1, demo.base_color_texture_srv));
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(1, grfx.copyDescriptorsToGpuHeap(1, demo.entity_buffer_srv));
-        grfx.cmdlist.SetGraphicsRoot32BitConstant(0, 0, 0);
-        grfx.cmdlist.DrawIndexedInstanced(demo.num_mesh_indices, 1, 0, 0, 0);
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(2, gctx.copyDescriptorsToGpuHeap(1, demo.base_color_texture_srv));
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(1, gctx.copyDescriptorsToGpuHeap(1, demo.entity_buffer_srv));
+        gctx.cmdlist.SetGraphicsRoot32BitConstant(0, 0, 0);
+        gctx.cmdlist.DrawIndexedInstanced(demo.num_mesh_indices, 1, 0, 0, 0);
 
-        demo.gui.draw(grfx);
+        demo.guir.draw(gctx);
 
-        grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+        gctx.flushResourceBarriers();
 
-        grfx.endFrame();
+        gctx.endFrame();
     }
 };
 
@@ -430,28 +430,16 @@ pub fn main() !void {
     common.init();
     defer common.deinit();
 
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa_allocator_state.deinit();
-        std.debug.assert(leaked == false);
-    }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var demo = DemoState.init(gpa_allocator);
-    defer demo.deinit(gpa_allocator);
+    const allocator = gpa.allocator();
 
-    while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch unreachable;
-        if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            demo.update();
-            demo.draw();
-        }
+    var demo = try DemoState.init(allocator);
+    defer demo.deinit(allocator);
+
+    while (common.handleWindowEvents()) {
+        demo.update();
+        demo.draw();
     }
 }
