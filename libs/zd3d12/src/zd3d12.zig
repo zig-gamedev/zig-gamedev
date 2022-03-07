@@ -1613,7 +1613,6 @@ pub const MipmapGenerator = struct {
         for (mipgen.scratch_textures) |_, texture_index| {
             gctx.destroyResource(mipgen.scratch_textures[texture_index]);
         }
-        gctx.destroyPipeline(mipgen.pipeline);
         mipgen.* = undefined;
     }
 

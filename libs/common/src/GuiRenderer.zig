@@ -101,7 +101,6 @@ pub fn init(
 
 pub fn deinit(gui: *GuiRenderer, gctx: *zd3d12.GraphicsContext) void {
     gctx.finishGpuCommands();
-    gctx.destroyPipeline(gui.pipeline);
     gctx.destroyResource(gui.font);
     for (gui.vb) |vb|
         gctx.destroyResource(vb);
