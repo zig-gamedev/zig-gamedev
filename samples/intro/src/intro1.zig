@@ -50,7 +50,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const arena_allocator = arena_allocator_state.allocator();
 
     // Create DirectX 12 context.
-    var gctx = zd3d12.GraphicsContext.init(window);
+    var gctx = zd3d12.GraphicsContext.init(window, gpa_allocator);
 
     // Enable vsync.
     // gctx.present_flags = 0;
@@ -173,7 +173,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.guictx.deinit(&demo.gctx);
-    demo.gctx.deinit();
+    demo.gctx.deinit(gpa_allocator);
     common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }

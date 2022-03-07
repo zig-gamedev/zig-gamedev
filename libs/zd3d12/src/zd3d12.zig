@@ -64,8 +64,7 @@ pub const GraphicsContext = struct {
     resource_pool: ResourcePool,
     pipeline_pool: PipelinePool,
     current_pipeline: PipelineHandle,
-    transition_resource_barriers: []TransitionResourceBarrier,
-    num_transition_resource_barriers: u32,
+    transition_resource_barriers: std.ArrayListUnmanaged(TransitionResourceBarrier),
     viewport_width: u32,
     viewport_height: u32,
     frame_fence: *d3d12.IFence,
@@ -80,7 +79,7 @@ pub const GraphicsContext = struct {
     present_flags: w32.UINT,
     present_interval: w32.UINT,
 
-    pub fn init(window: w32.HWND) GraphicsContext {
+    pub fn init(window: w32.HWND, allocator: std.mem.Allocator) GraphicsContext {
         const wic_factory = blk: {
             var wic_factory: *wic.IImagingFactory = undefined;
             hrPanicOnFail(w32.CoCreateInstance(
@@ -278,8 +277,8 @@ pub const GraphicsContext = struct {
             break :blk swapchain3;
         };
 
-        var resource_pool = ResourcePool.init();
-        var pipeline_pool = PipelinePool.init();
+        var resource_pool = ResourcePool.init(allocator);
+        var pipeline_pool = PipelinePool.init(allocator);
 
         var rtv_heap = DescriptorHeap.init(device, num_rtv_descriptors, .RTV, d3d12.DESCRIPTOR_HEAP_FLAG_NONE);
         var dsv_heap = DescriptorHeap.init(device, num_dsv_descriptors, .DSV, d3d12.DESCRIPTOR_HEAP_FLAG_NONE);
@@ -566,11 +565,10 @@ pub const GraphicsContext = struct {
             .resource_pool = resource_pool,
             .pipeline_pool = pipeline_pool,
             .current_pipeline = .{},
-            .transition_resource_barriers = std.heap.page_allocator.alloc(
-                TransitionResourceBarrier,
+            .transition_resource_barriers = std.ArrayListUnmanaged(TransitionResourceBarrier).initCapacity(
+                allocator,
                 max_num_buffered_resource_barriers,
             ) catch unreachable,
-            .num_transition_resource_barriers = 0,
             .viewport_width = viewport_width,
             .viewport_height = viewport_height,
             .frame_index = 0,
@@ -584,12 +582,12 @@ pub const GraphicsContext = struct {
         };
     }
 
-    pub fn deinit(gctx: *GraphicsContext) void {
+    pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
         gctx.finishGpuCommands();
-        std.heap.page_allocator.free(gctx.transition_resource_barriers);
+        gctx.transition_resource_barriers.deinit(allocator);
         w32.CloseHandle(gctx.frame_fence_event);
-        gctx.resource_pool.deinit();
-        gctx.pipeline_pool.deinit();
+        gctx.resource_pool.deinit(allocator);
+        gctx.pipeline_pool.deinit(allocator);
         gctx.rtv_heap.deinit();
         gctx.dsv_heap.deinit();
         gctx.cbv_srv_uav_cpu_heap.deinit();
@@ -853,14 +851,11 @@ pub const GraphicsContext = struct {
     }
 
     pub fn flushResourceBarriers(gctx: *GraphicsContext) void {
-        if (gctx.num_transition_resource_barriers > 0) {
+        if (gctx.transition_resource_barriers.items.len > 0) {
             var d3d12_barriers: [max_num_buffered_resource_barriers]d3d12.RESOURCE_BARRIER = undefined;
 
             var num_valid_barriers: u32 = 0;
-            var barrier_index: u32 = 0;
-            while (barrier_index < gctx.num_transition_resource_barriers) : (barrier_index += 1) {
-                const barrier = &gctx.transition_resource_barriers[barrier_index];
-
+            for (gctx.transition_resource_barriers.items) |barrier| {
                 if (gctx.resource_pool.isResourceValid(barrier.resource)) {
                     d3d12_barriers[num_valid_barriers] = .{
                         .Type = .TRANSITION,
@@ -880,7 +875,7 @@ pub const GraphicsContext = struct {
             if (num_valid_barriers > 0) {
                 gctx.cmdlist.ResourceBarrier(num_valid_barriers, &d3d12_barriers);
             }
-            gctx.num_transition_resource_barriers = 0;
+            gctx.transition_resource_barriers.clearRetainingCapacity();
         }
     }
 
@@ -894,15 +889,14 @@ pub const GraphicsContext = struct {
             return;
 
         if (state_after != resource.?.state) {
-            if (gctx.num_transition_resource_barriers >= gctx.transition_resource_barriers.len) {
+            if (gctx.transition_resource_barriers.items.len == max_num_buffered_resource_barriers)
                 gctx.flushResourceBarriers();
-            }
-            gctx.transition_resource_barriers[gctx.num_transition_resource_barriers] = .{
+
+            gctx.transition_resource_barriers.appendAssumeCapacity(.{
                 .resource = handle,
                 .state_before = resource.?.state,
                 .state_after = state_after,
-            };
-            gctx.num_transition_resource_barriers += 1;
+            });
             resource.?.state = state_after;
         }
     }
@@ -1505,7 +1499,7 @@ pub const GraphicsContext = struct {
             var width: u32 = undefined;
             var height: u32 = undefined;
             hrPanicOnFail(image_conv.GetSize(&width, &height));
-            break :blk .{ .w32 = width, .h = height };
+            break :blk .{ .w = width, .h = height };
         };
         const texture = try gctx.createCommittedResource(
             .DEFAULT,
@@ -1513,7 +1507,7 @@ pub const GraphicsContext = struct {
             &blk: {
                 var desc = d3d12.RESOURCE_DESC.initTex2d(
                     dxgi_format,
-                    image_wh.w32,
+                    image_wh.w,
                     image_wh.h,
                     params.num_mip_levels,
                 );
@@ -1749,10 +1743,10 @@ const ResourcePool = struct {
     resources: []Resource,
     generations: []u16,
 
-    fn init() ResourcePool {
+    fn init(allocator: std.mem.Allocator) ResourcePool {
         return .{
             .resources = blk: {
-                var resources = std.heap.page_allocator.alloc(
+                var resources = allocator.alloc(
                     Resource,
                     max_num_resources + 1,
                 ) catch unreachable;
@@ -1766,7 +1760,7 @@ const ResourcePool = struct {
                 break :blk resources;
             },
             .generations = blk: {
-                var generations = std.heap.page_allocator.alloc(
+                var generations = allocator.alloc(
                     u16,
                     max_num_resources + 1,
                 ) catch unreachable;
@@ -1776,13 +1770,13 @@ const ResourcePool = struct {
         };
     }
 
-    fn deinit(pool: *ResourcePool) void {
+    fn deinit(pool: *ResourcePool, allocator: std.mem.Allocator) void {
         for (pool.resources) |resource| {
             if (resource.raw != null)
                 _ = resource.raw.?.Release();
         }
-        std.heap.page_allocator.free(pool.resources);
-        std.heap.page_allocator.free(pool.generations);
+        allocator.free(pool.resources);
+        allocator.free(pool.generations);
         pool.* = undefined;
     }
 
@@ -1860,10 +1854,10 @@ const PipelinePool = struct {
     generations: []u16,
     map: std.AutoHashMapUnmanaged(u32, PipelineHandle),
 
-    fn init() PipelinePool {
+    fn init(allocator: std.mem.Allocator) PipelinePool {
         return .{
             .pipelines = blk: {
-                var pipelines = std.heap.page_allocator.alloc(
+                var pipelines = allocator.alloc(
                     Pipeline,
                     max_num_pipelines + 1,
                 ) catch unreachable;
@@ -1873,7 +1867,7 @@ const PipelinePool = struct {
                 break :blk pipelines;
             },
             .generations = blk: {
-                var generations = std.heap.page_allocator.alloc(
+                var generations = allocator.alloc(
                     u16,
                     max_num_pipelines + 1,
                 ) catch unreachable;
@@ -1883,7 +1877,7 @@ const PipelinePool = struct {
             .map = blk: {
                 var hm: std.AutoHashMapUnmanaged(u32, PipelineHandle) = .{};
                 hm.ensureTotalCapacity(
-                    std.heap.page_allocator,
+                    allocator,
                     max_num_pipelines,
                 ) catch unreachable;
                 break :blk hm;
@@ -1891,16 +1885,16 @@ const PipelinePool = struct {
         };
     }
 
-    fn deinit(pool: *PipelinePool) void {
+    fn deinit(pool: *PipelinePool, allocator: std.mem.Allocator) void {
         for (pool.pipelines) |pipeline| {
             if (pipeline.pso != null)
                 _ = pipeline.pso.?.Release();
             if (pipeline.rs != null)
                 _ = pipeline.rs.?.Release();
         }
-        pool.map.deinit(std.heap.page_allocator);
-        std.heap.page_allocator.free(pool.pipelines);
-        std.heap.page_allocator.free(pool.generations);
+        pool.map.deinit(allocator);
+        allocator.free(pool.pipelines);
+        allocator.free(pool.generations);
         pool.* = undefined;
     }
 

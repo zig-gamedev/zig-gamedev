@@ -89,7 +89,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var grfx = zd3d12.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
 
     const draw_texture_pso = blk: {
         var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
@@ -458,7 +458,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.conv_op_state.dtbl.Release();
     _ = demo.dml_device.Release();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit();
+    demo.grfx.deinit(gpa_allocator);
     common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }

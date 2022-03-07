@@ -372,7 +372,7 @@ fn drawToCubeTexture(
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    var grfx = zd3d12.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
     defer arena_allocator_state.deinit();
@@ -902,7 +902,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit();
+    demo.grfx.deinit(gpa_allocator);
     common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }

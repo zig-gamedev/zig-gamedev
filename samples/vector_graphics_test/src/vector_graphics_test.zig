@@ -45,7 +45,7 @@ const DemoState = struct {
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    var grfx = zd3d12.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
 
     var ink_points = std.ArrayList(d2d1.POINT_2F).init(gpa_allocator);
 
@@ -613,7 +613,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.river_geo.Release();
     _ = demo.radial_gradient_brush.Release();
     demo.ink_points.deinit();
-    demo.grfx.deinit();
+    demo.grfx.deinit(gpa_allocator);
     common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }

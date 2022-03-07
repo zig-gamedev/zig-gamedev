@@ -4,7 +4,7 @@ const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const Mutex = std.Thread.Mutex;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const xaudio2 = zwin32.xaudio2;
 const xaudio2fx = zwin32.xaudio2fx;
@@ -140,13 +140,13 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
 
     {
-        var reverb_apo: ?*w.IUnknown = null;
+        var reverb_apo: ?*w32.IUnknown = null;
         hrPanicOnFail(xaudio2fx.createReverb(&reverb_apo, 0));
         defer _ = reverb_apo.?.Release();
 
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
             .pEffect = reverb_apo.?,
-            .InitialState = w.FALSE,
+            .InitialState = w32.FALSE,
             .OutputChannels = 2,
         }};
         const effect_chain = xaudio2.EFFECT_CHAIN{ .EffectCount = 1, .pEffectDescriptors = &effect_descriptor };
@@ -170,7 +170,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{
             .{
                 .pEffect = p0,
-                .InitialState = w.TRUE,
+                .InitialState = w32.TRUE,
                 .OutputChannels = 2,
             },
         };
@@ -188,7 +188,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = zd3d12.GraphicsContext.init(window);
+    var gctx = zd3d12.GraphicsContext.init(window, gpa_allocator);
     gctx.present_flags = 0;
     gctx.present_interval = 1;
 
@@ -268,7 +268,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.actx.device.StopEngine();
     demo.guictx.deinit(&demo.gctx);
-    demo.gctx.deinit();
+    demo.gctx.deinit(gpa_allocator);
     demo.music.destroy();
     gpa_allocator.free(demo.sound1_data);
     gpa_allocator.free(demo.sound2_data);
@@ -356,14 +356,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: w.POINT = undefined;
-        _ = w.GetCursorPos(&pos);
+        var pos: w32.POINT = undefined;
+        _ = w32.GetCursorPos(&pos);
         const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
         const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+        if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
@@ -387,14 +387,14 @@ fn update(demo: *DemoState) void {
         // Load camera position from memory to SIMD register ('3' means that we want to load three components).
         var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
 
-        if (w.GetAsyncKeyState('W') < 0) {
+        if (w32.GetAsyncKeyState('W') < 0) {
             cpos += forward;
-        } else if (w.GetAsyncKeyState('S') < 0) {
+        } else if (w32.GetAsyncKeyState('S') < 0) {
             cpos -= forward;
         }
-        if (w.GetAsyncKeyState('D') < 0) {
+        if (w32.GetAsyncKeyState('D') < 0) {
             cpos += right;
-        } else if (w.GetAsyncKeyState('A') < 0) {
+        } else if (w32.GetAsyncKeyState('A') < 0) {
             cpos -= right;
         }
 
@@ -428,7 +428,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        w.TRUE,
+        w32.TRUE,
         &demo.depth_texture_dsv,
     );
     gctx.cmdlist.ClearRenderTargetView(
@@ -523,12 +523,12 @@ pub fn main() !void {
     defer deinit(&demo, gpa_allocator);
 
     while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch false;
+        var message = std.mem.zeroes(w32.user32.MSG);
+        const has_message = w32.user32.peekMessageA(&message, null, 0, 0, w32.user32.PM_REMOVE) catch false;
         if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
+            _ = w32.user32.translateMessage(&message);
+            _ = w32.user32.dispatchMessageA(&message);
+            if (message.message == w32.user32.WM_QUIT) {
                 break;
             }
         } else {

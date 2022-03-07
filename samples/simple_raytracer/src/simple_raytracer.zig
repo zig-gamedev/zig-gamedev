@@ -440,7 +440,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &zpix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var grfx = zd3d12.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
 
     // Check for DirectX Raytracing (DXR) support.
     const dxr_is_supported = blk: {
@@ -1010,7 +1010,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.materials.deinit();
     demo.textures.deinit();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit();
+    demo.grfx.deinit(gpa_allocator);
     common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }

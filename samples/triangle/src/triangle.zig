@@ -37,8 +37,8 @@ pub fn main() !void {
     const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
     defer common.deinitWindow(gpa_allocator);
 
-    var grfx = zd3d12.GraphicsContext.init(window);
-    defer grfx.deinit();
+    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
+    defer grfx.deinit(gpa_allocator);
 
     const pipeline = blk: {
         const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{

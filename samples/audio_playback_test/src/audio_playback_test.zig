@@ -94,7 +94,7 @@ fn audioThread(ctx: ?*anyopaque) callconv(.C) w.DWORD {
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    var grfx = zd3d12.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
     grfx.present_flags = 0;
     grfx.present_interval = 1;
 
@@ -347,7 +347,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.audio.samples.deinit();
 
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit();
+    demo.grfx.deinit(gpa_allocator);
     common.deinitWindow(gpa_allocator);
     demo.* = undefined;
 }

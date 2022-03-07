@@ -930,7 +930,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var grfx = zd3d12.GraphicsContext.init(window);
+    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
     grfx.present_flags = 0;
     grfx.present_interval = 1;
 
@@ -1177,7 +1177,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.grfx.finishGpuCommands();
     demo.meshes.deinit();
     demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit();
+    demo.grfx.deinit(gpa_allocator);
     common.deinitWindow(gpa_allocator);
     if (zb.cbtConIsCreated(demo.pick.constraint)) {
         zb.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
@@ -1333,9 +1333,9 @@ fn update(demo: *DemoState) void {
         c.igPushStyleColor_U32(c.ImGuiCol_Text, 0xff_00_ff_ff);
         if (c.igButton("  Load Scene  ", .{ .x = 0, .y = 0 })) {
             demo.physics_objects_pool.destroyAllObjects(demo.physics_world);
-            demo.entities.resize(0) catch unreachable;
-            demo.connected_bodies.resize(0) catch unreachable;
-            demo.motors.resize(0) catch unreachable;
+            demo.entities.clearRetainingCapacity();
+            demo.connected_bodies.clearRetainingCapacity();
+            demo.motors.clearRetainingCapacity();
             const scene = @intToEnum(Scene, demo.current_scene_index);
             switch (scene) {
                 .scene1 => createScene1(demo.physics_world, demo.physics_objects_pool, &demo.entities, &demo.camera),
@@ -1876,7 +1876,7 @@ fn draw(demo: *DemoState) void {
             grfx.cmdlist.SetGraphicsRootShaderResourceView(1, mem.gpu_base);
         }
         grfx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
-        demo.physics_debug.lines.resize(0) catch unreachable;
+        demo.physics_debug.lines.clearRetainingCapacity();
     }
 
     demo.gui.draw(grfx);

@@ -74,7 +74,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = zd3d12.GraphicsContext.init(window);
+    var gctx = zd3d12.GraphicsContext.init(window, allocator);
 
     // Enable vsync.
     gctx.present_flags = 0;
@@ -258,11 +258,12 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
             body.deinit();
         }
     }
-    for (demo.physics.shapes.items) |shape| shape.deinit();
+    for (demo.physics.shapes.items) |shape|
+        shape.deinit();
     demo.physics.shapes.deinit();
     demo.physics.world.deinit();
     demo.guir.deinit(&demo.gctx);
-    demo.gctx.deinit();
+    demo.gctx.deinit(allocator);
     common.deinitWindow(allocator);
     demo.* = undefined;
 }
