@@ -3,9 +3,8 @@ const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
-const dml = zwin32.directml;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 const zd3d12 = @import("zd3d12");
@@ -85,8 +84,8 @@ const PsoTraceShadowRays_FrameConst = struct {
 };
 
 const DemoState = struct {
-    grfx: zd3d12.GraphicsContext,
-    gui: GuiRenderer,
+    gctx: zd3d12.GraphicsContext,
+    guir: GuiRenderer,
     frame_stats: common.FrameStats,
 
     static_mesh_pso: zd3d12.PipelineHandle,
@@ -267,7 +266,7 @@ fn appendMeshPrimitive(
 
 fn loadScene(
     arena: std.mem.Allocator,
-    grfx: *zd3d12.GraphicsContext,
+    gctx: *zd3d12.GraphicsContext,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
@@ -404,32 +403,32 @@ fn loadScene(
             .{image.uri},
         ) catch unreachable;
 
-        const texture = grfx.createAndUploadTex2dFromFile(path, .{}) catch unreachable;
-        const view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-        grfx.device.CreateShaderResourceView(grfx.lookupResource(texture).?, null, view);
+        const texture = gctx.createAndUploadTex2dFromFile(path, .{}) catch unreachable;
+        const view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+        gctx.device.CreateShaderResourceView(gctx.lookupResource(texture).?, null, view);
 
         all_textures.appendAssumeCapacity(.{ .resource = texture, .view = view });
     }
 
     const texture_4x4 = ResourceView{
-        .resource = grfx.createCommittedResource(
+        .resource = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, 4, 4, 0),
             d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             null,
         ) catch |err| hrPanic(err),
-        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+        .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
-    grfx.device.CreateShaderResourceView(grfx.lookupResource(texture_4x4.resource).?, null, texture_4x4.view);
+    gctx.device.CreateShaderResourceView(gctx.lookupResource(texture_4x4.resource).?, null, texture_4x4.view);
 
     all_textures.appendAssumeCapacity(texture_4x4);
 }
 
-fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+fn init(allocator: std.mem.Allocator) !DemoState {
+    const window = try common.initWindow(allocator, window_name, window_width, window_height);
 
-    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
@@ -440,13 +439,13 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &zpix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
     // Check for DirectX Raytracing (DXR) support.
     const dxr_is_supported = blk: {
         var options5: d3d12.FEATURE_DATA_D3D12_OPTIONS5 = undefined;
-        const res = grfx.device.CheckFeatureSupport(.OPTIONS5, &options5, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS5));
-        break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == w.S_OK;
+        const res = gctx.device.CheckFeatureSupport(.OPTIONS5, &options5, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS5));
+        break :blk options5.RaytracingTier != .NOT_SUPPORTED and res == w32.S_OK;
     };
     const dxr_draw_mode = @boolToInt(dxr_is_supported);
 
@@ -459,7 +458,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
-        break :blk grfx.createGraphicsShaderPipeline(
+        break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
             content_dir ++ "shaders/rast_static_mesh.vs.cso",
@@ -475,7 +474,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
-        break :blk grfx.createGraphicsShaderPipeline(
+        break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
             content_dir ++ "shaders/z_pre_pass.vs.cso",
@@ -493,7 +492,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.DepthStencilState.DepthFunc = .LESS_EQUAL;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
-        break :blk grfx.createGraphicsShaderPipeline(
+        break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
             content_dir ++ "shaders/gen_shadow_rays.vs.cso",
@@ -530,12 +529,12 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             .pSubobjects = @ptrCast([*]const d3d12.STATE_SUBOBJECT, &subobject),
         };
 
-        hrPanicOnFail(grfx.device.CreateStateObject(
+        hrPanicOnFail(gctx.device.CreateStateObject(
             &state_object_desc,
             &d3d12.IID_IStateObject,
             @ptrCast(*?*anyopaque, &trace_shadow_rays_stateobj),
         ));
-        hrPanicOnFail(grfx.device.CreateRootSignature(
+        hrPanicOnFail(gctx.device.CreateRootSignature(
             0,
             cso_code.ptr,
             cso_code.len,
@@ -544,7 +543,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ));
     }
 
-    const trace_shadow_rays_table = grfx.createCommittedResource(
+    const trace_shadow_rays_table = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &d3d12.RESOURCE_DESC.initBuffer(64 * 1024),
@@ -552,11 +551,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    const depth_texture = grfx.createCommittedResource(
+    const depth_texture = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
-            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
             break :blk desc;
         },
@@ -564,12 +563,12 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
-    const depth_texture_dsv = grfx.allocateCpuDescriptors(.DSV, 1);
-    const depth_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
+    const depth_texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
-    grfx.device.CreateDepthStencilView(grfx.lookupResource(depth_texture).?, null, depth_texture_dsv);
-    grfx.device.CreateShaderResourceView(
-        grfx.lookupResource(depth_texture).?,
+    gctx.device.CreateDepthStencilView(gctx.lookupResource(depth_texture).?, null, depth_texture_dsv);
+    gctx.device.CreateShaderResourceView(
+        gctx.lookupResource(depth_texture).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC{
             .Format = .R32_FLOAT,
             .ViewDimension = .TEXTURE2D,
@@ -586,14 +585,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         depth_texture_srv,
     );
 
-    const shadow_rays_texture = grfx.createCommittedResource(
+    const shadow_rays_texture = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
             var desc = d3d12.RESOURCE_DESC.initTex2d(
                 .R32G32B32A32_FLOAT,
-                grfx.viewport_width,
-                grfx.viewport_height,
+                gctx.viewport_width,
+                gctx.viewport_height,
                 1,
             );
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -603,25 +602,25 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &d3d12.CLEAR_VALUE.initColor(.R32G32B32A32_FLOAT, &.{ 0.0, 0.0, 0.0, 0.0 }),
     ) catch |err| hrPanic(err);
 
-    const shadow_rays_texture_rtv = grfx.allocateCpuDescriptors(.RTV, 1);
-    const shadow_rays_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    const shadow_rays_texture_rtv = gctx.allocateCpuDescriptors(.RTV, 1);
+    const shadow_rays_texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
-    grfx.device.CreateRenderTargetView(
-        grfx.lookupResource(shadow_rays_texture).?,
+    gctx.device.CreateRenderTargetView(
+        gctx.lookupResource(shadow_rays_texture).?,
         null,
         shadow_rays_texture_rtv,
     );
-    grfx.device.CreateShaderResourceView(
-        grfx.lookupResource(shadow_rays_texture).?,
+    gctx.device.CreateShaderResourceView(
+        gctx.lookupResource(shadow_rays_texture).?,
         null,
         shadow_rays_texture_srv,
     );
 
-    const shadow_mask_texture = grfx.createCommittedResource(
+    const shadow_mask_texture = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
-            var desc = d3d12.RESOURCE_DESC.initTex2d(.R32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.R32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             break :blk desc;
         },
@@ -629,38 +628,38 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    const shadow_mask_texture_uav = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    const shadow_mask_texture_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    const shadow_mask_texture_uav = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    const shadow_mask_texture_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
 
-    grfx.device.CreateUnorderedAccessView(
-        grfx.lookupResource(shadow_mask_texture).?,
+    gctx.device.CreateUnorderedAccessView(
+        gctx.lookupResource(shadow_mask_texture).?,
         null,
         null,
         shadow_mask_texture_uav,
     );
-    grfx.device.CreateShaderResourceView(
-        grfx.lookupResource(shadow_mask_texture).?,
+    gctx.device.CreateShaderResourceView(
+        gctx.lookupResource(shadow_mask_texture).?,
         null,
         shadow_mask_texture_srv,
     );
 
-    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &grfx, .R8G8B8A8_UNORM, content_dir);
+    var mipgen_rgba8 = zd3d12.MipmapGenerator.init(arena_allocator, &gctx, .R8G8B8A8_UNORM, content_dir);
 
     //
     // Begin frame to init/upload resources on the GPU.
     //
-    grfx.beginFrame();
+    gctx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
+    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
-    var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
+    var all_meshes = std.ArrayList(Mesh).init(allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
-    var all_materials = std.ArrayList(Material).init(gpa_allocator);
-    var all_textures = std.ArrayList(ResourceView).init(gpa_allocator);
+    var all_materials = std.ArrayList(Material).init(allocator);
+    var all_textures = std.ArrayList(ResourceView).init(allocator);
     loadScene(
         arena_allocator,
-        &grfx,
+        &gctx,
         &all_meshes,
         &all_vertices,
         &all_indices,
@@ -669,23 +668,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     );
 
     for (all_textures.items) |texture| {
-        mipgen_rgba8.generateMipmaps(&grfx, texture.resource);
-        grfx.addTransitionBarrier(texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        mipgen_rgba8.generateMipmaps(&gctx, texture.resource);
+        gctx.addTransitionBarrier(texture.resource, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
-    grfx.flushResourceBarriers();
+    gctx.flushResourceBarriers();
 
     const vertex_buffer = .{
-        .resource = grfx.createCommittedResource(
+        .resource = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(all_vertices.items.len * @sizeOf(Vertex)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err),
-        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+        .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
-    grfx.device.CreateShaderResourceView(
-        grfx.lookupResource(vertex_buffer.resource).?,
+    gctx.device.CreateShaderResourceView(
+        gctx.lookupResource(vertex_buffer.resource).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initStructuredBuffer(
             0,
             @intCast(u32, all_vertices.items.len),
@@ -695,53 +694,53 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     );
 
     const index_buffer = .{
-        .resource = grfx.createCommittedResource(
+        .resource = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
             d3d12.RESOURCE_STATE_COPY_DEST,
             null,
         ) catch |err| hrPanic(err),
-        .view = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
+        .view = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1),
     };
-    grfx.device.CreateShaderResourceView(
-        grfx.lookupResource(index_buffer.resource).?,
+    gctx.device.CreateShaderResourceView(
+        gctx.lookupResource(index_buffer.resource).?,
         &d3d12.SHADER_RESOURCE_VIEW_DESC.initTypedBuffer(.R32_UINT, 0, @intCast(u32, all_indices.items.len)),
         index_buffer.view,
     );
 
     // Upload vertex buffer.
     {
-        const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_vertices.items.len));
         for (all_vertices.items) |vertex, i| {
             upload.cpu_slice[i] = vertex;
         }
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.lookupResource(vertex_buffer.resource).?,
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.lookupResource(vertex_buffer.resource).?,
             0,
             upload.buffer,
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        grfx.addTransitionBarrier(vertex_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(vertex_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.flushResourceBarriers();
     }
 
     // Upload index buffer.
     {
-        const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
         for (all_indices.items) |index, i| {
             upload.cpu_slice[i] = index;
         }
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.lookupResource(index_buffer.resource).?,
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.lookupResource(index_buffer.resource).?,
             0,
             upload.buffer,
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        grfx.addTransitionBarrier(index_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        grfx.flushResourceBarriers();
+        gctx.addTransitionBarrier(index_buffer.resource, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        gctx.flushResourceBarriers();
     }
 
     var temp_resources = std.ArrayList(zd3d12.ResourceHandle).init(arena_allocator);
@@ -753,8 +752,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             all_meshes.items.len,
         ) catch unreachable;
 
-        const vertex_buffer_addr = grfx.lookupResource(vertex_buffer.resource).?.GetGPUVirtualAddress();
-        const index_buffer_addr = grfx.lookupResource(index_buffer.resource).?.GetGPUVirtualAddress();
+        const vertex_buffer_addr = gctx.lookupResource(vertex_buffer.resource).?.GetGPUVirtualAddress();
+        const index_buffer_addr = gctx.lookupResource(index_buffer.resource).?.GetGPUVirtualAddress();
 
         for (all_meshes.items) |mesh| {
             const desc = d3d12.RAYTRACING_GEOMETRY_DESC{
@@ -789,10 +788,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         };
 
         var blas_build_info: d3d12.RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = undefined;
-        grfx.device.GetRaytracingAccelerationStructurePrebuildInfo(&blas_inputs, &blas_build_info);
+        gctx.device.GetRaytracingAccelerationStructurePrebuildInfo(&blas_inputs, &blas_build_info);
         std.log.info("BLAS: {}", .{blas_build_info});
 
-        const blas_scratch_buffer = grfx.createCommittedResource(
+        const blas_scratch_buffer = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &blk: {
@@ -805,7 +804,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err);
         temp_resources.append(blas_scratch_buffer) catch unreachable;
 
-        const blas_buffer = grfx.createCommittedResource(
+        const blas_buffer = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &blk: {
@@ -818,23 +817,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err);
 
         const blas_desc = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
-            .DestAccelerationStructureData = grfx.lookupResource(blas_buffer).?.GetGPUVirtualAddress(),
+            .DestAccelerationStructureData = gctx.lookupResource(blas_buffer).?.GetGPUVirtualAddress(),
             .Inputs = blas_inputs,
             .SourceAccelerationStructureData = 0,
-            .ScratchAccelerationStructureData = grfx.lookupResource(blas_scratch_buffer).?.GetGPUVirtualAddress(),
+            .ScratchAccelerationStructureData = gctx.lookupResource(blas_scratch_buffer).?.GetGPUVirtualAddress(),
         };
-        grfx.cmdlist.BuildRaytracingAccelerationStructure(&blas_desc, 0, null);
-        grfx.cmdlist.ResourceBarrier(
+        gctx.cmdlist.BuildRaytracingAccelerationStructure(&blas_desc, 0, null);
+        gctx.cmdlist.ResourceBarrier(
             1,
             &[_]d3d12.RESOURCE_BARRIER{
-                d3d12.RESOURCE_BARRIER.initUav(grfx.lookupResource(blas_buffer).?),
+                d3d12.RESOURCE_BARRIER.initUav(gctx.lookupResource(blas_buffer).?),
             },
         );
 
         break :blk_blas blas_buffer;
     } else blk_blas: {
         // DXR is not supported. Create a dummy BLAS buffer to simplify code.
-        break :blk_blas grfx.createCommittedResource(
+        break :blk_blas gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(1),
@@ -855,10 +854,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             .InstanceMask = 1,
             .InstanceContributionToHitGroupIndex = 0,
             .Flags = 0,
-            .AccelerationStructure = grfx.lookupResource(blas_buffer).?.GetGPUVirtualAddress(),
+            .AccelerationStructure = gctx.lookupResource(blas_buffer).?.GetGPUVirtualAddress(),
         };
 
-        const instance_buffer = grfx.createCommittedResource(
+        const instance_buffer = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(@sizeOf(d3d12.RAYTRACING_INSTANCE_DESC)),
@@ -869,18 +868,18 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
         // Upload instance desc to instance buffer.
         {
-            const upload = grfx.allocateUploadBufferRegion(d3d12.RAYTRACING_INSTANCE_DESC, 1);
+            const upload = gctx.allocateUploadBufferRegion(d3d12.RAYTRACING_INSTANCE_DESC, 1);
             upload.cpu_slice[0] = instance_desc;
 
-            grfx.cmdlist.CopyBufferRegion(
-                grfx.lookupResource(instance_buffer).?,
+            gctx.cmdlist.CopyBufferRegion(
+                gctx.lookupResource(instance_buffer).?,
                 0,
                 upload.buffer,
                 upload.buffer_offset,
                 upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
             );
-            grfx.addTransitionBarrier(instance_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            grfx.flushResourceBarriers();
+            gctx.addTransitionBarrier(instance_buffer, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            gctx.flushResourceBarriers();
         }
 
         const tlas_inputs = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS{
@@ -889,15 +888,15 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             .NumDescs = 1,
             .DescsLayout = .ARRAY,
             .u = .{
-                .InstanceDescs = grfx.lookupResource(instance_buffer).?.GetGPUVirtualAddress(),
+                .InstanceDescs = gctx.lookupResource(instance_buffer).?.GetGPUVirtualAddress(),
             },
         };
 
         var tlas_build_info: d3d12.RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO = undefined;
-        grfx.device.GetRaytracingAccelerationStructurePrebuildInfo(&tlas_inputs, &tlas_build_info);
+        gctx.device.GetRaytracingAccelerationStructurePrebuildInfo(&tlas_inputs, &tlas_build_info);
         std.log.info("TLAS: {}", .{tlas_build_info});
 
-        const tlas_scratch_buffer = grfx.createCommittedResource(
+        const tlas_scratch_buffer = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &blk: {
@@ -910,7 +909,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err);
         temp_resources.append(tlas_scratch_buffer) catch unreachable;
 
-        const tlas_buffer = grfx.createCommittedResource(
+        const tlas_buffer = gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &blk: {
@@ -923,23 +922,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err);
 
         const tlas_desc = d3d12.BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
-            .DestAccelerationStructureData = grfx.lookupResource(tlas_buffer).?.GetGPUVirtualAddress(),
+            .DestAccelerationStructureData = gctx.lookupResource(tlas_buffer).?.GetGPUVirtualAddress(),
             .Inputs = tlas_inputs,
             .SourceAccelerationStructureData = 0,
-            .ScratchAccelerationStructureData = grfx.lookupResource(tlas_scratch_buffer).?.GetGPUVirtualAddress(),
+            .ScratchAccelerationStructureData = gctx.lookupResource(tlas_scratch_buffer).?.GetGPUVirtualAddress(),
         };
-        grfx.cmdlist.BuildRaytracingAccelerationStructure(&tlas_desc, 0, null);
-        grfx.cmdlist.ResourceBarrier(
+        gctx.cmdlist.BuildRaytracingAccelerationStructure(&tlas_desc, 0, null);
+        gctx.cmdlist.ResourceBarrier(
             1,
             &[_]d3d12.RESOURCE_BARRIER{
-                d3d12.RESOURCE_BARRIER.initUav(grfx.lookupResource(tlas_buffer).?),
+                d3d12.RESOURCE_BARRIER.initUav(gctx.lookupResource(tlas_buffer).?),
             },
         );
 
         break :blk_tlas tlas_buffer;
     } else blk_tlas: {
         // DXR is not supported. Create a dummy TLAS buffer to simplify code.
-        break :blk_tlas grfx.createCommittedResource(
+        break :blk_tlas gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &d3d12.RESOURCE_DESC.initBuffer(1),
@@ -948,19 +947,19 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ) catch |err| hrPanic(err);
     };
 
-    grfx.endFrame();
-    grfx.finishGpuCommands();
+    gctx.endFrame();
+    gctx.finishGpuCommands();
 
     _ = zpix.endCapture();
 
-    mipgen_rgba8.deinit(&grfx);
+    mipgen_rgba8.deinit(&gctx);
     for (temp_resources.items) |resource| {
-        grfx.destroyResource(resource);
+        gctx.destroyResource(resource);
     }
 
-    return .{
-        .grfx = grfx,
-        .gui = gui,
+    return DemoState{
+        .gctx = gctx,
+        .guir = guir,
         .frame_stats = common.FrameStats.init(),
         .static_mesh_pso = static_mesh_pso,
         .z_pre_pass_pso = z_pre_pass_pso,
@@ -1000,8 +999,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
-    demo.grfx.finishGpuCommands();
+fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
+    demo.gctx.finishGpuCommands();
     if (demo.dxr_is_supported) {
         _ = demo.trace_shadow_rays_stateobj.?.Release();
         _ = demo.trace_shadow_rays_rs.?.Release();
@@ -1009,19 +1008,19 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.meshes.deinit();
     demo.materials.deinit();
     demo.textures.deinit();
-    demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit(gpa_allocator);
-    common.deinitWindow(gpa_allocator);
+    demo.guir.deinit(&demo.gctx);
+    demo.gctx.deinit(allocator);
+    common.deinitWindow(allocator);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
-    demo.frame_stats.update(demo.grfx.window, window_name);
+    demo.frame_stats.update(demo.gctx.window, window_name);
 
     common.newImGuiFrame(demo.frame_stats.delta_time);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -1053,14 +1052,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: w.POINT = undefined;
-        _ = w.GetCursorPos(&pos);
+        var pos: w32.POINT = undefined;
+        _ = w32.GetCursorPos(&pos);
         const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
         const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+        if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
@@ -1080,14 +1079,14 @@ fn update(demo: *DemoState) void {
         const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
         forward = forward.scale(speed * delta_time);
 
-        if (w.GetAsyncKeyState('W') < 0) {
+        if (w32.GetAsyncKeyState('W') < 0) {
             demo.camera.position = demo.camera.position.add(forward);
-        } else if (w.GetAsyncKeyState('S') < 0) {
+        } else if (w32.GetAsyncKeyState('S') < 0) {
             demo.camera.position = demo.camera.position.sub(forward);
         }
-        if (w.GetAsyncKeyState('D') < 0) {
+        if (w32.GetAsyncKeyState('D') < 0) {
             demo.camera.position = demo.camera.position.add(right);
-        } else if (w.GetAsyncKeyState('A') < 0) {
+        } else if (w32.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
@@ -1096,8 +1095,8 @@ fn update(demo: *DemoState) void {
 }
 
 fn draw(demo: *DemoState) void {
-    var grfx = &demo.grfx;
-    grfx.beginFrame();
+    var gctx = &demo.gctx;
+    gctx.beginFrame();
 
     const cam_world_to_view = vm.Mat4.initLookToLh(
         demo.camera.position,
@@ -1106,72 +1105,72 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = vm.Mat4.initPerspectiveFovLh(
         math.pi / 3.0,
-        @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
+        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
         0.1,
         50.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
-    const back_buffer = grfx.getBackBuffer();
+    const back_buffer = gctx.getBackBuffer();
 
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.flushResourceBarriers();
 
-    grfx.cmdlist.OMSetRenderTargets(
+    gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        w.TRUE,
+        w32.TRUE,
         &demo.depth_texture_dsv,
     );
-    grfx.cmdlist.ClearRenderTargetView(
+    gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
         &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
         null,
     );
-    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
-    grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+    gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
 
     // Z Pre Pass.
     {
-        zpix.beginEvent(grfx.cmdlist, "Z Pre Pass");
-        defer zpix.endEvent(grfx.cmdlist);
+        zpix.beginEvent(gctx.cmdlist, "Z Pre Pass");
+        defer zpix.endEvent(gctx.cmdlist);
 
         const object_to_clip = cam_world_to_clip;
 
-        const mem = grfx.allocateUploadMemory(PsoZPrePass_FrameConst, 1);
+        const mem = gctx.allocateUploadMemory(PsoZPrePass_FrameConst, 1);
         mem.cpu_slice[0] = .{
             .object_to_clip = object_to_clip.transpose(),
         };
 
-        grfx.setCurrentPipeline(demo.z_pre_pass_pso);
-        grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
-            const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
-            _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
+        gctx.setCurrentPipeline(demo.z_pre_pass_pso);
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
+            const table = gctx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
+            _ = gctx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
             break :blk table;
         });
         for (demo.meshes.items) |mesh| {
-            grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
-            grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+            gctx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
+            gctx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
         }
     }
 
-    grfx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.flushResourceBarriers();
 
     // Generate shadow rays.
     if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
-        zpix.beginEvent(grfx.cmdlist, "Generate shadow rays.");
-        defer zpix.endEvent(grfx.cmdlist);
+        zpix.beginEvent(gctx.cmdlist, "Generate shadow rays.");
+        defer zpix.endEvent(gctx.cmdlist);
 
-        grfx.cmdlist.OMSetRenderTargets(
+        gctx.cmdlist.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{demo.shadow_rays_texture_rtv},
-            w.TRUE,
+            w32.TRUE,
             &demo.depth_texture_dsv,
         );
-        grfx.cmdlist.ClearRenderTargetView(
+        gctx.cmdlist.ClearRenderTargetView(
             demo.shadow_rays_texture_rtv,
             &[4]f32{ 0.0, 0.0, 0.0, 0.0 },
             0,
@@ -1180,48 +1179,48 @@ fn draw(demo: *DemoState) void {
 
         const object_to_clip = cam_world_to_clip;
 
-        const mem = grfx.allocateUploadMemory(PsoGenShadowRays_FrameConst, 1);
+        const mem = gctx.allocateUploadMemory(PsoGenShadowRays_FrameConst, 1);
         mem.cpu_slice[0] = .{
             .object_to_clip = object_to_clip.transpose(),
             .object_to_world = Mat4.initIdentity(),
         };
 
-        grfx.setCurrentPipeline(demo.gen_shadow_rays_pso);
-        grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
-            const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
-            _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
+        gctx.setCurrentPipeline(demo.gen_shadow_rays_pso);
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(2, blk: {
+            const table = gctx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
+            _ = gctx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
             break :blk table;
         });
         for (demo.meshes.items) |mesh| {
-            grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
-            grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+            gctx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
+            gctx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
         }
 
-        grfx.cmdlist.OMSetRenderTargets(
+        gctx.cmdlist.OMSetRenderTargets(
             1,
             &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-            w.TRUE,
+            w32.TRUE,
             &demo.depth_texture_dsv,
         );
     }
 
-    grfx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    grfx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(demo.shadow_rays_texture, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    gctx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+    gctx.flushResourceBarriers();
 
     // Trace shadow rays.
     if (demo.dxr_is_supported and demo.dxr_draw_mode > 0) {
-        zpix.beginEvent(grfx.cmdlist, "Trace Shadow Rays");
-        defer zpix.endEvent(grfx.cmdlist);
+        zpix.beginEvent(gctx.cmdlist, "Trace Shadow Rays");
+        defer zpix.endEvent(gctx.cmdlist);
 
         // Upload 'shader table' content (in this demo it could be done only once at init time).
         {
-            grfx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_COPY_DEST);
-            grfx.flushResourceBarriers();
+            gctx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_COPY_DEST);
+            gctx.flushResourceBarriers();
 
             const total_table_size = 192;
-            const upload = grfx.allocateUploadBufferRegion(u8, total_table_size);
+            const upload = gctx.allocateUploadBufferRegion(u8, total_table_size);
 
             var properties: *d3d12.IStateObjectProperties = undefined;
             hrPanicOnFail(demo.trace_shadow_rays_stateobj.?.QueryInterface(
@@ -1252,70 +1251,70 @@ fn draw(demo: *DemoState) void {
             );
             @memset(upload.cpu_slice.ptr + 2 * 64 + 32, 0, 32);
 
-            grfx.cmdlist.CopyBufferRegion(
-                grfx.lookupResource(demo.trace_shadow_rays_table).?,
+            gctx.cmdlist.CopyBufferRegion(
+                gctx.lookupResource(demo.trace_shadow_rays_table).?,
                 0,
                 upload.buffer,
                 upload.buffer_offset,
                 total_table_size,
             );
-            grfx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            grfx.flushResourceBarriers();
+            gctx.addTransitionBarrier(demo.trace_shadow_rays_table, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            gctx.flushResourceBarriers();
         }
 
-        const mem = grfx.allocateUploadMemory(PsoTraceShadowRays_FrameConst, 1);
+        const mem = gctx.allocateUploadMemory(PsoTraceShadowRays_FrameConst, 1);
         mem.cpu_slice[0] = .{
             .light_position = demo.light_position,
         };
 
-        grfx.cmdlist.SetPipelineState1(demo.trace_shadow_rays_stateobj.?);
-        grfx.cmdlist.SetComputeRootSignature(demo.trace_shadow_rays_rs.?);
-        grfx.cmdlist.SetComputeRootShaderResourceView(
+        gctx.cmdlist.SetPipelineState1(demo.trace_shadow_rays_stateobj.?);
+        gctx.cmdlist.SetComputeRootSignature(demo.trace_shadow_rays_rs.?);
+        gctx.cmdlist.SetComputeRootShaderResourceView(
             0,
-            grfx.lookupResource(demo.tlas_buffer).?.GetGPUVirtualAddress(),
+            gctx.lookupResource(demo.tlas_buffer).?.GetGPUVirtualAddress(),
         );
-        grfx.cmdlist.SetComputeRootDescriptorTable(1, blk: {
-            const table = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_rays_texture_srv);
-            _ = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_uav);
+        gctx.cmdlist.SetComputeRootDescriptorTable(1, blk: {
+            const table = gctx.copyDescriptorsToGpuHeap(1, demo.shadow_rays_texture_srv);
+            _ = gctx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_uav);
             break :blk table;
         });
-        grfx.cmdlist.SetComputeRootConstantBufferView(2, mem.gpu_base);
+        gctx.cmdlist.SetComputeRootConstantBufferView(2, mem.gpu_base);
 
-        const base_addr = grfx.lookupResource(demo.trace_shadow_rays_table).?.GetGPUVirtualAddress();
+        const base_addr = gctx.lookupResource(demo.trace_shadow_rays_table).?.GetGPUVirtualAddress();
         const dispatch_desc = d3d12.DISPATCH_RAYS_DESC{
             .RayGenerationShaderRecord = .{ .StartAddress = base_addr, .SizeInBytes = 32 },
             .MissShaderTable = .{ .StartAddress = base_addr + 64, .SizeInBytes = 32, .StrideInBytes = 32 },
             .HitGroupTable = .{ .StartAddress = base_addr + 128, .SizeInBytes = 32, .StrideInBytes = 32 },
             .CallableShaderTable = .{ .StartAddress = 0, .SizeInBytes = 0, .StrideInBytes = 0 },
-            .Width = grfx.viewport_width,
-            .Height = grfx.viewport_height,
+            .Width = gctx.viewport_width,
+            .Height = gctx.viewport_height,
             .Depth = 1,
         };
-        grfx.cmdlist.DispatchRays(&dispatch_desc);
+        gctx.cmdlist.DispatchRays(&dispatch_desc);
     } else {
-        const gpu_view = grfx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_uav);
-        grfx.cmdlist.ClearUnorderedAccessViewFloat(
+        const gpu_view = gctx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_uav);
+        gctx.cmdlist.ClearUnorderedAccessViewFloat(
             gpu_view,
             demo.shadow_mask_texture_uav,
-            grfx.lookupResource(demo.shadow_mask_texture).?,
+            gctx.lookupResource(demo.shadow_mask_texture).?,
             &.{ 1000.0, 0.0, 0.0, 0.0 },
             0,
             null,
         );
     }
 
-    grfx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(demo.shadow_mask_texture, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    gctx.flushResourceBarriers();
 
     // Draw Sponza.
     {
-        zpix.beginEvent(grfx.cmdlist, "Main Pass");
-        defer zpix.endEvent(grfx.cmdlist);
+        zpix.beginEvent(gctx.cmdlist, "Main Pass");
+        defer zpix.endEvent(gctx.cmdlist);
 
         const object_to_world = vm.Mat4.initIdentity();
         const object_to_clip = object_to_world.mul(cam_world_to_clip);
 
-        const mem = grfx.allocateUploadMemory(PsoStaticMesh_FrameConst, 1);
+        const mem = gctx.allocateUploadMemory(PsoStaticMesh_FrameConst, 1);
         mem.cpu_slice[0] = .{
             .object_to_clip = object_to_clip.transpose(),
             .object_to_world = object_to_world.transpose(),
@@ -1324,67 +1323,55 @@ fn draw(demo: *DemoState) void {
             .draw_mode = demo.dxr_draw_mode,
         };
 
-        grfx.setCurrentPipeline(demo.static_mesh_pso);
-        grfx.cmdlist.SetGraphicsRootConstantBufferView(2, mem.gpu_base);
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(3, blk: {
-            const table = grfx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
-            _ = grfx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
+        gctx.setCurrentPipeline(demo.static_mesh_pso);
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(2, mem.gpu_base);
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(3, blk: {
+            const table = gctx.copyDescriptorsToGpuHeap(1, demo.vertex_buffer.view);
+            _ = gctx.copyDescriptorsToGpuHeap(1, demo.index_buffer.view);
             break :blk table;
         });
-        grfx.cmdlist.SetGraphicsRootDescriptorTable(
+        gctx.cmdlist.SetGraphicsRootDescriptorTable(
             4,
-            grfx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_srv),
+            gctx.copyDescriptorsToGpuHeap(1, demo.shadow_mask_texture_srv),
         );
         for (demo.meshes.items) |mesh| {
-            grfx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
-            grfx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {
+            gctx.cmdlist.SetGraphicsRoot32BitConstants(0, 2, &.{ mesh.vertex_offset, mesh.index_offset }, 0);
+            gctx.cmdlist.SetGraphicsRootDescriptorTable(1, blk: {
                 const color_index = demo.materials.items[mesh.material_index].base_color_tex_index;
                 const mr_index = demo.materials.items[mesh.material_index].metallic_roughness_tex_index;
                 const normal_index = demo.materials.items[mesh.material_index].normal_tex_index;
 
-                const table = grfx.copyDescriptorsToGpuHeap(1, demo.textures.items[color_index].view);
-                _ = grfx.copyDescriptorsToGpuHeap(1, demo.textures.items[mr_index].view);
-                _ = grfx.copyDescriptorsToGpuHeap(1, demo.textures.items[normal_index].view);
+                const table = gctx.copyDescriptorsToGpuHeap(1, demo.textures.items[color_index].view);
+                _ = gctx.copyDescriptorsToGpuHeap(1, demo.textures.items[mr_index].view);
+                _ = gctx.copyDescriptorsToGpuHeap(1, demo.textures.items[normal_index].view);
                 break :blk table;
             });
-            grfx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
+            gctx.cmdlist.DrawInstanced(mesh.num_indices, 1, 0, 0);
         }
     }
 
-    demo.gui.draw(grfx);
+    demo.guir.draw(gctx);
 
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.flushResourceBarriers();
 
-    grfx.endFrame();
+    gctx.endFrame();
 }
 
 pub fn main() !void {
     common.init();
     defer common.deinit();
 
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa_allocator_state.deinit();
-        std.debug.assert(leaked == false);
-    }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var demo = init(gpa_allocator);
-    defer deinit(&demo, gpa_allocator);
+    const allocator = gpa.allocator();
 
-    while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch unreachable;
-        if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            update(&demo);
-            draw(&demo);
-        }
+    var demo = try init(allocator);
+    defer deinit(&demo, allocator);
+
+    while (common.handleWindowEvents()) {
+        update(&demo);
+        draw(&demo);
     }
 }
