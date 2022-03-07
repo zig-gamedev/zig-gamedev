@@ -88,8 +88,8 @@ pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 pub fn main() !void {
     ...
-    var gctx = zd3d12.GraphicsContext.init(window);
-    defer gctx.deinit();
+    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    defer gctx.deinit(allocator);
 
     while (...) {
         gctx.beginFrame();

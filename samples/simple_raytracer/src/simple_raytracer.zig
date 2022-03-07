@@ -440,7 +440,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &zpix.CaptureParameters{ .gpu_capture_params = .{ .FileName = L("capture.wpix") } },
     );
 
-    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
+    var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
 
     // Check for DirectX Raytracing (DXR) support.
     const dxr_is_supported = blk: {

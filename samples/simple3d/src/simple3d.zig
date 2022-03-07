@@ -156,7 +156,7 @@ const DemoState = struct {
 
     fn init(gpa_allocator: std.mem.Allocator) DemoState {
         const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-        var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
+        var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
 
         var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
         defer arena_allocator_state.deinit();

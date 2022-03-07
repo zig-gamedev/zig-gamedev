@@ -79,7 +79,7 @@ pub const GraphicsContext = struct {
     present_flags: w32.UINT,
     present_interval: w32.UINT,
 
-    pub fn init(window: w32.HWND, allocator: std.mem.Allocator) GraphicsContext {
+    pub fn init(allocator: std.mem.Allocator, window: w32.HWND) GraphicsContext {
         const wic_factory = blk: {
             var wic_factory: *wic.IImagingFactory = undefined;
             hrPanicOnFail(w32.CoCreateInstance(

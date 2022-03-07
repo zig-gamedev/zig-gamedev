@@ -45,7 +45,7 @@ const DemoState = struct {
 
 fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
+    var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
 
     var ink_points = std.ArrayList(d2d1.POINT_2F).init(gpa_allocator);
 

@@ -26,7 +26,7 @@ pub fn main() !void {
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
     defer common.deinitWindow(allocator);
 
-    var gctx = zd3d12.GraphicsContext.init(window, allocator);
+    var gctx = zd3d12.GraphicsContext.init(allocator, window);
     defer gctx.deinit(allocator);
 
     var frame_stats = common.FrameStats.init();

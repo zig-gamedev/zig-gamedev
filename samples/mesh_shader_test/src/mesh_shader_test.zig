@@ -253,7 +253,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var grfx = zd3d12.GraphicsContext.init(window, gpa_allocator);
+    var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
 
     // Check for Mesh Shader support.
     {
