@@ -182,8 +182,8 @@ pub const GraphicsContext = struct {
             if (hr != w32.S_OK) {
                 _ = w32.user32.messageBoxA(
                     window,
-                    "Failed to create Direct3D 12 Device. This applications requires graphics card with DirectX 12" ++
-                        "support.",
+                    "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
+                        "with DirectX 12support.",
                     "Your graphics card driver may be old",
                     w32.user32.MB_OK | w32.user32.MB_ICONERROR,
                 ) catch 0;
@@ -314,8 +314,10 @@ pub const GraphicsContext = struct {
                 // Non-persistent heap does not own memory it is just a sub-range in a persistent heap
                 cbv_srv_uav_gpu_heaps[heap_index] = cbv_srv_uav_gpu_heaps[0];
                 cbv_srv_uav_gpu_heaps[heap_index].heap = null;
-                cbv_srv_uav_gpu_heaps[heap_index].base.cpu_handle.ptr += heap_index * range_capacity * descriptor_size;
-                cbv_srv_uav_gpu_heaps[heap_index].base.gpu_handle.ptr += heap_index * range_capacity * descriptor_size;
+                cbv_srv_uav_gpu_heaps[heap_index].base.cpu_handle.ptr +=
+                    heap_index * range_capacity * descriptor_size;
+                cbv_srv_uav_gpu_heaps[heap_index].base.gpu_handle.ptr +=
+                    heap_index * range_capacity * descriptor_size;
             }
         }
 
@@ -563,7 +565,7 @@ pub const GraphicsContext = struct {
             .upload_memory_heaps = upload_heaps,
             .resource_pool = resource_pool,
             .pipeline_pool = pipeline_pool,
-            .current_pipeline = .{ .index = 0, .generation = 0 },
+            .current_pipeline = .{},
             .transition_resource_barriers = std.heap.page_allocator.alloc(
                 TransitionResourceBarrier,
                 max_num_buffered_resource_barriers,
@@ -599,17 +601,22 @@ pub const GraphicsContext = struct {
             _ = gctx.d2d.?.device11.Release();
             _ = gctx.d2d.?.context11.Release();
             _ = gctx.d2d.?.dwrite_factory.Release();
-            for (gctx.d2d.?.targets) |target| _ = target.Release();
-            for (gctx.d2d.?.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
+            for (gctx.d2d.?.targets) |target|
+                _ = target.Release();
+            for (gctx.d2d.?.swapbuffers11) |swapbuffer11|
+                _ = swapbuffer11.Release();
         }
-        for (gctx.cbv_srv_uav_gpu_heaps) |*heap| heap.deinit();
-        for (gctx.upload_memory_heaps) |*heap| heap.deinit();
+        for (gctx.cbv_srv_uav_gpu_heaps) |*heap|
+            heap.deinit();
+        for (gctx.upload_memory_heaps) |*heap|
+            heap.deinit();
         _ = gctx.device.Release();
         _ = gctx.cmdqueue.Release();
         _ = gctx.swapchain.Release();
         _ = gctx.frame_fence.Release();
         _ = gctx.cmdlist.Release();
-        for (gctx.cmdallocs) |cmdalloc| _ = cmdalloc.Release();
+        for (gctx.cmdallocs) |cmdalloc|
+            _ = cmdalloc.Release();
         _ = gctx.wic_factory.Release();
         gctx.* = undefined;
     }
@@ -638,7 +645,7 @@ pub const GraphicsContext = struct {
             .right = @intCast(c_long, gctx.viewport_width),
             .bottom = @intCast(c_long, gctx.viewport_height),
         }});
-        gctx.current_pipeline = .{ .index = 0, .generation = 0 };
+        gctx.current_pipeline = .{};
     }
 
     pub fn endFrame(gctx: *GraphicsContext) void {
@@ -686,7 +693,10 @@ pub const GraphicsContext = struct {
         if (enable_dx_debug) {
             // NOTE(mziulek): D2D1 is slow. It creates and destroys resources every frame. To see create/destroy
             // messages in debug output set 'mute_d2d_completely' to 'false'.
-            hrPanicOnFail(gctx.device.QueryInterface(&d3d12d.IID_IInfoQueue, @ptrCast(*?*anyopaque, &info_queue)));
+            hrPanicOnFail(gctx.device.QueryInterface(
+                &d3d12d.IID_IInfoQueue,
+                @ptrCast(*?*anyopaque, &info_queue),
+            ));
 
             if (mute_d2d_completely) {
                 info_queue.SetMuteDebugOutput(w32.TRUE);
@@ -1235,7 +1245,10 @@ pub const GraphicsContext = struct {
         const size = num_elements * @sizeOf(T);
         var memory = gctx.upload_memory_heaps[gctx.frame_index].allocate(size);
         if (memory.cpu_slice == null or memory.gpu_base == null) {
-            std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
+            std.log.info(
+                "[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).",
+                .{},
+            );
 
             gctx.finishGpuCommands();
 
@@ -1303,7 +1316,10 @@ pub const GraphicsContext = struct {
         return handle;
     }
 
-    pub fn deallocateAllTempCpuDescriptors(gctx: *GraphicsContext, dtype: d3d12.DESCRIPTOR_HEAP_TYPE) void {
+    pub fn deallocateAllTempCpuDescriptors(
+        gctx: *GraphicsContext,
+        dtype: d3d12.DESCRIPTOR_HEAP_TYPE,
+    ) void {
         var dheap = switch (dtype) {
             .CBV_SRV_UAV => &gctx.cbv_srv_uav_cpu_heap,
             .RTV => &gctx.rtv_heap,
@@ -1321,7 +1337,10 @@ pub const GraphicsContext = struct {
         return gctx.cbv_srv_uav_gpu_heaps[gctx.frame_index + 1].allocateDescriptors(num_descriptors);
     }
 
-    pub fn allocatePersistentGpuDescriptors(gctx: *GraphicsContext, num_descriptors: u32) PersistentDescriptor {
+    pub fn allocatePersistentGpuDescriptors(
+        gctx: *GraphicsContext,
+        num_descriptors: u32,
+    ) PersistentDescriptor {
         // Allocate descriptors from persistent heap (heap 0)
         const index = gctx.cbv_srv_uav_gpu_heaps[0].size;
         const base = gctx.cbv_srv_uav_gpu_heaps[0].allocateDescriptors(num_descriptors);
@@ -1405,7 +1424,6 @@ pub const GraphicsContext = struct {
         params: struct {
             num_mip_levels: u32 = 0,
             texture_flags: d3d12.RESOURCE_FLAGS = d3d12.RESOURCE_FLAG_NONE,
-            //force_num_components = 0,
         },
     ) HResultError!ResourceHandle {
         assert(gctx.is_cmdlist_opened);
@@ -1493,7 +1511,12 @@ pub const GraphicsContext = struct {
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &blk: {
-                var desc = d3d12.RESOURCE_DESC.initTex2d(dxgi_format, image_wh.w32, image_wh.h, params.num_mip_levels);
+                var desc = d3d12.RESOURCE_DESC.initTex2d(
+                    dxgi_format,
+                    image_wh.w32,
+                    image_wh.h,
+                    params.num_mip_levels,
+                );
                 desc.Flags = params.texture_flags;
                 break :blk desc;
             },
@@ -1600,7 +1623,11 @@ pub const MipmapGenerator = struct {
         mipgen.* = undefined;
     }
 
-    pub fn generateMipmaps(mipgen: *MipmapGenerator, gctx: *GraphicsContext, texture_handle: ResourceHandle) void {
+    pub fn generateMipmaps(
+        mipgen: *MipmapGenerator,
+        gctx: *GraphicsContext,
+        texture_handle: ResourceHandle,
+    ) void {
         if (!gctx.resource_pool.isResourceValid(texture_handle))
             return;
 
@@ -1706,8 +1733,8 @@ pub const MipmapGenerator = struct {
 };
 
 pub const ResourceHandle = struct {
-    index: u16 align(4),
-    generation: u16,
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
 };
 
 const Resource = struct {
@@ -1811,8 +1838,8 @@ const ResourcePool = struct {
 };
 
 pub const PipelineHandle = struct {
-    index: u16 align(4),
-    generation: u16,
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
 };
 
 const PipelineType = enum {
