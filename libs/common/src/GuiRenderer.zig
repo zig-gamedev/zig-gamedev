@@ -92,8 +92,8 @@ pub fn init(
         .font = font,
         .font_srv = font_srv,
         .pipeline = pipeline,
-        .vb = .{.{ .index = 0, .generation = 0 }} ** zd3d12.GraphicsContext.max_num_buffered_frames,
-        .ib = .{.{ .index = 0, .generation = 0 }} ** zd3d12.GraphicsContext.max_num_buffered_frames,
+        .vb = .{.{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
+        .ib = .{.{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
         .vb_cpu_addr = [_][]align(8) u8{&.{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
         .ib_cpu_addr = [_][]align(8) u8{&.{}} ** zd3d12.GraphicsContext.max_num_buffered_frames,
     };
@@ -103,8 +103,10 @@ pub fn deinit(gui: *GuiRenderer, gr: *zd3d12.GraphicsContext) void {
     gr.finishGpuCommands();
     gr.destroyPipeline(gui.pipeline);
     gr.destroyResource(gui.font);
-    for (gui.vb) |vb| gr.destroyResource(vb);
-    for (gui.ib) |ib| gr.destroyResource(ib);
+    for (gui.vb) |vb|
+        gr.destroyResource(vb);
+    for (gui.ib) |ib|
+        gr.destroyResource(ib);
     gui.* = undefined;
 }
 
