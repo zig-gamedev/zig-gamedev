@@ -2,7 +2,7 @@ const std = @import("std");
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const d2d1 = zwin32.d2d1;
 const dwrite = zwin32.dwrite;
@@ -20,7 +20,7 @@ const window_width = 1920;
 const window_height = 1080;
 
 const DemoState = struct {
-    grfx: zd3d12.GraphicsContext,
+    gctx: zd3d12.GraphicsContext,
     frame_stats: common.FrameStats,
 
     brush: *d2d1.ISolidColorBrush,
@@ -43,15 +43,15 @@ const DemoState = struct {
     custom_txtfmt: *dwrite.ITextFormat,
 };
 
-fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
+fn init(allocator: std.mem.Allocator) !DemoState {
+    const window = try common.initWindow(allocator, window_name, window_width, window_height);
+    var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
-    var ink_points = std.ArrayList(d2d1.POINT_2F).init(gpa_allocator);
+    var ink_points = std.ArrayList(d2d1.POINT_2F).init(allocator);
 
     const brush = blk: {
         var maybe_brush: ?*d2d1.ISolidColorBrush = null;
-        hrPanicOnFail(grfx.d2d.?.context.CreateSolidColorBrush(
+        hrPanicOnFail(gctx.d2d.?.context.CreateSolidColorBrush(
             &d2d1.COLOR_F{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 0.5 },
             null,
             &maybe_brush,
@@ -61,7 +61,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const textformat = blk: {
         var maybe_textformat: ?*dwrite.ITextFormat = null;
-        hrPanicOnFail(grfx.d2d.?.dwrite_factory.CreateTextFormat(
+        hrPanicOnFail(gctx.d2d.?.dwrite_factory.CreateTextFormat(
             L("Verdana"),
             null,
             dwrite.FONT_WEIGHT.NORMAL,
@@ -78,7 +78,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const custom_txtfmt = blk: {
         var maybe_textformat: ?*dwrite.ITextFormat = null;
-        hrPanicOnFail(grfx.d2d.?.dwrite_factory.CreateTextFormat(
+        hrPanicOnFail(gctx.d2d.?.dwrite_factory.CreateTextFormat(
             L("Ink Free"),
             null,
             dwrite.FONT_WEIGHT.NORMAL,
@@ -95,7 +95,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const ellipse = blk: {
         var maybe_ellipse: ?*d2d1.IEllipseGeometry = null;
-        hrPanicOnFail(grfx.d2d.?.factory.CreateEllipseGeometry(
+        hrPanicOnFail(gctx.d2d.?.factory.CreateEllipseGeometry(
             &.{ .point = .{ .x = 1210.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
             &maybe_ellipse,
         ));
@@ -104,7 +104,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const stroke_style = blk: {
         var maybe_stroke_style: ?*d2d1.IStrokeStyle = null;
-        hrPanicOnFail(grfx.d2d.?.factory.CreateStrokeStyle(
+        hrPanicOnFail(gctx.d2d.?.factory.CreateStrokeStyle(
             &.{
                 .startCap = .ROUND,
                 .endCap = .ROUND,
@@ -123,7 +123,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const path = blk: {
         var path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(grfx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &path)));
 
         var sink: *d2d1.IGeometrySink = undefined;
         hrPanicOnFail(path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
@@ -150,7 +150,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
     const ink_style = blk: {
         var ink_style: *d2d1.IInkStyle = undefined;
-        hrPanicOnFail(grfx.d2d.?.context.CreateInkStyle(
+        hrPanicOnFail(gctx.d2d.?.context.CreateInkStyle(
             &.{ .nibShape = .ROUND, .nibTransform = d2d1.MATRIX_3X2_F.initIdentity() },
             @ptrCast(*?*d2d1.IInkStyle, &ink_style),
         ));
@@ -159,7 +159,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const ink = blk: {
         var ink: *d2d1.IInk = undefined;
-        hrPanicOnFail(grfx.d2d.?.context.CreateInk(
+        hrPanicOnFail(gctx.d2d.?.context.CreateInk(
             &.{ .x = 0.0, .y = 0.0, .radius = 0.0 },
             @ptrCast(*?*d2d1.IInk, &ink),
         ));
@@ -205,7 +205,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const bezier_lines_path = blk: {
         var bezier_lines_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(grfx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &bezier_lines_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &bezier_lines_path)));
 
         var sink: *d2d1.IGeometrySink = undefined;
         hrPanicOnFail(bezier_lines_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
@@ -221,7 +221,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const left_mountain_geo = blk: {
         var left_mountain_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(grfx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &left_mountain_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &left_mountain_path)));
 
         var sink: *d2d1.IGeometrySink = undefined;
         hrPanicOnFail(left_mountain_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
@@ -246,7 +246,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const right_mountain_geo = blk: {
         var right_mountain_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(grfx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &right_mountain_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &right_mountain_path)));
 
         var sink: *d2d1.IGeometrySink = undefined;
         hrPanicOnFail(right_mountain_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
@@ -273,7 +273,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const sun_geo = blk: {
         var sun_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(grfx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &sun_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &sun_path)));
 
         var sink: *d2d1.IGeometrySink = undefined;
         hrPanicOnFail(sun_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
@@ -363,7 +363,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const river_geo = blk: {
         var river_path: *d2d1.IPathGeometry = undefined;
-        hrPanicOnFail(grfx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &river_path)));
+        hrPanicOnFail(gctx.d2d.?.factory.CreatePathGeometry(@ptrCast(*?*d2d1.IPathGeometry, &river_path)));
 
         var sink: *d2d1.IGeometrySink = undefined;
         hrPanicOnFail(river_path.Open(@ptrCast(*?*d2d1.IGeometrySink, &sink)));
@@ -404,7 +404,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
             .{ .color = d2d1.colorf.LightSkyBlue, .position = 1.0 },
         };
         var stop_collection: *d2d1.IGradientStopCollection = undefined;
-        hrPanicOnFail(grfx.d2d.?.context.CreateGradientStopCollection(
+        hrPanicOnFail(gctx.d2d.?.context.CreateGradientStopCollection(
             &stops,
             2,
             ._2_2,
@@ -414,7 +414,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         defer _ = stop_collection.Release();
 
         var radial_gradient_brush: *d2d1.IRadialGradientBrush = undefined;
-        hrPanicOnFail(grfx.d2d.?.context.CreateRadialGradientBrush(
+        hrPanicOnFail(gctx.d2d.?.context.CreateRadialGradientBrush(
             &.{
                 .center = .{ .x = 75.0, .y = 75.0 },
                 .gradientOriginOffset = .{ .x = 0.0, .y = 0.0 },
@@ -428,8 +428,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk radial_gradient_brush;
     };
 
-    return .{
-        .grfx = grfx,
+    return DemoState{
+        .gctx = gctx,
         .frame_stats = common.FrameStats.init(),
         .brush = brush,
         .textformat = textformat,
@@ -450,23 +450,23 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 }
 
 fn drawShapes(demo: DemoState) void {
-    var grfx = &demo.grfx;
+    var gctx = &demo.gctx;
 
-    grfx.d2d.?.context.DrawLine(
+    gctx.d2d.?.context.DrawLine(
         .{ .x = 20.0, .y = 200.0 },
         .{ .x = 120.0, .y = 300.0 },
         @ptrCast(*d2d1.IBrush, demo.brush),
         33.0,
         demo.stroke_style,
     );
-    grfx.d2d.?.context.DrawLine(
+    gctx.d2d.?.context.DrawLine(
         .{ .x = 160.0, .y = 300.0 },
         .{ .x = 260.0, .y = 200.0 },
         @ptrCast(*d2d1.IBrush, demo.brush),
         33.0,
         demo.stroke_style,
     );
-    grfx.d2d.?.context.DrawLine(
+    gctx.d2d.?.context.DrawLine(
         .{ .x = 300.0, .y = 200.0 },
         .{ .x = 400.0, .y = 300.0 },
         @ptrCast(*d2d1.IBrush, demo.brush),
@@ -474,17 +474,17 @@ fn drawShapes(demo: DemoState) void {
         demo.stroke_style,
     );
 
-    grfx.d2d.?.context.DrawRectangle(
+    gctx.d2d.?.context.DrawRectangle(
         &.{ .left = 500.0, .top = 100.0, .right = 600.0, .bottom = 200.0 },
         @ptrCast(*d2d1.IBrush, demo.brush),
         5.0,
         null,
     );
-    grfx.d2d.?.context.FillRectangle(
+    gctx.d2d.?.context.FillRectangle(
         &.{ .left = 610.0, .top = 100.0, .right = 710.0, .bottom = 200.0 },
         @ptrCast(*d2d1.IBrush, demo.brush),
     );
-    grfx.d2d.?.context.FillRoundedRectangle(
+    gctx.d2d.?.context.FillRoundedRectangle(
         &.{
             .rect = .{ .left = 830.0, .top = 100.0, .right = 930.0, .bottom = 200.0 },
             .radiusX = 20.0,
@@ -493,35 +493,35 @@ fn drawShapes(demo: DemoState) void {
         @ptrCast(*d2d1.IBrush, demo.brush),
     );
 
-    grfx.d2d.?.context.DrawEllipse(
+    gctx.d2d.?.context.DrawEllipse(
         &.{ .point = .{ .x = 990.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
         @ptrCast(*d2d1.IBrush, demo.brush),
         5.0,
         null,
     );
-    grfx.d2d.?.context.FillEllipse(
+    gctx.d2d.?.context.FillEllipse(
         &.{ .point = .{ .x = 1100.0, .y = 150.0 }, .radiusX = 50.0, .radiusY = 70.0 },
         @ptrCast(*d2d1.IBrush, demo.brush),
     );
-    grfx.d2d.?.context.DrawGeometry(
+    gctx.d2d.?.context.DrawGeometry(
         @ptrCast(*d2d1.IGeometry, demo.ellipse),
         @ptrCast(*d2d1.IBrush, demo.brush),
         7.0,
         null,
     );
-    grfx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(110.0, 0.0));
-    grfx.d2d.?.context.FillGeometry(
+    gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(110.0, 0.0));
+    gctx.d2d.?.context.FillGeometry(
         @ptrCast(*d2d1.IGeometry, demo.ellipse),
         @ptrCast(*d2d1.IBrush, demo.brush),
         null,
     );
-    grfx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initIdentity());
+    gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initIdentity());
 
     demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.2, .g = 0.4, .b = 0.8, .a = 1.0 });
     var i: u32 = 0;
     while (i < 5) : (i += 1) {
-        grfx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(0.0, @intToFloat(f32, i) * 50.0));
-        grfx.d2d.?.context.DrawGeometry(
+        gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(0.0, @intToFloat(f32, i) * 50.0));
+        gctx.d2d.?.context.DrawGeometry(
             @ptrCast(*d2d1.IGeometry, demo.path),
             @ptrCast(*d2d1.IBrush, demo.brush),
             15.0,
@@ -529,11 +529,11 @@ fn drawShapes(demo: DemoState) void {
         );
     }
 
-    grfx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(500.0, 800.0));
-    grfx.d2d.?.context.DrawInk(demo.ink, @ptrCast(*d2d1.IBrush, demo.brush), demo.ink_style);
+    gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(500.0, 800.0));
+    gctx.d2d.?.context.DrawInk(demo.ink, @ptrCast(*d2d1.IBrush, demo.brush), demo.ink_style);
 
     demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
-    grfx.d2d.?.context.DrawGeometry(
+    gctx.d2d.?.context.DrawGeometry(
         @ptrCast(*d2d1.IGeometry, demo.bezier_lines_path),
         @ptrCast(*d2d1.IBrush, demo.brush),
         3.0,
@@ -542,20 +542,20 @@ fn drawShapes(demo: DemoState) void {
 
     demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.8, .g = 0.0, .b = 0.0, .a = 1.0 });
     for (demo.ink_points.items) |cp| {
-        grfx.d2d.?.context.FillEllipse(
+        gctx.d2d.?.context.FillEllipse(
             &.{ .point = cp, .radiusX = 9.0, .radiusY = 9.0 },
             @ptrCast(*d2d1.IBrush, demo.brush),
         );
     }
 
-    grfx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(750.0, 900.0));
-    grfx.d2d.?.context.DrawInk(demo.ink, @ptrCast(*d2d1.IBrush, demo.brush), demo.ink_style);
+    gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(750.0, 900.0));
+    gctx.d2d.?.context.DrawInk(demo.ink, @ptrCast(*d2d1.IBrush, demo.brush), demo.ink_style);
 
-    grfx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(1080.0, 640.0));
+    gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initTranslation(1080.0, 640.0));
 
     // Draw background.
     demo.brush.SetColor(&d2d1.colorf.White);
-    grfx.d2d.?.context.FillRectangle(
+    gctx.d2d.?.context.FillRectangle(
         &.{ .left = 100.0, .top = 100.0, .right = 620.0, .bottom = 420.0 },
         @ptrCast(*d2d1.IBrush, demo.brush),
     );
@@ -567,37 +567,37 @@ fn drawShapes(demo: DemoState) void {
     // NOTE(mziulek): Using 'demo.radial_gradient_brush' causes GPU-Based Validation errors (D3D11on12 bug?).
     // As a workaround we use 'demo.brush' (solid color brush).
     demo.brush.SetColor(&d2d1.colorf.DarkOrange);
-    grfx.d2d.?.context.FillGeometry(demo.sun_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
+    gctx.d2d.?.context.FillGeometry(demo.sun_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
 
     demo.brush.SetColor(&d2d1.colorf.Black);
-    grfx.d2d.?.context.DrawGeometry(demo.sun_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
+    gctx.d2d.?.context.DrawGeometry(demo.sun_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
 
     // Draw left mountain geometry.
     demo.brush.SetColor(&d2d1.colorf.OliveDrab);
-    grfx.d2d.?.context.FillGeometry(demo.left_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
+    gctx.d2d.?.context.FillGeometry(demo.left_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
 
     demo.brush.SetColor(&d2d1.colorf.Black);
-    grfx.d2d.?.context.DrawGeometry(demo.left_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
+    gctx.d2d.?.context.DrawGeometry(demo.left_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
 
     // Draw river geometry.
     demo.brush.SetColor(&d2d1.colorf.LightSkyBlue);
-    grfx.d2d.?.context.FillGeometry(demo.river_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
+    gctx.d2d.?.context.FillGeometry(demo.river_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
 
     demo.brush.SetColor(&d2d1.colorf.Black);
-    grfx.d2d.?.context.DrawGeometry(demo.river_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
+    gctx.d2d.?.context.DrawGeometry(demo.river_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
 
     // Draw right mountain geometry.
     demo.brush.SetColor(&d2d1.colorf.YellowGreen);
-    grfx.d2d.?.context.FillGeometry(demo.right_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
+    gctx.d2d.?.context.FillGeometry(demo.right_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), null);
 
     demo.brush.SetColor(&d2d1.colorf.Black);
-    grfx.d2d.?.context.DrawGeometry(demo.right_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
+    gctx.d2d.?.context.DrawGeometry(demo.right_mountain_geo, @ptrCast(*d2d1.IBrush, demo.brush), 5.0, null);
 
-    grfx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initIdentity());
+    gctx.d2d.?.context.SetTransform(&d2d1.MATRIX_3X2_F.initIdentity());
 }
 
-fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
-    demo.grfx.finishGpuCommands();
+fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
+    demo.gctx.finishGpuCommands();
     _ = demo.brush.Release();
     _ = demo.textformat.Release();
     _ = demo.custom_txtfmt.Release();
@@ -613,38 +613,38 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     _ = demo.river_geo.Release();
     _ = demo.radial_gradient_brush.Release();
     demo.ink_points.deinit();
-    demo.grfx.deinit(gpa_allocator);
-    common.deinitWindow(gpa_allocator);
+    demo.gctx.deinit(allocator);
+    common.deinitWindow(allocator);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
-    demo.frame_stats.update(demo.grfx.window, window_name);
+    demo.frame_stats.update(demo.gctx.window, window_name);
 }
 
 fn draw(demo: *DemoState) void {
-    var grfx = &demo.grfx;
-    grfx.beginFrame();
+    var gctx = &demo.gctx;
+    gctx.beginFrame();
 
-    const back_buffer = grfx.getBackBuffer();
+    const back_buffer = gctx.getBackBuffer();
 
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.flushResourceBarriers();
 
-    grfx.cmdlist.OMSetRenderTargets(
+    gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        w.TRUE,
+        w32.TRUE,
         null,
     );
-    grfx.cmdlist.ClearRenderTargetView(
+    gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
         &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
         null,
     );
 
-    grfx.beginDraw2d();
+    gctx.beginDraw2d();
     {
         const stats = &demo.frame_stats;
         var buffer = [_]u8{0} ** 64;
@@ -656,21 +656,21 @@ fn draw(demo: *DemoState) void {
 
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
         common.drawText(
-            grfx.d2d.?.context,
+            gctx.d2d.?.context,
             text,
             demo.textformat,
             &d2d1.RECT_F{
                 .left = 10.0,
                 .top = 10.0,
-                .right = @intToFloat(f32, grfx.viewport_width),
-                .bottom = @intToFloat(f32, grfx.viewport_height),
+                .right = @intToFloat(f32, gctx.viewport_width),
+                .bottom = @intToFloat(f32, gctx.viewport_height),
             },
             @ptrCast(*d2d1.IBrush, demo.brush),
         );
 
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 0.6, .g = 0.0, .b = 1.0, .a = 1.0 });
         common.drawText(
-            grfx.d2d.?.context,
+            gctx.d2d.?.context,
             \\Lorem ipsum dolor sit amet,
             \\consectetur adipiscing elit,
             \\sed do eiusmod tempor incididunt
@@ -680,8 +680,8 @@ fn draw(demo: *DemoState) void {
             &d2d1.RECT_F{
                 .left = 1030.0,
                 .top = 220.0,
-                .right = @intToFloat(f32, grfx.viewport_width),
-                .bottom = @intToFloat(f32, grfx.viewport_height),
+                .right = @intToFloat(f32, gctx.viewport_width),
+                .bottom = @intToFloat(f32, gctx.viewport_height),
             },
             @ptrCast(*d2d1.IBrush, demo.brush),
         );
@@ -689,37 +689,25 @@ fn draw(demo: *DemoState) void {
         demo.brush.SetColor(&d2d1.COLOR_F{ .r = 1.0, .g = 1.0, .b = 1.0, .a = 1.0 });
         drawShapes(demo.*);
     }
-    grfx.endDraw2d();
+    gctx.endDraw2d();
 
-    grfx.endFrame();
+    gctx.endFrame();
 }
 
 pub fn main() !void {
     common.init();
     defer common.deinit();
 
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa_allocator_state.deinit();
-        assert(leaked == false);
-    }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var demo = init(gpa_allocator);
-    defer deinit(&demo, gpa_allocator);
+    const allocator = gpa.allocator();
 
-    while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch unreachable;
-        if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            update(&demo);
-            draw(&demo);
-        }
+    var demo = try init(allocator);
+    defer deinit(&demo, allocator);
+
+    while (common.handleWindowEvents()) {
+        update(&demo);
+        draw(&demo);
     }
 }
