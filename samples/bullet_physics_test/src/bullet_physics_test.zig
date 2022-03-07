@@ -4,7 +4,7 @@ const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
@@ -287,8 +287,8 @@ const Camera = struct {
 };
 
 const DemoState = struct {
-    grfx: zd3d12.GraphicsContext,
-    gui: GuiRenderer,
+    gctx: zd3d12.GraphicsContext,
+    guir: GuiRenderer,
     frame_stats: common.FrameStats,
 
     physics_debug_pso: zd3d12.PipelineHandle,
@@ -923,21 +923,21 @@ fn createScene4(
     };
 }
 
-fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+fn init(allocator: std.mem.Allocator) !DemoState {
+    const window = try common.initWindow(allocator, window_name, window_width, window_height);
 
-    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
-    grfx.present_flags = 0;
-    grfx.present_interval = 1;
+    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    gctx.present_flags = 0;
+    gctx.present_interval = 1;
 
     const barycentrics_supported = blk: {
         var options3: d3d12.FEATURE_DATA_D3D12_OPTIONS3 = undefined;
-        const res = grfx.device.CheckFeatureSupport(.OPTIONS3, &options3, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS3));
-        break :blk options3.BarycentricsSupported == w.TRUE and res == w.S_OK;
+        const res = gctx.device.CheckFeatureSupport(.OPTIONS3, &options3, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS3));
+        break :blk options3.BarycentricsSupported == w32.TRUE and res == w32.S_OK;
     };
 
     const physics_debug_pso = blk: {
@@ -949,7 +949,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.DSVFormat = .D32_FLOAT;
         pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
 
-        break :blk grfx.createGraphicsShaderPipeline(
+        break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
             content_dir ++ "shaders/physics_debug.vs.cso",
@@ -976,7 +976,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.SampleDesc = .{ .Count = num_msaa_samples, .Quality = 0 };
 
         if (!barycentrics_supported) {
-            break :blk grfx.createGraphicsShaderPipelineVsGsPs(
+            break :blk gctx.createGraphicsShaderPipelineVsGsPs(
                 arena_allocator,
                 &pso_desc,
                 content_dir ++ "shaders/simple_entity.vs.cso",
@@ -984,7 +984,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
                 content_dir ++ "shaders/simple_entity_with_gs.ps.cso",
             );
         } else {
-            break :blk grfx.createGraphicsShaderPipeline(
+            break :blk gctx.createGraphicsShaderPipeline(
                 arena_allocator,
                 &pso_desc,
                 content_dir ++ "shaders/simple_entity.vs.cso",
@@ -993,11 +993,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         }
     };
 
-    const color_texture = grfx.createCommittedResource(
+    const color_texture = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
-            var desc = d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, grfx.viewport_width, grfx.viewport_height, 1);
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.R8G8B8A8_UNORM, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_RENDER_TARGET;
             desc.SampleDesc.Count = num_msaa_samples;
             break :blk desc;
@@ -1006,14 +1006,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &d3d12.CLEAR_VALUE.initColor(.R8G8B8A8_UNORM, &.{ 0.0, 0.0, 0.0, 1.0 }),
     ) catch |err| hrPanic(err);
 
-    const color_texture_rtv = grfx.allocateCpuDescriptors(.RTV, 1);
-    grfx.device.CreateRenderTargetView(grfx.lookupResource(color_texture).?, null, color_texture_rtv);
+    const color_texture_rtv = gctx.allocateCpuDescriptors(.RTV, 1);
+    gctx.device.CreateRenderTargetView(gctx.lookupResource(color_texture).?, null, color_texture_rtv);
 
-    const depth_texture = grfx.createCommittedResource(
+    const depth_texture = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &blk: {
-            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, grfx.viewport_width, grfx.viewport_height, 1);
+            var desc = d3d12.RESOURCE_DESC.initTex2d(.D32_FLOAT, gctx.viewport_width, gctx.viewport_height, 1);
             desc.Flags = d3d12.RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | d3d12.RESOURCE_FLAG_DENY_SHADER_RESOURCE;
             desc.SampleDesc.Count = num_msaa_samples;
             break :blk desc;
@@ -1022,10 +1022,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         &d3d12.CLEAR_VALUE.initDepthStencil(.D32_FLOAT, 1.0, 0),
     ) catch |err| hrPanic(err);
 
-    const depth_texture_dsv = grfx.allocateCpuDescriptors(.DSV, 1);
-    grfx.device.CreateDepthStencilView(grfx.lookupResource(depth_texture).?, null, depth_texture_dsv);
+    const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
+    gctx.device.CreateDepthStencilView(gctx.lookupResource(depth_texture).?, null, depth_texture_dsv);
 
-    var all_meshes = std.ArrayList(Mesh).init(gpa_allocator);
+    var all_meshes = std.ArrayList(Mesh).init(allocator);
     var all_positions = std.ArrayList([3]f32).init(arena_allocator);
     var all_normals = std.ArrayList([3]f32).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
@@ -1034,8 +1034,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     const physics_world = zb.cbtWorldCreate();
     zb.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
 
-    var physics_debug = gpa_allocator.create(PhysicsDebug) catch unreachable;
-    physics_debug.* = PhysicsDebug.init(gpa_allocator);
+    var physics_debug = allocator.create(PhysicsDebug) catch unreachable;
+    physics_debug.* = PhysicsDebug.init(allocator);
 
     zb.cbtWorldDebugSetDrawer(physics_world, &.{
         .drawLine1 = PhysicsDebug.drawLine1,
@@ -1068,14 +1068,14 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 
     const physics_objects_pool = PhysicsObjectsPool.init();
     var camera: Camera = undefined;
-    var entities = std.ArrayList(Entity).init(gpa_allocator);
+    var entities = std.ArrayList(Entity).init(allocator);
     createScene1(physics_world, physics_objects_pool, &entities, &camera);
     entities.items[0].flags = 1;
 
-    var connected_bodies = std.ArrayList(BodyWithPivot).init(gpa_allocator);
-    var motors = std.ArrayList(zb.CbtConstraintHandle).init(gpa_allocator);
+    var connected_bodies = std.ArrayList(BodyWithPivot).init(allocator);
+    var motors = std.ArrayList(zb.CbtConstraintHandle).init(allocator);
 
-    var vertex_buffer = grfx.createCommittedResource(
+    var vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &d3d12.RESOURCE_DESC.initBuffer(all_positions.items.len * @sizeOf(Vertex)),
@@ -1083,7 +1083,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    var index_buffer = grfx.createCommittedResource(
+    var index_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &d3d12.RESOURCE_DESC.initBuffer(all_indices.items.len * @sizeOf(u32)),
@@ -1094,49 +1094,49 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     // Begin frame to init/upload resources to the GPU.
     //
-    grfx.beginFrame();
-    grfx.endFrame();
-    grfx.beginFrame();
+    gctx.beginFrame();
+    gctx.endFrame();
+    gctx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, num_msaa_samples, content_dir);
+    var guir = GuiRenderer.init(arena_allocator, &gctx, num_msaa_samples, content_dir);
 
     {
-        const upload = grfx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_positions.items.len));
+        const upload = gctx.allocateUploadBufferRegion(Vertex, @intCast(u32, all_positions.items.len));
         for (all_positions.items) |_, i| {
             upload.cpu_slice[i].position = all_positions.items[i];
             upload.cpu_slice[i].normal = all_normals.items[i];
         }
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.lookupResource(vertex_buffer).?,
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.lookupResource(vertex_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        grfx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        gctx.addTransitionBarrier(vertex_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
     }
 
     {
-        const upload = grfx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
+        const upload = gctx.allocateUploadBufferRegion(u32, @intCast(u32, all_indices.items.len));
         for (all_indices.items) |_, i| {
             upload.cpu_slice[i] = all_indices.items[i];
         }
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.lookupResource(index_buffer).?,
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.lookupResource(index_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
             upload.cpu_slice.len * @sizeOf(@TypeOf(upload.cpu_slice[0])),
         );
-        grfx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
+        gctx.addTransitionBarrier(index_buffer, d3d12.RESOURCE_STATE_INDEX_BUFFER);
     }
 
-    grfx.endFrame();
-    grfx.finishGpuCommands();
+    gctx.endFrame();
+    gctx.finishGpuCommands();
 
-    return .{
-        .grfx = grfx,
-        .gui = gui,
+    return DemoState{
+        .gctx = gctx,
+        .guir = guir,
         .frame_stats = common.FrameStats.init(),
         .physics_world = physics_world,
         .physics_debug = physics_debug,
@@ -1173,12 +1173,12 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
-    demo.grfx.finishGpuCommands();
+fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
+    demo.gctx.finishGpuCommands();
     demo.meshes.deinit();
-    demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit(gpa_allocator);
-    common.deinitWindow(gpa_allocator);
+    demo.guir.deinit(&demo.gctx);
+    demo.gctx.deinit(allocator);
+    common.deinitWindow(allocator);
     if (zb.cbtConIsCreated(demo.pick.constraint)) {
         zb.cbtWorldRemoveConstraint(demo.physics_world, demo.pick.constraint);
         zb.cbtConDestroy(demo.pick.constraint);
@@ -1189,7 +1189,7 @@ fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.motors.deinit();
     demo.physics_objects_pool.deinit(demo.physics_world);
     demo.physics_debug.deinit();
-    gpa_allocator.destroy(demo.physics_debug);
+    allocator.destroy(demo.physics_debug);
     zb.cbtWorldDestroy(demo.physics_world);
     demo.* = undefined;
 }
@@ -1268,7 +1268,7 @@ fn createAddEntity(
 }
 
 fn update(demo: *DemoState) void {
-    demo.frame_stats.update(demo.grfx.window, window_name);
+    demo.frame_stats.update(demo.gctx.window, window_name);
     const dt = demo.frame_stats.delta_time;
 
     if (!demo.simulation_is_paused) {
@@ -1281,7 +1281,7 @@ fn update(demo: *DemoState) void {
     common.newImGuiFrame(dt);
 
     c.igSetNextWindowPos(
-        c.ImVec2{ .x = @intToFloat(f32, demo.grfx.viewport_width) - 600.0 - 20, .y = 20.0 },
+        c.ImVec2{ .x = @intToFloat(f32, demo.gctx.viewport_width) - 600.0 - 20, .y = 20.0 },
         c.ImGuiCond_FirstUseEver,
         c.ImVec2{ .x = 0.0, .y = 0.0 },
     );
@@ -1484,14 +1484,14 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        var pos: w.POINT = undefined;
-        _ = w.GetCursorPos(&pos);
+        var pos: w32.POINT = undefined;
+        _ = w32.GetCursorPos(&pos);
         const delta_x = @intToFloat(f32, pos.x) - @intToFloat(f32, demo.mouse.cursor_prev_x);
         const delta_y = @intToFloat(f32, pos.y) - @intToFloat(f32, demo.mouse.cursor_prev_y);
         demo.mouse.cursor_prev_x = pos.x;
         demo.mouse.cursor_prev_y = pos.y;
 
-        if (w.GetAsyncKeyState(w.VK_RBUTTON) < 0) {
+        if (w32.GetAsyncKeyState(w32.VK_RBUTTON) < 0) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
@@ -1511,21 +1511,21 @@ fn update(demo: *DemoState) void {
         const right = Vec3.init(0.0, 1.0, 0.0).cross(forward).normalize().scale(speed * delta_time);
         forward = forward.scale(speed * delta_time);
 
-        if (w.GetAsyncKeyState('W') < 0) {
+        if (w32.GetAsyncKeyState('W') < 0) {
             demo.camera.position = demo.camera.position.add(forward);
-        } else if (w.GetAsyncKeyState('S') < 0) {
+        } else if (w32.GetAsyncKeyState('S') < 0) {
             demo.camera.position = demo.camera.position.sub(forward);
         }
-        if (w.GetAsyncKeyState('D') < 0) {
+        if (w32.GetAsyncKeyState('D') < 0) {
             demo.camera.position = demo.camera.position.add(right);
-        } else if (w.GetAsyncKeyState('A') < 0) {
+        } else if (w32.GetAsyncKeyState('A') < 0) {
             demo.camera.position = demo.camera.position.sub(right);
         }
     }
 
     demo.keyboard_delay += dt;
     if (demo.keyboard_delay >= 0.5) {
-        if (w.GetAsyncKeyState(w.VK_SPACE) < 0) {
+        if (w32.GetAsyncKeyState(w32.VK_SPACE) < 0) {
             demo.keyboard_delay = 0.0;
             const body = demo.physics_objects_pool.getBody();
             zb.cbtBodyCreate(body, 2.0, &Mat4.initTranslation(demo.camera.position).toArray4x3(), shape_sphere_r1);
@@ -1543,16 +1543,16 @@ fn update(demo: *DemoState) void {
 
     const ray_from = demo.camera.position;
     const ray_to = blk: {
-        var pos: w.POINT = undefined;
-        _ = w.GetCursorPos(&pos);
-        _ = w.ScreenToClient(demo.grfx.window, &pos);
+        var pos: w32.POINT = undefined;
+        _ = w32.GetCursorPos(&pos);
+        _ = w32.ScreenToClient(demo.gctx.window, &pos);
         const mousex = @intToFloat(f32, pos.x);
         const mousey = @intToFloat(f32, pos.y);
 
         const far_plane: f32 = 10000.0;
         const tanfov = math.tan(0.5 * camera_fovy);
-        const width = @intToFloat(f32, demo.grfx.viewport_width);
-        const height = @intToFloat(f32, demo.grfx.viewport_height);
+        const width = @intToFloat(f32, demo.gctx.viewport_width);
+        const height = @intToFloat(f32, demo.gctx.viewport_height);
         const aspect = width / height;
 
         const ray_forward = demo.camera.forward.scale(far_plane);
@@ -1711,8 +1711,8 @@ fn update(demo: *DemoState) void {
 }
 
 fn draw(demo: *DemoState) void {
-    var grfx = &demo.grfx;
-    grfx.beginFrame();
+    var gctx = &demo.gctx;
+    gctx.beginFrame();
 
     const cam_world_to_view = Mat4.initLookToLh(
         demo.camera.position,
@@ -1721,23 +1721,23 @@ fn draw(demo: *DemoState) void {
     );
     const cam_view_to_clip = Mat4.initPerspectiveFovLh(
         camera_fovy,
-        @intToFloat(f32, grfx.viewport_width) / @intToFloat(f32, grfx.viewport_height),
+        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
         0.01,
         200.0,
     );
     const cam_world_to_clip = cam_world_to_view.mul(cam_view_to_clip);
 
-    grfx.addTransitionBarrier(demo.color_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(demo.color_texture, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.flushResourceBarriers();
 
-    grfx.cmdlist.OMSetRenderTargets(
+    gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{demo.color_texture_rtv},
-        w.TRUE,
+        w32.TRUE,
         &demo.depth_texture_dsv,
     );
-    grfx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
-    grfx.cmdlist.ClearRenderTargetView(
+    gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+    gctx.cmdlist.ClearRenderTargetView(
         demo.color_texture_rtv,
         &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
@@ -1745,24 +1745,24 @@ fn draw(demo: *DemoState) void {
     );
 
     {
-        grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-            .BufferLocation = grfx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
-            .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.vertex_buffer)),
+        gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+            .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
+            .SizeInBytes = @intCast(u32, gctx.getResourceSize(demo.vertex_buffer)),
             .StrideInBytes = @sizeOf(Vertex),
         }});
-        grfx.cmdlist.IASetIndexBuffer(&.{
-            .BufferLocation = grfx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
-            .SizeInBytes = @intCast(u32, grfx.getResourceSize(demo.index_buffer)),
+        gctx.cmdlist.IASetIndexBuffer(&.{
+            .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
+            .SizeInBytes = @intCast(u32, gctx.getResourceSize(demo.index_buffer)),
             .Format = .R32_UINT,
         });
 
-        grfx.setCurrentPipeline(demo.simple_entity_pso);
-        grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+        gctx.setCurrentPipeline(demo.simple_entity_pso);
+        gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
         {
-            const mem = grfx.allocateUploadMemory(PsoSimpleEntity_FrameConst, 1);
+            const mem = gctx.allocateUploadMemory(PsoSimpleEntity_FrameConst, 1);
             mem.cpu_slice[0].world_to_clip = cam_world_to_clip.transpose();
             mem.cpu_slice[0].camera_position = demo.camera.position;
-            grfx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+            gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
         }
 
         //
@@ -1821,13 +1821,13 @@ fn draw(demo: *DemoState) void {
 
                     const scaling = Mat4.initScaling(mesh_size);
 
-                    const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
+                    const mem = gctx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
                     mem.cpu_slice[0].object_to_world = scaling.mul(local_transform.mul(world_transform)).transpose();
                     mem.cpu_slice[0].base_color_roughness = entity.base_color_roughness;
                     mem.cpu_slice[0].flags = entity.flags;
 
-                    grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
-                    grfx.cmdlist.DrawIndexedInstanced(
+                    gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+                    gctx.cmdlist.DrawIndexedInstanced(
                         demo.meshes.items[mesh_index].num_indices,
                         1,
                         demo.meshes.items[mesh_index].index_offset,
@@ -1841,13 +1841,13 @@ fn draw(demo: *DemoState) void {
 
                 const scaling = Mat4.initScaling(entity.size);
 
-                const mem = grfx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
+                const mem = gctx.allocateUploadMemory(PsoSimpleEntity_DrawConst, 1);
                 mem.cpu_slice[0].object_to_world = scaling.mul(Mat4.initArray4x3(transform)).transpose();
                 mem.cpu_slice[0].base_color_roughness = entity.base_color_roughness;
                 mem.cpu_slice[0].flags = entity.flags;
 
-                grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
-                grfx.cmdlist.DrawIndexedInstanced(
+                gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+                gctx.cmdlist.DrawIndexedInstanced(
                     demo.meshes.items[entity.mesh_index].num_indices,
                     1,
                     demo.meshes.items[entity.mesh_index].index_offset,
@@ -1860,71 +1860,59 @@ fn draw(demo: *DemoState) void {
 
     zb.cbtWorldDebugDrawAll(demo.physics_world);
     if (demo.physics_debug.lines.items.len > 0) {
-        grfx.setCurrentPipeline(demo.physics_debug_pso);
-        grfx.cmdlist.IASetPrimitiveTopology(.LINELIST);
+        gctx.setCurrentPipeline(demo.physics_debug_pso);
+        gctx.cmdlist.IASetPrimitiveTopology(.LINELIST);
         {
-            const mem = grfx.allocateUploadMemory(Mat4, 1);
+            const mem = gctx.allocateUploadMemory(Mat4, 1);
             mem.cpu_slice[0] = cam_world_to_clip.transpose();
-            grfx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+            gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
         }
         const num_vertices = @intCast(u32, demo.physics_debug.lines.items.len);
         {
-            const mem = grfx.allocateUploadMemory(PsoPhysicsDebug_Vertex, num_vertices);
+            const mem = gctx.allocateUploadMemory(PsoPhysicsDebug_Vertex, num_vertices);
             for (demo.physics_debug.lines.items) |p, i| {
                 mem.cpu_slice[i] = p;
             }
-            grfx.cmdlist.SetGraphicsRootShaderResourceView(1, mem.gpu_base);
+            gctx.cmdlist.SetGraphicsRootShaderResourceView(1, mem.gpu_base);
         }
-        grfx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
+        gctx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
         demo.physics_debug.lines.clearRetainingCapacity();
     }
 
-    demo.gui.draw(grfx);
+    demo.guir.draw(gctx);
 
-    const back_buffer = grfx.getBackBuffer();
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RESOLVE_DEST);
-    grfx.addTransitionBarrier(demo.color_texture, d3d12.RESOURCE_STATE_RESOLVE_SOURCE);
-    grfx.flushResourceBarriers();
+    const back_buffer = gctx.getBackBuffer();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RESOLVE_DEST);
+    gctx.addTransitionBarrier(demo.color_texture, d3d12.RESOURCE_STATE_RESOLVE_SOURCE);
+    gctx.flushResourceBarriers();
 
-    grfx.cmdlist.ResolveSubresource(
-        grfx.lookupResource(back_buffer.resource_handle).?,
+    gctx.cmdlist.ResolveSubresource(
+        gctx.lookupResource(back_buffer.resource_handle).?,
         0,
-        grfx.lookupResource(demo.color_texture).?,
+        gctx.lookupResource(demo.color_texture).?,
         0,
         .R8G8B8A8_UNORM,
     );
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.flushResourceBarriers();
 
-    grfx.endFrame();
+    gctx.endFrame();
 }
 
 pub fn main() !void {
     common.init();
     defer common.deinit();
 
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa_allocator_state.deinit();
-        std.debug.assert(leaked == false);
-    }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var demo = init(gpa_allocator);
-    defer deinit(&demo, gpa_allocator);
+    const allocator = gpa.allocator();
 
-    while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch false;
-        if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            update(&demo);
-            draw(&demo);
-        }
+    var demo = try init(allocator);
+    defer deinit(&demo, allocator);
+
+    while (common.handleWindowEvents()) {
+        update(&demo);
+        draw(&demo);
     }
 }
