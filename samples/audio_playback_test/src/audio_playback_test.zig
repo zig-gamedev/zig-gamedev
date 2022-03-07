@@ -3,7 +3,7 @@ const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const wasapi = zwin32.wasapi;
 const mf = zwin32.mf;
@@ -31,17 +31,17 @@ const window_height = 1080;
 const AudioContex = struct {
     client: *wasapi.IAudioClient3,
     render_client: *wasapi.IAudioRenderClient,
-    buffer_ready_event: w.HANDLE,
+    buffer_ready_event: w32.HANDLE,
     buffer_size_in_frames: u32,
-    thread_handle: ?w.HANDLE,
+    thread_handle: ?w32.HANDLE,
     samples: std.ArrayList(i16),
     current_frame_index: u32,
     is_locked: bool,
 };
 
 const DemoState = struct {
-    grfx: zd3d12.GraphicsContext,
-    gui: GuiRenderer,
+    gctx: zd3d12.GraphicsContext,
+    guir: GuiRenderer,
     frame_stats: common.FrameStats,
 
     audio: AudioContex,
@@ -58,13 +58,13 @@ fn fillAudioBuffer(audio: *AudioContex) void {
     while (@cmpxchgWeak(bool, &audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
     defer @atomicStore(bool, &audio.is_locked, false, .Release);
 
-    var buffer_padding_in_frames: w.UINT = 0;
+    var buffer_padding_in_frames: w32.UINT = 0;
     hrPanicOnFail(audio.client.GetCurrentPadding(&buffer_padding_in_frames));
 
     const num_frames = audio.buffer_size_in_frames - buffer_padding_in_frames;
 
     var ptr: [*]f32 = undefined;
-    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @ptrCast(*?[*]w.BYTE, &ptr)));
+    hrPanicOnFail(audio.render_client.GetBuffer(num_frames, @ptrCast(*?[*]w32.BYTE, &ptr)));
 
     var i: u32 = 0;
     while (i < num_frames) : (i += 1) {
@@ -80,34 +80,35 @@ fn fillAudioBuffer(audio: *AudioContex) void {
     hrPanicOnFail(audio.render_client.ReleaseBuffer(num_frames, 0));
 }
 
-fn audioThread(ctx: ?*anyopaque) callconv(.C) w.DWORD {
+fn audioThread(ctx: ?*anyopaque) callconv(.C) w32.DWORD {
     const audio = @ptrCast(*AudioContex, @alignCast(8, ctx));
 
     fillAudioBuffer(audio);
     while (true) {
-        w.WaitForSingleObject(audio.buffer_ready_event, w.INFINITE) catch return 0;
+        w32.WaitForSingleObject(audio.buffer_ready_event, w32.INFINITE) catch return 0;
         fillAudioBuffer(audio);
     }
 
     return 0;
 }
 
-fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
-    var grfx = zd3d12.GraphicsContext.init(gpa_allocator, window);
-    grfx.present_flags = 0;
-    grfx.present_interval = 1;
+fn init(allocator: std.mem.Allocator) !DemoState {
+    const window = try common.initWindow(allocator, window_name, window_width, window_height);
 
-    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    var gctx = zd3d12.GraphicsContext.init(allocator, window);
+    gctx.present_flags = 0;
+    gctx.present_interval = 1;
+
+    var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
     const audio_device_enumerator = blk: {
         var audio_device_enumerator: *wasapi.IMMDeviceEnumerator = undefined;
-        hrPanicOnFail(w.CoCreateInstance(
+        hrPanicOnFail(w32.CoCreateInstance(
             &wasapi.CLSID_MMDeviceEnumerator,
             null,
-            w.CLSCTX_INPROC_SERVER,
+            w32.CLSCTX_INPROC_SERVER,
             &wasapi.IID_IMMDeviceEnumerator,
             @ptrCast(*?*anyopaque, &audio_device_enumerator),
         ));
@@ -130,7 +131,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         var audio_client: *wasapi.IAudioClient3 = undefined;
         hrPanicOnFail(audio_device.Activate(
             &wasapi.IID_IAudioClient3,
-            w.CLSCTX_INPROC_SERVER,
+            w32.CLSCTX_INPROC_SERVER,
             null,
             @ptrCast(*?*anyopaque, &audio_client),
         ));
@@ -171,16 +172,16 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         break :blk audio_render_client;
     };
 
-    const audio_buffer_ready_event = w.CreateEventEx(
+    const audio_buffer_ready_event = w32.CreateEventEx(
         null,
         "audio_buffer_ready_event",
         0,
-        w.EVENT_ALL_ACCESS,
+        w32.EVENT_ALL_ACCESS,
     ) catch unreachable;
 
     hrPanicOnFail(audio_client.SetEventHandle(audio_buffer_ready_event));
 
-    var audio_buffer_size_in_frames: w.UINT = 0;
+    var audio_buffer_size_in_frames: w32.UINT = 0;
     hrPanicOnFail(audio_client.GetBufferSize(&audio_buffer_size_in_frames));
 
     const audio_samples = blk: {
@@ -190,7 +191,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         var config_attribs: *mf.IAttributes = undefined;
         hrPanicOnFail(mf.MFCreateAttributes(&config_attribs, 1));
         defer _ = config_attribs.Release();
-        hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, w.TRUE));
+        hrPanicOnFail(config_attribs.SetUINT32(&mf.LOW_LATENCY, w32.TRUE));
 
         var source_reader: *mf.ISourceReader = undefined;
         hrPanicOnFail(mf.MFCreateSourceReaderFromURL(
@@ -211,9 +212,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(media_type.SetUINT32(&mf.MT_AUDIO_SAMPLES_PER_SECOND, 48_000));
         hrPanicOnFail(source_reader.SetCurrentMediaType(mf.SOURCE_READER_FIRST_AUDIO_STREAM, null, media_type));
 
-        var audio_samples = std.ArrayList(i16).init(gpa_allocator);
+        var audio_samples = std.ArrayList(i16).init(allocator);
         while (true) {
-            var flags: w.DWORD = 0;
+            var flags: w32.DWORD = 0;
             var sample: ?*mf.ISample = null;
             defer {
                 if (sample != null) {
@@ -262,10 +263,10 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.NumRenderTargets = 1;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .LINE;
-        pso_desc.DepthStencilState.DepthEnable = w.FALSE;
-        pso_desc.RasterizerState.AntialiasedLineEnable = w.TRUE;
+        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
+        pso_desc.RasterizerState.AntialiasedLineEnable = w32.TRUE;
 
-        break :blk grfx.createGraphicsShaderPipeline(
+        break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
             content_dir ++ "shaders/lines.vs.cso",
@@ -279,9 +280,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         pso_desc.NumRenderTargets = 1;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
-        pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
 
-        break :blk grfx.createGraphicsShaderPipeline(
+        break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
             content_dir ++ "shaders/image.vs.cso",
@@ -289,7 +290,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         );
     };
 
-    const lines_buffer = grfx.createCommittedResource(
+    const lines_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
         &d3d12.RESOURCE_DESC.initBuffer(num_vis_samples * @sizeOf(Vec2)),
@@ -297,24 +298,24 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         null,
     ) catch |err| hrPanic(err);
 
-    grfx.beginFrame();
+    gctx.beginFrame();
 
-    var gui = GuiRenderer.init(arena_allocator, &grfx, 1, content_dir);
+    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
-    const image = grfx.createAndUploadTex2dFromFile(
+    const image = gctx.createAndUploadTex2dFromFile(
         content_dir ++ "genart_008b.png",
         .{ .num_mip_levels = 1 },
     ) catch |err| hrPanic(err);
-    const image_srv = grfx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
-    grfx.device.CreateShaderResourceView(grfx.lookupResource(image).?, null, image_srv);
-    grfx.addTransitionBarrier(image, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    const image_srv = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, 1);
+    gctx.device.CreateShaderResourceView(gctx.lookupResource(image).?, null, image_srv);
+    gctx.addTransitionBarrier(image, d3d12.RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-    grfx.endFrame();
-    grfx.finishGpuCommands();
+    gctx.endFrame();
+    gctx.finishGpuCommands();
 
-    return .{
-        .grfx = grfx,
-        .gui = gui,
+    return DemoState{
+        .gctx = gctx,
+        .guir = guir,
         .frame_stats = common.FrameStats.init(),
         .audio = .{
             .client = audio_client,
@@ -334,38 +335,38 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
-    demo.grfx.finishGpuCommands();
+fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
+    demo.gctx.finishGpuCommands();
 
     while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
-    _ = w.TerminateThread(demo.audio.thread_handle.?, 0);
-    w.CloseHandle(demo.audio.buffer_ready_event);
-    w.CloseHandle(demo.audio.thread_handle.?);
+    _ = w32.TerminateThread(demo.audio.thread_handle.?, 0);
+    w32.CloseHandle(demo.audio.buffer_ready_event);
+    w32.CloseHandle(demo.audio.thread_handle.?);
     hrPanicOnFail(demo.audio.client.Stop());
     _ = demo.audio.render_client.Release();
     _ = demo.audio.client.Release();
     demo.audio.samples.deinit();
 
-    demo.gui.deinit(&demo.grfx);
-    demo.grfx.deinit(gpa_allocator);
-    common.deinitWindow(gpa_allocator);
+    demo.guir.deinit(&demo.gctx);
+    demo.gctx.deinit(allocator);
+    common.deinitWindow(allocator);
     demo.* = undefined;
 }
 
 fn update(demo: *DemoState) void {
-    demo.frame_stats.update(demo.grfx.window, window_name);
+    demo.frame_stats.update(demo.gctx.window, window_name);
     common.newImGuiFrame(demo.frame_stats.delta_time);
 }
 
 fn draw(demo: *DemoState) void {
-    var grfx = &demo.grfx;
-    grfx.beginFrame();
+    var gctx = &demo.gctx;
+    gctx.beginFrame();
 
-    const back_buffer = grfx.getBackBuffer();
+    const back_buffer = gctx.getBackBuffer();
 
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
-    grfx.addTransitionBarrier(demo.lines_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_RENDER_TARGET);
+    gctx.addTransitionBarrier(demo.lines_buffer, d3d12.RESOURCE_STATE_COPY_DEST);
+    gctx.flushResourceBarriers();
 
     {
         while (@cmpxchgWeak(bool, &demo.audio.is_locked, false, true, .Acquire, .Monotonic) != null) {}
@@ -373,7 +374,7 @@ fn draw(demo: *DemoState) void {
 
         const frame = demo.audio.current_frame_index;
 
-        const upload = grfx.allocateUploadBufferRegion(Vec2, num_vis_samples);
+        const upload = gctx.allocateUploadBufferRegion(Vec2, num_vis_samples);
         for (upload.cpu_slice) |_, i| {
             const y = blk: {
                 if ((frame + i) * 2 >= demo.audio.samples.items.len) {
@@ -389,8 +390,8 @@ fn draw(demo: *DemoState) void {
             const x = -1.0 + 2.0 * @intToFloat(f32, i) / @intToFloat(f32, num_vis_samples - 1);
             upload.cpu_slice[i] = Vec2.init(0.95 * x, y);
         }
-        grfx.cmdlist.CopyBufferRegion(
-            grfx.lookupResource(demo.lines_buffer).?,
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.lookupResource(demo.lines_buffer).?,
             0,
             upload.buffer,
             upload.buffer_offset,
@@ -398,16 +399,16 @@ fn draw(demo: *DemoState) void {
         );
     }
 
-    grfx.addTransitionBarrier(demo.lines_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(demo.lines_buffer, d3d12.RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    gctx.flushResourceBarriers();
 
-    grfx.cmdlist.OMSetRenderTargets(
+    gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        w.TRUE,
+        w32.TRUE,
         null,
     );
-    grfx.cmdlist.ClearRenderTargetView(
+    gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
         &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
         0,
@@ -415,44 +416,42 @@ fn draw(demo: *DemoState) void {
     );
 
     // Draw background image.
-    grfx.setCurrentPipeline(demo.image_pso);
-    grfx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
-    grfx.cmdlist.SetGraphicsRootDescriptorTable(0, grfx.copyDescriptorsToGpuHeap(1, demo.image_srv));
-    grfx.cmdlist.DrawInstanced(3, 1, 0, 0);
+    gctx.setCurrentPipeline(demo.image_pso);
+    gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+    gctx.cmdlist.SetGraphicsRootDescriptorTable(0, gctx.copyDescriptorsToGpuHeap(1, demo.image_srv));
+    gctx.cmdlist.DrawInstanced(3, 1, 0, 0);
 
     // Draw audio stream samples.
-    grfx.setCurrentPipeline(demo.lines_pso);
-    grfx.cmdlist.IASetPrimitiveTopology(.LINESTRIP);
-    grfx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
-        .BufferLocation = grfx.lookupResource(demo.lines_buffer).?.GetGPUVirtualAddress(),
+    gctx.setCurrentPipeline(demo.lines_pso);
+    gctx.cmdlist.IASetPrimitiveTopology(.LINESTRIP);
+    gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+        .BufferLocation = gctx.lookupResource(demo.lines_buffer).?.GetGPUVirtualAddress(),
         .SizeInBytes = num_vis_samples * @sizeOf(Vec2),
         .StrideInBytes = @sizeOf(Vec2),
     }});
-    grfx.cmdlist.DrawInstanced(num_vis_samples, 1, 0, 0);
+    gctx.cmdlist.DrawInstanced(num_vis_samples, 1, 0, 0);
 
-    demo.gui.draw(grfx);
+    demo.guir.draw(gctx);
 
-    grfx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
-    grfx.flushResourceBarriers();
+    gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
+    gctx.flushResourceBarriers();
 
-    grfx.endFrame();
+    gctx.endFrame();
 }
 
 pub fn main() !void {
     common.init();
     defer common.deinit();
 
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa_allocator_state.deinit();
-        assert(leaked == false);
-    }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var demo = init(gpa_allocator);
-    defer deinit(&demo, gpa_allocator);
+    const allocator = gpa.allocator();
 
-    demo.audio.thread_handle = w.kernel32.CreateThread(
+    var demo = try init(allocator);
+    defer deinit(&demo, allocator);
+
+    demo.audio.thread_handle = w32.kernel32.CreateThread(
         null,
         0,
         audioThread,
@@ -463,18 +462,8 @@ pub fn main() !void {
     hrPanicOnFail(demo.audio.client.Start());
     @atomicStore(bool, &demo.audio.is_locked, false, .Release);
 
-    while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch false;
-        if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            update(&demo);
-            draw(&demo);
-        }
+    while (common.handleWindowEvents()) {
+        update(&demo);
+        draw(&demo);
     }
 }
