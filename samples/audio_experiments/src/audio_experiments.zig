@@ -73,7 +73,7 @@ const AudioData = struct {
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
     actx: zxaudio2.AudioContext,
-    guictx: GuiRenderer,
+    guir: GuiRenderer,
     frame_stats: common.FrameStats,
 
     music: *zxaudio2.Stream,
@@ -125,15 +125,15 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
     }
 }
 
-fn init(gpa_allocator: std.mem.Allocator) DemoState {
-    var actx = zxaudio2.AudioContext.init(gpa_allocator);
+fn init(allocator: std.mem.Allocator) DemoState {
+    var actx = zxaudio2.AudioContext.init(allocator);
 
-    const sound1_data = zxaudio2.loadBufferData(gpa_allocator, L(content_dir ++ "drum_bass_hard.flac"));
-    const sound2_data = zxaudio2.loadBufferData(gpa_allocator, L(content_dir ++ "tabla_tas1.flac"));
-    const sound3_data = zxaudio2.loadBufferData(gpa_allocator, L(content_dir ++ "loop_mika.flac"));
+    const sound1_data = zxaudio2.loadBufferData(allocator, L(content_dir ++ "drum_bass_hard.flac"));
+    const sound2_data = zxaudio2.loadBufferData(allocator, L(content_dir ++ "tabla_tas1.flac"));
+    const sound3_data = zxaudio2.loadBufferData(allocator, L(content_dir ++ "loop_mika.flac"));
 
     var music = zxaudio2.Stream.create(
-        gpa_allocator,
+        allocator,
         actx.device,
         L(content_dir ++ "Broke For Free - Night Owl.mp3"),
     );
@@ -160,8 +160,8 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         ));
     }
 
-    const audio_data = gpa_allocator.create(AudioData) catch unreachable;
-    audio_data.* = AudioData.init(gpa_allocator);
+    const audio_data = allocator.create(AudioData) catch unreachable;
+    audio_data.* = AudioData.init(allocator);
 
     {
         const p0 = zxaudio2.createSimpleProcessor(&processAudio, audio_data);
@@ -182,13 +182,13 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(actx.master_voice.SetEffectChain(&effect_chain));
     }
 
-    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = common.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
 
-    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
-    var gctx = zd3d12.GraphicsContext.init(gpa_allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(allocator, window);
     gctx.present_flags = 0;
     gctx.present_interval = 1;
 
@@ -243,7 +243,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     //
     gctx.beginFrame();
 
-    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
+    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     gctx.endFrame();
     gctx.finishGpuCommands();
@@ -251,7 +251,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     return .{
         .gctx = gctx,
         .actx = actx,
-        .guictx = guictx,
+        .guir = guir,
         .music = music,
         .sound1_data = sound1_data,
         .sound2_data = sound2_data,
@@ -267,7 +267,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
 fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.actx.device.StopEngine();
-    demo.guictx.deinit(&demo.gctx);
+    demo.guir.deinit(&demo.gctx);
     demo.gctx.deinit(gpa_allocator);
     demo.music.destroy();
     gpa_allocator.free(demo.sound1_data);
@@ -500,7 +500,7 @@ fn draw(demo: *DemoState) void {
         }
     }
 
-    demo.guictx.draw(gctx);
+    demo.guir.draw(gctx);
 
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
     gctx.flushResourceBarriers();
@@ -512,28 +512,16 @@ pub fn main() !void {
     common.init();
     defer common.deinit();
 
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa_allocator_state.deinit();
-        std.debug.assert(leaked == false);
-    }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var demo = init(gpa_allocator);
-    defer deinit(&demo, gpa_allocator);
+    const allocator = gpa.allocator();
 
-    while (true) {
-        var message = std.mem.zeroes(w32.user32.MSG);
-        const has_message = w32.user32.peekMessageA(&message, null, 0, 0, w32.user32.PM_REMOVE) catch false;
-        if (has_message) {
-            _ = w32.user32.translateMessage(&message);
-            _ = w32.user32.dispatchMessageA(&message);
-            if (message.message == w32.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            update(&demo);
-            draw(&demo);
-        }
+    var demo = init(allocator);
+    defer deinit(&demo, allocator);
+
+    while (common.handleWindowEvents()) {
+        update(&demo);
+        draw(&demo);
     }
 }
