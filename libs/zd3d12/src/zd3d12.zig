@@ -1,7 +1,7 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const dwrite = zwin32.dwrite;
 const dxgi = zwin32.dxgi;
 const d3d11 = zwin32.d3d11;
@@ -69,24 +69,24 @@ pub const GraphicsContext = struct {
     viewport_width: u32,
     viewport_height: u32,
     frame_fence: *d3d12.IFence,
-    frame_fence_event: w.HANDLE,
+    frame_fence_event: w32.HANDLE,
     frame_fence_counter: u64,
     frame_index: u32,
     back_buffer_index: u32,
-    window: w.HWND,
+    window: w32.HWND,
     is_cmdlist_opened: bool,
     d2d: ?D2dState,
     wic_factory: *wic.IImagingFactory,
-    present_flags: w.UINT,
-    present_interval: w.UINT,
+    present_flags: w32.UINT,
+    present_interval: w32.UINT,
 
-    pub fn init(window: w.HWND) GraphicsContext {
+    pub fn init(window: w32.HWND) GraphicsContext {
         const wic_factory = blk: {
             var wic_factory: *wic.IImagingFactory = undefined;
-            hrPanicOnFail(w.CoCreateInstance(
+            hrPanicOnFail(w32.CoCreateInstance(
                 &wic.CLSID_ImagingFactory,
                 null,
-                w.CLSCTX_INPROC_SERVER,
+                w32.CLSCTX_INPROC_SERVER,
                 &wic.IID_IImagingFactory,
                 @ptrCast(*?*anyopaque, &wic_factory),
             ));
@@ -104,17 +104,17 @@ pub const GraphicsContext = struct {
         };
         defer _ = factory.Release();
 
-        var present_flags: w.UINT = 0;
-        var present_interval: w.UINT = 0;
+        var present_flags: w32.UINT = 0;
+        var present_interval: w32.UINT = 0;
         {
-            var allow_tearing: w.BOOL = w.FALSE;
+            var allow_tearing: w32.BOOL = w32.FALSE;
             var hr = factory.CheckFeatureSupport(
                 .PRESENT_ALLOW_TEARING,
                 &allow_tearing,
                 @sizeOf(@TypeOf(allow_tearing)),
             );
 
-            if (hr == w.S_OK and allow_tearing == w.TRUE) {
+            if (hr == w32.S_OK and allow_tearing == w32.TRUE) {
                 present_flags |= dxgi.PRESENT_ALLOW_TEARING;
             }
         }
@@ -125,7 +125,7 @@ pub const GraphicsContext = struct {
             if (maybe_debug) |debug| {
                 debug.EnableDebugLayer();
                 if (enable_dx_gpu_debug) {
-                    debug.SetEnableGPUBasedValidation(w.TRUE);
+                    debug.SetEnableGPUBasedValidation(w32.TRUE);
                 }
                 _ = debug.Release();
             }
@@ -141,22 +141,22 @@ pub const GraphicsContext = struct {
                 dxgi.GPU_PREFERENCE_HIGH_PERFORMANCE,
                 &dxgi.IID_IAdapter1,
                 &optional_adapter1,
-            ) == w.S_OK) {
+            ) == w32.S_OK) {
                 if (optional_adapter1) |adapter1| {
                     var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
-                    if (adapter1.GetDesc1(&adapter1_desc) == w.S_OK) {
+                    if (adapter1.GetDesc1(&adapter1_desc) == w32.S_OK) {
                         if ((adapter1_desc.Flags & dxgi.ADAPTER_FLAG_SOFTWARE) != 0) {
                             // Don't select the Basic Render Driver adapter.
                             continue;
                         }
 
                         const hr = d3d12.D3D12CreateDevice(
-                            @ptrCast(*w.IUnknown, adapter1),
+                            @ptrCast(*w32.IUnknown, adapter1),
                             .FL_11_1,
                             &d3d12.IID_IDevice9,
                             null,
                         );
-                        if (hr == w.S_OK or hr == w.S_FALSE) {
+                        if (hr == w32.S_OK or hr == w32.S_FALSE) {
                             adapter = adapter1;
                             break;
                         }
@@ -173,21 +173,21 @@ pub const GraphicsContext = struct {
         const device = blk: {
             var device: *d3d12.IDevice9 = undefined;
             const hr = d3d12.D3D12CreateDevice(
-                if (suitable_adapter) |adapter| @ptrCast(*w.IUnknown, adapter) else null,
+                if (suitable_adapter) |adapter| @ptrCast(*w32.IUnknown, adapter) else null,
                 .FL_11_1,
                 &d3d12.IID_IDevice9,
                 @ptrCast(*?*anyopaque, &device),
             );
 
-            if (hr != w.S_OK) {
-                _ = w.user32.messageBoxA(
+            if (hr != w32.S_OK) {
+                _ = w32.user32.messageBoxA(
                     window,
                     "Failed to create Direct3D 12 Device. This applications requires graphics card with DirectX 12" ++
                         "support.",
                     "Your graphics card driver may be old",
-                    w.user32.MB_OK | w.user32.MB_ICONERROR,
+                    w32.user32.MB_OK | w32.user32.MB_ICONERROR,
                 ) catch 0;
-                w.kernel32.ExitProcess(0);
+                w32.kernel32.ExitProcess(0);
             }
             break :blk device;
         };
@@ -196,15 +196,15 @@ pub const GraphicsContext = struct {
         {
             var data: d3d12.FEATURE_DATA_SHADER_MODEL = .{ .HighestShaderModel = .SM_6_7 };
             const hr = device.CheckFeatureSupport(.SHADER_MODEL, &data, @sizeOf(d3d12.FEATURE_DATA_SHADER_MODEL));
-            if (hr != w.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.SM_6_6)) {
-                _ = w.user32.messageBoxA(
+            if (hr != w32.S_OK or @enumToInt(data.HighestShaderModel) < @enumToInt(d3d12.SHADER_MODEL.SM_6_6)) {
+                _ = w32.user32.messageBoxA(
                     window,
                     "This applications requires graphics card driver that supports Shader Model 6.6. " ++
                         "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
-                    w.user32.MB_OK | w.user32.MB_ICONERROR,
+                    w32.user32.MB_OK | w32.user32.MB_ICONERROR,
                 ) catch 0;
-                w.kernel32.ExitProcess(0);
+                w32.kernel32.ExitProcess(0);
             }
         }
 
@@ -212,17 +212,17 @@ pub const GraphicsContext = struct {
         {
             var data: d3d12.FEATURE_DATA_D3D12_OPTIONS = std.mem.zeroes(d3d12.FEATURE_DATA_D3D12_OPTIONS);
             const hr = device.CheckFeatureSupport(.OPTIONS, &data, @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS));
-            if (hr != w.S_OK or
+            if (hr != w32.S_OK or
                 @enumToInt(data.ResourceBindingTier) < @enumToInt(d3d12.RESOURCE_BINDING_TIER.TIER_3))
             {
-                _ = w.user32.messageBoxA(
+                _ = w32.user32.messageBoxA(
                     window,
                     "This applications requires graphics card driver that supports Resource Binding Tier 3. " ++
                         "Please update your graphics driver and try again.",
                     "Your graphics card driver may be old",
-                    w.user32.MB_OK | w.user32.MB_ICONERROR,
+                    w32.user32.MB_OK | w32.user32.MB_ICONERROR,
                 ) catch 0;
-                w.kernel32.ExitProcess(0);
+                w32.kernel32.ExitProcess(0);
             }
         }
 
@@ -237,15 +237,15 @@ pub const GraphicsContext = struct {
             break :blk cmdqueue;
         };
 
-        var rect: w.RECT = undefined;
-        _ = w.GetClientRect(window, &rect);
+        var rect: w32.RECT = undefined;
+        _ = w32.GetClientRect(window, &rect);
         const viewport_width = @intCast(u32, rect.right - rect.left);
         const viewport_height = @intCast(u32, rect.bottom - rect.top);
 
         const swapchain = blk: {
             var swapchain: *dxgi.ISwapChain = undefined;
             hrPanicOnFail(factory.CreateSwapChain(
-                @ptrCast(*w.IUnknown, cmdqueue),
+                @ptrCast(*w32.IUnknown, cmdqueue),
                 &dxgi.SWAP_CHAIN_DESC{
                     .BufferDesc = .{
                         .Width = viewport_width,
@@ -259,7 +259,7 @@ pub const GraphicsContext = struct {
                     .BufferUsage = dxgi.USAGE_RENDER_TARGET_OUTPUT,
                     .BufferCount = num_swapbuffers,
                     .OutputWindow = window,
-                    .Windowed = w.TRUE,
+                    .Windowed = w32.TRUE,
                     .SwapEffect = .FLIP_DISCARD,
                     .Flags = if ((present_flags & dxgi.PRESENT_ALLOW_TEARING) != 0)
                         dxgi.SWAP_CHAIN_FLAG_ALLOW_TEARING
@@ -360,14 +360,14 @@ pub const GraphicsContext = struct {
                 var device11: *d3d11.IDevice = undefined;
                 var device_context11: *d3d11.IDeviceContext = undefined;
                 hrPanicOnFail(d3d11on12.D3D11On12CreateDevice(
-                    @ptrCast(*w.IUnknown, device),
+                    @ptrCast(*w32.IUnknown, device),
                     if (enable_dx_debug)
                         d3d11.CREATE_DEVICE_DEBUG | d3d11.CREATE_DEVICE_BGRA_SUPPORT
                     else
                         d3d11.CREATE_DEVICE_BGRA_SUPPORT,
                     null,
                     0,
-                    &[_]*w.IUnknown{@ptrCast(*w.IUnknown, cmdqueue)},
+                    &[_]*w32.IUnknown{@ptrCast(*w32.IUnknown, cmdqueue)},
                     1,
                     0,
                     @ptrCast(*?*d3d11.IDevice, &device11),
@@ -443,7 +443,7 @@ pub const GraphicsContext = struct {
                 for (swapbuffers11) |_, buffer_index| {
                     hrPanicOnFail(device11on12.CreateWrappedResource(
                         @ptrCast(
-                            *w.IUnknown,
+                            *w32.IUnknown,
                             resource_pool.lookupResource(swapchain_buffers[buffer_index]).?.raw.?,
                         ),
                         &d3d11on12.RESOURCE_FLAGS{
@@ -512,11 +512,11 @@ pub const GraphicsContext = struct {
             break :blk frame_fence;
         };
 
-        const frame_fence_event = w.CreateEventEx(
+        const frame_fence_event = w32.CreateEventEx(
             null,
             "frame_fence_event",
             0,
-            w.EVENT_ALL_ACCESS,
+            w32.EVENT_ALL_ACCESS,
         ) catch unreachable;
 
         const cmdallocs = blk: {
@@ -582,70 +582,70 @@ pub const GraphicsContext = struct {
         };
     }
 
-    pub fn deinit(gr: *GraphicsContext) void {
-        gr.finishGpuCommands();
-        std.heap.page_allocator.free(gr.transition_resource_barriers);
-        w.CloseHandle(gr.frame_fence_event);
-        gr.resource_pool.deinit();
-        gr.pipeline_pool.deinit();
-        gr.rtv_heap.deinit();
-        gr.dsv_heap.deinit();
-        gr.cbv_srv_uav_cpu_heap.deinit();
+    pub fn deinit(gctx: *GraphicsContext) void {
+        gctx.finishGpuCommands();
+        std.heap.page_allocator.free(gctx.transition_resource_barriers);
+        w32.CloseHandle(gctx.frame_fence_event);
+        gctx.resource_pool.deinit();
+        gctx.pipeline_pool.deinit();
+        gctx.rtv_heap.deinit();
+        gctx.dsv_heap.deinit();
+        gctx.cbv_srv_uav_cpu_heap.deinit();
         if (enable_d2d) {
-            _ = gr.d2d.?.factory.Release();
-            _ = gr.d2d.?.device.Release();
-            _ = gr.d2d.?.context.Release();
-            _ = gr.d2d.?.device11on12.Release();
-            _ = gr.d2d.?.device11.Release();
-            _ = gr.d2d.?.context11.Release();
-            _ = gr.d2d.?.dwrite_factory.Release();
-            for (gr.d2d.?.targets) |target| _ = target.Release();
-            for (gr.d2d.?.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
+            _ = gctx.d2d.?.factory.Release();
+            _ = gctx.d2d.?.device.Release();
+            _ = gctx.d2d.?.context.Release();
+            _ = gctx.d2d.?.device11on12.Release();
+            _ = gctx.d2d.?.device11.Release();
+            _ = gctx.d2d.?.context11.Release();
+            _ = gctx.d2d.?.dwrite_factory.Release();
+            for (gctx.d2d.?.targets) |target| _ = target.Release();
+            for (gctx.d2d.?.swapbuffers11) |swapbuffer11| _ = swapbuffer11.Release();
         }
-        for (gr.cbv_srv_uav_gpu_heaps) |*heap| heap.deinit();
-        for (gr.upload_memory_heaps) |*heap| heap.deinit();
-        _ = gr.device.Release();
-        _ = gr.cmdqueue.Release();
-        _ = gr.swapchain.Release();
-        _ = gr.frame_fence.Release();
-        _ = gr.cmdlist.Release();
-        for (gr.cmdallocs) |cmdalloc| _ = cmdalloc.Release();
-        _ = gr.wic_factory.Release();
-        gr.* = undefined;
+        for (gctx.cbv_srv_uav_gpu_heaps) |*heap| heap.deinit();
+        for (gctx.upload_memory_heaps) |*heap| heap.deinit();
+        _ = gctx.device.Release();
+        _ = gctx.cmdqueue.Release();
+        _ = gctx.swapchain.Release();
+        _ = gctx.frame_fence.Release();
+        _ = gctx.cmdlist.Release();
+        for (gctx.cmdallocs) |cmdalloc| _ = cmdalloc.Release();
+        _ = gctx.wic_factory.Release();
+        gctx.* = undefined;
     }
 
-    pub fn beginFrame(gr: *GraphicsContext) void {
-        assert(!gr.is_cmdlist_opened);
-        const cmdalloc = gr.cmdallocs[gr.frame_index];
+    pub fn beginFrame(gctx: *GraphicsContext) void {
+        assert(!gctx.is_cmdlist_opened);
+        const cmdalloc = gctx.cmdallocs[gctx.frame_index];
         hrPanicOnFail(cmdalloc.Reset());
-        hrPanicOnFail(gr.cmdlist.Reset(cmdalloc, null));
-        gr.is_cmdlist_opened = true;
-        gr.cmdlist.SetDescriptorHeaps(
+        hrPanicOnFail(gctx.cmdlist.Reset(cmdalloc, null));
+        gctx.is_cmdlist_opened = true;
+        gctx.cmdlist.SetDescriptorHeaps(
             1,
-            &[_]*d3d12.IDescriptorHeap{gr.cbv_srv_uav_gpu_heaps[0].heap.?},
+            &[_]*d3d12.IDescriptorHeap{gctx.cbv_srv_uav_gpu_heaps[0].heap.?},
         );
-        gr.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
+        gctx.cmdlist.RSSetViewports(1, &[_]d3d12.VIEWPORT{.{
             .TopLeftX = 0.0,
             .TopLeftY = 0.0,
-            .Width = @intToFloat(f32, gr.viewport_width),
-            .Height = @intToFloat(f32, gr.viewport_height),
+            .Width = @intToFloat(f32, gctx.viewport_width),
+            .Height = @intToFloat(f32, gctx.viewport_height),
             .MinDepth = 0.0,
             .MaxDepth = 1.0,
         }});
-        gr.cmdlist.RSSetScissorRects(1, &[_]d3d12.RECT{.{
+        gctx.cmdlist.RSSetScissorRects(1, &[_]d3d12.RECT{.{
             .left = 0,
             .top = 0,
-            .right = @intCast(c_long, gr.viewport_width),
-            .bottom = @intCast(c_long, gr.viewport_height),
+            .right = @intCast(c_long, gctx.viewport_width),
+            .bottom = @intCast(c_long, gctx.viewport_height),
         }});
-        gr.current_pipeline = .{ .index = 0, .generation = 0 };
+        gctx.current_pipeline = .{ .index = 0, .generation = 0 };
     }
 
-    pub fn endFrame(gr: *GraphicsContext) void {
-        gr.flushGpuCommands();
+    pub fn endFrame(gctx: *GraphicsContext) void {
+        gctx.flushGpuCommands();
 
-        gr.frame_fence_counter += 1;
-        hrPanicOnFail(gr.swapchain.Present(gr.present_interval, gr.present_flags));
+        gctx.frame_fence_counter += 1;
+        hrPanicOnFail(gctx.swapchain.Present(gctx.present_interval, gctx.present_flags));
         // TODO(mziulek):
         // Handle DXGI_ERROR_DEVICE_REMOVED and DXGI_ERROR_DEVICE_RESET codes here - we need to re-create
         // all resources in that case.
@@ -653,43 +653,43 @@ pub const GraphicsContext = struct {
         // https://github.com/microsoft/DirectML/blob/master/Samples/DirectMLSuperResolution/DeviceResources.cpp
 
         ztracy.frameMark();
-        hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
+        hrPanicOnFail(gctx.cmdqueue.Signal(gctx.frame_fence, gctx.frame_fence_counter));
 
-        const gpu_frame_counter = gr.frame_fence.GetCompletedValue();
-        if ((gr.frame_fence_counter - gpu_frame_counter) >= max_num_buffered_frames) {
-            hrPanicOnFail(gr.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gr.frame_fence_event));
-            w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
+        const gpu_frame_counter = gctx.frame_fence.GetCompletedValue();
+        if ((gctx.frame_fence_counter - gpu_frame_counter) >= max_num_buffered_frames) {
+            hrPanicOnFail(gctx.frame_fence.SetEventOnCompletion(gpu_frame_counter + 1, gctx.frame_fence_event));
+            w32.WaitForSingleObject(gctx.frame_fence_event, w32.INFINITE) catch unreachable;
         }
 
-        gr.frame_index = (gr.frame_index + 1) % max_num_buffered_frames;
-        gr.back_buffer_index = gr.swapchain.GetCurrentBackBufferIndex();
+        gctx.frame_index = (gctx.frame_index + 1) % max_num_buffered_frames;
+        gctx.back_buffer_index = gctx.swapchain.GetCurrentBackBufferIndex();
 
         // Reset current non-persistent heap (+1 because heap 0 is persistent)
-        gr.cbv_srv_uav_gpu_heaps[gr.frame_index + 1].size = 0;
-        gr.upload_memory_heaps[gr.frame_index].size = 0;
+        gctx.cbv_srv_uav_gpu_heaps[gctx.frame_index + 1].size = 0;
+        gctx.upload_memory_heaps[gctx.frame_index].size = 0;
     }
 
-    pub fn beginDraw2d(gr: *GraphicsContext) void {
-        gr.flushGpuCommands();
+    pub fn beginDraw2d(gctx: *GraphicsContext) void {
+        gctx.flushGpuCommands();
 
-        gr.d2d.?.device11on12.AcquireWrappedResources(
-            &[_]*d3d11.IResource{gr.d2d.?.swapbuffers11[gr.back_buffer_index]},
+        gctx.d2d.?.device11on12.AcquireWrappedResources(
+            &[_]*d3d11.IResource{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
             1,
         );
-        gr.d2d.?.context.SetTarget(@ptrCast(*d2d1.IImage, gr.d2d.?.targets[gr.back_buffer_index]));
-        gr.d2d.?.context.BeginDraw();
+        gctx.d2d.?.context.SetTarget(@ptrCast(*d2d1.IImage, gctx.d2d.?.targets[gctx.back_buffer_index]));
+        gctx.d2d.?.context.BeginDraw();
     }
 
-    pub fn endDraw2d(gr: *GraphicsContext) void {
+    pub fn endDraw2d(gctx: *GraphicsContext) void {
         var info_queue: *d3d12d.IInfoQueue = undefined;
         const mute_d2d_completely = true;
         if (enable_dx_debug) {
             // NOTE(mziulek): D2D1 is slow. It creates and destroys resources every frame. To see create/destroy
             // messages in debug output set 'mute_d2d_completely' to 'false'.
-            hrPanicOnFail(gr.device.QueryInterface(&d3d12d.IID_IInfoQueue, @ptrCast(*?*anyopaque, &info_queue)));
+            hrPanicOnFail(gctx.device.QueryInterface(&d3d12d.IID_IInfoQueue, @ptrCast(*?*anyopaque, &info_queue)));
 
             if (mute_d2d_completely) {
-                info_queue.SetMuteDebugOutput(w.TRUE);
+                info_queue.SetMuteDebugOutput(w32.TRUE);
             } else {
                 var filter: d3d12.INFO_QUEUE_FILTER = std.mem.zeroes(d3d12.INFO_QUEUE_FILTER);
                 hrPanicOnFail(info_queue.PushStorageFilter(&filter));
@@ -719,17 +719,17 @@ pub const GraphicsContext = struct {
                 }));
             }
         }
-        hrPanicOnFail(gr.d2d.?.context.EndDraw(null, null));
+        hrPanicOnFail(gctx.d2d.?.context.EndDraw(null, null));
 
-        gr.d2d.?.device11on12.ReleaseWrappedResources(
-            &[_]*d3d11.IResource{gr.d2d.?.swapbuffers11[gr.back_buffer_index]},
+        gctx.d2d.?.device11on12.ReleaseWrappedResources(
+            &[_]*d3d11.IResource{gctx.d2d.?.swapbuffers11[gctx.back_buffer_index]},
             1,
         );
-        gr.d2d.?.context11.Flush();
+        gctx.d2d.?.context11.Flush();
 
         if (enable_dx_debug) {
             if (mute_d2d_completely) {
-                info_queue.SetMuteDebugOutput(w.FALSE);
+                info_queue.SetMuteDebugOutput(w32.FALSE);
             } else {
                 info_queue.PopStorageFilter();
             }
@@ -738,67 +738,67 @@ pub const GraphicsContext = struct {
 
         // Above calls will set back buffer state to PRESENT. We need to reflect this change
         // in 'resource_pool' by manually setting state.
-        gr.resource_pool.lookupResource(gr.swapchain_buffers[gr.back_buffer_index]).?.state =
+        gctx.resource_pool.lookupResource(gctx.swapchain_buffers[gctx.back_buffer_index]).?.state =
             d3d12.RESOURCE_STATE_PRESENT;
     }
 
-    fn flushGpuCommands(gr: *GraphicsContext) void {
-        if (gr.is_cmdlist_opened) {
-            gr.flushResourceBarriers();
-            hrPanicOnFail(gr.cmdlist.Close());
-            gr.is_cmdlist_opened = false;
-            gr.cmdqueue.ExecuteCommandLists(
+    fn flushGpuCommands(gctx: *GraphicsContext) void {
+        if (gctx.is_cmdlist_opened) {
+            gctx.flushResourceBarriers();
+            hrPanicOnFail(gctx.cmdlist.Close());
+            gctx.is_cmdlist_opened = false;
+            gctx.cmdqueue.ExecuteCommandLists(
                 1,
-                &[_]*d3d12.ICommandList{@ptrCast(*d3d12.ICommandList, gr.cmdlist)},
+                &[_]*d3d12.ICommandList{@ptrCast(*d3d12.ICommandList, gctx.cmdlist)},
             );
         }
     }
 
-    pub fn finishGpuCommands(gr: *GraphicsContext) void {
-        const was_cmdlist_opened = gr.is_cmdlist_opened;
-        gr.flushGpuCommands();
+    pub fn finishGpuCommands(gctx: *GraphicsContext) void {
+        const was_cmdlist_opened = gctx.is_cmdlist_opened;
+        gctx.flushGpuCommands();
 
-        gr.frame_fence_counter += 1;
+        gctx.frame_fence_counter += 1;
 
-        hrPanicOnFail(gr.cmdqueue.Signal(gr.frame_fence, gr.frame_fence_counter));
-        hrPanicOnFail(gr.frame_fence.SetEventOnCompletion(gr.frame_fence_counter, gr.frame_fence_event));
-        w.WaitForSingleObject(gr.frame_fence_event, w.INFINITE) catch unreachable;
+        hrPanicOnFail(gctx.cmdqueue.Signal(gctx.frame_fence, gctx.frame_fence_counter));
+        hrPanicOnFail(gctx.frame_fence.SetEventOnCompletion(gctx.frame_fence_counter, gctx.frame_fence_event));
+        w32.WaitForSingleObject(gctx.frame_fence_event, w32.INFINITE) catch unreachable;
 
         // Reset current non-persistent heap (+1 because heap 0 is persistent)
-        gr.cbv_srv_uav_gpu_heaps[gr.frame_index + 1].size = 0;
-        gr.upload_memory_heaps[gr.frame_index].size = 0;
+        gctx.cbv_srv_uav_gpu_heaps[gctx.frame_index + 1].size = 0;
+        gctx.upload_memory_heaps[gctx.frame_index].size = 0;
 
         if (was_cmdlist_opened) {
-            beginFrame(gr);
+            beginFrame(gctx);
         }
     }
 
-    pub fn getBackBuffer(gr: GraphicsContext) struct {
+    pub fn getBackBuffer(gctx: GraphicsContext) struct {
         resource_handle: ResourceHandle,
         descriptor_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
     } {
         return .{
-            .resource_handle = gr.swapchain_buffers[gr.back_buffer_index],
+            .resource_handle = gctx.swapchain_buffers[gctx.back_buffer_index],
             .descriptor_handle = .{
-                .ptr = gr.rtv_heap.base.cpu_handle.ptr + gr.back_buffer_index * gr.rtv_heap.descriptor_size,
+                .ptr = gctx.rtv_heap.base.cpu_handle.ptr + gctx.back_buffer_index * gctx.rtv_heap.descriptor_size,
             },
         };
     }
 
-    pub inline fn lookupResource(gr: GraphicsContext, handle: ResourceHandle) ?*d3d12.IResource {
-        const resource = gr.resource_pool.lookupResource(handle);
+    pub inline fn lookupResource(gctx: GraphicsContext, handle: ResourceHandle) ?*d3d12.IResource {
+        const resource = gctx.resource_pool.lookupResource(handle);
         if (resource == null)
             return null;
 
         return resource.?.raw.?;
     }
 
-    pub fn isResourceValid(gr: GraphicsContext, handle: ResourceHandle) bool {
-        return gr.resource_pool.isResourceValid(handle);
+    pub fn isResourceValid(gctx: GraphicsContext, handle: ResourceHandle) bool {
+        return gctx.resource_pool.isResourceValid(handle);
     }
 
-    pub fn getResourceSize(gr: GraphicsContext, handle: ResourceHandle) u64 {
-        const resource = gr.resource_pool.lookupResource(handle);
+    pub fn getResourceSize(gctx: GraphicsContext, handle: ResourceHandle) u64 {
+        const resource = gctx.resource_pool.lookupResource(handle);
         if (resource == null)
             return 0;
 
@@ -806,8 +806,8 @@ pub const GraphicsContext = struct {
         return resource.?.desc.Width;
     }
 
-    pub fn getResourceDesc(gr: GraphicsContext, handle: ResourceHandle) d3d12.RESOURCE_DESC {
-        const resource = gr.resource_pool.lookupResource(handle);
+    pub fn getResourceDesc(gctx: GraphicsContext, handle: ResourceHandle) d3d12.RESOURCE_DESC {
+        const resource = gctx.resource_pool.lookupResource(handle);
         if (resource == null)
             return d3d12.RESOURCE_DESC.initBuffer(0);
 
@@ -815,7 +815,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn createCommittedResource(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         heap_type: d3d12.HEAP_TYPE,
         heap_flags: d3d12.HEAP_FLAGS,
         desc: *const d3d12.RESOURCE_DESC,
@@ -824,7 +824,7 @@ pub const GraphicsContext = struct {
     ) HResultError!ResourceHandle {
         const resource = blk: {
             var resource: *d3d12.IResource = undefined;
-            try hrErrorOnFail(gr.device.CreateCommittedResource(
+            try hrErrorOnFail(gctx.device.CreateCommittedResource(
                 &d3d12.HEAP_PROPERTIES.initType(heap_type),
                 heap_flags,
                 desc,
@@ -835,29 +835,29 @@ pub const GraphicsContext = struct {
             ));
             break :blk resource;
         };
-        return gr.resource_pool.addResource(resource, initial_state);
+        return gctx.resource_pool.addResource(resource, initial_state);
     }
 
-    pub fn destroyResource(gr: GraphicsContext, handle: ResourceHandle) void {
-        gr.resource_pool.destroyResource(handle);
+    pub fn destroyResource(gctx: GraphicsContext, handle: ResourceHandle) void {
+        gctx.resource_pool.destroyResource(handle);
     }
 
-    pub fn flushResourceBarriers(gr: *GraphicsContext) void {
-        if (gr.num_transition_resource_barriers > 0) {
+    pub fn flushResourceBarriers(gctx: *GraphicsContext) void {
+        if (gctx.num_transition_resource_barriers > 0) {
             var d3d12_barriers: [max_num_buffered_resource_barriers]d3d12.RESOURCE_BARRIER = undefined;
 
             var num_valid_barriers: u32 = 0;
             var barrier_index: u32 = 0;
-            while (barrier_index < gr.num_transition_resource_barriers) : (barrier_index += 1) {
-                const barrier = &gr.transition_resource_barriers[barrier_index];
+            while (barrier_index < gctx.num_transition_resource_barriers) : (barrier_index += 1) {
+                const barrier = &gctx.transition_resource_barriers[barrier_index];
 
-                if (gr.resource_pool.isResourceValid(barrier.resource)) {
+                if (gctx.resource_pool.isResourceValid(barrier.resource)) {
                     d3d12_barriers[num_valid_barriers] = .{
                         .Type = .TRANSITION,
                         .Flags = d3d12.RESOURCE_BARRIER_FLAG_NONE,
                         .u = .{
                             .Transition = .{
-                                .pResource = gr.lookupResource(barrier.resource).?,
+                                .pResource = gctx.lookupResource(barrier.resource).?,
                                 .Subresource = d3d12.RESOURCE_BARRIER_ALL_SUBRESOURCES,
                                 .StateBefore = barrier.state_before,
                                 .StateAfter = barrier.state_after,
@@ -868,47 +868,47 @@ pub const GraphicsContext = struct {
                 }
             }
             if (num_valid_barriers > 0) {
-                gr.cmdlist.ResourceBarrier(num_valid_barriers, &d3d12_barriers);
+                gctx.cmdlist.ResourceBarrier(num_valid_barriers, &d3d12_barriers);
             }
-            gr.num_transition_resource_barriers = 0;
+            gctx.num_transition_resource_barriers = 0;
         }
     }
 
     pub fn addTransitionBarrier(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         handle: ResourceHandle,
         state_after: d3d12.RESOURCE_STATES,
     ) void {
-        var resource = gr.resource_pool.lookupResource(handle);
+        var resource = gctx.resource_pool.lookupResource(handle);
         if (resource == null)
             return;
 
         if (state_after != resource.?.state) {
-            if (gr.num_transition_resource_barriers >= gr.transition_resource_barriers.len) {
-                gr.flushResourceBarriers();
+            if (gctx.num_transition_resource_barriers >= gctx.transition_resource_barriers.len) {
+                gctx.flushResourceBarriers();
             }
-            gr.transition_resource_barriers[gr.num_transition_resource_barriers] = .{
+            gctx.transition_resource_barriers[gctx.num_transition_resource_barriers] = .{
                 .resource = handle,
                 .state_before = resource.?.state,
                 .state_after = state_after,
             };
-            gr.num_transition_resource_barriers += 1;
+            gctx.num_transition_resource_barriers += 1;
             resource.?.state = state_after;
         }
     }
 
     pub fn createGraphicsShaderPipeline(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         vs_cso_path: ?[]const u8,
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
-        return createGraphicsShaderPipelineVsGsPs(gr, arena, pso_desc, vs_cso_path, null, ps_cso_path);
+        return createGraphicsShaderPipelineVsGsPs(gctx, arena, pso_desc, vs_cso_path, null, ps_cso_path);
     }
 
     pub fn createGraphicsShaderPipelineVsGsPs(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         vs_cso_path: ?[]const u8,
@@ -916,7 +916,7 @@ pub const GraphicsContext = struct {
         ps_cso_path: ?[]const u8,
     ) PipelineHandle {
         return createGraphicsShaderPipelineRsVsGsPs(
-            gr,
+            gctx,
             arena,
             pso_desc,
             null,
@@ -927,7 +927,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn createGraphicsShaderPipelineRsVsGsPs(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         arena: std.mem.Allocator,
         pso_desc: *d3d12.GRAPHICS_PIPELINE_STATE_DESC,
         root_signature: ?*d3d12.IRootSignature,
@@ -1004,9 +1004,9 @@ pub const GraphicsContext = struct {
         };
         std.log.info("[graphics] Graphics pipeline hash: {d}", .{hash});
 
-        if (gr.pipeline_pool.map.contains(hash)) {
+        if (gctx.pipeline_pool.map.contains(hash)) {
             std.log.info("[graphics] Graphics pipeline cache hit detected.", .{});
-            const handle = gr.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
+            const handle = gctx.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
             return handle;
         }
 
@@ -1015,7 +1015,7 @@ pub const GraphicsContext = struct {
                 break :blk rs;
             } else {
                 var rs: *d3d12.IRootSignature = undefined;
-                hrPanicOnFail(gr.device.CreateRootSignature(
+                hrPanicOnFail(gctx.device.CreateRootSignature(
                     0,
                     pso_desc.VS.pShaderBytecode.?,
                     pso_desc.VS.BytecodeLength,
@@ -1030,7 +1030,7 @@ pub const GraphicsContext = struct {
 
         const pso = blk: {
             var pso: *d3d12.IPipelineState = undefined;
-            hrPanicOnFail(gr.device.CreateGraphicsPipelineState(
+            hrPanicOnFail(gctx.device.CreateGraphicsPipelineState(
                 pso_desc,
                 &d3d12.IID_IPipelineState,
                 @ptrCast(*?*anyopaque, &pso),
@@ -1038,11 +1038,11 @@ pub const GraphicsContext = struct {
             break :blk pso;
         };
 
-        return gr.pipeline_pool.addPipeline(pso, rs, .Graphics, hash);
+        return gctx.pipeline_pool.addPipeline(pso, rs, .Graphics, hash);
     }
 
     pub fn createMeshShaderPipeline(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         arena: std.mem.Allocator,
         pso_desc: *d3d12.MESH_SHADER_PIPELINE_STATE_DESC,
         as_cso_path: ?[]const u8,
@@ -1103,15 +1103,15 @@ pub const GraphicsContext = struct {
         };
         std.log.info("[graphics] Mesh shader pipeline hash: {d}", .{hash});
 
-        if (gr.pipeline_pool.map.contains(hash)) {
+        if (gctx.pipeline_pool.map.contains(hash)) {
             std.log.info("[graphics] Mesh shader pipeline cache hit detected.", .{});
-            const handle = gr.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
+            const handle = gctx.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
             return handle;
         }
 
         const rs = blk: {
             var rs: *d3d12.IRootSignature = undefined;
-            hrPanicOnFail(gr.device.CreateRootSignature(
+            hrPanicOnFail(gctx.device.CreateRootSignature(
                 0,
                 pso_desc.MS.pShaderBytecode.?,
                 pso_desc.MS.BytecodeLength,
@@ -1126,7 +1126,7 @@ pub const GraphicsContext = struct {
         const pso = blk: {
             var stream = d3d12.PIPELINE_MESH_STATE_STREAM.init(pso_desc.*);
             var pso: *d3d12.IPipelineState = undefined;
-            hrPanicOnFail(gr.device.CreatePipelineState(
+            hrPanicOnFail(gctx.device.CreatePipelineState(
                 &d3d12.PIPELINE_STATE_STREAM_DESC{
                     .SizeInBytes = @sizeOf(@TypeOf(stream)),
                     .pPipelineStateSubobjectStream = &stream,
@@ -1137,11 +1137,11 @@ pub const GraphicsContext = struct {
             break :blk pso;
         };
 
-        return gr.pipeline_pool.addPipeline(pso, rs, .Graphics, hash);
+        return gctx.pipeline_pool.addPipeline(pso, rs, .Graphics, hash);
     }
 
     pub fn createComputeShaderPipeline(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         arena: std.mem.Allocator,
         pso_desc: *d3d12.COMPUTE_PIPELINE_STATE_DESC,
         cs_cso_path: ?[]const u8,
@@ -1167,15 +1167,15 @@ pub const GraphicsContext = struct {
         };
         std.log.info("[graphics] Compute pipeline hash: {d}", .{hash});
 
-        if (gr.pipeline_pool.map.contains(hash)) {
+        if (gctx.pipeline_pool.map.contains(hash)) {
             std.log.info("[graphics] Compute pipeline hit detected.", .{});
-            const handle = gr.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
+            const handle = gctx.pipeline_pool.map.getEntry(hash).?.value_ptr.*;
             return handle;
         }
 
         const rs = blk: {
             var rs: *d3d12.IRootSignature = undefined;
-            hrPanicOnFail(gr.device.CreateRootSignature(
+            hrPanicOnFail(gctx.device.CreateRootSignature(
                 0,
                 pso_desc.CS.pShaderBytecode.?,
                 pso_desc.CS.BytecodeLength,
@@ -1189,7 +1189,7 @@ pub const GraphicsContext = struct {
 
         const pso = blk: {
             var pso: *d3d12.IPipelineState = undefined;
-            hrPanicOnFail(gr.device.CreateComputePipelineState(
+            hrPanicOnFail(gctx.device.CreateComputePipelineState(
                 pso_desc,
                 &d3d12.IID_IPipelineState,
                 @ptrCast(*?*anyopaque, &pso),
@@ -1197,49 +1197,49 @@ pub const GraphicsContext = struct {
             break :blk pso;
         };
 
-        return gr.pipeline_pool.addPipeline(pso, rs, .Compute, hash);
+        return gctx.pipeline_pool.addPipeline(pso, rs, .Compute, hash);
     }
 
-    pub fn setCurrentPipeline(gr: *GraphicsContext, pipeline_handle: PipelineHandle) void {
-        assert(gr.is_cmdlist_opened);
+    pub fn setCurrentPipeline(gctx: *GraphicsContext, pipeline_handle: PipelineHandle) void {
+        assert(gctx.is_cmdlist_opened);
 
-        const pipeline = gr.pipeline_pool.lookupPipeline(pipeline_handle);
+        const pipeline = gctx.pipeline_pool.lookupPipeline(pipeline_handle);
         if (pipeline == null)
             return;
 
-        if (pipeline_handle.index == gr.current_pipeline.index and
-            pipeline_handle.generation == gr.current_pipeline.generation)
+        if (pipeline_handle.index == gctx.current_pipeline.index and
+            pipeline_handle.generation == gctx.current_pipeline.generation)
         {
             return;
         }
 
-        gr.cmdlist.SetPipelineState(pipeline.?.pso.?);
+        gctx.cmdlist.SetPipelineState(pipeline.?.pso.?);
         switch (pipeline.?.ptype.?) {
-            .Graphics => gr.cmdlist.SetGraphicsRootSignature(pipeline.?.rs.?),
-            .Compute => gr.cmdlist.SetComputeRootSignature(pipeline.?.rs.?),
+            .Graphics => gctx.cmdlist.SetGraphicsRootSignature(pipeline.?.rs.?),
+            .Compute => gctx.cmdlist.SetComputeRootSignature(pipeline.?.rs.?),
         }
 
-        gr.current_pipeline = pipeline_handle;
+        gctx.current_pipeline = pipeline_handle;
     }
 
-    pub fn destroyPipeline(gr: *GraphicsContext, handle: PipelineHandle) void {
-        gr.pipeline_pool.destroyPipeline(handle);
+    pub fn destroyPipeline(gctx: *GraphicsContext, handle: PipelineHandle) void {
+        gctx.pipeline_pool.destroyPipeline(handle);
     }
 
     pub fn allocateUploadMemory(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         comptime T: type,
         num_elements: u32,
     ) struct { cpu_slice: []T, gpu_base: d3d12.GPU_VIRTUAL_ADDRESS } {
         assert(num_elements > 0);
         const size = num_elements * @sizeOf(T);
-        var memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
+        var memory = gctx.upload_memory_heaps[gctx.frame_index].allocate(size);
         if (memory.cpu_slice == null or memory.gpu_base == null) {
             std.log.info("[graphics] Upload memory exhausted - waiting for a GPU... (cmdlist state is lost).", .{});
 
-            gr.finishGpuCommands();
+            gctx.finishGpuCommands();
 
-            memory = gr.upload_memory_heaps[gr.frame_index].allocate(size);
+            memory = gctx.upload_memory_heaps[gctx.frame_index].allocate(size);
         }
         return .{
             .cpu_slice = std.mem.bytesAsSlice(T, @alignCast(@alignOf(T), memory.cpu_slice.?)),
@@ -1248,54 +1248,54 @@ pub const GraphicsContext = struct {
     }
 
     pub fn allocateUploadBufferRegion(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         comptime T: type,
         num_elements: u32,
     ) struct { cpu_slice: []T, buffer: *d3d12.IResource, buffer_offset: u64 } {
         assert(num_elements > 0);
         const size = num_elements * @sizeOf(T);
-        const memory = gr.allocateUploadMemory(T, num_elements);
+        const memory = gctx.allocateUploadMemory(T, num_elements);
         const aligned_size = (size + (GpuMemoryHeap.alloc_alignment - 1)) & ~(GpuMemoryHeap.alloc_alignment - 1);
         return .{
             .cpu_slice = memory.cpu_slice,
-            .buffer = gr.upload_memory_heaps[gr.frame_index].heap,
-            .buffer_offset = gr.upload_memory_heaps[gr.frame_index].size - aligned_size,
+            .buffer = gctx.upload_memory_heaps[gctx.frame_index].heap,
+            .buffer_offset = gctx.upload_memory_heaps[gctx.frame_index].size - aligned_size,
         };
     }
 
     pub fn allocateCpuDescriptors(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         dtype: d3d12.DESCRIPTOR_HEAP_TYPE,
         num: u32,
     ) d3d12.CPU_DESCRIPTOR_HANDLE {
         assert(num > 0);
         switch (dtype) {
             .CBV_SRV_UAV => {
-                assert(gr.cbv_srv_uav_cpu_heap.size_temp == 0);
-                return gr.cbv_srv_uav_cpu_heap.allocateDescriptors(num).cpu_handle;
+                assert(gctx.cbv_srv_uav_cpu_heap.size_temp == 0);
+                return gctx.cbv_srv_uav_cpu_heap.allocateDescriptors(num).cpu_handle;
             },
             .RTV => {
-                assert(gr.rtv_heap.size_temp == 0);
-                return gr.rtv_heap.allocateDescriptors(num).cpu_handle;
+                assert(gctx.rtv_heap.size_temp == 0);
+                return gctx.rtv_heap.allocateDescriptors(num).cpu_handle;
             },
             .DSV => {
-                assert(gr.dsv_heap.size_temp == 0);
-                return gr.dsv_heap.allocateDescriptors(num).cpu_handle;
+                assert(gctx.dsv_heap.size_temp == 0);
+                return gctx.dsv_heap.allocateDescriptors(num).cpu_handle;
             },
             .SAMPLER => unreachable,
         }
     }
 
     pub fn allocateTempCpuDescriptors(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         dtype: d3d12.DESCRIPTOR_HEAP_TYPE,
         num: u32,
     ) d3d12.CPU_DESCRIPTOR_HANDLE {
         assert(num > 0);
         var dheap = switch (dtype) {
-            .CBV_SRV_UAV => &gr.cbv_srv_uav_cpu_heap,
-            .RTV => &gr.rtv_heap,
-            .DSV => &gr.dsv_heap,
+            .CBV_SRV_UAV => &gctx.cbv_srv_uav_cpu_heap,
+            .RTV => &gctx.rtv_heap,
+            .DSV => &gctx.dsv_heap,
             .SAMPLER => unreachable,
         };
         const handle = dheap.allocateDescriptors(num).cpu_handle;
@@ -1303,11 +1303,11 @@ pub const GraphicsContext = struct {
         return handle;
     }
 
-    pub fn deallocateAllTempCpuDescriptors(gr: *GraphicsContext, dtype: d3d12.DESCRIPTOR_HEAP_TYPE) void {
+    pub fn deallocateAllTempCpuDescriptors(gctx: *GraphicsContext, dtype: d3d12.DESCRIPTOR_HEAP_TYPE) void {
         var dheap = switch (dtype) {
-            .CBV_SRV_UAV => &gr.cbv_srv_uav_cpu_heap,
-            .RTV => &gr.rtv_heap,
-            .DSV => &gr.dsv_heap,
+            .CBV_SRV_UAV => &gctx.cbv_srv_uav_cpu_heap,
+            .RTV => &gctx.rtv_heap,
+            .DSV => &gctx.dsv_heap,
             .SAMPLER => unreachable,
         };
         assert(dheap.size_temp > 0);
@@ -1316,15 +1316,15 @@ pub const GraphicsContext = struct {
         dheap.size_temp = 0;
     }
 
-    pub inline fn allocateGpuDescriptors(gr: *GraphicsContext, num_descriptors: u32) Descriptor {
+    pub inline fn allocateGpuDescriptors(gctx: *GraphicsContext, num_descriptors: u32) Descriptor {
         // Allocate non-persistent descriptors
-        return gr.cbv_srv_uav_gpu_heaps[gr.frame_index + 1].allocateDescriptors(num_descriptors);
+        return gctx.cbv_srv_uav_gpu_heaps[gctx.frame_index + 1].allocateDescriptors(num_descriptors);
     }
 
-    pub fn allocatePersistentGpuDescriptors(gr: *GraphicsContext, num_descriptors: u32) PersistentDescriptor {
+    pub fn allocatePersistentGpuDescriptors(gctx: *GraphicsContext, num_descriptors: u32) PersistentDescriptor {
         // Allocate descriptors from persistent heap (heap 0)
-        const index = gr.cbv_srv_uav_gpu_heaps[0].size;
-        const base = gr.cbv_srv_uav_gpu_heaps[0].allocateDescriptors(num_descriptors);
+        const index = gctx.cbv_srv_uav_gpu_heaps[0].size;
+        const base = gctx.cbv_srv_uav_gpu_heaps[0].allocateDescriptors(num_descriptors);
         return .{
             .cpu_handle = base.cpu_handle,
             .gpu_handle = base.gpu_handle,
@@ -1333,24 +1333,24 @@ pub const GraphicsContext = struct {
     }
 
     pub fn copyDescriptorsToGpuHeap(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         num: u32,
         src_base_handle: d3d12.CPU_DESCRIPTOR_HANDLE,
     ) d3d12.GPU_DESCRIPTOR_HANDLE {
-        const base = gr.allocateGpuDescriptors(num);
-        gr.device.CopyDescriptorsSimple(num, base.cpu_handle, src_base_handle, .CBV_SRV_UAV);
+        const base = gctx.allocateGpuDescriptors(num);
+        gctx.device.CopyDescriptorsSimple(num, base.cpu_handle, src_base_handle, .CBV_SRV_UAV);
         return base.gpu_handle;
     }
 
     pub fn updateTex2dSubresource(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         texture: ResourceHandle,
         subresource: u32,
         data: []const u8,
         row_pitch: u32,
     ) void {
-        assert(gr.is_cmdlist_opened);
-        const resource = gr.resource_pool.lookupResource(texture);
+        assert(gctx.is_cmdlist_opened);
+        const resource = gctx.resource_pool.lookupResource(texture);
         if (resource == null)
             return;
 
@@ -1358,7 +1358,7 @@ pub const GraphicsContext = struct {
 
         var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
         var required_size: u64 = undefined;
-        gr.device.GetCopyableFootprints(
+        gctx.device.GetCopyableFootprints(
             &resource.?.desc,
             subresource,
             layout.len,
@@ -1369,7 +1369,7 @@ pub const GraphicsContext = struct {
             &required_size,
         );
 
-        const upload = gr.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
+        const upload = gctx.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
         layout[0].Offset = upload.buffer_offset;
 
         const pixel_size = resource.?.desc.Format.pixelSizeInBytes();
@@ -1381,11 +1381,11 @@ pub const GraphicsContext = struct {
             }
         }
 
-        gr.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_COPY_DEST);
-        gr.flushResourceBarriers();
+        gctx.addTransitionBarrier(texture, d3d12.RESOURCE_STATE_COPY_DEST);
+        gctx.flushResourceBarriers();
 
-        gr.cmdlist.CopyTextureRegion(&d3d12.TEXTURE_COPY_LOCATION{
-            .pResource = gr.lookupResource(texture).?,
+        gctx.cmdlist.CopyTextureRegion(&d3d12.TEXTURE_COPY_LOCATION{
+            .pResource = gctx.lookupResource(texture).?,
             .Type = .SUBRESOURCE_INDEX,
             .u = .{
                 .SubresourceIndex = subresource,
@@ -1400,7 +1400,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn createAndUploadTex2dFromFile(
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         path: []const u8,
         params: struct {
             num_mip_levels: u32 = 0,
@@ -1408,7 +1408,7 @@ pub const GraphicsContext = struct {
             //force_num_components = 0,
         },
     ) HResultError!ResourceHandle {
-        assert(gr.is_cmdlist_opened);
+        assert(gctx.is_cmdlist_opened);
 
         // TODO(mziulek): Hardcoded array size. Make it more robust.
         var path_u16: [300]u16 = undefined;
@@ -1418,10 +1418,10 @@ pub const GraphicsContext = struct {
 
         const bmp_decoder = blk: {
             var maybe_bmp_decoder: ?*wic.IBitmapDecoder = undefined;
-            hrPanicOnFail(gr.wic_factory.CreateDecoderFromFilename(
-                @ptrCast(w.LPCWSTR, &path_u16),
+            hrPanicOnFail(gctx.wic_factory.CreateDecoderFromFilename(
+                @ptrCast(w32.LPCWSTR, &path_u16),
                 null,
-                w.GENERIC_READ,
+                w32.GENERIC_READ,
                 .MetadataCacheOnDemand,
                 &maybe_bmp_decoder,
             ));
@@ -1437,7 +1437,7 @@ pub const GraphicsContext = struct {
         defer _ = bmp_frame.Release();
 
         const pixel_format = blk: {
-            var pixel_format: w.GUID = undefined;
+            var pixel_format: w32.GUID = undefined;
             hrPanicOnFail(bmp_frame.GetPixelFormat(&pixel_format));
             break :blk pixel_format;
         };
@@ -1470,7 +1470,7 @@ pub const GraphicsContext = struct {
 
         const image_conv = blk: {
             var maybe_image_conv: ?*wic.IFormatConverter = null;
-            hrPanicOnFail(gr.wic_factory.CreateFormatConverter(&maybe_image_conv));
+            hrPanicOnFail(gctx.wic_factory.CreateFormatConverter(&maybe_image_conv));
             break :blk maybe_image_conv.?;
         };
         defer _ = image_conv.Release();
@@ -1487,13 +1487,13 @@ pub const GraphicsContext = struct {
             var width: u32 = undefined;
             var height: u32 = undefined;
             hrPanicOnFail(image_conv.GetSize(&width, &height));
-            break :blk .{ .w = width, .h = height };
+            break :blk .{ .w32 = width, .h = height };
         };
-        const texture = try gr.createCommittedResource(
+        const texture = try gctx.createCommittedResource(
             .DEFAULT,
             d3d12.HEAP_FLAG_NONE,
             &blk: {
-                var desc = d3d12.RESOURCE_DESC.initTex2d(dxgi_format, image_wh.w, image_wh.h, params.num_mip_levels);
+                var desc = d3d12.RESOURCE_DESC.initTex2d(dxgi_format, image_wh.w32, image_wh.h, params.num_mip_levels);
                 desc.Flags = params.texture_flags;
                 break :blk desc;
             },
@@ -1501,13 +1501,13 @@ pub const GraphicsContext = struct {
             null,
         );
 
-        const desc = gr.lookupResource(texture).?.GetDesc();
+        const desc = gctx.lookupResource(texture).?.GetDesc();
 
         var layout: [1]d3d12.PLACED_SUBRESOURCE_FOOTPRINT = undefined;
         var required_size: u64 = undefined;
-        gr.device.GetCopyableFootprints(&desc, 0, 1, 0, &layout, null, null, &required_size);
+        gctx.device.GetCopyableFootprints(&desc, 0, 1, 0, &layout, null, null, &required_size);
 
-        const upload = gr.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
+        const upload = gctx.allocateUploadBufferRegion(u8, @intCast(u32, required_size));
         layout[0].Offset = upload.buffer_offset;
 
         hrPanicOnFail(image_conv.CopyPixels(
@@ -1517,8 +1517,8 @@ pub const GraphicsContext = struct {
             upload.cpu_slice.ptr,
         ));
 
-        gr.cmdlist.CopyTextureRegion(&d3d12.TEXTURE_COPY_LOCATION{
-            .pResource = gr.lookupResource(texture).?,
+        gctx.cmdlist.CopyTextureRegion(&d3d12.TEXTURE_COPY_LOCATION{
+            .pResource = gctx.lookupResource(texture).?,
             .Type = .SUBRESOURCE_INDEX,
             .u = .{ .SubresourceIndex = 0 },
         }, 0, 0, 0, &d3d12.TEXTURE_COPY_LOCATION{
@@ -1541,7 +1541,7 @@ pub const MipmapGenerator = struct {
 
     pub fn init(
         arena: std.mem.Allocator,
-        gr: *GraphicsContext,
+        gctx: *GraphicsContext,
         format: dxgi.FORMAT,
         comptime content_dir: []const u8,
     ) MipmapGenerator {
@@ -1550,7 +1550,7 @@ pub const MipmapGenerator = struct {
 
         var scratch_textures: [num_scratch_textures]ResourceHandle = undefined;
         for (scratch_textures) |_, texture_index| {
-            scratch_textures[texture_index] = gr.createCommittedResource(
+            scratch_textures[texture_index] = gctx.createCommittedResource(
                 .DEFAULT,
                 d3d12.HEAP_FLAG_NONE,
                 &blk: {
@@ -1565,20 +1565,20 @@ pub const MipmapGenerator = struct {
             height /= 2;
         }
 
-        const base_uav = gr.allocateCpuDescriptors(.CBV_SRV_UAV, num_scratch_textures);
+        const base_uav = gctx.allocateCpuDescriptors(.CBV_SRV_UAV, num_scratch_textures);
         var cpu_handle = base_uav;
         for (scratch_textures) |_, texture_index| {
-            gr.device.CreateUnorderedAccessView(
-                gr.lookupResource(scratch_textures[texture_index]).?,
+            gctx.device.CreateUnorderedAccessView(
+                gctx.lookupResource(scratch_textures[texture_index]).?,
                 null,
                 null,
                 cpu_handle,
             );
-            cpu_handle.ptr += gr.cbv_srv_uav_cpu_heap.descriptor_size;
+            cpu_handle.ptr += gctx.cbv_srv_uav_cpu_heap.descriptor_size;
         }
 
         var desc = d3d12.COMPUTE_PIPELINE_STATE_DESC.initDefault();
-        const pipeline = gr.createComputeShaderPipeline(
+        const pipeline = gctx.createComputeShaderPipeline(
             arena,
             &desc,
             content_dir ++ "shaders/generate_mipmaps.cs.cso",
@@ -1592,19 +1592,19 @@ pub const MipmapGenerator = struct {
         };
     }
 
-    pub fn deinit(mipgen: *MipmapGenerator, gr: *GraphicsContext) void {
+    pub fn deinit(mipgen: *MipmapGenerator, gctx: *GraphicsContext) void {
         for (mipgen.scratch_textures) |_, texture_index| {
-            gr.destroyResource(mipgen.scratch_textures[texture_index]);
+            gctx.destroyResource(mipgen.scratch_textures[texture_index]);
         }
-        gr.destroyPipeline(mipgen.pipeline);
+        gctx.destroyPipeline(mipgen.pipeline);
         mipgen.* = undefined;
     }
 
-    pub fn generateMipmaps(mipgen: *MipmapGenerator, gr: *GraphicsContext, texture_handle: ResourceHandle) void {
-        if (!gr.resource_pool.isResourceValid(texture_handle))
+    pub fn generateMipmaps(mipgen: *MipmapGenerator, gctx: *GraphicsContext, texture_handle: ResourceHandle) void {
+        if (!gctx.resource_pool.isResourceValid(texture_handle))
             return;
 
-        const texture_desc = gr.getResourceDesc(texture_handle);
+        const texture_desc = gctx.getResourceDesc(texture_handle);
         assert(mipgen.format == texture_desc.Format);
         assert(texture_desc.Width <= 2048 and texture_desc.Height <= 2048);
         assert(texture_desc.Width == texture_desc.Height);
@@ -1612,9 +1612,9 @@ pub const MipmapGenerator = struct {
 
         var array_slice: u32 = 0;
         while (array_slice < texture_desc.DepthOrArraySize) : (array_slice += 1) {
-            const texture_srv = gr.allocateTempCpuDescriptors(.CBV_SRV_UAV, 1);
-            gr.device.CreateShaderResourceView(
-                gr.lookupResource(texture_handle).?,
+            const texture_srv = gctx.allocateTempCpuDescriptors(.CBV_SRV_UAV, 1);
+            gctx.device.CreateShaderResourceView(
+                gctx.lookupResource(texture_handle).?,
                 &d3d12.SHADER_RESOURCE_VIEW_DESC{
                     .Format = .UNKNOWN,
                     .ViewDimension = .TEXTURE2DARRAY,
@@ -1632,25 +1632,25 @@ pub const MipmapGenerator = struct {
                 },
                 texture_srv,
             );
-            const table_base = gr.copyDescriptorsToGpuHeap(1, texture_srv);
-            _ = gr.copyDescriptorsToGpuHeap(num_scratch_textures, mipgen.base_uav);
-            gr.deallocateAllTempCpuDescriptors(.CBV_SRV_UAV);
+            const table_base = gctx.copyDescriptorsToGpuHeap(1, texture_srv);
+            _ = gctx.copyDescriptorsToGpuHeap(num_scratch_textures, mipgen.base_uav);
+            gctx.deallocateAllTempCpuDescriptors(.CBV_SRV_UAV);
 
-            gr.setCurrentPipeline(mipgen.pipeline);
+            gctx.setCurrentPipeline(mipgen.pipeline);
             var total_num_mips: u32 = texture_desc.MipLevels - 1;
             var current_src_mip_level: u32 = 0;
 
             while (true) {
                 for (mipgen.scratch_textures) |scratch_texture| {
-                    gr.addTransitionBarrier(scratch_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
+                    gctx.addTransitionBarrier(scratch_texture, d3d12.RESOURCE_STATE_UNORDERED_ACCESS);
                 }
-                gr.addTransitionBarrier(texture_handle, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-                gr.flushResourceBarriers();
+                gctx.addTransitionBarrier(texture_handle, d3d12.RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                gctx.flushResourceBarriers();
 
                 const dispatch_num_mips = if (total_num_mips >= 4) 4 else total_num_mips;
-                gr.cmdlist.SetComputeRoot32BitConstant(0, current_src_mip_level, 0);
-                gr.cmdlist.SetComputeRoot32BitConstant(0, dispatch_num_mips, 1);
-                gr.cmdlist.SetComputeRootDescriptorTable(1, table_base);
+                gctx.cmdlist.SetComputeRoot32BitConstant(0, current_src_mip_level, 0);
+                gctx.cmdlist.SetComputeRoot32BitConstant(0, dispatch_num_mips, 1);
+                gctx.cmdlist.SetComputeRootDescriptorTable(1, table_base);
                 const num_groups_x = std.math.max(
                     @intCast(u32, texture_desc.Width) >> @intCast(u5, 3 + current_src_mip_level),
                     1,
@@ -1659,24 +1659,24 @@ pub const MipmapGenerator = struct {
                     texture_desc.Height >> @intCast(u5, 3 + current_src_mip_level),
                     1,
                 );
-                gr.cmdlist.Dispatch(num_groups_x, num_groups_y, 1);
+                gctx.cmdlist.Dispatch(num_groups_x, num_groups_y, 1);
 
                 for (mipgen.scratch_textures) |scratch_texture| {
-                    gr.addTransitionBarrier(scratch_texture, d3d12.RESOURCE_STATE_COPY_SOURCE);
+                    gctx.addTransitionBarrier(scratch_texture, d3d12.RESOURCE_STATE_COPY_SOURCE);
                 }
-                gr.addTransitionBarrier(texture_handle, d3d12.RESOURCE_STATE_COPY_DEST);
-                gr.flushResourceBarriers();
+                gctx.addTransitionBarrier(texture_handle, d3d12.RESOURCE_STATE_COPY_DEST);
+                gctx.flushResourceBarriers();
 
                 var mip_index: u32 = 0;
                 while (mip_index < dispatch_num_mips) : (mip_index += 1) {
                     const dst = d3d12.TEXTURE_COPY_LOCATION{
-                        .pResource = gr.lookupResource(texture_handle).?,
+                        .pResource = gctx.lookupResource(texture_handle).?,
                         .Type = .SUBRESOURCE_INDEX,
                         .u = .{ .SubresourceIndex = mip_index + 1 + current_src_mip_level +
                             array_slice * texture_desc.MipLevels },
                     };
                     const src = d3d12.TEXTURE_COPY_LOCATION{
-                        .pResource = gr.lookupResource(mipgen.scratch_textures[mip_index]).?,
+                        .pResource = gctx.lookupResource(mipgen.scratch_textures[mip_index]).?,
                         .Type = .SUBRESOURCE_INDEX,
                         .u = .{ .SubresourceIndex = 0 },
                     };
@@ -1691,7 +1691,7 @@ pub const MipmapGenerator = struct {
                         .bottom = texture_desc.Height >> @intCast(u5, mip_index + 1 + current_src_mip_level),
                         .back = 1,
                     };
-                    gr.cmdlist.CopyTextureRegion(&dst, 0, 0, 0, &src, &box);
+                    gctx.cmdlist.CopyTextureRegion(&dst, 0, 0, 0, &src, &box);
                 }
 
                 assert(total_num_mips >= dispatch_num_mips);
