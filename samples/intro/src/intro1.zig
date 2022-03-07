@@ -5,7 +5,7 @@ const math = std.math;
 const assert = std.debug.assert;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
 const zwin32 = @import("zwin32");
-const w = zwin32.base;
+const w32 = zwin32.base;
 const d3d12 = zwin32.d3d12;
 const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
@@ -30,7 +30,7 @@ const Vertex = struct {
 
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
-    guictx: GuiRenderer,
+    guir: GuiRenderer,
     frame_stats: common.FrameStats,
 
     intro1_pso: zd3d12.PipelineHandle,
@@ -39,18 +39,18 @@ const DemoState = struct {
     index_buffer: zd3d12.ResourceHandle,
 };
 
-fn init(gpa_allocator: std.mem.Allocator) DemoState {
+fn init(allocator: std.mem.Allocator) !DemoState {
     // Create application window and initialize dear imgui library.
-    const window = common.initWindow(gpa_allocator, window_name, window_width, window_height) catch unreachable;
+    const window = try common.initWindow(allocator, window_name, window_width, window_height);
 
     // Create temporary memory allocator for use during initialization. We pass this allocator to all
     // subsystems that need memory and then free everyting with a single deallocation.
-    var arena_allocator_state = std.heap.ArenaAllocator.init(gpa_allocator);
+    var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
     const arena_allocator = arena_allocator_state.allocator();
 
     // Create DirectX 12 context.
-    var gctx = zd3d12.GraphicsContext.init(gpa_allocator, window);
+    var gctx = zd3d12.GraphicsContext.init(allocator, window);
 
     // Enable vsync.
     // gctx.present_flags = 0;
@@ -71,7 +71,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
         };
         pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
         pso_desc.NumRenderTargets = 1;
-        pso_desc.DepthStencilState.DepthEnable = w.FALSE;
+        pso_desc.DepthStencilState.DepthEnable = w32.FALSE;
         pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
         pso_desc.PrimitiveTopologyType = .TRIANGLE;
 
@@ -106,7 +106,7 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     gctx.beginFrame();
 
     // Create and upload graphics resources for dear imgui renderer.
-    var guictx = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
+    var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
 
     // Fill vertex buffer with vertex data.
     {
@@ -160,9 +160,9 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     // Wait for the GPU to finish all commands.
     gctx.finishGpuCommands();
 
-    return .{
+    return DemoState{
         .gctx = gctx,
-        .guictx = guictx,
+        .guir = guir,
         .frame_stats = common.FrameStats.init(),
         .intro1_pso = intro1_pso,
         .vertex_buffer = vertex_buffer,
@@ -170,11 +170,11 @@ fn init(gpa_allocator: std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
+fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
-    demo.guictx.deinit(&demo.gctx);
-    demo.gctx.deinit(gpa_allocator);
-    common.deinitWindow(gpa_allocator);
+    demo.guir.deinit(&demo.gctx);
+    demo.gctx.deinit(allocator);
+    common.deinitWindow(allocator);
     demo.* = undefined;
 }
 
@@ -201,7 +201,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.OMSetRenderTargets(
         1,
         &[_]d3d12.CPU_DESCRIPTOR_HANDLE{back_buffer.descriptor_handle},
-        w.TRUE,
+        w32.TRUE,
         null,
     );
     gctx.cmdlist.ClearRenderTargetView(
@@ -227,7 +227,7 @@ fn draw(demo: *DemoState) void {
     gctx.cmdlist.DrawIndexedInstanced(3, 1, 0, 0, 0);
 
     // Draw dear imgui (not used in this demo).
-    demo.guictx.draw(gctx);
+    demo.guir.draw(gctx);
 
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
     gctx.flushResourceBarriers();
@@ -243,28 +243,16 @@ pub fn main() !void {
     defer common.deinit();
 
     // Create main memory allocator for our application.
-    var gpa_allocator_state = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        const leaked = gpa_allocator_state.deinit();
-        std.debug.assert(leaked == false);
-    }
-    const gpa_allocator = gpa_allocator_state.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var demo = init(gpa_allocator);
-    defer deinit(&demo, gpa_allocator);
+    const allocator = gpa.allocator();
 
-    while (true) {
-        var message = std.mem.zeroes(w.user32.MSG);
-        const has_message = w.user32.peekMessageA(&message, null, 0, 0, w.user32.PM_REMOVE) catch false;
-        if (has_message) {
-            _ = w.user32.translateMessage(&message);
-            _ = w.user32.dispatchMessageA(&message);
-            if (message.message == w.user32.WM_QUIT) {
-                break;
-            }
-        } else {
-            update(&demo);
-            draw(&demo);
-        }
+    var demo = try init(allocator);
+    defer deinit(&demo, allocator);
+
+    while (common.handleWindowEvents()) {
+        update(&demo);
+        draw(&demo);
     }
 }
