@@ -135,6 +135,14 @@ pub const World = opaque {
     ) void;
 };
 
+pub const Axis = enum(c_int) {
+    x = 0,
+    y = 1,
+    z = 2,
+};
+
+pub const Error = error{OutOfMemory};
+
 pub const ShapeType = enum(c_int) {
     box = 0,
     sphere = 8,
@@ -143,14 +151,6 @@ pub const ShapeType = enum(c_int) {
     compound = 31,
     trimesh = 21,
 };
-
-pub const Axis = enum(c_int) {
-    x = 0,
-    y = 1,
-    z = 2,
-};
-
-pub const Error = error{OutOfMemory};
 
 pub const Shape = opaque {
     pub fn allocate(stype: ShapeType) Error!*const Shape {
@@ -376,13 +376,23 @@ pub const CylinderShape = opaque {
     }
 
     pub const create = cbtShapeCylinderCreate;
-    extern fn cbtShapeCylinderCreate(cylinder: *const CylinderShape, half_extents: *const [3]f32, upaxis: Axis) void;
+    extern fn cbtShapeCylinderCreate(
+        cylinder: *const CylinderShape,
+        half_extents: *const [3]f32,
+        upaxis: Axis,
+    ) void;
 
     pub const getHalfExtentsWithoutMargin = cbtShapeCylinderGetHalfExtentsWithoutMargin;
-    extern fn cbtShapeCylinderGetHalfExtentsWithoutMargin(cylinder: *const CylinderShape, half_extents: *[3]f32) void;
+    extern fn cbtShapeCylinderGetHalfExtentsWithoutMargin(
+        cylinder: *const CylinderShape,
+        half_extents: *[3]f32,
+    ) void;
 
     pub const getHalfExtentsWithMargin = cbtShapeCylinderGetHalfExtentsWithMargin;
-    extern fn cbtShapeCylinderGetHalfExtentsWithMargin(cylinder: *const CylinderShape, half_extents: *[3]f32) void;
+    extern fn cbtShapeCylinderGetHalfExtentsWithMargin(
+        cylinder: *const CylinderShape,
+        half_extents: *[3]f32,
+    ) void;
 
     pub const getUpAxis = cbtShapeCylinderGetUpAxis;
     extern fn cbtShapeCylinderGetUpAxis(capsule: *const CylinderShape) Axis;
@@ -502,7 +512,12 @@ pub const Body = opaque {
     extern fn cbtBodyDeallocate(body: *const Body) void;
 
     pub const create = cbtBodyCreate;
-    extern fn cbtBodyCreate(body: *const Body, mass: f32, transform: *const [12]f32, shape: *const Shape) void;
+    extern fn cbtBodyCreate(
+        body: *const Body,
+        mass: f32,
+        transform: *const [12]f32,
+        shape: *const Shape,
+    ) void;
 
     pub const destroy = cbtBodyDestroy;
     extern fn cbtBodyDestroy(body: *const Body) void;
@@ -524,6 +539,33 @@ pub const Body = opaque {
 
     pub const getGraphicsWorldTransform = cbtBodyGetGraphicsWorldTransform;
     extern fn cbtBodyGetGraphicsWorldTransform(body: *const Body, transform: *[12]f32) void;
+};
+
+pub const ConstraintType = enum(c_int) {
+    point2point = 3,
+};
+
+pub const Constraint = opaque {
+    pub fn allocate(ctype: ConstraintType) Error!*const Constraint {
+        const ptr = cbtConAllocate(ctype);
+        if (ptr == null) {
+            return error.OutOfMemory;
+        }
+        return ptr.?;
+    }
+    extern fn cbtConAllocate(ctype: ConstraintType) ?*const Constraint;
+
+    pub const deallocate = cbtConDeallocate;
+    extern fn cbtConDeallocate(con: *const Constraint) void;
+
+    pub const destroy = cbtConDestroy;
+    extern fn cbtConDestroy(con: *const Constraint) void;
+
+    pub const isCreated = cbtConIsCreated;
+    extern fn cbtConIsCreated(con: *const Constraint) bool;
+
+    pub const getType = cbtConGetType;
+    extern fn cbtConGetType(con: *const Constraint) ConstraintType;
 };
 
 pub const DebugMode = i32;
