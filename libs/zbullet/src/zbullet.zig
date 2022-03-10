@@ -100,10 +100,10 @@ pub const World = opaque {
     pub const getNumBodies = cbtWorldGetNumBodies;
     extern fn cbtWorldGetNumBodies(world: *const World) i32;
 
-    pub const setDebugDrawer = cbtWorldDebugSetDrawer;
+    pub const debugSetDrawer = cbtWorldDebugSetDrawer;
     extern fn cbtWorldDebugSetDrawer(world: *const World, debug: *const DebugDraw) void;
 
-    pub const setDebugMode = cbtWorldDebugSetMode;
+    pub const debugSetMode = cbtWorldDebugSetMode;
     extern fn cbtWorldDebugSetMode(world: *const World, mode: DebugMode) void;
 
     pub const debugDrawAll = cbtWorldDebugDrawAll;

@@ -41,6 +41,7 @@ const DemoState = struct {
     frame_stats: common.FrameStats,
 
     simple_pso: zd3d12.PipelineHandle,
+    physics_debug_pso: zd3d12.PipelineHandle,
 
     vertex_buffer: zd3d12.ResourceHandle,
     index_buffer: zd3d12.ResourceHandle,
@@ -54,11 +55,12 @@ const DemoState = struct {
     physics: struct {
         world: *const zbt.World,
         shapes: std.ArrayList(*const zbt.Shape),
+        debug: *zbt.DebugDrawer,
     },
     camera: struct {
         position: [3]f32 = .{ 0.0, 10.0, -10.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
-        pitch: f32 = 0.25 * math.pi,
+        pitch: f32 = 0.15 * math.pi,
         yaw: f32 = 0.0,
     } = .{},
     mouse: struct {
@@ -100,8 +102,24 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         break :blk gctx.createGraphicsShaderPipeline(
             arena_allocator,
             &pso_desc,
-            content_dir ++ "shaders/intro3.vs.cso",
-            content_dir ++ "shaders/intro3.ps.cso",
+            content_dir ++ "shaders/simple.vs.cso",
+            content_dir ++ "shaders/simple.ps.cso",
+        );
+    };
+
+    const physics_debug_pso = blk: {
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.DSVFormat = .D32_FLOAT;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .LINE;
+
+        break :blk gctx.createGraphicsShaderPipeline(
+            arena_allocator,
+            &pso_desc,
+            content_dir ++ "shaders/physics_debug.vs.cso",
+            content_dir ++ "shaders/physics_debug.ps.cso",
         );
     };
 
@@ -154,19 +172,19 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const physics_world = try zbt.World.init(.{});
 
-    //var physics_debug = allocator.create(zbt.DebugDrawer) catch unreachable;
-    //physics_debug.* = zbt.DebugDrawer.init(allocator);
+    var physics_debug = allocator.create(zbt.DebugDrawer) catch unreachable;
+    physics_debug.* = zbt.DebugDrawer.init(allocator);
 
-    //physics_world.setDebugDrawer(&physics_debug.getDebugDraw());
-    //physics_world.setDebugMode(zbt.dbgmode_draw_wireframe);
+    physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
+    physics_world.debugSetMode(zbt.dbgmode_draw_wireframe);
 
     const physics_shapes = blk: {
         var shapes = std.ArrayList(*const zbt.Shape).init(allocator);
 
-        const box_shape = try zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 });
+        const box_shape = try zbt.BoxShape.init(&.{ 1.05, 1.05, 1.05 });
         try shapes.append(box_shape.asShape());
 
-        const ground_shape = try zbt.BoxShape.init(&.{ 100.0, 0.2, 100.0 });
+        const ground_shape = try zbt.BoxShape.init(&.{ 50.0, 0.2, 50.0 });
         try shapes.append(ground_shape.asShape());
 
         const box_body = try zbt.Body.init(
@@ -235,6 +253,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .guir = guir,
         .frame_stats = common.FrameStats.init(),
         .simple_pso = simple_pso,
+        .physics_debug_pso = physics_debug_pso,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .depth_texture = depth_texture,
@@ -244,6 +263,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .physics = .{
             .world = physics_world,
             .shapes = physics_shapes,
+            .debug = physics_debug,
         },
     };
 }
@@ -261,6 +281,8 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     for (demo.physics.shapes.items) |shape|
         shape.deinit();
     demo.physics.shapes.deinit();
+    demo.physics.debug.deinit();
+    allocator.destroy(demo.physics.debug);
     demo.physics.world.deinit();
     demo.guir.deinit(&demo.gctx);
     demo.gctx.deinit(allocator);
@@ -426,9 +448,29 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
     }
 
-    demo.guir.draw(gctx);
+    demo.physics.world.debugDrawAll();
+    if (demo.physics.debug.lines.items.len > 0) {
+        gctx.setCurrentPipeline(demo.physics_debug_pso);
+        gctx.cmdlist.IASetPrimitiveTopology(.LINELIST);
+        {
+            const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
+            zm.storeMat(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
 
-    //demo.physics.world.drawDebug();
+            gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        }
+        const num_vertices = @intCast(u32, demo.physics.debug.lines.items.len);
+        {
+            const mem = gctx.allocateUploadMemory(zbt.DebugDrawer.Vertex, num_vertices);
+            for (demo.physics.debug.lines.items) |p, i| {
+                mem.cpu_slice[i] = p;
+            }
+            gctx.cmdlist.SetGraphicsRootShaderResourceView(1, mem.gpu_base);
+        }
+        gctx.cmdlist.DrawInstanced(num_vertices, 1, 0, 0);
+        demo.physics.debug.lines.clearRetainingCapacity();
+    }
+
+    demo.guir.draw(gctx);
 
     gctx.addTransitionBarrier(back_buffer.resource_handle, d3d12.RESOURCE_STATE_PRESENT);
     gctx.flushResourceBarriers();

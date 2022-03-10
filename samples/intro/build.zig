@@ -162,6 +162,16 @@ fn buildShaders(b: *std.build.Builder, comptime intro_index_str: []const u8) *st
     dxc_command = makeDxcCmd("src/intro5.hlsl", "psMain", "intro5.ps.cso", "ps", "");
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
+    dxc_command = makeDxcCmd("src/intro6.hlsl", "vsMain", "simple.vs.cso", "vs", "PSO__SIMPLE");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/intro6.hlsl", "psMain", "simple.ps.cso", "ps", "PSO__SIMPLE");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
+    dxc_command = makeDxcCmd("src/intro6.hlsl", "vsPhysicsDebug", "physics_debug.vs.cso", "vs", "PSO__PHYSICS_DEBUG");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd("src/intro6.hlsl", "psPhysicsDebug", "physics_debug.ps.cso", "ps", "PSO__PHYSICS_DEBUG");
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+
     return dxc_step;
 }
 
