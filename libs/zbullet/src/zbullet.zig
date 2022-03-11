@@ -1,3 +1,5 @@
+// zbullet - version 0.1
+
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
 const expect = std.testing.expect;
@@ -98,6 +100,22 @@ pub const World = opaque {
 
     pub const getNumBodies = cbtWorldGetNumBodies;
     extern fn cbtWorldGetNumBodies(world: *const World) i32;
+
+    pub const addConstraint = cbtWorldAddConstraint;
+    extern fn cbtWorldAddConstraint(
+        world: *const World,
+        con: *const Constraint,
+        disable_collision_between_linked_bodies: bool,
+    ) void;
+
+    pub const removeConstraint = cbtWorldRemoveConstraint;
+    extern fn cbtWorldRemoveConstraint(world: *const World, con: *const Constraint) void;
+
+    pub const getConstraint = cbtWorldGetConstraint;
+    extern fn cbtWorldGetConstraint(world: *const World, index: i32) *const Constraint;
+
+    pub const getNumConstraints = cbtWorldGetNumConstraints;
+    extern fn cbtWorldGetNumConstraints(world: *const World) i32;
 
     pub const debugSetDrawer = cbtWorldDebugSetDrawer;
     extern fn cbtWorldDebugSetDrawer(world: *const World, debug: *const DebugDraw) void;
@@ -1105,5 +1123,12 @@ test "zbullet.constraint.point2point" {
 
         p2p.getPivotB(&pivot);
         try expect(pivot[0] == -1.0 and pivot[1] == -2.0 and pivot[2] == -3.0);
+
+        world.addConstraint(p2p.asConstraint(), false);
+        try expect(world.getNumConstraints() == 1);
+        try expect(world.getConstraint(0) == p2p.asConstraint());
+
+        world.removeConstraint(p2p.asConstraint());
+        try expect(world.getNumConstraints() == 0);
     }
 }
