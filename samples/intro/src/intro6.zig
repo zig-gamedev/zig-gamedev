@@ -1,3 +1,5 @@
+// This intro application shows how to use zbullet library to perform rigid body simulation.
+
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;

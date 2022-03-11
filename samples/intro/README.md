@@ -39,3 +39,9 @@ This intro application shows how to load a texture image from file, generate mip
 This intro application shows how to use zmath lib and std.MultiArrayList to efficiently generate dynamic wave consisting of more than 1M points on the CPU.
 
 ![image](screenshots/screenshot5.png)
+
+### intro 6
+
+This intro application shows how to use [zbullet](https://github.com/michal-z/zig-gamedev/tree/main/libs/zbullet) library to perform rigid body simulation.
+
+![image](screenshots/screenshot6.png)

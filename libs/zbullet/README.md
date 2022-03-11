@@ -1,5 +1,7 @@
 # zbullet - Zig bindings for Bullet Physics
 
+See example program [here](https://github.com/michal-z/zig-gamedev/blob/main/samples/intro/src/intro6.zig)
+
 ## Getting started
 
 Copy `zbullet` folder to a `libs` subdirectory of the root of your project.
