@@ -1,4 +1,5 @@
 // zbullet - version 0.1
+// Zig bindings for Bullet Physics SDK
 
 const std = @import("std");
 const Mutex = std.Thread.Mutex;

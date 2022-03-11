@@ -1,3 +1,6 @@
+// cbullet - version 0.1
+// C API for Bullet Physics SDK
+
 #pragma once
 
 #include <stddef.h>
