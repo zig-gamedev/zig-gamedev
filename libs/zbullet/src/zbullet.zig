@@ -548,14 +548,23 @@ pub const Body = opaque {
     pub const getShape = cbtBodyGetShape;
     extern fn cbtBodyGetShape(body: *const Body) *const Shape;
 
+    pub const getMass = cbtBodyGetMass;
+    extern fn cbtBodyGetMass(body: *const Body) f32;
+
     pub const setRestitution = cbtBodySetRestitution;
     extern fn cbtBodySetRestitution(body: *const Body, restitution: f32) void;
 
     pub const getRestitution = cbtBodyGetRestitution;
     extern fn cbtBodyGetRestitution(body: *const Body) f32;
 
+    pub const setFriction = cbtBodySetFriction;
+    extern fn cbtBodySetFriction(body: *const Body, friction: f32) void;
+
     pub const getGraphicsWorldTransform = cbtBodyGetGraphicsWorldTransform;
     extern fn cbtBodyGetGraphicsWorldTransform(body: *const Body, transform: *[12]f32) void;
+
+    pub const applyCentralImpulse = cbtBodyApplyCentralImpulse;
+    extern fn cbtBodyApplyCentralImpulse(body: *const Body, impulse: *[3]f32) void;
 };
 
 pub const ConstraintType = enum(c_int) {

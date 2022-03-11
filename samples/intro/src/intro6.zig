@@ -52,6 +52,8 @@ const DemoState = struct {
     mesh_num_vertices: u32,
     mesh_num_indices: u32,
 
+    keyboard_delay: f32 = 1.0,
+
     physics: struct {
         world: *const zbt.World,
         shapes: std.ArrayList(*const zbt.Shape),
@@ -188,14 +190,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         try shapes.append(ground_shape.asShape());
 
         const box_body = try zbt.Body.init(
-            1.0,
+            1.0, // mass
             &zm.mat43ToArray(zm.translation(0.0, 3.0, 0.0)),
             box_shape.asShape(),
         );
         physics_world.addBody(box_body);
 
         const ground_body = try zbt.Body.init(
-            0.0,
+            0.0, // static body
             &zm.mat43ToArray(zm.identity()),
             ground_shape.asShape(),
         );
@@ -322,6 +324,12 @@ fn update(demo: *DemoState) void {
     c.igSameLine(0, -1);
     c.igText(" :  move camera", "");
 
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "SPACE", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  shoot", "");
+
     c.igEnd();
 
     // Handle camera rotation with mouse.
@@ -368,6 +376,27 @@ fn update(demo: *DemoState) void {
         }
 
         zm.store(demo.camera.position[0..], cpos, 3);
+    }
+
+    // Shooting.
+    {
+        demo.keyboard_delay += dt;
+        if (w32.GetAsyncKeyState(w32.VK_SPACE) < 0 and demo.keyboard_delay >= 0.5) {
+            demo.keyboard_delay = 0.0;
+
+            const transform = zm.translationV(zm.load(demo.camera.position[0..], zm.Vec, 3));
+            const impulse = zm.f32x4s(50.0) * zm.load(demo.camera.forward[0..], zm.Vec, 3);
+
+            const body = zbt.Body.init(
+                1.0,
+                &zm.mat43ToArray(transform),
+                demo.physics.shapes.items[0],
+            ) catch unreachable;
+            body.setFriction(2.1);
+            body.applyCentralImpulse(&zm.vec3ToArray(impulse));
+
+            demo.physics.world.addBody(body);
+        }
     }
 }
 
@@ -432,22 +461,29 @@ fn draw(demo: *DemoState) void {
 
     // For each object, upload per-draw constant data (object to world xform) and draw.
     {
-        const body = demo.physics.world.getBody(0);
+        const num_bodies = demo.physics.world.getNumBodies();
+        var body_index: i32 = 0;
+        while (body_index < num_bodies) : (body_index += 1) {
+            const body = demo.physics.world.getBody(body_index);
+            if (body.getMass() == 0.0)
+                continue;
 
-        // Get transform matrix from the physics simulator.
-        const object_to_world = blk: {
-            var transform: [12]f32 = undefined;
-            body.getGraphicsWorldTransform(&transform);
-            break :blk zm.loadMat43(transform[0..]);
-        };
+            // Get transform matrix from the physics simulator.
+            const object_to_world = blk: {
+                var transform: [12]f32 = undefined;
+                body.getGraphicsWorldTransform(&transform);
+                break :blk zm.loadMat43(transform[0..]);
+            };
 
-        const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
-        zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+            const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
+            zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
 
-        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
-        gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
+            gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+            gctx.cmdlist.DrawIndexedInstanced(demo.mesh_num_indices, 1, 0, 0, 0);
+        }
     }
 
+    // Draw physics debug data.
     demo.physics.world.debugDrawAll();
     if (demo.physics.debug.lines.items.len > 0) {
         gctx.setCurrentPipeline(demo.physics_debug_pso);
