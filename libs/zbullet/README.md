@@ -1,4 +1,4 @@
-# zbullet - Zig bindings for Bullet Physics
+# zbullet - Zig bindings for Bullet Physics SDK
 
 ## Features
 
