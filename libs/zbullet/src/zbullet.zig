@@ -1,4 +1,3 @@
-const builtin = @import("builtin");
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
 const expect = std.testing.expect;
@@ -577,10 +576,10 @@ pub const Constraint = opaque {
     extern fn cbtConIsEnabled(con: *const Constraint) bool;
 
     pub const getBodyA = cbtConGetBodyA;
-    extern fn cbtConGetBodyA(con: *const Constraint) ?*const Body;
+    extern fn cbtConGetBodyA(con: *const Constraint) *const Body;
 
     pub const getBodyB = cbtConGetBodyB;
-    extern fn cbtConGetBodyB(con: *const Constraint) ?*const Body;
+    extern fn cbtConGetBodyB(con: *const Constraint) *const Body;
 };
 
 fn ConstraintFunctions(comptime T: type) type {
@@ -606,10 +605,10 @@ fn ConstraintFunctions(comptime T: type) type {
         pub fn isEnabled(con: *const T) bool {
             return con.asConstraint().isEnabled();
         }
-        pub fn getBodyA(con: *const T) ?*const Body {
+        pub fn getBodyA(con: *const T) *const Body {
             return con.asConstraint().getBodyA();
         }
-        pub fn getBodyB(con: *const T) ?*const Body {
+        pub fn getBodyB(con: *const T) *const Body {
             return con.asConstraint().getBodyB();
         }
     };
