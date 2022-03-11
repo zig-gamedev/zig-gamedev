@@ -568,6 +568,56 @@ pub const Constraint = opaque {
     extern fn cbtConGetType(con: *const Constraint) ConstraintType;
 };
 
+fn ConstraintFunctions(comptime T: type) type {
+    return struct {
+        pub fn asConstraint(con: *const T) *const Constraint {
+            return @ptrCast(*const Constraint, con);
+        }
+        pub fn deallocate(con: *const T) void {
+            con.asConstraint().deallocate();
+        }
+        pub fn destroy(con: *const T) void {
+            con.asConstraint().destroy();
+        }
+        pub fn getType(con: *const T) ConstraintType {
+            return con.asConstraint().getType();
+        }
+        pub fn isCreated(con: *const T) bool {
+            return con.asConstraint().isCreated();
+        }
+    };
+}
+
+pub const Point2PointConstraint = opaque {
+    pub fn allocate() Error!*const Point2PointConstraint {
+        return @ptrCast(*const Point2PointConstraint, try Constraint.allocate(.point2point));
+    }
+
+    pub const create1 = cbtConPoint2PointCreate1;
+    extern fn cbtConPoint2PointCreate1(
+        con: *const Point2PointConstraint,
+        body: *const Body,
+        pivot: *const [3]f32,
+    ) void;
+
+    pub const create2 = cbtConPoint2PointCreate2;
+    extern fn cbtConPoint2PointCreate2(
+        con: *const Point2PointConstraint,
+        body_a: *const Body,
+        body_b: *const Body,
+        pivot_a: *const [3]f32,
+        pivot_b: *const [3]f32,
+    ) void;
+
+    pub const setPivotA = cbtConPoint2PointSetPivotA;
+    extern fn cbtConPoint2PointSetPivotA(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
+
+    pub const setPivotB = cbtConPoint2PointSetPivotB;
+    extern fn cbtConPoint2PointSetPivotB(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
+
+    usingnamespace ConstraintFunctions(@This());
+};
+
 pub const DebugMode = i32;
 pub const dbgmode_disabled: DebugMode = -1;
 pub const dbgmode_no_debug: DebugMode = 0;
@@ -930,5 +980,23 @@ test "zbullet.body.basic" {
         try expect(zm.approxEqAbs(m[1], zm.f32x4(0.0, 1.0, 0.0, 0.0), 0.0001));
         try expect(zm.approxEqAbs(m[2], zm.f32x4(0.0, 0.0, 1.0, 0.0), 0.0001));
         try expect(zm.approxEqAbs(m[3], zm.f32x4(2.0, 3.0, 4.0, 1.0), 0.0001));
+    }
+}
+
+test "zbullet.constraint.point2point" {
+    init(std.testing.allocator);
+    defer deinit();
+    {
+        const world = try World.init(.{});
+        defer world.deinit();
+
+        const sphere = try SphereShape.init(3.0);
+        defer sphere.deinit();
+
+        const p2p = try Point2PointConstraint.allocate();
+        defer p2p.deallocate();
+
+        try expect(p2p.getType() == .point2point);
+        try expect(p2p.isCreated() == false);
     }
 }
