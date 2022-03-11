@@ -49,7 +49,7 @@ pub fn main() !void {
         2.0, 2.0, 2.0, // translation
     };
     const box_body = try zbt.Body.init(
-        1.0, // mass (must be 0.0 for static objects)
+        1.0, // mass (0.0 for static objects)
         &initial_transform,
         box_shape.asShape(),
     );
