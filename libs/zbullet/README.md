@@ -1,6 +1,6 @@
 # zbullet - Zig bindings for Bullet Physics
 
-See example program [here](https://github.com/michal-z/zig-gamedev/blob/main/samples/intro/src/intro6.zig)
+For an example program see [intro 6](https://github.com/michal-z/zig-gamedev/blob/main/samples/intro/src/intro6.zig).
 
 ## Getting started
 
