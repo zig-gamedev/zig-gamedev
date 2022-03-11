@@ -293,6 +293,8 @@ fn ShapeFunctions(comptime T: type) type {
 }
 
 pub const BoxShape = opaque {
+    usingnamespace ShapeFunctions(@This());
+
     pub fn init(half_extents: *const [3]f32) Error!*const BoxShape {
         const box = try allocate();
         box.create(half_extents);
@@ -311,11 +313,11 @@ pub const BoxShape = opaque {
 
     pub const getHalfExtentsWithMargin = cbtShapeBoxGetHalfExtentsWithMargin;
     extern fn cbtShapeBoxGetHalfExtentsWithMargin(box: *const BoxShape, half_extents: *[3]f32) void;
-
-    usingnamespace ShapeFunctions(@This());
 };
 
 pub const SphereShape = opaque {
+    usingnamespace ShapeFunctions(@This());
+
     pub fn init(radius: f32) Error!*const SphereShape {
         const sphere = try allocate();
         sphere.create(radius);
@@ -334,11 +336,11 @@ pub const SphereShape = opaque {
 
     pub const setUnscaledRadius = cbtShapeSphereSetUnscaledRadius;
     extern fn cbtShapeSphereSetUnscaledRadius(sphere: *const SphereShape, radius: f32) void;
-
-    usingnamespace ShapeFunctions(@This());
 };
 
 pub const CapsuleShape = opaque {
+    usingnamespace ShapeFunctions(@This());
+
     pub fn init(radius: f32, height: f32, upaxis: Axis) Error!*const CapsuleShape {
         const capsule = try allocate();
         capsule.create(radius, height, upaxis);
@@ -360,11 +362,11 @@ pub const CapsuleShape = opaque {
 
     pub const getRadius = cbtShapeCapsuleGetRadius;
     extern fn cbtShapeCapsuleGetRadius(capsule: *const CapsuleShape) f32;
-
-    usingnamespace ShapeFunctions(@This());
 };
 
 pub const CylinderShape = opaque {
+    usingnamespace ShapeFunctions(@This());
+
     pub fn init(half_extents: *const [3]f32, upaxis: Axis) Error!*const CylinderShape {
         const cylinder = try allocate();
         cylinder.create(half_extents, upaxis);
@@ -396,11 +398,11 @@ pub const CylinderShape = opaque {
 
     pub const getUpAxis = cbtShapeCylinderGetUpAxis;
     extern fn cbtShapeCylinderGetUpAxis(capsule: *const CylinderShape) Axis;
-
-    usingnamespace ShapeFunctions(@This());
 };
 
 pub const CompoundShape = opaque {
+    usingnamespace ShapeFunctions(@This());
+
     pub fn init(
         params: struct {
             enable_dynamic_aabb_tree: bool = true,
@@ -448,11 +450,11 @@ pub const CompoundShape = opaque {
         index: i32,
         local_transform: *[12]f32,
     ) void;
-
-    usingnamespace ShapeFunctions(@This());
 };
 
 pub const TriangleMeshShape = opaque {
+    usingnamespace ShapeFunctions(@This());
+
     pub fn init() Error!*const TriangleMeshShape {
         const trimesh = try allocate();
         trimesh.createBegin();
@@ -483,8 +485,6 @@ pub const TriangleMeshShape = opaque {
 
     pub const createEnd = cbtShapeTriMeshCreateEnd;
     extern fn cbtShapeTriMeshCreateEnd(trimesh: *const TriangleMeshShape) void;
-
-    usingnamespace ShapeFunctions(@This());
 };
 
 pub const Body = opaque {
@@ -546,6 +546,9 @@ pub const ConstraintType = enum(c_int) {
 };
 
 pub const Constraint = opaque {
+    pub const getFixedBody = cbtConGetFixedBody;
+    extern fn cbtConGetFixedBody() *const Body;
+
     pub fn allocate(ctype: ConstraintType) Error!*const Constraint {
         const ptr = cbtConAllocate(ctype);
         if (ptr == null) {
@@ -566,6 +569,18 @@ pub const Constraint = opaque {
 
     pub const getType = cbtConGetType;
     extern fn cbtConGetType(con: *const Constraint) ConstraintType;
+
+    pub const setEnabled = cbtConSetEnabled;
+    extern fn cbtConSetEnabled(con: *const Constraint, enabled: bool) void;
+
+    pub const isEnabled = cbtConIsEnabled;
+    extern fn cbtConIsEnabled(con: *const Constraint) bool;
+
+    pub const getBodyA = cbtConGetBodyA;
+    extern fn cbtConGetBodyA(con: *const Constraint) ?*const Body;
+
+    pub const getBodyB = cbtConGetBodyB;
+    extern fn cbtConGetBodyB(con: *const Constraint) ?*const Body;
 };
 
 fn ConstraintFunctions(comptime T: type) type {
@@ -585,10 +600,24 @@ fn ConstraintFunctions(comptime T: type) type {
         pub fn isCreated(con: *const T) bool {
             return con.asConstraint().isCreated();
         }
+        pub fn setEnabled(con: *const T, enabled: bool) void {
+            con.asConstraint().setEnabled(enabled);
+        }
+        pub fn isEnabled(con: *const T) bool {
+            return con.asConstraint().isEnabled();
+        }
+        pub fn getBodyA(con: *const T) ?*const Body {
+            return con.asConstraint().getBodyA();
+        }
+        pub fn getBodyB(con: *const T) ?*const Body {
+            return con.asConstraint().getBodyB();
+        }
     };
 }
 
 pub const Point2PointConstraint = opaque {
+    usingnamespace ConstraintFunctions(@This());
+
     pub fn allocate() Error!*const Point2PointConstraint {
         return @ptrCast(*const Point2PointConstraint, try Constraint.allocate(.point2point));
     }
@@ -615,7 +644,20 @@ pub const Point2PointConstraint = opaque {
     pub const setPivotB = cbtConPoint2PointSetPivotB;
     extern fn cbtConPoint2PointSetPivotB(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
 
-    usingnamespace ConstraintFunctions(@This());
+    pub const getPivotA = cbtConPoint2PointGetPivotA;
+    extern fn cbtConPoint2PointGetPivotA(con: *const Point2PointConstraint, pivot: *[3]f32) void;
+
+    pub const getPivotB = cbtConPoint2PointGetPivotB;
+    extern fn cbtConPoint2PointGetPivotB(con: *const Point2PointConstraint, pivot: *[3]f32) void;
+
+    pub const setTau = cbtConPoint2PointSetPivotB;
+    extern fn cbtConPoint2PointSetTau(con: *const Point2PointConstraint, tau: f32) void;
+
+    pub const setDamping = cbtConPoint2PointSetDamping;
+    extern fn cbtConPoint2PointSetDamping(con: *const Point2PointConstraint, damping: f32) void;
+
+    pub const setImpulseClamp = cbtConPoint2PointSetImpulseClamp;
+    extern fn cbtConPoint2PointSetImpulseClamp(con: *const Point2PointConstraint, damping: f32) void;
 };
 
 pub const DebugMode = i32;
@@ -984,6 +1026,7 @@ test "zbullet.body.basic" {
 }
 
 test "zbullet.constraint.point2point" {
+    const zm = @import("zmath");
     init(std.testing.allocator);
     defer deinit();
     {
@@ -993,10 +1036,75 @@ test "zbullet.constraint.point2point" {
         const sphere = try SphereShape.init(3.0);
         defer sphere.deinit();
 
+        const body = try Body.init(
+            1.0,
+            &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
+            sphere.asShape(),
+        );
+        defer body.deinit();
+
         const p2p = try Point2PointConstraint.allocate();
         defer p2p.deallocate();
 
         try expect(p2p.getType() == .point2point);
         try expect(p2p.isCreated() == false);
+
+        p2p.create1(body, &.{ 1.0, 2.0, 3.0 });
+        defer p2p.destroy();
+
+        try expect(p2p.getType() == .point2point);
+        try expect(p2p.isCreated() == true);
+        try expect(p2p.isEnabled() == true);
+        try expect(p2p.getBodyA() == body);
+        try expect(p2p.getBodyB() == Constraint.getFixedBody());
+
+        var pivot: [3]f32 = undefined;
+        p2p.getPivotA(&pivot);
+        try expect(pivot[0] == 1.0 and pivot[1] == 2.0 and pivot[2] == 3.0);
+
+        p2p.setPivotA(&.{ -1.0, -2.0, -3.0 });
+        p2p.getPivotA(&pivot);
+        try expect(pivot[0] == -1.0 and pivot[1] == -2.0 and pivot[2] == -3.0);
+    }
+    {
+        const world = try World.init(.{});
+        defer world.deinit();
+
+        const sphere = try SphereShape.init(3.0);
+        defer sphere.deinit();
+
+        const body0 = try Body.init(
+            1.0,
+            &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
+            sphere.asShape(),
+        );
+        defer body0.deinit();
+
+        const body1 = try Body.init(
+            1.0,
+            &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
+            sphere.asShape(),
+        );
+        defer body1.deinit();
+
+        const p2p = try Point2PointConstraint.allocate();
+        defer p2p.deallocate();
+
+        p2p.create2(body0, body1, &.{ 1.0, 2.0, 3.0 }, &.{ -1.0, -2.0, -3.0 });
+        defer p2p.destroy();
+
+        try expect(p2p.isEnabled() == true);
+        try expect(p2p.getBodyA() == body0);
+        try expect(p2p.getBodyB() == body1);
+        try expect(p2p.getType() == .point2point);
+        try expect(p2p.isCreated() == true);
+
+        var pivot: [3]f32 = undefined;
+
+        p2p.getPivotA(&pivot);
+        try expect(pivot[0] == 1.0 and pivot[1] == 2.0 and pivot[2] == 3.0);
+
+        p2p.getPivotB(&pivot);
+        try expect(pivot[0] == -1.0 and pivot[1] == -2.0 and pivot[2] == -3.0);
     }
 }
