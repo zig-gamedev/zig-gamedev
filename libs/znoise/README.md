@@ -25,13 +25,17 @@ const zns = @import("znoise");
 
 pub fn main() !void {
     ...
-    var state = zns.createState();
+    {
+        const state = zns.State{};
+        const n2 = zns.noise2(&state, 0.1, 0.2);
+        const n3 = zns.noise3(&state, 1.0, 2.0, 3.0);
+    }
 
-    const n2 = zns.noise2(&state, 0.1, 0.2);
-    const n3 = zns.noise3(&state, 1.0, 2.0, 3.0);
-
-    state.fractal_type = .fbm;
-
-    const f2 = zns.noise2(&state, 0.1, 0.2);
+    {
+        const state = zns.State{
+            .fractal_type = .fbm,
+        };
+        const f2 = zns.noise2(&state, 0.1, 0.2);
+    }
 }
 ```
