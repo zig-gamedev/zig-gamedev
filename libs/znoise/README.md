@@ -33,9 +33,23 @@ pub fn main() !void {
 
     {
         const state = zns.State{
-            .fractal_type = .fbm,
+            .seed = 1337,
+            .frequency = 0.01,
+            .noise_type = .opensimplex2,
+            .rotation_type3 = .none,
+            .fractal_type = .none,
+            .octaves = 3,
+            .lacunarity = 2.0,
+            .gain = 0.5,
+            .weighted_strength = 0.0,
+            .ping_pong_strength = 2.0,
+            .cellular_distance_func = .euclideansq,
+            .cellular_return_type = .distance,
+            .cellular_jitter_mod = 1.0,
+            .domain_warp_type = .opensimplex2,
+            .domain_warp_amp = 1.0,
         };
-        const f2 = zns.noise2(&state, 0.1, 0.2);
+        const n = zns.noise2(&state, 0.1, 0.2);
     }
 }
 ```
