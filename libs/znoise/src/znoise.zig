@@ -48,40 +48,37 @@ pub const DomainWarpType = enum(c_int) {
 };
 
 pub const State = extern struct {
-    seed: i32, // 1337
-    frequency: f32, // 0.01
-    noise_type: NoiseType, // .opensimplex2
-    rotation_type3: RotationType3, // .none
-    fractal_type: FractalType, // .none
-    octaves: i32, // 3
-    lacunarity: f32, // 2.0
-    gain: f32, // 0.5
-    weighted_strength: f32, // 0.0
-    ping_pong_strength: f32, // 2.0
-    cellular_distance_func: CellularDistanceFunc, // .distance
-    cellular_return_type: CellularReturnType, // .euclideansq
-    cellular_jitter_mod: f32, // 1.0
-    domain_warp_type: DomainWarpType, // .opensimplex2
-    domain_warp_amp: f32, // 1.0
+    seed: i32 = 1337,
+    frequency: f32 = 0.01,
+    noise_type: NoiseType = .opensimplex2,
+    rotation_type3: RotationType3 = .none,
+    fractal_type: FractalType = .none,
+    octaves: i32 = 3,
+    lacunarity: f32 = 2.0,
+    gain: f32 = 0.5,
+    weighted_strength: f32 = 0.0,
+    ping_pong_strength: f32 = 2.0,
+    cellular_distance_func: CellularDistanceFunc = .euclideansq,
+    cellular_return_type: CellularReturnType = .distance,
+    cellular_jitter_mod: f32 = 1.0,
+    domain_warp_type: DomainWarpType = .opensimplex2,
+    domain_warp_amp: f32 = 1.0,
 };
 
-pub const createState = fnlCreateState;
-extern fn fnlCreateState() State;
-
 pub const noise2 = fnlGetNoise2D;
-extern fn fnlGetNoise2D(state: *State, x: f32, y: f32) f32;
+extern fn fnlGetNoise2D(state: *const State, x: f32, y: f32) f32;
 
 pub const noise3 = fnlGetNoise3D;
-extern fn fnlGetNoise3D(state: *State, x: f32, y: f32, z: f32) f32;
+extern fn fnlGetNoise3D(state: *const State, x: f32, y: f32, z: f32) f32;
 
 pub const domainWarp2 = fnlDomainWarp2D;
-extern fn fnlDomainWarp2D(state: *State, x: *f32, y: *f32) void;
+extern fn fnlDomainWarp2D(state: *const State, x: *f32, y: *f32) void;
 
 pub const domainWarp3 = fnlDomainWarp3D;
-extern fn fnlDomainWarp3D(state: *State, x: *f32, y: *f32, z: *f32) void;
+extern fn fnlDomainWarp3D(state: *const State, x: *f32, y: *f32, z: *f32) void;
 
 test "znoise.basic" {
-    var state = createState();
+    const state = State{};
     const n2 = noise2(&state, 0.1, 0.2);
     const n3 = noise3(&state, 1.0, 2.0, 3.0);
     _ = n2;
