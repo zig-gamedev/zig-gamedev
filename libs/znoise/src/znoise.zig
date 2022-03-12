@@ -1,52 +1,5 @@
 // znoise - Zig bindings for FastNoiseLite
 
-pub const NoiseType = enum(c_int) {
-    opensimplex2,
-    opensimplex2s,
-    cellular,
-    perlin,
-    value_cubic,
-    value,
-};
-
-pub const RotationType3 = enum(c_int) {
-    none,
-    improve_xy_planes,
-    improve_xz_planes,
-};
-
-pub const FractalType = enum(c_int) {
-    none,
-    fbm,
-    ridged,
-    pingpong,
-    domain_warp_progressive,
-    domain_warp_independent,
-};
-
-pub const CellularDistanceFunc = enum(c_int) {
-    euclidean,
-    euclideansq,
-    manhattan,
-    hybrid,
-};
-
-pub const CellularReturnType = enum(c_int) {
-    cellvalue,
-    distance,
-    distance2,
-    distance2add,
-    distance2sub,
-    distance2mul,
-    distance2div,
-};
-
-pub const DomainWarpType = enum(c_int) {
-    opensimplex2,
-    opensimplex2_reduced,
-    basicgrid,
-};
-
 pub const FnlGenerator = extern struct {
     seed: i32 = 1337,
     frequency: f32 = 0.01,
@@ -64,6 +17,53 @@ pub const FnlGenerator = extern struct {
     domain_warp_type: DomainWarpType = .opensimplex2,
     domain_warp_amp: f32 = 1.0,
 
+    pub const NoiseType = enum(c_int) {
+        opensimplex2,
+        opensimplex2s,
+        cellular,
+        perlin,
+        value_cubic,
+        value,
+    };
+
+    pub const RotationType3 = enum(c_int) {
+        none,
+        improve_xy_planes,
+        improve_xz_planes,
+    };
+
+    pub const FractalType = enum(c_int) {
+        none,
+        fbm,
+        ridged,
+        pingpong,
+        domain_warp_progressive,
+        domain_warp_independent,
+    };
+
+    pub const CellularDistanceFunc = enum(c_int) {
+        euclidean,
+        euclideansq,
+        manhattan,
+        hybrid,
+    };
+
+    pub const CellularReturnType = enum(c_int) {
+        cellvalue,
+        distance,
+        distance2,
+        distance2add,
+        distance2sub,
+        distance2mul,
+        distance2div,
+    };
+
+    pub const DomainWarpType = enum(c_int) {
+        opensimplex2,
+        opensimplex2_reduced,
+        basicgrid,
+    };
+
     pub const noise2 = fnlGetNoise2D;
     extern fn fnlGetNoise2D(gen: *const FnlGenerator, x: f32, y: f32) f32;
 
@@ -78,7 +78,7 @@ pub const FnlGenerator = extern struct {
 };
 
 test "znoise.basic" {
-    const gen = FnlGenerator{};
+    const gen = FnlGenerator{ .fractal_type = .fbm };
     const n2 = gen.noise2(0.1, 0.2);
     const n3 = gen.noise3(1.0, 2.0, 3.0);
     _ = n2;

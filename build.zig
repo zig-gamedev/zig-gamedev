@@ -16,6 +16,7 @@ const triangle = @import("samples/triangle/build.zig");
 const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const intro = @import("samples/intro/build.zig");
 const minimal = @import("samples/minimal/build.zig");
+const procedural_test = @import("samples/procedural_test/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
@@ -71,9 +72,8 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, intro.build(b, options, 5), "intro5");
         installDemo(b, intro.build(b, options, 6), "intro6");
         installDemo(b, minimal.build(b, options), "minimal");
-    } else {
-        std.log.info("This project requires Windows.", .{});
     }
+    installDemo(b, procedural_test.build(b, options), "procedural_test");
 }
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
