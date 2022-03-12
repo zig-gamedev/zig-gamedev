@@ -21,23 +21,23 @@ pub fn build(b: *std.build.Builder) void {
 Now in your code you may import and use znoise:
 
 ```zig
-const zns = @import("znoise");
+const znoise = @import("znoise");
 
 pub fn main() !void {
     ...
     {
-        const state = zns.State{};
-        const n2 = zns.noise2(&state, 0.1, 0.2);
-        const n3 = zns.noise3(&state, 1.0, 2.0, 3.0);
+        const gen = znoise.FnlGenerator{};
+        const n2 = gen.noise2(0.1, 0.2);
+        const n3 = gen.noise3(1.0, 2.0, 3.0);
 
         var x: f32 = 1.0;
         var y: f32 = 2.0;
         var z: f32 = 3.0;
-        zns.domainWarp3(&state, &x, &y, &z);
+        gen.domainWarp3(&x, &y, &z);
     }
 
     {
-        const state = zns.State{
+        const gen = znoise.FnlGenerator{
             .seed = 1337,
             .frequency = 0.01,
             .noise_type = .opensimplex2,
@@ -54,7 +54,7 @@ pub fn main() !void {
             .domain_warp_type = .opensimplex2,
             .domain_warp_amp = 1.0,
         };
-        const n = zns.noise2(&state, 0.1, 0.2);
+        const n = gen.noise2(0.1, 0.2);
     }
 }
 ```

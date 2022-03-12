@@ -47,7 +47,7 @@ pub const DomainWarpType = enum(c_int) {
     basicgrid,
 };
 
-pub const State = extern struct {
+pub const FnlGenerator = extern struct {
     seed: i32 = 1337,
     frequency: f32 = 0.01,
     noise_type: NoiseType = .opensimplex2,
@@ -63,24 +63,24 @@ pub const State = extern struct {
     cellular_jitter_mod: f32 = 1.0,
     domain_warp_type: DomainWarpType = .opensimplex2,
     domain_warp_amp: f32 = 1.0,
+
+    pub const noise2 = fnlGetNoise2D;
+    extern fn fnlGetNoise2D(gen: *const FnlGenerator, x: f32, y: f32) f32;
+
+    pub const noise3 = fnlGetNoise3D;
+    extern fn fnlGetNoise3D(gen: *const FnlGenerator, x: f32, y: f32, z: f32) f32;
+
+    pub const domainWarp2 = fnlDomainWarp2D;
+    extern fn fnlDomainWarp2D(gen: *const FnlGenerator, x: *f32, y: *f32) void;
+
+    pub const domainWarp3 = fnlDomainWarp3D;
+    extern fn fnlDomainWarp3D(gen: *const FnlGenerator, x: *f32, y: *f32, z: *f32) void;
 };
 
-pub const noise2 = fnlGetNoise2D;
-extern fn fnlGetNoise2D(state: *const State, x: f32, y: f32) f32;
-
-pub const noise3 = fnlGetNoise3D;
-extern fn fnlGetNoise3D(state: *const State, x: f32, y: f32, z: f32) f32;
-
-pub const domainWarp2 = fnlDomainWarp2D;
-extern fn fnlDomainWarp2D(state: *const State, x: *f32, y: *f32) void;
-
-pub const domainWarp3 = fnlDomainWarp3D;
-extern fn fnlDomainWarp3D(state: *const State, x: *f32, y: *f32, z: *f32) void;
-
 test "znoise.basic" {
-    const state = State{};
-    const n2 = noise2(&state, 0.1, 0.2);
-    const n3 = noise3(&state, 1.0, 2.0, 3.0);
+    const gen = FnlGenerator{};
+    const n2 = gen.noise2(0.1, 0.2);
+    const n3 = gen.noise3(1.0, 2.0, 3.0);
     _ = n2;
     _ = n3;
 }
