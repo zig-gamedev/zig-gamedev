@@ -29,6 +29,11 @@ pub fn main() !void {
         const state = zns.State{};
         const n2 = zns.noise2(&state, 0.1, 0.2);
         const n3 = zns.noise3(&state, 1.0, 2.0, 3.0);
+
+        var x: f32 = 1.0;
+        var y: f32 = 2.0;
+        var z: f32 = 3.0;
+        zns.domainWarp3(&state, &x, &y, &z);
     }
 
     {
