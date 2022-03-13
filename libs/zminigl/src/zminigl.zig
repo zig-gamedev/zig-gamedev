@@ -31,12 +31,17 @@ pub var clearNamedFramebufferfv: fn (
     value: *const [4]f32,
 ) callconv(.C) void = undefined;
 
+pub var clearNamedFramebufferfi: fn (
+    framebuffer: Framebuffer,
+    buffer: FbBuffer,
+    drawbuffer: i32,
+    depth: f32,
+    stencil: i32,
+) callconv(.C) void = undefined;
+
 pub fn init(
     getProcAddr: fn (name: [*:0]const u8) callconv(.C) ?fn () callconv(.C) void,
 ) void {
     clearNamedFramebufferfv = @ptrCast(@TypeOf(clearNamedFramebufferfv), getProcAddr("glClearNamedFramebufferfv").?);
-}
-
-test "zminigl.framebuffer.basic" {
-    clearNamedFramebufferfv(default_framebuffer, .color, 0, &.{ 0.0, 0.0, 0.0, 1.0 });
+    clearNamedFramebufferfi = @ptrCast(@TypeOf(clearNamedFramebufferfi), getProcAddr("glClearNamedFramebufferfi").?);
 }

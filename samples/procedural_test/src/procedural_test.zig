@@ -2,7 +2,7 @@ const glfw = @import("glfw");
 const zgl = @import("zminigl");
 
 const window_name = "zig-gamedev: procedural test";
-const window_width = 1900;
+const window_width = 1800;
 const window_height = 1000;
 
 pub fn main() !void {
