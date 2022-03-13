@@ -2595,7 +2595,7 @@ pub inline fn mat34ToArray(m: Mat) [12]f32 {
 //
 // ------------------------------------------------------------------------------
 
-fn qmul(q0: Quat, q1: Quat) Quat {
+pub fn qmul(q0: Quat, q1: Quat) Quat {
     var result = swizzle(q1, .w, .w, .w, .w);
     var q1x = swizzle(q1, .x, .x, .x, .x);
     var q1y = swizzle(q1, .y, .y, .y, .y);
