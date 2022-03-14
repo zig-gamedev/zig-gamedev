@@ -79,9 +79,10 @@ const DemoState = struct {
     music: *zxaudio2.Stream,
     music_is_playing: bool = true,
     music_has_reverb: bool = false,
-    sound1_data: []const u8,
-    sound2_data: []const u8,
-    sound3_data: []const u8,
+
+    sound1: zxaudio2.SoundHandle,
+    sound2: zxaudio2.SoundHandle,
+    sound3: zxaudio2.SoundHandle,
 
     lines_pso: zd3d12.PipelineHandle,
 
@@ -125,12 +126,12 @@ fn processAudio(samples: []f32, num_channels: u32, context: ?*anyopaque) void {
     }
 }
 
-fn init(allocator: std.mem.Allocator) DemoState {
+fn init(allocator: std.mem.Allocator) !DemoState {
     var actx = zxaudio2.AudioContext.init(allocator);
 
-    const sound1_data = zxaudio2.loadBufferData(allocator, L(content_dir ++ "drum_bass_hard.flac"));
-    const sound2_data = zxaudio2.loadBufferData(allocator, L(content_dir ++ "tabla_tas1.flac"));
-    const sound3_data = zxaudio2.loadBufferData(allocator, L(content_dir ++ "loop_mika.flac"));
+    const sound1 = actx.loadSound(L(content_dir ++ "drum_bass_hard.flac"));
+    const sound2 = actx.loadSound(L(content_dir ++ "tabla_tas1.flac"));
+    const sound3 = actx.loadSound(L(content_dir ++ "loop_mika.flac"));
 
     var music = zxaudio2.Stream.create(
         allocator,
@@ -149,7 +150,10 @@ fn init(allocator: std.mem.Allocator) DemoState {
             .InitialState = w32.FALSE,
             .OutputChannels = 2,
         }};
-        const effect_chain = xaudio2.EFFECT_CHAIN{ .EffectCount = 1, .pEffectDescriptors = &effect_descriptor };
+        const effect_chain = xaudio2.EFFECT_CHAIN{
+            .EffectCount = 1,
+            .pEffectDescriptors = &effect_descriptor,
+        };
         hrPanicOnFail(music.voice.SetEffectChain(&effect_chain));
 
         hrPanicOnFail(music.voice.SetEffectParameters(
@@ -167,13 +171,11 @@ fn init(allocator: std.mem.Allocator) DemoState {
         const p0 = zxaudio2.createSimpleProcessor(&processAudio, audio_data);
         defer _ = p0.Release();
 
-        var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{
-            .{
-                .pEffect = p0,
-                .InitialState = w32.TRUE,
-                .OutputChannels = 2,
-            },
-        };
+        var effect_descriptor = [_]xaudio2.EFFECT_DESCRIPTOR{.{
+            .pEffect = p0,
+            .InitialState = w32.TRUE,
+            .OutputChannels = 2,
+        }};
         const effect_chain = xaudio2.EFFECT_CHAIN{
             .EffectCount = effect_descriptor.len,
             .pEffectDescriptors = &effect_descriptor,
@@ -182,7 +184,7 @@ fn init(allocator: std.mem.Allocator) DemoState {
         hrPanicOnFail(actx.master_voice.SetEffectChain(&effect_chain));
     }
 
-    const window = common.initWindow(allocator, window_name, window_width, window_height) catch unreachable;
+    const window = try common.initWindow(allocator, window_name, window_width, window_height);
 
     var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_allocator_state.deinit();
@@ -248,14 +250,14 @@ fn init(allocator: std.mem.Allocator) DemoState {
     gctx.endFrame();
     gctx.finishGpuCommands();
 
-    return .{
+    return DemoState{
         .gctx = gctx,
         .actx = actx,
         .guir = guir,
         .music = music,
-        .sound1_data = sound1_data,
-        .sound2_data = sound2_data,
-        .sound3_data = sound3_data,
+        .sound1 = sound1,
+        .sound2 = sound2,
+        .sound3 = sound3,
         .frame_stats = common.FrameStats.init(),
         .audio_data = audio_data,
         .lines_pso = lines_pso,
@@ -264,19 +266,16 @@ fn init(allocator: std.mem.Allocator) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState, gpa_allocator: std.mem.Allocator) void {
+fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.actx.device.StopEngine();
     demo.guir.deinit(&demo.gctx);
-    demo.gctx.deinit(gpa_allocator);
+    demo.gctx.deinit(allocator);
     demo.music.destroy();
-    gpa_allocator.free(demo.sound1_data);
-    gpa_allocator.free(demo.sound2_data);
-    gpa_allocator.free(demo.sound3_data);
     demo.audio_data.deinit();
-    gpa_allocator.destroy(demo.audio_data);
+    allocator.destroy(demo.audio_data);
     demo.actx.deinit();
-    common.deinitWindow(gpa_allocator);
+    common.deinitWindow(allocator);
     demo.* = undefined;
 }
 
@@ -341,15 +340,15 @@ fn update(demo: *DemoState) void {
 
     c.igText("Sounds:", "");
     if (c.igButton("  Play Sound 1  ", .{ .x = 0, .y = 0 })) {
-        demo.actx.playBuffer(.{ .data = demo.sound1_data });
+        demo.actx.playSound(demo.sound1, .{});
     }
     c.igSameLine(0.0, -1.0);
     if (c.igButton("  Play Sound 2  ", .{ .x = 0, .y = 0 })) {
-        demo.actx.playBuffer(.{ .data = demo.sound2_data });
+        demo.actx.playSound(demo.sound2, .{});
     }
     c.igSameLine(0.0, -1.0);
     if (c.igButton("  Play Sound 3  ", .{ .x = 0, .y = 0 })) {
-        demo.actx.playBuffer(.{ .data = demo.sound3_data });
+        demo.actx.playSound(demo.sound3, .{});
     }
 
     c.igEnd();
@@ -517,7 +516,7 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    var demo = init(allocator);
+    var demo = try init(allocator);
     defer deinit(&demo, allocator);
 
     while (common.handleWindowEvents()) {

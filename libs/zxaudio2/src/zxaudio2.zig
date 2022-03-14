@@ -30,7 +30,7 @@ const StopOnBufferEnd_VoiceCallback = struct {
     const Self = @This();
 
     fn OnBufferEnd(_: *Self, context: ?*anyopaque) callconv(w32.WINAPI) void {
-        const voice = @ptrCast(*xaudio2.ISourceVoice, @alignCast(8, context));
+        const voice = @ptrCast(*xaudio2.ISourceVoice, @alignCast(@sizeOf(usize), context));
         hrPanicOnFail(voice.Stop(0, xaudio2.COMMIT_NOW));
     }
 
@@ -56,9 +56,11 @@ const StopOnBufferEnd_VoiceCallback = struct {
 var stop_on_buffer_end_vcb: StopOnBufferEnd_VoiceCallback = .{};
 
 pub const AudioContext = struct {
+    allocator: std.mem.Allocator,
     device: *xaudio2.IXAudio2,
     master_voice: *xaudio2.IMasteringVoice,
     source_voices: std.ArrayList(*xaudio2.ISourceVoice),
+    sound_pool: SoundPool,
 
     pub fn init(allocator: std.mem.Allocator) AudioContext {
         const device = blk: {
@@ -113,15 +115,18 @@ pub const AudioContext = struct {
         hrPanicOnFail(mf.MFStartup(mf.VERSION, 0));
 
         return .{
+            .allocator = allocator,
             .device = device,
             .master_voice = master_voice,
             .source_voices = source_voices,
+            .sound_pool = SoundPool.init(allocator),
         };
     }
 
     pub fn deinit(audio: *AudioContext) void {
         audio.device.StopEngine();
         hrPanicOnFail(mf.MFShutdown());
+        audio.sound_pool.deinit(audio.allocator);
         for (audio.source_voices.items) |voice| {
             voice.DestroyVoice();
         }
@@ -165,20 +170,38 @@ pub const AudioContext = struct {
         return idle_voice;
     }
 
-    pub fn playBuffer(audio: *AudioContext, buffer: Buffer) void {
-        const voice = audio.getSourceVoice();
-        submitBuffer(voice, buffer);
+    pub fn playSound(actx: *AudioContext, handle: SoundHandle, params: struct {
+        play_begin: u32 = 0,
+        play_length: u32 = 0,
+        loop_begin: u32 = 0,
+        loop_length: u32 = 0,
+        loop_count: u32 = 0,
+    }) void {
+        const sound = actx.sound_pool.lookupSound(handle);
+        if (sound == null)
+            return;
+
+        const voice = actx.getSourceVoice();
+
+        hrPanicOnFail(voice.SubmitSourceBuffer(&.{
+            .Flags = xaudio2.END_OF_STREAM,
+            .AudioBytes = @intCast(u32, sound.?.data.?.len),
+            .pAudioData = sound.?.data.?.ptr,
+            .PlayBegin = params.play_begin,
+            .PlayLength = params.play_length,
+            .LoopBegin = params.loop_begin,
+            .LoopLength = params.loop_length,
+            .LoopCount = params.loop_count,
+            .pContext = voice,
+        }, null));
+
         hrPanicOnFail(voice.Start(0, xaudio2.COMMIT_NOW));
     }
-};
 
-pub const Buffer = struct {
-    data: []const u8,
-    play_begin: u32 = 0,
-    play_length: u32 = 0,
-    loop_begin: u32 = 0,
-    loop_length: u32 = 0,
-    loop_count: u32 = 0,
+    pub fn loadSound(actx: *AudioContext, sound_file_path: [:0]const u16) SoundHandle {
+        const data = loadBufferData(actx.allocator, sound_file_path);
+        return actx.sound_pool.addSound(data);
+    }
 };
 
 pub const Stream = struct {
@@ -365,7 +388,7 @@ pub const Stream = struct {
         }
 
         fn OnBufferEnd(voice_cb: *VoiceCallback, context: ?*anyopaque) callconv(w32.WINAPI) void {
-            voice_cb.stream.?.onBufferEnd(@ptrCast(*mf.IMediaBuffer, @alignCast(8, context)));
+            voice_cb.stream.?.onBufferEnd(@ptrCast(*mf.IMediaBuffer, @alignCast(@sizeOf(usize), context)));
         }
 
         const vtable_voice_cb = xaudio2.IVoiceCallbackVTable(VoiceCallback){
@@ -471,7 +494,7 @@ pub const Stream = struct {
     };
 };
 
-pub fn loadBufferData(allocator: std.mem.Allocator, audio_file_path: [:0]const u16) []const u8 {
+fn loadBufferData(allocator: std.mem.Allocator, audio_file_path: [:0]const u16) []const u8 {
     var source_reader: *mf.ISourceReader = undefined;
     hrPanicOnFail(mf.MFCreateSourceReaderFromURL(audio_file_path, null, &source_reader));
     defer _ = source_reader.Release();
@@ -518,19 +541,96 @@ pub fn loadBufferData(allocator: std.mem.Allocator, audio_file_path: [:0]const u
     return data.toOwnedSlice();
 }
 
-pub fn submitBuffer(voice: *xaudio2.ISourceVoice, buffer: Buffer) void {
-    hrPanicOnFail(voice.SubmitSourceBuffer(&.{
-        .Flags = xaudio2.END_OF_STREAM,
-        .AudioBytes = @intCast(u32, buffer.data.len),
-        .pAudioData = buffer.data.ptr,
-        .PlayBegin = buffer.play_begin,
-        .PlayLength = buffer.play_length,
-        .LoopBegin = buffer.loop_begin,
-        .LoopLength = buffer.loop_length,
-        .LoopCount = buffer.loop_count,
-        .pContext = voice,
-    }, null));
-}
+pub const SoundHandle = struct {
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
+};
+
+const Sound = struct {
+    data: ?[]const u8,
+};
+
+const SoundPool = struct {
+    const max_num_sounds = 256;
+
+    sounds: []Sound,
+    generations: []u16,
+
+    fn init(allocator: std.mem.Allocator) SoundPool {
+        return .{
+            .sounds = blk: {
+                var sounds = allocator.alloc(Sound, max_num_sounds + 1) catch unreachable;
+                for (sounds) |*sound| {
+                    sound.* = .{
+                        .data = null,
+                    };
+                }
+                break :blk sounds;
+            },
+            .generations = blk: {
+                var generations = allocator.alloc(u16, max_num_sounds + 1) catch unreachable;
+                for (generations) |*gen|
+                    gen.* = 0;
+                break :blk generations;
+            },
+        };
+    }
+
+    fn deinit(pool: *SoundPool, allocator: std.mem.Allocator) void {
+        for (pool.sounds) |sound| {
+            if (sound.data != null)
+                allocator.free(sound.data.?);
+        }
+        allocator.free(pool.sounds);
+        allocator.free(pool.generations);
+        pool.* = undefined;
+    }
+
+    fn addSound(
+        pool: SoundPool,
+        data: []const u8,
+    ) SoundHandle {
+        var slot_idx: u32 = 1;
+        while (slot_idx <= max_num_sounds) : (slot_idx += 1) {
+            if (pool.sounds[slot_idx].data == null)
+                break;
+        }
+        assert(slot_idx <= max_num_sounds);
+
+        pool.sounds[slot_idx] = .{ .data = data };
+        return .{
+            .index = @intCast(u16, slot_idx),
+            .generation = blk: {
+                pool.generations[slot_idx] += 1;
+                break :blk pool.generations[slot_idx];
+            },
+        };
+    }
+
+    fn destroySound(pool: SoundPool, allocator: std.mem.Allocator, handle: SoundHandle) void {
+        var sound = pool.lookupSound(handle);
+        if (sound == null)
+            return;
+
+        allocator.free(sound.data.?);
+        sound.?.* = .{ .data = null };
+    }
+
+    fn isSoundValid(pool: SoundPool, handle: SoundHandle) bool {
+        return handle.index > 0 and
+            handle.index <= max_num_sounds and
+            handle.generation > 0 and
+            handle.generation == pool.generations[handle.index] and
+            pool.sounds[handle.index].data != null;
+    }
+
+    fn lookupSound(pool: SoundPool, handle: SoundHandle) ?*Sound {
+        if (pool.isSoundValid(handle)) {
+            return &pool.sounds[handle.index];
+        }
+        return null;
+    }
+};
 
 const SimpleAudioProcessor = extern struct {
     v: *const xapo.IXAPOVTable(SimpleAudioProcessor) = &vtable,
@@ -619,7 +719,7 @@ const SimpleAudioProcessor = extern struct {
     ) callconv(w32.WINAPI) w32.HRESULT {
         const ptr = w32.CoTaskMemAlloc(@sizeOf(xapo.REGISTRATION_PROPERTIES));
         if (ptr != null) {
-            props.* = @ptrCast(*xapo.REGISTRATION_PROPERTIES, @alignCast(8, ptr.?));
+            props.* = @ptrCast(*xapo.REGISTRATION_PROPERTIES, @alignCast(@sizeOf(usize), ptr.?));
             props.*.* = info;
             return w32.S_OK;
         }
