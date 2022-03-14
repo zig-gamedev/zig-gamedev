@@ -47,13 +47,12 @@ const zxaudio2 = @import("zxaudio2");
 
 pub fn main() !void {
     ...
-    var actx = zxaudio2.AudioContext.init(gpa_allocator);
+    var actx = zxaudio2.AudioContext.init(allocator);
 
-    const sound1_data = zxaudio2.loadBufferData(gpa_allocator, L("content/drum_bass_hard.flac"));
-    const sound2_data = zxaudio2.loadBufferData(gpa_allocator, L("content/tabla_tas1.flac"));
-    const sound3_data = zxaudio2.loadBufferData(gpa_allocator, L("content/loop_mika.flac"));
+    const sound_handle = actx.loadSound(L("content/drum_bass_hard.flac"));
+    actx.playSound(sound_handle, .{});
 
-    var music = zxaudio2.Stream.create(gpa_allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
+    var music = zxaudio2.Stream.create(allocator, actx.device, L("content/Broke For Free - Night Owl.mp3"));
     hrPanicOnFail(music.voice.Start(0, xaudio2.COMMIT_NOW));
     ...
 }
