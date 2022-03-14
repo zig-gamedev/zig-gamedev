@@ -7,7 +7,6 @@ const xaudio2 = zwin32.xaudio2;
 const mf = zwin32.mf;
 const wasapi = zwin32.wasapi;
 const xapo = zwin32.xapo;
-const hrPanic = zwin32.hrPanic;
 const hrPanicOnFail = zwin32.hrPanicOnFail;
 
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
@@ -123,22 +122,22 @@ pub const AudioContext = struct {
         };
     }
 
-    pub fn deinit(audio: *AudioContext) void {
-        audio.device.StopEngine();
+    pub fn deinit(actx: *AudioContext) void {
+        actx.device.StopEngine();
         hrPanicOnFail(mf.MFShutdown());
-        audio.sound_pool.deinit(audio.allocator);
-        for (audio.source_voices.items) |voice| {
+        actx.sound_pool.deinit(actx.allocator);
+        for (actx.source_voices.items) |voice| {
             voice.DestroyVoice();
         }
-        audio.source_voices.deinit();
-        audio.master_voice.DestroyVoice();
-        _ = audio.device.Release();
-        audio.* = undefined;
+        actx.source_voices.deinit();
+        actx.master_voice.DestroyVoice();
+        _ = actx.device.Release();
+        actx.* = undefined;
     }
 
-    pub fn getSourceVoice(audio: *AudioContext) *xaudio2.ISourceVoice {
+    pub fn getSourceVoice(actx: *AudioContext) *xaudio2.ISourceVoice {
         const idle_voice = blk: {
-            for (audio.source_voices.items) |voice| {
+            for (actx.source_voices.items) |voice| {
                 var state: xaudio2.VOICE_STATE = undefined;
                 voice.GetState(&state, xaudio2.VOICE_NOSAMPLESPLAYED);
                 if (state.BuffersQueued == 0) {
@@ -147,7 +146,7 @@ pub const AudioContext = struct {
             }
 
             var voice: ?*xaudio2.ISourceVoice = null;
-            hrPanicOnFail(audio.device.CreateSourceVoice(
+            hrPanicOnFail(actx.device.CreateSourceVoice(
                 &voice,
                 &optimal_voice_format,
                 0,
@@ -156,7 +155,7 @@ pub const AudioContext = struct {
                 null,
                 null,
             ));
-            audio.source_voices.append(voice.?) catch unreachable;
+            actx.source_voices.append(voice.?) catch unreachable;
             break :blk voice.?;
         };
 
