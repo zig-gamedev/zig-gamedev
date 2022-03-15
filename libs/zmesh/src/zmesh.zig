@@ -15,10 +15,10 @@ const ParMesh = extern struct {
 
 pub const Mesh = struct {
     handle: MeshHandle,
-    vertices: []f32,
-    indices: []IndexType,
-    normals: ?[]f32,
-    texcoords: ?[]f32,
+    positions: [][3]f32,
+    triangles: [][3]IndexType,
+    normals: ?[][3]f32,
+    texcoords: ?[][2]f32,
 
     fn saveToObj(mesh: Mesh, filename: [*:0]const u8) void {
         par_shapes_export(mesh.handle, filename);
@@ -29,16 +29,16 @@ pub const Mesh = struct {
 fn createMesh(parmesh: *ParMesh) Mesh {
     return .{
         .handle = @ptrCast(MeshHandle, parmesh),
-        .vertices = parmesh.points[0..@intCast(usize, parmesh.npoints * 3)],
-        .indices = parmesh.triangles[0..@intCast(usize, parmesh.ntriangles * 3)],
+        .positions = @ptrCast([*][3]f32, parmesh.points)[0..@intCast(usize, parmesh.npoints)],
+        .triangles = @ptrCast([*][3]IndexType, parmesh.triangles)[0..@intCast(usize, parmesh.ntriangles)],
         .normals = if (parmesh.normals == null)
             null
         else
-            parmesh.normals.?[0..@intCast(usize, parmesh.npoints * 3)],
+            @ptrCast([*][3]f32, parmesh.normals.?)[0..@intCast(usize, parmesh.npoints)],
         .texcoords = if (parmesh.tcoords == null)
             null
         else
-            parmesh.tcoords.?[0..@intCast(usize, parmesh.npoints * 2)],
+            @ptrCast([*][2]f32, parmesh.tcoords.?)[0..@intCast(usize, parmesh.npoints)],
     };
 }
 
