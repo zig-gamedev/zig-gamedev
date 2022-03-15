@@ -90,6 +90,22 @@ pub fn createSubdividedSphere(num_subdivisions: i32) Error!Mesh {
 }
 extern fn par_shapes_create_subdivided_sphere(num_subdivisions: i32) ?*ParMesh;
 
+pub fn createKleinBottle(slices: i32, stacks: i31) Error!Mesh {
+    const parmesh = par_shapes_create_klein_bottle(slices, stacks);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return createMesh(parmesh.?);
+}
+extern fn par_shapes_create_klein_bottle(slices: i32, stacks: i32) ?*ParMesh;
+
+pub fn createTrefoilKnot(slices: i32, stacks: i31, radius: f32) Error!Mesh {
+    const parmesh = par_shapes_create_trefoil_knot(slices, stacks, radius);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return createMesh(parmesh.?);
+}
+extern fn par_shapes_create_trefoil_knot(slices: i32, stacks: i32, radius: f32) ?*ParMesh;
+
 test "zmesh.basic" {
     const cylinder = try createCylinder(10, 10);
     //cylinder.saveToObj("zmesh.cylinder.obj");
@@ -114,4 +130,12 @@ test "zmesh.basic" {
     const subdsphere = try createSubdividedSphere(3);
     //subdsphere.saveToObj("zmesh.subdsphere.obj");
     _ = subdsphere;
+
+    const klein_bottle = try createKleinBottle(10, 60);
+    //klein_bottle.saveToObj("zmesh.klein_bottle.obj");
+    _ = klein_bottle;
+
+    const trefoil_knot = try createTrefoilKnot(10, 100, 0.6);
+    //trefoil_knot.saveToObj("zmesh.trefoil_knot.obj");
+    _ = trefoil_knot;
 }
