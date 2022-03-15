@@ -66,7 +66,52 @@ pub fn createParametricDisk(slices: i32, stacks: i32) Error!Mesh {
 }
 extern fn par_shapes_create_parametric_disk(slices: i32, stacks: i32) ?*ParMesh;
 
-test "zmesh.cylinder" {
-    const mesh = try createCylinder(10, 10);
-    mesh.saveToObj("zmesh.cylinder.obj");
+pub fn createTorus(slices: i32, stacks: i32, radius: f32) Error!Mesh {
+    const parmesh = par_shapes_create_torus(slices, stacks, radius);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return createMesh(parmesh.?);
+}
+extern fn par_shapes_create_torus(slices: i32, stacks: i32, radius: f32) ?*ParMesh;
+
+pub fn createParametricSphere(slices: i32, stacks: i32) Error!Mesh {
+    const parmesh = par_shapes_create_parametric_sphere(slices, stacks);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return createMesh(parmesh.?);
+}
+extern fn par_shapes_create_parametric_sphere(slices: i32, stacks: i32) ?*ParMesh;
+
+pub fn createSubdividedSphere(num_subdivisions: i32) Error!Mesh {
+    const parmesh = par_shapes_create_subdivided_sphere(num_subdivisions);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return createMesh(parmesh.?);
+}
+extern fn par_shapes_create_subdivided_sphere(num_subdivisions: i32) ?*ParMesh;
+
+test "zmesh.basic" {
+    const cylinder = try createCylinder(10, 10);
+    //cylinder.saveToObj("zmesh.cylinder.obj");
+    _ = cylinder;
+
+    const cone = try createCone(10, 10);
+    //cone.saveToObj("zmesh.cone.obj");
+    _ = cone;
+
+    const disk = try createParametricDisk(10, 10);
+    //disk.saveToObj("zmesh.disk.obj");
+    _ = disk;
+
+    const torus = try createTorus(10, 10, 0.2);
+    //torus.saveToObj("zmesh.torus.obj");
+    _ = torus;
+
+    const psphere = try createParametricSphere(10, 10);
+    //psphere.saveToObj("zmesh.psphere.obj");
+    _ = psphere;
+
+    const subdsphere = try createSubdividedSphere(3);
+    //subdsphere.saveToObj("zmesh.subdsphere.obj");
+    _ = subdsphere;
 }

@@ -23,10 +23,7 @@ fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.buil
     lib.addIncludeDir(thisDir() ++ "/libs/par_shapes");
     lib.linkSystemLibrary("c");
 
-    lib.addCSourceFile(
-        thisDir() ++ "/libs/par_shapes/par_shapes.c",
-        &.{ "-std=c99", "-fno-sanitize=undefined" },
-    );
+    lib.addCSourceFile(thisDir() ++ "/libs/par_shapes/par_shapes.c", &.{"-std=c99"});
 
     lib.install();
     return lib;
