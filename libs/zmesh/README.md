@@ -21,11 +21,11 @@ pub fn build(b: *std.build.Builder) void {
 Now in your code you may import and use zmesh:
 
 ```zig
-const znoise = @import("zmesh");
+const zmesh = @import("zmesh");
 
 pub fn main() !void {
     ...
-    const mesh = try zmesh.Mesh.createCylinder(10, 10);
-    mesh.saveToFile("cylinder.obj");
+    const mesh = try zmesh.createCylinder(10, 10);
+    mesh.saveToObj("cylinder.obj");
 }
 ```
