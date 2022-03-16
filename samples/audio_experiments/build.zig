@@ -69,6 +69,13 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     };
     exe.addPackage(zmath_pkg);
 
+    const zmesh_pkg = std.build.Pkg{
+        .name = "zmesh",
+        .path = .{ .path = thisDir() ++ "/../../libs/zmesh/src/zmesh.zig" },
+    };
+    exe.addPackage(zmesh_pkg);
+    @import("../../libs/zmesh/build.zig").link(b, exe);
+
     const zxaudio2_pkg = std.build.Pkg{
         .name = "zxaudio2",
         .path = .{ .path = thisDir() ++ "/../../libs/zxaudio2/src/zxaudio2.zig" },

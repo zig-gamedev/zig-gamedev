@@ -17,6 +17,7 @@ const common = @import("common");
 const GuiRenderer = common.GuiRenderer;
 const c = common.c;
 const zm = @import("zmath");
+const zmesh = @import("zmesh");
 
 pub export const D3D12SDKVersion: u32 = 4;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -510,6 +511,11 @@ fn draw(demo: *DemoState) void {
 pub fn main() !void {
     common.init();
     defer common.deinit();
+
+    const mesh = try zmesh.initCube();
+    std.debug.print("aaa: {d}\n", .{mesh.handle.npoints});
+    _ = mesh.handle.npoints;
+    _ = mesh;
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
