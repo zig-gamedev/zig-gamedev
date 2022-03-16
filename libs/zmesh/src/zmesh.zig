@@ -46,7 +46,7 @@ export fn reallocFunc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     defer mutex.unlock();
 
     const old_len = if (ptr != null)
-        allocations.?.fetchRemove(@ptrToInt(ptr.?)).?.value
+        allocations.?.get(@ptrToInt(ptr.?)).?
     else
         0;
 
@@ -63,6 +63,12 @@ export fn reallocFunc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
         0,
         @returnAddress(),
     ) catch return null;
+
+    if (ptr != null) {
+        const removed = allocations.?.remove(@ptrToInt(ptr.?));
+        std.debug.assert(removed);
+    }
+
     allocations.?.put(@ptrToInt(slice.ptr), size) catch unreachable;
     return slice.ptr;
 }
@@ -82,11 +88,12 @@ pub fn init(alloc: std.mem.Allocator) void {
     std.debug.assert(allocator == null and allocations == null);
     allocator = alloc;
     allocations = std.AutoHashMap(usize, usize).init(allocator.?);
-    allocations.?.ensureTotalCapacity(256) catch unreachable;
+    allocations.?.ensureTotalCapacity(32) catch unreachable;
     zmesh_set_allocator(mallocFunc, callocFunc, reallocFunc, freeFunc);
 }
 
 pub fn deinit() void {
+    std.debug.assert(allocations.?.count() == 0);
     allocations.?.deinit();
     allocations = null;
     allocator = null;
