@@ -20,122 +20,297 @@ pub const Mesh = struct {
     normals: ?[][3]f32,
     texcoords: ?[][2]f32,
 
-    fn saveToObj(mesh: Mesh, filename: [*:0]const u8) void {
+    pub fn saveToObj(mesh: Mesh, filename: [*:0]const u8) void {
         par_shapes_export(mesh.handle, filename);
     }
     extern fn par_shapes_export(mesh: MeshHandle, filename: [*:0]const u8) void;
+
+    pub fn deinit(mesh: Mesh) void {
+        par_shapes_free_mesh(mesh.handle);
+    }
+    extern fn par_shapes_free_mesh(mesh: MeshHandle) void;
 };
 
-fn createMesh(parmesh: *ParMesh) Mesh {
+fn parMeshToMesh(parmesh: *ParMesh) Mesh {
     return .{
         .handle = @ptrCast(MeshHandle, parmesh),
-        .positions = @ptrCast([*][3]f32, parmesh.points)[0..@intCast(usize, parmesh.npoints)],
-        .triangles = @ptrCast([*][3]IndexType, parmesh.triangles)[0..@intCast(usize, parmesh.ntriangles)],
+        .positions = @ptrCast(
+            [*][3]f32,
+            parmesh.points,
+        )[0..@intCast(usize, parmesh.npoints)],
+        .triangles = @ptrCast(
+            [*][3]IndexType,
+            parmesh.triangles,
+        )[0..@intCast(usize, parmesh.ntriangles)],
         .normals = if (parmesh.normals == null)
             null
         else
-            @ptrCast([*][3]f32, parmesh.normals.?)[0..@intCast(usize, parmesh.npoints)],
+            @ptrCast(
+                [*][3]f32,
+                parmesh.normals.?,
+            )[0..@intCast(usize, parmesh.npoints)],
         .texcoords = if (parmesh.tcoords == null)
             null
         else
-            @ptrCast([*][2]f32, parmesh.tcoords.?)[0..@intCast(usize, parmesh.npoints)],
+            @ptrCast(
+                [*][2]f32,
+                parmesh.tcoords.?,
+            )[0..@intCast(usize, parmesh.npoints)],
     };
 }
 
-pub fn createCylinder(slices: i32, stacks: i32) Error!Mesh {
+pub fn initCylinder(slices: i32, stacks: i32) Error!Mesh {
     const parmesh = par_shapes_create_cylinder(slices, stacks);
     if (parmesh == null)
         return error.OutOfMemory;
-    return createMesh(parmesh.?);
+    return parMeshToMesh(parmesh.?);
 }
 extern fn par_shapes_create_cylinder(slices: i32, stacks: i32) ?*ParMesh;
 
-pub fn createCone(slices: i32, stacks: i32) Error!Mesh {
+pub fn initCone(slices: i32, stacks: i32) Error!Mesh {
     const parmesh = par_shapes_create_cone(slices, stacks);
     if (parmesh == null)
         return error.OutOfMemory;
-    return createMesh(parmesh.?);
+    return parMeshToMesh(parmesh.?);
 }
 extern fn par_shapes_create_cone(slices: i32, stacks: i32) ?*ParMesh;
 
-pub fn createParametricDisk(slices: i32, stacks: i32) Error!Mesh {
+pub fn initParametricDisk(slices: i32, stacks: i32) Error!Mesh {
     const parmesh = par_shapes_create_parametric_disk(slices, stacks);
     if (parmesh == null)
         return error.OutOfMemory;
-    return createMesh(parmesh.?);
+    return parMeshToMesh(parmesh.?);
 }
 extern fn par_shapes_create_parametric_disk(slices: i32, stacks: i32) ?*ParMesh;
 
-pub fn createTorus(slices: i32, stacks: i32, radius: f32) Error!Mesh {
+pub fn initTorus(slices: i32, stacks: i32, radius: f32) Error!Mesh {
     const parmesh = par_shapes_create_torus(slices, stacks, radius);
     if (parmesh == null)
         return error.OutOfMemory;
-    return createMesh(parmesh.?);
+    return parMeshToMesh(parmesh.?);
 }
 extern fn par_shapes_create_torus(slices: i32, stacks: i32, radius: f32) ?*ParMesh;
 
-pub fn createParametricSphere(slices: i32, stacks: i32) Error!Mesh {
+pub fn initParametricSphere(slices: i32, stacks: i32) Error!Mesh {
     const parmesh = par_shapes_create_parametric_sphere(slices, stacks);
     if (parmesh == null)
         return error.OutOfMemory;
-    return createMesh(parmesh.?);
+    return parMeshToMesh(parmesh.?);
 }
 extern fn par_shapes_create_parametric_sphere(slices: i32, stacks: i32) ?*ParMesh;
 
-pub fn createSubdividedSphere(num_subdivisions: i32) Error!Mesh {
+pub fn initSubdividedSphere(num_subdivisions: i32) Error!Mesh {
     const parmesh = par_shapes_create_subdivided_sphere(num_subdivisions);
     if (parmesh == null)
         return error.OutOfMemory;
-    return createMesh(parmesh.?);
+    return parMeshToMesh(parmesh.?);
 }
 extern fn par_shapes_create_subdivided_sphere(num_subdivisions: i32) ?*ParMesh;
 
-pub fn createKleinBottle(slices: i32, stacks: i31) Error!Mesh {
+pub fn initKleinBottle(slices: i32, stacks: i31) Error!Mesh {
     const parmesh = par_shapes_create_klein_bottle(slices, stacks);
     if (parmesh == null)
         return error.OutOfMemory;
-    return createMesh(parmesh.?);
+    return parMeshToMesh(parmesh.?);
 }
 extern fn par_shapes_create_klein_bottle(slices: i32, stacks: i32) ?*ParMesh;
 
-pub fn createTrefoilKnot(slices: i32, stacks: i31, radius: f32) Error!Mesh {
+pub fn initTrefoilKnot(slices: i32, stacks: i32, radius: f32) Error!Mesh {
     const parmesh = par_shapes_create_trefoil_knot(slices, stacks, radius);
     if (parmesh == null)
         return error.OutOfMemory;
-    return createMesh(parmesh.?);
+    return parMeshToMesh(parmesh.?);
 }
-extern fn par_shapes_create_trefoil_knot(slices: i32, stacks: i32, radius: f32) ?*ParMesh;
+extern fn par_shapes_create_trefoil_knot(
+    slices: i32,
+    stacks: i32,
+    radius: f32,
+) ?*ParMesh;
+
+pub fn initHemisphere(slices: i32, stacks: i32) Error!Mesh {
+    const parmesh = par_shapes_create_hemisphere(slices, stacks);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_hemisphere(slices: i32, stacks: i32) ?*ParMesh;
+
+pub fn initPlane(slices: i32, stacks: i32) Error!Mesh {
+    const parmesh = par_shapes_create_plane(slices, stacks);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_plane(slices: i32, stacks: i32) ?*ParMesh;
+
+pub fn initIcosahedron() Error!Mesh {
+    const parmesh = par_shapes_create_icosahedron();
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_icosahedron() ?*ParMesh;
+
+pub fn initDodecahedron() Error!Mesh {
+    const parmesh = par_shapes_create_dodecahedron();
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_dodecahedron() ?*ParMesh;
+
+pub fn initOctahedron() Error!Mesh {
+    const parmesh = par_shapes_create_octahedron();
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_octahedron() ?*ParMesh;
+
+pub fn initTetrahedron() Error!Mesh {
+    const parmesh = par_shapes_create_tetrahedron();
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_tetrahedron() ?*ParMesh;
+
+pub fn initCube() Error!Mesh {
+    const parmesh = par_shapes_create_cube();
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_cube() ?*ParMesh;
+
+pub fn initEmpty() Error!Mesh {
+    const parmesh = par_shapes_create_empty();
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_empty() ?*ParMesh;
+
+pub fn initDisk(
+    radius: f32,
+    slices: i32,
+    center: *const [3]f32,
+    normal: *const [3]f32,
+) Error!Mesh {
+    const parmesh = par_shapes_create_disk(radius, slices, center, normal);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_disk(
+    radius: f32,
+    slices: i32,
+    center: *const [3]f32,
+    normal: *const [3]f32,
+) ?*ParMesh;
+
+pub fn initRock(seed: i32, num_subdivisions: i32) Error!Mesh {
+    const parmesh = par_shapes_create_rock(seed, num_subdivisions);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_rock(seed: i32, num_subdivisions: i32) ?*ParMesh;
+
+pub fn initLSystem(program: [*:0]const u8, slices: i32, maxdepth: i32) Error!Mesh {
+    const parmesh = par_shapes_create_lsystem(program, slices, maxdepth);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_lsystem(
+    program: [*:0]const u8,
+    slices: i32,
+    maxdepth: i32,
+) ?*ParMesh;
+
+pub const UvToPositionFn = fn (
+    uv: *const [2]f32,
+    position: *[3]f32,
+    userdata: ?*anyopaque,
+) callconv(.C) void;
+
+pub fn initParametric(
+    fun: UvToPositionFn,
+    slices: i32,
+    stacks: i32,
+    userdata: ?*anyopaque,
+) Error!Mesh {
+    const parmesh = par_shapes_create_parametric(fun, slices, stacks, userdata);
+    if (parmesh == null)
+        return error.OutOfMemory;
+    return parMeshToMesh(parmesh.?);
+}
+extern fn par_shapes_create_parametric(
+    fun: UvToPositionFn,
+    slices: i32,
+    stacks: i32,
+    userdata: ?*anyopaque,
+) ?*ParMesh;
 
 test "zmesh.basic" {
-    const cylinder = try createCylinder(10, 10);
+    const cylinder = try initCylinder(10, 10);
+    defer cylinder.deinit();
     //cylinder.saveToObj("zmesh.cylinder.obj");
-    _ = cylinder;
 
-    const cone = try createCone(10, 10);
+    const cone = try initCone(10, 10);
+    defer cone.deinit();
     //cone.saveToObj("zmesh.cone.obj");
-    _ = cone;
 
-    const disk = try createParametricDisk(10, 10);
-    //disk.saveToObj("zmesh.disk.obj");
-    _ = disk;
+    const pdisk = try initParametricDisk(10, 10);
+    defer pdisk.deinit();
+    //disk.saveToObj("zmesh.pdisk.obj");
 
-    const torus = try createTorus(10, 10, 0.2);
+    const torus = try initTorus(10, 10, 0.2);
+    defer torus.deinit();
     //torus.saveToObj("zmesh.torus.obj");
-    _ = torus;
 
-    const psphere = try createParametricSphere(10, 10);
+    const psphere = try initParametricSphere(10, 10);
+    defer psphere.deinit();
     //psphere.saveToObj("zmesh.psphere.obj");
-    _ = psphere;
 
-    const subdsphere = try createSubdividedSphere(3);
+    const subdsphere = try initSubdividedSphere(3);
+    defer subdsphere.deinit();
     //subdsphere.saveToObj("zmesh.subdsphere.obj");
-    _ = subdsphere;
 
-    const klein_bottle = try createKleinBottle(10, 60);
+    const klein_bottle = try initKleinBottle(10, 60);
+    defer klein_bottle.deinit();
     //klein_bottle.saveToObj("zmesh.klein_bottle.obj");
-    _ = klein_bottle;
 
-    const trefoil_knot = try createTrefoilKnot(10, 100, 0.6);
+    const trefoil_knot = try initTrefoilKnot(10, 100, 0.6);
+    defer trefoil_knot.deinit();
     //trefoil_knot.saveToObj("zmesh.trefoil_knot.obj");
-    _ = trefoil_knot;
+
+    const hemisphere = try initHemisphere(10, 10);
+    defer hemisphere.deinit();
+    //hemisphere.saveToObj("zmesh.hemisphere.obj");
+
+    const plane = try initPlane(10, 10);
+    defer plane.deinit();
+    //plane.saveToObj("zmesh.plane.obj");
+
+    const icosahedron = try initIcosahedron();
+    defer icosahedron.deinit();
+    //icosahedron.saveToObj("zmesh.icosahedron.obj");
+
+    const dodecahedron = try initDodecahedron();
+    defer dodecahedron.deinit();
+    //dodecahedron.saveToObj("zmesh.dodecahedron.obj");
+
+    const octahedron = try initOctahedron();
+    defer octahedron.deinit();
+    //octahedron.saveToObj("zmesh.octahedron.obj");
+
+    const tetrahedron = try initTetrahedron();
+    defer tetrahedron.deinit();
+    //tetrahedron.saveToObj("zmesh.tetrahedron.obj");
+
+    const cube = try initCube();
+    defer cube.deinit();
+    //cube.saveToObj("zmesh.cube.obj");
 }
