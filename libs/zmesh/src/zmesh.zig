@@ -392,9 +392,9 @@ test "zmesh.basic" {
     defer subdsphere.deinit();
     if (save) subdsphere.saveToObj("zmesh.subdsphere.obj");
 
-    //const klein_bottle = try initKleinBottle(10, 60);
-    //defer klein_bottle.deinit();
-    //if (save) klein_bottle.saveToObj("zmesh.klein_bottle.obj");
+    const klein_bottle = try initKleinBottle(10, 60);
+    defer klein_bottle.deinit();
+    if (save) klein_bottle.saveToObj("zmesh.klein_bottle.obj");
 
     const trefoil_knot = try initTrefoilKnot(10, 100, 0.6);
     defer trefoil_knot.deinit();
@@ -408,38 +408,36 @@ test "zmesh.basic" {
     defer plane.deinit();
     if (save) plane.saveToObj("zmesh.plane.obj");
 
-    if (false) {
-        const icosahedron = try initIcosahedron();
-        defer icosahedron.deinit();
-        if (save) icosahedron.saveToObj("zmesh.icosahedron.obj");
+    const icosahedron = try initIcosahedron();
+    defer icosahedron.deinit();
+    if (save) icosahedron.saveToObj("zmesh.icosahedron.obj");
 
-        const dodecahedron = try initDodecahedron();
-        defer dodecahedron.deinit();
-        if (save) dodecahedron.saveToObj("zmesh.dodecahedron.obj");
+    const dodecahedron = try initDodecahedron();
+    defer dodecahedron.deinit();
+    if (save) dodecahedron.saveToObj("zmesh.dodecahedron.obj");
 
-        const octahedron = try initOctahedron();
-        defer octahedron.deinit();
-        if (save) octahedron.saveToObj("zmesh.octahedron.obj");
+    const octahedron = try initOctahedron();
+    defer octahedron.deinit();
+    if (save) octahedron.saveToObj("zmesh.octahedron.obj");
 
-        const tetrahedron = try initTetrahedron();
-        defer tetrahedron.deinit();
-        if (save) tetrahedron.saveToObj("zmesh.tetrahedron.obj");
+    const tetrahedron = try initTetrahedron();
+    defer tetrahedron.deinit();
+    if (save) tetrahedron.saveToObj("zmesh.tetrahedron.obj");
 
-        const cube = try initCube();
-        defer cube.deinit();
-        if (save) cube.saveToObj("zmesh.cube.obj");
+    const cube = try initCube();
+    defer cube.deinit();
+    if (save) cube.saveToObj("zmesh.cube.obj");
 
-        const empty = try initEmpty();
-        defer empty.deinit();
+    const empty = try initEmpty();
+    defer empty.deinit();
 
-        const rock = try initRock(1337, 3);
-        defer rock.deinit();
-        if (save) rock.saveToObj("zmesh.rock.obj");
+    const rock = try initRock(1337, 3);
+    defer rock.deinit();
+    if (save) rock.saveToObj("zmesh.rock.obj");
 
-        const disk = try initDisk(3.0, 10, &.{ 1, 2, 3 }, &.{ 0, 1, 0 });
-        defer disk.deinit();
-        if (save) disk.saveToObj("zmesh.disk.obj");
-    }
+    const disk = try initDisk(3.0, 10, &.{ 1, 2, 3 }, &.{ 0, 1, 0 });
+    defer disk.deinit();
+    if (save) disk.saveToObj("zmesh.disk.obj");
 }
 
 test "zmesh.clone" {

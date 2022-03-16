@@ -319,6 +319,7 @@ static float par_shapes__sqrdist3(float const* a, float const* b)
 void par_shapes__compute_welded_normals(par_shapes_mesh* m)
 {
     const float epsilon = par_shapes__epsilon_welded_normals;
+    PAR_FREE(m->normals);
     m->normals = PAR_MALLOC(float, m->npoints * 3);
     PAR_SHAPES_T* weldmap = PAR_MALLOC(PAR_SHAPES_T, m->npoints);
     par_shapes_mesh* welded = par_shapes_weld(m, epsilon, weldmap);
