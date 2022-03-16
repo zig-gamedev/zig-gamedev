@@ -187,7 +187,13 @@ pub fn initEmpty() Error!Mesh {
     const parmesh = par_shapes_create_empty();
     if (parmesh == null)
         return error.OutOfMemory;
-    return parMeshToMesh(parmesh.?);
+    return Mesh{
+        .handle = @ptrCast(MeshHandle, parmesh),
+        .positions = undefined,
+        .triangles = undefined,
+        .normals = null,
+        .texcoords = null,
+    };
 }
 extern fn par_shapes_create_empty() ?*ParMesh;
 
@@ -254,63 +260,76 @@ extern fn par_shapes_create_parametric(
 ) ?*ParMesh;
 
 test "zmesh.basic" {
+    const save = true;
+
     const cylinder = try initCylinder(10, 10);
     defer cylinder.deinit();
-    //cylinder.saveToObj("zmesh.cylinder.obj");
+    if (save) cylinder.saveToObj("zmesh.cylinder.obj");
 
     const cone = try initCone(10, 10);
     defer cone.deinit();
-    //cone.saveToObj("zmesh.cone.obj");
+    if (save) cone.saveToObj("zmesh.cone.obj");
 
     const pdisk = try initParametricDisk(10, 10);
     defer pdisk.deinit();
-    //disk.saveToObj("zmesh.pdisk.obj");
+    if (save) pdisk.saveToObj("zmesh.pdisk.obj");
 
     const torus = try initTorus(10, 10, 0.2);
     defer torus.deinit();
-    //torus.saveToObj("zmesh.torus.obj");
+    if (save) torus.saveToObj("zmesh.torus.obj");
 
     const psphere = try initParametricSphere(10, 10);
     defer psphere.deinit();
-    //psphere.saveToObj("zmesh.psphere.obj");
+    if (save) psphere.saveToObj("zmesh.psphere.obj");
 
     const subdsphere = try initSubdividedSphere(3);
     defer subdsphere.deinit();
-    //subdsphere.saveToObj("zmesh.subdsphere.obj");
+    if (save) subdsphere.saveToObj("zmesh.subdsphere.obj");
 
     const klein_bottle = try initKleinBottle(10, 60);
     defer klein_bottle.deinit();
-    //klein_bottle.saveToObj("zmesh.klein_bottle.obj");
+    if (save) klein_bottle.saveToObj("zmesh.klein_bottle.obj");
 
     const trefoil_knot = try initTrefoilKnot(10, 100, 0.6);
     defer trefoil_knot.deinit();
-    //trefoil_knot.saveToObj("zmesh.trefoil_knot.obj");
+    if (save) trefoil_knot.saveToObj("zmesh.trefoil_knot.obj");
 
     const hemisphere = try initHemisphere(10, 10);
     defer hemisphere.deinit();
-    //hemisphere.saveToObj("zmesh.hemisphere.obj");
+    if (save) hemisphere.saveToObj("zmesh.hemisphere.obj");
 
     const plane = try initPlane(10, 10);
     defer plane.deinit();
-    //plane.saveToObj("zmesh.plane.obj");
+    if (save) plane.saveToObj("zmesh.plane.obj");
 
     const icosahedron = try initIcosahedron();
     defer icosahedron.deinit();
-    //icosahedron.saveToObj("zmesh.icosahedron.obj");
+    if (save) icosahedron.saveToObj("zmesh.icosahedron.obj");
 
     const dodecahedron = try initDodecahedron();
     defer dodecahedron.deinit();
-    //dodecahedron.saveToObj("zmesh.dodecahedron.obj");
+    if (save) dodecahedron.saveToObj("zmesh.dodecahedron.obj");
 
     const octahedron = try initOctahedron();
     defer octahedron.deinit();
-    //octahedron.saveToObj("zmesh.octahedron.obj");
+    if (save) octahedron.saveToObj("zmesh.octahedron.obj");
 
     const tetrahedron = try initTetrahedron();
     defer tetrahedron.deinit();
-    //tetrahedron.saveToObj("zmesh.tetrahedron.obj");
+    if (save) tetrahedron.saveToObj("zmesh.tetrahedron.obj");
 
     const cube = try initCube();
     defer cube.deinit();
-    //cube.saveToObj("zmesh.cube.obj");
+    if (save) cube.saveToObj("zmesh.cube.obj");
+
+    const empty = try initEmpty();
+    defer empty.deinit();
+
+    const rock = try initRock(1337, 3);
+    defer rock.deinit();
+    if (save) rock.saveToObj("zmesh.rock.obj");
+
+    const disk = try initDisk(3.0, 10, &.{ 1, 2, 3 }, &.{ 0, 1, 0 });
+    defer disk.deinit();
+    if (save) disk.saveToObj("zmesh.disk.obj");
 }
