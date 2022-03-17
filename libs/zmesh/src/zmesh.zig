@@ -447,3 +447,13 @@ test "zmesh.merge" {
 
     if (save) sphere.saveToObj("zmesh.merge.obj");
 }
+
+test "zmesh.invert" {
+    init(std.testing.allocator);
+    defer deinit();
+
+    const hemisphere = initHemisphere(10, 10);
+    defer hemisphere.deinit();
+    hemisphere.invert(0, 0);
+    if (save) hemisphere.saveToObj("zmesh.invert.obj");
+}
