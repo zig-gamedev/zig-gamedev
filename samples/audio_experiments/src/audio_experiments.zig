@@ -512,11 +512,6 @@ pub fn main() !void {
     common.init();
     defer common.deinit();
 
-    const mesh = try zmesh.initCube();
-    std.debug.print("aaa: {d}\n", .{mesh.handle.npoints});
-    _ = mesh.handle.npoints;
-    _ = mesh;
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
