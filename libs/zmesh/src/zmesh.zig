@@ -131,11 +131,8 @@ pub const Mesh = struct {
     }
     extern fn par_shapes_compute_aabb(mesh: MeshHandle, aabb: *[6]f32) void;
 
-    pub fn clone(mesh: Mesh, target: ?*Mesh) Error!Mesh {
-        const parmesh = par_shapes_clone(
-            mesh.handle,
-            if (target != null) target.?.handle else null,
-        );
+    pub fn clone(mesh: Mesh) Error!Mesh {
+        const parmesh = par_shapes_clone(mesh.handle, null);
         if (parmesh == null)
             return error.OutOfMemory;
         return parMeshToMesh(parmesh.?);
@@ -455,15 +452,8 @@ test "zmesh.clone" {
     const cube = try initCube();
     defer cube.deinit();
 
-    var clone0 = try cube.clone(null);
+    var clone0 = try cube.clone();
+    defer clone0.deinit();
+
     try expect(@ptrToInt(clone0.handle) != @ptrToInt(cube.handle));
-
-    const clone1 = try cube.clone(&clone0);
-    defer clone1.deinit();
-
-    var empty = try initEmpty();
-
-    const clone2 = try cube.clone(&empty);
-    defer clone2.deinit();
-    try expect(@ptrToInt(empty.handle) == @ptrToInt(clone2.handle));
 }
