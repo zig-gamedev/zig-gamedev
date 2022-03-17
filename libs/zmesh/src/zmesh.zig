@@ -1,6 +1,7 @@
 // zmesh - Zig bindings for par_shapes
 
 const std = @import("std");
+const expect = std.testing.expect;
 const Mutex = std.Thread.Mutex;
 
 pub const Error = error{OutOfMemory};
@@ -133,13 +134,13 @@ pub const Mesh = struct {
     pub fn clone(mesh: Mesh, target: ?*Mesh) Error!Mesh {
         const parmesh = par_shapes_clone(
             mesh.handle,
-            if (target != null) target.handle else null,
+            if (target != null) target.?.handle else null,
         );
         if (parmesh == null)
             return error.OutOfMemory;
         return parMeshToMesh(parmesh.?);
     }
-    extern fn par_shapes_clone(mesh: MeshHandle, target: MeshHandle) ?*ParMesh;
+    extern fn par_shapes_clone(mesh: MeshHandle, target: ?MeshHandle) ?*ParMesh;
 };
 
 fn parMeshToMesh(parmesh: *ParMesh) Mesh {
@@ -450,9 +451,19 @@ test "zmesh.basic" {
 test "zmesh.clone" {
     init(std.testing.allocator);
     defer deinit();
+
     const cube = try initCube();
     defer cube.deinit();
 
-    //const clone0 = cube.clone(null);
-    //defer clone0.deinit();
+    var clone0 = try cube.clone(null);
+    try expect(@ptrToInt(clone0.handle) != @ptrToInt(cube.handle));
+
+    const clone1 = try cube.clone(&clone0);
+    defer clone1.deinit();
+
+    var empty = try initEmpty();
+
+    const clone2 = try cube.clone(&empty);
+    defer clone2.deinit();
+    try expect(@ptrToInt(empty.handle) == @ptrToInt(clone2.handle));
 }
