@@ -169,6 +169,11 @@ pub const Mesh = struct {
         par_shapes_scale(mesh.handle, x, y, z);
     }
     extern fn par_shapes_scale(mesh: MeshHandle, x: f32, y: f32, z: f32) void;
+
+    pub fn invert(mesh: Mesh, start_face: i32, num_faces: i32) void {
+        par_shapes_invert(mesh.handle, start_face, num_faces);
+    }
+    extern fn par_shapes_invert(mesh: MeshHandle, start_face: i32, num_faces: i32) void;
 };
 
 fn parMeshToMesh(parmesh: *ParMesh) Mesh {
@@ -235,12 +240,6 @@ pub fn initSubdividedSphere(num_subdivisions: i32) Mesh {
 }
 extern fn par_shapes_create_subdivided_sphere(num_subdivisions: i32) *ParMesh;
 
-pub fn initKleinBottle(slices: i32, stacks: i31) Mesh {
-    const parmesh = par_shapes_create_klein_bottle(slices, stacks);
-    return parMeshToMesh(parmesh);
-}
-extern fn par_shapes_create_klein_bottle(slices: i32, stacks: i32) *ParMesh;
-
 pub fn initTrefoilKnot(slices: i32, stacks: i32, radius: f32) Mesh {
     const parmesh = par_shapes_create_trefoil_knot(slices, stacks, radius);
     return parMeshToMesh(parmesh);
@@ -292,18 +291,6 @@ pub fn initCube() Mesh {
     return parMeshToMesh(parmesh);
 }
 extern fn par_shapes_create_cube() *ParMesh;
-
-pub fn initEmpty() Mesh {
-    const parmesh = par_shapes_create_empty();
-    return .{
-        .handle = @ptrCast(MeshHandle, parmesh),
-        .positions = undefined,
-        .triangles = undefined,
-        .normals = null,
-        .texcoords = null,
-    };
-}
-extern fn par_shapes_create_empty() *ParMesh;
 
 pub fn initDisk(
     radius: f32,
@@ -359,10 +346,11 @@ extern fn par_shapes_create_parametric(
     userdata: ?*anyopaque,
 ) *ParMesh;
 
+const save = true;
+
 test "zmesh.basic" {
     init(std.testing.allocator);
     defer deinit();
-    const save = true;
 
     const cylinder = initCylinder(10, 10);
     defer cylinder.deinit();
@@ -387,10 +375,6 @@ test "zmesh.basic" {
     const subdsphere = initSubdividedSphere(3);
     defer subdsphere.deinit();
     if (save) subdsphere.saveToObj("zmesh.subdsphere.obj");
-
-    const klein_bottle = initKleinBottle(10, 60);
-    defer klein_bottle.deinit();
-    if (save) klein_bottle.saveToObj("zmesh.klein_bottle.obj");
 
     const trefoil_knot = initTrefoilKnot(10, 100, 0.6);
     defer trefoil_knot.deinit();
@@ -424,9 +408,6 @@ test "zmesh.basic" {
     defer cube.deinit();
     if (save) cube.saveToObj("zmesh.cube.obj");
 
-    const empty = initEmpty();
-    defer empty.deinit();
-
     const rock = initRock(1337, 3);
     defer rock.deinit();
     if (save) rock.saveToObj("zmesh.rock.obj");
@@ -456,10 +437,13 @@ test "zmesh.merge" {
     const cube = initCube();
     defer cube.deinit();
 
-    cube.translate(0, 2, 0);
-
     var sphere = initSubdividedSphere(3);
     defer sphere.deinit();
 
+    cube.translate(0, 2, 0);
     sphere.merge(cube);
+    cube.translate(0, 2, 0);
+    sphere.merge(cube);
+
+    if (save) sphere.saveToObj("zmesh.merge.obj");
 }
