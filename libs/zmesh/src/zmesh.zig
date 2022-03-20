@@ -116,7 +116,7 @@ const ParMesh = extern struct {
 pub const Mesh = struct {
     handle: MeshHandle,
     positions: [][3]f32,
-    triangles: [][3]IndexType,
+    indices: []IndexType,
     normals: ?[][3]f32,
     texcoords: ?[][2]f32,
 
@@ -136,28 +136,26 @@ pub const Mesh = struct {
     extern fn par_shapes_compute_aabb(mesh: MeshHandle, aabb: *[6]f32) void;
 
     pub fn clone(mesh: Mesh) Mesh {
-        const parmesh = par_shapes_clone(mesh.handle, null);
-        return parMeshToMesh(parmesh);
+        const new_mesh = par_shapes_clone(mesh.handle, null);
+        return initMesh(new_mesh);
     }
-    extern fn par_shapes_clone(mesh: MeshHandle, target: ?MeshHandle) *ParMesh;
+    extern fn par_shapes_clone(mesh: MeshHandle, target: ?MeshHandle) MeshHandle;
 
     pub fn merge(mesh: *Mesh, src_mesh: Mesh) void {
         par_shapes_merge(mesh.handle, src_mesh.handle);
-        const parmesh = @ptrCast(
-            *ParMesh,
-            @alignCast(@alignOf(ParMesh), mesh.handle),
-        );
-        mesh.* = parMeshToMesh(parmesh);
+        mesh.* = initMesh(mesh.handle);
     }
     extern fn par_shapes_merge(mesh: MeshHandle, src_mesh: MeshHandle) void;
 
-    pub fn translate(mesh: Mesh, x: f32, y: f32, z: f32) void {
+    pub fn translate(mesh: *Mesh, x: f32, y: f32, z: f32) void {
         par_shapes_translate(mesh.handle, x, y, z);
+        mesh.* = initMesh(mesh.handle);
     }
     extern fn par_shapes_translate(mesh: MeshHandle, x: f32, y: f32, z: f32) void;
 
-    pub fn rotate(mesh: Mesh, radians: f32, axis: *const [3]f32) void {
+    pub fn rotate(mesh: *Mesh, radians: f32, axis: *const [3]f32) void {
         par_shapes_rotate(mesh.handle, radians, axis);
+        mesh.* = initMesh(mesh.handle);
     }
     extern fn par_shapes_rotate(
         mesh: MeshHandle,
@@ -165,28 +163,58 @@ pub const Mesh = struct {
         axis: *const [3]f32,
     ) void;
 
-    pub fn scale(mesh: Mesh, x: f32, y: f32, z: f32) void {
+    pub fn scale(mesh: *Mesh, x: f32, y: f32, z: f32) void {
         par_shapes_scale(mesh.handle, x, y, z);
+        mesh.* = initMesh(mesh.handle);
     }
     extern fn par_shapes_scale(mesh: MeshHandle, x: f32, y: f32, z: f32) void;
 
-    pub fn invert(mesh: Mesh, start_face: i32, num_faces: i32) void {
+    pub fn invert(mesh: *Mesh, start_face: i32, num_faces: i32) void {
         par_shapes_invert(mesh.handle, start_face, num_faces);
+        mesh.* = initMesh(mesh.handle);
     }
-    extern fn par_shapes_invert(mesh: MeshHandle, start_face: i32, num_faces: i32) void;
+    extern fn par_shapes_invert(
+        mesh: MeshHandle,
+        start_face: i32,
+        num_faces: i32,
+    ) void;
+
+    pub fn removeDegenerate(mesh: *Mesh, min_area: f32) void {
+        par_shapes_remove_degenerate(mesh.handle, min_area);
+        mesh.* = initMesh(mesh.handle);
+    }
+    extern fn par_shapes_remove_degenerate(mesh: MeshHandle, min_area: f32) void;
+
+    pub fn weld(mesh: *Mesh, epsilon: f32, mapping: ?[*]IndexType) void {
+        const new_mesh = par_shapes_weld(mesh.handle, epsilon, mapping);
+        par_shapes_free_mesh(mesh.handle);
+        mesh.* = initMesh(new_mesh);
+    }
+    extern fn par_shapes_weld(
+        mesh: MeshHandle,
+        epsilon: f32,
+        mapping: ?[*]IndexType,
+    ) MeshHandle;
+
+    pub fn computeNormals(mesh: *Mesh) void {
+        par_shapes_compute_normals(mesh.handle);
+        mesh.* = initMesh(mesh.handle);
+    }
+    extern fn par_shapes_compute_normals(mesh: MeshHandle) void;
 };
 
-fn parMeshToMesh(parmesh: *ParMesh) Mesh {
+fn initMesh(handle: MeshHandle) Mesh {
+    const parmesh = @ptrCast(
+        *ParMesh,
+        @alignCast(@alignOf(ParMesh), handle),
+    );
     return .{
-        .handle = @ptrCast(MeshHandle, parmesh),
+        .handle = handle,
         .positions = @ptrCast(
             [*][3]f32,
             parmesh.points,
         )[0..@intCast(usize, parmesh.npoints)],
-        .triangles = @ptrCast(
-            [*][3]IndexType,
-            parmesh.triangles,
-        )[0..@intCast(usize, parmesh.ntriangles)],
+        .indices = parmesh.triangles[0..@intCast(usize, parmesh.ntriangles * 3)],
         .normals = if (parmesh.normals == null)
             null
         else
@@ -205,92 +233,78 @@ fn parMeshToMesh(parmesh: *ParMesh) Mesh {
 }
 
 pub fn initCylinder(slices: i32, stacks: i32) Mesh {
-    const parmesh = par_shapes_create_cylinder(slices, stacks);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_cylinder(slices, stacks));
 }
-extern fn par_shapes_create_cylinder(slices: i32, stacks: i32) *ParMesh;
+extern fn par_shapes_create_cylinder(slices: i32, stacks: i32) MeshHandle;
 
 pub fn initCone(slices: i32, stacks: i32) Mesh {
-    const parmesh = par_shapes_create_cone(slices, stacks);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_cone(slices, stacks));
 }
-extern fn par_shapes_create_cone(slices: i32, stacks: i32) *ParMesh;
+extern fn par_shapes_create_cone(slices: i32, stacks: i32) MeshHandle;
 
 pub fn initParametricDisk(slices: i32, stacks: i32) Mesh {
-    const parmesh = par_shapes_create_parametric_disk(slices, stacks);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_parametric_disk(slices, stacks));
 }
-extern fn par_shapes_create_parametric_disk(slices: i32, stacks: i32) *ParMesh;
+extern fn par_shapes_create_parametric_disk(slices: i32, stacks: i32) MeshHandle;
 
 pub fn initTorus(slices: i32, stacks: i32, radius: f32) Mesh {
-    const parmesh = par_shapes_create_torus(slices, stacks, radius);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_torus(slices, stacks, radius));
 }
-extern fn par_shapes_create_torus(slices: i32, stacks: i32, radius: f32) *ParMesh;
+extern fn par_shapes_create_torus(slices: i32, stacks: i32, radius: f32) MeshHandle;
 
 pub fn initParametricSphere(slices: i32, stacks: i32) Mesh {
-    const parmesh = par_shapes_create_parametric_sphere(slices, stacks);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_parametric_sphere(slices, stacks));
 }
-extern fn par_shapes_create_parametric_sphere(slices: i32, stacks: i32) *ParMesh;
+extern fn par_shapes_create_parametric_sphere(slices: i32, stacks: i32) MeshHandle;
 
 pub fn initSubdividedSphere(num_subdivisions: i32) Mesh {
-    const parmesh = par_shapes_create_subdivided_sphere(num_subdivisions);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_subdivided_sphere(num_subdivisions));
 }
-extern fn par_shapes_create_subdivided_sphere(num_subdivisions: i32) *ParMesh;
+extern fn par_shapes_create_subdivided_sphere(num_subdivisions: i32) MeshHandle;
 
 pub fn initTrefoilKnot(slices: i32, stacks: i32, radius: f32) Mesh {
-    const parmesh = par_shapes_create_trefoil_knot(slices, stacks, radius);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_trefoil_knot(slices, stacks, radius));
 }
 extern fn par_shapes_create_trefoil_knot(
     slices: i32,
     stacks: i32,
     radius: f32,
-) *ParMesh;
+) MeshHandle;
 
 pub fn initHemisphere(slices: i32, stacks: i32) Mesh {
-    const parmesh = par_shapes_create_hemisphere(slices, stacks);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_hemisphere(slices, stacks));
 }
-extern fn par_shapes_create_hemisphere(slices: i32, stacks: i32) *ParMesh;
+extern fn par_shapes_create_hemisphere(slices: i32, stacks: i32) MeshHandle;
 
 pub fn initPlane(slices: i32, stacks: i32) Mesh {
-    const parmesh = par_shapes_create_plane(slices, stacks);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_plane(slices, stacks));
 }
-extern fn par_shapes_create_plane(slices: i32, stacks: i32) *ParMesh;
+extern fn par_shapes_create_plane(slices: i32, stacks: i32) MeshHandle;
 
 pub fn initIcosahedron() Mesh {
-    const parmesh = par_shapes_create_icosahedron();
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_icosahedron());
 }
-extern fn par_shapes_create_icosahedron() *ParMesh;
+extern fn par_shapes_create_icosahedron() MeshHandle;
 
 pub fn initDodecahedron() Mesh {
-    const parmesh = par_shapes_create_dodecahedron();
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_dodecahedron());
 }
-extern fn par_shapes_create_dodecahedron() *ParMesh;
+extern fn par_shapes_create_dodecahedron() MeshHandle;
 
 pub fn initOctahedron() Mesh {
-    const parmesh = par_shapes_create_octahedron();
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_octahedron());
 }
-extern fn par_shapes_create_octahedron() *ParMesh;
+extern fn par_shapes_create_octahedron() MeshHandle;
 
 pub fn initTetrahedron() Mesh {
-    const parmesh = par_shapes_create_tetrahedron();
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_tetrahedron());
 }
-extern fn par_shapes_create_tetrahedron() *ParMesh;
+extern fn par_shapes_create_tetrahedron() MeshHandle;
 
 pub fn initCube() Mesh {
-    const parmesh = par_shapes_create_cube();
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_cube());
 }
-extern fn par_shapes_create_cube() *ParMesh;
+extern fn par_shapes_create_cube() MeshHandle;
 
 pub fn initDisk(
     radius: f32,
@@ -298,31 +312,28 @@ pub fn initDisk(
     center: *const [3]f32,
     normal: *const [3]f32,
 ) Mesh {
-    const parmesh = par_shapes_create_disk(radius, slices, center, normal);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_disk(radius, slices, center, normal));
 }
 extern fn par_shapes_create_disk(
     radius: f32,
     slices: i32,
     center: *const [3]f32,
     normal: *const [3]f32,
-) *ParMesh;
+) MeshHandle;
 
 pub fn initRock(seed: i32, num_subdivisions: i32) Mesh {
-    const parmesh = par_shapes_create_rock(seed, num_subdivisions);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_rock(seed, num_subdivisions));
 }
-extern fn par_shapes_create_rock(seed: i32, num_subdivisions: i32) *ParMesh;
+extern fn par_shapes_create_rock(seed: i32, num_subdivisions: i32) MeshHandle;
 
 pub fn initLSystem(program: [*:0]const u8, slices: i32, maxdepth: i32) Mesh {
-    const parmesh = par_shapes_create_lsystem(program, slices, maxdepth);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_lsystem(program, slices, maxdepth));
 }
 extern fn par_shapes_create_lsystem(
     program: [*:0]const u8,
     slices: i32,
     maxdepth: i32,
-) *ParMesh;
+) MeshHandle;
 
 pub const UvToPositionFn = fn (
     uv: *const [2]f32,
@@ -336,15 +347,14 @@ pub fn initParametric(
     stacks: i32,
     userdata: ?*anyopaque,
 ) Mesh {
-    const parmesh = par_shapes_create_parametric(fun, slices, stacks, userdata);
-    return parMeshToMesh(parmesh);
+    return initMesh(par_shapes_create_parametric(fun, slices, stacks, userdata));
 }
 extern fn par_shapes_create_parametric(
     fun: UvToPositionFn,
     slices: i32,
     stacks: i32,
     userdata: ?*anyopaque,
-) *ParMesh;
+) MeshHandle;
 
 const save = true;
 
@@ -434,7 +444,7 @@ test "zmesh.merge" {
     init(std.testing.allocator);
     defer deinit();
 
-    const cube = initCube();
+    var cube = initCube();
     defer cube.deinit();
 
     var sphere = initSubdividedSphere(3);
@@ -452,8 +462,13 @@ test "zmesh.invert" {
     init(std.testing.allocator);
     defer deinit();
 
-    const hemisphere = initHemisphere(10, 10);
+    var hemisphere = initHemisphere(10, 10);
     defer hemisphere.deinit();
     hemisphere.invert(0, 0);
+
+    hemisphere.removeDegenerate(0.001);
+    hemisphere.weld(0.001, null);
+    hemisphere.computeNormals();
+
     if (save) hemisphere.saveToObj("zmesh.invert.obj");
 }

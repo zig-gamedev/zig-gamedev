@@ -25,7 +25,7 @@ const zmesh = @import("zmesh");
 
 pub fn main() !void {
     ...
-    const mesh = try zmesh.createCylinder(10, 10);
+    const mesh = try zmesh.initCylinder(10, 10);
     mesh.saveToObj("cylinder.obj");
 }
 ```

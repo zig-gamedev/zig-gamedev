@@ -34,11 +34,11 @@ pub fn main() !void {
     zbt.init(allocator);
     defer zbt.deinit();
 
-    const world = try zbt.World.init(.{});
+    const world = zbt.World.init(.{});
     defer world.deinit();
 
     // Create unit cube shape.
-    const box_shape = try zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 });
+    const box_shape = zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 });
     defer box_shape.deinit();
 
     // Create rigid body that will use above shape.
@@ -48,7 +48,7 @@ pub fn main() !void {
         0.0, 0.0, 1.0,
         2.0, 2.0, 2.0, // translation
     };
-    const box_body = try zbt.Body.init(
+    const box_body = zbt.Body.init(
         1.0, // mass (0.0 for static objects)
         &initial_transform,
         box_shape.asShape(),

@@ -80,7 +80,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn buildShaders(b: *std.build.Builder) *std.build.Step {
-    const dxc_step = b.step("textured_quad-dxc", "Build shaders for 'textured_quad' demo");
+    const dxc_step = b.step("textured_quad-dxc", "Build shaders for 'textured quad' demo");
 
     var dxc_command = makeDxcCmd(
         "../../libs/common/src/hlsl/common.hlsl",

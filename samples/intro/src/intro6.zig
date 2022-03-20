@@ -174,7 +174,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         depth_texture_dsv,
     );
 
-    const physics_world = try zbt.World.init(.{});
+    const physics_world = zbt.World.init(.{});
 
     var physics_debug = allocator.create(zbt.DebugDrawer) catch unreachable;
     physics_debug.* = zbt.DebugDrawer.init(allocator);
@@ -185,20 +185,20 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const physics_shapes = blk: {
         var shapes = std.ArrayList(*const zbt.Shape).init(allocator);
 
-        const box_shape = try zbt.BoxShape.init(&.{ 1.05, 1.05, 1.05 });
+        const box_shape = zbt.BoxShape.init(&.{ 1.05, 1.05, 1.05 });
         try shapes.append(box_shape.asShape());
 
-        const ground_shape = try zbt.BoxShape.init(&.{ 50.0, 0.2, 50.0 });
+        const ground_shape = zbt.BoxShape.init(&.{ 50.0, 0.2, 50.0 });
         try shapes.append(ground_shape.asShape());
 
-        const box_body = try zbt.Body.init(
+        const box_body = zbt.Body.init(
             1.0, // mass
             &zm.mat43ToArray(zm.translation(0.0, 3.0, 0.0)),
             box_shape.asShape(),
         );
         physics_world.addBody(box_body);
 
-        const ground_body = try zbt.Body.init(
+        const ground_body = zbt.Body.init(
             0.0, // static body
             &zm.mat43ToArray(zm.identity()),
             ground_shape.asShape(),
@@ -393,7 +393,7 @@ fn update(demo: *DemoState) void {
                 1.0,
                 &zm.mat43ToArray(transform),
                 demo.physics.shapes.items[0],
-            ) catch unreachable;
+            );
             body.setFriction(2.1);
             body.applyCentralImpulse(&zm.vec3ToArray(impulse));
 

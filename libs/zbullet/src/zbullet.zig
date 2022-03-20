@@ -7,7 +7,7 @@ const expect = std.testing.expect;
 
 extern fn cbtAlignedAllocSetCustomAligned(
     alloc: fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque,
-    free: fn (memblock: ?*anyopaque) callconv(.C) void,
+    free: fn (ptr: ?*anyopaque) callconv(.C) void,
 ) void;
 
 var allocator: ?std.mem.Allocator = null;
@@ -18,23 +18,26 @@ export fn allocFunc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
     mutex.lock();
     defer mutex.unlock();
 
-    var memblock = allocator.?.allocBytes(
+    var slice = allocator.?.allocBytes(
         @intCast(u29, alignment),
         size,
         0,
         @returnAddress(),
-    ) catch return null;
-    allocations.?.put(@ptrToInt(memblock.ptr), size) catch unreachable;
-    return memblock.ptr;
+    ) catch @panic("zbullet: out of memory");
+
+    allocations.?.put(@ptrToInt(slice.ptr), size) catch
+        @panic("zbullet: out of memory");
+
+    return slice.ptr;
 }
 
-export fn freeFunc(memblock: ?*anyopaque) callconv(.C) void {
-    if (memblock != null) {
+export fn freeFunc(ptr: ?*anyopaque) callconv(.C) void {
+    if (ptr != null) {
         mutex.lock();
         defer mutex.unlock();
 
-        const size = allocations.?.fetchRemove(@ptrToInt(memblock.?)).?.value;
-        const slice = @ptrCast([*]u8, memblock.?)[0..size];
+        const size = allocations.?.fetchRemove(@ptrToInt(ptr.?)).?.value;
+        const slice = @ptrCast([*]u8, ptr.?)[0..size];
         allocator.?.free(slice);
     }
 }
@@ -43,27 +46,24 @@ pub fn init(alloc: std.mem.Allocator) void {
     std.debug.assert(allocator == null and allocations == null);
     allocator = alloc;
     allocations = std.AutoHashMap(usize, usize).init(allocator.?);
-    allocations.?.ensureTotalCapacity(1024) catch unreachable;
+    allocations.?.ensureTotalCapacity(256) catch @panic("zbullet: out of memory");
     cbtAlignedAllocSetCustomAligned(allocFunc, freeFunc);
 }
 
 pub fn deinit() void {
+    std.debug.assert(allocations.?.count() == 0);
     allocations.?.deinit();
     allocations = null;
     allocator = null;
 }
 
 pub const World = opaque {
-    pub fn init(params: struct {}) Error!*const World {
+    pub fn init(params: struct {}) *const World {
         _ = params;
         std.debug.assert(allocator != null and allocations != null);
-        const ptr = cbtWorldCreate();
-        if (ptr == null) {
-            return error.OutOfMemory;
-        }
-        return ptr.?;
+        return cbtWorldCreate();
     }
-    extern fn cbtWorldCreate() ?*const World;
+    extern fn cbtWorldCreate() *const World;
 
     pub fn deinit(world: *const World) void {
         std.debug.assert(world.getNumBodies() == 0);
@@ -81,7 +81,12 @@ pub const World = opaque {
         max_sub_steps: u32 = 1,
         fixed_time_step: f32 = 1.0 / 60.0,
     }) u32 {
-        return cbtWorldStepSimulation(world, time_step, params.max_sub_steps, params.fixed_time_step);
+        return cbtWorldStepSimulation(
+            world,
+            time_step,
+            params.max_sub_steps,
+            params.fixed_time_step,
+        );
     }
     extern fn cbtWorldStepSimulation(
         world: *const World,
@@ -110,16 +115,25 @@ pub const World = opaque {
     ) void;
 
     pub const removeConstraint = cbtWorldRemoveConstraint;
-    extern fn cbtWorldRemoveConstraint(world: *const World, con: *const Constraint) void;
+    extern fn cbtWorldRemoveConstraint(
+        world: *const World,
+        con: *const Constraint,
+    ) void;
 
     pub const getConstraint = cbtWorldGetConstraint;
-    extern fn cbtWorldGetConstraint(world: *const World, index: i32) *const Constraint;
+    extern fn cbtWorldGetConstraint(
+        world: *const World,
+        index: i32,
+    ) *const Constraint;
 
     pub const getNumConstraints = cbtWorldGetNumConstraints;
     extern fn cbtWorldGetNumConstraints(world: *const World) i32;
 
     pub const debugSetDrawer = cbtWorldDebugSetDrawer;
-    extern fn cbtWorldDebugSetDrawer(world: *const World, debug: *const DebugDraw) void;
+    extern fn cbtWorldDebugSetDrawer(
+        world: *const World,
+        debug: *const DebugDraw,
+    ) void;
 
     pub const debugSetMode = cbtWorldDebugSetMode;
     extern fn cbtWorldDebugSetMode(world: *const World, mode: DebugMode) void;
@@ -159,8 +173,6 @@ pub const Axis = enum(c_int) {
     z = 2,
 };
 
-pub const Error = error{OutOfMemory};
-
 pub const ShapeType = enum(c_int) {
     box = 0,
     sphere = 8,
@@ -171,14 +183,8 @@ pub const ShapeType = enum(c_int) {
 };
 
 pub const Shape = opaque {
-    pub fn allocate(stype: ShapeType) Error!*const Shape {
-        const ptr = cbtShapeAllocate(stype);
-        if (ptr == null) {
-            return error.OutOfMemory;
-        }
-        return ptr.?;
-    }
-    extern fn cbtShapeAllocate(stype: ShapeType) ?*const Shape;
+    pub const allocate = cbtShapeAllocate;
+    extern fn cbtShapeAllocate(stype: ShapeType) *const Shape;
 
     pub const deallocate = cbtShapeDeallocate;
     extern fn cbtShapeDeallocate(shape: *const Shape) void;
@@ -233,7 +239,11 @@ pub const Shape = opaque {
     extern fn cbtShapeIsCompound(shape: *const Shape) bool;
 
     pub const calculateLocalInertia = cbtShapeCalculateLocalInertia;
-    extern fn cbtShapeCalculateLocalInertia(shape: *const Shape, mass: f32, inertia: *[3]f32) void;
+    extern fn cbtShapeCalculateLocalInertia(
+        shape: *const Shape,
+        mass: f32,
+        inertia: *[3]f32,
+    ) void;
 
     pub const setUserPointer = cbtShapeSetUserPointer;
     extern fn cbtShapeSetUserPointer(shape: *const Shape, ptr: ?*anyopaque) void;
@@ -292,7 +302,11 @@ fn ShapeFunctions(comptime T: type) type {
         pub fn isCompound(shape: *const T) bool {
             return shape.asShape().isCompound();
         }
-        pub fn calculateLocalInertia(shape: *const Shape, mass: f32, inertia: *[3]f32) void {
+        pub fn calculateLocalInertia(
+            shape: *const Shape,
+            mass: f32,
+            inertia: *[3]f32,
+        ) void {
             shape.asShape().calculateLocalInertia(shape, mass, inertia);
         }
         pub fn setUserPointer(shape: *const T, ptr: ?*anyopaque) void {
@@ -313,37 +327,46 @@ fn ShapeFunctions(comptime T: type) type {
 pub const BoxShape = opaque {
     usingnamespace ShapeFunctions(@This());
 
-    pub fn init(half_extents: *const [3]f32) Error!*const BoxShape {
-        const box = try allocate();
+    pub fn init(half_extents: *const [3]f32) *const BoxShape {
+        const box = allocate();
         box.create(half_extents);
         return box;
     }
 
-    pub fn allocate() Error!*const BoxShape {
-        return @ptrCast(*const BoxShape, try Shape.allocate(.box));
+    pub fn allocate() *const BoxShape {
+        return @ptrCast(*const BoxShape, Shape.allocate(.box));
     }
 
     pub const create = cbtShapeBoxCreate;
-    extern fn cbtShapeBoxCreate(box: *const BoxShape, half_extents: *const [3]f32) void;
+    extern fn cbtShapeBoxCreate(
+        box: *const BoxShape,
+        half_extents: *const [3]f32,
+    ) void;
 
     pub const getHalfExtentsWithoutMargin = cbtShapeBoxGetHalfExtentsWithoutMargin;
-    extern fn cbtShapeBoxGetHalfExtentsWithoutMargin(box: *const BoxShape, half_extents: *[3]f32) void;
+    extern fn cbtShapeBoxGetHalfExtentsWithoutMargin(
+        box: *const BoxShape,
+        half_extents: *[3]f32,
+    ) void;
 
     pub const getHalfExtentsWithMargin = cbtShapeBoxGetHalfExtentsWithMargin;
-    extern fn cbtShapeBoxGetHalfExtentsWithMargin(box: *const BoxShape, half_extents: *[3]f32) void;
+    extern fn cbtShapeBoxGetHalfExtentsWithMargin(
+        box: *const BoxShape,
+        half_extents: *[3]f32,
+    ) void;
 };
 
 pub const SphereShape = opaque {
     usingnamespace ShapeFunctions(@This());
 
-    pub fn init(radius: f32) Error!*const SphereShape {
-        const sphere = try allocate();
+    pub fn init(radius: f32) *const SphereShape {
+        const sphere = allocate();
         sphere.create(radius);
         return sphere;
     }
 
-    pub fn allocate() Error!*const SphereShape {
-        return @ptrCast(*const SphereShape, try Shape.allocate(.sphere));
+    pub fn allocate() *const SphereShape {
+        return @ptrCast(*const SphereShape, Shape.allocate(.sphere));
     }
 
     pub const create = cbtShapeSphereCreate;
@@ -353,24 +376,32 @@ pub const SphereShape = opaque {
     extern fn cbtShapeSphereGetRadius(sphere: *const SphereShape) f32;
 
     pub const setUnscaledRadius = cbtShapeSphereSetUnscaledRadius;
-    extern fn cbtShapeSphereSetUnscaledRadius(sphere: *const SphereShape, radius: f32) void;
+    extern fn cbtShapeSphereSetUnscaledRadius(
+        sphere: *const SphereShape,
+        radius: f32,
+    ) void;
 };
 
 pub const CapsuleShape = opaque {
     usingnamespace ShapeFunctions(@This());
 
-    pub fn init(radius: f32, height: f32, upaxis: Axis) Error!*const CapsuleShape {
-        const capsule = try allocate();
+    pub fn init(radius: f32, height: f32, upaxis: Axis) *const CapsuleShape {
+        const capsule = allocate();
         capsule.create(radius, height, upaxis);
         return capsule;
     }
 
-    pub fn allocate() Error!*const CapsuleShape {
-        return @ptrCast(*const CapsuleShape, try Shape.allocate(.capsule));
+    pub fn allocate() *const CapsuleShape {
+        return @ptrCast(*const CapsuleShape, Shape.allocate(.capsule));
     }
 
     pub const create = cbtShapeCapsuleCreate;
-    extern fn cbtShapeCapsuleCreate(capsule: *const CapsuleShape, radius: f32, height: f32, upaxis: Axis) void;
+    extern fn cbtShapeCapsuleCreate(
+        capsule: *const CapsuleShape,
+        radius: f32,
+        height: f32,
+        upaxis: Axis,
+    ) void;
 
     pub const getUpAxis = cbtShapeCapsuleGetUpAxis;
     extern fn cbtShapeCapsuleGetUpAxis(capsule: *const CapsuleShape) Axis;
@@ -385,14 +416,17 @@ pub const CapsuleShape = opaque {
 pub const CylinderShape = opaque {
     usingnamespace ShapeFunctions(@This());
 
-    pub fn init(half_extents: *const [3]f32, upaxis: Axis) Error!*const CylinderShape {
-        const cylinder = try allocate();
+    pub fn init(
+        half_extents: *const [3]f32,
+        upaxis: Axis,
+    ) *const CylinderShape {
+        const cylinder = allocate();
         cylinder.create(half_extents, upaxis);
         return cylinder;
     }
 
-    pub fn allocate() Error!*const CylinderShape {
-        return @ptrCast(*const CylinderShape, try Shape.allocate(.cylinder));
+    pub fn allocate() *const CylinderShape {
+        return @ptrCast(*const CylinderShape, Shape.allocate(.cylinder));
     }
 
     pub const create = cbtShapeCylinderCreate;
@@ -402,7 +436,8 @@ pub const CylinderShape = opaque {
         upaxis: Axis,
     ) void;
 
-    pub const getHalfExtentsWithoutMargin = cbtShapeCylinderGetHalfExtentsWithoutMargin;
+    pub const getHalfExtentsWithoutMargin =
+        cbtShapeCylinderGetHalfExtentsWithoutMargin;
     extern fn cbtShapeCylinderGetHalfExtentsWithoutMargin(
         cylinder: *const CylinderShape,
         half_extents: *[3]f32,
@@ -426,14 +461,17 @@ pub const CompoundShape = opaque {
             enable_dynamic_aabb_tree: bool = true,
             initial_child_capacity: u32 = 0,
         },
-    ) Error!*const CompoundShape {
-        const cshape = try allocate();
-        cshape.create(params.enable_dynamic_aabb_tree, params.initial_child_capacity);
+    ) *const CompoundShape {
+        const cshape = allocate();
+        cshape.create(
+            params.enable_dynamic_aabb_tree,
+            params.initial_child_capacity,
+        );
         return cshape;
     }
 
-    pub fn allocate() Error!*const CompoundShape {
-        return @ptrCast(*const CompoundShape, try Shape.allocate(.compound));
+    pub fn allocate() *const CompoundShape {
+        return @ptrCast(*const CompoundShape, Shape.allocate(.compound));
     }
 
     pub const create = cbtShapeCompoundCreate;
@@ -451,16 +489,25 @@ pub const CompoundShape = opaque {
     ) void;
 
     pub const removeChild = cbtShapeCompoundRemoveChild;
-    extern fn cbtShapeCompoundRemoveChild(cshape: *const CompoundShape, child_shape: *const Shape) void;
+    extern fn cbtShapeCompoundRemoveChild(
+        cshape: *const CompoundShape,
+        child_shape: *const Shape,
+    ) void;
 
     pub const removeChildByIndex = cbtShapeCompoundRemoveChildByIndex;
-    extern fn cbtShapeCompoundRemoveChildByIndex(cshape: *const CompoundShape, index: i32) void;
+    extern fn cbtShapeCompoundRemoveChildByIndex(
+        cshape: *const CompoundShape,
+        index: i32,
+    ) void;
 
     pub const getNumChilds = cbtShapeCompoundGetNumChilds;
     extern fn cbtShapeCompoundGetNumChilds(cshape: *const CompoundShape) i32;
 
     pub const getChild = cbtShapeCompoundGetChild;
-    extern fn cbtShapeCompoundGetChild(cshape: *const CompoundShape, index: i32) *const Shape;
+    extern fn cbtShapeCompoundGetChild(
+        cshape: *const CompoundShape,
+        index: i32,
+    ) *const Shape;
 
     pub const getChildTransform = cbtShapeCompoundGetChildTransform;
     extern fn cbtShapeCompoundGetChildTransform(
@@ -473,8 +520,8 @@ pub const CompoundShape = opaque {
 pub const TriangleMeshShape = opaque {
     usingnamespace ShapeFunctions(@This());
 
-    pub fn init() Error!*const TriangleMeshShape {
-        const trimesh = try allocate();
+    pub fn init() *const TriangleMeshShape {
+        const trimesh = allocate();
         trimesh.createBegin();
         return trimesh;
     }
@@ -483,8 +530,8 @@ pub const TriangleMeshShape = opaque {
         trimesh.createEnd();
     }
 
-    pub fn allocate() Error!*const TriangleMeshShape {
-        return @ptrCast(*const TriangleMeshShape, try Shape.allocate(.trimesh));
+    pub fn allocate() *const TriangleMeshShape {
+        return @ptrCast(*const TriangleMeshShape, Shape.allocate(.trimesh));
     }
 
     pub const addIndexVertexArray = cbtShapeTriMeshAddIndexVertexArray;
@@ -506,8 +553,12 @@ pub const TriangleMeshShape = opaque {
 };
 
 pub const Body = opaque {
-    pub fn init(mass: f32, transform: *const [12]f32, shape: *const Shape) Error!*const Body {
-        const body = try allocate();
+    pub fn init(
+        mass: f32,
+        transform: *const [12]f32,
+        shape: *const Shape,
+    ) *const Body {
+        const body = allocate();
         body.create(mass, transform, shape);
         return body;
     }
@@ -517,14 +568,8 @@ pub const Body = opaque {
         body.deallocate();
     }
 
-    pub fn allocate() Error!*const Body {
-        const ptr = cbtBodyAllocate();
-        if (ptr == null) {
-            return error.OutOfMemory;
-        }
-        return ptr.?;
-    }
-    extern fn cbtBodyAllocate() ?*const Body;
+    pub const allocate = cbtBodyAllocate;
+    extern fn cbtBodyAllocate() *const Body;
 
     pub const deallocate = cbtBodyDeallocate;
     extern fn cbtBodyDeallocate(body: *const Body) void;
@@ -562,7 +607,10 @@ pub const Body = opaque {
     extern fn cbtBodySetFriction(body: *const Body, friction: f32) void;
 
     pub const getGraphicsWorldTransform = cbtBodyGetGraphicsWorldTransform;
-    extern fn cbtBodyGetGraphicsWorldTransform(body: *const Body, transform: *[12]f32) void;
+    extern fn cbtBodyGetGraphicsWorldTransform(
+        body: *const Body,
+        transform: *[12]f32,
+    ) void;
 
     pub const applyCentralImpulse = cbtBodyApplyCentralImpulse;
     extern fn cbtBodyApplyCentralImpulse(body: *const Body, impulse: *[3]f32) void;
@@ -576,14 +624,8 @@ pub const Constraint = opaque {
     pub const getFixedBody = cbtConGetFixedBody;
     extern fn cbtConGetFixedBody() *const Body;
 
-    pub fn allocate(ctype: ConstraintType) Error!*const Constraint {
-        const ptr = cbtConAllocate(ctype);
-        if (ptr == null) {
-            return error.OutOfMemory;
-        }
-        return ptr.?;
-    }
-    extern fn cbtConAllocate(ctype: ConstraintType) ?*const Constraint;
+    pub const allocate = cbtConAllocate;
+    extern fn cbtConAllocate(ctype: ConstraintType) *const Constraint;
 
     pub const deallocate = cbtConDeallocate;
     extern fn cbtConDeallocate(con: *const Constraint) void;
@@ -645,8 +687,11 @@ fn ConstraintFunctions(comptime T: type) type {
 pub const Point2PointConstraint = opaque {
     usingnamespace ConstraintFunctions(@This());
 
-    pub fn allocate() Error!*const Point2PointConstraint {
-        return @ptrCast(*const Point2PointConstraint, try Constraint.allocate(.point2point));
+    pub fn allocate() *const Point2PointConstraint {
+        return @ptrCast(
+            *const Point2PointConstraint,
+            Constraint.allocate(.point2point),
+        );
     }
 
     pub const create1 = cbtConPoint2PointCreate1;
@@ -666,25 +711,46 @@ pub const Point2PointConstraint = opaque {
     ) void;
 
     pub const setPivotA = cbtConPoint2PointSetPivotA;
-    extern fn cbtConPoint2PointSetPivotA(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
+    extern fn cbtConPoint2PointSetPivotA(
+        con: *const Point2PointConstraint,
+        pivot: *const [3]f32,
+    ) void;
 
     pub const setPivotB = cbtConPoint2PointSetPivotB;
-    extern fn cbtConPoint2PointSetPivotB(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
+    extern fn cbtConPoint2PointSetPivotB(
+        con: *const Point2PointConstraint,
+        pivot: *const [3]f32,
+    ) void;
 
     pub const getPivotA = cbtConPoint2PointGetPivotA;
-    extern fn cbtConPoint2PointGetPivotA(con: *const Point2PointConstraint, pivot: *[3]f32) void;
+    extern fn cbtConPoint2PointGetPivotA(
+        con: *const Point2PointConstraint,
+        pivot: *[3]f32,
+    ) void;
 
     pub const getPivotB = cbtConPoint2PointGetPivotB;
-    extern fn cbtConPoint2PointGetPivotB(con: *const Point2PointConstraint, pivot: *[3]f32) void;
+    extern fn cbtConPoint2PointGetPivotB(
+        con: *const Point2PointConstraint,
+        pivot: *[3]f32,
+    ) void;
 
     pub const setTau = cbtConPoint2PointSetPivotB;
-    extern fn cbtConPoint2PointSetTau(con: *const Point2PointConstraint, tau: f32) void;
+    extern fn cbtConPoint2PointSetTau(
+        con: *const Point2PointConstraint,
+        tau: f32,
+    ) void;
 
     pub const setDamping = cbtConPoint2PointSetDamping;
-    extern fn cbtConPoint2PointSetDamping(con: *const Point2PointConstraint, damping: f32) void;
+    extern fn cbtConPoint2PointSetDamping(
+        con: *const Point2PointConstraint,
+        damping: f32,
+    ) void;
 
     pub const setImpulseClamp = cbtConPoint2PointSetImpulseClamp;
-    extern fn cbtConPoint2PointSetImpulseClamp(con: *const Point2PointConstraint, damping: f32) void;
+    extern fn cbtConPoint2PointSetImpulseClamp(
+        con: *const Point2PointConstraint,
+        damping: f32,
+    ) void;
 };
 
 pub const DebugMode = i32;
@@ -694,9 +760,26 @@ pub const dbgmode_draw_wireframe: DebugMode = 1;
 pub const dbgmode_draw_aabb: DebugMode = 2;
 
 pub const DebugDraw = extern struct {
-    drawLine1: fn (?*anyopaque, *const [3]f32, *const [3]f32, *const [3]f32) callconv(.C) void,
-    drawLine2: ?fn (?*anyopaque, *const [3]f32, *const [3]f32, *const [3]f32, *const [3]f32) callconv(.C) void,
-    drawContactPoint: ?fn (?*anyopaque, *const [3]f32, *const [3]f32, f32, *const [3]f32) callconv(.C) void,
+    drawLine1: fn (
+        ?*anyopaque,
+        *const [3]f32,
+        *const [3]f32,
+        *const [3]f32,
+    ) callconv(.C) void,
+    drawLine2: ?fn (
+        ?*anyopaque,
+        *const [3]f32,
+        *const [3]f32,
+        *const [3]f32,
+        *const [3]f32,
+    ) callconv(.C) void,
+    drawContactPoint: ?fn (
+        ?*anyopaque,
+        *const [3]f32,
+        *const [3]f32,
+        f32,
+        *const [3]f32,
+    ) callconv(.C) void,
     context: ?*anyopaque,
 };
 
@@ -732,15 +815,22 @@ pub const DebugDrawer = struct {
         p1: *const [3]f32,
         color: *const [3]f32,
     ) callconv(.C) void {
-        const debug = @ptrCast(*DebugDrawer, @alignCast(@alignOf(DebugDrawer), context.?));
+        const debug = @ptrCast(
+            *DebugDrawer,
+            @alignCast(@alignOf(DebugDrawer), context.?),
+        );
 
         const r = @floatToInt(u32, color[0] * 255.0);
         const g = @floatToInt(u32, color[1] * 255.0) << 8;
         const b = @floatToInt(u32, color[2] * 255.0) << 16;
         const rgb = r | g | b;
 
-        debug.lines.append(.{ .position = .{ p0[0], p0[1], p0[2] }, .color = rgb }) catch unreachable;
-        debug.lines.append(.{ .position = .{ p1[0], p1[1], p1[2] }, .color = rgb }) catch unreachable;
+        debug.lines.append(
+            .{ .position = .{ p0[0], p0[1], p0[2] }, .color = rgb },
+        ) catch unreachable;
+        debug.lines.append(
+            .{ .position = .{ p1[0], p1[1], p1[2] }, .color = rgb },
+        ) catch unreachable;
     }
 
     fn drawLine2(
@@ -750,7 +840,10 @@ pub const DebugDrawer = struct {
         color0: *const [3]f32,
         color1: *const [3]f32,
     ) callconv(.C) void {
-        const debug = @ptrCast(*DebugDrawer, @alignCast(@alignOf(DebugDrawer), context.?));
+        const debug = @ptrCast(
+            *DebugDrawer,
+            @alignCast(@alignOf(DebugDrawer), context.?),
+        );
 
         const r0 = @floatToInt(u32, color0[0] * 255.0);
         const g0 = @floatToInt(u32, color0[1] * 255.0) << 8;
@@ -762,8 +855,12 @@ pub const DebugDrawer = struct {
         const b1 = @floatToInt(u32, color1[2] * 255.0) << 16;
         const rgb1 = r1 | g1 | b1;
 
-        debug.lines.append(.{ .position = .{ p0[0], p0[1], p0[2] }, .color = rgb0 }) catch unreachable;
-        debug.lines.append(.{ .position = .{ p1[0], p1[1], p1[2] }, .color = rgb1 }) catch unreachable;
+        debug.lines.append(
+            .{ .position = .{ p0[0], p0[1], p0[2] }, .color = rgb0 },
+        ) catch unreachable;
+        debug.lines.append(
+            .{ .position = .{ p1[0], p1[1], p1[2] }, .color = rgb1 },
+        ) catch unreachable;
     }
 };
 
@@ -772,7 +869,7 @@ test "zbullet.world.gravity" {
     init(std.testing.allocator);
     defer deinit();
 
-    const world = try World.init(.{});
+    const world = World.init(.{});
     defer world.deinit();
 
     world.setGravity(&.{ 0.0, -10.0, 0.0 });
@@ -793,7 +890,7 @@ test "zbullet.shape.box" {
     init(std.testing.allocator);
     defer deinit();
     {
-        const box = try BoxShape.init(&.{ 4.0, 4.0, 4.0 });
+        const box = BoxShape.init(&.{ 4.0, 4.0, 4.0 });
         defer box.deinit();
         try expect(box.isCreated());
         try expect(box.getType() == .box);
@@ -802,10 +899,12 @@ test "zbullet.shape.box" {
 
         var half_extents: [3]f32 = undefined;
         box.getHalfExtentsWithoutMargin(&half_extents);
-        try expect(half_extents[0] == 3.9 and half_extents[1] == 3.9 and half_extents[2] == 3.9);
+        try expect(half_extents[0] == 3.9 and half_extents[1] == 3.9 and
+            half_extents[2] == 3.9);
 
         box.getHalfExtentsWithMargin(&half_extents);
-        try expect(half_extents[0] == 4.0 and half_extents[1] == 4.0 and half_extents[2] == 4.0);
+        try expect(half_extents[0] == 4.0 and half_extents[1] == 4.0 and
+            half_extents[2] == 4.0);
 
         try expect(box.isPolyhedral() == true);
         try expect(box.isConvex() == true);
@@ -824,7 +923,7 @@ test "zbullet.shape.box" {
         try expect(shape.isCreated());
     }
     {
-        const box = try BoxShape.allocate();
+        const box = BoxShape.allocate();
         defer box.deallocate();
         try expect(box.isCreated() == false);
 
@@ -839,7 +938,7 @@ test "zbullet.shape.sphere" {
     init(std.testing.allocator);
     defer deinit();
     {
-        const sphere = try SphereShape.init(3.0);
+        const sphere = SphereShape.init(3.0);
         defer sphere.deinit();
         try expect(sphere.isCreated());
         try expect(sphere.getType() == .sphere);
@@ -856,7 +955,7 @@ test "zbullet.shape.sphere" {
         try expect(shape.isCreated());
     }
     {
-        const sphere = try SphereShape.allocate();
+        const sphere = SphereShape.allocate();
         errdefer sphere.deallocate();
         try expect(sphere.isCreated() == false);
 
@@ -882,7 +981,7 @@ test "zbullet.shape.sphere" {
 test "zbullet.shape.capsule" {
     init(std.testing.allocator);
     defer deinit();
-    const capsule = try CapsuleShape.init(2.0, 1.0, .y);
+    const capsule = CapsuleShape.init(2.0, 1.0, .y);
     defer capsule.deinit();
     try expect(capsule.isCreated());
     try expect(capsule.getType() == .capsule);
@@ -896,7 +995,7 @@ test "zbullet.shape.capsule" {
 test "zbullet.shape.cylinder" {
     init(std.testing.allocator);
     defer deinit();
-    const cylinder = try CylinderShape.init(&.{ 1.0, 2.0, 3.0 }, .y);
+    const cylinder = CylinderShape.init(&.{ 1.0, 2.0, 3.0 }, .y);
     defer cylinder.deinit();
     try expect(cylinder.isCreated());
     try expect(cylinder.getType() == .cylinder);
@@ -909,10 +1008,12 @@ test "zbullet.shape.cylinder" {
 
     var half_extents: [3]f32 = undefined;
     cylinder.getHalfExtentsWithoutMargin(&half_extents);
-    try expect(half_extents[0] == 0.9 and half_extents[1] == 1.9 and half_extents[2] == 2.9);
+    try expect(half_extents[0] == 0.9 and half_extents[1] == 1.9 and
+        half_extents[2] == 2.9);
 
     cylinder.getHalfExtentsWithMargin(&half_extents);
-    try expect(half_extents[0] == 1.0 and half_extents[1] == 2.0 and half_extents[2] == 3.0);
+    try expect(half_extents[0] == 1.0 and half_extents[1] == 2.0 and
+        half_extents[2] == 3.0);
 }
 
 test "zbullet.shape.compound" {
@@ -920,7 +1021,7 @@ test "zbullet.shape.compound" {
     init(std.testing.allocator);
     defer deinit();
 
-    const cshape = try CompoundShape.init(.{});
+    const cshape = CompoundShape.init(.{});
     defer cshape.deinit();
     try expect(cshape.isCreated());
     try expect(cshape.getType() == .compound);
@@ -929,14 +1030,20 @@ test "zbullet.shape.compound" {
     try expect(cshape.isConvex() == false);
     try expect(cshape.isCompound() == true);
 
-    const sphere = try SphereShape.init(3.0);
+    const sphere = SphereShape.init(3.0);
     defer sphere.deinit();
 
-    const box = try BoxShape.init(&.{ 1.0, 2.0, 3.0 });
+    const box = BoxShape.init(&.{ 1.0, 2.0, 3.0 });
     defer box.deinit();
 
-    cshape.addChild(&zm.mat43ToArray(zm.translation(1.0, 2.0, 3.0)), sphere.asShape());
-    cshape.addChild(&zm.mat43ToArray(zm.translation(-1.0, -2.0, -3.0)), box.asShape());
+    cshape.addChild(
+        &zm.mat43ToArray(zm.translation(1.0, 2.0, 3.0)),
+        sphere.asShape(),
+    );
+    cshape.addChild(
+        &zm.mat43ToArray(zm.translation(-1.0, -2.0, -3.0)),
+        box.asShape(),
+    );
     try expect(cshape.getNumChilds() == 2);
 
     try expect(cshape.getChild(0) == sphere.asShape());
@@ -962,7 +1069,7 @@ test "zbullet.shape.compound" {
 test "zbullet.shape.trimesh" {
     init(std.testing.allocator);
     defer deinit();
-    const trimesh = try TriangleMeshShape.init();
+    const trimesh = TriangleMeshShape.init();
     const triangles = [3]u32{ 0, 1, 2 };
     const vertices = [_]f32{0.0} ** 9;
     trimesh.addIndexVertexArray(
@@ -984,10 +1091,10 @@ test "zbullet.body.basic" {
     init(std.testing.allocator);
     defer deinit();
     {
-        const world = try World.init(.{});
+        const world = World.init(.{});
         defer world.deinit();
 
-        const sphere = try SphereShape.init(3.0);
+        const sphere = SphereShape.init(3.0);
         defer sphere.deinit();
 
         const transform = [12]f32{
@@ -996,7 +1103,7 @@ test "zbullet.body.basic" {
             0.0, 0.0, 1.0,
             2.0, 2.0, 2.0,
         };
-        const body = try Body.init(1.0, &transform, sphere.asShape());
+        const body = Body.init(1.0, &transform, sphere.asShape());
         defer body.deinit();
         try expect(body.isCreated() == true);
         try expect(body.getShape() == sphere.asShape());
@@ -1011,13 +1118,13 @@ test "zbullet.body.basic" {
     {
         const zm = @import("zmath");
 
-        const sphere = try SphereShape.init(3.0);
+        const sphere = SphereShape.init(3.0);
         defer sphere.deinit();
 
         var transform: [12]f32 = undefined;
         zm.storeMat43(transform[0..], zm.translation(2.0, 3.0, 4.0));
 
-        const body = try Body.init(1.0, &transform, sphere.asShape());
+        const body = Body.init(1.0, &transform, sphere.asShape());
         errdefer body.deinit();
 
         try expect(body.isCreated() == true);
@@ -1031,10 +1138,10 @@ test "zbullet.body.basic" {
     {
         const zm = @import("zmath");
 
-        const sphere = try SphereShape.init(3.0);
+        const sphere = SphereShape.init(3.0);
         defer sphere.deinit();
 
-        const body = try Body.init(
+        const body = Body.init(
             0.0, // static body
             &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
@@ -1057,20 +1164,20 @@ test "zbullet.constraint.point2point" {
     init(std.testing.allocator);
     defer deinit();
     {
-        const world = try World.init(.{});
+        const world = World.init(.{});
         defer world.deinit();
 
-        const sphere = try SphereShape.init(3.0);
+        const sphere = SphereShape.init(3.0);
         defer sphere.deinit();
 
-        const body = try Body.init(
+        const body = Body.init(
             1.0,
             &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
         );
         defer body.deinit();
 
-        const p2p = try Point2PointConstraint.allocate();
+        const p2p = Point2PointConstraint.allocate();
         defer p2p.deallocate();
 
         try expect(p2p.getType() == .point2point);
@@ -1094,27 +1201,27 @@ test "zbullet.constraint.point2point" {
         try expect(pivot[0] == -1.0 and pivot[1] == -2.0 and pivot[2] == -3.0);
     }
     {
-        const world = try World.init(.{});
+        const world = World.init(.{});
         defer world.deinit();
 
-        const sphere = try SphereShape.init(3.0);
+        const sphere = SphereShape.init(3.0);
         defer sphere.deinit();
 
-        const body0 = try Body.init(
+        const body0 = Body.init(
             1.0,
             &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
         );
         defer body0.deinit();
 
-        const body1 = try Body.init(
+        const body1 = Body.init(
             1.0,
             &zm.mat43ToArray(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
         );
         defer body1.deinit();
 
-        const p2p = try Point2PointConstraint.allocate();
+        const p2p = Point2PointConstraint.allocate();
         defer p2p.deallocate();
 
         p2p.create2(body0, body1, &.{ 1.0, 2.0, 3.0 }, &.{ -1.0, -2.0, -3.0 });

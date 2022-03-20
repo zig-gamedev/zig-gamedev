@@ -16,6 +16,7 @@ const triangle = @import("samples/triangle/build.zig");
 const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const intro = @import("samples/intro/build.zig");
 const minimal = @import("samples/minimal/build.zig");
+const procedural_mesh = @import("samples/procedural_mesh/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
@@ -49,36 +50,37 @@ pub fn build(b: *std.build.Builder) void {
         .tracy = tracy,
     };
 
-    if (options.target.isWindows()) {
-        installDemo(b, audio_experiments.build(b, options), "audio_experiments");
-        installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
-        installDemo(b, bindless.build(b, options), "bindless");
-        installDemo(b, bullet_physics_test.build(b, options), "bullet_physics_test");
-        installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-        installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
-        installDemo(b, physically_based_rendering.build(b, options), "physically_based_rendering");
-        installDemo(b, rasterization.build(b, options), "rasterization");
-        installDemo(b, simple3d.build(b, options), "simple3d");
-        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
-        installDemo(b, textured_quad.build(b, options), "textured_quad");
-        installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-        installDemo(b, triangle.build(b, options), "triangle");
-        installDemo(b, intro.build(b, options, 0), "intro0");
-        installDemo(b, intro.build(b, options, 1), "intro1");
-        installDemo(b, intro.build(b, options, 2), "intro2");
-        installDemo(b, intro.build(b, options, 3), "intro3");
-        installDemo(b, intro.build(b, options, 4), "intro4");
-        installDemo(b, intro.build(b, options, 5), "intro5");
-        installDemo(b, intro.build(b, options, 6), "intro6");
-        installDemo(b, minimal.build(b, options), "minimal");
+    installDemo(b, audio_experiments.build(b, options), "audio_experiments");
+    installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
+    installDemo(b, bindless.build(b, options), "bindless");
+    installDemo(b, bullet_physics_test.build(b, options), "bullet_physics_test");
+    installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
+    installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
+    installDemo(b, physically_based_rendering.build(b, options), "physically_based_rendering");
+    installDemo(b, rasterization.build(b, options), "rasterization");
+    installDemo(b, simple3d.build(b, options), "simple3d");
+    installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
+    installDemo(b, textured_quad.build(b, options), "textured_quad");
+    installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
+    installDemo(b, triangle.build(b, options), "triangle");
+    installDemo(b, minimal.build(b, options), "minimal");
+    installDemo(b, procedural_mesh.build(b, options), "procedural_mesh");
+
+    comptime var intro_index: u32 = 0;
+    inline while (intro_index < 7) : (intro_index += 1) {
+        const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
+        installDemo(b, intro.build(b, options, intro_index), name);
     }
 }
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
-    const install = b.step(name, "Build '" ++ name ++ "' demo");
+    comptime var desc_name: [256]u8 = undefined;
+    comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
+
+    const install = b.step(name, "Build '" ++ desc_name ++ "' demo");
     install.dependOn(&b.addInstallArtifact(exe).step);
 
-    const run_step = b.step(name ++ "-run", "Run '" ++ name ++ "' demo");
+    const run_step = b.step(name ++ "-run", "Run '" ++ desc_name ++ "' demo");
     const run_cmd = exe.run();
     run_cmd.step.dependOn(install);
     run_step.dependOn(&run_cmd.step);

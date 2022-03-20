@@ -81,7 +81,7 @@ fn fillAudioBuffer(audio: *AudioContex) void {
 }
 
 fn audioThread(ctx: ?*anyopaque) callconv(.C) w32.DWORD {
-    const audio = @ptrCast(*AudioContex, @alignCast(8, ctx));
+    const audio = @ptrCast(*AudioContex, @alignCast(@sizeOf(usize), ctx));
 
     fillAudioBuffer(audio);
     while (true) {
