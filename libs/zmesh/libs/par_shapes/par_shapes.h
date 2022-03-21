@@ -1432,11 +1432,16 @@ void par_shapes_unweld(par_shapes_mesh* mesh, bool create_indices)
         PAR_FREE(mesh->triangles);
         mesh->triangles = tris;
     }
+    // NOTE(mziulek): This operation invalidates 'normals' and 'tcoords'.
+    PAR_FREE(mesh->normals);
+    mesh->normals = 0;
+    PAR_FREE(mesh->tcoords);
+    mesh->tcoords = 0;
 }
 
 void par_shapes_compute_normals(par_shapes_mesh* m)
 {
-    PAR_FREE(m->normals);
+    PAR_FREE(m->normals); // NOTE(mziulek): Fixed memory leak.
     m->normals = PAR_CALLOC(float, m->npoints * 3);
     PAR_SHAPES_T const* triangle = m->triangles;
     float next[3], prev[3], cp[3];

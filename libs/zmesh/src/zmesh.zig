@@ -114,11 +114,11 @@ const ParMesh = extern struct {
 };
 
 pub const Mesh = struct {
-    handle: MeshHandle,
-    positions: [][3]f32,
     indices: []IndexType,
+    positions: [][3]f32,
     normals: ?[][3]f32,
     texcoords: ?[][2]f32,
+    handle: MeshHandle,
 
     pub fn deinit(mesh: Mesh) void {
         par_shapes_free_mesh(mesh.handle);
@@ -136,8 +136,7 @@ pub const Mesh = struct {
     extern fn par_shapes_compute_aabb(mesh: MeshHandle, aabb: *[6]f32) void;
 
     pub fn clone(mesh: Mesh) Mesh {
-        const new_mesh = par_shapes_clone(mesh.handle, null);
-        return initMesh(new_mesh);
+        return initMesh(par_shapes_clone(mesh.handle, null));
     }
     extern fn par_shapes_clone(mesh: MeshHandle, target: ?MeshHandle) MeshHandle;
 
@@ -184,6 +183,12 @@ pub const Mesh = struct {
         mesh.* = initMesh(mesh.handle);
     }
     extern fn par_shapes_remove_degenerate(mesh: MeshHandle, min_area: f32) void;
+
+    pub fn unweld(mesh: *Mesh) void {
+        par_shapes_unweld(mesh.handle, true);
+        mesh.* = initMesh(mesh.handle);
+    }
+    extern fn par_shapes_unweld(mesh: MeshHandle, create_indices: bool) void;
 
     pub fn weld(mesh: *Mesh, epsilon: f32, mapping: ?[*]IndexType) void {
         const new_mesh = par_shapes_weld(mesh.handle, epsilon, mapping);
@@ -414,8 +419,10 @@ test "zmesh.basic" {
     defer tetrahedron.deinit();
     if (save) tetrahedron.saveToObj("zmesh.tetrahedron.obj");
 
-    const cube = initCube();
+    var cube = initCube();
     defer cube.deinit();
+    cube.unweld();
+    cube.computeNormals();
     if (save) cube.saveToObj("zmesh.cube.obj");
 
     const rock = initRock(1337, 3);
@@ -462,13 +469,14 @@ test "zmesh.invert" {
     init(std.testing.allocator);
     defer deinit();
 
-    var hemisphere = initHemisphere(10, 10);
+    var hemisphere = initParametricSphere(10, 10);
     defer hemisphere.deinit();
-    hemisphere.invert(0, 0);
+    //hemisphere.invert(0, 0);
 
     hemisphere.removeDegenerate(0.001);
-    hemisphere.weld(0.001, null);
+    hemisphere.unweld();
     hemisphere.computeNormals();
+    hemisphere.weld(0.001, null);
 
-    if (save) hemisphere.saveToObj("zmesh.invert.obj");
+    //if (save) hemisphere.saveToObj("zmesh.invert.obj");
 }
