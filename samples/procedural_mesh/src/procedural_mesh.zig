@@ -33,7 +33,7 @@ const Pso_FrameConst = struct {
 
 const Pso_Vertex = struct {
     position: [3]f32,
-    color: [3]f32,
+    normal: [3]f32,
 };
 
 const DemoState = struct {
@@ -77,6 +77,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     {
         var cube = zmesh.initCube();
         defer cube.deinit();
+        cube.unweld();
         cube.computeNormals();
 
         mesh_indices.appendSlice(cube.indices) catch unreachable;
@@ -98,7 +99,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(mesh_num_indices * @sizeOf(u32)),
+        &d3d12.RESOURCE_DESC.initBuffer(mesh_num_indices * @sizeOf(u16)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -130,6 +131,39 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     gctx.beginFrame();
 
     var guir = GuiRenderer.init(arena_allocator, &gctx, 1, content_dir);
+
+    // Fill vertex buffer with vertex data.
+    {
+        const verts = gctx.allocateUploadBufferRegion(Pso_Vertex, mesh_num_vertices);
+        for (mesh_positions.items) |_, i| {
+            verts.cpu_slice[i].position = mesh_positions.items[i];
+            verts.cpu_slice[i].normal = mesh_normals.items[i];
+        }
+
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.lookupResource(vertex_buffer).?,
+            0,
+            verts.buffer,
+            verts.buffer_offset,
+            verts.cpu_slice.len * @sizeOf(@TypeOf(verts.cpu_slice[0])),
+        );
+    }
+
+    // Fill index buffer with index data.
+    {
+        const indices = gctx.allocateUploadBufferRegion(u16, mesh_num_indices);
+        for (mesh_indices.items) |_, i| {
+            indices.cpu_slice[i] = mesh_indices.items[i];
+        }
+
+        gctx.cmdlist.CopyBufferRegion(
+            gctx.lookupResource(index_buffer).?,
+            0,
+            indices.buffer,
+            indices.buffer_offset,
+            indices.cpu_slice.len * @sizeOf(@TypeOf(indices.cpu_slice[0])),
+        );
+    }
 
     gctx.endFrame();
     gctx.finishGpuCommands();

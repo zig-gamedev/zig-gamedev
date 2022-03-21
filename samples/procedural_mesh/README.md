@@ -1,3 +1,1 @@
-## audio experiments (wip)
-
-![image](screenshot.png)
+## procedural mesh (wip)
