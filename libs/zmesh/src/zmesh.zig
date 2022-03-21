@@ -471,12 +471,11 @@ test "zmesh.invert" {
 
     var hemisphere = initParametricSphere(10, 10);
     defer hemisphere.deinit();
-    //hemisphere.invert(0, 0);
+    hemisphere.invert(0, 0);
 
     hemisphere.removeDegenerate(0.001);
     hemisphere.unweld();
-    hemisphere.computeNormals();
     hemisphere.weld(0.001, null);
 
-    //if (save) hemisphere.saveToObj("zmesh.invert.obj");
+    if (save) hemisphere.saveToObj("zmesh.invert.obj");
 }
