@@ -112,10 +112,38 @@ fn buildShaders(b: *std.build.Builder) *std.build.Step {
     );
     dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
-    //dxc_command = makeDxcCmd("src/procedural_mesh.hlsl", "vsMain", "lines.vs.cso", "vs", "");
-    //dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
-    //dxc_command = makeDxcCmd("src/procedural_mesh.hlsl", "psMain", "lines.ps.cso", "ps", "");
-    //dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/procedural_mesh.hlsl",
+        "vsSimpleEntity",
+        "simple_entity.vs.cso",
+        "vs",
+        "PSO__SIMPLE_ENTITY",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/procedural_mesh.hlsl",
+        "gsSimpleEntity",
+        "simple_entity.gs.cso",
+        "gs",
+        "PSO__SIMPLE_ENTITY",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/procedural_mesh.hlsl",
+        "psSimpleEntity",
+        "simple_entity.ps.cso",
+        "ps",
+        "PSO__SIMPLE_ENTITY",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
+    dxc_command = makeDxcCmd(
+        "src/procedural_mesh.hlsl",
+        "psSimpleEntity",
+        "simple_entity_with_gs.ps.cso",
+        "ps",
+        "PSO__SIMPLE_ENTITY_WITH_GS",
+    );
+    dxc_step.dependOn(&b.addSystemCommand(&dxc_command).step);
 
     return dxc_step;
 }

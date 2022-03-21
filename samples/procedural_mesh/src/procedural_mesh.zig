@@ -25,10 +25,12 @@ const window_height = 1080;
 
 const Pso_DrawConst = struct {
     object_to_world: [16]f32,
+    basecolor_roughness: [4]f32,
 };
 
 const Pso_FrameConst = struct {
     world_to_clip: [16]f32,
+    camera_position: [3]f32,
 };
 
 const Pso_Vertex = struct {
@@ -41,6 +43,8 @@ const DemoState = struct {
     guir: GuiRenderer,
     frame_stats: common.FrameStats,
 
+    simple_entity_pso: zd3d12.PipelineHandle,
+
     vertex_buffer: zd3d12.ResourceHandle,
     index_buffer: zd3d12.ResourceHandle,
 
@@ -48,7 +52,7 @@ const DemoState = struct {
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     camera: struct {
-        position: [3]f32 = .{ -10.0, 15.0, -10.0 },
+        position: [3]f32 = .{ -10.0, 5.0, -10.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
         pitch: f32 = 0.15 * math.pi,
         yaw: f32 = 0.25 * math.pi,
@@ -69,6 +73,51 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var gctx = zd3d12.GraphicsContext.init(allocator, window);
     gctx.present_flags = 0;
     gctx.present_interval = 1;
+
+    const barycentrics_supported = blk: {
+        var options3: d3d12.FEATURE_DATA_D3D12_OPTIONS3 = undefined;
+        const res = gctx.device.CheckFeatureSupport(
+            .OPTIONS3,
+            &options3,
+            @sizeOf(d3d12.FEATURE_DATA_D3D12_OPTIONS3),
+        );
+        break :blk options3.BarycentricsSupported == w32.TRUE and res == w32.S_OK;
+    };
+
+    const simple_entity_pso = blk: {
+        const input_layout_desc = [_]d3d12.INPUT_ELEMENT_DESC{
+            d3d12.INPUT_ELEMENT_DESC.init("POSITION", 0, .R32G32B32_FLOAT, 0, 0, .PER_VERTEX_DATA, 0),
+            d3d12.INPUT_ELEMENT_DESC.init("_Normal", 0, .R32G32B32_FLOAT, 0, 12, .PER_VERTEX_DATA, 0),
+        };
+
+        var pso_desc = d3d12.GRAPHICS_PIPELINE_STATE_DESC.initDefault();
+        pso_desc.InputLayout = .{
+            .pInputElementDescs = &input_layout_desc,
+            .NumElements = input_layout_desc.len,
+        };
+        pso_desc.RTVFormats[0] = .R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.BlendState.RenderTarget[0].RenderTargetWriteMask = 0xf;
+        pso_desc.PrimitiveTopologyType = .TRIANGLE;
+        pso_desc.DSVFormat = .D32_FLOAT;
+
+        if (!barycentrics_supported) {
+            break :blk gctx.createGraphicsShaderPipelineVsGsPs(
+                arena_allocator,
+                &pso_desc,
+                content_dir ++ "shaders/simple_entity.vs.cso",
+                content_dir ++ "shaders/simple_entity.gs.cso",
+                content_dir ++ "shaders/simple_entity_with_gs.ps.cso",
+            );
+        } else {
+            break :blk gctx.createGraphicsShaderPipeline(
+                arena_allocator,
+                &pso_desc,
+                content_dir ++ "shaders/simple_entity.vs.cso",
+                content_dir ++ "shaders/simple_entity.ps.cso",
+            );
+        }
+    };
 
     var mesh_indices = std.ArrayList(u16).init(arena_allocator);
     var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
@@ -172,6 +221,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .gctx = gctx,
         .guir = guir,
         .frame_stats = common.FrameStats.init(),
+        .simple_entity_pso = simple_entity_pso,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .depth_texture = depth_texture,
@@ -280,7 +330,6 @@ fn draw(demo: *DemoState) void {
         200.0,
     );
     const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
-    _ = cam_world_to_clip;
 
     gctx.beginFrame();
 
@@ -301,6 +350,41 @@ fn draw(demo: *DemoState) void {
         null,
     );
     gctx.cmdlist.ClearDepthStencilView(demo.depth_texture_dsv, d3d12.CLEAR_FLAG_DEPTH, 1.0, 0, 0, null);
+
+    gctx.cmdlist.IASetVertexBuffers(0, 1, &[_]d3d12.VERTEX_BUFFER_VIEW{.{
+        .BufferLocation = gctx.lookupResource(demo.vertex_buffer).?.GetGPUVirtualAddress(),
+        .SizeInBytes = @intCast(u32, gctx.getResourceSize(demo.vertex_buffer)),
+        .StrideInBytes = @sizeOf(Pso_Vertex),
+    }});
+    gctx.cmdlist.IASetIndexBuffer(&.{
+        .BufferLocation = gctx.lookupResource(demo.index_buffer).?.GetGPUVirtualAddress(),
+        .SizeInBytes = @intCast(u32, gctx.getResourceSize(demo.index_buffer)),
+        .Format = .R16_UINT,
+    });
+    gctx.cmdlist.IASetPrimitiveTopology(.TRIANGLELIST);
+
+    gctx.setCurrentPipeline(demo.simple_entity_pso);
+
+    // Upload per-frame constant data (camera xform).
+    {
+        const mem = gctx.allocateUploadMemory(Pso_FrameConst, 1);
+
+        zm.storeMat(mem.cpu_slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+        mem.cpu_slice[0].camera_position = demo.camera.position;
+
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
+    }
+
+    {
+        const object_to_world = zm.identity();
+        const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
+
+        zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
+        mem.cpu_slice[0].basecolor_roughness = .{ 0.0, 0.7, 0.0, 0.6 };
+
+        gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
+        gctx.cmdlist.DrawIndexedInstanced(36, 1, 0, 0, 0);
+    }
 
     demo.guir.draw(gctx);
 
