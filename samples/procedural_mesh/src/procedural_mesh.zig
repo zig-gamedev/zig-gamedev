@@ -38,6 +38,13 @@ const Pso_Vertex = struct {
     normal: [3]f32,
 };
 
+const Mesh = struct {
+    index_offset: u32,
+    vertex_offset: i32,
+    num_indices: u32,
+    num_vertices: u32,
+};
+
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
     guir: GuiRenderer,
@@ -51,11 +58,13 @@ const DemoState = struct {
     depth_texture: zd3d12.ResourceHandle,
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
+    meshes: std.ArrayList(Mesh),
+
     camera: struct {
-        position: [3]f32 = .{ -10.0, 5.0, -10.0 },
+        position: [3]f32 = .{ 0.0, 0.0, -3.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
-        pitch: f32 = 0.15 * math.pi,
-        yaw: f32 = 0.25 * math.pi,
+        pitch: f32 = 0.0,
+        yaw: f32 = 0.0,
     } = .{},
     mouse: struct {
         cursor_prev_x: i32 = 0,
@@ -119,19 +128,28 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         }
     };
 
+    var meshes = std.ArrayList(Mesh).init(allocator);
     var mesh_indices = std.ArrayList(u16).init(arena_allocator);
     var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
     var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
 
     {
-        var cube = zmesh.initCube();
-        defer cube.deinit();
-        cube.unweld();
-        cube.computeNormals();
+        var mesh = zmesh.initTrefoilKnot(10, 128, 0.8);
+        defer mesh.deinit();
+        mesh.rotate(math.pi * 0.5, &.{ 1, 0, 0 });
+        mesh.unweld();
+        mesh.computeNormals();
 
-        mesh_indices.appendSlice(cube.indices) catch unreachable;
-        mesh_positions.appendSlice(cube.positions) catch unreachable;
-        mesh_normals.appendSlice(cube.normals.?) catch unreachable;
+        meshes.append(.{
+            .index_offset = @intCast(u32, mesh_indices.items.len),
+            .vertex_offset = @intCast(i32, mesh_positions.items.len),
+            .num_indices = @intCast(u32, mesh.indices.len),
+            .num_vertices = @intCast(u32, mesh.positions.len),
+        }) catch unreachable;
+
+        mesh_indices.appendSlice(mesh.indices) catch unreachable;
+        mesh_positions.appendSlice(mesh.positions) catch unreachable;
+        mesh_normals.appendSlice(mesh.normals.?) catch unreachable;
     }
 
     const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);
@@ -226,11 +244,13 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .index_buffer = index_buffer,
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
+        .meshes = meshes,
     };
 }
 
 fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
+    demo.meshes.deinit();
     demo.guir.deinit(&demo.gctx);
     demo.gctx.deinit(allocator);
     common.deinitWindow(allocator);
@@ -288,7 +308,7 @@ fn update(demo: *DemoState) void {
 
     // Handle camera movement with 'WASD' keys.
     {
-        const speed = zm.f32x4s(10.0);
+        const speed = zm.f32x4s(2.0);
         const delta_time = zm.f32x4s(demo.frame_stats.delta_time);
         const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
@@ -383,7 +403,14 @@ fn draw(demo: *DemoState) void {
         mem.cpu_slice[0].basecolor_roughness = .{ 0.0, 0.7, 0.0, 0.6 };
 
         gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
-        gctx.cmdlist.DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+        gctx.cmdlist.DrawIndexedInstanced(
+            demo.meshes.items[0].num_indices,
+            1,
+            demo.meshes.items[0].index_offset,
+            demo.meshes.items[0].vertex_offset,
+            0,
+        );
     }
 
     demo.guir.draw(gctx);
