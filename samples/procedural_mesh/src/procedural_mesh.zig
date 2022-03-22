@@ -45,6 +45,12 @@ const Mesh = struct {
     num_vertices: u32,
 };
 
+const Drawable = struct {
+    mesh_index: u32,
+    position: [3]f32,
+    basecolor_roughness: [4]f32,
+};
+
 const DemoState = struct {
     gctx: zd3d12.GraphicsContext,
     guir: GuiRenderer,
@@ -59,6 +65,7 @@ const DemoState = struct {
     depth_texture_dsv: d3d12.CPU_DESCRIPTOR_HANDLE,
 
     meshes: std.ArrayList(Mesh),
+    drawables: std.ArrayList(Drawable),
 
     camera: struct {
         position: [3]f32 = .{ 0.0, 0.0, -3.0 },
@@ -71,6 +78,62 @@ const DemoState = struct {
         cursor_prev_y: i32 = 0,
     } = .{},
 };
+
+fn appendMesh(
+    mesh: zmesh.Mesh,
+    meshes: *std.ArrayList(Mesh),
+    meshes_indices: *std.ArrayList(u16),
+    meshes_positions: *std.ArrayList([3]f32),
+    meshes_normals: *std.ArrayList([3]f32),
+) void {
+    meshes.append(.{
+        .index_offset = @intCast(u32, meshes_indices.items.len),
+        .vertex_offset = @intCast(i32, meshes_positions.items.len),
+        .num_indices = @intCast(u32, mesh.indices.len),
+        .num_vertices = @intCast(u32, mesh.positions.len),
+    }) catch unreachable;
+
+    meshes_indices.appendSlice(mesh.indices) catch unreachable;
+    meshes_positions.appendSlice(mesh.positions) catch unreachable;
+    meshes_normals.appendSlice(mesh.normals.?) catch unreachable;
+}
+
+fn initScene(
+    drawables: *std.ArrayList(Drawable),
+    meshes: *std.ArrayList(Mesh),
+    meshes_indices: *std.ArrayList(u16),
+    meshes_positions: *std.ArrayList([3]f32),
+    meshes_normals: *std.ArrayList([3]f32),
+) void {
+    {
+        var mesh = zmesh.initTrefoilKnot(10, 128, 0.8);
+        defer mesh.deinit();
+        mesh.rotate(math.pi * 0.5, &.{ 1, 0, 0 });
+        mesh.unweld();
+        mesh.computeNormals();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ 0, 0, 0 },
+            .basecolor_roughness = .{ 0.0, 0.7, 0.0, 0.6 },
+        }) catch unreachable;
+
+        appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    {
+        var mesh = zmesh.initParametricSphere(20, 20);
+        defer mesh.deinit();
+        mesh.rotate(math.pi * 0.5, &.{ 1, 0, 0 });
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ 3, 0, 0 },
+            .basecolor_roughness = .{ 0.7, 0.0, 0.0, 0.4 },
+        }) catch unreachable;
+
+        appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+}
 
 fn init(allocator: std.mem.Allocator) !DemoState {
     const window = try common.initWindow(allocator, window_name, window_width, window_height);
@@ -128,37 +191,20 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         }
     };
 
+    var drawables = std.ArrayList(Drawable).init(allocator);
     var meshes = std.ArrayList(Mesh).init(allocator);
-    var mesh_indices = std.ArrayList(u16).init(arena_allocator);
-    var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
-    var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
+    var meshes_indices = std.ArrayList(u16).init(arena_allocator);
+    var meshes_positions = std.ArrayList([3]f32).init(arena_allocator);
+    var meshes_normals = std.ArrayList([3]f32).init(arena_allocator);
+    initScene(&drawables, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
 
-    {
-        var mesh = zmesh.initTrefoilKnot(10, 128, 0.8);
-        defer mesh.deinit();
-        mesh.rotate(math.pi * 0.5, &.{ 1, 0, 0 });
-        mesh.unweld();
-        mesh.computeNormals();
-
-        meshes.append(.{
-            .index_offset = @intCast(u32, mesh_indices.items.len),
-            .vertex_offset = @intCast(i32, mesh_positions.items.len),
-            .num_indices = @intCast(u32, mesh.indices.len),
-            .num_vertices = @intCast(u32, mesh.positions.len),
-        }) catch unreachable;
-
-        mesh_indices.appendSlice(mesh.indices) catch unreachable;
-        mesh_positions.appendSlice(mesh.positions) catch unreachable;
-        mesh_normals.appendSlice(mesh.normals.?) catch unreachable;
-    }
-
-    const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);
-    const mesh_num_indices = @intCast(u32, mesh_indices.items.len);
+    const num_vertices = @intCast(u32, meshes_positions.items.len);
+    const num_indices = @intCast(u32, meshes_indices.items.len);
 
     const vertex_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(mesh_num_vertices * @sizeOf(Pso_Vertex)),
+        &d3d12.RESOURCE_DESC.initBuffer(num_vertices * @sizeOf(Pso_Vertex)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -166,7 +212,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const index_buffer = gctx.createCommittedResource(
         .DEFAULT,
         d3d12.HEAP_FLAG_NONE,
-        &d3d12.RESOURCE_DESC.initBuffer(mesh_num_indices * @sizeOf(u16)),
+        &d3d12.RESOURCE_DESC.initBuffer(num_indices * @sizeOf(u16)),
         d3d12.RESOURCE_STATE_COPY_DEST,
         null,
     ) catch |err| hrPanic(err);
@@ -201,10 +247,10 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Fill vertex buffer with vertex data.
     {
-        const verts = gctx.allocateUploadBufferRegion(Pso_Vertex, mesh_num_vertices);
-        for (mesh_positions.items) |_, i| {
-            verts.cpu_slice[i].position = mesh_positions.items[i];
-            verts.cpu_slice[i].normal = mesh_normals.items[i];
+        const verts = gctx.allocateUploadBufferRegion(Pso_Vertex, num_vertices);
+        for (meshes_positions.items) |_, i| {
+            verts.cpu_slice[i].position = meshes_positions.items[i];
+            verts.cpu_slice[i].normal = meshes_normals.items[i];
         }
 
         gctx.cmdlist.CopyBufferRegion(
@@ -218,9 +264,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     // Fill index buffer with index data.
     {
-        const indices = gctx.allocateUploadBufferRegion(u16, mesh_num_indices);
-        for (mesh_indices.items) |_, i| {
-            indices.cpu_slice[i] = mesh_indices.items[i];
+        const indices = gctx.allocateUploadBufferRegion(u16, num_indices);
+        for (meshes_indices.items) |_, i| {
+            indices.cpu_slice[i] = meshes_indices.items[i];
         }
 
         gctx.cmdlist.CopyBufferRegion(
@@ -245,12 +291,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         .depth_texture = depth_texture,
         .depth_texture_dsv = depth_texture_dsv,
         .meshes = meshes,
+        .drawables = drawables,
     };
 }
 
 fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     demo.gctx.finishGpuCommands();
     demo.meshes.deinit();
+    demo.drawables.deinit();
     demo.guir.deinit(&demo.gctx);
     demo.gctx.deinit(allocator);
     common.deinitWindow(allocator);
@@ -365,7 +413,7 @@ fn draw(demo: *DemoState) void {
     );
     gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.0, 0.0, 0.0, 1.0 },
+        &[4]f32{ 0.2, 0.2, 0.2, 1.0 },
         0,
         null,
     );
@@ -395,20 +443,19 @@ fn draw(demo: *DemoState) void {
         gctx.cmdlist.SetGraphicsRootConstantBufferView(1, mem.gpu_base);
     }
 
-    {
-        const object_to_world = zm.identity();
+    for (demo.drawables.items) |drawable| {
         const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
 
+        const object_to_world = zm.translationV(zm.load(drawable.position[0..], zm.Vec, 3));
         zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
-        mem.cpu_slice[0].basecolor_roughness = .{ 0.0, 0.7, 0.0, 0.6 };
+        mem.cpu_slice[0].basecolor_roughness = drawable.basecolor_roughness;
 
         gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
-
         gctx.cmdlist.DrawIndexedInstanced(
-            demo.meshes.items[0].num_indices,
+            demo.meshes.items[drawable.mesh_index].num_indices,
             1,
-            demo.meshes.items[0].index_offset,
-            demo.meshes.items[0].vertex_offset,
+            demo.meshes.items[drawable.mesh_index].index_offset,
+            demo.meshes.items[drawable.mesh_index].vertex_offset,
             0,
         );
     }
