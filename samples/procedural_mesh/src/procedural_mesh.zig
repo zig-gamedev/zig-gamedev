@@ -68,9 +68,9 @@ const DemoState = struct {
     drawables: std.ArrayList(Drawable),
 
     camera: struct {
-        position: [3]f32 = .{ 0.0, 0.0, -3.0 },
+        position: [3]f32 = .{ 0.0, 3.0, -3.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
-        pitch: f32 = 0.0,
+        pitch: f32 = 0.15 * math.pi,
         yaw: f32 = 0.0,
     } = .{},
     mouse: struct {
@@ -105,7 +105,7 @@ fn initScene(
     meshes_positions: *std.ArrayList([3]f32),
     meshes_normals: *std.ArrayList([3]f32),
 ) void {
-    // Trefoil Knot.
+    // Trefoil knot.
     {
         var mesh = zmesh.initTrefoilKnot(10, 128, 0.8);
         defer mesh.deinit();
@@ -121,7 +121,7 @@ fn initScene(
 
         appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
     }
-    // Parametric Sphere.
+    // Parametric sphere.
     {
         var mesh = zmesh.initParametricSphere(20, 20);
         defer mesh.deinit();
@@ -130,7 +130,7 @@ fn initScene(
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
             .position = .{ 3, 0, 0 },
-            .basecolor_roughness = .{ 0.7, 0.0, 0.0, 0.4 },
+            .basecolor_roughness = .{ 0.7, 0.0, 0.0, 0.2 },
         }) catch unreachable;
 
         appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
@@ -160,7 +160,7 @@ fn initScene(
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
             .position = .{ 0, 0, 3 },
-            .basecolor_roughness = .{ 0.0, 0.2, 1.0, 0.4 },
+            .basecolor_roughness = .{ 0.0, 0.1, 1.0, 0.2 },
         }) catch unreachable;
 
         appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
@@ -188,10 +188,66 @@ fn initScene(
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
             .position = .{ -3, 0, 3 },
-            .basecolor_roughness = .{ 1.0, 0.0, 0.0, 0.4 },
+            .basecolor_roughness = .{ 1.0, 0.0, 0.0, 0.3 },
         }) catch unreachable;
 
         appendMesh(cylinder, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Torus.
+    {
+        var mesh = zmesh.initTorus(10, 20, 0.2);
+        defer mesh.deinit();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ 3, 0, 3 },
+            .basecolor_roughness = .{ 1.0, 0.5, 0.0, 0.2 },
+        }) catch unreachable;
+
+        appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Subdivided sphere.
+    {
+        var mesh = zmesh.initSubdividedSphere(3);
+        defer mesh.deinit();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ 3, 0, 6 },
+            .basecolor_roughness = .{ 0.0, 1.0, 0.0, 0.2 },
+        }) catch unreachable;
+
+        appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Tetrahedron.
+    {
+        var mesh = zmesh.initTetrahedron();
+        defer mesh.deinit();
+        mesh.unweld();
+        mesh.computeNormals();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ 0, 0, 6 },
+            .basecolor_roughness = .{ 1.0, 0.0, 1.0, 0.2 },
+        }) catch unreachable;
+
+        appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Octahedron.
+    {
+        var mesh = zmesh.initOctahedron();
+        defer mesh.deinit();
+        mesh.unweld();
+        mesh.computeNormals();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ -3, 0, 6 },
+            .basecolor_roughness = .{ 0.0, 1.0, 1.0, 0.2 },
+        }) catch unreachable;
+
+        appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
     }
 }
 
