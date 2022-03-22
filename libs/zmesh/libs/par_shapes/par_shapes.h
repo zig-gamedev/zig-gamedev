@@ -1832,6 +1832,13 @@ par_shapes_mesh* par_shapes_weld(par_shapes_mesh const* mesh, float epsilon,
     PAR_FREE(sortmap);
     par_shapes_scale(clone, 1.0 / scale[0], 1.0 / scale[1], 1.0 / scale[2]);
     par_shapes_translate(clone, aabb[0], aabb[1], aabb[2]);
+
+    // NOTE(mziulek): This operation invalidates 'normals' and 'tcoords'.
+    PAR_FREE(clone->normals);
+    clone->normals = 0;
+    PAR_FREE(clone->tcoords);
+    clone->tcoords = 0;
+
     return clone;
 }
 

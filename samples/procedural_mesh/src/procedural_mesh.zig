@@ -19,7 +19,7 @@ pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const content_dir = @import("build_options").content_dir;
 
-const window_name = "zig-gamedev: procedural mesh";
+const window_name = "zig-gamedev: procedural mesh (WIP)";
 const window_width = 1920;
 const window_height = 1080;
 
