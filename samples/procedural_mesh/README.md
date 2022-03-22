@@ -1,1 +1,3 @@
-## procedural mesh (wip)
+## procedural mesh
+
+![image](screenshot.png)

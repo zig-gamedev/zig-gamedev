@@ -13,13 +13,14 @@ const GuiRenderer = common.GuiRenderer;
 const c = common.c;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
+const znoise = @import("znoise");
 
 pub export const D3D12SDKVersion: u32 = 4;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
 
 const content_dir = @import("build_options").content_dir;
 
-const window_name = "zig-gamedev: procedural mesh (WIP)";
+const window_name = "zig-gamedev: procedural mesh";
 const window_width = 1920;
 const window_height = 1080;
 
@@ -68,7 +69,7 @@ const DemoState = struct {
     drawables: std.ArrayList(Drawable),
 
     camera: struct {
-        position: [3]f32 = .{ 0.0, 3.0, -3.0 },
+        position: [3]f32 = .{ 0.0, 4.0, -4.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
         pitch: f32 = 0.15 * math.pi,
         yaw: f32 = 0.0,
@@ -115,7 +116,7 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ 0, 0, 0 },
+            .position = .{ 0, 1, 0 },
             .basecolor_roughness = .{ 0.0, 0.7, 0.0, 0.6 },
         }) catch unreachable;
 
@@ -129,7 +130,7 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ 3, 0, 0 },
+            .position = .{ 3, 1, 0 },
             .basecolor_roughness = .{ 0.7, 0.0, 0.0, 0.2 },
         }) catch unreachable;
 
@@ -144,7 +145,7 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ -3, 0, 0 },
+            .position = .{ -3, 1, 0 },
             .basecolor_roughness = .{ 0.7, 0.6, 0.0, 0.4 },
         }) catch unreachable;
 
@@ -159,7 +160,7 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ 0, 0, 3 },
+            .position = .{ 0, 1, 3 },
             .basecolor_roughness = .{ 0.0, 0.1, 1.0, 0.2 },
         }) catch unreachable;
 
@@ -200,7 +201,7 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ 3, 0, 3 },
+            .position = .{ 3, 1.5, 3 },
             .basecolor_roughness = .{ 1.0, 0.5, 0.0, 0.2 },
         }) catch unreachable;
 
@@ -213,7 +214,7 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ 3, 0, 6 },
+            .position = .{ 3, 1, 6 },
             .basecolor_roughness = .{ 0.0, 1.0, 0.0, 0.2 },
         }) catch unreachable;
 
@@ -228,7 +229,7 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ 0, 0, 6 },
+            .position = .{ 0, 0.5, 6 },
             .basecolor_roughness = .{ 1.0, 0.0, 1.0, 0.2 },
         }) catch unreachable;
 
@@ -243,11 +244,55 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ -3, 0, 6 },
-            .basecolor_roughness = .{ 0.0, 1.0, 1.0, 0.2 },
+            .position = .{ -3, 1, 6 },
+            .basecolor_roughness = .{ 0.2, 0.0, 1.0, 0.2 },
         }) catch unreachable;
 
         appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Rock.
+    {
+        var rock = zmesh.initRock(123, 4);
+        defer rock.deinit();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ -6, 0, 0 },
+            .basecolor_roughness = .{ 1.0, 1.0, 1.0, 1.0 },
+        }) catch unreachable;
+
+        appendMesh(rock, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Custom parametric (simple terrain).
+    {
+        const gen = znoise.FnlGenerator{
+            .fractal_type = .fbm,
+            .frequency = 2.0,
+            .octaves = 5,
+            .lacunarity = 2.02,
+        };
+        const local = struct {
+            fn terrain(uv: *const [2]f32, position: *[3]f32, userdata: ?*anyopaque) callconv(.C) void {
+                _ = userdata;
+                position[0] = uv[0];
+                position[1] = 0.025 * gen.noise2(uv[0], uv[1]);
+                position[2] = uv[1];
+            }
+        };
+        var ground = zmesh.initParametric(local.terrain, 40, 40, null);
+        defer ground.deinit();
+        ground.translate(-0.5, -0.0, -0.5);
+        ground.invert(0, 0);
+        ground.scale(20, 20, 20);
+        ground.computeNormals();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ 0, 0, 0 },
+            .basecolor_roughness = .{ 0.1, 0.1, 0.1, 1.0 },
+        }) catch unreachable;
+
+        appendMesh(ground, meshes, meshes_indices, meshes_positions, meshes_normals);
     }
 }
 
@@ -527,7 +572,7 @@ fn draw(demo: *DemoState) void {
     );
     gctx.cmdlist.ClearRenderTargetView(
         back_buffer.descriptor_handle,
-        &[4]f32{ 0.2, 0.2, 0.2, 1.0 },
+        &[4]f32{ 0.2, 0.4, 0.8, 1.0 },
         0,
         null,
     );

@@ -76,6 +76,13 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(zmesh_pkg);
     @import("../../libs/zmesh/build.zig").link(b, exe);
 
+    const znoise_pkg = std.build.Pkg{
+        .name = "znoise",
+        .path = .{ .path = thisDir() ++ "/../../libs/znoise/src/znoise.zig" },
+    };
+    exe.addPackage(znoise_pkg);
+    @import("../../libs/znoise/build.zig").link(b, exe);
+
     const common_pkg = std.build.Pkg{
         .name = "common",
         .path = .{ .path = thisDir() ++ "/../../libs/common/src/common.zig" },
