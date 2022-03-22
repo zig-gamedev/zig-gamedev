@@ -12,6 +12,7 @@ This repository contains a collection of [sample applications](#sample-applicati
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers (**cross-platform**)
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) (**cross-platform**)
+* [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - Zig bindings for [par_shapes](https://github.com/prideout/par/blob/master/par_shapes.h) (**cross-platform**)
 * [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) (**cross-platform**)
 * [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API
 * [zd3d12](https://github.com/michal-z/zig-gamedev/blob/main/libs/zd3d12) - helper library for working with DirectX 12

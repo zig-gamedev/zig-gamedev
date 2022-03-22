@@ -1,4 +1,6 @@
-# zmesh - Zig bindings for par_shapes 
+# zmesh - Zig bindings for par_shapes
+
+As an example programs see [procedural mesh](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh).
 
 ## Getting started
 
