@@ -27,6 +27,9 @@ const zmesh = @import("zmesh");
 
 pub fn main() !void {
     ...
+    zmesh.init(allocator);
+    defer zmesh.deinit();
+
     var disk = zmesh.initParametricDisk(10, 2);
     defer disk.deinit();
     disk.invert(0, 0);
@@ -44,5 +47,6 @@ pub fn main() !void {
 
     cylinder.unweld();
     cylinder.computeNormals();
+    ...
 }
 ```
