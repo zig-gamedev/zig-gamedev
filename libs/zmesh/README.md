@@ -1,4 +1,4 @@
-# zmesh - Zig bindings for par_shapes
+# zmesh - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h)
 
 As an example programs see [procedural mesh](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh).
 
@@ -27,7 +27,22 @@ const zmesh = @import("zmesh");
 
 pub fn main() !void {
     ...
-    const mesh = try zmesh.initCylinder(10, 10);
-    mesh.saveToObj("cylinder.obj");
+    var disk = zmesh.initParametricDisk(10, 2);
+    defer disk.deinit();
+    disk.invert(0, 0);
+
+    var cylinder = zmesh.initCylinder(10, 4);
+    defer cylinder.deinit();
+
+    cylinder.merge(disk);
+    cylinder.translate(0, 0, -1);
+    disk.invert(0, 0);
+    cylinder.merge(disk);
+
+    cylinder.scale(0.5, 0.5, 2);
+    cylinder.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
+
+    cylinder.unweld();
+    cylinder.computeNormals();
 }
 ```
