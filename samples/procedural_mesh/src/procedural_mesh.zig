@@ -105,10 +105,11 @@ fn initScene(
     meshes_positions: *std.ArrayList([3]f32),
     meshes_normals: *std.ArrayList([3]f32),
 ) void {
+    // Trefoil Knot.
     {
         var mesh = zmesh.initTrefoilKnot(10, 128, 0.8);
         defer mesh.deinit();
-        mesh.rotate(math.pi * 0.5, &.{ 1, 0, 0 });
+        mesh.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
         mesh.unweld();
         mesh.computeNormals();
 
@@ -120,10 +121,11 @@ fn initScene(
 
         appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
     }
+    // Parametric Sphere.
     {
         var mesh = zmesh.initParametricSphere(20, 20);
         defer mesh.deinit();
-        mesh.rotate(math.pi * 0.5, &.{ 1, 0, 0 });
+        mesh.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
@@ -132,6 +134,64 @@ fn initScene(
         }) catch unreachable;
 
         appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Icosahedron.
+    {
+        var mesh = zmesh.initIcosahedron();
+        defer mesh.deinit();
+        mesh.unweld();
+        mesh.computeNormals();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ -3, 0, 0 },
+            .basecolor_roughness = .{ 0.7, 0.6, 0.0, 0.4 },
+        }) catch unreachable;
+
+        appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Dodecahedron.
+    {
+        var mesh = zmesh.initDodecahedron();
+        defer mesh.deinit();
+        mesh.unweld();
+        mesh.computeNormals();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ 0, 0, 3 },
+            .basecolor_roughness = .{ 0.0, 0.2, 1.0, 0.4 },
+        }) catch unreachable;
+
+        appendMesh(mesh, meshes, meshes_indices, meshes_positions, meshes_normals);
+    }
+    // Cylinder with top and bottom caps.
+    {
+        var disk = zmesh.initParametricDisk(10, 4);
+        defer disk.deinit();
+        disk.invert(0, 0);
+
+        var cylinder = zmesh.initCylinder(10, 4);
+        defer cylinder.deinit();
+
+        cylinder.merge(disk);
+        cylinder.translate(0, 0, -1);
+        disk.invert(0, 0);
+        cylinder.merge(disk);
+
+        cylinder.scale(0.5, 0.5, 2);
+        cylinder.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
+
+        cylinder.unweld();
+        cylinder.computeNormals();
+
+        drawables.append(.{
+            .mesh_index = @intCast(u32, meshes.items.len),
+            .position = .{ -3, 0, 3 },
+            .basecolor_roughness = .{ 1.0, 0.0, 0.0, 0.4 },
+        }) catch unreachable;
+
+        appendMesh(cylinder, meshes, meshes_indices, meshes_positions, meshes_normals);
     }
 }
 

@@ -152,8 +152,8 @@ pub const Mesh = struct {
     }
     extern fn par_shapes_translate(mesh: MeshHandle, x: f32, y: f32, z: f32) void;
 
-    pub fn rotate(mesh: *Mesh, radians: f32, axis: *const [3]f32) void {
-        par_shapes_rotate(mesh.handle, radians, axis);
+    pub fn rotate(mesh: *Mesh, radians: f32, x: f32, y: f32, z: f32) void {
+        par_shapes_rotate(mesh.handle, radians, &.{ x, y, z });
         mesh.* = initMesh(mesh.handle);
     }
     extern fn par_shapes_rotate(
@@ -361,7 +361,7 @@ extern fn par_shapes_create_parametric(
     userdata: ?*anyopaque,
 ) MeshHandle;
 
-const save = true;
+const save = false;
 
 test "zmesh.basic" {
     init(std.testing.allocator);
