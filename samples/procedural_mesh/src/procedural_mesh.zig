@@ -167,7 +167,7 @@ fn initScene(
     }
     // Cylinder with top and bottom caps.
     {
-        var disk = zmesh.initParametricDisk(10, 4);
+        var disk = zmesh.initParametricDisk(10, 2);
         defer disk.deinit();
         disk.invert(0, 0);
 
@@ -203,8 +203,6 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     const arena_allocator = arena_allocator_state.allocator();
 
     var gctx = zd3d12.GraphicsContext.init(allocator, window);
-    gctx.present_flags = 0;
-    gctx.present_interval = 1;
 
     const barycentrics_supported = blk: {
         var options3: d3d12.FEATURE_DATA_D3D12_OPTIONS3 = undefined;
