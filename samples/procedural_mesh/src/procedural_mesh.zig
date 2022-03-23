@@ -100,12 +100,20 @@ fn appendMesh(
 }
 
 fn initScene(
+    allocator: std.mem.Allocator,
     drawables: *std.ArrayList(Drawable),
     meshes: *std.ArrayList(Mesh),
     meshes_indices: *std.ArrayList(u16),
     meshes_positions: *std.ArrayList([3]f32),
     meshes_normals: *std.ArrayList([3]f32),
 ) void {
+    var arena_allocator_state = std.heap.ArenaAllocator.init(allocator);
+    defer arena_allocator_state.deinit();
+    const arena_allocator = arena_allocator_state.allocator();
+
+    zmesh.init(arena_allocator);
+    defer zmesh.deinit();
+
     // Trefoil knot.
     {
         var mesh = zmesh.initTrefoilKnot(10, 128, 0.8);
@@ -257,7 +265,7 @@ fn initScene(
 
         drawables.append(.{
             .mesh_index = @intCast(u32, meshes.items.len),
-            .position = .{ -6, 0, 0 },
+            .position = .{ -6, 0, 3 },
             .basecolor_roughness = .{ 1.0, 1.0, 1.0, 1.0 },
         }) catch unreachable;
 
@@ -355,7 +363,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var meshes_indices = std.ArrayList(u16).init(arena_allocator);
     var meshes_positions = std.ArrayList([3]f32).init(arena_allocator);
     var meshes_normals = std.ArrayList([3]f32).init(arena_allocator);
-    initScene(&drawables, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
+    initScene(allocator, &drawables, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
 
     const num_vertices = @intCast(u32, meshes_positions.items.len);
     const num_indices = @intCast(u32, meshes_indices.items.len);
@@ -635,9 +643,6 @@ pub fn main() !void {
     defer _ = gpa.deinit();
 
     const allocator = gpa.allocator();
-
-    zmesh.init(allocator);
-    defer zmesh.deinit();
 
     var demo = try init(allocator);
     defer deinit(&demo, allocator);

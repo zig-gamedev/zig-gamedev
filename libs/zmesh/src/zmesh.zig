@@ -98,7 +98,6 @@ pub fn init(alloc: std.mem.Allocator) void {
 }
 
 pub fn deinit() void {
-    std.debug.assert(allocations.?.count() == 0);
     allocations.?.deinit();
     allocations = null;
     allocator = null;
@@ -330,15 +329,6 @@ pub fn initRock(seed: i32, num_subdivisions: i32) Mesh {
     return initMesh(par_shapes_create_rock(seed, num_subdivisions));
 }
 extern fn par_shapes_create_rock(seed: i32, num_subdivisions: i32) MeshHandle;
-
-pub fn initLSystem(program: [*:0]const u8, slices: i32, maxdepth: i32) Mesh {
-    return initMesh(par_shapes_create_lsystem(program, slices, maxdepth));
-}
-extern fn par_shapes_create_lsystem(
-    program: [*:0]const u8,
-    slices: i32,
-    maxdepth: i32,
-) MeshHandle;
 
 pub const UvToPositionFn = fn (
     uv: *const [2]f32,

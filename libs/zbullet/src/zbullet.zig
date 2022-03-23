@@ -51,7 +51,6 @@ pub fn init(alloc: std.mem.Allocator) void {
 }
 
 pub fn deinit() void {
-    std.debug.assert(allocations.?.count() == 0);
     allocations.?.deinit();
     allocations = null;
     allocator = null;
