@@ -1,6 +1,6 @@
 # zmesh - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h)
 
-As an example programs see [procedural mesh](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh).
+As an example program see [procedural mesh](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh).
 
 ## Getting started
 
