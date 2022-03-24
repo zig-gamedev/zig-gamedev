@@ -453,7 +453,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             @ptrCast(*i32, &width),
             @ptrCast(*i32, &height),
             null,
-            3,
+            4,
         );
         assert(image_data != null and width > 0 and height > 0);
 
@@ -461,7 +461,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .resource = gctx.createCommittedResource(
                 .DEFAULT,
                 d3d12.HEAP_FLAG_NONE,
-                &d3d12.RESOURCE_DESC.initTex2d(.R32G32B32_FLOAT, width, height, 1),
+                &d3d12.RESOURCE_DESC.initTex2d(.R32G32B32A32_FLOAT, width, height, 1),
                 d3d12.RESOURCE_STATE_COPY_DEST,
                 null,
             ) catch |err| hrPanic(err),
@@ -476,8 +476,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         gctx.updateTex2dSubresource(
             equirect_texture.resource,
             0,
-            std.mem.sliceAsBytes(image_data[0 .. width * height * 3]),
-            width * @sizeOf(f32) * 3,
+            std.mem.sliceAsBytes(image_data[0 .. width * height * 4]),
+            width * @sizeOf(f32) * 4,
         );
         c.stbi_image_free(image_data);
 
