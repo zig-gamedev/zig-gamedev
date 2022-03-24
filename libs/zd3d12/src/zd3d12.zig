@@ -48,7 +48,7 @@ pub const GraphicsContext = struct {
     const num_cbv_srv_uav_cpu_descriptors = 16 * 1024;
     const num_cbv_srv_uav_gpu_descriptors = 8 * 1024;
     const max_num_buffered_resource_barriers = 16;
-    const upload_heap_capacity = 18 * 1024 * 1024;
+    const upload_heap_capacity = 24 * 1024 * 1024;
 
     device: *d3d12.IDevice9,
     cmdqueue: *d3d12.ICommandQueue,
