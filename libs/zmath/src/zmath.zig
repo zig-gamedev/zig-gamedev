@@ -204,6 +204,13 @@
 // quatFromRollPitchYawV(angles: Vec) Quat
 //
 // ------------------------------------------------------------------------------
+// 6. Color functions
+// ------------------------------------------------------------------------------
+//
+// adjustSaturation(color: F32x4, saturation: f32) F32x4
+// adjustContrast(color: F32x4, contrast: f32) F32x4
+//
+// ------------------------------------------------------------------------------
 // X. Misc functions
 // ------------------------------------------------------------------------------
 //
@@ -2818,6 +2825,25 @@ test "zmath.quaternion.quatFromRollPitchYawV" {
         try expect(approxEqAbs(m0[2], m1[2], 0.0001));
         try expect(approxEqAbs(m0[3], m1[3], 0.0001));
     }
+}
+
+// ------------------------------------------------------------------------------
+//
+// 6. Color functions
+//
+// ------------------------------------------------------------------------------
+
+pub fn adjustSaturation(color: F32x4, saturation: f32) F32x4 {
+    const luminance = dot3(f32x4(0.2125, 0.7154, 0.0721, 0.0), color);
+    var result = mulAdd(color - luminance, f32x4s(saturation), luminance);
+    result[3] = color[3];
+    return result;
+}
+
+pub fn adjustContrast(color: F32x4, contrast: f32) F32x4 {
+    var result = mulAdd(color - f32x4s(0.5), f32x4s(contrast), f32x4s(0.5));
+    result[3] = color[3];
+    return result;
 }
 
 // ------------------------------------------------------------------------------
