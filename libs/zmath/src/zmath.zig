@@ -2978,6 +2978,49 @@ test "zmath.color.hslToRgb" {
     ));
 }
 
+pub fn rgbToHsv(rgb: F32x4) F32x4 {
+    const r = swizzle(rgb, .x, .x, .x, .x);
+    const g = swizzle(rgb, .y, .y, .y, .y);
+    const b = swizzle(rgb, .z, .z, .z, .z);
+
+    const minv = min(r, min(g, b));
+    const v = max(r, max(g, b));
+    const d = v - minv;
+    const s = if (all(isNearEqual(v, f32x4s(0.0), f32x4s(math.f32_epsilon)), 3)) f32x4s(0.0) else d / v;
+
+    if (all(d < f32x4s(math.f32_epsilon), 3)) {
+        const hv = select(boolx4(true, false, false, false), f32x4s(0.0), v);
+        const hva = select(boolx4(true, true, true, false), hv, rgb);
+        return select(boolx4(true, false, true, true), hva, s);
+    } else {
+        var h: F32x4 = undefined;
+        if (all(r == v, 3)) {
+            h = (g - b) / d;
+            if (all(g < b, 3))
+                h += f32x4s(6.0);
+        } else if (all(g == v, 3)) {
+            h = f32x4s(2.0) + (b - r) / d;
+        } else {
+            h = f32x4s(4.0) + (r - g) / d;
+        }
+
+        h /= f32x4s(6.0);
+        const hv = select(boolx4(true, false, false, false), h, v);
+        const hva = select(boolx4(true, true, true, false), hv, rgb);
+        return select(boolx4(true, false, true, true), hva, s);
+    }
+}
+test "zmath.color.rgbToHsv" {
+    try expect(approxEqAbs(rgbToHsv(f32x4(0.2, 0.4, 0.8, 1.0)), f32x4(0.6111, 0.75, 0.8, 1.0), 0.0001));
+    try expect(approxEqAbs(rgbToHsv(f32x4(0.4, 0.2, 0.8, 1.0)), f32x4(0.7222, 0.75, 0.8, 1.0), 0.0001));
+    try expect(approxEqAbs(rgbToHsv(f32x4(0.4, 0.8, 0.2, 1.0)), f32x4(0.2777, 0.75, 0.8, 1.0), 0.0001));
+    try expect(approxEqAbs(rgbToHsv(f32x4(1.0, 0.0, 0.0, 0.5)), f32x4(0.0, 1.0, 1.0, 0.5), 0.0001));
+    try expect(approxEqAbs(rgbToHsv(f32x4(0.0, 1.0, 0.0, 0.25)), f32x4(0.3333, 1.0, 1.0, 0.25), 0.0001));
+    try expect(approxEqAbs(rgbToHsv(f32x4(0.0, 0.0, 1.0, 1.0)), f32x4(0.6666, 1.0, 1.0, 1.0), 0.0001));
+    try expect(approxEqAbs(rgbToHsv(f32x4(0.0, 0.0, 0.0, 1.0)), f32x4(0.0, 0.0, 0.0, 1.0), 0.0001));
+    try expect(approxEqAbs(rgbToHsv(f32x4(1.0, 1.0, 1.0, 1.0)), f32x4(0.0, 0.0, 1.0, 1.0), 0.0001));
+}
+
 // ------------------------------------------------------------------------------
 //
 // X. Misc functions
