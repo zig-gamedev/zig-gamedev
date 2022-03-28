@@ -2,7 +2,7 @@
 
 ## Features
 
-See documentation in the [code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath/zmath.zig).
+See documentation in the [code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath/src/zmath.zig).
 
 Read [intro article](https://github.com/michal-z/zig-gamedev/wiki/Fast,-multi-platform,-SIMD-math-library-in-Zig).
 
@@ -17,7 +17,7 @@ pub fn build(b: *std.build.Builder) void {
     ...
     const zmath_pkg = std.build.Pkg{
         .name = "zmath",
-        .path = .{ .path = "libs/zmath/zmath.zig" },
+        .path = .{ .path = "libs/zmath/src/zmath.zig" },
     };
     exe.addPackage(zmath_pkg);
 }

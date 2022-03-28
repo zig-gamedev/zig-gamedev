@@ -2,18 +2,6 @@ const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
     _ = b;
-    //const tests = b.addTest("src/zbullet.zig");
-    //const zmath = std.build.Pkg{
-    //    .name = "zmath",
-    //    .path = .{ .path = thisDir() ++ "/../zmath/zmath.zig" },
-    //};
-    //tests.addPackage(zmath);
-    //tests.setBuildMode(b.standardReleaseOptions());
-    //tests.setTarget(b.standardTargetOptions(.{}));
-    //link(b, tests);
-
-    //const test_step = b.step("test", "Run library tests");
-    //test_step.dependOn(&tests.step);
 }
 
 pub fn link(b: *std.build.Builder, step: *std.build.LibExeObjStep) void {

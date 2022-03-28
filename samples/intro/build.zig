@@ -53,7 +53,7 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
 
     const zmath_pkg = std.build.Pkg{
         .name = "zmath",
-        .path = .{ .path = thisDir() ++ "/../../libs/zmath/zmath.zig" },
+        .path = .{ .path = thisDir() ++ "/../../libs/zmath/src/zmath.zig" },
     };
     exe.addPackage(zmath_pkg);
 

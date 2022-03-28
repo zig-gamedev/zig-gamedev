@@ -1,22 +1,29 @@
 const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
-    const tests = b.addTest("src/zbullet.zig");
-    const zmath = std.build.Pkg{
-        .name = "zmath",
-        .path = .{ .path = thisDir() ++ "/../zmath/zmath.zig" },
-    };
-    tests.addPackage(zmath);
-    tests.setBuildMode(b.standardReleaseOptions());
-    tests.setTarget(b.standardTargetOptions(.{}));
-    link(b, tests);
+    const build_mode = b.standardReleaseOptions();
+    const target = b.standardTargetOptions(.{});
+    const tests = buildTests(b, build_mode, target);
 
-    const test_step = b.step("test", "Run library tests");
+    const test_step = b.step("test", "Run zbullet tests");
     test_step.dependOn(&tests.step);
 }
 
-fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+pub fn buildTests(
+    b: *std.build.Builder,
+    build_mode: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.build.LibExeObjStep {
+    const tests = b.addTest(thisDir() ++ "/src/zbullet.zig");
+    const zmath = std.build.Pkg{
+        .name = "zmath",
+        .path = .{ .path = thisDir() ++ "/../zmath/src/zmath.zig" },
+    };
+    tests.addPackage(zmath);
+    tests.setBuildMode(build_mode);
+    tests.setTarget(target);
+    link(b, tests);
+    return tests;
 }
 
 fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
@@ -42,4 +49,8 @@ fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.buil
 pub fn link(b: *std.build.Builder, step: *std.build.LibExeObjStep) void {
     const lib = buildLibrary(b, step);
     step.linkLibrary(lib);
+}
+
+fn thisDir() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse ".";
 }

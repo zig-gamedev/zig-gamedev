@@ -451,7 +451,7 @@ fn draw(demo: *DemoState) void {
 
     // Upload per-draw constant data (object to world xform).
     {
-        const object_to_world = zm.translation(0.0, 0.0, 0.0);
+        const object_to_world = zm.identity();
         const mem = gctx.allocateUploadMemory(Pso_DrawConst, 1);
         zm.storeMat(mem.cpu_slice[0].object_to_world[0..], zm.transpose(object_to_world));
         gctx.cmdlist.SetGraphicsRootConstantBufferView(0, mem.gpu_base);
