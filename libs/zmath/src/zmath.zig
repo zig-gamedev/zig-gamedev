@@ -2846,6 +2846,59 @@ pub fn adjustContrast(color: F32x4, contrast: f32) F32x4 {
     return result;
 }
 
+pub fn rgbToHsl(rgb: F32x4) F32x4 {
+    const r = swizzle(rgb, .x, .x, .x, .x);
+    const g = swizzle(rgb, .y, .y, .y, .y);
+    const b = swizzle(rgb, .z, .z, .z, .z);
+
+    const minv = min(r, min(g, b));
+    const maxv = max(r, max(g, b));
+
+    const l = (minv + maxv) * f32x4s(0.5);
+    const d = maxv - minv;
+    const la = select(boolx4(true, true, true, false), l, rgb);
+
+    if (all(d < f32x4s(math.f32_epsilon), 3)) {
+        return select(boolx4(true, true, false, false), f32x4s(0.0), la);
+    } else {
+        var s: F32x4 = undefined;
+        var h: F32x4 = undefined;
+
+        const d2 = minv + maxv;
+
+        if (all(l > f32x4s(0.5), 3)) {
+            s = d / (f32x4s(2.0) - d2);
+        } else {
+            s = d / d2;
+        }
+
+        if (all(r == maxv, 3)) {
+            h = (g - b) / d;
+        } else if (all(g == maxv, 3)) {
+            h = f32x4s(2.0) + (b - r) / d;
+        } else {
+            h = f32x4s(4.0) + (r - g) / d;
+        }
+
+        h /= f32x4s(6.0);
+
+        if (all(h < f32x4s(0.0), 3)) {
+            h += f32x4s(1.0);
+        }
+
+        const lha = select(boolx4(true, true, false, false), h, la);
+        return select(boolx4(true, false, true, true), lha, s);
+    }
+}
+test "zmath.color.rgbToHsl" {
+    try expect(approxEqAbs(rgbToHsl(f32x4(0.2, 0.4, 0.8, 1.0)), f32x4(0.6111, 0.6, 0.5, 1.0), 0.0001));
+    try expect(approxEqAbs(rgbToHsl(f32x4(1.0, 0.0, 0.0, 0.5)), f32x4(0.0, 1.0, 0.5, 0.5), 0.0001));
+    try expect(approxEqAbs(rgbToHsl(f32x4(0.0, 1.0, 0.0, 0.25)), f32x4(0.3333, 1.0, 0.5, 0.25), 0.0001));
+    try expect(approxEqAbs(rgbToHsl(f32x4(0.0, 0.0, 1.0, 1.0)), f32x4(0.6666, 1.0, 0.5, 1.0), 0.0001));
+    try expect(approxEqAbs(rgbToHsl(f32x4(0.0, 0.0, 0.0, 1.0)), f32x4(0.0, 0.0, 0.0, 1.0), 0.0001));
+    try expect(approxEqAbs(rgbToHsl(f32x4(1.0, 1.0, 1.0, 1.0)), f32x4(0.0, 0.0, 1.0, 1.0), 0.0001));
+}
+
 // ------------------------------------------------------------------------------
 //
 // X. Misc functions
