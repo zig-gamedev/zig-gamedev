@@ -209,6 +209,8 @@
 //
 // adjustSaturation(color: F32x4, saturation: f32) F32x4
 // adjustContrast(color: F32x4, contrast: f32) F32x4
+// rgbToHsl(rgb: F32x4) F32x4
+// hslToRgb(hsl: F32x4) F32x4
 //
 // ------------------------------------------------------------------------------
 // X. Misc functions
@@ -437,7 +439,7 @@ pub inline fn isNearEqual(
     v1: anytype,
     epsilon: anytype,
 ) @Vector(veclen(@TypeOf(v0)), bool) {
-    const T = @TypeOf(v0, v1);
+    const T = @TypeOf(v0, v1, epsilon);
     const delta = v0 - v1;
     const temp = maxFast(delta, splat(T, 0.0) - delta);
     return temp <= epsilon;
@@ -2897,6 +2899,83 @@ test "zmath.color.rgbToHsl" {
     try expect(approxEqAbs(rgbToHsl(f32x4(0.0, 0.0, 1.0, 1.0)), f32x4(0.6666, 1.0, 0.5, 1.0), 0.0001));
     try expect(approxEqAbs(rgbToHsl(f32x4(0.0, 0.0, 0.0, 1.0)), f32x4(0.0, 0.0, 0.0, 1.0), 0.0001));
     try expect(approxEqAbs(rgbToHsl(f32x4(1.0, 1.0, 1.0, 1.0)), f32x4(0.0, 0.0, 1.0, 1.0), 0.0001));
+}
+
+fn hueToClr(p: F32x4, q: F32x4, h: F32x4) F32x4 {
+    var t = h;
+
+    if (all(t < f32x4s(0.0), 3))
+        t += f32x4s(1.0);
+
+    if (all(t > f32x4s(1.0), 3))
+        t -= f32x4s(1.0);
+
+    if (all(t < f32x4s(1.0 / 6.0), 3))
+        return mulAdd(q - p, f32x4s(6.0) * t, p);
+
+    if (all(t < f32x4s(0.5), 3))
+        return q;
+
+    if (all(t < f32x4s(2.0 / 3.0), 3))
+        return mulAdd(q - p, f32x4s(6.0) * (f32x4s(2.0 / 3.0) - t), p);
+
+    return p;
+}
+
+pub fn hslToRgb(hsl: F32x4) F32x4 {
+    const s = swizzle(hsl, .y, .y, .y, .y);
+    const l = swizzle(hsl, .z, .z, .z, .z);
+
+    if (all(isNearEqual(s, f32x4s(0.0), f32x4s(math.f32_epsilon)), 3)) {
+        return select(boolx4(true, true, true, false), l, hsl);
+    } else {
+        const h = swizzle(hsl, .x, .x, .x, .x);
+        var q: F32x4 = undefined;
+        if (all(l < f32x4s(0.5), 3)) {
+            q = l * (f32x4s(1.0) + s);
+        } else {
+            q = (l + s) - (l * s);
+        }
+
+        const p = f32x4s(2.0) * l - q;
+
+        const r = hueToClr(p, q, h + f32x4s(1.0 / 3.0));
+        const g = hueToClr(p, q, h);
+        const b = hueToClr(p, q, h - f32x4s(1.0 / 3.0));
+
+        const rg = select(boolx4(true, false, false, false), r, g);
+        const ba = select(boolx4(true, true, true, false), b, hsl);
+        return select(boolx4(true, true, false, false), rg, ba);
+    }
+}
+test "zmath.color.hslToRgb" {
+    try expect(approxEqAbs(f32x4(0.2, 0.4, 0.8, 1.0), hslToRgb(f32x4(0.6111, 0.6, 0.5, 1.0)), 0.0001));
+    try expect(approxEqAbs(f32x4(1.0, 0.0, 0.0, 0.5), hslToRgb(f32x4(0.0, 1.0, 0.5, 0.5)), 0.0001));
+    try expect(approxEqAbs(f32x4(0.0, 1.0, 0.0, 0.25), hslToRgb(f32x4(0.3333, 1.0, 0.5, 0.25)), 0.0005));
+    try expect(approxEqAbs(f32x4(0.0, 0.0, 1.0, 1.0), hslToRgb(f32x4(0.6666, 1.0, 0.5, 1.0)), 0.0005));
+    try expect(approxEqAbs(f32x4(0.0, 0.0, 0.0, 1.0), hslToRgb(f32x4(0.0, 0.0, 0.0, 1.0)), 0.0001));
+    try expect(approxEqAbs(f32x4(1.0, 1.0, 1.0, 1.0), hslToRgb(f32x4(0.0, 0.0, 1.0, 1.0)), 0.0001));
+    try expect(approxEqAbs(hslToRgb(rgbToHsl(f32x4(1.0, 1.0, 1.0, 1.0))), f32x4(1.0, 1.0, 1.0, 1.0), 0.0005));
+    try expect(approxEqAbs(
+        hslToRgb(rgbToHsl(f32x4(0.82198, 0.1839, 0.632, 1.0))),
+        f32x4(0.82198, 0.1839, 0.632, 1.0),
+        0.0005,
+    ));
+    try expect(approxEqAbs(
+        rgbToHsl(hslToRgb(f32x4(0.82198, 0.1839, 0.632, 1.0))),
+        f32x4(0.82198, 0.1839, 0.632, 1.0),
+        0.0005,
+    ));
+    try expect(approxEqAbs(
+        rgbToHsl(hslToRgb(f32x4(0.1839, 0.82198, 0.632, 1.0))),
+        f32x4(0.1839, 0.82198, 0.632, 1.0),
+        0.0005,
+    ));
+    try expect(approxEqAbs(
+        hslToRgb(rgbToHsl(f32x4(0.1839, 0.632, 0.82198, 1.0))),
+        f32x4(0.1839, 0.632, 0.82198, 1.0),
+        0.0005,
+    ));
 }
 
 // ------------------------------------------------------------------------------
