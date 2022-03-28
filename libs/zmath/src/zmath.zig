@@ -211,6 +211,8 @@
 // adjustContrast(color: F32x4, contrast: f32) F32x4
 // rgbToHsl(rgb: F32x4) F32x4
 // hslToRgb(hsl: F32x4) F32x4
+// rgbToHsv(rgb: F32x4) F32x4
+// hsvToRgb(hsv: F32x4) F32x4
 //
 // ------------------------------------------------------------------------------
 // X. Misc functions
@@ -237,7 +239,7 @@ pub const Boolx4 = @Vector(4, bool);
 pub const Boolx8 = @Vector(8, bool);
 pub const Boolx16 = @Vector(16, bool);
 
-// Higher-level 'geometric' types
+// "Higher-level" aliases
 pub const Vec = F32x4;
 pub const Mat = [4]F32x4;
 pub const Quat = F32x4;
@@ -3019,6 +3021,81 @@ test "zmath.color.rgbToHsv" {
     try expect(approxEqAbs(rgbToHsv(f32x4(0.0, 0.0, 1.0, 1.0)), f32x4(0.6666, 1.0, 1.0, 1.0), 0.0001));
     try expect(approxEqAbs(rgbToHsv(f32x4(0.0, 0.0, 0.0, 1.0)), f32x4(0.0, 0.0, 0.0, 1.0), 0.0001));
     try expect(approxEqAbs(rgbToHsv(f32x4(1.0, 1.0, 1.0, 1.0)), f32x4(0.0, 0.0, 1.0, 1.0), 0.0001));
+}
+
+pub fn hsvToRgb(hsv: F32x4) F32x4 {
+    const h = swizzle(hsv, .x, .x, .x, .x);
+    const s = swizzle(hsv, .y, .y, .y, .y);
+    const v = swizzle(hsv, .z, .z, .z, .z);
+
+    const h6 = h * f32x4s(6.0);
+    const i = floor(h6);
+    const f = h6 - i;
+
+    const p = v * (f32x4s(1.0) - s);
+    const q = v * (f32x4s(1.0) - f * s);
+    const t = v * (f32x4s(1.0) - (f32x4s(1.0) - f) * s);
+
+    const ii = @floatToInt(i32, mod(i, f32x4s(6.0))[0]);
+    const rgb = switch (ii) {
+        0 => blk: {
+            const vt = select(boolx4(true, false, false, false), v, t);
+            break :blk select(boolx4(true, true, false, false), vt, p);
+        },
+        1 => blk: {
+            const qv = select(boolx4(true, false, false, false), q, v);
+            break :blk select(boolx4(true, true, false, false), qv, p);
+        },
+        2 => blk: {
+            const pv = select(boolx4(true, false, false, false), p, v);
+            break :blk select(boolx4(true, true, false, false), pv, t);
+        },
+        3 => blk: {
+            const pq = select(boolx4(true, false, false, false), p, q);
+            break :blk select(boolx4(true, true, false, false), pq, v);
+        },
+        4 => blk: {
+            const tp = select(boolx4(true, false, false, false), t, p);
+            break :blk select(boolx4(true, true, false, false), tp, v);
+        },
+        5 => blk: {
+            const vp = select(boolx4(true, false, false, false), v, p);
+            break :blk select(boolx4(true, true, false, false), vp, q);
+        },
+        else => unreachable,
+    };
+    return select(boolx4(true, true, true, false), rgb, hsv);
+}
+test "zmath.color.hsvToRgb" {
+    const epsilon = 0.0005;
+    try expect(approxEqAbs(f32x4(0.2, 0.4, 0.8, 1.0), hsvToRgb(f32x4(0.6111, 0.75, 0.8, 1.0)), epsilon));
+    try expect(approxEqAbs(f32x4(0.4, 0.2, 0.8, 1.0), hsvToRgb(f32x4(0.7222, 0.75, 0.8, 1.0)), epsilon));
+    try expect(approxEqAbs(f32x4(0.4, 0.8, 0.2, 1.0), hsvToRgb(f32x4(0.2777, 0.75, 0.8, 1.0)), epsilon));
+    try expect(approxEqAbs(f32x4(1.0, 0.0, 0.0, 0.5), hsvToRgb(f32x4(0.0, 1.0, 1.0, 0.5)), epsilon));
+    try expect(approxEqAbs(f32x4(0.0, 1.0, 0.0, 0.25), hsvToRgb(f32x4(0.3333, 1.0, 1.0, 0.25)), epsilon));
+    try expect(approxEqAbs(f32x4(0.0, 0.0, 1.0, 1.0), hsvToRgb(f32x4(0.6666, 1.0, 1.0, 1.0)), epsilon));
+    try expect(approxEqAbs(f32x4(0.0, 0.0, 0.0, 1.0), hsvToRgb(f32x4(0.0, 0.0, 0.0, 1.0)), epsilon));
+    try expect(approxEqAbs(f32x4(1.0, 1.0, 1.0, 1.0), hsvToRgb(f32x4(0.0, 0.0, 1.0, 1.0)), epsilon));
+    try expect(approxEqAbs(
+        hsvToRgb(rgbToHsv(f32x4(0.1839, 0.632, 0.82198, 1.0))),
+        f32x4(0.1839, 0.632, 0.82198, 1.0),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        hsvToRgb(rgbToHsv(f32x4(0.82198, 0.1839, 0.632, 1.0))),
+        f32x4(0.82198, 0.1839, 0.632, 1.0),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        rgbToHsv(hsvToRgb(f32x4(0.82198, 0.1839, 0.632, 1.0))),
+        f32x4(0.82198, 0.1839, 0.632, 1.0),
+        epsilon,
+    ));
+    try expect(approxEqAbs(
+        rgbToHsv(hsvToRgb(f32x4(0.1839, 0.82198, 0.632, 1.0))),
+        f32x4(0.1839, 0.82198, 0.632, 1.0),
+        epsilon,
+    ));
 }
 
 // ------------------------------------------------------------------------------
