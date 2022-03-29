@@ -53,7 +53,6 @@ pub fn main() !void {
     const proj_view_model = zm.mul(proj, view_model);
 
     gl.uniformMatrix4fv(0, 1, gl.FALSE, zm.f32Ptr(&proj_view_model));
-
     ...
     //
     // DirectX convention
@@ -74,5 +73,35 @@ pub fn main() !void {
     const mem = allocateUploadMemory(...);
     zm.storeMat(mem, zm.transpose(object_to_clip));
     ...
+    
+    //
+    // 'WASD' camera movement
+    //
+    {
+        const speed = zm.f32x4s(10.0);
+        const delta_time = zm.f32x4s(demo.frame_stats.delta_time);
+        const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
+        var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
+
+        zm.store(demo.camera.forward[0..], forward, 3);
+
+        const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
+        forward = speed * delta_time * forward;
+
+        var campos = zm.load(demo.camera.position[0..], zm.Vec, 3);
+
+        if (keyDown('W')) {
+            campos += forward;
+        } else if (w32.GetAsyncKeyState('S') < 0) {
+            campos -= forward;
+        }
+        if (w32.GetAsyncKeyState('D') < 0) {
+            campos += right;
+        } else if (w32.GetAsyncKeyState('A') < 0) {
+            campos -= right;
+        }
+
+        zm.store(demo.camera.position[0..], campos, 3);
+    }
 }
 ```
