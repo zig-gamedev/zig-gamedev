@@ -89,12 +89,12 @@ pub fn main() !void {
 
         if (keyDown('W')) {
             campos += forward;
-        } else if (w32.GetAsyncKeyState('S') < 0) {
+        } else if (keyDown('S')) {
             campos -= forward;
         }
-        if (w32.GetAsyncKeyState('D') < 0) {
+        if (keyDown('D')) {
             campos += right;
-        } else if (w32.GetAsyncKeyState('A') < 0) {
+        } else if (keyDown('A')) {
             campos -= right;
         }
 
