@@ -2606,6 +2606,10 @@ pub inline fn mat34ToArray(m: Mat) [12]f32 {
     return array;
 }
 
+pub inline fn f32Ptr(obj: anytype) [*]const f32 {
+    return @ptrCast([*]const f32, obj);
+}
+
 // ------------------------------------------------------------------------------
 //
 // 5. Quaternion functions

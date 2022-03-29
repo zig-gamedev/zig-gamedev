@@ -52,8 +52,9 @@ pub fn main() !void {
     const view_model = zm.mul(view, model);
     const proj_view_model = zm.mul(proj, view_model);
 
-    gl.uniformMatrix4fv(0, 1, gl.FALSE, &zm.matToArray(proj_view_model));
+    gl.uniformMatrix4fv(0, 1, gl.FALSE, zm.f32Ptr(&proj_view_model));
 
+    ...
     //
     // DirectX convention
     //
