@@ -70,5 +70,8 @@ pub fn main() !void {
 
     const object_to_view = zm.mul(object_to_world, world_to_view);
     const object_to_clip = zm.mul(object_to_view, view_to_clip);
+    
+    const mem = allocateUploadMemory(...);
+    zm.storeMat(mem, zm.transpose(object_to_world));
 }
 ```
