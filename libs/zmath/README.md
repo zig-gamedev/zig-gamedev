@@ -73,5 +73,6 @@ pub fn main() !void {
     
     const mem = allocateUploadMemory(...);
     zm.storeMat(mem, zm.transpose(object_to_world));
+    ...
 }
 ```
