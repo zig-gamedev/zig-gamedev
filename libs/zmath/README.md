@@ -40,7 +40,6 @@ pub fn main() !void {
     // OpenGL/Vulkan convention
     //
     // zm.mul(mat, vec) `vec` is treated as a culumn vector
-
     const model = zm.rotationY(..);
     const view = zm.lookAtRh(
         zm.f32x4(3.0, 3.0, 3.0, 1.0), // eye position
@@ -58,7 +57,6 @@ pub fn main() !void {
     // DirectX convention
     //
     // zm.mul(vec, mat) `vec` is treated as a row vector
-
     const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0), // eye position
@@ -73,7 +71,6 @@ pub fn main() !void {
     const mem = allocateUploadMemory(...);
     zm.storeMat(mem, zm.transpose(object_to_clip));
     ...
-    
     //
     // 'WASD' camera movement
     //
