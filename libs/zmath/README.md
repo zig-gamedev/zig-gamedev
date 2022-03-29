@@ -72,7 +72,7 @@ pub fn main() !void {
     zm.storeMat(mem, zm.transpose(object_to_clip));
     ...
     //
-    // 'WASD' camera movement
+    // 'WASD' camera movement (DirectX convention)
     //
     {
         const speed = zm.f32x4s(10.0);
