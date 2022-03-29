@@ -4,7 +4,7 @@
 // SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/tree/main/libs/zmath
 //
-// Works on all OSes supported by Zig. Works on x86_64 and ARM.
+// Should work on all OSes supported by Zig. Works on x86_64 and ARM.
 // Provides ~140 optimized routines and ~70 extensive tests.
 // Can be used with any graphics API.
 //

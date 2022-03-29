@@ -2,7 +2,7 @@
 
 ## Features
 
-Works on all OSes supported by Zig. Works on x86_64 and ARM.
+Should work on all OSes supported by Zig. Works on x86_64 and ARM.
 
 Provides ~140 optimized routines and ~70 extensive tests.
 
@@ -41,12 +41,14 @@ pub fn main() !void {
     //
     // zm.mul(mat, vec) `vec` is treated as a culumn vector
 
-    const proj = zm.perspectiveFovRh(
-        0.25 * math.pi,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
-        0.1,
-        20.0,
+    const model = zm.rotationY(..);
+    const view = zm.lookAtRh(
+        zm.f32x4(3.0, 3.0, -3.0, 1.0), // eye position
+        zm.f32x4(0.0, 0.0, 0.0, 1.0), // focus point
+        zm.f32x4(0.0, 1.0, 0.0, 0.0), // up direction ('w' coord is zero because this is a vector not a point)
     );
+    const proj = zm.perspectiveFovRh(0.25 * math.pi, aspect_ratio, 0.1, 20.0);
+
     const view_model = zm.mul(view, model);
     const proj_view_model = zm.mul(proj, view_model);
 
@@ -57,18 +59,13 @@ pub fn main() !void {
     //
     // zm.mul(vec, mat) `vec` is treated as a row vector
 
-    const object_to_world = zm.rotationY(@floatCast(f32, demo.frame_stats.time));
+    const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0), // eye position
         zm.f32x4(0.0, 0.0, 0.0, 1.0), // focus point
         zm.f32x4(0.0, 1.0, 0.0, 0.0), // up direction ('w' coord is zero because this is a vector not a point)
     );
-    const view_to_clip = zm.perspectiveFovLh(
-        0.25 * math.pi,
-        @intToFloat(f32, gctx.viewport_width) / @intToFloat(f32, gctx.viewport_height),
-        0.1,
-        20.0,
-    );
+    const view_to_clip = zm.perspectiveFovLh(0.25 * math.pi, aspect_ratio, 0.1, 20.0);
 
     const object_to_view = zm.mul(object_to_world, world_to_view);
     const object_to_clip = zm.mul(object_to_view, view_to_clip);
