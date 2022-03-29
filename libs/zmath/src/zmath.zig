@@ -1,8 +1,12 @@
 // ==============================================================================
 //
-// zmath - version 0.3 (wip)
+// zmath - version 0.3
 // SIMD math library for game developers
-// https://github.com/michal-z/zig-gamedev/blob/main/libs/common/zmath.zig
+// https://github.com/michal-z/zig-gamedev/tree/main/libs/zmath
+//
+// Works on all OSes supported by Zig. Works on x86_64 and ARM.
+// Provides ~140 optimized routines and ~70 extensive tests.
+// Can be used with any graphics API.
 //
 // zmath uses row-major matrices, row vectors (each row vector is stored in SIMD register).
 // Handedness is determined by which function version is used (Rh vs. Lh),
