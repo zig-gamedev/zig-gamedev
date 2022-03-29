@@ -213,6 +213,8 @@
 // hslToRgb(hsl: F32x4) F32x4
 // rgbToHsv(rgb: F32x4) F32x4
 // hsvToRgb(hsv: F32x4) F32x4
+// rgbToSrgb(rgb: F32x4) F32x4
+// srgbToRgb(srgb: F32x4) F32x4
 //
 // ------------------------------------------------------------------------------
 // X. Misc functions
@@ -3093,6 +3095,60 @@ test "zmath.color.hsvToRgb" {
     ));
     try expect(approxEqAbs(
         rgbToHsv(hsvToRgb(f32x4(0.1839, 0.82198, 0.632, 1.0))),
+        f32x4(0.1839, 0.82198, 0.632, 1.0),
+        epsilon,
+    ));
+}
+
+pub fn rgbToSrgb(rgb: F32x4) F32x4 {
+    const static = struct {
+        const cutoff = f32x4(0.0031308, 0.0031308, 0.0031308, 1.0);
+        const linear = f32x4(12.92, 12.92, 12.92, 1.0);
+        const scale = f32x4(1.055, 1.055, 1.055, 1.0);
+        const bias = f32x4(0.055, 0.055, 0.055, 1.0);
+        const rgamma = 1.0 / 2.4;
+    };
+    var v = saturate(rgb);
+    const v0 = v * static.linear;
+    const v1 = static.scale * f32x4(
+        math.pow(f32, v[0], static.rgamma),
+        math.pow(f32, v[1], static.rgamma),
+        math.pow(f32, v[2], static.rgamma),
+        v[3],
+    ) - static.bias;
+    v = select(v < static.cutoff, v0, v1);
+    return select(boolx4(true, true, true, false), v, rgb);
+}
+test "zmath.color.rgbToSrgb" {
+    const epsilon = 0.001;
+    try expect(approxEqAbs(rgbToSrgb(f32x4(0.2, 0.4, 0.8, 1.0)), f32x4(0.484, 0.665, 0.906, 1.0), epsilon));
+}
+
+pub fn srgbToRgb(srgb: F32x4) F32x4 {
+    const static = struct {
+        const cutoff = f32x4(0.04045, 0.04045, 0.04045, 1.0);
+        const rlinear = f32x4(1.0 / 12.92, 1.0 / 12.92, 1.0 / 12.92, 1.0);
+        const scale = f32x4(1.0 / 1.055, 1.0 / 1.055, 1.0 / 1.055, 1.0);
+        const bias = f32x4(0.055, 0.055, 0.055, 1.0);
+        const gamma = 2.4;
+    };
+    var v = saturate(srgb);
+    const v0 = v * static.rlinear;
+    var v1 = static.scale * (v + static.bias);
+    v1 = f32x4(
+        math.pow(f32, v1[0], static.gamma),
+        math.pow(f32, v1[1], static.gamma),
+        math.pow(f32, v1[2], static.gamma),
+        v1[3],
+    );
+    v = select(v > static.cutoff, v1, v0);
+    return select(boolx4(true, true, true, false), v, srgb);
+}
+test "zmath.color.srgbToRgb" {
+    const epsilon = 0.0007;
+    try expect(approxEqAbs(f32x4(0.2, 0.4, 0.8, 1.0), srgbToRgb(f32x4(0.484, 0.665, 0.906, 1.0)), epsilon));
+    try expect(approxEqAbs(
+        rgbToSrgb(srgbToRgb(f32x4(0.1839, 0.82198, 0.632, 1.0))),
         f32x4(0.1839, 0.82198, 0.632, 1.0),
         epsilon,
     ));
