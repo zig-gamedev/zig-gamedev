@@ -43,7 +43,7 @@ pub fn main() !void {
 
     const model = zm.rotationY(..);
     const view = zm.lookAtRh(
-        zm.f32x4(3.0, 3.0, -3.0, 1.0), // eye position
+        zm.f32x4(3.0, 3.0, 3.0, 1.0), // eye position
         zm.f32x4(0.0, 0.0, 0.0, 1.0), // focus point
         zm.f32x4(0.0, 1.0, 0.0, 0.0), // up direction ('w' coord is zero because this is a vector not a point)
     );
