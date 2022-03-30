@@ -2,9 +2,9 @@
 
 # zig-gamedev project
 
-This repository contains a collection of [sample applications](#sample-applications) and libraries written in **[Zig programming language](https://ziglang.org/)**. Prebuilt binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases). Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.<br />
-
-*I build game development stuff in Zig full-time. As a sample of my work please see [this video](https://www.youtube.com/watch?v=1hYIzFVdA2o). If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
+This repository contains a collection of [sample applications](#sample-applications) and standalone libraries written in **[Zig programming language](https://ziglang.org/)**.
+Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
+Prebuilt Windows binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases).<br />
 
 #### Some features and libraries we develop:
 
@@ -21,6 +21,8 @@ This repository contains a collection of [sample applications](#sample-applicati
 * [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpix) - support for GPU profiling with PIX **[depends only on zwin32]**
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [libs/common/src/c](libs/common/src/c))
+
+*I build game development stuff in Zig full-time. If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
 
 ## Sample applications
 
