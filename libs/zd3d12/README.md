@@ -32,12 +32,12 @@ pub fn build(b: *std.build.Builder) void {
         "enable-dx-gpu-debug",
         "Enable GPU-based validation for D3D12",
     ) orelse false;
-    const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
+    const enable_tracy = b.option(bool, "enable_tracy", "Enable Tracy profiler") orelse false;
 
     const exe_options = b.addOptions();
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
-    exe_options.addOption(bool, "enable_tracy", tracy != null);
+    exe_options.addOption(bool, "enable_tracy", enable_tracy);
     exe_options.addOption(bool, "enable_d2d", false);
 
     exe.addOptions("build_options", exe_options);

@@ -22,10 +22,10 @@ const network_test = @import("samples/network_test/build.zig");
 pub const Options = struct {
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
-    enable_pix: bool,
     enable_dx_debug: bool,
     enable_dx_gpu_debug: bool,
-    tracy: ?[]const u8,
+    enable_tracy: bool,
+    enable_pix: bool,
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -40,15 +40,15 @@ pub fn build(b: *std.build.Builder) void {
         "enable-dx-gpu-debug",
         "Enable GPU-based validation for D3D12",
     ) orelse false;
-    const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
+    const enable_tracy = b.option(bool, "enable_tracy", "Enable Tracy profiler") orelse false;
 
     const options = Options{
         .build_mode = b.standardReleaseOptions(),
         .target = b.standardTargetOptions(.{}),
-        .enable_pix = enable_pix,
         .enable_dx_debug = enable_dx_debug,
         .enable_dx_gpu_debug = enable_dx_gpu_debug,
-        .tracy = tracy,
+        .enable_tracy = enable_tracy,
+        .enable_pix = enable_pix,
     };
 
     installDemo(b, audio_experiments.build(b, options), "audio_experiments");

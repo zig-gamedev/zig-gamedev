@@ -4,6 +4,8 @@
 
 Zig bindings taken from: https://github.com/SpexGuy/Zig-Tracy
 
+To build your project with Tracy enabled run: `zig build -Denable_tracy=true`.
+
 ## Getting started
 
 Copy `ztracy` folder to a `libs` subdirectory of the root of your project.
@@ -13,11 +15,10 @@ Then in your `build.zig` add:
 ```zig
 pub fn build(b: *std.build.Builder) void {
     ...
-    const tracy = b.option([]const u8, "tracy", "Enable Tracy profiler integration (supply path to Tracy source)");
+    const enable_tracy = b.option(bool, "enable_tracy", "Enable Tracy profiler") orelse false;
 
     const exe_options = b.addOptions();
-    exe_options.addOption(bool, "enable_tracy", tracy != null);
-
+    exe_options.addOption(bool, "enable_tracy", enable_tracy);
     exe.addOptions("build_options", exe_options);
 
     const options_pkg = std.build.Pkg{
@@ -33,7 +34,7 @@ pub fn build(b: *std.build.Builder) void {
         },
     };
     exe.addPackage(ztracy_pkg);
-    @import("libs/ztracy/build.zig").link(exe, tracy);
+    @import("libs/ztracy/build.zig").link(exe, enable_tracy);
 }
 ```
 

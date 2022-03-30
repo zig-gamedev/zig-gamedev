@@ -8,7 +8,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe_options.addOption(bool, "enable_pix", options.enable_pix);
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
-    exe_options.addOption(bool, "enable_tracy", options.tracy != null);
+    exe_options.addOption(bool, "enable_tracy", options.enable_tracy);
     exe_options.addOption(bool, "enable_d2d", false);
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
@@ -55,7 +55,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         .dependencies = &[_]std.build.Pkg{options_pkg},
     };
     exe.addPackage(ztracy_pkg);
-    @import("../../libs/ztracy/build.zig").link(exe, options.tracy);
+    @import("../../libs/ztracy/build.zig").link(exe, options.enable_tracy);
 
     const zd3d12_pkg = std.build.Pkg{
         .name = "zd3d12",
