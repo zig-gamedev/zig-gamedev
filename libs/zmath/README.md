@@ -40,10 +40,9 @@ pub fn main() !void {
     // OpenGL/Vulkan convention
     //
     // zm.mul(mat, vec) `vec` is treated as a culumn vector
-
     const model = zm.rotationY(..);
     const view = zm.lookAtRh(
-        zm.f32x4(3.0, 3.0, -3.0, 1.0), // eye position
+        zm.f32x4(3.0, 3.0, 3.0, 1.0), // eye position
         zm.f32x4(0.0, 0.0, 0.0, 1.0), // focus point
         zm.f32x4(0.0, 1.0, 0.0, 0.0), // up direction ('w' coord is zero because this is a vector not a point)
     );
@@ -53,13 +52,11 @@ pub fn main() !void {
     const proj_view_model = zm.mul(proj, view_model);
 
     gl.uniformMatrix4fv(0, 1, gl.FALSE, zm.f32Ptr(&proj_view_model));
-
     ...
     //
     // DirectX convention
     //
     // zm.mul(vec, mat) `vec` is treated as a row vector
-
     const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0), // eye position
@@ -70,5 +67,38 @@ pub fn main() !void {
 
     const object_to_view = zm.mul(object_to_world, world_to_view);
     const object_to_clip = zm.mul(object_to_view, view_to_clip);
+    
+    const mem = allocateUploadMemory(...);
+    zm.storeMat(mem, zm.transpose(object_to_clip));
+    ...
+    //
+    // 'WASD' camera movement (DirectX convention)
+    //
+    {
+        const speed = zm.f32x4s(10.0);
+        const delta_time = zm.f32x4s(demo.frame_stats.delta_time);
+        const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
+        var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
+
+        zm.store(demo.camera.forward[0..], forward, 3);
+
+        const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
+        forward = speed * delta_time * forward;
+
+        var campos = zm.load(demo.camera.position[0..], zm.Vec, 3);
+
+        if (keyDown('W')) {
+            campos += forward;
+        } else if (keyDown('S')) {
+            campos -= forward;
+        }
+        if (keyDown('D')) {
+            campos += right;
+        } else if (keyDown('A')) {
+            campos -= right;
+        }
+
+        zm.store(demo.camera.position[0..], campos, 3);
+    }
 }
 ```
