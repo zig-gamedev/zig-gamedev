@@ -1,5 +1,9 @@
 # ztracy - performance markers for Tracy
 
+## Features
+
+Zig bindings taken from: https://github.com/SpexGuy/Zig-Tracy
+
 ## Getting started
 
 Copy `ztracy` folder to a `libs` subdirectory of the root of your project.
@@ -29,7 +33,7 @@ pub fn build(b: *std.build.Builder) void {
         },
     };
     exe.addPackage(ztracy_pkg);
-    @import("libs/ztracy/build.zig").link(b, exe, .{ .tracy_path = tracy });
+    @import("libs/ztracy/build.zig").link(exe, tracy);
 }
 ```
 
@@ -40,8 +44,8 @@ const ztracy = @import("ztracy");
 
 pub fn main() !void {
     {
-        const tracy_zone = ztracy.zoneNC(@src(), "Compute Magic", 0x00_ff_00_00, 1);
-        defer tracy_zone.end();
+        const tracy_zone = ztracy.ZoneNC(@src(), "Compute Magic", 0x00_ff_00_00);
+        defer tracy_zone.End();
         ...
     }
 }

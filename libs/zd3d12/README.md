@@ -61,7 +61,7 @@ pub fn build(b: *std.build.Builder) void {
         },
     };
     exe.addPackage(ztracy_pkg);
-    @import("libs/ztracy/build.zig").link(b, exe, .{ .tracy_path = tracy });
+    @import("libs/ztracy/build.zig").link(exe, tracy);
 
     const zd3d12_pkg = std.build.Pkg{
         .name = "zd3d12",
