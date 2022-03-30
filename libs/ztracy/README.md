@@ -4,8 +4,6 @@
 
 Zig bindings taken from: https://github.com/SpexGuy/Zig-Tracy
 
-To build your project with Tracy enabled run: `zig build -Denable_tracy=true`.
-
 ## Getting started
 
 Copy `ztracy` folder to a `libs` subdirectory of the root of your project.
@@ -38,7 +36,7 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
-Now in your code you may import and use ztracy:
+Now in your code you may import and use ztracy. To build your project with Tracy enabled run: `zig build -Denable_tracy=true`.
 
 ```zig
 const ztracy = @import("ztracy");
