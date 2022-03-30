@@ -6,16 +6,15 @@ pub fn main() !void {
     defer zenet.deinitialize();
 
     var address: zenet.Address = std.mem.zeroes(zenet.Address);
-    var client: *zenet.Host = undefined;
-    var peer: *zenet.Peer = undefined;
     var event: zenet.Event = std.mem.zeroes(zenet.Event);
 
-    client = try zenet.Host.create(null, 1, 1, 0, 0);
+    const client = try zenet.Host.create(null, 1, 1, 0, 0);
+    defer client.destroy();
 
     try address.set_host("127.0.0.1");
     address.port = 7777;
 
-    peer = try client.connect(address, 1, 0);
+    const peer = try client.connect(address, 1, 0);
 
     if (try client.service(&event, 5000)) {
         if (event.type == zenet.EventType.connect) {
@@ -54,7 +53,4 @@ pub fn main() !void {
             else => {},
         }
     }
-
-    client.destroy();
-    return;
 }

@@ -8,9 +8,11 @@ pub fn main() !void {
     var address: zenet.Address = std.mem.zeroes(zenet.Address);
     address.host = zenet.HOST_ANY; // localhost
     address.port = 7777;
-    var server: *zenet.Host = undefined;
 
-    server = try zenet.Host.create(address, 1, 1, 0, 0);
+    const server = try zenet.Host.create(address, 1, 1, 0, 0);
+    defer server.destroy();
+
+    std.log.debug("Server started!", .{});
 
     // game loop
     while (true) {
@@ -44,7 +46,4 @@ pub fn main() !void {
             }
         }
     }
-
-    server.destroy();
-    return;
 }
