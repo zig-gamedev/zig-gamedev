@@ -17,6 +17,7 @@ const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const intro = @import("samples/intro/build.zig");
 const minimal = @import("samples/minimal/build.zig");
 const procedural_mesh = @import("samples/procedural_mesh/build.zig");
+const network_test = @import("samples/network_test/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
@@ -65,6 +66,7 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, triangle.build(b, options), "triangle");
     installDemo(b, minimal.build(b, options), "minimal");
     installDemo(b, procedural_mesh.build(b, options), "procedural_mesh");
+    installDemo(b, network_test.build(b, options), "network_test");
 
     comptime var intro_index: u32 = 0;
     inline while (intro_index < 7) : (intro_index += 1) {

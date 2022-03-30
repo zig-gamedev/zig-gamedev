@@ -40,12 +40,13 @@ fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.buil
         "-DHAS_POLL=1",
         "-DHAS_GETNAMEINFO=1",
         "-DHAS_GETADDRINFO=1",
-        "-DHAS_GETHOSTBYNAME_R",
-        "-DHAS_GETHOSTBYADDR_R",
+        "-DHAS_GETHOSTBYNAME_R=1",
+        "-DHAS_GETHOSTBYADDR_R=1",
         "-DHAS_INET_PTON=1",
         "-DHAS_INET_NTOP=1",
         "-DHAS_MSGHDR_FLAGS=1",
         "-DHAS_SOCKLEN_T=1",
+        "-fno-sanitize=undefined",
     };
     lib.addCSourceFile(thisDir() ++ "/libs/enet/callbacks.c", &defines);
     lib.addCSourceFile(thisDir() ++ "/libs/enet/compress.c", &defines);
