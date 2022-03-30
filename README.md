@@ -10,15 +10,15 @@ This repository contains a collection of [sample applications](#sample-applicati
 
 * Zero dependency except [Zig compiler (master)](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
-* [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers (**cross-platform**)
-* [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) (**cross-platform**)
-* [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h) (**cross-platform**)
-* [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) (**cross-platform**)
+* [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers **[cross-platform and standalone]**
+* [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) **[cross-platform and standalone]**
+* [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h) **[cross-platform and standalone]**
+* [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) **[cross-platform and standalone]**
+* [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) **[cross-platform and standalone]**
 * [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API
 * [zd3d12](https://github.com/michal-z/zig-gamedev/blob/main/libs/zd3d12) - helper library for working with DirectX 12
 * [zxaudio2](https://github.com/michal-z/zig-gamedev/blob/main/libs/zxaudio2) - helper library for working with XAudio2
 * [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpix) - support for GPU profiling with PIX
-* [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [libs/common/src/c](libs/common/src/c))
 
