@@ -76,12 +76,14 @@ pub fn build(b: *std.build.Builder) void {
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
     const zmath_tests = @import("libs/zmath/build.zig").buildTests(b, options.build_mode, options.target);
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
+    const zenet_tests = @import("libs/zenet/build.zig").buildTests(b, options.build_mode, options.target);
 
     const test_step = b.step("test", "Run all tests");
     test_step.dependOn(&zbullet_tests.step);
     test_step.dependOn(&zmesh_tests.step);
     test_step.dependOn(&zmath_tests.step);
     test_step.dependOn(&znoise_tests.step);
+    test_step.dependOn(&zenet_tests.step);
 }
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
