@@ -2,6 +2,8 @@
 
 Bindings developed by Martin Wickham: https://github.com/SpexGuy/Zig-ENet
 
+For test client/server application see: https://github.com/michal-z/zig-gamedev/tree/main/samples/network_test
+
 ## Getting started
 
 Copy `zenet` folder to a `libs` subdirectory of the root of your project.
