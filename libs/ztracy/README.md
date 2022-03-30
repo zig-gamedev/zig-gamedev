@@ -1,4 +1,4 @@
-# ztracy - performance markers for Tracy
+# ztracy - performance markers for Tracy 0.8
 
 ## Features
 
