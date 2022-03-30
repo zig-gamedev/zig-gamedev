@@ -46,6 +46,8 @@ pub fn main() !void {
 
         // wait 1000 ms (1 second) for an event
         while (try server.service(&event, 1000)) {
+            if (event.peer == null)
+                continue;
             switch (event.type) {
                 .connect => {
                     std.log.debug(
