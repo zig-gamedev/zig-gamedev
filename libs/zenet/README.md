@@ -22,7 +22,7 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
-Now in your code you may import and use znoise:
+Now in your code you may import and use zenet:
 
 ```zig
 const zenet = @import("zenet");
