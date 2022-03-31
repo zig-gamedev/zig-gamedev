@@ -37,24 +37,25 @@ const zm = @import("zmath");
 pub fn main() !void {
     ...
     //
-    // OpenGL/Vulkan convention
+    // OpenGL
     //
-    // zm.mul(mat, vec) `vec` is treated as a culumn vector
-    const model = zm.rotationY(..);
-    const view = zm.lookAtRh(
+    const object_to_world = zm.rotationY(..);
+    const world_to_view = zm.lookAtRh(
         zm.f32x4(3.0, 3.0, 3.0, 1.0), // eye position
         zm.f32x4(0.0, 0.0, 0.0, 1.0), // focus point
         zm.f32x4(0.0, 1.0, 0.0, 0.0), // up direction ('w' coord is zero because this is a vector not a point)
     );
-    const proj = zm.perspectiveFovRh(0.25 * math.pi, aspect_ratio, 0.1, 20.0);
+    // `perspectiveFovRhGl` produces Z values in [-1.0, 1.0] range
+    const view_to_clip = zm.perspectiveFovRhGl(0.25 * math.pi, aspect_ratio, 0.1, 20.0);
 
-    const view_model = zm.mul(view, model);
-    const proj_view_model = zm.mul(proj, view_model);
+    const object_to_view = zm.mul(object_to_world, world_to_view);
+    const object_to_clip = zm.mul(object_to_view, view_to_clip);
 
-    gl.uniformMatrix4fv(0, 1, gl.FALSE, zm.f32Ptr(&proj_view_model));
+    // Transposition is needed because GLSL uses column-major matrices by default
+    gl.uniformMatrix4fv(0, 1, gl.TRUE, zm.f32Ptr(&object_to_clip));
     ...
     //
-    // DirectX convention
+    // DirectX
     //
     // zm.mul(vec, mat) `vec` is treated as a row vector
     const object_to_world = zm.rotationY(..);
@@ -68,11 +69,12 @@ pub fn main() !void {
     const object_to_view = zm.mul(object_to_world, world_to_view);
     const object_to_clip = zm.mul(object_to_view, view_to_clip);
     
+    // Transposition is needed because HLSL uses column-major matrices by default
     const mem = allocateUploadMemory(...);
     zm.storeMat(mem, zm.transpose(object_to_clip));
     ...
     //
-    // 'WASD' camera movement (DirectX convention)
+    // 'WASD' camera movement
     //
     {
         const speed = zm.f32x4s(10.0);

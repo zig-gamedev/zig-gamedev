@@ -20,9 +20,8 @@
 //
 // const m = rotationX(math.pi * 0.25);
 // const v = f32x4(...);
-// const v0 = mul(v, m); // 'v' treated as row vector
-// const v1 = mul(m, v); // 'v' treated as column vector
-// mul(v, m) == mul(transpose(m), v)
+// const v0 = mul(v, m); // 'v' treated as a row vector
+// const v1 = mul(m, v); // 'v' treated as a column vector
 // const f = m[row][column];
 //
 // const b = va < vb;
@@ -2187,6 +2186,26 @@ pub fn perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
         f32x4(0.0, h, 0.0, 0.0),
         f32x4(0.0, 0.0, r, -1.0),
         f32x4(0.0, 0.0, r * near, 0.0),
+    };
+}
+
+// Produces Z values in [-1.0, 1.0] range (OpenGL defaults)
+pub fn perspectiveFovRhGl(fovy: f32, aspect: f32, near: f32, far: f32) Mat {
+    const scfov = sincos(0.5 * fovy);
+
+    assert(near > 0.0 and far > 0.0 and far > near);
+    assert(!math.approxEqAbs(f32, scfov[0], 0.0, 0.001));
+    assert(!math.approxEqAbs(f32, far, near, 0.001));
+    assert(!math.approxEqAbs(f32, aspect, 0.0, 0.01));
+
+    const h = scfov[1] / scfov[0];
+    const w = h / aspect;
+    const r = near - far;
+    return .{
+        f32x4(w, 0.0, 0.0, 0.0),
+        f32x4(0.0, h, 0.0, 0.0),
+        f32x4(0.0, 0.0, (near + far) / r, -1.0),
+        f32x4(0.0, 0.0, 2.0 * near * far / r, 0.0),
     };
 }
 
