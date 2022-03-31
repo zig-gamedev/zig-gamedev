@@ -36,7 +36,7 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
-Now in your code you may import and use ztracy. To build your project with Tracy enabled run: `zig build -Denable_tracy=true`.
+Now in your code you may import and use ztracy. To build your project with Tracy enabled run: `zig build -Denable-tracy=true`.
 
 ```zig
 const ztracy = @import("ztracy");
