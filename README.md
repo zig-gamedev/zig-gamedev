@@ -87,13 +87,13 @@ All sample applications support the following build options:
 * `-Denable-pix=[bool]` - PIX markers and events enabled
 * `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
-* `-Denable_tracy=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
+* `-Denable-tracy=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
 
 #### Examples
 
 `zig build -Denable-dx-debug=true -Drelease-fast=true`
 
-`zig build -Denable_tracy=true`
+`zig build -Denable-tracy=true`
 
 `zig build simple_raytracer`
 

@@ -40,7 +40,7 @@ pub fn build(b: *std.build.Builder) void {
         "enable-dx-gpu-debug",
         "Enable GPU-based validation for D3D12",
     ) orelse false;
-    const enable_tracy = b.option(bool, "enable_tracy", "Enable Tracy profiler") orelse false;
+    const enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
 
     const options = Options{
         .build_mode = b.standardReleaseOptions(),
