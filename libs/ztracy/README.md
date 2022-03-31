@@ -13,7 +13,7 @@ Then in your `build.zig` add:
 ```zig
 pub fn build(b: *std.build.Builder) void {
     ...
-    const enable_tracy = b.option(bool, "enable_tracy", "Enable Tracy profiler") orelse false;
+    const enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
 
     const exe_options = b.addOptions();
     exe_options.addOption(bool, "enable_tracy", enable_tracy);
