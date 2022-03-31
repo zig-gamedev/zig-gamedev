@@ -166,6 +166,7 @@
 // lookAtRh(eyepos: Vec, focuspos: Vec, updir: Vec) Mat
 // perspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // perspectiveFovRh(fovy: f32, aspect: f32, near: f32, far: f32) Mat
+// perspectiveFovRhGl(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // orthographicLh(w: f32, h: f32, near: f32, far: f32) Mat
 // orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat
 // determinant(m: Mat) F32x4
