@@ -84,10 +84,10 @@ All sample applications support the following build options:
 
 * `-Drelease-safe=[bool]` - Optimizations on and safety on
 * `-Drelease-fast=[bool]` - Optimizations on and safety off
-* `-Denable-pix=[bool]` - PIX markers and events enabled
 * `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
 * `-Denable-tracy=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
+* `-Denable-pix=[bool]` - PIX markers and events enabled
 
 #### Examples
 
