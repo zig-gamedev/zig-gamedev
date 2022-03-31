@@ -50,7 +50,9 @@ pub fn main() !void {
 
     // Transposition is needed because GLSL uses column-major matrices by default
     gl.uniformMatrix4fv(0, 1, gl.TRUE, zm.f32Ptr(&object_to_clip));
-    ...
+    
+    // In GLSL: gl_Position = vec4(in_position, 1.0) * object_to_clip;
+    
     //
     // DirectX
     //
@@ -68,9 +70,11 @@ pub fn main() !void {
     // Transposition is needed because HLSL uses column-major matrices by default
     const mem = allocateUploadMemory(...);
     zm.storeMat(mem, zm.transpose(object_to_clip));
-    ...
+    
+    // In HLSL: out_position_sv = mul(float4(in_position, 1.0), object_to_clip);
+    
     //
-    // 'WASD' camera movement
+    // 'WASD' camera movement example
     //
     {
         const speed = zm.f32x4s(10.0);
