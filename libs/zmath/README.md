@@ -33,7 +33,6 @@ Now in your code you may import and use zmath:
 const zm = @import("zmath");
 
 pub fn main() !void {
-    ...
     //
     // OpenGL
     //
