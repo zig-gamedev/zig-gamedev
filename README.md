@@ -14,6 +14,7 @@ Prebuilt Windows binaries for all sample applications can be found in [Releases]
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) **[cross-platform and standalone]**
 * [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h) **[cross-platform and standalone]**
 * [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) **[cross-platform and standalone]**
+* [zenet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zenet) - Zig bindings for [ENet](https://github.com/lsalzman/enet) **[cross-platform and standalone]**
 * [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) **[cross-platform and standalone]**
 * [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API **[standalone]**
 * [zd3d12](https://github.com/michal-z/zig-gamedev/blob/main/libs/zd3d12) - helper library for working with DirectX 12 **[depends only on zwin32]**
