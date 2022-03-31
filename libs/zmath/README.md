@@ -57,7 +57,6 @@ pub fn main() !void {
     //
     // DirectX
     //
-    // zm.mul(vec, mat) `vec` is treated as a row vector
     const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0), // eye position
