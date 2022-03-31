@@ -34,7 +34,7 @@ const zm = @import("zmath");
 
 pub fn main() !void {
     //
-    // OpenGL
+    // OpenGL example
     //
     const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtRh(
@@ -54,7 +54,7 @@ pub fn main() !void {
     // In GLSL: gl_Position = vec4(in_position, 1.0) * object_to_clip;
     
     //
-    // DirectX
+    // DirectX example
     //
     const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtLh(
