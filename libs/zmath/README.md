@@ -1,7 +1,5 @@
 # zmath v0.3 - SIMD math library for game developers
 
-## Features
-
 Should work on all OSes supported by Zig. Works on x86_64 and ARM.
 
 Provides ~140 optimized routines and ~70 extensive tests.
