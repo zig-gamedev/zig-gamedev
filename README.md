@@ -104,7 +104,7 @@ All sample applications support the following build options:
 
 ## Requirements
 
-This project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/) which allows to always use latest DirectX 12 features regardless of Windows version installed (this works from Windows 10 November 2019). In particular, following Windows versions are supported:
+On Windows, project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/) which allows to always use latest DirectX 12 features regardless of Windows version installed (this works from Windows 10 November 2019). In particular, following Windows versions are supported:
 
 * Windows 10 May 2021 (Build 19043) or newer
 * Windows 10 October 2020 (Build 19042.789+)
