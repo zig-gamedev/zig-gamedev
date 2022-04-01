@@ -8,7 +8,7 @@
 // Provides ~140 optimized routines and ~70 extensive tests.
 // Can be used with any graphics API.
 //
-// zmath uses row-major matrices, row vectors (each row vector is stored in SIMD register).
+// zmath uses row-major matrices, row vectors (each row vector is stored in a SIMD register).
 // Handedness is determined by which function version is used (Rh vs. Lh),
 // otherwise the function works with either left-handed or right-handed view coordinates.
 //
@@ -75,6 +75,7 @@
 // usplat(comptime T: type, value: u32) T
 //
 // vec3ToArray(v: Vec) [3]f32
+// asFloats(ptr: anytype) [*]const f32
 //
 // ------------------------------------------------------------------------------
 // 2. Functions that work on all vector components (F32xN = F32x4 or F32x8 or F32x16)
@@ -2626,8 +2627,27 @@ pub inline fn mat34ToArray(m: Mat) [12]f32 {
     return array;
 }
 
-pub inline fn f32Ptr(obj: anytype) [*]const f32 {
-    return @ptrCast([*]const f32, obj);
+pub inline fn asFloats(ptr: anytype) [*]const f32 {
+    comptime assert(@typeInfo(@TypeOf(ptr)) == .Pointer);
+    const T = std.meta.Child(@TypeOf(ptr));
+    comptime assert(T == Mat or T == F32x4 or T == F32x8 or T == F32x16);
+    return @ptrCast([*]const f32, ptr);
+}
+test "asFloats" {
+    {
+        const mat = identity();
+        const f32ptr = asFloats(&mat);
+        try expect(f32ptr[0] == 1.0);
+        try expect(f32ptr[5] == 1.0);
+        try expect(f32ptr[10] == 1.0);
+        try expect(f32ptr[15] == 1.0);
+    }
+    {
+        const v8 = f32x8s(1.0);
+        const f32ptr = asFloats(&v8);
+        try expect(f32ptr[1] == 1.0);
+        try expect(f32ptr[7] == 1.0);
+    }
 }
 
 // ------------------------------------------------------------------------------

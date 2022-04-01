@@ -52,7 +52,7 @@ pub fn main() !void {
     const object_to_clip = zm.mul(object_to_view, view_to_clip);
 
     // Transposition is needed because GLSL uses column-major matrices by default
-    gl.uniformMatrix4fv(0, 1, gl.TRUE, zm.f32Ptr(&object_to_clip));
+    gl.uniformMatrix4fv(0, 1, gl.TRUE, zm.asFloats(&object_to_clip));
     ...
     //
     // DirectX
