@@ -34,7 +34,7 @@ const zm = @import("zmath");
 
 pub fn main() !void {
     //
-    // OpenGL example
+    // OpenGL/Vulkan example
     //
     const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtRh(
