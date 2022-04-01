@@ -17,6 +17,10 @@ pub fn build(b: *std.build.Builder) void {
         .name = "zenet",
         .path = .{ .path = "libs/zenet/src/zenet.zig" },
     };
+
+    const exe = b.addExecutable("your_bin", "src/main.zig");
+    exe.install();
+
     exe.addPackage(zenet_pkg);
     @import("libs/zenet/build.zig").link(b, exe);
 }
