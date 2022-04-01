@@ -105,6 +105,7 @@ pub fn main() !void {
    
     //
     // SIMD wave equation solver example (works with vector width 4, 8 and 16)
+    // 'T' can be F32x4, F32x8 or F32x16
     //
     var z_index: i32 = 0;
     while (z_index < grid_size) : (z_index += 1) {
