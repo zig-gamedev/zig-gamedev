@@ -1,7 +1,5 @@
 # zmath v0.3 - SIMD math library for game developers
 
-## Features
-
 Should work on all OSes supported by Zig. Works on x86_64 and ARM.
 
 Provides ~140 optimized routines and ~70 extensive tests.
@@ -35,9 +33,8 @@ Now in your code you may import and use zmath:
 const zm = @import("zmath");
 
 pub fn main() !void {
-    ...
     //
-    // OpenGL
+    // OpenGL example
     //
     const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtRh(
@@ -53,9 +50,11 @@ pub fn main() !void {
 
     // Transposition is needed because GLSL uses column-major matrices by default
     gl.uniformMatrix4fv(0, 1, gl.TRUE, zm.asFloats(&object_to_clip));
-    ...
+    
+    // In GLSL: gl_Position = vec4(in_position, 1.0) * object_to_clip;
+    
     //
-    // DirectX
+    // DirectX example
     //
     const object_to_world = zm.rotationY(..);
     const world_to_view = zm.lookAtLh(
@@ -71,9 +70,11 @@ pub fn main() !void {
     // Transposition is needed because HLSL uses column-major matrices by default
     const mem = allocateUploadMemory(...);
     zm.storeMat(mem, zm.transpose(object_to_clip));
-    ...
+    
+    // In HLSL: out_position_sv = mul(float4(in_position, 1.0), object_to_clip);
+    
     //
-    // 'WASD' camera movement
+    // 'WASD' camera movement example
     //
     {
         const speed = zm.f32x4s(10.0);
@@ -100,6 +101,30 @@ pub fn main() !void {
         }
 
         zm.store(demo.camera.position[0..], campos, 3);
+    }
+   
+    //
+    // SIMD wave equation solver example (works with vector width 4, 8 and 16)
+    // 'T' can be F32x4, F32x8 or F32x16
+    //
+    var z_index: i32 = 0;
+    while (z_index < grid_size) : (z_index += 1) {
+        const z = scale * @intToFloat(f32, z_index - grid_size / 2);
+        const vz = zm.splat(T, z);
+
+        var x_index: i32 = 0;
+        while (x_index < grid_size) : (x_index += zm.veclen(T)) {
+            const x = scale * @intToFloat(f32, x_index - grid_size / 2);
+            const vx = zm.splat(T, x) + voffset * zm.splat(T, scale);
+
+            const d = zm.sqrt(vx * vx + vz * vz);
+            const vy = zm.sin(d - vtime);
+
+            const index = @intCast(usize, x_index + z_index * grid_size);
+            zm.store(xslice[index..], vx, 0);
+            zm.store(yslice[index..], vy, 0);
+            zm.store(zslice[index..], vz, 0);
+        }
     }
 }
 ```
