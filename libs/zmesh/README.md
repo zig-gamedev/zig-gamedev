@@ -1,4 +1,4 @@
-# zmesh - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h)
+# zmesh v0.1 - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h)
 
 As an example program see [procedural mesh](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh).
 
