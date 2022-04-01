@@ -42,7 +42,7 @@ pub fn main() !void {
         zm.f32x4(0.0, 0.0, 0.0, 1.0), // focus point
         zm.f32x4(0.0, 1.0, 0.0, 0.0), // up direction ('w' coord is zero because this is a vector not a point)
     );
-    // `perspectiveFovRhGl` produces Z values in [-1.0, 1.0] range
+    // `perspectiveFovRhGl` produces Z values in [-1.0, 1.0] range (Vulkan app should use `perspectiveFovRh`)
     const view_to_clip = zm.perspectiveFovRhGl(0.25 * math.pi, aspect_ratio, 0.1, 20.0);
 
     const object_to_view = zm.mul(object_to_world, world_to_view);
