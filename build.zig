@@ -51,28 +51,30 @@ pub fn build(b: *std.build.Builder) void {
         .enable_pix = enable_pix,
     };
 
-    installDemo(b, audio_experiments.build(b, options), "audio_experiments");
-    installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
-    installDemo(b, bindless.build(b, options), "bindless");
-    installDemo(b, bullet_physics_test.build(b, options), "bullet_physics_test");
-    installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-    installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
-    installDemo(b, physically_based_rendering.build(b, options), "physically_based_rendering");
-    installDemo(b, rasterization.build(b, options), "rasterization");
-    installDemo(b, simple3d.build(b, options), "simple3d");
-    installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
-    installDemo(b, textured_quad.build(b, options), "textured_quad");
-    installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-    installDemo(b, triangle.build(b, options), "triangle");
-    installDemo(b, minimal.build(b, options), "minimal");
-    installDemo(b, procedural_mesh.build(b, options), "procedural_mesh");
-    installDemo(b, network_test.build(b, options), "network_test");
+    if (options.target.isWindows()) {
+        installDemo(b, audio_experiments.build(b, options), "audio_experiments");
+        installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
+        installDemo(b, bindless.build(b, options), "bindless");
+        installDemo(b, bullet_physics_test.build(b, options), "bullet_physics_test");
+        installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
+        installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
+        installDemo(b, physically_based_rendering.build(b, options), "physically_based_rendering");
+        installDemo(b, rasterization.build(b, options), "rasterization");
+        installDemo(b, simple3d.build(b, options), "simple3d");
+        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
+        installDemo(b, textured_quad.build(b, options), "textured_quad");
+        installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
+        installDemo(b, triangle.build(b, options), "triangle");
+        installDemo(b, minimal.build(b, options), "minimal");
+        installDemo(b, procedural_mesh.build(b, options), "procedural_mesh");
 
-    comptime var intro_index: u32 = 0;
-    inline while (intro_index < 7) : (intro_index += 1) {
-        const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
-        installDemo(b, intro.build(b, options, intro_index), name);
+        comptime var intro_index: u32 = 0;
+        inline while (intro_index < 7) : (intro_index += 1) {
+            const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
+            installDemo(b, intro.build(b, options, intro_index), name);
+        }
     }
+    installDemo(b, network_test.build(b, options), "network_test");
 
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
