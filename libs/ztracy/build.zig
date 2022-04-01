@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub fn link(exe: *std.build.LibExeObjStep, enable_tracy: bool) void {
     if (enable_tracy) {
-        exe.addIncludePath(thisDir() ++ "/libs/tracy");
+        exe.addIncludeDir(thisDir() ++ "/libs/tracy");
         exe.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
             "-DTRACY_ENABLE",
             // MinGW doesn't have all the newfangled windows features,

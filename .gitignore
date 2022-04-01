@@ -4,6 +4,7 @@
 
 !*.c
 !*.cpp
+!*.hpp
 !*.zig
 !*.h
 !*.hlsl

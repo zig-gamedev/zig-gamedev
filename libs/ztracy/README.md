@@ -24,7 +24,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const ztracy_pkg = std.build.Pkg{
         .name = "ztracy",
-        .path = .{ .path = "libs/ztracy/ztracy.zig" },
+        .path = .{ .path = "libs/ztracy/src/ztracy.zig" },
         .dependencies = &[_]std.build.Pkg{
             options_pkg,
         },
