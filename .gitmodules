@@ -1,0 +1,7 @@
+[submodule "libs/mach-gpu-dawn/libs/dawn"]
+	path = libs/mach-gpu-dawn/libs/dawn
+	url = https://github.com/hexops/dawn.git
+	branch = generated-2022-03-04
+[submodule "libs/mach-gpu-dawn/libs/DirectXShaderCompiler"]
+	path = libs/mach-gpu-dawn/libs/DirectXShaderCompiler
+	url = https://github.com/hexops/DirectXShaderCompiler.git
