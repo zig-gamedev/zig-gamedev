@@ -18,7 +18,7 @@ const intro = @import("samples/intro/build.zig");
 const minimal = @import("samples/minimal/build.zig");
 const procedural_mesh = @import("samples/procedural_mesh/build.zig");
 const network_test = @import("samples/network_test/build.zig");
-//const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
+const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
@@ -27,6 +27,7 @@ pub const Options = struct {
     enable_dx_gpu_debug: bool,
     enable_tracy: bool,
     enable_pix: bool,
+    dawn_from_source: bool,
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -42,6 +43,11 @@ pub fn build(b: *std.build.Builder) void {
         "Enable GPU-based validation for D3D12",
     ) orelse false;
     const enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
+    const dawn_from_source = b.option(bool, "dawn-from-source", "Build Dawn (WebGPU) from source") orelse false;
+
+    if (dawn_from_source) {
+        ensureSubmodules(b.allocator) catch |err| @panic(@errorName(err));
+    }
 
     const options = Options{
         .build_mode = b.standardReleaseOptions(),
@@ -50,6 +56,7 @@ pub fn build(b: *std.build.Builder) void {
         .enable_dx_gpu_debug = enable_dx_gpu_debug,
         .enable_tracy = enable_tracy,
         .enable_pix = enable_pix,
+        .dawn_from_source = dawn_from_source,
     };
 
     if (options.target.isWindows()) {
@@ -76,7 +83,7 @@ pub fn build(b: *std.build.Builder) void {
         }
     }
     installDemo(b, network_test.build(b, options), "network_test");
-    //installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
+    installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
 
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
@@ -105,4 +112,19 @@ fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime na
     run_step.dependOn(&run_cmd.step);
 
     b.getInstallStep().dependOn(install);
+}
+
+fn ensureSubmodules(allocator: std.mem.Allocator) !void {
+    if (std.process.getEnvVarOwned(allocator, "NO_ENSURE_SUBMODULES")) |no_ensure_submodules| {
+        if (std.mem.eql(u8, no_ensure_submodules, "true")) return;
+    } else |_| {}
+    const child = try std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--recursive" }, allocator);
+    child.cwd = thisDir();
+    child.stderr = std.io.getStdErr();
+    child.stdout = std.io.getStdOut();
+    _ = try child.spawnAndWait();
+}
+
+fn thisDir() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse ".";
 }

@@ -7,16 +7,14 @@ const Options = @import("../../build.zig").Options;
 const content_dir = "triangle_wgpu_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const gpu_dawn_options = gpu_dawn.Options{
-        .from_source = b.option(bool, "dawn-from-source", "Build Dawn from source") orelse false,
-    };
-
     const exe = b.addExecutable("triangle_wgpu", thisDir() ++ "/src/triangle_wgpu.zig");
+
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
-    glfw.link(b, exe, .{ .system_sdk = .{ .set_sysroot = false } });
-    gpu_dawn.link(b, exe, gpu_dawn_options);
     exe.addPackagePath("glfw", thisDir() ++ "/../../libs/mach-glfw/src/main.zig");
+
+    glfw.link(b, exe, .{ .system_sdk = .{ .set_sysroot = false } });
+    gpu_dawn.link(b, exe, .{ .from_source = options.dawn_from_source });
 
     return exe;
 }

@@ -1,3 +1,0 @@
-[submodule "libs/mach-gpu-dawn"]
-	path = libs/mach-gpu-dawn
-	url = https://github.com/michal-z/mach-gpu-dawn
