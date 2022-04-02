@@ -9,6 +9,8 @@
 !*.h
 !*.hlsl
 !*.hlsli
+!*.m
+!LICENSE*
 
 !*.txt
 !*.md

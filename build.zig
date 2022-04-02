@@ -18,6 +18,7 @@ const intro = @import("samples/intro/build.zig");
 const minimal = @import("samples/minimal/build.zig");
 const procedural_mesh = @import("samples/procedural_mesh/build.zig");
 const network_test = @import("samples/network_test/build.zig");
+const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
@@ -75,6 +76,7 @@ pub fn build(b: *std.build.Builder) void {
         }
     }
     installDemo(b, network_test.build(b, options), "network_test");
+    installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
 
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
