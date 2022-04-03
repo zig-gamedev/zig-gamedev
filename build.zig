@@ -1,65 +1,41 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const audio_experiments = @import("samples/audio_experiments/build.zig");
-const audio_playback_test = @import("samples/audio_playback_test/build.zig");
-const bindless = @import("samples/bindless/build.zig");
-const bullet_physics_test = @import("samples/bullet_physics_test/build.zig");
-const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
-const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
-const physically_based_rendering = @import("samples/physically_based_rendering/build.zig");
-const rasterization = @import("samples/rasterization/build.zig");
-const simple3d = @import("samples/simple3d/build.zig");
-const simple_raytracer = @import("samples/simple_raytracer/build.zig");
-const textured_quad = @import("samples/textured_quad/build.zig");
-const triangle = @import("samples/triangle/build.zig");
-const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
-const intro = @import("samples/intro/build.zig");
-const minimal = @import("samples/minimal/build.zig");
-const procedural_mesh = @import("samples/procedural_mesh/build.zig");
-const network_test = @import("samples/network_test/build.zig");
-const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
-
-pub const Options = struct {
-    build_mode: std.builtin.Mode,
-    target: std.zig.CrossTarget,
-    enable_dx_debug: bool,
-    enable_dx_gpu_debug: bool,
-    enable_tracy: bool,
-    enable_pix: bool,
-    dawn_from_source: bool,
-};
-
 pub fn build(b: *std.build.Builder) void {
-    const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
-    const enable_dx_debug = b.option(
-        bool,
-        "enable-dx-debug",
-        "Enable debug layer for D3D12, D2D1, DirectML and DXGI",
-    ) orelse false;
-    const enable_dx_gpu_debug = b.option(
-        bool,
-        "enable-dx-gpu-debug",
-        "Enable GPU-based validation for D3D12",
-    ) orelse false;
-    const enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
-    const dawn_from_source = b.option(bool, "dawn-from-source", "Build Dawn (WebGPU) from source") orelse false;
+    var options = Options{
+        .build_mode = b.standardReleaseOptions(),
+        .target = b.standardTargetOptions(.{}),
+    };
 
-    if (dawn_from_source) {
+    options.enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
+    options.dawn_from_source = b.option(bool, "dawn-from-source", "Build Dawn (WebGPU) from source") orelse false;
+
+    if (options.dawn_from_source) {
         ensureSubmodules(b.allocator) catch |err| @panic(@errorName(err));
     }
 
-    const options = Options{
-        .build_mode = b.standardReleaseOptions(),
-        .target = b.standardTargetOptions(.{}),
-        .enable_dx_debug = enable_dx_debug,
-        .enable_dx_gpu_debug = enable_dx_gpu_debug,
-        .enable_tracy = enable_tracy,
-        .enable_pix = enable_pix,
-        .dawn_from_source = dawn_from_source,
-    };
+    //
+    // Cross-platform demos
+    //
+    installDemo(b, network_test.build(b, options), "network_test");
+    installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
 
+    //
+    // Windows-only demos
+    //
     if (options.target.isWindows()) {
+        options.enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
+        options.enable_dx_debug = b.option(
+            bool,
+            "enable-dx-debug",
+            "Enable debug layer for D3D12, D2D1, DirectML and DXGI",
+        ) orelse false;
+        options.enable_dx_gpu_debug = b.option(
+            bool,
+            "enable-dx-gpu-debug",
+            "Enable GPU-based validation for D3D12",
+        ) orelse false;
+
         installDemo(b, audio_experiments.build(b, options), "audio_experiments");
         installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
         installDemo(b, bindless.build(b, options), "bindless");
@@ -82,9 +58,10 @@ pub fn build(b: *std.build.Builder) void {
             installDemo(b, intro.build(b, options, intro_index), name);
         }
     }
-    installDemo(b, network_test.build(b, options), "network_test");
-    installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
 
+    //
+    // Tests
+    //
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
     const zmath_tests = @import("libs/zmath/build.zig").buildTests(b, options.build_mode, options.target);
@@ -98,6 +75,35 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&znoise_tests.step);
     test_step.dependOn(&zenet_tests.step);
 }
+
+const audio_experiments = @import("samples/audio_experiments/build.zig");
+const audio_playback_test = @import("samples/audio_playback_test/build.zig");
+const bindless = @import("samples/bindless/build.zig");
+const bullet_physics_test = @import("samples/bullet_physics_test/build.zig");
+const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
+const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
+const physically_based_rendering = @import("samples/physically_based_rendering/build.zig");
+const rasterization = @import("samples/rasterization/build.zig");
+const simple3d = @import("samples/simple3d/build.zig");
+const simple_raytracer = @import("samples/simple_raytracer/build.zig");
+const textured_quad = @import("samples/textured_quad/build.zig");
+const triangle = @import("samples/triangle/build.zig");
+const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
+const intro = @import("samples/intro/build.zig");
+const minimal = @import("samples/minimal/build.zig");
+const procedural_mesh = @import("samples/procedural_mesh/build.zig");
+const network_test = @import("samples/network_test/build.zig");
+const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
+
+pub const Options = struct {
+    build_mode: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+    enable_dx_debug: bool = false,
+    enable_dx_gpu_debug: bool = false,
+    enable_tracy: bool = false,
+    enable_pix: bool = false,
+    dawn_from_source: bool = false,
+};
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
     comptime var desc_name: [256]u8 = undefined;
