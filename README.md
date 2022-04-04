@@ -10,7 +10,7 @@ To get started on Windows, Linux or Mac:
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
-zig build triangl_wgpu-run
+zig build triangle_wgpu-run
 ```
 #### Some features and libraries we develop/maintain:
 
