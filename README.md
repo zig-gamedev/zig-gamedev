@@ -8,7 +8,8 @@ Prebuilt Windows binaries for all sample applications can be found in [Releases]
 
 #### Some features and libraries we develop/maintain:
 
-* Zero dependency except [Zig compiler (master)](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
+* Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
+* Zero dependency except [Zig compiler (master)](https://ziglang.org/download/), git and curl - no Visual Studio/Build Tools/Windows SDK, gcc, dev packages, system headers/libs are needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers **[cross-platform and standalone]**
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) **[cross-platform and standalone]**
@@ -16,12 +17,14 @@ Prebuilt Windows binaries for all sample applications can be found in [Releases]
 * [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) **[cross-platform and standalone]**
 * [zenet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zenet) - Zig bindings for [ENet](https://github.com/lsalzman/enet) **[cross-platform and standalone]**
 * [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) **[cross-platform and standalone]**
+* Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [libs/common/src/c](libs/common/src/c))
+
+If you want to develop Windows applications we provide:
 * [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API **[standalone]**
 * [zd3d12](https://github.com/michal-z/zig-gamedev/blob/main/libs/zd3d12) - helper library for working with DirectX 12 **[depends only on zwin32]**
 * [zxaudio2](https://github.com/michal-z/zig-gamedev/blob/main/libs/zxaudio2) - helper library for working with XAudio2 **[depends only on zwin32]**
 * [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpix) - support for GPU profiling with PIX **[depends only on zwin32]**
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
-* Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [libs/common/src/c](libs/common/src/c))
 
 *I build game development stuff in Zig full-time. If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
 
@@ -85,22 +88,17 @@ All sample applications support the following build options:
 
 * `-Drelease-safe=[bool]` - Optimizations on and safety on
 * `-Drelease-fast=[bool]` - Optimizations on and safety off
+* `-Denable-tracy=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
+* `-Ddawn-from-source=[bool]` - Build Dawn (WebGPU implementation) from source
+
+Addidtional options for Windows applications:
 * `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
-* `-Denable-tracy=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
 * `-Denable-pix=[bool]` - PIX markers and events enabled
 
 #### Examples
 
-`zig build -Denable-dx-debug=true -Drelease-fast=true`
-
-`zig build -Denable-tracy=true`
-
-`zig build simple_raytracer`
-
-`zig build simple_raytracer-run`
-
-`zig build simple_raytracer-dxc`
+`zig build triangle_wgpu-run -Drelease-fast=true`
 
 ## Requirements
 
