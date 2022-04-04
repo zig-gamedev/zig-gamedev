@@ -7,9 +7,11 @@ Project is under active development, see [Roadmap](https://github.com/michal-z/z
 Prebuilt Windows binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases).<br />
 
 To get started on Windows, Linux or Mac:
-1. `git clone https://github.com/michal-z/zig-gamedev.git`
-1. `cd zig-gamedev`
-1. `zig build triangl_wgpu-run`
+```
+git clone https://github.com/michal-z/zig-gamedev.git
+cd zig-gamedev
+zig build triangl_wgpu-run
+```
 
 #### Some features and libraries we develop/maintain:
 
