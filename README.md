@@ -4,7 +4,6 @@
 
 This repository contains a collection of [sample applications](#sample-applications) and standalone libraries written in **[Zig programming language](https://ziglang.org/)**.
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
-Prebuilt Windows binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases).<br />
 
 To get started on Windows, Linux or Mac:
 ```
