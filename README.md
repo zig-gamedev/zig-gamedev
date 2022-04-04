@@ -6,6 +6,11 @@ This repository contains a collection of [sample applications](#sample-applicati
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
 Prebuilt Windows binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases).<br />
 
+To get started on Windows, Linux or Mac:
+1. `git clone https://github.com/michal-z/zig-gamedev.git`
+1. `cd zig-gamedev`
+1. `zig build triangl_wgpu-run`
+
 #### Some features and libraries we develop/maintain:
 
 * Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
