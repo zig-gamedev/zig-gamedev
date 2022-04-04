@@ -12,6 +12,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
     exe.addPackagePath("glfw", thisDir() ++ "/../../libs/mach-glfw/src/main.zig");
+    exe.addPackagePath("gpu", thisDir() ++ "/../../libs/mach-gpu/src/main.zig");
 
     glfw.link(b, exe, .{ .system_sdk = .{ .set_sysroot = false } });
     gpu_dawn.link(b, exe, .{ .from_source = options.dawn_from_source });

@@ -1,25 +1,27 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const glfw = @import("glfw");
+const gpu = @import("gpu");
 const c = @import("c.zig").c;
 const objc = @cImport({
     @cInclude("objc/message.h");
 });
 
-fn printDeviceError(error_type: c.WGPUErrorType, message: [*c]const u8, _: ?*anyopaque) callconv(.C) void {
-    switch (error_type) {
-        c.WGPUErrorType_Validation => std.debug.print("dawn: validation error: {s}\n", .{message}),
-        c.WGPUErrorType_OutOfMemory => std.debug.print("dawn: out of memory: {s}\n", .{message}),
-        c.WGPUErrorType_Unknown => std.debug.print("dawn: unknown error: {s}\n", .{message}),
-        c.WGPUErrorType_DeviceLost => std.debug.print("dawn: device lost: {s}\n", .{message}),
+fn printUnhandledError(_: void, typ: gpu.ErrorType, message: [*:0]const u8) void {
+    switch (typ) {
+        .validation => std.debug.print("gpu: validation error: {s}\n", .{message}),
+        .out_of_memory => std.debug.print("gpu: out of memory: {s}\n", .{message}),
+        .device_lost => std.debug.print("gpu: device lost: {s}\n", .{message}),
+        .unknown => std.debug.print("gpu: unknown error: {s}\n", .{message}),
         else => unreachable,
     }
 }
+var printUnhandledErrorCallback = gpu.ErrorCallback.init(void, {}, printUnhandledError);
 
 const Setup = struct {
-    instance: c.WGPUInstance,
-    backend_type: c.WGPUBackendType,
-    device: c.WGPUDevice,
+    native_instance: gpu.NativeInstance,
+    backend_type: gpu.Adapter.BackendType,
+    device: gpu.Device,
     window: glfw.Window,
 };
 
@@ -30,37 +32,24 @@ fn getEnvVarOwned(allocator: std.mem.Allocator, key: []const u8) error{ OutOfMem
     };
 }
 
-fn detectBackendType(allocator: std.mem.Allocator) !c.WGPUBackendType {
-    const WGPU_BACKEND = try getEnvVarOwned(allocator, "WGPU_BACKEND");
-    if (WGPU_BACKEND) |backend| {
+fn detectBackendType(allocator: std.mem.Allocator) !gpu.Adapter.BackendType {
+    const GPU_BACKEND = try getEnvVarOwned(allocator, "GPU_BACKEND");
+    if (GPU_BACKEND) |backend| {
         defer allocator.free(backend);
-        if (std.ascii.eqlIgnoreCase(backend, "opengl")) return c.WGPUBackendType_OpenGL;
-        if (std.ascii.eqlIgnoreCase(backend, "opengles")) return c.WGPUBackendType_OpenGLES;
-        if (std.ascii.eqlIgnoreCase(backend, "d3d11")) return c.WGPUBackendType_D3D11;
-        if (std.ascii.eqlIgnoreCase(backend, "d3d12")) return c.WGPUBackendType_D3D12;
-        if (std.ascii.eqlIgnoreCase(backend, "metal")) return c.WGPUBackendType_Metal;
-        if (std.ascii.eqlIgnoreCase(backend, "null")) return c.WGPUBackendType_Null;
-        if (std.ascii.eqlIgnoreCase(backend, "vulkan")) return c.WGPUBackendType_Vulkan;
+        if (std.ascii.eqlIgnoreCase(backend, "opengl")) return .opengl;
+        if (std.ascii.eqlIgnoreCase(backend, "opengles")) return .opengles;
+        if (std.ascii.eqlIgnoreCase(backend, "d3d11")) return .d3d11;
+        if (std.ascii.eqlIgnoreCase(backend, "d3d12")) return .d3d12;
+        if (std.ascii.eqlIgnoreCase(backend, "metal")) return .metal;
+        if (std.ascii.eqlIgnoreCase(backend, "null")) return .nul;
+        if (std.ascii.eqlIgnoreCase(backend, "vulkan")) return .vulkan;
         @panic("unknown BACKEND type");
     }
 
     const target = @import("builtin").target;
-    if (target.isDarwin()) return c.WGPUBackendType_Metal;
-    if (target.os.tag == .windows) return c.WGPUBackendType_D3D12;
-    return c.WGPUBackendType_Vulkan;
-}
-
-fn backendTypeString(t: c.WGPUBackendType) []const u8 {
-    return switch (t) {
-        c.WGPUBackendType_OpenGL => "OpenGL",
-        c.WGPUBackendType_OpenGLES => "OpenGLES",
-        c.WGPUBackendType_D3D11 => "D3D11",
-        c.WGPUBackendType_D3D12 => "D3D12",
-        c.WGPUBackendType_Metal => "Metal",
-        c.WGPUBackendType_Null => "Null",
-        c.WGPUBackendType_Vulkan => "Vulkan",
-        else => unreachable,
-    };
+    if (target.isDarwin()) return .metal;
+    if (target.os.tag == .windows) return .d3d12;
+    return .vulkan;
 }
 
 pub fn setup(allocator: std.mem.Allocator) !Setup {
@@ -70,43 +59,84 @@ pub fn setup(allocator: std.mem.Allocator) !Setup {
 
     // Create the test window and discover adapters using it (esp. for OpenGL)
     var hints = glfwWindowHintsForBackend(backend_type);
-    hints.cocoa_retina_framebuffer = false;
-    const window = try glfw.Window.create(640, 480, "Dawn window", null, null, hints);
+    hints.cocoa_retina_framebuffer = true;
+    const window = try glfw.Window.create(640, 480, "mach/gpu window", null, null, hints);
+
+    const backend_procs = c.machDawnNativeGetProcs();
+    c.dawnProcSetProcs(backend_procs);
 
     const instance = c.machDawnNativeInstance_init();
-    try discoverAdapter(instance, window, backend_type);
+    var native_instance = gpu.NativeInstance.wrap(c.machDawnNativeInstance_get(instance).?);
 
+    // Discovers e.g. OpenGL adapters.
+    try discoverAdapters(instance, window, backend_type);
+
+    // Request an adapter.
+    //
+    // TODO: It would be nice if we could use gpu_interface.waitForAdapter here, however the webgpu.h
+    // API does not yet have a way to specify what type of backend you want (vulkan, opengl, etc.)
+    // In theory, I suppose we shouldn't need to and Dawn should just pick the best adapter - but in
+    // practice if Vulkan is not supported today waitForAdapter/requestAdapter merely generates an error.
+    //
+    // const gpu_interface = native_instance.interface();
+    // const backend_adapter = switch (gpu_interface.waitForAdapter(&.{
+    //     .power_preference = .high_performance,
+    // })) {
+    //     .adapter => |v| v,
+    //     .err => |err| {
+    //         std.debug.print("failed to get adapter: error={} {s}\n", .{ err.code, err.message });
+    //         std.process.exit(1);
+    //     },
+    // };
     const adapters = c.machDawnNativeInstance_getAdapters(instance);
-    var backend_adapter: ?c.MachDawnNativeAdapter = null;
+    var dawn_adapter: ?c.MachDawnNativeAdapter = null;
     var i: usize = 0;
     while (i < c.machDawnNativeAdapters_length(adapters)) : (i += 1) {
         const adapter = c.machDawnNativeAdapters_index(adapters, i);
         const properties = c.machDawnNativeAdapter_getProperties(adapter);
-        if (c.machDawnNativeAdapterProperties_getBackendType(properties) == backend_type) {
-            const name = c.machDawnNativeAdapterProperties_getName(properties);
-            const driver_description = c.machDawnNativeAdapterProperties_getDriverDescription(properties);
-            std.debug.print("found {s} adapter: {s}, {s}\n", .{ backendTypeString(backend_type), name, driver_description });
-            backend_adapter = adapter;
+        const found_backend_type = @intToEnum(gpu.Adapter.BackendType, c.machDawnNativeAdapterProperties_getBackendType(properties));
+        const found_adapter_type = @intToEnum(gpu.Adapter.Type, c.machDawnNativeAdapterProperties_getAdapterType(properties));
+        if (found_backend_type == backend_type and found_adapter_type != .cpu) {
+            dawn_adapter = adapter;
         }
     }
-    assert(backend_adapter != null);
+    if (dawn_adapter == null) {
+        std.debug.print("no matching adapter found for {s}", .{@tagName(backend_type)});
+        std.debug.print("-> maybe try GPU_BACKEND=opengl ?\n", .{});
+        std.process.exit(1);
+    }
+    assert(dawn_adapter != null);
+    const backend_adapter = gpu.NativeInstance.fromWGPUAdapter(c.machDawnNativeAdapter_get(dawn_adapter.?).?);
 
-    const backend_device = c.machDawnNativeAdapter_createDevice(backend_adapter.?, null);
-    const backend_procs = c.machDawnNativeGetProcs();
+    // Print which adapter we are going to use.
+    const props = backend_adapter.properties;
+    std.debug.print("found {s} backend on {s} adapter: {s}, {s}\n", .{
+        gpu.Adapter.backendTypeName(props.backend_type),
+        gpu.Adapter.typeName(props.adapter_type),
+        props.name,
+        props.driver_description,
+    });
 
-    c.dawnProcSetProcs(backend_procs);
-    backend_procs.*.deviceSetUncapturedErrorCallback.?(backend_device, printDeviceError, null);
+    const device = switch (backend_adapter.waitForDevice(&.{})) {
+        .device => |v| v,
+        .err => |err| {
+            std.debug.print("failed to get device: error={} {s}\n", .{ err.code, err.message });
+            std.process.exit(1);
+        },
+    };
+
+    device.setUncapturedErrorCallback(&printUnhandledErrorCallback);
     return Setup{
-        .instance = c.machDawnNativeInstance_get(instance),
+        .native_instance = native_instance,
         .backend_type = backend_type,
-        .device = backend_device,
+        .device = device,
         .window = window,
     };
 }
 
-fn glfwWindowHintsForBackend(backend: c.WGPUBackendType) glfw.Window.Hints {
+fn glfwWindowHintsForBackend(backend: gpu.Adapter.BackendType) glfw.Window.Hints {
     return switch (backend) {
-        c.WGPUBackendType_OpenGL => .{
+        .opengl => .{
             // Ask for OpenGL 4.4 which is what the GL backend requires for compute shaders and
             // texture views.
             .context_version_major = 4,
@@ -114,7 +144,7 @@ fn glfwWindowHintsForBackend(backend: c.WGPUBackendType) glfw.Window.Hints {
             .opengl_forward_compat = true,
             .opengl_profile = .opengl_core_profile,
         },
-        c.WGPUBackendType_OpenGLES => .{
+        .opengles => .{
             .context_version_major = 3,
             .context_version_minor = 1,
             .client_api = .opengl_es_api,
@@ -128,21 +158,25 @@ fn glfwWindowHintsForBackend(backend: c.WGPUBackendType) glfw.Window.Hints {
     };
 }
 
-fn discoverAdapter(instance: c.MachDawnNativeInstance, window: glfw.Window, typ: c.WGPUBackendType) !void {
-    if (typ == c.WGPUBackendType_OpenGL) {
-        try glfw.makeContextCurrent(window);
-        const adapter_options = c.MachDawnNativeAdapterDiscoveryOptions_OpenGL{
-            .getProc = @ptrCast(fn ([*c]const u8) callconv(.C) ?*anyopaque, glfw.getProcAddress),
-        };
-        _ = c.machDawnNativeInstance_discoverAdapters(instance, typ, &adapter_options);
-    } else if (typ == c.WGPUBackendType_OpenGLES) {
-        try glfw.makeContextCurrent(window);
-        const adapter_options = c.MachDawnNativeAdapterDiscoveryOptions_OpenGLES{
-            .getProc = @ptrCast(fn ([*c]const u8) callconv(.C) ?*anyopaque, glfw.getProcAddress),
-        };
-        _ = c.machDawnNativeInstance_discoverAdapters(instance, typ, &adapter_options);
-    } else {
-        c.machDawnNativeInstance_discoverDefaultAdapters(instance);
+fn discoverAdapters(instance: c.MachDawnNativeInstance, window: glfw.Window, typ: gpu.Adapter.BackendType) !void {
+    switch (typ) {
+        .opengl => {
+            try glfw.makeContextCurrent(window);
+            const adapter_options = c.MachDawnNativeAdapterDiscoveryOptions_OpenGL{
+                .getProc = @ptrCast(fn ([*c]const u8) callconv(.C) ?*anyopaque, glfw.getProcAddress),
+            };
+            _ = c.machDawnNativeInstance_discoverAdapters(instance, @enumToInt(typ), &adapter_options);
+        },
+        .opengles => {
+            try glfw.makeContextCurrent(window);
+            const adapter_options = c.MachDawnNativeAdapterDiscoveryOptions_OpenGLES{
+                .getProc = @ptrCast(fn ([*c]const u8) callconv(.C) ?*anyopaque, glfw.getProcAddress),
+            };
+            _ = c.machDawnNativeInstance_discoverAdapters(instance, @enumToInt(typ), &adapter_options);
+        },
+        else => {
+            c.machDawnNativeInstance_discoverDefaultAdapters(instance);
+        },
     }
 }
 
@@ -157,40 +191,24 @@ pub fn detectGLFWOptions() glfw.BackendOptions {
 }
 
 pub fn createSurfaceForWindow(
-    instance: c.WGPUInstance,
+    native_instance: *const gpu.NativeInstance,
     window: glfw.Window,
     comptime glfw_options: glfw.BackendOptions,
-) c.WGPUSurface {
+) gpu.Surface {
     const glfw_native = glfw.Native(glfw_options);
-    if (glfw_options.win32) {
-        var desc: c.WGPUSurfaceDescriptorFromWindowsHWND = undefined;
-        desc.chain.next = null;
-        desc.chain.sType = c.WGPUSType_SurfaceDescriptorFromWindowsHWND;
-
-        desc.hinstance = std.os.windows.kernel32.GetModuleHandleW(null);
-        desc.hwnd = glfw_native.getWin32Window(window);
-
-        var descriptor: c.WGPUSurfaceDescriptor = undefined;
-        descriptor.nextInChain = @ptrCast(*c.WGPUChainedStruct, &desc);
-        descriptor.label = "basic surface";
-        return c.wgpuInstanceCreateSurface(instance, &descriptor);
-    } else if (glfw_options.x11) {
-        var desc: c.WGPUSurfaceDescriptorFromXlibWindow = undefined;
-        desc.chain.next = null;
-        desc.chain.sType = c.WGPUSType_SurfaceDescriptorFromXlibWindow;
-
-        desc.display = glfw_native.getX11Display();
-        desc.window = glfw_native.getX11Window(window);
-
-        var descriptor: c.WGPUSurfaceDescriptor = undefined;
-        descriptor.nextInChain = @ptrCast(*c.WGPUChainedStruct, &desc);
-        descriptor.label = "basic surface";
-        return c.wgpuInstanceCreateSurface(instance, &descriptor);
-    } else if (glfw_options.cocoa) {
-        var desc: c.WGPUSurfaceDescriptorFromMetalLayer = undefined;
-        desc.chain.next = null;
-        desc.chain.sType = c.WGPUSType_SurfaceDescriptorFromMetalLayer;
-
+    const descriptor = if (glfw_options.win32) gpu.Surface.Descriptor{
+        .windows_hwnd = .{
+            .label = "basic surface",
+            .hinstance = std.os.windows.kernel32.GetModuleHandleW(null).?,
+            .hwnd = glfw_native.getWin32Window(window),
+        },
+    } else if (glfw_options.x11) gpu.Surface.Descriptor{
+        .xlib = .{
+            .label = "basic surface",
+            .display = glfw_native.getX11Display(),
+            .window = glfw_native.getX11Window(window),
+        },
+    } else if (glfw_options.cocoa) blk: {
         const ns_window = glfw_native.getCocoaWindow(window);
         const ns_view = msgSend(ns_window, "contentView", .{}, *anyopaque); // [nsWindow contentView]
 
@@ -204,15 +222,17 @@ pub fn createSurfaceForWindow(
         const scale_factor = msgSend(ns_window, "backingScaleFactor", .{}, f64); // [ns_window backingScaleFactor]
         msgSend(layer.?, "setContentsScale:", .{scale_factor}, void); // [layer setContentsScale:scale_factor]
 
-        desc.layer = layer.?;
-
-        var descriptor: c.WGPUSurfaceDescriptor = undefined;
-        descriptor.nextInChain = @ptrCast(*c.WGPUChainedStruct, &desc);
-        descriptor.label = "basic surface";
-        return c.wgpuInstanceCreateSurface(instance, &descriptor);
+        break :blk gpu.Surface.Descriptor{
+            .metal_layer = .{
+                .label = "basic surface",
+                .layer = layer.?,
+            },
+        };
     } else if (glfw_options.wayland) {
         @panic("Dawn does not yet have Wayland support, see https://bugs.chromium.org/p/dawn/issues/detail?id=1246&q=surface&can=2");
     } else unreachable;
+
+    return native_instance.createSurface(&descriptor);
 }
 
 // Borrowed from https://github.com/hazeycode/zig-objcrt
@@ -234,22 +254,3 @@ pub fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime Ret
 
     return @call(.{}, func, .{ obj, sel } ++ args);
 }
-
-// wgpu::TextureFormat GetPreferredSwapChainTextureFormat() {
-//     DoFlush();
-//     return static_cast<wgpu::TextureFormat>(binding->GetPreferredSwapChainTextureFormat());
-// }
-
-// wgpu::TextureView CreateDefaultDepthStencilView(const wgpu::Device& device) {
-//     wgpu::TextureDescriptor descriptor;
-//     descriptor.dimension = wgpu::TextureDimension::e2D;
-//     descriptor.size.width = 640;
-//     descriptor.size.height = 480;
-//     descriptor.size.depthOrArrayLayers = 1;
-//     descriptor.sampleCount = 1;
-//     descriptor.format = wgpu::TextureFormat::Depth24PlusStencil8;
-//     descriptor.mipLevelCount = 1;
-//     descriptor.usage = wgpu::TextureUsage::RenderAttachment;
-//     auto depthStencilTexture = device.CreateTexture(&descriptor);
-//     return depthStencilTexture.CreateView();
-// }
