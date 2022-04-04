@@ -4,24 +4,34 @@
 
 This repository contains a collection of [sample applications](#sample-applications) and standalone libraries written in **[Zig programming language](https://ziglang.org/)**.
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
-Prebuilt Windows binaries for all sample applications can be found in [Releases](https://github.com/michal-z/zig-gamedev/releases).<br />
 
-#### Some features and libraries we develop/maintain:
-
-* Zero dependency except [Zig compiler (master)](https://ziglang.org/download/) - no Visual Studio/Build Tools/Windows SDK is needed - this repo + Zig compiler package (60 MB) is enough to start developing (any debugger can be used)
+To get started on Windows, Linux or Mac:
+```
+git clone https://github.com/michal-z/zig-gamedev.git
+cd zig-gamedev
+zig build triangle_wgpu-run
+```
+#### Some features:
+* Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
+* Zero dependency except [Zig compiler (master)](https://ziglang.org/download/), git and curl - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja or any other crap is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
+* Uses [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) (WebGPU) for cross-platfrom graphics, uses DirectX 12 for low-level graphics on Windows
+* Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [libs/common/src/c](libs/common/src/c))
+
+#### Libraries we develop/maintain:
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers **[cross-platform and standalone]**
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) **[cross-platform and standalone]**
 * [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h) **[cross-platform and standalone]**
 * [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) **[cross-platform and standalone]**
 * [zenet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zenet) - Zig bindings for [ENet](https://github.com/lsalzman/enet) **[cross-platform and standalone]**
 * [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) **[cross-platform and standalone]**
+
+#### Additionally for Windows applications we provide:
 * [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API **[standalone]**
 * [zd3d12](https://github.com/michal-z/zig-gamedev/blob/main/libs/zd3d12) - helper library for working with DirectX 12 **[depends only on zwin32]**
 * [zxaudio2](https://github.com/michal-z/zig-gamedev/blob/main/libs/zxaudio2) - helper library for working with XAudio2 **[depends only on zwin32]**
 * [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpix) - support for GPU profiling with PIX **[depends only on zwin32]**
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
-* Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [libs/common/src/c](libs/common/src/c))
 
 *I build game development stuff in Zig full-time. If you like my project and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
 
@@ -59,7 +69,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 ## Building sample applications
 
-To build all sample applications (assuming `zig.exe` is in the PATH and [Git LFS](https://git-lfs.github.com/) is installed):
+To build all sample applications (assuming `zig` is in the PATH and [Git LFS](https://git-lfs.github.com/) is installed):
 
 1. `git clone https://github.com/michal-z/zig-gamedev.git`
 1. `cd zig-gamedev`
@@ -71,11 +81,7 @@ Build artifacts will show up in `zig-out/bin` folder.
 
 `zig build <sample_name>-run` will build and run sample application named `<sample_name>`.
 
-`zig build <sample_name>-dxc` will build shaders for sample application named `<sample_name>`.
-
 To list all available sample names run `zig build --help` and navigate to `Steps` section.
-
-As mentioned above, the only dependency needed to build this project is [Zig compiler](https://ziglang.org/download/), neither Visual Studio nor Windows SDK has to be installed.
 
 Zig compiler consists of a single ~60MB .zip file that needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
 
@@ -85,22 +91,17 @@ All sample applications support the following build options:
 
 * `-Drelease-safe=[bool]` - Optimizations on and safety on
 * `-Drelease-fast=[bool]` - Optimizations on and safety off
+* `-Denable-tracy=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
+* `-Ddawn-from-source=[bool]` - Build Dawn (WebGPU implementation) from source
+
+Addidtional options for Windows applications:
 * `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
-* `-Denable-tracy=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
 * `-Denable-pix=[bool]` - PIX markers and events enabled
 
 #### Examples
 
-`zig build -Denable-dx-debug=true -Drelease-fast=true`
-
-`zig build -Denable-tracy=true`
-
-`zig build simple_raytracer`
-
-`zig build simple_raytracer-run`
-
-`zig build simple_raytracer-dxc`
+`zig build triangle_wgpu-run -Drelease-fast=true`
 
 ## Requirements
 
