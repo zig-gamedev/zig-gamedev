@@ -68,7 +68,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 ## Building sample applications
 
-To build all sample applications (assuming `zig.exe` is in the PATH and [Git LFS](https://git-lfs.github.com/) is installed):
+To build all sample applications (assuming `zig` is in the PATH and [Git LFS](https://git-lfs.github.com/) is installed):
 
 1. `git clone https://github.com/michal-z/zig-gamedev.git`
 1. `cd zig-gamedev`
@@ -79,8 +79,6 @@ Build artifacts will show up in `zig-out/bin` folder.
 `zig build <sample_name>` will build sample application named `<sample_name>`.
 
 `zig build <sample_name>-run` will build and run sample application named `<sample_name>`.
-
-`zig build <sample_name>-dxc` will build shaders for sample application named `<sample_name>`.
 
 To list all available sample names run `zig build --help` and navigate to `Steps` section.
 
