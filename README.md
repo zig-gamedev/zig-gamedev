@@ -12,7 +12,6 @@ git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
 zig build triangl_wgpu-run
 ```
-
 #### Some features and libraries we develop/maintain:
 
 * Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
@@ -84,8 +83,6 @@ Build artifacts will show up in `zig-out/bin` folder.
 `zig build <sample_name>-dxc` will build shaders for sample application named `<sample_name>`.
 
 To list all available sample names run `zig build --help` and navigate to `Steps` section.
-
-As mentioned above, the only dependency needed to build this project is [Zig compiler](https://ziglang.org/download/), neither Visual Studio nor Windows SDK has to be installed.
 
 Zig compiler consists of a single ~60MB .zip file that needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
 
