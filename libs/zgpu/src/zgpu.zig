@@ -92,6 +92,7 @@ pub const GraphicsContext = struct {
                 gctx.window_surface,
                 &gctx.swap_chain_descriptor_target,
             );
+            gctx.swap_chain_descriptor_current = gctx.swap_chain_descriptor_target;
         }
     }
 };
