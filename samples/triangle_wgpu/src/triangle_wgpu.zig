@@ -3,6 +3,7 @@ const sample_utils = @import("sample_utils.zig");
 const c = @import("c.zig").c;
 const glfw = @import("glfw");
 const gpu = @import("gpu");
+const zgpu = @import("zgpu");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -20,6 +21,9 @@ pub fn main() !void {
         .target_desc = undefined,
     };
     setup.window.setUserPointer(window_data);
+
+    var gctx = zgpu.GraphicsContext.init(setup.window);
+    _ = gctx;
 
     // If targeting OpenGL, we can't use the newer WGPUSurface API. Instead, we need to use the
     // older Dawn-specific API. https://bugs.chromium.org/p/dawn/issues/detail?id=269&q=surface&can=2
