@@ -1,5 +1,4 @@
 const std = @import("std");
-const system_sdk = @import("../../libs/mach-glfw/system_sdk.zig");
 const glfw = @import("../../libs/mach-glfw/build.zig");
 const gpu = @import("../../libs/mach-gpu/build.zig");
 const gpu_dawn = @import("../../libs/mach-gpu-dawn/build.zig");
