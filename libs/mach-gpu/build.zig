@@ -1,6 +1,6 @@
 const std = @import("std");
-const gpu_dawn = @import("libs/mach-gpu-dawn/build.zig");
-const glfw = @import("libs/mach-glfw/build.zig");
+const gpu_dawn = @import("../mach-gpu-dawn/build.zig");
+const glfw = @import("../mach-glfw/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     const mode = b.standardReleaseOptions();
@@ -40,4 +40,14 @@ pub fn build(b: *std.build.Builder) void {
     example_run_cmd.step.dependOn(b.getInstallStep());
     const example_run_step = b.step("run-example", "Run the example");
     example_run_step.dependOn(&example_run_cmd.step);
+}
+
+pub const pkg = .{
+    .name = "gpu",
+    .path = .{ .path = thisDir() ++ "/src/main.zig" },
+    .dependencies = &.{glfw.pkg},
+};
+
+fn thisDir() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse ".";
 }

@@ -1,6 +1,7 @@
 const std = @import("std");
 const system_sdk = @import("../../libs/mach-glfw/system_sdk.zig");
 const glfw = @import("../../libs/mach-glfw/build.zig");
+const gpu = @import("../../libs/mach-gpu/build.zig");
 const gpu_dawn = @import("../../libs/mach-gpu-dawn/build.zig");
 
 const Options = @import("../../build.zig").Options;
@@ -11,10 +12,10 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
-    exe.addPackagePath("glfw", thisDir() ++ "/../../libs/mach-glfw/src/main.zig");
-    exe.addPackagePath("gpu", thisDir() ++ "/../../libs/mach-gpu/src/main.zig");
+    exe.addPackage(glfw.pkg);
+    exe.addPackage(gpu.pkg);
 
-    glfw.link(b, exe, .{ .system_sdk = .{ .set_sysroot = false } });
+    glfw.link(b, exe, .{});
     gpu_dawn.link(b, exe, .{ .from_source = options.dawn_from_source });
 
     return exe;
