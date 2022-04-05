@@ -96,7 +96,12 @@ pub fn setup(allocator: std.mem.Allocator) !Setup {
         const properties = c.machDawnNativeAdapter_getProperties(adapter);
         const found_backend_type = @intToEnum(gpu.Adapter.BackendType, c.machDawnNativeAdapterProperties_getBackendType(properties));
         const found_adapter_type = @intToEnum(gpu.Adapter.Type, c.machDawnNativeAdapterProperties_getAdapterType(properties));
-        if (found_backend_type == backend_type and found_adapter_type != .cpu) {
+
+        // Skip D3D12 CPU implementation (WARP)
+        if (found_backend_type == .d3d12 and found_adapter_type == .cpu)
+            continue;
+
+        if (found_backend_type == backend_type) {
             dawn_adapter = adapter;
         }
     }
