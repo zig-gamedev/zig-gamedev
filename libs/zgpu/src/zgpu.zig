@@ -11,6 +11,7 @@ pub const GraphicsContext = struct {
     adapter_type: gpu.Adapter.Type,
     backend_type: gpu.Adapter.BackendType,
     device: gpu.Device,
+    device_queue: gpu.Queue,
     window: glfw.Window,
     window_surface: gpu.Surface,
     swap_chain: ?gpu.SwapChain,
@@ -18,7 +19,7 @@ pub const GraphicsContext = struct {
     swap_chain_descriptor_current: gpu.SwapChain.Descriptor,
     swap_chain_descriptor_target: gpu.SwapChain.Descriptor,
 
-    pub fn init(window: glfw.Window) GraphicsContext {
+    pub fn create(allocator: std.mem.Allocator, window: glfw.Window) *GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
         c.machDawnNativeInstance_discoverDefaultAdapters(instance);
@@ -31,26 +32,27 @@ pub const GraphicsContext = struct {
         })) {
             .adapter => |v| v,
             .err => |err| {
-                std.debug.print("failed to get adapter: error={} {s}\n", .{ err.code, err.message });
+                std.debug.print("[zgpu] Failed to get adapter: error={} {s}.\n", .{ err.code, err.message });
                 std.process.exit(1);
             },
         };
 
         const props = backend_adapter.properties;
-        std.debug.print("zgpu: Backend: '{s} ({s})' on adapter: '{s} ({s})' selected.\n", .{
-            gpu.Adapter.backendTypeName(props.backend_type),
-            props.driver_description,
-            gpu.Adapter.typeName(props.adapter_type),
-            props.name,
-        });
+        std.debug.print("[zgpu] High-performance device has been selected:\n", .{});
+        std.debug.print("[zgpu]   Name: {s}\n", .{props.name});
+        std.debug.print("[zgpu]   Driver: {s}\n", .{props.driver_description});
+        std.debug.print("[zgpu]   Adapter type: {s}\n", .{gpu.Adapter.typeName(props.adapter_type)});
+        std.debug.print("[zgpu]   Backend type: {s}\n", .{gpu.Adapter.backendTypeName(props.backend_type)});
 
         const device = switch (backend_adapter.waitForDevice(&.{})) {
             .device => |v| v,
             .err => |err| {
-                std.debug.print("failed to get device: error={} {s}\n", .{ err.code, err.message });
+                std.debug.print("[zgpu] Failed to get device: error={} {s}\n", .{ err.code, err.message });
                 std.process.exit(1);
             },
         };
+        device.setUncapturedErrorCallback(&printUnhandledErrorCallback);
+        const device_queue = device.getQueue();
 
         const window_surface = createSurfaceForWindow(
             &native_instance,
@@ -70,11 +72,13 @@ pub const GraphicsContext = struct {
             .implementation = 0,
         };
 
-        return GraphicsContext{
+        const gctx = allocator.create(GraphicsContext) catch unreachable;
+        gctx.* = .{
             .native_instance = native_instance,
             .adapter_type = props.adapter_type,
             .backend_type = props.backend_type,
             .device = device,
+            .device_queue = device_queue,
             .window = window,
             .window_surface = window_surface,
             .swap_chain = null,
@@ -82,6 +86,20 @@ pub const GraphicsContext = struct {
             .swap_chain_descriptor_current = swap_chain_descriptor,
             .swap_chain_descriptor_target = swap_chain_descriptor,
         };
+        window.setUserPointer(gctx);
+        window.setFramebufferSizeCallback((struct {
+            fn callback(win: glfw.Window, win_width: u32, win_height: u32) void {
+                const ctx = win.getUserPointer(GraphicsContext);
+                ctx.?.swap_chain_descriptor_target.width = win_width;
+                ctx.?.swap_chain_descriptor_target.height = win_height;
+            }
+        }).callback);
+        return gctx;
+    }
+
+    pub fn destroy(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
+        // TODO: release resources
+        allocator.destroy(gctx);
     }
 
     pub fn update(gctx: *GraphicsContext) void {
@@ -93,6 +111,11 @@ pub const GraphicsContext = struct {
                 &gctx.swap_chain_descriptor_target,
             );
             gctx.swap_chain_descriptor_current = gctx.swap_chain_descriptor_target;
+
+            std.debug.print(
+                "[zgpu] Swap chain has been resized to: {d}x{d}\n",
+                .{ gctx.swap_chain_descriptor_current.width, gctx.swap_chain_descriptor_current.height },
+            );
         }
     }
 };
@@ -146,7 +169,8 @@ fn createSurfaceForWindow(
             },
         };
     } else if (glfw_options.wayland) {
-        @panic("Dawn does not yet have Wayland support, see https://bugs.chromium.org/p/dawn/issues/detail?id=1246&q=surface&can=2");
+        // bugs.chromium.org/p/dawn/issues/detail?id=1246&q=surface&can=2
+        @panic("Dawn does not yet have Wayland support");
     } else unreachable;
 
     return native_instance.createSurface(&descriptor);
@@ -160,8 +184,21 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
         0 => fn (@TypeOf(obj), objc.SEL) callconv(.C) ReturnType,
         1 => fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type) callconv(.C) ReturnType,
         2 => fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type, args_meta[1].field_type) callconv(.C) ReturnType,
-        3 => fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type, args_meta[1].field_type, args_meta[2].field_type) callconv(.C) ReturnType,
-        4 => fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type, args_meta[1].field_type, args_meta[2].field_type, args_meta[3].field_type) callconv(.C) ReturnType,
+        3 => fn (
+            @TypeOf(obj),
+            objc.SEL,
+            args_meta[0].field_type,
+            args_meta[1].field_type,
+            args_meta[2].field_type,
+        ) callconv(.C) ReturnType,
+        4 => fn (
+            @TypeOf(obj),
+            objc.SEL,
+            args_meta[0].field_type,
+            args_meta[1].field_type,
+            args_meta[2].field_type,
+            args_meta[3].field_type,
+        ) callconv(.C) ReturnType,
         else => @compileError("Unsupported number of args"),
     };
 
@@ -171,3 +208,14 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
 
     return @call(.{}, func, .{ obj, sel } ++ args);
 }
+
+fn printUnhandledError(_: void, typ: gpu.ErrorType, message: [*:0]const u8) void {
+    switch (typ) {
+        .validation => std.debug.print("[zgpu] Validation error: {s}\n", .{message}),
+        .out_of_memory => std.debug.print("[zgpu] Out of memory: {s}\n", .{message}),
+        .device_lost => std.debug.print("[zgpu] Device lost: {s}\n", .{message}),
+        .unknown => std.debug.print("[zgpu] Unknown error: {s}\n", .{message}),
+        else => unreachable,
+    }
+}
+var printUnhandledErrorCallback = gpu.ErrorCallback.init(void, {}, printUnhandledError);
