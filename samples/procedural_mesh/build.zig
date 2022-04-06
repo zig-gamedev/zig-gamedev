@@ -1,4 +1,11 @@
 const std = @import("std");
+const zwin32 = @import("../../libs/zwin32/zwin32.zig");
+const ztracy = @import("../../libs/ztracy/build.zig");
+const zd3d12 = @import("../../libs/zd3d12/build.zig");
+const zmath = @import("../../libs/zmath/build.zig");
+const zmesh = @import("../../libs/zmesh/build.zig");
+const znoise = @import("../../libs/znoise/build.zig");
+const common = @import("../../libs/common/build.zig");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "procedural_mesh_content/";
@@ -32,69 +39,20 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.rdynamic = true;
     exe.want_lto = false;
 
-    const options_pkg = std.build.Pkg{
-        .name = "build_options",
-        .path = exe_options.getSource(),
-    };
+    const options_pkg = exe_options.getPackage("build_options");
+    exe.addPackage(ztracy.getPkg(b, options_pkg));
+    exe.addPackage(zd3d12.getPkg(b, options_pkg));
+    exe.addPackage(common.getPkg(b, options_pkg));
+    exe.addPackage(zwin32.pkg);
+    exe.addPackage(zmath.pkg);
+    exe.addPackage(zmesh.pkg);
+    exe.addPackage(znoise.pkg);
 
-    const zwin32_pkg = std.build.Pkg{
-        .name = "zwin32",
-        .path = .{ .path = thisDir() ++ "/../../libs/zwin32/zwin32.zig" },
-    };
-    exe.addPackage(zwin32_pkg);
-
-    const ztracy_pkg = std.build.Pkg{
-        .name = "ztracy",
-        .path = .{ .path = thisDir() ++ "/../../libs/ztracy/src/ztracy.zig" },
-        .dependencies = &[_]std.build.Pkg{options_pkg},
-    };
-    exe.addPackage(ztracy_pkg);
-    @import("../../libs/ztracy/build.zig").link(exe, options.enable_tracy);
-
-    const zd3d12_pkg = std.build.Pkg{
-        .name = "zd3d12",
-        .path = .{ .path = thisDir() ++ "/../../libs/zd3d12/src/zd3d12.zig" },
-        .dependencies = &[_]std.build.Pkg{
-            zwin32_pkg,
-            ztracy_pkg,
-            options_pkg,
-        },
-    };
-    exe.addPackage(zd3d12_pkg);
-    @import("../../libs/zd3d12/build.zig").link(b, exe);
-
-    const zmath_pkg = std.build.Pkg{
-        .name = "zmath",
-        .path = .{ .path = thisDir() ++ "/../../libs/zmath/src/zmath.zig" },
-    };
-    exe.addPackage(zmath_pkg);
-
-    const zmesh_pkg = std.build.Pkg{
-        .name = "zmesh",
-        .path = .{ .path = thisDir() ++ "/../../libs/zmesh/src/zmesh.zig" },
-    };
-    exe.addPackage(zmesh_pkg);
-    @import("../../libs/zmesh/build.zig").link(b, exe);
-
-    const znoise_pkg = std.build.Pkg{
-        .name = "znoise",
-        .path = .{ .path = thisDir() ++ "/../../libs/znoise/src/znoise.zig" },
-    };
-    exe.addPackage(znoise_pkg);
-    @import("../../libs/znoise/build.zig").link(b, exe);
-
-    const common_pkg = std.build.Pkg{
-        .name = "common",
-        .path = .{ .path = thisDir() ++ "/../../libs/common/src/common.zig" },
-        .dependencies = &[_]std.build.Pkg{
-            zwin32_pkg,
-            zd3d12_pkg,
-            ztracy_pkg,
-            options_pkg,
-        },
-    };
-    exe.addPackage(common_pkg);
-    @import("../../libs/common/build.zig").link(b, exe);
+    ztracy.link(exe, options.enable_tracy);
+    zd3d12.link(exe);
+    zmesh.link(exe);
+    znoise.link(exe);
+    common.link(exe);
 
     return exe;
 }

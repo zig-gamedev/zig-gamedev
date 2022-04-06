@@ -73,7 +73,7 @@ pub fn build(b: *std.build.Builder) void {
         },
     };
     exe.addPackage(zd3d12_pkg);
-    @import("libs/zd3d12/build.zig").link(b, exe);
+    @import("libs/zd3d12/build.zig").link(exe);
 }
 ```
 

@@ -64,7 +64,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         },
     };
     exe.addPackage(zd3d12_pkg);
-    @import("../../libs/zd3d12/build.zig").link(b, exe);
+    @import("../../libs/zd3d12/build.zig").link(exe);
 
     const common_pkg = std.build.Pkg{
         .name = "common",
@@ -77,7 +77,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         },
     };
     exe.addPackage(common_pkg);
-    @import("../../libs/common/build.zig").link(b, exe);
+    @import("../../libs/common/build.zig").link(exe);
 
     return exe;
 }

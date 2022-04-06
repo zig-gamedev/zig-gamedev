@@ -11,11 +11,12 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
+
     exe.addPackage(glfw.pkg);
     exe.addPackage(gpu.pkg);
     exe.addPackage(zgpu.pkg);
 
-    zgpu.link(b, exe, .{
+    zgpu.link(exe, .{
         .glfw_options = .{},
         .gpu_dawn_options = .{ .from_source = options.dawn_from_source },
     });

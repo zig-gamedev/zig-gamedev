@@ -1,5 +1,14 @@
 const std = @import("std");
 
+pub fn getPkg(b: *std.build.Builder, options_pkg: std.build.Pkg) std.build.Pkg {
+    const pkg = std.build.Pkg{
+        .name = "ztracy",
+        .path = .{ .path = thisDir() ++ "/src/ztracy.zig" },
+        .dependencies = &[_]std.build.Pkg{options_pkg},
+    };
+    return b.dupePkg(pkg);
+}
+
 pub fn link(exe: *std.build.LibExeObjStep, enable_tracy: bool) void {
     if (enable_tracy) {
         exe.addIncludeDir(thisDir() ++ "/libs/tracy");

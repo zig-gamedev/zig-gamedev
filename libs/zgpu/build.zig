@@ -3,58 +3,36 @@ const glfw = @import("../mach-glfw/build.zig");
 const gpu = @import("../mach-gpu/build.zig");
 const gpu_dawn = @import("../mach-gpu-dawn/build.zig");
 
-pub fn build(b: *std.build.Builder) void {
-    const build_mode = b.standardReleaseOptions();
-    const target = b.standardTargetOptions(.{});
-    const tests = buildTests(b, build_mode, target);
-
-    const test_step = b.step("test", "Run zgpu tests");
-    test_step.dependOn(&tests.step);
-}
-
-pub fn buildTests(
-    b: *std.build.Builder,
-    build_mode: std.builtin.Mode,
-    target: std.zig.CrossTarget,
-) *std.build.LibExeObjStep {
-    const tests = b.addTest(thisDir() ++ "/src/zgpu.zig");
-    tests.setBuildMode(build_mode);
-    tests.setTarget(target);
-    link(b, tests);
-    return tests;
-}
-
 pub const Options = struct {
     glfw_options: glfw.Options = .{},
     gpu_dawn_options: gpu_dawn.Options = .{},
 };
 
 fn buildLibrary(
-    b: *std.build.Builder,
-    step: *std.build.LibExeObjStep,
+    exe: *std.build.LibExeObjStep,
     options: Options,
 ) *std.build.LibExeObjStep {
-    const lib = b.addStaticLibrary("zgpu", thisDir() ++ "/src/zgpu.zig");
+    const lib = exe.builder.addStaticLibrary("zgpu", thisDir() ++ "/src/zgpu.zig");
 
-    lib.setBuildMode(step.build_mode);
-    lib.setTarget(step.target);
+    lib.setBuildMode(exe.build_mode);
+    lib.setTarget(exe.target);
     //lib.want_lto = false;
-    glfw.link(b, lib, options.glfw_options);
-    gpu_dawn.link(b, lib, options.gpu_dawn_options);
+    glfw.link(exe.builder, lib, options.glfw_options);
+    gpu_dawn.link(exe.builder, lib, options.gpu_dawn_options);
 
     lib.install();
     return lib;
 }
 
-pub fn link(b: *std.build.Builder, exe: *std.build.LibExeObjStep, options: Options) void {
-    glfw.link(b, exe, options.glfw_options);
-    gpu_dawn.link(b, exe, options.gpu_dawn_options);
+pub fn link(exe: *std.build.LibExeObjStep, options: Options) void {
+    glfw.link(exe.builder, exe, options.glfw_options);
+    gpu_dawn.link(exe.builder, exe, options.gpu_dawn_options);
 
-    //const lib = buildLibrary(b, exe, options);
+    //const lib = buildLibrary(exe, options);
     //exe.linkLibrary(lib);
 }
 
-pub const pkg = .{
+pub const pkg = std.build.Pkg{
     .name = "zgpu",
     .path = .{ .path = thisDir() ++ "/src/zgpu.zig" },
     .dependencies = &.{ glfw.pkg, gpu.pkg },

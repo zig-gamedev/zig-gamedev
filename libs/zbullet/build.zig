@@ -1,5 +1,10 @@
 const std = @import("std");
 
+pub const pkg = std.build.Pkg{
+    .name = "zbullet",
+    .path = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+};
+
 pub fn build(b: *std.build.Builder) void {
     const build_mode = b.standardReleaseOptions();
     const target = b.standardTargetOptions(.{});
@@ -22,15 +27,15 @@ pub fn buildTests(
     tests.addPackage(zmath);
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
-    link(b, tests);
+    link(tests);
     return tests;
 }
 
-fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = b.addStaticLibrary("zbullet", thisDir() ++ "/src/zbullet.zig");
+fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
+    const lib = exe.builder.addStaticLibrary("zbullet", thisDir() ++ "/src/zbullet.zig");
 
-    lib.setBuildMode(step.build_mode);
-    lib.setTarget(step.target);
+    lib.setBuildMode(exe.build_mode);
+    lib.setTarget(exe.target);
     lib.want_lto = false;
     lib.addIncludeDir(thisDir() ++ "/libs/cbullet");
     lib.addIncludeDir(thisDir() ++ "/libs/bullet");
@@ -46,9 +51,9 @@ fn buildLibrary(b: *std.build.Builder, step: *std.build.LibExeObjStep) *std.buil
     return lib;
 }
 
-pub fn link(b: *std.build.Builder, step: *std.build.LibExeObjStep) void {
-    const lib = buildLibrary(b, step);
-    step.linkLibrary(lib);
+pub fn link(exe: *std.build.LibExeObjStep) void {
+    const lib = buildLibrary(exe);
+    exe.linkLibrary(lib);
 }
 
 fn thisDir() []const u8 {
