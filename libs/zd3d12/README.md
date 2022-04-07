@@ -48,8 +48,8 @@ pub fn build(b: *std.build.Builder) void {
     exe.addOptions("build_options", exe_options);
 
     const options_pkg = exe_options.getPackage("build_options");
-    exe.addPackage(ztracy.getPackage(b, options_pkg));
-    exe.addPackage(zd3d12.getPackage(b, options_pkg));
+    exe.addPackage(ztracy.getPkg(b, options_pkg));
+    exe.addPackage(zd3d12.getPkg(b, options_pkg));
     exe.addPackage(zwin32.pkg);
 
     ztracy.link(tracy, enable_tracy);
