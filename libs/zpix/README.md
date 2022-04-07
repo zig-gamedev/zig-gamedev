@@ -21,7 +21,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const options_pkg = exe_options.getPackage("build_options");
     exe.addPackage(zwin32.pkg);
-    exe.addPackage(zpix.getPackage(b, options_pkg));
+    exe.addPackage(zpix.getPkg(b, options_pkg));
 }
 ```
 
