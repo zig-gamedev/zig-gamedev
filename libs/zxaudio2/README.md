@@ -7,36 +7,23 @@ Copy `zxaudio2` and `zwin32` folders to a `libs` subdirectory of the root of you
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const zwin32 = @import("libs/zwin32/build.zig");
+const zxaudio2 = @import("libs/zxaudio2/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     ...
     const enable_dx_debug = b.option( bool, "enable-dx-debug", "Enable debug layer for XAudio2") orelse false;
 
     const exe_options = b.addOptions();
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
-
     exe.addOptions("build_options", exe_options);
 
-    const options_pkg = std.build.Pkg{
-        .name = "build_options",
-        .path = exe_options.getSource(),
-    };
+    const options_pkg = exe_options.getPackage("build_options");
+    exe.addPackage(zwin32.pkg);
+    exe.addPackage(zxaudio2.getPackage(b, options_pkg));
 
-    const zwin32_pkg = std.build.Pkg{
-        .name = "zwin32",
-        .path = .{ .path = "libs/zwin32/zwin32.zig" },
-    };
-    exe.addPackage(zwin32_pkg);
-
-    const zxaudio2_pkg = std.build.Pkg{
-        .name = "zxaudio2",
-        .path = .{ .path = "libs/zxaudio2/zxaudio2.zig" },
-        .dependencies = &[_]std.build.Pkg{
-            zwin32_pkg,
-            options_pkg,
-        },
-    };
-    exe.addPackage(zxaudio2_pkg);
-    @import("libs/zxaudio2/build.zig").link(b, exe, .{ .enable_debug_layer = enable_dx_debug });
+    zxaudio2.link(exe, enable_dx_debug);
 }
 ```
 

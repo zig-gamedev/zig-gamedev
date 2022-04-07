@@ -9,14 +9,13 @@ Copy `zmesh` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const zmesh = @import("libs/zmesh/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zmesh_pkg = std.build.Pkg{
-        .name = "zmesh",
-        .path = .{ .path = "libs/zmesh/src/zmesh.zig" },
-    };
-    exe.addPackage(zmesh_pkg);
-    @import("libs/zmesh/build.zig").link(b, exe);
+    exe.addPackage(zmesh.pkg);
+    zmesh.link(exe);
 }
 ```
 

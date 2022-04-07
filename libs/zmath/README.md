@@ -17,13 +17,12 @@ Copy `zmath` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const zmath = @import("libs/zmath/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zmath_pkg = std.build.Pkg{
-        .name = "zmath",
-        .path = .{ .path = "libs/zmath/src/zmath.zig" },
-    };
-    exe.addPackage(zmath_pkg);
+    exe.addPackage(zmath.pkg);
 }
 ```
 

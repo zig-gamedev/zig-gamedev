@@ -11,15 +11,14 @@ Copy `zenet` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const zenet = @import("libs/zenet/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     const exe = b.addExecutable("your_bin", "src/main.zig");
 
-    const zenet_pkg = std.build.Pkg{
-        .name = "zenet",
-        .path = .{ .path = "libs/zenet/src/zenet.zig" },
-    };
-    exe.addPackage(zenet_pkg);
-    @import("libs/zenet/build.zig").link(b, exe);
+    exe.addPackage(zenet.pkg);
+    zenet.link(exe);
 
     exe.setBuildMode(b.standardReleaseOptions());
     exe.setTarget(b.standardTargetOptions(.{}));

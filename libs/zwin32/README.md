@@ -7,13 +7,12 @@ Copy `zwin32` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const zwin32 = @import("libs/zwin32/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zwin32_pkg = std.build.Pkg{
-        .name = "zwin32",
-        .path = .{ .path = "libs/zwin32/zwin32.zig" },
-    };
-    exe.addPackage(zwin32_pkg);
+    exe.addPackage(zwin32.pkg);
 }
 ```
 

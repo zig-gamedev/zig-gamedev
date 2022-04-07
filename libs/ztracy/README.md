@@ -9,6 +9,10 @@ Copy `ztracy` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const zwin32 = @import("libs/zwin32/build.zig");
+const ztracy = @import("libs/ztracy/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     ...
     const enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
@@ -17,20 +21,11 @@ pub fn build(b: *std.build.Builder) void {
     exe_options.addOption(bool, "enable_tracy", enable_tracy);
     exe.addOptions("build_options", exe_options);
 
-    const options_pkg = std.build.Pkg{
-        .name = "build_options",
-        .path = exe_options.getSource(),
-    };
+    const options_pkg = exe_options.getPackage("build_options");
+    exe.addPackage(zwin32.pkg);
+    exe.addPackage(ztracy.getPackage(b, options_pkg));
 
-    const ztracy_pkg = std.build.Pkg{
-        .name = "ztracy",
-        .path = .{ .path = "libs/ztracy/src/ztracy.zig" },
-        .dependencies = &[_]std.build.Pkg{
-            options_pkg,
-        },
-    };
-    exe.addPackage(ztracy_pkg);
-    @import("libs/ztracy/build.zig").link(exe, enable_tracy);
+    ztracy.link(exe, enable_tracy);
 }
 ```
 

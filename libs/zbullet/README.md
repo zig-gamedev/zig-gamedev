@@ -13,14 +13,13 @@ Copy `zbullet` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const zbullet = @import("libs/zbullet/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zbullet_pkg = std.build.Pkg{
-        .name = "zbullet",
-        .path = .{ .path = "libs/zbullet/src/zbullet.zig" },
-    };
-    exe.addPackage(zbullet_pkg);
-    @import("libs/zbullet/build.zig").link(b, exe);
+    exe.addPackage(zbullet.pkg);
+    zbullet.link(exe);
 }
 ```
 

@@ -1,5 +1,5 @@
 const std = @import("std");
-const zwin32 = @import("../zwin32/zwin32.zig");
+const zwin32 = @import("../zwin32/build.zig");
 
 pub fn getPkg(b: *std.build.Builder, options_pkg: std.build.Pkg) std.build.Pkg {
     const pkg = std.build.Pkg{

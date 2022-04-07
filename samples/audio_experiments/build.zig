@@ -1,5 +1,5 @@
 const std = @import("std");
-const zwin32 = @import("../../libs/zwin32/zwin32.zig");
+const zwin32 = @import("../../libs/zwin32/build.zig");
 const ztracy = @import("../../libs/ztracy/build.zig");
 const zd3d12 = @import("../../libs/zd3d12/build.zig");
 const zxaudio2 = @import("../../libs/zxaudio2/build.zig");

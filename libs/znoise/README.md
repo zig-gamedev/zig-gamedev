@@ -7,14 +7,13 @@ Copy `znoise` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const znoise = @import("libs/znoise/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     ...
-    const znoise_pkg = std.build.Pkg{
-        .name = "znoise",
-        .path = .{ .path = "libs/znoise/src/znoise.zig" },
-    };
-    exe.addPackage(znoise_pkg);
-    @import("libs/znoise/build.zig").link(b, exe);
+    exe.addPackage(znoise.pkg);
+    znoise.link(exe);
 }
 ```
 

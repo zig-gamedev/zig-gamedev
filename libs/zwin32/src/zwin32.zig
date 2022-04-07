@@ -26,11 +26,6 @@ const std = @import("std");
 const panic = std.debug.panic;
 const assert = std.debug.assert;
 
-pub const pkg = std.build.Pkg{
-    .name = "zwin32",
-    .path = .{ .path = thisDir() ++ "/zwin32.zig" },
-};
-
 // TODO: Handle more error codes from https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
 pub const HResultError =
     base.Error || dxgi.Error || d3d12.Error || d3d11.Error || wasapi.Error || dwrite.Error || xapo.Error || base.MiscError;

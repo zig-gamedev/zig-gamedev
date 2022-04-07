@@ -20,6 +20,11 @@ Copy `zd3d12`, `zwin32` and `ztracy` folders to a `libs` subdirectory of the roo
 Then in your `build.zig` add:
 
 ```zig
+const std = @import("std");
+const zwin32 = @import("libs/zwin32/build.zig");
+const ztracy = @import("libs/ztracy/build.zig");
+const zd3d12 = @import("libs/zd3d12/build.zig");
+
 pub fn build(b: *std.build.Builder) void {
     ...
     const enable_dx_debug = b.option(
@@ -42,38 +47,13 @@ pub fn build(b: *std.build.Builder) void {
 
     exe.addOptions("build_options", exe_options);
 
-    const options_pkg = std.build.Pkg{
-        .name = "build_options",
-        .path = exe_options.getSource(),
-    };
+    const options_pkg = exe_options.getPackage("build_options");
+    exe.addPackage(ztracy.getPackage(b, options_pkg));
+    exe.addPackage(zd3d12.getPackage(b, options_pkg));
+    exe.addPackage(zwin32.pkg);
 
-    const zwin32_pkg = std.build.Pkg{
-        .name = "zwin32",
-        .path = .{ .path = "libs/zwin32/zwin32.zig" },
-    };
-    exe.addPackage(zwin32_pkg);
-
-    const ztracy_pkg = std.build.Pkg{
-        .name = "ztracy",
-        .path = .{ .path = "libs/ztracy/ztracy.zig" },
-        .dependencies = &[_]std.build.Pkg{
-            options_pkg,
-        },
-    };
-    exe.addPackage(ztracy_pkg);
-    @import("libs/ztracy/build.zig").link(exe, tracy);
-
-    const zd3d12_pkg = std.build.Pkg{
-        .name = "zd3d12",
-        .path = .{ .path = "libs/zd3d12/zd3d12.zig" },
-        .dependencies = &[_]std.build.Pkg{
-            zwin32_pkg,
-            ztracy_pkg,
-            options_pkg,
-        },
-    };
-    exe.addPackage(zd3d12_pkg);
-    @import("libs/zd3d12/build.zig").link(exe);
+    ztracy.link(tracy, enable_tracy);
+    zd3d12.link(exe);
 }
 ```
 

@@ -1,5 +1,5 @@
 const std = @import("std");
-const zwin32 = @import("../zwin32/zwin32.zig");
+const zwin32 = @import("../zwin32/build.zig");
 const ztracy = @import("../ztracy/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
