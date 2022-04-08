@@ -3,11 +3,6 @@ const glfw = @import("glfw");
 const gpu = @import("gpu");
 const zgpu = @import("zgpu");
 
-const DemoState = struct {
-    gctx: *zgpu.GraphicsContext,
-    pipeline: gpu.RenderPipeline,
-};
-
 // zig fmt: off
 const wgsl_vs =
 \\  struct VertexOut {
@@ -32,10 +27,8 @@ const wgsl_vs =
 \\     output.color = colors[VertexIndex];
 \\     return output;
 \\ }
-// zig fmt: on
 ;
 
-// zig fmt: off
 const wgsl_fs =
 \\  @stage(fragment) fn main(
 \\      @location(0) color : vec3<f32>
@@ -44,6 +37,11 @@ const wgsl_fs =
 \\  }
 // zig fmt: on
 ;
+
+const DemoState = struct {
+    gctx: *zgpu.GraphicsContext,
+    pipeline: gpu.RenderPipeline,
+};
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     var gctx = zgpu.GraphicsContext.create(allocator, window);

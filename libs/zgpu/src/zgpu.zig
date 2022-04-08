@@ -12,7 +12,6 @@ pub const GraphicsContext = struct {
     backend_type: gpu.Adapter.BackendType,
     device: gpu.Device,
     device_queue: gpu.Queue,
-    window: glfw.Window,
     window_surface: gpu.Surface,
     swap_chain: ?gpu.SwapChain,
     swap_chain_format: gpu.Texture.Format,
@@ -79,7 +78,6 @@ pub const GraphicsContext = struct {
             .backend_type = props.backend_type,
             .device = device,
             .device_queue = device_queue,
-            .window = window,
             .window_surface = window_surface,
             .swap_chain = null,
             .swap_chain_format = swap_chain_format,
@@ -98,7 +96,12 @@ pub const GraphicsContext = struct {
     }
 
     pub fn destroy(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
-        // TODO: release resources
+        // TODO: make sure all GPU commands are completed
+        // TODO: how to release `native_instance`?
+        gctx.window_surface.release();
+        gctx.swap_chain.release();
+        gctx.device_queue.release();
+        gctx.device.release();
         allocator.destroy(gctx);
     }
 
