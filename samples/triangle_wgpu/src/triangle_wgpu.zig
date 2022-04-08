@@ -29,7 +29,7 @@ const wgsl_vs =
 \\     );
 \\     var output : VertexOut;
 \\     output.position_clip = vec4(positions[VertexIndex], 0.0, 1.0);
-\\     output.color = colors[VertexInde];
+\\     output.color = colors[VertexIndex];
 \\     return output;
 \\ }
 // zig fmt: on
