@@ -28,7 +28,6 @@ const wgsl_vs =
 \\     return output;
 \\ }
 ;
-
 const wgsl_fs =
 \\  @stage(fragment) fn main(
 \\      @location(0) color : vec3<f32>
