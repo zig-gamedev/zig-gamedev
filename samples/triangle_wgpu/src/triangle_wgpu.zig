@@ -90,32 +90,36 @@ fn draw(demo: *DemoState) void {
     gctx.update();
 
     const back_buffer_view = gctx.swap_chain.?.getCurrentTextureView();
-    const color_attachment = gpu.RenderPassColorAttachment{
-        .view = back_buffer_view,
-        .resolve_target = null,
-        .clear_value = std.mem.zeroes(gpu.Color),
-        .load_op = .clear,
-        .store_op = .store,
+    defer back_buffer_view.release();
+
+    const commands = blk: {
+        const encoder = gctx.device.createCommandEncoder(null);
+        defer encoder.release();
+        {
+            const color_attachment = gpu.RenderPassColorAttachment{
+                .view = back_buffer_view,
+                .resolve_target = null,
+                .clear_value = std.mem.zeroes(gpu.Color),
+                .load_op = .clear,
+                .store_op = .store,
+            };
+            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
+                .color_attachments = &.{color_attachment},
+                .depth_stencil_attachment = null,
+            };
+            const pass = encoder.beginRenderPass(&render_pass_info);
+            defer pass.release();
+
+            pass.setPipeline(demo.pipeline);
+            pass.draw(3, 1, 0, 0);
+            pass.end();
+        }
+        break :blk encoder.finish(null);
     };
+    defer commands.release();
 
-    const encoder = gctx.device.createCommandEncoder(null);
-    const render_pass_info = gpu.RenderPassEncoder.Descriptor{
-        .color_attachments = &.{color_attachment},
-        .depth_stencil_attachment = null,
-    };
-    const pass = encoder.beginRenderPass(&render_pass_info);
-    pass.setPipeline(demo.pipeline);
-    pass.draw(3, 1, 0, 0);
-    pass.end();
-    pass.release();
-
-    var command = encoder.finish(null);
-    encoder.release();
-
-    gctx.device_queue.submit(&.{command});
-    command.release();
+    gctx.device_queue.submit(&.{commands});
     gctx.swap_chain.?.present();
-    back_buffer_view.release();
 }
 
 pub fn main() !void {
@@ -131,6 +135,7 @@ pub fn main() !void {
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
     });
+    defer window.destroy();
 
     var demo = init(allocator, window);
     defer deinit(allocator, &demo);
