@@ -217,5 +217,6 @@ fn printUnhandledError(_: void, typ: gpu.ErrorType, message: [*:0]const u8) void
         .unknown => std.debug.print("[zgpu] Unknown error: {s}\n", .{message}),
         else => unreachable,
     }
+    std.process.exit(1);
 }
 var printUnhandledErrorCallback = gpu.ErrorCallback.init(void, {}, printUnhandledError);

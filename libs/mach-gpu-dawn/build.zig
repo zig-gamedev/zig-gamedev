@@ -68,7 +68,7 @@ pub const Options = struct {
     /// specific, -g0 will be used (no debug symbols at all) to save an additional ~39M.
     ///
     /// When enabled, a debug build of the static library goes from ~947M to just ~53M.
-    minimal_debug_symbols: bool = true,
+    minimal_debug_symbols: bool = false,
 
     /// Whether or not to produce separate static libraries for each component of Dawn (reduces
     /// iteration times when building from source / testing changes to Dawn source code.)
