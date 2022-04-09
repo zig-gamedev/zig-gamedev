@@ -68,7 +68,7 @@ pub const Options = struct {
     /// specific, -g0 will be used (no debug symbols at all) to save an additional ~39M.
     ///
     /// When enabled, a debug build of the static library goes from ~947M to just ~53M.
-    minimal_debug_symbols: bool = false,
+    minimal_debug_symbols: bool = true,
 
     /// Whether or not to produce separate static libraries for each component of Dawn (reduces
     /// iteration times when building from source / testing changes to Dawn source code.)
@@ -78,7 +78,7 @@ pub const Options = struct {
     from_source: bool = false,
 
     /// The binary release version to use from https://github.com/hexops/mach-gpu-dawn/releases
-    binary_version: []const u8 = "release-17e8c8b",
+    binary_version: []const u8 = "release-637689c",
 
     /// Detects the default options to use for the given target.
     pub fn detectDefaults(self: Options, target: std.Target) Options {
@@ -398,7 +398,8 @@ fn gzipDecompress(allocator: std.mem.Allocator, src_absolute_path: []const u8, d
     var file = try std.fs.openFileAbsolute(src_absolute_path, .{ .mode = .read_only });
     defer file.close();
 
-    var gzip_stream = try std.compress.gzip.gzipStream(allocator, file.reader());
+    var buf_stream = std.io.bufferedReader(file.reader());
+    var gzip_stream = try std.compress.gzip.gzipStream(allocator, buf_stream.reader());
     defer gzip_stream.deinit();
 
     // Read and decompress the whole file

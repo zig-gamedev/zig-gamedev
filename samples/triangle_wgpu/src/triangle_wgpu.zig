@@ -1,6 +1,5 @@
 const std = @import("std");
 const glfw = @import("glfw");
-const gpu = @import("gpu");
 const zgpu = @import("zgpu");
 
 // zig fmt: off
@@ -39,7 +38,7 @@ const wgsl_fs =
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
-    pipeline: gpu.RenderPipeline,
+    pipeline: zgpu.RenderPipeline,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
@@ -51,23 +50,23 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
     defer fs_module.release();
 
-    const blend = gpu.BlendState{
+    const blend = zgpu.BlendState{
         .color = .{ .operation = .add, .src_factor = .one, .dst_factor = .one },
         .alpha = .{ .operation = .add, .src_factor = .one, .dst_factor = .one },
     };
-    const color_target = gpu.ColorTargetState{
+    const color_target = zgpu.ColorTargetState{
         .format = gctx.swap_chain_format,
         .blend = &blend,
-        .write_mask = .all,
+        .write_mask = zgpu.ColorWriteMask.all,
     };
-    const fragment = gpu.FragmentState{
+    const fragment = zgpu.FragmentState{
         .module = fs_module,
         .entry_point = "main",
         .targets = &.{color_target},
         .constants = null,
     };
 
-    const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
+    const pipeline_descriptor = zgpu.RenderPipeline.Descriptor{
         .fragment = &fragment,
         .layout = null,
         .depth_stencil = null,
@@ -113,14 +112,14 @@ fn draw(demo: *DemoState) void {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
         {
-            const color_attachment = gpu.RenderPassColorAttachment{
+            const color_attachment = zgpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
                 .resolve_target = null,
-                .clear_value = std.mem.zeroes(gpu.Color),
+                .clear_value = std.mem.zeroes(zgpu.Color),
                 .load_op = .clear,
                 .store_op = .store,
             };
-            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
+            const render_pass_info = zgpu.RenderPassEncoder.Descriptor{
                 .color_attachments = &.{color_attachment},
                 .depth_stencil_attachment = null,
             };

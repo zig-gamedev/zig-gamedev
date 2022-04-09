@@ -1,29 +1,34 @@
 const std = @import("std");
 const glfw = @import("glfw");
-const gpu = @import("gpu");
-const c = @import("c.zig").c;
+const zgpu = @import("main.zig");
+const c = @cImport({
+    @cInclude("dawn/dawn_proc.h");
+    @cInclude("dawn_native_mach.h");
+});
 const objc = @cImport({
     @cInclude("objc/message.h");
 });
 
+pub usingnamespace zgpu;
+
 pub const GraphicsContext = struct {
-    native_instance: gpu.NativeInstance,
-    adapter_type: gpu.Adapter.Type,
-    backend_type: gpu.Adapter.BackendType,
-    device: gpu.Device,
-    device_queue: gpu.Queue,
-    window_surface: gpu.Surface,
-    swap_chain: ?gpu.SwapChain,
-    swap_chain_format: gpu.Texture.Format,
-    swap_chain_descriptor_current: gpu.SwapChain.Descriptor,
-    swap_chain_descriptor_target: gpu.SwapChain.Descriptor,
+    native_instance: zgpu.NativeInstance,
+    adapter_type: zgpu.Adapter.Type,
+    backend_type: zgpu.Adapter.BackendType,
+    device: zgpu.Device,
+    device_queue: zgpu.Queue,
+    window_surface: zgpu.Surface,
+    swap_chain: ?zgpu.SwapChain,
+    swap_chain_format: zgpu.Texture.Format,
+    swap_chain_descriptor_current: zgpu.SwapChain.Descriptor,
+    swap_chain_descriptor_target: zgpu.SwapChain.Descriptor,
 
     pub fn create(allocator: std.mem.Allocator, window: glfw.Window) *GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
         c.machDawnNativeInstance_discoverDefaultAdapters(instance);
 
-        var native_instance = gpu.NativeInstance.wrap(c.machDawnNativeInstance_get(instance).?);
+        var native_instance = zgpu.NativeInstance.wrap(c.machDawnNativeInstance_get(instance).?);
 
         const gpu_interface = native_instance.interface();
         const backend_adapter = switch (gpu_interface.waitForAdapter(&.{
@@ -40,8 +45,8 @@ pub const GraphicsContext = struct {
         std.debug.print("[zgpu] High-performance device has been selected:\n", .{});
         std.debug.print("[zgpu]   Name: {s}\n", .{props.name});
         std.debug.print("[zgpu]   Driver: {s}\n", .{props.driver_description});
-        std.debug.print("[zgpu]   Adapter type: {s}\n", .{gpu.Adapter.typeName(props.adapter_type)});
-        std.debug.print("[zgpu]   Backend type: {s}\n", .{gpu.Adapter.backendTypeName(props.backend_type)});
+        std.debug.print("[zgpu]   Adapter type: {s}\n", .{zgpu.Adapter.typeName(props.adapter_type)});
+        std.debug.print("[zgpu]   Backend type: {s}\n", .{zgpu.Adapter.backendTypeName(props.backend_type)});
 
         const device = switch (backend_adapter.waitForDevice(&.{})) {
             .device => |v| v,
@@ -61,9 +66,9 @@ pub const GraphicsContext = struct {
 
         const framebuffer_size = window.getFramebufferSize() catch unreachable;
         const swap_chain_format = .bgra8_unorm;
-        const swap_chain_descriptor = gpu.SwapChain.Descriptor{
+        const swap_chain_descriptor = zgpu.SwapChain.Descriptor{
             .label = "main window swap chain",
-            .usage = .render_attachment,
+            .usage = .{ .render_attachment = true },
             .format = swap_chain_format,
             .width = framebuffer_size.width,
             .height = framebuffer_size.height,
@@ -134,18 +139,18 @@ fn detectGLFWOptions() glfw.BackendOptions {
 }
 
 fn createSurfaceForWindow(
-    native_instance: *const gpu.NativeInstance,
+    native_instance: *const zgpu.NativeInstance,
     window: glfw.Window,
     comptime glfw_options: glfw.BackendOptions,
-) gpu.Surface {
+) zgpu.Surface {
     const glfw_native = glfw.Native(glfw_options);
-    const descriptor = if (glfw_options.win32) gpu.Surface.Descriptor{
+    const descriptor = if (glfw_options.win32) zgpu.Surface.Descriptor{
         .windows_hwnd = .{
             .label = "basic surface",
             .hinstance = std.os.windows.kernel32.GetModuleHandleW(null).?,
             .hwnd = glfw_native.getWin32Window(window),
         },
-    } else if (glfw_options.x11) gpu.Surface.Descriptor{
+    } else if (glfw_options.x11) zgpu.Surface.Descriptor{
         .xlib = .{
             .label = "basic surface",
             .display = glfw_native.getX11Display(),
@@ -165,7 +170,7 @@ fn createSurfaceForWindow(
         const scale_factor = msgSend(ns_window, "backingScaleFactor", .{}, f64); // [ns_window backingScaleFactor]
         msgSend(layer.?, "setContentsScale:", .{scale_factor}, void); // [layer setContentsScale:scale_factor]
 
-        break :blk gpu.Surface.Descriptor{
+        break :blk zgpu.Surface.Descriptor{
             .metal_layer = .{
                 .label = "basic surface",
                 .layer = layer.?,
@@ -212,7 +217,7 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
     return @call(.{}, func, .{ obj, sel } ++ args);
 }
 
-fn printUnhandledError(_: void, typ: gpu.ErrorType, message: [*:0]const u8) void {
+fn printUnhandledError(_: void, typ: zgpu.ErrorType, message: [*:0]const u8) void {
     switch (typ) {
         .validation => std.debug.print("[zgpu] Validation error: {s}\n", .{message}),
         .out_of_memory => std.debug.print("[zgpu] Out of memory: {s}\n", .{message}),
@@ -222,4 +227,4 @@ fn printUnhandledError(_: void, typ: gpu.ErrorType, message: [*:0]const u8) void
     }
     std.process.exit(1);
 }
-var printUnhandledErrorCallback = gpu.ErrorCallback.init(void, {}, printUnhandledError);
+var printUnhandledErrorCallback = zgpu.ErrorCallback.init(void, {}, printUnhandledError);

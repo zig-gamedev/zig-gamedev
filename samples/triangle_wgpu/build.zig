@@ -1,6 +1,5 @@
 const std = @import("std");
 const glfw = @import("../../libs/mach-glfw/build.zig");
-const gpu = @import("../../libs/mach-gpu/build.zig");
 const zgpu = @import("../../libs/zgpu/build.zig");
 
 const Options = @import("../../build.zig").Options;
@@ -13,7 +12,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     exe.addPackage(glfw.pkg);
-    exe.addPackage(gpu.pkg);
     exe.addPackage(zgpu.pkg);
 
     zgpu.link(exe, .{
