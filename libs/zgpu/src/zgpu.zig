@@ -1,6 +1,6 @@
 const std = @import("std");
 const glfw = @import("glfw");
-const zgpu = @import("main.zig");
+const zgpu = @import("mach-gpu/main.zig");
 const c = @cImport({
     @cInclude("dawn/dawn_proc.h");
     @cInclude("dawn_native_mach.h");
