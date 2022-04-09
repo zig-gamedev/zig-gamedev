@@ -107,7 +107,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .{ .position = [3]f32{ -0.5, -0.5, 0.0 }, .color = [3]f32{ 0.0, 1.0, 0.0 } },
         .{ .position = [3]f32{ 0.5, -0.5, 0.0 }, .color = [3]f32{ 0.0, 0.0, 1.0 } },
     };
-    gctx.device_queue.writeBuffer(vertex_buffer, 0, Vertex, vertex_data[0..]);
+    gctx.queue.writeBuffer(vertex_buffer, 0, Vertex, vertex_data[0..]);
 
     return .{
         .gctx = gctx,
@@ -157,7 +157,7 @@ fn draw(demo: *DemoState) void {
     };
     defer commands.release();
 
-    gctx.device_queue.submit(&.{commands});
+    gctx.queue.submit(&.{commands});
     gctx.swap_chain.?.present();
 }
 

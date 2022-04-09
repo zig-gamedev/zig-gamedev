@@ -16,7 +16,7 @@ pub const GraphicsContext = struct {
     adapter_type: zgpu.Adapter.Type,
     backend_type: zgpu.Adapter.BackendType,
     device: zgpu.Device,
-    device_queue: zgpu.Queue,
+    queue: zgpu.Queue,
     window_surface: zgpu.Surface,
     swap_chain: ?zgpu.SwapChain,
     swap_chain_format: zgpu.Texture.Format,
@@ -56,7 +56,6 @@ pub const GraphicsContext = struct {
             },
         };
         device.setUncapturedErrorCallback(&printUnhandledErrorCallback);
-        const device_queue = device.getQueue();
 
         const window_surface = createSurfaceForWindow(
             &native_instance,
@@ -82,7 +81,7 @@ pub const GraphicsContext = struct {
             .adapter_type = props.adapter_type,
             .backend_type = props.backend_type,
             .device = device,
-            .device_queue = device_queue,
+            .queue = device.getQueue(),
             .window_surface = window_surface,
             .swap_chain = null,
             .swap_chain_format = swap_chain_format,
@@ -105,7 +104,7 @@ pub const GraphicsContext = struct {
         // TODO: how to release `native_instance`?
         gctx.window_surface.release();
         gctx.swap_chain.release();
-        gctx.device_queue.release();
+        gctx.queue.release();
         gctx.device.release();
         allocator.destroy(gctx);
     }
