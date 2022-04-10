@@ -36,6 +36,7 @@ const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
     pipeline: zgpu.RenderPipeline,
     vertex_buffer: zgpu.Buffer,
+    index_buffer: zgpu.Buffer,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
@@ -56,7 +57,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .blend = &blend,
         .write_mask = zgpu.ColorWriteMask.all,
     };
-    const fragment = zgpu.FragmentState{
+    const fragment_state = zgpu.FragmentState{
         .module = fs_module,
         .entry_point = "main",
         .targets = &.{color_target},
@@ -72,17 +73,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .attribute_count = vertex_attributes.len,
         .attributes = &vertex_attributes,
     };
-    const vertex = zgpu.VertexState{
+    const vertex_state = zgpu.VertexState{
         .module = vs_module,
         .entry_point = "main",
         .buffers = &.{vertex_buffer_layout},
     };
 
     const pipeline_descriptor = zgpu.RenderPipeline.Descriptor{
-        .fragment = &fragment,
+        .fragment = &fragment_state,
         .layout = null,
         .depth_stencil = null,
-        .vertex = vertex,
+        .vertex = vertex_state,
         .multisample = .{
             .count = 1,
             .mask = 0xffff_ffff,
@@ -109,16 +110,26 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     };
     gctx.queue.writeBuffer(vertex_buffer, 0, Vertex, vertex_data[0..]);
 
+    const index_buffer = gctx.device.createBuffer(&.{
+        .usage = .{ .copy_dst = true, .index = true },
+        .size = 3 * @sizeOf(u32),
+        .mapped_at_creation = false,
+    });
+    const index_data = [_]u32{ 0, 1, 2 };
+    gctx.queue.writeBuffer(index_buffer, 0, u32, index_data[0..]);
+
     return .{
         .gctx = gctx,
         .pipeline = pipeline,
         .vertex_buffer = vertex_buffer,
+        .index_buffer = index_buffer,
     };
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.pipeline.release();
     demo.vertex_buffer.release();
+    demo.index_buffer.release();
     allocator.destroy(demo.gctx);
     demo.* = undefined;
 }
@@ -150,7 +161,8 @@ fn draw(demo: *DemoState) void {
 
             pass.setPipeline(demo.pipeline);
             pass.setVertexBuffer(0, demo.vertex_buffer, 0, 3 * @sizeOf([6]f32));
-            pass.draw(3, 1, 0, 0);
+            pass.setIndexBuffer(demo.index_buffer, .uint32, 0, 3 * @sizeOf(u32));
+            pass.drawIndexed(3, 1, 0, 0, 0);
             pass.end();
         }
         break :blk encoder.finish(null);
