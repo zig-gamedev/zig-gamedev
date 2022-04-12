@@ -159,10 +159,7 @@ pub const FrameStats = struct {
             self.average_cpu_time = @floatCast(f32, ms);
             self.fps_refresh_time = self.time;
             self.frame_counter = 0;
-        }
-        self.frame_counter += 1;
 
-        {
             var buffer = [_]u8{0} ** 128;
             const text = std.fmt.bufPrint(
                 buffer[0..],
@@ -171,6 +168,7 @@ pub const FrameStats = struct {
             ) catch unreachable;
             window.setTitle(@ptrCast([*:0]const u8, text.ptr)) catch unreachable;
         }
+        self.frame_counter += 1;
     }
 };
 
