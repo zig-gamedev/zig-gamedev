@@ -5,7 +5,7 @@
 This repository contains a collection of [sample applications](#sample-applications) and standalone libraries written in **[Zig programming language](https://ziglang.org/)**.
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
 
-To get started on Windows, Linux or Mac:
+To get started on Window/Linux/Mac try out [triangle wgpu](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu) sample:
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
