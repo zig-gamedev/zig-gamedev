@@ -211,7 +211,18 @@ fn deinit(demo: *DemoState) void {
 
 fn draw(demo: *DemoState) void {
     var gctx = &demo.gctx;
-    gctx.update();
+    if (!gctx.update()) {
+        // Re-create depth texture to match new window size.
+        const depth = createDepthTexture(
+            demo.gctx.device,
+            gctx.swapchain_descriptor.width,
+            gctx.swapchain_descriptor.height,
+        );
+        demo.depth_texture_view.release();
+        demo.depth_texture.release();
+        demo.depth_texture = depth.texture;
+        demo.depth_texture_view = depth.view;
+    }
 
     const time = @floatCast(f32, glfw.getTime());
 
@@ -333,16 +344,6 @@ fn createDepthTexture(device: zgpu.Device, width: u32, height: u32) struct {
     return .{ .texture = texture, .view = view };
 }
 
-fn framebufferSizeCallback(window: glfw.Window, width: u32, height: u32) void {
-    // Re-create depth texture to match new window size.
-    const demo = window.getUserPointer(DemoState).?;
-    const depth = createDepthTexture(demo.gctx.device, width, height);
-    demo.depth_texture_view.release();
-    demo.depth_texture.release();
-    demo.depth_texture = depth.texture;
-    demo.depth_texture_view = depth.view;
-}
-
 pub fn main() !void {
     //var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     //defer _ = gpa.deinit();
@@ -360,9 +361,6 @@ pub fn main() !void {
 
     var demo = init(window);
     defer deinit(&demo);
-
-    window.setUserPointer(&demo);
-    window.setFramebufferSizeCallback(framebufferSizeCallback);
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();

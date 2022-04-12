@@ -103,7 +103,7 @@ pub const GraphicsContext = struct {
         gctx.* = undefined;
     }
 
-    pub fn update(gctx: *GraphicsContext) void {
+    pub fn update(gctx: *GraphicsContext) bool {
         const fb_size = gctx.window.getFramebufferSize() catch unreachable;
         if (gctx.swapchain_descriptor.width != fb_size.width or
             gctx.swapchain_descriptor.height != fb_size.height)
@@ -118,7 +118,9 @@ pub const GraphicsContext = struct {
                 "[zgpu] Swap chain has been resized to: {d}x{d}\n",
                 .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
             );
+            return false; // swapchain resized
         }
+        return true;
     }
 };
 
