@@ -224,7 +224,7 @@ fn draw(demo: *DemoState, time: f64) void {
         demo.depth_texture_view = depth.view;
     }
     const fb_width = gctx.swapchain_descriptor.width;
-    const fb_height = gctx.swapchain_descriptor.width;
+    const fb_height = gctx.swapchain_descriptor.height;
     const t = @floatCast(f32, time);
 
     const cam_world_to_view = zm.lookAtLh(
