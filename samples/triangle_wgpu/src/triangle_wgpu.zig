@@ -212,14 +212,16 @@ fn deinit(demo: *DemoState) void {
 fn draw(demo: *DemoState) void {
     var gctx = &demo.gctx;
     if (!gctx.update()) {
+        // Release old depth texture.
+        demo.depth_texture_view.release();
+        demo.depth_texture.release();
+
         // Re-create depth texture to match new window size.
         const depth = createDepthTexture(
             demo.gctx.device,
             gctx.swapchain_descriptor.width,
             gctx.swapchain_descriptor.height,
         );
-        demo.depth_texture_view.release();
-        demo.depth_texture.release();
         demo.depth_texture = depth.texture;
         demo.depth_texture_view = depth.view;
     }
