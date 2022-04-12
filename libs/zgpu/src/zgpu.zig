@@ -124,6 +124,56 @@ pub const GraphicsContext = struct {
     }
 };
 
+pub const FrameStats = struct {
+    time: f64,
+    delta_time: f32,
+    fps: f32,
+    average_cpu_time: f32,
+    previous_time: f64,
+    fps_refresh_time: f64,
+    frame_counter: u64,
+
+    pub fn init() FrameStats {
+        return .{
+            .time = 0.0,
+            .delta_time = 0.0,
+            .fps = 0.0,
+            .average_cpu_time = 0.0,
+            .previous_time = 0.0,
+            .fps_refresh_time = 0.0,
+            .frame_counter = 0,
+        };
+    }
+
+    pub fn update(self: *FrameStats, window: glfw.Window, window_name: []const u8) void {
+        self.time = glfw.getTime();
+        self.delta_time = @floatCast(f32, self.time - self.previous_time);
+        self.previous_time = self.time;
+
+        if ((self.time - self.fps_refresh_time) >= 1.0) {
+            const t = self.time - self.fps_refresh_time;
+            const fps = @intToFloat(f64, self.frame_counter) / t;
+            const ms = (1.0 / fps) * 1000.0;
+
+            self.fps = @floatCast(f32, fps);
+            self.average_cpu_time = @floatCast(f32, ms);
+            self.fps_refresh_time = self.time;
+            self.frame_counter = 0;
+        }
+        self.frame_counter += 1;
+
+        {
+            var buffer = [_]u8{0} ** 128;
+            const text = std.fmt.bufPrint(
+                buffer[0..],
+                "FPS: {d:.1}  CPU time: {d:.3} ms | {s}",
+                .{ self.fps, self.average_cpu_time, window_name },
+            ) catch unreachable;
+            window.setTitle(@ptrCast([*:0]const u8, text.ptr)) catch unreachable;
+        }
+    }
+};
+
 fn detectGLFWOptions() glfw.BackendOptions {
     const target = @import("builtin").target;
     if (target.isDarwin()) return .{ .cocoa = true };

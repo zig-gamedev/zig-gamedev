@@ -37,7 +37,6 @@ const Vertex = struct {
 
 const DemoState = struct {
     gctx: zgpu.GraphicsContext,
-    window: glfw.Window,
     pipeline: zgpu.RenderPipeline,
     bind_group: zgpu.BindGroup,
     vertex_buffer: zgpu.Buffer,
@@ -186,7 +185,6 @@ fn init(window: glfw.Window) DemoState {
 
     return .{
         .gctx = gctx,
-        .window = window,
         .pipeline = pipeline,
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
@@ -209,14 +207,14 @@ fn deinit(demo: *DemoState) void {
     demo.* = undefined;
 }
 
-fn draw(demo: *DemoState) void {
+fn draw(demo: *DemoState, time: f64) void {
     var gctx = &demo.gctx;
     if (!gctx.update()) {
         // Release old depth texture.
         demo.depth_texture_view.release();
         demo.depth_texture.release();
 
-        // Re-create depth texture to match new window size.
+        // Create new depth texture to match new window size.
         const depth = createDepthTexture(
             demo.gctx.device,
             gctx.swapchain_descriptor.width,
@@ -225,18 +223,18 @@ fn draw(demo: *DemoState) void {
         demo.depth_texture = depth.texture;
         demo.depth_texture_view = depth.view;
     }
-
-    const time = @floatCast(f32, glfw.getTime());
+    const fb_width = gctx.swapchain_descriptor.width;
+    const fb_height = gctx.swapchain_descriptor.width;
+    const t = @floatCast(f32, time);
 
     const cam_world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0),
         zm.f32x4(0.0, 0.0, 0.0, 1.0),
         zm.f32x4(0.0, 1.0, 0.0, 0.0),
     );
-    const fb_size = demo.window.getFramebufferSize() catch unreachable;
     const cam_view_to_clip = zm.perspectiveFovLh(
         0.25 * math.pi,
-        @intToFloat(f32, fb_size.width) / @intToFloat(f32, fb_size.height),
+        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
         0.01,
         200.0,
     );
@@ -251,26 +249,26 @@ fn draw(demo: *DemoState) void {
 
         // Update xform matrix for triangle 1.
         {
-            const object_to_world = zm.mul(zm.rotationY(time), zm.translation(-1.0, 0.0, 0.0));
+            const object_to_world = zm.mul(zm.rotationY(t), zm.translation(-1.0, 0.0, 0.0));
             const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
 
             var xform: [16]f32 = undefined;
             zm.storeMat(xform[0..], zm.transpose(object_to_clip));
 
             // Write data at offset 0.
-            gctx.queue.writeBuffer(demo.uniform_buffer, 0, f32, xform[0..]);
+            encoder.writeBuffer(demo.uniform_buffer, 0, f32, xform[0..]);
         }
 
         // Update xform matrix for triangle 2.
         {
-            const object_to_world = zm.mul(zm.rotationY(0.75 * time), zm.translation(1.0, 0.0, 0.0));
+            const object_to_world = zm.mul(zm.rotationY(0.75 * t), zm.translation(1.0, 0.0, 0.0));
             const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
 
             var xform: [16]f32 = undefined;
             zm.storeMat(xform[0..], zm.transpose(object_to_clip));
 
             // Write data at offset 256 (dynamic offsets need to be aligned to 256 bytes).
-            gctx.queue.writeBuffer(demo.uniform_buffer, 256, f32, xform[0..]);
+            encoder.writeBuffer(demo.uniform_buffer, 256, f32, xform[0..]);
         }
 
         {
@@ -347,15 +345,11 @@ fn createDepthTexture(device: zgpu.Device, width: u32, height: u32) struct {
 }
 
 pub fn main() !void {
-    //var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    //defer _ = gpa.deinit();
-
-    //const allocator = gpa.allocator();
-
     try glfw.init(.{});
     defer glfw.terminate();
 
-    const window = try glfw.Window.create(1280, 960, "zig-gamedev: triangle wgpu", null, null, .{
+    const window_title = "zig-gamedev: triangle wgpu";
+    const window = try glfw.Window.create(1280, 960, window_title, null, null, .{
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
     });
@@ -364,8 +358,11 @@ pub fn main() !void {
     var demo = init(window);
     defer deinit(&demo);
 
+    var stats = zgpu.FrameStats.init();
+
     while (!window.shouldClose()) {
         try glfw.pollEvents();
-        draw(&demo);
+        stats.update(window, window_title);
+        draw(&demo, stats.time);
     }
 }
