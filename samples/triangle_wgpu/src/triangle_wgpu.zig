@@ -354,6 +354,7 @@ pub fn main() !void {
         .cocoa_retina_framebuffer = true,
     });
     defer window.destroy();
+    try window.setSizeLimits(.{ .width = 200, .height = 200 }, .{ .width = null, .height = null });
 
     var demo = init(window);
     defer deinit(&demo);
