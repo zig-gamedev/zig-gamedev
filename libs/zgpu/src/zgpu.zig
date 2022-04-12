@@ -17,13 +17,13 @@ pub const GraphicsContext = struct {
     backend_type: zgpu.Adapter.BackendType,
     device: zgpu.Device,
     queue: zgpu.Queue,
+    window: glfw.Window,
     window_surface: zgpu.Surface,
-    swap_chain: ?zgpu.SwapChain,
-    swap_chain_format: zgpu.Texture.Format,
-    swap_chain_descriptor_current: zgpu.SwapChain.Descriptor,
-    swap_chain_descriptor_target: zgpu.SwapChain.Descriptor,
+    swapchain: zgpu.SwapChain,
+    swapchain_format: zgpu.Texture.Format,
+    swapchain_descriptor: zgpu.SwapChain.Descriptor,
 
-    pub fn create(allocator: std.mem.Allocator, window: glfw.Window) *GraphicsContext {
+    pub fn init(window: glfw.Window) GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
         c.machDawnNativeInstance_discoverDefaultAdapters(instance);
@@ -62,66 +62,61 @@ pub const GraphicsContext = struct {
             window,
             comptime detectGLFWOptions(),
         );
-
         const framebuffer_size = window.getFramebufferSize() catch unreachable;
-        const swap_chain_format = .bgra8_unorm;
-        const swap_chain_descriptor = zgpu.SwapChain.Descriptor{
+
+        const swapchain_format = .bgra8_unorm;
+        const swapchain_descriptor = zgpu.SwapChain.Descriptor{
             .label = "main window swap chain",
             .usage = .{ .render_attachment = true },
-            .format = swap_chain_format,
+            .format = swapchain_format,
             .width = framebuffer_size.width,
             .height = framebuffer_size.height,
             .present_mode = .fifo,
             .implementation = 0,
         };
+        const swapchain = device.nativeCreateSwapChain(
+            window_surface,
+            &swapchain_descriptor,
+        );
 
-        const gctx = allocator.create(GraphicsContext) catch unreachable;
-        gctx.* = .{
+        return GraphicsContext{
             .native_instance = native_instance,
             .adapter_type = props.adapter_type,
             .backend_type = props.backend_type,
             .device = device,
             .queue = device.getQueue(),
+            .window = window,
             .window_surface = window_surface,
-            .swap_chain = null,
-            .swap_chain_format = swap_chain_format,
-            .swap_chain_descriptor_current = swap_chain_descriptor,
-            .swap_chain_descriptor_target = swap_chain_descriptor,
+            .swapchain = swapchain,
+            .swapchain_format = swapchain_format,
+            .swapchain_descriptor = swapchain_descriptor,
         };
-        window.setUserPointer(gctx);
-        window.setFramebufferSizeCallback((struct {
-            fn callback(win: glfw.Window, win_width: u32, win_height: u32) void {
-                const ctx = win.getUserPointer(GraphicsContext);
-                ctx.?.swap_chain_descriptor_target.width = win_width;
-                ctx.?.swap_chain_descriptor_target.height = win_height;
-            }
-        }).callback);
-        return gctx;
     }
 
-    pub fn destroy(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
+    pub fn deinit(gctx: *GraphicsContext) void {
         // TODO: make sure all GPU commands are completed
         // TODO: how to release `native_instance`?
         gctx.window_surface.release();
-        gctx.swap_chain.release();
+        gctx.swapchain.release();
         gctx.queue.release();
         gctx.device.release();
-        allocator.destroy(gctx);
+        gctx.* = undefined;
     }
 
     pub fn update(gctx: *GraphicsContext) void {
-        if (gctx.swap_chain == null or
-            !gctx.swap_chain_descriptor_current.equal(&gctx.swap_chain_descriptor_target))
+        const fb_size = gctx.window.getFramebufferSize() catch unreachable;
+        if (gctx.swapchain_descriptor.width != fb_size.width or
+            gctx.swapchain_descriptor.height != fb_size.height)
         {
-            gctx.swap_chain = gctx.device.nativeCreateSwapChain(
+            gctx.swapchain_descriptor.width = fb_size.width;
+            gctx.swapchain_descriptor.height = fb_size.height;
+            gctx.swapchain = gctx.device.nativeCreateSwapChain(
                 gctx.window_surface,
-                &gctx.swap_chain_descriptor_target,
+                &gctx.swapchain_descriptor,
             );
-            gctx.swap_chain_descriptor_current = gctx.swap_chain_descriptor_target;
-
             std.debug.print(
                 "[zgpu] Swap chain has been resized to: {d}x{d}\n",
-                .{ gctx.swap_chain_descriptor_current.width, gctx.swap_chain_descriptor_current.height },
+                .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
             );
         }
     }

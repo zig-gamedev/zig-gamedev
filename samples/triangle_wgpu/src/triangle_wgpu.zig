@@ -36,17 +36,19 @@ const Vertex = struct {
 };
 
 const DemoState = struct {
-    gctx: *zgpu.GraphicsContext,
+    gctx: zgpu.GraphicsContext,
     window: glfw.Window,
     pipeline: zgpu.RenderPipeline,
     bind_group: zgpu.BindGroup,
     vertex_buffer: zgpu.Buffer,
     index_buffer: zgpu.Buffer,
     uniform_buffer: zgpu.Buffer,
+    depth_texture: zgpu.Texture,
+    depth_texture_view: zgpu.TextureView,
 };
 
-fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
-    var gctx = zgpu.GraphicsContext.create(allocator, window);
+fn init(window: glfw.Window) DemoState {
+    var gctx = zgpu.GraphicsContext.init(window);
 
     const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
     defer vs_module.release();
@@ -60,7 +62,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .alpha = .{ .operation = .add, .src_factor = .one, .dst_factor = .zero },
     };
     const color_target = zgpu.ColorTargetState{
-        .format = gctx.swap_chain_format,
+        .format = gctx.swapchain_format,
         .blend = &blend,
         .write_mask = zgpu.ColorWriteMask.all,
     };
@@ -106,7 +108,28 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const pipeline_descriptor = zgpu.RenderPipeline.Descriptor{
         .fragment = &fragment_state,
         .layout = pl,
-        .depth_stencil = null,
+        .depth_stencil = &.{
+            .format = .depth32_float,
+            .depth_write_enabled = true,
+            .depth_compare = .less,
+            .stencil_front = .{
+                .compare = .always,
+                .fail_op = .keep,
+                .depth_fail_op = .keep,
+                .pass_op = .keep,
+            },
+            .stencil_back = .{
+                .compare = .always,
+                .fail_op = .keep,
+                .depth_fail_op = .keep,
+                .pass_op = .keep,
+            },
+            .stencil_read_mask = 0,
+            .stencil_write_mask = 0,
+            .depth_bias = 0,
+            .depth_bias_slope_scale = 0.0,
+            .depth_bias_clamp = 0.0,
+        },
         .vertex = vertex_state,
         .multisample = .{
             .count = 1,
@@ -157,6 +180,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const index_data = [_]u32{ 0, 1, 2 };
     gctx.queue.writeBuffer(index_buffer, 0, u32, index_data[0..]);
 
+    // Create a depth texture and it's 'view'.
+    const fb_size = window.getFramebufferSize() catch unreachable;
+    const depth = createDepthTexture(gctx.device, fb_size.width, fb_size.height);
+
     return .{
         .gctx = gctx,
         .window = window,
@@ -165,21 +192,25 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .uniform_buffer = uniform_buffer,
+        .depth_texture = depth.texture,
+        .depth_texture_view = depth.view,
     };
 }
 
-fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
+fn deinit(demo: *DemoState) void {
     demo.pipeline.release();
     demo.bind_group.release();
     demo.vertex_buffer.release();
     demo.index_buffer.release();
     demo.uniform_buffer.release();
-    allocator.destroy(demo.gctx);
+    demo.depth_texture_view.release();
+    demo.depth_texture.release();
+    demo.gctx.deinit();
     demo.* = undefined;
 }
 
 fn draw(demo: *DemoState) void {
-    var gctx = demo.gctx;
+    var gctx = &demo.gctx;
     gctx.update();
 
     const time = @floatCast(f32, glfw.getTime());
@@ -198,13 +229,14 @@ fn draw(demo: *DemoState) void {
     );
     const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
 
-    const back_buffer_view = gctx.swap_chain.?.getCurrentTextureView();
+    const back_buffer_view = gctx.swapchain.getCurrentTextureView();
     defer back_buffer_view.release();
 
     const commands = blk: {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
+        // Update xform matrix for triangle 1.
         {
             const object_to_world = zm.mul(zm.rotationY(time), zm.translation(-1.0, 0.0, 0.0));
             const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
@@ -212,8 +244,11 @@ fn draw(demo: *DemoState) void {
             var xform: [16]f32 = undefined;
             zm.storeMat(xform[0..], zm.transpose(object_to_clip));
 
+            // Write data at offset 0.
             gctx.queue.writeBuffer(demo.uniform_buffer, 0, f32, xform[0..]);
         }
+
+        // Update xform matrix for triangle 2.
         {
             const object_to_world = zm.mul(zm.rotationY(0.75 * time), zm.translation(1.0, 0.0, 0.0));
             const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
@@ -221,6 +256,7 @@ fn draw(demo: *DemoState) void {
             var xform: [16]f32 = undefined;
             zm.storeMat(xform[0..], zm.transpose(object_to_clip));
 
+            // Write data at offset 256 (dynamic offsets need to be aligned to 256 bytes).
             gctx.queue.writeBuffer(demo.uniform_buffer, 256, f32, xform[0..]);
         }
 
@@ -232,9 +268,22 @@ fn draw(demo: *DemoState) void {
                 .load_op = .clear,
                 .store_op = .store,
             };
+            const depth_attachment = zgpu.RenderPassDepthStencilAttachment{
+                .view = demo.depth_texture_view,
+                .depth_load_op = .clear,
+                .depth_store_op = .store,
+                .clear_depth = math.nan_f32,
+                .depth_clear_value = 1.0,
+                .depth_read_only = false,
+                .stencil_load_op = .clear,
+                .stencil_store_op = .store,
+                .clear_stencil = 0,
+                .stencil_clear_value = 0,
+                .stencil_read_only = false,
+            };
             const render_pass_info = zgpu.RenderPassEncoder.Descriptor{
                 .color_attachments = &.{color_attachment},
-                .depth_stencil_attachment = null,
+                .depth_stencil_attachment = &depth_attachment,
             };
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
@@ -257,14 +306,48 @@ fn draw(demo: *DemoState) void {
     defer commands.release();
 
     gctx.queue.submit(&.{commands});
-    gctx.swap_chain.?.present();
+    gctx.swapchain.present();
+}
+
+fn createDepthTexture(device: zgpu.Device, width: u32, height: u32) struct {
+    texture: zgpu.Texture,
+    view: zgpu.TextureView,
+} {
+    const texture = device.createTexture(&zgpu.Texture.Descriptor{
+        .usage = .{ .render_attachment = true },
+        .dimension = .dimension_2d,
+        .size = .{ .width = width, .height = height, .depth_or_array_layers = 1 },
+        .format = .depth32_float,
+        .mip_level_count = 1,
+        .sample_count = 1,
+    });
+    const view = texture.createView(&zgpu.TextureView.Descriptor{
+        .format = .depth32_float,
+        .dimension = .dimension_2d,
+        .base_mip_level = 0,
+        .mip_level_count = 1,
+        .base_array_layer = 0,
+        .array_layer_count = 1,
+        .aspect = .depth_only,
+    });
+    return .{ .texture = texture, .view = view };
+}
+
+fn framebufferSizeCallback(window: glfw.Window, width: u32, height: u32) void {
+    // Re-create depth texture to match new window size.
+    const demo = window.getUserPointer(DemoState).?;
+    const depth = createDepthTexture(demo.gctx.device, width, height);
+    demo.depth_texture_view.release();
+    demo.depth_texture.release();
+    demo.depth_texture = depth.texture;
+    demo.depth_texture_view = depth.view;
 }
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
+    //var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    //defer _ = gpa.deinit();
 
-    const allocator = gpa.allocator();
+    //const allocator = gpa.allocator();
 
     try glfw.init(.{});
     defer glfw.terminate();
@@ -275,8 +358,11 @@ pub fn main() !void {
     });
     defer window.destroy();
 
-    var demo = init(allocator, window);
-    defer deinit(allocator, &demo);
+    var demo = init(window);
+    defer deinit(&demo);
+
+    window.setUserPointer(&demo);
+    window.setFramebufferSizeCallback(framebufferSizeCallback);
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();
