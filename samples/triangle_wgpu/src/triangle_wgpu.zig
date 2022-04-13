@@ -4,6 +4,8 @@ const glfw = @import("glfw");
 const zgpu = @import("zgpu");
 const zm = @import("zmath");
 
+const content_dir = @import("build_options").content_dir;
+
 // zig fmt: off
 const wgsl_vs =
 \\  @group(0) @binding(0) var<uniform> object_to_clip : mat4x4<f32>;
@@ -312,6 +314,26 @@ fn draw(demo: *DemoState, time: f64) void {
 
             pass.end();
         }
+        {
+            const color_attachment = zgpu.RenderPassColorAttachment{
+                .view = back_buffer_view,
+                .resolve_target = null,
+                .clear_value = std.mem.zeroes(zgpu.Color),
+                .load_op = .load,
+                .store_op = .store,
+            };
+            const render_pass_info = zgpu.RenderPassEncoder.Descriptor{
+                .color_attachments = &.{color_attachment},
+                .depth_stencil_attachment = null,
+            };
+            const pass = encoder.beginRenderPass(&render_pass_info);
+            defer pass.release();
+
+            zgpu.gui.draw(pass);
+
+            pass.end();
+        }
+
         break :blk encoder.finish(null);
     };
     defer commands.release();
@@ -359,11 +381,18 @@ pub fn main() !void {
     var demo = init(window);
     defer deinit(&demo);
 
+    zgpu.gui.init(window, demo.gctx.device, content_dir ++ "Roboto-Medium.ttf", 25.0);
+    defer zgpu.gui.deinit();
+
     var stats = zgpu.FrameStats.init();
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();
         stats.update(window, window_title);
+
+        zgpu.gui.newFrame();
+        zgpu.gui.showDemoWindow();
+
         draw(&demo, stats.time);
     }
 }

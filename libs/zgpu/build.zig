@@ -18,6 +18,17 @@ fn buildLibrary(
     glfw.link(exe.builder, lib, options.glfw_options);
     gpu_dawn.link(exe.builder, lib, options.gpu_dawn_options);
 
+    // We add imgui to zgpu for simplicity - this is not ideal but works for now.
+    lib.addIncludeDir(thisDir() ++ "/libs");
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/cimgui.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
+
     lib.install();
     return lib;
 }
@@ -28,6 +39,9 @@ pub fn link(exe: *std.build.LibExeObjStep, options: Options) void {
 
     const lib = buildLibrary(exe, options);
     exe.linkLibrary(lib);
+
+    // imgui
+    exe.addIncludeDir(thisDir() ++ "/libs");
 }
 
 pub const pkg = std.build.Pkg{

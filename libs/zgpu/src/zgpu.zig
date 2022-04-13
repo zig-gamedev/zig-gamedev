@@ -1,9 +1,13 @@
 const std = @import("std");
+const assert = std.debug.assert;
 const glfw = @import("glfw");
 const zgpu = @import("mach-gpu/main.zig");
 const c = @cImport({
     @cInclude("dawn/dawn_proc.h");
     @cInclude("dawn_native_mach.h");
+    @cDefine("CIMGUI_DEFINE_ENUMS_AND_STRUCTS", "");
+    @cDefine("CIMGUI_NO_EXPORT", "");
+    @cInclude("imgui/cimgui.h");
 });
 const objc = @cImport({
     @cInclude("objc/message.h");
@@ -12,6 +16,8 @@ const objc = @cImport({
 pub usingnamespace zgpu;
 
 pub const GraphicsContext = struct {
+    const swapchain_format = zgpu.Texture.Format.bgra8_unorm;
+
     native_instance: zgpu.NativeInstance,
     adapter_type: zgpu.Adapter.Type,
     backend_type: zgpu.Adapter.BackendType,
@@ -24,6 +30,11 @@ pub const GraphicsContext = struct {
     swapchain_descriptor: zgpu.SwapChain.Descriptor,
 
     pub fn init(window: glfw.Window) GraphicsContext {
+        // Change directory to where an executable is located.
+        var exe_path_buffer: [1024]u8 = undefined;
+        const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
+        std.os.chdir(exe_path) catch {};
+
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
         c.machDawnNativeInstance_discoverDefaultAdapters(instance);
@@ -64,7 +75,6 @@ pub const GraphicsContext = struct {
         );
         const framebuffer_size = window.getFramebufferSize() catch unreachable;
 
-        const swapchain_format = .bgra8_unorm;
         const swapchain_descriptor = zgpu.SwapChain.Descriptor{
             .label = "main window swap chain",
             .usage = .{ .render_attachment = true },
@@ -170,6 +180,50 @@ pub const FrameStats = struct {
         }
         self.frame_counter += 1;
     }
+};
+
+pub const gui = struct {
+    pub fn init(window: glfw.Window, device: zgpu.Device, font: [*:0]const u8, font_size: f32) void {
+        assert(c.igGetCurrentContext() == null);
+        _ = c.igCreateContext(null);
+
+        if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) unreachable;
+
+        const io = c.igGetIO().?;
+        if (c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) unreachable;
+
+        if (!ImGui_ImplWGPU_Init(device.ptr, 1, @enumToInt(GraphicsContext.swapchain_format))) unreachable;
+    }
+
+    pub fn deinit() void {
+        assert(c.igGetCurrentContext() != null);
+        ImGui_ImplWGPU_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        c.igDestroyContext(null);
+    }
+
+    pub fn newFrame() void {
+        ImGui_ImplGlfw_NewFrame();
+        ImGui_ImplWGPU_NewFrame();
+        c.igNewFrame();
+    }
+
+    pub fn showDemoWindow() void {
+        c.igShowDemoWindow(null);
+    }
+
+    pub fn draw(pass: zgpu.RenderPassEncoder) void {
+        c.igRender();
+        ImGui_ImplWGPU_RenderDrawData(c.igGetDrawData(), pass.ptr);
+    }
+
+    extern fn ImGui_ImplGlfw_InitForOther(window: *anyopaque, install_callbacks: bool) bool;
+    extern fn ImGui_ImplGlfw_NewFrame() void;
+    extern fn ImGui_ImplGlfw_Shutdown() void;
+    extern fn ImGui_ImplWGPU_Init(device: *anyopaque, num_frames_in_flight: u32, rt_format: u32) bool;
+    extern fn ImGui_ImplWGPU_NewFrame() void;
+    extern fn ImGui_ImplWGPU_RenderDrawData(draw_data: *anyopaque, pass_encoder: *anyopaque) void;
+    extern fn ImGui_ImplWGPU_Shutdown() void;
 };
 
 fn detectGLFWOptions() glfw.BackendOptions {
