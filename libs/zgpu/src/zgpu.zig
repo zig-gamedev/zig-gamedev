@@ -5,12 +5,14 @@ const zgpu = @import("mach-gpu/main.zig");
 const c = @cImport({
     @cInclude("dawn/dawn_proc.h");
     @cInclude("dawn_native_mach.h");
-    @cDefine("CIMGUI_DEFINE_ENUMS_AND_STRUCTS", "");
-    @cDefine("CIMGUI_NO_EXPORT", "");
-    @cInclude("imgui/cimgui.h");
 });
 const objc = @cImport({
     @cInclude("objc/message.h");
+});
+pub const cimgui = @cImport({
+    @cDefine("CIMGUI_DEFINE_ENUMS_AND_STRUCTS", "");
+    @cDefine("CIMGUI_NO_EXPORT", "");
+    @cInclude("imgui/cimgui.h");
 });
 
 pub usingnamespace zgpu;
@@ -184,37 +186,33 @@ pub const FrameStats = struct {
 
 pub const gui = struct {
     pub fn init(window: glfw.Window, device: zgpu.Device, font: [*:0]const u8, font_size: f32) void {
-        assert(c.igGetCurrentContext() == null);
-        _ = c.igCreateContext(null);
+        assert(cimgui.igGetCurrentContext() == null);
+        _ = cimgui.igCreateContext(null);
 
         if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) unreachable;
 
-        const io = c.igGetIO().?;
-        if (c.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) unreachable;
+        const io = cimgui.igGetIO().?;
+        if (cimgui.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) unreachable;
 
         if (!ImGui_ImplWGPU_Init(device.ptr, 1, @enumToInt(GraphicsContext.swapchain_format))) unreachable;
     }
 
     pub fn deinit() void {
-        assert(c.igGetCurrentContext() != null);
+        assert(cimgui.igGetCurrentContext() != null);
         ImGui_ImplWGPU_Shutdown();
         ImGui_ImplGlfw_Shutdown();
-        c.igDestroyContext(null);
+        cimgui.igDestroyContext(null);
     }
 
     pub fn newFrame() void {
         ImGui_ImplGlfw_NewFrame();
         ImGui_ImplWGPU_NewFrame();
-        c.igNewFrame();
-    }
-
-    pub fn showDemoWindow() void {
-        c.igShowDemoWindow(null);
+        cimgui.igNewFrame();
     }
 
     pub fn draw(pass: zgpu.RenderPassEncoder) void {
-        c.igRender();
-        ImGui_ImplWGPU_RenderDrawData(c.igGetDrawData(), pass.ptr);
+        cimgui.igRender();
+        ImGui_ImplWGPU_RenderDrawData(cimgui.igGetDrawData(), pass.ptr);
     }
 
     extern fn ImGui_ImplGlfw_InitForOther(window: *anyopaque, install_callbacks: bool) bool;

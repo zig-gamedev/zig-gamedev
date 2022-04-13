@@ -2,6 +2,7 @@ const std = @import("std");
 const math = std.math;
 const glfw = @import("glfw");
 const zgpu = @import("zgpu");
+const c = zgpu.cimgui;
 const zm = @import("zmath");
 
 const content_dir = @import("build_options").content_dir;
@@ -391,7 +392,7 @@ pub fn main() !void {
         stats.update(window, window_title);
 
         zgpu.gui.newFrame();
-        zgpu.gui.showDemoWindow();
+        c.igShowDemoWindow(null);
 
         draw(&demo, stats.time);
     }
