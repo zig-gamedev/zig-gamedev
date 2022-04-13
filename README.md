@@ -13,7 +13,7 @@ zig build triangle_wgpu-run
 ```
 #### Some features:
 * Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
-* Zero dependency except [Zig compiler (master)](https://ziglang.org/download/), git and curl - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja or any other crap is needed
+* Zero dependency except [Zig compiler (master)](https://ziglang.org/download/), git with [Git LFS](https://git-lfs.github.com/) and curl - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja or any other crap is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Uses [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) (WebGPU) for cross-platfrom graphics, uses DirectX 12 for low-level graphics on Windows
 * Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [libs/common/src/c](libs/common/src/c))
