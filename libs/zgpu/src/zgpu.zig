@@ -192,7 +192,13 @@ pub const gui = struct {
         if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) unreachable;
 
         const io = cimgui.igGetIO().?;
-        if (cimgui.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) unreachable;
+        if (cimgui.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) {
+            std.debug.print(
+                "\nINVALID DATA FILES!!! PLEASE INSTALL Git LFS (Large File Support) AND RE-CLONE.\n\n",
+                .{},
+            );
+            unreachable;
+        }
 
         if (!ImGui_ImplWGPU_Init(device.ptr, 1, @enumToInt(GraphicsContext.swapchain_format))) unreachable;
     }
