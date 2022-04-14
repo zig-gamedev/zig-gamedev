@@ -6,6 +6,8 @@ This repository contains a collection of [sample applications](#sample-applicati
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
 
 To get started on Windows/Linux/Mac try out [triangle wgpu](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu) sample:
+
+(Note: git with [Git LFS](https://git-lfs.github.com/) extension is required)
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
