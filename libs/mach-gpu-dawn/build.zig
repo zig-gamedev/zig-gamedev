@@ -602,12 +602,11 @@ fn appendDawnEnableBackendTypeFlags(flags: *std.ArrayList([]const u8), options: 
     const desktop_gl = "-DDAWN_ENABLE_BACKEND_DESKTOP_GL";
     const opengl_es = "-DDAWN_ENABLE_BACKEND_OPENGLES";
     const backend_null = "-DDAWN_ENABLE_BACKEND_NULL";
-    const no_sanitizer = "-fno-sanitize=undefined";
 
     try flags.append(backend_null);
     if (options.d3d12.?) try flags.append(d3d12);
     if (options.metal.?) try flags.append(metal);
-    if (options.vulkan.?) try flags.appendSlice(&.{ vulkan, no_sanitizer });
+    if (options.vulkan.?) try flags.append(vulkan);
     if (options.desktop_gl.?) try flags.appendSlice(&.{ opengl, desktop_gl });
     if (options.opengl_es.?) try flags.appendSlice(&.{ opengl, opengl_es });
 }
