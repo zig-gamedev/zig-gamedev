@@ -42,7 +42,7 @@ zig build triangle_wgpu-run
 * Tested (tests, samples, mini-games)
 * Well maintained
 
-*If you like it please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
+*If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
 ## Sample applications
 
