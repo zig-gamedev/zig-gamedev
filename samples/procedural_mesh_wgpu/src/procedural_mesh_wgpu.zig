@@ -135,10 +135,7 @@ fn init(window: glfw.Window) DemoState {
 
         const color_target = zgpu.ColorTargetState{
             .format = zgpu.GraphicsContext.swapchain_format,
-            .blend = &.{
-                .color = .{},
-                .alpha = .{},
-            },
+            .blend = &.{ .color = .{}, .alpha = .{} },
         };
 
         const vertex_attributes = [_]zgpu.VertexAttribute{
@@ -181,7 +178,7 @@ fn init(window: glfw.Window) DemoState {
     // Create an uniform buffer and a bind group for it.
     const uniform_buffer = gctx.device.createBuffer(&.{
         .usage = .{ .copy_dst = true, .uniform = true },
-        .size = 1024,
+        .size = 64 * 1024,
     });
 
     const draw_bind_group = gctx.device.createBindGroup(
