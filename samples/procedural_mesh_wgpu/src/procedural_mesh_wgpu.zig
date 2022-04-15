@@ -12,24 +12,33 @@ const window_title = "zig-gamedev: procedural mesh wgpu";
 
 // zig fmt: off
 const wgsl_vs =
-\\  @group(0) @binding(0) var<uniform> object_to_clip : mat4x4<f32>;
+\\  struct DrawUniforms {
+\\      object_to_world: mat4x4<f32>;
+\\  }
+\\  @group(0) @binding(0) var<uniform> draw_uniforms: DrawUniforms;
+\\
+\\  struct FrameUniforms {
+\\      world_to_clip: mat4x4<f32>;
+\\  }
+\\  @group(1) @binding(0) var<uniform> frame_uniforms: FrameUniforms;
+\\
 \\  struct VertexOut {
-\\      @builtin(position) position_clip : vec4<f32>;
-\\      @location(0) color : vec3<f32>;
+\\      @builtin(position) position_clip: vec4<f32>;
+\\      @location(0) color: vec3<f32>;
 \\  }
 \\  @stage(vertex) fn main(
-\\      @location(0) position : vec3<f32>,
-\\      @location(1) color : vec3<f32>,
+\\      @location(0) position: vec3<f32>,
+\\      @location(1) color: vec3<f32>,
 \\  ) -> VertexOut {
-\\     var output : VertexOut;
-\\     output.position_clip = vec4(position, 1.0) * object_to_clip;
+\\     var output: VertexOut;
+\\     output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_clip;
 \\     output.color = color;
 \\     return output;
 \\ }
 ;
 const wgsl_fs =
 \\  @stage(fragment) fn main(
-\\      @location(0) color : vec3<f32>,
+\\      @location(0) color: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      return vec4(color, 1.0);
 \\  }
@@ -39,6 +48,14 @@ const wgsl_fs =
 const Vertex = struct {
     position: [3]f32,
     color: [3]f32,
+};
+
+const FrameUniforms = struct {
+    world_to_clip: [16]f32,
+};
+
+const DrawUniforms = struct {
+    object_to_world: [16]f32,
 };
 
 const Mesh = struct {
@@ -53,10 +70,13 @@ const DemoState = struct {
     stats: zgpu.FrameStats,
 
     pipeline: zgpu.RenderPipeline,
-    bind_group: zgpu.BindGroup,
+    draw_bind_group: zgpu.BindGroup,
+    frame_bind_group: zgpu.BindGroup,
+
     vertex_buffer: zgpu.Buffer,
     index_buffer: zgpu.Buffer,
     uniform_buffer: zgpu.Buffer,
+
     depth_texture: zgpu.Texture,
     depth_texture_view: zgpu.TextureView,
 };
@@ -83,18 +103,26 @@ fn appendMesh(
 fn init(window: glfw.Window) DemoState {
     var gctx = zgpu.GraphicsContext.init(window);
 
-    // Create a bind group layout needed for our render pipeline.
-    const bgl = gctx.device.createBindGroupLayout(
+    const draw_bgl = gctx.device.createBindGroupLayout(
         &zgpu.BindGroupLayout.Descriptor{
             .entries = &.{
                 zgpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0),
             },
         },
     );
-    defer bgl.release();
+    defer draw_bgl.release();
+
+    const frame_bgl = gctx.device.createBindGroupLayout(
+        &zgpu.BindGroupLayout.Descriptor{
+            .entries = &.{
+                zgpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, false, 0),
+            },
+        },
+    );
+    defer frame_bgl.release();
 
     const pl = gctx.device.createPipelineLayout(&zgpu.PipelineLayout.Descriptor{
-        .bind_group_layouts = &.{bgl},
+        .bind_group_layouts = &.{ draw_bgl, frame_bgl },
     });
     defer pl.release();
 
@@ -153,11 +181,18 @@ fn init(window: glfw.Window) DemoState {
     // Create an uniform buffer and a bind group for it.
     const uniform_buffer = gctx.device.createBuffer(&.{
         .usage = .{ .copy_dst = true, .uniform = true },
-        .size = 512,
+        .size = 1024,
     });
-    const bind_group = gctx.device.createBindGroup(
+
+    const draw_bind_group = gctx.device.createBindGroup(
         &zgpu.BindGroup.Descriptor{
-            .layout = bgl,
+            .layout = draw_bgl,
+            .entries = &.{zgpu.BindGroup.Entry.buffer(0, uniform_buffer, 512, @sizeOf(zm.Mat))},
+        },
+    );
+    const frame_bind_group = gctx.device.createBindGroup(
+        &zgpu.BindGroup.Descriptor{
+            .layout = frame_bgl,
             .entries = &.{zgpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(zm.Mat))},
         },
     );
@@ -190,7 +225,8 @@ fn init(window: glfw.Window) DemoState {
         .gctx = gctx,
         .stats = zgpu.FrameStats.init(),
         .pipeline = pipeline,
-        .bind_group = bind_group,
+        .draw_bind_group = draw_bind_group,
+        .frame_bind_group = frame_bind_group,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .uniform_buffer = uniform_buffer,
@@ -201,7 +237,8 @@ fn init(window: glfw.Window) DemoState {
 
 fn deinit(demo: *DemoState) void {
     demo.pipeline.release();
-    demo.bind_group.release();
+    demo.draw_bind_group.release();
+    demo.frame_bind_group.release();
     demo.vertex_buffer.release();
     demo.index_buffer.release();
     demo.uniform_buffer.release();
@@ -257,28 +294,31 @@ fn draw(demo: *DemoState) void {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
+        // Update camera xform.
+        {
+            var frame_uniforms: FrameUniforms = undefined;
+            zm.storeMat(frame_uniforms.world_to_clip[0..], zm.transpose(cam_world_to_clip));
+            encoder.writeBuffer(demo.uniform_buffer, 0, @TypeOf(frame_uniforms), &.{frame_uniforms});
+        }
+
         // Update xform matrix for triangle 1.
         {
             const object_to_world = zm.mul(zm.rotationY(t), zm.translation(-1.0, 0.0, 0.0));
-            const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
 
-            var xform: [16]f32 = undefined;
-            zm.storeMat(xform[0..], zm.transpose(object_to_clip));
+            var draw_uniforms: DrawUniforms = undefined;
+            zm.storeMat(draw_uniforms.object_to_world[0..], zm.transpose(object_to_world));
 
-            // Write data at offset 0.
-            encoder.writeBuffer(demo.uniform_buffer, 0, f32, xform[0..]);
+            encoder.writeBuffer(demo.uniform_buffer, 512, @TypeOf(draw_uniforms), &.{draw_uniforms});
         }
 
         // Update xform matrix for triangle 2.
         {
             const object_to_world = zm.mul(zm.rotationY(0.75 * t), zm.translation(1.0, 0.0, 0.0));
-            const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
 
-            var xform: [16]f32 = undefined;
-            zm.storeMat(xform[0..], zm.transpose(object_to_clip));
+            var draw_uniforms: DrawUniforms = undefined;
+            zm.storeMat(draw_uniforms.object_to_world[0..], zm.transpose(object_to_world));
 
-            // Write data at offset 256 (dynamic offsets need to be aligned to 256 bytes).
-            encoder.writeBuffer(demo.uniform_buffer, 256, f32, xform[0..]);
+            encoder.writeBuffer(demo.uniform_buffer, 512 + 256, @TypeOf(draw_uniforms), &.{draw_uniforms});
         }
 
         // Main pass.
@@ -307,11 +347,12 @@ fn draw(demo: *DemoState) void {
             pass.setIndexBuffer(demo.index_buffer, .uint32, 0, 3 * @sizeOf(u32));
 
             pass.setPipeline(demo.pipeline);
+            pass.setBindGroup(1, demo.frame_bind_group, &.{});
 
-            pass.setBindGroup(0, demo.bind_group, &.{0});
+            pass.setBindGroup(0, demo.draw_bind_group, &.{0});
             pass.drawIndexed(3, 1, 0, 0, 0);
 
-            pass.setBindGroup(0, demo.bind_group, &.{256});
+            pass.setBindGroup(0, demo.draw_bind_group, &.{256});
             pass.drawIndexed(3, 1, 0, 0, 0);
 
             pass.end();
