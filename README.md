@@ -1,8 +1,8 @@
-**If you are new to low-level graphics programming or you would like to learn about zig-gamedev framework I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).**
+**If you are new to low-level graphics programming or you would like to learn about some zig-gamedev libraries I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).**
 
 # zig-gamedev project
 
-This repository contains a collection of [sample applications](#sample-applications) and standalone libraries written in **[Zig programming language](https://ziglang.org/)**.
+This repository contains a collection of [sample applications](#sample-applications) and **standalone, composable libraries** written in **[Zig programming language](https://ziglang.org/)**.
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
 
 To get started on Windows/Linux/Mac try out [triangle wgpu](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu) sample:
