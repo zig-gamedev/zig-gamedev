@@ -35,14 +35,14 @@ zig build triangle_wgpu-run
 * [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpix) - support for GPU profiling with PIX **[depends only on zwin32]**
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 
-#### Project vision:
+## Project vision:
 * Collection of cross-platform, standalone and composable libraries for game developers
 * Written from scratch in Zig or bindings to carefully selected C/C++ code
 * Non-allocating or taking Zig allocator
 * Tested (tests, samples, mini-games)
 * Well maintained
 
-*If you like my vision and my mission to promote the language, please consider [supporting me](https://github.com/sponsors/michal-z).*
+*If you like it please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
 ## Sample applications
 
