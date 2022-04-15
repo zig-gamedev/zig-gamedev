@@ -4,6 +4,8 @@ const glfw = @import("glfw");
 const zgpu = @import("zgpu");
 const c = zgpu.cimgui;
 const zm = @import("zmath");
+const zmesh = @import("zmesh");
+const znoise = @import("znoise");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: procedural mesh wgpu";
@@ -17,7 +19,7 @@ const wgsl_vs =
 \\  }
 \\  @stage(vertex) fn main(
 \\      @location(0) position : vec3<f32>,
-\\      @location(1) color : vec3<f32>
+\\      @location(1) color : vec3<f32>,
 \\  ) -> VertexOut {
 \\     var output : VertexOut;
 \\     output.position_clip = vec4(position, 1.0) * object_to_clip;
@@ -27,7 +29,7 @@ const wgsl_vs =
 ;
 const wgsl_fs =
 \\  @stage(fragment) fn main(
-\\      @location(0) color : vec3<f32>
+\\      @location(0) color : vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      return vec4(color, 1.0);
 \\  }
@@ -39,8 +41,17 @@ const Vertex = struct {
     color: [3]f32,
 };
 
+const Mesh = struct {
+    index_offset: u32,
+    vertex_offset: i32,
+    num_indices: u32,
+    num_vertices: u32,
+};
+
 const DemoState = struct {
     gctx: zgpu.GraphicsContext,
+    stats: zgpu.FrameStats,
+
     pipeline: zgpu.RenderPipeline,
     bind_group: zgpu.BindGroup,
     vertex_buffer: zgpu.Buffer,
@@ -49,6 +60,25 @@ const DemoState = struct {
     depth_texture: zgpu.Texture,
     depth_texture_view: zgpu.TextureView,
 };
+
+fn appendMesh(
+    mesh: zmesh.Mesh,
+    meshes: *std.ArrayList(Mesh),
+    meshes_indices: *std.ArrayList(u16),
+    meshes_positions: *std.ArrayList([3]f32),
+    meshes_normals: *std.ArrayList([3]f32),
+) void {
+    meshes.append(.{
+        .index_offset = @intCast(u32, meshes_indices.items.len),
+        .vertex_offset = @intCast(i32, meshes_positions.items.len),
+        .num_indices = @intCast(u32, mesh.indices.len),
+        .num_vertices = @intCast(u32, mesh.positions.len),
+    }) catch unreachable;
+
+    meshes_indices.appendSlice(mesh.indices) catch unreachable;
+    meshes_positions.appendSlice(mesh.positions) catch unreachable;
+    meshes_normals.appendSlice(mesh.normals.?) catch unreachable;
+}
 
 fn init(window: glfw.Window) DemoState {
     var gctx = zgpu.GraphicsContext.init(window);
@@ -158,6 +188,7 @@ fn init(window: glfw.Window) DemoState {
 
     return .{
         .gctx = gctx,
+        .stats = zgpu.FrameStats.init(),
         .pipeline = pipeline,
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
@@ -180,14 +211,20 @@ fn deinit(demo: *DemoState) void {
     demo.* = undefined;
 }
 
-fn draw(demo: *DemoState, time: f64) void {
+fn update(demo: *DemoState) void {
+    demo.stats.update(demo.gctx.window, window_title);
+    zgpu.gui.newFrame();
+    c.igShowDemoWindow(null);
+}
+
+fn draw(demo: *DemoState) void {
     var gctx = &demo.gctx;
     if (!gctx.update()) {
         // Release old depth texture.
         demo.depth_texture_view.release();
         demo.depth_texture.release();
 
-        // Create new depth texture to match new window size.
+        // Create a new depth texture to match the new window size.
         const depth = createDepthTexture(
             demo.gctx.device,
             gctx.swapchain_descriptor.width,
@@ -198,7 +235,7 @@ fn draw(demo: *DemoState, time: f64) void {
     }
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
-    const t = @floatCast(f32, time);
+    const t = @floatCast(f32, demo.stats.time);
 
     const cam_world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0),
@@ -347,15 +384,9 @@ pub fn main() !void {
     zgpu.gui.init(window, demo.gctx.device, content_dir ++ "Roboto-Medium.ttf", 25.0);
     defer zgpu.gui.deinit();
 
-    var stats = zgpu.FrameStats.init();
-
     while (!window.shouldClose()) {
         try glfw.pollEvents();
-        stats.update(window, window_title);
-
-        zgpu.gui.newFrame();
-        c.igShowDemoWindow(null);
-
-        draw(&demo, stats.time);
+        update(&demo);
+        draw(&demo);
     }
 }
