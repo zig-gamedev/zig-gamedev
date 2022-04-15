@@ -138,25 +138,14 @@ pub const GraphicsContext = struct {
 };
 
 pub const FrameStats = struct {
-    time: f64,
-    delta_time: f32,
-    fps: f32,
-    average_cpu_time: f32,
-    previous_time: f64,
-    fps_refresh_time: f64,
-    frame_counter: u64,
-
-    pub fn init() FrameStats {
-        return .{
-            .time = 0.0,
-            .delta_time = 0.0,
-            .fps = 0.0,
-            .average_cpu_time = 0.0,
-            .previous_time = 0.0,
-            .fps_refresh_time = 0.0,
-            .frame_counter = 0,
-        };
-    }
+    time: f64 = 0.0,
+    delta_time: f32 = 0.0,
+    fps: f32 = 0.0,
+    average_cpu_time: f32 = 0.0,
+    previous_time: f64 = 0.0,
+    fps_refresh_time: f64 = 0.0,
+    frame_counter: u64 = 0,
+    frame_number: u64 = 0,
 
     pub fn update(self: *FrameStats, window: glfw.Window, window_name: []const u8) void {
         self.time = glfw.getTime();
@@ -182,6 +171,7 @@ pub const FrameStats = struct {
             window.setTitle(@ptrCast([*:0]const u8, text.ptr)) catch unreachable;
         }
         self.frame_counter += 1;
+        self.frame_number += 1;
     }
 };
 
