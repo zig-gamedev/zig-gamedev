@@ -18,7 +18,7 @@ pub const cimgui = @cImport({
 pub usingnamespace zgpu;
 
 pub const GraphicsContext = struct {
-    const swapchain_format = zgpu.Texture.Format.bgra8_unorm;
+    pub const swapchain_format = zgpu.Texture.Format.bgra8_unorm;
 
     native_instance: zgpu.NativeInstance,
     adapter_type: zgpu.Adapter.Type,
@@ -28,14 +28,16 @@ pub const GraphicsContext = struct {
     window: glfw.Window,
     window_surface: zgpu.Surface,
     swapchain: zgpu.SwapChain,
-    swapchain_format: zgpu.Texture.Format,
     swapchain_descriptor: zgpu.SwapChain.Descriptor,
 
     pub fn init(window: glfw.Window) GraphicsContext {
         // Change directory to where an executable is located.
-        var exe_path_buffer: [1024]u8 = undefined;
-        const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
-        std.os.chdir(exe_path) catch {};
+        {
+            // TODO: Find a better place for this code.
+            var exe_path_buffer: [1024]u8 = undefined;
+            const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
+            std.os.chdir(exe_path) catch {};
+        }
 
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
@@ -100,7 +102,6 @@ pub const GraphicsContext = struct {
             .window = window,
             .window_surface = window_surface,
             .swapchain = swapchain,
-            .swapchain_format = swapchain_format,
             .swapchain_descriptor = swapchain_descriptor,
         };
     }

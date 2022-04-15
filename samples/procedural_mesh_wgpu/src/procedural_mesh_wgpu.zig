@@ -6,6 +6,7 @@ const c = zgpu.cimgui;
 const zm = @import("zmath");
 
 const content_dir = @import("build_options").content_dir;
+const window_title = "zig-gamedev: procedural mesh wgpu";
 
 // zig fmt: off
 const wgsl_vs =
@@ -74,21 +75,14 @@ fn init(window: glfw.Window) DemoState {
         const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
         defer fs_module.release();
 
-        // Setup a 'fragment state' for our render pipeline.
         const color_target = zgpu.ColorTargetState{
-            .format = gctx.swapchain_format,
+            .format = zgpu.GraphicsContext.swapchain_format,
             .blend = &.{
                 .color = .{},
                 .alpha = .{},
             },
         };
-        const fragment_state = zgpu.FragmentState{
-            .module = fs_module,
-            .entry_point = "main",
-            .targets = &.{color_target},
-        };
 
-        // Setup a 'vertex state' for our render pipeline.
         const vertex_attributes = [_]zgpu.VertexAttribute{
             zgpu.VertexAttribute{ .format = .float32x3, .offset = 0, .shader_location = 0 },
             zgpu.VertexAttribute{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
@@ -98,26 +92,29 @@ fn init(window: glfw.Window) DemoState {
             .attribute_count = vertex_attributes.len,
             .attributes = &vertex_attributes,
         };
-        const vertex_state = zgpu.VertexState{
-            .module = vs_module,
-            .entry_point = "main",
-            .buffers = &.{vertex_buffer_layout},
-        };
 
         // Create a render pipeline.
         const pipeline_descriptor = zgpu.RenderPipeline.Descriptor{
-            .fragment = &fragment_state,
             .layout = pl,
-            .depth_stencil = &.{
+            .vertex = zgpu.VertexState{
+                .module = vs_module,
+                .entry_point = "main",
+                .buffers = &.{vertex_buffer_layout},
+            },
+            .primitive = zgpu.PrimitiveState{
+                .front_face = .ccw,
+                .cull_mode = .none,
+                .topology = .triangle_list,
+            },
+            .depth_stencil = &zgpu.DepthStencilState{
                 .format = .depth32_float,
                 .depth_write_enabled = true,
                 .depth_compare = .less,
             },
-            .vertex = vertex_state,
-            .primitive = .{
-                .front_face = .ccw,
-                .cull_mode = .none,
-                .topology = .triangle_list,
+            .fragment = &zgpu.FragmentState{
+                .module = fs_module,
+                .entry_point = "main",
+                .targets = &.{color_target},
             },
         };
         break :blk gctx.device.createRenderPipeline(&pipeline_descriptor);
@@ -337,7 +334,6 @@ pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
 
-    const window_title = "zig-gamedev: procedural mesh wgpu";
     const window = try glfw.Window.create(1280, 960, window_title, null, null, .{
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,

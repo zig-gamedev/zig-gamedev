@@ -64,7 +64,7 @@ fn init(window: glfw.Window) DemoState {
         .alpha = .{ .operation = .add, .src_factor = .one, .dst_factor = .zero },
     };
     const color_target = zgpu.ColorTargetState{
-        .format = gctx.swapchain_format,
+        .format = zgpu.GraphicsContext.swapchain_format,
         .blend = &blend,
         .write_mask = zgpu.ColorWriteMask.all,
     };
