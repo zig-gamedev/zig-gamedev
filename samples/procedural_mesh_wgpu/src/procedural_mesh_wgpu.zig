@@ -522,9 +522,34 @@ fn deinit(demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     demo.stats.update(demo.gctx.window, window_title);
     zgpu.gui.newFrame();
-    c.igShowDemoWindow(null);
 
     const window = demo.gctx.window;
+
+    c.igSetNextWindowPos(
+        c.ImVec2{ .x = 10.0, .y = 10.0 },
+        c.ImGuiCond_FirstUseEver,
+        c.ImVec2{ .x = 0.0, .y = 0.0 },
+    );
+    c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
+
+    _ = c.igBegin(
+        "Demo Settings",
+        null,
+        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
+    );
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + drag", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  rotate camera", "");
+
+    c.igBulletText("", "");
+    c.igSameLine(0, -1);
+    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
+    c.igSameLine(0, -1);
+    c.igText(" :  move camera", "");
+
+    c.igEnd();
 
     // Handle camera rotation with mouse.
     {
@@ -735,7 +760,7 @@ pub fn main() !void {
         .cocoa_retina_framebuffer = true,
     });
     defer window.destroy();
-    try window.setSizeLimits(.{ .width = 200, .height = 200 }, .{ .width = null, .height = null });
+    try window.setSizeLimits(.{ .width = 400, .height = 400 }, .{ .width = null, .height = null });
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
