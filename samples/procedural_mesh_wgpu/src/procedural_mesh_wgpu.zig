@@ -6,61 +6,10 @@ const c = zgpu.cimgui;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const znoise = @import("znoise");
+const wgsl = @import("procedural_mesh_wgsl.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: procedural mesh wgpu";
-
-// zig fmt: off
-const wgsl_vs =
-\\  struct DrawUniforms {
-\\      object_to_world: mat4x4<f32>;
-\\  }
-\\  @group(0) @binding(0) var<uniform> draw_uniforms: DrawUniforms;
-\\
-\\  struct FrameUniforms {
-\\      world_to_clip: mat4x4<f32>;
-\\  }
-\\  @group(1) @binding(0) var<uniform> frame_uniforms: FrameUniforms;
-\\
-\\  struct VertexOut {
-\\      @builtin(position) position_clip: vec4<f32>;
-\\      @location(0) normal: vec3<f32>;
-\\      @location(1) barycentrics: vec3<f32>;
-\\  }
-\\  @stage(vertex) fn main(
-\\      @location(0) position: vec3<f32>,
-\\      @location(1) normal: vec3<f32>,
-\\      @builtin(vertex_index) vertex_index: u32,
-\\  ) -> VertexOut {
-\\     var output: VertexOut;
-\\     output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_clip;
-\\     output.normal = normal;
-\\     let index = vertex_index % 3u;
-\\     if (index == 0u) { output.barycentrics = vec3(1.0, 0.0, 0.0); }
-\\     else if (index == 1u) { output.barycentrics = vec3(0.0, 1.0, 0.0); }
-\\     else { output.barycentrics = vec3(0.0, 0.0, 1.0); }
-\\     return output;
-\\  }
-;
-const wgsl_fs =
-\\  @stage(fragment) fn main(
-\\      @location(0) normal: vec3<f32>,
-\\      @location(1) barycentrics: vec3<f32>,
-\\  ) -> @location(0) vec4<f32> {
-\\      let color = normalize(abs(normal));
-\\
-\\      // wireframe
-\\      var barys = barycentrics;
-\\      barys.z = 1.0 - barys.x - barys.y;
-\\      let deltas = fwidth(barys);
-\\      let smoothing = deltas * 1.0;
-\\      let thickness = deltas * 0.25;
-\\      barys = smoothStep(thickness, thickness + smoothing, barys);
-\\      let min_bary = min(barys.x, min(barys.y, barys.z));
-\\      return vec4(min_bary * color, 1.0);
-\\  }
-// zig fmt: on
-;
 
 const Vertex = struct {
     position: [3]f32,
@@ -69,10 +18,12 @@ const Vertex = struct {
 
 const FrameUniforms = struct {
     world_to_clip: [16]f32,
+    camera_position: [3]f32,
 };
 
 const DrawUniforms = struct {
     object_to_world: [16]f32,
+    basecolor_roughness: [4]f32,
 };
 
 const Mesh = struct {
@@ -360,7 +311,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const draw_bgl = gctx.device.createBindGroupLayout(
         &zgpu.BindGroupLayout.Descriptor{
             .entries = &.{
-                zgpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0),
+                zgpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
             },
         },
     );
@@ -369,7 +320,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const frame_bgl = gctx.device.createBindGroupLayout(
         &zgpu.BindGroupLayout.Descriptor{
             .entries = &.{
-                zgpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, false, 0),
+                zgpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, false, 0),
             },
         },
     );
@@ -381,10 +332,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     defer pl.release();
 
     const pipeline = blk: {
-        const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
+        const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl.vs } });
         defer vs_module.release();
 
-        const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
+        const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl.fs } });
         defer fs_module.release();
 
         const color_target = zgpu.ColorTargetState{
@@ -438,13 +389,13 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const draw_bind_group = gctx.device.createBindGroup(
         &zgpu.BindGroup.Descriptor{
             .layout = draw_bgl,
-            .entries = &.{zgpu.BindGroup.Entry.buffer(0, uniform_buffer, 512, @sizeOf(zm.Mat))},
+            .entries = &.{zgpu.BindGroup.Entry.buffer(0, uniform_buffer, 512, @sizeOf(DrawUniforms))},
         },
     );
     const frame_bind_group = gctx.device.createBindGroup(
         &zgpu.BindGroup.Descriptor{
             .layout = frame_bgl,
-            .entries = &.{zgpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(zm.Mat))},
+            .entries = &.{zgpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(FrameUniforms))},
         },
     );
 
@@ -640,6 +591,7 @@ fn draw(demo: *DemoState) void {
         {
             var frame_uniforms: FrameUniforms = undefined;
             zm.storeMat(frame_uniforms.world_to_clip[0..], zm.transpose(cam_world_to_clip));
+            frame_uniforms.camera_position = demo.camera.position;
             encoder.writeBuffer(demo.uniform_buffer, 0, @TypeOf(frame_uniforms), &.{frame_uniforms});
         }
 
@@ -650,6 +602,7 @@ fn draw(demo: *DemoState) void {
                 );
                 var draw_uniforms: DrawUniforms = undefined;
                 zm.storeMat(draw_uniforms.object_to_world[0..], zm.transpose(object_to_world));
+                draw_uniforms.basecolor_roughness = drawable.basecolor_roughness;
 
                 encoder.writeBuffer(
                     demo.uniform_buffer,
