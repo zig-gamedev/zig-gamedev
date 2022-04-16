@@ -1,10 +1,10 @@
 ## procedural mesh wgpu
 
-* This WebGPU sample application shows how to efficiently draw several different meshes
+* This WebGPU sample shows how to efficiently draw several procedurally generated meshes
 * All vertices and indices are stored in one large vertex/index buffer
 * Two bind groups are used - frame bind group and draw bind group
-* All meshes are procedurally generated
 * Simple physically-based shading is used
+* Single-pass wireframe rendering (hacky)
 
 Main drawing loop is optimized and changes just one dynamic offset before each draw call:
 
