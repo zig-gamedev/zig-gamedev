@@ -3,6 +3,8 @@
 This sample application shows how to efficiently draw several different meshes.
 All vertices and indices are stored in one large vertex/index buffer.
 Two bind groups are used - frame bind group and draw bind group.
+All meshes are procedurally generated.
+Simple physically-based shading is used.
 
 ```zig
 pass.setVertexBuffer(0, demo.vertex_buffer, 0, demo.total_num_vertices * @sizeOf(Vertex));
