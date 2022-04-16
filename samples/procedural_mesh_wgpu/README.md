@@ -6,6 +6,8 @@
 * All meshes are procedurally generated.
 * Simple physically-based shading is used.
 
+Main drawing loop is optimized and changes just one dynamic offset before each draw call:
+
 ```zig
 pass.setVertexBuffer(0, demo.vertex_buffer, 0, demo.total_num_vertices * @sizeOf(Vertex));
 pass.setIndexBuffer(demo.index_buffer, .uint16, 0, demo.total_num_indices * @sizeOf(u16));
