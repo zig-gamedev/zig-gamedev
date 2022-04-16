@@ -5,6 +5,7 @@
 * Two bind groups are used - frame bind group and draw bind group
 * Simple physically-based shading is used
 * Single-pass wireframe rendering (hacky)
+* Works on Windows/Linux/Mac
 
 Main drawing loop is optimized and changes just one dynamic offset before each draw call:
 
