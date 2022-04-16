@@ -385,7 +385,7 @@ pub fn main() !void {
     zgpu.gui.init(window, demo.gctx.device, content_dir ++ "Roboto-Medium.ttf", 25.0);
     defer zgpu.gui.deinit();
 
-    var stats = zgpu.FrameStats.init();
+    var stats = zgpu.FrameStats{};
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();
