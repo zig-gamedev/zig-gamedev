@@ -1,12 +1,32 @@
-## triangle wgpu
+## procedural mesh wgpu
 
-Very simple but fairly complete WebGPU sample application, shows how to:
+This sample application shows how to efficiently draw several different meshes.
+All vertices and indices are stored in one large vertex/index buffer.
+Two bind groups are used - frame bind group and draw bind group.
 
-* create bind group layout
-* create render pipeline
-* setup vertex/index buffers
-* use uniform buffer with dynamic offset
-* setup depth buffer
-* handle window resizes
+```zig
+pass.setVertexBuffer(0, demo.vertex_buffer, 0, demo.total_num_vertices * @sizeOf(Vertex));
+pass.setIndexBuffer(demo.index_buffer, .uint16, 0, demo.total_num_indices * @sizeOf(u16));
+
+pass.setPipeline(demo.pipeline);
+pass.setBindGroup(1, demo.frame_bind_group, &.{});
+
+for (demo.drawables.items) |drawable, drawable_index| {
+    pass.setBindGroup(0, demo.draw_bind_group, &.{@intCast(u32, drawable_index * 256)});
+    pass.drawIndexed(
+        demo.meshes.items[drawable.mesh_index].num_indices,
+        1,
+        demo.meshes.items[drawable.mesh_index].index_offset,
+        demo.meshes.items[drawable.mesh_index].vertex_offset,
+        0,
+    );
+}
+```
+
+Used libraries:
+* zgpu
+* zmath
+* zmesh
+* znoise
 
 ![image](screenshot.png)
