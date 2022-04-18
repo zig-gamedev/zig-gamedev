@@ -52,11 +52,6 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
 
     lib.addCSourceFile(thisDir() ++ "/src/c/stb_image.c", &.{"-std=c99"});
 
-    lib.addCSourceFile(thisDir() ++ "/src/c/meshoptimizer/clusterizer.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/src/c/meshoptimizer/indexgenerator.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/src/c/meshoptimizer/vcacheoptimizer.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/src/c/meshoptimizer/vfetchoptimizer.cpp", &.{""});
-
     lib.install();
     return lib;
 }
