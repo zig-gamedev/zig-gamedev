@@ -13,6 +13,7 @@ const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
+const zmesh = @import("zmesh");
 
 const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
@@ -137,72 +138,63 @@ fn loadMeshAndGenerateMeshlets(
 
     var remap = std.ArrayList(u32).init(arena_allocator);
     remap.resize(src_indices.items.len) catch unreachable;
-    const num_unique_vertices = c.meshopt_generateVertexRemap(
-        remap.items.ptr,
-        src_indices.items.ptr,
-        src_indices.items.len,
-        src_vertices.items.ptr,
-        src_vertices.items.len,
-        @sizeOf(Vertex),
+    const num_unique_vertices = zmesh.generateVertexRemap(
+        remap.items,
+        src_indices.items,
+        Vertex,
+        src_vertices.items,
     );
 
     var opt_vertices = std.ArrayList(Vertex).init(arena_allocator);
     opt_vertices.resize(num_unique_vertices) catch unreachable;
-    c.meshopt_remapVertexBuffer(
-        opt_vertices.items.ptr,
-        src_vertices.items.ptr,
-        src_vertices.items.len,
-        @sizeOf(Vertex),
-        remap.items.ptr,
+    zmesh.remapVertexBuffer(
+        Vertex,
+        opt_vertices.items,
+        src_vertices.items,
+        remap.items,
     );
 
     var opt_indices = std.ArrayList(u32).init(arena_allocator);
     opt_indices.resize(src_indices.items.len) catch unreachable;
-    c.meshopt_remapIndexBuffer(
-        opt_indices.items.ptr,
-        src_indices.items.ptr,
-        src_indices.items.len,
-        remap.items.ptr,
+    zmesh.remapIndexBuffer(
+        opt_indices.items,
+        src_indices.items,
+        remap.items,
     );
 
-    c.meshopt_optimizeVertexCache(
-        opt_indices.items.ptr,
-        opt_indices.items.ptr,
-        opt_indices.items.len,
+    zmesh.optimizeVertexCache(
+        opt_indices.items,
+        opt_indices.items,
         opt_vertices.items.len,
     );
-    const num_opt_vertices = c.meshopt_optimizeVertexFetch(
-        opt_vertices.items.ptr,
-        opt_indices.items.ptr,
-        opt_indices.items.len,
-        opt_vertices.items.ptr,
-        opt_vertices.items.len,
-        @sizeOf(Vertex),
+    const num_opt_vertices = zmesh.optimizeVertexFetch(
+        Vertex,
+        opt_vertices.items,
+        opt_indices.items,
+        opt_vertices.items,
     );
     assert(num_opt_vertices == opt_vertices.items.len);
 
-    const max_num_meshlets = c.meshopt_buildMeshletsBound(
+    const max_num_meshlets = zmesh.buildMeshletsBound(
         opt_indices.items.len,
         max_num_meshlet_vertices,
         max_num_meshlet_triangles,
     );
 
-    var meshlets = std.ArrayList(c.meshopt_Meshlet).init(arena_allocator);
+    var meshlets = std.ArrayList(zmesh.Meshlet).init(arena_allocator);
     var meshlet_vertices = std.ArrayList(u32).init(arena_allocator);
     var meshlet_triangles = std.ArrayList(u8).init(arena_allocator);
     meshlets.resize(max_num_meshlets) catch unreachable;
     meshlet_vertices.resize(max_num_meshlets * max_num_meshlet_vertices) catch unreachable;
     meshlet_triangles.resize(max_num_meshlets * max_num_meshlet_triangles * 3) catch unreachable;
 
-    const num_meshlets = c.meshopt_buildMeshlets(
-        meshlets.items.ptr,
-        meshlet_vertices.items.ptr,
-        meshlet_triangles.items.ptr,
-        opt_indices.items.ptr,
-        opt_indices.items.len,
-        @ptrCast([*c]const f32, opt_vertices.items.ptr),
-        opt_vertices.items.len,
-        @sizeOf(Vertex),
+    const num_meshlets = zmesh.buildMeshlets(
+        meshlets.items,
+        meshlet_vertices.items,
+        meshlet_triangles.items,
+        opt_indices.items,
+        Vertex,
+        opt_vertices.items,
         max_num_meshlet_vertices,
         max_num_meshlet_triangles,
         0.0,

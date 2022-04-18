@@ -4,14 +4,20 @@ const std = @import("std");
 const expect = std.testing.expect;
 const Mutex = std.Thread.Mutex;
 
+pub usingnamespace @import("meshoptimizer.zig");
 pub const IndexType = u16;
 pub const MeshHandle = *opaque {};
 
-extern fn zmesh_set_allocator(
+extern fn zmesh_setAllocator(
     malloc: fn (size: usize) callconv(.C) ?*anyopaque,
     calloc: fn (num: usize, size: usize) callconv(.C) ?*anyopaque,
     realloc: fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque,
     free: fn (ptr: ?*anyopaque) callconv(.C) void,
+) void;
+
+extern fn meshopt_setAllocator(
+    allocate: fn (size: usize) callconv(.C) ?*anyopaque,
+    deallocate: fn (ptr: ?*anyopaque) callconv(.C) void,
 ) void;
 
 var allocator: ?std.mem.Allocator = null;
@@ -94,7 +100,8 @@ pub fn init(alloc: std.mem.Allocator) void {
     allocator = alloc;
     allocations = std.AutoHashMap(usize, usize).init(allocator.?);
     allocations.?.ensureTotalCapacity(32) catch unreachable;
-    zmesh_set_allocator(mallocFunc, callocFunc, reallocFunc, freeFunc);
+    zmesh_setAllocator(mallocFunc, callocFunc, reallocFunc, freeFunc);
+    meshopt_setAllocator(mallocFunc, freeFunc);
 }
 
 pub fn deinit() void {
