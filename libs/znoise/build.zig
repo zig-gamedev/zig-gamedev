@@ -40,7 +40,6 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         &.{ "-std=c99", "-fno-sanitize=undefined" },
     );
 
-    lib.install();
     return lib;
 }
 

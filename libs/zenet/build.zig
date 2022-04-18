@@ -63,7 +63,6 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.addCSourceFile(thisDir() ++ "/libs/enet/unix.c", &defines);
     lib.addCSourceFile(thisDir() ++ "/libs/enet/win32.c", &defines);
 
-    lib.install();
     return lib;
 }
 

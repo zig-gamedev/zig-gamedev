@@ -52,7 +52,6 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
 
     lib.addCSourceFile(thisDir() ++ "/src/c/stb_image.c", &.{"-std=c99"});
 
-    lib.install();
     return lib;
 }
 

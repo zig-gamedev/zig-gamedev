@@ -29,7 +29,6 @@ fn buildLibrary(
     lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
     lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
 
-    lib.install();
     return lib;
 }
 
