@@ -67,13 +67,13 @@ pub fn wrap(instance: *anyopaque) NativeInstance {
 const interface_vtable = Interface.VTable{
     .reference = (struct {
         pub fn reference(ptr: *anyopaque) void {
-            const native = @ptrCast(*NativeInstance, @alignCast(@alignOf(*NativeInstance), ptr));
+            const native = @ptrCast(*NativeInstance, @alignCast(std.meta.alignment(*NativeInstance), ptr));
             c.wgpuInstanceReference(native.instance);
         }
     }).reference,
     .release = (struct {
         pub fn release(ptr: *anyopaque) void {
-            const native = @ptrCast(*NativeInstance, @alignCast(@alignOf(*NativeInstance), ptr));
+            const native = @ptrCast(*NativeInstance, @alignCast(std.meta.alignment(*NativeInstance), ptr));
             c.wgpuInstanceRelease(native.instance);
         }
     }).release,
@@ -83,7 +83,7 @@ const interface_vtable = Interface.VTable{
             options: *const RequestAdapterOptions,
             callback: *RequestAdapterCallback,
         ) void {
-            const native = @ptrCast(*NativeInstance, @alignCast(@alignOf(*NativeInstance), ptr));
+            const native = @ptrCast(*NativeInstance, @alignCast(std.meta.alignment(*NativeInstance), ptr));
 
             const opt = c.WGPURequestAdapterOptions{
                 .nextInChain = null,
@@ -94,7 +94,7 @@ const interface_vtable = Interface.VTable{
 
             const cCallback = (struct {
                 pub fn cCallback(status: c.WGPURequestAdapterStatus, adapter: c.WGPUAdapter, message: [*c]const u8, userdata: ?*anyopaque) callconv(.C) void {
-                    const callback_info = @ptrCast(*RequestAdapterCallback, @alignCast(@alignOf(*RequestAdapterCallback), userdata.?));
+                    const callback_info = @ptrCast(*RequestAdapterCallback, @alignCast(std.meta.alignment(*RequestAdapterCallback), userdata.?));
 
                     // Store the response into a field on the native instance for later reading.
                     const response = if (status == c.WGPURequestAdapterStatus_Success) RequestAdapterResponse{
@@ -280,11 +280,12 @@ const adapter_vtable = Adapter.VTable{
                 .requiredFeaturesCount = if (descriptor.required_features) |f| @intCast(u32, f.len) else 0,
                 .requiredFeatures = if (descriptor.required_features) |f| @ptrCast([*]const c_uint, f.ptr) else null,
                 .requiredLimits = if (required_limits) |*l| l else null,
+                .defaultQueue = if (descriptor.default_queue) |q| .{ .nextInChain = null, .label = q.label } else .{ .nextInChain = null, .label = null },
             };
 
             const cCallback = (struct {
                 pub fn cCallback(status: c.WGPURequestDeviceStatus, device: c.WGPUDevice, message: [*c]const u8, userdata: ?*anyopaque) callconv(.C) void {
-                    const callback_info = @ptrCast(*RequestDeviceCallback, @alignCast(@alignOf(*RequestDeviceCallback), userdata.?));
+                    const callback_info = @ptrCast(*RequestDeviceCallback, @alignCast(std.meta.alignment(*RequestDeviceCallback), userdata.?));
 
                     const response = if (status == c.WGPURequestDeviceStatus_Success) RequestDeviceResponse{
                         .device = wrapDevice(device.?),
@@ -359,7 +360,7 @@ const device_vtable = Device.VTable{
                     message: [*c]const u8,
                     userdata: ?*anyopaque,
                 ) callconv(.C) void {
-                    const callback_info = @ptrCast(*ErrorCallback, @alignCast(@alignOf(*ErrorCallback), userdata));
+                    const callback_info = @ptrCast(*ErrorCallback, @alignCast(std.meta.alignment(*ErrorCallback), userdata));
                     callback_info.type_erased_callback(
                         callback_info.type_erased_ctx,
                         @intToEnum(ErrorType, typ),
@@ -429,7 +430,7 @@ const device_vtable = Device.VTable{
                     message: [*c]const u8,
                     userdata: ?*anyopaque,
                 ) callconv(.C) void {
-                    const callback_info = @ptrCast(*Device.LostCallback, @alignCast(@alignOf(*Device.LostCallback), userdata));
+                    const callback_info = @ptrCast(*Device.LostCallback, @alignCast(std.meta.alignment(*Device.LostCallback), userdata));
                     callback_info.type_erased_callback(
                         callback_info.type_erased_ctx,
                         @intToEnum(Device.LostReason, reason),
@@ -520,10 +521,19 @@ const device_vtable = Device.VTable{
     }).nativeCreateSwapChain,
     .createTexture = (struct {
         pub fn createTexture(ptr: *anyopaque, descriptor: *const Texture.Descriptor) Texture {
-            return wrapTexture(c.wgpuDeviceCreateTexture(
-                @ptrCast(c.WGPUDevice, ptr),
-                @ptrCast(*const c.WGPUTextureDescriptor, descriptor),
-            ));
+            const desc = c.WGPUTextureDescriptor{
+                .nextInChain = null,
+                .label = if (descriptor.label) |l| l else null,
+                .usage = @bitCast(u32, descriptor.usage),
+                .dimension = @enumToInt(descriptor.dimension),
+                .size = @bitCast(c.WGPUExtent3D, descriptor.size),
+                .format = @enumToInt(descriptor.format),
+                .mipLevelCount = descriptor.mip_level_count,
+                .sampleCount = descriptor.sample_count,
+                .viewFormatCount = if (descriptor.view_formats) |vf| @intCast(u32, vf.len) else 0,
+                .viewFormats = if (descriptor.view_formats) |vf| @ptrCast([*]const c.WGPUTextureFormat, vf.ptr) else null,
+            };
+            return wrapTexture(c.wgpuDeviceCreateTexture(@ptrCast(c.WGPUDevice, ptr), &desc));
         }
     }).createTexture,
     .destroy = (struct {
@@ -576,7 +586,7 @@ const device_vtable = Device.VTable{
                     message: [*c]const u8,
                     userdata: ?*anyopaque,
                 ) callconv(.C) void {
-                    const callback_info = @ptrCast(*ComputePipeline.CreateCallback, @alignCast(@alignOf(*ComputePipeline.CreateCallback), userdata));
+                    const callback_info = @ptrCast(*ComputePipeline.CreateCallback, @alignCast(std.meta.alignment(*ComputePipeline.CreateCallback), userdata));
                     callback_info.type_erased_callback(
                         callback_info.type_erased_ctx,
                         @intToEnum(ComputePipeline.CreateStatus, status),
@@ -692,7 +702,7 @@ const device_vtable = Device.VTable{
                     message: [*c]const u8,
                     userdata: ?*anyopaque,
                 ) callconv(.C) void {
-                    const callback_info = @ptrCast(*RenderPipeline.CreateCallback, @alignCast(@alignOf(*RenderPipeline.CreateCallback), userdata));
+                    const callback_info = @ptrCast(*RenderPipeline.CreateCallback, @alignCast(std.meta.alignment(*RenderPipeline.CreateCallback), userdata));
                     callback_info.type_erased_callback(
                         callback_info.type_erased_ctx,
                         @intToEnum(RenderPipeline.CreateStatus, status),
@@ -721,7 +731,7 @@ const device_vtable = Device.VTable{
                     message: [*c]const u8,
                     userdata: ?*anyopaque,
                 ) callconv(.C) void {
-                    const callback_info = @ptrCast(*ErrorCallback, @alignCast(@alignOf(*ErrorCallback), userdata));
+                    const callback_info = @ptrCast(*ErrorCallback, @alignCast(std.meta.alignment(*ErrorCallback), userdata));
                     callback_info.type_erased_callback(
                         callback_info.type_erased_ctx,
                         @intToEnum(ErrorType, typ),
@@ -748,7 +758,7 @@ const device_vtable = Device.VTable{
                     message: [*c]const u8,
                     userdata: ?*anyopaque,
                 ) callconv(.C) void {
-                    const callback_info = @ptrCast(*LoggingCallback, @alignCast(@alignOf(*LoggingCallback), userdata));
+                    const callback_info = @ptrCast(*LoggingCallback, @alignCast(std.meta.alignment(*LoggingCallback), userdata));
                     callback_info.type_erased_callback(
                         callback_info.type_erased_ctx,
                         @intToEnum(LoggingType, typ),
@@ -880,7 +890,7 @@ const queue_vtable = Queue.VTable{
 
                 const cCallback = (struct {
                     pub fn cCallback(status: c.WGPUQueueWorkDoneStatus, userdata: ?*anyopaque) callconv(.C) void {
-                        const callback_info = @ptrCast(*Queue.WorkDoneCallback, @alignCast(@alignOf(*Queue.WorkDoneCallback), userdata));
+                        const callback_info = @ptrCast(*Queue.WorkDoneCallback, @alignCast(std.meta.alignment(*Queue.WorkDoneCallback), userdata));
                         callback_info.type_erased_callback(
                             callback_info.type_erased_ctx,
                             @intToEnum(Queue.WorkDoneStatus, status),
@@ -979,7 +989,7 @@ const shader_module_vtable = ShaderModule.VTable{
         pub fn getCompilationInfo(ptr: *anyopaque, callback: *ShaderModule.CompilationInfoCallback) void {
             const cCallback = (struct {
                 pub fn cCallback(status: c.WGPUCompilationInfoRequestStatus, info: [*c]const c.WGPUCompilationInfo, userdata: ?*anyopaque) callconv(.C) void {
-                    const callback_info = @ptrCast(*ShaderModule.CompilationInfoCallback, @alignCast(@alignOf(*ShaderModule.CompilationInfoCallback), userdata.?));
+                    const callback_info = @ptrCast(*ShaderModule.CompilationInfoCallback, @alignCast(std.meta.alignment(*ShaderModule.CompilationInfoCallback), userdata.?));
 
                     callback_info.type_erased_callback(
                         callback_info.type_erased_ctx,
@@ -1741,7 +1751,7 @@ const buffer_vtable = Buffer.VTable{
         ) void {
             const cCallback = (struct {
                 pub fn cCallback(status: c.WGPUBufferMapAsyncStatus, userdata: ?*anyopaque) callconv(.C) void {
-                    const callback_info = @ptrCast(*Buffer.MapCallback, @alignCast(@alignOf(*Buffer.MapCallback), userdata.?));
+                    const callback_info = @ptrCast(*Buffer.MapCallback, @alignCast(std.meta.alignment(*Buffer.MapCallback), userdata.?));
                     callback_info.type_erased_callback(callback_info.type_erased_ctx, @intToEnum(Buffer.MapAsyncStatus, status));
                 }
             }).cCallback;

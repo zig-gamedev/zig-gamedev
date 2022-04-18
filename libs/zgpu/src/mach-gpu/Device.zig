@@ -137,7 +137,7 @@ pub const LostCallback = struct {
     ) LostCallback {
         const erased = (struct {
             pub inline fn erased(type_erased_ctx: *anyopaque, reason: LostReason, message: [*:0]const u8) void {
-                callback(if (Context == void) {} else @ptrCast(Context, @alignCast(@alignOf(Context), type_erased_ctx)), reason, message);
+                callback(if (Context == void) {} else @ptrCast(Context, @alignCast(std.meta.alignment(Context), type_erased_ctx)), reason, message);
             }
         }).erased;
 
@@ -177,7 +177,9 @@ pub inline fn destroy(device: Device) void {
 }
 
 pub inline fn createBuffer(device: Device, descriptor: *const Buffer.Descriptor) Buffer {
-    return device.vtable.createBuffer(device.ptr, descriptor);
+    var local_descriptor = descriptor.*;
+    local_descriptor.size += local_descriptor.size % 4;
+    return device.vtable.createBuffer(device.ptr, &local_descriptor);
 }
 
 pub inline fn createCommandEncoder(device: Device, descriptor: ?*const CommandEncoder.Descriptor) CommandEncoder {
@@ -247,6 +249,7 @@ pub const Descriptor = struct {
     label: ?[*:0]const u8 = null,
     required_features: ?[]Feature = null,
     required_limits: ?Limits = null,
+    default_queue: ?Queue.Descriptor = null,
 };
 
 pub const LostReason = enum(u32) {
