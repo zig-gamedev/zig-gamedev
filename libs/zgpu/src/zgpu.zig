@@ -177,19 +177,28 @@ pub const FrameStats = struct {
 
 pub const gui = struct {
     pub fn init(window: glfw.Window, device: zgpu.Device, font: [*:0]const u8, font_size: f32) void {
+        // Make sure font file is a valid data file - not just Git LFS link.
+        {
+            const file = std.fs.cwd().openFileZ(font, .{}) catch unreachable;
+            defer file.close();
+
+            const size = @intCast(usize, file.getEndPos() catch unreachable);
+            if (size <= 1024) {
+                std.debug.print(
+                    "\nINVALID DATA FILES!!! PLEASE INSTALL Git LFS (Large File Support) AND RE-CLONE.\n\n",
+                    .{},
+                );
+                std.process.exit(1);
+            }
+        }
+
         assert(cimgui.igGetCurrentContext() == null);
         _ = cimgui.igCreateContext(null);
 
         if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) unreachable;
 
         const io = cimgui.igGetIO().?;
-        if (cimgui.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) {
-            std.debug.print(
-                "\nINVALID DATA FILES!!! PLEASE INSTALL Git LFS (Large File Support) AND RE-CLONE.\n\n",
-                .{},
-            );
-            unreachable;
-        }
+        if (cimgui.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) unreachable;
 
         if (!ImGui_ImplWGPU_Init(device.ptr, 1, @enumToInt(GraphicsContext.swapchain_format))) unreachable;
     }
