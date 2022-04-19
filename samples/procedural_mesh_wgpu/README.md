@@ -1,5 +1,7 @@
 ## procedural mesh (wgpu)
 
+![image](screenshot.png)
+
 * This WebGPU sample shows how to efficiently draw several procedurally generated meshes
 * All vertices and indices are stored in one large vertex/index buffer
 * Two bind groups are used - frame bind group and draw bind group
@@ -33,5 +35,3 @@ Used libraries:
 * zmath
 * zmesh
 * znoise
-
-![image](screenshot.png)
