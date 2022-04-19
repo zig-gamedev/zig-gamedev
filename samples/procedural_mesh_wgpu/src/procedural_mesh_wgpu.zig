@@ -486,6 +486,15 @@ fn update(demo: *DemoState) void {
         demo.depth_texture = depth.texture;
         demo.depth_texture_view = depth.view;
     }
+    {
+        const io = c.igGetIO().?;
+        io.*.DisplaySize = .{
+            .x = @intToFloat(f32, demo.gctx.swapchain_descriptor.width),
+            .y = @intToFloat(f32, demo.gctx.swapchain_descriptor.height),
+        };
+        io.*.DisplayFramebufferScale = .{ .x = 1.0, .y = 1.0 };
+    }
+
     demo.stats.update(demo.gctx.window, window_title);
     const window = demo.gctx.window;
 
@@ -563,7 +572,6 @@ fn update(demo: *DemoState) void {
 
 fn draw(demo: *DemoState) void {
     var gctx = &demo.gctx;
-
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
 
