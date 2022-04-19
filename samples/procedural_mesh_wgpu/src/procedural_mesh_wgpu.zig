@@ -471,9 +471,22 @@ fn deinit(demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    demo.stats.update(demo.gctx.window, window_title);
     zgpu.gui.newFrame();
+    if (!demo.gctx.update()) {
+        // Release old depth texture.
+        demo.depth_texture_view.release();
+        demo.depth_texture.release();
 
+        // Create a new depth texture to match the new window size.
+        const depth = createDepthTexture(
+            demo.gctx.device,
+            demo.gctx.swapchain_descriptor.width,
+            demo.gctx.swapchain_descriptor.height,
+        );
+        demo.depth_texture = depth.texture;
+        demo.depth_texture_view = depth.view;
+    }
+    demo.stats.update(demo.gctx.window, window_title);
     const window = demo.gctx.window;
 
     c.igSetNextWindowPos(
@@ -550,20 +563,7 @@ fn update(demo: *DemoState) void {
 
 fn draw(demo: *DemoState) void {
     var gctx = &demo.gctx;
-    if (!gctx.update()) {
-        // Release old depth texture.
-        demo.depth_texture_view.release();
-        demo.depth_texture.release();
 
-        // Create a new depth texture to match the new window size.
-        const depth = createDepthTexture(
-            demo.gctx.device,
-            gctx.swapchain_descriptor.width,
-            gctx.swapchain_descriptor.height,
-        );
-        demo.depth_texture = depth.texture;
-        demo.depth_texture_view = depth.view;
-    }
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
 
