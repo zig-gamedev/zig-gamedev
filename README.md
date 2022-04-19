@@ -5,13 +5,13 @@
 This repository contains a collection of [sample applications](#sample-applications) and **cross-platform, standalone, composable libraries** written in **[Zig programming language](https://ziglang.org/)**.
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
 
-To get started on Windows/Linux/Mac try out [triangle wgpu](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu) sample:
+To get started on Windows/Linux/Mac try out [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu) sample:
 
 (Note: git with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.x (master)](https://ziglang.org/download/) is required)
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
-zig build triangle_wgpu-run
+zig build procedural_mesh_wgpu-run
 ```
 #### Some features:
 * Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
