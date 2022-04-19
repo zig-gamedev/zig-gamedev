@@ -1,0 +1,250 @@
+pub const IndexType = u16;
+pub const ShapeHandle = *opaque {};
+pub const Shape = @This();
+
+indices: []IndexType,
+positions: [][3]f32,
+normals: ?[][3]f32,
+texcoords: ?[][2]f32,
+handle: ShapeHandle,
+
+pub fn deinit(mesh: Shape) void {
+    par_shapes_free_mesh(mesh.handle);
+}
+
+pub fn saveToObj(mesh: Shape, filename: [*:0]const u8) void {
+    par_shapes_export(mesh.handle, filename);
+}
+
+pub fn computeAabb(mesh: Shape, aabb: *[6]f32) void {
+    par_shapes_compute_aabb(mesh.handle, aabb);
+}
+
+pub fn clone(mesh: Shape) Shape {
+    return initShape(par_shapes_clone(mesh.handle, null));
+}
+
+pub fn merge(mesh: *Shape, src_mesh: Shape) void {
+    par_shapes_merge(mesh.handle, src_mesh.handle);
+    mesh.* = initShape(mesh.handle);
+}
+
+pub fn translate(mesh: *Shape, x: f32, y: f32, z: f32) void {
+    par_shapes_translate(mesh.handle, x, y, z);
+    mesh.* = initShape(mesh.handle);
+}
+
+pub fn rotate(mesh: *Shape, radians: f32, x: f32, y: f32, z: f32) void {
+    par_shapes_rotate(mesh.handle, radians, &.{ x, y, z });
+    mesh.* = initShape(mesh.handle);
+}
+
+pub fn scale(mesh: *Shape, x: f32, y: f32, z: f32) void {
+    par_shapes_scale(mesh.handle, x, y, z);
+    mesh.* = initShape(mesh.handle);
+}
+
+pub fn invert(mesh: *Shape, start_face: i32, num_faces: i32) void {
+    par_shapes_invert(mesh.handle, start_face, num_faces);
+    mesh.* = initShape(mesh.handle);
+}
+
+pub fn removeDegenerate(mesh: *Shape, min_area: f32) void {
+    par_shapes_remove_degenerate(mesh.handle, min_area);
+    mesh.* = initShape(mesh.handle);
+}
+
+pub fn unweld(mesh: *Shape) void {
+    par_shapes_unweld(mesh.handle, true);
+    mesh.* = initShape(mesh.handle);
+}
+
+pub fn weld(mesh: *Shape, epsilon: f32, mapping: ?[*]IndexType) void {
+    const new_mesh = par_shapes_weld(mesh.handle, epsilon, mapping);
+    par_shapes_free_mesh(mesh.handle);
+    mesh.* = initShape(new_mesh);
+}
+
+pub fn computeNormals(mesh: *Shape) void {
+    par_shapes_compute_normals(mesh.handle);
+    mesh.* = initShape(mesh.handle);
+}
+
+fn initShape(handle: ShapeHandle) Shape {
+    const parmesh = @ptrCast(
+        *ParShape,
+        @alignCast(@alignOf(ParShape), handle),
+    );
+    return .{
+        .handle = handle,
+        .positions = @ptrCast(
+            [*][3]f32,
+            parmesh.points,
+        )[0..@intCast(usize, parmesh.npoints)],
+        .indices = parmesh.triangles[0..@intCast(usize, parmesh.ntriangles * 3)],
+        .normals = if (parmesh.normals == null)
+            null
+        else
+            @ptrCast(
+                [*][3]f32,
+                parmesh.normals.?,
+            )[0..@intCast(usize, parmesh.npoints)],
+        .texcoords = if (parmesh.tcoords == null)
+            null
+        else
+            @ptrCast(
+                [*][2]f32,
+                parmesh.tcoords.?,
+            )[0..@intCast(usize, parmesh.npoints)],
+    };
+}
+
+pub fn initCylinder(slices: i32, stacks: i32) Shape {
+    return initShape(par_shapes_create_cylinder(slices, stacks));
+}
+
+pub fn initCone(slices: i32, stacks: i32) Shape {
+    return initShape(par_shapes_create_cone(slices, stacks));
+}
+
+pub fn initParametricDisk(slices: i32, stacks: i32) Shape {
+    return initShape(par_shapes_create_parametric_disk(slices, stacks));
+}
+
+pub fn initTorus(slices: i32, stacks: i32, radius: f32) Shape {
+    return initShape(par_shapes_create_torus(slices, stacks, radius));
+}
+
+pub fn initParametricSphere(slices: i32, stacks: i32) Shape {
+    return initShape(par_shapes_create_parametric_sphere(slices, stacks));
+}
+
+pub fn initSubdividedSphere(num_subdivisions: i32) Shape {
+    return initShape(par_shapes_create_subdivided_sphere(num_subdivisions));
+}
+
+pub fn initTrefoilKnot(slices: i32, stacks: i32, radius: f32) Shape {
+    return initShape(par_shapes_create_trefoil_knot(slices, stacks, radius));
+}
+
+pub fn initHemisphere(slices: i32, stacks: i32) Shape {
+    return initShape(par_shapes_create_hemisphere(slices, stacks));
+}
+
+pub fn initPlane(slices: i32, stacks: i32) Shape {
+    return initShape(par_shapes_create_plane(slices, stacks));
+}
+
+pub fn initIcosahedron() Shape {
+    return initShape(par_shapes_create_icosahedron());
+}
+
+pub fn initDodecahedron() Shape {
+    return initShape(par_shapes_create_dodecahedron());
+}
+
+pub fn initOctahedron() Shape {
+    return initShape(par_shapes_create_octahedron());
+}
+
+pub fn initTetrahedron() Shape {
+    return initShape(par_shapes_create_tetrahedron());
+}
+
+pub fn initCube() Shape {
+    return initShape(par_shapes_create_cube());
+}
+
+pub fn initDisk(
+    radius: f32,
+    slices: i32,
+    center: *const [3]f32,
+    normal: *const [3]f32,
+) Shape {
+    return initShape(par_shapes_create_disk(radius, slices, center, normal));
+}
+
+pub fn initRock(seed: i32, num_subdivisions: i32) Shape {
+    return initShape(par_shapes_create_rock(seed, num_subdivisions));
+}
+
+pub const UvToPositionFn = fn (
+    uv: *const [2]f32,
+    position: *[3]f32,
+    userdata: ?*anyopaque,
+) callconv(.C) void;
+
+pub fn initParametric(
+    fun: UvToPositionFn,
+    slices: i32,
+    stacks: i32,
+    userdata: ?*anyopaque,
+) Shape {
+    return initShape(par_shapes_create_parametric(fun, slices, stacks, userdata));
+}
+
+const ParShape = extern struct {
+    points: [*]f32,
+    npoints: c_int,
+    triangles: [*]IndexType,
+    ntriangles: c_int,
+    normals: ?[*]f32,
+    tcoords: ?[*]f32,
+};
+
+extern fn par_shapes_free_mesh(mesh: ShapeHandle) void;
+extern fn par_shapes_export(mesh: ShapeHandle, filename: [*:0]const u8) void;
+extern fn par_shapes_compute_aabb(mesh: ShapeHandle, aabb: *[6]f32) void;
+extern fn par_shapes_clone(mesh: ShapeHandle, target: ?ShapeHandle) ShapeHandle;
+extern fn par_shapes_merge(mesh: ShapeHandle, src_mesh: ShapeHandle) void;
+extern fn par_shapes_translate(mesh: ShapeHandle, x: f32, y: f32, z: f32) void;
+extern fn par_shapes_rotate(
+    mesh: ShapeHandle,
+    radians: f32,
+    axis: *const [3]f32,
+) void;
+extern fn par_shapes_scale(mesh: ShapeHandle, x: f32, y: f32, z: f32) void;
+extern fn par_shapes_invert(
+    mesh: ShapeHandle,
+    start_face: i32,
+    num_faces: i32,
+) void;
+extern fn par_shapes_remove_degenerate(mesh: ShapeHandle, min_area: f32) void;
+extern fn par_shapes_unweld(mesh: ShapeHandle, create_indices: bool) void;
+extern fn par_shapes_weld(
+    mesh: ShapeHandle,
+    epsilon: f32,
+    mapping: ?[*]IndexType,
+) ShapeHandle;
+extern fn par_shapes_compute_normals(mesh: ShapeHandle) void;
+extern fn par_shapes_create_cylinder(slices: i32, stacks: i32) ShapeHandle;
+extern fn par_shapes_create_cone(slices: i32, stacks: i32) ShapeHandle;
+extern fn par_shapes_create_parametric_disk(slices: i32, stacks: i32) ShapeHandle;
+extern fn par_shapes_create_torus(slices: i32, stacks: i32, radius: f32) ShapeHandle;
+extern fn par_shapes_create_parametric_sphere(slices: i32, stacks: i32) ShapeHandle;
+extern fn par_shapes_create_subdivided_sphere(num_subdivisions: i32) ShapeHandle;
+extern fn par_shapes_create_trefoil_knot(
+    slices: i32,
+    stacks: i32,
+    radius: f32,
+) ShapeHandle;
+extern fn par_shapes_create_hemisphere(slices: i32, stacks: i32) ShapeHandle;
+extern fn par_shapes_create_plane(slices: i32, stacks: i32) ShapeHandle;
+extern fn par_shapes_create_icosahedron() ShapeHandle;
+extern fn par_shapes_create_dodecahedron() ShapeHandle;
+extern fn par_shapes_create_octahedron() ShapeHandle;
+extern fn par_shapes_create_tetrahedron() ShapeHandle;
+extern fn par_shapes_create_cube() ShapeHandle;
+extern fn par_shapes_create_disk(
+    radius: f32,
+    slices: i32,
+    center: *const [3]f32,
+    normal: *const [3]f32,
+) ShapeHandle;
+extern fn par_shapes_create_rock(seed: i32, num_subdivisions: i32) ShapeHandle;
+extern fn par_shapes_create_parametric(
+    fun: UvToPositionFn,
+    slices: i32,
+    stacks: i32,
+    userdata: ?*anyopaque,
+) ShapeHandle;
