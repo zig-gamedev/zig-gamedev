@@ -212,9 +212,17 @@ pub const gui = struct {
         cimgui.igDestroyContext(null);
     }
 
-    pub fn newFrame() void {
+    pub fn newFrame(fb_width: u32, fb_height: u32) void {
         ImGui_ImplGlfw_NewFrame();
         ImGui_ImplWGPU_NewFrame();
+        {
+            const io = cimgui.igGetIO().?;
+            io.*.DisplaySize = .{
+                .x = @intToFloat(f32, fb_width),
+                .y = @intToFloat(f32, fb_height),
+            };
+            io.*.DisplayFramebufferScale = .{ .x = 1.0, .y = 1.0 };
+        }
         cimgui.igNewFrame();
     }
 

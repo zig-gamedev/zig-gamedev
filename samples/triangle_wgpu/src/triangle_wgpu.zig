@@ -6,6 +6,7 @@ const c = zgpu.cimgui;
 const zm = @import("zmath");
 
 const content_dir = @import("build_options").content_dir;
+const window_title = "zig-gamedev: triangle (wgpu)";
 
 // zig fmt: off
 const wgsl_vs =
@@ -40,11 +41,15 @@ const Vertex = struct {
 
 const DemoState = struct {
     gctx: zgpu.GraphicsContext,
+    stats: zgpu.FrameStats,
+
     pipeline: zgpu.RenderPipeline,
     bind_group: zgpu.BindGroup,
+
     vertex_buffer: zgpu.Buffer,
     index_buffer: zgpu.Buffer,
     uniform_buffer: zgpu.Buffer,
+
     depth_texture: zgpu.Texture,
     depth_texture_view: zgpu.TextureView,
 };
@@ -188,6 +193,7 @@ fn init(window: glfw.Window) DemoState {
 
     return .{
         .gctx = gctx,
+        .stats = .{},
         .pipeline = pipeline,
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
@@ -210,25 +216,32 @@ fn deinit(demo: *DemoState) void {
     demo.* = undefined;
 }
 
-fn draw(demo: *DemoState, time: f64) void {
-    var gctx = &demo.gctx;
-    if (!gctx.update()) {
+fn update(demo: *DemoState) void {
+    demo.stats.update(demo.gctx.window, window_title);
+    if (!demo.gctx.update()) {
         // Release old depth texture.
         demo.depth_texture_view.release();
         demo.depth_texture.release();
 
-        // Create new depth texture to match new window size.
+        // Create a new depth texture to match the new window size.
         const depth = createDepthTexture(
             demo.gctx.device,
-            gctx.swapchain_descriptor.width,
-            gctx.swapchain_descriptor.height,
+            demo.gctx.swapchain_descriptor.width,
+            demo.gctx.swapchain_descriptor.height,
         );
         demo.depth_texture = depth.texture;
         demo.depth_texture_view = depth.view;
     }
+    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+
+    c.igShowDemoWindow(null);
+}
+
+fn draw(demo: *DemoState) void {
+    var gctx = &demo.gctx;
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
-    const t = @floatCast(f32, time);
+    const t = @floatCast(f32, demo.stats.time);
 
     const cam_world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0),
@@ -371,7 +384,6 @@ pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
 
-    const window_title = "zig-gamedev: triangle wgpu";
     const window = try glfw.Window.create(1280, 960, window_title, null, null, .{
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
@@ -385,15 +397,9 @@ pub fn main() !void {
     zgpu.gui.init(window, demo.gctx.device, content_dir ++ "Roboto-Medium.ttf", 25.0);
     defer zgpu.gui.deinit();
 
-    var stats = zgpu.FrameStats{};
-
     while (!window.shouldClose()) {
         try glfw.pollEvents();
-        stats.update(window, window_title);
-
-        zgpu.gui.newFrame();
-        c.igShowDemoWindow(null);
-
-        draw(&demo, stats.time);
+        update(&demo);
+        draw(&demo);
     }
 }

@@ -9,7 +9,7 @@ const znoise = @import("znoise");
 const wgsl = @import("procedural_mesh_wgsl.zig");
 
 const content_dir = @import("build_options").content_dir;
-const window_title = "zig-gamedev: procedural mesh wgpu";
+const window_title = "zig-gamedev: procedural mesh (wgpu)";
 
 const Vertex = struct {
     position: [3]f32,
@@ -471,7 +471,7 @@ fn deinit(demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    zgpu.gui.newFrame();
+    demo.stats.update(demo.gctx.window, window_title);
     if (!demo.gctx.update()) {
         // Release old depth texture.
         demo.depth_texture_view.release();
@@ -486,25 +486,12 @@ fn update(demo: *DemoState) void {
         demo.depth_texture = depth.texture;
         demo.depth_texture_view = depth.view;
     }
-    {
-        const io = c.igGetIO().?;
-        io.*.DisplaySize = .{
-            .x = @intToFloat(f32, demo.gctx.swapchain_descriptor.width),
-            .y = @intToFloat(f32, demo.gctx.swapchain_descriptor.height),
-        };
-        io.*.DisplayFramebufferScale = .{ .x = 1.0, .y = 1.0 };
-    }
+    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    demo.stats.update(demo.gctx.window, window_title);
     const window = demo.gctx.window;
 
-    c.igSetNextWindowPos(
-        c.ImVec2{ .x = 10.0, .y = 10.0 },
-        c.ImGuiCond_FirstUseEver,
-        c.ImVec2{ .x = 0.0, .y = 0.0 },
-    );
+    c.igSetNextWindowPos(.{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
     c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
-
     _ = c.igBegin(
         "Demo Settings",
         null,
