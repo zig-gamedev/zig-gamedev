@@ -34,11 +34,7 @@ pub inline fn remapVertexBuffer(
     );
 }
 
-pub inline fn remapIndexBuffer(
-    destination: []u32,
-    indices: []const u32,
-    remap: []const u32,
-) void {
+pub inline fn remapIndexBuffer(destination: []u32, indices: []const u32, remap: []const u32) void {
     assert(destination.len >= indices.len);
     meshopt_remapIndexBuffer(destination.ptr, indices.ptr, indices.len, remap.ptr);
 }
@@ -74,11 +70,7 @@ pub inline fn optimizeVertexFetch(
     );
 }
 
-pub inline fn buildMeshletsBound(
-    index_count: usize,
-    max_vertices: usize,
-    max_triangles: usize,
-) usize {
+pub inline fn buildMeshletsBound(index_count: usize, max_vertices: usize, max_triangles: usize) usize {
     return meshopt_buildMeshletsBound(index_count, max_vertices, max_triangles);
 }
 

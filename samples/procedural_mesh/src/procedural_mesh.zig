@@ -81,7 +81,7 @@ const DemoState = struct {
 };
 
 fn appendMesh(
-    mesh: zmesh.Mesh,
+    mesh: zmesh.Shape,
     meshes: *std.ArrayList(Mesh),
     meshes_indices: *std.ArrayList(u16),
     meshes_positions: *std.ArrayList([3]f32),
@@ -116,7 +116,7 @@ fn initScene(
 
     // Trefoil knot.
     {
-        var mesh = zmesh.initTrefoilKnot(10, 128, 0.8);
+        var mesh = zmesh.Shape.initTrefoilKnot(10, 128, 0.8);
         defer mesh.deinit();
         mesh.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
         mesh.unweld();
@@ -132,7 +132,7 @@ fn initScene(
     }
     // Parametric sphere.
     {
-        var mesh = zmesh.initParametricSphere(20, 20);
+        var mesh = zmesh.Shape.initParametricSphere(20, 20);
         defer mesh.deinit();
         mesh.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
 
@@ -146,7 +146,7 @@ fn initScene(
     }
     // Icosahedron.
     {
-        var mesh = zmesh.initIcosahedron();
+        var mesh = zmesh.Shape.initIcosahedron();
         defer mesh.deinit();
         mesh.unweld();
         mesh.computeNormals();
@@ -161,7 +161,7 @@ fn initScene(
     }
     // Dodecahedron.
     {
-        var mesh = zmesh.initDodecahedron();
+        var mesh = zmesh.Shape.initDodecahedron();
         defer mesh.deinit();
         mesh.unweld();
         mesh.computeNormals();
@@ -176,11 +176,11 @@ fn initScene(
     }
     // Cylinder with top and bottom caps.
     {
-        var disk = zmesh.initParametricDisk(10, 2);
+        var disk = zmesh.Shape.initParametricDisk(10, 2);
         defer disk.deinit();
         disk.invert(0, 0);
 
-        var cylinder = zmesh.initCylinder(10, 4);
+        var cylinder = zmesh.Shape.initCylinder(10, 4);
         defer cylinder.deinit();
 
         cylinder.merge(disk);
@@ -204,7 +204,7 @@ fn initScene(
     }
     // Torus.
     {
-        var mesh = zmesh.initTorus(10, 20, 0.2);
+        var mesh = zmesh.Shape.initTorus(10, 20, 0.2);
         defer mesh.deinit();
 
         drawables.append(.{
@@ -217,7 +217,7 @@ fn initScene(
     }
     // Subdivided sphere.
     {
-        var mesh = zmesh.initSubdividedSphere(3);
+        var mesh = zmesh.Shape.initSubdividedSphere(3);
         defer mesh.deinit();
 
         drawables.append(.{
@@ -230,7 +230,7 @@ fn initScene(
     }
     // Tetrahedron.
     {
-        var mesh = zmesh.initTetrahedron();
+        var mesh = zmesh.Shape.initTetrahedron();
         defer mesh.deinit();
         mesh.unweld();
         mesh.computeNormals();
@@ -245,7 +245,7 @@ fn initScene(
     }
     // Octahedron.
     {
-        var mesh = zmesh.initOctahedron();
+        var mesh = zmesh.Shape.initOctahedron();
         defer mesh.deinit();
         mesh.unweld();
         mesh.computeNormals();
@@ -260,7 +260,7 @@ fn initScene(
     }
     // Rock.
     {
-        var rock = zmesh.initRock(123, 4);
+        var rock = zmesh.Shape.initRock(123, 4);
         defer rock.deinit();
 
         drawables.append(.{
@@ -287,7 +287,7 @@ fn initScene(
                 position[2] = uv[1];
             }
         };
-        var ground = zmesh.initParametric(local.terrain, 40, 40, null);
+        var ground = zmesh.Shape.initParametric(local.terrain, 40, 40, null);
         defer ground.deinit();
         ground.translate(-0.5, -0.0, -0.5);
         ground.invert(0, 0);

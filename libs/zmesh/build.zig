@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const pkg = std.build.Pkg{
     .name = "zmesh",
-    .path = .{ .path = thisDir() ++ "/src/zmesh.zig" },
+    .path = .{ .path = thisDir() ++ "/src/main.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -19,7 +19,7 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(thisDir() ++ "/src/zmesh.zig");
+    const tests = b.addTest(thisDir() ++ "/src/main.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     link(tests);
@@ -27,13 +27,14 @@ pub fn buildTests(
 }
 
 fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("zmesh", thisDir() ++ "/src/zmesh.zig");
+    const lib = exe.builder.addStaticLibrary("zmesh", thisDir() ++ "/src/main.zig");
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.want_lto = false;
     lib.addIncludeDir(thisDir() ++ "/libs/par_shapes");
     lib.linkSystemLibrary("c");
+    lib.linkSystemLibrary("c++");
 
     lib.addCSourceFile(
         thisDir() ++ "/libs/par_shapes/par_shapes.c",
