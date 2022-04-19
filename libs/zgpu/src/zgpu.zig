@@ -127,6 +127,11 @@ pub const GraphicsContext = struct {
                 gctx.window_surface,
                 &gctx.swapchain_descriptor,
             );
+
+            const back_buffer_view = gctx.swapchain.getCurrentTextureView();
+            defer back_buffer_view.release();
+            gctx.swapchain.present();
+
             std.debug.print(
                 "[zgpu] Swap chain has been resized to: {d}x{d}\n",
                 .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
