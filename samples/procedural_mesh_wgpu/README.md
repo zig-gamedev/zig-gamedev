@@ -1,4 +1,4 @@
-## procedural mesh wgpu
+## procedural mesh (wgpu)
 
 * This WebGPU sample shows how to efficiently draw several procedurally generated meshes
 * All vertices and indices are stored in one large vertex/index buffer
