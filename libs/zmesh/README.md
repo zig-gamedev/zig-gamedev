@@ -29,11 +29,11 @@ pub fn main() !void {
     zmesh.init(allocator);
     defer zmesh.deinit();
 
-    var disk = zmesh.initParametricDisk(10, 2);
+    var disk = zmesh.Shape.initParametricDisk(10, 2);
     defer disk.deinit();
     disk.invert(0, 0);
 
-    var cylinder = zmesh.initCylinder(10, 4);
+    var cylinder = zmesh.Shape.initCylinder(10, 4);
     defer cylinder.deinit();
 
     cylinder.merge(disk);
