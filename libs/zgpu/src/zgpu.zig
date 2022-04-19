@@ -214,6 +214,10 @@ pub const gui = struct {
 
     pub fn newFrame() void {
         ImGui_ImplGlfw_NewFrame();
+        {
+            const io = cimgui.igGetIO().?;
+            io.*.DisplayFramebufferScale = .{ .x = 1.0, .y = 1.0 };
+        }
         ImGui_ImplWGPU_NewFrame();
         cimgui.igNewFrame();
     }
