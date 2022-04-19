@@ -18,7 +18,7 @@ zig build triangle_wgpu-run
 * Zero dependency except [Zig compiler (master)](https://ziglang.org/download/), git with [Git LFS](https://git-lfs.github.com/) and curl - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Uses [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) (WebGPU) for cross-platfrom graphics, uses DirectX 12 for low-level graphics on Windows
-* Uses some great C/C++ libraries which are seamlessly built by `zig cc` compiler (see: [libs/common/src/c](libs/common/src/c))
+* Uses some great, carefully selected C/C++ libraries which are seamlessly built by `zig cc` compiler
 
 #### Libraries we develop/maintain:
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers **[cross-platform and standalone]**
