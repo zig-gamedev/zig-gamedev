@@ -1,4 +1,4 @@
-![image](logo.png)
+![image](logo.jpg)
 
 # zmesh v0.2 - loading, generating, processing and optimizing triangle meshes
 
