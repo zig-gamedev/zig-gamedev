@@ -1,4 +1,4 @@
-// zmesh v0.2
+// zmesh v0.2 (wip)
 
 pub const Shape = @import("Shape.zig");
 pub usingnamespace @import("meshoptimizer.zig");

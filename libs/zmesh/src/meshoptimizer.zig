@@ -1,17 +1,19 @@
+// For the documentation see: ../libs/meshoptimizer/meshoptimizer.h
+
 const std = @import("std");
 const assert = std.debug.assert;
 
+// Indexing
 pub inline fn generateVertexRemap(
     destination: []u32,
-    indices: []const u32,
+    indices: ?[]const u32,
     comptime T: type,
     vertices: []const T,
 ) usize {
-    assert(destination.len >= indices.len);
     return meshopt_generateVertexRemap(
         destination.ptr,
-        indices.ptr,
-        indices.len,
+        if (indices) |ind| ind.ptr else null,
+        if (indices) |ind| ind.len else vertices.len,
         vertices.ptr,
         vertices.len,
         @sizeOf(T),
@@ -34,11 +36,20 @@ pub inline fn remapVertexBuffer(
     );
 }
 
-pub inline fn remapIndexBuffer(destination: []u32, indices: []const u32, remap: []const u32) void {
-    assert(destination.len >= indices.len);
-    meshopt_remapIndexBuffer(destination.ptr, indices.ptr, indices.len, remap.ptr);
+pub inline fn remapIndexBuffer(
+    destination: []u32,
+    indices: ?[]const u32,
+    remap: []const u32,
+) void {
+    meshopt_remapIndexBuffer(
+        destination.ptr,
+        if (indices) |ind| ind.ptr else null,
+        if (indices) |ind| ind.len else remap.len,
+        remap.ptr,
+    );
 }
 
+// Vertex cache optimization
 pub inline fn optimizeVertexCache(
     destination: []u32,
     indices: []const u32,
@@ -53,6 +64,65 @@ pub inline fn optimizeVertexCache(
     );
 }
 
+pub const VertexCacheStatistics = extern struct {
+    vertices_transformed: u32,
+    warps_executed: u32,
+    acmr: f32,
+    atvr: f32,
+};
+
+pub inline fn analyzeVertexCache(
+    indices: []const u32,
+    vertex_count: usize,
+    cache_size: u32,
+    warp_size: u32,
+    primgroup_size: u32,
+) VertexCacheStatistics {
+    return meshopt_analyzeVertexCache(
+        indices.ptr,
+        indices.len,
+        vertex_count,
+        cache_size,
+        warp_size,
+        primgroup_size,
+    );
+}
+
+// Overdraw optimization
+pub inline fn optimizeOverdraw(
+    destination: []u32,
+    indices: []const u32,
+    comptime T: type,
+    vertices: []const T,
+    threshold: f32,
+) void {
+    assert(destination.len >= indices.len);
+    meshopt_optimizeOverdraw(
+        destination.ptr,
+        indices.ptr,
+        indices.len,
+        vertices.ptr,
+        vertices.len,
+        @sizeOf(T),
+        threshold,
+    );
+}
+
+pub const OverdrawStatistics = extern struct {
+    pixels_covered: u32,
+    pixels_shaded: u32,
+    overdraw: f32,
+};
+
+pub inline fn analyzeOverdraw(
+    indices: []const u32,
+    comptime T: type,
+    vertices: []const T,
+) OverdrawStatistics {
+    return meshopt_analyzeOverdraw(indices.ptr, indices.len, vertices.ptr, vertices.len, @sizeOf(T));
+}
+
+// Vertex fetch optimization
 pub inline fn optimizeVertexFetch(
     comptime T: type,
     destination: []T,
@@ -70,6 +140,20 @@ pub inline fn optimizeVertexFetch(
     );
 }
 
+pub const VertexFetchStatistics = extern struct {
+    bytes_fetched: u32,
+    overfetch: f32,
+};
+
+pub inline fn analyzeVertexFetch(
+    indices: []const u32,
+    vertex_count: usize,
+    vertex_size: usize,
+) VertexFetchStatistics {
+    return meshopt_analyzeVertexFetch(indices.ptr, indices.len, vertex_count, vertex_size);
+}
+
+// Mesh shading
 pub inline fn buildMeshletsBound(index_count: usize, max_vertices: usize, max_triangles: usize) usize {
     return meshopt_buildMeshletsBound(index_count, max_vertices, max_triangles);
 }
@@ -109,13 +193,12 @@ pub inline fn buildMeshlets(
 
 extern fn meshopt_generateVertexRemap(
     destination: [*]u32,
-    indices: [*]const u32,
+    indices: ?[*]const u32,
     index_count: usize,
     vertices: *const anyopaque,
     vertex_count: usize,
     vertex_size: usize,
 ) usize;
-
 extern fn meshopt_remapVertexBuffer(
     destination: *anyopaque,
     vertices: *const anyopaque,
@@ -123,21 +206,42 @@ extern fn meshopt_remapVertexBuffer(
     vertex_size: usize,
     remap: [*]const u32,
 ) void;
-
 extern fn meshopt_remapIndexBuffer(
     destination: [*]u32,
-    indices: [*]const u32,
+    indices: ?[*]const u32,
     index_count: usize,
     remap: [*]const u32,
 ) void;
-
 extern fn meshopt_optimizeVertexCache(
     destination: [*]u32,
     indices: [*]const u32,
     index_count: usize,
     vertex_count: usize,
 ) void;
-
+extern fn meshopt_analyzeVertexCache(
+    indices: [*]const u32,
+    index_count: usize,
+    vertex_count: usize,
+    cache_size: u32,
+    warp_size: u32,
+    primgroup_size: u32,
+) VertexCacheStatistics;
+extern fn meshopt_optimizeOverdraw(
+    destination: [*]u32,
+    indices: [*]const u32,
+    index_count: usize,
+    vertices: *const anyopaque,
+    vertex_count: usize,
+    vertex_size: usize,
+    threshold: f32,
+) void;
+extern fn meshopt_analyzeOverdraw(
+    indices: [*]const u32,
+    index_count: usize,
+    vertices: *const anyopaque,
+    vertex_count: usize,
+    vertex_size: usize,
+) OverdrawStatistics;
 extern fn meshopt_optimizeVertexFetch(
     destination: *anyopaque,
     indices: [*]u32,
@@ -146,13 +250,17 @@ extern fn meshopt_optimizeVertexFetch(
     vertex_count: usize,
     vertex_size: usize,
 ) usize;
-
+extern fn meshopt_analyzeVertexFetch(
+    indices: [*]const u32,
+    index_count: usize,
+    vertex_count: usize,
+    vertex_size: usize,
+) VertexFetchStatistics;
 extern fn meshopt_buildMeshletsBound(
     index_count: usize,
     max_vertices: usize,
     max_triangles: usize,
 ) usize;
-
 extern fn meshopt_buildMeshlets(
     meshlets: [*]Meshlet,
     meshlet_vertices: [*]u32,
