@@ -19,10 +19,10 @@ const wgsl_vs =
 \\      @location(0) position : vec3<f32>,
 \\      @location(1) color : vec3<f32>,
 \\  ) -> VertexOut {
-\\     var output : VertexOut;
-\\     output.position_clip = vec4(position, 1.0) * object_to_clip;
-\\     output.color = color;
-\\     return output;
+\\      var output : VertexOut;
+\\      output.position_clip = vec4(position, 1.0) * object_to_clip;
+\\      output.color = color;
+\\      return output;
 \\ }
 ;
 const wgsl_fs =

@@ -84,7 +84,7 @@ pub const fs = common ++
 \\      let alpha = roughness * roughness;
 \\      var k = alpha + 1.0;
 \\      k = (k * k) / 8.0;
-\\      var f0 = vec3(0.04, 0.04, 0.04);
+\\      var f0 = vec3(0.04);
 \\      f0 = mix(f0, base_color, metallic);
 \\
 \\      let light_positions = array<vec3<f32>, 4>(
