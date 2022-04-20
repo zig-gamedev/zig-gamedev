@@ -90,14 +90,19 @@ pub fn main() !void {
     //
     // Optimize mesh
     //
-    var remap = std.ArrayList(u32).init(arena_allocator);
+    const Vertex = struct {
+        position: [3]f32,
+        normal: [3]f32,
+    };
+
+    var remap = std.ArrayList(u32).init(allocator);
     remap.resize(src_indices.items.len) catch unreachable;
 
     const num_unique_vertices = zmesh.generateVertexRemap(
-        remap.items,
-        src_indices.items,
-        Vertex,
-        src_vertices.items,
+        remap.items, // 'vertex remap' (destination)
+        src_indices.items, // non-optimized indices
+        Vertex, // Zig type describing your vertex
+        src_vertices.items, // non-optimized vertices
     );
 
     var optimized_vertices = std.ArrayList(Vertex).init(allocator);
