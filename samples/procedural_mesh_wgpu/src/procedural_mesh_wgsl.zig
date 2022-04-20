@@ -1,23 +1,23 @@
 // zig fmt: off
 const common =
 \\  struct DrawUniforms {
-\\      object_to_world: mat4x4<f32>;
-\\      basecolor_roughness: vec4<f32>;
+\\      object_to_world: mat4x4<f32>,
+\\      basecolor_roughness: vec4<f32>,
 \\  }
 \\  @group(0) @binding(0) var<uniform> draw_uniforms: DrawUniforms;
 \\
 \\  struct FrameUniforms {
-\\      world_to_clip: mat4x4<f32>;
-\\      camera_position: vec3<f32>;
+\\      world_to_clip: mat4x4<f32>,
+\\      camera_position: vec3<f32>,
 \\  }
 \\  @group(1) @binding(0) var<uniform> frame_uniforms: FrameUniforms;
 ;
 pub const vs = common ++
 \\  struct VertexOut {
-\\      @builtin(position) position_clip: vec4<f32>;
-\\      @location(0) position: vec3<f32>;
-\\      @location(1) normal: vec3<f32>;
-\\      @location(2) barycentrics: vec3<f32>;
+\\      @builtin(position) position_clip: vec4<f32>,
+\\      @location(0) position: vec3<f32>,
+\\      @location(1) normal: vec3<f32>,
+\\      @location(2) barycentrics: vec3<f32>,
 \\  }
 \\  @stage(vertex) fn main(
 \\      @location(0) position: vec3<f32>,
@@ -138,7 +138,7 @@ pub const fs = common ++
 \\      let deltas = fwidth(barys);
 \\      let smoothing = deltas * 1.0;
 \\      let thickness = deltas * 0.25;
-\\      barys = smoothStep(thickness, thickness + smoothing, barys);
+\\      barys = smoothstep(thickness, thickness + smoothing, barys);
 \\      let min_bary = min(barys.x, min(barys.y, barys.z));
 \\      return vec4(min_bary * color, 1.0);
 \\  }
