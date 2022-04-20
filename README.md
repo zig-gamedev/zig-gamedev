@@ -7,7 +7,7 @@ Project is under active development, see [Roadmap](https://github.com/michal-z/z
 
 To get started on Windows/Linux/Mac try out [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu) sample:
 
-(Note: git with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.x (master)](https://ziglang.org/download/) is required)
+(`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.x (master)](https://ziglang.org/download/) is required)
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
@@ -23,7 +23,7 @@ zig build procedural_mesh_wgpu-run -Drelease-fast=true
 #### Libraries we develop/maintain:
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers **[cross-platform and standalone]**
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) **[cross-platform and standalone]**
-* [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h) **[cross-platform and standalone]**
+* [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - loading, generating, processing and optimizing triangle meshes **[cross-platform and standalone]**
 * [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) **[cross-platform and standalone]**
 * [zenet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zenet) - Zig bindings for [ENet](https://github.com/lsalzman/enet) **[cross-platform and standalone]**
 * [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) **[cross-platform and standalone]**

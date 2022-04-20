@@ -61,6 +61,8 @@ pub fn main() !void {
 ```
 
 ```zig
+const zmesh = @import("zmesh");
+
 pub fn main() !void {
     zmesh.init(allocator);
     defer zmesh.deinit();
