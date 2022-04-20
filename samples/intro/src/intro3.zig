@@ -14,6 +14,7 @@ const common = @import("common");
 const GuiRenderer = common.GuiRenderer;
 const c = common.c;
 const zm = @import("zmath");
+const zmesh = @import("zmesh");
 
 // We need to export below symbols for DirectX 12 Agility SDK.
 pub export const D3D12SDKVersion: u32 = 4;
@@ -111,9 +112,11 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
     var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
     {
-        const data = common.parseAndLoadGltfFile(content_dir ++ "cube.gltf");
-        defer c.cgltf_free(data);
-        common.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, null, null);
+        zmesh.init(arena_allocator);
+        defer zmesh.deinit();
+        const data = try zmesh.gltf.parseAndLoadFile(content_dir ++ "cube.gltf");
+        defer zmesh.gltf.freeData(data);
+        zmesh.gltf.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, null, null);
     }
     const mesh_num_indices = @intCast(u32, mesh_indices.items.len);
     const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);

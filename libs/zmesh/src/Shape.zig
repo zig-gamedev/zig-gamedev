@@ -248,3 +248,125 @@ extern fn par_shapes_create_parametric(
     stacks: i32,
     userdata: ?*anyopaque,
 ) ShapeHandle;
+
+const std = @import("std");
+const zmesh = @import("main.zig");
+const save = false;
+const expect = std.testing.expect;
+
+test "zmesh.basic" {
+    zmesh.init(std.testing.allocator);
+    defer zmesh.deinit();
+
+    const cylinder = Shape.initCylinder(10, 10);
+    defer cylinder.deinit();
+    if (save) cylinder.saveToObj("zmesh.cylinder.obj");
+
+    const cone = Shape.initCone(10, 10);
+    defer cone.deinit();
+    if (save) cone.saveToObj("zmesh.cone.obj");
+
+    const pdisk = Shape.initParametricDisk(10, 10);
+    defer pdisk.deinit();
+    if (save) pdisk.saveToObj("zmesh.pdisk.obj");
+
+    const torus = Shape.initTorus(10, 10, 0.2);
+    defer torus.deinit();
+    if (save) torus.saveToObj("zmesh.torus.obj");
+
+    const psphere = Shape.initParametricSphere(10, 10);
+    defer psphere.deinit();
+    if (save) psphere.saveToObj("zmesh.psphere.obj");
+
+    const subdsphere = Shape.initSubdividedSphere(3);
+    defer subdsphere.deinit();
+    if (save) subdsphere.saveToObj("zmesh.subdsphere.obj");
+
+    const trefoil_knot = Shape.initTrefoilKnot(10, 100, 0.6);
+    defer trefoil_knot.deinit();
+    if (save) trefoil_knot.saveToObj("zmesh.trefoil_knot.obj");
+
+    const hemisphere = Shape.initHemisphere(10, 10);
+    defer hemisphere.deinit();
+    if (save) hemisphere.saveToObj("zmesh.hemisphere.obj");
+
+    const plane = Shape.initPlane(10, 10);
+    defer plane.deinit();
+    if (save) plane.saveToObj("zmesh.plane.obj");
+
+    const icosahedron = Shape.initIcosahedron();
+    defer icosahedron.deinit();
+    if (save) icosahedron.saveToObj("zmesh.icosahedron.obj");
+
+    const dodecahedron = Shape.initDodecahedron();
+    defer dodecahedron.deinit();
+    if (save) dodecahedron.saveToObj("zmesh.dodecahedron.obj");
+
+    const octahedron = Shape.initOctahedron();
+    defer octahedron.deinit();
+    if (save) octahedron.saveToObj("zmesh.octahedron.obj");
+
+    const tetrahedron = Shape.initTetrahedron();
+    defer tetrahedron.deinit();
+    if (save) tetrahedron.saveToObj("zmesh.tetrahedron.obj");
+
+    var cube = Shape.initCube();
+    defer cube.deinit();
+    cube.unweld();
+    cube.computeNormals();
+    if (save) cube.saveToObj("zmesh.cube.obj");
+
+    const rock = Shape.initRock(1337, 3);
+    defer rock.deinit();
+    if (save) rock.saveToObj("zmesh.rock.obj");
+
+    const disk = Shape.initDisk(3.0, 10, &.{ 1, 2, 3 }, &.{ 0, 1, 0 });
+    defer disk.deinit();
+    if (save) disk.saveToObj("zmesh.disk.obj");
+}
+
+test "zmesh.clone" {
+    zmesh.init(std.testing.allocator);
+    defer zmesh.deinit();
+
+    const cube = Shape.initCube();
+    defer cube.deinit();
+
+    var clone0 = cube.clone();
+    defer clone0.deinit();
+
+    try expect(@ptrToInt(clone0.handle) != @ptrToInt(cube.handle));
+}
+
+test "zmesh.merge" {
+    zmesh.init(std.testing.allocator);
+    defer zmesh.deinit();
+
+    var cube = Shape.initCube();
+    defer cube.deinit();
+
+    var sphere = Shape.initSubdividedSphere(3);
+    defer sphere.deinit();
+
+    cube.translate(0, 2, 0);
+    sphere.merge(cube);
+    cube.translate(0, 2, 0);
+    sphere.merge(cube);
+
+    if (save) sphere.saveToObj("zmesh.merge.obj");
+}
+
+test "zmesh.invert" {
+    zmesh.init(std.testing.allocator);
+    defer zmesh.deinit();
+
+    var hemisphere = Shape.initParametricSphere(10, 10);
+    defer hemisphere.deinit();
+    hemisphere.invert(0, 0);
+
+    hemisphere.removeDegenerate(0.001);
+    hemisphere.unweld();
+    hemisphere.weld(0.001, null);
+
+    if (save) hemisphere.saveToObj("zmesh.invert.obj");
+}

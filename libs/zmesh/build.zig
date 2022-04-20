@@ -31,11 +31,10 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
-    lib.want_lto = false;
-    lib.addIncludeDir(thisDir() ++ "/libs/par_shapes");
     lib.linkSystemLibrary("c");
     lib.linkSystemLibrary("c++");
 
+    lib.addIncludeDir(thisDir() ++ "/libs/par_shapes");
     lib.addCSourceFile(
         thisDir() ++ "/libs/par_shapes/par_shapes.c",
         &.{ "-std=c99", "-fno-sanitize=undefined" },
@@ -44,8 +43,15 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/clusterizer.cpp", &.{""});
     lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/indexgenerator.cpp", &.{""});
     lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/vcacheoptimizer.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/vcacheanalyzer.cpp", &.{""});
     lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/vfetchoptimizer.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/vfetchanalyzer.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/overdrawoptimizer.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/overdrawanalyzer.cpp", &.{""});
     lib.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/allocator.cpp", &.{""});
+
+    lib.addIncludeDir(thisDir() ++ "/libs/cgltf");
+    lib.addCSourceFile(thisDir() ++ "/libs/cgltf/cgltf.c", &.{"-std=c99"});
 
     return lib;
 }
@@ -53,6 +59,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
 pub fn link(exe: *std.build.LibExeObjStep) void {
     const lib = buildLibrary(exe);
     exe.linkLibrary(lib);
+    exe.addIncludeDir(thisDir() ++ "/libs/cgltf");
 }
 
 fn thisDir() []const u8 {
