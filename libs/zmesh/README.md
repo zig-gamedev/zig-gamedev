@@ -1,6 +1,14 @@
-# zmesh v0.1 - Zig bindings for [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h)
+![image](logo.png)
 
-As an example program see [procedural mesh](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh).
+# zmesh v0.2 - loading, generating, processing and optimizing triangle meshes
+
+As an example program please see [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu).
+
+Under the hood this library uses below C/C++ libraries:
+
+* [par shapes](https://github.com/prideout/par/blob/master/par_shapes.h)
+* [meshoptimizer](https://github.com/zeux/meshoptimizer)
+* [cgltf](https://github.com/jkuhlmann/cgltf)
 
 ## Getting started
 
