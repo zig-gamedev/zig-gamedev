@@ -13,6 +13,7 @@ const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
+const zmesh = @import("zmesh");
 
 const Vec2 = vm.Vec2;
 const Vec3 = vm.Vec3;
@@ -43,149 +44,14 @@ const ResourceView = struct {
 };
 
 const Vertex = struct {
-    position: Vec3,
-    normal: Vec3,
-    texcoords0: Vec2,
-    tangent: Vec4,
+    position: [3]f32,
+    normal: [3]f32,
+    texcoords0: [2]f32,
+    tangent: [4]f32,
 };
 comptime {
     assert(@sizeOf([2]Vertex) == 2 * 48);
     assert(@alignOf([2]Vertex) == 4);
-}
-
-fn parseAndLoadGltfFile(gltf_path: []const u8) *c.cgltf_data {
-    var data: *c.cgltf_data = undefined;
-    const options = std.mem.zeroes(c.cgltf_options);
-    // Parse.
-    {
-        const result = c.cgltf_parse_file(&options, gltf_path.ptr, @ptrCast([*c][*c]c.cgltf_data, &data));
-        assert(result == c.cgltf_result_success);
-    }
-    // Load.
-    {
-        const result = c.cgltf_load_buffers(&options, data, gltf_path.ptr);
-        assert(result == c.cgltf_result_success);
-    }
-    return data;
-}
-
-fn appendMesh(
-    data: *c.cgltf_data,
-    mesh_index: u32,
-    indices: *std.ArrayList(u32),
-    positions: *std.ArrayList(Vec3),
-    normals: ?*std.ArrayList(Vec3),
-    texcoords0: ?*std.ArrayList(Vec2),
-    tangents: ?*std.ArrayList(Vec4),
-) void {
-    assert(mesh_index < data.meshes_count);
-    const num_vertices: u32 = @intCast(u32, data.meshes[mesh_index].primitives[0].attributes[0].data.*.count);
-    const num_indices: u32 = @intCast(u32, data.meshes[mesh_index].primitives[0].indices.*.count);
-
-    // Indices.
-    {
-        indices.ensureTotalCapacity(indices.items.len + num_indices) catch unreachable;
-
-        const accessor = data.meshes[mesh_index].primitives[0].indices;
-
-        assert(accessor.*.buffer_view != null);
-        assert(accessor.*.stride == accessor.*.buffer_view.*.stride or accessor.*.buffer_view.*.stride == 0);
-        assert((accessor.*.stride * accessor.*.count) == accessor.*.buffer_view.*.size);
-        assert(accessor.*.buffer_view.*.buffer.*.data != null);
-
-        const data_addr = @alignCast(4, @ptrCast([*]const u8, accessor.*.buffer_view.*.buffer.*.data) +
-            accessor.*.offset + accessor.*.buffer_view.*.offset);
-
-        if (accessor.*.stride == 1) {
-            assert(accessor.*.component_type == c.cgltf_component_type_r_8u);
-            const src = @ptrCast([*]const u8, data_addr);
-            var i: u32 = 0;
-            while (i < num_indices) : (i += 1) {
-                indices.appendAssumeCapacity(src[i]);
-            }
-        } else if (accessor.*.stride == 2) {
-            assert(accessor.*.component_type == c.cgltf_component_type_r_16u);
-            const src = @ptrCast([*]const u16, data_addr);
-            var i: u32 = 0;
-            while (i < num_indices) : (i += 1) {
-                indices.appendAssumeCapacity(src[i]);
-            }
-        } else if (accessor.*.stride == 4) {
-            assert(accessor.*.component_type == c.cgltf_component_type_r_32u);
-            const src = @ptrCast([*]const u32, data_addr);
-            var i: u32 = 0;
-            while (i < num_indices) : (i += 1) {
-                indices.appendAssumeCapacity(src[i]);
-            }
-        } else {
-            unreachable;
-        }
-    }
-
-    // Attributes.
-    {
-        const num_attribs: u32 = @intCast(u32, data.meshes[mesh_index].primitives[0].attributes_count);
-
-        var attrib_index: u32 = 0;
-        while (attrib_index < num_attribs) : (attrib_index += 1) {
-            const attrib = &data.*.meshes[mesh_index].primitives[0].attributes[attrib_index];
-            const accessor = attrib.*.data;
-
-            assert(accessor.*.buffer_view != null);
-            assert(accessor.*.stride == accessor.*.buffer_view.*.stride or accessor.*.buffer_view.*.stride == 0);
-            assert((accessor.*.stride * accessor.*.count) == accessor.*.buffer_view.*.size);
-            assert(accessor.*.buffer_view.*.buffer.*.data != null);
-
-            const data_addr = @ptrCast([*]const u8, accessor.*.buffer_view.*.buffer.*.data) +
-                accessor.*.offset + accessor.*.buffer_view.*.offset;
-
-            if (attrib.*.type == c.cgltf_attribute_type_position) {
-                assert(accessor.*.type == c.cgltf_type_vec3);
-                assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
-
-                positions.resize(positions.items.len + num_vertices) catch unreachable;
-                @memcpy(
-                    @ptrCast([*]u8, &positions.items[positions.items.len - num_vertices]),
-                    data_addr,
-                    accessor.*.count * accessor.*.stride,
-                );
-            } else if (attrib.*.type == c.cgltf_attribute_type_normal and normals != null) {
-                assert(accessor.*.type == c.cgltf_type_vec3);
-                assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
-
-                normals.?.resize(normals.?.items.len + num_vertices) catch unreachable;
-                @memcpy(
-                    @ptrCast([*]u8, &normals.?.items[normals.?.items.len - num_vertices]),
-                    data_addr,
-                    accessor.*.count * accessor.*.stride,
-                );
-            } else if (attrib.*.type == c.cgltf_attribute_type_texcoord and texcoords0 != null) {
-                assert(accessor.*.type == c.cgltf_type_vec2);
-                assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
-
-                texcoords0.?.resize(texcoords0.?.items.len + num_vertices) catch unreachable;
-                @memcpy(
-                    @ptrCast([*]u8, &texcoords0.?.items[texcoords0.?.items.len - num_vertices]),
-                    data_addr,
-                    accessor.*.count * accessor.*.stride,
-                );
-            } else if (attrib.*.type == c.cgltf_attribute_type_tangent and tangents != null) {
-                assert(accessor.*.type == c.cgltf_type_vec4);
-                assert(accessor.*.component_type == c.cgltf_component_type_r_32f);
-
-                tangents.?.resize(tangents.?.items.len + num_vertices) catch unreachable;
-                @memcpy(
-                    @ptrCast([*]u8, &tangents.?.items[tangents.?.items.len - num_vertices]),
-                    data_addr,
-                    accessor.*.count * accessor.*.stride,
-                );
-            }
-        }
-    }
-
-    if (normals != null) assert(normals.?.items.len == positions.items.len);
-    if (texcoords0 != null) assert(texcoords0.?.items.len == positions.items.len);
-    if (tangents != null) assert(tangents.?.items.len == positions.items.len);
 }
 
 // In this demo program, Mesh is just a range of vertices/indices in a single global vertex/index buffer.
@@ -245,18 +111,18 @@ fn loadAllMeshes(
     all_indices: *std.ArrayList(u32),
 ) void {
     var indices = std.ArrayList(u32).init(arena);
-    var positions = std.ArrayList(Vec3).init(arena);
-    var normals = std.ArrayList(Vec3).init(arena);
-    var texcoords0 = std.ArrayList(Vec2).init(arena);
-    var tangents = std.ArrayList(Vec4).init(arena);
+    var positions = std.ArrayList([3]f32).init(arena);
+    var normals = std.ArrayList([3]f32).init(arena);
+    var texcoords0 = std.ArrayList([2]f32).init(arena);
+    var tangents = std.ArrayList([4]f32).init(arena);
 
     {
         const pre_indices_len = indices.items.len;
         const pre_positions_len = positions.items.len;
 
-        const data = parseAndLoadGltfFile(content_dir ++ "cube.gltf");
-        defer c.cgltf_free(data);
-        appendMesh(data, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+        const data = zmesh.gltf.parseAndLoadFile(content_dir ++ "cube.gltf") catch unreachable;
+        defer zmesh.gltf.freeData(data);
+        zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
         all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
@@ -268,9 +134,9 @@ fn loadAllMeshes(
         const pre_indices_len = indices.items.len;
         const pre_positions_len = positions.items.len;
 
-        const data = parseAndLoadGltfFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
-        defer c.cgltf_free(data);
-        appendMesh(data, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+        const data = zmesh.gltf.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf") catch unreachable;
+        defer zmesh.gltf.freeData(data);
+        zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
         all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
@@ -482,6 +348,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .generate_brdf_integration_texture_pso = generate_brdf_integration_texture_pso,
         };
     };
+
+    zmesh.init(arena_allocator);
+    defer zmesh.deinit();
 
     var all_meshes = std.ArrayList(Mesh).init(allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
