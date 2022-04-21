@@ -12,6 +12,7 @@ const common = @import("common");
 const c = common.c;
 const GuiRenderer = common.GuiRenderer;
 const zm = @import("zmath");
+const zmesh = @import("zmesh");
 
 pub export const D3D12SDKVersion: u32 = 4;
 pub export const D3D12SDKPath: [*:0]const u8 = ".\\d3d12\\";
@@ -195,15 +196,21 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         content_dir ++ "shaders/clear_pixels.cs.cso",
     );
 
+    zmesh.init(arena_allocator);
+    defer zmesh.deinit();
+
     var mesh_indices = std.ArrayList(u32).init(arena_allocator);
     var mesh_positions = std.ArrayList([3]f32).init(arena_allocator);
     var mesh_normals = std.ArrayList([3]f32).init(arena_allocator);
     var mesh_texcoords = std.ArrayList([2]f32).init(arena_allocator);
     var mesh_tangents = std.ArrayList([4]f32).init(arena_allocator);
     {
-        const data = common.parseAndLoadGltfFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
-        defer c.cgltf_free(data);
-        common.appendMeshPrimitive(
+        const data = zmesh.gltf.parseAndLoadFile(
+            content_dir ++ "SciFiHelmet/SciFiHelmet.gltf",
+        ) catch unreachable;
+        defer zmesh.gltf.freeData(data);
+
+        zmesh.gltf.appendMeshPrimitive(
             data,
             0,
             0,
