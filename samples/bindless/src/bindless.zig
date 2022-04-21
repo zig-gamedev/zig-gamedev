@@ -14,6 +14,7 @@ const common = @import("common");
 const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
+const zmesh = @import("zmesh");
 
 const Vec2 = vm.Vec2;
 const Vec3 = vm.Vec3;
@@ -123,7 +124,7 @@ const DemoState = struct {
 
 fn loadMesh(
     arena: std.mem.Allocator,
-    file_path: []const u8,
+    file_path: [:0]const u8,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
@@ -137,9 +138,9 @@ fn loadMesh(
     const pre_indices_len = all_indices.items.len;
     const pre_positions_len = all_vertices.items.len;
 
-    const data = common.parseAndLoadGltfFile(file_path);
-    defer c.cgltf_free(data);
-    common.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+    const data = zmesh.gltf.parseAndLoadFile(file_path) catch unreachable;
+    defer zmesh.gltf.freeData(data);
+    zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
     all_meshes.append(.{
         .index_offset = @intCast(u32, pre_indices_len),
@@ -354,6 +355,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             .generate_brdf_integration_texture_pso = generate_brdf_integration_texture_pso,
         };
     };
+
+    zmesh.init(arena_allocator);
+    defer zmesh.deinit();
 
     var all_meshes = std.ArrayList(Mesh).init(allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
