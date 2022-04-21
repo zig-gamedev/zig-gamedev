@@ -6,8 +6,8 @@ pub fn init(alloc: std.mem.Allocator) void {
     allocator = alloc;
     allocations = std.AutoHashMap(usize, usize).init(allocator.?);
     allocations.?.ensureTotalCapacity(32) catch unreachable;
-    zmesh_setAllocator(mallocFunc, callocFunc, reallocFunc, freeFunc);
-    meshopt_setAllocator(mallocFunc, freeFunc);
+    zmesh_setAllocator(zmeshAlloc, zmeshClearAlloc, zmeshReAlloc, zmeshFree);
+    meshopt_setAllocator(zmeshAlloc, zmeshFree);
 }
 
 pub fn deinit() void {
@@ -32,7 +32,7 @@ var allocator: ?std.mem.Allocator = null;
 var allocations: ?std.AutoHashMap(usize, usize) = null;
 var mutex: Mutex = .{};
 
-pub export fn mallocFunc(size: usize) callconv(.C) ?*anyopaque {
+pub export fn zmeshAlloc(size: usize) callconv(.C) ?*anyopaque {
     mutex.lock();
     defer mutex.unlock();
 
@@ -49,8 +49,8 @@ pub export fn mallocFunc(size: usize) callconv(.C) ?*anyopaque {
     return slice.ptr;
 }
 
-export fn callocFunc(num: usize, size: usize) callconv(.C) ?*anyopaque {
-    const ptr = mallocFunc(num * size);
+export fn zmeshClearAlloc(num: usize, size: usize) callconv(.C) ?*anyopaque {
+    const ptr = zmeshAlloc(num * size);
     if (ptr != null) {
         @memset(@ptrCast([*]u8, ptr), 0, num * size);
         return ptr;
@@ -58,7 +58,7 @@ export fn callocFunc(num: usize, size: usize) callconv(.C) ?*anyopaque {
     return null;
 }
 
-export fn reallocFunc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
+export fn zmeshReAlloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     mutex.lock();
     defer mutex.unlock();
 
@@ -92,7 +92,7 @@ export fn reallocFunc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     return slice.ptr;
 }
 
-pub export fn freeFunc(ptr: ?*anyopaque) callconv(.C) void {
+pub export fn zmeshFree(ptr: ?*anyopaque) callconv(.C) void {
     if (ptr != null) {
         mutex.lock();
         defer mutex.unlock();

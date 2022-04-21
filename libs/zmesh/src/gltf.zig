@@ -10,8 +10,8 @@ pub const DataHandle = *opaque {};
 pub fn parseAndLoadFile(gltf_path: [:0]const u8) Error!DataHandle {
     var options = std.mem.zeroes(c.cgltf_options);
     options.memory = .{
-        .alloc = gltfMallocFunc,
-        .free = gltfFreeFunc,
+        .alloc = zmeshAllocUser,
+        .free = zmeshFreeUser,
         .user_data = null,
     };
 
@@ -179,12 +179,12 @@ pub fn appendMeshPrimitive(
 
 const mem = @import("memory.zig");
 
-export fn gltfMallocFunc(user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
+export fn zmeshAllocUser(user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     _ = user;
-    return mem.mallocFunc(size);
+    return mem.zmeshAlloc(size);
 }
 
-export fn gltfFreeFunc(user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void {
+export fn zmeshFreeUser(user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void {
     _ = user;
-    mem.freeFunc(ptr);
+    mem.zmeshFree(ptr);
 }

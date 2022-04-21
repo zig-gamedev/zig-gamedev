@@ -14,7 +14,7 @@ var allocator: ?std.mem.Allocator = null;
 var allocations: ?std.AutoHashMap(usize, usize) = null;
 var mutex: Mutex = .{};
 
-export fn allocFunc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
+export fn zbulletAlloc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
     mutex.lock();
     defer mutex.unlock();
 
@@ -31,7 +31,7 @@ export fn allocFunc(size: usize, alignment: i32) callconv(.C) ?*anyopaque {
     return slice.ptr;
 }
 
-export fn freeFunc(ptr: ?*anyopaque) callconv(.C) void {
+export fn zbulletFree(ptr: ?*anyopaque) callconv(.C) void {
     if (ptr != null) {
         mutex.lock();
         defer mutex.unlock();
@@ -47,7 +47,7 @@ pub fn init(alloc: std.mem.Allocator) void {
     allocator = alloc;
     allocations = std.AutoHashMap(usize, usize).init(allocator.?);
     allocations.?.ensureTotalCapacity(256) catch @panic("zbullet: out of memory");
-    cbtAlignedAllocSetCustomAligned(allocFunc, freeFunc);
+    cbtAlignedAllocSetCustomAligned(zbulletAlloc, zbulletFree);
 }
 
 pub fn deinit() void {
