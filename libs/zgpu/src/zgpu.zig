@@ -187,7 +187,7 @@ pub const gui = struct {
             const size = @intCast(usize, file.getEndPos() catch unreachable);
             if (size <= 1024) {
                 std.debug.print(
-                    "\nINVALID DATA FILES!!! PLEASE INSTALL Git LFS (Large File Support) AND RE-CLONE.\n\n",
+                    "\nINVALID DATA FILES!!! PLEASE INSTALL Git LFS (Large File Support) and run 'git lfs install', 'git pull'.\n\n",
                     .{},
                 );
                 std.process.exit(1);
