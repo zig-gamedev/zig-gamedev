@@ -14,6 +14,7 @@ const c = common.c;
 const vm = common.vectormath;
 const GuiRenderer = common.GuiRenderer;
 const zb = @cImport(@cInclude("cbullet.h"));
+const zmesh = @import("zmesh");
 
 const Vec3 = vm.Vec3;
 const Vec4 = vm.Vec4;
@@ -246,7 +247,7 @@ fn loadAllMeshes(
     all_normals: *std.ArrayList([3]f32),
     all_indices: *std.ArrayList(u32),
 ) void {
-    const paths = [_][]const u8{
+    const paths = [_][:0]const u8{
         content_dir ++ "cube.gltf",
         content_dir ++ "sphere.gltf",
         content_dir ++ "capsule.gltf",
@@ -258,9 +259,9 @@ fn loadAllMeshes(
         const pre_indices_len = all_indices.items.len;
         const pre_positions_len = all_positions.items.len;
 
-        const data = common.parseAndLoadGltfFile(path);
-        defer c.cgltf_free(data);
-        common.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
+        const data = zmesh.gltf.parseAndLoadFile(path) catch unreachable;
+        defer zmesh.gltf.freeData(data);
+        zmesh.gltf.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
 
         all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
@@ -1024,6 +1025,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
     const depth_texture_dsv = gctx.allocateCpuDescriptors(.DSV, 1);
     gctx.device.CreateDepthStencilView(gctx.lookupResource(depth_texture).?, null, depth_texture_dsv);
+
+    zmesh.init(arena_allocator);
+    defer zmesh.deinit();
 
     var all_meshes = std.ArrayList(Mesh).init(allocator);
     var all_positions = std.ArrayList([3]f32).init(arena_allocator);
