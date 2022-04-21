@@ -2,6 +2,7 @@ const std = @import("std");
 const math = std.math;
 const glfw = @import("glfw");
 const zgpu = @import("zgpu");
+const gpu = zgpu.gpu;
 const c = zgpu.cimgui;
 const zm = @import("zmath");
 
@@ -43,15 +44,15 @@ const DemoState = struct {
     gctx: zgpu.GraphicsContext,
     stats: zgpu.FrameStats,
 
-    pipeline: zgpu.RenderPipeline,
-    bind_group: zgpu.BindGroup,
+    pipeline: gpu.RenderPipeline,
+    bind_group: gpu.BindGroup,
 
-    vertex_buffer: zgpu.Buffer,
-    index_buffer: zgpu.Buffer,
-    uniform_buffer: zgpu.Buffer,
+    vertex_buffer: gpu.Buffer,
+    index_buffer: gpu.Buffer,
+    uniform_buffer: gpu.Buffer,
 
-    depth_texture: zgpu.Texture,
-    depth_texture_view: zgpu.TextureView,
+    depth_texture: gpu.Texture,
+    depth_texture_view: gpu.TextureView,
 };
 
 fn init(window: glfw.Window) DemoState {
@@ -64,33 +65,33 @@ fn init(window: glfw.Window) DemoState {
     defer fs_module.release();
 
     // Setup a 'fragment state' for our render pipeline.
-    const blend = zgpu.BlendState{
+    const blend = gpu.BlendState{
         .color = .{ .operation = .add, .src_factor = .one, .dst_factor = .zero },
         .alpha = .{ .operation = .add, .src_factor = .one, .dst_factor = .zero },
     };
-    const color_target = zgpu.ColorTargetState{
+    const color_target = gpu.ColorTargetState{
         .format = zgpu.GraphicsContext.swapchain_format,
         .blend = &blend,
-        .write_mask = zgpu.ColorWriteMask.all,
+        .write_mask = gpu.ColorWriteMask.all,
     };
-    const fragment_state = zgpu.FragmentState{
+    const fragment_state = gpu.FragmentState{
         .module = fs_module,
         .entry_point = "main",
         .targets = &.{color_target},
     };
 
     // Setup a 'vertex state' for our render pipeline.
-    const vertex_attributes = [_]zgpu.VertexAttribute{
-        zgpu.VertexAttribute{ .format = .float32x3, .offset = 0, .shader_location = 0 },
-        zgpu.VertexAttribute{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
+    const vertex_attributes = [_]gpu.VertexAttribute{
+        gpu.VertexAttribute{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+        gpu.VertexAttribute{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
     };
-    const vertex_buffer_layout = zgpu.VertexBufferLayout{
+    const vertex_buffer_layout = gpu.VertexBufferLayout{
         .array_stride = @sizeOf(Vertex),
         .step_mode = .vertex,
         .attribute_count = vertex_attributes.len,
         .attributes = &vertex_attributes,
     };
-    const vertex_state = zgpu.VertexState{
+    const vertex_state = gpu.VertexState{
         .module = vs_module,
         .entry_point = "main",
         .buffers = &.{vertex_buffer_layout},
@@ -98,21 +99,21 @@ fn init(window: glfw.Window) DemoState {
 
     // Create a bind group layout needed for our render pipeline.
     const bgl = gctx.device.createBindGroupLayout(
-        &zgpu.BindGroupLayout.Descriptor{
+        &gpu.BindGroupLayout.Descriptor{
             .entries = &.{
-                zgpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0),
+                gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0),
             },
         },
     );
     defer bgl.release();
 
-    const pl = gctx.device.createPipelineLayout(&zgpu.PipelineLayout.Descriptor{
+    const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
         .bind_group_layouts = &.{bgl},
     });
     defer pl.release();
 
     // Create a render pipeline.
-    const pipeline_descriptor = zgpu.RenderPipeline.Descriptor{
+    const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
         .fragment = &fragment_state,
         .layout = pl,
         .depth_stencil = &.{
@@ -159,9 +160,9 @@ fn init(window: glfw.Window) DemoState {
         .mapped_at_creation = false,
     });
     const bind_group = gctx.device.createBindGroup(
-        &zgpu.BindGroup.Descriptor{
+        &gpu.BindGroup.Descriptor{
             .layout = bgl,
-            .entries = &.{zgpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(zm.Mat))},
+            .entries = &.{gpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(zm.Mat))},
         },
     );
 
@@ -288,14 +289,14 @@ fn draw(demo: *DemoState) void {
         }
 
         {
-            const color_attachment = zgpu.RenderPassColorAttachment{
+            const color_attachment = gpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
                 .resolve_target = null,
-                .clear_value = std.mem.zeroes(zgpu.Color),
+                .clear_value = std.mem.zeroes(gpu.Color),
                 .load_op = .clear,
                 .store_op = .store,
             };
-            const depth_attachment = zgpu.RenderPassDepthStencilAttachment{
+            const depth_attachment = gpu.RenderPassDepthStencilAttachment{
                 .view = demo.depth_texture_view,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
@@ -308,7 +309,7 @@ fn draw(demo: *DemoState) void {
                 .stencil_clear_value = 0,
                 .stencil_read_only = false,
             };
-            const render_pass_info = zgpu.RenderPassEncoder.Descriptor{
+            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
                 .color_attachments = &.{color_attachment},
                 .depth_stencil_attachment = &depth_attachment,
             };
@@ -329,14 +330,14 @@ fn draw(demo: *DemoState) void {
             pass.end();
         }
         {
-            const color_attachment = zgpu.RenderPassColorAttachment{
+            const color_attachment = gpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
                 .resolve_target = null,
-                .clear_value = std.mem.zeroes(zgpu.Color),
+                .clear_value = std.mem.zeroes(gpu.Color),
                 .load_op = .load,
                 .store_op = .store,
             };
-            const render_pass_info = zgpu.RenderPassEncoder.Descriptor{
+            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
                 .color_attachments = &.{color_attachment},
                 .depth_stencil_attachment = null,
             };
@@ -356,11 +357,11 @@ fn draw(demo: *DemoState) void {
     gctx.swapchain.present();
 }
 
-fn createDepthTexture(device: zgpu.Device, width: u32, height: u32) struct {
-    texture: zgpu.Texture,
-    view: zgpu.TextureView,
+fn createDepthTexture(device: gpu.Device, width: u32, height: u32) struct {
+    texture: gpu.Texture,
+    view: gpu.TextureView,
 } {
-    const texture = device.createTexture(&zgpu.Texture.Descriptor{
+    const texture = device.createTexture(&gpu.Texture.Descriptor{
         .usage = .{ .render_attachment = true },
         .dimension = .dimension_2d,
         .size = .{ .width = width, .height = height, .depth_or_array_layers = 1 },
@@ -368,7 +369,7 @@ fn createDepthTexture(device: zgpu.Device, width: u32, height: u32) struct {
         .mip_level_count = 1,
         .sample_count = 1,
     });
-    const view = texture.createView(&zgpu.TextureView.Descriptor{
+    const view = texture.createView(&gpu.TextureView.Descriptor{
         .format = .depth32_float,
         .dimension = .dimension_2d,
         .base_mip_level = 0,
