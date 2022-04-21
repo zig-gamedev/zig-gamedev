@@ -109,7 +109,7 @@ const DemoState = struct {
 
 fn loadMeshAndGenerateMeshlets(
     arena_allocator: std.mem.Allocator,
-    file_path: []const u8,
+    file_path: [:0]const u8,
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
@@ -120,9 +120,9 @@ fn loadMeshAndGenerateMeshlets(
     var src_normals = std.ArrayList([3]f32).init(arena_allocator);
     var src_indices = std.ArrayList(u32).init(arena_allocator);
 
-    const data = common.parseAndLoadGltfFile(file_path);
-    defer c.cgltf_free(data);
-    common.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
+    const data = zmesh.gltf.parseAndLoadFile(file_path) catch unreachable;
+    defer zmesh.gltf.freeData(data);
+    zmesh.gltf.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 
     var src_vertices = std.ArrayList(Vertex).initCapacity(
         arena_allocator,
@@ -327,6 +327,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
             content_dir ++ "shaders/vertex_shader_fixed.ps.cso",
         );
     };
+
+    zmesh.init(arena_allocator);
+    defer zmesh.deinit();
 
     var all_meshes = std.ArrayList(Mesh).init(allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
