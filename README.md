@@ -11,7 +11,7 @@ To get started on Windows/Linux/Mac try out [procedural mesh (wgpu)](https://git
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
-zig build procedural_mesh_wgpu-run -Drelease-fast=true
+zig build procedural_mesh_wgpu-run
 ```
 #### Some features:
 * Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
