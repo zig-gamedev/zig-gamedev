@@ -90,3 +90,56 @@ pub const PrimitiveType = enum(c_int) {
     triangle_strip,
     triangle_fan,
 };
+
+pub const AlphaMode = enum(c_int) {
+    @"opaque",
+    mask,
+    blend,
+};
+
+pub const AnimationPathType = enum(c_int) {
+    invalid,
+    translation,
+    rotation,
+    scale,
+    weights,
+};
+
+pub const InterpolationType = enum(c_int) {
+    linear,
+    step,
+    cubic_spline,
+};
+
+pub const CameraType = enum(c_int) {
+    invalid,
+    perspective,
+    orthographic,
+};
+
+pub const LightType = enum(c_int) {
+    invalid,
+    directional,
+    point,
+    spot,
+};
+
+pub const DataFreeMethod = enum(c_int) {
+    none,
+    file_release,
+    memory_free,
+};
+
+pub const MeshoptCompressionMode = enum(c_int) {
+    invalid,
+    attributes,
+    triangles,
+    indices,
+};
+
+pub const MeshoptCompressionFilter = enum(c_int) {
+    none,
+    octahedral,
+    quaternion,
+    exponential,
+};
