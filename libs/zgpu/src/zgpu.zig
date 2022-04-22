@@ -29,14 +29,6 @@ pub const GraphicsContext = struct {
     swapchain_descriptor: gpu.SwapChain.Descriptor,
 
     pub fn init(window: glfw.Window) GraphicsContext {
-        // Change directory to where an executable is located.
-        {
-            // TODO: Find a better place for this code.
-            var exe_path_buffer: [1024]u8 = undefined;
-            const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
-            std.os.chdir(exe_path) catch {};
-        }
-
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
         c.machDawnNativeInstance_discoverDefaultAdapters(instance);
@@ -137,6 +129,38 @@ pub const GraphicsContext = struct {
     }
 };
 
+pub fn checkContent(comptime content_dir: []const u8) !void {
+    // Change directory to where an executable is located.
+    {
+        var exe_path_buffer: [1024]u8 = undefined;
+        const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
+        std.os.chdir(exe_path) catch {};
+    }
+
+    // Make sure font file is a valid data file - not just Git LFS link.
+    {
+        const file = try std.fs.cwd().openFile(content_dir ++ "Roboto-Medium.ttf", .{});
+        defer file.close();
+
+        const size = @intCast(usize, try file.getEndPos());
+        if (size <= 1024) {
+            std.debug.print(
+                \\
+                \\ERROR
+                \\Invalid data files or missing content folder.
+                \\Please install Git LFS (Large File Support) and run:
+                \\git lfs install
+                \\git pull
+                \\
+                \\
+            ,
+                .{},
+            );
+            return error.InvalidDataFiles;
+        }
+    }
+}
+
 pub const FrameStats = struct {
     time: f64 = 0.0,
     delta_time: f32 = 0.0,
@@ -177,30 +201,21 @@ pub const FrameStats = struct {
 
 pub const gui = struct {
     pub fn init(window: glfw.Window, device: gpu.Device, font: [*:0]const u8, font_size: f32) void {
-        // Make sure font file is a valid data file - not just Git LFS link.
-        {
-            const file = std.fs.cwd().openFileZ(font, .{}) catch unreachable;
-            defer file.close();
-
-            const size = @intCast(usize, file.getEndPos() catch unreachable);
-            if (size <= 1024) {
-                std.debug.print(
-                    "\nINVALID DATA FILES!!! PLEASE INSTALL Git LFS (Large File Support) and run 'git lfs install', 'git pull'.\n\n",
-                    .{},
-                );
-                std.process.exit(1);
-            }
-        }
-
         assert(cimgui.igGetCurrentContext() == null);
         _ = cimgui.igCreateContext(null);
 
-        if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) unreachable;
+        if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) {
+            unreachable;
+        }
 
         const io = cimgui.igGetIO().?;
-        if (cimgui.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) unreachable;
+        if (cimgui.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) {
+            unreachable;
+        }
 
-        if (!ImGui_ImplWGPU_Init(device.ptr, 1, @enumToInt(GraphicsContext.swapchain_format))) unreachable;
+        if (!ImGui_ImplWGPU_Init(device.ptr, 1, @enumToInt(GraphicsContext.swapchain_format))) {
+            unreachable;
+        }
     }
 
     pub fn deinit() void {

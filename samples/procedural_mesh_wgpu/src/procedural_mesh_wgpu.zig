@@ -701,6 +701,11 @@ fn createDepthTexture(device: gpu.Device, width: u32, height: u32) struct {
 }
 
 pub fn main() !void {
+    zgpu.checkContent(content_dir) catch {
+        // In case of error zgpu.checkContent() will print error message.
+        return;
+    };
+
     try glfw.init(.{});
     defer glfw.terminate();
 

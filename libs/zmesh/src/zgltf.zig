@@ -158,7 +158,7 @@ pub const Buffer = extern struct {
     name: ?[*:0]u8,
     size: Size,
     uri: ?[*:0]u8,
-    data: ?*anyopaque,
+    data: ?*anyopaque, // loaded by loadBuffers()
     data_free_method: DataFreeMethod,
     extras: Extras,
     extensions_count: Size,
@@ -180,9 +180,9 @@ pub const BufferView = extern struct {
     buffer: *Buffer,
     offset: Size,
     size: Size,
-    stride: Size,
+    stride: Size, // 0 == automatically determined by accessor
     view_type: BufferViewType,
-    data: ?*anyopaque,
+    data: ?*anyopaque, // overrides buffer.data if present, filled by extensions
     has_meshopt_compression: Bool,
     meshopt_compression: MeshoptCompression,
     extras: Extras,
