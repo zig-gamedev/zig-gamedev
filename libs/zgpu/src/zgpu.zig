@@ -130,35 +130,42 @@ pub const GraphicsContext = struct {
 };
 
 pub fn checkContent(comptime content_dir: []const u8) !void {
-    // Change directory to where an executable is located.
-    {
-        var exe_path_buffer: [1024]u8 = undefined;
-        const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
-        std.os.chdir(exe_path) catch {};
-    }
+    const local = struct {
+        fn impl() !void {
+            // Change directory to where an executable is located.
+            {
+                var exe_path_buffer: [1024]u8 = undefined;
+                const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
+                std.os.chdir(exe_path) catch {};
+            }
 
-    // Make sure font file is a valid data file - not just Git LFS link.
-    {
-        const file = try std.fs.cwd().openFile(content_dir ++ "Roboto-Medium.ttf", .{});
-        defer file.close();
+            // Make sure font file is a valid data file - not just Git LFS link.
+            {
+                const file = try std.fs.cwd().openFile(content_dir ++ "Roboto-Medium.ttf", .{});
+                defer file.close();
 
-        const size = @intCast(usize, try file.getEndPos());
-        if (size <= 1024) {
-            std.debug.print(
-                \\
-                \\ERROR
-                \\Invalid data files or missing content folder.
-                \\Please install Git LFS (Large File Support) and run:
-                \\git lfs install
-                \\git pull
-                \\
-                \\
-            ,
-                .{},
-            );
-            return error.InvalidDataFiles;
+                const size = @intCast(usize, try file.getEndPos());
+                if (size <= 1024) {
+                    return error.InvalidDataFiles;
+                }
+            }
         }
-    }
+    };
+    local.impl() catch |err| {
+        std.debug.print(
+            \\
+            \\ERROR
+            \\Invalid data files or missing content folder.
+            \\Please install Git LFS (Large File Support) and run:
+            \\git lfs install
+            \\git pull
+            \\
+            \\
+        ,
+            .{},
+        );
+        return err;
+    };
 }
 
 pub const FrameStats = struct {
