@@ -143,3 +143,49 @@ pub const MeshoptCompressionFilter = enum(c_int) {
     quaternion,
     exponential,
 };
+
+pub const Extras = extern struct {
+    start_offset: Size,
+    end_offset: Size,
+};
+
+pub const Extension = extern struct {
+    name: [*:0]u8,
+    data: [*:0]u8,
+};
+
+pub const Buffer = extern struct {
+    name: ?[*:0]u8,
+    size: Size,
+    uri: ?[*:0]u8,
+    data: ?*anyopaque,
+    data_free_method: DataFreeMethod,
+    extras: Extras,
+    extensions_count: Size,
+    extensions: ?[*]Extension,
+};
+
+pub const MeshoptCompression = extern struct {
+    buffer: *Buffer,
+    offset: Size,
+    size: Size,
+    stride: Size,
+    count: Size,
+    mode: MeshoptCompressionMode,
+    filter: MeshoptCompressionFilter,
+};
+
+pub const BufferView = extern struct {
+    name: ?[*:0]u8,
+    buffer: *Buffer,
+    offset: Size,
+    size: Size,
+    stride: Size,
+    view_type: BufferViewType,
+    data: ?*anyopaque,
+    has_meshopt_compression: Bool,
+    meshopt_compression: MeshoptCompression,
+    extras: Extras,
+    extensions_count: Size,
+    extensions: ?[*]Extension,
+};
