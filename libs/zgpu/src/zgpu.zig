@@ -27,8 +27,9 @@ pub const GraphicsContext = struct {
     window_surface: gpu.Surface,
     swapchain: gpu.SwapChain,
     swapchain_descriptor: gpu.SwapChain.Descriptor,
+    buffer_pool: GpuObjectPool(Buffer),
 
-    pub fn init(window: glfw.Window) GraphicsContext {
+    pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
         c.machDawnNativeInstance_discoverDefaultAdapters(instance);
@@ -93,12 +94,14 @@ pub const GraphicsContext = struct {
             .window_surface = window_surface,
             .swapchain = swapchain,
             .swapchain_descriptor = swapchain_descriptor,
+            .buffer_pool = GpuObjectPool(Buffer).init(allocator, 256),
         };
     }
 
-    pub fn deinit(gctx: *GraphicsContext) void {
+    pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
         // TODO: make sure all GPU commands are completed
         // TODO: how to release `native_instance`?
+        gctx.buffer_pool.deinit(allocator);
         gctx.window_surface.release();
         gctx.swapchain.release();
         gctx.queue.release();
@@ -128,6 +131,48 @@ pub const GraphicsContext = struct {
         return true;
     }
 };
+
+pub const BufferHandle = struct {
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
+};
+
+const Buffer = struct {
+    gpuobj: ?gpu.Buffer = null,
+    descriptor: ?gpu.Buffer.Descriptor = null,
+};
+
+fn GpuObjectPool(comptime T: type) type {
+    return struct {
+        const Self = @This();
+
+        objects: []T,
+        generations: []u16,
+
+        fn init(allocator: std.mem.Allocator, capacity: u32) Self {
+            var objects = allocator.alloc(T, capacity + 1) catch unreachable;
+            for (objects) |*obj| obj.* = .{};
+
+            var generations = allocator.alloc(u16, capacity + 1) catch unreachable;
+            for (generations) |*gen| gen.* = 0;
+
+            return .{
+                .objects = objects,
+                .generations = generations,
+            };
+        }
+
+        fn deinit(pool: *Self, allocator: std.mem.Allocator) void {
+            for (pool.objects) |obj| {
+                if (obj.gpuobj) |gpuobj|
+                    gpuobj.release();
+            }
+            allocator.free(pool.objects);
+            allocator.free(pool.generations);
+            pool.* = undefined;
+        }
+    };
+}
 
 pub fn checkContent(comptime content_dir: []const u8) !void {
     const local = struct {

@@ -303,7 +303,7 @@ fn initScene(
 }
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
-    var gctx = zgpu.GraphicsContext.init(window);
+    var gctx = zgpu.GraphicsContext.init(allocator, window);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
@@ -456,7 +456,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState) void {
+fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.pipeline.release();
     demo.draw_bind_group.release();
     demo.frame_bind_group.release();
@@ -467,7 +467,7 @@ fn deinit(demo: *DemoState) void {
     demo.depth_texture.release();
     demo.meshes.deinit();
     demo.drawables.deinit();
-    demo.gctx.deinit();
+    demo.gctx.deinit(allocator);
     demo.* = undefined;
 }
 
@@ -722,7 +722,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     var demo = init(allocator, window);
-    defer deinit(&demo);
+    defer deinit(allocator, &demo);
 
     zgpu.gui.init(window, demo.gctx.device, content_dir ++ "Roboto-Medium.ttf", 25.0);
     defer zgpu.gui.deinit();

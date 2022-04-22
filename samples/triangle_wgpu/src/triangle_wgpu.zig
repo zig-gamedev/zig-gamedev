@@ -55,8 +55,8 @@ const DemoState = struct {
     depth_texture_view: gpu.TextureView,
 };
 
-fn init(window: glfw.Window) DemoState {
-    var gctx = zgpu.GraphicsContext.init(window);
+fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
+    var gctx = zgpu.GraphicsContext.init(allocator, window);
 
     const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
     defer vs_module.release();
@@ -205,7 +205,7 @@ fn init(window: glfw.Window) DemoState {
     };
 }
 
-fn deinit(demo: *DemoState) void {
+fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.pipeline.release();
     demo.bind_group.release();
     demo.vertex_buffer.release();
@@ -213,7 +213,7 @@ fn deinit(demo: *DemoState) void {
     demo.uniform_buffer.release();
     demo.depth_texture_view.release();
     demo.depth_texture.release();
-    demo.gctx.deinit();
+    demo.gctx.deinit(allocator);
     demo.* = undefined;
 }
 
@@ -395,10 +395,15 @@ pub fn main() !void {
         .cocoa_retina_framebuffer = true,
     });
     defer window.destroy();
-    try window.setSizeLimits(.{ .width = 200, .height = 200 }, .{ .width = null, .height = null });
+    try window.setSizeLimits(.{ .width = 400, .height = 400 }, .{ .width = null, .height = null });
 
-    var demo = init(window);
-    defer deinit(&demo);
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const allocator = gpa.allocator();
+
+    var demo = init(allocator, window);
+    defer deinit(allocator, &demo);
 
     zgpu.gui.init(window, demo.gctx.device, content_dir ++ "Roboto-Medium.ttf", 25.0);
     defer zgpu.gui.deinit();
