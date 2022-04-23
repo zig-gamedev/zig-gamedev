@@ -47,9 +47,9 @@ const DemoState = struct {
     pipeline: gpu.RenderPipeline,
     bind_group: gpu.BindGroup,
 
-    vertex_buffer: gpu.Buffer,
-    index_buffer: gpu.Buffer,
-    uniform_buffer: gpu.Buffer,
+    vertex_buffer: zgpu.BufferHandle,
+    index_buffer: zgpu.BufferHandle,
+    uniform_buffer: zgpu.BufferHandle,
 
     depth_texture: gpu.Texture,
     depth_texture_view: gpu.TextureView,
@@ -154,7 +154,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const pipeline = gctx.device.createRenderPipeline(&pipeline_descriptor);
 
     // Create an uniform buffer and a bind group for it.
-    const uniform_buffer = gctx.device.createBuffer(&.{
+    const uniform_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .uniform = true },
         .size = 512,
         .mapped_at_creation = false,
@@ -162,12 +162,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const bind_group = gctx.device.createBindGroup(
         &gpu.BindGroup.Descriptor{
             .layout = bgl,
-            .entries = &.{gpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(zm.Mat))},
+            .entries = &.{gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 0, @sizeOf(zm.Mat))},
         },
     );
 
     // Create a vertex buffer.
-    const vertex_buffer = gctx.device.createBuffer(&.{
+    const vertex_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
         .size = 3 * @sizeOf(Vertex),
         .mapped_at_creation = false,
@@ -177,16 +177,16 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .{ .position = [3]f32{ -0.5, -0.5, 0.0 }, .color = [3]f32{ 0.0, 1.0, 0.0 } },
         .{ .position = [3]f32{ 0.5, -0.5, 0.0 }, .color = [3]f32{ 0.0, 0.0, 1.0 } },
     };
-    gctx.queue.writeBuffer(vertex_buffer, 0, Vertex, vertex_data[0..]);
+    gctx.queue.writeBuffer(gctx.lookupBuffer(vertex_buffer).?, 0, Vertex, vertex_data[0..]);
 
     // Create an index buffer.
-    const index_buffer = gctx.device.createBuffer(&.{
+    const index_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
         .size = 3 * @sizeOf(u32),
         .mapped_at_creation = false,
     });
     const index_data = [_]u32{ 0, 1, 2 };
-    gctx.queue.writeBuffer(index_buffer, 0, u32, index_data[0..]);
+    gctx.queue.writeBuffer(gctx.lookupBuffer(index_buffer).?, 0, u32, index_data[0..]);
 
     // Create a depth texture and it's 'view'.
     const fb_size = window.getFramebufferSize() catch unreachable;
@@ -208,9 +208,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.pipeline.release();
     demo.bind_group.release();
-    demo.vertex_buffer.release();
-    demo.index_buffer.release();
-    demo.uniform_buffer.release();
     demo.depth_texture_view.release();
     demo.depth_texture.release();
     demo.gctx.deinit(allocator);
@@ -273,7 +270,7 @@ fn draw(demo: *DemoState) void {
             zm.storeMat(xform[0..], zm.transpose(object_to_clip));
 
             // Write data at offset 0.
-            encoder.writeBuffer(demo.uniform_buffer, 0, f32, xform[0..]);
+            encoder.writeBuffer(gctx.lookupBuffer(demo.uniform_buffer).?, 0, f32, xform[0..]);
         }
 
         // Update xform matrix for triangle 2.
@@ -285,7 +282,7 @@ fn draw(demo: *DemoState) void {
             zm.storeMat(xform[0..], zm.transpose(object_to_clip));
 
             // Write data at offset 256 (dynamic offsets need to be aligned to 256 bytes).
-            encoder.writeBuffer(demo.uniform_buffer, 256, f32, xform[0..]);
+            encoder.writeBuffer(gctx.lookupBuffer(demo.uniform_buffer).?, 256, f32, xform[0..]);
         }
 
         {
@@ -316,8 +313,8 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            pass.setVertexBuffer(0, demo.vertex_buffer, 0, 3 * @sizeOf(Vertex));
-            pass.setIndexBuffer(demo.index_buffer, .uint32, 0, 3 * @sizeOf(u32));
+            pass.setVertexBuffer(0, gctx.lookupBuffer(demo.vertex_buffer).?, 0, 3 * @sizeOf(Vertex));
+            pass.setIndexBuffer(gctx.lookupBuffer(demo.index_buffer).?, .uint32, 0, 3 * @sizeOf(u32));
 
             pass.setPipeline(demo.pipeline);
 

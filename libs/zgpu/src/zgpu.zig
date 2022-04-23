@@ -133,6 +133,23 @@ pub const GraphicsContext = struct {
         }
         return true;
     }
+
+    pub fn createBuffer(gctx: GraphicsContext, descriptor: gpu.Buffer.Descriptor) BufferHandle {
+        const gpuobj = gctx.device.createBuffer(&descriptor);
+        return gctx.buffer_pool.addResource(.{
+            .gpuobj = gpuobj,
+            .size = descriptor.size,
+            .usage = descriptor.usage,
+        });
+    }
+
+    pub fn lookupBuffer(gctx: GraphicsContext, handle: BufferHandle) ?gpu.Buffer {
+        const maybe_buffer_resource = gctx.buffer_pool.lookupResource(handle);
+        if (maybe_buffer_resource) |buffer_resource| {
+            return buffer_resource.gpuobj;
+        }
+        return null;
+    }
 };
 
 pub const BufferHandle = struct {
@@ -147,7 +164,8 @@ pub const RenderPipelineHandle = struct {
 
 const BufferResource = struct {
     gpuobj: ?gpu.Buffer = null,
-    descriptor: ?gpu.Buffer.Descriptor = null,
+    size: usize = 0,
+    usage: gpu.BufferUsage = .{},
 };
 
 const RenderPipelineResource = struct {
@@ -205,6 +223,21 @@ fn ResourcePool(comptime Resource: type, comptime ResourceHandle: type) type {
                     break :blk pool.generations[slot_idx];
                 },
             };
+        }
+
+        fn isHandleValid(pool: Self, handle: ResourceHandle) bool {
+            return handle.index > 0 and
+                handle.index < pool.resources.len and
+                handle.generation > 0 and
+                handle.generation == pool.generations[handle.index] and
+                pool.resources[handle.index].gpuobj != null;
+        }
+
+        fn lookupResource(pool: Self, handle: ResourceHandle) ?*Resource {
+            if (pool.isHandleValid(handle)) {
+                return &pool.resources[handle.index];
+            }
+            return null;
         }
     };
 }
