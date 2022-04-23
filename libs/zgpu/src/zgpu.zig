@@ -31,9 +31,9 @@ pub const GraphicsContext = struct {
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
     // TODO: Adjust pool sizes.
-    pub const buffer_pool_size = 256;
-    pub const texture_pool_size = 256;
-    pub const render_pipeline_pool_size = 256;
+    const buffer_pool_size = 256;
+    const texture_pool_size = 256;
+    const render_pipeline_pool_size = 256;
 
     pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
