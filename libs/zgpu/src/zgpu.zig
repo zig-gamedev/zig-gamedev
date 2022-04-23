@@ -28,6 +28,7 @@ pub const GraphicsContext = struct {
     swapchain: gpu.SwapChain,
     swapchain_descriptor: gpu.SwapChain.Descriptor,
     buffer_pool: BufferPool,
+    texture_pool: TexturePool,
     render_pipeline_pool: RenderPipelinePool,
 
     pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
@@ -95,7 +96,9 @@ pub const GraphicsContext = struct {
             .window_surface = window_surface,
             .swapchain = swapchain,
             .swapchain_descriptor = swapchain_descriptor,
+            // TODO: Adjust pool sizes
             .buffer_pool = BufferPool.init(allocator, 256),
+            .texture_pool = TexturePool.init(allocator, 256),
             .render_pipeline_pool = RenderPipelinePool.init(allocator, 256),
         };
     }
@@ -104,6 +107,7 @@ pub const GraphicsContext = struct {
         // TODO: make sure all GPU commands are completed
         // TODO: how to release `native_instance`?
         gctx.buffer_pool.deinit(allocator);
+        gctx.texture_pool.deinit(allocator);
         gctx.render_pipeline_pool.deinit(allocator);
         gctx.window_surface.release();
         gctx.swapchain.release();
@@ -184,6 +188,11 @@ pub const BufferHandle = struct {
     generation: u16 = 0,
 };
 
+pub const TextureHandle = struct {
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
+};
+
 pub const RenderPipelineHandle = struct {
     index: u16 align(4) = 0,
     generation: u16 = 0,
@@ -195,11 +204,22 @@ pub const BufferInfo = struct {
     usage: gpu.BufferUsage = .{},
 };
 
+pub const TextureInfo = struct {
+    gpuobj: ?gpu.Texture = null,
+    usage: gpu.Texture.Usage = .{},
+    dimension: gpu.Texture.Dimension = .dimension_1d,
+    size: gpu.Extent3D = .{ .width = 0 },
+    format: gpu.Texture.Format = .none,
+    mip_level_count: u32 = 0,
+    sample_count: u32 = 0,
+};
+
 const RenderPipelineInfo = struct {
     gpuobj: ?gpu.RenderPipeline = null,
 };
 
 const BufferPool = ResourcePool(BufferInfo, BufferHandle);
+const TexturePool = ResourcePool(TextureInfo, TextureHandle);
 const RenderPipelinePool = ResourcePool(RenderPipelineInfo, RenderPipelineHandle);
 
 fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type {
