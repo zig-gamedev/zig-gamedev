@@ -165,6 +165,37 @@ pub const GraphicsContext = struct {
         return null;
     }
 
+    pub fn createTexture(gctx: GraphicsContext, descriptor: gpu.Texture.Descriptor) TextureHandle {
+        const gpuobj = gctx.device.createTexture(&descriptor);
+        return gctx.texture_pool.addResource(.{
+            .gpuobj = gpuobj,
+            .usage = descriptor.usage,
+            .dimension = descriptor.dimension,
+            .size = descriptor.size,
+            .format = descriptor.format,
+            .mip_level_count = descriptor.mip_level_count,
+            .sample_count = descriptor.sample_count,
+        });
+    }
+
+    pub fn destroyTexture(gctx: GraphicsContext, handle: TextureHandle) void {
+        gctx.texture_pool.destroyResource(handle);
+    }
+
+    pub fn lookupTexture(gctx: GraphicsContext, handle: TextureHandle) ?gpu.Texture {
+        if (gctx.lookupTextureInfo(handle)) |info| {
+            return info.gpuobj;
+        }
+        return null;
+    }
+
+    pub fn lookupTextureInfo(gctx: GraphicsContext, handle: TextureHandle) ?TextureInfo {
+        if (gctx.texture_pool.lookupResourceInfo(handle)) |texture_info| {
+            return texture_info.*;
+        }
+        return null;
+    }
+
     pub fn createRenderPipeline(gctx: GraphicsContext, descriptor: gpu.RenderPipeline.Descriptor) RenderPipelineHandle {
         const gpuobj = gctx.device.createRenderPipeline(&descriptor);
         return gctx.render_pipeline_pool.addResource(.{
@@ -277,7 +308,7 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
             if (resource_info == null)
                 return;
 
-            resource_info.?.gpuobj.release();
+            resource_info.?.gpuobj.?.release();
             resource_info.?.* = .{};
         }
 

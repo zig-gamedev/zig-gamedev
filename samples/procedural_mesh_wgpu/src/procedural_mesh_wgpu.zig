@@ -52,7 +52,7 @@ const DemoState = struct {
     index_buffer: zgpu.BufferHandle,
     uniform_buffer: zgpu.BufferHandle,
 
-    depth_texture: gpu.Texture,
+    depth_texture: zgpu.TextureHandle,
     depth_texture_view: gpu.TextureView,
 
     meshes: std.ArrayList(Mesh),
@@ -433,7 +433,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 
     // Create a depth texture and it's 'view'.
     const fb_size = window.getFramebufferSize() catch unreachable;
-    const depth = createDepthTexture(gctx.device, fb_size.width, fb_size.height);
+    const depth = createDepthTexture(gctx, fb_size.width, fb_size.height);
 
     return .{
         .gctx = gctx,
@@ -455,7 +455,6 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.draw_bind_group.release();
     demo.frame_bind_group.release();
     demo.depth_texture_view.release();
-    demo.depth_texture.release();
     demo.meshes.deinit();
     demo.drawables.deinit();
     demo.gctx.deinit(allocator);
@@ -467,11 +466,11 @@ fn update(demo: *DemoState) void {
     if (!demo.gctx.update()) {
         // Release old depth texture.
         demo.depth_texture_view.release();
-        demo.depth_texture.release();
+        demo.gctx.destroyTexture(demo.depth_texture);
 
         // Create a new depth texture to match the new window size.
         const depth = createDepthTexture(
-            demo.gctx.device,
+            demo.gctx,
             demo.gctx.swapchain_descriptor.width,
             demo.gctx.swapchain_descriptor.height,
         );
@@ -682,11 +681,11 @@ fn draw(demo: *DemoState) void {
     gctx.swapchain.present();
 }
 
-fn createDepthTexture(device: gpu.Device, width: u32, height: u32) struct {
-    texture: gpu.Texture,
+fn createDepthTexture(gctx: zgpu.GraphicsContext, width: u32, height: u32) struct {
+    texture: zgpu.TextureHandle,
     view: gpu.TextureView,
 } {
-    const texture = device.createTexture(&gpu.Texture.Descriptor{
+    const texture = gctx.createTexture(.{
         .usage = .{ .render_attachment = true },
         .dimension = .dimension_2d,
         .size = .{ .width = width, .height = height, .depth_or_array_layers = 1 },
@@ -694,7 +693,7 @@ fn createDepthTexture(device: gpu.Device, width: u32, height: u32) struct {
         .mip_level_count = 1,
         .sample_count = 1,
     });
-    const view = texture.createView(&gpu.TextureView.Descriptor{
+    const view = gctx.lookupTexture(texture).?.createView(&.{
         .format = .depth32_float,
         .dimension = .dimension_2d,
         .base_mip_level = 0,
