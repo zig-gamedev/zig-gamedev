@@ -313,8 +313,18 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            pass.setVertexBuffer(0, gctx.lookupBuffer(demo.vertex_buffer).?, 0, 3 * @sizeOf(Vertex));
-            pass.setIndexBuffer(gctx.lookupBuffer(demo.index_buffer).?, .uint32, 0, 3 * @sizeOf(u32));
+            pass.setVertexBuffer(
+                0,
+                gctx.lookupBuffer(demo.vertex_buffer).?,
+                0,
+                gctx.lookupBufferInfo(demo.vertex_buffer).?.size,
+            );
+            pass.setIndexBuffer(
+                gctx.lookupBuffer(demo.index_buffer).?,
+                .uint32,
+                0,
+                gctx.lookupBufferInfo(demo.index_buffer).?.size,
+            );
 
             pass.setPipeline(demo.pipeline);
 

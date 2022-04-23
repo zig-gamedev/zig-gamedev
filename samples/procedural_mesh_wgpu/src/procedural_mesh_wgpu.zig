@@ -48,12 +48,9 @@ const DemoState = struct {
     draw_bind_group: gpu.BindGroup,
     frame_bind_group: gpu.BindGroup,
 
-    total_num_vertices: u32,
-    total_num_indices: u32,
-
-    vertex_buffer: gpu.Buffer,
-    index_buffer: gpu.Buffer,
-    uniform_buffer: gpu.Buffer,
+    vertex_buffer: zgpu.BufferHandle,
+    index_buffer: zgpu.BufferHandle,
+    uniform_buffer: zgpu.BufferHandle,
 
     depth_texture: gpu.Texture,
     depth_texture_view: gpu.TextureView,
@@ -382,7 +379,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     };
 
     // Create an uniform buffer and a bind group for it.
-    const uniform_buffer = gctx.device.createBuffer(&.{
+    const uniform_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .uniform = true },
         .size = 64 * 1024,
     });
@@ -390,13 +387,13 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const draw_bind_group = gctx.device.createBindGroup(
         &gpu.BindGroup.Descriptor{
             .layout = draw_bgl,
-            .entries = &.{gpu.BindGroup.Entry.buffer(0, uniform_buffer, 512, @sizeOf(DrawUniforms))},
+            .entries = &.{gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 512, @sizeOf(DrawUniforms))},
         },
     );
     const frame_bind_group = gctx.device.createBindGroup(
         &gpu.BindGroup.Descriptor{
             .layout = frame_bgl,
-            .entries = &.{gpu.BindGroup.Entry.buffer(0, uniform_buffer, 0, @sizeOf(FrameUniforms))},
+            .entries = &.{gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 0, @sizeOf(FrameUniforms))},
         },
     );
 
@@ -411,7 +408,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const total_num_indices = @intCast(u32, meshes_indices.items.len);
 
     // Create a vertex buffer.
-    const vertex_buffer = gctx.device.createBuffer(&.{
+    const vertex_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
         .size = total_num_vertices * @sizeOf(Vertex),
     });
@@ -424,15 +421,15 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
             vertex_data.items[i].position = meshes_positions.items[i];
             vertex_data.items[i].normal = meshes_normals.items[i];
         }
-        gctx.queue.writeBuffer(vertex_buffer, 0, Vertex, vertex_data.items);
+        gctx.queue.writeBuffer(gctx.lookupBuffer(vertex_buffer).?, 0, Vertex, vertex_data.items);
     }
 
     // Create an index buffer.
-    const index_buffer = gctx.device.createBuffer(&.{
+    const index_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
         .size = total_num_indices * @sizeOf(u16),
     });
-    gctx.queue.writeBuffer(index_buffer, 0, u16, meshes_indices.items);
+    gctx.queue.writeBuffer(gctx.lookupBuffer(index_buffer).?, 0, u16, meshes_indices.items);
 
     // Create a depth texture and it's 'view'.
     const fb_size = window.getFramebufferSize() catch unreachable;
@@ -444,8 +441,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .pipeline = pipeline,
         .draw_bind_group = draw_bind_group,
         .frame_bind_group = frame_bind_group,
-        .total_num_vertices = total_num_vertices,
-        .total_num_indices = total_num_indices,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .uniform_buffer = uniform_buffer,
@@ -460,9 +455,6 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.pipeline.release();
     demo.draw_bind_group.release();
     demo.frame_bind_group.release();
-    demo.vertex_buffer.release();
-    demo.index_buffer.release();
-    demo.uniform_buffer.release();
     demo.depth_texture_view.release();
     demo.depth_texture.release();
     demo.meshes.deinit();
@@ -588,7 +580,12 @@ fn draw(demo: *DemoState) void {
             var frame_uniforms: FrameUniforms = undefined;
             zm.storeMat(frame_uniforms.world_to_clip[0..], zm.transpose(cam_world_to_clip));
             frame_uniforms.camera_position = demo.camera.position;
-            encoder.writeBuffer(demo.uniform_buffer, 0, @TypeOf(frame_uniforms), &.{frame_uniforms});
+            encoder.writeBuffer(
+                gctx.lookupBuffer(demo.uniform_buffer).?,
+                0,
+                @TypeOf(frame_uniforms),
+                &.{frame_uniforms},
+            );
         }
 
         if (demo.stats.frame_number == 1) {
@@ -601,7 +598,7 @@ fn draw(demo: *DemoState) void {
                 draw_uniforms.basecolor_roughness = drawable.basecolor_roughness;
 
                 encoder.writeBuffer(
-                    demo.uniform_buffer,
+                    gctx.lookupBuffer(demo.uniform_buffer).?,
                     512 + 256 * drawable_index,
                     @TypeOf(draw_uniforms),
                     &.{draw_uniforms},
@@ -631,8 +628,18 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            pass.setVertexBuffer(0, demo.vertex_buffer, 0, demo.total_num_vertices * @sizeOf(Vertex));
-            pass.setIndexBuffer(demo.index_buffer, .uint16, 0, demo.total_num_indices * @sizeOf(u16));
+            pass.setVertexBuffer(
+                0,
+                gctx.lookupBuffer(demo.vertex_buffer).?,
+                0,
+                gctx.lookupBufferInfo(demo.vertex_buffer).?.size,
+            );
+            pass.setIndexBuffer(
+                gctx.lookupBuffer(demo.index_buffer).?,
+                .uint16,
+                0,
+                gctx.lookupBufferInfo(demo.index_buffer).?.size,
+            );
 
             pass.setPipeline(demo.pipeline);
             pass.setBindGroup(1, demo.frame_bind_group, &.{});

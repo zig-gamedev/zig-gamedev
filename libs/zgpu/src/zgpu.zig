@@ -143,10 +143,20 @@ pub const GraphicsContext = struct {
         });
     }
 
+    pub fn destroyBuffer(gctx: GraphicsContext, handle: BufferHandle) void {
+        gctx.buffer_pool.destroyBuffer(handle);
+    }
+
     pub fn lookupBuffer(gctx: GraphicsContext, handle: BufferHandle) ?gpu.Buffer {
-        const maybe_buffer_resource = gctx.buffer_pool.lookupResource(handle);
-        if (maybe_buffer_resource) |buffer_resource| {
-            return buffer_resource.gpuobj;
+        if (gctx.lookupBufferInfo(handle)) |info| {
+            return info.gpuobj;
+        }
+        return null;
+    }
+
+    pub fn lookupBufferInfo(gctx: GraphicsContext, handle: BufferHandle) ?BufferInfo {
+        if (gctx.buffer_pool.lookupResourceInfo(handle)) |buffer_info| {
+            return buffer_info.*;
         }
         return null;
     }
@@ -162,28 +172,28 @@ pub const RenderPipelineHandle = struct {
     generation: u16 = 0,
 };
 
-const BufferResource = struct {
+pub const BufferInfo = struct {
     gpuobj: ?gpu.Buffer = null,
     size: usize = 0,
     usage: gpu.BufferUsage = .{},
 };
 
-const RenderPipelineResource = struct {
+pub const RenderPipelineInfo = struct {
     gpuobj: ?gpu.RenderPipeline = null,
 };
 
-const BufferPool = ResourcePool(BufferResource, BufferHandle);
-const RenderPipelinePool = ResourcePool(RenderPipelineResource, RenderPipelineHandle);
+const BufferPool = ResourcePool(BufferInfo, BufferHandle);
+const RenderPipelinePool = ResourcePool(RenderPipelineInfo, RenderPipelineHandle);
 
-fn ResourcePool(comptime Resource: type, comptime ResourceHandle: type) type {
+fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type {
     return struct {
         const Self = @This();
 
-        resources: []Resource,
+        resources: []ResourceInfo,
         generations: []u16,
 
         fn init(allocator: std.mem.Allocator, capacity: u32) Self {
-            var resources = allocator.alloc(Resource, capacity + 1) catch unreachable;
+            var resources = allocator.alloc(ResourceInfo, capacity + 1) catch unreachable;
             for (resources) |*resource| resource.* = .{};
 
             var generations = allocator.alloc(u16, capacity + 1) catch unreachable;
@@ -205,7 +215,7 @@ fn ResourcePool(comptime Resource: type, comptime ResourceHandle: type) type {
             pool.* = undefined;
         }
 
-        fn addResource(pool: Self, resource: Resource) ResourceHandle {
+        fn addResource(pool: Self, resource: ResourceInfo) ResourceHandle {
             assert(resource.gpuobj != null);
 
             var slot_idx: u32 = 1;
@@ -225,6 +235,15 @@ fn ResourcePool(comptime Resource: type, comptime ResourceHandle: type) type {
             };
         }
 
+        fn destroyResource(pool: Self, handle: ResourceHandle) void {
+            var resource_info = pool.lookupResourceInfo(handle);
+            if (resource_info == null)
+                return;
+
+            resource_info.?.gpuobj.release();
+            resource_info.?.* = .{};
+        }
+
         fn isHandleValid(pool: Self, handle: ResourceHandle) bool {
             return handle.index > 0 and
                 handle.index < pool.resources.len and
@@ -233,7 +252,7 @@ fn ResourcePool(comptime Resource: type, comptime ResourceHandle: type) type {
                 pool.resources[handle.index].gpuobj != null;
         }
 
-        fn lookupResource(pool: Self, handle: ResourceHandle) ?*Resource {
+        fn lookupResourceInfo(pool: Self, handle: ResourceHandle) ?*ResourceInfo {
             if (pool.isHandleValid(handle)) {
                 return &pool.resources[handle.index];
             }
