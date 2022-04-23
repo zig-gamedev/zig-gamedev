@@ -27,7 +27,8 @@ pub const GraphicsContext = struct {
     window_surface: gpu.Surface,
     swapchain: gpu.SwapChain,
     swapchain_descriptor: gpu.SwapChain.Descriptor,
-    buffer_pool: GpuObjectPool(Buffer),
+    buffer_pool: BufferPool,
+    render_pipeline_pool: RenderPipelinePool,
 
     pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
@@ -94,7 +95,8 @@ pub const GraphicsContext = struct {
             .window_surface = window_surface,
             .swapchain = swapchain,
             .swapchain_descriptor = swapchain_descriptor,
-            .buffer_pool = GpuObjectPool(Buffer).init(allocator, 256),
+            .buffer_pool = BufferPool.init(allocator, 256),
+            .render_pipeline_pool = RenderPipelinePool.init(allocator, 256),
         };
     }
 
@@ -102,6 +104,7 @@ pub const GraphicsContext = struct {
         // TODO: make sure all GPU commands are completed
         // TODO: how to release `native_instance`?
         gctx.buffer_pool.deinit(allocator);
+        gctx.render_pipeline_pool.deinit(allocator);
         gctx.window_surface.release();
         gctx.swapchain.release();
         gctx.queue.release();
@@ -137,39 +140,71 @@ pub const BufferHandle = struct {
     generation: u16 = 0,
 };
 
-const Buffer = struct {
+pub const RenderPipelineHandle = struct {
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
+};
+
+const BufferResource = struct {
     gpuobj: ?gpu.Buffer = null,
     descriptor: ?gpu.Buffer.Descriptor = null,
 };
 
-fn GpuObjectPool(comptime T: type) type {
+const RenderPipelineResource = struct {
+    gpuobj: ?gpu.RenderPipeline = null,
+};
+
+const BufferPool = ResourcePool(BufferResource, BufferHandle);
+const RenderPipelinePool = ResourcePool(RenderPipelineResource, RenderPipelineHandle);
+
+fn ResourcePool(comptime Resource: type, comptime ResourceHandle: type) type {
     return struct {
         const Self = @This();
 
-        objects: []T,
+        resources: []Resource,
         generations: []u16,
 
         fn init(allocator: std.mem.Allocator, capacity: u32) Self {
-            var objects = allocator.alloc(T, capacity + 1) catch unreachable;
-            for (objects) |*obj| obj.* = .{};
+            var resources = allocator.alloc(Resource, capacity + 1) catch unreachable;
+            for (resources) |*resource| resource.* = .{};
 
             var generations = allocator.alloc(u16, capacity + 1) catch unreachable;
             for (generations) |*gen| gen.* = 0;
 
             return .{
-                .objects = objects,
+                .resources = resources,
                 .generations = generations,
             };
         }
 
         fn deinit(pool: *Self, allocator: std.mem.Allocator) void {
-            for (pool.objects) |obj| {
-                if (obj.gpuobj) |gpuobj|
+            for (pool.resources) |resource| {
+                if (resource.gpuobj) |gpuobj|
                     gpuobj.release();
             }
-            allocator.free(pool.objects);
+            allocator.free(pool.resources);
             allocator.free(pool.generations);
             pool.* = undefined;
+        }
+
+        fn addResource(pool: Self, resource: Resource) ResourceHandle {
+            assert(resource.gpuobj != null);
+
+            var slot_idx: u32 = 1;
+            while (slot_idx < pool.resources.len) : (slot_idx += 1) {
+                if (pool.resources[slot_idx].gpuobj == null)
+                    break;
+            }
+            assert(slot_idx < pool.resources.len);
+
+            pool.resources[slot_idx] = resource;
+            return .{
+                .index = @intCast(u16, slot_idx),
+                .generation = blk: {
+                    pool.generations[slot_idx] += 1;
+                    break :blk pool.generations[slot_idx];
+                },
+            };
         }
     };
 }
