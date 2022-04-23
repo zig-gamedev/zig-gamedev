@@ -44,7 +44,7 @@ const DemoState = struct {
     gctx: zgpu.GraphicsContext,
     stats: zgpu.FrameStats,
 
-    pipeline: gpu.RenderPipeline,
+    pipeline: zgpu.RenderPipelineHandle,
     draw_bind_group: gpu.BindGroup,
     frame_bind_group: gpu.BindGroup,
 
@@ -375,7 +375,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
                 .targets = &.{color_target},
             },
         };
-        break :blk gctx.device.createRenderPipeline(&pipeline_descriptor);
+        break :blk gctx.createRenderPipeline(pipeline_descriptor);
     };
 
     // Create an uniform buffer and a bind group for it.
@@ -452,7 +452,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
-    demo.pipeline.release();
     demo.draw_bind_group.release();
     demo.frame_bind_group.release();
     demo.depth_texture_view.release();
@@ -641,7 +640,7 @@ fn draw(demo: *DemoState) void {
                 gctx.lookupBufferInfo(demo.index_buffer).?.size,
             );
 
-            pass.setPipeline(demo.pipeline);
+            gctx.setRenderPipeline(pass, demo.pipeline);
             pass.setBindGroup(1, demo.frame_bind_group, &.{});
 
             for (demo.drawables.items) |drawable, drawable_index| {

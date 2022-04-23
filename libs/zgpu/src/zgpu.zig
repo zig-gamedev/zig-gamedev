@@ -144,7 +144,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn destroyBuffer(gctx: GraphicsContext, handle: BufferHandle) void {
-        gctx.buffer_pool.destroyBuffer(handle);
+        gctx.buffer_pool.destroyResource(handle);
     }
 
     pub fn lookupBuffer(gctx: GraphicsContext, handle: BufferHandle) ?gpu.Buffer {
@@ -159,6 +159,23 @@ pub const GraphicsContext = struct {
             return buffer_info.*;
         }
         return null;
+    }
+
+    pub fn createRenderPipeline(gctx: GraphicsContext, descriptor: gpu.RenderPipeline.Descriptor) RenderPipelineHandle {
+        const gpuobj = gctx.device.createRenderPipeline(&descriptor);
+        return gctx.render_pipeline_pool.addResource(.{
+            .gpuobj = gpuobj,
+        });
+    }
+
+    pub fn destroyRenderPipeline(gctx: GraphicsContext, handle: RenderPipelineHandle) void {
+        gctx.render_pipeline_pool.destroyResource(handle);
+    }
+
+    pub fn setRenderPipeline(gctx: GraphicsContext, pass: gpu.RenderPassEncoder, handle: RenderPipelineHandle) void {
+        if (gctx.render_pipeline_pool.lookupResourceInfo(handle)) |info| {
+            pass.setPipeline(info.gpuobj.?);
+        }
     }
 };
 
@@ -178,7 +195,7 @@ pub const BufferInfo = struct {
     usage: gpu.BufferUsage = .{},
 };
 
-pub const RenderPipelineInfo = struct {
+const RenderPipelineInfo = struct {
     gpuobj: ?gpu.RenderPipeline = null,
 };
 
