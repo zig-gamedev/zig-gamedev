@@ -16,8 +16,6 @@ pub const cimgui = @cImport({
 pub const gpu = @import("mach-gpu/main.zig");
 
 pub const GraphicsContext = struct {
-    pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
-
     native_instance: gpu.NativeInstance,
     adapter_type: gpu.Adapter.Type,
     backend_type: gpu.Adapter.BackendType,
@@ -30,6 +28,12 @@ pub const GraphicsContext = struct {
     buffer_pool: BufferPool,
     texture_pool: TexturePool,
     render_pipeline_pool: RenderPipelinePool,
+
+    pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
+    // TODO: Adjust pool sizes.
+    pub const buffer_pool_size = 256;
+    pub const texture_pool_size = 256;
+    pub const render_pipeline_pool_size = 256;
 
     pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
@@ -96,16 +100,15 @@ pub const GraphicsContext = struct {
             .window_surface = window_surface,
             .swapchain = swapchain,
             .swapchain_descriptor = swapchain_descriptor,
-            // TODO: Adjust pool sizes
-            .buffer_pool = BufferPool.init(allocator, 256),
-            .texture_pool = TexturePool.init(allocator, 256),
-            .render_pipeline_pool = RenderPipelinePool.init(allocator, 256),
+            .buffer_pool = BufferPool.init(allocator, buffer_pool_size),
+            .texture_pool = TexturePool.init(allocator, texture_pool_size),
+            .render_pipeline_pool = RenderPipelinePool.init(allocator, render_pipeline_pool_size),
         };
     }
 
     pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
-        // TODO: make sure all GPU commands are completed
-        // TODO: how to release `native_instance`?
+        // TODO: Make sure all GPU commands are completed.
+        // TODO: How to release `native_instance`?
         gctx.buffer_pool.deinit(allocator);
         gctx.texture_pool.deinit(allocator);
         gctx.render_pipeline_pool.deinit(allocator);
@@ -133,7 +136,7 @@ pub const GraphicsContext = struct {
                 "[zgpu] Swap chain has been resized to: {d}x{d}\n",
                 .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
             );
-            return false; // swapchain resized
+            return false; // Swap chain has been resized.
         }
         return true;
     }
@@ -338,8 +341,7 @@ pub fn checkContent(comptime content_dir: []const u8) !void {
                 const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
                 std.os.chdir(exe_path) catch {};
             }
-
-            // Make sure font file is a valid data file - not just Git LFS link.
+            // Make sure font file is a valid data file and not just a Git LFS pointer.
             {
                 const file = try std.fs.cwd().openFile(content_dir ++ "Roboto-Medium.ttf", .{});
                 defer file.close();
@@ -542,7 +544,7 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
         else => @compileError("Unsupported number of args"),
     };
 
-    // NOTE: func is a var because making it const causes a compile error which I believe is a compiler bug
+    // NOTE: `func` is a var because making it const causes a compile error which I believe is a compiler bug.
     var func = @ptrCast(FnType, objc.objc_msgSend);
     const sel = objc.sel_getUid(sel_name);
 
