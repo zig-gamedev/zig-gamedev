@@ -430,7 +430,7 @@ pub const gui = struct {
             unreachable;
         }
 
-        if (!ImGui_ImplWGPU_Init(device.ptr, 1, @enumToInt(GraphicsContext.swapchain_format))) {
+        if (!ImGui_ImplWGPU_Init(device.ptr, 2, @enumToInt(GraphicsContext.swapchain_format))) {
             unreachable;
         }
     }
