@@ -10,7 +10,6 @@ Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zwin32 = @import("libs/zwin32/build.zig");
 const ztracy = @import("libs/ztracy/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
@@ -22,7 +21,6 @@ pub fn build(b: *std.build.Builder) void {
     exe.addOptions("build_options", exe_options);
 
     const options_pkg = exe_options.getPackage("build_options");
-    exe.addPackage(zwin32.pkg);
     exe.addPackage(ztracy.getPkg(b, options_pkg));
 
     ztracy.link(exe, enable_tracy);
