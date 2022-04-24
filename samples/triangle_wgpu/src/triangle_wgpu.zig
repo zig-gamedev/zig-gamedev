@@ -311,26 +311,22 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            pass.setVertexBuffer(
-                0,
-                gctx.lookupBuffer(demo.vertex_buffer).?,
-                0,
-                gctx.lookupBufferInfo(demo.vertex_buffer).?.size,
-            );
-            pass.setIndexBuffer(
-                gctx.lookupBuffer(demo.index_buffer).?,
-                .uint32,
-                0,
-                gctx.lookupBufferInfo(demo.index_buffer).?.size,
-            );
+            if (gctx.lookupBufferInfo(demo.vertex_buffer)) |vb| {
+                pass.setVertexBuffer(0, vb.gpuobj.?, 0, vb.size);
+            }
+            if (gctx.lookupBufferInfo(demo.index_buffer)) |ib| {
+                pass.setIndexBuffer(ib.gpuobj.?, .uint32, 0, ib.size);
+            }
 
-            gctx.setRenderPipeline(pass, demo.pipeline);
+            if (gctx.lookupRenderPipeline(demo.pipeline)) |pipeline| {
+                pass.setPipeline(pipeline);
 
-            pass.setBindGroup(0, demo.bind_group, &.{0});
-            pass.drawIndexed(3, 1, 0, 0, 0);
+                pass.setBindGroup(0, demo.bind_group, &.{0});
+                pass.drawIndexed(3, 1, 0, 0, 0);
 
-            pass.setBindGroup(0, demo.bind_group, &.{256});
-            pass.drawIndexed(3, 1, 0, 0, 0);
+                pass.setBindGroup(0, demo.bind_group, &.{256});
+                pass.drawIndexed(3, 1, 0, 0, 0);
+            }
 
             pass.end();
         }

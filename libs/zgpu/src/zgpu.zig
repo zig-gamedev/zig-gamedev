@@ -210,10 +210,11 @@ pub const GraphicsContext = struct {
         gctx.render_pipeline_pool.destroyResource(handle);
     }
 
-    pub fn setRenderPipeline(gctx: GraphicsContext, pass: gpu.RenderPassEncoder, handle: RenderPipelineHandle) void {
-        if (gctx.render_pipeline_pool.lookupResourceInfo(handle)) |info| {
-            pass.setPipeline(info.gpuobj.?);
+    pub fn lookupRenderPipeline(gctx: GraphicsContext, handle: RenderPipelineHandle) ?gpu.RenderPipeline {
+        if (gctx.render_pipeline_pool.lookupResourceInfo(handle)) |render_pipeline| {
+            return render_pipeline.gpuobj;
         }
+        return null;
     }
 };
 

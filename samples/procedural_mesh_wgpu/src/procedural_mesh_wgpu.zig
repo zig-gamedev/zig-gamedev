@@ -626,31 +626,27 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            pass.setVertexBuffer(
-                0,
-                gctx.lookupBuffer(demo.vertex_buffer).?,
-                0,
-                gctx.lookupBufferInfo(demo.vertex_buffer).?.size,
-            );
-            pass.setIndexBuffer(
-                gctx.lookupBuffer(demo.index_buffer).?,
-                .uint16,
-                0,
-                gctx.lookupBufferInfo(demo.index_buffer).?.size,
-            );
+            if (gctx.lookupBufferInfo(demo.vertex_buffer)) |vb| {
+                pass.setVertexBuffer(0, vb.gpuobj.?, 0, vb.size);
+            }
+            if (gctx.lookupBufferInfo(demo.index_buffer)) |ib| {
+                pass.setIndexBuffer(ib.gpuobj.?, .uint16, 0, ib.size);
+            }
 
-            gctx.setRenderPipeline(pass, demo.pipeline);
-            pass.setBindGroup(1, demo.frame_bind_group, &.{});
+            if (gctx.lookupRenderPipeline(demo.pipeline)) |pipeline| {
+                pass.setPipeline(pipeline);
+                pass.setBindGroup(1, demo.frame_bind_group, &.{});
 
-            for (demo.drawables.items) |drawable, drawable_index| {
-                pass.setBindGroup(0, demo.draw_bind_group, &.{@intCast(u32, drawable_index * 256)});
-                pass.drawIndexed(
-                    demo.meshes.items[drawable.mesh_index].num_indices,
-                    1,
-                    demo.meshes.items[drawable.mesh_index].index_offset,
-                    demo.meshes.items[drawable.mesh_index].vertex_offset,
-                    0,
-                );
+                for (demo.drawables.items) |drawable, drawable_index| {
+                    pass.setBindGroup(0, demo.draw_bind_group, &.{@intCast(u32, drawable_index * 256)});
+                    pass.drawIndexed(
+                        demo.meshes.items[drawable.mesh_index].num_indices,
+                        1,
+                        demo.meshes.items[drawable.mesh_index].index_offset,
+                        demo.meshes.items[drawable.mesh_index].vertex_offset,
+                        0,
+                    );
+                }
             }
             pass.end();
         }
