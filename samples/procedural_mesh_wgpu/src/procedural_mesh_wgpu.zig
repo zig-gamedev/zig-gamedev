@@ -342,8 +342,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         };
 
         const vertex_attributes = [_]gpu.VertexAttribute{
-            gpu.VertexAttribute{ .format = .float32x3, .offset = 0, .shader_location = 0 },
-            gpu.VertexAttribute{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
+            .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+            .{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
         };
         const vertex_buffer_layout = gpu.VertexBufferLayout{
             .array_stride = @sizeOf(Vertex),

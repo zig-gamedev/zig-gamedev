@@ -64,37 +64,20 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
     defer fs_module.release();
 
-    // Setup a 'fragment state' for our render pipeline.
-    const blend = gpu.BlendState{
-        .color = .{ .operation = .add, .src_factor = .one, .dst_factor = .zero },
-        .alpha = .{ .operation = .add, .src_factor = .one, .dst_factor = .zero },
-    };
     const color_target = gpu.ColorTargetState{
         .format = zgpu.GraphicsContext.swapchain_format,
-        .blend = &blend,
-        .write_mask = gpu.ColorWriteMask.all,
-    };
-    const fragment_state = gpu.FragmentState{
-        .module = fs_module,
-        .entry_point = "main",
-        .targets = &.{color_target},
+        .blend = &.{ .color = .{}, .alpha = .{} },
     };
 
-    // Setup a 'vertex state' for our render pipeline.
     const vertex_attributes = [_]gpu.VertexAttribute{
-        gpu.VertexAttribute{ .format = .float32x3, .offset = 0, .shader_location = 0 },
-        gpu.VertexAttribute{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
+        .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+        .{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
     };
     const vertex_buffer_layout = gpu.VertexBufferLayout{
         .array_stride = @sizeOf(Vertex),
         .step_mode = .vertex,
         .attribute_count = vertex_attributes.len,
         .attributes = &vertex_attributes,
-    };
-    const vertex_state = gpu.VertexState{
-        .module = vs_module,
-        .entry_point = "main",
-        .buffers = &.{vertex_buffer_layout},
     };
 
     // Create a bind group layout needed for our render pipeline.
@@ -114,41 +97,26 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 
     // Create a render pipeline.
     const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
-        .fragment = &fragment_state,
         .layout = pl,
-        .depth_stencil = &.{
-            .format = .depth32_float,
-            .depth_write_enabled = true,
-            .depth_compare = .less,
-            .stencil_front = .{
-                .compare = .always,
-                .fail_op = .keep,
-                .depth_fail_op = .keep,
-                .pass_op = .keep,
-            },
-            .stencil_back = .{
-                .compare = .always,
-                .fail_op = .keep,
-                .depth_fail_op = .keep,
-                .pass_op = .keep,
-            },
-            .stencil_read_mask = 0,
-            .stencil_write_mask = 0,
-            .depth_bias = 0,
-            .depth_bias_slope_scale = 0.0,
-            .depth_bias_clamp = 0.0,
-        },
-        .vertex = vertex_state,
-        .multisample = .{
-            .count = 1,
-            .mask = 0xffff_ffff,
-            .alpha_to_coverage_enabled = false,
+        .vertex = gpu.VertexState{
+            .module = vs_module,
+            .entry_point = "main",
+            .buffers = &.{vertex_buffer_layout},
         },
         .primitive = .{
             .front_face = .ccw,
             .cull_mode = .none,
             .topology = .triangle_list,
-            .strip_index_format = .none,
+        },
+        .depth_stencil = &.{
+            .format = .depth32_float,
+            .depth_write_enabled = true,
+            .depth_compare = .less,
+        },
+        .fragment = &gpu.FragmentState{
+            .module = fs_module,
+            .entry_point = "main",
+            .targets = &.{color_target},
         },
     };
     const pipeline = gctx.createRenderPipeline(pipeline_descriptor);
@@ -286,8 +254,6 @@ fn draw(demo: *DemoState) void {
         {
             const color_attachment = gpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
-                .resolve_target = null,
-                .clear_value = std.mem.zeroes(gpu.Color),
                 .load_op = .clear,
                 .store_op = .store,
             };
@@ -295,14 +261,9 @@ fn draw(demo: *DemoState) void {
                 .view = demo.depth_texture_view,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
-                .clear_depth = math.nan_f32,
                 .depth_clear_value = 1.0,
-                .depth_read_only = false,
                 .stencil_load_op = .none,
                 .stencil_store_op = .none,
-                .clear_stencil = 0,
-                .stencil_clear_value = 0,
-                .stencil_read_only = false,
             };
             const render_pass_info = gpu.RenderPassEncoder.Descriptor{
                 .color_attachments = &.{color_attachment},
@@ -333,14 +294,11 @@ fn draw(demo: *DemoState) void {
         {
             const color_attachment = gpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
-                .resolve_target = null,
-                .clear_value = std.mem.zeroes(gpu.Color),
                 .load_op = .load,
                 .store_op = .store,
             };
             const render_pass_info = gpu.RenderPassEncoder.Descriptor{
                 .color_attachments = &.{color_attachment},
-                .depth_stencil_attachment = null,
             };
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
