@@ -387,13 +387,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const draw_bind_group = gctx.device.createBindGroup(
         &gpu.BindGroup.Descriptor{
             .layout = draw_bgl,
-            .entries = &.{gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 512, @sizeOf(DrawUniforms))},
+            .entries = &.{
+                gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 512, @sizeOf(DrawUniforms)),
+            },
         },
     );
     const frame_bind_group = gctx.device.createBindGroup(
         &gpu.BindGroup.Descriptor{
             .layout = frame_bgl,
-            .entries = &.{gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 0, @sizeOf(FrameUniforms))},
+            .entries = &.{
+                gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 0, @sizeOf(FrameUniforms)),
+            },
         },
     );
 

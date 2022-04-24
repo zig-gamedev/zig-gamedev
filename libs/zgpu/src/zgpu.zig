@@ -199,7 +199,10 @@ pub const GraphicsContext = struct {
         return null;
     }
 
-    pub fn createRenderPipeline(gctx: GraphicsContext, descriptor: gpu.RenderPipeline.Descriptor) RenderPipelineHandle {
+    pub fn createRenderPipeline(
+        gctx: GraphicsContext,
+        descriptor: gpu.RenderPipeline.Descriptor,
+    ) RenderPipelineHandle {
         const gpuobj = gctx.device.createRenderPipeline(&descriptor);
         return gctx.render_pipeline_pool.addResource(.{
             .gpuobj = gpuobj,
