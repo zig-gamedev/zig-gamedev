@@ -312,7 +312,11 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
             if (resource_info == null)
                 return;
 
-            resource_info.?.gpuobj.?.release();
+            const gpuobj = resource_info.?.gpuobj.?;
+            if (@hasDecl(@TypeOf(gpuobj), "destroy")) {
+                gpuobj.destroy();
+            }
+            gpuobj.release();
             resource_info.?.* = .{};
         }
 
