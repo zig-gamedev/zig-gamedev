@@ -141,7 +141,7 @@ pub const GraphicsContext = struct {
         return true;
     }
 
-    pub fn createBuffer(gctx: GraphicsContext, descriptor: gpu.Buffer.Descriptor) BufferHandle {
+    pub fn createBuffer(gctx: *GraphicsContext, descriptor: gpu.Buffer.Descriptor) BufferHandle {
         const gpuobj = gctx.device.createBuffer(&descriptor);
         return gctx.buffer_pool.addResource(.{
             .gpuobj = gpuobj,
@@ -168,7 +168,7 @@ pub const GraphicsContext = struct {
         return null;
     }
 
-    pub fn createTexture(gctx: GraphicsContext, descriptor: gpu.Texture.Descriptor) TextureHandle {
+    pub fn createTexture(gctx: *GraphicsContext, descriptor: gpu.Texture.Descriptor) TextureHandle {
         const gpuobj = gctx.device.createTexture(&descriptor);
         return gctx.texture_pool.addResource(.{
             .gpuobj = gpuobj,
@@ -200,7 +200,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn createRenderPipeline(
-        gctx: GraphicsContext,
+        gctx: *GraphicsContext,
         descriptor: gpu.RenderPipeline.Descriptor,
     ) RenderPipelineHandle {
         const gpuobj = gctx.device.createRenderPipeline(&descriptor);
@@ -266,6 +266,7 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
 
         resources: []ResourceInfo,
         generations: []u16,
+        start_slot_index: u32 = 0,
 
         fn init(allocator: std.mem.Allocator, capacity: u32) Self {
             var resources = allocator.alloc(ResourceInfo, capacity + 1) catch unreachable;
@@ -290,22 +291,29 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
             pool.* = undefined;
         }
 
-        fn addResource(pool: Self, resource: ResourceInfo) ResourceHandle {
+        fn addResource(pool: *Self, resource: ResourceInfo) ResourceHandle {
             assert(resource.gpuobj != null);
 
-            var slot_idx: u32 = 1;
-            while (slot_idx < pool.resources.len) : (slot_idx += 1) {
-                if (pool.resources[slot_idx].gpuobj == null)
+            var index: u32 = 0;
+            var found_slot_index: u32 = 0;
+            while (index < pool.resources.len) : (index += 1) {
+                const slot_index = (pool.start_slot_index + index) % @intCast(u32, pool.resources.len);
+                if (slot_index == 0)
+                    continue;
+                if (pool.resources[slot_index].gpuobj == null) {
+                    found_slot_index = slot_index;
                     break;
+                }
             }
-            assert(slot_idx < pool.resources.len);
+            assert(found_slot_index > 0 and found_slot_index < pool.resources.len);
 
-            pool.resources[slot_idx] = resource;
+            pool.start_slot_index = found_slot_index + 1;
+            pool.resources[found_slot_index] = resource;
             return .{
-                .index = @intCast(u16, slot_idx),
+                .index = @intCast(u16, found_slot_index),
                 .generation = blk: {
-                    pool.generations[slot_idx] += 1;
-                    break :blk pool.generations[slot_idx];
+                    pool.generations[found_slot_index] += 1;
+                    break :blk pool.generations[found_slot_index];
                 },
             };
         }

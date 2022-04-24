@@ -437,7 +437,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 
     // Create a depth texture and it's 'view'.
     const fb_size = window.getFramebufferSize() catch unreachable;
-    const depth = createDepthTexture(gctx, fb_size.width, fb_size.height);
+    const depth = createDepthTexture(&gctx, fb_size.width, fb_size.height);
 
     return .{
         .gctx = gctx,
@@ -474,7 +474,7 @@ fn update(demo: *DemoState) void {
 
         // Create a new depth texture to match the new window size.
         const depth = createDepthTexture(
-            demo.gctx,
+            &demo.gctx,
             demo.gctx.swapchain_descriptor.width,
             demo.gctx.swapchain_descriptor.height,
         );
@@ -681,7 +681,7 @@ fn draw(demo: *DemoState) void {
     gctx.swapchain.present();
 }
 
-fn createDepthTexture(gctx: zgpu.GraphicsContext, width: u32, height: u32) struct {
+fn createDepthTexture(gctx: *zgpu.GraphicsContext, width: u32, height: u32) struct {
     texture: zgpu.TextureHandle,
     view: gpu.TextureView,
 } {
