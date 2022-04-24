@@ -125,12 +125,13 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const uniform_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .uniform = true },
         .size = 512,
-        .mapped_at_creation = false,
     });
     const bind_group = gctx.device.createBindGroup(
         &gpu.BindGroup.Descriptor{
             .layout = bgl,
-            .entries = &.{gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 0, @sizeOf(zm.Mat))},
+            .entries = &.{
+                gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 0, @sizeOf(zm.Mat)),
+            },
         },
     );
 
@@ -138,7 +139,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const vertex_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
         .size = 3 * @sizeOf(Vertex),
-        .mapped_at_creation = false,
     });
     const vertex_data = [_]Vertex{
         .{ .position = [3]f32{ 0.0, 0.5, 0.0 }, .color = [3]f32{ 1.0, 0.0, 0.0 } },
@@ -151,7 +151,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const index_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
         .size = 3 * @sizeOf(u32),
-        .mapped_at_creation = false,
     });
     const index_data = [_]u32{ 0, 1, 2 };
     gctx.queue.writeBuffer(gctx.lookupBuffer(index_buffer).?, 0, u32, index_data[0..]);
