@@ -454,6 +454,8 @@ pub fn checkContent(comptime content_dir: []const u8) !void {
             \\git lfs install
             \\git pull
             \\
+            \\For more info please see: https://git-lfs.github.com/
+            \\
             \\
         ,
             .{},
