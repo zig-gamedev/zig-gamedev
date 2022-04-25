@@ -218,6 +218,10 @@ pub const GraphicsContext = struct {
         });
     }
 
+    pub fn destroyTextureView(gctx: GraphicsContext, handle: TextureViewHandle) void {
+        gctx.texture_view_pool.destroyResource(handle);
+    }
+
     pub fn lookupTextureViewInfo(gctx: GraphicsContext, handle: TextureViewHandle) ?TextureViewInfo {
         if (gctx.texture_view_pool.lookupResourceInfo(handle)) |texture_view_info| {
             return texture_view_info.*;
@@ -226,8 +230,10 @@ pub const GraphicsContext = struct {
     }
 
     pub fn lookupTextureView(gctx: GraphicsContext, handle: TextureViewHandle) ?gpu.TextureView {
-        if (gctx.lookupTextureViewInfo(handle)) |info| {
-            return info.gpuobj.?;
+        if (gctx.lookupTextureViewInfo(handle)) |view_info| {
+            if (gctx.isResourceValid(view_info.parent_texture_handle)) {
+                return view_info.gpuobj.?;
+            }
         }
         return null;
     }
@@ -251,6 +257,22 @@ pub const GraphicsContext = struct {
             return render_pipeline.gpuobj.?;
         }
         return null;
+    }
+
+    pub fn isResourceValid(gctx: GraphicsContext, resource_handle: anytype) bool {
+        const T = @TypeOf(resource_handle);
+        switch (T) {
+            BufferHandle => return gctx.buffer_pool.isHandleValid(resource_handle),
+            TextureHandle => return gctx.texture_pool.isHandleValid(resource_handle),
+            TextureViewHandle => {
+                if (gctx.lookupTextureViewInfo(resource_handle)) |view_info| {
+                    return gctx.texture_pool.isHandleValid(view_info.parent_texture_handle);
+                }
+                return false;
+            },
+            RenderPipelineHandle => return gctx.render_pipeline_pool.isHandleValid(resource_handle),
+            else => @compileError("[zgpu] GraphicsContext.isResourceValid() not implemented for " ++ @typeName(T)),
+        }
     }
 };
 

@@ -53,7 +53,7 @@ const DemoState = struct {
     uniform_buffer: zgpu.BufferHandle,
 
     depth_texture: zgpu.TextureHandle,
-    depth_texture_view: gpu.TextureView,
+    depth_texture_view: zgpu.TextureViewHandle,
 
     meshes: std.ArrayList(Mesh),
     drawables: std.ArrayList(Drawable),
@@ -458,7 +458,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.draw_bind_group.release();
     demo.frame_bind_group.release();
-    demo.depth_texture_view.release();
     demo.meshes.deinit();
     demo.drawables.deinit();
     demo.gctx.deinit(allocator);
@@ -469,7 +468,7 @@ fn update(demo: *DemoState) void {
     demo.stats.update(demo.gctx.window, window_title);
     if (!demo.gctx.update()) {
         // Release old depth texture.
-        demo.depth_texture_view.release();
+        demo.gctx.destroyTextureView(demo.depth_texture_view);
         demo.gctx.destroyTexture(demo.depth_texture);
 
         // Create a new depth texture to match the new window size.
@@ -616,7 +615,7 @@ fn draw(demo: *DemoState) void {
                 .store_op = .store,
             };
             const depth_attachment = gpu.RenderPassDepthStencilAttachment{
-                .view = demo.depth_texture_view,
+                .view = gctx.lookupTextureView(demo.depth_texture_view).?,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
@@ -683,7 +682,7 @@ fn draw(demo: *DemoState) void {
 
 fn createDepthTexture(gctx: *zgpu.GraphicsContext, width: u32, height: u32) struct {
     texture: zgpu.TextureHandle,
-    view: gpu.TextureView,
+    view: zgpu.TextureViewHandle,
 } {
     const texture = gctx.createTexture(.{
         .usage = .{ .render_attachment = true },
@@ -693,7 +692,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext, width: u32, height: u32) stru
         .mip_level_count = 1,
         .sample_count = 1,
     });
-    const view = gctx.lookupTexture(texture).?.createView(&.{
+    const view = gctx.createTextureView(texture, .{
         .format = .depth32_float,
         .dimension = .dimension_2d,
         .base_mip_level = 0,
