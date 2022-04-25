@@ -27,12 +27,14 @@ pub const GraphicsContext = struct {
     swapchain_descriptor: gpu.SwapChain.Descriptor,
     buffer_pool: BufferPool,
     texture_pool: TexturePool,
+    texture_view_pool: TextureViewPool,
     render_pipeline_pool: RenderPipelinePool,
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
     // TODO: Adjust pool sizes.
     const buffer_pool_size = 256;
     const texture_pool_size = 256;
+    const texture_view_pool_size = 256;
     const render_pipeline_pool_size = 256;
 
     pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
@@ -102,6 +104,7 @@ pub const GraphicsContext = struct {
             .swapchain_descriptor = swapchain_descriptor,
             .buffer_pool = BufferPool.init(allocator, buffer_pool_size),
             .texture_pool = TexturePool.init(allocator, texture_pool_size),
+            .texture_view_pool = TextureViewPool.init(allocator, texture_view_pool_size),
             .render_pipeline_pool = RenderPipelinePool.init(allocator, render_pipeline_pool_size),
         };
     }
@@ -110,6 +113,7 @@ pub const GraphicsContext = struct {
         // TODO: Make sure all GPU commands are completed.
         // TODO: How to release `native_instance`?
         gctx.buffer_pool.deinit(allocator);
+        gctx.texture_view_pool.deinit(allocator);
         gctx.texture_pool.deinit(allocator);
         gctx.render_pipeline_pool.deinit(allocator);
         gctx.window_surface.release();
@@ -156,7 +160,7 @@ pub const GraphicsContext = struct {
 
     pub fn lookupBuffer(gctx: GraphicsContext, handle: BufferHandle) ?gpu.Buffer {
         if (gctx.lookupBufferInfo(handle)) |info| {
-            return info.gpuobj;
+            return info.gpuobj.?;
         }
         return null;
     }
@@ -187,7 +191,7 @@ pub const GraphicsContext = struct {
 
     pub fn lookupTexture(gctx: GraphicsContext, handle: TextureHandle) ?gpu.Texture {
         if (gctx.lookupTextureInfo(handle)) |info| {
-            return info.gpuobj;
+            return info.gpuobj.?;
         }
         return null;
     }
@@ -195,6 +199,35 @@ pub const GraphicsContext = struct {
     pub fn lookupTextureInfo(gctx: GraphicsContext, handle: TextureHandle) ?TextureInfo {
         if (gctx.texture_pool.lookupResourceInfo(handle)) |texture_info| {
             return texture_info.*;
+        }
+        return null;
+    }
+
+    pub fn createTextureView(gctx: *GraphicsContext, texture_handle: TextureHandle, descriptor: gpu.TextureView.Descriptor) TextureViewHandle {
+        const texture = gctx.lookupTexture(texture_handle).?;
+        const gpuobj = texture.createView(&descriptor);
+        return gctx.texture_view_pool.addResource(.{
+            .gpuobj = gpuobj,
+            .format = descriptor.format,
+            .dimension = descriptor.dimension,
+            .base_mip_level = descriptor.base_mip_level,
+            .base_array_layer = descriptor.base_array_layer,
+            .array_layer_count = descriptor.array_layer_count,
+            .aspect = descriptor.aspect,
+            .parent_texture_handle = texture_handle,
+        });
+    }
+
+    pub fn lookupTextureViewInfo(gctx: GraphicsContext, handle: TextureViewHandle) ?TextureViewInfo {
+        if (gctx.texture_view_pool.lookupResourceInfo(handle)) |texture_view_info| {
+            return texture_view_info.*;
+        }
+        return null;
+    }
+
+    pub fn lookupTextureView(gctx: GraphicsContext, handle: TextureViewHandle) ?gpu.TextureView {
+        if (gctx.lookupTextureViewInfo(handle)) |info| {
+            return info.gpuobj.?;
         }
         return null;
     }
@@ -215,7 +248,7 @@ pub const GraphicsContext = struct {
 
     pub fn lookupRenderPipeline(gctx: GraphicsContext, handle: RenderPipelineHandle) ?gpu.RenderPipeline {
         if (gctx.render_pipeline_pool.lookupResourceInfo(handle)) |render_pipeline| {
-            return render_pipeline.gpuobj;
+            return render_pipeline.gpuobj.?;
         }
         return null;
     }
@@ -227,6 +260,11 @@ pub const BufferHandle = struct {
 };
 
 pub const TextureHandle = struct {
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
+};
+
+pub const TextureViewHandle = struct {
     index: u16 align(4) = 0,
     generation: u16 = 0,
 };
@@ -252,12 +290,24 @@ pub const TextureInfo = struct {
     sample_count: u32 = 0,
 };
 
+pub const TextureViewInfo = struct {
+    gpuobj: ?gpu.TextureView = null,
+    format: gpu.Texture.Format = .none,
+    dimension: gpu.TextureView.Dimension = .dimension_none,
+    base_mip_level: u32 = 0,
+    base_array_layer: u32 = 0,
+    array_layer_count: u32 = 0,
+    aspect: gpu.Texture.Aspect = .all,
+    parent_texture_handle: TextureHandle = .{},
+};
+
 const RenderPipelineInfo = struct {
     gpuobj: ?gpu.RenderPipeline = null,
 };
 
 const BufferPool = ResourcePool(BufferInfo, BufferHandle);
 const TexturePool = ResourcePool(TextureInfo, TextureHandle);
+const TextureViewPool = ResourcePool(TextureViewInfo, TextureViewHandle);
 const RenderPipelinePool = ResourcePool(RenderPipelineInfo, RenderPipelineHandle);
 
 fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type {
@@ -283,8 +333,12 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
 
         fn deinit(pool: *Self, allocator: std.mem.Allocator) void {
             for (pool.resources) |resource| {
-                if (resource.gpuobj) |gpuobj|
+                if (resource.gpuobj) |gpuobj| {
+                    if (@hasDecl(@TypeOf(gpuobj), "destroy")) {
+                        gpuobj.destroy();
+                    }
                     gpuobj.release();
+                }
             }
             allocator.free(pool.resources);
             allocator.free(pool.generations);
