@@ -28,6 +28,7 @@ pub const GraphicsContext = struct {
     buffer_pool: BufferPool,
     texture_pool: TexturePool,
     texture_view_pool: TextureViewPool,
+    sampler_pool: SamplerPool,
     render_pipeline_pool: RenderPipelinePool,
     compute_pipeline_pool: ComputePipelinePool,
 
@@ -36,6 +37,7 @@ pub const GraphicsContext = struct {
     const buffer_pool_size = 256;
     const texture_pool_size = 256;
     const texture_view_pool_size = 256;
+    const sampler_pool_size = 16;
     const render_pipeline_pool_size = 128;
     const compute_pipeline_pool_size = 128;
 
@@ -107,6 +109,7 @@ pub const GraphicsContext = struct {
             .buffer_pool = BufferPool.init(allocator, buffer_pool_size),
             .texture_pool = TexturePool.init(allocator, texture_pool_size),
             .texture_view_pool = TextureViewPool.init(allocator, texture_view_pool_size),
+            .sampler_pool = SamplerPool.init(allocator, sampler_pool_size),
             .render_pipeline_pool = RenderPipelinePool.init(allocator, render_pipeline_pool_size),
             .compute_pipeline_pool = ComputePipelinePool.init(allocator, compute_pipeline_pool_size),
         };
@@ -118,6 +121,7 @@ pub const GraphicsContext = struct {
         gctx.buffer_pool.deinit(allocator);
         gctx.texture_view_pool.deinit(allocator);
         gctx.texture_pool.deinit(allocator);
+        gctx.sampler_pool.deinit(allocator);
         gctx.render_pipeline_pool.deinit(allocator);
         gctx.compute_pipeline_pool.deinit(allocator);
         gctx.window_surface.release();
@@ -244,6 +248,41 @@ pub const GraphicsContext = struct {
         return null;
     }
 
+    pub fn createSampler(gctx: *GraphicsContext, descriptor: gpu.Sampler.Descriptor) SamplerHandle {
+        const gpuobj = gctx.device.createSampler(&descriptor);
+        return gctx.sampler_pool.addResource(.{
+            .gpuobj = gpuobj,
+            .address_mode_u = descriptor.address_mode_u,
+            .address_mode_v = descriptor.address_mode_v,
+            .address_mode_w = descriptor.address_mode_w,
+            .mag_filter = descriptor.mag_filter,
+            .min_filter = descriptor.min_filter,
+            .mipmap_filter = descriptor.mipmap_filter,
+            .lod_min_clamp = descriptor.lod_min_clamp,
+            .lod_max_clamp = descriptor.lod_max_clamp,
+            .compare = descriptor.compare,
+            .max_anisotropy = descriptor.max_anisotropy,
+        });
+    }
+
+    pub fn destroySampler(gctx: GraphicsContext, handle: SamplerHandle) void {
+        gctx.sampler_pool.destroyResource(handle);
+    }
+
+    pub fn lookupSampler(gctx: GraphicsContext, handle: SamplerHandle) ?gpu.Sampler {
+        if (gctx.isResourceValid(handle)) {
+            return gctx.sampler_pool.resources[handle.index].gpuobj.?;
+        }
+        return null;
+    }
+
+    pub fn lookupSamplerInfo(gctx: GraphicsContext, handle: SamplerHandle) ?SamplerInfo {
+        if (gctx.isResourceValid(handle)) {
+            return gctx.sampler_pool.resources[handle.index];
+        }
+        return null;
+    }
+
     pub fn createRenderPipeline(
         gctx: *GraphicsContext,
         descriptor: gpu.RenderPipeline.Descriptor,
@@ -298,6 +337,7 @@ pub const GraphicsContext = struct {
                 }
                 return false;
             },
+            SamplerHandle => return gctx.sampler_pool.isHandleValid(handle),
             RenderPipelineHandle => return gctx.render_pipeline_pool.isHandleValid(handle),
             ComputePipelineHandle => return gctx.compute_pipeline_pool.isHandleValid(handle),
             else => @compileError("[zgpu] GraphicsContext.isResourceValid() not implemented for " ++ @typeName(T)),
@@ -316,6 +356,11 @@ pub const TextureHandle = struct {
 };
 
 pub const TextureViewHandle = struct {
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
+};
+
+pub const SamplerHandle = struct {
     index: u16 align(4) = 0,
     generation: u16 = 0,
 };
@@ -357,6 +402,20 @@ pub const TextureViewInfo = struct {
     parent_texture_handle: TextureHandle = .{},
 };
 
+pub const SamplerInfo = struct {
+    gpuobj: ?gpu.Sampler = null,
+    address_mode_u: gpu.AddressMode = .repeat,
+    address_mode_v: gpu.AddressMode = .repeat,
+    address_mode_w: gpu.AddressMode = .repeat,
+    mag_filter: gpu.FilterMode = .nearest,
+    min_filter: gpu.FilterMode = .nearest,
+    mipmap_filter: gpu.FilterMode = .nearest,
+    lod_min_clamp: f32 = 0.0,
+    lod_max_clamp: f32 = 0.0,
+    compare: gpu.CompareFunction = .none,
+    max_anisotropy: u16 = 0,
+};
+
 const RenderPipelineInfo = struct {
     gpuobj: ?gpu.RenderPipeline = null,
 };
@@ -380,6 +439,7 @@ pub const BindGroupInfo = struct {
 const BufferPool = ResourcePool(BufferInfo, BufferHandle);
 const TexturePool = ResourcePool(TextureInfo, TextureHandle);
 const TextureViewPool = ResourcePool(TextureViewInfo, TextureViewHandle);
+const SamplerPool = ResourcePool(SamplerInfo, SamplerHandle);
 const RenderPipelinePool = ResourcePool(RenderPipelineInfo, RenderPipelineHandle);
 const ComputePipelinePool = ResourcePool(ComputePipelineInfo, ComputePipelineHandle);
 
