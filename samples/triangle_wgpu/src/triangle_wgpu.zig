@@ -260,8 +260,6 @@ fn draw(demo: *DemoState) void {
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
-                .stencil_load_op = .none,
-                .stencil_store_op = .none,
             };
             const render_pass_info = gpu.RenderPassEncoder.Descriptor{
                 .color_attachments = &.{color_attachment},
