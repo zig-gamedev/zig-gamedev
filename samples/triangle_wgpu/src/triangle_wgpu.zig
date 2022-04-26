@@ -58,28 +58,6 @@ const DemoState = struct {
 fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     var gctx = zgpu.GraphicsContext.init(allocator, window);
 
-    const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
-    defer vs_module.release();
-
-    const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
-    defer fs_module.release();
-
-    const color_target = gpu.ColorTargetState{
-        .format = zgpu.GraphicsContext.swapchain_format,
-        .blend = &.{ .color = .{}, .alpha = .{} },
-    };
-
-    const vertex_attributes = [_]gpu.VertexAttribute{
-        .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
-        .{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
-    };
-    const vertex_buffer_layout = gpu.VertexBufferLayout{
-        .array_stride = @sizeOf(Vertex),
-        .step_mode = .vertex,
-        .attribute_count = vertex_attributes.len,
-        .attributes = &vertex_attributes,
-    };
-
     // Create a bind group layout needed for our render pipeline.
     const bgl = gctx.device.createBindGroupLayout(
         &gpu.BindGroupLayout.Descriptor{
@@ -95,31 +73,54 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     });
     defer pl.release();
 
-    // Create a render pipeline.
-    const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
-        .layout = pl,
-        .vertex = gpu.VertexState{
-            .module = vs_module,
-            .entry_point = "main",
-            .buffers = &.{vertex_buffer_layout},
-        },
-        .primitive = .{
-            .front_face = .ccw,
-            .cull_mode = .none,
-            .topology = .triangle_list,
-        },
-        .depth_stencil = &.{
-            .format = .depth32_float,
-            .depth_write_enabled = true,
-            .depth_compare = .less,
-        },
-        .fragment = &gpu.FragmentState{
-            .module = fs_module,
-            .entry_point = "main",
-            .targets = &.{color_target},
-        },
+    const pipeline = pipline: {
+        const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
+        defer vs_module.release();
+
+        const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
+        defer fs_module.release();
+
+        const color_target = gpu.ColorTargetState{
+            .format = zgpu.GraphicsContext.swapchain_format,
+            .blend = &.{ .color = .{}, .alpha = .{} },
+        };
+
+        const vertex_attributes = [_]gpu.VertexAttribute{
+            .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+            .{ .format = .float32x3, .offset = @sizeOf([3]f32), .shader_location = 1 },
+        };
+        const vertex_buffer_layout = gpu.VertexBufferLayout{
+            .array_stride = @sizeOf(Vertex),
+            .step_mode = .vertex,
+            .attribute_count = vertex_attributes.len,
+            .attributes = &vertex_attributes,
+        };
+
+        const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
+            .layout = pl,
+            .vertex = gpu.VertexState{
+                .module = vs_module,
+                .entry_point = "main",
+                .buffers = &.{vertex_buffer_layout},
+            },
+            .primitive = .{
+                .front_face = .ccw,
+                .cull_mode = .none,
+                .topology = .triangle_list,
+            },
+            .depth_stencil = &.{
+                .format = .depth32_float,
+                .depth_write_enabled = true,
+                .depth_compare = .less,
+            },
+            .fragment = &gpu.FragmentState{
+                .module = fs_module,
+                .entry_point = "main",
+                .targets = &.{color_target},
+            },
+        };
+        break :pipline gctx.createRenderPipeline(pipeline_descriptor);
     };
-    const pipeline = gctx.createRenderPipeline(pipeline_descriptor);
 
     // Create an uniform buffer and a bind group for it.
     const uniform_buffer = gctx.createBuffer(.{
@@ -221,7 +222,7 @@ fn draw(demo: *DemoState) void {
     const back_buffer_view = gctx.swapchain.getCurrentTextureView();
     defer back_buffer_view.release();
 
-    const commands = blk: {
+    const commands = commands: {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
@@ -304,7 +305,7 @@ fn draw(demo: *DemoState) void {
             pass.end();
         }
 
-        break :blk encoder.finish(null);
+        break :commands encoder.finish(null);
     };
     defer commands.release();
 

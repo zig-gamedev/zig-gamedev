@@ -329,7 +329,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     });
     defer pl.release();
 
-    const pipeline = blk: {
+    const pipeline = pipeline: {
         const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl.vs } });
         defer vs_module.release();
 
@@ -375,7 +375,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
                 .targets = &.{color_target},
             },
         };
-        break :blk gctx.createRenderPipeline(pipeline_descriptor);
+        break :pipeline gctx.createRenderPipeline(pipeline_descriptor);
     };
 
     // Create an uniform buffer and a bind group for it.
@@ -572,7 +572,7 @@ fn draw(demo: *DemoState) void {
     const back_buffer_view = gctx.swapchain.getCurrentTextureView();
     defer back_buffer_view.release();
 
-    const commands = blk: {
+    const commands = commands: {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
@@ -670,7 +670,7 @@ fn draw(demo: *DemoState) void {
             pass.end();
         }
 
-        break :blk encoder.finish(null);
+        break :commands encoder.finish(null);
     };
     defer commands.release();
 
