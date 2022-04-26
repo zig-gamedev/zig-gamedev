@@ -163,15 +163,15 @@ pub const GraphicsContext = struct {
     }
 
     pub fn lookupBuffer(gctx: GraphicsContext, handle: BufferHandle) ?gpu.Buffer {
-        if (gctx.lookupBufferInfo(handle)) |info| {
-            return info.gpuobj.?;
+        if (gctx.isResourceValid(handle)) {
+            return gctx.buffer_pool.resources[handle.index].gpuobj.?;
         }
         return null;
     }
 
     pub fn lookupBufferInfo(gctx: GraphicsContext, handle: BufferHandle) ?BufferInfo {
-        if (gctx.buffer_pool.lookupResourceInfo(handle)) |buffer_info| {
-            return buffer_info.*;
+        if (gctx.isResourceValid(handle)) {
+            return gctx.buffer_pool.resources[handle.index];
         }
         return null;
     }
@@ -194,20 +194,24 @@ pub const GraphicsContext = struct {
     }
 
     pub fn lookupTexture(gctx: GraphicsContext, handle: TextureHandle) ?gpu.Texture {
-        if (gctx.lookupTextureInfo(handle)) |info| {
-            return info.gpuobj.?;
+        if (gctx.isResourceValid(handle)) {
+            return gctx.texture_pool.resources[handle.index].gpuobj.?;
         }
         return null;
     }
 
     pub fn lookupTextureInfo(gctx: GraphicsContext, handle: TextureHandle) ?TextureInfo {
-        if (gctx.texture_pool.lookupResourceInfo(handle)) |texture_info| {
-            return texture_info.*;
+        if (gctx.isResourceValid(handle)) {
+            return gctx.texture_pool.resources[handle.index];
         }
         return null;
     }
 
-    pub fn createTextureView(gctx: *GraphicsContext, texture_handle: TextureHandle, descriptor: gpu.TextureView.Descriptor) TextureViewHandle {
+    pub fn createTextureView(
+        gctx: *GraphicsContext,
+        texture_handle: TextureHandle,
+        descriptor: gpu.TextureView.Descriptor,
+    ) TextureViewHandle {
         const texture = gctx.lookupTexture(texture_handle).?;
         const gpuobj = texture.createView(&descriptor);
         return gctx.texture_view_pool.addResource(.{
@@ -226,18 +230,16 @@ pub const GraphicsContext = struct {
         gctx.texture_view_pool.destroyResource(handle);
     }
 
-    pub fn lookupTextureViewInfo(gctx: GraphicsContext, handle: TextureViewHandle) ?TextureViewInfo {
-        if (gctx.texture_view_pool.lookupResourceInfo(handle)) |texture_view_info| {
-            return texture_view_info.*;
+    pub fn lookupTextureView(gctx: GraphicsContext, handle: TextureViewHandle) ?gpu.TextureView {
+        if (gctx.isResourceValid(handle)) {
+            return gctx.texture_view_pool.resources[handle.index].gpuobj.?;
         }
         return null;
     }
 
-    pub fn lookupTextureView(gctx: GraphicsContext, handle: TextureViewHandle) ?gpu.TextureView {
-        if (gctx.lookupTextureViewInfo(handle)) |view_info| {
-            if (gctx.isResourceValid(view_info.parent_texture_handle)) {
-                return view_info.gpuobj.?;
-            }
+    pub fn lookupTextureViewInfo(gctx: GraphicsContext, handle: TextureViewHandle) ?TextureViewInfo {
+        if (gctx.isResourceValid(handle)) {
+            return gctx.texture_view_pool.resources[handle.index];
         }
         return null;
     }
@@ -257,8 +259,8 @@ pub const GraphicsContext = struct {
     }
 
     pub fn lookupRenderPipeline(gctx: GraphicsContext, handle: RenderPipelineHandle) ?gpu.RenderPipeline {
-        if (gctx.render_pipeline_pool.lookupResourceInfo(handle)) |render_pipeline| {
-            return render_pipeline.gpuobj.?;
+        if (gctx.isResourceValid(handle)) {
+            return gctx.render_pipeline_pool.resources[handle.index].gpuobj.?;
         }
         return null;
     }
@@ -278,25 +280,26 @@ pub const GraphicsContext = struct {
     }
 
     pub fn lookupComputePipeline(gctx: GraphicsContext, handle: ComputePipelineHandle) ?gpu.ComputePipeline {
-        if (gctx.compute_pipeline_pool.lookupResourceInfo(handle)) |compute_pipeline| {
-            return compute_pipeline.gpuobj.?;
+        if (gctx.isResourceValid(handle)) {
+            return gctx.compute_pipeline_pool.resources[handle.index].gpuobj.?;
         }
         return null;
     }
 
-    pub fn isResourceValid(gctx: GraphicsContext, resource_handle: anytype) bool {
-        const T = @TypeOf(resource_handle);
+    pub fn isResourceValid(gctx: GraphicsContext, handle: anytype) bool {
+        const T = @TypeOf(handle);
         switch (T) {
-            BufferHandle => return gctx.buffer_pool.isResourceValid(resource_handle),
-            TextureHandle => return gctx.texture_pool.isResourceValid(resource_handle),
+            BufferHandle => return gctx.buffer_pool.isHandleValid(handle),
+            TextureHandle => return gctx.texture_pool.isHandleValid(handle),
             TextureViewHandle => {
-                if (gctx.lookupTextureViewInfo(resource_handle)) |view_info| {
-                    return gctx.texture_pool.isResourceValid(view_info.parent_texture_handle);
+                if (gctx.texture_view_pool.isHandleValid(handle)) {
+                    const texture = gctx.texture_view_pool.resources[handle.index].parent_texture_handle;
+                    return gctx.texture_pool.isHandleValid(texture);
                 }
                 return false;
             },
-            RenderPipelineHandle => return gctx.render_pipeline_pool.isResourceValid(resource_handle),
-            ComputePipelineHandle => return gctx.compute_pipeline_pool.isResourceValid(resource_handle),
+            RenderPipelineHandle => return gctx.render_pipeline_pool.isHandleValid(handle),
+            ComputePipelineHandle => return gctx.compute_pipeline_pool.isHandleValid(handle),
             else => @compileError("[zgpu] GraphicsContext.isResourceValid() not implemented for " ++ @typeName(T)),
         }
     }
@@ -360,6 +363,18 @@ const RenderPipelineInfo = struct {
 
 const ComputePipelineInfo = struct {
     gpuobj: ?gpu.ComputePipeline = null,
+};
+
+// TODO: Complete it, use tagged unions.
+pub const BindGroupInfo = struct {
+    gpuobj: ?gpu.BindGroup,
+    entries: [8]struct {
+        buffer: ?BufferHandle = null,
+        offset: u64 = 0,
+        size: u64 = 0,
+        //sampler: ?Sampler = null,
+        texture_view: ?TextureViewHandle = null,
+    } = .{},
 };
 
 const BufferPool = ResourcePool(BufferInfo, BufferHandle);
@@ -431,31 +446,24 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
         }
 
         fn destroyResource(pool: Self, handle: ResourceHandle) void {
-            var resource_info = pool.lookupResourceInfo(handle);
-            if (resource_info == null)
+            if (!pool.isHandleValid(handle))
                 return;
+            var resource_info = &pool.resources[handle.index];
 
-            const gpuobj = resource_info.?.gpuobj.?;
+            const gpuobj = resource_info.gpuobj.?;
             if (@hasDecl(@TypeOf(gpuobj), "destroy")) {
                 gpuobj.destroy();
             }
             gpuobj.release();
-            resource_info.?.* = .{};
+            resource_info.* = .{};
         }
 
-        fn isResourceValid(pool: Self, handle: ResourceHandle) bool {
+        fn isHandleValid(pool: Self, handle: ResourceHandle) bool {
             return handle.index > 0 and
                 handle.index < pool.resources.len and
                 handle.generation > 0 and
                 handle.generation == pool.generations[handle.index] and
                 pool.resources[handle.index].gpuobj != null;
-        }
-
-        fn lookupResourceInfo(pool: Self, handle: ResourceHandle) ?*ResourceInfo {
-            if (pool.isResourceValid(handle)) {
-                return &pool.resources[handle.index];
-            }
-            return null;
         }
     };
 }
