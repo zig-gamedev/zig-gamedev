@@ -262,15 +262,15 @@ pub const GraphicsContext = struct {
     pub fn isResourceValid(gctx: GraphicsContext, resource_handle: anytype) bool {
         const T = @TypeOf(resource_handle);
         switch (T) {
-            BufferHandle => return gctx.buffer_pool.isHandleValid(resource_handle),
-            TextureHandle => return gctx.texture_pool.isHandleValid(resource_handle),
+            BufferHandle => return gctx.buffer_pool.isResourceValid(resource_handle),
+            TextureHandle => return gctx.texture_pool.isResourceValid(resource_handle),
             TextureViewHandle => {
                 if (gctx.lookupTextureViewInfo(resource_handle)) |view_info| {
-                    return gctx.texture_pool.isHandleValid(view_info.parent_texture_handle);
+                    return gctx.texture_pool.isResourceValid(view_info.parent_texture_handle);
                 }
                 return false;
             },
-            RenderPipelineHandle => return gctx.render_pipeline_pool.isHandleValid(resource_handle),
+            RenderPipelineHandle => return gctx.render_pipeline_pool.isResourceValid(resource_handle),
             else => @compileError("[zgpu] GraphicsContext.isResourceValid() not implemented for " ++ @typeName(T)),
         }
     }
@@ -407,7 +407,7 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
             resource_info.?.* = .{};
         }
 
-        fn isHandleValid(pool: Self, handle: ResourceHandle) bool {
+        fn isResourceValid(pool: Self, handle: ResourceHandle) bool {
             return handle.index > 0 and
                 handle.index < pool.resources.len and
                 handle.generation > 0 and
@@ -416,7 +416,7 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
         }
 
         fn lookupResourceInfo(pool: Self, handle: ResourceHandle) ?*ResourceInfo {
-            if (pool.isHandleValid(handle)) {
+            if (pool.isResourceValid(handle)) {
                 return &pool.resources[handle.index];
             }
             return null;
