@@ -4,14 +4,15 @@ const c = @cImport({
     @cInclude("cgltf.h");
 });
 const Error = @import("main.zig").Error;
+const mem = @import("memory.zig");
 
 pub const DataHandle = *opaque {};
 
 pub fn parseAndLoadFile(gltf_path: [:0]const u8) Error!DataHandle {
     var options = std.mem.zeroes(c.cgltf_options);
     options.memory = .{
-        .alloc = zmeshAllocUser,
-        .free = zmeshFreeUser,
+        .alloc = mem.zmeshAllocUser,
+        .free = mem.zmeshFreeUser,
         .user_data = null,
     };
 
@@ -175,16 +176,4 @@ pub fn appendMeshPrimitive(
             }
         }
     }
-}
-
-const mem = @import("memory.zig");
-
-export fn zmeshAllocUser(user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
-    _ = user;
-    return mem.zmeshAlloc(size);
-}
-
-export fn zmeshFreeUser(user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void {
-    _ = user;
-    mem.zmeshFree(ptr);
 }

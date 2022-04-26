@@ -32,7 +32,7 @@ var allocator: ?std.mem.Allocator = null;
 var allocations: ?std.AutoHashMap(usize, usize) = null;
 var mutex: Mutex = .{};
 
-pub export fn zmeshAlloc(size: usize) callconv(.C) ?*anyopaque {
+export fn zmeshAlloc(size: usize) callconv(.C) ?*anyopaque {
     mutex.lock();
     defer mutex.unlock();
 
@@ -56,6 +56,11 @@ export fn zmeshClearAlloc(num: usize, size: usize) callconv(.C) ?*anyopaque {
         return ptr;
     }
     return null;
+}
+
+pub export fn zmeshAllocUser(user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
+    _ = user;
+    return zmeshAlloc(size);
 }
 
 export fn zmeshReAlloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
@@ -92,7 +97,7 @@ export fn zmeshReAlloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     return slice.ptr;
 }
 
-pub export fn zmeshFree(ptr: ?*anyopaque) callconv(.C) void {
+export fn zmeshFree(ptr: ?*anyopaque) callconv(.C) void {
     if (ptr != null) {
         mutex.lock();
         defer mutex.unlock();
@@ -101,4 +106,9 @@ pub export fn zmeshFree(ptr: ?*anyopaque) callconv(.C) void {
         const slice = @ptrCast([*]u8, ptr.?)[0..size];
         allocator.?.free(slice);
     }
+}
+
+pub export fn zmeshFreeUser(user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void {
+    _ = user;
+    zmeshFree(ptr);
 }
