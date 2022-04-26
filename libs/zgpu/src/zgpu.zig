@@ -29,13 +29,15 @@ pub const GraphicsContext = struct {
     texture_pool: TexturePool,
     texture_view_pool: TextureViewPool,
     render_pipeline_pool: RenderPipelinePool,
+    compute_pipeline_pool: ComputePipelinePool,
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
     // TODO: Adjust pool sizes.
     const buffer_pool_size = 256;
     const texture_pool_size = 256;
     const texture_view_pool_size = 256;
-    const render_pipeline_pool_size = 256;
+    const render_pipeline_pool_size = 128;
+    const compute_pipeline_pool_size = 128;
 
     pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
@@ -106,6 +108,7 @@ pub const GraphicsContext = struct {
             .texture_pool = TexturePool.init(allocator, texture_pool_size),
             .texture_view_pool = TextureViewPool.init(allocator, texture_view_pool_size),
             .render_pipeline_pool = RenderPipelinePool.init(allocator, render_pipeline_pool_size),
+            .compute_pipeline_pool = ComputePipelinePool.init(allocator, compute_pipeline_pool_size),
         };
     }
 
@@ -116,6 +119,7 @@ pub const GraphicsContext = struct {
         gctx.texture_view_pool.deinit(allocator);
         gctx.texture_pool.deinit(allocator);
         gctx.render_pipeline_pool.deinit(allocator);
+        gctx.compute_pipeline_pool.deinit(allocator);
         gctx.window_surface.release();
         gctx.swapchain.release();
         gctx.queue.release();
@@ -259,6 +263,27 @@ pub const GraphicsContext = struct {
         return null;
     }
 
+    pub fn createComputePipeline(
+        gctx: *GraphicsContext,
+        descriptor: gpu.ComputePipeline.Descriptor,
+    ) RenderPipelineHandle {
+        const gpuobj = gctx.device.createComputePipeline(&descriptor);
+        return gctx.compute_pipeline_pool.addResource(.{
+            .gpuobj = gpuobj,
+        });
+    }
+
+    pub fn destroyComputePipeline(gctx: GraphicsContext, handle: ComputePipelineHandle) void {
+        gctx.compute_pipeline_pool.destroyResource(handle);
+    }
+
+    pub fn lookupComputePipeline(gctx: GraphicsContext, handle: ComputePipelineHandle) ?gpu.ComputePipeline {
+        if (gctx.compute_pipeline_pool.lookupResourceInfo(handle)) |compute_pipeline| {
+            return compute_pipeline.gpuobj.?;
+        }
+        return null;
+    }
+
     pub fn isResourceValid(gctx: GraphicsContext, resource_handle: anytype) bool {
         const T = @TypeOf(resource_handle);
         switch (T) {
@@ -271,6 +296,7 @@ pub const GraphicsContext = struct {
                 return false;
             },
             RenderPipelineHandle => return gctx.render_pipeline_pool.isResourceValid(resource_handle),
+            ComputePipelineHandle => return gctx.compute_pipeline_pool.isResourceValid(resource_handle),
             else => @compileError("[zgpu] GraphicsContext.isResourceValid() not implemented for " ++ @typeName(T)),
         }
     }
@@ -292,6 +318,11 @@ pub const TextureViewHandle = struct {
 };
 
 pub const RenderPipelineHandle = struct {
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
+};
+
+pub const ComputePipelineHandle = struct {
     index: u16 align(4) = 0,
     generation: u16 = 0,
 };
@@ -327,10 +358,15 @@ const RenderPipelineInfo = struct {
     gpuobj: ?gpu.RenderPipeline = null,
 };
 
+const ComputePipelineInfo = struct {
+    gpuobj: ?gpu.ComputePipeline = null,
+};
+
 const BufferPool = ResourcePool(BufferInfo, BufferHandle);
 const TexturePool = ResourcePool(TextureInfo, TextureHandle);
 const TextureViewPool = ResourcePool(TextureViewInfo, TextureViewHandle);
 const RenderPipelinePool = ResourcePool(RenderPipelineInfo, RenderPipelineHandle);
+const ComputePipelinePool = ResourcePool(ComputePipelineInfo, ComputePipelineHandle);
 
 fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type {
     return struct {
