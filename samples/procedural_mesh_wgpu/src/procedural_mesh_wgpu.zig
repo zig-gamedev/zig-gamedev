@@ -45,8 +45,8 @@ const DemoState = struct {
     stats: zgpu.FrameStats,
 
     pipeline: zgpu.RenderPipelineHandle,
-    draw_bind_group: gpu.BindGroup,
-    frame_bind_group: gpu.BindGroup,
+    draw_bind_group: zgpu.BindGroupHandle,
+    frame_bind_group: zgpu.BindGroupHandle,
 
     vertex_buffer: zgpu.BufferHandle,
     index_buffer: zgpu.BufferHandle,
@@ -384,22 +384,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .size = 64 * 1024,
     });
 
-    const draw_bind_group = gctx.device.createBindGroup(
-        &gpu.BindGroup.Descriptor{
-            .layout = draw_bgl,
-            .entries = &.{
-                gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 512, @sizeOf(DrawUniforms)),
-            },
-        },
-    );
-    const frame_bind_group = gctx.device.createBindGroup(
-        &gpu.BindGroup.Descriptor{
-            .layout = frame_bgl,
-            .entries = &.{
-                gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 0, @sizeOf(FrameUniforms)),
-            },
-        },
-    );
+    const draw_bind_group = gctx.createBindGroup(draw_bgl, &[_]zgpu.BindGroupEntryInfo{
+        .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 512, .size = @sizeOf(DrawUniforms) },
+    });
+    const frame_bind_group = gctx.createBindGroup(frame_bgl, &[_]zgpu.BindGroupEntryInfo{
+        .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = @sizeOf(FrameUniforms) },
+    });
 
     var drawables = std.ArrayList(Drawable).init(allocator);
     var meshes = std.ArrayList(Mesh).init(allocator);
@@ -456,8 +446,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
-    demo.draw_bind_group.release();
-    demo.frame_bind_group.release();
     demo.meshes.deinit();
     demo.drawables.deinit();
     demo.gctx.deinit(allocator);
@@ -636,10 +624,14 @@ fn draw(demo: *DemoState) void {
 
             if (gctx.lookupRenderPipeline(demo.pipeline)) |pipeline| {
                 pass.setPipeline(pipeline);
-                pass.setBindGroup(1, demo.frame_bind_group, &.{});
+                pass.setBindGroup(1, gctx.lookupBindGroup(demo.frame_bind_group).?, &.{});
 
                 for (demo.drawables.items) |drawable, drawable_index| {
-                    pass.setBindGroup(0, demo.draw_bind_group, &.{@intCast(u32, drawable_index * 256)});
+                    pass.setBindGroup(
+                        0,
+                        gctx.lookupBindGroup(demo.draw_bind_group).?,
+                        &.{@intCast(u32, drawable_index * 256)},
+                    );
                     pass.drawIndexed(
                         demo.meshes.items[drawable.mesh_index].num_indices,
                         1,

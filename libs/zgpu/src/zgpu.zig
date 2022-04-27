@@ -25,12 +25,14 @@ pub const GraphicsContext = struct {
     window_surface: gpu.Surface,
     swapchain: gpu.SwapChain,
     swapchain_descriptor: gpu.SwapChain.Descriptor,
+
     buffer_pool: BufferPool,
     texture_pool: TexturePool,
     texture_view_pool: TextureViewPool,
     sampler_pool: SamplerPool,
     render_pipeline_pool: RenderPipelinePool,
     compute_pipeline_pool: ComputePipelinePool,
+    bind_group_pool: BindGroupPool,
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
     // TODO: Adjust pool sizes.
@@ -40,6 +42,7 @@ pub const GraphicsContext = struct {
     const sampler_pool_size = 16;
     const render_pipeline_pool_size = 128;
     const compute_pipeline_pool_size = 128;
+    const bind_group_pool_size = 32;
 
     pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
@@ -112,12 +115,14 @@ pub const GraphicsContext = struct {
             .sampler_pool = SamplerPool.init(allocator, sampler_pool_size),
             .render_pipeline_pool = RenderPipelinePool.init(allocator, render_pipeline_pool_size),
             .compute_pipeline_pool = ComputePipelinePool.init(allocator, compute_pipeline_pool_size),
+            .bind_group_pool = BindGroupPool.init(allocator, bind_group_pool_size),
         };
     }
 
     pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
         // TODO: Make sure all GPU commands are completed.
         // TODO: How to release `native_instance`?
+        gctx.bind_group_pool.deinit(allocator);
         gctx.buffer_pool.deinit(allocator);
         gctx.texture_view_pool.deinit(allocator);
         gctx.texture_pool.deinit(allocator);
@@ -325,6 +330,66 @@ pub const GraphicsContext = struct {
         return null;
     }
 
+    pub fn createBindGroup(
+        gctx: *GraphicsContext,
+        layout: gpu.BindGroupLayout,
+        entries: []const BindGroupEntryInfo,
+    ) BindGroupHandle {
+        assert(entries.len > 0 and entries.len < max_num_bindings_per_group);
+
+        var bind_group_info = BindGroupInfo{ .num_active_entries = @intCast(u32, entries.len) };
+        var gpu_bind_group_entries: [max_num_bindings_per_group]gpu.BindGroup.Entry = undefined;
+
+        for (entries) |entry, i| {
+            bind_group_info.entries[i] = entry;
+
+            if (entries[i].buffer_handle) |handle| {
+                gpu_bind_group_entries[i] = .{
+                    .binding = entries[i].binding,
+                    .buffer = gctx.lookupBuffer(handle).?,
+                    .offset = entries[i].offset,
+                    .size = entries[i].size,
+                    .sampler = null,
+                    .texture_view = null,
+                };
+            } else if (entries[i].sampler_handle) |handle| {
+                gpu_bind_group_entries[i] = .{
+                    .binding = entries[i].binding,
+                    .buffer = null,
+                    .offset = 0,
+                    .size = 0,
+                    .sampler = gctx.lookupSampler(handle).?,
+                    .texture_view = null,
+                };
+            } else if (entries[i].texture_view_handle) |handle| {
+                gpu_bind_group_entries[i] = .{
+                    .binding = entries[i].binding,
+                    .buffer = null,
+                    .offset = 0,
+                    .size = 0,
+                    .sampler = null,
+                    .texture_view = gctx.lookupTextureView(handle).?,
+                };
+            } else unreachable;
+        }
+        bind_group_info.gpuobj = gctx.device.createBindGroup(&.{
+            .layout = layout,
+            .entries = gpu_bind_group_entries[0..entries.len],
+        });
+        return gctx.bind_group_pool.addResource(gctx.*, bind_group_info);
+    }
+
+    pub fn destroyBindGroup(gctx: GraphicsContext, handle: BindGroupHandle) void {
+        gctx.bind_group_pool.destroyResource(handle);
+    }
+
+    pub fn lookupBindGroup(gctx: GraphicsContext, handle: BindGroupHandle) ?gpu.BindGroup {
+        if (gctx.isResourceValid(handle)) {
+            return gctx.bind_group_pool.resources[handle.index].gpuobj.?;
+        }
+        return null;
+    }
+
     pub fn isResourceValid(gctx: GraphicsContext, handle: anytype) bool {
         const T = @TypeOf(handle);
         switch (T) {
@@ -340,6 +405,27 @@ pub const GraphicsContext = struct {
             SamplerHandle => return gctx.sampler_pool.isHandleValid(handle),
             RenderPipelineHandle => return gctx.render_pipeline_pool.isHandleValid(handle),
             ComputePipelineHandle => return gctx.compute_pipeline_pool.isHandleValid(handle),
+            BindGroupHandle => {
+                if (gctx.bind_group_pool.isHandleValid(handle)) {
+                    const num_entries = gctx.bind_group_pool.resources[handle.index].num_active_entries;
+                    const entries = &gctx.bind_group_pool.resources[handle.index].entries;
+                    var i: u32 = 0;
+                    while (i < num_entries) : (i += 1) {
+                        if (entries[i].buffer_handle) |h| {
+                            if (!gctx.buffer_pool.isHandleValid(h))
+                                return false;
+                        } else if (entries[i].sampler_handle) |h| {
+                            if (!gctx.sampler_pool.isHandleValid(h))
+                                return false;
+                        } else if (entries[i].texture_view_handle) |h| {
+                            if (!gctx.texture_view_pool.isHandleValid(h))
+                                return false;
+                        } else unreachable;
+                    }
+                    return true;
+                }
+                return false;
+            },
             else => @compileError("[zgpu] GraphicsContext.isResourceValid() not implemented for " ++ @typeName(T)),
         }
     }
@@ -429,21 +515,22 @@ const ComputePipelineInfo = struct {
     gpuobj: ?gpu.ComputePipeline = null,
 };
 
+pub const BindGroupEntryInfo = struct {
+    binding: u32 = 0,
+    buffer_handle: ?BufferHandle = null,
+    offset: u64 = 0,
+    size: u64 = 0,
+    sampler_handle: ?SamplerHandle = null,
+    texture_view_handle: ?TextureViewHandle = null,
+};
+
+pub const max_num_bindings_per_group = 8;
+
 pub const BindGroupInfo = struct {
-    gpuobj: ?gpu.BindGroup,
-    entries: [8]union(enum) {
-        buffer: struct {
-            handle: BufferHandle = .{},
-            offset: u64 = 0,
-            size: u64 = 0,
-        },
-        sampler: struct {
-            handle: SamplerHandle = .{},
-        },
-        texture_view: struct {
-            handle: TextureViewHandle = .{},
-        },
-    } = .{},
+    gpuobj: ?gpu.BindGroup = null,
+    num_active_entries: u32 = 0,
+    entries: [max_num_bindings_per_group]BindGroupEntryInfo =
+        [_]BindGroupEntryInfo{BindGroupEntryInfo{}} ** max_num_bindings_per_group,
 };
 
 const BufferPool = ResourcePool(BufferInfo, BufferHandle);
@@ -579,9 +666,11 @@ pub fn checkContent(comptime content_dir: []const u8) !void {
     local.impl() catch |err| {
         std.debug.print(
             \\
-            \\ERROR
+            \\DATA ERROR
+            \\
             \\Invalid data files or missing content folder.
-            \\Please install Git LFS (Large File Support) and run:
+            \\Please install Git LFS (Large File Support) and run (in the repo):
+            \\
             \\git lfs install
             \\git pull
             \\

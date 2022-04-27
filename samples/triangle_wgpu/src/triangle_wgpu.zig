@@ -45,7 +45,7 @@ const DemoState = struct {
     stats: zgpu.FrameStats,
 
     pipeline: zgpu.RenderPipelineHandle,
-    bind_group: gpu.BindGroup,
+    bind_group: zgpu.BindGroupHandle,
 
     vertex_buffer: zgpu.BufferHandle,
     index_buffer: zgpu.BufferHandle,
@@ -127,14 +127,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .usage = .{ .copy_dst = true, .uniform = true },
         .size = 512,
     });
-    const bind_group = gctx.device.createBindGroup(
-        &gpu.BindGroup.Descriptor{
-            .layout = bgl,
-            .entries = &.{
-                gpu.BindGroup.Entry.buffer(0, gctx.lookupBuffer(uniform_buffer).?, 0, @sizeOf(zm.Mat)),
-            },
-        },
-    );
+    const bind_group = gctx.createBindGroup(bgl, &[_]zgpu.BindGroupEntryInfo{
+        .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
+    });
 
     // Create a vertex buffer.
     const vertex_buffer = gctx.createBuffer(.{
@@ -174,7 +169,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
-    demo.bind_group.release();
     demo.gctx.deinit(allocator);
     demo.* = undefined;
 }
@@ -279,10 +273,10 @@ fn draw(demo: *DemoState) void {
             if (gctx.lookupRenderPipeline(demo.pipeline)) |pipeline| {
                 pass.setPipeline(pipeline);
 
-                pass.setBindGroup(0, demo.bind_group, &.{0});
+                pass.setBindGroup(0, gctx.lookupBindGroup(demo.bind_group).?, &.{0});
                 pass.drawIndexed(3, 1, 0, 0, 0);
 
-                pass.setBindGroup(0, demo.bind_group, &.{256});
+                pass.setBindGroup(0, gctx.lookupBindGroup(demo.bind_group).?, &.{256});
                 pass.drawIndexed(3, 1, 0, 0, 0);
             }
 
