@@ -155,7 +155,7 @@ pub const GraphicsContext = struct {
 
     pub fn createBuffer(gctx: *GraphicsContext, descriptor: gpu.Buffer.Descriptor) BufferHandle {
         const gpuobj = gctx.device.createBuffer(&descriptor);
-        return gctx.buffer_pool.addResource(.{
+        return gctx.buffer_pool.addResource(gctx.*, .{
             .gpuobj = gpuobj,
             .size = descriptor.size,
             .usage = descriptor.usage,
@@ -182,7 +182,7 @@ pub const GraphicsContext = struct {
 
     pub fn createTexture(gctx: *GraphicsContext, descriptor: gpu.Texture.Descriptor) TextureHandle {
         const gpuobj = gctx.device.createTexture(&descriptor);
-        return gctx.texture_pool.addResource(.{
+        return gctx.texture_pool.addResource(gctx.*, .{
             .gpuobj = gpuobj,
             .usage = descriptor.usage,
             .dimension = descriptor.dimension,
@@ -218,7 +218,7 @@ pub const GraphicsContext = struct {
     ) TextureViewHandle {
         const texture = gctx.lookupTexture(texture_handle).?;
         const gpuobj = texture.createView(&descriptor);
-        return gctx.texture_view_pool.addResource(.{
+        return gctx.texture_view_pool.addResource(gctx.*, .{
             .gpuobj = gpuobj,
             .format = descriptor.format,
             .dimension = descriptor.dimension,
@@ -250,7 +250,7 @@ pub const GraphicsContext = struct {
 
     pub fn createSampler(gctx: *GraphicsContext, descriptor: gpu.Sampler.Descriptor) SamplerHandle {
         const gpuobj = gctx.device.createSampler(&descriptor);
-        return gctx.sampler_pool.addResource(.{
+        return gctx.sampler_pool.addResource(gctx.*, .{
             .gpuobj = gpuobj,
             .address_mode_u = descriptor.address_mode_u,
             .address_mode_v = descriptor.address_mode_v,
@@ -288,7 +288,7 @@ pub const GraphicsContext = struct {
         descriptor: gpu.RenderPipeline.Descriptor,
     ) RenderPipelineHandle {
         const gpuobj = gctx.device.createRenderPipeline(&descriptor);
-        return gctx.render_pipeline_pool.addResource(.{
+        return gctx.render_pipeline_pool.addResource(gctx.*, .{
             .gpuobj = gpuobj,
         });
     }
@@ -309,7 +309,7 @@ pub const GraphicsContext = struct {
         descriptor: gpu.ComputePipeline.Descriptor,
     ) RenderPipelineHandle {
         const gpuobj = gctx.device.createComputePipeline(&descriptor);
-        return gctx.compute_pipeline_pool.addResource(.{
+        return gctx.compute_pipeline_pool.addResource(gctx.*, .{
             .gpuobj = gpuobj,
         });
     }
@@ -478,20 +478,34 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
             pool.* = undefined;
         }
 
-        fn addResource(pool: *Self, resource: ResourceInfo) ResourceHandle {
+        fn addResource(pool: *Self, gctx: GraphicsContext, resource: ResourceInfo) ResourceHandle {
             assert(resource.gpuobj != null);
 
             var index: u32 = 0;
             var found_slot_index: u32 = 0;
             while (index < pool.resources.len) : (index += 1) {
                 const slot_index = (pool.start_slot_index + index) % @intCast(u32, pool.resources.len);
-                if (slot_index == 0)
+                if (slot_index == 0) // Skip index 0 because it is reserved for `invalid handle`.
                     continue;
-                if (pool.resources[slot_index].gpuobj == null) {
+                if (pool.resources[slot_index].gpuobj == null) { // If `gpuobj` is null slot is free.
                     found_slot_index = slot_index;
                     break;
+                } else {
+                    // If `gpuobj` is not null slot can still be free because dependent resources could
+                    // have become invalid. For example, texture view becomes invalid when parent texture
+                    // is destroyed.
+                    const handle = ResourceHandle{ // Construct a *valid* handle for the slot that we want to check.
+                        .index = @intCast(u16, slot_index),
+                        .generation = pool.generations[slot_index],
+                    };
+                    // Check the handle (will always be valid) and it's potential dependencies.
+                    if (!gctx.isResourceValid(handle)) {
+                        found_slot_index = slot_index;
+                        break;
+                    }
                 }
             }
+            // TODO: For now we just assert if pool is full - make it more roboust.
             assert(found_slot_index > 0 and found_slot_index < pool.resources.len);
 
             pool.start_slot_index = found_slot_index + 1;
@@ -620,7 +634,11 @@ pub const gui = struct {
             unreachable;
         }
 
-        if (!ImGui_ImplWGPU_Init(device.ptr, 2, @enumToInt(GraphicsContext.swapchain_format))) {
+        if (!ImGui_ImplWGPU_Init(
+            device.ptr,
+            1, // Number of `frames in flight`. One is enough because Dawn creates staging buffers internally.
+            @enumToInt(GraphicsContext.swapchain_format),
+        )) {
             unreachable;
         }
     }
