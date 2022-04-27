@@ -427,12 +427,14 @@ const ComputePipelineInfo = struct {
 // TODO: Complete it, use tagged unions.
 pub const BindGroupInfo = struct {
     gpuobj: ?gpu.BindGroup,
-    entries: [8]struct {
-        buffer: ?BufferHandle = null,
-        offset: u64 = 0,
-        size: u64 = 0,
-        //sampler: ?Sampler = null,
-        texture_view: ?TextureViewHandle = null,
+    entries: [8]union(enum) {
+        buffer: struct {
+            buffer_handle: BufferHandle,
+            offset: u64,
+            size: u64,
+        },
+        sampler_handle: SamplerHandle,
+        texture_view_handle: TextureViewHandle,
     } = .{},
 };
 
@@ -498,7 +500,7 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
                         .index = @intCast(u16, slot_index),
                         .generation = pool.generations[slot_index],
                     };
-                    // Check the handle (will always be valid) and it's potential dependencies.
+                    // Check the handle (will always be valid) and it's potential dependencies (may be invalid).
                     if (!gctx.isResourceValid(handle)) {
                         found_slot_index = slot_index;
                         break;
@@ -512,9 +514,9 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
             pool.resources[found_slot_index] = resource;
             return .{
                 .index = @intCast(u16, found_slot_index),
-                .generation = blk: {
+                .generation = generation: {
                     pool.generations[found_slot_index] += 1;
-                    break :blk pool.generations[found_slot_index];
+                    break :generation pool.generations[found_slot_index];
                 },
             };
         }
