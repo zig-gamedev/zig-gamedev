@@ -398,7 +398,7 @@ pub const GraphicsContext = struct {
             TextureViewHandle => {
                 if (gctx.texture_view_pool.isHandleValid(handle)) {
                     const texture = gctx.texture_view_pool.resources[handle.index].parent_texture_handle;
-                    return gctx.texture_pool.isHandleValid(texture);
+                    return gctx.isResourceValid(texture);
                 }
                 return false;
             },
@@ -411,14 +411,14 @@ pub const GraphicsContext = struct {
                     const entries = &gctx.bind_group_pool.resources[handle.index].entries;
                     var i: u32 = 0;
                     while (i < num_entries) : (i += 1) {
-                        if (entries[i].buffer_handle) |h| {
-                            if (!gctx.buffer_pool.isHandleValid(h))
+                        if (entries[i].buffer_handle) |buffer| {
+                            if (!gctx.isResourceValid(buffer))
                                 return false;
-                        } else if (entries[i].sampler_handle) |h| {
-                            if (!gctx.sampler_pool.isHandleValid(h))
+                        } else if (entries[i].sampler_handle) |sampler| {
+                            if (!gctx.isResourceValid(sampler))
                                 return false;
-                        } else if (entries[i].texture_view_handle) |h| {
-                            if (!gctx.texture_view_pool.isHandleValid(h))
+                        } else if (entries[i].texture_view_handle) |texture_view| {
+                            if (!gctx.isResourceValid(texture_view))
                                 return false;
                         } else unreachable;
                     }
