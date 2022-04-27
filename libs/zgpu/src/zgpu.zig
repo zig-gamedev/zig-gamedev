@@ -375,6 +375,11 @@ pub const ComputePipelineHandle = struct {
     generation: u16 = 0,
 };
 
+pub const BindGroupHandle = struct {
+    index: u16 align(4) = 0,
+    generation: u16 = 0,
+};
+
 pub const BufferInfo = struct {
     gpuobj: ?gpu.Buffer = null,
     size: usize = 0,
@@ -424,17 +429,20 @@ const ComputePipelineInfo = struct {
     gpuobj: ?gpu.ComputePipeline = null,
 };
 
-// TODO: Complete it, use tagged unions.
 pub const BindGroupInfo = struct {
     gpuobj: ?gpu.BindGroup,
     entries: [8]union(enum) {
         buffer: struct {
-            buffer_handle: BufferHandle,
-            offset: u64,
-            size: u64,
+            handle: BufferHandle = .{},
+            offset: u64 = 0,
+            size: u64 = 0,
         },
-        sampler_handle: SamplerHandle,
-        texture_view_handle: TextureViewHandle,
+        sampler: struct {
+            handle: SamplerHandle = .{},
+        },
+        texture_view: struct {
+            handle: TextureViewHandle = .{},
+        },
     } = .{},
 };
 
@@ -444,6 +452,7 @@ const TextureViewPool = ResourcePool(TextureViewInfo, TextureViewHandle);
 const SamplerPool = ResourcePool(SamplerInfo, SamplerHandle);
 const RenderPipelinePool = ResourcePool(RenderPipelineInfo, RenderPipelineHandle);
 const ComputePipelinePool = ResourcePool(ComputePipelineInfo, ComputePipelineHandle);
+const BindGroupPool = ResourcePool(BindGroupInfo, BindGroupHandle);
 
 fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type {
     return struct {
@@ -502,6 +511,8 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
                     };
                     // Check the handle (will always be valid) and it's potential dependencies (may be invalid).
                     if (!gctx.isResourceValid(handle)) {
+                        // Destroy old resource (it is invalid because some of it's dependencies are invalid).
+                        pool.destroyResource(handle);
                         found_slot_index = slot_index;
                         break;
                     }
