@@ -163,18 +163,16 @@ pub const GraphicsContext = struct {
     }
 
     pub fn createBuffer(gctx: *GraphicsContext, descriptor: gpu.Buffer.Descriptor) BufferHandle {
-        const gpuobj = gctx.device.createBuffer(&descriptor);
         return gctx.buffer_pool.addResource(gctx.*, .{
-            .gpuobj = gpuobj,
+            .gpuobj = gctx.device.createBuffer(&descriptor),
             .size = descriptor.size,
             .usage = descriptor.usage,
         });
     }
 
     pub fn createTexture(gctx: *GraphicsContext, descriptor: gpu.Texture.Descriptor) TextureHandle {
-        const gpuobj = gctx.device.createTexture(&descriptor);
         return gctx.texture_pool.addResource(gctx.*, .{
-            .gpuobj = gpuobj,
+            .gpuobj = gctx.device.createTexture(&descriptor),
             .usage = descriptor.usage,
             .dimension = descriptor.dimension,
             .size = descriptor.size,
@@ -190,9 +188,8 @@ pub const GraphicsContext = struct {
         descriptor: gpu.TextureView.Descriptor,
     ) TextureViewHandle {
         const texture = gctx.lookupResource(texture_handle).?;
-        const gpuobj = texture.createView(&descriptor);
         return gctx.texture_view_pool.addResource(gctx.*, .{
-            .gpuobj = gpuobj,
+            .gpuobj = texture.createView(&descriptor),
             .format = descriptor.format,
             .dimension = descriptor.dimension,
             .base_mip_level = descriptor.base_mip_level,
@@ -204,9 +201,8 @@ pub const GraphicsContext = struct {
     }
 
     pub fn createSampler(gctx: *GraphicsContext, descriptor: gpu.Sampler.Descriptor) SamplerHandle {
-        const gpuobj = gctx.device.createSampler(&descriptor);
         return gctx.sampler_pool.addResource(gctx.*, .{
-            .gpuobj = gpuobj,
+            .gpuobj = gctx.device.createSampler(&descriptor),
             .address_mode_u = descriptor.address_mode_u,
             .address_mode_v = descriptor.address_mode_v,
             .address_mode_w = descriptor.address_mode_w,
@@ -224,9 +220,8 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         descriptor: gpu.RenderPipeline.Descriptor,
     ) RenderPipelineHandle {
-        const gpuobj = gctx.device.createRenderPipeline(&descriptor);
         return gctx.render_pipeline_pool.addResource(gctx.*, .{
-            .gpuobj = gpuobj,
+            .gpuobj = gctx.device.createRenderPipeline(&descriptor),
         });
     }
 
@@ -234,9 +229,8 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         descriptor: gpu.ComputePipeline.Descriptor,
     ) RenderPipelineHandle {
-        const gpuobj = gctx.device.createComputePipeline(&descriptor);
         return gctx.compute_pipeline_pool.addResource(gctx.*, .{
-            .gpuobj = gpuobj,
+            .gpuobj = gctx.device.createComputePipeline(&descriptor),
         });
     }
 
@@ -296,8 +290,8 @@ pub const GraphicsContext = struct {
         assert(descriptor.entries.len > 0 and descriptor.entries.len < max_num_bindings_per_group);
 
         var bind_group_layout_info = BindGroupLayoutInfo{
-            .num_active_entries = @intCast(u32, descriptor.entries.len),
             .gpuobj = gctx.device.createBindGroupLayout(&descriptor),
+            .num_active_entries = @intCast(u32, descriptor.entries.len),
         };
         for (descriptor.entries) |entry, i| {
             bind_group_layout_info.entries[i] = entry;
