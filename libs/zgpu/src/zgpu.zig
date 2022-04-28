@@ -716,10 +716,12 @@ pub const gui = struct {
         ImGui_ImplWGPU_NewFrame();
         {
             const io = cimgui.igGetIO().?;
+            // Make sure imgui uses the same framebuffer dimensions as calling code.
             io.*.DisplaySize = .{
                 .x = @intToFloat(f32, fb_width),
                 .y = @intToFloat(f32, fb_height),
             };
+            // Disable imgui scaling.
             io.*.DisplayFramebufferScale = .{ .x = 1.0, .y = 1.0 };
         }
         cimgui.igNewFrame();
@@ -836,6 +838,7 @@ fn printUnhandledError(_: void, typ: gpu.ErrorType, message: [*:0]const u8) void
         .unknown => std.debug.print("[zgpu] Unknown error: {s}\n", .{message}),
         else => unreachable,
     }
+    // TODO: Do something better.
     std.process.exit(1);
 }
 var printUnhandledErrorCallback = gpu.ErrorCallback.init(void, {}, printUnhandledError);
@@ -850,7 +853,7 @@ fn handleToGpuResourceType(comptime T: type) type {
         ComputePipelineHandle => gpu.ComputePipeline,
         BindGroupHandle => gpu.BindGroup,
         BindGroupLayoutHandle => gpu.BindGroupLayout,
-        else => @compileError("[zgpu] zgpu.handleToGpuType() not implemented for " ++ @typeName(T)),
+        else => @compileError("[zgpu] zgpu.handleToGpuResourceType() not implemented for " ++ @typeName(T)),
     };
 }
 
