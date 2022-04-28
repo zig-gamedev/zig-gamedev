@@ -599,14 +599,21 @@ fn draw(demo: *DemoState) void {
         }
 
         // Main pass.
-        {
+        pass: {
+            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
+            const ib_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
+            const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
+            const draw_bind_group = gctx.lookupResource(demo.draw_bind_group) orelse break :pass;
+            const frame_bind_group = gctx.lookupResource(demo.frame_bind_group) orelse break :pass;
+            const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
+
             const color_attachment = gpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
                 .load_op = .clear,
                 .store_op = .store,
             };
             const depth_attachment = gpu.RenderPassDepthStencilAttachment{
-                .view = gctx.lookupResource(demo.depth_texture_view).?,
+                .view = depth_view,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
@@ -618,31 +625,25 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            if (gctx.lookupResourceInfo(demo.vertex_buffer)) |vb_info| {
-                pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
-            }
-            if (gctx.lookupResourceInfo(demo.index_buffer)) |ib_info| {
-                pass.setIndexBuffer(ib_info.gpuobj.?, .uint16, 0, ib_info.size);
-            }
+            pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
+            pass.setIndexBuffer(ib_info.gpuobj.?, .uint16, 0, ib_info.size);
 
-            if (gctx.lookupResource(demo.pipeline)) |pipeline| {
-                pass.setPipeline(pipeline);
-                pass.setBindGroup(1, gctx.lookupResource(demo.frame_bind_group).?, &.{});
+            pass.setPipeline(pipeline);
+            pass.setBindGroup(1, frame_bind_group, &.{});
 
-                for (demo.drawables.items) |drawable, drawable_index| {
-                    pass.setBindGroup(
-                        0,
-                        gctx.lookupResource(demo.draw_bind_group).?,
-                        &.{@intCast(u32, drawable_index * 256)},
-                    );
-                    pass.drawIndexed(
-                        demo.meshes.items[drawable.mesh_index].num_indices,
-                        1,
-                        demo.meshes.items[drawable.mesh_index].index_offset,
-                        demo.meshes.items[drawable.mesh_index].vertex_offset,
-                        0,
-                    );
-                }
+            for (demo.drawables.items) |drawable, drawable_index| {
+                pass.setBindGroup(
+                    0,
+                    draw_bind_group,
+                    &.{@intCast(u32, drawable_index * 256)},
+                );
+                pass.drawIndexed(
+                    demo.meshes.items[drawable.mesh_index].num_indices,
+                    1,
+                    demo.meshes.items[drawable.mesh_index].index_offset,
+                    demo.meshes.items[drawable.mesh_index].vertex_offset,
+                    0,
+                );
             }
             pass.end();
         }

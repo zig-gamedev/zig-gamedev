@@ -244,14 +244,20 @@ fn draw(demo: *DemoState) void {
             encoder.writeBuffer(gctx.lookupResource(demo.uniform_buffer).?, 256, f32, xform[0..]);
         }
 
-        {
+        pass: {
+            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
+            const ib_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
+            const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
+            const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
+            const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
+
             const color_attachment = gpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
                 .load_op = .clear,
                 .store_op = .store,
             };
             const depth_attachment = gpu.RenderPassDepthStencilAttachment{
-                .view = gctx.lookupResource(demo.depth_texture_view).?,
+                .view = depth_view,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
@@ -263,22 +269,16 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            if (gctx.lookupResourceInfo(demo.vertex_buffer)) |vb_info| {
-                pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
-            }
-            if (gctx.lookupResourceInfo(demo.index_buffer)) |ib_info| {
-                pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
-            }
+            pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
+            pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
 
-            if (gctx.lookupResource(demo.pipeline)) |pipeline| {
-                pass.setPipeline(pipeline);
+            pass.setPipeline(pipeline);
 
-                pass.setBindGroup(0, gctx.lookupResource(demo.bind_group).?, &.{0});
-                pass.drawIndexed(3, 1, 0, 0, 0);
+            pass.setBindGroup(0, bind_group, &.{0});
+            pass.drawIndexed(3, 1, 0, 0, 0);
 
-                pass.setBindGroup(0, gctx.lookupResource(demo.bind_group).?, &.{256});
-                pass.drawIndexed(3, 1, 0, 0, 0);
-            }
+            pass.setBindGroup(0, bind_group, &.{256});
+            pass.drawIndexed(3, 1, 0, 0, 0);
 
             pass.end();
         }
