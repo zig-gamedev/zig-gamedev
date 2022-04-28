@@ -59,17 +59,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     var gctx = zgpu.GraphicsContext.init(allocator, window);
 
     // Create a bind group layout needed for our render pipeline.
-    const bgl = gctx.device.createBindGroupLayout(
-        &gpu.BindGroupLayout.Descriptor{
+    const bgl = gctx.createBindGroupLayout(
+        gpu.BindGroupLayout.Descriptor{
             .entries = &.{
                 gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0),
             },
         },
     );
-    defer bgl.release();
+    defer gctx.destroyResource(bgl);
 
     const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
-        .bind_group_layouts = &.{bgl},
+        .bind_group_layouts = &.{gctx.lookupBindGroupLayout(bgl).?},
     });
     defer pl.release();
 
@@ -177,8 +177,8 @@ fn update(demo: *DemoState) void {
     demo.stats.update(demo.gctx.window, window_title);
     if (!demo.gctx.update()) {
         // Release old depth texture.
-        demo.gctx.destroyTextureView(demo.depth_texture_view);
-        demo.gctx.destroyTexture(demo.depth_texture);
+        demo.gctx.destroyResource(demo.depth_texture_view);
+        demo.gctx.destroyResource(demo.depth_texture);
 
         // Create a new depth texture to match the new window size.
         const depth = createDepthTexture(

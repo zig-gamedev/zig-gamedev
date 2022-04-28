@@ -306,26 +306,29 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     defer arena_state.deinit();
     const arena = arena_state.allocator();
 
-    const draw_bgl = gctx.device.createBindGroupLayout(
-        &gpu.BindGroupLayout.Descriptor{
+    const draw_bgl = gctx.createBindGroupLayout(
+        gpu.BindGroupLayout.Descriptor{
             .entries = &.{
                 gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
             },
         },
     );
-    defer draw_bgl.release();
+    defer gctx.destroyResource(draw_bgl);
 
-    const frame_bgl = gctx.device.createBindGroupLayout(
-        &gpu.BindGroupLayout.Descriptor{
+    const frame_bgl = gctx.createBindGroupLayout(
+        gpu.BindGroupLayout.Descriptor{
             .entries = &.{
                 gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, false, 0),
             },
         },
     );
-    defer frame_bgl.release();
+    defer gctx.destroyResource(frame_bgl);
 
     const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
-        .bind_group_layouts = &.{ draw_bgl, frame_bgl },
+        .bind_group_layouts = &.{
+            gctx.lookupBindGroupLayout(draw_bgl).?,
+            gctx.lookupBindGroupLayout(frame_bgl).?,
+        },
     });
     defer pl.release();
 
@@ -456,8 +459,8 @@ fn update(demo: *DemoState) void {
     demo.stats.update(demo.gctx.window, window_title);
     if (!demo.gctx.update()) {
         // Release old depth texture.
-        demo.gctx.destroyTextureView(demo.depth_texture_view);
-        demo.gctx.destroyTexture(demo.depth_texture);
+        demo.gctx.destroyResource(demo.depth_texture_view);
+        demo.gctx.destroyResource(demo.depth_texture);
 
         // Create a new depth texture to match the new window size.
         const depth = createDepthTexture(
