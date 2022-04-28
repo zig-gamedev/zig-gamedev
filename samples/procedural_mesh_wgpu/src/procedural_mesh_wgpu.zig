@@ -299,8 +299,8 @@ fn initScene(
     }
 }
 
-fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
-    var gctx = zgpu.GraphicsContext.init(allocator, window);
+fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
+    var gctx = try zgpu.GraphicsContext.init(allocator, window);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
@@ -432,7 +432,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     const fb_size = window.getFramebufferSize() catch unreachable;
     const depth = createDepthTexture(&gctx, fb_size.width, fb_size.height);
 
-    return .{
+    return DemoState{
         .gctx = gctx,
         .stats = .{},
         .pipeline = pipeline,
@@ -718,7 +718,7 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    var demo = init(allocator, window);
+    var demo = try init(allocator, window);
     defer deinit(allocator, &demo);
 
     zgpu.gui.init(window, demo.gctx.device, content_dir ++ "Roboto-Medium.ttf", 25.0);

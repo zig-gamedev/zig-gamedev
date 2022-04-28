@@ -46,7 +46,7 @@ pub const GraphicsContext = struct {
     const bind_group_pool_size = 32;
     const bind_group_layout_pool_size = 32;
 
-    pub fn init(allocator: std.mem.Allocator, window: glfw.Window) GraphicsContext {
+    pub fn init(allocator: std.mem.Allocator, window: glfw.Window) !GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
         c.machDawnNativeInstance_discoverDefaultAdapters(instance);
@@ -60,7 +60,7 @@ pub const GraphicsContext = struct {
             .adapter => |v| v,
             .err => |err| {
                 std.debug.print("[zgpu] Failed to get adapter: error={} {s}.\n", .{ err.code, err.message });
-                std.process.exit(1);
+                return error.NoGraphicsAdapter;
             },
         };
 
@@ -75,7 +75,7 @@ pub const GraphicsContext = struct {
             .device => |v| v,
             .err => |err| {
                 std.debug.print("[zgpu] Failed to get device: error={} {s}\n", .{ err.code, err.message });
-                std.process.exit(1);
+                return error.NoGraphicsDevice;
             },
         };
         device.setUncapturedErrorCallback(&printUnhandledErrorCallback);
@@ -814,7 +814,7 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
             args_meta[2].field_type,
             args_meta[3].field_type,
         ) callconv(.C) ReturnType,
-        else => @compileError("Unsupported number of args"),
+        else => @compileError("[zgpu] Unsupported number of args"),
     };
 
     // NOTE: `func` is a var because making it const causes a compile error which I believe is a compiler bug.
@@ -847,7 +847,7 @@ fn handleToGpuResourceType(comptime T: type) type {
         ComputePipelineHandle => gpu.ComputePipeline,
         BindGroupHandle => gpu.BindGroup,
         BindGroupLayoutHandle => gpu.BindGroupLayout,
-        else => @compileError("[zgpu] zgpu.handleToGpuResourceType() not implemented for " ++ @typeName(T)),
+        else => @compileError("[zgpu] handleToGpuResourceType() not implemented for " ++ @typeName(T)),
     };
 }
 
@@ -861,6 +861,6 @@ fn handleToResourceInfoType(comptime T: type) type {
         ComputePipelineHandle => ComputePipelineInfo,
         BindGroupHandle => BindGroupInfo,
         BindGroupLayoutHandle => BindGroupLayoutInfo,
-        else => @compileError("[zgpu] zgpu.handleToResourceInfoType() not implemented for " ++ @typeName(T)),
+        else => @compileError("[zgpu] handleToResourceInfoType() not implemented for " ++ @typeName(T)),
     };
 }
