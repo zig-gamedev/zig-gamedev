@@ -171,20 +171,6 @@ pub const GraphicsContext = struct {
         });
     }
 
-    pub fn lookupBuffer(gctx: GraphicsContext, handle: BufferHandle) ?gpu.Buffer {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.buffer_pool.resources[handle.index].gpuobj.?;
-        }
-        return null;
-    }
-
-    pub fn lookupBufferInfo(gctx: GraphicsContext, handle: BufferHandle) ?BufferInfo {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.buffer_pool.resources[handle.index];
-        }
-        return null;
-    }
-
     pub fn createTexture(gctx: *GraphicsContext, descriptor: gpu.Texture.Descriptor) TextureHandle {
         const gpuobj = gctx.device.createTexture(&descriptor);
         return gctx.texture_pool.addResource(gctx.*, .{
@@ -198,26 +184,12 @@ pub const GraphicsContext = struct {
         });
     }
 
-    pub fn lookupTexture(gctx: GraphicsContext, handle: TextureHandle) ?gpu.Texture {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.texture_pool.resources[handle.index].gpuobj.?;
-        }
-        return null;
-    }
-
-    pub fn lookupTextureInfo(gctx: GraphicsContext, handle: TextureHandle) ?TextureInfo {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.texture_pool.resources[handle.index];
-        }
-        return null;
-    }
-
     pub fn createTextureView(
         gctx: *GraphicsContext,
         texture_handle: TextureHandle,
         descriptor: gpu.TextureView.Descriptor,
     ) TextureViewHandle {
-        const texture = gctx.lookupTexture(texture_handle).?;
+        const texture = gctx.lookupResource(texture_handle).?;
         const gpuobj = texture.createView(&descriptor);
         return gctx.texture_view_pool.addResource(gctx.*, .{
             .gpuobj = gpuobj,
@@ -229,20 +201,6 @@ pub const GraphicsContext = struct {
             .aspect = descriptor.aspect,
             .parent_texture_handle = texture_handle,
         });
-    }
-
-    pub fn lookupTextureView(gctx: GraphicsContext, handle: TextureViewHandle) ?gpu.TextureView {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.texture_view_pool.resources[handle.index].gpuobj.?;
-        }
-        return null;
-    }
-
-    pub fn lookupTextureViewInfo(gctx: GraphicsContext, handle: TextureViewHandle) ?TextureViewInfo {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.texture_view_pool.resources[handle.index];
-        }
-        return null;
     }
 
     pub fn createSampler(gctx: *GraphicsContext, descriptor: gpu.Sampler.Descriptor) SamplerHandle {
@@ -262,20 +220,6 @@ pub const GraphicsContext = struct {
         });
     }
 
-    pub fn lookupSampler(gctx: GraphicsContext, handle: SamplerHandle) ?gpu.Sampler {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.sampler_pool.resources[handle.index].gpuobj.?;
-        }
-        return null;
-    }
-
-    pub fn lookupSamplerInfo(gctx: GraphicsContext, handle: SamplerHandle) ?SamplerInfo {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.sampler_pool.resources[handle.index];
-        }
-        return null;
-    }
-
     pub fn createRenderPipeline(
         gctx: *GraphicsContext,
         descriptor: gpu.RenderPipeline.Descriptor,
@@ -286,13 +230,6 @@ pub const GraphicsContext = struct {
         });
     }
 
-    pub fn lookupRenderPipeline(gctx: GraphicsContext, handle: RenderPipelineHandle) ?gpu.RenderPipeline {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.render_pipeline_pool.resources[handle.index].gpuobj.?;
-        }
-        return null;
-    }
-
     pub fn createComputePipeline(
         gctx: *GraphicsContext,
         descriptor: gpu.ComputePipeline.Descriptor,
@@ -301,13 +238,6 @@ pub const GraphicsContext = struct {
         return gctx.compute_pipeline_pool.addResource(gctx.*, .{
             .gpuobj = gpuobj,
         });
-    }
-
-    pub fn lookupComputePipeline(gctx: GraphicsContext, handle: ComputePipelineHandle) ?gpu.ComputePipeline {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.compute_pipeline_pool.resources[handle.index].gpuobj.?;
-        }
-        return null;
     }
 
     pub fn createBindGroup(
@@ -326,7 +256,7 @@ pub const GraphicsContext = struct {
             if (entries[i].buffer_handle) |handle| {
                 gpu_bind_group_entries[i] = .{
                     .binding = entries[i].binding,
-                    .buffer = gctx.lookupBuffer(handle).?,
+                    .buffer = gctx.lookupResource(handle).?,
                     .offset = entries[i].offset,
                     .size = entries[i].size,
                     .sampler = null,
@@ -338,7 +268,7 @@ pub const GraphicsContext = struct {
                     .buffer = null,
                     .offset = 0,
                     .size = 0,
-                    .sampler = gctx.lookupSampler(handle).?,
+                    .sampler = gctx.lookupResource(handle).?,
                     .texture_view = null,
                 };
             } else if (entries[i].texture_view_handle) |handle| {
@@ -348,29 +278,15 @@ pub const GraphicsContext = struct {
                     .offset = 0,
                     .size = 0,
                     .sampler = null,
-                    .texture_view = gctx.lookupTextureView(handle).?,
+                    .texture_view = gctx.lookupResource(handle).?,
                 };
             } else unreachable;
         }
         bind_group_info.gpuobj = gctx.device.createBindGroup(&.{
-            .layout = gctx.lookupBindGroupLayout(layout).?,
+            .layout = gctx.lookupResource(layout).?,
             .entries = gpu_bind_group_entries[0..entries.len],
         });
         return gctx.bind_group_pool.addResource(gctx.*, bind_group_info);
-    }
-
-    pub fn lookupBindGroup(gctx: GraphicsContext, handle: BindGroupHandle) ?gpu.BindGroup {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.bind_group_pool.resources[handle.index].gpuobj.?;
-        }
-        return null;
-    }
-
-    pub fn lookupBindGroupInfo(gctx: GraphicsContext, handle: BindGroupHandle) ?BindGroupInfo {
-        if (gctx.isResourceValid(handle)) {
-            return gctx.bind_group_pool.resources[handle.index];
-        }
-        return null;
     }
 
     pub fn createBindGroupLayout(
@@ -395,16 +311,42 @@ pub const GraphicsContext = struct {
         return gctx.bind_group_layout_pool.addResource(gctx.*, bind_group_layout_info);
     }
 
-    pub fn lookupBindGroupLayout(gctx: GraphicsContext, handle: BindGroupLayoutHandle) ?gpu.BindGroupLayout {
+    pub fn lookupResource(gctx: GraphicsContext, handle: anytype) ?handleToGpuResourceType(@TypeOf(handle)) {
         if (gctx.isResourceValid(handle)) {
-            return gctx.bind_group_layout_pool.resources[handle.index].gpuobj.?;
+            const T = @TypeOf(handle);
+            return switch (T) {
+                BufferHandle => gctx.buffer_pool.resources[handle.index].gpuobj.?,
+                TextureHandle => gctx.texture_pool.resources[handle.index].gpuobj.?,
+                TextureViewHandle => gctx.texture_view_pool.resources[handle.index].gpuobj.?,
+                SamplerHandle => gctx.sampler_pool.resources[handle.index].gpuobj.?,
+                RenderPipelineHandle => gctx.render_pipeline_pool.resources[handle.index].gpuobj.?,
+                ComputePipelineHandle => gctx.compute_pipeline_pool.resources[handle.index].gpuobj.?,
+                BindGroupHandle => gctx.bind_group_pool.resources[handle.index].gpuobj.?,
+                BindGroupLayoutHandle => gctx.bind_group_layout_pool.resources[handle.index].gpuobj.?,
+                else => @compileError(
+                    "[zgpu] GraphicsContext.lookupResource() not implemented for " ++ @typeName(T),
+                ),
+            };
         }
         return null;
     }
 
-    pub fn lookupBindGroupLayoutInfo(gctx: GraphicsContext, handle: BindGroupLayoutHandle) ?BindGroupLayoutInfo {
+    pub fn lookupResourceInfo(gctx: GraphicsContext, handle: anytype) ?handleToResourceInfoType(@TypeOf(handle)) {
         if (gctx.isResourceValid(handle)) {
-            return gctx.bind_group_layout_pool.resources[handle.index];
+            const T = @TypeOf(handle);
+            return switch (T) {
+                BufferHandle => gctx.buffer_pool.resources[handle.index],
+                TextureHandle => gctx.texture_pool.resources[handle.index],
+                TextureViewHandle => gctx.texture_view_pool.resources[handle.index],
+                SamplerHandle => gctx.sampler_pool.resources[handle.index],
+                RenderPipelineHandle => gctx.render_pipeline_pool.resources[handle.index],
+                ComputePipelineHandle => gctx.compute_pipeline_pool.resources[handle.index],
+                BindGroupHandle => gctx.bind_group_pool.resources[handle.index],
+                BindGroupLayoutHandle => gctx.bind_group_layout_pool.resources[handle.index],
+                else => @compileError(
+                    "[zgpu] GraphicsContext.lookupResourceInfo() not implemented for " ++ @typeName(T),
+                ),
+            };
         }
         return null;
     }
@@ -897,3 +839,31 @@ fn printUnhandledError(_: void, typ: gpu.ErrorType, message: [*:0]const u8) void
     std.process.exit(1);
 }
 var printUnhandledErrorCallback = gpu.ErrorCallback.init(void, {}, printUnhandledError);
+
+fn handleToGpuResourceType(comptime T: type) type {
+    return switch (T) {
+        BufferHandle => gpu.Buffer,
+        TextureHandle => gpu.Texture,
+        TextureViewHandle => gpu.TextureView,
+        SamplerHandle => gpu.Sampler,
+        RenderPipelineHandle => gpu.RenderPipeline,
+        ComputePipelineHandle => gpu.ComputePipeline,
+        BindGroupHandle => gpu.BindGroup,
+        BindGroupLayoutHandle => gpu.BindGroupLayout,
+        else => @compileError("[zgpu] zgpu.handleToGpuType() not implemented for " ++ @typeName(T)),
+    };
+}
+
+fn handleToResourceInfoType(comptime T: type) type {
+    return switch (T) {
+        BufferHandle => BufferInfo,
+        TextureHandle => TextureInfo,
+        TextureViewHandle => TextureViewInfo,
+        SamplerHandle => SamplerInfo,
+        RenderPipelineHandle => RenderPipelineInfo,
+        ComputePipelineHandle => ComputePipelineInfo,
+        BindGroupHandle => BindGroupInfo,
+        BindGroupLayoutHandle => BindGroupLayoutInfo,
+        else => @compileError("[zgpu] zgpu.handleToResourceInfoType() not implemented for " ++ @typeName(T)),
+    };
+}

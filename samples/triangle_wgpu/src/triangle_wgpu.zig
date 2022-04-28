@@ -69,7 +69,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
     defer gctx.destroyResource(bgl);
 
     const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
-        .bind_group_layouts = &.{gctx.lookupBindGroupLayout(bgl).?},
+        .bind_group_layouts = &.{gctx.lookupResource(bgl).?},
     });
     defer pl.release();
 
@@ -141,7 +141,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .{ .position = [3]f32{ -0.5, -0.5, 0.0 }, .color = [3]f32{ 0.0, 1.0, 0.0 } },
         .{ .position = [3]f32{ 0.5, -0.5, 0.0 }, .color = [3]f32{ 0.0, 0.0, 1.0 } },
     };
-    gctx.queue.writeBuffer(gctx.lookupBuffer(vertex_buffer).?, 0, Vertex, vertex_data[0..]);
+    gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data[0..]);
 
     // Create an index buffer.
     const index_buffer = gctx.createBuffer(.{
@@ -149,7 +149,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .size = 3 * @sizeOf(u32),
     });
     const index_data = [_]u32{ 0, 1, 2 };
-    gctx.queue.writeBuffer(gctx.lookupBuffer(index_buffer).?, 0, u32, index_data[0..]);
+    gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data[0..]);
 
     // Create a depth texture and it's 'view'.
     const fb_size = window.getFramebufferSize() catch unreachable;
@@ -229,7 +229,7 @@ fn draw(demo: *DemoState) void {
             zm.storeMat(xform[0..], zm.transpose(object_to_clip));
 
             // Write data at offset 0.
-            encoder.writeBuffer(gctx.lookupBuffer(demo.uniform_buffer).?, 0, f32, xform[0..]);
+            encoder.writeBuffer(gctx.lookupResource(demo.uniform_buffer).?, 0, f32, xform[0..]);
         }
 
         // Update xform matrix for triangle 2.
@@ -241,7 +241,7 @@ fn draw(demo: *DemoState) void {
             zm.storeMat(xform[0..], zm.transpose(object_to_clip));
 
             // Write data at offset 256 (dynamic offsets need to be aligned to 256 bytes).
-            encoder.writeBuffer(gctx.lookupBuffer(demo.uniform_buffer).?, 256, f32, xform[0..]);
+            encoder.writeBuffer(gctx.lookupResource(demo.uniform_buffer).?, 256, f32, xform[0..]);
         }
 
         {
@@ -251,7 +251,7 @@ fn draw(demo: *DemoState) void {
                 .store_op = .store,
             };
             const depth_attachment = gpu.RenderPassDepthStencilAttachment{
-                .view = gctx.lookupTextureView(demo.depth_texture_view).?,
+                .view = gctx.lookupResource(demo.depth_texture_view).?,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
@@ -263,20 +263,20 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            if (gctx.lookupBufferInfo(demo.vertex_buffer)) |vb| {
-                pass.setVertexBuffer(0, vb.gpuobj.?, 0, vb.size);
+            if (gctx.lookupResourceInfo(demo.vertex_buffer)) |vb_info| {
+                pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             }
-            if (gctx.lookupBufferInfo(demo.index_buffer)) |ib| {
-                pass.setIndexBuffer(ib.gpuobj.?, .uint32, 0, ib.size);
+            if (gctx.lookupResourceInfo(demo.index_buffer)) |ib_info| {
+                pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
             }
 
-            if (gctx.lookupRenderPipeline(demo.pipeline)) |pipeline| {
+            if (gctx.lookupResource(demo.pipeline)) |pipeline| {
                 pass.setPipeline(pipeline);
 
-                pass.setBindGroup(0, gctx.lookupBindGroup(demo.bind_group).?, &.{0});
+                pass.setBindGroup(0, gctx.lookupResource(demo.bind_group).?, &.{0});
                 pass.drawIndexed(3, 1, 0, 0, 0);
 
-                pass.setBindGroup(0, gctx.lookupBindGroup(demo.bind_group).?, &.{256});
+                pass.setBindGroup(0, gctx.lookupResource(demo.bind_group).?, &.{256});
                 pass.drawIndexed(3, 1, 0, 0, 0);
             }
 

@@ -326,8 +326,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
 
     const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
         .bind_group_layouts = &.{
-            gctx.lookupBindGroupLayout(draw_bgl).?,
-            gctx.lookupBindGroupLayout(frame_bgl).?,
+            gctx.lookupResource(draw_bgl).?,
+            gctx.lookupResource(frame_bgl).?,
         },
     });
     defer pl.release();
@@ -418,7 +418,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
             vertex_data.items[i].position = meshes_positions.items[i];
             vertex_data.items[i].normal = meshes_normals.items[i];
         }
-        gctx.queue.writeBuffer(gctx.lookupBuffer(vertex_buffer).?, 0, Vertex, vertex_data.items);
+        gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data.items);
     }
 
     // Create an index buffer.
@@ -426,7 +426,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) DemoState {
         .usage = .{ .copy_dst = true, .index = true },
         .size = total_num_indices * @sizeOf(u16),
     });
-    gctx.queue.writeBuffer(gctx.lookupBuffer(index_buffer).?, 0, u16, meshes_indices.items);
+    gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, meshes_indices.items);
 
     // Create a depth texture and it's 'view'.
     const fb_size = window.getFramebufferSize() catch unreachable;
@@ -573,7 +573,7 @@ fn draw(demo: *DemoState) void {
             zm.storeMat(frame_uniforms.world_to_clip[0..], zm.transpose(cam_world_to_clip));
             frame_uniforms.camera_position = demo.camera.position;
             encoder.writeBuffer(
-                gctx.lookupBuffer(demo.uniform_buffer).?,
+                gctx.lookupResource(demo.uniform_buffer).?,
                 0,
                 @TypeOf(frame_uniforms),
                 &.{frame_uniforms},
@@ -590,7 +590,7 @@ fn draw(demo: *DemoState) void {
                 draw_uniforms.basecolor_roughness = drawable.basecolor_roughness;
 
                 encoder.writeBuffer(
-                    gctx.lookupBuffer(demo.uniform_buffer).?,
+                    gctx.lookupResource(demo.uniform_buffer).?,
                     512 + 256 * drawable_index,
                     @TypeOf(draw_uniforms),
                     &.{draw_uniforms},
@@ -606,7 +606,7 @@ fn draw(demo: *DemoState) void {
                 .store_op = .store,
             };
             const depth_attachment = gpu.RenderPassDepthStencilAttachment{
-                .view = gctx.lookupTextureView(demo.depth_texture_view).?,
+                .view = gctx.lookupResource(demo.depth_texture_view).?,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
@@ -618,21 +618,21 @@ fn draw(demo: *DemoState) void {
             const pass = encoder.beginRenderPass(&render_pass_info);
             defer pass.release();
 
-            if (gctx.lookupBufferInfo(demo.vertex_buffer)) |vb| {
-                pass.setVertexBuffer(0, vb.gpuobj.?, 0, vb.size);
+            if (gctx.lookupResourceInfo(demo.vertex_buffer)) |vb_info| {
+                pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             }
-            if (gctx.lookupBufferInfo(demo.index_buffer)) |ib| {
-                pass.setIndexBuffer(ib.gpuobj.?, .uint16, 0, ib.size);
+            if (gctx.lookupResourceInfo(demo.index_buffer)) |ib_info| {
+                pass.setIndexBuffer(ib_info.gpuobj.?, .uint16, 0, ib_info.size);
             }
 
-            if (gctx.lookupRenderPipeline(demo.pipeline)) |pipeline| {
+            if (gctx.lookupResource(demo.pipeline)) |pipeline| {
                 pass.setPipeline(pipeline);
-                pass.setBindGroup(1, gctx.lookupBindGroup(demo.frame_bind_group).?, &.{});
+                pass.setBindGroup(1, gctx.lookupResource(demo.frame_bind_group).?, &.{});
 
                 for (demo.drawables.items) |drawable, drawable_index| {
                     pass.setBindGroup(
                         0,
-                        gctx.lookupBindGroup(demo.draw_bind_group).?,
+                        gctx.lookupResource(demo.draw_bind_group).?,
                         &.{@intCast(u32, drawable_index * 256)},
                     );
                     pass.drawIndexed(
