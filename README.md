@@ -17,7 +17,7 @@ zig build procedural_mesh_wgpu-run
 * Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
 * Zero dependency except [Zig compiler (master)](https://ziglang.org/download/), git with [Git LFS](https://git-lfs.github.com/) and curl - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
-* Uses *native* WebGPU ([mach/gpu](https://github.com/hexops/mach/tree/main/gpu)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
+* Uses native version of WebGPU API ([mach/gpu](https://github.com/hexops/mach/tree/main/gpu)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
 * Uses some great, carefully selected C/C++ libraries which are seamlessly built by `zig cc` compiler
 
 #### Libraries we develop/maintain:

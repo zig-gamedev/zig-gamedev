@@ -641,10 +641,10 @@ pub const FrameStats = struct {
     time: f64 = 0.0,
     delta_time: f32 = 0.0,
     fps: f32 = 0.0,
+    fps_counter: u32 = 0,
     average_cpu_time: f32 = 0.0,
     previous_time: f64 = 0.0,
     fps_refresh_time: f64 = 0.0,
-    frame_counter: u64 = 0,
     frame_number: u64 = 0,
 
     pub fn update(self: *FrameStats, window: glfw.Window, window_name: []const u8) void {
@@ -654,13 +654,13 @@ pub const FrameStats = struct {
 
         if ((self.time - self.fps_refresh_time) >= 1.0) {
             const t = self.time - self.fps_refresh_time;
-            const fps = @intToFloat(f64, self.frame_counter) / t;
+            const fps = @intToFloat(f64, self.fps_counter) / t;
             const ms = (1.0 / fps) * 1000.0;
 
             self.fps = @floatCast(f32, fps);
             self.average_cpu_time = @floatCast(f32, ms);
             self.fps_refresh_time = self.time;
-            self.frame_counter = 0;
+            self.fps_counter = 0;
 
             var buffer = [_]u8{0} ** 128;
             const text = std.fmt.bufPrint(
@@ -670,7 +670,7 @@ pub const FrameStats = struct {
             ) catch unreachable;
             window.setTitle(@ptrCast([*:0]const u8, text.ptr)) catch unreachable;
         }
-        self.frame_counter += 1;
+        self.fps_counter += 1;
         self.frame_number += 1;
     }
 };
