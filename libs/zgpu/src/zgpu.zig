@@ -14,6 +14,7 @@ pub const cimgui = @cImport({
     @cInclude("imgui/cimgui.h");
 });
 pub const gpu = @import("mach-gpu/main.zig");
+const wgsl = @import("common_wgsl.zig");
 
 pub const GraphicsContext = struct {
     native_instance: gpu.NativeInstance,
@@ -159,6 +160,7 @@ pub const GraphicsContext = struct {
             );
             return false; // Swap chain has been resized.
         }
+
         return true;
     }
 
@@ -228,7 +230,7 @@ pub const GraphicsContext = struct {
     pub fn createComputePipeline(
         gctx: *GraphicsContext,
         descriptor: gpu.ComputePipeline.Descriptor,
-    ) RenderPipelineHandle {
+    ) ComputePipelineHandle {
         return gctx.compute_pipeline_pool.addResource(gctx.*, .{
             .gpuobj = gctx.device.createComputePipeline(&descriptor),
         });
@@ -864,3 +866,32 @@ fn handleToResourceInfoType(comptime T: type) type {
         else => @compileError("[zgpu] handleToResourceInfoType() not implemented for " ++ @typeName(T)),
     };
 }
+
+const MipmapGenerator = struct {
+    pipeline: ComputePipelineHandle,
+
+    fn init(gctx: *GraphicsContext) MipmapGenerator {
+        const cs_module = gctx.device.createShaderModule(&.{
+            .label = "zgpu_cs_generate_mipmaps",
+            .code = .{ .wgsl = wgsl.cs_generate_mipmaps },
+        });
+        defer cs_module.release();
+
+        const pipeline = gctx.createComputePipeline(.{
+            .compute = .{
+                .label = "zgpu_cs_generate_mipmaps",
+                .module = cs_module,
+                .entry_point = "main",
+            },
+        });
+
+        return MipmapGenerator{
+            .pipeline = pipeline,
+        };
+    }
+
+    fn deinit(mipgen: *MipmapGenerator, gctx: GraphicsContext) void {
+        gctx.destroyResource(mipgen.pipeline);
+        mipgen.* = undefined;
+    }
+};
