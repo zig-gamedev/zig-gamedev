@@ -36,6 +36,12 @@ pub const GraphicsContext = struct {
     bind_group_pool: BindGroupPool,
     bind_group_layout_pool: BindGroupLayoutPool,
 
+    mipgen: struct {
+        pipeline: ComputePipelineHandle = .{},
+        scratch_texture: TextureHandle = .{},
+        scratch_texture_views: [4]TextureViewHandle = [_]TextureViewHandle{.{}} ** 4,
+    } = .{},
+
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
     // TODO: Adjust pool sizes.
     const buffer_pool_size = 256;
@@ -160,7 +166,6 @@ pub const GraphicsContext = struct {
             );
             return false; // Swap chain has been resized.
         }
-
         return true;
     }
 
@@ -307,6 +312,15 @@ pub const GraphicsContext = struct {
         return gctx.bind_group_layout_pool.addResource(gctx.*, bind_group_layout_info);
     }
 
+    pub fn createBindGroupLayoutAuto(
+        gctx: *GraphicsContext,
+        pipeline: anytype,
+        group_index: u32,
+    ) BindGroupLayoutHandle {
+        const bgl = gctx.lookupResource(pipeline).?.getBindGroupLayout(group_index);
+        return gctx.bind_group_layout_pool.addResource(gctx.*, BindGroupLayoutInfo{ .gpuobj = bgl });
+    }
+
     pub fn lookupResource(gctx: GraphicsContext, handle: anytype) ?handleToGpuResourceType(@TypeOf(handle)) {
         if (gctx.isResourceValid(handle)) {
             const T = @TypeOf(handle);
@@ -401,6 +415,47 @@ pub const GraphicsContext = struct {
             BindGroupLayoutHandle => return gctx.bind_group_layout_pool.isHandleValid(handle),
             else => @compileError("[zgpu] GraphicsContext.isResourceValid() not implemented for " ++ @typeName(T)),
         }
+    }
+
+    pub fn generateMipmaps(gctx: *GraphicsContext, texture: TextureHandle) void {
+        if (!gctx.isResourceValid(gctx.mipgen.pipeline)) {
+            const cs_module = gctx.device.createShaderModule(&.{
+                .label = "zgpu_cs_generate_mipmaps",
+                .code = .{ .wgsl = wgsl.cs_generate_mipmaps },
+            });
+            defer cs_module.release();
+
+            gctx.mipgen.pipeline = gctx.createComputePipeline(.{
+                .compute = .{
+                    .label = "zgpu_cs_generate_mipmaps",
+                    .module = cs_module,
+                    .entry_point = "main",
+                },
+            });
+            const bgl = gctx.createBindGroupLayoutAuto(gctx.mipgen.pipeline, 0);
+            defer gctx.destroyResource(bgl);
+
+            gctx.mipgen.scratch_texture = gctx.createTexture(.{
+                .usage = .{ .copy_src = true, .storage_binding = true },
+                .dimension = .dimension_2d,
+                .size = .{ .width = 1024, .height = 1024, .depth_or_array_layers = 1 },
+                .format = .rgba32_float,
+                .mip_level_count = 4,
+                .sample_count = 1,
+            });
+
+            for (gctx.mipgen.scratch_texture_views) |*view, i| {
+                view.* = gctx.createTextureView(gctx.mipgen.scratch_texture, .{
+                    .format = .rgba32_float,
+                    .dimension = .dimension_2d,
+                    .base_mip_level = @intCast(u32, i),
+                    .mip_level_count = 1,
+                    .base_array_layer = 0,
+                    .array_layer_count = 1,
+                });
+            }
+        }
+        _ = texture;
     }
 };
 
@@ -866,32 +921,3 @@ fn handleToResourceInfoType(comptime T: type) type {
         else => @compileError("[zgpu] handleToResourceInfoType() not implemented for " ++ @typeName(T)),
     };
 }
-
-const MipmapGenerator = struct {
-    pipeline: ComputePipelineHandle,
-
-    fn init(gctx: *GraphicsContext) MipmapGenerator {
-        const cs_module = gctx.device.createShaderModule(&.{
-            .label = "zgpu_cs_generate_mipmaps",
-            .code = .{ .wgsl = wgsl.cs_generate_mipmaps },
-        });
-        defer cs_module.release();
-
-        const pipeline = gctx.createComputePipeline(.{
-            .compute = .{
-                .label = "zgpu_cs_generate_mipmaps",
-                .module = cs_module,
-                .entry_point = "main",
-            },
-        });
-
-        return MipmapGenerator{
-            .pipeline = pipeline,
-        };
-    }
-
-    fn deinit(mipgen: *MipmapGenerator, gctx: GraphicsContext) void {
-        gctx.destroyResource(mipgen.pipeline);
-        mipgen.* = undefined;
-    }
-};
