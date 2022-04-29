@@ -103,12 +103,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
                 .entry_point = "main",
                 .buffers = &.{vertex_buffer_layout},
             },
-            .primitive = .{
+            .primitive = gpu.PrimitiveState{
                 .front_face = .ccw,
                 .cull_mode = .none,
                 .topology = .triangle_list,
             },
-            .depth_stencil = &.{
+            .depth_stencil = &gpu.DepthStencilState{
                 .format = .depth32_float,
                 .depth_write_enabled = true,
                 .depth_compare = .less,
@@ -152,7 +152,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data[0..]);
 
     // Create a depth texture and it's 'view'.
-    const fb_size = window.getFramebufferSize() catch unreachable;
+    const fb_size = try window.getFramebufferSize();
     const depth = createDepthTexture(&gctx, fb_size.width, fb_size.height);
 
     return DemoState{

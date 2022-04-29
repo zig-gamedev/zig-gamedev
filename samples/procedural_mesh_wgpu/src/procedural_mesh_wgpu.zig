@@ -429,7 +429,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, meshes_indices.items);
 
     // Create a depth texture and it's 'view'.
-    const fb_size = window.getFramebufferSize() catch unreachable;
+    const fb_size = try window.getFramebufferSize();
     const depth = createDepthTexture(&gctx, fb_size.width, fb_size.height);
 
     return DemoState{
