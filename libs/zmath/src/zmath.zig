@@ -2695,7 +2695,7 @@ test "zmath.quaternion.quatToAxisAngle" {
         var axis: Vec = f32x4(4.0, 3.0, 2.0, 1.0);
         var angle: f32 = 10.0;
         quatToAxisAngle(q0, &axis, &angle);
-        try expect(math.approxEqAbs(f32, axis[0], math.sin(@as(f32, 0.25) * math.pi * 0.5), 0.0001));
+        try expect(math.approxEqAbs(f32, axis[0], @sin(@as(f32, 0.25) * math.pi * 0.5), 0.0001));
         try expect(axis[1] == 0.0);
         try expect(axis[2] == 0.0);
         try expect(math.approxEqAbs(f32, angle, 0.25 * math.pi, 0.0001));
