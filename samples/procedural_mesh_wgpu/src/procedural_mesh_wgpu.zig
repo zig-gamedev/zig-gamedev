@@ -326,8 +326,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
 
     const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
         .bind_group_layouts = &.{
-            gctx.lookupResource(draw_bgl).?,
             gctx.lookupResource(frame_bgl).?,
+            gctx.lookupResource(draw_bgl).?,
         },
     });
     defer pl.release();
@@ -629,11 +629,11 @@ fn draw(demo: *DemoState) void {
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint16, 0, ib_info.size);
 
             pass.setPipeline(pipeline);
-            pass.setBindGroup(1, frame_bind_group, null);
+            pass.setBindGroup(0, frame_bind_group, null);
 
             for (demo.drawables.items) |drawable, drawable_index| {
                 pass.setBindGroup(
-                    0,
+                    1,
                     draw_bind_group,
                     &.{@intCast(u32, drawable_index * 256)},
                 );
