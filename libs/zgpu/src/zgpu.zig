@@ -23,6 +23,8 @@ pub const GraphicsContext = struct {
     device: gpu.Device,
     queue: gpu.Queue,
     window: glfw.Window,
+    window_width: u32,
+    window_height: u32,
     window_surface: gpu.Surface,
     swapchain: gpu.SwapChain,
     swapchain_descriptor: gpu.SwapChain.Descriptor,
@@ -92,6 +94,7 @@ pub const GraphicsContext = struct {
             window,
             comptime detectGLFWOptions(),
         );
+        const window_size = window.getSize() catch unreachable;
         const framebuffer_size = window.getFramebufferSize() catch unreachable;
 
         const swapchain_descriptor = gpu.SwapChain.Descriptor{
@@ -115,6 +118,8 @@ pub const GraphicsContext = struct {
             .device = device,
             .queue = device.getQueue(),
             .window = window,
+            .window_width = window_size.width,
+            .window_height = window_size.height,
             .window_surface = window_surface,
             .swapchain = swapchain,
             .swapchain_descriptor = swapchain_descriptor,
@@ -148,6 +153,7 @@ pub const GraphicsContext = struct {
     }
 
     pub fn update(gctx: *GraphicsContext) bool {
+        const win_size = gctx.window.getSize() catch unreachable;
         const fb_size = gctx.window.getFramebufferSize() catch unreachable;
         if (gctx.swapchain_descriptor.width != fb_size.width or
             gctx.swapchain_descriptor.height != fb_size.height)
@@ -160,9 +166,17 @@ pub const GraphicsContext = struct {
                 &gctx.swapchain_descriptor,
             );
 
+            gctx.window_width = win_size.width;
+            gctx.window_height = win_size.height;
+
             std.debug.print(
-                "[zgpu] Swap chain has been resized to: {d}x{d}\n",
-                .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
+                "[zgpu] Window has been resized to: {d}x{d} pixels ({d}x{d} units).\n",
+                .{
+                    gctx.swapchain_descriptor.width,
+                    gctx.swapchain_descriptor.height,
+                    gctx.window_width,
+                    gctx.window_height,
+                },
             );
             return false; // Swap chain has been resized.
         }
@@ -762,19 +776,9 @@ pub const gui = struct {
         cimgui.igDestroyContext(null);
     }
 
-    pub fn newFrame(fb_width: u32, fb_height: u32) void {
-        ImGui_ImplGlfw_NewFrame();
+    pub fn newFrame(win_width: u32, win_height: u32, fb_width: u32, fb_height: u32) void {
+        ImGui_ImplGlfw_NewFrame(win_width, win_height, fb_width, fb_height);
         ImGui_ImplWGPU_NewFrame();
-        {
-            const io = cimgui.igGetIO().?;
-            // Make sure imgui uses the same framebuffer dimensions as calling code.
-            io.*.DisplaySize = .{
-                .x = @intToFloat(f32, fb_width),
-                .y = @intToFloat(f32, fb_height),
-            };
-            // Disable imgui scaling.
-            io.*.DisplayFramebufferScale = .{ .x = 1.0, .y = 1.0 };
-        }
         cimgui.igNewFrame();
     }
 
@@ -784,7 +788,7 @@ pub const gui = struct {
     }
 
     extern fn ImGui_ImplGlfw_InitForOther(window: *anyopaque, install_callbacks: bool) bool;
-    extern fn ImGui_ImplGlfw_NewFrame() void;
+    extern fn ImGui_ImplGlfw_NewFrame(window_w: u32, window_h: u32, framebuffer_w: u32, framebuffer_h: u32) void;
     extern fn ImGui_ImplGlfw_Shutdown() void;
     extern fn ImGui_ImplWGPU_Init(device: *anyopaque, num_frames_in_flight: u32, rt_format: u32) bool;
     extern fn ImGui_ImplWGPU_NewFrame() void;
