@@ -629,7 +629,7 @@ fn draw(demo: *DemoState) void {
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint16, 0, ib_info.size);
 
             pass.setPipeline(pipeline);
-            pass.setBindGroup(1, frame_bind_group, &.{});
+            pass.setBindGroup(1, frame_bind_group, null);
 
             for (demo.drawables.items) |drawable, drawable_index| {
                 pass.setBindGroup(
