@@ -267,7 +267,10 @@ fn draw(demo: *DemoState) void {
                 .depth_stencil_attachment = &depth_attachment,
             };
             const pass = encoder.beginRenderPass(&render_pass_info);
-            defer pass.release();
+            defer {
+                pass.end();
+                pass.release();
+            }
 
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
@@ -279,8 +282,6 @@ fn draw(demo: *DemoState) void {
 
             pass.setBindGroup(0, bind_group, &.{256});
             pass.drawIndexed(3, 1, 0, 0, 0);
-
-            pass.end();
         }
         {
             const color_attachment = gpu.RenderPassColorAttachment{
@@ -292,11 +293,12 @@ fn draw(demo: *DemoState) void {
                 .color_attachments = &.{color_attachment},
             };
             const pass = encoder.beginRenderPass(&render_pass_info);
-            defer pass.release();
+            defer {
+                pass.end();
+                pass.release();
+            }
 
             zgpu.gui.draw(pass);
-
-            pass.end();
         }
 
         break :commands encoder.finish(null);
