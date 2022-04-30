@@ -1554,7 +1554,7 @@ fn update(demo: *DemoState) void {
         const mousey = @intToFloat(f32, pos.y);
 
         const far_plane: f32 = 10000.0;
-        const tanfov = math.tan(0.5 * camera_fovy);
+        const tanfov = @tan(0.5 * camera_fovy);
         const width = @intToFloat(f32, demo.gctx.viewport_width);
         const height = @intToFloat(f32, demo.gctx.viewport_height);
         const aspect = width / height;

@@ -478,7 +478,7 @@ fn draw(demo: *DemoState) void {
                 zm.store(color[0..], zm.lerp(
                     zm.f32x4(0.2, 1.0, 0.0, 0.0),
                     zm.f32x4(1.0, 0.0, 0.0, 0.0),
-                    1.2 * math.sqrt(f) * math.fabs(sample),
+                    1.2 * @sqrt(f) * @fabs(sample),
                 ), 3);
 
                 mem.cpu_slice[x] = Pso_Vertex{

@@ -7,7 +7,7 @@ const epsilon: f32 = 0.00001;
 
 pub fn modAngle(in_angle: f32) f32 {
     const angle = in_angle + math.pi;
-    var temp: f32 = math.fabs(angle);
+    var temp: f32 = @fabs(angle);
     temp = temp - (2.0 * math.pi * @intToFloat(f32, @floatToInt(i32, temp / math.pi)));
     temp = temp - math.pi;
     if (angle < 0.0) {
@@ -612,10 +612,10 @@ pub const Quat = extern struct {
         const cos_angle = dot(a, b);
         const angle = math.acos(cos_angle);
 
-        const fa = math.sin((1.0 - t) * angle);
-        const fb = math.sin(t * angle);
+        const fa = @sin((1.0 - t) * angle);
+        const fb = @sin(t * angle);
 
-        const sin_angle = math.sin(angle);
+        const sin_angle = @sin(angle);
         assert(!math.approxEqAbs(f32, sin_angle, 0.0, epsilon));
         const rcp_sin_angle = 1.0 / sin_angle;
 
@@ -675,8 +675,8 @@ pub const Quat = extern struct {
 
     pub fn initRotationNormal(normal_axis: Vec3, angle: f32) Quat {
         const half_angle = 0.5 * angle;
-        const sinv = math.sin(half_angle);
-        const cosv = math.cos(half_angle);
+        const sinv = @sin(half_angle);
+        const cosv = @cos(half_angle);
 
         return init(
             normal_axis.c[0] * sinv,
@@ -931,8 +931,8 @@ pub const Mat4 = extern struct {
     }
 
     pub fn initRotationX(angle: f32) Mat4 {
-        const sinv = math.sin(angle);
-        const cosv = math.cos(angle);
+        const sinv = @sin(angle);
+        const cosv = @cos(angle);
         // zig fmt: off
         return init(
             1.0, 0.0, 0.0, 0.0,
@@ -944,8 +944,8 @@ pub const Mat4 = extern struct {
     }
 
     pub fn initRotationY(angle: f32) Mat4 {
-        const sinv = math.sin(angle);
-        const cosv = math.cos(angle);
+        const sinv = @sin(angle);
+        const cosv = @cos(angle);
         // zig fmt: off
         return init(
             cosv, 0.0, -sinv, 0.0,
@@ -957,8 +957,8 @@ pub const Mat4 = extern struct {
     }
 
     pub fn initRotationZ(angle: f32) Mat4 {
-        const sinv = math.sin(angle);
-        const cosv = math.cos(angle);
+        const sinv = @sin(angle);
+        const cosv = @cos(angle);
         // zig fmt: off
         return init(
             cosv, sinv, 0.0, 0.0,
@@ -1006,8 +1006,8 @@ pub const Mat4 = extern struct {
     }
 
     pub fn initPerspectiveFovLh(fovy: f32, aspect: f32, near: f32, far: f32) Mat4 {
-        const sinfov = math.sin(0.5 * fovy);
-        const cosfov = math.cos(0.5 * fovy);
+        const sinfov = @sin(0.5 * fovy);
+        const cosfov = @cos(0.5 * fovy);
 
         assert(near > 0.0 and far > 0.0 and far > near);
         assert(!math.approxEqAbs(f32, sinfov, 0.0, 0.001));

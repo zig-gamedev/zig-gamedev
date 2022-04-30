@@ -1091,7 +1091,7 @@ fn update(demo: *DemoState) void {
         }
     }
 
-    demo.light_position.c[0] = @floatCast(f32, 0.5 * math.sin(0.25 * demo.frame_stats.time));
+    demo.light_position.c[0] = @floatCast(f32, 0.5 * @sin(0.25 * demo.frame_stats.time));
 }
 
 fn draw(demo: *DemoState) void {
