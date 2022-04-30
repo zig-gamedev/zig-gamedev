@@ -3439,7 +3439,7 @@ test "zmath.acos32" {
 
 pub fn modAngle32(in_angle: f32) f32 {
     const angle = in_angle + math.pi;
-    var temp: f32 = math.fabs(angle);
+    var temp: f32 = @fabs(angle);
     temp = temp - (2.0 * math.pi * @intToFloat(f32, @floatToInt(i32, temp / math.pi)));
     temp = temp - math.pi;
     if (angle < 0.0) {
