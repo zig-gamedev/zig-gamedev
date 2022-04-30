@@ -7,7 +7,7 @@ Project is under active development, see [Roadmap](https://github.com/michal-z/z
 
 To get started on Windows/Linux/Mac try out [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu) sample:
 
-(`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.x (master)](https://ziglang.org/download/) is required)
+(`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.0-dev.2017 (master)](https://ziglang.org/download/) or newer is required)
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
