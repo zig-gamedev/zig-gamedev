@@ -45,8 +45,7 @@ const DemoState = struct {
     stats: zgpu.FrameStats,
 
     pipeline: zgpu.RenderPipelineHandle,
-    draw_bind_group: zgpu.BindGroupHandle,
-    frame_bind_group: zgpu.BindGroupHandle,
+    bind_group: zgpu.BindGroupHandle,
 
     vertex_buffer: zgpu.BufferHandle,
     index_buffer: zgpu.BufferHandle,
@@ -306,28 +305,19 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     defer arena_state.deinit();
     const arena = arena_state.allocator();
 
-    const draw_bgl = gctx.createBindGroupLayout(
+    const bgl = gctx.createBindGroupLayout(
         gpu.BindGroupLayout.Descriptor{
             .entries = &.{
                 gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
             },
         },
     );
-    defer gctx.destroyResource(draw_bgl);
-
-    const frame_bgl = gctx.createBindGroupLayout(
-        gpu.BindGroupLayout.Descriptor{
-            .entries = &.{
-                gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, false, 0),
-            },
-        },
-    );
-    defer gctx.destroyResource(frame_bgl);
+    defer gctx.destroyResource(bgl);
 
     const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
         .bind_group_layouts = &.{
-            gctx.lookupResource(frame_bgl).?,
-            gctx.lookupResource(draw_bgl).?,
+            gctx.lookupResource(bgl).?,
+            gctx.lookupResource(bgl).?,
         },
     });
     defer pl.release();
@@ -387,11 +377,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         .size = 64 * 1024,
     });
 
-    const draw_bind_group = gctx.createBindGroup(draw_bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 512, .size = @sizeOf(DrawUniforms) },
-    });
-    const frame_bind_group = gctx.createBindGroup(frame_bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = @sizeOf(FrameUniforms) },
+    const bind_group = gctx.createBindGroup(bgl, &[_]zgpu.BindGroupEntryInfo{
+        .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = 256 },
     });
 
     var drawables = std.ArrayList(Drawable).init(allocator);
@@ -433,7 +420,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     const depth = createDepthTexture(&gctx, fb_size.width, fb_size.height);
 
     // TODO: Move this code to textured_quad_wgpu demo.
-    if (false) {
+    if (true) {
         const texture = gctx.createTexture(.{
             .usage = .{ .texture_binding = true },
             .dimension = .dimension_2d,
@@ -451,8 +438,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         .gctx = gctx,
         .stats = .{},
         .pipeline = pipeline,
-        .draw_bind_group = draw_bind_group,
-        .frame_bind_group = frame_bind_group,
+        .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
         .uniform_buffer = uniform_buffer,
@@ -611,7 +597,7 @@ fn draw(demo: *DemoState) void {
 
                 encoder.writeBuffer(
                     gctx.lookupResource(demo.uniform_buffer).?,
-                    512 + 256 * drawable_index,
+                    256 + 256 * drawable_index,
                     @TypeOf(draw_uniforms),
                     &.{draw_uniforms},
                 );
@@ -623,8 +609,7 @@ fn draw(demo: *DemoState) void {
             const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
             const ib_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
             const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
-            const draw_bind_group = gctx.lookupResource(demo.draw_bind_group) orelse break :pass;
-            const frame_bind_group = gctx.lookupResource(demo.frame_bind_group) orelse break :pass;
+            const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
             const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
 
             const color_attachment = gpu.RenderPassColorAttachment{
@@ -652,13 +637,13 @@ fn draw(demo: *DemoState) void {
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint16, 0, ib_info.size);
 
             pass.setPipeline(pipeline);
-            pass.setBindGroup(0, frame_bind_group, null);
+            pass.setBindGroup(0, bind_group, &.{0});
 
             for (demo.drawables.items) |drawable, drawable_index| {
                 pass.setBindGroup(
                     1,
-                    draw_bind_group,
-                    &.{@intCast(u32, drawable_index * 256)},
+                    bind_group,
+                    &.{@intCast(u32, 256 + drawable_index * 256)},
                 );
                 pass.drawIndexed(
                     demo.meshes.items[drawable.mesh_index].num_indices,
