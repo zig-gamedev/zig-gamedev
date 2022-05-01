@@ -432,6 +432,21 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     const fb_size = try window.getFramebufferSize();
     const depth = createDepthTexture(&gctx, fb_size.width, fb_size.height);
 
+    // TODO: Move this code to textured_quad_wgpu demo.
+    if (false) {
+        const texture = gctx.createTexture(.{
+            .usage = .{ .texture_binding = true },
+            .dimension = .dimension_2d,
+            .size = .{ .width = 512, .height = 512, .depth_or_array_layers = 1 },
+            .format = .rgba8_unorm,
+            .mip_level_count = 4,
+            .sample_count = 1,
+        });
+        defer gctx.destroyResource(texture);
+
+        gctx.generateMipmaps(texture);
+    }
+
     return DemoState{
         .gctx = gctx,
         .stats = .{},

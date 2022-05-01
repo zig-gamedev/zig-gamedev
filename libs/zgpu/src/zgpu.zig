@@ -42,6 +42,7 @@ pub const GraphicsContext = struct {
         pipeline: ComputePipelineHandle = .{},
         scratch_texture: TextureHandle = .{},
         scratch_texture_views: [4]TextureViewHandle = [_]TextureViewHandle{.{}} ** 4,
+        bind_group_layout: BindGroupLayoutHandle = .{},
     } = .{},
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
@@ -432,6 +433,12 @@ pub const GraphicsContext = struct {
     }
 
     pub fn generateMipmaps(gctx: *GraphicsContext, texture: TextureHandle) void {
+        const texture_info = gctx.lookupResourceInfo(texture) orelse return;
+        if (texture_info.dimension != .dimension_2d) {
+            // TODO: Print message.
+            return;
+        }
+
         if (!gctx.isResourceValid(gctx.mipgen.pipeline)) {
             const cs_module = gctx.device.createShaderModule(&.{
                 .label = "zgpu_cs_generate_mipmaps",
@@ -446,8 +453,7 @@ pub const GraphicsContext = struct {
                     .entry_point = "main",
                 },
             });
-            const bgl = gctx.createBindGroupLayoutAuto(gctx.mipgen.pipeline, 0);
-            defer gctx.destroyResource(bgl);
+            gctx.mipgen.bind_group_layout = gctx.createBindGroupLayoutAuto(gctx.mipgen.pipeline, 0);
 
             gctx.mipgen.scratch_texture = gctx.createTexture(.{
                 .usage = .{ .copy_src = true, .storage_binding = true },
@@ -469,7 +475,32 @@ pub const GraphicsContext = struct {
                 });
             }
         }
-        _ = texture;
+
+        const uniform_buffer = gctx.createBuffer(.{
+            .usage = .{ .copy_dst = true, .uniform = true },
+            .size = 8,
+        });
+        defer gctx.destroyResource(uniform_buffer);
+
+        const texture_view = gctx.createTextureView(texture, .{
+            .format = texture_info.format,
+            .dimension = .dimension_2d,
+            .base_mip_level = 0,
+            .mip_level_count = texture_info.mip_level_count,
+            .base_array_layer = 0,
+            .array_layer_count = texture_info.size.depth_or_array_layers,
+        });
+        defer gctx.destroyResource(texture_view);
+
+        const draw_bind_group = gctx.createBindGroup(gctx.mipgen.bind_group_layout, &[_]BindGroupEntryInfo{
+            .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = 8 },
+            .{ .binding = 1, .texture_view_handle = texture_view },
+            .{ .binding = 2, .texture_view_handle = gctx.mipgen.scratch_texture_views[0] },
+            .{ .binding = 3, .texture_view_handle = gctx.mipgen.scratch_texture_views[1] },
+            .{ .binding = 4, .texture_view_handle = gctx.mipgen.scratch_texture_views[2] },
+            .{ .binding = 5, .texture_view_handle = gctx.mipgen.scratch_texture_views[3] },
+        });
+        defer gctx.destroyResource(draw_bind_group);
     }
 };
 
