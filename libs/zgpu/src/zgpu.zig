@@ -651,9 +651,9 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
                         .index = @intCast(u16, slot_index),
                         .generation = pool.generations[slot_index],
                     };
-                    // Check the handle (will always be valid) and it's potential dependencies (may be invalid).
+                    // Check the handle (will always be valid) and its potential dependencies (may be invalid).
                     if (!gctx.isResourceValid(handle)) {
-                        // Destroy old resource (it is invalid because some of it's dependencies are invalid).
+                        // Destroy old resource (it is invalid because some of its dependencies are invalid).
                         pool.destroyResource(handle);
                         found_slot_index = slot_index;
                         break;
