@@ -311,11 +311,7 @@ static void ImGui_ImplWGPU_SetupRenderState(ImDrawData* draw_data, WGPURenderPas
     }
 
     // Setup viewport
-    wgpuRenderPassEncoderSetViewport(
-        ctx, 0, 0,
-        float(int(draw_data->FramebufferScale.x * draw_data->DisplaySize.x)),
-        float(int(draw_data->FramebufferScale.y * draw_data->DisplaySize.y)),
-        0, 1);
+    wgpuRenderPassEncoderSetViewport(ctx, 0, 0, float(int(draw_data->FramebufferScale.x * draw_data->DisplaySize.x)), float(int(draw_data->FramebufferScale.y * draw_data->DisplaySize.y)), 0, 1);
 
     // Bind shader and vertex buffers
     wgpuRenderPassEncoderSetVertexBuffer(ctx, 0, fr->VertexBuffer, 0, fr->VertexBufferSize * sizeof(ImDrawVert));

@@ -32,7 +32,7 @@ bool     ImGui_ImplGlfw_InitForOpenGL(GLFWwindow* window, bool install_callbacks
 bool     ImGui_ImplGlfw_InitForVulkan(GLFWwindow* window, bool install_callbacks);
 bool     ImGui_ImplGlfw_InitForOther(GLFWwindow* window, bool install_callbacks);
 void     ImGui_ImplGlfw_Shutdown();
-void     ImGui_ImplGlfw_NewFrame(int window_w, int window_h, int framebuffer_w, int framebuffer_h);
+void     ImGui_ImplGlfw_NewFrame();
 
 // GLFW callbacks (installer)
 // - When calling Init with 'install_callbacks=true': ImGui_ImplGlfw_InstallCallbacks() is called. GLFW callbacks will be installed for you. They will chain-call user's previously installed callbacks, if any.
