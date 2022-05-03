@@ -648,7 +648,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.queue.submit(&.{commands});
 
-    if (!gctx.present()) {
+    if (gctx.present() == .swap_chain_resized) {
         // Release old depth texture.
         gctx.destroyResource(demo.depth_texture_view);
         gctx.destroyResource(demo.depth_texture);

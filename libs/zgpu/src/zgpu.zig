@@ -16,6 +16,11 @@ pub const cimgui = @cImport({
 pub const gpu = @import("mach-gpu/main.zig");
 const wgsl = @import("common_wgsl.zig");
 
+pub const SwapChainState = enum {
+    normal,
+    swap_chain_resized,
+};
+
 pub const GraphicsContext = struct {
     native_instance: gpu.NativeInstance,
     adapter_type: gpu.Adapter.Type,
@@ -138,7 +143,6 @@ pub const GraphicsContext = struct {
     }
 
     pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
-        // TODO: Make sure all GPU commands are completed.
         // TODO: How to release `native_instance`?
         gctx.bind_group_pool.deinit(allocator);
         gctx.bind_group_layout_pool.deinit(allocator);
@@ -155,7 +159,7 @@ pub const GraphicsContext = struct {
         gctx.* = undefined;
     }
 
-    pub fn present(gctx: *GraphicsContext) bool {
+    pub fn present(gctx: *GraphicsContext) SwapChainState {
         gctx.swapchain.present();
         gctx.stats.update();
 
@@ -184,9 +188,9 @@ pub const GraphicsContext = struct {
                     gctx.window_height,
                 },
             );
-            return false; // Swap chain has been resized.
+            return .swap_chain_resized;
         }
-        return true;
+        return .normal;
     }
 
     pub fn createBuffer(gctx: *GraphicsContext, descriptor: gpu.Buffer.Descriptor) BufferHandle {
