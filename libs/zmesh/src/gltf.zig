@@ -44,7 +44,7 @@ pub fn getNumMeshes(data_handle: DataHandle) u32 {
         *c.cgltf_data,
         @alignCast(@alignOf(c.cgltf_data), data_handle),
     );
-    return data.meshes_count;
+    return @intCast(u32, data.meshes_count);
 }
 
 pub fn getNumMeshPrimitives(data_handle: DataHandle, mesh_index: u32) u32 {
@@ -53,7 +53,7 @@ pub fn getNumMeshPrimitives(data_handle: DataHandle, mesh_index: u32) u32 {
         @alignCast(@alignOf(c.cgltf_data), data_handle),
     );
     assert(mesh_index < data.meshes_count);
-    return data.meshes[mesh_index].primitives_count;
+    return @intCast(u32, data.meshes[mesh_index].primitives_count);
 }
 
 pub fn appendMeshPrimitive(
