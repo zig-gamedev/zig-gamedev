@@ -42,7 +42,6 @@ const Vertex = struct {
 
 const DemoState = struct {
     gctx: zgpu.GraphicsContext,
-    stats: zgpu.FrameStats,
 
     pipeline: zgpu.RenderPipelineHandle,
     bind_group: zgpu.BindGroupHandle,
@@ -157,7 +156,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
 
     return DemoState{
         .gctx = gctx,
-        .stats = .{},
         .pipeline = pipeline,
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
@@ -174,21 +172,6 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    demo.stats.update(demo.gctx.window, window_title);
-    if (!demo.gctx.update()) {
-        // Release old depth texture.
-        demo.gctx.destroyResource(demo.depth_texture_view);
-        demo.gctx.destroyResource(demo.depth_texture);
-
-        // Create a new depth texture to match the new window size.
-        const depth = createDepthTexture(
-            &demo.gctx,
-            demo.gctx.swapchain_descriptor.width,
-            demo.gctx.swapchain_descriptor.height,
-        );
-        demo.depth_texture = depth.texture;
-        demo.depth_texture_view = depth.view;
-    }
     zgpu.gui.newFrame(
         demo.gctx.window_width,
         demo.gctx.window_height,
@@ -203,7 +186,7 @@ fn draw(demo: *DemoState) void {
     var gctx = &demo.gctx;
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
-    const t = @floatCast(f32, demo.stats.time);
+    const t = @floatCast(f32, gctx.stats.time);
 
     const cam_world_to_view = zm.lookAtLh(
         zm.f32x4(3.0, 3.0, -3.0, 1.0),
@@ -311,7 +294,21 @@ fn draw(demo: *DemoState) void {
     defer commands.release();
 
     gctx.queue.submit(&.{commands});
-    gctx.swapchain.present();
+
+    if (!demo.gctx.present()) {
+        // Release old depth texture.
+        gctx.destroyResource(demo.depth_texture_view);
+        gctx.destroyResource(demo.depth_texture);
+
+        // Create a new depth texture to match the new window size.
+        const depth = createDepthTexture(
+            gctx,
+            gctx.swapchain_descriptor.width,
+            gctx.swapchain_descriptor.height,
+        );
+        demo.depth_texture = depth.texture;
+        demo.depth_texture_view = depth.view;
+    }
 }
 
 fn createDepthTexture(gctx: *zgpu.GraphicsContext, width: u32, height: u32) struct {
