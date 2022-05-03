@@ -9,11 +9,22 @@ pub fn getPkg(b: *std.build.Builder, options_pkg: std.build.Pkg) std.build.Pkg {
     return b.dupePkg(pkg);
 }
 
-pub fn link(exe: *std.build.LibExeObjStep, enable_tracy: bool) void {
+pub const TracyBuildOptions = struct {
+    fibers: bool = false,
+};
+
+pub fn link(
+    exe: *std.build.LibExeObjStep,
+    enable_tracy: bool,
+    build_opts: TracyBuildOptions,
+) void {
     if (enable_tracy) {
+        const fibers_flag = if (build_opts.fibers) "-DTRACY_FIBERS" else "";
+
         exe.addIncludeDir(thisDir() ++ "/libs/tracy");
         exe.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
             "-DTRACY_ENABLE",
+            fibers_flag,
             // MinGW doesn't have all the newfangled windows features,
             // so we need to pretend to have an older windows version.
             "-D_WIN32_WINNT=0x601",
