@@ -58,7 +58,7 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
     exe.addPackage(znoise.pkg);
     exe.addPackage(zbullet.pkg);
 
-    ztracy.link(exe, options.enable_tracy);
+    ztracy.link(exe, options.enable_tracy, .{});
     zd3d12.link(exe);
     zmesh.link(exe);
     znoise.link(exe);

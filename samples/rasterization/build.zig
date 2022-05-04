@@ -46,7 +46,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(zmesh.pkg);
     exe.addPackage(zmath.pkg);
 
-    ztracy.link(exe, options.enable_tracy);
+    ztracy.link(exe, options.enable_tracy, .{});
     zd3d12.link(exe);
     zmesh.link(exe);
     common.link(exe);
