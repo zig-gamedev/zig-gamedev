@@ -43,6 +43,9 @@ pub const GraphicsContext = struct {
     bind_group_pool: BindGroupPool,
     bind_group_layout_pool: BindGroupLayoutPool,
 
+    stage_encoder: gpu.CommandEncoder,
+    command_buffers: std.ArrayList(gpu.CommandBuffer),
+
     mipgen: struct {
         pipeline: ComputePipelineHandle = .{},
         scratch_texture: TextureHandle = .{},
@@ -119,6 +122,9 @@ pub const GraphicsContext = struct {
             &swapchain_descriptor,
         );
 
+        const stage_encoder = device.createCommandEncoder(null);
+        const command_buffers = try std.ArrayList(gpu.CommandBuffer).initCapacity(allocator, 16);
+
         return GraphicsContext{
             .native_instance = native_instance,
             .adapter_type = props.adapter_type,
@@ -139,6 +145,8 @@ pub const GraphicsContext = struct {
             .compute_pipeline_pool = ComputePipelinePool.init(allocator, compute_pipeline_pool_size),
             .bind_group_pool = BindGroupPool.init(allocator, bind_group_pool_size),
             .bind_group_layout_pool = BindGroupLayoutPool.init(allocator, bind_group_layout_pool_size),
+            .stage_encoder = stage_encoder,
+            .command_buffers = command_buffers,
         };
     }
 
@@ -152,6 +160,8 @@ pub const GraphicsContext = struct {
         gctx.sampler_pool.deinit(allocator);
         gctx.render_pipeline_pool.deinit(allocator);
         gctx.compute_pipeline_pool.deinit(allocator);
+        gctx.command_buffers.deinit();
+        gctx.stage_encoder.release();
         gctx.window_surface.release();
         gctx.swapchain.release();
         gctx.queue.release();
@@ -160,7 +170,18 @@ pub const GraphicsContext = struct {
     }
 
     pub fn submit(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) SwapChainState {
-        gctx.queue.submit(commands);
+        const stage_commands = gctx.stage_encoder.finish(null);
+        defer {
+            stage_commands.release();
+            gctx.stage_encoder.release();
+            gctx.stage_encoder = gctx.device.createCommandEncoder(null);
+            gctx.command_buffers.clearRetainingCapacity();
+        }
+
+        gctx.command_buffers.append(stage_commands) catch unreachable;
+        gctx.command_buffers.appendSlice(commands) catch unreachable;
+
+        gctx.queue.submit(gctx.command_buffers.items);
         gctx.swapchain.present();
         gctx.stats.update();
 
