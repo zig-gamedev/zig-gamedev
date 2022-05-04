@@ -159,7 +159,8 @@ pub const GraphicsContext = struct {
         gctx.* = undefined;
     }
 
-    pub fn present(gctx: *GraphicsContext) SwapChainState {
+    pub fn submit(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) SwapChainState {
+        gctx.queue.submit(commands);
         gctx.swapchain.present();
         gctx.stats.update();
 
