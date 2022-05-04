@@ -16,20 +16,6 @@ pub const cimgui = @cImport({
 pub const gpu = @import("mach-gpu/main.zig");
 const wgsl = @import("common_wgsl.zig");
 
-pub const SwapChainState = enum {
-    normal,
-    swap_chain_resized,
-};
-
-const uniforms_buffer_size = 4 * 1024 * 1024;
-const uniforms_staging_pipeline_len = 8;
-
-const UniformsStagingBuffer = struct {
-    slice: ?[]u8 = null,
-    buffer: gpu.Buffer = undefined,
-    callback: gpu.Buffer.MapCallback = undefined,
-};
-
 pub const GraphicsContext = struct {
     native_instance: gpu.NativeInstance,
     adapter_type: gpu.Adapter.Type,
@@ -76,6 +62,7 @@ pub const GraphicsContext = struct {
     stats: FrameStats = .{},
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
+
     // TODO: Adjust pool sizes.
     const buffer_pool_size = 256;
     const texture_pool_size = 256;
@@ -193,6 +180,14 @@ pub const GraphicsContext = struct {
         allocator.destroy(gctx);
     }
 
+    const UniformsStagingBuffer = struct {
+        slice: ?[]u8 = null,
+        buffer: gpu.Buffer = undefined,
+        callback: gpu.Buffer.MapCallback = undefined,
+    };
+    const uniforms_buffer_size = 4 * 1024 * 1024;
+    const uniforms_staging_pipeline_len = 8;
+
     fn uniformsInit(gctx: *GraphicsContext) void {
         gctx.uniforms.buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .uniform = true },
@@ -255,8 +250,10 @@ pub const GraphicsContext = struct {
         };
     }
 
-    pub fn submit(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) SwapChainState {
-        //std.debug.print("cur: {d}   num: {d}\n", .{ gctx.uniforms.stage.current, gctx.uniforms.stage.num });
+    pub fn submit(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) enum {
+        nothing_special_happened,
+        swap_chain_resized,
+    } {
         const stage_commands = stage_commands: {
             const current = gctx.uniforms.stage.current;
             assert(gctx.uniforms.stage.buffers[current].slice != null);
@@ -308,7 +305,7 @@ pub const GraphicsContext = struct {
             );
             return .swap_chain_resized;
         }
-        return .normal;
+        return .nothing_special_happened;
     }
 
     pub fn createBuffer(gctx: *GraphicsContext, descriptor: gpu.Buffer.Descriptor) BufferHandle {
