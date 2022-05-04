@@ -41,7 +41,7 @@ const Drawable = struct {
 };
 
 const DemoState = struct {
-    gctx: zgpu.GraphicsContext,
+    gctx: *zgpu.GraphicsContext,
 
     pipeline: zgpu.RenderPipelineHandle,
     bind_group: zgpu.BindGroupHandle,
@@ -298,7 +298,7 @@ fn initScene(
 }
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
-    var gctx = try zgpu.GraphicsContext.init(allocator, window);
+    const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
@@ -416,7 +416,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
 
     // Create a depth texture and it's 'view'.
     const fb_size = try window.getFramebufferSize();
-    const depth = createDepthTexture(&gctx, fb_size.width, fb_size.height);
+    const depth = createDepthTexture(gctx, fb_size.width, fb_size.height);
 
     return DemoState{
         .gctx = gctx,
@@ -517,7 +517,7 @@ fn update(demo: *DemoState) void {
 }
 
 fn draw(demo: *DemoState) void {
-    var gctx = &demo.gctx;
+    const gctx = demo.gctx;
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
 

@@ -21,6 +21,15 @@ pub const SwapChainState = enum {
     swap_chain_resized,
 };
 
+const uniforms_buffer_size = 4 * 1024 * 1024;
+const uniforms_staging_pipeline_len = 8;
+
+const UniformsStagingBuffer = struct {
+    slice: ?[]u8 = null,
+    buffer: gpu.Buffer = undefined,
+    callback: gpu.Buffer.MapCallback = undefined,
+};
+
 pub const GraphicsContext = struct {
     native_instance: gpu.NativeInstance,
     adapter_type: gpu.Adapter.Type,
@@ -42,6 +51,17 @@ pub const GraphicsContext = struct {
     compute_pipeline_pool: ComputePipelinePool,
     bind_group_pool: BindGroupPool,
     bind_group_layout_pool: BindGroupLayoutPool,
+
+    uniforms: struct {
+        offset: u64 = 0,
+        buffer: BufferHandle = .{},
+        stage: struct {
+            num: u32 = 0,
+            current: u32 = 0,
+            buffers: [uniforms_staging_pipeline_len]UniformsStagingBuffer =
+                [_]UniformsStagingBuffer{.{}} ** uniforms_staging_pipeline_len,
+        } = .{},
+    } = .{},
 
     stage_encoder: gpu.CommandEncoder,
     command_buffers: std.ArrayList(gpu.CommandBuffer),
@@ -66,7 +86,7 @@ pub const GraphicsContext = struct {
     const bind_group_pool_size = 32;
     const bind_group_layout_pool_size = 32;
 
-    pub fn init(allocator: std.mem.Allocator, window: glfw.Window) !GraphicsContext {
+    pub fn init(allocator: std.mem.Allocator, window: glfw.Window) !*GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
         const instance = c.machDawnNativeInstance_init();
         c.machDawnNativeInstance_discoverDefaultAdapters(instance);
@@ -125,7 +145,8 @@ pub const GraphicsContext = struct {
         const stage_encoder = device.createCommandEncoder(null);
         const command_buffers = try std.ArrayList(gpu.CommandBuffer).initCapacity(allocator, 16);
 
-        return GraphicsContext{
+        const gctx = allocator.create(GraphicsContext) catch unreachable;
+        gctx.* = .{
             .native_instance = native_instance,
             .adapter_type = props.adapter_type,
             .backend_type = props.backend_type,
@@ -148,6 +169,9 @@ pub const GraphicsContext = struct {
             .stage_encoder = stage_encoder,
             .command_buffers = command_buffers,
         };
+
+        uniformsInit(gctx);
+        return gctx;
     }
 
     pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
@@ -166,11 +190,81 @@ pub const GraphicsContext = struct {
         gctx.swapchain.release();
         gctx.queue.release();
         gctx.device.release();
-        gctx.* = undefined;
+        allocator.destroy(gctx);
+    }
+
+    fn uniformsInit(gctx: *GraphicsContext) void {
+        gctx.uniforms.buffer = gctx.createBuffer(.{
+            .usage = .{ .copy_dst = true, .uniform = true },
+            .size = uniforms_buffer_size,
+        });
+        uniformsNextStagingBuffer(gctx);
+    }
+
+    fn uniformsMappedCallback(usb: *UniformsStagingBuffer, status: gpu.Buffer.MapAsyncStatus) void {
+        assert(usb.slice == null);
+        if (status == .success) {
+            usb.slice = usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size);
+        }
+    }
+
+    fn uniformsNextStagingBuffer(gctx: *GraphicsContext) void {
+        if (gctx.stats.frame_number > 0) {
+            // Map staging buffer which was used this frame.
+            const current = gctx.uniforms.stage.current;
+            assert(gctx.uniforms.stage.buffers[current].slice == null);
+            gctx.uniforms.stage.buffers[current].buffer.mapAsync(
+                .write,
+                0,
+                uniforms_buffer_size,
+                &gctx.uniforms.stage.buffers[current].callback,
+            );
+        }
+
+        gctx.uniforms.offset = 0;
+
+        var i: u32 = 0;
+        while (i < gctx.uniforms.stage.num) : (i += 1) {
+            if (gctx.uniforms.stage.buffers[i].slice != null) {
+                gctx.uniforms.stage.current = i;
+                return;
+            }
+        }
+
+        assert(gctx.uniforms.stage.num < uniforms_staging_pipeline_len);
+        const current = gctx.uniforms.stage.num;
+        gctx.uniforms.stage.current = current;
+        gctx.uniforms.stage.num += 1;
+
+        // Create new staging buffer.
+        const buf = gctx.createBuffer(.{
+            .usage = .{ .copy_src = true, .map_write = true },
+            .size = uniforms_buffer_size,
+            .mapped_at_creation = true,
+        });
+
+        // Add new (mapped) staging buffer to the buffer list.
+        gctx.uniforms.stage.buffers[current] = .{
+            .slice = gctx.lookupResource(buf).?.getMappedRange(u8, 0, uniforms_buffer_size),
+            .buffer = gctx.lookupResource(buf).?,
+            .callback = gpu.Buffer.MapCallback.init(
+                *UniformsStagingBuffer,
+                &gctx.uniforms.stage.buffers[current],
+                uniformsMappedCallback,
+            ),
+        };
     }
 
     pub fn submit(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) SwapChainState {
-        const stage_commands = gctx.stage_encoder.finish(null);
+        //std.debug.print("cur: {d}   num: {d}\n", .{ gctx.uniforms.stage.current, gctx.uniforms.stage.num });
+        const stage_commands = stage_commands: {
+            const current = gctx.uniforms.stage.current;
+            assert(gctx.uniforms.stage.buffers[current].slice != null);
+            gctx.uniforms.stage.buffers[current].slice = null;
+            gctx.uniforms.stage.buffers[current].buffer.unmap();
+            // TODO: Copy current staging buffer to the GPU-side buffer (gctx.uniforms.buffer).
+            break :stage_commands gctx.stage_encoder.finish(null);
+        };
         defer {
             stage_commands.release();
             gctx.stage_encoder.release();
@@ -184,6 +278,8 @@ pub const GraphicsContext = struct {
         gctx.queue.submit(gctx.command_buffers.items);
         gctx.swapchain.present();
         gctx.stats.update();
+
+        gctx.uniformsNextStagingBuffer();
 
         const win_size = gctx.window.getSize() catch unreachable;
         const fb_size = gctx.window.getFramebufferSize() catch unreachable;

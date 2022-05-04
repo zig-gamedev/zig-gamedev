@@ -41,7 +41,7 @@ const Vertex = struct {
 };
 
 const DemoState = struct {
-    gctx: zgpu.GraphicsContext,
+    gctx: *zgpu.GraphicsContext,
 
     pipeline: zgpu.RenderPipelineHandle,
     bind_group: zgpu.BindGroupHandle,
@@ -55,7 +55,7 @@ const DemoState = struct {
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
-    var gctx = try zgpu.GraphicsContext.init(allocator, window);
+    const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
     // Create a bind group layout needed for our render pipeline.
     const bgl = gctx.createBindGroupLayout(
@@ -152,7 +152,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
 
     // Create a depth texture and it's 'view'.
     const fb_size = try window.getFramebufferSize();
-    const depth = createDepthTexture(&gctx, fb_size.width, fb_size.height);
+    const depth = createDepthTexture(gctx, fb_size.width, fb_size.height);
 
     return DemoState{
         .gctx = gctx,
@@ -183,7 +183,7 @@ fn update(demo: *DemoState) void {
 }
 
 fn draw(demo: *DemoState) void {
-    var gctx = &demo.gctx;
+    const gctx = demo.gctx;
     const fb_width = gctx.swapchain_descriptor.width;
     const fb_height = gctx.swapchain_descriptor.height;
     const t = @floatCast(f32, gctx.stats.time);
