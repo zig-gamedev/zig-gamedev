@@ -23,7 +23,7 @@ pub fn build(b: *std.build.Builder) void {
     const options_pkg = exe_options.getPackage("build_options");
     exe.addPackage(ztracy.getPkg(b, options_pkg));
 
-    ztracy.link(exe, enable_tracy);
+    ztracy.link(exe, enable_tracy, .{});
 }
 ```
 
@@ -41,4 +41,15 @@ pub fn main() !void {
         ...
     }
 }
+```
+
+## Async "Fibers" support
+
+Tracy v0.8.0 added support for marking fibers (also called green threads,
+coroutines, and other forms of cooperative multitasking). This support requires
+an additional option passed through when compiling the Tracy library, so change
+the `link()` call in your `build.zig` to:
+
+```zig
+    ztracy.link(exe, enable_tracy, .{ .fibers = true });
 ```

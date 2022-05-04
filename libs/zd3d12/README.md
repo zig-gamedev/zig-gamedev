@@ -52,7 +52,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addPackage(zd3d12.getPkg(b, options_pkg));
     exe.addPackage(zwin32.pkg);
 
-    ztracy.link(tracy, enable_tracy);
+    ztracy.link(tracy, enable_tracy, .{});
     zd3d12.link(exe);
 }
 ```

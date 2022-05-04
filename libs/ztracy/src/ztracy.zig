@@ -227,6 +227,11 @@ const tracy_stub = struct {
         _ = flip;
     }
 
+    pub inline fn FiberEnter(name: [*:0]const u8) void {
+        _ = name;
+    }
+    pub inline fn FiberLeave() void {}
+
     pub inline fn PlotF(name: [*:0]const u8, val: f64) void {
         _ = name;
         _ = val;
@@ -512,6 +517,13 @@ const tracy_full = struct {
     }
     pub inline fn FrameImage(image: ?*const anyopaque, width: u16, height: u16, offset: u8, flip: c_int) void {
         c.___tracy_emit_frame_image(image, width, height, offset, flip);
+    }
+
+    pub inline fn FiberEnter(name: [*:0]const u8) void {
+        c.___tracy_fiber_enter(name);
+    }
+    pub inline fn FiberLeave() void {
+        c.___tracy_fiber_leave();
     }
 
     pub inline fn PlotF(name: [*:0]const u8, val: f64) void {

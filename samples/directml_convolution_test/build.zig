@@ -67,7 +67,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(common.getPkg(b, options_pkg));
     exe.addPackage(zwin32.pkg);
 
-    ztracy.link(exe, options.enable_tracy);
+    ztracy.link(exe, options.enable_tracy, .{});
     zd3d12.link(exe);
     common.link(exe);
 

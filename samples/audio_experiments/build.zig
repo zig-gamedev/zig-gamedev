@@ -45,7 +45,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(zwin32.pkg);
     exe.addPackage(zmath.pkg);
 
-    ztracy.link(exe, options.enable_tracy);
+    ztracy.link(exe, options.enable_tracy, .{});
     zd3d12.link(exe);
     zxaudio2.link(exe, options.enable_dx_debug);
     common.link(exe);
