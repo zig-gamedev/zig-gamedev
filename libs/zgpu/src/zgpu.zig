@@ -28,6 +28,7 @@ pub const GraphicsContext = struct {
     window_surface: gpu.Surface,
     swapchain: gpu.SwapChain,
     swapchain_descriptor: gpu.SwapChain.Descriptor,
+    stats: FrameStats = .{},
 
     buffer_pool: BufferPool,
     texture_pool: TexturePool,
@@ -55,8 +56,6 @@ pub const GraphicsContext = struct {
         scratch_texture_views: [4]TextureViewHandle = [_]TextureViewHandle{.{}} ** 4,
         bind_group_layout: BindGroupLayoutHandle = .{},
     } = .{},
-
-    stats: FrameStats = .{},
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
 
@@ -274,7 +273,7 @@ pub const GraphicsContext = struct {
     //
     // Submit
     //
-    pub fn submit(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) enum {
+    pub fn submitAndPresent(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) enum {
         nothing_special_happened,
         swap_chain_resized,
     } {
@@ -302,9 +301,13 @@ pub const GraphicsContext = struct {
         };
         defer stage_commands.release();
 
+        // TODO: We support up to 32 command buffers for now. Make it more robust.
+        var command_buffers = std.BoundedArray(gpu.CommandBuffer, 32).init(0) catch unreachable;
+        command_buffers.append(stage_commands) catch unreachable;
+        command_buffers.appendSlice(commands) catch unreachable;
+        gctx.queue.submit(command_buffers.slice());
+
         gctx.stats.update();
-        gctx.queue.submit(&.{stage_commands});
-        gctx.queue.submit(commands);
         gctx.uniformsNextStagingBuffer();
 
         gctx.swapchain.present();
