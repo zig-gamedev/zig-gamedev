@@ -83,7 +83,7 @@ pub const GraphicsContext = struct {
         })) {
             .adapter => |v| v,
             .err => |err| {
-                std.debug.print("[zgpu] Failed to get adapter: error={} {s}.\n", .{ err.code, err.message });
+                std.debug.print("[zgpu] Failed to get adapter: error={} {s}\n", .{ err.code, err.message });
                 return error.NoGraphicsAdapter;
             },
         };
@@ -212,7 +212,7 @@ pub const GraphicsContext = struct {
             .usage = .{ .copy_dst = true, .uniform = true },
             .size = uniforms_buffer_size,
         });
-        uniformsNextStagingBuffer(gctx);
+        gctx.uniformsNextStagingBuffer();
     }
 
     fn uniformsMappedCallback(usb: *UniformsStagingBuffer, status: gpu.Buffer.MapAsyncStatus) void {
@@ -220,7 +220,7 @@ pub const GraphicsContext = struct {
         if (status == .success) {
             usb.slice = usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size);
         } else {
-            std.debug.print("Failed to map buffer\n", .{});
+            std.debug.print("[zgpu] Failed to map buffer\n", .{});
         }
     }
 
@@ -326,7 +326,7 @@ pub const GraphicsContext = struct {
             gctx.window_height = win_size.height;
 
             std.debug.print(
-                "[zgpu] Window has been resized to: {d}x{d} pixels ({d}x{d} units).\n",
+                "[zgpu] Window has been resized to: {d}x{d} pixels ({d}x{d} units)\n",
                 .{
                     gctx.swapchain_descriptor.width,
                     gctx.swapchain_descriptor.height,
