@@ -304,8 +304,8 @@ pub const GraphicsContext = struct {
 
         gctx.stats.update();
         gctx.queue.submit(&.{stage_commands});
-        gctx.uniformsNextStagingBuffer();
         gctx.queue.submit(commands);
+        gctx.uniformsNextStagingBuffer();
 
         gctx.swapchain.present();
 
