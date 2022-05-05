@@ -49,9 +49,6 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
-    stage_encoder: gpu.CommandEncoder,
-    command_buffers: std.ArrayList(gpu.CommandBuffer),
-
     mipgen: struct {
         pipeline: ComputePipelineHandle = .{},
         scratch_texture: TextureHandle = .{},
@@ -129,9 +126,6 @@ pub const GraphicsContext = struct {
             &swapchain_descriptor,
         );
 
-        const stage_encoder = device.createCommandEncoder(null);
-        const command_buffers = try std.ArrayList(gpu.CommandBuffer).initCapacity(allocator, 16);
-
         const gctx = allocator.create(GraphicsContext) catch unreachable;
         gctx.* = .{
             .native_instance = native_instance,
@@ -153,8 +147,6 @@ pub const GraphicsContext = struct {
             .compute_pipeline_pool = ComputePipelinePool.init(allocator, compute_pipeline_pool_size),
             .bind_group_pool = BindGroupPool.init(allocator, bind_group_pool_size),
             .bind_group_layout_pool = BindGroupLayoutPool.init(allocator, bind_group_layout_pool_size),
-            .stage_encoder = stage_encoder,
-            .command_buffers = command_buffers,
         };
 
         uniformsInit(gctx);
@@ -171,8 +163,6 @@ pub const GraphicsContext = struct {
         gctx.sampler_pool.deinit(allocator);
         gctx.render_pipeline_pool.deinit(allocator);
         gctx.compute_pipeline_pool.deinit(allocator);
-        gctx.command_buffers.deinit();
-        gctx.stage_encoder.release();
         gctx.window_surface.release();
         gctx.swapchain.release();
         gctx.queue.release();
@@ -229,6 +219,8 @@ pub const GraphicsContext = struct {
         assert(usb.slice == null);
         if (status == .success) {
             usb.slice = usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size);
+        } else {
+            std.debug.print("Failed to map buffer\n", .{});
         }
     }
 
@@ -287,6 +279,9 @@ pub const GraphicsContext = struct {
         swap_chain_resized,
     } {
         const stage_commands = stage_commands: {
+            const stage_encoder = gctx.device.createCommandEncoder(null);
+            defer stage_encoder.release();
+
             const current = gctx.uniforms.stage.current;
             assert(gctx.uniforms.stage.buffers[current].slice != null);
 
@@ -294,7 +289,7 @@ pub const GraphicsContext = struct {
             gctx.uniforms.stage.buffers[current].buffer.unmap();
 
             if (gctx.uniforms.offset > 0) {
-                gctx.stage_encoder.copyBufferToBuffer(
+                stage_encoder.copyBufferToBuffer(
                     gctx.uniforms.stage.buffers[current].buffer,
                     0,
                     gctx.lookupResource(gctx.uniforms.buffer).?,
@@ -303,23 +298,16 @@ pub const GraphicsContext = struct {
                 );
             }
 
-            break :stage_commands gctx.stage_encoder.finish(null);
+            break :stage_commands stage_encoder.finish(null);
         };
-        defer {
-            stage_commands.release();
-            gctx.stage_encoder.release();
-            gctx.stage_encoder = gctx.device.createCommandEncoder(null);
-            gctx.command_buffers.clearRetainingCapacity();
-        }
+        defer stage_commands.release();
 
-        gctx.command_buffers.append(stage_commands) catch unreachable;
-        gctx.command_buffers.appendSlice(commands) catch unreachable;
-
-        gctx.queue.submit(gctx.command_buffers.items);
-        gctx.swapchain.present();
         gctx.stats.update();
-
+        gctx.queue.submit(&.{stage_commands});
         gctx.uniformsNextStagingBuffer();
+        gctx.queue.submit(commands);
+
+        gctx.swapchain.present();
 
         const win_size = gctx.window.getSize() catch unreachable;
         const fb_size = gctx.window.getFramebufferSize() catch unreachable;

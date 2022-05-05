@@ -441,6 +441,8 @@ fn update(demo: *DemoState) void {
 
     const window = demo.gctx.window;
 
+    c.igShowDemoWindow(null);
+
     c.igSetNextWindowPos(.{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
     c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
     _ = c.igBegin(
