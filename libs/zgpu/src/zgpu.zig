@@ -39,7 +39,7 @@ pub const GraphicsContext = struct {
     bind_group_layout_pool: BindGroupLayoutPool,
 
     uniforms: struct {
-        offset: u64 = 0,
+        offset: u32 = 0,
         buffer: BufferHandle = .{},
         stage: struct {
             num: u32 = 0,
@@ -180,6 +180,34 @@ pub const GraphicsContext = struct {
         allocator.destroy(gctx);
     }
 
+    //
+    // Uniform buffer pool
+    //
+    pub fn uniformsAllocate(
+        gctx: *GraphicsContext,
+        comptime T: type,
+        num_elements: u32,
+    ) struct { slice: []T, offset: u32 } {
+        assert(num_elements > 0);
+        const size = num_elements * @sizeOf(T);
+
+        const offset = gctx.uniforms.offset;
+        const aligned_size = (size + (uniforms_alloc_alignment - 1)) & ~(uniforms_alloc_alignment - 1);
+        if ((offset + aligned_size) >= uniforms_buffer_size) {
+            // TODO: Better error handling; pool is full; flush it?
+            return .{ .slice = @as([*]T, undefined)[0..0], .offset = 0 };
+        }
+
+        const current = gctx.uniforms.stage.current;
+        const slice = (gctx.uniforms.stage.buffers[current].slice.?.ptr + offset)[0..size];
+
+        gctx.uniforms.offset += aligned_size;
+        return .{
+            .slice = std.mem.bytesAsSlice(T, @alignCast(@alignOf(T), slice)),
+            .offset = offset,
+        };
+    }
+
     const UniformsStagingBuffer = struct {
         slice: ?[]u8 = null,
         buffer: gpu.Buffer = undefined,
@@ -187,6 +215,7 @@ pub const GraphicsContext = struct {
     };
     const uniforms_buffer_size = 4 * 1024 * 1024;
     const uniforms_staging_pipeline_len = 8;
+    const uniforms_alloc_alignment: u32 = 256;
 
     fn uniformsInit(gctx: *GraphicsContext) void {
         gctx.uniforms.buffer = gctx.createBuffer(.{
@@ -232,7 +261,7 @@ pub const GraphicsContext = struct {
         gctx.uniforms.stage.num += 1;
 
         // Create new staging buffer.
-        const buf = gctx.createBuffer(.{
+        const buffer_handle = gctx.createBuffer(.{
             .usage = .{ .copy_src = true, .map_write = true },
             .size = uniforms_buffer_size,
             .mapped_at_creation = true,
@@ -240,8 +269,8 @@ pub const GraphicsContext = struct {
 
         // Add new (mapped) staging buffer to the buffer list.
         gctx.uniforms.stage.buffers[current] = .{
-            .slice = gctx.lookupResource(buf).?.getMappedRange(u8, 0, uniforms_buffer_size),
-            .buffer = gctx.lookupResource(buf).?,
+            .slice = gctx.lookupResource(buffer_handle).?.getMappedRange(u8, 0, uniforms_buffer_size),
+            .buffer = gctx.lookupResource(buffer_handle).?,
             .callback = gpu.Buffer.MapCallback.init(
                 *UniformsStagingBuffer,
                 &gctx.uniforms.stage.buffers[current],
@@ -250,6 +279,9 @@ pub const GraphicsContext = struct {
         };
     }
 
+    //
+    // Submit
+    //
     pub fn submit(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) enum {
         nothing_special_happened,
         swap_chain_resized,
@@ -257,9 +289,20 @@ pub const GraphicsContext = struct {
         const stage_commands = stage_commands: {
             const current = gctx.uniforms.stage.current;
             assert(gctx.uniforms.stage.buffers[current].slice != null);
+
             gctx.uniforms.stage.buffers[current].slice = null;
             gctx.uniforms.stage.buffers[current].buffer.unmap();
-            // TODO: Copy current staging buffer to the GPU-side buffer (gctx.uniforms.buffer).
+
+            if (gctx.uniforms.offset > 0) {
+                gctx.stage_encoder.copyBufferToBuffer(
+                    gctx.uniforms.stage.buffers[current].buffer,
+                    0,
+                    gctx.lookupResource(gctx.uniforms.buffer).?,
+                    0,
+                    gctx.uniforms.offset,
+                );
+            }
+
             break :stage_commands gctx.stage_encoder.finish(null);
         };
         defer {
@@ -308,6 +351,9 @@ pub const GraphicsContext = struct {
         return .nothing_special_happened;
     }
 
+    //
+    // Resources
+    //
     pub fn createBuffer(gctx: *GraphicsContext, descriptor: gpu.Buffer.Descriptor) BufferHandle {
         return gctx.buffer_pool.addResource(gctx.*, .{
             .gpuobj = gctx.device.createBuffer(&descriptor),
@@ -556,6 +602,9 @@ pub const GraphicsContext = struct {
         }
     }
 
+    //
+    // Mipmaps
+    //
     pub fn generateMipmaps(gctx: *GraphicsContext, texture: TextureHandle) void {
         const texture_info = gctx.lookupResourceInfo(texture) orelse return;
         if (texture_info.dimension != .dimension_2d) {

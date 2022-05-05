@@ -48,7 +48,6 @@ const DemoState = struct {
 
     vertex_buffer: zgpu.BufferHandle,
     index_buffer: zgpu.BufferHandle,
-    uniform_buffer: zgpu.BufferHandle,
 
     depth_texture: zgpu.TextureHandle,
     depth_texture_view: zgpu.TextureViewHandle,
@@ -121,13 +120,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         break :pipline gctx.createRenderPipeline(pipeline_descriptor);
     };
 
-    // Create an uniform buffer and a bind group for it.
-    const uniform_buffer = gctx.createBuffer(.{
-        .usage = .{ .copy_dst = true, .uniform = true },
-        .size = 512,
-    });
     const bind_group = gctx.createBindGroup(bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
     });
 
     // Create a vertex buffer.
@@ -160,7 +154,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
-        .uniform_buffer = uniform_buffer,
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
     };
@@ -208,30 +201,6 @@ fn draw(demo: *DemoState) void {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
-        // Update xform matrix for triangle 1.
-        {
-            const object_to_world = zm.mul(zm.rotationY(t), zm.translation(-1.0, 0.0, 0.0));
-            const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
-
-            var xform: [16]f32 = undefined;
-            zm.storeMat(xform[0..], zm.transpose(object_to_clip));
-
-            // Write data at offset 0.
-            encoder.writeBuffer(gctx.lookupResource(demo.uniform_buffer).?, 0, f32, xform[0..]);
-        }
-
-        // Update xform matrix for triangle 2.
-        {
-            const object_to_world = zm.mul(zm.rotationY(0.75 * t), zm.translation(1.0, 0.0, 0.0));
-            const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
-
-            var xform: [16]f32 = undefined;
-            zm.storeMat(xform[0..], zm.transpose(object_to_clip));
-
-            // Write data at offset 256 (dynamic offsets need to be aligned to 256 bytes).
-            encoder.writeBuffer(gctx.lookupResource(demo.uniform_buffer).?, 256, f32, xform[0..]);
-        }
-
         pass: {
             const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
             const ib_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
@@ -265,11 +234,29 @@ fn draw(demo: *DemoState) void {
 
             pass.setPipeline(pipeline);
 
-            pass.setBindGroup(0, bind_group, &.{0});
-            pass.drawIndexed(3, 1, 0, 0, 0);
+            // Draw triangle 1.
+            {
+                const object_to_world = zm.mul(zm.rotationY(t), zm.translation(-1.0, 0.0, 0.0));
+                const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
 
-            pass.setBindGroup(0, bind_group, &.{256});
-            pass.drawIndexed(3, 1, 0, 0, 0);
+                const mem = gctx.uniformsAllocate(zm.Mat, 1);
+                mem.slice[0] = zm.transpose(object_to_clip);
+
+                pass.setBindGroup(0, bind_group, &.{mem.offset});
+                pass.drawIndexed(3, 1, 0, 0, 0);
+            }
+
+            // Draw triangle 2.
+            {
+                const object_to_world = zm.mul(zm.rotationY(0.75 * t), zm.translation(1.0, 0.0, 0.0));
+                const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
+
+                const mem = gctx.uniformsAllocate(zm.Mat, 1);
+                mem.slice[0] = zm.transpose(object_to_clip);
+
+                pass.setBindGroup(0, bind_group, &.{mem.offset});
+                pass.drawIndexed(3, 1, 0, 0, 0);
+            }
         }
         {
             const color_attachment = gpu.RenderPassColorAttachment{

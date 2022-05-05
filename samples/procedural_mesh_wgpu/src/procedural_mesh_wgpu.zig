@@ -48,7 +48,6 @@ const DemoState = struct {
 
     vertex_buffer: zgpu.BufferHandle,
     index_buffer: zgpu.BufferHandle,
-    uniform_buffer: zgpu.BufferHandle,
 
     depth_texture: zgpu.TextureHandle,
     depth_texture_view: zgpu.TextureViewHandle,
@@ -370,14 +369,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         break :pipeline gctx.createRenderPipeline(pipeline_descriptor);
     };
 
-    // Create an uniform buffer and a bind group for it.
-    const uniform_buffer = gctx.createBuffer(.{
-        .usage = .{ .copy_dst = true, .uniform = true },
-        .size = 64 * 1024,
-    });
-
     const bind_group = gctx.createBindGroup(bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = 256 },
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
     });
 
     var drawables = std.ArrayList(Drawable).init(allocator);
@@ -424,7 +417,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
-        .uniform_buffer = uniform_buffer,
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
         .meshes = meshes,
@@ -541,37 +533,6 @@ fn draw(demo: *DemoState) void {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
-        // Update camera xform.
-        {
-            var frame_uniforms: FrameUniforms = undefined;
-            zm.storeMat(frame_uniforms.world_to_clip[0..], zm.transpose(cam_world_to_clip));
-            frame_uniforms.camera_position = demo.camera.position;
-            encoder.writeBuffer(
-                gctx.lookupResource(demo.uniform_buffer).?,
-                0,
-                @TypeOf(frame_uniforms),
-                &.{frame_uniforms},
-            );
-        }
-
-        if (gctx.stats.frame_number == 0) {
-            for (demo.drawables.items) |drawable, drawable_index| {
-                const object_to_world = zm.translationV(
-                    zm.load(drawable.position[0..], zm.Vec, 3),
-                );
-                var draw_uniforms: DrawUniforms = undefined;
-                zm.storeMat(draw_uniforms.object_to_world[0..], zm.transpose(object_to_world));
-                draw_uniforms.basecolor_roughness = drawable.basecolor_roughness;
-
-                encoder.writeBuffer(
-                    gctx.lookupResource(demo.uniform_buffer).?,
-                    256 + 256 * drawable_index,
-                    @TypeOf(draw_uniforms),
-                    &.{draw_uniforms},
-                );
-            }
-        }
-
         // Main pass.
         pass: {
             const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
@@ -605,14 +566,27 @@ fn draw(demo: *DemoState) void {
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint16, 0, ib_info.size);
 
             pass.setPipeline(pipeline);
-            pass.setBindGroup(0, bind_group, &.{0});
 
-            for (demo.drawables.items) |drawable, drawable_index| {
-                pass.setBindGroup(
-                    1,
-                    bind_group,
-                    &.{@intCast(u32, 256 + drawable_index * 256)},
+            // Update "world to clip" (camera) xform.
+            {
+                const mem = gctx.uniformsAllocate(FrameUniforms, 1);
+                zm.storeMat(mem.slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+                mem.slice[0].camera_position = demo.camera.position;
+
+                pass.setBindGroup(0, bind_group, &.{mem.offset});
+            }
+
+            for (demo.drawables.items) |drawable| {
+                // Update "object to world" xform.
+                const object_to_world = zm.translationV(
+                    zm.load(drawable.position[0..], zm.Vec, 3),
                 );
+                const mem = gctx.uniformsAllocate(DrawUniforms, 1);
+                zm.storeMat(mem.slice[0].object_to_world[0..], zm.transpose(object_to_world));
+                mem.slice[0].basecolor_roughness = drawable.basecolor_roughness;
+
+                // Draw.
+                pass.setBindGroup(1, bind_group, &.{mem.offset});
                 pass.drawIndexed(
                     demo.meshes.items[drawable.mesh_index].num_indices,
                     1,
