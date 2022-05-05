@@ -18,12 +18,12 @@ const Vertex = struct {
 };
 
 const FrameUniforms = struct {
-    world_to_clip: [16]f32,
+    world_to_clip: zm.Mat,
     camera_position: [3]f32,
 };
 
 const DrawUniforms = struct {
-    object_to_world: [16]f32,
+    object_to_world: zm.Mat,
     basecolor_roughness: [4]f32,
 };
 
@@ -570,7 +570,7 @@ fn draw(demo: *DemoState) void {
             // Update "world to clip" (camera) xform.
             {
                 const mem = gctx.uniformsAllocate(FrameUniforms, 1);
-                zm.storeMat(mem.slice[0].world_to_clip[0..], zm.transpose(cam_world_to_clip));
+                mem.slice[0].world_to_clip = zm.transpose(cam_world_to_clip);
                 mem.slice[0].camera_position = demo.camera.position;
 
                 pass.setBindGroup(0, bind_group, &.{mem.offset});
@@ -578,15 +578,15 @@ fn draw(demo: *DemoState) void {
 
             for (demo.drawables.items) |drawable| {
                 // Update "object to world" xform.
-                const object_to_world = zm.translationV(
-                    zm.load(drawable.position[0..], zm.Vec, 3),
-                );
+                const object_to_world = zm.translationV(zm.load(drawable.position[0..], zm.Vec, 3));
+
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
-                zm.storeMat(mem.slice[0].object_to_world[0..], zm.transpose(object_to_world));
+                mem.slice[0].object_to_world = zm.transpose(object_to_world);
                 mem.slice[0].basecolor_roughness = drawable.basecolor_roughness;
 
-                // Draw.
                 pass.setBindGroup(1, bind_group, &.{mem.offset});
+
+                // Draw.
                 pass.drawIndexed(
                     demo.meshes.items[drawable.mesh_index].num_indices,
                     1,
