@@ -8,5 +8,6 @@ Very simple but fairly complete WebGPU sample application, shows how to:
 * use uniform buffer with dynamic offset
 * setup depth buffer
 * handle window resizes
+* draw GUI ([Dear ImGui](https://github.com/ocornut/imgui))
 
 ![image](screenshot.png)
