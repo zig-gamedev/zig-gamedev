@@ -436,7 +436,12 @@ fn update(demo: *DemoState) void {
 
     const window = demo.gctx.window;
 
-    c.igSetNextWindowPos(.{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
+    const main_viewport = c.igGetMainViewport().?.*;
+    c.igSetNextWindowPos(
+        .{ .x = main_viewport.WorkPos.x + 20.0, .y = main_viewport.WorkPos.y + 20.0 },
+        c.ImGuiCond_FirstUseEver,
+        .{ .x = 0.0, .y = 0.0 },
+    );
     c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_FirstUseEver);
     _ = c.igBegin(
         "Demo Settings",
