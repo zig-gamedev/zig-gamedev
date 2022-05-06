@@ -79,6 +79,8 @@
 #define GLFW_HAS_GAMEPAD_API          (GLFW_VERSION_MAJOR * 1000 + GLFW_VERSION_MINOR * 100 >= 3300) // 3.3+ glfwGetGamepadState() new api
 #define GLFW_HAS_GET_KEY_NAME         (GLFW_VERSION_MAJOR * 1000 + GLFW_VERSION_MINOR * 100 >= 3200) // 3.2+ glfwGetKeyName()
 
+#include <math.h>
+
 // GLFW data
 enum GlfwClientApi
 {
@@ -96,6 +98,8 @@ struct ImGui_ImplGlfw_Data
     GLFWcursor*             MouseCursors[ImGuiMouseCursor_COUNT];
     ImVec2                  LastValidMousePos;
     bool                    InstalledCallbacks;
+
+    ImVec2                  DpiScale; // mziulek
 
     // Chain GLFW callbacks: our callbacks will call the user's previously installed callbacks, if any.
     GLFWwindowfocusfun      PrevUserCallbackWindowFocus;
@@ -355,11 +359,11 @@ void ImGui_ImplGlfw_CursorPosCallback(GLFWwindow* window, double x, double y)
 {
     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
     if (bd->PrevUserCallbackCursorPos != NULL && window == bd->Window)
-        bd->PrevUserCallbackCursorPos(window, x, y);
+        bd->PrevUserCallbackCursorPos(window, x * bd->DpiScale.x, y * bd->DpiScale.y);
 
     ImGuiIO& io = ImGui::GetIO();
-    io.AddMousePosEvent((float)x, (float)y);
-    bd->LastValidMousePos = ImVec2((float)x, (float)y);
+    io.AddMousePosEvent((float)x * bd->DpiScale.x, (float)y * bd->DpiScale.y);
+    bd->LastValidMousePos = ImVec2((float)x * bd->DpiScale.x, (float)y * bd->DpiScale.y);
 }
 
 // Workaround: X11 seems to send spurious Leave/Enter events which would make us lose our position,
@@ -455,6 +459,7 @@ static bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, Glfw
 
     bd->Window = window;
     bd->Time = 0.0;
+    bd->DpiScale = ImVec2{ 1.0, 1.0 };
 
     io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText;
     io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
@@ -549,8 +554,8 @@ static void ImGui_ImplGlfw_UpdateMouseData()
         {
             double mouse_x, mouse_y;
             glfwGetCursorPos(bd->Window, &mouse_x, &mouse_y);
-            io.AddMousePosEvent((float)mouse_x, (float)mouse_y);
-            bd->LastValidMousePos = ImVec2((float)mouse_x, (float)mouse_y);
+            io.AddMousePosEvent((float)mouse_x * bd->DpiScale.x, (float)mouse_y * bd->DpiScale.y);
+            bd->LastValidMousePos = ImVec2((float)mouse_x * bd->DpiScale.x, (float)mouse_y * bd->DpiScale.y);
         }
     }
 }
@@ -644,6 +649,9 @@ void ImGui_ImplGlfw_NewFrame()
     io.DisplaySize = ImVec2((float)w, (float)h);
     if (w > 0 && h > 0)
         io.DisplayFramebufferScale = ImVec2((float)display_w / (float)w, (float)display_h / (float)h);
+
+    bd->DpiScale.x = ceil(io.DisplayFramebufferScale.x);
+    bd->DpiScale.y = ceil(io.DisplayFramebufferScale.y);
 
     // Setup time step
     double current_time = glfwGetTime();

@@ -965,8 +965,8 @@ pub const gui = struct {
     }
 
     pub fn newFrame(fb_width: u32, fb_height: u32) void {
-        ImGui_ImplGlfw_NewFrame();
         ImGui_ImplWGPU_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
         {
             const io = cimgui.igGetIO().?;
             io.*.DisplaySize = .{
