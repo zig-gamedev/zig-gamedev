@@ -165,13 +165,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    zgpu.gui.newFrame(
-        demo.gctx.window_width,
-        demo.gctx.window_height,
-        demo.gctx.swapchain_descriptor.width,
-        demo.gctx.swapchain_descriptor.height,
-    );
-
+    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
     c.igShowDemoWindow(null);
 }
 
