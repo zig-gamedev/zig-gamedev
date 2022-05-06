@@ -246,6 +246,23 @@ pub const GraphicsContext = struct {
             }
         }
 
+        // TODO: Get rid of this code.
+        if (gctx.uniforms.stage.num >= uniforms_staging_pipeline_len) {
+            const durations = [_]u64{ 0, 100, 500, 1000, 2000 };
+            for (durations) |duration| {
+                std.time.sleep(duration * 1000);
+                gctx.device.tick();
+
+                i = 0;
+                while (i < gctx.uniforms.stage.num) : (i += 1) {
+                    if (gctx.uniforms.stage.buffers[i].slice != null) {
+                        gctx.uniforms.stage.current = i;
+                        return;
+                    }
+                }
+            }
+        }
+
         assert(gctx.uniforms.stage.num < uniforms_staging_pipeline_len);
         const current = gctx.uniforms.stage.num;
         gctx.uniforms.stage.current = current;
