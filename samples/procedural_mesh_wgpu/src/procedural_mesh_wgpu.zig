@@ -451,13 +451,17 @@ fn update(demo: *DemoState) void {
 
     c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + drag", "");
+    c.igPushStyleColor_Vec4(c.ImGuiCol_Text, .{ .x = 0, .y = 0.8, .z = 0, .w = 1 });
+    c.igText("Right Mouse Button + drag", "");
+    c.igPopStyleColor(1);
     c.igSameLine(0, -1);
     c.igText(" :  rotate camera", "");
 
     c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
+    c.igPushStyleColor_Vec4(c.ImGuiCol_Text, .{ .x = 0, .y = 0.8, .z = 0, .w = 1 });
+    c.igText("W, A, S, D", "");
+    c.igPopStyleColor(1);
     c.igSameLine(0, -1);
     c.igText(" :  move camera", "");
 
