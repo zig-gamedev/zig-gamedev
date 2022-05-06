@@ -442,26 +442,22 @@ fn update(demo: *DemoState) void {
     const window = demo.gctx.window;
 
     c.igSetNextWindowPos(.{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
-    c.igSetNextWindowSize(.{ .x = 600.0, .y = 300 }, c.ImGuiCond_FirstUseEver);
+    c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_FirstUseEver);
     _ = c.igBegin(
         "Demo Settings",
         null,
-        c.ImGuiWindowFlags_None,
+        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
     );
 
     c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igPushStyleColor_Vec4(c.ImGuiCol_Text, .{ .x = 0, .y = 0.8, .z = 0, .w = 1 });
     c.igText("Right Mouse Button + drag", "");
-    c.igPopStyleColor(1);
     c.igSameLine(0, -1);
     c.igText(" :  rotate camera", "");
 
     c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igPushStyleColor_Vec4(c.ImGuiCol_Text, .{ .x = 0, .y = 0.8, .z = 0, .w = 1 });
     c.igText("W, A, S, D", "");
-    c.igPopStyleColor(1);
     c.igSameLine(0, -1);
     c.igText(" :  move camera", "");
 
