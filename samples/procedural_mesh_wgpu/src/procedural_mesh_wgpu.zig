@@ -441,28 +441,27 @@ fn update(demo: *DemoState) void {
 
     const window = demo.gctx.window;
 
-    c.igShowDemoWindow(null);
-
     c.igSetNextWindowPos(.{ .x = 10.0, .y = 10.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
-    c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
-    _ = c.igBegin(
+    c.igSetNextWindowSize(.{ .x = 600.0, .y = 300 }, c.ImGuiCond_FirstUseEver);
+    if (c.igBegin(
         "Demo Settings",
         null,
-        c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize | c.ImGuiWindowFlags_NoSavedSettings,
-    );
-    c.igBulletText("", "");
-    c.igSameLine(0, -1);
-    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + drag", "");
-    c.igSameLine(0, -1);
-    c.igText(" :  rotate camera", "");
+        c.ImGuiWindowFlags_None,
+    )) {
+        c.igBulletText("", "");
+        c.igSameLine(0, -1);
+        c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "Right Mouse Button + drag", "");
+        c.igSameLine(0, -1);
+        c.igText(" :  rotate camera", "");
 
-    c.igBulletText("", "");
-    c.igSameLine(0, -1);
-    c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
-    c.igSameLine(0, -1);
-    c.igText(" :  move camera", "");
+        c.igBulletText("", "");
+        c.igSameLine(0, -1);
+        c.igTextColored(.{ .x = 0, .y = 0.8, .z = 0, .w = 1 }, "W, A, S, D", "");
+        c.igSameLine(0, -1);
+        c.igText(" :  move camera", "");
 
-    c.igEnd();
+        c.igEnd();
+    }
 
     // Handle camera rotation with mouse.
     {

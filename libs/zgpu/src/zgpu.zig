@@ -248,9 +248,10 @@ pub const GraphicsContext = struct {
 
         // TODO: Get rid of this code.
         if (gctx.uniforms.stage.num >= uniforms_staging_pipeline_len) {
-            const durations = [_]u64{ 0, 100, 500, 1000, 2000 };
-            for (durations) |duration| {
-                std.time.sleep(duration * 1000);
+            //const durations = [_]u64{ 0, 100, 500, 1000, 2000 };
+            //for (durations) |duration| {
+            while (true) {
+                //std.time.sleep(duration * 1000);
                 gctx.device.tick();
 
                 i = 0;
