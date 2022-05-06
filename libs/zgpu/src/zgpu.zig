@@ -246,12 +246,9 @@ pub const GraphicsContext = struct {
             }
         }
 
-        // TODO: Get rid of this code.
         if (gctx.uniforms.stage.num >= uniforms_staging_pipeline_len) {
-            //const durations = [_]u64{ 0, 100, 500, 1000, 2000 };
-            //for (durations) |duration| {
+            // TODO: Wait for the GPU to finish all commands. Not sure if this is the best way.
             while (true) {
-                //std.time.sleep(duration * 1000);
                 gctx.device.tick();
 
                 i = 0;
