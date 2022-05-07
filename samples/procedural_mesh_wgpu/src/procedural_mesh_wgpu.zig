@@ -433,13 +433,12 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    const main_viewport = c.igGetMainViewport().?.*;
     c.igSetNextWindowPos(
-        .{ .x = main_viewport.WorkPos.x + 20.0, .y = main_viewport.WorkPos.y + 20.0 },
+        .{ .x = 20.0, .y = 20.0 },
         c.ImGuiCond_Always,
         .{ .x = 0.0, .y = 0.0 },
     );
-    c.igSetNextWindowSize(.{ .x = 600.0, .y = -1 }, c.ImGuiCond_Always);
+    c.igSetNextWindowSize(.{ .x = 620.0, .y = 220.0 }, c.ImGuiCond_Always);
     _ = c.igBegin(
         "Demo Settings",
         null,
