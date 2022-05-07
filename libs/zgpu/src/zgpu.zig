@@ -907,9 +907,9 @@ pub fn checkContent(comptime content_dir: []const u8) !void {
 const FrameStats = struct {
     time: f64 = 0.0,
     delta_time: f32 = 0.0,
-    fps: f32 = 0.0,
+    fps: f64 = 0.0,
     fps_counter: u32 = 0,
-    average_cpu_time: f32 = 0.0,
+    average_cpu_time: f64 = 0.0,
     previous_time: f64 = 0.0,
     fps_refresh_time: f64 = 0.0,
     frame_number: u64 = 0,
@@ -924,8 +924,8 @@ const FrameStats = struct {
             const fps = @intToFloat(f64, stats.fps_counter) / t;
             const ms = (1.0 / fps) * 1000.0;
 
-            stats.fps = @floatCast(f32, fps);
-            stats.average_cpu_time = @floatCast(f32, ms);
+            stats.fps = fps;
+            stats.average_cpu_time = ms;
             stats.fps_refresh_time = stats.time;
             stats.fps_counter = 0;
         }

@@ -433,19 +433,22 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
+    c.igSetNextWindowPos(.{ .x = 20.0, .y = 20.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
+    c.igSetNextWindowSize(.{ .x = 500.0, .y = -1 }, c.ImGuiCond_FirstUseEver);
+
     _ = c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoResize);
 
     c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igText("Right Mouse Button + drag", "");
-    c.igSameLine(0, -1);
-    c.igText(" :  rotate camera", "");
+    c.igText("Right Mouse Button + drag :  rotate camera");
 
     c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igText("W, A, S, D", "");
+    c.igText("W, A, S, D :  move camera");
+
+    c.igBulletText("", "");
     c.igSameLine(0, -1);
-    c.igText(" :  move camera", "");
+    c.igText("Average :  %.3f ms/frame (%.1f fps)", demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps);
 
     c.igEnd();
 
