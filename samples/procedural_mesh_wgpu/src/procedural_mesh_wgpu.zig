@@ -433,8 +433,6 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    c.igSetNextWindowSize(.{ .x = 620.0, .y = -1 }, c.ImGuiCond_FirstUseEver);
-
     _ = c.igBegin(
         "Demo Settings",
         null,
@@ -660,6 +658,9 @@ pub fn main() !void {
         // In case of error zgpu.checkContent() will print error message.
         return;
     };
+
+    comptime var i = 0;
+    inline while (i < 3) : (i += 1) std.debug.print("hello!", .{});
 
     try glfw.init(.{});
     defer glfw.terminate();
