@@ -435,10 +435,11 @@ fn update(demo: *DemoState) void {
 
     c.igSetNextWindowPos(
         .{ .x = 20.0, .y = 20.0 },
-        c.ImGuiCond_Always,
+        c.ImGuiCond_FirstUseEver,
         .{ .x = 0.0, .y = 0.0 },
     );
-    c.igSetNextWindowSize(.{ .x = 620.0, .y = 220.0 }, c.ImGuiCond_Always);
+    c.igSetNextWindowSize(.{ .x = 620.0, .y = 420.0 }, c.ImGuiCond_FirstUseEver);
+
     _ = c.igBegin(
         "Demo Settings",
         null,
