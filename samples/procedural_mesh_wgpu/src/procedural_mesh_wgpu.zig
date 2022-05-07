@@ -438,15 +438,15 @@ fn update(demo: *DemoState) void {
 
     _ = c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoResize);
 
-    c.igBulletText("", "");
+    c.igBulletText("");
     c.igSameLine(0, -1);
     c.igText("Right Mouse Button + drag :  rotate camera");
 
-    c.igBulletText("", "");
+    c.igBulletText("");
     c.igSameLine(0, -1);
     c.igText("W, A, S, D :  move camera");
 
-    c.igBulletText("", "");
+    c.igBulletText("");
     c.igSameLine(0, -1);
     c.igText("Average :  %.3f ms/frame (%.1f fps)", demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps);
 
