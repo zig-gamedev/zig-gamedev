@@ -444,7 +444,7 @@ fn update(demo: *DemoState) void {
             demo.gctx.stats.fps,
         );
         c.igBulletText(
-            "CPU is ahead GPU by :  %d frame(s)",
+            "CPU is ahead of GPU by :  %d frame(s)",
             demo.gctx.stats.cpu_frame_number - demo.gctx.stats.gpu_frame_number,
         );
     }

@@ -266,7 +266,7 @@ pub const GraphicsContext = struct {
         }
 
         if (gctx.uniforms.stage.num >= uniforms_staging_pipeline_len) {
-            // TODO: Wait for the GPU to finish all commands. Not sure if this is the best way.
+            // Wait until one of the buffers is mapped and ready to use.
             while (true) {
                 gctx.device.tick();
 
