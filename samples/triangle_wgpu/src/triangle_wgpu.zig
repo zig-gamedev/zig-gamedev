@@ -144,7 +144,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     const index_data = [_]u32{ 0, 1, 2 };
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data[0..]);
 
-    // Create a depth texture and it's 'view'.
+    // Create a depth texture and its 'view'.
     const depth = createDepthTexture(gctx);
 
     return DemoState{

@@ -143,12 +143,36 @@ pub const GraphicsContext = struct {
             .bind_group_layout_pool = BindGroupLayoutPool.init(allocator, bind_group_layout_pool_size),
         };
 
+        gctx.queue.on_submitted_work_done = gpu.Queue.WorkDoneCallback.init(
+            *u64,
+            &gctx.stats.gpu_frame_number,
+            gpuWorkDone,
+        );
+
         uniformsInit(gctx);
         return gctx;
     }
 
     pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
         // TODO: How to release `native_instance`?
+
+        // Wait for the GPU to finish all encoded commands.
+        while (gctx.stats.cpu_frame_number != gctx.stats.gpu_frame_number) {
+            gctx.device.tick();
+        }
+
+        // Wait for all outstanding mapAsync() calls to complete.
+        wait_loop: while (true) {
+            gctx.device.tick();
+            var i: u32 = 0;
+            while (i < gctx.uniforms.stage.num) : (i += 1) {
+                if (gctx.uniforms.stage.buffers[i].slice == null) {
+                    continue :wait_loop;
+                }
+            }
+            break;
+        }
+
         gctx.bind_group_pool.deinit(allocator);
         gctx.bind_group_layout_pool.deinit(allocator);
         gctx.buffer_pool.deinit(allocator);
@@ -219,7 +243,7 @@ pub const GraphicsContext = struct {
     }
 
     fn uniformsNextStagingBuffer(gctx: *GraphicsContext) void {
-        if (gctx.stats.frame_number > 0) {
+        if (gctx.stats.cpu_frame_number > 0) {
             // Map staging buffer which was used this frame.
             const current = gctx.uniforms.stage.current;
             assert(gctx.uniforms.stage.buffers[current].slice == null);
@@ -317,7 +341,7 @@ pub const GraphicsContext = struct {
         command_buffers.appendSlice(commands) catch unreachable;
         gctx.queue.submit(command_buffers.slice());
 
-        gctx.stats.update();
+        gctx.stats.tick();
         gctx.uniformsNextStagingBuffer();
 
         gctx.swapchain.present();
@@ -341,6 +365,13 @@ pub const GraphicsContext = struct {
             return .swap_chain_resized;
         }
         return .nothing_special_happened;
+    }
+
+    fn gpuWorkDone(gpu_frame_number: *u64, status: gpu.Queue.WorkDoneStatus) void {
+        gpu_frame_number.* += 1;
+        if (status != .Success) {
+            std.debug.print("[zgpu] GPU work submission failed\n", .{});
+        }
     }
 
     //
@@ -912,9 +943,10 @@ const FrameStats = struct {
     average_cpu_time: f64 = 0.0,
     previous_time: f64 = 0.0,
     fps_refresh_time: f64 = 0.0,
-    frame_number: u64 = 0,
+    cpu_frame_number: u64 = 0,
+    gpu_frame_number: u64 = 0,
 
-    fn update(stats: *FrameStats) void {
+    fn tick(stats: *FrameStats) void {
         stats.time = glfw.getTime();
         stats.delta_time = @floatCast(f32, stats.time - stats.previous_time);
         stats.previous_time = stats.time;
@@ -930,7 +962,7 @@ const FrameStats = struct {
             stats.fps_counter = 0;
         }
         stats.fps_counter += 1;
-        stats.frame_number += 1;
+        stats.cpu_frame_number += 1;
     }
 };
 

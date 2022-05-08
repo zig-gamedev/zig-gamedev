@@ -407,7 +407,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     });
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, meshes_indices.items);
 
-    // Create a depth texture and it's 'view'.
+    // Create a depth texture and its 'view'.
     const depth = createDepthTexture(gctx);
 
     return DemoState{
@@ -442,6 +442,10 @@ fn update(demo: *DemoState) void {
             "Average :  %.3f ms/frame (%.1f fps)",
             demo.gctx.stats.average_cpu_time,
             demo.gctx.stats.fps,
+        );
+        c.igBulletText(
+            "CPU is ahead GPU by :  %d frame(s)",
+            demo.gctx.stats.cpu_frame_number - demo.gctx.stats.gpu_frame_number,
         );
     }
     c.igEnd();
