@@ -434,7 +434,7 @@ fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
     c.igSetNextWindowPos(.{ .x = 20.0, .y = 20.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
-    c.igSetNextWindowSize(.{ .x = 500.0, .y = -1 }, c.ImGuiCond_FirstUseEver);
+    c.igSetNextWindowSize(.{ .x = 500.0, .y = 140.0 }, c.ImGuiCond_FirstUseEver);
 
     _ = c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoResize);
 
