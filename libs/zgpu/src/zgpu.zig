@@ -238,7 +238,7 @@ pub const GraphicsContext = struct {
         if (status == .success) {
             usb.slice = usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size);
         } else {
-            std.debug.print("[zgpu] Failed to map buffer\n", .{});
+            std.debug.print("[zgpu] Failed to map buffer (code: {d})\n", .{@enumToInt(status)});
         }
     }
 
@@ -370,7 +370,7 @@ pub const GraphicsContext = struct {
     fn gpuWorkDone(gpu_frame_number: *u64, status: gpu.Queue.WorkDoneStatus) void {
         gpu_frame_number.* += 1;
         if (status != .Success) {
-            std.debug.print("[zgpu] GPU work submission failed\n", .{});
+            std.debug.print("[zgpu] Failed to complete GPU work (code: {d})\n", .{@enumToInt(status)});
         }
     }
 
