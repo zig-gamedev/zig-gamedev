@@ -167,6 +167,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     });
     const texture_view = gctx.createTextureView(texture, .{});
 
+    // TODO: writeTexture()
+    const image = zgpu.stbi.load(content_dir ++ "genart_0025_5.png", 3);
+    defer zgpu.stbi.freeData(image.data);
+
     return DemoState{
         .gctx = gctx,
         .pipeline = pipeline,

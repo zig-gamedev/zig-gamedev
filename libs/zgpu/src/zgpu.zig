@@ -1050,6 +1050,41 @@ pub const gui = struct {
     extern fn ImGui_ImplWGPU_Shutdown() void;
 };
 
+pub const stbi = struct {
+    pub fn load(
+        filename: [*:0]const u8,
+        desired_channels: u32,
+    ) struct {
+        data: ?*u8,
+        width: u32,
+        height: u32,
+        channels_in_memory: u32,
+        channels_in_file: u32,
+    } {
+        var x: c_int = undefined;
+        var y: c_int = undefined;
+        var ch: c_int = undefined;
+        const data = stbi_load(filename, &x, &y, &ch, @intCast(c_int, desired_channels));
+        return .{
+            .data = data,
+            .width = @intCast(u32, x),
+            .height = @intCast(u32, y),
+            .channels_in_memory = if (desired_channels == 0) @intCast(u32, ch) else desired_channels,
+            .channels_in_file = @intCast(u32, ch),
+        };
+    }
+    pub const freeData = stbi_image_free;
+
+    extern fn stbi_load(
+        filename: [*:0]const u8,
+        x: *c_int,
+        y: *c_int,
+        channels_in_file: *c_int,
+        desired_channels: c_int,
+    ) ?*u8;
+    extern fn stbi_image_free(image_data: ?*anyopaque) void;
+};
+
 fn detectGLFWOptions() glfw.BackendOptions {
     const target = @import("builtin").target;
     if (target.isDarwin()) return .{ .cocoa = true };

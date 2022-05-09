@@ -30,6 +30,8 @@ fn buildLibrary(
     lib.addCSourceFile(comptime thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
     lib.addCSourceFile(comptime thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
 
+    // If don't want to use 'stb_image' just comment out below line and do not use `zgpu.stbi`
+    // namespace in your code.
     lib.addCSourceFile(comptime thisDir() ++ "/libs/stb/stb_image.c", &.{"-std=c99"});
 
     return lib;
