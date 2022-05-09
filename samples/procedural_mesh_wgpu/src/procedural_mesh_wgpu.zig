@@ -351,8 +351,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
                 .buffers = &.{vertex_buffer_layout},
             },
             .primitive = gpu.PrimitiveState{
-                .front_face = .ccw,
-                .cull_mode = .none,
+                .front_face = .cw,
+                .cull_mode = .back,
                 .topology = .triangle_list,
             },
             .depth_stencil = &gpu.DepthStencilState{
