@@ -10,11 +10,11 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const exe_options = b.addOptions();
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
-    const exe = b.addExecutable("triangle_wgpu", thisDir() ++ "/src/triangle_wgpu.zig");
+    const exe = b.addExecutable("triangle_wgpu", comptime thisDir() ++ "/src/triangle_wgpu.zig");
     exe.addOptions("build_options", exe_options);
 
     const install_content_step = b.addInstallDirectory(.{
-        .source_dir = thisDir() ++ "/" ++ content_dir,
+        .source_dir = comptime thisDir() ++ "/" ++ content_dir,
         .install_dir = .{ .custom = "" },
         .install_subdir = "bin/" ++ content_dir,
     });

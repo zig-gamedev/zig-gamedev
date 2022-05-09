@@ -938,8 +938,8 @@ pub fn checkContent(comptime content_dir: []const u8) !void {
 const FrameStats = struct {
     time: f64 = 0.0,
     delta_time: f32 = 0.0,
-    fps: f64 = 0.0,
     fps_counter: u32 = 0,
+    fps: f64 = 0.0,
     average_cpu_time: f64 = 0.0,
     previous_time: f64 = 0.0,
     fps_refresh_time: f64 = 0.0,
