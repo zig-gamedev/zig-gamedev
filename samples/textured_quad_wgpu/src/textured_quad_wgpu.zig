@@ -28,7 +28,7 @@ const wgsl_vs =
 \\      output.position_clip = vec4(p, 0.0, 1.0);
 \\      output.uv = uv;
 \\      return output;
-\\ }
+\\  }
 ;
 const wgsl_fs =
 \\  @stage(fragment) fn main(
