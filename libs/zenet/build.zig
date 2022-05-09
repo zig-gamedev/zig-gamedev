@@ -19,7 +19,7 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(thisDir() ++ "/src/zenet.zig");
+    const tests = b.addTest(comptime thisDir() ++ "/src/zenet.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     link(tests);
@@ -27,12 +27,12 @@ pub fn buildTests(
 }
 
 fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("zenet", thisDir() ++ "/src/zenet.zig");
+    const lib = exe.builder.addStaticLibrary("zenet", comptime thisDir() ++ "/src/zenet.zig");
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.want_lto = false;
-    lib.addIncludeDir(thisDir() ++ "/libs/enet/include");
+    lib.addIncludeDir(comptime thisDir() ++ "/libs/enet/include");
     lib.linkSystemLibrary("c");
 
     if (exe.target.isWindows()) {
@@ -53,15 +53,15 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         "-DHAS_SOCKLEN_T=1",
         "-fno-sanitize=undefined",
     };
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/callbacks.c", &defines);
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/compress.c", &defines);
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/host.c", &defines);
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/list.c", &defines);
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/packet.c", &defines);
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/peer.c", &defines);
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/protocol.c", &defines);
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/unix.c", &defines);
-    lib.addCSourceFile(thisDir() ++ "/libs/enet/win32.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/callbacks.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/compress.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/host.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/list.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/packet.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/peer.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/protocol.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/unix.c", &defines);
+    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/win32.c", &defines);
 
     return lib;
 }

@@ -19,7 +19,7 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(thisDir() ++ "/src/znoise.zig");
+    const tests = b.addTest(comptime thisDir() ++ "/src/znoise.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     link(tests);
@@ -27,16 +27,16 @@ pub fn buildTests(
 }
 
 fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("znoise", thisDir() ++ "/src/znoise.zig");
+    const lib = exe.builder.addStaticLibrary("znoise", comptime thisDir() ++ "/src/znoise.zig");
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.want_lto = false;
-    lib.addIncludeDir(thisDir() ++ "/libs/FastNoiseLite");
+    lib.addIncludeDir(comptime thisDir() ++ "/libs/FastNoiseLite");
     lib.linkSystemLibrary("c");
 
     lib.addCSourceFile(
-        thisDir() ++ "/libs/FastNoiseLite/FastNoiseLite.c",
+        comptime thisDir() ++ "/libs/FastNoiseLite/FastNoiseLite.c",
         &.{ "-std=c99", "-fno-sanitize=undefined" },
     );
 

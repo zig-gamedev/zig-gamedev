@@ -27,6 +27,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addIncludeDir(thisDir() ++ "/src/c");
     exe.addIncludeDir(thisDir() ++ "/../zgpu/libs/imgui");
     exe.addIncludeDir(thisDir() ++ "/../zmesh/libs/cgltf");
+    exe.addIncludeDir(thisDir() ++ "/../zgpu/libs/stb");
 }
 
 fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
@@ -52,7 +53,8 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.addIncludeDir(thisDir() ++ "/../zmesh/libs/cgltf");
     lib.addCSourceFile(thisDir() ++ "/../zmesh/libs/cgltf/cgltf.c", &.{"-std=c99"});
 
-    lib.addCSourceFile(thisDir() ++ "/src/c/stb_image.c", &.{"-std=c99"});
+    lib.addIncludeDir(thisDir() ++ "/../zgpu/libs/stb");
+    lib.addCSourceFile(thisDir() ++ "/../zgpu/libs/stb/stb_image.c", &.{"-std=c99"});
 
     return lib;
 }
