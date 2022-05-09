@@ -301,15 +301,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
         .mip_level_count = 1,
         .sample_count = 1,
     });
-    const view = gctx.createTextureView(texture, .{
-        .format = .depth32_float,
-        .dimension = .dimension_2d,
-        .base_mip_level = 0,
-        .mip_level_count = 1,
-        .base_array_layer = 0,
-        .array_layer_count = 1,
-        .aspect = .depth_only,
-    });
+    const view = gctx.createTextureView(texture, .{});
     return .{ .texture = texture, .view = view };
 }
 

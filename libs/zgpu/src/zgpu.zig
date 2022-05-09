@@ -403,13 +403,24 @@ pub const GraphicsContext = struct {
         descriptor: gpu.TextureView.Descriptor,
     ) TextureViewHandle {
         const texture = gctx.lookupResource(texture_handle).?;
+        const info = gctx.lookupResourceInfo(texture_handle).?;
         return gctx.texture_view_pool.addResource(gctx.*, .{
             .gpuobj = texture.createView(&descriptor),
-            .format = descriptor.format,
-            .dimension = descriptor.dimension,
+            .format = if (descriptor.format == .none) info.format else descriptor.format,
+            .dimension = if (descriptor.dimension == .dimension_none)
+                @intToEnum(gpu.TextureView.Dimension, @enumToInt(info.dimension))
+            else
+                descriptor.dimension,
             .base_mip_level = descriptor.base_mip_level,
+            .mip_level_count = if (descriptor.mip_level_count == 0xffff_ffff)
+                info.mip_level_count
+            else
+                descriptor.mip_level_count,
             .base_array_layer = descriptor.base_array_layer,
-            .array_layer_count = descriptor.array_layer_count,
+            .array_layer_count = if (descriptor.array_layer_count == 0xffff_ffff)
+                info.size.depth_or_array_layers
+            else
+                descriptor.array_layer_count,
             .aspect = descriptor.aspect,
             .parent_texture_handle = texture_handle,
         });
@@ -730,6 +741,7 @@ pub const TextureViewInfo = struct {
     format: gpu.Texture.Format = .none,
     dimension: gpu.TextureView.Dimension = .dimension_none,
     base_mip_level: u32 = 0,
+    mip_level_count: u32 = 0,
     base_array_layer: u32 = 0,
     array_layer_count: u32 = 0,
     aspect: gpu.Texture.Aspect = .all,

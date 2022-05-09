@@ -150,6 +150,23 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     });
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data[0..]);
 
+    const texture = gctx.createTexture(.{
+        .usage = .{ .texture_binding = true },
+        .dimension = .dimension_2d,
+        .size = .{
+            .width = 1024,
+            .height = 1024,
+            .depth_or_array_layers = 1,
+        },
+        .format = .rgba8_unorm,
+        .mip_level_count = 11,
+        .sample_count = 1,
+    });
+    const view = gctx.createTextureView(texture, .{});
+
+    defer gctx.destroyResource(view);
+    defer gctx.destroyResource(texture);
+
     return DemoState{
         .gctx = gctx,
         .pipeline = pipeline,
