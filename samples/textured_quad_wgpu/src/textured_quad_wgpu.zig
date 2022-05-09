@@ -16,15 +16,15 @@ const wgsl_vs =
 \\  }
 \\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 \\  struct VertexOut {
-\\      @builtin(position) position_clip : vec4<f32>,
-\\      @location(0) uv : vec2<f32>,
+\\      @builtin(position) position_clip: vec4<f32>,
+\\      @location(0) uv: vec2<f32>,
 \\  }
 \\  @stage(vertex) fn main(
-\\      @location(0) position : vec2<f32>,
-\\      @location(1) uv : vec2<f32>,
+\\      @location(0) position: vec2<f32>,
+\\      @location(1) uv: vec2<f32>,
 \\  ) -> VertexOut {
 \\      let p = vec2(position.x / uniforms.aspect_ratio, position.y);
-\\      var output : VertexOut;
+\\      var output: VertexOut;
 \\      output.position_clip = vec4(p, 0.0, 1.0);
 \\      output.uv = uv;
 \\      return output;
@@ -32,7 +32,7 @@ const wgsl_vs =
 ;
 const wgsl_fs =
 \\  @stage(fragment) fn main(
-\\      @location(0) uv : vec2<f32>,
+\\      @location(0) uv: vec2<f32>,
 \\  ) -> @location(0) vec4<f32> {
 \\      return vec4(uv, 0.0, 1.0);
 \\  }
@@ -56,6 +56,9 @@ const DemoState = struct {
 
     vertex_buffer: zgpu.BufferHandle,
     index_buffer: zgpu.BufferHandle,
+
+    texture: zgpu.TextureHandle,
+    texture_view: zgpu.TextureViewHandle,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
@@ -159,13 +162,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
             .depth_or_array_layers = 1,
         },
         .format = .rgba8_unorm,
-        .mip_level_count = 11,
+        .mip_level_count = math.log2_int(u32, 1024) + 1,
         .sample_count = 1,
     });
-    const view = gctx.createTextureView(texture, .{});
-
-    defer gctx.destroyResource(view);
-    defer gctx.destroyResource(texture);
+    const texture_view = gctx.createTextureView(texture, .{});
 
     return DemoState{
         .gctx = gctx,
@@ -173,6 +173,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
+        .texture = texture,
+        .texture_view = texture_view,
     };
 }
 
