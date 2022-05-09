@@ -329,7 +329,7 @@ pub fn main() !void {
     var demo = try init(allocator, window);
     defer deinit(allocator, &demo);
 
-    zgpu.gui.init(window, demo.gctx.device, content_dir ++ "Roboto-Medium.ttf", 25.0);
+    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 25.0);
     defer zgpu.gui.deinit();
 
     while (!window.shouldClose()) {

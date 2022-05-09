@@ -979,7 +979,13 @@ const FrameStats = struct {
 };
 
 pub const gui = struct {
-    pub fn init(window: glfw.Window, device: gpu.Device, font: [*:0]const u8, font_size: f32) void {
+    pub fn init(
+        window: glfw.Window,
+        device: gpu.Device,
+        comptime content_dir: []const u8,
+        comptime font_name: [*:0]const u8,
+        font_size: f32,
+    ) void {
         assert(cimgui.igGetCurrentContext() == null);
         _ = cimgui.igCreateContext(null);
 
@@ -988,7 +994,13 @@ pub const gui = struct {
         }
 
         const io = cimgui.igGetIO().?;
-        if (cimgui.ImFontAtlas_AddFontFromFileTTF(io.*.Fonts, font, font_size, null, null) == null) {
+        if (cimgui.ImFontAtlas_AddFontFromFileTTF(
+            io.*.Fonts,
+            content_dir ++ font_name,
+            font_size,
+            null,
+            null,
+        ) == null) {
             unreachable;
         }
 
@@ -999,6 +1011,8 @@ pub const gui = struct {
         )) {
             unreachable;
         }
+
+        io.*.IniFilename = content_dir ++ "imgui.ini";
     }
 
     pub fn deinit() void {
