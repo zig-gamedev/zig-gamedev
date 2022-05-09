@@ -433,9 +433,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    c.igSetNextWindowPos(.{ .x = 20.0, .y = 20.0 }, c.ImGuiCond_FirstUseEver, .{ .x = 0.0, .y = 0.0 });
-    c.igSetNextWindowSize(.{ .x = 500.0, .y = -1.0 }, c.ImGuiCond_FirstUseEver);
-    if (c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoResize)) {
+    if (c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize)) {
         c.igBulletText("Right Mouse Button + drag :  rotate camera");
         c.igBulletText("W, A, S, D :  move camera");
         c.igBulletText(
