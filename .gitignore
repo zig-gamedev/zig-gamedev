@@ -12,6 +12,7 @@
 !*.m
 !LICENSE*
 
+!*.ini
 !*.txt
 !*.md
 !*.bat
