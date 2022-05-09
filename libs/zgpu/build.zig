@@ -18,7 +18,7 @@ fn buildLibrary(
     glfw.link(exe.builder, lib, options.glfw_options);
     gpu_dawn.link(exe.builder, lib, options.gpu_dawn_options);
 
-    // If don't want to use 'dear imgui' just comment out below lines and do not use `zgpu.gui`
+    // If you don't want to use 'dear imgui' library just comment out below lines and do not use `zgpu.gui`
     // namespace in your code.
     lib.addIncludeDir(comptime thisDir() ++ "/libs");
     lib.addCSourceFile(comptime thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
@@ -30,7 +30,7 @@ fn buildLibrary(
     lib.addCSourceFile(comptime thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
     lib.addCSourceFile(comptime thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
 
-    // If don't want to use 'stb_image' just comment out below line and do not use `zgpu.stbi`
+    // If you don't want to use 'stb_image' library just comment out below line and do not use `zgpu.stbi`
     // namespace in your code.
     lib.addCSourceFile(comptime thisDir() ++ "/libs/stb/stb_image.c", &.{"-std=c99"});
 
