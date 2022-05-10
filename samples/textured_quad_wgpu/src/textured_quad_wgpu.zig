@@ -153,23 +153,24 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     });
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data[0..]);
 
+    var image = try zgpu.stbi.Image.init(content_dir ++ "genart_0025_5.png", 3);
+    defer image.deinit();
+
     const texture = gctx.createTexture(.{
         .usage = .{ .texture_binding = true },
         .dimension = .dimension_2d,
         .size = .{
-            .width = 1024,
-            .height = 1024,
+            .width = image.width,
+            .height = image.height,
             .depth_or_array_layers = 1,
         },
         .format = .rgba8_unorm,
-        .mip_level_count = math.log2_int(u32, 1024) + 1,
+        .mip_level_count = math.log2_int(u32, math.max(image.width, image.height)) + 1,
         .sample_count = 1,
     });
     const texture_view = gctx.createTextureView(texture, .{});
 
     // TODO: writeTexture()
-    const image = zgpu.stbi.load(content_dir ++ "genart_0025_5.png", 3);
-    defer zgpu.stbi.freeData(image.data);
 
     return DemoState{
         .gctx = gctx,

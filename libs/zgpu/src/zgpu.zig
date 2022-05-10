@@ -1051,36 +1051,41 @@ pub const gui = struct {
 };
 
 pub const stbi = struct {
-    pub fn load(
-        filename: [*:0]const u8,
-        desired_channels: u32,
-    ) struct {
-        data: ?[]u8,
+    pub const Image = struct {
+        data: []u8,
         width: u32,
         height: u32,
         channels_in_memory: u32,
         channels_in_file: u32,
-    } {
-        var x: c_int = undefined;
-        var y: c_int = undefined;
-        var ch: c_int = undefined;
-        const data = stbi_load(filename, &x, &y, &ch, @intCast(c_int, desired_channels));
-        const channels_in_memory = if (desired_channels == 0) @intCast(u32, ch) else desired_channels;
-        const width = @intCast(u32, x);
-        const height = @intCast(u32, y);
-        return .{
-            .data = if (data == null) null else data.?[0 .. width * height * channels_in_memory],
-            .width = width,
-            .height = height,
-            .channels_in_memory = channels_in_memory,
-            .channels_in_file = @intCast(u32, ch),
-        };
-    }
 
-    pub fn freeData(data: ?[]u8) void {
-        if (data != null)
-            stbi_image_free(data.?.ptr);
-    }
+        pub fn init(
+            filename: [*:0]const u8,
+            desired_channels: u32,
+        ) !Image {
+            var x: c_int = undefined;
+            var y: c_int = undefined;
+            var ch: c_int = undefined;
+            const data = stbi_load(filename, &x, &y, &ch, @intCast(c_int, desired_channels));
+            if (data == null)
+                return error.stbi_LoadFailed;
+
+            const channels_in_memory = if (desired_channels == 0) @intCast(u32, ch) else desired_channels;
+            const width = @intCast(u32, x);
+            const height = @intCast(u32, y);
+            return Image{
+                .data = data.?[0 .. width * height * channels_in_memory],
+                .width = width,
+                .height = height,
+                .channels_in_memory = channels_in_memory,
+                .channels_in_file = @intCast(u32, ch),
+            };
+        }
+
+        pub fn deinit(image: *Image) void {
+            stbi_image_free(image.data.ptr);
+            image.* = undefined;
+        }
+    };
 
     extern fn stbi_load(
         filename: [*:0]const u8,
