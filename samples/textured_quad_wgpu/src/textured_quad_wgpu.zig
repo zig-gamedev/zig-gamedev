@@ -57,7 +57,7 @@ const Uniforms = struct {
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
-    pipeline: zgpu.RenderPipelineHandle,
+    pipeline: zgpu.RenderPipelineHandle = .{},
     bind_group: zgpu.BindGroupHandle,
 
     vertex_buffer: zgpu.BufferHandle,
@@ -68,7 +68,7 @@ const DemoState = struct {
     sampler: zgpu.SamplerHandle,
 };
 
-fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
+fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
     const bind_group_layout = gctx.createBindGroupLayout(
@@ -81,57 +81,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         },
     );
     defer gctx.destroyResource(bind_group_layout);
-
-    const pipeline = pipeline: {
-        const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
-            .bind_group_layouts = &.{
-                gctx.lookupResource(bind_group_layout).?,
-            },
-        });
-        defer pl.release();
-
-        const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
-        defer vs_module.release();
-
-        const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
-        defer fs_module.release();
-
-        const color_target = gpu.ColorTargetState{
-            .format = zgpu.GraphicsContext.swapchain_format,
-            .blend = &.{ .color = .{}, .alpha = .{} },
-        };
-
-        const vertex_attributes = [_]gpu.VertexAttribute{
-            .{ .format = .float32x2, .offset = 0, .shader_location = 0 },
-            .{ .format = .float32x2, .offset = @offsetOf(Vertex, "uv"), .shader_location = 1 },
-        };
-        const vertex_buffer_layout = gpu.VertexBufferLayout{
-            .array_stride = @sizeOf(Vertex),
-            .attribute_count = vertex_attributes.len,
-            .attributes = &vertex_attributes,
-        };
-
-        // Create a render pipeline.
-        const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
-            .layout = pl,
-            .vertex = gpu.VertexState{
-                .module = vs_module,
-                .entry_point = "main",
-                .buffers = &.{vertex_buffer_layout},
-            },
-            .primitive = gpu.PrimitiveState{
-                .front_face = .cw,
-                .cull_mode = .back,
-                .topology = .triangle_list,
-            },
-            .fragment = &gpu.FragmentState{
-                .module = fs_module,
-                .entry_point = "main",
-                .targets = &.{color_target},
-            },
-        };
-        break :pipeline gctx.createRenderPipeline(pipeline_descriptor);
-    };
 
     // Create a vertex buffer.
     const vertex_data = [_]Vertex{
@@ -192,9 +141,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         .{ .binding = 2, .sampler_handle = sampler },
     });
 
-    return DemoState{
+    const demo = try allocator.create(DemoState);
+    demo.* = .{
         .gctx = gctx,
-        .pipeline = pipeline,
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
         .index_buffer = index_buffer,
@@ -202,11 +151,65 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         .texture_view = texture_view,
         .sampler = sampler,
     };
+
+    // (Async) Create a render pipeline.
+    {
+        const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
+            .bind_group_layouts = &.{
+                gctx.lookupResource(bind_group_layout).?,
+            },
+        });
+        defer pl.release();
+
+        const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
+        defer vs_module.release();
+
+        const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
+        defer fs_module.release();
+
+        const color_target = gpu.ColorTargetState{
+            .format = zgpu.GraphicsContext.swapchain_format,
+            .blend = &.{ .color = .{}, .alpha = .{} },
+        };
+
+        const vertex_attributes = [_]gpu.VertexAttribute{
+            .{ .format = .float32x2, .offset = 0, .shader_location = 0 },
+            .{ .format = .float32x2, .offset = @offsetOf(Vertex, "uv"), .shader_location = 1 },
+        };
+        const vertex_buffer_layout = gpu.VertexBufferLayout{
+            .array_stride = @sizeOf(Vertex),
+            .attribute_count = vertex_attributes.len,
+            .attributes = &vertex_attributes,
+        };
+
+        // Create a render pipeline.
+        const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
+            .layout = pl,
+            .vertex = gpu.VertexState{
+                .module = vs_module,
+                .entry_point = "main",
+                .buffers = &.{vertex_buffer_layout},
+            },
+            .primitive = gpu.PrimitiveState{
+                .front_face = .cw,
+                .cull_mode = .back,
+                .topology = .triangle_list,
+            },
+            .fragment = &gpu.FragmentState{
+                .module = fs_module,
+                .entry_point = "main",
+                .targets = &.{color_target},
+            },
+        };
+        gctx.createRenderPipelineAsync(allocator, pipeline_descriptor, &demo.pipeline);
+    }
+
+    return demo;
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.gctx.deinit(allocator);
-    demo.* = undefined;
+    allocator.destroy(demo);
 }
 
 fn update(demo: *DemoState) void {
@@ -316,15 +319,15 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    var demo = try init(allocator, window);
-    defer deinit(allocator, &demo);
+    const demo = try init(allocator, window);
+    defer deinit(allocator, demo);
 
     zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 25.0);
     defer zgpu.gui.deinit();
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();
-        update(&demo);
-        draw(&demo);
+        update(demo);
+        draw(demo);
     }
 }
