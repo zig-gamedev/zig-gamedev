@@ -10,11 +10,14 @@ const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: textured quad (wgpu)";
 
 // zig fmt: off
-const wgsl_vs =
+const wgsl_common =
 \\  struct Uniforms {
 \\      aspect_ratio: f32,
+\\      mip_level: f32,
 \\  }
 \\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+;
+const wgsl_vs = wgsl_common ++
 \\  struct VertexOut {
 \\      @builtin(position) position_clip: vec4<f32>,
 \\      @location(0) uv: vec2<f32>,
@@ -30,13 +33,13 @@ const wgsl_vs =
 \\      return output;
 \\  }
 ;
-const wgsl_fs =
+const wgsl_fs = wgsl_common ++
 \\  @group(0) @binding(1) var image: texture_2d<f32>;
 \\  @group(0) @binding(2) var image_sampler: sampler;
 \\  @stage(fragment) fn main(
 \\      @location(0) uv: vec2<f32>,
 \\  ) -> @location(0) vec4<f32> {
-\\      return textureSampleLevel(image, image_sampler, uv, 0.0);
+\\      return textureSampleLevel(image, image_sampler, uv, uniforms.mip_level);
 \\  }
 // zig fmt: on
 ;
@@ -48,6 +51,7 @@ const Vertex = struct {
 
 const Uniforms = struct {
     aspect_ratio: f32,
+    mip_level: f32,
 };
 
 const DemoState = struct {
@@ -70,7 +74,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     const bind_group_layout = gctx.createBindGroupLayout(
         gpu.BindGroupLayout.Descriptor{
             .entries = &.{
-                gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0),
+                gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
                 gpu.BindGroupLayout.Entry.texture(1, .{ .fragment = true }, .float, .dimension_2d, false),
                 gpu.BindGroupLayout.Entry.sampler(2, .{ .fragment = true }, .filtering),
             },
@@ -177,7 +181,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     );
 
     // Create a sampler.
-    const sampler = gctx.createSampler(gpu.Sampler.Descriptor{
+    const sampler = gctx.createSampler(.{
         .mag_filter = .linear,
         .min_filter = .linear,
     });
@@ -257,9 +261,11 @@ fn draw(demo: *DemoState) void {
             pass.setPipeline(pipeline);
 
             const mem = gctx.uniformsAllocate(Uniforms, 1);
-            mem.slice[0].aspect_ratio = @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height);
+            mem.slice[0] = .{
+                .aspect_ratio = @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+                .mip_level = 0.0,
+            };
             pass.setBindGroup(0, bind_group, &.{mem.offset});
-
             pass.drawIndexed(6, 1, 0, 0, 0);
         }
 
