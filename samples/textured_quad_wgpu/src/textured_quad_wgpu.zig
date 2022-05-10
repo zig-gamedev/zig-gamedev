@@ -31,10 +31,12 @@ const wgsl_vs =
 \\  }
 ;
 const wgsl_fs =
+\\  @group(0) @binding(1) var image: texture_2d<f32>;
+\\  @group(0) @binding(2) var image_sampler: sampler;
 \\  @stage(fragment) fn main(
 \\      @location(0) uv: vec2<f32>,
 \\  ) -> @location(0) vec4<f32> {
-\\      return vec4(uv, 0.0, 1.0);
+\\      return textureSampleLevel(image, image_sampler, uv, 0.0);
 \\  }
 // zig fmt: on
 ;
@@ -59,32 +61,31 @@ const DemoState = struct {
 
     texture: zgpu.TextureHandle,
     texture_view: zgpu.TextureViewHandle,
+    sampler: zgpu.SamplerHandle,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
-    var arena_state = std.heap.ArenaAllocator.init(allocator);
-    defer arena_state.deinit();
-    //const arena = arena_state.allocator();
-
-    const bgl = gctx.createBindGroupLayout(
+    const bind_group_layout = gctx.createBindGroupLayout(
         gpu.BindGroupLayout.Descriptor{
             .entries = &.{
                 gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0),
+                gpu.BindGroupLayout.Entry.texture(1, .{ .fragment = true }, .float, .dimension_2d, false),
+                gpu.BindGroupLayout.Entry.sampler(2, .{ .fragment = true }, .filtering),
             },
         },
     );
-    defer gctx.destroyResource(bgl);
-
-    const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
-        .bind_group_layouts = &.{
-            gctx.lookupResource(bgl).?,
-        },
-    });
-    defer pl.release();
+    defer gctx.destroyResource(bind_group_layout);
 
     const pipeline = pipeline: {
+        const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
+            .bind_group_layouts = &.{
+                gctx.lookupResource(bind_group_layout).?,
+            },
+        });
+        defer pl.release();
+
         const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
         defer vs_module.release();
 
@@ -128,10 +129,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         break :pipeline gctx.createRenderPipeline(pipeline_descriptor);
     };
 
-    const bind_group = gctx.createBindGroup(bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
-    });
-
     // Create a vertex buffer.
     const vertex_data = [_]Vertex{
         .{ .position = [2]f32{ -0.9, 0.9 }, .uv = [2]f32{ 0.0, 0.0 } },
@@ -153,12 +150,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     });
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data[0..]);
 
-    var image = try zgpu.stbi.Image.init(content_dir ++ "genart_0025_5.png", 3);
+    // Create a texture.
+    var image = try zgpu.stbi.Image.init(content_dir ++ "genart_0025_5.png", 4);
     defer image.deinit();
 
     const texture = gctx.createTexture(.{
-        .usage = .{ .texture_binding = true },
-        .dimension = .dimension_2d,
+        .usage = .{ .texture_binding = true, .copy_dst = true },
         .size = .{
             .width = image.width,
             .height = image.height,
@@ -166,11 +163,30 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         },
         .format = .rgba8_unorm,
         .mip_level_count = math.log2_int(u32, math.max(image.width, image.height)) + 1,
-        .sample_count = 1,
     });
     const texture_view = gctx.createTextureView(texture, .{});
 
-    // TODO: writeTexture()
+    gctx.queue.writeTexture(
+        &gpu.ImageCopyTexture{ .texture = gctx.lookupResource(texture).? },
+        image.data,
+        &gpu.Texture.DataLayout{
+            .bytes_per_row = image.width * image.channels_in_memory,
+            .rows_per_image = image.height,
+        },
+        &gpu.Extent3D{ .width = image.width, .height = image.height },
+    );
+
+    // Create a sampler.
+    const sampler = gctx.createSampler(gpu.Sampler.Descriptor{
+        .mag_filter = .linear,
+        .min_filter = .linear,
+    });
+
+    const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+        .{ .binding = 1, .texture_view_handle = texture_view },
+        .{ .binding = 2, .sampler_handle = sampler },
+    });
 
     return DemoState{
         .gctx = gctx,
@@ -180,6 +196,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         .index_buffer = index_buffer,
         .texture = texture,
         .texture_view = texture_view,
+        .sampler = sampler,
     };
 }
 
