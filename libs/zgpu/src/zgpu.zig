@@ -804,7 +804,6 @@ pub const GraphicsContext = struct {
             defer gctx.destroyResource(pipeline_layout);
 
             const cs_module = gctx.device.createShaderModule(&.{
-                .label = "zgpu_cs_generate_mipmaps",
                 .code = .{ .wgsl = wgsl.cs_generate_mipmaps },
             });
             defer cs_module.release();
@@ -839,7 +838,7 @@ pub const GraphicsContext = struct {
         const texture_view = gctx.createTextureView(texture, .{});
         defer gctx.destroyResource(texture_view);
 
-        const draw_bind_group = gctx.createBindGroup(gctx.mipgen.bind_group_layout, &[_]BindGroupEntryInfo{
+        const bind_group = gctx.createBindGroup(gctx.mipgen.bind_group_layout, &[_]BindGroupEntryInfo{
             .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 8 },
             .{ .binding = 1, .texture_view_handle = texture_view },
             .{ .binding = 2, .texture_view_handle = gctx.mipgen.scratch_texture_views[0] },
@@ -847,7 +846,7 @@ pub const GraphicsContext = struct {
             .{ .binding = 4, .texture_view_handle = gctx.mipgen.scratch_texture_views[2] },
             .{ .binding = 5, .texture_view_handle = gctx.mipgen.scratch_texture_views[3] },
         });
-        defer gctx.destroyResource(draw_bind_group);
+        defer gctx.destroyResource(bind_group);
     }
 };
 
@@ -903,12 +902,12 @@ pub const SamplerInfo = struct {
     max_anisotropy: u16 = 0,
 };
 
-const RenderPipelineInfo = struct {
+pub const RenderPipelineInfo = struct {
     gpuobj: ?gpu.RenderPipeline = null,
     pipeline_layout_handle: PipelineLayoutHandle = .{},
 };
 
-const ComputePipelineInfo = struct {
+pub const ComputePipelineInfo = struct {
     gpuobj: ?gpu.ComputePipeline = null,
     pipeline_layout_handle: PipelineLayoutHandle = .{},
 };
@@ -922,7 +921,7 @@ pub const BindGroupEntryInfo = struct {
     texture_view_handle: ?TextureViewHandle = null,
 };
 
-pub const max_num_bindings_per_group = 8;
+const max_num_bindings_per_group = 8;
 
 pub const BindGroupInfo = struct {
     gpuobj: ?gpu.BindGroup = null,
@@ -938,7 +937,7 @@ pub const BindGroupLayoutInfo = struct {
         [_]gpu.BindGroupLayout.Entry{.{ .binding = 0, .visibility = .{} }} ** max_num_bindings_per_group,
 };
 
-pub const max_num_bind_groups_per_pipeline = 4;
+const max_num_bind_groups_per_pipeline = 4;
 
 pub const PipelineLayoutInfo = struct {
     gpuobj: ?gpu.PipelineLayout = null,
