@@ -507,6 +507,53 @@ pub const GraphicsContext = struct {
         });
     }
 
+    const AsyncCreateOpCompute = struct {
+        gctx: *GraphicsContext,
+        result: *ComputePipelineHandle,
+        callback: gpu.ComputePipeline.CreateCallback,
+        allocator: std.mem.Allocator,
+
+        fn create(
+            op: *AsyncCreateOpCompute,
+            status: gpu.ComputePipeline.CreateStatus,
+            pipeline: gpu.ComputePipeline,
+            message: [:0]const u8,
+        ) void {
+            if (status == .success) {
+                op.result.* = op.gctx.compute_pipeline_pool.addResource(
+                    op.gctx.*,
+                    .{ .gpuobj = pipeline },
+                );
+            } else {
+                std.debug.print(
+                    "[zgpu] Failed to async create compute pipeline (code: {d})\n{s}\n",
+                    .{ status, message },
+                );
+            }
+            op.allocator.destroy(op);
+        }
+    };
+
+    pub fn createComputePipelineAsync(
+        gctx: *GraphicsContext,
+        allocator: std.mem.Allocator,
+        descriptor: gpu.ComputePipeline.Descriptor,
+        result: *ComputePipelineHandle,
+    ) void {
+        const op = allocator.create(AsyncCreateOpCompute) catch unreachable;
+        op.* = .{
+            .gctx = gctx,
+            .result = result,
+            .callback = gpu.ComputePipeline.CreateCallback.init(
+                *AsyncCreateOpCompute,
+                op,
+                AsyncCreateOpCompute.create,
+            ),
+            .allocator = allocator,
+        };
+        gctx.device.createComputePipelineAsync(&descriptor, &op.callback);
+    }
+
     pub fn createBindGroup(
         gctx: *GraphicsContext,
         layout: BindGroupLayoutHandle,
