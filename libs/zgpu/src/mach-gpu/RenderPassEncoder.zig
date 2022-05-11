@@ -184,7 +184,7 @@ pub const Descriptor = struct {
     color_attachments: []const RenderPassColorAttachment,
     depth_stencil_attachment: ?*const RenderPassDepthStencilAttachment = null,
     occlusion_query_set: ?QuerySet = null,
-    timestamp_writes: ?[]RenderPassTimestampWrite = null,
+    timestamp_writes: ?[]const RenderPassTimestampWrite = null,
 };
 
 test {

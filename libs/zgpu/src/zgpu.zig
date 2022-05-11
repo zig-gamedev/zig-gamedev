@@ -373,7 +373,7 @@ pub const GraphicsContext = struct {
 
     fn gpuWorkDone(gpu_frame_number: *u64, status: gpu.Queue.WorkDoneStatus) void {
         gpu_frame_number.* += 1;
-        if (status != .Success) {
+        if (status != .success) {
             std.debug.print("[zgpu] Failed to complete GPU work (code: {d})\n", .{@enumToInt(status)});
         }
     }
@@ -520,7 +520,7 @@ pub const GraphicsContext = struct {
         var desc = descriptor;
         desc.layout = gctx.lookupResource(pipeline_layout) orelse null;
         return gctx.compute_pipeline_pool.addResource(gctx.*, .{
-            .gpuobj = gctx.device.createComputePipeline(&descriptor),
+            .gpuobj = gctx.device.createComputePipeline(&desc),
             .pipeline_layout_handle = pipeline_layout,
         });
     }
@@ -781,7 +781,11 @@ pub const GraphicsContext = struct {
     //
     // Mipmaps
     //
-    pub fn generateMipmaps(gctx: *GraphicsContext, texture: TextureHandle) void {
+    pub fn generateMipmaps(
+        gctx: *GraphicsContext,
+        encoder: gpu.CommandEncoder,
+        texture: TextureHandle,
+    ) void {
         const texture_info = gctx.lookupResourceInfo(texture) orelse return;
         if (texture_info.dimension != .dimension_2d) {
             // TODO: Print message.
@@ -792,10 +796,10 @@ pub const GraphicsContext = struct {
             gctx.mipgen.bind_group_layout = gctx.createBindGroupLayout(&.{
                 bglBuffer(0, .{ .compute = true }, .uniform, true, 0),
                 bglTexture(1, .{ .compute = true }, .float, .dimension_2d, false),
-                bglStorageTexture(2, .{ .compute = true }, .write_only, .rgba32_float, .dimension_2d),
-                bglStorageTexture(3, .{ .compute = true }, .write_only, .rgba32_float, .dimension_2d),
-                bglStorageTexture(4, .{ .compute = true }, .write_only, .rgba32_float, .dimension_2d),
-                bglStorageTexture(5, .{ .compute = true }, .write_only, .rgba32_float, .dimension_2d),
+                bglStorageTexture(2, .{ .compute = true }, .write_only, .rgba8_unorm, .dimension_2d),
+                bglStorageTexture(3, .{ .compute = true }, .write_only, .rgba8_unorm, .dimension_2d),
+                bglStorageTexture(4, .{ .compute = true }, .write_only, .rgba8_unorm, .dimension_2d),
+                bglStorageTexture(5, .{ .compute = true }, .write_only, .rgba8_unorm, .dimension_2d),
             });
 
             const pipeline_layout = gctx.createPipelineLayout(&.{
@@ -820,7 +824,7 @@ pub const GraphicsContext = struct {
                 .usage = .{ .copy_src = true, .storage_binding = true },
                 .dimension = .dimension_2d,
                 .size = .{ .width = 1024, .height = 1024, .depth_or_array_layers = 1 },
-                .format = .rgba32_float,
+                .format = .rgba8_unorm,
                 .mip_level_count = 4,
                 .sample_count = 1,
             });
@@ -847,6 +851,46 @@ pub const GraphicsContext = struct {
             .{ .binding = 5, .texture_view_handle = gctx.mipgen.scratch_texture_views[3] },
         });
         defer gctx.destroyResource(bind_group);
+
+        const MipgenUniforms = extern struct {
+            src_mip_level: i32,
+            num_mip_levels: u32,
+        };
+        const mem = gctx.uniformsAllocate(MipgenUniforms, 1);
+        mem.slice[0] = .{
+            .src_mip_level = 0,
+            .num_mip_levels = 4,
+        };
+
+        const pass = encoder.beginComputePass(null);
+
+        pass.setPipeline(gctx.lookupResource(gctx.mipgen.pipeline).?);
+        pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
+        pass.dispatch(1024 / 8, 1024 / 8, 1);
+
+        pass.end();
+        pass.release();
+
+        encoder.copyTextureToTexture(
+            &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = 0 },
+            &.{ .texture = gctx.lookupResource(texture).?, .mip_level = 1 },
+            &.{ .width = 512, .height = 512 },
+        );
+        encoder.copyTextureToTexture(
+            &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = 1 },
+            &.{ .texture = gctx.lookupResource(texture).?, .mip_level = 2 },
+            &.{ .width = 256, .height = 256 },
+        );
+        encoder.copyTextureToTexture(
+            &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = 2 },
+            &.{ .texture = gctx.lookupResource(texture).?, .mip_level = 3 },
+            &.{ .width = 128, .height = 128 },
+        );
+        encoder.copyTextureToTexture(
+            &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = 3 },
+            &.{ .texture = gctx.lookupResource(texture).?, .mip_level = 4 },
+            &.{ .width = 64, .height = 64 },
+        );
     }
 };
 

@@ -66,6 +66,8 @@ const DemoState = struct {
     texture: zgpu.TextureHandle,
     texture_view: zgpu.TextureViewHandle,
     sampler: zgpu.SamplerHandle,
+
+    mip_level: i32 = 0,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
@@ -127,8 +129,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     // Create a sampler.
     const sampler = gctx.createSampler(.{
-        .mag_filter = .linear,
-        .min_filter = .linear,
+        //.mag_filter = .linear,
+        //.min_filter = .linear,
     });
 
     const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
@@ -147,6 +149,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .texture_view = texture_view,
         .sampler = sampler,
     };
+
+    const commands = commands: {
+        const encoder = gctx.device.createCommandEncoder(null);
+        defer encoder.release();
+
+        gctx.generateMipmaps(encoder, demo.texture);
+
+        break :commands encoder.finish(null);
+    };
+    defer commands.release();
+    gctx.queue.submit(&.{commands});
 
     // (Async) Create a render pipeline.
     {
@@ -214,6 +227,7 @@ fn update(demo: *DemoState) void {
             demo.gctx.stats.average_cpu_time,
             demo.gctx.stats.fps,
         );
+        _ = c.igSliderInt("Mipmap Level", &demo.mip_level, 0, 4, null, c.ImGuiSliderFlags_None);
     }
     c.igEnd();
 }
@@ -259,7 +273,7 @@ fn draw(demo: *DemoState) void {
             const mem = gctx.uniformsAllocate(Uniforms, 1);
             mem.slice[0] = .{
                 .aspect_ratio = @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
-                .mip_level = 0.0,
+                .mip_level = @intToFloat(f32, demo.mip_level),
             };
             pass.setBindGroup(0, bind_group, &.{mem.offset});
             pass.drawIndexed(6, 1, 0, 0, 0);
