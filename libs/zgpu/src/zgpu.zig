@@ -36,6 +36,7 @@ pub const GraphicsContext = struct {
     compute_pipeline_pool: ComputePipelinePool,
     bind_group_pool: BindGroupPool,
     bind_group_layout_pool: BindGroupLayoutPool,
+    pipeline_layout_pool: PipelineLayoutPool,
 
     uniforms: struct {
         offset: u32 = 0,
@@ -66,6 +67,7 @@ pub const GraphicsContext = struct {
     const compute_pipeline_pool_size = 128;
     const bind_group_pool_size = 32;
     const bind_group_layout_pool_size = 32;
+    const pipeline_layout_pool_size = 32;
 
     pub fn init(allocator: std.mem.Allocator, window: glfw.Window) !*GraphicsContext {
         c.dawnProcSetProcs(c.machDawnNativeGetProcs());
@@ -141,6 +143,7 @@ pub const GraphicsContext = struct {
             .compute_pipeline_pool = ComputePipelinePool.init(allocator, compute_pipeline_pool_size),
             .bind_group_pool = BindGroupPool.init(allocator, bind_group_pool_size),
             .bind_group_layout_pool = BindGroupLayoutPool.init(allocator, bind_group_layout_pool_size),
+            .pipeline_layout_pool = PipelineLayoutPool.init(allocator, pipeline_layout_pool_size),
         };
 
         gctx.queue.on_submitted_work_done = gpu.Queue.WorkDoneCallback.init(
@@ -173,6 +176,7 @@ pub const GraphicsContext = struct {
             break;
         }
 
+        gctx.pipeline_layout_pool.deinit(allocator);
         gctx.bind_group_pool.deinit(allocator);
         gctx.bind_group_layout_pool.deinit(allocator);
         gctx.buffer_pool.deinit(allocator);
@@ -444,16 +448,21 @@ pub const GraphicsContext = struct {
 
     pub fn createRenderPipeline(
         gctx: *GraphicsContext,
+        pipeline_layout: PipelineLayoutHandle,
         descriptor: gpu.RenderPipeline.Descriptor,
     ) RenderPipelineHandle {
+        var desc = descriptor;
+        desc.layout = gctx.lookupResource(pipeline_layout) orelse null;
         return gctx.render_pipeline_pool.addResource(gctx.*, .{
-            .gpuobj = gctx.device.createRenderPipeline(&descriptor),
+            .gpuobj = gctx.device.createRenderPipeline(&desc),
+            .pipeline_layout_handle = pipeline_layout,
         });
     }
 
     const AsyncCreateOpRender = struct {
         gctx: *GraphicsContext,
         result: *RenderPipelineHandle,
+        pipeline_layout: PipelineLayoutHandle,
         callback: gpu.RenderPipeline.CreateCallback,
         allocator: std.mem.Allocator,
 
@@ -466,7 +475,7 @@ pub const GraphicsContext = struct {
             if (status == .success) {
                 op.result.* = op.gctx.render_pipeline_pool.addResource(
                     op.gctx.*,
-                    .{ .gpuobj = pipeline },
+                    .{ .gpuobj = pipeline, .pipeline_layout_handle = op.pipeline_layout },
                 );
             } else {
                 std.debug.print(
@@ -481,13 +490,18 @@ pub const GraphicsContext = struct {
     pub fn createRenderPipelineAsync(
         gctx: *GraphicsContext,
         allocator: std.mem.Allocator,
+        pipeline_layout: PipelineLayoutHandle,
         descriptor: gpu.RenderPipeline.Descriptor,
         result: *RenderPipelineHandle,
     ) void {
+        var desc = descriptor;
+        desc.layout = gctx.lookupResource(pipeline_layout) orelse null;
+
         const op = allocator.create(AsyncCreateOpRender) catch unreachable;
         op.* = .{
             .gctx = gctx,
             .result = result,
+            .pipeline_layout = pipeline_layout,
             .callback = gpu.RenderPipeline.CreateCallback.init(
                 *AsyncCreateOpRender,
                 op,
@@ -495,21 +509,26 @@ pub const GraphicsContext = struct {
             ),
             .allocator = allocator,
         };
-        gctx.device.createRenderPipelineAsync(&descriptor, &op.callback);
+        gctx.device.createRenderPipelineAsync(&desc, &op.callback);
     }
 
     pub fn createComputePipeline(
         gctx: *GraphicsContext,
+        pipeline_layout: PipelineLayoutHandle,
         descriptor: gpu.ComputePipeline.Descriptor,
     ) ComputePipelineHandle {
+        var desc = descriptor;
+        desc.layout = gctx.lookupResource(pipeline_layout) orelse null;
         return gctx.compute_pipeline_pool.addResource(gctx.*, .{
             .gpuobj = gctx.device.createComputePipeline(&descriptor),
+            .pipeline_layout_handle = pipeline_layout,
         });
     }
 
     const AsyncCreateOpCompute = struct {
         gctx: *GraphicsContext,
         result: *ComputePipelineHandle,
+        pipeline_layout: PipelineLayoutHandle,
         callback: gpu.ComputePipeline.CreateCallback,
         allocator: std.mem.Allocator,
 
@@ -522,7 +541,7 @@ pub const GraphicsContext = struct {
             if (status == .success) {
                 op.result.* = op.gctx.compute_pipeline_pool.addResource(
                     op.gctx.*,
-                    .{ .gpuobj = pipeline },
+                    .{ .gpuobj = pipeline, .pipeline_layout_handle = op.pipeline_layout },
                 );
             } else {
                 std.debug.print(
@@ -537,13 +556,18 @@ pub const GraphicsContext = struct {
     pub fn createComputePipelineAsync(
         gctx: *GraphicsContext,
         allocator: std.mem.Allocator,
+        pipeline_layout: PipelineLayoutHandle,
         descriptor: gpu.ComputePipeline.Descriptor,
         result: *ComputePipelineHandle,
     ) void {
+        var desc = descriptor;
+        desc.layout = gctx.lookupResource(pipeline_layout) orelse null;
+
         const op = allocator.create(AsyncCreateOpCompute) catch unreachable;
         op.* = .{
             .gctx = gctx,
             .result = result,
+            .pipeline_layout = pipeline_layout,
             .callback = gpu.ComputePipeline.CreateCallback.init(
                 *AsyncCreateOpCompute,
                 op,
@@ -551,7 +575,7 @@ pub const GraphicsContext = struct {
             ),
             .allocator = allocator,
         };
-        gctx.device.createComputePipelineAsync(&descriptor, &op.callback);
+        gctx.device.createComputePipelineAsync(&desc, &op.callback);
     }
 
     pub fn createBindGroup(
@@ -561,7 +585,7 @@ pub const GraphicsContext = struct {
     ) BindGroupHandle {
         assert(entries.len > 0 and entries.len < max_num_bindings_per_group);
 
-        var bind_group_info = BindGroupInfo{ .num_active_entries = @intCast(u32, entries.len) };
+        var bind_group_info = BindGroupInfo{ .num_entries = @intCast(u32, entries.len) };
         var gpu_bind_group_entries: [max_num_bindings_per_group]gpu.BindGroup.Entry = undefined;
 
         for (entries) |entry, i| {
@@ -605,15 +629,15 @@ pub const GraphicsContext = struct {
 
     pub fn createBindGroupLayout(
         gctx: *GraphicsContext,
-        descriptor: gpu.BindGroupLayout.Descriptor,
+        entries: []const gpu.BindGroupLayout.Entry,
     ) BindGroupLayoutHandle {
-        assert(descriptor.entries.len > 0 and descriptor.entries.len < max_num_bindings_per_group);
+        assert(entries.len > 0 and entries.len < max_num_bindings_per_group);
 
         var bind_group_layout_info = BindGroupLayoutInfo{
-            .gpuobj = gctx.device.createBindGroupLayout(&descriptor),
-            .num_active_entries = @intCast(u32, descriptor.entries.len),
+            .gpuobj = gctx.device.createBindGroupLayout(&.{ .entries = entries }),
+            .num_entries = @intCast(u32, entries.len),
         };
-        for (descriptor.entries) |entry, i| {
+        for (entries) |entry, i| {
             bind_group_layout_info.entries[i] = entry;
             bind_group_layout_info.entries[i].reserved = null;
             bind_group_layout_info.entries[i].buffer.reserved = null;
@@ -621,7 +645,6 @@ pub const GraphicsContext = struct {
             bind_group_layout_info.entries[i].texture.reserved = null;
             bind_group_layout_info.entries[i].storage_texture.reserved = null;
         }
-
         return gctx.bind_group_layout_pool.addResource(gctx.*, bind_group_layout_info);
     }
 
@@ -632,6 +655,27 @@ pub const GraphicsContext = struct {
     ) BindGroupLayoutHandle {
         const bgl = gctx.lookupResource(pipeline).?.getBindGroupLayout(group_index);
         return gctx.bind_group_layout_pool.addResource(gctx.*, BindGroupLayoutInfo{ .gpuobj = bgl });
+    }
+
+    pub fn createPipelineLayout(
+        gctx: *GraphicsContext,
+        bind_group_layouts: []const BindGroupLayoutHandle,
+    ) PipelineLayoutHandle {
+        assert(bind_group_layouts.len > 0);
+
+        var info: PipelineLayoutInfo = .{ .num_bind_group_layouts = @intCast(u32, bind_group_layouts.len) };
+        var gpu_bind_group_layouts: [max_num_bind_groups_per_pipeline]gpu.BindGroupLayout = undefined;
+
+        for (bind_group_layouts) |bgl, i| {
+            info.bind_group_layouts[i] = bgl;
+            gpu_bind_group_layouts[i] = gctx.lookupResource(bgl).?;
+        }
+
+        info.gpuobj = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
+            .bind_group_layouts = gpu_bind_group_layouts[0..info.num_bind_group_layouts],
+        });
+
+        return gctx.pipeline_layout_pool.addResource(gctx.*, info);
     }
 
     pub fn lookupResource(gctx: GraphicsContext, handle: anytype) ?handleToGpuResourceType(@TypeOf(handle)) {
@@ -646,6 +690,7 @@ pub const GraphicsContext = struct {
                 ComputePipelineHandle => gctx.compute_pipeline_pool.resources[handle.index].gpuobj.?,
                 BindGroupHandle => gctx.bind_group_pool.resources[handle.index].gpuobj.?,
                 BindGroupLayoutHandle => gctx.bind_group_layout_pool.resources[handle.index].gpuobj.?,
+                PipelineLayoutHandle => gctx.pipeline_layout_pool.resources[handle.index].gpuobj.?,
                 else => @compileError(
                     "[zgpu] GraphicsContext.lookupResource() not implemented for " ++ @typeName(T),
                 ),
@@ -666,6 +711,7 @@ pub const GraphicsContext = struct {
                 ComputePipelineHandle => gctx.compute_pipeline_pool.resources[handle.index],
                 BindGroupHandle => gctx.bind_group_pool.resources[handle.index],
                 BindGroupLayoutHandle => gctx.bind_group_layout_pool.resources[handle.index],
+                PipelineLayoutHandle => gctx.pipeline_layout_pool.resources[handle.index],
                 else => @compileError(
                     "[zgpu] GraphicsContext.lookupResourceInfo() not implemented for " ++ @typeName(T),
                 ),
@@ -685,6 +731,7 @@ pub const GraphicsContext = struct {
             ComputePipelineHandle => gctx.compute_pipeline_pool.destroyResource(handle),
             BindGroupHandle => gctx.bind_group_pool.destroyResource(handle),
             BindGroupLayoutHandle => gctx.bind_group_layout_pool.destroyResource(handle),
+            PipelineLayoutHandle => gctx.pipeline_layout_pool.destroyResource(handle),
             else => @compileError("[zgpu] GraphicsContext.destroyResource() not implemented for " ++ @typeName(T)),
         }
     }
@@ -706,7 +753,7 @@ pub const GraphicsContext = struct {
             ComputePipelineHandle => return gctx.compute_pipeline_pool.isHandleValid(handle),
             BindGroupHandle => {
                 if (gctx.bind_group_pool.isHandleValid(handle)) {
-                    const num_entries = gctx.bind_group_pool.resources[handle.index].num_active_entries;
+                    const num_entries = gctx.bind_group_pool.resources[handle.index].num_entries;
                     const entries = &gctx.bind_group_pool.resources[handle.index].entries;
                     var i: u32 = 0;
                     while (i < num_entries) : (i += 1) {
@@ -726,6 +773,7 @@ pub const GraphicsContext = struct {
                 return false;
             },
             BindGroupLayoutHandle => return gctx.bind_group_layout_pool.isHandleValid(handle),
+            PipelineLayoutHandle => return gctx.pipeline_layout_pool.isHandleValid(handle),
             else => @compileError("[zgpu] GraphicsContext.isResourceValid() not implemented for " ++ @typeName(T)),
         }
     }
@@ -741,20 +789,33 @@ pub const GraphicsContext = struct {
         }
 
         if (!gctx.isResourceValid(gctx.mipgen.pipeline)) {
+            gctx.mipgen.bind_group_layout = gctx.createBindGroupLayout(&.{
+                bglBuffer(0, .{ .compute = true }, .uniform, true, 0),
+                bglTexture(1, .{ .compute = true }, .float, .dimension_2d, false),
+                bglStorageTexture(2, .{ .compute = true }, .write_only, .rgba32_float, .dimension_2d),
+                bglStorageTexture(3, .{ .compute = true }, .write_only, .rgba32_float, .dimension_2d),
+                bglStorageTexture(4, .{ .compute = true }, .write_only, .rgba32_float, .dimension_2d),
+                bglStorageTexture(5, .{ .compute = true }, .write_only, .rgba32_float, .dimension_2d),
+            });
+
+            const pipeline_layout = gctx.createPipelineLayout(&.{
+                gctx.mipgen.bind_group_layout,
+            });
+            defer gctx.destroyResource(pipeline_layout);
+
             const cs_module = gctx.device.createShaderModule(&.{
                 .label = "zgpu_cs_generate_mipmaps",
                 .code = .{ .wgsl = wgsl.cs_generate_mipmaps },
             });
             defer cs_module.release();
 
-            gctx.mipgen.pipeline = gctx.createComputePipeline(.{
+            gctx.mipgen.pipeline = gctx.createComputePipeline(pipeline_layout, .{
                 .compute = .{
                     .label = "zgpu_cs_generate_mipmaps",
                     .module = cs_module,
                     .entry_point = "main",
                 },
             });
-            gctx.mipgen.bind_group_layout = gctx.createBindGroupLayoutAuto(gctx.mipgen.pipeline, 0);
 
             gctx.mipgen.scratch_texture = gctx.createTexture(.{
                 .usage = .{ .copy_src = true, .storage_binding = true },
@@ -767,8 +828,6 @@ pub const GraphicsContext = struct {
 
             for (gctx.mipgen.scratch_texture_views) |*view, i| {
                 view.* = gctx.createTextureView(gctx.mipgen.scratch_texture, .{
-                    .format = .rgba32_float,
-                    .dimension = .dimension_2d,
                     .base_mip_level = @intCast(u32, i),
                     .mip_level_count = 1,
                     .base_array_layer = 0,
@@ -777,24 +836,11 @@ pub const GraphicsContext = struct {
             }
         }
 
-        const uniform_buffer = gctx.createBuffer(.{
-            .usage = .{ .copy_dst = true, .uniform = true },
-            .size = 8,
-        });
-        defer gctx.destroyResource(uniform_buffer);
-
-        const texture_view = gctx.createTextureView(texture, .{
-            .format = texture_info.format,
-            .dimension = .dimension_2d,
-            .base_mip_level = 0,
-            .mip_level_count = texture_info.mip_level_count,
-            .base_array_layer = 0,
-            .array_layer_count = texture_info.size.depth_or_array_layers,
-        });
+        const texture_view = gctx.createTextureView(texture, .{});
         defer gctx.destroyResource(texture_view);
 
         const draw_bind_group = gctx.createBindGroup(gctx.mipgen.bind_group_layout, &[_]BindGroupEntryInfo{
-            .{ .binding = 0, .buffer_handle = uniform_buffer, .offset = 0, .size = 8 },
+            .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 8 },
             .{ .binding = 1, .texture_view_handle = texture_view },
             .{ .binding = 2, .texture_view_handle = gctx.mipgen.scratch_texture_views[0] },
             .{ .binding = 3, .texture_view_handle = gctx.mipgen.scratch_texture_views[1] },
@@ -813,6 +859,7 @@ pub const RenderPipelineHandle = struct { index: u16 align(4) = 0, generation: u
 pub const ComputePipelineHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
 pub const BindGroupHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
 pub const BindGroupLayoutHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
+pub const PipelineLayoutHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
 
 pub const BufferInfo = struct {
     gpuobj: ?gpu.Buffer = null,
@@ -858,10 +905,12 @@ pub const SamplerInfo = struct {
 
 const RenderPipelineInfo = struct {
     gpuobj: ?gpu.RenderPipeline = null,
+    pipeline_layout_handle: PipelineLayoutHandle = .{},
 };
 
 const ComputePipelineInfo = struct {
     gpuobj: ?gpu.ComputePipeline = null,
+    pipeline_layout_handle: PipelineLayoutHandle = .{},
 };
 
 pub const BindGroupEntryInfo = struct {
@@ -877,16 +926,25 @@ pub const max_num_bindings_per_group = 8;
 
 pub const BindGroupInfo = struct {
     gpuobj: ?gpu.BindGroup = null,
-    num_active_entries: u32 = 0,
+    num_entries: u32 = 0,
     entries: [max_num_bindings_per_group]BindGroupEntryInfo =
         [_]BindGroupEntryInfo{.{}} ** max_num_bindings_per_group,
 };
 
 pub const BindGroupLayoutInfo = struct {
     gpuobj: ?gpu.BindGroupLayout = null,
-    num_active_entries: u32 = 0,
+    num_entries: u32 = 0,
     entries: [max_num_bindings_per_group]gpu.BindGroupLayout.Entry =
         [_]gpu.BindGroupLayout.Entry{.{ .binding = 0, .visibility = .{} }} ** max_num_bindings_per_group,
+};
+
+pub const max_num_bind_groups_per_pipeline = 4;
+
+pub const PipelineLayoutInfo = struct {
+    gpuobj: ?gpu.PipelineLayout = null,
+    num_bind_group_layouts: u32 = 0,
+    bind_group_layouts: [max_num_bind_groups_per_pipeline]BindGroupLayoutHandle =
+        [_]BindGroupLayoutHandle{.{}} ** max_num_bind_groups_per_pipeline,
 };
 
 const BufferPool = ResourcePool(BufferInfo, BufferHandle);
@@ -897,6 +955,7 @@ const RenderPipelinePool = ResourcePool(RenderPipelineInfo, RenderPipelineHandle
 const ComputePipelinePool = ResourcePool(ComputePipelineInfo, ComputePipelineHandle);
 const BindGroupPool = ResourcePool(BindGroupInfo, BindGroupHandle);
 const BindGroupLayoutPool = ResourcePool(BindGroupLayoutInfo, BindGroupLayoutHandle);
+const PipelineLayoutPool = ResourcePool(PipelineLayoutInfo, PipelineLayoutHandle);
 
 fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type {
     return struct {
@@ -1303,6 +1362,7 @@ fn handleToGpuResourceType(comptime T: type) type {
         ComputePipelineHandle => gpu.ComputePipeline,
         BindGroupHandle => gpu.BindGroup,
         BindGroupLayoutHandle => gpu.BindGroupLayout,
+        PipelineLayoutHandle => gpu.PipelineLayout,
         else => @compileError("[zgpu] handleToGpuResourceType() not implemented for " ++ @typeName(T)),
     };
 }
@@ -1317,6 +1377,12 @@ fn handleToResourceInfoType(comptime T: type) type {
         ComputePipelineHandle => ComputePipelineInfo,
         BindGroupHandle => BindGroupInfo,
         BindGroupLayoutHandle => BindGroupLayoutInfo,
+        PipelineLayoutHandle => PipelineLayoutInfo,
         else => @compileError("[zgpu] handleToResourceInfoType() not implemented for " ++ @typeName(T)),
     };
 }
+
+pub const bglBuffer = gpu.BindGroupLayout.Entry.buffer;
+pub const bglTexture = gpu.BindGroupLayout.Entry.texture;
+pub const bglSampler = gpu.BindGroupLayout.Entry.sampler;
+pub const bglStorageTexture = gpu.BindGroupLayout.Entry.storageTexture;

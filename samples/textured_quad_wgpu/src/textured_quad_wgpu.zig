@@ -71,15 +71,11 @@ const DemoState = struct {
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
-    const bind_group_layout = gctx.createBindGroupLayout(
-        gpu.BindGroupLayout.Descriptor{
-            .entries = &.{
-                gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-                gpu.BindGroupLayout.Entry.texture(1, .{ .fragment = true }, .float, .dimension_2d, false),
-                gpu.BindGroupLayout.Entry.sampler(2, .{ .fragment = true }, .filtering),
-            },
-        },
-    );
+    const bind_group_layout = gctx.createBindGroupLayout(&.{
+        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
+        zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
+        zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
+    });
     defer gctx.destroyResource(bind_group_layout);
 
     // Create a vertex buffer.
@@ -154,12 +150,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     // (Async) Create a render pipeline.
     {
-        const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
-            .bind_group_layouts = &.{
-                gctx.lookupResource(bind_group_layout).?,
-            },
+        const pipeline_layout = gctx.createPipelineLayout(&.{
+            bind_group_layout,
         });
-        defer pl.release();
+        defer gctx.destroyResource(pipeline_layout);
 
         const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
         defer vs_module.release();
@@ -184,7 +178,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
         // Create a render pipeline.
         const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
-            .layout = pl,
             .vertex = gpu.VertexState{
                 .module = vs_module,
                 .entry_point = "main",
@@ -201,7 +194,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
                 .targets = &.{color_target},
             },
         };
-        gctx.createRenderPipelineAsync(allocator, pipeline_descriptor, &demo.pipeline);
+        gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline);
     }
 
     return demo;

@@ -57,19 +57,13 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
     // Create a bind group layout needed for our render pipeline.
-    const bgl = gctx.createBindGroupLayout(
-        gpu.BindGroupLayout.Descriptor{
-            .entries = &.{
-                gpu.BindGroupLayout.Entry.buffer(0, .{ .vertex = true }, .uniform, true, 0),
-            },
-        },
-    );
-    defer gctx.destroyResource(bgl);
-
-    const pl = gctx.device.createPipelineLayout(&gpu.PipelineLayout.Descriptor{
-        .bind_group_layouts = &.{gctx.lookupResource(bgl).?},
+    const bind_group_layout = gctx.createBindGroupLayout(&.{
+        zgpu.bglBuffer(0, .{ .vertex = true }, .uniform, true, 0),
     });
-    defer pl.release();
+    defer gctx.destroyResource(bind_group_layout);
+
+    const pipeline_layout = gctx.createPipelineLayout(&.{bind_group_layout});
+    defer gctx.destroyResource(bind_group_layout);
 
     const pipeline = pipline: {
         const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
@@ -95,7 +89,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
         };
 
         const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
-            .layout = pl,
             .vertex = gpu.VertexState{
                 .module = vs_module,
                 .entry_point = "main",
@@ -117,10 +110,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
                 .targets = &.{color_target},
             },
         };
-        break :pipline gctx.createRenderPipeline(pipeline_descriptor);
+        break :pipline gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
     };
 
-    const bind_group = gctx.createBindGroup(bgl, &[_]zgpu.BindGroupEntryInfo{
+    const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
     });
 
