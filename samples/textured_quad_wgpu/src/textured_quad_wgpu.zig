@@ -152,16 +152,18 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     };
 
     // Generate mipmaps on the GPU.
-    const commands = commands: {
-        const encoder = gctx.device.createCommandEncoder(null);
-        defer encoder.release();
+    {
+        const commands = commands: {
+            const encoder = gctx.device.createCommandEncoder(null);
+            defer encoder.release();
 
-        gctx.generateMipmaps(arena, encoder, demo.texture);
+            gctx.generateMipmaps(arena, encoder, demo.texture);
 
-        break :commands encoder.finish(null);
-    };
-    gctx.queue.submit(&.{commands});
-    commands.release();
+            break :commands encoder.finish(null);
+        };
+        defer commands.release();
+        gctx.submit(&.{commands});
+    }
 
     // (Async) Create a render pipeline.
     {
@@ -229,7 +231,14 @@ fn update(demo: *DemoState) void {
             demo.gctx.stats.average_cpu_time,
             demo.gctx.stats.fps,
         );
-        _ = c.igSliderInt("Mipmap Level", &demo.mip_level, 0, 4, null, c.ImGuiSliderFlags_None);
+        _ = c.igSliderInt(
+            "Mipmap Level",
+            &demo.mip_level,
+            0,
+            @intCast(i32, demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1),
+            null,
+            c.ImGuiSliderFlags_None,
+        );
     }
     c.igEnd();
 }
@@ -304,7 +313,8 @@ fn draw(demo: *DemoState) void {
     };
     defer commands.release();
 
-    _ = gctx.submitAndPresent(&.{commands});
+    gctx.submit(&.{commands});
+    _ = gctx.present();
 }
 
 pub fn main() !void {

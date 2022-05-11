@@ -306,10 +306,7 @@ pub const GraphicsContext = struct {
     //
     // Submit
     //
-    pub fn submitAndPresent(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) enum {
-        nothing_special_happened,
-        swap_chain_resized,
-    } {
+    pub fn submit(gctx: *GraphicsContext, commands: []const gpu.CommandBuffer) void {
         const stage_commands = stage_commands: {
             const stage_encoder = gctx.device.createCommandEncoder(null);
             defer stage_encoder.release();
@@ -342,7 +339,19 @@ pub const GraphicsContext = struct {
 
         gctx.stats.tick();
         gctx.uniformsNextStagingBuffer();
+    }
 
+    fn gpuWorkDone(gpu_frame_number: *u64, status: gpu.Queue.WorkDoneStatus) void {
+        gpu_frame_number.* += 1;
+        if (status != .success) {
+            std.debug.print("[zgpu] Failed to complete GPU work (code: {d})\n", .{@enumToInt(status)});
+        }
+    }
+
+    pub fn present(gctx: *GraphicsContext) enum {
+        normal_execution,
+        swap_chain_resized,
+    } {
         gctx.swapchain.present();
 
         const fb_size = gctx.window.getFramebufferSize() catch unreachable;
@@ -363,14 +372,8 @@ pub const GraphicsContext = struct {
             );
             return .swap_chain_resized;
         }
-        return .nothing_special_happened;
-    }
 
-    fn gpuWorkDone(gpu_frame_number: *u64, status: gpu.Queue.WorkDoneStatus) void {
-        gpu_frame_number.* += 1;
-        if (status != .success) {
-            std.debug.print("[zgpu] Failed to complete GPU work (code: {d})\n", .{@enumToInt(status)});
-        }
+        return .normal_execution;
     }
 
     //
@@ -783,6 +786,9 @@ pub const GraphicsContext = struct {
         bind_group_layout: BindGroupLayoutHandle = .{},
     };
 
+    // TODO: Add support for different texture formats
+    // TODO: Add support for array textures
+    // TODO: Test non-square and non-power-of-two textures
     pub fn generateMipmaps(
         gctx: *GraphicsContext,
         arena: std.mem.Allocator,
@@ -790,7 +796,11 @@ pub const GraphicsContext = struct {
         texture: TextureHandle,
     ) void {
         const texture_info = gctx.lookupResourceInfo(texture) orelse return;
-        if (texture_info.dimension != .dimension_2d) {
+        if (texture_info.dimension != .dimension_2d or
+            texture_info.mip_level_count == 1 or
+            texture_info.size.width > 2048 or texture_info.size.height > 2048 or
+            texture_info.size.width != texture_info.size.height)
+        {
             // TODO: Print message.
             return;
         }
@@ -864,41 +874,59 @@ pub const GraphicsContext = struct {
             src_mip_level: i32,
             num_mip_levels: u32,
         };
-        const mem = gctx.uniformsAllocate(MipgenUniforms, 1);
-        mem.slice[0] = .{
-            .src_mip_level = 0,
-            .num_mip_levels = 4,
-        };
 
-        const pass = encoder.beginComputePass(null);
+        var total_num_mips: u32 = texture_info.mip_level_count - 1;
+        var current_src_mip_level: u32 = 0;
 
-        pass.setPipeline(gctx.lookupResource(gctx.mipgen.pipeline).?);
-        pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
-        pass.dispatch(1024 / 8, 1024 / 8, 1);
+        while (true) {
+            const dispatch_num_mips = std.math.min(4, total_num_mips);
 
-        pass.end();
-        pass.release();
+            const mem = gctx.uniformsAllocate(MipgenUniforms, 1);
+            mem.slice[0] = .{
+                .src_mip_level = @intCast(i32, current_src_mip_level),
+                .num_mip_levels = dispatch_num_mips,
+            };
 
-        encoder.copyTextureToTexture(
-            &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = 0 },
-            &.{ .texture = gctx.lookupResource(texture).?, .mip_level = 1 },
-            &.{ .width = 512, .height = 512 },
-        );
-        encoder.copyTextureToTexture(
-            &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = 1 },
-            &.{ .texture = gctx.lookupResource(texture).?, .mip_level = 2 },
-            &.{ .width = 256, .height = 256 },
-        );
-        encoder.copyTextureToTexture(
-            &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = 2 },
-            &.{ .texture = gctx.lookupResource(texture).?, .mip_level = 3 },
-            &.{ .width = 128, .height = 128 },
-        );
-        encoder.copyTextureToTexture(
-            &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = 3 },
-            &.{ .texture = gctx.lookupResource(texture).?, .mip_level = 4 },
-            &.{ .width = 64, .height = 64 },
-        );
+            const pass = encoder.beginComputePass(null);
+
+            pass.setPipeline(gctx.lookupResource(gctx.mipgen.pipeline).?);
+            pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
+            const num_groups_x = std.math.max(
+                texture_info.size.width >> @intCast(u5, 3 + current_src_mip_level),
+                1,
+            );
+            const num_groups_y = std.math.max(
+                texture_info.size.height >> @intCast(u5, 3 + current_src_mip_level),
+                1,
+            );
+            // TODO: Align up
+            pass.dispatch(num_groups_x, num_groups_y, 1);
+
+            pass.end();
+            pass.release();
+
+            var mip_index: u32 = 0;
+            while (mip_index < dispatch_num_mips) : (mip_index += 1) {
+                encoder.copyTextureToTexture(
+                    &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = mip_index },
+                    &.{
+                        .texture = gctx.lookupResource(texture).?,
+                        .mip_level = mip_index + current_src_mip_level + 1,
+                    },
+                    &.{
+                        .width = texture_info.size.width >> @intCast(u5, mip_index + current_src_mip_level + 1),
+                        .height = texture_info.size.height >> @intCast(u5, mip_index + current_src_mip_level + 1),
+                    },
+                );
+            }
+
+            assert(total_num_mips >= dispatch_num_mips);
+            total_num_mips -= dispatch_num_mips;
+            if (total_num_mips == 0) {
+                break;
+            }
+            current_src_mip_level += dispatch_num_mips;
+        }
     }
 };
 
