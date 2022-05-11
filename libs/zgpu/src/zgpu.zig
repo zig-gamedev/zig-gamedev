@@ -793,13 +793,14 @@ pub const GraphicsContext = struct {
         }
 
         if (!gctx.isResourceValid(gctx.mipgen.pipeline)) {
+            const format = .rgba8_unorm;
             gctx.mipgen.bind_group_layout = gctx.createBindGroupLayout(&.{
                 bglBuffer(0, .{ .compute = true }, .uniform, true, 0),
                 bglTexture(1, .{ .compute = true }, .float, .dimension_2d, false),
-                bglStorageTexture(2, .{ .compute = true }, .write_only, .rgba8_unorm, .dimension_2d),
-                bglStorageTexture(3, .{ .compute = true }, .write_only, .rgba8_unorm, .dimension_2d),
-                bglStorageTexture(4, .{ .compute = true }, .write_only, .rgba8_unorm, .dimension_2d),
-                bglStorageTexture(5, .{ .compute = true }, .write_only, .rgba8_unorm, .dimension_2d),
+                bglStorageTexture(2, .{ .compute = true }, .write_only, format, .dimension_2d),
+                bglStorageTexture(3, .{ .compute = true }, .write_only, format, .dimension_2d),
+                bglStorageTexture(4, .{ .compute = true }, .write_only, format, .dimension_2d),
+                bglStorageTexture(5, .{ .compute = true }, .write_only, format, .dimension_2d),
             });
 
             const pipeline_layout = gctx.createPipelineLayout(&.{
@@ -824,7 +825,7 @@ pub const GraphicsContext = struct {
                 .usage = .{ .copy_src = true, .storage_binding = true },
                 .dimension = .dimension_2d,
                 .size = .{ .width = 1024, .height = 1024, .depth_or_array_layers = 1 },
-                .format = .rgba8_unorm,
+                .format = format,
                 .mip_level_count = 4,
                 .sample_count = 1,
             });

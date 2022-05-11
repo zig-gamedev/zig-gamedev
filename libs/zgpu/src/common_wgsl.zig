@@ -1,3 +1,6 @@
+const print = @import("std").fmt.comptimePrint;
+const format = print("{s}", .{"rgba8unorm"});
+
 // zig fmt: off
 pub const cs_generate_mipmaps =
 \\  struct Uniforms {
@@ -5,13 +8,13 @@ pub const cs_generate_mipmaps =
 \\      num_mip_levels: u32,
 \\  }
 \\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
-\\
 \\  @group(0) @binding(1) var src_image: texture_2d<f32>;
-\\  @group(0) @binding(2) var dst_mipmap1: texture_storage_2d<rgba8unorm, write>;
-\\  @group(0) @binding(3) var dst_mipmap2: texture_storage_2d<rgba8unorm, write>;
-\\  @group(0) @binding(4) var dst_mipmap3: texture_storage_2d<rgba8unorm, write>;
-\\  @group(0) @binding(5) var dst_mipmap4: texture_storage_2d<rgba8unorm, write>;
-\\
+++
+ "  @group(0) @binding(2) var dst_mipmap1: texture_storage_2d<" ++ format ++ ", write>;\n" ++
+ "  @group(0) @binding(3) var dst_mipmap2: texture_storage_2d<" ++ format ++ ", write>;\n" ++
+ "  @group(0) @binding(4) var dst_mipmap3: texture_storage_2d<" ++ format ++ ", write>;\n" ++
+ "  @group(0) @binding(5) var dst_mipmap4: texture_storage_2d<" ++ format ++ ", write>;\n"
+++
 \\  var<workgroup> red: array<f32, 64>;
 \\  var<workgroup> green: array<f32, 64>;
 \\  var<workgroup> blue: array<f32, 64>;

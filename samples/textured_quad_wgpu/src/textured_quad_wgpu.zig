@@ -158,8 +158,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
         break :commands encoder.finish(null);
     };
-    defer commands.release();
     gctx.queue.submit(&.{commands});
+    commands.release();
 
     // (Async) Create a render pipeline.
     {
