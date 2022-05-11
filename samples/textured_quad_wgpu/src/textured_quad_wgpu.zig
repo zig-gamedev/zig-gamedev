@@ -73,6 +73,10 @@ const DemoState = struct {
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
+    var arena_state = std.heap.ArenaAllocator.init(allocator);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
     const bind_group_layout = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
         zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
@@ -118,20 +122,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const texture_view = gctx.createTextureView(texture, .{});
 
     gctx.queue.writeTexture(
-        &gpu.ImageCopyTexture{ .texture = gctx.lookupResource(texture).? },
+        &.{ .texture = gctx.lookupResource(texture).? },
         image.data,
-        &gpu.Texture.DataLayout{
+        &.{
             .bytes_per_row = image.width * image.channels_in_memory,
             .rows_per_image = image.height,
         },
-        &gpu.Extent3D{ .width = image.width, .height = image.height },
+        &.{ .width = image.width, .height = image.height },
     );
 
     // Create a sampler.
-    const sampler = gctx.createSampler(.{
-        //.mag_filter = .linear,
-        //.min_filter = .linear,
-    });
+    const sampler = gctx.createSampler(.{});
 
     const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
@@ -150,11 +151,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .sampler = sampler,
     };
 
+    // Generate mipmaps on the GPU.
     const commands = commands: {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
-        gctx.generateMipmaps(encoder, demo.texture);
+        gctx.generateMipmaps(arena, encoder, demo.texture);
 
         break :commands encoder.finish(null);
     };

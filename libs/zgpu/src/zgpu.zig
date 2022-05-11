@@ -49,12 +49,7 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
-    mipgen: struct {
-        pipeline: ComputePipelineHandle = .{},
-        scratch_texture: TextureHandle = .{},
-        scratch_texture_views: [4]TextureViewHandle = [_]TextureViewHandle{.{}} ** 4,
-        bind_group_layout: BindGroupLayoutHandle = .{},
-    } = .{},
+    mipgen: MipgenResources = .{},
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
 
@@ -781,8 +776,16 @@ pub const GraphicsContext = struct {
     //
     // Mipmaps
     //
+    const MipgenResources = struct {
+        pipeline: ComputePipelineHandle = .{},
+        scratch_texture: TextureHandle = .{},
+        scratch_texture_views: [4]TextureViewHandle = [_]TextureViewHandle{.{}} ** 4,
+        bind_group_layout: BindGroupLayoutHandle = .{},
+    };
+
     pub fn generateMipmaps(
         gctx: *GraphicsContext,
+        arena: std.mem.Allocator,
         encoder: gpu.CommandEncoder,
         texture: TextureHandle,
     ) void {
@@ -808,10 +811,14 @@ pub const GraphicsContext = struct {
             });
             defer gctx.destroyResource(pipeline_layout);
 
-            const cs_module = gctx.device.createShaderModule(&.{
-                .code = .{ .wgsl = wgsl.cs_generate_mipmaps },
+            const wgsl_src = wgsl.csGenerateMipmaps(arena, formatToShaderFormat(format));
+            const cs_module = gctx.device.createShaderModule(&gpu.ShaderModule.Descriptor{
+                .code = .{ .wgsl = wgsl_src.ptr },
             });
-            defer cs_module.release();
+            defer {
+                arena.free(wgsl_src);
+                cs_module.release();
+            }
 
             gctx.mipgen.pipeline = gctx.createComputePipeline(pipeline_layout, .{
                 .compute = .{
@@ -1423,6 +1430,17 @@ fn handleToResourceInfoType(comptime T: type) type {
         BindGroupLayoutHandle => BindGroupLayoutInfo,
         PipelineLayoutHandle => PipelineLayoutInfo,
         else => @compileError("[zgpu] handleToResourceInfoType() not implemented for " ++ @typeName(T)),
+    };
+}
+
+fn formatToShaderFormat(format: gpu.Texture.Format) []const u8 {
+    // TODO: Add missing formats.
+    return switch (format) {
+        .rgba8_unorm => "rgba8unorm",
+        .rgba8_snorm => "rgba8snorm",
+        .rgba16_float => "rgba16float",
+        .rgba32_float => "rgba32float",
+        else => unreachable,
     };
 }
 
