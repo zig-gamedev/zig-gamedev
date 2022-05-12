@@ -22,7 +22,7 @@
 //      pass.drawIndexed(...);
 //
 //      // When you are done encoding all commands for a frame:
-//      gctx.submit(...); // Injects one copy operation to transfer *all* allocated uniforms
+//      gctx.submit(...); // Injects *one* copy operation to transfer *all* allocated uniforms
 //
 //  3. Resource pools
 //
@@ -37,10 +37,21 @@
 //      if (gctx.isResourceValid(buffer_handle)) {
 //          const buffer = gctx.lookupResource(buffer_handle).?;  // Returns gpu.Buffer
 //          const buffer_info = gctx.lookupResourceInfo(buffer_handle).?; // Returns zgpu.BufferInfo
-//          std.debug.print("Buffer size is: {d}, .{buffer_info.size});
+//          std.debug.print("Buffer size is: {d}", .{buffer_info.size});
 //      }
 //      // If you want to destroy a resource before shutting down graphics context:
 //      gctx.destroyResource(buffer_handle);
+//
+//  4. Async shader compilation
+//
+//      * Thanks to resource pools and resources identified by handles we can quite easily
+//        async compile all our shaders
+//
+//  5. Mipmap generations
+//
+//  6. Image loading (optional)
+//
+//  7. GUI based on dear imgui library (optional)
 //
 const std = @import("std");
 const math = std.math;
