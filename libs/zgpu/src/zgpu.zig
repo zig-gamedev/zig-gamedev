@@ -1,4 +1,5 @@
 const std = @import("std");
+const math = std.math;
 const assert = std.debug.assert;
 const glfw = @import("glfw");
 const c = @cImport({
@@ -806,7 +807,7 @@ pub const GraphicsContext = struct {
         assert(texture_info.dimension == .dimension_2d);
         assert(texture_info.size.width <= max_size and texture_info.size.height <= max_size);
         assert(texture_info.size.width == texture_info.size.height);
-        assert(std.math.isPowerOfTwo(texture_info.size.width));
+        assert(math.isPowerOfTwo(texture_info.size.width));
 
         const format = texture_info.format;
         const entry = gctx.mipgens.getOrPut(format) catch unreachable;
@@ -891,33 +892,29 @@ pub const GraphicsContext = struct {
             var current_src_mip_level: u32 = 0;
 
             while (true) {
-                const dispatch_num_mips = std.math.min(
-                    MipgenResources.max_levels_per_dispatch,
-                    total_num_mips,
-                );
+                const dispatch_num_mips = math.min(MipgenResources.max_levels_per_dispatch, total_num_mips);
+                {
+                    const pass = encoder.beginComputePass(null);
+                    defer {
+                        pass.end();
+                        pass.release();
+                    }
 
-                const mem = gctx.uniformsAllocate(MipgenUniforms, 1);
-                mem.slice[0] = .{
-                    .src_mip_level = @intCast(i32, current_src_mip_level),
-                    .num_mip_levels = dispatch_num_mips,
-                };
+                    pass.setPipeline(gctx.lookupResource(mipgen.pipeline).?);
 
-                const pass = encoder.beginComputePass(null);
+                    const mem = gctx.uniformsAllocate(MipgenUniforms, 1);
+                    mem.slice[0] = .{
+                        .src_mip_level = @intCast(i32, current_src_mip_level),
+                        .num_mip_levels = dispatch_num_mips,
+                    };
+                    pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
 
-                pass.setPipeline(gctx.lookupResource(mipgen.pipeline).?);
-                pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
-                const num_groups_x = std.math.max(
-                    texture_info.size.width >> @intCast(u5, 3 + current_src_mip_level),
-                    1,
-                );
-                const num_groups_y = std.math.max(
-                    texture_info.size.height >> @intCast(u5, 3 + current_src_mip_level),
-                    1,
-                );
-                pass.dispatch(num_groups_x, num_groups_y, 1);
-
-                pass.end();
-                pass.release();
+                    pass.dispatch(
+                        math.max(texture_info.size.width >> @intCast(u5, 3 + current_src_mip_level), 1),
+                        math.max(texture_info.size.height >> @intCast(u5, 3 + current_src_mip_level), 1),
+                        1,
+                    );
+                }
 
                 var mip_index: u32 = 0;
                 while (mip_index < dispatch_num_mips) : (mip_index += 1) {
