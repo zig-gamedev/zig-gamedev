@@ -1,8 +1,6 @@
-pub const Size = usize;
-pub const Float = f32;
-pub const Int = c_int;
-pub const UInt = c_uint;
-pub const Bool = c_int;
+pub const Bool32 = i32;
+pub const CString = [*:0]const u8;
+pub const MutCString = [*:0]u8;
 
 pub const FileType = enum(c_int) {
     invalid,
@@ -24,23 +22,22 @@ pub const Result = enum(c_int) {
 };
 
 pub const MemoryOptions = extern struct {
-    alloc: fn (user: ?*anyopaque, size: Size) callconv(.C) ?*anyopaque,
-    free: fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void,
-    user_data: ?*anyopaque,
+    alloc: ?fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque = null,
+    free: ?fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
 };
 
-// TODO: Write proper function prototypes
 pub const FileOptions = extern struct {
-    read: ?*anyopaque,
-    release: ?*anyopaque,
-    user_data: ?*anyopaque,
+    read: ?fn (*const MemoryOptions, *const FileOptions, CString, *usize, *(?*anyopaque)) callconv(.C) Result = null,
+    release: ?fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
 };
 
 pub const Options = extern struct {
-    file_type: FileType,
-    json_token_count: Size,
-    memory: MemoryOptions,
-    file: FileOptions,
+    file_type: FileType = .invalid,
+    json_token_count: usize = 0,
+    memory: MemoryOptions = .{},
+    file: FileOptions = .{},
 };
 
 pub const BufferViewType = enum(c_int) {
@@ -145,47 +142,47 @@ pub const MeshoptCompressionFilter = enum(c_int) {
 };
 
 pub const Extras = extern struct {
-    start_offset: Size,
-    end_offset: Size,
+    start_offset: usize,
+    end_offset: usize,
 };
 
 pub const Extension = extern struct {
-    name: [*:0]u8,
-    data: [*:0]u8,
+    name: MutCString,
+    data: MutCString,
 };
 
 pub const Buffer = extern struct {
-    name: ?[*:0]u8,
-    size: Size,
-    uri: ?[*:0]u8,
+    name: ?MutCString,
+    size: usize,
+    uri: ?MutCString,
     data: ?*anyopaque, // loaded by loadBuffers()
     data_free_method: DataFreeMethod,
     extras: Extras,
-    extensions_count: Size,
+    extensions_count: usize,
     extensions: ?[*]Extension,
 };
 
 pub const MeshoptCompression = extern struct {
     buffer: *Buffer,
-    offset: Size,
-    size: Size,
-    stride: Size,
-    count: Size,
+    offset: usize,
+    size: usize,
+    stride: usize,
+    count: usize,
     mode: MeshoptCompressionMode,
     filter: MeshoptCompressionFilter,
 };
 
 pub const BufferView = extern struct {
-    name: ?[*:0]u8,
+    name: ?MutCString,
     buffer: *Buffer,
-    offset: Size,
-    size: Size,
-    stride: Size, // 0 == automatically determined by accessor
+    offset: usize,
+    size: usize,
+    stride: usize, // 0 == automatically determined by accessor
     view_type: BufferViewType,
     data: ?*anyopaque, // overrides buffer.data if present, filled by extensions
-    has_meshopt_compression: Bool,
+    has_meshopt_compression: Bool32,
     meshopt_compression: MeshoptCompression,
     extras: Extras,
-    extensions_count: Size,
+    extensions_count: usize,
     extensions: ?[*]Extension,
 };
