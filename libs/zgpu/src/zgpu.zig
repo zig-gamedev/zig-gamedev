@@ -1225,7 +1225,7 @@ pub fn checkContent(comptime content_dir: []const u8) !void {
             \\Please install Git LFS (Large File Support) and run (in the repo):
             \\
             \\git lfs install
-            \\git pull
+            \\git lfs pull
             \\
             \\For more info please see: https://git-lfs.github.com/
             \\
