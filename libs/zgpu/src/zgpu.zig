@@ -49,7 +49,7 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
-    mipgen: MipgenResources = .{},
+    mipgens: std.AutoHashMap(gpu.Texture.Format, MipgenResources),
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
 
@@ -139,6 +139,7 @@ pub const GraphicsContext = struct {
             .bind_group_pool = BindGroupPool.init(allocator, bind_group_pool_size),
             .bind_group_layout_pool = BindGroupLayoutPool.init(allocator, bind_group_layout_pool_size),
             .pipeline_layout_pool = PipelineLayoutPool.init(allocator, pipeline_layout_pool_size),
+            .mipgens = std.AutoHashMap(gpu.Texture.Format, MipgenResources).init(allocator),
         };
 
         gctx.queue.on_submitted_work_done = gpu.Queue.WorkDoneCallback.init(
@@ -171,6 +172,7 @@ pub const GraphicsContext = struct {
             break;
         }
 
+        gctx.mipgens.deinit();
         gctx.pipeline_layout_pool.deinit(allocator);
         gctx.bind_group_pool.deinit(allocator);
         gctx.bind_group_layout_pool.deinit(allocator);
@@ -786,9 +788,7 @@ pub const GraphicsContext = struct {
         bind_group_layout: BindGroupLayoutHandle = .{},
     };
 
-    // TODO: Add support for different texture formats
     // TODO: Add support for array textures
-    // TODO: Test non-square and non-power-of-two textures
     pub fn generateMipmaps(
         gctx: *GraphicsContext,
         arena: std.mem.Allocator,
@@ -796,18 +796,22 @@ pub const GraphicsContext = struct {
         texture: TextureHandle,
     ) void {
         const texture_info = gctx.lookupResourceInfo(texture) orelse return;
-        if (texture_info.dimension != .dimension_2d or
-            texture_info.mip_level_count == 1 or
-            texture_info.size.width > 2048 or texture_info.size.height > 2048 or
-            texture_info.size.width != texture_info.size.height)
-        {
-            // TODO: Print message.
-            return;
-        }
+        if (texture_info.mip_level_count == 1) return;
 
-        if (!gctx.isResourceValid(gctx.mipgen.pipeline)) {
-            const format = .rgba8_unorm;
-            gctx.mipgen.bind_group_layout = gctx.createBindGroupLayout(&.{
+        const max_size = 2048;
+        const max_levels_per_dispatch = 4;
+
+        assert(texture_info.dimension == .dimension_2d);
+        assert(texture_info.size.width <= max_size and texture_info.size.height <= max_size);
+        assert(texture_info.size.width == texture_info.size.height);
+        assert(std.math.isPowerOfTwo(texture_info.size.width));
+
+        const format = texture_info.format;
+        const entry = gctx.mipgens.getOrPut(format) catch unreachable;
+        const mipgen = entry.value_ptr;
+
+        if (!entry.found_existing) {
+            mipgen.bind_group_layout = gctx.createBindGroupLayout(&.{
                 bglBuffer(0, .{ .compute = true }, .uniform, true, 0),
                 bglTexture(1, .{ .compute = true }, .float, .dimension_2d, false),
                 bglStorageTexture(2, .{ .compute = true }, .write_only, format, .dimension_2d),
@@ -817,7 +821,7 @@ pub const GraphicsContext = struct {
             });
 
             const pipeline_layout = gctx.createPipelineLayout(&.{
-                gctx.mipgen.bind_group_layout,
+                mipgen.bind_group_layout,
             });
             defer gctx.destroyResource(pipeline_layout);
 
@@ -830,7 +834,7 @@ pub const GraphicsContext = struct {
                 cs_module.release();
             }
 
-            gctx.mipgen.pipeline = gctx.createComputePipeline(pipeline_layout, .{
+            mipgen.pipeline = gctx.createComputePipeline(pipeline_layout, .{
                 .compute = .{
                     .label = "zgpu_cs_generate_mipmaps",
                     .module = cs_module,
@@ -838,17 +842,17 @@ pub const GraphicsContext = struct {
                 },
             });
 
-            gctx.mipgen.scratch_texture = gctx.createTexture(.{
+            mipgen.scratch_texture = gctx.createTexture(.{
                 .usage = .{ .copy_src = true, .storage_binding = true },
                 .dimension = .dimension_2d,
-                .size = .{ .width = 1024, .height = 1024, .depth_or_array_layers = 1 },
+                .size = .{ .width = max_size / 2, .height = max_size / 2, .depth_or_array_layers = 1 },
                 .format = format,
-                .mip_level_count = 4,
+                .mip_level_count = max_levels_per_dispatch,
                 .sample_count = 1,
             });
 
-            for (gctx.mipgen.scratch_texture_views) |*view, i| {
-                view.* = gctx.createTextureView(gctx.mipgen.scratch_texture, .{
+            for (mipgen.scratch_texture_views) |*view, i| {
+                view.* = gctx.createTextureView(mipgen.scratch_texture, .{
                     .base_mip_level = @intCast(u32, i),
                     .mip_level_count = 1,
                     .base_array_layer = 0,
@@ -860,13 +864,13 @@ pub const GraphicsContext = struct {
         const texture_view = gctx.createTextureView(texture, .{});
         defer gctx.destroyResource(texture_view);
 
-        const bind_group = gctx.createBindGroup(gctx.mipgen.bind_group_layout, &[_]BindGroupEntryInfo{
+        const bind_group = gctx.createBindGroup(mipgen.bind_group_layout, &[_]BindGroupEntryInfo{
             .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 8 },
             .{ .binding = 1, .texture_view_handle = texture_view },
-            .{ .binding = 2, .texture_view_handle = gctx.mipgen.scratch_texture_views[0] },
-            .{ .binding = 3, .texture_view_handle = gctx.mipgen.scratch_texture_views[1] },
-            .{ .binding = 4, .texture_view_handle = gctx.mipgen.scratch_texture_views[2] },
-            .{ .binding = 5, .texture_view_handle = gctx.mipgen.scratch_texture_views[3] },
+            .{ .binding = 2, .texture_view_handle = mipgen.scratch_texture_views[0] },
+            .{ .binding = 3, .texture_view_handle = mipgen.scratch_texture_views[1] },
+            .{ .binding = 4, .texture_view_handle = mipgen.scratch_texture_views[2] },
+            .{ .binding = 5, .texture_view_handle = mipgen.scratch_texture_views[3] },
         });
         defer gctx.destroyResource(bind_group);
 
@@ -879,7 +883,7 @@ pub const GraphicsContext = struct {
         var current_src_mip_level: u32 = 0;
 
         while (true) {
-            const dispatch_num_mips = std.math.min(4, total_num_mips);
+            const dispatch_num_mips = std.math.min(max_levels_per_dispatch, total_num_mips);
 
             const mem = gctx.uniformsAllocate(MipgenUniforms, 1);
             mem.slice[0] = .{
@@ -889,7 +893,7 @@ pub const GraphicsContext = struct {
 
             const pass = encoder.beginComputePass(null);
 
-            pass.setPipeline(gctx.lookupResource(gctx.mipgen.pipeline).?);
+            pass.setPipeline(gctx.lookupResource(mipgen.pipeline).?);
             pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
             const num_groups_x = std.math.max(
                 texture_info.size.width >> @intCast(u5, 3 + current_src_mip_level),
@@ -899,7 +903,6 @@ pub const GraphicsContext = struct {
                 texture_info.size.height >> @intCast(u5, 3 + current_src_mip_level),
                 1,
             );
-            // TODO: Align up
             pass.dispatch(num_groups_x, num_groups_y, 1);
 
             pass.end();
@@ -908,7 +911,7 @@ pub const GraphicsContext = struct {
             var mip_index: u32 = 0;
             while (mip_index < dispatch_num_mips) : (mip_index += 1) {
                 encoder.copyTextureToTexture(
-                    &.{ .texture = gctx.lookupResource(gctx.mipgen.scratch_texture).?, .mip_level = mip_index },
+                    &.{ .texture = gctx.lookupResource(mipgen.scratch_texture).?, .mip_level = mip_index },
                     &.{
                         .texture = gctx.lookupResource(texture).?,
                         .mip_level = mip_index + current_src_mip_level + 1,
