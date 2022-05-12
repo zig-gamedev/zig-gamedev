@@ -147,8 +147,8 @@ pub const Extras = extern struct {
 };
 
 pub const Extension = extern struct {
-    name: MutCString,
-    data: MutCString,
+    name: ?MutCString,
+    data: ?MutCString,
 };
 
 pub const Buffer = extern struct {
@@ -185,4 +185,89 @@ pub const BufferView = extern struct {
     extras: Extras,
     extensions_count: usize,
     extensions: ?[*]Extension,
+};
+
+pub const AccessorSparse = extern struct {
+    count: usize,
+    indices_buffer_view: *BufferView,
+    indices_byte_offset: usize,
+    indices_component_type: ComponentType,
+    values_buffer_view: *BufferView,
+    values_byte_offset: usize,
+    extras: Extras,
+    indices_extras: Extras,
+    values_extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+    indices_extensions_count: usize,
+    indices_extensions: ?[*]Extension,
+    values_extensions_count: usize,
+    values_extensions: ?[*]Extension,
+};
+
+pub const Accessor = extern struct {
+    name: ?MutCString,
+    component_type: ComponentType,
+    normalized: Bool32,
+    type: Type,
+    offset: usize,
+    count: usize,
+    stride: usize,
+    buffer_view: ?*BufferView,
+    has_min: Bool32,
+    min: [16]f32,
+    has_max: Bool32,
+    max: [16]f32,
+    is_sparse: Bool32,
+    sparse: AccessorSparse,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const Attribute = extern struct {
+    name: ?MutCString,
+    type: AttributeType,
+    index: i32,
+    data: *Accessor,
+};
+
+pub const Image = extern struct {
+    name: ?MutCString,
+    uri: ?MutCString,
+    buffer_view: ?*BufferView,
+    mime_type: ?MutCString,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const Sampler = extern struct {
+    uri: ?MutCString,
+    mag_filter: i32,
+    min_filter: i32,
+    wrap_s: i32,
+    wrap_t: i32,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const Texture = extern struct {
+    name: ?MutCString,
+    image: ?*Image,
+    sampler: ?*Sampler,
+    has_basisu: Bool32,
+    basisu_image: ?*Image,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const TextureTransform = extern struct {
+    offset: [2]f32,
+    rotation: f32,
+    scale: [2]f32,
+    has_texcoord: Bool32,
+    texcoord: i32,
 };
