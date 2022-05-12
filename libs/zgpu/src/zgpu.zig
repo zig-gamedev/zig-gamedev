@@ -784,8 +784,11 @@ pub const GraphicsContext = struct {
     const MipgenResources = struct {
         pipeline: ComputePipelineHandle = .{},
         scratch_texture: TextureHandle = .{},
-        scratch_texture_views: [4]TextureViewHandle = [_]TextureViewHandle{.{}} ** 4,
+        scratch_texture_views: [max_levels_per_dispatch]TextureViewHandle =
+            [_]TextureViewHandle{.{}} ** max_levels_per_dispatch,
         bind_group_layout: BindGroupLayoutHandle = .{},
+
+        const max_levels_per_dispatch = 4;
     };
 
     // TODO: Add support for array textures
@@ -799,7 +802,6 @@ pub const GraphicsContext = struct {
         if (texture_info.mip_level_count == 1) return;
 
         const max_size = 2048;
-        const max_levels_per_dispatch = 4;
 
         assert(texture_info.dimension == .dimension_2d);
         assert(texture_info.size.width <= max_size and texture_info.size.height <= max_size);
@@ -847,7 +849,7 @@ pub const GraphicsContext = struct {
                 .dimension = .dimension_2d,
                 .size = .{ .width = max_size / 2, .height = max_size / 2, .depth_or_array_layers = 1 },
                 .format = format,
-                .mip_level_count = max_levels_per_dispatch,
+                .mip_level_count = MipgenResources.max_levels_per_dispatch,
                 .sample_count = 1,
             });
 
@@ -883,7 +885,10 @@ pub const GraphicsContext = struct {
         var current_src_mip_level: u32 = 0;
 
         while (true) {
-            const dispatch_num_mips = std.math.min(max_levels_per_dispatch, total_num_mips);
+            const dispatch_num_mips = std.math.min(
+                MipgenResources.max_levels_per_dispatch,
+                total_num_mips,
+            );
 
             const mem = gctx.uniformsAllocate(MipgenUniforms, 1);
             mem.slice[0] = .{
