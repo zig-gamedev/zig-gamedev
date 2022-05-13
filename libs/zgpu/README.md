@@ -45,7 +45,7 @@ For sample applications please see:
 
 ## Library overview
 
-Below you can find an overview of its main features.
+Below you can find an overview of main `zgpu` features.
 
 ### Init
 ```zig
