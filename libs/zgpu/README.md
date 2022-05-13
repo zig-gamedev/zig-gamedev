@@ -2,7 +2,32 @@
 
 WebGPU bindings taken from: https://github.com/hexops/mach/tree/main/gpu
 
-`zgpu` is a helper library for working with native WebGPU API.
+## Getting started
+
+Copy `zgpu`, `mach-glfw` and `mach-gpu-dawn` folders to a `libs` subdirectory of the root of your project.
+
+Then in your `build.zig` add:
+
+```zig
+const std = @import("std");
+const glfw = @import("libs/mach-glfw/build.zig");
+const zgpu = @import("libs/zgpu/build.zig");
+
+pub fn build(b: *std.build.Builder) void {
+    ...
+    exe.addPackage(glfw.pkg);
+    exe.addPackage(zgpu.pkg);
+
+    zgpu.link(exe, .{
+        .glfw_options = .{},
+        .gpu_dawn_options = .{ .from_source = false },
+    });
+}
+```
+
+## Library overview
+
+`zgpu` is a helper library for working with native WebGPU API (Dawn).
 Below you can find an overview of its main features.
 
 ### Init

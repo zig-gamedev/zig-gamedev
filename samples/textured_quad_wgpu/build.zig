@@ -10,11 +10,11 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const exe_options = b.addOptions();
     exe_options.addOption([]const u8, "content_dir", content_dir);
 
-    const exe = b.addExecutable("textured_quad_wgpu", comptime thisDir() ++ "/src/textured_quad_wgpu.zig");
+    const exe = b.addExecutable("textured_quad_wgpu", thisDir() ++ "/src/textured_quad_wgpu.zig");
     exe.addOptions("build_options", exe_options);
 
     const install_content_step = b.addInstallDirectory(.{
-        .source_dir = comptime thisDir() ++ "/" ++ content_dir,
+        .source_dir = thisDir() ++ "/" ++ content_dir,
         .install_dir = .{ .custom = "" },
         .install_subdir = "bin/" ++ content_dir,
     });
@@ -36,5 +36,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }
