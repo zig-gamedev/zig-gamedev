@@ -21,6 +21,7 @@ zig build procedural_mesh_wgpu-run
 * Uses some great, carefully selected C/C++ libraries which are seamlessly built by `zig cc` compiler
 
 #### Libraries we develop/maintain:
+* [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - Cross-platform graphics layer built on top of native WebGPU API (Dawn)
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers **[cross-platform and standalone]**
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3) **[cross-platform and standalone]**
 * [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - loading, generating, processing and optimizing triangle meshes **[cross-platform and standalone]**
