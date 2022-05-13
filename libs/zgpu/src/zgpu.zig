@@ -1,4 +1,8 @@
-//  zgpu v0.1
+//  zgpu - version 0.1
+//  ------------------
+//
+//  zgpu is a helper library for working with native WebGPU API.
+//  Below you can find an overview of its main features.
 //
 //  1. Init
 //
@@ -33,7 +37,7 @@
 //      * You can always check if resource is valid (very useful for async operations)
 //      * System keeps basic info about resource dependencies, for example, TextureViewHandle knows about its
 //        parent texture and becomes invalid when parent texture becomes invalid; BindGroupHandle knows
-//        about all resources it binds so it becomes invalid if any binded resource become invalid, etc.
+//        about all resources it binds so it becomes invalid if any bounded resource become invalid
 //
 //      const buffer_handle = gctx.createBuffer(...);
 //      if (gctx.isResourceValid(buffer_handle)) {
@@ -64,11 +68,57 @@
 //          ...
 //      }
 //
-//  5. Mipmap generations
+//  5. Mipmap generations on the GPU
 //
-//  6. Image loading with stb_image library (optional)
+//      * WebGPU API does not provide mipmap generator
+//      * zgpu provides decent mipmap generator implemented in a compute shader
+//      * It supports 2D textures, array textures and cubemap textures of any format
+//        (rgba8_unorm, rg16_float, rgba32_float, etc.)
+//      * Currently it requires that: width == height and isPowerOfTwo(width)
+//      * It takes ~260 us to generate all mips for 1024x1024 rgba8_unorm texture on GTX 1660
 //
-//  7. GUI based on dear imgui library (optional)
+//      gctx.generateMipmaps(arena, command_encoder, texture_handle);
+//
+//  6. Image loading with 'stb_image' library (optional)
+//
+//      // Defined in zgpu.stbi namespace
+//      pub const Image = struct {
+//          data: []u8,
+//          width: u32,
+//          height: u32,
+//          channels_in_memory: u32,
+//          channels_in_file: u32,
+//          ...
+//      };
+//
+//      // Usage:
+//      var image = try zgpu.stbi.Image.init("path_to_image_file", num_desired_channels);
+//      defer image.deinit();
+//
+//      If you don't want to use 'stb_image' library you can disable it in `build.zig`.
+//
+//  7. GUI based on 'dear imgui' library (optional)
+//
+//      zgpu.gui.init(window, gpu_device, "path_to_content_dir", font_name, font_size);
+//      defer zgpu.gui.deinit();
+//
+//      // Main loop
+//      while (...) {
+//          zgpu.gui.newFrame(framebuffer_width, framebuffer_height);
+//          // Define your widgets...
+//          // Draw
+//          {
+//              // Begin render pass with only one color attachment and *no depth-stencil* attachment
+//              const pass = encoder.beginRenderPass(...);
+//              defer {
+//                  pass.end();
+//                  pass.release();
+//              }
+//              zgpu.gui.draw(pass);
+//          }
+//      }
+//
+//      If you don't want to use 'dear imgui' library you can disable it in `build.zig`.
 //
 const std = @import("std");
 const math = std.math;
