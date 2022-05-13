@@ -22,7 +22,6 @@ Copy `zgpu`, `mach-glfw` and `mach-gpu-dawn` folders to a `libs` subdirectory of
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
 const glfw = @import("libs/mach-glfw/build.zig");
 const zgpu = @import("libs/zgpu/build.zig");
 
