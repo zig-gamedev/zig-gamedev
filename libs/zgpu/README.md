@@ -2,6 +2,19 @@
 
 This library uses GLFW and WebGPU bindings + great build script from [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
 
+`zgpu` is a cross-platform (Windows/Linux/MacOS) graphics layer built on top of WebGPU API (Dawn).
+
+## Features:
+
+* Uniform buffer pool for fast CPU->GPU transfers
+* Resource pools and resources identified by 32-bit integer handles
+* Async shader compilation
+* GPU mipmap generator
+* Image loading via `stb_image` library (optional)
+* GUI via `dear imgui` library (optional)
+
+For more details please see below.
+
 ## Getting started
 
 Copy `zgpu`, `mach-glfw` and `mach-gpu-dawn` folders to a `libs` subdirectory of the root of your project.
@@ -32,7 +45,6 @@ For sample applications please see:
 
 ## Library overview
 
-`zgpu` is a helper library for working with native WebGPU API (Dawn).
 Below you can find an overview of its main features.
 
 ### Init
