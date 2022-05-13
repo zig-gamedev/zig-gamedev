@@ -114,7 +114,7 @@ pass: {
 * zgpu provides decent mipmap generator implemented in a compute shader
 * It supports 2D textures, array textures and cubemap textures of any format
 (`rgba8_unorm`, `rg16_float`, `rgba32_float`, etc.)
-* Currently it requires that: width == height and isPowerOfTwo(width)
+* Currently it requires that: zig`texture_width == texture_height and isPowerOfTwo(texture_width)`
 * It takes ~260 us to generate all mips for 1024x1024 `rgba8_unorm` texture on GTX 1660
 
 ```zig
