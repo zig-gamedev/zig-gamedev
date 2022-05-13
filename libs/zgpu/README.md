@@ -7,117 +7,132 @@ Below you can find an overview of its main features.
 
 1. Init
 ```zig
-    const gctx = try zgpu.GraphicsContext.init(allocator, window);
+const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
-    // When you are done:
-    gctx.deinit(allocator);
+// When you are done:
+gctx.deinit(allocator);
 ```
 2. Uniforms
 
-    * Implemented as a uniform buffer pool
-    * Easy to use
-    * Efficient - only one copy operation per frame
+* Implemented as a uniform buffer pool
+* Easy to use
+* Efficient - only one copy operation per frame
+
 ```zig
-    struct DrawUniforms = extern struct {
-        object_to_world: zm.Mat,
-    };
-    const mem = gctx.uniformsAllocate(DrawUniforms, 1);
-    mem.slice[0] = .{ .object_to_world = zm.transpose(zm.translation(...)) };
+struct DrawUniforms = extern struct {
+    object_to_world: zm.Mat,
+};
+const mem = gctx.uniformsAllocate(DrawUniforms, 1);
+mem.slice[0] = .{ .object_to_world = zm.transpose(zm.translation(...)) };
 
-    pass.setBindGroup(0, bind_group, &.{mem.offset});
-    pass.drawIndexed(...);
+pass.setBindGroup(0, bind_group, &.{mem.offset});
+pass.drawIndexed(...);
 
-    // When you are done encoding all commands for a frame:
-    gctx.submit(...); // Injects *one* copy operation to transfer *all* allocated uniforms
+// When you are done encoding all commands for a frame:
+gctx.submit(...); // Injects *one* copy operation to transfer *all* allocated uniforms
 ```
+
 3. Resource pools
 
-    * Every GPU resource is identified by 32-bit integer handle
-    * All resources are stored in one system
-    * We keep basic info about each resource (size of the buffer, format of the texture, etc.)
-    * You can always check if resource is valid (very useful for async operations)
-    * System keeps basic info about resource dependencies, for example, TextureViewHandle knows about its
-      parent texture and becomes invalid when parent texture becomes invalid; BindGroupHandle knows
-      about all resources it binds so it becomes invalid if any bounded resource become invalid
+* Every GPU resource is identified by 32-bit integer handle
+* All resources are stored in one system
+* We keep basic info about each resource (size of the buffer, format of the texture, etc.)
+* You can always check if resource is valid (very useful for async operations)
+* System keeps basic info about resource dependencies, for example, TextureViewHandle knows about its
+parent texture and becomes invalid when parent texture becomes invalid; BindGroupHandle knows
+about all resources it binds so it becomes invalid if any bounded resource become invalid
+
 ```zig
-    const buffer_handle = gctx.createBuffer(...);
-    if (gctx.isResourceValid(buffer_handle)) {
+const buffer_handle = gctx.createBuffer(...);
+
+if (gctx.isResourceValid(buffer_handle)) {
     const buffer = gctx.lookupResource(buffer_handle).?;  // Returns gpu.Buffer
+
     const buffer_info = gctx.lookupResourceInfo(buffer_handle).?; // Returns zgpu.BufferInfo
-        std.debug.print("Buffer size is: {d}", .{buffer_info.size});
-    }
-    // If you want to destroy a resource before shutting down graphics context:
-    gctx.destroyResource(buffer_handle);
+    std.debug.print("Buffer size is: {d}", .{buffer_info.size});
+}
+
+// If you want to destroy a resource before shutting down graphics context:
+gctx.destroyResource(buffer_handle);
+
 ```
 4. Async shader compilation
 
-    * Thanks to resource pools and resources identified by handles we can easily async compile
-       all our shaders
-```zig
-    const DemoState = struct {
-        pipeline: zgpu.PipelineLayoutHandle = .{},
-        ...
-    };
-    const demo = try allocator.create(DemoState);
-    // Below call schedules pipeline compilation and returns immediately. When compilation is complete
-    // valid pipeline handle will be stored in `demo.pipeline`.
-    gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline);
+* Thanks to resource pools and resources identified by handles we can easily async compile all our shaders
 
-    // Pass using our pipeline will be skipped until compilation is ready
-    pass: {
-        const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
-        ...
-    }
+```zig
+const DemoState = struct {
+    pipeline: zgpu.PipelineLayoutHandle = .{},
+    ...
+};
+const demo = try allocator.create(DemoState);
+
+// Below call schedules pipeline compilation and returns immediately. When compilation is complete
+// valid pipeline handle will be stored in `demo.pipeline`.
+gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline);
+
+// Pass using our pipeline will be skipped until compilation is ready
+pass: {
+    const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
+    ...
+}
 ```
+
 5. Mipmap generations on the GPU
 
-    * WebGPU API does not provide mipmap generator
-    * zgpu provides decent mipmap generator implemented in a compute shader
-    * It supports 2D textures, array textures and cubemap textures of any format
-      (`rgba8_unorm`, `rg16_float`, `rgba32_float`, etc.)
-    * Currently it requires that: width == height and isPowerOfTwo(width)
-    * It takes ~260 us to generate all mips for 1024x1024 `rgba8_unorm` texture on GTX 1660
+* WebGPU API does not provide mipmap generator
+* zgpu provides decent mipmap generator implemented in a compute shader
+* It supports 2D textures, array textures and cubemap textures of any format
+(`rgba8_unorm`, `rg16_float`, `rgba32_float`, etc.)
+* Currently it requires that: width == height and isPowerOfTwo(width)
+* It takes ~260 us to generate all mips for 1024x1024 `rgba8_unorm` texture on GTX 1660
 
 ```zig
-    gctx.generateMipmaps(arena, command_encoder, texture_handle);
+gctx.generateMipmaps(arena, command_encoder, texture_handle);
 ```
 6. Image loading with `stb_image` library (optional)
-```zig
-    // Defined in zgpu.stbi namespace
-    pub const Image = struct {
-        data: []u8,
-        width: u32,
-        height: u32,
-        channels_in_memory: u32,
-        channels_in_file: u32,
-        ...
-    };
 
-    // Usage:
-    var image = try zgpu.stbi.Image.init("path_to_image_file", num_desired_channels);
-    defer image.deinit();
+```zig
+// Defined in zgpu.stbi namespace
+pub const Image = struct {
+    data: []u8,
+    width: u32,
+    height: u32,
+    channels_in_memory: u32,
+    channels_in_file: u32,
+    ...
+};
+
+// Usage:
+var image = try zgpu.stbi.Image.init("path_to_image_file", num_desired_channels);
+defer image.deinit();
 ```
-    If you don't want to use `stb_image` library you can disable it in `build.zig`.
+
+If you don't want to use `stb_image` library you can disable it in `build.zig`.
 
 7. GUI based on `dear imgui` library (optional)
-```zig
-    zgpu.gui.init(window, gpu_device, "path_to_content_dir", font_name, font_size);
-    defer zgpu.gui.deinit();
 
-    // Main loop
-    while (...) {
-        zgpu.gui.newFrame(framebuffer_width, framebuffer_height);
-        // Define your widgets...
-        // Draw
-        {
-            // Begin render pass with only one color attachment and *no depth-stencil* attachment
-            const pass = encoder.beginRenderPass(...);
-            defer {
-                pass.end();
-                pass.release();
-            }
-            zgpu.gui.draw(pass);
+```zig
+zgpu.gui.init(window, gpu_device, "path_to_content_dir", font_name, font_size);
+defer zgpu.gui.deinit();
+
+// Main loop
+while (...) {
+    zgpu.gui.newFrame(framebuffer_width, framebuffer_height);
+    // Define your widgets here...
+    // ...
+
+    // Draw
+    {
+        // Begin render pass with only one color attachment and *no depth-stencil* attachment
+        const pass = encoder.beginRenderPass(...);
+        defer {
+            pass.end();
+            pass.release();
         }
+        zgpu.gui.draw(pass);
     }
+}
 ```
+
 If you don't want to use `dear imgui` library you can disable it in `build.zig`.
