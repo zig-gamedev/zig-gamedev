@@ -1,6 +1,6 @@
 # zgpu - version 0.1
 
-WebGPU bindings taken from: https://github.com/hexops/mach/tree/main/gpu
+This library uses GLFW and WebGPU bindings + great build script from [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
 
 ## Getting started
 
