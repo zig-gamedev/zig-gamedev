@@ -111,7 +111,7 @@ pass: {
 }
 ```
 
-### Mipmap generations on the GPU
+### Mipmap generation on the GPU
 
 * WebGPU API does not provide mipmap generator
 * zgpu provides decent mipmap generator implemented in a compute shader
@@ -121,6 +121,7 @@ pass: {
 * It takes ~260 us to generate all mips for 1024x1024 `rgba8_unorm` texture on GTX 1660
 
 ```zig
+// Usage:
 gctx.generateMipmaps(arena, command_encoder, texture_handle);
 ```
 

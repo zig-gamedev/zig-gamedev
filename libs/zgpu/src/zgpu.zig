@@ -1,5 +1,8 @@
 //  zgpu - version 0.1
 //
+//  This library uses GLFW and WebGPU bindings + great build script from
+//  [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
+//
 //  `zgpu` is a helper library for working with native WebGPU API (Dawn).
 //  Below you can find an overview of its main features.
 //
@@ -39,8 +42,10 @@
 //        about all resources it binds so it becomes invalid if any of those resources become invalid
 //
 //      const buffer_handle = gctx.createBuffer(...);
+//
 //      if (gctx.isResourceValid(buffer_handle)) {
 //          const buffer = gctx.lookupResource(buffer_handle).?;  // Returns gpu.Buffer
+//
 //          const buffer_info = gctx.lookupResourceInfo(buffer_handle).?; // Returns zgpu.BufferInfo
 //          std.debug.print("Buffer size is: {d}", .{buffer_info.size});
 //      }
@@ -53,21 +58,24 @@
 //        all our shaders
 //
 //      const DemoState = struct {
-//          pipeline: zgpu.PipelineLayoutHandle = .{},
+//          pipeline_handle: zgpu.PipelineLayoutHandle = .{},
 //          ...
 //      };
 //      const demo = try allocator.create(DemoState);
 //      // Below call schedules pipeline compilation and returns immediately. When compilation is complete
-//      // valid pipeline handle will be stored in `demo.pipeline`.
-//      gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline);
+//      // valid pipeline handle will be stored in `demo.pipeline_handle`.
+//      gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline_handle);
 //
 //      // Pass using our pipeline will be skipped until compilation is ready
 //      pass: {
-//          const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
+//          const pipeline = gctx.lookupResource(demo.pipeline_handle) orelse break :pass;
 //          ...
+//
+//          pass.setPipeline(pipeline);
+//          pass.drawIndexed(...);
 //      }
 //
-//  5. Mipmap generations on the GPU
+//  5. Mipmap generation on the GPU
 //
 //      * WebGPU API does not provide mipmap generator
 //      * zgpu provides decent mipmap generator implemented in a compute shader
@@ -76,6 +84,7 @@
 //      * Currently it requires that: width == height and isPowerOfTwo(width)
 //      * It takes ~260 us to generate all mips for 1024x1024 rgba8_unorm texture on GTX 1660
 //
+//      // Usage:
 //      gctx.generateMipmaps(arena, command_encoder, texture_handle);
 //
 //  6. Image loading with 'stb_image' library (optional)
