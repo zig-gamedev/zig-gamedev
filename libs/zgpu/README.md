@@ -25,6 +25,11 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
+For sample applications please see:
+* [triangle (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu)
+* [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu)
+* [textured quad (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/textured_quad_wgpu)
+
 ## Library overview
 
 `zgpu` is a helper library for working with native WebGPU API (Dawn).
