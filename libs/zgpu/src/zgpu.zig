@@ -18,6 +18,7 @@
 //      };
 //      const mem = gctx.uniformsAllocate(DrawUniforms, 1);
 //      mem.slice[0] = .{ .object_to_world = zm.transpose(zm.translation(...)) };
+//
 //      pass.setBindGroup(0, bind_group, &.{mem.offset});
 //      pass.drawIndexed(...);
 //
@@ -30,8 +31,9 @@
 //      * All resources are stored in one system
 //      * We keep basic info about each resource (size of the buffer, format of the texture, etc.)
 //      * You can always check if resource is valid (very useful for async operations)
-//      * System keeps basic info about resource dependencies, for example, TextureViewHandle knows its
-//        parent texture and becomes invalid when parent texture becomes invalid
+//      * System keeps basic info about resource dependencies, for example, TextureViewHandle knows about its
+//        parent texture and becomes invalid when parent texture becomes invalid; BindGroupHandle knows
+//        about all resources it binds so it becomes invalid if any binded resource become invalid, etc.
 //
 //      const buffer_handle = gctx.createBuffer(...);
 //      if (gctx.isResourceValid(buffer_handle)) {
@@ -44,12 +46,27 @@
 //
 //  4. Async shader compilation
 //
-//      * Thanks to resource pools and resources identified by handles we can quite easily
-//        async compile all our shaders
+//      * Thanks to resource pools and resources identified by handles we can easily async compile
+//        all our shaders
+//
+//      const DemoState = struct {
+//          pipeline: zgpu.PipelineLayoutHandle = .{},
+//          ...
+//      };
+//      const demo = try allocator.create(DemoState);
+//      // Below call schedules pipeline compilation and returns immediately. When compilation is complete
+//      // valid pipeline handle will be stored in `demo.pipeline`.
+//      gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline);
+//
+//      // Pass using our pipeline will be skipped until compilation is ready
+//      pass: {
+//          const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
+//          ...
+//      }
 //
 //  5. Mipmap generations
 //
-//  6. Image loading (optional)
+//  6. Image loading with stb_image library (optional)
 //
 //  7. GUI based on dear imgui library (optional)
 //
