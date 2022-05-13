@@ -92,19 +92,22 @@ gctx.destroyResource(buffer_handle);
 
 ```zig
 const DemoState = struct {
-    pipeline: zgpu.PipelineLayoutHandle = .{},
+    pipeline_handle: zgpu.PipelineLayoutHandle = .{},
     ...
 };
 const demo = try allocator.create(DemoState);
 
 // Below call schedules pipeline compilation and returns immediately. When compilation is complete
-// valid pipeline handle will be stored in `demo.pipeline`.
-gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline);
+// valid pipeline handle will be stored in `demo.pipeline_handle`.
+gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline_handle);
 
 // Pass using our pipeline will be skipped until compilation is ready
 pass: {
-    const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
+    const pipeline = gctx.lookupResource(demo.pipeline_handle) orelse break :pass;
     ...
+
+    pass.setPipeline(pipeline);
+    pass.drawIndexed(...);
 }
 ```
 

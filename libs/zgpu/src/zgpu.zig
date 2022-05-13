@@ -1,6 +1,6 @@
 //  zgpu - version 0.1
 //
-//  zgpu is a helper library for working with native WebGPU API (Dawn).
+//  `zgpu` is a helper library for working with native WebGPU API (Dawn).
 //  Below you can find an overview of its main features.
 //
 //  1. Init
@@ -34,9 +34,9 @@
 //      * All resources are stored in one system
 //      * We keep basic info about each resource (size of the buffer, format of the texture, etc.)
 //      * You can always check if resource is valid (very useful for async operations)
-//      * System keeps basic info about resource dependencies, for example, TextureViewHandle knows about its
-//        parent texture and becomes invalid when parent texture becomes invalid; BindGroupHandle knows
-//        about all resources it binds so it becomes invalid if any bounded resource become invalid
+//      * System keeps basic info about resource dependencies, for example, `TextureViewHandle` knows about its
+//        parent texture and becomes invalid when parent texture becomes invalid; `BindGroupHandle` knows
+//        about all resources it binds so it becomes invalid if any of those resources become invalid
 //
 //      const buffer_handle = gctx.createBuffer(...);
 //      if (gctx.isResourceValid(buffer_handle)) {
