@@ -12,7 +12,7 @@ const gctx = try zgpu.GraphicsContext.init(allocator, window);
 // When you are done:
 gctx.deinit(allocator);
 ```
-2. Uniforms
+1. Uniforms
 
 * Implemented as a uniform buffer pool
 * Easy to use
@@ -32,7 +32,7 @@ pass.drawIndexed(...);
 gctx.submit(...); // Injects *one* copy operation to transfer *all* allocated uniforms
 ```
 
-3. Resource pools
+1. Resource pools
 
 * Every GPU resource is identified by 32-bit integer handle
 * All resources are stored in one system
@@ -56,7 +56,7 @@ if (gctx.isResourceValid(buffer_handle)) {
 gctx.destroyResource(buffer_handle);
 
 ```
-4. Async shader compilation
+1. Async shader compilation
 
 * Thanks to resource pools and resources identified by handles we can easily async compile all our shaders
 
@@ -78,7 +78,7 @@ pass: {
 }
 ```
 
-5. Mipmap generations on the GPU
+1. Mipmap generations on the GPU
 
 * WebGPU API does not provide mipmap generator
 * zgpu provides decent mipmap generator implemented in a compute shader
@@ -90,7 +90,8 @@ pass: {
 ```zig
 gctx.generateMipmaps(arena, command_encoder, texture_handle);
 ```
-6. Image loading with `stb_image` library (optional)
+
+1. Image loading with `stb_image` library (optional)
 
 ```zig
 // Defined in zgpu.stbi namespace
@@ -110,7 +111,7 @@ defer image.deinit();
 
 If you don't want to use `stb_image` library you can disable it in `build.zig`.
 
-7. GUI based on `dear imgui` library (optional)
+1. GUI based on `dear imgui` library (optional)
 
 ```zig
 zgpu.gui.init(window, gpu_device, "path_to_content_dir", font_name, font_size);
