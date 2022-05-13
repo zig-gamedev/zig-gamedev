@@ -1,5 +1,4 @@
 //  zgpu - version 0.1
-//  ------------------
 //
 //  zgpu is a helper library for working with native WebGPU API.
 //  Below you can find an overview of its main features.
