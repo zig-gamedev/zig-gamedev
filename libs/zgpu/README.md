@@ -2,7 +2,7 @@
 
 This library uses GLFW and WebGPU bindings + great build script from [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
 
-`zgpu` is a cross-platform (Windows/Linux/MacOS) graphics layer built on top of WebGPU API (Dawn).
+`zgpu` is a cross-platform (Windows/Linux/MacOS) graphics layer built on top of native WebGPU API (Dawn).
 
 ## Features:
 
