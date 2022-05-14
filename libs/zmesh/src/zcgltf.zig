@@ -271,3 +271,153 @@ pub const TextureTransform = extern struct {
     has_texcoord: Bool32,
     texcoord: i32,
 };
+
+pub const TextureView = extern struct {
+    texture: ?*Texture,
+    texcoord: i32,
+    scale: f32,
+    has_transform: Bool32,
+    transform: TextureTransform,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const PbrMetallicRoughness = extern struct {
+    base_color_texture: TextureView,
+    metallic_roughness_texture: TextureView,
+    base_color_factor: [4]f32,
+    metallic_factor: f32,
+    roughness_factor: f32,
+    extras: Extras,
+};
+
+pub const PbrSpecularGlossiness = extern struct {
+    diffuse_texture: TextureView,
+    specular_glossiness_texture: TextureView,
+    diffuse_factor: [4]f32,
+    specular_factor: [3]f32,
+    glossiness_factor: f32,
+};
+
+pub const Clearcoat = extern struct {
+    clearcoat_texture: TextureView,
+    clearcoat_roughness_texture: TextureView,
+    clearcoat_normal_texture: TextureView,
+    clearcoat_factor: f32,
+    clearcoat_roughness_factor: f32,
+};
+
+pub const Transmission = extern struct {
+    transmission_texture: TextureView,
+    transmission_factor: f32,
+};
+
+pub const Ior = extern struct {
+    ior: f32,
+};
+
+pub const Specular = extern struct {
+    specular_texture: TextureView,
+    specular_color_texture: TextureView,
+    specular_color_factor: [3]f32,
+    specular_factor: f32,
+};
+
+pub const Volume = extern struct {
+    thickness_texture: TextureView,
+    thickness_factor: f32,
+    attentuation_color: [3]f32,
+    attentuation_distance: f32,
+};
+
+pub const Sheen = extern struct {
+    sheen_color_texture: TextureView,
+    sheen_color_factor: [3]f32,
+    sheen_roughness_texture: TextureView,
+    sheen_roughness_factor: f32,
+};
+
+pub const EmissiveStrength = extern struct {
+    emissive_strength: f32,
+};
+
+pub const Material = extern struct {
+    name: ?MutCString,
+    has_pbr_metallic_roughness: Bool32,
+    has_pbr_specular_glossiness: Bool32,
+    has_clearcoat: Bool32,
+    has_transmission: Bool32,
+    has_volume: Bool32,
+    has_ior: Bool32,
+    has_specular: Bool32,
+    has_sheen: Bool32,
+    has_emissive_strength: Bool32,
+    pbr_metallic_roughness: PbrMetallicRoughness,
+    pbr_specular_glossiness: PbrSpecularGlossiness,
+    clearcoat: Clearcoat,
+    ior: Ior,
+    specular: Specular,
+    sheen: Sheen,
+    transmission: Transmission,
+    volume: Volume,
+    emissive_strength: EmissiveStrength,
+    normal_texture: TextureView,
+    occlusion_texture: TextureView,
+    emissive_texture: TextureView,
+    emissive_factor: [3]f32,
+    alpha_mode: AlphaMode,
+    alpha_cutoff: f32,
+    double_sided: Bool32,
+    unlit: Bool32,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const MaterialMapping = extern struct {
+    variant: usize,
+    material: ?*Material,
+    extras: Extras,
+};
+
+pub const MorphTarget = extern struct {
+    attributes: ?[*]Attribute,
+    attributes_count: usize,
+};
+
+pub const DracoMeshCompression = extern struct {
+    buffer_view: ?*BufferView,
+    attributes: ?[*]Attribute,
+    attributes_count: usize,
+};
+
+pub const Primitive = extern struct {
+    type: PrimitiveType,
+    indices: ?*Accessor,
+    material: ?*Material,
+    attributes: [*]Attribute, // required
+    attributes_count: usize,
+    targets: ?[*]MorphTarget,
+    targets_count: usize,
+    extras: Extras,
+    has_draco_mesh_compression: Bool32,
+    draco_mesh_compression: DracoMeshCompression,
+    mappings: ?[*]MaterialMapping,
+    mappings_count: usize,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const Mesh = extern struct {
+    name: ?MutCString,
+    primitives: [*]Primitive, // required
+    primitives_count: usize,
+    weights: ?[*]f32,
+    weights_count: usize,
+    target_names: ?[*]MutCString,
+    target_names_count: usize,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
