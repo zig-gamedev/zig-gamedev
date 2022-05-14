@@ -1,8 +1,8 @@
-# zgpu - version 0.1
+# zgpu v0.1 - Cross-platform graphics layer
 
 This library uses GLFW and WebGPU bindings + great build script from [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
 
-`zgpu` is a cross-platform (Windows/Linux/MacOS) graphics layer built on top of WebGPU API (Dawn).
+`zgpu` is a cross-platform (Windows/Linux/MacOS) graphics layer built on top of native WebGPU API (Dawn).
 
 ## Features:
 
@@ -22,7 +22,6 @@ Copy `zgpu`, `mach-glfw` and `mach-gpu-dawn` folders to a `libs` subdirectory of
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
 const glfw = @import("libs/mach-glfw/build.zig");
 const zgpu = @import("libs/zgpu/build.zig");
 
@@ -171,7 +170,7 @@ while (...) {
 
     // Draw
     {
-        // Begin render pass with only one color attachment and *no depth-stencil* attachment
+        // Begin render pass with only one color attachment and *without depth-stencil* attachment
         const pass = encoder.beginRenderPass(...);
         defer {
             pass.end();
