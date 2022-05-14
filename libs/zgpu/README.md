@@ -170,7 +170,7 @@ while (...) {
 
     // Draw
     {
-        // Begin render pass with only one color attachment and *no depth-stencil* attachment
+        // Begin render pass with only one color attachment and *without depth-stencil* attachment
         const pass = encoder.beginRenderPass(...);
         defer {
             pass.end();
