@@ -421,3 +421,206 @@ pub const Mesh = extern struct {
     extensions_count: usize,
     extensions: ?[*]Extension,
 };
+
+pub const Skin = extern struct {
+    name: ?MutCString,
+    joints: [*]*Node, // required
+    joints_count: usize,
+    skeleton: ?*Node,
+    inverse_bind_matrices: ?*Accessor,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const CameraPerspective = extern struct {
+    has_aspect_ratio: Bool32,
+    aspect_ratio: f32,
+    yfov: f32,
+    has_zfar: Bool32,
+    zfar: f32,
+    znear: f32,
+    extras: Extras,
+};
+
+pub const CameraOrthographic = extern struct {
+    xmag: f32,
+    ymag: f32,
+    zfar: f32,
+    znear: f32,
+    extras: Extras,
+};
+
+pub const Camera = extern struct {
+    name: ?MutCString,
+    type: CameraType,
+    data: extern union {
+        perspective: CameraPerspective,
+        orthographic: CameraOrthographic,
+    },
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const Light = extern struct {
+    name: ?MutCString,
+    color: [3]f32,
+    intensity: f32,
+    type: LightType,
+    range: f32,
+    spot_inner_cone_angle: f32,
+    spot_outer_cone_angle: f32,
+    extras: Extras,
+};
+
+pub const Node = extern struct {
+    name: ?MutCString,
+    parent: ?*Node,
+    children: ?[*]*Node,
+    children_count: usize,
+    skin: ?*Skin,
+    mesh: ?*Mesh,
+    camera: ?*Camera,
+    light: ?*Light,
+    weights: [*]f32,
+    weights_count: usize,
+    has_translation: Bool32,
+    has_rotation: Bool32,
+    has_scale: Bool32,
+    has_matrix: Bool32,
+    translation: [3]f32,
+    rotation: [4]f32,
+    scale: [3]f32,
+    matrix: [16]f32,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const Scene = extern struct {
+    name: ?MutCString,
+    nodes: ?[*]*Node,
+    nodes_count: usize,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const AnimationSampler = extern struct {
+    input: *Accessor, // required
+    output: *Accessor, // required
+    interpolation: InterpolationType,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const AnimationChannel = extern struct {
+    sampler: *AnimationSampler, // required
+    target_node: ?*Node,
+    target_path: AnimationPathType,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const Animation = extern struct {
+    name: ?MutCString,
+    samplers: [*]AnimationSampler, // required
+    samplers_count: usize,
+    channels: [*]AnimationChannel, // required
+    channels_count: usize,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const MaterialVariant = extern struct {
+    name: ?MutCString,
+    extras: Extras,
+};
+
+pub const Asset = extern struct {
+    copyright: ?MutCString,
+    generator: ?MutCString,
+    version: ?MutCString,
+    min_version: ?MutCString,
+    extras: Extras,
+    extensions_count: usize,
+    extensions: ?[*]Extension,
+};
+
+pub const Data = extern struct {
+    file_type: FileType,
+    file_data: ?*anyopaque,
+
+    asset: Asset,
+
+    meshes: ?[*]Mesh,
+    meshes_count: usize,
+
+    materials: ?[*]Material,
+    materials_count: usize,
+
+    accessors: ?[*]Accessor,
+    accessors_count: usize,
+
+    buffer_views: ?[*]BufferView,
+    buffer_views_count: usize,
+
+    buffers: ?[*]Buffer,
+    buffers_count: usize,
+
+    images: ?[*]Image,
+    images_count: usize,
+
+    textures: ?[*]Texture,
+    textures_count: usize,
+
+    samplers: ?[*]Sampler,
+    samplers_count: usize,
+
+    skins: ?[*]Skin,
+    skins_count: usize,
+
+    cameras: ?[*]Camera,
+    cameras_count: usize,
+
+    lights: ?[*]Light,
+    lights_count: usize,
+
+    nodes: ?[*]Node,
+    nodes_count: usize,
+
+    scenes: ?[*]Scene,
+    scenes_count: usize,
+
+    scene: ?*Scene,
+
+    animations: ?[*]Animation,
+    animations_count: usize,
+
+    variants: ?[*]MaterialVariant,
+    variants_count: usize,
+
+    extras: Extras,
+
+    data_extensions_count: usize,
+    data_extensions: ?[*]Extension,
+
+    extensions_used: ?[*]MutCString,
+    extensions_used_count: usize,
+
+    extensions_required: ?[*]MutCString,
+    extensions_required_count: usize,
+
+    json: ?CString,
+    json_size: usize,
+
+    bin: ?*const anyopaque,
+    bin_size: usize,
+
+    memory: MemoryOptions,
+    file: FileOptions,
+};
