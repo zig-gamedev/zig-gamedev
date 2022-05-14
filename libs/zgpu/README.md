@@ -1,4 +1,4 @@
-# zgpu - version 0.1
+# zgpu v0.1 - Cross-platform graphics layer
 
 This library uses GLFW and WebGPU bindings + great build script from [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
 
