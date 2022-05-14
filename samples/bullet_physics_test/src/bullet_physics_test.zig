@@ -260,7 +260,7 @@ fn loadAllMeshes(
         const pre_positions_len = all_positions.items.len;
 
         const data = zmesh.gltf.parseAndLoadFile(path) catch unreachable;
-        defer zmesh.gltf.freeData(data);
+        defer zmesh.gltf.free(data);
         zmesh.gltf.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
 
         all_meshes.append(.{

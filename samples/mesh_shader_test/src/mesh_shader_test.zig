@@ -121,7 +121,7 @@ fn loadMeshAndGenerateMeshlets(
     var src_indices = std.ArrayList(u32).init(arena_allocator);
 
     const data = zmesh.gltf.parseAndLoadFile(file_path) catch unreachable;
-    defer zmesh.gltf.freeData(data);
+    defer zmesh.gltf.free(data);
     zmesh.gltf.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 
     var src_vertices = std.ArrayList(Vertex).initCapacity(

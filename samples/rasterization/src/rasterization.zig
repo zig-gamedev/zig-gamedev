@@ -208,7 +208,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         const data = zmesh.gltf.parseAndLoadFile(
             content_dir ++ "SciFiHelmet/SciFiHelmet.gltf",
         ) catch unreachable;
-        defer zmesh.gltf.freeData(data);
+        defer zmesh.gltf.free(data);
 
         zmesh.gltf.appendMeshPrimitive(
             data,

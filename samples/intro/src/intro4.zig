@@ -132,7 +132,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         zmesh.init(arena_allocator);
         defer zmesh.deinit();
         const data = try zmesh.gltf.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
-        defer zmesh.gltf.freeData(data);
+        defer zmesh.gltf.free(data);
         zmesh.gltf.appendMeshPrimitive(
             data,
             0,

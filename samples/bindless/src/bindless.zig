@@ -139,7 +139,7 @@ fn loadMesh(
     const pre_positions_len = all_vertices.items.len;
 
     const data = zmesh.gltf.parseAndLoadFile(file_path) catch unreachable;
-    defer zmesh.gltf.freeData(data);
+    defer zmesh.gltf.free(data);
     zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
     all_meshes.append(.{

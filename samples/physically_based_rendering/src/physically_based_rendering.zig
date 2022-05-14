@@ -121,7 +121,7 @@ fn loadAllMeshes(
         const pre_positions_len = positions.items.len;
 
         const data = zmesh.gltf.parseAndLoadFile(content_dir ++ "cube.gltf") catch unreachable;
-        defer zmesh.gltf.freeData(data);
+        defer zmesh.gltf.free(data);
         zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
         all_meshes.append(.{
@@ -135,7 +135,7 @@ fn loadAllMeshes(
         const pre_positions_len = positions.items.len;
 
         const data = zmesh.gltf.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf") catch unreachable;
-        defer zmesh.gltf.freeData(data);
+        defer zmesh.gltf.free(data);
         zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
         all_meshes.append(.{

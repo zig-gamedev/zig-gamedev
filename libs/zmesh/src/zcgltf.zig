@@ -638,26 +638,20 @@ pub const Error = error{
 };
 
 pub fn parse(options: Options, data: []const u8) Error!*Data {
-    var out_data: ?*Data = undefined;
+    var out_data: ?*Data = null;
     const result = cgltf_parse(&options, data.ptr, data.len, &out_data);
-    if (result == .success)
-        return out_data.?;
-    return resultToError(result);
+    return try resultToError(result, out_data);
 }
 
 pub fn parseFile(options: Options, path: [*:0]const u8) Error!*Data {
-    var out_data: ?*Data = undefined;
+    var out_data: ?*Data = null;
     const result = cgltf_parse_file(&options, path, &out_data);
-    if (result == .success)
-        return out_data.?;
-    return resultToError(result);
+    return try resultToError(result, out_data);
 }
 
 pub fn loadBuffers(options: Options, data: *Data, gltf_path: [*:0]const u8) Error!void {
     const result = cgltf_load_buffers(&options, data, gltf_path);
-    if (result == .success)
-        return;
-    return resultToError(result);
+    _ = try resultToError(result, data);
 }
 
 pub fn free(data: *Data) void {
@@ -669,7 +663,10 @@ extern fn cgltf_parse_file(options: ?*const Options, path: ?[*:0]const u8, out_d
 extern fn cgltf_load_buffers(options: ?*const Options, data: ?*Data, gltf_path: ?[*:0]const u8) Result;
 extern fn cgltf_free(data: ?*Data) void;
 
-fn resultToError(result: Result) Error!void {
+fn resultToError(result: Result, data: ?*Data) Error!*Data {
+    if (result == .success)
+        return data.?;
+
     return switch (result) {
         .data_too_short => error.DataTooShort,
         .unknown_format => error.UnknownFormat,
