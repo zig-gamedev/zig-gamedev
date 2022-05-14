@@ -624,3 +624,62 @@ pub const Data = extern struct {
     memory: MemoryOptions,
     file: FileOptions,
 };
+
+pub const Error = error{
+    DataTooShort,
+    UnknownFormat,
+    InvalidJson,
+    InvalidGltf,
+    InvalidOptions,
+    FileNotFound,
+    IoError,
+    OutOfMemory,
+    LegacyGltf,
+};
+
+pub fn parse(options: Options, data: []const u8) Error!*Data {
+    var out_data: ?*Data = undefined;
+    const result = cgltf_parse(&options, data.ptr, data.len, &out_data);
+    if (result == .success)
+        return out_data.?;
+    return resultToError(result);
+}
+
+pub fn parseFile(options: Options, path: [*:0]const u8) Error!*Data {
+    var out_data: ?*Data = undefined;
+    const result = cgltf_parse_file(&options, path, &out_data);
+    if (result == .success)
+        return out_data.?;
+    return resultToError(result);
+}
+
+pub fn loadBuffers(options: Options, data: *Data, gltf_path: [*:0]const u8) Error!void {
+    const result = cgltf_load_buffers(&options, data, gltf_path);
+    if (result == .success)
+        return;
+    return resultToError(result);
+}
+
+pub fn free(data: *Data) void {
+    cgltf_free(data);
+}
+
+extern fn cgltf_parse(options: ?*const Options, data: ?*const anyopaque, size: usize, out_data: ?*?*Data) Result;
+extern fn cgltf_parse_file(options: ?*const Options, path: ?[*:0]const u8, out_data: ?*?*Data) Result;
+extern fn cgltf_load_buffers(options: ?*const Options, data: ?*Data, gltf_path: ?[*:0]const u8) Result;
+extern fn cgltf_free(data: ?*Data) void;
+
+fn resultToError(result: Result) Error!void {
+    return switch (result) {
+        .data_too_short => error.DataTooShort,
+        .unknown_format => error.UnknownFormat,
+        .invalid_json => error.InvalidJson,
+        .invalid_gltf => error.InvalidGltf,
+        .invalid_options => error.InvalidOptions,
+        .file_not_found => error.FileNotFound,
+        .io_error => error.IoError,
+        .out_of_memory => error.OutOfMemory,
+        .legacy_gltf => error.LegacyGltf,
+        else => unreachable,
+    };
+}
