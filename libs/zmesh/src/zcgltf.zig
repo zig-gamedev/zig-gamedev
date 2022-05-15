@@ -76,6 +76,18 @@ pub const Type = enum(c_int) {
     mat2,
     mat3,
     mat4,
+
+    pub fn numComponents(dtype: Type) usize {
+        return switch (dtype) {
+            .vec2 => 2,
+            .vec3 => 3,
+            .vec4 => 4,
+            .mat2 => 4,
+            .mat3 => 9,
+            .mat4 => 16,
+            else => 1,
+        };
+    }
 };
 
 pub const PrimitiveType = enum(c_int) {
@@ -342,6 +354,15 @@ pub const EmissiveStrength = extern struct {
     emissive_strength: f32,
 };
 
+pub const Iridescence = extern struct {
+    iridescence_factor: f32,
+    iridescence_texture: TextureView,
+    iridescence_ior: f32,
+    iridescence_thickness_min: f32,
+    iridescence_thickness_max: f32,
+    iridescence_thickness_texture: TextureView,
+};
+
 pub const Material = extern struct {
     name: ?MutCString,
     has_pbr_metallic_roughness: Bool32,
@@ -353,6 +374,7 @@ pub const Material = extern struct {
     has_specular: Bool32,
     has_sheen: Bool32,
     has_emissive_strength: Bool32,
+    has_iridescence: Bool32,
     pbr_metallic_roughness: PbrMetallicRoughness,
     pbr_specular_glossiness: PbrSpecularGlossiness,
     clearcoat: Clearcoat,
@@ -362,6 +384,7 @@ pub const Material = extern struct {
     transmission: Transmission,
     volume: Volume,
     emissive_strength: EmissiveStrength,
+    iridescence: Iridescence,
     normal_texture: TextureView,
     occlusion_texture: TextureView,
     emissive_texture: TextureView,
@@ -387,6 +410,12 @@ pub const MorphTarget = extern struct {
 };
 
 pub const DracoMeshCompression = extern struct {
+    buffer_view: ?*BufferView,
+    attributes: ?[*]Attribute,
+    attributes_count: usize,
+};
+
+pub const MeshGpuInstancing = extern struct {
     buffer_view: ?*BufferView,
     attributes: ?[*]Attribute,
     attributes_count: usize,
@@ -494,6 +523,8 @@ pub const Node = extern struct {
     scale: [3]f32,
     matrix: [16]f32,
     extras: Extras,
+    has_mesh_gpu_instancing: Bool32,
+    mesh_gpu_instancing: MeshGpuInstancing,
     extensions_count: usize,
     extensions: ?[*]Extension,
 };
@@ -658,10 +689,15 @@ pub fn free(data: *Data) void {
     cgltf_free(data);
 }
 
+pub fn validate(data: *Data) Result {
+    return cgltf_validate(data);
+}
+
 extern fn cgltf_parse(options: ?*const Options, data: ?*const anyopaque, size: usize, out_data: ?*?*Data) Result;
 extern fn cgltf_parse_file(options: ?*const Options, path: ?[*:0]const u8, out_data: ?*?*Data) Result;
 extern fn cgltf_load_buffers(options: ?*const Options, data: ?*Data, gltf_path: ?[*:0]const u8) Result;
 extern fn cgltf_free(data: ?*Data) void;
+extern fn cgltf_validate(data: ?*Data) Result;
 
 fn resultToError(result: Result, data: ?*Data) Error!*Data {
     if (result == .success)
