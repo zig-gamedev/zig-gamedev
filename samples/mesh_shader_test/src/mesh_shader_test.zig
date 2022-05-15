@@ -115,19 +115,19 @@ fn loadMeshAndGenerateMeshlets(
     all_indices: *std.ArrayList(u32),
     all_meshlets: *std.ArrayList(Meshlet),
     all_meshlets_data: *std.ArrayList(u32),
-) void {
+) !void {
     var src_positions = std.ArrayList([3]f32).init(arena_allocator);
     var src_normals = std.ArrayList([3]f32).init(arena_allocator);
     var src_indices = std.ArrayList(u32).init(arena_allocator);
 
-    const data = zmesh.io.parseAndLoadFile(file_path) catch unreachable;
+    const data = try zmesh.io.parseAndLoadFile(file_path);
     defer zmesh.io.cgltf.free(data);
-    zmesh.io.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
+    try zmesh.io.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 
-    var src_vertices = std.ArrayList(Vertex).initCapacity(
+    var src_vertices = try std.ArrayList(Vertex).initCapacity(
         arena_allocator,
         src_positions.items.len,
-    ) catch unreachable;
+    );
 
     for (src_positions.items) |_, index| {
         src_vertices.appendAssumeCapacity(.{
@@ -137,7 +137,7 @@ fn loadMeshAndGenerateMeshlets(
     }
 
     var remap = std.ArrayList(u32).init(arena_allocator);
-    remap.resize(src_indices.items.len) catch unreachable;
+    try remap.resize(src_indices.items.len);
     const num_unique_vertices = zmesh.opt.generateVertexRemap(
         remap.items,
         src_indices.items,
@@ -146,7 +146,7 @@ fn loadMeshAndGenerateMeshlets(
     );
 
     var opt_vertices = std.ArrayList(Vertex).init(arena_allocator);
-    opt_vertices.resize(num_unique_vertices) catch unreachable;
+    try opt_vertices.resize(num_unique_vertices);
     zmesh.opt.remapVertexBuffer(
         Vertex,
         opt_vertices.items,
@@ -155,7 +155,7 @@ fn loadMeshAndGenerateMeshlets(
     );
 
     var opt_indices = std.ArrayList(u32).init(arena_allocator);
-    opt_indices.resize(src_indices.items.len) catch unreachable;
+    try opt_indices.resize(src_indices.items.len);
     zmesh.opt.remapIndexBuffer(
         opt_indices.items,
         src_indices.items,
@@ -184,9 +184,9 @@ fn loadMeshAndGenerateMeshlets(
     var meshlets = std.ArrayList(zmesh.opt.Meshlet).init(arena_allocator);
     var meshlet_vertices = std.ArrayList(u32).init(arena_allocator);
     var meshlet_triangles = std.ArrayList(u8).init(arena_allocator);
-    meshlets.resize(max_num_meshlets) catch unreachable;
-    meshlet_vertices.resize(max_num_meshlets * max_num_meshlet_vertices) catch unreachable;
-    meshlet_triangles.resize(max_num_meshlets * max_num_meshlet_triangles * 3) catch unreachable;
+    try meshlets.resize(max_num_meshlets);
+    try meshlet_vertices.resize(max_num_meshlets * max_num_meshlet_vertices);
+    try meshlet_triangles.resize(max_num_meshlets * max_num_meshlet_triangles * 3);
 
     const num_meshlets = zmesh.opt.buildMeshlets(
         meshlets.items,
@@ -200,16 +200,16 @@ fn loadMeshAndGenerateMeshlets(
         0.0,
     );
     assert(num_meshlets <= max_num_meshlets);
-    meshlets.resize(num_meshlets) catch unreachable;
+    try meshlets.resize(num_meshlets);
 
-    all_meshes.append(.{
+    try all_meshes.append(.{
         .index_offset = @intCast(u32, all_indices.items.len),
         .vertex_offset = @intCast(u32, all_vertices.items.len),
         .meshlet_offset = @intCast(u32, all_meshlets.items.len),
         .num_indices = @intCast(u32, opt_indices.items.len),
         .num_vertices = @intCast(u32, opt_vertices.items.len),
         .num_meshlets = @intCast(u32, meshlets.items.len),
-    }) catch unreachable;
+    });
 
     for (meshlets.items) |src_meshlet| {
         const meshlet = Meshlet{
@@ -217,11 +217,11 @@ fn loadMeshAndGenerateMeshlets(
             .num_vertices = @intCast(u16, src_meshlet.vertex_count),
             .num_triangles = @intCast(u16, src_meshlet.triangle_count),
         };
-        all_meshlets.append(meshlet) catch unreachable;
+        try all_meshlets.append(meshlet);
 
         var i: u32 = 0;
         while (i < src_meshlet.vertex_count) : (i += 1) {
-            all_meshlets_data.append(meshlet_vertices.items[src_meshlet.vertex_offset + i]) catch unreachable;
+            try all_meshlets_data.append(meshlet_vertices.items[src_meshlet.vertex_offset + i]);
         }
 
         i = 0;
@@ -230,12 +230,12 @@ fn loadMeshAndGenerateMeshlets(
             const index1 = @intCast(u10, meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 1]);
             const index2 = @intCast(u10, meshlet_triangles.items[src_meshlet.triangle_offset + i * 3 + 2]);
             const prim = @intCast(u32, index0) | (@intCast(u32, index1) << 10) | (@intCast(u32, index2) << 20);
-            all_meshlets_data.append(prim) catch unreachable;
+            try all_meshlets_data.append(prim);
         }
     }
 
-    all_indices.appendSlice(opt_indices.items) catch unreachable;
-    all_vertices.appendSlice(opt_vertices.items) catch unreachable;
+    try all_indices.appendSlice(opt_indices.items);
+    try all_vertices.appendSlice(opt_vertices.items);
 }
 
 fn init(allocator: std.mem.Allocator) !DemoState {
@@ -336,7 +336,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var all_indices = std.ArrayList(u32).init(arena_allocator);
     var all_meshlets = std.ArrayList(Meshlet).init(arena_allocator);
     var all_meshlets_data = std.ArrayList(u32).init(arena_allocator);
-    loadMeshAndGenerateMeshlets(
+    try loadMeshAndGenerateMeshlets(
         arena_allocator,
         content_dir ++ "cube.gltf",
         &all_meshes,
@@ -345,7 +345,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
         &all_meshlets,
         &all_meshlets_data,
     );
-    loadMeshAndGenerateMeshlets(
+    try loadMeshAndGenerateMeshlets(
         arena_allocator,
         content_dir ++ "engine.gltf",
         &all_meshes,

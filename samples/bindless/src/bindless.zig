@@ -128,7 +128,7 @@ fn loadMesh(
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
-) void {
+) !void {
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
     var normals = std.ArrayList([3]f32).init(arena);
@@ -138,9 +138,9 @@ fn loadMesh(
     const pre_indices_len = all_indices.items.len;
     const pre_positions_len = all_vertices.items.len;
 
-    const data = zmesh.io.parseAndLoadFile(file_path) catch unreachable;
+    const data = try zmesh.io.parseAndLoadFile(file_path);
     defer zmesh.io.cgltf.free(data);
-    zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+    try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
     all_meshes.append(.{
         .index_offset = @intCast(u32, pre_indices_len),
@@ -148,12 +148,12 @@ fn loadMesh(
         .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
     }) catch unreachable;
 
-    all_indices.ensureTotalCapacity(indices.items.len) catch unreachable;
+    try all_indices.ensureTotalCapacity(indices.items.len);
     for (indices.items) |mesh_index| {
         all_indices.appendAssumeCapacity(mesh_index);
     }
 
-    all_vertices.ensureTotalCapacity(positions.items.len) catch unreachable;
+    try all_vertices.ensureTotalCapacity(positions.items.len);
     for (positions.items) |_, index| {
         all_vertices.appendAssumeCapacity(.{
             .position = positions.items[index],
@@ -363,8 +363,8 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
 
-    loadMesh(arena_allocator, content_dir ++ "cube.gltf", &all_meshes, &all_vertices, &all_indices);
-    loadMesh(
+    try loadMesh(arena_allocator, content_dir ++ "cube.gltf", &all_meshes, &all_vertices, &all_indices);
+    try loadMesh(
         arena_allocator,
         content_dir ++ "SciFiHelmet/SciFiHelmet.gltf",
         &all_meshes,

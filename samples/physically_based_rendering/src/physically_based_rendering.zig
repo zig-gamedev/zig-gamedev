@@ -109,7 +109,7 @@ fn loadAllMeshes(
     all_meshes: *std.ArrayList(Mesh),
     all_vertices: *std.ArrayList(Vertex),
     all_indices: *std.ArrayList(u32),
-) void {
+) !void {
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
     var normals = std.ArrayList([3]f32).init(arena);
@@ -120,37 +120,37 @@ fn loadAllMeshes(
         const pre_indices_len = indices.items.len;
         const pre_positions_len = positions.items.len;
 
-        const data = zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf") catch unreachable;
+        const data = try zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf");
         defer zmesh.io.cgltf.free(data);
-        zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+        try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
-        all_meshes.append(.{
+        try all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
             .vertex_offset = @intCast(u32, pre_positions_len),
             .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
-        }) catch unreachable;
+        });
     }
     {
         const pre_indices_len = indices.items.len;
         const pre_positions_len = positions.items.len;
 
-        const data = zmesh.io.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf") catch unreachable;
+        const data = try zmesh.io.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
         defer zmesh.io.cgltf.free(data);
-        zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+        try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
-        all_meshes.append(.{
+        try all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
             .vertex_offset = @intCast(u32, pre_positions_len),
             .num_indices = @intCast(u32, indices.items.len - pre_indices_len),
-        }) catch unreachable;
+        });
     }
 
-    all_indices.ensureTotalCapacity(indices.items.len) catch unreachable;
+    try all_indices.ensureTotalCapacity(indices.items.len);
     for (indices.items) |mesh_index| {
         all_indices.appendAssumeCapacity(mesh_index);
     }
 
-    all_vertices.ensureTotalCapacity(positions.items.len) catch unreachable;
+    try all_vertices.ensureTotalCapacity(positions.items.len);
     for (positions.items) |_, index| {
         all_vertices.appendAssumeCapacity(.{
             .position = positions.items[index],
@@ -355,7 +355,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var all_meshes = std.ArrayList(Mesh).init(allocator);
     var all_vertices = std.ArrayList(Vertex).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
-    loadAllMeshes(arena_allocator, &all_meshes, &all_vertices, &all_indices);
+    try loadAllMeshes(arena_allocator, &all_meshes, &all_vertices, &all_indices);
 
     const depth_texture = .{
         .resource = gctx.createCommittedResource(

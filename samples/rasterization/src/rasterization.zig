@@ -205,12 +205,12 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var mesh_texcoords = std.ArrayList([2]f32).init(arena_allocator);
     var mesh_tangents = std.ArrayList([4]f32).init(arena_allocator);
     {
-        const data = zmesh.io.parseAndLoadFile(
+        const data = try zmesh.io.parseAndLoadFile(
             content_dir ++ "SciFiHelmet/SciFiHelmet.gltf",
-        ) catch unreachable;
+        );
         defer zmesh.io.cgltf.free(data);
 
-        zmesh.io.appendMeshPrimitive(
+        try zmesh.io.appendMeshPrimitive(
             data,
             0,
             0,

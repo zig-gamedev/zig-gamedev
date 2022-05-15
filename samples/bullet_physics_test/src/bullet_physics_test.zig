@@ -246,7 +246,7 @@ fn loadAllMeshes(
     all_positions: *std.ArrayList([3]f32),
     all_normals: *std.ArrayList([3]f32),
     all_indices: *std.ArrayList(u32),
-) void {
+) !void {
     const paths = [_][:0]const u8{
         content_dir ++ "cube.gltf",
         content_dir ++ "sphere.gltf",
@@ -259,16 +259,16 @@ fn loadAllMeshes(
         const pre_indices_len = all_indices.items.len;
         const pre_positions_len = all_positions.items.len;
 
-        const data = zmesh.io.parseAndLoadFile(path) catch unreachable;
+        const data = try zmesh.io.parseAndLoadFile(path);
         defer zmesh.io.cgltf.free(data);
-        zmesh.io.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
+        try zmesh.io.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
 
-        all_meshes.append(.{
+        try all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
             .vertex_offset = @intCast(u32, pre_positions_len),
             .num_indices = @intCast(u32, all_indices.items.len - pre_indices_len),
             .num_vertices = @intCast(u32, all_positions.items.len - pre_positions_len),
-        }) catch unreachable;
+        });
     }
 }
 
@@ -1033,12 +1033,12 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var all_positions = std.ArrayList([3]f32).init(arena_allocator);
     var all_normals = std.ArrayList([3]f32).init(arena_allocator);
     var all_indices = std.ArrayList(u32).init(arena_allocator);
-    loadAllMeshes(&all_meshes, &all_positions, &all_normals, &all_indices);
+    try loadAllMeshes(&all_meshes, &all_positions, &all_normals, &all_indices);
 
     const physics_world = zb.cbtWorldCreate();
     zb.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
 
-    var physics_debug = allocator.create(PhysicsDebug) catch unreachable;
+    var physics_debug = try allocator.create(PhysicsDebug);
     physics_debug.* = PhysicsDebug.init(allocator);
 
     zb.cbtWorldDebugSetDrawer(physics_world, &.{
