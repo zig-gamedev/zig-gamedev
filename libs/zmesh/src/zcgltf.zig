@@ -1,3 +1,6 @@
+const std = @import("std");
+const assert = std.debug.assert;
+
 pub const Bool32 = i32;
 pub const CString = [*:0]const u8;
 pub const MutCString = [*:0]u8;
@@ -235,6 +238,31 @@ pub const Accessor = extern struct {
     extras: Extras,
     extensions_count: usize,
     extensions: ?[*]Extension,
+
+    pub fn unpackFloatsCount(accessor: Accessor) usize {
+        return cgltf_accessor_unpack_floats(&accessor, null, 0);
+    }
+
+    pub fn unpackFloats(accessor: Accessor, out: []f32) []f32 {
+        const count = cgltf_accessor_unpack_floats(&accessor, out.ptr, out.len);
+        return out[0..count];
+    }
+
+    pub fn readFloat(accessor: Accessor, index: usize, out: []f32) bool {
+        assert(out.len == accessor.type.numComponents());
+        const result = cgltf_accessor_read_float(&accessor, index, out.ptr, out.len);
+        return result != 0;
+    }
+
+    pub fn readUint(accessor: Accessor, index: usize, out: []u32) bool {
+        assert(out.len == accessor.type.numComponents());
+        const result = cgltf_accessor_read_uint(&accessor, index, out.ptr, out.len);
+        return result != 0;
+    }
+
+    pub fn readIndex(accessor: Accessor, index: usize) usize {
+        return cgltf_accessor_read_index(&accessor, index);
+    }
 };
 
 pub const Attribute = extern struct {
@@ -527,6 +555,18 @@ pub const Node = extern struct {
     mesh_gpu_instancing: MeshGpuInstancing,
     extensions_count: usize,
     extensions: ?[*]Extension,
+
+    pub fn transformLocal(node: Node) [16]f32 {
+        var transform: [16]f32 = undefined;
+        cgltf_node_transform_local(&node, &transform);
+        return transform;
+    }
+
+    pub fn transformWorld(node: Node) [16]f32 {
+        var transform: [16]f32 = undefined;
+        cgltf_node_transform_world(&node, &transform);
+        return transform;
+    }
 };
 
 pub const Scene = extern struct {
@@ -724,6 +764,41 @@ extern fn cgltf_decode_uri(string: ?MutCString) usize;
 
 extern fn cgltf_free(data: ?*Data) void;
 extern fn cgltf_validate(data: ?*Data) Result;
+
+extern fn cgltf_node_transform_local(node: ?*const Node, out_matrix: ?*[16]f32) void;
+extern fn cgltf_node_transform_world(node: ?*const Node, out_matrix: ?*[16]f32) void;
+
+extern fn cgltf_accessor_read_float(
+    accessor: ?*const Accessor,
+    index: usize,
+    out: ?[*]f32,
+    element_size: usize,
+) Bool32;
+
+extern fn cgltf_accessor_read_uint(
+    accessor: ?*const Accessor,
+    index: usize,
+    out: ?[*]u32,
+    element_size: usize,
+) Bool32;
+
+extern fn cgltf_accessor_read_index(
+    accessor: ?*const Accessor,
+    index: usize,
+) usize;
+
+extern fn cgltf_accessor_unpack_floats(
+    accessor: ?*const Accessor,
+    out: ?[*]f32,
+    float_count: usize,
+) usize;
+
+extern fn cgltf_copy_extras_json(
+    data: ?*const Data,
+    extras: ?*const Extras,
+    dest: ?[*]u8,
+    dest_size: ?*usize,
+) Result;
 
 fn resultToError(result: Result, data: ?*Data) Error!*Data {
     if (result == .success)
