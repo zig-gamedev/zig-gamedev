@@ -693,9 +693,35 @@ pub fn validate(data: *Data) Result {
     return cgltf_validate(data);
 }
 
-extern fn cgltf_parse(options: ?*const Options, data: ?*const anyopaque, size: usize, out_data: ?*?*Data) Result;
-extern fn cgltf_parse_file(options: ?*const Options, path: ?[*:0]const u8, out_data: ?*?*Data) Result;
-extern fn cgltf_load_buffers(options: ?*const Options, data: ?*Data, gltf_path: ?[*:0]const u8) Result;
+extern fn cgltf_parse(
+    options: ?*const Options,
+    data: ?*const anyopaque,
+    size: usize,
+    out_data: ?*?*Data,
+) Result;
+
+extern fn cgltf_parse_file(
+    options: ?*const Options,
+    path: ?[*:0]const u8,
+    out_data: ?*?*Data,
+) Result;
+
+extern fn cgltf_load_buffers(
+    options: ?*const Options,
+    data: ?*Data,
+    gltf_path: ?[*:0]const u8,
+) Result;
+
+extern fn cgltf_load_buffer_base64(
+    options: ?*const Options,
+    size: usize,
+    base64: ?[*:0]const u8,
+    out_data: ?*?*Data,
+) Result;
+
+extern fn cgltf_decode_string(string: ?MutCString) usize;
+extern fn cgltf_decode_uri(string: ?MutCString) usize;
+
 extern fn cgltf_free(data: ?*Data) void;
 extern fn cgltf_validate(data: ?*Data) Result;
 
