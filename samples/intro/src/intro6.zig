@@ -135,9 +135,9 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     {
         zmesh.init(arena_allocator);
         defer zmesh.deinit();
-        const data = try zmesh.gltf.parseAndLoadFile(content_dir ++ "cube.gltf");
-        defer zmesh.gltf.free(data);
-        zmesh.gltf.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, null, null);
+        const data = try zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf");
+        defer zmesh.io.cgltf.free(data);
+        zmesh.io.appendMeshPrimitive(data, 0, 0, &mesh_indices, &mesh_positions, &mesh_normals, null, null);
     }
     const mesh_num_indices = @intCast(u32, mesh_indices.items.len);
     const mesh_num_vertices = @intCast(u32, mesh_positions.items.len);

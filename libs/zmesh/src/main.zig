@@ -1,8 +1,8 @@
-// zmesh v0.2
+// zmesh v0.3 (wip)
 
 pub const Shape = @import("Shape.zig");
-pub const gltf = @import("gltf.zig");
-pub usingnamespace @import("meshoptimizer.zig");
+pub const io = @import("io.zig");
+pub const opt = @import("zmeshoptimizer.zig");
 
 const std = @import("std");
 const mem = @import("memory.zig");

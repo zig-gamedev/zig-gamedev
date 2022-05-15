@@ -120,9 +120,9 @@ fn loadAllMeshes(
         const pre_indices_len = indices.items.len;
         const pre_positions_len = positions.items.len;
 
-        const data = zmesh.gltf.parseAndLoadFile(content_dir ++ "cube.gltf") catch unreachable;
-        defer zmesh.gltf.free(data);
-        zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+        const data = zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf") catch unreachable;
+        defer zmesh.io.cgltf.free(data);
+        zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
         all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),
@@ -134,9 +134,9 @@ fn loadAllMeshes(
         const pre_indices_len = indices.items.len;
         const pre_positions_len = positions.items.len;
 
-        const data = zmesh.gltf.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf") catch unreachable;
-        defer zmesh.gltf.free(data);
-        zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+        const data = zmesh.io.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf") catch unreachable;
+        defer zmesh.io.cgltf.free(data);
+        zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
         all_meshes.append(.{
             .index_offset = @intCast(u32, pre_indices_len),

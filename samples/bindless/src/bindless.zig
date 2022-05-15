@@ -138,9 +138,9 @@ fn loadMesh(
     const pre_indices_len = all_indices.items.len;
     const pre_positions_len = all_vertices.items.len;
 
-    const data = zmesh.gltf.parseAndLoadFile(file_path) catch unreachable;
-    defer zmesh.gltf.free(data);
-    zmesh.gltf.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
+    const data = zmesh.io.parseAndLoadFile(file_path) catch unreachable;
+    defer zmesh.io.cgltf.free(data);
+    zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords0, &tangents);
 
     all_meshes.append(.{
         .index_offset = @intCast(u32, pre_indices_len),

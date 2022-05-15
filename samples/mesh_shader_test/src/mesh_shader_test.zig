@@ -120,9 +120,9 @@ fn loadMeshAndGenerateMeshlets(
     var src_normals = std.ArrayList([3]f32).init(arena_allocator);
     var src_indices = std.ArrayList(u32).init(arena_allocator);
 
-    const data = zmesh.gltf.parseAndLoadFile(file_path) catch unreachable;
-    defer zmesh.gltf.free(data);
-    zmesh.gltf.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
+    const data = zmesh.io.parseAndLoadFile(file_path) catch unreachable;
+    defer zmesh.io.cgltf.free(data);
+    zmesh.io.appendMeshPrimitive(data, 0, 0, &src_indices, &src_positions, &src_normals, null, null);
 
     var src_vertices = std.ArrayList(Vertex).initCapacity(
         arena_allocator,
@@ -138,7 +138,7 @@ fn loadMeshAndGenerateMeshlets(
 
     var remap = std.ArrayList(u32).init(arena_allocator);
     remap.resize(src_indices.items.len) catch unreachable;
-    const num_unique_vertices = zmesh.generateVertexRemap(
+    const num_unique_vertices = zmesh.opt.generateVertexRemap(
         remap.items,
         src_indices.items,
         Vertex,
@@ -147,7 +147,7 @@ fn loadMeshAndGenerateMeshlets(
 
     var opt_vertices = std.ArrayList(Vertex).init(arena_allocator);
     opt_vertices.resize(num_unique_vertices) catch unreachable;
-    zmesh.remapVertexBuffer(
+    zmesh.opt.remapVertexBuffer(
         Vertex,
         opt_vertices.items,
         src_vertices.items,
@@ -156,18 +156,18 @@ fn loadMeshAndGenerateMeshlets(
 
     var opt_indices = std.ArrayList(u32).init(arena_allocator);
     opt_indices.resize(src_indices.items.len) catch unreachable;
-    zmesh.remapIndexBuffer(
+    zmesh.opt.remapIndexBuffer(
         opt_indices.items,
         src_indices.items,
         remap.items,
     );
 
-    zmesh.optimizeVertexCache(
+    zmesh.opt.optimizeVertexCache(
         opt_indices.items,
         opt_indices.items,
         opt_vertices.items.len,
     );
-    const num_opt_vertices = zmesh.optimizeVertexFetch(
+    const num_opt_vertices = zmesh.opt.optimizeVertexFetch(
         Vertex,
         opt_vertices.items,
         opt_indices.items,
@@ -175,20 +175,20 @@ fn loadMeshAndGenerateMeshlets(
     );
     assert(num_opt_vertices == opt_vertices.items.len);
 
-    const max_num_meshlets = zmesh.buildMeshletsBound(
+    const max_num_meshlets = zmesh.opt.buildMeshletsBound(
         opt_indices.items.len,
         max_num_meshlet_vertices,
         max_num_meshlet_triangles,
     );
 
-    var meshlets = std.ArrayList(zmesh.Meshlet).init(arena_allocator);
+    var meshlets = std.ArrayList(zmesh.opt.Meshlet).init(arena_allocator);
     var meshlet_vertices = std.ArrayList(u32).init(arena_allocator);
     var meshlet_triangles = std.ArrayList(u8).init(arena_allocator);
     meshlets.resize(max_num_meshlets) catch unreachable;
     meshlet_vertices.resize(max_num_meshlets * max_num_meshlet_vertices) catch unreachable;
     meshlet_triangles.resize(max_num_meshlets * max_num_meshlet_triangles * 3) catch unreachable;
 
-    const num_meshlets = zmesh.buildMeshlets(
+    const num_meshlets = zmesh.opt.buildMeshlets(
         meshlets.items,
         meshlet_vertices.items,
         meshlet_triangles.items,
