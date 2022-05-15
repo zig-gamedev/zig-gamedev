@@ -70,15 +70,15 @@ pub fn main() !void {
     //
     // Load mesh
     //
-    const data_handle = try zmesh.gltf.parseAndLoadFile(content_dir ++ "cube.gltf");
-    defer zmesh.gltf.freeData(data_handle);
+    const data = try zmesh.gltf.parseAndLoadFile(content_dir ++ "cube.gltf");
+    defer zmesh.gltf.free(data);
 
     var mesh_indices = std.ArrayList(u32).init(allocator);
     var mesh_positions = std.ArrayList([3]f32).init(allocator);
     var mesh_normals = std.ArrayList([3]f32).init(allocator);
 
     zmesh.gltf.appendMeshPrimitive(
-        data_handle,
+        data, // *gltf.Data
         0, // mesh index
         0, // gltf primitive index (submesh index)
         &mesh_indices,
