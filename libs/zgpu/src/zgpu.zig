@@ -1450,7 +1450,7 @@ pub const stbi = struct {
                     else => @compileError("[zgpu] stbi.Image supports u8 and f32."),
                 };
                 if (data == null)
-                    return error.stbi_LoadFailed;
+                    return error.StbiLoadFailed;
 
                 const channels_in_memory = if (desired_channels == 0) @intCast(u32, ch) else desired_channels;
                 const width = @intCast(u32, x);
