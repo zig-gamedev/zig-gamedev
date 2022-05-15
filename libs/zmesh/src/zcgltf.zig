@@ -31,7 +31,13 @@ pub const MemoryOptions = extern struct {
 };
 
 pub const FileOptions = extern struct {
-    read: ?fn (*const MemoryOptions, *const FileOptions, CString, *usize, *(?*anyopaque)) callconv(.C) Result = null,
+    read: ?fn (
+        *const MemoryOptions,
+        *const FileOptions,
+        CString,
+        *usize,
+        *?*anyopaque,
+    ) callconv(.C) Result = null,
     release: ?fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };

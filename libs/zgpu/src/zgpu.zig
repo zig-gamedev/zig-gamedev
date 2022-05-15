@@ -1,4 +1,4 @@
-//  zgpu - version 0.1
+//  zgpu v0.1
 //
 //  This library uses GLFW and WebGPU bindings + great build script from
 //  [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
@@ -1427,41 +1427,58 @@ pub const gui = struct {
 };
 
 pub const stbi = struct {
-    pub const Image = struct {
-        data: []u8,
-        width: u32,
-        height: u32,
-        channels_in_memory: u32,
-        channels_in_file: u32,
+    pub fn Image(comptime T: type) type {
+        return struct {
+            const Self = @This();
 
-        pub fn init(
-            filename: [*:0]const u8,
-            desired_channels: u32,
-        ) !Image {
-            var x: c_int = undefined;
-            var y: c_int = undefined;
-            var ch: c_int = undefined;
-            const data = stbi_load(filename, &x, &y, &ch, @intCast(c_int, desired_channels));
-            if (data == null)
-                return error.stbi_LoadFailed;
+            data: []T,
+            width: u32,
+            height: u32,
+            channels_in_memory: u32,
+            channels_in_file: u32,
 
-            const channels_in_memory = if (desired_channels == 0) @intCast(u32, ch) else desired_channels;
-            const width = @intCast(u32, x);
-            const height = @intCast(u32, y);
-            return Image{
-                .data = data.?[0 .. width * height * channels_in_memory],
-                .width = width,
-                .height = height,
-                .channels_in_memory = channels_in_memory,
-                .channels_in_file = @intCast(u32, ch),
-            };
-        }
+            pub fn init(
+                filename: [*:0]const u8,
+                desired_channels: u32,
+            ) !Self {
+                var x: c_int = undefined;
+                var y: c_int = undefined;
+                var ch: c_int = undefined;
+                const data = switch (T) {
+                    u8 => stbi_load(filename, &x, &y, &ch, @intCast(c_int, desired_channels)),
+                    f32 => stbi_loadf(filename, &x, &y, &ch, @intCast(c_int, desired_channels)),
+                    else => @compileError("[zgpu] stbi.Image supports u8 and f32."),
+                };
+                if (data == null)
+                    return error.stbi_LoadFailed;
 
-        pub fn deinit(image: *Image) void {
-            stbi_image_free(image.data.ptr);
-            image.* = undefined;
-        }
-    };
+                const channels_in_memory = if (desired_channels == 0) @intCast(u32, ch) else desired_channels;
+                const width = @intCast(u32, x);
+                const height = @intCast(u32, y);
+                return Self{
+                    .data = data.?[0 .. width * height * channels_in_memory],
+                    .width = width,
+                    .height = height,
+                    .channels_in_memory = channels_in_memory,
+                    .channels_in_file = @intCast(u32, ch),
+                };
+            }
+
+            pub fn deinit(image: *Self) void {
+                stbi_image_free(image.data.ptr);
+                image.* = undefined;
+            }
+        };
+    }
+
+    pub const hdrToLdrScale = stbi_hdr_to_ldr_scale;
+    pub const hdrToLdrGamma = stbi_hdr_to_ldr_gamma;
+    pub const ldrToHdrScale = stbi_ldr_to_hdr_scale;
+    pub const ldrToHdrGamma = stbi_ldr_to_hdr_gamma;
+
+    pub fn isHdr(filename: [*:0]const u8) bool {
+        return stbi_is_hdr(filename) == 1;
+    }
 
     extern fn stbi_load(
         filename: [*:0]const u8,
@@ -1470,7 +1487,23 @@ pub const stbi = struct {
         channels_in_file: *c_int,
         desired_channels: c_int,
     ) ?[*]u8;
+
+    extern fn stbi_loadf(
+        filename: [*:0]const u8,
+        x: *c_int,
+        y: *c_int,
+        channels_in_file: *c_int,
+        desired_channels: c_int,
+    ) ?[*]f32;
+
     extern fn stbi_image_free(image_data: ?*anyopaque) void;
+
+    extern fn stbi_hdr_to_ldr_scale(scale: f32) void;
+    extern fn stbi_hdr_to_ldr_gamma(gamma: f32) void;
+    extern fn stbi_ldr_to_hdr_scale(scale: f32) void;
+    extern fn stbi_ldr_to_hdr_gamma(gamma: f32) void;
+
+    extern fn stbi_is_hdr(filename: [*:0]const u8) c_int;
 };
 
 fn detectGLFWOptions() glfw.BackendOptions {

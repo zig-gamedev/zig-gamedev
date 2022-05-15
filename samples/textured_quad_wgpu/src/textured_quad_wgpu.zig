@@ -106,7 +106,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data[0..]);
 
     // Create a texture.
-    var image = try zgpu.stbi.Image.init(content_dir ++ "genart_0025_5.png", 4);
+    var image = try zgpu.stbi.Image(u8).init(content_dir ++ "genart_0025_5.png", 4);
     defer image.deinit();
 
     const texture = gctx.createTexture(.{
