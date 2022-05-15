@@ -78,7 +78,7 @@ pub fn main() !void {
     var mesh_normals = std.ArrayList([3]f32).init(allocator);
 
     zmesh.io.appendMeshPrimitive(
-        data, // *gltf.Data
+        data, // *zmesh.io.cgltf.Data
         0, // mesh index
         0, // gltf primitive index (submesh index)
         &mesh_indices,
