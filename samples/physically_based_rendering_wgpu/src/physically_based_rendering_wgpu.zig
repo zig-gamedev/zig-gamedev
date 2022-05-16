@@ -29,7 +29,7 @@ const Mesh = struct {
 const num_mesh_textures = 4;
 const cube_mesh = 0;
 const helmet_mesh = 1;
-const enable_async_compilation = true;
+const enable_async_shader_compilation = true;
 
 const FrameUniforms = struct {
     world_to_clip: zm.Mat,
@@ -181,9 +181,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, indices.items);
 
     //
-    // Create textures.
+    // Create textures and samplers.
     //
-
     const aniso_sam = gctx.createSampler(.{
         .mag_filter = .linear,
         .min_filter = .linear,
@@ -555,7 +554,7 @@ fn createMeshPipeline(
         },
     };
 
-    if (enable_async_compilation) {
+    if (enable_async_shader_compilation) {
         gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, out_pipeline);
     } else {
         out_pipeline.* = gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);

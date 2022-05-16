@@ -1480,6 +1480,10 @@ pub const stbi = struct {
         return stbi_is_hdr(filename) == 1;
     }
 
+    pub fn setFlipVerticallyOnLoad(should_flip: bool) void {
+        stbi_set_flip_vertically_on_load(if (should_flip) 1 else 0);
+    }
+
     extern fn stbi_load(
         filename: [*:0]const u8,
         x: *c_int,
@@ -1504,6 +1508,7 @@ pub const stbi = struct {
     extern fn stbi_ldr_to_hdr_gamma(gamma: f32) void;
 
     extern fn stbi_is_hdr(filename: [*:0]const u8) c_int;
+    extern fn stbi_set_flip_vertically_on_load(flag_true_if_should_flip: c_int) void;
 };
 
 fn detectGLFWOptions() glfw.BackendOptions {
