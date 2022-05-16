@@ -427,13 +427,13 @@ fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
     if (c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize)) {
-        c.igBulletText("Right Mouse Button + drag :  rotate camera");
-        c.igBulletText("W, A, S, D :  move camera");
         c.igBulletText(
             "Average :  %.3f ms/frame (%.1f fps)",
             demo.gctx.stats.average_cpu_time,
             demo.gctx.stats.fps,
         );
+        c.igBulletText("Right Mouse Button + drag :  rotate camera");
+        c.igBulletText("W, A, S, D :  move camera");
         c.igBulletText(
             "CPU is ahead of GPU by :  %d frame(s)",
             demo.gctx.stats.cpu_frame_number - demo.gctx.stats.gpu_frame_number,
