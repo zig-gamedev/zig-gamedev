@@ -25,6 +25,14 @@ const Mesh = struct {
     num_vertices: u32,
 };
 
+const FrameUniforms = struct {
+    world_to_clip: zm.Mat,
+};
+
+const DrawUniforms = struct {
+    object_to_world: zm.Mat,
+};
+
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
@@ -36,13 +44,16 @@ const DemoState = struct {
     depth_texture: zgpu.TextureHandle,
     depth_texture_view: zgpu.TextureViewHandle,
 
+    frame_uniforms_bg: zgpu.BindGroupHandle,
+    mesh_bg: zgpu.BindGroupHandle,
+
     meshes: std.ArrayList(Mesh),
 
     camera: struct {
-        position: [3]f32 = .{ 0.0, 4.0, -4.0 },
-        forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
-        pitch: f32 = 0.15 * math.pi,
-        yaw: f32 = 0.0,
+        position: [3]f32 = .{ 2.2, 0.0, 2.2 },
+        forward: [3]f32 = .{ 0.0, 0.0, 0.0 },
+        pitch: f32 = 0.0,
+        yaw: f32 = math.pi + 0.25 * math.pi,
     } = .{},
     mouse: struct {
         cursor: glfw.Window.CursorPos = .{ .xpos = 0.0, .ypos = 0.0 },
@@ -115,6 +126,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     defer arena_state.deinit();
     const arena = arena_state.allocator();
 
+    //
+    // Create bind group layouts.
+    //
     const frame_uniforms_bgl = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
     });
@@ -125,6 +139,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     });
     defer gctx.destroyResource(mesh_bgl);
 
+    //
+    // Create meshes.
+    //
     zmesh.init(arena);
     defer zmesh.deinit();
 
@@ -153,6 +170,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     // Create a depth texture and its 'view'.
     const depth = createDepthTexture(gctx);
 
+    //
+    // Create bind groups.
+    //
+    const frame_uniforms_bg = gctx.createBindGroup(frame_uniforms_bgl, &[_]zgpu.BindGroupEntryInfo{
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+    });
+
+    const mesh_bg = gctx.createBindGroup(frame_uniforms_bgl, &[_]zgpu.BindGroupEntryInfo{
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+    });
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
@@ -160,9 +188,14 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .index_buffer = index_buffer,
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
+        .frame_uniforms_bg = frame_uniforms_bg,
+        .mesh_bg = mesh_bg,
         .meshes = meshes,
     };
 
+    //
+    // Create pipelines.
+    //
     createMeshPipeline(allocator, gctx, &.{ frame_uniforms_bgl, mesh_bgl }, &demo.mesh_pipeline);
 
     return demo;
@@ -238,8 +271,21 @@ fn update(demo: *DemoState) void {
 
 fn draw(demo: *DemoState) void {
     const gctx = demo.gctx;
-    //const fb_width = gctx.swapchain_descriptor.width;
-    //const fb_height = gctx.swapchain_descriptor.height;
+    const fb_width = gctx.swapchain_descriptor.width;
+    const fb_height = gctx.swapchain_descriptor.height;
+
+    const cam_world_to_view = zm.lookToLh(
+        zm.load(demo.camera.position[0..], zm.Vec, 3),
+        zm.load(demo.camera.forward[0..], zm.Vec, 3),
+        zm.f32x4(0.0, 1.0, 0.0, 0.0),
+    );
+    const cam_view_to_clip = zm.perspectiveFovLh(
+        0.25 * math.pi,
+        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        0.01,
+        200.0,
+    );
+    const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
 
     const back_buffer_view = gctx.swapchain.getCurrentTextureView();
     defer back_buffer_view.release();
@@ -247,6 +293,67 @@ fn draw(demo: *DemoState) void {
     const commands = commands: {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
+
+        // Main pass.
+        pass: {
+            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
+            const ib_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
+            const mesh_pipeline = gctx.lookupResource(demo.mesh_pipeline) orelse break :pass;
+            const frame_uniforms_bg = gctx.lookupResource(demo.frame_uniforms_bg) orelse break :pass;
+            const mesh_bg = gctx.lookupResource(demo.mesh_bg) orelse break :pass;
+            const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
+
+            const color_attachment = gpu.RenderPassColorAttachment{
+                .view = back_buffer_view,
+                .load_op = .clear,
+                .store_op = .store,
+            };
+            const depth_attachment = gpu.RenderPassDepthStencilAttachment{
+                .view = depth_view,
+                .depth_load_op = .clear,
+                .depth_store_op = .store,
+                .depth_clear_value = 1.0,
+            };
+            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
+                .color_attachments = &.{color_attachment},
+                .depth_stencil_attachment = &depth_attachment,
+            };
+            const pass = encoder.beginRenderPass(&render_pass_info);
+            defer {
+                pass.end();
+                pass.release();
+            }
+
+            pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
+            pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
+
+            pass.setPipeline(mesh_pipeline);
+
+            // Update "world to clip" (camera) xform.
+            {
+                const mem = gctx.uniformsAllocate(FrameUniforms, 1);
+                mem.slice[0].world_to_clip = zm.transpose(cam_world_to_clip);
+
+                pass.setBindGroup(0, frame_uniforms_bg, &.{mem.offset});
+            }
+
+            // Update "object to world" xform.
+            const object_to_world = zm.identity();
+
+            const mem = gctx.uniformsAllocate(DrawUniforms, 1);
+            mem.slice[0].object_to_world = zm.transpose(object_to_world);
+
+            pass.setBindGroup(1, mesh_bg, &.{mem.offset});
+
+            // Draw mesh.
+            pass.drawIndexed(
+                demo.meshes.items[1].num_indices,
+                1,
+                demo.meshes.items[1].index_offset,
+                demo.meshes.items[1].vertex_offset,
+                0,
+            );
+        }
 
         // Gui pass.
         {
@@ -353,6 +460,11 @@ fn createMeshPipeline(
             .front_face = .cw,
             .cull_mode = .back,
             .topology = .triangle_list,
+        },
+        .depth_stencil = &gpu.DepthStencilState{
+            .format = .depth32_float,
+            .depth_write_enabled = true,
+            .depth_compare = .less,
         },
         .fragment = &gpu.FragmentState{
             .module = module_fs,
