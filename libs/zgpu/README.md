@@ -140,17 +140,19 @@ gctx.generateMipmaps(arena, command_encoder, texture_handle);
 
 ```zig
 // Defined in zgpu.stbi namespace
-pub const Image = struct {
-    data: []u8,
-    width: u32,
-    height: u32,
-    channels_in_memory: u32,
-    channels_in_file: u32,
-    ...
-};
+pub fn Image(comptime ChannelType: type) type {
+    return struct {
+        const Self = @This();
+
+        data: []ChannelType, // ChannelType can be `u8` or `f32`
+        width: u32,
+        height: u32,
+        channels_in_memory: u32,
+        channels_in_file: u32,
+        ...
 
 // Usage:
-var image = try zgpu.stbi.Image.init("path_to_image_file", num_desired_channels);
+var image = try zgpu.stbi.Image(u8).init("path_to_image_file", num_desired_channels);
 defer image.deinit();
 ```
 

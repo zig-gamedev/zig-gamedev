@@ -1427,11 +1427,11 @@ pub const gui = struct {
 };
 
 pub const stbi = struct {
-    pub fn Image(comptime T: type) type {
+    pub fn Image(comptime ChannelType: type) type {
         return struct {
             const Self = @This();
 
-            data: []T,
+            data: []ChannelType,
             width: u32,
             height: u32,
             channels_in_memory: u32,
@@ -1444,7 +1444,7 @@ pub const stbi = struct {
                 var x: c_int = undefined;
                 var y: c_int = undefined;
                 var ch: c_int = undefined;
-                const data = switch (T) {
+                const data = switch (ChannelType) {
                     u8 => stbi_load(filename, &x, &y, &ch, @intCast(c_int, desired_channels)),
                     f32 => stbi_loadf(filename, &x, &y, &ch, @intCast(c_int, desired_channels)),
                     else => @compileError("[zgpu] stbi.Image supports u8 and f32."),
