@@ -1420,7 +1420,7 @@ pub const raw = struct {
     };
 };
 
-comptime {
+test {
     _ = PacketFreeCallback;
     _ = InterceptCallback;
     std.testing.refAllDecls(@This());
