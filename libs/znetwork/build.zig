@@ -1,8 +1,8 @@
 const std = @import("std");
 
 pub const pkg = std.build.Pkg{
-    .name = "zenet",
-    .path = .{ .path = thisDir() ++ "/src/zenet.zig" },
+    .name = "znetwork",
+    .path = .{ .path = thisDir() ++ "/src/main.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -10,7 +10,7 @@ pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
     const tests = buildTests(b, build_mode, target);
 
-    const test_step = b.step("test", "Run zenet tests");
+    const test_step = b.step("test", "Run znetwork tests");
     test_step.dependOn(&tests.step);
 }
 
@@ -19,7 +19,7 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(comptime thisDir() ++ "/src/zenet.zig");
+    const tests = b.addTest(thisDir() ++ "/src/main.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     link(tests);
@@ -27,12 +27,12 @@ pub fn buildTests(
 }
 
 fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("zenet", comptime thisDir() ++ "/src/zenet.zig");
+    const lib = exe.builder.addStaticLibrary("znetwork", thisDir() ++ "/src/main.zig");
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.want_lto = false;
-    lib.addIncludeDir(comptime thisDir() ++ "/libs/enet/include");
+    lib.addIncludeDir(thisDir() ++ "/libs/enet/include");
     lib.linkSystemLibrary("c");
 
     if (exe.target.isWindows()) {
@@ -53,15 +53,15 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         "-DHAS_SOCKLEN_T=1",
         "-fno-sanitize=undefined",
     };
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/callbacks.c", &defines);
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/compress.c", &defines);
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/host.c", &defines);
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/list.c", &defines);
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/packet.c", &defines);
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/peer.c", &defines);
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/protocol.c", &defines);
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/unix.c", &defines);
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/enet/win32.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/callbacks.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/compress.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/host.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/list.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/packet.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/peer.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/protocol.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/unix.c", &defines);
+    lib.addCSourceFile(thisDir() ++ "/libs/enet/win32.c", &defines);
 
     return lib;
 }
@@ -72,5 +72,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }

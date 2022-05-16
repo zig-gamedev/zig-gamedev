@@ -1,6 +1,6 @@
-# zenet - Zig bindings for ENet
+# znetwork v0.1
 
-Bindings developed by Martin Wickham: https://github.com/SpexGuy/Zig-ENet
+ENet bindings developed by Martin Wickham: https://github.com/SpexGuy/Zig-ENet
 
 For test client/server application see: https://github.com/michal-z/zig-gamedev/tree/main/samples/network_test
 

@@ -1,5 +1,5 @@
 const std = @import("std");
-const zenet = @import("zenet");
+const zenet = @import("znetwork").enet;
 
 pub fn main() !void {
     try zenet.initialize();
