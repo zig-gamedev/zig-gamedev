@@ -49,16 +49,15 @@ pub fn Handle(
     if (index_bits == 0) @compileError("index_bits must be greater than 0");
     if (cycle_bits == 0) @compileError("cycle_bits must be greater than 0");
 
-    const value_bits : u16 = @as(u16, index_bits) + @as(u16, cycle_bits);
+    const value_bits: u16 = @as(u16, index_bits) + @as(u16, cycle_bits);
     const Value = switch (value_bits) {
-          8 => u8,
-         16 => u16,
-         32 => u32,
-         64 => u64,
+        8 => u8,
+        16 => u16,
+        32 => u32,
+        64 => u64,
         128 => u128,
         256 => u256,
-        else => @compileError(
-            "index_bits + cycle_bits should sum to exactly " ++
+        else => @compileError("index_bits + cycle_bits should sum to exactly " ++
             "8, 16, 32, 64, 128, or 256 bits"),
     };
 
@@ -70,18 +69,18 @@ pub fn Handle(
         const Self = @This();
 
         pub const Resource = TResource;
-        pub const Index    = UInt(index_bits);
-        pub const Cycle    = UInt(cycle_bits);
+        pub const Index = UInt(index_bits);
+        pub const Cycle = UInt(cycle_bits);
 
         pub const AddressableIndex = AddressableUInt(index_bits);
         pub const AddressableCycle = AddressableUInt(cycle_bits);
 
-        pub const max_index = ~@as(Index,0);
-        pub const max_cycle = ~@as(Cycle,0);
-        pub const max_count =  @as(Value,max_index-1)+2;
+        pub const max_index = ~@as(Index, 0);
+        pub const max_cycle = ~@as(Cycle, 0);
+        pub const max_count = @as(Value, max_index - 1) + 2;
 
-        value   : Value,
-        compact : packed struct { index: Index, cycle: Cycle },
+        value: Value,
+        compact: packed struct { index: Index, cycle: Cycle },
 
         pub fn init(_index: Index, _cycle: Cycle) Self {
             return .{ .compact = .{ .index = _index, .cycle = _cycle } };
@@ -94,16 +93,22 @@ pub fn Handle(
             };
         }
 
-        pub fn index(self: Self) AddressableIndex { return self.compact.index; }
+        pub fn index(self: Self) AddressableIndex {
+            return self.compact.index;
+        }
 
-        pub fn cycle(self: Self) AddressableCycle { return self.compact.cycle; }
+        pub fn cycle(self: Self) AddressableCycle {
+            return self.compact.cycle;
+        }
 
-        pub fn eql(a: Self, b: Self) bool { return a.value == b.value; }
+        pub fn eql(a: Self, b: Self) bool {
+            return a.value == b.value;
+        }
 
         pub const AddressableHandle = struct {
             const Compact = Self;
-            index : AddressableIndex = 0,
-            cycle : AddressableCycle = 0,
+            index: AddressableIndex = 0,
+            cycle: AddressableCycle = 0,
 
             pub fn compact(handle: AddressableHandle) Compact {
                 const _index = @intCast(Index, handle.index);
@@ -133,12 +138,12 @@ pub fn Handle(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-test "Handle sizes and alignments"
-{
+test "Handle sizes and alignments" {
     const testing = std.testing;
     const expectEqual = testing.expectEqual;
 
-    { const H = Handle(4, 4, void);
+    {
+        const H = Handle(4, 4, void);
         try expectEqual(@sizeOf(u8), @sizeOf(H));
         try expectEqual(@alignOf(u8), @alignOf(H));
         try expectEqual(4, @bitSizeOf(H.Index));
@@ -151,7 +156,8 @@ test "Handle sizes and alignments"
         try expectEqual(@alignOf(u8), @alignOf(A));
     }
 
-    { const H = Handle(6, 2, void);
+    {
+        const H = Handle(6, 2, void);
         try expectEqual(@sizeOf(u8), @sizeOf(H));
         try expectEqual(@alignOf(u8), @alignOf(H));
         try expectEqual(6, @bitSizeOf(H.Index));
@@ -164,7 +170,8 @@ test "Handle sizes and alignments"
         try expectEqual(@alignOf(u8), @alignOf(A));
     }
 
-    { const H = Handle(8, 8, void);
+    {
+        const H = Handle(8, 8, void);
         try expectEqual(@sizeOf(u16), @sizeOf(H));
         try expectEqual(@alignOf(u16), @alignOf(H));
         try expectEqual(8, @bitSizeOf(H.Index));
@@ -177,7 +184,8 @@ test "Handle sizes and alignments"
         try expectEqual(@alignOf(u8), @alignOf(A));
     }
 
-    { const H = Handle(12, 4, void);
+    {
+        const H = Handle(12, 4, void);
         try expectEqual(@sizeOf(u16), @sizeOf(H));
         try expectEqual(@alignOf(u16), @alignOf(H));
         try expectEqual(12, @bitSizeOf(H.Index));
@@ -190,7 +198,8 @@ test "Handle sizes and alignments"
         try expectEqual(@alignOf(u16), @alignOf(A));
     }
 
-    { const H = Handle(16, 16, void);
+    {
+        const H = Handle(16, 16, void);
         try expectEqual(@sizeOf(u32), @sizeOf(H));
         try expectEqual(@alignOf(u32), @alignOf(H));
         try expectEqual(16, @bitSizeOf(H.Index));
@@ -203,7 +212,8 @@ test "Handle sizes and alignments"
         try expectEqual(@alignOf(u16), @alignOf(A));
     }
 
-    { const H = Handle(22, 10, void);
+    {
+        const H = Handle(22, 10, void);
         try expectEqual(@sizeOf(u32), @sizeOf(H));
         try expectEqual(@alignOf(u32), @alignOf(H));
         try expectEqual(22, @bitSizeOf(H.Index));
@@ -224,10 +234,10 @@ test "Handle.format()" {
     const expectEqualStrings = std.testing.expectEqualStrings;
 
     const Foo = struct {};
-    const H = Handle(12,4, Foo);
+    const H = Handle(12, 4, Foo);
     const h = H.init(0, 1);
 
     var buffer = [_]u8{0} ** 128;
-    const s = try bufPrint(buffer[0..], "{}", .{ h });
+    const s = try bufPrint(buffer[0..], "{}", .{h});
     try expectEqualStrings("Foo[0#1]", s);
 }

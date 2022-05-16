@@ -32,16 +32,16 @@ const std = @import("std");
 /// const desc : Texture.Descriptor = .{ ... };
 /// const obj = device.createTexture(desc);
 /// const handle : TextureHandle = pool.add(.{ .obj = obj, .desc = desc });
-/// 
+///
 /// // elsewhere, use the handle to get `obj` or `desc` as needed
 /// const obj = pool.getColumn(handle, .obj);
 /// const desc = pool.getColumn(handle, .desc);
 /// ```
 pub fn Pool(
-    comptime index_bits : u8,
-    comptime cycle_bits : u8,
-    comptime TResource  : type,
-    comptime TColumns   : type,
+    comptime index_bits: u8,
+    comptime cycle_bits: u8,
+    comptime TResource: type,
+    comptime TColumns: type,
 ) type {
     // Handle performs compile time checks on index_bits & cycle_bits
     const handles = @import("handles.zig");
@@ -60,7 +60,7 @@ pub fn Pool(
     return struct {
         const Self = @This();
 
-        pub const Error = error {
+        pub const Error = error{
             PoolIsFull,
             HandleIsUnacquired,
             HandleIsOutOfBounds,
@@ -70,21 +70,21 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         pub const Resource = TResource;
-        pub const Handle   = THandle;
+        pub const Handle = THandle;
 
         pub const AddressableHandle = Handle.AddressableHandle;
-        pub const AddressableIndex  = Handle.AddressableIndex;
-        pub const AddressableCycle  = Handle.AddressableCycle;
+        pub const AddressableIndex = Handle.AddressableIndex;
+        pub const AddressableCycle = Handle.AddressableCycle;
 
-        pub const max_index    : usize = Handle.max_index;
-        pub const max_cycle    : usize = Handle.max_cycle;
-        pub const max_capacity : usize = Handle.max_count;
+        pub const max_index: usize = Handle.max_index;
+        pub const max_cycle: usize = Handle.max_cycle;
+        pub const max_capacity: usize = Handle.max_count;
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        pub const Columns      = TColumns;
+        pub const Columns = TColumns;
         pub const ColumnSlices = StructOfSlices(Columns);
-        pub const Column       = meta.FieldEnum(Columns);
+        pub const Column = meta.FieldEnum(Columns);
 
         pub const column_fields = meta.fields(Columns);
         pub const column_count = column_fields.len;
@@ -96,36 +96,36 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         const private_fields = meta.fields(struct {
-            @"Pool._free_stack" : AddressableIndex,
-            @"Pool._curr_cycle" : AddressableCycle,
+            @"Pool._free_stack": AddressableIndex,
+            @"Pool._curr_cycle": AddressableCycle,
         });
 
-        const Storage = MultiArrayList(@Type(.{.Struct = .{
-            .layout   = std.builtin.Type.ContainerLayout.Auto,
-            .fields   = private_fields ++ column_fields,
-            .decls    = &.{},
+        const Storage = MultiArrayList(@Type(.{ .Struct = .{
+            .layout = std.builtin.Type.ContainerLayout.Auto,
+            .fields = private_fields ++ column_fields,
+            .decls = &.{},
             .is_tuple = false,
-        }}));
+        } }));
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        _allocator  : Allocator          = undefined,
-        _storage    : Storage            = .{},
-        _free_count : usize              = 0,
-        _free_stack : []AddressableIndex = &.{},
-        _curr_cycle : []AddressableCycle = &.{},
-        columns     : ColumnSlices       = undefined,
+        _allocator: Allocator = undefined,
+        _storage: Storage = .{},
+        _free_count: usize = 0,
+        _free_stack: []AddressableIndex = &.{},
+        _curr_cycle: []AddressableCycle = &.{},
+        columns: ColumnSlices = undefined,
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         pub fn init(allocator: Allocator) Self {
-            var self = Self { ._allocator = allocator };
+            var self = Self{ ._allocator = allocator };
             updateSlices(self);
             return self;
         }
 
         pub fn initCapacity(allocator: Allocator, min_capacity: usize) !Self {
-            var self = Self { ._allocator = allocator };
+            var self = Self{ ._allocator = allocator };
             try self.reserve(min_capacity);
             return self;
         }
@@ -196,11 +196,11 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         pub const LiveHandleIterator = struct {
-            live_indices : LiveIndexIterator = .{},
+            live_indices: LiveIndexIterator = .{},
 
             pub fn next(self: *LiveHandleIterator) ?Handle {
                 if (self.live_indices.next()) |index| {
-                    const ahandle = AddressableHandle {
+                    const ahandle = AddressableHandle{
                         .index = index,
                         .cycle = self.live_indices.curr_cycle[index],
                     };
@@ -217,7 +217,7 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         pub fn clear(self: *Self) void {
-            var ahandle = AddressableHandle { .index = 0 };
+            var ahandle = AddressableHandle{ .index = 0 };
             for (self._curr_cycle) |cycle| {
                 if (isLiveCycle(cycle)) {
                     ahandle.cycle = cycle;
@@ -231,7 +231,7 @@ pub fn Pool(
             const ahandle = try acquireAddressableHandle(self);
             inline for (column_fields) |field| {
                 @field(self.columns, field.name)[ahandle.index] =
-                     @field(values, field.name);
+                    @field(values, field.name);
             }
             return ahandle.compact();
         }
@@ -249,29 +249,21 @@ pub fn Pool(
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        pub fn getColumnPtr(
-            self: Self,
-            handle: Handle,
-            comptime column: Column
-        ) !*ColumnType(column) {
+        pub fn getColumnPtr(self: Self, handle: Handle, comptime column: Column) !*ColumnType(column) {
             const ahandle = handle.addressable();
             try validateAddressableHandle(self, ahandle);
             const column_field = meta.fieldInfo(Columns, column);
             return &@field(self.columns, column_field.name)[ahandle.index];
         }
 
-        pub fn getColumn(
-            self: Self,
-            handle: Handle,
-            comptime column: Column
-        ) !ColumnType(column) {
+        pub fn getColumn(self: Self, handle: Handle, comptime column: Column) !ColumnType(column) {
             return (try getColumnPtr(self, handle, column)).*;
         }
 
         pub fn getColumns(self: Self, handle: Handle) !Columns {
             const ahandle = handle.addressable();
             try validateAddressableHandle(self, ahandle);
-            var values : Columns = undefined;
+            var values: Columns = undefined;
             inline for (column_fields) |column_field| {
                 @field(values, column_field.name) =
                     @field(self.columns, column_field.name)[ahandle.index];
@@ -279,12 +271,7 @@ pub fn Pool(
             return values;
         }
 
-        pub fn setColumn(
-            self: Self,
-            handle: Handle,
-            comptime column: Column,
-            value: ColumnType(column)
-        ) !void {
+        pub fn setColumn(self: Self, handle: Handle, comptime column: Column, value: ColumnType(column)) !void {
             const ahandle = handle.addressable();
             try validateAddressableHandle(self, ahandle);
             const column_field = meta.fieldInfo(Columns, column);
@@ -292,7 +279,7 @@ pub fn Pool(
             @field(self.columns, column_field.name)[ahandle.index] = value;
         }
 
-        pub fn setColumns(self: Self, handle:Handle, values: Columns) !void {
+        pub fn setColumns(self: Self, handle: Handle, values: Columns) !void {
             const ahandle = handle.addressable();
             try validateAddressableHandle(self, ahandle);
             deinitColumns(self, ahandle.index);
@@ -307,11 +294,7 @@ pub fn Pool(
         const StructField = std.builtin.Type.StructField;
 
         /// Call `value.deinit()` if defined.
-        fn deinitColumn(
-            self: Self,
-            index: AddressableIndex,
-            comptime column_field: StructField
-        ) void {
+        fn deinitColumn(self: Self, index: AddressableIndex, comptime column_field: StructField) void {
             switch (@typeInfo(column_field.field_type)) {
                 .Struct, .Enum, .Union, .Opaque => {
                     if (@hasDecl(column_field.field_type, "deinit")) {
@@ -325,7 +308,7 @@ pub fn Pool(
         /// Call `values.deinit()` if defined.
         fn deinitColumns(self: Self, index: AddressableIndex) void {
             if (@hasDecl(Columns, "deinit")) {
-                var values : Columns = undefined;
+                var values: Columns = undefined;
                 inline for (column_fields) |column_field| {
                     @field(values, column_field.name) =
                         @field(self.columns, column_field.name)[index];
@@ -362,9 +345,7 @@ pub fn Pool(
             self: Self,
             handle: AddressableHandle,
         ) bool {
-            return isLiveCycle(handle.cycle)
-               and handle.index < self._curr_cycle.len
-               and handle.cycle == self._curr_cycle[handle.index];
+            return isLiveCycle(handle.cycle) and handle.index < self._curr_cycle.len and handle.cycle == self._curr_cycle[handle.index];
         }
 
         fn validateAddressableHandle(
@@ -385,8 +366,7 @@ pub fn Pool(
                 handle.cycle = incrementAndReturnCycle(self, handle.index);
                 try validateAddressableHandle(self.*, handle);
                 return handle;
-            }
-            else if (self._storage.len < max_capacity) {
+            } else if (self._storage.len < max_capacity) {
                 handle.index = try issueNewIndex(self);
                 handle.cycle = 1;
                 try validateAddressableHandle(self.*, handle);
@@ -426,11 +406,11 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         fn isFreeCycle(cycle: AddressableCycle) bool {
-            return (cycle & @as(AddressableCycle,1)) == @as(AddressableCycle,0);
+            return (cycle & @as(AddressableCycle, 1)) == @as(AddressableCycle, 0);
         }
 
         fn isLiveCycle(cycle: AddressableCycle) bool {
-            return (cycle & @as(AddressableCycle,1)) == @as(AddressableCycle,1);
+            return (cycle & @as(AddressableCycle, 1)) == @as(AddressableCycle, 1);
         }
 
         fn incrementCycle(self: *Self, index: AddressableIndex) void {
@@ -473,7 +453,6 @@ pub fn Pool(
             self._curr_cycle[new_index] = 1;
             return @intCast(AddressableIndex, new_index);
         }
-
     };
 }
 
@@ -489,16 +468,18 @@ const DeinitCounter = struct {
     counter: *u32,
 
     fn init(_counter: *u32) Self {
-        return Self { .counter = _counter };
+        return Self{ .counter = _counter };
     }
 
-    fn deinit(self: *Self) void { self.counter.* += 1; }
+    fn deinit(self: *Self) void {
+        self.counter.* += 1;
+    }
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool with no columns" {
-    const TestPool = Pool(8,8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {});
     try expectEqual(@as(usize, 0), TestPool.column_count);
     try expectEqual(@as(usize, 0), @sizeOf(TestPool.ColumnSlices));
 
@@ -518,7 +499,7 @@ test "Pool with no columns" {
 }
 
 test "Pool with one column" {
-    const TestPool = Pool(8,8, void, struct { a: u32 });
+    const TestPool = Pool(8, 8, void, struct { a: u32 });
     try expectEqual(@as(usize, 1), TestPool.column_count);
     try expectEqual(@sizeOf([]u32), @sizeOf(TestPool.ColumnSlices));
 
@@ -542,7 +523,7 @@ test "Pool with one column" {
 }
 
 test "Pool with two columns" {
-    const TestPool = Pool(8,8, void, struct { a: u32, b: u64 });
+    const TestPool = Pool(8, 8, void, struct { a: u32, b: u64 });
     try expectEqual(@as(usize, 2), TestPool.column_count);
     try expectEqual(@sizeOf([]u32) * 2, @sizeOf(TestPool.ColumnSlices));
 
@@ -572,7 +553,7 @@ test "Pool with two columns" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.liveHandleCount()" {
-    const TestPool = Pool(8,8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {});
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -603,7 +584,7 @@ test "Pool.liveHandleCount()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.isLiveHandle()" {
-    const TestPool = Pool(8,8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {});
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -628,7 +609,7 @@ test "Pool.isLiveHandle()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.validateHandle()" {
-    const TestPool = Pool(8,8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {});
     try expectEqual(@as(usize, 0), TestPool.column_count);
     try expectEqual(@as(usize, 0), @sizeOf(TestPool.ColumnSlices));
 
@@ -640,28 +621,22 @@ test "Pool.validateHandle()" {
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
 
     const unacquiredHandle = TestPool.Handle.init(0, 0);
-    try expectError(
-        TestPool.Error.HandleIsUnacquired,
-        pool.validateHandle(unacquiredHandle));
+    try expectError(TestPool.Error.HandleIsUnacquired, pool.validateHandle(unacquiredHandle));
 
     const outOfBoundsHandle = TestPool.Handle.init(1, 1);
-    try expectError(
-        TestPool.Error.HandleIsOutOfBounds,
-        pool.validateHandle(outOfBoundsHandle));
+    try expectError(TestPool.Error.HandleIsOutOfBounds, pool.validateHandle(outOfBoundsHandle));
 
     const handle = try pool.add(.{});
     try pool.validateHandle(handle);
 
     try pool.remove(handle);
-    try expectError(
-        TestPool.Error.HandleIsReleased,
-        pool.validateHandle(handle));
+    try expectError(TestPool.Error.HandleIsReleased, pool.validateHandle(handle));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.liveIndices()" {
-    const TestPool = Pool(8,8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {});
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -685,7 +660,7 @@ test "Pool.liveIndices()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.liveHandles()" {
-    const TestPool = Pool(8,8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {});
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -709,7 +684,7 @@ test "Pool.liveHandles()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.clear()" {
-    const TestPool = Pool(8,8, void, struct {});
+    const TestPool = Pool(8, 8, void, struct {});
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -734,14 +709,14 @@ test "Pool.clear()" {
 }
 
 test "Pool.clear() calls Columns.deinit()" {
-    const TestPool = Pool(2,6, void, DeinitCounter);
+    const TestPool = Pool(2, 6, void, DeinitCounter);
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     _ = try pool.add(DeinitCounter.init(&deinit_count));
     try expectEqual(@as(u32, 0), deinit_count);
     pool.clear();
@@ -749,14 +724,14 @@ test "Pool.clear() calls Columns.deinit()" {
 }
 
 test "Pool.clear() calls ColumnType.deinit()" {
-    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     _ = try pool.add(.{
         .a = DeinitCounter.init(&deinit_count),
         .b = DeinitCounter.init(&deinit_count),
@@ -769,7 +744,7 @@ test "Pool.clear() calls ColumnType.deinit()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.add()" {
-    const TestPool = Pool(2,6, void, struct {});
+    const TestPool = Pool(2, 6, void, struct {});
     try expectEqual(@sizeOf(u8), @sizeOf(TestPool.Handle));
     try expectEqual(@as(usize, 4), TestPool.max_capacity);
 
@@ -795,7 +770,7 @@ test "Pool.add()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.remove()" {
-    const TestPool = Pool(2,6, void, struct {});
+    const TestPool = Pool(2, 6, void, struct {});
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -819,14 +794,14 @@ test "Pool.remove()" {
 }
 
 test "Pool.remove() calls Columns.deinit()" {
-    const TestPool = Pool(2,6, void, DeinitCounter);
+    const TestPool = Pool(2, 6, void, DeinitCounter);
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     const handle = try pool.add(DeinitCounter.init(&deinit_count));
     try expectEqual(@as(u32, 0), deinit_count);
     try pool.remove(handle);
@@ -834,14 +809,14 @@ test "Pool.remove() calls Columns.deinit()" {
 }
 
 test "Pool.remove() calls ColumnType.deinit()" {
-    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     const handle = try pool.add(.{
         .a = DeinitCounter.init(&deinit_count),
         .b = DeinitCounter.init(&deinit_count),
@@ -854,7 +829,7 @@ test "Pool.remove() calls ColumnType.deinit()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.removeIfLive()" {
-    const TestPool = Pool(2,6, void, struct {});
+    const TestPool = Pool(2, 6, void, struct {});
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -888,30 +863,29 @@ test "Pool.removeIfLive()" {
 }
 
 test "Pool.removeIfLive() calls Columns.deinit()" {
-    const TestPool = Pool(2,6, void, DeinitCounter);
+    const TestPool = Pool(2, 6, void, DeinitCounter);
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     const handle = try pool.add(DeinitCounter.init(&deinit_count));
     try expectEqual(@as(u32, 0), deinit_count);
     pool.removeIfLive(handle);
     try expectEqual(@as(u32, 1), deinit_count);
 }
 
-
 test "Pool.removeIfLive() calls ColumnType.deinit()" {
-    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     const handle = try pool.add(.{
         .a = DeinitCounter.init(&deinit_count),
         .b = DeinitCounter.init(&deinit_count),
@@ -924,7 +898,7 @@ test "Pool.removeIfLive() calls ColumnType.deinit()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.getColumnPtr()" {
-    const TestPool = Pool(2,6, void, struct { a: u32 });
+    const TestPool = Pool(2, 6, void, struct { a: u32 });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -938,10 +912,10 @@ test "Pool.getColumnPtr()" {
     const handle2 = try pool.add(.{ .a = 2 });
     const handle3 = try pool.add(.{ .a = 3 });
 
-    const a0ptr : *u32 = try pool.getColumnPtr(handle0, .a);
-    const a1ptr : *u32 = try pool.getColumnPtr(handle1, .a);
-    const a2ptr : *u32 = try pool.getColumnPtr(handle2, .a);
-    const a3ptr : *u32 = try pool.getColumnPtr(handle3, .a);
+    const a0ptr: *u32 = try pool.getColumnPtr(handle0, .a);
+    const a1ptr: *u32 = try pool.getColumnPtr(handle1, .a);
+    const a2ptr: *u32 = try pool.getColumnPtr(handle2, .a);
+    const a3ptr: *u32 = try pool.getColumnPtr(handle3, .a);
     try expectEqual(@as(u32, 0), a0ptr.*);
     try expectEqual(@as(u32, 1), a1ptr.*);
     try expectEqual(@as(u32, 2), a2ptr.*);
@@ -960,7 +934,7 @@ test "Pool.getColumnPtr()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.getColumn()" {
-    const TestPool = Pool(2,6, void, struct { a: u32 });
+    const TestPool = Pool(2, 6, void, struct { a: u32 });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -992,7 +966,7 @@ test "Pool.getColumn()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.setColumn()" {
-    const TestPool = Pool(2,6, void, struct { a: u32 });
+    const TestPool = Pool(2, 6, void, struct { a: u32 });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -1032,14 +1006,14 @@ test "Pool.setColumn()" {
 }
 
 test "Pool.setColumn() calls ColumnType.deinit()" {
-    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     const handle = try pool.add(.{
         .a = DeinitCounter.init(&deinit_count),
         .b = DeinitCounter.init(&deinit_count),
@@ -1054,7 +1028,7 @@ test "Pool.setColumn() calls ColumnType.deinit()" {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.setColumns()" {
-    const TestPool = Pool(2,6, void, struct { a: u32 });
+    const TestPool = Pool(2, 6, void, struct { a: u32 });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -1094,14 +1068,14 @@ test "Pool.setColumns()" {
 }
 
 test "Pool.setColumns() calls Columns.deinit()" {
-    const TestPool = Pool(2,6, void, DeinitCounter);
+    const TestPool = Pool(2, 6, void, DeinitCounter);
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     const handle = try pool.add(DeinitCounter.init(&deinit_count));
     try expectEqual(@as(u32, 0), deinit_count);
     try pool.setColumns(handle, DeinitCounter.init(&deinit_count));
@@ -1109,14 +1083,14 @@ test "Pool.setColumns() calls Columns.deinit()" {
 }
 
 test "Pool.setColumns() calls ColumnType.deinit()" {
-    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+    const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
     var pool = try TestPool.initMaxCapacity(gpa.allocator());
     defer pool.deinit();
 
-    var deinit_count : u32 = 0;
+    var deinit_count: u32 = 0;
     const handle = try pool.add(.{
         .a = DeinitCounter.init(&deinit_count),
         .b = DeinitCounter.init(&deinit_count),

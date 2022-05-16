@@ -19,7 +19,7 @@ pub fn isStruct(comptime T: type) bool {
 /// UInt(bits) returns an unsigned integer type of the requested bit width.
 pub fn UInt(comptime bits: u8) type {
     const unsigned = std.builtin.Signedness.unsigned;
-    return @Type(.{.Int = .{ .signedness = unsigned, .bits = bits }});
+    return @Type(.{ .Int = .{ .signedness = unsigned, .bits = bits } });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -35,12 +35,12 @@ pub fn UInt(comptime bits: u8) type {
 /// * `u256`
 pub fn AddressableUInt(comptime min_bits: u8) type {
     return switch (min_bits) {
-          0...   8 => u8,
-          9...  16 => u16,
-         17...  32 => u32,
-         33...  64 => u64,
-         65... 128 => u128,
-        129... 255 => u256,
+        0...8 => u8,
+        9...16 => u16,
+        17...32 => u32,
+        33...64 => u64,
+        65...128 => u128,
+        129...255 => u256,
     };
 }
 
@@ -54,12 +54,12 @@ pub fn StructOfSlices(comptime Struct: type) type {
 
     // initialize a basic slice-typed field, no name, zero sized elements
     const Template = struct { @"": []u0 };
-    var slice_field : StructField = @typeInfo(Template).Struct.fields[0];
+    var slice_field: StructField = @typeInfo(Template).Struct.fields[0];
     var slice_type_info = @typeInfo(slice_field.field_type);
 
     // same number of fields in the new struct
     const struct_fields = @typeInfo(Struct).Struct.fields;
-    var struct_of_slices_fields : [struct_fields.len]StructField = undefined;
+    var struct_of_slices_fields: [struct_fields.len]StructField = undefined;
 
     inline for (struct_fields) |struct_field, i| {
         // u32 -> []u32
@@ -75,12 +75,12 @@ pub fn StructOfSlices(comptime Struct: type) type {
         struct_of_slices_fields[i] = slice_field;
     }
 
-    return @Type(.{.Struct = .{
+    return @Type(.{ .Struct = .{
         .layout = std.builtin.Type.ContainerLayout.Auto,
         .fields = &struct_of_slices_fields,
-        .decls  = &.{},
+        .decls = &.{},
         .is_tuple = false,
-    }});
+    } });
 }
 
 test "StructOfSlices" {
