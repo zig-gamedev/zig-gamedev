@@ -1,5 +1,7 @@
 const std = @import("std");
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 /// Returns a struct that maintains a pool of data.  Handles returned by
 /// `Pool.add()` can be used to get/set the data in zero or more columns.
 ///
@@ -475,6 +477,8 @@ pub fn Pool(
     };
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 const expectError = std.testing.expectError;
@@ -490,6 +494,8 @@ const DeinitCounter = struct {
 
     fn deinit(self: *Self) void { self.counter.* += 1; }
 };
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool with no columns" {
     const TestPool = Pool(8,8, void, struct {});
@@ -563,6 +569,8 @@ test "Pool with two columns" {
     try expectEqual(@as(u64, 123), try pool.getColumn(handle, .b));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 test "Pool.liveHandleCount()" {
     const TestPool = Pool(8,8, void, struct {});
 
@@ -592,6 +600,8 @@ test "Pool.liveHandleCount()" {
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 test "Pool.isLiveHandle()" {
     const TestPool = Pool(8,8, void, struct {});
 
@@ -614,6 +624,8 @@ test "Pool.isLiveHandle()" {
     try pool.remove(handle);
     try expect(!pool.isLiveHandle(handle));
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.validateHandle()" {
     const TestPool = Pool(8,8, void, struct {});
@@ -646,6 +658,8 @@ test "Pool.validateHandle()" {
         pool.validateHandle(handle));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 test "Pool.liveIndices()" {
     const TestPool = Pool(8,8, void, struct {});
 
@@ -668,6 +682,8 @@ test "Pool.liveIndices()" {
     try expect(null == live_indices.next());
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 test "Pool.liveHandles()" {
     const TestPool = Pool(8,8, void, struct {});
 
@@ -689,6 +705,8 @@ test "Pool.liveHandles()" {
     try expectEqual(handle2.value, live_handles.next().?.value);
     try expect(null == live_handles.next());
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.clear()" {
     const TestPool = Pool(8,8, void, struct {});
@@ -715,6 +733,41 @@ test "Pool.clear()" {
     try expect(!pool.isLiveHandle(handle2));
 }
 
+test "Pool.clear() calls Columns.deinit()" {
+    const TestPool = Pool(2,6, void, DeinitCounter);
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    _ = try pool.add(DeinitCounter.init(&deinit_count));
+    try expectEqual(@as(u32, 0), deinit_count);
+    pool.clear();
+    try expectEqual(@as(u32, 1), deinit_count);
+}
+
+test "Pool.clear() calls ColumnType.deinit()" {
+    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    _ = try pool.add(.{
+        .a = DeinitCounter.init(&deinit_count),
+        .b = DeinitCounter.init(&deinit_count),
+    });
+    try expectEqual(@as(u32, 0), deinit_count);
+    pool.clear();
+    try expectEqual(@as(u32, 2), deinit_count);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 test "Pool.add()" {
     const TestPool = Pool(2,6, void, struct {});
     try expectEqual(@sizeOf(u8), @sizeOf(TestPool.Handle));
@@ -739,6 +792,8 @@ test "Pool.add()" {
     try expectError(TestPool.Error.PoolIsFull, pool.add(.{}));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 test "Pool.remove()" {
     const TestPool = Pool(2,6, void, struct {});
 
@@ -762,6 +817,41 @@ test "Pool.remove()" {
     try expectError(TestPool.Error.HandleIsReleased, pool.remove(handle2));
     try expectError(TestPool.Error.HandleIsReleased, pool.remove(handle3));
 }
+
+test "Pool.remove() calls Columns.deinit()" {
+    const TestPool = Pool(2,6, void, DeinitCounter);
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    const handle = try pool.add(DeinitCounter.init(&deinit_count));
+    try expectEqual(@as(u32, 0), deinit_count);
+    try pool.remove(handle);
+    try expectEqual(@as(u32, 1), deinit_count);
+}
+
+test "Pool.remove() calls ColumnType.deinit()" {
+    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    const handle = try pool.add(.{
+        .a = DeinitCounter.init(&deinit_count),
+        .b = DeinitCounter.init(&deinit_count),
+    });
+    try expectEqual(@as(u32, 0), deinit_count);
+    try pool.remove(handle);
+    try expectEqual(@as(u32, 2), deinit_count);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.removeIfLive()" {
     const TestPool = Pool(2,6, void, struct {});
@@ -797,6 +887,42 @@ test "Pool.removeIfLive()" {
     pool.removeIfLive(handle3);
 }
 
+test "Pool.removeIfLive() calls Columns.deinit()" {
+    const TestPool = Pool(2,6, void, DeinitCounter);
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    const handle = try pool.add(DeinitCounter.init(&deinit_count));
+    try expectEqual(@as(u32, 0), deinit_count);
+    pool.removeIfLive(handle);
+    try expectEqual(@as(u32, 1), deinit_count);
+}
+
+
+test "Pool.removeIfLive() calls ColumnType.deinit()" {
+    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    const handle = try pool.add(.{
+        .a = DeinitCounter.init(&deinit_count),
+        .b = DeinitCounter.init(&deinit_count),
+    });
+    try expectEqual(@as(u32, 0), deinit_count);
+    pool.removeIfLive(handle);
+    try expectEqual(@as(u32, 2), deinit_count);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 test "Pool.getColumnPtr()" {
     const TestPool = Pool(2,6, void, struct { a: u32 });
 
@@ -831,6 +957,8 @@ test "Pool.getColumnPtr()" {
     try expectError(TestPool.Error.HandleIsReleased, pool.getColumnPtr(handle3, .a));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 test "Pool.getColumn()" {
     const TestPool = Pool(2,6, void, struct { a: u32 });
 
@@ -860,6 +988,8 @@ test "Pool.getColumn()" {
     try expectError(TestPool.Error.HandleIsReleased, pool.getColumn(handle2, .a));
     try expectError(TestPool.Error.HandleIsReleased, pool.getColumn(handle3, .a));
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.setColumn()" {
     const TestPool = Pool(2,6, void, struct { a: u32 });
@@ -901,8 +1031,8 @@ test "Pool.setColumn()" {
     try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle3, .a, 23));
 }
 
-test "Pool.setColumn() calls deinit" {
-    const TestPool = Pool(2,6, void, struct { d: DeinitCounter });
+test "Pool.setColumn() calls ColumnType.deinit()" {
+    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -910,13 +1040,18 @@ test "Pool.setColumn() calls deinit" {
     defer pool.deinit();
 
     var deinit_count : u32 = 0;
-    const handle = try pool.add(.{ .d = DeinitCounter.init(&deinit_count)});
+    const handle = try pool.add(.{
+        .a = DeinitCounter.init(&deinit_count),
+        .b = DeinitCounter.init(&deinit_count),
+    });
     try expectEqual(@as(u32, 0), deinit_count);
-    try pool.setColumn(handle, .d, DeinitCounter.init(&deinit_count));
+    try pool.setColumn(handle, .a, DeinitCounter.init(&deinit_count));
     try expectEqual(@as(u32, 1), deinit_count);
-    try pool.remove(handle);
+    try pool.setColumn(handle, .b, DeinitCounter.init(&deinit_count));
     try expectEqual(@as(u32, 2), deinit_count);
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 test "Pool.setColumns()" {
     const TestPool = Pool(2,6, void, struct { a: u32 });
@@ -958,7 +1093,7 @@ test "Pool.setColumns()" {
     try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle3, .a, 23));
 }
 
-test "Pool.setColumns() calls deinit" {
+test "Pool.setColumns() calls Columns.deinit()" {
     const TestPool = Pool(2,6, void, DeinitCounter);
 
     const GPA = std.heap.GeneralPurposeAllocator;
@@ -971,6 +1106,27 @@ test "Pool.setColumns() calls deinit" {
     try expectEqual(@as(u32, 0), deinit_count);
     try pool.setColumns(handle, DeinitCounter.init(&deinit_count));
     try expectEqual(@as(u32, 1), deinit_count);
-    try pool.remove(handle);
+}
+
+test "Pool.setColumns() calls ColumnType.deinit()" {
+    const TestPool = Pool(2,6, void, struct { a: DeinitCounter, b: DeinitCounter });
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    const handle = try pool.add(.{
+        .a = DeinitCounter.init(&deinit_count),
+        .b = DeinitCounter.init(&deinit_count),
+    });
+    try expectEqual(@as(u32, 0), deinit_count);
+    try pool.setColumns(handle, .{
+        .a = DeinitCounter.init(&deinit_count),
+        .b = DeinitCounter.init(&deinit_count),
+    });
     try expectEqual(@as(u32, 2), deinit_count);
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
