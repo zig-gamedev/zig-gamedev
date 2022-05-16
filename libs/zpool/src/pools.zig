@@ -483,9 +483,7 @@ test "Pool with no columns" {
     try expectEqual(@as(usize, 0), TestPool.column_count);
     try expectEqual(@as(usize, 0), @sizeOf(TestPool.ColumnSlices));
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     const handle = try pool.add(.{});
@@ -503,9 +501,7 @@ test "Pool with one column" {
     try expectEqual(@as(usize, 1), TestPool.column_count);
     try expectEqual(@sizeOf([]u32), @sizeOf(TestPool.ColumnSlices));
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     const handle = try pool.add(.{ .a = 123 });
@@ -527,9 +523,7 @@ test "Pool with two columns" {
     try expectEqual(@as(usize, 2), TestPool.column_count);
     try expectEqual(@sizeOf([]u32) * 2, @sizeOf(TestPool.ColumnSlices));
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     const handle = try pool.add(.{ .a = 123, .b = 456 });
@@ -555,9 +549,7 @@ test "Pool with two columns" {
 test "Pool.liveHandleCount()" {
     const TestPool = Pool(8, 8, void, struct {});
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -586,9 +578,7 @@ test "Pool.liveHandleCount()" {
 test "Pool.isLiveHandle()" {
     const TestPool = Pool(8, 8, void, struct {});
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -613,9 +603,7 @@ test "Pool.validateHandle()" {
     try expectEqual(@as(usize, 0), TestPool.column_count);
     try expectEqual(@as(usize, 0), @sizeOf(TestPool.ColumnSlices));
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -638,9 +626,7 @@ test "Pool.validateHandle()" {
 test "Pool.liveIndices()" {
     const TestPool = Pool(8, 8, void, struct {});
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -662,9 +648,7 @@ test "Pool.liveIndices()" {
 test "Pool.liveHandles()" {
     const TestPool = Pool(8, 8, void, struct {});
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -686,9 +670,7 @@ test "Pool.liveHandles()" {
 test "Pool.clear()" {
     const TestPool = Pool(8, 8, void, struct {});
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -711,9 +693,7 @@ test "Pool.clear()" {
 test "Pool.clear() calls Columns.deinit()" {
     const TestPool = Pool(2, 6, void, DeinitCounter);
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
@@ -726,9 +706,7 @@ test "Pool.clear() calls Columns.deinit()" {
 test "Pool.clear() calls ColumnType.deinit()" {
     const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
@@ -748,9 +726,7 @@ test "Pool.add()" {
     try expectEqual(@sizeOf(u8), @sizeOf(TestPool.Handle));
     try expectEqual(@as(usize, 4), TestPool.max_capacity);
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -772,9 +748,7 @@ test "Pool.add()" {
 test "Pool.remove()" {
     const TestPool = Pool(2, 6, void, struct {});
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -796,9 +770,7 @@ test "Pool.remove()" {
 test "Pool.remove() calls Columns.deinit()" {
     const TestPool = Pool(2, 6, void, DeinitCounter);
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
@@ -811,9 +783,7 @@ test "Pool.remove() calls Columns.deinit()" {
 test "Pool.remove() calls ColumnType.deinit()" {
     const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
@@ -831,9 +801,7 @@ test "Pool.remove() calls ColumnType.deinit()" {
 test "Pool.removeIfLive()" {
     const TestPool = Pool(2, 6, void, struct {});
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -865,9 +833,7 @@ test "Pool.removeIfLive()" {
 test "Pool.removeIfLive() calls Columns.deinit()" {
     const TestPool = Pool(2, 6, void, DeinitCounter);
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
@@ -880,9 +846,7 @@ test "Pool.removeIfLive() calls Columns.deinit()" {
 test "Pool.removeIfLive() calls ColumnType.deinit()" {
     const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
@@ -900,9 +864,7 @@ test "Pool.removeIfLive() calls ColumnType.deinit()" {
 test "Pool.getColumnPtr()" {
     const TestPool = Pool(2, 6, void, struct { a: u32 });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -936,9 +898,7 @@ test "Pool.getColumnPtr()" {
 test "Pool.getColumn()" {
     const TestPool = Pool(2, 6, void, struct { a: u32 });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -968,9 +928,7 @@ test "Pool.getColumn()" {
 test "Pool.setColumn()" {
     const TestPool = Pool(2, 6, void, struct { a: u32 });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -1008,9 +966,7 @@ test "Pool.setColumn()" {
 test "Pool.setColumn() calls ColumnType.deinit()" {
     const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
@@ -1030,9 +986,7 @@ test "Pool.setColumn() calls ColumnType.deinit()" {
 test "Pool.setColumns()" {
     const TestPool = Pool(2, 6, void, struct { a: u32 });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     try expectEqual(@as(usize, 0), pool.liveHandleCount());
@@ -1070,9 +1024,7 @@ test "Pool.setColumns()" {
 test "Pool.setColumns() calls Columns.deinit()" {
     const TestPool = Pool(2, 6, void, DeinitCounter);
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
@@ -1085,9 +1037,7 @@ test "Pool.setColumns() calls Columns.deinit()" {
 test "Pool.setColumns() calls ColumnType.deinit()" {
     const TestPool = Pool(2, 6, void, struct { a: DeinitCounter, b: DeinitCounter });
 
-    const GPA = std.heap.GeneralPurposeAllocator;
-    var gpa = GPA(.{}){};
-    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    var pool = try TestPool.initMaxCapacity(std.testing.allocator);
     defer pool.deinit();
 
     var deinit_count: u32 = 0;
