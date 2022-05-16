@@ -4,6 +4,8 @@ const mesh_common =
 \\      object_to_world: mat4x4<f32>,
 \\  }
 \\  @group(1) @binding(0) var<uniform> draw_uniforms: DrawUniforms;
+\\  @group(1) @binding(1) var base_color_tex: texture_2d<f32>;
+\\  @group(1) @binding(2) var aniso_sam: sampler;
 \\
 \\  struct FrameUniforms {
 \\      world_to_clip: mat4x4<f32>,
@@ -40,7 +42,8 @@ pub const mesh_fs = mesh_common ++
 \\      @location(2) texcoord: vec2<f32>,
 \\      @location(3) tangent: vec4<f32>,
 \\  ) -> @location(0) vec4<f32> {
-\\      return vec4(1.0);
+\\      let color = textureSample(base_color_tex, aniso_sam, texcoord).xyz;
+\\      return vec4(color, 1.0);
 \\  }
 // zig fmt: on
 ;

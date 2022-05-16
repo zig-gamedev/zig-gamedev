@@ -1,5 +1,6 @@
 const std = @import("std");
 const math = std.math;
+const assert = std.debug.assert;
 const glfw = @import("glfw");
 const zgpu = @import("zgpu");
 const gpu = zgpu.gpu;
@@ -25,6 +26,11 @@ const Mesh = struct {
     num_vertices: u32,
 };
 
+const num_mesh_textures = 4;
+const cube_mesh = 0;
+const helmet_mesh = 1;
+const enable_async_compilation = true;
+
 const FrameUniforms = struct {
     world_to_clip: zm.Mat,
 };
@@ -43,6 +49,11 @@ const DemoState = struct {
 
     depth_texture: zgpu.TextureHandle,
     depth_texture_view: zgpu.TextureViewHandle,
+
+    mesh_textures: [num_mesh_textures]zgpu.TextureHandle,
+    mesh_texture_views: [num_mesh_textures]zgpu.TextureViewHandle,
+
+    aniso_sam: zgpu.SamplerHandle,
 
     frame_uniforms_bg: zgpu.BindGroupHandle,
     mesh_bg: zgpu.BindGroupHandle,
@@ -136,6 +147,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     const mesh_bgl = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
+        zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
+        zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
     });
     defer gctx.destroyResource(mesh_bgl);
 
@@ -167,8 +180,72 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     });
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, indices.items);
 
+    //
+    // Create textures.
+    //
+
+    const aniso_sam = gctx.createSampler(.{
+        .mag_filter = .linear,
+        .min_filter = .linear,
+        .mipmap_filter = .linear,
+        .max_anisotropy = 16,
+    });
+
     // Create a depth texture and its 'view'.
     const depth = createDepthTexture(gctx);
+
+    // Create mesh textures.
+    const mesh_texture_paths = &[num_mesh_textures][:0]const u8{
+        content_dir ++ "SciFiHelmet/SciFiHelmet_AmbientOcclusion.png",
+        content_dir ++ "SciFiHelmet/SciFiHelmet_BaseColor.png",
+        content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
+        content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.png",
+    };
+    var mesh_textures: [num_mesh_textures]zgpu.TextureHandle = undefined;
+    var mesh_texture_views: [num_mesh_textures]zgpu.TextureViewHandle = undefined;
+
+    for (mesh_texture_paths) |path, tex_index| {
+        var image = try zgpu.stbi.Image(u8).init(path, 4);
+        defer image.deinit();
+
+        mesh_textures[tex_index] = gctx.createTexture(.{
+            .usage = .{ .texture_binding = true, .copy_dst = true },
+            .size = .{
+                .width = image.width,
+                .height = image.height,
+                .depth_or_array_layers = 1,
+            },
+            .format = .rgba8_unorm,
+            .mip_level_count = math.log2_int(u32, math.max(image.width, image.height)) + 1,
+        });
+        mesh_texture_views[tex_index] = gctx.createTextureView(mesh_textures[tex_index], .{});
+
+        gctx.queue.writeTexture(
+            &.{ .texture = gctx.lookupResource(mesh_textures[tex_index]).? },
+            image.data,
+            &.{
+                .bytes_per_row = image.width * image.channels_in_memory,
+                .rows_per_image = image.height,
+            },
+            &.{ .width = image.width, .height = image.height },
+        );
+    }
+
+    // Generate mipmaps on the GPU.
+    {
+        const commands = commands: {
+            const encoder = gctx.device.createCommandEncoder(null);
+            defer encoder.release();
+
+            for (mesh_textures) |texture| {
+                gctx.generateMipmaps(arena, encoder, texture);
+            }
+
+            break :commands encoder.finish(null);
+        };
+        defer commands.release();
+        gctx.submit(&.{commands});
+    }
 
     //
     // Create bind groups.
@@ -177,8 +254,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
     });
 
-    const mesh_bg = gctx.createBindGroup(frame_uniforms_bgl, &[_]zgpu.BindGroupEntryInfo{
+    const mesh_bg = gctx.createBindGroup(mesh_bgl, &[_]zgpu.BindGroupEntryInfo{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+        .{ .binding = 1, .texture_view_handle = mesh_texture_views[0] },
+        .{ .binding = 2, .sampler_handle = aniso_sam },
     });
 
     const demo = try allocator.create(DemoState);
@@ -188,6 +267,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .index_buffer = index_buffer,
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
+        .mesh_textures = mesh_textures,
+        .mesh_texture_views = mesh_texture_views,
+        .aniso_sam = aniso_sam,
         .frame_uniforms_bg = frame_uniforms_bg,
         .mesh_bg = mesh_bg,
         .meshes = meshes,
@@ -347,10 +429,10 @@ fn draw(demo: *DemoState) void {
 
             // Draw mesh.
             pass.drawIndexed(
-                demo.meshes.items[1].num_indices,
+                demo.meshes.items[helmet_mesh].num_indices,
                 1,
-                demo.meshes.items[1].index_offset,
-                demo.meshes.items[1].vertex_offset,
+                demo.meshes.items[helmet_mesh].index_offset,
+                demo.meshes.items[helmet_mesh].vertex_offset,
                 0,
             );
         }
@@ -472,7 +554,12 @@ fn createMeshPipeline(
             .targets = &.{color_target},
         },
     };
-    gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, out_pipeline);
+
+    if (enable_async_compilation) {
+        gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, out_pipeline);
+    } else {
+        out_pipeline.* = gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
+    }
 }
 
 pub fn main() !void {
