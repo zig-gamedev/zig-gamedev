@@ -1,23 +1,24 @@
 # znetwork v0.1
 
+This library uses [Zig-Network](https://github.com/MasterQ32/zig-network)
 ENet bindings developed by Martin Wickham: https://github.com/SpexGuy/Zig-ENet
 
-For test client/server application see: https://github.com/michal-z/zig-gamedev/tree/main/samples/network_test
+For ENet test client/server application see: https://github.com/michal-z/zig-gamedev/tree/main/samples/network_test
 
 ## Getting started
 
-Copy `zenet` folder to a `libs` subdirectory of the root of your project.
+Copy `znetwork` folder to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 
 ```zig
 const std = @import("std");
-const zenet = @import("libs/zenet/build.zig");
+const znet = @import("libs/znetwork/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     const exe = b.addExecutable("your_bin", "src/main.zig");
 
-    exe.addPackage(zenet.pkg);
+    exe.addPackage(znet.pkg);
     zenet.link(exe);
 
     exe.setBuildMode(b.standardReleaseOptions());
@@ -32,10 +33,10 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
-Now in your code you may import and use zenet:
+Now in your code you may import and use `znetwork`:
 
 ```zig
-const zenet = @import("zenet");
+const zenet = @import("znetwork").enet;
 
 pub fn main() !void {
     try zenet.initialize();
