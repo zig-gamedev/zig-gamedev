@@ -98,6 +98,8 @@ pub fn Handle(
 
         pub fn cycle(self: Self) AddressableCycle { return self.compact.cycle; }
 
+        pub fn eql(a: Self, b: Self) bool { return a.value == b.value; }
+
         pub const AddressableHandle = struct {
             const Compact = Self;
             index : AddressableIndex = 0,
@@ -107,6 +109,10 @@ pub fn Handle(
                 const _index = @intCast(Index, handle.index);
                 const _cycle = @intCast(Cycle, handle.cycle);
                 return Compact.init(_index, _cycle);
+            }
+
+            pub fn eql(a: AddressableHandle, b: AddressableHandle) bool {
+                return a.index == b.index and a.cycle == b.cycle;
             }
         };
 

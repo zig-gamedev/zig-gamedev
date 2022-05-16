@@ -46,8 +46,9 @@ pub fn Pool(
     const THandle = handles.Handle(index_bits, cycle_bits, TResource);
 
     const utils = @import("utils.zig");
+    const isStruct = utils.isStruct;
 
-    if (!utils.isStruct(TColumns)) @compileError("TColumns must be a struct");
+    if (!isStruct(TColumns)) @compileError("TColumns must be a struct");
 
     const meta = std.meta;
     const Allocator = std.mem.Allocator;
@@ -106,12 +107,12 @@ pub fn Pool(
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        _allocator     : Allocator          = undefined,
-        _storage       : Storage            = .{},
-        _free_count    : usize              = 0,
-        _free_stack    : []AddressableIndex = &.{},
-        _curr_cycle    : []AddressableCycle = &.{},
-        _column_slices : ColumnSlices       = undefined,
+        _allocator  : Allocator          = undefined,
+        _storage    : Storage            = .{},
+        _free_count : usize              = 0,
+        _free_stack : []AddressableIndex = &.{},
+        _curr_cycle : []AddressableCycle = &.{},
+        columns     : ColumnSlices       = undefined,
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -171,6 +172,48 @@ pub fn Pool(
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+        pub const LiveIndexIterator = struct {
+            curr_cycle: []const AddressableCycle = &.{},
+            next_index: AddressableIndex = 0,
+
+            pub fn next(self: *LiveIndexIterator) ?AddressableIndex {
+                while (self.next_index < self.curr_cycle.len) {
+                    const curr_index = self.next_index;
+                    self.next_index += 1;
+                    if (isLiveCycle(self.curr_cycle[curr_index]))
+                        return curr_index;
+                }
+                return null;
+            }
+        };
+
+        pub fn liveIndices(self: Self) LiveIndexIterator {
+            return .{ .curr_cycle = self._curr_cycle };
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        pub const LiveHandleIterator = struct {
+            live_indices : LiveIndexIterator = .{},
+
+            pub fn next(self: *LiveHandleIterator) ?Handle {
+                if (self.live_indices.next()) |index| {
+                    const ahandle = AddressableHandle {
+                        .index = index,
+                        .cycle = self.live_indices.curr_cycle[index],
+                    };
+                    return ahandle.compact();
+                }
+                return null;
+            }
+        };
+
+        pub fn liveHandles(self: Self) LiveHandleIterator {
+            return .{ .live_indices = liveIndices(self) };
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
         pub fn clear(self: *Self) void {
             var ahandle = AddressableHandle { .index = 0 };
             for (self._curr_cycle) |cycle| {
@@ -185,8 +228,8 @@ pub fn Pool(
         pub fn add(self: *Self, values: Columns) !Handle {
             const ahandle = try acquireAddressableHandle(self);
             inline for (column_fields) |field| {
-                @field(self._column_slices, field.name)[ahandle.index]
-                     = @field(values, field.name);
+                @field(self.columns, field.name)[ahandle.index] =
+                     @field(values, field.name);
             }
             return ahandle.compact();
         }
@@ -211,8 +254,8 @@ pub fn Pool(
         ) !*ColumnType(column) {
             const ahandle = handle.addressable();
             try validateAddressableHandle(self, ahandle);
-            const column_name = meta.fieldInfo(Columns, column).name;
-            return &@field(self._column_slices, column_name)[ahandle.index];
+            const column_field = meta.fieldInfo(Columns, column);
+            return &@field(self.columns, column_field.name)[ahandle.index];
         }
 
         pub fn getColumn(
@@ -223,6 +266,17 @@ pub fn Pool(
             return (try getColumnPtr(self, handle, column)).*;
         }
 
+        pub fn getColumns(self: Self, handle: Handle) !Columns {
+            const ahandle = handle.addressable();
+            try validateAddressableHandle(self, ahandle);
+            var values : Columns = undefined;
+            inline for (column_fields) |column_field| {
+                @field(values, column_field.name) =
+                    @field(self.columns, column_field.name)[ahandle.index];
+            }
+            return values;
+        }
+
         pub fn setColumn(
             self: Self,
             handle: Handle,
@@ -231,8 +285,73 @@ pub fn Pool(
         ) !void {
             const ahandle = handle.addressable();
             try validateAddressableHandle(self, ahandle);
-            const field_name = meta.fieldInfo(Columns, column).name;
-            @field(self._column_slices, field_name)[ahandle.index] = value;
+            const column_field = meta.fieldInfo(Columns, column);
+            deinitColumn(self, ahandle.index, column_field);
+            @field(self.columns, column_field.name)[ahandle.index] = value;
+        }
+
+        pub fn setColumns(self: Self, handle:Handle, values: Columns) !void {
+            const ahandle = handle.addressable();
+            try validateAddressableHandle(self, ahandle);
+            deinitColumns(self, ahandle.index);
+            inline for (column_fields) |column_field| {
+                @field(self.columns, column_field.name)[ahandle.index] =
+                    @field(values, column_field.name);
+            }
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        const StructField = std.builtin.Type.StructField;
+
+        /// Call `value.deinit()` if defined.
+        fn deinitColumn(
+            self: Self,
+            index: AddressableIndex,
+            comptime column_field: StructField
+        ) void {
+            switch (@typeInfo(column_field.field_type)) {
+                .Struct, .Enum, .Union, .Opaque => {
+                    if (@hasDecl(column_field.field_type, "deinit")) {
+                        @field(self.columns, column_field.name)[index].deinit();
+                    }
+                },
+                else => {},
+            }
+        }
+
+        /// Call `values.deinit()` if defined.
+        fn deinitColumns(self: Self, index: AddressableIndex) void {
+            if (@hasDecl(Columns, "deinit")) {
+                var values : Columns = undefined;
+                inline for (column_fields) |column_field| {
+                    @field(values, column_field.name) =
+                        @field(self.columns, column_field.name)[index];
+                }
+                values.deinit();
+                inline for (column_fields) |column_field| {
+                    @field(self.columns, column_field.name)[index] =
+                        @field(values, column_field.name);
+                }
+            } else {
+                inline for (column_fields) |column_field| {
+                    deinitColumn(self, index, column_field);
+                }
+            }
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        fn updateSlices(self: *Self) void {
+            var slice = self._storage.slice();
+            self._free_stack = slice.items(.@"Pool._free_stack");
+            self._curr_cycle = slice.items(.@"Pool._curr_cycle");
+            inline for (column_fields) |column_field, i| {
+                const F = column_field.field_type;
+                const p = slice.ptrs[private_fields.len + i];
+                const f = @ptrCast([*]F, @alignCast(@alignOf(F), p));
+                @field(self.columns, column_field.name) = f[0..slice.len];
+            }
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -286,6 +405,7 @@ pub fn Pool(
             self: *Self,
             handle: AddressableHandle,
         ) void {
+            deinitColumns(self.*, handle.index);
             incrementCycle(self, handle.index);
             pushFreeIndex(self, handle.index);
         }
@@ -352,27 +472,24 @@ pub fn Pool(
             return @intCast(AddressableIndex, new_index);
         }
 
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        fn updateSlices(self: *Self) void {
-            var slice = self._storage.slice();
-            self._free_stack = slice.items(.@"Pool._free_stack");
-            self._curr_cycle = slice.items(.@"Pool._curr_cycle");
-
-            inline for (column_fields) |field, i| {
-                const F = field.field_type;
-                const byte_ptr = slice.ptrs[private_fields.len + i];
-                const data_ptr = @ptrCast([*]F, @alignCast(@alignOf(F), byte_ptr));
-                @field(self._column_slices, field.name) = data_ptr[0..slice.len];
-            }
-        }
-
     };
 }
 
 const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 const expectError = std.testing.expectError;
+
+const DeinitCounter = struct {
+    const Self = @This();
+
+    counter: *u32,
+
+    fn init(_counter: *u32) Self {
+        return Self { .counter = _counter };
+    }
+
+    fn deinit(self: *Self) void { self.counter.* += 1; }
+};
 
 test "Pool with no columns" {
     const TestPool = Pool(8,8, void, struct {});
@@ -529,6 +646,50 @@ test "Pool.validateHandle()" {
         pool.validateHandle(handle));
 }
 
+test "Pool.liveIndices()" {
+    const TestPool = Pool(8,8, void, struct {});
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    try expectEqual(@as(usize, 0), pool.liveHandleCount());
+
+    const handle0 = try pool.add(.{});
+    const handle1 = try pool.add(.{});
+    const handle2 = try pool.add(.{});
+    try expectEqual(@as(usize, 3), pool.liveHandleCount());
+
+    var live_indices = pool.liveIndices();
+    try expectEqual(handle0.index(), live_indices.next().?);
+    try expectEqual(handle1.index(), live_indices.next().?);
+    try expectEqual(handle2.index(), live_indices.next().?);
+    try expect(null == live_indices.next());
+}
+
+test "Pool.liveHandles()" {
+    const TestPool = Pool(8,8, void, struct {});
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    try expectEqual(@as(usize, 0), pool.liveHandleCount());
+
+    const handle0 = try pool.add(.{});
+    const handle1 = try pool.add(.{});
+    const handle2 = try pool.add(.{});
+    try expectEqual(@as(usize, 3), pool.liveHandleCount());
+
+    var live_handles = pool.liveHandles();
+    try expectEqual(handle0.value, live_handles.next().?.value);
+    try expectEqual(handle1.value, live_handles.next().?.value);
+    try expectEqual(handle2.value, live_handles.next().?.value);
+    try expect(null == live_handles.next());
+}
+
 test "Pool.clear()" {
     const TestPool = Pool(8,8, void, struct {});
 
@@ -637,7 +798,7 @@ test "Pool.removeIfLive()" {
 }
 
 test "Pool.getColumnPtr()" {
-    const TestPool = Pool(2,6, void, struct { a : u32 });
+    const TestPool = Pool(2,6, void, struct { a: u32 });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -671,7 +832,7 @@ test "Pool.getColumnPtr()" {
 }
 
 test "Pool.getColumn()" {
-    const TestPool = Pool(2,6, void, struct { a : u32 });
+    const TestPool = Pool(2,6, void, struct { a: u32 });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -701,7 +862,7 @@ test "Pool.getColumn()" {
 }
 
 test "Pool.setColumn()" {
-    const TestPool = Pool(2,6, void, struct { a : u32 });
+    const TestPool = Pool(2,6, void, struct { a: u32 });
 
     const GPA = std.heap.GeneralPurposeAllocator;
     var gpa = GPA(.{}){};
@@ -738,4 +899,78 @@ test "Pool.setColumn()" {
     try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle1, .a, 21));
     try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle2, .a, 22));
     try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle3, .a, 23));
+}
+
+test "Pool.setColumn() calls deinit" {
+    const TestPool = Pool(2,6, void, struct { d: DeinitCounter });
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    const handle = try pool.add(.{ .d = DeinitCounter.init(&deinit_count)});
+    try expectEqual(@as(u32, 0), deinit_count);
+    try pool.setColumn(handle, .d, DeinitCounter.init(&deinit_count));
+    try expectEqual(@as(u32, 1), deinit_count);
+    try pool.remove(handle);
+    try expectEqual(@as(u32, 2), deinit_count);
+}
+
+test "Pool.setColumns()" {
+    const TestPool = Pool(2,6, void, struct { a: u32 });
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    try expectEqual(@as(usize, 0), pool.liveHandleCount());
+
+    const handle0 = try pool.add(.{ .a = 0 });
+    const handle1 = try pool.add(.{ .a = 1 });
+    const handle2 = try pool.add(.{ .a = 2 });
+    const handle3 = try pool.add(.{ .a = 3 });
+
+    try expectEqual(@as(u32, 0), try pool.getColumn(handle0, .a));
+    try expectEqual(@as(u32, 1), try pool.getColumn(handle1, .a));
+    try expectEqual(@as(u32, 2), try pool.getColumn(handle2, .a));
+    try expectEqual(@as(u32, 3), try pool.getColumn(handle3, .a));
+
+    try pool.setColumns(handle0, .{ .a = 10 });
+    try pool.setColumns(handle1, .{ .a = 11 });
+    try pool.setColumns(handle2, .{ .a = 12 });
+    try pool.setColumns(handle3, .{ .a = 13 });
+
+    try expectEqual(@as(u32, 10), try pool.getColumn(handle0, .a));
+    try expectEqual(@as(u32, 11), try pool.getColumn(handle1, .a));
+    try expectEqual(@as(u32, 12), try pool.getColumn(handle2, .a));
+    try expectEqual(@as(u32, 13), try pool.getColumn(handle3, .a));
+
+    try pool.remove(handle0);
+    try pool.remove(handle1);
+    try pool.remove(handle2);
+    try pool.remove(handle3);
+    try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle0, .a, 20));
+    try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle1, .a, 21));
+    try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle2, .a, 22));
+    try expectError(TestPool.Error.HandleIsReleased, pool.setColumn(handle3, .a, 23));
+}
+
+test "Pool.setColumns() calls deinit" {
+    const TestPool = Pool(2,6, void, DeinitCounter);
+
+    const GPA = std.heap.GeneralPurposeAllocator;
+    var gpa = GPA(.{}){};
+    var pool = try TestPool.initMaxCapacity(gpa.allocator());
+    defer pool.deinit();
+
+    var deinit_count : u32 = 0;
+    const handle = try pool.add(DeinitCounter.init(&deinit_count));
+    try expectEqual(@as(u32, 0), deinit_count);
+    try pool.setColumns(handle, DeinitCounter.init(&deinit_count));
+    try expectEqual(@as(u32, 1), deinit_count);
+    try pool.remove(handle);
+    try expectEqual(@as(u32, 2), deinit_count);
 }
