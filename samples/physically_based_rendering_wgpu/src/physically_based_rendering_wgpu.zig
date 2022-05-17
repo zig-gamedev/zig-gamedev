@@ -297,8 +297,8 @@ fn update(demo: *DemoState) void {
             demo.gctx.stats.average_cpu_time,
             demo.gctx.stats.fps,
         );
-        c.igBulletText("Right Mouse Button + drag :  rotate camera");
-        c.igBulletText("W, A, S, D :  move camera");
+        c.igBulletText("Right Mouse Button + drag :  rotate camera", "");
+        c.igBulletText("W, A, S, D :  move camera", "");
     }
     c.igEnd();
 
