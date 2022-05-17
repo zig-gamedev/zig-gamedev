@@ -28,6 +28,7 @@ zig build procedural_mesh_wgpu-run
 * [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) **[cross-platform and standalone]**
 * [znetwork](https://github.com/michal-z/zig-gamedev/blob/main/libs/znetwork) - Zig bindings for [ENet](https://github.com/lsalzman/enet) **[cross-platform and standalone]**
 * [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy) **[cross-platform and standalone]**
+* [zpool](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpool) - generic pool & handle implementation **[cross-platform and standalone]**
 
 #### Additionally for Windows applications we provide:
 * [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API **[standalone]**
