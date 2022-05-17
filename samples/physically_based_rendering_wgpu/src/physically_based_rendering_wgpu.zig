@@ -42,16 +42,16 @@ const DrawUniforms = struct {
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
-    mesh_pipeline: zgpu.RenderPipelineHandle = .{},
+    mesh_pipe: zgpu.RenderPipelineHandle = .{},
 
-    vertex_buffer: zgpu.BufferHandle,
-    index_buffer: zgpu.BufferHandle,
+    vertex_buf: zgpu.BufferHandle,
+    index_buf: zgpu.BufferHandle,
 
-    depth_texture: zgpu.TextureHandle,
-    depth_texture_view: zgpu.TextureViewHandle,
+    depth_tex: zgpu.TextureHandle,
+    depth_texv: zgpu.TextureViewHandle,
 
-    mesh_textures: [num_mesh_textures]zgpu.TextureHandle,
-    mesh_texture_views: [num_mesh_textures]zgpu.TextureViewHandle,
+    mesh_tex: [num_mesh_textures]zgpu.TextureHandle,
+    mesh_texv: [num_mesh_textures]zgpu.TextureViewHandle,
 
     aniso_sam: zgpu.SamplerHandle,
 
@@ -167,18 +167,18 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const total_num_indices = @intCast(u32, indices.items.len);
 
     // Create a vertex buffer.
-    const vertex_buffer = gctx.createBuffer(.{
+    const vertex_buf = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
         .size = total_num_vertices * @sizeOf(Vertex),
     });
-    gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertices.items);
+    gctx.queue.writeBuffer(gctx.lookupResource(vertex_buf).?, 0, Vertex, vertices.items);
 
     // Create an index buffer.
-    const index_buffer = gctx.createBuffer(.{
+    const index_buf = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
         .size = total_num_indices * @sizeOf(u32),
     });
-    gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, indices.items);
+    gctx.queue.writeBuffer(gctx.lookupResource(index_buf).?, 0, u32, indices.items);
 
     //
     // Create textures and samplers.
@@ -200,14 +200,14 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         content_dir ++ "SciFiHelmet/SciFiHelmet_MetallicRoughness.png",
         content_dir ++ "SciFiHelmet/SciFiHelmet_Normal.png",
     };
-    var mesh_textures: [num_mesh_textures]zgpu.TextureHandle = undefined;
-    var mesh_texture_views: [num_mesh_textures]zgpu.TextureViewHandle = undefined;
+    var mesh_tex: [num_mesh_textures]zgpu.TextureHandle = undefined;
+    var mesh_texv: [num_mesh_textures]zgpu.TextureViewHandle = undefined;
 
     for (mesh_texture_paths) |path, tex_index| {
         var image = try zgpu.stbi.Image(u8).init(path, 4);
         defer image.deinit();
 
-        mesh_textures[tex_index] = gctx.createTexture(.{
+        mesh_tex[tex_index] = gctx.createTexture(.{
             .usage = .{ .texture_binding = true, .copy_dst = true },
             .size = .{
                 .width = image.width,
@@ -217,10 +217,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             .format = .rgba8_unorm,
             .mip_level_count = math.log2_int(u32, math.max(image.width, image.height)) + 1,
         });
-        mesh_texture_views[tex_index] = gctx.createTextureView(mesh_textures[tex_index], .{});
+        mesh_texv[tex_index] = gctx.createTextureView(mesh_tex[tex_index], .{});
 
         gctx.queue.writeTexture(
-            &.{ .texture = gctx.lookupResource(mesh_textures[tex_index]).? },
+            &.{ .texture = gctx.lookupResource(mesh_tex[tex_index]).? },
             image.data,
             &.{
                 .bytes_per_row = image.width * image.channels_in_memory,
@@ -236,7 +236,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             const encoder = gctx.device.createCommandEncoder(null);
             defer encoder.release();
 
-            for (mesh_textures) |texture| {
+            for (mesh_tex) |texture| {
                 gctx.generateMipmaps(arena, encoder, texture);
             }
 
@@ -255,19 +255,19 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     const mesh_bg = gctx.createBindGroup(mesh_bgl, &[_]zgpu.BindGroupEntryInfo{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
-        .{ .binding = 1, .texture_view_handle = mesh_texture_views[0] },
+        .{ .binding = 1, .texture_view_handle = mesh_texv[0] },
         .{ .binding = 2, .sampler_handle = aniso_sam },
     });
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
-        .vertex_buffer = vertex_buffer,
-        .index_buffer = index_buffer,
-        .depth_texture = depth.texture,
-        .depth_texture_view = depth.view,
-        .mesh_textures = mesh_textures,
-        .mesh_texture_views = mesh_texture_views,
+        .vertex_buf = vertex_buf,
+        .index_buf = index_buf,
+        .depth_tex = depth.texture,
+        .depth_texv = depth.view,
+        .mesh_tex = mesh_tex,
+        .mesh_texv = mesh_texv,
         .aniso_sam = aniso_sam,
         .frame_uniforms_bg = frame_uniforms_bg,
         .mesh_bg = mesh_bg,
@@ -277,7 +277,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     // Create pipelines.
     //
-    createMeshPipeline(allocator, gctx, &.{ frame_uniforms_bgl, mesh_bgl }, &demo.mesh_pipeline);
+    createMeshPipeline(allocator, gctx, &.{ frame_uniforms_bgl, mesh_bgl }, &demo.mesh_pipe);
 
     return demo;
 }
@@ -377,12 +377,12 @@ fn draw(demo: *DemoState) void {
 
         // Main pass.
         pass: {
-            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
-            const ib_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
-            const mesh_pipeline = gctx.lookupResource(demo.mesh_pipeline) orelse break :pass;
+            const vb_info = gctx.lookupResourceInfo(demo.vertex_buf) orelse break :pass;
+            const ib_info = gctx.lookupResourceInfo(demo.index_buf) orelse break :pass;
+            const mesh_pipe = gctx.lookupResource(demo.mesh_pipe) orelse break :pass;
             const frame_uniforms_bg = gctx.lookupResource(demo.frame_uniforms_bg) orelse break :pass;
             const mesh_bg = gctx.lookupResource(demo.mesh_bg) orelse break :pass;
-            const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
+            const depth_view = gctx.lookupResource(demo.depth_texv) orelse break :pass;
 
             const color_attachment = gpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
@@ -408,7 +408,7 @@ fn draw(demo: *DemoState) void {
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
 
-            pass.setPipeline(mesh_pipeline);
+            pass.setPipeline(mesh_pipe);
 
             // Update "world to clip" (camera) xform.
             {
@@ -462,13 +462,13 @@ fn draw(demo: *DemoState) void {
 
     if (gctx.present() == .swap_chain_resized) {
         // Release old depth texture.
-        gctx.destroyResource(demo.depth_texture_view);
-        gctx.destroyResource(demo.depth_texture);
+        gctx.destroyResource(demo.depth_texv);
+        gctx.destroyResource(demo.depth_tex);
 
         // Create a new depth texture to match the new window size.
         const depth = createDepthTexture(gctx);
-        demo.depth_texture = depth.texture;
-        demo.depth_texture_view = depth.view;
+        demo.depth_tex = depth.texture;
+        demo.depth_texv = depth.view;
     }
 }
 
