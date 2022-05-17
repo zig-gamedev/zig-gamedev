@@ -1434,6 +1434,7 @@ pub const stbi = struct {
             data: []ChannelType,
             width: u32,
             height: u32,
+            bytes_per_row: u32,
             channels_in_memory: u32,
             channels_in_file: u32,
 
@@ -1444,10 +1445,11 @@ pub const stbi = struct {
                 var x: c_int = undefined;
                 var y: c_int = undefined;
                 var ch: c_int = undefined;
-                const data = switch (ChannelType) {
+                var data = switch (ChannelType) {
                     u8 => stbi_load(filename, &x, &y, &ch, @intCast(c_int, desired_channels)),
+                    f16 => @ptrCast(?[*]f16, stbi_loadf(filename, &x, &y, &ch, @intCast(c_int, desired_channels))),
                     f32 => stbi_loadf(filename, &x, &y, &ch, @intCast(c_int, desired_channels)),
-                    else => @compileError("[zgpu] stbi.Image supports u8 and f32."),
+                    else => @compileError("[zgpu] stbi.Image: ChannelType can be u8, f16 or f32."),
                 };
                 if (data == null)
                     return error.StbiLoadFailed;
@@ -1455,10 +1457,21 @@ pub const stbi = struct {
                 const channels_in_memory = if (desired_channels == 0) @intCast(u32, ch) else desired_channels;
                 const width = @intCast(u32, x);
                 const height = @intCast(u32, y);
+
+                if (ChannelType == f16) {
+                    var data_f32 = @ptrCast([*]f32, data.?);
+                    const num = width * height * channels_in_memory;
+                    var i: u32 = 0;
+                    while (i < num) : (i += 1) {
+                        data.?[i] = @floatCast(f16, data_f32[i]);
+                    }
+                }
+
                 return Self{
                     .data = data.?[0 .. width * height * channels_in_memory],
                     .width = width,
                     .height = height,
+                    .bytes_per_row = width * channels_in_memory * @sizeOf(ChannelType),
                     .channels_in_memory = channels_in_memory,
                     .channels_in_file = @intCast(u32, ch),
                 };

@@ -30,6 +30,7 @@ const num_mesh_textures = 4;
 const cube_mesh = 0;
 const helmet_mesh = 1;
 const enable_async_shader_compilation = true;
+const env_cube_tex_resolution = 512;
 
 const FrameUniforms = struct {
     world_to_clip: zm.Mat,
@@ -43,6 +44,10 @@ const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
     mesh_pipe: zgpu.RenderPipelineHandle = .{},
+    generate_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
+
+    uniform_tex2d_sam_bgl: zgpu.BindGroupLayoutHandle,
+    uniform_texcube_sam_bgl: zgpu.BindGroupLayoutHandle,
 
     vertex_buf: zgpu.BufferHandle,
     index_buf: zgpu.BufferHandle,
@@ -53,7 +58,11 @@ const DemoState = struct {
     mesh_tex: [num_mesh_textures]zgpu.TextureHandle,
     mesh_texv: [num_mesh_textures]zgpu.TextureViewHandle,
 
-    aniso_sam: zgpu.SamplerHandle,
+    env_cube_tex: zgpu.TextureHandle,
+    env_cube_texv: zgpu.TextureViewHandle,
+
+    hdr_source_tex: zgpu.TextureHandle,
+    hdr_source_texv: zgpu.TextureViewHandle,
 
     frame_uniforms_bg: zgpu.BindGroupHandle,
     mesh_bg: zgpu.BindGroupHandle,
@@ -152,6 +161,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     });
     defer gctx.destroyResource(mesh_bgl);
 
+    const uniform_tex2d_sam_bgl = gctx.createBindGroupLayout(&.{
+        zgpu.bglBuffer(0, .{ .vertex = true }, .uniform, true, 0),
+        zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
+        zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
+    });
+    const uniform_texcube_sam_bgl = gctx.createBindGroupLayout(&.{
+        zgpu.bglBuffer(0, .{ .vertex = true }, .uniform, true, 0),
+        zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_cube, false),
+        zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
+    });
+
     //
     // Create meshes.
     //
@@ -183,15 +203,57 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     // Create textures and samplers.
     //
-    const aniso_sam = gctx.createSampler(.{
-        .mag_filter = .linear,
-        .min_filter = .linear,
-        .mipmap_filter = .linear,
-        .max_anisotropy = 16,
+    const depth = createDepthTexture(gctx);
+
+    // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
+    const hdr_source_tex = hdr_source_tex: {
+        zgpu.stbi.setFlipVerticallyOnLoad(true);
+        var image = try zgpu.stbi.Image(f16).init(content_dir ++ "Newport_Loft.hdr", 4);
+        defer {
+            image.deinit();
+            zgpu.stbi.setFlipVerticallyOnLoad(false);
+        }
+
+        const hdr_source_tex = gctx.createTexture(.{
+            .usage = .{ .texture_binding = true, .copy_dst = true },
+            .size = .{
+                .width = image.width,
+                .height = image.height,
+                .depth_or_array_layers = 1,
+            },
+            .format = .rgba16_float,
+            .mip_level_count = 1,
+        });
+
+        gctx.queue.writeTexture(
+            &.{ .texture = gctx.lookupResource(hdr_source_tex).? },
+            image.data,
+            &.{
+                .bytes_per_row = image.bytes_per_row,
+                .rows_per_image = image.height,
+            },
+            &.{ .width = image.width, .height = image.height },
+        );
+
+        break :hdr_source_tex hdr_source_tex;
+    };
+    const hdr_source_texv = gctx.createTextureView(hdr_source_tex, .{});
+
+    // Create an empty env. cube texture (we will render to it).
+    const env_cube_tex = gctx.createTexture(.{
+        .usage = .{ .texture_binding = true, .render_attachment = true, .copy_dst = true },
+        .size = .{
+            .width = env_cube_tex_resolution,
+            .height = env_cube_tex_resolution,
+            .depth_or_array_layers = 6,
+        },
+        .format = .rgba16_float,
+        .mip_level_count = math.log2_int(u32, env_cube_tex_resolution) + 1,
     });
 
-    // Create a depth texture and its 'view'.
-    const depth = createDepthTexture(gctx);
+    const env_cube_texv = gctx.createTextureView(env_cube_tex, .{
+        .dimension = .dimension_cube,
+    });
 
     // Create mesh textures.
     const mesh_texture_paths = &[num_mesh_textures][:0]const u8{
@@ -223,12 +285,19 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             &.{ .texture = gctx.lookupResource(mesh_tex[tex_index]).? },
             image.data,
             &.{
-                .bytes_per_row = image.width * image.channels_in_memory,
+                .bytes_per_row = image.bytes_per_row,
                 .rows_per_image = image.height,
             },
             &.{ .width = image.width, .height = image.height },
         );
     }
+
+    const aniso_sam = gctx.createSampler(.{
+        .mag_filter = .linear,
+        .min_filter = .linear,
+        .mipmap_filter = .linear,
+        .max_anisotropy = 16,
+    });
 
     // Generate mipmaps on the GPU.
     {
@@ -262,13 +331,18 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
+        .uniform_tex2d_sam_bgl = uniform_tex2d_sam_bgl,
+        .uniform_texcube_sam_bgl = uniform_texcube_sam_bgl,
         .vertex_buf = vertex_buf,
         .index_buf = index_buf,
         .depth_tex = depth.tex,
         .depth_texv = depth.texv,
+        .env_cube_tex = env_cube_tex,
+        .env_cube_texv = env_cube_texv,
+        .hdr_source_tex = hdr_source_tex,
+        .hdr_source_texv = hdr_source_texv,
         .mesh_tex = mesh_tex,
         .mesh_texv = mesh_texv,
-        .aniso_sam = aniso_sam,
         .frame_uniforms_bg = frame_uniforms_bg,
         .mesh_bg = mesh_bg,
         .meshes = meshes,
@@ -278,6 +352,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     // Create pipelines.
     //
     createMeshPipeline(allocator, gctx, &.{ frame_uniforms_bgl, mesh_bgl }, &demo.mesh_pipe);
+    createGenEnvTexPipeline(allocator, gctx, &.{uniform_tex2d_sam_bgl}, &demo.generate_env_tex_pipe);
 
     return demo;
 }
@@ -374,6 +449,18 @@ fn draw(demo: *DemoState) void {
     const commands = commands: {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
+
+        drawToCubeTexture(
+            gctx,
+            encoder,
+            demo.uniform_tex2d_sam_bgl,
+            demo.generate_env_tex_pipe,
+            demo.hdr_source_texv,
+            demo.env_cube_tex,
+            0,
+            demo.vertex_buf,
+            demo.index_buf,
+        );
 
         // Main pass.
         pass: {
@@ -492,6 +579,93 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
+fn drawToCubeTexture(
+    gctx: *zgpu.GraphicsContext,
+    encoder: gpu.CommandEncoder,
+    pipe_bgl: zgpu.BindGroupLayoutHandle,
+    pipe: zgpu.RenderPipelineHandle,
+    source_texv: zgpu.TextureViewHandle,
+    dest_tex: zgpu.TextureHandle,
+    dest_mip_level: u32,
+    vertex_buf: zgpu.BufferHandle,
+    index_buf: zgpu.BufferHandle,
+) void {
+    const dest_tex_info = gctx.lookupResourceInfo(dest_tex) orelse return;
+    //const src_texv_info = gctx.lookupResourceInfo(source_texv) orelse return;
+    const vb_info = gctx.lookupResourceInfo(vertex_buf) orelse return;
+    const ib_info = gctx.lookupResourceInfo(index_buf) orelse return;
+    const pipeline = gctx.lookupResource(pipe) orelse return;
+
+    assert(dest_mip_level < dest_tex_info.mip_level_count);
+    const dest_tex_width = dest_tex_info.size.width >> @intCast(u5, dest_mip_level);
+    const dest_tex_height = dest_tex_info.size.height >> @intCast(u5, dest_mip_level);
+    assert(dest_tex_width == dest_tex_height);
+
+    const sam = gctx.createSampler(.{
+        .mag_filter = .linear,
+        .min_filter = .linear,
+        .mipmap_filter = .nearest,
+    });
+    defer gctx.destroyResource(sam);
+
+    const bg = gctx.createBindGroup(pipe_bgl, &[_]zgpu.BindGroupEntryInfo{
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+        .{ .binding = 1, .texture_view_handle = source_texv },
+        .{ .binding = 2, .sampler_handle = sam },
+    });
+    defer gctx.destroyResource(bg);
+
+    const zero = zm.f32x4(0.0, 0.0, 0.0, 0.0);
+    const object_to_view = [_]zm.Mat{
+        zm.lookToLh(zero, zm.f32x4(1.0, 0.0, 0.0, 0.0), zm.f32x4(0.0, 1.0, 0.0, 0.0)),
+        zm.lookToLh(zero, zm.f32x4(-1.0, 0.0, 0.0, 0.0), zm.f32x4(0.0, 1.0, 0.0, 0.0)),
+        zm.lookToLh(zero, zm.f32x4(0.0, 1.0, 0.0, 0.0), zm.f32x4(0.0, 0.0, -1.0, 0.0)),
+        zm.lookToLh(zero, zm.f32x4(0.0, -1.0, 0.0, 0.0), zm.f32x4(0.0, 0.0, 1.0, 0.0)),
+        zm.lookToLh(zero, zm.f32x4(0.0, 0.0, 1.0, 0.0), zm.f32x4(0.0, 1.0, 0.0, 0.0)),
+        zm.lookToLh(zero, zm.f32x4(0.0, 0.0, -1.0, 0.0), zm.f32x4(0.0, 1.0, 0.0, 0.0)),
+    };
+    const view_to_clip = zm.perspectiveFovLh(math.pi * 0.5, 1.0, 0.1, 10.0);
+
+    var cube_face_idx: u32 = 0;
+    while (cube_face_idx < 6) : (cube_face_idx += 1) {
+        const face_texv = gctx.createTextureView(dest_tex, .{
+            .dimension = .dimension_2d,
+            .base_mip_level = dest_mip_level,
+            .mip_level_count = 1,
+            .base_array_layer = cube_face_idx,
+            .array_layer_count = 1,
+        });
+        defer gctx.destroyResource(face_texv);
+
+        const color_attachment = gpu.RenderPassColorAttachment{
+            .view = gctx.lookupResource(face_texv).?,
+            .load_op = .clear,
+            .store_op = .store,
+        };
+        const render_pass_info = gpu.RenderPassEncoder.Descriptor{
+            .color_attachments = &.{color_attachment},
+        };
+        const pass = encoder.beginRenderPass(&render_pass_info);
+        defer {
+            pass.end();
+            pass.release();
+        }
+
+        pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
+        pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
+
+        pass.setPipeline(pipeline);
+
+        const mem = gctx.uniformsAllocate(zm.Mat, 1);
+        mem.slice[0] = zm.transpose(zm.mul(object_to_view[cube_face_idx], view_to_clip));
+
+        pass.setBindGroup(0, gctx.lookupResource(bg).?, &.{mem.offset});
+
+        // NOTE: We assume that the first mesh in vertex/index buffer is a 'cube'.
+        pass.drawIndexed(36, 1, 0, 0, 0);
+    }
+}
+
 fn createMeshPipeline(
     allocator: std.mem.Allocator,
     gctx: *zgpu.GraphicsContext,
@@ -501,16 +675,10 @@ fn createMeshPipeline(
     const pipeline_layout = gctx.createPipelineLayout(bind_group_layouts);
     defer gctx.destroyResource(pipeline_layout);
 
-    const module_vs = gctx.device.createShaderModule(&.{
-        .label = "mesh_vs",
-        .code = .{ .wgsl = wgsl.mesh_vs },
-    });
+    const module_vs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.mesh_vs } });
     defer module_vs.release();
 
-    const module_fs = gctx.device.createShaderModule(&.{
-        .label = "mesh_fs",
-        .code = .{ .wgsl = wgsl.mesh_fs },
-    });
+    const module_fs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.mesh_fs } });
     defer module_fs.release();
 
     const color_target = gpu.ColorTargetState{
@@ -540,12 +708,61 @@ fn createMeshPipeline(
         .primitive = gpu.PrimitiveState{
             .front_face = .cw,
             .cull_mode = .back,
-            .topology = .triangle_list,
         },
         .depth_stencil = &gpu.DepthStencilState{
             .format = .depth32_float,
             .depth_write_enabled = true,
             .depth_compare = .less,
+        },
+        .fragment = &gpu.FragmentState{
+            .module = module_fs,
+            .entry_point = "main",
+            .targets = &.{color_target},
+        },
+    };
+
+    if (enable_async_shader_compilation) {
+        gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, out_pipeline);
+    } else {
+        out_pipeline.* = gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
+    }
+}
+
+fn createGenEnvTexPipeline(
+    allocator: std.mem.Allocator,
+    gctx: *zgpu.GraphicsContext,
+    bind_group_layouts: []const zgpu.BindGroupLayoutHandle,
+    out_pipeline: *zgpu.RenderPipelineHandle,
+) void {
+    const pipeline_layout = gctx.createPipelineLayout(bind_group_layouts);
+    defer gctx.destroyResource(pipeline_layout);
+
+    const module_vs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.generate_env_tex_vs } });
+    defer module_vs.release();
+
+    const module_fs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.generate_env_tex_fs } });
+    defer module_fs.release();
+
+    const color_target = gpu.ColorTargetState{
+        .format = .rgba16_float,
+        .blend = &.{ .color = .{}, .alpha = .{} },
+    };
+
+    const vertex_attributes = [_]gpu.VertexAttribute{
+        .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+    };
+    const vertex_buffer_layout = gpu.VertexBufferLayout{
+        .array_stride = @sizeOf(Vertex),
+        .attribute_count = vertex_attributes.len,
+        .attributes = &vertex_attributes,
+    };
+
+    // Create a render pipeline.
+    const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
+        .vertex = gpu.VertexState{
+            .module = module_vs,
+            .entry_point = "main",
+            .buffers = &.{vertex_buffer_layout},
         },
         .fragment = &gpu.FragmentState{
             .module = module_fs,
