@@ -43,6 +43,7 @@ const DrawUniforms = struct {
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
+    generate_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
     mesh_pipe: zgpu.RenderPipelineHandle = .{},
     sample_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
 
@@ -202,7 +203,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     gctx.queue.writeBuffer(gctx.lookupResource(index_buf).?, 0, u32, indices.items);
 
     //
-    // Create textures and samplers.
+    // Create textures.
     //
     const depth = createDepthTexture(gctx);
 
@@ -293,6 +294,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         );
     }
 
+    //
+    // Create samplers.
+    //
     const aniso_sam = gctx.createSampler(.{
         .mag_filter = .linear,
         .min_filter = .linear,
@@ -300,32 +304,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .max_anisotropy = 16,
     });
 
-    const env_sam = gctx.createSampler(.{
+    const trilinear_sam = gctx.createSampler(.{
         .mag_filter = .linear,
         .min_filter = .linear,
         .mipmap_filter = .linear,
     });
 
-    const generate_env_tex_pipe = createGenEnvTexPipeline(gctx, &.{uniform_tex2d_sam_bgl});
-    defer gctx.destroyResource(generate_env_tex_pipe);
-
+    // Generates mipmaps on the GPU.
     {
         const commands = commands: {
             const encoder = gctx.device.createCommandEncoder(null);
             defer encoder.release();
-
-            drawToCubeTexture(
-                gctx,
-                encoder,
-                uniform_tex2d_sam_bgl,
-                generate_env_tex_pipe,
-                hdr_source_texv,
-                env_cube_tex,
-                0,
-                vertex_buf,
-                index_buf,
-            );
-            gctx.generateMipmaps(arena, encoder, env_cube_tex);
 
             for (mesh_tex) |texture| {
                 gctx.generateMipmaps(arena, encoder, texture);
@@ -353,7 +342,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const env_bg = gctx.createBindGroup(uniform_texcube_sam_bgl, &[_]zgpu.BindGroupEntryInfo{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
         .{ .binding = 1, .texture_view_handle = env_cube_texv },
-        .{ .binding = 2, .sampler_handle = env_sam },
+        .{ .binding = 2, .sampler_handle = trilinear_sam },
     });
 
     const demo = try allocator.create(DemoState);
@@ -380,8 +369,47 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     // Create pipelines.
     //
-    createMeshPipeline(allocator, gctx, &.{ frame_uniforms_bgl, mesh_bgl }, &demo.mesh_pipe);
-    createSampleEnvTexturePipeline(allocator, gctx, &.{uniform_texcube_sam_bgl}, &demo.sample_env_tex_pipe);
+    createRenderPipe(
+        allocator,
+        gctx,
+        &.{ frame_uniforms_bgl, mesh_bgl },
+        wgsl.mesh_vs,
+        wgsl.mesh_fs,
+        zgpu.GraphicsContext.swapchain_format,
+        false,
+        gpu.DepthStencilState{
+            .format = .depth32_float,
+            .depth_write_enabled = true,
+            .depth_compare = .less,
+        },
+        &demo.mesh_pipe,
+    );
+    createRenderPipe(
+        allocator,
+        gctx,
+        &.{uniform_texcube_sam_bgl},
+        wgsl.sample_env_tex_vs,
+        wgsl.sample_env_tex_fs,
+        zgpu.GraphicsContext.swapchain_format,
+        true,
+        gpu.DepthStencilState{
+            .format = .depth32_float,
+            .depth_write_enabled = false,
+            .depth_compare = .less_equal,
+        },
+        &demo.sample_env_tex_pipe,
+    );
+    createRenderPipe(
+        allocator,
+        gctx,
+        &.{uniform_tex2d_sam_bgl},
+        wgsl.generate_env_tex_vs,
+        wgsl.generate_env_tex_fs,
+        .rgba16_float,
+        true,
+        null,
+        &demo.generate_env_tex_pipe,
+    );
 
     return demo;
 }
@@ -479,6 +507,19 @@ fn draw(demo: *DemoState) void {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
+        drawToCubeTexture(
+            gctx,
+            encoder,
+            demo.uniform_tex2d_sam_bgl,
+            demo.generate_env_tex_pipe,
+            demo.hdr_source_texv,
+            demo.env_cube_tex,
+            0,
+            demo.vertex_buf,
+            demo.index_buf,
+        );
+        //gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
+
         // Draw SciFiHelmet.
         pass: {
             const vb_info = gctx.lookupResourceInfo(demo.vertex_buf) orelse break :pass;
@@ -511,7 +552,6 @@ fn draw(demo: *DemoState) void {
 
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
-
             pass.setPipeline(mesh_pipe);
 
             // Update "world to clip" (camera) xform.
@@ -529,8 +569,6 @@ fn draw(demo: *DemoState) void {
             mem.slice[0].object_to_world = zm.transpose(object_to_world);
 
             pass.setBindGroup(1, mesh_bg, &.{mem.offset});
-
-            // Draw mesh.
             pass.drawIndexed(
                 demo.meshes.items[helmet_mesh].num_indices,
                 1,
@@ -571,7 +609,6 @@ fn draw(demo: *DemoState) void {
 
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
-
             pass.setPipeline(env_pipe);
 
             var world_to_view_origin = cam_world_to_view;
@@ -581,8 +618,6 @@ fn draw(demo: *DemoState) void {
             mem.slice[0] = zm.transpose(zm.mul(world_to_view_origin, cam_view_to_clip));
 
             pass.setBindGroup(0, env_bg, &.{mem.offset});
-
-            // Draw mesh.
             pass.drawIndexed(
                 demo.meshes.items[cube_mesh].num_indices,
                 1,
@@ -734,23 +769,30 @@ fn drawToCubeTexture(
     }
 }
 
-fn createMeshPipeline(
+fn createRenderPipe(
     allocator: std.mem.Allocator,
     gctx: *zgpu.GraphicsContext,
-    bind_group_layouts: []const zgpu.BindGroupLayoutHandle,
-    out_pipeline: *zgpu.RenderPipelineHandle,
+    bgls: []const zgpu.BindGroupLayoutHandle,
+    wgsl_vs: [:0]const u8,
+    wgsl_fs: [:0]const u8,
+    format: gpu.Texture.Format,
+    only_position_attrib: bool,
+    depth_state: ?gpu.DepthStencilState,
+    out_pipe: *zgpu.RenderPipelineHandle,
 ) void {
-    const pipeline_layout = gctx.createPipelineLayout(bind_group_layouts);
-    defer gctx.destroyResource(pipeline_layout);
+    const pl = gctx.createPipelineLayout(bgls);
+    defer gctx.destroyResource(pl);
 
-    const module_vs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.mesh_vs } });
-    defer module_vs.release();
+    const vs_desc = gpu.ShaderModule.Descriptor{ .code = .{ .wgsl = wgsl_vs.ptr } };
+    const vs_mod = gctx.device.createShaderModule(&vs_desc);
+    defer vs_mod.release();
 
-    const module_fs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.mesh_fs } });
-    defer module_fs.release();
+    const fs_desc = gpu.ShaderModule.Descriptor{ .code = .{ .wgsl = wgsl_fs.ptr } };
+    const fs_mod = gctx.device.createShaderModule(&fs_desc);
+    defer fs_mod.release();
 
     const color_target = gpu.ColorTargetState{
-        .format = zgpu.GraphicsContext.swapchain_format,
+        .format = format,
         .blend = &.{ .color = .{}, .alpha = .{} },
     };
 
@@ -762,136 +804,29 @@ fn createMeshPipeline(
     };
     const vertex_buffer_layout = gpu.VertexBufferLayout{
         .array_stride = @sizeOf(Vertex),
-        .attribute_count = vertex_attributes.len,
+        .attribute_count = if (only_position_attrib) 1 else vertex_attributes.len,
         .attributes = &vertex_attributes,
     };
 
     // Create a render pipeline.
-    const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
+    const pipe_desc = gpu.RenderPipeline.Descriptor{
         .vertex = gpu.VertexState{
-            .module = module_vs,
+            .module = vs_mod,
             .entry_point = "main",
             .buffers = &.{vertex_buffer_layout},
         },
-        .primitive = gpu.PrimitiveState{
-            .front_face = .cw,
-            .cull_mode = .back,
-        },
-        .depth_stencil = &gpu.DepthStencilState{
-            .format = .depth32_float,
-            .depth_write_enabled = true,
-            .depth_compare = .less,
-        },
         .fragment = &gpu.FragmentState{
-            .module = module_fs,
+            .module = fs_mod,
             .entry_point = "main",
             .targets = &.{color_target},
         },
+        .depth_stencil = if (depth_state) |ds| &ds else null,
     };
 
     if (enable_async_shader_compilation) {
-        gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, out_pipeline);
+        gctx.createRenderPipelineAsync(allocator, pl, pipe_desc, out_pipe);
     } else {
-        out_pipeline.* = gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
-    }
-}
-
-fn createGenEnvTexPipeline(
-    gctx: *zgpu.GraphicsContext,
-    bind_group_layouts: []const zgpu.BindGroupLayoutHandle,
-) zgpu.RenderPipelineHandle {
-    const pipeline_layout = gctx.createPipelineLayout(bind_group_layouts);
-    defer gctx.destroyResource(pipeline_layout);
-
-    const module_vs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.generate_env_tex_vs } });
-    defer module_vs.release();
-
-    const module_fs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.generate_env_tex_fs } });
-    defer module_fs.release();
-
-    const color_target = gpu.ColorTargetState{
-        .format = .rgba16_float,
-        .blend = &.{ .color = .{}, .alpha = .{} },
-    };
-
-    const vertex_attributes = [_]gpu.VertexAttribute{
-        .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
-    };
-    const vertex_buffer_layout = gpu.VertexBufferLayout{
-        .array_stride = @sizeOf(Vertex),
-        .attribute_count = vertex_attributes.len,
-        .attributes = &vertex_attributes,
-    };
-
-    // Create a render pipeline.
-    const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
-        .vertex = gpu.VertexState{
-            .module = module_vs,
-            .entry_point = "main",
-            .buffers = &.{vertex_buffer_layout},
-        },
-        .fragment = &gpu.FragmentState{
-            .module = module_fs,
-            .entry_point = "main",
-            .targets = &.{color_target},
-        },
-    };
-
-    return gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
-}
-
-fn createSampleEnvTexturePipeline(
-    allocator: std.mem.Allocator,
-    gctx: *zgpu.GraphicsContext,
-    bind_group_layouts: []const zgpu.BindGroupLayoutHandle,
-    out_pipeline: *zgpu.RenderPipelineHandle,
-) void {
-    const pipeline_layout = gctx.createPipelineLayout(bind_group_layouts);
-    defer gctx.destroyResource(pipeline_layout);
-
-    const module_vs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.sample_env_tex_vs } });
-    defer module_vs.release();
-
-    const module_fs = gctx.device.createShaderModule(&.{ .code = .{ .wgsl = wgsl.sample_env_tex_fs } });
-    defer module_fs.release();
-
-    const color_target = gpu.ColorTargetState{
-        .format = zgpu.GraphicsContext.swapchain_format,
-        .blend = &.{ .color = .{}, .alpha = .{} },
-    };
-
-    const vertex_attributes = [_]gpu.VertexAttribute{
-        .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
-    };
-    const vertex_buffer_layout = gpu.VertexBufferLayout{
-        .array_stride = @sizeOf(Vertex),
-        .attribute_count = vertex_attributes.len,
-        .attributes = &vertex_attributes,
-    };
-
-    // Create a render pipeline.
-    const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
-        .vertex = gpu.VertexState{
-            .module = module_vs,
-            .entry_point = "main",
-            .buffers = &.{vertex_buffer_layout},
-        },
-        .depth_stencil = &gpu.DepthStencilState{
-            .format = .depth32_float,
-            .depth_write_enabled = false,
-            .depth_compare = .less_equal,
-        },
-        .fragment = &gpu.FragmentState{
-            .module = module_fs,
-            .entry_point = "main",
-            .targets = &.{color_target},
-        },
-    };
-
-    if (enable_async_shader_compilation) {
-        gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, out_pipeline);
-    } else {
-        out_pipeline.* = gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
+        out_pipe.* = gctx.createRenderPipeline(pl, pipe_desc);
     }
 }
 
