@@ -300,6 +300,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .max_anisotropy = 16,
     });
 
+    const env_sam = gctx.createSampler(.{
+        .mag_filter = .linear,
+        .min_filter = .linear,
+        .mipmap_filter = .linear,
+    });
+
     const generate_env_tex_pipe = createGenEnvTexPipeline(gctx, &.{uniform_tex2d_sam_bgl});
     defer gctx.destroyResource(generate_env_tex_pipe);
 
@@ -347,7 +353,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const env_bg = gctx.createBindGroup(uniform_texcube_sam_bgl, &[_]zgpu.BindGroupEntryInfo{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
         .{ .binding = 1, .texture_view_handle = env_cube_texv },
-        .{ .binding = 2, .sampler_handle = aniso_sam },
+        .{ .binding = 2, .sampler_handle = env_sam },
     });
 
     const demo = try allocator.create(DemoState);
