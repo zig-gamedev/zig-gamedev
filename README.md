@@ -131,3 +131,4 @@ Thanks to all people who sponsor zig-gamedev project! In particular, these fine 
 * Simon A. Nielsen Knights (tauoverpi)
 * shintales (shintales)
 * Chris Heyes (hazeycode)
+* Joran Dirk Greef (jorangreef)
