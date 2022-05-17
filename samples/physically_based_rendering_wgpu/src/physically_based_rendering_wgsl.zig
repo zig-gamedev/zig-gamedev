@@ -1,4 +1,7 @@
 // zig fmt: off
+const global =
+\\  let gamma: f32 = 2.2;
+;
 const mesh_common =
 \\  struct DrawUniforms {
 \\      object_to_world: mat4x4<f32>,
@@ -80,5 +83,34 @@ pub const generate_env_tex_fs =
 \\      let color = textureSampleLevel(equirect_tex, equirect_sam, uv, 0.0).xyz;
 \\      return vec4(color, 1.0);
 \\  }
-// zig fmt: on
 ;
+pub const sample_env_tex_vs =
+\\  struct Uniforms {
+\\      object_to_clip: mat4x4<f32>,
+\\  }
+\\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+\\  struct VertexOut {
+\\      @builtin(position) position_clip: vec4<f32>,
+\\      @location(0) position: vec3<f32>,
+\\  }
+\\  @stage(vertex) fn main(
+\\      @location(0) position: vec3<f32>,
+\\  ) -> VertexOut {
+\\      var output: VertexOut;
+\\      output.position_clip = (vec4(position, 1.0) * uniforms.object_to_clip).xyww;
+\\      output.position = position;
+\\      return output;
+\\  }
+;
+pub const sample_env_tex_fs = global ++
+\\  @group(0) @binding(1) var env_tex: texture_cube<f32>;
+\\  @group(0) @binding(2) var env_sam: sampler;
+\\  @stage(fragment) fn main(
+\\      @location(0) position: vec3<f32>,
+\\  ) -> @location(0) vec4<f32> {
+\\      var color = textureSample(env_tex, env_sam, position).xyz;
+\\      color = color / (color + vec3(1.0));
+\\      return vec4(pow(color, vec3(1.0 / gamma)), 1.0);
+\\  }
+;
+// zig fmt: on
