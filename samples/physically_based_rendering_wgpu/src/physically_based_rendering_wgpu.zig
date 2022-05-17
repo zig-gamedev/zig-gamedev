@@ -264,8 +264,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .gctx = gctx,
         .vertex_buf = vertex_buf,
         .index_buf = index_buf,
-        .depth_tex = depth.texture,
-        .depth_texv = depth.view,
+        .depth_tex = depth.tex,
+        .depth_texv = depth.texv,
         .mesh_tex = mesh_tex,
         .mesh_texv = mesh_texv,
         .aniso_sam = aniso_sam,
@@ -382,7 +382,7 @@ fn draw(demo: *DemoState) void {
             const mesh_pipe = gctx.lookupResource(demo.mesh_pipe) orelse break :pass;
             const frame_uniforms_bg = gctx.lookupResource(demo.frame_uniforms_bg) orelse break :pass;
             const mesh_bg = gctx.lookupResource(demo.mesh_bg) orelse break :pass;
-            const depth_view = gctx.lookupResource(demo.depth_texv) orelse break :pass;
+            const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
 
             const color_attachment = gpu.RenderPassColorAttachment{
                 .view = back_buffer_view,
@@ -390,7 +390,7 @@ fn draw(demo: *DemoState) void {
                 .store_op = .store,
             };
             const depth_attachment = gpu.RenderPassDepthStencilAttachment{
-                .view = depth_view,
+                .view = depth_texv,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
@@ -467,16 +467,16 @@ fn draw(demo: *DemoState) void {
 
         // Create a new depth texture to match the new window size.
         const depth = createDepthTexture(gctx);
-        demo.depth_tex = depth.texture;
-        demo.depth_texv = depth.view;
+        demo.depth_tex = depth.tex;
+        demo.depth_texv = depth.texv;
     }
 }
 
 fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
-    texture: zgpu.TextureHandle,
-    view: zgpu.TextureViewHandle,
+    tex: zgpu.TextureHandle,
+    texv: zgpu.TextureViewHandle,
 } {
-    const texture = gctx.createTexture(.{
+    const tex = gctx.createTexture(.{
         .usage = .{ .render_attachment = true },
         .dimension = .dimension_2d,
         .size = .{
@@ -488,8 +488,8 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
         .mip_level_count = 1,
         .sample_count = 1,
     });
-    const view = gctx.createTextureView(texture, .{});
-    return .{ .texture = texture, .view = view };
+    const texv = gctx.createTextureView(tex, .{});
+    return .{ .tex = tex, .texv = texv };
 }
 
 fn createMeshPipeline(
