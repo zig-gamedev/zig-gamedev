@@ -144,7 +144,7 @@ pub fn Image(comptime ChannelType: type) type {
     return struct {
         const Self = @This();
 
-        data: []ChannelType, // ChannelType can be `u8` or `f32`
+        data: []ChannelType, // ChannelType can be `u8`, `f16` or `f32`
         width: u32,
         height: u32,
         channels_in_memory: u32,
