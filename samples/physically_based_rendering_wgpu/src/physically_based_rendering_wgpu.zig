@@ -40,6 +40,7 @@ const MeshUniforms = struct {
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
+    allocator: std.mem.Allocator,
 
     precompute_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
     precompute_irradiance_tex_pipe: zgpu.RenderPipelineHandle = .{},
@@ -290,6 +291,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
+        .allocator = allocator,
         .uniform_tex2d_sam_bgl = uniform_tex2d_sam_bgl,
         .uniform_texcube_sam_bgl = uniform_texcube_sam_bgl,
         .vertex_buf = vertex_buf,
@@ -624,6 +626,7 @@ fn precomputeImageLighting(
     const gctx = demo.gctx;
 
     _ = gctx.lookupResource(demo.precompute_env_tex_pipe) orelse return;
+    _ = gctx.lookupResource(demo.precompute_irradiance_tex_pipe) orelse return;
 
     // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
     gctx.destroyResource(demo.hdr_source_texv);
@@ -662,6 +665,9 @@ fn precomputeImageLighting(
     };
     demo.hdr_source_texv = gctx.createTextureView(demo.hdr_source_tex, .{});
 
+    //
+    // Step 1.
+    //
     if (!gctx.isResourceValid(demo.env_cube_tex)) {
         // Create an empty env. cube texture (we will render to it).
         demo.env_cube_tex = gctx.createTexture(.{
@@ -686,18 +692,56 @@ fn precomputeImageLighting(
         });
     }
 
+    var arena_state = std.heap.ArenaAllocator.init(demo.allocator);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
     drawToCubeTexture(
         gctx,
         encoder,
         demo.uniform_tex2d_sam_bgl,
         demo.precompute_env_tex_pipe,
-        demo.hdr_source_texv,
-        demo.env_cube_tex,
-        0,
+        demo.hdr_source_texv, // Source texture view.
+        demo.env_cube_tex, // Dest. texture.
+        0, // Dest. mipmap level to render to.
         demo.vertex_buf,
         demo.index_buf,
     );
-    //gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
+    gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
+
+    //
+    // Step 2.
+    //
+    if (!gctx.isResourceValid(demo.irradiance_cube_tex)) {
+        // Create an empty irradiance cube texture (we will render to it).
+        demo.irradiance_cube_tex = gctx.createTexture(.{
+            .usage = .{ .texture_binding = true, .render_attachment = true, .copy_dst = true },
+            .size = .{
+                .width = irradiance_cube_tex_resolution,
+                .height = irradiance_cube_tex_resolution,
+                .depth_or_array_layers = 6,
+            },
+            .format = .rgba16_float,
+            .mip_level_count = math.log2_int(u32, irradiance_cube_tex_resolution) + 1,
+        });
+
+        demo.irradiance_cube_texv = gctx.createTextureView(demo.irradiance_cube_tex, .{
+            .dimension = .dimension_cube,
+        });
+    }
+
+    drawToCubeTexture(
+        gctx,
+        encoder,
+        demo.uniform_texcube_sam_bgl,
+        demo.precompute_irradiance_tex_pipe,
+        demo.env_cube_texv, // Source texture view.
+        demo.irradiance_cube_tex, // Dest. texture.
+        0, // Dest. mipmap level to render to.
+        demo.vertex_buf,
+        demo.index_buf,
+    );
+    gctx.generateMipmaps(arena, encoder, demo.irradiance_cube_tex);
 
     demo.is_lighting_precomputed = true;
 }

@@ -1048,9 +1048,14 @@ pub const GraphicsContext = struct {
 
                 var mip_index: u32 = 0;
                 while (mip_index < dispatch_num_mips) : (mip_index += 1) {
+                    const src_origin = gpu.Origin3D{ .x = 0, .y = 0, .z = 0 };
                     const dst_origin = gpu.Origin3D{ .x = 0, .y = 0, .z = array_layer };
                     encoder.copyTextureToTexture(
-                        &.{ .texture = gctx.lookupResource(mipgen.scratch_texture).?, .mip_level = mip_index },
+                        &.{
+                            .texture = gctx.lookupResource(mipgen.scratch_texture).?,
+                            .mip_level = mip_index,
+                            .origin = src_origin,
+                        },
                         &.{
                             .texture = gctx.lookupResource(texture).?,
                             .mip_level = mip_index + current_src_mip_level + 1,
