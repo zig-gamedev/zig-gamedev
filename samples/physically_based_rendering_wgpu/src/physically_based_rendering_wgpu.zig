@@ -31,6 +31,7 @@ const cube_mesh = 0;
 const helmet_mesh = 1;
 const enable_async_shader_compilation = true;
 const env_cube_tex_resolution = 1024;
+const irradiance_cube_tex_resolution = 64;
 
 const MeshUniforms = struct {
     object_to_world: zm.Mat,
@@ -40,7 +41,8 @@ const MeshUniforms = struct {
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
-    generate_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
+    precompute_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
+    precompute_irradiance_tex_pipe: zgpu.RenderPipelineHandle = .{},
     mesh_pipe: zgpu.RenderPipelineHandle = .{},
     sample_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
 
@@ -61,6 +63,9 @@ const DemoState = struct {
 
     env_cube_tex: zgpu.TextureHandle = .{},
     env_cube_texv: zgpu.TextureViewHandle = .{},
+
+    irradiance_cube_tex: zgpu.TextureHandle = .{},
+    irradiance_cube_texv: zgpu.TextureViewHandle = .{},
 
     mesh_bg: zgpu.BindGroupHandle,
     env_bg: zgpu.BindGroupHandle = .{},
@@ -255,7 +260,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .mipmap_filter = .linear,
     });
 
+    //
     // Generates mipmaps on the GPU.
+    //
     {
         const commands = commands: {
             const encoder = gctx.device.createCommandEncoder(null);
@@ -333,12 +340,23 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         allocator,
         gctx,
         &.{uniform_tex2d_sam_bgl},
-        wgsl.generate_env_tex_vs,
-        wgsl.generate_env_tex_fs,
+        wgsl.precompute_env_tex_vs,
+        wgsl.precompute_env_tex_fs,
         .rgba16_float,
         true,
         null,
-        &demo.generate_env_tex_pipe,
+        &demo.precompute_env_tex_pipe,
+    );
+    createRenderPipe(
+        allocator,
+        gctx,
+        &.{uniform_texcube_sam_bgl},
+        wgsl.precompute_irradiance_tex_vs,
+        wgsl.precompute_irradiance_tex_fs,
+        .rgba16_float,
+        true,
+        null,
+        &demo.precompute_irradiance_tex_pipe,
     );
 
     return demo;
@@ -469,7 +487,6 @@ fn draw(demo: *DemoState) void {
                 pass.end();
                 pass.release();
             }
-
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
             pass.setPipeline(mesh_pipe);
@@ -520,7 +537,6 @@ fn draw(demo: *DemoState) void {
                 pass.end();
                 pass.release();
             }
-
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
             pass.setPipeline(env_pipe);
@@ -565,7 +581,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.submit(&.{commands});
 
-    // We can release source textures *after* submit
+    // We can release source textures now.
     gctx.destroyResource(demo.hdr_source_tex);
     gctx.destroyResource(demo.hdr_source_texv);
 
@@ -607,7 +623,7 @@ fn precomputeImageLighting(
 ) void {
     const gctx = demo.gctx;
 
-    _ = gctx.lookupResource(demo.generate_env_tex_pipe) orelse return;
+    _ = gctx.lookupResource(demo.precompute_env_tex_pipe) orelse return;
 
     // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
     gctx.destroyResource(demo.hdr_source_texv);
@@ -674,7 +690,7 @@ fn precomputeImageLighting(
         gctx,
         encoder,
         demo.uniform_tex2d_sam_bgl,
-        demo.generate_env_tex_pipe,
+        demo.precompute_env_tex_pipe,
         demo.hdr_source_texv,
         demo.env_cube_tex,
         0,
