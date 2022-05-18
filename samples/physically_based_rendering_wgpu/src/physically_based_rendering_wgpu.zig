@@ -27,9 +27,12 @@ const Mesh = struct {
 };
 
 const num_mesh_textures = 4;
+
 const cube_mesh = 0;
 const helmet_mesh = 1;
+
 const enable_async_shader_compilation = true;
+
 const env_cube_tex_resolution = 1024;
 const irradiance_cube_tex_resolution = 64;
 
@@ -57,7 +60,6 @@ const DemoState = struct {
     depth_texv: zgpu.TextureViewHandle,
 
     hdr_source_tex: zgpu.TextureHandle = .{},
-    hdr_source_texv: zgpu.TextureViewHandle = .{},
 
     mesh_tex: [num_mesh_textures]zgpu.TextureHandle,
     mesh_texv: [num_mesh_textures]zgpu.TextureViewHandle,
@@ -583,9 +585,8 @@ fn draw(demo: *DemoState) void {
 
     gctx.submit(&.{commands});
 
-    // We can release source textures now.
+    // We can release source texture now.
     gctx.destroyResource(demo.hdr_source_tex);
-    gctx.destroyResource(demo.hdr_source_texv);
 
     if (gctx.present() == .swap_chain_resized) {
         // Release old depth texture.
@@ -629,7 +630,6 @@ fn precomputeImageLighting(
     _ = gctx.lookupResource(demo.precompute_irradiance_tex_pipe) orelse return;
 
     // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
-    gctx.destroyResource(demo.hdr_source_texv);
     gctx.destroyResource(demo.hdr_source_tex);
     demo.hdr_source_tex = hdr_source_tex: {
         zgpu.stbi.setFlipVerticallyOnLoad(true);
@@ -663,7 +663,8 @@ fn precomputeImageLighting(
 
         break :hdr_source_tex hdr_source_tex;
     };
-    demo.hdr_source_texv = gctx.createTextureView(demo.hdr_source_tex, .{});
+    const hdr_source_texv = gctx.createTextureView(demo.hdr_source_tex, .{});
+    defer gctx.destroyResource(hdr_source_texv);
 
     //
     // Step 1.
@@ -680,7 +681,6 @@ fn precomputeImageLighting(
             .format = .rgba16_float,
             .mip_level_count = math.log2_int(u32, env_cube_tex_resolution) + 1,
         });
-
         demo.env_cube_texv = gctx.createTextureView(demo.env_cube_tex, .{
             .dimension = .dimension_cube,
         });
@@ -692,22 +692,24 @@ fn precomputeImageLighting(
         });
     }
 
-    var arena_state = std.heap.ArenaAllocator.init(demo.allocator);
-    defer arena_state.deinit();
-    const arena = arena_state.allocator();
-
     drawToCubeTexture(
         gctx,
         encoder,
         demo.uniform_tex2d_sam_bgl,
         demo.precompute_env_tex_pipe,
-        demo.hdr_source_texv, // Source texture view.
+        hdr_source_texv, // Source texture view.
         demo.env_cube_tex, // Dest. texture.
         0, // Dest. mipmap level to render to.
         demo.vertex_buf,
         demo.index_buf,
     );
-    gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
+    {
+        var arena_state = std.heap.ArenaAllocator.init(demo.allocator);
+        defer arena_state.deinit();
+        const arena = arena_state.allocator();
+
+        gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
+    }
 
     //
     // Step 2.
@@ -722,9 +724,8 @@ fn precomputeImageLighting(
                 .depth_or_array_layers = 6,
             },
             .format = .rgba16_float,
-            .mip_level_count = math.log2_int(u32, irradiance_cube_tex_resolution) + 1,
+            .mip_level_count = 1,
         });
-
         demo.irradiance_cube_texv = gctx.createTextureView(demo.irradiance_cube_tex, .{
             .dimension = .dimension_cube,
         });
@@ -741,7 +742,6 @@ fn precomputeImageLighting(
         demo.vertex_buf,
         demo.index_buf,
     );
-    gctx.generateMipmaps(arena, encoder, demo.irradiance_cube_tex);
 
     demo.is_lighting_precomputed = true;
 }
