@@ -30,14 +30,11 @@ const num_mesh_textures = 4;
 const cube_mesh = 0;
 const helmet_mesh = 1;
 const enable_async_shader_compilation = true;
-const env_cube_tex_resolution = 512;
+const env_cube_tex_resolution = 1024;
 
-const FrameUniforms = struct {
-    world_to_clip: zm.Mat,
-};
-
-const DrawUniforms = struct {
+const MeshUniforms = struct {
     object_to_world: zm.Mat,
+    world_to_clip: zm.Mat,
 };
 
 const DemoState = struct {
@@ -56,20 +53,23 @@ const DemoState = struct {
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
 
+    hdr_source_tex: zgpu.TextureHandle = .{},
+    hdr_source_texv: zgpu.TextureViewHandle = .{},
+
     mesh_tex: [num_mesh_textures]zgpu.TextureHandle,
     mesh_texv: [num_mesh_textures]zgpu.TextureViewHandle,
 
-    env_cube_tex: zgpu.TextureHandle,
-    env_cube_texv: zgpu.TextureViewHandle,
+    env_cube_tex: zgpu.TextureHandle = .{},
+    env_cube_texv: zgpu.TextureViewHandle = .{},
 
-    hdr_source_tex: zgpu.TextureHandle,
-    hdr_source_texv: zgpu.TextureViewHandle,
-
-    frame_uniforms_bg: zgpu.BindGroupHandle,
     mesh_bg: zgpu.BindGroupHandle,
-    env_bg: zgpu.BindGroupHandle,
+    env_bg: zgpu.BindGroupHandle = .{},
+
+    trilinear_sam: zgpu.SamplerHandle,
 
     meshes: std.ArrayList(Mesh),
+
+    is_lighting_precomputed: bool = false,
 
     camera: struct {
         position: [3]f32 = .{ 3.0, 0.0, 3.0 },
@@ -151,11 +151,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     // Create bind group layouts.
     //
-    const frame_uniforms_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-    });
-    defer gctx.destroyResource(frame_uniforms_bgl);
-
     const mesh_bgl = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
         zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
@@ -206,56 +201,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     // Create textures.
     //
     const depth = createDepthTexture(gctx);
-
-    // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
-    const hdr_source_tex = hdr_source_tex: {
-        zgpu.stbi.setFlipVerticallyOnLoad(true);
-        var image = try zgpu.stbi.Image(f16).init(content_dir ++ "Newport_Loft.hdr", 4);
-        defer {
-            image.deinit();
-            zgpu.stbi.setFlipVerticallyOnLoad(false);
-        }
-
-        const hdr_source_tex = gctx.createTexture(.{
-            .usage = .{ .texture_binding = true, .copy_dst = true },
-            .size = .{
-                .width = image.width,
-                .height = image.height,
-                .depth_or_array_layers = 1,
-            },
-            .format = .rgba16_float,
-            .mip_level_count = 1,
-        });
-
-        gctx.queue.writeTexture(
-            &.{ .texture = gctx.lookupResource(hdr_source_tex).? },
-            image.data,
-            &.{
-                .bytes_per_row = image.bytes_per_row,
-                .rows_per_image = image.height,
-            },
-            &.{ .width = image.width, .height = image.height },
-        );
-
-        break :hdr_source_tex hdr_source_tex;
-    };
-    const hdr_source_texv = gctx.createTextureView(hdr_source_tex, .{});
-
-    // Create an empty env. cube texture (we will render to it).
-    const env_cube_tex = gctx.createTexture(.{
-        .usage = .{ .texture_binding = true, .render_attachment = true, .copy_dst = true },
-        .size = .{
-            .width = env_cube_tex_resolution,
-            .height = env_cube_tex_resolution,
-            .depth_or_array_layers = 6,
-        },
-        .format = .rgba16_float,
-        .mip_level_count = math.log2_int(u32, env_cube_tex_resolution) + 1,
-    });
-
-    const env_cube_texv = gctx.createTextureView(env_cube_tex, .{
-        .dimension = .dimension_cube,
-    });
 
     // Create mesh textures.
     const mesh_texture_paths = &[num_mesh_textures][:0]const u8{
@@ -329,20 +274,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     // Create bind groups.
     //
-    const frame_uniforms_bg = gctx.createBindGroup(frame_uniforms_bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
-    });
-
     const mesh_bg = gctx.createBindGroup(mesh_bgl, &[_]zgpu.BindGroupEntryInfo{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
         .{ .binding = 1, .texture_view_handle = mesh_texv[1] },
         .{ .binding = 2, .sampler_handle = aniso_sam },
-    });
-
-    const env_bg = gctx.createBindGroup(uniform_texcube_sam_bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
-        .{ .binding = 1, .texture_view_handle = env_cube_texv },
-        .{ .binding = 2, .sampler_handle = trilinear_sam },
     });
 
     const demo = try allocator.create(DemoState);
@@ -354,16 +289,11 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .index_buf = index_buf,
         .depth_tex = depth.tex,
         .depth_texv = depth.texv,
-        .env_cube_tex = env_cube_tex,
-        .env_cube_texv = env_cube_texv,
-        .hdr_source_tex = hdr_source_tex,
-        .hdr_source_texv = hdr_source_texv,
         .mesh_tex = mesh_tex,
         .mesh_texv = mesh_texv,
-        .frame_uniforms_bg = frame_uniforms_bg,
         .mesh_bg = mesh_bg,
-        .env_bg = env_bg,
         .meshes = meshes,
+        .trilinear_sam = trilinear_sam,
     };
 
     //
@@ -372,7 +302,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     createRenderPipe(
         allocator,
         gctx,
-        &.{ frame_uniforms_bgl, mesh_bgl },
+        &.{mesh_bgl},
         wgsl.mesh_vs,
         wgsl.mesh_fs,
         zgpu.GraphicsContext.swapchain_format,
@@ -507,25 +437,15 @@ fn draw(demo: *DemoState) void {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
-        drawToCubeTexture(
-            gctx,
-            encoder,
-            demo.uniform_tex2d_sam_bgl,
-            demo.generate_env_tex_pipe,
-            demo.hdr_source_texv,
-            demo.env_cube_tex,
-            0,
-            demo.vertex_buf,
-            demo.index_buf,
-        );
-        //gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
+        if (!demo.is_lighting_precomputed) {
+            precomputeImageLighting(demo, encoder);
+        }
 
         // Draw SciFiHelmet.
         pass: {
             const vb_info = gctx.lookupResourceInfo(demo.vertex_buf) orelse break :pass;
             const ib_info = gctx.lookupResourceInfo(demo.index_buf) orelse break :pass;
             const mesh_pipe = gctx.lookupResource(demo.mesh_pipe) orelse break :pass;
-            const frame_uniforms_bg = gctx.lookupResource(demo.frame_uniforms_bg) orelse break :pass;
             const mesh_bg = gctx.lookupResource(demo.mesh_bg) orelse break :pass;
             const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
 
@@ -554,21 +474,15 @@ fn draw(demo: *DemoState) void {
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
             pass.setPipeline(mesh_pipe);
 
-            // Update "world to clip" (camera) xform.
-            {
-                const mem = gctx.uniformsAllocate(FrameUniforms, 1);
-                mem.slice[0].world_to_clip = zm.transpose(cam_world_to_clip);
-
-                pass.setBindGroup(0, frame_uniforms_bg, &.{mem.offset});
-            }
-
-            // Update "object to world" xform.
             const object_to_world = zm.identity();
 
-            const mem = gctx.uniformsAllocate(DrawUniforms, 1);
-            mem.slice[0].object_to_world = zm.transpose(object_to_world);
+            const mem = gctx.uniformsAllocate(MeshUniforms, 1);
+            mem.slice[0] = .{
+                .object_to_world = zm.transpose(object_to_world),
+                .world_to_clip = zm.transpose(cam_world_to_clip),
+            };
 
-            pass.setBindGroup(1, mesh_bg, &.{mem.offset});
+            pass.setBindGroup(0, mesh_bg, &.{mem.offset});
             pass.drawIndexed(
                 demo.meshes.items[helmet_mesh].num_indices,
                 1,
@@ -651,6 +565,10 @@ fn draw(demo: *DemoState) void {
 
     gctx.submit(&.{commands});
 
+    // We can release source textures *after* submit
+    gctx.destroyResource(demo.hdr_source_tex);
+    gctx.destroyResource(demo.hdr_source_texv);
+
     if (gctx.present() == .swap_chain_resized) {
         // Release old depth texture.
         gctx.destroyResource(demo.depth_texv);
@@ -681,6 +599,91 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     });
     const texv = gctx.createTextureView(tex, .{});
     return .{ .tex = tex, .texv = texv };
+}
+
+fn precomputeImageLighting(
+    demo: *DemoState,
+    encoder: gpu.CommandEncoder,
+) void {
+    const gctx = demo.gctx;
+
+    _ = gctx.lookupResource(demo.generate_env_tex_pipe) orelse return;
+
+    // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
+    gctx.destroyResource(demo.hdr_source_texv);
+    gctx.destroyResource(demo.hdr_source_tex);
+    demo.hdr_source_tex = hdr_source_tex: {
+        zgpu.stbi.setFlipVerticallyOnLoad(true);
+        //var image = try zgpu.stbi.Image(f16).init(content_dir ++ "brown_photostudio_01_4k.hdr", 4);
+        var image = zgpu.stbi.Image(f16).init(content_dir ++ "machine_shop_01_4k.hdr", 4) catch unreachable;
+        defer {
+            image.deinit();
+            zgpu.stbi.setFlipVerticallyOnLoad(false);
+        }
+
+        const hdr_source_tex = gctx.createTexture(.{
+            .usage = .{ .texture_binding = true, .copy_dst = true },
+            .size = .{
+                .width = image.width,
+                .height = image.height,
+                .depth_or_array_layers = 1,
+            },
+            .format = .rgba16_float,
+            .mip_level_count = 1,
+        });
+
+        gctx.queue.writeTexture(
+            &.{ .texture = gctx.lookupResource(hdr_source_tex).? },
+            image.data,
+            &.{
+                .bytes_per_row = image.bytes_per_row,
+                .rows_per_image = image.height,
+            },
+            &.{ .width = image.width, .height = image.height },
+        );
+
+        break :hdr_source_tex hdr_source_tex;
+    };
+    demo.hdr_source_texv = gctx.createTextureView(demo.hdr_source_tex, .{});
+
+    if (!gctx.isResourceValid(demo.env_cube_tex)) {
+        // Create an empty env. cube texture (we will render to it).
+        demo.env_cube_tex = gctx.createTexture(.{
+            .usage = .{ .texture_binding = true, .render_attachment = true, .copy_dst = true },
+            .size = .{
+                .width = env_cube_tex_resolution,
+                .height = env_cube_tex_resolution,
+                .depth_or_array_layers = 6,
+            },
+            .format = .rgba16_float,
+            .mip_level_count = math.log2_int(u32, env_cube_tex_resolution) + 1,
+        });
+
+        demo.env_cube_texv = gctx.createTextureView(demo.env_cube_tex, .{
+            .dimension = .dimension_cube,
+        });
+
+        demo.env_bg = gctx.createBindGroup(demo.uniform_texcube_sam_bgl, &[_]zgpu.BindGroupEntryInfo{
+            .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+            .{ .binding = 1, .texture_view_handle = demo.env_cube_texv },
+            .{ .binding = 2, .sampler_handle = demo.trilinear_sam },
+        });
+    }
+
+    drawToCubeTexture(
+        gctx,
+        encoder,
+        demo.uniform_tex2d_sam_bgl,
+        demo.generate_env_tex_pipe,
+        demo.hdr_source_texv,
+        demo.env_cube_tex,
+        0,
+        demo.vertex_buf,
+        demo.index_buf,
+    );
+    //gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
+
+    demo.is_lighting_precomputed = true;
 }
 
 fn drawToCubeTexture(

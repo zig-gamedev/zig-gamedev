@@ -3,17 +3,13 @@ const global =
 \\  let gamma: f32 = 2.2;
 ;
 const mesh_common =
-\\  struct DrawUniforms {
+\\  struct MeshUniforms {
 \\      object_to_world: mat4x4<f32>,
-\\  }
-\\  @group(1) @binding(0) var<uniform> draw_uniforms: DrawUniforms;
-\\  @group(1) @binding(1) var base_color_tex: texture_2d<f32>;
-\\  @group(1) @binding(2) var aniso_sam: sampler;
-\\
-\\  struct FrameUniforms {
 \\      world_to_clip: mat4x4<f32>,
 \\  }
-\\  @group(0) @binding(0) var<uniform> frame_uniforms: FrameUniforms;
+\\  @group(0) @binding(0) var<uniform> uniforms: MeshUniforms;
+\\  @group(0) @binding(1) var base_color_tex: texture_2d<f32>;
+\\  @group(0) @binding(2) var aniso_sam: sampler;
 ;
 pub const mesh_vs = mesh_common ++
 \\  struct VertexOut {
@@ -30,8 +26,8 @@ pub const mesh_vs = mesh_common ++
 \\      @location(3) tangent: vec4<f32>,
 \\  ) -> VertexOut {
 \\      var output: VertexOut;
-\\      output.position_clip = vec4(position, 1.0) * draw_uniforms.object_to_world * frame_uniforms.world_to_clip;
-\\      output.position = (vec4(position, 1.0) * draw_uniforms.object_to_world).xyz;
+\\      output.position_clip = vec4(position, 1.0) * uniforms.object_to_world * uniforms.world_to_clip;
+\\      output.position = (vec4(position, 1.0) * uniforms.object_to_world).xyz;
 \\      output.normal = normal;
 \\      output.texcoord = texcoord;
 \\      output.tangent = tangent;
