@@ -3,6 +3,57 @@ const global =
 \\  let gamma: f32 = 2.2;
 \\  let pi: f32 = 3.1415926;
 \\
+\\  fn saturate(x: f32) -> f32 {
+\\      return clamp(x, 0.0, 1.0);
+\\  }
+\\
+\\  fn radicalInverseVdc(in_bits: u32) -> f32 {
+\\      var bits = (in_bits << 16u) | (in_bits >> 16u);
+\\      bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+\\      bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+\\      bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+\\      bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+\\      return f32(bits) * 2.3283064365386963e-10; // / 0x100000000
+\\  }
+\\
+\\  fn hammersley(idx: u32, n: u32) -> vec2<f32> {
+\\      return vec2(f32(idx) / f32(n), radicalInverseVdc(idx));
+\\  }
+\\
+\\  fn importanceSampleGgx(xi: vec2<f32>, roughness: f32, n: vec3<f32>) -> vec3<f32> {
+\\      let alpha = roughness * roughness;
+\\      let phi = 2.0 * pi * xi.x;
+\\      let cos_theta = sqrt((1.0 - xi.y) / (1.0 + (alpha * alpha - 1.0) * xi.y));
+\\      let sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+\\
+\\      var h: vec3<f32>;
+\\      h.x = sin_theta * cos(phi);
+\\      h.y = sin_theta * sin(phi);
+\\      h.z = cos_theta;
+\\
+\\      // This is Right-Handed coordinate system and works for upper-left UV coordinate systems.
+\\      var up_vector: vec3<f32>;
+\\      if (abs(n.y) < 0.999) {
+\\          up_vector = vec3(0.0, 1.0, 0.0);
+\\      } else {
+\\          up_vector = vec3(0.0, 0.0, 1.0);
+\\      }
+\\      let tangent_x = normalize(cross(up_vector, n));
+\\      let tangent_y = normalize(cross(n, tangent_x));
+\\
+\\      // Tangent to world space.
+\\      return normalize(tangent_x * h.x + tangent_y * h.y + n * h.z);
+\\  }
+\\
+\\  fn geometrySchlickGgx(cos_theta: f32, roughness: f32) -> f32 {
+\\      let k = (roughness * roughness) * 0.5;
+\\      return cos_theta / (cos_theta * (1.0 - k) + k);
+\\  }
+\\
+\\  fn geometrySmith(n_dot_l: f32, n_dot_v: f32, roughness: f32) -> f32 {
+\\      return geometrySchlickGgx(n_dot_v, roughness) * geometrySchlickGgx(n_dot_l, roughness);
+\\  }
+\\
 ;
 const mesh_common =
 \\  struct MeshUniforms {
@@ -144,6 +195,57 @@ pub const precompute_irradiance_tex_fs = global ++
 \\
 \\      irradiance = pi * irradiance * vec3(1.0 / f32(num_samples));
 \\      return vec4(irradiance, 1.0);
+\\  }
+;
+const precompute_filtered_env_tex_common =
+\\  struct Uniforms {
+\\      object_to_clip: mat4x4<f32>,
+\\      roughness: f32,
+\\  }
+\\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+\\
+;
+pub const precompute_filtered_env_tex_vs = precompute_filtered_env_tex_common ++
+\\  struct VertexOut {
+\\      @builtin(position) position_clip: vec4<f32>,
+\\      @location(0) position: vec3<f32>,
+\\  }
+\\  @stage(vertex) fn main(
+\\      @location(0) position: vec3<f32>,
+\\  ) -> VertexOut {
+\\      var output: VertexOut;
+\\      output.position_clip = vec4(position, 1.0) * uniforms.object_to_clip;
+\\      output.position = position;
+\\      return output;
+\\  }
+;
+pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex_common ++
+\\  @group(0) @binding(1) var env_tex: texture_cube<f32>;
+\\  @group(0) @binding(2) var env_sam: sampler;
+\\  @stage(fragment) fn main(
+\\      @location(0) position: vec3<f32>,
+\\  ) -> @location(0) vec4<f32> {
+\\      let roughness = uniforms.roughness;
+\\      let n = normalize(position);
+\\      let r = n;
+\\      let v = r;
+\\
+\\      var prefiltered_color = vec3(0.0);
+\\      var total_weight = 0.0;
+\\      let num_samples = 1024u;
+\\
+\\      for (var sample_idx = 0u; sample_idx < num_samples; sample_idx = sample_idx + 1u) {
+\\          let xi = hammersley(sample_idx, num_samples);
+\\          let h = importanceSampleGgx(xi, roughness, n);
+\\          let l = normalize(2.0 * dot(v, h) * h - v);
+\\          let n_dot_l = saturate(dot(n, l));
+\\          if (n_dot_l > 0.0) {
+\\              var color = textureSampleLevel(env_tex, env_sam, l, 0.0).xyz * n_dot_l;
+\\              prefiltered_color = prefiltered_color + color;
+\\              total_weight = total_weight + n_dot_l;
+\\          }
+\\      }
+\\      return vec4(prefiltered_color / max(total_weight, 0.001), 1.0);
 \\  }
 ;
 pub const sample_env_tex_vs =

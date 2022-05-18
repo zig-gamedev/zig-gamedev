@@ -35,6 +35,8 @@ const enable_async_shader_compilation = true;
 
 const env_cube_tex_resolution = 1024;
 const irradiance_cube_tex_resolution = 64;
+const filtered_env_tex_resolution = 256;
+const filtered_env_tex_mip_levels = 6;
 
 const MeshUniforms = struct {
     object_to_world: zm.Mat,
@@ -47,6 +49,7 @@ const DemoState = struct {
 
     precompute_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
     precompute_irradiance_tex_pipe: zgpu.RenderPipelineHandle = .{},
+    precompute_filtered_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
     mesh_pipe: zgpu.RenderPipelineHandle = .{},
     sample_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
 
@@ -69,6 +72,9 @@ const DemoState = struct {
 
     irradiance_cube_tex: zgpu.TextureHandle = .{},
     irradiance_cube_texv: zgpu.TextureViewHandle = .{},
+
+    filtered_env_cube_tex: zgpu.TextureHandle = .{},
+    filtered_env_cube_texv: zgpu.TextureViewHandle = .{},
 
     mesh_bg: zgpu.BindGroupHandle,
     env_bg: zgpu.BindGroupHandle = .{},
@@ -172,7 +178,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
     });
     const uniform_texcube_sam_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true }, .uniform, true, 0),
+        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
         zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_cube, false),
         zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
     });
@@ -361,6 +367,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         true,
         null,
         &demo.precompute_irradiance_tex_pipe,
+    );
+    createRenderPipe(
+        allocator,
+        gctx,
+        &.{uniform_texcube_sam_bgl},
+        wgsl.precompute_filtered_env_tex_vs,
+        wgsl.precompute_filtered_env_tex_fs,
+        .rgba16_float,
+        true,
+        null,
+        &demo.precompute_filtered_env_tex_pipe,
     );
 
     return demo;
@@ -628,6 +645,7 @@ fn precomputeImageLighting(
 
     _ = gctx.lookupResource(demo.precompute_env_tex_pipe) orelse return;
     _ = gctx.lookupResource(demo.precompute_irradiance_tex_pipe) orelse return;
+    _ = gctx.lookupResource(demo.precompute_filtered_env_tex_pipe) orelse return;
 
     // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
     gctx.destroyResource(demo.hdr_source_tex);
@@ -743,6 +761,43 @@ fn precomputeImageLighting(
         demo.index_buf,
     );
 
+    //
+    // Step 3.
+    //
+    if (!gctx.isResourceValid(demo.filtered_env_cube_tex)) {
+        // Create an empty filtered env. cube texture (we will render to it).
+        demo.filtered_env_cube_tex = gctx.createTexture(.{
+            .usage = .{ .texture_binding = true, .render_attachment = true, .copy_dst = true },
+            .size = .{
+                .width = filtered_env_tex_resolution,
+                .height = filtered_env_tex_resolution,
+                .depth_or_array_layers = 6,
+            },
+            .format = .rgba16_float,
+            .mip_level_count = filtered_env_tex_mip_levels,
+        });
+        demo.filtered_env_cube_texv = gctx.createTextureView(demo.filtered_env_cube_tex, .{
+            .dimension = .dimension_cube,
+        });
+    }
+
+    {
+        var mip_level: u32 = 0;
+        while (mip_level < filtered_env_tex_mip_levels) : (mip_level += 1) {
+            drawToCubeTexture(
+                gctx,
+                encoder,
+                demo.uniform_texcube_sam_bgl,
+                demo.precompute_filtered_env_tex_pipe,
+                demo.env_cube_texv, // Source texture view.
+                demo.filtered_env_cube_tex, // Dest. texture.
+                mip_level, // Dest. mipmap level to render to.
+                demo.vertex_buf,
+                demo.index_buf,
+            );
+        }
+    }
+
     demo.is_lighting_precomputed = true;
 }
 
@@ -822,9 +877,15 @@ fn drawToCubeTexture(
 
         pass.setPipeline(pipeline);
 
-        const mem = gctx.uniformsAllocate(zm.Mat, 1);
-        mem.slice[0] = zm.transpose(zm.mul(object_to_view[cube_face_idx], view_to_clip));
-
+        const Uniforms = extern struct {
+            object_to_clip: zm.Mat,
+            roughness: f32,
+        };
+        const mem = gctx.uniformsAllocate(Uniforms, 1);
+        mem.slice[0] = .{
+            .object_to_clip = zm.transpose(zm.mul(object_to_view[cube_face_idx], view_to_clip)),
+            .roughness = @intToFloat(f32, dest_mip_level) / @intToFloat(f32, filtered_env_tex_mip_levels - 1),
+        };
         pass.setBindGroup(0, gctx.lookupResource(bg).?, &.{mem.offset});
 
         // NOTE: We assume that the first mesh in vertex/index buffer is a 'cube'.
