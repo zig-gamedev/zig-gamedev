@@ -13,7 +13,7 @@ const global =
 \\      bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
 \\      bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
 \\      bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-\\      return f32(bits) * 2.3283064365386963e-10; // / 0x100000000
+\\      return f32(bits) * bitcast<f32>(0x2f800000);
 \\  }
 \\
 \\  fn hammersley(idx: u32, n: u32) -> vec2<f32> {
@@ -132,7 +132,7 @@ pub const precompute_irradiance_tex_fs = global ++
 \\      let tangent_x = normalize(cross(up_vector, n));
 \\      let tangent_y = normalize(cross(n, tangent_x));
 \\
-\\      var num_samples: i32  = 0;
+\\      var num_samples: i32 = 0;
 \\      var irradiance = vec3(0.0);
 \\
 \\      for (var phi = 0.0; phi < 2.0 * pi; phi = phi + 0.025) {
@@ -197,7 +197,7 @@ pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex
 \\
 \\      var prefiltered_color = vec3(0.0);
 \\      var total_weight = 0.0;
-\\      let num_samples = 256u;
+\\      let num_samples = 4096u;
 \\
 \\      for (var sample_idx = 0u; sample_idx < num_samples; sample_idx = sample_idx + 1u) {
 \\          let xi = hammersley(sample_idx, num_samples);
@@ -330,7 +330,7 @@ pub const mesh_fs = global ++ mesh_common ++
 \\      var metallic: f32;
 \\      var roughness: f32;
 \\      {
-\\          let mr = textureSample(metallic_roughness_tex, aniso_sam, texcoord).zy;
+\\          let mr = textureSample(metallic_roughness_tex, aniso_sam, texcoord).yz;
 \\          metallic = mr.x;
 \\          roughness = mr.y;
 \\      }

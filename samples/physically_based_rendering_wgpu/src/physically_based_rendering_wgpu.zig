@@ -34,8 +34,8 @@ const helmet_mesh = 1;
 const enable_async_shader_compilation = true;
 
 const env_cube_tex_resolution = 1024;
-const irradiance_cube_tex_resolution = 64;
-const filtered_env_tex_resolution = 256;
+const irradiance_cube_tex_resolution = 128;
+const filtered_env_tex_resolution = 512;
 const filtered_env_tex_mip_levels = 6;
 const brdf_integration_tex_resolution = 512;
 
@@ -88,6 +88,7 @@ const DemoState = struct {
 
     is_lighting_precomputed: bool = false,
 
+    mesh_yaw: f32 = 0.0,
     camera: struct {
         position: [3]f32 = .{ 3.0, 0.0, 3.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 0.0 },
@@ -509,6 +510,7 @@ fn update(demo: *DemoState) void {
             demo.gctx.stats.average_cpu_time,
             demo.gctx.stats.fps,
         );
+        c.igBulletText("Left Mouse Button + drag :  rotate helmet", "");
         c.igBulletText("Right Mouse Button + drag :  rotate camera", "");
         c.igBulletText("W, A, S, D :  move camera", "");
     }
@@ -524,7 +526,10 @@ fn update(demo: *DemoState) void {
         demo.mouse.cursor.xpos = cursor.xpos;
         demo.mouse.cursor.ypos = cursor.ypos;
 
-        if (window.getMouseButton(.right) == .press) {
+        if (window.getMouseButton(.left) == .press) {
+            demo.mesh_yaw += 0.0025 * delta_x;
+            demo.mesh_yaw = zm.modAngle(demo.mesh_yaw);
+        } else if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
             demo.camera.yaw += 0.0025 * delta_x;
             demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
@@ -623,7 +628,7 @@ fn draw(demo: *DemoState) void {
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
             pass.setPipeline(mesh_pipe);
 
-            const object_to_world = zm.identity();
+            const object_to_world = zm.rotationY(demo.mesh_yaw);
 
             const mem = gctx.uniformsAllocate(MeshUniforms, 1);
             mem.slice[0] = .{
@@ -760,8 +765,7 @@ fn precomputeImageLighting(
     // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
     const hdr_source_tex = hdr_source_tex: {
         zgpu.stbi.setFlipVerticallyOnLoad(true);
-        var image = zgpu.stbi.Image(f16).init(content_dir ++ "brown_photostudio_01_4k.hdr", 4) catch unreachable;
-        //var image = zgpu.stbi.Image(f16).init(content_dir ++ "machine_shop_01_4k.hdr", 4) catch unreachable;
+        var image = zgpu.stbi.Image(f16).init(content_dir ++ "freight_station_4k.hdr", 4) catch unreachable;
         defer {
             image.deinit();
             zgpu.stbi.setFlipVerticallyOnLoad(false);
@@ -958,7 +962,7 @@ fn drawToCubeTexture(
         const mem = gctx.uniformsAllocate(Uniforms, 1);
         mem.slice[0] = .{
             .object_to_clip = zm.transpose(zm.mul(object_to_view[cube_face_idx], view_to_clip)),
-            .roughness = @intToFloat(f32, dest_mip_level) / @intToFloat(f32, filtered_env_tex_mip_levels - 1),
+            .roughness = @intToFloat(f32, dest_mip_level + 1) / @intToFloat(f32, filtered_env_tex_mip_levels),
         };
         pass.setBindGroup(0, gctx.lookupResource(bg).?, &.{mem.offset});
 
