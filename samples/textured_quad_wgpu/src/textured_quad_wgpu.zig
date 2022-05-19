@@ -82,7 +82,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
         zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
     });
-    defer gctx.destroyResource(bind_group_layout);
+    defer gctx.releaseResource(bind_group_layout);
 
     // Create a vertex buffer.
     const vertex_data = [_]Vertex{
@@ -170,7 +170,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         const pipeline_layout = gctx.createPipelineLayout(&.{
             bind_group_layout,
         });
-        defer gctx.destroyResource(pipeline_layout);
+        defer gctx.releaseResource(pipeline_layout);
 
         const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
         defer vs_module.release();

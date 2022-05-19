@@ -306,13 +306,13 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     const bind_group_layout = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
     });
-    defer gctx.destroyResource(bind_group_layout);
+    defer gctx.releaseResource(bind_group_layout);
 
     const pipeline_layout = gctx.createPipelineLayout(&.{
         bind_group_layout,
         bind_group_layout,
     });
-    defer gctx.destroyResource(pipeline_layout);
+    defer gctx.releaseResource(pipeline_layout);
 
     const pipeline = pipeline: {
         const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl.vs } });
@@ -605,7 +605,7 @@ fn draw(demo: *DemoState) void {
 
     if (gctx.present() == .swap_chain_resized) {
         // Release old depth texture.
-        gctx.destroyResource(demo.depth_texture_view);
+        gctx.releaseResource(demo.depth_texture_view);
         gctx.destroyResource(demo.depth_texture);
 
         // Create a new depth texture to match the new window size.

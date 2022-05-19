@@ -214,7 +214,7 @@ pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex
 \\  }
 ;
 pub const precompute_brdf_integration_tex_cs = global ++
-\\  @group(0) @binding(0) var brdf_tex: texture_storage_2d<rg32float, write>;
+\\  @group(0) @binding(0) var brdf_tex: texture_storage_2d<rgba16float, write>;
 \\
 \\  fn integrate(roughness: f32, n_dot_v: f32) -> vec2<f32> {
 \\      var v: vec3<f32>;
@@ -265,8 +265,7 @@ const mesh_common =
 \\      world_to_clip: mat4x4<f32>,
 \\  }
 \\  @group(0) @binding(0) var<uniform> uniforms: MeshUniforms;
-\\  @group(0) @binding(1) var base_color_tex: texture_2d<f32>;
-\\  @group(0) @binding(2) var aniso_sam: sampler;
+\\
 ;
 pub const mesh_vs = mesh_common ++
 \\  struct VertexOut {
@@ -293,6 +292,17 @@ pub const mesh_vs = mesh_common ++
 \\  }
 ;
 pub const mesh_fs = mesh_common ++
+\\  @group(0) @binding(1) var ao_tex: texture_2d<f32>;
+\\  @group(0) @binding(2) var base_color_tex: texture_2d<f32>;
+\\  @group(0) @binding(3) var metallic_roughness_tex: texture_2d<f32>;
+\\  @group(0) @binding(4) var normal_tex: texture_2d<f32>;
+\\
+\\  @group(0) @binding(5) var irradiance_tex: texture_cube<f32>;
+\\  @group(0) @binding(6) var filtered_env_tex: texture_cube<f32>;
+\\  @group(0) @binding(7) var brdf_integration_tex: texture_2d<f32>;
+\\
+\\  @group(0) @binding(8) var aniso_sam: sampler;
+\\
 \\  @stage(fragment) fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) normal: vec3<f32>,

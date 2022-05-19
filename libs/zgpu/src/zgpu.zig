@@ -851,18 +851,27 @@ pub const GraphicsContext = struct {
         return null;
     }
 
+    pub fn releaseResource(gctx: GraphicsContext, handle: anytype) void {
+        const T = @TypeOf(handle);
+        switch (T) {
+            BufferHandle => gctx.buffer_pool.destroyResource(handle, false),
+            TextureHandle => gctx.texture_pool.destroyResource(handle, false),
+            TextureViewHandle => gctx.texture_view_pool.destroyResource(handle, false),
+            SamplerHandle => gctx.sampler_pool.destroyResource(handle, false),
+            RenderPipelineHandle => gctx.render_pipeline_pool.destroyResource(handle, false),
+            ComputePipelineHandle => gctx.compute_pipeline_pool.destroyResource(handle, false),
+            BindGroupHandle => gctx.bind_group_pool.destroyResource(handle, false),
+            BindGroupLayoutHandle => gctx.bind_group_layout_pool.destroyResource(handle, false),
+            PipelineLayoutHandle => gctx.pipeline_layout_pool.destroyResource(handle, false),
+            else => @compileError("[zgpu] GraphicsContext.releaseResource() not implemented for " ++ @typeName(T)),
+        }
+    }
+
     pub fn destroyResource(gctx: GraphicsContext, handle: anytype) void {
         const T = @TypeOf(handle);
         switch (T) {
-            BufferHandle => gctx.buffer_pool.destroyResource(handle),
-            TextureHandle => gctx.texture_pool.destroyResource(handle),
-            TextureViewHandle => gctx.texture_view_pool.destroyResource(handle),
-            SamplerHandle => gctx.sampler_pool.destroyResource(handle),
-            RenderPipelineHandle => gctx.render_pipeline_pool.destroyResource(handle),
-            ComputePipelineHandle => gctx.compute_pipeline_pool.destroyResource(handle),
-            BindGroupHandle => gctx.bind_group_pool.destroyResource(handle),
-            BindGroupLayoutHandle => gctx.bind_group_layout_pool.destroyResource(handle),
-            PipelineLayoutHandle => gctx.pipeline_layout_pool.destroyResource(handle),
+            BufferHandle => gctx.buffer_pool.destroyResource(handle, true),
+            TextureHandle => gctx.texture_pool.destroyResource(handle, true),
             else => @compileError("[zgpu] GraphicsContext.destroyResource() not implemented for " ++ @typeName(T)),
         }
     }
@@ -956,7 +965,7 @@ pub const GraphicsContext = struct {
             const pipeline_layout = gctx.createPipelineLayout(&.{
                 mipgen.bind_group_layout,
             });
-            defer gctx.destroyResource(pipeline_layout);
+            defer gctx.releaseResource(pipeline_layout);
 
             const wgsl_src = wgsl.csGenerateMipmaps(arena, formatToShaderFormat(format));
             const cs_module = gctx.device.createShaderModule(&gpu.ShaderModule.Descriptor{
@@ -1001,7 +1010,7 @@ pub const GraphicsContext = struct {
                 .base_array_layer = array_layer,
                 .array_layer_count = 1,
             });
-            defer gctx.destroyResource(texture_view);
+            defer gctx.releaseResource(texture_view);
 
             const bind_group = gctx.createBindGroup(mipgen.bind_group_layout, &[_]BindGroupEntryInfo{
                 .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 8 },
@@ -1011,7 +1020,7 @@ pub const GraphicsContext = struct {
                 .{ .binding = 4, .texture_view_handle = mipgen.scratch_texture_views[2] },
                 .{ .binding = 5, .texture_view_handle = mipgen.scratch_texture_views[3] },
             });
-            defer gctx.destroyResource(bind_group);
+            defer gctx.releaseResource(bind_group);
 
             const MipgenUniforms = extern struct {
                 src_mip_level: i32,
@@ -1150,7 +1159,7 @@ pub const BindGroupEntryInfo = struct {
     texture_view_handle: ?TextureViewHandle = null,
 };
 
-const max_num_bindings_per_group = 8;
+const max_num_bindings_per_group = 10;
 
 pub const BindGroupInfo = struct {
     gpuobj: ?gpu.BindGroup = null,
@@ -1243,7 +1252,7 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
                     // Check the handle (will always be valid) and its potential dependencies (may be invalid).
                     if (!gctx.isResourceValid(handle)) {
                         // Destroy old resource (it is invalid because some of its dependencies are invalid).
-                        pool.destroyResource(handle);
+                        pool.destroyResource(handle, true);
                         found_slot_index = slot_index;
                         break;
                     }
@@ -1263,13 +1272,13 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
             };
         }
 
-        fn destroyResource(pool: Self, handle: ResourceHandle) void {
+        fn destroyResource(pool: Self, handle: ResourceHandle, comptime call_destroy: bool) void {
             if (!pool.isHandleValid(handle))
                 return;
             var resource_info = &pool.resources[handle.index];
 
             const gpuobj = resource_info.gpuobj.?;
-            if (@hasDecl(@TypeOf(gpuobj), "destroy")) {
+            if (call_destroy and @hasDecl(@TypeOf(gpuobj), "destroy")) {
                 gpuobj.destroy();
             }
             gpuobj.release();
