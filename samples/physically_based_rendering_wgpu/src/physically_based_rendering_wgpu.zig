@@ -1041,7 +1041,7 @@ pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
 
-    const window = try glfw.Window.create(1280, 960, window_title, null, null, .{
+    const window = try glfw.Window.create(1400, 1000, window_title, null, null, .{
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
     });
