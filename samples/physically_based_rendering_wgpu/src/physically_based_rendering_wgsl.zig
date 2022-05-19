@@ -263,6 +263,7 @@ const mesh_common =
 \\  struct MeshUniforms {
 \\      object_to_world: mat4x4<f32>,
 \\      world_to_clip: mat4x4<f32>,
+\\      camera_position: vec3<f32>,
 \\  }
 \\  @group(0) @binding(0) var<uniform> uniforms: MeshUniforms;
 \\
@@ -291,7 +292,7 @@ pub const mesh_vs = mesh_common ++
 \\      return output;
 \\  }
 ;
-pub const mesh_fs = mesh_common ++
+pub const mesh_fs = global ++ mesh_common ++
 \\  @group(0) @binding(1) var ao_tex: texture_2d<f32>;
 \\  @group(0) @binding(2) var base_color_tex: texture_2d<f32>;
 \\  @group(0) @binding(3) var metallic_roughness_tex: texture_2d<f32>;
@@ -303,14 +304,71 @@ pub const mesh_fs = mesh_common ++
 \\
 \\  @group(0) @binding(8) var aniso_sam: sampler;
 \\
+\\  fn fresnelSchlickRoughness(cos_theta: f32, f0: vec3<f32>, roughness: f32) -> vec3<f32> {
+\\      return f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - cos_theta, 5.0);
+\\  }
+\\
 \\  @stage(fragment) fn main(
 \\      @location(0) position: vec3<f32>,
 \\      @location(1) normal: vec3<f32>,
 \\      @location(2) texcoord: vec2<f32>,
 \\      @location(3) tangent: vec4<f32>,
 \\  ) -> @location(0) vec4<f32> {
-\\      let color = textureSample(base_color_tex, aniso_sam, texcoord).xyz;
-\\      return vec4(color, 1.0);
+\\      let unit_normal = normalize(normal);
+\\      let unit_tangent = vec4(normalize(tangent.xyz), tangent.w);
+\\      let unit_bitangent = normalize(cross(normal, unit_tangent.xyz)) * unit_tangent.w;
+\\
+\\      let object_to_world = mat3x3(
+\\          uniforms.object_to_world[0].xyz,
+\\          uniforms.object_to_world[1].xyz,
+\\          uniforms.object_to_world[2].xyz,
+\\      );
+\\      var n = normalize(textureSample(normal_tex, aniso_sam, texcoord).xyz * 2.0 - 1.0);
+\\      n = n * transpose(mat3x3(unit_tangent.xyz, unit_bitangent, unit_normal));
+\\      n = normalize(n * object_to_world);
+\\
+\\      var metallic: f32;
+\\      var roughness: f32;
+\\      {
+\\          let mr = textureSample(metallic_roughness_tex, aniso_sam, texcoord).zy;
+\\          metallic = mr.x;
+\\          roughness = mr.y;
+\\      }
+\\      let base_color = pow(textureSample(base_color_tex, aniso_sam, texcoord).xyz, vec3(gamma));
+\\      let ao = textureSample(ao_tex, aniso_sam, texcoord).x;
+\\
+\\      let v = normalize(uniforms.camera_position - position);
+\\      let n_dot_v = saturate(dot(n, v));
+\\
+\\      let f0 = mix(vec3(0.04), base_color, vec3(metallic));
+\\
+\\      let r = reflect(-v, n);
+\\      let f = fresnelSchlickRoughness(n_dot_v, f0, roughness);
+\\
+\\      let kd = (1.0 - f) * (1.0 - metallic);
+\\
+\\      let irradiance = textureSampleLevel(irradiance_tex, aniso_sam, n, 0.0).xyz;
+\\      let prefiltered_color = textureSampleLevel(
+\\          filtered_env_tex,
+\\          aniso_sam,
+\\          r,
+\\          roughness * 5.0, // roughness * (num_mip_levels - 1.0)
+\\      ).xyz;
+\\      let env_brdf = textureSampleLevel(
+\\          brdf_integration_tex,
+\\          aniso_sam,
+\\          vec2(min(n_dot_v, 0.999), roughness),
+\\          0.0,
+\\      ).xy;
+\\
+\\      let diffuse = irradiance * base_color;
+\\      let specular = prefiltered_color * (f * env_brdf.x + env_brdf.y);
+\\      let ambient = (kd * diffuse + specular) * ao;
+\\
+\\      var color = ambient;
+\\      color = color / (color + 1.0);
+\\
+\\      return vec4(pow(color, vec3(1.0 / gamma)), 1.0);
 \\  }
 ;
 pub const sample_env_tex_vs =

@@ -42,6 +42,7 @@ const brdf_integration_tex_resolution = 512;
 const MeshUniforms = struct {
     object_to_world: zm.Mat,
     world_to_clip: zm.Mat,
+    camera_position: zm.Vec,
 };
 
 const DemoState = struct {
@@ -628,6 +629,7 @@ fn draw(demo: *DemoState) void {
             mem.slice[0] = .{
                 .object_to_world = zm.transpose(object_to_world),
                 .world_to_clip = zm.transpose(cam_world_to_clip),
+                .camera_position = zm.load(demo.camera.position[0..], zm.Vec, 3),
             };
 
             pass.setBindGroup(0, mesh_bg, &.{mem.offset});
@@ -758,8 +760,8 @@ fn precomputeImageLighting(
     // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
     const hdr_source_tex = hdr_source_tex: {
         zgpu.stbi.setFlipVerticallyOnLoad(true);
-        //var image = try zgpu.stbi.Image(f16).init(content_dir ++ "brown_photostudio_01_4k.hdr", 4);
-        var image = zgpu.stbi.Image(f16).init(content_dir ++ "machine_shop_01_4k.hdr", 4) catch unreachable;
+        var image = zgpu.stbi.Image(f16).init(content_dir ++ "brown_photostudio_01_4k.hdr", 4) catch unreachable;
+        //var image = zgpu.stbi.Image(f16).init(content_dir ++ "machine_shop_01_4k.hdr", 4) catch unreachable;
         defer {
             image.deinit();
             zgpu.stbi.setFlipVerticallyOnLoad(false);
