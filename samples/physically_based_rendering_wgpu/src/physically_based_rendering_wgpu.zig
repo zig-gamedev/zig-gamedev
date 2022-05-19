@@ -37,6 +37,7 @@ const env_cube_tex_resolution = 1024;
 const irradiance_cube_tex_resolution = 64;
 const filtered_env_tex_resolution = 256;
 const filtered_env_tex_mip_levels = 6;
+const brdf_integration_tex_resolution = 512;
 
 const MeshUniforms = struct {
     object_to_world: zm.Mat,
@@ -50,11 +51,13 @@ const DemoState = struct {
     precompute_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
     precompute_irradiance_tex_pipe: zgpu.RenderPipelineHandle = .{},
     precompute_filtered_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
+    precompute_brdf_integration_tex_pipe: zgpu.ComputePipelineHandle = .{},
     mesh_pipe: zgpu.RenderPipelineHandle = .{},
     sample_env_tex_pipe: zgpu.RenderPipelineHandle = .{},
 
     uniform_tex2d_sam_bgl: zgpu.BindGroupLayoutHandle,
     uniform_texcube_sam_bgl: zgpu.BindGroupLayoutHandle,
+    texstorage2d_bgl: zgpu.BindGroupLayoutHandle,
 
     vertex_buf: zgpu.BufferHandle,
     index_buf: zgpu.BufferHandle,
@@ -75,6 +78,9 @@ const DemoState = struct {
 
     filtered_env_cube_tex: zgpu.TextureHandle = .{},
     filtered_env_cube_texv: zgpu.TextureViewHandle = .{},
+
+    brdf_integration_tex: zgpu.TextureHandle = .{},
+    brdf_integration_texv: zgpu.TextureViewHandle = .{},
 
     mesh_bg: zgpu.BindGroupHandle,
     env_bg: zgpu.BindGroupHandle = .{},
@@ -181,6 +187,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
         zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_cube, false),
         zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
+    });
+    const texstorage2d_bgl = gctx.createBindGroupLayout(&.{
+        zgpu.bglStorageTexture(0, .{ .compute = true }, .write_only, .rg32_float, .dimension_2d),
     });
 
     //
@@ -302,6 +311,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .allocator = allocator,
         .uniform_tex2d_sam_bgl = uniform_tex2d_sam_bgl,
         .uniform_texcube_sam_bgl = uniform_texcube_sam_bgl,
+        .texstorage2d_bgl = texstorage2d_bgl,
         .vertex_buf = vertex_buf,
         .index_buf = index_buf,
         .depth_tex = depth.tex,
@@ -379,6 +389,27 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         null,
         &demo.precompute_filtered_env_tex_pipe,
     );
+    {
+        const pl = gctx.createPipelineLayout(&.{texstorage2d_bgl});
+        defer gctx.destroyResource(pl);
+
+        const cs_mod = gctx.device.createShaderModule(&gpu.ShaderModule.Descriptor{
+            .code = .{ .wgsl = wgsl.precompute_brdf_integration_tex_cs },
+        });
+        defer cs_mod.release();
+
+        const pipe_desc = gpu.ComputePipeline.Descriptor{
+            .compute = .{
+                .module = cs_mod,
+                .entry_point = "main",
+            },
+        };
+        if (enable_async_shader_compilation) {
+            gctx.createComputePipelineAsync(allocator, pl, pipe_desc, &demo.precompute_brdf_integration_tex_pipe);
+        } else {
+            demo.precompute_filtered_env_tex_pipe = gctx.createComputePipeline(pl, pipe_desc);
+        }
+    }
 
     return demo;
 }
@@ -646,6 +677,7 @@ fn precomputeImageLighting(
     _ = gctx.lookupResource(demo.precompute_env_tex_pipe) orelse return;
     _ = gctx.lookupResource(demo.precompute_irradiance_tex_pipe) orelse return;
     _ = gctx.lookupResource(demo.precompute_filtered_env_tex_pipe) orelse return;
+    _ = gctx.lookupResource(demo.precompute_brdf_integration_tex_pipe) orelse return;
 
     // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
     gctx.destroyResource(demo.hdr_source_tex);
@@ -735,7 +767,7 @@ fn precomputeImageLighting(
     if (!gctx.isResourceValid(demo.irradiance_cube_tex)) {
         // Create an empty irradiance cube texture (we will render to it).
         demo.irradiance_cube_tex = gctx.createTexture(.{
-            .usage = .{ .texture_binding = true, .render_attachment = true, .copy_dst = true },
+            .usage = .{ .texture_binding = true, .render_attachment = true },
             .size = .{
                 .width = irradiance_cube_tex_resolution,
                 .height = irradiance_cube_tex_resolution,
@@ -767,7 +799,7 @@ fn precomputeImageLighting(
     if (!gctx.isResourceValid(demo.filtered_env_cube_tex)) {
         // Create an empty filtered env. cube texture (we will render to it).
         demo.filtered_env_cube_tex = gctx.createTexture(.{
-            .usage = .{ .texture_binding = true, .render_attachment = true, .copy_dst = true },
+            .usage = .{ .texture_binding = true, .render_attachment = true },
             .size = .{
                 .width = filtered_env_tex_resolution,
                 .height = filtered_env_tex_resolution,
@@ -796,6 +828,40 @@ fn precomputeImageLighting(
                 demo.index_buf,
             );
         }
+    }
+
+    //
+    // Step 4.
+    //
+    if (!gctx.isResourceValid(demo.brdf_integration_tex)) {
+        // Create an empty BRDF integration texture (we will generate its content in a compute shader).
+        demo.brdf_integration_tex = gctx.createTexture(.{
+            .usage = .{ .texture_binding = true, .storage_binding = true },
+            .size = .{
+                .width = brdf_integration_tex_resolution,
+                .height = brdf_integration_tex_resolution,
+            },
+            .format = .rg32_float,
+            .mip_level_count = 1,
+        });
+        demo.brdf_integration_texv = gctx.createTextureView(demo.brdf_integration_tex, .{});
+    }
+
+    {
+        const bg = gctx.createBindGroup(demo.texstorage2d_bgl, &[_]zgpu.BindGroupEntryInfo{
+            .{ .binding = 0, .texture_view_handle = demo.brdf_integration_texv },
+        });
+        defer gctx.destroyResource(bg);
+
+        const pass = encoder.beginComputePass(null);
+        defer {
+            pass.end();
+            pass.release();
+        }
+        const num_groups = @divExact(brdf_integration_tex_resolution, 8);
+        pass.setPipeline(gctx.lookupResource(demo.precompute_brdf_integration_tex_pipe).?);
+        pass.setBindGroup(0, gctx.lookupResource(bg).?, null);
+        pass.dispatch(num_groups, num_groups, 1);
     }
 
     demo.is_lighting_precomputed = true;

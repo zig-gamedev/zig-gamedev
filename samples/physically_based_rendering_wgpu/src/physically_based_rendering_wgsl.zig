@@ -55,49 +55,6 @@ const global =
 \\  }
 \\
 ;
-const mesh_common =
-\\  struct MeshUniforms {
-\\      object_to_world: mat4x4<f32>,
-\\      world_to_clip: mat4x4<f32>,
-\\  }
-\\  @group(0) @binding(0) var<uniform> uniforms: MeshUniforms;
-\\  @group(0) @binding(1) var base_color_tex: texture_2d<f32>;
-\\  @group(0) @binding(2) var aniso_sam: sampler;
-;
-pub const mesh_vs = mesh_common ++
-\\  struct VertexOut {
-\\      @builtin(position) position_clip: vec4<f32>,
-\\      @location(0) position: vec3<f32>,
-\\      @location(1) normal: vec3<f32>,
-\\      @location(2) texcoord: vec2<f32>,
-\\      @location(3) tangent: vec4<f32>,
-\\  }
-\\  @stage(vertex) fn main(
-\\      @location(0) position: vec3<f32>,
-\\      @location(1) normal: vec3<f32>,
-\\      @location(2) texcoord: vec2<f32>,
-\\      @location(3) tangent: vec4<f32>,
-\\  ) -> VertexOut {
-\\      var output: VertexOut;
-\\      output.position_clip = vec4(position, 1.0) * uniforms.object_to_world * uniforms.world_to_clip;
-\\      output.position = (vec4(position, 1.0) * uniforms.object_to_world).xyz;
-\\      output.normal = normal;
-\\      output.texcoord = texcoord;
-\\      output.tangent = tangent;
-\\      return output;
-\\  }
-;
-pub const mesh_fs = mesh_common ++
-\\  @stage(fragment) fn main(
-\\      @location(0) position: vec3<f32>,
-\\      @location(1) normal: vec3<f32>,
-\\      @location(2) texcoord: vec2<f32>,
-\\      @location(3) tangent: vec4<f32>,
-\\  ) -> @location(0) vec4<f32> {
-\\      let color = textureSample(base_color_tex, aniso_sam, texcoord).xyz;
-\\      return vec4(color, 1.0);
-\\  }
-;
 pub const precompute_env_tex_vs =
 \\  struct Uniforms {
 \\      object_to_clip: mat4x4<f32>,
@@ -107,6 +64,7 @@ pub const precompute_env_tex_vs =
 \\      @builtin(position) position_clip: vec4<f32>,
 \\      @location(0) position: vec3<f32>,
 \\  }
+\\
 \\  @stage(vertex) fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> VertexOut {
@@ -119,12 +77,14 @@ pub const precompute_env_tex_vs =
 pub const precompute_env_tex_fs =
 \\  @group(0) @binding(1) var equirect_tex: texture_2d<f32>;
 \\  @group(0) @binding(2) var equirect_sam: sampler;
+\\
 \\  fn sampleSphericalMap(v: vec3<f32>) -> vec2<f32> {
 \\      var uv = vec2(atan2(v.z, v.x), asin(v.y));
 \\      uv = uv * vec2(0.1591, 0.3183);
 \\      uv = uv + vec2(0.5);
 \\      return uv;
 \\  }
+\\
 \\  @stage(fragment) fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
@@ -138,10 +98,12 @@ pub const precompute_irradiance_tex_vs =
 \\      object_to_clip: mat4x4<f32>,
 \\  }
 \\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+\\
 \\  struct VertexOut {
 \\      @builtin(position) position_clip: vec4<f32>,
 \\      @location(0) position: vec3<f32>,
 \\  }
+\\
 \\  @stage(vertex) fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> VertexOut {
@@ -154,6 +116,7 @@ pub const precompute_irradiance_tex_vs =
 pub const precompute_irradiance_tex_fs = global ++
 \\  @group(0) @binding(1) var env_tex: texture_cube<f32>;
 \\  @group(0) @binding(2) var env_sam: sampler;
+\\
 \\  @stage(fragment) fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
@@ -210,6 +173,7 @@ pub const precompute_filtered_env_tex_vs = precompute_filtered_env_tex_common ++
 \\      @builtin(position) position_clip: vec4<f32>,
 \\      @location(0) position: vec3<f32>,
 \\  }
+\\
 \\  @stage(vertex) fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> VertexOut {
@@ -222,6 +186,7 @@ pub const precompute_filtered_env_tex_vs = precompute_filtered_env_tex_common ++
 pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex_common ++
 \\  @group(0) @binding(1) var env_tex: texture_cube<f32>;
 \\  @group(0) @binding(2) var env_sam: sampler;
+\\
 \\  @stage(fragment) fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
@@ -232,7 +197,7 @@ pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex
 \\
 \\      var prefiltered_color = vec3(0.0);
 \\      var total_weight = 0.0;
-\\      let num_samples = 1024u;
+\\      let num_samples = 256u;
 \\
 \\      for (var sample_idx = 0u; sample_idx < num_samples; sample_idx = sample_idx + 1u) {
 \\          let xi = hammersley(sample_idx, num_samples);
@@ -248,15 +213,107 @@ pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex
 \\      return vec4(prefiltered_color / max(total_weight, 0.001), 1.0);
 \\  }
 ;
+pub const precompute_brdf_integration_tex_cs = global ++
+\\  @group(0) @binding(0) var brdf_tex: texture_storage_2d<rg32float, write>;
+\\
+\\  fn integrate(roughness: f32, n_dot_v: f32) -> vec2<f32> {
+\\      var v: vec3<f32>;
+\\      v.x = 0.0;
+\\      v.y = n_dot_v; // cos
+\\      v.z = sqrt(1.0 - n_dot_v * n_dot_v); // sin
+\\
+\\      let n = vec3(0.0, 1.0, 0.0);
+\\
+\\      var a = 0.0;
+\\      var b = 0.0;
+\\      let num_samples = 1024u;
+\\
+\\      for (var sample_idx = 0u; sample_idx < num_samples; sample_idx = sample_idx + 1u) {
+\\          let xi = hammersley(sample_idx, num_samples);
+\\          let h = importanceSampleGgx(xi, roughness, n);
+\\          let l = normalize(2.0 * dot(v, h) * h - v);
+\\
+\\          let n_dot_l = saturate(l.y);
+\\          let n_dot_h = saturate(h.y);
+\\          let v_dot_h = saturate(dot(v, h));
+\\
+\\          if (n_dot_l > 0.0) {
+\\              let g = geometrySmith(n_dot_l, n_dot_v, roughness);
+\\              let g_vis = g * v_dot_h / (n_dot_h * n_dot_v);
+\\              let fc = pow(1.0 - v_dot_h, 5.0);
+\\              a = a + (1.0 - fc) * g_vis;
+\\              b = b + fc * g_vis;
+\\          }
+\\      }
+\\      return vec2(a, b) / vec2(f32(num_samples));
+\\  }
+\\
+\\  @stage(compute) @workgroup_size(8, 8, 1)
+\\  fn main(
+\\      @builtin(global_invocation_id) global_id: vec3<u32>,
+\\  ) {
+\\      let dim = textureDimensions(brdf_tex);
+\\      let roughness = f32(global_id.y + 1u) / f32(dim.y);
+\\      let n_dot_v = f32(global_id.x + 1u) / f32(dim.x);
+\\      let result = integrate(roughness, n_dot_v);
+\\      textureStore(brdf_tex, vec2<i32>(global_id.xy), vec4(result, 0.0, 1.0));
+\\  }
+;
+const mesh_common =
+\\  struct MeshUniforms {
+\\      object_to_world: mat4x4<f32>,
+\\      world_to_clip: mat4x4<f32>,
+\\  }
+\\  @group(0) @binding(0) var<uniform> uniforms: MeshUniforms;
+\\  @group(0) @binding(1) var base_color_tex: texture_2d<f32>;
+\\  @group(0) @binding(2) var aniso_sam: sampler;
+;
+pub const mesh_vs = mesh_common ++
+\\  struct VertexOut {
+\\      @builtin(position) position_clip: vec4<f32>,
+\\      @location(0) position: vec3<f32>,
+\\      @location(1) normal: vec3<f32>,
+\\      @location(2) texcoord: vec2<f32>,
+\\      @location(3) tangent: vec4<f32>,
+\\  }
+\\
+\\  @stage(vertex) fn main(
+\\      @location(0) position: vec3<f32>,
+\\      @location(1) normal: vec3<f32>,
+\\      @location(2) texcoord: vec2<f32>,
+\\      @location(3) tangent: vec4<f32>,
+\\  ) -> VertexOut {
+\\      var output: VertexOut;
+\\      output.position_clip = vec4(position, 1.0) * uniforms.object_to_world * uniforms.world_to_clip;
+\\      output.position = (vec4(position, 1.0) * uniforms.object_to_world).xyz;
+\\      output.normal = normal;
+\\      output.texcoord = texcoord;
+\\      output.tangent = tangent;
+\\      return output;
+\\  }
+;
+pub const mesh_fs = mesh_common ++
+\\  @stage(fragment) fn main(
+\\      @location(0) position: vec3<f32>,
+\\      @location(1) normal: vec3<f32>,
+\\      @location(2) texcoord: vec2<f32>,
+\\      @location(3) tangent: vec4<f32>,
+\\  ) -> @location(0) vec4<f32> {
+\\      let color = textureSample(base_color_tex, aniso_sam, texcoord).xyz;
+\\      return vec4(color, 1.0);
+\\  }
+;
 pub const sample_env_tex_vs =
 \\  struct Uniforms {
 \\      object_to_clip: mat4x4<f32>,
 \\  }
 \\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+\\
 \\  struct VertexOut {
 \\      @builtin(position) position_clip: vec4<f32>,
 \\      @location(0) position: vec3<f32>,
 \\  }
+\\
 \\  @stage(vertex) fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> VertexOut {
@@ -269,6 +326,7 @@ pub const sample_env_tex_vs =
 pub const sample_env_tex_fs = global ++
 \\  @group(0) @binding(1) var env_tex: texture_cube<f32>;
 \\  @group(0) @binding(2) var env_sam: sampler;
+\\
 \\  @stage(fragment) fn main(
 \\      @location(0) position: vec3<f32>,
 \\  ) -> @location(0) vec4<f32> {
