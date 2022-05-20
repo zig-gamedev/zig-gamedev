@@ -346,9 +346,9 @@ pub const mesh_fs = global ++ mesh_common ++
 \\      var metallic: f32;
 \\      var roughness: f32;
 \\      {
-\\          let mr = textureSample(metallic_roughness_tex, aniso_sam, texcoord).yz;
-\\          roughness = mr.x;
-\\          metallic = mr.y;
+\\          let rm = textureSample(metallic_roughness_tex, aniso_sam, texcoord).yz;
+\\          roughness = rm.x;
+\\          metallic = rm.y;
 \\      }
 \\      let base_color = pow(textureSample(base_color_tex, aniso_sam, texcoord).xyz, vec3(gamma));
 \\      let ao = textureSample(ao_tex, aniso_sam, texcoord).x;
