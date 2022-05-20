@@ -714,7 +714,7 @@ pub const GraphicsContext = struct {
         layout: BindGroupLayoutHandle,
         entries: []const BindGroupEntryInfo,
     ) BindGroupHandle {
-        assert(entries.len > 0 and entries.len < max_num_bindings_per_group);
+        assert(entries.len > 0 and entries.len <= max_num_bindings_per_group);
 
         var bind_group_info = BindGroupInfo{ .num_entries = @intCast(u32, entries.len) };
         var gpu_bind_group_entries: [max_num_bindings_per_group]gpu.BindGroup.Entry = undefined;
@@ -762,7 +762,7 @@ pub const GraphicsContext = struct {
         gctx: *GraphicsContext,
         entries: []const gpu.BindGroupLayout.Entry,
     ) BindGroupLayoutHandle {
-        assert(entries.len > 0 and entries.len < max_num_bindings_per_group);
+        assert(entries.len > 0 and entries.len <= max_num_bindings_per_group);
 
         var bind_group_layout_info = BindGroupLayoutInfo{
             .gpuobj = gctx.device.createBindGroupLayout(&.{ .entries = entries }),
@@ -955,7 +955,7 @@ pub const GraphicsContext = struct {
         if (!entry.found_existing) {
             mipgen.bind_group_layout = gctx.createBindGroupLayout(&.{
                 bglBuffer(0, .{ .compute = true }, .uniform, true, 0),
-                bglTexture(1, .{ .compute = true }, .float, .dimension_2d, false),
+                bglTexture(1, .{ .compute = true }, .unfilterable_float, .dimension_2d, false),
                 bglStorageTexture(2, .{ .compute = true }, .write_only, format, .dimension_2d),
                 bglStorageTexture(3, .{ .compute = true }, .write_only, format, .dimension_2d),
                 bglStorageTexture(4, .{ .compute = true }, .write_only, format, .dimension_2d),

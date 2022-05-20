@@ -86,6 +86,7 @@ const DemoState = struct {
 
     meshes: std.ArrayList(Mesh),
 
+    current_hdri_index: i32 = 1,
     is_lighting_precomputed: bool = false,
 
     mesh_yaw: f32 = 0.0,
@@ -283,14 +284,14 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     // Create an empty irradiance cube texture (we will render to it).
     const irradiance_cube_tex = gctx.createTexture(.{
-        .usage = .{ .texture_binding = true, .render_attachment = true },
+        .usage = .{ .texture_binding = true, .render_attachment = true, .copy_dst = true },
         .size = .{
             .width = irradiance_cube_tex_resolution,
             .height = irradiance_cube_tex_resolution,
             .depth_or_array_layers = 6,
         },
         .format = .rgba16_float,
-        .mip_level_count = 1,
+        .mip_level_count = math.log2_int(u32, irradiance_cube_tex_resolution) + 1,
     });
     const irradiance_cube_texv = gctx.createTextureView(irradiance_cube_tex, .{
         .dimension = .dimension_cube,
@@ -488,7 +489,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         if (enable_async_shader_compilation) {
             gctx.createComputePipelineAsync(allocator, pl, pipe_desc, &demo.precompute_brdf_integration_tex_pipe);
         } else {
-            demo.precompute_filtered_env_tex_pipe = gctx.createComputePipeline(pl, pipe_desc);
+            demo.precompute_brdf_integration_tex_pipe = gctx.createComputePipeline(pl, pipe_desc);
         }
     }
 
@@ -510,9 +511,22 @@ fn update(demo: *DemoState) void {
             demo.gctx.stats.average_cpu_time,
             demo.gctx.stats.fps,
         );
-        c.igBulletText("Left Mouse Button + drag :  rotate helmet", "");
-        c.igBulletText("Right Mouse Button + drag :  rotate camera", "");
-        c.igBulletText("W, A, S, D :  move camera", "");
+        c.igBulletText("Left Mouse Button + drag :  rotate helmet");
+        c.igBulletText("Right Mouse Button + drag :  rotate camera");
+        c.igBulletText("W, A, S, D :  move camera");
+
+        c.igSpacing();
+        c.igSpacing();
+        c.igBulletText("Current HDRI :  ");
+        c.igSameLine(0.0, 0.0);
+        if (c.igCombo_Str(
+            "##",
+            &demo.current_hdri_index,
+            "Newport Loft\x00Drackenstein Quarry\x00Freight Station\x00\x00",
+            -1,
+        )) {
+            demo.is_lighting_precomputed = false;
+        }
     }
     c.igEnd();
 
@@ -764,8 +778,16 @@ fn precomputeImageLighting(
 
     // Create HDR source texture (this is an equirect texture, we will generate cubemap from it).
     const hdr_source_tex = hdr_source_tex: {
+        const hdri_paths = [_][:0]const u8{
+            content_dir ++ "Newport_Loft.hdr",
+            content_dir ++ "drackenstein_quarry_4k.hdr",
+            content_dir ++ "freight_station_4k.hdr",
+        };
         zgpu.stbi.setFlipVerticallyOnLoad(true);
-        var image = zgpu.stbi.Image(f16).init(content_dir ++ "freight_station_4k.hdr", 4) catch unreachable;
+        var image = zgpu.stbi.Image(f16).init(
+            hdri_paths[@intCast(usize, demo.current_hdri_index)],
+            4,
+        ) catch unreachable;
         defer {
             image.deinit();
             zgpu.stbi.setFlipVerticallyOnLoad(false);
@@ -799,6 +821,10 @@ fn precomputeImageLighting(
     const hdr_source_texv = gctx.createTextureView(hdr_source_tex, .{});
     defer gctx.releaseResource(hdr_source_texv);
 
+    var arena_state = std.heap.ArenaAllocator.init(demo.allocator);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
     //
     // Step 1.
     //
@@ -813,13 +839,7 @@ fn precomputeImageLighting(
         demo.vertex_buf,
         demo.index_buf,
     );
-    {
-        var arena_state = std.heap.ArenaAllocator.init(demo.allocator);
-        defer arena_state.deinit();
-        const arena = arena_state.allocator();
-
-        gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
-    }
+    gctx.generateMipmaps(arena, encoder, demo.env_cube_tex);
 
     //
     // Step 2.
@@ -835,6 +855,7 @@ fn precomputeImageLighting(
         demo.vertex_buf,
         demo.index_buf,
     );
+    gctx.generateMipmaps(arena, encoder, demo.irradiance_cube_tex);
 
     //
     // Step 3.
@@ -903,7 +924,7 @@ fn drawToCubeTexture(
     const sam = gctx.createSampler(.{
         .mag_filter = .linear,
         .min_filter = .linear,
-        .mipmap_filter = .nearest,
+        .mipmap_filter = .linear,
     });
     defer gctx.releaseResource(sam);
 
@@ -995,7 +1016,6 @@ fn createRenderPipe(
 
     const color_target = gpu.ColorTargetState{
         .format = format,
-        .blend = &.{ .color = .{}, .alpha = .{} },
     };
 
     const vertex_attributes = [_]gpu.VertexAttribute{

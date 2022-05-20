@@ -149,7 +149,7 @@ pub const precompute_irradiance_tex_fs = global ++
 \\              // Transform from tangent space to world space.
 \\              let sample_vector = tangent_x * h.x + tangent_y * h.y + n * h.z;
 \\
-\\              let irr = textureSampleLevel(env_tex, env_sam, sample_vector, 0.0).xyz * cos_theta * sin_theta;
+\\              let irr = textureSample(env_tex, env_sam, sample_vector).xyz * cos_theta * sin_theta;
 \\
 \\              irradiance = irradiance + irr;
 \\              num_samples = num_samples + 1;
@@ -202,10 +202,11 @@ pub const precompute_filtered_env_tex_fs = global ++ precompute_filtered_env_tex
 \\      for (var sample_idx = 0u; sample_idx < num_samples; sample_idx = sample_idx + 1u) {
 \\          let xi = hammersley(sample_idx, num_samples);
 \\          let h = importanceSampleGgx(xi, roughness, n);
+\\          let lvec = 2.0 * dot(v, h) * h - v;
 \\          let l = normalize(2.0 * dot(v, h) * h - v);
 \\          let n_dot_l = saturate(dot(n, l));
 \\          if (n_dot_l > 0.0) {
-\\              var color = textureSampleLevel(env_tex, env_sam, l, 0.0).xyz * n_dot_l;
+\\              var color = textureSample(env_tex, env_sam, lvec).xyz * n_dot_l;
 \\              prefiltered_color = prefiltered_color + color;
 \\              total_weight = total_weight + n_dot_l;
 \\          }
@@ -347,18 +348,17 @@ pub const mesh_fs = global ++ mesh_common ++
 \\
 \\      let kd = (1.0 - f) * (1.0 - metallic);
 \\
-\\      let irradiance = textureSampleLevel(irradiance_tex, aniso_sam, n, 0.0).xyz;
+\\      let irradiance = textureSample(irradiance_tex, aniso_sam, n).xyz;
 \\      let prefiltered_color = textureSampleLevel(
 \\          filtered_env_tex,
 \\          aniso_sam,
 \\          r,
 \\          roughness * 5.0, // roughness * (num_mip_levels - 1.0)
 \\      ).xyz;
-\\      let env_brdf = textureSampleLevel(
+\\      let env_brdf = textureSample(
 \\          brdf_integration_tex,
 \\          aniso_sam,
 \\          vec2(min(n_dot_v, 0.999), roughness),
-\\          0.0,
 \\      ).xy;
 \\
 \\      let diffuse = irradiance * base_color;
