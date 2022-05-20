@@ -1,6 +1,6 @@
 # zig-gamedev project
 
-This repository contains a collection of [sample applications](#sample-applications) and **cross-platform, standalone, composable libraries** written in **[Zig programming language](https://ziglang.org/)**.
+This repository contains a collection of [sample applications](#cross-platfrom-sample-applications-native-webgpu) and **cross-platform, standalone, composable libraries** written in **[Zig programming language](https://ziglang.org/)**.
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
 
 To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
