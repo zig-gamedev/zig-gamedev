@@ -1,6 +1,10 @@
 ## physically based rendering (wgpu)
 
-This sample implements physically-based rendering (PBR) and image-based lighting (IBL) to achive realistic looking rendering results.
+This sample implements physically-based rendering (PBR) and image-based lighting (IBL) to achive realistic looking rendering results. For more details please see below.
+
+![image](screenshot0.jpg)
+![image](screenshot1.jpg)
+![image](screenshot2.jpg)
 
 Indirect lighting is precomputed and stored every time user changes current HDRI (skybox).
 
@@ -26,7 +30,3 @@ This demo exercises some features from our libraries, in particular:
 * Mesh loading (zmesh.io)
 * Simple GUI (zgpu.gui)
 * 3D math (zmath)
-
-![image](screenshot0.jpg)
-![image](screenshot1.jpg)
-![image](screenshot2.jpg)
