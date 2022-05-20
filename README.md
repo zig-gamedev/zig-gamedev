@@ -1,25 +1,16 @@
-**If you are new to low-level graphics programming or you would like to learn about some zig-gamedev libraries I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).**
-
 # zig-gamedev project
 
 This repository contains a collection of [sample applications](#sample-applications) and **cross-platform, standalone, composable libraries** written in **[Zig programming language](https://ziglang.org/)**.
 Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
 
-To get started on Windows/Linux/Mac try out [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu) sample:
+To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 
 (`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.0-dev.2017 (master)](https://ziglang.org/download/) or newer is required)
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
-zig build procedural_mesh_wgpu-run
+zig build physically_based_rendering_wgpu-run
 ```
-#### Some features:
-* Works on Windows, Linux and Mac (sample applications are WIP on Linux and Mac)
-* Zero dependency except [Zig compiler (master)](https://ziglang.org/download/), git with [Git LFS](https://git-lfs.github.com/) and curl - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
-* Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
-* Uses native version of WebGPU API ([mach/gpu](https://github.com/hexops/mach/tree/main/gpu)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
-* Uses some great, carefully selected C/C++ libraries which are seamlessly built by `zig cc` compiler
-
 #### Libraries we develop/maintain:
 * [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - Cross-platform graphics layer built on top of native WebGPU API (Dawn)
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers **[cross-platform and standalone]**
@@ -37,26 +28,38 @@ zig build procedural_mesh_wgpu-run
 * [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpix) - support for GPU profiling with PIX **[depends only on zwin32]**
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 
-## Project vision:
-* Collection of cross-platform, standalone and composable libraries for game developers
-* Written from scratch in Zig or bindings to carefully selected C/C++ code
-* Non-allocating or taking Zig allocator
-* Tested (tests, samples, mini-games)
-* Well maintained
+#### Project vision:
+* Works on Windows, Linux and MacOS
+* Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/), `git` with [Git LFS](https://git-lfs.github.com/) and `curl` - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
+* Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
+* Written from scratch in Zig *or* bindings to carefully selected C/C++ code
+* Uses native version of WebGPU API ([mach/gpu](https://github.com/hexops/mach/tree/main/gpu)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
 
 *If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
-## Sample applications
+## Cross-platfrom sample applications (native WebGPU)
 
 Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
+
+1. [physically based rendering (wgpu)](samples/physically_based_rendering_wgpu): This sample implements physically-based rendering (PBR) and image-based lighting (IBL) to achive realistic looking rendering results. For more details please see below.
+
+`zig build physically_based_rendering_wgpu-run`
+
+    <a href="samples/physically_based_rendering_wgpu"><img src="samples/physically_based_rendering_wgpu/screenshot0.jpg" alt="physically based rendering (wgpu)" height="200"></a>
+
+1. [procedural mesh (wgpu)](samples/procedural_mesh_wgpu): This sample shows how to efficiently draw several procedurally generated meshes.
+
+`zig build procedural_mesh_wgpu-run`
+
+    <a href="samples/procedural_mesh_wgpu"><img src="samples/procedural_mesh_wgpu/screenshot.png" alt="procedural mesh wgpu (wgpu)" height="200"></a>
+
+## Windows sample applications (DirectX 12)
+
+If you are new to DirectX 12 graphics programming I recommend starting with [intro applications](https://github.com/michal-z/zig-gamedev/tree/main/samples/intro).
 
 1. [rasterization](samples/rasterization): This sample application shows how GPU rasterizes triangles in slow motion.
 
     <a href="samples/rasterization"><img src="samples/rasterization/screenshot.png" alt="rasterization" height="200"></a>
-
-1. [physically based rendering](samples/physically_based_rendering): This sample implements physically based shading and image based lighting to achive realistic looking rendering results.
-
-    <a href="samples/physically_based_rendering"><img src="samples/physically_based_rendering/screenshot.png" alt="physically based rendering" height="200"></a>
 
 1. [simple raytracer](samples/simple_raytracer): This sample implements basic hybrid renderer. It uses rasterization to resolve primary rays and raytracing (DXR) for shadow rays.
 
@@ -69,14 +72,6 @@ Some of the sample applications are listed below. More can be found in [samples]
 1. [virtual physics lab](samples/bullet_physics_test): This sample application demonstrates how to use full 3D physics engine in your Zig programs.
 
     <a href="samples/bullet_physics_test"><img src="samples/bullet_physics_test/screenshot1.png" alt="virtual physics lab" height="200"></a>
-
-1. [audio playback test](samples/audio_playback_test): This sample demonstrates how to decode .mp3 file using Microsoft Media Foundation and play it back using Windows Audio Session API (WASAPI).
-
-    <a href="samples/audio_playback_test"><img src="samples/audio_playback_test/screenshot.png" alt="audio playback test" height="200"></a>
-
-1. [DirectML convolution test](samples/directml_convolution_test): This sample demonstrates how to perform GPU-accelerated convolution operation using DirectML.
-
-    <a href="samples/directml_convolution_test"><img src="samples/directml_convolution_test/screenshot.png" alt="directml convolution test" height="200"></a>
 
 ## Building sample applications
 
@@ -94,8 +89,6 @@ Build artifacts will show up in `zig-out/bin` folder.
 
 To list all available sample names run `zig build --help` and navigate to `Steps` section.
 
-Zig compiler consists of a single ~60MB .zip file that needs to be downloaded separately. Latest development build of the compiler must be used (master) you can download prebuilt binaries [here](https://ziglang.org/download/).
-
 #### Build options
 
 All sample applications support the following build options:
@@ -109,19 +102,6 @@ Addidtional options for Windows applications:
 * `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
 * `-Denable-pix=[bool]` - PIX markers and events enabled
-
-#### Examples
-
-`zig build triangle_wgpu-run -Drelease-fast=true`
-
-## Requirements
-
-On Windows, project uses [DirectX 12 Agility SDK](https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/) which allows to always use latest DirectX 12 features regardless of Windows version installed (this works from Windows 10 November 2019). In particular, following Windows versions are supported:
-
-* Windows 10 May 2021 (Build 19043) or newer
-* Windows 10 October 2020 (Build 19042.789+)
-* Windows 10 May 2020 (Build 19041.789+)
-* Windows 10 November 2019 (Build 18363.1350+)
 
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
