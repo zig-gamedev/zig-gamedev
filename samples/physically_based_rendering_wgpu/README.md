@@ -1,6 +1,6 @@
 ## physically based rendering (wgpu)
 
-This sample implements physically-based rendering (PBR) and image-based lighting (IBL) to achive realistic looking rendering results. For more details please see below.
+This sample implements physically-based rendering (PBR) and image-based lighting (IBL) to achive realistic looking rendering results. Works on Windows, Linux and MacOS. For more details please see below.
 
 ![image](screenshot0.jpg)
 ![image](screenshot1.jpg)
