@@ -265,6 +265,7 @@ const mesh_common =
 \\      object_to_world: mat4x4<f32>,
 \\      world_to_clip: mat4x4<f32>,
 \\      camera_position: vec3<f32>,
+\\      draw_mode: i32,
 \\  }
 \\  @group(0) @binding(0) var<uniform> uniforms: MeshUniforms;
 \\
@@ -315,6 +316,20 @@ pub const mesh_fs = global ++ mesh_common ++
 \\      @location(2) texcoord: vec2<f32>,
 \\      @location(3) tangent: vec4<f32>,
 \\  ) -> @location(0) vec4<f32> {
+\\      if (uniforms.draw_mode == 1) {
+\\          return vec4(pow(textureSample(ao_tex, aniso_sam, texcoord).xyz, vec3(1.0 / gamma)), 1.0);
+\\      } else if (uniforms.draw_mode == 2) {
+\\          return vec4(textureSample(base_color_tex, aniso_sam, texcoord).xyz, 1.0);
+\\      } else if (uniforms.draw_mode == 3) {
+\\          let m = pow(textureSample(metallic_roughness_tex, aniso_sam, texcoord).y, 1.0 / gamma);
+\\          return vec4(m, m, m, 1.0);
+\\      } else if (uniforms.draw_mode == 4) {
+\\          let r = pow(textureSample(metallic_roughness_tex, aniso_sam, texcoord).z, 1.0 / gamma);
+\\          return vec4(r, r, r, 1.0);
+\\      } else if (uniforms.draw_mode == 5) {
+\\          return vec4(pow(textureSample(normal_tex, aniso_sam, texcoord).xyz, vec3(1.0 / gamma)), 1.0);
+\\      }
+\\
 \\      let unit_normal = normalize(normal);
 \\      let unit_tangent = vec4(normalize(tangent.xyz), tangent.w);
 \\      let unit_bitangent = normalize(cross(normal, unit_tangent.xyz)) * unit_tangent.w;

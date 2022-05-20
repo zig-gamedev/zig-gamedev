@@ -39,10 +39,11 @@ const filtered_env_tex_resolution = 512;
 const filtered_env_tex_mip_levels = 6;
 const brdf_integration_tex_resolution = 512;
 
-const MeshUniforms = struct {
+const MeshUniforms = extern struct {
     object_to_world: zm.Mat,
     world_to_clip: zm.Mat,
-    camera_position: zm.Vec,
+    camera_position: [3]f32,
+    draw_mode: i32,
 };
 
 const DemoState = struct {
@@ -86,6 +87,7 @@ const DemoState = struct {
 
     meshes: std.ArrayList(Mesh),
 
+    draw_mode: i32 = 0,
     current_hdri_index: i32 = 1,
     is_lighting_precomputed: bool = false,
 
@@ -527,6 +529,15 @@ fn update(demo: *DemoState) void {
         )) {
             demo.is_lighting_precomputed = false;
         }
+
+        c.igSpacing();
+        c.igSpacing();
+        _ = c.igRadioButton_IntPtr("Draw PBR effect", &demo.draw_mode, 0);
+        _ = c.igRadioButton_IntPtr("Draw Ambient Occlusion texture", &demo.draw_mode, 1);
+        _ = c.igRadioButton_IntPtr("Draw Base Color texture", &demo.draw_mode, 2);
+        _ = c.igRadioButton_IntPtr("Draw Metallic texture", &demo.draw_mode, 3);
+        _ = c.igRadioButton_IntPtr("Draw Roughness texture", &demo.draw_mode, 4);
+        _ = c.igRadioButton_IntPtr("Draw Normal texture", &demo.draw_mode, 5);
     }
     c.igEnd();
 
@@ -648,7 +659,8 @@ fn draw(demo: *DemoState) void {
             mem.slice[0] = .{
                 .object_to_world = zm.transpose(object_to_world),
                 .world_to_clip = zm.transpose(cam_world_to_clip),
-                .camera_position = zm.load(demo.camera.position[0..], zm.Vec, 3),
+                .camera_position = demo.camera.position,
+                .draw_mode = demo.draw_mode,
             };
 
             pass.setBindGroup(0, mesh_bg, &.{mem.offset});
