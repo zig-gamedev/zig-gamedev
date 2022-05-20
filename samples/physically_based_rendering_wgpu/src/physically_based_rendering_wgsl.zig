@@ -321,10 +321,10 @@ pub const mesh_fs = global ++ mesh_common ++
 \\      } else if (uniforms.draw_mode == 2) {
 \\          return vec4(textureSample(base_color_tex, aniso_sam, texcoord).xyz, 1.0);
 \\      } else if (uniforms.draw_mode == 3) {
-\\          let m = pow(textureSample(metallic_roughness_tex, aniso_sam, texcoord).y, 1.0 / gamma);
+\\          let m = pow(textureSample(metallic_roughness_tex, aniso_sam, texcoord).z, 1.0 / gamma);
 \\          return vec4(m, m, m, 1.0);
 \\      } else if (uniforms.draw_mode == 4) {
-\\          let r = pow(textureSample(metallic_roughness_tex, aniso_sam, texcoord).z, 1.0 / gamma);
+\\          let r = pow(textureSample(metallic_roughness_tex, aniso_sam, texcoord).y, 1.0 / gamma);
 \\          return vec4(r, r, r, 1.0);
 \\      } else if (uniforms.draw_mode == 5) {
 \\          return vec4(pow(textureSample(normal_tex, aniso_sam, texcoord).xyz, vec3(1.0 / gamma)), 1.0);
@@ -347,8 +347,8 @@ pub const mesh_fs = global ++ mesh_common ++
 \\      var roughness: f32;
 \\      {
 \\          let mr = textureSample(metallic_roughness_tex, aniso_sam, texcoord).yz;
-\\          metallic = mr.x;
-\\          roughness = mr.y;
+\\          roughness = mr.x;
+\\          metallic = mr.y;
 \\      }
 \\      let base_color = pow(textureSample(base_color_tex, aniso_sam, texcoord).xyz, vec3(gamma));
 \\      let ao = textureSample(ao_tex, aniso_sam, texcoord).x;
