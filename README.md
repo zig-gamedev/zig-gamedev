@@ -11,7 +11,7 @@ git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
-#### Cross-platfrom libraries:
+#### Cross-platfrom (Win/Lin/Mac) libraries:
 * [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - Cross-platform graphics layer built on top of native WebGPU API (Dawn)
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
@@ -37,7 +37,7 @@ zig build physically_based_rendering_wgpu-run
 
 *If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
-## Cross-platfrom sample applications (native WebGPU)
+## Cross-platfrom (Win/Lin/Mac) sample applications (native WebGPU)
 
 Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
 
