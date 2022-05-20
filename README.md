@@ -32,7 +32,7 @@ zig build physically_based_rendering_wgpu-run
 * Works on Windows, Linux and MacOS
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/), `git` with [Git LFS](https://git-lfs.github.com/) and `curl` - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
-* Written from scratch in Zig *or* bindings to carefully selected C/C++ code
+* Libraries are written from scratch in Zig *or* provide bindings to carefully selected C/C++ code
 * Uses native version of WebGPU API ([mach/gpu](https://github.com/hexops/mach/tree/main/gpu)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
 
 *If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
