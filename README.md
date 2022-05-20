@@ -22,10 +22,10 @@ zig build physically_based_rendering_wgpu-run
 * [zpool](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpool) - generic pool & handle implementation
 
 #### Windows libraries:
-* [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API **[standalone]**
-* [zd3d12](https://github.com/michal-z/zig-gamedev/blob/main/libs/zd3d12) - helper library for working with DirectX 12 **[depends only on zwin32]**
-* [zxaudio2](https://github.com/michal-z/zig-gamedev/blob/main/libs/zxaudio2) - helper library for working with XAudio2 **[depends only on zwin32]**
-* [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpix) - support for GPU profiling with PIX **[depends only on zwin32]**
+* [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API
+* [zd3d12](https://github.com/michal-z/zig-gamedev/blob/main/libs/zd3d12) - helper library for working with DirectX 12
+* [zxaudio2](https://github.com/michal-z/zig-gamedev/blob/main/libs/zxaudio2) - helper library for working with XAudio2
+* [zpix](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpix) - support for GPU profiling with PIX
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 
 #### Project vision:
