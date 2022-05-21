@@ -63,7 +63,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     defer gctx.releaseResource(bind_group_layout);
 
     const pipeline_layout = gctx.createPipelineLayout(&.{bind_group_layout});
-    defer gctx.releaseResource(bind_group_layout);
+    defer gctx.releaseResource(pipeline_layout);
 
     const pipeline = pipline: {
         const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
