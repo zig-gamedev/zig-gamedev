@@ -364,7 +364,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     // Create bind groups.
     //
     const mesh_bg = gctx.createBindGroup(mesh_bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(MeshUniforms) },
         .{ .binding = 1, .texture_view_handle = mesh_texv[0] },
         .{ .binding = 2, .texture_view_handle = mesh_texv[1] },
         .{ .binding = 3, .texture_view_handle = mesh_texv[2] },
@@ -376,7 +376,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     });
 
     const env_bg = gctx.createBindGroup(uniform_texcube_sam_bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
         .{ .binding = 1, .texture_view_handle = env_cube_texv },
         .{ .binding = 2, .sampler_handle = trilinear_sam },
     });
@@ -940,8 +940,13 @@ fn drawToCubeTexture(
     });
     defer gctx.releaseResource(sam);
 
+    const Uniforms = extern struct {
+        object_to_clip: zm.Mat,
+        roughness: f32,
+    };
+
     const bg = gctx.createBindGroup(pipe_bgl, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
+        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(Uniforms) },
         .{ .binding = 1, .texture_view_handle = source_texv },
         .{ .binding = 2, .sampler_handle = sam },
     });
@@ -988,10 +993,6 @@ fn drawToCubeTexture(
 
         pass.setPipeline(pipeline);
 
-        const Uniforms = extern struct {
-            object_to_clip: zm.Mat,
-            roughness: f32,
-        };
         const mem = gctx.uniformsAllocate(Uniforms, 1);
         mem.slice[0] = .{
             .object_to_clip = zm.transpose(zm.mul(object_to_view[cube_face_idx], view_to_clip)),
