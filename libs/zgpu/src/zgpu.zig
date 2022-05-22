@@ -1335,10 +1335,10 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
                 \\This program requires:
                 \\
                 \\  * DirectX 12 graphics driver on Windows
-                \\  * Vulkan graphics driver on Linux (OpenGL is not supported)
+                \\  * Vulkan graphics driver on Linux (OpenGL is NOT supported)
                 \\  * Metal graphics driver on MacOS
                 \\
-                \\Please install latest driver and try again.
+                \\Please install latest supported driver and try again.
                 \\
                 \\
             , .{});
