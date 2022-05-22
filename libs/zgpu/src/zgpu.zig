@@ -44,7 +44,7 @@
 //      const buffer_handle = gctx.createBuffer(...);
 //
 //      if (gctx.isResourceValid(buffer_handle)) {
-//          const buffer = gctx.lookupResource(buffer_handle).?;  // Returns gpu.Buffer
+//          const buffer = gctx.lookupResource(buffer_handle).?; // Returns gpu.Buffer
 //
 //          const buffer_info = gctx.lookupResourceInfo(buffer_handle).?; // Returns zgpu.BufferInfo
 //          std.debug.print("Buffer size is: {d}", .{buffer_info.size});
@@ -1295,9 +1295,16 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
     };
 }
 
-pub fn checkContent(comptime content_dir: []const u8) !void {
+pub fn checkSystem(comptime content_dir: []const u8) !void {
     const local = struct {
-        fn impl() !void {
+        fn impl() error{ GraphicsApiUnavailable, InvalidDataFiles }!void {
+            // On Linux we require Vulkan support.
+            if (@import("builtin").target.os.tag == .linux) {
+                if (!glfw.vulkanSupported()) {
+                    return error.GraphicsApiUnavailable;
+                }
+                _ = glfw.getRequiredInstanceExtensions() catch return error.GraphicsApiUnavailable;
+            }
             // Change directory to where an executable is located.
             {
                 var exe_path_buffer: [1024]u8 = undefined;
@@ -1306,34 +1313,55 @@ pub fn checkContent(comptime content_dir: []const u8) !void {
             }
             // Make sure font file is a valid data file and not just a Git LFS pointer.
             {
-                const file = try std.fs.cwd().openFile(content_dir ++ "Roboto-Medium.ttf", .{});
+                const file = std.fs.cwd().openFile(
+                    content_dir ++ "Roboto-Medium.ttf",
+                    .{},
+                ) catch return error.InvalidDataFiles;
                 defer file.close();
 
-                const size = @intCast(usize, try file.getEndPos());
+                const size = @intCast(usize, file.getEndPos() catch return error.InvalidDataFiles);
                 if (size <= 1024) {
                     return error.InvalidDataFiles;
                 }
             }
         }
     };
-    local.impl() catch |err| {
-        std.debug.print(
-            \\
-            \\DATA ERROR
-            \\
-            \\Invalid data files or missing content folder.
-            \\Please install Git LFS (Large File Support) and run (in the repo):
-            \\
-            \\git lfs install
-            \\git lfs pull
-            \\
-            \\For more info please see: https://git-lfs.github.com/
-            \\
-            \\
-        ,
-            .{},
-        );
-        return err;
+    local.impl() catch |err| switch (err) {
+        error.GraphicsApiUnavailable => {
+            std.debug.print(
+                \\
+                \\GRAPHICS ERROR
+                \\
+                \\This program requires:
+                \\
+                \\  * DirectX 12 graphics driver on Windows
+                \\  * Vulkan graphics driver on Linux (OpenGL is not supported)
+                \\  * Metal graphics driver on MacOS
+                \\
+                \\Please install latest driver and try again.
+                \\
+                \\
+            , .{});
+            return err;
+        },
+        error.InvalidDataFiles => {
+            std.debug.print(
+                \\
+                \\DATA ERROR
+                \\
+                \\Invalid data files or missing content folder.
+                \\Please install Git LFS (Large File Support) and run (in the repo):
+                \\
+                \\git lfs install
+                \\git lfs pull
+                \\
+                \\For more info please see: https://git-lfs.github.com/
+                \\
+                \\
+            , .{});
+            return err;
+        },
+        else => unreachable,
     };
 }
 

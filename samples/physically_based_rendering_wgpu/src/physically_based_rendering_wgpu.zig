@@ -1066,13 +1066,13 @@ fn createRenderPipe(
 }
 
 pub fn main() !void {
-    zgpu.checkContent(content_dir) catch {
-        // In case of error zgpu.checkContent() will print error message.
-        return;
-    };
-
     try glfw.init(.{});
     defer glfw.terminate();
+
+    zgpu.checkSystem(content_dir) catch {
+        // In case of error zgpu.checkSystem() will print error message.
+        return;
+    };
 
     const window = try glfw.Window.create(1400, 1000, window_title, null, null, .{
         .client_api = .no_api,
