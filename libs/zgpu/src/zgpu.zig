@@ -1369,6 +1369,9 @@ const FrameStats = struct {
 };
 
 pub const gui = struct {
+    /// This call will install GLFW callbacks to handle GUI interactions.
+    /// Those callbacks will chain-call user's previously installed callbacks, if any.
+    /// This means that custom user's callbacks need to be installed *before* calling zgpu.gui.init().
     pub fn init(
         window: glfw.Window,
         device: gpu.Device,
