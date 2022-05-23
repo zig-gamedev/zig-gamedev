@@ -1716,3 +1716,9 @@ pub const bglBuffer = gpu.BindGroupLayout.Entry.buffer;
 pub const bglTexture = gpu.BindGroupLayout.Entry.texture;
 pub const bglSampler = gpu.BindGroupLayout.Entry.sampler;
 pub const bglStorageTexture = gpu.BindGroupLayout.Entry.storageTexture;
+
+test "use zpool package from zgpu?" {
+    const zpool = @import("zpool");
+    const VoidPool = zpool.Pool(16, 16, void, struct {});
+    std.debug.print("\n@sizeOf(VoidPool): {}\n", .{ @sizeOf(VoidPool)});
+}

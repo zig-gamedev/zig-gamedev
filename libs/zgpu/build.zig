@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfw = @import("../mach-glfw/build.zig");
 const gpu_dawn = @import("../mach-gpu-dawn/build.zig");
+const zpool = @import("../zpool/build.zig");
 
 pub const Options = struct {
     glfw_options: glfw.Options = .{},
@@ -17,6 +18,7 @@ fn buildLibrary(
     lib.setTarget(exe.target);
     glfw.link(exe.builder, lib, options.glfw_options);
     gpu_dawn.link(exe.builder, lib, options.gpu_dawn_options);
+    zpool.link(lib);
 
     // If you don't want to use 'dear imgui' library just comment out below lines and do not use `zgpu.gui`
     // namespace in your code.
@@ -33,6 +35,7 @@ fn buildLibrary(
     // If you don't want to use 'stb_image' library just comment out below line and do not use `zgpu.stbi`
     // namespace in your code.
     lib.addCSourceFile(thisDir() ++ "/libs/stb/stb_image.c", &.{"-std=c99"});
+    lib.addPackage(zpool.pkg);
 
     return lib;
 }
@@ -40,6 +43,7 @@ fn buildLibrary(
 pub fn link(exe: *std.build.LibExeObjStep, options: Options) void {
     glfw.link(exe.builder, exe, options.glfw_options);
     gpu_dawn.link(exe.builder, exe, options.gpu_dawn_options);
+    zpool.link(exe);
 
     const lib = buildLibrary(exe, options);
     exe.linkLibrary(lib);
@@ -51,7 +55,7 @@ pub fn link(exe: *std.build.LibExeObjStep, options: Options) void {
 pub const pkg = std.build.Pkg{
     .name = "zgpu",
     .path = .{ .path = thisDir() ++ "/src/zgpu.zig" },
-    .dependencies = &.{glfw.pkg},
+    .dependencies = &.{glfw.pkg, zpool.pkg},
 };
 
 fn thisDir() []const u8 {

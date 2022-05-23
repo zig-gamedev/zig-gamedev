@@ -1,10 +1,8 @@
 const std = @import("std");
 
-const main = .{ .zig = thisDir() ++ "/src/main.zig" };
-
 pub const pkg = std.build.Pkg{
     .name = "zpool",
-    .path = .{ .path = main.zig },
+    .path = .{ .path = thisDir() ++ "/src/main.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -21,7 +19,7 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(main.zig);
+    const tests = b.addTest(thisDir() ++ "/src/main.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     link(tests);
@@ -29,7 +27,7 @@ pub fn buildTests(
 }
 
 fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("zpool", main.zig);
+    const lib = exe.builder.addStaticLibrary("zpool", thisDir() ++ "/src/main.zig");
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     return lib;
