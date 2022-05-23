@@ -97,7 +97,9 @@ fn buildLibrary(b: *Builder, step: *std.build.LibExeObjStep, options: Options) *
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }
 
 fn linkGLFWDependencies(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void {

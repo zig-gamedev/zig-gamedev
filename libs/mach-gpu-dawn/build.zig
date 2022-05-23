@@ -1390,7 +1390,9 @@ fn include(comptime rel: []const u8) []const u8 {
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }
 
 fn appendLangScannedSources(

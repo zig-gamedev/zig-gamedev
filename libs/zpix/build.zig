@@ -14,5 +14,7 @@ pub fn getPkg(b: *std.build.Builder, options_pkg: std.build.Pkg) std.build.Pkg {
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }

@@ -36,5 +36,7 @@ pub fn link(exe: *std.build.LibExeObjStep, enable_debug_layer: bool) void {
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }

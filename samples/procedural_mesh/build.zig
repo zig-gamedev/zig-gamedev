@@ -136,5 +136,7 @@ fn makeDxcCmd(
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }

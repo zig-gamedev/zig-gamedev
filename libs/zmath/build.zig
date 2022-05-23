@@ -19,12 +19,14 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(comptime thisDir() ++ "/src/zmath.zig");
+    const tests = b.addTest(thisDir() ++ "/src/zmath.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     return tests;
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }

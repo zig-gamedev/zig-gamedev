@@ -33,7 +33,7 @@
 //
 //  3. Resource pools
 //
-//      * Every GPU resource is identified by 32-bit integer handle
+//      * Every GPU resource is identified by a 32-bit integer handle
 //      * All resources are stored in one system
 //      * We keep basic info about each resource (size of the buffer, format of the texture, etc.)
 //      * You can always check if resource is valid (very useful for async operations)
@@ -1298,6 +1298,7 @@ fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type
 pub fn checkSystem(comptime content_dir: []const u8) !void {
     const local = struct {
         fn impl() error{ GraphicsApiUnavailable, InvalidDataFiles }!void {
+            // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
             // On Linux we require Vulkan support.
             if (@import("builtin").target.os.tag == .linux) {
                 if (!glfw.vulkanSupported()) {

@@ -19,10 +19,10 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(comptime thisDir() ++ "/src/zbullet.zig");
+    const tests = b.addTest(thisDir() ++ "/src/zbullet.zig");
     const zmath = std.build.Pkg{
         .name = "zmath",
-        .path = .{ .path = comptime thisDir() ++ "/../zmath/src/zmath.zig" },
+        .path = .{ .path = thisDir() ++ "/../zmath/src/zmath.zig" },
     };
     tests.addPackage(zmath);
     tests.setBuildMode(build_mode);
@@ -32,20 +32,20 @@ pub fn buildTests(
 }
 
 fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("zbullet", comptime thisDir() ++ "/src/zbullet.zig");
+    const lib = exe.builder.addStaticLibrary("zbullet", thisDir() ++ "/src/zbullet.zig");
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.want_lto = false;
-    lib.addIncludeDir(comptime thisDir() ++ "/libs/cbullet");
-    lib.addIncludeDir(comptime thisDir() ++ "/libs/bullet");
+    lib.addIncludeDir(thisDir() ++ "/libs/cbullet");
+    lib.addIncludeDir(thisDir() ++ "/libs/bullet");
     lib.linkSystemLibrary("c");
     lib.linkSystemLibrary("c++");
 
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/cbullet/cbullet.cpp", &.{""});
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/bullet/btLinearMathAll.cpp", &.{""});
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp", &.{""});
-    lib.addCSourceFile(comptime thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/cbullet/cbullet.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btLinearMathAll.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp", &.{""});
 
     return lib;
 }
@@ -56,5 +56,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }

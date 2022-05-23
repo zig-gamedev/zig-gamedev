@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn getPkg(b: *std.build.Builder, options_pkg: std.build.Pkg) std.build.Pkg {
     const pkg = std.build.Pkg{
         .name = "ztracy",
-        .path = .{ .path = comptime thisDir() ++ "/src/ztracy.zig" },
+        .path = .{ .path = thisDir() ++ "/src/ztracy.zig" },
         .dependencies = &[_]std.build.Pkg{options_pkg},
     };
     return b.dupePkg(pkg);
@@ -21,8 +21,8 @@ pub fn link(
     if (enable_tracy) {
         const fibers_flag = if (build_opts.fibers) "-DTRACY_FIBERS" else "";
 
-        exe.addIncludeDir(comptime thisDir() ++ "/libs/tracy");
-        exe.addCSourceFile(comptime thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
+        exe.addIncludeDir(thisDir() ++ "/libs/tracy");
+        exe.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
             "-DTRACY_ENABLE",
             fibers_flag,
             // MinGW doesn't have all the newfangled windows features,
@@ -44,5 +44,7 @@ pub fn link(
 }
 
 fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    comptime {
+        return std.fs.path.dirname(@src().file) orelse ".";
+    }
 }
