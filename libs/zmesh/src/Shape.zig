@@ -1,4 +1,7 @@
-pub const IndexType = u16;
+const builtin = @import("builtin");
+
+// We can't import "zmesh.options" in tests.
+pub const IndexType = if (!builtin.is_test and @import("zmesh.options").shape_has_32bit_indices) u32 else u16;
 pub const ShapeHandle = *opaque {};
 pub const Shape = @This();
 

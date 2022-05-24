@@ -42,11 +42,10 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(zd3d12.getPkg(b, options_pkg));
     exe.addPackage(common.getPkg(b, options_pkg));
     exe.addPackage(zwin32.pkg);
-    exe.addPackage(zmesh.pkg);
 
     ztracy.link(exe, options.enable_tracy, .{});
     zd3d12.link(exe);
-    zmesh.link(exe);
+    zmesh.link(exe, .{});
     common.link(exe);
 
     return exe;

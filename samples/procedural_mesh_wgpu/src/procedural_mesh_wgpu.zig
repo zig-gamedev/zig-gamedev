@@ -12,6 +12,8 @@ const wgsl = @import("procedural_mesh_wgsl.zig");
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: procedural mesh (wgpu)";
 
+const IndexType = zmesh.Shape.IndexType;
+
 const Vertex = struct {
     position: [3]f32,
     normal: [3]f32,
@@ -69,7 +71,7 @@ const DemoState = struct {
 fn appendMesh(
     mesh: zmesh.Shape,
     meshes: *std.ArrayList(Mesh),
-    meshes_indices: *std.ArrayList(u16),
+    meshes_indices: *std.ArrayList(IndexType),
     meshes_positions: *std.ArrayList([3]f32),
     meshes_normals: *std.ArrayList([3]f32),
 ) void {
@@ -89,7 +91,7 @@ fn initScene(
     allocator: std.mem.Allocator,
     drawables: *std.ArrayList(Drawable),
     meshes: *std.ArrayList(Mesh),
-    meshes_indices: *std.ArrayList(u16),
+    meshes_indices: *std.ArrayList(IndexType),
     meshes_positions: *std.ArrayList([3]f32),
     meshes_normals: *std.ArrayList([3]f32),
 ) void {
@@ -373,7 +375,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
 
     var drawables = std.ArrayList(Drawable).init(allocator);
     var meshes = std.ArrayList(Mesh).init(allocator);
-    var meshes_indices = std.ArrayList(u16).init(arena);
+    var meshes_indices = std.ArrayList(IndexType).init(arena);
     var meshes_positions = std.ArrayList([3]f32).init(arena);
     var meshes_normals = std.ArrayList([3]f32).init(arena);
     initScene(allocator, &drawables, &meshes, &meshes_indices, &meshes_positions, &meshes_normals);
@@ -401,9 +403,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
     // Create an index buffer.
     const index_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
-        .size = total_num_indices * @sizeOf(u16),
+        .size = total_num_indices * @sizeOf(IndexType),
     });
-    gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, meshes_indices.items);
+    gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, IndexType, meshes_indices.items);
 
     // Create a depth texture and its 'view'.
     const depth = createDepthTexture(gctx);
@@ -549,7 +551,12 @@ fn draw(demo: *DemoState) void {
             }
 
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
-            pass.setIndexBuffer(ib_info.gpuobj.?, .uint16, 0, ib_info.size);
+            pass.setIndexBuffer(
+                ib_info.gpuobj.?,
+                if (IndexType == u16) .uint16 else .uint32,
+                0,
+                ib_info.size,
+            );
 
             pass.setPipeline(pipeline);
 

@@ -28,14 +28,13 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(glfw.pkg);
     exe.addPackage(zgpu.pkg);
     exe.addPackage(zmath.pkg);
-    exe.addPackage(zmesh.pkg);
     exe.addPackage(znoise.pkg);
 
     zgpu.link(exe, .{
         .glfw_options = .{},
         .gpu_dawn_options = .{ .from_source = options.dawn_from_source },
     });
-    zmesh.link(exe);
+    zmesh.link(exe, .{ .shape_has_32bit_indices = true });
     znoise.link(exe);
 
     return exe;

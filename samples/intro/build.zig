@@ -54,13 +54,12 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
     exe.addPackage(common.getPkg(b, options_pkg));
     exe.addPackage(zwin32.pkg);
     exe.addPackage(zmath.pkg);
-    exe.addPackage(zmesh.pkg);
     exe.addPackage(znoise.pkg);
     exe.addPackage(zbullet.pkg);
 
     ztracy.link(exe, options.enable_tracy, .{});
     zd3d12.link(exe);
-    zmesh.link(exe);
+    zmesh.link(exe, .{});
     znoise.link(exe);
     zbullet.link(exe);
     common.link(exe);

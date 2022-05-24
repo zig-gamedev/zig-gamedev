@@ -19,13 +19,11 @@ Copy `zmesh` folder to a `libs` subdirectory of the root of your project.
 Then in your `build.zig` add:
 
 ```zig
-const std = @import("std");
 const zmesh = @import("libs/zmesh/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    exe.addPackage(zmesh.pkg);
-    zmesh.link(exe);
+    zmesh.link(exe, .{ .shape_has_32bit_indices = false });
 }
 ```
 
