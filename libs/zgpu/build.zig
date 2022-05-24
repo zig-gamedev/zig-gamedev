@@ -48,11 +48,13 @@ pub fn link(exe: *std.build.LibExeObjStep, options: Options) void {
     exe.addIncludeDir(thisDir() ++ "/libs");
 }
 
-pub const pkg = std.build.Pkg{
-    .name = "zgpu",
-    .path = .{ .path = thisDir() ++ "/src/zgpu.zig" },
-    .dependencies = &.{glfw.pkg},
-};
+pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
+    return .{
+        .name = "zgpu",
+        .path = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+        .dependencies = dependencies,
+    };
+}
 
 fn thisDir() []const u8 {
     comptime {

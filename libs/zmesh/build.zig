@@ -4,10 +4,13 @@ const BuildOptions = struct {
     shape_has_32bit_indices: bool = false,
 };
 
-pub const pkg = std.build.Pkg{
-    .name = "zmesh",
-    .path = .{ .path = thisDir() ++ "/src/main.zig" },
-};
+pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
+    return std.build.Pkg{
+        .name = "zmesh",
+        .path = .{ .path = thisDir() ++ "/src/main.zig" },
+        .dependencies = dependencies,
+    };
+}
 
 pub fn build(b: *std.build.Builder) void {
     const build_mode = b.standardReleaseOptions();
@@ -32,6 +35,10 @@ pub fn buildTests(
 
 fn buildLibrary(exe: *std.build.LibExeObjStep, options: BuildOptions) *std.build.LibExeObjStep {
     const lib = exe.builder.addStaticLibrary("zmesh", thisDir() ++ "/src/main.zig");
+
+    const lib_options = exe.builder.addOptions();
+    lib.addOptions("build_options", lib_options);
+    lib_options.addOption(bool, "shape_has_32bit_indices", options.shape_has_32bit_indices);
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
@@ -64,21 +71,8 @@ fn buildLibrary(exe: *std.build.LibExeObjStep, options: BuildOptions) *std.build
 
 pub fn link(exe: *std.build.LibExeObjStep, options: BuildOptions) void {
     const lib = buildLibrary(exe, options);
-
     exe.linkLibrary(lib);
     exe.addIncludeDir(thisDir() ++ "/libs/cgltf");
-
-    const options_step = exe.builder.addOptions();
-    options_step.addOption(bool, "shape_has_32bit_indices", options.shape_has_32bit_indices);
-
-    const options_pkg = options_step.getPackage("zmesh.options");
-
-    lib.addOptions(options_pkg.name, options_step);
-    exe.addPackage(.{
-        .name = pkg.name,
-        .path = pkg.path,
-        .dependencies = &.{options_pkg},
-    });
 }
 
 fn thisDir() []const u8 {

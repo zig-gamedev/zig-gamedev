@@ -41,15 +41,21 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.want_lto = false;
 
     const options_pkg = exe_options.getPackage("build_options");
-    exe.addPackage(ztracy.getPkg(b, options_pkg));
-    exe.addPackage(zd3d12.getPkg(b, options_pkg));
-    exe.addPackage(common.getPkg(b, options_pkg));
+    const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
+    const zd3d12_pkg = zd3d12.getPkg(&.{ ztracy_pkg, zwin32.pkg, options_pkg });
+    const common_pkg = common.getPkg(&.{ zd3d12_pkg, ztracy_pkg, zwin32.pkg, options_pkg });
+    const zmesh_pkg = zmesh.getPkg(&.{options_pkg});
+
+    exe.addPackage(zmesh_pkg);
+    exe.addPackage(ztracy_pkg);
+    exe.addPackage(zd3d12_pkg);
+    exe.addPackage(common_pkg);
     exe.addPackage(zwin32.pkg);
 
     ztracy.link(exe, options.enable_tracy, .{});
     zd3d12.link(exe);
-    zmesh.link(exe, .{});
     common.link(exe);
+    zmesh.link(exe, .{});
 
     return exe;
 }

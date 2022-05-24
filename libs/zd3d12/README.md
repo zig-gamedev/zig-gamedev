@@ -40,16 +40,19 @@ pub fn build(b: *std.build.Builder) void {
     const enable_tracy = b.option(bool, "enable_tracy", "Enable Tracy profiler") orelse false;
 
     const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
+
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_tracy", enable_tracy);
     exe_options.addOption(bool, "enable_d2d", false);
 
-    exe.addOptions("build_options", exe_options);
-
     const options_pkg = exe_options.getPackage("build_options");
-    exe.addPackage(ztracy.getPkg(b, options_pkg));
-    exe.addPackage(zd3d12.getPkg(b, options_pkg));
+    const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
+    const zd3d12_pkg = zd3d12.getPkg(&.{ ztracy_pkg, zwin32.pkg, options_pkg });
+
+    exe.addPackage(ztracy_pkg);
+    exe.addPackage(zd3d12_pkg);
     exe.addPackage(zwin32.pkg);
 
     ztracy.link(tracy, enable_tracy, .{});

@@ -17,11 +17,13 @@ pub fn build(b: *std.build.Builder) void {
     const enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
 
     const exe_options = b.addOptions();
-    exe_options.addOption(bool, "enable_tracy", enable_tracy);
     exe.addOptions("build_options", exe_options);
+    exe_options.addOption(bool, "enable_tracy", enable_tracy);
 
     const options_pkg = exe_options.getPackage("build_options");
-    exe.addPackage(ztracy.getPkg(b, options_pkg));
+    const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
+
+    exe.addPackage(ztracy_pkg);
 
     ztracy.link(exe, enable_tracy, .{});
 }
@@ -51,5 +53,5 @@ an additional option passed through when compiling the Tracy library, so change
 the `link()` call in your `build.zig` to:
 
 ```zig
-    ztracy.link(exe, enable_tracy, .{ .fibers = true });
+    ztracy.link(exe, enable_tracy, .{ .enable_fibers = true });
 ```

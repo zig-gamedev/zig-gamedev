@@ -1,30 +1,29 @@
 const std = @import("std");
 
-pub fn getPkg(b: *std.build.Builder, options_pkg: std.build.Pkg) std.build.Pkg {
-    const pkg = std.build.Pkg{
+const BuildOptions = struct {
+    enable_fibers: bool = false,
+};
+
+pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
+    return std.build.Pkg{
         .name = "ztracy",
         .path = .{ .path = thisDir() ++ "/src/ztracy.zig" },
-        .dependencies = &[_]std.build.Pkg{options_pkg},
+        .dependencies = dependencies,
     };
-    return b.dupePkg(pkg);
 }
-
-pub const TracyBuildOptions = struct {
-    fibers: bool = false,
-};
 
 pub fn link(
     exe: *std.build.LibExeObjStep,
     enable_tracy: bool,
-    build_opts: TracyBuildOptions,
+    build_options: BuildOptions,
 ) void {
     if (enable_tracy) {
-        const fibers_flag = if (build_opts.fibers) "-DTRACY_FIBERS" else "";
+        const enable_fibers = if (build_options.enable_fibers) "-DTRACY_FIBERS" else "";
 
         exe.addIncludeDir(thisDir() ++ "/libs/tracy");
         exe.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
             "-DTRACY_ENABLE",
-            fibers_flag,
+            enable_fibers,
             // MinGW doesn't have all the newfangled windows features,
             // so we need to pretend to have an older windows version.
             "-D_WIN32_WINNT=0x601",

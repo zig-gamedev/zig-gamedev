@@ -7,10 +7,12 @@ const znoise = @import("../../libs/znoise/build.zig");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "procedural_mesh_wgpu_content/";
+const shape_has_32bit_indices = true;
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const exe_options = b.addOptions();
     exe_options.addOption([]const u8, "content_dir", content_dir);
+    exe_options.addOption(bool, "shape_has_32bit_indices", shape_has_32bit_indices);
 
     const exe = b.addExecutable("procedural_mesh_wgpu", thisDir() ++ "/src/procedural_mesh_wgpu.zig");
     exe.addOptions("build_options", exe_options);
@@ -25,8 +27,13 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
 
+    const options_pkg = exe_options.getPackage("build_options");
+    const zmesh_pkg = zmesh.getPkg(&.{options_pkg});
+    const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});
+
+    exe.addPackage(zmesh_pkg);
     exe.addPackage(glfw.pkg);
-    exe.addPackage(zgpu.pkg);
+    exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(znoise.pkg);
 
@@ -34,7 +41,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         .glfw_options = .{},
         .gpu_dawn_options = .{ .from_source = options.dawn_from_source },
     });
-    zmesh.link(exe, .{ .shape_has_32bit_indices = true });
+    zmesh.link(exe, .{ .shape_has_32bit_indices = shape_has_32bit_indices });
     znoise.link(exe);
 
     return exe;

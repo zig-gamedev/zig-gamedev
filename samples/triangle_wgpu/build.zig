@@ -23,8 +23,10 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
 
+    const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});
+
     exe.addPackage(glfw.pkg);
-    exe.addPackage(zgpu.pkg);
+    exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
 
     const zgpu_options = zgpu.Options{

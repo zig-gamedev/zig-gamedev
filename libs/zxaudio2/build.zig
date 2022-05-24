@@ -1,16 +1,12 @@
 const std = @import("std");
 const zwin32 = @import("../zwin32/build.zig");
 
-pub fn getPkg(b: *std.build.Builder, options_pkg: std.build.Pkg) std.build.Pkg {
-    const pkg = std.build.Pkg{
+pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
+    return .{
         .name = "zxaudio2",
         .path = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
-        .dependencies = &[_]std.build.Pkg{
-            zwin32.pkg,
-            options_pkg,
-        },
+        .dependencies = dependencies,
     };
-    return b.dupePkg(pkg);
 }
 
 pub fn build(b: *std.build.Builder) void {

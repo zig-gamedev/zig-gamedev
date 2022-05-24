@@ -23,7 +23,18 @@ const zmesh = @import("libs/zmesh/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    zmesh.link(exe, .{ .shape_has_32bit_indices = false });
+    const use_32bit_indices = false;
+
+    const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
+    exe_options.addOption(bool, "shape_has_32bit_indices", use_32bit_indices);
+
+    const options_pkg = exe_options.getPackage("build_options");
+    const zmesh_pkg = zmesh.getPkg(&.{options_pkg});
+
+    exe.addPackage(zmesh_pkg);
+
+    zmesh.link(exe, .{ .shape_has_32bit_indices = use_32bit_indices });
 }
 ```
 
