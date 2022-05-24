@@ -22,6 +22,7 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
     installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
     installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
+    installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
 
     //
     // Windows-only demos
@@ -102,6 +103,7 @@ const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
 const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
 const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
+const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
