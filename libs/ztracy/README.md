@@ -51,5 +51,15 @@ an additional option passed through when compiling the Tracy library, so change
 the `link()` call in your `build.zig` to:
 
 ```zig
-ztracy.link(exe, ztracy_enable, .{ .enable_fibers = true });
+const ztracy_options = ztracy.BuildOptionsStep.init(
+    b,
+    .{ .enable_ztracy = true, .enable_fibers = true },
+);
+ztracy_options.addTo(exe);
+
+const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
+
+exe.addPackage(ztracy_pkg);
+
+ztracy.link(exe, ztracy_options);
 ```
