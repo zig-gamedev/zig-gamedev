@@ -5,20 +5,17 @@ const zmath = @import("../../libs/zmath/build.zig");
 const zmesh = @import("../../libs/zmesh/build.zig");
 
 const Options = @import("../../build.zig").Options;
+
+const options_pkg_name = "build_options";
 const demo_name = "bullet_physics_test_wgpu";
 const content_dir = demo_name ++ "_content/";
 const use_32bit_indices = true;
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe_options = b.addOptions();
-    exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "zmesh_shape_use_32bit_indices", use_32bit_indices);
-
     const exe = b.addExecutable(
         demo_name,
         thisDir() ++ "/src/" ++ demo_name ++ ".zig",
     );
-    exe.addOptions("build_options", exe_options);
 
     const install_content_step = b.addInstallDirectory(.{
         .source_dir = thisDir() ++ "/" ++ content_dir,
@@ -30,7 +27,12 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
 
-    const options_pkg = exe_options.getPackage("build_options");
+    const exe_options = b.addOptions();
+    exe.addOptions(options_pkg_name, exe_options);
+    exe_options.addOption([]const u8, "content_dir", content_dir);
+    exe_options.addOption(bool, "zmesh_shape_use_32bit_indices", use_32bit_indices);
+
+    const options_pkg = exe_options.getPackage(options_pkg_name);
     const zmesh_pkg = zmesh.getPkg(&.{options_pkg});
     const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});
 
