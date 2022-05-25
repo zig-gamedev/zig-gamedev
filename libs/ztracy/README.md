@@ -12,22 +12,18 @@ Then in your `build.zig` add:
 const std = @import("std");
 const ztracy = @import("libs/ztracy/build.zig");
 
-const options_pkg_name = "build_options";
-
 pub fn build(b: *std.build.Builder) void {
     ...
     const ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
 
-    const exe_options = b.addOptions();
-    exe.addOptions(options_pkg_name, exe_options);
-    exe_options.addOption(bool, "ztracy_enable", ztracy_enable);
+    const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = ztracy_enable });
+    ztracy_options.addTo(exe);
 
-    const options_pkg = exe_options.getPackage(options_pkg_name);
-    const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
+    const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
 
     exe.addPackage(ztracy_pkg);
 
-    ztracy.link(exe, ztracy_enable, .{});
+    ztracy.link(exe, ztracy_options);
 }
 ```
 

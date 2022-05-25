@@ -1,7 +1,30 @@
 const std = @import("std");
 
 const BuildOptions = struct {
+    enable_ztracy: bool = false,
     enable_fibers: bool = false,
+};
+
+pub const BuildOptionsStep = struct {
+    options: BuildOptions,
+    step: *std.build.OptionsStep,
+
+    pub fn init(b: *std.build.Builder, options: BuildOptions) BuildOptionsStep {
+        const bos = BuildOptionsStep{
+            .options = options,
+            .step = b.addOptions(),
+        };
+        bos.step.addOption(bool, "enable_ztracy", bos.options.enable_ztracy);
+        return bos;
+    }
+
+    pub fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
+        target_step.addOptions("ztracy_options", bos.step);
+    }
+
+    pub fn getPkg(bos: BuildOptionsStep) std.build.Pkg {
+        return bos.step.getPackage("ztracy_options");
+    }
 };
 
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
@@ -12,13 +35,9 @@ pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     };
 }
 
-pub fn link(
-    exe: *std.build.LibExeObjStep,
-    ztracy_enable: bool,
-    build_options: BuildOptions,
-) void {
-    if (ztracy_enable) {
-        const enable_fibers = if (build_options.enable_fibers) "-DTRACY_FIBERS" else "";
+pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
+    if (bos.options.enable_ztracy) {
+        const enable_fibers = if (bos.options.enable_fibers) "-DTRACY_FIBERS" else "";
 
         exe.addIncludeDir(thisDir() ++ "/libs/tracy");
         exe.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{

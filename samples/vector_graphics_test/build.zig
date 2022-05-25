@@ -11,7 +11,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_d2d", true);
-    exe_options.addOption(bool, "ztracy_enable", options.ztracy_enable);
     exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
 
     const exe = b.addExecutable("vector_graphics_test", thisDir() ++ "/src/vector_graphics_test.zig");
@@ -25,8 +24,11 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.rdynamic = true;
     exe.want_lto = false;
 
+    const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = options.ztracy_enable });
+    ztracy_options.addTo(exe);
+
     const options_pkg = exe_options.getPackage("build_options");
-    const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
+    const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
     const zd3d12_pkg = zd3d12.getPkg(&.{ ztracy_pkg, zwin32.pkg, options_pkg });
     const common_pkg = common.getPkg(&.{ zd3d12_pkg, ztracy_pkg, zwin32.pkg, options_pkg });
 
@@ -35,7 +37,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(common_pkg);
     exe.addPackage(zwin32.pkg);
 
-    ztracy.link(exe, options.ztracy_enable, .{});
+    ztracy.link(exe, ztracy_options);
     zd3d12.link(exe);
     common.link(exe);
 

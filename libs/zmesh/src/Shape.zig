@@ -2,9 +2,9 @@ const builtin = @import("builtin");
 
 pub const IndexType: type = blk: {
     if (!builtin.is_test) {
-        const options = @import("build_options");
-        if (@hasDecl(options, "zmesh_shape_use_32bit_indices")) {
-            if (options.zmesh_shape_use_32bit_indices)
+        const options = @import("zmesh_options");
+        if (@hasDecl(options, "shape_use_32bit_indices")) {
+            if (options.shape_use_32bit_indices)
                 break :blk u32;
             break :blk u16;
         }

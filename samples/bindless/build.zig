@@ -14,7 +14,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_d2d", false);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "ztracy_enable", options.ztracy_enable);
     exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
 
     const exe = b.addExecutable("bindless", thisDir() ++ "/src/bindless.zig");
@@ -37,9 +36,15 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.rdynamic = true;
     exe.want_lto = false;
 
+    const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
+    zmesh_options.addTo(exe);
+
+    const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = options.ztracy_enable });
+    ztracy_options.addTo(exe);
+
     const options_pkg = exe_options.getPackage("build_options");
-    const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
-    const zmesh_pkg = zmesh.getPkg(&.{options_pkg});
+    const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
+    const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const zd3d12_pkg = zd3d12.getPkg(&.{ ztracy_pkg, zwin32.pkg, options_pkg });
     const common_pkg = common.getPkg(&.{ zd3d12_pkg, ztracy_pkg, zwin32.pkg, options_pkg });
 
@@ -49,10 +54,10 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(common_pkg);
     exe.addPackage(zmesh_pkg);
 
-    ztracy.link(exe, options.ztracy_enable, .{});
+    ztracy.link(exe, ztracy_options);
+    zmesh.link(exe, zmesh_options);
     zd3d12.link(exe);
     common.link(exe);
-    zmesh.link(exe, .{});
 
     return exe;
 }

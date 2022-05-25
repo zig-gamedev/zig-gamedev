@@ -9,7 +9,6 @@ const Options = @import("../../build.zig").Options;
 const options_pkg_name = "build_options";
 const demo_name = "bullet_physics_test_wgpu";
 const content_dir = demo_name ++ "_content/";
-const use_32bit_indices = true;
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const exe = b.addExecutable(
@@ -27,13 +26,14 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
 
+    const zmesh_options = zmesh.BuildOptionsStep.init(b, .{ .shape_use_32bit_indices = true });
+    zmesh_options.addTo(exe);
+
     const exe_options = b.addOptions();
     exe.addOptions(options_pkg_name, exe_options);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "zmesh_shape_use_32bit_indices", use_32bit_indices);
 
-    const options_pkg = exe_options.getPackage(options_pkg_name);
-    const zmesh_pkg = zmesh.getPkg(&.{options_pkg});
+    const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});
 
     exe.addPackage(zmesh_pkg);
@@ -45,7 +45,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         .glfw_options = .{},
         .gpu_dawn_options = .{ .from_source = options.dawn_from_source },
     });
-    zmesh.link(exe, .{ .shape_use_32bit_indices = use_32bit_indices });
+    zmesh.link(exe, zmesh_options);
 
     return exe;
 }

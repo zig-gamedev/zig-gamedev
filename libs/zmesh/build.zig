@@ -4,6 +4,28 @@ const BuildOptions = struct {
     shape_use_32bit_indices: bool = false,
 };
 
+pub const BuildOptionsStep = struct {
+    options: BuildOptions,
+    step: *std.build.OptionsStep,
+
+    pub fn init(b: *std.build.Builder, options: BuildOptions) BuildOptionsStep {
+        const bos = BuildOptionsStep{
+            .options = options,
+            .step = b.addOptions(),
+        };
+        bos.step.addOption(bool, "shape_use_32bit_indices", bos.options.shape_use_32bit_indices);
+        return bos;
+    }
+
+    pub fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
+        target_step.addOptions("zmesh_options", bos.step);
+    }
+
+    pub fn getPkg(bos: BuildOptionsStep) std.build.Pkg {
+        return bos.step.getPackage("zmesh_options");
+    }
+};
+
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
         .name = "zmesh",
@@ -29,23 +51,21 @@ pub fn buildTests(
     const tests = b.addTest(thisDir() ++ "/src/main.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
-    link(tests, .{});
+    link(tests, BuildOptionsStep.init(b, .{}));
     return tests;
 }
 
-fn buildLibrary(exe: *std.build.LibExeObjStep, options: BuildOptions) *std.build.LibExeObjStep {
+fn buildLibrary(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) *std.build.LibExeObjStep {
     const lib = exe.builder.addStaticLibrary("zmesh", thisDir() ++ "/src/main.zig");
 
-    const lib_options = exe.builder.addOptions();
-    lib.addOptions("build_options", lib_options);
-    lib_options.addOption(bool, "zmesh_shape_use_32bit_indices", options.shape_use_32bit_indices);
+    bos.addTo(lib);
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.linkSystemLibrary("c");
     lib.linkSystemLibrary("c++");
 
-    const par_shapes_t = if (options.shape_use_32bit_indices) "-DPAR_SHAPES_T=uint32_t" else "";
+    const par_shapes_t = if (bos.options.shape_use_32bit_indices) "-DPAR_SHAPES_T=uint32_t" else "";
 
     lib.addIncludeDir(thisDir() ++ "/libs/par_shapes");
     lib.addCSourceFile(
@@ -69,8 +89,8 @@ fn buildLibrary(exe: *std.build.LibExeObjStep, options: BuildOptions) *std.build
     return lib;
 }
 
-pub fn link(exe: *std.build.LibExeObjStep, options: BuildOptions) void {
-    const lib = buildLibrary(exe, options);
+pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
+    const lib = buildLibrary(exe, bos);
     exe.linkLibrary(lib);
     exe.addIncludeDir(thisDir() ++ "/libs/cgltf");
 }

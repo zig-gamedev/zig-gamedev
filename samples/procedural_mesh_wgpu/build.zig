@@ -10,12 +10,11 @@ const content_dir = "procedural_mesh_wgpu_content/";
 const use_32bit_indices = true;
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe_options = b.addOptions();
-    exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "zmesh_shape_use_32bit_indices", use_32bit_indices);
-
     const exe = b.addExecutable("procedural_mesh_wgpu", thisDir() ++ "/src/procedural_mesh_wgpu.zig");
+
+    const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
+    exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const install_content_step = b.addInstallDirectory(.{
         .source_dir = thisDir() ++ "/" ++ content_dir,
@@ -27,8 +26,10 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
 
-    const options_pkg = exe_options.getPackage("build_options");
-    const zmesh_pkg = zmesh.getPkg(&.{options_pkg});
+    const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
+    zmesh_options.addTo(exe);
+
+    const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});
 
     exe.addPackage(zmesh_pkg);
@@ -41,7 +42,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         .glfw_options = .{},
         .gpu_dawn_options = .{ .from_source = options.dawn_from_source },
     });
-    zmesh.link(exe, .{ .shape_use_32bit_indices = use_32bit_indices });
+    zmesh.link(exe, zmesh_options);
     znoise.link(exe);
 
     return exe;
