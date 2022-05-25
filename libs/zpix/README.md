@@ -11,15 +11,17 @@ const std = @import("std");
 const zwin32 = @import("libs/zwin32/build.zig");
 const zpix = @import("libs/zpix/build.zig");
 
+const options_pkg_name = "build_options";
+
 pub fn build(b: *std.build.Builder) void {
     ...
     const zpix_enable = b.option(bool, "zpix-enable", "Enable PIX GPU events and markers") orelse false;
 
     const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
+    exe.addOptions(options_pkg_name, exe_options);
     exe_options.addOption(bool, "zpix_enable", zpix_enable);
 
-    const options_pkg = exe_options.getPackage("build_options");
+    const options_pkg = exe_options.getPackage(options_pkg_name);
     const zpix_pkg = zpix.getPkg(&.{ options_pkg, zwin32.pkg });
 
     exe.addPackage(zwin32.pkg);
@@ -27,7 +29,7 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
-Now in your code you may import and use zpix:
+Now in your code you may import and use `zpix`:
 
 ```zig
 const zpix = @import("zpix");

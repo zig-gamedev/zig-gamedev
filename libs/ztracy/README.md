@@ -12,15 +12,17 @@ Then in your `build.zig` add:
 const std = @import("std");
 const ztracy = @import("libs/ztracy/build.zig");
 
+const options_pkg_name = "build_options";
+
 pub fn build(b: *std.build.Builder) void {
     ...
     const ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
 
     const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
+    exe.addOptions(options_pkg_name, exe_options);
     exe_options.addOption(bool, "ztracy_enable", ztracy_enable);
 
-    const options_pkg = exe_options.getPackage("build_options");
+    const options_pkg = exe_options.getPackage(options_pkg_name);
     const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
 
     exe.addPackage(ztracy_pkg);
@@ -29,7 +31,7 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
-Now in your code you may import and use ztracy. To build your project with Tracy enabled run:
+Now in your code you may import and use `ztracy`. To build your project with Tracy enabled run:
 
 `zig build -Dztracy-enable=true`
 

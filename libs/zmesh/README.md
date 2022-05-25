@@ -21,15 +21,16 @@ Then in your `build.zig` add:
 ```zig
 const zmesh = @import("libs/zmesh/build.zig");
 
+const options_pkg_name = "build_options";
+const use_32bit_indices = false;
+
 pub fn build(b: *std.build.Builder) void {
     ...
-    const use_32bit_indices = false;
-
     const exe_options = b.addOptions();
-    exe.addOptions("build_options", exe_options);
+    exe.addOptions(options_pkg_name, exe_options);
     exe_options.addOption(bool, "zmesh_shape_use_32bit_indices", use_32bit_indices);
 
-    const options_pkg = exe_options.getPackage("build_options");
+    const options_pkg = exe_options.getPackage(options_pkg_name);
     const zmesh_pkg = zmesh.getPkg(&.{options_pkg});
 
     exe.addPackage(zmesh_pkg);
@@ -38,7 +39,7 @@ pub fn build(b: *std.build.Builder) void {
 }
 ```
 
-Now in your code you may import and use zmesh:
+Now in your code you may import and use `zmesh`:
 
 ```zig
 const zmesh = @import("zmesh");
