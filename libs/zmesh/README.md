@@ -34,7 +34,7 @@ pub fn build(b: *std.build.Builder) void {
 
     exe.addPackage(zmesh_pkg);
 
-    zmesh.link(exe, .{ .shape_has_32bit_indices = use_32bit_indices });
+    zmesh.link(exe, .{ .shape_use_32bit_indices = use_32bit_indices });
 }
 ```
 
