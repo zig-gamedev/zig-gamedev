@@ -49,8 +49,8 @@ pub fn Handle(
     if (index_bits == 0) @compileError("index_bits must be greater than 0");
     if (cycle_bits == 0) @compileError("cycle_bits must be greater than 0");
 
-    const value_bits: u16 = @as(u16, index_bits) + @as(u16, cycle_bits);
-    const Value = switch (value_bits) {
+    const id_bits: u16 = @as(u16, index_bits) + @as(u16, cycle_bits);
+    const Id = switch (id_bits) {
         8 => u8,
         16 => u16,
         32 => u32,
@@ -77,10 +77,12 @@ pub fn Handle(
 
         pub const max_index = ~@as(Index, 0);
         pub const max_cycle = ~@as(Cycle, 0);
-        pub const max_count = @as(Value, max_index - 1) + 2;
+        pub const max_count = @as(Id, max_index - 1) + 2;
 
-        value: Value,
+        id: Id,
         compact: packed struct { index: Index, cycle: Cycle },
+
+        pub const zero = Self{ .id = 0 };
 
         pub fn init(_index: Index, _cycle: Cycle) Self {
             return .{ .compact = .{ .index = _index, .cycle = _cycle } };
@@ -88,8 +90,8 @@ pub fn Handle(
 
         pub fn addressable(self: Self) AddressableHandle {
             return .{
-                .index = self.compact.index,
-                .cycle = self.compact.cycle,
+                .index = self.index(),
+                .cycle = self.cycle(),
             };
         }
 
@@ -102,11 +104,12 @@ pub fn Handle(
         }
 
         pub fn eql(a: Self, b: Self) bool {
-            return a.value == b.value;
+            return a.id == b.id;
         }
 
         pub const AddressableHandle = struct {
-            const Compact = Self;
+            pub const Compact = Self;
+
             index: AddressableIndex = 0,
             cycle: AddressableCycle = 0,
 
