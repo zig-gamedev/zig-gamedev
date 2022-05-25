@@ -103,13 +103,13 @@ All sample applications support the following build options:
 
 * `-Drelease-safe=[bool]` - Optimizations on and safety on
 * `-Drelease-fast=[bool]` - Optimizations on and safety off
-* `-Denable-tracy=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
+* `-Dztracy-enable=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
 * `-Ddawn-from-source=[bool]` - Build Dawn (WebGPU implementation) from source
 
 Addidtional options for Windows applications:
 * `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
 * `-Denable-dx-gpu-debug=[bool]` - Direct3D 12 GPU-Based Validation enabled (requires -Denable-dx-debug=true)
-* `-Denable-pix=[bool]` - PIX markers and events enabled
+* `-Dzpix-enable=[bool]` - PIX markers and events enabled
 
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:

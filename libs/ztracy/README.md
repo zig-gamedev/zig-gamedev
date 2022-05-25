@@ -14,24 +14,24 @@ const ztracy = @import("libs/ztracy/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
+    const ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
-    exe_options.addOption(bool, "enable_tracy", enable_tracy);
+    exe_options.addOption(bool, "ztracy_enable", ztracy_enable);
 
     const options_pkg = exe_options.getPackage("build_options");
     const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
 
     exe.addPackage(ztracy_pkg);
 
-    ztracy.link(exe, enable_tracy, .{});
+    ztracy.link(exe, ztracy_enable, .{});
 }
 ```
 
 Now in your code you may import and use ztracy. To build your project with Tracy enabled run:
 
-`zig build -Denable-tracy=true`
+`zig build -Dztracy-enable=true`
 
 ```zig
 const ztracy = @import("ztracy");
@@ -53,5 +53,5 @@ an additional option passed through when compiling the Tracy library, so change
 the `link()` call in your `build.zig` to:
 
 ```zig
-    ztracy.link(exe, enable_tracy, .{ .enable_fibers = true });
+ztracy.link(exe, ztracy_enable, .{ .enable_fibers = true });
 ```

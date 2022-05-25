@@ -13,11 +13,11 @@ const zpix = @import("libs/zpix/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
+    const zpix_enable = b.option(bool, "zpix-enable", "Enable PIX GPU events and markers") orelse false;
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
-    exe_options.addOption(bool, "enable_pix", enable_pix);
+    exe_options.addOption(bool, "zpix_enable", zpix_enable);
 
     const options_pkg = exe_options.getPackage("build_options");
     const zpix_pkg = zpix.getPkg(&.{ options_pkg, zwin32.pkg });

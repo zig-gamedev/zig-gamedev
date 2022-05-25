@@ -20,7 +20,8 @@ const UINT32 = u32;
 const BOOL = windows.BOOL;
 const DWORD = windows.DWORD;
 
-const enable_pix = @import("build_options").enable_pix;
+const options = @import("build_options");
+const enable_pix = if (@hasDecl(options, "zpix_enable")) options.zpix_enable else false;
 
 pub const CAPTURE_TIMING = (1 << 0);
 pub const CAPTURE_GPU = (1 << 1);

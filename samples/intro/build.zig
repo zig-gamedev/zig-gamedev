@@ -13,16 +13,16 @@ const content_dir = "intro_content/";
 
 pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32) *std.build.LibExeObjStep {
     const exe_options = b.addOptions();
-    exe_options.addOption(bool, "enable_pix", options.enable_pix);
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
-    exe_options.addOption(bool, "enable_tracy", options.enable_tracy);
     if (intro_index == 0) {
         exe_options.addOption(bool, "enable_d2d", true);
     } else {
         exe_options.addOption(bool, "enable_d2d", false);
     }
     exe_options.addOption([]const u8, "content_dir", content_dir);
+    exe_options.addOption(bool, "ztracy_enable", options.ztracy_enable);
+    exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
 
     const intro_index_str = comptime std.fmt.comptimePrint("{}", .{intro_index});
     const exe = b.addExecutable(
@@ -63,7 +63,7 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
     exe.addPackage(znoise.pkg);
     exe.addPackage(zbullet.pkg);
 
-    ztracy.link(exe, options.enable_tracy, .{});
+    ztracy.link(exe, options.ztracy_enable, .{});
     zd3d12.link(exe);
     common.link(exe);
     zmesh.link(exe, .{});

@@ -14,10 +14,10 @@ pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
 
 pub fn link(
     exe: *std.build.LibExeObjStep,
-    enable_tracy: bool,
+    ztracy_enable: bool,
     build_options: BuildOptions,
 ) void {
-    if (enable_tracy) {
+    if (ztracy_enable) {
         const enable_fibers = if (build_options.enable_fibers) "-DTRACY_FIBERS" else "";
 
         exe.addIncludeDir(thisDir() ++ "/libs/tracy");

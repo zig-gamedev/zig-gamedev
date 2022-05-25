@@ -27,7 +27,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
-    exe_options.addOption(bool, "shape_has_32bit_indices", use_32bit_indices);
+    exe_options.addOption(bool, "zmesh_shape_use_32bit_indices", use_32bit_indices);
 
     const options_pkg = exe_options.getPackage("build_options");
     const zmesh_pkg = zmesh.getPkg(&.{options_pkg});

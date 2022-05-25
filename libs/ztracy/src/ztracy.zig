@@ -8,21 +8,21 @@ pub const enabled = blk: {
     var root_enable: ?bool = null;
 
     const root = @import("root");
-    if (@hasDecl(root, "enable_tracy")) {
-        root_enable = @as(bool, root.enable_tracy);
+    if (@hasDecl(root, "ztracy_enable")) {
+        root_enable = root.ztracy_enable;
     }
     if (!builtin.is_test) {
         // Don't try to include build_options in tests.
         // Otherwise `zig test` doesn't work.
         const options = @import("build_options");
-        if (@hasDecl(options, "enable_tracy")) {
-            build_enable = @as(bool, options.enable_tracy);
+        if (@hasDecl(options, "ztracy_enable")) {
+            build_enable = options.ztracy_enable;
         }
     }
 
     if (build_enable != null and root_enable != null) {
         if (build_enable.? != root_enable.?) {
-            @compileError("root.enable_tracy disagrees with build_options.enable_tracy! Please remove one or make them match.");
+            @compileError("root.ztracy_enable disagrees with build_options.ztracy_enable! Please remove one or make them match.");
         }
     }
 

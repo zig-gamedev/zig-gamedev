@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const BuildOptions = struct {
-    shape_has_32bit_indices: bool = false,
+    shape_use_32bit_indices: bool = false,
 };
 
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
@@ -38,14 +38,14 @@ fn buildLibrary(exe: *std.build.LibExeObjStep, options: BuildOptions) *std.build
 
     const lib_options = exe.builder.addOptions();
     lib.addOptions("build_options", lib_options);
-    lib_options.addOption(bool, "shape_has_32bit_indices", options.shape_has_32bit_indices);
+    lib_options.addOption(bool, "zmesh_shape_use_32bit_indices", options.shape_use_32bit_indices);
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.linkSystemLibrary("c");
     lib.linkSystemLibrary("c++");
 
-    const par_shapes_t = if (options.shape_has_32bit_indices) "-DPAR_SHAPES_T=uint32_t" else "";
+    const par_shapes_t = if (options.shape_use_32bit_indices) "-DPAR_SHAPES_T=uint32_t" else "";
 
     lib.addIncludeDir(thisDir() ++ "/libs/par_shapes");
     lib.addCSourceFile(

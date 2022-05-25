@@ -7,7 +7,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = b.standardTargetOptions(.{}),
     };
 
-    options.enable_tracy = b.option(bool, "enable-tracy", "Enable Tracy profiler") orelse false;
+    options.ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
     options.dawn_from_source = b.option(bool, "dawn-from-source", "Build Dawn (WebGPU) from source") orelse false;
 
     if (options.dawn_from_source) {
@@ -28,7 +28,7 @@ pub fn build(b: *std.build.Builder) void {
     // Windows-only demos
     //
     if (options.target.isWindows()) {
-        options.enable_pix = b.option(bool, "enable-pix", "Enable PIX GPU events and markers") orelse false;
+        options.zpix_enable = b.option(bool, "zpix-enable", "Enable PIX GPU events and markers") orelse false;
         options.enable_dx_debug = b.option(
             bool,
             "enable-dx-debug",
@@ -110,8 +110,8 @@ pub const Options = struct {
     target: std.zig.CrossTarget,
     enable_dx_debug: bool = false,
     enable_dx_gpu_debug: bool = false,
-    enable_tracy: bool = false,
-    enable_pix: bool = false,
+    ztracy_enable: bool = false,
+    zpix_enable: bool = false,
     dawn_from_source: bool = false,
 };
 

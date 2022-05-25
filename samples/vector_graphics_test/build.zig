@@ -8,11 +8,11 @@ const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const exe_options = b.addOptions();
-    exe_options.addOption(bool, "enable_pix", options.enable_pix);
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
-    exe_options.addOption(bool, "enable_tracy", options.enable_tracy);
     exe_options.addOption(bool, "enable_d2d", true);
+    exe_options.addOption(bool, "ztracy_enable", options.ztracy_enable);
+    exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
 
     const exe = b.addExecutable("vector_graphics_test", thisDir() ++ "/src/vector_graphics_test.zig");
     exe.setBuildMode(options.build_mode);
@@ -35,7 +35,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(common_pkg);
     exe.addPackage(zwin32.pkg);
 
-    ztracy.link(exe, options.enable_tracy, .{});
+    ztracy.link(exe, options.ztracy_enable, .{});
     zd3d12.link(exe);
     common.link(exe);
 

@@ -37,15 +37,15 @@ pub fn build(b: *std.build.Builder) void {
         "enable-dx-gpu-debug",
         "Enable GPU-based validation for D3D12",
     ) orelse false;
-    const enable_tracy = b.option(bool, "enable_tracy", "Enable Tracy profiler") orelse false;
+    const ztracy_enable = b.option(bool, "ztracy_enable", "Enable Tracy profiler") orelse false;
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
 
     exe_options.addOption(bool, "enable_dx_debug", enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", enable_dx_gpu_debug);
-    exe_options.addOption(bool, "enable_tracy", enable_tracy);
     exe_options.addOption(bool, "enable_d2d", false);
+    exe_options.addOption(bool, "ztracy_enable", ztracy_enable);
 
     const options_pkg = exe_options.getPackage("build_options");
     const ztracy_pkg = ztracy.getPkg(&.{options_pkg});
@@ -55,7 +55,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addPackage(zd3d12_pkg);
     exe.addPackage(zwin32.pkg);
 
-    ztracy.link(tracy, enable_tracy, .{});
+    ztracy.link(tracy, ztracy_enable, .{});
     zd3d12.link(exe);
 }
 ```
