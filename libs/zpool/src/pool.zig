@@ -44,18 +44,18 @@ pub fn Pool(
     comptime TColumns: type,
 ) type {
     // Handle performs compile time checks on index_bits & cycle_bits
-    const handles = @import("handles.zig");
-    const THandle = handles.Handle(index_bits, cycle_bits, TResource);
-
+    const ring_queue = @import("embedded_ring_queue.zig");
+    const handles = @import("handle.zig");
     const utils = @import("utils.zig");
-    const isStruct = utils.isStruct;
 
-    if (!isStruct(TColumns)) @compileError("TColumns must be a struct");
+    if (!utils.isStruct(TColumns)) @compileError("TColumns must be a struct");
 
+    const assert = std.debug.assert;
     const meta = std.meta;
     const Allocator = std.mem.Allocator;
     const MultiArrayList = std.MultiArrayList;
     const StructOfSlices = utils.StructOfSlices;
+    const RingQueue = ring_queue.EmbeddedRingQueue;
 
     return struct {
         const Self = @This();
@@ -70,7 +70,7 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         pub const Resource = TResource;
-        pub const Handle = THandle;
+        pub const Handle = handles.Handle(index_bits, cycle_bits, TResource);
 
         pub const AddressableHandle = Handle.AddressableHandle;
         pub const AddressableIndex = Handle.AddressableIndex;
@@ -96,7 +96,7 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         const private_fields = meta.fields(struct {
-            @"Pool._free_stack": AddressableIndex,
+            @"Pool._free_queue": AddressableIndex,
             @"Pool._curr_cycle": AddressableCycle,
         });
 
@@ -107,12 +107,13 @@ pub fn Pool(
             .is_tuple = false,
         } }));
 
+        const FreeQueue = RingQueue(AddressableIndex);
+
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         _allocator: Allocator = undefined,
         _storage: Storage = .{},
-        _free_count: usize = 0,
-        _free_stack: []AddressableIndex = &.{},
+        _free_queue: FreeQueue = .{},
         _curr_cycle: []AddressableCycle = &.{},
         columns: ColumnSlices = undefined,
 
@@ -161,15 +162,15 @@ pub fn Pool(
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         pub fn liveHandleCount(self: Self) usize {
-            return self._storage.len - self._free_count;
+            return self._storage.len - self._free_queue.len();
         }
 
         pub fn isLiveHandle(self: Self, handle: Handle) bool {
-            return isLiveAddressableHandle(self, handle.addressable());
+            return self.isLiveAddressableHandle(handle.addressable());
         }
 
         pub fn validateHandle(self: Self, handle: Handle) Error!void {
-            try validateAddressableHandle(self, handle.addressable());
+            try self.validateAddressableHandle(handle.addressable());
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -221,7 +222,7 @@ pub fn Pool(
             for (self._curr_cycle) |cycle| {
                 if (isLiveCycle(cycle)) {
                     ahandle.cycle = cycle;
-                    releaseAddressableHandleUnchecked(self, ahandle);
+                    self.releaseAddressableHandleUnchecked(ahandle);
                 }
                 ahandle.index += 1;
             }
@@ -237,13 +238,13 @@ pub fn Pool(
         }
 
         pub fn remove(self: *Self, handle: Handle) !void {
-            try releaseAddressableHandle(self, handle.addressable());
+            try self.releaseAddressableHandle(handle.addressable());
         }
 
         pub fn removeIfLive(self: *Self, handle: Handle) void {
             var ahandle = handle.addressable();
-            if (isLiveAddressableHandle(self.*, ahandle)) {
-                releaseAddressableHandleUnchecked(self, ahandle);
+            if (self.isLiveAddressableHandle(ahandle)) {
+                self.releaseAddressableHandleUnchecked(ahandle);
             }
         }
 
@@ -251,18 +252,18 @@ pub fn Pool(
 
         pub fn getColumnPtr(self: Self, handle: Handle, comptime column: Column) !*ColumnType(column) {
             const ahandle = handle.addressable();
-            try validateAddressableHandle(self, ahandle);
+            try self.validateAddressableHandle(ahandle);
             const column_field = meta.fieldInfo(Columns, column);
             return &@field(self.columns, column_field.name)[ahandle.index];
         }
 
         pub fn getColumn(self: Self, handle: Handle, comptime column: Column) !ColumnType(column) {
-            return (try getColumnPtr(self, handle, column)).*;
+            return (try self.getColumnPtr(handle, column)).*;
         }
 
         pub fn getColumns(self: Self, handle: Handle) !Columns {
             const ahandle = handle.addressable();
-            try validateAddressableHandle(self, ahandle);
+            try self.validateAddressableHandle(ahandle);
             var values: Columns = undefined;
             inline for (column_fields) |column_field| {
                 @field(values, column_field.name) =
@@ -273,16 +274,16 @@ pub fn Pool(
 
         pub fn setColumn(self: Self, handle: Handle, comptime column: Column, value: ColumnType(column)) !void {
             const ahandle = handle.addressable();
-            try validateAddressableHandle(self, ahandle);
+            try self.validateAddressableHandle(ahandle);
             const column_field = meta.fieldInfo(Columns, column);
-            deinitColumn(self, ahandle.index, column_field);
+            self.deinitColumn(ahandle.index, column_field);
             @field(self.columns, column_field.name)[ahandle.index] = value;
         }
 
         pub fn setColumns(self: Self, handle: Handle, values: Columns) !void {
             const ahandle = handle.addressable();
-            try validateAddressableHandle(self, ahandle);
-            deinitColumns(self, ahandle.index);
+            try self.validateAddressableHandle(ahandle);
+            self.deinitColumns(ahandle.index);
             inline for (column_fields) |column_field| {
                 @field(self.columns, column_field.name)[ahandle.index] =
                     @field(values, column_field.name);
@@ -320,7 +321,7 @@ pub fn Pool(
                 }
             } else {
                 inline for (column_fields) |column_field| {
-                    deinitColumn(self, index, column_field);
+                    self.deinitColumn(index, column_field);
                 }
             }
         }
@@ -329,7 +330,7 @@ pub fn Pool(
 
         fn updateSlices(self: *Self) void {
             var slice = self._storage.slice();
-            self._free_stack = slice.items(.@"Pool._free_stack");
+            self._free_queue.storage = slice.items(.@"Pool._free_queue");
             self._curr_cycle = slice.items(.@"Pool._curr_cycle");
             inline for (column_fields) |column_field, i| {
                 const F = column_field.field_type;
@@ -361,43 +362,50 @@ pub fn Pool(
         }
 
         fn acquireAddressableHandle(self: *Self) !AddressableHandle {
+            if (self._storage.len == max_capacity) {
+                return Error.PoolIsFull;
+            }
+
             var handle = AddressableHandle{};
-            if (tryPopFreeIndex(self, &handle.index)) {
-                handle.cycle = incrementAndReturnCycle(self, handle.index);
-                try validateAddressableHandle(self.*, handle);
-                return handle;
-            } else if (self._storage.len < max_capacity) {
-                handle.index = try issueNewIndex(self);
-                handle.cycle = 1;
-                try validateAddressableHandle(self.*, handle);
+            if (self.didGetNewHandleNoResize(&handle)) {
+                assert(self.isLiveAddressableHandle(handle));
                 return handle;
             }
-            return Error.PoolIsFull;
+
+            if (self.didDequeueFreeIndex(&handle.index)) {
+                handle.cycle = self.incrementAndReturnCycle(handle.index);
+                assert(self.isLiveAddressableHandle(handle));
+                return handle;
+            }
+
+            try self.getNewHandleAfterResize(&handle);
+            assert(self.isLiveAddressableHandle(handle));
+            return handle;
         }
 
         fn releaseAddressableHandle(
             self: *Self,
             handle: AddressableHandle,
         ) !void {
-            try validateAddressableHandle(self.*, handle);
-            releaseAddressableHandleUnchecked(self, handle);
+            try self.validateAddressableHandle(handle);
+            self.releaseAddressableHandleUnchecked(handle);
         }
 
         fn releaseAddressableHandleUnchecked(
             self: *Self,
             handle: AddressableHandle,
         ) void {
-            deinitColumns(self.*, handle.index);
-            incrementCycle(self, handle.index);
-            pushFreeIndex(self, handle.index);
+            self.deinitColumns(handle.index);
+            self.incrementCycle(handle.index);
+            self.enqueueFreeIndex(handle.index);
         }
 
         fn tryReleaseAddressableHandle(
             self: *Self,
             handle: AddressableHandle,
         ) bool {
-            if (isLiveAddressableHandle(self.*, handle)) {
-                releaseAddressableHandleUnchecked(self, handle);
+            if (self.isLiveAddressableHandle(handle)) {
+                self.releaseAddressableHandleUnchecked(handle);
                 return true;
             }
             return false;
@@ -429,34 +437,41 @@ pub fn Pool(
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        fn pushFreeIndex(self: *Self, index: AddressableIndex) void {
-            const assert = std.debug.assert;
-            assert(self._free_count < self._free_stack.len);
-            assert(self._free_count < max_capacity);
-            const addressable_index = @intCast(AddressableIndex, index);
-            self._free_stack[self._free_count] = addressable_index;
-            self._free_count += 1;
+        fn enqueueFreeIndex(self: *Self, index: AddressableIndex) void {
+            self._free_queue.enqueueAssumeNotFull(index);
         }
 
-        fn tryPopFreeIndex(self: *Self, index: *AddressableIndex) bool {
-            if (self._free_count > 0) {
-                self._free_count -= 1;
-                index.* = self._free_stack[self._free_count];
+        fn didDequeueFreeIndex(self: *Self, index: *AddressableIndex) bool {
+            return self._free_queue.didDequeue(index);
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        fn didGetNewHandleNoResize(self: *Self, handle: *AddressableHandle) bool {
+            if (self._storage.len < max_capacity and
+                self._storage.len < self._storage.capacity)
+            {
+                const new_index = self._storage.addOneAssumeCapacity();
+                updateSlices(self);
+                self._curr_cycle[new_index] = 1;
+                handle.index = @intCast(AddressableIndex, new_index);
+                handle.cycle = 1;
                 return true;
             }
             return false;
         }
 
-        fn issueNewIndex(self: *Self) !AddressableIndex {
+        fn getNewHandleAfterResize(self: *Self, handle: *AddressableHandle) !void {
             const new_index = try self._storage.addOne(self._allocator);
             updateSlices(self);
             self._curr_cycle[new_index] = 1;
-            return @intCast(AddressableIndex, new_index);
+            handle.index = @intCast(AddressableIndex, new_index);
+            handle.cycle = 1;
         }
     };
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//------------------------------------------------------------------------------
 
 const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
@@ -659,9 +674,9 @@ test "Pool.liveHandles()" {
     try expectEqual(@as(usize, 3), pool.liveHandleCount());
 
     var live_handles = pool.liveHandles();
-    try expectEqual(handle0.value, live_handles.next().?.value);
-    try expectEqual(handle1.value, live_handles.next().?.value);
-    try expectEqual(handle2.value, live_handles.next().?.value);
+    try expectEqual(handle0.id, live_handles.next().?.id);
+    try expectEqual(handle1.id, live_handles.next().?.id);
+    try expectEqual(handle2.id, live_handles.next().?.id);
     try expect(null == live_handles.next());
 }
 
@@ -1053,4 +1068,4 @@ test "Pool.setColumns() calls ColumnType.deinit()" {
     try expectEqual(@as(u32, 2), deinit_count);
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//------------------------------------------------------------------------------
