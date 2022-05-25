@@ -5,7 +5,7 @@ const BuildOptions = struct {
 };
 
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
-    return std.build.Pkg{
+    return .{
         .name = "ztracy",
         .path = .{ .path = thisDir() ++ "/src/ztracy.zig" },
         .dependencies = dependencies,

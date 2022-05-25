@@ -1,5 +1,4 @@
 const std = @import("std");
-const zwin32 = @import("../zwin32/build.zig");
 
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
