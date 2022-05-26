@@ -23,16 +23,15 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
 
-    const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{
+        .dawn = .{ .from_source = options.zgpu_dawn_from_source },
+    });
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), glfw.pkg });
 
     exe.addPackage(glfw.pkg);
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
 
-    const zgpu_options = zgpu.Options{
-        .glfw_options = .{},
-        .gpu_dawn_options = .{ .from_source = options.dawn_from_source },
-    };
     zgpu.link(exe, zgpu_options);
 
     return exe;

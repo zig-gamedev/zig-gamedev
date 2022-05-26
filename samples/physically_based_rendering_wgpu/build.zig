@@ -28,19 +28,19 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{
+        .dawn = .{ .from_source = options.zgpu_dawn_from_source },
+    });
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
-    const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), glfw.pkg });
 
     exe.addPackage(zmesh_pkg);
     exe.addPackage(glfw.pkg);
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
 
-    zgpu.link(exe, .{
-        .glfw_options = .{},
-        .gpu_dawn_options = .{ .from_source = options.dawn_from_source },
-    });
+    zgpu.link(exe, zgpu_options);
     zmesh.link(exe, zmesh_options);
 
     return exe;

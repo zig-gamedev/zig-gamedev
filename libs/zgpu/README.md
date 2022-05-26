@@ -27,15 +27,13 @@ const zgpu = @import("libs/zgpu/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{ .dawn = .{ .from_source = false } });
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), glfw.pkg });
 
     exe.addPackage(glfw.pkg);
     exe.addPackage(zgpu_pkg);
 
-    zgpu.link(exe, .{
-        .glfw_options = .{},
-        .gpu_dawn_options = .{ .from_source = false },
-    });
+    zgpu.link(exe, zgpu_options);
 }
 ```
 

@@ -8,9 +8,13 @@ pub fn build(b: *std.build.Builder) void {
     };
 
     options.ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
-    options.dawn_from_source = b.option(bool, "dawn-from-source", "Build Dawn (WebGPU) from source") orelse false;
+    options.zgpu_dawn_from_source = b.option(
+        bool,
+        "zgpu-dawn-from-source",
+        "Build Dawn (WebGPU) from source",
+    ) orelse false;
 
-    if (options.dawn_from_source) {
+    if (options.zgpu_dawn_from_source) {
         ensureSubmodules(b.allocator) catch |err| @panic(@errorName(err));
     }
 
@@ -108,11 +112,13 @@ const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build
 pub const Options = struct {
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
-    enable_dx_debug: bool = false,
-    enable_dx_gpu_debug: bool = false,
+
     ztracy_enable: bool = false,
     zpix_enable: bool = false,
-    dawn_from_source: bool = false,
+    zgpu_dawn_from_source: bool = false,
+
+    enable_dx_debug: bool = false,
+    enable_dx_gpu_debug: bool = false,
 };
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {

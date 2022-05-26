@@ -104,7 +104,7 @@ All sample applications support the following build options:
 * `-Drelease-safe=[bool]` - Optimizations on and safety on
 * `-Drelease-fast=[bool]` - Optimizations on and safety off
 * `-Dztracy-enable=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
-* `-Ddawn-from-source=[bool]` - Build Dawn (WebGPU implementation) from source
+* `-Dzgpu-dawn-from-source=[bool]` - Build Dawn (WebGPU implementation) from source
 
 Addidtional options for Windows applications:
 * `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled
