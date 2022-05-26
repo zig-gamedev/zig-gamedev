@@ -28,7 +28,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
-    zmesh_options.addTo(exe);
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});

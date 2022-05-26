@@ -14,10 +14,9 @@ const ztracy = @import("libs/ztracy/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
+    const ztracy_enable = builder.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
 
-    const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = ztracy_enable });
-    ztracy_options.addTo(exe);
+    const ztracy_options = ztracy.BuildOptionsStep.init(builder, .{ .enable_ztracy = ztracy_enable });
 
     const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
 
@@ -52,10 +51,9 @@ the `link()` call in your `build.zig` to:
 
 ```zig
 const ztracy_options = ztracy.BuildOptionsStep.init(
-    b,
+    builder,
     .{ .enable_ztracy = true, .enable_fibers = true },
 );
-ztracy_options.addTo(exe);
 
 const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
 

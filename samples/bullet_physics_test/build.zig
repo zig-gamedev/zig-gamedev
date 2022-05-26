@@ -38,10 +38,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.want_lto = false;
 
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
-    zmesh_options.addTo(exe);
-
     const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = options.ztracy_enable });
-    ztracy_options.addTo(exe);
 
     const options_pkg = exe_options.getPackage("build_options");
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});

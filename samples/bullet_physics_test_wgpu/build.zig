@@ -15,6 +15,9 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
         demo_name,
         thisDir() ++ "/src/" ++ demo_name ++ ".zig",
     );
+    const exe_options = b.addOptions();
+    exe.addOptions(options_pkg_name, exe_options);
+    exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const install_content_step = b.addInstallDirectory(.{
         .source_dir = thisDir() ++ "/" ++ content_dir,
@@ -27,11 +30,6 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{ .shape_use_32bit_indices = true });
-    zmesh_options.addTo(exe);
-
-    const exe_options = b.addOptions();
-    exe.addOptions(options_pkg_name, exe_options);
-    exe_options.addOption([]const u8, "content_dir", content_dir);
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const zgpu_pkg = zgpu.getPkg(&.{glfw.pkg});

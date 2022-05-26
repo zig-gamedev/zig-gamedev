@@ -25,7 +25,6 @@ const zmesh = @import("libs/zmesh/build.zig");
 pub fn build(b: *std.build.Builder) void {
     ...
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
-    zmesh_options.addTo(exe);
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
 

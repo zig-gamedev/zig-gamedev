@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const BuildOptions = struct {
+pub const BuildOptions = struct {
     shape_use_32bit_indices: bool = false,
 };
 
@@ -17,12 +17,12 @@ pub const BuildOptionsStep = struct {
         return bos;
     }
 
-    pub fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
-        target_step.addOptions("zmesh_options", bos.step);
-    }
-
     pub fn getPkg(bos: BuildOptionsStep) std.build.Pkg {
         return bos.step.getPackage("zmesh_options");
+    }
+
+    fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
+        target_step.addOptions("zmesh_options", bos.step);
     }
 };
 
@@ -90,6 +90,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) *std.build
 }
 
 pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
+    bos.addTo(exe);
     const lib = buildLibrary(exe, bos);
     exe.linkLibrary(lib);
     exe.addIncludeDir(thisDir() ++ "/libs/cgltf");

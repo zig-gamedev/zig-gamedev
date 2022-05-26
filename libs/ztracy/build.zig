@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const BuildOptions = struct {
+pub const BuildOptions = struct {
     enable_ztracy: bool = false,
     enable_fibers: bool = false,
 };
@@ -18,12 +18,12 @@ pub const BuildOptionsStep = struct {
         return bos;
     }
 
-    pub fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
-        target_step.addOptions("ztracy_options", bos.step);
-    }
-
     pub fn getPkg(bos: BuildOptionsStep) std.build.Pkg {
         return bos.step.getPackage("ztracy_options");
+    }
+
+    fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
+        target_step.addOptions("ztracy_options", bos.step);
     }
 };
 
@@ -36,6 +36,7 @@ pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
 }
 
 pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
+    bos.addTo(exe);
     if (bos.options.enable_ztracy) {
         const enable_fibers = if (bos.options.enable_fibers) "-DTRACY_FIBERS" else "";
 
