@@ -9,17 +9,17 @@ const Options = @import("../../build.zig").Options;
 const content_dir = "mesh_shader_test_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
+    const exe = b.addExecutable("mesh_shader_test", thisDir() ++ "/src/mesh_shader_test.zig");
+
     const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_d2d", false);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
 
-    const exe = b.addExecutable("mesh_shader_test", thisDir() ++ "/src/mesh_shader_test.zig");
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
-    exe.addOptions("build_options", exe_options);
 
     const dxc_step = buildShaders(b);
     const install_content_step = b.addInstallDirectory(.{

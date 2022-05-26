@@ -12,7 +12,14 @@ const Options = @import("../../build.zig").Options;
 const content_dir = "intro_content/";
 
 pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32) *std.build.LibExeObjStep {
+    const intro_index_str = comptime std.fmt.comptimePrint("{}", .{intro_index});
+    const exe = b.addExecutable(
+        "intro" ++ intro_index_str,
+        thisDir() ++ "/src/intro" ++ intro_index_str ++ ".zig",
+    );
+
     const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     if (intro_index == 0) {
@@ -21,16 +28,9 @@ pub fn build(b: *std.build.Builder, options: Options, comptime intro_index: u32)
         exe_options.addOption(bool, "enable_d2d", false);
     }
     exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
 
-    const intro_index_str = comptime std.fmt.comptimePrint("{}", .{intro_index});
-    const exe = b.addExecutable(
-        "intro" ++ intro_index_str,
-        thisDir() ++ "/src/intro" ++ intro_index_str ++ ".zig",
-    );
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
-    exe.addOptions("build_options", exe_options);
 
     const dxc_step = buildShaders(b, intro_index_str);
     const install_content_step = b.addInstallDirectory(.{

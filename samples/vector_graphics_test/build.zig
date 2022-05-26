@@ -7,16 +7,16 @@ const common = @import("../../libs/common/build.zig");
 const Options = @import("../../build.zig").Options;
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
+    const exe = b.addExecutable("vector_graphics_test", thisDir() ++ "/src/vector_graphics_test.zig");
+
     const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_d2d", true);
-    exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
 
-    const exe = b.addExecutable("vector_graphics_test", thisDir() ++ "/src/vector_graphics_test.zig");
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
-    exe.addOptions("build_options", exe_options);
 
     // This is needed to export symbols from an .exe file.
     // We export D3D12SDKVersion and D3D12SDKPath symbols which

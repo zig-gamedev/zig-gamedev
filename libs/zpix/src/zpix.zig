@@ -2,8 +2,6 @@ const std = @import("std");
 const assert = std.debug.assert;
 const windows = std.os.windows;
 const L = std.unicode.utf8ToUtf16LeStringLiteral;
-const zwin32 = @import("zwin32");
-const d3d12 = zwin32.d3d12;
 const kernel32 = windows.kernel32;
 const ole32 = windows.ole32;
 const shell32 = windows.shell32;
@@ -20,8 +18,8 @@ const UINT32 = u32;
 const BOOL = windows.BOOL;
 const DWORD = windows.DWORD;
 
-const options = @import("build_options");
-const enable_pix = if (@hasDecl(options, "zpix_enable")) options.zpix_enable else false;
+const options = @import("zpix_options");
+const enable_pix = if (@hasDecl(options, "enable_zpix")) options.enable_zpix else false;
 
 pub const CAPTURE_TIMING = (1 << 0);
 pub const CAPTURE_GPU = (1 << 1);

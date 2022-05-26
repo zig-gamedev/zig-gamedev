@@ -9,17 +9,16 @@ const Options = @import("../../build.zig").Options;
 const content_dir = "simple_raytracer_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
+    const exe = b.addExecutable("simple_raytracer", thisDir() ++ "/src/simple_raytracer.zig");
+    exe.setBuildMode(options.build_mode);
+    exe.setTarget(options.target);
+
     const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_d2d", false);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
-
-    const exe = b.addExecutable("simple_raytracer", thisDir() ++ "/src/simple_raytracer.zig");
-    exe.setBuildMode(options.build_mode);
-    exe.setTarget(options.target);
-    exe.addOptions("build_options", exe_options);
 
     const dxc_step = buildShaders(b);
     const install_content_step = b.addInstallDirectory(.{
@@ -37,12 +36,13 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.want_lto = false;
 
     const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = options.ztracy_enable });
+    const zpix_options = zpix.BuildOptionsStep.init(b, .{ .enable_zpix = options.zpix_enable });
 
-    const options_pkg = exe_options.getPackage("build_options");
     const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
+    const zpix_pkg = zpix.getPkg(&.{zpix_options.getPkg()});
+    const options_pkg = exe_options.getPackage("build_options");
     const zd3d12_pkg = zd3d12.getPkg(&.{ ztracy_pkg, zwin32.pkg, options_pkg });
     const common_pkg = common.getPkg(&.{ zd3d12_pkg, ztracy_pkg, zwin32.pkg, options_pkg });
-    const zpix_pkg = zpix.getPkg(&.{ options_pkg, zwin32.pkg });
 
     exe.addPackage(ztracy_pkg);
     exe.addPackage(zd3d12_pkg);
@@ -51,6 +51,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(zpix_pkg);
 
     ztracy.link(exe, ztracy_options);
+    zpix.link(exe, zpix_options);
     zd3d12.link(exe);
     common.link(exe);
 

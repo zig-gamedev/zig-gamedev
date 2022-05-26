@@ -8,17 +8,17 @@ const Options = @import("../../build.zig").Options;
 const content_dir = "simple3d_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
+    const exe = b.addExecutable("simple3d", thisDir() ++ "/src/simple3d.zig");
+
     const exe_options = b.addOptions();
+    exe.addOptions("build_options", exe_options);
     exe_options.addOption(bool, "enable_dx_debug", options.enable_dx_debug);
     exe_options.addOption(bool, "enable_dx_gpu_debug", options.enable_dx_gpu_debug);
     exe_options.addOption(bool, "enable_d2d", false);
     exe_options.addOption([]const u8, "content_dir", content_dir);
-    exe_options.addOption(bool, "zpix_enable", options.zpix_enable);
 
-    const exe = b.addExecutable("simple3d", thisDir() ++ "/src/simple3d.zig");
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
-    exe.addOptions("build_options", exe_options);
 
     const dxc_step = buildShaders(b);
     const install_content_step = b.addInstallDirectory(.{
