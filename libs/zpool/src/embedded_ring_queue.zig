@@ -52,26 +52,8 @@ pub fn EmbeddedRingQueue(comptime TElement: type) type {
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        pub fn didEnqueue(self: *Self, value: Element) bool {
-            if (!self.full()) {
-                self.enqueueUnchecked(value);
-                return true;
-            }
-            return false;
-        }
-
-        pub fn didDequeue(self: *Self, value: *Element) bool {
-            if (!self.empty()) {
-                self.dequeueUnchecked(value);
-                return true;
-            }
-            return false;
-        }
-
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
         pub fn enqueue(self: *Self, value: Element) Error!void {
-            if (self.didEnqueue(value)) {
+            if (self.enqueueIfNotFull(value)) {
                 return;
             }
             return Error.Full;
@@ -79,10 +61,28 @@ pub fn EmbeddedRingQueue(comptime TElement: type) type {
 
         pub fn dequeue(self: *Self) Error!Element {
             var value: Element = undefined;
-            if (self.didDequeue(&value)) {
+            if (self.dequeueIfNotEmpty(&value)) {
                 return value;
             }
             return Error.Empty;
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        pub fn enqueueIfNotFull(self: *Self, value: Element) bool {
+            if (self.full()) {
+                return false;
+            }
+            self.enqueueUnchecked(value);
+            return true;
+        }
+
+        pub fn dequeueIfNotEmpty(self: *Self, value: *Element) bool {
+            if (self.empty()) {
+                return false;
+            }
+            self.dequeueUnchecked(value);
+            return true;
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
