@@ -5,7 +5,7 @@ Project is under active development, see [Roadmap](https://github.com/michal-z/z
 
 To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 
-(`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.0-dev.2017 (master)](https://ziglang.org/download/) or newer is required)
+(`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.0-dev.2412 (master)](https://ziglang.org/download/) or newer is required)
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
