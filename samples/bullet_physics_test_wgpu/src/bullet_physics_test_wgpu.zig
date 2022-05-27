@@ -167,7 +167,7 @@ fn update(demo: *DemoState) void {
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
-        var cam_pos = zm.load(demo.camera.position[0..], zm.Vec, 3);
+        var cam_pos = zm.load3(demo.camera.position);
 
         if (window.getKey(.w) == .press) {
             cam_pos += forward;
@@ -190,8 +190,8 @@ fn draw(demo: *DemoState) void {
     const fb_height = gctx.swapchain_descriptor.height;
 
     const cam_world_to_view = zm.lookToLh(
-        zm.load(demo.camera.position[0..], zm.Vec, 3),
-        zm.load(demo.camera.forward[0..], zm.Vec, 3),
+        zm.load3(demo.camera.position),
+        zm.load3(demo.camera.forward),
         zm.f32x4(0.0, 1.0, 0.0, 0.0),
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
