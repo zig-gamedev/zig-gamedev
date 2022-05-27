@@ -34,8 +34,10 @@
 // var v8 = load(mem[100..], F32x8, 0);
 // var v16 = load(mem[200..], F32x16, 0);
 //
-// const camera_position = [3]f32{ 1.0, 2.0, 3.0 };
-// const cam_pos_simd = load3(camera_position);
+// var camera_position = [3]f32{ 1.0, 2.0, 3.0 };
+// var cam_pos = load3(camera_position);
+// ...
+// store3(&camera_position, cam_pos);
 //
 // v4 = sin(v4); // SIMDx4
 // v8 = cos(v8); // .x86_64 -> 2 x SIMDx4, .x86_64+avx+fma -> SIMDx8
@@ -76,6 +78,10 @@
 // load2(arr: [2]f32) F32x4
 // load3(arr: [3]f32) F32x4
 // load4(arr: [4]f32) F32x4
+//
+// store2(arr: *[2]f32, v: F32x4) void
+// store3(arr: *[3]f32, v: F32x4) void
+// store4(arr: *[4]f32, v: F32x4) void
 //
 // splat(comptime T: type, value: f32) T
 // splatInt(comptime T: type, value: u32) T
@@ -405,6 +411,16 @@ pub inline fn load3(arr: [3]f32) F32x4 {
 }
 pub inline fn load4(arr: [4]f32) F32x4 {
     return f32x4(arr[0], arr[1], arr[2], arr[3]);
+}
+
+pub inline fn store2(arr: *[2]f32, v: F32x4) void {
+    arr.* = .{ v[0], v[1] };
+}
+pub inline fn store3(arr: *[3]f32, v: F32x4) void {
+    arr.* = .{ v[0], v[1], v[2] };
+}
+pub inline fn store4(arr: *[4]f32, v: F32x4) void {
+    arr.* = .{ v[0], v[1], v[2], v[3] };
 }
 
 // ------------------------------------------------------------------------------

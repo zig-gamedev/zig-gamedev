@@ -162,7 +162,7 @@ fn update(demo: *DemoState) void {
         const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
 
-        zm.store(demo.camera.forward[0..], forward, 3);
+        zm.store3(&demo.camera.forward, forward);
 
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
@@ -180,7 +180,7 @@ fn update(demo: *DemoState) void {
             cam_pos -= right;
         }
 
-        zm.store(demo.camera.position[0..], cam_pos, 3);
+        zm.store3(&demo.camera.position, cam_pos);
     }
 }
 
