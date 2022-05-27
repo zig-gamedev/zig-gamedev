@@ -474,25 +474,25 @@ fn update(demo: *DemoState) void {
         const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
 
-        zm.store(demo.camera.forward[0..], forward, 3);
+        zm.store3(&demo.camera.forward, forward);
 
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
-        var cpos = zm.load(demo.camera.position[0..], zm.Vec, 3);
+        var cam_pos = zm.load3(demo.camera.position);
 
         if (window.getKey(.w) == .press) {
-            cpos += forward;
+            cam_pos += forward;
         } else if (window.getKey(.s) == .press) {
-            cpos -= forward;
+            cam_pos -= forward;
         }
         if (window.getKey(.d) == .press) {
-            cpos += right;
+            cam_pos += right;
         } else if (window.getKey(.a) == .press) {
-            cpos -= right;
+            cam_pos -= right;
         }
 
-        zm.store(demo.camera.position[0..], cpos, 3);
+        zm.store3(&demo.camera.position, cam_pos);
     }
 }
 
@@ -502,8 +502,8 @@ fn draw(demo: *DemoState) void {
     const fb_height = gctx.swapchain_descriptor.height;
 
     const cam_world_to_view = zm.lookToLh(
-        zm.load(demo.camera.position[0..], zm.Vec, 3),
-        zm.load(demo.camera.forward[0..], zm.Vec, 3),
+        zm.load3(demo.camera.position),
+        zm.load3(demo.camera.forward),
         zm.f32x4(0.0, 1.0, 0.0, 0.0),
     );
     const cam_view_to_clip = zm.perspectiveFovLh(
@@ -571,7 +571,7 @@ fn draw(demo: *DemoState) void {
 
             for (demo.drawables.items) |drawable| {
                 // Update "object to world" xform.
-                const object_to_world = zm.translationV(zm.load(drawable.position[0..], zm.Vec, 3));
+                const object_to_world = zm.translationV(zm.load3(drawable.position));
 
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0].object_to_world = zm.transpose(object_to_world);
