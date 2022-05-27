@@ -86,20 +86,20 @@ pub fn main() !void {
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
-        var campos = zm.load(demo.camera.position[0..], zm.Vec, 3);
+        var cam_pos = zm.load3(demo.camera.position);
 
         if (keyDown('W')) {
-            campos += forward;
+            cam_pos += forward;
         } else if (keyDown('S')) {
-            campos -= forward;
+            cam_pos -= forward;
         }
         if (keyDown('D')) {
-            campos += right;
+            cam_pos += right;
         } else if (keyDown('A')) {
-            campos -= right;
+            cam_pos -= right;
         }
 
-        zm.store(demo.camera.position[0..], campos, 3);
+        zm.store(demo.camera.position[0..], cam_pos, 3);
     }
    
     //
