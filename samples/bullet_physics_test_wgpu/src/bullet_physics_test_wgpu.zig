@@ -272,7 +272,8 @@ fn appendMesh(
     indices: *std.ArrayList(u32),
     positions: *std.ArrayList([3]f32),
     normals: *std.ArrayList([3]f32),
-) void {
+) u32 {
+    const mesh_index = @intCast(u32, meshes.items.len);
     meshes.append(.{
         .index_offset = @intCast(u32, indices.items.len),
         .vertex_offset = @intCast(i32, positions.items.len),
@@ -283,6 +284,7 @@ fn appendMesh(
     indices.appendSlice(mesh.indices) catch unreachable;
     positions.appendSlice(mesh.positions) catch unreachable;
     normals.appendSlice(mesh.normals.?) catch unreachable;
+    return mesh_index;
 }
 
 fn initMeshes(
@@ -299,7 +301,7 @@ fn initMeshes(
         mesh.unweld();
         mesh.computeNormals();
 
-        appendMesh(mesh, meshes, indices, positions, normals);
+        _ = appendMesh(mesh, meshes, indices, positions, normals);
     }
 }
 
