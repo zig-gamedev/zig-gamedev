@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const pkg = std.build.Pkg{
     .name = "zmath",
-    .path = .{ .path = thisDir() ++ "/src/zmath.zig" },
+    .source = .{ .path = thisDir() ++ "/src/zmath.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {

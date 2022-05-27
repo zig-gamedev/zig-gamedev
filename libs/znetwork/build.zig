@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const pkg = std.build.Pkg{
     .name = "znetwork",
-    .path = .{ .path = thisDir() ++ "/src/main.zig" },
+    .source = .{ .path = thisDir() ++ "/src/main.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {

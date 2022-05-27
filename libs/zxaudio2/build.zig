@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
         .name = "zxaudio2",
-        .path = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
+        .source = .{ .path = thisDir() ++ "/src/zxaudio2.zig" },
         .dependencies = dependencies,
     };
 }

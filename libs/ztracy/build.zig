@@ -30,7 +30,7 @@ pub const BuildOptionsStep = struct {
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
         .name = "ztracy",
-        .path = .{ .path = thisDir() ++ "/src/ztracy.zig" },
+        .source = .{ .path = thisDir() ++ "/src/ztracy.zig" },
         .dependencies = dependencies,
     };
 }

@@ -29,7 +29,7 @@ pub const BuildOptionsStep = struct {
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
         .name = "zmesh",
-        .path = .{ .path = thisDir() ++ "/src/main.zig" },
+        .source = .{ .path = thisDir() ++ "/src/main.zig" },
         .dependencies = dependencies,
     };
 }

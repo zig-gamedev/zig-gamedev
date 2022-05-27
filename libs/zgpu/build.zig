@@ -79,7 +79,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
         .name = "zgpu",
-        .path = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+        .source = .{ .path = thisDir() ++ "/src/zgpu.zig" },
         .dependencies = dependencies,
     };
 }

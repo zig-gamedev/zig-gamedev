@@ -29,7 +29,7 @@ pub const BuildOptionsStep = struct {
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
         .name = "zpix",
-        .path = .{ .path = thisDir() ++ "/src/zpix.zig" },
+        .source = .{ .path = thisDir() ++ "/src/zpix.zig" },
         .dependencies = dependencies,
     };
 }
