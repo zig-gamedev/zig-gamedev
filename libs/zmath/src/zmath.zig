@@ -1,6 +1,6 @@
 // ==============================================================================
 //
-// zmath - version 0.3
+// zmath v0.4 (wip)
 // SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/tree/main/libs/zmath
 //
