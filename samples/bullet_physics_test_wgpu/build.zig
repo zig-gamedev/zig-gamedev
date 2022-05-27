@@ -3,6 +3,7 @@ const glfw = @import("../../libs/mach-glfw/build.zig");
 const zgpu = @import("../../libs/zgpu/build.zig");
 const zmath = @import("../../libs/zmath/build.zig");
 const zmesh = @import("../../libs/zmesh/build.zig");
+const ztracy = @import("../../libs/ztracy/build.zig");
 
 const Options = @import("../../build.zig").Options;
 
@@ -29,20 +30,24 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{ .shape_use_32bit_indices = true });
+    const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = options.ztracy_enable });
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{
         .dawn = .{ .from_source = options.zgpu_dawn_from_source },
     });
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
+    const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
     const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), glfw.pkg });
 
     exe.addPackage(zmesh_pkg);
+    exe.addPackage(ztracy_pkg);
     exe.addPackage(glfw.pkg);
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
 
     zgpu.link(exe, zgpu_options);
     zmesh.link(exe, zmesh_options);
+    ztracy.link(exe, ztracy_options);
 
     return exe;
 }
