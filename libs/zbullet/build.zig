@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const pkg = std.build.Pkg{
     .name = "zbullet",
-    .path = .{ .path = thisDir() ++ "/src/zbullet.zig" },
+    .source = .{ .path = thisDir() ++ "/src/zbullet.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -22,7 +22,7 @@ pub fn buildTests(
     const tests = b.addTest(thisDir() ++ "/src/zbullet.zig");
     const zmath = std.build.Pkg{
         .name = "zmath",
-        .path = .{ .path = thisDir() ++ "/../zmath/src/zmath.zig" },
+        .source = .{ .path = thisDir() ++ "/../zmath/src/zmath.zig" },
     };
     tests.addPackage(zmath);
     tests.setBuildMode(build_mode);

@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
         .name = "common",
-        .path = .{ .path = thisDir() ++ "/src/common.zig" },
+        .source = .{ .path = thisDir() ++ "/src/common.zig" },
         .dependencies = dependencies,
     };
 }

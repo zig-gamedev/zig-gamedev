@@ -7,7 +7,7 @@ pub fn build(b: *std.build.Builder) void {
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     return .{
         .name = "zd3d12",
-        .path = .{ .path = thisDir() ++ "/src/zd3d12.zig" },
+        .source = .{ .path = thisDir() ++ "/src/zd3d12.zig" },
         .dependencies = dependencies,
     };
 }
