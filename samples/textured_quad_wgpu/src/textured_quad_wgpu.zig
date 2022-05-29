@@ -123,12 +123,13 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     gctx.queue.writeTexture(
         &.{ .texture = gctx.lookupResource(texture).? },
-        image.data,
         &.{
             .bytes_per_row = image.width * image.channels_in_memory,
             .rows_per_image = image.height,
         },
         &.{ .width = image.width, .height = image.height },
+        u8,
+        image.data,
     );
 
     // Create a sampler.

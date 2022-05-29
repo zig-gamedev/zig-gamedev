@@ -260,12 +260,13 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
         gctx.queue.writeTexture(
             &.{ .texture = gctx.lookupResource(mesh_tex[tex_index]).? },
-            image.data,
             &.{
                 .bytes_per_row = image.bytes_per_row,
                 .rows_per_image = image.height,
             },
             &.{ .width = image.width, .height = image.height },
+            u8,
+            image.data,
         );
     }
 
@@ -818,12 +819,13 @@ fn precomputeImageLighting(
 
         gctx.queue.writeTexture(
             &.{ .texture = gctx.lookupResource(hdr_source_tex).? },
-            image.data,
             &.{
                 .bytes_per_row = image.bytes_per_row,
                 .rows_per_image = image.height,
             },
             &.{ .width = image.width, .height = image.height },
+            f16,
+            image.data,
         );
 
         break :hdr_source_tex hdr_source_tex;

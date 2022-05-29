@@ -63,15 +63,16 @@ pub inline fn writeBuffer(queue: Queue, buffer: Buffer, buffer_offset: u64, comp
 pub inline fn writeTexture(
     queue: Queue,
     destination: *const ImageCopyTexture,
-    data: anytype,
     data_layout: *const Texture.DataLayout,
     write_size: *const Extent3D,
+    comptime T: type,
+    data: []const T,
 ) void {
     queue.vtable.writeTexture(
         queue.ptr,
         destination,
         @ptrCast(*const anyopaque, data.ptr),
-        @intCast(u64, data.len) * @sizeOf(std.meta.Elem(@TypeOf(data))),
+        @intCast(usize, data.len) * @sizeOf(std.meta.Elem(@TypeOf(data))),
         data_layout,
         write_size,
     );
