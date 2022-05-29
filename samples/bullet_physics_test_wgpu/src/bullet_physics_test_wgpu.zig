@@ -24,6 +24,9 @@ const Mesh = struct {
     num_vertices: u32,
 };
 
+const mesh_world = 0;
+const mesh_cube = 1;
+
 const Drawable = struct {
     mesh_index: u32,
     position: [3]f32,
@@ -69,7 +72,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
     var normals = std.ArrayList([3]f32).init(arena);
-    initMeshes(&meshes, &indices, &positions, &normals);
+    try initMeshes(&meshes, &indices, &positions, &normals);
 
     const total_num_vertices = @intCast(u32, positions.items.len);
     const total_num_indices = @intCast(u32, indices.items.len);
@@ -268,40 +271,60 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 
 fn appendMesh(
     mesh: zmesh.Shape,
-    meshes: *std.ArrayList(Mesh),
-    indices: *std.ArrayList(u32),
-    positions: *std.ArrayList([3]f32),
-    normals: *std.ArrayList([3]f32),
+    all_meshes: *std.ArrayList(Mesh),
+    all_indices: *std.ArrayList(u32),
+    all_positions: *std.ArrayList([3]f32),
+    all_normals: *std.ArrayList([3]f32),
 ) u32 {
-    const mesh_index = @intCast(u32, meshes.items.len);
-    meshes.append(.{
-        .index_offset = @intCast(u32, indices.items.len),
-        .vertex_offset = @intCast(i32, positions.items.len),
+    const mesh_index = @intCast(u32, all_meshes.items.len);
+    all_meshes.append(.{
+        .index_offset = @intCast(u32, all_indices.items.len),
+        .vertex_offset = @intCast(i32, all_positions.items.len),
         .num_indices = @intCast(u32, mesh.indices.len),
         .num_vertices = @intCast(u32, mesh.positions.len),
     }) catch unreachable;
 
-    indices.appendSlice(mesh.indices) catch unreachable;
-    positions.appendSlice(mesh.positions) catch unreachable;
-    normals.appendSlice(mesh.normals.?) catch unreachable;
+    all_indices.appendSlice(mesh.indices) catch unreachable;
+    all_positions.appendSlice(mesh.positions) catch unreachable;
+    all_normals.appendSlice(mesh.normals.?) catch unreachable;
     return mesh_index;
 }
 
 fn initMeshes(
-    meshes: *std.ArrayList(Mesh),
-    indices: *std.ArrayList(u32),
-    positions: *std.ArrayList([3]f32),
-    normals: *std.ArrayList([3]f32),
-) void {
-    // Parametric sphere.
+    all_meshes: *std.ArrayList(Mesh),
+    all_indices: *std.ArrayList(u32),
+    all_positions: *std.ArrayList([3]f32),
+    all_normals: *std.ArrayList([3]f32),
+) !void {
+    // World mesh.
     {
-        var mesh = zmesh.Shape.initParametricSphere(20, 20);
+        const mesh_index = @intCast(u32, all_meshes.items.len);
+        const index_offset = @intCast(u32, all_indices.items.len);
+        const vertex_offset = @intCast(u32, all_positions.items.len);
+
+        const data = try zmesh.io.parseAndLoadFile(content_dir ++ "world.gltf");
+        defer zmesh.io.cgltf.free(data);
+        try zmesh.io.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
+
+        try all_meshes.append(.{
+            .index_offset = index_offset,
+            .vertex_offset = @intCast(i32, vertex_offset),
+            .num_indices = @intCast(u32, all_indices.items.len) - index_offset,
+            .num_vertices = @intCast(u32, all_positions.items.len) - vertex_offset,
+        });
+        assert(mesh_index == mesh_world);
+    }
+
+    // Cube mesh.
+    {
+        var mesh = zmesh.Shape.initCube();
         defer mesh.deinit();
-        mesh.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
+        mesh.translate(-0.5, -0.5, -0.5);
         mesh.unweld();
         mesh.computeNormals();
 
-        _ = appendMesh(mesh, meshes, indices, positions, normals);
+        const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
+        assert(mesh_index == mesh_cube);
     }
 }
 
