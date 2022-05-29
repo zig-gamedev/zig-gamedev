@@ -1008,7 +1008,8 @@ void cbtBodySetMassProps(CbtBodyHandle body_handle, float mass, const CbtVector3
 void cbtBodySetDamping(CbtBodyHandle body_handle, float linear, float angular) {
     assert(body_handle && cbtBodyIsCreated(body_handle));
     auto body = (btRigidBody*)body_handle;
-    body->setDamping(linear, angular);
+    // TODO: Disabling damping for now because it casues hang when calling powf() inside Bullet. Very strange.
+    //body->setDamping(linear, angular);
 }
 
 void cbtBodySetLinearVelocity(CbtBodyHandle body_handle, const CbtVector3 velocity) {
