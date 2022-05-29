@@ -43,10 +43,16 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.linkSystemLibrary("c++");
 
     // TODO: Use the old damping method for now otherwise there is a hang in powf().
-    lib.addCSourceFile(thisDir() ++ "/libs/cbullet/cbullet.cpp", &.{"-DBT_USE_OLD_DAMPING_METHOD"});
-    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btLinearMathAll.cpp", &.{"-DBT_USE_OLD_DAMPING_METHOD"});
-    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp", &.{"-DBT_USE_OLD_DAMPING_METHOD"});
-    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp", &.{"-DBT_USE_OLD_DAMPING_METHOD"});
+    const flags = &.{
+        "-DBT_USE_OLD_DAMPING_METHOD",
+        "-DBT_THREADSAFE=1",
+        "-std=c++11",
+        "-fno-sanitize=undefined",
+    };
+    lib.addCSourceFile(thisDir() ++ "/libs/cbullet/cbullet.cpp", flags);
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btLinearMathAll.cpp", flags);
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletCollisionAll.cpp", flags);
+    lib.addCSourceFile(thisDir() ++ "/libs/bullet/btBulletDynamicsAll.cpp", flags);
 
     return lib;
 }
