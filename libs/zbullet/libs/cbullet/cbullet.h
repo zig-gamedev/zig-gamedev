@@ -136,6 +136,10 @@ typedef struct CbtRayCastResult {
     CbtBodyHandle body;
 } CbtRayCastResult;
 
+// Can be only called from main thread
+void cbtInit(void);
+void cbtDeinit(void);
+
 //
 // World
 //

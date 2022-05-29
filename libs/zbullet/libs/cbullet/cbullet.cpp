@@ -84,14 +84,23 @@ struct WorldData {
     DebugDraw* debug = nullptr;
 };
 
+static btITaskScheduler* s_task_scheduler = nullptr;
+
+void cbtInit(void) {
+    assert(s_task_scheduler == nullptr);
+    s_task_scheduler = btCreateDefaultTaskScheduler();
+    btSetTaskScheduler(s_task_scheduler);
+}
+
+void cbtDeinit(void) {
+    assert(s_task_scheduler != nullptr);
+    btSetTaskScheduler(nullptr);
+    delete s_task_scheduler;
+    s_task_scheduler = nullptr;
+}
+
 CbtWorldHandle cbtWorldCreate(void) {
     // TODO: Check for oom errors.
-
-    if (btITaskScheduler* ts = btCreateDefaultTaskScheduler()) {
-        btSetTaskScheduler(ts);
-    } else {
-        btSetTaskScheduler(btGetSequentialTaskScheduler());
-    }
 
     auto world_data = (WorldData*)btAlignedAlloc(sizeof(WorldData), 16);
     new (world_data) WorldData();
