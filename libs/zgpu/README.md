@@ -22,15 +22,13 @@ Copy `zgpu`, `mach-glfw` and `mach-gpu-dawn` folders to a `libs` subdirectory of
 Then in your `build.zig` add:
 
 ```zig
-const glfw = @import("libs/mach-glfw/build.zig");
 const zgpu = @import("libs/zgpu/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{ .dawn = .{ .from_source = false } });
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), glfw.pkg });
+    const zgpu_pkg = zgpu.getPkg(&.{zgpu_options.getPkg()});
 
-    exe.addPackage(glfw.pkg);
     exe.addPackage(zgpu_pkg);
 
     zgpu.link(exe, zgpu_options);

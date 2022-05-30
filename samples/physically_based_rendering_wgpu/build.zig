@@ -1,5 +1,4 @@
 const std = @import("std");
-const glfw = @import("../../libs/mach-glfw/build.zig");
 const zgpu = @import("../../libs/zgpu/build.zig");
 const zmath = @import("../../libs/zmath/build.zig");
 const zmesh = @import("../../libs/zmesh/build.zig");
@@ -33,10 +32,9 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     });
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), glfw.pkg });
+    const zgpu_pkg = zgpu.getPkg(&.{zgpu_options.getPkg()});
 
     exe.addPackage(zmesh_pkg);
-    exe.addPackage(glfw.pkg);
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
 
