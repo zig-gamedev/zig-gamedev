@@ -31,37 +31,6 @@ pub const BuildOptionsStep = struct {
     }
 };
 
-fn buildLibrary(
-    exe: *std.build.LibExeObjStep,
-    bos: BuildOptionsStep,
-) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("zgpu", thisDir() ++ "/src/zgpu.zig");
-
-    lib.setBuildMode(exe.build_mode);
-    lib.setTarget(exe.target);
-
-    glfw.link(exe.builder, lib, bos.options.glfw);
-    gpu_dawn.link(exe.builder, lib, bos.options.dawn);
-
-    if (bos.options.use_imgui) {
-        lib.addIncludeDir(thisDir() ++ "/libs");
-        lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
-        lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", &.{""});
-        lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", &.{""});
-        lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &.{""});
-        lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
-        lib.addCSourceFile(thisDir() ++ "/libs/imgui/cimgui.cpp", &.{""});
-        lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
-        lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
-    }
-
-    if (bos.options.use_stb_image) {
-        lib.addCSourceFile(thisDir() ++ "/libs/stb/stb_image.c", &.{"-std=c99"});
-    }
-
-    return lib;
-}
-
 pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
     bos.addTo(exe);
 
@@ -71,11 +40,20 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
     glfw.link(exe.builder, exe, bos.options.glfw);
     gpu_dawn.link(exe.builder, exe, bos.options.dawn);
 
-    const lib = buildLibrary(exe, bos);
-    exe.linkLibrary(lib);
-
     if (bos.options.use_imgui) {
         exe.addIncludeDir(thisDir() ++ "/libs");
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", &.{""});
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", &.{""});
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &.{""});
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/cimgui.cpp", &.{""});
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
+    }
+
+    if (bos.options.use_stb_image) {
+        exe.addCSourceFile(thisDir() ++ "/libs/stb/stb_image.c", &.{"-std=c99"});
     }
 }
 
