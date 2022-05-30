@@ -92,7 +92,7 @@ fn buildLibrary(b: *Builder, step: *std.build.LibExeObjStep, options: Options) *
         },
     }
     linkGLFWDependencies(b, lib, options);
-    lib.install();
+    //lib.install();
     return lib;
 }
 

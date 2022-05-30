@@ -158,7 +158,7 @@ fn linkFromSource(b: *Builder, step: *std.build.LibExeObjStep, options: Options)
 
     var main_abs = std.fs.path.join(b.allocator, &.{ thisDir(), "src/dawn/dummy.zig" }) catch unreachable;
     const lib_dawn = b.addStaticLibrary("dawn", main_abs);
-    lib_dawn.install();
+    //lib_dawn.install();
     lib_dawn.setBuildMode(step.build_mode);
     lib_dawn.setTarget(step.target);
     lib_dawn.linkLibCpp();
