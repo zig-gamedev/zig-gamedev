@@ -17,7 +17,7 @@ For more details please see below.
 
 ## Getting started
 
-Copy `zgpu`, `mach-glfw` and `mach-gpu-dawn` folders to a `libs` subdirectory of the root of your project.
+Copy `zgpu` folder to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 

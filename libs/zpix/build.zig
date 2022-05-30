@@ -9,7 +9,7 @@ pub const BuildOptionsStep = struct {
     step: *std.build.OptionsStep,
 
     pub fn init(b: *std.build.Builder, options: BuildOptions) BuildOptionsStep {
-        const bos = BuildOptionsStep{
+        const bos = .{
             .options = options,
             .step = b.addOptions(),
         };
