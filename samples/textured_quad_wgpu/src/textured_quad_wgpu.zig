@@ -1,8 +1,8 @@
 const std = @import("std");
 const math = std.math;
 const glfw = @import("glfw");
+const gpu = @import("gpu");
 const zgpu = @import("zgpu");
-const gpu = zgpu.gpu;
 const c = zgpu.cimgui;
 const zm = @import("zmath");
 

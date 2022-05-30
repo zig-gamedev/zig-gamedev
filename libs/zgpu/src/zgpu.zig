@@ -144,7 +144,7 @@ pub const cimgui = @cImport({
     @cDefine("CIMGUI_NO_EXPORT", "");
     @cInclude("imgui/cimgui.h");
 });
-pub const gpu = @import("mach-gpu/main.zig");
+const gpu = @import("gpu");
 const wgsl = @import("common_wgsl.zig");
 
 pub const GraphicsContext = struct {
