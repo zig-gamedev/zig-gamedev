@@ -74,34 +74,48 @@ struct DebugDraw : public btIDebugDraw {
 };
 
 struct WorldData {
-    btDiscreteDynamicsWorldMt* world = nullptr;
+    btDiscreteDynamicsWorld* world = nullptr;
     btDefaultCollisionConfiguration* collision_config = nullptr;
-    btCollisionDispatcherMt* dispatcher = nullptr;
+    btCollisionDispatcher* dispatcher = nullptr;
     btDbvtBroadphase* broadphase = nullptr;
-    btConstraintSolverPoolMt* solver_pool = nullptr;
-    btSequentialImpulseConstraintSolverMt* solver = nullptr;
+    btSequentialImpulseConstraintSolver* solver = nullptr;
 
+    btConstraintSolverPoolMt* solver_pool = nullptr;
     DebugDraw* debug = nullptr;
 };
 
 static btITaskScheduler* s_task_scheduler = nullptr;
 
-void cbtInit(void) {
+void cbtTaskSchedInit(void) {
     assert(s_task_scheduler == nullptr);
     s_task_scheduler = btCreateDefaultTaskScheduler();
     btSetTaskScheduler(s_task_scheduler);
 }
 
-void cbtDeinit(void) {
+void cbtTaskSchedDeinit(void) {
     assert(s_task_scheduler != nullptr);
     btSetTaskScheduler(nullptr);
     delete s_task_scheduler;
     s_task_scheduler = nullptr;
 }
 
+int cbtTaskSchedGetNumThreads(void) {
+    assert(s_task_scheduler != nullptr);
+    return s_task_scheduler->getNumThreads();
+}
+
+int cbtTaskSchedGetMaxNumThreads(void) {
+    assert(s_task_scheduler != nullptr);
+    return s_task_scheduler->getMaxNumThreads();
+}
+
+void cbtTaskSchedSetNumThreads(int num_threads) {
+    assert(s_task_scheduler != nullptr);
+    s_task_scheduler->setNumThreads(num_threads);
+}
+
 CbtWorldHandle cbtWorldCreate(void) {
     // TODO: Check for oom errors.
-
     auto world_data = (WorldData*)btAlignedAlloc(sizeof(WorldData), 16);
     new (world_data) WorldData();
 
@@ -109,31 +123,52 @@ CbtWorldHandle cbtWorldCreate(void) {
         sizeof(btDefaultCollisionConfiguration),
         16
     );
-    world_data->dispatcher = (btCollisionDispatcherMt*)btAlignedAlloc(sizeof(btCollisionDispatcherMt), 16);
     world_data->broadphase = (btDbvtBroadphase*)btAlignedAlloc(sizeof(btDbvtBroadphase), 16);
-    world_data->solver_pool = (btConstraintSolverPoolMt*)btAlignedAlloc(
-        sizeof(btConstraintSolverPoolMt),
-        16
-    );
-    world_data->solver = (btSequentialImpulseConstraintSolverMt*)btAlignedAlloc(
-        sizeof(btSequentialImpulseConstraintSolverMt),
-        16
-    );
-    world_data->world = (btDiscreteDynamicsWorldMt*)btAlignedAlloc(sizeof(btDiscreteDynamicsWorldMt), 16);
 
     new (world_data->collision_config) btDefaultCollisionConfiguration();
-    new (world_data->dispatcher) btCollisionDispatcherMt(world_data->collision_config);
     new (world_data->broadphase) btDbvtBroadphase();
-    new (world_data->solver_pool) btConstraintSolverPoolMt(32);
-    new (world_data->solver) btSequentialImpulseConstraintSolverMt();
 
-    new (world_data->world) btDiscreteDynamicsWorldMt(
-        world_data->dispatcher,
-        world_data->broadphase,
-        world_data->solver_pool,
-        world_data->solver,
-        world_data->collision_config
-    );
+    if (s_task_scheduler == nullptr) {
+        world_data->dispatcher = (btCollisionDispatcher*)btAlignedAlloc(sizeof(btCollisionDispatcher), 16);
+        world_data->solver = (btSequentialImpulseConstraintSolver*)btAlignedAlloc(
+            sizeof(btSequentialImpulseConstraintSolver),
+            16
+        );
+        world_data->world = (btDiscreteDynamicsWorld*)btAlignedAlloc(sizeof(btDiscreteDynamicsWorld), 16);
+
+        new (world_data->dispatcher) btCollisionDispatcher(world_data->collision_config);
+        new (world_data->solver) btSequentialImpulseConstraintSolver();
+
+        new (world_data->world) btDiscreteDynamicsWorld(
+            world_data->dispatcher,
+            world_data->broadphase,
+            world_data->solver,
+            world_data->collision_config
+        );
+    } else {
+        world_data->dispatcher = (btCollisionDispatcherMt*)btAlignedAlloc(sizeof(btCollisionDispatcherMt), 16);
+        world_data->solver_pool = (btConstraintSolverPoolMt*)btAlignedAlloc(
+            sizeof(btConstraintSolverPoolMt),
+            16
+        );
+        world_data->solver = (btSequentialImpulseConstraintSolverMt*)btAlignedAlloc(
+            sizeof(btSequentialImpulseConstraintSolverMt),
+            16
+        );
+        world_data->world = (btDiscreteDynamicsWorldMt*)btAlignedAlloc(sizeof(btDiscreteDynamicsWorldMt), 16);
+
+        new (world_data->dispatcher) btCollisionDispatcherMt(world_data->collision_config);
+        new (world_data->solver_pool) btConstraintSolverPoolMt(s_task_scheduler->getNumThreads());
+        new (world_data->solver) btSequentialImpulseConstraintSolverMt();
+
+        new (world_data->world) btDiscreteDynamicsWorldMt(
+            world_data->dispatcher,
+            world_data->broadphase,
+            world_data->solver_pool,
+            world_data->solver,
+            world_data->collision_config
+        );
+    }
 
     return (CbtWorldHandle)world_data;
 }
@@ -142,19 +177,22 @@ void cbtWorldDestroy(CbtWorldHandle world_handle) {
     assert(world_handle);
     auto world_data = (WorldData*)world_handle;
 
-    world_data->dispatcher->~btCollisionDispatcherMt();
+    world_data->dispatcher->~btCollisionDispatcher();
     world_data->collision_config->~btDefaultCollisionConfiguration();
     world_data->broadphase->~btDbvtBroadphase();
-    world_data->solver_pool->~btConstraintSolverPoolMt();
-    world_data->solver->~btSequentialImpulseConstraintSolverMt();
-    world_data->world->~btDiscreteDynamicsWorldMt();
+    world_data->solver->~btSequentialImpulseConstraintSolver();
+    world_data->world->~btDiscreteDynamicsWorld();
 
     btAlignedFree(world_data->dispatcher);
     btAlignedFree(world_data->collision_config);
     btAlignedFree(world_data->broadphase);
-    btAlignedFree(world_data->solver_pool);
     btAlignedFree(world_data->solver);
     btAlignedFree(world_data->world);
+
+    if (world_data->solver_pool != nullptr) {
+        world_data->solver_pool->~btConstraintSolverPoolMt();
+        btAlignedFree(world_data->solver_pool);
+    }
 
     if (world_data->debug) {
         world_data->debug->~DebugDraw();

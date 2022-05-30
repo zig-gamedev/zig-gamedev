@@ -136,9 +136,14 @@ typedef struct CbtRayCastResult {
     CbtBodyHandle body;
 } CbtRayCastResult;
 
-// Can be only called from main thread
-void cbtInit(void);
-void cbtDeinit(void);
+//
+// Task scheduler
+//
+void cbtTaskSchedInit(void);
+void cbtTaskSchedDeinit(void);
+int cbtTaskSchedGetNumThreads(void);
+int cbtTaskSchedGetMaxNumThreads(void);
+void cbtTaskSchedSetNumThreads(int num_threads);
 
 //
 // World

@@ -1035,7 +1035,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     var all_indices = std.ArrayList(u32).init(arena_allocator);
     try loadAllMeshes(&all_meshes, &all_positions, &all_normals, &all_indices);
 
-    zb.cbtInit();
+    zb.cbtTaskSchedInit();
 
     const physics_world = zb.cbtWorldCreate();
     zb.cbtWorldSetGravity(physics_world, &Vec3.init(0.0, -10.0, 0.0).c);
@@ -1197,7 +1197,7 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     demo.physics_debug.deinit();
     allocator.destroy(demo.physics_debug);
     zb.cbtWorldDestroy(demo.physics_world);
-    zb.cbtDeinit();
+    zb.cbtTaskSchedDeinit();
     demo.* = undefined;
 }
 
