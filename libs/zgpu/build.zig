@@ -74,13 +74,13 @@ pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
         static.deps[i] = dep;
     }
     // When user links with `zgpu` we automatically inject dependencies to `gpu` and `glfw`.
-    static.deps[dependencies.len - 1] = gpu_pkg;
-    static.deps[dependencies.len] = glfw.pkg;
+    static.deps[dependencies.len] = gpu_pkg;
+    static.deps[dependencies.len + 1] = glfw.pkg;
 
     return .{
         .name = "zgpu",
         .source = .{ .path = thisDir() ++ "/src/zgpu.zig" },
-        .dependencies = static.deps[0 .. dependencies.len + 1],
+        .dependencies = static.deps[0 .. dependencies.len + 2],
     };
 }
 
