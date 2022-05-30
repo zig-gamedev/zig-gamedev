@@ -4,7 +4,7 @@ const main = .{ .zig = thisDir() ++ "/src/main.zig" };
 
 pub const pkg = std.build.Pkg{
     .name = "zpool",
-    .path = .{ .path = main.zig },
+    .source = .{ .path = main.zig },
 };
 
 pub fn build(b: *std.build.Builder) void {
