@@ -17,11 +17,12 @@ For more details please see below.
 
 ## Getting started
 
-Copy `zgpu` folder to a `libs` subdirectory of the root of your project.
+Copy `zgpu` and `zpool` folders to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 ```zig
 const zgpu = @import("libs/zgpu/build.zig");
+const zpool = @import("libs/zpool/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
