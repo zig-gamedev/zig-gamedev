@@ -13,4 +13,4 @@
 *.blend
 *.hiplc
 .gitkeep
-/libs/mach-gpu-dawn/libs/*
+/libs/zgpu/libs/mach-gpu-dawn/libs/*

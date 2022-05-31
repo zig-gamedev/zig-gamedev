@@ -1088,6 +1088,102 @@ pub const GraphicsContext = struct {
     }
 };
 
+pub const util = struct {
+    /// You may disable async shader compilation for debugging purposes.
+    const enable_async_shader_compilation = true;
+
+    /// Helper function for creating render pipelines.
+    /// Supports: one vertex buffer, one non-blending render target,
+    /// one vertex shader module and one fragment shader module.
+    pub fn createSimpleRenderPipeline(
+        allocator: std.mem.Allocator,
+        gctx: *GraphicsContext,
+        bgls: []const BindGroupLayoutHandle,
+        wgsl_vs: [:0]const u8,
+        wgsl_fs: [:0]const u8,
+        rt_format: gpu.Texture.Format,
+        vertex_buffer_layout: gpu.VertexBufferLayout,
+        primitive_state: gpu.PrimitiveState,
+        depth_state: ?gpu.DepthStencilState,
+        out_pipe: *RenderPipelineHandle,
+    ) void {
+        const pl = gctx.createPipelineLayout(bgls);
+        defer gctx.releaseResource(pl);
+
+        const vs_desc = gpu.ShaderModule.Descriptor{ .code = .{ .wgsl = wgsl_vs.ptr } };
+        const vs_mod = gctx.device.createShaderModule(&vs_desc);
+        defer vs_mod.release();
+
+        const fs_desc = gpu.ShaderModule.Descriptor{ .code = .{ .wgsl = wgsl_fs.ptr } };
+        const fs_mod = gctx.device.createShaderModule(&fs_desc);
+        defer fs_mod.release();
+
+        const color_target = gpu.ColorTargetState{ .format = rt_format };
+
+        const pipe_desc = gpu.RenderPipeline.Descriptor{
+            .vertex = gpu.VertexState{
+                .module = vs_mod,
+                .entry_point = "main",
+                .buffers = &.{vertex_buffer_layout},
+            },
+            .fragment = &gpu.FragmentState{
+                .module = fs_mod,
+                .entry_point = "main",
+                .targets = &.{color_target},
+            },
+            .depth_stencil = if (depth_state) |ds| &ds else null,
+            .primitive = primitive_state,
+        };
+
+        if (enable_async_shader_compilation) {
+            gctx.createRenderPipelineAsync(allocator, pl, pipe_desc, out_pipe);
+        } else {
+            out_pipe.* = gctx.createRenderPipeline(pl, pipe_desc);
+        }
+    }
+
+    /// Helper function for creating render passes.
+    /// Supports: One color attachment and optional depth attachment.
+    pub fn beginSimpleRenderPass(
+        encoder: gpu.CommandEncoder,
+        load_op: gpu.LoadOp,
+        color_texv: gpu.TextureView,
+        clear_color: ?gpu.Color,
+        depth_texv: ?gpu.TextureView,
+        clear_depth: ?f32,
+    ) gpu.RenderPassEncoder {
+        if (depth_texv == null) {
+            assert(clear_depth == null);
+        }
+        const color_attachment = gpu.RenderPassColorAttachment{
+            .view = color_texv,
+            .load_op = load_op,
+            .store_op = .store,
+            .clear_value = if (clear_color) |cc| cc else .{ .r = 0, .g = 0, .b = 0, .a = 0 },
+        };
+        if (depth_texv) |dtexv| {
+            const depth_attachment = gpu.RenderPassDepthStencilAttachment{
+                .view = dtexv,
+                .depth_load_op = load_op,
+                .depth_store_op = .store,
+                .depth_clear_value = if (clear_depth) |cd| cd else 0.0,
+            };
+            return encoder.beginRenderPass(&gpu.RenderPassEncoder.Descriptor{
+                .color_attachments = &.{color_attachment},
+                .depth_stencil_attachment = &depth_attachment,
+            });
+        }
+        return encoder.beginRenderPass(&gpu.RenderPassEncoder.Descriptor{
+            .color_attachments = &.{color_attachment},
+        });
+    }
+
+    pub fn endRelease(pass: anytype) void {
+        pass.end();
+        pass.release();
+    }
+};
+
 pub const BufferHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
 pub const TextureHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
 pub const TextureViewHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
