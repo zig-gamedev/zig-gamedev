@@ -26,7 +26,7 @@ const zgpu = @import("libs/zgpu/build.zig");
 pub fn build(b: *std.build.Builder) void {
     ...
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{ .dawn = .{ .from_source = false } });
-    const zgpu_pkg = zgpu.getPkg(&.{zgpu_options.getPkg()});
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg });
 
     exe.addPackage(zgpu_pkg);
 
