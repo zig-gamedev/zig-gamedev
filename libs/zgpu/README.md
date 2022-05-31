@@ -164,7 +164,7 @@ pub fn Image(comptime ChannelType: type) type {
 var image = try zgpu.stbi.Image(u8).init("path_to_image_file", num_desired_channels);
 defer image.deinit();
 ```
-If you don't want to use `dear imgui` library you can disable it by setting `BuildOptions.use_stb_image = false`.
+If you don't want to use `stb_image` library you can disable it by setting `BuildOptions.use_stb_image = false`.
 
 ### GUI based on `dear imgui` library (optional)
 
