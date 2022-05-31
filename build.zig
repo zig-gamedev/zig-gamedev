@@ -14,13 +14,6 @@ pub fn build(b: *std.build.Builder) void {
         "Build Dawn (WebGPU) from source",
     ) orelse false;
 
-    // TODO: Remove this
-    // On macOS you must compile with `-Dzgpu-dawn-from-source=true`
-    // (this will be fixed shortly)
-    if (@import("builtin").os.tag == .macos) {
-        options.zgpu_dawn_from_source = true;
-    }
-
     if (options.zgpu_dawn_from_source) {
         ensureSubmodules(b.allocator) catch |err| @panic(@errorName(err));
     }
