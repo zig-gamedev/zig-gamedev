@@ -813,15 +813,15 @@ pub const GraphicsContext = struct {
         if (gctx.isResourceValid(handle)) {
             const T = @TypeOf(handle);
             return switch (T) {
-                BufferHandle => gctx.buffer_pool.resources[handle.index].gpuobj.?,
-                TextureHandle => gctx.texture_pool.resources[handle.index].gpuobj.?,
-                TextureViewHandle => gctx.texture_view_pool.resources[handle.index].gpuobj.?,
-                SamplerHandle => gctx.sampler_pool.resources[handle.index].gpuobj.?,
-                RenderPipelineHandle => gctx.render_pipeline_pool.resources[handle.index].gpuobj.?,
-                ComputePipelineHandle => gctx.compute_pipeline_pool.resources[handle.index].gpuobj.?,
-                BindGroupHandle => gctx.bind_group_pool.resources[handle.index].gpuobj.?,
-                BindGroupLayoutHandle => gctx.bind_group_layout_pool.resources[handle.index].gpuobj.?,
-                PipelineLayoutHandle => gctx.pipeline_layout_pool.resources[handle.index].gpuobj.?,
+                BufferHandle => gctx.buffer_pool.getGpuObj(handle).?,
+                TextureHandle => gctx.texture_pool.getGpuObj(handle).?,
+                TextureViewHandle => gctx.texture_view_pool.getGpuObj(handle).?,
+                SamplerHandle => gctx.sampler_pool.getGpuObj(handle).?,
+                RenderPipelineHandle => gctx.render_pipeline_pool.getGpuObj(handle).?,
+                ComputePipelineHandle => gctx.compute_pipeline_pool.getGpuObj(handle).?,
+                BindGroupHandle => gctx.bind_group_pool.getGpuObj(handle).?,
+                BindGroupLayoutHandle => gctx.bind_group_layout_pool.getGpuObj(handle).?,
+                PipelineLayoutHandle => gctx.pipeline_layout_pool.getGpuObj(handle).?,
                 else => @compileError(
                     "[zgpu] GraphicsContext.lookupResource() not implemented for " ++ @typeName(T),
                 ),
@@ -834,15 +834,15 @@ pub const GraphicsContext = struct {
         if (gctx.isResourceValid(handle)) {
             const T = @TypeOf(handle);
             return switch (T) {
-                BufferHandle => gctx.buffer_pool.resources[handle.index],
-                TextureHandle => gctx.texture_pool.resources[handle.index],
-                TextureViewHandle => gctx.texture_view_pool.resources[handle.index],
-                SamplerHandle => gctx.sampler_pool.resources[handle.index],
-                RenderPipelineHandle => gctx.render_pipeline_pool.resources[handle.index],
-                ComputePipelineHandle => gctx.compute_pipeline_pool.resources[handle.index],
-                BindGroupHandle => gctx.bind_group_pool.resources[handle.index],
-                BindGroupLayoutHandle => gctx.bind_group_layout_pool.resources[handle.index],
-                PipelineLayoutHandle => gctx.pipeline_layout_pool.resources[handle.index],
+                BufferHandle => gctx.buffer_pool.getInfo(handle),
+                TextureHandle => gctx.texture_pool.getInfo(handle),
+                TextureViewHandle => gctx.texture_view_pool.getInfo(handle),
+                SamplerHandle => gctx.sampler_pool.getInfo(handle),
+                RenderPipelineHandle => gctx.render_pipeline_pool.getInfo(handle),
+                ComputePipelineHandle => gctx.compute_pipeline_pool.getInfo(handle),
+                BindGroupHandle => gctx.bind_group_pool.getInfo(handle),
+                BindGroupLayoutHandle => gctx.bind_group_layout_pool.getInfo(handle),
+                PipelineLayoutHandle => gctx.pipeline_layout_pool.getInfo(handle),
                 else => @compileError(
                     "[zgpu] GraphicsContext.lookupResourceInfo() not implemented for " ++ @typeName(T),
                 ),
@@ -851,7 +851,7 @@ pub const GraphicsContext = struct {
         return null;
     }
 
-    pub fn releaseResource(gctx: GraphicsContext, handle: anytype) void {
+    pub fn releaseResource(gctx: *GraphicsContext, handle: anytype) void {
         const T = @TypeOf(handle);
         switch (T) {
             BufferHandle => gctx.buffer_pool.destroyResource(handle, false),
@@ -867,7 +867,7 @@ pub const GraphicsContext = struct {
         }
     }
 
-    pub fn destroyResource(gctx: GraphicsContext, handle: anytype) void {
+    pub fn destroyResource(gctx: *GraphicsContext, handle: anytype) void {
         const T = @TypeOf(handle);
         switch (T) {
             BufferHandle => gctx.buffer_pool.destroyResource(handle, true),
@@ -883,7 +883,7 @@ pub const GraphicsContext = struct {
             TextureHandle => return gctx.texture_pool.isHandleValid(handle),
             TextureViewHandle => {
                 if (gctx.texture_view_pool.isHandleValid(handle)) {
-                    const texture = gctx.texture_view_pool.resources[handle.index].parent_texture_handle;
+                    const texture = gctx.texture_view_pool.getInfoPtr(handle).parent_texture_handle;
                     return gctx.isResourceValid(texture);
                 }
                 return false;
@@ -893,8 +893,8 @@ pub const GraphicsContext = struct {
             ComputePipelineHandle => return gctx.compute_pipeline_pool.isHandleValid(handle),
             BindGroupHandle => {
                 if (gctx.bind_group_pool.isHandleValid(handle)) {
-                    const num_entries = gctx.bind_group_pool.resources[handle.index].num_entries;
-                    const entries = &gctx.bind_group_pool.resources[handle.index].entries;
+                    const num_entries = gctx.bind_group_pool.getInfoPtr(handle).num_entries;
+                    const entries = &gctx.bind_group_pool.getInfoPtr(handle).entries;
                     var i: u32 = 0;
                     while (i < num_entries) : (i += 1) {
                         if (entries[i].buffer_handle) |buffer| {
@@ -1184,16 +1184,6 @@ pub const util = struct {
     }
 };
 
-pub const BufferHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-pub const TextureHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-pub const TextureViewHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-pub const SamplerHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-pub const RenderPipelineHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-pub const ComputePipelineHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-pub const BindGroupHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-pub const BindGroupLayoutHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-pub const PipelineLayoutHandle = struct { index: u16 align(4) = 0, generation: u16 = 0 };
-
 pub const BufferInfo = struct {
     gpuobj: ?gpu.Buffer = null,
     size: usize = 0,
@@ -1280,113 +1270,136 @@ pub const PipelineLayoutInfo = struct {
         [_]BindGroupLayoutHandle{.{}} ** max_num_bind_groups_per_pipeline,
 };
 
-const BufferPool = ResourcePool(BufferInfo, BufferHandle);
-const TexturePool = ResourcePool(TextureInfo, TextureHandle);
-const TextureViewPool = ResourcePool(TextureViewInfo, TextureViewHandle);
-const SamplerPool = ResourcePool(SamplerInfo, SamplerHandle);
-const RenderPipelinePool = ResourcePool(RenderPipelineInfo, RenderPipelineHandle);
-const ComputePipelinePool = ResourcePool(ComputePipelineInfo, ComputePipelineHandle);
-const BindGroupPool = ResourcePool(BindGroupInfo, BindGroupHandle);
-const BindGroupLayoutPool = ResourcePool(BindGroupLayoutInfo, BindGroupLayoutHandle);
-const PipelineLayoutPool = ResourcePool(PipelineLayoutInfo, PipelineLayoutHandle);
+pub const BufferHandle = BufferPool.Handle;
+pub const TextureHandle = TexturePool.Handle;
+pub const TextureViewHandle = TextureViewPool.Handle;
+pub const SamplerHandle = SamplerPool.Handle;
+pub const RenderPipelineHandle = RenderPipelinePool.Handle;
+pub const ComputePipelineHandle = ComputePipelinePool.Handle;
+pub const BindGroupHandle = BindGroupPool.Handle;
+pub const BindGroupLayoutHandle = BindGroupLayoutPool.Handle;
+pub const PipelineLayoutHandle = PipelineLayoutPool.Handle;
 
-fn ResourcePool(comptime ResourceInfo: type, comptime ResourceHandle: type) type {
+const BufferPool = ResourcePool(BufferInfo, gpu.Buffer);
+const TexturePool = ResourcePool(TextureInfo, gpu.Texture);
+const TextureViewPool = ResourcePool(TextureViewInfo, gpu.TextureView);
+const SamplerPool = ResourcePool(SamplerInfo, gpu.Sampler);
+const RenderPipelinePool = ResourcePool(RenderPipelineInfo, gpu.RenderPipeline);
+const ComputePipelinePool = ResourcePool(ComputePipelineInfo, gpu.ComputePipeline);
+const BindGroupPool = ResourcePool(BindGroupInfo, gpu.BindGroup);
+const BindGroupLayoutPool = ResourcePool(BindGroupLayoutInfo, gpu.BindGroupLayout);
+const PipelineLayoutPool = ResourcePool(PipelineLayoutInfo, gpu.PipelineLayout);
+
+fn ResourcePool(comptime Info: type, comptime Resource: type) type {
+    const zpool = @import("zpool");
+    const Pool = zpool.Pool(16, 16, Resource, struct { info: Info });
+
     return struct {
         const Self = @This();
 
-        resources: []ResourceInfo,
-        generations: []u16,
-        start_slot_index: u32 = 0,
+        pub const Handle = Pool.Handle;
+
+        pool: Pool,
 
         fn init(allocator: std.mem.Allocator, capacity: u32) Self {
-            var resources = allocator.alloc(ResourceInfo, capacity + 1) catch unreachable;
-            for (resources) |*resource| resource.* = .{};
-
-            var generations = allocator.alloc(u16, capacity + 1) catch unreachable;
-            for (generations) |*gen| gen.* = 0;
-
-            return .{
-                .resources = resources,
-                .generations = generations,
-            };
+            const pool = Pool.initCapacity(allocator, capacity) catch unreachable;
+            return .{ .pool = pool };
         }
 
-        fn deinit(pool: *Self, allocator: std.mem.Allocator) void {
-            for (pool.resources) |resource| {
-                if (resource.gpuobj) |gpuobj| {
-                    if (@hasDecl(@TypeOf(gpuobj), "destroy")) {
-                        gpuobj.destroy();
-                    }
-                    gpuobj.release();
-                }
-            }
-            allocator.free(pool.resources);
-            allocator.free(pool.generations);
-            pool.* = undefined;
+        fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+            _ = allocator;
+            self.pool.deinit();
         }
 
-        fn addResource(pool: *Self, gctx: GraphicsContext, resource: ResourceInfo) ResourceHandle {
-            assert(resource.gpuobj != null);
+        fn addResource(self: *Self, gctx: GraphicsContext, info: Info) Handle {
+            assert(info.gpuobj != null);
 
-            var index: u32 = 0;
-            var found_slot_index: u32 = 0;
-            while (index < pool.resources.len) : (index += 1) {
-                const slot_index = (pool.start_slot_index + index) % @intCast(u32, pool.resources.len);
-                if (slot_index == 0) // Skip index 0 because it is reserved for `invalid handle`.
-                    continue;
-                if (pool.resources[slot_index].gpuobj == null) { // If `gpuobj` is null slot is free.
-                    found_slot_index = slot_index;
-                    break;
-                } else {
-                    // If `gpuobj` is not null slot can still be free because dependent resources could
-                    // have become invalid. For example, texture view becomes invalid when parent texture
-                    // is destroyed.
-                    const handle = ResourceHandle{ // Construct a *valid* handle for the slot that we want to check.
-                        .index = @intCast(u16, slot_index),
-                        .generation = pool.generations[slot_index],
-                    };
-                    // Check the handle (will always be valid) and its potential dependencies (may be invalid).
-                    if (!gctx.isResourceValid(handle)) {
-                        // Destroy old resource (it is invalid because some of its dependencies are invalid).
-                        pool.destroyResource(handle, true);
-                        found_slot_index = slot_index;
-                        break;
-                    }
+            if (self.pool.addIfNotFull(.{ .info = info })) |handle| {
+                return handle;
+            }
+
+            // If pool is free, attempt to remove a resource that is now invalid
+            // because of dependent resources which have become invalid.
+            // For example, texture view becomes invalid when parent texture
+            // is destroyed.
+            //
+            // TODO: We could instead store a linked list in Info to track
+            // dependencies.  The parent resource could "point" to the first
+            // dependent resource, and each dependent resource could "point" to
+            // the parent and the prev/next dependent resources of the same
+            // type (perhaps using handles instead of pointers).
+            // When a parent resource is destroyed, we could traverse that list
+            // to destroy dependent resources, and when a dependent resource
+            // is destroyed, we can remove it from the doubly-linked list.
+            //
+            // pub const TextureInfo = struct {
+            //     ...
+            //     // note generic name:
+            //     first_dependent_handle: TextureViewHandle = .{}
+            // };
+            //
+            // pub const TextureViewInfo = struct {
+            //     ...
+            //     // note generic names:
+            //     parent_handle: TextureHandle = .{},
+            //     prev_dependent_handle: TextureViewHandle,
+            //     next_dependent_handle: TextureViewHandle,
+            // };
+            if (self.removeResourceIfInvalid(gctx)) {
+                if (self.pool.addIfNotFull(.{ .info = info })) |handle| {
+                    return handle;
                 }
             }
+
             // TODO: For now we just assert if pool is full - make it more roboust.
-            assert(found_slot_index > 0 and found_slot_index < pool.resources.len);
-
-            pool.start_slot_index = found_slot_index + 1;
-            pool.resources[found_slot_index] = resource;
-            return .{
-                .index = @intCast(u16, found_slot_index),
-                .generation = generation: {
-                    pool.generations[found_slot_index] += 1;
-                    break :generation pool.generations[found_slot_index];
-                },
-            };
+            assert(false);
+            return Handle.nil;
         }
 
-        fn destroyResource(pool: Self, handle: ResourceHandle, comptime call_destroy: bool) void {
-            if (!pool.isHandleValid(handle))
-                return;
-            var resource_info = &pool.resources[handle.index];
+        fn removeResourceIfInvalid(self: *Self, gctx: GraphicsContext) bool {
+            var live_handles = self.pool.liveHandles();
+            while (live_handles.next()) |live_handle| {
+                if (!gctx.isResourceValid(live_handle)) {
+                    self.destroyResource(live_handle, true);
+                    return true;
+                }
+            }
+            return false;
+        }
 
+        fn destroyResource(self: *Self, handle: Handle, comptime call_destroy: bool) void {
+            if (!self.isHandleValid(handle))
+                return;
+
+            const resource_info = self.pool.getColumnPtrAssumeLive(handle, .info);
             const gpuobj = resource_info.gpuobj.?;
+
             if (call_destroy and @hasDecl(@TypeOf(gpuobj), "destroy")) {
                 gpuobj.destroy();
             }
             gpuobj.release();
             resource_info.* = .{};
+
+            self.pool.removeAssumeLive(handle);
         }
 
-        fn isHandleValid(pool: Self, handle: ResourceHandle) bool {
-            return handle.index > 0 and
-                handle.index < pool.resources.len and
-                handle.generation > 0 and
-                handle.generation == pool.generations[handle.index] and
-                pool.resources[handle.index].gpuobj != null;
+        fn isHandleValid(self: Self, handle: Handle) bool {
+            return self.pool.isLiveHandle(handle);
+        }
+
+        fn getInfoPtr(self: Self, handle: Handle) *Info {
+            return self.pool.getColumnPtrAssumeLive(handle, .info);
+        }
+
+        fn getInfo(self: Self, handle: Handle) Info {
+            return self.pool.getColumnAssumeLive(handle, .info);
+        }
+
+        fn getGpuObj(self: Self, handle: Handle) ?Resource {
+            if (self.pool.getColumnPtrIfLive(handle, .info)) |info| {
+                return info.gpuobj;
+            }
+            return null;
         }
     };
 }
