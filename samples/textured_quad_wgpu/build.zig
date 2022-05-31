@@ -1,6 +1,7 @@
 const std = @import("std");
 const zgpu = @import("../../libs/zgpu/build.zig");
 const zmath = @import("../../libs/zmath/build.zig");
+const zpool = @import("../../libs/zpool/build.zig");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "textured_quad_wgpu_content/";
@@ -25,10 +26,11 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{
         .dawn = .{ .from_source = options.zgpu_dawn_from_source },
     });
-    const zgpu_pkg = zgpu.getPkg(&.{zgpu_options.getPkg()});
+    const zgpu_pkg = zgpu.getPkg(&.{zgpu_options.getPkg(), zpool.pkg});
 
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
+    exe.addPackage(zpool.pkg);
 
     zgpu.link(exe, zgpu_options);
 

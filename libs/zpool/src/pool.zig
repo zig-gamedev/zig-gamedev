@@ -261,11 +261,29 @@ pub fn Pool(
         /// * `Error.PoolIsFull`
         /// * `Allocator.Error.OutOfMemory`
         pub fn add(self: *Self, values: Columns) !Handle {
-            const ahandle = try acquireAddressableHandle(self);
-            inline for (column_fields) |field| {
-                @field(self.columns, field.name)[ahandle.index] =
-                    @field(values, field.name);
-            }
+            const ahandle = try self.acquireAddressableHandle();
+            self.initColumnsAt(ahandle.index, values);
+            return ahandle.compact();
+        }
+
+        /// Adds `values` and returns a live `Handle` if possible, otherwise
+        /// returns null.
+        pub fn addIfNotFull(self: *Self, values: Columns) ?Handle {
+            const ahandle = self.acquireAddressableHandle() catch {
+                return null;
+            };
+            self.initColumnsAt(ahandle.index, values);
+            return ahandle.compact();
+        }
+
+        /// Adds `values` and returns a live `Handle` if possible, otherwise
+        /// calls `std.debug.assert(false)` and returns `Handle.nil`.
+        pub fn addAssumeNotFull(self: *Self, values: Columns) Handle {
+            const ahandle = self.acquireAddressableHandle() catch {
+                assert(false);
+                return Handle.nil;
+            };
+            self.initColumnsAt(ahandle.index, values);
             return ahandle.compact();
         }
 
@@ -281,12 +299,20 @@ pub fn Pool(
         /// Removes (and invalidates) `handle` if live.
         /// Returns `true` if removed, otherwise `false`.
         pub fn removeIfLive(self: *Self, handle: Handle) bool {
-            var ahandle = handle.addressable();
+            const ahandle = handle.addressable();
             if (self.isLiveAddressableHandle(ahandle)) {
                 self.releaseAddressableHandleUnchecked(ahandle);
                 return true;
             }
             return false;
+        }
+
+        /// Attempts to remove (and invalidates) `handle` assuming it is live.
+        /// Liveness of `handle` is checked by `std.debug.assert()`.
+        pub fn removeAssumeLive(self: *Self, handle: Handle) void {
+            const ahandle = handle.addressable();
+            assert(self.isLiveAddressableHandle(ahandle));
+            self.releaseAddressableHandleUnchecked(ahandle);
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -456,24 +482,28 @@ pub fn Pool(
 
         fn setColumnUnchecked(self: Self, handle: AddressableHandle, comptime column: Column, value: ColumnType(column)) void {
             const column_field = meta.fieldInfo(Columns, column);
-            self.deinitColumn(handle.index, column_field);
+            self.deinitColumnAt(handle.index, column_field);
             @field(self.columns, column_field.name)[handle.index] = value;
         }
 
         fn setColumnsUnchecked(self: Self, handle: AddressableHandle, values: Columns) void {
-            self.deinitColumns(handle.index);
-            inline for (column_fields) |column_field| {
-                @field(self.columns, column_field.name)[handle.index] =
-                    @field(values, column_field.name);
-            }
+            self.deinitColumnsAt(handle.index);
+            self.initColumnsAt(handle.index, values);
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         const StructField = std.builtin.Type.StructField;
 
+        fn initColumnsAt(self: Self, index: AddressableIndex, values: Columns) void {
+            inline for (column_fields) |column_field| {
+                @field(self.columns, column_field.name)[index] =
+                    @field(values, column_field.name);
+            }
+        }
+
         /// Call `value.deinit()` if defined.
-        fn deinitColumn(self: Self, index: AddressableIndex, comptime column_field: StructField) void {
+        fn deinitColumnAt(self: Self, index: AddressableIndex, comptime column_field: StructField) void {
             switch (@typeInfo(column_field.field_type)) {
                 .Struct, .Enum, .Union, .Opaque => {
                     if (@hasDecl(column_field.field_type, "deinit")) {
@@ -485,7 +515,7 @@ pub fn Pool(
         }
 
         /// Call `values.deinit()` if defined.
-        fn deinitColumns(self: Self, index: AddressableIndex) void {
+        fn deinitColumnsAt(self: Self, index: AddressableIndex) void {
             if (@hasDecl(Columns, "deinit")) {
                 var values: Columns = undefined;
                 inline for (column_fields) |column_field| {
@@ -499,7 +529,7 @@ pub fn Pool(
                 }
             } else {
                 inline for (column_fields) |column_field| {
-                    self.deinitColumn(index, column_field);
+                    self.deinitColumnAt(index, column_field);
                 }
             }
         }
@@ -579,7 +609,7 @@ pub fn Pool(
             self: *Self,
             handle: AddressableHandle,
         ) void {
-            self.deinitColumns(handle.index);
+            self.deinitColumnsAt(handle.index);
             self.incrementCycle(handle.index);
             self.enqueueFreeIndex(handle.index);
         }
@@ -692,8 +722,8 @@ test "Pool with no columns" {
 
     try pool.requireLiveHandle(handle);
     try expect(pool.isLiveHandle(handle));
-    try expectEqual(@as(u8, 0), handle.compact.index);
-    try expectEqual(@as(u8, 1), handle.compact.cycle);
+    try expectEqual(@as(u8, 0), handle.index());
+    try expectEqual(@as(u8, 1), handle.cycle());
     try expectEqual(@as(usize, 1), pool.liveHandleCount());
 }
 
@@ -711,8 +741,8 @@ test "Pool with one column" {
     try pool.requireLiveHandle(handle);
     try expect(pool.isLiveHandle(handle));
     try expectEqual(@as(usize, 1), pool.liveHandleCount());
-    try expectEqual(@as(u8, 0), handle.compact.index);
-    try expectEqual(@as(u8, 1), handle.compact.cycle);
+    try expectEqual(@as(u8, 0), handle.index());
+    try expectEqual(@as(u8, 1), handle.cycle());
 
     try expectEqual(@as(u32, 123), try pool.getColumn(handle, .a));
     try pool.setColumn(handle, .a, 456);
@@ -733,8 +763,8 @@ test "Pool with two columns" {
     try pool.requireLiveHandle(handle);
     try expect(pool.isLiveHandle(handle));
     try expectEqual(@as(usize, 1), pool.liveHandleCount());
-    try expectEqual(@as(u8, 0), handle.compact.index);
-    try expectEqual(@as(u8, 1), handle.compact.cycle);
+    try expectEqual(@as(u8, 0), handle.index());
+    try expectEqual(@as(u8, 1), handle.cycle());
 
     try expectEqual(@as(u32, 123), try pool.getColumn(handle, .a));
     try pool.setColumn(handle, .a, 456);

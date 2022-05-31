@@ -65,12 +65,18 @@ pub fn Handle(
     const UInt = utils.UInt;
     const AddressableUInt = utils.AddressableUInt;
 
-    return extern union {
+
+    return struct {
         const Self = @This();
 
         pub const Resource = TResource;
         pub const Index = UInt(index_bits);
         pub const Cycle = UInt(cycle_bits);
+
+        const Union = extern union {
+            id: Id,
+            handle: packed struct { index: Index, cycle: Cycle },
+        };
 
         pub const AddressableIndex = AddressableUInt(index_bits);
         pub const AddressableCycle = AddressableUInt(cycle_bits);
@@ -79,13 +85,13 @@ pub fn Handle(
         pub const max_cycle = ~@as(Cycle, 0);
         pub const max_count = @as(Id, max_index - 1) + 2;
 
-        id: Id,
-        compact: packed struct { index: Index, cycle: Cycle },
+        id: Id = 0,
 
-        pub const zero = Self{ .id = 0 };
+        pub const nil = Self{ .id = 0 };
 
         pub fn init(_index: Index, _cycle: Cycle) Self {
-            return .{ .compact = .{ .index = _index, .cycle = _cycle } };
+            var u = Union{ .handle = .{ .index = _index, .cycle = _cycle }};
+            return .{ .id = u.id };
         }
 
         pub fn addressable(self: Self) AddressableHandle {
@@ -96,11 +102,13 @@ pub fn Handle(
         }
 
         pub fn index(self: Self) AddressableIndex {
-            return self.compact.index;
+            var u = Union{ .id = self.id };
+            return u.handle.index;
         }
 
         pub fn cycle(self: Self) AddressableCycle {
-            return self.compact.cycle;
+            var u = Union{ .id = self.id };
+            return u.handle.cycle;
         }
 
         pub fn eql(a: Self, b: Self) bool {
