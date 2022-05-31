@@ -1095,15 +1095,16 @@ pub const util = struct {
     /// Helper function for creating render pipelines.
     /// Supports: one vertex buffer, one non-blending render target,
     /// one vertex shader module and one fragment shader module.
-    pub fn createSimpleRenderPipeline(
+    pub fn createRenderPipelineSimple(
         allocator: std.mem.Allocator,
         gctx: *GraphicsContext,
         bgls: []const BindGroupLayoutHandle,
         wgsl_vs: [:0]const u8,
         wgsl_fs: [:0]const u8,
-        rt_format: gpu.Texture.Format,
-        vertex_buffer_layout: gpu.VertexBufferLayout,
+        vertex_stride: u64,
+        vertex_attribs: []const gpu.VertexAttribute,
         primitive_state: gpu.PrimitiveState,
+        rt_format: gpu.Texture.Format,
         depth_state: ?gpu.DepthStencilState,
         out_pipe: *RenderPipelineHandle,
     ) void {
@@ -1119,6 +1120,12 @@ pub const util = struct {
         defer fs_mod.release();
 
         const color_target = gpu.ColorTargetState{ .format = rt_format };
+
+        const vertex_buffer_layout = gpu.VertexBufferLayout{
+            .array_stride = vertex_stride,
+            .attribute_count = @intCast(u32, vertex_attribs.len),
+            .attributes = vertex_attribs.ptr,
+        };
 
         const pipe_desc = gpu.RenderPipeline.Descriptor{
             .vertex = gpu.VertexState{
@@ -1144,7 +1151,7 @@ pub const util = struct {
 
     /// Helper function for creating render passes.
     /// Supports: One color attachment and optional depth attachment.
-    pub fn beginSimpleRenderPass(
+    pub fn beginRenderPassSimple(
         encoder: gpu.CommandEncoder,
         load_op: gpu.LoadOp,
         color_texv: gpu.TextureView,

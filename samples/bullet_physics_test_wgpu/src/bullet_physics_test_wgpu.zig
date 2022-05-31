@@ -150,19 +150,20 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     // Create pipelines.
     //
-    const attribs = [_]gpu.VertexAttribute{
+    const pos_norm_attribs = [_]gpu.VertexAttribute{
         .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
         .{ .format = .float32x3, .offset = @offsetOf(Vertex, "normal"), .shader_location = 1 },
     };
-    zgpu.util.createSimpleRenderPipeline(
+    zgpu.util.createRenderPipelineSimple(
         allocator,
         gctx,
         &.{ uniform_bgl, uniform_bgl },
         wgsl.vs,
         wgsl.fs,
-        zgpu.GraphicsContext.swapchain_format,
-        .{ .array_stride = @sizeOf(Vertex), .attribute_count = attribs.len, .attributes = &attribs },
+        @sizeOf(Vertex),
+        pos_norm_attribs[0..],
         .{ .front_face = .cw, .cull_mode = .back },
+        zgpu.GraphicsContext.swapchain_format,
         gpu.DepthStencilState{ .format = .depth32_float, .depth_write_enabled = true, .depth_compare = .less },
         &demo.mesh_pipe,
     );
@@ -271,7 +272,7 @@ fn draw(demo: *DemoState) void {
             const mesh_bg = gctx.lookupResource(demo.mesh_bg) orelse break :pass;
             const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
 
-            const pass = zgpu.util.beginSimpleRenderPass(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
+            const pass = zgpu.util.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
             defer zgpu.util.endRelease(pass);
 
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
@@ -308,7 +309,7 @@ fn draw(demo: *DemoState) void {
 
         // Gui pass.
         {
-            const pass = zgpu.util.beginSimpleRenderPass(encoder, .load, swapchain_texv, null, null, null);
+            const pass = zgpu.util.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
             defer zgpu.util.endRelease(pass);
             zgpu.gui.draw(pass);
         }
