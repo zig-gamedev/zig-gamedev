@@ -132,6 +132,7 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const glfw = @import("glfw");
+const gpu = @import("gpu");
 const c = @cImport({
     @cInclude("dawn/dawn_proc.h");
     @cInclude("dawn_native_mach.h");
@@ -144,7 +145,6 @@ pub const cimgui = @cImport({
     @cDefine("CIMGUI_NO_EXPORT", "");
     @cInclude("imgui/cimgui.h");
 });
-const gpu = @import("gpu");
 const wgsl = @import("common_wgsl.zig");
 
 pub const GraphicsContext = struct {

@@ -20,7 +20,6 @@ For more details please see below.
 Copy `zgpu` folder to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
-
 ```zig
 const zgpu = @import("libs/zgpu/build.zig");
 
@@ -34,7 +33,18 @@ pub fn build(b: *std.build.Builder) void {
     zgpu.link(exe, zgpu_options);
 }
 ```
+Note that linking with `zgpu` package also gives you access to `glfw` and `gpu` packages.
 
+Now in your code you may import and use `zgpu`, `gpu` and `glfw`:
+```zig
+const glfw = @import("glfw");
+const gpu = @import("gpu");
+const zgpu = @import("zgpu");
+
+pub fn main() !void {
+    ...
+}
+```
 For sample applications please see:
 * [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu)
 * [triangle (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu)
