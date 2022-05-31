@@ -1313,8 +1313,58 @@ fn ResourcePool(comptime Info: type, comptime Resource: type) type {
 
         fn addResource(self: *Self, gctx: GraphicsContext, info: Info) Handle {
             assert(info.gpuobj != null);
-            _ = gctx;
-            return self.pool.addAssumeNotFull(.{ .info = info });
+
+            if (self.pool.addIfNotFull(.{ .info = info })) |handle| {
+                return handle;
+            }
+
+            // If pool is free, attempt to remove a resource that is now invalid
+            // because of dependent resources which have become invalid.
+            // For example, texture view becomes invalid when parent texture
+            // is destroyed.
+            //
+            // TODO: We could instead store a linked list in Info to track
+            // dependencies.  The parent resource could "point" to the first
+            // dependent resource, and each dependent resource could "point" to
+            // the parent and the prev/next dependent resources of the same
+            // type (perhaps using handles instead of pointers).
+            // When a parent resource is destroyed, we could traverse that list
+            // to destroy dependent resources, and when a dependent resource
+            // is destroyed, we can remove it from the doubly-linked list.
+            //
+            // pub const TextureInfo = struct {
+            //     ...
+            //     // note generic name:
+            //     first_dependent_handle: TextureViewHandle = .{}
+            // };
+            //
+            // pub const TextureViewInfo = struct {
+            //     ...
+            //     // note generic names:
+            //     parent_handle: TextureHandle = .{},
+            //     prev_dependent_handle: TextureViewHandle,
+            //     next_dependent_handle: TextureViewHandle,
+            // };
+            if (self.removeResourceIfInvalid(gctx)) {
+                if (self.pool.addIfNotFull(.{ .info = info })) |handle| {
+                    return handle;
+                }
+            }
+
+            // TODO: For now we just assert if pool is full - make it more roboust.
+            assert(false);
+            return Handle.nil;
+        }
+
+        fn removeResourceIfInvalid(self: *Self, gctx: GraphicsContext) bool {
+            var live_handles = self.pool.liveHandles();
+            while (live_handles.next()) |live_handle| {
+                if (!gctx.isResourceValid(live_handle)) {
+                    self.destroyResource(live_handle, true);
+                    return true;
+                }
+            }
+            return false;
         }
 
         fn destroyResource(self: *Self, handle: Handle, comptime call_destroy: bool) void {
