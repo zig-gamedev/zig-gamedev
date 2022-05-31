@@ -33,9 +33,7 @@ pub const vs = common ++
 \\          draw_uniforms.object_to_world[2].xyz,
 \\      );
 \\      let index = vertex_index % 3u;
-\\      if (index == 0u) { output.barycentrics = vec3(1.0, 0.0, 0.0); }
-\\      else if (index == 1u) { output.barycentrics = vec3(0.0, 1.0, 0.0); }
-\\      else { output.barycentrics = vec3(0.0, 0.0, 1.0); }
+\\      output.barycentrics = vec3(f32(index == 0u), f32(index == 1u), f32(index == 2u));
 \\      return output;
 \\  }
 ;
