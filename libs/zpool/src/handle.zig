@@ -65,7 +65,6 @@ pub fn Handle(
     const UInt = utils.UInt;
     const AddressableUInt = utils.AddressableUInt;
 
-
     return struct {
         const Self = @This();
 
@@ -90,7 +89,7 @@ pub fn Handle(
         pub const nil = Self{ .id = 0 };
 
         pub fn init(_index: Index, _cycle: Cycle) Self {
-            var u = Union{ .handle = .{ .index = _index, .cycle = _cycle }};
+            var u = Union{ .handle = .{ .index = _index, .cycle = _cycle } };
             return .{ .id = u.id };
         }
 
