@@ -235,7 +235,7 @@ pub fn Pool(
                         .index = index,
                         .cycle = self.live_indices.curr_cycle[index],
                     };
-                    return ahandle.compact();
+                    return ahandle.handle();
                 }
                 return null;
             }
@@ -263,7 +263,7 @@ pub fn Pool(
         pub fn add(self: *Self, values: Columns) !Handle {
             const ahandle = try self.acquireAddressableHandle();
             self.initColumnsAt(ahandle.index, values);
-            return ahandle.compact();
+            return ahandle.handle();
         }
 
         /// Adds `values` and returns a live `Handle` if possible, otherwise
@@ -273,7 +273,7 @@ pub fn Pool(
                 return null;
             };
             self.initColumnsAt(ahandle.index, values);
-            return ahandle.compact();
+            return ahandle.handle();
         }
 
         /// Adds `values` and returns a live `Handle` if possible, otherwise
@@ -284,7 +284,7 @@ pub fn Pool(
                 return Handle.nil;
             };
             self.initColumnsAt(ahandle.index, values);
-            return ahandle.compact();
+            return ahandle.handle();
         }
 
         /// Removes (and invalidates) `handle` if live, otherwise returns one
@@ -722,8 +722,8 @@ test "Pool with no columns" {
 
     try pool.requireLiveHandle(handle);
     try expect(pool.isLiveHandle(handle));
-    try expectEqual(@as(u8, 0), handle.index());
-    try expectEqual(@as(u8, 1), handle.cycle());
+    try expectEqual(@as(u8, 0), handle.addressable().index);
+    try expectEqual(@as(u8, 1), handle.addressable().cycle);
     try expectEqual(@as(usize, 1), pool.liveHandleCount());
 }
 
@@ -741,8 +741,8 @@ test "Pool with one column" {
     try pool.requireLiveHandle(handle);
     try expect(pool.isLiveHandle(handle));
     try expectEqual(@as(usize, 1), pool.liveHandleCount());
-    try expectEqual(@as(u8, 0), handle.index());
-    try expectEqual(@as(u8, 1), handle.cycle());
+    try expectEqual(@as(u8, 0), handle.addressable().index);
+    try expectEqual(@as(u8, 1), handle.addressable().cycle);
 
     try expectEqual(@as(u32, 123), try pool.getColumn(handle, .a));
     try pool.setColumn(handle, .a, 456);
@@ -763,8 +763,8 @@ test "Pool with two columns" {
     try pool.requireLiveHandle(handle);
     try expect(pool.isLiveHandle(handle));
     try expectEqual(@as(usize, 1), pool.liveHandleCount());
-    try expectEqual(@as(u8, 0), handle.index());
-    try expectEqual(@as(u8, 1), handle.cycle());
+    try expectEqual(@as(u8, 0), handle.addressable().index);
+    try expectEqual(@as(u8, 1), handle.addressable().cycle);
 
     try expectEqual(@as(u32, 123), try pool.getColumn(handle, .a));
     try pool.setColumn(handle, .a, 456);
@@ -868,9 +868,9 @@ test "Pool.liveIndices()" {
     try expectEqual(@as(usize, 3), pool.liveHandleCount());
 
     var live_indices = pool.liveIndices();
-    try expectEqual(handle0.index(), live_indices.next().?);
-    try expectEqual(handle1.index(), live_indices.next().?);
-    try expectEqual(handle2.index(), live_indices.next().?);
+    try expectEqual(handle0.addressable().index, live_indices.next().?);
+    try expectEqual(handle1.addressable().index, live_indices.next().?);
+    try expectEqual(handle2.addressable().index, live_indices.next().?);
     try expect(null == live_indices.next());
 }
 

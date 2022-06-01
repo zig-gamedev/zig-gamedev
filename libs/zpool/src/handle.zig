@@ -57,7 +57,7 @@ pub fn Handle(
         64 => u64,
         128 => u128,
         256 => u256,
-        else => @compileError("index_bits + cycle_bits should sum to exactly " ++
+        else => @compileError("index_bits + cycle_bits must sum to exactly " ++
             "8, 16, 32, 64, 128, or 256 bits"),
     };
 
@@ -68,66 +68,65 @@ pub fn Handle(
     return struct {
         const Self = @This();
 
-        pub const Resource = TResource;
-        pub const Index = UInt(index_bits);
-        pub const Cycle = UInt(cycle_bits);
-
-        const Union = extern union {
+        const CompactHandle = Self;
+        const CompactIndex = UInt(index_bits);
+        const CompactCycle = UInt(cycle_bits);
+        const CompactUnion = extern union {
             id: Id,
-            handle: packed struct { index: Index, cycle: Cycle },
+            bits: packed struct {
+                index: CompactIndex,
+                cycle: CompactCycle,
+            },
         };
+
+        pub const Resource = TResource;
 
         pub const AddressableIndex = AddressableUInt(index_bits);
         pub const AddressableCycle = AddressableUInt(cycle_bits);
 
-        pub const max_index = ~@as(Index, 0);
-        pub const max_cycle = ~@as(Cycle, 0);
+        pub const max_index = ~@as(CompactIndex, 0);
+        pub const max_cycle = ~@as(CompactCycle, 0);
         pub const max_count = @as(Id, max_index - 1) + 2;
 
         id: Id = 0,
 
         pub const nil = Self{ .id = 0 };
 
-        pub fn init(_index: Index, _cycle: Cycle) Self {
-            var u = Union{ .handle = .{ .index = _index, .cycle = _cycle } };
+        pub fn init(index: CompactIndex, cycle: CompactCycle) Self {
+            var u = CompactUnion{ .bits = .{
+                .index = index,
+                .cycle = cycle,
+            } };
             return .{ .id = u.id };
         }
 
+        /// Unpacks the `index` and `cycle` bit fields that comprise
+        /// `Handle.id` into an `AddressableHandle`, which stores
+        /// the `index` and `cycle` values in pointer-addressable fields.
         pub fn addressable(self: Self) AddressableHandle {
+            var u = CompactUnion{ .id = self.id };
             return .{
-                .index = self.index(),
-                .cycle = self.cycle(),
+                .index = u.bits.index,
+                .cycle = u.bits.cycle,
             };
         }
 
-        pub fn index(self: Self) AddressableIndex {
-            var u = Union{ .id = self.id };
-            return u.handle.index;
-        }
-
-        pub fn cycle(self: Self) AddressableCycle {
-            var u = Union{ .id = self.id };
-            return u.handle.cycle;
-        }
-
-        pub fn eql(a: Self, b: Self) bool {
-            return a.id == b.id;
-        }
-
+        /// When you want to directly access the `index` and `cycle` of a
+        /// handle, first convert it to an `AddressableHandle` by calling
+        /// `Handle.addressable()`.
+        /// An `AddressableHandle` can be converted back into a "compact"
+        /// `Handle` by calling `AddressableHandle.compact()`.
         pub const AddressableHandle = struct {
-            pub const Compact = Self;
-
             index: AddressableIndex = 0,
             cycle: AddressableCycle = 0,
 
-            pub fn compact(handle: AddressableHandle) Compact {
-                const _index = @intCast(Index, handle.index);
-                const _cycle = @intCast(Cycle, handle.cycle);
-                return Compact.init(_index, _cycle);
-            }
-
-            pub fn eql(a: AddressableHandle, b: AddressableHandle) bool {
-                return a.index == b.index and a.cycle == b.cycle;
+            /// Returns the corresponding `Handle`
+            pub fn handle(self: AddressableHandle) CompactHandle {
+                var u = CompactUnion{ .bits = .{
+                    .index = @intCast(CompactIndex, self.index),
+                    .cycle = @intCast(CompactCycle, self.cycle),
+                } };
+                return .{ .id = u.id };
             }
         };
 
@@ -156,8 +155,8 @@ test "Handle sizes and alignments" {
         const H = Handle(4, 4, void);
         try expectEqual(@sizeOf(u8), @sizeOf(H));
         try expectEqual(@alignOf(u8), @alignOf(H));
-        try expectEqual(4, @bitSizeOf(H.Index));
-        try expectEqual(4, @bitSizeOf(H.Cycle));
+        try expectEqual(4, @bitSizeOf(H.CompactIndex));
+        try expectEqual(4, @bitSizeOf(H.CompactCycle));
         try expectEqual(8, @bitSizeOf(H.AddressableIndex));
         try expectEqual(8, @bitSizeOf(H.AddressableCycle));
 
@@ -170,8 +169,8 @@ test "Handle sizes and alignments" {
         const H = Handle(6, 2, void);
         try expectEqual(@sizeOf(u8), @sizeOf(H));
         try expectEqual(@alignOf(u8), @alignOf(H));
-        try expectEqual(6, @bitSizeOf(H.Index));
-        try expectEqual(2, @bitSizeOf(H.Cycle));
+        try expectEqual(6, @bitSizeOf(H.CompactIndex));
+        try expectEqual(2, @bitSizeOf(H.CompactCycle));
         try expectEqual(8, @bitSizeOf(H.AddressableIndex));
         try expectEqual(8, @bitSizeOf(H.AddressableCycle));
 
@@ -184,8 +183,8 @@ test "Handle sizes and alignments" {
         const H = Handle(8, 8, void);
         try expectEqual(@sizeOf(u16), @sizeOf(H));
         try expectEqual(@alignOf(u16), @alignOf(H));
-        try expectEqual(8, @bitSizeOf(H.Index));
-        try expectEqual(8, @bitSizeOf(H.Cycle));
+        try expectEqual(8, @bitSizeOf(H.CompactIndex));
+        try expectEqual(8, @bitSizeOf(H.CompactCycle));
         try expectEqual(8, @bitSizeOf(H.AddressableIndex));
         try expectEqual(8, @bitSizeOf(H.AddressableCycle));
 
@@ -198,8 +197,8 @@ test "Handle sizes and alignments" {
         const H = Handle(12, 4, void);
         try expectEqual(@sizeOf(u16), @sizeOf(H));
         try expectEqual(@alignOf(u16), @alignOf(H));
-        try expectEqual(12, @bitSizeOf(H.Index));
-        try expectEqual(4, @bitSizeOf(H.Cycle));
+        try expectEqual(12, @bitSizeOf(H.CompactIndex));
+        try expectEqual(4, @bitSizeOf(H.CompactCycle));
         try expectEqual(16, @bitSizeOf(H.AddressableIndex));
         try expectEqual(8, @bitSizeOf(H.AddressableCycle));
 
@@ -212,8 +211,8 @@ test "Handle sizes and alignments" {
         const H = Handle(16, 16, void);
         try expectEqual(@sizeOf(u32), @sizeOf(H));
         try expectEqual(@alignOf(u32), @alignOf(H));
-        try expectEqual(16, @bitSizeOf(H.Index));
-        try expectEqual(16, @bitSizeOf(H.Cycle));
+        try expectEqual(16, @bitSizeOf(H.CompactIndex));
+        try expectEqual(16, @bitSizeOf(H.CompactCycle));
         try expectEqual(16, @bitSizeOf(H.AddressableIndex));
         try expectEqual(16, @bitSizeOf(H.AddressableCycle));
 
@@ -226,8 +225,8 @@ test "Handle sizes and alignments" {
         const H = Handle(22, 10, void);
         try expectEqual(@sizeOf(u32), @sizeOf(H));
         try expectEqual(@alignOf(u32), @alignOf(H));
-        try expectEqual(22, @bitSizeOf(H.Index));
-        try expectEqual(10, @bitSizeOf(H.Cycle));
+        try expectEqual(22, @bitSizeOf(H.CompactIndex));
+        try expectEqual(10, @bitSizeOf(H.CompactCycle));
         try expectEqual(32, @bitSizeOf(H.AddressableIndex));
         try expectEqual(16, @bitSizeOf(H.AddressableCycle));
 
