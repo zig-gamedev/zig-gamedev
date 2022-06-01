@@ -29,13 +29,13 @@ const DrawUniforms = struct {
 
 const Mesh = struct {
     index_offset: u32,
-    vertex_offset: i32,
+    vertex_offset: u32,
     num_indices: u32,
     num_vertices: u32,
 };
 
-const mesh_world = 0;
-const mesh_cube = 1;
+const mesh_cube = 0;
+const mesh_world = 1;
 
 const safe_uniform_size = 256;
 
@@ -298,12 +298,24 @@ fn draw(demo: *DemoState) void {
             };
 
             pass.setBindGroup(1, mesh_bg, &.{mem.offset});
-            pass.draw(
-                demo.meshes.items[mesh_world].num_vertices,
-                1,
-                @intCast(u32, demo.meshes.items[mesh_world].vertex_offset),
-                0,
-            );
+            const mesh_index = mesh_world;
+
+            if (mesh_index == mesh_world) {
+                pass.draw(
+                    demo.meshes.items[mesh_index].num_vertices,
+                    1,
+                    demo.meshes.items[mesh_index].vertex_offset,
+                    0,
+                );
+            } else {
+                pass.drawIndexed(
+                    demo.meshes.items[mesh_index].num_indices,
+                    1,
+                    demo.meshes.items[mesh_index].index_offset,
+                    @intCast(i32, demo.meshes.items[mesh_index].vertex_offset),
+                    0,
+                );
+            }
         }
 
         // Gui pass.
@@ -361,7 +373,7 @@ fn appendMesh(
     const mesh_index = @intCast(u32, all_meshes.items.len);
     all_meshes.append(.{
         .index_offset = @intCast(u32, all_indices.items.len),
-        .vertex_offset = @intCast(i32, all_positions.items.len),
+        .vertex_offset = @intCast(u32, all_positions.items.len),
         .num_indices = @intCast(u32, mesh.indices.len),
         .num_vertices = @intCast(u32, mesh.positions.len),
     }) catch unreachable;
@@ -379,6 +391,18 @@ fn initMeshes(
     all_positions: *std.ArrayList([3]f32),
     all_normals: *std.ArrayList([3]f32),
 ) !void {
+    // Cube mesh.
+    {
+        var mesh = zmesh.Shape.initCube();
+        defer mesh.deinit();
+        mesh.translate(-0.5, -0.5, -0.5);
+        mesh.unweld();
+        mesh.computeNormals();
+
+        const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
+        assert(mesh_index == mesh_cube);
+    }
+
     // World mesh.
     {
         const mesh_index = @intCast(u32, all_meshes.items.len);
@@ -402,23 +426,11 @@ fn initMeshes(
 
         try all_meshes.append(.{
             .index_offset = 0,
-            .vertex_offset = @intCast(i32, vertex_offset),
+            .vertex_offset = vertex_offset,
             .num_indices = 0,
             .num_vertices = @intCast(u32, all_positions.items.len) - vertex_offset,
         });
         assert(mesh_index == mesh_world);
-    }
-
-    // Cube mesh.
-    {
-        var mesh = zmesh.Shape.initCube();
-        defer mesh.deinit();
-        mesh.translate(-0.5, -0.5, -0.5);
-        mesh.unweld();
-        mesh.computeNormals();
-
-        const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
-        assert(mesh_index == mesh_cube);
     }
 }
 
