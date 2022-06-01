@@ -92,7 +92,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
     var normals = std.ArrayList([3]f32).init(arena);
-    try initMeshes(&meshes, &indices, &positions, &normals);
+    try initMeshes(arena, &meshes, &indices, &positions, &normals);
 
     const total_num_vertices = @intCast(u32, positions.items.len);
     const total_num_indices = @intCast(u32, indices.items.len);
@@ -162,7 +162,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         wgsl.fs,
         @sizeOf(Vertex),
         pos_norm_attribs[0..],
-        .{ .front_face = .cw, .cull_mode = .back },
+        .{ .front_face = .cw, .cull_mode = .none },
         zgpu.GraphicsContext.swapchain_format,
         gpu.DepthStencilState{ .format = .depth32_float, .depth_write_enabled = true, .depth_compare = .less },
         &demo.mesh_pipe,
@@ -294,15 +294,14 @@ fn draw(demo: *DemoState) void {
             const mem = gctx.uniformsAllocate(DrawUniforms, 1);
             mem.slice[0] = .{
                 .object_to_world = zm.transpose(object_to_world),
-                .basecolor_roughness = [4]f32{ 1.0, 1.0, 1.0, 0.5 },
+                .basecolor_roughness = [4]f32{ 0.25, 0.25, 0.25, 0.125 },
             };
 
             pass.setBindGroup(1, mesh_bg, &.{mem.offset});
-            pass.drawIndexed(
-                demo.meshes.items[mesh_world].num_indices,
+            pass.draw(
+                demo.meshes.items[mesh_world].num_vertices,
                 1,
-                demo.meshes.items[mesh_world].index_offset,
-                demo.meshes.items[mesh_world].vertex_offset,
+                @intCast(u32, demo.meshes.items[mesh_world].vertex_offset),
                 0,
             );
         }
@@ -374,6 +373,7 @@ fn appendMesh(
 }
 
 fn initMeshes(
+    arena: std.mem.Allocator,
     all_meshes: *std.ArrayList(Mesh),
     all_indices: *std.ArrayList(u32),
     all_positions: *std.ArrayList([3]f32),
@@ -382,17 +382,28 @@ fn initMeshes(
     // World mesh.
     {
         const mesh_index = @intCast(u32, all_meshes.items.len);
-        const index_offset = @intCast(u32, all_indices.items.len);
         const vertex_offset = @intCast(u32, all_positions.items.len);
+
+        var indices = std.ArrayList(u32).init(arena);
+        defer indices.deinit();
+        var positions = std.ArrayList([3]f32).init(arena);
+        defer positions.deinit();
+        var normals = std.ArrayList([3]f32).init(arena);
+        defer normals.deinit();
 
         const data = try zmesh.io.parseAndLoadFile(content_dir ++ "world.gltf");
         defer zmesh.io.cgltf.free(data);
-        try zmesh.io.appendMeshPrimitive(data, 0, 0, all_indices, all_positions, all_normals, null, null);
+        try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, null, null);
+
+        for (indices.items) |ind| {
+            all_positions.append(positions.items[ind]) catch unreachable;
+            all_normals.append(normals.items[ind]) catch unreachable;
+        }
 
         try all_meshes.append(.{
-            .index_offset = index_offset,
+            .index_offset = 0,
             .vertex_offset = @intCast(i32, vertex_offset),
-            .num_indices = @intCast(u32, all_indices.items.len) - index_offset,
+            .num_indices = 0,
             .num_vertices = @intCast(u32, all_positions.items.len) - vertex_offset,
         });
         assert(mesh_index == mesh_world);

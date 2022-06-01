@@ -137,7 +137,7 @@ pub const fs = common ++
 \\      let smoothing = deltas * 1.0;
 \\      let thickness = deltas * 0.25;
 \\      barys = smoothstep(thickness, thickness + smoothing, barys);
-\\      let min_bary = 1.0;//min(barys.x, min(barys.y, barys.z));
+\\      let min_bary = min(barys.x, min(barys.y, barys.z));
 \\      return vec4(min_bary * color, 1.0);
 \\  }
 // zig fmt: on
