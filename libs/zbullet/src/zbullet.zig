@@ -530,7 +530,7 @@ pub const TriangleMeshShape = opaque {
         return trimesh;
     }
 
-    pub fn finalize(trimesh: *const TriangleMeshShape) void {
+    pub fn finish(trimesh: *const TriangleMeshShape) void {
         trimesh.createEnd();
     }
 
@@ -1084,7 +1084,7 @@ test "zbullet.shape.trimesh" {
         &vertices, // vertices_base
         12, // vertex_stride
     );
-    trimesh.finalize();
+    trimesh.finish();
     defer trimesh.deinit();
     try expect(trimesh.isCreated());
     try expect(trimesh.isNonMoving());
