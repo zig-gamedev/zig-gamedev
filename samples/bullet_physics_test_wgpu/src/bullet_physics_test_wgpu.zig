@@ -38,12 +38,13 @@ const Mesh = struct {
 const Entity = struct {
     body: *const zbt.Body,
     basecolor_roughness: [4]f32,
-    size: [3]f32,
+    //size: [3]f32,
     mesh_index: u32,
 };
 
-const mesh_cube = 0;
-const mesh_world = 1;
+const mesh_cube: u32 = 0;
+const mesh_world: u32 = 1;
+const mesh_sphere: u32 = 2;
 
 const safe_uniform_size = 256;
 
@@ -64,6 +65,9 @@ const DemoState = struct {
     uniform_bg: zgpu.BindGroupHandle,
 
     meshes: std.ArrayList(Mesh),
+    entities: std.ArrayList(Entity),
+
+    keyboard_delay: f32 = 1.0,
 
     physics: struct {
         world: *const zbt.World,
@@ -103,7 +107,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
     var normals = std.ArrayList([3]f32).init(arena);
-    try initMeshes(arena, &meshes, &indices, &positions, &normals);
+    var physics_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
+    try initMeshes(arena, &meshes, &indices, &positions, &normals, &physics_shapes);
 
     const total_num_vertices = @intCast(u32, positions.items.len);
     const total_num_indices = @intCast(u32, indices.items.len);
@@ -161,43 +166,25 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     physics_debug.* = zbt.DebugDrawer.init(allocator);
 
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
-    physics_world.debugSetMode(zbt.dbgmode_draw_wireframe);
+    physics_world.debugSetMode(zbt.dbgmode_disabled);
 
-    const physics_shapes = blk: {
-        var shapes = std.ArrayList(*const zbt.Shape).init(allocator);
+    var entities = std.ArrayList(Entity).init(allocator);
 
-        const box_shape = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 });
-        try shapes.append(box_shape.asShape());
-
+    {
         const box_body = zbt.Body.init(
             1.0, // mass
-            &zm.mat43ToArray(zm.translation(0.0, 5.0, 10.0)),
-            box_shape.asShape(),
+            &zm.mat43ToArray(zm.translation(0.0, 5.0, 5.0)),
+            physics_shapes.items[mesh_cube],
         );
-        physics_world.addBody(box_body);
-
-        const world_shape = zbt.TriangleMeshShape.init();
-        try shapes.append(world_shape.asShape());
-
-        world_shape.addIndexVertexArray(
-            meshes.items[mesh_world].num_indices / 3,
-            indices.items.ptr + meshes.items[mesh_world].index_offset,
-            @sizeOf([3]u32),
-            meshes.items[mesh_world].num_vertices,
-            positions.items.ptr + meshes.items[mesh_world].vertex_offset,
-            @sizeOf([3]f32),
-        );
-        world_shape.finish();
+        createEntity(physics_world, box_body, [4]f32{ 0.8, 0.0, 0.0, 0.25 }, &entities);
 
         const world_body = zbt.Body.init(
             0.0, // static body
             &zm.mat43ToArray(zm.identity()),
-            world_shape.asShape(),
+            physics_shapes.items[mesh_world],
         );
-        physics_world.addBody(world_body);
-
-        break :blk shapes;
-    };
+        createEntity(physics_world, world_body, [4]f32{ 0.25, 0.25, 0.25, 0.125 }, &entities);
+    }
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -209,6 +196,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .depth_texv = depth.texv,
         .uniform_bg = uniform_bg,
         .meshes = meshes,
+        .entities = entities,
         .physics = .{
             .world = physics_world,
             .shapes = physics_shapes,
@@ -279,6 +267,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.physics.debug.deinit();
     allocator.destroy(demo.physics.debug);
     demo.physics.world.deinit();
+    demo.entities.deinit();
     demo.meshes.deinit();
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
@@ -298,6 +287,7 @@ fn update(demo: *DemoState) void {
         );
         c.igBulletText("Right Mouse Button + drag :  rotate camera");
         c.igBulletText("W, A, S, D :  move camera");
+        c.igBulletText("SPACE :  to shoot");
     }
     c.igEnd();
 
@@ -347,6 +337,26 @@ fn update(demo: *DemoState) void {
 
         zm.store3(&demo.camera.position, cam_pos);
     }
+
+    // Shooting.
+    {
+        demo.keyboard_delay += dt;
+        if (window.getKey(.space) == .press and demo.keyboard_delay >= 0.5) {
+            demo.keyboard_delay = 0.0;
+
+            const transform = zm.translationV(zm.load3(demo.camera.position));
+            const impulse = zm.f32x4s(60.0) * zm.load3(demo.camera.forward);
+
+            const body = zbt.Body.init(
+                1.0,
+                &zm.mat43ToArray(transform),
+                demo.physics.shapes.items[mesh_sphere],
+            );
+            body.applyCentralImpulse(&zm.vec3ToArray(impulse));
+
+            createEntity(demo.physics.world, body, [4]f32{ 0.0, 0.8, 0.0, 0.2 }, &demo.entities);
+        }
+    }
 }
 
 fn draw(demo: *DemoState) void {
@@ -387,10 +397,7 @@ fn draw(demo: *DemoState) void {
 
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
-
             pass.setPipeline(mesh_pipe);
-
-            // Update "world to clip" (camera) xform.
             {
                 const mem = gctx.uniformsAllocate(FrameUniforms, 1);
                 mem.slice[0] = .{
@@ -400,62 +407,71 @@ fn draw(demo: *DemoState) void {
                 pass.setBindGroup(0, uniform_bg, &.{mem.offset});
             }
 
-            const object_to_world = zm.identity();
-            const mem = gctx.uniformsAllocate(DrawUniforms, 1);
-            mem.slice[0] = .{
-                .object_to_world = zm.transpose(object_to_world),
-                .basecolor_roughness = [4]f32{ 0.25, 0.25, 0.25, 0.125 },
-            };
+            const num_bodies = demo.physics.world.getNumBodies();
+            var body_index: i32 = 0;
+            while (body_index < num_bodies) : (body_index += 1) {
+                const body = demo.physics.world.getBody(body_index);
+                const entity = &demo.entities.items[@intCast(usize, body.getUserIndex(0))];
 
-            pass.setBindGroup(1, uniform_bg, &.{mem.offset});
-            const mesh_index = mesh_world;
+                // Get transform matrix from the physics simulator.
+                const object_to_world = blk: {
+                    var transform: [12]f32 = undefined;
+                    body.getGraphicsWorldTransform(&transform);
+                    break :blk zm.loadMat43(transform[0..]);
+                };
 
-            pass.drawIndexed(
-                demo.meshes.items[mesh_index].num_indices,
-                1,
-                demo.meshes.items[mesh_index].index_offset,
-                @intCast(i32, demo.meshes.items[mesh_index].vertex_offset),
-                0,
-            );
+                const mem = gctx.uniformsAllocate(DrawUniforms, 1);
+                mem.slice[0] = .{
+                    .object_to_world = zm.transpose(object_to_world),
+                    .basecolor_roughness = entity.basecolor_roughness,
+                };
+
+                pass.setBindGroup(1, uniform_bg, &.{mem.offset});
+                pass.drawIndexed(
+                    demo.meshes.items[entity.mesh_index].num_indices,
+                    1,
+                    demo.meshes.items[entity.mesh_index].index_offset,
+                    @intCast(i32, demo.meshes.items[entity.mesh_index].vertex_offset),
+                    0,
+                );
+            }
         }
 
-        if (true) {
-            // Physics debug pass.
-            pass: {
-                demo.physics.world.debugDrawAll();
-                const num_vertices = @intCast(u32, demo.physics.debug.lines.items.len);
-                if (num_vertices == 0) break :pass;
+        // Physics debug pass.
+        pass: {
+            demo.physics.world.debugDrawAll();
+            const num_vertices = @intCast(u32, demo.physics.debug.lines.items.len);
+            if (num_vertices == 0) break :pass;
 
-                var vb_info = gctx.lookupResourceInfo(demo.physics_debug_buf) orelse break :pass;
-                const physics_debug_pipe = gctx.lookupResource(demo.physics_debug_pipe) orelse break :pass;
-                const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse break :pass;
-                const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
+            var vb_info = gctx.lookupResourceInfo(demo.physics_debug_buf) orelse break :pass;
+            const physics_debug_pipe = gctx.lookupResource(demo.physics_debug_pipe) orelse break :pass;
+            const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse break :pass;
+            const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
 
-                // Resize `physics_debug_buf` if needed.
-                if (num_vertices * @sizeOf(zbt.DebugDrawer.Vertex) > vb_info.size) {
-                    gctx.destroyResource(demo.physics_debug_buf);
-                    demo.physics_debug_buf = gctx.createBuffer(.{
-                        .usage = .{ .copy_dst = true, .vertex = true },
-                        .size = (2 * num_vertices) * @sizeOf(zbt.DebugDrawer.Vertex),
-                    });
-                    vb_info = gctx.lookupResourceInfo(demo.physics_debug_buf) orelse break :pass;
-                }
-
-                gctx.queue.writeBuffer(vb_info.gpuobj.?, 0, zbt.DebugDrawer.Vertex, demo.physics.debug.lines.items);
-                demo.physics.debug.lines.clearRetainingCapacity();
-
-                const pass = zgpu.util.beginRenderPassSimple(encoder, .load, swapchain_texv, null, depth_texv, null);
-                defer zgpu.util.endRelease(pass);
-
-                pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, num_vertices * @sizeOf(zbt.DebugDrawer.Vertex));
-                pass.setPipeline(physics_debug_pipe);
-                {
-                    const mem = gctx.uniformsAllocate(zm.Mat, 1);
-                    mem.slice[0] = zm.transpose(cam_world_to_clip);
-                    pass.setBindGroup(0, uniform_bg, &.{mem.offset});
-                }
-                pass.draw(num_vertices, 1, 0, 0);
+            // Resize `physics_debug_buf` if it is too small.
+            if (num_vertices * @sizeOf(zbt.DebugDrawer.Vertex) > vb_info.size) {
+                gctx.destroyResource(demo.physics_debug_buf);
+                demo.physics_debug_buf = gctx.createBuffer(.{
+                    .usage = .{ .copy_dst = true, .vertex = true },
+                    .size = (2 * num_vertices) * @sizeOf(zbt.DebugDrawer.Vertex),
+                });
+                vb_info = gctx.lookupResourceInfo(demo.physics_debug_buf) orelse break :pass;
             }
+
+            gctx.queue.writeBuffer(vb_info.gpuobj.?, 0, zbt.DebugDrawer.Vertex, demo.physics.debug.lines.items);
+            demo.physics.debug.lines.clearRetainingCapacity();
+
+            const pass = zgpu.util.beginRenderPassSimple(encoder, .load, swapchain_texv, null, depth_texv, null);
+            defer zgpu.util.endRelease(pass);
+
+            pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, num_vertices * @sizeOf(zbt.DebugDrawer.Vertex));
+            pass.setPipeline(physics_debug_pipe);
+            {
+                const mem = gctx.uniformsAllocate(zm.Mat, 1);
+                mem.slice[0] = zm.transpose(cam_world_to_clip);
+                pass.setBindGroup(0, uniform_bg, &.{mem.offset});
+            }
+            pass.draw(num_vertices, 1, 0, 0);
         }
 
         // Gui pass.
@@ -503,6 +519,32 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
+fn createEntity(
+    world: *const zbt.World,
+    body: *const zbt.Body,
+    basecolor_roughness: [4]f32,
+    entities: *std.ArrayList(Entity),
+) void {
+    const shape = body.getShape();
+    const shape_type = shape.getType();
+    const mesh_index = switch (shape_type) {
+        .box => mesh_cube,
+        .sphere => mesh_sphere,
+        .trimesh => mesh_world,
+        else => unreachable,
+    };
+    const entity_index = @intCast(i32, entities.items.len);
+    entities.append(.{
+        .body = body,
+        .basecolor_roughness = basecolor_roughness,
+        .mesh_index = mesh_index,
+    }) catch unreachable;
+    body.setUserIndex(0, entity_index);
+    body.setCcdSweptSphereRadius(0.5);
+    body.setCcdMotionThreshold(1e-7);
+    world.addBody(body);
+}
+
 fn appendMesh(
     mesh: zmesh.Shape,
     all_meshes: *std.ArrayList(Mesh),
@@ -530,6 +572,7 @@ fn initMeshes(
     all_indices: *std.ArrayList(u32),
     all_positions: *std.ArrayList([3]f32),
     all_normals: *std.ArrayList([3]f32),
+    physics_shapes: *std.ArrayList(*const zbt.Shape),
 ) !void {
     // Cube mesh.
     {
@@ -541,6 +584,9 @@ fn initMeshes(
 
         const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_cube);
+
+        const shape = zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 });
+        try physics_shapes.append(shape.asShape());
     }
 
     // World mesh.
@@ -573,6 +619,33 @@ fn initMeshes(
             .num_vertices = @intCast(u32, all_positions.items.len) - vertex_offset,
         });
         assert(mesh_index == mesh_world);
+
+        const world_shape = zbt.TriangleMeshShape.init();
+        try physics_shapes.append(world_shape.asShape());
+
+        world_shape.addIndexVertexArray(
+            @intCast(u32, indices.items.len / 3),
+            indices.items.ptr,
+            @sizeOf([3]u32),
+            @intCast(u32, positions.items.len),
+            positions.items.ptr,
+            @sizeOf([3]f32),
+        );
+        world_shape.finish();
+    }
+
+    // Parametric sphere.
+    {
+        var mesh = zmesh.Shape.initParametricSphere(8, 8);
+        defer mesh.deinit();
+        mesh.unweld();
+        mesh.computeNormals();
+
+        const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
+        assert(mesh_index == mesh_sphere);
+
+        const shape = zbt.SphereShape.init(1.0);
+        try physics_shapes.append(shape.asShape());
     }
 }
 

@@ -382,6 +382,12 @@ void cbtBodyGetCenterOfMassPosition(CbtBodyHandle body_handle, CbtVector3 positi
 void cbtBodyGetInvCenterOfMassTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]);
 void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle body_handle, CbtVector3 transform[4]);
 
+float cbtBodyGetCcdSweptSphereRadius(CbtBodyHandle body_handle);
+void cbtBodySetCcdSweptSphereRadius(CbtBodyHandle body_handle, float radius);
+
+float cbtBodyGetCcdMotionThreshold(CbtBodyHandle body_handle);
+void cbtBodySetCcdMotionThreshold(CbtBodyHandle body_handle, float threshold);
+
 //
 // Constraints
 //

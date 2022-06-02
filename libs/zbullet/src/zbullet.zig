@@ -618,6 +618,24 @@ pub const Body = opaque {
 
     pub const applyCentralImpulse = cbtBodyApplyCentralImpulse;
     extern fn cbtBodyApplyCentralImpulse(body: *const Body, impulse: *[3]f32) void;
+
+    pub const setUserIndex = cbtBodySetUserIndex;
+    extern fn cbtBodySetUserIndex(body: *const Body, slot: u32, index: i32) void;
+
+    pub const getUserIndex = cbtBodyGetUserIndex;
+    extern fn cbtBodyGetUserIndex(body: *const Body, slot: u32) i32;
+
+    pub const getCcdSweptSphereRadius = cbtBodyGetCcdSweptSphereRadius;
+    extern fn cbtBodyGetCcdSweptSphereRadius(body: *const Body) f32;
+
+    pub const setCcdSweptSphereRadius = cbtBodySetCcdSweptSphereRadius;
+    extern fn cbtBodySetCcdSweptSphereRadius(body: *const Body, radius: f32) void;
+
+    pub const getCcdMotionThreshold = cbtBodyGetCcdMotionThreshold;
+    extern fn cbtBodyGetCcdMotionThreshold(body: *const Body) f32;
+
+    pub const setCcdMotionThreshold = cbtBodySetCcdMotionThreshold;
+    extern fn cbtBodySetCcdMotionThreshold(body: *const Body, threshold: f32) void;
 };
 
 pub const ConstraintType = enum(c_int) {

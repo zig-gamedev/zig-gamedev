@@ -1482,6 +1482,30 @@ void cbtBodyGetGraphicsWorldTransform(CbtBodyHandle body_handle, CbtVector3 tran
     transform[3][2] = origin.z();
 }
 
+float cbtBodyGetCcdSweptSphereRadius(CbtBodyHandle body_handle) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    auto body = (btRigidBody*)body_handle;
+    return body->getCcdSweptSphereRadius();
+}
+
+void cbtBodySetCcdSweptSphereRadius(CbtBodyHandle body_handle, float radius) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    auto body = (btRigidBody*)body_handle;
+    body->setCcdSweptSphereRadius(radius);
+}
+
+float cbtBodyGetCcdMotionThreshold(CbtBodyHandle body_handle) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    auto body = (btRigidBody*)body_handle;
+    return body->getCcdMotionThreshold();
+}
+
+void cbtBodySetCcdMotionThreshold(CbtBodyHandle body_handle, float threshold) {
+    assert(body_handle && cbtBodyIsCreated(body_handle));
+    auto body = (btRigidBody*)body_handle;
+    body->setCcdMotionThreshold(threshold);
+}
+
 CbtBodyHandle cbtConGetFixedBody(void) {
     return (CbtBodyHandle)&btTypedConstraint::getFixedBody();
 }
