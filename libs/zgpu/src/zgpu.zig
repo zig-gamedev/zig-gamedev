@@ -1101,8 +1101,8 @@ pub const util = struct {
         bgls: []const BindGroupLayoutHandle,
         wgsl_vs: [:0]const u8,
         wgsl_fs: [:0]const u8,
-        vertex_stride: u64,
-        vertex_attribs: []const gpu.VertexAttribute,
+        vertex_stride: ?u64,
+        vertex_attribs: ?[]const gpu.VertexAttribute,
         primitive_state: gpu.PrimitiveState,
         rt_format: gpu.Texture.Format,
         depth_state: ?gpu.DepthStencilState,
@@ -1121,17 +1121,17 @@ pub const util = struct {
 
         const color_target = gpu.ColorTargetState{ .format = rt_format };
 
-        const vertex_buffer_layout = gpu.VertexBufferLayout{
-            .array_stride = vertex_stride,
-            .attribute_count = @intCast(u32, vertex_attribs.len),
-            .attributes = vertex_attribs.ptr,
-        };
+        const vertex_buffer_layout = if (vertex_stride) |vs| gpu.VertexBufferLayout{
+            .array_stride = vs,
+            .attribute_count = @intCast(u32, vertex_attribs.?.len),
+            .attributes = vertex_attribs.?.ptr,
+        } else null;
 
         const pipe_desc = gpu.RenderPipeline.Descriptor{
             .vertex = gpu.VertexState{
                 .module = vs_mod,
                 .entry_point = "main",
-                .buffers = &.{vertex_buffer_layout},
+                .buffers = if (vertex_buffer_layout != null) &.{vertex_buffer_layout.?} else null,
             },
             .fragment = &gpu.FragmentState{
                 .module = fs_mod,

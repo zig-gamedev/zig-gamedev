@@ -7,6 +7,7 @@ const zgpu = @import("zgpu");
 const c = zgpu.cimgui;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
+const zbt = @import("zbullet");
 const wgsl = @import("bullet_physics_test_wgsl.zig");
 
 const content_dir = @import("build_options").content_dir;
@@ -34,31 +35,41 @@ const Mesh = struct {
     num_vertices: u32,
 };
 
+const Entity = struct {
+    body: *const zbt.Body,
+    basecolor_roughness: [4]f32,
+    size: [3]f32,
+    mesh_index: u32,
+};
+
 const mesh_cube = 0;
 const mesh_world = 1;
 
 const safe_uniform_size = 256;
 
-const Drawable = struct {
-    mesh_index: u32,
-    position: [3]f32,
-    basecolor_roughness: [4]f32,
-};
-
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
     mesh_pipe: zgpu.RenderPipelineHandle = .{},
-    mesh_bg: zgpu.BindGroupHandle,
+    physics_debug_pipe: zgpu.RenderPipelineHandle = .{},
 
     vertex_buf: zgpu.BufferHandle,
     index_buf: zgpu.BufferHandle,
 
+    physics_debug_buf: zgpu.BufferHandle,
+
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
 
+    uniform_bg: zgpu.BindGroupHandle,
+
     meshes: std.ArrayList(Mesh),
 
+    physics: struct {
+        world: *const zbt.World,
+        shapes: std.ArrayList(*const zbt.Shape),
+        debug: *zbt.DebugDrawer,
+    },
     camera: struct {
         position: [3]f32 = .{ 0.0, 3.0, 0.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 0.0 },
@@ -121,6 +132,11 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     });
     gctx.queue.writeBuffer(gctx.lookupResource(index_buf).?, 0, u32, indices.items);
 
+    const physics_debug_buf = gctx.createBuffer(.{
+        .usage = .{ .copy_dst = true, .vertex = true },
+        .size = 1024 * @sizeOf(zbt.DebugDrawer.Vertex),
+    });
+
     //
     // Create textures.
     //
@@ -129,27 +145,86 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     // Create bind groups
     //
-    const mesh_bg = gctx.createBindGroup(uniform_bgl, &[_]zgpu.BindGroupEntryInfo{.{
+    const uniform_bg = gctx.createBindGroup(uniform_bgl, &[_]zgpu.BindGroupEntryInfo{.{
         .binding = 0,
         .buffer_handle = gctx.uniforms.buffer,
         .offset = 0,
         .size = safe_uniform_size,
     }});
 
+    //
+    // Init physics
+    //
+    const physics_world = zbt.World.init(.{});
+
+    var physics_debug = allocator.create(zbt.DebugDrawer) catch unreachable;
+    physics_debug.* = zbt.DebugDrawer.init(allocator);
+
+    physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
+    physics_world.debugSetMode(zbt.dbgmode_draw_wireframe);
+
+    const physics_shapes = blk: {
+        var shapes = std.ArrayList(*const zbt.Shape).init(allocator);
+
+        const box_shape = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 });
+        try shapes.append(box_shape.asShape());
+
+        const box_body = zbt.Body.init(
+            1.0, // mass
+            &zm.mat43ToArray(zm.translation(0.0, 5.0, 10.0)),
+            box_shape.asShape(),
+        );
+        physics_world.addBody(box_body);
+
+        const world_shape = zbt.TriangleMeshShape.init();
+        try shapes.append(world_shape.asShape());
+
+        world_shape.addIndexVertexArray(
+            meshes.items[mesh_world].num_indices / 3,
+            indices.items.ptr + meshes.items[mesh_world].index_offset,
+            @sizeOf([3]u32),
+            meshes.items[mesh_world].num_vertices,
+            positions.items.ptr + meshes.items[mesh_world].vertex_offset,
+            @sizeOf([3]f32),
+        );
+        world_shape.finish();
+
+        const world_body = zbt.Body.init(
+            0.0, // static body
+            &zm.mat43ToArray(zm.identity()),
+            world_shape.asShape(),
+        );
+        physics_world.addBody(world_body);
+
+        break :blk shapes;
+    };
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
         .vertex_buf = vertex_buf,
         .index_buf = index_buf,
+        .physics_debug_buf = physics_debug_buf,
         .depth_tex = depth.tex,
         .depth_texv = depth.texv,
-        .mesh_bg = mesh_bg,
+        .uniform_bg = uniform_bg,
         .meshes = meshes,
+        .physics = .{
+            .world = physics_world,
+            .shapes = physics_shapes,
+            .debug = physics_debug,
+        },
     };
 
     //
     // Create pipelines.
     //
+    const common_depth_state = gpu.DepthStencilState{
+        .format = .depth32_float,
+        .depth_write_enabled = true,
+        .depth_compare = .less,
+    };
+
     const pos_norm_attribs = [_]gpu.VertexAttribute{
         .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
         .{ .format = .float32x3, .offset = @offsetOf(Vertex, "normal"), .shader_location = 1 },
@@ -158,20 +233,52 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         allocator,
         gctx,
         &.{ uniform_bgl, uniform_bgl },
-        wgsl.vs,
-        wgsl.fs,
+        wgsl.mesh_vs,
+        wgsl.mesh_fs,
         @sizeOf(Vertex),
         pos_norm_attribs[0..],
         .{ .front_face = .cw, .cull_mode = .none },
         zgpu.GraphicsContext.swapchain_format,
-        gpu.DepthStencilState{ .format = .depth32_float, .depth_write_enabled = true, .depth_compare = .less },
+        common_depth_state,
         &demo.mesh_pipe,
+    );
+
+    const pos_color_attribs = [_]gpu.VertexAttribute{
+        .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+        .{ .format = .uint32, .offset = @offsetOf(zbt.DebugDrawer.Vertex, "color"), .shader_location = 1 },
+    };
+    zgpu.util.createRenderPipelineSimple(
+        allocator,
+        gctx,
+        &.{uniform_bgl},
+        wgsl.physics_debug_vs,
+        wgsl.physics_debug_fs,
+        @sizeOf(zbt.DebugDrawer.Vertex),
+        pos_color_attribs[0..],
+        .{ .topology = .line_list },
+        zgpu.GraphicsContext.swapchain_format,
+        common_depth_state,
+        &demo.physics_debug_pipe,
     );
 
     return demo;
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
+    {
+        var i = demo.physics.world.getNumBodies() - 1;
+        while (i >= 0) : (i -= 1) {
+            const body = demo.physics.world.getBody(i);
+            demo.physics.world.removeBody(body);
+            body.deinit();
+        }
+    }
+    for (demo.physics.shapes.items) |shape|
+        shape.deinit();
+    demo.physics.shapes.deinit();
+    demo.physics.debug.deinit();
+    allocator.destroy(demo.physics.debug);
+    demo.physics.world.deinit();
     demo.meshes.deinit();
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
@@ -179,6 +286,9 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+
+    const dt = demo.gctx.stats.delta_time;
+    _ = demo.physics.world.stepSimulation(dt, .{});
 
     if (c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize)) {
         c.igBulletText(
@@ -269,7 +379,7 @@ fn draw(demo: *DemoState) void {
             const vb_info = gctx.lookupResourceInfo(demo.vertex_buf) orelse break :pass;
             const ib_info = gctx.lookupResourceInfo(demo.index_buf) orelse break :pass;
             const mesh_pipe = gctx.lookupResource(demo.mesh_pipe) orelse break :pass;
-            const mesh_bg = gctx.lookupResource(demo.mesh_bg) orelse break :pass;
+            const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse break :pass;
             const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
 
             const pass = zgpu.util.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
@@ -287,7 +397,7 @@ fn draw(demo: *DemoState) void {
                     .world_to_clip = zm.transpose(cam_world_to_clip),
                     .camera_position = demo.camera.position,
                 };
-                pass.setBindGroup(0, mesh_bg, &.{mem.offset});
+                pass.setBindGroup(0, uniform_bg, &.{mem.offset});
             }
 
             const object_to_world = zm.identity();
@@ -297,24 +407,54 @@ fn draw(demo: *DemoState) void {
                 .basecolor_roughness = [4]f32{ 0.25, 0.25, 0.25, 0.125 },
             };
 
-            pass.setBindGroup(1, mesh_bg, &.{mem.offset});
+            pass.setBindGroup(1, uniform_bg, &.{mem.offset});
             const mesh_index = mesh_world;
 
-            if (mesh_index == mesh_world) {
-                pass.draw(
-                    demo.meshes.items[mesh_index].num_vertices,
-                    1,
-                    demo.meshes.items[mesh_index].vertex_offset,
-                    0,
-                );
-            } else {
-                pass.drawIndexed(
-                    demo.meshes.items[mesh_index].num_indices,
-                    1,
-                    demo.meshes.items[mesh_index].index_offset,
-                    @intCast(i32, demo.meshes.items[mesh_index].vertex_offset),
-                    0,
-                );
+            pass.drawIndexed(
+                demo.meshes.items[mesh_index].num_indices,
+                1,
+                demo.meshes.items[mesh_index].index_offset,
+                @intCast(i32, demo.meshes.items[mesh_index].vertex_offset),
+                0,
+            );
+        }
+
+        if (true) {
+            // Physics debug pass.
+            pass: {
+                demo.physics.world.debugDrawAll();
+                const num_vertices = @intCast(u32, demo.physics.debug.lines.items.len);
+                if (num_vertices == 0) break :pass;
+
+                var vb_info = gctx.lookupResourceInfo(demo.physics_debug_buf) orelse break :pass;
+                const physics_debug_pipe = gctx.lookupResource(demo.physics_debug_pipe) orelse break :pass;
+                const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse break :pass;
+                const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
+
+                // Resize `physics_debug_buf` if needed.
+                if (num_vertices * @sizeOf(zbt.DebugDrawer.Vertex) > vb_info.size) {
+                    gctx.destroyResource(demo.physics_debug_buf);
+                    demo.physics_debug_buf = gctx.createBuffer(.{
+                        .usage = .{ .copy_dst = true, .vertex = true },
+                        .size = (2 * num_vertices) * @sizeOf(zbt.DebugDrawer.Vertex),
+                    });
+                    vb_info = gctx.lookupResourceInfo(demo.physics_debug_buf) orelse break :pass;
+                }
+
+                gctx.queue.writeBuffer(vb_info.gpuobj.?, 0, zbt.DebugDrawer.Vertex, demo.physics.debug.lines.items);
+                demo.physics.debug.lines.clearRetainingCapacity();
+
+                const pass = zgpu.util.beginRenderPassSimple(encoder, .load, swapchain_texv, null, depth_texv, null);
+                defer zgpu.util.endRelease(pass);
+
+                pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, num_vertices * @sizeOf(zbt.DebugDrawer.Vertex));
+                pass.setPipeline(physics_debug_pipe);
+                {
+                    const mem = gctx.uniformsAllocate(zm.Mat, 1);
+                    mem.slice[0] = zm.transpose(cam_world_to_clip);
+                    pass.setBindGroup(0, uniform_bg, &.{mem.offset});
+                }
+                pass.draw(num_vertices, 1, 0, 0);
             }
         }
 
@@ -406,6 +546,7 @@ fn initMeshes(
     // World mesh.
     {
         const mesh_index = @intCast(u32, all_meshes.items.len);
+        const index_offset = @intCast(u32, all_indices.items.len);
         const vertex_offset = @intCast(u32, all_positions.items.len);
 
         var indices = std.ArrayList(u32).init(arena);
@@ -419,15 +560,16 @@ fn initMeshes(
         defer zmesh.io.cgltf.free(data);
         try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, null, null);
 
-        for (indices.items) |ind| {
+        for (indices.items) |ind, i| {
             all_positions.append(positions.items[ind]) catch unreachable;
             all_normals.append(normals.items[ind]) catch unreachable;
+            all_indices.append(@intCast(u32, i)) catch unreachable;
         }
 
         try all_meshes.append(.{
-            .index_offset = 0,
+            .index_offset = index_offset,
             .vertex_offset = vertex_offset,
-            .num_indices = 0,
+            .num_indices = @intCast(u32, all_indices.items.len) - index_offset,
             .num_vertices = @intCast(u32, all_positions.items.len) - vertex_offset,
         });
         assert(mesh_index == mesh_world);
@@ -454,6 +596,10 @@ pub fn main() !void {
     defer _ = gpa.deinit();
 
     const allocator = gpa.allocator();
+
+    // Init zbullet library.
+    zbt.init(allocator);
+    defer zbt.deinit();
 
     const demo = try init(allocator, window);
     defer deinit(allocator, demo);

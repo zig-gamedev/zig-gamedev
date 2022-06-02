@@ -4,6 +4,7 @@ const zmath = @import("../../libs/zmath/build.zig");
 const zmesh = @import("../../libs/zmesh/build.zig");
 const zpool = @import("../../libs/zpool/build.zig");
 const ztracy = @import("../../libs/ztracy/build.zig");
+const zbullet = @import("../../libs/zbullet/build.zig");
 
 const Options = @import("../../build.zig").Options;
 
@@ -43,10 +44,12 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(ztracy_pkg);
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
+    exe.addPackage(zbullet.pkg);
 
     zgpu.link(exe, zgpu_options);
     zmesh.link(exe, zmesh_options);
     ztracy.link(exe, ztracy_options);
+    zbullet.link(exe);
 
     return exe;
 }

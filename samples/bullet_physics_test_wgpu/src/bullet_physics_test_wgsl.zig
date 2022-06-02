@@ -1,5 +1,5 @@
 // zig fmt: off
-const common =
+const mesh_common =
 \\  struct DrawUniforms {
 \\      object_to_world: mat4x4<f32>,
 \\      basecolor_roughness: vec4<f32>,
@@ -12,7 +12,7 @@ const common =
 \\  }
 \\  @group(0) @binding(0) var<uniform> frame_uniforms: FrameUniforms;
 ;
-pub const vs = common ++
+pub const mesh_vs = mesh_common ++
 \\  struct VertexOut {
 \\      @builtin(position) position_clip: vec4<f32>,
 \\      @location(0) position: vec3<f32>,
@@ -37,7 +37,7 @@ pub const vs = common ++
 \\      return output;
 \\  }
 ;
-pub const fs = common ++
+pub const mesh_fs = mesh_common ++
 \\  let pi = 3.1415926;
 \\
 \\  fn saturate(x: f32) -> f32 { return clamp(x, 0.0, 1.0); }
@@ -85,6 +85,7 @@ pub const fs = common ++
 \\      var f0 = vec3(0.04);
 \\      f0 = mix(f0, base_color, metallic);
 \\
+\\      // TODO: Pass those arrays via uniform buffer
 \\      let light_positions = array<vec3<f32>, 4>(
 \\          vec3(25.0, 15.0, 25.0),
 \\          vec3(-25.0, 15.0, 25.0),
@@ -140,5 +141,38 @@ pub const fs = common ++
 \\      let min_bary = min(barys.x, min(barys.y, barys.z));
 \\      return vec4(min_bary * color, 1.0);
 \\  }
-// zig fmt: on
 ;
+pub const physics_debug_vs =
+\\  struct Uniforms {
+\\      world_to_clip: mat4x4<f32>,
+\\  }
+\\  @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+\\
+\\  struct VertexOut {
+\\      @builtin(position) position_clip: vec4<f32>,
+\\      @location(0) color: vec3<f32>,
+\\  }
+\\
+\\  @stage(vertex) fn main(
+\\      @builtin(vertex_index) vertex_index: u32,
+\\      @location(0) position: vec3<f32>,
+\\      @location(1) color: u32,
+\\  ) -> VertexOut {
+\\      var output: VertexOut;
+\\      output.position_clip = vec4(position, 1.0) * uniforms.world_to_clip;
+\\      output.color = vec3(
+\\          f32(color & 0xFFu) / 255.0,
+\\          f32((color >> 8u) & 0xFFu) / 255.0,
+\\          f32((color >> 16u) & 0xFFu) / 255.0,
+\\      );
+\\      return output;
+\\  }
+;
+pub const physics_debug_fs =
+\\  @stage(fragment) fn main(
+\\      @location(0) color: vec3<f32>,
+\\  ) -> @location(0) vec4<f32> {
+\\      return vec4(color, 1.0);
+\\  }
+;
+// zig fmt: on
