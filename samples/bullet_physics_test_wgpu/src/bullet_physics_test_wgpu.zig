@@ -48,7 +48,6 @@ const mesh_world: u32 = 2;
 
 const default_linear_damping: f32 = 0.1;
 const default_angular_damping: f32 = 0.1;
-const default_world_friction: f32 = 0.15;
 
 const safe_uniform_size = 256;
 
@@ -72,7 +71,6 @@ const DemoState = struct {
     entities: std.ArrayList(Entity),
 
     keyboard_delay: f32 = 1.0,
-    shape_for_shooting: i32 = mesh_sphere,
 
     physics: struct {
         world: *const zbt.World,
@@ -181,15 +179,14 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             &zm.mat43ToArray(zm.translation(0.0, 5.0, 5.0)),
             physics_shapes.items[mesh_cube],
         );
-        createEntity(physics_world, box_body, [4]f32{ 0.8, 0.0, 0.0, 0.25 }, &entities);
+        createEntity(physics_world, box_body, [4]f32{ 0.8, 0.0, 0.0, 0.25 }, 1.0, &entities);
 
         const world_body = zbt.Body.init(
             0.0, // static body
             &zm.mat43ToArray(zm.identity()),
             physics_shapes.items[mesh_world],
         );
-        //world_body.setFriction(default_world_friction);
-        createEntity(physics_world, world_body, [4]f32{ 0.25, 0.25, 0.25, 0.125 }, &entities);
+        createEntity(physics_world, world_body, [4]f32{ 0.25, 0.25, 0.25, 0.125 }, 0.0, &entities);
     }
 
     const demo = try allocator.create(DemoState);
@@ -294,14 +291,6 @@ fn update(demo: *DemoState) void {
         c.igBulletText("Right Mouse Button + drag :  rotate camera");
         c.igBulletText("W, A, S, D :  move camera");
         c.igBulletText("Space :  shoot");
-        c.igBulletText("Shoot with :  ");
-        c.igSameLine(0.0, 0.0);
-        _ = c.igCombo_Str(
-            "##",
-            &demo.shape_for_shooting,
-            "Cube\x00Sphere\x00\x00",
-            -1,
-        );
     }
     c.igEnd();
 
@@ -359,16 +348,16 @@ fn update(demo: *DemoState) void {
             demo.keyboard_delay = 0.0;
 
             const transform = zm.translationV(zm.load3(demo.camera.position));
-            const impulse = zm.f32x4s(60.0) * zm.load3(demo.camera.forward);
+            const impulse = zm.f32x4s(80.0) * zm.load3(demo.camera.forward);
 
             const body = zbt.Body.init(
                 1.0,
                 &zm.mat43ToArray(transform),
-                demo.physics.shapes.items[@intCast(usize, demo.shape_for_shooting)],
+                demo.physics.shapes.items[mesh_sphere],
             );
             body.applyCentralImpulse(&zm.vec3ToArray(impulse));
 
-            createEntity(demo.physics.world, body, [4]f32{ 0.0, 0.8, 0.0, 0.2 }, &demo.entities);
+            createEntity(demo.physics.world, body, [4]f32{ 0.0, 0.8, 0.0, 0.2 }, 1.0, &demo.entities);
         }
     }
 }
@@ -537,6 +526,7 @@ fn createEntity(
     world: *const zbt.World,
     body: *const zbt.Body,
     basecolor_roughness: [4]f32,
+    swept_sphere_radius: f32,
     entities: *std.ArrayList(Entity),
 ) void {
     const shape = body.getShape();
@@ -554,8 +544,10 @@ fn createEntity(
         .mesh_index = mesh_index,
     }) catch unreachable;
     body.setUserIndex(0, entity_index);
-    body.setCcdSweptSphereRadius(1.0);
-    body.setCcdMotionThreshold(1e-7);
+    if (swept_sphere_radius != 0.0) {
+        body.setCcdSweptSphereRadius(swept_sphere_radius);
+        body.setCcdMotionThreshold(1e-7);
+    }
     body.setDamping(default_linear_damping, default_angular_damping);
     world.addBody(body);
 }
