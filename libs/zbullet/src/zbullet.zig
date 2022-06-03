@@ -556,6 +556,13 @@ pub const TriangleMeshShape = opaque {
     extern fn cbtShapeTriMeshCreateEnd(trimesh: *const TriangleMeshShape) void;
 };
 
+pub const BodyActivationState = enum(c_int) {
+    active = 1,
+    sleeping = 2,
+    deactivation_disabled = 4,
+    simulation_disabled = 5,
+};
+
 pub const Body = opaque {
     pub fn init(
         mass: f32,
@@ -645,6 +652,36 @@ pub const Body = opaque {
 
     pub const getAngularDamping = cbtBodyGetAngularDamping;
     extern fn cbtBodyGetAngularDamping(body: *const Body) f32;
+
+    pub const getActivationState = cbtBodyGetActivationState;
+    extern fn cbtBodyGetActivationState(body: *const Body) BodyActivationState;
+
+    pub const setActivationState = cbtBodySetActivationState;
+    extern fn cbtBodySetActivationState(body: *const Body, state: BodyActivationState) void;
+
+    pub const forceActivationState = cbtBodyForceActivationState;
+    extern fn cbtBodyForceActivationState(body: *const Body, state: BodyActivationState) void;
+
+    pub const getDeactivationTime = cbtBodyGetDeactivationTime;
+    extern fn cbtBodyGetDeactivationTime(body: *const Body) f32;
+
+    pub const setDeactivationTime = cbtBodySetDeactivationTime;
+    extern fn cbtBodySetDeactivationTime(body: *const Body, time: f32) void;
+
+    pub const isActive = cbtBodyIsActive;
+    extern fn cbtBodyIsActive(body: *const Body) bool;
+
+    pub const isInWorld = cbtBodyIsInWorld;
+    extern fn cbtBodyIsInWorld(body: *const Body) bool;
+
+    pub const isStatic = cbtBodyIsStatic;
+    extern fn cbtBodyIsStatic(body: *const Body) bool;
+
+    pub const isKinematic = cbtBodyIsKinematic;
+    extern fn cbtBodyIsKinematic(body: *const Body) bool;
+
+    pub const isStaticOrKinematic = cbtBodyIsStaticOrKinematic;
+    extern fn cbtBodyIsStaticOrKinematic(body: *const Body) bool;
 };
 
 pub const ConstraintType = enum(c_int) {

@@ -179,7 +179,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             &zm.mat43ToArray(zm.translation(0.0, 5.0, 5.0)),
             physics_shapes.items[mesh_cube],
         );
-        createEntity(physics_world, box_body, [4]f32{ 0.8, 0.0, 0.0, 0.25 }, 1.0, &entities);
+        createEntity(physics_world, box_body, [4]f32{ 0.8, 0.0, 0.0, 0.25 }, 1.05, &entities);
 
         const world_body = zbt.Body.init(
             0.0, // static body
@@ -263,9 +263,8 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
             demo.physics.world.removeBody(body);
             body.deinit();
         }
+        for (demo.physics.shapes.items) |shape| shape.deinit();
     }
-    for (demo.physics.shapes.items) |shape|
-        shape.deinit();
     demo.physics.shapes.deinit();
     demo.physics.debug.deinit();
     allocator.destroy(demo.physics.debug);
@@ -549,6 +548,7 @@ fn createEntity(
         body.setCcdMotionThreshold(1e-7);
     }
     body.setDamping(default_linear_damping, default_angular_damping);
+    body.setActivationState(.deactivation_disabled);
     world.addBody(body);
 }
 
@@ -668,7 +668,7 @@ pub fn main() !void {
         return;
     };
 
-    const window = try glfw.Window.create(1400, 1000, window_title, null, null, .{
+    const window = try glfw.Window.create(1600, 1000, window_title, null, null, .{
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
     });
