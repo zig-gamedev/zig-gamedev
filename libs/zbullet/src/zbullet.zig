@@ -636,6 +636,15 @@ pub const Body = opaque {
 
     pub const setCcdMotionThreshold = cbtBodySetCcdMotionThreshold;
     extern fn cbtBodySetCcdMotionThreshold(body: *const Body, threshold: f32) void;
+
+    pub const setDamping = cbtBodySetDamping;
+    extern fn cbtBodySetDamping(body: *const Body, linear: f32, angular: f32) void;
+
+    pub const getLinearDamping = cbtBodyGetLinearDamping;
+    extern fn cbtBodyGetLinearDamping(body: *const Body) f32;
+
+    pub const getAngularDamping = cbtBodyGetAngularDamping;
+    extern fn cbtBodyGetAngularDamping(body: *const Body) f32;
 };
 
 pub const ConstraintType = enum(c_int) {
@@ -777,7 +786,7 @@ pub const Point2PointConstraint = opaque {
 
 pub const DebugMode = i32;
 pub const dbgmode_disabled: DebugMode = -1;
-pub const dbgmode_no_debug: DebugMode = 0;
+pub const dbgmode_draw_only_user: DebugMode = 0;
 pub const dbgmode_draw_wireframe: DebugMode = 1;
 pub const dbgmode_draw_aabb: DebugMode = 2;
 

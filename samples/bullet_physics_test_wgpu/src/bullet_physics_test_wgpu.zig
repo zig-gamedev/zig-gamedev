@@ -43,8 +43,12 @@ const Entity = struct {
 };
 
 const mesh_cube: u32 = 0;
-const mesh_world: u32 = 1;
-const mesh_sphere: u32 = 2;
+const mesh_sphere: u32 = 1;
+const mesh_world: u32 = 2;
+
+const default_linear_damping: f32 = 0.1;
+const default_angular_damping: f32 = 0.1;
+const default_world_friction: f32 = 0.15;
 
 const safe_uniform_size = 256;
 
@@ -68,6 +72,7 @@ const DemoState = struct {
     entities: std.ArrayList(Entity),
 
     keyboard_delay: f32 = 1.0,
+    shape_for_shooting: i32 = mesh_sphere,
 
     physics: struct {
         world: *const zbt.World,
@@ -166,7 +171,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     physics_debug.* = zbt.DebugDrawer.init(allocator);
 
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
-    physics_world.debugSetMode(zbt.dbgmode_disabled);
+    physics_world.debugSetMode(zbt.dbgmode_draw_only_user);
 
     var entities = std.ArrayList(Entity).init(allocator);
 
@@ -183,6 +188,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             &zm.mat43ToArray(zm.identity()),
             physics_shapes.items[mesh_world],
         );
+        //world_body.setFriction(default_world_friction);
         createEntity(physics_world, world_body, [4]f32{ 0.25, 0.25, 0.25, 0.125 }, &entities);
     }
 
@@ -287,7 +293,15 @@ fn update(demo: *DemoState) void {
         );
         c.igBulletText("Right Mouse Button + drag :  rotate camera");
         c.igBulletText("W, A, S, D :  move camera");
-        c.igBulletText("SPACE :  to shoot");
+        c.igBulletText("Space :  shoot");
+        c.igBulletText("Shoot with :  ");
+        c.igSameLine(0.0, 0.0);
+        _ = c.igCombo_Str(
+            "##",
+            &demo.shape_for_shooting,
+            "Cube\x00Sphere\x00\x00",
+            -1,
+        );
     }
     c.igEnd();
 
@@ -350,7 +364,7 @@ fn update(demo: *DemoState) void {
             const body = zbt.Body.init(
                 1.0,
                 &zm.mat43ToArray(transform),
-                demo.physics.shapes.items[mesh_sphere],
+                demo.physics.shapes.items[@intCast(usize, demo.shape_for_shooting)],
             );
             body.applyCentralImpulse(&zm.vec3ToArray(impulse));
 
@@ -540,8 +554,9 @@ fn createEntity(
         .mesh_index = mesh_index,
     }) catch unreachable;
     body.setUserIndex(0, entity_index);
-    body.setCcdSweptSphereRadius(0.5);
+    body.setCcdSweptSphereRadius(1.0);
     body.setCcdMotionThreshold(1e-7);
+    body.setDamping(default_linear_damping, default_angular_damping);
     world.addBody(body);
 }
 
@@ -579,13 +594,28 @@ fn initMeshes(
         var mesh = zmesh.Shape.initCube();
         defer mesh.deinit();
         mesh.translate(-0.5, -0.5, -0.5);
+        mesh.scale(2.0, 2.0, 2.0);
         mesh.unweld();
         mesh.computeNormals();
 
         const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_cube);
 
-        const shape = zbt.BoxShape.init(&.{ 0.5, 0.5, 0.5 });
+        const shape = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 });
+        try physics_shapes.append(shape.asShape());
+    }
+
+    // Parametric sphere.
+    {
+        var mesh = zmesh.Shape.initParametricSphere(8, 8);
+        defer mesh.deinit();
+        mesh.unweld();
+        mesh.computeNormals();
+
+        const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
+        assert(mesh_index == mesh_sphere);
+
+        const shape = zbt.SphereShape.init(1.0);
         try physics_shapes.append(shape.asShape());
     }
 
@@ -606,6 +636,8 @@ fn initMeshes(
         defer zmesh.io.cgltf.free(data);
         try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, null, null);
 
+        // "Unweld" mesh, this creates un-optimized mesh with duplicated vertices.
+        // We need to do it for wireframes and facet look.
         for (indices.items) |ind, i| {
             all_positions.append(positions.items[ind]) catch unreachable;
             all_normals.append(normals.items[ind]) catch unreachable;
@@ -632,20 +664,6 @@ fn initMeshes(
             @sizeOf([3]f32),
         );
         world_shape.finish();
-    }
-
-    // Parametric sphere.
-    {
-        var mesh = zmesh.Shape.initParametricSphere(8, 8);
-        defer mesh.deinit();
-        mesh.unweld();
-        mesh.computeNormals();
-
-        const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
-        assert(mesh_index == mesh_sphere);
-
-        const shape = zbt.SphereShape.init(1.0);
-        try physics_shapes.append(shape.asShape());
     }
 }
 
