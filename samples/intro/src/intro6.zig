@@ -183,7 +183,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     physics_debug.* = zbt.DebugDrawer.init(allocator);
 
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
-    physics_world.debugSetMode(zbt.dbgmode_draw_wireframe);
+    physics_world.debugSetMode(.{ .draw_wireframe = true });
 
     const physics_shapes = blk: {
         var shapes = std.ArrayList(*const zbt.Shape).init(allocator);

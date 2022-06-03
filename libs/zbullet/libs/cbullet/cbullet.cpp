@@ -282,7 +282,7 @@ CbtConstraintHandle cbtWorldGetConstraint(CbtWorldHandle world_handle, int con_i
     return (CbtConstraintHandle)world->getConstraint(con_index);
 }
 
-bool cbtRayTestClosest(
+bool cbtWorldRayTestClosest(
     CbtWorldHandle world_handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,

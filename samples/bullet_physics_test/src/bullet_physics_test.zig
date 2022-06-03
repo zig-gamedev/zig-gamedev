@@ -1583,13 +1583,13 @@ fn update(demo: *DemoState) void {
 
     if (!zb.cbtConIsCreated(demo.pick.constraint) and mouse_button_is_down) {
         var result: zb.CbtRayCastResult = undefined;
-        const hit = zb.cbtRayTestClosest(
+        const hit = zb.cbtWorldRayTestClosest(
             demo.physics_world,
             &ray_from.c,
             &ray_to.c,
             zb.CBT_COLLISION_FILTER_DEFAULT,
             zb.CBT_COLLISION_FILTER_ALL,
-            zb.CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST,
+            zb.CBT_RAYCAST_FLAG_USE_GJK_CONVEX_TEST,
             &result,
         );
 

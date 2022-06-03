@@ -7,7 +7,7 @@
 
 #define CBT_DECLARE_HANDLE(name) typedef struct name##__ { int unused; } *name
 
-// cbtRayTestClosest
+// cbtWorldRayTestClosest
 #define CBT_COLLISION_FILTER_DEFAULT 1
 #define CBT_COLLISION_FILTER_STATIC 2
 #define CBT_COLLISION_FILTER_KINEMATIC 4
@@ -16,12 +16,12 @@
 #define CBT_COLLISION_FILTER_CHARACTER 32
 #define CBT_COLLISION_FILTER_ALL -1
 
-// cbtRayTestClosest
+// cbtWorldRayTestClosest
 #define CBT_RAYCAST_FLAG_NONE 0
 #define CBT_RAYCAST_FLAG_TRIMESH_SKIP_BACKFACES 1
 #define CBT_RAYCAST_FLAG_TRIMESH_KEEP_UNFLIPPED_NORMALS 2
 #define CBT_RAYCAST_FLAG_USE_SUB_SIMPLEX_CONVEX_TEST 4 // default, faster but less accurate
-#define CBT_RAYCAST_FLAG_USE_USE_GJK_CONVEX_TEST 8
+#define CBT_RAYCAST_FLAG_USE_GJK_CONVEX_TEST 8
 
 // cbtBodySetAnisotropicFriction
 #define CBT_ANISOTROPIC_FRICTION_DISABLED 0
@@ -175,7 +175,7 @@ CbtBodyHandle cbtWorldGetBody(CbtWorldHandle world_handle, int body_index);
 CbtConstraintHandle cbtWorldGetConstraint(CbtWorldHandle world_handle, int con_index);
 
 // Returns `true` when hits something, `false` otherwise
-bool cbtRayTestClosest(
+bool cbtWorldRayTestClosest(
     CbtWorldHandle world_handle,
     const CbtVector3 ray_from_world,
     const CbtVector3 ray_to_world,

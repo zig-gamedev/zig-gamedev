@@ -169,7 +169,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     physics_debug.* = zbt.DebugDrawer.init(allocator);
 
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
-    physics_world.debugSetMode(zbt.dbgmode_draw_only_user);
+    physics_world.debugSetMode(zbt.DebugMode.user_only);
 
     var entities = std.ArrayList(Entity).init(allocator);
 

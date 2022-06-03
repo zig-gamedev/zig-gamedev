@@ -1,4 +1,4 @@
-// zbullet - version 0.1
+// zbullet - version 0.2 (wip)
 // Zig bindings for Bullet Physics SDK
 
 const std = @import("std");
@@ -60,6 +60,45 @@ pub fn deinit() void {
     allocations = null;
     allocator = null;
 }
+
+pub const CollisionFilter = packed struct {
+    default: bool = false,
+    static: bool = false,
+    kinematic: bool = false,
+    debris: bool = false,
+    sensor_trigger: bool = false,
+    character: bool = false,
+
+    _pad0: u10 = 0,
+    _pad1: u16 = 0,
+
+    pub const all = @bitCast(CollisionFilter, ~@as(u32, 0));
+
+    comptime {
+        std.debug.assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+pub const RayCastFlags = packed struct {
+    trimesh_skip_backfaces: bool = false,
+    trimesh_keep_unflipped_normals: bool = false,
+    use_subsimplex_convex_test: bool = false, // used by default, faster but less accurate
+    use_gjk_convex_test: bool = false,
+
+    _pad0: u12 = 0,
+    _pad1: u16 = 0,
+
+    comptime {
+        std.debug.assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+pub const RayCastResult = extern struct {
+    hit_normal_world: [3]f32,
+    hit_point_world: [3]f32,
+    hit_fraction: f32,
+    body: *const Body,
+};
 
 pub const World = opaque {
     pub fn init(params: struct {}) *const World {
@@ -169,6 +208,17 @@ pub const World = opaque {
         radius: f32,
         color: *const [3]f32,
     ) void;
+
+    pub const rayTestClosest = cbtWorldRayTestClosest;
+    extern fn cbtWorldRayTestClosest(
+        world: *const World,
+        ray_from_world: *const [3]f32,
+        ray_to_world: *const [3]f32,
+        group: CollisionFilter,
+        mask: CollisionFilter,
+        flags: RayCastFlags,
+        raycast_result: ?*RayCastResult,
+    ) bool;
 };
 
 pub const Axis = enum(c_int) {
@@ -821,11 +871,20 @@ pub const Point2PointConstraint = opaque {
     ) void;
 };
 
-pub const DebugMode = i32;
-pub const dbgmode_disabled: DebugMode = -1;
-pub const dbgmode_draw_only_user: DebugMode = 0;
-pub const dbgmode_draw_wireframe: DebugMode = 1;
-pub const dbgmode_draw_aabb: DebugMode = 2;
+pub const DebugMode = packed struct {
+    draw_wireframe: bool = false,
+    draw_aabb: bool = false,
+
+    _pad0: u14 = 0,
+    _pad1: u16 = 0,
+
+    pub const disabled = @bitCast(DebugMode, ~@as(u32, 0));
+    pub const user_only = @bitCast(DebugMode, @as(u32, 0));
+
+    comptime {
+        std.debug.assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
 
 pub const DebugDraw = extern struct {
     drawLine1: fn (
