@@ -178,8 +178,10 @@ pub const World = opaque {
         debug: *const DebugDraw,
     ) void;
 
-    pub const debugSetMode = cbtWorldDebugSetMode;
-    extern fn cbtWorldDebugSetMode(world: *const World, mode: DebugMode) void;
+    pub fn debugSetMode(world: *const World, mode: DebugMode) void {
+        cbtWorldDebugSetMode(world, @bitCast(c_int, mode));
+    }
+    extern fn cbtWorldDebugSetMode(world: *const World, mode: c_int) void;
 
     pub const debugDrawAll = cbtWorldDebugDrawAll;
     extern fn cbtWorldDebugDrawAll(world: *const World) void;
@@ -209,14 +211,32 @@ pub const World = opaque {
         color: *const [3]f32,
     ) void;
 
-    pub const rayTestClosest = cbtWorldRayTestClosest;
-    extern fn cbtWorldRayTestClosest(
+    pub fn rayTestClosest(
         world: *const World,
         ray_from_world: *const [3]f32,
         ray_to_world: *const [3]f32,
         group: CollisionFilter,
         mask: CollisionFilter,
         flags: RayCastFlags,
+        raycast_result: ?*RayCastResult,
+    ) bool {
+        return cbtWorldRayTestClosest(
+            world,
+            ray_from_world,
+            ray_to_world,
+            @bitCast(c_int, group),
+            @bitCast(c_int, mask),
+            @bitCast(c_int, flags),
+            raycast_result,
+        );
+    }
+    extern fn cbtWorldRayTestClosest(
+        world: *const World,
+        ray_from_world: *const [3]f32,
+        ray_to_world: *const [3]f32,
+        group: c_int,
+        mask: c_int,
+        flags: c_int,
         raycast_result: ?*RayCastResult,
     ) bool;
 };
