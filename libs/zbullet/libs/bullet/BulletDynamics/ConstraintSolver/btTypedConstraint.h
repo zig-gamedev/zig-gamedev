@@ -116,6 +116,7 @@ public:
 	};
 
 	static btRigidBody& getFixedBody();
+	static void destroyFixedBody();
 
 	struct btConstraintInfo2
 	{

@@ -46,16 +46,17 @@ extern fn cbtTaskSchedInit() void;
 extern fn cbtTaskSchedDeinit() void;
 
 pub fn init(alloc: std.mem.Allocator) void {
-    _ = Constraint.getFixedBody();
     std.debug.assert(allocator == null and allocations == null);
     allocator = alloc;
     allocations = std.AutoHashMap(usize, usize).init(allocator.?);
     allocations.?.ensureTotalCapacity(256) catch @panic("zbullet: out of memory");
     cbtAlignedAllocSetCustomAligned(zbulletAlloc, zbulletFree);
     cbtTaskSchedInit();
+    _ = Constraint.getFixedBody();
 }
 
 pub fn deinit() void {
+    Constraint.destroyFixedBody();
     cbtTaskSchedDeinit();
     cbtAlignedAllocSetCustomAligned(null, null);
     allocations.?.deinit();
@@ -779,6 +780,9 @@ pub const ConstraintType = enum(c_int) {
 pub const Constraint = opaque {
     pub const getFixedBody = cbtConGetFixedBody;
     extern fn cbtConGetFixedBody() *const Body;
+
+    pub const destroyFixedBody = cbtConDestroyFixedBody;
+    extern fn cbtConDestroyFixedBody() void;
 
     pub const allocate = cbtConAllocate;
     extern fn cbtConAllocate(ctype: ConstraintType) *const Constraint;

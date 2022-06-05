@@ -1511,6 +1511,10 @@ CbtBodyHandle cbtConGetFixedBody(void) {
     return (CbtBodyHandle)&btTypedConstraint::getFixedBody();
 }
 
+void cbtConDestroyFixedBody(void) {
+    btTypedConstraint::destroyFixedBody();
+}
+
 CbtConstraintHandle cbtConAllocate(int con_type) {
     size_t size = 0;
     switch (con_type) {

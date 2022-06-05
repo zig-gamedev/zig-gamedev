@@ -392,6 +392,7 @@ void cbtBodySetCcdMotionThreshold(CbtBodyHandle body_handle, float threshold);
 // Constraints
 //
 CbtBodyHandle cbtConGetFixedBody(void);
+void cbtConDestroyFixedBody(void);
 
 CbtConstraintHandle cbtConAllocate(int con_type);
 void cbtConDeallocate(CbtConstraintHandle con_handle);

@@ -806,7 +806,7 @@ pub fn main() !void {
     defer window.destroy();
     try window.setSizeLimits(.{ .width = 400, .height = 400 }, .{ .width = null, .height = null });
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = false }){};
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
     const allocator = gpa.allocator();
