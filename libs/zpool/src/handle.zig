@@ -94,12 +94,22 @@ pub fn Handle(
 
         pub const nil = Self{ .id = 0 };
 
-        pub fn init(index: IndexType, cycle: CycleType) Self {
+        pub fn init(i: IndexType, c: CycleType) Self {
             var u = HandleUnion{ .bits = .{
-                .cycle = cycle,
-                .index = index,
+                .cycle = c,
+                .index = i,
             } };
             return .{ .id = u.id };
+        }
+
+        pub fn cycle(self: Self) CycleType {
+            var u = HandleUnion{ .id = self.id };
+            return u.bits.cycle;
+        }
+
+        pub fn index(self: Self) IndexType {
+            var u = HandleUnion{ .id = self.id };
+            return u.bits.index;
         }
 
         /// Unpacks the `index` and `cycle` bit fields that comprise
@@ -150,8 +160,7 @@ pub fn Handle(
 ////////////////////////////////////////////////////////////////////////////////
 
 test "Handle sizes and alignments" {
-    const testing = std.testing;
-    const expectEqual = testing.expectEqual;
+    const expectEqual = std.testing.expectEqual;
 
     {
         const H = Handle(4, 4, void);
@@ -236,6 +245,19 @@ test "Handle sizes and alignments" {
         try expectEqual(@sizeOf(u64), @sizeOf(A));
         try expectEqual(@alignOf(u32), @alignOf(A));
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+test "Handle sort order" {
+    const expect = std.testing.expect;
+
+    const handle = Handle(4, 4, void).init;
+    const a = handle(0, 1);
+    const b = handle(1, 1);
+    try expect(a.id < b.id);
+    try expect(a.index() < b.index());
+    try expect(a.cycle() == b.cycle());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
