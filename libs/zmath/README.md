@@ -48,7 +48,7 @@ pub fn main() !void {
     const object_to_clip = zm.mul(object_to_view, view_to_clip);
 
     // Transposition is needed because GLSL uses column-major matrices by default
-    gl.uniformMatrix4fv(0, 1, gl.TRUE, zm.asFloats(&object_to_clip));
+    gl.uniformMatrix4fv(0, 1, gl.TRUE, zm.arrNPtr(&object_to_clip));
     
     // In GLSL: gl_Position = vec4(in_position, 1.0) * object_to_clip;
     
@@ -81,12 +81,12 @@ pub fn main() !void {
         const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
 
-        zm.store3(&demo.camera.forward, forward);
+        zm.storeArr3(&demo.camera.forward, forward);
 
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
-        var cam_pos = zm.load3(demo.camera.position);
+        var cam_pos = zm.loadArr3(demo.camera.position);
 
         if (keyDown('W')) {
             cam_pos += forward;
@@ -99,7 +99,7 @@ pub fn main() !void {
             cam_pos -= right;
         }
 
-        zm.store3(&demo.camera.position, cam_pos);
+        zm.storeArr3(&demo.camera.position, cam_pos);
     }
    
     //

@@ -571,12 +571,12 @@ fn update(demo: *DemoState) void {
         const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
 
-        zm.store3(&demo.camera.forward, forward);
+        zm.storeArr3(&demo.camera.forward, forward);
 
         const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
-        var cam_pos = zm.load3(demo.camera.position);
+        var cam_pos = zm.loadArr3(demo.camera.position);
 
         if (window.getKey(.w) == .press) {
             cam_pos += forward;
@@ -589,7 +589,7 @@ fn update(demo: *DemoState) void {
             cam_pos -= right;
         }
 
-        zm.store3(&demo.camera.position, cam_pos);
+        zm.storeArr3(&demo.camera.position, cam_pos);
     }
 }
 
@@ -599,8 +599,8 @@ fn draw(demo: *DemoState) void {
     const fb_height = gctx.swapchain_descriptor.height;
 
     const cam_world_to_view = zm.lookToLh(
-        zm.load3(demo.camera.position),
-        zm.load3(demo.camera.forward),
+        zm.loadArr3(demo.camera.position),
+        zm.loadArr3(demo.camera.forward),
         zm.f32x4(0.0, 1.0, 0.0, 0.0),
     );
     const cam_view_to_clip = zm.perspectiveFovLh(

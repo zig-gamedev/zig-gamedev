@@ -141,9 +141,12 @@ const char* btTypedConstraint::serialize(void* dataBuffer, btSerializer* seriali
 
 btRigidBody& btTypedConstraint::getFixedBody()
 {
-	static btRigidBody s_fixed(0, 0, 0);
-	s_fixed.setMassProps(btScalar(0.), btVector3(btScalar(0.), btScalar(0.), btScalar(0.)));
-	return s_fixed;
+    static btRigidBody* s_fixed = nullptr;
+    if (s_fixed == nullptr) {
+        s_fixed = new btRigidBody(0, 0, 0);
+        s_fixed->setMassProps(btScalar(0.), btVector3(btScalar(0.), btScalar(0.), btScalar(0.)));
+    }
+	return *s_fixed;
 }
 
 void btAngularLimit::set(btScalar low, btScalar high, btScalar _softness, btScalar _biasFactor, btScalar _relaxationFactor)

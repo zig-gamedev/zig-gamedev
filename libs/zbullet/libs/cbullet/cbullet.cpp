@@ -252,7 +252,8 @@ void cbtWorldRemoveBody(CbtWorldHandle world_handle, CbtBodyHandle body_handle) 
 }
 
 void cbtWorldRemoveConstraint(CbtWorldHandle world_handle, CbtConstraintHandle con_handle) {
-    assert(world_handle && con_handle);
+    assert(world_handle);
+    assert(con_handle && cbtConIsCreated(con_handle));
     auto world = ((WorldData*)world_handle)->world;
     auto con = (btTypedConstraint*)con_handle;
     world->removeConstraint(con);

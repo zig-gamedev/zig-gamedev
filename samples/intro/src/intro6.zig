@@ -389,8 +389,8 @@ fn update(demo: *DemoState) void {
         if (w32.GetAsyncKeyState(w32.VK_SPACE) < 0 and demo.keyboard_delay >= 0.5) {
             demo.keyboard_delay = 0.0;
 
-            const transform = zm.translationV(zm.load(demo.camera.position[0..], zm.Vec, 3));
-            const impulse = zm.f32x4s(50.0) * zm.load(demo.camera.forward[0..], zm.Vec, 3);
+            const transform = zm.translationV(zm.loadArr3(demo.camera.position));
+            const impulse = zm.f32x4s(50.0) * zm.loadArr3(demo.camera.forward);
 
             const body = zbt.Body.init(
                 1.0,
@@ -398,7 +398,7 @@ fn update(demo: *DemoState) void {
                 demo.physics.shapes.items[0],
             );
             body.setFriction(2.1);
-            body.applyCentralImpulse(&zm.vec3ToArray(impulse));
+            body.applyCentralImpulse(zm.arr3Ptr(&impulse));
 
             demo.physics.world.addBody(body);
         }

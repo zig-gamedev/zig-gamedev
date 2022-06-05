@@ -35,9 +35,9 @@
 // var v16 = load(mem[200..], F32x16, 0);
 //
 // var camera_position = [3]f32{ 1.0, 2.0, 3.0 };
-// var cam_pos = load3(camera_position);
+// var cam_pos = loadArr3(camera_position);
 // ...
-// store3(&camera_position, cam_pos);
+// storeArr3(&camera_position, cam_pos);
 //
 // v4 = sin(v4); // SIMDx4
 // v8 = cos(v8); // .x86_64 -> 2 x SIMDx4, .x86_64+avx+fma -> SIMDx8
@@ -75,20 +75,22 @@
 // load(mem: []const f32, comptime T: type, comptime len: u32) T
 // store(mem: []f32, v: anytype, comptime len: u32) void
 //
-// load2(arr: [2]f32) F32x4
-// load3(arr: [3]f32) F32x4
-// load4(arr: [4]f32) F32x4
+// loadArr2(arr: [2]f32) F32x4
+// loadArr2zw(arr: [2]f32, z: f32, w: f32) F32x4
+// loadArr3(arr: [3]f32) F32x4
+// loadArr3w(arr: [3]f32, w: f32) F32x4
+// loadArr4(arr: [4]f32) F32x4
 //
-// store2(arr: *[2]f32, v: F32x4) void
-// store3(arr: *[3]f32, v: F32x4) void
-// store4(arr: *[4]f32, v: F32x4) void
+// storeArr2(arr: *[2]f32, v: F32x4) void
+// storeArr3(arr: *[3]f32, v: F32x4) void
+// storeArr4(arr: *[4]f32, v: F32x4) void
+//
+// arr3Ptr(ptr: anytype) *const [3]f32
+// arrNPtr(ptr: anytype) [*]const f32
 //
 // splat(comptime T: type, value: f32) T
 // splatInt(comptime T: type, value: u32) T
 // usplat(comptime T: type, value: u32) T
-//
-// vec3ToArray(v: Vec) [3]f32
-// asFloats(ptr: anytype) [*]const f32
 //
 // ------------------------------------------------------------------------------
 // 2. Functions that work on all vector components (F32xN = F32x4 or F32x8 or F32x16)
@@ -399,28 +401,73 @@ test "zmath.store" {
     try expect(a[5] == 0.0);
 }
 
-pub inline fn vec3ToArray(v: Vec) [3]f32 {
-    return .{ v[0], v[1], v[2] };
-}
-
-pub inline fn load2(arr: [2]f32) F32x4 {
+pub inline fn loadArr2(arr: [2]f32) F32x4 {
     return f32x4(arr[0], arr[1], 0.0, 0.0);
 }
-pub inline fn load3(arr: [3]f32) F32x4 {
+pub inline fn loadArr2zw(arr: [2]f32, z: f32, w: f32) F32x4 {
+    return f32x4(arr[0], arr[1], z, w);
+}
+pub inline fn loadArr3(arr: [3]f32) F32x4 {
     return f32x4(arr[0], arr[1], arr[2], 0.0);
 }
-pub inline fn load4(arr: [4]f32) F32x4 {
+pub inline fn loadArr3w(arr: [3]f32, w: f32) F32x4 {
+    return f32x4(arr[0], arr[1], arr[2], w);
+}
+pub inline fn loadArr4(arr: [4]f32) F32x4 {
     return f32x4(arr[0], arr[1], arr[2], arr[3]);
 }
 
-pub inline fn store2(arr: *[2]f32, v: F32x4) void {
+pub inline fn storeArr2(arr: *[2]f32, v: F32x4) void {
     arr.* = .{ v[0], v[1] };
 }
-pub inline fn store3(arr: *[3]f32, v: F32x4) void {
+pub inline fn storeArr3(arr: *[3]f32, v: F32x4) void {
     arr.* = .{ v[0], v[1], v[2] };
 }
-pub inline fn store4(arr: *[4]f32, v: F32x4) void {
+pub inline fn storeArr4(arr: *[4]f32, v: F32x4) void {
     arr.* = .{ v[0], v[1], v[2], v[3] };
+}
+
+// TODO: Add support for U32x4
+pub inline fn arr3Ptr(ptr: anytype) *const [3]f32 {
+    comptime assert(@typeInfo(@TypeOf(ptr)) == .Pointer);
+    return @ptrCast(*const [3]f32, ptr);
+}
+
+// TODO: Add support for U32xN
+pub inline fn arrNPtr(ptr: anytype) [*]const f32 {
+    comptime assert(@typeInfo(@TypeOf(ptr)) == .Pointer);
+    const T = std.meta.Child(@TypeOf(ptr));
+    comptime assert(T == Mat or T == F32x4 or T == F32x8 or T == F32x16);
+    return @ptrCast([*]const f32, ptr);
+}
+test "zmath.arrNPtr" {
+    {
+        const mat = identity();
+        const f32ptr = arrNPtr(&mat);
+        try expect(f32ptr[0] == 1.0);
+        try expect(f32ptr[5] == 1.0);
+        try expect(f32ptr[10] == 1.0);
+        try expect(f32ptr[15] == 1.0);
+    }
+    {
+        const v8 = f32x8s(1.0);
+        const f32ptr = arrNPtr(&v8);
+        try expect(f32ptr[1] == 1.0);
+        try expect(f32ptr[7] == 1.0);
+    }
+}
+
+test "zmath.loadArr" {
+    {
+        const camera_position = [3]f32{ 1.0, 2.0, 3.0 };
+        const simd_reg = loadArr3(camera_position);
+        try expect(approxEqAbs(simd_reg, f32x4(1.0, 2.0, 3.0, 0.0), 0.0));
+    }
+    {
+        const camera_position = [3]f32{ 1.0, 2.0, 3.0 };
+        const simd_reg = loadArr3w(camera_position, 1.0);
+        try expect(approxEqAbs(simd_reg, f32x4(1.0, 2.0, 3.0, 1.0), 0.0));
+    }
 }
 
 // ------------------------------------------------------------------------------
@@ -2658,35 +2705,6 @@ pub inline fn mat34ToArray(m: Mat) [12]f32 {
     var array: [12]f32 = undefined;
     storeMat34(array[0..], m);
     return array;
-}
-
-pub inline fn asFloats(ptr: anytype) [*]const f32 {
-    comptime assert(@typeInfo(@TypeOf(ptr)) == .Pointer);
-    const T = std.meta.Child(@TypeOf(ptr));
-    comptime assert(T == Mat or T == F32x4 or T == F32x8 or T == F32x16);
-    return @ptrCast([*]const f32, ptr);
-}
-test "zmath.asFloats" {
-    {
-        const mat = identity();
-        const f32ptr = asFloats(&mat);
-        try expect(f32ptr[0] == 1.0);
-        try expect(f32ptr[5] == 1.0);
-        try expect(f32ptr[10] == 1.0);
-        try expect(f32ptr[15] == 1.0);
-    }
-    {
-        const v8 = f32x8s(1.0);
-        const f32ptr = asFloats(&v8);
-        try expect(f32ptr[1] == 1.0);
-        try expect(f32ptr[7] == 1.0);
-    }
-}
-
-test "zmath.loadArray" {
-    const camera_position = [3]f32{ 1.0, 2.0, 3.0 };
-    const simd_reg = load3(camera_position);
-    try expect(approxEqAbs(simd_reg, f32x4(1.0, 2.0, 3.0, 0.0), 0.0));
 }
 
 // ------------------------------------------------------------------------------

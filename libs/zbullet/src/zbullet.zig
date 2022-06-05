@@ -1,4 +1,4 @@
-// zbullet - version 0.2 (wip)
+// zbullet v0.2 (wip)
 // Zig bindings for Bullet Physics SDK
 
 const std = @import("std");
@@ -6,8 +6,8 @@ const Mutex = std.Thread.Mutex;
 const expect = std.testing.expect;
 
 extern fn cbtAlignedAllocSetCustomAligned(
-    alloc: fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque,
-    free: fn (ptr: ?*anyopaque) callconv(.C) void,
+    alloc: ?fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque,
+    free: ?fn (ptr: ?*anyopaque) callconv(.C) void,
 ) void;
 
 var allocator: ?std.mem.Allocator = null;
@@ -46,6 +46,7 @@ extern fn cbtTaskSchedInit() void;
 extern fn cbtTaskSchedDeinit() void;
 
 pub fn init(alloc: std.mem.Allocator) void {
+    _ = Constraint.getFixedBody();
     std.debug.assert(allocator == null and allocations == null);
     allocator = alloc;
     allocations = std.AutoHashMap(usize, usize).init(allocator.?);
@@ -56,6 +57,7 @@ pub fn init(alloc: std.mem.Allocator) void {
 
 pub fn deinit() void {
     cbtTaskSchedDeinit();
+    cbtAlignedAllocSetCustomAligned(null, null);
     allocations.?.deinit();
     allocations = null;
     allocator = null;
@@ -97,7 +99,7 @@ pub const RayCastResult = extern struct {
     hit_normal_world: [3]f32,
     hit_point_world: [3]f32,
     hit_fraction: f32,
-    body: *const Body,
+    body: ?*const Body,
 };
 
 pub const World = opaque {
@@ -110,6 +112,7 @@ pub const World = opaque {
 
     pub fn deinit(world: *const World) void {
         std.debug.assert(world.getNumBodies() == 0);
+        std.debug.assert(world.getNumConstraints() == 0);
         cbtWorldDestroy(world);
     }
     extern fn cbtWorldDestroy(world: *const World) void;
@@ -693,8 +696,20 @@ pub const Body = opaque {
         transform: *[12]f32,
     ) void;
 
+    pub const getCenterOfMassTransform = cbtBodyGetCenterOfMassTransform;
+    extern fn cbtBodyGetCenterOfMassTransform(
+        body: *const Body,
+        transform: *[12]f32,
+    ) void;
+
+    pub const getInvCenterOfMassTransform = cbtBodyGetInvCenterOfMassTransform;
+    extern fn cbtBodyGetInvCenterOfMassTransform(
+        body: *const Body,
+        transform: *[12]f32,
+    ) void;
+
     pub const applyCentralImpulse = cbtBodyApplyCentralImpulse;
-    extern fn cbtBodyApplyCentralImpulse(body: *const Body, impulse: *[3]f32) void;
+    extern fn cbtBodyApplyCentralImpulse(body: *const Body, impulse: *const [3]f32) void;
 
     pub const setUserIndex = cbtBodySetUserIndex;
     extern fn cbtBodySetUserIndex(body: *const Body, slot: u32, index: i32) void;
@@ -713,6 +728,9 @@ pub const Body = opaque {
 
     pub const setCcdMotionThreshold = cbtBodySetCcdMotionThreshold;
     extern fn cbtBodySetCcdMotionThreshold(body: *const Body, threshold: f32) void;
+
+    pub const setMassProps = cbtBodySetMassProps;
+    extern fn cbtBodySetMassProps(body: *const Body, mass: f32, inertia: *const [3]f32) void;
 
     pub const setDamping = cbtBodySetDamping;
     extern fn cbtBodySetDamping(body: *const Body, linear: f32, angular: f32) void;
@@ -788,6 +806,9 @@ pub const Constraint = opaque {
 
     pub const getBodyB = cbtConGetBodyB;
     extern fn cbtConGetBodyB(con: *const Constraint) *const Body;
+
+    pub const setDebugDrawSize = cbtConSetDebugDrawSize;
+    extern fn cbtConSetDebugDrawSize(con: *const Constraint, size: f32) void;
 };
 
 fn ConstraintFunctions(comptime T: type) type {
@@ -818,6 +839,9 @@ fn ConstraintFunctions(comptime T: type) type {
         }
         pub fn getBodyB(con: *const T) *const Body {
             return con.asConstraint().getBodyB();
+        }
+        pub fn setDebugDrawSize(con: *const T, size: f32) void {
+            con.asConstraint().setDebugDrawSize(size);
         }
     };
 }
@@ -872,7 +896,7 @@ pub const Point2PointConstraint = opaque {
         pivot: *[3]f32,
     ) void;
 
-    pub const setTau = cbtConPoint2PointSetPivotB;
+    pub const setTau = cbtConPoint2PointSetTau;
     extern fn cbtConPoint2PointSetTau(
         con: *const Point2PointConstraint,
         tau: f32,
@@ -887,7 +911,7 @@ pub const Point2PointConstraint = opaque {
     pub const setImpulseClamp = cbtConPoint2PointSetImpulseClamp;
     extern fn cbtConPoint2PointSetImpulseClamp(
         con: *const Point2PointConstraint,
-        damping: f32,
+        impulse_clamp: f32,
     ) void;
 };
 
@@ -1028,7 +1052,7 @@ test "zbullet.world.gravity" {
     world.getGravity(&gravity);
     try expect(gravity[0] == 0.0 and gravity[1] == -10.0 and gravity[2] == 0.0);
 
-    world.setGravity(&zm.vec3ToArray(zm.f32x4(1.0, 2.0, 3.0, 0.0)));
+    world.setGravity(zm.arr3Ptr(&zm.f32x4(1.0, 2.0, 3.0, 0.0)));
     world.getGravity(&gravity);
     try expect(gravity[0] == 1.0 and gravity[1] == 2.0 and gravity[2] == 3.0);
 }
