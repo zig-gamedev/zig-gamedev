@@ -253,11 +253,13 @@ test "Handle sort order" {
     const expect = std.testing.expect;
 
     const handle = Handle(4, 4, void).init;
-    const a = handle(0, 1);
+    const a = handle(0, 3);
     const b = handle(1, 1);
+
+    // id order is consistent with index order, even when cycle order is not
     try expect(a.id < b.id);
     try expect(a.index() < b.index());
-    try expect(a.cycle() == b.cycle());
+    try expect(a.cycle() > b.cycle());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
