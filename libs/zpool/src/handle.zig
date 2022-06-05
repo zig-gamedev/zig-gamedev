@@ -61,6 +61,8 @@ pub fn Handle(
             "8, 16, 32, 64, 128, or 256 bits"),
     };
 
+    const field_bits = std.math.max(index_bits, cycle_bits);
+
     const utils = @import("utils.zig");
     const UInt = utils.UInt;
     const AddressableUInt = utils.AddressableUInt;
@@ -68,46 +70,56 @@ pub fn Handle(
     return struct {
         const Self = @This();
 
-        const CompactHandle = Self;
-        const CompactIndex = UInt(index_bits);
-        const CompactCycle = UInt(cycle_bits);
-        const CompactUnion = extern union {
+        const HandleType = Self;
+        const IndexType = UInt(index_bits);
+        const CycleType = UInt(cycle_bits);
+        const HandleUnion = extern union {
             id: Id,
             bits: packed struct {
-                index: CompactIndex,
-                cycle: CompactCycle,
+                cycle: CycleType, // least significant bits
+                index: IndexType, // most significant bits
             },
         };
 
         pub const Resource = TResource;
 
-        pub const AddressableIndex = AddressableUInt(index_bits);
-        pub const AddressableCycle = AddressableUInt(cycle_bits);
+        pub const AddressableCycle = AddressableUInt(field_bits);
+        pub const AddressableIndex = AddressableUInt(field_bits);
 
-        pub const max_index = ~@as(CompactIndex, 0);
-        pub const max_cycle = ~@as(CompactCycle, 0);
+        pub const max_cycle = ~@as(CycleType, 0);
+        pub const max_index = ~@as(IndexType, 0);
         pub const max_count = @as(Id, max_index - 1) + 2;
 
         id: Id = 0,
 
         pub const nil = Self{ .id = 0 };
 
-        pub fn init(index: CompactIndex, cycle: CompactCycle) Self {
-            var u = CompactUnion{ .bits = .{
-                .index = index,
-                .cycle = cycle,
+        pub fn init(i: IndexType, c: CycleType) Self {
+            var u = HandleUnion{ .bits = .{
+                .cycle = c,
+                .index = i,
             } };
             return .{ .id = u.id };
+        }
+
+        pub fn cycle(self: Self) CycleType {
+            var u = HandleUnion{ .id = self.id };
+            return u.bits.cycle;
+        }
+
+        pub fn index(self: Self) IndexType {
+            var u = HandleUnion{ .id = self.id };
+            return u.bits.index;
         }
 
         /// Unpacks the `index` and `cycle` bit fields that comprise
         /// `Handle.id` into an `AddressableHandle`, which stores
         /// the `index` and `cycle` values in pointer-addressable fields.
         pub fn addressable(self: Self) AddressableHandle {
-            var u = CompactUnion{ .id = self.id };
+            var u = HandleUnion{ .id = self.id };
             return .{
-                .index = u.bits.index,
                 .cycle = u.bits.cycle,
+                .index = u.bits.index,
             };
         }
 
@@ -117,14 +129,14 @@ pub fn Handle(
         /// An `AddressableHandle` can be converted back into a "compact"
         /// `Handle` by calling `AddressableHandle.compact()`.
         pub const AddressableHandle = struct {
-            index: AddressableIndex = 0,
             cycle: AddressableCycle = 0,
+            index: AddressableIndex = 0,
 
             /// Returns the corresponding `Handle`
-            pub fn handle(self: AddressableHandle) CompactHandle {
-                var u = CompactUnion{ .bits = .{
-                    .index = @intCast(CompactIndex, self.index),
-                    .cycle = @intCast(CompactCycle, self.cycle),
+            pub fn handle(self: AddressableHandle) HandleType {
+                var u = HandleUnion{ .bits = .{
+                    .cycle = @intCast(CycleType, self.cycle),
+                    .index = @intCast(IndexType, self.index),
                 } };
                 return .{ .id = u.id };
             }
@@ -148,15 +160,14 @@ pub fn Handle(
 ////////////////////////////////////////////////////////////////////////////////
 
 test "Handle sizes and alignments" {
-    const testing = std.testing;
-    const expectEqual = testing.expectEqual;
+    const expectEqual = std.testing.expectEqual;
 
     {
         const H = Handle(4, 4, void);
         try expectEqual(@sizeOf(u8), @sizeOf(H));
         try expectEqual(@alignOf(u8), @alignOf(H));
-        try expectEqual(4, @bitSizeOf(H.CompactIndex));
-        try expectEqual(4, @bitSizeOf(H.CompactCycle));
+        try expectEqual(4, @bitSizeOf(H.IndexType));
+        try expectEqual(4, @bitSizeOf(H.CycleType));
         try expectEqual(8, @bitSizeOf(H.AddressableIndex));
         try expectEqual(8, @bitSizeOf(H.AddressableCycle));
 
@@ -169,8 +180,8 @@ test "Handle sizes and alignments" {
         const H = Handle(6, 2, void);
         try expectEqual(@sizeOf(u8), @sizeOf(H));
         try expectEqual(@alignOf(u8), @alignOf(H));
-        try expectEqual(6, @bitSizeOf(H.CompactIndex));
-        try expectEqual(2, @bitSizeOf(H.CompactCycle));
+        try expectEqual(6, @bitSizeOf(H.IndexType));
+        try expectEqual(2, @bitSizeOf(H.CycleType));
         try expectEqual(8, @bitSizeOf(H.AddressableIndex));
         try expectEqual(8, @bitSizeOf(H.AddressableCycle));
 
@@ -183,8 +194,8 @@ test "Handle sizes and alignments" {
         const H = Handle(8, 8, void);
         try expectEqual(@sizeOf(u16), @sizeOf(H));
         try expectEqual(@alignOf(u16), @alignOf(H));
-        try expectEqual(8, @bitSizeOf(H.CompactIndex));
-        try expectEqual(8, @bitSizeOf(H.CompactCycle));
+        try expectEqual(8, @bitSizeOf(H.IndexType));
+        try expectEqual(8, @bitSizeOf(H.CycleType));
         try expectEqual(8, @bitSizeOf(H.AddressableIndex));
         try expectEqual(8, @bitSizeOf(H.AddressableCycle));
 
@@ -197,10 +208,10 @@ test "Handle sizes and alignments" {
         const H = Handle(12, 4, void);
         try expectEqual(@sizeOf(u16), @sizeOf(H));
         try expectEqual(@alignOf(u16), @alignOf(H));
-        try expectEqual(12, @bitSizeOf(H.CompactIndex));
-        try expectEqual(4, @bitSizeOf(H.CompactCycle));
+        try expectEqual(12, @bitSizeOf(H.IndexType));
+        try expectEqual(4, @bitSizeOf(H.CycleType));
         try expectEqual(16, @bitSizeOf(H.AddressableIndex));
-        try expectEqual(8, @bitSizeOf(H.AddressableCycle));
+        try expectEqual(16, @bitSizeOf(H.AddressableCycle));
 
         const A = H.AddressableHandle;
         try expectEqual(@sizeOf(u32), @sizeOf(A));
@@ -211,8 +222,8 @@ test "Handle sizes and alignments" {
         const H = Handle(16, 16, void);
         try expectEqual(@sizeOf(u32), @sizeOf(H));
         try expectEqual(@alignOf(u32), @alignOf(H));
-        try expectEqual(16, @bitSizeOf(H.CompactIndex));
-        try expectEqual(16, @bitSizeOf(H.CompactCycle));
+        try expectEqual(16, @bitSizeOf(H.IndexType));
+        try expectEqual(16, @bitSizeOf(H.CycleType));
         try expectEqual(16, @bitSizeOf(H.AddressableIndex));
         try expectEqual(16, @bitSizeOf(H.AddressableCycle));
 
@@ -225,15 +236,30 @@ test "Handle sizes and alignments" {
         const H = Handle(22, 10, void);
         try expectEqual(@sizeOf(u32), @sizeOf(H));
         try expectEqual(@alignOf(u32), @alignOf(H));
-        try expectEqual(22, @bitSizeOf(H.CompactIndex));
-        try expectEqual(10, @bitSizeOf(H.CompactCycle));
+        try expectEqual(22, @bitSizeOf(H.IndexType));
+        try expectEqual(10, @bitSizeOf(H.CycleType));
         try expectEqual(32, @bitSizeOf(H.AddressableIndex));
-        try expectEqual(16, @bitSizeOf(H.AddressableCycle));
+        try expectEqual(32, @bitSizeOf(H.AddressableCycle));
 
         const A = H.AddressableHandle;
         try expectEqual(@sizeOf(u64), @sizeOf(A));
         try expectEqual(@alignOf(u32), @alignOf(A));
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+test "Handle sort order" {
+    const expect = std.testing.expect;
+
+    const handle = Handle(4, 4, void).init;
+    const a = handle(0, 3);
+    const b = handle(1, 1);
+
+    // id order is consistent with index order, even when cycle order is not
+    try expect(a.id < b.id);
+    try expect(a.index() < b.index());
+    try expect(a.cycle() > b.cycle());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
