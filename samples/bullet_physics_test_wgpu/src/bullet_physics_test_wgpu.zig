@@ -717,8 +717,9 @@ fn objectPicking(demo: *DemoState) void {
 
         const far_plane = zm.f32x4s(10_000.0);
         const tanfov = zm.f32x4s(@tan(0.5 * camera_fovy));
-        const width = @intToFloat(f32, demo.gctx.swapchain_descriptor.width);
-        const height = @intToFloat(f32, demo.gctx.swapchain_descriptor.height);
+        const winsize = window.getSize() catch unreachable;
+        const width = @intToFloat(f32, winsize.width);
+        const height = @intToFloat(f32, winsize.height);
         const aspect = zm.f32x4s(width / height);
 
         const ray_forward = zm.loadArr3(demo.camera.forward) * far_plane;
