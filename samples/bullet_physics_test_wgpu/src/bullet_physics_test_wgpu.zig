@@ -38,7 +38,7 @@ const Mesh = struct {
 const Entity = struct {
     body: *const zbt.Body,
     basecolor_roughness: [4]f32,
-    //size: [3]f32,
+    size: [3]f32,
     mesh_index: u32,
 };
 
@@ -182,12 +182,25 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     var entities = std.ArrayList(Entity).init(allocator);
     {
-        const box_body = zbt.Body.init(
-            10.0, // mass
-            &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)),
-            physics_shapes.items[mesh_cube],
-        );
-        createEntity(physics_world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, &entities);
+        {
+            const box_body = zbt.Body.init(
+                10.0, // mass
+                &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)),
+                physics_shapes.items[mesh_cube],
+            );
+            createEntity(physics_world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, &entities);
+        }
+        {
+            const shape = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
+            try physics_shapes.append(shape.asShape());
+
+            const box_body = zbt.Body.init(
+                15.0, // mass
+                &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)),
+                shape.asShape(),
+            );
+            createEntity(physics_world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, 0.55, &entities);
+        }
 
         const world_body = zbt.Body.init(
             0.0, // static body
@@ -435,11 +448,12 @@ fn draw(demo: *DemoState) void {
                 const entity = &demo.entities.items[@intCast(usize, body.getUserIndex(0))];
 
                 // Get transform matrix from the physics simulator.
-                const object_to_world = object_to_world: {
+                const transform = object_to_world: {
                     var transform: [12]f32 = undefined;
                     body.getGraphicsWorldTransform(&transform);
                     break :object_to_world zm.loadMat43(transform[0..]);
                 };
+                const object_to_world = zm.mul(zm.scalingV(zm.loadArr3(entity.size)), transform);
 
                 const mem = gctx.uniformsAllocate(DrawUniforms, 1);
                 mem.slice[0] = .{
@@ -555,10 +569,23 @@ fn createEntity(
         .trimesh => mesh_world,
         else => unreachable,
     };
+    const mesh_size = switch (shape_type) {
+        .box => mesh_size: {
+            var half_extents: [3]f32 = undefined;
+            @ptrCast(*const zbt.BoxShape, shape).getHalfExtentsWithMargin(&half_extents);
+            break :mesh_size half_extents;
+        },
+        .sphere => mesh_size: {
+            const r = @ptrCast(*const zbt.SphereShape, shape).getRadius();
+            break :mesh_size [3]f32{ r, r, r };
+        },
+        else => [3]f32{ 1.0, 1.0, 1.0 },
+    };
     const entity_index = @intCast(i32, entities.items.len);
     entities.append(.{
         .body = body,
         .basecolor_roughness = basecolor_roughness,
+        .size = mesh_size,
         .mesh_index = mesh_index,
     }) catch unreachable;
     body.setUserIndex(0, entity_index);
@@ -585,7 +612,6 @@ fn appendMesh(
         .num_indices = @intCast(u32, mesh.indices.len),
         .num_vertices = @intCast(u32, mesh.positions.len),
     });
-
     try all_indices.appendSlice(mesh.indices);
     try all_positions.appendSlice(mesh.positions);
     try all_normals.appendSlice(mesh.normals.?);
