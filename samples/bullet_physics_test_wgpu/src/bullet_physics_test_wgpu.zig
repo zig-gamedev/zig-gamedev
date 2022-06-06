@@ -303,6 +303,7 @@ fn update(demo: *DemoState) void {
             demo.gctx.stats.average_cpu_time,
             demo.gctx.stats.fps,
         );
+        c.igBulletText("Left Mouse Button + drag :  pick up and move object");
         c.igBulletText("Right Mouse Button + drag :  rotate camera");
         c.igBulletText("W, A, S, D :  move camera");
         c.igBulletText("Space :  shoot");
@@ -665,18 +666,18 @@ fn appendMesh(
     all_indices: *std.ArrayList(u32),
     all_positions: *std.ArrayList([3]f32),
     all_normals: *std.ArrayList([3]f32),
-) u32 {
+) !u32 {
     const mesh_index = @intCast(u32, all_meshes.items.len);
-    all_meshes.append(.{
+    try all_meshes.append(.{
         .index_offset = @intCast(u32, all_indices.items.len),
         .vertex_offset = @intCast(u32, all_positions.items.len),
         .num_indices = @intCast(u32, mesh.indices.len),
         .num_vertices = @intCast(u32, mesh.positions.len),
-    }) catch unreachable;
+    });
 
-    all_indices.appendSlice(mesh.indices) catch unreachable;
-    all_positions.appendSlice(mesh.positions) catch unreachable;
-    all_normals.appendSlice(mesh.normals.?) catch unreachable;
+    try all_indices.appendSlice(mesh.indices);
+    try all_positions.appendSlice(mesh.positions);
+    try all_normals.appendSlice(mesh.normals.?);
     return mesh_index;
 }
 
@@ -697,7 +698,7 @@ fn initMeshes(
         mesh.unweld();
         mesh.computeNormals();
 
-        const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
+        const mesh_index = try appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_cube);
 
         const shape = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 });
@@ -711,7 +712,7 @@ fn initMeshes(
         mesh.unweld();
         mesh.computeNormals();
 
-        const mesh_index = appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
+        const mesh_index = try appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_sphere);
 
         const shape = zbt.SphereShape.init(1.0);
@@ -738,9 +739,9 @@ fn initMeshes(
         // "Unweld" mesh, this creates un-optimized mesh with duplicated vertices.
         // We need it for wireframes and facet look.
         for (indices.items) |ind, i| {
-            all_positions.append(positions.items[ind]) catch unreachable;
-            all_normals.append(normals.items[ind]) catch unreachable;
-            all_indices.append(@intCast(u32, i)) catch unreachable;
+            try all_positions.append(positions.items[ind]);
+            try all_normals.append(normals.items[ind]);
+            try all_indices.append(@intCast(u32, i));
         }
 
         try all_meshes.append(.{
