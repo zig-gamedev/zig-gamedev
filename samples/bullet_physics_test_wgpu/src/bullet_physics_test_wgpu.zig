@@ -357,96 +357,7 @@ fn update(demo: *DemoState) void {
         zm.storeArr3(&demo.camera.position, cam_pos);
     }
 
-    const mouse_button_is_down = window.getMouseButton(.left) == .press and !c.igGetIO().?.*.WantCaptureMouse;
-
-    const ray_from = zm.loadArr3(demo.camera.position);
-    const ray_to = ray_to: {
-        const cursor = window.getCursorPos() catch unreachable;
-        const mousex = @floatCast(f32, cursor.xpos);
-        const mousey = @floatCast(f32, cursor.ypos);
-
-        const far_plane = zm.f32x4s(10_000.0);
-        const tanfov = zm.f32x4s(@tan(0.5 * camera_fovy));
-        const width = @intToFloat(f32, demo.gctx.swapchain_descriptor.width);
-        const height = @intToFloat(f32, demo.gctx.swapchain_descriptor.height);
-        const aspect = zm.f32x4s(width / height);
-
-        const ray_forward = zm.loadArr3(demo.camera.forward) * far_plane;
-
-        const hor = zm.normalize3(zm.cross3(zm.f32x4(0, 1, 0, 0), ray_forward)) *
-            zm.f32x4s(2.0) * far_plane * tanfov * aspect;
-        const vert = zm.normalize3(zm.cross3(hor, ray_forward)) *
-            zm.f32x4s(2.0) * far_plane * tanfov;
-
-        const ray_to_center = ray_from + ray_forward;
-
-        const dhor = zm.f32x4s(1.0 / width) * hor;
-        const dvert = zm.f32x4s(1.0 / height) * vert;
-
-        var ray_to = ray_to_center + zm.f32x4s(-0.5) * hor + zm.f32x4s(-0.5) * vert;
-        ray_to += dhor * zm.f32x4s(mousex);
-        ray_to += dvert * zm.f32x4s(mousey);
-        break :ray_to ray_to;
-    };
-
-    if (!demo.pick.p2p.isCreated() and mouse_button_is_down) {
-        var result: zbt.RayCastResult = undefined;
-        const is_hit = demo.physics.world.rayTestClosest(
-            zm.arr3Ptr(&ray_from),
-            zm.arr3Ptr(&ray_to),
-            .{ .default = true },
-            zbt.CollisionFilter.all,
-            .{ .use_gjk_convex_test = true },
-            &result,
-        );
-
-        if (is_hit) if (result.body) |body| if (!body.isStaticOrKinematic()) {
-            demo.pick.body = body;
-
-            demo.pick.saved_linear_damping = body.getLinearDamping();
-            demo.pick.saved_angular_damping = body.getAngularDamping();
-            body.setDamping(0.4, 0.4);
-
-            const pivot_a = zm.mul(
-                zm.loadArr3w(result.hit_point_world, 1.0),
-                loadInvCenterOfMassTransform(body),
-            );
-            demo.pick.p2p.create1(body, zm.arr3Ptr(&pivot_a));
-            demo.pick.p2p.setImpulseClamp(30.0);
-            demo.pick.p2p.setDebugDrawSize(0.15);
-
-            demo.physics.world.addConstraint(demo.pick.p2p.asConstraint(), true);
-
-            demo.pick.distance = zm.length3(zm.loadArr3(result.hit_point_world) - ray_from)[0];
-        };
-    } else if (demo.pick.p2p.isCreated() and mouse_button_is_down) {
-        const to = ray_from + zm.normalize3(ray_to) * zm.f32x4s(demo.pick.distance);
-        demo.pick.p2p.setPivotB(zm.arr3Ptr(&to));
-
-        const trans_a = loadCenterOfMassTransform(demo.pick.p2p.getBodyA());
-        const trans_b = loadCenterOfMassTransform(demo.pick.p2p.getBodyB());
-
-        const pivot_a = loadPivotA(demo.pick.p2p);
-        const pivot_b = loadPivotB(demo.pick.p2p);
-
-        const position_a = zm.mul(pivot_a, trans_a);
-        const position_b = zm.mul(pivot_b, trans_b);
-
-        demo.physics.world.debugDrawLine2(
-            zm.arr3Ptr(&position_a),
-            zm.arr3Ptr(&position_b),
-            &.{ 1.0, 1.0, 0.0 },
-            &.{ 1.0, 0.0, 0.0 },
-        );
-        demo.physics.world.debugDrawSphere(zm.arr3Ptr(&position_a), 0.05, &.{ 0.0, 1.0, 0.0 });
-    }
-
-    if (!mouse_button_is_down and demo.pick.p2p.isCreated()) {
-        demo.physics.world.removeConstraint(demo.pick.p2p.asConstraint());
-        demo.pick.p2p.destroy();
-        demo.pick.body.?.setDamping(demo.pick.saved_linear_damping, demo.pick.saved_angular_damping);
-        demo.pick.body = null;
-    }
+    objectPicking(demo);
 
     // Shooting.
     {
@@ -764,6 +675,101 @@ fn initMeshes(
             @sizeOf([3]f32),
         );
         world_shape.finish();
+    }
+}
+
+fn objectPicking(demo: *DemoState) void {
+    const window = demo.gctx.window;
+
+    const mouse_button_is_down = window.getMouseButton(.left) == .press and !c.igGetIO().?.*.WantCaptureMouse;
+
+    const ray_from = zm.loadArr3(demo.camera.position);
+    const ray_to = ray_to: {
+        const cursor = window.getCursorPos() catch unreachable;
+        const mousex = @floatCast(f32, cursor.xpos);
+        const mousey = @floatCast(f32, cursor.ypos);
+
+        const far_plane = zm.f32x4s(10_000.0);
+        const tanfov = zm.f32x4s(@tan(0.5 * camera_fovy));
+        const width = @intToFloat(f32, demo.gctx.swapchain_descriptor.width);
+        const height = @intToFloat(f32, demo.gctx.swapchain_descriptor.height);
+        const aspect = zm.f32x4s(width / height);
+
+        const ray_forward = zm.loadArr3(demo.camera.forward) * far_plane;
+
+        const hor = zm.normalize3(zm.cross3(zm.f32x4(0, 1, 0, 0), ray_forward)) *
+            zm.f32x4s(2.0) * far_plane * tanfov * aspect;
+        const vert = zm.normalize3(zm.cross3(hor, ray_forward)) *
+            zm.f32x4s(2.0) * far_plane * tanfov;
+
+        const ray_to_center = ray_from + ray_forward;
+
+        const dhor = zm.f32x4s(1.0 / width) * hor;
+        const dvert = zm.f32x4s(1.0 / height) * vert;
+
+        var ray_to = ray_to_center + zm.f32x4s(-0.5) * hor + zm.f32x4s(-0.5) * vert;
+        ray_to += dhor * zm.f32x4s(mousex);
+        ray_to += dvert * zm.f32x4s(mousey);
+        break :ray_to ray_to;
+    };
+
+    if (!demo.pick.p2p.isCreated() and mouse_button_is_down) {
+        var result: zbt.RayCastResult = undefined;
+        const is_hit = demo.physics.world.rayTestClosest(
+            zm.arr3Ptr(&ray_from),
+            zm.arr3Ptr(&ray_to),
+            .{ .default = true },
+            zbt.CollisionFilter.all,
+            .{ .use_gjk_convex_test = true },
+            &result,
+        );
+
+        if (is_hit) if (result.body) |body| if (!body.isStaticOrKinematic()) {
+            demo.pick.body = body;
+
+            demo.pick.saved_linear_damping = body.getLinearDamping();
+            demo.pick.saved_angular_damping = body.getAngularDamping();
+            body.setDamping(0.4, 0.4);
+
+            const pivot_a = zm.mul(
+                zm.loadArr3w(result.hit_point_world, 1.0),
+                loadInvCenterOfMassTransform(body),
+            );
+            demo.pick.p2p.create1(body, zm.arr3Ptr(&pivot_a));
+            demo.pick.p2p.setImpulseClamp(30.0);
+            demo.pick.p2p.setDebugDrawSize(0.15);
+
+            demo.physics.world.addConstraint(demo.pick.p2p.asConstraint(), true);
+
+            demo.pick.distance = zm.length3(zm.loadArr3(result.hit_point_world) - ray_from)[0];
+        };
+    } else if (demo.pick.p2p.isCreated() and mouse_button_is_down) {
+        const to = ray_from + zm.normalize3(ray_to) * zm.f32x4s(demo.pick.distance);
+        demo.pick.p2p.setPivotB(zm.arr3Ptr(&to));
+
+        const trans_a = loadCenterOfMassTransform(demo.pick.p2p.getBodyA());
+        const trans_b = loadCenterOfMassTransform(demo.pick.p2p.getBodyB());
+
+        const pivot_a = loadPivotA(demo.pick.p2p);
+        const pivot_b = loadPivotB(demo.pick.p2p);
+
+        const position_a = zm.mul(pivot_a, trans_a);
+        const position_b = zm.mul(pivot_b, trans_b);
+
+        demo.physics.world.debugDrawLine2(
+            zm.arr3Ptr(&position_a),
+            zm.arr3Ptr(&position_b),
+            &.{ 1.0, 1.0, 0.0 },
+            &.{ 1.0, 0.0, 0.0 },
+        );
+        demo.physics.world.debugDrawSphere(zm.arr3Ptr(&position_a), 0.05, &.{ 0.0, 1.0, 0.0 });
+    }
+
+    if (!mouse_button_is_down and demo.pick.p2p.isCreated()) {
+        demo.physics.world.removeConstraint(demo.pick.p2p.asConstraint());
+        demo.pick.p2p.destroy();
+        demo.pick.body.?.setDamping(demo.pick.saved_linear_damping, demo.pick.saved_angular_damping);
+        demo.pick.body = null;
     }
 }
 
