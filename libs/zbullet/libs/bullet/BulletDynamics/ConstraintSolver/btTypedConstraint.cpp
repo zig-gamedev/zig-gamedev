@@ -139,6 +139,8 @@ const char* btTypedConstraint::serialize(void* dataBuffer, btSerializer* seriali
 	return btTypedConstraintDataName;
 }
 
+// mziulek: We allocate 'fixed body' on the heap (originally, Bullet doesn't use heap here).
+// This change fixes problem we had with Bullet and Zig allocators.
 static btRigidBody* s_fixed = nullptr;
 
 btRigidBody& btTypedConstraint::getFixedBody()

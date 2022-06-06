@@ -202,9 +202,9 @@
 // storeMat43(mem: []f32, m: Mat) void
 // storeMat34(mem: []f32, m: Mat) void
 //
-// matToArray(m: Mat) [16]f32
-// mat43ToArray(m: Mat) [12]f32
-// mat34ToArray(m: Mat) [12]f32
+// matToArr(m: Mat) [16]f32
+// mat43ToArr(m: Mat) [12]f32
+// mat34ToArr(m: Mat) [12]f32
 //
 // ------------------------------------------------------------------------------
 // 5. Quaternion functions
@@ -2689,19 +2689,19 @@ pub inline fn storeMat34(mem: []f32, m: Mat) void {
     store(mem[8..12], m[2], 0);
 }
 
-pub inline fn matToArray(m: Mat) [16]f32 {
+pub inline fn matToArr(m: Mat) [16]f32 {
     var array: [16]f32 = undefined;
     storeMat(array[0..], m);
     return array;
 }
 
-pub inline fn mat43ToArray(m: Mat) [12]f32 {
+pub inline fn mat43ToArr(m: Mat) [12]f32 {
     var array: [12]f32 = undefined;
     storeMat43(array[0..], m);
     return array;
 }
 
-pub inline fn mat34ToArray(m: Mat) [12]f32 {
+pub inline fn mat34ToArr(m: Mat) [12]f32 {
     var array: [12]f32 = undefined;
     storeMat34(array[0..], m);
     return array;

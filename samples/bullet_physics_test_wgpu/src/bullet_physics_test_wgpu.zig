@@ -183,18 +183,18 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var entities = std.ArrayList(Entity).init(allocator);
     {
         const box_body = zbt.Body.init(
-            1.0, // mass
-            &zm.mat43ToArray(zm.translation(0.0, 5.0, 5.0)),
+            10.0, // mass
+            &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)),
             physics_shapes.items[mesh_cube],
         );
-        createEntity(physics_world, box_body, [4]f32{ 0.8, 0.0, 0.0, 0.25 }, 1.05, &entities);
+        createEntity(physics_world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, &entities);
 
         const world_body = zbt.Body.init(
             0.0, // static body
-            &zm.mat43ToArray(zm.identity()),
+            &zm.mat43ToArr(zm.identity()),
             physics_shapes.items[mesh_world],
         );
-        createEntity(physics_world, world_body, [4]f32{ 0.25, 0.25, 0.25, 0.125 }, 0.0, &entities);
+        createEntity(physics_world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, 0.0, &entities);
     }
 
     const demo = try allocator.create(DemoState);
@@ -370,12 +370,12 @@ fn update(demo: *DemoState) void {
 
             const body = zbt.Body.init(
                 1.0,
-                &zm.mat43ToArray(transform),
+                &zm.mat43ToArr(transform),
                 demo.physics.shapes.items[mesh_sphere],
             );
             body.applyCentralImpulse(zm.arr3Ptr(&impulse));
 
-            createEntity(demo.physics.world, body, [4]f32{ 0.0, 0.8, 0.0, 0.2 }, 1.0, &demo.entities);
+            createEntity(demo.physics.world, body, .{ 0.0, 0.8, 0.0, 0.2 }, 1.0, &demo.entities);
         }
     }
 }
