@@ -3,7 +3,7 @@
 
 This repository contains a collection of [sample applications](#cross-platfrom-sample-applications-native-webgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides solutions for: cross-platform graphics, multi-threaded physics, SIMD math, procedural content generation, profiling and more.
 
-The goal of the project is to build a **toolbox of libraries** for game developers. A lot of effort is put to make those libraries **robust, consistent and performant**. Developer is free to use all libraries or only some of them. Project is being developed by contributors and by **one full-time developer**.
+The goal of the project is to build a **toolbox of libraries** for Zig game developers. A lot of effort is put to make the whole package consistent and let the developer pick only the components she needs. Project is being developed by contributors and by **one full-time developer**.
 
 Please see [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) and our [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) for the details.
 
