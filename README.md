@@ -5,7 +5,7 @@ This repository contains a collection of [sample applications](#cross-platfrom-s
 
 The goal of the project is to build a **toolbox of libraries** for game developers. A lot of effort is put to make those libraries **robust, consistent and performant**. Developer is free to use them all or only some of them. Project is being developed by contributors and by **one full-time developer**.
 
-Project is under active development, see [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) and [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) for the details.
+Please see [Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) and our [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap) for the details.
 
 To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 
