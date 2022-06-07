@@ -298,15 +298,14 @@ fn update(demo: *DemoState) void {
     }
     // Scene selection.
     {
+        c.igSpacing();
+        c.igSpacing();
         comptime var str: [:0]const u8 = "";
         comptime var i: u32 = 0;
         inline while (i < scene_setup_table.len) : (i += 1) {
-            const name = "Scene " ++ comptime std.fmt.comptimePrint("{}", .{i});
-            str = str ++ name ++ "\x00";
+            str = str ++ "Scene " ++ std.fmt.comptimePrint("{}", .{i}) ++ "\x00";
         }
-        str = str ++ "\x00\x00";
-        c.igSpacing();
-        c.igSpacing();
+        str = str ++ "\x00";
         _ = c.igCombo_Str("##", &demo.current_scene_index, str.ptr, -1);
         c.igSameLine(0.0, -1.0);
         if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
