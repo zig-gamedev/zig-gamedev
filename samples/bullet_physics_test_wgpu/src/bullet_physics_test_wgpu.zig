@@ -42,6 +42,13 @@ const Entity = struct {
     mesh_index: u32,
 };
 
+const Camera = struct {
+    position: [3]f32,
+    forward: [3]f32 = .{ 0, 0, 0 },
+    pitch: f32,
+    yaw: f32,
+};
+
 const mesh_index_cube: u32 = 0;
 const mesh_index_sphere: u32 = 1;
 const mesh_index_world: u32 = 2;
@@ -75,18 +82,14 @@ const DemoState = struct {
     entities: std.ArrayList(Entity),
 
     keyboard_delay: f32 = 1.0,
+    current_scene_index: i32 = 0,
 
     physics: struct {
         world: *const zbt.World,
         shapes: std.ArrayList(*const zbt.Shape),
         debug: *zbt.DebugDrawer,
     },
-    camera: struct {
-        position: [3]f32 = .{ 0.0, 3.0, 0.0 },
-        forward: [3]f32 = .{ 0.0, 0.0, 0.0 },
-        pitch: f32 = math.pi * 0.05,
-        yaw: f32 = 0.0,
-    } = .{},
+    camera: Camera,
     mouse: struct {
         cursor: glfw.Window.CursorPos = .{ .xpos = 0.0, .ypos = 0.0 },
     } = .{},
@@ -183,7 +186,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     var physics_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
-    setupScene0(physics_world, &physics_shapes, &entities);
+    var camera: Camera = undefined;
+    scene_setup_table[0](physics_world, &physics_shapes, &entities, &camera);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -196,6 +200,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .uniform_bg = uniform_bg,
         .meshes = meshes,
         .entities = entities,
+        .camera = camera,
         .physics = .{
             .world = physics_world,
             .shapes = physics_shapes,
@@ -290,6 +295,29 @@ fn update(demo: *DemoState) void {
         c.igBulletText("Right Mouse Button + drag :  rotate camera");
         c.igBulletText("W, A, S, D :  move camera");
         c.igBulletText("Space :  shoot");
+    }
+    // Scene selection.
+    {
+        comptime var str: [:0]const u8 = "";
+        comptime var i: u32 = 0;
+        inline while (i < scene_setup_table.len) : (i += 1) {
+            const name = "Scene " ++ comptime std.fmt.comptimePrint("{}", .{i});
+            str = str ++ name ++ "\x00";
+        }
+        str = str ++ "\x00\x00";
+        c.igSpacing();
+        c.igSpacing();
+        _ = c.igCombo_Str("##", &demo.current_scene_index, str.ptr, -1);
+        c.igSameLine(0.0, -1.0);
+        if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
+            cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
+            scene_setup_table[@intCast(usize, demo.current_scene_index)](
+                demo.physics.world,
+                &demo.physics.shapes,
+                &demo.entities,
+                &demo.camera,
+            );
+        }
     }
     c.igEnd();
 
@@ -524,11 +552,26 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
+const scene_setup_table: [2]fn (
+    world: *const zbt.World,
+    shapes: *std.ArrayList(*const zbt.Shape),
+    entities: *std.ArrayList(Entity),
+    camera: *Camera,
+) void = .{
+    setupScene0,
+    setupScene1,
+};
+
 fn setupScene0(
     world: *const zbt.World,
     shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
+    camera: *Camera,
 ) void {
+    assert(shapes.items.len == 0 and entities.items.len == 0);
+
+    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
+    createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, 0.0, entities);
     {
         const box_body = zbt.Body.init(10.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)), shape_cube);
         createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, entities);
@@ -540,9 +583,38 @@ fn setupScene0(
         const box_body = zbt.Body.init(15.0, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)), shape.asShape());
         createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, 0.55, entities);
     }
+    camera.* = .{
+        .position = .{ 0.0, 3.0, 0.0 },
+        .pitch = math.pi * 0.05,
+        .yaw = 0.0,
+    };
+}
+
+fn setupScene1(
+    world: *const zbt.World,
+    shapes: *std.ArrayList(*const zbt.Shape),
+    entities: *std.ArrayList(Entity),
+    camera: *Camera,
+) void {
+    assert(shapes.items.len == 0 and entities.items.len == 0);
 
     const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, 0.0, entities);
+
+    var i: u32 = 0;
+    while (i < 10) : (i += 1) {
+        const box_body = zbt.Body.init(
+            5.0,
+            &zm.mat43ToArr(zm.translation(0.0, 5.0 + @intToFloat(f32, i) * 2.05, 10.0)),
+            shape_cube,
+        );
+        createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, entities);
+    }
+    camera.* = .{
+        .position = .{ 0.0, 3.0, 0.0 },
+        .pitch = math.pi * 0.05,
+        .yaw = 0.0,
+    };
 }
 
 fn cleanupScene(
