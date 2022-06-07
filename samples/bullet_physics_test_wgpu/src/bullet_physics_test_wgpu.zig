@@ -42,15 +42,17 @@ const Entity = struct {
     mesh_index: u32,
 };
 
-const mesh_cube: u32 = 0;
-const mesh_sphere: u32 = 1;
-const mesh_world: u32 = 2;
+const mesh_index_cube: u32 = 0;
+const mesh_index_sphere: u32 = 1;
+const mesh_index_world: u32 = 2;
+
+var shape_cube: *const zbt.Shape = undefined;
+var shape_sphere: *const zbt.Shape = undefined;
+var shape_world: *const zbt.Shape = undefined;
 
 const default_linear_damping: f32 = 0.1;
 const default_angular_damping: f32 = 0.1;
-
 const safe_uniform_size = 256;
-
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 
 const DemoState = struct {
@@ -119,8 +121,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
     var normals = std.ArrayList([3]f32).init(arena);
-    var physics_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
-    try initMeshes(arena, &meshes, &indices, &positions, &normals, &physics_shapes);
+    try initMeshes(arena, &meshes, &indices, &positions, &normals);
 
     const total_num_vertices = @intCast(u32, positions.items.len);
     const total_num_indices = @intCast(u32, indices.items.len);
@@ -180,35 +181,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
     physics_world.debugSetMode(zbt.DebugMode.user_only);
 
+    var physics_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
-    {
-        {
-            const box_body = zbt.Body.init(
-                10.0, // mass
-                &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)),
-                physics_shapes.items[mesh_cube],
-            );
-            createEntity(physics_world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, &entities);
-        }
-        {
-            const shape = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
-            try physics_shapes.append(shape.asShape());
-
-            const box_body = zbt.Body.init(
-                15.0, // mass
-                &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)),
-                shape.asShape(),
-            );
-            createEntity(physics_world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, 0.55, &entities);
-        }
-
-        const world_body = zbt.Body.init(
-            0.0, // static body
-            &zm.mat43ToArr(zm.identity()),
-            physics_shapes.items[mesh_world],
-        );
-        createEntity(physics_world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, 0.0, &entities);
-    }
+    setupScene0(physics_world, &physics_shapes, &entities);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -285,15 +260,10 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
         demo.pick.p2p.destroy();
     }
     demo.pick.p2p.deallocate();
-    {
-        var i = demo.physics.world.getNumBodies() - 1;
-        while (i >= 0) : (i -= 1) {
-            const body = demo.physics.world.getBody(i);
-            demo.physics.world.removeBody(body);
-            body.deinit();
-        }
-        for (demo.physics.shapes.items) |shape| shape.deinit();
-    }
+    cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
+    shape_cube.deinit();
+    shape_sphere.deinit();
+    shape_world.deinit();
     demo.physics.shapes.deinit();
     demo.physics.debug.deinit();
     allocator.destroy(demo.physics.debug);
@@ -384,7 +354,7 @@ fn update(demo: *DemoState) void {
             const body = zbt.Body.init(
                 1.0,
                 &zm.mat43ToArr(transform),
-                demo.physics.shapes.items[mesh_sphere],
+                shape_sphere,
             );
             body.applyCentralImpulse(zm.arr3Ptr(&impulse));
 
@@ -554,6 +524,44 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
+fn setupScene0(
+    world: *const zbt.World,
+    shapes: *std.ArrayList(*const zbt.Shape),
+    entities: *std.ArrayList(Entity),
+) void {
+    {
+        const box_body = zbt.Body.init(10.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)), shape_cube);
+        createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, entities);
+    }
+    {
+        const shape = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
+        shapes.append(shape.asShape()) catch unreachable;
+
+        const box_body = zbt.Body.init(15.0, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)), shape.asShape());
+        createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, 0.55, entities);
+    }
+
+    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
+    createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, 0.0, entities);
+}
+
+fn cleanupScene(
+    world: *const zbt.World,
+    shapes: *std.ArrayList(*const zbt.Shape),
+    entities: *std.ArrayList(Entity),
+) void {
+    var i = world.getNumBodies() - 1;
+    while (i >= 0) : (i -= 1) {
+        const body = world.getBody(i);
+        world.removeBody(body);
+        body.deinit();
+    }
+    for (shapes.items) |shape| shape.deinit();
+
+    shapes.clearRetainingCapacity();
+    entities.clearRetainingCapacity();
+}
+
 fn createEntity(
     world: *const zbt.World,
     body: *const zbt.Body,
@@ -564,9 +572,9 @@ fn createEntity(
     const shape = body.getShape();
     const shape_type = shape.getType();
     const mesh_index = switch (shape_type) {
-        .box => mesh_cube,
-        .sphere => mesh_sphere,
-        .trimesh => mesh_world,
+        .box => mesh_index_cube,
+        .sphere => mesh_index_sphere,
+        .trimesh => mesh_index_world,
         else => unreachable,
     };
     const mesh_size = switch (shape_type) {
@@ -624,7 +632,6 @@ fn initMeshes(
     all_indices: *std.ArrayList(u32),
     all_positions: *std.ArrayList([3]f32),
     all_normals: *std.ArrayList([3]f32),
-    physics_shapes: *std.ArrayList(*const zbt.Shape),
 ) !void {
     // Cube mesh.
     {
@@ -636,10 +643,9 @@ fn initMeshes(
         mesh.computeNormals();
 
         const mesh_index = try appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
-        assert(mesh_index == mesh_cube);
+        assert(mesh_index == mesh_index_cube);
 
-        const shape = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 });
-        try physics_shapes.append(shape.asShape());
+        shape_cube = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 }).asShape();
     }
 
     // Parametric sphere.
@@ -650,10 +656,9 @@ fn initMeshes(
         mesh.computeNormals();
 
         const mesh_index = try appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
-        assert(mesh_index == mesh_sphere);
+        assert(mesh_index == mesh_index_sphere);
 
-        const shape = zbt.SphereShape.init(1.0);
-        try physics_shapes.append(shape.asShape());
+        shape_sphere = zbt.SphereShape.init(1.0).asShape();
     }
 
     // World mesh.
@@ -687,12 +692,10 @@ fn initMeshes(
             .num_indices = @intCast(u32, all_indices.items.len) - index_offset,
             .num_vertices = @intCast(u32, all_positions.items.len) - vertex_offset,
         });
-        assert(mesh_index == mesh_world);
+        assert(mesh_index == mesh_index_world);
 
-        const world_shape = zbt.TriangleMeshShape.init();
-        try physics_shapes.append(world_shape.asShape());
-
-        world_shape.addIndexVertexArray(
+        const trimesh = zbt.TriangleMeshShape.init();
+        trimesh.addIndexVertexArray(
             @intCast(u32, indices.items.len / 3),
             indices.items.ptr,
             @sizeOf([3]u32),
@@ -700,7 +703,8 @@ fn initMeshes(
             positions.items.ptr,
             @sizeOf([3]f32),
         );
-        world_shape.finish();
+        trimesh.finish();
+        shape_world = trimesh.asShape();
     }
 }
 
