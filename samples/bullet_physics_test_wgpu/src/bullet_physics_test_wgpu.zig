@@ -307,7 +307,7 @@ fn update(demo: *DemoState) void {
         }
         str = str ++ "\x00";
         _ = c.igCombo_Str("##", &demo.current_scene_index, str.ptr, -1);
-        //c.igSameLine(0.0, -1.0);
+        c.igSameLine(0.0, 0.0);
         if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
             cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
             scene_setup_table[@intCast(usize, demo.current_scene_index)](
@@ -317,6 +317,7 @@ fn update(demo: *DemoState) void {
                 &demo.camera,
             );
         }
+        c.igSpacing();
     }
     c.igEnd();
 
