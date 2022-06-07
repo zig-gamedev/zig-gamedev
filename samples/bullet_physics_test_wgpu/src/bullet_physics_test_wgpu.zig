@@ -82,7 +82,7 @@ const DemoState = struct {
     entities: std.ArrayList(Entity),
 
     keyboard_delay: f32 = 1.0,
-    current_scene_index: i32 = 0,
+    current_scene_index: i32 = initial_scene,
 
     physics: struct {
         world: *const zbt.World,
@@ -187,7 +187,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var physics_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
     var camera: Camera = undefined;
-    scene_setup_table[0](physics_world, &physics_shapes, &entities, &camera);
+    scene_setup_table[initial_scene](physics_world, &physics_shapes, &entities, &camera);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -551,6 +551,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
+const initial_scene = 0;
 const scene_setup_table: [2]fn (
     world: *const zbt.World,
     shapes: *std.ArrayList(*const zbt.Shape),
