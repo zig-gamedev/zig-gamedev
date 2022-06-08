@@ -386,7 +386,7 @@ fn update(demo: *DemoState) void {
             );
             body.applyCentralImpulse(zm.arr3Ptr(&impulse));
 
-            createEntity(demo.physics.world, body, .{ 0.0, 0.8, 0.0, 0.2 }, 1.0, &demo.entities);
+            createEntity(demo.physics.world, body, .{ 0.0, 0.8, 0.0, 0.2 }, &demo.entities);
         }
     }
 }
@@ -572,17 +572,17 @@ fn setupScene0(
     assert(shapes.items.len == 0 and entities.items.len == 0);
 
     const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
-    createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, 0.0, entities);
+    createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
     {
         const box_body = zbt.Body.init(10.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)), shape_cube);
-        createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, entities);
+        createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
     }
     {
-        const shape = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
-        shapes.append(shape.asShape()) catch unreachable;
+        const box = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
+        shapes.append(box.asShape()) catch unreachable;
 
-        const box_body = zbt.Body.init(15.0, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)), shape.asShape());
-        createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, 0.55, entities);
+        const box_body = zbt.Body.init(15.0, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)), box.asShape());
+        createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
     }
     camera.* = .{
         .position = .{ 0.0, 3.0, 0.0 },
@@ -600,19 +600,19 @@ fn setupScene1(
     assert(shapes.items.len == 0 and entities.items.len == 0);
 
     const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
-    createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, 0.0, entities);
+    createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
 
     var i: u32 = 0;
     while (i < 10) : (i += 1) {
         const box_body = zbt.Body.init(
-            5.0,
-            &zm.mat43ToArr(zm.translation(0.0, 5.0 + @intToFloat(f32, i) * 2.05, 10.0)),
+            2.5,
+            &zm.mat43ToArr(zm.translation(0.0, 5.0 + @intToFloat(f32, i) * 2.0 + 0.05, 10.0)),
             shape_cube,
         );
-        createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, 1.05, entities);
+        createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
     }
     camera.* = .{
-        .position = .{ 0.0, 3.0, 0.0 },
+        .position = .{ 0.0, 5.0, -2.0 },
         .pitch = math.pi * 0.05,
         .yaw = 0.0,
     };
@@ -639,7 +639,6 @@ fn createEntity(
     world: *const zbt.World,
     body: *const zbt.Body,
     basecolor_roughness: [4]f32,
-    swept_sphere_radius: f32,
     entities: *std.ArrayList(Entity),
 ) void {
     const shape = body.getShape();
@@ -654,10 +653,14 @@ fn createEntity(
         .box => mesh_size: {
             var half_extents: [3]f32 = undefined;
             @ptrCast(*const zbt.BoxShape, shape).getHalfExtentsWithMargin(&half_extents);
+            body.setCcdSweptSphereRadius(math.min3(half_extents[0], half_extents[1], half_extents[2]));
+            body.setCcdMotionThreshold(1e-6);
             break :mesh_size half_extents;
         },
         .sphere => mesh_size: {
             const r = @ptrCast(*const zbt.SphereShape, shape).getRadius();
+            body.setCcdSweptSphereRadius(r);
+            body.setCcdMotionThreshold(1e-6);
             break :mesh_size [3]f32{ r, r, r };
         },
         else => [3]f32{ 1.0, 1.0, 1.0 },
@@ -670,10 +673,6 @@ fn createEntity(
         .mesh_index = mesh_index,
     }) catch unreachable;
     body.setUserIndex(0, entity_index);
-    if (swept_sphere_radius != 0.0) {
-        body.setCcdSweptSphereRadius(swept_sphere_radius);
-        body.setCcdMotionThreshold(1e-7);
-    }
     body.setDamping(default_linear_damping, default_angular_damping);
     body.setActivationState(.deactivation_disabled);
     world.addBody(body);
