@@ -592,7 +592,7 @@ fn setupScene0(
     }
     {
         const box_body = zbt.Body.init(50.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 10.0)), shape_compound0);
-        createEntity(world, box_body, .{ 0.8, 0.0, 0.7, 0.25 }, entities);
+        createEntity(world, box_body, .{ 0.8, 0.0, 0.9, 0.25 }, entities);
     }
     {
         const box = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
@@ -602,7 +602,7 @@ fn setupScene0(
         createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
     }
     camera.* = .{
-        .position = .{ 0.0, 3.0, 0.0 },
+        .position = .{ 0.0, 3.0, -3.0 },
         .pitch = math.pi * 0.05,
         .yaw = 0.0,
     };
@@ -680,7 +680,7 @@ fn createEntity(
     const mesh_index = switch (shape_type) {
         .box => mesh_index_cube,
         .sphere => mesh_index_sphere,
-        .compound => mesh_index_compound0,
+        .compound => @intCast(u32, shape.getUserIndex(0)),
         .trimesh => mesh_index_world,
         else => unreachable,
     };
@@ -802,6 +802,7 @@ fn initMeshes(
         compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.0, 0.0)), shape_cube);
         compound.addChild(&zm.mat43ToArr(zm.translation(0.0, -2.0, 0.0)), shape_cube);
         shape_compound0 = compound.asShape();
+        shape_compound0.setUserIndex(0, @intCast(i32, mesh_index_compound0));
     }
 
     // World mesh.
@@ -981,6 +982,7 @@ pub fn main() !void {
     };
 
     const window = try glfw.Window.create(1600, 1000, window_title, null, null, .{
+        .maximized = true,
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
     });
