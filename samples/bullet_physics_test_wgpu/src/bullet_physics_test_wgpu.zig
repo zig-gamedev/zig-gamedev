@@ -51,10 +51,12 @@ const Camera = struct {
 
 const mesh_index_cube: u32 = 0;
 const mesh_index_sphere: u32 = 1;
-const mesh_index_world: u32 = 2;
+const mesh_index_compound0: u32 = 2;
+const mesh_index_world: u32 = 3;
 
 var shape_cube: *const zbt.Shape = undefined;
 var shape_sphere: *const zbt.Shape = undefined;
+var shape_compound0: *const zbt.Shape = undefined;
 var shape_world: *const zbt.Shape = undefined;
 
 const default_linear_damping: f32 = 0.1;
@@ -268,6 +270,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
     shape_cube.deinit();
     shape_sphere.deinit();
+    shape_compound0.deinit();
     shape_world.deinit();
     demo.physics.shapes.deinit();
     demo.physics.debug.deinit();
@@ -310,6 +313,7 @@ fn update(demo: *DemoState) void {
             c.igSameLine(0.0, 0.0);
             if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
                 cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
+                // Call scene-setup function.
                 scene_setup_table[@intCast(usize, demo.current_scene_index)](
                     demo.physics.world,
                     &demo.physics.shapes,
@@ -587,6 +591,10 @@ fn setupScene0(
         createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
     }
     {
+        const box_body = zbt.Body.init(50.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 10.0)), shape_compound0);
+        createEntity(world, box_body, .{ 0.8, 0.0, 0.7, 0.25 }, entities);
+    }
+    {
         const box = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
         shapes.append(box.asShape()) catch unreachable;
 
@@ -672,6 +680,7 @@ fn createEntity(
     const mesh_index = switch (shape_type) {
         .box => mesh_index_cube,
         .sphere => mesh_index_sphere,
+        .compound => mesh_index_compound0,
         .trimesh => mesh_index_world,
         else => unreachable,
     };
@@ -757,6 +766,42 @@ fn initMeshes(
         assert(mesh_index == mesh_index_sphere);
 
         shape_sphere = zbt.SphereShape.init(1.0).asShape();
+    }
+
+    // Compound mesh.
+    {
+        var cube0 = zmesh.Shape.initCube();
+        defer cube0.deinit();
+        cube0.translate(-0.5, -0.5, -0.5);
+        cube0.scale(2.0, 2.0, 2.0);
+        cube0.unweld();
+        cube0.computeNormals();
+
+        var cube1 = cube0.clone();
+        defer cube1.deinit();
+        var cube2 = cube0.clone();
+        defer cube2.deinit();
+        var cube3 = cube0.clone();
+        defer cube3.deinit();
+
+        cube0.translate(2.0, 0.0, 0.0);
+        cube1.translate(-2.0, 0.0, 0.0);
+        cube2.translate(0.0, 2.0, 0.0);
+        cube3.translate(0.0, -2.0, 0.0);
+
+        cube0.merge(cube1);
+        cube2.merge(cube3);
+        cube0.merge(cube2);
+
+        const mesh_index = try appendMesh(cube0, all_meshes, all_indices, all_positions, all_normals);
+        assert(mesh_index == mesh_index_compound0);
+
+        const compound = zbt.CompoundShape.init(.{});
+        compound.addChild(&zm.mat43ToArr(zm.translation(2.0, 0.0, 0.0)), shape_cube);
+        compound.addChild(&zm.mat43ToArr(zm.translation(-2.0, 0.0, 0.0)), shape_cube);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.0, 0.0)), shape_cube);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, -2.0, 0.0)), shape_cube);
+        shape_compound0 = compound.asShape();
     }
 
     // World mesh.
