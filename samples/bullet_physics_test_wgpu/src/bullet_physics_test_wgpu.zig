@@ -596,6 +596,7 @@ fn setupScene0(
     }
     {
         const box = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
+        box.setUserIndex(0, @intCast(i32, mesh_index_cube));
         shapes.append(box.asShape()) catch unreachable;
 
         const box_body = zbt.Body.init(15.0, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)), box.asShape());
@@ -676,15 +677,8 @@ fn createEntity(
     entities: *std.ArrayList(Entity),
 ) void {
     const shape = body.getShape();
-    const shape_type = shape.getType();
-    const mesh_index = switch (shape_type) {
-        .box => mesh_index_cube,
-        .sphere => mesh_index_sphere,
-        .compound => @intCast(u32, shape.getUserIndex(0)),
-        .trimesh => mesh_index_world,
-        else => unreachable,
-    };
-    const mesh_size = switch (shape_type) {
+    const mesh_index = @intCast(u32, shape.getUserIndex(0));
+    const mesh_size = switch (shape.getType()) {
         .box => mesh_size: {
             var half_extents: [3]f32 = undefined;
             @ptrCast(*const zbt.BoxShape, shape).getHalfExtentsWithMargin(&half_extents);
@@ -753,6 +747,7 @@ fn initMeshes(
         assert(mesh_index == mesh_index_cube);
 
         shape_cube = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 }).asShape();
+        shape_cube.setUserIndex(0, @intCast(i32, mesh_index));
     }
 
     // Parametric sphere.
@@ -766,6 +761,7 @@ fn initMeshes(
         assert(mesh_index == mesh_index_sphere);
 
         shape_sphere = zbt.SphereShape.init(1.0).asShape();
+        shape_sphere.setUserIndex(0, @intCast(i32, mesh_index));
     }
 
     // Compound mesh.
@@ -836,7 +832,6 @@ fn initMeshes(
             .num_indices = @intCast(u32, all_indices.items.len) - index_offset,
             .num_vertices = @intCast(u32, all_positions.items.len) - vertex_offset,
         });
-        assert(mesh_index == mesh_index_world);
 
         const trimesh = zbt.TriangleMeshShape.init();
         trimesh.addIndexVertexArray(
@@ -849,6 +844,7 @@ fn initMeshes(
         );
         trimesh.finish();
         shape_world = trimesh.asShape();
+        shape_world.setUserIndex(0, @intCast(i32, mesh_index));
     }
 }
 
