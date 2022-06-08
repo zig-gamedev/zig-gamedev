@@ -295,27 +295,36 @@ fn update(demo: *DemoState) void {
         c.igBulletText("Right Mouse Button + drag :  rotate camera");
         c.igBulletText("W, A, S, D :  move camera");
         c.igBulletText("Space :  shoot");
-    }
-    // Scene selection.
-    {
-        c.igSpacing();
-        c.igSpacing();
-        comptime var str: [:0]const u8 = "";
-        comptime var i: u32 = 0;
-        inline while (i < scene_setup_table.len) : (i += 1) {
-            str = str ++ "Scene " ++ std.fmt.comptimePrint("{}", .{i}) ++ "\x00";
+        c.igBulletText("Number of objects :  %d", demo.physics.world.getNumBodies());
+        // Scene selection.
+        {
+            c.igSpacing();
+            c.igSpacing();
+            comptime var str: [:0]const u8 = "";
+            comptime var i: u32 = 0;
+            inline while (i < scene_setup_table.len) : (i += 1) {
+                str = str ++ "Scene " ++ std.fmt.comptimePrint("{}", .{i}) ++ "\x00";
+            }
+            str = str ++ "\x00";
+            _ = c.igCombo_Str("##", &demo.current_scene_index, str.ptr, -1);
+            c.igSameLine(0.0, 0.0);
+            if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
+                cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
+                scene_setup_table[@intCast(usize, demo.current_scene_index)](
+                    demo.physics.world,
+                    &demo.physics.shapes,
+                    &demo.entities,
+                    &demo.camera,
+                );
+            }
         }
-        str = str ++ "\x00";
-        _ = c.igCombo_Str("##", &demo.current_scene_index, str.ptr, -1);
-        c.igSameLine(0.0, 0.0);
-        if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
-            cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
-            scene_setup_table[@intCast(usize, demo.current_scene_index)](
-                demo.physics.world,
-                &demo.physics.shapes,
-                &demo.entities,
-                &demo.camera,
-            );
+        // Gravity.
+        {
+            var gravity: [3]f32 = undefined;
+            demo.physics.world.getGravity(&gravity);
+            if (c.igSliderFloat("Gravity", &gravity[1], -15.0, 15.0, null, c.ImGuiSliderFlags_None)) {
+                demo.physics.world.setGravity(&gravity);
+            }
         }
         c.igSpacing();
     }
@@ -574,7 +583,7 @@ fn setupScene0(
     const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
     {
-        const box_body = zbt.Body.init(10.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)), shape_cube);
+        const box_body = zbt.Body.init(25.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)), shape_cube);
         createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
     }
     {
@@ -602,19 +611,34 @@ fn setupScene1(
     const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
 
-    var i: u32 = 0;
-    while (i < 10) : (i += 1) {
-        const box_body = zbt.Body.init(
-            2.5,
-            &zm.mat43ToArr(zm.translation(0.0, 5.0 + @intToFloat(f32, i) * 2.0 + 0.05, 10.0)),
-            shape_cube,
-        );
-        createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
+    const num_stacks = 32;
+    const num_cubes_per_stack = 10;
+    const radius: f32 = 15.0;
+
+    var j: u32 = 0;
+    while (j < num_stacks) : (j += 1) {
+        const theta = @intToFloat(f32, j) * math.tau / @intToFloat(f32, num_stacks);
+        const x = radius * @cos(theta);
+        const z = radius * @sin(theta);
+        var i: u32 = 0;
+        while (i < num_cubes_per_stack) : (i += 1) {
+            const box_body = zbt.Body.init(
+                2.5,
+                &zm.mat43ToArr(zm.translation(x, 5.0 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
+                shape_cube,
+            );
+            createEntity(
+                world,
+                box_body,
+                if (j % 2 == 1) .{ 0.8, 0.0, 0.0, 0.25 } else .{ 1.0, 0.9, 0.0, 0.75 },
+                entities,
+            );
+        }
     }
     camera.* = .{
-        .position = .{ 0.0, 5.0, -2.0 },
-        .pitch = math.pi * 0.05,
-        .yaw = 0.0,
+        .position = .{ 30.0, 30.0, -30.0 },
+        .pitch = math.pi * 0.15,
+        .yaw = -math.pi * 0.25,
     };
 }
 
@@ -633,6 +657,8 @@ fn cleanupScene(
 
     shapes.clearRetainingCapacity();
     entities.clearRetainingCapacity();
+
+    world.setGravity(&.{ 0.0, -10.0, 0.0 });
 }
 
 fn createEntity(
