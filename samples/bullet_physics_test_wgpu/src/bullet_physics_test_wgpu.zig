@@ -52,7 +52,6 @@ const Camera = struct {
 const mesh_index_cube: u32 = 0;
 const mesh_index_sphere: u32 = 1;
 const mesh_index_compound0: u32 = 2;
-const mesh_index_world: u32 = 3;
 
 var shape_cube: *const zbt.Shape = undefined;
 var shape_sphere: *const zbt.Shape = undefined;
