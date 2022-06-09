@@ -5,6 +5,7 @@ const glfw = @import("glfw");
 const gpu = @import("gpu");
 const zgpu = @import("zgpu");
 const c = zgpu.cimgui;
+const zgui = zgpu.zgui;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const zbt = @import("zbullet");
@@ -287,7 +288,7 @@ fn update(demo: *DemoState) void {
     const dt = demo.gctx.stats.delta_time;
     _ = demo.physics.world.stepSimulation(dt, .{});
 
-    if (c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize)) {
+    if (zgui.begin("Demo Settings", null, .{ .no_move = true, .no_resize = true })) {
         c.igBulletText(
             "Average :  %.3f ms/frame (%.1f fps)",
             demo.gctx.stats.average_cpu_time,
@@ -300,8 +301,8 @@ fn update(demo: *DemoState) void {
         c.igBulletText("Number of objects :  %d", demo.physics.world.getNumBodies());
         // Scene selection.
         {
-            c.igSpacing();
-            c.igSpacing();
+            zgui.spacing();
+            zgui.spacing();
             comptime var str: [:0]const u8 = "";
             comptime var i: u32 = 0;
             inline while (i < scene_setup_table.len) : (i += 1) {
@@ -309,8 +310,9 @@ fn update(demo: *DemoState) void {
             }
             str = str ++ "\x00";
             _ = c.igCombo_Str("##", &demo.current_scene_index, str.ptr, -1);
-            c.igSameLine(0.0, 0.0);
-            if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
+            zgui.sameLine(0.0, -1.0);
+            if (zgui.button("  Setup Scene  ", 0, 0)) {
+                //if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
                 cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
                 // Call scene-setup function.
                 scene_setup_table[@intCast(usize, demo.current_scene_index)](
@@ -329,9 +331,8 @@ fn update(demo: *DemoState) void {
                 demo.physics.world.setGravity(&gravity);
             }
         }
-        c.igSpacing();
     }
-    c.igEnd();
+    zgui.end();
 
     const window = demo.gctx.window;
 

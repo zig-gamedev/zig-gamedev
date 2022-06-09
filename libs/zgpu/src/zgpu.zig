@@ -145,6 +145,7 @@ pub const cimgui = @cImport({
     @cDefine("CIMGUI_NO_EXPORT", "");
     @cInclude("imgui/cimgui.h");
 });
+pub const zgui = @import("zgui.zig");
 const wgsl = @import("common_wgsl.zig");
 
 pub const GraphicsContext = struct {

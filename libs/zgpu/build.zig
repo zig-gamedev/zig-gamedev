@@ -49,6 +49,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/cimgui.cpp", &.{""});
+        exe.addCSourceFile(thisDir() ++ "/libs/imgui/zgui.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
     }
