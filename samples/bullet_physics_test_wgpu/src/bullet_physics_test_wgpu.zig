@@ -309,10 +309,9 @@ fn update(demo: *DemoState) void {
                 str = str ++ "Scene " ++ std.fmt.comptimePrint("{}", .{i}) ++ "\x00";
             }
             str = str ++ "\x00";
-            _ = c.igCombo_Str("##", &demo.current_scene_index, str.ptr, -1);
-            zgui.sameLine(0.0, -1.0);
+            _ = zgui.comboStr("##", &demo.current_scene_index, str.ptr, -1);
+            zgui.sameLine(.{});
             if (zgui.button("  Setup Scene  ", 0, 0)) {
-                //if (c.igButton("  Setup Scene  ", .{ .x = 0, .y = 0 })) {
                 cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
                 // Call scene-setup function.
                 scene_setup_table[@intCast(usize, demo.current_scene_index)](
@@ -327,7 +326,7 @@ fn update(demo: *DemoState) void {
         {
             var gravity: [3]f32 = undefined;
             demo.physics.world.getGravity(&gravity);
-            if (c.igSliderFloat("Gravity", &gravity[1], -15.0, 15.0, null, c.ImGuiSliderFlags_None)) {
+            if (zgui.sliderFloat("Gravity", &gravity[1], -15.0, 15.0, .{})) {
                 demo.physics.world.setGravity(&gravity);
             }
         }

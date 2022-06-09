@@ -15,3 +15,21 @@ ZGUI_API void zguiSameLine(float offset_from_start_x, float spacing) {
     ImGui::SameLine(offset_from_start_x, spacing);
 }
 ZGUI_API void zguiDummy(float w, float h) { ImGui::Dummy({ w, h }); }
+ZGUI_API bool zguiComboStr(
+    const char* label,
+    int* current_item,
+    const char* items_separated_by_zeros,
+    int popup_max_height_in_items
+) {
+    return ImGui::Combo(label, current_item, items_separated_by_zeros, popup_max_height_in_items);
+}
+ZGUI_API bool zguiSliderFloat(
+    const char* label,
+    float* v,
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderFloat(label, v, v_min, v_max, format, flags);
+}

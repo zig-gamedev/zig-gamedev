@@ -39,6 +39,24 @@ pub const WindowFlags = packed struct {
     }
 };
 
+pub const SliderFlags = packed struct {
+    _reserved0: bool = false,
+    _reserved1: bool = false,
+    _reserved2: bool = false,
+    _reserved3: bool = false,
+    always_clamp: bool = false,
+    logarithmic: bool = false,
+    no_round_to_format: bool = false,
+    no_input: bool = false,
+
+    _pad0: u8 = 0,
+    _pad1: u16 = 0,
+
+    comptime {
+        std.debug.assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
 pub const button = zguiButton;
 
 pub fn begin(name: [*:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
@@ -48,8 +66,23 @@ pub const end = zguiEnd;
 pub const spacing = zguiSpacing;
 pub const newLine = zguiNewLine;
 pub const separator = zguiSeparator;
-pub const sameLine = zguiSameLine;
+pub fn sameLine(args: struct { offset_from_start_x: f32 = 0.0, spacing: f32 = -1.0 }) void {
+    zguiSameLine(args.offset_from_start_x, args.spacing);
+}
 pub const dummy = zguiDummy;
+pub const comboStr = zguiComboStr;
+pub fn sliderFloat(
+    label: [*:0]const u8,
+    v: *f32,
+    v_min: f32,
+    v_max: f32,
+    args: struct {
+        format: ?[*:0]const u8 = null,
+        flags: SliderFlags = .{},
+    },
+) bool {
+    return zguiSliderFloat(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
+}
 
 extern fn zguiButton(label: [*:0]const u8, x: f32, y: f32) bool;
 extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
@@ -59,3 +92,17 @@ extern fn zguiNewLine() void;
 extern fn zguiSeparator() void;
 extern fn zguiSameLine(offset_from_start_x: f32, spacing: f32) void;
 extern fn zguiDummy(w: f32, h: f32) void;
+extern fn zguiComboStr(
+    label: [*:0]const u8,
+    current_item: *i32,
+    items_separated_by_zeros: [*:0]const u8,
+    popup_max_height_in_items: i32,
+) void;
+extern fn zguiSliderFloat(
+    label: [*:0]const u8,
+    v: *f32,
+    v_min: f32,
+    v_max: f32,
+    format: ?[*:0]const u8,
+    flags: u32,
+) bool;
