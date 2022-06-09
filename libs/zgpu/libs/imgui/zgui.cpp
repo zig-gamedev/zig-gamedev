@@ -33,3 +33,9 @@ ZGUI_API bool zguiSliderFloat(
 ) {
     return ImGui::SliderFloat(label, v, v_min, v_max, format, flags);
 }
+ZGUI_API void zguiBulletText(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    ImGui::BulletTextV(fmt, args);
+    va_end(args);
+}

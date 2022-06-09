@@ -1515,6 +1515,9 @@ const FrameStats = struct {
 };
 
 pub const gui = struct {
+    pub var want_capture_mouse: bool = false;
+    pub var want_capture_keyboard: bool = false;
+
     /// This call will install GLFW callbacks to handle GUI interactions.
     /// Those callbacks will chain-call user's previously installed callbacks, if any.
     /// This means that custom user's callbacks need to be installed *before* calling zgpu.gui.init().
@@ -1562,10 +1565,16 @@ pub const gui = struct {
     }
 
     pub fn newFrame(fb_width: u32, fb_height: u32) void {
+        const io = cimgui.igGetIO().?;
+
+        // (when reading from the io.WantCaptureMouse, io.WantCaptureKeyboard flags to dispatch your inputs, it is
+        //  generally easier and more correct to use their state BEFORE calling NewFrame(). See FAQ for details!)
+        want_capture_mouse = io.*.WantCaptureMouse;
+        want_capture_keyboard = io.*.WantCaptureKeyboard;
+
         ImGui_ImplWGPU_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         {
-            const io = cimgui.igGetIO().?;
             io.*.DisplaySize = .{
                 .x = @intToFloat(f32, fb_width),
                 .y = @intToFloat(f32, fb_height),

@@ -4,7 +4,6 @@ const assert = std.debug.assert;
 const glfw = @import("glfw");
 const gpu = @import("gpu");
 const zgpu = @import("zgpu");
-const c = zgpu.cimgui;
 const zgui = zgpu.zgui;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
@@ -289,16 +288,15 @@ fn update(demo: *DemoState) void {
     _ = demo.physics.world.stepSimulation(dt, .{});
 
     if (zgui.begin("Demo Settings", null, .{ .no_move = true, .no_resize = true })) {
-        c.igBulletText(
-            "Average :  %.3f ms/frame (%.1f fps)",
-            demo.gctx.stats.average_cpu_time,
-            demo.gctx.stats.fps,
+        zgui.bulletText(
+            "Average :  {d:.3} ms/frame ({d:.1} fps)",
+            .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
-        c.igBulletText("Left Mouse Button + drag :  pick up and move object");
-        c.igBulletText("Right Mouse Button + drag :  rotate camera");
-        c.igBulletText("W, A, S, D :  move camera");
-        c.igBulletText("Space :  shoot");
-        c.igBulletText("Number of objects :  %d", demo.physics.world.getNumBodies());
+        zgui.bulletText("Left Mouse Button + drag :  pick up and move object", .{});
+        zgui.bulletText("Right Mouse Button + drag :  rotate camera", .{});
+        zgui.bulletText("W, A, S, D :  move camera", .{});
+        zgui.bulletText("Space :  shoot", .{});
+        zgui.bulletText("Number of objects :  {}", .{demo.physics.world.getNumBodies()});
         // Scene selection.
         {
             zgui.spacing();
@@ -309,7 +307,7 @@ fn update(demo: *DemoState) void {
                 str = str ++ "Scene " ++ std.fmt.comptimePrint("{}", .{i}) ++ "\x00";
             }
             str = str ++ "\x00";
-            _ = zgui.comboStr("##", &demo.current_scene_index, str.ptr, -1);
+            _ = zgui.comboStr("##", &demo.current_scene_index, str, -1);
             zgui.sameLine(.{});
             if (zgui.button("  Setup Scene  ", .{})) {
                 cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
@@ -850,7 +848,7 @@ fn initMeshes(
 fn objectPicking(demo: *DemoState) void {
     const window = demo.gctx.window;
 
-    const mouse_button_is_down = window.getMouseButton(.left) == .press and !c.igGetIO().?.*.WantCaptureMouse;
+    const mouse_button_is_down = window.getMouseButton(.left) == .press and !zgpu.gui.want_capture_mouse;
 
     const ray_from = zm.loadArr3(demo.camera.position);
     const ray_to = ray_to: {

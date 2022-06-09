@@ -57,12 +57,12 @@ pub const SliderFlags = packed struct {
     }
 };
 
-pub fn button(label: [*:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
-    return zguiButton(label, size.w, size.h);
+pub fn button(label: [:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
+    return zguiButton(label.ptr, size.w, size.h);
 }
 
-pub fn begin(name: [*:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
-    return zguiBegin(name, p_open, @bitCast(u32, flags));
+pub fn begin(name: [:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
+    return zguiBegin(name.ptr, p_open, @bitCast(u32, flags));
 }
 pub const end = zguiEnd;
 pub const spacing = zguiSpacing;
@@ -72,18 +72,41 @@ pub fn sameLine(args: struct { offset_from_start_x: f32 = 0.0, spacing: f32 = -1
     zguiSameLine(args.offset_from_start_x, args.spacing);
 }
 pub const dummy = zguiDummy;
-pub const comboStr = zguiComboStr;
+pub fn comboStr(
+    label: [:0]const u8,
+    current_item: *i32,
+    items_separated_by_zeros: [:0]const u8,
+    popup_max_height_in_items: i32,
+) bool {
+    return zguiComboStr(label.ptr, current_item, items_separated_by_zeros.ptr, popup_max_height_in_items);
+}
 pub fn sliderFloat(
-    label: [*:0]const u8,
+    label: [:0]const u8,
     v: *f32,
     v_min: f32,
     v_max: f32,
     args: struct {
-        format: ?[*:0]const u8 = null,
+        format: ?[:0]const u8 = null,
         flags: SliderFlags = .{},
     },
 ) bool {
-    return zguiSliderFloat(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
+    return zguiSliderFloat(
+        label.ptr,
+        v,
+        v_min,
+        v_max,
+        if (args.format) |fmt| fmt.ptr else null,
+        @bitCast(u32, args.flags),
+    );
+}
+pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
+    // TODO: Max. text length is hardcoded, make it more robust.
+    var buf: [512]u8 = undefined;
+    const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch blk: {
+        buf[buf.len - 1] = '\x00';
+        break :blk buf[0 .. buf.len - 1 :0];
+    };
+    zguiBulletText("%s", result.ptr);
 }
 
 extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
@@ -99,7 +122,7 @@ extern fn zguiComboStr(
     current_item: *i32,
     items_separated_by_zeros: [*:0]const u8,
     popup_max_height_in_items: i32,
-) void;
+) bool;
 extern fn zguiSliderFloat(
     label: [*:0]const u8,
     v: *f32,
@@ -108,3 +131,4 @@ extern fn zguiSliderFloat(
     format: ?[*:0]const u8,
     flags: u32,
 ) bool;
+extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
