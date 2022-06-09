@@ -57,7 +57,9 @@ pub const SliderFlags = packed struct {
     }
 };
 
-pub const button = zguiButton;
+pub fn button(label: [*:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
+    return zguiButton(label, size.w, size.h);
+}
 
 pub fn begin(name: [*:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
     return zguiBegin(name, p_open, @bitCast(u32, flags));
@@ -84,7 +86,7 @@ pub fn sliderFloat(
     return zguiSliderFloat(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
 }
 
-extern fn zguiButton(label: [*:0]const u8, x: f32, y: f32) bool;
+extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
 extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 extern fn zguiEnd() void;
 extern fn zguiSpacing() void;

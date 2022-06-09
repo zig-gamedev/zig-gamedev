@@ -311,7 +311,7 @@ fn update(demo: *DemoState) void {
             str = str ++ "\x00";
             _ = zgui.comboStr("##", &demo.current_scene_index, str.ptr, -1);
             zgui.sameLine(.{});
-            if (zgui.button("  Setup Scene  ", 0, 0)) {
+            if (zgui.button("  Setup Scene  ", .{})) {
                 cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
                 // Call scene-setup function.
                 scene_setup_table[@intCast(usize, demo.current_scene_index)](
