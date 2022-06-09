@@ -64,14 +64,11 @@ pub fn button(label: [:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) 
 pub fn begin(name: [:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
     return zguiBegin(name.ptr, p_open, @bitCast(u32, flags));
 }
-pub const end = zguiEnd;
-pub const spacing = zguiSpacing;
-pub const newLine = zguiNewLine;
-pub const separator = zguiSeparator;
+
 pub fn sameLine(args: struct { offset_from_start_x: f32 = 0.0, spacing: f32 = -1.0 }) void {
     zguiSameLine(args.offset_from_start_x, args.spacing);
 }
-pub const dummy = zguiDummy;
+
 pub fn comboStr(
     label: [:0]const u8,
     current_item: *i32,
@@ -80,6 +77,7 @@ pub fn comboStr(
 ) bool {
     return zguiComboStr(label.ptr, current_item, items_separated_by_zeros.ptr, popup_max_height_in_items);
 }
+
 pub fn sliderFloat(
     label: [:0]const u8,
     v: *f32,
@@ -99,6 +97,7 @@ pub fn sliderFloat(
         @bitCast(u32, args.flags),
     );
 }
+
 pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
     // TODO: Max. text length is hardcoded, make it more robust.
     var buf: [512]u8 = undefined;
@@ -109,6 +108,15 @@ pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
     zguiBulletText("%s", result.ptr);
 }
 
+pub const end = zguiEnd;
+pub const spacing = zguiSpacing;
+pub const newLine = zguiNewLine;
+pub const separator = zguiSeparator;
+pub const dummy = zguiDummy;
+
+//
+// Raw C functions.
+//
 extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
 extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 extern fn zguiEnd() void;
