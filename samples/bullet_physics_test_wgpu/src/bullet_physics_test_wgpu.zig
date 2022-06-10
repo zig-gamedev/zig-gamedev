@@ -86,7 +86,8 @@ const DemoState = struct {
 
     physics: struct {
         world: *const zbt.World,
-        shapes: std.ArrayList(*const zbt.Shape),
+        common_shapes: std.ArrayList(*const zbt.Shape),
+        scene_shapes: std.ArrayList(*const zbt.Shape),
         debug: *zbt.DebugDrawer,
     },
     camera: Camera,
@@ -120,12 +121,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     zmesh.init(arena);
     defer zmesh.deinit();
 
-    var physics_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
+    var common_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var meshes = std.ArrayList(Mesh).init(allocator);
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
     var normals = std.ArrayList([3]f32).init(arena);
-    try initMeshes(arena, &physics_shapes, &meshes, &indices, &positions, &normals);
+    try initMeshes(arena, &common_shapes, &meshes, &indices, &positions, &normals);
 
     const total_num_vertices = @intCast(u32, positions.items.len);
     const total_num_indices = @intCast(u32, indices.items.len);
@@ -185,9 +186,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
     physics_world.debugSetMode(zbt.DebugMode.user_only);
 
+    var scene_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
     var camera: Camera = undefined;
-    scene_setup_table[initial_scene](physics_world, &physics_shapes, &entities, &camera);
+    scene_setup_table[initial_scene](physics_world, common_shapes, &scene_shapes, &entities, &camera);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -203,7 +205,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .camera = camera,
         .physics = .{
             .world = physics_world,
-            .shapes = physics_shapes,
+            .common_shapes = common_shapes,
+            .scene_shapes = scene_shapes,
             .debug = physics_debug,
         },
         .pick = .{
@@ -265,9 +268,10 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
         demo.pick.p2p.destroy();
     }
     demo.pick.p2p.deallocate();
-    cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
-    for (demo.physics.shapes.items) |shape| shape.deinit();
-    demo.physics.shapes.deinit();
+    cleanupScene(demo.physics.world, &demo.physics.scene_shapes, &demo.entities);
+    demo.physics.scene_shapes.deinit();
+    for (demo.physics.common_shapes.items) |shape| shape.deinit();
+    demo.physics.common_shapes.deinit();
     demo.physics.debug.deinit();
     allocator.destroy(demo.physics.debug);
     demo.physics.world.deinit();
@@ -306,11 +310,12 @@ fn update(demo: *DemoState) void {
             _ = zgui.comboStr("##", &demo.current_scene_index, str, -1);
             zgui.sameLine(.{});
             if (zgui.button("  Setup Scene  ", .{})) {
-                cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
+                cleanupScene(demo.physics.world, &demo.physics.scene_shapes, &demo.entities);
                 // Call scene-setup function.
                 scene_setup_table[@intCast(usize, demo.current_scene_index)](
                     demo.physics.world,
-                    &demo.physics.shapes,
+                    demo.physics.common_shapes,
+                    &demo.physics.scene_shapes,
                     &demo.entities,
                     &demo.camera,
                 );
@@ -398,7 +403,7 @@ fn update(demo: *DemoState) void {
             const body = zbt.Body.init(
                 1.0,
                 &zm.mat43ToArr(transform),
-                demo.physics.shapes.items[mesh_index_sphere],
+                demo.physics.common_shapes.items[mesh_index_sphere],
             );
             body.applyCentralImpulse(zm.arr3Ptr(&impulse));
 
@@ -571,7 +576,8 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 const initial_scene = 0;
 const scene_setup_table: [2]fn (
     world: *const zbt.World,
-    shapes: *std.ArrayList(*const zbt.Shape),
+    common_shapes: std.ArrayList(*const zbt.Shape),
+    scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void = .{
@@ -581,19 +587,20 @@ const scene_setup_table: [2]fn (
 
 fn setupScene0(
     world: *const zbt.World,
-    shapes: *std.ArrayList(*const zbt.Shape),
+    common_shapes: std.ArrayList(*const zbt.Shape),
+    scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void {
     assert(entities.items.len == 0);
 
-    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shapes.items[mesh_index_world]);
+    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), common_shapes.items[mesh_index_world]);
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
     {
         const body = zbt.Body.init(
             25.0,
             &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)),
-            shapes.items[mesh_index_cube],
+            common_shapes.items[mesh_index_cube],
         );
         createEntity(world, body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
     }
@@ -601,14 +608,14 @@ fn setupScene0(
         const body = zbt.Body.init(
             50.0,
             &zm.mat43ToArr(zm.translation(0.0, 5.0, 10.0)),
-            shapes.items[mesh_index_compound0],
+            common_shapes.items[mesh_index_compound0],
         );
         createEntity(world, body, .{ 0.8, 0.0, 0.9, 0.25 }, entities);
     }
     {
         const cylinder = zbt.CylinderShape.init(&.{ 1.0, 1.0, 1.0 }, .y);
         cylinder.setUserIndex(0, @intCast(i32, mesh_index_cylinder));
-        shapes.append(cylinder.asShape()) catch unreachable;
+        scene_shapes.append(cylinder.asShape()) catch unreachable;
 
         const body = zbt.Body.init(2.5, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 10.0)), cylinder.asShape());
         createEntity(world, body, .{ 1.0, 0.0, 0.0, 0.15 }, entities);
@@ -617,14 +624,14 @@ fn setupScene0(
         const body = zbt.Body.init(
             40.0,
             &zm.mat43ToArr(zm.translation(5.0, 5.0, 10.0)),
-            shapes.items[mesh_index_compound1],
+            common_shapes.items[mesh_index_compound1],
         );
         createEntity(world, body, .{ 0.05, 0.1, 0.8, 0.5 }, entities);
     }
     {
         const box = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
         box.setUserIndex(0, @intCast(i32, mesh_index_cube));
-        shapes.append(box.asShape()) catch unreachable;
+        scene_shapes.append(box.asShape()) catch unreachable;
 
         const box_body = zbt.Body.init(15.0, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)), box.asShape());
         createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
@@ -638,13 +645,15 @@ fn setupScene0(
 
 fn setupScene1(
     world: *const zbt.World,
-    shapes: *std.ArrayList(*const zbt.Shape),
+    common_shapes: std.ArrayList(*const zbt.Shape),
+    scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void {
+    _ = scene_shapes;
     assert(entities.items.len == 0);
 
-    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shapes.items[mesh_index_world]);
+    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), common_shapes.items[mesh_index_world]);
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
 
     const num_stacks = 32;
@@ -661,7 +670,7 @@ fn setupScene1(
             const box_body = zbt.Body.init(
                 2.5,
                 &zm.mat43ToArr(zm.translation(x, 5.0 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
-                shapes.items[mesh_index_cube],
+                common_shapes.items[mesh_index_cube],
             );
             createEntity(
                 world,
@@ -689,13 +698,11 @@ fn cleanupScene(
         world.removeBody(body);
         body.deinit();
     }
-    for (shapes.items) |shape, shape_index| {
-        if (shape_index >= mesh_count) {
-            shape.deinit();
-        }
+    for (shapes.items) |shape| {
+        shape.deinit();
     }
 
-    shapes.resize(mesh_count) catch unreachable;
+    shapes.clearRetainingCapacity();
     entities.clearRetainingCapacity();
 
     world.setGravity(&.{ 0.0, -10.0, 0.0 });
