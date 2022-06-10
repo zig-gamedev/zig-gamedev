@@ -176,8 +176,17 @@ defer zgpu.gui.deinit();
 // Main loop
 while (...) {
     zgpu.gui.newFrame(framebuffer_width, framebuffer_height);
-    // Define your widgets here...
-    // ...
+
+    zgui.bulletText(
+        "Average :  {d:.3} ms/frame ({d:.1} fps)",
+        .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
+    );
+    zgui.bulletText("W, A, S, D :  move camera", .{});
+    zgui.spacing();
+
+    if (zgui.button("Setup Scene", .{})) {
+        ...
+    }
 
     // Draw
     {
