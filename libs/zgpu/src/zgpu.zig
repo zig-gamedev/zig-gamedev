@@ -140,11 +140,6 @@ const c = @cImport({
 const objc = @cImport({
     @cInclude("objc/message.h");
 });
-pub const cimgui = @cImport({
-    @cDefine("CIMGUI_DEFINE_ENUMS_AND_STRUCTS", "");
-    @cDefine("CIMGUI_NO_EXPORT", "");
-    @cInclude("imgui/cimgui.h");
-});
 pub const zgui = @import("zgui.zig");
 const wgsl = @import("common_wgsl.zig");
 
@@ -1525,26 +1520,17 @@ pub const gui = struct {
         window: glfw.Window,
         device: gpu.Device,
         comptime content_dir: []const u8,
-        comptime font_name: [*:0]const u8,
+        comptime font_name: []const u8,
         font_size: f32,
     ) void {
-        assert(cimgui.igGetCurrentContext() == null);
-        _ = cimgui.igCreateContext(null);
+        assert(zgui.getCurrentContext() == null);
+        _ = zgui.createContext(null);
 
         if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) {
             unreachable;
         }
 
-        const io = cimgui.igGetIO().?;
-        if (cimgui.ImFontAtlas_AddFontFromFileTTF(
-            io.*.Fonts,
-            content_dir ++ font_name,
-            font_size,
-            null,
-            null,
-        ) == null) {
-            unreachable;
-        }
+        zgui.io.addFontFromFile(content_dir ++ font_name ++ "\x00", font_size);
 
         if (!ImGui_ImplWGPU_Init(
             device.ptr,
@@ -1554,47 +1540,42 @@ pub const gui = struct {
             unreachable;
         }
 
-        io.*.IniFilename = content_dir ++ "imgui.ini";
+        zgui.io.setIniFilename(content_dir ++ "imgui.ini");
     }
 
     pub fn deinit() void {
-        assert(cimgui.igGetCurrentContext() != null);
+        assert(zgui.getCurrentContext() != null);
         ImGui_ImplWGPU_Shutdown();
         ImGui_ImplGlfw_Shutdown();
-        cimgui.igDestroyContext(null);
+        zgui.destroyContext(null);
     }
 
     pub fn newFrame(fb_width: u32, fb_height: u32) void {
-        const io = cimgui.igGetIO().?;
-
         // (when reading from the io.WantCaptureMouse, io.WantCaptureKeyboard flags to dispatch your inputs, it is
         //  generally easier and more correct to use their state BEFORE calling NewFrame(). See FAQ for details!)
-        want_capture_mouse = io.*.WantCaptureMouse;
-        want_capture_keyboard = io.*.WantCaptureKeyboard;
+        want_capture_mouse = zgui.io.getWantCaptureMouse();
+        want_capture_keyboard = zgui.io.getWantCaptureKeyboard();
 
         ImGui_ImplWGPU_NewFrame();
         ImGui_ImplGlfw_NewFrame();
-        {
-            io.*.DisplaySize = .{
-                .x = @intToFloat(f32, fb_width),
-                .y = @intToFloat(f32, fb_height),
-            };
-            io.*.DisplayFramebufferScale = .{ .x = 1.0, .y = 1.0 };
-        }
-        cimgui.igNewFrame();
+
+        zgui.io.setDisplaySize(@intToFloat(f32, fb_width), @intToFloat(f32, fb_height));
+        zgui.io.setDisplayFramebufferScale(1.0, 1.0);
+
+        zgui.newFrame();
     }
 
     pub fn draw(pass: gpu.RenderPassEncoder) void {
-        cimgui.igRender();
-        ImGui_ImplWGPU_RenderDrawData(cimgui.igGetDrawData(), pass.ptr);
+        zgui.render();
+        ImGui_ImplWGPU_RenderDrawData(zgui.getDrawData(), pass.ptr);
     }
 
-    extern fn ImGui_ImplGlfw_InitForOther(window: *anyopaque, install_callbacks: bool) bool;
+    extern fn ImGui_ImplGlfw_InitForOther(window: *const anyopaque, install_callbacks: bool) bool;
     extern fn ImGui_ImplGlfw_NewFrame() void;
     extern fn ImGui_ImplGlfw_Shutdown() void;
-    extern fn ImGui_ImplWGPU_Init(device: *anyopaque, num_frames_in_flight: u32, rt_format: u32) bool;
+    extern fn ImGui_ImplWGPU_Init(device: *const anyopaque, num_frames_in_flight: u32, rt_format: u32) bool;
     extern fn ImGui_ImplWGPU_NewFrame() void;
-    extern fn ImGui_ImplWGPU_RenderDrawData(draw_data: *anyopaque, pass_encoder: *anyopaque) void;
+    extern fn ImGui_ImplWGPU_RenderDrawData(draw_data: *const anyopaque, pass_encoder: *const anyopaque) void;
     extern fn ImGui_ImplWGPU_Shutdown() void;
 };
 

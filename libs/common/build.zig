@@ -16,7 +16,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     const lib = buildLibrary(exe);
     exe.linkLibrary(lib);
     exe.addIncludeDir(thisDir() ++ "/src/c");
-    exe.addIncludeDir(thisDir() ++ "/../zgpu/libs/imgui");
+    exe.addIncludeDir(thisDir() ++ "/libs/imgui");
     exe.addIncludeDir(thisDir() ++ "/../zmesh/libs/cgltf");
     exe.addIncludeDir(thisDir() ++ "/../zgpu/libs/stb");
 }
@@ -33,13 +33,13 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.linkSystemLibrary("c++");
     lib.linkSystemLibrary("imm32");
 
-    lib.addIncludeDir(thisDir() ++ "/../zgpu/libs");
-    lib.addCSourceFile(thisDir() ++ "/../zgpu/libs/imgui/imgui.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/../zgpu/libs/imgui/imgui_widgets.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/../zgpu/libs/imgui/imgui_tables.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/../zgpu/libs/imgui/imgui_draw.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/../zgpu/libs/imgui/imgui_demo.cpp", &.{""});
-    lib.addCSourceFile(thisDir() ++ "/../zgpu/libs/imgui/cimgui.cpp", &.{""});
+    lib.addIncludeDir(thisDir() ++ "/libs");
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
+    lib.addCSourceFile(thisDir() ++ "/libs/imgui/cimgui.cpp", &.{""});
 
     lib.addIncludeDir(thisDir() ++ "/../zmesh/libs/cgltf");
     lib.addCSourceFile(thisDir() ++ "/../zmesh/libs/cgltf/cgltf.c", &.{"-std=c99"});

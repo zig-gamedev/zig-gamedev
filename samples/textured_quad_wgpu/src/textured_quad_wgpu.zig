@@ -3,7 +3,7 @@ const math = std.math;
 const glfw = @import("glfw");
 const gpu = @import("gpu");
 const zgpu = @import("zgpu");
-const c = zgpu.cimgui;
+const zgui = zgpu.zgui;
 const zm = @import("zmath");
 
 const content_dir = @import("build_options").content_dir;
@@ -226,22 +226,21 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    if (c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize)) {
-        c.igBulletText(
-            "Average :  %.3f ms/frame (%.1f fps)",
-            demo.gctx.stats.average_cpu_time,
-            demo.gctx.stats.fps,
+    if (zgui.begin("Demo Settings", null, .{ .no_move = true, .no_resize = true })) {
+        zgui.bulletText(
+            "Average :  {d:.3} ms/frame ({d:.1} fps)",
+            .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
-        _ = c.igSliderInt(
+        zgui.spacing();
+        _ = zgui.sliderInt(
             "Mipmap Level",
             &demo.mip_level,
             0,
             @intCast(i32, demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1),
-            null,
-            c.ImGuiSliderFlags_None,
+            .{},
         );
     }
-    c.igEnd();
+    zgui.end();
 }
 
 fn draw(demo: *DemoState) void {

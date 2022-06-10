@@ -1,6 +1,23 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
+pub const createContext = zguiCreateContext;
+pub const destroyContext = zguiDestroyContext;
+pub const getCurrentContext = zguiGetCurrentContext;
+pub const setCurrentContext = zguiSetCurrentContext;
+
+pub const io = struct {
+    pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
+    pub const getWantCaptureKeyboard = zguiIoGetWantCaptureKeyboard;
+    pub const addFontFromFile = zguiIoAddFontFromFile;
+    pub const setIniFilename = zguiIoSetIniFilename;
+    pub const setDisplaySize = zguiIoSetDisplaySize;
+    pub const setDisplayFramebufferScale = zguiIoSetDisplayFramebufferScale;
+};
+
+pub const Context = opaque {};
+pub const DrawData = opaque {};
+
 pub const WindowFlags = packed struct {
     no_title_bar: bool = false,
     no_resize: bool = false,
@@ -35,7 +52,7 @@ pub const WindowFlags = packed struct {
     pub const no_inputs = WindowFlags{ .no_mouse_inputs = true, .no_nav_inputs = true, .no_nav_focus = true };
 
     comptime {
-        std.debug.assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
     }
 };
 
@@ -53,7 +70,7 @@ pub const SliderFlags = packed struct {
     _pad1: u16 = 0,
 
     comptime {
-        std.debug.assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
     }
 };
 
@@ -84,11 +101,31 @@ pub fn sliderFloat(
     v_min: f32,
     v_max: f32,
     args: struct {
-        format: ?[:0]const u8 = null,
+        format: ?[:0]const u8 = "%.3f",
         flags: SliderFlags = .{},
     },
 ) bool {
     return zguiSliderFloat(
+        label.ptr,
+        v,
+        v_min,
+        v_max,
+        if (args.format) |fmt| fmt.ptr else null,
+        @bitCast(u32, args.flags),
+    );
+}
+
+pub fn sliderInt(
+    label: [:0]const u8,
+    v: *i32,
+    v_min: i32,
+    v_max: i32,
+    args: struct {
+        format: ?[:0]const u8 = "%d",
+        flags: SliderFlags = .{},
+    },
+) bool {
+    return zguiSliderInt(
         label.ptr,
         v,
         v_min,
@@ -108,11 +145,19 @@ pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
     zguiBulletText("%s", result.ptr);
 }
 
+pub fn radioButtonIntPtr(label: [:0]const u8, v: *i32, v_button: i32) bool {
+    return zguiRadioButtonIntPtr(label.ptr, v, v_button);
+}
+
 pub const end = zguiEnd;
 pub const spacing = zguiSpacing;
 pub const newLine = zguiNewLine;
 pub const separator = zguiSeparator;
 pub const dummy = zguiDummy;
+pub const newFrame = zguiNewFrame;
+pub const render = zguiRender;
+pub const getDrawData = zguiGetDrawData;
+pub const showDemoWindow = zguiShowDemoWindow;
 
 //
 // Raw C functions.
@@ -139,4 +184,31 @@ extern fn zguiSliderFloat(
     format: ?[*:0]const u8,
     flags: u32,
 ) bool;
+extern fn zguiSliderInt(
+    label: [*:0]const u8,
+    v: *i32,
+    v_min: i32,
+    v_max: i32,
+    format: ?[*:0]const u8,
+    flags: u32,
+) bool;
 extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
+extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
+
+extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) ?*const Context;
+extern fn zguiDestroyContext(ctx: ?*const Context) void;
+extern fn zguiGetCurrentContext() ?*const Context;
+extern fn zguiSetCurrentContext(ctx: ?*const Context) void;
+
+extern fn zguiNewFrame() void;
+extern fn zguiRender() void;
+extern fn zguiGetDrawData() *const DrawData;
+
+extern fn zguiShowDemoWindow(p_open: ?*bool) void;
+
+extern fn zguiIoGetWantCaptureMouse() bool;
+extern fn zguiIoGetWantCaptureKeyboard() bool;
+extern fn zguiIoAddFontFromFile(filename: [*:0]const u8, size_pixels: f32) void;
+extern fn zguiIoSetIniFilename(filename: [*:0]const u8) void;
+extern fn zguiIoSetDisplaySize(width: f32, height: f32) void;
+extern fn zguiIoSetDisplayFramebufferScale(sx: f32, sy: f32) void;

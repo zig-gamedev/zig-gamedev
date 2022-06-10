@@ -22,7 +22,6 @@
 //  2021-01-28: Initial version.
 
 #include "imgui.h"
-#include "imgui_impl_wgpu.h"
 #include <limits.h>
 #include <webgpu/webgpu.h>
 
@@ -34,6 +33,19 @@
 
 // Dear ImGui prototypes from imgui_internal.h
 extern ImGuiID ImHashData(const void* data_p, size_t data_size, ImU32 seed = 0);
+
+extern "C" {
+
+bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format);
+void ImGui_ImplWGPU_Shutdown();
+void ImGui_ImplWGPU_NewFrame();
+void ImGui_ImplWGPU_RenderDrawData(ImDrawData* draw_data, WGPURenderPassEncoder pass_encoder);
+
+// Use if you want to reset your rendering device without losing Dear ImGui state.
+void ImGui_ImplWGPU_InvalidateDeviceObjects();
+bool ImGui_ImplWGPU_CreateDeviceObjects();
+
+} // extern "C"
 
 // WebGPU data
 static WGPUDevice               g_wgpuDevice = NULL;

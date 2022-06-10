@@ -3,7 +3,7 @@ const math = std.math;
 const glfw = @import("glfw");
 const gpu = @import("gpu");
 const zgpu = @import("zgpu");
-const c = zgpu.cimgui;
+const zgui = zgpu.zgui;
 const zm = @import("zmath");
 
 const content_dir = @import("build_options").content_dir;
@@ -158,7 +158,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
-    c.igShowDemoWindow(null);
+    zgui.showDemoWindow(null);
 }
 
 fn draw(demo: *DemoState) void {

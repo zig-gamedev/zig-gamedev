@@ -3,7 +3,7 @@ const math = std.math;
 const glfw = @import("glfw");
 const gpu = @import("gpu");
 const zgpu = @import("zgpu");
-const c = zgpu.cimgui;
+const zgui = zgpu.zgui;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const znoise = @import("znoise");
@@ -431,20 +431,15 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    if (c.igBegin("Demo Settings", null, c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize)) {
-        c.igBulletText(
-            "Average :  %.3f ms/frame (%.1f fps)",
-            demo.gctx.stats.average_cpu_time,
-            demo.gctx.stats.fps,
+    if (zgui.begin("Demo Settings", null, .{ .no_move = true, .no_resize = true })) {
+        zgui.bulletText(
+            "Average :  {d:.3} ms/frame ({d:.1} fps)",
+            .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
-        c.igBulletText("Right Mouse Button + drag :  rotate camera");
-        c.igBulletText("W, A, S, D :  move camera");
-        c.igBulletText(
-            "CPU is ahead of GPU by :  %d frame(s)",
-            demo.gctx.stats.cpu_frame_number - demo.gctx.stats.gpu_frame_number,
-        );
+        zgui.bulletText("Right Mouse Button + drag :  rotate camera", .{});
+        zgui.bulletText("W, A, S, D :  move camera", .{});
     }
-    c.igEnd();
+    zgui.end();
 
     const window = demo.gctx.window;
 
