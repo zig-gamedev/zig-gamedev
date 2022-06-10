@@ -57,7 +57,7 @@ const mesh_index_compound1: u32 = 4;
 
 var shape_cube: *const zbt.Shape = undefined;
 var shape_sphere: *const zbt.Shape = undefined;
-var shape_cylinder: *const zbt.Shape = undefined;
+var shape_thin_cylinder: *const zbt.Shape = undefined;
 var shape_compound0: *const zbt.Shape = undefined;
 var shape_compound1: *const zbt.Shape = undefined;
 var shape_world: *const zbt.Shape = undefined;
@@ -273,7 +273,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
     shape_cube.deinit();
     shape_sphere.deinit();
-    shape_cylinder.deinit();
+    shape_thin_cylinder.deinit();
     shape_compound0.deinit();
     shape_compound1.deinit();
     shape_world.deinit();
@@ -608,7 +608,11 @@ fn setupScene0(
         createEntity(world, body, .{ 0.8, 0.0, 0.9, 0.25 }, entities);
     }
     {
-        const body = zbt.Body.init(2.5, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 10.0)), shape_cylinder);
+        const cylinder = zbt.CylinderShape.init(&.{ 1.0, 1.0, 1.0 }, .y);
+        cylinder.setUserIndex(0, @intCast(i32, mesh_index_cylinder));
+        shapes.append(cylinder.asShape()) catch unreachable;
+
+        const body = zbt.Body.init(2.5, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 10.0)), cylinder.asShape());
         createEntity(world, body, .{ 1.0, 0.0, 0.0, 0.15 }, entities);
     }
     {
@@ -718,7 +722,7 @@ fn createEntity(
             @ptrCast(*const zbt.CylinderShape, shape).getHalfExtentsWithMargin(&half_extents);
             body.setCcdSweptSphereRadius(math.min3(half_extents[0], half_extents[1], half_extents[2]));
             body.setCcdMotionThreshold(1e-6);
-            break :mesh_size [3]f32{ 1.0, 1.0, 1.0 };
+            break :mesh_size half_extents;
         },
         else => mesh_size: {
             body.setCcdSweptSphereRadius(0.5);
@@ -800,21 +804,20 @@ fn initMeshes(
     {
         var cylinder = zmesh.Shape.initCylinder(8, 6);
         defer cylinder.deinit();
-        cylinder.scale(0.5, 0.5, 4.0);
         cylinder.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
-        cylinder.translate(0.0, 2.0, 0.0);
+        cylinder.scale(1.0, 2.0, 1.0);
+        cylinder.translate(0.0, 1.0, 0.0);
 
         // Top cap.
         var disk0 = zmesh.Shape.initParametricDisk(8, 2);
         defer disk0.deinit();
         disk0.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
-        disk0.scale(0.5, 1.0, 0.5);
-        disk0.translate(0.0, 2.0, 0.0);
+        disk0.translate(0.0, 1.0, 0.0);
 
         // Bottom cap.
         var disk1 = disk0.clone();
         defer disk1.deinit();
-        disk1.translate(0.0, -4.0, 0.0);
+        disk1.translate(0.0, -2.0, 0.0);
 
         cylinder.merge(disk0);
         cylinder.merge(disk1);
@@ -824,8 +827,8 @@ fn initMeshes(
         const mesh_index = try appendMesh(cylinder, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_index_cylinder);
 
-        shape_cylinder = zbt.CylinderShape.init(&.{ 0.5, 2.0, 0.5 }, .y).asShape();
-        shape_cylinder.setUserIndex(0, @intCast(i32, mesh_index));
+        shape_thin_cylinder = zbt.CylinderShape.init(&.{ 0.25, 2.0, 0.25 }, .y).asShape();
+        shape_thin_cylinder.setUserIndex(0, @intCast(i32, mesh_index));
     }
 
     // Compound0 mesh.
@@ -882,7 +885,7 @@ fn initMeshes(
 
         var cylinder = zmesh.Shape.initCylinder(10, 6);
         defer cylinder.deinit();
-        cylinder.scale(0.5, 0.5, 4.0);
+        cylinder.scale(0.25, 0.25, 4.0);
         cylinder.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
         cylinder.translate(0.0, 3.5, 0.0);
         cylinder.unweld();
@@ -897,7 +900,7 @@ fn initMeshes(
         const compound = zbt.CompoundShape.init(.{});
         compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 0.0, 0.0)), shape_cube);
         compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 4.0, 0.0)), shape_sphere);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.5, 0.0)), shape_cylinder);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.5, 0.0)), shape_thin_cylinder);
         shape_compound1 = compound.asShape();
         shape_compound1.setUserIndex(0, @intCast(i32, mesh_index_compound1));
     }
