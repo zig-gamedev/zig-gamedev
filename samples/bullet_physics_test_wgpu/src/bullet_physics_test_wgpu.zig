@@ -51,11 +51,15 @@ const Camera = struct {
 
 const mesh_index_cube: u32 = 0;
 const mesh_index_sphere: u32 = 1;
-const mesh_index_compound0: u32 = 2;
+const mesh_index_cylinder: u32 = 2;
+const mesh_index_compound0: u32 = 3;
+const mesh_index_compound1: u32 = 4;
 
 var shape_cube: *const zbt.Shape = undefined;
 var shape_sphere: *const zbt.Shape = undefined;
+var shape_cylinder: *const zbt.Shape = undefined;
 var shape_compound0: *const zbt.Shape = undefined;
+var shape_compound1: *const zbt.Shape = undefined;
 var shape_world: *const zbt.Shape = undefined;
 
 const default_linear_damping: f32 = 0.1;
@@ -269,7 +273,9 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
     shape_cube.deinit();
     shape_sphere.deinit();
+    shape_cylinder.deinit();
     shape_compound0.deinit();
+    shape_compound1.deinit();
     shape_world.deinit();
     demo.physics.shapes.deinit();
     demo.physics.debug.deinit();
@@ -330,7 +336,7 @@ fn update(demo: *DemoState) void {
         }
         // Debug draw mode.
         {
-            var is_enabled: bool = demo.physics.world.debugGetMode().draw_wireframe;
+            var is_enabled = demo.physics.world.debugGetMode().draw_wireframe;
             _ = zgui.checkbox("Debug draw enabled", &is_enabled);
             if (is_enabled) {
                 demo.physics.world.debugSetMode(.{ .draw_wireframe = true, .draw_aabb = true });
@@ -594,12 +600,20 @@ fn setupScene0(
     const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
     {
-        const box_body = zbt.Body.init(25.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)), shape_cube);
-        createEntity(world, box_body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
+        const body = zbt.Body.init(25.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)), shape_cube);
+        createEntity(world, body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
     }
     {
-        const box_body = zbt.Body.init(50.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 10.0)), shape_compound0);
-        createEntity(world, box_body, .{ 0.8, 0.0, 0.9, 0.25 }, entities);
+        const body = zbt.Body.init(50.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 10.0)), shape_compound0);
+        createEntity(world, body, .{ 0.8, 0.0, 0.9, 0.25 }, entities);
+    }
+    {
+        const body = zbt.Body.init(2.5, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 10.0)), shape_cylinder);
+        createEntity(world, body, .{ 1.0, 0.0, 0.0, 0.15 }, entities);
+    }
+    {
+        const body = zbt.Body.init(40.0, &zm.mat43ToArr(zm.translation(5.0, 5.0, 10.0)), shape_compound1);
+        createEntity(world, body, .{ 0.05, 0.1, 0.8, 0.5 }, entities);
     }
     {
         const box = zbt.BoxShape.init(&.{ 0.5, 1.0, 2.0 });
@@ -757,7 +771,7 @@ fn initMeshes(
         shape_cube.setUserIndex(0, @intCast(i32, mesh_index));
     }
 
-    // Parametric sphere.
+    // Parametric sphere mesh.
     {
         var mesh = zmesh.Shape.initParametricSphere(8, 8);
         defer mesh.deinit();
@@ -769,6 +783,38 @@ fn initMeshes(
 
         shape_sphere = zbt.SphereShape.init(1.0).asShape();
         shape_sphere.setUserIndex(0, @intCast(i32, mesh_index));
+    }
+
+    // Cylinder mesh.
+    {
+        var cylinder = zmesh.Shape.initCylinder(8, 6);
+        defer cylinder.deinit();
+        cylinder.scale(0.5, 0.5, 4.0);
+        cylinder.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
+        cylinder.translate(0.0, 2.0, 0.0);
+
+        // Top cap.
+        var disk0 = zmesh.Shape.initParametricDisk(8, 2);
+        defer disk0.deinit();
+        disk0.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
+        disk0.scale(0.5, 1.0, 0.5);
+        disk0.translate(0.0, 2.0, 0.0);
+
+        // Bottom cap.
+        var disk1 = disk0.clone();
+        defer disk1.deinit();
+        disk1.translate(0.0, -4.0, 0.0);
+
+        cylinder.merge(disk0);
+        cylinder.merge(disk1);
+        cylinder.unweld();
+        cylinder.computeNormals();
+
+        const mesh_index = try appendMesh(cylinder, all_meshes, all_indices, all_positions, all_normals);
+        assert(mesh_index == mesh_index_cylinder);
+
+        shape_cylinder = zbt.CylinderShape.init(&.{ 0.5, 2.0, 0.5 }, .y).asShape();
+        shape_cylinder.setUserIndex(0, @intCast(i32, mesh_index));
     }
 
     // Compound0 mesh.
@@ -806,6 +852,43 @@ fn initMeshes(
         compound.addChild(&zm.mat43ToArr(zm.translation(0.0, -2.0, 0.0)), shape_cube);
         shape_compound0 = compound.asShape();
         shape_compound0.setUserIndex(0, @intCast(i32, mesh_index_compound0));
+    }
+
+    // Compound1 mesh.
+    {
+        var cube = zmesh.Shape.initCube();
+        defer cube.deinit();
+        cube.translate(-0.5, -0.5, -0.5);
+        cube.scale(2.0, 2.0, 2.0);
+        cube.unweld();
+        cube.computeNormals();
+
+        var sphere = zmesh.Shape.initParametricSphere(10, 10);
+        defer sphere.deinit();
+        sphere.unweld();
+        sphere.computeNormals();
+        sphere.translate(0.0, 4.0, 0.0);
+
+        var cylinder = zmesh.Shape.initCylinder(10, 6);
+        defer cylinder.deinit();
+        cylinder.scale(0.5, 0.5, 4.0);
+        cylinder.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
+        cylinder.translate(0.0, 3.5, 0.0);
+        cylinder.unweld();
+        cylinder.computeNormals();
+
+        cube.merge(cylinder);
+        cube.merge(sphere);
+
+        const mesh_index = try appendMesh(cube, all_meshes, all_indices, all_positions, all_normals);
+        assert(mesh_index == mesh_index_compound1);
+
+        const compound = zbt.CompoundShape.init(.{});
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 0.0, 0.0)), shape_cube);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 4.0, 0.0)), shape_sphere);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.5, 0.0)), shape_cylinder);
+        shape_compound1 = compound.asShape();
+        shape_compound1.setUserIndex(0, @intCast(i32, mesh_index_compound1));
     }
 
     // World mesh.
