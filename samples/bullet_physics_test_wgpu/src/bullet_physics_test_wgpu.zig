@@ -713,7 +713,18 @@ fn createEntity(
             body.setCcdMotionThreshold(1e-6);
             break :mesh_size [3]f32{ r, r, r };
         },
-        else => [3]f32{ 1.0, 1.0, 1.0 },
+        .cylinder => mesh_size: {
+            var half_extents: [3]f32 = undefined;
+            @ptrCast(*const zbt.CylinderShape, shape).getHalfExtentsWithMargin(&half_extents);
+            body.setCcdSweptSphereRadius(math.min3(half_extents[0], half_extents[1], half_extents[2]));
+            body.setCcdMotionThreshold(1e-6);
+            break :mesh_size [3]f32{ 1.0, 1.0, 1.0 };
+        },
+        else => mesh_size: {
+            body.setCcdSweptSphereRadius(0.5);
+            body.setCcdMotionThreshold(1e-6);
+            break :mesh_size [3]f32{ 1.0, 1.0, 1.0 };
+        },
     };
     const entity_index = @intCast(i32, entities.items.len);
     entities.append(.{
