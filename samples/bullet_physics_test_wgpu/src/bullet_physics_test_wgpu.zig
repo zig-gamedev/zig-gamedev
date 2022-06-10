@@ -613,11 +613,11 @@ fn setupScene0(
         createEntity(world, body, .{ 0.8, 0.0, 0.9, 0.25 }, entities);
     }
     {
-        const cylinder = zbt.CylinderShape.init(&.{ 1.0, 1.0, 1.0 }, .y);
-        cylinder.setUserIndex(0, @intCast(i32, mesh_index_cylinder));
-        scene_shapes.append(cylinder.asShape()) catch unreachable;
-
-        const body = zbt.Body.init(2.5, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 10.0)), cylinder.asShape());
+        const body = zbt.Body.init(
+            2.5,
+            &zm.mat43ToArr(zm.translation(-5.0, 5.0, 10.0)),
+            common_shapes.items[mesh_index_cylinder],
+        );
         createEntity(world, body, .{ 1.0, 0.0, 0.0, 0.15 }, entities);
     }
     {
@@ -844,7 +844,7 @@ fn initMeshes(
         const mesh_index = try appendMesh(cylinder, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_index_cylinder);
 
-        shapes.items[mesh_index] = zbt.CylinderShape.init(&.{ 0.25, 2.0, 0.25 }, .y).asShape();
+        shapes.items[mesh_index] = zbt.CylinderShape.init(&.{ 1.0, 1.0, 1.0 }, .y).asShape();
         shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
     }
 
@@ -914,10 +914,13 @@ fn initMeshes(
         const mesh_index = try appendMesh(cube, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_index_compound1);
 
+        const cylinder_shape = zbt.CylinderShape.init(&.{ 0.25, 2.0, 0.25 }, .y).asShape();
+        try shapes.append(cylinder_shape);
+
         const compound = zbt.CompoundShape.init(.{});
         compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
         compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 4.0, 0.0)), shapes.items[mesh_index_sphere]);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.5, 0.0)), shapes.items[mesh_index_cylinder]);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.5, 0.0)), cylinder_shape);
         shapes.items[mesh_index] = compound.asShape();
         shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index_compound1));
     }
