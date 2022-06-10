@@ -149,6 +149,10 @@ pub fn radioButtonIntPtr(label: [:0]const u8, v: *i32, v_button: i32) bool {
     return zguiRadioButtonIntPtr(label.ptr, v, v_button);
 }
 
+pub fn checkbox(label: [:0]const u8, v: *bool) bool {
+    return zguiCheckbox(label.ptr, v);
+}
+
 pub const end = zguiEnd;
 pub const spacing = zguiSpacing;
 pub const newLine = zguiNewLine;
@@ -194,6 +198,7 @@ extern fn zguiSliderInt(
 ) bool;
 extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
 extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
+extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 
 extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) ?*const Context;
 extern fn zguiDestroyContext(ctx: ?*const Context) void;

@@ -51,6 +51,9 @@ ZGUI_API void zguiBulletText(const char* fmt, ...) {
 ZGUI_API bool zguiRadioButtonIntPtr(const char* label, int* v, int v_button) {
     return ImGui::RadioButton(label, v, v_button);
 }
+ZGUI_API bool zguiCheckbox(const char* label, bool* v) {
+    return ImGui::Checkbox(label, v);
+}
 
 ZGUI_API ImGuiContext* zguiCreateContext(ImFontAtlas* shared_font_atlas) {
     return ImGui::CreateContext(shared_font_atlas);

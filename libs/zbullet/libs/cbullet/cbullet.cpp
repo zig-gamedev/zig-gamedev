@@ -346,6 +346,13 @@ void cbtWorldDebugSetMode(CbtWorldHandle world_handle, int mode) {
     }
 }
 
+int cbtWorldDebugGetMode(CbtWorldHandle world_handle) {
+    assert(world_handle);
+    auto world_data = (WorldData*)world_handle;
+    assert(world_data->debug != nullptr);
+    return world_data->debug->mode;
+}
+
 void cbtWorldDebugDrawAll(CbtWorldHandle world_handle) {
     assert(world_handle);
     auto world = ((WorldData*)world_handle)->world;

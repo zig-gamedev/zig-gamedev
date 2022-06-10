@@ -328,6 +328,16 @@ fn update(demo: *DemoState) void {
                 demo.physics.world.setGravity(&gravity);
             }
         }
+        // Debug draw mode.
+        {
+            var is_enabled: bool = demo.physics.world.debugGetMode().draw_wireframe;
+            _ = zgui.checkbox("Debug draw enabled", &is_enabled);
+            if (is_enabled) {
+                demo.physics.world.debugSetMode(.{ .draw_wireframe = true, .draw_aabb = true });
+            } else {
+                demo.physics.world.debugSetMode(zbt.DebugMode.user_only);
+            }
+        }
     }
     zgui.end();
 
@@ -761,7 +771,7 @@ fn initMeshes(
         shape_sphere.setUserIndex(0, @intCast(i32, mesh_index));
     }
 
-    // Compound mesh.
+    // Compound0 mesh.
     {
         var cube0 = zmesh.Shape.initCube();
         defer cube0.deinit();
@@ -975,7 +985,6 @@ pub fn main() !void {
     };
 
     const window = try glfw.Window.create(1600, 1000, window_title, null, null, .{
-        .maximized = true,
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
     });

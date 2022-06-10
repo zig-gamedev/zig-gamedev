@@ -187,6 +187,11 @@ pub const World = opaque {
     }
     extern fn cbtWorldDebugSetMode(world: *const World, mode: c_int) void;
 
+    pub fn debugGetMode(world: *const World) DebugMode {
+        return @bitCast(DebugMode, cbtWorldDebugGetMode(world));
+    }
+    extern fn cbtWorldDebugGetMode(world: *const World) c_int;
+
     pub const debugDrawAll = cbtWorldDebugDrawAll;
     extern fn cbtWorldDebugDrawAll(world: *const World) void;
 
