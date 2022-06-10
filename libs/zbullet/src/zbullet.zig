@@ -421,22 +421,13 @@ pub const BoxShape = opaque {
     }
 
     pub const create = cbtShapeBoxCreate;
-    extern fn cbtShapeBoxCreate(
-        box: *const BoxShape,
-        half_extents: *const [3]f32,
-    ) void;
+    extern fn cbtShapeBoxCreate(box: *const BoxShape, half_extents: *const [3]f32) void;
 
     pub const getHalfExtentsWithoutMargin = cbtShapeBoxGetHalfExtentsWithoutMargin;
-    extern fn cbtShapeBoxGetHalfExtentsWithoutMargin(
-        box: *const BoxShape,
-        half_extents: *[3]f32,
-    ) void;
+    extern fn cbtShapeBoxGetHalfExtentsWithoutMargin(box: *const BoxShape, half_extents: *[3]f32) void;
 
     pub const getHalfExtentsWithMargin = cbtShapeBoxGetHalfExtentsWithMargin;
-    extern fn cbtShapeBoxGetHalfExtentsWithMargin(
-        box: *const BoxShape,
-        half_extents: *[3]f32,
-    ) void;
+    extern fn cbtShapeBoxGetHalfExtentsWithMargin(box: *const BoxShape, half_extents: *[3]f32) void;
 };
 
 pub const SphereShape = opaque {
@@ -459,10 +450,7 @@ pub const SphereShape = opaque {
     extern fn cbtShapeSphereGetRadius(sphere: *const SphereShape) f32;
 
     pub const setUnscaledRadius = cbtShapeSphereSetUnscaledRadius;
-    extern fn cbtShapeSphereSetUnscaledRadius(
-        sphere: *const SphereShape,
-        radius: f32,
-    ) void;
+    extern fn cbtShapeSphereSetUnscaledRadius(sphere: *const SphereShape, radius: f32) void;
 };
 
 pub const CapsuleShape = opaque {
@@ -519,8 +507,7 @@ pub const CylinderShape = opaque {
         upaxis: Axis,
     ) void;
 
-    pub const getHalfExtentsWithoutMargin =
-        cbtShapeCylinderGetHalfExtentsWithoutMargin;
+    pub const getHalfExtentsWithoutMargin = cbtShapeCylinderGetHalfExtentsWithoutMargin;
     extern fn cbtShapeCylinderGetHalfExtentsWithoutMargin(
         cylinder: *const CylinderShape,
         half_extents: *[3]f32,
@@ -546,10 +533,7 @@ pub const CompoundShape = opaque {
         },
     ) *const CompoundShape {
         const cshape = allocate();
-        cshape.create(
-            params.enable_dynamic_aabb_tree,
-            params.initial_child_capacity,
-        );
+        cshape.create(params.enable_dynamic_aabb_tree, params.initial_child_capacity);
         return cshape;
     }
 
@@ -572,25 +556,16 @@ pub const CompoundShape = opaque {
     ) void;
 
     pub const removeChild = cbtShapeCompoundRemoveChild;
-    extern fn cbtShapeCompoundRemoveChild(
-        cshape: *const CompoundShape,
-        child_shape: *const Shape,
-    ) void;
+    extern fn cbtShapeCompoundRemoveChild(cshape: *const CompoundShape, child_shape: *const Shape) void;
 
     pub const removeChildByIndex = cbtShapeCompoundRemoveChildByIndex;
-    extern fn cbtShapeCompoundRemoveChildByIndex(
-        cshape: *const CompoundShape,
-        index: i32,
-    ) void;
+    extern fn cbtShapeCompoundRemoveChildByIndex(cshape: *const CompoundShape, index: i32) void;
 
     pub const getNumChilds = cbtShapeCompoundGetNumChilds;
     extern fn cbtShapeCompoundGetNumChilds(cshape: *const CompoundShape) i32;
 
     pub const getChild = cbtShapeCompoundGetChild;
-    extern fn cbtShapeCompoundGetChild(
-        cshape: *const CompoundShape,
-        index: i32,
-    ) *const Shape;
+    extern fn cbtShapeCompoundGetChild(cshape: *const CompoundShape, index: i32) *const Shape;
 
     pub const getChildTransform = cbtShapeCompoundGetChildTransform;
     extern fn cbtShapeCompoundGetChildTransform(
@@ -859,10 +834,7 @@ pub const Point2PointConstraint = opaque {
     usingnamespace ConstraintFunctions(@This());
 
     pub fn allocate() *const Point2PointConstraint {
-        return @ptrCast(
-            *const Point2PointConstraint,
-            Constraint.allocate(.point2point),
-        );
+        return @ptrCast(*const Point2PointConstraint, Constraint.allocate(.point2point));
     }
 
     pub const create1 = cbtConPoint2PointCreate1;
@@ -882,46 +854,25 @@ pub const Point2PointConstraint = opaque {
     ) void;
 
     pub const setPivotA = cbtConPoint2PointSetPivotA;
-    extern fn cbtConPoint2PointSetPivotA(
-        con: *const Point2PointConstraint,
-        pivot: *const [3]f32,
-    ) void;
+    extern fn cbtConPoint2PointSetPivotA(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
 
     pub const setPivotB = cbtConPoint2PointSetPivotB;
-    extern fn cbtConPoint2PointSetPivotB(
-        con: *const Point2PointConstraint,
-        pivot: *const [3]f32,
-    ) void;
+    extern fn cbtConPoint2PointSetPivotB(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
 
     pub const getPivotA = cbtConPoint2PointGetPivotA;
-    extern fn cbtConPoint2PointGetPivotA(
-        con: *const Point2PointConstraint,
-        pivot: *[3]f32,
-    ) void;
+    extern fn cbtConPoint2PointGetPivotA(con: *const Point2PointConstraint, pivot: *[3]f32) void;
 
     pub const getPivotB = cbtConPoint2PointGetPivotB;
-    extern fn cbtConPoint2PointGetPivotB(
-        con: *const Point2PointConstraint,
-        pivot: *[3]f32,
-    ) void;
+    extern fn cbtConPoint2PointGetPivotB(con: *const Point2PointConstraint, pivot: *[3]f32) void;
 
     pub const setTau = cbtConPoint2PointSetTau;
-    extern fn cbtConPoint2PointSetTau(
-        con: *const Point2PointConstraint,
-        tau: f32,
-    ) void;
+    extern fn cbtConPoint2PointSetTau(con: *const Point2PointConstraint, tau: f32) void;
 
     pub const setDamping = cbtConPoint2PointSetDamping;
-    extern fn cbtConPoint2PointSetDamping(
-        con: *const Point2PointConstraint,
-        damping: f32,
-    ) void;
+    extern fn cbtConPoint2PointSetDamping(con: *const Point2PointConstraint, damping: f32) void;
 
     pub const setImpulseClamp = cbtConPoint2PointSetImpulseClamp;
-    extern fn cbtConPoint2PointSetImpulseClamp(
-        con: *const Point2PointConstraint,
-        impulse_clamp: f32,
-    ) void;
+    extern fn cbtConPoint2PointSetImpulseClamp(con: *const Point2PointConstraint, impulse_clamp: f32) void;
 };
 
 pub const DebugMode = packed struct {
