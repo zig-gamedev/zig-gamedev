@@ -21,9 +21,9 @@ zig build physically_based_rendering_wgpu-run
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
 * [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - loading, generating, processing and optimizing triangle meshes
 * [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
-* [znetwork](https://github.com/michal-z/zig-gamedev/blob/main/libs/znetwork) - Zig bindings for [ENet](https://github.com/lsalzman/enet)
 * [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 * [zpool](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpool) - generic pool & handle implementation
+* [znetwork](https://github.com/michal-z/zig-gamedev/blob/main/libs/znetwork) - Zig bindings for [ENet](https://github.com/lsalzman/enet) (experimental)
 
 #### Windows libraries:
 * [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API
