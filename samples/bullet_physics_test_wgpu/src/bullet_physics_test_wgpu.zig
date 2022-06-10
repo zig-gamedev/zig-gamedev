@@ -54,13 +54,8 @@ const mesh_index_sphere: u32 = 1;
 const mesh_index_cylinder: u32 = 2;
 const mesh_index_compound0: u32 = 3;
 const mesh_index_compound1: u32 = 4;
-
-var shape_cube: *const zbt.Shape = undefined;
-var shape_sphere: *const zbt.Shape = undefined;
-var shape_thin_cylinder: *const zbt.Shape = undefined;
-var shape_compound0: *const zbt.Shape = undefined;
-var shape_compound1: *const zbt.Shape = undefined;
-var shape_world: *const zbt.Shape = undefined;
+const mesh_index_world: u32 = 5;
+const mesh_count: u32 = 6;
 
 const default_linear_damping: f32 = 0.1;
 const default_angular_damping: f32 = 0.1;
@@ -125,11 +120,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     zmesh.init(arena);
     defer zmesh.deinit();
 
+    var physics_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var meshes = std.ArrayList(Mesh).init(allocator);
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
     var normals = std.ArrayList([3]f32).init(arena);
-    try initMeshes(arena, &meshes, &indices, &positions, &normals);
+    try initMeshes(arena, &physics_shapes, &meshes, &indices, &positions, &normals);
 
     const total_num_vertices = @intCast(u32, positions.items.len);
     const total_num_indices = @intCast(u32, indices.items.len);
@@ -189,7 +185,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
     physics_world.debugSetMode(zbt.DebugMode.user_only);
 
-    var physics_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
     var camera: Camera = undefined;
     scene_setup_table[initial_scene](physics_world, &physics_shapes, &entities, &camera);
@@ -271,12 +266,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     }
     demo.pick.p2p.deallocate();
     cleanupScene(demo.physics.world, &demo.physics.shapes, &demo.entities);
-    shape_cube.deinit();
-    shape_sphere.deinit();
-    shape_thin_cylinder.deinit();
-    shape_compound0.deinit();
-    shape_compound1.deinit();
-    shape_world.deinit();
+    for (demo.physics.shapes.items) |shape| shape.deinit();
     demo.physics.shapes.deinit();
     demo.physics.debug.deinit();
     allocator.destroy(demo.physics.debug);
@@ -408,7 +398,7 @@ fn update(demo: *DemoState) void {
             const body = zbt.Body.init(
                 1.0,
                 &zm.mat43ToArr(transform),
-                shape_sphere,
+                demo.physics.shapes.items[mesh_index_sphere],
             );
             body.applyCentralImpulse(zm.arr3Ptr(&impulse));
 
@@ -595,16 +585,24 @@ fn setupScene0(
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void {
-    assert(shapes.items.len == 0 and entities.items.len == 0);
+    assert(entities.items.len == 0);
 
-    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
+    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shapes.items[mesh_index_world]);
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
     {
-        const body = zbt.Body.init(25.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)), shape_cube);
+        const body = zbt.Body.init(
+            25.0,
+            &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)),
+            shapes.items[mesh_index_cube],
+        );
         createEntity(world, body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
     }
     {
-        const body = zbt.Body.init(50.0, &zm.mat43ToArr(zm.translation(0.0, 5.0, 10.0)), shape_compound0);
+        const body = zbt.Body.init(
+            50.0,
+            &zm.mat43ToArr(zm.translation(0.0, 5.0, 10.0)),
+            shapes.items[mesh_index_compound0],
+        );
         createEntity(world, body, .{ 0.8, 0.0, 0.9, 0.25 }, entities);
     }
     {
@@ -616,7 +614,11 @@ fn setupScene0(
         createEntity(world, body, .{ 1.0, 0.0, 0.0, 0.15 }, entities);
     }
     {
-        const body = zbt.Body.init(40.0, &zm.mat43ToArr(zm.translation(5.0, 5.0, 10.0)), shape_compound1);
+        const body = zbt.Body.init(
+            40.0,
+            &zm.mat43ToArr(zm.translation(5.0, 5.0, 10.0)),
+            shapes.items[mesh_index_compound1],
+        );
         createEntity(world, body, .{ 0.05, 0.1, 0.8, 0.5 }, entities);
     }
     {
@@ -640,9 +642,9 @@ fn setupScene1(
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void {
-    assert(shapes.items.len == 0 and entities.items.len == 0);
+    assert(entities.items.len == 0);
 
-    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shape_world);
+    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), shapes.items[mesh_index_world]);
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
 
     const num_stacks = 32;
@@ -659,7 +661,7 @@ fn setupScene1(
             const box_body = zbt.Body.init(
                 2.5,
                 &zm.mat43ToArr(zm.translation(x, 5.0 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
-                shape_cube,
+                shapes.items[mesh_index_cube],
             );
             createEntity(
                 world,
@@ -687,9 +689,13 @@ fn cleanupScene(
         world.removeBody(body);
         body.deinit();
     }
-    for (shapes.items) |shape| shape.deinit();
+    for (shapes.items) |shape, shape_index| {
+        if (shape_index >= mesh_count) {
+            shape.deinit();
+        }
+    }
 
-    shapes.clearRetainingCapacity();
+    shapes.resize(mesh_count) catch unreachable;
     entities.clearRetainingCapacity();
 
     world.setGravity(&.{ 0.0, -10.0, 0.0 });
@@ -765,11 +771,15 @@ fn appendMesh(
 
 fn initMeshes(
     arena: std.mem.Allocator,
+    shapes: *std.ArrayList(*const zbt.Shape),
     all_meshes: *std.ArrayList(Mesh),
     all_indices: *std.ArrayList(u32),
     all_positions: *std.ArrayList([3]f32),
     all_normals: *std.ArrayList([3]f32),
 ) !void {
+    assert(shapes.items.len == 0);
+    try shapes.resize(mesh_count);
+
     // Cube mesh.
     {
         var mesh = zmesh.Shape.initCube();
@@ -782,8 +792,8 @@ fn initMeshes(
         const mesh_index = try appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_index_cube);
 
-        shape_cube = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 }).asShape();
-        shape_cube.setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index] = zbt.BoxShape.init(&.{ 1.0, 1.0, 1.0 }).asShape();
+        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
     }
 
     // Parametric sphere mesh.
@@ -796,8 +806,8 @@ fn initMeshes(
         const mesh_index = try appendMesh(mesh, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_index_sphere);
 
-        shape_sphere = zbt.SphereShape.init(1.0).asShape();
-        shape_sphere.setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index] = zbt.SphereShape.init(1.0).asShape();
+        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
     }
 
     // Cylinder mesh.
@@ -827,8 +837,8 @@ fn initMeshes(
         const mesh_index = try appendMesh(cylinder, all_meshes, all_indices, all_positions, all_normals);
         assert(mesh_index == mesh_index_cylinder);
 
-        shape_thin_cylinder = zbt.CylinderShape.init(&.{ 0.25, 2.0, 0.25 }, .y).asShape();
-        shape_thin_cylinder.setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index] = zbt.CylinderShape.init(&.{ 0.25, 2.0, 0.25 }, .y).asShape();
+        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
     }
 
     // Compound0 mesh.
@@ -860,12 +870,12 @@ fn initMeshes(
         assert(mesh_index == mesh_index_compound0);
 
         const compound = zbt.CompoundShape.init(.{});
-        compound.addChild(&zm.mat43ToArr(zm.translation(2.0, 0.0, 0.0)), shape_cube);
-        compound.addChild(&zm.mat43ToArr(zm.translation(-2.0, 0.0, 0.0)), shape_cube);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.0, 0.0)), shape_cube);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, -2.0, 0.0)), shape_cube);
-        shape_compound0 = compound.asShape();
-        shape_compound0.setUserIndex(0, @intCast(i32, mesh_index_compound0));
+        compound.addChild(&zm.mat43ToArr(zm.translation(2.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.mat43ToArr(zm.translation(-2.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, -2.0, 0.0)), shapes.items[mesh_index_cube]);
+        shapes.items[mesh_index] = compound.asShape();
+        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index_compound0));
     }
 
     // Compound1 mesh.
@@ -898,11 +908,11 @@ fn initMeshes(
         assert(mesh_index == mesh_index_compound1);
 
         const compound = zbt.CompoundShape.init(.{});
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 0.0, 0.0)), shape_cube);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 4.0, 0.0)), shape_sphere);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.5, 0.0)), shape_thin_cylinder);
-        shape_compound1 = compound.asShape();
-        shape_compound1.setUserIndex(0, @intCast(i32, mesh_index_compound1));
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 4.0, 0.0)), shapes.items[mesh_index_sphere]);
+        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.5, 0.0)), shapes.items[mesh_index_cylinder]);
+        shapes.items[mesh_index] = compound.asShape();
+        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index_compound1));
     }
 
     // World mesh.
@@ -947,8 +957,8 @@ fn initMeshes(
             @sizeOf([3]f32),
         );
         trimesh.finish();
-        shape_world = trimesh.asShape();
-        shape_world.setUserIndex(0, @intCast(i32, mesh_index));
+        shapes.items[mesh_index] = trimesh.asShape();
+        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
     }
 }
 
