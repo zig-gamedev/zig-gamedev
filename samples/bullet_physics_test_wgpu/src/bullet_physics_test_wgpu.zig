@@ -52,10 +52,11 @@ const Camera = struct {
 const mesh_index_cube: u32 = 0;
 const mesh_index_sphere: u32 = 1;
 const mesh_index_cylinder: u32 = 2;
-const mesh_index_compound0: u32 = 3;
-const mesh_index_compound1: u32 = 4;
-const mesh_index_world: u32 = 5;
-const mesh_count: u32 = 6;
+const mesh_index_capsule: u32 = 3;
+const mesh_index_compound0: u32 = 4;
+const mesh_index_compound1: u32 = 5;
+const mesh_index_world: u32 = 6;
+const mesh_count: u32 = 7;
 
 const default_linear_damping: f32 = 0.1;
 const default_angular_damping: f32 = 0.1;
@@ -614,11 +615,19 @@ fn setupScene0(
     }
     {
         const body = zbt.Body.init(
-            2.5,
+            10.0,
             &zm.mat43ToArr(zm.translation(-5.0, 5.0, 10.0)),
             common_shapes.items[mesh_index_cylinder],
         );
         createEntity(world, body, .{ 1.0, 0.0, 0.0, 0.15 }, entities);
+    }
+    {
+        const body = zbt.Body.init(
+            10.0,
+            &zm.mat43ToArr(zm.translation(-5.0, 8.0, 10.0)),
+            common_shapes.items[mesh_index_capsule],
+        );
+        createEntity(world, body, .{ 1.0, 0.5, 0.0, 0.5 }, entities);
     }
     {
         const body = zbt.Body.init(
@@ -635,6 +644,14 @@ fn setupScene0(
 
         const box_body = zbt.Body.init(15.0, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)), box.asShape());
         createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
+    }
+    {
+        const sphere = zbt.SphereShape.init(1.5);
+        sphere.setUserIndex(0, @intCast(i32, mesh_index_sphere));
+        scene_shapes.append(sphere.asShape()) catch unreachable;
+
+        const sphere_body = zbt.Body.init(10.0, &zm.mat43ToArr(zm.translation(-5.0, 10.0, 5.0)), sphere.asShape());
+        createEntity(world, sphere_body, .{ 0.0, 0.0, 1.0, 0.5 }, entities);
     }
     camera.* = .{
         .position = .{ 0.0, 3.0, -3.0 },
@@ -698,9 +715,7 @@ fn cleanupScene(
         world.removeBody(body);
         body.deinit();
     }
-    for (shapes.items) |shape| {
-        shape.deinit();
-    }
+    for (shapes.items) |shape| shape.deinit();
 
     shapes.clearRetainingCapacity();
     entities.clearRetainingCapacity();
@@ -719,28 +734,34 @@ fn createEntity(
     const mesh_size = switch (shape.getType()) {
         .box => mesh_size: {
             var half_extents: [3]f32 = undefined;
-            @ptrCast(*const zbt.BoxShape, shape).getHalfExtentsWithMargin(&half_extents);
+            shape.as(.box).getHalfExtentsWithMargin(&half_extents);
             body.setCcdSweptSphereRadius(math.min3(half_extents[0], half_extents[1], half_extents[2]));
             body.setCcdMotionThreshold(1e-6);
             break :mesh_size half_extents;
         },
         .sphere => mesh_size: {
-            const r = @ptrCast(*const zbt.SphereShape, shape).getRadius();
+            const r = shape.as(.sphere).getRadius();
             body.setCcdSweptSphereRadius(r);
             body.setCcdMotionThreshold(1e-6);
             break :mesh_size [3]f32{ r, r, r };
         },
         .cylinder => mesh_size: {
             var half_extents: [3]f32 = undefined;
-            @ptrCast(*const zbt.CylinderShape, shape).getHalfExtentsWithMargin(&half_extents);
+            shape.as(.cylinder).getHalfExtentsWithMargin(&half_extents);
             body.setCcdSweptSphereRadius(math.min3(half_extents[0], half_extents[1], half_extents[2]));
             body.setCcdMotionThreshold(1e-6);
             break :mesh_size half_extents;
         },
+        .capsule => mesh_size: {
+            const r = shape.as(.capsule).getRadius();
+            body.setCcdSweptSphereRadius(r);
+            body.setCcdMotionThreshold(1e-6);
+            break :mesh_size [3]f32{ 1.0, 1.0, 1.0 }; // No scaling support for this mesh.
+        },
         else => mesh_size: {
             body.setCcdSweptSphereRadius(0.5);
             body.setCcdMotionThreshold(1e-6);
-            break :mesh_size [3]f32{ 1.0, 1.0, 1.0 };
+            break :mesh_size [3]f32{ 1.0, 1.0, 1.0 }; // No scaling support for this mesh.
         },
     };
     const entity_index = @intCast(i32, entities.items.len);
@@ -819,25 +840,25 @@ fn initMeshes(
 
     // Cylinder mesh.
     {
-        var cylinder = zmesh.Shape.initCylinder(8, 6);
+        var cylinder = zmesh.Shape.initCylinder(10, 6);
         defer cylinder.deinit();
         cylinder.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
         cylinder.scale(1.0, 2.0, 1.0);
         cylinder.translate(0.0, 1.0, 0.0);
 
         // Top cap.
-        var disk0 = zmesh.Shape.initParametricDisk(8, 2);
-        defer disk0.deinit();
-        disk0.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
-        disk0.translate(0.0, 1.0, 0.0);
+        var top = zmesh.Shape.initParametricDisk(10, 2);
+        defer top.deinit();
+        top.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
+        top.translate(0.0, 1.0, 0.0);
 
         // Bottom cap.
-        var disk1 = disk0.clone();
-        defer disk1.deinit();
-        disk1.translate(0.0, -2.0, 0.0);
+        var bottom = top.clone();
+        defer bottom.deinit();
+        bottom.translate(0.0, -2.0, 0.0);
 
-        cylinder.merge(disk0);
-        cylinder.merge(disk1);
+        cylinder.merge(top);
+        cylinder.merge(bottom);
         cylinder.unweld();
         cylinder.computeNormals();
 
@@ -845,6 +866,35 @@ fn initMeshes(
         assert(mesh_index == mesh_index_cylinder);
 
         shapes.items[mesh_index] = zbt.CylinderShape.init(&.{ 1.0, 1.0, 1.0 }, .y).asShape();
+        shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
+    }
+
+    // Capsule mesh.
+    {
+        var cylinder = zmesh.Shape.initCylinder(12, 6);
+        defer cylinder.deinit();
+        cylinder.rotate(math.pi * 0.5, 1.0, 0.0, 0.0);
+        cylinder.translate(0.0, 0.5, 0.0);
+
+        // Top hemisphere.
+        var top = zmesh.Shape.initHemisphere(12, 6);
+        defer top.deinit();
+        top.translate(0.0, 0.5, 0.0);
+
+        // Bottom hemisphere.
+        var bottom = top.clone();
+        defer bottom.deinit();
+        bottom.rotate(math.pi, 1.0, 0.0, 0.0);
+
+        cylinder.merge(top);
+        cylinder.merge(bottom);
+        cylinder.unweld();
+        cylinder.computeNormals();
+
+        const mesh_index = try appendMesh(cylinder, all_meshes, all_indices, all_positions, all_normals);
+        assert(mesh_index == mesh_index_capsule);
+
+        shapes.items[mesh_index] = zbt.CapsuleShape.init(1.0, 1.0, .y).asShape();
         shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index));
     }
 

@@ -104,8 +104,8 @@ pub const RayCastResult = extern struct {
 };
 
 pub const World = opaque {
-    pub fn init(params: struct {}) *const World {
-        _ = params;
+    pub fn init(args: struct {}) *const World {
+        _ = args;
         std.debug.assert(allocator != null and allocations != null);
         return cbtWorldCreate();
     }
@@ -124,15 +124,15 @@ pub const World = opaque {
     pub const getGravity = cbtWorldGetGravity;
     extern fn cbtWorldGetGravity(world: *const World, gravity: *[3]f32) void;
 
-    pub fn stepSimulation(world: *const World, time_step: f32, params: struct {
+    pub fn stepSimulation(world: *const World, time_step: f32, args: struct {
         max_sub_steps: u32 = 1,
         fixed_time_step: f32 = 1.0 / 60.0,
     }) u32 {
         return cbtWorldStepSimulation(
             world,
             time_step,
-            params.max_sub_steps,
-            params.fixed_time_step,
+            args.max_sub_steps,
+            args.fixed_time_step,
         );
     }
     extern fn cbtWorldStepSimulation(
@@ -162,25 +162,16 @@ pub const World = opaque {
     ) void;
 
     pub const removeConstraint = cbtWorldRemoveConstraint;
-    extern fn cbtWorldRemoveConstraint(
-        world: *const World,
-        con: *const Constraint,
-    ) void;
+    extern fn cbtWorldRemoveConstraint(world: *const World, con: *const Constraint) void;
 
     pub const getConstraint = cbtWorldGetConstraint;
-    extern fn cbtWorldGetConstraint(
-        world: *const World,
-        index: i32,
-    ) *const Constraint;
+    extern fn cbtWorldGetConstraint(world: *const World, index: i32) *const Constraint;
 
     pub const getNumConstraints = cbtWorldGetNumConstraints;
     extern fn cbtWorldGetNumConstraints(world: *const World) i32;
 
     pub const debugSetDrawer = cbtWorldDebugSetDrawer;
-    extern fn cbtWorldDebugSetDrawer(
-        world: *const World,
-        debug: *const DebugDraw,
-    ) void;
+    extern fn cbtWorldDebugSetDrawer(world: *const World, debug: *const DebugDraw) void;
 
     pub fn debugSetMode(world: *const World, mode: DebugMode) void {
         cbtWorldDebugSetMode(world, @bitCast(c_int, mode));
@@ -339,6 +330,25 @@ pub const Shape = opaque {
 
     pub const getUserIndex = cbtShapeGetUserIndex;
     extern fn cbtShapeGetUserIndex(shape: *const Shape, slot: u32) i32;
+
+    pub fn as(shape: *const Shape, comptime stype: ShapeType) switch (stype) {
+        .box => *const BoxShape,
+        .sphere => *const SphereShape,
+        .cylinder => *const CylinderShape,
+        .capsule => *const CapsuleShape,
+        .compound => *const CompoundShape,
+        .trimesh => *const TriangleMeshShape,
+    } {
+        std.debug.assert(shape.getType() == stype);
+        return switch (stype) {
+            .box => @ptrCast(*const BoxShape, shape),
+            .sphere => @ptrCast(*const SphereShape, shape),
+            .cylinder => @ptrCast(*const CylinderShape, shape),
+            .capsule => @ptrCast(*const CapsuleShape, shape),
+            .compound => @ptrCast(*const CompoundShape, shape),
+            .trimesh => @ptrCast(*const TriangleMeshShape, shape),
+        };
+    }
 };
 
 fn ShapeFunctions(comptime T: type) type {
@@ -346,6 +356,7 @@ fn ShapeFunctions(comptime T: type) type {
         pub fn asShape(shape: *const T) *const Shape {
             return @ptrCast(*const Shape, shape);
         }
+
         pub fn deallocate(shape: *const T) void {
             shape.asShape().deallocate();
         }
@@ -385,11 +396,7 @@ fn ShapeFunctions(comptime T: type) type {
         pub fn isCompound(shape: *const T) bool {
             return shape.asShape().isCompound();
         }
-        pub fn calculateLocalInertia(
-            shape: *const Shape,
-            mass: f32,
-            inertia: *[3]f32,
-        ) void {
+        pub fn calculateLocalInertia(shape: *const Shape, mass: f32, inertia: *[3]f32) void {
             shape.asShape().calculateLocalInertia(shape, mass, inertia);
         }
         pub fn setUserPointer(shape: *const T, ptr: ?*anyopaque) void {
@@ -527,13 +534,13 @@ pub const CompoundShape = opaque {
     usingnamespace ShapeFunctions(@This());
 
     pub fn init(
-        params: struct {
+        args: struct {
             enable_dynamic_aabb_tree: bool = true,
             initial_child_capacity: u32 = 0,
         },
     ) *const CompoundShape {
         const cshape = allocate();
-        cshape.create(params.enable_dynamic_aabb_tree, params.initial_child_capacity);
+        cshape.create(args.enable_dynamic_aabb_tree, args.initial_child_capacity);
         return cshape;
     }
 
