@@ -681,7 +681,7 @@ fn setupScene1(
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
 
     const num_stacks = 32;
-    const num_cubes_per_stack = 10;
+    const num_cubes_per_stack = 12;
     const radius: f32 = 15.0;
 
     var j: u32 = 0;
@@ -765,9 +765,12 @@ fn createEntity(
             body.setCcdMotionThreshold(1e-6);
             break :mesh_size [3]f32{ 1.0, 1.0, 1.0 }; // No scaling support for this mesh.
         },
-        else => mesh_size: {
+        .compound => mesh_size: {
             body.setCcdSweptSphereRadius(0.5);
             body.setCcdMotionThreshold(1e-6);
+            break :mesh_size [3]f32{ 1.0, 1.0, 1.0 }; // No scaling support for this mesh.
+        },
+        else => mesh_size: {
             break :mesh_size [3]f32{ 1.0, 1.0, 1.0 }; // No scaling support for this mesh.
         },
     };
