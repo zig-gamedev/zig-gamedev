@@ -602,7 +602,11 @@ fn setupScene0(
 ) void {
     assert(entities.items.len == 0);
 
-    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), common_shapes.items[mesh_index_world]);
+    const world_body = zbt.Body.init(
+        0.0,
+        &zm.mat43ToArr(zm.identity()),
+        common_shapes.items[mesh_index_world],
+    );
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
     {
         const body = zbt.Body.init(
@@ -657,7 +661,11 @@ fn setupScene0(
         sphere.setUserIndex(0, @intCast(i32, mesh_index_sphere));
         scene_shapes.append(sphere.asShape()) catch unreachable;
 
-        const sphere_body = zbt.Body.init(10.0, &zm.mat43ToArr(zm.translation(-5.0, 10.0, 5.0)), sphere.asShape());
+        const sphere_body = zbt.Body.init(
+            10.0,
+            &zm.mat43ToArr(zm.translation(-5.0, 10.0, 5.0)),
+            sphere.asShape(),
+        );
         createEntity(world, sphere_body, .{ 0.0, 0.0, 1.0, 0.5 }, entities);
     }
     camera.* = .{
@@ -677,7 +685,11 @@ fn setupScene1(
     _ = scene_shapes;
     assert(entities.items.len == 0);
 
-    const world_body = zbt.Body.init(0.0, &zm.mat43ToArr(zm.identity()), common_shapes.items[mesh_index_world]);
+    const world_body = zbt.Body.init(
+        0.0,
+        &zm.mat43ToArr(zm.identity()),
+        common_shapes.items[mesh_index_world],
+    );
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
 
     const num_stacks = 32;
