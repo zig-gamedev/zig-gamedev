@@ -62,6 +62,7 @@ const default_linear_damping: f32 = 0.1;
 const default_angular_damping: f32 = 0.1;
 const safe_uniform_size = 256;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
+const ccd_motion_threshold: f32 = 1e-7;
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
@@ -575,7 +576,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 }
 
 const initial_scene = 0;
-const scene_setup_funcs: [2]fn (
+const scene_setup_funcs: [3]fn (
     world: *const zbt.World,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
@@ -584,10 +585,12 @@ const scene_setup_funcs: [2]fn (
 ) void = .{
     setupScene0,
     setupScene1,
+    setupScene2,
 };
 const scene_names = .{
     "Collision shapes",
     "Stacks of boxes",
+    "Pyramid and a bomb",
 };
 comptime {
     assert(scene_names.len == scene_setup_funcs.len);
@@ -711,6 +714,64 @@ fn setupScene1(
     };
 }
 
+fn setupScene2(
+    world: *const zbt.World,
+    common_shapes: std.ArrayList(*const zbt.Shape),
+    scene_shapes: *std.ArrayList(*const zbt.Shape),
+    entities: *std.ArrayList(Entity),
+    camera: *Camera,
+) void {
+    assert(entities.items.len == 0);
+
+    const world_body = zbt.Body.init(
+        0.0,
+        &zm.mat43ToArr(zm.identity()),
+        common_shapes.items[mesh_index_world],
+    );
+    createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
+
+    const bomb_shape = zbt.SphereShape.init(2.0);
+    bomb_shape.setUserIndex(0, @intCast(i32, mesh_index_sphere));
+    scene_shapes.append(bomb_shape.asShape()) catch unreachable;
+
+    const bomb_body = zbt.Body.init(
+        30.0,
+        &zm.mat43ToArr(zm.translation(0.0, 100.0, 0.0)),
+        bomb_shape.asShape(),
+    );
+    createEntity(world, bomb_body, .{ 1.0, 1.0, 1.0, 0.75 }, entities);
+    bomb_body.setCcdSweptSphereRadius(0.25);
+
+    var level: u32 = 0;
+    var y: f32 = 2.0;
+    while (y <= 12.0) : (y += 2.0) {
+        const bound: f32 = 14.0 - y;
+        var z: f32 = -bound;
+        level += 1;
+        while (z <= bound) : (z += 2.0) {
+            var x: f32 = -bound;
+            while (x <= bound) : (x += 2.0) {
+                const box_body = zbt.Body.init(
+                    0.5,
+                    &zm.mat43ToArr(zm.translation(x, y, z)),
+                    common_shapes.items[mesh_index_cube],
+                );
+                createEntity(
+                    world,
+                    box_body,
+                    if (level % 2 == 1) .{ 0.5, 0.0, 0.0, 0.5 } else .{ 0.7, 0.6, 0.0, 0.75 },
+                    entities,
+                );
+            }
+        }
+    }
+    camera.* = .{
+        .position = .{ 30.0, 30.0, -30.0 },
+        .pitch = math.pi * 0.2,
+        .yaw = -math.pi * 0.25,
+    };
+}
+
 fn cleanupScene(
     world: *const zbt.World,
     shapes: *std.ArrayList(*const zbt.Shape),
@@ -743,31 +804,31 @@ fn createEntity(
             var half_extents: [3]f32 = undefined;
             shape.as(.box).getHalfExtentsWithMargin(&half_extents);
             body.setCcdSweptSphereRadius(math.min3(half_extents[0], half_extents[1], half_extents[2]));
-            body.setCcdMotionThreshold(1e-6);
+            body.setCcdMotionThreshold(ccd_motion_threshold);
             break :mesh_size half_extents;
         },
         .sphere => mesh_size: {
             const r = shape.as(.sphere).getRadius();
             body.setCcdSweptSphereRadius(r);
-            body.setCcdMotionThreshold(1e-6);
+            body.setCcdMotionThreshold(ccd_motion_threshold);
             break :mesh_size [3]f32{ r, r, r };
         },
         .cylinder => mesh_size: {
             var half_extents: [3]f32 = undefined;
             shape.as(.cylinder).getHalfExtentsWithMargin(&half_extents);
             body.setCcdSweptSphereRadius(math.min3(half_extents[0], half_extents[1], half_extents[2]));
-            body.setCcdMotionThreshold(1e-6);
+            body.setCcdMotionThreshold(ccd_motion_threshold);
             break :mesh_size half_extents;
         },
         .capsule => mesh_size: {
             const r = shape.as(.capsule).getRadius();
             body.setCcdSweptSphereRadius(r);
-            body.setCcdMotionThreshold(1e-6);
+            body.setCcdMotionThreshold(ccd_motion_threshold);
             break :mesh_size [3]f32{ 1.0, 1.0, 1.0 }; // No scaling support for this mesh.
         },
         .compound => mesh_size: {
             body.setCcdSweptSphereRadius(0.5);
-            body.setCcdMotionThreshold(1e-6);
+            body.setCcdMotionThreshold(ccd_motion_threshold);
             break :mesh_size [3]f32{ 1.0, 1.0, 1.0 }; // No scaling support for this mesh.
         },
         else => mesh_size: {
