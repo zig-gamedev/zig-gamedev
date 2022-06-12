@@ -185,6 +185,8 @@
 // perspectiveFovRhGl(fovy: f32, aspect: f32, near: f32, far: f32) Mat
 // orthographicLh(w: f32, h: f32, near: f32, far: f32) Mat
 // orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat
+// orthographicOffCenterLh(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat
+// orthographicOffCenterRh(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat
 // determinant(m: Mat) F32x4
 // inverse(m: Mat) Mat
 // inverseDet(m: Mat, det: ?*F32x4) Mat
@@ -2304,6 +2306,7 @@ pub fn orthographicLh(w: f32, h: f32, near: f32, far: f32) Mat {
         f32x4(0.0, 0.0, -r * near, 1.0),
     };
 }
+
 pub fn orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat {
     assert(!math.approxEqAbs(f32, w, 0.0, 0.001));
     assert(!math.approxEqAbs(f32, h, 0.0, 0.001));
@@ -2315,6 +2318,32 @@ pub fn orthographicRh(w: f32, h: f32, near: f32, far: f32) Mat {
         f32x4(0.0, 2 / h, 0.0, 0.0),
         f32x4(0.0, 0.0, r, 0.0),
         f32x4(0.0, 0.0, r * near, 1.0),
+    };
+}
+
+pub fn orthographicOffCenterLh(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat {
+    assert(!math.approxEqAbs(f32, far, near, 0.001));
+
+    const r = 1.0 / (far - near);
+
+    return .{
+        f32x4(2 / (right - left), 0.0, 0.0, -(right + left) / (right - left)),
+        f32x4(0.0, 2 / (top - bottom), 0.0, -(top + bottom) / (top - bottom)),
+        f32x4(0.0, 0.0, r, -r * near),
+        f32x4(0.0, 0.0, 0.0, 1.0),
+    };
+}
+
+pub fn orthographicOffCenterRh(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat {
+    assert(!math.approxEqAbs(f32, far, near, 0.001));
+
+    const r = 1.0 / (near - far);
+
+    return .{
+        f32x4(2 / (right - left), 0.0, 0.0, -(right + left) / (right - left)),
+        f32x4(0.0, 2 / (top - bottom), 0.0, -(top + bottom) / (top - bottom)),
+        f32x4(0.0, 0.0, r, r * near),
+        f32x4(0.0, 0.0, 0.0, 1.0),
     };
 }
 
