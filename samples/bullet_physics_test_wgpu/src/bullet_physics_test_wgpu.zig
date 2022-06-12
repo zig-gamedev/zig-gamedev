@@ -63,7 +63,7 @@ const default_angular_damping: f32 = 0.1;
 const safe_uniform_size = 256;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 const ccd_motion_threshold: f32 = 1e-7;
-const ccd_swept_sphere_radius: f32 = 0.5;
+const ccd_swept_sphere_radius: f32 = 0.9;
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
@@ -330,6 +330,9 @@ fn update(demo: *DemoState) void {
             demo.physics.world.getGravity(&gravity);
             if (zgui.sliderFloat("Gravity", &gravity[1], -15.0, 15.0, .{})) {
                 demo.physics.world.setGravity(&gravity);
+            }
+            if (zgui.button("  Disable gravity  ", .{})) {
+                demo.physics.world.setGravity(&.{ 0, 0, 0 });
             }
         }
         // Debug draw mode.
