@@ -576,7 +576,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 }
 
 const initial_scene = 0;
-const scene_setup_funcs: [3]fn (
+const scene_setup_funcs: [scene_names.len]fn (
     world: *const zbt.World,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
@@ -592,9 +592,6 @@ const scene_names = .{
     "Stacks of boxes",
     "Pyramid and a bomb",
 };
-comptime {
-    assert(scene_names.len == scene_setup_funcs.len);
-}
 
 fn setupScene0(
     world: *const zbt.World,
