@@ -190,7 +190,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var scene_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
     var camera: Camera = undefined;
-    scene_setup_table[initial_scene](physics_world, common_shapes, &scene_shapes, &entities, &camera);
+    scene_setup_funcs[initial_scene](physics_world, common_shapes, &scene_shapes, &entities, &camera);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -304,8 +304,8 @@ fn update(demo: *DemoState) void {
             zgui.spacing();
             comptime var str: [:0]const u8 = "";
             comptime var i: u32 = 0;
-            inline while (i < scene_setup_table.len) : (i += 1) {
-                str = str ++ "Scene " ++ std.fmt.comptimePrint("{}", .{i}) ++ "\x00";
+            inline while (i < scene_setup_funcs.len) : (i += 1) {
+                str = str ++ "Scene: " ++ scene_names[i] ++ "\x00";
             }
             str = str ++ "\x00";
             _ = zgui.comboStr("##", &demo.current_scene_index, str, -1);
@@ -313,7 +313,7 @@ fn update(demo: *DemoState) void {
             if (zgui.button("  Setup Scene  ", .{})) {
                 cleanupScene(demo.physics.world, &demo.physics.scene_shapes, &demo.entities);
                 // Call scene-setup function.
-                scene_setup_table[@intCast(usize, demo.current_scene_index)](
+                scene_setup_funcs[@intCast(usize, demo.current_scene_index)](
                     demo.physics.world,
                     demo.physics.common_shapes,
                     &demo.physics.scene_shapes,
@@ -575,7 +575,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 }
 
 const initial_scene = 0;
-const scene_setup_table: [2]fn (
+const scene_setup_funcs: [2]fn (
     world: *const zbt.World,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
@@ -585,6 +585,13 @@ const scene_setup_table: [2]fn (
     setupScene0,
     setupScene1,
 };
+const scene_names = .{
+    "Collision shapes",
+    "Stacks of boxes",
+};
+comptime {
+    assert(scene_names.len == scene_setup_funcs.len);
+}
 
 fn setupScene0(
     world: *const zbt.World,
