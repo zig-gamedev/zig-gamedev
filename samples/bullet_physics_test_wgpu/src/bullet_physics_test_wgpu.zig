@@ -747,7 +747,7 @@ fn setupScene2(
     var level: u32 = 0;
     var y: f32 = 2.0;
     while (y <= 12.0) : (y += 2.0) {
-        const bound: f32 = 14.0 - y;
+        const bound: f32 = 12.0 - y;
         var z: f32 = -bound;
         level += 1;
         while (z <= bound) : (z += 2.0) {
