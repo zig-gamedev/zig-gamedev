@@ -63,7 +63,7 @@ const default_angular_damping: f32 = 0.05;
 const safe_uniform_size = 256;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 const ccd_motion_threshold: f32 = 1e-7;
-const ccd_swept_sphere_radius: f32 = 0.75;
+const ccd_swept_sphere_radius: f32 = 0.5;
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
@@ -193,7 +193,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var scene_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
     var camera: Camera = undefined;
-    scenes[initial_scene].setup_func(physics_world, common_shapes, &scene_shapes, &entities, &camera);
+    scenes[initial_scene].setup(physics_world, common_shapes, &scene_shapes, &entities, &camera);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -316,7 +316,7 @@ fn update(demo: *DemoState) void {
             if (zgui.button("  Setup Scene  ", .{})) {
                 cleanupScene(demo.physics.world, &demo.physics.scene_shapes, &demo.entities);
                 // Call scene-setup function.
-                scenes[@intCast(usize, demo.current_scene_index)].setup_func(
+                scenes[@intCast(usize, demo.current_scene_index)].setup(
                     demo.physics.world,
                     demo.physics.common_shapes,
                     &demo.physics.scene_shapes,
@@ -592,15 +592,15 @@ const SceneSetupFunc = fn (
 
 const Scene = struct {
     name: []const u8,
-    setup_func: SceneSetupFunc,
+    setup: SceneSetupFunc,
     has_gravity_ui: bool = true,
 };
 
 const scenes = [_]Scene{
-    .{ .name = "Collision shapes", .setup_func = setupScene0 },
-    .{ .name = "Stacks of boxes", .setup_func = setupScene1 },
-    .{ .name = "Pyramid", .setup_func = setupScene2 },
-    .{ .name = "Tower", .setup_func = setupScene3, .has_gravity_ui = false },
+    .{ .name = "Collision shapes", .setup = setupScene0 },
+    .{ .name = "Stacks of boxes", .setup = setupScene1 },
+    .{ .name = "Pyramid", .setup = setupScene2 },
+    .{ .name = "Tower", .setup = setupScene3, .has_gravity_ui = false },
 };
 const initial_scene = 0;
 
