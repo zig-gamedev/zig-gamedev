@@ -58,12 +58,12 @@ const mesh_index_compound1: u32 = 5;
 const mesh_index_world: u32 = 6;
 const mesh_count: u32 = 7;
 
-const default_linear_damping: f32 = 0.1;
-const default_angular_damping: f32 = 0.1;
+const default_linear_damping: f32 = 0.05;
+const default_angular_damping: f32 = 0.05;
 const safe_uniform_size = 256;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 const ccd_motion_threshold: f32 = 1e-7;
-const ccd_swept_sphere_radius: f32 = 0.9;
+const ccd_swept_sphere_radius: f32 = 0.5;
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
@@ -102,6 +102,7 @@ const DemoState = struct {
         p2p: *const zbt.Point2PointConstraint,
         saved_linear_damping: f32 = 0.0,
         saved_angular_damping: f32 = 0.0,
+        saved_activation_state: zbt.BodyActivationState = .active,
         distance: f32 = 0.0,
     } = .{},
 };
@@ -590,11 +591,13 @@ const scene_setup_funcs: [scene_names.len]fn (
     setupScene0,
     setupScene1,
     setupScene2,
+    setupScene3,
 };
 const scene_names = .{
     "Collision shapes",
     "Stacks of boxes",
     "Pyramid",
+    "Tower",
 };
 
 fn setupScene0(
@@ -673,8 +676,8 @@ fn setupScene0(
         createEntity(world, sphere_body, .{ 0.0, 0.0, 1.0, 0.5 }, entities);
     }
     camera.* = .{
-        .position = .{ 0.0, 3.0, -3.0 },
-        .pitch = math.pi * 0.05,
+        .position = .{ 0.0, 7.0, -7.0 },
+        .pitch = math.pi * 0.1,
         .yaw = 0.0,
     };
 }
@@ -767,6 +770,91 @@ fn setupScene2(
             }
         }
     }
+    camera.* = .{
+        .position = .{ 30.0, 30.0, -30.0 },
+        .pitch = math.pi * 0.2,
+        .yaw = -math.pi * 0.25,
+    };
+}
+
+fn setupScene3(
+    world: *const zbt.World,
+    common_shapes: std.ArrayList(*const zbt.Shape),
+    scene_shapes: *std.ArrayList(*const zbt.Shape),
+    entities: *std.ArrayList(Entity),
+    camera: *Camera,
+) void {
+    assert(entities.items.len == 0);
+
+    const world_body = zbt.Body.init(
+        0.0,
+        &zm.mat43ToArr(zm.identity()),
+        common_shapes.items[mesh_index_world],
+    );
+    createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
+
+    const box = zbt.BoxShape.init(&.{ 0.5, 3.0, 1.5 });
+    box.setUserIndex(0, @intCast(i32, mesh_index_cube));
+    scene_shapes.append(box.asShape()) catch unreachable;
+
+    const mass: f32 = 10.0;
+
+    const heights = [_]u32{ 10, 8, 8, 6, 6 };
+    const xoffsets = [_]f32{ 0.0, -7.0, 7.0, 0.0, 0.0 };
+    const zoffsets = [_]f32{ 0.0, 0.0, 0.0, -4.0, 4.0 };
+
+    var j: u32 = 0;
+    while (j < heights.len) : (j += 1) {
+        var i: u32 = 0;
+        while (i < heights[j]) : (i += 1) {
+            const y = 4.0 + @intToFloat(f32, i) * 7.0;
+
+            const left_body = zbt.Body.init(
+                mass,
+                &zm.mat43ToArr(zm.translation(xoffsets[j] + -2.5, y, zoffsets[j] + 0.0)),
+                box.asShape(),
+            );
+            const right_body = zbt.Body.init(
+                mass,
+                &zm.mat43ToArr(zm.translation(xoffsets[j] + 2.5, y, zoffsets[j] + 0.0)),
+                box.asShape(),
+            );
+            const top_body = zbt.Body.init(
+                mass,
+                &zm.mat43ToArr(
+                    zm.mul(zm.rotationZ(0.5 * math.pi), zm.translation(xoffsets[j], y + 3.5, zoffsets[j])),
+                ),
+                box.asShape(),
+            );
+
+            createEntity(world, left_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
+            createEntity(world, right_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
+            createEntity(world, top_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
+
+            left_body.forceActivationState(.wants_deactivation);
+            right_body.forceActivationState(.wants_deactivation);
+            top_body.forceActivationState(.wants_deactivation);
+        }
+    }
+
+    const num_boxes: u32 = 35;
+    const radius: f32 = 25.0;
+    var i: u32 = 0;
+    while (i < num_boxes) : (i += 1) {
+        const theta = @intToFloat(f32, i) * math.tau / @intToFloat(f32, num_boxes);
+        const x = radius * @cos(theta);
+        const z = radius * @sin(theta);
+
+        const box_body = zbt.Body.init(
+            mass,
+            &zm.mat43ToArr(
+                zm.mul(zm.rotationY(-theta), zm.translation(x, 4.0, z)),
+            ),
+            box.asShape(),
+        );
+        createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
+    }
+
     camera.* = .{
         .position = .{ 30.0, 30.0, -30.0 },
         .pitch = math.pi * 0.2,
@@ -1134,7 +1222,10 @@ fn objectPicking(demo: *DemoState) void {
 
             demo.pick.saved_linear_damping = body.getLinearDamping();
             demo.pick.saved_angular_damping = body.getAngularDamping();
+            demo.pick.saved_activation_state = body.getActivationState();
+
             body.setDamping(0.4, 0.4);
+            body.forceActivationState(.deactivation_disabled);
 
             const pivot_a = zm.mul(
                 zm.loadArr3w(result.hit_point_world, 1.0),
@@ -1174,6 +1265,7 @@ fn objectPicking(demo: *DemoState) void {
         demo.physics.world.removeConstraint(demo.pick.p2p.asConstraint());
         demo.pick.p2p.destroy();
         demo.pick.body.?.setDamping(demo.pick.saved_linear_damping, demo.pick.saved_angular_damping);
+        demo.pick.body.?.setActivationState(demo.pick.saved_activation_state);
         demo.pick.body = null;
     }
 }

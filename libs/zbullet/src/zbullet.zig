@@ -620,6 +620,7 @@ pub const TriangleMeshShape = opaque {
 pub const BodyActivationState = enum(c_int) {
     active = 1,
     sleeping = 2,
+    wants_deactivation = 3,
     deactivation_disabled = 4,
     simulation_disabled = 5,
 };

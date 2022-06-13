@@ -54,6 +54,7 @@
 // cbtBodyGetActivationState, cbtBodySetActivationState
 #define CBT_ACTIVE_TAG 1
 #define CBT_ISLAND_SLEEPING 2
+#define CBT_WANTS_DEACTIVATION 3
 #define CBT_DISABLE_DEACTIVATION 4
 #define CBT_DISABLE_SIMULATION 5
 
