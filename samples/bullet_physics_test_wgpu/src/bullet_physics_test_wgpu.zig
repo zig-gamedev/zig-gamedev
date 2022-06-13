@@ -64,6 +64,7 @@ const safe_uniform_size = 256;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 const ccd_motion_threshold: f32 = 1e-7;
 const ccd_swept_sphere_radius: f32 = 0.5;
+const default_gravity: f32 = 10.0;
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
@@ -183,6 +184,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     // Init physics.
     //
     const physics_world = zbt.World.init(.{});
+    physics_world.setGravity(&.{ 0.0, -default_gravity, 0.0 });
 
     var physics_debug = try allocator.create(zbt.DebugDrawer);
     physics_debug.* = zbt.DebugDrawer.init(allocator);
@@ -330,7 +332,7 @@ fn update(demo: *DemoState) void {
             if (scenes[@intCast(usize, demo.current_scene_index)].has_gravity_ui) {
                 var gravity: [3]f32 = undefined;
                 demo.physics.world.getGravity(&gravity);
-                if (zgui.sliderFloat("Gravity", &gravity[1], -15.0, 15.0, .{})) {
+                if (zgui.sliderFloat("Gravity", &gravity[1], -default_gravity, default_gravity, .{})) {
                     demo.physics.world.setGravity(&gravity);
                 }
                 if (zgui.button("  Disable gravity  ", .{})) {
@@ -882,7 +884,7 @@ fn cleanupScene(
     shapes.clearRetainingCapacity();
     entities.clearRetainingCapacity();
 
-    world.setGravity(&.{ 0.0, -10.0, 0.0 });
+    world.setGravity(&.{ 0.0, -default_gravity, 0.0 });
 }
 
 fn createEntity(
