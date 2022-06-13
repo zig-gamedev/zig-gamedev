@@ -803,7 +803,7 @@ fn setupScene3(
 
     const mass: f32 = 10.0;
 
-    const heights = [_]u32{ 10, 8, 8, 6, 6 };
+    const heights = [_]u32{ 18, 8, 8, 6, 6 };
     const xoffsets = [_]f32{ 0.0, -7.0, 7.0, 0.0, 0.0 };
     const zoffsets = [_]f32{ 0.0, 0.0, 0.0, -4.0, 4.0 };
 
@@ -831,9 +831,9 @@ fn setupScene3(
                 box.asShape(),
             );
 
-            createEntity(world, left_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
-            createEntity(world, right_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
-            createEntity(world, top_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
+            createEntity(world, left_body, .{ 1.0, 1.0, 0.0, 1.0 }, entities);
+            createEntity(world, right_body, .{ 1.0, 1.0, 0.0, 1.0 }, entities);
+            createEntity(world, top_body, .{ 0.0, 0.5, 0.0, 1.0 }, entities);
 
             left_body.forceActivationState(.wants_deactivation);
             right_body.forceActivationState(.wants_deactivation);
@@ -856,7 +856,7 @@ fn setupScene3(
             ),
             box.asShape(),
         );
-        createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
+        createEntity(world, box_body, .{ 0.0, 0.1, 1.0, 1.0 }, entities);
     }
 
     camera.* = .{
