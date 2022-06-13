@@ -63,7 +63,7 @@ const default_angular_damping: f32 = 0.05;
 const safe_uniform_size = 256;
 const camera_fovy: f32 = math.pi / @as(f32, 3.0);
 const ccd_motion_threshold: f32 = 1e-7;
-const ccd_swept_sphere_radius: f32 = 0.5;
+const ccd_swept_sphere_radius: f32 = 0.75;
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
@@ -193,7 +193,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var scene_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
     var camera: Camera = undefined;
-    scene_setup_funcs[initial_scene](physics_world, common_shapes, &scene_shapes, &entities, &camera);
+    scenes[initial_scene].setup_func(physics_world, common_shapes, &scene_shapes, &entities, &camera);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -307,8 +307,8 @@ fn update(demo: *DemoState) void {
             zgui.spacing();
             comptime var str: [:0]const u8 = "";
             comptime var i: u32 = 0;
-            inline while (i < scene_setup_funcs.len) : (i += 1) {
-                str = str ++ "Scene: " ++ scene_names[i] ++ "\x00";
+            inline while (i < scenes.len) : (i += 1) {
+                str = str ++ "Scene: " ++ scenes[i].name ++ "\x00";
             }
             str = str ++ "\x00";
             _ = zgui.comboStr("##", &demo.current_scene_index, str, -1);
@@ -316,7 +316,7 @@ fn update(demo: *DemoState) void {
             if (zgui.button("  Setup Scene  ", .{})) {
                 cleanupScene(demo.physics.world, &demo.physics.scene_shapes, &demo.entities);
                 // Call scene-setup function.
-                scene_setup_funcs[@intCast(usize, demo.current_scene_index)](
+                scenes[@intCast(usize, demo.current_scene_index)].setup_func(
                     demo.physics.world,
                     demo.physics.common_shapes,
                     &demo.physics.scene_shapes,
@@ -327,30 +327,15 @@ fn update(demo: *DemoState) void {
         }
         // Gravity.
         {
-            const local = struct {
-                fn activateAllBodies(world: *const zbt.World) void {
-                    var i = world.getNumBodies() - 1;
-                    while (i >= 0) : (i -= 1) {
-                        const body = world.getBody(i);
-                        body.setActivationState(.active);
-                    }
+            if (scenes[@intCast(usize, demo.current_scene_index)].has_gravity_ui) {
+                var gravity: [3]f32 = undefined;
+                demo.physics.world.getGravity(&gravity);
+                if (zgui.sliderFloat("Gravity", &gravity[1], -15.0, 15.0, .{})) {
+                    demo.physics.world.setGravity(&gravity);
                 }
-            };
-            var was_changed = false;
-
-            var gravity: [3]f32 = undefined;
-            demo.physics.world.getGravity(&gravity);
-            if (zgui.sliderFloat("Gravity", &gravity[1], -15.0, 15.0, .{})) {
-                demo.physics.world.setGravity(&gravity);
-                was_changed = true;
-            }
-            if (zgui.button("  Disable gravity  ", .{})) {
-                demo.physics.world.setGravity(&.{ 0, 0, 0 });
-                was_changed = true;
-            }
-
-            if (was_changed) {
-                local.activateAllBodies(demo.physics.world);
+                if (zgui.button("  Disable gravity  ", .{})) {
+                    demo.physics.world.setGravity(&.{ 0, 0, 0 });
+                }
             }
         }
         // Debug draw mode.
@@ -597,25 +582,27 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
-const initial_scene = 0;
-const scene_setup_funcs: [scene_names.len]fn (
+const SceneSetupFunc = fn (
     world: *const zbt.World,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
-) void = .{
-    setupScene0,
-    setupScene1,
-    setupScene2,
-    setupScene3,
+) void;
+
+const Scene = struct {
+    name: []const u8,
+    setup_func: SceneSetupFunc,
+    has_gravity_ui: bool = true,
 };
-const scene_names = .{
-    "Collision shapes",
-    "Stacks of boxes",
-    "Pyramid",
-    "Tower",
+
+const scenes = [_]Scene{
+    .{ .name = "Collision shapes", .setup_func = setupScene0 },
+    .{ .name = "Stacks of boxes", .setup_func = setupScene1 },
+    .{ .name = "Pyramid", .setup_func = setupScene2 },
+    .{ .name = "Tower", .setup_func = setupScene3, .has_gravity_ui = false },
 };
+const initial_scene = 0;
 
 fn setupScene0(
     world: *const zbt.World,

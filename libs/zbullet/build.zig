@@ -44,7 +44,6 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     // TODO: Use the old damping method for now otherwise there is a hang in powf().
     const flags = &.{
         "-DBT_USE_OLD_DAMPING_METHOD",
-        "-DBT_CLAMP_VELOCITY_TO=50",
         "-DBT_THREADSAFE=1",
         "-std=c++11",
         "-fno-sanitize=undefined",
