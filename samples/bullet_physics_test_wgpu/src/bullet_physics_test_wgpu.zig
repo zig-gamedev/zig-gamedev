@@ -327,13 +327,30 @@ fn update(demo: *DemoState) void {
         }
         // Gravity.
         {
+            const local = struct {
+                fn activateAllBodies(world: *const zbt.World) void {
+                    var i = world.getNumBodies() - 1;
+                    while (i >= 0) : (i -= 1) {
+                        const body = world.getBody(i);
+                        body.setActivationState(.active);
+                    }
+                }
+            };
+            var was_changed = false;
+
             var gravity: [3]f32 = undefined;
             demo.physics.world.getGravity(&gravity);
             if (zgui.sliderFloat("Gravity", &gravity[1], -15.0, 15.0, .{})) {
                 demo.physics.world.setGravity(&gravity);
+                was_changed = true;
             }
             if (zgui.button("  Disable gravity  ", .{})) {
                 demo.physics.world.setGravity(&.{ 0, 0, 0 });
+                was_changed = true;
+            }
+
+            if (was_changed) {
+                local.activateAllBodies(demo.physics.world);
             }
         }
         // Debug draw mode.
