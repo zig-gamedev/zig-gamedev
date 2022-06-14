@@ -51,6 +51,12 @@ Some of the sample applications are listed below. More can be found in [samples]
 
     `zig build physically_based_rendering_wgpu-run`
 
+1. [bullet physics test (wgpu)](samples/bullet_physics_test_wgpu): This sample application demonstrates how to use full 3D physics engine in your Zig programs.
+
+    <a href="samples/bullet_physics_test_wgpu"><img src="samples/bullet_physics_test_wgpu/screenshot.png" alt="bullet physics test (wgpu)" height="200"></a>
+
+    `zig build bullet_physics_test_wgpu-run`
+
 1. [procedural mesh (wgpu)](samples/procedural_mesh_wgpu): This sample shows how to efficiently draw several procedurally generated meshes.
 
     <a href="samples/procedural_mesh_wgpu"><img src="samples/procedural_mesh_wgpu/screenshot.png" alt="procedural mesh wgpu (wgpu)" height="200"></a>
@@ -72,12 +78,6 @@ If you are new to DirectX 12 graphics programming I recommend starting with [int
     <a href="samples/simple_raytracer"><img src="samples/simple_raytracer/screenshot.png" alt="simple raytracer" height="200"></a>
 
     `zig build simple_raytracer-run`
-
-1. [virtual physics lab](samples/bullet_physics_test): This sample application demonstrates how to use full 3D physics engine in your Zig programs.
-
-    <a href="samples/bullet_physics_test"><img src="samples/bullet_physics_test/screenshot1.png" alt="virtual physics lab" height="200"></a>
-
-    `zig build bullet_physics_test-run`
 
 1. [mesh shader test](samples/mesh_shader_test): This sample shows how to use DirectX 12 Mesh Shader.
 

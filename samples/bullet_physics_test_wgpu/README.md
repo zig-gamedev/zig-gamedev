@@ -6,6 +6,6 @@ Some info:
 * Comes with 4 example 'scenes'. Users can easily add more scenes in the source code to experiment and test various physics effects/setups.
 * Multi-threading is enabled by default.
 
-[Short video](https://youtu.be/Mk-0HY1tGIc)
+[-->See short video<--](https://youtu.be/Mk-0HY1tGIc)
 
 ![image](screenshot.jpg)
