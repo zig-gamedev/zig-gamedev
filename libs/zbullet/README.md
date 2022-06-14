@@ -2,7 +2,7 @@
 
 ## Overview
 
-Bullet Physics SDK 3.25 (**C++**) --> cbullet v0.2 (**C**) --> zbullet v0.2 (**Zig**)
+Bullet Physics SDK 3.25 (**C++**) [-->] cbullet v0.2 (**C**) [-->] zbullet v0.2 (**Zig**)
 
 `cbullet` is C API for Bullet Physics SDK which is being developed as a part of zig-gamedev project.
 
