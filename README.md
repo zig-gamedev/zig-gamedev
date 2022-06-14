@@ -41,7 +41,7 @@ zig build physically_based_rendering_wgpu-run
 
 *I work on this project full-time and try to make a living from donations. If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
-## Cross-platfrom (Win/Lin/Mac) sample applications (native WebGPU)
+## Cross-platfrom (Win/Lin/Mac) sample applications (native wgpu)
 
 Some of the sample applications are listed below. More can be found in [samples](samples/) directory.
 
