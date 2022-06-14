@@ -49,6 +49,14 @@ const Camera = struct {
     yaw: f32,
 };
 
+const scenes = [_]Scene{
+    .{ .name = "Collision shapes", .setup = setupScene0 },
+    .{ .name = "Stacks of boxes", .setup = setupScene1 },
+    .{ .name = "Pyramid", .setup = setupScene2 },
+    .{ .name = "Tower", .setup = setupScene3, .has_gravity_ui = false },
+};
+const initial_scene = 0;
+
 const mesh_index_cube: u32 = 0;
 const mesh_index_sphere: u32 = 1;
 const mesh_index_cylinder: u32 = 2;
@@ -602,14 +610,6 @@ const Scene = struct {
     setup: SceneSetupFunc,
     has_gravity_ui: bool = true,
 };
-
-const scenes = [_]Scene{
-    .{ .name = "Collision shapes", .setup = setupScene0 },
-    .{ .name = "Stacks of boxes", .setup = setupScene1 },
-    .{ .name = "Pyramid", .setup = setupScene2 },
-    .{ .name = "Tower", .setup = setupScene3, .has_gravity_ui = false },
-};
-const initial_scene = 0;
 
 fn setupScene0(
     world: *const zbt.World,
