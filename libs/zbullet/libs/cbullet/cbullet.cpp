@@ -115,7 +115,6 @@ void cbtTaskSchedSetNumThreads(int num_threads) {
 }
 
 CbtWorldHandle cbtWorldCreate(void) {
-    // TODO: Check for oom errors.
     auto world_data = (WorldData*)btAlignedAlloc(sizeof(WorldData), 16);
     new (world_data) WorldData();
 
@@ -722,7 +721,11 @@ CbtShapeHandle cbtShapeCompoundGetChild(CbtShapeHandle shape_handle, int child_s
     return (CbtShapeHandle)shape->getChildShape(child_shape_index);
 }
 
-void cbtShapeCompoundGetChildTransform(CbtShapeHandle shape_handle, int child_shape_index, CbtVector3 transform[4]) {
+void cbtShapeCompoundGetChildTransform(
+    CbtShapeHandle shape_handle,
+    int child_shape_index,
+    CbtVector3 transform[4]
+) {
     assert(shape_handle && cbtShapeIsCreated(shape_handle));
     assert(transform && child_shape_index >= 0);
     auto shape = (btCompoundShape*)shape_handle;
@@ -1174,7 +1177,10 @@ void cbtBodyApplyImpulse(CbtBodyHandle body_handle, const CbtVector3 impulse, co
     assert(body_handle && cbtBodyIsCreated(body_handle));
     assert(impulse && rel_pos);
     auto body = (btRigidBody*)body_handle;
-    body->applyImpulse(btVector3(impulse[0], impulse[1], impulse[2]), btVector3(rel_pos[0], rel_pos[1], rel_pos[2]));
+    body->applyImpulse(
+        btVector3(impulse[0], impulse[1], impulse[2]),
+        btVector3(rel_pos[0], rel_pos[1], rel_pos[2])
+    );
 }
 
 void cbtBodyApplyTorque(CbtBodyHandle body_handle, const CbtVector3 torque) {
@@ -2046,7 +2052,11 @@ bool cbtConSliderIsAngularMotorEnabled(CbtConstraintHandle con_handle) {
     return con->getPoweredAngMotor();
 }
 
-void cbtConSliderGetAngularMotor(CbtConstraintHandle con_handle, float* target_velocity, float* max_force) {
+void cbtConSliderGetAngularMotor(
+    CbtConstraintHandle con_handle,
+    float* target_velocity,
+    float* max_force
+) {
     assert(con_handle && cbtConIsCreated(con_handle));
     assert(cbtConGetType(con_handle) == CBT_CONSTRAINT_TYPE_SLIDER);
     auto con = (btSliderConstraint*)con_handle;

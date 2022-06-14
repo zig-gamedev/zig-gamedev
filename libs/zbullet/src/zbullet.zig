@@ -1,4 +1,4 @@
-// zbullet v0.2 (wip)
+// zbullet v0.2
 // Zig bindings for Bullet Physics SDK
 
 const std = @import("std");

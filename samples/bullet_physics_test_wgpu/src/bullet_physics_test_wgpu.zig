@@ -329,15 +329,20 @@ fn update(demo: *DemoState) void {
         }
         // Gravity.
         {
-            if (scenes[@intCast(usize, demo.current_scene_index)].has_gravity_ui) {
-                var gravity: [3]f32 = undefined;
-                demo.physics.world.getGravity(&gravity);
-                if (zgui.sliderFloat("Gravity", &gravity[1], -default_gravity, default_gravity, .{})) {
-                    demo.physics.world.setGravity(&gravity);
-                }
-                if (zgui.button("  Disable gravity  ", .{})) {
-                    demo.physics.world.setGravity(&.{ 0, 0, 0 });
-                }
+            const is_enabled = scenes[@intCast(usize, demo.current_scene_index)].has_gravity_ui;
+            if (!is_enabled) {
+                zgui.beginDisabled(.{});
+            }
+            var gravity: [3]f32 = undefined;
+            demo.physics.world.getGravity(&gravity);
+            if (zgui.sliderFloat("Gravity", &gravity[1], -default_gravity, default_gravity, .{})) {
+                demo.physics.world.setGravity(&gravity);
+            }
+            if (zgui.button("  Disable gravity  ", .{})) {
+                demo.physics.world.setGravity(&.{ 0, 0, 0 });
+            }
+            if (!is_enabled) {
+                zgui.endDisabled();
             }
         }
         // Debug draw mode.
@@ -718,7 +723,7 @@ fn setupScene1(
         while (i < num_cubes_per_stack) : (i += 1) {
             const box_body = zbt.Body.init(
                 2.5,
-                &zm.mat43ToArr(zm.translation(x, 5.0 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
+                &zm.mat43ToArr(zm.translation(x, 2.2 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
                 common_shapes.items[mesh_index_cube],
             );
             createEntity(

@@ -1,4 +1,4 @@
-// cbullet - version 0.1
+// cbullet v0.2
 // C API for Bullet Physics SDK
 
 #pragma once

@@ -153,6 +153,11 @@ pub fn checkbox(label: [:0]const u8, v: *bool) bool {
     return zguiCheckbox(label.ptr, v);
 }
 
+pub fn beginDisabled(args: struct { disabled: bool = true }) void {
+    zguiBeginDisabled(args.disabled);
+}
+
+pub const endDisabled = zguiEndDisabled;
 pub const end = zguiEnd;
 pub const spacing = zguiSpacing;
 pub const newLine = zguiNewLine;
@@ -210,6 +215,9 @@ extern fn zguiRender() void;
 extern fn zguiGetDrawData() *const DrawData;
 
 extern fn zguiShowDemoWindow(p_open: ?*bool) void;
+
+extern fn zguiBeginDisabled(disabled: bool) void;
+extern fn zguiEndDisabled() void;
 
 extern fn zguiIoGetWantCaptureMouse() bool;
 extern fn zguiIoGetWantCaptureKeyboard() bool;

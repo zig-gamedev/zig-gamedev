@@ -68,6 +68,9 @@ ZGUI_API ImDrawData* zguiGetDrawData(void) { return ImGui::GetDrawData(); }
 
 ZGUI_API void zguiShowDemoWindow(bool* p_open) { ImGui::ShowDemoWindow(p_open); }
 
+ZGUI_API void zguiBeginDisabled(bool disabled) { ImGui::BeginDisabled(disabled); }
+ZGUI_API void zguiEndDisabled(void) { ImGui::EndDisabled(); }
+
 ZGUI_API bool zguiIoGetWantCaptureMouse(void) { return ImGui::GetIO().WantCaptureMouse; }
 ZGUI_API bool zguiIoGetWantCaptureKeyboard(void) { return ImGui::GetIO().WantCaptureKeyboard; }
 ZGUI_API void zguiIoAddFontFromFile(const char* filename, float size_pixels) {
