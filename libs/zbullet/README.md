@@ -2,7 +2,7 @@
 
 ## Overview
 
-Bullet Physics SDK 3.25 (C++) -> cbullet v0.2 (C) -> zbullet v0.2 (Zig)
+Bullet Physics SDK 3.25 (**C++**) --> cbullet v0.2 (**C**) --> zbullet v0.2 (**Zig**)
 
 `cbullet` is C API for Bullet Physics SDK which is being developed as a part of zig-gamedev project.
 
@@ -23,7 +23,7 @@ For example code please see:
 
 * [bullet physics test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test_wgpu)
 * [intro 6](https://github.com/michal-z/zig-gamedev/blob/main/samples/intro/src/intro6.zig) (Windows-only)
-* [virtual physics lab](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test) (Windows-only, uses cbullet C API directly)
+* [virtual physics lab](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test) (Windows-only, uses `cbullet` directly)
 * [zbullet tests](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet/src/zbullet.zig)
 
 ## Getting started
