@@ -53,7 +53,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 1. [bullet physics test (wgpu)](samples/bullet_physics_test_wgpu): This sample application demonstrates how to use full 3D physics engine in your Zig programs.
 
-    <a href="samples/bullet_physics_test_wgpu"><img src="samples/bullet_physics_test_wgpu/screenshot.png" alt="bullet physics test (wgpu)" height="200"></a>
+    <a href="samples/bullet_physics_test_wgpu"><img src="samples/bullet_physics_test_wgpu/screenshot.jpg" alt="bullet physics test (wgpu)" height="200"></a>
 
     `zig build bullet_physics_test_wgpu-run`
 
