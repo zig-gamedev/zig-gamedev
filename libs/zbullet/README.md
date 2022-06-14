@@ -19,7 +19,7 @@ Some `cbullet` features:
   * New physics objects can re-use existing memory
 * Lots of error checks in debug builds
 
-For example code please see:
+For an example code please see:
 
 * [bullet physics test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test_wgpu)
 * [intro 6](https://github.com/michal-z/zig-gamedev/blob/main/samples/intro/src/intro6.zig) (Windows-only)
