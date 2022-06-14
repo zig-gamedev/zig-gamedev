@@ -1,10 +1,30 @@
-# zbullet v0.1 - Zig bindings for Bullet Physics SDK
+# zbullet v0.2 - Zig bindings for Bullet Physics SDK
+
+## Overview
+
+Bullet Physics SDK 3.25 (C++) -> cbullet v0.2 (C) -> zbullet v0.2 (Zig)
+
+`cbullet` is C API for Bullet Physics SDK which is being developed as a part of zig-gamedev project.
+
+`zbullet` is built on top of `cbullet` and provides Zig friendly bindings.
 
 ## Features
 
-See tests in the [source code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet/src/zbullet.zig).
+Some `cbullet` features:
+* Most collision shapes
+* Rigid bodies
+* Most constraint types
+* Tries to minimize number of memory allocations
+  * Multiple rigid bodies and motion states can be created with one memory allocation
+  * New physics objects can re-use existing memory
+* Lots of error checks in debug builds
 
-As an example programs see [intro 6](https://github.com/michal-z/zig-gamedev/blob/main/samples/intro/src/intro6.zig) and our [virtual physics lab](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test) (uses cbullet C API directly).
+For example code please see:
+
+* [bullet physics test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test_wgpu)
+* [intro 6](https://github.com/michal-z/zig-gamedev/blob/main/samples/intro/src/intro6.zig) (Windows-only)
+* [virtual physics lab](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test) (Windows-only, uses cbullet C API directly)
+* [zbullet tests](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet/src/zbullet.zig)
 
 ## Getting started
 
