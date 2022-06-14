@@ -2,7 +2,7 @@
 
 This library uses GLFW and WebGPU bindings + great build script from [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
 
-`zgpu` is a cross-platform (Windows/Linux/MacOS) graphics layer built on top of native WebGPU API (Dawn).
+`zgpu` is a cross-platform (Windows/Linux/Mac) graphics layer built on top of native WebGPU API (Dawn).
 
 ## Features:
 
@@ -48,9 +48,10 @@ pub fn main() !void {
 ```
 For sample applications please see:
 * [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu)
-* [triangle (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu)
+* [bullet physics test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test_wgpu)
 * [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu)
 * [textured quad (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/textured_quad_wgpu)
+* [triangle (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/triangle_wgpu)
 
 ## Library overview
 
