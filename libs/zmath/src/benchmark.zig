@@ -32,6 +32,23 @@
 //           cross3, scale, bias benchmark - scalar version: 1.0489s, zmath version: 0.7019s
 //     cross3, dot3, scale, bias benchmark - scalar version: 1.4217s, zmath version: 1.1814s
 //                quaternion mul benchmark - scalar version: 1.9270s, zmath version: 0.8299s
+//
+//
+// Results on 'AMD Ryzen 7 5800X 8-Core Processer', Linux 5.17.14, Zig 0.10.0-dev.2624+d506275a0:
+//
+// 'zig build benchmark'
+//                    matrix mul benchmark - scalar version: 1.3669s, zmath version: 0.8680s
+//           cross3, scale, bias benchmark - scalar version: 0.6604s, zmath version: 0.4814s
+//     cross3, dot3, scale, bias benchmark - scalar version: 1.0710s, zmath version: 0.8993s
+//                quaternion mul benchmark - scalar version: 1.1698s, zmath version: 0.6054s
+//
+// 'zig build benchmark -Dcpu=x86_64'
+//
+//                    matrix mul benchmark - scalar version: 1.3630s, zmath version: 1.3332s
+//           cross3, scale, bias benchmark - scalar version: 0.6915s, zmath version: 0.6121s
+//     cross3, dot3, scale, bias benchmark - scalar version: 1.0890s, zmath version: 1.0197s
+//                quaternion mul benchmark - scalar version: 1.7723s, zmath version: 0.6490s
+//
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
