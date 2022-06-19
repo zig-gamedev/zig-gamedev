@@ -2093,18 +2093,11 @@ fn mulMat(m0: Mat, m1: Mat) Mat {
     var result: Mat = undefined;
     comptime var row: u32 = 0;
     inline while (row < 4) : (row += 1) {
-        var vx = @shuffle(f32, m0[row], undefined, [4]i32{ 0, 0, 0, 0 });
-        var vy = @shuffle(f32, m0[row], undefined, [4]i32{ 1, 1, 1, 1 });
-        var vz = @shuffle(f32, m0[row], undefined, [4]i32{ 2, 2, 2, 2 });
-        var vw = @shuffle(f32, m0[row], undefined, [4]i32{ 3, 3, 3, 3 });
-        vx = vx * m1[0];
-        vy = vy * m1[1];
-        vz = vz * m1[2];
-        vw = vw * m1[3];
-        vx = vx + vz;
-        vy = vy + vw;
-        vx = vx + vy;
-        result[row] = vx;
+        const vx = swizzle(m0[row], .x, .x, .x, .x);
+        const vy = swizzle(m0[row], .y, .y, .y, .y);
+        const vz = swizzle(m0[row], .z, .z, .z, .z);
+        const vw = swizzle(m0[row], .w, .w, .w, .w);
+        result[row] = mulAdd(vx, m1[0], vz * m1[2]) + mulAdd(vy, m1[1], vw * m1[3]);
     }
     return result;
 }

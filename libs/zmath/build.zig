@@ -25,6 +25,17 @@ pub fn buildTests(
     return tests;
 }
 
+pub fn buildBenchmarks(
+    b: *std.build.Builder,
+    target: std.zig.CrossTarget,
+) *std.build.LibExeObjStep {
+    const exe = b.addExecutable("benchmark", thisDir() ++ "/src/benchmark.zig");
+    exe.setBuildMode(std.builtin.Mode.ReleaseFast);
+    exe.setTarget(target);
+    exe.addPackage(pkg);
+    return exe;
+}
+
 fn thisDir() []const u8 {
     comptime {
         return std.fs.path.dirname(@src().file) orelse ".";

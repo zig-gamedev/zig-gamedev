@@ -72,7 +72,7 @@ pub fn build(b: *std.build.Builder) void {
     //
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
-    const zmath_tests = @import("libs/zmath/build.zig").buildTests(b, options.build_mode, options.target);
+    const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
     const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
     const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
@@ -84,7 +84,18 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&znoise_tests.step);
     test_step.dependOn(&znetwork_tests.step);
     test_step.dependOn(&zpool_tests.step);
+
+    //
+    // Benchmarks
+    //
+    const benchmark_step = b.step("benchmark", "Run all benchmarks");
+    {
+        const run_cmd = zmath.buildBenchmarks(b, options.target).run();
+        benchmark_step.dependOn(&run_cmd.step);
+    }
 }
+
+const zmath = @import("libs/zmath/build.zig");
 
 const audio_experiments = @import("samples/audio_experiments/build.zig");
 const audio_playback_test = @import("samples/audio_playback_test/build.zig");
