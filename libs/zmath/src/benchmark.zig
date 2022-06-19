@@ -17,6 +17,21 @@
 // Notice that, when compiling for 'x86_64' target, compiler is able to auto-vectorize scalar
 // matrix multiplication *but* 'zmath' version is still a bit faster *and* vectorized for all compile targets,
 // giving consistent performance results in all cases.
+//
+//
+// Results on 'AMD Ryzen 9 3950X 16-Core Processor', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f:
+//
+// 'zig build benchmark'
+//                    matrix mul benchmark - scalar version: 1.5782s, zmath version: 1.0369s
+//           cross3, scale, bias benchmark - scalar version: 0.9023s, zmath version: 0.6664s
+//     cross3, dot3, scale, bias benchmark - scalar version: 1.1955s, zmath version: 1.1284s
+//                quaternion mul benchmark - scalar version: 1.4135s, zmath version: 0.7151s
+//
+// 'zig build benchmark -Dcpu=x86_64'
+//                    matrix mul benchmark - scalar version: 1.8019s, zmath version: 1.6038s
+//           cross3, scale, bias benchmark - scalar version: 1.0489s, zmath version: 0.7019s
+//     cross3, dot3, scale, bias benchmark - scalar version: 1.4217s, zmath version: 1.1814s
+//                quaternion mul benchmark - scalar version: 1.9270s, zmath version: 0.8299s
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
