@@ -31,6 +31,15 @@
 //                      wave benchmark (SOA) - scalar version: 3.4220s, zmath version: 1.0255s
 //
 // -------------------------------------------------------------------------------------------------
+// '11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f
+// -------------------------------------------------------------------------------------------------
+//                matrix mul benchmark (AOS) - scalar version: 2.2308s, zmath version: 0.9376s
+//       cross3, scale, bias benchmark (AOS) - scalar version: 1.0821s, zmath version: 0.5110s
+// cross3, dot3, scale, bias benchmark (AOS) - scalar version: 1.6580s, zmath version: 0.9167s
+//            quaternion mul benchmark (AOS) - scalar version: 2.0139s, zmath version: 0.5856s
+//                      wave benchmark (SOA) - scalar version: 3.7832s, zmath version: 0.3642s
+//
+// -------------------------------------------------------------------------------------------------
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
