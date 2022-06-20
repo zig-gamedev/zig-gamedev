@@ -4,53 +4,14 @@
 // 'zig build benchmark' in the root project directory will build and run 'ReleaseFast' configuration.
 //
 // -------------------------------------------------------------------------------------------------
-// '11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f
-// -------------------------------------------------------------------------------------------------
-// 'zig build benchmark'
-//                    matrix mul benchmark - scalar version: 2.2236s, zmath version: 0.9359s
-//           cross3, scale, bias benchmark - scalar version: 1.0806s, zmath version: 0.5136s
-//     cross3, dot3, scale, bias benchmark - scalar version: 1.6541s, zmath version: 0.9155s
-//                quaternion mul benchmark - scalar version: 2.0128s, zmath version: 0.5862s
-//
-// 'zig build benchmark -Dcpu=x86_64'
-//                    matrix mul benchmark - scalar version: 1.3909s, zmath version: 1.3477s
-//           cross3, scale, bias benchmark - scalar version: 1.0801s, zmath version: 0.5884s
-//     cross3, dot3, scale, bias benchmark - scalar version: 1.6541s, zmath version: 0.9695s
-//                quaternion mul benchmark - scalar version: 1.6879s, zmath version: 0.7287s
-//
-// Notice that, when compiling for 'x86_64' target, compiler is able to auto-vectorize scalar
-// matrix multiplication *but* 'zmath' version is still a bit faster *and* vectorized for all
-// compile targets, giving consistent performance results in all cases.
-//
-// -------------------------------------------------------------------------------------------------
 // 'AMD Ryzen 9 3950X 16-Core Processor', Windows 11, Zig 0.10.0-dev.2620+0e9458a3f
 // -------------------------------------------------------------------------------------------------
-// 'zig build benchmark'
-//                    matrix mul benchmark - scalar version: 1.5782s, zmath version: 1.0369s
-//           cross3, scale, bias benchmark - scalar version: 0.9023s, zmath version: 0.6664s
-//     cross3, dot3, scale, bias benchmark - scalar version: 1.1955s, zmath version: 1.1284s
-//                quaternion mul benchmark - scalar version: 1.4135s, zmath version: 0.7151s
+//                matrix mul benchmark (AOS) - scalar version: 1.5880s, zmath version: 1.0642s
+//       cross3, scale, bias benchmark (AOS) - scalar version: 0.9318s, zmath version: 0.6888s
+// cross3, dot3, scale, bias benchmark (AOS) - scalar version: 1.2258s, zmath version: 1.1095s
+//            quaternion mul benchmark (AOS) - scalar version: 1.4123s, zmath version: 0.6958s
+//                      wave benchmark (SOA) - scalar version: 4.8165s, zmath version: 0.7338s
 //
-// 'zig build benchmark -Dcpu=x86_64'
-//                    matrix mul benchmark - scalar version: 1.8019s, zmath version: 1.6038s
-//           cross3, scale, bias benchmark - scalar version: 1.0489s, zmath version: 0.7019s
-//     cross3, dot3, scale, bias benchmark - scalar version: 1.4217s, zmath version: 1.1814s
-//                quaternion mul benchmark - scalar version: 1.9270s, zmath version: 0.8299s
-//
-// -------------------------------------------------------------------------------------------------
-// 'AMD Ryzen 7 5800X 8-Core Processer', Linux 5.17.14, Zig 0.10.0-dev.2624+d506275a0
-// -------------------------------------------------------------------------------------------------
-// 'zig build benchmark'
-//                    matrix mul benchmark - scalar version: 1.3669s, zmath version: 0.8680s
-//           cross3, scale, bias benchmark - scalar version: 0.6604s, zmath version: 0.4814s
-//     cross3, dot3, scale, bias benchmark - scalar version: 1.0710s, zmath version: 0.8993s
-//                quaternion mul benchmark - scalar version: 1.1698s, zmath version: 0.6054s
-//
-// 'zig build benchmark -Dcpu=x86_64'
-//                    matrix mul benchmark - scalar version: 1.3630s, zmath version: 1.3332s
-//           cross3, scale, bias benchmark - scalar version: 0.6915s, zmath version: 0.6121s
-//     cross3, dot3, scale, bias benchmark - scalar version: 1.0890s, zmath version: 1.0197s
-//                quaternion mul benchmark - scalar version: 1.7723s, zmath version: 0.6490s
 // -------------------------------------------------------------------------------------------------
 
 pub fn main() !void {
@@ -69,6 +30,9 @@ pub fn main() !void {
 
     // q = qmul(qa, qb); data set fits in L1 cache; AOS data layout.
     try quatBenchmark(allocator, 10_000);
+
+    // d = sqrt(x * x + z * z); y = sin(d - t); SOA layout.
+    try waveBenchmark(allocator, 1_000);
 }
 
 const std = @import("std");
@@ -80,7 +44,7 @@ var prng = std.rand.DefaultPrng.init(0);
 const random = prng.random();
 
 noinline fn mat4MulBenchmark(allocator: std.mem.Allocator, comptime count: comptime_int) !void {
-    std.debug.print("{s:>40} - ", .{"matrix mul benchmark"});
+    std.debug.print("{s:>42} - ", .{"matrix mul benchmark (AOS)"});
 
     var data0 = std.ArrayList([16]f32).init(allocator);
     defer data0.deinit();
@@ -173,7 +137,7 @@ noinline fn mat4MulBenchmark(allocator: std.mem.Allocator, comptime count: compt
 }
 
 noinline fn cross3ScaleBiasBenchmark(allocator: std.mem.Allocator, comptime count: comptime_int) !void {
-    std.debug.print("{s:>40} - ", .{"cross3, scale, bias benchmark"});
+    std.debug.print("{s:>42} - ", .{"cross3, scale, bias benchmark (AOS)"});
 
     var data0 = std.ArrayList([3]f32).init(allocator);
     defer data0.deinit();
@@ -243,7 +207,7 @@ noinline fn cross3ScaleBiasBenchmark(allocator: std.mem.Allocator, comptime coun
 }
 
 noinline fn cross3Dot3ScaleBiasBenchmark(allocator: std.mem.Allocator, comptime count: comptime_int) !void {
-    std.debug.print("{s:>40} - ", .{"cross3, dot3, scale, bias benchmark"});
+    std.debug.print("{s:>42} - ", .{"cross3, dot3, scale, bias benchmark (AOS)"});
 
     var data0 = std.ArrayList([3]f32).init(allocator);
     defer data0.deinit();
@@ -314,7 +278,7 @@ noinline fn cross3Dot3ScaleBiasBenchmark(allocator: std.mem.Allocator, comptime 
 }
 
 noinline fn quatBenchmark(allocator: std.mem.Allocator, comptime count: comptime_int) !void {
-    std.debug.print("{s:>40} - ", .{"quaternion mul benchmark"});
+    std.debug.print("{s:>42} - ", .{"quaternion mul benchmark (AOS)"});
 
     var data0 = std.ArrayList([4]f32).init(allocator);
     defer data0.deinit();
@@ -376,6 +340,98 @@ noinline fn quatBenchmark(allocator: std.mem.Allocator, comptime count: comptime
                     std.mem.doNotOptimizeAway(&r);
                 }
             }
+        }
+        const end = timer.read();
+        const elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
+
+        std.debug.print("zmath version: {d:.4}s\n", .{elapsed_s});
+    }
+}
+
+noinline fn waveBenchmark(allocator: std.mem.Allocator, comptime count: comptime_int) !void {
+    _ = allocator;
+    std.debug.print("{s:>42} - ", .{"wave benchmark (SOA)"});
+
+    const grid_size = 1024;
+    {
+        var t: f32 = 0.0;
+
+        const scale: f32 = 0.05;
+
+        var timer = try Timer.start();
+        const start = timer.lap();
+
+        var iter: usize = 0;
+        while (iter < count) : (iter += 1) {
+            var z_index: i32 = 0;
+            while (z_index < grid_size) : (z_index += 1) {
+                const z = scale * @intToFloat(f32, z_index - grid_size / 2);
+
+                var x_index: i32 = 0;
+                while (x_index < grid_size) : (x_index += 4) {
+                    const x0 = scale * @intToFloat(f32, x_index + 0 - grid_size / 2);
+                    const x1 = scale * @intToFloat(f32, x_index + 1 - grid_size / 2);
+                    const x2 = scale * @intToFloat(f32, x_index + 2 - grid_size / 2);
+                    const x3 = scale * @intToFloat(f32, x_index + 3 - grid_size / 2);
+
+                    const d0 = zm.sqrt(x0 * x0 + z * z);
+                    const d1 = zm.sqrt(x1 * x1 + z * z);
+                    const d2 = zm.sqrt(x2 * x2 + z * z);
+                    const d3 = zm.sqrt(x3 * x3 + z * z);
+
+                    const y0 = zm.sin(d0 - t);
+                    const y1 = zm.sin(d1 - t);
+                    const y2 = zm.sin(d2 - t);
+                    const y3 = zm.sin(d3 - t);
+
+                    std.mem.doNotOptimizeAway(&y0);
+                    std.mem.doNotOptimizeAway(&y1);
+                    std.mem.doNotOptimizeAway(&y2);
+                    std.mem.doNotOptimizeAway(&y3);
+                }
+            }
+            t += 0.001;
+        }
+        const end = timer.read();
+        const elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;
+
+        std.debug.print("scalar version: {d:.4}s, ", .{elapsed_s});
+    }
+
+    {
+        const T = zm.F32x16;
+
+        const static = struct {
+            const offsets = [16]f32{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+        };
+        const voffset = zm.load(static.offsets[0..], T, 0);
+        var vt = zm.splat(T, 0.0);
+
+        const scale: f32 = 0.05;
+
+        var timer = try Timer.start();
+        const start = timer.lap();
+
+        var iter: usize = 0;
+        while (iter < count) : (iter += 1) {
+            var z_index: i32 = 0;
+            while (z_index < grid_size) : (z_index += 1) {
+                const z = scale * @intToFloat(f32, z_index - grid_size / 2);
+                const vz = zm.splat(T, z);
+
+                var x_index: i32 = 0;
+                while (x_index < grid_size) : (x_index += zm.veclen(T)) {
+                    const x = scale * @intToFloat(f32, x_index - grid_size / 2);
+                    const vx = zm.splat(T, x) + voffset * zm.splat(T, scale);
+
+                    const d = zm.sqrt(vx * vx + vz * vz);
+
+                    const vy = zm.sin(d - vt);
+
+                    std.mem.doNotOptimizeAway(&vy);
+                }
+            }
+            vt += zm.splat(T, 0.001);
         }
         const end = timer.read();
         const elapsed_s = @intToFloat(f64, end - start) / time.ns_per_s;

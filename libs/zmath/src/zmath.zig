@@ -1867,12 +1867,9 @@ test "zmath.dot2" {
 }
 
 pub inline fn dot3(v0: Vec, v1: Vec) F32x4 {
-    var dot = v0 * v1;
-    var temp = swizzle(dot, .y, .z, .y, .z);
-    dot = F32x4{ dot[0] + temp[0], dot[1], dot[2], dot[2] }; // addss
-    temp = swizzle(temp, .y, .y, .y, .y);
-    dot = F32x4{ dot[0] + temp[0], dot[1], dot[2], dot[2] }; // addss
-    return swizzle(dot, .x, .x, .x, .x);
+    @setFloatMode(.Optimized);
+    const dot = v0 * v1;
+    return f32x4s(dot[0] + dot[1] + dot[2]);
 }
 test "zmath.dot3" {
     const v0 = F32x4{ -1.0, 2.0, 3.0, 1.0 };
