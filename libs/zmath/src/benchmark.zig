@@ -13,6 +13,24 @@
 //                      wave benchmark (SOA) - scalar version: 4.8165s, zmath version: 0.7338s
 //
 // -------------------------------------------------------------------------------------------------
+// 'AMD Ryzen 7 5800X 8-Core Processer', Linux 5.17.14, Zig 0.10.0-dev.2624+d506275a0
+// -------------------------------------------------------------------------------------------------
+//                matrix mul benchmark (AOS) - scalar version: 1.3672s, zmath version: 0.8617s
+//       cross3, scale, bias benchmark (AOS) - scalar version: 0.6586s, zmath version: 0.4803s
+// cross3, dot3, scale, bias benchmark (AOS) - scalar version: 1.0620s, zmath version: 0.8942s
+//            quaternion mul benchmark (AOS) - scalar version: 1.1324s, zmath version: 0.6064s
+//                      wave benchmark (SOA) - scalar version: 3.6598s, zmath version: 0.4231s
+//
+// -------------------------------------------------------------------------------------------------
+// 'Apple M1 Max', macOS Version 12.4, Zig 0.10.0-dev.2657+74442f350
+// -------------------------------------------------------------------------------------------------
+//                matrix mul benchmark (AOS) - scalar version: 1.0297s, zmath version: 1.0538s
+//       cross3, scale, bias benchmark (AOS) - scalar version: 0.6294s, zmath version: 0.6532s
+// cross3, dot3, scale, bias benchmark (AOS) - scalar version: 0.9807s, zmath version: 1.0988s
+//            quaternion mul benchmark (AOS) - scalar version: 1.5413s, zmath version: 0.7800s
+//                      wave benchmark (SOA) - scalar version: 3.4220s, zmath version: 1.0255s
+//
+// -------------------------------------------------------------------------------------------------
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
