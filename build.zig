@@ -27,7 +27,10 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
     installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
     installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-    //installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+
+    if (options.target.isWindows() or options.target.isLinux()) {
+        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+    }
 
     //
     // Windows-only demos

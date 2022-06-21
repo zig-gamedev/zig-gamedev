@@ -24,6 +24,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         exe.linkFramework("CoreAudio");
         exe.linkFramework("CoreFoundation");
         exe.linkFramework("AudioUnit");
+        exe.linkFramework("AudioToolbox");
     } else if (exe.target.isLinux()) {
         exe.linkSystemLibrary("pthread");
         exe.linkSystemLibrary("m");
