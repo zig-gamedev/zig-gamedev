@@ -38,6 +38,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         "-DMA_NO_ENCODING",
         "-DMA_NO_NULL",
         "-DMA_NO_JACK",
+        "-fno-sanitize=undefined",
         if (@import("builtin").target.os.tag == .macos) "-DMA_NO_RUNTIME_LINKING" else "",
     });
 
