@@ -1,6 +1,16 @@
 const std = @import("std");
 
-pub fn buildLibrary(exe: *std.build.LibExeObjStep) void {
+pub const pkg = std.build.Pkg{
+    .name = "zaudio",
+    .source = .{ .path = thisDir() ++ "/src/zaudio.zig" },
+};
+
+pub fn link(exe: *std.build.LibExeObjStep) void {
+    const lib = buildLibrary(exe);
+    exe.linkLibrary(lib);
+}
+
+fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     const lib = exe.builder.addStaticLibrary("zaudio", thisDir() ++ "/src/zaudio.zig");
 
     lib.setBuildMode(exe.build_mode);
@@ -20,13 +30,16 @@ pub fn buildLibrary(exe: *std.build.LibExeObjStep) void {
         exe.linkSystemLibrary("dl");
     }
 
-    lib.addCSourceFile(thisDir() ++ "libs/miniaudio/miniaudio.c", &.{
+    lib.addCSourceFile(thisDir() ++ "/libs/miniaudio/miniaudio.c", &.{
         "-DMA_NO_FLAC",
         "-DMA_NO_WEBAUDIO",
         "-DMA_NO_ENCODING",
         "-DMA_NO_NULL",
         "-DMA_NO_RUNTIME_LINKING",
+        "-DMA_NO_JACK",
     });
+
+    return lib;
 }
 
 fn thisDir() []const u8 {
