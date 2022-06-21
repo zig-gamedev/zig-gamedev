@@ -30341,7 +30341,7 @@ References
 #include <AVFoundation/AVFoundation.h>
 #endif
 
-//#include <AudioToolbox/AudioToolbox.h>
+#include <AudioToolbox/AudioToolbox.h>
 
 /* CoreFoundation */
 typedef Boolean (* ma_CFStringGetCString_proc)(CFStringRef theString, char* buffer, CFIndex bufferSize, CFStringEncoding encoding);
