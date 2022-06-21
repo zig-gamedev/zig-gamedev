@@ -8,6 +8,7 @@ pub const pkg = std.build.Pkg{
 pub fn link(exe: *std.build.LibExeObjStep) void {
     const lib = buildLibrary(exe);
     exe.linkLibrary(lib);
+    exe.addIncludeDir(thisDir() ++ "/libs/miniaudio");
 }
 
 fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
@@ -41,6 +42,18 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     });
 
     return lib;
+}
+
+pub fn buildTests(
+    b: *std.build.Builder,
+    build_mode: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.build.LibExeObjStep {
+    const tests = b.addTest(thisDir() ++ "/src/zaudio.zig");
+    tests.setBuildMode(build_mode);
+    tests.setTarget(target);
+    link(tests);
+    return tests;
 }
 
 fn thisDir() []const u8 {
