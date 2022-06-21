@@ -18,13 +18,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.addIncludeDir(thisDir() ++ "/libs/miniaudio");
     lib.linkSystemLibrary("c");
 
-    if (exe.target.isDarwin()) {
-        const system_sdk = @import("system_sdk.zig");
-        system_sdk.include(exe.builder, lib, .{});
-        exe.linkFramework("CoreAudio");
-        exe.linkFramework("CoreFoundation");
-        exe.linkFramework("AudioUnit");
-    } else if (exe.target.isLinux()) {
+    if (exe.target.isLinux()) {
         exe.linkSystemLibrary("pthread");
         exe.linkSystemLibrary("m");
         exe.linkSystemLibrary("dl");
@@ -35,7 +29,6 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         "-DMA_NO_WEBAUDIO",
         "-DMA_NO_ENCODING",
         "-DMA_NO_NULL",
-        "-DMA_NO_RUNTIME_LINKING",
         "-DMA_NO_JACK",
     });
 
