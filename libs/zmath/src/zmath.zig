@@ -158,6 +158,10 @@
 // normalize3(v: Vec) Vec
 // normalize4(v: Vec) Vec
 //
+// vecToArr2(v: Vec) [2]f32
+// vecToArr3(v: Vec) [3]f32
+// vecToArr4(v: Vec) [4]f32
+//
 // ------------------------------------------------------------------------------
 // 4. Matrix functions
 // ------------------------------------------------------------------------------
@@ -205,8 +209,8 @@
 // storeMat34(mem: []f32, m: Mat) void
 //
 // matToArr(m: Mat) [16]f32
-// mat43ToArr(m: Mat) [12]f32
-// mat34ToArr(m: Mat) [12]f32
+// matToArr43(m: Mat) [12]f32
+// matToArr34(m: Mat) [12]f32
 //
 // ------------------------------------------------------------------------------
 // 5. Quaternion functions
@@ -470,6 +474,16 @@ test "zmath.loadArr" {
         const simd_reg = loadArr3w(camera_position, 1.0);
         try expect(approxEqAbs(simd_reg, f32x4(1.0, 2.0, 3.0, 1.0), 0.0));
     }
+}
+
+pub inline fn vecToArr2(v: Vec) [2]f32 {
+    return .{ v[0], v[1] };
+}
+pub inline fn vecToArr3(v: Vec) [3]f32 {
+    return .{ v[0], v[1], v[2] };
+}
+pub inline fn vecToArr4(v: Vec) [4]f32 {
+    return .{ v[0], v[1], v[2], v[3] };
 }
 
 // ------------------------------------------------------------------------------
@@ -2714,13 +2728,13 @@ pub inline fn matToArr(m: Mat) [16]f32 {
     return array;
 }
 
-pub inline fn mat43ToArr(m: Mat) [12]f32 {
+pub inline fn matToArr43(m: Mat) [12]f32 {
     var array: [12]f32 = undefined;
     storeMat43(array[0..], m);
     return array;
 }
 
-pub inline fn mat34ToArr(m: Mat) [12]f32 {
+pub inline fn matToArr34(m: Mat) [12]f32 {
     var array: [12]f32 = undefined;
     storeMat34(array[0..], m);
     return array;

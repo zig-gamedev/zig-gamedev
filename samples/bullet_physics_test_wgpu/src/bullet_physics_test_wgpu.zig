@@ -426,7 +426,7 @@ fn update(demo: *DemoState) void {
 
             const body = zbt.Body.init(
                 1.0,
-                &zm.mat43ToArr(transform),
+                &zm.matToArr43(transform),
                 demo.physics.common_shapes.items[mesh_index_sphere],
             );
             body.applyCentralImpulse(zm.arr3Ptr(&impulse));
@@ -622,14 +622,14 @@ fn setupScene0(
 
     const world_body = zbt.Body.init(
         0.0,
-        &zm.mat43ToArr(zm.identity()),
+        &zm.matToArr43(zm.identity()),
         common_shapes.items[mesh_index_world],
     );
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
     {
         const body = zbt.Body.init(
             25.0,
-            &zm.mat43ToArr(zm.translation(0.0, 5.0, 5.0)),
+            &zm.matToArr43(zm.translation(0.0, 5.0, 5.0)),
             common_shapes.items[mesh_index_cube],
         );
         createEntity(world, body, .{ 0.8, 0.0, 0.0, 0.25 }, entities);
@@ -637,7 +637,7 @@ fn setupScene0(
     {
         const body = zbt.Body.init(
             50.0,
-            &zm.mat43ToArr(zm.translation(0.0, 5.0, 10.0)),
+            &zm.matToArr43(zm.translation(0.0, 5.0, 10.0)),
             common_shapes.items[mesh_index_compound0],
         );
         createEntity(world, body, .{ 0.8, 0.0, 0.9, 0.25 }, entities);
@@ -645,7 +645,7 @@ fn setupScene0(
     {
         const body = zbt.Body.init(
             10.0,
-            &zm.mat43ToArr(zm.translation(-5.0, 5.0, 10.0)),
+            &zm.matToArr43(zm.translation(-5.0, 5.0, 10.0)),
             common_shapes.items[mesh_index_cylinder],
         );
         createEntity(world, body, .{ 1.0, 0.0, 0.0, 0.15 }, entities);
@@ -653,7 +653,7 @@ fn setupScene0(
     {
         const body = zbt.Body.init(
             10.0,
-            &zm.mat43ToArr(zm.translation(-5.0, 8.0, 10.0)),
+            &zm.matToArr43(zm.translation(-5.0, 8.0, 10.0)),
             common_shapes.items[mesh_index_capsule],
         );
         createEntity(world, body, .{ 1.0, 0.5, 0.0, 0.5 }, entities);
@@ -661,7 +661,7 @@ fn setupScene0(
     {
         const body = zbt.Body.init(
             40.0,
-            &zm.mat43ToArr(zm.translation(5.0, 5.0, 10.0)),
+            &zm.matToArr43(zm.translation(5.0, 5.0, 10.0)),
             common_shapes.items[mesh_index_compound1],
         );
         createEntity(world, body, .{ 0.05, 0.1, 0.8, 0.5 }, entities);
@@ -671,7 +671,7 @@ fn setupScene0(
         box.setUserIndex(0, @intCast(i32, mesh_index_cube));
         scene_shapes.append(box.asShape()) catch unreachable;
 
-        const box_body = zbt.Body.init(15.0, &zm.mat43ToArr(zm.translation(-5.0, 5.0, 5.0)), box.asShape());
+        const box_body = zbt.Body.init(15.0, &zm.matToArr43(zm.translation(-5.0, 5.0, 5.0)), box.asShape());
         createEntity(world, box_body, .{ 1.0, 0.9, 0.0, 0.75 }, entities);
     }
     {
@@ -681,7 +681,7 @@ fn setupScene0(
 
         const sphere_body = zbt.Body.init(
             10.0,
-            &zm.mat43ToArr(zm.translation(-5.0, 10.0, 5.0)),
+            &zm.matToArr43(zm.translation(-5.0, 10.0, 5.0)),
             sphere.asShape(),
         );
         createEntity(world, sphere_body, .{ 0.0, 0.0, 1.0, 0.5 }, entities);
@@ -705,7 +705,7 @@ fn setupScene1(
 
     const world_body = zbt.Body.init(
         0.0,
-        &zm.mat43ToArr(zm.identity()),
+        &zm.matToArr43(zm.identity()),
         common_shapes.items[mesh_index_world],
     );
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
@@ -723,7 +723,7 @@ fn setupScene1(
         while (i < num_cubes_per_stack) : (i += 1) {
             const box_body = zbt.Body.init(
                 2.5,
-                &zm.mat43ToArr(zm.translation(x, 2.2 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
+                &zm.matToArr43(zm.translation(x, 2.2 + @intToFloat(f32, i) * 2.0 + 0.05, z)),
                 common_shapes.items[mesh_index_cube],
             );
             createEntity(
@@ -753,7 +753,7 @@ fn setupScene2(
 
     const world_body = zbt.Body.init(
         0.0,
-        &zm.mat43ToArr(zm.identity()),
+        &zm.matToArr43(zm.identity()),
         common_shapes.items[mesh_index_world],
     );
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
@@ -769,7 +769,7 @@ fn setupScene2(
             while (x <= bound) : (x += 2.0) {
                 const box_body = zbt.Body.init(
                     0.5,
-                    &zm.mat43ToArr(zm.translation(x, y, z)),
+                    &zm.matToArr43(zm.translation(x, y, z)),
                     common_shapes.items[mesh_index_cube],
                 );
                 createEntity(
@@ -799,7 +799,7 @@ fn setupScene3(
 
     const world_body = zbt.Body.init(
         0.0,
-        &zm.mat43ToArr(zm.identity()),
+        &zm.matToArr43(zm.identity()),
         common_shapes.items[mesh_index_world],
     );
     createEntity(world, world_body, .{ 0.25, 0.25, 0.25, 0.125 }, entities);
@@ -822,17 +822,17 @@ fn setupScene3(
 
             const left_body = zbt.Body.init(
                 mass,
-                &zm.mat43ToArr(zm.translation(xoffsets[j] + -2.5, y, zoffsets[j] + 0.0)),
+                &zm.matToArr43(zm.translation(xoffsets[j] + -2.5, y, zoffsets[j] + 0.0)),
                 box.asShape(),
             );
             const right_body = zbt.Body.init(
                 mass,
-                &zm.mat43ToArr(zm.translation(xoffsets[j] + 2.5, y, zoffsets[j] + 0.0)),
+                &zm.matToArr43(zm.translation(xoffsets[j] + 2.5, y, zoffsets[j] + 0.0)),
                 box.asShape(),
             );
             const top_body = zbt.Body.init(
                 mass,
-                &zm.mat43ToArr(
+                &zm.matToArr43(
                     zm.mul(zm.rotationZ(0.5 * math.pi), zm.translation(xoffsets[j], y + 3.5, zoffsets[j])),
                 ),
                 box.asShape(),
@@ -858,7 +858,7 @@ fn setupScene3(
 
         const box_body = zbt.Body.init(
             mass,
-            &zm.mat43ToArr(
+            &zm.matToArr43(
                 zm.mul(zm.rotationY(-theta), zm.translation(x, 4.0, z)),
             ),
             box.asShape(),
@@ -1086,10 +1086,10 @@ fn initMeshes(
         assert(mesh_index == mesh_index_compound0);
 
         const compound = zbt.CompoundShape.init(.{});
-        compound.addChild(&zm.mat43ToArr(zm.translation(2.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
-        compound.addChild(&zm.mat43ToArr(zm.translation(-2.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.0, 0.0)), shapes.items[mesh_index_cube]);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, -2.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.matToArr43(zm.translation(2.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.matToArr43(zm.translation(-2.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.matToArr43(zm.translation(0.0, 2.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.matToArr43(zm.translation(0.0, -2.0, 0.0)), shapes.items[mesh_index_cube]);
         shapes.items[mesh_index] = compound.asShape();
         shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index_compound0));
     }
@@ -1127,9 +1127,9 @@ fn initMeshes(
         try shapes.append(cylinder_shape);
 
         const compound = zbt.CompoundShape.init(.{});
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 4.0, 0.0)), shapes.items[mesh_index_sphere]);
-        compound.addChild(&zm.mat43ToArr(zm.translation(0.0, 2.5, 0.0)), cylinder_shape);
+        compound.addChild(&zm.matToArr43(zm.translation(0.0, 0.0, 0.0)), shapes.items[mesh_index_cube]);
+        compound.addChild(&zm.matToArr43(zm.translation(0.0, 4.0, 0.0)), shapes.items[mesh_index_sphere]);
+        compound.addChild(&zm.matToArr43(zm.translation(0.0, 2.5, 0.0)), cylinder_shape);
         shapes.items[mesh_index] = compound.asShape();
         shapes.items[mesh_index].setUserIndex(0, @intCast(i32, mesh_index_compound1));
     }

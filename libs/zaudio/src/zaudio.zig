@@ -55,6 +55,19 @@ pub const Engine = struct {
     pub fn setGainDb(engine: Engine, gain_db: f32) Error!void {
         try checkResult(c.ma_engine_set_gain_db(engine.handle, gain_db));
     }
+
+    pub fn getNumListeners(engine: Engine) u32 {
+        return c.ma_engine_get_listener_count(engine.handle);
+    }
+
+    pub fn findClosestListener(engine: Engine, absolute_pos_xyz: [3]f32) u32 {
+        return c.ma_engine_find_closest_listener(
+            engine.handle,
+            absolute_pos_xyz[0],
+            absolute_pos_xyz[1],
+            absolute_pos_xyz[2],
+        );
+    }
 };
 
 pub const Error = error{
@@ -79,7 +92,12 @@ test "zaudio.engine.basic" {
 
     try engine.setTime(engine.getTime());
 
-    std.debug.print("Channels: {}, SampleRate: {}\n", .{ engine.getChannels(), engine.getSampleRate() });
+    std.debug.print("Channels: {}, SampleRate: {}, NumListeners: {}, ClosestListener: {}\n", .{
+        engine.getChannels(),
+        engine.getSampleRate(),
+        engine.getNumListeners(),
+        engine.findClosestListener(.{ 0.0, 0.0, 0.0 }),
+    });
 
     try engine.start();
     try engine.stop();

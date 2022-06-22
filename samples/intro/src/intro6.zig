@@ -196,14 +196,14 @@ fn init(allocator: std.mem.Allocator) !DemoState {
 
         const box_body = zbt.Body.init(
             1.0, // mass
-            &zm.mat43ToArr(zm.translation(0.0, 3.0, 0.0)),
+            &zm.matToArr43(zm.translation(0.0, 3.0, 0.0)),
             box_shape.asShape(),
         );
         physics_world.addBody(box_body);
 
         const ground_body = zbt.Body.init(
             0.0, // static body
-            &zm.mat43ToArr(zm.identity()),
+            &zm.matToArr43(zm.identity()),
             ground_shape.asShape(),
         );
         physics_world.addBody(ground_body);
@@ -394,7 +394,7 @@ fn update(demo: *DemoState) void {
 
             const body = zbt.Body.init(
                 1.0,
-                &zm.mat43ToArr(transform),
+                &zm.matToArr43(transform),
                 demo.physics.shapes.items[0],
             );
             body.setFriction(2.1);

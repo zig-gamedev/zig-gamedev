@@ -1176,11 +1176,11 @@ test "zbullet.shape.compound" {
     defer box.deinit();
 
     cshape.addChild(
-        &zm.mat43ToArr(zm.translation(1.0, 2.0, 3.0)),
+        &zm.matToArr43(zm.translation(1.0, 2.0, 3.0)),
         sphere.asShape(),
     );
     cshape.addChild(
-        &zm.mat43ToArr(zm.translation(-1.0, -2.0, -3.0)),
+        &zm.matToArr43(zm.translation(-1.0, -2.0, -3.0)),
         box.asShape(),
     );
     try expect(cshape.getNumChilds() == 2);
@@ -1282,7 +1282,7 @@ test "zbullet.body.basic" {
 
         const body = Body.init(
             0.0, // static body
-            &zm.mat43ToArr(zm.translation(2.0, 3.0, 4.0)),
+            &zm.matToArr43(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
         );
         defer body.deinit();
@@ -1311,7 +1311,7 @@ test "zbullet.constraint.point2point" {
 
         const body = Body.init(
             1.0,
-            &zm.mat43ToArr(zm.translation(2.0, 3.0, 4.0)),
+            &zm.matToArr43(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
         );
         defer body.deinit();
@@ -1348,14 +1348,14 @@ test "zbullet.constraint.point2point" {
 
         const body0 = Body.init(
             1.0,
-            &zm.mat43ToArr(zm.translation(2.0, 3.0, 4.0)),
+            &zm.matToArr43(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
         );
         defer body0.deinit();
 
         const body1 = Body.init(
             1.0,
-            &zm.mat43ToArr(zm.translation(2.0, 3.0, 4.0)),
+            &zm.matToArr43(zm.translation(2.0, 3.0, 4.0)),
             sphere.asShape(),
         );
         defer body1.deinit();
