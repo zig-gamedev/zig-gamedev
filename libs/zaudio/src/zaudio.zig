@@ -286,6 +286,94 @@ pub const SoundGroup = struct {
     pub fn getPositioning(sgroup: SoundGroup) Positioning {
         return c.ma_sound_group_get_positioning(sgroup.handle);
     }
+
+    pub fn setRolloff(sgroup: SoundGroup, rolloff: f32) void {
+        c.ma_sound_group_set_rolloff(sgroup.handle, rolloff);
+    }
+    pub fn getRolloff(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_rolloff(sgroup.handle);
+    }
+
+    pub fn setMinGain(sgroup: SoundGroup, min_gain: f32) void {
+        c.ma_sound_group_set_min_gain(sgroup.handle, min_gain);
+    }
+    pub fn getMinGain(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_min_gain(sgroup.handle);
+    }
+
+    pub fn setMaxGain(sgroup: SoundGroup, max_gain: f32) void {
+        c.ma_sound_group_set_max_gain(sgroup.handle, max_gain);
+    }
+    pub fn getMaxGain(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_max_gain(sgroup.handle);
+    }
+
+    pub fn setMinDistance(sgroup: SoundGroup, min_distance: f32) void {
+        c.ma_sound_group_set_min_distance(sgroup.handle, min_distance);
+    }
+    pub fn getMinDistance(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_min_distance(sgroup.handle);
+    }
+
+    pub fn setMaxDistance(sgroup: SoundGroup, max_distance: f32) void {
+        c.ma_sound_group_set_max_distance(sgroup.handle, max_distance);
+    }
+    pub fn getMaxDistance(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_max_distance(sgroup.handle);
+    }
+
+    pub fn setCone(sgroup: SoundGroup, inner_radians: f32, outer_radians: f32, outer_gain: f32) void {
+        c.ma_sound_group_set_cone(sgroup.handle, inner_radians, outer_radians, outer_gain);
+    }
+    pub fn getCone(sgroup: SoundGroup, inner_radians: ?*f32, outer_radians: ?*f32, outer_gain: ?*f32) void {
+        c.ma_sound_group_get_cone(sgroup.handle, inner_radians, outer_radians, outer_gain);
+    }
+
+    pub fn setDopplerFactor(sgroup: SoundGroup, factor: f32) void {
+        c.ma_sound_group_set_doppler_factor(sgroup.handle, factor);
+    }
+    pub fn getDopplerFactor(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_doppler_factor(sgroup.handle);
+    }
+
+    pub fn setDirectionalAttenuationFactor(sgroup: SoundGroup, factor: f32) void {
+        c.ma_sound_group_set_directional_attenuation_factor(sgroup.handle, factor);
+    }
+    pub fn getDirectionalAttenuationFactor(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_directional_attenuation_factor(sgroup.handle);
+    }
+
+    pub fn setFadeInPcmFrames(sgroup: SoundGroup, volume_begin: f32, volume_end: f32, len_in_frames: u64) void {
+        c.ma_sound_group_set_fade_in_pcm_frames(sgroup.handle, volume_begin, volume_end, len_in_frames);
+    }
+    pub fn setFadeInMilliseconds(sgroup: SoundGroup, volume_begin: f32, volume_end: f32, len_in_ms: u64) void {
+        c.ma_sound_group_set_fade_in_milliseconds(sgroup.handle, volume_begin, volume_end, len_in_ms);
+    }
+    pub fn getCurrentFadeVolume(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_current_fade_volume(sgroup.handle);
+    }
+
+    pub fn setStartTimeInPcmFrames(sgroup: SoundGroup, abs_global_time_in_frames: u64) void {
+        c.ma_sound_group_set_start_time_in_pcm_frames(sgroup.handle, abs_global_time_in_frames);
+    }
+    pub fn setStartTimeInMilliseconds(sgroup: SoundGroup, abs_global_time_in_ms: u64) void {
+        c.ma_sound_group_set_start_time_in_milliseconds(sgroup.handle, abs_global_time_in_ms);
+    }
+
+    pub fn setStopTimeInPcmFrames(sgroup: SoundGroup, abs_global_time_in_frames: u64) void {
+        c.ma_sound_group_set_stop_time_in_pcm_frames(sgroup.handle, abs_global_time_in_frames);
+    }
+    pub fn setStopTimeInMilliseconds(sgroup: SoundGroup, abs_global_time_in_ms: u64) void {
+        c.ma_sound_group_set_stop_time_in_milliseconds(sgroup.handle, abs_global_time_in_ms);
+    }
+
+    pub fn isPlaying(sgroup: SoundGroup) bool {
+        return c.ma_sound_group_is_playing(sgroup.handle) == c.MA_TRUE;
+    }
+
+    pub fn getTimeInPcmFrames(sgroup: SoundGroup) u64 {
+        return c.ma_sound_group_get_time_in_pcm_frames(sgroup.handle);
+    }
 };
 
 pub const Error = error{
