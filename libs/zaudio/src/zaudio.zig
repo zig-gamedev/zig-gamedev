@@ -1,5 +1,23 @@
 const std = @import("std");
+const assert = std.debug.assert;
 const c = @cImport(@cInclude("miniaudio.h"));
+
+pub const SoundFlags = packed struct {
+    stream: bool = false,
+    decode: bool = false,
+    @"async": bool = false,
+    wait_init: bool = false,
+    no_default_attachment: bool = false,
+    no_pitch: bool = false,
+    no_spatialization: bool = false,
+
+    _pad0: u9 = 0,
+    _pad1: u16 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
 
 pub const EngineConfig = c.ma_engine_config;
 
@@ -128,6 +146,62 @@ pub const Engine = struct {
     }
 };
 
+pub const SoundGroup = struct {
+    handle: *c.ma_sound_group,
+
+    pub fn init(
+        allocator: std.mem.Allocator,
+        engine: Engine,
+        flags: SoundFlags,
+        parent: ?SoundGroup,
+    ) Error!SoundGroup {
+        var handle = allocator.create(c.ma_sound_group) catch return error.OutOfMemory;
+        errdefer allocator.destroy(handle);
+
+        try checkResult(c.ma_sound_group_init(
+            engine.handle,
+            @bitCast(u32, flags),
+            if (parent) |p| p.handle else null,
+            handle,
+        ));
+
+        return SoundGroup{ .handle = handle };
+    }
+
+    pub fn deinit(sgroup: SoundGroup, allocator: std.mem.Allocator) void {
+        c.ma_sound_group_uninit(sgroup.handle);
+        allocator.destroy(sgroup.handle);
+    }
+
+    pub fn getEngine(sgroup: SoundGroup) Engine {
+        return Engine{ .handle = c.ma_sound_group_get_engine(sgroup.handle) };
+    }
+
+    pub fn start(sgroup: SoundGroup) Error!void {
+        try checkResult(c.ma_sound_group_start(sgroup.handle));
+    }
+
+    pub fn stop(sgroup: SoundGroup) Error!void {
+        try checkResult(c.ma_sound_group_stop(sgroup.handle));
+    }
+
+    pub fn setVolume(sgroup: SoundGroup, volume: f32) void {
+        c.ma_sound_group_set_volume(sgroup.handle, volume);
+    }
+
+    pub fn getVolume(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_volume(sgroup.handle);
+    }
+
+    pub fn setPan(sgroup: SoundGroup, pan: f32) void {
+        c.ma_sound_group_set_pan(sgroup.handle, pan);
+    }
+
+    pub fn getPan(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_pan(sgroup.handle);
+    }
+};
+
 pub const Error = error{
     GenericError,
     InvalidArgs,
@@ -167,4 +241,24 @@ test "zaudio.engine.basic" {
 
     engine.setListenerEnabled(0, true);
     try expect(engine.isListenerEnabled(0) == true);
+}
+
+test "zaudio.soundgroup.basic" {
+    const engine = try Engine.init(std.testing.allocator, null);
+    defer engine.deinit(std.testing.allocator);
+
+    const sgroup = try SoundGroup.init(std.testing.allocator, engine, .{}, null);
+    defer sgroup.deinit(std.testing.allocator);
+
+    try expect(sgroup.getEngine().handle == engine.handle);
+
+    try sgroup.start();
+    try sgroup.stop();
+    try sgroup.start();
+
+    sgroup.setVolume(0.5);
+    try expect(sgroup.getVolume() == 0.5);
+
+    sgroup.setPan(0.25);
+    try expect(sgroup.getPan() == 0.25);
 }
