@@ -68,6 +68,64 @@ pub const Engine = struct {
             absolute_pos_xyz[2],
         );
     }
+
+    pub fn setListenerPosition(engine: Engine, index: u32, v: [3]f32) void {
+        c.ma_engine_listener_set_position(engine.handle, index, v[0], v[1], v[2]);
+    }
+    pub fn getListenerPosition(engine: Engine, index: u32) [3]f32 {
+        const v = c.ma_engine_listener_get_position(engine.handle, index);
+        return .{ v.x, v.y, v.z };
+    }
+
+    pub fn setListenerDirection(engine: Engine, index: u32, v: [3]f32) void {
+        c.ma_engine_listener_set_direction(engine.handle, index, v[0], v[1], v[2]);
+    }
+    pub fn getListenerDirection(engine: Engine, index: u32) [3]f32 {
+        const v = c.ma_engine_listener_get_direction(engine.handle, index);
+        return .{ v.x, v.y, v.z };
+    }
+
+    pub fn setListenerVelocity(engine: Engine, index: u32, v: [3]f32) void {
+        c.ma_engine_listener_set_velocity(engine.handle, index, v[0], v[1], v[2]);
+    }
+    pub fn getListenerVelocity(engine: Engine, index: u32) [3]f32 {
+        const v = c.ma_engine_listener_get_velocity(engine.handle, index);
+        return .{ v.x, v.y, v.z };
+    }
+
+    pub fn setListenerWorldUp(engine: Engine, index: u32, v: [3]f32) void {
+        c.ma_engine_listener_set_world_up(engine.handle, index, v[0], v[1], v[2]);
+    }
+    pub fn getListenerWorldUp(engine: Engine, index: u32) [3]f32 {
+        const v = c.ma_engine_listener_get_world_up(engine.handle, index);
+        return .{ v.x, v.y, v.z };
+    }
+
+    pub fn setListenerEnabled(engine: Engine, index: u32, enabled: bool) void {
+        c.ma_engine_listener_set_enabled(engine.handle, index, if (enabled) 1 else 0);
+    }
+    pub fn isListenerEnabled(engine: Engine, index: u32) bool {
+        return c.ma_engine_listener_is_enabled(engine.handle, index) == 1;
+    }
+
+    pub fn setListenerCone(
+        engine: Engine,
+        index: u32,
+        inner_radians: f32,
+        outer_radians: f32,
+        outer_gain: f32,
+    ) void {
+        c.ma_engine_listener_set_cone(engine.handle, index, inner_radians, outer_radians, outer_gain);
+    }
+    pub fn getListenerCone(
+        engine: Engine,
+        index: u32,
+        inner_radians: ?*f32,
+        outer_radians: ?*f32,
+        outer_gain: ?*f32,
+    ) void {
+        c.ma_engine_listener_get_cone(engine.handle, index, inner_radians, outer_radians, outer_gain);
+    }
 };
 
 pub const Error = error{
@@ -82,6 +140,8 @@ fn checkResult(result: c.ma_result) Error!void {
     if (result != c.MA_SUCCESS)
         return error.GenericError;
 }
+
+const expect = std.testing.expect;
 
 test "zaudio.engine.basic" {
     const engine = try Engine.init(std.testing.allocator, null);
@@ -104,4 +164,7 @@ test "zaudio.engine.basic" {
     try engine.start();
     try engine.setVolume(1.0);
     try engine.setGainDb(1.0);
+
+    engine.setListenerEnabled(0, true);
+    try expect(engine.isListenerEnabled(0) == true);
 }
