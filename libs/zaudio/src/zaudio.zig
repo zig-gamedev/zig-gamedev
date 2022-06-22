@@ -19,6 +19,23 @@ pub const SoundFlags = packed struct {
     }
 };
 
+pub const PanMode = enum(c_int) {
+    balance,
+    pan,
+};
+
+pub const AttenuationModel = enum(c_int) {
+    none,
+    inverse,
+    linear,
+    exponential,
+};
+
+pub const Positioning = enum(c_int) {
+    absolute,
+    relative,
+};
+
 pub const EngineConfig = c.ma_engine_config;
 
 pub const Engine = struct {
@@ -45,7 +62,6 @@ pub const Engine = struct {
     pub fn getTime(engine: Engine) u64 {
         return c.ma_engine_get_time(engine.handle);
     }
-
     pub fn setTime(engine: Engine, global_time: u64) Error!void {
         try checkResult(c.ma_engine_set_time(engine.handle, global_time));
     }
@@ -61,7 +77,6 @@ pub const Engine = struct {
     pub fn start(engine: Engine) Error!void {
         try checkResult(c.ma_engine_start(engine.handle));
     }
-
     pub fn stop(engine: Engine) Error!void {
         try checkResult(c.ma_engine_stop(engine.handle));
     }
@@ -120,10 +135,10 @@ pub const Engine = struct {
     }
 
     pub fn setListenerEnabled(engine: Engine, index: u32, enabled: bool) void {
-        c.ma_engine_listener_set_enabled(engine.handle, index, if (enabled) 1 else 0);
+        c.ma_engine_listener_set_enabled(engine.handle, index, if (enabled) c.MA_TRUE else c.MA_FALSE);
     }
     pub fn isListenerEnabled(engine: Engine, index: u32) bool {
-        return c.ma_engine_listener_is_enabled(engine.handle, index) == 1;
+        return c.ma_engine_listener_is_enabled(engine.handle, index) == c.MA_TRUE;
     }
 
     pub fn setListenerCone(
@@ -180,7 +195,6 @@ pub const SoundGroup = struct {
     pub fn start(sgroup: SoundGroup) Error!void {
         try checkResult(c.ma_sound_group_start(sgroup.handle));
     }
-
     pub fn stop(sgroup: SoundGroup) Error!void {
         try checkResult(c.ma_sound_group_stop(sgroup.handle));
     }
@@ -188,7 +202,6 @@ pub const SoundGroup = struct {
     pub fn setVolume(sgroup: SoundGroup, volume: f32) void {
         c.ma_sound_group_set_volume(sgroup.handle, volume);
     }
-
     pub fn getVolume(sgroup: SoundGroup) f32 {
         return c.ma_sound_group_get_volume(sgroup.handle);
     }
@@ -196,9 +209,82 @@ pub const SoundGroup = struct {
     pub fn setPan(sgroup: SoundGroup, pan: f32) void {
         c.ma_sound_group_set_pan(sgroup.handle, pan);
     }
-
     pub fn getPan(sgroup: SoundGroup) f32 {
         return c.ma_sound_group_get_pan(sgroup.handle);
+    }
+
+    pub fn setPanMode(sgroup: SoundGroup, pan_mode: PanMode) void {
+        c.ma_sound_group_set_pan_mode(sgroup.handle, pan_mode);
+    }
+    pub fn getPanMode(sgroup: SoundGroup) PanMode {
+        return c.ma_sound_group_get_pan_mode(sgroup.handle);
+    }
+
+    pub fn setPitch(sgroup: SoundGroup, pitch: f32) void {
+        c.ma_sound_group_set_pitch(sgroup.handle, pitch);
+    }
+    pub fn getPitch(sgroup: SoundGroup) f32 {
+        return c.ma_sound_group_get_pitch(sgroup.handle);
+    }
+
+    pub fn setSpatializationEnabled(sgroup: SoundGroup, enabled: bool) void {
+        c.ma_sound_group_set_spatialization_enabled(sgroup.handle, if (enabled) c.MA_TRUE else c.MA_FALSE);
+    }
+    pub fn isSpatializationEnabled(sgroup: SoundGroup) bool {
+        return c.ma_sound_group_is_spatialization_enabled(sgroup.handle) == c.MA_TRUE;
+    }
+
+    pub fn setPinnedListenerIndex(sgroup: SoundGroup, index: u32) void {
+        c.ma_sound_group_set_pinned_listener_index(sgroup.handle, index);
+    }
+    pub fn getPinnedListenerIndex(sgroup: SoundGroup) u32 {
+        return c.ma_sound_group_get_pinned_listener_index(sgroup.handle);
+    }
+    pub fn getListenerIndex(sgroup: SoundGroup) u32 {
+        return c.ma_sound_group_get_listener_index(sgroup.handle);
+    }
+
+    pub fn getDirectionToListener(sgroup: SoundGroup) [3]f32 {
+        const v = c.ma_sound_group_get_direction_to_listener(sgroup.handle);
+        return .{ v.x, v.y, v.z };
+    }
+
+    pub fn setPosition(sgroup: SoundGroup, v: [3]f32) void {
+        c.ma_sound_group_set_position(sgroup.handle, v[0], v[1], v[2]);
+    }
+    pub fn getPosition(sgroup: SoundGroup) [3]f32 {
+        const v = c.ma_sound_group_get_position(sgroup.handle);
+        return .{ v.x, v.y, v.z };
+    }
+
+    pub fn setDirection(sgroup: SoundGroup, v: [3]f32) void {
+        c.ma_sound_group_set_direction(sgroup.handle, v[0], v[1], v[2]);
+    }
+    pub fn getDirection(sgroup: SoundGroup) [3]f32 {
+        const v = c.ma_sound_group_get_direction(sgroup.handle);
+        return .{ v.x, v.y, v.z };
+    }
+
+    pub fn setVelocity(sgroup: SoundGroup, v: [3]f32) void {
+        c.ma_sound_group_set_velocity(sgroup.handle, v[0], v[1], v[2]);
+    }
+    pub fn getVelocity(sgroup: SoundGroup) [3]f32 {
+        const v = c.ma_sound_group_get_velocity(sgroup.handle);
+        return .{ v.x, v.y, v.z };
+    }
+
+    pub fn setAttenuationModel(sgroup: SoundGroup, model: AttenuationModel) void {
+        c.ma_sound_group_set_attenuation_model(sgroup.handle, model);
+    }
+    pub fn getAttenuationModel(sgroup: SoundGroup) AttenuationModel {
+        return c.ma_sound_group_get_attenuation_model(sgroup.handle);
+    }
+
+    pub fn setPositioning(sgroup: SoundGroup, pos: Positioning) void {
+        c.ma_sound_group_set_positioning(sgroup.handle, pos);
+    }
+    pub fn getPositioning(sgroup: SoundGroup) Positioning {
+        return c.ma_sound_group_get_positioning(sgroup.handle);
     }
 };
 
@@ -261,4 +347,10 @@ test "zaudio.soundgroup.basic" {
 
     sgroup.setPan(0.25);
     try expect(sgroup.getPan() == 0.25);
+
+    sgroup.setDirection(.{ 1.0, 2.0, 3.0 });
+    {
+        const dir = sgroup.getDirection();
+        try expect(dir[0] == 1.0 and dir[1] == 2.0 and dir[2] == 3.0);
+    }
 }
