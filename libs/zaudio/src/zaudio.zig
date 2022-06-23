@@ -215,6 +215,14 @@ pub const Engine = struct {
     ) void {
         c.ma_engine_listener_get_cone(engine.handle, index, inner_radians, outer_radians, outer_gain);
     }
+
+    pub fn playSound(engine: Engine, filepath: [:0]const u8, sgroup: ?SoundGroup) Error!void {
+        try checkResult(c.ma_engine_play_sound(engine.handle, filepath.ptr, if (sgroup) |g| g.handle else null));
+    }
+
+    pub fn playSoundEx(engine: Engine, filepath: [:0]const u8, node: ?Node, node_input_bus_index: u32) Error!void {
+        try checkResult(c.ma_engine_play_sound_ex(engine.handle, filepath.ptr, if (node) |n| n.handle else null, node_input_bus_index));
+    }
 };
 
 pub const Sound = struct {
