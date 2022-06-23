@@ -376,6 +376,36 @@ pub const SoundGroup = struct {
     }
 };
 
+pub const Fence = struct {
+    handle: *c.ma_fence,
+
+    pub fn init(allocator: std.mem.Allocator) Error!Fence {
+        var handle = allocator.create(c.ma_fence) catch return error.OutOfMemory;
+        errdefer allocator.destroy(handle);
+
+        try checkResult(c.ma_fence_init(handle));
+
+        return Fence{ .handle = handle };
+    }
+
+    pub fn deinit(fence: Fence, allocator: std.mem.Allocator) void {
+        c.ma_fence_uninit(fence.handle);
+        allocator.destroy(fence.handle);
+    }
+
+    pub fn acquire(fence: Fence) Error!void {
+        try checkResult(c.ma_fence_acquire(fence.handle));
+    }
+
+    pub fn release(fence: Fence) Error!void {
+        try checkResult(c.ma_fence_release(fence.handle));
+    }
+
+    pub fn wait(fence: Fence) Error!void {
+        try checkResult(c.ma_fence_wait(fence.handle));
+    }
+};
+
 pub const Error = error{
     GenericError,
     InvalidArgs,
@@ -441,4 +471,13 @@ test "zaudio.soundgroup.basic" {
         const dir = sgroup.getDirection();
         try expect(dir[0] == 1.0 and dir[1] == 2.0 and dir[2] == 3.0);
     }
+}
+
+test "zaudio.fence.basic" {
+    const fence = try Fence.init(std.testing.allocator);
+    defer fence.deinit(std.testing.allocator);
+
+    try fence.acquire();
+    try fence.release();
+    try fence.wait();
 }
