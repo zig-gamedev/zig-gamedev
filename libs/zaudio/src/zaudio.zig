@@ -47,7 +47,32 @@ pub const Format = enum(c_int) {
 
 pub const EngineConfig = c.ma_engine_config;
 pub const SoundConfig = c.ma_sound_config;
-pub const Channel = c.ma_channel; // u8
+pub const Channel = c.ma_channel;
+
+pub const NodeGraph = struct {
+    handle: *c.ma_node_graph,
+    // TODO: Add methods.
+};
+
+pub const ResourceManager = struct {
+    handle: *c.ma_resource_manager,
+    // TODO: Add methods.
+};
+
+pub const Device = struct {
+    handle: *c.ma_device,
+    // TODO: Add methods.
+};
+
+pub const Log = struct {
+    handle: *c.ma_log,
+    // TODO: Add methods.
+};
+
+pub const Node = struct {
+    handle: *c.ma_node,
+    // TODO: Add methods.
+};
 
 pub const Engine = struct {
     handle: *c.ma_engine,
@@ -68,6 +93,26 @@ pub const Engine = struct {
 
     pub fn readPcmFrames(engine: Engine, comptime T: type, frames: []T, frames_read: ?*u64) Error!void {
         try checkResult(c.ma_engine_read_pcm_frames(engine.handle, frames.ptr, frames.len, frames_read));
+    }
+
+    pub fn getNodeGraph(engine: Engine) NodeGraph {
+        return .{ .handle = c.ma_engine_get_node_graph(engine.handle) };
+    }
+
+    pub fn getResourceManager(engine: Engine) ResourceManager {
+        return .{ .handle = c.ma_engine_get_resource_manager(engine.handle) };
+    }
+
+    pub fn getDevice(engine: Engine) Device {
+        return .{ .handle = c.ma_engine_get_device(engine.handle) };
+    }
+
+    pub fn getLog(engine: Engine) Log {
+        return .{ .handle = c.ma_engine_get_log(engine.handle) };
+    }
+
+    pub fn getEndpoint(engine: Engine) Node {
+        return .{ .handle = c.ma_engine_get_endpoint(engine.handle) };
     }
 
     pub fn getTime(engine: Engine) u64 {
@@ -750,7 +795,6 @@ pub const Fence = struct {
 
 pub const DataSource = struct {
     handle: *c.ma_data_source,
-
     // TODO: Add methods.
 };
 
