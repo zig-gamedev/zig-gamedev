@@ -45,6 +45,8 @@ pub const BIND_UNORDERED_ACCESS = 0x80;
 pub const BIND_DECODER = 0x200;
 pub const BIND_VIDEO_ENCODER = 0x400;
 
+pub const RECT = windows.RECT;
+
 pub const RESOURCE_DIMENSION = enum(UINT) {
     UNKNOWN = 0,
     BUFFER = 1,
@@ -753,6 +755,9 @@ pub const IDeviceContext = extern struct {
             ) void {
                 self.v.devctx.RSSetViewports(self, NumViewports, pViewports);
             }
+            pub inline fn RSSetScissorRects(self: *T, NumRects: UINT, pRects: ?[*]const RECT) void {
+                self.v.devctx.RSSetScissorRects(self, NumRects, pRects);
+            }
             pub inline fn ClearRenderTargetView(
                 self: *T,
                 pRenderTargetView: *IRenderTargetView,
@@ -865,7 +870,7 @@ pub const IDeviceContext = extern struct {
             DispatchIndirect: *anyopaque,
             RSSetState: fn (*T, ?*IRasterizerState) callconv(WINAPI) void,
             RSSetViewports: fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
-            RSSetScissorRects: *anyopaque,
+            RSSetScissorRects: fn (*T, UINT, ?[*]const RECT) callconv(WINAPI) void,
             CopySubresourceRegion: *anyopaque,
             CopyResource: *anyopaque,
             UpdateSubresource: *anyopaque,
