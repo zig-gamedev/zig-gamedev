@@ -45,9 +45,23 @@ pub const Format = enum(c_int) {
     format_f32,
 };
 
-pub const EngineConfig = c.ma_engine_config;
-pub const SoundConfig = c.ma_sound_config;
 pub const Channel = c.ma_channel;
+
+pub const EngineConfig = struct {
+    raw: c.ma_engine_config,
+
+    pub fn init() EngineConfig {
+        return .{ .raw = c.ma_engine_config_init() };
+    }
+};
+
+pub const SoundConfig = struct {
+    raw: c.ma_sound_config,
+
+    pub fn init() SoundConfig {
+        return .{ .raw = c.ma_sound_config_init() };
+    }
+};
 
 pub const NodeGraph = struct {
     handle: *c.ma_node_graph,
@@ -77,11 +91,20 @@ pub const Node = struct {
 pub const Engine = struct {
     handle: *c.ma_engine,
 
-    pub fn init(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
+    pub fn init(allocator: std.mem.Allocator) Error!Engine {
         var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 
-        try checkResult(c.ma_engine_init(if (config != null) &config.? else null, handle));
+        try checkResult(c.ma_engine_init(null, handle));
+
+        return Engine{ .handle = handle };
+    }
+
+    pub fn initWithConfig(allocator: std.mem.Allocator, config: EngineConfig) Error!Engine {
+        var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
+        errdefer allocator.destroy(handle);
+
+        try checkResult(c.ma_engine_init(&config.raw, handle));
 
         return Engine{ .handle = handle };
     }
@@ -301,13 +324,18 @@ pub const Sound = struct {
         var handle = allocator.create(c.ma_sound) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 
-        try checkResult(c.ma_sound_init_ex(engine.handle, &config, handle));
+        try checkResult(c.ma_sound_init_ex(engine.handle, &config.raw, handle));
 
         return Sound{ .handle = handle };
     }
 
+    pub fn deinit(sound: Sound, allocator: std.mem.Allocator) void {
+        c.ma_sound_uninit(sound.handle);
+        allocator.destroy(sound.handle);
+    }
+
     pub fn getEngine(sound: Sound) Engine {
-        return Engine{ .handle = c.ma_sound_get_engine(sound.handle) };
+        return .{ .handle = c.ma_sound_get_engine(sound.handle) };
     }
 
     pub fn getDataSource(sound: Sound) ?DataSource {
@@ -822,7 +850,7 @@ fn checkResult(result: c.ma_result) Error!void {
 const expect = std.testing.expect;
 
 test "zaudio.engine.basic" {
-    const engine = try Engine.init(std.testing.allocator, null);
+    const engine = try Engine.init(std.testing.allocator);
     defer engine.deinit(std.testing.allocator);
 
     var frames: [2]f32 = undefined;
@@ -848,7 +876,7 @@ test "zaudio.engine.basic" {
 }
 
 test "zaudio.soundgroup.basic" {
-    const engine = try Engine.init(std.testing.allocator, null);
+    const engine = try Engine.init(std.testing.allocator);
     defer engine.deinit(std.testing.allocator);
 
     const sgroup = try SoundGroup.init(std.testing.allocator, engine, .{}, null);
@@ -880,4 +908,17 @@ test "zaudio.fence.basic" {
     try fence.acquire();
     try fence.release();
     try fence.wait();
+}
+
+test "zaudio.sound.basic" {
+    const engine = try Engine.init(std.testing.allocator);
+    defer engine.deinit(std.testing.allocator);
+
+    var config = SoundConfig.init();
+    config.raw.channelsIn = 1;
+    const sound = try Sound.initWithConfig(std.testing.allocator, engine, config);
+    defer sound.deinit(std.testing.allocator);
+
+    sound.setVolume(0.25);
+    try expect(sound.getVolume() == 0.25);
 }
