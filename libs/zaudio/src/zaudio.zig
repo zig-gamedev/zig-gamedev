@@ -36,8 +36,18 @@ pub const Positioning = enum(c_int) {
     relative,
 };
 
+pub const Format = enum(c_int) {
+    unknown,
+    format_u8,
+    format_s16,
+    format_s24,
+    format_s32,
+    format_f32,
+};
+
 pub const EngineConfig = c.ma_engine_config;
 pub const SoundConfig = c.ma_sound_config;
+pub const Channel = c.ma_channel; // u8
 
 pub const Engine = struct {
     handle: *c.ma_engine,
@@ -434,6 +444,38 @@ pub const Sound = struct {
 
     pub fn getTimeInPcmFrames(sound: Sound) u64 {
         return c.ma_sound_get_time_in_pcm_frames(sound.handle);
+    }
+
+    pub fn setLooping(sound: Sound, looping: bool) void {
+        return c.ma_sound_set_looping(sound.handle, if (looping) c.MA_TRUE else c.MA_FALSE);
+    }
+    pub fn isLooping(sound: Sound) bool {
+        return c.ma_sound_is_looping(sound.handle) == c.MA_TRUE;
+    }
+
+    pub fn isAtEnd(sound: Sound) bool {
+        return c.ma_sound_at_end(sound.handle) == c.MA_TRUE;
+    }
+
+    pub fn seekToPcmFrame(sound: Sound, frame: u64) Error!void {
+        try checkResult(c.ma_sound_seek_to_pcm_frame(sound.handle, frame));
+    }
+
+    pub fn getDataFormat(
+        sound: Sound,
+        format: ?*Format,
+        num_channels: ?*u32,
+        sample_rate: ?*u32,
+        channel_map: ?[]Channel,
+    ) Error!void {
+        try checkResult(c.ma_sound_get_data_format(
+            sound.handle,
+            format,
+            num_channels,
+            sample_rate,
+            if (channel_map) |chm| chm.ptr else null,
+            if (channel_map) |chm| chm.len else 0,
+        ));
     }
 };
 
