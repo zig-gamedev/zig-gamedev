@@ -477,6 +477,30 @@ pub const Sound = struct {
             if (channel_map) |chm| chm.len else 0,
         ));
     }
+
+    pub fn getCursorInPcmFrames(sound: Sound) Error!u64 {
+        var cursor: u64 = undefined;
+        try checkResult(c.ma_sound_get_cursor_in_pcm_frames(sound.handle, &cursor));
+        return cursor;
+    }
+
+    pub fn getLengthInPcmFrames(sound: Sound) Error!u64 {
+        var length: u64 = undefined;
+        try checkResult(c.ma_sound_get_length_in_pcm_frames(sound.handle, &length));
+        return length;
+    }
+
+    pub fn getCursorInSeconds(sound: Sound) Error!f32 {
+        var cursor: f32 = undefined;
+        try checkResult(c.ma_sound_get_cursor_in_seconds(sound.handle, &cursor));
+        return cursor;
+    }
+
+    pub fn getLengthInSeconds(sound: Sound) Error!f32 {
+        var length: f32 = undefined;
+        try checkResult(c.ma_sound_get_length_in_seconds(sound.handle, &length));
+        return length;
+    }
 };
 
 pub const SoundGroup = struct {
