@@ -63,6 +63,11 @@ pub const SoundConfig = struct {
     }
 };
 
+pub const DataSource = struct {
+    handle: *c.ma_data_source,
+    // TODO: Add methods.
+};
+
 pub const NodeGraph = struct {
     handle: *c.ma_node_graph,
     // TODO: Add methods.
@@ -100,7 +105,7 @@ pub const Engine = struct {
         return Engine{ .handle = handle };
     }
 
-    pub fn initWithConfig(allocator: std.mem.Allocator, config: EngineConfig) Error!Engine {
+    pub fn initConfig(allocator: std.mem.Allocator, config: EngineConfig) Error!Engine {
         var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 
@@ -251,13 +256,15 @@ pub const Engine = struct {
 pub const Sound = struct {
     handle: *c.ma_sound,
 
-    pub fn initFromFile(
+    pub fn initFile(
         allocator: std.mem.Allocator,
         engine: Engine,
         filepath: [:0]const u8,
-        flags: SoundFlags,
-        sgroup: ?SoundGroup,
-        done_fence: ?Fence,
+        args: struct {
+            flags: SoundFlags = .{},
+            sgroup: ?SoundGroup = null,
+            done_fence: ?Fence = null,
+        },
     ) Error!Sound {
         var handle = allocator.create(c.ma_sound) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
@@ -265,16 +272,16 @@ pub const Sound = struct {
         try checkResult(c.ma_sound_init_from_file(
             engine.handle,
             filepath.ptr,
-            @bitCast(u32, flags),
-            if (sgroup) |g| g.handle else null,
-            if (done_fence) |f| f.handle else null,
+            @bitCast(u32, args.flags),
+            if (args.sgroup) |g| g.handle else null,
+            if (args.done_fence) |f| f.handle else null,
             handle,
         ));
 
         return Sound{ .handle = handle };
     }
 
-    pub fn initFromDataSource(
+    pub fn initDataSource(
         allocator: std.mem.Allocator,
         engine: Engine,
         data_source: DataSource,
@@ -316,7 +323,7 @@ pub const Sound = struct {
         return Sound{ .handle = handle };
     }
 
-    pub fn initWithConfig(
+    pub fn initConfig(
         allocator: std.mem.Allocator,
         engine: Engine,
         config: SoundConfig,
@@ -495,27 +502,27 @@ pub const Sound = struct {
         return c.ma_sound_get_directional_attenuation_factor(sound.handle);
     }
 
-    pub fn setFadeInPcmFrames(sound: Sound, volume_begin: f32, volume_end: f32, len_in_frames: u64) void {
+    pub fn setFadePcmFrames(sound: Sound, volume_begin: f32, volume_end: f32, len_in_frames: u64) void {
         c.ma_sound_set_fade_in_pcm_frames(sound.handle, volume_begin, volume_end, len_in_frames);
     }
-    pub fn setFadeInMilliseconds(sound: Sound, volume_begin: f32, volume_end: f32, len_in_ms: u64) void {
+    pub fn setFadeMilliseconds(sound: Sound, volume_begin: f32, volume_end: f32, len_in_ms: u64) void {
         c.ma_sound_set_fade_in_milliseconds(sound.handle, volume_begin, volume_end, len_in_ms);
     }
     pub fn getCurrentFadeVolume(sound: Sound) f32 {
         return c.ma_sound_get_current_fade_volume(sound.handle);
     }
 
-    pub fn setStartTimeInPcmFrames(sound: Sound, abs_global_time_in_frames: u64) void {
+    pub fn setStartTimePcmFrames(sound: Sound, abs_global_time_in_frames: u64) void {
         c.ma_sound_set_start_time_in_pcm_frames(sound.handle, abs_global_time_in_frames);
     }
-    pub fn setStartTimeInMilliseconds(sound: Sound, abs_global_time_in_ms: u64) void {
+    pub fn setStartTimeMilliseconds(sound: Sound, abs_global_time_in_ms: u64) void {
         c.ma_sound_set_start_time_in_milliseconds(sound.handle, abs_global_time_in_ms);
     }
 
-    pub fn setStopTimeInPcmFrames(sound: Sound, abs_global_time_in_frames: u64) void {
+    pub fn setStopTimePcmFrames(sound: Sound, abs_global_time_in_frames: u64) void {
         c.ma_sound_set_stop_time_in_pcm_frames(sound.handle, abs_global_time_in_frames);
     }
-    pub fn setStopTimeInMilliseconds(sound: Sound, abs_global_time_in_ms: u64) void {
+    pub fn setStopTimeMilliseconds(sound: Sound, abs_global_time_in_ms: u64) void {
         c.ma_sound_set_stop_time_in_milliseconds(sound.handle, abs_global_time_in_ms);
     }
 
@@ -523,7 +530,7 @@ pub const Sound = struct {
         return c.ma_sound_is_playing(sound.handle) == c.MA_TRUE;
     }
 
-    pub fn getTimeInPcmFrames(sound: Sound) u64 {
+    pub fn getTimePcmFrames(sound: Sound) u64 {
         return c.ma_sound_get_time_in_pcm_frames(sound.handle);
     }
 
@@ -559,25 +566,25 @@ pub const Sound = struct {
         ));
     }
 
-    pub fn getCursorInPcmFrames(sound: Sound) Error!u64 {
+    pub fn getCursorPcmFrames(sound: Sound) Error!u64 {
         var cursor: u64 = undefined;
         try checkResult(c.ma_sound_get_cursor_in_pcm_frames(sound.handle, &cursor));
         return cursor;
     }
 
-    pub fn getLengthInPcmFrames(sound: Sound) Error!u64 {
+    pub fn getLengthPcmFrames(sound: Sound) Error!u64 {
         var length: u64 = undefined;
         try checkResult(c.ma_sound_get_length_in_pcm_frames(sound.handle, &length));
         return length;
     }
 
-    pub fn getCursorInSeconds(sound: Sound) Error!f32 {
+    pub fn getCursorSeconds(sound: Sound) Error!f32 {
         var cursor: f32 = undefined;
         try checkResult(c.ma_sound_get_cursor_in_seconds(sound.handle, &cursor));
         return cursor;
     }
 
-    pub fn getLengthInSeconds(sound: Sound) Error!f32 {
+    pub fn getLengthSeconds(sound: Sound) Error!f32 {
         var length: f32 = undefined;
         try checkResult(c.ma_sound_get_length_in_seconds(sound.handle, &length));
         return length;
@@ -766,27 +773,27 @@ pub const SoundGroup = struct {
         return c.ma_sound_group_get_directional_attenuation_factor(sgroup.handle);
     }
 
-    pub fn setFadeInPcmFrames(sgroup: SoundGroup, volume_begin: f32, volume_end: f32, len_in_frames: u64) void {
+    pub fn setFadePcmFrames(sgroup: SoundGroup, volume_begin: f32, volume_end: f32, len_in_frames: u64) void {
         c.ma_sound_group_set_fade_in_pcm_frames(sgroup.handle, volume_begin, volume_end, len_in_frames);
     }
-    pub fn setFadeInMilliseconds(sgroup: SoundGroup, volume_begin: f32, volume_end: f32, len_in_ms: u64) void {
+    pub fn setFadeMilliseconds(sgroup: SoundGroup, volume_begin: f32, volume_end: f32, len_in_ms: u64) void {
         c.ma_sound_group_set_fade_in_milliseconds(sgroup.handle, volume_begin, volume_end, len_in_ms);
     }
     pub fn getCurrentFadeVolume(sgroup: SoundGroup) f32 {
         return c.ma_sound_group_get_current_fade_volume(sgroup.handle);
     }
 
-    pub fn setStartTimeInPcmFrames(sgroup: SoundGroup, abs_global_time_in_frames: u64) void {
+    pub fn setStartTimePcmFrames(sgroup: SoundGroup, abs_global_time_in_frames: u64) void {
         c.ma_sound_group_set_start_time_in_pcm_frames(sgroup.handle, abs_global_time_in_frames);
     }
-    pub fn setStartTimeInMilliseconds(sgroup: SoundGroup, abs_global_time_in_ms: u64) void {
+    pub fn setStartTimeMilliseconds(sgroup: SoundGroup, abs_global_time_in_ms: u64) void {
         c.ma_sound_group_set_start_time_in_milliseconds(sgroup.handle, abs_global_time_in_ms);
     }
 
-    pub fn setStopTimeInPcmFrames(sgroup: SoundGroup, abs_global_time_in_frames: u64) void {
+    pub fn setStopTimePcmFrames(sgroup: SoundGroup, abs_global_time_in_frames: u64) void {
         c.ma_sound_group_set_stop_time_in_pcm_frames(sgroup.handle, abs_global_time_in_frames);
     }
-    pub fn setStopTimeInMilliseconds(sgroup: SoundGroup, abs_global_time_in_ms: u64) void {
+    pub fn setStopTimeMilliseconds(sgroup: SoundGroup, abs_global_time_in_ms: u64) void {
         c.ma_sound_group_set_stop_time_in_milliseconds(sgroup.handle, abs_global_time_in_ms);
     }
 
@@ -794,7 +801,7 @@ pub const SoundGroup = struct {
         return c.ma_sound_group_is_playing(sgroup.handle) == c.MA_TRUE;
     }
 
-    pub fn getTimeInPcmFrames(sgroup: SoundGroup) u64 {
+    pub fn getTimePcmFrames(sgroup: SoundGroup) u64 {
         return c.ma_sound_group_get_time_in_pcm_frames(sgroup.handle);
     }
 };
@@ -827,11 +834,6 @@ pub const Fence = struct {
     pub fn wait(fence: Fence) Error!void {
         try checkResult(c.ma_fence_wait(fence.handle));
     }
-};
-
-pub const DataSource = struct {
-    handle: *c.ma_data_source,
-    // TODO: Add methods.
 };
 
 pub const Error = error{
@@ -916,7 +918,7 @@ test "zaudio.sound.basic" {
 
     var config = SoundConfig.init();
     config.raw.channelsIn = 1;
-    const sound = try Sound.initWithConfig(std.testing.allocator, engine, config);
+    const sound = try Sound.initConfig(std.testing.allocator, engine, config);
     defer sound.deinit(std.testing.allocator);
 
     sound.setVolume(0.25);
