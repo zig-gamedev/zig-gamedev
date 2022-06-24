@@ -14,6 +14,10 @@ const window_title = "zig-gamedev: audio experiments (wgpu)";
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
+    audio_engine: zaudio.Engine,
+
+    depth_tex: zgpu.TextureHandle,
+    depth_texv: zgpu.TextureViewHandle,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
@@ -23,20 +27,26 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     defer arena_state.deinit();
     //const arena = arena_state.allocator();
 
+    const depth = createDepthTexture(gctx);
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
+        .depth_tex = depth.tex,
+        .depth_texv = depth.texv,
+        .audio_engine = try zaudio.Engine.init(allocator),
     };
 
     return demo;
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
+    demo.audio_engine.deinit(allocator);
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
 }
 
-fn update(demo: *DemoState) void {
+fn update(demo: *DemoState) !void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
     if (zgui.begin("Demo Settings", null, .{ .no_move = true, .no_resize = true })) {
@@ -46,6 +56,9 @@ fn update(demo: *DemoState) void {
         );
         zgui.bulletText("Right Mouse Button + drag :  rotate camera", .{});
         zgui.bulletText("W, A, S, D :  move camera", .{});
+        if (zgui.button("  Play  ", .{})) {
+            try demo.audio_engine.playSound(content_dir ++ "loop_mika.flac", null);
+        }
     }
     zgui.end();
 }
@@ -75,7 +88,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.submit(&.{commands});
 
-    if (false and gctx.present() == .swap_chain_resized) {
+    if (gctx.present() == .swap_chain_resized) {
         // Release old depth texture.
         gctx.releaseResource(demo.depth_texv);
         gctx.destroyResource(demo.depth_tex);
@@ -136,7 +149,7 @@ pub fn main() !void {
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();
-        update(demo);
+        try update(demo);
         draw(demo);
     }
 }

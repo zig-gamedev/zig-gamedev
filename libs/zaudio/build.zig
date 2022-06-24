@@ -33,7 +33,6 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     }
 
     lib.addCSourceFile(thisDir() ++ "/libs/miniaudio/miniaudio.c", &.{
-        "-DMA_NO_FLAC",
         "-DMA_NO_WEBAUDIO",
         "-DMA_NO_ENCODING",
         "-DMA_NO_NULL",
