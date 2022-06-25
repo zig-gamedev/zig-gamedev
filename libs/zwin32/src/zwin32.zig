@@ -15,8 +15,10 @@ pub const mf = @import("mf.zig");
 pub const xaudio2 = @import("xaudio2.zig");
 pub const xaudio2fx = @import("xaudio2fx.zig");
 pub const xapo = @import("xapo.zig");
+pub const xinput = @import("xinput.zig");
 
-/// Disclaimer: You should probably precompile your shaders with dxc and not use d3dcompiler!
+/// Bindings for D3DCompiler_47
+/// Not recommended. Precompile your shaders with dxc instead.
 pub const d3dcompiler = @import("d3dcompiler.zig");
 
 const HRESULT = base.HRESULT;
@@ -28,7 +30,7 @@ const assert = std.debug.assert;
 
 // TODO: Handle more error codes from https://docs.microsoft.com/en-us/windows/win32/com/com-error-codes-10
 pub const HResultError =
-    base.Error || dxgi.Error || d3d12.Error || d3d11.Error || wasapi.Error || dwrite.Error || xapo.Error || base.MiscError;
+    base.MiscError || base.Error || dxgi.Error || d3d12.Error || d3d11.Error || wasapi.Error || dwrite.Error || xapo.Error || xinput.Error;
 
 pub fn hrPanic(err: HResultError) noreturn {
     panic(
@@ -125,6 +127,9 @@ pub fn hrToError(hr: HRESULT) HResultError {
         dwrite.E_FILEFORMAT => dwrite.Error.E_FILEFORMAT,
         //
         xapo.E_FORMAT_UNSUPPORTED => xapo.Error.E_FORMAT_UNSUPPORTED,
+        //
+        xinput.ERROR_EMPTY => xinput.Error.EMPTY,
+        xinput.ERROR_DEVICE_NOT_CONNECTED => xinput.Error.DEVICE_NOT_CONNECTED,
         //
         base.E_FILE_NOT_FOUND => base.MiscError.E_FILE_NOT_FOUND,
         base.S_FALSE => base.MiscError.S_FALSE,
