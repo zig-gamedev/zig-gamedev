@@ -48,6 +48,12 @@ ZGUI_API void zguiBulletText(const char* fmt, ...) {
     ImGui::BulletTextV(fmt, args);
     va_end(args);
 }
+ZGUI_API void zguiText(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    ImGui::TextV(fmt, args);
+    va_end(args);
+}
 ZGUI_API bool zguiRadioButtonIntPtr(const char* label, int* v, int v_button) {
     return ImGui::RadioButton(label, v, v_button);
 }

@@ -135,14 +135,25 @@ pub fn sliderInt(
     );
 }
 
+// TODO: Max. text length is hardcoded, make it more robust?
+const max_text_len = 512;
+
 pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
-    // TODO: Max. text length is hardcoded, make it more robust.
-    var buf: [512]u8 = undefined;
+    var buf: [max_text_len]u8 = undefined;
     const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch blk: {
         buf[buf.len - 1] = '\x00';
         break :blk buf[0 .. buf.len - 1 :0];
     };
     zguiBulletText("%s", result.ptr);
+}
+
+pub fn text(comptime fmt: []const u8, args: anytype) void {
+    var buf: [max_text_len]u8 = undefined;
+    const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch blk: {
+        buf[buf.len - 1] = '\x00';
+        break :blk buf[0 .. buf.len - 1 :0];
+    };
+    zguiText("%s", result.ptr);
 }
 
 pub fn radioButtonIntPtr(label: [:0]const u8, v: *i32, v_button: i32) bool {
@@ -202,6 +213,7 @@ extern fn zguiSliderInt(
     flags: u32,
 ) bool;
 extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
+extern fn zguiText(fmt: [*:0]const u8, ...) void;
 extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
 extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 

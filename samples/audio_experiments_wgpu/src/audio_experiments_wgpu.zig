@@ -56,7 +56,18 @@ fn update(demo: *DemoState) !void {
         );
         zgui.bulletText("Right Mouse Button + drag :  rotate camera", .{});
         zgui.bulletText("W, A, S, D :  move camera", .{});
-        if (zgui.button("  Play  ", .{})) {
+        zgui.spacing();
+
+        zgui.text("Sounds:", .{});
+        if (zgui.button("  Play Sound 1  ", .{})) {
+            try demo.audio_engine.playSound(content_dir ++ "drum_bass_hard.flac", null);
+        }
+        zgui.sameLine(.{});
+        if (zgui.button("  Play Sound 2  ", .{})) {
+            try demo.audio_engine.playSound(content_dir ++ "tabla_tas1.flac", null);
+        }
+        zgui.sameLine(.{});
+        if (zgui.button("  Play Sound 3  ", .{})) {
             try demo.audio_engine.playSound(content_dir ++ "loop_mika.flac", null);
         }
     }
