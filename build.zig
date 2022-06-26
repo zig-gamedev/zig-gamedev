@@ -86,11 +86,11 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&zpool_tests.step);
 
     // TODO: Make it work also on macOS.
-    if (options.target.isWindows() or options.target.isLinux()) {
-        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-        const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
-        test_step.dependOn(&zaudio_tests.step);
-    }
+    //if (options.target.isWindows() or options.target.isLinux()) {
+    installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zaudio_tests.step);
+    //}
 
     //
     // Benchmarks
