@@ -68,6 +68,14 @@ pub inline fn GET_Y_LPARAM(lparam: LPARAM) i32 {
     return @intCast(i32, @bitCast(i16, @intCast(u16, (lparam >> 16) & 0xffff)));
 }
 
+pub inline fn LOWORD(dword: DWORD) WORD {
+    return @bitCast(WORD, @intCast(u16, dword & 0xffff));
+}
+
+pub inline fn HIWORD(dword: DWORD) WORD {
+    return @bitCast(WORD, @intCast(u16, (dword >> 16) & 0xffff));
+}
+
 pub fn IUnknownVTable(comptime T: type) type {
     return extern struct {
         unknown: extern struct {
