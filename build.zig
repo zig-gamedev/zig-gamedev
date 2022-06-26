@@ -27,6 +27,7 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
     installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
     installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
+    installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
 
     //
     // Windows-only demos
@@ -76,6 +77,7 @@ pub fn build(b: *std.build.Builder) void {
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
     const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
     const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
+    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
 
     const test_step = b.step("test", "Run all tests");
     test_step.dependOn(&zbullet_tests.step);
@@ -84,13 +86,7 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&znoise_tests.step);
     test_step.dependOn(&znetwork_tests.step);
     test_step.dependOn(&zpool_tests.step);
-
-    // TODO: Make it work also on macOS.
-    //if (options.target.isWindows() or options.target.isLinux()) {
-    installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zaudio_tests.step);
-    //}
 
     //
     // Benchmarks
