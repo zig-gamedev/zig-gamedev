@@ -16,6 +16,10 @@ pub const Error = error{
     ACCESSDENIED,
 };
 
+pub const ERROR_SUCCESS = @as(LONG, 0);
+pub const ERROR_DEVICE_NOT_CONNECTED = @as(LONG, 1167);
+pub const ERROR_EMPTY = @as(LONG, 4306);
+
 pub const SEVERITY_SUCCESS = 0;
 pub const SEVERITY_ERROR = 1;
 
