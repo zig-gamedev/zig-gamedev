@@ -14,10 +14,12 @@ const window_title = "zig-gamedev: audio experiments (wgpu)";
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
-    audio_engine: zaudio.Engine,
 
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
+
+    audio_engine: zaudio.Engine,
+    music: zaudio.Sound,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
@@ -29,18 +31,30 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     const depth = createDepthTexture(gctx);
 
+    const audio_engine = try zaudio.Engine.init(allocator);
+
+    const music = try zaudio.Sound.initFile(
+        allocator,
+        audio_engine,
+        content_dir ++ "Broke For Free - Night Owl.mp3",
+        .{ .flags = .{ .stream = true } },
+    );
+    try music.start();
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
         .depth_tex = depth.tex,
         .depth_texv = depth.texv,
-        .audio_engine = try zaudio.Engine.init(allocator),
+        .audio_engine = audio_engine,
+        .music = music,
     };
 
     return demo;
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
+    demo.music.deinit(allocator);
     demo.audio_engine.deinit(allocator);
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
@@ -56,8 +70,23 @@ fn update(demo: *DemoState) !void {
         );
         zgui.bulletText("Right Mouse Button + drag :  rotate camera", .{});
         zgui.bulletText("W, A, S, D :  move camera", .{});
-        zgui.spacing();
 
+        zgui.spacing();
+        zgui.text("Music:", .{});
+        const music_is_playing = demo.music.isPlaying();
+        if (zgui.button(if (music_is_playing) "  Pause  " else "  Play  ", .{})) {
+            if (music_is_playing) {
+                try demo.music.stop();
+            } else {
+                try demo.music.start();
+            }
+        }
+        zgui.sameLine(.{});
+        if (zgui.button("  Rewind  ", .{})) {
+            try demo.music.seekToPcmFrame(0);
+        }
+
+        zgui.spacing();
         zgui.text("Sounds:", .{});
         if (zgui.button("  Play Sound 1  ", .{})) {
             try demo.audio_engine.playSound(content_dir ++ "drum_bass_hard.flac", null);

@@ -249,7 +249,12 @@ pub const Engine = struct {
     }
 
     pub fn playSoundEx(engine: Engine, filepath: [:0]const u8, node: ?Node, node_input_bus_index: u32) Error!void {
-        try checkResult(c.ma_engine_play_sound_ex(engine.handle, filepath.ptr, if (node) |n| n.handle else null, node_input_bus_index));
+        try checkResult(c.ma_engine_play_sound_ex(
+            engine.handle,
+            filepath.ptr,
+            if (node) |n| n.handle else null,
+            node_input_bus_index,
+        ));
     }
 };
 
