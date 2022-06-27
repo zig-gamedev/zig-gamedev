@@ -31,7 +31,11 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     const depth = createDepthTexture(gctx);
 
-    const audio_engine = try zaudio.Engine.init(allocator);
+    const audio_engine = audio_engine: {
+        var config = zaudio.EngineConfig.init();
+        config.raw.sampleRate = 48_000;
+        break :audio_engine try zaudio.Engine.initConfig(allocator, config);
+    };
 
     const music = try zaudio.Sound.initFile(
         allocator,
@@ -39,6 +43,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         content_dir ++ "Broke For Free - Night Owl.mp3",
         .{ .flags = .{ .stream = true } },
     );
+    music.setVolume(1.5);
     try music.start();
 
     const demo = try allocator.create(DemoState);
