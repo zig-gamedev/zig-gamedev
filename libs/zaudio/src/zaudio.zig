@@ -45,7 +45,22 @@ pub const Format = enum(c_int) {
     format_f32,
 };
 
+pub const DeviceType = enum(c_int) {
+    playback = 1,
+    capture = 2,
+    duplex = 3,
+    loopback = 4,
+};
+
 pub const Channel = c.ma_channel;
+
+pub const DeviceConfig = struct {
+    raw: c.ma_device_config,
+
+    pub fn init(device_type: DeviceType) DeviceConfig {
+        return .{ .raw = c.ma_device_config_init(@bitCast(c_uint, device_type)) };
+    }
+};
 
 pub const EngineConfig = struct {
     raw: c.ma_engine_config,
@@ -78,9 +93,31 @@ pub const ResourceManager = struct {
     // TODO: Add methods.
 };
 
+pub const Context = struct {
+    handle: *c.ma_context,
+    // TODO: Add methods.
+};
+
 pub const Device = struct {
     handle: *c.ma_device,
-    // TODO: Add methods.
+
+    pub fn init(allocator: std.mem.Allocator, context: ?Context, config: DeviceConfig) Error!Device {
+        var handle = allocator.create(c.ma_device) catch return error.OutOfMemory;
+        errdefer allocator.destroy(handle);
+
+        try checkResult(c.ma_device_init(
+            if (context) |ctx| ctx.handle else null,
+            &config.raw,
+            handle,
+        ));
+
+        return Device{ .handle = handle };
+    }
+
+    pub fn deinit(device: Device, allocator: std.mem.Allocator) void {
+        c.ma_device_uninit(device.handle);
+        allocator.destroy(device.handle);
+    }
 };
 
 pub const Log = struct {
@@ -96,20 +133,11 @@ pub const Node = struct {
 pub const Engine = struct {
     handle: *c.ma_engine,
 
-    pub fn init(allocator: std.mem.Allocator) Error!Engine {
+    pub fn init(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
         var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 
-        try checkResult(c.ma_engine_init(null, handle));
-
-        return Engine{ .handle = handle };
-    }
-
-    pub fn initConfig(allocator: std.mem.Allocator, config: EngineConfig) Error!Engine {
-        var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
-
-        try checkResult(c.ma_engine_init(&config.raw, handle));
+        try checkResult(c.ma_engine_init(if (config) |conf| &conf.raw else null, handle));
 
         return Engine{ .handle = handle };
     }
@@ -857,7 +885,7 @@ fn checkResult(result: c.ma_result) Error!void {
 const expect = std.testing.expect;
 
 test "zaudio.engine.basic" {
-    const engine = try Engine.init(std.testing.allocator);
+    const engine = try Engine.init(std.testing.allocator, null);
     defer engine.deinit(std.testing.allocator);
 
     var frames: [2]f32 = undefined;
@@ -883,7 +911,7 @@ test "zaudio.engine.basic" {
 }
 
 test "zaudio.soundgroup.basic" {
-    const engine = try Engine.init(std.testing.allocator);
+    const engine = try Engine.init(std.testing.allocator, null);
     defer engine.deinit(std.testing.allocator);
 
     const sgroup = try SoundGroup.init(std.testing.allocator, engine, .{}, null);
@@ -918,7 +946,7 @@ test "zaudio.fence.basic" {
 }
 
 test "zaudio.sound.basic" {
-    const engine = try Engine.init(std.testing.allocator);
+    const engine = try Engine.init(std.testing.allocator, null);
     defer engine.deinit(std.testing.allocator);
 
     var config = SoundConfig.init();
@@ -928,4 +956,13 @@ test "zaudio.sound.basic" {
 
     sound.setVolume(0.25);
     try expect(sound.getVolume() == 0.25);
+}
+
+test "zaudio.device.basic" {
+    var config = DeviceConfig.init(.playback);
+    config.raw.playback.format = c.ma_format_f32;
+    config.raw.playback.channels = 2;
+    config.raw.sampleRate = 48_000;
+    const device = try Device.init(std.testing.allocator, null, config);
+    defer device.deinit(std.testing.allocator);
 }

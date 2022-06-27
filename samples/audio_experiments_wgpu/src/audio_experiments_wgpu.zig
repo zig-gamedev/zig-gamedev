@@ -34,7 +34,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const audio_engine = audio_engine: {
         var config = zaudio.EngineConfig.init();
         config.raw.sampleRate = 48_000;
-        break :audio_engine try zaudio.Engine.initConfig(allocator, config);
+        break :audio_engine try zaudio.Engine.init(allocator, config);
     };
 
     const music = try zaudio.Sound.initFile(
