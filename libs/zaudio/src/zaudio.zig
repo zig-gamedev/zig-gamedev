@@ -52,6 +52,14 @@ pub const DeviceType = enum(c_int) {
     loopback = 4,
 };
 
+pub const DeviceState = enum(c_int) {
+    uninitialized = 0,
+    stopped = 1,
+    started = 2,
+    starting = 3,
+    stopping = 4,
+};
+
 pub const Channel = c.ma_channel;
 
 pub const DeviceConfig = struct {
@@ -118,6 +126,34 @@ pub const Device = struct {
         c.ma_device_uninit(device.handle);
         allocator.destroy(device.handle);
     }
+
+    pub fn getContext(device: Device) Context {
+        const handle = c.ma_device_get_context(device.handle);
+        assert(handle != null);
+        return .{ .handle = handle };
+    }
+
+    pub fn getLog(device: Device) ?Log {
+        const handle = c.ma_device_get_log(device.handle);
+        if (handle != null) return Log{ .handle = handle };
+        return null;
+    }
+
+    pub fn start(device: Device) Error!void {
+        try checkResult(c.ma_device_start(device.handle));
+    }
+
+    pub fn stop(device: Device) Error!void {
+        try checkResult(c.ma_device_stop(device.handle));
+    }
+
+    pub fn isStarted(device: Device) bool {
+        return c.ma_device_is_started(device.handle) == c.MA_TRUE;
+    }
+
+    pub fn getState(device: Device) DeviceState {
+        return @intToEnum(DeviceState, c.ma_device_get_state(device.handle));
+    }
 };
 
 pub const Log = struct {
@@ -151,24 +187,34 @@ pub const Engine = struct {
         try checkResult(c.ma_engine_read_pcm_frames(engine.handle, frames.ptr, frames.len, frames_read));
     }
 
+    pub fn getResourceManager(engine: Engine) ?ResourceManager {
+        const handle = c.ma_engine_get_resource_manager(engine.handle);
+        if (handle != null) return ResourceManager{ .handle = handle };
+        return null;
+    }
+
+    pub fn getDevice(engine: Engine) ?Device {
+        const handle = c.ma_engine_get_device(engine.handle);
+        if (handle != null) return Device{ .handle = handle };
+        return null;
+    }
+
+    pub fn getLog(engine: Engine) ?Log {
+        const handle = c.ma_engine_get_log(engine.handle);
+        if (handle != null) return Log{ .handle = handle };
+        return null;
+    }
+
     pub fn getNodeGraph(engine: Engine) NodeGraph {
-        return .{ .handle = c.ma_engine_get_node_graph(engine.handle) };
-    }
-
-    pub fn getResourceManager(engine: Engine) ResourceManager {
-        return .{ .handle = c.ma_engine_get_resource_manager(engine.handle) };
-    }
-
-    pub fn getDevice(engine: Engine) Device {
-        return .{ .handle = c.ma_engine_get_device(engine.handle) };
-    }
-
-    pub fn getLog(engine: Engine) Log {
-        return .{ .handle = c.ma_engine_get_log(engine.handle) };
+        const handle = c.ma_engine_get_node_graph(engine.handle);
+        assert(handle != null);
+        return .{ .handle = handle };
     }
 
     pub fn getEndpoint(engine: Engine) Node {
-        return .{ .handle = c.ma_engine_get_endpoint(engine.handle) };
+        const handle = c.ma_engine_get_endpoint(engine.handle);
+        assert(handle != null);
+        return .{ .handle = handle };
     }
 
     pub fn getTime(engine: Engine) u64 {
@@ -379,8 +425,8 @@ pub const Sound = struct {
     }
 
     pub fn getDataSource(sound: Sound) ?DataSource {
-        const ds = c.ma_sound_get_data_source(sound.handle);
-        if (ds != null) return DataSource{ .handle = ds };
+        const handle = c.ma_sound_get_data_source(sound.handle);
+        if (handle != null) return .{ .handle = handle };
         return null;
     }
 
@@ -965,4 +1011,12 @@ test "zaudio.device.basic" {
     config.raw.sampleRate = 48_000;
     const device = try Device.init(std.testing.allocator, null, config);
     defer device.deinit(std.testing.allocator);
+    try device.start();
+    try expect(device.getState() == .started or device.getState() == .starting);
+    try device.stop();
+    try expect(device.getState() == .stopped or device.getState() == .stopping);
+    const context = device.getContext();
+    _ = context;
+    const log = device.getLog();
+    _ = log;
 }
