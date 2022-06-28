@@ -38,11 +38,11 @@ pub const Positioning = enum(c_int) {
 
 pub const Format = enum(c_int) {
     unknown,
-    format_u8,
-    format_s16,
-    format_s24,
-    format_s32,
-    format_f32,
+    @"u8",
+    s16,
+    s24,
+    s32,
+    @"f32",
 };
 
 pub const DeviceType = enum(c_int) {
@@ -62,8 +62,19 @@ pub const DeviceState = enum(c_int) {
 
 pub const Channel = c.ma_channel;
 
+pub const DataCallback = struct {
+    context: ?*anyopaque = null,
+    func: ?fn (
+        usr_context: ?*anyopaque,
+        raw_output: ?*anyopaque,
+        raw_input: ?*const anyopaque,
+        num_frames: u32,
+    ) void = null,
+};
+
 pub const DeviceConfig = struct {
     raw: c.ma_device_config,
+    data_callback: DataCallback = .{},
 
     pub fn init(device_type: DeviceType) DeviceConfig {
         return .{ .raw = c.ma_device_config_init(@bitCast(c_uint, device_type)) };
@@ -109,9 +120,42 @@ pub const Context = struct {
 pub const Device = struct {
     handle: *c.ma_device,
 
-    pub fn init(allocator: std.mem.Allocator, context: ?Context, config: DeviceConfig) Error!Device {
+    fn internalDataCallback(
+        device_handle: ?*c.ma_device,
+        raw_output: ?*anyopaque,
+        raw_input: ?*const anyopaque,
+        num_frames: u32,
+    ) callconv(.C) void {
+        assert(device_handle != null);
+
+        const data_callback = @ptrCast(
+            *DataCallback,
+            @alignCast(@alignOf(DataCallback), device_handle.?.pUserData),
+        );
+
+        if (data_callback.func) |func| {
+            func(data_callback.context, raw_output, raw_input, num_frames);
+        }
+    }
+
+    pub fn init(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
         var handle = allocator.create(c.ma_device) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
+
+        // We don't allow setting below fields (we use them internally), please use
+        // `config.data_callback` instead.
+        assert(config.raw.dataCallback == null);
+        assert(config.raw.pUserData == null);
+
+        const data_callback = allocator.create(DataCallback) catch return error.OutOfMemory;
+        data_callback.* = config.data_callback;
+        errdefer allocator.destroy(data_callback);
+
+        config.raw.pUserData = data_callback;
+
+        if (config.data_callback.func != null) {
+            config.raw.dataCallback = internalDataCallback;
+        }
 
         try checkResult(c.ma_device_init(
             if (context) |ctx| ctx.handle else null,
@@ -123,6 +167,10 @@ pub const Device = struct {
     }
 
     pub fn deinit(device: Device, allocator: std.mem.Allocator) void {
+        allocator.destroy(@ptrCast(
+            *DataCallback,
+            @alignCast(@alignOf(DataCallback), device.handle.pUserData),
+        ));
         c.ma_device_uninit(device.handle);
         allocator.destroy(device.handle);
     }
@@ -153,6 +201,15 @@ pub const Device = struct {
 
     pub fn getState(device: Device) DeviceState {
         return @intToEnum(DeviceState, c.ma_device_get_state(device.handle));
+    }
+
+    pub fn setMasterVolume(device: Device, volume: f32) Error!void {
+        try checkResult(c.ma_device_set_master_volume(device.handle, volume));
+    }
+    pub fn getMasterVolume(device: Device) Error!f32 {
+        var volume: f32 = undefined;
+        try checkResult(c.ma_device_get_master_volume(device.handle, &volume));
+        return volume;
     }
 };
 
@@ -319,10 +376,19 @@ pub const Engine = struct {
     }
 
     pub fn playSound(engine: Engine, filepath: [:0]const u8, sgroup: ?SoundGroup) Error!void {
-        try checkResult(c.ma_engine_play_sound(engine.handle, filepath.ptr, if (sgroup) |g| g.handle else null));
+        try checkResult(c.ma_engine_play_sound(
+            engine.handle,
+            filepath.ptr,
+            if (sgroup) |g| g.handle else null,
+        ));
     }
 
-    pub fn playSoundEx(engine: Engine, filepath: [:0]const u8, node: ?Node, node_input_bus_index: u32) Error!void {
+    pub fn playSoundEx(
+        engine: Engine,
+        filepath: [:0]const u8,
+        node: ?Node,
+        node_input_bus_index: u32,
+    ) Error!void {
         try checkResult(c.ma_engine_play_sound_ex(
             engine.handle,
             filepath.ptr,
@@ -1009,7 +1075,7 @@ test "zaudio.device.basic" {
     config.raw.playback.format = c.ma_format_f32;
     config.raw.playback.channels = 2;
     config.raw.sampleRate = 48_000;
-    const device = try Device.init(std.testing.allocator, null, config);
+    const device = try Device.init(std.testing.allocator, null, &config);
     defer device.deinit(std.testing.allocator);
     try device.start();
     try expect(device.getState() == .started or device.getState() == .starting);

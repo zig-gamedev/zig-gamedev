@@ -12,15 +12,32 @@ const wgsl = @import("audio_experiments_wgsl.zig");
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: audio experiments (wgpu)";
 
+const AudioState = struct {
+    device: zaudio.Device,
+    engine: zaudio.Engine,
+};
+
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
+    audio: *AudioState,
 
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
 
-    audio_engine: zaudio.Engine,
     music: zaudio.Sound,
 };
+
+fn audioDataCallback(
+    usr_context: ?*anyopaque,
+    raw_output: ?*anyopaque,
+    _: ?*const anyopaque,
+    num_frames: u32,
+) void {
+    const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), usr_context));
+    const output = @ptrCast([*]f32, @alignCast(@alignOf(f32), raw_output))[0..num_frames];
+
+    audio.engine.readPcmFrames(f32, output, null) catch {};
+}
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.init(allocator, window);
@@ -31,15 +48,37 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     const depth = createDepthTexture(gctx);
 
-    const audio_engine = audio_engine: {
-        var config = zaudio.EngineConfig.init();
-        config.raw.sampleRate = 48_000;
-        break :audio_engine try zaudio.Engine.init(allocator, config);
+    const audio = audio: {
+        const audio = try allocator.create(AudioState);
+
+        const device = device: {
+            var config = zaudio.DeviceConfig.init(.playback);
+            config.data_callback = .{
+                .context = audio,
+                .func = audioDataCallback,
+            };
+            config.raw.playback.format = @enumToInt(zaudio.Format.@"f32");
+            config.raw.playback.channels = 2;
+            config.raw.sampleRate = 48_000;
+            break :device try zaudio.Device.init(allocator, null, &config);
+        };
+
+        const engine = engine: {
+            var config = zaudio.EngineConfig.init();
+            config.raw.pDevice = device.handle;
+            break :engine try zaudio.Engine.init(allocator, config);
+        };
+
+        audio.* = .{
+            .device = device,
+            .engine = engine,
+        };
+        break :audio audio;
     };
 
     const music = try zaudio.Sound.initFile(
         allocator,
-        audio_engine,
+        audio.engine,
         content_dir ++ "Broke For Free - Night Owl.mp3",
         .{ .flags = .{ .stream = true } },
     );
@@ -51,7 +90,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .gctx = gctx,
         .depth_tex = depth.tex,
         .depth_texv = depth.texv,
-        .audio_engine = audio_engine,
+        .audio = audio,
         .music = music,
     };
 
@@ -60,8 +99,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.music.deinit(allocator);
-    demo.audio_engine.deinit(allocator);
+    demo.audio.engine.deinit(allocator);
+    demo.audio.device.deinit(allocator);
     demo.gctx.deinit(allocator);
+    allocator.destroy(demo.audio);
     allocator.destroy(demo);
 }
 
@@ -94,15 +135,15 @@ fn update(demo: *DemoState) !void {
         zgui.spacing();
         zgui.text("Sounds:", .{});
         if (zgui.button("  Play Sound 1  ", .{})) {
-            try demo.audio_engine.playSound(content_dir ++ "drum_bass_hard.flac", null);
+            try demo.audio.engine.playSound(content_dir ++ "drum_bass_hard.flac", null);
         }
         zgui.sameLine(.{});
         if (zgui.button("  Play Sound 2  ", .{})) {
-            try demo.audio_engine.playSound(content_dir ++ "tabla_tas1.flac", null);
+            try demo.audio.engine.playSound(content_dir ++ "tabla_tas1.flac", null);
         }
         zgui.sameLine(.{});
         if (zgui.button("  Play Sound 3  ", .{})) {
-            try demo.audio_engine.playSound(content_dir ++ "loop_mika.flac", null);
+            try demo.audio.engine.playSound(content_dir ++ "loop_mika.flac", null);
         }
     }
     zgui.end();
