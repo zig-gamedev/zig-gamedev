@@ -33,12 +33,12 @@ fn audioDataCallback(
     _: ?*const anyopaque,
     num_frames: u32,
 ) void {
-    if (usr_context != null) {
-        const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), usr_context));
-        const output = @ptrCast([*]f32, @alignCast(@alignOf(f32), raw_output))[0..num_frames];
+    if (usr_context == null or raw_output == null or num_frames == 0) return;
 
-        audio.engine.readPcmFrames(f32, output, null) catch {};
-    }
+    const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), usr_context));
+    const output = @ptrCast([*]f32, @alignCast(@alignOf(f32), raw_output))[0..num_frames];
+
+    audio.engine.readPcmFrames(f32, output, null) catch {};
 }
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
