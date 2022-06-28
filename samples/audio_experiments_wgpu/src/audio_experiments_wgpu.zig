@@ -68,6 +68,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         const engine = engine: {
             var config = zaudio.EngineConfig.init();
             config.raw.pDevice = device.handle;
+            config.raw.noAutoStart = 1;
             break :engine try zaudio.Engine.init(allocator, config);
         };
 
@@ -77,6 +78,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         };
         break :audio audio;
     };
+
+    try audio.engine.start();
 
     const music = try zaudio.Sound.initFile(
         allocator,
