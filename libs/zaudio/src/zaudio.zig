@@ -62,19 +62,21 @@ pub const DeviceState = enum(c_int) {
 
 pub const Channel = c.ma_channel;
 
-pub const DataCallback = struct {
+pub const PlaybackDataCallback = struct {
     context: ?*anyopaque = null,
-    func: ?fn (
-        usr_context: ?*anyopaque,
-        raw_output: ?*anyopaque,
-        raw_input: ?*const anyopaque,
-        num_frames: u32,
-    ) void = null,
+    func: ?fn (context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void = null,
+};
+
+pub const CaptureDataCallback = struct {
+    context: ?*anyopaque = null,
+    func: ?fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void = null,
 };
 
 pub const DeviceConfig = struct {
     raw: c.ma_device_config,
-    data_callback: DataCallback = .{},
+
+    playback_callback: PlaybackDataCallback = .{},
+    capture_callback: CaptureDataCallback = .{},
 
     pub fn init(device_type: DeviceType) DeviceConfig {
         return .{ .raw = c.ma_device_config_init(@bitCast(c_uint, device_type)) };
@@ -120,40 +122,56 @@ pub const Context = struct {
 pub const Device = struct {
     handle: *c.ma_device,
 
+    const InternalState = struct {
+        playback_callback: PlaybackDataCallback = .{},
+        capture_callback: CaptureDataCallback = .{},
+    };
+
     fn internalDataCallback(
         device_handle: ?*c.ma_device,
-        raw_output: ?*anyopaque,
-        raw_input: ?*const anyopaque,
+        outptr: ?*anyopaque,
+        inptr: ?*const anyopaque,
         num_frames: u32,
     ) callconv(.C) void {
         assert(device_handle != null);
 
-        const data_callback = @ptrCast(
-            *DataCallback,
-            @alignCast(@alignOf(DataCallback), device_handle.?.pUserData),
+        const internal_state = @ptrCast(
+            *InternalState,
+            @alignCast(@alignOf(InternalState), device_handle.?.pUserData),
         );
 
-        if (data_callback.func) |func| {
-            func(data_callback.context, raw_output, raw_input, num_frames);
+        if (num_frames > 0) {
+            // Dispatch playback callback.
+            if (outptr != null) if (internal_state.playback_callback.func) |func| {
+                func(internal_state.playback_callback.context, outptr.?, num_frames);
+            };
+
+            // Dispatch capture callback.
+            if (inptr != null) if (internal_state.capture_callback.func) |func| {
+                func(internal_state.capture_callback.context, inptr.?, num_frames);
+            };
         }
     }
 
     pub fn init(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
-        var handle = allocator.create(c.ma_device) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
-
         // We don't allow setting below fields (we use them internally), please use
-        // `config.data_callback` instead.
+        // `config.playback_callback` and/or `config.capture_callback` instead.
         assert(config.raw.dataCallback == null);
         assert(config.raw.pUserData == null);
 
-        const data_callback = allocator.create(DataCallback) catch return error.OutOfMemory;
-        data_callback.* = config.data_callback;
-        errdefer allocator.destroy(data_callback);
+        var handle = allocator.create(c.ma_device) catch return error.OutOfMemory;
+        errdefer allocator.destroy(handle);
 
-        config.raw.pUserData = data_callback;
+        const internal_state = allocator.create(InternalState) catch return error.OutOfMemory;
+        internal_state.* = .{
+            .playback_callback = config.playback_callback,
+            .capture_callback = config.capture_callback,
+        };
+        errdefer allocator.destroy(internal_state);
 
-        if (config.data_callback.func != null) {
+        config.raw.pUserData = internal_state;
+
+        if (config.playback_callback.func != null or config.capture_callback.func != null) {
             config.raw.dataCallback = internalDataCallback;
         }
 
@@ -168,8 +186,8 @@ pub const Device = struct {
 
     pub fn deinit(device: Device, allocator: std.mem.Allocator) void {
         allocator.destroy(@ptrCast(
-            *DataCallback,
-            @alignCast(@alignOf(DataCallback), device.handle.pUserData),
+            *InternalState,
+            @alignCast(@alignOf(InternalState), device.handle.pUserData),
         ));
         c.ma_device_uninit(device.handle);
         allocator.destroy(device.handle);
