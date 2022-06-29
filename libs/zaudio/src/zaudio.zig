@@ -163,11 +163,12 @@ pub const Device = struct {
         errdefer allocator.destroy(handle);
 
         const internal_state = allocator.create(InternalState) catch return error.OutOfMemory;
+        errdefer allocator.destroy(internal_state);
+
         internal_state.* = .{
             .playback_callback = config.playback_callback,
             .capture_callback = config.capture_callback,
         };
-        errdefer allocator.destroy(internal_state);
 
         config.raw.pUserData = internal_state;
 
@@ -721,7 +722,7 @@ pub const Sound = struct {
     ) Error!void {
         try checkResult(c.ma_sound_get_data_format(
             sound.handle,
-            format,
+            if (format) |fmt| @ptrCast(*u32, fmt) else null,
             num_channels,
             sample_rate,
             if (channel_map) |chm| chm.ptr else null,
@@ -1018,9 +1019,6 @@ test "zaudio.engine.basic" {
     const engine = try Engine.init(std.testing.allocator, null);
     defer engine.deinit(std.testing.allocator);
 
-    var frames: [2]f32 = undefined;
-    try engine.readPcmFrames(f32, frames[0..], null);
-
     try engine.setTime(engine.getTime());
 
     std.debug.print("Channels: {}, SampleRate: {}, NumListeners: {}, ClosestListener: {}\n", .{
@@ -1086,6 +1084,14 @@ test "zaudio.sound.basic" {
 
     sound.setVolume(0.25);
     try expect(sound.getVolume() == 0.25);
+
+    var format: Format = .unknown;
+    var num_channels: u32 = 0;
+    var sample_rate: u32 = 0;
+    try sound.getDataFormat(&format, &num_channels, &sample_rate, null);
+    try expect(num_channels == 1);
+    try expect(sample_rate > 0);
+    try expect(format != .unknown);
 }
 
 test "zaudio.device.basic" {
@@ -1103,4 +1109,6 @@ test "zaudio.device.basic" {
     _ = context;
     const log = device.getLog();
     _ = log;
+    try device.setMasterVolume(0.1);
+    try expect((try device.getMasterVolume()) == 0.1);
 }
