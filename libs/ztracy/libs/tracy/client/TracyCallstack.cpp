@@ -221,6 +221,10 @@ void InitCallstack()
 #endif
 }
 
+void EndCallstack()
+{
+}
+
 const char* DecodeCallstackPtrFast( uint64_t ptr )
 {
     static char ret[MaxNameSize];
@@ -557,6 +561,20 @@ int cb_num;
 CallstackEntry cb_data[MaxCbTrace];
 int cb_fixup;
 
+#ifdef TRACY_DEBUGINFOD
+debuginfod_client* s_debuginfod;
+
+struct DebugInfo
+{
+    uint8_t* buildid;
+    size_t buildid_size;
+    char* filename;
+    int fd;
+};
+
+FastVector<DebugInfo> s_di_known( 16 );
+#endif
+
 #ifdef __linux
 struct KernelSymbol
 {
@@ -658,6 +676,79 @@ void InitCallstack()
 
 #ifdef __linux
     InitKernelSymbols();
+#endif
+#ifdef TRACY_DEBUGINFOD
+    s_debuginfod = debuginfod_begin();
+#endif
+}
+
+#ifdef TRACY_DEBUGINFOD
+void ClearDebugInfoVector( FastVector<DebugInfo>& vec )
+{
+    for( auto& v : vec )
+    {
+        tracy_free( v.buildid );
+        tracy_free( v.filename );
+        if( v.fd >= 0 ) close( v.fd );
+    }
+    vec.clear();
+}
+
+DebugInfo* FindDebugInfo( FastVector<DebugInfo>& vec, const uint8_t* buildid_data, size_t buildid_size )
+{
+    for( auto& v : vec )
+    {
+        if( v.buildid_size == buildid_size && memcmp( v.buildid, buildid_data, buildid_size ) == 0 )
+        {
+            return &v;
+        }
+    }
+    return nullptr;
+}
+
+int GetDebugInfoDescriptor( const char* buildid_data, size_t buildid_size, const char* filename )
+{
+    auto buildid = (uint8_t*)buildid_data;
+    auto it = FindDebugInfo( s_di_known, buildid, buildid_size );
+    if( it ) return it->fd >= 0 ? dup( it->fd ) : -1;
+
+    int fd = debuginfod_find_debuginfo( s_debuginfod, buildid, buildid_size, nullptr );
+    it = s_di_known.push_next();
+    it->buildid_size = buildid_size;
+    it->buildid = (uint8_t*)tracy_malloc( buildid_size );
+    memcpy( it->buildid, buildid, buildid_size );
+    const auto fnsz = strlen( filename ) + 1;
+    it->filename = (char*)tracy_malloc( fnsz );
+    memcpy( it->filename, filename, fnsz );
+    it->fd = fd >= 0 ? fd : -1;
+    return it->fd;
+}
+
+const uint8_t* GetBuildIdForImage( const char* image, size_t& size )
+{
+    assert( image );
+    for( auto& v : s_di_known )
+    {
+        if( strcmp( image, v.filename ) == 0 )
+        {
+            size = v.buildid_size;
+            return v.buildid;
+        }
+    }
+    return nullptr;
+}
+
+debuginfod_client* GetDebuginfodClient()
+{
+    return s_debuginfod;
+}
+#endif
+
+void EndCallstack()
+{
+#ifdef TRACY_DEBUGINFOD
+    ClearDebugInfoVector( s_di_known );
+    debuginfod_end( s_debuginfod );
 #endif
 }
 
@@ -910,6 +1001,10 @@ CallstackEntryData DecodeCallstackPtr( uint64_t ptr )
 #elif TRACY_HAS_CALLSTACK == 5
 
 void InitCallstack()
+{
+}
+
+void EndCallstack()
 {
 }
 

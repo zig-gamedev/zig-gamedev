@@ -38,7 +38,7 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
     static char buf[16];
     switch( impl )
     {
-    case 0x41:
+    case 0x41:  // ARM
         switch( part )
         {
         case 0x810: return "810";
@@ -92,6 +92,7 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
         case 0xd13: return " Cortex-R52";
         case 0xd20: return " Cortex-M23";
         case 0xd21: return " Cortex-M33";
+        case 0xd22: return " Cortex-M55";
         case 0xd40: return " Neoverse V1";
         case 0xd41: return " Cortex-A78";
         case 0xd42: return " Cortex-A78AE";
@@ -102,9 +103,10 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
         case 0xd49: return " Neoverse N2";
         case 0xd4a: return " Neoverse E1";
         case 0xd4b: return " Cortex-A78C";
+        case 0xd4c: return " Cortex-X1C";
         default: break;
         }
-    case 0x42:
+    case 0x42:  // Broadcom
         switch( part )
         {
         case 0xf: return " Brahma B15";
@@ -112,7 +114,7 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
         case 0x516: return " ThunderX2";
         default: break;
         }
-    case 0x43:
+    case 0x43:  // Cavium
         switch( part )
         {
         case 0xa0: return " ThunderX";
@@ -126,30 +128,31 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
         case 0xb3: return " OcteonTX2 F95";
         case 0xb4: return " OcteonTX2 F95N";
         case 0xb5: return " OcteonTX2 F95MM";
+        case 0xb6: return " OcteonTX2 F95O";
         case 0xb8: return " ThunderX3 T110";
         default: break;
         }
-    case 0x44:
+    case 0x44:  // DEC
         switch( part )
         {
         case 0xa10: return " SA110";
         case 0xa11: return " SA1100";
         default: break;
         }
-    case 0x46:
+    case 0x46:  // Fujitsu
         switch( part )
         {
         case 0x1: return " A64FX";
         default: break;
         }
-    case 0x48:
+    case 0x48:  // HiSilicon
         switch( part )
         {
         case 0xd01: return " TSV100";
         case 0xd40: return " Kirin 980";
         default: break;
         }
-    case 0x4e:
+    case 0x4e:  // Nvidia
         switch( part )
         {
         case 0x0: return " Denver";
@@ -157,13 +160,13 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
         case 0x4: return " Carmel";
         default: break;
         }
-    case 0x50:
+    case 0x50:  // Applied Micro
         switch( part )
         {
         case 0x0: return " X-Gene";
         default: break;
         }
-    case 0x51:
+    case 0x51:  // Qualcomm
         switch( part )
         {
         case 0xf: return " Scorpion";
@@ -179,18 +182,27 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
         case 0x802: return " Kryo 385 Gold";
         case 0x803: return " Kryo 385 Silver";
         case 0x804: return " Kryo 485 Gold";
+        case 0x805: return " Kryo 4xx/5xx Silver";
         case 0xc00: return " Falkor";
         case 0xc01: return " Saphira";
         default: break;
         }
-    case 0x53:
+    case 0x53:  // Samsung
         switch( part )
         {
         case 0x1: return " Exynos M1/M2";
         case 0x2: return " Exynos M3";
+        case 0x3: return " Exynos M4";
+        case 0x4: return " Exynos M5";
         default: break;
         }
-    case 0x56:
+    case 0x54:  // Texas Instruments
+        switch( part )
+        {
+        case 0x925: return " TI925";
+        default: break;
+        }
+    case 0x56:  // Marvell
         switch( part )
         {
         case 0x131: return " Feroceon 88FR131";
@@ -198,7 +210,7 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
         case 0x584: return " PJ4B-MP / PJ4C";
         default: break;
         }
-    case 0x61:
+    case 0x61:  // Apple
         switch( part )
         {
         case 0x1: return " Cyclone";
@@ -208,19 +220,31 @@ static const char* DecodeArmPart( uint32_t impl, uint32_t part )
         case 0x5: return " Twister/Elba/Malta";
         case 0x6: return " Hurricane";
         case 0x7: return " Hurricane/Myst";
+        case 0x22: return " M1 Icestorm";
+        case 0x23: return " M1 Firestorm";
+        case 0x24: return " M1 Icestorm Pro";
+        case 0x25: return " M1 Firestorm Pro";
+        case 0x28: return " M1 Icestorm Max";
+        case 0x29: return " M1 Firestorm Max";
         default: break;
         }
-    case 0x66:
+    case 0x66:  // Faraday
         switch( part )
         {
         case 0x526: return " FA526";
         case 0x626: return " FA626";
         default: break;
         }
-    case 0x68:
+    case 0x68:  // HXT
         switch( part )
         {
         case 0x0: return " Phecda";
+        default: break;
+        }
+    case 0xc0:  // Ampere Computing
+        switch( part )
+        {
+        case 0xac3: return " Ampere1";
         default: break;
         }
     default: break;
@@ -276,6 +300,11 @@ static const char* DecodeIosDevice( const char* id )
         "iPhone13,2", "iPhone 12",
         "iPhone13,3", "iPhone 12 Pro",
         "iPhone13,4", "iPhone 12 Pro Max",
+        "iPhone14,2", "iPhone 13 Pro",
+        "iPhone14,3", "iPhone 13 Pro Max",
+        "iPhone14,4", "iPhone 13 Mini",
+        "iPhone14,5", "iPhone 13",
+        "iPhone14,6", "iPhone SE 3rd Gen",
         "iPad1,1", "iPad (A1219/A1337)",
         "iPad2,1", "iPad 2 (A1395)",
         "iPad2,2", "iPad 2 (A1396)",
@@ -346,6 +375,8 @@ static const char* DecodeIosDevice( const char* id )
         "iPad13,9", "iPad Pro 12.9\" 5th gen",
         "iPad13,10", "iPad Pro 12.9\" 5th gen",
         "iPad13,11", "iPad Pro 12.9\" 5th gen",
+        "iPad13,16", "iPad Air 5th Gen (WiFi)",
+        "iPad13,17", "iPad Air 5th Gen (WiFi+Cellular)",
         "iPod1,1", "iPod Touch",
         "iPod2,1", "iPod Touch 2nd gen",
         "iPod3,1", "iPod Touch 3rd gen",
