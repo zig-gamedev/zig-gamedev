@@ -259,8 +259,8 @@ pub const Engine = struct {
         allocator.destroy(engine.handle);
     }
 
-    pub fn readPcmFrames(engine: Engine, comptime T: type, frames: []T, frames_read: ?*u64) Error!void {
-        try checkResult(c.ma_engine_read_pcm_frames(engine.handle, frames.ptr, frames.len, frames_read));
+    pub fn readPcmFrames(engine: Engine, outptr: *anyopaque, num_frames: u64, num_frames_read: ?*u64) Error!void {
+        try checkResult(c.ma_engine_read_pcm_frames(engine.handle, outptr, num_frames, num_frames_read));
     }
 
     pub fn getResourceManager(engine: Engine) ?ResourceManager {

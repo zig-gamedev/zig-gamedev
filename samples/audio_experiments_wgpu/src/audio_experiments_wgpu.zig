@@ -31,9 +31,8 @@ fn audioPlaybackCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u
     if (context == null) return;
 
     const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), context));
-    const output = @ptrCast([*]f32, @alignCast(@alignOf(f32), outptr))[0..num_frames];
 
-    audio.engine.readPcmFrames(f32, output, null) catch {};
+    audio.engine.readPcmFrames(outptr, num_frames, null) catch {};
 }
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
