@@ -38,7 +38,7 @@ pub const Options = struct {
     x11: bool = true,
 
     /// Only respected on Linux.
-    wayland: bool = true,
+    wayland: bool = false,
 
     /// System SDK options.
     system_sdk: system_sdk.Options = .{},
