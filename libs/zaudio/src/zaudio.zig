@@ -856,9 +856,11 @@ pub const SoundGroup = struct {
         c.ma_sound_group_set_direction(sgroup.handle, v[0], v[1], v[2]);
     }
     pub fn getDirection(sgroup: SoundGroup) [3]f32 {
-        const v = c.ma_sound_group_get_direction(sgroup.handle);
+        var v: c.ma_vec3f = undefined;
+        zma_sound_group_get_direction(sgroup.handle, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn zma_sound_group_get_direction(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
 
     pub fn setVelocity(sgroup: SoundGroup, v: [3]f32) void {
         c.ma_sound_group_set_velocity(sgroup.handle, v[0], v[1], v[2]);
