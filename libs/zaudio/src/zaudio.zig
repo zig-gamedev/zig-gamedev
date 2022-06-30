@@ -3,6 +3,8 @@ const assert = std.debug.assert;
 const math = std.math;
 const c = @cImport(@cInclude("miniaudio.h"));
 
+// TODO: Get rid of WA_ma_* functions which are workarounds for Zig C ABI issues on aarch64.
+
 pub const SoundFlags = packed struct {
     stream: bool = false,
     decode: bool = false,
@@ -341,33 +343,41 @@ pub const Engine = struct {
         c.ma_engine_listener_set_position(engine.handle, index, v[0], v[1], v[2]);
     }
     pub fn getListenerPosition(engine: Engine, index: u32) [3]f32 {
-        const v = c.ma_engine_listener_get_position(engine.handle, index);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_engine_listener_get_position(engine.handle, index, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_engine_listener_get_position(engine: *c.ma_engine, index: u32, vout: *c.ma_vec3f) void;
 
     pub fn setListenerDirection(engine: Engine, index: u32, v: [3]f32) void {
         c.ma_engine_listener_set_direction(engine.handle, index, v[0], v[1], v[2]);
     }
     pub fn getListenerDirection(engine: Engine, index: u32) [3]f32 {
-        const v = c.ma_engine_listener_get_direction(engine.handle, index);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_engine_listener_get_direction(engine.handle, index, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_engine_listener_get_direction(engine: *c.ma_engine, index: u32, vout: *c.ma_vec3f) void;
 
     pub fn setListenerVelocity(engine: Engine, index: u32, v: [3]f32) void {
         c.ma_engine_listener_set_velocity(engine.handle, index, v[0], v[1], v[2]);
     }
     pub fn getListenerVelocity(engine: Engine, index: u32) [3]f32 {
-        const v = c.ma_engine_listener_get_velocity(engine.handle, index);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_engine_listener_get_velocity(engine.handle, index, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_engine_listener_get_velocity(engine: *c.ma_engine, index: u32, vout: *c.ma_vec3f) void;
 
     pub fn setListenerWorldUp(engine: Engine, index: u32, v: [3]f32) void {
         c.ma_engine_listener_set_world_up(engine.handle, index, v[0], v[1], v[2]);
     }
     pub fn getListenerWorldUp(engine: Engine, index: u32) [3]f32 {
-        const v = c.ma_engine_listener_get_world_up(engine.handle, index);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_engine_listener_get_world_up(engine.handle, index, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_engine_listener_get_world_up(engine: *c.ma_engine, index: u32, vout: *c.ma_vec3f) void;
 
     pub fn setListenerEnabled(engine: Engine, index: u32, enabled: bool) void {
         c.ma_engine_listener_set_enabled(engine.handle, index, if (enabled) c.MA_TRUE else c.MA_FALSE);
@@ -569,33 +579,41 @@ pub const Sound = struct {
     }
 
     pub fn getDirectionToListener(sound: Sound) [3]f32 {
-        const v = c.ma_sound_get_direction_to_listener(sound.handle);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_sound_get_direction_to_listener(sound.handle, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_sound_get_direction_to_listener(sound: *c.ma_sound, vout: *c.ma_vec3f) void;
 
     pub fn setPosition(sound: Sound, v: [3]f32) void {
         c.ma_sound_set_position(sound.handle, v[0], v[1], v[2]);
     }
     pub fn getPosition(sound: Sound) [3]f32 {
-        const v = c.ma_sound_get_position(sound.handle);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_sound_get_position(sound.handle, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_sound_get_position(sound: *c.ma_sound, vout: *c.ma_vec3f) void;
 
     pub fn setDirection(sound: Sound, v: [3]f32) void {
         c.ma_sound_set_direction(sound.handle, v[0], v[1], v[2]);
     }
     pub fn getDirection(sound: Sound) [3]f32 {
-        const v = c.ma_sound_get_direction(sound.handle);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_sound_get_direction(sound.handle);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_sound_get_direction(sound: *c.ma_sound, vout: *c.ma_vec3f) void;
 
     pub fn setVelocity(sound: Sound, v: [3]f32) void {
         c.ma_sound_set_velocity(sound.handle, v[0], v[1], v[2]);
     }
     pub fn getVelocity(sound: Sound) [3]f32 {
-        const v = c.ma_sound_get_velocity(sound.handle);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_sound_get_velocity(sound.handle, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_sound_get_velocity(sound: *c.ma_sound, vout: *c.ma_vec3f) void;
 
     pub fn setAttenuationModel(sound: Sound, model: AttenuationModel) void {
         c.ma_sound_set_attenuation_model(sound.handle, model);
@@ -840,35 +858,41 @@ pub const SoundGroup = struct {
     }
 
     pub fn getDirectionToListener(sgroup: SoundGroup) [3]f32 {
-        const v = c.ma_sound_group_get_direction_to_listener(sgroup.handle);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_sound_group_get_direction_to_listener(sgroup.handle, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_sound_group_get_direction_to_listener(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
 
     pub fn setPosition(sgroup: SoundGroup, v: [3]f32) void {
         c.ma_sound_group_set_position(sgroup.handle, v[0], v[1], v[2]);
     }
     pub fn getPosition(sgroup: SoundGroup) [3]f32 {
-        const v = c.ma_sound_group_get_position(sgroup.handle);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_sound_group_get_position(sgroup.handle, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_sound_group_get_position(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
 
     pub fn setDirection(sgroup: SoundGroup, v: [3]f32) void {
         c.ma_sound_group_set_direction(sgroup.handle, v[0], v[1], v[2]);
     }
     pub fn getDirection(sgroup: SoundGroup) [3]f32 {
         var v: c.ma_vec3f = undefined;
-        zma_sound_group_get_direction(sgroup.handle, &v);
+        WA_ma_sound_group_get_direction(sgroup.handle, &v);
         return .{ v.x, v.y, v.z };
     }
-    extern fn zma_sound_group_get_direction(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_sound_group_get_direction(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
 
     pub fn setVelocity(sgroup: SoundGroup, v: [3]f32) void {
         c.ma_sound_group_set_velocity(sgroup.handle, v[0], v[1], v[2]);
     }
     pub fn getVelocity(sgroup: SoundGroup) [3]f32 {
-        const v = c.ma_sound_group_get_velocity(sgroup.handle);
+        var v: c.ma_vec3f = undefined;
+        WA_ma_sound_group_get_velocity(sgroup.handle, &v);
         return .{ v.x, v.y, v.z };
     }
+    extern fn WA_ma_sound_group_get_velocity(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
 
     pub fn setAttenuationModel(sgroup: SoundGroup, model: AttenuationModel) void {
         c.ma_sound_group_set_attenuation_model(sgroup.handle, model);
