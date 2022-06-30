@@ -8,7 +8,7 @@
 //! The naming of the key codes follow these rules:
 //!
 //! - The US keyboard layout is used
-//! - Names of printable alpha-numeric characters are used (e.g. "a", "r", "three", etc.)
+//! - Names of printable alphanumeric characters are used (e.g. "a", "r", "three", etc.)
 //! - For non-alphanumeric characters, Unicode:ish names are used (e.g. "comma", "left_bracket",
 //!   etc.). Note that some names do not correspond to the Unicode standard (usually for brevity)
 //! - Keys that lack a clear US mapping are named "world_x"
@@ -223,7 +223,7 @@ pub const Key = enum(c_int) {
             else => unreachable,
         };
         return if (name_opt) |name|
-            std.mem.span(name)
+            std.mem.span(@ptrCast([*:0]const u8, name))
         else
             null;
     }
@@ -255,13 +255,14 @@ pub const Key = enum(c_int) {
     }
 };
 
-test "getName" {
-    const glfw = @import("main.zig");
-    try glfw.init(.{});
-    defer glfw.terminate();
+// TODO: https://github.com/hexops/mach/issues/375
+// test "getName" {
+//     const glfw = @import("main.zig");
+//     try glfw.init(.{});
+//     defer glfw.terminate();
 
-    _ = glfw.Key.a.getName(0) catch |err| std.debug.print("failed to get key name, not supported? error={}\n", .{err});
-}
+//     _ = glfw.Key.a.getName(0) catch |err| std.debug.print("failed to get key name, not supported? error={}\n", .{err});
+// }
 
 test "getScancode" {
     const glfw = @import("main.zig");

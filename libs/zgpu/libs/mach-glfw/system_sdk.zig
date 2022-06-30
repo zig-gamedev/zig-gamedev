@@ -38,7 +38,7 @@ pub const Options = struct {
 
     /// The MacOS 12 SDK repository name.
     macos_sdk_12: []const u8 = "sdk-macos-12.0",
-    macos_sdk_12_revision: []const u8 = "b365132501f5577a357fab955d112fc1fee79f27",
+    macos_sdk_12_revision: []const u8 = "14613b4917c7059dad8f3789f55bb13a2548f83d",
 
     /// The MacOS 11 SDK repository name.
     macos_sdk_11: []const u8 = "sdk-macos-11.3",
@@ -46,11 +46,11 @@ pub const Options = struct {
 
     /// The Linux x86-64 SDK repository name.
     linux_x86_64: []const u8 = "sdk-linux-x86_64",
-    linux_x86_64_revision: []const u8 = "ab7fa8f3a05b06e0b06f4277b484e27004bfb20f",
+    linux_x86_64_revision: []const u8 = "baace69c969b7577fbcd2dda2d4e139fb3a7bdf7",
 
     /// The Linux aarch64 SDK repository name.
     linux_aarch64: []const u8 = "sdk-linux-aarch64",
-    linux_aarch64_revision: []const u8 = "60c7b3023e65ee0b22668eb20f73786962437303",
+    linux_aarch64_revision: []const u8 = "8f6ddaf6cc25df02925ef78448d512c3184abc63",
 
     /// The Windows x86-64 SDK repository name.
     windows_x86_64: []const u8 = "sdk-windows-x86_64",
@@ -201,6 +201,8 @@ fn determineSdkRoot(allocator: std.mem.Allocator, org: []const u8, name: []const
         else => |e| return e,
     }
 
+    ensureGit(allocator);
+
     // If the SDK exists, return it. Otherwise, clone it.
     if (std.fs.openDirAbsolute(sdk_root_dir, .{})) {
         const current_revision = try getCurrentGitRevision(allocator, sdk_root_dir);
@@ -268,5 +270,25 @@ fn confirmAppleSDKAgreement(allocator: std.mem.Allocator) !bool {
         return std.mem.eql(u8, in, "y") or std.mem.eql(u8, in, "Y") or std.mem.eql(u8, in, "yes") or std.mem.eql(u8, in, "");
     } else {
         return false;
+    }
+}
+
+fn ensureGit(allocator: std.mem.Allocator) void {
+    const argv = &[_][]const u8{ "git", "--version" };
+    const result = std.ChildProcess.exec(.{
+        .allocator = allocator,
+        .argv = argv,
+        .cwd = ".",
+    }) catch { // e.g. FileNotFound
+        std.log.err("mach: error: 'git --version' failed. Is git not installed?", .{});
+        std.process.exit(1);
+    };
+    defer {
+        allocator.free(result.stderr);
+        allocator.free(result.stdout);
+    }
+    if (result.term.Exited != 0) {
+        std.log.err("mach: error: 'git --version' failed. Is git not installed?", .{});
+        std.process.exit(1);
     }
 }

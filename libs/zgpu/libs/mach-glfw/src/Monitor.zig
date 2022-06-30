@@ -49,7 +49,7 @@ pub inline fn getPos(self: Monitor) error{PlatformError}!Pos {
 ///
 /// This is the position of the upper-left corner of the work area of the monitor, along with the
 /// work area size. The work area is defined as the area of the monitor not occluded by the
-/// operating system task bar where present. If no task bar exists then the work area is the
+/// window system task bar where present. If no task bar exists then the work area is the
 /// monitor resolution in screen coordinates.
 const Workarea = struct {
     x: u32,
@@ -88,7 +88,7 @@ const PhysicalSize = struct {
 
 /// Returns the physical size of the monitor.
 ///
-/// Some systems do not provide accurate monitor size information, either because the monitor
+/// Some platforms do not provide accurate monitor size information, either because the monitor
 /// [EDID](https://en.wikipedia.org/wiki/Extended_display_identification_data)
 /// data is incorrect or because the driver does not report it accurately.
 ///
@@ -164,7 +164,7 @@ pub inline fn getContentScale(self: Monitor) error{PlatformError}!ContentScale {
 /// see also: monitor_properties
 pub inline fn getName(self: Monitor) [*:0]const u8 {
     internal_debug.assertInitialized();
-    if (c.glfwGetMonitorName(self.handle)) |name| return name;
+    if (c.glfwGetMonitorName(self.handle)) |name| return @ptrCast([*:0]const u8, name);
     getError() catch |err| return switch (err) {
         Error.NotInitialized => unreachable,
         else => unreachable,
@@ -239,7 +239,7 @@ pub inline fn getVideoModes(self: Monitor, allocator: mem.Allocator) (mem.Alloca
         const slice = try allocator.alloc(VideoMode, @intCast(u32, count));
         var i: u32 = 0;
         while (i < count) : (i += 1) {
-            slice[i] = VideoMode{ .handle = modes[i] };
+            slice[i] = VideoMode{ .handle = @ptrCast([*c]const c.GLFWvidmode, modes)[i] };
         }
         return slice;
     }
@@ -318,6 +318,7 @@ pub inline fn setGamma(self: Monitor, gamma: f32) error{PlatformError}!void {
 ///
 /// wayland: Gamma handling is a privileged protocol, this function will thus never be implemented
 /// and returns glfw.Error.PlatformError.
+/// TODO: Is the documentation obsolete? On wayland the error returned is FeatureUnavailable
 ///
 /// The returned gamma ramp is `.owned = true` by GLFW, and is valid until the monitor is
 /// disconnected, this function is called again, or `glfw.terminate()` is called.
@@ -325,12 +326,12 @@ pub inline fn setGamma(self: Monitor, gamma: f32) error{PlatformError}!void {
 /// @thread_safety This function must only be called from the main thread.
 ///
 /// see also: monitor_gamma
-pub inline fn getGammaRamp(self: Monitor) error{PlatformError}!GammaRamp {
+pub inline fn getGammaRamp(self: Monitor) error{ PlatformError, FeatureUnavailable }!GammaRamp {
     internal_debug.assertInitialized();
     if (c.glfwGetGammaRamp(self.handle)) |ramp| return GammaRamp.fromC(ramp.*);
     getError() catch |err| return switch (err) {
         Error.NotInitialized => unreachable,
-        Error.PlatformError => |e| e,
+        Error.PlatformError, Error.FeatureUnavailable => |e| e,
         else => unreachable,
     };
     // `glfwGetGammaRamp` returns `null` only for errors
@@ -390,7 +391,7 @@ pub inline fn getAll(allocator: mem.Allocator) mem.Allocator.Error![]Monitor {
         const slice = try allocator.alloc(Monitor, @intCast(u32, count));
         var i: u32 = 0;
         while (i < count) : (i += 1) {
-            slice[i] = Monitor{ .handle = monitors[i].? };
+            slice[i] = Monitor{ .handle = @ptrCast([*c]const ?*c.GLFWmonitor, monitors)[i].? };
         }
         return slice;
     }

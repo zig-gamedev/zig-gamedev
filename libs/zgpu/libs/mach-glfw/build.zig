@@ -35,7 +35,10 @@ pub const Options = struct {
     gles: bool = false,
 
     /// Only respected on Linux.
-    linux_window_manager: LinuxWindowManager = .X11,
+    x11: bool = true,
+
+    /// Only respected on Linux.
+    wayland: bool = true,
 
     /// System SDK options.
     system_sdk: system_sdk.Options = .{},
@@ -53,7 +56,10 @@ pub fn link(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void 
 }
 
 fn buildLibrary(b: *Builder, step: *std.build.LibExeObjStep, options: Options) *std.build.LibExeObjStep {
-    const main_abs = std.fs.path.join(b.allocator, &.{ thisDir(), "src/main.zig" }) catch unreachable;
+    // TODO(build-system): https://github.com/hexops/mach/issues/229#issuecomment-1100958939
+    ensureDependencySubmodule(b.allocator, "upstream") catch unreachable;
+
+    const main_abs = std.fs.path.join(b.allocator, &.{ (comptime thisDir()), "src/main.zig" }) catch unreachable;
     const lib = b.addStaticLibrary("glfw", main_abs);
     lib.setBuildMode(step.build_mode);
     lib.setTarget(step.target);
@@ -61,12 +67,16 @@ fn buildLibrary(b: *Builder, step: *std.build.LibExeObjStep, options: Options) *
     // TODO(build-system): pass system SDK options through
     system_sdk.include(b, step, .{});
     const target = (std.zig.system.NativeTargetInfo.detect(b.allocator, step.target) catch unreachable).target;
-    const include_glfw_src = "-I" ++ thisDir() ++ "/upstream/glfw/src";
+    const include_glfw_src = "-I" ++ (comptime thisDir()) ++ "/upstream/glfw/src";
     switch (target.os.tag) {
-        .windows => lib.addCSourceFile(thisDir() ++ "/src/sources_windows.c", &.{ "-D_GLFW_WIN32", include_glfw_src }),
+        .windows => lib.addCSourceFiles(&.{
+            (comptime thisDir()) ++ "/src/sources_all.c",
+            (comptime thisDir()) ++ "/src/sources_windows.c",
+        }, &.{ "-D_GLFW_WIN32", include_glfw_src }),
         .macos => lib.addCSourceFiles(&.{
-            thisDir() ++ "/src/sources_macos.m",
-            thisDir() ++ "/src/sources_macos.c",
+            (comptime thisDir()) ++ "/src/sources_all.c",
+            (comptime thisDir()) ++ "/src/sources_macos.m",
+            (comptime thisDir()) ++ "/src/sources_macos.c",
         }, &.{ "-D_GLFW_COCOA", include_glfw_src }),
         else => {
             // TODO(future): for now, Linux must be built with glibc, not musl:
@@ -79,35 +89,49 @@ fn buildLibrary(b: *Builder, step: *std.build.LibExeObjStep, options: Options) *
             lib.setTarget(step.target);
 
             var sources = std.ArrayList([]const u8).init(b.allocator);
-            const flag = switch (options.linux_window_manager) {
-                .X11 => "-D_GLFW_X11",
-                .Wayland => "-D_GLFW_WAYLAND",
-            };
-            sources.append(thisDir() ++ "/src/sources_linux.c") catch unreachable;
-            switch (options.linux_window_manager) {
-                .X11 => sources.append(thisDir() ++ "/src/sources_linux_x11.c") catch unreachable,
-                .Wayland => sources.append(thisDir() ++ "/src/sources_linux_wayland.c") catch unreachable,
+            var flags = std.ArrayList([]const u8).init(b.allocator);
+            sources.append((comptime thisDir()) ++ "/src/sources_all.c") catch unreachable;
+            sources.append((comptime thisDir()) ++ "/src/sources_linux.c") catch unreachable;
+            if (options.x11) {
+                sources.append((comptime thisDir()) ++ "/src/sources_linux_x11.c") catch unreachable;
+                flags.append("-D_GLFW_X11") catch unreachable;
             }
-            lib.addCSourceFiles(sources.items, &.{ flag, "-I" ++ thisDir() ++ "/upstream/glfw/src" });
+            if (options.wayland) {
+                sources.append((comptime thisDir()) ++ "/src/sources_linux_wayland.c") catch unreachable;
+                flags.append("-D_GLFW_WAYLAND") catch unreachable;
+            }
+            flags.append("-I" ++ (comptime thisDir()) ++ "/upstream/glfw/src") catch unreachable;
+
+            lib.addCSourceFiles(sources.items, flags.items);
         },
     }
     linkGLFWDependencies(b, lib, options);
-    //lib.install();
+    lib.install();
     return lib;
 }
 
+fn ensureDependencySubmodule(allocator: std.mem.Allocator, path: []const u8) !void {
+    if (std.process.getEnvVarOwned(allocator, "NO_ENSURE_SUBMODULES")) |no_ensure_submodules| {
+        if (std.mem.eql(u8, no_ensure_submodules, "true")) return;
+    } else |_| {}
+    var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", path }, allocator);
+    child.cwd = (comptime thisDir());
+    child.stderr = std.io.getStdErr();
+    child.stdout = std.io.getStdOut();
+
+    _ = try child.spawnAndWait();
+}
+
 fn thisDir() []const u8 {
-    comptime {
-        return std.fs.path.dirname(@src().file) orelse ".";
-    }
+    return std.fs.path.dirname(@src().file) orelse ".";
 }
 
 fn linkGLFWDependencies(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void {
-    const include_dir = std.fs.path.join(b.allocator, &.{ thisDir(), "upstream/glfw/include" }) catch unreachable;
+    const include_dir = std.fs.path.join(b.allocator, &.{ (comptime thisDir()), "upstream/glfw/include" }) catch unreachable;
     defer b.allocator.free(include_dir);
     step.addIncludeDir(include_dir);
 
-    const vulkan_include_dir = std.fs.path.join(b.allocator, &.{ thisDir(), "upstream/vulkan_headers/include" }) catch unreachable;
+    const vulkan_include_dir = std.fs.path.join(b.allocator, &.{ (comptime thisDir()), "upstream/vulkan_headers/include" }) catch unreachable;
     defer b.allocator.free(vulkan_include_dir);
     step.addIncludeDir(vulkan_include_dir);
 
@@ -144,14 +168,14 @@ fn linkGLFWDependencies(b: *Builder, step: *std.build.LibExeObjStep, options: Op
         },
         else => {
             // Assume Linux-like
-            switch (options.linux_window_manager) {
-                .X11 => {
-                    step.linkSystemLibraryName("X11");
-                    step.linkSystemLibraryName("xcb");
-                    step.linkSystemLibraryName("Xau");
-                    step.linkSystemLibraryName("Xdmcp");
-                },
-                .Wayland => step.linkSystemLibraryName("wayland-client"),
+            if (options.wayland) {
+                step.defineCMacro("WL_MARSHAL_FLAG_DESTROY", null);
+            }
+            if (options.x11) {
+                step.linkSystemLibraryName("X11");
+                step.linkSystemLibraryName("xcb");
+                step.linkSystemLibraryName("Xau");
+                step.linkSystemLibraryName("Xdmcp");
             }
             // Note: no need to link against vulkan, GLFW finds it dynamically at runtime.
             // https://www.glfw.org/docs/3.3/vulkan_guide.html#vulkan_loader
