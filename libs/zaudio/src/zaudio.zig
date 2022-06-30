@@ -1,5 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const math = std.math;
 const c = @cImport(@cInclude("miniaudio.h"));
 
 pub const SoundFlags = packed struct {
@@ -1057,10 +1058,14 @@ test "zaudio.soundgroup.basic" {
     sgroup.setPan(0.25);
     try expect(sgroup.getPan() == 0.25);
 
-    sgroup.setDirection(.{ 1.0, 2.0, 3.0 });
+    const sdir = [3]f32{ 1.0, 2.0, 3.0 };
+    sgroup.setDirection(sdir);
     {
-        const dir = sgroup.getDirection();
-        try expect(dir[0] == 1.0 and dir[1] == 2.0 and dir[2] == 3.0);
+        const gdir = sgroup.getDirection();
+        expect(sdir[0] == gdir[0] and sdir[1] == gdir[1] and sdir[2] == gdir[2]) catch |err| {
+            std.debug.print("Direction is: {any} should be: {any}\n", .{ gdir, sdir });
+            return err;
+        };
     }
 }
 
