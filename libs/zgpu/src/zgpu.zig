@@ -1441,7 +1441,14 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
                 }
             }
         }
+
+        fn errorCallbackGlfw(error_code: glfw.Error, description: [:0]const u8) void {
+            std.debug.print("glfw: {}: {s}\n", .{ error_code, description });
+        }
     };
+
+    glfw.setErrorCallback(local.errorCallbackGlfw);
+
     local.impl() catch |err| switch (err) {
         error.GraphicsApiUnavailable => {
             std.debug.print(
