@@ -176,6 +176,8 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
+    gpu_work_done_callback: gpu.Queue.WorkDoneCallback = undefined,
+
     mipgens: std.AutoHashMap(gpu.Texture.Format, MipgenResources),
 
     pub const swapchain_format = gpu.Texture.Format.bgra8_unorm;
@@ -269,11 +271,12 @@ pub const GraphicsContext = struct {
             .mipgens = std.AutoHashMap(gpu.Texture.Format, MipgenResources).init(allocator),
         };
 
-        gctx.queue.on_submitted_work_done = gpu.Queue.WorkDoneCallback.init(
+        gctx.gpu_work_done_callback = gpu.Queue.WorkDoneCallback.init(
             *u64,
             &gctx.stats.gpu_frame_number,
             gpuWorkDone,
         );
+        gctx.queue.on_submitted_work_done = &gctx.gpu_work_done_callback;
 
         uniformsInit(gctx);
         return gctx;
