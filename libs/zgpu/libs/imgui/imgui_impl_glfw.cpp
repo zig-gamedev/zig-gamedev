@@ -518,6 +518,7 @@ static bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, Glfw
     bd->MouseCursors[ImGuiMouseCursor_NotAllowed] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
 #endif
     glfwSetErrorCallback(prev_error_callback);
+    glfwGetError(NULL); // Pop potential error from the stack.
 
     // Chain GLFW callbacks: our callbacks will call the user's previously installed callbacks, if any.
     if (install_callbacks)
