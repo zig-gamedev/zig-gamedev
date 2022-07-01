@@ -119,7 +119,7 @@ Addidtional options for Windows applications:
 ## GitHub Sponsors
 Thanks to all people who sponsor zig-gamedev project! In particular, these fine folks sponsor zig-gamedev for $25/month or more:
 * **[Derek Collison (derekcollison)](https://github.com/derekcollison)**
-* [mzet (mzet-)](https://github.com/mzet-)
+* **[mzet (mzet-)](https://github.com/mzet-)**
 * [Garett Bass (garettbass)](https://github.com/garettbass)
 * Zig Software Foundation (ziglang)
 * Ian (LinuXY)
