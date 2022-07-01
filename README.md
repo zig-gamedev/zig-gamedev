@@ -17,6 +17,7 @@ zig build physically_based_rendering_wgpu-run
 ```
 #### Cross-platfrom (Win/Lin/Mac) libraries:
 * [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - Cross-platform graphics layer built on top of native WebGPU API (Dawn)
+* [zaudio](https://github.com/michal-z/zig-gamedev/tree/main/libs/zaudio) - Cross-platform audio built on top of [miniaudio](https://github.com/mackron/miniaudio) library
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
 * [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - loading, generating, processing and optimizing triangle meshes
