@@ -1,6 +1,6 @@
 # zaudio v0.1 - Cross-platform audio
 
-Zig friendly bindings for great [miniaudio](https://github.com/mackron/miniaudio) library. Works on Windows, Linux and macOS.
+Zig friendly bindings for great [miniaudio](https://github.com/mackron/miniaudio) library. Tested on Windows, Linux and macOS but should also work on mobile/web platforms.
 
 As an example program please see [audio experiments (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/audio_experiments_wgpu).
 
