@@ -141,6 +141,7 @@ pub const GraphicsContext = struct {
                 &dxgi.IID_IAdapter1,
                 &optional_adapter1,
             ) == w32.S_OK) {
+                adapter_index += 1;
                 if (optional_adapter1) |adapter1| {
                     var adapter1_desc: dxgi.ADAPTER_DESC1 = undefined;
                     if (adapter1.GetDesc1(&adapter1_desc) == w32.S_OK) {
@@ -161,7 +162,6 @@ pub const GraphicsContext = struct {
                         }
                     }
                 }
-                adapter_index += 1;
             }
             break :blk adapter;
         };
@@ -182,7 +182,7 @@ pub const GraphicsContext = struct {
                 _ = w32.user32.messageBoxA(
                     window,
                     "Failed to create Direct3D 12 Device. This applications requires graphics card " ++
-                        "with DirectX 12support.",
+                        "with DirectX 12 Feature Level 11.1 support.",
                     "Your graphics card driver may be old",
                     w32.user32.MB_OK | w32.user32.MB_ICONERROR,
                 ) catch 0;
