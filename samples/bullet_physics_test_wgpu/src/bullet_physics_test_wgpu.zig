@@ -36,7 +36,7 @@ const Mesh = struct {
 };
 
 const Entity = struct {
-    body: *const zbt.Body,
+    body: zbt.BodyRef,
     basecolor_roughness: [4]f32,
     size: [3]f32,
     mesh_index: u32,
@@ -98,8 +98,8 @@ const DemoState = struct {
 
     physics: struct {
         world: zbt.WorldRef,
-        common_shapes: std.ArrayList(*const zbt.Shape),
-        scene_shapes: std.ArrayList(*const zbt.Shape),
+        common_shapes: std.ArrayList(zbt.ShapeRef),
+        scene_shapes: std.ArrayList(zbt.ShapeRef),
         debug: *zbt.DebugDrawer,
     },
     camera: Camera,
@@ -107,8 +107,8 @@ const DemoState = struct {
         cursor: glfw.Window.CursorPos = .{ .xpos = 0.0, .ypos = 0.0 },
     } = .{},
     pick: struct {
-        body: ?*const zbt.Body = null,
-        p2p: *const zbt.Point2PointConstraint,
+        body: ?zbt.BodyRef = null,
+        p2p: zbt.Point2PointConstraintRef,
         saved_linear_damping: f32 = 0.0,
         saved_angular_damping: f32 = 0.0,
         saved_activation_state: zbt.BodyActivationState = .active,
@@ -134,7 +134,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     zmesh.init(arena);
     defer zmesh.deinit();
 
-    var common_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
+    var common_shapes = std.ArrayList(zbt.ShapeRef).init(allocator);
     var meshes = std.ArrayList(Mesh).init(allocator);
     var indices = std.ArrayList(u32).init(arena);
     var positions = std.ArrayList([3]f32).init(arena);
@@ -200,7 +200,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     physics_world.debugSetDrawer(&physics_debug.getDebugDraw());
     physics_world.debugSetMode(zbt.DebugMode.user_only);
 
-    var scene_shapes = std.ArrayList(*const zbt.Shape).init(allocator);
+    var scene_shapes = std.ArrayList(zbt.ShapeRef).init(allocator);
     var entities = std.ArrayList(Entity).init(allocator);
     var camera: Camera = undefined;
     scenes[initial_scene].setup(physics_world, common_shapes, &scene_shapes, &entities, &camera);
@@ -599,8 +599,8 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 
 const SceneSetupFunc = fn (
     world: zbt.WorldRef,
-    common_shapes: std.ArrayList(*const zbt.Shape),
-    scene_shapes: *std.ArrayList(*const zbt.Shape),
+    common_shapes: std.ArrayList(zbt.ShapeRef),
+    scene_shapes: *std.ArrayList(zbt.ShapeRef),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void;
@@ -613,8 +613,8 @@ const Scene = struct {
 
 fn setupScene0(
     world: zbt.WorldRef,
-    common_shapes: std.ArrayList(*const zbt.Shape),
-    scene_shapes: *std.ArrayList(*const zbt.Shape),
+    common_shapes: std.ArrayList(zbt.ShapeRef),
+    scene_shapes: *std.ArrayList(zbt.ShapeRef),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void {
@@ -695,8 +695,8 @@ fn setupScene0(
 
 fn setupScene1(
     world: zbt.WorldRef,
-    common_shapes: std.ArrayList(*const zbt.Shape),
-    scene_shapes: *std.ArrayList(*const zbt.Shape),
+    common_shapes: std.ArrayList(zbt.ShapeRef),
+    scene_shapes: *std.ArrayList(zbt.ShapeRef),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void {
@@ -743,8 +743,8 @@ fn setupScene1(
 
 fn setupScene2(
     world: zbt.WorldRef,
-    common_shapes: std.ArrayList(*const zbt.Shape),
-    scene_shapes: *std.ArrayList(*const zbt.Shape),
+    common_shapes: std.ArrayList(zbt.ShapeRef),
+    scene_shapes: *std.ArrayList(zbt.ShapeRef),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void {
@@ -790,8 +790,8 @@ fn setupScene2(
 
 fn setupScene3(
     world: zbt.WorldRef,
-    common_shapes: std.ArrayList(*const zbt.Shape),
-    scene_shapes: *std.ArrayList(*const zbt.Shape),
+    common_shapes: std.ArrayList(zbt.ShapeRef),
+    scene_shapes: *std.ArrayList(zbt.ShapeRef),
     entities: *std.ArrayList(Entity),
     camera: *Camera,
 ) void {
@@ -875,7 +875,7 @@ fn setupScene3(
 
 fn cleanupScene(
     world: zbt.WorldRef,
-    shapes: *std.ArrayList(*const zbt.Shape),
+    shapes: *std.ArrayList(zbt.ShapeRef),
     entities: *std.ArrayList(Entity),
 ) void {
     var i = world.getNumBodies() - 1;
@@ -894,7 +894,7 @@ fn cleanupScene(
 
 fn createEntity(
     world: zbt.WorldRef,
-    body: *const zbt.Body,
+    body: zbt.BodyRef,
     basecolor_roughness: [4]f32,
     entities: *std.ArrayList(Entity),
 ) void {
@@ -958,7 +958,7 @@ fn appendMesh(
 
 fn initMeshes(
     arena: std.mem.Allocator,
-    shapes: *std.ArrayList(*const zbt.Shape),
+    shapes: *std.ArrayList(zbt.ShapeRef),
     all_meshes: *std.ArrayList(Mesh),
     all_indices: *std.ArrayList(u32),
     all_positions: *std.ArrayList([3]f32),
@@ -1281,25 +1281,25 @@ fn objectPicking(demo: *DemoState) void {
     }
 }
 
-fn loadCenterOfMassTransform(body: *const zbt.Body) zm.Mat {
+fn loadCenterOfMassTransform(body: zbt.BodyRef) zm.Mat {
     var transform: [12]f32 = undefined;
     body.getCenterOfMassTransform(&transform);
     return zm.loadMat43(transform[0..]);
 }
 
-fn loadInvCenterOfMassTransform(body: *const zbt.Body) zm.Mat {
+fn loadInvCenterOfMassTransform(body: zbt.BodyRef) zm.Mat {
     var transform: [12]f32 = undefined;
     body.getInvCenterOfMassTransform(&transform);
     return zm.loadMat43(transform[0..]);
 }
 
-fn loadPivotA(p2p: *const zbt.Point2PointConstraint) zm.Vec {
+fn loadPivotA(p2p: zbt.Point2PointConstraintRef) zm.Vec {
     var pivot: [3]f32 = undefined;
     p2p.getPivotA(&pivot);
     return zm.loadArr3w(pivot, 1.0);
 }
 
-fn loadPivotB(p2p: *const zbt.Point2PointConstraint) zm.Vec {
+fn loadPivotB(p2p: zbt.Point2PointConstraintRef) zm.Vec {
     var pivot: [3]f32 = undefined;
     p2p.getPivotB(&pivot);
     return zm.loadArr3w(pivot, 1.0);

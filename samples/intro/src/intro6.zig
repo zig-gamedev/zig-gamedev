@@ -59,7 +59,7 @@ const DemoState = struct {
 
     physics: struct {
         world: zbt.WorldRef,
-        shapes: std.ArrayList(*const zbt.Shape),
+        shapes: std.ArrayList(zbt.ShapeRef),
         debug: *zbt.DebugDrawer,
     },
     camera: struct {
@@ -186,7 +186,7 @@ fn init(allocator: std.mem.Allocator) !DemoState {
     physics_world.debugSetMode(.{ .draw_wireframe = true });
 
     const physics_shapes = blk: {
-        var shapes = std.ArrayList(*const zbt.Shape).init(allocator);
+        var shapes = std.ArrayList(zbt.ShapeRef).init(allocator);
 
         const box_shape = zbt.BoxShape.init(&.{ 1.05, 1.05, 1.05 });
         try shapes.append(box_shape.asShape());

@@ -100,7 +100,7 @@ pub const RayCastResult = extern struct {
     hit_normal_world: [3]f32,
     hit_point_world: [3]f32,
     hit_fraction: f32,
-    body: ?*const Body,
+    body: ?BodyRef,
 };
 
 pub const WorldRef = *const World;
@@ -144,13 +144,13 @@ pub const World = opaque {
     ) u32;
 
     pub const addBody = cbtWorldAddBody;
-    extern fn cbtWorldAddBody(world: WorldRef, body: *const Body) void;
+    extern fn cbtWorldAddBody(world: WorldRef, body: BodyRef) void;
 
     pub const removeBody = cbtWorldRemoveBody;
-    extern fn cbtWorldRemoveBody(world: WorldRef, body: *const Body) void;
+    extern fn cbtWorldRemoveBody(world: WorldRef, body: BodyRef) void;
 
     pub const getBody = cbtWorldGetBody;
-    extern fn cbtWorldGetBody(world: WorldRef, index: i32) *const Body;
+    extern fn cbtWorldGetBody(world: WorldRef, index: i32) BodyRef;
 
     pub const getNumBodies = cbtWorldGetNumBodies;
     extern fn cbtWorldGetNumBodies(world: WorldRef) i32;
@@ -158,15 +158,15 @@ pub const World = opaque {
     pub const addConstraint = cbtWorldAddConstraint;
     extern fn cbtWorldAddConstraint(
         world: WorldRef,
-        con: *const Constraint,
+        con: ConstraintRef,
         disable_collision_between_linked_bodies: bool,
     ) void;
 
     pub const removeConstraint = cbtWorldRemoveConstraint;
-    extern fn cbtWorldRemoveConstraint(world: WorldRef, con: *const Constraint) void;
+    extern fn cbtWorldRemoveConstraint(world: WorldRef, con: ConstraintRef) void;
 
     pub const getConstraint = cbtWorldGetConstraint;
-    extern fn cbtWorldGetConstraint(world: WorldRef, index: i32) *const Constraint;
+    extern fn cbtWorldGetConstraint(world: WorldRef, index: i32) ConstraintRef;
 
     pub const getNumConstraints = cbtWorldGetNumConstraints;
     extern fn cbtWorldGetNumConstraints(world: WorldRef) i32;
@@ -633,188 +633,190 @@ pub const BodyActivationState = enum(c_int) {
     simulation_disabled = 5,
 };
 
+pub const BodyRef = *const Body;
 pub const Body = opaque {
     pub fn init(
         mass: f32,
         transform: *const [12]f32,
         shape: ShapeRef,
-    ) *const Body {
+    ) BodyRef {
         const body = allocate();
         body.create(mass, transform, shape);
         return body;
     }
 
-    pub fn deinit(body: *const Body) void {
+    pub fn deinit(body: BodyRef) void {
         body.destroy();
         body.deallocate();
     }
 
     pub const allocate = cbtBodyAllocate;
-    extern fn cbtBodyAllocate() *const Body;
+    extern fn cbtBodyAllocate() BodyRef;
 
     pub const deallocate = cbtBodyDeallocate;
-    extern fn cbtBodyDeallocate(body: *const Body) void;
+    extern fn cbtBodyDeallocate(body: BodyRef) void;
 
     pub const create = cbtBodyCreate;
     extern fn cbtBodyCreate(
-        body: *const Body,
+        body: BodyRef,
         mass: f32,
         transform: *const [12]f32,
         shape: ShapeRef,
     ) void;
 
     pub const destroy = cbtBodyDestroy;
-    extern fn cbtBodyDestroy(body: *const Body) void;
+    extern fn cbtBodyDestroy(body: BodyRef) void;
 
     pub const isCreated = cbtBodyIsCreated;
-    extern fn cbtBodyIsCreated(body: *const Body) bool;
+    extern fn cbtBodyIsCreated(body: BodyRef) bool;
 
     pub const setShape = cbtBodySetShape;
-    extern fn cbtBodySetShape(body: *const Body, shape: ShapeRef) void;
+    extern fn cbtBodySetShape(body: BodyRef, shape: ShapeRef) void;
 
     pub const getShape = cbtBodyGetShape;
-    extern fn cbtBodyGetShape(body: *const Body) ShapeRef;
+    extern fn cbtBodyGetShape(body: BodyRef) ShapeRef;
 
     pub const getMass = cbtBodyGetMass;
-    extern fn cbtBodyGetMass(body: *const Body) f32;
+    extern fn cbtBodyGetMass(body: BodyRef) f32;
 
     pub const setRestitution = cbtBodySetRestitution;
-    extern fn cbtBodySetRestitution(body: *const Body, restitution: f32) void;
+    extern fn cbtBodySetRestitution(body: BodyRef, restitution: f32) void;
 
     pub const getRestitution = cbtBodyGetRestitution;
-    extern fn cbtBodyGetRestitution(body: *const Body) f32;
+    extern fn cbtBodyGetRestitution(body: BodyRef) f32;
 
     pub const setFriction = cbtBodySetFriction;
-    extern fn cbtBodySetFriction(body: *const Body, friction: f32) void;
+    extern fn cbtBodySetFriction(body: BodyRef, friction: f32) void;
 
     pub const getGraphicsWorldTransform = cbtBodyGetGraphicsWorldTransform;
     extern fn cbtBodyGetGraphicsWorldTransform(
-        body: *const Body,
+        body: BodyRef,
         transform: *[12]f32,
     ) void;
 
     pub const getCenterOfMassTransform = cbtBodyGetCenterOfMassTransform;
     extern fn cbtBodyGetCenterOfMassTransform(
-        body: *const Body,
+        body: BodyRef,
         transform: *[12]f32,
     ) void;
 
     pub const getInvCenterOfMassTransform = cbtBodyGetInvCenterOfMassTransform;
     extern fn cbtBodyGetInvCenterOfMassTransform(
-        body: *const Body,
+        body: BodyRef,
         transform: *[12]f32,
     ) void;
 
     pub const applyCentralImpulse = cbtBodyApplyCentralImpulse;
-    extern fn cbtBodyApplyCentralImpulse(body: *const Body, impulse: *const [3]f32) void;
+    extern fn cbtBodyApplyCentralImpulse(body: BodyRef, impulse: *const [3]f32) void;
 
     pub const setUserIndex = cbtBodySetUserIndex;
-    extern fn cbtBodySetUserIndex(body: *const Body, slot: u32, index: i32) void;
+    extern fn cbtBodySetUserIndex(body: BodyRef, slot: u32, index: i32) void;
 
     pub const getUserIndex = cbtBodyGetUserIndex;
-    extern fn cbtBodyGetUserIndex(body: *const Body, slot: u32) i32;
+    extern fn cbtBodyGetUserIndex(body: BodyRef, slot: u32) i32;
 
     pub const getCcdSweptSphereRadius = cbtBodyGetCcdSweptSphereRadius;
-    extern fn cbtBodyGetCcdSweptSphereRadius(body: *const Body) f32;
+    extern fn cbtBodyGetCcdSweptSphereRadius(body: BodyRef) f32;
 
     pub const setCcdSweptSphereRadius = cbtBodySetCcdSweptSphereRadius;
-    extern fn cbtBodySetCcdSweptSphereRadius(body: *const Body, radius: f32) void;
+    extern fn cbtBodySetCcdSweptSphereRadius(body: BodyRef, radius: f32) void;
 
     pub const getCcdMotionThreshold = cbtBodyGetCcdMotionThreshold;
-    extern fn cbtBodyGetCcdMotionThreshold(body: *const Body) f32;
+    extern fn cbtBodyGetCcdMotionThreshold(body: BodyRef) f32;
 
     pub const setCcdMotionThreshold = cbtBodySetCcdMotionThreshold;
-    extern fn cbtBodySetCcdMotionThreshold(body: *const Body, threshold: f32) void;
+    extern fn cbtBodySetCcdMotionThreshold(body: BodyRef, threshold: f32) void;
 
     pub const setMassProps = cbtBodySetMassProps;
-    extern fn cbtBodySetMassProps(body: *const Body, mass: f32, inertia: *const [3]f32) void;
+    extern fn cbtBodySetMassProps(body: BodyRef, mass: f32, inertia: *const [3]f32) void;
 
     pub const setDamping = cbtBodySetDamping;
-    extern fn cbtBodySetDamping(body: *const Body, linear: f32, angular: f32) void;
+    extern fn cbtBodySetDamping(body: BodyRef, linear: f32, angular: f32) void;
 
     pub const getLinearDamping = cbtBodyGetLinearDamping;
-    extern fn cbtBodyGetLinearDamping(body: *const Body) f32;
+    extern fn cbtBodyGetLinearDamping(body: BodyRef) f32;
 
     pub const getAngularDamping = cbtBodyGetAngularDamping;
-    extern fn cbtBodyGetAngularDamping(body: *const Body) f32;
+    extern fn cbtBodyGetAngularDamping(body: BodyRef) f32;
 
     pub const getActivationState = cbtBodyGetActivationState;
-    extern fn cbtBodyGetActivationState(body: *const Body) BodyActivationState;
+    extern fn cbtBodyGetActivationState(body: BodyRef) BodyActivationState;
 
     pub const setActivationState = cbtBodySetActivationState;
-    extern fn cbtBodySetActivationState(body: *const Body, state: BodyActivationState) void;
+    extern fn cbtBodySetActivationState(body: BodyRef, state: BodyActivationState) void;
 
     pub const forceActivationState = cbtBodyForceActivationState;
-    extern fn cbtBodyForceActivationState(body: *const Body, state: BodyActivationState) void;
+    extern fn cbtBodyForceActivationState(body: BodyRef, state: BodyActivationState) void;
 
     pub const getDeactivationTime = cbtBodyGetDeactivationTime;
-    extern fn cbtBodyGetDeactivationTime(body: *const Body) f32;
+    extern fn cbtBodyGetDeactivationTime(body: BodyRef) f32;
 
     pub const setDeactivationTime = cbtBodySetDeactivationTime;
-    extern fn cbtBodySetDeactivationTime(body: *const Body, time: f32) void;
+    extern fn cbtBodySetDeactivationTime(body: BodyRef, time: f32) void;
 
     pub const isActive = cbtBodyIsActive;
-    extern fn cbtBodyIsActive(body: *const Body) bool;
+    extern fn cbtBodyIsActive(body: BodyRef) bool;
 
     pub const isInWorld = cbtBodyIsInWorld;
-    extern fn cbtBodyIsInWorld(body: *const Body) bool;
+    extern fn cbtBodyIsInWorld(body: BodyRef) bool;
 
     pub const isStatic = cbtBodyIsStatic;
-    extern fn cbtBodyIsStatic(body: *const Body) bool;
+    extern fn cbtBodyIsStatic(body: BodyRef) bool;
 
     pub const isKinematic = cbtBodyIsKinematic;
-    extern fn cbtBodyIsKinematic(body: *const Body) bool;
+    extern fn cbtBodyIsKinematic(body: BodyRef) bool;
 
     pub const isStaticOrKinematic = cbtBodyIsStaticOrKinematic;
-    extern fn cbtBodyIsStaticOrKinematic(body: *const Body) bool;
+    extern fn cbtBodyIsStaticOrKinematic(body: BodyRef) bool;
 };
 
 pub const ConstraintType = enum(c_int) {
     point2point = 3,
 };
 
+pub const ConstraintRef = *const Constraint;
 pub const Constraint = opaque {
     pub const getFixedBody = cbtConGetFixedBody;
-    extern fn cbtConGetFixedBody() *const Body;
+    extern fn cbtConGetFixedBody() BodyRef;
 
     pub const destroyFixedBody = cbtConDestroyFixedBody;
     extern fn cbtConDestroyFixedBody() void;
 
     pub const allocate = cbtConAllocate;
-    extern fn cbtConAllocate(ctype: ConstraintType) *const Constraint;
+    extern fn cbtConAllocate(ctype: ConstraintType) ConstraintRef;
 
     pub const deallocate = cbtConDeallocate;
-    extern fn cbtConDeallocate(con: *const Constraint) void;
+    extern fn cbtConDeallocate(con: ConstraintRef) void;
 
     pub const destroy = cbtConDestroy;
-    extern fn cbtConDestroy(con: *const Constraint) void;
+    extern fn cbtConDestroy(con: ConstraintRef) void;
 
     pub const isCreated = cbtConIsCreated;
-    extern fn cbtConIsCreated(con: *const Constraint) bool;
+    extern fn cbtConIsCreated(con: ConstraintRef) bool;
 
     pub const getType = cbtConGetType;
-    extern fn cbtConGetType(con: *const Constraint) ConstraintType;
+    extern fn cbtConGetType(con: ConstraintRef) ConstraintType;
 
     pub const setEnabled = cbtConSetEnabled;
-    extern fn cbtConSetEnabled(con: *const Constraint, enabled: bool) void;
+    extern fn cbtConSetEnabled(con: ConstraintRef, enabled: bool) void;
 
     pub const isEnabled = cbtConIsEnabled;
-    extern fn cbtConIsEnabled(con: *const Constraint) bool;
+    extern fn cbtConIsEnabled(con: ConstraintRef) bool;
 
     pub const getBodyA = cbtConGetBodyA;
-    extern fn cbtConGetBodyA(con: *const Constraint) *const Body;
+    extern fn cbtConGetBodyA(con: ConstraintRef) BodyRef;
 
     pub const getBodyB = cbtConGetBodyB;
-    extern fn cbtConGetBodyB(con: *const Constraint) *const Body;
+    extern fn cbtConGetBodyB(con: ConstraintRef) BodyRef;
 
     pub const setDebugDrawSize = cbtConSetDebugDrawSize;
-    extern fn cbtConSetDebugDrawSize(con: *const Constraint, size: f32) void;
+    extern fn cbtConSetDebugDrawSize(con: ConstraintRef, size: f32) void;
 };
 
 fn ConstraintFunctions(comptime T: type) type {
     return struct {
-        pub fn asConstraint(con: *const T) *const Constraint {
-            return @ptrCast(*const Constraint, con);
+        pub fn asConstraint(con: *const T) ConstraintRef {
+            return @ptrCast(ConstraintRef, con);
         }
         pub fn deallocate(con: *const T) void {
             con.asConstraint().deallocate();
@@ -834,10 +836,10 @@ fn ConstraintFunctions(comptime T: type) type {
         pub fn isEnabled(con: *const T) bool {
             return con.asConstraint().isEnabled();
         }
-        pub fn getBodyA(con: *const T) *const Body {
+        pub fn getBodyA(con: *const T) BodyRef {
             return con.asConstraint().getBodyA();
         }
-        pub fn getBodyB(con: *const T) *const Body {
+        pub fn getBodyB(con: *const T) BodyRef {
             return con.asConstraint().getBodyB();
         }
         pub fn setDebugDrawSize(con: *const T, size: f32) void {
@@ -846,49 +848,50 @@ fn ConstraintFunctions(comptime T: type) type {
     };
 }
 
+pub const Point2PointConstraintRef = *const Point2PointConstraint;
 pub const Point2PointConstraint = opaque {
     usingnamespace ConstraintFunctions(@This());
 
-    pub fn allocate() *const Point2PointConstraint {
-        return @ptrCast(*const Point2PointConstraint, Constraint.allocate(.point2point));
+    pub fn allocate() Point2PointConstraintRef {
+        return @ptrCast(Point2PointConstraintRef, Constraint.allocate(.point2point));
     }
 
     pub const create1 = cbtConPoint2PointCreate1;
     extern fn cbtConPoint2PointCreate1(
-        con: *const Point2PointConstraint,
-        body: *const Body,
+        con: Point2PointConstraintRef,
+        body: BodyRef,
         pivot: *const [3]f32,
     ) void;
 
     pub const create2 = cbtConPoint2PointCreate2;
     extern fn cbtConPoint2PointCreate2(
-        con: *const Point2PointConstraint,
-        body_a: *const Body,
-        body_b: *const Body,
+        con: Point2PointConstraintRef,
+        body_a: BodyRef,
+        body_b: BodyRef,
         pivot_a: *const [3]f32,
         pivot_b: *const [3]f32,
     ) void;
 
     pub const setPivotA = cbtConPoint2PointSetPivotA;
-    extern fn cbtConPoint2PointSetPivotA(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
+    extern fn cbtConPoint2PointSetPivotA(con: Point2PointConstraintRef, pivot: *const [3]f32) void;
 
     pub const setPivotB = cbtConPoint2PointSetPivotB;
-    extern fn cbtConPoint2PointSetPivotB(con: *const Point2PointConstraint, pivot: *const [3]f32) void;
+    extern fn cbtConPoint2PointSetPivotB(con: Point2PointConstraintRef, pivot: *const [3]f32) void;
 
     pub const getPivotA = cbtConPoint2PointGetPivotA;
-    extern fn cbtConPoint2PointGetPivotA(con: *const Point2PointConstraint, pivot: *[3]f32) void;
+    extern fn cbtConPoint2PointGetPivotA(con: Point2PointConstraintRef, pivot: *[3]f32) void;
 
     pub const getPivotB = cbtConPoint2PointGetPivotB;
-    extern fn cbtConPoint2PointGetPivotB(con: *const Point2PointConstraint, pivot: *[3]f32) void;
+    extern fn cbtConPoint2PointGetPivotB(con: Point2PointConstraintRef, pivot: *[3]f32) void;
 
     pub const setTau = cbtConPoint2PointSetTau;
-    extern fn cbtConPoint2PointSetTau(con: *const Point2PointConstraint, tau: f32) void;
+    extern fn cbtConPoint2PointSetTau(con: Point2PointConstraintRef, tau: f32) void;
 
     pub const setDamping = cbtConPoint2PointSetDamping;
-    extern fn cbtConPoint2PointSetDamping(con: *const Point2PointConstraint, damping: f32) void;
+    extern fn cbtConPoint2PointSetDamping(con: Point2PointConstraintRef, damping: f32) void;
 
     pub const setImpulseClamp = cbtConPoint2PointSetImpulseClamp;
-    extern fn cbtConPoint2PointSetImpulseClamp(con: *const Point2PointConstraint, impulse_clamp: f32) void;
+    extern fn cbtConPoint2PointSetImpulseClamp(con: Point2PointConstraintRef, impulse_clamp: f32) void;
 };
 
 pub const DebugMode = packed struct {
