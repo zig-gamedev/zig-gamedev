@@ -58,7 +58,7 @@ const DemoState = struct {
     keyboard_delay: f32 = 1.0,
 
     physics: struct {
-        world: *const zbt.World,
+        world: zbt.WorldRef,
         shapes: std.ArrayList(*const zbt.Shape),
         debug: *zbt.DebugDrawer,
     },

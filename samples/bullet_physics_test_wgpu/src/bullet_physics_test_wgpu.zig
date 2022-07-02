@@ -97,7 +97,7 @@ const DemoState = struct {
     current_scene_index: i32 = initial_scene,
 
     physics: struct {
-        world: *const zbt.World,
+        world: zbt.WorldRef,
         common_shapes: std.ArrayList(*const zbt.Shape),
         scene_shapes: std.ArrayList(*const zbt.Shape),
         debug: *zbt.DebugDrawer,
@@ -598,7 +598,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 }
 
 const SceneSetupFunc = fn (
-    world: *const zbt.World,
+    world: zbt.WorldRef,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
@@ -612,7 +612,7 @@ const Scene = struct {
 };
 
 fn setupScene0(
-    world: *const zbt.World,
+    world: zbt.WorldRef,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
@@ -694,7 +694,7 @@ fn setupScene0(
 }
 
 fn setupScene1(
-    world: *const zbt.World,
+    world: zbt.WorldRef,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
@@ -742,7 +742,7 @@ fn setupScene1(
 }
 
 fn setupScene2(
-    world: *const zbt.World,
+    world: zbt.WorldRef,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
@@ -789,7 +789,7 @@ fn setupScene2(
 }
 
 fn setupScene3(
-    world: *const zbt.World,
+    world: zbt.WorldRef,
     common_shapes: std.ArrayList(*const zbt.Shape),
     scene_shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
@@ -874,7 +874,7 @@ fn setupScene3(
 }
 
 fn cleanupScene(
-    world: *const zbt.World,
+    world: zbt.WorldRef,
     shapes: *std.ArrayList(*const zbt.Shape),
     entities: *std.ArrayList(Entity),
 ) void {
@@ -893,7 +893,7 @@ fn cleanupScene(
 }
 
 fn createEntity(
-    world: *const zbt.World,
+    world: zbt.WorldRef,
     body: *const zbt.Body,
     basecolor_roughness: [4]f32,
     entities: *std.ArrayList(Entity),
