@@ -29,7 +29,7 @@ const zaudio = @import("zaudio");
 
 pub fn main() !void {
     ...
-    const engine =  try zaudio.Engine.init(allocator, null);
+    const engine = try zaudio.Engine.init(allocator, null);
 
     const music = try zaudio.Sound.initFile(
         allocator,

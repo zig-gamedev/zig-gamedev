@@ -103,7 +103,7 @@ pub const RayCastResult = extern struct {
     body: ?BodyRef,
 };
 
-pub const WorldRef = *const World;
+pub const WorldRef = *align(@sizeOf(usize)) World;
 pub const World = opaque {
     pub fn init(args: struct {}) WorldRef {
         _ = args;
@@ -257,7 +257,7 @@ pub const ShapeType = enum(c_int) {
     trimesh = 21,
 };
 
-pub const ShapeRef = *const Shape;
+pub const ShapeRef = *align(@sizeOf(usize)) Shape;
 pub const Shape = opaque {
     pub const allocate = cbtShapeAllocate;
     extern fn cbtShapeAllocate(stype: ShapeType) ShapeRef;
@@ -334,7 +334,7 @@ pub const Shape = opaque {
     extern fn cbtShapeGetUserIndex(shape: ShapeRef, slot: u32) i32;
 
     pub fn as(shape: ShapeRef, comptime stype: ShapeType) switch (stype) {
-        .box => *const BoxShape,
+        .box => BoxShapeRef,
         .sphere => SphereShapeRef,
         .cylinder => CylinderShapeRef,
         .capsule => CapsuleShapeRef,
@@ -343,7 +343,7 @@ pub const Shape = opaque {
     } {
         std.debug.assert(shape.getType() == stype);
         return switch (stype) {
-            .box => @ptrCast(*const BoxShape, shape),
+            .box => @ptrCast(BoxShapeRef, shape),
             .sphere => @ptrCast(SphereShapeRef, shape),
             .cylinder => @ptrCast(CylinderShapeRef, shape),
             .capsule => @ptrCast(CapsuleShapeRef, shape),
@@ -355,70 +355,70 @@ pub const Shape = opaque {
 
 fn ShapeFunctions(comptime T: type) type {
     return struct {
-        pub fn asShape(shape: *const T) ShapeRef {
+        pub fn asShape(shape: T) ShapeRef {
             return @ptrCast(ShapeRef, shape);
         }
 
-        pub fn deallocate(shape: *const T) void {
+        pub fn deallocate(shape: T) void {
             shape.asShape().deallocate();
         }
-        pub fn destroy(shape: *const T) void {
+        pub fn destroy(shape: T) void {
             shape.asShape().destroy();
         }
-        pub fn deinit(shape: *const T) void {
+        pub fn deinit(shape: T) void {
             shape.asShape().deinit();
         }
-        pub fn isCreated(shape: *const T) bool {
+        pub fn isCreated(shape: T) bool {
             return shape.asShape().isCreated();
         }
-        pub fn getType(shape: *const T) ShapeType {
+        pub fn getType(shape: T) ShapeType {
             return shape.asShape().getType();
         }
-        pub fn setMargin(shape: *const T, margin: f32) void {
+        pub fn setMargin(shape: T, margin: f32) void {
             shape.asShape().setMargin(margin);
         }
-        pub fn getMargin(shape: *const T) f32 {
+        pub fn getMargin(shape: T) f32 {
             return shape.asShape().getMargin();
         }
-        pub fn isPolyhedral(shape: *const T) bool {
+        pub fn isPolyhedral(shape: T) bool {
             return shape.asShape().isPolyhedral();
         }
-        pub fn isConvex2d(shape: *const T) bool {
+        pub fn isConvex2d(shape: T) bool {
             return shape.asShape().isConvex2d();
         }
-        pub fn isConvex(shape: *const T) bool {
+        pub fn isConvex(shape: T) bool {
             return shape.asShape().isConvex();
         }
-        pub fn isNonMoving(shape: *const T) bool {
+        pub fn isNonMoving(shape: T) bool {
             return shape.asShape().isNonMoving();
         }
-        pub fn isConcave(shape: *const T) bool {
+        pub fn isConcave(shape: T) bool {
             return shape.asShape().isConcave();
         }
-        pub fn isCompound(shape: *const T) bool {
+        pub fn isCompound(shape: T) bool {
             return shape.asShape().isCompound();
         }
         pub fn calculateLocalInertia(shape: ShapeRef, mass: f32, inertia: *[3]f32) void {
             shape.asShape().calculateLocalInertia(shape, mass, inertia);
         }
-        pub fn setUserPointer(shape: *const T, ptr: ?*anyopaque) void {
+        pub fn setUserPointer(shape: T, ptr: ?*anyopaque) void {
             shape.asShape().setUserPointer(ptr);
         }
-        pub fn getUserPointer(shape: *const T) ?*anyopaque {
+        pub fn getUserPointer(shape: T) ?*anyopaque {
             return shape.asShape().getUserPointer();
         }
-        pub fn setUserIndex(shape: *const T, slot: u32, index: i32) void {
+        pub fn setUserIndex(shape: T, slot: u32, index: i32) void {
             shape.asShape().setUserIndex(slot, index);
         }
-        pub fn getUserIndex(shape: *const T, slot: u32) i32 {
+        pub fn getUserIndex(shape: T, slot: u32) i32 {
             return shape.asShape().getUserIndex(slot);
         }
     };
 }
 
-pub const BoxShapeRef = *const BoxShape;
+pub const BoxShapeRef = *align(@sizeOf(usize)) BoxShape;
 pub const BoxShape = opaque {
-    usingnamespace ShapeFunctions(@This());
+    usingnamespace ShapeFunctions(BoxShapeRef);
 
     pub fn init(half_extents: *const [3]f32) BoxShapeRef {
         const box = allocate();
@@ -440,9 +440,9 @@ pub const BoxShape = opaque {
     extern fn cbtShapeBoxGetHalfExtentsWithMargin(box: BoxShapeRef, half_extents: *[3]f32) void;
 };
 
-pub const SphereShapeRef = *const SphereShape;
+pub const SphereShapeRef = *align(@sizeOf(usize)) SphereShape;
 pub const SphereShape = opaque {
-    usingnamespace ShapeFunctions(@This());
+    usingnamespace ShapeFunctions(SphereShapeRef);
 
     pub fn init(radius: f32) SphereShapeRef {
         const sphere = allocate();
@@ -464,9 +464,9 @@ pub const SphereShape = opaque {
     extern fn cbtShapeSphereSetUnscaledRadius(sphere: SphereShapeRef, radius: f32) void;
 };
 
-pub const CapsuleShapeRef = *const CapsuleShape;
+pub const CapsuleShapeRef = *align(@sizeOf(usize)) CapsuleShape;
 pub const CapsuleShape = opaque {
-    usingnamespace ShapeFunctions(@This());
+    usingnamespace ShapeFunctions(CapsuleShapeRef);
 
     pub fn init(radius: f32, height: f32, upaxis: Axis) CapsuleShapeRef {
         const capsule = allocate();
@@ -496,9 +496,9 @@ pub const CapsuleShape = opaque {
     extern fn cbtShapeCapsuleGetRadius(capsule: CapsuleShapeRef) f32;
 };
 
-pub const CylinderShapeRef = *const CylinderShape;
+pub const CylinderShapeRef = *align(@sizeOf(usize)) CylinderShape;
 pub const CylinderShape = opaque {
-    usingnamespace ShapeFunctions(@This());
+    usingnamespace ShapeFunctions(CylinderShapeRef);
 
     pub fn init(
         half_extents: *const [3]f32,
@@ -536,9 +536,9 @@ pub const CylinderShape = opaque {
     extern fn cbtShapeCylinderGetUpAxis(capsule: CylinderShapeRef) Axis;
 };
 
-pub const CompoundShapeRef = *const CompoundShape;
+pub const CompoundShapeRef = *align(@sizeOf(usize)) CompoundShape;
 pub const CompoundShape = opaque {
-    usingnamespace ShapeFunctions(@This());
+    usingnamespace ShapeFunctions(CompoundShapeRef);
 
     pub fn init(
         args: struct {
@@ -589,9 +589,9 @@ pub const CompoundShape = opaque {
     ) void;
 };
 
-pub const TriangleMeshShapeRef = *const TriangleMeshShape;
+pub const TriangleMeshShapeRef = *align(@sizeOf(usize)) TriangleMeshShape;
 pub const TriangleMeshShape = opaque {
-    usingnamespace ShapeFunctions(@This());
+    usingnamespace ShapeFunctions(TriangleMeshShapeRef);
 
     pub fn init() TriangleMeshShapeRef {
         const trimesh = allocate();
@@ -633,7 +633,7 @@ pub const BodyActivationState = enum(c_int) {
     simulation_disabled = 5,
 };
 
-pub const BodyRef = *const Body;
+pub const BodyRef = *align(@sizeOf(usize)) Body;
 pub const Body = opaque {
     pub fn init(
         mass: f32,
@@ -774,7 +774,7 @@ pub const ConstraintType = enum(c_int) {
     point2point = 3,
 };
 
-pub const ConstraintRef = *const Constraint;
+pub const ConstraintRef = *align(@sizeOf(usize)) Constraint;
 pub const Constraint = opaque {
     pub const getFixedBody = cbtConGetFixedBody;
     extern fn cbtConGetFixedBody() BodyRef;
@@ -815,42 +815,42 @@ pub const Constraint = opaque {
 
 fn ConstraintFunctions(comptime T: type) type {
     return struct {
-        pub fn asConstraint(con: *const T) ConstraintRef {
+        pub fn asConstraint(con: T) ConstraintRef {
             return @ptrCast(ConstraintRef, con);
         }
-        pub fn deallocate(con: *const T) void {
+        pub fn deallocate(con: T) void {
             con.asConstraint().deallocate();
         }
-        pub fn destroy(con: *const T) void {
+        pub fn destroy(con: T) void {
             con.asConstraint().destroy();
         }
-        pub fn getType(con: *const T) ConstraintType {
+        pub fn getType(con: T) ConstraintType {
             return con.asConstraint().getType();
         }
-        pub fn isCreated(con: *const T) bool {
+        pub fn isCreated(con: T) bool {
             return con.asConstraint().isCreated();
         }
-        pub fn setEnabled(con: *const T, enabled: bool) void {
+        pub fn setEnabled(con: T, enabled: bool) void {
             con.asConstraint().setEnabled(enabled);
         }
-        pub fn isEnabled(con: *const T) bool {
+        pub fn isEnabled(con: T) bool {
             return con.asConstraint().isEnabled();
         }
-        pub fn getBodyA(con: *const T) BodyRef {
+        pub fn getBodyA(con: T) BodyRef {
             return con.asConstraint().getBodyA();
         }
-        pub fn getBodyB(con: *const T) BodyRef {
+        pub fn getBodyB(con: T) BodyRef {
             return con.asConstraint().getBodyB();
         }
-        pub fn setDebugDrawSize(con: *const T, size: f32) void {
+        pub fn setDebugDrawSize(con: T, size: f32) void {
             con.asConstraint().setDebugDrawSize(size);
         }
     };
 }
 
-pub const Point2PointConstraintRef = *const Point2PointConstraint;
+pub const Point2PointConstraintRef = *align(@sizeOf(usize)) Point2PointConstraint;
 pub const Point2PointConstraint = opaque {
-    usingnamespace ConstraintFunctions(@This());
+    usingnamespace ConstraintFunctions(Point2PointConstraintRef);
 
     pub fn allocate() Point2PointConstraintRef {
         return @ptrCast(Point2PointConstraintRef, Constraint.allocate(.point2point));

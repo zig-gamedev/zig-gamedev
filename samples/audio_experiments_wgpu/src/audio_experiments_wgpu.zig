@@ -13,8 +13,8 @@ const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: audio experiments (wgpu)";
 
 const AudioState = struct {
-    device: zaudio.Device,
-    engine: zaudio.Engine,
+    device: zaudio.DeviceRef,
+    engine: zaudio.EngineRef,
 };
 
 const DemoState = struct {
@@ -24,7 +24,7 @@ const DemoState = struct {
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
 
-    music: zaudio.Sound,
+    music: zaudio.SoundRef,
 };
 
 fn audioPlaybackCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void {
@@ -61,7 +61,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
         const engine = engine: {
             var config = zaudio.EngineConfig.init();
-            config.raw.pDevice = device.handle;
+            config.raw.pDevice = device.asRaw();
             config.raw.noAutoStart = 1;
             break :engine try zaudio.Engine.init(allocator, config);
         };
