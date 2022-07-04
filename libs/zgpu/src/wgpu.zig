@@ -573,54 +573,145 @@ pub const AdapterProperties = extern struct {
 pub const BindGroupEntry = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     binding: u32,
-    buffer: BufferRef,
+    buffer: Buffer,
     offset: u64,
     size: u64,
-    sampler: SamplerRef,
-    textureView: TextureViewRef,
+    sampler: Sampler,
+    textureView: TextureView,
 };
 
 pub const BindGroupDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: [*:0]const u8 = null,
-    layout: BindGroupLayoutRef,
+    layout: BindGroupLayout,
     entry_count: u32,
     entries: ?[*]const BindGroupEntry,
 };
 
-pub const DeviceRef = *align(@sizeOf(usize)) Device;
-pub const Device = opaque {
-    pub fn createBindGroup(device: DeviceRef, descriptor: BindGroupDescriptor) BindGroupRef {
-        return @ptrCast(BindGroupRef, c.wgpuDeviceCreateBindGroup(device.asRaw(), &descriptor));
+pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
+pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
+pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
+pub const Buffer = *align(@sizeOf(usize)) BufferImpl;
+pub const CommandBuffer = *align(@sizeOf(usize)) CommandBufferImpl;
+pub const CommandEncoder = *align(@sizeOf(usize)) CommandEncoderImpl;
+pub const ComputePassEncoder = *align(@sizeOf(usize)) ComputePassEncoderImpl;
+pub const ComputePipeline = *align(@sizeOf(usize)) ComputePipelineImpl;
+pub const Device = *align(@sizeOf(usize)) DeviceImpl;
+pub const ExternalTexture = *align(@sizeOf(usize)) ExternalTextureImpl;
+pub const Instance = *align(@sizeOf(usize)) InstanceImpl;
+pub const PipelineLayout = *align(@sizeOf(usize)) PipelineLayoutImpl;
+pub const QuerySet = *align(@sizeOf(usize)) QuerySetImpl;
+pub const Queue = *align(@sizeOf(usize)) QueueImpl;
+pub const RenderBundle = *align(@sizeOf(usize)) RenderBundleImpl;
+pub const RenderBundleEncoder = *align(@sizeOf(usize)) RenderBundleEncoderImpl;
+pub const RenderPassEncoder = *align(@sizeOf(usize)) RenderPassEncoderImpl;
+pub const RenderPipeline = *align(@sizeOf(usize)) RenderPipelineImpl;
+pub const Sampler = *align(@sizeOf(usize)) SamplerImpl;
+pub const ShaderModule = *align(@sizeOf(usize)) ShaderModuleImpl;
+pub const Surface = *align(@sizeOf(usize)) SurfaceImpl;
+pub const SwapChain = *align(@sizeOf(usize)) SwapChainImpl;
+pub const Texture = *align(@sizeOf(usize)) TextureImpl;
+pub const TextureView = *align(@sizeOf(usize)) TextureViewImpl;
+
+const AdapterImpl = opaque {
+    // TODO: Add functions.
+};
+
+const BindGroupImpl = opaque {
+    // TODO: Add functions.
+};
+
+const BindGroupLayoutImpl = opaque {
+    // TODO: Add functions.
+};
+
+const BufferImpl = opaque {
+    // TODO: Add functions.
+};
+
+const CommandBufferImpl = opaque {
+    // TODO: Add functions.
+};
+
+const CommandEncoderImpl = opaque {
+    // TODO: Add functions.
+};
+
+const ComputePassEncoderImpl = opaque {
+    // TODO: Add functions.
+};
+
+const ComputePipelineImpl = opaque {
+    // TODO: Add functions.
+};
+
+const DeviceImpl = opaque {
+    pub fn createBindGroup(device: Device, descriptor: BindGroupDescriptor) BindGroup {
+        return @ptrCast(BindGroup, c.wgpuDeviceCreateBindGroup(device.asRaw(), &descriptor));
     }
 
-    fn asRaw(device: DeviceRef) c.WGPUDevice {
+    fn asRaw(device: Device) c.WGPUDevice {
         return @ptrCast(c.WGPUDevice, device);
     }
     // TODO: Add functions.
 };
 
-pub const BufferRef = *align(@sizeOf(usize)) Buffer;
-pub const Buffer = opaque {
+const ExternalTextureImpl = opaque {
     // TODO: Add functions.
 };
 
-pub const SamplerRef = *align(@sizeOf(usize)) Sampler;
-pub const Sampler = opaque {
+const InstanceImpl = opaque {
     // TODO: Add functions.
 };
 
-pub const TextureViewRef = *align(@sizeOf(usize)) TextureView;
-pub const TextureView = opaque {
+const PipelineLayoutImpl = opaque {
     // TODO: Add functions.
 };
 
-pub const BindGroupLayoutRef = *align(@sizeOf(usize)) BindGroupLayout;
-pub const BindGroupLayout = opaque {
+const QuerySetImpl = opaque {
     // TODO: Add functions.
 };
 
-pub const BindGroupRef = *align(@sizeOf(usize)) BindGroup;
-pub const BindGroup = opaque {
+const QueueImpl = opaque {
+    // TODO: Add functions.
+};
+
+const RenderBundleImpl = opaque {
+    // TODO: Add functions.
+};
+
+const RenderBundleEncoderImpl = opaque {
+    // TODO: Add functions.
+};
+
+const RenderPassEncoderImpl = opaque {
+    // TODO: Add functions.
+};
+
+const RenderPipelineImpl = opaque {
+    // TODO: Add functions.
+};
+
+const SamplerImpl = opaque {
+    // TODO: Add functions.
+};
+
+const ShaderModuleImpl = opaque {
+    // TODO: Add functions.
+};
+
+const SurfaceImpl = opaque {
+    // TODO: Add functions.
+};
+
+const SwapChainImpl = opaque {
+    // TODO: Add functions.
+};
+
+const TextureImpl = opaque {
+    // TODO: Add functions.
+};
+
+const TextureViewImpl = opaque {
     // TODO: Add functions.
 };

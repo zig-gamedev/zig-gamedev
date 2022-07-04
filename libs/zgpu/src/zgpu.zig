@@ -133,6 +133,7 @@ const math = std.math;
 const assert = std.debug.assert;
 const glfw = @import("glfw");
 const gpu = @import("gpu");
+const wgpu = @import("wgpu.zig");
 const c = @cImport({
     @cInclude("dawn/dawn_proc.h");
     @cInclude("dawn_native_mach.h");
