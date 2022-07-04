@@ -13,8 +13,8 @@ const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: audio experiments (wgpu)";
 
 const AudioState = struct {
-    device: zaudio.DeviceRef,
-    engine: zaudio.EngineRef,
+    device: zaudio.Device,
+    engine: zaudio.Engine,
 };
 
 const DemoState = struct {
@@ -24,7 +24,7 @@ const DemoState = struct {
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
 
-    music: zaudio.SoundRef,
+    music: zaudio.Sound,
 };
 
 fn audioPlaybackCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void {
@@ -56,14 +56,14 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             config.raw.playback.format = @enumToInt(zaudio.Format.@"f32");
             config.raw.playback.channels = 2;
             config.raw.sampleRate = 48_000;
-            break :device try zaudio.Device.init(allocator, null, &config);
+            break :device try zaudio.initDevice(allocator, null, &config);
         };
 
         const engine = engine: {
             var config = zaudio.EngineConfig.init();
             config.raw.pDevice = device.asRaw();
             config.raw.noAutoStart = 1;
-            break :engine try zaudio.Engine.init(allocator, config);
+            break :engine try zaudio.initEngine(allocator, config);
         };
 
         audio.* = .{
@@ -75,9 +75,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     try audio.engine.start();
 
-    const music = try zaudio.Sound.initFile(
+    const music = try audio.engine.initSoundFromFile(
         allocator,
-        audio.engine,
         content_dir ++ "Broke For Free - Night Owl.mp3",
         .{ .flags = .{ .stream = true } },
     );
