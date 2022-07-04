@@ -243,7 +243,7 @@ pub const RequestDeviceStatus = enum(u32) {
     unknown = 0x00000002,
 };
 
-pub const StructType = enum(u32) {
+pub const SType = enum(u32) {
     invalid = 0x00000000,
     surface_descriptor_from_metal_layer = 0x00000001,
     surface_descriptor_from_windows_hwnd = 0x00000002,
@@ -552,12 +552,12 @@ pub const TextureUsage = packed struct {
 
 pub const ChainedStruct = extern struct {
     next: ?*const ChainedStruct,
-    stype: StructType,
+    stype: SType,
 };
 
 pub const ChainedStructOut = extern struct {
     next: ?*ChainedStructOut,
-    stype: StructType,
+    stype: SType,
 };
 
 pub const AdapterProperties = extern struct {
@@ -582,10 +582,66 @@ pub const BindGroupEntry = extern struct {
 
 pub const BindGroupDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: [*:0]const u8 = null,
+    label: ?[*:0]const u8 = null,
     layout: BindGroupLayout,
     entry_count: u32,
     entries: ?[*]const BindGroupEntry,
+};
+
+pub const BufferBindingLayout = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    @"type": BufferBindingType,
+    has_dynamic_offset: bool,
+    min_binding_size: u64,
+};
+
+pub const SamplerBindingLayout = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    @"type": SamplerBindingType,
+};
+
+pub const TextureBindingLayout = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    sample_type: TextureSampleType,
+    view_dimension: TextureViewDimension,
+    multisampled: bool,
+};
+
+pub const StorageTextureBindingLayout = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    access: StorageTextureAccess,
+    format: TextureFormat,
+    view_dimension: TextureViewDimension,
+};
+
+pub const BindGroupLayoutEntry = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    binding: u32,
+    visibility: ShaderStage,
+    buffer: BufferBindingLayout,
+    sampler: SamplerBindingLayout,
+    texture: TextureBindingLayout,
+    storage_texture: StorageTextureBindingLayout,
+};
+
+pub const BindGroupLayoutDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    entry_count: u32,
+    entries: ?[*]const BindGroupLayoutEntry,
+};
+
+pub const BufferDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    usage: BufferUsage,
+    size: u64,
+    mapped_at_creation: bool,
+};
+
+pub const CommandEncoderDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
 };
 
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
@@ -648,6 +704,18 @@ const ComputePipelineImpl = opaque {
 const DeviceImpl = opaque {
     pub fn createBindGroup(device: Device, descriptor: BindGroupDescriptor) BindGroup {
         return @ptrCast(BindGroup, c.wgpuDeviceCreateBindGroup(device.asRaw(), &descriptor));
+    }
+
+    pub fn createBindGroupLayout(device: Device, descriptor: BindGroupLayoutDescriptor) BindGroupLayout {
+        return @ptrCast(BindGroupLayout, c.wgpuDeviceCreateBindGroupLayout(device.asRaw(), &descriptor));
+    }
+
+    pub fn createBuffer(device: Device, descriptor: BufferDescriptor) Buffer {
+        return @ptrCast(Buffer, c.wgpuDeviceCreateBuffer(device.asRaw(), &descriptor));
+    }
+
+    pub fn createCommandEncoder(device: Device, descriptor: CommandEncoderDescriptor) CommandEncoder {
+        return @ptrCast(CommandEncoder, c.wgpuDeviceCreateCommandEncoder(device.asRaw(), &descriptor));
     }
 
     fn asRaw(device: Device) c.WGPUDevice {
