@@ -591,7 +591,7 @@ pub const BindGroupDescriptor = extern struct {
 pub const DeviceRef = *align(@sizeOf(usize)) Device;
 pub const Device = opaque {
     pub fn createBindGroup(device: DeviceRef, descriptor: BindGroupDescriptor) BindGroupRef {
-        return c.wgpuDeviceCreateBindGroup(device.asRaw(), &descriptor);
+        return @ptrCast(BindGroupRef, c.wgpuDeviceCreateBindGroup(device.asRaw(), &descriptor));
     }
 
     fn asRaw(device: DeviceRef) c.WGPUDevice {
