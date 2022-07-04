@@ -56,7 +56,7 @@ pub const BlendOperation = enum(u32) {
 };
 
 pub const BufferBindingType = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     uniform = 0x00000001,
     storage = 0x00000002,
     read_only_storage = 0x00000003,
@@ -64,7 +64,7 @@ pub const BufferBindingType = enum(u32) {
 
 pub const BufferMapAsyncStatus = enum(u32) {
     success = 0x00000000,
-    err = 0x00000001,
+    @"error" = 0x00000001,
     unknown = 0x00000002,
     device_lost = 0x00000003,
     destroyed_before_callback = 0x00000004,
@@ -72,7 +72,7 @@ pub const BufferMapAsyncStatus = enum(u32) {
 };
 
 pub const CompareFunction = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     never = 0x00000001,
     less = 0x00000002,
     less_equal = 0x00000003,
@@ -85,13 +85,13 @@ pub const CompareFunction = enum(u32) {
 
 pub const CompilationInfoRequestStatus = enum(u32) {
     success = 0x00000000,
-    err = 0x00000001,
+    @"error" = 0x00000001,
     device_lost = 0x00000002,
     unknown = 0x00000003,
 };
 
 pub const CompilationMessageType = enum(u32) {
-    err = 0x00000000,
+    @"error" = 0x00000000,
     warning = 0x00000001,
     info = 0x00000002,
 };
@@ -103,7 +103,7 @@ pub const ComputePassTimestampLocation = enum(u32) {
 
 pub const CreatePipelineAsyncStatus = enum(u32) {
     success = 0x00000000,
-    err = 0x00000001,
+    @"error" = 0x00000001,
     device_lost = 0x00000002,
     device_destroyed = 0x00000003,
     unknown = 0x00000004,
@@ -116,7 +116,7 @@ pub const CullMode = enum(u32) {
 };
 
 pub const DeviceLostReason = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     destroyed = 0x00000001,
 };
 
@@ -134,7 +134,7 @@ pub const ErrorType = enum(u32) {
 };
 
 pub const FeatureName = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     depth24_unorm_stencil8 = 0x00000002,
     depth32_float_stencil8 = 0x00000003,
     timestamp_query = 0x00000004,
@@ -161,13 +161,13 @@ pub const FrontFace = enum(u32) {
 };
 
 pub const IndexFormat = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     uint16 = 0x00000001,
     uint32 = 0x00000002,
 };
 
 pub const LoadOp = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     clear = 0x00000001,
     load = 0x00000002,
 };
@@ -176,7 +176,7 @@ pub const LoggingType = enum(u32) {
     verbose = 0x00000000,
     info = 0x00000001,
     warning = 0x00000002,
-    err = 0x00000003,
+    @"error" = 0x00000003,
 };
 
 pub const PipelineStatisticName = enum(u32) {
@@ -188,13 +188,13 @@ pub const PipelineStatisticName = enum(u32) {
 };
 
 pub const PowerPreference = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     low_power = 0x00000001,
     high_performance = 0x00000002,
 };
 
 pub const PredefinedColorSpace = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     srgb = 0x00000001,
 };
 
@@ -220,7 +220,7 @@ pub const QueryType = enum(u32) {
 
 pub const QueueWorkDoneStatus = enum(u32) {
     success = 0x00000000,
-    err = 0x00000001,
+    @"error" = 0x00000001,
     unknown = 0x00000002,
     device_lost = 0x00000003,
 };
@@ -233,13 +233,13 @@ pub const RenderPassTimestampLocation = enum(u32) {
 pub const RequestAdapterStatus = enum(u32) {
     success = 0x00000000,
     unavailable = 0x00000001,
-    err = 0x00000002,
+    @"error" = 0x00000002,
     unknown = 0x00000003,
 };
 
 pub const RequestDeviceStatus = enum(u32) {
     success = 0x00000000,
-    err = 0x00000001,
+    @"error" = 0x00000001,
     unknown = 0x00000002,
 };
 
@@ -266,7 +266,7 @@ pub const StructType = enum(u32) {
 };
 
 pub const SamplerBindingType = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     filtering = 0x00000001,
     non_filtering = 0x00000002,
     comparison = 0x00000003,
@@ -284,12 +284,12 @@ pub const StencilOperation = enum(u32) {
 };
 
 pub const StorageTextureAccess = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     write_only = 0x00000001,
 };
 
 pub const StoreOp = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     store = 0x00000001,
     discard = 0x00000002,
 };
@@ -316,7 +316,7 @@ pub const TextureDimension = enum(u32) {
 };
 
 pub const TextureFormat = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     r8_unorm = 0x00000001,
     r8_snorm = 0x00000002,
     r8_uint = 0x00000003,
@@ -416,7 +416,7 @@ pub const TextureFormat = enum(u32) {
 };
 
 pub const TextureSampleType = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     float = 0x00000001,
     unfilterable_float = 0x00000002,
     depth = 0x00000003,
@@ -425,7 +425,7 @@ pub const TextureSampleType = enum(u32) {
 };
 
 pub const TextureViewDimension = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     @"1d" = 0x00000001,
     @"2d" = 0x00000002,
     @"2d_array" = 0x00000003,
@@ -435,7 +435,7 @@ pub const TextureViewDimension = enum(u32) {
 };
 
 pub const VertexFormat = enum(u32) {
-    undef = 0x00000000,
+    @"undefined" = 0x00000000,
     uint8x2 = 0x00000001,
     uint8x4 = 0x00000002,
     sint8x2 = 0x00000003,
