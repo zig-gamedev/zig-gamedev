@@ -928,6 +928,24 @@ pub const CreateRenderPipelineAsyncCallback = fn (
     userdata: ?*anyopaque,
 ) void;
 
+pub const ErrorCallback = fn (
+    etype: ErrorType,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) void;
+
+pub const LoggingCallback = fn (
+    etype: LoggingType,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) void;
+
+pub const DeviceLostCallback = fn (
+    reason: DeviceLostReason,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) void;
+
 const AdapterImpl = opaque {
     // TODO: Add functions.
 };
@@ -1054,7 +1072,7 @@ const DeviceImpl = opaque {
     }
 
     pub fn enumerateFeatures(device: Device, features: ?[*]FeatureName) usize {
-        return c.wgpuDeviceEnumerateFeatures(device.asRaw(), features);
+        return c.wgpuDeviceEnumerateFeatures(device.asRaw(), @ptrCast(?[*]u32, features));
     }
 
     pub fn getLimits(device: Device, limits: *SupportedLimits) bool {
@@ -1062,11 +1080,11 @@ const DeviceImpl = opaque {
     }
 
     pub fn getQueue(device: Device) Queue {
-        c.wgpuDeviceGetQueue(device.asRaw());
+        return @ptrCast(Queue, c.wgpuDeviceGetQueue(device.asRaw()));
     }
 
     pub fn hasFeature(device: Device, feature: FeatureName) bool {
-        return c.wgpuDeviceHasFeature(device.asRaw(), feature);
+        return c.wgpuDeviceHasFeature(device.asRaw(), @enumToInt(feature));
     }
 
     pub fn injectError(device: Device, etype: ErrorType, message: ?[*:0]const u8) void {
@@ -1077,10 +1095,45 @@ const DeviceImpl = opaque {
         c.wgpuDeviceLoseForTesting(device.asRaw());
     }
 
+    pub fn popErrorScope(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) bool {
+        return c.wgpuDevicePopErrorScope(device.asRaw(), callback, userdata);
+    }
+
+    pub fn pushErrorScope(device: Device, filter: ErrorFilter) void {
+        c.wgpuDevicePushErrorScope(device.asRaw(), @enumToInt(filter));
+    }
+
+    pub fn setDeviceLostCallback(device: Device, callback: DeviceLostCallback, userdata: ?*anyopaque) void {
+        c.wgpuDeviceSetDeviceLostCallback(device.asRaw(), callback, userdata);
+    }
+
+    pub fn setLabel(device: Device, label: ?[*:0]const u8) void {
+        c.wgpuDeviceSetLabel(device.asRaw(), label);
+    }
+
+    pub fn setLoggingCallback(device: Device, callback: LoggingCallback, userdata: ?*anyopaque) void {
+        c.wgpuDeviceSetLoggingCallback(device.asRaw(), callback, userdata);
+    }
+
+    pub fn setUncapturedErrorCallback(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) void {
+        c.wgpuDeviceSetUncapturedErrorCallback(device.asRaw(), callback, userdata);
+    }
+
+    pub fn tick(device: Device) void {
+        c.wgpuDeviceTick(device.asRaw());
+    }
+
+    pub fn reference(device: Device) void {
+        c.wgpuDeviceReference(device.asRaw());
+    }
+
+    pub fn release(device: Device) void {
+        c.wgpuDeviceRelease(device.asRaw());
+    }
+
     fn asRaw(device: Device) c.WGPUDevice {
         return @ptrCast(c.WGPUDevice, device);
     }
-    // TODO: Add functions.
 };
 
 const ExternalTextureImpl = opaque {
