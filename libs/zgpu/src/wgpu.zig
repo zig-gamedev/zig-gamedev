@@ -850,6 +850,45 @@ pub const TextureDescriptor = extern struct {
     view_formats: ?[*]const TextureFormat,
 };
 
+pub const Limits = extern struct {
+    max_texture_dimension_1d: u32,
+    max_texture_dimension_2d: u32,
+    max_texture_dimension_3d: u32,
+    max_texture_array_layers: u32,
+    max_bind_groups: u32,
+    max_dynamic_uniform_buffers_per_pipeline_layout: u32,
+    max_dynamic_storage_buffers_per_pipeline_layout: u32,
+    max_sampled_textures_per_shader_stage: u32,
+    max_samplers_per_shader_stage: u32,
+    max_storage_buffers_per_shader_stage: u32,
+    max_storage_textures_per_shader_stage: u32,
+    max_uniform_buffers_per_shader_stage: u32,
+    max_uniform_buffer_binding_size: u64,
+    max_storage_buffer_binding_size: u64,
+    min_uniform_buffer_offset_alignment: u32,
+    min_storage_buffer_offset_alignment: u32,
+    max_vertex_buffers: u32,
+    max_vertex_attributes: u32,
+    max_vertex_buffer_array_stride: u32,
+    max_inter_stage_shader_components: u32,
+    max_compute_workgroup_storage_size: u32,
+    max_compute_invocations_per_workgroup: u32,
+    max_compute_workgroup_size_x: u32,
+    max_compute_workgroup_size_y: u32,
+    max_compute_workgroup_size_z: u32,
+    max_compute_workgroups_per_dimension: u32,
+};
+
+pub const RequiredLimits = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    limits: Limits,
+};
+
+pub const SupportedLimits = extern struct {
+    next_in_chain: ?*ChainedStructOut = null,
+    limits: Limits,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -1012,6 +1051,30 @@ const DeviceImpl = opaque {
 
     pub fn destroy(device: Device) void {
         c.wgpuDeviceDestroy(device.asRaw());
+    }
+
+    pub fn enumerateFeatures(device: Device, features: ?[*]FeatureName) usize {
+        return c.wgpuDeviceEnumerateFeatures(device.asRaw(), features);
+    }
+
+    pub fn getLimits(device: Device, limits: *SupportedLimits) bool {
+        return c.wgpuDeviceGetLimits(device.asRaw(), limits);
+    }
+
+    pub fn getQueue(device: Device) Queue {
+        c.wgpuDeviceGetQueue(device.asRaw());
+    }
+
+    pub fn hasFeature(device: Device, feature: FeatureName) bool {
+        return c.wgpuDeviceHasFeature(device.asRaw(), feature);
+    }
+
+    pub fn injectError(device: Device, etype: ErrorType, message: ?[*:0]const u8) void {
+        c.wgpuDeviceInjectError(device.asRaw(), @enumToInt(etype), message);
+    }
+
+    pub fn loseForTesting(device: Device) void {
+        c.wgpuDeviceLoseForTesting(device.asRaw());
     }
 
     fn asRaw(device: Device) c.WGPUDevice {
