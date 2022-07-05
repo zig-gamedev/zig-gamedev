@@ -1,5 +1,5 @@
 const std = @import("std");
-const assert = std.assert;
+const assert = std.debug.assert;
 const c = @cImport(@cInclude("webgpu/webgpu.h"));
 
 pub const AdapterType = enum(u32) {
@@ -903,6 +903,18 @@ pub const DeviceDescriptor = extern struct {
     default_queue: QueueDescription,
 };
 
+pub const SurfaceDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+};
+
+pub const RequestAdapterOptions = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    compatible_surface: ?Surface = null,
+    power_preference: PowerPreference,
+    force_fallback_adapter: bool = false,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -933,32 +945,39 @@ pub const CreateComputePipelineAsyncCallback = fn (
     pipeline: ComputePipeline,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
-) void;
+) callconv(.C) void;
 
 pub const CreateRenderPipelineAsyncCallback = fn (
     status: CreatePipelineAsyncStatus,
     pipeline: RenderPipeline,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
-) void;
+) callconv(.C) void;
 
 pub const ErrorCallback = fn (
     etype: ErrorType,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
-) void;
+) callconv(.C) void;
 
 pub const LoggingCallback = fn (
     etype: LoggingType,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
-) void;
+) callconv(.C) void;
 
 pub const DeviceLostCallback = fn (
     reason: DeviceLostReason,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
-) void;
+) callconv(.C) void;
+
+pub const RequestAdapterCallback = fn (
+    status: RequestAdapterStatus,
+    adapter: Adapter,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void;
 
 const AdapterImpl = opaque {
     pub fn createDevice(adapter: Adapter, descriptor: DeviceDescriptor) Device {
@@ -1167,7 +1186,30 @@ const ExternalTextureImpl = opaque {
 };
 
 const InstanceImpl = opaque {
-    // TODO: Add functions.
+    pub fn createSurface(instance: Instance, descriptor: SurfaceDescriptor) Surface {
+        return @ptrCast(Surface, c.wgpuInstanceCreateSurface(instance.asRaw(), &descriptor));
+    }
+
+    pub fn requestAdapter(
+        instance: Instance,
+        options: RequestAdapterOptions,
+        callback: RequestAdapterCallback,
+        userdata: ?*anyopaque,
+    ) void {
+        c.wgpuInstanceRequestAdapter(instance.asRaw(), @ptrCast(*const c.WGPURequestAdapterOptions, &options), @ptrCast(c.WGPURequestAdapterCallback, callback), userdata);
+    }
+
+    pub fn reference(instance: Instance) void {
+        c.wgpuInstanceReference(instance.asRaw());
+    }
+
+    pub fn release(instance: Instance) void {
+        c.wgpuInstanceRelease(instance.asRaw());
+    }
+
+    fn asRaw(instance: Instance) c.WGPUInstance {
+        return @ptrCast(c.WGPUInstance, instance);
+    }
 };
 
 const PipelineLayoutImpl = opaque {

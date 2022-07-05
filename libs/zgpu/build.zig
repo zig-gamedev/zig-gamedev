@@ -58,6 +58,18 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
     }
 }
 
+pub fn buildTests(
+    b: *std.build.Builder,
+    build_mode: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.build.LibExeObjStep {
+    const tests = b.addTest(thisDir() ++ "/src/zgpu.zig");
+    tests.setBuildMode(build_mode);
+    tests.setTarget(target);
+    link(tests, BuildOptionsStep.init(b, .{}));
+    return tests;
+}
+
 const gpu_pkg = std.build.Pkg{
     .name = "gpu",
     .source = .{ .path = thisDir() ++ "/libs/mach-gpu/main.zig" },

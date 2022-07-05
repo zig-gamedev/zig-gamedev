@@ -1835,3 +1835,37 @@ pub const bglBuffer = gpu.BindGroupLayout.Entry.buffer;
 pub const bglTexture = gpu.BindGroupLayout.Entry.texture;
 pub const bglSampler = gpu.BindGroupLayout.Entry.sampler;
 pub const bglStorageTexture = gpu.BindGroupLayout.Entry.storageTexture;
+
+test "zgpu.wgpu.instance" {
+    c.dawnProcSetProcs(c.machDawnNativeGetProcs());
+
+    const dawn_instance = c.machDawnNativeInstance_init();
+    defer c.machDawnNativeInstance_deinit(dawn_instance);
+
+    c.machDawnNativeInstance_discoverDefaultAdapters(dawn_instance);
+
+    const instance = @ptrCast(
+        wgpu.Instance,
+        @alignCast(@sizeOf(usize), c.machDawnNativeInstance_get(dawn_instance).?),
+    );
+    instance.reference();
+    instance.release();
+
+    const local = struct {
+        fn callback(
+            status: wgpu.RequestAdapterStatus,
+            adapter: wgpu.Adapter,
+            message: ?[*:0]const u8,
+            userdata: ?*anyopaque,
+        ) callconv(.C) void {
+            _ = adapter;
+            _ = userdata;
+            _ = message;
+            std.debug.print("status: {any}\n", .{status});
+        }
+    };
+
+    var adapter: wgpu.Adapter = undefined;
+    _ = adapter;
+    instance.requestAdapter(.{ .power_preference = .high_performance }, local.callback, @ptrCast(*anyopaque, &adapter));
+}
