@@ -680,6 +680,26 @@ pub const PipelineLayoutDescriptor = extern struct {
     bind_group_layouts: ?[*]const BindGroupLayout,
 };
 
+pub const QuerySetDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    @"type": QueryType,
+    count: u32,
+    pipeline_statistics: ?[*]const PipelineStatisticName,
+    pipeline_statistics_count: u32,
+};
+
+pub const RenderBundleEncoderDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    color_formats_count: u32,
+    color_formats: ?[*]const TextureFormat,
+    depth_stencil_format: TextureFormat,
+    sample_count: u32,
+    depth_read_only: bool,
+    stencil_read_only: bool,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -789,6 +809,14 @@ const DeviceImpl = opaque {
 
     pub fn createPipelineLayout(device: Device, descriptor: PipelineLayoutDescriptor) PipelineLayout {
         return @ptrCast(PipelineLayout, c.wgpuDeviceCreatePipelineLayout(device.asRaw(), &descriptor));
+    }
+
+    pub fn createQuerySet(device: Device, descriptor: QuerySetDescriptor) QuerySet {
+        return @ptrCast(QuerySet, c.wgpuDeviceCreateQuerySet(device.asRaw(), &descriptor));
+    }
+
+    pub fn createRenderBundleEncoder(device: Device, descriptor: RenderBundleEncoderDescriptor) RenderBundleEncoder {
+        return @ptrCast(RenderBundleEncoder, c.wgpuDeviceCreateRenderBundleEncoder(device.asRaw(), &descriptor));
     }
 
     fn asRaw(device: Device) c.WGPUDevice {
