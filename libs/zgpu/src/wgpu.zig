@@ -700,6 +700,107 @@ pub const RenderBundleEncoderDescriptor = extern struct {
     stencil_read_only: bool,
 };
 
+pub const VertexAttribute = extern struct {
+    format: VertexFormat,
+    offset: u64,
+    shader_location: u32,
+};
+
+pub const VertexBufferLayout = extern struct {
+    array_stride: u64,
+    step_mode: VertexStepMode,
+    attribute_count: u32,
+    attributes: [*]const VertexAttribute,
+};
+
+pub const VertexState = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    module: ShaderModule,
+    entry_point: [*:0]const u8,
+    constant_count: u32,
+    constants: ?[*]const ConstantEntry,
+    buffer_count: u32,
+    buffers: ?[*]const VertexBufferLayout,
+};
+
+pub const BlendComponent = extern struct {
+    operation: BlendOperation,
+    src_factor: BlendFactor,
+    dst_factor: BlendFactor,
+};
+
+pub const BlendState = extern struct {
+    color: BlendComponent,
+    alpha: BlendComponent,
+};
+
+pub const ColorTargetState = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    format: TextureFormat,
+    blend: ?*const BlendState,
+    write_mask: ColorWriteMask,
+};
+
+pub const FragmentState = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    module: ShaderModule,
+    entry_point: [*:0]const u8,
+    constant_count: u32,
+    constants: ?[*]const ConstantEntry,
+    target_count: u32,
+    targets: ?[*]const ColorTargetState,
+};
+
+pub const PrimitiveState = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    topology: PrimitiveTopology,
+    strip_index_format: IndexFormat,
+    front_face: FrontFace,
+    cull_mode: CullMode,
+};
+
+pub const StencilFaceState = extern struct {
+    compare: CompareFunction,
+    fail_op: StencilOperation,
+    depth_fail_op: StencilOperation,
+    pass_op: StencilOperation,
+};
+
+pub const DepthStencilState = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    format: TextureFormat,
+    depth_write_enabled: bool,
+    depth_compare: CompareFunction,
+    stencil_front: StencilFaceState,
+    stencil_back: StencilFaceState,
+    stencil_read_mask: u32,
+    stencil_write_mask: u32,
+    depth_bias: i32,
+    depth_bias_slope_scale: f32,
+    depth_bias_clamp: f32,
+};
+
+pub const MultisampleState = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    count: u32,
+    mask: u32,
+    alpha_to_coverage_enabled: bool,
+};
+
+pub const RenderPipelineDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    layout: ?PipelineLayout,
+    vertex: VertexState,
+    primitive: PrimitiveState,
+    depth_stencil: ?*const DepthStencilState,
+    multisample: MultisampleState,
+    fragment: ?*const FragmentState,
+};
+comptime {
+    assert(@sizeOf(RenderPipelineDescriptor) == @sizeOf(c.WGPURenderPipelineDescriptor));
+}
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -728,6 +829,13 @@ pub const TextureView = *align(@sizeOf(usize)) TextureViewImpl;
 pub const CreateComputePipelineAsyncCallback = fn (
     status: CreatePipelineAsyncStatus,
     pipeline: ComputePipeline,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) void;
+
+pub const CreateRenderPipelineAsyncCallback = fn (
+    status: CreatePipelineAsyncStatus,
+    pipeline: RenderPipeline,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) void;
@@ -817,6 +925,24 @@ const DeviceImpl = opaque {
 
     pub fn createRenderBundleEncoder(device: Device, descriptor: RenderBundleEncoderDescriptor) RenderBundleEncoder {
         return @ptrCast(RenderBundleEncoder, c.wgpuDeviceCreateRenderBundleEncoder(device.asRaw(), &descriptor));
+    }
+
+    pub fn createRenderPipeline(device: Device, descriptor: RenderPipelineDescriptor) RenderPipeline {
+        return @ptrCast(RenderPipeline, c.wgpuDeviceCreateRenderPipeline(device.asRaw(), &descriptor));
+    }
+
+    pub fn createRenderPipelineAsync(
+        device: Device,
+        descriptor: RenderPipelineDescriptor,
+        callback: CreateRenderPipelineAsyncCallback,
+        userdata: ?*anyopaque,
+    ) void {
+        c.wgpuDeviceCreateRenderPipelineAsync(
+            device.asRaw(),
+            &descriptor,
+            callback,
+            userdata,
+        );
     }
 
     fn asRaw(device: Device) c.WGPUDevice {
