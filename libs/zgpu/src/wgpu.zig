@@ -644,6 +644,42 @@ pub const CommandEncoderDescriptor = extern struct {
     label: ?[*:0]const u8 = null,
 };
 
+pub const ConstantEntry = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    key: [*:0]const u8,
+    value: f64,
+};
+
+pub const ProgrammableStageDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    module: ShaderModule,
+    entry_point: [*:0]const u8,
+    constant_count: u32,
+    constants: ?[*]const ConstantEntry,
+};
+
+pub const ComputePipelineDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    layout: ?PipelineLayout = null,
+    compute: ProgrammableStageDescriptor,
+};
+
+pub const ExternalTextureDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    plane0: TextureView,
+    plane1: TextureView,
+    color_space: PredefinedColorSpace,
+};
+
+pub const PipelineLayoutDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    bind_group_layout_count: u32,
+    bind_group_layouts: ?[*]const BindGroupLayout,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -668,6 +704,13 @@ pub const Surface = *align(@sizeOf(usize)) SurfaceImpl;
 pub const SwapChain = *align(@sizeOf(usize)) SwapChainImpl;
 pub const Texture = *align(@sizeOf(usize)) TextureImpl;
 pub const TextureView = *align(@sizeOf(usize)) TextureViewImpl;
+
+pub const CreateComputePipelineAsyncCallback = fn (
+    status: CreatePipelineAsyncStatus,
+    pipeline: ComputePipeline,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) void;
 
 const AdapterImpl = opaque {
     // TODO: Add functions.
@@ -716,6 +759,36 @@ const DeviceImpl = opaque {
 
     pub fn createCommandEncoder(device: Device, descriptor: CommandEncoderDescriptor) CommandEncoder {
         return @ptrCast(CommandEncoder, c.wgpuDeviceCreateCommandEncoder(device.asRaw(), &descriptor));
+    }
+
+    pub fn createComputePipeline(device: Device, descriptor: ComputePipelineDescriptor) ComputePipeline {
+        return @ptrCast(ComputePipeline, c.wgpuDeviceCreateComputePipeline(device.asRaw(), &descriptor));
+    }
+
+    pub fn createComputePipelineAsync(
+        device: Device,
+        descriptor: ComputePipelineDescriptor,
+        callback: CreateComputePipelineAsyncCallback,
+        userdata: ?*anyopaque,
+    ) void {
+        c.wgpuDeviceCreateComputePipelineAsync(
+            device.asRaw(),
+            &descriptor,
+            callback,
+            userdata,
+        );
+    }
+
+    pub fn createErrorBuffer(device: Device) Buffer {
+        return @ptrCast(Buffer, c.wgpuDeviceCreateErrorBuffer(device.asRaw()));
+    }
+
+    pub fn createExternalTexture(device: Device, descriptor: ExternalTextureDescriptor) ExternalTexture {
+        return @ptrCast(ExternalTexture, c.wgpuDeviceCreateExternalTexture(device.asRaw(), &descriptor));
+    }
+
+    pub fn createPipelineLayout(device: Device, descriptor: PipelineLayoutDescriptor) PipelineLayout {
+        return @ptrCast(PipelineLayout, c.wgpuDeviceCreatePipelineLayout(device.asRaw(), &descriptor));
     }
 
     fn asRaw(device: Device) c.WGPUDevice {
