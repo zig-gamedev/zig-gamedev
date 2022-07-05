@@ -300,12 +300,32 @@ const EngineImpl = opaque {
         return SoundImpl.initFile(allocator, engine, filepath, args.flags, args.sgroup, args.done_fence);
     }
 
+    pub fn initSoundFromDataSource(
+        engine: Engine,
+        allocator: std.mem.Allocator,
+        data_source: DataSource,
+        flags: SoundFlags,
+        sgroup: ?SoundGroup,
+    ) Error!Sound {
+        return SoundImpl.initDataSource(allocator, engine, data_source, flags, sgroup);
+    }
+
     pub fn initSound(
         engine: Engine,
         allocator: std.mem.Allocator,
         config: SoundConfig,
     ) Error!Sound {
         return SoundImpl.initConfig(allocator, engine, config);
+    }
+
+    pub fn initSoundCopy(
+        engine: Engine,
+        allocator: std.mem.Allocator,
+        existing_sound: Sound,
+        flags: SoundFlags,
+        sgroup: ?SoundGroup,
+    ) Error!Sound {
+        return SoundImpl.initCopy(allocator, engine, existing_sound, flags, sgroup);
     }
 
     pub fn initSoundGroup(
