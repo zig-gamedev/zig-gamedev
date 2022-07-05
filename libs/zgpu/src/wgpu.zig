@@ -889,6 +889,20 @@ pub const SupportedLimits = extern struct {
     limits: Limits,
 };
 
+pub const QueueDescription = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+};
+
+pub const DeviceDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    required_features_count: u32,
+    required_features: ?[*]const FeatureName,
+    required_limits: ?[*]const RequiredLimits,
+    default_queue: QueueDescription,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -947,6 +961,18 @@ pub const DeviceLostCallback = fn (
 ) void;
 
 const AdapterImpl = opaque {
+    pub fn createDevice(adapter: Adapter, descriptor: DeviceDescriptor) Device {
+        return @ptrCast(Device, c.wgpuAdapterCreateDevice(adapter.asRaw(), &descriptor));
+    }
+
+    pub fn enumerateFeatures(adapter: Adapter, features: ?[*]FeatureName) usize {
+        return c.wgpuAdapterEnumerateFeatures(adapter.asRaw(), features);
+    }
+
+    fn asRaw(adapter: Adapter) c.WGPUAdapter {
+        return @ptrCast(c.WGPUAdapter, adapter);
+    }
+
     // TODO: Add functions.
 };
 
