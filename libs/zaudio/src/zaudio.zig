@@ -338,7 +338,7 @@ const EngineImpl = opaque {
     }
 
     pub fn getEndpoint(engine: Engine) ?Node {
-        return @ptrCast(?Node, c.ma_engine_get_endpoint(engine.asRaw()));
+        return @ptrCast(?Node, @alignCast(@sizeOf(usize), c.ma_engine_get_endpoint(engine.asRaw())));
     }
 
     pub fn getTime(engine: Engine) u64 {
@@ -1117,6 +1117,10 @@ test "zaudio.engine.basic" {
     try expect(engine.isListenerEnabled(0) == true);
 
     try expect(engine.getDevice() != null);
+    _ = engine.getNodeGraph();
+    _ = engine.getResourceManager();
+    _ = engine.getLog();
+    _ = engine.getEndpoint();
 }
 
 test "zaudio.soundgroup.basic" {
