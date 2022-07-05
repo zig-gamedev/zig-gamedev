@@ -334,9 +334,7 @@ const EngineImpl = opaque {
     }
 
     pub fn getNodeGraph(engine: Engine) NodeGraph {
-        const raw = c.ma_engine_get_node_graph(engine.asRaw());
-        assert(raw != null);
-        return @ptrCast(NodeGraph, raw);
+        return @ptrCast(NodeGraph, c.ma_engine_get_node_graph(engine.asRaw()));
     }
 
     pub fn getEndpoint(engine: Engine) ?Node {
