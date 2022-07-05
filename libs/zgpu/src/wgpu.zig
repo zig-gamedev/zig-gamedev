@@ -801,6 +801,55 @@ comptime {
     assert(@sizeOf(RenderPipelineDescriptor) == @sizeOf(c.WGPURenderPipelineDescriptor));
 }
 
+pub const SamplerDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    address_mode_u: AddressMode,
+    address_mode_v: AddressMode,
+    address_mode_w: AddressMode,
+    mag_filter: FilterMode,
+    min_filter: FilterMode,
+    lod_min_clamp: f32,
+    lod_max_clamp: f32,
+    compare: CompareFunction,
+    max_anisotropy: u16,
+};
+
+pub const ShaderModuleDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+};
+
+pub const SwapChainDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    usage: TextureUsage,
+    format: TextureFormat,
+    width: u32,
+    height: u32,
+    present_mode: PresentMode,
+    implementation: u64,
+};
+
+pub const Extent3D = extern struct {
+    width: u32,
+    height: u32,
+    depth_or_array_layers: u32,
+};
+
+pub const TextureDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    usage: TextureUsage,
+    dimension: TextureDimension,
+    size: Extent3D,
+    format: TextureFormat,
+    mip_level_count: u32,
+    sample_count: u32,
+    view_format_count: u32,
+    view_formats: ?[*]const TextureFormat,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -943,6 +992,26 @@ const DeviceImpl = opaque {
             callback,
             userdata,
         );
+    }
+
+    pub fn createSampler(device: Device, descriptor: SamplerDescriptor) Sampler {
+        return @ptrCast(Sampler, c.wgpuDeviceCreateSampler(device.asRaw(), &descriptor));
+    }
+
+    pub fn createShaderModule(device: Device, descriptor: SamplerDescriptor) ShaderModule {
+        return @ptrCast(ShaderModule, c.wgpuDeviceCreateShaderModule(device.asRaw(), &descriptor));
+    }
+
+    pub fn createSwapChain(device: Device, descriptor: SwapChainDescriptor) SwapChain {
+        return @ptrCast(SwapChain, c.wgpuDeviceCreateSwapChain(device.asRaw(), &descriptor));
+    }
+
+    pub fn createTexture(device: Device, descriptor: TextureDescriptor) Texture {
+        return @ptrCast(Texture, c.wgpuDeviceCreateTexture(device.asRaw(), &descriptor));
+    }
+
+    pub fn destroy(device: Device) void {
+        c.wgpuDeviceDestroy(device.asRaw());
     }
 
     fn asRaw(device: Device) c.WGPUDevice {
