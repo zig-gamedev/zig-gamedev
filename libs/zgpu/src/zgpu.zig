@@ -1896,6 +1896,6 @@ test "zgpu.wgpu.instance" {
     std.debug.print("Adapter features:\n", .{});
     var i: usize = 0;
     while (i < num_adapter_features) : (i += 1) {
-        std.debug.print("feature: {any}\n", .{features[i]});
+        std.debug.print("{any}\n", .{features[i]});
     }
 }

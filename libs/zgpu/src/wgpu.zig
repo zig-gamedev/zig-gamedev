@@ -1052,11 +1052,23 @@ const DeviceImpl = opaque {
     }
 
     pub fn createCommandEncoder(device: Device, descriptor: CommandEncoderDescriptor) CommandEncoder {
-        return @ptrCast(CommandEncoder, c.wgpuDeviceCreateCommandEncoder(device.asRaw(), &descriptor));
+        return @ptrCast(
+            CommandEncoder,
+            c.wgpuDeviceCreateCommandEncoder(
+                device.asRaw(),
+                @ptrCast(*const c.WGPUCommandEncoderDescriptor, &descriptor),
+            ),
+        );
     }
 
     pub fn createComputePipeline(device: Device, descriptor: ComputePipelineDescriptor) ComputePipeline {
-        return @ptrCast(ComputePipeline, c.wgpuDeviceCreateComputePipeline(device.asRaw(), &descriptor));
+        return @ptrCast(
+            ComputePipeline,
+            c.wgpuDeviceCreateComputePipeline(
+                device.asRaw(),
+                @ptrCast(*const c.WGPUComputePipelineDescriptor, &descriptor),
+            ),
+        );
     }
 
     pub fn createComputePipelineAsync(
@@ -1067,7 +1079,7 @@ const DeviceImpl = opaque {
     ) void {
         c.wgpuDeviceCreateComputePipelineAsync(
             device.asRaw(),
-            &descriptor,
+            @ptrCast(*const c.WGPUComputePipelineDescriptor, &descriptor),
             callback,
             userdata,
         );
@@ -1078,23 +1090,50 @@ const DeviceImpl = opaque {
     }
 
     pub fn createExternalTexture(device: Device, descriptor: ExternalTextureDescriptor) ExternalTexture {
-        return @ptrCast(ExternalTexture, c.wgpuDeviceCreateExternalTexture(device.asRaw(), &descriptor));
+        return @ptrCast(
+            ExternalTexture,
+            c.wgpuDeviceCreateExternalTexture(
+                device.asRaw(),
+                @ptrCast(*const c.WGPUExternalTextureDescriptor, &descriptor),
+            ),
+        );
     }
 
     pub fn createPipelineLayout(device: Device, descriptor: PipelineLayoutDescriptor) PipelineLayout {
-        return @ptrCast(PipelineLayout, c.wgpuDeviceCreatePipelineLayout(device.asRaw(), &descriptor));
+        return @ptrCast(
+            PipelineLayout,
+            c.wgpuDeviceCreatePipelineLayout(
+                device.asRaw(),
+                @ptrCast(*const c.WGPUPipelineLayoutDescriptor, &descriptor),
+            ),
+        );
     }
 
     pub fn createQuerySet(device: Device, descriptor: QuerySetDescriptor) QuerySet {
-        return @ptrCast(QuerySet, c.wgpuDeviceCreateQuerySet(device.asRaw(), &descriptor));
+        return @ptrCast(
+            QuerySet,
+            c.wgpuDeviceCreateQuerySet(device.asRaw(), @ptrCast(*const c.WGPUQuerySetDescriptor, &descriptor)),
+        );
     }
 
     pub fn createRenderBundleEncoder(device: Device, descriptor: RenderBundleEncoderDescriptor) RenderBundleEncoder {
-        return @ptrCast(RenderBundleEncoder, c.wgpuDeviceCreateRenderBundleEncoder(device.asRaw(), &descriptor));
+        return @ptrCast(
+            RenderBundleEncoder,
+            c.wgpuDeviceCreateRenderBundleEncoder(
+                device.asRaw(),
+                @ptrCast(*const c.WGPURenderBundleEncoderDescriptor, &descriptor),
+            ),
+        );
     }
 
     pub fn createRenderPipeline(device: Device, descriptor: RenderPipelineDescriptor) RenderPipeline {
-        return @ptrCast(RenderPipeline, c.wgpuDeviceCreateRenderPipeline(device.asRaw(), &descriptor));
+        return @ptrCast(
+            RenderPipeline,
+            c.wgpuDeviceCreateRenderPipeline(
+                device.asRaw(),
+                @ptrCast(*const c.WGPURenderPipelineDescriptor, &descriptor),
+            ),
+        );
     }
 
     pub fn createRenderPipelineAsync(
@@ -1105,7 +1144,7 @@ const DeviceImpl = opaque {
     ) void {
         c.wgpuDeviceCreateRenderPipelineAsync(
             device.asRaw(),
-            &descriptor,
+            @ptrCast(*const c.WGPURenderPipelineDescriptor, &descriptor),
             callback,
             userdata,
         );
