@@ -974,18 +974,21 @@ pub const DeviceLostCallback = fn (
 
 pub const RequestAdapterCallback = fn (
     status: RequestAdapterStatus,
-    adapter: Adapter,
+    adapter: ?Adapter,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
 const AdapterImpl = opaque {
     pub fn createDevice(adapter: Adapter, descriptor: DeviceDescriptor) Device {
-        return @ptrCast(Device, c.wgpuAdapterCreateDevice(adapter.asRaw(), &descriptor));
+        return @ptrCast(
+            Device,
+            c.wgpuAdapterCreateDevice(adapter.asRaw(), @ptrCast(*const c.WGPUDeviceDescriptor, &descriptor)),
+        );
     }
 
     pub fn enumerateFeatures(adapter: Adapter, features: ?[*]FeatureName) usize {
-        return c.wgpuAdapterEnumerateFeatures(adapter.asRaw(), features);
+        return c.wgpuAdapterEnumerateFeatures(adapter.asRaw(), @ptrCast(?[*]u32, features));
     }
 
     fn asRaw(adapter: Adapter) c.WGPUAdapter {
@@ -1025,15 +1028,27 @@ const ComputePipelineImpl = opaque {
 
 const DeviceImpl = opaque {
     pub fn createBindGroup(device: Device, descriptor: BindGroupDescriptor) BindGroup {
-        return @ptrCast(BindGroup, c.wgpuDeviceCreateBindGroup(device.asRaw(), &descriptor));
+        return @ptrCast(
+            BindGroup,
+            c.wgpuDeviceCreateBindGroup(device.asRaw(), @ptrCast(*const c.WGPUBindGroupDescriptor, &descriptor)),
+        );
     }
 
     pub fn createBindGroupLayout(device: Device, descriptor: BindGroupLayoutDescriptor) BindGroupLayout {
-        return @ptrCast(BindGroupLayout, c.wgpuDeviceCreateBindGroupLayout(device.asRaw(), &descriptor));
+        return @ptrCast(
+            BindGroupLayout,
+            c.wgpuDeviceCreateBindGroupLayout(
+                device.asRaw(),
+                @ptrCast(*const c.WGPUBindGroupLayoutDescriptor, &descriptor),
+            ),
+        );
     }
 
     pub fn createBuffer(device: Device, descriptor: BufferDescriptor) Buffer {
-        return @ptrCast(Buffer, c.wgpuDeviceCreateBuffer(device.asRaw(), &descriptor));
+        return @ptrCast(
+            Buffer,
+            c.wgpuDeviceCreateBuffer(device.asRaw(), @ptrCast(*const c.WGPUBufferDescriptor, &descriptor)),
+        );
     }
 
     pub fn createCommandEncoder(device: Device, descriptor: CommandEncoderDescriptor) CommandEncoder {
@@ -1187,7 +1202,10 @@ const ExternalTextureImpl = opaque {
 
 const InstanceImpl = opaque {
     pub fn createSurface(instance: Instance, descriptor: SurfaceDescriptor) Surface {
-        return @ptrCast(Surface, c.wgpuInstanceCreateSurface(instance.asRaw(), &descriptor));
+        return @ptrCast(
+            Surface,
+            c.wgpuInstanceCreateSurface(instance.asRaw(), @ptrCast(*const c.WGPUSurfaceDescriptor, &descriptor)),
+        );
     }
 
     pub fn requestAdapter(
@@ -1196,7 +1214,12 @@ const InstanceImpl = opaque {
         callback: RequestAdapterCallback,
         userdata: ?*anyopaque,
     ) void {
-        c.wgpuInstanceRequestAdapter(instance.asRaw(), @ptrCast(*const c.WGPURequestAdapterOptions, &options), @ptrCast(c.WGPURequestAdapterCallback, callback), userdata);
+        c.wgpuInstanceRequestAdapter(
+            instance.asRaw(),
+            @ptrCast(*const c.WGPURequestAdapterOptions, &options),
+            @ptrCast(c.WGPURequestAdapterCallback, callback),
+            userdata,
+        );
     }
 
     pub fn reference(instance: Instance) void {

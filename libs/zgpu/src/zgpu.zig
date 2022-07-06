@@ -1836,6 +1836,8 @@ pub const bglTexture = gpu.BindGroupLayout.Entry.texture;
 pub const bglSampler = gpu.BindGroupLayout.Entry.sampler;
 pub const bglStorageTexture = gpu.BindGroupLayout.Entry.storageTexture;
 
+const expect = std.testing.expect;
+
 test "zgpu.wgpu.instance" {
     c.dawnProcSetProcs(c.machDawnNativeGetProcs());
 
@@ -1851,21 +1853,49 @@ test "zgpu.wgpu.instance" {
     instance.reference();
     instance.release();
 
-    const local = struct {
+    const Response = struct {
+        status: wgpu.RequestAdapterStatus = .unknown,
+        adapter: ?wgpu.Adapter = null,
+    };
+
+    const callback = (struct {
         fn callback(
             status: wgpu.RequestAdapterStatus,
-            adapter: wgpu.Adapter,
+            adapter: ?wgpu.Adapter,
             message: ?[*:0]const u8,
             userdata: ?*anyopaque,
         ) callconv(.C) void {
-            _ = adapter;
-            _ = userdata;
             _ = message;
-            std.debug.print("status: {any}\n", .{status});
-        }
-    };
 
-    var adapter: wgpu.Adapter = undefined;
-    _ = adapter;
-    instance.requestAdapter(.{ .power_preference = .high_performance }, local.callback, @ptrCast(*anyopaque, &adapter));
+            var response = @ptrCast(*Response, @alignCast(@sizeOf(usize), userdata));
+            response.status = status;
+            response.adapter = adapter;
+
+            if (status != .success) {
+                std.debug.print("Failed to request GPU adapter (status: {any}).\n", .{status});
+            }
+        }
+    }).callback;
+
+    var response = Response{};
+    instance.requestAdapter(
+        .{ .power_preference = .high_performance },
+        callback,
+        @ptrCast(*anyopaque, &response),
+    );
+
+    try expect(response.status == .success);
+    try expect(response.adapter != null);
+
+    const adapter = response.adapter.?;
+
+    var features: [32]wgpu.FeatureName = undefined;
+    const num_adapter_features = std.math.min(adapter.enumerateFeatures(null), features.len);
+    _ = adapter.enumerateFeatures(&features);
+
+    std.debug.print("Adapter features:\n", .{});
+    var i: usize = 0;
+    while (i < num_adapter_features) : (i += 1) {
+        std.debug.print("feature: {any}\n", .{features[i]});
+    }
 }
