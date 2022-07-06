@@ -1855,13 +1855,13 @@ test "zgpu.wgpu.instance" {
 
     const Response = struct {
         status: wgpu.RequestAdapterStatus = .unknown,
-        adapter: ?wgpu.Adapter = null,
+        adapter: wgpu.Adapter = undefined,
     };
 
     const callback = (struct {
         fn callback(
             status: wgpu.RequestAdapterStatus,
-            adapter: ?wgpu.Adapter,
+            adapter: wgpu.Adapter,
             message: ?[*:0]const u8,
             userdata: ?*anyopaque,
         ) callconv(.C) void {
@@ -1883,11 +1883,9 @@ test "zgpu.wgpu.instance" {
         callback,
         @ptrCast(*anyopaque, &response),
     );
-
     try expect(response.status == .success);
-    try expect(response.adapter != null);
 
-    const adapter = response.adapter.?;
+    const adapter = response.adapter;
 
     var features: [32]wgpu.FeatureName = undefined;
     const num_adapter_features = std.math.min(adapter.enumerateFeatures(null), features.len);

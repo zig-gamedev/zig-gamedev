@@ -1,6 +1,5 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const c = @cImport(@cInclude("webgpu/webgpu.h"));
 
 pub const AdapterType = enum(u32) {
     discrete_gpu,
@@ -797,9 +796,6 @@ pub const RenderPipelineDescriptor = extern struct {
     multisample: MultisampleState,
     fragment: ?*const FragmentState,
 };
-comptime {
-    assert(@sizeOf(RenderPipelineDescriptor) == @sizeOf(c.WGPURenderPipelineDescriptor));
-}
 
 pub const SamplerDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
@@ -974,26 +970,21 @@ pub const DeviceLostCallback = fn (
 
 pub const RequestAdapterCallback = fn (
     status: RequestAdapterStatus,
-    adapter: ?Adapter,
+    adapter: Adapter,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
 const AdapterImpl = opaque {
     pub fn createDevice(adapter: Adapter, descriptor: DeviceDescriptor) Device {
-        return @ptrCast(
-            Device,
-            c.wgpuAdapterCreateDevice(adapter.asRaw(), @ptrCast(*const c.WGPUDeviceDescriptor, &descriptor)),
-        );
+        return wgpuAdapterCreateDevice(adapter, &descriptor);
     }
+    extern fn wgpuAdapterCreateDevice(adapter: Adapter, descriptor: *const DeviceDescriptor) Device;
 
     pub fn enumerateFeatures(adapter: Adapter, features: ?[*]FeatureName) usize {
-        return c.wgpuAdapterEnumerateFeatures(adapter.asRaw(), @ptrCast(?[*]u32, features));
+        return wgpuAdapterEnumerateFeatures(adapter, features);
     }
-
-    fn asRaw(adapter: Adapter) c.WGPUAdapter {
-        return @ptrCast(c.WGPUAdapter, adapter);
-    }
+    extern fn wgpuAdapterEnumerateFeatures(adapter: Adapter, features: ?[*]FeatureName) usize;
 
     // TODO: Add functions.
 };
@@ -1028,48 +1019,38 @@ const ComputePipelineImpl = opaque {
 
 const DeviceImpl = opaque {
     pub fn createBindGroup(device: Device, descriptor: BindGroupDescriptor) BindGroup {
-        return @ptrCast(
-            BindGroup,
-            c.wgpuDeviceCreateBindGroup(device.asRaw(), @ptrCast(*const c.WGPUBindGroupDescriptor, &descriptor)),
-        );
+        return wgpuDeviceCreateBindGroup(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateBindGroup(device: Device, descriptor: *const BindGroupDescriptor) BindGroup;
 
     pub fn createBindGroupLayout(device: Device, descriptor: BindGroupLayoutDescriptor) BindGroupLayout {
-        return @ptrCast(
-            BindGroupLayout,
-            c.wgpuDeviceCreateBindGroupLayout(
-                device.asRaw(),
-                @ptrCast(*const c.WGPUBindGroupLayoutDescriptor, &descriptor),
-            ),
-        );
+        return wgpuDeviceCreateBindGroupLayout(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateBindGroupLayout(
+        device: Device,
+        descriptor: *const BindGroupLayoutDescriptor,
+    ) BindGroupLayout;
 
     pub fn createBuffer(device: Device, descriptor: BufferDescriptor) Buffer {
-        return @ptrCast(
-            Buffer,
-            c.wgpuDeviceCreateBuffer(device.asRaw(), @ptrCast(*const c.WGPUBufferDescriptor, &descriptor)),
-        );
+        return wgpuDeviceCreateBuffer(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateBuffer(device: Device, descriptor: *const BufferDescriptor) Buffer;
 
     pub fn createCommandEncoder(device: Device, descriptor: CommandEncoderDescriptor) CommandEncoder {
-        return @ptrCast(
-            CommandEncoder,
-            c.wgpuDeviceCreateCommandEncoder(
-                device.asRaw(),
-                @ptrCast(*const c.WGPUCommandEncoderDescriptor, &descriptor),
-            ),
-        );
+        return wgpuDeviceCreateCommandEncoder(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateCommandEncoder(
+        device: Device,
+        descriptor: *const CommandEncoderDescriptor,
+    ) CommandEncoder;
 
     pub fn createComputePipeline(device: Device, descriptor: ComputePipelineDescriptor) ComputePipeline {
-        return @ptrCast(
-            ComputePipeline,
-            c.wgpuDeviceCreateComputePipeline(
-                device.asRaw(),
-                @ptrCast(*const c.WGPUComputePipelineDescriptor, &descriptor),
-            ),
-        );
+        return wgpuDeviceCreateComputePipeline(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateComputePipeline(
+        device: Device,
+        descriptor: *const ComputePipelineDescriptor,
+    ) ComputePipeline;
 
     pub fn createComputePipelineAsync(
         device: Device,
@@ -1077,64 +1058,56 @@ const DeviceImpl = opaque {
         callback: CreateComputePipelineAsyncCallback,
         userdata: ?*anyopaque,
     ) void {
-        c.wgpuDeviceCreateComputePipelineAsync(
-            device.asRaw(),
-            @ptrCast(*const c.WGPUComputePipelineDescriptor, &descriptor),
-            callback,
-            userdata,
-        );
+        wgpuDeviceCreateComputePipelineAsync(device, &descriptor, callback, userdata);
     }
+    extern fn wgpuDeviceCreateComputePipelineAsync(
+        device: Device,
+        descriptor: *const ComputePipelineDescriptor,
+        callback: CreateComputePipelineAsyncCallback,
+        userdata: ?*anyopaque,
+    ) void;
 
     pub fn createErrorBuffer(device: Device) Buffer {
-        return @ptrCast(Buffer, c.wgpuDeviceCreateErrorBuffer(device.asRaw()));
+        return wgpuDeviceCreateErrorBuffer(device);
     }
+    extern fn wgpuDeviceCreateErrorBuffer(device: Device) Buffer;
 
     pub fn createExternalTexture(device: Device, descriptor: ExternalTextureDescriptor) ExternalTexture {
-        return @ptrCast(
-            ExternalTexture,
-            c.wgpuDeviceCreateExternalTexture(
-                device.asRaw(),
-                @ptrCast(*const c.WGPUExternalTextureDescriptor, &descriptor),
-            ),
-        );
+        return wgpuDeviceCreateExternalTexture(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateExternalTexture(
+        device: Device,
+        descriptor: *const ExternalTextureDescriptor,
+    ) ExternalTexture;
 
     pub fn createPipelineLayout(device: Device, descriptor: PipelineLayoutDescriptor) PipelineLayout {
-        return @ptrCast(
-            PipelineLayout,
-            c.wgpuDeviceCreatePipelineLayout(
-                device.asRaw(),
-                @ptrCast(*const c.WGPUPipelineLayoutDescriptor, &descriptor),
-            ),
-        );
+        return wgpuDeviceCreatePipelineLayout(device, &descriptor);
     }
+    extern fn wgpuDeviceCreatePipelineLayout(
+        device: Device,
+        descriptor: *const PipelineLayoutDescriptor,
+    ) PipelineLayout;
 
     pub fn createQuerySet(device: Device, descriptor: QuerySetDescriptor) QuerySet {
-        return @ptrCast(
-            QuerySet,
-            c.wgpuDeviceCreateQuerySet(device.asRaw(), @ptrCast(*const c.WGPUQuerySetDescriptor, &descriptor)),
-        );
+        return wgpuDeviceCreateQuerySet(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateQuerySet(device: Device, descriptor: *const QuerySetDescriptor) QuerySet;
 
     pub fn createRenderBundleEncoder(device: Device, descriptor: RenderBundleEncoderDescriptor) RenderBundleEncoder {
-        return @ptrCast(
-            RenderBundleEncoder,
-            c.wgpuDeviceCreateRenderBundleEncoder(
-                device.asRaw(),
-                @ptrCast(*const c.WGPURenderBundleEncoderDescriptor, &descriptor),
-            ),
-        );
+        return wgpuDeviceCreateRenderBundleEncoder(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateRenderBundleEncoder(
+        device: Device,
+        descriptor: *const RenderBundleEncoderDescriptor,
+    ) RenderBundleEncoder;
 
     pub fn createRenderPipeline(device: Device, descriptor: RenderPipelineDescriptor) RenderPipeline {
-        return @ptrCast(
-            RenderPipeline,
-            c.wgpuDeviceCreateRenderPipeline(
-                device.asRaw(),
-                @ptrCast(*const c.WGPURenderPipelineDescriptor, &descriptor),
-            ),
-        );
+        return wgpuDeviceCreateRenderPipeline(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateRenderPipeline(
+        device: Device,
+        descriptor: *const RenderPipelineDescriptor,
+    ) RenderPipeline;
 
     pub fn createRenderPipelineAsync(
         device: Device,
@@ -1142,97 +1115,122 @@ const DeviceImpl = opaque {
         callback: CreateRenderPipelineAsyncCallback,
         userdata: ?*anyopaque,
     ) void {
-        c.wgpuDeviceCreateRenderPipelineAsync(
-            device.asRaw(),
-            @ptrCast(*const c.WGPURenderPipelineDescriptor, &descriptor),
-            callback,
-            userdata,
-        );
+        wgpuDeviceCreateRenderPipelineAsync(device, &descriptor, callback, userdata);
     }
+    extern fn wgpuDeviceCreateRenderPipelineAsync(
+        device: Device,
+        descriptor: *const RenderPipelineDescriptor,
+        callback: CreateRenderPipelineAsyncCallback,
+        userdata: ?*anyopaque,
+    ) void;
 
     pub fn createSampler(device: Device, descriptor: SamplerDescriptor) Sampler {
-        return @ptrCast(Sampler, c.wgpuDeviceCreateSampler(device.asRaw(), &descriptor));
+        return wgpuDeviceCreateSampler(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateSampler(device: Device, descriptor: *const SamplerDescriptor) Sampler;
 
     pub fn createShaderModule(device: Device, descriptor: SamplerDescriptor) ShaderModule {
-        return @ptrCast(ShaderModule, c.wgpuDeviceCreateShaderModule(device.asRaw(), &descriptor));
+        return wgpuDeviceCreateShaderModule(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateShaderModule(device: Device, descriptor: *const SamplerDescriptor) ShaderModule;
 
     pub fn createSwapChain(device: Device, descriptor: SwapChainDescriptor) SwapChain {
-        return @ptrCast(SwapChain, c.wgpuDeviceCreateSwapChain(device.asRaw(), &descriptor));
+        return wgpuDeviceCreateSwapChain(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateSwapChain(device: Device, descriptor: *const SwapChainDescriptor) SwapChain;
 
     pub fn createTexture(device: Device, descriptor: TextureDescriptor) Texture {
-        return @ptrCast(Texture, c.wgpuDeviceCreateTexture(device.asRaw(), &descriptor));
+        return wgpuDeviceCreateTexture(device, &descriptor);
     }
+    extern fn wgpuDeviceCreateTexture(device: Device, descriptor: *const TextureDescriptor) Texture;
 
     pub fn destroy(device: Device) void {
-        c.wgpuDeviceDestroy(device.asRaw());
+        wgpuDeviceDestroy(device);
     }
+    extern fn wgpuDeviceDestroy(device: Device) void;
 
     pub fn enumerateFeatures(device: Device, features: ?[*]FeatureName) usize {
-        return c.wgpuDeviceEnumerateFeatures(device.asRaw(), @ptrCast(?[*]u32, features));
+        return wgpuDeviceEnumerateFeatures(device, features);
     }
+    extern fn wgpuDeviceEnumerateFeatures(device: Device, features: ?[*]FeatureName) usize;
 
     pub fn getLimits(device: Device, limits: *SupportedLimits) bool {
-        return c.wgpuDeviceGetLimits(device.asRaw(), limits);
+        return wgpuDeviceGetLimits(device, limits);
     }
+    extern fn wgpuDeviceGetLimits(device: Device, limits: *SupportedLimits) bool;
 
     pub fn getQueue(device: Device) Queue {
-        return @ptrCast(Queue, c.wgpuDeviceGetQueue(device.asRaw()));
+        return wgpuDeviceGetQueue(device);
     }
+    extern fn wgpuDeviceGetQueue(device: Device) Queue;
 
     pub fn hasFeature(device: Device, feature: FeatureName) bool {
-        return c.wgpuDeviceHasFeature(device.asRaw(), @enumToInt(feature));
+        return wgpuDeviceHasFeature(device, feature);
     }
+    extern fn wgpuDeviceHasFeature(device: Device, feature: FeatureName) bool;
 
     pub fn injectError(device: Device, etype: ErrorType, message: ?[*:0]const u8) void {
-        c.wgpuDeviceInjectError(device.asRaw(), @enumToInt(etype), message);
+        wgpuDeviceInjectError(device, etype, message);
     }
+    extern fn wgpuDeviceInjectError(device: Device, etype: ErrorType, message: ?[*:0]const u8) void;
 
     pub fn loseForTesting(device: Device) void {
-        c.wgpuDeviceLoseForTesting(device.asRaw());
+        wgpuDeviceLoseForTesting(device);
     }
+    extern fn wgpuDeviceLoseForTesting(device: Device) void;
 
     pub fn popErrorScope(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) bool {
-        return c.wgpuDevicePopErrorScope(device.asRaw(), callback, userdata);
+        return wgpuDevicePopErrorScope(device, callback, userdata);
     }
+    extern fn wgpuDevicePopErrorScope(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) bool;
 
     pub fn pushErrorScope(device: Device, filter: ErrorFilter) void {
-        c.wgpuDevicePushErrorScope(device.asRaw(), @enumToInt(filter));
+        wgpuDevicePushErrorScope(device, filter);
     }
+    extern fn wgpuDevicePushErrorScope(device: Device, filter: ErrorFilter) void;
 
     pub fn setDeviceLostCallback(device: Device, callback: DeviceLostCallback, userdata: ?*anyopaque) void {
-        c.wgpuDeviceSetDeviceLostCallback(device.asRaw(), callback, userdata);
+        wgpuDeviceSetDeviceLostCallback(device, callback, userdata);
     }
+    extern fn wgpuDeviceSetDeviceLostCallback(
+        device: Device,
+        callback: DeviceLostCallback,
+        userdata: ?*anyopaque,
+    ) void;
 
     pub fn setLabel(device: Device, label: ?[*:0]const u8) void {
-        c.wgpuDeviceSetLabel(device.asRaw(), label);
+        wgpuDeviceSetLabel(device, label);
     }
+    extern fn wgpuDeviceSetLabel(device: Device, label: ?[*:0]const u8) void;
 
     pub fn setLoggingCallback(device: Device, callback: LoggingCallback, userdata: ?*anyopaque) void {
-        c.wgpuDeviceSetLoggingCallback(device.asRaw(), callback, userdata);
+        wgpuDeviceSetLoggingCallback(device, callback, userdata);
     }
+    extern fn wgpuDeviceSetLoggingCallback(device: Device, callback: LoggingCallback, userdata: ?*anyopaque) void;
 
     pub fn setUncapturedErrorCallback(device: Device, callback: ErrorCallback, userdata: ?*anyopaque) void {
-        c.wgpuDeviceSetUncapturedErrorCallback(device.asRaw(), callback, userdata);
+        wgpuDeviceSetUncapturedErrorCallback(device, callback, userdata);
     }
+    extern fn wgpuDeviceSetUncapturedErrorCallback(
+        device: Device,
+        callback: ErrorCallback,
+        userdata: ?*anyopaque,
+    ) void;
 
     pub fn tick(device: Device) void {
-        c.wgpuDeviceTick(device.asRaw());
+        wgpuDeviceTick(device);
     }
+    extern fn wgpuDeviceTick(device: Device) void;
 
     pub fn reference(device: Device) void {
-        c.wgpuDeviceReference(device.asRaw());
+        wgpuDeviceReference(device);
     }
+    extern fn wgpuDeviceReference(device: Device) void;
 
     pub fn release(device: Device) void {
-        c.wgpuDeviceRelease(device.asRaw());
+        wgpuDeviceRelease(device);
     }
-
-    fn asRaw(device: Device) c.WGPUDevice {
-        return @ptrCast(c.WGPUDevice, device);
-    }
+    extern fn wgpuDeviceRelease(device: Device) void;
 };
 
 const ExternalTextureImpl = opaque {
@@ -1241,11 +1239,9 @@ const ExternalTextureImpl = opaque {
 
 const InstanceImpl = opaque {
     pub fn createSurface(instance: Instance, descriptor: SurfaceDescriptor) Surface {
-        return @ptrCast(
-            Surface,
-            c.wgpuInstanceCreateSurface(instance.asRaw(), @ptrCast(*const c.WGPUSurfaceDescriptor, &descriptor)),
-        );
+        return wgpuInstanceCreateSurface(instance, &descriptor);
     }
+    extern fn wgpuInstanceCreateSurface(instance: Instance, descriptor: *const SurfaceDescriptor) Surface;
 
     pub fn requestAdapter(
         instance: Instance,
@@ -1253,25 +1249,24 @@ const InstanceImpl = opaque {
         callback: RequestAdapterCallback,
         userdata: ?*anyopaque,
     ) void {
-        c.wgpuInstanceRequestAdapter(
-            instance.asRaw(),
-            @ptrCast(*const c.WGPURequestAdapterOptions, &options),
-            @ptrCast(c.WGPURequestAdapterCallback, callback),
-            userdata,
-        );
+        wgpuInstanceRequestAdapter(instance, &options, callback, userdata);
     }
+    extern fn wgpuInstanceRequestAdapter(
+        instance: Instance,
+        options: *const RequestAdapterOptions,
+        callback: RequestAdapterCallback,
+        userdata: ?*anyopaque,
+    ) void;
 
     pub fn reference(instance: Instance) void {
-        c.wgpuInstanceReference(instance.asRaw());
+        wgpuInstanceReference(instance);
     }
+    extern fn wgpuInstanceReference(instance: Instance) void;
 
     pub fn release(instance: Instance) void {
-        c.wgpuInstanceRelease(instance.asRaw());
+        wgpuInstanceRelease(instance);
     }
-
-    fn asRaw(instance: Instance) c.WGPUInstance {
-        return @ptrCast(c.WGPUInstance, instance);
-    }
+    extern fn wgpuInstanceRelease(instance: Instance) void;
 };
 
 const PipelineLayoutImpl = opaque {
