@@ -975,6 +975,13 @@ pub const RequestAdapterCallback = fn (
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
+pub const RequestDeviceCallback = fn (
+    status: RequestDeviceStatus,
+    device: Device,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void;
+
 const AdapterImpl = opaque {
     pub fn createDevice(adapter: Adapter, descriptor: DeviceDescriptor) Device {
         return wgpuAdapterCreateDevice(adapter, &descriptor);
@@ -986,7 +993,45 @@ const AdapterImpl = opaque {
     }
     extern fn wgpuAdapterEnumerateFeatures(adapter: Adapter, features: ?[*]FeatureName) usize;
 
-    // TODO: Add functions.
+    pub fn getLimits(adapter: Adapter, limits: *SupportedLimits) bool {
+        return wgpuAdapterGetLimits(adapter, limits);
+    }
+    extern fn wgpuAdapterGetLimits(adapter: Adapter, limits: *SupportedLimits) bool;
+
+    pub fn getProperties(adapter: Adapter, properties: *AdapterProperties) void {
+        wgpuAdapterGetProperties(adapter, properties);
+    }
+    extern fn wgpuAdapterGetProperties(adapter: Adapter, properties: *AdapterProperties) void;
+
+    pub fn hasFeature(adapter: Adapter, feature: FeatureName) bool {
+        return wgpuAdapterHasFeature(adapter, feature);
+    }
+    extern fn wgpuAdapterHasFeature(adapter: Adapter, feature: FeatureName) bool;
+
+    pub fn requestDevice(
+        adapter: Adapter,
+        descriptor: DeviceDescriptor,
+        callback: RequestDeviceCallback,
+        userdata: ?*anyopaque,
+    ) void {
+        wgpuAdapterRequestDevice(adapter, &descriptor, callback, userdata);
+    }
+    extern fn wgpuAdapterRequestDevice(
+        adapter: Adapter,
+        descriptor: *const DeviceDescriptor,
+        callback: RequestDeviceCallback,
+        userdata: ?*anyopaque,
+    ) void;
+
+    pub fn reference(adapter: Adapter) void {
+        wgpuAdapterReference(adapter);
+    }
+    extern fn wgpuAdapterReference(adapter: Adapter) void;
+
+    pub fn release(adapter: Adapter) void {
+        wgpuAdapterRelease(adapter);
+    }
+    extern fn wgpuAdapterRelease(adapter: Adapter) void;
 };
 
 const BindGroupImpl = opaque {
