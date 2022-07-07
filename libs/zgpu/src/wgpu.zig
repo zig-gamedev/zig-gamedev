@@ -1572,7 +1572,28 @@ const ComputePassEncoderImpl = opaque {
 };
 
 const ComputePipelineImpl = opaque {
-    // TODO: Add functions.
+    pub fn getBindGroupLayout(compute_pipeline: ComputePipeline, group_index: u32) BindGroupLayout {
+        return wgpuComputePipelineGetBindGroupLayout(compute_pipeline, group_index);
+    }
+    extern fn wgpuComputePipelineGetBindGroupLayout(
+        compute_pipeline: ComputePipeline,
+        group_index: u32,
+    ) BindGroupLayout;
+
+    pub fn setLabel(compute_pipeline: ComputePipeline, label: ?[*:0]const u8) void {
+        wgpuComputePipelineSetLabel(compute_pipeline, label);
+    }
+    extern fn wgpuComputePipelineSetLabel(compute_pipeline: ComputePipeline, label: ?[*:0]const u8) void;
+
+    pub fn reference(compute_pipeline: ComputePipeline) void {
+        wgpuComputePipelineReference(compute_pipeline);
+    }
+    extern fn wgpuComputePipelineReference(compute_pipeline: ComputePipeline) void;
+
+    pub fn release(compute_pipeline: ComputePipeline) void {
+        wgpuComputePipelineRelease(compute_pipeline);
+    }
+    extern fn wgpuComputePipelineRelease(compute_pipeline: ComputePipeline) void;
 };
 
 const DeviceImpl = opaque {
