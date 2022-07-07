@@ -1838,7 +1838,7 @@ pub const bglStorageTexture = gpu.BindGroupLayout.Entry.storageTexture;
 
 const expect = std.testing.expect;
 
-test "zgpu.wgpu.instance" {
+test "zgpu.wgpu.init" {
     c.dawnProcSetProcs(c.machDawnNativeGetProcs());
 
     const dawn_instance = c.machDawnNativeInstance_init();
@@ -1853,47 +1853,93 @@ test "zgpu.wgpu.instance" {
     instance.reference();
     instance.release();
 
-    const Response = struct {
-        status: wgpu.RequestAdapterStatus = .unknown,
-        adapter: wgpu.Adapter = undefined,
-    };
+    const adapter = adapter: {
+        const Response = struct {
+            status: wgpu.RequestAdapterStatus = .unknown,
+            adapter: wgpu.Adapter = undefined,
+        };
 
-    const callback = (struct {
-        fn callback(
-            status: wgpu.RequestAdapterStatus,
-            adapter: wgpu.Adapter,
-            message: ?[*:0]const u8,
-            userdata: ?*anyopaque,
-        ) callconv(.C) void {
-            _ = message;
+        const callback = (struct {
+            fn callback(
+                status: wgpu.RequestAdapterStatus,
+                adapter: wgpu.Adapter,
+                message: ?[*:0]const u8,
+                userdata: ?*anyopaque,
+            ) callconv(.C) void {
+                _ = message;
 
-            var response = @ptrCast(*Response, @alignCast(@sizeOf(usize), userdata));
-            response.status = status;
-            response.adapter = adapter;
+                var response = @ptrCast(*Response, @alignCast(@sizeOf(usize), userdata));
+                response.status = status;
+                response.adapter = adapter;
 
-            if (status != .success) {
-                std.debug.print("Failed to request GPU adapter (status: {any}).\n", .{status});
+                if (status != .success) {
+                    std.debug.print("Failed to request GPU adapter (status: {any}).\n", .{status});
+                }
             }
+        }).callback;
+
+        var response = Response{};
+        instance.requestAdapter(
+            .{ .power_preference = .high_performance },
+            callback,
+            @ptrCast(*anyopaque, &response),
+        );
+        try expect(response.status == .success);
+
+        const adapter = response.adapter;
+
+        var features: [32]wgpu.FeatureName = undefined;
+        const num_adapter_features = std.math.min(adapter.enumerateFeatures(null), features.len);
+        _ = adapter.enumerateFeatures(&features);
+
+        std.debug.print("\nAdapter features:\n", .{});
+        var i: usize = 0;
+        while (i < num_adapter_features) : (i += 1) {
+            std.debug.print("{any}\n", .{features[i]});
         }
-    }).callback;
 
-    var response = Response{};
-    instance.requestAdapter(
-        .{ .power_preference = .high_performance },
-        callback,
-        @ptrCast(*anyopaque, &response),
-    );
-    try expect(response.status == .success);
+        var properties: wgpu.AdapterProperties = undefined;
+        adapter.getProperties(&properties);
+        std.debug.print("Name: {s}\n", .{properties.name});
+        std.debug.print("Driver description: {s}\n", .{properties.driver_description});
 
-    const adapter = response.adapter;
+        break :adapter adapter;
+    };
+    defer adapter.release();
 
-    var features: [32]wgpu.FeatureName = undefined;
-    const num_adapter_features = std.math.min(adapter.enumerateFeatures(null), features.len);
-    _ = adapter.enumerateFeatures(&features);
+    const device = device: {
+        const Response = struct {
+            status: wgpu.RequestDeviceStatus = .unknown,
+            device: wgpu.Device = undefined,
+        };
 
-    std.debug.print("Adapter features:\n", .{});
-    var i: usize = 0;
-    while (i < num_adapter_features) : (i += 1) {
-        std.debug.print("{any}\n", .{features[i]});
-    }
+        const callback = (struct {
+            fn callback(
+                status: wgpu.RequestDeviceStatus,
+                device: wgpu.Device,
+                message: ?[*:0]const u8,
+                userdata: ?*anyopaque,
+            ) callconv(.C) void {
+                _ = message;
+
+                var response = @ptrCast(*Response, @alignCast(@sizeOf(usize), userdata));
+                response.status = status;
+                response.device = device;
+
+                if (status != .success) {
+                    std.debug.print("Failed to request GPU device (status: {any}).\n", .{status});
+                }
+            }
+        }).callback;
+
+        var response = Response{};
+        adapter.requestDevice(
+            wgpu.DeviceDescriptor{},
+            callback,
+            @ptrCast(*anyopaque, &response),
+        );
+        try expect(response.status == .success);
+        break :device response.device;
+    };
+    defer device.release();
 }

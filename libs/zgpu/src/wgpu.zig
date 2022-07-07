@@ -893,10 +893,10 @@ pub const QueueDescription = extern struct {
 pub const DeviceDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    required_features_count: u32,
-    required_features: ?[*]const FeatureName,
-    required_limits: ?[*]const RequiredLimits,
-    default_queue: QueueDescription,
+    required_features_count: u32 = 0,
+    required_features: ?[*]const FeatureName = null,
+    required_limits: ?[*]const RequiredLimits = null,
+    default_queue: QueueDescription = .{},
 };
 
 pub const SurfaceDescriptor = extern struct {
