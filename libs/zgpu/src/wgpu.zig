@@ -911,6 +911,66 @@ pub const RequestAdapterOptions = extern struct {
     force_fallback_adapter: bool = false,
 };
 
+pub const ComputePassTimestampWrite = extern struct {
+    query_set: QuerySet,
+    query_index: u32,
+    location: ComputePassTimestampLocation,
+};
+
+pub const RenderPassTimestampWrite = extern struct {
+    query_set: QuerySet,
+    query_index: u32,
+    location: RenderPassTimestampLocation,
+};
+
+pub const ComputePassDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    timestamp_write_count: u32,
+    timestamp_writes: ?[*]const ComputePassTimestampWrite,
+};
+
+pub const Color = extern struct {
+    r: f64,
+    g: f64,
+    b: f64,
+    a: f64,
+};
+
+pub const RenderPassColorAttachment = extern struct {
+    view: TextureView,
+    resolve_target: TextureView,
+    load_op: LoadOp,
+    store_op: StoreOp,
+    clear_color: Color,
+    clear_value: Color,
+};
+
+pub const RenderPassDepthStencilAttachment = extern struct {
+    view: TextureView,
+    depth_load_op: LoadOp,
+    depth_store_op: StoreOp,
+    clear_depth: f32,
+    depth_clear_value: f32,
+    depth_read_only: bool,
+    stencil_load_op: LoadOp,
+    stencil_store_op: StoreOp,
+    clear_stencil: u32,
+    stencil_clear_value: u32,
+    stencil_read_only: bool,
+};
+
+pub const RenderPassDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    color_attachment_count: u32,
+    color_attachments: ?[*]const RenderPassColorAttachment,
+    depth_stencil_attachment: ?*const RenderPassDepthStencilAttachment,
+    occlusion_query_set: QuerySet,
+    timestamp_write_count: u32,
+    timestamp_writes: ?[*]const RenderPassTimestampWrite,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -1160,6 +1220,58 @@ const CommandBufferImpl = opaque {
 };
 
 const CommandEncoderImpl = opaque {
+    pub fn beginComputePass(command_encoder: CommandEncoder, descriptor: ComputePassDescriptor) ComputePassEncoder {
+        return wgpuCommandEncoderBeginComputePass(command_encoder, &descriptor);
+    }
+    extern fn wgpuCommandEncoderBeginComputePass(
+        command_encoder: CommandEncoder,
+        descriptor: *const ComputePassDescriptor,
+    ) ComputePassEncoder;
+
+    pub fn beginRenderPass(command_encoder: CommandEncoder, descriptor: RenderPassDescriptor) RenderPassEncoder {
+        return wgpuCommandEncoderBeginRenderPass(command_encoder, &descriptor);
+    }
+    extern fn wgpuCommandEncoderBeginRenderPass(
+        command_encoder: CommandEncoder,
+        descriptor: *const RenderPassDescriptor,
+    ) RenderPassEncoder;
+
+    pub fn clearBuffer(command_encoder: CommandEncoder, buffer: Buffer, offset: usize, size: usize) void {
+        wgpuCommandEncoderClearBuffer(command_encoder, buffer, offset, size);
+    }
+    extern fn wgpuCommandEncoderClearBuffer(
+        command_encoder: CommandEncoder,
+        buffer: Buffer,
+        offset: usize,
+        size: usize,
+    ) void;
+
+    pub fn copyBufferToBuffer(
+        command_encoder: CommandEncoder,
+        source: Buffer,
+        source_offset: usize,
+        destination: Buffer,
+        destination_offset: usize,
+        size: usize,
+    ) void {
+        wgpuCommandEncoderCopyBufferToBuffer(
+            command_encoder,
+            source,
+            source_offset,
+            destination,
+            destination_offset,
+            size,
+        );
+    }
+    extern fn wgpuCommandEncoderCopyBufferToBuffer(
+        command_encoder: CommandEncoder,
+        source: Buffer,
+        source_offset: usize,
+        destination: Buffer,
+        destination_offset: usize,
+        size: usize,
+    ) void;
+
     // TODO: Add functions.
 };
 
