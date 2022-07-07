@@ -1101,6 +1101,7 @@ const BufferImpl = opaque {
 
     // `offset` has to be a multiple of 8 (Dawn's validation layer will warn).
     // `size` has to be a multiple of 4 (Dawn's validation layer will warn).
+    // `size == 0` will map entire range (from 'offset' to the end of the buffer).
     pub fn mapAsync(
         buffer: Buffer,
         mode: MapMode,
