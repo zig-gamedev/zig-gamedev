@@ -1003,6 +1003,17 @@ pub const CommandBufferDescriptor = extern struct {
     label: ?[*:0]const u8 = null,
 };
 
+pub const CopyTextureForBrowserOptions = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    flip_y: bool,
+    needs_color_space_conversion: bool,
+    src_alpha_mode: AlphaMode,
+    src_transfer_function_parameters: ?[*]const f32,
+    conversion_matrix: ?[*]const f32,
+    dst_transfer_function_parameters: ?[*]const f32,
+    dst_alpha_mode: AlphaMode,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -1076,6 +1087,11 @@ pub const RequestDeviceCallback = fn (
 
 pub const BufferMapCallback = fn (
     status: BufferMapAsyncStatus,
+    userdata: ?*anyopaque,
+) callconv(.C) void;
+
+pub const QueueWorkDoneCallback = fn (
+    status: QueueWorkDoneStatus,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
@@ -1906,7 +1922,106 @@ const QuerySetImpl = opaque {
 };
 
 const QueueImpl = opaque {
-    // TODO: Add functions.
+    pub fn copyTextureForBrowser(
+        queue: Queue,
+        source: ImageCopyTexture,
+        destination: ImageCopyTexture,
+        copy_size: Extent3D,
+        options: CopyTextureForBrowserOptions,
+    ) void {
+        wgpuQueueCopyTextureForBrowser(queue, &source, &destination, &copy_size, &options);
+    }
+    extern fn wgpuQueueCopyTextureForBrowser(
+        queue: Queue,
+        source: *const ImageCopyTexture,
+        destination: *const ImageCopyTexture,
+        copy_size: *const Extent3D,
+        options: *const CopyTextureForBrowserOptions,
+    ) void;
+
+    pub fn onSubmittedWorkDone(
+        queue: Queue,
+        signal_value: u64,
+        callback: QueueWorkDoneCallback,
+        userdata: ?anyopaque,
+    ) void {
+        wgpuQueueOnSubmittedWorkDone(queue, signal_value, callback, userdata);
+    }
+    extern fn wgpuQueueOnSubmittedWorkDone(
+        queue: Queue,
+        signal_value: u64,
+        callback: QueueWorkDoneCallback,
+        userdata: ?anyopaque,
+    ) void;
+
+    pub fn setLabel(queue: Queue, label: ?[*:0]const u8) void {
+        wgpuQueueSetLabel(queue, label);
+    }
+    extern fn wgpuQueueSetLabel(queue: Queue, label: ?[*:0]const u8) void;
+
+    pub fn submit(queue: Queue, commands: []const CommandBuffer) void {
+        wgpuQueueSubmit(queue, @intCast(u32, commands.len), commands.ptr);
+    }
+    extern fn wgpuQueueSubmit(queue: Queue, command_count: u32, commands: [*]const CommandBuffer) void;
+
+    pub fn writeBuffer(
+        queue: Queue,
+        buffer: Buffer,
+        buffer_offset: u64,
+        comptime T: type,
+        data: []const T,
+    ) void {
+        wgpuQueueWriteBuffer(
+            queue,
+            buffer,
+            buffer_offset,
+            @ptrCast(*const anyopaque, data.ptr),
+            @intCast(u64, data.len) * @sizeOf(T),
+        );
+    }
+    extern fn wgpuQueueWriteBuffer(
+        queue: Queue,
+        buffer: Buffer,
+        buffer_offset: u64,
+        data: *const anyopaque,
+        size: u64,
+    ) void;
+
+    pub fn writeTexture(
+        queue: Queue,
+        destination: ImageCopyTexture,
+        data_layout: TextureDataLayout,
+        write_size: Extent3D,
+        comptime T: type,
+        data: []const T,
+    ) void {
+        wgpuQueueWriteTexture(
+            queue,
+            &destination,
+            @ptrCast(*const anyopaque, data.ptr),
+            @intCast(usize, data.len) * @sizeOf(T),
+            &data_layout,
+            &write_size,
+        );
+    }
+    extern fn wgpuQueueWriteTexture(
+        queue: Queue,
+        destination: *const ImageCopyTexture,
+        data: *const anyopaque,
+        data_size: u64,
+        data_layout: *const TextureDataLayout,
+        write_size: *const Extent3D,
+    ) void;
+
+    pub fn reference(queue: Queue) void {
+        wgpuQueueReference(queue);
+    }
+    extern fn wgpuQueueReference(queue: Queue) void;
+
+    pub fn release(queue: Queue) void {
+        wgpuQueueRelease(queue);
+    }
+    extern fn wgpuQueueRelease(queue: Queue) void;
 };
 
 const RenderBundleImpl = opaque {
