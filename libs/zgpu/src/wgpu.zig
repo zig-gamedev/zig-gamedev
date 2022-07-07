@@ -982,6 +982,11 @@ pub const RequestDeviceCallback = fn (
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
+pub const BufferMapCallback = fn (
+    status: BufferMapAsyncStatus,
+    userdata: ?*anyopaque,
+) callconv(.C) void;
+
 const AdapterImpl = opaque {
     pub fn createDevice(adapter: Adapter, descriptor: DeviceDescriptor) Device {
         return wgpuAdapterCreateDevice(adapter, &descriptor);
@@ -1069,7 +1074,71 @@ const BindGroupLayoutImpl = opaque {
 };
 
 const BufferImpl = opaque {
-    // TODO: Add functions.
+    pub fn destroy(buffer: Buffer) void {
+        wgpuBufferDestroy(buffer);
+    }
+    extern fn wgpuBufferDestroy(buffer: Buffer) void;
+
+    // `offset` has to be a multiple of 8 (otherwise `null` will be returned).
+    // `@sizeOf(T) * len` has to be a multiple of 4 (otherwise `null` will be returned).
+    pub fn getConstMappedRange(buffer: Buffer, comptime T: type, offset: usize, len: usize) ?[]const T {
+        if (len == 0) return null;
+        const ptr = wgpuBufferGetConstMappedRange(buffer, offset, @sizeOf(T) * len);
+        if (ptr == null) return null;
+        return @ptrCast([*]const T, @alignCast(@alignOf(T), ptr))[0..len];
+    }
+    extern fn wgpuBufferGetConstMappedRange(buffer: Buffer, offset: usize, size: usize) ?*const anyopaque;
+
+    // `offset` has to be a multiple of 8 (otherwise `null` will be returned).
+    // `@sizeOf(T) * len` has to be a multiple of 4 (otherwise `null` will be returned).
+    pub fn getMappedRange(buffer: Buffer, comptime T: type, offset: usize, len: usize) ?[]T {
+        if (len == 0) return null;
+        const ptr = wgpuBufferGetMappedRange(buffer, offset, @sizeOf(T) * len);
+        if (ptr == null) return null;
+        return @ptrCast([*]T, @alignCast(@alignOf(T), ptr))[0..len];
+    }
+    extern fn wgpuBufferGetMappedRange(buffer: Buffer, offset: usize, size: usize) ?*anyopaque;
+
+    // `offset` has to be a multiple of 8 (Dawn's validation layer will warn).
+    // `size` has to be a multiple of 4 (Dawn's validation layer will warn).
+    pub fn mapAsync(
+        buffer: Buffer,
+        mode: MapMode,
+        offset: usize,
+        size: usize,
+        callback: BufferMapCallback,
+        userdata: *anyopaque,
+    ) void {
+        wgpuBufferMapAsync(buffer, @bitCast(u32, mode), offset, size, callback, userdata);
+    }
+    extern fn wgpuBufferMapAsync(
+        buffer: Buffer,
+        mode: u32, // MapMode (extern functions don't like 'packed struct' parameters).
+        offset: usize,
+        size: usize,
+        callback: BufferMapCallback,
+        userdata: ?*anyopaque,
+    ) void;
+
+    pub fn setLabel(buffer: Buffer, label: ?[*:0]const u8) void {
+        wgpuBufferSetLabel(buffer, label);
+    }
+    extern fn wgpuBufferSetLabel(buffer: Buffer, label: ?[*:0]const u8) void;
+
+    pub fn unmap(buffer: Buffer) void {
+        wgpuBufferUnmap(buffer);
+    }
+    extern fn wgpuBufferUnmap(buffer: Buffer) void;
+
+    pub fn reference(buffer: Buffer) void {
+        wgpuBufferReference(buffer);
+    }
+    extern fn wgpuBufferReference(buffer: Buffer) void;
+
+    pub fn release(buffer: Buffer) void {
+        wgpuBufferRelease(buffer);
+    }
+    extern fn wgpuBufferRelease(buffer: Buffer) void;
 };
 
 const CommandBufferImpl = opaque {
