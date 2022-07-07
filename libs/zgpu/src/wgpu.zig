@@ -1014,6 +1014,34 @@ pub const CopyTextureForBrowserOptions = extern struct {
     dst_alpha_mode: AlphaMode,
 };
 
+pub const TextureViewDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    format: TextureFormat,
+    dimension: TextureViewDimension,
+    base_mip_level: u32,
+    mip_level_count: u32,
+    base_array_level: u32,
+    array_layer_count: u32,
+    aspect: TextureAspect,
+};
+
+pub const CompilationMessage = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    message: ?[*:0]const u8 = null,
+    @"type": CompilationMessageType,
+    line_num: u64,
+    line_pos: u64,
+    offset: u64,
+    length: u64,
+};
+
+pub const CompilationInfo = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    message_count: u32,
+    messages: ?[*]const CompilationMessage,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -1092,6 +1120,11 @@ pub const BufferMapCallback = fn (
 
 pub const QueueWorkDoneCallback = fn (
     status: QueueWorkDoneStatus,
+    userdata: ?*anyopaque,
+) callconv(.C) void;
+
+pub const CompilationInfoCallback = fn (
+    status: CompilationInfoRequestStatus,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
@@ -2045,7 +2078,28 @@ const RenderPassEncoderImpl = opaque {
 };
 
 const RenderPipelineImpl = opaque {
-    // TODO: Add functions.
+    pub fn getBindGroupLayout(render_pipeline: RenderPipeline, group_index: u32) BindGroupLayout {
+        return wgpuRenderPipelineGetBindGroupLayout(render_pipeline, group_index);
+    }
+    extern fn wgpuRenderPipelineGetBindGroupLayout(
+        render_pipeline: RenderPipeline,
+        group_index: u32,
+    ) BindGroupLayout;
+
+    pub fn setLabel(render_pipeline: RenderPipeline, label: ?[*:0]const u8) void {
+        wgpuRenderPipelineSetLabel(render_pipeline, label);
+    }
+    extern fn wgpuRenderPipelineSetLabel(render_pipeline: RenderPipeline, label: ?[*:0]const u8) void;
+
+    pub fn reference(render_pipeline: RenderPipeline) void {
+        wgpuRenderPipelineReference(render_pipeline);
+    }
+    extern fn wgpuRenderPipelineReference(render_pipeline: RenderPipeline) void;
+
+    pub fn release(render_pipeline: RenderPipeline) void {
+        wgpuRenderPipelineRelease(render_pipeline);
+    }
+    extern fn wgpuRenderPipelineRelease(render_pipeline: RenderPipeline) void;
 };
 
 const SamplerImpl = opaque {
@@ -2066,7 +2120,33 @@ const SamplerImpl = opaque {
 };
 
 const ShaderModuleImpl = opaque {
-    // TODO: Add functions.
+    pub fn getCompilationInfo(
+        shader_module: ShaderModule,
+        callback: CompilationInfoCallback,
+        userdata: ?*anyopaque,
+    ) void {
+        wgpuShaderModuleGetCompilationInfo(shader_module, callback, userdata);
+    }
+    extern fn wgpuShaderModuleGetCompilationInfo(
+        shader_module: ShaderModule,
+        callback: CompilationInfoCallback,
+        userdata: ?*anyopaque,
+    ) void;
+
+    pub fn setLabel(shader_module: ShaderModule, label: ?[*:0]const u8) void {
+        wgpuShaderModuleSetLabel(shader_module, label);
+    }
+    extern fn wgpuShaderModuleSetLabel(shader_module: ShaderModule, label: ?[*:0]const u8) void;
+
+    pub fn reference(shader_module: ShaderModule) void {
+        wgpuShaderModuleReference(shader_module);
+    }
+    extern fn wgpuShaderModuleReference(shader_module: ShaderModule) void;
+
+    pub fn release(shader_module: ShaderModule) void {
+        wgpuShaderModuleRelease(shader_module);
+    }
+    extern fn wgpuShaderModuleRelease(shader_module: ShaderModule) void;
 };
 
 const SurfaceImpl = opaque {
@@ -2082,11 +2162,69 @@ const SurfaceImpl = opaque {
 };
 
 const SwapChainImpl = opaque {
-    // TODO: Add functions.
+    pub fn configure(
+        swap_chain: SwapChain,
+        format: TextureFormat,
+        allowed_usage: TextureUsage,
+        width: u32,
+        height: u32,
+    ) void {
+        wgpuSwapChainConfigure(swap_chain, format, @bitCast(u32, allowed_usage), width, height);
+    }
+    extern fn wgpuSwapChainConfigure(
+        swap_chain: SwapChain,
+        format: TextureFormat,
+        allowed_usage: u32, // TextureUsage
+        width: u32,
+        height: u32,
+    ) void;
+
+    pub fn getCurrentTextureView(swap_chain: SwapChain) TextureView {
+        return wgpuSwapChainGetCurrentTextureView(swap_chain);
+    }
+    extern fn wgpuSwapChainGetCurrentTextureView(swap_chain: SwapChain) TextureView;
+
+    pub fn present(swap_chain: SwapChain) void {
+        wgpuSwapChainReference(swap_chain);
+    }
+    extern fn wgpuSwapChainPresent(swap_chain: SwapChain) void;
+
+    pub fn reference(swap_chain: SwapChain) void {
+        wgpuSwapChainReference(swap_chain);
+    }
+    extern fn wgpuSwapChainReference(swap_chain: SwapChain) void;
+
+    pub fn release(swap_chain: SwapChain) void {
+        wgpuSwapChainRelease(swap_chain);
+    }
+    extern fn wgpuSwapChainRelease(swap_chain: SwapChain) void;
 };
 
 const TextureImpl = opaque {
-    // TODO: Add functions.
+    pub fn createTextureView(texture: Texture, descriptor: TextureViewDescriptor) TextureView {
+        return wgpuTextureCreateView(texture, &descriptor);
+    }
+    extern fn wgpuTextureCreateView(texture: Texture, descriptor: *const TextureViewDescriptor) TextureView;
+
+    pub fn destroy(texture: Texture) void {
+        wgpuTextureDestroy(texture);
+    }
+    extern fn wgpuTextureDestroy(texture: Texture) void;
+
+    pub fn setLabel(texture: Texture, label: ?[*:0]const u8) void {
+        wgpuTextureSetLabel(texture, label);
+    }
+    extern fn wgpuTextureSetLabel(texture: Texture, label: ?[*:0]const u8) void;
+
+    pub fn reference(texture: Texture) void {
+        wgpuTextureReference(texture);
+    }
+    extern fn wgpuTextureReference(texture: Texture) void;
+
+    pub fn release(texture: Texture) void {
+        wgpuTextureRelease(texture);
+    }
+    extern fn wgpuTextureRelease(texture: Texture) void;
 };
 
 const TextureViewImpl = opaque {
