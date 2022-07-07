@@ -1452,7 +1452,123 @@ const CommandEncoderImpl = opaque {
 };
 
 const ComputePassEncoderImpl = opaque {
-    // TODO: Add functions.
+    pub fn dispatch(
+        compute_pass_encoder: ComputePassEncoder,
+        workgroup_count_x: u32,
+        workgroup_count_y: u32,
+        workgroup_count_z: u32,
+    ) void {
+        wgpuComputePassEncoderDispatch(
+            compute_pass_encoder,
+            workgroup_count_x,
+            workgroup_count_y,
+            workgroup_count_z,
+        );
+    }
+    extern fn wgpuComputePassEncoderDispatch(
+        compute_pass_encoder: ComputePassEncoder,
+        workgroup_count_x: u32,
+        workgroup_count_y: u32,
+        workgroup_count_z: u32,
+    ) void;
+
+    pub fn dispatchIndirect(
+        compute_pass_encoder: ComputePassEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void {
+        wgpuComputePassEncoderDispatchIndirect(compute_pass_encoder, indirect_buffer, indirect_offset);
+    }
+    extern fn wgpuComputePassEncoderDispatchIndirect(
+        compute_pass_encoder: ComputePassEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void;
+
+    pub fn end(compute_pass_encoder: ComputePassEncoder) void {
+        wgpuComputePassEncoderEnd(compute_pass_encoder);
+    }
+    extern fn wgpuComputePassEncoderEnd(compute_pass_encoder: ComputePassEncoder) void;
+
+    pub fn endPass(compute_pass_encoder: ComputePassEncoder) void {
+        wgpuComputePassEncoderEndPass(compute_pass_encoder);
+    }
+    extern fn wgpuComputePassEncoderEndPass(compute_pass_encoder: ComputePassEncoder) void;
+
+    pub fn insertDebugMarker(compute_pass_encoder: ComputePassEncoder, marker_label: [*:0]const u8) void {
+        wgpuComputePassEncoderInsertDebugMarker(compute_pass_encoder, marker_label);
+    }
+    extern fn wgpuComputePassEncoderInsertDebugMarker(
+        compute_pass_encoder: ComputePassEncoder,
+        marker_label: [*:0]const u8,
+    ) void;
+
+    pub fn popDebugGroup(compute_pass_encoder: ComputePassEncoder) void {
+        wgpuComputePassEncoderPopDebugGroup(compute_pass_encoder);
+    }
+    extern fn wgpuComputePassEncoderPopDebugGroup(compute_pass_encoder: ComputePassEncoder) void;
+
+    pub fn pushDebugGroup(compute_pass_encoder: ComputePassEncoder, group_label: [*:0]const u8) void {
+        wgpuComputePassEncoderPushDebugGroup(compute_pass_encoder, group_label);
+    }
+    extern fn wgpuComputePassEncoderPushDebugGroup(
+        compute_pass_encoder: ComputePassEncoder,
+        group_label: [*:0]const u8,
+    ) void;
+
+    pub fn setBindGroup(
+        compute_pass_encoder: ComputePassEncoder,
+        group_index: u32,
+        bind_group: BindGroup,
+        dynamic_offsets: ?[]const u32,
+    ) void {
+        wgpuComputePassEncoderSetBindGroup(
+            compute_pass_encoder,
+            group_index,
+            bind_group,
+            if (dynamic_offsets) |dynoff| @intCast(u32, dynoff.len) else 0,
+            if (dynamic_offsets) |dynoff| dynoff.ptr else null,
+        );
+    }
+    extern fn wgpuComputePassEncoderSetBindGroup(
+        compute_pass_encoder: ComputePassEncoder,
+        group_index: u32,
+        bind_group: BindGroup,
+        dynamic_offset_count: u32,
+        dynamic_offsets: ?[*]const u32,
+    ) void;
+
+    pub fn setLabel(compute_pass_encoder: ComputePassEncoder, label: ?[*:0]const u8) void {
+        wgpuComputePassEncoderSetLabel(compute_pass_encoder, label);
+    }
+    extern fn wgpuComputePassEncoderSetLabel(compute_pass_encoder: ComputePassEncoder, label: ?[*:0]const u8) void;
+
+    pub fn setPipeline(compute_pass_encoder: ComputePassEncoder, pipeline: ComputePipeline) void {
+        wgpuComputePassEncoderSetPipeline(compute_pass_encoder, pipeline);
+    }
+    extern fn wgpuComputePassEncoderSetPipeline(
+        compute_pass_encoder: ComputePassEncoder,
+        pipeline: ComputePipeline,
+    ) void;
+
+    pub fn writeTimestamp(compute_pass_encoder: ComputePassEncoder, query_set: QuerySet, query_index: u32) void {
+        wgpuComputePassEncoderWriteTimestamp(compute_pass_encoder, query_set, query_index);
+    }
+    extern fn wgpuComputePassEncoderWriteTimestamp(
+        compute_pass_encoder: ComputePassEncoder,
+        query_set: QuerySet,
+        query_index: u32,
+    ) void;
+
+    pub fn reference(compute_pass_encoder: ComputePassEncoder) void {
+        wgpuComputePassEncoderReference(compute_pass_encoder);
+    }
+    extern fn wgpuComputePassEncoderReference(compute_pass_encoder: ComputePassEncoder) void;
+
+    pub fn release(compute_pass_encoder: ComputePassEncoder) void {
+        wgpuComputePassEncoderRelease(compute_pass_encoder);
+    }
+    extern fn wgpuComputePassEncoderRelease(compute_pass_encoder: ComputePassEncoder) void;
 };
 
 const ComputePipelineImpl = opaque {
