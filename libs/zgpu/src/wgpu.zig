@@ -1035,11 +1035,37 @@ const AdapterImpl = opaque {
 };
 
 const BindGroupImpl = opaque {
-    // TODO: Add functions.
+    pub fn setLabel(bind_group: BindGroup, label: ?[*:0]const u8) void {
+        wgpuBindGroupSetLabel(bind_group, label);
+    }
+    extern fn wgpuBindGroupSetLabel(bind_group: BindGroup, label: ?[*:0]const u8) void;
+
+    pub fn reference(bind_group: BindGroup) void {
+        wgpuBindGroupReference(bind_group);
+    }
+    extern fn wgpuBindGroupReference(bind_group: BindGroup) void;
+
+    pub fn release(bind_group: BindGroup) void {
+        wgpuBindGroupRelease(bind_group);
+    }
+    extern fn wgpuBindGroupRelease(bind_group: BindGroup) void;
 };
 
 const BindGroupLayoutImpl = opaque {
-    // TODO: Add functions.
+    pub fn setLabel(bind_group_layout: BindGroupLayout, label: ?[*:0]const u8) void {
+        wgpuBindGroupLayoutSetLabel(bind_group_layout, label);
+    }
+    extern fn wgpuBindGroupLayoutSetLabel(bind_group_layout: BindGroupLayout, label: ?[*:0]const u8) void;
+
+    pub fn reference(bind_group_layout: BindGroupLayout) void {
+        wgpuBindGroupLayoutReference(bind_group_layout);
+    }
+    extern fn wgpuBindGroupLayoutReference(bind_group_layout: BindGroupLayout) void;
+
+    pub fn release(bind_group_layout: BindGroupLayout) void {
+        wgpuBindGroupLayoutRelease(bind_group_layout);
+    }
+    extern fn wgpuBindGroupLayoutRelease(bind_group_layout: BindGroupLayout) void;
 };
 
 const BufferImpl = opaque {
@@ -1047,7 +1073,20 @@ const BufferImpl = opaque {
 };
 
 const CommandBufferImpl = opaque {
-    // TODO: Add functions.
+    pub fn setLabel(command_buffer: CommandBuffer, label: ?[*:0]const u8) void {
+        wgpuCommandBufferSetLabel(command_buffer, label);
+    }
+    extern fn wgpuCommandBufferSetLabel(command_buffer: CommandBuffer, label: ?[*:0]const u8) void;
+
+    pub fn reference(command_buffer: CommandBuffer) void {
+        wgpuCommandBufferReference(command_buffer);
+    }
+    extern fn wgpuCommandBufferReference(command_buffer: CommandBuffer) void;
+
+    pub fn release(command_buffer: CommandBuffer) void {
+        wgpuCommandBufferRelease(command_buffer);
+    }
+    extern fn wgpuCommandBufferRelease(command_buffer: CommandBuffer) void;
 };
 
 const CommandEncoderImpl = opaque {
@@ -1279,7 +1318,25 @@ const DeviceImpl = opaque {
 };
 
 const ExternalTextureImpl = opaque {
-    // TODO: Add functions.
+    pub fn destroy(external_texture: ExternalTexture) void {
+        wgpuExternalTextureDestroy(external_texture);
+    }
+    extern fn wgpuExternalTextureDestroy(external_texture: ExternalTexture) void;
+
+    pub fn setLabel(external_texture: ExternalTexture, label: ?[*:0]const u8) void {
+        wgpuExternalTextureSetLabel(external_texture, label);
+    }
+    extern fn wgpuExternalTextureSetLabel(external_texture: ExternalTexture, label: ?[*:0]const u8) void;
+
+    pub fn reference(external_texture: ExternalTexture) void {
+        wgpuExternalTextureReference(external_texture);
+    }
+    extern fn wgpuExternalTextureReference(external_texture: ExternalTexture) void;
+
+    pub fn release(external_texture: ExternalTexture) void {
+        wgpuExternalTextureRelease(external_texture);
+    }
+    extern fn wgpuExternalTextureRelease(external_texture: ExternalTexture) void;
 };
 
 const InstanceImpl = opaque {
@@ -1315,11 +1372,42 @@ const InstanceImpl = opaque {
 };
 
 const PipelineLayoutImpl = opaque {
-    // TODO: Add functions.
+    pub fn setLabel(pipeline_layout: PipelineLayout, label: ?[*:0]const u8) void {
+        wgpuPipelineLayoutSetLabel(pipeline_layout, label);
+    }
+    extern fn wgpuPipelineLayoutSetLabel(pipeline_layout: PipelineLayout, label: ?[*:0]const u8) void;
+
+    pub fn reference(pipeline_layout: PipelineLayout) void {
+        wgpuPipelineLayoutReference(pipeline_layout);
+    }
+    extern fn wgpuPipelineLayoutReference(pipeline_layout: PipelineLayout) void;
+
+    pub fn release(pipeline_layout: PipelineLayout) void {
+        wgpuPipelineLayoutRelease(pipeline_layout);
+    }
+    extern fn wgpuPipelineLayoutRelease(pipeline_layout: PipelineLayout) void;
 };
 
 const QuerySetImpl = opaque {
-    // TODO: Add functions.
+    pub fn destroy(query_set: QuerySet) void {
+        wgpuQuerySetDestroy(query_set);
+    }
+    extern fn wgpuQuerySetDestroy(query_set: QuerySet) void;
+
+    pub fn setLabel(query_set: QuerySet, label: ?[*:0]const u8) void {
+        wgpuQuerySetSetLabel(query_set, label);
+    }
+    extern fn wgpuQuerySetSetLabel(query_set: QuerySet, label: ?[*:0]const u8) void;
+
+    pub fn reference(query_set: QuerySet) void {
+        wgpuQuerySetReference(query_set);
+    }
+    extern fn wgpuQuerySetReference(query_set: QuerySet) void;
+
+    pub fn release(query_set: QuerySet) void {
+        wgpuQuerySetRelease(query_set);
+    }
+    extern fn wgpuQuerySetRelease(query_set: QuerySet) void;
 };
 
 const QueueImpl = opaque {
@@ -1327,7 +1415,15 @@ const QueueImpl = opaque {
 };
 
 const RenderBundleImpl = opaque {
-    // TODO: Add functions.
+    pub fn reference(render_bundle: RenderBundle) void {
+        wgpuRenderBundleReference(render_bundle);
+    }
+    extern fn wgpuRenderBundleReference(render_bundle: RenderBundle) void;
+
+    pub fn release(render_bundle: RenderBundle) void {
+        wgpuRenderBundleRelease(render_bundle);
+    }
+    extern fn wgpuRenderBundleRelease(render_bundle: RenderBundle) void;
 };
 
 const RenderBundleEncoderImpl = opaque {
@@ -1343,7 +1439,20 @@ const RenderPipelineImpl = opaque {
 };
 
 const SamplerImpl = opaque {
-    // TODO: Add functions.
+    pub fn setLabel(sampler: Sampler, label: ?[*:0]const u8) void {
+        wgpuSamplerSetLabel(sampler, label);
+    }
+    extern fn wgpuSamplerSetLabel(sampler: Sampler, label: ?[*:0]const u8) void;
+
+    pub fn reference(sampler: Sampler) void {
+        wgpuSamplerReference(sampler);
+    }
+    extern fn wgpuSamplerReference(sampler: Sampler) void;
+
+    pub fn release(sampler: Sampler) void {
+        wgpuSamplerRelease(sampler);
+    }
+    extern fn wgpuSamplerRelease(sampler: Sampler) void;
 };
 
 const ShaderModuleImpl = opaque {
@@ -1351,7 +1460,15 @@ const ShaderModuleImpl = opaque {
 };
 
 const SurfaceImpl = opaque {
-    // TODO: Add functions.
+    pub fn reference(surface: Surface) void {
+        wgpuSurfaceReference(surface);
+    }
+    extern fn wgpuSurfaceReference(surface: Surface) void;
+
+    pub fn release(surface: Surface) void {
+        wgpuSurfaceRelease(surface);
+    }
+    extern fn wgpuSurfaceRelease(surface: Surface) void;
 };
 
 const SwapChainImpl = opaque {
@@ -1363,5 +1480,18 @@ const TextureImpl = opaque {
 };
 
 const TextureViewImpl = opaque {
-    // TODO: Add functions.
+    pub fn setLabel(texture_view: TextureView, label: ?[*:0]const u8) void {
+        wgpuTextureViewSetLabel(texture_view, label);
+    }
+    extern fn wgpuTextureViewSetLabel(texture_view: TextureView, label: ?[*:0]const u8) void;
+
+    pub fn reference(texture_view: TextureView) void {
+        wgpuTextureViewReference(texture_view);
+    }
+    extern fn wgpuTextureViewReference(texture_view: TextureView) void;
+
+    pub fn release(texture_view: TextureView) void {
+        wgpuTextureViewRelease(texture_view);
+    }
+    extern fn wgpuTextureViewRelease(texture_view: TextureView) void;
 };
