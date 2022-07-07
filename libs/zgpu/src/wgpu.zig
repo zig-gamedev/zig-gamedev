@@ -971,6 +971,38 @@ pub const RenderPassDescriptor = extern struct {
     timestamp_writes: ?[*]const RenderPassTimestampWrite,
 };
 
+pub const TextureDataLayout = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    offset: usize,
+    bytes_per_row: u32,
+    rows_per_image: u32,
+};
+
+pub const Origin3D = extern struct {
+    x: u32,
+    y: u32,
+    z: u32,
+};
+
+pub const ImageCopyBuffer = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    layout: TextureDataLayout,
+    buffer: Buffer,
+};
+
+pub const ImageCopyTexture = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    texture: Texture,
+    mip_level: u32,
+    origin: Origin3D,
+    aspect: TextureAspect,
+};
+
+pub const CommandBufferDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -1272,7 +1304,151 @@ const CommandEncoderImpl = opaque {
         size: usize,
     ) void;
 
-    // TODO: Add functions.
+    pub fn copyBufferToTexture(
+        command_encoder: CommandEncoder,
+        source: ImageCopyBuffer,
+        destination: ImageCopyTexture,
+        copy_size: Extent3D,
+    ) void {
+        wgpuCommandEncoderCopyBufferToTexture(command_encoder, &source, &destination, &copy_size);
+    }
+    extern fn wgpuCommandEncoderCopyBufferToTexture(
+        command_encoder: CommandEncoder,
+        source: *const ImageCopyBuffer,
+        destination: *const ImageCopyTexture,
+        copy_size: *const Extent3D,
+    ) void;
+
+    pub fn copyTextureToBuffer(
+        command_encoder: CommandEncoder,
+        source: ImageCopyTexture,
+        destination: ImageCopyBuffer,
+        copy_size: Extent3D,
+    ) void {
+        wgpuCommandEncoderCopyTextureToBuffer(command_encoder, &source, &destination, &copy_size);
+    }
+    extern fn wgpuCommandEncoderCopyTextureToBuffer(
+        command_encoder: CommandEncoder,
+        source: *const ImageCopyTexture,
+        destination: *const ImageCopyBuffer,
+        copy_size: *const Extent3D,
+    ) void;
+
+    pub fn copyTextureToTexture(
+        command_encoder: CommandEncoder,
+        source: ImageCopyTexture,
+        destination: ImageCopyTexture,
+        copy_size: Extent3D,
+    ) void {
+        wgpuCommandEncoderCopyTextureToTexture(command_encoder, &source, &destination, &copy_size);
+    }
+    extern fn wgpuCommandEncoderCopyTextureToTexture(
+        command_encoder: CommandEncoder,
+        source: *const ImageCopyTexture,
+        destination: *const ImageCopyTexture,
+        copy_size: *const Extent3D,
+    ) void;
+
+    pub fn finish(command_encoder: CommandEncoder, descriptor: CommandBufferDescriptor) CommandBuffer {
+        return wgpuCommandEncoderFinish(command_encoder, &descriptor);
+    }
+    extern fn wgpuCommandEncoderFinish(
+        command_encoder: CommandEncoder,
+        descriptor: *const CommandBufferDescriptor,
+    ) CommandBuffer;
+
+    pub fn injectValidationError(command_encoder: CommandEncoder, message: [*:0]const u8) void {
+        wgpuCommandEncoderInjectValidationError(command_encoder, message);
+    }
+    extern fn wgpuCommandEncoderInjectValidationError(command_encoder: CommandEncoder, message: [*:0]const u8) void;
+
+    pub fn insertDebugMarker(command_encoder: CommandEncoder, marker_label: [*:0]const u8) void {
+        wgpuCommandEncoderInsertDebugMarker(command_encoder, marker_label);
+    }
+    extern fn wgpuCommandEncoderInsertDebugMarker(command_encoder: CommandEncoder, marker_label: [*:0]const u8) void;
+
+    pub fn popDebugGroup(command_encoder: CommandEncoder) void {
+        wgpuCommandEncoderPopDebugGroup(command_encoder);
+    }
+    extern fn wgpuCommandEncoderPopDebugGroup(command_encoder: CommandEncoder) void;
+
+    pub fn pushDebugGroup(command_encoder: CommandEncoder, group_label: [*:0]const u8) void {
+        wgpuCommandEncoderPushDebugGroup(command_encoder, group_label);
+    }
+    extern fn wgpuCommandEncoderPushDebugGroup(command_encoder: CommandEncoder, group_label: [*:0]const u8) void;
+
+    pub fn resolveQuerySet(
+        command_encoder: CommandEncoder,
+        query_set: QuerySet,
+        first_query: u32,
+        query_count: u32,
+        destination: Buffer,
+        destination_offset: u64,
+    ) void {
+        wgpuCommandEncoderResolveQuerySet(
+            command_encoder,
+            query_set,
+            first_query,
+            query_count,
+            destination,
+            destination_offset,
+        );
+    }
+    extern fn wgpuCommandEncoderResolveQuerySet(
+        command_encoder: CommandEncoder,
+        query_set: QuerySet,
+        first_query: u32,
+        query_count: u32,
+        destination: Buffer,
+        destination_offset: u64,
+    ) void;
+
+    pub fn setLabel(command_encoder: CommandEncoder, label: ?[*:0]const u8) void {
+        wgpuCommandEncoderSetLabel(command_encoder, label);
+    }
+    extern fn wgpuCommandEncoderSetLabel(command_encoder: CommandEncoder, label: ?[*:0]const u8) void;
+
+    pub fn writeBuffer(
+        command_encoder: CommandEncoder,
+        buffer: Buffer,
+        buffer_offset: u64,
+        comptime T: type,
+        data: []const T,
+    ) void {
+        wgpuCommandEncoderWriteBuffer(
+            command_encoder,
+            buffer,
+            buffer_offset,
+            @ptrCast([*]const u8, data.ptr),
+            @intCast(u64, data.len) * @sizeOf(T),
+        );
+    }
+    extern fn wgpuCommandEncoderWriteBuffer(
+        command_encoder: CommandEncoder,
+        buffer: Buffer,
+        buffer_offset: u64,
+        data: [*]const u8,
+        size: u64,
+    ) void;
+
+    pub fn writeTimestamp(command_encoder: CommandEncoder, query_set: QuerySet, query_index: u32) void {
+        wgpuCommandEncoderWriteTimestamp(command_encoder, query_set, query_index);
+    }
+    extern fn wgpuCommandEncoderWriteTimestamp(
+        command_encoder: CommandEncoder,
+        query_set: QuerySet,
+        query_index: u32,
+    ) void;
+
+    pub fn reference(command_encoder: CommandEncoder) void {
+        wgpuCommandEncoderReference(command_encoder);
+    }
+    extern fn wgpuCommandEncoderReference(command_encoder: CommandEncoder) void;
+
+    pub fn release(command_encoder: CommandEncoder) void {
+        wgpuCommandEncoderRelease(command_encoder);
+    }
+    extern fn wgpuCommandEncoderRelease(command_encoder: CommandEncoder) void;
 };
 
 const ComputePassEncoderImpl = opaque {
