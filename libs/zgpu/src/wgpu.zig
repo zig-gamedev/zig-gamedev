@@ -1042,6 +1042,11 @@ pub const CompilationInfo = extern struct {
     messages: ?[*]const CompilationMessage,
 };
 
+pub const RenderBundleDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+};
+
 pub const Adapter = *align(@sizeOf(usize)) AdapterImpl;
 pub const BindGroup = *align(@sizeOf(usize)) BindGroupImpl;
 pub const BindGroupLayout = *align(@sizeOf(usize)) BindGroupLayoutImpl;
@@ -2070,7 +2075,86 @@ const RenderBundleImpl = opaque {
 };
 
 const RenderBundleEncoderImpl = opaque {
-    // TODO: Add functions.
+    pub fn draw(render_bundle_encoder: RenderBundleEncoder, vertex_count: u32, instance_count: u32, first_vertex: u32, first_instance: u32) void {
+        wgpuRenderBundleEncoderDraw(render_bundle_encoder, vertex_count, instance_count, first_vertex, first_instance);
+    }
+    extern fn wgpuRenderBundleEncoderDraw(render_bundle_encoder: RenderBundleEncoder, vertex_count: u32, instance_count: u32, first_vertex: u32, first_instance: u32) void;
+
+    pub fn drawIndexed(render_bundle_encoder: RenderBundleEncoder, index_count: u32, instance_count: u32, first_index: u32, base_vertex: i32, first_instance: u32) void {
+        wgpuRenderBundleEncoderDrawIndexed(render_bundle_encoder, index_count, instance_count, first_index, base_vertex, first_instance);
+    }
+    extern fn wgpuRenderBundleEncoderDrawIndexed(render_bundle_encoder: RenderBundleEncoder, index_count: u32, instance_count: u32, first_index: u32, base_vertex: i32, first_instance: u32) void;
+
+    pub fn drawIndexedIndirect(render_bundle_encoder: RenderBundleEncoder, indirect_buffer: Buffer, indirect_offset: u64) void {
+        wgpuRenderBundleEncoderDrawIndexedIndirect(render_bundle_encoder, indirect_buffer, indirect_offset);
+    }
+    extern fn wgpuRenderBundleEncoderDrawIndexedIndirect(render_bundle_encoder: RenderBundleEncoder, indirect_buffer: Buffer, indirect_offset: u64) void;
+
+    pub fn drawIndirect(render_bundle_encoder: RenderBundleEncoder, indirect_buffer: Buffer, indirect_offset: u64) void {
+        wgpuRenderBundleEncoderDrawIndirect(render_bundle_encoder, indirect_buffer, indirect_offset);
+    }
+    extern fn wgpuRenderBundleEncoderDrawIndirect(render_bundle_encoder: RenderBundleEncoder, indirect_buffer: Buffer, indirect_offset: u64) void;
+
+    pub fn finish(render_bundle_encoder: RenderBundleEncoder, descriptor: RenderBundleDescriptor) RenderBundle {
+        return wgpuRenderBundleEncoderFinish(render_bundle_encoder, &descriptor);
+    }
+    extern fn wgpuRenderBundleEncoderFinish(render_bundle_encoder: RenderBundleEncoder, descriptor: *const RenderBundleDescriptor) RenderBundle;
+
+    pub fn insertDebugMarker(render_bundle_encoder: RenderBundleEncoder, marker_label: [*:0]const u8) void {
+        wgpuRenderBundleEncoderInsertDebugMarker(render_bundle_encoder, marker_label);
+    }
+    extern fn wgpuRenderBundleEncoderInsertDebugMarker(render_bundle_encoder: RenderBundleEncoder, marker_label: [*:0]const u8) void;
+
+    pub fn popDebugGroup(render_bundle_encoder: RenderBundleEncoder) void {
+        wgpuRenderBundleEncoderPopDebugGroup(render_bundle_encoder);
+    }
+    extern fn wgpuRenderBundleEncoderPopDebugGroup(render_bundle_encoder: RenderBundleEncoder) void;
+
+    pub fn pushDebugGroup(render_bundle_encoder: RenderBundleEncoder, group_label: [*:0]const u8) void {
+        wgpuRenderBundleEncoderPushDebugGroup(render_bundle_encoder, group_label);
+    }
+    extern fn wgpuRenderBundleEncoderPushDebugGroup(render_bundle_encoder: RenderBundleEncoder, group_label: [*:0]const u8) void;
+
+    pub fn setBindGroup(render_bundle_encoder: RenderBundleEncoder, group_index: u32, group: BindGroup, dynamic_offsets: ?[]const u32) void {
+        wgpuRenderBundleEncoderSetBindGroup(
+            render_bundle_encoder,
+            group_index,
+            group,
+            if (dynamic_offsets) |dynoff| @intCast(u32, dynoff.len) else 0,
+            if (dynamic_offsets) |dynoff| dynoff.ptr else null,
+        );
+    }
+    extern fn wgpuRenderBundleEncoderSetBindGroup(render_bundle_encoder: RenderBundleEncoder, group_index: u32, group: BindGroup, dynamic_offset_count: u32, dynamic_offsets: ?[*]const u32) void;
+
+    pub fn setIndexBuffer(render_bundle_encoder: RenderBundleEncoder, buffer: Buffer, format: IndexFormat, offset: u64, size: u64) void {
+        wgpuRenderBundleEncoderSetIndexBuffer(render_bundle_encoder, buffer, format, offset, size);
+    }
+    extern fn wgpuRenderBundleEncoderSetIndexBuffer(render_bundle_encoder: RenderBundleEncoder, buffer: Buffer, format: IndexFormat, offset: u64, size: u64) void;
+
+    pub fn setLabel(render_bundle_encoder: RenderBundleEncoder, label: ?[*:0]const u8) void {
+        wgpuRenderBundleEncoderSetLabel(render_bundle_encoder, label);
+    }
+    extern fn wgpuRenderBundleEncoderSetLabel(render_bundle_encoder: RenderBundleEncoder, label: ?[*:0]const u8) void;
+
+    pub fn setPipeline(render_bundle_encoder: RenderBundleEncoder, pipeline: RenderPipeline) void {
+        wgpuRenderBundleEncoderSetPipeline(render_bundle_encoder, pipeline);
+    }
+    extern fn wgpuRenderBundleEncoderSetPipeline(render_bundle_encoder: RenderBundleEncoder, pipeline: RenderPipeline) void;
+
+    pub fn setVertexBuffer(render_bundle_encoder: RenderBundleEncoder, slot: u32, buffer: Buffer, offset: u64, size: u64) void {
+        wgpuRenderBundleEncoderSetVertexBuffer(render_bundle_encoder, slot, buffer, offset, size);
+    }
+    extern fn wgpuRenderBundleEncoderSetVertexBuffer(render_bundle_encoder: RenderBundleEncoder, slot: u32, buffer: Buffer, offset: u64, size: u64) void;
+
+    pub fn reference(render_bundle_encoder: RenderBundleEncoder) void {
+        wgpuRenderBundleEncoderReference(render_bundle_encoder);
+    }
+    extern fn wgpuRenderBundleEncoderReference(render_bundle_encoder: RenderBundleEncoder) void;
+
+    pub fn release(render_bundle_encoder: RenderBundleEncoder) void {
+        wgpuRenderBundleEncoderRelease(render_bundle_encoder);
+    }
+    extern fn wgpuRenderBundleEncoderRelease(render_bundle_encoder: RenderBundleEncoder) void;
 };
 
 const RenderPassEncoderImpl = opaque {
