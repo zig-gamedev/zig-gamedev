@@ -2,8 +2,8 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const glfw = @import("glfw");
-const gpu = @import("gpu");
 const zgpu = @import("zgpu");
+const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
@@ -174,29 +174,29 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     const mesh_bgl = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-        zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
-        zgpu.bglTexture(2, .{ .fragment = true }, .float, .dimension_2d, false),
-        zgpu.bglTexture(3, .{ .fragment = true }, .float, .dimension_2d, false),
-        zgpu.bglTexture(4, .{ .fragment = true }, .float, .dimension_2d, false),
-        zgpu.bglTexture(5, .{ .fragment = true }, .float, .dimension_cube, false),
-        zgpu.bglTexture(6, .{ .fragment = true }, .float, .dimension_cube, false),
-        zgpu.bglTexture(7, .{ .fragment = true }, .float, .dimension_2d, false),
+        zgpu.bglTexture(1, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.bglTexture(2, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.bglTexture(3, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.bglTexture(4, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.bglTexture(5, .{ .fragment = true }, .float, .tvdim_cube, false),
+        zgpu.bglTexture(6, .{ .fragment = true }, .float, .tvdim_cube, false),
+        zgpu.bglTexture(7, .{ .fragment = true }, .float, .tvdim_2d, false),
         zgpu.bglSampler(8, .{ .fragment = true }, .filtering),
     });
     defer gctx.releaseResource(mesh_bgl);
 
     const uniform_tex2d_sam_bgl = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true }, .uniform, true, 0),
-        zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
+        zgpu.bglTexture(1, .{ .fragment = true }, .float, .tvdim_2d, false),
         zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
     });
     const uniform_texcube_sam_bgl = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-        zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_cube, false),
+        zgpu.bglTexture(1, .{ .fragment = true }, .float, .tvdim_cube, false),
         zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
     });
     const texstorage2d_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglStorageTexture(0, .{ .compute = true }, .write_only, .rgba16_float, .dimension_2d),
+        zgpu.bglStorageTexture(0, .{ .compute = true }, .write_only, .rgba16_float, .tvdim_2d),
     });
 
     //
@@ -259,12 +259,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         mesh_texv[tex_index] = gctx.createTextureView(mesh_tex[tex_index], .{});
 
         gctx.queue.writeTexture(
-            &.{ .texture = gctx.lookupResource(mesh_tex[tex_index]).? },
-            &.{
+            .{ .texture = gctx.lookupResource(mesh_tex[tex_index]).? },
+            .{
                 .bytes_per_row = image.bytes_per_row,
                 .rows_per_image = image.height,
             },
-            &.{ .width = image.width, .height = image.height },
+            .{ .width = image.width, .height = image.height },
             u8,
             image.data,
         );
@@ -282,7 +282,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .mip_level_count = math.log2_int(u32, env_cube_tex_resolution) + 1,
     });
     const env_cube_texv = gctx.createTextureView(env_cube_tex, .{
-        .dimension = .dimension_cube,
+        .dimension = .tvdim_cube,
     });
 
     // Create an empty irradiance cube texture (we will render to it).
@@ -297,7 +297,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .mip_level_count = math.log2_int(u32, irradiance_cube_tex_resolution) + 1,
     });
     const irradiance_cube_texv = gctx.createTextureView(irradiance_cube_tex, .{
-        .dimension = .dimension_cube,
+        .dimension = .tvdim_cube,
     });
 
     // Create an empty filtered env. cube texture (we will render to it).
@@ -312,7 +312,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .mip_level_count = filtered_env_tex_mip_levels,
     });
     const filtered_env_cube_texv = gctx.createTextureView(filtered_env_cube_tex, .{
-        .dimension = .dimension_cube,
+        .dimension = .tvdim_cube,
     });
 
     // Create an empty BRDF integration texture (we will generate its content in a compute shader).
@@ -419,7 +419,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         wgsl.mesh_fs,
         zgpu.GraphicsContext.swapchain_format,
         false,
-        gpu.DepthStencilState{
+        wgpu.DepthStencilState{
             .format = .depth32_float,
             .depth_write_enabled = true,
             .depth_compare = .less,
@@ -434,7 +434,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         wgsl.sample_env_tex_fs,
         zgpu.GraphicsContext.swapchain_format,
         true,
-        gpu.DepthStencilState{
+        wgpu.DepthStencilState{
             .format = .depth32_float,
             .depth_write_enabled = false,
             .depth_compare = .less_equal,
@@ -478,12 +478,14 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         const pl = gctx.createPipelineLayout(&.{texstorage2d_bgl});
         defer gctx.releaseResource(pl);
 
-        const cs_mod = gctx.device.createShaderModule(&gpu.ShaderModule.Descriptor{
-            .code = .{ .wgsl = wgsl.precompute_brdf_integration_tex_cs },
-        });
+        const cs_mod = zgpu.util.createWgslShaderModule(
+            gctx.device,
+            wgsl.precompute_brdf_integration_tex_cs,
+            null,
+        );
         defer cs_mod.release();
 
-        const pipe_desc = gpu.ComputePipeline.Descriptor{
+        const pipe_desc = wgpu.ComputePipelineDescriptor{
             .compute = .{
                 .module = cs_mod,
                 .entry_point = "main",
@@ -629,22 +631,23 @@ fn draw(demo: *DemoState) void {
             const mesh_bg = gctx.lookupResource(demo.mesh_bg) orelse break :pass;
             const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
 
-            const color_attachment = gpu.RenderPassColorAttachment{
+            const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                 .view = back_buffer_view,
                 .load_op = .clear,
                 .store_op = .store,
-            };
-            const depth_attachment = gpu.RenderPassDepthStencilAttachment{
+            }};
+            const depth_attachment = wgpu.RenderPassDepthStencilAttachment{
                 .view = depth_texv,
                 .depth_load_op = .clear,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
             };
-            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
-                .color_attachments = &.{color_attachment},
+            const render_pass_info = wgpu.RenderPassDescriptor{
+                .color_attachment_count = color_attachments.len,
+                .color_attachments = &color_attachments,
                 .depth_stencil_attachment = &depth_attachment,
             };
-            const pass = encoder.beginRenderPass(&render_pass_info);
+            const pass = encoder.beginRenderPass(render_pass_info);
             defer {
                 pass.end();
                 pass.release();
@@ -681,22 +684,23 @@ fn draw(demo: *DemoState) void {
             const env_bg = gctx.lookupResource(demo.env_bg) orelse break :pass;
             const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
 
-            const color_attachment = gpu.RenderPassColorAttachment{
+            const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                 .view = back_buffer_view,
                 .load_op = .load,
                 .store_op = .store,
-            };
-            const depth_attachment = gpu.RenderPassDepthStencilAttachment{
+            }};
+            const depth_attachment = wgpu.RenderPassDepthStencilAttachment{
                 .view = depth_texv,
                 .depth_load_op = .load,
                 .depth_store_op = .store,
                 .depth_clear_value = 1.0,
             };
-            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
-                .color_attachments = &.{color_attachment},
+            const render_pass_info = wgpu.RenderPassDescriptor{
+                .color_attachment_count = color_attachments.len,
+                .color_attachments = &color_attachments,
                 .depth_stencil_attachment = &depth_attachment,
             };
-            const pass = encoder.beginRenderPass(&render_pass_info);
+            const pass = encoder.beginRenderPass(render_pass_info);
             defer {
                 pass.end();
                 pass.release();
@@ -723,15 +727,16 @@ fn draw(demo: *DemoState) void {
 
         // Gui pass.
         {
-            const color_attachment = gpu.RenderPassColorAttachment{
+            const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                 .view = back_buffer_view,
                 .load_op = .load,
                 .store_op = .store,
+            }};
+            const render_pass_info = wgpu.RenderPassDescriptor{
+                .color_attachment_count = color_attachments.len,
+                .color_attachments = &color_attachments,
             };
-            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
-                .color_attachments = &.{color_attachment},
-            };
-            const pass = encoder.beginRenderPass(&render_pass_info);
+            const pass = encoder.beginRenderPass(render_pass_info);
             defer {
                 pass.end();
                 pass.release();
@@ -763,7 +768,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 } {
     const tex = gctx.createTexture(.{
         .usage = .{ .render_attachment = true },
-        .dimension = .dimension_2d,
+        .dimension = .tdim_2d,
         .size = .{
             .width = gctx.swapchain_descriptor.width,
             .height = gctx.swapchain_descriptor.height,
@@ -779,7 +784,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 
 fn precomputeImageLighting(
     demo: *DemoState,
-    encoder: gpu.CommandEncoder,
+    encoder: wgpu.CommandEncoder,
 ) void {
     const gctx = demo.gctx;
 
@@ -817,12 +822,12 @@ fn precomputeImageLighting(
         });
 
         gctx.queue.writeTexture(
-            &.{ .texture = gctx.lookupResource(hdr_source_tex).? },
-            &.{
+            .{ .texture = gctx.lookupResource(hdr_source_tex).? },
+            .{
                 .bytes_per_row = image.bytes_per_row,
                 .rows_per_image = image.height,
             },
-            &.{ .width = image.width, .height = image.height },
+            .{ .width = image.width, .height = image.height },
             f16,
             image.data,
         );
@@ -915,7 +920,7 @@ fn precomputeImageLighting(
 
 fn drawToCubeTexture(
     gctx: *zgpu.GraphicsContext,
-    encoder: gpu.CommandEncoder,
+    encoder: wgpu.CommandEncoder,
     pipe_bgl: zgpu.BindGroupLayoutHandle,
     pipe: zgpu.RenderPipelineHandle,
     source_texv: zgpu.TextureViewHandle,
@@ -967,7 +972,7 @@ fn drawToCubeTexture(
     var cube_face_idx: u32 = 0;
     while (cube_face_idx < 6) : (cube_face_idx += 1) {
         const face_texv = gctx.createTextureView(dest_tex, .{
-            .dimension = .dimension_2d,
+            .dimension = .tvdim_2d,
             .base_mip_level = dest_mip_level,
             .mip_level_count = 1,
             .base_array_layer = cube_face_idx,
@@ -975,15 +980,16 @@ fn drawToCubeTexture(
         });
         defer gctx.releaseResource(face_texv);
 
-        const color_attachment = gpu.RenderPassColorAttachment{
+        const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
             .view = gctx.lookupResource(face_texv).?,
             .load_op = .clear,
             .store_op = .store,
+        }};
+        const render_pass_info = wgpu.RenderPassDescriptor{
+            .color_attachment_count = color_attachments.len,
+            .color_attachments = &color_attachments,
         };
-        const render_pass_info = gpu.RenderPassEncoder.Descriptor{
-            .color_attachments = &.{color_attachment},
-        };
-        const pass = encoder.beginRenderPass(&render_pass_info);
+        const pass = encoder.beginRenderPass(render_pass_info);
         defer {
             pass.end();
             pass.release();
@@ -1012,49 +1018,49 @@ fn createRenderPipe(
     bgls: []const zgpu.BindGroupLayoutHandle,
     wgsl_vs: [:0]const u8,
     wgsl_fs: [:0]const u8,
-    format: gpu.Texture.Format,
+    format: wgpu.TextureFormat,
     only_position_attrib: bool,
-    depth_state: ?gpu.DepthStencilState,
+    depth_state: ?wgpu.DepthStencilState,
     out_pipe: *zgpu.RenderPipelineHandle,
 ) void {
     const pl = gctx.createPipelineLayout(bgls);
     defer gctx.releaseResource(pl);
 
-    const vs_desc = gpu.ShaderModule.Descriptor{ .code = .{ .wgsl = wgsl_vs.ptr } };
-    const vs_mod = gctx.device.createShaderModule(&vs_desc);
+    const vs_mod = zgpu.util.createWgslShaderModule(gctx.device, wgsl_vs, null);
     defer vs_mod.release();
 
-    const fs_desc = gpu.ShaderModule.Descriptor{ .code = .{ .wgsl = wgsl_fs.ptr } };
-    const fs_mod = gctx.device.createShaderModule(&fs_desc);
+    const fs_mod = zgpu.util.createWgslShaderModule(gctx.device, wgsl_fs, null);
     defer fs_mod.release();
 
-    const color_target = gpu.ColorTargetState{
+    const color_targets = [_]wgpu.ColorTargetState{.{
         .format = format,
-    };
+    }};
 
-    const vertex_attributes = [_]gpu.VertexAttribute{
+    const vertex_attributes = [_]wgpu.VertexAttribute{
         .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
         .{ .format = .float32x3, .offset = @offsetOf(Vertex, "normal"), .shader_location = 1 },
         .{ .format = .float32x2, .offset = @offsetOf(Vertex, "texcoord"), .shader_location = 2 },
         .{ .format = .float32x4, .offset = @offsetOf(Vertex, "tangent"), .shader_location = 3 },
     };
-    const vertex_buffer_layout = gpu.VertexBufferLayout{
+    const vertex_buffers = [_]wgpu.VertexBufferLayout{.{
         .array_stride = @sizeOf(Vertex),
         .attribute_count = if (only_position_attrib) 1 else vertex_attributes.len,
         .attributes = &vertex_attributes,
-    };
+    }};
 
     // Create a render pipeline.
-    const pipe_desc = gpu.RenderPipeline.Descriptor{
-        .vertex = gpu.VertexState{
+    const pipe_desc = wgpu.RenderPipelineDescriptor{
+        .vertex = wgpu.VertexState{
             .module = vs_mod,
             .entry_point = "main",
-            .buffers = &.{vertex_buffer_layout},
+            .buffer_count = vertex_buffers.len,
+            .buffers = &vertex_buffers,
         },
-        .fragment = &gpu.FragmentState{
+        .fragment = &wgpu.FragmentState{
             .module = fs_mod,
             .entry_point = "main",
-            .targets = &.{color_target},
+            .target_count = color_targets.len,
+            .targets = &color_targets,
         },
         .depth_stencil = if (depth_state) |ds| &ds else null,
     };

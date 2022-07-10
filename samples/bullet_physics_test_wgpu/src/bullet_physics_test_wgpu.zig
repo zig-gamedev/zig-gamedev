@@ -2,8 +2,8 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const glfw = @import("glfw");
-const gpu = @import("gpu");
 const zgpu = @import("zgpu");
+const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
@@ -231,13 +231,13 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     //
     // Create pipelines.
     //
-    const common_depth_state = gpu.DepthStencilState{
+    const common_depth_state = wgpu.DepthStencilState{
         .format = .depth32_float,
         .depth_write_enabled = true,
         .depth_compare = .less,
     };
 
-    const pos_norm_attribs = [_]gpu.VertexAttribute{
+    const pos_norm_attribs = [_]wgpu.VertexAttribute{
         .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
         .{ .format = .float32x3, .offset = @offsetOf(Vertex, "normal"), .shader_location = 1 },
     };
@@ -255,7 +255,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         &demo.mesh_pipe,
     );
 
-    const pos_color_attribs = [_]gpu.VertexAttribute{
+    const pos_color_attribs = [_]wgpu.VertexAttribute{
         .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
         .{ .format = .uint32, .offset = @offsetOf(zbt.DebugDrawer.Vertex, "color"), .shader_location = 1 },
     };
@@ -583,7 +583,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 } {
     const tex = gctx.createTexture(.{
         .usage = .{ .render_attachment = true },
-        .dimension = .dimension_2d,
+        .dimension = .tdim_2d,
         .size = .{
             .width = gctx.swapchain_descriptor.width,
             .height = gctx.swapchain_descriptor.height,

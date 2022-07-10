@@ -2,8 +2,8 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const glfw = @import("glfw");
-const gpu = @import("gpu");
 const zgpu = @import("zgpu");
+const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
 const zm = @import("zmath");
 const zaudio = @import("zaudio");
@@ -190,7 +190,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 } {
     const tex = gctx.createTexture(.{
         .usage = .{ .render_attachment = true },
-        .dimension = .dimension_2d,
+        .dimension = .tdim_2d,
         .size = .{
             .width = gctx.swapchain_descriptor.width,
             .height = gctx.swapchain_descriptor.height,

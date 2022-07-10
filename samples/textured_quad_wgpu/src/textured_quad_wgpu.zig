@@ -1,8 +1,8 @@
 const std = @import("std");
 const math = std.math;
 const glfw = @import("glfw");
-const gpu = @import("gpu");
 const zgpu = @import("zgpu");
+const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
 const zm = @import("zmath");
 
@@ -44,12 +44,12 @@ const wgsl_fs = wgsl_common ++
 // zig fmt: on
 ;
 
-const Vertex = struct {
+const Vertex = extern struct {
     position: [2]f32,
     uv: [2]f32,
 };
 
-const Uniforms = struct {
+const Uniforms = extern struct {
     aspect_ratio: f32,
     mip_level: f32,
 };
@@ -79,7 +79,7 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 
     const bind_group_layout = gctx.createBindGroupLayout(&.{
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-        zgpu.bglTexture(1, .{ .fragment = true }, .float, .dimension_2d, false),
+        zgpu.bglTexture(1, .{ .fragment = true }, .float, .tvdim_2d, false),
         zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
     });
     defer gctx.releaseResource(bind_group_layout);
@@ -122,12 +122,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const texture_view = gctx.createTextureView(texture, .{});
 
     gctx.queue.writeTexture(
-        &.{ .texture = gctx.lookupResource(texture).? },
-        &.{
+        .{ .texture = gctx.lookupResource(texture).? },
+        .{
             .bytes_per_row = image.width * image.channels_in_memory,
             .rows_per_image = image.height,
         },
-        &.{ .width = image.width, .height = image.height },
+        .{ .width = image.width, .height = image.height },
         u8,
         image.data,
     );
@@ -153,18 +153,16 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     };
 
     // Generate mipmaps on the GPU.
-    {
-        const commands = commands: {
-            const encoder = gctx.device.createCommandEncoder(null);
-            defer encoder.release();
+    const commands = commands: {
+        const encoder = gctx.device.createCommandEncoder(null);
+        defer encoder.release();
 
-            gctx.generateMipmaps(arena, encoder, demo.texture);
+        gctx.generateMipmaps(arena, encoder, demo.texture);
 
-            break :commands encoder.finish(null);
-        };
-        defer commands.release();
-        gctx.submit(&.{commands});
-    }
+        break :commands encoder.finish(null);
+    };
+    defer commands.release();
+    gctx.submit(&.{commands});
 
     // (Async) Create a render pipeline.
     {
@@ -173,43 +171,44 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         });
         defer gctx.releaseResource(pipeline_layout);
 
-        const vs_module = gctx.device.createShaderModule(&.{ .label = "vs", .code = .{ .wgsl = wgsl_vs } });
+        const vs_module = zgpu.util.createWgslShaderModule(gctx.device, wgsl_vs, "vs");
         defer vs_module.release();
 
-        const fs_module = gctx.device.createShaderModule(&.{ .label = "fs", .code = .{ .wgsl = wgsl_fs } });
+        const fs_module = zgpu.util.createWgslShaderModule(gctx.device, wgsl_fs, "fs");
         defer fs_module.release();
 
-        const color_target = gpu.ColorTargetState{
+        const color_targets = [_]wgpu.ColorTargetState{.{
             .format = zgpu.GraphicsContext.swapchain_format,
-            .blend = &.{ .color = .{}, .alpha = .{} },
-        };
+        }};
 
-        const vertex_attributes = [_]gpu.VertexAttribute{
+        const vertex_attributes = [_]wgpu.VertexAttribute{
             .{ .format = .float32x2, .offset = 0, .shader_location = 0 },
             .{ .format = .float32x2, .offset = @offsetOf(Vertex, "uv"), .shader_location = 1 },
         };
-        const vertex_buffer_layout = gpu.VertexBufferLayout{
+        const vertex_buffers = [_]wgpu.VertexBufferLayout{.{
             .array_stride = @sizeOf(Vertex),
             .attribute_count = vertex_attributes.len,
             .attributes = &vertex_attributes,
-        };
+        }};
 
         // Create a render pipeline.
-        const pipeline_descriptor = gpu.RenderPipeline.Descriptor{
-            .vertex = gpu.VertexState{
+        const pipeline_descriptor = wgpu.RenderPipelineDescriptor{
+            .vertex = wgpu.VertexState{
                 .module = vs_module,
                 .entry_point = "main",
-                .buffers = &.{vertex_buffer_layout},
+                .buffer_count = vertex_buffers.len,
+                .buffers = &vertex_buffers,
             },
-            .primitive = gpu.PrimitiveState{
+            .primitive = wgpu.PrimitiveState{
                 .front_face = .cw,
                 .cull_mode = .back,
                 .topology = .triangle_list,
             },
-            .fragment = &gpu.FragmentState{
+            .fragment = &wgpu.FragmentState{
                 .module = fs_module,
                 .entry_point = "main",
-                .targets = &.{color_target},
+                .target_count = color_targets.len,
+                .targets = &color_targets,
             },
         };
         gctx.createRenderPipelineAsync(allocator, pipeline_layout, pipeline_descriptor, &demo.pipeline);
@@ -262,15 +261,16 @@ fn draw(demo: *DemoState) void {
             const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
             const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
 
-            const color_attachment = gpu.RenderPassColorAttachment{
+            const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                 .view = back_buffer_view,
                 .load_op = .clear,
                 .store_op = .store,
+            }};
+            const render_pass_info = wgpu.RenderPassDescriptor{
+                .color_attachment_count = color_attachments.len,
+                .color_attachments = &color_attachments,
             };
-            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
-                .color_attachments = &.{color_attachment},
-            };
-            const pass = encoder.beginRenderPass(&render_pass_info);
+            const pass = encoder.beginRenderPass(render_pass_info);
             defer {
                 pass.end();
                 pass.release();
@@ -292,15 +292,16 @@ fn draw(demo: *DemoState) void {
 
         // Gui pass.
         {
-            const color_attachment = gpu.RenderPassColorAttachment{
+            const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                 .view = back_buffer_view,
                 .load_op = .load,
                 .store_op = .store,
+            }};
+            const render_pass_info = wgpu.RenderPassDescriptor{
+                .color_attachment_count = color_attachments.len,
+                .color_attachments = &color_attachments,
             };
-            const render_pass_info = gpu.RenderPassEncoder.Descriptor{
-                .color_attachments = &.{color_attachment},
-            };
-            const pass = encoder.beginRenderPass(&render_pass_info);
+            const pass = encoder.beginRenderPass(render_pass_info);
             defer {
                 pass.end();
                 pass.release();

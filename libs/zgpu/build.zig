@@ -34,9 +34,8 @@ pub const BuildOptionsStep = struct {
 pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
     bos.addTo(exe);
 
-    // When user links with `zgpu` we automatically inject dependencies to `gpu` and `glfw`.
+    // When user links with `zgpu` we automatically inject dependency to `glfw`.
     exe.addPackage(glfw.pkg);
-    exe.addPackage(gpu_pkg);
 
     glfw.link(exe.builder, exe, bos.options.glfw);
     gpu_dawn.link(exe.builder, exe, bos.options.dawn);
@@ -70,29 +69,23 @@ pub fn buildTests(
     return tests;
 }
 
-const gpu_pkg = std.build.Pkg{
-    .name = "gpu",
-    .source = .{ .path = thisDir() ++ "/libs/mach-gpu/main.zig" },
-};
-
 pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     const static = struct {
         var deps: [8]std.build.Pkg = undefined;
     };
-    std.debug.assert(dependencies.len < static.deps.len - 1);
+    std.debug.assert(dependencies.len < static.deps.len);
 
     // Copy `dependencies` to a static memory.
     for (dependencies) |dep, i| {
         static.deps[i] = dep;
     }
-    // When user links with `zgpu` we automatically inject dependencies to `gpu` and `glfw`.
-    static.deps[dependencies.len] = gpu_pkg;
-    static.deps[dependencies.len + 1] = glfw.pkg;
+    // When user links with `zgpu` we automatically inject dependency to `glfw`.
+    static.deps[dependencies.len] = glfw.pkg;
 
     return .{
         .name = "zgpu",
         .source = .{ .path = thisDir() ++ "/src/zgpu.zig" },
-        .dependencies = static.deps[0 .. dependencies.len + 2],
+        .dependencies = static.deps[0 .. dependencies.len + 1],
     };
 }
 

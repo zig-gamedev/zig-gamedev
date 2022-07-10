@@ -15,8 +15,8 @@ pub const io = struct {
     pub const setDisplayFramebufferScale = zguiIoSetDisplayFramebufferScale;
 };
 
-pub const Context = opaque {};
-pub const DrawData = opaque {};
+pub const Context = *opaque {};
+pub const DrawData = *opaque {};
 
 pub const WindowFlags = packed struct {
     no_title_bar: bool = false,
@@ -75,11 +75,11 @@ pub const SliderFlags = packed struct {
 };
 
 pub fn button(label: [:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
-    return zguiButton(label.ptr, size.w, size.h);
+    return zguiButton(label, size.w, size.h);
 }
 
 pub fn begin(name: [:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
-    return zguiBegin(name.ptr, p_open, @bitCast(u32, flags));
+    return zguiBegin(name, p_open, @bitCast(u32, flags));
 }
 
 pub fn sameLine(args: struct { offset_from_start_x: f32 = 0.0, spacing: f32 = -1.0 }) void {
@@ -92,7 +92,7 @@ pub fn comboStr(
     items_separated_by_zeros: [:0]const u8,
     popup_max_height_in_items: i32,
 ) bool {
-    return zguiComboStr(label.ptr, current_item, items_separated_by_zeros.ptr, popup_max_height_in_items);
+    return zguiComboStr(label, current_item, items_separated_by_zeros, popup_max_height_in_items);
 }
 
 pub fn sliderFloat(
@@ -106,11 +106,11 @@ pub fn sliderFloat(
     },
 ) bool {
     return zguiSliderFloat(
-        label.ptr,
+        label,
         v,
         v_min,
         v_max,
-        if (args.format) |fmt| fmt.ptr else null,
+        if (args.format) |fmt| fmt else null,
         @bitCast(u32, args.flags),
     );
 }
@@ -126,16 +126,16 @@ pub fn sliderInt(
     },
 ) bool {
     return zguiSliderInt(
-        label.ptr,
+        label,
         v,
         v_min,
         v_max,
-        if (args.format) |fmt| fmt.ptr else null,
+        if (args.format) |fmt| fmt else null,
         @bitCast(u32, args.flags),
     );
 }
 
-// TODO: Max. text length is hardcoded, make it more robust?
+// TODO: Max. text length is hardcoded, make it more robust? (see: std.fmt.count())
 const max_text_len = 512;
 
 pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
@@ -157,11 +157,11 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
 }
 
 pub fn radioButtonIntPtr(label: [:0]const u8, v: *i32, v_button: i32) bool {
-    return zguiRadioButtonIntPtr(label.ptr, v, v_button);
+    return zguiRadioButtonIntPtr(label, v, v_button);
 }
 
 pub fn checkbox(label: [:0]const u8, v: *bool) bool {
-    return zguiCheckbox(label.ptr, v);
+    return zguiCheckbox(label, v);
 }
 
 pub fn beginDisabled(args: struct { disabled: bool = true }) void {
@@ -217,14 +217,14 @@ extern fn zguiText(fmt: [*:0]const u8, ...) void;
 extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
 extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 
-extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) ?*const Context;
-extern fn zguiDestroyContext(ctx: ?*const Context) void;
-extern fn zguiGetCurrentContext() ?*const Context;
-extern fn zguiSetCurrentContext(ctx: ?*const Context) void;
+extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) ?Context;
+extern fn zguiDestroyContext(ctx: ?Context) void;
+extern fn zguiGetCurrentContext() ?Context;
+extern fn zguiSetCurrentContext(ctx: ?Context) void;
 
 extern fn zguiNewFrame() void;
 extern fn zguiRender() void;
-extern fn zguiGetDrawData() *const DrawData;
+extern fn zguiGetDrawData() DrawData;
 
 extern fn zguiShowDemoWindow(p_open: ?*bool) void;
 
