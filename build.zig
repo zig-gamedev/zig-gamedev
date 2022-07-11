@@ -11,7 +11,7 @@ pub fn build(b: *std.build.Builder) void {
     options.zgpu_dawn_from_source = b.option(
         bool,
         "zgpu-dawn-from-source",
-        "Build Dawn (WebGPU) from source",
+        "Build Dawn (wgpu implementation) from source",
     ) orelse false;
 
     if (options.zgpu_dawn_from_source) {

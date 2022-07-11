@@ -1,7 +1,7 @@
 //  zgpu v0.2 (wip)
 //
-//  This library uses `mach-glfw` bindings and build script from `mach-gpu-dawn`
-//  [mach/gpu](https://github.com/hexops/mach/tree/main/gpu).
+//  This library uses [mach-glfw bindings](https://github.com/hexops/mach-glfw) and
+//  build script from [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn).
 //
 //  `zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of wgpu API (Dawn).
 //  Below you can find an overview of its main features.
@@ -77,7 +77,7 @@
 //
 //  5. Mipmap generation on the GPU
 //
-//      * WebGPU API does not provide mipmap generator
+//      * wgpu API does not provide mipmap generator
 //      * zgpu provides decent mipmap generator implemented in a compute shader
 //      * It supports 2D textures, array textures and cubemap textures of any format
 //        (rgba8_unorm, rg16_float, rgba32_float, etc.)
@@ -1236,7 +1236,11 @@ pub const util = struct {
         pass.release();
     }
 
-    pub fn createWgslShaderModule(device: wgpu.Device, source: [*:0]const u8, label: ?[*:0]const u8) wgpu.ShaderModule {
+    pub fn createWgslShaderModule(
+        device: wgpu.Device,
+        source: [*:0]const u8,
+        label: ?[*:0]const u8,
+    ) wgpu.ShaderModule {
         const wgsl_desc = wgpu.ShaderModuleWgslDescriptor{
             .chain = .{
                 .next = null,

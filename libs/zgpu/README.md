@@ -1,8 +1,8 @@
 # zgpu v0.1 - Cross-platform graphics layer
 
-This library uses GLFW and WebGPU bindings + great build script from [mach/gpu](https://github.com/hexops/mach/tree/main/gpu) project.
+This library uses [mach-glfw bindings](https://github.com/hexops/mach-glfw) and build script from [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn).
 
-`zgpu` is a cross-platform (Windows/Linux/Mac) graphics layer built on top of native WebGPU API (Dawn).
+`zgpu` is a cross-platform (Windows/Linux/Mac) graphics layer built on top of native wgpu API (Dawn).
 
 ## Features:
 
@@ -135,7 +135,7 @@ pass: {
 
 ### Mipmap generation on the GPU
 
-* WebGPU API does not provide mipmap generator
+* wgpu API does not provide mipmap generator
 * zgpu provides decent mipmap generator implemented in a compute shader
 * It supports 2D textures, array textures and cubemap textures of any format
 (`rgba8_unorm`, `rg16_float`, `rgba32_float`, etc.)

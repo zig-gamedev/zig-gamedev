@@ -16,7 +16,7 @@ cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
 #### Cross-platfrom (Win/Lin/Mac) libraries:
-* [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - Cross-platform graphics layer built on top of native WebGPU API (Dawn)
+* [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - Cross-platform graphics layer built on top of native wgpu API (Dawn)
 * [zaudio](https://github.com/michal-z/zig-gamedev/tree/main/libs/zaudio) - Cross-platform audio built on top of [miniaudio](https://github.com/mackron/miniaudio) library
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
@@ -34,11 +34,11 @@ zig build physically_based_rendering_wgpu-run
 * Interop with Direct2D and DirectWrite for high-quality vector graphics and text rendering (optional)
 
 #### Project vision:
-* Works on Windows, Linux and MacOS
+* Works on Windows, Linux and macOS
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/), `git` with [Git LFS](https://git-lfs.github.com/) and `curl` - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings to carefully selected C/C++ libraries
-* Uses native version of WebGPU API ([mach/gpu](https://github.com/hexops/mach/tree/main/gpu)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
+* Uses native version of wgpu API ([mach/gpu-dawn](https://github.com/hexops/mach-gpu-dawn)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
 
 *I work on this project full-time and try to make a living from donations. If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
@@ -109,7 +109,7 @@ All sample applications support the following build options:
 * `-Drelease-safe=[bool]` - Optimizations on and safety on
 * `-Drelease-fast=[bool]` - Optimizations on and safety off
 * `-Dztracy-enable=[bool]` - [Tracy](https://github.com/wolfpld/tracy) profiler zones enabled
-* `-Dzgpu-dawn-from-source=[bool]` - Build Dawn (WebGPU implementation) from source
+* `-Dzgpu-dawn-from-source=[bool]` - Build Dawn (wgpu implementation) from source
 
 Addidtional options for Windows applications:
 * `-Denable-dx-debug=[bool]` - Direct3D 12, Direct2D, DXGI debug layers enabled

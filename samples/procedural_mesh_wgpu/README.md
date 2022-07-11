@@ -2,7 +2,7 @@
 
 ![image](screenshot.png)
 
-* This WebGPU sample shows how to efficiently draw several procedurally generated meshes
+* This sample shows how to efficiently draw several procedurally generated meshes
 * All vertices and indices are stored in one large vertex/index buffer
 * Simple physically-based shading is used
 * Single-pass wireframe rendering
