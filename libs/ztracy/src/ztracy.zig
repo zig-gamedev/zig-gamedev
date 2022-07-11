@@ -41,7 +41,6 @@ const tracy_stub = struct {
         }
     };
 
-    pub inline fn InitThread() void {}
     pub inline fn SetThreadName(name: [*:0]const u8) void {
         _ = name;
     }
@@ -317,9 +316,6 @@ const tracy_full = struct {
         }
     }
 
-    pub inline fn InitThread() void {
-        c.___tracy_init_thread();
-    }
     pub inline fn SetThreadName(name: [*:0]const u8) void {
         c.___tracy_set_thread_name(name);
     }
