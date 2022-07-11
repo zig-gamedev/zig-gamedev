@@ -1046,7 +1046,12 @@ pub const RenderPassColorAttachment = extern struct {
     resolve_target: ?TextureView = null,
     load_op: LoadOp,
     store_op: StoreOp,
-    clear_color: Color = .{ .r = std.math.nan(f32), .g = std.math.nan(f32), .b = std.math.nan(f32), .a = std.math.nan(f32) },
+    clear_color: Color = .{
+        .r = std.math.nan(f32),
+        .g = std.math.nan(f32),
+        .b = std.math.nan(f32),
+        .a = std.math.nan(f32),
+    },
     clear_value: Color = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 0.0 },
 };
 
@@ -1385,7 +1390,10 @@ pub const CommandBuffer = *opaque {
 };
 
 pub const CommandEncoder = *opaque {
-    pub inline fn beginComputePass(command_encoder: CommandEncoder, descriptor: ?ComputePassDescriptor) ComputePassEncoder {
+    pub inline fn beginComputePass(
+        command_encoder: CommandEncoder,
+        descriptor: ?ComputePassDescriptor,
+    ) ComputePassEncoder {
         return wgpuCommandEncoderBeginComputePass(command_encoder, if (descriptor) |d| &d else null);
     }
     extern fn wgpuCommandEncoderBeginComputePass(
@@ -1393,7 +1401,10 @@ pub const CommandEncoder = *opaque {
         descriptor: ?*const ComputePassDescriptor,
     ) ComputePassEncoder;
 
-    pub inline fn beginRenderPass(command_encoder: CommandEncoder, descriptor: RenderPassDescriptor) RenderPassEncoder {
+    pub inline fn beginRenderPass(
+        command_encoder: CommandEncoder,
+        descriptor: RenderPassDescriptor,
+    ) RenderPassEncoder {
         return wgpuCommandEncoderBeginRenderPass(command_encoder, &descriptor);
     }
     extern fn wgpuCommandEncoderBeginRenderPass(
@@ -1684,7 +1695,11 @@ pub const ComputePassEncoder = *opaque {
         pipeline: ComputePipeline,
     ) void;
 
-    pub inline fn writeTimestamp(compute_pass_encoder: ComputePassEncoder, query_set: QuerySet, query_index: u32) void {
+    pub inline fn writeTimestamp(
+        compute_pass_encoder: ComputePassEncoder,
+        query_set: QuerySet,
+        query_index: u32,
+    ) void {
         wgpuComputePassEncoderWriteTimestamp(compute_pass_encoder, query_set, query_index);
     }
     extern fn wgpuComputePassEncoderWriteTimestamp(
@@ -1805,7 +1820,10 @@ pub const Device = *opaque {
     }
     extern fn wgpuDeviceCreateQuerySet(device: Device, descriptor: *const QuerySetDescriptor) QuerySet;
 
-    pub inline fn createRenderBundleEncoder(device: Device, descriptor: RenderBundleEncoderDescriptor) RenderBundleEncoder {
+    pub inline fn createRenderBundleEncoder(
+        device: Device,
+        descriptor: RenderBundleEncoderDescriptor,
+    ) RenderBundleEncoder {
         return wgpuDeviceCreateRenderBundleEncoder(device, &descriptor);
     }
     extern fn wgpuDeviceCreateRenderBundleEncoder(
@@ -1849,7 +1867,11 @@ pub const Device = *opaque {
     pub inline fn createSwapChain(device: Device, surface: Surface, descriptor: SwapChainDescriptor) SwapChain {
         return wgpuDeviceCreateSwapChain(device, surface, &descriptor);
     }
-    extern fn wgpuDeviceCreateSwapChain(device: Device, surface: Surface, descriptor: *const SwapChainDescriptor) SwapChain;
+    extern fn wgpuDeviceCreateSwapChain(
+        device: Device,
+        surface: Surface,
+        descriptor: *const SwapChainDescriptor,
+    ) SwapChain;
 
     pub inline fn createTexture(device: Device, descriptor: TextureDescriptor) Texture {
         return wgpuDeviceCreateTexture(device, &descriptor);
@@ -1901,7 +1923,11 @@ pub const Device = *opaque {
     }
     extern fn wgpuDevicePushErrorScope(device: Device, filter: ErrorFilter) void;
 
-    pub inline fn setDeviceLostCallback(device: Device, callback: DeviceLostCallback, userdata: ?*anyopaque) void {
+    pub inline fn setDeviceLostCallback(
+        device: Device,
+        callback: DeviceLostCallback,
+        userdata: ?*anyopaque,
+    ) void {
         wgpuDeviceSetDeviceLostCallback(device, callback, userdata);
     }
     extern fn wgpuDeviceSetDeviceLostCallback(
@@ -2154,35 +2180,102 @@ pub const RenderBundle = *opaque {
 };
 
 pub const RenderBundleEncoder = *opaque {
-    pub inline fn draw(render_bundle_encoder: RenderBundleEncoder, vertex_count: u32, instance_count: u32, first_vertex: u32, first_instance: u32) void {
-        wgpuRenderBundleEncoderDraw(render_bundle_encoder, vertex_count, instance_count, first_vertex, first_instance);
+    pub inline fn draw(
+        render_bundle_encoder: RenderBundleEncoder,
+        vertex_count: u32,
+        instance_count: u32,
+        first_vertex: u32,
+        first_instance: u32,
+    ) void {
+        wgpuRenderBundleEncoderDraw(
+            render_bundle_encoder,
+            vertex_count,
+            instance_count,
+            first_vertex,
+            first_instance,
+        );
     }
-    extern fn wgpuRenderBundleEncoderDraw(render_bundle_encoder: RenderBundleEncoder, vertex_count: u32, instance_count: u32, first_vertex: u32, first_instance: u32) void;
+    extern fn wgpuRenderBundleEncoderDraw(
+        render_bundle_encoder: RenderBundleEncoder,
+        vertex_count: u32,
+        instance_count: u32,
+        first_vertex: u32,
+        first_instance: u32,
+    ) void;
 
-    pub inline fn drawIndexed(render_bundle_encoder: RenderBundleEncoder, index_count: u32, instance_count: u32, first_index: u32, base_vertex: i32, first_instance: u32) void {
-        wgpuRenderBundleEncoderDrawIndexed(render_bundle_encoder, index_count, instance_count, first_index, base_vertex, first_instance);
+    pub inline fn drawIndexed(
+        render_bundle_encoder: RenderBundleEncoder,
+        index_count: u32,
+        instance_count: u32,
+        first_index: u32,
+        base_vertex: i32,
+        first_instance: u32,
+    ) void {
+        wgpuRenderBundleEncoderDrawIndexed(
+            render_bundle_encoder,
+            index_count,
+            instance_count,
+            first_index,
+            base_vertex,
+            first_instance,
+        );
     }
-    extern fn wgpuRenderBundleEncoderDrawIndexed(render_bundle_encoder: RenderBundleEncoder, index_count: u32, instance_count: u32, first_index: u32, base_vertex: i32, first_instance: u32) void;
+    extern fn wgpuRenderBundleEncoderDrawIndexed(
+        render_bundle_encoder: RenderBundleEncoder,
+        index_count: u32,
+        instance_count: u32,
+        first_index: u32,
+        base_vertex: i32,
+        first_instance: u32,
+    ) void;
 
-    pub inline fn drawIndexedIndirect(render_bundle_encoder: RenderBundleEncoder, indirect_buffer: Buffer, indirect_offset: u64) void {
+    pub inline fn drawIndexedIndirect(
+        render_bundle_encoder: RenderBundleEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void {
         wgpuRenderBundleEncoderDrawIndexedIndirect(render_bundle_encoder, indirect_buffer, indirect_offset);
     }
-    extern fn wgpuRenderBundleEncoderDrawIndexedIndirect(render_bundle_encoder: RenderBundleEncoder, indirect_buffer: Buffer, indirect_offset: u64) void;
+    extern fn wgpuRenderBundleEncoderDrawIndexedIndirect(
+        render_bundle_encoder: RenderBundleEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void;
 
-    pub inline fn drawIndirect(render_bundle_encoder: RenderBundleEncoder, indirect_buffer: Buffer, indirect_offset: u64) void {
+    pub inline fn drawIndirect(
+        render_bundle_encoder: RenderBundleEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void {
         wgpuRenderBundleEncoderDrawIndirect(render_bundle_encoder, indirect_buffer, indirect_offset);
     }
-    extern fn wgpuRenderBundleEncoderDrawIndirect(render_bundle_encoder: RenderBundleEncoder, indirect_buffer: Buffer, indirect_offset: u64) void;
+    extern fn wgpuRenderBundleEncoderDrawIndirect(
+        render_bundle_encoder: RenderBundleEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void;
 
-    pub inline fn finish(render_bundle_encoder: RenderBundleEncoder, descriptor: RenderBundleDescriptor) RenderBundle {
+    pub inline fn finish(
+        render_bundle_encoder: RenderBundleEncoder,
+        descriptor: RenderBundleDescriptor,
+    ) RenderBundle {
         return wgpuRenderBundleEncoderFinish(render_bundle_encoder, &descriptor);
     }
-    extern fn wgpuRenderBundleEncoderFinish(render_bundle_encoder: RenderBundleEncoder, descriptor: *const RenderBundleDescriptor) RenderBundle;
+    extern fn wgpuRenderBundleEncoderFinish(
+        render_bundle_encoder: RenderBundleEncoder,
+        descriptor: *const RenderBundleDescriptor,
+    ) RenderBundle;
 
-    pub inline fn insertDebugMarker(render_bundle_encoder: RenderBundleEncoder, marker_label: [*:0]const u8) void {
+    pub inline fn insertDebugMarker(
+        render_bundle_encoder: RenderBundleEncoder,
+        marker_label: [*:0]const u8,
+    ) void {
         wgpuRenderBundleEncoderInsertDebugMarker(render_bundle_encoder, marker_label);
     }
-    extern fn wgpuRenderBundleEncoderInsertDebugMarker(render_bundle_encoder: RenderBundleEncoder, marker_label: [*:0]const u8) void;
+    extern fn wgpuRenderBundleEncoderInsertDebugMarker(
+        render_bundle_encoder: RenderBundleEncoder,
+        marker_label: [*:0]const u8,
+    ) void;
 
     pub inline fn popDebugGroup(render_bundle_encoder: RenderBundleEncoder) void {
         wgpuRenderBundleEncoderPopDebugGroup(render_bundle_encoder);
@@ -2192,9 +2285,17 @@ pub const RenderBundleEncoder = *opaque {
     pub inline fn pushDebugGroup(render_bundle_encoder: RenderBundleEncoder, group_label: [*:0]const u8) void {
         wgpuRenderBundleEncoderPushDebugGroup(render_bundle_encoder, group_label);
     }
-    extern fn wgpuRenderBundleEncoderPushDebugGroup(render_bundle_encoder: RenderBundleEncoder, group_label: [*:0]const u8) void;
+    extern fn wgpuRenderBundleEncoderPushDebugGroup(
+        render_bundle_encoder: RenderBundleEncoder,
+        group_label: [*:0]const u8,
+    ) void;
 
-    pub inline fn setBindGroup(render_bundle_encoder: RenderBundleEncoder, group_index: u32, group: BindGroup, dynamic_offsets: ?[]const u32) void {
+    pub inline fn setBindGroup(
+        render_bundle_encoder: RenderBundleEncoder,
+        group_index: u32,
+        group: BindGroup,
+        dynamic_offsets: ?[]const u32,
+    ) void {
         wgpuRenderBundleEncoderSetBindGroup(
             render_bundle_encoder,
             group_index,
@@ -2203,27 +2304,63 @@ pub const RenderBundleEncoder = *opaque {
             if (dynamic_offsets) |dynoff| dynoff.ptr else null,
         );
     }
-    extern fn wgpuRenderBundleEncoderSetBindGroup(render_bundle_encoder: RenderBundleEncoder, group_index: u32, group: BindGroup, dynamic_offset_count: u32, dynamic_offsets: ?[*]const u32) void;
+    extern fn wgpuRenderBundleEncoderSetBindGroup(
+        render_bundle_encoder: RenderBundleEncoder,
+        group_index: u32,
+        group: BindGroup,
+        dynamic_offset_count: u32,
+        dynamic_offsets: ?[*]const u32,
+    ) void;
 
-    pub inline fn setIndexBuffer(render_bundle_encoder: RenderBundleEncoder, buffer: Buffer, format: IndexFormat, offset: u64, size: u64) void {
+    pub inline fn setIndexBuffer(
+        render_bundle_encoder: RenderBundleEncoder,
+        buffer: Buffer,
+        format: IndexFormat,
+        offset: u64,
+        size: u64,
+    ) void {
         wgpuRenderBundleEncoderSetIndexBuffer(render_bundle_encoder, buffer, format, offset, size);
     }
-    extern fn wgpuRenderBundleEncoderSetIndexBuffer(render_bundle_encoder: RenderBundleEncoder, buffer: Buffer, format: IndexFormat, offset: u64, size: u64) void;
+    extern fn wgpuRenderBundleEncoderSetIndexBuffer(
+        render_bundle_encoder: RenderBundleEncoder,
+        buffer: Buffer,
+        format: IndexFormat,
+        offset: u64,
+        size: u64,
+    ) void;
 
     pub inline fn setLabel(render_bundle_encoder: RenderBundleEncoder, label: ?[*:0]const u8) void {
         wgpuRenderBundleEncoderSetLabel(render_bundle_encoder, label);
     }
-    extern fn wgpuRenderBundleEncoderSetLabel(render_bundle_encoder: RenderBundleEncoder, label: ?[*:0]const u8) void;
+    extern fn wgpuRenderBundleEncoderSetLabel(
+        render_bundle_encoder: RenderBundleEncoder,
+        label: ?[*:0]const u8,
+    ) void;
 
     pub inline fn setPipeline(render_bundle_encoder: RenderBundleEncoder, pipeline: RenderPipeline) void {
         wgpuRenderBundleEncoderSetPipeline(render_bundle_encoder, pipeline);
     }
-    extern fn wgpuRenderBundleEncoderSetPipeline(render_bundle_encoder: RenderBundleEncoder, pipeline: RenderPipeline) void;
+    extern fn wgpuRenderBundleEncoderSetPipeline(
+        render_bundle_encoder: RenderBundleEncoder,
+        pipeline: RenderPipeline,
+    ) void;
 
-    pub inline fn setVertexBuffer(render_bundle_encoder: RenderBundleEncoder, slot: u32, buffer: Buffer, offset: u64, size: u64) void {
+    pub inline fn setVertexBuffer(
+        render_bundle_encoder: RenderBundleEncoder,
+        slot: u32,
+        buffer: Buffer,
+        offset: u64,
+        size: u64,
+    ) void {
         wgpuRenderBundleEncoderSetVertexBuffer(render_bundle_encoder, slot, buffer, offset, size);
     }
-    extern fn wgpuRenderBundleEncoderSetVertexBuffer(render_bundle_encoder: RenderBundleEncoder, slot: u32, buffer: Buffer, offset: u64, size: u64) void;
+    extern fn wgpuRenderBundleEncoderSetVertexBuffer(
+        render_bundle_encoder: RenderBundleEncoder,
+        slot: u32,
+        buffer: Buffer,
+        offset: u64,
+        size: u64,
+    ) void;
 
     pub inline fn reference(render_bundle_encoder: RenderBundleEncoder) void {
         wgpuRenderBundleEncoderReference(render_bundle_encoder);
@@ -2240,7 +2377,10 @@ pub const RenderPassEncoder = *opaque {
     pub inline fn beginOcclusionQuery(render_pass_encoder: RenderPassEncoder, query_index: u32) void {
         wgpuRenderPassEncoderBeginOcclusionQuery(render_pass_encoder, query_index);
     }
-    extern fn wgpuRenderPassEncoderBeginOcclusionQuery(render_pass_encoder: RenderPassEncoder, query_index: u32) void;
+    extern fn wgpuRenderPassEncoderBeginOcclusionQuery(
+        render_pass_encoder: RenderPassEncoder,
+        query_index: u32,
+    ) void;
 
     pub inline fn draw(
         render_pass_encoder: RenderPassEncoder,
@@ -2267,7 +2407,14 @@ pub const RenderPassEncoder = *opaque {
         base_vertex: i32,
         first_instance: u32,
     ) void {
-        wgpuRenderPassEncoderDrawIndexed(render_pass_encoder, index_count, instance_count, first_index, base_vertex, first_instance);
+        wgpuRenderPassEncoderDrawIndexed(
+            render_pass_encoder,
+            index_count,
+            instance_count,
+            first_index,
+            base_vertex,
+            first_instance,
+        );
     }
     extern fn wgpuRenderPassEncoderDrawIndexed(
         render_pass_encoder: RenderPassEncoder,
@@ -2278,15 +2425,31 @@ pub const RenderPassEncoder = *opaque {
         first_instance: u32,
     ) void;
 
-    pub inline fn drawIndexedIndirect(render_pass_encoder: RenderPassEncoder, indirect_buffer: Buffer, indirect_offset: u64) void {
+    pub inline fn drawIndexedIndirect(
+        render_pass_encoder: RenderPassEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void {
         wgpuRenderPassEncoderDrawIndexedIndirect(render_pass_encoder, indirect_buffer, indirect_offset);
     }
-    extern fn wgpuRenderPassEncoderDrawIndexedIndirect(render_pass_encoder: RenderPassEncoder, indirect_buffer: Buffer, indirect_offset: u64) void;
+    extern fn wgpuRenderPassEncoderDrawIndexedIndirect(
+        render_pass_encoder: RenderPassEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void;
 
-    pub inline fn drawIndirect(render_pass_encoder: RenderPassEncoder, indirect_buffer: Buffer, indirect_offset: u64) void {
+    pub inline fn drawIndirect(
+        render_pass_encoder: RenderPassEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void {
         wgpuRenderPassEncoderDrawIndirect(render_pass_encoder, indirect_buffer, indirect_offset);
     }
-    extern fn wgpuRenderPassEncoderDrawIndirect(render_pass_encoder: RenderPassEncoder, indirect_buffer: Buffer, indirect_offset: u64) void;
+    extern fn wgpuRenderPassEncoderDrawIndirect(
+        render_pass_encoder: RenderPassEncoder,
+        indirect_buffer: Buffer,
+        indirect_offset: u64,
+    ) void;
 
     pub inline fn end(render_pass_encoder: RenderPassEncoder) void {
         wgpuRenderPassEncoderEnd(render_pass_encoder);
@@ -2303,15 +2466,26 @@ pub const RenderPassEncoder = *opaque {
     }
     extern fn wgpuRenderPassEncoderEndPass(render_pass_encoder: RenderPassEncoder) void;
 
-    pub inline fn executeBundles(render_pass_encoder: RenderPassEncoder, bundles_count: u32, bundles: [*]const RenderBundle) void {
+    pub inline fn executeBundles(
+        render_pass_encoder: RenderPassEncoder,
+        bundles_count: u32,
+        bundles: [*]const RenderBundle,
+    ) void {
         wgpuRenderPassEncoderExecuteBundles(render_pass_encoder, bundles_count, bundles);
     }
-    extern fn wgpuRenderPassEncoderExecuteBundles(render_pass_encoder: RenderPassEncoder, bundles_count: u32, bundles: [*]const RenderBundle) void;
+    extern fn wgpuRenderPassEncoderExecuteBundles(
+        render_pass_encoder: RenderPassEncoder,
+        bundles_count: u32,
+        bundles: [*]const RenderBundle,
+    ) void;
 
     pub inline fn insertDebugMarker(render_pass_encoder: RenderPassEncoder, marker_label: [*:0]const u8) void {
         wgpuRenderPassEncoderInsertDebugMarker(render_pass_encoder, marker_label);
     }
-    extern fn wgpuRenderPassEncoderInsertDebugMarker(render_pass_encoder: RenderPassEncoder, marker_label: [*:0]const u8) void;
+    extern fn wgpuRenderPassEncoderInsertDebugMarker(
+        render_pass_encoder: RenderPassEncoder,
+        marker_label: [*:0]const u8,
+    ) void;
 
     pub inline fn popDebugGroup(render_pass_encoder: RenderPassEncoder) void {
         wgpuRenderPassEncoderPopDebugGroup(render_pass_encoder);
@@ -2321,9 +2495,17 @@ pub const RenderPassEncoder = *opaque {
     pub inline fn pushDebugGroup(render_pass_encoder: RenderPassEncoder, group_label: [*:0]const u8) void {
         wgpuRenderPassEncoderPushDebugGroup(render_pass_encoder, group_label);
     }
-    extern fn wgpuRenderPassEncoderPushDebugGroup(render_pass_encoder: RenderPassEncoder, group_label: [*:0]const u8) void;
+    extern fn wgpuRenderPassEncoderPushDebugGroup(
+        render_pass_encoder: RenderPassEncoder,
+        group_label: [*:0]const u8,
+    ) void;
 
-    pub inline fn setBindGroup(render_pass_encoder: RenderPassEncoder, group_index: u32, group: BindGroup, dynamic_offsets: ?[]const u32) void {
+    pub inline fn setBindGroup(
+        render_pass_encoder: RenderPassEncoder,
+        group_index: u32,
+        group: BindGroup,
+        dynamic_offsets: ?[]const u32,
+    ) void {
         wgpuRenderPassEncoderSetBindGroup(
             render_pass_encoder,
             group_index,
@@ -2332,17 +2514,38 @@ pub const RenderPassEncoder = *opaque {
             if (dynamic_offsets) |dynoff| dynoff.ptr else null,
         );
     }
-    extern fn wgpuRenderPassEncoderSetBindGroup(render_pass_encoder: RenderPassEncoder, group_index: u32, group: BindGroup, dynamic_offset_count: u32, dynamic_offsets: ?[*]const u32) void;
+    extern fn wgpuRenderPassEncoderSetBindGroup(
+        render_pass_encoder: RenderPassEncoder,
+        group_index: u32,
+        group: BindGroup,
+        dynamic_offset_count: u32,
+        dynamic_offsets: ?[*]const u32,
+    ) void;
 
     pub inline fn setBlendConstant(render_pass_encoder: RenderPassEncoder, color: Color) void {
         wgpuRenderPassEncoderSetBlendConstant(render_pass_encoder, &color);
     }
-    extern fn wgpuRenderPassEncoderSetBlendConstant(render_pass_encoder: RenderPassEncoder, color: *const Color) void;
+    extern fn wgpuRenderPassEncoderSetBlendConstant(
+        render_pass_encoder: RenderPassEncoder,
+        color: *const Color,
+    ) void;
 
-    pub inline fn setIndexBuffer(render_pass_encoder: RenderPassEncoder, buffer: Buffer, format: IndexFormat, offset: u64, size: u64) void {
+    pub inline fn setIndexBuffer(
+        render_pass_encoder: RenderPassEncoder,
+        buffer: Buffer,
+        format: IndexFormat,
+        offset: u64,
+        size: u64,
+    ) void {
         wgpuRenderPassEncoderSetIndexBuffer(render_pass_encoder, buffer, format, offset, size);
     }
-    extern fn wgpuRenderPassEncoderSetIndexBuffer(render_pass_encoder: RenderPassEncoder, buffer: Buffer, format: IndexFormat, offset: u64, size: u64) void;
+    extern fn wgpuRenderPassEncoderSetIndexBuffer(
+        render_pass_encoder: RenderPassEncoder,
+        buffer: Buffer,
+        format: IndexFormat,
+        offset: u64,
+        size: u64,
+    ) void;
 
     pub inline fn setLabel(render_pass_encoder: RenderPassEncoder, label: ?[*:0]const u8) void {
         wgpuRenderPassEncoderSetLabel(render_pass_encoder, label);
@@ -2352,32 +2555,83 @@ pub const RenderPassEncoder = *opaque {
     pub inline fn setPipeline(render_pass_encoder: RenderPassEncoder, pipeline: RenderPipeline) void {
         wgpuRenderPassEncoderSetPipeline(render_pass_encoder, pipeline);
     }
-    extern fn wgpuRenderPassEncoderSetPipeline(render_pass_encoder: RenderPassEncoder, pipeline: RenderPipeline) void;
+    extern fn wgpuRenderPassEncoderSetPipeline(
+        render_pass_encoder: RenderPassEncoder,
+        pipeline: RenderPipeline,
+    ) void;
 
-    pub inline fn setScissorRect(render_pass_encoder: RenderPassEncoder, x: u32, y: u32, width: u32, height: u32) void {
+    pub inline fn setScissorRect(
+        render_pass_encoder: RenderPassEncoder,
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+    ) void {
         wgpuRenderPassEncoderSetScissorRect(render_pass_encoder, x, y, width, height);
     }
-    extern fn wgpuRenderPassEncoderSetScissorRect(render_pass_encoder: RenderPassEncoder, x: u32, y: u32, width: u32, height: u32) void;
+    extern fn wgpuRenderPassEncoderSetScissorRect(
+        render_pass_encoder: RenderPassEncoder,
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+    ) void;
 
     pub inline fn setStencilReference(render_pass_encoder: RenderPassEncoder, ref: u32) void {
         wgpuRenderPassEncoderSetStencilReference(render_pass_encoder, ref);
     }
     extern fn wgpuRenderPassEncoderSetStencilReference(render_pass_encoder: RenderPassEncoder, ref: u32) void;
 
-    pub inline fn setVertexBuffer(render_pass_encoder: RenderPassEncoder, slot: u32, buffer: Buffer, offset: u64, size: u64) void {
+    pub inline fn setVertexBuffer(
+        render_pass_encoder: RenderPassEncoder,
+        slot: u32,
+        buffer: Buffer,
+        offset: u64,
+        size: u64,
+    ) void {
         wgpuRenderPassEncoderSetVertexBuffer(render_pass_encoder, slot, buffer, offset, size);
     }
-    extern fn wgpuRenderPassEncoderSetVertexBuffer(render_pass_encoder: RenderPassEncoder, slot: u32, buffer: Buffer, offset: u64, size: u64) void;
+    extern fn wgpuRenderPassEncoderSetVertexBuffer(
+        render_pass_encoder: RenderPassEncoder,
+        slot: u32,
+        buffer: Buffer,
+        offset: u64,
+        size: u64,
+    ) void;
 
-    pub inline fn setViewport(render_pass_encoder: RenderPassEncoder, x: f32, y: f32, width: f32, height: f32, min_depth: f32, max_depth: f32) void {
+    pub inline fn setViewport(
+        render_pass_encoder: RenderPassEncoder,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        min_depth: f32,
+        max_depth: f32,
+    ) void {
         wgpuRenderPassEncoderSetViewport(render_pass_encoder, x, y, width, height, min_depth, max_depth);
     }
-    extern fn wgpuRenderPassEncoderSetViewport(render_pass_encoder: RenderPassEncoder, x: f32, y: f32, width: f32, height: f32, min_depth: f32, max_depth: f32) void;
+    extern fn wgpuRenderPassEncoderSetViewport(
+        render_pass_encoder: RenderPassEncoder,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        min_depth: f32,
+        max_depth: f32,
+    ) void;
 
-    pub inline fn writeTimestamp(render_pass_encoder: RenderPassEncoder, query_set: QuerySet, query_index: u32) void {
+    pub inline fn writeTimestamp(
+        render_pass_encoder: RenderPassEncoder,
+        query_set: QuerySet,
+        query_index: u32,
+    ) void {
         wgpuRenderPassEncoderWriteTimestamp(render_pass_encoder, query_set, query_index);
     }
-    extern fn wgpuRenderPassEncoderWriteTimestamp(render_pass_encoder: RenderPassEncoder, query_set: QuerySet, query_index: u32) void;
+    extern fn wgpuRenderPassEncoderWriteTimestamp(
+        render_pass_encoder: RenderPassEncoder,
+        query_set: QuerySet,
+        query_index: u32,
+    ) void;
 
     pub inline fn reference(render_pass_encoder: RenderPassEncoder) void {
         wgpuRenderPassEncoderReference(render_pass_encoder);
