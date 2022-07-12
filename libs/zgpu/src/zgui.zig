@@ -66,8 +66,7 @@ pub const SliderFlags = packed struct {
     no_round_to_format: bool = false,
     no_input: bool = false,
 
-    _pad0: u8 = 0,
-    _pad1: u16 = 0,
+    _padding: u24 = 0,
 
     comptime {
         assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
@@ -135,25 +134,40 @@ pub fn sliderInt(
     );
 }
 
-// TODO: Max. text length is hardcoded, make it more robust? (see: std.fmt.count())
-const max_text_len = 512;
+const max_stack_buf_size = 512;
 
 pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
-    var buf: [max_text_len]u8 = undefined;
-    const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch blk: {
-        buf[buf.len - 1] = '\x00';
-        break :blk buf[0 .. buf.len - 1 :0];
-    };
-    zguiBulletText("%s", result.ptr);
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len < max_stack_buf_size) {
+        var buf: [max_stack_buf_size]u8 = undefined;
+        const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch unreachable;
+
+        zguiBulletText("%s", result.ptr);
+    } else {
+        const allocator = std.heap.c_allocator;
+        const buf = allocator.alloc(u8, len) catch unreachable;
+        defer allocator.free(buf);
+        const result = std.fmt.bufPrintZ(buf, fmt, args) catch unreachable;
+
+        zguiBulletText("%s", result.ptr);
+    }
 }
 
 pub fn text(comptime fmt: []const u8, args: anytype) void {
-    var buf: [max_text_len]u8 = undefined;
-    const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch blk: {
-        buf[buf.len - 1] = '\x00';
-        break :blk buf[0 .. buf.len - 1 :0];
-    };
-    zguiText("%s", result.ptr);
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len < max_stack_buf_size) {
+        var buf: [max_stack_buf_size]u8 = undefined;
+        const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch unreachable;
+
+        zguiText("%s", result.ptr);
+    } else {
+        const allocator = std.heap.c_allocator;
+        const buf = allocator.alloc(u8, len) catch unreachable;
+        defer allocator.free(buf);
+        const result = std.fmt.bufPrintZ(buf, fmt, args) catch unreachable;
+
+        zguiText("%s", result.ptr);
+    }
 }
 
 pub fn radioButtonIntPtr(label: [:0]const u8, v: *i32, v_button: i32) bool {
