@@ -40,7 +40,7 @@ pub const WindowFlags = packed struct {
     no_nav_focus: bool = false,
     unsaved_document: bool = false,
 
-    _pad0: u12 = 0,
+    _padding: u12 = 0,
 
     pub const no_nav = WindowFlags{ .no_nav_inputs = true, .no_nav_focus = true };
     pub const no_decoration = WindowFlags{
@@ -100,18 +100,11 @@ pub fn sliderFloat(
     v_min: f32,
     v_max: f32,
     args: struct {
-        format: ?[:0]const u8 = "%.3f",
+        format: [:0]const u8 = "%.3f",
         flags: SliderFlags = .{},
     },
 ) bool {
-    return zguiSliderFloat(
-        label,
-        v,
-        v_min,
-        v_max,
-        if (args.format) |fmt| fmt else null,
-        @bitCast(u32, args.flags),
-    );
+    return zguiSliderFloat(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
 }
 
 pub fn sliderInt(
@@ -120,18 +113,11 @@ pub fn sliderInt(
     v_min: i32,
     v_max: i32,
     args: struct {
-        format: ?[:0]const u8 = "%d",
+        format: [:0]const u8 = "%d",
         flags: SliderFlags = .{},
     },
 ) bool {
-    return zguiSliderInt(
-        label,
-        v,
-        v_min,
-        v_max,
-        if (args.format) |fmt| fmt else null,
-        @bitCast(u32, args.flags),
-    );
+    return zguiSliderInt(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
 }
 
 const max_stack_buf_size = 512;
