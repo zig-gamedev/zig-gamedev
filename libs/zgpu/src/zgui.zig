@@ -2,17 +2,35 @@ const std = @import("std");
 const assert = std.debug.assert;
 
 pub const createContext = zguiCreateContext;
+extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) ?Context;
+
 pub const destroyContext = zguiDestroyContext;
+extern fn zguiDestroyContext(ctx: ?Context) void;
+
 pub const getCurrentContext = zguiGetCurrentContext;
+extern fn zguiGetCurrentContext() ?Context;
+
 pub const setCurrentContext = zguiSetCurrentContext;
+extern fn zguiSetCurrentContext(ctx: ?Context) void;
 
 pub const io = struct {
     pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
+    extern fn zguiIoGetWantCaptureMouse() bool;
+
     pub const getWantCaptureKeyboard = zguiIoGetWantCaptureKeyboard;
+    extern fn zguiIoGetWantCaptureKeyboard() bool;
+
     pub const addFontFromFile = zguiIoAddFontFromFile;
+    extern fn zguiIoAddFontFromFile(filename: [*:0]const u8, size_pixels: f32) void;
+
     pub const setIniFilename = zguiIoSetIniFilename;
+    extern fn zguiIoSetIniFilename(filename: [*:0]const u8) void;
+
     pub const setDisplaySize = zguiIoSetDisplaySize;
+    extern fn zguiIoSetDisplaySize(width: f32, height: f32) void;
+
     pub const setDisplayFramebufferScale = zguiIoSetDisplayFramebufferScale;
+    extern fn zguiIoSetDisplayFramebufferScale(sx: f32, sy: f32) void;
 };
 
 pub const Context = *opaque {};
@@ -73,29 +91,38 @@ pub const SliderFlags = packed struct {
     }
 };
 
-pub fn button(label: [:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
+pub fn button(label: [*:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
     return zguiButton(label, size.w, size.h);
 }
+extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
 
 pub fn begin(name: [:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
     return zguiBegin(name, p_open, @bitCast(u32, flags));
 }
+extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 
 pub fn sameLine(args: struct { offset_from_start_x: f32 = 0.0, spacing: f32 = -1.0 }) void {
     zguiSameLine(args.offset_from_start_x, args.spacing);
 }
+extern fn zguiSameLine(offset_from_start_x: f32, spacing: f32) void;
 
 pub fn comboStr(
-    label: [:0]const u8,
+    label: [*:0]const u8,
     current_item: *i32,
     items_separated_by_zeros: [:0]const u8,
     popup_max_height_in_items: i32,
 ) bool {
     return zguiComboStr(label, current_item, items_separated_by_zeros, popup_max_height_in_items);
 }
+extern fn zguiComboStr(
+    label: [*:0]const u8,
+    current_item: *i32,
+    items_separated_by_zeros: [*:0]const u8,
+    popup_max_height_in_items: i32,
+) bool;
 
 pub fn sliderFloat(
-    label: [:0]const u8,
+    label: [*:0]const u8,
     v: *f32,
     v_min: f32,
     v_max: f32,
@@ -106,9 +133,17 @@ pub fn sliderFloat(
 ) bool {
     return zguiSliderFloat(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
 }
+extern fn zguiSliderFloat(
+    label: [*:0]const u8,
+    v: *f32,
+    v_min: f32,
+    v_max: f32,
+    format: [*:0]const u8,
+    flags: u32,
+) bool;
 
 pub fn sliderInt(
-    label: [:0]const u8,
+    label: [*:0]const u8,
     v: *i32,
     v_min: i32,
     v_max: i32,
@@ -119,6 +154,14 @@ pub fn sliderInt(
 ) bool {
     return zguiSliderInt(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
 }
+extern fn zguiSliderInt(
+    label: [*:0]const u8,
+    v: *i32,
+    v_min: i32,
+    v_max: i32,
+    format: [*:0]const u8,
+    flags: u32,
+) bool;
 
 const max_stack_buf_size = 512;
 
@@ -138,6 +181,7 @@ pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
         zguiBulletText("%s", result.ptr);
     }
 }
+extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
 
 pub fn text(comptime fmt: []const u8, args: anytype) void {
     const len = std.fmt.count(fmt ++ "\x00", args);
@@ -155,85 +199,45 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
         zguiText("%s", result.ptr);
     }
 }
+extern fn zguiText(fmt: [*:0]const u8, ...) void;
 
-pub fn radioButtonIntPtr(label: [:0]const u8, v: *i32, v_button: i32) bool {
-    return zguiRadioButtonIntPtr(label, v, v_button);
-}
+pub const radioButtonIntPtr = zguiRadioButtonIntPtr;
+extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
 
-pub fn checkbox(label: [:0]const u8, v: *bool) bool {
-    return zguiCheckbox(label, v);
-}
+pub const checkbox = zguiCheckbox;
+extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 
 pub fn beginDisabled(args: struct { disabled: bool = true }) void {
     zguiBeginDisabled(args.disabled);
 }
+extern fn zguiBeginDisabled(disabled: bool) void;
 
 pub const endDisabled = zguiEndDisabled;
-pub const end = zguiEnd;
-pub const spacing = zguiSpacing;
-pub const newLine = zguiNewLine;
-pub const separator = zguiSeparator;
-pub const dummy = zguiDummy;
-pub const newFrame = zguiNewFrame;
-pub const render = zguiRender;
-pub const getDrawData = zguiGetDrawData;
-pub const showDemoWindow = zguiShowDemoWindow;
-
-//
-// Raw C functions.
-//
-extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
-extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
-extern fn zguiEnd() void;
-extern fn zguiSpacing() void;
-extern fn zguiNewLine() void;
-extern fn zguiSeparator() void;
-extern fn zguiSameLine(offset_from_start_x: f32, spacing: f32) void;
-extern fn zguiDummy(w: f32, h: f32) void;
-extern fn zguiComboStr(
-    label: [*:0]const u8,
-    current_item: *i32,
-    items_separated_by_zeros: [*:0]const u8,
-    popup_max_height_in_items: i32,
-) bool;
-extern fn zguiSliderFloat(
-    label: [*:0]const u8,
-    v: *f32,
-    v_min: f32,
-    v_max: f32,
-    format: ?[*:0]const u8,
-    flags: u32,
-) bool;
-extern fn zguiSliderInt(
-    label: [*:0]const u8,
-    v: *i32,
-    v_min: i32,
-    v_max: i32,
-    format: ?[*:0]const u8,
-    flags: u32,
-) bool;
-extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
-extern fn zguiText(fmt: [*:0]const u8, ...) void;
-extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
-extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
-
-extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) ?Context;
-extern fn zguiDestroyContext(ctx: ?Context) void;
-extern fn zguiGetCurrentContext() ?Context;
-extern fn zguiSetCurrentContext(ctx: ?Context) void;
-
-extern fn zguiNewFrame() void;
-extern fn zguiRender() void;
-extern fn zguiGetDrawData() DrawData;
-
-extern fn zguiShowDemoWindow(p_open: ?*bool) void;
-
-extern fn zguiBeginDisabled(disabled: bool) void;
 extern fn zguiEndDisabled() void;
 
-extern fn zguiIoGetWantCaptureMouse() bool;
-extern fn zguiIoGetWantCaptureKeyboard() bool;
-extern fn zguiIoAddFontFromFile(filename: [*:0]const u8, size_pixels: f32) void;
-extern fn zguiIoSetIniFilename(filename: [*:0]const u8) void;
-extern fn zguiIoSetDisplaySize(width: f32, height: f32) void;
-extern fn zguiIoSetDisplayFramebufferScale(sx: f32, sy: f32) void;
+pub const end = zguiEnd;
+extern fn zguiEnd() void;
+
+pub const spacing = zguiSpacing;
+extern fn zguiSpacing() void;
+
+pub const newLine = zguiNewLine;
+extern fn zguiNewLine() void;
+
+pub const separator = zguiSeparator;
+extern fn zguiSeparator() void;
+
+pub const dummy = zguiDummy;
+extern fn zguiDummy(w: f32, h: f32) void;
+
+pub const newFrame = zguiNewFrame;
+extern fn zguiNewFrame() void;
+
+pub const render = zguiRender;
+extern fn zguiRender() void;
+
+pub const getDrawData = zguiGetDrawData;
+extern fn zguiGetDrawData() DrawData;
+
+pub const showDemoWindow = zguiShowDemoWindow;
+extern fn zguiShowDemoWindow(p_open: ?*bool) void;
