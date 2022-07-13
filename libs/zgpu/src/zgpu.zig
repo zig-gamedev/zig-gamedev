@@ -1599,8 +1599,7 @@ pub const gui = struct {
         comptime font_name: []const u8,
         font_size: f32,
     ) void {
-        assert(zgui.getCurrentContext() == null);
-        _ = zgui.createContext(null);
+        _ = zgui.init();
 
         if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) {
             unreachable;
@@ -1620,10 +1619,9 @@ pub const gui = struct {
     }
 
     pub fn deinit() void {
-        assert(zgui.getCurrentContext() != null);
         ImGui_ImplWGPU_Shutdown();
         ImGui_ImplGlfw_Shutdown();
-        zgui.destroyContext(null);
+        zgui.deinit();
     }
 
     pub fn newFrame(fb_width: u32, fb_height: u32) void {

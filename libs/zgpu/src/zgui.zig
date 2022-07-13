@@ -1,8 +1,20 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
+pub fn init() Context {
+    assert(getCurrentContext() == null);
+    temp_buffer.resize(3 * 1024 + 1) catch unreachable;
+    return createContext(null);
+}
+
+pub fn deinit() void {
+    assert(getCurrentContext() != null);
+    destroyContext(null);
+    temp_buffer.deinit();
+}
+
 pub const createContext = zguiCreateContext;
-extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) ?Context;
+extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
 
 pub const destroyContext = zguiDestroyContext;
 extern fn zguiDestroyContext(ctx: ?Context) void;
@@ -163,43 +175,51 @@ extern fn zguiSliderInt(
     flags: u32,
 ) bool;
 
-const max_stack_buf_size = 512;
+var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
 
-pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
+fn textFormatZ(comptime fmt: []const u8, args: anytype, textFunc: anytype) void {
     const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len < max_stack_buf_size) {
-        var buf: [max_stack_buf_size]u8 = undefined;
-        const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch unreachable;
-
-        zguiBulletText("%s", result.ptr);
-    } else {
-        const allocator = std.heap.c_allocator;
-        const buf = allocator.alloc(u8, len) catch unreachable;
-        defer allocator.free(buf);
-        const result = std.fmt.bufPrintZ(buf, fmt, args) catch unreachable;
-
-        zguiBulletText("%s", result.ptr);
+    if (len > temp_buffer.items.len) {
+        temp_buffer.resize(len + 128) catch unreachable;
     }
+    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+    textFunc("%s", result.ptr);
 }
-extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
+
+fn textFormat(comptime fmt: []const u8, args: anytype) void {
+    const len = std.fmt.count(fmt, args);
+    if (len > temp_buffer.items.len) {
+        temp_buffer.resize(len + 128) catch unreachable;
+    }
+    const result = std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
+    textUnformatted(result);
+}
+
+// Widgets: Text
+
+pub fn textUnformatted(txt: []const u8) void {
+    zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
+}
+extern fn zguiTextUnformatted(txt: [*]const u8, txt_end: [*]const u8) void;
 
 pub fn text(comptime fmt: []const u8, args: anytype) void {
-    const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len < max_stack_buf_size) {
-        var buf: [max_stack_buf_size]u8 = undefined;
-        const result = std.fmt.bufPrintZ(buf[0..], fmt, args) catch unreachable;
-
-        zguiText("%s", result.ptr);
-    } else {
-        const allocator = std.heap.c_allocator;
-        const buf = allocator.alloc(u8, len) catch unreachable;
-        defer allocator.free(buf);
-        const result = std.fmt.bufPrintZ(buf, fmt, args) catch unreachable;
-
-        zguiText("%s", result.ptr);
-    }
+    textFormat(fmt, args);
 }
-extern fn zguiText(fmt: [*:0]const u8, ...) void;
+
+pub fn textDisabled(comptime fmt: []const u8, args: anytype) void {
+    textFormatZ(fmt, args, zguiTextDisabled);
+}
+extern fn zguiTextDisabled(fmt: [*:0]const u8, ...) void;
+
+pub fn textWrapped(comptime fmt: []const u8, args: anytype) void {
+    textFormatZ(fmt, args, zguiTextWrapped);
+}
+extern fn zguiTextWrapped(fmt: [*:0]const u8, ...) void;
+
+pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
+    textFormatZ(fmt, args, zguiBulletText);
+}
+extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
 
 pub const radioButtonIntPtr = zguiRadioButtonIntPtr;
 extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
