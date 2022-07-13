@@ -110,12 +110,13 @@ fn update(demo: *DemoState) !void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
     if (zgui.begin("Demo Settings", null, .{ .no_move = true, .no_resize = true })) {
-        zgui.bulletText(
-            "Average :  {d:.3} ms/frame ({d:.1} fps)",
+        zgui.bullet();
+        zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Average :");
+        zgui.sameLine(.{});
+        zgui.text(
+            "  {d:.3} ms/frame ({d:.1} fps)",
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
-        zgui.bulletText("Right Mouse Button + drag :  rotate camera", .{});
-        zgui.bulletText("W, A, S, D :  move camera", .{});
 
         zgui.spacing();
         zgui.text("Music:", .{});

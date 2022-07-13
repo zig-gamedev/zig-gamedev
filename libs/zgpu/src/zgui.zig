@@ -216,17 +216,22 @@ fn formatZ(comptime fmt: []const u8, args: anytype) [:0]const u8 {
 pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
+pub fn textUnformattedColored(color: [4]f32, txt: []const u8) void {
+    pushStyleColor(.text, color);
+    textUnformatted(txt);
+    popStyleColor(.{});
+}
+
 pub fn text(comptime fmt: []const u8, args: anytype) void {
     const result = format(fmt, args);
     zguiTextUnformatted(result.ptr, result.ptr + result.len);
 }
-extern fn zguiTextUnformatted(txt: [*]const u8, txt_end: [*]const u8) void;
-
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
     pushStyleColor(.text, color);
     text(fmt, args);
     popStyleColor(.{});
 }
+extern fn zguiTextUnformatted(txt: [*]const u8, txt_end: [*]const u8) void;
 
 pub fn textDisabled(comptime fmt: []const u8, args: anytype) void {
     zguiTextDisabled("%s", formatZ(fmt, args).ptr);
