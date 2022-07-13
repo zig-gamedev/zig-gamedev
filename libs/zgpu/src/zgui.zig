@@ -178,20 +178,6 @@ extern fn zguiSliderInt(
 const temp_buffer_grow_addition = 128;
 var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
 
-fn textFormatZ(comptime fmt: []const u8, args: anytype, textFunc: anytype) void {
-    const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
-    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
-    textFunc("%s", result.ptr);
-}
-
-fn textFormat(comptime fmt: []const u8, args: anytype) void {
-    const len = std.fmt.count(fmt, args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + 128) catch unreachable;
-    const result = std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
-    textUnformatted(result);
-}
-
 // Widgets: Text
 
 pub fn textUnformatted(txt: []const u8) void {
