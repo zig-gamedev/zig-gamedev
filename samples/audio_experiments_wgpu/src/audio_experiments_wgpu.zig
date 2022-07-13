@@ -5,7 +5,7 @@ const glfw = @import("glfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
-const zm = @import("zmath");
+const zmath = @import("zmath");
 const zaudio = @import("zaudio");
 const wgsl = @import("audio_experiments_wgsl.zig");
 

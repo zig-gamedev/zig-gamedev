@@ -122,6 +122,10 @@ ZGUI_API bool zguiArrowButton(const char* label, ImGuiDir dir) {
     return ImGui::ArrowButton(label, dir);
 }
 
+ZGUI_API void zguiBullet(void) {
+    ImGui::Bullet();
+}
+
 
 ZGUI_API bool zguiRadioButtonIntPtr(const char* label, int* v, int v_button) {
     return ImGui::RadioButton(label, v, v_button);
@@ -169,6 +173,14 @@ ZGUI_API void zguiBeginDisabled(bool disabled) {
 
 ZGUI_API void zguiEndDisabled(void) {
     ImGui::EndDisabled();
+}
+
+ZGUI_API void zguiPushStyleColor(ImGuiCol_ idx, float color[4]) {
+    ImGui::PushStyleColor(idx, ImVec4(color[0], color[1], color[2], color[3]));
+}
+
+ZGUI_API void zguiPopStyleColor(int count) {
+    ImGui::PopStyleColor(count);
 }
 
 ZGUI_API bool zguiIoGetWantCaptureMouse(void) {

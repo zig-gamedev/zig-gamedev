@@ -48,6 +48,13 @@ pub const io = struct {
 pub const Context = *opaque {};
 pub const DrawData = *opaque {};
 
+pub const StyleColorIndex = enum(u32) {
+    text,
+    text_disabled,
+    window_bg,
+    // TODO: Add all the values.
+};
+
 pub const WindowFlags = packed struct {
     no_title_bar: bool = false,
     no_resize: bool = false,
@@ -216,9 +223,10 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
 extern fn zguiTextUnformatted(txt: [*]const u8, txt_end: [*]const u8) void;
 
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
-    zguiTextColored(&color, "%s", formatZ(fmt, args).ptr);
+    pushStyleColor(.text, color);
+    text(fmt, args);
+    popStyleColor(.{});
 }
-extern fn zguiTextColored(color: *const [4]f32, fmt: [*:0]const u8, ...) void;
 
 pub fn textDisabled(comptime fmt: []const u8, args: anytype) void {
     zguiTextDisabled("%s", formatZ(fmt, args).ptr);
@@ -231,9 +239,9 @@ pub fn textWrapped(comptime fmt: []const u8, args: anytype) void {
 extern fn zguiTextWrapped(fmt: [*:0]const u8, ...) void;
 
 pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
-    zguiBulletText("%s", formatZ(fmt, args).ptr);
+    bullet();
+    text(fmt, args);
 }
-extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
 
 pub fn labelText(label: [*:0]const u8, comptime fmt: []const u8, args: anytype) void {
     zguiLabelText(label, "%s", formatZ(fmt, args).ptr);
@@ -257,6 +265,19 @@ extern fn zguiInvisibleButton(str_id: [*:0]const u8, w: f32, h: f32, flags: u32)
 
 pub const arrowButton = zguiArrowButton;
 extern fn zguiArrowButton(label: [*:0]const u8, dir: Direction) bool;
+
+pub const bullet = zguiBullet;
+extern fn zguiBullet() void;
+
+pub fn pushStyleColor(idx: StyleColorIndex, color: [4]f32) void {
+    zguiPushStyleColor(idx, &color);
+}
+extern fn zguiPushStyleColor(idx: StyleColorIndex, color: *const [4]f32) void;
+
+pub fn popStyleColor(args: struct { count: i32 = 1 }) void {
+    zguiPopStyleColor(args.count);
+}
+extern fn zguiPopStyleColor(count: i32) void;
 
 pub const radioButtonIntPtr = zguiRadioButtonIntPtr;
 extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
