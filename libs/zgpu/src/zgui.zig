@@ -103,10 +103,25 @@ pub const SliderFlags = packed struct {
     }
 };
 
-pub fn button(label: [*:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
-    return zguiButton(label, size.w, size.h);
-}
-extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
+pub const ButtonFlags = packed struct {
+    mouse_button_left: bool = false,
+    mouse_button_right: bool = false,
+    mouse_button_middle: bool = false,
+
+    _padding: u29 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+pub const Direction = enum(i32) {
+    none = -1,
+    left = 0,
+    right = 1,
+    up = 2,
+    down = 3,
+};
 
 pub fn begin(name: [:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
     return zguiBegin(name, p_open, @bitCast(u32, flags));
@@ -230,6 +245,24 @@ pub fn labelText(label: [*:0]const u8, comptime fmt: []const u8, args: anytype) 
     zguiLabelText(label, "%s", result.ptr);
 }
 extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
+
+// Widgets: Main
+
+pub fn button(label: [*:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
+    return zguiButton(label, size.w, size.h);
+}
+extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
+
+pub const smallButton = zguiButton;
+extern fn zguiSmallButton(label: [*:0]const u8) bool;
+
+pub fn invisibleButton(str_id: [*:0]const u8, args: struct { w: f32, h: f32, flags: ButtonFlags = .{} }) bool {
+    return zguiInvisibleButton(str_id, args.w, args.h, @bitCast(u32, args.flags));
+}
+extern fn zguiInvisibleButton(str_id: [*:0]const u8, w: f32, h: f32, flags: u32) bool;
+
+pub const arrowButton = zguiArrowButton;
+extern fn zguiArrowButton(label: [*:0]const u8, dir: Direction) bool;
 
 pub const radioButtonIntPtr = zguiRadioButtonIntPtr;
 extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;

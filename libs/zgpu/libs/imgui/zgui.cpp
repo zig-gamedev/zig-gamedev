@@ -2,9 +2,7 @@
 
 #define ZGUI_API extern "C"
 
-ZGUI_API bool zguiButton(const char* label, float x, float y) {
-    return ImGui::Button(label, { x, y });
-}
+
 
 ZGUI_API bool zguiBegin(const char* name, bool* p_open, ImGuiWindowFlags flags) {
     return ImGui::Begin(name, p_open, flags);
@@ -105,6 +103,25 @@ ZGUI_API void zguiLabelText(const char* label, const char* fmt, ...) {
     ImGui::LabelTextV(label, fmt, args);
     va_end(args);
 }
+
+// Widgets: Main
+
+ZGUI_API bool zguiButton(const char* label, float x, float y) {
+    return ImGui::Button(label, { x, y });
+}
+
+ZGUI_API bool zguiSmallButton(const char* label) {
+    return ImGui::SmallButton(label);
+}
+
+ZGUI_API bool zguiInvisibleButton(const char* str_id, float w, float h, ImGuiButtonFlags flags) {
+    return ImGui::InvisibleButton(str_id, ImVec2(w, h), flags);
+}
+
+ZGUI_API bool zguiArrowButton(const char* label, ImGuiDir dir) {
+    return ImGui::ArrowButton(label, dir);
+}
+
 
 ZGUI_API bool zguiRadioButtonIntPtr(const char* label, int* v, int v_button) {
     return ImGui::RadioButton(label, v, v_button);
