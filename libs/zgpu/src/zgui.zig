@@ -190,8 +190,19 @@ extern fn zguiSliderInt(
     flags: u32,
 ) bool;
 
-const temp_buffer_grow_addition = 128;
 var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
+
+fn format(comptime fmt: []const u8, args: anytype) []const u8 {
+    const len = std.fmt.count(fmt, args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
+    return std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
+}
+
+fn formatZ(comptime fmt: []const u8, args: anytype) [:0]const u8 {
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
+    return std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+}
 
 // Widgets: Text
 
@@ -199,50 +210,33 @@ pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
 pub fn text(comptime fmt: []const u8, args: anytype) void {
-    const len = std.fmt.count(fmt, args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
-    const result = std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
+    const result = format(fmt, args);
     zguiTextUnformatted(result.ptr, result.ptr + result.len);
 }
 extern fn zguiTextUnformatted(txt: [*]const u8, txt_end: [*]const u8) void;
 
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
-    const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
-    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
-    zguiTextColored(&color, "%s", result.ptr);
+    zguiTextColored(&color, "%s", formatZ(fmt, args).ptr);
 }
 extern fn zguiTextColored(color: *const [4]f32, fmt: [*:0]const u8, ...) void;
 
 pub fn textDisabled(comptime fmt: []const u8, args: anytype) void {
-    const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
-    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
-    zguiTextDisabled("%s", result.ptr);
+    zguiTextDisabled("%s", formatZ(fmt, args).ptr);
 }
 extern fn zguiTextDisabled(fmt: [*:0]const u8, ...) void;
 
 pub fn textWrapped(comptime fmt: []const u8, args: anytype) void {
-    const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
-    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
-    zguiTextWrapped("%s", result.ptr);
+    zguiTextWrapped("%s", formatZ(fmt, args).ptr);
 }
 extern fn zguiTextWrapped(fmt: [*:0]const u8, ...) void;
 
 pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
-    const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
-    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
-    zguiBulletText("%s", result.ptr);
+    zguiBulletText("%s", formatZ(fmt, args).ptr);
 }
 extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
 
 pub fn labelText(label: [*:0]const u8, comptime fmt: []const u8, args: anytype) void {
-    const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
-    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
-    zguiLabelText(label, "%s", result.ptr);
+    zguiLabelText(label, "%s", formatZ(fmt, args).ptr);
 }
 extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
 
