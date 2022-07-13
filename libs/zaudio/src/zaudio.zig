@@ -20,14 +20,13 @@ pub const Fence = *align(@sizeOf(usize)) FenceImpl;
 pub const SoundFlags = packed struct {
     stream: bool = false,
     decode: bool = false,
-    @"async": bool = false,
+    async_load: bool = false,
     wait_init: bool = false,
     no_default_attachment: bool = false,
     no_pitch: bool = false,
     no_spatialization: bool = false,
 
-    _pad0: u9 = 0,
-    _pad1: u16 = 0,
+    _padding: u25 = 0,
 
     comptime {
         assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
@@ -53,11 +52,11 @@ pub const Positioning = enum(c_uint) {
 
 pub const Format = enum(c_uint) {
     unknown,
-    @"u8",
-    s16,
-    s24,
-    s32,
-    @"f32",
+    unsigned8,
+    signed16,
+    signed24,
+    signed32,
+    float32,
 };
 
 pub const DeviceType = enum(c_uint) {

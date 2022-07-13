@@ -53,9 +53,11 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
                 .context = audio,
                 .func = audioPlaybackCallback,
             };
-            config.raw.playback.format = @enumToInt(zaudio.Format.@"f32");
+            config.raw.playback.format = @enumToInt(zaudio.Format.float32);
             config.raw.playback.channels = 2;
             config.raw.sampleRate = 48_000;
+            config.raw.periodSizeInFrames = 480;
+            config.raw.periodSizeInMilliseconds = 10;
             break :device try zaudio.initDevice(allocator, null, &config);
         };
 
