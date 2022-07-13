@@ -65,11 +65,17 @@ ZGUI_API bool zguiSliderInt(
     return ImGui::SliderInt(label, v, v_min, v_max, format, flags);
 }
 
-
 // Widgets: Text
 
 ZGUI_API void zguiTextUnformatted(const char* text, const char* text_end) {
     ImGui::TextUnformatted(text, text_end);
+}
+
+ZGUI_API void zguiTextColored(float color[4], const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    ImGui::TextColoredV(ImVec4(color[0], color[1], color[2], color[3]), fmt, args);
+    va_end(args);
 }
 
 ZGUI_API void zguiTextDisabled(const char* fmt, ...) {
@@ -90,6 +96,13 @@ ZGUI_API void zguiBulletText(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
     ImGui::BulletTextV(fmt, args);
+    va_end(args);
+}
+
+ZGUI_API void zguiLabelText(const char* label, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    ImGui::LabelTextV(label, fmt, args);
     va_end(args);
 }
 

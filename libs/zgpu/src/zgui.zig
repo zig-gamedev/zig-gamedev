@@ -175,22 +175,19 @@ extern fn zguiSliderInt(
     flags: u32,
 ) bool;
 
+const temp_buffer_grow_addition = 128;
 var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
 
 fn textFormatZ(comptime fmt: []const u8, args: anytype, textFunc: anytype) void {
     const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) {
-        temp_buffer.resize(len + 128) catch unreachable;
-    }
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
     const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
     textFunc("%s", result.ptr);
 }
 
 fn textFormat(comptime fmt: []const u8, args: anytype) void {
     const len = std.fmt.count(fmt, args);
-    if (len > temp_buffer.items.len) {
-        temp_buffer.resize(len + 128) catch unreachable;
-    }
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + 128) catch unreachable;
     const result = std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
     textUnformatted(result);
 }
@@ -200,26 +197,53 @@ fn textFormat(comptime fmt: []const u8, args: anytype) void {
 pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
+pub fn text(comptime fmt: []const u8, args: anytype) void {
+    const len = std.fmt.count(fmt, args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
+    const result = std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
+    zguiTextUnformatted(result.ptr, result.ptr + result.len);
+}
 extern fn zguiTextUnformatted(txt: [*]const u8, txt_end: [*]const u8) void;
 
-pub fn text(comptime fmt: []const u8, args: anytype) void {
-    textFormat(fmt, args);
+pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
+    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+    zguiTextColored(&color, "%s", result.ptr);
 }
+extern fn zguiTextColored(color: *const [4]f32, fmt: [*:0]const u8, ...) void;
 
 pub fn textDisabled(comptime fmt: []const u8, args: anytype) void {
-    textFormatZ(fmt, args, zguiTextDisabled);
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
+    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+    zguiTextDisabled("%s", result.ptr);
 }
 extern fn zguiTextDisabled(fmt: [*:0]const u8, ...) void;
 
 pub fn textWrapped(comptime fmt: []const u8, args: anytype) void {
-    textFormatZ(fmt, args, zguiTextWrapped);
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
+    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+    zguiTextWrapped("%s", result.ptr);
 }
 extern fn zguiTextWrapped(fmt: [*:0]const u8, ...) void;
 
 pub fn bulletText(comptime fmt: []const u8, args: anytype) void {
-    textFormatZ(fmt, args, zguiBulletText);
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
+    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+    zguiBulletText("%s", result.ptr);
 }
 extern fn zguiBulletText(fmt: [*:0]const u8, ...) void;
+
+pub fn labelText(label: [*:0]const u8, comptime fmt: []const u8, args: anytype) void {
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + temp_buffer_grow_addition) catch unreachable;
+    const result = std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+    zguiLabelText(label, "%s", result.ptr);
+}
+extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
 
 pub const radioButtonIntPtr = zguiRadioButtonIntPtr;
 extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
