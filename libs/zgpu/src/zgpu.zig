@@ -1599,7 +1599,7 @@ pub const gui = struct {
         comptime font_name: []const u8,
         font_size: f32,
     ) void {
-        _ = zgui.init();
+        zgui.init();
 
         if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) {
             unreachable;

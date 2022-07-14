@@ -124,11 +124,11 @@ ZGUI_API void zguiBullet(void) {
     ImGui::Bullet();
 }
 
-ZGUI_API bool zguiRadioButtonBool(const char* label, bool active) {
+ZGUI_API bool zguiRadioButton0(const char* label, bool active) {
     return ImGui::RadioButton(label, active);
 }
 
-ZGUI_API bool zguiRadioButtonIntPtr(const char* label, int* v, int v_button) {
+ZGUI_API bool zguiRadioButton1(const char* label, int* v, int v_button) {
     return ImGui::RadioButton(label, v, v_button);
 }
 
@@ -136,11 +136,11 @@ ZGUI_API bool zguiCheckbox(const char* label, bool* v) {
     return ImGui::Checkbox(label, v);
 }
 
-ZGUI_API bool zguiCheckboxFlagsI32(const char* label, int* flags, int flags_value) {
+ZGUI_API bool zguiCheckboxFlags0(const char* label, int* flags, int flags_value) {
     return ImGui::CheckboxFlags(label, flags, flags_value);
 }
 
-ZGUI_API bool zguiCheckboxFlagsU32(const char* label, unsigned int* flags, unsigned int flags_value) {
+ZGUI_API bool zguiCheckboxFlags1(const char* label, unsigned int* flags, unsigned int flags_value) {
     return ImGui::CheckboxFlags(label, flags, flags_value);
 }
 
@@ -190,12 +190,12 @@ ZGUI_API void zguiEndDisabled(void) {
     ImGui::EndDisabled();
 }
 
-ZGUI_API void zguiPushStyleColor(ImGuiCol_ idx, float color[4]) {
-    ImGui::PushStyleColor(idx, ImVec4(color[0], color[1], color[2], color[3]));
+ZGUI_API void zguiPushStyleColor0(ImGuiCol_ idx, ImU32 color) {
+    ImGui::PushStyleColor(idx, color);
 }
 
-ZGUI_API void zguiPushStyleColorU32(ImGuiCol_ idx, ImU32 color) {
-    ImGui::PushStyleColor(idx, color);
+ZGUI_API void zguiPushStyleColor1(ImGuiCol_ idx, float color[4]) {
+    ImGui::PushStyleColor(idx, ImVec4(color[0], color[1], color[2], color[3]));
 }
 
 ZGUI_API void zguiPopStyleColor(int count) {

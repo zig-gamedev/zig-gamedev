@@ -1,10 +1,10 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
-pub fn init() Context {
+pub fn init() void {
     assert(getCurrentContext() == null);
     temp_buffer.resize(3 * 1024 + 1) catch unreachable;
-    return createContext(null);
+    _ = createContext(null);
 }
 
 pub fn deinit() void {
@@ -13,17 +13,14 @@ pub fn deinit() void {
     temp_buffer.deinit();
 }
 
-pub const createContext = zguiCreateContext;
+const createContext = zguiCreateContext;
 extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
 
-pub const destroyContext = zguiDestroyContext;
+const destroyContext = zguiDestroyContext;
 extern fn zguiDestroyContext(ctx: ?Context) void;
 
-pub const getCurrentContext = zguiGetCurrentContext;
+const getCurrentContext = zguiGetCurrentContext;
 extern fn zguiGetCurrentContext() ?Context;
-
-pub const setCurrentContext = zguiSetCurrentContext;
-extern fn zguiSetCurrentContext(ctx: ?Context) void;
 
 pub const io = struct {
     pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
@@ -45,7 +42,7 @@ pub const io = struct {
     extern fn zguiIoSetDisplayFramebufferScale(sx: f32, sy: f32) void;
 };
 
-pub const Context = *opaque {};
+const Context = *opaque {};
 pub const DrawData = *opaque {};
 
 pub const StyleColorIndex = enum(u32) {
@@ -307,13 +304,13 @@ pub fn radioButton(label: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 1 or len == 2);
     if (len == 1) {
-        return zguiRadioButtonBool(label, args[0]);
+        return zguiRadioButton0(label, args[0]);
     } else {
-        return zguiRadioButtonIntPtr(label, args[0], args[1]);
+        return zguiRadioButton1(label, args[0], args[1]);
     }
 }
-extern fn zguiRadioButtonBool(label: [*:0]const u8, active: bool) bool;
-extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
+extern fn zguiRadioButton0(label: [*:0]const u8, active: bool) bool;
+extern fn zguiRadioButton1(label: [*:0]const u8, v: *i32, v_button: i32) bool;
 
 pub fn checkbox(label: [*:0]const u8, args: anytype) bool {
     comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
@@ -324,13 +321,13 @@ extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 pub fn checkboxFlags(label: [*:0]const u8, args: anytype) bool {
     comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 2);
     if (@typeInfo(@TypeOf(args[0])).Pointer.child == i32) {
-        return zguiCheckboxFlagsI32(label, args[0], args[1]);
+        return zguiCheckboxFlags0(label, args[0], args[1]);
     } else {
-        return zguiCheckboxFlagsU32(label, args[0], args[1]);
+        return zguiCheckboxFlags1(label, args[0], args[1]);
     }
 }
-extern fn zguiCheckboxFlagsI32(label: [*:0]const u8, flags: *i32, flags_value: i32) bool;
-extern fn zguiCheckboxFlagsU32(label: [*:0]const u8, flags: *u32, flags_value: u32) bool;
+extern fn zguiCheckboxFlags0(label: [*:0]const u8, flags: *i32, flags_value: i32) bool;
+extern fn zguiCheckboxFlags1(label: [*:0]const u8, flags: *u32, flags_value: u32) bool;
 
 pub fn progressBar(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
@@ -349,13 +346,13 @@ extern fn zguiProgressBar(fraction: f32, w: f32, h: f32, overlay: ?[*:0]const u8
 pub fn pushStyleColor(idx: StyleColorIndex, args: anytype) void {
     comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
     if (@TypeOf(args[0]) == u32) {
-        zguiPushStyleColorU32(idx, args[0]);
+        zguiPushStyleColor0(idx, args[0]);
     } else {
-        zguiPushStyleColor(idx, &args[0]);
+        zguiPushStyleColor1(idx, &args[0]);
     }
 }
-extern fn zguiPushStyleColor(idx: StyleColorIndex, color: *const [4]f32) void;
-extern fn zguiPushStyleColorU32(idx: StyleColorIndex, color: u32) void;
+extern fn zguiPushStyleColor0(idx: StyleColorIndex, color: u32) void;
+extern fn zguiPushStyleColor1(idx: StyleColorIndex, color: *const [4]f32) void;
 
 pub fn popStyleColor(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
