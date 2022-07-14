@@ -30,7 +30,7 @@ ZGUI_API void zguiDummy(float w, float h) {
     ImGui::Dummy({ w, h });
 }
 
-ZGUI_API bool zguiComboStr(
+ZGUI_API bool zguiCombo0(
     const char* label,
     int* current_item,
     const char* items_separated_by_zeros,

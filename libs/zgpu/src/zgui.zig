@@ -127,6 +127,7 @@ pub const Direction = enum(i32) {
     down = 3,
 };
 
+/// `args: .{ p_open: ?*bool = null, flags = WindowFlags = .{} }`
 pub fn begin(name: [:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 0 or len == 1 or len == 2);
@@ -138,6 +139,7 @@ pub fn begin(name: [:0]const u8, args: anytype) bool {
 }
 extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 
+/// `args: .{ offset_from_start_x: f32 = 0.0, spacing = -1.0 }`
 pub fn sameLine(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 0 or len == 1 or len == 2);
@@ -148,23 +150,25 @@ pub fn sameLine(args: anytype) void {
 }
 extern fn zguiSameLine(offset_from_start_x: f32, spacing: f32) void;
 
+/// `args: .{ current_item: *i32, items_separated_by_zeros: [*:0]const u8, popup_max_height_in_items: i32 = -1 }`
 pub fn combo(label: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len >= 2 and len <= 3);
-    return zguiComboStr(
+    return zguiCombo0(
         label,
         args[0],
         args[1],
         if (len >= 3) args[2] else -1,
     );
 }
-extern fn zguiComboStr(
+extern fn zguiCombo0(
     label: [*:0]const u8,
     current_item: *i32,
     items_separated_by_zeros: [*:0]const u8,
     popup_max_height_in_items: i32,
 ) bool;
 
+/// `args: .{ v: *f32, v_min: f32, v_max: f32, format: [*:0]const u8 = "%.3f", flags: SliderFlags = .{} }`
 pub fn sliderFloat(label: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len >= 3 and len <= 5);
@@ -186,6 +190,7 @@ extern fn zguiSliderFloat(
     flags: u32,
 ) bool;
 
+/// `args: .{ v: *i32, v_min: i32, v_max: i32, format: [*:0]const u8 = "%d", flags: SliderFlags = .{} }`
 pub fn sliderInt(label: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len >= 3 and len <= 5);
@@ -265,6 +270,7 @@ extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
 
 // Widgets: Main
 
+/// `args: .{ w: f32 = 0.0, h: f32 = 0.0 }`
 pub fn button(label: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 0 or len == 1 or len == 2);
@@ -279,6 +285,7 @@ extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
 pub const smallButton = zguiButton;
 extern fn zguiSmallButton(label: [*:0]const u8) bool;
 
+/// `args: .{ w: f32, h: f32, flags: ButtonFlags = .{} }`
 pub fn invisibleButton(str_id: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 2 or len == 3);
@@ -291,6 +298,7 @@ pub fn invisibleButton(str_id: [*:0]const u8, args: anytype) bool {
 }
 extern fn zguiInvisibleButton(str_id: [*:0]const u8, w: f32, h: f32, flags: u32) bool;
 
+/// `args: .{ dir: Direction }`
 pub fn arrowButton(label: [*:0]const u8, args: anytype) bool {
     comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
     return zguiArrowButton(label, args[0]);
@@ -300,6 +308,8 @@ extern fn zguiArrowButton(label: [*:0]const u8, dir: Direction) bool;
 pub const bullet = zguiBullet;
 extern fn zguiBullet() void;
 
+/// `args: .{ active: bool }`
+/// `args: .{ v: *i32, v_button: i32 }`
 pub fn radioButton(label: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 1 or len == 2);
@@ -312,12 +322,15 @@ pub fn radioButton(label: [*:0]const u8, args: anytype) bool {
 extern fn zguiRadioButton0(label: [*:0]const u8, active: bool) bool;
 extern fn zguiRadioButton1(label: [*:0]const u8, v: *i32, v_button: i32) bool;
 
+/// `args: .{ v: *bool }`
 pub fn checkbox(label: [*:0]const u8, args: anytype) bool {
     comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
     return zguiCheckbox(label, args[0]);
 }
 extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 
+/// `args: .{ flags: *i32, flags_value: i32 }`
+/// `args: .{ flags: *u32, flags_value: u32 }`
 pub fn checkboxFlags(label: [*:0]const u8, args: anytype) bool {
     comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 2);
     if (@typeInfo(@TypeOf(args[0])).Pointer.child == i32) {
@@ -329,6 +342,7 @@ pub fn checkboxFlags(label: [*:0]const u8, args: anytype) bool {
 extern fn zguiCheckboxFlags0(label: [*:0]const u8, flags: *i32, flags_value: i32) bool;
 extern fn zguiCheckboxFlags1(label: [*:0]const u8, flags: *u32, flags_value: u32) bool;
 
+/// `args: .{ fraction: f32, w: f32 = -math.f32_min, h: f32 = 0.0, overlay: ?[*:0]const u8 = null }`
 pub fn progressBar(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len >= 1 and len <= 4);
@@ -343,6 +357,8 @@ extern fn zguiProgressBar(fraction: f32, w: f32, h: f32, overlay: ?[*:0]const u8
 
 //
 
+/// `args: .{ color: u32 }`
+/// `args: .{ color: [4]f32 }`
 pub fn pushStyleColor(idx: StyleColorIndex, args: anytype) void {
     comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
     if (@TypeOf(args[0]) == u32) {
@@ -354,6 +370,7 @@ pub fn pushStyleColor(idx: StyleColorIndex, args: anytype) void {
 extern fn zguiPushStyleColor0(idx: StyleColorIndex, color: u32) void;
 extern fn zguiPushStyleColor1(idx: StyleColorIndex, color: *const [4]f32) void;
 
+/// `args: .{ count: i32 = 1 }`
 pub fn popStyleColor(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 0 or len == 1);
@@ -361,6 +378,7 @@ pub fn popStyleColor(args: anytype) void {
 }
 extern fn zguiPopStyleColor(count: i32) void;
 
+/// `args: .{ disabled: bool = true }`
 pub fn beginDisabled(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 0 or len == 1);
@@ -383,6 +401,7 @@ extern fn zguiNewLine() void;
 pub const separator = zguiSeparator;
 extern fn zguiSeparator() void;
 
+/// `args: .{ w: f32, h: f32 }`
 pub fn dummy(args: anytype) void {
     comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 2);
     zguiDummy(args[0], args[1]);
