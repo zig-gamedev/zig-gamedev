@@ -299,24 +299,6 @@ extern fn zguiArrowButton(label: [*:0]const u8, dir: Direction) bool;
 pub const bullet = zguiBullet;
 extern fn zguiBullet() void;
 
-pub fn pushStyleColor(idx: StyleColorIndex, args: anytype) void {
-    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
-    if (@TypeOf(args[0]) == u32) {
-        zguiPushStyleColorU32(idx, args[0]);
-    } else {
-        zguiPushStyleColor(idx, &args[0]);
-    }
-}
-extern fn zguiPushStyleColor(idx: StyleColorIndex, color: *const [4]f32) void;
-extern fn zguiPushStyleColorU32(idx: StyleColorIndex, color: u32) void;
-
-pub fn popStyleColor(args: anytype) void {
-    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
-    comptime assert(len == 0 or len == 1);
-    zguiPopStyleColor(if (len >= 1) args[0] else 1);
-}
-extern fn zguiPopStyleColor(count: i32) void;
-
 pub fn radioButton(label: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 1 or len == 2);
@@ -346,6 +328,37 @@ pub fn checkboxFlags(label: [*:0]const u8, args: anytype) bool {
 extern fn zguiCheckboxFlagsI32(label: [*:0]const u8, flags: *i32, flags_value: i32) bool;
 extern fn zguiCheckboxFlagsU32(label: [*:0]const u8, flags: *u32, flags_value: u32) bool;
 
+pub fn progressBar(args: anytype) void {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 1 or len == 2 or len == 3);
+    zguiProgressBar(
+        args[0],
+        if (len >= 2) &args[1] else &[2]f32{ -std.math.f32_min, 0 },
+        if (len >= 3) args[2] else null,
+    );
+}
+extern fn zguiProgressBar(fraction: f32, size: *const [2]f32, overlay: ?[*:0]const u8) void;
+
+//
+
+pub fn pushStyleColor(idx: StyleColorIndex, args: anytype) void {
+    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
+    if (@TypeOf(args[0]) == u32) {
+        zguiPushStyleColorU32(idx, args[0]);
+    } else {
+        zguiPushStyleColor(idx, &args[0]);
+    }
+}
+extern fn zguiPushStyleColor(idx: StyleColorIndex, color: *const [4]f32) void;
+extern fn zguiPushStyleColorU32(idx: StyleColorIndex, color: u32) void;
+
+pub fn popStyleColor(args: anytype) void {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 0 or len == 1);
+    zguiPopStyleColor(if (len >= 1) args[0] else 1);
+}
+extern fn zguiPopStyleColor(count: i32) void;
+
 pub fn beginDisabled(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 0 or len == 1);
@@ -368,7 +381,10 @@ extern fn zguiNewLine() void;
 pub const separator = zguiSeparator;
 extern fn zguiSeparator() void;
 
-pub const dummy = zguiDummy;
+pub fn dummy(args: anytype) void {
+    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 2);
+    zguiDummy(args[0], args[1]);
+}
 extern fn zguiDummy(w: f32, h: f32) void;
 
 pub const newFrame = zguiNewFrame;

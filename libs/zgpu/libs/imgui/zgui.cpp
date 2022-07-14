@@ -2,8 +2,6 @@
 
 #define ZGUI_API extern "C"
 
-
-
 ZGUI_API bool zguiBegin(const char* name, bool* p_open, ImGuiWindowFlags flags) {
     return ImGui::Begin(name, p_open, flags);
 }
@@ -126,7 +124,6 @@ ZGUI_API void zguiBullet(void) {
     ImGui::Bullet();
 }
 
-
 ZGUI_API bool zguiRadioButtonBool(const char* label, bool active) {
     return ImGui::RadioButton(label, active);
 }
@@ -146,6 +143,12 @@ ZGUI_API bool zguiCheckboxFlagsI32(const char* label, int* flags, int flags_valu
 ZGUI_API bool zguiCheckboxFlagsU32(const char* label, unsigned int* flags, unsigned int flags_value) {
     return ImGui::CheckboxFlags(label, flags, flags_value);
 }
+
+ZGUI_API void zguiProgressBar(float fraction, float size[2], const char* overlay) {
+    return ImGui::ProgressBar(fraction, ImVec2(size[0], size[1]), overlay);
+}
+
+//
 
 ZGUI_API ImGuiContext* zguiCreateContext(ImFontAtlas* shared_font_atlas) {
     return ImGui::CreateContext(shared_font_atlas);
