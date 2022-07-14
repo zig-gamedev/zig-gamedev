@@ -271,7 +271,11 @@ extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
 pub fn button(label: [*:0]const u8, args: anytype) bool {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 0 or len == 1 or len == 2);
-    return zguiButton(label, if (len >= 1) args[0] else 0.0, if (len >= 2) args[2] else 0.0);
+    return zguiButton(
+        label,
+        if (len >= 1) args[0] else 0.0,
+        if (len >= 2) args[1] else 0.0,
+    );
 }
 extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
 
@@ -330,14 +334,15 @@ extern fn zguiCheckboxFlagsU32(label: [*:0]const u8, flags: *u32, flags_value: u
 
 pub fn progressBar(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
-    comptime assert(len == 1 or len == 2 or len == 3);
+    comptime assert(len >= 1 and len <= 4);
     zguiProgressBar(
         args[0],
-        if (len >= 2) &args[1] else &[2]f32{ -std.math.f32_min, 0 },
-        if (len >= 3) args[2] else null,
+        if (len >= 2) args[1] else -std.math.f32_min,
+        if (len >= 3) args[2] else 0.0,
+        if (len >= 4) args[3] else null,
     );
 }
-extern fn zguiProgressBar(fraction: f32, size: *const [2]f32, overlay: ?[*:0]const u8) void;
+extern fn zguiProgressBar(fraction: f32, w: f32, h: f32, overlay: ?[*:0]const u8) void;
 
 //
 

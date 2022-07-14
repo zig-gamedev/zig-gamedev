@@ -144,8 +144,8 @@ ZGUI_API bool zguiCheckboxFlagsU32(const char* label, unsigned int* flags, unsig
     return ImGui::CheckboxFlags(label, flags, flags_value);
 }
 
-ZGUI_API void zguiProgressBar(float fraction, float size[2], const char* overlay) {
-    return ImGui::ProgressBar(fraction, ImVec2(size[0], size[1]), overlay);
+ZGUI_API void zguiProgressBar(float fraction, float w, float h, const char* overlay) {
+    return ImGui::ProgressBar(fraction, ImVec2(w, h), overlay);
 }
 
 //
