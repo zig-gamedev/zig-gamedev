@@ -335,6 +335,17 @@ pub fn checkbox(label: [*:0]const u8, args: anytype) bool {
 }
 extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 
+pub fn checkboxFlags(label: [*:0]const u8, args: anytype) bool {
+    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 2);
+    if (@typeInfo(@TypeOf(args[0])).Pointer.child == i32) {
+        return zguiCheckboxFlagsI32(label, args[0], args[1]);
+    } else {
+        return zguiCheckboxFlagsU32(label, args[0], args[1]);
+    }
+}
+extern fn zguiCheckboxFlagsI32(label: [*:0]const u8, flags: *i32, flags_value: i32) bool;
+extern fn zguiCheckboxFlagsU32(label: [*:0]const u8, flags: *u32, flags_value: u32) bool;
+
 pub fn beginDisabled(args: anytype) void {
     const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
     comptime assert(len == 0 or len == 1);
