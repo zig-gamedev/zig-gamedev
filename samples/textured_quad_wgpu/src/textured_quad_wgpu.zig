@@ -225,19 +225,17 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    if (zgui.begin("Demo Settings", null, .{ .no_move = true, .no_resize = true })) {
+    if (zgui.begin("Demo Settings", .{ null, zgui.WindowFlags{ .no_move = true, .no_resize = true } })) {
         zgui.bulletText(
             "Average :  {d:.3} ms/frame ({d:.1} fps)",
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
         zgui.spacing();
-        _ = zgui.sliderInt(
-            "Mipmap Level",
+        _ = zgui.sliderInt("Mipmap Level", .{
             &demo.mip_level,
             0,
             @intCast(i32, demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1),
-            .{},
-        );
+        });
     }
     zgui.end();
 }

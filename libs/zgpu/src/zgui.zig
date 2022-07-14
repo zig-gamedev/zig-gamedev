@@ -130,23 +130,36 @@ pub const Direction = enum(i32) {
     down = 3,
 };
 
-pub fn begin(name: [:0]const u8, p_open: ?*bool, flags: WindowFlags) bool {
-    return zguiBegin(name, p_open, @bitCast(u32, flags));
+pub fn begin(name: [:0]const u8, args: anytype) bool {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 0 or len == 1 or len == 2);
+    return zguiBegin(
+        name,
+        if (len >= 1) args[0] else null,
+        if (len >= 2) @bitCast(u32, args[1]) else 0,
+    );
 }
 extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 
-pub fn sameLine(args: struct { offset_from_start_x: f32 = 0.0, spacing: f32 = -1.0 }) void {
-    zguiSameLine(args.offset_from_start_x, args.spacing);
+pub fn sameLine(args: anytype) void {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 0 or len == 1 or len == 2);
+    zguiSameLine(
+        if (len >= 1) args[0] else 0.0,
+        if (len >= 2) args[1] else -1.0,
+    );
 }
 extern fn zguiSameLine(offset_from_start_x: f32, spacing: f32) void;
 
-pub fn comboStr(
-    label: [*:0]const u8,
-    current_item: *i32,
-    items_separated_by_zeros: [:0]const u8,
-    popup_max_height_in_items: i32,
-) bool {
-    return zguiComboStr(label, current_item, items_separated_by_zeros, popup_max_height_in_items);
+pub fn combo(label: [*:0]const u8, args: anytype) bool {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len >= 2 and len <= 3);
+    return zguiComboStr(
+        label,
+        args[0],
+        args[1],
+        if (len >= 3) args[2] else -1,
+    );
 }
 extern fn zguiComboStr(
     label: [*:0]const u8,
@@ -155,17 +168,17 @@ extern fn zguiComboStr(
     popup_max_height_in_items: i32,
 ) bool;
 
-pub fn sliderFloat(
-    label: [*:0]const u8,
-    v: *f32,
-    v_min: f32,
-    v_max: f32,
-    args: struct {
-        format: [:0]const u8 = "%.3f",
-        flags: SliderFlags = .{},
-    },
-) bool {
-    return zguiSliderFloat(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
+pub fn sliderFloat(label: [*:0]const u8, args: anytype) bool {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len >= 3 and len <= 5);
+    return zguiSliderFloat(
+        label,
+        args[0],
+        args[1],
+        args[2],
+        if (len >= 4) args[3] else "%.3f",
+        if (len >= 5) @bitCast(u32, args[4]) else 0,
+    );
 }
 extern fn zguiSliderFloat(
     label: [*:0]const u8,
@@ -176,17 +189,17 @@ extern fn zguiSliderFloat(
     flags: u32,
 ) bool;
 
-pub fn sliderInt(
-    label: [*:0]const u8,
-    v: *i32,
-    v_min: i32,
-    v_max: i32,
-    args: struct {
-        format: [:0]const u8 = "%d",
-        flags: SliderFlags = .{},
-    },
-) bool {
-    return zguiSliderInt(label, v, v_min, v_max, args.format, @bitCast(u32, args.flags));
+pub fn sliderInt(label: [*:0]const u8, args: anytype) bool {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len >= 3 and len <= 5);
+    return zguiSliderInt(
+        label,
+        args[0],
+        args[1],
+        args[2],
+        if (len >= 4) args[3] else "%d",
+        if (len >= 5) @bitCast(u32, args[4]) else 0,
+    );
 }
 extern fn zguiSliderInt(
     label: [*:0]const u8,
@@ -217,7 +230,7 @@ pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
 pub fn textUnformattedColored(color: [4]f32, txt: []const u8) void {
-    pushStyleColor(.text, color);
+    pushStyleColor(.text, .{color});
     textUnformatted(txt);
     popStyleColor(.{});
 }
@@ -227,7 +240,7 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
     zguiTextUnformatted(result.ptr, result.ptr + result.len);
 }
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
-    pushStyleColor(.text, color);
+    pushStyleColor(.text, .{color});
     text(fmt, args);
     popStyleColor(.{});
 }
@@ -255,43 +268,77 @@ extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
 
 // Widgets: Main
 
-pub fn button(label: [*:0]const u8, size: struct { w: f32 = 0.0, h: f32 = 0.0 }) bool {
-    return zguiButton(label, size.w, size.h);
+pub fn button(label: [*:0]const u8, args: anytype) bool {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 0 or len == 1 or len == 2);
+    return zguiButton(label, if (len >= 1) args[0] else 0.0, if (len >= 2) args[2] else 0.0);
 }
 extern fn zguiButton(label: [*:0]const u8, w: f32, h: f32) bool;
 
 pub const smallButton = zguiButton;
 extern fn zguiSmallButton(label: [*:0]const u8) bool;
 
-pub fn invisibleButton(str_id: [*:0]const u8, args: struct { w: f32, h: f32, flags: ButtonFlags = .{} }) bool {
-    return zguiInvisibleButton(str_id, args.w, args.h, @bitCast(u32, args.flags));
+pub fn invisibleButton(str_id: [*:0]const u8, args: anytype) bool {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 2 or len == 3);
+    return zguiInvisibleButton(
+        str_id,
+        args[0],
+        args[1],
+        if (len >= 3) @bitCast(u32, args.flags) else 0,
+    );
 }
 extern fn zguiInvisibleButton(str_id: [*:0]const u8, w: f32, h: f32, flags: u32) bool;
 
-pub const arrowButton = zguiArrowButton;
+pub fn arrowButton(label: [*:0]const u8, args: anytype) bool {
+    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
+    return zguiArrowButton(label, args[0]);
+}
 extern fn zguiArrowButton(label: [*:0]const u8, dir: Direction) bool;
 
 pub const bullet = zguiBullet;
 extern fn zguiBullet() void;
 
-pub fn pushStyleColor(idx: StyleColorIndex, color: [4]f32) void {
-    zguiPushStyleColor(idx, &color);
+pub fn pushStyleColor(idx: StyleColorIndex, args: anytype) void {
+    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
+    if (@TypeOf(args[0]) == u32) {
+        zguiPushStyleColorU32(idx, args[0]);
+    } else {
+        zguiPushStyleColor(idx, &args[0]);
+    }
 }
 extern fn zguiPushStyleColor(idx: StyleColorIndex, color: *const [4]f32) void;
+extern fn zguiPushStyleColorU32(idx: StyleColorIndex, color: u32) void;
 
-pub fn popStyleColor(args: struct { count: i32 = 1 }) void {
-    zguiPopStyleColor(args.count);
+pub fn popStyleColor(args: anytype) void {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 0 or len == 1);
+    zguiPopStyleColor(if (len >= 1) args[0] else 1);
 }
 extern fn zguiPopStyleColor(count: i32) void;
 
-pub const radioButtonIntPtr = zguiRadioButtonIntPtr;
+pub fn radioButton(label: [*:0]const u8, args: anytype) bool {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 1 or len == 2);
+    if (len == 1) {
+        return zguiRadioButtonBool(label, args[0]);
+    } else {
+        return zguiRadioButtonIntPtr(label, args[0], args[1]);
+    }
+}
+extern fn zguiRadioButtonBool(label: [*:0]const u8, active: bool) bool;
 extern fn zguiRadioButtonIntPtr(label: [*:0]const u8, v: *i32, v_button: i32) bool;
 
-pub const checkbox = zguiCheckbox;
+pub fn checkbox(label: [*:0]const u8, args: anytype) bool {
+    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
+    return zguiCheckbox(label, args[0]);
+}
 extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 
-pub fn beginDisabled(args: struct { disabled: bool = true }) void {
-    zguiBeginDisabled(args.disabled);
+pub fn beginDisabled(args: anytype) void {
+    const len = @typeInfo(@TypeOf(args)).Struct.fields.len;
+    comptime assert(len == 0 or len == 1);
+    zguiBeginDisabled(if (len >= 1) args[0] else true);
 }
 extern fn zguiBeginDisabled(disabled: bool) void;
 
