@@ -39,6 +39,26 @@ ZGUI_API bool zguiCombo0(
     return ImGui::Combo(label, current_item, items_separated_by_zeros, popup_max_height_in_items);
 }
 
+ZGUI_API bool zguiBeginCombo(const char* label, const char* preview_value, ImGuiComboFlags flags) {
+    return ImGui::BeginCombo(label, preview_value, flags);
+}
+
+ZGUI_API void zguiEndCombo(void) {
+    ImGui::EndCombo();
+}
+
+ZGUI_API bool zguiSelectable0(const char* label, bool selected, ImGuiSelectableFlags flags, float w, float h) {
+    return ImGui::Selectable(label, selected, flags, ImVec2(w, h));
+}
+
+ZGUI_API bool zguiSelectable1(const char* label, bool* p_selected, ImGuiSelectableFlags flags, float w, float h) {
+    return ImGui::Selectable(label, p_selected, flags, ImVec2(w, h));
+}
+
+ZGUI_API void zguiSetItemDefaultFocus(void) {
+    ImGui::SetItemDefaultFocus();
+}
+
 ZGUI_API bool zguiSliderFloat(
     const char* label,
     float* v,
@@ -60,8 +80,6 @@ ZGUI_API bool zguiSliderInt(
 ) {
     return ImGui::SliderInt(label, v, v_min, v_max, format, flags);
 }
-
-// Widgets: Text
 
 ZGUI_API void zguiTextUnformatted(const char* text, const char* text_end) {
     ImGui::TextUnformatted(text, text_end);
@@ -101,8 +119,6 @@ ZGUI_API void zguiLabelText(const char* label, const char* fmt, ...) {
     ImGui::LabelTextV(label, fmt, args);
     va_end(args);
 }
-
-// Widgets: Main
 
 ZGUI_API bool zguiButton(const char* label, float x, float y) {
     return ImGui::Button(label, { x, y });
@@ -147,8 +163,6 @@ ZGUI_API bool zguiCheckboxFlags1(const char* label, unsigned int* flags, unsigne
 ZGUI_API void zguiProgressBar(float fraction, float w, float h, const char* overlay) {
     return ImGui::ProgressBar(fraction, ImVec2(w, h), overlay);
 }
-
-//
 
 ZGUI_API ImGuiContext* zguiCreateContext(ImFontAtlas* shared_font_atlas) {
     return ImGui::CreateContext(shared_font_atlas);

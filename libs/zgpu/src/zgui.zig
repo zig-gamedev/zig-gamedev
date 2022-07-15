@@ -187,6 +187,95 @@ extern fn zguiCombo0(
     popup_max_height_in_items: i32,
 ) bool;
 
+pub const ComboFlags = packed struct {
+    popup_align_left: bool = false,
+    height_small: bool = false,
+    height_regular: bool = false,
+    height_large: bool = false,
+    height_largest: bool = false,
+    no_arrow_button: bool = false,
+    no_preview: bool = false,
+
+    _padding: u25 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+/// `args: .{ preview_value: [*:0]const u8, flags: ComboFlags = .{} }`
+pub fn beginCombo(label: [*:0]const u8, args: anytype) bool {
+    const T = @TypeOf(args);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 1 and len <= 2)) @compileError("Invalid parameter count");
+    if (@hasField(T, "preview_value")) len -= 1;
+    if (@hasField(T, "flags")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
+    return zguiBeginCombo(
+        label,
+        args.preview_value,
+        if (@hasField(T, "flags")) @bitCast(u32, @as(ComboFlags, args.flags)) else 0,
+    );
+}
+extern fn zguiBeginCombo(label: [*:0]const u8, preview_value: ?[*:0]const u8, flags: u32) bool;
+
+pub const endCombo = zguiEndCombo;
+extern fn zguiEndCombo() void;
+
+pub const SelectableFlags = packed struct {
+    dont_close_popups: bool = false,
+    span_all_colums: bool = false,
+    allow_double_click: bool = false,
+    disabled: bool = false,
+    allow_item_overlap: bool = false,
+
+    _padding: u27 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+/// `args: .{ selected: bool = false, flags: SelectableFlags = .{}, w: f32 = 0, h: f32 = 0 }`
+/// `args: .{ p_selected: *bool, flags: SelectableFlags = .{}, w: f32 = 0, h: f32 = 0 }`
+pub fn selectable(label: [*:0]const u8, args: anytype) bool {
+    const T = @TypeOf(args);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 0 and len <= 4)) @compileError("Invalid parameter count");
+    if (@hasField(T, "w")) len -= 1;
+    if (@hasField(T, "h")) len -= 1;
+    if (@hasField(T, "flags")) len -= 1;
+
+    if (@hasField(T, "p_selected")) {
+        len -= 1;
+        return zguiSelectable1(
+            label,
+            args.p_selected,
+            if (@hasField(T, "flags")) @bitCast(u32, @as(SelectableFlags, args.flags)) else 0,
+            if (@hasField(T, "w")) args.w else 0.0,
+            if (@hasField(T, "h")) args.h else 0.0,
+        );
+    } else {
+        if (@hasField(T, "selected")) len -= 1;
+        return zguiSelectable0(
+            label,
+            if (@hasField(T, "selected")) args.selected else false,
+            if (@hasField(T, "flags")) @bitCast(u32, @as(SelectableFlags, args.flags)) else 0,
+            if (@hasField(T, "w")) args.w else 0.0,
+            if (@hasField(T, "h")) args.h else 0.0,
+        );
+    }
+    if (len != 0) @compileError("Invalid parameter name(s)");
+}
+extern fn zguiSelectable0(label: [*:0]const u8, selected: bool, flags: u32, w: f32, h: f32) bool;
+extern fn zguiSelectable1(label: [*:0]const u8, p_selected: *bool, flags: u32, w: f32, h: f32) bool;
+
+pub const setItemDefaultFocus = zguiSetItemDefaultFocus;
+extern fn zguiSetItemDefaultFocus() void;
+
 /// `args: .{ v: *f32, v_min: f32, v_max: f32, format: [*:0]const u8 = "%.3f", flags: SliderFlags = .{} }`
 pub fn sliderFloat(label: [*:0]const u8, args: anytype) bool {
     const T = @TypeOf(args);
@@ -249,8 +338,6 @@ extern fn zguiSliderInt(
     flags: u32,
 ) bool;
 
-// Widgets: Text
-
 pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
@@ -290,8 +377,6 @@ pub fn labelText(label: [*:0]const u8, comptime fmt: []const u8, args: anytype) 
     zguiLabelText(label, "%s", formatZ(fmt, args).ptr);
 }
 extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
-
-// Widgets: Main
 
 /// `args: .{ w: f32 = 0.0, h: f32 = 0.0 }`
 pub fn button(label: [*:0]const u8, args: anytype) bool {
@@ -427,8 +512,6 @@ pub fn progressBar(args: anytype) void {
     );
 }
 extern fn zguiProgressBar(fraction: f32, w: f32, h: f32, overlay: ?[*:0]const u8) void;
-
-//
 
 /// `args: .{ color: u32 }`
 /// `args: .{ color: [4]f32 }`
