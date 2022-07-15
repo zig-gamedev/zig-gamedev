@@ -109,7 +109,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) !void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    if (zgui.begin("Demo Settings", .{ null, zgui.WindowFlags{ .no_move = true, .no_resize = true } })) {
+    if (zgui.begin("Demo Settings", .{ .flags = .{ .no_move = true, .no_resize = true } })) {
         zgui.bullet();
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Average :");
         zgui.sameLine(.{});
@@ -121,14 +121,14 @@ fn update(demo: *DemoState) !void {
         zgui.spacing();
         zgui.text("Music:", .{});
         const music_is_playing = demo.music.isPlaying();
-        if (zgui.button(if (music_is_playing) "Pause" else "Play", .{200.0})) {
+        if (zgui.button(if (music_is_playing) "Pause" else "Play", .{ .w = 200.0 })) {
             if (music_is_playing) {
                 try demo.music.stop();
             } else {
                 try demo.music.start();
             }
         }
-        zgui.sameLine(.{});
+        zgui.sameLine(.{ .offset_from_start_x = 0.0 });
         if (zgui.button("  Rewind  ", .{})) {
             try demo.music.seekToPcmFrame(0);
         }

@@ -301,7 +301,7 @@ fn update(demo: *DemoState) void {
     const dt = demo.gctx.stats.delta_time;
     _ = demo.physics.world.stepSimulation(dt, .{});
 
-    if (zgui.begin("Demo Settings", .{ null, zgui.WindowFlags{ .no_move = true, .no_resize = true } })) {
+    if (zgui.begin("Demo Settings", .{ .flags = .{ .no_move = true, .no_resize = true } })) {
         zgui.bulletText(
             "Average :  {d:.3} ms/frame ({d:.1} fps)",
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
@@ -321,7 +321,10 @@ fn update(demo: *DemoState) void {
                 str = str ++ "Scene: " ++ scenes[i].name ++ "\x00";
             }
             str = str ++ "\x00";
-            _ = zgui.combo("##", .{ &demo.current_scene_index, str });
+            _ = zgui.combo(
+                "##",
+                .{ .current_item = &demo.current_scene_index, .items_separated_by_zeros = str },
+            );
             zgui.sameLine(.{});
             if (zgui.button("  Setup Scene  ", .{})) {
                 cleanupScene(demo.physics.world, &demo.physics.scene_shapes, &demo.entities);
@@ -343,7 +346,10 @@ fn update(demo: *DemoState) void {
             }
             var gravity: [3]f32 = undefined;
             demo.physics.world.getGravity(&gravity);
-            if (zgui.sliderFloat("Gravity", .{ &gravity[1], -default_gravity, default_gravity })) {
+            if (zgui.sliderFloat(
+                "Gravity",
+                .{ .v = &gravity[1], .v_min = -default_gravity, .v_max = default_gravity },
+            )) {
                 demo.physics.world.setGravity(&gravity);
             }
             if (zgui.button("  Disable gravity  ", .{})) {
@@ -356,7 +362,7 @@ fn update(demo: *DemoState) void {
         // Debug draw mode.
         {
             var is_enabled = demo.physics.world.debugGetMode().draw_wireframe;
-            _ = zgui.checkbox("Debug draw enabled", .{&is_enabled});
+            _ = zgui.checkbox("Debug draw enabled", .{ .v = &is_enabled });
             if (is_enabled) {
                 demo.physics.world.debugSetMode(.{ .draw_wireframe = true, .draw_aabb = true });
             } else {

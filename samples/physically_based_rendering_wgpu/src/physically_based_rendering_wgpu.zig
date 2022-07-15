@@ -510,7 +510,7 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    if (zgui.begin("Demo Settings", .{ null, zgui.WindowFlags{ .no_move = true, .no_resize = true } })) {
+    if (zgui.begin("Demo Settings", .{ .flags = .{ .no_move = true, .no_resize = true } })) {
         zgui.bulletText(
             "Average :  {d:.3} ms/frame ({d:.1} fps)",
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
@@ -522,22 +522,22 @@ fn update(demo: *DemoState) void {
         zgui.spacing();
         zgui.spacing();
         zgui.bulletText("Current HDRI :  ", .{});
-        zgui.sameLine(.{ 0.0, 0.0 });
-        if (zgui.combo(
-            "##",
-            .{ &demo.current_hdri_index, "Newport Loft\x00Drackenstein Quarry\x00Freight Station\x00\x00" },
-        )) {
+        zgui.sameLine(.{ .spacing = 0.0 });
+        if (zgui.combo("##", .{
+            .current_item = &demo.current_hdri_index,
+            .items_separated_by_zeros = "Newport Loft\x00Drackenstein Quarry\x00Freight Station\x00\x00",
+        })) {
             demo.is_lighting_precomputed = false;
         }
 
         zgui.spacing();
         zgui.spacing();
-        _ = zgui.radioButton("Draw PBR effect", .{ &demo.draw_mode, 0 });
-        _ = zgui.radioButton("Draw Ambient Occlusion texture", .{ &demo.draw_mode, 1 });
-        _ = zgui.radioButton("Draw Base Color texture", .{ &demo.draw_mode, 2 });
-        _ = zgui.radioButton("Draw Metallic texture", .{ &demo.draw_mode, 3 });
-        _ = zgui.radioButton("Draw Roughness texture", .{ &demo.draw_mode, 4 });
-        _ = zgui.radioButton("Draw Normal texture", .{ &demo.draw_mode, 5 });
+        _ = zgui.radioButton("Draw PBR effect", .{ .v = &demo.draw_mode, .v_button = 0 });
+        _ = zgui.radioButton("Draw Ambient Occlusion texture", .{ .v = &demo.draw_mode, .v_button = 1 });
+        _ = zgui.radioButton("Draw Base Color texture", .{ .v = &demo.draw_mode, .v_button = 2 });
+        _ = zgui.radioButton("Draw Metallic texture", .{ .v = &demo.draw_mode, .v_button = 3 });
+        _ = zgui.radioButton("Draw Roughness texture", .{ .v = &demo.draw_mode, .v_button = 4 });
+        _ = zgui.radioButton("Draw Normal texture", .{ .v = &demo.draw_mode, .v_button = 5 });
     }
     zgui.end();
 
