@@ -130,8 +130,13 @@ pub const Direction = enum(i32) {
 /// `args: .{ p_open: ?*bool = null, flags: WindowFlags = .{} }`
 pub fn begin(name: [:0]const u8, args: anytype) bool {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len == 0 or len == 1 or len == 2);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 0 and len <= 2)) @compileError("Invalid parameter count");
+    if (@hasField(T, "p_open")) len -= 1;
+    if (@hasField(T, "flags")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     return zguiBegin(
         name,
         if (@hasField(T, "p_open")) args.p_open else null,
@@ -143,8 +148,13 @@ extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 /// `args: .{ offset_from_start_x: f32 = 0.0, spacing: f32 = -1.0 }`
 pub fn sameLine(args: anytype) void {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len == 0 or len == 1 or len == 2);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 0 and len <= 2)) @compileError("Invalid parameter count");
+    if (@hasField(T, "offset_from_start_x")) len -= 1;
+    if (@hasField(T, "spacing")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     zguiSameLine(
         if (@hasField(T, "offset_from_start_x")) args.offset_from_start_x else 0.0,
         if (@hasField(T, "spacing")) args.spacing else -1.0,
@@ -155,8 +165,14 @@ extern fn zguiSameLine(offset_from_start_x: f32, spacing: f32) void;
 /// `args: .{ current_item: *i32, items_separated_by_zeros: [*:0]const u8, popup_max_height_in_items: i32 = -1 }`
 pub fn combo(label: [*:0]const u8, args: anytype) bool {
     const T = @TypeOf(args);
-    const len = @typeInfo(T).Struct.fields.len;
-    comptime assert(len >= 2 and len <= 3);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 2 and len <= 3)) @compileError("Invalid parameter count");
+    if (@hasField(T, "current_item")) len -= 1;
+    if (@hasField(T, "items_separated_by_zeros")) len -= 1;
+    if (@hasField(T, "popup_max_height_in_items")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     return zguiCombo0(
         label,
         args.current_item,
@@ -174,8 +190,16 @@ extern fn zguiCombo0(
 /// `args: .{ v: *f32, v_min: f32, v_max: f32, format: [*:0]const u8 = "%.3f", flags: SliderFlags = .{} }`
 pub fn sliderFloat(label: [*:0]const u8, args: anytype) bool {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len >= 3 and len <= 5);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 3 and len <= 5)) @compileError("Invalid parameter count");
+    if (@hasField(T, "v")) len -= 1;
+    if (@hasField(T, "v_min")) len -= 1;
+    if (@hasField(T, "v_max")) len -= 1;
+    if (@hasField(T, "format")) len -= 1;
+    if (@hasField(T, "flags")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     return zguiSliderFloat(
         label,
         args.v,
@@ -197,8 +221,16 @@ extern fn zguiSliderFloat(
 /// `args: .{ v: *i32, v_min: i32, v_max: i32, format: [*:0]const u8 = "%d", flags: SliderFlags = .{} }`
 pub fn sliderInt(label: [*:0]const u8, args: anytype) bool {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len >= 3 and len <= 5);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 3 and len <= 5)) @compileError("Invalid parameter count");
+    if (@hasField(T, "v")) len -= 1;
+    if (@hasField(T, "v_min")) len -= 1;
+    if (@hasField(T, "v_max")) len -= 1;
+    if (@hasField(T, "format")) len -= 1;
+    if (@hasField(T, "flags")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     return zguiSliderInt(
         label,
         args.v,
@@ -216,20 +248,6 @@ extern fn zguiSliderInt(
     format: [*:0]const u8,
     flags: u32,
 ) bool;
-
-var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
-
-fn format(comptime fmt: []const u8, args: anytype) []const u8 {
-    const len = std.fmt.count(fmt, args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
-    return std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
-}
-
-fn formatZ(comptime fmt: []const u8, args: anytype) [:0]const u8 {
-    const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
-    return std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
-}
 
 // Widgets: Text
 
@@ -275,23 +293,16 @@ extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
 
 // Widgets: Main
 
-fn getArgsLen(comptime T: type) comptime_int {
-    const type_info = @typeInfo(T);
-    const len = type_info.Struct.fields.len;
-    if (len > 0) comptime assert(type_info.Struct.is_tuple == false);
-    return len;
-}
-
 /// `args: .{ w: f32 = 0.0, h: f32 = 0.0 }`
 pub fn button(label: [*:0]const u8, args: anytype) bool {
     const T = @TypeOf(args);
     comptime var len = getArgsLen(T);
-    comptime assert(len == 0 or len == 1 or len == 2);
-    if (len > 0) {
-        if (@hasField(T, "w")) len -= 1;
-        if (@hasField(T, "h")) len -= 1;
-        comptime assert(len == 0); // TODO: Incorrect name detected - call @compileError().
-    }
+
+    if (!(len >= 0 and len <= 2)) @compileError("Invalid parameter count");
+    if (@hasField(T, "w")) len -= 1;
+    if (@hasField(T, "h")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     return zguiButton(
         label,
         if (@hasField(T, "w")) args.w else 0.0,
@@ -306,8 +317,14 @@ extern fn zguiSmallButton(label: [*:0]const u8) bool;
 /// `args: .{ w: f32, h: f32, flags: ButtonFlags = .{} }`
 pub fn invisibleButton(str_id: [*:0]const u8, args: anytype) bool {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len == 2 or len == 3);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 2 and len <= 3)) @compileError("Invalid parameter count");
+    if (@hasField(T, "w")) len -= 1;
+    if (@hasField(T, "h")) len -= 1;
+    if (@hasField(T, "flags")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     return zguiInvisibleButton(
         str_id,
         args.w,
@@ -319,7 +336,13 @@ extern fn zguiInvisibleButton(str_id: [*:0]const u8, w: f32, h: f32, flags: u32)
 
 /// `args: .{ dir: Direction }`
 pub fn arrowButton(label: [*:0]const u8, args: anytype) bool {
-    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
+    const T = @TypeOf(args);
+    comptime var len = getArgsLen(T);
+
+    if (len != 1) @compileError("Invalid parameter count");
+    if (@hasField(T, "dir")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     return zguiArrowButton(label, args.dir);
 }
 extern fn zguiArrowButton(label: [*:0]const u8, dir: Direction) bool;
@@ -331,11 +354,20 @@ extern fn zguiBullet() void;
 /// `args: .{ v: *i32, v_button: i32 }`
 pub fn radioButton(label: [*:0]const u8, args: anytype) bool {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len == 1 or len == 2);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 1 and len <= 2)) @compileError("Invalid parameter count");
+
     if (len == 1 and @hasField(T, "active")) {
+        if (@hasField(T, "active")) len -= 1;
+        if (len != 0) @compileError("Invalid parameter name(s)");
+
         return zguiRadioButton0(label, args.active);
     } else {
+        if (@hasField(T, "v")) len -= 1;
+        if (@hasField(T, "v_button")) len -= 1;
+        if (len != 0) @compileError("Invalid parameter name(s)");
+
         return zguiRadioButton1(label, args.v, args.v_button);
     }
 }
@@ -344,7 +376,13 @@ extern fn zguiRadioButton1(label: [*:0]const u8, v: *i32, v_button: i32) bool;
 
 /// `args: .{ v: *bool }`
 pub fn checkbox(label: [*:0]const u8, args: anytype) bool {
-    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
+    const T = @TypeOf(args);
+    comptime var len = getArgsLen(T);
+
+    if (len != 1) @compileError("Invalid parameter count");
+    if (@hasField(T, "v")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     return zguiCheckbox(label, args.v);
 }
 extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
@@ -352,7 +390,14 @@ extern fn zguiCheckbox(label: [*:0]const u8, v: *bool) bool;
 /// `args: .{ flags: *i32, flags_value: i32 }`
 /// `args: .{ flags: *u32, flags_value: u32 }`
 pub fn checkboxFlags(label: [*:0]const u8, args: anytype) bool {
-    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 2);
+    const T = @TypeOf(args);
+    comptime var len = getArgsLen(T);
+
+    if (len != 2) @compileError("Invalid parameter count");
+    if (@hasField(T, "flags")) len -= 1;
+    if (@hasField(T, "flags_value")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     if (@typeInfo(@TypeOf(args.flags)).Pointer.child == i32) {
         return zguiCheckboxFlags0(label, args.flags, args.flags_value);
     } else {
@@ -365,8 +410,15 @@ extern fn zguiCheckboxFlags1(label: [*:0]const u8, flags: *u32, flags_value: u32
 /// `args: .{ fraction: f32, w: f32 = -math.f32_min, h: f32 = 0.0, overlay: ?[*:0]const u8 = null }`
 pub fn progressBar(args: anytype) void {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len >= 1 and len <= 4);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 1 and len <= 4)) @compileError("Invalid parameter count");
+    if (@hasField(T, "fraction")) len -= 1;
+    if (@hasField(T, "w")) len -= 1;
+    if (@hasField(T, "h")) len -= 1;
+    if (@hasField(T, "overlay")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     zguiProgressBar(
         args.fraction,
         if (@hasField(T, "w")) args.w else -std.math.f32_min,
@@ -381,7 +433,13 @@ extern fn zguiProgressBar(fraction: f32, w: f32, h: f32, overlay: ?[*:0]const u8
 /// `args: .{ color: u32 }`
 /// `args: .{ color: [4]f32 }`
 pub fn pushStyleColor(idx: StyleColorIndex, args: anytype) void {
-    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 1);
+    const T = @TypeOf(args);
+    comptime var len = getArgsLen(T);
+
+    if (len != 1) @compileError("Invalid parameter count");
+    if (@hasField(T, "color")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     if (@TypeOf(args.color) == u32) {
         zguiPushStyleColor0(idx, args.color);
     } else {
@@ -394,8 +452,12 @@ extern fn zguiPushStyleColor1(idx: StyleColorIndex, color: *const [4]f32) void;
 /// `args: .{ count: i32 = 1 }`
 pub fn popStyleColor(args: anytype) void {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len == 0 or len == 1);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 0 and len <= 1)) @compileError("Invalid parameter count");
+    if (@hasField(T, "count")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     zguiPopStyleColor(
         if (@hasField(T, "count")) args.count else 1,
     );
@@ -405,8 +467,12 @@ extern fn zguiPopStyleColor(count: i32) void;
 /// `args: .{ disabled: bool = true }`
 pub fn beginDisabled(args: anytype) void {
     const T = @TypeOf(args);
-    const len = getArgsLen(T);
-    comptime assert(len == 0 or len == 1);
+    comptime var len = getArgsLen(T);
+
+    if (!(len >= 0 and len <= 1)) @compileError("Invalid parameter count");
+    if (@hasField(T, "disabled")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     zguiBeginDisabled(
         if (@hasField(T, "disabled")) args.disabled else true,
     );
@@ -430,7 +496,14 @@ extern fn zguiSeparator() void;
 
 /// `args: .{ w: f32, h: f32 }`
 pub fn dummy(args: anytype) void {
-    comptime assert(@typeInfo(@TypeOf(args)).Struct.fields.len == 2);
+    const T = @TypeOf(args);
+    comptime var len = getArgsLen(T);
+
+    if (len != 2) @compileError("Invalid parameter count");
+    if (@hasField(T, "w")) len -= 1;
+    if (@hasField(T, "h")) len -= 1;
+    if (len != 0) @compileError("Invalid parameter name(s)");
+
     zguiDummy(args.w, args.h);
 }
 extern fn zguiDummy(w: f32, h: f32) void;
@@ -446,3 +519,28 @@ extern fn zguiGetDrawData() DrawData;
 
 pub const showDemoWindow = zguiShowDemoWindow;
 extern fn zguiShowDemoWindow(p_open: ?*bool) void;
+
+//
+
+var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
+
+fn format(comptime fmt: []const u8, args: anytype) []const u8 {
+    const len = std.fmt.count(fmt, args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
+    return std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
+}
+
+fn formatZ(comptime fmt: []const u8, args: anytype) [:0]const u8 {
+    const len = std.fmt.count(fmt ++ "\x00", args);
+    if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
+    return std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+}
+
+fn getArgsLen(comptime T: type) comptime_int {
+    const type_info = @typeInfo(T);
+    const len = type_info.Struct.fields.len;
+    if (len > 0 and type_info.Struct.is_tuple) {
+        @compileError("Expected struct with named fields but got tuple");
+    }
+    return len;
+}
