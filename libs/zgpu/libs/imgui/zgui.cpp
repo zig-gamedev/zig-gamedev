@@ -2,6 +2,14 @@
 
 #define ZGUI_API extern "C"
 
+ZGUI_API void zguiSetNextWindowPos(float x, float y, ImGuiCond cond, float pivot_x, float pivot_y) {
+    ImGui::SetNextWindowPos(ImVec2(x, y), cond, ImVec2(pivot_x, pivot_y));
+}
+
+ZGUI_API void zguiSetNextWindowSize(float w, float h, ImGuiCond cond) {
+    ImGui::SetNextWindowSize(ImVec2(w, h), cond);
+}
+
 ZGUI_API bool zguiBegin(const char* name, bool* p_open, ImGuiWindowFlags flags) {
     return ImGui::Begin(name, p_open, flags);
 }
@@ -132,8 +140,8 @@ ZGUI_API bool zguiInvisibleButton(const char* str_id, float w, float h, ImGuiBut
     return ImGui::InvisibleButton(str_id, ImVec2(w, h), flags);
 }
 
-ZGUI_API bool zguiArrowButton(const char* label, ImGuiDir dir) {
-    return ImGui::ArrowButton(label, dir);
+ZGUI_API bool zguiArrowButton(const char* str_id, ImGuiDir dir) {
+    return ImGui::ArrowButton(str_id, dir);
 }
 
 ZGUI_API void zguiBullet(void) {
@@ -215,6 +223,16 @@ ZGUI_API void zguiPushStyleColor1(ImGuiCol_ idx, float color[4]) {
 ZGUI_API void zguiPopStyleColor(int count) {
     ImGui::PopStyleColor(count);
 }
+
+ZGUI_API bool zguiTreeNode(const char* label) {
+    return ImGui::TreeNode(label);
+}
+
+ZGUI_API void zguiTreePop(void) {
+    ImGui::TreePop();
+}
+
+//
 
 ZGUI_API bool zguiIoGetWantCaptureMouse(void) {
     return ImGui::GetIO().WantCaptureMouse;

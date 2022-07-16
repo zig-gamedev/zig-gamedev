@@ -28,6 +28,7 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
     installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
     installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+    installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
 
     //
     // Windows-only demos
@@ -125,6 +126,7 @@ const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
 const physically_based_rendering_wgpu = @import("samples/physically_based_rendering_wgpu/build.zig");
 const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
 const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
+const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
