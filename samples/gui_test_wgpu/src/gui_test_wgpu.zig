@@ -89,6 +89,7 @@ fn update(demo: *DemoState) !void {
             var flags_u32: u32 = 0xf;
             var radio_value: u32 = 0;
             var month: i32 = 1;
+            var progress: f32 = 0.0;
         };
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Checkbox");
         _ = zgui.checkbox("Magic Is Everywhere", .{ .v = &static.check0 });
@@ -115,7 +116,15 @@ fn update(demo: *DemoState) !void {
         _ = zgui.radioButton("February", .{ .v = &static.month, .v_button = 2 });
         zgui.sameLine(.{});
         _ = zgui.radioButton("March", .{ .v = &static.month, .v_button = 3 });
+        zgui.spacing();
 
+        zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Progress bar");
+        zgui.progressBar(.{ .fraction = static.progress });
+        static.progress += 0.005;
+        if (static.progress > 1.0) static.progress = 0.0;
+        zgui.spacing();
+
+        zgui.bulletText("keep going...", .{});
         zgui.treePop();
     }
 

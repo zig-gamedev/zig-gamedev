@@ -541,7 +541,7 @@ pub fn checkboxFlags(label: [*:0]const u8, args: anytype) bool {
 extern fn zguiCheckboxFlags0(label: [*:0]const u8, flags: *i32, flags_value: i32) bool;
 extern fn zguiCheckboxFlags1(label: [*:0]const u8, flags: *u32, flags_value: u32) bool;
 
-/// `args: .{ fraction: f32, w: f32 = -math.f32_min, h: f32 = 0.0, overlay: ?[*:0]const u8 = null }`
+/// `args: .{ fraction: f32, w: f32 = -1.0, h: f32 = 0.0, overlay: ?[*:0]const u8 = null }`
 pub fn progressBar(args: anytype) void {
     const T = @TypeOf(args);
     comptime var len = getArgsLen(T);
@@ -555,7 +555,7 @@ pub fn progressBar(args: anytype) void {
 
     zguiProgressBar(
         args.fraction,
-        if (@hasField(T, "w")) args.w else -std.math.f32_min,
+        if (@hasField(T, "w")) args.w else -1.0,
         if (@hasField(T, "h")) args.h else 0.0,
         if (@hasField(T, "overlay")) args.overlay else null,
     );
