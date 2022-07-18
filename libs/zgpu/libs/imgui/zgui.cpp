@@ -3,11 +3,11 @@
 #define ZGUI_API extern "C"
 
 ZGUI_API void zguiSetNextWindowPos(float x, float y, ImGuiCond cond, float pivot_x, float pivot_y) {
-    ImGui::SetNextWindowPos(ImVec2(x, y), cond, ImVec2(pivot_x, pivot_y));
+    ImGui::SetNextWindowPos({ x, y }, cond, { pivot_x, pivot_y });
 }
 
 ZGUI_API void zguiSetNextWindowSize(float w, float h, ImGuiCond cond) {
-    ImGui::SetNextWindowSize(ImVec2(w, h), cond);
+    ImGui::SetNextWindowSize({ w, h }, cond);
 }
 
 ZGUI_API bool zguiBegin(const char* name, bool* p_open, ImGuiWindowFlags flags) {
@@ -26,6 +26,14 @@ ZGUI_API void zguiNewLine(void) {
     ImGui::NewLine();
 }
 
+ZGUI_API void zguiIndent(void) {
+    ImGui::Indent();
+}
+
+ZGUI_API void zguiUnindent(void) {
+    ImGui::Unindent();
+}
+
 ZGUI_API void zguiSeparator(void) {
     ImGui::Separator();
 }
@@ -38,7 +46,158 @@ ZGUI_API void zguiDummy(float w, float h) {
     ImGui::Dummy({ w, h });
 }
 
-ZGUI_API bool zguiCombo0(
+ZGUI_API bool zguiDragFloat(
+    const char* label,
+    float* v,
+    float v_speed,
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragFloat(label, v, v_speed, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiDragFloat2(
+    const char* label,
+    float v[2],
+    float v_speed,
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragFloat2(label, v, v_speed, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiDragFloat3(
+    const char* label,
+    float v[3],
+    float v_speed,
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragFloat3(label, v, v_speed, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiDragFloat4(
+    const char* label,
+    float v[4],
+    float v_speed,
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragFloat4(label, v, v_speed, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiDragFloatRange2(
+    const char* label,
+    float* v_current_min,
+    float* v_current_max,
+    float v_speed,
+    float v_min,
+    float v_max,
+    const char* format,
+    const char* format_max,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragFloatRange2(label, v_current_min, v_current_max, v_speed, v_min, v_max, format, format_max, flags);
+}
+
+ZGUI_API bool zguiDragInt(
+    const char* label,
+    int* v,
+    float v_speed,
+    int v_min,
+    int v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragInt(label, v, v_speed, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiDragInt2(
+    const char* label,
+    int v[2],
+    float v_speed,
+    int v_min,
+    int v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragInt2(label, v, v_speed, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiDragInt3(
+    const char* label,
+    int v[3],
+    float v_speed,
+    int v_min,
+    int v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragInt3(label, v, v_speed, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiDragInt4(
+    const char* label,
+    int v[4],
+    float v_speed,
+    int v_min,
+    int v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragInt4(label, v, v_speed, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiDragIntRange2(
+    const char* label,
+    int* v_current_min,
+    int* v_current_max,
+    float v_speed,
+    int v_min,
+    int v_max,
+    const char* format,
+    const char* format_max,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragIntRange2(label, v_current_min, v_current_max, v_speed, v_min, v_max, format, format_max, flags);
+}
+
+ZGUI_API bool zguiDragScalar(
+    const char* label,
+    ImGuiDataType data_type,
+    void* p_data,
+    float v_speed,
+    const void* p_min,
+    const void* p_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragScalar(label, data_type, p_data, v_speed, p_min, p_max, format, flags);
+}
+
+ZGUI_API bool zguiDragScalarN(
+    const char* label,
+    ImGuiDataType data_type,
+    void* p_data,
+    int components,
+    float v_speed,
+    const void* p_min,
+    const void* p_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::DragScalarN(label, data_type, p_data, components, v_speed, p_min, p_max, format, flags);
+}
+
+ZGUI_API bool zguiCombo(
     const char* label,
     int* current_item,
     const char* items_separated_by_zeros,
@@ -55,16 +214,12 @@ ZGUI_API void zguiEndCombo(void) {
     ImGui::EndCombo();
 }
 
-ZGUI_API bool zguiSelectable0(const char* label, bool selected, ImGuiSelectableFlags flags, float w, float h) {
-    return ImGui::Selectable(label, selected, flags, ImVec2(w, h));
+ZGUI_API bool zguiSelectable(const char* label, bool selected, ImGuiSelectableFlags flags, float w, float h) {
+    return ImGui::Selectable(label, selected, flags, { w, h });
 }
 
-ZGUI_API bool zguiSelectable1(const char* label, bool* p_selected, ImGuiSelectableFlags flags, float w, float h) {
-    return ImGui::Selectable(label, p_selected, flags, ImVec2(w, h));
-}
-
-ZGUI_API void zguiSetItemDefaultFocus(void) {
-    ImGui::SetItemDefaultFocus();
+ZGUI_API bool zguiSelectableStatePtr(const char* label, bool* p_selected, ImGuiSelectableFlags flags, float w, float h) {
+    return ImGui::Selectable(label, p_selected, flags, { w, h });
 }
 
 ZGUI_API bool zguiSliderFloat(
@@ -78,6 +233,39 @@ ZGUI_API bool zguiSliderFloat(
     return ImGui::SliderFloat(label, v, v_min, v_max, format, flags);
 }
 
+ZGUI_API bool zguiSliderFloat2(
+    const char* label,
+    float v[2],
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderFloat2(label, v, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiSliderFloat3(
+    const char* label,
+    float v[3],
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderFloat3(label, v, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiSliderFloat4(
+    const char* label,
+    float v[4],
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderFloat4(label, v, v_min, v_max, format, flags);
+}
+
 ZGUI_API bool zguiSliderInt(
     const char* label,
     int* v,
@@ -89,6 +277,104 @@ ZGUI_API bool zguiSliderInt(
     return ImGui::SliderInt(label, v, v_min, v_max, format, flags);
 }
 
+ZGUI_API bool zguiSliderInt2(
+    const char* label,
+    int v[2],
+    int v_min,
+    int v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderInt2(label, v, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiSliderInt3(
+    const char* label,
+    int v[3],
+    int v_min,
+    int v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderInt3(label, v, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiSliderInt4(
+    const char* label,
+    int v[4],
+    int v_min,
+    int v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderInt4(label, v, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiSliderScalar(
+    const char* label,
+    ImGuiDataType data_type,
+    void* p_data,
+    const void* p_min,
+    const void* p_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderScalar(label, data_type, p_data, p_min, p_max, format, flags);
+}
+
+ZGUI_API bool zguiSliderScalarN(
+    const char* label,
+    ImGuiDataType data_type,
+    void* p_data,
+    int components,
+    const void* p_min,
+    const void* p_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderScalarN(label, data_type, p_data, components, p_min, p_max, format, flags);
+}
+
+ZGUI_API bool zguiVSliderFloat(
+    const char* label,
+    float w,
+    float h,
+    float* v,
+    float v_min,
+    float v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::VSliderFloat(label, { w, h }, v, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiVSliderInt(
+    const char* label,
+    float w,
+    float h,
+    int* v,
+    int v_min,
+    int v_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::VSliderInt(label, { w, h }, v, v_min, v_max, format, flags);
+}
+
+ZGUI_API bool zguiVSliderScalar(
+    const char* label,
+    float w,
+    float h,
+    ImGuiDataType data_type,
+    void* p_data,
+    const void* p_min,
+    const void* p_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::VSliderScalar(label, { w, h }, data_type, p_data, p_min, p_max, format, flags);
+}
+
 ZGUI_API void zguiTextUnformatted(const char* text, const char* text_end) {
     ImGui::TextUnformatted(text, text_end);
 }
@@ -96,7 +382,7 @@ ZGUI_API void zguiTextUnformatted(const char* text, const char* text_end) {
 ZGUI_API void zguiTextColored(float color[4], const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    ImGui::TextColoredV(ImVec4(color[0], color[1], color[2], color[3]), fmt, args);
+    ImGui::TextColoredV({ color[0], color[1], color[2], color[3] }, fmt, args);
     va_end(args);
 }
 
@@ -137,7 +423,7 @@ ZGUI_API bool zguiSmallButton(const char* label) {
 }
 
 ZGUI_API bool zguiInvisibleButton(const char* str_id, float w, float h, ImGuiButtonFlags flags) {
-    return ImGui::InvisibleButton(str_id, ImVec2(w, h), flags);
+    return ImGui::InvisibleButton(str_id, { w, h }, flags);
 }
 
 ZGUI_API bool zguiArrowButton(const char* str_id, ImGuiDir dir) {
@@ -148,11 +434,11 @@ ZGUI_API void zguiBullet(void) {
     ImGui::Bullet();
 }
 
-ZGUI_API bool zguiRadioButton0(const char* label, bool active) {
+ZGUI_API bool zguiRadioButton(const char* label, bool active) {
     return ImGui::RadioButton(label, active);
 }
 
-ZGUI_API bool zguiRadioButton1(const char* label, int* v, int v_button) {
+ZGUI_API bool zguiRadioButtonStatePtr(const char* label, int* v, int v_button) {
     return ImGui::RadioButton(label, v, v_button);
 }
 
@@ -160,16 +446,12 @@ ZGUI_API bool zguiCheckbox(const char* label, bool* v) {
     return ImGui::Checkbox(label, v);
 }
 
-ZGUI_API bool zguiCheckboxFlags0(const char* label, int* flags, int flags_value) {
-    return ImGui::CheckboxFlags(label, flags, flags_value);
-}
-
-ZGUI_API bool zguiCheckboxFlags1(const char* label, unsigned int* flags, unsigned int flags_value) {
-    return ImGui::CheckboxFlags(label, flags, flags_value);
+ZGUI_API bool zguiCheckboxBits(const char* label, unsigned int* bits, unsigned int bits_value) {
+    return ImGui::CheckboxFlags(label, bits, bits_value);
 }
 
 ZGUI_API void zguiProgressBar(float fraction, float w, float h, const char* overlay) {
-    return ImGui::ProgressBar(fraction, ImVec2(w, h), overlay);
+    return ImGui::ProgressBar(fraction, { w, h }, overlay);
 }
 
 ZGUI_API ImGuiContext* zguiCreateContext(ImFontAtlas* shared_font_atlas) {
@@ -212,12 +494,8 @@ ZGUI_API void zguiEndDisabled(void) {
     ImGui::EndDisabled();
 }
 
-ZGUI_API void zguiPushStyleColor0(ImGuiCol_ idx, ImU32 color) {
-    ImGui::PushStyleColor(idx, color);
-}
-
-ZGUI_API void zguiPushStyleColor1(ImGuiCol_ idx, float color[4]) {
-    ImGui::PushStyleColor(idx, ImVec4(color[0], color[1], color[2], color[3]));
+ZGUI_API void zguiPushStyleColor(ImGuiCol idx, float color[4]) {
+    ImGui::PushStyleColor(idx, { color[0], color[1], color[2], color[3] });
 }
 
 ZGUI_API void zguiPopStyleColor(int count) {

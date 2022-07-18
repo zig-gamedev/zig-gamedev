@@ -532,12 +532,12 @@ fn update(demo: *DemoState) void {
 
         zgui.spacing();
         zgui.spacing();
-        _ = zgui.radioButton("Draw PBR effect", .{ .v = &demo.draw_mode, .v_button = 0 });
-        _ = zgui.radioButton("Draw Ambient Occlusion texture", .{ .v = &demo.draw_mode, .v_button = 1 });
-        _ = zgui.radioButton("Draw Base Color texture", .{ .v = &demo.draw_mode, .v_button = 2 });
-        _ = zgui.radioButton("Draw Metallic texture", .{ .v = &demo.draw_mode, .v_button = 3 });
-        _ = zgui.radioButton("Draw Roughness texture", .{ .v = &demo.draw_mode, .v_button = 4 });
-        _ = zgui.radioButton("Draw Normal texture", .{ .v = &demo.draw_mode, .v_button = 5 });
+        _ = zgui.radioButtonStatePtr("Draw PBR effect", .{ .v = &demo.draw_mode, .v_button = 0 });
+        _ = zgui.radioButtonStatePtr("Draw Ambient Occlusion texture", .{ .v = &demo.draw_mode, .v_button = 1 });
+        _ = zgui.radioButtonStatePtr("Draw Base Color texture", .{ .v = &demo.draw_mode, .v_button = 2 });
+        _ = zgui.radioButtonStatePtr("Draw Metallic texture", .{ .v = &demo.draw_mode, .v_button = 3 });
+        _ = zgui.radioButtonStatePtr("Draw Roughness texture", .{ .v = &demo.draw_mode, .v_button = 4 });
+        _ = zgui.radioButtonStatePtr("Draw Normal texture", .{ .v = &demo.draw_mode, .v_button = 5 });
     }
     zgui.end();
 

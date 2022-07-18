@@ -1,4 +1,4 @@
-**Project requires [Zig 0.10.0-dev.3207 (master)](https://ziglang.org/download/) or newer to compile.**
+**Project requires [Zig 0.10.0-dev.3027 (master)](https://ziglang.org/download/) or newer to compile.**
 # zig-gamedev project
 
 This repository contains a collection of [sample applications](#cross-platfrom-sample-applications-native-webgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: cross-platform graphics, multi-threaded physics, SIMD math, procedural content generation (basic), profiling and more.
@@ -9,7 +9,7 @@ If you are interested, please see [Monthly Progress Reports](https://github.com/
 
 To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 
-(`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.0-dev.3207 (master)](https://ziglang.org/download/) or newer is required)
+(`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.0-dev.3027 (master)](https://ziglang.org/download/) or newer is required)
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
