@@ -446,6 +446,42 @@ ZGUI_API bool zguiInputInt4(const char* label, int v[4], ImGuiInputTextFlags fla
     return ImGui::InputInt4(label, v, flags);
 }
 
+ZGUI_API bool zguiInputDouble(
+    const char* label,
+    double* v,
+    double step,
+    double step_fast,
+    const char* format,
+    ImGuiInputTextFlags flags
+) {
+    return ImGui::InputDouble(label, v, step, step_fast, format, flags);
+}
+
+ZGUI_API bool zguiInputScalar(
+    const char* label,
+    ImGuiDataType data_type,
+    void* p_data,
+    const void* p_step,
+    const void* p_step_fast,
+    const char* format,
+    ImGuiInputTextFlags flags
+) {
+    return ImGui::InputScalar(label, data_type, p_data, p_step, p_step_fast, format, flags);
+}
+
+ZGUI_API bool zguiInputScalarN(
+    const char* label,
+    ImGuiDataType data_type,
+    void* p_data,
+    int components,
+    const void* p_step,
+    const void* p_step_fast,
+    const char* format,
+    ImGuiInputTextFlags flags
+) {
+    return ImGui::InputScalarN(label, data_type, p_data, components, p_step, p_step_fast, format, flags);
+}
+
 ZGUI_API void zguiTextUnformatted(const char* text, const char* text_end) {
     ImGui::TextUnformatted(text, text_end);
 }

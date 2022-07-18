@@ -237,6 +237,9 @@ fn update(demo: *DemoState) !void {
             var v2i: [2]i32 = .{ 0, 0 };
             var v3i: [3]i32 = .{ 0, 0, 0 };
             var v4i: [4]i32 = .{ 0, 0, 0, 0 };
+            var sf64: f64 = 0.0;
+            var si8: i8 = 0;
+            var v3u8: [3]u8 = .{ 0, 0, 0 };
         };
         _ = zgui.inputFloat("Input float 1", .{ .v = &static.v1 });
         _ = zgui.inputFloat2("Input float 2", .{ .v = &static.v2 });
@@ -246,6 +249,9 @@ fn update(demo: *DemoState) !void {
         _ = zgui.inputInt2("Input int 2", .{ .v = &static.v2i });
         _ = zgui.inputInt3("Input int 3", .{ .v = &static.v3i });
         _ = zgui.inputInt4("Input int 4", .{ .v = &static.v4i });
+        _ = zgui.inputDouble("Input double", .{ .v = &static.sf64 });
+        _ = zgui.inputScalar("Input scalar (i8)", i8, .{ .v = &static.si8 });
+        _ = zgui.inputScalarN("Input scalar N ([3]u8)", [3]u8, .{ .v = &static.v3u8 });
         zgui.treePop();
     }
 

@@ -1187,6 +1187,90 @@ pub fn inputInt4(label: [:0]const u8, args: InputInt4) bool {
 }
 extern fn zguiInputInt4(label: [*:0]const u8, v: *[4]i32, flags: u32) bool;
 //--------------------------------------------------------------------------------------------------
+const InputDouble = struct {
+    v: *f64,
+    step: f64 = 0.0,
+    step_fast: f64 = 0.0,
+    format: [:0]const u8 = "%.6f",
+    flags: InputTextFlags = .{},
+};
+pub fn inputDouble(label: [:0]const u8, args: InputDouble) bool {
+    return zguiInputDouble(label, args.v, args.step, args.step_fast, args.format, @bitCast(u32, args.flags));
+}
+extern fn zguiInputDouble(
+    label: [*:0]const u8,
+    v: *f64,
+    step: f64,
+    step_fast: f64,
+    format: [*:0]const u8,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
+fn InputScalarGen(comptime T: type) type {
+    return struct {
+        v: *T,
+        step: ?T = null,
+        step_fast: ?T = null,
+        format: ?[:0]const u8 = null,
+        flags: InputTextFlags = .{},
+    };
+}
+pub fn inputScalar(label: [:0]const u8, comptime T: type, args: InputScalarGen(T)) bool {
+    return zguiInputScalar(
+        label,
+        typeToDataTypeEnum(T),
+        args.v,
+        if (args.step) |s| &s else null,
+        if (args.step_fast) |sf| &sf else null,
+        if (args.format) |fmt| fmt else null,
+        @bitCast(u32, args.flags),
+    );
+}
+extern fn zguiInputScalar(
+    label: [*:0]const u8,
+    data_type: DataType,
+    p_data: *anyopaque,
+    p_step: ?*const anyopaque,
+    p_step_fast: ?*const anyopaque,
+    format: ?[*:0]const u8,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
+fn InputScalarNGen(comptime T: type) type {
+    const ScalarType = @typeInfo(T).Array.child;
+    return struct {
+        v: *T,
+        step: ?ScalarType = null,
+        step_fast: ?ScalarType = null,
+        format: ?[:0]const u8 = null,
+        flags: InputTextFlags = .{},
+    };
+}
+pub fn inputScalarN(label: [:0]const u8, comptime T: type, args: InputScalarNGen(T)) bool {
+    const ScalarType = @typeInfo(T).Array.child;
+    const components = @typeInfo(T).Array.len;
+    return zguiInputScalarN(
+        label,
+        typeToDataTypeEnum(ScalarType),
+        args.v,
+        components,
+        if (args.step) |s| &s else null,
+        if (args.step_fast) |sf| &sf else null,
+        if (args.format) |fmt| fmt else null,
+        @bitCast(u32, args.flags),
+    );
+}
+extern fn zguiInputScalarN(
+    label: [*:0]const u8,
+    data_type: DataType,
+    p_data: *anyopaque,
+    components: i32,
+    p_step: ?*const anyopaque,
+    p_step_fast: ?*const anyopaque,
+    format: ?[*:0]const u8,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
 /// `pub fn newFrame() void`
 pub const newFrame = zguiNewFrame;
 extern fn zguiNewFrame() void;
