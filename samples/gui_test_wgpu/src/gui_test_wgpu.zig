@@ -54,7 +54,11 @@ fn update(demo: *DemoState) !void {
     );
 
     zgui.separator();
-    zgui.textWrapped("zgui API supports default parameters and function name overloading", .{});
+    zgui.dummy(.{ .w = -1.0, .h = 20.0 });
+    zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "zgui -");
+    zgui.sameLine(.{});
+    zgui.textWrapped("Zig bindings for 'dear imgui' library. Easy to use API with defualt arguments and Zig style text formatting.", .{});
+    zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.separator();
 
     if (zgui.treeNode("Widgets: Main")) {
@@ -68,12 +72,12 @@ fn update(demo: *DemoState) !void {
         _ = zgui.button("Button 4", .{});
         _ = zgui.button("Button 5", .{ .w = -1.0, .h = 100.0 });
 
-        zgui.pushStyleColor(.text, .{ .color = .{ 1.0, 0.0, 0.0, 1.0 } });
+        zgui.pushStyleColor(.text, .{ .rgba32f = .{ 1.0, 0.0, 0.0, 1.0 } });
         _ = zgui.button("  Red Text Button  ", .{});
         zgui.popStyleColor(.{});
 
         zgui.sameLine(.{});
-        zgui.pushStyleColor(.text, .{ .color = .{ 1.0, 1.0, 0.0, 1.0 } });
+        zgui.pushStyleColor(.text, .{ .rgba32f = .{ 1.0, 1.0, 0.0, 1.0 } });
         _ = zgui.button("  Yellow Text Button  ", .{});
         zgui.popStyleColor(.{});
 
@@ -163,12 +167,9 @@ fn update(demo: *DemoState) !void {
             var v3i: [3]i32 = .{ 0, 0, 0 };
             var v4i: [4]i32 = .{ 0, 0, 0, 0 };
             var rangei: [2]i32 = .{ 0, 0 };
-            var su8: u8 = 123;
-            const su8_min: u8 = 20;
+            var si8: i8 = 123;
             var vu16: [3]u16 = .{ 10, 11, 12 };
-            const su16_max: u16 = 100;
             var sd: f64 = 0.0;
-            const sd_b: [2]f64 = .{ -1.0, 1.0 };
         };
         _ = zgui.dragFloat("Drag float 1", .{ .v = &static.v1 });
         _ = zgui.dragFloat2("Drag float 2", .{ .v = &static.v2 });
@@ -180,9 +181,9 @@ fn update(demo: *DemoState) !void {
         _ = zgui.dragInt3("Drag int 3", .{ .v = &static.v3i });
         _ = zgui.dragInt4("Drag int 4", .{ .v = &static.v4i });
         _ = zgui.dragIntRange2("Drag int range 2", .{ .v_current_min = &static.rangei[0], .v_current_max = &static.rangei[1] });
-        _ = zgui.dragScalar("Drag scalar (u8)", u8, .{ .p_data = &static.su8, .p_min = &static.su8_min });
-        _ = zgui.dragScalarN("Drag scalar N ([3]u16)", @TypeOf(static.vu16), .{ .p_data = &static.vu16, .p_max = &static.su16_max });
-        _ = zgui.dragScalar("Drag scalar (f64)", f64, .{ .p_data = &static.sd, .p_min = &static.sd_b[0], .p_max = &static.sd_b[1], .v_speed = 0.005 });
+        _ = zgui.dragScalar("Drag scalar (i8)", i8, .{ .v = &static.si8, .v_min = -20 });
+        _ = zgui.dragScalarN("Drag scalar N ([3]u16)", @TypeOf(static.vu16), .{ .v = &static.vu16, .v_max = 100 });
+        _ = zgui.dragScalar("Drag scalar (f64)", f64, .{ .v = &static.sd, .v_min = -1.0, .v_max = 1.0, .v_speed = 0.005 });
         zgui.treePop();
     }
 
@@ -197,16 +198,11 @@ fn update(demo: *DemoState) !void {
             var v3i: [3]i32 = .{ 10, 10, 10 };
             var v4i: [4]i32 = .{ 0, 0, 0, 0 };
             var su8: u8 = 1;
-            const su8_min: u8 = 0;
-            const su8_max: u8 = 100;
             var vu16: [3]u16 = .{ 10, 11, 12 };
-            const su16_min: u16 = 1;
-            const su16_max: u16 = 100;
             var vsf: f32 = 0;
             var vsi: i32 = 0;
             var vsu8: u8 = 1;
-            const vsu8_min: u8 = 0;
-            const vsu8_max: u8 = 200;
+            var angle: f32 = 0;
         };
         _ = zgui.sliderFloat("Slider float 1", .{ .v = &static.v1, .v_min = 0.0, .v_max = 1.0 });
         _ = zgui.sliderFloat2("Slider float 2", .{ .v = &static.v2, .v_min = -1.0, .v_max = 1.0 });
@@ -216,12 +212,9 @@ fn update(demo: *DemoState) !void {
         _ = zgui.sliderInt2("Slider int 2", .{ .v = &static.v2i, .v_min = -20, .v_max = 20 });
         _ = zgui.sliderInt3("Slider int 3", .{ .v = &static.v3i, .v_min = 10, .v_max = 50 });
         _ = zgui.sliderInt4("Slider int 4", .{ .v = &static.v4i, .v_min = 0, .v_max = 10 });
-        _ = zgui.sliderScalar("Slider scalar (u8)", u8, .{ .p_data = &static.su8, .p_min = &static.su8_min, .p_max = &static.su8_max });
-        _ = zgui.sliderScalarN(
-            "Slider scalar N ([3]u16)",
-            [3]u16,
-            .{ .p_data = &static.vu16, .p_min = &static.su16_min, .p_max = &static.su16_max },
-        );
+        _ = zgui.sliderScalar("Slider scalar (u8)", u8, .{ .v = &static.su8, .v_min = 0, .v_max = 100, .format = "%Xh" });
+        _ = zgui.sliderScalarN("Slider scalar N ([3]u16)", [3]u16, .{ .v = &static.vu16, .v_min = 1, .v_max = 100 });
+        _ = zgui.sliderAngle("Slider angle", .{ .v_rad = &static.angle });
         _ = zgui.vsliderFloat("VSlider float", .{ .w = 80.0, .h = 200.0, .v = &static.vsf, .v_min = 0.0, .v_max = 1.0 });
         zgui.sameLine(.{});
         _ = zgui.vsliderInt("VSlider int", .{ .w = 80.0, .h = 200.0, .v = &static.vsi, .v_min = 0, .v_max = 100 });
@@ -229,8 +222,30 @@ fn update(demo: *DemoState) !void {
         _ = zgui.vsliderScalar(
             "VSlider scalar (u8)",
             u8,
-            .{ .w = 80.0, .h = 200.0, .p_data = &static.vsu8, .p_min = &static.vsu8_min, .p_max = &static.vsu8_max },
+            .{ .w = 80.0, .h = 200.0, .v = &static.vsu8, .v_min = 0, .v_max = 200 },
         );
+        zgui.treePop();
+    }
+
+    if (zgui.treeNode("Widgets: Input with Keyboard")) {
+        const static = struct {
+            var v1: f32 = 0;
+            var v2: [2]f32 = .{ 0, 0 };
+            var v3: [3]f32 = .{ 0, 0, 0 };
+            var v4: [4]f32 = .{ 0, 0, 0, 0 };
+            var v1i: i32 = 0;
+            var v2i: [2]i32 = .{ 0, 0 };
+            var v3i: [3]i32 = .{ 0, 0, 0 };
+            var v4i: [4]i32 = .{ 0, 0, 0, 0 };
+        };
+        _ = zgui.inputFloat("Input float 1", .{ .v = &static.v1 });
+        _ = zgui.inputFloat2("Input float 2", .{ .v = &static.v2 });
+        _ = zgui.inputFloat3("Input float 3", .{ .v = &static.v3 });
+        _ = zgui.inputFloat4("Input float 4", .{ .v = &static.v4 });
+        _ = zgui.inputInt("Input int 1", .{ .v = &static.v1i });
+        _ = zgui.inputInt2("Input int 2", .{ .v = &static.v2i });
+        _ = zgui.inputInt3("Input int 3", .{ .v = &static.v3i });
+        _ = zgui.inputInt4("Input int 4", .{ .v = &static.v4i });
         zgui.treePop();
     }
 

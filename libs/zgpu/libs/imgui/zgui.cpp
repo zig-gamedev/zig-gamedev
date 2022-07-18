@@ -375,6 +375,77 @@ ZGUI_API bool zguiVSliderScalar(
     return ImGui::VSliderScalar(label, { w, h }, data_type, p_data, p_min, p_max, format, flags);
 }
 
+ZGUI_API bool zguiSliderAngle(
+    const char* label,
+    float* v_rad,
+    float v_degrees_min,
+    float v_degrees_max,
+    const char* format,
+    ImGuiSliderFlags flags
+) {
+    return ImGui::SliderAngle(label, v_rad, v_degrees_min, v_degrees_max, format, flags);
+}
+
+ZGUI_API bool zguiInputFloat(
+    const char* label,
+    float* v,
+    float step,
+    float step_fast,
+    const char* format,
+    ImGuiInputTextFlags flags
+) {
+    return ImGui::InputFloat(label, v, step, step_fast, format, flags);
+}
+
+ZGUI_API bool zguiInputFloat2(
+    const char* label,
+    float v[2],
+    const char* format,
+    ImGuiInputTextFlags flags
+) {
+    return ImGui::InputFloat2(label, v, format, flags);
+}
+
+ZGUI_API bool zguiInputFloat3(
+    const char* label,
+    float v[3],
+    const char* format,
+    ImGuiInputTextFlags flags
+) {
+    return ImGui::InputFloat3(label, v, format, flags);
+}
+
+ZGUI_API bool zguiInputFloat4(
+    const char* label,
+    float v[4],
+    const char* format,
+    ImGuiInputTextFlags flags
+) {
+    return ImGui::InputFloat4(label, v, format, flags);
+}
+
+ZGUI_API bool zguiInputInt(
+    const char* label,
+    int* v,
+    int step,
+    int step_fast,
+    ImGuiInputTextFlags flags
+) {
+    return ImGui::InputInt(label, v, step, step_fast, flags);
+}
+
+ZGUI_API bool zguiInputInt2(const char* label, int v[2], ImGuiInputTextFlags flags) {
+    return ImGui::InputInt2(label, v, flags);
+}
+
+ZGUI_API bool zguiInputInt3(const char* label, int v[3], ImGuiInputTextFlags flags) {
+    return ImGui::InputInt3(label, v, flags);
+}
+
+ZGUI_API bool zguiInputInt4(const char* label, int v[4], ImGuiInputTextFlags flags) {
+    return ImGui::InputInt4(label, v, flags);
+}
+
 ZGUI_API void zguiTextUnformatted(const char* text, const char* text_end) {
     ImGui::TextUnformatted(text, text_end);
 }

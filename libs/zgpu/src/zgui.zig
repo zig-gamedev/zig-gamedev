@@ -218,15 +218,14 @@ pub fn selectableStatePtr(label: [:0]const u8, args: SelectableStatePtr) bool {
     return zguiSelectableStatePtr(label, args.p_selected, @bitCast(u32, args.flags), args.w, args.h);
 }
 extern fn zguiSelectableStatePtr(label: [*:0]const u8, p_selected: *bool, flags: u32, w: f32, h: f32) bool;
-
 //--------------------------------------------------------------------------------------------------
 const PushStyleColor = struct {
-    color: [4]f32,
+    rgba32f: [4]f32,
 };
 pub fn pushStyleColor(idx: StyleColorIndex, args: PushStyleColor) void {
-    zguiPushStyleColor(idx, &args.color);
+    zguiPushStyleColor(idx, &args.rgba32f);
 }
-extern fn zguiPushStyleColor(idx: StyleColorIndex, color: *const [4]f32) void;
+extern fn zguiPushStyleColor(idx: StyleColorIndex, rgba32f: *const [4]f32) void;
 //--------------------------------------------------------------------------------------------------
 const PopStyleColor = struct {
     count: i32 = 1,
@@ -304,7 +303,7 @@ pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
 pub fn textUnformattedColored(color: [4]f32, txt: []const u8) void {
-    pushStyleColor(.text, .{ .color = color });
+    pushStyleColor(.text, .{ .rgba32f = color });
     textUnformatted(txt);
     popStyleColor(.{});
 }
@@ -314,7 +313,7 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
     zguiTextUnformatted(result.ptr, result.ptr + result.len);
 }
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
-    pushStyleColor(.text, .{ .color = color });
+    pushStyleColor(.text, .{ .rgba32f = color });
     text(fmt, args);
     popStyleColor(.{});
 }
@@ -683,10 +682,10 @@ extern fn zguiDragIntRange2(
 //--------------------------------------------------------------------------------------------------
 fn DragScalarGen(comptime T: type) type {
     return struct {
-        p_data: *T,
+        v: *T,
         v_speed: f32 = 1.0,
-        p_min: ?*const T = null,
-        p_max: ?*const T = null,
+        v_min: ?T = null,
+        v_max: ?T = null,
         format: ?[:0]const u8 = null,
         flags: SliderFlags = .{},
     };
@@ -695,10 +694,10 @@ pub fn dragScalar(label: [:0]const u8, comptime T: type, args: DragScalarGen(T))
     return zguiDragScalar(
         label,
         typeToDataTypeEnum(T),
-        args.p_data,
+        args.v,
         args.v_speed,
-        args.p_min,
-        args.p_max,
+        if (args.v_min) |vm| &vm else null,
+        if (args.v_max) |vm| &vm else null,
         if (args.format) |fmt| fmt else null,
         @bitCast(u32, args.flags),
     );
@@ -717,10 +716,10 @@ extern fn zguiDragScalar(
 fn DragScalarNGen(comptime T: type) type {
     const ScalarType = @typeInfo(T).Array.child;
     return struct {
-        p_data: *T,
+        v: *T,
         v_speed: f32 = 1.0,
-        p_min: ?*const ScalarType = null,
-        p_max: ?*const ScalarType = null,
+        v_min: ?ScalarType = null,
+        v_max: ?ScalarType = null,
         format: ?[:0]const u8 = null,
         flags: SliderFlags = .{},
     };
@@ -731,11 +730,11 @@ pub fn dragScalarN(label: [:0]const u8, comptime T: type, args: DragScalarNGen(T
     return zguiDragScalarN(
         label,
         typeToDataTypeEnum(ScalarType),
-        args.p_data,
+        args.v,
         components,
         args.v_speed,
-        args.p_min,
-        args.p_max,
+        if (args.v_min) |vm| &vm else null,
+        if (args.v_max) |vm| &vm else null,
         if (args.format) |fmt| fmt else null,
         @bitCast(u32, args.flags),
     );
@@ -882,9 +881,9 @@ extern fn zguiSliderInt4(
 //--------------------------------------------------------------------------------------------------
 fn SliderScalarGen(comptime T: type) type {
     return struct {
-        p_data: *T,
-        p_min: *const T,
-        p_max: *const T,
+        v: *T,
+        v_min: T,
+        v_max: T,
         format: ?[:0]const u8 = null,
         flags: SliderFlags = .{},
     };
@@ -893,9 +892,9 @@ pub fn sliderScalar(label: [:0]const u8, comptime T: type, args: SliderScalarGen
     return zguiSliderScalar(
         label,
         typeToDataTypeEnum(T),
-        args.p_data,
-        args.p_min,
-        args.p_max,
+        args.v,
+        &args.v_min,
+        &args.v_max,
         if (args.format) |fmt| fmt else null,
         @bitCast(u32, args.flags),
     );
@@ -913,9 +912,9 @@ extern fn zguiSliderScalar(
 fn SliderScalarNGen(comptime T: type) type {
     const ScalarType = @typeInfo(T).Array.child;
     return struct {
-        p_data: *T,
-        p_min: *const ScalarType,
-        p_max: *const ScalarType,
+        v: *T,
+        v_min: ScalarType,
+        v_max: ScalarType,
         format: ?[:0]const u8 = null,
         flags: SliderFlags = .{},
     };
@@ -926,10 +925,10 @@ pub fn sliderScalarN(label: [:0]const u8, comptime T: type, args: SliderScalarNG
     return zguiSliderScalarN(
         label,
         typeToDataTypeEnum(ScalarType),
-        args.p_data,
+        args.v,
         components,
-        args.p_min,
-        args.p_max,
+        &args.v_min,
+        &args.v_max,
         if (args.format) |fmt| fmt else null,
         @bitCast(u32, args.flags),
     );
@@ -995,9 +994,9 @@ fn VSliderScalarGen(comptime T: type) type {
     return struct {
         w: f32,
         h: f32,
-        p_data: *T,
-        p_min: *const T,
-        p_max: *const T,
+        v: *T,
+        v_min: T,
+        v_max: T,
         format: ?[:0]const u8 = null,
         flags: SliderFlags = .{},
     };
@@ -1008,9 +1007,9 @@ pub fn vsliderScalar(label: [:0]const u8, comptime T: type, args: VSliderScalarG
         args.w,
         args.h,
         typeToDataTypeEnum(T),
-        args.p_data,
-        args.p_min,
-        args.p_max,
+        args.v,
+        &args.v_min,
+        &args.v_max,
         if (args.format) |fmt| fmt else null,
         @bitCast(u32, args.flags),
     );
@@ -1026,6 +1025,167 @@ extern fn zguiVSliderScalar(
     format: ?[*:0]const u8,
     flags: u32,
 ) bool;
+//--------------------------------------------------------------------------------------------------
+const SliderAngle = struct {
+    v_rad: *f32,
+    v_degrees_min: f32 = -360.0,
+    v_degrees_max: f32 = 360.0,
+    format: [:0]const u8 = "%.0f deg",
+    flags: SliderFlags = .{},
+};
+pub fn sliderAngle(label: [:0]const u8, args: SliderAngle) bool {
+    return zguiSliderAngle(
+        label,
+        args.v_rad,
+        args.v_degrees_min,
+        args.v_degrees_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
+}
+extern fn zguiSliderAngle(
+    label: [*:0]const u8,
+    v_rad: *f32,
+    v_degrees_min: f32,
+    v_degrees_max: f32,
+    format: [*:0]const u8,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
+//
+// Widgets: Input with Keyboard
+//
+//--------------------------------------------------------------------------------------------------
+pub const InputTextFlags = packed struct {
+    chars_decimal: bool = false,
+    chars_hexadecimal: bool = false,
+    chars_uppercase: bool = false,
+    chars_no_blank: bool = false,
+    auto_select_all: bool = false,
+    enter_returns_true: bool = false,
+    callback_completion: bool = false,
+    callback_history: bool = false,
+    callback_always: bool = false,
+    callback_char_filter: bool = false,
+    allow_tab_input: bool = false,
+    ctrl_enter_for_new_line: bool = false,
+    no_horizontal_scroll: bool = false,
+    always_overwrite: bool = false,
+    read_only: bool = false,
+    password: bool = false,
+    no_undo_redo: bool = false,
+    chars_scientific: bool = false,
+    callback_resize: bool = false,
+    callback_edit: bool = false,
+
+    _padding: u12 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+const InputFloat = struct {
+    v: *f32,
+    step: f32 = 0.0,
+    step_fast: f32 = 0.0,
+    format: [:0]const u8 = "%.3f",
+    flags: InputTextFlags = .{},
+};
+pub fn inputFloat(label: [:0]const u8, args: InputFloat) bool {
+    return zguiInputFloat(label, args.v, args.step, args.step_fast, args.format, @bitCast(u32, args.flags));
+}
+extern fn zguiInputFloat(
+    label: [*:0]const u8,
+    v: *f32,
+    step: f32,
+    step_fast: f32,
+    format: [*:0]const u8,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
+fn InputFloatGen(comptime T: type) type {
+    return struct {
+        v: *T,
+        format: [:0]const u8 = "%.3f",
+        flags: InputTextFlags = .{},
+    };
+}
+//--------------------------------------------------------------------------------------------------
+const InputFloat2 = InputFloatGen([2]f32);
+pub fn inputFloat2(label: [:0]const u8, args: InputFloat2) bool {
+    return zguiInputFloat2(label, args.v, args.format, @bitCast(u32, args.flags));
+}
+extern fn zguiInputFloat2(
+    label: [*:0]const u8,
+    v: *[2]f32,
+    format: [*:0]const u8,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
+const InputFloat3 = InputFloatGen([3]f32);
+pub fn inputFloat3(label: [:0]const u8, args: InputFloat3) bool {
+    return zguiInputFloat3(label, args.v, args.format, @bitCast(u32, args.flags));
+}
+extern fn zguiInputFloat3(
+    label: [*:0]const u8,
+    v: *[3]f32,
+    format: [*:0]const u8,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
+const InputFloat4 = InputFloatGen([4]f32);
+pub fn inputFloat4(label: [:0]const u8, args: InputFloat4) bool {
+    return zguiInputFloat4(label, args.v, args.format, @bitCast(u32, args.flags));
+}
+extern fn zguiInputFloat4(
+    label: [*:0]const u8,
+    v: *[4]f32,
+    format: [*:0]const u8,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
+const InputInt = struct {
+    v: *i32,
+    step: i32 = 1,
+    step_fast: i32 = 100,
+    flags: InputTextFlags = .{},
+};
+pub fn inputInt(label: [:0]const u8, args: InputInt) bool {
+    return zguiInputInt(label, args.v, args.step, args.step_fast, @bitCast(u32, args.flags));
+}
+extern fn zguiInputInt(
+    label: [*:0]const u8,
+    v: *i32,
+    step: i32,
+    step_fast: i32,
+    flags: u32,
+) bool;
+//--------------------------------------------------------------------------------------------------
+fn InputIntGen(comptime T: type) type {
+    return struct {
+        v: *T,
+        flags: InputTextFlags = .{},
+    };
+}
+//--------------------------------------------------------------------------------------------------
+const InputInt2 = InputIntGen([2]i32);
+pub fn inputInt2(label: [:0]const u8, args: InputInt2) bool {
+    return zguiInputInt2(label, args.v, @bitCast(u32, args.flags));
+}
+extern fn zguiInputInt2(label: [*:0]const u8, v: *[2]i32, flags: u32) bool;
+//--------------------------------------------------------------------------------------------------
+const InputInt3 = InputIntGen([3]i32);
+pub fn inputInt3(label: [:0]const u8, args: InputInt3) bool {
+    return zguiInputInt3(label, args.v, @bitCast(u32, args.flags));
+}
+extern fn zguiInputInt3(label: [*:0]const u8, v: *[3]i32, flags: u32) bool;
+//--------------------------------------------------------------------------------------------------
+const InputInt4 = InputIntGen([4]i32);
+pub fn inputInt4(label: [:0]const u8, args: InputInt4) bool {
+    return zguiInputInt4(label, args.v, @bitCast(u32, args.flags));
+}
+extern fn zguiInputInt4(label: [*:0]const u8, v: *[4]i32, flags: u32) bool;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn newFrame() void`
 pub const newFrame = zguiNewFrame;
