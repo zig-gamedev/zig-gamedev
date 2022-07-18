@@ -1,4 +1,4 @@
-**Project requires [Zig 0.10.0-dev.2412 (master)](https://ziglang.org/download/) or newer to compile.**
+**Project requires [Zig 0.10.0-dev.3207 (master)](https://ziglang.org/download/) or newer to compile.**
 # zig-gamedev project
 
 This repository contains a collection of [sample applications](#cross-platfrom-sample-applications-native-webgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: cross-platform graphics, multi-threaded physics, SIMD math, procedural content generation (basic), profiling and more.
