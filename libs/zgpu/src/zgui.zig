@@ -61,7 +61,56 @@ pub const StyleColorIndex = enum(u32) {
     text,
     text_disabled,
     window_bg,
-    // TODO: Add all the values.
+    child_bg,
+    popup_bg,
+    border,
+    border_shadow,
+    frame_bg,
+    frame_bg_hovered,
+    frame_bg_active,
+    title_bg,
+    title_bg_active,
+    title_bg_collapsed,
+    menu_bar_bg,
+    scrollbar_bg,
+    scrollbar_grab,
+    scrollbar_grab_hovered,
+    scrollbar_grab_active,
+    check_mark,
+    slider_grab,
+    slider_grab_active,
+    button,
+    button_hovered,
+    button_active,
+    header,
+    header_hovered,
+    header_active,
+    separator,
+    separator_hovered,
+    separator_active,
+    resize_grip,
+    resize_grip_hovered,
+    resize_grip_active,
+    tab,
+    tab_hovered,
+    tab_active,
+    tab_unfocused,
+    tab_unfocused_active,
+    plot_lines,
+    plot_lines_hovered,
+    plot_histogram,
+    plot_histogram_hovered,
+    table_header_bg,
+    table_border_strong,
+    table_border_light,
+    table_row_bg,
+    table_row_bg_alt,
+    text_selected_bg,
+    drag_drop_target,
+    nav_highlight,
+    nav_windowing_highlight,
+    nav_windowing_dim_bg,
+    modal_window_dim_bg,
 };
 //--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct {
@@ -1502,7 +1551,18 @@ extern fn zguiSelectableStatePtr(label: [*:0]const u8, p_selected: *bool, flags:
 // Widgets: List Boxes
 //
 //--------------------------------------------------------------------------------------------------
-// TODO: Add functions.
+const BeginListBox = struct {
+    w: f32 = 0.0,
+    h: f32 = 0.0,
+};
+pub fn beginListBox(label: [:0]const u8, args: BeginListBox) bool {
+    return zguiBeginListBox(label, args.w, args.h);
+}
+extern fn zguiBeginListBox(label: [*:0]const u8, w: f32, h: f32) bool;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn endListBox() void`
+pub const endListBox = zguiEndListBox;
+extern fn zguiEndListBox() void;
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 /// `pub fn newFrame() void`

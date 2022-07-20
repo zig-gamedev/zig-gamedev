@@ -281,6 +281,21 @@ fn update(demo: *DemoState) !void {
         zgui.treePop();
     }
 
+    if (zgui.treeNode("Widgets: List Boxes")) {
+        const static = struct {
+            var selection_index: u32 = 0;
+        };
+        const items = [_][:0]const u8{ "aaa", "bbb", "ccc", "ddd", "eee", "FFF", "ggg", "hhh" };
+        if (zgui.beginListBox("List Box 0", .{})) {
+            for (items) |item, index| {
+                const i = @intCast(u32, index);
+                if (zgui.selectable(item, .{ .selected = static.selection_index == i })) static.selection_index = i;
+            }
+            zgui.endListBox();
+        }
+        zgui.treePop();
+    }
+
     zgui.end();
 }
 

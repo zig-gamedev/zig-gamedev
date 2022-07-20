@@ -214,6 +214,14 @@ ZGUI_API void zguiEndCombo(void) {
     ImGui::EndCombo();
 }
 
+ZGUI_API bool zguiBeginListBox(const char* label, float w, float h) {
+    return ImGui::BeginListBox(label, { w, h });
+}
+
+ZGUI_API void zguiEndListBox(void) {
+    ImGui::EndListBox();
+}
+
 ZGUI_API bool zguiSelectable(const char* label, bool selected, ImGuiSelectableFlags flags, float w, float h) {
     return ImGui::Selectable(label, selected, flags, { w, h });
 }
