@@ -66,9 +66,13 @@ fn update(demo: *DemoState) !void {
 
     if (zgui.collapsingHeader("Widgets: Main", .{})) {
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Button");
-        _ = zgui.button("Button 1", .{ .w = 200.0 });
+        if (zgui.button("Button 1", .{ .w = 200.0 })) {
+            // 'Button 1' pressed.
+        }
         zgui.sameLine(.{ .spacing = 20.0 });
-        _ = zgui.button("Button 2", .{ .h = 60.0 });
+        if (zgui.button("Button 2", .{ .h = 60.0 })) {
+            // 'Button 2' pressed.
+        }
         zgui.sameLine(.{});
         _ = zgui.button("Button 3", .{ .w = 100.0, .h = 0.0 });
         zgui.sameLine(.{});

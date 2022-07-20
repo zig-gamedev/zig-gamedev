@@ -1,4 +1,8 @@
 //--------------------------------------------------------------------------------------------------
+// zgui v0.1 (wip)
+// Zig bindings for 'dear imgui' library. Easy to use, hand-crafted API with default arguments,
+// named parameters and Zig style text formatting.
+//--------------------------------------------------------------------------------------------------
 const std = @import("std");
 const assert = std.debug.assert;
 //--------------------------------------------------------------------------------------------------
@@ -536,7 +540,15 @@ fn DragFloatGen(comptime T: type) type {
 //--------------------------------------------------------------------------------------------------
 const DragFloat = DragFloatGen(f32);
 pub fn dragFloat(label: [:0]const u8, args: DragFloat) bool {
-    return zguiDragFloat(label, args.v, args.v_speed, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiDragFloat(
+        label,
+        args.v,
+        args.v_speed,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiDragFloat(
     label: [*:0]const u8,
@@ -550,7 +562,15 @@ extern fn zguiDragFloat(
 //--------------------------------------------------------------------------------------------------
 const DragFloat2 = DragFloatGen([2]f32);
 pub fn dragFloat2(label: [:0]const u8, args: DragFloat2) bool {
-    return zguiDragFloat2(label, args.v, args.v_speed, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiDragFloat2(
+        label,
+        args.v,
+        args.v_speed,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiDragFloat2(
     label: [*:0]const u8,
@@ -564,7 +584,15 @@ extern fn zguiDragFloat2(
 //--------------------------------------------------------------------------------------------------
 const DragFloat3 = DragFloatGen([3]f32);
 pub fn dragFloat3(label: [:0]const u8, args: DragFloat3) bool {
-    return zguiDragFloat3(label, args.v, args.v_speed, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiDragFloat3(
+        label,
+        args.v,
+        args.v_speed,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiDragFloat3(
     label: [*:0]const u8,
@@ -578,7 +606,15 @@ extern fn zguiDragFloat3(
 //--------------------------------------------------------------------------------------------------
 const DragFloat4 = DragFloatGen([4]f32);
 pub fn dragFloat4(label: [:0]const u8, args: DragFloat4) bool {
-    return zguiDragFloat4(label, args.v, args.v_speed, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiDragFloat4(
+        label,
+        args.v,
+        args.v_speed,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiDragFloat4(
     label: [*:0]const u8,
@@ -638,7 +674,15 @@ fn DragIntGen(comptime T: type) type {
 //--------------------------------------------------------------------------------------------------
 const DragInt = DragIntGen(i32);
 pub fn dragInt(label: [:0]const u8, args: DragInt) bool {
-    return zguiDragInt(label, args.v, args.v_speed, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiDragInt(
+        label,
+        args.v,
+        args.v_speed,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiDragInt(
     label: [*:0]const u8,
@@ -652,7 +696,15 @@ extern fn zguiDragInt(
 //--------------------------------------------------------------------------------------------------
 const DragInt2 = DragIntGen([2]i32);
 pub fn dragInt2(label: [:0]const u8, args: DragInt2) bool {
-    return zguiDragInt2(label, args.v, args.v_speed, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiDragInt2(
+        label,
+        args.v,
+        args.v_speed,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiDragInt2(
     label: [*:0]const u8,
@@ -666,7 +718,15 @@ extern fn zguiDragInt2(
 //--------------------------------------------------------------------------------------------------
 const DragInt3 = DragIntGen([3]i32);
 pub fn dragInt3(label: [:0]const u8, args: DragInt3) bool {
-    return zguiDragInt3(label, args.v, args.v_speed, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiDragInt3(
+        label,
+        args.v,
+        args.v_speed,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiDragInt3(
     label: [*:0]const u8,
@@ -680,7 +740,15 @@ extern fn zguiDragInt3(
 //--------------------------------------------------------------------------------------------------
 const DragInt4 = DragIntGen([4]i32);
 pub fn dragInt4(label: [:0]const u8, args: DragInt4) bool {
-    return zguiDragInt4(label, args.v, args.v_speed, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiDragInt4(
+        label,
+        args.v,
+        args.v_speed,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiDragInt4(
     label: [*:0]const u8,
@@ -1001,7 +1069,16 @@ const VSliderFloat = struct {
     flags: SliderFlags = .{},
 };
 pub fn vsliderFloat(label: [:0]const u8, args: VSliderFloat) bool {
-    return zguiVSliderFloat(label, args.w, args.h, args.v, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiVSliderFloat(
+        label,
+        args.w,
+        args.h,
+        args.v,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiVSliderFloat(
     label: [*:0]const u8,
@@ -1024,7 +1101,16 @@ const VSliderInt = struct {
     flags: SliderFlags = .{},
 };
 pub fn vsliderInt(label: [:0]const u8, args: VSliderInt) bool {
-    return zguiVSliderInt(label, args.w, args.h, args.v, args.v_min, args.v_max, args.format, @bitCast(u32, args.flags));
+    return zguiVSliderInt(
+        label,
+        args.w,
+        args.h,
+        args.v,
+        args.v_min,
+        args.v_max,
+        args.format,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiVSliderInt(
     label: [*:0]const u8,
@@ -1360,7 +1446,12 @@ pub const ColorEditFlags = packed struct {
         assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
     }
 
-    pub const default_options = ColorEditFlags{ .uint8 = true, .display_rgb = true, .input_rgb = true, .picker_hue_bar = true };
+    pub const default_options = ColorEditFlags{
+        .uint8 = true,
+        .display_rgb = true,
+        .input_rgb = true,
+        .picker_hue_bar = true,
+    };
 };
 //--------------------------------------------------------------------------------------------------
 const ColorEdit3 = struct {
@@ -1438,7 +1529,11 @@ pub const TreeNodeFlags = packed struct {
 
     _padding: u18 = 0,
 
-    pub const collapsing_header = TreeNodeFlags{ .framed = true, .no_tree_push_on_open = true, .no_auto_open_on_log = true };
+    pub const collapsing_header = TreeNodeFlags{
+        .framed = true,
+        .no_tree_push_on_open = true,
+        .no_auto_open_on_log = true,
+    };
 };
 //--------------------------------------------------------------------------------------------------
 pub fn treeNode(label: [:0]const u8) bool {
@@ -1453,7 +1548,12 @@ extern fn zguiTreeNodeFlags(label: [*:0]const u8, flags: u32) bool;
 pub fn treeNodeStrId(str_id: [:0]const u8, comptime fmt: []const u8, args: anytype) bool {
     return zguiTreeNodeStrId(str_id, "%s", formatZ(fmt, args).ptr);
 }
-pub fn treeNodeStrIdFlags(str_id: [:0]const u8, flags: TreeNodeFlags, comptime fmt: []const u8, args: anytype) bool {
+pub fn treeNodeStrIdFlags(
+    str_id: [:0]const u8,
+    flags: TreeNodeFlags,
+    comptime fmt: []const u8,
+    args: anytype,
+) bool {
     return zguiTreeNodeStrIdFlags(str_id, @bitCast(u32, flags), "%s", formatZ(fmt, args).ptr);
 }
 extern fn zguiTreeNodeStrId(str_id: [*:0]const u8, fmt: [*:0]const u8, ...) bool;
@@ -1462,7 +1562,12 @@ extern fn zguiTreeNodeStrIdFlags(str_id: [*:0]const u8, flags: u32, fmt: [*:0]co
 pub fn treeNodePtrId(ptr_id: *const anyopaque, comptime fmt: []const u8, args: anytype) bool {
     return zguiTreeNodePtrId(ptr_id, "%s", formatZ(fmt, args).ptr);
 }
-pub fn treeNodePtrIdFlags(ptr_id: *const anyopaque, flags: TreeNodeFlags, comptime fmt: []const u8, args: anytype) bool {
+pub fn treeNodePtrIdFlags(
+    ptr_id: *const anyopaque,
+    flags: TreeNodeFlags,
+    comptime fmt: []const u8,
+    args: anytype,
+) bool {
     return zguiTreeNodePtrIdFlags(ptr_id, @bitCast(u32, flags), "%s", formatZ(fmt, args).ptr);
 }
 extern fn zguiTreeNodePtrId(ptr_id: *const anyopaque, fmt: [*:0]const u8, ...) bool;
