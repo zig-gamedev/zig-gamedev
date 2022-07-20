@@ -202,6 +202,34 @@ pub const Condition = enum(u32) {
     appearing = 8,
 };
 //--------------------------------------------------------------------------------------------------
+//
+// Main
+//
+//--------------------------------------------------------------------------------------------------
+/// `pub fn newFrame() void`
+pub const newFrame = zguiNewFrame;
+extern fn zguiNewFrame() void;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn render() void`
+pub const render = zguiRender;
+extern fn zguiRender() void;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn getDrawData() DrawData`
+pub const getDrawData = zguiGetDrawData;
+extern fn zguiGetDrawData() DrawData;
+//--------------------------------------------------------------------------------------------------
+//
+// Demo, Debug, Information
+//
+//--------------------------------------------------------------------------------------------------
+/// `pub fn showDemoWindow(p_open: ?*bool) void`
+pub const showDemoWindow = zguiShowDemoWindow;
+extern fn zguiShowDemoWindow(p_open: ?*bool) void;
+//--------------------------------------------------------------------------------------------------
+//
+// Windows
+//
+//--------------------------------------------------------------------------------------------------
 const SetNextWindowPos = struct {
     x: f32,
     y: f32,
@@ -231,11 +259,68 @@ const Begin = struct {
 pub fn begin(name: [:0]const u8, args: Begin) bool {
     return zguiBegin(name, args.p_open, @bitCast(u32, args.flags));
 }
-extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
-//--------------------------------------------------------------------------------------------------
 /// `pub fn end() void`
 pub const end = zguiEnd;
+extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 extern fn zguiEnd() void;
+//--------------------------------------------------------------------------------------------------
+pub const FocusedFlags = packed struct {
+    child_windows: bool = false,
+    root_window: bool = false,
+    any_window: bool = false,
+    no_popup_hierarchy: bool = false,
+
+    _padding: u28 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+
+    pub const root_and_child_windows = FocusedFlags{ .root_window = true, .child_windows = true };
+};
+//--------------------------------------------------------------------------------------------------
+pub const HoveredFlags = packed struct {
+    child_windows: bool = false,
+    root_window: bool = false,
+    any_window: bool = false,
+    no_popup_hierarchy: bool = false,
+    _reserved0: bool = false,
+    allow_when_blocked_by_popup: bool = false,
+    _reserved1: bool = false,
+    allow_when_blocked_by_active_item: bool = false,
+    allow_when_overlapped: bool = false,
+    allow_when_disabled: bool = false,
+    no_nav_override: bool = false,
+
+    _padding: u21 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+
+    pub const rect_only = HoveredFlags{
+        .allow_when_blocked_by_popup = true,
+        .allow_when_blocked_by_active_item = true,
+        .allow_when_overlapped = true,
+    };
+    pub const root_and_child_windows = HoveredFlags{ .root_window = true, .child_windows = true };
+};
+//--------------------------------------------------------------------------------------------------
+/// `pub fn isWindowAppearing() bool`
+pub const isWindowAppearing = zguiIsWindowAppearing;
+/// `pub fn isWindowCollapsed() bool`
+pub const isWindowCollapsed = zguiIsWindowCollapsed;
+pub fn isWindowFocused(flags: FocusedFlags) bool {
+    return zguiIsWindowFocused(@bitCast(u32, flags));
+}
+pub fn isWindowHovered(flags: HoveredFlags) bool {
+    return zguiIsWindowHovered(@bitCast(u32, flags));
+}
+extern fn zguiIsWindowAppearing() bool;
+extern fn zguiIsWindowCollapsed() bool;
+extern fn zguiIsWindowFocused(flags: u32) bool;
+extern fn zguiIsWindowHovered(flags: u32) bool;
+//--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 const PushStyleColor = struct {
     idx: StyleColorIndex,
@@ -244,14 +329,13 @@ const PushStyleColor = struct {
 pub fn pushStyleColor(args: PushStyleColor) void {
     zguiPushStyleColor(args.idx, &args.col);
 }
-extern fn zguiPushStyleColor(idx: StyleColorIndex, col: *const [4]f32) void;
-//--------------------------------------------------------------------------------------------------
 const PopStyleColor = struct {
     count: i32 = 1,
 };
 pub fn popStyleColor(args: PopStyleColor) void {
     zguiPopStyleColor(args.count);
 }
+extern fn zguiPushStyleColor(idx: StyleColorIndex, col: *const [4]f32) void;
 extern fn zguiPopStyleColor(count: i32) void;
 //--------------------------------------------------------------------------------------------------
 const BeginDisabled = struct {
@@ -260,10 +344,9 @@ const BeginDisabled = struct {
 pub fn beginDisabled(args: BeginDisabled) void {
     zguiBeginDisabled(args.disabled);
 }
-extern fn zguiBeginDisabled(disabled: bool) void;
-//--------------------------------------------------------------------------------------------------
 /// `pub fn endDisabled() void`
 pub const endDisabled = zguiEndDisabled;
+extern fn zguiBeginDisabled(disabled: bool) void;
 extern fn zguiEndDisabled() void;
 //--------------------------------------------------------------------------------------------------
 //
@@ -1665,22 +1748,9 @@ extern fn zguiBeginListBox(label: [*:0]const u8, w: f32, h: f32) bool;
 pub const endListBox = zguiEndListBox;
 extern fn zguiEndListBox() void;
 //--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-/// `pub fn newFrame() void`
-pub const newFrame = zguiNewFrame;
-extern fn zguiNewFrame() void;
-//--------------------------------------------------------------------------------------------------
-/// `pub fn render() void`
-pub const render = zguiRender;
-extern fn zguiRender() void;
-//--------------------------------------------------------------------------------------------------
-/// `pub fn getDrawData() DrawData`
-pub const getDrawData = zguiGetDrawData;
-extern fn zguiGetDrawData() DrawData;
-//--------------------------------------------------------------------------------------------------
-/// `pub fn showDemoWindow(p_open: ?*bool) void`
-pub const showDemoWindow = zguiShowDemoWindow;
-extern fn zguiShowDemoWindow(p_open: ?*bool) void;
+//
+// Internal Helpers
+//
 //--------------------------------------------------------------------------------------------------
 var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
 

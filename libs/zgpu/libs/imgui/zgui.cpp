@@ -18,6 +18,22 @@ ZGUI_API void zguiEnd(void) {
     ImGui::End();
 }
 
+ZGUI_API bool zguiIsWindowAppearing(void) {
+    return ImGui::IsWindowAppearing();
+}
+
+ZGUI_API bool zguiIsWindowCollapsed(void) {
+    return ImGui::IsWindowCollapsed();
+}
+
+ZGUI_API bool zguiIsWindowFocused(ImGuiFocusedFlags flags) {
+    return ImGui::IsWindowFocused(flags);
+}
+
+ZGUI_API bool zguiIsWindowHovered(ImGuiHoveredFlags flags) {
+    return ImGui::IsWindowHovered(flags);
+}
+
 ZGUI_API void zguiSpacing(void) {
     ImGui::Spacing();
 }
@@ -105,7 +121,17 @@ ZGUI_API bool zguiDragFloatRange2(
     const char* format_max,
     ImGuiSliderFlags flags
 ) {
-    return ImGui::DragFloatRange2(label, v_current_min, v_current_max, v_speed, v_min, v_max, format, format_max, flags);
+    return ImGui::DragFloatRange2(
+        label,
+        v_current_min,
+        v_current_max,
+        v_speed,
+        v_min,
+        v_max,
+        format,
+        format_max,
+        flags
+    );
 }
 
 ZGUI_API bool zguiDragInt(
@@ -167,7 +193,17 @@ ZGUI_API bool zguiDragIntRange2(
     const char* format_max,
     ImGuiSliderFlags flags
 ) {
-    return ImGui::DragIntRange2(label, v_current_min, v_current_max, v_speed, v_min, v_max, format, format_max, flags);
+    return ImGui::DragIntRange2(
+        label,
+        v_current_min,
+        v_current_max,
+        v_speed,
+        v_min,
+        v_max,
+        format,
+        format_max,
+        flags
+    );
 }
 
 ZGUI_API bool zguiDragScalar(
@@ -226,7 +262,13 @@ ZGUI_API bool zguiSelectable(const char* label, bool selected, ImGuiSelectableFl
     return ImGui::Selectable(label, selected, flags, { w, h });
 }
 
-ZGUI_API bool zguiSelectableStatePtr(const char* label, bool* p_selected, ImGuiSelectableFlags flags, float w, float h) {
+ZGUI_API bool zguiSelectableStatePtr(
+    const char* label,
+    bool* p_selected,
+    ImGuiSelectableFlags flags,
+    float w,
+    float h
+) {
     return ImGui::Selectable(label, p_selected, flags, { w, h });
 }
 
