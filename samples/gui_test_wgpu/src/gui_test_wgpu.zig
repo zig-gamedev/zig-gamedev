@@ -57,11 +57,14 @@ fn update(demo: *DemoState) !void {
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "zgui -");
     zgui.sameLine(.{});
-    zgui.textWrapped("Zig bindings for 'dear imgui' library. Easy to use, hand-crafted API with defualt arguments, named parameters and Zig style text formatting.", .{});
+    zgui.textWrapped(
+        \\Zig bindings for 'dear imgui' library. Easy to use, hand-crafted API with default arguments,
+        \\named parameters and Zig style text formatting."
+    , .{});
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.separator();
 
-    if (zgui.treeNode("Widgets: Main")) {
+    if (zgui.collapsingHeader("Widgets: Main", .{})) {
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Button");
         _ = zgui.button("Button 1", .{ .w = 200.0 });
         zgui.sameLine(.{ .spacing = 20.0 });
@@ -129,10 +132,9 @@ fn update(demo: *DemoState) !void {
         zgui.spacing();
 
         zgui.bulletText("keep going...", .{});
-        zgui.treePop();
     }
 
-    if (zgui.treeNode("Widgets: Combo Box")) {
+    if (zgui.collapsingHeader("Widgets: Combo Box", .{})) {
         const static = struct {
             var selection_index: u32 = 0;
             var current_item: i32 = 0;
@@ -142,7 +144,8 @@ fn update(demo: *DemoState) !void {
         if (zgui.beginCombo("Combo 0", .{ .preview_value = items[static.selection_index] })) {
             for (items) |item, index| {
                 const i = @intCast(u32, index);
-                if (zgui.selectable(item, .{ .selected = static.selection_index == i })) static.selection_index = i;
+                if (zgui.selectable(item, .{ .selected = static.selection_index == i }))
+                    static.selection_index = i;
             }
             zgui.endCombo();
         }
@@ -151,11 +154,9 @@ fn update(demo: *DemoState) !void {
             .current_item = &static.current_item,
             .items_separated_by_zeros = "Item 0\x00Item 1\x00Item 2\x00Item 3\x00\x00",
         });
-
-        zgui.treePop();
     }
 
-    if (zgui.treeNode("Widgets: Drag Sliders")) {
+    if (zgui.collapsingHeader("Widgets: Drag Sliders", .{})) {
         const static = struct {
             var v1: f32 = 0.0;
             var v2: [2]f32 = .{ 0.0, 0.0 };
@@ -175,19 +176,32 @@ fn update(demo: *DemoState) !void {
         _ = zgui.dragFloat2("Drag float 2", .{ .v = &static.v2 });
         _ = zgui.dragFloat3("Drag float 3", .{ .v = &static.v3 });
         _ = zgui.dragFloat4("Drag float 4", .{ .v = &static.v4 });
-        _ = zgui.dragFloatRange2("Drag float range 2", .{ .v_current_min = &static.range[0], .v_current_max = &static.range[1] });
+        _ = zgui.dragFloatRange2(
+            "Drag float range 2",
+            .{ .v_current_min = &static.range[0], .v_current_max = &static.range[1] },
+        );
         _ = zgui.dragInt("Drag int 1", .{ .v = &static.v1i });
         _ = zgui.dragInt2("Drag int 2", .{ .v = &static.v2i });
         _ = zgui.dragInt3("Drag int 3", .{ .v = &static.v3i });
         _ = zgui.dragInt4("Drag int 4", .{ .v = &static.v4i });
-        _ = zgui.dragIntRange2("Drag int range 2", .{ .v_current_min = &static.rangei[0], .v_current_max = &static.rangei[1] });
+        _ = zgui.dragIntRange2(
+            "Drag int range 2",
+            .{ .v_current_min = &static.rangei[0], .v_current_max = &static.rangei[1] },
+        );
         _ = zgui.dragScalar("Drag scalar (i8)", i8, .{ .v = &static.si8, .v_min = -20 });
-        _ = zgui.dragScalarN("Drag scalar N ([3]u16)", @TypeOf(static.vu16), .{ .v = &static.vu16, .v_max = 100 });
-        _ = zgui.dragScalar("Drag scalar (f64)", f64, .{ .v = &static.sd, .v_min = -1.0, .v_max = 1.0, .v_speed = 0.005 });
-        zgui.treePop();
+        _ = zgui.dragScalarN(
+            "Drag scalar N ([3]u16)",
+            @TypeOf(static.vu16),
+            .{ .v = &static.vu16, .v_max = 100 },
+        );
+        _ = zgui.dragScalar(
+            "Drag scalar (f64)",
+            f64,
+            .{ .v = &static.sd, .v_min = -1.0, .v_max = 1.0, .v_speed = 0.005 },
+        );
     }
 
-    if (zgui.treeNode("Widgets: Regular Sliders")) {
+    if (zgui.collapsingHeader("Widgets: Regular Sliders", .{})) {
         const static = struct {
             var v1: f32 = 0;
             var v2: [2]f32 = .{ 0, 0 };
@@ -212,22 +226,35 @@ fn update(demo: *DemoState) !void {
         _ = zgui.sliderInt2("Slider int 2", .{ .v = &static.v2i, .v_min = -20, .v_max = 20 });
         _ = zgui.sliderInt3("Slider int 3", .{ .v = &static.v3i, .v_min = 10, .v_max = 50 });
         _ = zgui.sliderInt4("Slider int 4", .{ .v = &static.v4i, .v_min = 0, .v_max = 10 });
-        _ = zgui.sliderScalar("Slider scalar (u8)", u8, .{ .v = &static.su8, .v_min = 0, .v_max = 100, .format = "%Xh" });
-        _ = zgui.sliderScalarN("Slider scalar N ([3]u16)", [3]u16, .{ .v = &static.vu16, .v_min = 1, .v_max = 100 });
+        _ = zgui.sliderScalar(
+            "Slider scalar (u8)",
+            u8,
+            .{ .v = &static.su8, .v_min = 0, .v_max = 100, .format = "%Xh" },
+        );
+        _ = zgui.sliderScalarN(
+            "Slider scalar N ([3]u16)",
+            [3]u16,
+            .{ .v = &static.vu16, .v_min = 1, .v_max = 100 },
+        );
         _ = zgui.sliderAngle("Slider angle", .{ .v_rad = &static.angle });
-        _ = zgui.vsliderFloat("VSlider float", .{ .w = 80.0, .h = 200.0, .v = &static.vsf, .v_min = 0.0, .v_max = 1.0 });
+        _ = zgui.vsliderFloat(
+            "VSlider float",
+            .{ .w = 80.0, .h = 200.0, .v = &static.vsf, .v_min = 0.0, .v_max = 1.0 },
+        );
         zgui.sameLine(.{});
-        _ = zgui.vsliderInt("VSlider int", .{ .w = 80.0, .h = 200.0, .v = &static.vsi, .v_min = 0, .v_max = 100 });
+        _ = zgui.vsliderInt(
+            "VSlider int",
+            .{ .w = 80.0, .h = 200.0, .v = &static.vsi, .v_min = 0, .v_max = 100 },
+        );
         zgui.sameLine(.{});
         _ = zgui.vsliderScalar(
             "VSlider scalar (u8)",
             u8,
             .{ .w = 80.0, .h = 200.0, .v = &static.vsu8, .v_min = 0, .v_max = 200 },
         );
-        zgui.treePop();
     }
 
-    if (zgui.treeNode("Widgets: Input with Keyboard")) {
+    if (zgui.collapsingHeader("Widgets: Input with Keyboard", .{})) {
         const static = struct {
             var v1: f32 = 0;
             var v2: [2]f32 = .{ 0, 0 };
@@ -252,10 +279,9 @@ fn update(demo: *DemoState) !void {
         _ = zgui.inputDouble("Input double", .{ .v = &static.sf64 });
         _ = zgui.inputScalar("Input scalar (i8)", i8, .{ .v = &static.si8 });
         _ = zgui.inputScalarN("Input scalar N ([3]u8)", [3]u8, .{ .v = &static.v3u8 });
-        zgui.treePop();
     }
 
-    if (zgui.treeNode("Widgets: Color Editor/Picker")) {
+    if (zgui.collapsingHeader("Widgets: Color Editor/Picker", .{})) {
         const static = struct {
             var col3: [3]f32 = .{ 0, 0, 0 };
             var col4: [4]f32 = .{ 0, 0, 0, 0 };
@@ -267,10 +293,9 @@ fn update(demo: *DemoState) !void {
         _ = zgui.colorPicker3("Color picker 3", .{ .col = &static.col3p });
         _ = zgui.colorPicker4("Color picker 4", .{ .col = &static.col4p });
         _ = zgui.colorButton("color_button_id", .{ .col = .{ 0, 1, 0, 1 } });
-        zgui.treePop();
     }
 
-    if (zgui.treeNode("Widgets: Trees")) {
+    if (zgui.collapsingHeader("Widgets: Trees", .{})) {
         if (zgui.treeNodeStrId("tree_id", "My Tree {d}", .{1})) {
             zgui.textUnformatted("Some content...");
             zgui.treePop();
@@ -278,10 +303,9 @@ fn update(demo: *DemoState) !void {
         if (zgui.collapsingHeader("Collapsing header 1", .{})) {
             zgui.textUnformatted("Some content...");
         }
-        zgui.treePop();
     }
 
-    if (zgui.treeNode("Widgets: List Boxes")) {
+    if (zgui.collapsingHeader("Widgets: List Boxes", .{})) {
         const static = struct {
             var selection_index: u32 = 0;
         };
@@ -289,11 +313,11 @@ fn update(demo: *DemoState) !void {
         if (zgui.beginListBox("List Box 0", .{})) {
             for (items) |item, index| {
                 const i = @intCast(u32, index);
-                if (zgui.selectable(item, .{ .selected = static.selection_index == i })) static.selection_index = i;
+                if (zgui.selectable(item, .{ .selected = static.selection_index == i }))
+                    static.selection_index = i;
             }
             zgui.endListBox();
         }
-        zgui.treePop();
     }
 
     zgui.end();

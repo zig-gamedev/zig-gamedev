@@ -1444,41 +1444,37 @@ pub const TreeNodeFlags = packed struct {
 pub fn treeNode(label: [:0]const u8) bool {
     return zguiTreeNode(label);
 }
-extern fn zguiTreeNode(label: [*:0]const u8) bool;
-//--------------------------------------------------------------------------------------------------
 pub fn treeNodeFlags(label: [:0]const u8, flags: TreeNodeFlags) bool {
     return zguiTreeNodeFlags(label, @bitCast(u32, flags));
 }
+extern fn zguiTreeNode(label: [*:0]const u8) bool;
 extern fn zguiTreeNodeFlags(label: [*:0]const u8, flags: u32) bool;
 //--------------------------------------------------------------------------------------------------
 pub fn treeNodeStrId(str_id: [:0]const u8, comptime fmt: []const u8, args: anytype) bool {
     return zguiTreeNodeStrId(str_id, "%s", formatZ(fmt, args).ptr);
 }
-extern fn zguiTreeNodeStrId(str_id: [*:0]const u8, fmt: [*:0]const u8, ...) bool;
-//--------------------------------------------------------------------------------------------------
 pub fn treeNodeStrIdFlags(str_id: [:0]const u8, flags: TreeNodeFlags, comptime fmt: []const u8, args: anytype) bool {
     return zguiTreeNodeStrIdFlags(str_id, @bitCast(u32, flags), "%s", formatZ(fmt, args).ptr);
 }
+extern fn zguiTreeNodeStrId(str_id: [*:0]const u8, fmt: [*:0]const u8, ...) bool;
 extern fn zguiTreeNodeStrIdFlags(str_id: [*:0]const u8, flags: u32, fmt: [*:0]const u8, ...) bool;
 //--------------------------------------------------------------------------------------------------
 pub fn treeNodePtrId(ptr_id: *const anyopaque, comptime fmt: []const u8, args: anytype) bool {
     return zguiTreeNodePtrId(ptr_id, "%s", formatZ(fmt, args).ptr);
 }
-extern fn zguiTreeNodePtrId(ptr_id: *const anyopaque, fmt: [*:0]const u8, ...) bool;
-//--------------------------------------------------------------------------------------------------
 pub fn treeNodePtrIdFlags(ptr_id: *const anyopaque, flags: TreeNodeFlags, comptime fmt: []const u8, args: anytype) bool {
     return zguiTreeNodePtrIdFlags(ptr_id, @bitCast(u32, flags), "%s", formatZ(fmt, args).ptr);
 }
+extern fn zguiTreeNodePtrId(ptr_id: *const anyopaque, fmt: [*:0]const u8, ...) bool;
 extern fn zguiTreeNodePtrIdFlags(ptr_id: *const anyopaque, flags: u32, fmt: [*:0]const u8, ...) bool;
 //--------------------------------------------------------------------------------------------------
 pub fn treePushStrId(str_id: [:0]const u8) void {
     zguiTreePushStrId(str_id);
 }
-extern fn zguiTreePushStrId(str_id: [*:0]const u8) void;
-//--------------------------------------------------------------------------------------------------
 pub fn treePushPtrId(ptr_id: *const anyopaque) void {
     zguiTreePushPtrId(ptr_id);
 }
+extern fn zguiTreePushStrId(str_id: [*:0]const u8) void;
 extern fn zguiTreePushPtrId(ptr_id: *const anyopaque) void;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn treePop() void`
