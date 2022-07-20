@@ -482,14 +482,34 @@ ZGUI_API bool zguiInputScalarN(
     return ImGui::InputScalarN(label, data_type, p_data, components, p_step, p_step_fast, format, flags);
 }
 
+ZGUI_API bool zguiColorEdit3(const char* label, float col[3], ImGuiColorEditFlags flags) {
+    return ImGui::ColorEdit3(label, col, flags);
+}
+
+ZGUI_API bool zguiColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flags) {
+    return ImGui::ColorEdit4(label, col, flags);
+}
+
+ZGUI_API bool zguiColorPicker3(const char* label, float col[3], ImGuiColorEditFlags flags) {
+    return ImGui::ColorPicker3(label, col, flags);
+}
+
+ZGUI_API bool zguiColorPicker4(const char* label, float col[4], ImGuiColorEditFlags flags, const float* ref_col) {
+    return ImGui::ColorPicker4(label, col, flags, ref_col);
+}
+
+ZGUI_API bool zguiColorButton(const char* desc_id, const float col[4], ImGuiColorEditFlags flags, float w, float h) {
+    return ImGui::ColorButton(desc_id, { col[0], col[1], col[2], col[3] }, flags, { w, h });
+}
+
 ZGUI_API void zguiTextUnformatted(const char* text, const char* text_end) {
     ImGui::TextUnformatted(text, text_end);
 }
 
-ZGUI_API void zguiTextColored(float color[4], const char* fmt, ...) {
+ZGUI_API void zguiTextColored(const float col[4], const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    ImGui::TextColoredV({ color[0], color[1], color[2], color[3] }, fmt, args);
+    ImGui::TextColoredV({ col[0], col[1], col[2], col[3] }, fmt, args);
     va_end(args);
 }
 
@@ -601,8 +621,8 @@ ZGUI_API void zguiEndDisabled(void) {
     ImGui::EndDisabled();
 }
 
-ZGUI_API void zguiPushStyleColor(ImGuiCol idx, float color[4]) {
-    ImGui::PushStyleColor(idx, { color[0], color[1], color[2], color[3] });
+ZGUI_API void zguiPushStyleColor(ImGuiCol idx, const float col[4]) {
+    ImGui::PushStyleColor(idx, { col[0], col[1], col[2], col[3] });
 }
 
 ZGUI_API void zguiPopStyleColor(int count) {
@@ -613,8 +633,92 @@ ZGUI_API bool zguiTreeNode(const char* label) {
     return ImGui::TreeNode(label);
 }
 
+ZGUI_API bool zguiTreeNodeStrId(const char* str_id, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    const bool ret = ImGui::TreeNodeV(str_id, fmt, args);
+    va_end(args);
+    return ret;
+}
+
+ZGUI_API bool zguiTreeNodeStrIdFlags(const char* str_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    const bool ret = ImGui::TreeNodeExV(str_id, flags, fmt, args);
+    va_end(args);
+    return ret;
+}
+
+ZGUI_API bool zguiTreeNodePtrId(const void* ptr_id, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    const bool ret = ImGui::TreeNodeV(ptr_id, fmt, args);
+    va_end(args);
+    return ret;
+}
+
+ZGUI_API bool zguiTreeNodePtrIdFlags(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    const bool ret = ImGui::TreeNodeExV(ptr_id, flags, fmt, args);
+    va_end(args);
+    return ret;
+}
+
+ZGUI_API bool zguiCollapsingHeader(const char* label, ImGuiTreeNodeFlags flags) {
+    return ImGui::CollapsingHeader(label, flags);
+}
+
+ZGUI_API bool zguiCollapsingHeaderStatePtr(const char* label, bool* p_visible, ImGuiTreeNodeFlags flags) {
+    return ImGui::CollapsingHeader(label, p_visible, flags);
+}
+
+ZGUI_API void zguiSetNextItemOpen(bool is_open, ImGuiCond cond) {
+    ImGui::SetNextItemOpen(is_open, cond);
+}
+
+ZGUI_API void zguiTreePushStrId(const char* str_id) {
+    ImGui::TreePush(str_id);
+}
+
+ZGUI_API void zguiTreePushPtrId(const void* ptr_id) {
+    ImGui::TreePush(ptr_id);
+}
+
 ZGUI_API void zguiTreePop(void) {
     ImGui::TreePop();
+}
+
+ZGUI_API void zguiPushStrId(const char* str_id_begin, const char* str_id_end) {
+    ImGui::PushID(str_id_begin, str_id_end);
+}
+
+ZGUI_API void zguiPushStrIdZ(const char* str_id) {
+    ImGui::PushID(str_id);
+}
+
+ZGUI_API void zguiPushPtrId(const void* ptr_id) {
+    ImGui::PushID(ptr_id);
+}
+
+ZGUI_API void zguiPushIntId(int int_id) {
+    ImGui::PushID(int_id);
+}
+
+ZGUI_API void zguiPopId(void) {
+    ImGui::PopID();
+}
+
+ZGUI_API ImGuiID zguiGetStrId(const char* str_id_begin, const char* str_id_end) {
+    return ImGui::GetID(str_id_begin, str_id_end);
+}
+
+ZGUI_API ImGuiID zguiGetStrIdZ(const char* str_id) {
+    return ImGui::GetID(str_id);
+}
+
+ZGUI_API ImGuiID zguiGetPtrId(const void* ptr_id) {
+    return ImGui::GetID(ptr_id);
 }
 
 //

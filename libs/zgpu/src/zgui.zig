@@ -55,6 +55,7 @@ pub const io = struct {
 //--------------------------------------------------------------------------------------------------
 const Context = *opaque {};
 pub const DrawData = *opaque {};
+pub const Ident = u32;
 //--------------------------------------------------------------------------------------------------
 pub const StyleColorIndex = enum(u32) {
     text,
@@ -183,49 +184,13 @@ extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 pub const end = zguiEnd;
 extern fn zguiEnd() void;
 //--------------------------------------------------------------------------------------------------
-pub const SelectableFlags = packed struct {
-    dont_close_popups: bool = false,
-    span_all_colums: bool = false,
-    allow_double_click: bool = false,
-    disabled: bool = false,
-    allow_item_overlap: bool = false,
-
-    _padding: u27 = 0,
-
-    comptime {
-        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
-    }
-};
-//--------------------------------------------------------------------------------------------------
-const Selectable = struct {
-    selected: bool = false,
-    flags: SelectableFlags = .{},
-    w: f32 = 0,
-    h: f32 = 0,
-};
-pub fn selectable(label: [:0]const u8, args: Selectable) bool {
-    return zguiSelectable(label, args.selected, @bitCast(u32, args.flags), args.w, args.h);
-}
-extern fn zguiSelectable(label: [*:0]const u8, selected: bool, flags: u32, w: f32, h: f32) bool;
-//--------------------------------------------------------------------------------------------------
-const SelectableStatePtr = struct {
-    p_selected: *bool,
-    flags: SelectableFlags = .{},
-    w: f32 = 0,
-    h: f32 = 0,
-};
-pub fn selectableStatePtr(label: [:0]const u8, args: SelectableStatePtr) bool {
-    return zguiSelectableStatePtr(label, args.p_selected, @bitCast(u32, args.flags), args.w, args.h);
-}
-extern fn zguiSelectableStatePtr(label: [*:0]const u8, p_selected: *bool, flags: u32, w: f32, h: f32) bool;
-//--------------------------------------------------------------------------------------------------
 const PushStyleColor = struct {
-    rgba32f: [4]f32,
+    col: [4]f32,
 };
 pub fn pushStyleColor(idx: StyleColorIndex, args: PushStyleColor) void {
-    zguiPushStyleColor(idx, &args.rgba32f);
+    zguiPushStyleColor(idx, &args.col);
 }
-extern fn zguiPushStyleColor(idx: StyleColorIndex, rgba32f: *const [4]f32) void;
+extern fn zguiPushStyleColor(idx: StyleColorIndex, col: *const [4]f32) void;
 //--------------------------------------------------------------------------------------------------
 const PopStyleColor = struct {
     count: i32 = 1,
@@ -293,7 +258,39 @@ extern fn zguiUnindent() void;
 // ID stack/scopes
 //
 //--------------------------------------------------------------------------------------------------
-// TODO: Add functions.
+pub fn pushStrId(str_id: []const u8) void {
+    zguiPushStrId(str_id.ptr, str_id.ptr + str_id.len);
+}
+pub fn pushStrIdZ(str_id: [:0]const u8) void {
+    zguiPushStrIdZ(str_id);
+}
+pub fn pushPtrId(ptr_id: *const anyopaque) void {
+    zguiPushPtrId(ptr_id);
+}
+pub fn pushIntId(int_id: i32) void {
+    zguiPushIntId(int_id);
+}
+extern fn zguiPushStrId(str_id_begin: [*]const u8, str_id_end: [*]const u8) void;
+extern fn zguiPushStrIdZ(str_id: [*:0]const u8) void;
+extern fn zguiPushPtrId(ptr_id: *const anyopaque) void;
+extern fn zguiPushIntId(int_id: i32) void;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn popId() void`
+pub const popId = zguiPopId;
+extern fn zguiPopId() void;
+//--------------------------------------------------------------------------------------------------
+pub fn getStrId(str_id: []const u8) Ident {
+    return zguiGetStrId(str_id.ptr, str_id.ptr + str_id.len);
+}
+pub fn getStrIdZ(str_id: [:0]const u8) Ident {
+    return zguiGetStrIdZ(str_id);
+}
+pub fn getPtrId(ptr_id: *const anyopaque) Ident {
+    return zguiGetPtrId(ptr_id);
+}
+extern fn zguiGetStrId(str_id_begin: [*]const u8, str_id_end: [*]const u8) Ident;
+extern fn zguiGetStrIdZ(str_id: [*:0]const u8) Ident;
+extern fn zguiGetPtrId(ptr_id: *const anyopaque) Ident;
 //--------------------------------------------------------------------------------------------------
 //
 // Widgets: Text
@@ -303,7 +300,7 @@ pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
 pub fn textUnformattedColored(color: [4]f32, txt: []const u8) void {
-    pushStyleColor(.text, .{ .rgba32f = color });
+    pushStyleColor(.text, .{ .col = color });
     textUnformatted(txt);
     popStyleColor(.{});
 }
@@ -313,7 +310,7 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
     zguiTextUnformatted(result.ptr, result.ptr + result.len);
 }
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
-    pushStyleColor(.text, .{ .rgba32f = color });
+    pushStyleColor(.text, .{ .col = color });
     text(fmt, args);
     popStyleColor(.{});
 }
@@ -1271,6 +1268,242 @@ extern fn zguiInputScalarN(
     flags: u32,
 ) bool;
 //--------------------------------------------------------------------------------------------------
+//
+// Widgets: Color Editor/Picker
+//
+//--------------------------------------------------------------------------------------------------
+pub const ColorEditFlags = packed struct {
+    no_alpha: bool = false,
+    no_picker: bool = false,
+    no_options: bool = false,
+    no_small_preview: bool = false,
+    no_inputs: bool = false,
+    no_tooltip: bool = false,
+    no_label: bool = false,
+    no_side_preview: bool = false,
+    no_drag_drop: bool = false,
+    no_border: bool = false,
+
+    _reserved0: bool = false,
+    _reserved1: bool = false,
+    _reserved2: bool = false,
+    _reserved3: bool = false,
+    _reserved4: bool = false,
+
+    alpha_bar: bool = false,
+    alpha_preview: bool = false,
+    alpha_preview_half: bool = false,
+    hdr: bool = false,
+    display_rgb: bool = false,
+    display_hsv: bool = false,
+    display_hex: bool = false,
+    uint8: bool = false,
+    float: bool = false,
+    picker_hue_bar: bool = false,
+    picker_hue_wheel: bool = false,
+    input_rgb: bool = false,
+    input_hsv: bool = false,
+
+    _padding: u4 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+
+    pub const default_options = ColorEditFlags{ .uint8 = true, .display_rgb = true, .input_rgb = true, .picker_hue_bar = true };
+};
+//--------------------------------------------------------------------------------------------------
+const ColorEdit3 = struct {
+    col: *[3]f32,
+    flags: ColorEditFlags = .{},
+};
+pub fn colorEdit3(label: [:0]const u8, args: ColorEdit3) bool {
+    return zguiColorEdit3(label, args.col, @bitCast(u32, args.flags));
+}
+extern fn zguiColorEdit3(label: [*:0]const u8, col: *[3]f32, flags: u32) bool;
+//--------------------------------------------------------------------------------------------------
+const ColorEdit4 = struct {
+    col: *[4]f32,
+    flags: ColorEditFlags = .{},
+};
+pub fn colorEdit4(label: [:0]const u8, args: ColorEdit4) bool {
+    return zguiColorEdit4(label, args.col, @bitCast(u32, args.flags));
+}
+extern fn zguiColorEdit4(label: [*:0]const u8, col: *[4]f32, flags: u32) bool;
+//--------------------------------------------------------------------------------------------------
+const ColorPicker3 = struct {
+    col: *[3]f32,
+    flags: ColorEditFlags = .{},
+};
+pub fn colorPicker3(label: [:0]const u8, args: ColorPicker3) bool {
+    return zguiColorPicker3(label, args.col, @bitCast(u32, args.flags));
+}
+extern fn zguiColorPicker3(label: [*:0]const u8, col: *[3]f32, flags: u32) bool;
+//--------------------------------------------------------------------------------------------------
+const ColorPicker4 = struct {
+    col: *[4]f32,
+    flags: ColorEditFlags = .{},
+    ref_col: ?[*]const f32 = null,
+};
+pub fn colorPicker4(label: [:0]const u8, args: ColorPicker4) bool {
+    return zguiColorPicker4(
+        label,
+        args.col,
+        @bitCast(u32, args.flags),
+        if (args.ref_col) |rc| rc else null,
+    );
+}
+extern fn zguiColorPicker4(label: [*:0]const u8, col: *[4]f32, flags: u32, ref_col: ?[*]const f32) bool;
+//--------------------------------------------------------------------------------------------------
+const ColorButton = struct {
+    col: [4]f32,
+    flags: ColorEditFlags = .{},
+    w: f32 = 0.0,
+    h: f32 = 0.0,
+};
+pub fn colorButton(desc_id: [:0]const u8, args: ColorButton) bool {
+    return zguiColorButton(desc_id, &args.col, @bitCast(u32, args.flags), args.w, args.h);
+}
+extern fn zguiColorButton(desc_id: [*:0]const u8, col: *const [4]f32, flags: u32, w: f32, h: f32) bool;
+//--------------------------------------------------------------------------------------------------
+//
+// Widgets: Trees
+//
+//--------------------------------------------------------------------------------------------------
+pub const TreeNodeFlags = packed struct {
+    selected: bool = false,
+    framed: bool = false,
+    allow_item_overlap: bool = false,
+    no_tree_push_on_open: bool = false,
+    no_auto_open_on_log: bool = false,
+    default_open: bool = false,
+    open_on_double_click: bool = false,
+    open_on_arrow: bool = false,
+    leaf: bool = false,
+    bullet: bool = false,
+    frame_padding: bool = false,
+    span_avail_width: bool = false,
+    span_full_width: bool = false,
+    nav_left_jumps_back_here: bool = false,
+
+    _padding: u18 = 0,
+
+    pub const collapsing_header = TreeNodeFlags{ .framed = true, .no_tree_push_on_open = true, .no_auto_open_on_log = true };
+};
+//--------------------------------------------------------------------------------------------------
+pub fn treeNode(label: [:0]const u8) bool {
+    return zguiTreeNode(label);
+}
+extern fn zguiTreeNode(label: [*:0]const u8) bool;
+//--------------------------------------------------------------------------------------------------
+pub fn treeNodeFlags(label: [:0]const u8, flags: TreeNodeFlags) bool {
+    return zguiTreeNodeFlags(label, @bitCast(u32, flags));
+}
+extern fn zguiTreeNodeFlags(label: [*:0]const u8, flags: u32) bool;
+//--------------------------------------------------------------------------------------------------
+pub fn treeNodeStrId(str_id: [:0]const u8, comptime fmt: []const u8, args: anytype) bool {
+    return zguiTreeNodeStrId(str_id, "%s", formatZ(fmt, args).ptr);
+}
+extern fn zguiTreeNodeStrId(str_id: [*:0]const u8, fmt: [*:0]const u8, ...) bool;
+//--------------------------------------------------------------------------------------------------
+pub fn treeNodeStrIdFlags(str_id: [:0]const u8, flags: TreeNodeFlags, comptime fmt: []const u8, args: anytype) bool {
+    return zguiTreeNodeStrIdFlags(str_id, @bitCast(u32, flags), "%s", formatZ(fmt, args).ptr);
+}
+extern fn zguiTreeNodeStrIdFlags(str_id: [*:0]const u8, flags: u32, fmt: [*:0]const u8, ...) bool;
+//--------------------------------------------------------------------------------------------------
+pub fn treeNodePtrId(ptr_id: *const anyopaque, comptime fmt: []const u8, args: anytype) bool {
+    return zguiTreeNodePtrId(ptr_id, "%s", formatZ(fmt, args).ptr);
+}
+extern fn zguiTreeNodePtrId(ptr_id: *const anyopaque, fmt: [*:0]const u8, ...) bool;
+//--------------------------------------------------------------------------------------------------
+pub fn treeNodePtrIdFlags(ptr_id: *const anyopaque, flags: TreeNodeFlags, comptime fmt: []const u8, args: anytype) bool {
+    return zguiTreeNodePtrIdFlags(ptr_id, @bitCast(u32, flags), "%s", formatZ(fmt, args).ptr);
+}
+extern fn zguiTreeNodePtrIdFlags(ptr_id: *const anyopaque, flags: u32, fmt: [*:0]const u8, ...) bool;
+//--------------------------------------------------------------------------------------------------
+pub fn treePushStrId(str_id: [:0]const u8) void {
+    zguiTreePushStrId(str_id);
+}
+extern fn zguiTreePushStrId(str_id: [*:0]const u8) void;
+//--------------------------------------------------------------------------------------------------
+pub fn treePushPtrId(ptr_id: *const anyopaque) void {
+    zguiTreePushPtrId(ptr_id);
+}
+extern fn zguiTreePushPtrId(ptr_id: *const anyopaque) void;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn treePop() void`
+pub const treePop = zguiTreePop;
+extern fn zguiTreePop() void;
+//--------------------------------------------------------------------------------------------------
+const CollapsingHeaderStatePtr = struct {
+    p_visible: *bool,
+    flags: TreeNodeFlags = .{},
+};
+pub fn collapsingHeader(label: [:0]const u8, flags: TreeNodeFlags) bool {
+    return zguiCollapsingHeader(label, @bitCast(u32, flags));
+}
+pub fn collapsingHeaderStatePtr(label: [:0]const u8, args: CollapsingHeaderStatePtr) bool {
+    return zguiCollapsingHeaderStatePtr(label, args.p_visible, @bitCast(u32, args.flags));
+}
+extern fn zguiCollapsingHeader(label: [*:0]const u8, flags: u32) bool;
+extern fn zguiCollapsingHeaderStatePtr(label: [*:0]const u8, p_visible: bool, flags: u32) bool;
+//--------------------------------------------------------------------------------------------------
+const SetNextItemOpen = struct {
+    is_open: bool,
+    cond: Condition = .none,
+};
+pub fn setNextItemOpen(args: SetNextItemOpen) void {
+    zguiSetNextItemOpen(args.is_open, args.cond);
+}
+extern fn zguiSetNextItemOpen(is_open: bool, cond: Condition) void;
+//--------------------------------------------------------------------------------------------------
+//
+// Selectables
+//
+//--------------------------------------------------------------------------------------------------
+pub const SelectableFlags = packed struct {
+    dont_close_popups: bool = false,
+    span_all_colums: bool = false,
+    allow_double_click: bool = false,
+    disabled: bool = false,
+    allow_item_overlap: bool = false,
+
+    _padding: u27 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+const Selectable = struct {
+    selected: bool = false,
+    flags: SelectableFlags = .{},
+    w: f32 = 0,
+    h: f32 = 0,
+};
+pub fn selectable(label: [:0]const u8, args: Selectable) bool {
+    return zguiSelectable(label, args.selected, @bitCast(u32, args.flags), args.w, args.h);
+}
+extern fn zguiSelectable(label: [*:0]const u8, selected: bool, flags: u32, w: f32, h: f32) bool;
+//--------------------------------------------------------------------------------------------------
+const SelectableStatePtr = struct {
+    p_selected: *bool,
+    flags: SelectableFlags = .{},
+    w: f32 = 0,
+    h: f32 = 0,
+};
+pub fn selectableStatePtr(label: [:0]const u8, args: SelectableStatePtr) bool {
+    return zguiSelectableStatePtr(label, args.p_selected, @bitCast(u32, args.flags), args.w, args.h);
+}
+extern fn zguiSelectableStatePtr(label: [*:0]const u8, p_selected: *bool, flags: u32, w: f32, h: f32) bool;
+//--------------------------------------------------------------------------------------------------
+//
+// Widgets: List Boxes
+//
+//--------------------------------------------------------------------------------------------------
+// TODO: Add functions.
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 /// `pub fn newFrame() void`
 pub const newFrame = zguiNewFrame;
 extern fn zguiNewFrame() void;
@@ -1286,15 +1519,6 @@ extern fn zguiGetDrawData() DrawData;
 /// `pub fn showDemoWindow(p_open: ?*bool) void`
 pub const showDemoWindow = zguiShowDemoWindow;
 extern fn zguiShowDemoWindow(p_open: ?*bool) void;
-//--------------------------------------------------------------------------------------------------
-pub fn treeNode(label: [:0]const u8) bool {
-    return zguiTreeNode(label);
-}
-extern fn zguiTreeNode(label: [*:0]const u8) bool;
-//--------------------------------------------------------------------------------------------------
-/// `pub fn treePop() void`
-pub const treePop = zguiTreePop;
-extern fn zguiTreePop() void;
 //--------------------------------------------------------------------------------------------------
 var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
 

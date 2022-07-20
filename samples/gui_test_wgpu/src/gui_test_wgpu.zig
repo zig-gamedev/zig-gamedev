@@ -57,7 +57,7 @@ fn update(demo: *DemoState) !void {
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "zgui -");
     zgui.sameLine(.{});
-    zgui.textWrapped("Zig bindings for 'dear imgui' library. Easy to use API with defualt arguments and Zig style text formatting.", .{});
+    zgui.textWrapped("Zig bindings for 'dear imgui' library. Easy to use API with defualt arguments, named parameters and Zig style text formatting.", .{});
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.separator();
 
@@ -72,12 +72,12 @@ fn update(demo: *DemoState) !void {
         _ = zgui.button("Button 4", .{});
         _ = zgui.button("Button 5", .{ .w = -1.0, .h = 100.0 });
 
-        zgui.pushStyleColor(.text, .{ .rgba32f = .{ 1.0, 0.0, 0.0, 1.0 } });
+        zgui.pushStyleColor(.text, .{ .col = .{ 1.0, 0.0, 0.0, 1.0 } });
         _ = zgui.button("  Red Text Button  ", .{});
         zgui.popStyleColor(.{});
 
         zgui.sameLine(.{});
-        zgui.pushStyleColor(.text, .{ .rgba32f = .{ 1.0, 1.0, 0.0, 1.0 } });
+        zgui.pushStyleColor(.text, .{ .col = .{ 1.0, 1.0, 0.0, 1.0 } });
         _ = zgui.button("  Yellow Text Button  ", .{});
         zgui.popStyleColor(.{});
 
@@ -252,6 +252,32 @@ fn update(demo: *DemoState) !void {
         _ = zgui.inputDouble("Input double", .{ .v = &static.sf64 });
         _ = zgui.inputScalar("Input scalar (i8)", i8, .{ .v = &static.si8 });
         _ = zgui.inputScalarN("Input scalar N ([3]u8)", [3]u8, .{ .v = &static.v3u8 });
+        zgui.treePop();
+    }
+
+    if (zgui.treeNode("Widgets: Color Editor/Picker")) {
+        const static = struct {
+            var col3: [3]f32 = .{ 0, 0, 0 };
+            var col4: [4]f32 = .{ 0, 0, 0, 0 };
+            var col3p: [3]f32 = .{ 0, 0, 0 };
+            var col4p: [4]f32 = .{ 0, 0, 0, 0 };
+        };
+        _ = zgui.colorEdit3("Color edit 3", .{ .col = &static.col3 });
+        _ = zgui.colorEdit4("Color edit 4", .{ .col = &static.col4 });
+        _ = zgui.colorPicker3("Color picker 3", .{ .col = &static.col3p });
+        _ = zgui.colorPicker4("Color picker 4", .{ .col = &static.col4p });
+        _ = zgui.colorButton("color_button_id", .{ .col = .{ 0, 1, 0, 1 } });
+        zgui.treePop();
+    }
+
+    if (zgui.treeNode("Widgets: Trees")) {
+        if (zgui.treeNodeStrId("tree_id", "My Tree {d}", .{1})) {
+            zgui.textUnformatted("Some content...");
+            zgui.treePop();
+        }
+        if (zgui.collapsingHeader("Collapsing header 1", .{})) {
+            zgui.textUnformatted("Some content...");
+        }
         zgui.treePop();
     }
 
