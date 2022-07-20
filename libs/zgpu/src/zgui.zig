@@ -185,10 +185,11 @@ pub const end = zguiEnd;
 extern fn zguiEnd() void;
 //--------------------------------------------------------------------------------------------------
 const PushStyleColor = struct {
+    idx: StyleColorIndex,
     col: [4]f32,
 };
-pub fn pushStyleColor(idx: StyleColorIndex, args: PushStyleColor) void {
-    zguiPushStyleColor(idx, &args.col);
+pub fn pushStyleColor(args: PushStyleColor) void {
+    zguiPushStyleColor(args.idx, &args.col);
 }
 extern fn zguiPushStyleColor(idx: StyleColorIndex, col: *const [4]f32) void;
 //--------------------------------------------------------------------------------------------------
@@ -300,7 +301,7 @@ pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
 pub fn textUnformattedColored(color: [4]f32, txt: []const u8) void {
-    pushStyleColor(.text, .{ .col = color });
+    pushStyleColor(.{ .idx = .text, .col = color });
     textUnformatted(txt);
     popStyleColor(.{});
 }
@@ -310,7 +311,7 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
     zguiTextUnformatted(result.ptr, result.ptr + result.len);
 }
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
-    pushStyleColor(.text, .{ .col = color });
+    pushStyleColor(.{ .idx = .text, .col = color });
     text(fmt, args);
     popStyleColor(.{});
 }

@@ -72,12 +72,12 @@ fn update(demo: *DemoState) !void {
         _ = zgui.button("Button 4", .{});
         _ = zgui.button("Button 5", .{ .w = -1.0, .h = 100.0 });
 
-        zgui.pushStyleColor(.text, .{ .col = .{ 1.0, 0.0, 0.0, 1.0 } });
+        zgui.pushStyleColor(.{ .idx = .text, .col = .{ 1.0, 0.0, 0.0, 1.0 } });
         _ = zgui.button("  Red Text Button  ", .{});
         zgui.popStyleColor(.{});
 
         zgui.sameLine(.{});
-        zgui.pushStyleColor(.text, .{ .col = .{ 1.0, 1.0, 0.0, 1.0 } });
+        zgui.pushStyleColor(.{ .idx = .text, .col = .{ 1.0, 1.0, 0.0, 1.0 } });
         _ = zgui.button("  Yellow Text Button  ", .{});
         zgui.popStyleColor(.{});
 
