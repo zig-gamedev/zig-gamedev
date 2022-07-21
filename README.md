@@ -1,7 +1,7 @@
 **Project requires [Zig 0.10.0-dev.3027 (master)](https://ziglang.org/download/) or newer to compile.**
 # zig-gamedev project
 
-This repository contains a collection of [sample applications](#cross-platfrom-sample-applications-native-webgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: 3D graphics, multi-threaded physics, SIMD math, audio, GUI, procedural content generation (basic) and profiling.
+This repository contains a collection of [sample applications](#cross-platfrom-sample-applications-native-webgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: 3D graphics, multi-threaded physics, SIMD math, audio, GUI, noise generation and profiling.
 
 The goal of the project is to build a **toolbox of libraries** for Zig game developers. A lot of effort is being put to make the whole package consistent and let the developer use only the components she needs. Project is being developed by contributors and by **one full-time developer**.
 
