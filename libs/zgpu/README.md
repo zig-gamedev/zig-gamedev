@@ -148,7 +148,7 @@ pass: {
 gctx.generateMipmaps(arena, command_encoder, texture_handle);
 ```
 
-### Image loading with `stb_image` library (optional)
+### Image loading with 'stb_image' library (optional)
 
 ```zig
 // Defined in zgpu.stbi namespace
@@ -169,12 +169,12 @@ defer image.deinit();
 ```
 If you don't want to use `stb_image` library you can disable it by setting `BuildOptions.use_stb_image = false`.
 
-### `zgui` - `dear imgui` bindings (optional)
+### `zgui` - 'dear imgui' bindings (optional)
 
 Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. For a test application please see [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu).
 
 ```zig
-const zgpu = @import("libs/zgpu/build.zig");
+const zgpu = @import("zgpu");
 const zgui = zgpu.zgui;
 
 zgpu.gui.init(window, gpu_device, "path_to_content_dir", font_name, font_size);
