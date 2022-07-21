@@ -12,7 +12,7 @@ This library uses [mach-glfw bindings](https://github.com/hexops/mach-glfw) and 
 * Async shader compilation
 * GPU mipmap generator
 * Image loading via `stb_image` library
-* `zgui` - easy to use `dear imgui` bindings ([source code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zgpu/src/zgui.zig))
+* `zgui` - easy to use `dear imgui` bindings ([source code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zgpu/src/zgui.zig), [test app](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu))
 
 For more details please see below.
 
