@@ -1,17 +1,18 @@
-# zgpu v0.1 - Cross-platform graphics layer
+# zgpu v0.2 - Cross-platform graphics layer
 
 This library uses [mach-glfw bindings](https://github.com/hexops/mach-glfw) and build script from [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn).
 
-`zgpu` is a cross-platform (Windows/Linux/Mac) graphics layer built on top of native wgpu API (Dawn).
+`zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of native wgpu API (Dawn).
 
 ## Features:
 
+* Zero-overhead wgpu API bindings ([source code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zgpu/src/wgpu.zig))
 * Uniform buffer pool for fast CPU->GPU transfers
 * Resource pools and resources identified by 32-bit integer handles
 * Async shader compilation
 * GPU mipmap generator
-* Image loading via `stb_image` library (optional)
-* GUI via `dear imgui` library (optional)
+* Image loading via `stb_image` library
+* `zgui` - easy to use `dear imgui` bindings ([source code](https://github.com/michal-z/zig-gamedev/blob/main/libs/zgpu/src/zgui.zig))
 
 For more details please see below.
 
@@ -34,12 +35,11 @@ pub fn build(b: *std.build.Builder) void {
     zgpu.link(exe, zgpu_options);
 }
 ```
-Note that linking with `zgpu` package also gives you access to `glfw` and `gpu` packages.
+Note that linking with `zgpu` package also gives you access to `glfw` package.
 
-Now in your code you may import and use `zgpu`, `gpu` and `glfw`:
+Now in your code you may import and use `zgpu` and `glfw`:
 ```zig
 const glfw = @import("glfw");
-const gpu = @import("gpu");
 const zgpu = @import("zgpu");
 
 pub fn main() !void {
@@ -47,6 +47,7 @@ pub fn main() !void {
 }
 ```
 For sample applications please see:
+* [gui test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu)
 * [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu)
 * [bullet physics test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/bullet_physics_test_wgpu)
 * [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu)
@@ -168,11 +169,19 @@ defer image.deinit();
 ```
 If you don't want to use `stb_image` library you can disable it by setting `BuildOptions.use_stb_image = false`.
 
-### GUI based on `dear imgui` library (optional)
+### `zgui` - `dear imgui` bindings (optional)
+
+Easy to use, hand-crafted API with default arguments, named parameters and Zig style text formatting. For a test application please see [here](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu).
 
 ```zig
+const zgpu = @import("libs/zgpu/build.zig");
+const zgui = zgpu.zgui;
+
 zgpu.gui.init(window, gpu_device, "path_to_content_dir", font_name, font_size);
 defer zgpu.gui.deinit();
+
+var value0: f32 = 0.0;
+var value1: f32 = 0.0;
 
 // Main loop
 while (...) {
@@ -186,19 +195,23 @@ while (...) {
     zgui.spacing();
 
     if (zgui.button("Setup Scene", .{})) {
-        ...
+        // Button pressed.
+    }
+
+    if (zgui.dragFloat("Drag 1", .{ .v = &value0 })) {
+        // value0 has changed
+    }
+
+    if (zgui.dragFloat("Drag 2", .{ .v = &value0, .v_min = -1.0, .v_max = 1.0 })) {
+        // value1 has changed
     }
 
     // Draw
     {
-        // Begin render pass with only one color attachment and *without depth-stencil* attachment
-        const pass = encoder.beginRenderPass(...);
-        defer {
-            pass.end();
-            pass.release();
-        }
+        const pass = zgpu.util.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
+        defer zgpu.util.endRelease(pass);
         zgpu.gui.draw(pass);
     }
 }
 ```
-If you don't want to use `dear imgui` library you can disable it by setting `BuildOptions.use_imgui = false`.
+If you don't want to use `zgui` library you can disable it by setting `BuildOptions.use_imgui = false`.

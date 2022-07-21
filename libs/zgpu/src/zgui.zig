@@ -1,5 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// zgui v0.1 (wip)
 // Zig bindings for 'dear imgui' library. Easy to use, hand-crafted API with default arguments,
 // named parameters and Zig style text formatting.
 //--------------------------------------------------------------------------------------------------
