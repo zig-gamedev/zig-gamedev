@@ -60,7 +60,7 @@ const Context = *opaque {};
 pub const DrawData = *opaque {};
 pub const Ident = u32;
 //--------------------------------------------------------------------------------------------------
-pub const StyleColorIndex = enum(u32) {
+pub const StyleCol = enum(u32) {
     text,
     text_disabled,
     window_bg,
@@ -251,6 +251,27 @@ pub fn setNextWindowSize(args: SetNextWindowSize) void {
 }
 extern fn zguiSetNextWindowSize(w: f32, h: f32, cond: Condition) void;
 //--------------------------------------------------------------------------------------------------
+const SetNextWindowCollapsed = struct {
+    collapsed: bool,
+    cond: Condition = .none,
+};
+pub fn setNextWindowCollapsed(args: SetNextWindowCollapsed) void {
+    zguiSetNextWindowCollapsed(args.collapsed, args.cond);
+}
+extern fn zguiSetNextWindowCollapsed(collapsed: bool, cond: Condition) void;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn setNextWindowFocus() void`
+pub const setNextWindowFocus = zguiSetNextWindowFocus;
+extern fn zguiSetNextWindowFocus() void;
+//--------------------------------------------------------------------------------------------------
+const SetNextWindowBgAlpha = struct {
+    alpha: f32,
+};
+pub fn setNextWindowBgAlpha(args: SetNextWindowBgAlpha) void {
+    zguiSetNextWindowBgAlpha(args.alpha);
+}
+extern fn zguiSetNextWindowBgAlpha(alpha: f32) void;
+//--------------------------------------------------------------------------------------------------
 const Begin = struct {
     p_open: ?*bool = null,
     flags: WindowFlags = .{},
@@ -262,6 +283,24 @@ pub fn begin(name: [:0]const u8, args: Begin) bool {
 pub const end = zguiEnd;
 extern fn zguiBegin(name: [*:0]const u8, p_open: ?*bool, flags: u32) bool;
 extern fn zguiEnd() void;
+//--------------------------------------------------------------------------------------------------
+const BeginChild = struct {
+    w: f32 = 0.0,
+    h: f32 = 0.0,
+    border: bool = false,
+    flags: WindowFlags = .{},
+};
+pub fn beginChild(str_id: [:0]const u8, args: BeginChild) bool {
+    return zguiBeginChild(str_id, args.w, args.h, args.border, @bitCast(u32, args.flags));
+}
+pub fn beginChildId(id: Ident, args: BeginChild) bool {
+    return zguiBeginChildId(id, args.w, args.h, args.border, @bitCast(u32, args.flags));
+}
+/// `pub fn endChild() void`
+pub const endChild = zguiEndChild;
+extern fn zguiBeginChild(str_id: [*:0]const u8, w: f32, h: f32, border: bool, flags: u32) bool;
+extern fn zguiBeginChildId(id: Ident, w: f32, h: f32, border: bool, flags: u32) bool;
+extern fn zguiEndChild() void;
 //--------------------------------------------------------------------------------------------------
 pub const FocusedFlags = packed struct {
     child_windows: bool = false,
@@ -320,9 +359,28 @@ extern fn zguiIsWindowCollapsed() bool;
 extern fn zguiIsWindowFocused(flags: u32) bool;
 extern fn zguiIsWindowHovered(flags: u32) bool;
 //--------------------------------------------------------------------------------------------------
+pub fn getWindowPos() [2]f32 {
+    var pos: [2]f32 = undefined;
+    zguiGetWindowPos(&pos);
+    return pos;
+}
+pub fn getWindowSize() [2]f32 {
+    var size: [2]f32 = undefined;
+    zguiGetWindowSize(&size);
+    return size;
+}
+/// `pub fn getWindowWidth() f32`
+pub const getWindowWidth = zguiGetWindowWidth;
+/// `pub fn getWindowHeight() f32`
+pub const getWindowHeight = zguiGetWindowHeight;
+extern fn zguiGetWindowPos(pos: *[2]f32) void;
+extern fn zguiGetWindowSize(size: *[2]f32) void;
+extern fn zguiGetWindowWidth() f32;
+extern fn zguiGetWindowHeight() f32;
+//--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 const PushStyleColor = struct {
-    idx: StyleColorIndex,
+    idx: StyleCol,
     col: [4]f32,
 };
 pub fn pushStyleColor(args: PushStyleColor) void {
@@ -334,8 +392,22 @@ const PopStyleColor = struct {
 pub fn popStyleColor(args: PopStyleColor) void {
     zguiPopStyleColor(args.count);
 }
-extern fn zguiPushStyleColor(idx: StyleColorIndex, col: *const [4]f32) void;
+extern fn zguiPushStyleColor(idx: StyleCol, col: *const [4]f32) void;
 extern fn zguiPopStyleColor(count: i32) void;
+//--------------------------------------------------------------------------------------------------
+/// `void pushItemWidth(item_width: f32) void`
+pub const pushItemWidth = zguiPushItemWidth;
+/// `void popItemWidth() void`
+pub const popItemWidth = zguiPopItemWidth;
+/// `void setNextItemWidth(item_width: f32) void`
+pub const setNextItemWidth = zguiSetNextItemWidth;
+extern fn zguiPushItemWidth(item_width: f32) void;
+extern fn zguiPopItemWidth() void;
+extern fn zguiSetNextItemWidth(item_width: f32) void;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn getFontSize() f32'
+pub const getFontSize = zguiGetFontSize;
+extern fn zguiGetFontSize() f32;
 //--------------------------------------------------------------------------------------------------
 const BeginDisabled = struct {
     disabled: bool = true,

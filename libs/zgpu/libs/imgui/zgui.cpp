@@ -10,12 +10,36 @@ ZGUI_API void zguiSetNextWindowSize(float w, float h, ImGuiCond cond) {
     ImGui::SetNextWindowSize({ w, h }, cond);
 }
 
+ZGUI_API void zguiSetNextWindowCollapsed(bool collapsed, ImGuiCond cond) {
+    ImGui::SetNextWindowCollapsed(collapsed, cond);
+}
+
+ZGUI_API void zguiSetNextWindowFocus(void) {
+    ImGui::SetNextWindowFocus();
+}
+
+ZGUI_API void zguiSetNextWindowBgAlpha(float alpha) {
+    ImGui::SetNextWindowBgAlpha(alpha);
+}
+
 ZGUI_API bool zguiBegin(const char* name, bool* p_open, ImGuiWindowFlags flags) {
     return ImGui::Begin(name, p_open, flags);
 }
 
 ZGUI_API void zguiEnd(void) {
     ImGui::End();
+}
+
+ZGUI_API bool zguiBeginChild(const char* str_id, float w, float h, bool border, ImGuiWindowFlags flags) {
+    return ImGui::BeginChild(str_id, { w, h }, border, flags);
+}
+
+ZGUI_API bool zguiBeginChildId(ImGuiID id, float w, float h, bool border, ImGuiWindowFlags flags) {
+    return ImGui::BeginChild(id, { w, h }, border, flags);
+}
+
+ZGUI_API void zguiEndChild(void) {
+    ImGui::EndChild();
 }
 
 ZGUI_API bool zguiIsWindowAppearing(void) {
@@ -32,6 +56,26 @@ ZGUI_API bool zguiIsWindowFocused(ImGuiFocusedFlags flags) {
 
 ZGUI_API bool zguiIsWindowHovered(ImGuiHoveredFlags flags) {
     return ImGui::IsWindowHovered(flags);
+}
+
+ZGUI_API void zguiGetWindowPos(float pos[2]) {
+    const ImVec2 p = ImGui::GetWindowPos();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API void zguiGetWindowSize(float size[2]) {
+    const ImVec2 s = ImGui::GetWindowSize();
+    size[0] = s.x;
+    size[1] = s.y;
+}
+
+ZGUI_API float zguiGetWindowWidth(void) {
+    return ImGui::GetWindowWidth();
+}
+
+ZGUI_API float zguiGetWindowHeight(void) {
+    return ImGui::GetWindowHeight();
 }
 
 ZGUI_API void zguiSpacing(void) {
@@ -677,6 +721,22 @@ ZGUI_API void zguiPushStyleColor(ImGuiCol idx, const float col[4]) {
 
 ZGUI_API void zguiPopStyleColor(int count) {
     ImGui::PopStyleColor(count);
+}
+
+ZGUI_API void zguiPushItemWidth(float item_width) {
+    ImGui::PushItemWidth(item_width);
+}
+
+ZGUI_API void zguiPopItemWidth(void) {
+    ImGui::PopItemWidth();
+}
+
+ZGUI_API void zguiSetNextItemWidth(float item_width) {
+    ImGui::SetNextItemWidth(item_width);
+}
+
+ZGUI_API float zguiGetFontSize(void) {
+    return ImGui::GetFontSize();
 }
 
 ZGUI_API bool zguiTreeNode(const char* label) {

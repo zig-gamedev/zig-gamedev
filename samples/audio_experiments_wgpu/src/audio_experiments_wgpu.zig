@@ -119,14 +119,12 @@ fn update(demo: *DemoState) !void {
         );
 
         zgui.spacing();
-        zgui.text("Music:", .{});
+        zgui.textUnformatted("Music:");
         const music_is_playing = demo.music.isPlaying();
         if (zgui.button(if (music_is_playing) "Pause" else "Play", .{ .w = 200.0 })) {
             if (music_is_playing) {
                 try demo.music.stop();
-            } else {
-                try demo.music.start();
-            }
+            } else try demo.music.start();
         }
         zgui.sameLine(.{ .offset_from_start_x = 0.0 });
         if (zgui.button("  Rewind  ", .{})) {
@@ -134,7 +132,7 @@ fn update(demo: *DemoState) !void {
         }
 
         zgui.spacing();
-        zgui.text("Sounds:", .{});
+        zgui.textUnformatted("Sounds:");
         if (zgui.button("  Play Sound 1  ", .{})) {
             try demo.audio.engine.playSound(content_dir ++ "drum_bass_hard.flac", null);
         }

@@ -57,10 +57,9 @@ fn update(demo: *DemoState) !void {
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "zgui -");
     zgui.sameLine(.{});
-    zgui.textWrapped(
-        \\Zig bindings for 'dear imgui' library. Easy to use, hand-crafted API with default arguments,
-        \\named parameters and Zig style text formatting."
-    , .{});
+    zgui.textWrapped("Zig bindings for 'dear imgui' library. " ++
+        "Easy to use, hand-crafted API with default arguments, " ++
+        "named parameters and Zig style text formatting.", .{});
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.separator();
 
