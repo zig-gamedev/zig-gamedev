@@ -1942,6 +1942,56 @@ extern fn zguiBeginListBox(label: [*:0]const u8, w: f32, h: f32) bool;
 extern fn zguiEndListBox() void;
 //--------------------------------------------------------------------------------------------------
 //
+// Item/Widgets Utilities and Query Functions
+//
+//--------------------------------------------------------------------------------------------------
+pub fn isItemHovered(flags: HoveredFlags) bool {
+    return zguiIsItemHovered(@bitCast(u32, flags));
+}
+/// `pub fn isItemActive() bool`
+pub const isItemActive = zguiIsItemActive;
+/// `pub fn isItemFocused() bool`
+pub const isItemFocused = zguiIsItemFocused;
+pub const MouseButton = enum(u32) {
+    left = 0,
+    right = 1,
+    middle = 2,
+};
+/// `pub fn isItemClicked(mouse_button: MouseButton) bool`
+pub const isItemClicked = zguiIsItemClicked;
+/// `pub fn isItemVisible() bool`
+pub const isItemVisible = zguiIsItemVisible;
+/// `pub fn isItemEdited() bool`
+pub const isItemEdited = zguiIsItemEdited;
+/// `pub fn isItemActivated() bool`
+pub const isItemActivated = zguiIsItemActivated;
+/// `pub fn isItemDeactivated bool`
+pub const isItemDeactivated = zguiIsItemDeactivated;
+/// `pub fn isItemDeactivatedAfterEdit() bool`
+pub const isItemDeactivatedAfterEdit = zguiIsItemDeactivatedAfterEdit;
+/// `pub fn isItemToggledOpen() bool`
+pub const isItemToggledOpen = zguiIsItemToggledOpen;
+/// `pub fn isAnyItemHovered() bool`
+pub const isAnyItemHovered = zguiIsAnyItemHovered;
+/// `pub fn isAnyItemActive() bool`
+pub const isAnyItemActive = zguiIsAnyItemActive;
+/// `pub fn isAnyItemFocused() bool`
+pub const isAnyItemFocused = zguiIsAnyItemFocused;
+extern fn zguiIsItemHovered(flags: u32) bool;
+extern fn zguiIsItemActive() bool;
+extern fn zguiIsItemFocused() bool;
+extern fn zguiIsItemClicked(mouse_button: MouseButton) bool;
+extern fn zguiIsItemVisible() bool;
+extern fn zguiIsItemEdited() bool;
+extern fn zguiIsItemActivated() bool;
+extern fn zguiIsItemDeactivated() bool;
+extern fn zguiIsItemDeactivatedAfterEdit() bool;
+extern fn zguiIsItemToggledOpen() bool;
+extern fn zguiIsAnyItemHovered() bool;
+extern fn zguiIsAnyItemActive() bool;
+extern fn zguiIsAnyItemFocused() bool;
+//--------------------------------------------------------------------------------------------------
+//
 // Internal Helpers
 //
 //--------------------------------------------------------------------------------------------------

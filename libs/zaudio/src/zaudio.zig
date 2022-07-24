@@ -1066,7 +1066,7 @@ pub fn initFence(allocator: std.mem.Allocator) Error!Fence {
 }
 
 const FenceImpl = opaque {
-    pub fn init(allocator: std.mem.Allocator) Error!Fence {
+    fn init(allocator: std.mem.Allocator) Error!Fence {
         var handle = allocator.create(c.ma_fence) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 

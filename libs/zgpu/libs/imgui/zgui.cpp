@@ -978,3 +978,55 @@ ZGUI_API void zguiIoSetDisplaySize(float width, float height) {
 ZGUI_API void zguiIoSetDisplayFramebufferScale(float sx, float sy) {
     ImGui::GetIO().DisplayFramebufferScale = { sx, sy };
 }
+
+ZGUI_API bool zguiIsItemHovered(ImGuiHoveredFlags flags) {
+    return ImGui::IsItemHovered(flags);
+}
+
+ZGUI_API bool zguiIsItemActive(void) {
+    return ImGui::IsItemActive();
+}
+
+ZGUI_API bool zguiIsItemFocused(void) {
+    return ImGui::IsItemFocused();
+}
+
+ZGUI_API bool zguiIsItemClicked(ImGuiMouseButton mouse_button) {
+    return ImGui::IsItemClicked(mouse_button);
+}
+
+ZGUI_API bool zguiIsItemVisible(void) {
+    return ImGui::IsItemVisible();
+}
+
+ZGUI_API bool zguiIsItemEdited(void) {
+    return ImGui::IsItemEdited();
+}
+
+ZGUI_API bool zguiIsItemActivated(void) {
+    return ImGui::IsItemActivated();
+}
+
+ZGUI_API bool zguiIsItemDeactivated(void) {
+    return ImGui::IsItemDeactivated();
+}
+
+ZGUI_API bool zguiIsItemDeactivatedAfterEdit(void) {
+    return ImGui::IsItemDeactivatedAfterEdit();
+}
+
+ZGUI_API bool zguiIsItemToggledOpen(void) {
+    return ImGui::IsItemToggledOpen();
+}
+
+ZGUI_API bool zguiIsAnyItemHovered(void) {
+    return ImGui::IsAnyItemHovered();
+}
+
+ZGUI_API bool zguiIsAnyItemActive(void) {
+    return ImGui::IsAnyItemActive();
+}
+
+ZGUI_API bool zguiIsAnyItemFocused(void) {
+    return ImGui::IsAnyItemFocused();
+}

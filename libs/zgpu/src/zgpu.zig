@@ -1,9 +1,11 @@
-//  zgpu v0.2
+//--------------------------------------------------------------------------------------------------
+// zgpu v0.2
 //
-//  This library uses [mach-glfw bindings](https://github.com/hexops/mach-glfw) and
-//  build script from [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn).
+// This library uses [mach-glfw bindings](https://github.com/hexops/mach-glfw) and
+// build script from [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn).
 //
-//  `zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of wgpu API (Dawn).
+// `zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of wgpu API (Dawn).
+//--------------------------------------------------------------------------------------------------
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
@@ -1401,7 +1403,7 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
                 \\
                 \\  * DirectX 12 graphics driver on Windows
                 \\  * Vulkan graphics driver on Linux (OpenGL is NOT supported)
-                \\  * Metal graphics driver on MacOS
+                \\  * Metal graphics driver on macOS
                 \\
                 \\Please install latest supported driver and try again.
                 \\
