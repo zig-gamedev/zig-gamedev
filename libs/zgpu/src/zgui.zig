@@ -16,8 +16,8 @@ pub fn deinit() void {
     temp_buffer.deinit();
 }
 //--------------------------------------------------------------------------------------------------
-pub const flt_min: f32 = 1.17549435082228750796873653722225e-38;
-pub const flt_max: f32 = 3.40282346638528859811704183484517e+38;
+pub const f32_min: f32 = 1.17549435082228750796873653722225e-38;
+pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
 //--------------------------------------------------------------------------------------------------
 /// `fn createContext(shared_font_atlas: ?*const anyopaque) Context`
 const createContext = zguiCreateContext;
@@ -743,7 +743,7 @@ extern fn zguiCheckboxBits(label: [*:0]const u8, bits: *u32, bits_value: u32) bo
 //--------------------------------------------------------------------------------------------------
 const ProgressBar = struct {
     fraction: f32,
-    w: f32 = -flt_min,
+    w: f32 = -f32_min,
     h: f32 = 0.0,
     overlay: ?[:0]const u8 = null,
 };
