@@ -2,6 +2,20 @@
 
 #define ZGUI_API extern "C"
 
+/*
+#include <stdio.h>
+
+ZGUI_API float zguiGetFloatMin(void) {
+    printf("__FLT_MIN__ %.32e\n", __FLT_MIN__);
+    return __FLT_MIN__;
+}
+
+ZGUI_API float zguiGetFloatMax(void) {
+    printf("__FLT_MAX__ %.32e\n", __FLT_MAX__);
+    return __FLT_MAX__;
+}
+*/
+
 ZGUI_API void zguiSetNextWindowPos(float x, float y, ImGuiCond cond, float pivot_x, float pivot_y) {
     ImGui::SetNextWindowPos({ x, y }, cond, { pivot_x, pivot_y });
 }
@@ -40,6 +54,46 @@ ZGUI_API bool zguiBeginChildId(ImGuiID id, float w, float h, bool border, ImGuiW
 
 ZGUI_API void zguiEndChild(void) {
     ImGui::EndChild();
+}
+
+ZGUI_API float zguiGetScrollX(void) {
+    return ImGui::GetScrollX();
+}
+
+ZGUI_API float zguiGetScrollY(void) {
+    return ImGui::GetScrollY();
+}
+
+ZGUI_API void zguiSetScrollX(float scroll_x) {
+    ImGui::SetScrollX(scroll_x);
+}
+
+ZGUI_API void zguiSetScrollY(float scroll_y) {
+    ImGui::SetScrollY(scroll_y);
+}
+
+ZGUI_API float zguiGetScrollMaxX(void) {
+    return ImGui::GetScrollMaxX();
+}
+
+ZGUI_API float zguiGetScrollMaxY(void) {
+    return ImGui::GetScrollMaxY();
+}
+
+ZGUI_API void zguiSetScrollHereX(float center_x_ratio) {
+    ImGui::SetScrollHereX(center_x_ratio);
+}
+
+ZGUI_API void zguiSetScrollHereY(float center_y_ratio) {
+    ImGui::SetScrollHereY(center_y_ratio);
+}
+
+ZGUI_API void zguiSetScrollFromPosX(float local_x, float center_x_ratio) {
+    ImGui::SetScrollFromPosX(local_x, center_x_ratio);
+}
+
+ZGUI_API void zguiSetScrollFromPosY(float local_y, float center_y_ratio) {
+    ImGui::SetScrollFromPosY(local_y, center_y_ratio);
 }
 
 ZGUI_API bool zguiIsWindowAppearing(void) {
@@ -86,12 +140,12 @@ ZGUI_API void zguiNewLine(void) {
     ImGui::NewLine();
 }
 
-ZGUI_API void zguiIndent(void) {
-    ImGui::Indent();
+ZGUI_API void zguiIndent(float indent_w) {
+    ImGui::Indent(indent_w);
 }
 
-ZGUI_API void zguiUnindent(void) {
-    ImGui::Unindent();
+ZGUI_API void zguiUnindent(float indent_w) {
+    ImGui::Unindent(indent_w);
 }
 
 ZGUI_API void zguiSeparator(void) {
@@ -104,6 +158,76 @@ ZGUI_API void zguiSameLine(float offset_from_start_x, float spacing) {
 
 ZGUI_API void zguiDummy(float w, float h) {
     ImGui::Dummy({ w, h });
+}
+
+ZGUI_API void zguiBeginGroup(void) {
+    ImGui::BeginGroup();
+}
+
+ZGUI_API void zguiEndGroup(void) {
+    ImGui::EndGroup();
+}
+
+ZGUI_API void zguiGetCursorPos(float pos[2]) {
+    const ImVec2 p = ImGui::GetCursorPos();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API float zguiGetCursorPosX() {
+    return ImGui::GetCursorPosX();
+}
+
+ZGUI_API float zguiGetCursorPosY() {
+    return ImGui::GetCursorPosY();
+}
+
+ZGUI_API void zguiSetCursorPos(float local_x, float local_y) {
+    ImGui::SetCursorPos({ local_x, local_y });
+}
+
+ZGUI_API void zguiSetCursorPosX(float local_x) {
+    ImGui::SetCursorPosX(local_x);
+}
+
+ZGUI_API void zguiSetCursorPosY(float local_y) {
+    ImGui::SetCursorPosY(local_y);
+}
+
+ZGUI_API void zguiGetCursorStartPos(float pos[2]) {
+    const ImVec2 p = ImGui::GetCursorStartPos();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API void zguiGetCursorScreenPos(float pos[2]) {
+    const ImVec2 p = ImGui::GetCursorScreenPos();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API void zguiSetCursorScreenPos(float screen_x, float screen_y) {
+    ImGui::SetCursorScreenPos({ screen_x, screen_y });
+}
+
+ZGUI_API void zguiAlignTextToFramePadding() {
+    ImGui::AlignTextToFramePadding();
+}
+
+ZGUI_API float zguiGetTextLineHeight() {
+    return ImGui::GetTextLineHeight();
+}
+
+ZGUI_API float zguiGetTextLineHeightWithSpacing() {
+    return ImGui::GetTextLineHeightWithSpacing();
+}
+
+ZGUI_API float zguiGetFrameHeight() {
+    return ImGui::GetFrameHeight();
+}
+
+ZGUI_API float zguiGetFrameHeightWithSpacing() {
+    return ImGui::GetFrameHeightWithSpacing();
 }
 
 ZGUI_API bool zguiDragFloat(

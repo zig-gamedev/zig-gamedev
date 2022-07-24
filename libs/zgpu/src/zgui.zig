@@ -16,6 +16,9 @@ pub fn deinit() void {
     temp_buffer.deinit();
 }
 //--------------------------------------------------------------------------------------------------
+pub const flt_min: f32 = 1.17549435082228750796873653722225e-38;
+pub const flt_max: f32 = 3.40282346638528859811704183484517e+38;
+//--------------------------------------------------------------------------------------------------
 /// `fn createContext(shared_font_atlas: ?*const anyopaque) Context`
 const createContext = zguiCreateContext;
 extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
@@ -302,6 +305,55 @@ extern fn zguiBeginChild(str_id: [*:0]const u8, w: f32, h: f32, border: bool, fl
 extern fn zguiBeginChildId(id: Ident, w: f32, h: f32, border: bool, flags: u32) bool;
 extern fn zguiEndChild() void;
 //--------------------------------------------------------------------------------------------------
+/// `pub fn zguiGetScrollX() f32`
+pub const getScrollX = zguiGetScrollX;
+/// `pub fn zguiGetScrollY() f32`
+pub const getScrollY = zguiGetScrollY;
+/// `pub fn zguiSetScrollX(scroll_x: f32) void`
+pub const setScrollX = zguiSetScrollX;
+/// `pub fn zguiSetScrollY(scroll_y: f32) void`
+pub const setScrollY = zguiSetScrollY;
+/// `pub fn zguiGetScrollMaxX() f32`
+pub const getScrollMaxX = zguiGetScrollMaxX;
+/// `pub fn zguiGetScrollMaxY() f32`
+pub const getScrollMaxY = zguiGetScrollMaxY;
+extern fn zguiGetScrollX() f32;
+extern fn zguiGetScrollY() f32;
+extern fn zguiSetScrollX(scroll_x: f32) void;
+extern fn zguiSetScrollY(scroll_y: f32) void;
+extern fn zguiGetScrollMaxX() f32;
+extern fn zguiGetScrollMaxY() f32;
+const SetScrollHereX = struct {
+    center_x_ratio: f32 = 0.5,
+};
+const SetScrollHereY = struct {
+    center_y_ratio: f32 = 0.5,
+};
+pub fn setScrollHereX(args: SetScrollHereX) void {
+    zguiSetScrollHereX(args.center_x_ratio);
+}
+pub fn setScrollHereY(args: SetScrollHereY) void {
+    zguiSetScrollHereY(args.center_y_ratio);
+}
+const SetScrollFromPosX = struct {
+    local_x: f32,
+    center_x_ratio: f32 = 0.5,
+};
+const SetScrollFromPosY = struct {
+    local_y: f32,
+    center_y_ratio: f32 = 0.5,
+};
+pub fn setScrollFromPosX(args: SetScrollFromPosX) void {
+    zguiSetScrollFromPosX(args.local_x, args.center_x_ratio);
+}
+pub fn setScrollFromPosY(args: SetScrollFromPosY) void {
+    zguiSetScrollFromPosY(args.local_y, args.center_y_ratio);
+}
+extern fn zguiSetScrollHereX(center_x_ratio: f32) void;
+extern fn zguiSetScrollHereY(center_y_ratio: f32) void;
+extern fn zguiSetScrollFromPosX(local_x: f32, center_x_ratio: f32) void;
+extern fn zguiSetScrollFromPosY(local_y: f32, center_y_ratio: f32) void;
+//--------------------------------------------------------------------------------------------------
 pub const FocusedFlags = packed struct {
     child_windows: bool = false,
     root_window: bool = false,
@@ -454,13 +506,84 @@ pub fn dummy(args: Dummy) void {
 }
 extern fn zguiDummy(w: f32, h: f32) void;
 //--------------------------------------------------------------------------------------------------
-/// `pub fn indent() void`
-pub const indent = zguiIndent;
-extern fn zguiIndent() void;
+const Indent = struct {
+    indent_w: f32 = 0.0,
+};
+pub fn indent(args: Indent) void {
+    zguiIndent(args.indent_w);
+}
+const Unindent = struct {
+    indent_w: f32 = 0.0,
+};
+pub fn unindent(args: Unindent) void {
+    zguiUnindent(args.indent_w);
+}
+extern fn zguiIndent(indent_w: f32) void;
+extern fn zguiUnindent(indent_w: f32) void;
 //--------------------------------------------------------------------------------------------------
-/// `pub fn unindent() void`
-pub const unindent = zguiUnindent;
-extern fn zguiUnindent() void;
+/// `pub fn beginGroup() void`
+const beginGroup = zguiBeginGroup;
+extern fn zguiBeginGroup() void;
+/// `pub fn endGroup() void`
+const endGroup = zguiEndGroup;
+extern fn zguiEndGroup() void;
+//--------------------------------------------------------------------------------------------------
+pub fn getCursorPos() [2]f32 {
+    var pos: [2]f32 = undefined;
+    zguiGetCursorPos(&pos);
+    return pos;
+}
+/// `pub fn getCursorPosX() f32`
+pub const getCursorPosX = zguiGetCursorPosX;
+/// `pub fn getCursorPosY() f32`
+pub const getCursorPosY = zguiGetCursorPosY;
+extern fn zguiGetCursorPos(pos: *[2]f32) void;
+extern fn zguiGetCursorPosX() f32;
+extern fn zguiGetCursorPosY() f32;
+//--------------------------------------------------------------------------------------------------
+pub fn setCursorPos(local_pos: [2]f32) void {
+    zguiSetCursorPos(local_pos[0], local_pos[1]);
+}
+/// `pub fn setCursorPosX(local_x: f32) void`
+pub const setCursorPosX = zguiSetCursorPosX;
+/// `pub fn setCursorPosY(local_y: f32) void`
+pub const setCursorPosY = zguiSetCursorPosY;
+extern fn zguiSetCursorPos(local_x: f32, local_y: f32) void;
+extern fn zguiSetCursorPosX(local_x: f32) void;
+extern fn zguiSetCursorPosY(local_y: f32) void;
+//--------------------------------------------------------------------------------------------------
+pub fn getCursorStartPos() [2]f32 {
+    var pos: [2]f32 = undefined;
+    zguiGetCursorStartPos(&pos);
+    return pos;
+}
+pub fn getCursorScreenPos() [2]f32 {
+    var pos: [2]f32 = undefined;
+    zguiGetCursorScreenPos(&pos);
+    return pos;
+}
+pub fn setCursorScreenPos(screen_pos: [2]f32) void {
+    zguiSetCursorPos(screen_pos[0], screen_pos[1]);
+}
+extern fn zguiGetCursorStartPos(pos: *[2]f32) void;
+extern fn zguiGetCursorScreenPos(pos: *[2]f32) void;
+extern fn zguiSetCursorScreenPos(screen_x: f32, screen_y: f32) void;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn alignTextToFramePadding() void`
+pub const alignTextToFramePadding = zguiAlignTextToFramePadding;
+/// `pub fn getTextLineHeight() f32`
+pub const getTextLineHeight = zguiGetTextLineHeight;
+/// `pub fn getTextLineHeightWithSpacing() f32`
+pub const getTextLineHeightWithSpacing = zguiGetTextLineHeightWithSpacing;
+/// `pub fn getFrameHeight() f32`
+pub const getFrameHeight = zguiGetFrameHeight;
+/// `pub fn getFrameHeightWithSpacing() f32`
+pub const getFrameHeightWithSpacing = zguiGetFrameHeightWithSpacing;
+extern fn zguiAlignTextToFramePadding() void;
+extern fn zguiGetTextLineHeight() f32;
+extern fn zguiGetTextLineHeightWithSpacing() f32;
+extern fn zguiGetFrameHeight() f32;
+extern fn zguiGetFrameHeightWithSpacing() f32;
 //--------------------------------------------------------------------------------------------------
 //
 // ID stack/scopes
@@ -620,7 +743,7 @@ extern fn zguiCheckboxBits(label: [*:0]const u8, bits: *u32, bits_value: u32) bo
 //--------------------------------------------------------------------------------------------------
 const ProgressBar = struct {
     fraction: f32,
-    w: f32 = -1.0,
+    w: f32 = -flt_min,
     h: f32 = 0.0,
     overlay: ?[:0]const u8 = null,
 };
