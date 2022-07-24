@@ -202,7 +202,7 @@ while (...) {
         // value0 has changed
     }
 
-    if (zgui.dragFloat("Drag 2", .{ .v = &value0, .v_min = -1.0, .v_max = 1.0 })) {
+    if (zgui.dragFloat("Drag 2", .{ .v = &value0, .min = -1.0, .max = 1.0 })) {
         // value1 has changed
     }
 
