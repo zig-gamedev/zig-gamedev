@@ -348,7 +348,7 @@ fn update(demo: *DemoState) void {
             demo.physics.world.getGravity(&gravity);
             if (zgui.sliderFloat(
                 "Gravity",
-                .{ .v = &gravity[1], .v_min = -default_gravity, .v_max = default_gravity },
+                .{ .v = &gravity[1], .min = -default_gravity, .max = default_gravity },
             )) {
                 demo.physics.world.setGravity(&gravity);
             }

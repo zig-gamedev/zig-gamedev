@@ -181,7 +181,7 @@ fn update(demo: *DemoState) !void {
         _ = zgui.dragFloat4("Drag float 4", .{ .v = &static.v4 });
         _ = zgui.dragFloatRange2(
             "Drag float range 2",
-            .{ .v_current_min = &static.range[0], .v_current_max = &static.range[1] },
+            .{ .current_min = &static.range[0], .current_max = &static.range[1] },
         );
         _ = zgui.dragInt("Drag int 1", .{ .v = &static.v1i });
         _ = zgui.dragInt2("Drag int 2", .{ .v = &static.v2i });
@@ -189,18 +189,18 @@ fn update(demo: *DemoState) !void {
         _ = zgui.dragInt4("Drag int 4", .{ .v = &static.v4i });
         _ = zgui.dragIntRange2(
             "Drag int range 2",
-            .{ .v_current_min = &static.rangei[0], .v_current_max = &static.rangei[1] },
+            .{ .current_min = &static.rangei[0], .current_max = &static.rangei[1] },
         );
-        _ = zgui.dragScalar("Drag scalar (i8)", i8, .{ .v = &static.si8, .v_min = -20 });
+        _ = zgui.dragScalar("Drag scalar (i8)", i8, .{ .v = &static.si8, .min = -20 });
         _ = zgui.dragScalarN(
             "Drag scalar N ([3]u16)",
             @TypeOf(static.vu16),
-            .{ .v = &static.vu16, .v_max = 100 },
+            .{ .v = &static.vu16, .max = 100 },
         );
         _ = zgui.dragScalar(
             "Drag scalar (f64)",
             f64,
-            .{ .v = &static.sd, .v_min = -1.0, .v_max = 1.0, .v_speed = 0.005 },
+            .{ .v = &static.sd, .min = -1.0, .max = 1.0, .speed = 0.005 },
         );
     }
 
@@ -221,39 +221,39 @@ fn update(demo: *DemoState) !void {
             var vsu8: u8 = 1;
             var angle: f32 = 0;
         };
-        _ = zgui.sliderFloat("Slider float 1", .{ .v = &static.v1, .v_min = 0.0, .v_max = 1.0 });
-        _ = zgui.sliderFloat2("Slider float 2", .{ .v = &static.v2, .v_min = -1.0, .v_max = 1.0 });
-        _ = zgui.sliderFloat3("Slider float 3", .{ .v = &static.v3, .v_min = 0.0, .v_max = 1.0 });
-        _ = zgui.sliderFloat4("Slider float 4", .{ .v = &static.v4, .v_min = 0.0, .v_max = 1.0 });
-        _ = zgui.sliderInt("Slider int 1", .{ .v = &static.v1i, .v_min = 0, .v_max = 100 });
-        _ = zgui.sliderInt2("Slider int 2", .{ .v = &static.v2i, .v_min = -20, .v_max = 20 });
-        _ = zgui.sliderInt3("Slider int 3", .{ .v = &static.v3i, .v_min = 10, .v_max = 50 });
-        _ = zgui.sliderInt4("Slider int 4", .{ .v = &static.v4i, .v_min = 0, .v_max = 10 });
+        _ = zgui.sliderFloat("Slider float 1", .{ .v = &static.v1, .min = 0.0, .max = 1.0 });
+        _ = zgui.sliderFloat2("Slider float 2", .{ .v = &static.v2, .min = -1.0, .max = 1.0 });
+        _ = zgui.sliderFloat3("Slider float 3", .{ .v = &static.v3, .min = 0.0, .max = 1.0 });
+        _ = zgui.sliderFloat4("Slider float 4", .{ .v = &static.v4, .min = 0.0, .max = 1.0 });
+        _ = zgui.sliderInt("Slider int 1", .{ .v = &static.v1i, .min = 0, .max = 100 });
+        _ = zgui.sliderInt2("Slider int 2", .{ .v = &static.v2i, .min = -20, .max = 20 });
+        _ = zgui.sliderInt3("Slider int 3", .{ .v = &static.v3i, .min = 10, .max = 50 });
+        _ = zgui.sliderInt4("Slider int 4", .{ .v = &static.v4i, .min = 0, .max = 10 });
         _ = zgui.sliderScalar(
             "Slider scalar (u8)",
             u8,
-            .{ .v = &static.su8, .v_min = 0, .v_max = 100, .format = "%Xh" },
+            .{ .v = &static.su8, .min = 0, .max = 100, .cfmt = "%Xh" },
         );
         _ = zgui.sliderScalarN(
             "Slider scalar N ([3]u16)",
             [3]u16,
-            .{ .v = &static.vu16, .v_min = 1, .v_max = 100 },
+            .{ .v = &static.vu16, .min = 1, .max = 100 },
         );
-        _ = zgui.sliderAngle("Slider angle", .{ .v_rad = &static.angle });
+        _ = zgui.sliderAngle("Slider angle", .{ .vrad = &static.angle });
         _ = zgui.vsliderFloat(
             "VSlider float",
-            .{ .w = 80.0, .h = 200.0, .v = &static.vsf, .v_min = 0.0, .v_max = 1.0 },
+            .{ .w = 80.0, .h = 200.0, .v = &static.vsf, .min = 0.0, .max = 1.0 },
         );
         zgui.sameLine(.{});
         _ = zgui.vsliderInt(
             "VSlider int",
-            .{ .w = 80.0, .h = 200.0, .v = &static.vsi, .v_min = 0, .v_max = 100 },
+            .{ .w = 80.0, .h = 200.0, .v = &static.vsi, .min = 0, .max = 100 },
         );
         zgui.sameLine(.{});
         _ = zgui.vsliderScalar(
             "VSlider scalar (u8)",
             u8,
-            .{ .w = 80.0, .h = 200.0, .v = &static.vsu8, .v_min = 0, .v_max = 200 },
+            .{ .w = 80.0, .h = 200.0, .v = &static.vsu8, .min = 0, .max = 200 },
         );
     }
 

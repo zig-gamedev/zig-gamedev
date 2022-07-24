@@ -233,8 +233,8 @@ fn update(demo: *DemoState) void {
         zgui.spacing();
         _ = zgui.sliderInt("Mipmap Level", .{
             .v = &demo.mip_level,
-            .v_min = 0,
-            .v_max = @intCast(i32, demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1),
+            .min = 0,
+            .max = @intCast(i32, demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1),
         });
     }
     zgui.end();
