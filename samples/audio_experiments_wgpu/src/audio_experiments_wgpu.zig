@@ -12,6 +12,11 @@ const wgsl = @import("audio_experiments_wgsl.zig");
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: audio experiments (wgpu)";
 
+const Vertex = extern struct {
+    position: [3]f32,
+    color: [3]f32,
+};
+
 const AudioState = struct {
     device: zaudio.Device,
     engine: zaudio.Engine,
@@ -20,6 +25,8 @@ const AudioState = struct {
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
     audio: *AudioState,
+
+    lines_pipe: zgpu.RenderPipelineHandle = .{},
 
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
@@ -41,6 +48,11 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
     //const arena = arena_state.allocator();
+
+    const uniform_bgl = gctx.createBindGroupLayout(&.{
+        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
+    });
+    defer gctx.releaseResource(uniform_bgl);
 
     const depth = createDepthTexture(gctx);
 
@@ -93,6 +105,29 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .audio = audio,
         .music = music,
     };
+
+    const common_depth_state = wgpu.DepthStencilState{
+        .format = .depth32_float,
+        .depth_write_enabled = true,
+        .depth_compare = .less,
+    };
+    const pos_color_attribs = [_]wgpu.VertexAttribute{
+        .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+        .{ .format = .float32x3, .offset = @offsetOf(Vertex, "color"), .shader_location = 1 },
+    };
+    zgpu.util.createRenderPipelineSimple(
+        allocator,
+        gctx,
+        &.{ uniform_bgl, uniform_bgl },
+        wgsl.lines_vs,
+        wgsl.lines_fs,
+        @sizeOf(Vertex),
+        pos_color_attribs[0..],
+        .{ .topology = .line_list },
+        zgpu.GraphicsContext.swapchain_format,
+        common_depth_state,
+        &demo.lines_pipe,
+    );
 
     return demo;
 }

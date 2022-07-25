@@ -33,24 +33,24 @@ pub const SoundFlags = packed struct {
     }
 };
 
-pub const PanMode = enum(c_uint) {
+pub const PanMode = enum(u32) {
     balance,
     pan,
 };
 
-pub const AttenuationModel = enum(c_uint) {
+pub const AttenuationModel = enum(u32) {
     none,
     inverse,
     linear,
     exponential,
 };
 
-pub const Positioning = enum(c_uint) {
+pub const Positioning = enum(u32) {
     absolute,
     relative,
 };
 
-pub const Format = enum(c_uint) {
+pub const Format = enum(u32) {
     unknown,
     unsigned8,
     signed16,
@@ -59,14 +59,14 @@ pub const Format = enum(c_uint) {
     float32,
 };
 
-pub const DeviceType = enum(c_uint) {
+pub const DeviceType = enum(u32) {
     playback = 1,
     capture = 2,
     duplex = 3,
     loopback = 4,
 };
 
-pub const DeviceState = enum(c_uint) {
+pub const DeviceState = enum(u32) {
     uninitialized = 0,
     stopped = 1,
     started = 2,
@@ -93,7 +93,7 @@ pub const DeviceConfig = struct {
     capture_callback: CaptureDataCallback = .{},
 
     pub fn init(device_type: DeviceType) DeviceConfig {
-        return .{ .raw = c.ma_device_config_init(@bitCast(c_uint, device_type)) };
+        return .{ .raw = c.ma_device_config_init(@bitCast(u32, device_type)) };
     }
 };
 
