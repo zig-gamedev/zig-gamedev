@@ -1,6 +1,7 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
+const Mutex = std.Thread.Mutex;
 const glfw = @import("glfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
@@ -18,45 +19,35 @@ const Vertex = extern struct {
 };
 
 const AudioState = struct {
+    const num_sample_sets = 100;
+    const samples_per_set = 512;
+    const usable_samples_per_set = 480;
+
     device: zaudio.Device,
     engine: zaudio.Engine,
-};
+    mutex: Mutex = .{},
+    current_sample_set: u32 = num_sample_sets - 1,
+    samples: std.ArrayList(f32),
 
-const DemoState = struct {
-    gctx: *zgpu.GraphicsContext,
-    audio: *AudioState,
+    fn audioPlaybackCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void {
+        if (context == null) return;
 
-    lines_pipe: zgpu.RenderPipelineHandle = .{},
+        const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), context));
 
-    depth_tex: zgpu.TextureHandle,
-    depth_texv: zgpu.TextureViewHandle,
+        audio.engine.readPcmFrames(outptr, num_frames, null) catch {};
+    }
 
-    music: zaudio.Sound,
-};
+    fn create(allocator: std.mem.Allocator) !*AudioState {
+        const samples = samples: {
+            var samples = std.ArrayList(f32).initCapacity(
+                allocator,
+                num_sample_sets * samples_per_set,
+            ) catch unreachable;
+            samples.expandToCapacity();
+            for (samples.items) |*s| s.* = 0.0;
+            break :samples samples;
+        };
 
-fn audioPlaybackCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void {
-    if (context == null) return;
-
-    const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), context));
-
-    audio.engine.readPcmFrames(outptr, num_frames, null) catch {};
-}
-
-fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
-    const gctx = try zgpu.GraphicsContext.init(allocator, window);
-
-    var arena_state = std.heap.ArenaAllocator.init(allocator);
-    defer arena_state.deinit();
-    //const arena = arena_state.allocator();
-
-    const uniform_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-    });
-    defer gctx.releaseResource(uniform_bgl);
-
-    const depth = createDepthTexture(gctx);
-
-    const audio = audio: {
         const audio = try allocator.create(AudioState);
 
         const device = device: {
@@ -83,10 +74,46 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         audio.* = .{
             .device = device,
             .engine = engine,
+            .samples = samples,
         };
-        break :audio audio;
-    };
+        return audio;
+    }
 
+    fn destroy(audio: *AudioState, allocator: std.mem.Allocator) void {
+        audio.samples.deinit();
+        audio.engine.deinit(allocator);
+        audio.device.deinit(allocator);
+        allocator.destroy(audio);
+    }
+};
+
+const DemoState = struct {
+    gctx: *zgpu.GraphicsContext,
+    audio: *AudioState,
+
+    lines_pipe: zgpu.RenderPipelineHandle = .{},
+
+    depth_tex: zgpu.TextureHandle,
+    depth_texv: zgpu.TextureViewHandle,
+
+    music: zaudio.Sound,
+};
+
+fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
+    const gctx = try zgpu.GraphicsContext.init(allocator, window);
+
+    var arena_state = std.heap.ArenaAllocator.init(allocator);
+    defer arena_state.deinit();
+    //const arena = arena_state.allocator();
+
+    const uniform_bgl = gctx.createBindGroupLayout(&.{
+        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
+    });
+    defer gctx.releaseResource(uniform_bgl);
+
+    const depth = createDepthTexture(gctx);
+
+    const audio = try AudioState.create(allocator);
     try audio.engine.start();
 
     const music = try audio.engine.initSoundFromFile(
@@ -132,12 +159,10 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     return demo;
 }
 
-fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
+fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.music.deinit(allocator);
-    demo.audio.engine.deinit(allocator);
-    demo.audio.device.deinit(allocator);
     demo.gctx.deinit(allocator);
-    allocator.destroy(demo.audio);
+    demo.audio.destroy(allocator);
     allocator.destroy(demo);
 }
 
@@ -261,8 +286,8 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    const demo = try init(allocator, window);
-    defer deinit(allocator, demo);
+    const demo = try create(allocator, window);
+    defer destroy(allocator, demo);
 
     zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 25.0);
     defer zgpu.gui.deinit();
