@@ -29,9 +29,9 @@ const zaudio = @import("zaudio");
 
 pub fn main() !void {
     ...
-    const engine = try zaudio.initEngine(allocator, null);
+    const engine = try zaudio.createEngine(allocator, null);
 
-    const music = try engine.initSoundFromFile(
+    const music = try engine.createSoundFromFile(
         allocator,
         content_dir ++ "Broke For Free - Night Owl.mp3",
         .{ .flags = .{ .stream = true } },
