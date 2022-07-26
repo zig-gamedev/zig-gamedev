@@ -6,27 +6,37 @@ const glfw = @import("glfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
-const zmath = @import("zmath");
+const zm = @import("zmath");
 const zaudio = @import("zaudio");
 const wgsl = @import("audio_experiments_wgsl.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: audio experiments (wgpu)";
 
+const safe_uniform_size = 256;
+
 const Vertex = extern struct {
     position: [3]f32,
     color: [3]f32,
 };
 
+const FrameUniforms = struct {
+    world_to_clip: zm.Mat,
+};
+
+const DrawUniforms = struct {
+    object_to_world: zm.Mat,
+};
+
 const AudioState = struct {
-    const num_sample_sets = 100;
+    const num_sets = 100;
     const samples_per_set = 512;
     const usable_samples_per_set = 480;
 
     device: zaudio.Device,
     engine: zaudio.Engine,
     mutex: Mutex = .{},
-    current_sample_set: u32 = num_sample_sets - 1,
+    current_set: u32 = num_sets - 1,
     samples: std.ArrayList(f32),
 
     fn audioPlaybackCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void {
@@ -35,13 +45,27 @@ const AudioState = struct {
         const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), context));
 
         audio.engine.readPcmFrames(outptr, num_frames, null) catch {};
+
+        audio.mutex.lock();
+        defer audio.mutex.unlock();
+
+        audio.current_set = (audio.current_set + 1) % num_sets;
+
+        const num_channels = 2;
+        const base_index = samples_per_set * audio.current_set;
+        const frames = @ptrCast([*]f32, @alignCast(@sizeOf(f32), outptr));
+
+        var i: u32 = 0;
+        while (i < num_frames) : (i += 1) {
+            audio.samples.items[base_index + i] = frames[i * num_channels];
+        }
     }
 
     fn create(allocator: std.mem.Allocator) !*AudioState {
         const samples = samples: {
             var samples = std.ArrayList(f32).initCapacity(
                 allocator,
-                num_sample_sets * samples_per_set,
+                num_sets * samples_per_set,
             ) catch unreachable;
             samples.expandToCapacity();
             for (samples.items) |*s| s.* = 0.0;
@@ -93,10 +117,22 @@ const DemoState = struct {
 
     lines_pipe: zgpu.RenderPipelineHandle = .{},
 
+    uniform_bg: zgpu.BindGroupHandle,
+
     depth_tex: zgpu.TextureHandle,
     depth_texv: zgpu.TextureViewHandle,
 
     music: zaudio.Sound,
+
+    camera: struct {
+        position: [3]f32 = .{ -10.0, 15.0, -10.0 },
+        forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
+        pitch: f32 = 0.15 * math.pi,
+        yaw: f32 = 0.25 * math.pi,
+    } = .{},
+    mouse: struct {
+        cursor: glfw.Window.CursorPos = .{ .xpos = 0.0, .ypos = 0.0 },
+    } = .{},
 };
 
 fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
@@ -110,6 +146,13 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
     });
     defer gctx.releaseResource(uniform_bgl);
+
+    const uniform_bg = gctx.createBindGroup(uniform_bgl, &[_]zgpu.BindGroupEntryInfo{.{
+        .binding = 0,
+        .buffer_handle = gctx.uniforms.buffer,
+        .offset = 0,
+        .size = safe_uniform_size,
+    }});
 
     const depth = createDepthTexture(gctx);
 
@@ -127,6 +170,7 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
+        .uniform_bg = uniform_bg,
         .depth_tex = depth.tex,
         .depth_texv = depth.texv,
         .audio = audio,
@@ -206,15 +250,83 @@ fn update(demo: *DemoState) !void {
         }
     }
     zgui.end();
+
+    const window = demo.gctx.window;
+
+    // Handle camera rotation with mouse.
+    {
+        const cursor = window.getCursorPos() catch unreachable;
+        const delta_x = @floatCast(f32, cursor.xpos - demo.mouse.cursor.xpos);
+        const delta_y = @floatCast(f32, cursor.ypos - demo.mouse.cursor.ypos);
+        demo.mouse.cursor.xpos = cursor.xpos;
+        demo.mouse.cursor.ypos = cursor.ypos;
+
+        if (window.getMouseButton(.right) == .press) {
+            demo.camera.pitch += 0.0025 * delta_y;
+            demo.camera.yaw += 0.0025 * delta_x;
+            demo.camera.pitch = math.min(demo.camera.pitch, 0.48 * math.pi);
+            demo.camera.pitch = math.max(demo.camera.pitch, -0.48 * math.pi);
+            demo.camera.yaw = zm.modAngle(demo.camera.yaw);
+        }
+    }
+
+    // Handle camera movement with 'WASD' keys.
+    {
+        const speed = zm.f32x4s(5.0);
+        const delta_time = zm.f32x4s(demo.gctx.stats.delta_time);
+        const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
+        var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
+
+        zm.storeArr3(&demo.camera.forward, forward);
+
+        const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
+        forward = speed * delta_time * forward;
+
+        var cam_pos = zm.loadArr3(demo.camera.position);
+
+        if (window.getKey(.w) == .press) {
+            cam_pos += forward;
+        } else if (window.getKey(.s) == .press) {
+            cam_pos -= forward;
+        }
+        if (window.getKey(.d) == .press) {
+            cam_pos += right;
+        } else if (window.getKey(.a) == .press) {
+            cam_pos -= right;
+        }
+
+        zm.storeArr3(&demo.camera.position, cam_pos);
+    }
 }
 
 fn draw(demo: *DemoState) void {
     const gctx = demo.gctx;
-    //const fb_width = gctx.swapchain_descriptor.width;
-    //const fb_height = gctx.swapchain_descriptor.height;
+    const fb_width = gctx.swapchain_descriptor.width;
+    const fb_height = gctx.swapchain_descriptor.height;
 
     const swapchain_texv = gctx.swapchain.getCurrentTextureView();
     defer swapchain_texv.release();
+
+    const cam_world_to_view = zm.lookToLh(
+        zm.loadArr3(demo.camera.position),
+        zm.loadArr3(demo.camera.forward),
+        zm.f32x4(0.0, 1.0, 0.0, 0.0),
+    );
+    const cam_view_to_clip = zm.perspectiveFovLh(
+        0.25 * math.pi,
+        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
+        0.01,
+        200.0,
+    );
+    const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
+    _ = cam_world_to_clip;
+
+    const vertex_buffer = gctx.createBuffer(.{
+        .usage = .{ .vertex = true },
+        .size = AudioState.num_sets * AudioState.usable_samples_per_set * @sizeOf(Vertex),
+        .mapped_at_creation = true,
+    });
+    defer gctx.lookupResource(vertex_buffer).?.destroy();
 
     const commands = commands: {
         const encoder = gctx.device.createCommandEncoder(null);
