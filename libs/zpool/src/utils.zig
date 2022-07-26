@@ -53,7 +53,7 @@ pub fn StructOfSlices(comptime Struct: type) type {
     const alignment = std.meta.alignment;
 
     // initialize a basic slice-typed field, no name, zero sized elements
-    const Template = struct { @"": []u0 };
+    const Template = struct { @"_template_": []u0 };
     var slice_field: StructField = @typeInfo(Template).Struct.fields[0];
     var slice_type_info = @typeInfo(slice_field.field_type);
 
