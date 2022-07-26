@@ -64,21 +64,21 @@ pub const DeviceState = enum(u32) {
 
 pub const Channel = c.ma_channel;
 
-pub const PlaybackDataCallback = struct {
+pub const PlaybackCallback = struct {
     context: ?*anyopaque = null,
-    func: ?fn (context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void = null,
+    callback: ?fn (context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void = null,
 };
 
-pub const CaptureDataCallback = struct {
+pub const CaptureCallback = struct {
     context: ?*anyopaque = null,
-    func: ?fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void = null,
+    callback: ?fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void = null,
 };
 
 pub const DeviceConfig = struct {
     raw: c.ma_device_config,
 
-    playback_callback: PlaybackDataCallback = .{},
-    capture_callback: CaptureDataCallback = .{},
+    playback_callback: PlaybackCallback = .{},
+    capture_callback: CaptureCallback = .{},
 
     pub fn init(device_type: DeviceType) DeviceConfig {
         return .{ .raw = c.ma_device_config_init(@bitCast(u32, device_type)) };
@@ -134,8 +134,8 @@ pub fn createDevice(allocator: std.mem.Allocator, context: ?Context, config: *De
 pub const Device = *align(@sizeOf(usize)) DeviceImpl;
 const DeviceImpl = opaque {
     const InternalState = struct {
-        playback_callback: PlaybackDataCallback = .{},
-        capture_callback: CaptureDataCallback = .{},
+        playback_callback: PlaybackCallback = .{},
+        capture_callback: CaptureCallback = .{},
     };
 
     fn internalDataCallback(
@@ -153,12 +153,12 @@ const DeviceImpl = opaque {
 
         if (num_frames > 0) {
             // Dispatch playback callback.
-            if (outptr != null) if (internal_state.playback_callback.func) |func| {
+            if (outptr != null) if (internal_state.playback_callback.callback) |func| {
                 func(internal_state.playback_callback.context, outptr.?, num_frames);
             };
 
             // Dispatch capture callback.
-            if (inptr != null) if (internal_state.capture_callback.func) |func| {
+            if (inptr != null) if (internal_state.capture_callback.callback) |func| {
                 func(internal_state.capture_callback.context, inptr.?, num_frames);
             };
         }
@@ -183,7 +183,7 @@ const DeviceImpl = opaque {
 
         config.raw.pUserData = internal_state;
 
-        if (config.playback_callback.func != null or config.capture_callback.func != null) {
+        if (config.playback_callback.callback != null or config.capture_callback.callback != null) {
             config.raw.dataCallback = internalDataCallback;
         }
 

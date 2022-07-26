@@ -39,7 +39,7 @@ const AudioState = struct {
     current_set: u32 = num_sets - 1,
     samples: std.ArrayList(f32),
 
-    fn audioPlaybackCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void {
+    fn audioCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void {
         if (context == null) return;
 
         const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), context));
@@ -78,7 +78,7 @@ const AudioState = struct {
             var config = zaudio.DeviceConfig.init(.playback);
             config.playback_callback = .{
                 .context = audio,
-                .func = audioPlaybackCallback,
+                .callback = audioCallback,
             };
             config.raw.playback.format = @enumToInt(zaudio.Format.float32);
             config.raw.playback.channels = 2;
