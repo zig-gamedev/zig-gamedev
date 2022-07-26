@@ -3,18 +3,6 @@ const assert = std.debug.assert;
 const math = std.math;
 const c = @cImport(@cInclude("miniaudio.h"));
 
-pub const Device = *align(@sizeOf(usize)) DeviceImpl;
-pub const Engine = *align(@sizeOf(usize)) EngineImpl;
-pub const Sound = *align(@sizeOf(usize)) SoundImpl;
-pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
-pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
-pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
-pub const ResourceManager = *align(@sizeOf(usize)) ResourceManagerImpl;
-pub const Context = *align(@sizeOf(usize)) ContextImpl;
-pub const Log = *align(@sizeOf(usize)) LogImpl;
-pub const Node = *align(@sizeOf(usize)) NodeImpl;
-pub const Fence = *align(@sizeOf(usize)) FenceImpl;
-
 // TODO: Get rid of WA_ma_* functions which are workarounds for Zig C ABI issues on aarch64.
 
 pub const SoundFlags = packed struct {
@@ -113,6 +101,7 @@ pub const SoundConfig = struct {
     }
 };
 
+pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
 const DataSourceImpl = opaque {
     pub fn asRaw(data_source: DataSource) *c.ma_data_source {
         return @ptrCast(*c.ma_data_source, data_source);
@@ -120,14 +109,17 @@ const DataSourceImpl = opaque {
     // TODO: Add methods.
 };
 
+pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
 const NodeGraphImpl = opaque {
     // TODO: Add methods.
 };
 
+pub const ResourceManager = *align(@sizeOf(usize)) ResourceManagerImpl;
 const ResourceManagerImpl = opaque {
     // TODO: Add methods.
 };
 
+pub const Context = *align(@sizeOf(usize)) ContextImpl;
 const ContextImpl = opaque {
     pub fn asRaw(context: Context) *c.ma_context {
         return @ptrCast(*c.ma_context, context);
@@ -139,6 +131,7 @@ pub fn createDevice(allocator: std.mem.Allocator, context: ?Context, config: *De
     return DeviceImpl.create(allocator, context, config);
 }
 
+pub const Device = *align(@sizeOf(usize)) DeviceImpl;
 const DeviceImpl = opaque {
     const InternalState = struct {
         playback_callback: PlaybackDataCallback = .{},
@@ -251,10 +244,12 @@ const DeviceImpl = opaque {
     }
 };
 
+pub const Log = *align(@sizeOf(usize)) LogImpl;
 const LogImpl = opaque {
     // TODO: Add methods.
 };
 
+pub const Node = *align(@sizeOf(usize)) NodeImpl;
 const NodeImpl = opaque {
     pub fn asRaw(node: Node) *c.ma_node {
         return @ptrCast(*c.ma_node, node);
@@ -266,6 +261,7 @@ pub fn createEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!E
     return EngineImpl.create(allocator, config);
 }
 
+pub const Engine = *align(@sizeOf(usize)) EngineImpl;
 const EngineImpl = opaque {
     fn create(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
         var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
@@ -492,6 +488,7 @@ const EngineImpl = opaque {
     }
 };
 
+pub const Sound = *align(@sizeOf(usize)) SoundImpl;
 const SoundImpl = opaque {
     fn createFromFile(
         allocator: std.mem.Allocator,
@@ -836,6 +833,7 @@ const SoundImpl = opaque {
     }
 };
 
+pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
 const SoundGroupImpl = opaque {
     fn create(
         allocator: std.mem.Allocator,
@@ -1065,6 +1063,7 @@ pub fn createFence(allocator: std.mem.Allocator) Error!Fence {
     return FenceImpl.create(allocator);
 }
 
+pub const Fence = *align(@sizeOf(usize)) FenceImpl;
 const FenceImpl = opaque {
     fn create(allocator: std.mem.Allocator) Error!Fence {
         var handle = allocator.create(c.ma_fence) catch return error.OutOfMemory;
