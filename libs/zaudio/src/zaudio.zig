@@ -135,8 +135,8 @@ const ContextImpl = opaque {
     // TODO: Add methods.
 };
 
-pub fn initDevice(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
-    return DeviceImpl.init(allocator, context, config);
+pub fn createDevice(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
+    return DeviceImpl.create(allocator, context, config);
 }
 
 const DeviceImpl = opaque {
@@ -171,7 +171,7 @@ const DeviceImpl = opaque {
         }
     }
 
-    fn init(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
+    fn create(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
         // We don't allow setting below fields (we use them internally), please use
         // `config.playback_callback` and/or `config.capture_callback` instead.
         assert(config.raw.dataCallback == null);
@@ -203,7 +203,7 @@ const DeviceImpl = opaque {
         return @ptrCast(Device, handle);
     }
 
-    pub fn deinit(device: Device, allocator: std.mem.Allocator) void {
+    pub fn destroy(device: Device, allocator: std.mem.Allocator) void {
         const raw = device.asRaw();
         allocator.destroy(@ptrCast(
             *InternalState,
@@ -262,12 +262,12 @@ const NodeImpl = opaque {
     // TODO: Add methods.
 };
 
-pub fn initEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
-    return EngineImpl.init(allocator, config);
+pub fn createEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
+    return EngineImpl.create(allocator, config);
 }
 
 const EngineImpl = opaque {
-    fn init(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
+    fn create(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
         var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 
@@ -276,7 +276,7 @@ const EngineImpl = opaque {
         return @ptrCast(Engine, handle);
     }
 
-    pub fn deinit(engine: Engine, allocator: std.mem.Allocator) void {
+    pub fn destroy(engine: Engine, allocator: std.mem.Allocator) void {
         const raw = engine.asRaw();
         c.ma_engine_uninit(raw);
         allocator.destroy(raw);
@@ -286,7 +286,7 @@ const EngineImpl = opaque {
         return @ptrCast(*c.ma_engine, engine);
     }
 
-    pub fn initSoundFromFile(
+    pub fn createSoundFromFile(
         engine: Engine,
         allocator: std.mem.Allocator,
         filepath: [:0]const u8,
@@ -296,44 +296,44 @@ const EngineImpl = opaque {
             done_fence: ?Fence = null,
         },
     ) Error!Sound {
-        return SoundImpl.initFile(allocator, engine, filepath, args.flags, args.sgroup, args.done_fence);
+        return SoundImpl.createFromFile(allocator, engine, filepath, args.flags, args.sgroup, args.done_fence);
     }
 
-    pub fn initSoundFromDataSource(
+    pub fn createSoundFromDataSource(
         engine: Engine,
         allocator: std.mem.Allocator,
         data_source: DataSource,
         flags: SoundFlags,
         sgroup: ?SoundGroup,
     ) Error!Sound {
-        return SoundImpl.initDataSource(allocator, engine, data_source, flags, sgroup);
+        return SoundImpl.createFromDataSource(allocator, engine, data_source, flags, sgroup);
     }
 
-    pub fn initSound(
+    pub fn createSound(
         engine: Engine,
         allocator: std.mem.Allocator,
         config: SoundConfig,
     ) Error!Sound {
-        return SoundImpl.initConfig(allocator, engine, config);
+        return SoundImpl.create(allocator, engine, config);
     }
 
-    pub fn initSoundCopy(
+    pub fn createSoundCopy(
         engine: Engine,
         allocator: std.mem.Allocator,
         existing_sound: Sound,
         flags: SoundFlags,
         sgroup: ?SoundGroup,
     ) Error!Sound {
-        return SoundImpl.initCopy(allocator, engine, existing_sound, flags, sgroup);
+        return SoundImpl.createCopy(allocator, engine, existing_sound, flags, sgroup);
     }
 
-    pub fn initSoundGroup(
+    pub fn createSoundGroup(
         engine: Engine,
         allocator: std.mem.Allocator,
         flags: SoundFlags,
         parent: ?SoundGroup,
     ) Error!SoundGroup {
-        return SoundGroupImpl.init(allocator, engine, flags, parent);
+        return SoundGroupImpl.create(allocator, engine, flags, parent);
     }
 
     pub fn readPcmFrames(engine: Engine, outptr: *anyopaque, num_frames: u64, num_frames_read: ?*u64) Error!void {
@@ -493,7 +493,7 @@ const EngineImpl = opaque {
 };
 
 const SoundImpl = opaque {
-    fn initFile(
+    fn createFromFile(
         allocator: std.mem.Allocator,
         engine: Engine,
         filepath: [:0]const u8,
@@ -516,7 +516,7 @@ const SoundImpl = opaque {
         return @ptrCast(Sound, handle);
     }
 
-    fn initDataSource(
+    fn createFromDataSource(
         allocator: std.mem.Allocator,
         engine: Engine,
         data_source: DataSource,
@@ -537,7 +537,7 @@ const SoundImpl = opaque {
         return @ptrCast(Sound, handle);
     }
 
-    fn initCopy(
+    fn createCopy(
         allocator: std.mem.Allocator,
         engine: Engine,
         existing_sound: Sound,
@@ -558,7 +558,7 @@ const SoundImpl = opaque {
         return @ptrCast(Sound, handle);
     }
 
-    fn initConfig(
+    fn create(
         allocator: std.mem.Allocator,
         engine: Engine,
         config: SoundConfig,
@@ -571,7 +571,7 @@ const SoundImpl = opaque {
         return @ptrCast(Sound, handle);
     }
 
-    pub fn deinit(sound: Sound, allocator: std.mem.Allocator) void {
+    pub fn destroy(sound: Sound, allocator: std.mem.Allocator) void {
         c.ma_sound_uninit(sound.asRaw());
         allocator.destroy(sound.asRaw());
     }
@@ -837,7 +837,7 @@ const SoundImpl = opaque {
 };
 
 const SoundGroupImpl = opaque {
-    fn init(
+    fn create(
         allocator: std.mem.Allocator,
         engine: Engine,
         flags: SoundFlags,
@@ -856,7 +856,7 @@ const SoundGroupImpl = opaque {
         return @ptrCast(SoundGroup, handle);
     }
 
-    pub fn deinit(sgroup: SoundGroup, allocator: std.mem.Allocator) void {
+    pub fn destroy(sgroup: SoundGroup, allocator: std.mem.Allocator) void {
         c.ma_sound_group_uninit(sgroup.asRaw());
         allocator.destroy(sgroup.asRaw());
     }
@@ -1061,12 +1061,12 @@ const SoundGroupImpl = opaque {
     }
 };
 
-pub fn initFence(allocator: std.mem.Allocator) Error!Fence {
-    return FenceImpl.init(allocator);
+pub fn createFence(allocator: std.mem.Allocator) Error!Fence {
+    return FenceImpl.create(allocator);
 }
 
 const FenceImpl = opaque {
-    fn init(allocator: std.mem.Allocator) Error!Fence {
+    fn create(allocator: std.mem.Allocator) Error!Fence {
         var handle = allocator.create(c.ma_fence) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 
@@ -1075,7 +1075,7 @@ const FenceImpl = opaque {
         return @ptrCast(Fence, handle);
     }
 
-    pub fn deinit(fence: Fence, allocator: std.mem.Allocator) void {
+    pub fn destroy(fence: Fence, allocator: std.mem.Allocator) void {
         const raw = fence.asRaw();
         c.ma_fence_uninit(raw);
         allocator.destroy(raw);
@@ -1114,8 +1114,8 @@ fn checkResult(result: c.ma_result) Error!void {
 const expect = std.testing.expect;
 
 test "zaudio.engine.basic" {
-    const engine = try initEngine(std.testing.allocator, null);
-    defer engine.deinit(std.testing.allocator);
+    const engine = try createEngine(std.testing.allocator, null);
+    defer engine.destroy(std.testing.allocator);
 
     try engine.setTime(engine.getTime());
 
@@ -1143,11 +1143,11 @@ test "zaudio.engine.basic" {
 }
 
 test "zaudio.soundgroup.basic" {
-    const engine = try initEngine(std.testing.allocator, null);
-    defer engine.deinit(std.testing.allocator);
+    const engine = try createEngine(std.testing.allocator, null);
+    defer engine.destroy(std.testing.allocator);
 
-    const sgroup = try engine.initSoundGroup(std.testing.allocator, .{}, null);
-    defer sgroup.deinit(std.testing.allocator);
+    const sgroup = try engine.createSoundGroup(std.testing.allocator, .{}, null);
+    defer sgroup.destroy(std.testing.allocator);
 
     try expect(sgroup.getEngine() == engine);
 
@@ -1173,8 +1173,8 @@ test "zaudio.soundgroup.basic" {
 }
 
 test "zaudio.fence.basic" {
-    const fence = try initFence(std.testing.allocator);
-    defer fence.deinit(std.testing.allocator);
+    const fence = try createFence(std.testing.allocator);
+    defer fence.destroy(std.testing.allocator);
 
     try fence.acquire();
     try fence.release();
@@ -1182,13 +1182,13 @@ test "zaudio.fence.basic" {
 }
 
 test "zaudio.sound.basic" {
-    const engine = try initEngine(std.testing.allocator, null);
-    defer engine.deinit(std.testing.allocator);
+    const engine = try createEngine(std.testing.allocator, null);
+    defer engine.destroy(std.testing.allocator);
 
     var config = SoundConfig.init();
     config.raw.channelsIn = 1;
-    const sound = try engine.initSound(std.testing.allocator, config);
-    defer sound.deinit(std.testing.allocator);
+    const sound = try engine.createSound(std.testing.allocator, config);
+    defer sound.destroy(std.testing.allocator);
 
     sound.setVolume(0.25);
     try expect(sound.getVolume() == 0.25);
@@ -1213,8 +1213,8 @@ test "zaudio.device.basic" {
     config.raw.playback.format = c.ma_format_f32;
     config.raw.playback.channels = 2;
     config.raw.sampleRate = 48_000;
-    const device = try initDevice(std.testing.allocator, null, &config);
-    defer device.deinit(std.testing.allocator);
+    const device = try createDevice(std.testing.allocator, null, &config);
+    defer device.destroy(std.testing.allocator);
     try device.start();
     try expect(device.getState() == .started or device.getState() == .starting);
     try device.stop();

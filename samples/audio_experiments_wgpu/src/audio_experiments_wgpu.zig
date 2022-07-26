@@ -85,14 +85,14 @@ const AudioState = struct {
             config.raw.sampleRate = 48_000;
             config.raw.periodSizeInFrames = 480;
             config.raw.periodSizeInMilliseconds = 10;
-            break :device try zaudio.initDevice(allocator, null, &config);
+            break :device try zaudio.createDevice(allocator, null, &config);
         };
 
         const engine = engine: {
             var config = zaudio.EngineConfig.init();
             config.raw.pDevice = device.asRaw();
             config.raw.noAutoStart = 1;
-            break :engine try zaudio.initEngine(allocator, config);
+            break :engine try zaudio.createEngine(allocator, config);
         };
 
         audio.* = .{
@@ -105,8 +105,8 @@ const AudioState = struct {
 
     fn destroy(audio: *AudioState, allocator: std.mem.Allocator) void {
         audio.samples.deinit();
-        audio.engine.deinit(allocator);
-        audio.device.deinit(allocator);
+        audio.engine.destroy(allocator);
+        audio.device.destroy(allocator);
         allocator.destroy(audio);
     }
 };
@@ -159,7 +159,7 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const audio = try AudioState.create(allocator);
     try audio.engine.start();
 
-    const music = try audio.engine.initSoundFromFile(
+    const music = try audio.engine.createSoundFromFile(
         allocator,
         content_dir ++ "Broke For Free - Night Owl.mp3",
         .{ .flags = .{ .stream = true } },
@@ -204,9 +204,9 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 }
 
 fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
-    demo.music.deinit(allocator);
-    demo.gctx.deinit(allocator);
+    demo.music.destroy(allocator);
     demo.audio.destroy(allocator);
+    demo.gctx.deinit(allocator);
     allocator.destroy(demo);
 }
 
