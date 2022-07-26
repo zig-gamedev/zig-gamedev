@@ -3,18 +3,6 @@ const assert = std.debug.assert;
 const math = std.math;
 const c = @cImport(@cInclude("miniaudio.h"));
 
-pub const Device = *align(@sizeOf(usize)) DeviceImpl;
-pub const Engine = *align(@sizeOf(usize)) EngineImpl;
-pub const Sound = *align(@sizeOf(usize)) SoundImpl;
-pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
-pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
-pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
-pub const ResourceManager = *align(@sizeOf(usize)) ResourceManagerImpl;
-pub const Context = *align(@sizeOf(usize)) ContextImpl;
-pub const Log = *align(@sizeOf(usize)) LogImpl;
-pub const Node = *align(@sizeOf(usize)) NodeImpl;
-pub const Fence = *align(@sizeOf(usize)) FenceImpl;
-
 // TODO: Get rid of WA_ma_* functions which are workarounds for Zig C ABI issues on aarch64.
 
 pub const SoundFlags = packed struct {
@@ -113,33 +101,39 @@ pub const SoundConfig = struct {
     }
 };
 
-const DataSourceImpl = opaque {
+pub const DataSource = enum(usize) {
+    _,
+
     pub fn asRaw(data_source: DataSource) *c.ma_data_source {
-        return @ptrCast(*c.ma_data_source, data_source);
+        return @intToPtr(*c.ma_data_source, @enumToInt(data_source));
     }
     // TODO: Add methods.
 };
 
-const NodeGraphImpl = opaque {
+pub const NodeGraph = enum(usize) {
+    _,
+
     // TODO: Add methods.
 };
 
-const ResourceManagerImpl = opaque {
+pub const ResourceManager = enum(usize) {
+    _,
+
     // TODO: Add methods.
 };
 
-const ContextImpl = opaque {
+pub const Context = enum(usize) {
+    _,
+
     pub fn asRaw(context: Context) *c.ma_context {
-        return @ptrCast(*c.ma_context, context);
+        return @intToPtr(*c.ma_context, @enumToInt(context));
     }
     // TODO: Add methods.
 };
 
-pub fn initDevice(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
-    return DeviceImpl.init(allocator, context, config);
-}
+pub const Device = enum(usize) {
+    _,
 
-const DeviceImpl = opaque {
     const InternalState = struct {
         playback_callback: PlaybackDataCallback = .{},
         capture_callback: CaptureDataCallback = .{},
@@ -171,7 +165,7 @@ const DeviceImpl = opaque {
         }
     }
 
-    fn init(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
+    pub fn init(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
         // We don't allow setting below fields (we use them internally), please use
         // `config.playback_callback` and/or `config.capture_callback` instead.
         assert(config.raw.dataCallback == null);
@@ -200,7 +194,7 @@ const DeviceImpl = opaque {
             handle,
         ));
 
-        return @ptrCast(Device, handle);
+        return @intToEnum(Device, @ptrToInt(handle));
     }
 
     pub fn deinit(device: Device, allocator: std.mem.Allocator) void {
@@ -214,15 +208,17 @@ const DeviceImpl = opaque {
     }
 
     pub fn asRaw(device: Device) *c.ma_device {
-        return @ptrCast(*c.ma_device, device);
+        return @intToPtr(*c.ma_device, @enumToInt(device));
     }
 
     pub fn getContext(device: Device) Context {
-        return @ptrCast(Context, c.ma_device_get_context(device.asRaw()));
+        return @intToEnum(Context, @ptrToInt(c.ma_device_get_context(device.asRaw())));
     }
 
     pub fn getLog(device: Device) ?Log {
-        return @ptrCast(?Log, c.ma_device_get_log(device.asRaw()));
+        const raw = c.ma_device_get_log(device.asRaw());
+        if (raw == null) return null;
+        return @intToEnum(Log, @ptrToInt(raw));
     }
 
     pub fn start(device: Device) Error!void {
@@ -251,29 +247,31 @@ const DeviceImpl = opaque {
     }
 };
 
-const LogImpl = opaque {
+pub const Log = enum(usize) {
+    _,
+
     // TODO: Add methods.
 };
 
-const NodeImpl = opaque {
+pub const Node = enum(usize) {
+    _,
+
     pub fn asRaw(node: Node) *c.ma_node {
-        return @ptrCast(*c.ma_node, node);
+        return @intToPtr(*c.ma_node, @enumToInt(node));
     }
     // TODO: Add methods.
 };
 
-pub fn initEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
-    return EngineImpl.init(allocator, config);
-}
+pub const Engine = enum(usize) {
+    _,
 
-const EngineImpl = opaque {
-    fn init(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
+    pub fn init(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
         var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 
         try checkResult(c.ma_engine_init(if (config) |conf| &conf.raw else null, handle));
 
-        return @ptrCast(Engine, handle);
+        return @intToEnum(Engine, @ptrToInt(handle));
     }
 
     pub fn deinit(engine: Engine, allocator: std.mem.Allocator) void {
@@ -283,7 +281,7 @@ const EngineImpl = opaque {
     }
 
     pub fn asRaw(engine: Engine) *c.ma_engine {
-        return @ptrCast(*c.ma_engine, engine);
+        return @intToPtr(*c.ma_engine, @enumToInt(engine));
     }
 
     pub fn initSoundFromFile(
@@ -296,7 +294,7 @@ const EngineImpl = opaque {
             done_fence: ?Fence = null,
         },
     ) Error!Sound {
-        return SoundImpl.initFile(allocator, engine, filepath, args.flags, args.sgroup, args.done_fence);
+        return Sound.initFile(allocator, engine, filepath, args.flags, args.sgroup, args.done_fence);
     }
 
     pub fn initSoundFromDataSource(
@@ -306,7 +304,7 @@ const EngineImpl = opaque {
         flags: SoundFlags,
         sgroup: ?SoundGroup,
     ) Error!Sound {
-        return SoundImpl.initDataSource(allocator, engine, data_source, flags, sgroup);
+        return Sound.initDataSource(allocator, engine, data_source, flags, sgroup);
     }
 
     pub fn initSound(
@@ -314,7 +312,7 @@ const EngineImpl = opaque {
         allocator: std.mem.Allocator,
         config: SoundConfig,
     ) Error!Sound {
-        return SoundImpl.initConfig(allocator, engine, config);
+        return Sound.initConfig(allocator, engine, config);
     }
 
     pub fn initSoundCopy(
@@ -324,7 +322,7 @@ const EngineImpl = opaque {
         flags: SoundFlags,
         sgroup: ?SoundGroup,
     ) Error!Sound {
-        return SoundImpl.initCopy(allocator, engine, existing_sound, flags, sgroup);
+        return Sound.initCopy(allocator, engine, existing_sound, flags, sgroup);
     }
 
     pub fn initSoundGroup(
@@ -333,7 +331,7 @@ const EngineImpl = opaque {
         flags: SoundFlags,
         parent: ?SoundGroup,
     ) Error!SoundGroup {
-        return SoundGroupImpl.init(allocator, engine, flags, parent);
+        return SoundGroup.init(allocator, engine, flags, parent);
     }
 
     pub fn readPcmFrames(engine: Engine, outptr: *anyopaque, num_frames: u64, num_frames_read: ?*u64) Error!void {
@@ -341,23 +339,31 @@ const EngineImpl = opaque {
     }
 
     pub fn getResourceManager(engine: Engine) ?ResourceManager {
-        return @ptrCast(?ResourceManager, c.ma_engine_get_resource_manager(engine.asRaw()));
+        const raw = c.ma_engine_get_resource_manager(engine.asRaw());
+        if (raw == null) return null;
+        return @intToEnum(ResourceManager, @ptrToInt(raw));
     }
 
     pub fn getDevice(engine: Engine) ?Device {
-        return @ptrCast(?Device, c.ma_engine_get_device(engine.asRaw()));
+        const raw = c.ma_engine_get_device(engine.asRaw());
+        if (raw == null) return null;
+        return @intToEnum(Device, @ptrToInt(raw));
     }
 
     pub fn getLog(engine: Engine) ?Log {
-        return @ptrCast(?Log, c.ma_engine_get_log(engine.asRaw()));
+        const raw = c.ma_engine_get_log(engine.asRaw());
+        if (raw == null) return null;
+        return @intToEnum(Log, @ptrToInt(raw));
     }
 
     pub fn getNodeGraph(engine: Engine) NodeGraph {
-        return @ptrCast(NodeGraph, c.ma_engine_get_node_graph(engine.asRaw()));
+        return @intToEnum(NodeGraph, @ptrToInt(c.ma_engine_get_node_graph(engine.asRaw())));
     }
 
     pub fn getEndpoint(engine: Engine) ?Node {
-        return @ptrCast(?Node, @alignCast(@sizeOf(usize), c.ma_engine_get_endpoint(engine.asRaw())));
+        const raw = c.ma_engine_get_endpoint(engine.asRaw());
+        if (raw == null) return null;
+        return @intToEnum(Node, @ptrToInt(raw));
     }
 
     pub fn getTime(engine: Engine) u64 {
@@ -492,7 +498,9 @@ const EngineImpl = opaque {
     }
 };
 
-const SoundImpl = opaque {
+pub const Sound = enum(usize) {
+    _,
+
     fn initFile(
         allocator: std.mem.Allocator,
         engine: Engine,
@@ -513,7 +521,7 @@ const SoundImpl = opaque {
             handle,
         ));
 
-        return @ptrCast(Sound, handle);
+        return @intToEnum(Sound, @ptrToInt(handle));
     }
 
     fn initDataSource(
@@ -534,7 +542,7 @@ const SoundImpl = opaque {
             handle,
         ));
 
-        return @ptrCast(Sound, handle);
+        return @intToEnum(Sound, @ptrToInt(handle));
     }
 
     fn initCopy(
@@ -555,7 +563,7 @@ const SoundImpl = opaque {
             handle,
         ));
 
-        return @ptrCast(Sound, handle);
+        return @intToEnum(Sound, @ptrToInt(handle));
     }
 
     fn initConfig(
@@ -568,7 +576,7 @@ const SoundImpl = opaque {
 
         try checkResult(c.ma_sound_init_ex(engine.asRaw(), &config.raw, handle));
 
-        return @ptrCast(Sound, handle);
+        return @intToEnum(Sound, @ptrToInt(handle));
     }
 
     pub fn deinit(sound: Sound, allocator: std.mem.Allocator) void {
@@ -577,15 +585,17 @@ const SoundImpl = opaque {
     }
 
     pub fn asRaw(sound: Sound) *c.ma_sound {
-        return @ptrCast(*c.ma_sound, sound);
+        return @intToPtr(*c.ma_sound, @enumToInt(sound));
     }
 
     pub fn getEngine(sound: Sound) Engine {
-        return @ptrCast(Engine, c.ma_sound_get_engine(sound.asRaw()));
+        return @intToEnum(Engine, @ptrToInt(c.ma_sound_get_engine(sound.asRaw())));
     }
 
     pub fn getDataSource(sound: Sound) ?DataSource {
-        return @ptrCast(?DataSource, c.ma_sound_get_data_source(sound.asRaw()));
+        const raw = c.ma_sound_get_data_source(sound.asRaw());
+        if (raw == null) return null;
+        return @intToEnum(DataSource, @ptrToInt(raw));
     }
 
     pub fn start(sound: Sound) Error!void {
@@ -836,8 +846,10 @@ const SoundImpl = opaque {
     }
 };
 
-const SoundGroupImpl = opaque {
-    fn init(
+pub const SoundGroup = enum(usize) {
+    _,
+
+    pub fn init(
         allocator: std.mem.Allocator,
         engine: Engine,
         flags: SoundFlags,
@@ -853,7 +865,7 @@ const SoundGroupImpl = opaque {
             handle,
         ));
 
-        return @ptrCast(SoundGroup, handle);
+        return @intToEnum(SoundGroup, @ptrToInt(handle));
     }
 
     pub fn deinit(sgroup: SoundGroup, allocator: std.mem.Allocator) void {
@@ -861,12 +873,12 @@ const SoundGroupImpl = opaque {
         allocator.destroy(sgroup.asRaw());
     }
 
-    pub fn asRaw(sound: SoundGroup) *c.ma_sound_group {
-        return @ptrCast(*c.ma_sound_group, sound);
+    pub fn asRaw(sgroup: SoundGroup) *c.ma_sound_group {
+        return @intToPtr(*c.ma_sound_group, @enumToInt(sgroup));
     }
 
     pub fn getEngine(sgroup: SoundGroup) Engine {
-        return @ptrCast(Engine, c.ma_sound_group_get_engine(sgroup.asRaw()));
+        return @intToEnum(Engine, @ptrToInt(c.ma_sound_group_get_engine(sgroup.asRaw())));
     }
 
     pub fn start(sgroup: SoundGroup) Error!void {
@@ -1061,18 +1073,16 @@ const SoundGroupImpl = opaque {
     }
 };
 
-pub fn initFence(allocator: std.mem.Allocator) Error!Fence {
-    return FenceImpl.init(allocator);
-}
+const Fence = enum(usize) {
+    _,
 
-const FenceImpl = opaque {
-    fn init(allocator: std.mem.Allocator) Error!Fence {
+    pub fn init(allocator: std.mem.Allocator) Error!Fence {
         var handle = allocator.create(c.ma_fence) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
 
         try checkResult(c.ma_fence_init(handle));
 
-        return @ptrCast(Fence, handle);
+        return @intToEnum(Fence, @ptrToInt(handle));
     }
 
     pub fn deinit(fence: Fence, allocator: std.mem.Allocator) void {
@@ -1082,7 +1092,7 @@ const FenceImpl = opaque {
     }
 
     pub fn asRaw(fence: Fence) *c.ma_fence {
-        return @ptrCast(*c.ma_fence, fence);
+        return @intToPtr(*c.ma_fence, @enumToInt(fence));
     }
 
     pub fn acquire(fence: Fence) Error!void {
@@ -1114,7 +1124,7 @@ fn checkResult(result: c.ma_result) Error!void {
 const expect = std.testing.expect;
 
 test "zaudio.engine.basic" {
-    const engine = try initEngine(std.testing.allocator, null);
+    const engine = try Engine.init(std.testing.allocator, null);
     defer engine.deinit(std.testing.allocator);
 
     try engine.setTime(engine.getTime());
@@ -1143,7 +1153,7 @@ test "zaudio.engine.basic" {
 }
 
 test "zaudio.soundgroup.basic" {
-    const engine = try initEngine(std.testing.allocator, null);
+    const engine = try Engine.init(std.testing.allocator, null);
     defer engine.deinit(std.testing.allocator);
 
     const sgroup = try engine.initSoundGroup(std.testing.allocator, .{}, null);
@@ -1173,7 +1183,7 @@ test "zaudio.soundgroup.basic" {
 }
 
 test "zaudio.fence.basic" {
-    const fence = try initFence(std.testing.allocator);
+    const fence = try Fence.init(std.testing.allocator);
     defer fence.deinit(std.testing.allocator);
 
     try fence.acquire();
@@ -1182,7 +1192,7 @@ test "zaudio.fence.basic" {
 }
 
 test "zaudio.sound.basic" {
-    const engine = try initEngine(std.testing.allocator, null);
+    const engine = try Engine.init(std.testing.allocator, null);
     defer engine.deinit(std.testing.allocator);
 
     var config = SoundConfig.init();
@@ -1213,7 +1223,7 @@ test "zaudio.device.basic" {
     config.raw.playback.format = c.ma_format_f32;
     config.raw.playback.channels = 2;
     config.raw.sampleRate = 48_000;
-    const device = try initDevice(std.testing.allocator, null, &config);
+    const device = try Device.init(std.testing.allocator, null, &config);
     defer device.deinit(std.testing.allocator);
     try device.start();
     try expect(device.getState() == .started or device.getState() == .starting);

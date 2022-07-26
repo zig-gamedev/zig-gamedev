@@ -61,14 +61,14 @@ const AudioState = struct {
             config.raw.sampleRate = 48_000;
             config.raw.periodSizeInFrames = 480;
             config.raw.periodSizeInMilliseconds = 10;
-            break :device try zaudio.initDevice(allocator, null, &config);
+            break :device try zaudio.Device.init(allocator, null, &config);
         };
 
         const engine = engine: {
             var config = zaudio.EngineConfig.init();
             config.raw.pDevice = device.asRaw();
             config.raw.noAutoStart = 1;
-            break :engine try zaudio.initEngine(allocator, config);
+            break :engine try zaudio.Engine.init(allocator, config);
         };
 
         audio.* = .{
