@@ -222,7 +222,17 @@ fn update(demo: *DemoState) !void {
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
 
-        zgui.spacing();
+        zgui.bullet();
+        zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Right Mouse Button + drag :");
+        zgui.sameLine(.{});
+        zgui.textUnformatted("rotate camera");
+
+        zgui.bullet();
+        zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "W, A, S, D :");
+        zgui.sameLine(.{});
+        zgui.textUnformatted("move camera");
+
+        zgui.separator();
         zgui.textUnformatted("Music:");
         const music_is_playing = demo.music.isPlaying();
         if (zgui.button(if (music_is_playing) "Pause" else "Play", .{ .w = 200.0 })) {
