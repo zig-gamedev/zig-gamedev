@@ -330,12 +330,12 @@ fn draw(demo: *DemoState) void {
     );
     const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
 
-    const vertex_buffer_h = gctx.createBuffer(.{
+    const vertex_buffer_handle = gctx.createBuffer(.{
         .usage = .{ .vertex = true },
         .size = AudioState.num_sets * AudioState.usable_samples_per_set * @sizeOf(Vertex),
         .mapped_at_creation = true,
     });
-    const vertex_buffer = gctx.lookupResource(vertex_buffer_h).?;
+    const vertex_buffer = gctx.lookupResource(vertex_buffer_handle).?;
     defer vertex_buffer.destroy();
     {
         const mem = vertex_buffer.getMappedRange(
