@@ -56,7 +56,7 @@ const AudioState = struct {
         const frames = @ptrCast([*]f32, @alignCast(@sizeOf(f32), outptr));
 
         var i: u32 = 0;
-        while (i < num_frames) : (i += 1) {
+        while (i < math.min(num_frames, usable_samples_per_set)) : (i += 1) {
             audio.samples.items[base_index + i] = frames[i * num_channels];
         }
     }
@@ -194,7 +194,7 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         wgsl.lines_fs,
         @sizeOf(Vertex),
         pos_color_attribs[0..],
-        .{ .topology = .line_list },
+        .{ .topology = .line_strip },
         zgpu.GraphicsContext.swapchain_format,
         common_depth_state,
         &demo.lines_pipe,
@@ -272,7 +272,7 @@ fn update(demo: *DemoState) !void {
 
     // Handle camera movement with 'WASD' keys.
     {
-        const speed = zm.f32x4s(5.0);
+        const speed = zm.f32x4s(10.0);
         const delta_time = zm.f32x4s(demo.gctx.stats.delta_time);
         const transform = zm.mul(zm.rotationX(demo.camera.pitch), zm.rotationY(demo.camera.yaw));
         var forward = zm.normalize3(zm.mul(zm.f32x4(0.0, 0.0, 1.0, 0.0), transform));
@@ -319,18 +319,89 @@ fn draw(demo: *DemoState) void {
         200.0,
     );
     const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
-    _ = cam_world_to_clip;
 
-    const vertex_buffer = gctx.createBuffer(.{
+    const vertex_buffer_h = gctx.createBuffer(.{
         .usage = .{ .vertex = true },
         .size = AudioState.num_sets * AudioState.usable_samples_per_set * @sizeOf(Vertex),
         .mapped_at_creation = true,
     });
-    defer gctx.lookupResource(vertex_buffer).?.destroy();
+    const vertex_buffer = gctx.lookupResource(vertex_buffer_h).?;
+    defer vertex_buffer.destroy();
+    {
+        const mem = vertex_buffer.getMappedRange(
+            Vertex,
+            0,
+            AudioState.num_sets * AudioState.usable_samples_per_set,
+        ).?;
+
+        demo.audio.mutex.lock();
+        defer demo.audio.mutex.unlock();
+
+        var set: u32 = 0;
+        while (set < AudioState.num_sets) : (set += 1) {
+            const z = (demo.audio.current_set + set) % AudioState.num_sets;
+            const f = if (set == 0) 1.0 else 0.010101 * @intToFloat(f32, set - 1);
+
+            var x: u32 = 0;
+            while (x < AudioState.usable_samples_per_set) : (x += 1) {
+                const sample = demo.audio.samples.items[x + z * AudioState.samples_per_set];
+
+                var color: [3]f32 = undefined;
+                zm.store(color[0..], zm.lerp(
+                    zm.f32x4(0.2, 1.0, 0.0, 0.0),
+                    zm.f32x4(1.0, 0.0, 0.0, 0.0),
+                    1.2 * @sqrt(f) * @fabs(sample),
+                ), 3);
+
+                mem[x + set * AudioState.usable_samples_per_set] = Vertex{
+                    .position = [_]f32{
+                        0.1 * @intToFloat(f32, x),
+                        f * f * f * 10.0 * sample,
+                        0.5 * @intToFloat(f32, z),
+                    },
+                    .color = color,
+                };
+            }
+        }
+    }
+    vertex_buffer.unmap();
 
     const commands = commands: {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
+
+        const depth_texv = gctx.lookupResource(demo.depth_texv) orelse return;
+        const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse return;
+
+        pass: {
+            const lines_pipe = gctx.lookupResource(demo.lines_pipe) orelse break :pass;
+
+            const pass = zgpu.util.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
+            defer zgpu.util.endRelease(pass);
+
+            pass.setPipeline(lines_pipe);
+            pass.setVertexBuffer(
+                0,
+                vertex_buffer,
+                0,
+                AudioState.num_sets * AudioState.usable_samples_per_set * @sizeOf(Vertex),
+            );
+            {
+                const mem = gctx.uniformsAllocate(FrameUniforms, 1);
+                mem.slice[0] = .{ .world_to_clip = zm.transpose(cam_world_to_clip) };
+                pass.setBindGroup(0, uniform_bg, &.{mem.offset});
+            }
+            {
+                const mem = gctx.uniformsAllocate(DrawUniforms, 1);
+                mem.slice[0] = .{ .object_to_world = zm.identity() };
+                pass.setBindGroup(1, uniform_bg, &.{mem.offset});
+            }
+
+            var i: u32 = 0;
+            while (i < AudioState.num_sets) : (i += 1) {
+                pass.draw(AudioState.usable_samples_per_set, 1, i * AudioState.usable_samples_per_set, 0);
+            }
+        }
 
         // Gui pass.
         {
