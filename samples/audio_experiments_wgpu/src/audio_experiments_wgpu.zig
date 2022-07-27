@@ -369,11 +369,10 @@ fn draw(demo: *DemoState) void {
         const encoder = gctx.device.createCommandEncoder(null);
         defer encoder.release();
 
-        const depth_texv = gctx.lookupResource(demo.depth_texv) orelse return;
-        const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse return;
-
         pass: {
             const lines_pipe = gctx.lookupResource(demo.lines_pipe) orelse break :pass;
+            const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
+            const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse break :pass;
 
             const pass = zgpu.util.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
             defer zgpu.util.endRelease(pass);
