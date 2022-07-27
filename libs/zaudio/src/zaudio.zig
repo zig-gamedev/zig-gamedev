@@ -363,7 +363,7 @@ const EngineImpl = opaque {
         try checkResult(c.ma_engine_set_time(engine.asRaw(), global_time));
     }
 
-    pub fn getChannels(engine: Engine) u32 {
+    pub fn getNumChannels(engine: Engine) u32 {
         return c.ma_engine_get_channels(engine.asRaw());
     }
 
@@ -1119,7 +1119,7 @@ test "zaudio.engine.basic" {
     try engine.setTime(engine.getTime());
 
     std.debug.print("Channels: {}, SampleRate: {}, NumListeners: {}, ClosestListener: {}\n", .{
-        engine.getChannels(),
+        engine.getNumChannels(),
         engine.getSampleRate(),
         engine.getNumListeners(),
         engine.findClosestListener(.{ 0.0, 0.0, 0.0 }),
