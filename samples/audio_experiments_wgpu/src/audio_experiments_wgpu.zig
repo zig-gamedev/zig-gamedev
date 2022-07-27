@@ -346,12 +346,11 @@ fn draw(demo: *DemoState) void {
             while (x < AudioState.usable_samples_per_set) : (x += 1) {
                 const sample = demo.audio.samples.items[x + z * AudioState.samples_per_set];
 
-                var color: [3]f32 = undefined;
-                zm.store(color[0..], zm.lerp(
+                const color = zm.vecToArr3(zm.lerp(
                     zm.f32x4(0.2, 1.0, 0.0, 0.0),
                     zm.f32x4(1.0, 0.0, 0.0, 0.0),
                     1.2 * @sqrt(f) * @fabs(sample),
-                ), 3);
+                ));
 
                 mem[x + set * AudioState.usable_samples_per_set] = Vertex{
                     .position = [_]f32{
