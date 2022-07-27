@@ -337,10 +337,11 @@ fn draw(demo: *DemoState) void {
         demo.audio.mutex.lock();
         defer demo.audio.mutex.unlock();
 
+        const rcp_num_sets = 1.0 / @intToFloat(f32, AudioState.num_sets - 1);
         var set: u32 = 0;
         while (set < AudioState.num_sets) : (set += 1) {
             const z = (demo.audio.current_set + set) % AudioState.num_sets;
-            const f = if (set == 0) 1.0 else 0.010101 * @intToFloat(f32, set - 1);
+            const f = if (set == 0) 1.0 else rcp_num_sets * @intToFloat(f32, set - 1);
 
             var x: u32 = 0;
             while (x < AudioState.usable_samples_per_set) : (x += 1) {
