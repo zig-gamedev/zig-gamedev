@@ -68,7 +68,7 @@ const AudioState = struct {
                 num_sets * samples_per_set,
             ) catch unreachable;
             samples.expandToCapacity();
-            for (samples.items) |*s| s.* = 0.0;
+            std.mem.set(f32, samples.items, 0.0);
             break :samples samples;
         };
 
