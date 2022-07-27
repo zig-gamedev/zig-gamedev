@@ -524,7 +524,7 @@ pub const GraphicsContext = struct {
             } else {
                 std.debug.print(
                     "[zgpu] Failed to async create render pipeline (code: {d})\n{s}\n",
-                    .{ status, message },
+                    .{ status, if (message) |msg| msg else "[zgpu] No error details from the driver" },
                 );
             }
             op.allocator.destroy(op);
@@ -585,7 +585,7 @@ pub const GraphicsContext = struct {
             } else {
                 std.debug.print(
                     "[zgpu] Failed to async create compute pipeline (code: {d})\n{s}\n",
-                    .{ status, message },
+                    .{ status, if (message) |msg| msg else "[zgpu] No error details from the driver" },
                 );
             }
             op.allocator.destroy(op);
