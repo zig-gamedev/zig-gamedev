@@ -107,9 +107,44 @@ pub const Log = *align(@sizeOf(usize)) LogImpl;
 const LogImpl = opaque {
     // TODO: Add methods.
 };
+//--------------------------------------------------------------------------------------------------
+//
+// Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const NodeConfig = struct {
+    raw: c.ma_node_config,
+
+    pub fn init() NodeConfig {
+        return .{ .raw = c.ma_node_config_init() };
+    }
+};
 
 pub const Node = *align(@sizeOf(usize)) NodeImpl;
 const NodeImpl = opaque {
+    usingnamespace Methods(Node);
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn getNodeGraph(node: T) NodeGraph {
+                return @ptrCast(NodeGraph, c.ma_node_get_node_graph(@ptrCast(*c.ma_node, node)));
+            }
+
+            pub fn getNumInputBuses(node: T) u32 {
+                return c.ma_node_get_input_bus_count(@ptrCast(*c.ma_node, node));
+            }
+            pub fn getNumOutputBuses(node: T) u32 {
+                return c.ma_node_get_output_bus_count(@ptrCast(*c.ma_node, node));
+            }
+
+            pub fn getNumInputChannels(node: T, bus_index: u32) u32 {
+                return c.ma_node_get_input_channels(@ptrCast(*c.ma_node, node), bus_index);
+            }
+            pub fn getNumOutputChannels(node: T, bus_index: u32) u32 {
+                return c.ma_node_get_output_channels(@ptrCast(*c.ma_node, node), bus_index);
+            }
+        };
+    }
     // TODO: Add methods.
 };
 //--------------------------------------------------------------------------------------------------
