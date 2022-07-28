@@ -21,6 +21,14 @@ pub const SoundFlags = packed struct {
     }
 };
 
+// TODO: Add all errors.
+pub const Error = error{
+    GenericError,
+    InvalidArgs,
+    InvalidOperation,
+    OutOfMemory,
+};
+
 pub const PanMode = enum(u32) {
     balance,
     pan,
@@ -74,43 +82,11 @@ pub const CaptureCallback = struct {
     callback: ?fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void = null,
 };
 
-pub const DeviceConfig = struct {
-    raw: c.ma_device_config,
-
-    playback_callback: PlaybackCallback = .{},
-    capture_callback: CaptureCallback = .{},
-
-    pub fn init(device_type: DeviceType) DeviceConfig {
-        return .{ .raw = c.ma_device_config_init(@bitCast(u32, device_type)) };
-    }
-};
-
-pub const EngineConfig = struct {
-    raw: c.ma_engine_config,
-
-    pub fn init() EngineConfig {
-        return .{ .raw = c.ma_engine_config_init() };
-    }
-};
-
-pub const SoundConfig = struct {
-    raw: c.ma_sound_config,
-
-    pub fn init() SoundConfig {
-        return .{ .raw = c.ma_sound_config_init() };
-    }
-};
-
 pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
 const DataSourceImpl = opaque {
     pub fn asRaw(data_source: DataSource) *c.ma_data_source {
         return @ptrCast(*c.ma_data_source, data_source);
     }
-    // TODO: Add methods.
-};
-
-pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
-const NodeGraphImpl = opaque {
     // TODO: Add methods.
 };
 
@@ -125,6 +101,94 @@ const ContextImpl = opaque {
         return @ptrCast(*c.ma_context, context);
     }
     // TODO: Add methods.
+};
+
+pub const Log = *align(@sizeOf(usize)) LogImpl;
+const LogImpl = opaque {
+    // TODO: Add methods.
+};
+
+pub const Node = *align(@sizeOf(usize)) NodeImpl;
+const NodeImpl = opaque {
+    // TODO: Add methods.
+};
+//--------------------------------------------------------------------------------------------------
+//
+// NodeGraph
+//
+//--------------------------------------------------------------------------------------------------
+pub const NodeGraphConfig = struct {
+    raw: c.ma_node_graph_config,
+
+    pub fn init(num_channels: u32) NodeGraphConfig {
+        return .{ .raw = c.ma_node_graph_config_init(num_channels) };
+    }
+};
+
+pub fn createNodeGraph(allocator: std.mem.Allocator, config: NodeGraphConfig) Error!NodeGraph {
+    var handle = allocator.create(c.ma_node_graph) catch return error.OutOfMemory;
+    errdefer allocator.destroy(handle);
+
+    try checkResult(c.ma_node_graph_init(&config.raw, null, handle));
+
+    return @ptrCast(NodeGraph, handle);
+}
+
+pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
+const NodeGraphImpl = opaque {
+    usingnamespace Methods(NodeGraph);
+
+    pub fn destroy(node_graph: NodeGraph, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_node_graph, node_graph);
+        c.ma_node_graph_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn getEndpoint(node_graph: T) ?Node {
+                return @ptrCast(
+                    ?Node,
+                    @alignCast(@sizeOf(usize), c.ma_node_graph_get_endpoint(@ptrCast(*c.ma_node_graph, node_graph))),
+                );
+            }
+
+            pub fn getTime(node_graph: T) u64 {
+                return c.ma_node_graph_get_time(@ptrCast(*c.ma_node_graph, node_graph));
+            }
+            pub fn setTime(node_graph: T, global_time: u64) Error!void {
+                try checkResult(c.ma_node_graph_set_time(@ptrCast(*c.ma_node_graph, node_graph), global_time));
+            }
+
+            pub fn getNumChannels(node_graph: T) u32 {
+                return c.ma_node_graph_get_channels(@ptrCast(*c.ma_node_graph, node_graph));
+            }
+
+            pub fn readPcmFrames(node_graph: T, outptr: *anyopaque, num_frames: u64, num_frames_read: ?*u64) Error!void {
+                try checkResult(c.ma_node_graph_read_pcm_frames(
+                    @ptrCast(*c.ma_node_graph, node_graph),
+                    outptr,
+                    num_frames,
+                    num_frames_read,
+                ));
+            }
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Device
+//
+//--------------------------------------------------------------------------------------------------
+pub const DeviceConfig = struct {
+    raw: c.ma_device_config,
+
+    playback_callback: PlaybackCallback = .{},
+    capture_callback: CaptureCallback = .{},
+
+    pub fn init(device_type: DeviceType) DeviceConfig {
+        return .{ .raw = c.ma_device_config_init(@bitCast(u32, device_type)) };
+    }
 };
 
 pub fn createDevice(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
@@ -243,18 +307,17 @@ const DeviceImpl = opaque {
         return volume;
     }
 };
+//--------------------------------------------------------------------------------------------------
+//
+// Engine
+//
+//--------------------------------------------------------------------------------------------------
+pub const EngineConfig = struct {
+    raw: c.ma_engine_config,
 
-pub const Log = *align(@sizeOf(usize)) LogImpl;
-const LogImpl = opaque {
-    // TODO: Add methods.
-};
-
-pub const Node = *align(@sizeOf(usize)) NodeImpl;
-const NodeImpl = opaque {
-    pub fn asRaw(node: Node) *c.ma_node {
-        return @ptrCast(*c.ma_node, node);
+    pub fn init() EngineConfig {
+        return .{ .raw = c.ma_engine_config_init() };
     }
-    // TODO: Add methods.
 };
 
 pub fn createEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
@@ -263,6 +326,8 @@ pub fn createEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!E
 
 pub const Engine = *align(@sizeOf(usize)) EngineImpl;
 const EngineImpl = opaque {
+    usingnamespace NodeGraphImpl.Methods(Engine); // Engine is a NodeGraph.
+
     fn create(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
         var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
         errdefer allocator.destroy(handle);
@@ -332,10 +397,6 @@ const EngineImpl = opaque {
         return SoundGroupImpl.create(allocator, engine, flags, parent);
     }
 
-    pub fn readPcmFrames(engine: Engine, outptr: *anyopaque, num_frames: u64, num_frames_read: ?*u64) Error!void {
-        try checkResult(c.ma_engine_read_pcm_frames(engine.asRaw(), outptr, num_frames, num_frames_read));
-    }
-
     pub fn getResourceManager(engine: Engine) ?ResourceManager {
         return @ptrCast(?ResourceManager, c.ma_engine_get_resource_manager(engine.asRaw()));
     }
@@ -346,25 +407,6 @@ const EngineImpl = opaque {
 
     pub fn getLog(engine: Engine) ?Log {
         return @ptrCast(?Log, c.ma_engine_get_log(engine.asRaw()));
-    }
-
-    pub fn getNodeGraph(engine: Engine) NodeGraph {
-        return @ptrCast(NodeGraph, c.ma_engine_get_node_graph(engine.asRaw()));
-    }
-
-    pub fn getEndpoint(engine: Engine) ?Node {
-        return @ptrCast(?Node, @alignCast(@sizeOf(usize), c.ma_engine_get_endpoint(engine.asRaw())));
-    }
-
-    pub fn getTime(engine: Engine) u64 {
-        return c.ma_engine_get_time(engine.asRaw());
-    }
-    pub fn setTime(engine: Engine, global_time: u64) Error!void {
-        try checkResult(c.ma_engine_set_time(engine.asRaw(), global_time));
-    }
-
-    pub fn getNumChannels(engine: Engine) u32 {
-        return c.ma_engine_get_channels(engine.asRaw());
     }
 
     pub fn getSampleRate(engine: Engine) u32 {
@@ -485,6 +527,18 @@ const EngineImpl = opaque {
             if (node) |n| n.asRaw() else null,
             node_input_bus_index,
         ));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Sound
+//
+//--------------------------------------------------------------------------------------------------
+pub const SoundConfig = struct {
+    raw: c.ma_sound_config,
+
+    pub fn init() SoundConfig {
+        return .{ .raw = c.ma_sound_config_init() };
     }
 };
 
@@ -832,7 +886,11 @@ const SoundImpl = opaque {
         return length;
     }
 };
-
+//--------------------------------------------------------------------------------------------------
+//
+// SoundGroup
+//
+//--------------------------------------------------------------------------------------------------
 pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
 const SoundGroupImpl = opaque {
     fn create(
@@ -1058,7 +1116,11 @@ const SoundGroupImpl = opaque {
         return c.ma_sound_group_get_time_in_pcm_frames(sgroup.asRaw());
     }
 };
-
+//--------------------------------------------------------------------------------------------------
+//
+// Fence
+//
+//--------------------------------------------------------------------------------------------------
 pub fn createFence(allocator: std.mem.Allocator) Error!Fence {
     return FenceImpl.create(allocator);
 }
@@ -1096,20 +1158,17 @@ const FenceImpl = opaque {
         try checkResult(c.ma_fence_wait(fence.asRaw()));
     }
 };
-
-pub const Error = error{
-    GenericError,
-    InvalidArgs,
-    InvalidOperation,
-    OutOfMemory,
-};
-
+//--------------------------------------------------------------------------------------------------
 fn checkResult(result: c.ma_result) Error!void {
     // TODO: Handle all errors.
     if (result != c.MA_SUCCESS)
         return error.GenericError;
 }
-
+//--------------------------------------------------------------------------------------------------
+//
+// Tests
+//
+//--------------------------------------------------------------------------------------------------
 const expect = std.testing.expect;
 
 test "zaudio.engine.basic" {
@@ -1135,7 +1194,6 @@ test "zaudio.engine.basic" {
     try expect(engine.isListenerEnabled(0) == true);
 
     try expect(engine.getDevice() != null);
-    _ = engine.getNodeGraph();
     _ = engine.getResourceManager();
     _ = engine.getLog();
     _ = engine.getEndpoint();
@@ -1225,3 +1283,11 @@ test "zaudio.device.basic" {
     try device.setMasterVolume(0.1);
     try expect((try device.getMasterVolume()) == 0.1);
 }
+
+test "zaudio.node_graph.basic" {
+    const config = NodeGraphConfig.init(2);
+    const node_graph = try createNodeGraph(std.testing.allocator, config);
+    defer node_graph.destroy(std.testing.allocator);
+    _ = node_graph.getTime();
+}
+//--------------------------------------------------------------------------------------------------
