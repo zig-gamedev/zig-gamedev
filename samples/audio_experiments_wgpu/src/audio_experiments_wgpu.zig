@@ -167,6 +167,8 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     music.setVolume(1.5);
     try music.start();
 
+    _ = music.getNumInputBuses();
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,

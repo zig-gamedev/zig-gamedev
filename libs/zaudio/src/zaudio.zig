@@ -126,26 +126,65 @@ const NodeImpl = opaque {
 
     fn Methods(comptime T: type) type {
         return struct {
+            pub fn asNode(node: T) Node {
+                return @ptrCast(Node, node);
+            }
+            pub fn asRawNode(node: T) *c.ma_node {
+                return @ptrCast(*c.ma_node, node);
+            }
+
             pub fn getNodeGraph(node: T) NodeGraph {
-                return @ptrCast(NodeGraph, c.ma_node_get_node_graph(@ptrCast(*c.ma_node, node)));
+                return @ptrCast(NodeGraph, c.ma_node_get_node_graph(node.asRawNode()));
             }
 
             pub fn getNumInputBuses(node: T) u32 {
-                return c.ma_node_get_input_bus_count(@ptrCast(*c.ma_node, node));
+                return c.ma_node_get_input_bus_count(node.asRawNode());
             }
             pub fn getNumOutputBuses(node: T) u32 {
-                return c.ma_node_get_output_bus_count(@ptrCast(*c.ma_node, node));
+                return c.ma_node_get_output_bus_count(node.asRawNode());
             }
 
             pub fn getNumInputChannels(node: T, bus_index: u32) u32 {
-                return c.ma_node_get_input_channels(@ptrCast(*c.ma_node, node), bus_index);
+                return c.ma_node_get_input_channels(node.asRawNode(), bus_index);
             }
             pub fn getNumOutputChannels(node: T, bus_index: u32) u32 {
-                return c.ma_node_get_output_channels(@ptrCast(*c.ma_node, node), bus_index);
+                return c.ma_node_get_output_channels(node.asRawNode(), bus_index);
             }
+
+            pub fn attachOutputBus(
+                node: T,
+                output_bus_index: u32,
+                other_node: Node,
+                other_node_input_bus_index: u32,
+            ) Error!void {
+                try checkResult(c.ma_node_attach_output_bus(
+                    node.asRawNode(),
+                    output_bus_index,
+                    other_node.asRawNode(),
+                    other_node_input_bus_index,
+                ));
+            }
+            pub fn dettachOutputBus(node: T, output_bus_index: u32) Error!void {
+                try checkResult(c.ma_node_detach_output_bus(node.asRawNode(), output_bus_index));
+            }
+            pub fn dettachAllOutputBuses(node: T) Error!void {
+                try checkResult(c.ma_node_detach_all_output_buses(node.asRawNode()));
+            }
+
+            pub fn setOutputBusVolume(node: T, output_bus_index: u32, volume: f32) Error!void {
+                try checkResult(c.ma_node_set_output_bus_volume(
+                    node.asRawNode(),
+                    output_bus_index,
+                    volume,
+                ));
+            }
+            pub fn getOutputBusVolume(node: T, output_bus_index: u32) f32 {
+                return c.ma_node_get_output_bus_volume(node.asRawNode(), output_bus_index);
+            }
+
+            // TODO: Add methods.
         };
     }
-    // TODO: Add methods.
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -163,9 +202,7 @@ pub const NodeGraphConfig = struct {
 pub fn createNodeGraph(allocator: std.mem.Allocator, config: NodeGraphConfig) Error!NodeGraph {
     var handle = allocator.create(c.ma_node_graph) catch return error.OutOfMemory;
     errdefer allocator.destroy(handle);
-
     try checkResult(c.ma_node_graph_init(&config.raw, null, handle));
-
     return @ptrCast(NodeGraph, handle);
 }
 
@@ -181,27 +218,42 @@ const NodeGraphImpl = opaque {
 
     fn Methods(comptime T: type) type {
         return struct {
+            pub fn asNodeGraph(node_graph: T) NodeGraph {
+                return @ptrCast(NodeGraph, node_graph);
+            }
+            pub fn asRawNodeGraph(node_graph: T) *c.ma_node_graph {
+                return @ptrCast(*c.ma_node_graph, node_graph);
+            }
+
             pub fn getEndpoint(node_graph: T) ?Node {
                 return @ptrCast(
                     ?Node,
-                    @alignCast(@sizeOf(usize), c.ma_node_graph_get_endpoint(@ptrCast(*c.ma_node_graph, node_graph))),
+                    @alignCast(
+                        @sizeOf(usize),
+                        c.ma_node_graph_get_endpoint(node_graph.asRawNodeGraph()),
+                    ),
                 );
             }
 
             pub fn getTime(node_graph: T) u64 {
-                return c.ma_node_graph_get_time(@ptrCast(*c.ma_node_graph, node_graph));
+                return c.ma_node_graph_get_time(node_graph.asRawNodeGraph());
             }
             pub fn setTime(node_graph: T, global_time: u64) Error!void {
-                try checkResult(c.ma_node_graph_set_time(@ptrCast(*c.ma_node_graph, node_graph), global_time));
+                try checkResult(c.ma_node_graph_set_time(node_graph.asRawNodeGraph(), global_time));
             }
 
             pub fn getNumChannels(node_graph: T) u32 {
-                return c.ma_node_graph_get_channels(@ptrCast(*c.ma_node_graph, node_graph));
+                return c.ma_node_graph_get_channels(node_graph.asRawNodeGraph());
             }
 
-            pub fn readPcmFrames(node_graph: T, outptr: *anyopaque, num_frames: u64, num_frames_read: ?*u64) Error!void {
+            pub fn readPcmFrames(
+                node_graph: T,
+                outptr: *anyopaque,
+                num_frames: u64,
+                num_frames_read: ?*u64,
+            ) Error!void {
                 try checkResult(c.ma_node_graph_read_pcm_frames(
-                    @ptrCast(*c.ma_node_graph, node_graph),
+                    node_graph.asRawNodeGraph(),
                     outptr,
                     num_frames,
                     num_frames_read,
@@ -356,21 +408,15 @@ pub const EngineConfig = struct {
 };
 
 pub fn createEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
-    return EngineImpl.create(allocator, config);
+    var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
+    errdefer allocator.destroy(handle);
+    try checkResult(c.ma_engine_init(if (config) |conf| &conf.raw else null, handle));
+    return @ptrCast(Engine, handle);
 }
 
 pub const Engine = *align(@sizeOf(usize)) EngineImpl;
 const EngineImpl = opaque {
     usingnamespace NodeGraphImpl.Methods(Engine); // Engine is a NodeGraph.
-
-    fn create(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
-        var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
-
-        try checkResult(c.ma_engine_init(if (config) |conf| &conf.raw else null, handle));
-
-        return @ptrCast(Engine, handle);
-    }
 
     pub fn destroy(engine: Engine, allocator: std.mem.Allocator) void {
         const raw = engine.asRaw();
@@ -579,6 +625,8 @@ pub const SoundConfig = struct {
 
 pub const Sound = *align(@sizeOf(usize)) SoundImpl;
 const SoundImpl = opaque {
+    usingnamespace NodeImpl.Methods(Sound); // Sound is a Node.
+
     fn createFromFile(
         allocator: std.mem.Allocator,
         engine: Engine,
@@ -928,6 +976,8 @@ const SoundImpl = opaque {
 //--------------------------------------------------------------------------------------------------
 pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
 const SoundGroupImpl = opaque {
+    usingnamespace NodeImpl.Methods(SoundGroup); // SoundGroup is a Node.
+
     fn create(
         allocator: std.mem.Allocator,
         engine: Engine,
@@ -1157,20 +1207,14 @@ const SoundGroupImpl = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub fn createFence(allocator: std.mem.Allocator) Error!Fence {
-    return FenceImpl.create(allocator);
+    var handle = allocator.create(c.ma_fence) catch return error.OutOfMemory;
+    errdefer allocator.destroy(handle);
+    try checkResult(c.ma_fence_init(handle));
+    return @ptrCast(Fence, handle);
 }
 
 pub const Fence = *align(@sizeOf(usize)) FenceImpl;
 const FenceImpl = opaque {
-    fn create(allocator: std.mem.Allocator) Error!Fence {
-        var handle = allocator.create(c.ma_fence) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
-
-        try checkResult(c.ma_fence_init(handle));
-
-        return @ptrCast(Fence, handle);
-    }
-
     pub fn destroy(fence: Fence, allocator: std.mem.Allocator) void {
         const raw = fence.asRaw();
         c.ma_fence_uninit(raw);
@@ -1247,6 +1291,11 @@ test "zaudio.soundgroup.basic" {
     try sgroup.stop();
     try sgroup.start();
 
+    _ = sgroup.getNumInputChannels(0);
+    _ = sgroup.getNumOutputChannels(0);
+    _ = sgroup.getNumInputBuses();
+    _ = sgroup.getNumOutputBuses();
+
     sgroup.setVolume(0.5);
     try expect(sgroup.getVolume() == 0.5);
 
@@ -1282,6 +1331,11 @@ test "zaudio.sound.basic" {
     const sound = try engine.createSound(std.testing.allocator, config);
     defer sound.destroy(std.testing.allocator);
 
+    _ = sound.getNumInputChannels(0);
+    _ = sound.getNumOutputChannels(0);
+    _ = sound.getNumInputBuses();
+    _ = sound.getNumOutputBuses();
+
     sound.setVolume(0.25);
     try expect(sound.getVolume() == 0.25);
 
@@ -1290,6 +1344,8 @@ test "zaudio.sound.basic" {
 
     sound.setPitch(0.5);
     try expect(sound.getPitch() == 0.5);
+
+    try expect(sound.getNodeGraph() == engine.asNodeGraph());
 
     var format: Format = .unknown;
     var num_channels: u32 = 0;
