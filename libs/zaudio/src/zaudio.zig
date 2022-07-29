@@ -309,6 +309,33 @@ const HpfNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// Peaking Filter Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const PeakNodeConfig = struct {
+    raw: c.ma_peak_node_config,
+
+    pub fn init(num_channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) PeakNodeConfig {
+        return .{ .raw = c.ma_peak_node_config_init(num_channels, sample_rate, gain_db, q, frequency) };
+    }
+};
+
+pub const PeakNode = *align(@sizeOf(usize)) PeakNodeImpl;
+const PeakNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(HpfNode);
+
+    pub fn destroy(peak_node: PeakNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_peak_node, peak_node);
+        c.ma_peak_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn reconfigure(peak_node: PeakNode, config: PeakNodeConfig) Error!void {
+        try checkResult(c.ma_peak_node_reinit(&config, @ptrCast(*c.ma_peak_node, peak_node)));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // NodeGraph
 //
 //--------------------------------------------------------------------------------------------------
@@ -388,6 +415,17 @@ const NodeGraphImpl = opaque {
                 errdefer allocator.destroy(handle);
                 try checkResult(c.ma_splitter_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
                 return @ptrCast(SplitterNode, handle);
+            }
+
+            pub fn createPeakNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: PeakNodeConfig,
+            ) Error!PeakNode {
+                var handle = allocator.create(c.ma_peak_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_peak_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(PeakNode, handle);
             }
 
             pub fn getEndpoint(node_graph: T) Node {
