@@ -120,6 +120,11 @@ pub const NodeConfig = struct {
     }
 };
 
+pub const NodeState = enum(u32) {
+    started,
+    stopped,
+};
+
 pub const Node = *align(@sizeOf(usize)) NodeImpl;
 const NodeImpl = opaque {
     usingnamespace Methods(Node);
@@ -182,8 +187,47 @@ const NodeImpl = opaque {
                 return c.ma_node_get_output_bus_volume(node.asRawNode(), output_bus_index);
             }
 
-            // TODO: Add methods.
+            pub fn setState(node: T, state: NodeState) Error!void {
+                try checkResult(c.ma_node_set_state(node.asRawNode(), @bitCast(u32, state)));
+            }
+            pub fn getState(node: T) NodeState {
+                return c.ma_node_get_state(node.asRawNode());
+            }
+
+            pub fn setTime(node: T, local_time: u64) Error!void {
+                try checkResult(c.ma_node_set_time(node.asRawNode(), local_time));
+            }
+            pub fn getTime(node: T) u64 {
+                return c.ma_node_get_time(node.asRawNode());
+            }
         };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// High Pass Filter Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const HpfNodeConfig = struct {
+    raw: c.ma_hpf_node_config,
+
+    pub fn init(num_channels: u32, sample_rate: u32, cutoff_frequency: f64, order: u32) HpfNodeConfig {
+        return .{ .raw = c.ma_hpf_node_config_init(num_channels, sample_rate, cutoff_frequency, order) };
+    }
+};
+
+pub const HpfNode = *align(@sizeOf(usize)) HpfNodeImpl;
+const HpfNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(HpfNode);
+
+    pub fn destroy(hpf_node: HpfNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_hpf_node, hpf_node);
+        c.ma_hpf_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn reconfigure(hpf_node: HpfNode, config: HpfNodeConfig) Error!void {
+        try checkResult(c.ma_hpf_node_reinit(&config, @ptrCast(*c.ma_hpf_node, hpf_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -225,9 +269,20 @@ const NodeGraphImpl = opaque {
                 return @ptrCast(*c.ma_node_graph, node_graph);
             }
 
-            pub fn getEndpoint(node_graph: T) ?Node {
+            pub fn createHpfNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: HpfNodeConfig,
+            ) Error!HpfNode {
+                var handle = allocator.create(c.ma_hpf_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_hpf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(HpfNode, handle);
+            }
+
+            pub fn getEndpoint(node_graph: T) Node {
                 return @ptrCast(
-                    ?Node,
+                    Node,
                     @alignCast(
                         @sizeOf(usize),
                         c.ma_node_graph_get_endpoint(node_graph.asRawNodeGraph()),
@@ -478,8 +533,8 @@ const EngineImpl = opaque {
         return SoundGroupImpl.create(allocator, engine, flags, parent);
     }
 
-    pub fn getResourceManager(engine: Engine) ?ResourceManager {
-        return @ptrCast(?ResourceManager, c.ma_engine_get_resource_manager(engine.asRaw()));
+    pub fn getResourceManager(engine: Engine) ResourceManager {
+        return @ptrCast(ResourceManager, c.ma_engine_get_resource_manager(engine.asRaw()));
     }
 
     pub fn getDevice(engine: Engine) ?Device {
@@ -1276,6 +1331,15 @@ test "zaudio.engine.basic" {
     _ = engine.getResourceManager();
     _ = engine.getLog();
     _ = engine.getEndpoint();
+
+    const hpf_node = try engine.createHpfNode(std.testing.allocator, HpfNodeConfig.init(
+        engine.getNumChannels(),
+        engine.getSampleRate(),
+        1000.0,
+        2,
+    ));
+    defer hpf_node.destroy(std.testing.allocator);
+    try hpf_node.attachOutputBus(0, engine.getEndpoint(), 0);
 }
 
 test "zaudio.soundgroup.basic" {
