@@ -250,7 +250,7 @@ const BiquadNodeImpl = opaque {
     }
 
     pub fn reconfigure(biquad_node: BiquadNode, config: BiquadNodeConfig) Error!void {
-        try checkResult(c.ma_biquad_node_reinit(&config, @ptrCast(*c.ma_biquad_node, biquad_node)));
+        try checkResult(c.ma_biquad_node_reinit(&config.raw, @ptrCast(*c.ma_biquad_node, biquad_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -277,7 +277,7 @@ const LpfNodeImpl = opaque {
     }
 
     pub fn reconfigure(lpf_node: LpfNode, config: LpfNodeConfig) Error!void {
-        try checkResult(c.ma_lpf_node_reinit(&config, @ptrCast(*c.ma_lpf_node, lpf_node)));
+        try checkResult(c.ma_lpf_node_reinit(&config.raw, @ptrCast(*c.ma_lpf_node, lpf_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -304,7 +304,34 @@ const HpfNodeImpl = opaque {
     }
 
     pub fn reconfigure(hpf_node: HpfNode, config: HpfNodeConfig) Error!void {
-        try checkResult(c.ma_hpf_node_reinit(&config, @ptrCast(*c.ma_hpf_node, hpf_node)));
+        try checkResult(c.ma_hpf_node_reinit(&config.raw, @ptrCast(*c.ma_hpf_node, hpf_node)));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Notching Filter Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const NotchNodeConfig = struct {
+    raw: c.ma_notch_node_config,
+
+    pub fn init(num_channels: u32, sample_rate: u32, q: f64, frequency: f64) NotchNodeConfig {
+        return .{ .raw = c.ma_notch_node_config_init(num_channels, sample_rate, q, frequency) };
+    }
+};
+
+pub const NotchNode = *align(@sizeOf(usize)) NotchNodeImpl;
+const NotchNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(NotchNode);
+
+    pub fn destroy(notch_node: PeakNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_notch_node, notch_node);
+        c.ma_notch_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn reconfigure(notch_node: NotchNode, config: NotchNodeConfig) Error!void {
+        try checkResult(c.ma_notch_node_reinit(&config.raw, @ptrCast(*c.ma_notch_node, notch_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -322,7 +349,7 @@ pub const PeakNodeConfig = struct {
 
 pub const PeakNode = *align(@sizeOf(usize)) PeakNodeImpl;
 const PeakNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(HpfNode);
+    usingnamespace NodeImpl.Methods(PeakNode);
 
     pub fn destroy(peak_node: PeakNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_peak_node, peak_node);
@@ -331,7 +358,7 @@ const PeakNodeImpl = opaque {
     }
 
     pub fn reconfigure(peak_node: PeakNode, config: PeakNodeConfig) Error!void {
-        try checkResult(c.ma_peak_node_reinit(&config, @ptrCast(*c.ma_peak_node, peak_node)));
+        try checkResult(c.ma_peak_node_reinit(&config.raw, @ptrCast(*c.ma_peak_node, peak_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -415,6 +442,17 @@ const NodeGraphImpl = opaque {
                 errdefer allocator.destroy(handle);
                 try checkResult(c.ma_splitter_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
                 return @ptrCast(SplitterNode, handle);
+            }
+
+            pub fn createNotchNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: NotchNodeConfig,
+            ) Error!PeakNode {
+                var handle = allocator.create(c.ma_notch_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_notch_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(NotchNode, handle);
             }
 
             pub fn createPeakNode(
