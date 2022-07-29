@@ -417,6 +417,50 @@ const HishelfNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// Delay Filter Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const DelayNodeConfig = struct {
+    raw: c.ma_delay_node_config,
+
+    pub fn init(num_channels: u32, sample_rate: u32, delay_in_frames: u32, decay: f32) DelayNodeConfig {
+        return .{ .raw = c.ma_delay_node_config_init(num_channels, sample_rate, delay_in_frames, decay) };
+    }
+};
+
+pub const DelayNode = *align(@sizeOf(usize)) DelayNodeImpl;
+const DelayNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(DelayNode);
+
+    pub fn destroy(delay_node: DelayNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_delay_node, delay_node);
+        c.ma_delay_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn setWet(delay_node: DelayNode, value: f32) void {
+        c.ma_delay_node_set_wet(@ptrCast(*c.ma_delay_node, delay_node), value);
+    }
+    pub fn getWet(delay_node: DelayNode) f32 {
+        return c.ma_delay_node_get_wet(@ptrCast(*c.ma_delay_node, delay_node));
+    }
+
+    pub fn setDry(delay_node: DelayNode, value: f32) void {
+        c.ma_delay_node_set_dry(@ptrCast(*c.ma_delay_node, delay_node), value);
+    }
+    pub fn getDry(delay_node: DelayNode) f32 {
+        return c.ma_delay_node_get_dry(@ptrCast(*c.ma_delay_node, delay_node));
+    }
+
+    pub fn setDecay(delay_node: DelayNode, value: f32) void {
+        c.ma_delay_node_set_decay(@ptrCast(*c.ma_delay_node, delay_node), value);
+    }
+    pub fn getDecay(delay_node: DelayNode) f32 {
+        return c.ma_delay_node_get_decay(@ptrCast(*c.ma_delay_node, delay_node));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // NodeGraph
 //
 //--------------------------------------------------------------------------------------------------
@@ -540,6 +584,17 @@ const NodeGraphImpl = opaque {
                 errdefer allocator.destroy(handle);
                 try checkResult(c.ma_hishelf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
                 return @ptrCast(HishelfNode, handle);
+            }
+
+            pub fn createDelayNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: DelayNodeConfig,
+            ) Error!DelayNode {
+                var handle = allocator.create(c.ma_delay_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_delay_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(DelayNode, handle);
             }
 
             pub fn getEndpoint(node_graph: T) Node {
