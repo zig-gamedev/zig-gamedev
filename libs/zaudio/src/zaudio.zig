@@ -363,6 +363,60 @@ const PeakNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// Low Shelf Filter Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const LoshelfNodeConfig = struct {
+    raw: c.ma_peak_node_config,
+
+    pub fn init(num_channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) LoshelfNodeConfig {
+        return .{ .raw = c.ma_loshelf_node_config_init(num_channels, sample_rate, gain_db, q, frequency) };
+    }
+};
+
+pub const LoshelfNode = *align(@sizeOf(usize)) LoshelfNodeImpl;
+const LoshelfNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(LoshelfNode);
+
+    pub fn destroy(loshelf_node: LoshelfNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_loshelf_node, loshelf_node);
+        c.ma_loshelf_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn reconfigure(loshelf_node: LoshelfNode, config: LoshelfNodeConfig) Error!void {
+        try checkResult(c.ma_loshelf_node_reinit(&config.raw, @ptrCast(*c.ma_loshelf_node, loshelf_node)));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// High Shelf Filter Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const HishelfNodeConfig = struct {
+    raw: c.ma_peak_node_config,
+
+    pub fn init(num_channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) HishelfNodeConfig {
+        return .{ .raw = c.ma_hishelf_node_config_init(num_channels, sample_rate, gain_db, q, frequency) };
+    }
+};
+
+pub const HishelfNode = *align(@sizeOf(usize)) HishelfNodeImpl;
+const HishelfNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(HishelfNode);
+
+    pub fn destroy(hishelf_node: HishelfNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_hishelf_node, hishelf_node);
+        c.ma_hishelf_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn reconfigure(hishelf_node: HishelfNode, config: HishelfNodeConfig) Error!void {
+        try checkResult(c.ma_hishelf_node_reinit(&config.raw, @ptrCast(*c.ma_hishelf_node, hishelf_node)));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // NodeGraph
 //
 //--------------------------------------------------------------------------------------------------
@@ -404,7 +458,7 @@ const NodeGraphImpl = opaque {
                 node_graph: T,
                 allocator: std.mem.Allocator,
                 config: BiquadNodeConfig,
-            ) Error!HpfNode {
+            ) Error!BiquadNode {
                 var handle = allocator.create(c.ma_biquad_node) catch return error.OutOfMemory;
                 errdefer allocator.destroy(handle);
                 try checkResult(c.ma_biquad_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
@@ -437,7 +491,7 @@ const NodeGraphImpl = opaque {
                 node_graph: T,
                 allocator: std.mem.Allocator,
                 config: SplitterNodeConfig,
-            ) Error!HpfNode {
+            ) Error!SplitterNode {
                 var handle = allocator.create(c.ma_splitter_node) catch return error.OutOfMemory;
                 errdefer allocator.destroy(handle);
                 try checkResult(c.ma_splitter_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
@@ -448,7 +502,7 @@ const NodeGraphImpl = opaque {
                 node_graph: T,
                 allocator: std.mem.Allocator,
                 config: NotchNodeConfig,
-            ) Error!PeakNode {
+            ) Error!NotchNode {
                 var handle = allocator.create(c.ma_notch_node) catch return error.OutOfMemory;
                 errdefer allocator.destroy(handle);
                 try checkResult(c.ma_notch_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
@@ -464,6 +518,28 @@ const NodeGraphImpl = opaque {
                 errdefer allocator.destroy(handle);
                 try checkResult(c.ma_peak_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
                 return @ptrCast(PeakNode, handle);
+            }
+
+            pub fn createLoshelfNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: LoshelfNodeConfig,
+            ) Error!LoshelfNode {
+                var handle = allocator.create(c.ma_loshelf_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_loshelf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(LoshelfNode, handle);
+            }
+
+            pub fn createHishelfNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: HishelfNodeConfig,
+            ) Error!HishelfNode {
+                var handle = allocator.create(c.ma_hishelf_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_hishelf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(HishelfNode, handle);
             }
 
             pub fn getEndpoint(node_graph: T) Node {
