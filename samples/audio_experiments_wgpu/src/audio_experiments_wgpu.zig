@@ -124,6 +124,8 @@ const DemoState = struct {
 
     music: zaudio.Sound,
 
+    high_pass_filter: zaudio.HpfNode,
+
     camera: struct {
         position: [3]f32 = .{ -10.0, 15.0, -10.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
@@ -167,7 +169,17 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     music.setVolume(1.5);
     try music.start();
 
-    _ = music.getNumInputBuses();
+    const high_pass_filter = try audio.engine.createHpfNode(allocator, zaudio.HpfNodeConfig.init(
+        audio.engine.getNumChannels(),
+        audio.engine.getSampleRate(),
+        150.0, // `cutoff_frequency`
+        4, // `order`
+    ));
+    // Uncomment to apply the high pass filter to the music. TODO: Add nice UI.
+    if (false) {
+        try music.attachOutputBus(0, high_pass_filter.asNode(), 0);
+        try high_pass_filter.attachOutputBus(0, audio.engine.getEndpoint(), 0);
+    }
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -177,6 +189,7 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .depth_texv = depth.texv,
         .audio = audio,
         .music = music,
+        .high_pass_filter = high_pass_filter,
     };
 
     const common_depth_state = wgpu.DepthStencilState{
@@ -206,6 +219,7 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 }
 
 fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
+    demo.high_pass_filter.destroy(allocator);
     demo.music.destroy(allocator);
     demo.audio.destroy(allocator);
     demo.gctx.deinit(allocator);

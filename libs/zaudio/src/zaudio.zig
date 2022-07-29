@@ -205,6 +205,83 @@ const NodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// Splitter Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const SplitterNodeConfig = struct {
+    raw: c.ma_splitter_node_config,
+
+    pub fn init(num_channels: u32) SplitterNodeConfig {
+        return .{ .raw = c.ma_splitter_node_config_init(num_channels) };
+    }
+};
+
+pub const SplitterNode = *align(@sizeOf(usize)) SplitterNodeImpl;
+const SplitterNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(SplitterNode);
+
+    pub fn destroy(splitter_node: SplitterNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_splitter_node, splitter_node);
+        c.ma_splitter_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Biquad Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const BiquadNodeConfig = struct {
+    raw: c.ma_biquad_node_config,
+
+    pub fn init(num_channels: u32, b0: f32, b1: f32, b2: f32, a0: f32, a1: f32, a2: f32) BiquadNodeConfig {
+        return .{ .raw = c.ma_biquad_node_config_init(num_channels, b0, b1, b2, a0, a1, a2) };
+    }
+};
+
+pub const BiquadNode = *align(@sizeOf(usize)) BiquadNodeImpl;
+const BiquadNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(BiquadNode);
+
+    pub fn destroy(biquad_node: BiquadNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_biquad_node, biquad_node);
+        c.ma_biquad_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn reconfigure(biquad_node: BiquadNode, config: BiquadNodeConfig) Error!void {
+        try checkResult(c.ma_biquad_node_reinit(&config, @ptrCast(*c.ma_biquad_node, biquad_node)));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Low Pass Filter Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const LpfNodeConfig = struct {
+    raw: c.ma_lpf_node_config,
+
+    pub fn init(num_channels: u32, sample_rate: u32, cutoff_frequency: f64, order: u32) LpfNodeConfig {
+        return .{ .raw = c.ma_lpf_node_config_init(num_channels, sample_rate, cutoff_frequency, order) };
+    }
+};
+
+pub const LpfNode = *align(@sizeOf(usize)) LpfNodeImpl;
+const LpfNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(LpfNode);
+
+    pub fn destroy(lpf_node: LpfNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_lpf_node, lpf_node);
+        c.ma_lpf_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn reconfigure(lpf_node: LpfNode, config: LpfNodeConfig) Error!void {
+        try checkResult(c.ma_lpf_node_reinit(&config, @ptrCast(*c.ma_lpf_node, lpf_node)));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
 // High Pass Filter Node
 //
 //--------------------------------------------------------------------------------------------------
@@ -269,6 +346,28 @@ const NodeGraphImpl = opaque {
                 return @ptrCast(*c.ma_node_graph, node_graph);
             }
 
+            pub fn createBiquadNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: BiquadNodeConfig,
+            ) Error!HpfNode {
+                var handle = allocator.create(c.ma_biquad_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_biquad_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(BiquadNode, handle);
+            }
+
+            pub fn createLpfNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: LpfNodeConfig,
+            ) Error!LpfNode {
+                var handle = allocator.create(c.ma_lpf_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_lpf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(LpfNode, handle);
+            }
+
             pub fn createHpfNode(
                 node_graph: T,
                 allocator: std.mem.Allocator,
@@ -278,6 +377,17 @@ const NodeGraphImpl = opaque {
                 errdefer allocator.destroy(handle);
                 try checkResult(c.ma_hpf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
                 return @ptrCast(HpfNode, handle);
+            }
+
+            pub fn createSplitterNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: SplitterNodeConfig,
+            ) Error!HpfNode {
+                var handle = allocator.create(c.ma_splitter_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_splitter_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(SplitterNode, handle);
             }
 
             pub fn getEndpoint(node_graph: T) Node {
