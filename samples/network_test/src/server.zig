@@ -33,14 +33,14 @@ pub fn main() !void {
                 .receive => {
                     if (event.packet) |packet| {
                         std.log.debug(
-                            "A packet of length {d} was received from {s} on channel {d}.",
-                            .{ packet.dataLength, event.peer.?.data, event.channelID },
+                            "A packet of length {d} was received from {d} on channel {d}.",
+                            .{ packet.dataLength, if (event.peer.?.data) |d| @ptrToInt(d) else 0, event.channelID },
                         );
                         packet.destroy();
                     }
                 },
                 .disconnect => {
-                    std.log.debug("{s} disconnected.", .{event.peer.?.data});
+                    std.log.debug("{d} disconnected.", .{if (event.peer.?.data) |d| @ptrToInt(d) else 0});
                     event.peer.?.data = null;
                 },
                 else => {
