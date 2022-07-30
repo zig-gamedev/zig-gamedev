@@ -84,10 +84,16 @@ pub const CaptureCallback = struct {
 
 pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
 const DataSourceImpl = opaque {
-    pub fn asRaw(data_source: DataSource) *c.ma_data_source {
-        return @ptrCast(*c.ma_data_source, data_source);
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn asDataSource(data_source: T) DataSource {
+                return @ptrCast(DataSource, data_source);
+            }
+            pub fn asRawDataSource(data_source: T) *c.ma_data_source {
+                return @ptrCast(*c.ma_data_source, data_source);
+            }
+        };
     }
-    // TODO: Add methods.
 };
 
 pub const ResourceManager = *align(@sizeOf(usize)) ResourceManagerImpl;
@@ -97,7 +103,7 @@ const ResourceManagerImpl = opaque {
 
 pub const Context = *align(@sizeOf(usize)) ContextImpl;
 const ContextImpl = opaque {
-    pub fn asRaw(context: Context) *c.ma_context {
+    pub fn asRawContext(context: Context) *c.ma_context {
         return @ptrCast(*c.ma_context, context);
     }
     // TODO: Add methods.
@@ -705,7 +711,7 @@ const DeviceImpl = opaque {
         }
 
         try checkResult(c.ma_device_init(
-            if (context) |ctx| ctx.asRaw() else null,
+            if (context) |ctx| ctx.asRawContext() else null,
             &config.raw,
             handle,
         ));
