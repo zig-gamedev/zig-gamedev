@@ -127,7 +127,7 @@ pub const NodeState = enum(u32) {
 
 pub const Node = *align(@sizeOf(usize)) NodeImpl;
 const NodeImpl = opaque {
-    usingnamespace Methods(Node);
+    usingnamespace NodeImpl.Methods(Node);
 
     fn Methods(comptime T: type) type {
         return struct {
@@ -481,7 +481,8 @@ pub fn createNodeGraph(allocator: std.mem.Allocator, config: NodeGraphConfig) Er
 
 pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
 const NodeGraphImpl = opaque {
-    usingnamespace Methods(NodeGraph);
+    usingnamespace NodeImpl.Methods(NodeGraph);
+    usingnamespace NodeGraphImpl.Methods(NodeGraph);
 
     pub fn destroy(node_graph: NodeGraph, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_node_graph, node_graph);
@@ -605,13 +606,6 @@ const NodeGraphImpl = opaque {
                         c.ma_node_graph_get_endpoint(node_graph.asRawNodeGraph()),
                     ),
                 );
-            }
-
-            pub fn getTime(node_graph: T) u64 {
-                return c.ma_node_graph_get_time(node_graph.asRawNodeGraph());
-            }
-            pub fn setTime(node_graph: T, global_time: u64) Error!void {
-                try checkResult(c.ma_node_graph_set_time(node_graph.asRawNodeGraph(), global_time));
             }
 
             pub fn getNumChannels(node_graph: T) u32 {
@@ -788,7 +782,8 @@ pub fn createEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!E
 
 pub const Engine = *align(@sizeOf(usize)) EngineImpl;
 const EngineImpl = opaque {
-    usingnamespace NodeGraphImpl.Methods(Engine); // Engine is a NodeGraph.
+    usingnamespace NodeImpl.Methods(Engine);
+    usingnamespace NodeGraphImpl.Methods(Engine);
 
     pub fn destroy(engine: Engine, allocator: std.mem.Allocator) void {
         const raw = engine.asRaw();
@@ -997,7 +992,7 @@ pub const SoundConfig = struct {
 
 pub const Sound = *align(@sizeOf(usize)) SoundImpl;
 const SoundImpl = opaque {
-    usingnamespace NodeImpl.Methods(Sound); // Sound is a Node.
+    usingnamespace NodeImpl.Methods(Sound);
 
     fn createFromFile(
         allocator: std.mem.Allocator,
@@ -1348,7 +1343,7 @@ const SoundImpl = opaque {
 //--------------------------------------------------------------------------------------------------
 pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
 const SoundGroupImpl = opaque {
-    usingnamespace NodeImpl.Methods(SoundGroup); // SoundGroup is a Node.
+    usingnamespace NodeImpl.Methods(SoundGroup);
 
     fn create(
         allocator: std.mem.Allocator,
