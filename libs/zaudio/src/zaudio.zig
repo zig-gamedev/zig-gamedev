@@ -82,20 +82,6 @@ pub const CaptureCallback = struct {
     callback: ?fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void = null,
 };
 
-pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
-const DataSourceImpl = opaque {
-    fn Methods(comptime T: type) type {
-        return struct {
-            pub fn asDataSource(data_source: T) DataSource {
-                return @ptrCast(DataSource, data_source);
-            }
-            pub fn asRawDataSource(data_source: T) *c.ma_data_source {
-                return @ptrCast(*c.ma_data_source, data_source);
-            }
-        };
-    }
-};
-
 pub const ResourceManager = *align(@sizeOf(usize)) ResourceManagerImpl;
 const ResourceManagerImpl = opaque {
     // TODO: Add methods.
@@ -112,6 +98,110 @@ const ContextImpl = opaque {
 pub const Log = *align(@sizeOf(usize)) LogImpl;
 const LogImpl = opaque {
     // TODO: Add methods.
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Data Source
+//
+//--------------------------------------------------------------------------------------------------
+pub const DataSourceConfig = struct {
+    raw: c.ma_node_config,
+
+    pub fn init() DataSourceConfig {
+        return .{ .raw = c.ma_data_source_config_init() };
+    }
+};
+
+pub fn createDataSource(allocator: std.mem.Allocator, config: DataSourceConfig) Error!DataSource {
+    var handle = allocator.create(c.ma_data_source) catch return error.OutOfMemory;
+    errdefer allocator.destroy(handle);
+    try checkResult(c.ma_data_source_init(&config.raw, handle));
+    return @ptrCast(DataSource, handle);
+}
+
+pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
+const DataSourceImpl = opaque {
+    pub fn destroy(data_source: DataSource, allocator: std.mem.Allocator) void {
+        const raw = data_source.asRawDataSource();
+        c.ma_data_source_uninit(raw);
+        allocator.destroy(raw);
+    }
+
+    fn Methods(comptime T: type) type {
+        return struct {
+            pub fn asDataSource(data_source: T) DataSource {
+                return @ptrCast(DataSource, data_source);
+            }
+            pub fn asRawDataSource(data_source: T) *c.ma_data_source {
+                return @ptrCast(*c.ma_data_source, data_source);
+            }
+            // TODO: Add missing methods.
+        };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Waveform Data Source
+//
+//--------------------------------------------------------------------------------------------------
+pub const WaveformType = enum(u32) {
+    sine,
+    square,
+    triangle,
+    sawtooth,
+};
+
+pub const WaveformConfig = struct {
+    raw: c.ma_waveform_config,
+
+    pub fn init(
+        format: Format,
+        num_channels: u32,
+        sample_rate: u32,
+        wave_type: WaveformType,
+        amplitude: f64,
+        frequency: f64,
+    ) WaveformConfig {
+        return .{ .raw = c.ma_waveform_config_init(
+            @bitCast(u32, format),
+            num_channels,
+            sample_rate,
+            @bitCast(u32, wave_type),
+            amplitude,
+            frequency,
+        ) };
+    }
+};
+
+pub fn createWaveform(allocator: std.mem.Allocator, config: WaveformConfig) Error!Waveform {
+    var handle = allocator.create(c.ma_waveform) catch return error.OutOfMemory;
+    errdefer allocator.destroy(handle);
+    try checkResult(c.ma_waveform_init(&config.raw, handle));
+    return @ptrCast(Waveform, handle);
+}
+
+pub const Waveform = *align(@sizeOf(usize)) WaveformImpl;
+const WaveformImpl = opaque {
+    usingnamespace DataSourceImpl.Methods(Waveform);
+
+    pub fn destroy(waveform: Waveform, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_waveform, waveform);
+        c.ma_waveform_uninit(raw);
+        allocator.destroy(raw);
+    }
+
+    pub fn setAmplitude(waveform: Waveform, amplitude: f64) Error!void {
+        try checkResult(c.ma_waveform_set_amplitude(@ptrCast(*c.ma_waveform, waveform), amplitude));
+    }
+    pub fn setFrequency(waveform: Waveform, frequency: f64) Error!void {
+        try checkResult(c.ma_waveform_set_frequency(@ptrCast(*c.ma_waveform, waveform), frequency));
+    }
+    pub fn setType(waveform: Waveform, wave_type: WaveformType) Error!void {
+        try checkResult(c.ma_waveform_set_type(@ptrCast(*c.ma_waveform, waveform), @bitCast(u32, wave_type)));
+    }
+    pub fn setSampleRate(waveform: Waveform, sample_rate: u32) Error!void {
+        try checkResult(c.ma_waveform_set_sample_rate(@ptrCast(*c.ma_waveform, waveform), sample_rate));
+    }
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -207,6 +297,36 @@ const NodeImpl = opaque {
                 return c.ma_node_get_time(node.asRawNode());
             }
         };
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Data Source Node
+//
+//--------------------------------------------------------------------------------------------------
+pub const DataSourceNodeConfig = struct {
+    raw: c.ma_data_source_node_config,
+
+    pub fn init(data_source: DataSource) DataSourceNodeConfig {
+        return .{ .raw = c.ma_data_source_node_config_init(data_source) };
+    }
+};
+
+pub const DataSourceNode = *align(@sizeOf(usize)) DataSourceNodeImpl;
+const DataSourceNodeImpl = opaque {
+    usingnamespace NodeImpl.Methods(DataSourceNode);
+
+    pub fn destroy(ds_node: SplitterNode, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_data_source_node, ds_node);
+        c.ma_data_source_node_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn setLooping(ds_node: DataSourceNode, is_looping: bool) void {
+        try checkResult(c.ma_data_source_node_set_looping(@ptrCast(*c.ma_data_source_node, ds_node), is_looping));
+    }
+    pub fn isLooping(ds_node: DataSourceNode) bool {
+        return c.ma_data_source_node_is_looping(@ptrCast(*c.ma_data_source_node, ds_node));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -467,7 +587,7 @@ const DelayNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// NodeGraph
+// Node Graph
 //
 //--------------------------------------------------------------------------------------------------
 pub const NodeGraphConfig = struct {
@@ -503,6 +623,17 @@ const NodeGraphImpl = opaque {
             }
             pub fn asRawNodeGraph(node_graph: T) *c.ma_node_graph {
                 return @ptrCast(*c.ma_node_graph, node_graph);
+            }
+
+            pub fn createDataSourceNode(
+                node_graph: T,
+                allocator: std.mem.Allocator,
+                config: DataSourceNodeConfig,
+            ) Error!DataSourceNode {
+                var handle = allocator.create(c.ma_data_source_node) catch return error.OutOfMemory;
+                errdefer allocator.destroy(handle);
+                try checkResult(c.ma_data_source_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
+                return @ptrCast(DataSourceNode, handle);
             }
 
             pub fn createBiquadNode(
@@ -1344,7 +1475,7 @@ const SoundImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// SoundGroup
+// Sound Group
 //
 //--------------------------------------------------------------------------------------------------
 pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
