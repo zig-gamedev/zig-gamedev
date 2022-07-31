@@ -403,7 +403,7 @@ const LpfNodeImpl = opaque {
     }
 
     pub fn reconfigure(lpf_node: LpfNode, config: LpfNodeConfig) Error!void {
-        try checkResult(c.ma_lpf_node_reinit(&config.raw, @ptrCast(*c.ma_lpf_node, lpf_node)));
+        try checkResult(c.ma_lpf_node_reinit(&config.raw.lpf, @ptrCast(*c.ma_lpf_node, lpf_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -430,7 +430,7 @@ const HpfNodeImpl = opaque {
     }
 
     pub fn reconfigure(hpf_node: HpfNode, config: HpfNodeConfig) Error!void {
-        try checkResult(c.ma_hpf_node_reinit(&config.raw, @ptrCast(*c.ma_hpf_node, hpf_node)));
+        try checkResult(c.ma_hpf_node_reinit(&config.raw.hpf, @ptrCast(*c.ma_hpf_node, hpf_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -1109,7 +1109,7 @@ const EngineImpl = opaque {
         try checkResult(c.ma_engine_play_sound_ex(
             engine.asRaw(),
             filepath.ptr,
-            if (node) |n| n.asRaw() else null,
+            if (node) |n| n.asRawNode() else null,
             node_input_bus_index,
         ));
     }

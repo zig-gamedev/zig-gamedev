@@ -28,6 +28,39 @@ const DrawUniforms = struct {
     object_to_world: zm.Mat,
 };
 
+const AudioFilterType = enum {
+    lpf,
+    hpf,
+
+    const names = [_][:0]const u8{ "Low Pass Filter", "High Pass Filter" };
+};
+
+const AudioFilter = struct {
+    current_type: AudioFilterType = .lpf,
+    is_enabled: bool = false,
+
+    lpf: struct {
+        config: zaudio.LpfNodeConfig,
+        node: zaudio.LpfNode,
+    },
+    hpf: struct {
+        config: zaudio.HpfNodeConfig,
+        node: zaudio.HpfNode,
+    },
+
+    fn getCurrentNode(filter: AudioFilter) zaudio.Node {
+        return switch (filter.current_type) {
+            .lpf => filter.lpf.node.asNode(),
+            .hpf => filter.hpf.node.asNode(),
+        };
+    }
+
+    fn destroy(filter: AudioFilter, allocator: std.mem.Allocator) void {
+        filter.lpf.node.destroy(allocator);
+        filter.hpf.node.destroy(allocator);
+    }
+};
+
 const AudioState = struct {
     const num_sets = 100;
     const samples_per_set = 512;
@@ -112,6 +145,7 @@ const AudioState = struct {
 };
 
 const DemoState = struct {
+    allocator: std.mem.Allocator,
     gctx: *zgpu.GraphicsContext,
     audio: *AudioState,
 
@@ -123,8 +157,7 @@ const DemoState = struct {
     depth_texv: zgpu.TextureViewHandle,
 
     music: zaudio.Sound,
-
-    high_pass_filter: zaudio.HpfNode,
+    audio_filter: AudioFilter,
 
     camera: struct {
         position: [3]f32 = .{ -10.0, 15.0, -10.0 },
@@ -169,28 +202,50 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     music.setVolume(1.5);
     try music.start();
 
-    const high_pass_filter = try audio.engine.createHpfNode(allocator, zaudio.HpfNodeConfig.init(
-        audio.engine.getNumChannels(),
-        audio.engine.getSampleRate(),
-        150.0, // `cutoff_frequency`
-        4, // `order`
-    ));
-    // Uncomment to apply the high pass filter to the music. TODO: Add nice UI.
-    if (false) {
-        try music.attachOutputBus(0, high_pass_filter.asNode(), 0);
-        try high_pass_filter.attachOutputBus(0, audio.engine.getEndpoint(), 0);
-    }
+    const audio_filter = audio_filter: {
+        const lpf_config = zaudio.LpfNodeConfig.init(
+            audio.engine.getNumChannels(),
+            audio.engine.getSampleRate(),
+            20.0, // `cutoff_frequency`
+            4, // `order`
+        );
+        const hpf_config = zaudio.HpfNodeConfig.init(
+            audio.engine.getNumChannels(),
+            audio.engine.getSampleRate(),
+            20.0, // `cutoff_frequency`
+            4, // `order`
+        );
+
+        const audio_filter = AudioFilter{
+            .lpf = .{
+                .config = lpf_config,
+                .node = try audio.engine.createLpfNode(allocator, lpf_config),
+            },
+            .hpf = .{
+                .config = hpf_config,
+                .node = try audio.engine.createHpfNode(allocator, hpf_config),
+            },
+        };
+
+        try audio_filter.lpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
+        try audio_filter.hpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
+
+        break :audio_filter audio_filter;
+    };
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
+        .allocator = allocator,
         .gctx = gctx,
         .uniform_bg = uniform_bg,
         .depth_tex = depth.tex,
         .depth_texv = depth.texv,
         .audio = audio,
         .music = music,
-        .high_pass_filter = high_pass_filter,
+        .audio_filter = audio_filter,
     };
+
+    try music.attachOutputBus(0, getAudioGraphEntry(demo.*), 0);
 
     const common_depth_state = wgpu.DepthStencilState{
         .format = .depth32_float,
@@ -219,36 +274,58 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 }
 
 fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
-    demo.high_pass_filter.destroy(allocator);
+    demo.audio_filter.destroy(allocator);
     demo.music.destroy(allocator);
     demo.audio.destroy(allocator);
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
 }
 
+fn getAudioGraphEntry(demo: DemoState) zaudio.Node {
+    if (demo.audio_filter.is_enabled == false)
+        return demo.audio.engine.getEndpoint();
+    return demo.audio_filter.getCurrentNode();
+}
+
 fn update(demo: *DemoState) !void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    if (zgui.begin("Demo Settings", .{ .flags = .{ .no_move = true, .no_resize = true } })) {
+    var win_y: f32 = 10.0;
+    zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
+    zgui.setNextWindowSize(.{ .w = 500.0, .h = -1.0 });
+
+    if (zgui.begin(
+        "Info",
+        .{ .flags = .{ .no_move = true, .no_resize = true, .no_collapse = true } },
+    )) {
         zgui.bullet();
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Average :");
         zgui.sameLine(.{});
         zgui.text(
-            "  {d:.3} ms/frame ({d:.1} fps)",
+            " {d:.3} ms/frame ({d:.1} fps)",
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
 
         zgui.bullet();
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Right Mouse Button + drag :");
         zgui.sameLine(.{});
-        zgui.textUnformatted("rotate camera");
+        zgui.textUnformatted(" rotate camera");
 
         zgui.bullet();
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "W, A, S, D :");
         zgui.sameLine(.{});
-        zgui.textUnformatted("move camera");
+        zgui.textUnformatted(" move camera");
+    }
+    win_y += zgui.getWindowHeight() + 20.0;
+    zgui.end();
 
-        zgui.separator();
+    zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
+    zgui.setNextWindowSize(.{ .w = 500.0, .h = -1.0 });
+
+    if (zgui.begin(
+        "Data Sources",
+        .{ .flags = .{ .no_move = true, .no_resize = true, .no_collapse = true } },
+    )) {
         zgui.textUnformatted("Music:");
         const music_is_playing = demo.music.isPlaying();
         if (zgui.button(if (music_is_playing) "Pause" else "Play", .{ .w = 200.0 })) {
@@ -264,15 +341,74 @@ fn update(demo: *DemoState) !void {
         zgui.spacing();
         zgui.textUnformatted("Sounds:");
         if (zgui.button("  Play Sound 1  ", .{})) {
-            try demo.audio.engine.playSound(content_dir ++ "drum_bass_hard.flac", null);
+            try demo.audio.engine.playSoundEx(
+                content_dir ++ "drum_bass_hard.flac",
+                getAudioGraphEntry(demo.*),
+                0,
+            );
         }
         zgui.sameLine(.{});
         if (zgui.button("  Play Sound 2  ", .{})) {
-            try demo.audio.engine.playSound(content_dir ++ "tabla_tas1.flac", null);
+            try demo.audio.engine.playSoundEx(
+                content_dir ++ "tabla_tas1.flac",
+                getAudioGraphEntry(demo.*),
+                0,
+            );
         }
         zgui.sameLine(.{});
         if (zgui.button("  Play Sound 3  ", .{})) {
-            try demo.audio.engine.playSound(content_dir ++ "loop_mika.flac", null);
+            try demo.audio.engine.playSoundEx(
+                content_dir ++ "loop_mika.flac",
+                getAudioGraphEntry(demo.*),
+                0,
+            );
+        }
+    }
+    win_y += zgui.getWindowHeight() + 20.0;
+    zgui.end();
+
+    zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
+    zgui.setNextWindowSize(.{ .w = 500.0, .h = -1.0 });
+
+    if (zgui.begin("Audio Filter", .{
+        .flags = .{ .no_move = true, .no_resize = true, .no_collapse = true },
+    })) {
+        if (zgui.checkbox("Enabled", .{ .v = &demo.audio_filter.is_enabled })) {
+            try demo.music.attachOutputBus(0, getAudioGraphEntry(demo.*), 0);
+        }
+
+        const selected_item = @enumToInt(demo.audio_filter.current_type);
+        if (zgui.beginCombo("Type", .{ .preview_value = AudioFilterType.names[selected_item] })) {
+            for (AudioFilterType.names) |name, index| {
+                if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and selected_item != index) {
+                    demo.audio_filter.current_type = @intToEnum(AudioFilterType, index);
+                    try demo.music.attachOutputBus(0, getAudioGraphEntry(demo.*), 0);
+                }
+            }
+            zgui.endCombo();
+        }
+
+        switch (demo.audio_filter.current_type) {
+            .lpf => {
+                const config = &demo.audio_filter.lpf.config;
+                if (zgui.sliderScalar(
+                    "Frequency",
+                    f64,
+                    .{ .v = &config.raw.lpf.cutoffFrequency, .min = 20.0, .max = 500.0 },
+                )) {
+                    try demo.audio_filter.lpf.node.reconfigure(config.*);
+                }
+            },
+            .hpf => {
+                const config = &demo.audio_filter.hpf.config;
+                if (zgui.sliderScalar(
+                    "Frequency",
+                    f64,
+                    .{ .v = &config.raw.hpf.cutoffFrequency, .min = 20.0, .max = 500.0 },
+                )) {
+                    try demo.audio_filter.hpf.node.reconfigure(config.*);
+                }
+            },
         }
     }
     zgui.end();
