@@ -327,9 +327,10 @@ fn updateAudioGraph(demo: DemoState) !void {
 fn update(demo: *DemoState) !void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
-    const win_width: f32 = 530.0;
+    const win_offset: f32 = 10.0;
+    const win_width: f32 = 450.0;
     var win_y: f32 = 10.0;
-    zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
+    zgui.setNextWindowPos(.{ .x = win_offset, .y = win_y });
     zgui.setNextWindowSize(.{ .w = win_width, .h = -1.0 });
 
     if (zgui.begin(
@@ -345,7 +346,7 @@ fn update(demo: *DemoState) !void {
         );
 
         zgui.bullet();
-        zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Right Mouse Button + drag :");
+        zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "RMB + drag :");
         zgui.sameLine(.{});
         zgui.textUnformatted(" rotate camera");
 
@@ -354,10 +355,10 @@ fn update(demo: *DemoState) !void {
         zgui.sameLine(.{});
         zgui.textUnformatted(" move camera");
     }
-    win_y += zgui.getWindowHeight() + 20.0;
+    win_y += zgui.getWindowHeight() + win_offset;
     zgui.end();
 
-    zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
+    zgui.setNextWindowPos(.{ .x = win_offset, .y = win_y });
     zgui.setNextWindowSize(.{ .w = win_width, .h = -1.0 });
 
     if (zgui.begin(
@@ -378,22 +379,22 @@ fn update(demo: *DemoState) !void {
 
         zgui.spacing();
         zgui.textUnformatted("Sounds:");
-        if (zgui.button("  Play Sound 1  ", .{})) {
+        if (zgui.button("Play Sound 1", .{})) {
             try demo.sounds.items[0].start();
         }
         zgui.sameLine(.{});
-        if (zgui.button("  Play Sound 2  ", .{})) {
+        if (zgui.button("Play Sound 2", .{})) {
             try demo.sounds.items[1].start();
         }
         zgui.sameLine(.{});
-        if (zgui.button("  Play Sound 3  ", .{})) {
+        if (zgui.button("Play Sound 3", .{})) {
             try demo.sounds.items[2].start();
         }
     }
-    win_y += zgui.getWindowHeight() + 20.0;
+    win_y += zgui.getWindowHeight() + win_offset;
     zgui.end();
 
-    zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
+    zgui.setNextWindowPos(.{ .x = win_offset, .y = win_y });
     zgui.setNextWindowSize(.{ .w = win_width, .h = -1.0 });
 
     if (zgui.begin("Audio Filter", .{
@@ -417,7 +418,7 @@ fn update(demo: *DemoState) !void {
         switch (demo.audio_filter.current_type) {
             .lpf => {
                 const config = &demo.audio_filter.lpf.config;
-                if (zgui.sliderScalar("Cutoff Frequency", f64, .{
+                if (zgui.sliderScalar("Cutoff Freq.", f64, .{
                     .v = &config.raw.lpf.cutoffFrequency,
                     .min = min_filter_fequency,
                     .max = max_filter_fequency,
@@ -428,7 +429,7 @@ fn update(demo: *DemoState) !void {
             },
             .hpf => {
                 const config = &demo.audio_filter.hpf.config;
-                if (zgui.sliderScalar("Cutoff Frequency", f64, .{
+                if (zgui.sliderScalar("Cutoff Freq.", f64, .{
                     .v = &config.raw.hpf.cutoffFrequency,
                     .min = min_filter_fequency,
                     .max = max_filter_fequency,
