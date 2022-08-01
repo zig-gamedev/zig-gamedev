@@ -163,8 +163,8 @@ const DemoState = struct {
     sounds: std.ArrayList(zaudio.Sound),
     audio_filter: AudioFilter,
 
-    waveform: zaudio.Waveform,
     waveform_config: zaudio.WaveformConfig,
+    waveform_data_source: zaudio.Waveform,
     waveform_node: zaudio.DataSourceNode,
 
     camera: struct {
@@ -269,10 +269,10 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         0.5,
         440.0,
     );
-    const waveform = try zaudio.createWaveform(allocator, waveform_config);
+    const waveform_data_source = try zaudio.createWaveform(allocator, waveform_config);
     const waveform_node = try audio.engine.createDataSourceNode(
         allocator,
-        zaudio.DataSourceNodeConfig.init(waveform.asDataSource()),
+        zaudio.DataSourceNodeConfig.init(waveform_data_source.asDataSource()),
     );
     try waveform_node.setState(.stopped);
 
@@ -287,8 +287,8 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .music = music,
         .sounds = sounds,
         .audio_filter = audio_filter,
-        .waveform = waveform,
         .waveform_config = waveform_config,
+        .waveform_data_source = waveform_data_source,
         .waveform_node = waveform_node,
     };
 
@@ -325,7 +325,7 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.audio_filter.is_enabled = false;
     updateAudioGraph(demo.*) catch unreachable;
     demo.audio_filter.destroy(allocator);
-    demo.waveform.destroy(allocator);
+    demo.waveform_data_source.destroy(allocator);
     demo.waveform_node.destroy(allocator);
     demo.music.destroy(allocator);
     for (demo.sounds.items) |sound| sound.destroy(allocator);
@@ -431,7 +431,7 @@ fn update(demo: *DemoState) !void {
                         selected_item != index)
                     {
                         demo.waveform_config.raw.type = @intCast(u32, index);
-                        try demo.waveform.setType(@intToEnum(zaudio.WaveformType, index));
+                        try demo.waveform_data_source.setType(@intToEnum(zaudio.WaveformType, index));
                     }
                 }
                 zgui.endCombo();
@@ -443,7 +443,15 @@ fn update(demo: *DemoState) !void {
                 .max = 1000.0,
                 .cfmt = "%.1f",
             })) {
-                try demo.waveform.setFrequency(demo.waveform_config.raw.frequency);
+                try demo.waveform_data_source.setFrequency(demo.waveform_config.raw.frequency);
+            }
+            if (zgui.sliderScalar("Amplitude", f64, .{
+                .v = &demo.waveform_config.raw.amplitude,
+                .min = 0.05,
+                .max = 0.75,
+                .cfmt = "%.3f",
+            })) {
+                try demo.waveform_data_source.setAmplitude(demo.waveform_config.raw.amplitude);
             }
 
             const is_started = demo.waveform_node.getState() == .started;
@@ -470,7 +478,9 @@ fn update(demo: *DemoState) !void {
         const selected_item = @enumToInt(demo.audio_filter.current_type);
         if (zgui.beginCombo("Type", .{ .preview_value = AudioFilterType.names[selected_item] })) {
             for (AudioFilterType.names) |name, index| {
-                if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and selected_item != index) {
+                if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
+                    selected_item != index)
+                {
                     demo.audio_filter.current_type = @intToEnum(AudioFilterType, index);
                     try updateAudioGraph(demo.*);
                 }
