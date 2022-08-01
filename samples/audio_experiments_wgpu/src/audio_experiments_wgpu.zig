@@ -14,6 +14,9 @@ const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: audio experiments (wgpu)";
 
 const safe_uniform_size = 256;
+const min_filter_fequency: f32 = 20.0;
+const max_filter_fequency: f32 = 500.0;
+const filter_order: u32 = 4;
 
 const Vertex = extern struct {
     position: [3]f32,
@@ -157,6 +160,7 @@ const DemoState = struct {
     depth_texv: zgpu.TextureViewHandle,
 
     music: zaudio.Sound,
+    sounds: std.ArrayList(zaudio.Sound),
     audio_filter: AudioFilter,
 
     camera: struct {
@@ -194,6 +198,26 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const audio = try AudioState.create(allocator);
     try audio.engine.start();
 
+    const sounds = sounds: {
+        var sounds = std.ArrayList(zaudio.Sound).init(allocator);
+        try sounds.append(try audio.engine.createSoundFromFile(
+            allocator,
+            content_dir ++ "drum_bass_hard.flac",
+            .{},
+        ));
+        try sounds.append(try audio.engine.createSoundFromFile(
+            allocator,
+            content_dir ++ "tabla_tas1.flac",
+            .{},
+        ));
+        try sounds.append(try audio.engine.createSoundFromFile(
+            allocator,
+            content_dir ++ "loop_mika.flac",
+            .{},
+        ));
+        break :sounds sounds;
+    };
+
     const music = try audio.engine.createSoundFromFile(
         allocator,
         content_dir ++ "Broke For Free - Night Owl.mp3",
@@ -206,14 +230,14 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         const lpf_config = zaudio.LpfNodeConfig.init(
             audio.engine.getNumChannels(),
             audio.engine.getSampleRate(),
-            20.0, // `cutoff_frequency`
-            4, // `order`
+            min_filter_fequency,
+            filter_order,
         );
         const hpf_config = zaudio.HpfNodeConfig.init(
             audio.engine.getNumChannels(),
             audio.engine.getSampleRate(),
-            20.0, // `cutoff_frequency`
-            4, // `order`
+            min_filter_fequency,
+            filter_order,
         );
 
         const audio_filter = AudioFilter{
@@ -242,10 +266,11 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .depth_texv = depth.texv,
         .audio = audio,
         .music = music,
+        .sounds = sounds,
         .audio_filter = audio_filter,
     };
 
-    try music.attachOutputBus(0, getAudioGraphEntry(demo.*), 0);
+    try updateAudioGraph(demo.*);
 
     const common_depth_state = wgpu.DepthStencilState{
         .format = .depth32_float,
@@ -274,25 +299,38 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
 }
 
 fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
+    demo.audio.engine.stop() catch unreachable;
+    demo.audio_filter.is_enabled = false;
+    updateAudioGraph(demo.*) catch unreachable;
     demo.audio_filter.destroy(allocator);
     demo.music.destroy(allocator);
+    for (demo.sounds.items) |sound| sound.destroy(allocator);
+    demo.sounds.deinit();
     demo.audio.destroy(allocator);
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
 }
 
-fn getAudioGraphEntry(demo: DemoState) zaudio.Node {
-    if (demo.audio_filter.is_enabled == false)
-        return demo.audio.engine.getEndpoint();
-    return demo.audio_filter.getCurrentNode();
+fn updateAudioGraph(demo: DemoState) !void {
+    const node = node: {
+        if (demo.audio_filter.is_enabled == false)
+            break :node demo.audio.engine.getEndpoint();
+        break :node demo.audio_filter.getCurrentNode();
+    };
+
+    try demo.music.attachOutputBus(0, node, 0);
+    for (demo.sounds.items) |sound| {
+        try sound.attachOutputBus(0, node, 0);
+    }
 }
 
 fn update(demo: *DemoState) !void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
+    const win_width: f32 = 530.0;
     var win_y: f32 = 10.0;
     zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
-    zgui.setNextWindowSize(.{ .w = 500.0, .h = -1.0 });
+    zgui.setNextWindowSize(.{ .w = win_width, .h = -1.0 });
 
     if (zgui.begin(
         "Info",
@@ -320,7 +358,7 @@ fn update(demo: *DemoState) !void {
     zgui.end();
 
     zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
-    zgui.setNextWindowSize(.{ .w = 500.0, .h = -1.0 });
+    zgui.setNextWindowSize(.{ .w = win_width, .h = -1.0 });
 
     if (zgui.begin(
         "Data Sources",
@@ -341,40 +379,28 @@ fn update(demo: *DemoState) !void {
         zgui.spacing();
         zgui.textUnformatted("Sounds:");
         if (zgui.button("  Play Sound 1  ", .{})) {
-            try demo.audio.engine.playSoundEx(
-                content_dir ++ "drum_bass_hard.flac",
-                getAudioGraphEntry(demo.*),
-                0,
-            );
+            try demo.sounds.items[0].start();
         }
         zgui.sameLine(.{});
         if (zgui.button("  Play Sound 2  ", .{})) {
-            try demo.audio.engine.playSoundEx(
-                content_dir ++ "tabla_tas1.flac",
-                getAudioGraphEntry(demo.*),
-                0,
-            );
+            try demo.sounds.items[1].start();
         }
         zgui.sameLine(.{});
         if (zgui.button("  Play Sound 3  ", .{})) {
-            try demo.audio.engine.playSoundEx(
-                content_dir ++ "loop_mika.flac",
-                getAudioGraphEntry(demo.*),
-                0,
-            );
+            try demo.sounds.items[2].start();
         }
     }
     win_y += zgui.getWindowHeight() + 20.0;
     zgui.end();
 
     zgui.setNextWindowPos(.{ .x = 10.0, .y = win_y });
-    zgui.setNextWindowSize(.{ .w = 500.0, .h = -1.0 });
+    zgui.setNextWindowSize(.{ .w = win_width, .h = -1.0 });
 
     if (zgui.begin("Audio Filter", .{
         .flags = .{ .no_move = true, .no_resize = true, .no_collapse = true },
     })) {
         if (zgui.checkbox("Enabled", .{ .v = &demo.audio_filter.is_enabled })) {
-            try demo.music.attachOutputBus(0, getAudioGraphEntry(demo.*), 0);
+            try updateAudioGraph(demo.*);
         }
 
         const selected_item = @enumToInt(demo.audio_filter.current_type);
@@ -382,7 +408,7 @@ fn update(demo: *DemoState) !void {
             for (AudioFilterType.names) |name, index| {
                 if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and selected_item != index) {
                     demo.audio_filter.current_type = @intToEnum(AudioFilterType, index);
-                    try demo.music.attachOutputBus(0, getAudioGraphEntry(demo.*), 0);
+                    try updateAudioGraph(demo.*);
                 }
             }
             zgui.endCombo();
@@ -391,21 +417,23 @@ fn update(demo: *DemoState) !void {
         switch (demo.audio_filter.current_type) {
             .lpf => {
                 const config = &demo.audio_filter.lpf.config;
-                if (zgui.sliderScalar(
-                    "Frequency",
-                    f64,
-                    .{ .v = &config.raw.lpf.cutoffFrequency, .min = 20.0, .max = 500.0 },
-                )) {
+                if (zgui.sliderScalar("Cutoff Frequency", f64, .{
+                    .v = &config.raw.lpf.cutoffFrequency,
+                    .min = min_filter_fequency,
+                    .max = max_filter_fequency,
+                    .cfmt = "%.1f",
+                })) {
                     try demo.audio_filter.lpf.node.reconfigure(config.*);
                 }
             },
             .hpf => {
                 const config = &demo.audio_filter.hpf.config;
-                if (zgui.sliderScalar(
-                    "Frequency",
-                    f64,
-                    .{ .v = &config.raw.hpf.cutoffFrequency, .min = 20.0, .max = 500.0 },
-                )) {
+                if (zgui.sliderScalar("Cutoff Frequency", f64, .{
+                    .v = &config.raw.hpf.cutoffFrequency,
+                    .min = min_filter_fequency,
+                    .max = max_filter_fequency,
+                    .cfmt = "%.1f",
+                })) {
                     try demo.audio_filter.hpf.node.reconfigure(config.*);
                 }
             },
