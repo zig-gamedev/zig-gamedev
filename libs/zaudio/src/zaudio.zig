@@ -287,7 +287,7 @@ const NodeImpl = opaque {
                 try checkResult(c.ma_node_set_state(node.asRawNode(), @bitCast(u32, state)));
             }
             pub fn getState(node: T) NodeState {
-                return c.ma_node_get_state(node.asRawNode());
+                return @intToEnum(NodeState, c.ma_node_get_state(node.asRawNode()));
             }
 
             pub fn setTime(node: T, local_time: u64) Error!void {
@@ -316,14 +316,17 @@ pub const DataSourceNode = *align(@sizeOf(usize)) DataSourceNodeImpl;
 const DataSourceNodeImpl = opaque {
     usingnamespace NodeImpl.Methods(DataSourceNode);
 
-    pub fn destroy(ds_node: SplitterNode, allocator: std.mem.Allocator) void {
+    pub fn destroy(ds_node: DataSourceNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_data_source_node, ds_node);
         c.ma_data_source_node_uninit(raw, null);
         allocator.destroy(raw);
     }
 
     pub fn setLooping(ds_node: DataSourceNode, is_looping: bool) void {
-        try checkResult(c.ma_data_source_node_set_looping(@ptrCast(*c.ma_data_source_node, ds_node), is_looping));
+        try checkResult(c.ma_data_source_node_set_looping(
+            @ptrCast(*c.ma_data_source_node, ds_node),
+            is_looping,
+        ));
     }
     pub fn isLooping(ds_node: DataSourceNode) bool {
         return c.ma_data_source_node_is_looping(@ptrCast(*c.ma_data_source_node, ds_node));

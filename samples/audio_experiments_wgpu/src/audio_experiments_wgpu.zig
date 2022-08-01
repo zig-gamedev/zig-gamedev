@@ -163,6 +163,10 @@ const DemoState = struct {
     sounds: std.ArrayList(zaudio.Sound),
     audio_filter: AudioFilter,
 
+    waveform: zaudio.Waveform,
+    waveform_config: zaudio.WaveformConfig,
+    waveform_node: zaudio.DataSourceNode,
+
     camera: struct {
         position: [3]f32 = .{ -10.0, 15.0, -10.0 },
         forward: [3]f32 = .{ 0.0, 0.0, 1.0 },
@@ -257,6 +261,21 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         break :audio_filter audio_filter;
     };
 
+    const waveform_config = zaudio.WaveformConfig.init(
+        .float32,
+        audio.engine.getNumChannels(),
+        audio.engine.getSampleRate(),
+        .sine,
+        0.5,
+        440.0,
+    );
+    const waveform = try zaudio.createWaveform(allocator, waveform_config);
+    const waveform_node = try audio.engine.createDataSourceNode(
+        allocator,
+        zaudio.DataSourceNodeConfig.init(waveform.asDataSource()),
+    );
+    try waveform_node.setState(.stopped);
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .allocator = allocator,
@@ -268,6 +287,9 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .music = music,
         .sounds = sounds,
         .audio_filter = audio_filter,
+        .waveform = waveform,
+        .waveform_config = waveform_config,
+        .waveform_node = waveform_node,
     };
 
     try updateAudioGraph(demo.*);
@@ -303,6 +325,8 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.audio_filter.is_enabled = false;
     updateAudioGraph(demo.*) catch unreachable;
     demo.audio_filter.destroy(allocator);
+    demo.waveform.destroy(allocator);
+    demo.waveform_node.destroy(allocator);
     demo.music.destroy(allocator);
     for (demo.sounds.items) |sound| sound.destroy(allocator);
     demo.sounds.deinit();
@@ -319,6 +343,7 @@ fn updateAudioGraph(demo: DemoState) !void {
     };
 
     try demo.music.attachOutputBus(0, node, 0);
+    try demo.waveform_node.attachOutputBus(0, node, 0);
     for (demo.sounds.items) |sound| {
         try sound.attachOutputBus(0, node, 0);
     }
@@ -378,17 +403,55 @@ fn update(demo: *DemoState) !void {
         }
 
         zgui.spacing();
+        zgui.separator();
         zgui.textUnformatted("Sounds:");
-        if (zgui.button("Play Sound 1", .{})) {
+        if (zgui.button("Sound 1", .{})) {
             try demo.sounds.items[0].start();
         }
         zgui.sameLine(.{});
-        if (zgui.button("Play Sound 2", .{})) {
+        if (zgui.button("Sound 2", .{})) {
             try demo.sounds.items[1].start();
         }
         zgui.sameLine(.{});
-        if (zgui.button("Play Sound 3", .{})) {
+        if (zgui.button("Sound 3", .{})) {
             try demo.sounds.items[2].start();
+        }
+
+        // Waveform generator
+        {
+            zgui.spacing();
+            zgui.separator();
+            zgui.textUnformatted("Waveform Generator:");
+
+            const selected_item = demo.waveform_config.raw.type;
+            const names = [_][:0]const u8{ "Sine", "Square", "Triangle", "Sawtooth" };
+            if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
+                for (names) |name, index| {
+                    if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
+                        selected_item != index)
+                    {
+                        demo.waveform_config.raw.type = @intCast(u32, index);
+                        try demo.waveform.setType(@intToEnum(zaudio.WaveformType, index));
+                    }
+                }
+                zgui.endCombo();
+            }
+
+            if (zgui.sliderScalar("Frequency", f64, .{
+                .v = &demo.waveform_config.raw.frequency,
+                .min = 20.0,
+                .max = 1000.0,
+                .cfmt = "%.1f",
+            })) {
+                try demo.waveform.setFrequency(demo.waveform_config.raw.frequency);
+            }
+
+            const is_started = demo.waveform_node.getState() == .started;
+            if (zgui.button(if (is_started) "Stop" else "Start", .{ .w = 200.0 })) {
+                if (is_started) {
+                    try demo.waveform_node.setState(.stopped);
+                } else try demo.waveform_node.setState(.started);
+            }
         }
     }
     win_y += zgui.getWindowHeight() + win_offset;
