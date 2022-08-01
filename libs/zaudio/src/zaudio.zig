@@ -453,14 +453,14 @@ pub const NotchNode = *align(@sizeOf(usize)) NotchNodeImpl;
 const NotchNodeImpl = opaque {
     usingnamespace NodeImpl.Methods(NotchNode);
 
-    pub fn destroy(notch_node: PeakNode, allocator: std.mem.Allocator) void {
+    pub fn destroy(notch_node: NotchNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_notch_node, notch_node);
         c.ma_notch_node_uninit(raw, null);
         allocator.destroy(raw);
     }
 
     pub fn reconfigure(notch_node: NotchNode, config: NotchNodeConfig) Error!void {
-        try checkResult(c.ma_notch_node_reinit(&config.raw, @ptrCast(*c.ma_notch_node, notch_node)));
+        try checkResult(c.ma_notch_node_reinit(&config.raw.notch, @ptrCast(*c.ma_notch_node, notch_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------

@@ -16,6 +16,8 @@ const window_title = "zig-gamedev: audio experiments (wgpu)";
 const safe_uniform_size = 256;
 const min_filter_fequency: f32 = 20.0;
 const max_filter_fequency: f32 = 500.0;
+const min_filter_q: f32 = 0.02;
+const max_filter_q: f32 = 1.0;
 const filter_order: u32 = 4;
 
 const Vertex = extern struct {
@@ -34,8 +36,9 @@ const DrawUniforms = struct {
 const AudioFilterType = enum {
     lpf,
     hpf,
+    notch,
 
-    const names = [_][:0]const u8{ "Low Pass Filter", "High Pass Filter" };
+    const names = [_][:0]const u8{ "Low-Pass Filter", "High-Pass Filter", "Notching Filter" };
 };
 
 const AudioFilter = struct {
@@ -50,17 +53,23 @@ const AudioFilter = struct {
         config: zaudio.HpfNodeConfig,
         node: zaudio.HpfNode,
     },
+    notch: struct {
+        config: zaudio.NotchNodeConfig,
+        node: zaudio.NotchNode,
+    },
 
     fn getCurrentNode(filter: AudioFilter) zaudio.Node {
         return switch (filter.current_type) {
             .lpf => filter.lpf.node.asNode(),
             .hpf => filter.hpf.node.asNode(),
+            .notch => filter.notch.node.asNode(),
         };
     }
 
     fn destroy(filter: AudioFilter, allocator: std.mem.Allocator) void {
         filter.lpf.node.destroy(allocator);
         filter.hpf.node.destroy(allocator);
+        filter.notch.node.destroy(allocator);
     }
 };
 
@@ -243,6 +252,12 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             min_filter_fequency,
             filter_order,
         );
+        const notch_config = zaudio.NotchNodeConfig.init(
+            audio.engine.getNumChannels(),
+            audio.engine.getSampleRate(),
+            min_filter_q, // `q` (also called Resonance, Q or Bandwidth)
+            min_filter_fequency,
+        );
 
         const audio_filter = AudioFilter{
             .lpf = .{
@@ -253,10 +268,15 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
                 .config = hpf_config,
                 .node = try audio.engine.createHpfNode(allocator, hpf_config),
             },
+            .notch = .{
+                .config = notch_config,
+                .node = try audio.engine.createNotchNode(allocator, notch_config),
+            },
         };
 
         try audio_filter.lpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
         try audio_filter.hpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
+        try audio_filter.notch.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
 
         break :audio_filter audio_filter;
     };
@@ -441,7 +461,7 @@ fn update(demo: *DemoState) !void {
                 .v = &demo.waveform_config.raw.frequency,
                 .min = 20.0,
                 .max = 1000.0,
-                .cfmt = "%.1f",
+                .cfmt = "%.1f Hz",
             })) {
                 try demo.waveform_data_source.setFrequency(demo.waveform_config.raw.frequency);
             }
@@ -491,25 +511,42 @@ fn update(demo: *DemoState) !void {
         switch (demo.audio_filter.current_type) {
             .lpf => {
                 const config = &demo.audio_filter.lpf.config;
-                if (zgui.sliderScalar("Cutoff Freq.", f64, .{
+                if (zgui.sliderScalar("Cutoff", f64, .{
                     .v = &config.raw.lpf.cutoffFrequency,
                     .min = min_filter_fequency,
                     .max = max_filter_fequency,
-                    .cfmt = "%.1f",
+                    .cfmt = "%.1f Hz",
                 })) {
                     try demo.audio_filter.lpf.node.reconfigure(config.*);
                 }
             },
             .hpf => {
                 const config = &demo.audio_filter.hpf.config;
-                if (zgui.sliderScalar("Cutoff Freq.", f64, .{
+                if (zgui.sliderScalar("Cutoff", f64, .{
                     .v = &config.raw.hpf.cutoffFrequency,
                     .min = min_filter_fequency,
                     .max = max_filter_fequency,
-                    .cfmt = "%.1f",
+                    .cfmt = "%.1f Hz",
                 })) {
                     try demo.audio_filter.hpf.node.reconfigure(config.*);
                 }
+            },
+            .notch => {
+                const config = &demo.audio_filter.notch.config;
+                var has_changed = false;
+                if (zgui.sliderScalar("Frequency", f64, .{
+                    .v = &config.raw.notch.frequency,
+                    .min = min_filter_fequency,
+                    .max = max_filter_fequency,
+                    .cfmt = "%.1f Hz",
+                })) has_changed = true;
+                if (zgui.sliderScalar("Q", f64, .{
+                    .v = &config.raw.notch.q,
+                    .min = min_filter_q,
+                    .max = max_filter_q,
+                    .cfmt = "%.3f",
+                })) has_changed = true;
+                if (has_changed) try demo.audio_filter.notch.node.reconfigure(config.*);
             },
         }
     }
