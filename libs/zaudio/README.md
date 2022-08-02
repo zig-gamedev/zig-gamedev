@@ -20,6 +20,7 @@ Provided structs:
 - [ ] `DataSource` (missing methods)
   - [x] `WaveformDataSource`
   - [x] `NoiseDataSource`
+  - [ ] custom data sources
 - [x] `Node`
   - [x] `DataSourceNode`
   - [x] `SplitterNode`
@@ -31,6 +32,7 @@ Provided structs:
   - [x] `LoshelfNode`
   - [x] `HishelfNode`
   - [x] `DelayNode`
+  - [ ] custom nodes
 
 ## Getting started
 
