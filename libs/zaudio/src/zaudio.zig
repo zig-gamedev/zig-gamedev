@@ -173,34 +173,89 @@ pub const WaveformConfig = struct {
     }
 };
 
-pub fn createWaveform(allocator: std.mem.Allocator, config: WaveformConfig) Error!Waveform {
+pub fn createWaveformDataSource(allocator: std.mem.Allocator, config: WaveformConfig) Error!WaveformDataSource {
     var handle = allocator.create(c.ma_waveform) catch return error.OutOfMemory;
     errdefer allocator.destroy(handle);
     try checkResult(c.ma_waveform_init(&config.raw, handle));
-    return @ptrCast(Waveform, handle);
+    return @ptrCast(WaveformDataSource, handle);
 }
 
-pub const Waveform = *align(@sizeOf(usize)) WaveformImpl;
-const WaveformImpl = opaque {
-    usingnamespace DataSourceImpl.Methods(Waveform);
+pub const WaveformDataSource = *align(@sizeOf(usize)) WaveformDataSourceImpl;
+const WaveformDataSourceImpl = opaque {
+    usingnamespace DataSourceImpl.Methods(WaveformDataSource);
 
-    pub fn destroy(waveform: Waveform, allocator: std.mem.Allocator) void {
+    pub fn destroy(waveform: WaveformDataSource, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_waveform, waveform);
         c.ma_waveform_uninit(raw);
         allocator.destroy(raw);
     }
 
-    pub fn setAmplitude(waveform: Waveform, amplitude: f64) Error!void {
+    pub fn setAmplitude(waveform: WaveformDataSource, amplitude: f64) Error!void {
         try checkResult(c.ma_waveform_set_amplitude(@ptrCast(*c.ma_waveform, waveform), amplitude));
     }
-    pub fn setFrequency(waveform: Waveform, frequency: f64) Error!void {
+    pub fn setFrequency(waveform: WaveformDataSource, frequency: f64) Error!void {
         try checkResult(c.ma_waveform_set_frequency(@ptrCast(*c.ma_waveform, waveform), frequency));
     }
-    pub fn setType(waveform: Waveform, wave_type: WaveformType) Error!void {
+    pub fn setType(waveform: WaveformDataSource, wave_type: WaveformType) Error!void {
         try checkResult(c.ma_waveform_set_type(@ptrCast(*c.ma_waveform, waveform), @bitCast(u32, wave_type)));
     }
-    pub fn setSampleRate(waveform: Waveform, sample_rate: u32) Error!void {
+    pub fn setSampleRate(waveform: WaveformDataSource, sample_rate: u32) Error!void {
         try checkResult(c.ma_waveform_set_sample_rate(@ptrCast(*c.ma_waveform, waveform), sample_rate));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+//
+// Noise Data Source
+//
+//--------------------------------------------------------------------------------------------------
+pub const NoiseType = enum(u32) {
+    white,
+    pink,
+    brownian,
+};
+
+pub const NoiseConfig = struct {
+    raw: c.ma_noise_config,
+
+    pub fn init(
+        format: Format,
+        num_channels: u32,
+        noise_type: NoiseType,
+        seed: i32,
+        amplitude: f64,
+    ) NoiseConfig {
+        return .{ .raw = c.ma_noise_config_init(
+            @bitCast(u32, format),
+            num_channels,
+            @bitCast(u32, noise_type),
+            seed,
+            amplitude,
+        ) };
+    }
+};
+
+pub fn createNoiseDataSource(allocator: std.mem.Allocator, config: NoiseConfig) Error!NoiseDataSource {
+    var handle = allocator.create(c.ma_noise) catch return error.OutOfMemory;
+    errdefer allocator.destroy(handle);
+    try checkResult(c.ma_noise_init(&config.raw, null, handle));
+    return @ptrCast(NoiseDataSource, handle);
+}
+
+pub const NoiseDataSource = *align(@sizeOf(usize)) NoiseDataSourceImpl;
+const NoiseDataSourceImpl = opaque {
+    usingnamespace DataSourceImpl.Methods(NoiseDataSource);
+
+    pub fn destroy(noise: NoiseDataSource, allocator: std.mem.Allocator) void {
+        const raw = @ptrCast(*c.ma_noise, noise);
+        c.ma_noise_uninit(raw, null);
+        allocator.destroy(raw);
+    }
+
+    pub fn setAmplitude(noise: NoiseDataSource, amplitude: f64) Error!void {
+        try checkResult(c.ma_noise_set_amplitude(@ptrCast(*c.ma_noise, noise), amplitude));
+    }
+    pub fn setType(noise: NoiseDataSource, noise_type: NoiseType) Error!void {
+        try checkResult(c.ma_noise_set_type(@ptrCast(*c.ma_noise, noise), @bitCast(u32, noise_type)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -357,7 +412,7 @@ const SplitterNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Biquad Node
+// Biquad Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const BiquadNodeConfig = struct {
@@ -384,7 +439,7 @@ const BiquadNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Low Pass Filter Node
+// Low-Pass Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const LpfNodeConfig = struct {
@@ -411,7 +466,7 @@ const LpfNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// High Pass Filter Node
+// High-Pass Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const HpfNodeConfig = struct {
@@ -438,7 +493,7 @@ const HpfNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Notching Filter Node
+// Notch Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const NotchNodeConfig = struct {
@@ -465,7 +520,7 @@ const NotchNodeImpl = opaque {
 };
 //--------------------------------------------------------------------------------------------------
 //
-// Peaking Filter Node
+// Peak Filter Node
 //
 //--------------------------------------------------------------------------------------------------
 pub const PeakNodeConfig = struct {

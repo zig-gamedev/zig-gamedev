@@ -46,8 +46,8 @@ const AudioFilterType = enum {
     const names = [_][:0]const u8{
         "Low-Pass Filter",
         "High-Pass Filter",
-        "Notching Filter",
-        "Peaking Filter",
+        "Notch Filter",
+        "Peak Filter",
         "Low Shelf Filter",
         "High Shelf Filter",
     };
@@ -203,8 +203,12 @@ const DemoState = struct {
     audio_filter: AudioFilter,
 
     waveform_config: zaudio.WaveformConfig,
-    waveform_data_source: zaudio.Waveform,
+    waveform_data_source: zaudio.WaveformDataSource,
     waveform_node: zaudio.DataSourceNode,
+
+    noise_config: zaudio.NoiseConfig,
+    noise_data_source: zaudio.NoiseDataSource,
+    noise_node: zaudio.DataSourceNode,
 
     camera: struct {
         position: [3]f32 = .{ -10.0, 15.0, -10.0 },
@@ -347,6 +351,7 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         break :audio_filter audio_filter;
     };
 
+    // Waveform generator
     const waveform_config = zaudio.WaveformConfig.init(
         .float32,
         audio.engine.getNumChannels(),
@@ -355,12 +360,27 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         0.5,
         440.0,
     );
-    const waveform_data_source = try zaudio.createWaveform(allocator, waveform_config);
+    const waveform_data_source = try zaudio.createWaveformDataSource(allocator, waveform_config);
     const waveform_node = try audio.engine.createDataSourceNode(
         allocator,
         zaudio.DataSourceNodeConfig.init(waveform_data_source.asDataSource()),
     );
     try waveform_node.setState(.stopped);
+
+    // Noise generator
+    const noise_config = zaudio.NoiseConfig.init(
+        .float32,
+        audio.engine.getNumChannels(),
+        .pink,
+        123,
+        0.5,
+    );
+    const noise_data_source = try zaudio.createNoiseDataSource(allocator, noise_config);
+    const noise_node = try audio.engine.createDataSourceNode(
+        allocator,
+        zaudio.DataSourceNodeConfig.init(noise_data_source.asDataSource()),
+    );
+    try noise_node.setState(.stopped);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
@@ -376,6 +396,9 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         .waveform_config = waveform_config,
         .waveform_data_source = waveform_data_source,
         .waveform_node = waveform_node,
+        .noise_config = noise_config,
+        .noise_data_source = noise_data_source,
+        .noise_node = noise_node,
     };
 
     try updateAudioGraph(demo.*);
@@ -413,6 +436,8 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.audio_filter.destroy(allocator);
     demo.waveform_data_source.destroy(allocator);
     demo.waveform_node.destroy(allocator);
+    demo.noise_data_source.destroy(allocator);
+    demo.noise_node.destroy(allocator);
     demo.music.destroy(allocator);
     for (demo.sounds.items) |sound| sound.destroy(allocator);
     demo.sounds.deinit();
@@ -430,6 +455,7 @@ fn updateAudioGraph(demo: DemoState) !void {
 
     try demo.music.attachOutputBus(0, node, 0);
     try demo.waveform_node.attachOutputBus(0, node, 0);
+    try demo.noise_node.attachOutputBus(0, node, 0);
     for (demo.sounds.items) |sound| {
         try sound.attachOutputBus(0, node, 0);
     }
@@ -505,6 +531,8 @@ fn update(demo: *DemoState) !void {
 
         // Waveform generator
         {
+            zgui.pushIntId(0);
+            defer zgui.popId();
             zgui.spacing();
             zgui.separator();
             zgui.textUnformatted("Waveform Generator:");
@@ -545,6 +573,45 @@ fn update(demo: *DemoState) !void {
                 if (is_started) {
                     try demo.waveform_node.setState(.stopped);
                 } else try demo.waveform_node.setState(.started);
+            }
+        }
+
+        // Noise generator
+        {
+            zgui.pushIntId(1);
+            defer zgui.popId();
+            zgui.spacing();
+            zgui.separator();
+            zgui.textUnformatted("Noise Generator:");
+
+            const selected_item = demo.noise_config.raw.type;
+            const names = [_][:0]const u8{ "White", "Pink" };
+            if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
+                for (names) |name, index| {
+                    if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
+                        selected_item != index)
+                    {
+                        demo.noise_config.raw.type = @intCast(u32, index);
+                        try demo.noise_data_source.setType(@intToEnum(zaudio.NoiseType, index));
+                    }
+                }
+                zgui.endCombo();
+            }
+
+            if (zgui.sliderScalar("Amplitude", f64, .{
+                .v = &demo.noise_config.raw.amplitude,
+                .min = 0.05,
+                .max = 0.75,
+                .cfmt = "%.3f",
+            })) {
+                try demo.noise_data_source.setAmplitude(demo.noise_config.raw.amplitude);
+            }
+
+            const is_started = demo.noise_node.getState() == .started;
+            if (zgui.button(if (is_started) "Stop" else "Start", .{ .w = 200.0 })) {
+                if (is_started) {
+                    try demo.noise_node.setState(.stopped);
+                } else try demo.noise_node.setState(.started);
             }
         }
     }
