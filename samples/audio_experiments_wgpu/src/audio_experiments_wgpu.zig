@@ -40,12 +40,16 @@ const AudioFilterType = enum {
     hpf,
     notch,
     peak,
+    loshelf,
+    hishelf,
 
     const names = [_][:0]const u8{
         "Low-Pass Filter",
         "High-Pass Filter",
         "Notching Filter",
         "Peaking Filter",
+        "Low Shelf Filter",
+        "High Shelf Filter",
     };
 };
 
@@ -69,6 +73,14 @@ const AudioFilter = struct {
         config: zaudio.PeakNodeConfig,
         node: zaudio.PeakNode,
     },
+    loshelf: struct {
+        config: zaudio.LoshelfNodeConfig,
+        node: zaudio.LoshelfNode,
+    },
+    hishelf: struct {
+        config: zaudio.HishelfNodeConfig,
+        node: zaudio.HishelfNode,
+    },
 
     fn getCurrentNode(filter: AudioFilter) zaudio.Node {
         return switch (filter.current_type) {
@@ -76,6 +88,8 @@ const AudioFilter = struct {
             .hpf => filter.hpf.node.asNode(),
             .notch => filter.notch.node.asNode(),
             .peak => filter.peak.node.asNode(),
+            .loshelf => filter.loshelf.node.asNode(),
+            .hishelf => filter.hishelf.node.asNode(),
         };
     }
 
@@ -84,6 +98,8 @@ const AudioFilter = struct {
         filter.hpf.node.destroy(allocator);
         filter.notch.node.destroy(allocator);
         filter.peak.node.destroy(allocator);
+        filter.loshelf.node.destroy(allocator);
+        filter.hishelf.node.destroy(allocator);
     }
 };
 
@@ -279,6 +295,20 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
             min_filter_q,
             min_filter_fequency,
         );
+        const loshelf_config = zaudio.LoshelfNodeConfig.init(
+            audio.engine.getNumChannels(),
+            audio.engine.getSampleRate(),
+            min_filter_gain,
+            min_filter_q,
+            min_filter_fequency,
+        );
+        const hishelf_config = zaudio.HishelfNodeConfig.init(
+            audio.engine.getNumChannels(),
+            audio.engine.getSampleRate(),
+            min_filter_gain,
+            min_filter_q,
+            min_filter_fequency,
+        );
 
         const audio_filter = AudioFilter{
             .lpf = .{
@@ -297,12 +327,22 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
                 .config = peak_config,
                 .node = try audio.engine.createPeakNode(allocator, peak_config),
             },
+            .loshelf = .{
+                .config = loshelf_config,
+                .node = try audio.engine.createLoshelfNode(allocator, loshelf_config),
+            },
+            .hishelf = .{
+                .config = hishelf_config,
+                .node = try audio.engine.createHishelfNode(allocator, hishelf_config),
+            },
         };
 
         try audio_filter.lpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
         try audio_filter.hpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
         try audio_filter.notch.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
         try audio_filter.peak.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
+        try audio_filter.loshelf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
+        try audio_filter.hishelf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
 
         break :audio_filter audio_filter;
     };
@@ -596,6 +636,52 @@ fn update(demo: *DemoState) !void {
                     .cfmt = "%.3f",
                 })) has_changed = true;
                 if (has_changed) try demo.audio_filter.peak.node.reconfigure(config.*);
+            },
+            .loshelf => {
+                const config = &demo.audio_filter.loshelf.config;
+                var has_changed = false;
+                if (zgui.sliderScalar("Gain", f64, .{
+                    .v = &config.raw.loshelf.gainDB,
+                    .min = min_filter_gain,
+                    .max = max_filter_gain,
+                    .cfmt = "%.1f dB",
+                })) has_changed = true;
+                if (zgui.sliderScalar("Frequency", f64, .{
+                    .v = &config.raw.loshelf.frequency,
+                    .min = min_filter_fequency,
+                    .max = max_filter_fequency,
+                    .cfmt = "%.1f Hz",
+                })) has_changed = true;
+                if (zgui.sliderScalar("Slope", f64, .{
+                    .v = &config.raw.loshelf.shelfSlope,
+                    .min = min_filter_q,
+                    .max = max_filter_q,
+                    .cfmt = "%.3f",
+                })) has_changed = true;
+                if (has_changed) try demo.audio_filter.loshelf.node.reconfigure(config.*);
+            },
+            .hishelf => {
+                const config = &demo.audio_filter.hishelf.config;
+                var has_changed = false;
+                if (zgui.sliderScalar("Gain", f64, .{
+                    .v = &config.raw.hishelf.gainDB,
+                    .min = min_filter_gain,
+                    .max = max_filter_gain,
+                    .cfmt = "%.1f dB",
+                })) has_changed = true;
+                if (zgui.sliderScalar("Frequency", f64, .{
+                    .v = &config.raw.hishelf.frequency,
+                    .min = min_filter_fequency,
+                    .max = max_filter_fequency,
+                    .cfmt = "%.1f Hz",
+                })) has_changed = true;
+                if (zgui.sliderScalar("Slope", f64, .{
+                    .v = &config.raw.hishelf.shelfSlope,
+                    .min = min_filter_q,
+                    .max = max_filter_q,
+                    .cfmt = "%.3f",
+                })) has_changed = true;
+                if (has_changed) try demo.audio_filter.hishelf.node.reconfigure(config.*);
             },
         }
     }
