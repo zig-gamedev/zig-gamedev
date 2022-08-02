@@ -537,6 +537,13 @@ fn update(demo: *DemoState) !void {
             zgui.separator();
             zgui.textUnformatted("Waveform Generator:");
 
+            var enabled = demo.waveform_node.getState() == .started;
+            if (zgui.checkbox("Enabled", .{ .v = &enabled })) {
+                if (enabled) {
+                    try demo.waveform_node.setState(.started);
+                } else try demo.waveform_node.setState(.stopped);
+            }
+
             const selected_item = demo.waveform_config.raw.type;
             const names = [_][:0]const u8{ "Sine", "Square", "Triangle", "Sawtooth" };
             if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
@@ -567,13 +574,6 @@ fn update(demo: *DemoState) !void {
             })) {
                 try demo.waveform_data_source.setAmplitude(demo.waveform_config.raw.amplitude);
             }
-
-            const is_started = demo.waveform_node.getState() == .started;
-            if (zgui.button(if (is_started) "Stop" else "Start", .{ .w = 200.0 })) {
-                if (is_started) {
-                    try demo.waveform_node.setState(.stopped);
-                } else try demo.waveform_node.setState(.started);
-            }
         }
 
         // Noise generator
@@ -583,6 +583,13 @@ fn update(demo: *DemoState) !void {
             zgui.spacing();
             zgui.separator();
             zgui.textUnformatted("Noise Generator:");
+
+            var enabled = demo.noise_node.getState() == .started;
+            if (zgui.checkbox("Enabled", .{ .v = &enabled })) {
+                if (enabled) {
+                    try demo.noise_node.setState(.started);
+                } else try demo.noise_node.setState(.stopped);
+            }
 
             const selected_item = demo.noise_config.raw.type;
             const names = [_][:0]const u8{ "White", "Pink" };
@@ -605,13 +612,6 @@ fn update(demo: *DemoState) !void {
                 .cfmt = "%.3f",
             })) {
                 try demo.noise_data_source.setAmplitude(demo.noise_config.raw.amplitude);
-            }
-
-            const is_started = demo.noise_node.getState() == .started;
-            if (zgui.button(if (is_started) "Stop" else "Start", .{ .w = 200.0 })) {
-                if (is_started) {
-                    try demo.noise_node.setState(.stopped);
-                } else try demo.noise_node.setState(.started);
             }
         }
     }
