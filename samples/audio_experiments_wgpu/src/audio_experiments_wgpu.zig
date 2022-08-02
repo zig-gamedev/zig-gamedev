@@ -537,12 +537,14 @@ fn update(demo: *DemoState) !void {
             zgui.separator();
             zgui.textUnformatted("Waveform Generator:");
 
-            var enabled = demo.waveform_node.getState() == .started;
-            if (zgui.checkbox("Enabled", .{ .v = &enabled })) {
-                if (enabled) {
+            var is_enabled = demo.waveform_node.getState() == .started;
+            if (zgui.checkbox("Enabled", .{ .v = &is_enabled })) {
+                if (is_enabled) {
                     try demo.waveform_node.setState(.started);
                 } else try demo.waveform_node.setState(.stopped);
             }
+            if (!is_enabled) zgui.beginDisabled(.{});
+            defer if (!is_enabled) zgui.endDisabled();
 
             const selected_item = demo.waveform_config.raw.type;
             const names = [_][:0]const u8{ "Sine", "Square", "Triangle", "Sawtooth" };
@@ -584,12 +586,14 @@ fn update(demo: *DemoState) !void {
             zgui.separator();
             zgui.textUnformatted("Noise Generator:");
 
-            var enabled = demo.noise_node.getState() == .started;
-            if (zgui.checkbox("Enabled", .{ .v = &enabled })) {
-                if (enabled) {
+            var is_enabled = demo.noise_node.getState() == .started;
+            if (zgui.checkbox("Enabled", .{ .v = &is_enabled })) {
+                if (is_enabled) {
                     try demo.noise_node.setState(.started);
                 } else try demo.noise_node.setState(.stopped);
             }
+            if (!is_enabled) zgui.beginDisabled(.{});
+            defer if (!is_enabled) zgui.endDisabled();
 
             const selected_item = demo.noise_config.raw.type;
             const names = [_][:0]const u8{ "White", "Pink" };
@@ -627,6 +631,8 @@ fn update(demo: *DemoState) !void {
         if (zgui.checkbox("Enabled", .{ .v = &demo.audio_filter.is_enabled })) {
             try updateAudioGraph(demo.*);
         }
+        if (!demo.audio_filter.is_enabled) zgui.beginDisabled(.{});
+        defer if (!demo.audio_filter.is_enabled) zgui.endDisabled();
 
         const selected_item = @enumToInt(demo.audio_filter.current_type);
         if (zgui.beginCombo("Type", .{ .preview_value = AudioFilterType.names[selected_item] })) {
