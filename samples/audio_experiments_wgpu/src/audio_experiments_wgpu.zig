@@ -18,6 +18,8 @@ const min_filter_fequency: f32 = 20.0;
 const max_filter_fequency: f32 = 500.0;
 const min_filter_q: f32 = 0.02;
 const max_filter_q: f32 = 1.0;
+const min_filter_gain: f32 = -20.0;
+const max_filter_gain: f32 = 20.0;
 const filter_order: u32 = 4;
 
 const Vertex = extern struct {
@@ -37,8 +39,14 @@ const AudioFilterType = enum {
     lpf,
     hpf,
     notch,
+    peak,
 
-    const names = [_][:0]const u8{ "Low-Pass Filter", "High-Pass Filter", "Notching Filter" };
+    const names = [_][:0]const u8{
+        "Low-Pass Filter",
+        "High-Pass Filter",
+        "Notching Filter",
+        "Peaking Filter",
+    };
 };
 
 const AudioFilter = struct {
@@ -57,12 +65,17 @@ const AudioFilter = struct {
         config: zaudio.NotchNodeConfig,
         node: zaudio.NotchNode,
     },
+    peak: struct {
+        config: zaudio.PeakNodeConfig,
+        node: zaudio.PeakNode,
+    },
 
     fn getCurrentNode(filter: AudioFilter) zaudio.Node {
         return switch (filter.current_type) {
             .lpf => filter.lpf.node.asNode(),
             .hpf => filter.hpf.node.asNode(),
             .notch => filter.notch.node.asNode(),
+            .peak => filter.peak.node.asNode(),
         };
     }
 
@@ -70,6 +83,7 @@ const AudioFilter = struct {
         filter.lpf.node.destroy(allocator);
         filter.hpf.node.destroy(allocator);
         filter.notch.node.destroy(allocator);
+        filter.peak.node.destroy(allocator);
     }
 };
 
@@ -255,7 +269,14 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         const notch_config = zaudio.NotchNodeConfig.init(
             audio.engine.getNumChannels(),
             audio.engine.getSampleRate(),
-            min_filter_q, // `q` (also called Resonance, Q or Bandwidth)
+            min_filter_q,
+            min_filter_fequency,
+        );
+        const peak_config = zaudio.PeakNodeConfig.init(
+            audio.engine.getNumChannels(),
+            audio.engine.getSampleRate(),
+            min_filter_gain,
+            min_filter_q,
             min_filter_fequency,
         );
 
@@ -272,11 +293,16 @@ fn create(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
                 .config = notch_config,
                 .node = try audio.engine.createNotchNode(allocator, notch_config),
             },
+            .peak = .{
+                .config = peak_config,
+                .node = try audio.engine.createPeakNode(allocator, peak_config),
+            },
         };
 
         try audio_filter.lpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
         try audio_filter.hpf.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
         try audio_filter.notch.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
+        try audio_filter.peak.node.attachOutputBus(0, audio.engine.getEndpoint(), 0);
 
         break :audio_filter audio_filter;
     };
@@ -547,6 +573,29 @@ fn update(demo: *DemoState) !void {
                     .cfmt = "%.3f",
                 })) has_changed = true;
                 if (has_changed) try demo.audio_filter.notch.node.reconfigure(config.*);
+            },
+            .peak => {
+                const config = &demo.audio_filter.peak.config;
+                var has_changed = false;
+                if (zgui.sliderScalar("Gain", f64, .{
+                    .v = &config.raw.peak.gainDB,
+                    .min = min_filter_gain,
+                    .max = max_filter_gain,
+                    .cfmt = "%.1f dB",
+                })) has_changed = true;
+                if (zgui.sliderScalar("Frequency", f64, .{
+                    .v = &config.raw.peak.frequency,
+                    .min = min_filter_fequency,
+                    .max = max_filter_fequency,
+                    .cfmt = "%.1f Hz",
+                })) has_changed = true;
+                if (zgui.sliderScalar("Q", f64, .{
+                    .v = &config.raw.peak.q,
+                    .min = min_filter_q,
+                    .max = max_filter_q,
+                    .cfmt = "%.3f",
+                })) has_changed = true;
+                if (has_changed) try demo.audio_filter.peak.node.reconfigure(config.*);
             },
         }
     }

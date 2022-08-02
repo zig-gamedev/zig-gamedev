@@ -487,7 +487,7 @@ const PeakNodeImpl = opaque {
     }
 
     pub fn reconfigure(peak_node: PeakNode, config: PeakNodeConfig) Error!void {
-        try checkResult(c.ma_peak_node_reinit(&config.raw, @ptrCast(*c.ma_peak_node, peak_node)));
+        try checkResult(c.ma_peak_node_reinit(&config.raw.peak, @ptrCast(*c.ma_peak_node, peak_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -496,7 +496,7 @@ const PeakNodeImpl = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const LoshelfNodeConfig = struct {
-    raw: c.ma_peak_node_config,
+    raw: c.ma_loshelf_node_config,
 
     pub fn init(num_channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) LoshelfNodeConfig {
         return .{ .raw = c.ma_loshelf_node_config_init(num_channels, sample_rate, gain_db, q, frequency) };
@@ -514,7 +514,7 @@ const LoshelfNodeImpl = opaque {
     }
 
     pub fn reconfigure(loshelf_node: LoshelfNode, config: LoshelfNodeConfig) Error!void {
-        try checkResult(c.ma_loshelf_node_reinit(&config.raw, @ptrCast(*c.ma_loshelf_node, loshelf_node)));
+        try checkResult(c.ma_loshelf_node_reinit(&config.raw.loshelf, @ptrCast(*c.ma_loshelf_node, loshelf_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -523,7 +523,7 @@ const LoshelfNodeImpl = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const HishelfNodeConfig = struct {
-    raw: c.ma_peak_node_config,
+    raw: c.ma_hishelf_node_config,
 
     pub fn init(num_channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) HishelfNodeConfig {
         return .{ .raw = c.ma_hishelf_node_config_init(num_channels, sample_rate, gain_db, q, frequency) };
@@ -541,7 +541,7 @@ const HishelfNodeImpl = opaque {
     }
 
     pub fn reconfigure(hishelf_node: HishelfNode, config: HishelfNodeConfig) Error!void {
-        try checkResult(c.ma_hishelf_node_reinit(&config.raw, @ptrCast(*c.ma_hishelf_node, hishelf_node)));
+        try checkResult(c.ma_hishelf_node_reinit(&config.raw.hishelf, @ptrCast(*c.ma_hishelf_node, hishelf_node)));
     }
 };
 //--------------------------------------------------------------------------------------------------
