@@ -141,13 +141,14 @@ pub const Options = struct {
 };
 
 fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
-    comptime var desc_name: [256]u8 = undefined;
+    comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
+    comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
 
-    const install = b.step(name, "Build '" ++ desc_name ++ "' demo");
+    const install = b.step(name, "Build '" ++ desc_name[0..desc_size] ++ "' demo");
     install.dependOn(&b.addInstallArtifact(exe).step);
 
-    const run_step = b.step(name ++ "-run", "Run '" ++ desc_name ++ "' demo");
+    const run_step = b.step(name ++ "-run", "Run '" ++ desc_name[0..desc_size] ++ "' demo");
     const run_cmd = exe.run();
     run_cmd.step.dependOn(install);
     run_step.dependOn(&run_cmd.step);
