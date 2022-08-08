@@ -788,7 +788,8 @@ fn update(demo: *DemoState) !void {
 
         zm.storeArr3(&demo.camera.forward, forward);
 
-        const right = speed * delta_time * zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
+        const right = speed * delta_time *
+            zm.normalize3(zm.cross3(zm.f32x4(0.0, 1.0, 0.0, 0.0), forward));
         forward = speed * delta_time * forward;
 
         var cam_pos = zm.loadArr3(demo.camera.position);
@@ -884,7 +885,14 @@ fn draw(demo: *DemoState) void {
             const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
             const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse break :pass;
 
-            const pass = zgpu.util.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
+            const pass = zgpu.util.beginRenderPassSimple(
+                encoder,
+                .clear,
+                swapchain_texv,
+                null,
+                depth_texv,
+                1.0,
+            );
             defer zgpu.util.endRelease(pass);
 
             pass.setPipeline(lines_pipe);
@@ -907,13 +915,25 @@ fn draw(demo: *DemoState) void {
 
             var i: u32 = 0;
             while (i < AudioState.num_sets) : (i += 1) {
-                pass.draw(AudioState.usable_samples_per_set, 1, i * AudioState.usable_samples_per_set, 0);
+                pass.draw(
+                    AudioState.usable_samples_per_set,
+                    1,
+                    i * AudioState.usable_samples_per_set,
+                    0,
+                );
             }
         }
 
         // Gui pass.
         {
-            const pass = zgpu.util.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
+            const pass = zgpu.util.beginRenderPassSimple(
+                encoder,
+                .load,
+                swapchain_texv,
+                null,
+                null,
+                null,
+            );
             defer zgpu.util.endRelease(pass);
             zgpu.gui.draw(pass);
         }

@@ -839,8 +839,12 @@ ZGUI_API void zguiEndDisabled(void) {
     ImGui::EndDisabled();
 }
 
-ZGUI_API void zguiPushStyleColor(ImGuiCol idx, const float col[4]) {
+ZGUI_API void zguiPushStyleColor4f(ImGuiCol idx, const float col[4]) {
     ImGui::PushStyleColor(idx, { col[0], col[1], col[2], col[3] });
+}
+
+ZGUI_API void zguiPushStyleColor1u(ImGuiCol idx, unsigned int col) {
+    ImGui::PushStyleColor(idx, col);
 }
 
 ZGUI_API void zguiPopStyleColor(int count) {

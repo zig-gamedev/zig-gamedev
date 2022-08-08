@@ -78,12 +78,12 @@ fn update(demo: *DemoState) !void {
         _ = zgui.button("Button 4", .{});
         _ = zgui.button("Button 5", .{ .w = -1.0, .h = 100.0 });
 
-        zgui.pushStyleColor(.{ .idx = .text, .col = .{ 1.0, 0.0, 0.0, 1.0 } });
+        zgui.pushStyleColor4f(.{ .idx = .text, .col = .{ 1.0, 0.0, 0.0, 1.0 } });
         _ = zgui.button("  Red Text Button  ", .{});
         zgui.popStyleColor(.{});
 
         zgui.sameLine(.{});
-        zgui.pushStyleColor(.{ .idx = .text, .col = .{ 1.0, 1.0, 0.0, 1.0 } });
+        zgui.pushStyleColor4f(.{ .idx = .text, .col = .{ 1.0, 1.0, 0.0, 1.0 } });
         _ = zgui.button("  Yellow Text Button  ", .{});
         zgui.popStyleColor(.{});
 
@@ -340,7 +340,14 @@ fn draw(demo: *DemoState) void {
 
         // Gui pass.
         {
-            const pass = zgpu.util.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
+            const pass = zgpu.util.beginRenderPassSimple(
+                encoder,
+                .load,
+                swapchain_texv,
+                null,
+                null,
+                null,
+            );
             defer zgpu.util.endRelease(pass);
             zgpu.gui.draw(pass);
         }

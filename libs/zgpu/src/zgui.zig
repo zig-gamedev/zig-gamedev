@@ -150,7 +150,11 @@ pub const WindowFlags = packed struct {
         .no_scrollbar = true,
         .no_collapse = true,
     };
-    pub const no_inputs = WindowFlags{ .no_mouse_inputs = true, .no_nav_inputs = true, .no_nav_focus = true };
+    pub const no_inputs = WindowFlags{
+        .no_mouse_inputs = true,
+        .no_nav_inputs = true,
+        .no_nav_focus = true,
+    };
 
     comptime {
         assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
@@ -431,12 +435,19 @@ extern fn zguiGetWindowWidth() f32;
 extern fn zguiGetWindowHeight() f32;
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
-const PushStyleColor = struct {
+const PushStyleColor4f = struct {
     idx: StyleCol,
     col: [4]f32,
 };
-pub fn pushStyleColor(args: PushStyleColor) void {
-    zguiPushStyleColor(args.idx, &args.col);
+pub fn pushStyleColor4f(args: PushStyleColor4f) void {
+    zguiPushStyleColor4f(args.idx, &args.col);
+}
+const PushStyleColor1u = struct {
+    idx: StyleCol,
+    col: u32,
+};
+pub fn pushStyleColor1u(args: PushStyleColor1u) void {
+    zguiPushStyleColor1u(args.idx, args.col);
 }
 const PopStyleColor = struct {
     count: i32 = 1,
@@ -444,7 +455,8 @@ const PopStyleColor = struct {
 pub fn popStyleColor(args: PopStyleColor) void {
     zguiPopStyleColor(args.count);
 }
-extern fn zguiPushStyleColor(idx: StyleCol, col: *const [4]f32) void;
+extern fn zguiPushStyleColor4f(idx: StyleCol, col: *const [4]f32) void;
+extern fn zguiPushStyleColor1u(idx: StyleCol, col: u32) void;
 extern fn zguiPopStyleColor(count: i32) void;
 //--------------------------------------------------------------------------------------------------
 /// `void pushItemWidth(item_width: f32) void`
@@ -631,7 +643,7 @@ pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
 pub fn textUnformattedColored(color: [4]f32, txt: []const u8) void {
-    pushStyleColor(.{ .idx = .text, .col = color });
+    pushStyleColor4f(.{ .idx = .text, .col = color });
     textUnformatted(txt);
     popStyleColor(.{});
 }
@@ -641,7 +653,7 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
     zguiTextUnformatted(result.ptr, result.ptr + result.len);
 }
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
-    pushStyleColor(.{ .idx = .text, .col = color });
+    pushStyleColor4f(.{ .idx = .text, .col = color });
     text(fmt, args);
     popStyleColor(.{});
 }
