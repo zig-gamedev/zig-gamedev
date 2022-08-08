@@ -40,6 +40,10 @@ fn update(demo: *DemoState) !void {
     zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .first_use_ever });
     zgui.setNextWindowSize(.{ .w = 600.0, .h = 600.0, .cond = .first_use_ever });
 
+    zgui.pushStyleVar1f(.{ .idx = .window_rounding, .v = 5.0 });
+    zgui.pushStyleVar2f(.{ .idx = .window_padding, .v = .{ 5.0, 5.0 } });
+    defer zgui.popStyleVar(.{ .count = 2 });
+
     if (!zgui.begin("Demo Settings", .{})) {
         zgui.end();
         return;
@@ -78,12 +82,12 @@ fn update(demo: *DemoState) !void {
         _ = zgui.button("Button 4", .{});
         _ = zgui.button("Button 5", .{ .w = -1.0, .h = 100.0 });
 
-        zgui.pushStyleColor4f(.{ .idx = .text, .col = .{ 1.0, 0.0, 0.0, 1.0 } });
+        zgui.pushStyleColor4f(.{ .idx = .text, .c = .{ 1.0, 0.0, 0.0, 1.0 } });
         _ = zgui.button("  Red Text Button  ", .{});
         zgui.popStyleColor(.{});
 
         zgui.sameLine(.{});
-        zgui.pushStyleColor4f(.{ .idx = .text, .col = .{ 1.0, 1.0, 0.0, 1.0 } });
+        zgui.pushStyleColor4f(.{ .idx = .text, .c = .{ 1.0, 1.0, 0.0, 1.0 } });
         _ = zgui.button("  Yellow Text Button  ", .{});
         zgui.popStyleColor(.{});
 

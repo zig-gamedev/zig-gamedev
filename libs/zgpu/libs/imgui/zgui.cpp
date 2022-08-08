@@ -851,6 +851,18 @@ ZGUI_API void zguiPopStyleColor(int count) {
     ImGui::PopStyleColor(count);
 }
 
+ZGUI_API void zguiPushStyleVar1f(ImGuiStyleVar idx, float var) {
+    ImGui::PushStyleVar(idx, var);
+}
+
+ZGUI_API void zguiPushStyleVar2f(ImGuiStyleVar idx, const float var[2]) {
+    ImGui::PushStyleVar(idx, { var[0], var[1] });
+}
+
+ZGUI_API void zguiPopStyleVar(int count) {
+    ImGui::PopStyleVar(count);
+}
+
 ZGUI_API void zguiPushItemWidth(float item_width) {
     ImGui::PushItemWidth(item_width);
 }

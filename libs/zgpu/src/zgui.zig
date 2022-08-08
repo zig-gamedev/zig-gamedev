@@ -63,62 +63,6 @@ const Context = *opaque {};
 pub const DrawData = *opaque {};
 pub const Ident = u32;
 //--------------------------------------------------------------------------------------------------
-pub const StyleCol = enum(u32) {
-    text,
-    text_disabled,
-    window_bg,
-    child_bg,
-    popup_bg,
-    border,
-    border_shadow,
-    frame_bg,
-    frame_bg_hovered,
-    frame_bg_active,
-    title_bg,
-    title_bg_active,
-    title_bg_collapsed,
-    menu_bar_bg,
-    scrollbar_bg,
-    scrollbar_grab,
-    scrollbar_grab_hovered,
-    scrollbar_grab_active,
-    check_mark,
-    slider_grab,
-    slider_grab_active,
-    button,
-    button_hovered,
-    button_active,
-    header,
-    header_hovered,
-    header_active,
-    separator,
-    separator_hovered,
-    separator_active,
-    resize_grip,
-    resize_grip_hovered,
-    resize_grip_active,
-    tab,
-    tab_hovered,
-    tab_active,
-    tab_unfocused,
-    tab_unfocused_active,
-    plot_lines,
-    plot_lines_hovered,
-    plot_histogram,
-    plot_histogram_hovered,
-    table_header_bg,
-    table_border_strong,
-    table_border_light,
-    table_row_bg,
-    table_row_bg_alt,
-    text_selected_bg,
-    drag_drop_target,
-    nav_highlight,
-    nav_windowing_highlight,
-    nav_windowing_dim_bg,
-    modal_window_dim_bg,
-};
-//--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct {
     no_title_bar: bool = false,
     no_resize: bool = false,
@@ -435,19 +379,74 @@ extern fn zguiGetWindowWidth() f32;
 extern fn zguiGetWindowHeight() f32;
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
+pub const StyleCol = enum(u32) {
+    text,
+    text_disabled,
+    window_bg,
+    child_bg,
+    popup_bg,
+    border,
+    border_shadow,
+    frame_bg,
+    frame_bg_hovered,
+    frame_bg_active,
+    title_bg,
+    title_bg_active,
+    title_bg_collapsed,
+    menu_bar_bg,
+    scrollbar_bg,
+    scrollbar_grab,
+    scrollbar_grab_hovered,
+    scrollbar_grab_active,
+    check_mark,
+    slider_grab,
+    slider_grab_active,
+    button,
+    button_hovered,
+    button_active,
+    header,
+    header_hovered,
+    header_active,
+    separator,
+    separator_hovered,
+    separator_active,
+    resize_grip,
+    resize_grip_hovered,
+    resize_grip_active,
+    tab,
+    tab_hovered,
+    tab_active,
+    tab_unfocused,
+    tab_unfocused_active,
+    plot_lines,
+    plot_lines_hovered,
+    plot_histogram,
+    plot_histogram_hovered,
+    table_header_bg,
+    table_border_strong,
+    table_border_light,
+    table_row_bg,
+    table_row_bg_alt,
+    text_selected_bg,
+    drag_drop_target,
+    nav_highlight,
+    nav_windowing_highlight,
+    nav_windowing_dim_bg,
+    modal_window_dim_bg,
+};
 const PushStyleColor4f = struct {
     idx: StyleCol,
-    col: [4]f32,
+    c: [4]f32,
 };
 pub fn pushStyleColor4f(args: PushStyleColor4f) void {
-    zguiPushStyleColor4f(args.idx, &args.col);
+    zguiPushStyleColor4f(args.idx, &args.c);
 }
 const PushStyleColor1u = struct {
     idx: StyleCol,
-    col: u32,
+    c: u32,
 };
 pub fn pushStyleColor1u(args: PushStyleColor1u) void {
-    zguiPushStyleColor1u(args.idx, args.col);
+    zguiPushStyleColor1u(args.idx, args.c);
 }
 const PopStyleColor = struct {
     count: i32 = 1,
@@ -458,6 +457,57 @@ pub fn popStyleColor(args: PopStyleColor) void {
 extern fn zguiPushStyleColor4f(idx: StyleCol, col: *const [4]f32) void;
 extern fn zguiPushStyleColor1u(idx: StyleCol, col: u32) void;
 extern fn zguiPopStyleColor(count: i32) void;
+//--------------------------------------------------------------------------------------------------
+pub const StyleVar = enum(u32) {
+    alpha, // 1f
+    disabled_alpha, // 1f
+    window_padding, // 2f
+    window_rounding, // 1f
+    window_border_size, // 1f
+    window_min_size, // 2f
+    window_title_align, // 2f
+    child_rounding, // 1f
+    child_border_size, // 1f
+    popup_rounding, // 1f
+    popup_border_size, // 1f
+    frame_padding, // 2f
+    frame_rounding, // 1f
+    frame_border_size, // 1f
+    item_spacing, // 2f
+    item_inner_spacing, // 2f
+    indent_spacing, // 1f
+    cell_padding, // 2f
+    scrollbar_size, // 1f
+    scrollbar_rounding, // 1f
+    grab_min_size, // 1f
+    grab_rounding, // 1f
+    tab_rounding, // 1f
+    button_text_align, // 2f
+    selectable_text_align, // 2f
+};
+const PushStyleVar1f = struct {
+    idx: StyleVar,
+    v: f32,
+};
+pub fn pushStyleVar1f(args: PushStyleVar1f) void {
+    zguiPushStyleVar1f(args.idx, args.v);
+}
+const PushStyleVar2f = struct {
+    idx: StyleVar,
+    v: [2]f32,
+};
+pub fn pushStyleVar2f(args: PushStyleVar2f) void {
+    zguiPushStyleVar2f(args.idx, &args.v);
+}
+const PopStyleVar = struct {
+    count: i32 = 1,
+};
+pub fn popStyleVar(args: PopStyleVar) void {
+    zguiPopStyleVar(args.count);
+}
+extern fn zguiPushStyleVar1f(idx: StyleVar, v: f32) void;
+extern fn zguiPushStyleVar2f(idx: StyleVar, v: *const [2]f32) void;
+extern fn zguiPopStyleVar(count: i32) void;
 //--------------------------------------------------------------------------------------------------
 /// `void pushItemWidth(item_width: f32) void`
 pub const pushItemWidth = zguiPushItemWidth;
@@ -643,7 +693,7 @@ pub fn textUnformatted(txt: []const u8) void {
     zguiTextUnformatted(txt.ptr, txt.ptr + txt.len);
 }
 pub fn textUnformattedColored(color: [4]f32, txt: []const u8) void {
-    pushStyleColor4f(.{ .idx = .text, .col = color });
+    pushStyleColor4f(.{ .idx = .text, .c = color });
     textUnformatted(txt);
     popStyleColor(.{});
 }
@@ -653,7 +703,7 @@ pub fn text(comptime fmt: []const u8, args: anytype) void {
     zguiTextUnformatted(result.ptr, result.ptr + result.len);
 }
 pub fn textColored(color: [4]f32, comptime fmt: []const u8, args: anytype) void {
-    pushStyleColor4f(.{ .idx = .text, .col = color });
+    pushStyleColor4f(.{ .idx = .text, .c = color });
     text(fmt, args);
     popStyleColor(.{});
 }
@@ -774,7 +824,12 @@ const Combo = struct {
     popup_max_height_in_items: i32 = -1,
 };
 pub fn combo(label: [:0]const u8, args: Combo) bool {
-    return zguiCombo(label, args.current_item, args.items_separated_by_zeros, args.popup_max_height_in_items);
+    return zguiCombo(
+        label,
+        args.current_item,
+        args.items_separated_by_zeros,
+        args.popup_max_height_in_items,
+    );
 }
 extern fn zguiCombo(
     label: [*:0]const u8,
