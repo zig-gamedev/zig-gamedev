@@ -775,6 +775,46 @@ ZGUI_API bool zguiArrowButton(const char* str_id, ImGuiDir dir) {
     return ImGui::ArrowButton(str_id, dir);
 }
 
+ZGUI_API void zguiImage(
+    ImTextureID user_texture_id,
+    float w,
+    float h,
+    const float uv0[2],
+    const float uv1[2],
+    const float tint_col[4],
+    const float border_col[4]
+) {
+    ImGui::Image(
+        user_texture_id,
+        { w, h },
+        { uv0[0], uv0[1] },
+        { uv1[0], uv1[1] },
+        { tint_col[0], tint_col[1], tint_col[2], tint_col[3] },
+        { border_col[0], border_col[1], border_col[2], border_col[3] }
+    );
+}
+
+ZGUI_API bool zguiImageButton(
+    ImTextureID user_texture_id,
+    float w,
+    float h,
+    const float uv0[2],
+    const float uv1[2],
+    int frame_padding,
+    const float bg_col[4],
+    const float tint_col[4]
+) {
+    return ImGui::ImageButton(
+        user_texture_id,
+        { w, h },
+        { uv0[0], uv0[1] },
+        { uv1[0], uv1[1] },
+        frame_padding,
+        { bg_col[0], bg_col[1], bg_col[2], bg_col[3] },
+        { tint_col[0], tint_col[1], tint_col[2], tint_col[3] }
+    );
+}
+
 ZGUI_API void zguiBullet(void) {
     ImGui::Bullet();
 }

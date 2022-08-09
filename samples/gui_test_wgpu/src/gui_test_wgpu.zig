@@ -12,6 +12,7 @@ const window_title = "zig-gamedev: gui test (wgpu)";
 
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
+    texture_view: zgpu.TextureViewHandle,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
@@ -21,9 +22,37 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     defer arena_state.deinit();
     //const arena = arena_state.allocator();
 
+    // Create a texture.
+    var image = try zgpu.stbi.Image(u8).init(content_dir ++ "genart_0025_5.png", 4);
+    defer image.deinit();
+
+    const texture = gctx.createTexture(.{
+        .usage = .{ .texture_binding = true, .copy_dst = true },
+        .size = .{
+            .width = image.width,
+            .height = image.height,
+            .depth_or_array_layers = 1,
+        },
+        .format = .rgba8_unorm,
+        .mip_level_count = 1,
+    });
+    const texture_view = gctx.createTextureView(texture, .{});
+
+    gctx.queue.writeTexture(
+        .{ .texture = gctx.lookupResource(texture).? },
+        .{
+            .bytes_per_row = image.width * image.channels_in_memory,
+            .rows_per_image = image.height,
+        },
+        .{ .width = image.width, .height = image.height },
+        u8,
+        image.data,
+    );
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
+        .texture_view = texture_view,
     };
 
     return demo;
@@ -325,6 +354,12 @@ fn update(demo: *DemoState) !void {
             }
             zgui.endListBox();
         }
+    }
+
+    if (zgui.collapsingHeader("Widgets: Image", .{})) {
+        const tex_id = demo.gctx.lookupResource(demo.texture_view).?;
+        zgui.image(tex_id, .{ .w = 512.0, .h = 512.0 });
+        _ = zgui.imageButton(tex_id, .{ .w = 512.0, .h = 512.0, .frame_padding = 10 });
     }
 
     zgui.end();

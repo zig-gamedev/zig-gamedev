@@ -62,6 +62,7 @@ pub const io = struct {
 const Context = *opaque {};
 pub const DrawData = *opaque {};
 pub const Ident = u32;
+pub const TextureIdent = *anyopaque;
 //--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct {
     no_title_bar: bool = false,
@@ -764,6 +765,59 @@ pub fn arrowButton(label: [:0]const u8, args: ArrowButton) bool {
     return zguiArrowButton(label, args.dir);
 }
 extern fn zguiArrowButton(label: [*:0]const u8, dir: Direction) bool;
+//--------------------------------------------------------------------------------------------------
+const Image = struct {
+    w: f32,
+    h: f32,
+    uv0: [2]f32 = .{ 0.0, 0.0 },
+    uv1: [2]f32 = .{ 1.0, 1.0 },
+    tint_col: [4]f32 = .{ 1.0, 1.0, 1.0, 1.0 },
+    border_col: [4]f32 = .{ 0.0, 0.0, 0.0, 0.0 },
+};
+pub fn image(user_texture_id: TextureIdent, args: Image) void {
+    zguiImage(user_texture_id, args.w, args.h, &args.uv0, &args.uv1, &args.tint_col, &args.border_col);
+}
+extern fn zguiImage(
+    user_texture_id: TextureIdent,
+    w: f32,
+    h: f32,
+    uv0: *const [2]f32,
+    uv1: *const [2]f32,
+    tint_col: *const [4]f32,
+    border_col: *const [4]f32,
+) void;
+//--------------------------------------------------------------------------------------------------
+const ImageButton = struct {
+    w: f32,
+    h: f32,
+    uv0: [2]f32 = .{ 0.0, 0.0 },
+    uv1: [2]f32 = .{ 1.0, 1.0 },
+    frame_padding: i32 = -1,
+    bg_col: [4]f32 = .{ 0.0, 0.0, 0.0, 0.0 },
+    tint_col: [4]f32 = .{ 1.0, 1.0, 1.0, 1.0 },
+};
+pub fn imageButton(user_texture_id: TextureIdent, args: ImageButton) bool {
+    return zguiImageButton(
+        user_texture_id,
+        args.w,
+        args.h,
+        &args.uv0,
+        &args.uv1,
+        args.frame_padding,
+        &args.bg_col,
+        &args.tint_col,
+    );
+}
+extern fn zguiImageButton(
+    user_texture_id: TextureIdent,
+    w: f32,
+    h: f32,
+    uv0: *const [2]f32,
+    uv1: *const [2]f32,
+    frame_padding: i32,
+    bg_col: *const [4]f32,
+    tint_col: *const [4]f32,
+) bool;
 //--------------------------------------------------------------------------------------------------
 /// `pub fn bullet() void`
 pub const bullet = zguiBullet;
@@ -1570,7 +1624,14 @@ const InputFloat = struct {
     flags: InputTextFlags = .{},
 };
 pub fn inputFloat(label: [:0]const u8, args: InputFloat) bool {
-    return zguiInputFloat(label, args.v, args.step, args.step_fast, args.cfmt, @bitCast(u32, args.flags));
+    return zguiInputFloat(
+        label,
+        args.v,
+        args.step,
+        args.step_fast,
+        args.cfmt,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiInputFloat(
     label: [*:0]const u8,
@@ -1672,7 +1733,14 @@ const InputDouble = struct {
     flags: InputTextFlags = .{},
 };
 pub fn inputDouble(label: [:0]const u8, args: InputDouble) bool {
-    return zguiInputDouble(label, args.v, args.step, args.step_fast, args.cfmt, @bitCast(u32, args.flags));
+    return zguiInputDouble(
+        label,
+        args.v,
+        args.step,
+        args.step_fast,
+        args.cfmt,
+        @bitCast(u32, args.flags),
+    );
 }
 extern fn zguiInputDouble(
     label: [*:0]const u8,
@@ -1990,7 +2058,13 @@ const SelectableStatePtr = struct {
 pub fn selectableStatePtr(label: [:0]const u8, args: SelectableStatePtr) bool {
     return zguiSelectableStatePtr(label, args.pselected, @bitCast(u32, args.flags), args.w, args.h);
 }
-extern fn zguiSelectableStatePtr(label: [*:0]const u8, pselected: *bool, flags: u32, w: f32, h: f32) bool;
+extern fn zguiSelectableStatePtr(
+    label: [*:0]const u8,
+    pselected: *bool,
+    flags: u32,
+    w: f32,
+    h: f32,
+) bool;
 //--------------------------------------------------------------------------------------------------
 //
 // Widgets: List Boxes
