@@ -1,6 +1,7 @@
 // zbullet v0.2
 // Zig bindings for Bullet Physics SDK
 
+const builtin = @import("builtin");
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
 const expect = std.testing.expect;
@@ -17,9 +18,19 @@ pub const Body = *align(@sizeOf(usize)) BodyImpl;
 pub const Constraint = *align(@sizeOf(usize)) ConstraintImpl;
 pub const Point2PointConstraint = *align(@sizeOf(usize)) Point2PointConstraintImpl;
 
+pub const AllocFn = if (@import("builtin").zig_backend == .stage1)
+    fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque
+else
+    *const fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque;
+
+pub const FreeFn = if (@import("builtin").zig_backend == .stage1)
+    fn (ptr: ?*anyopaque) callconv(.C) void
+else
+    *const fn (ptr: ?*anyopaque) callconv(.C) void;
+
 extern fn cbtAlignedAllocSetCustomAligned(
-    alloc: ?fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque,
-    free: ?fn (ptr: ?*anyopaque) callconv(.C) void,
+    alloc: ?AllocFn,
+    free: ?FreeFn,
 ) void;
 
 var allocator: ?std.mem.Allocator = null;
