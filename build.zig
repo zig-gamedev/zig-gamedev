@@ -21,19 +21,21 @@ pub fn build(b: *std.build.Builder) void {
     //
     // Cross-platform demos
     //
-    installDemo(b, network_test.build(b, options), "network_test");
-    installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
-    installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
-    installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
-    installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
-    installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-    installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-    installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
+    if (!builtin.is_test) {
+        installDemo(b, network_test.build(b, options), "network_test");
+        installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
+        installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
+        installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
+        installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
+        installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
+        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+        installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
+    }
 
     //
     // Windows-only demos
     //
-    if (@import("builtin").target.os.tag == .windows) {
+    if (!builtin.is_test and @import("builtin").target.os.tag == .windows) {
         options.zpix_enable = b.option(bool, "zpix-enable", "Enable PIX GPU events and markers") orelse false;
         options.enable_dx_debug = b.option(
             bool,
@@ -72,32 +74,37 @@ pub fn build(b: *std.build.Builder) void {
     //
     // Tests
     //
-    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
-    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
-    const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
-    const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
-    const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
-    const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
-    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
-    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
-
     const test_step = b.step("test", "Run all tests");
+
+    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zbullet_tests.step);
-    test_step.dependOn(&zmesh_tests.step);
-    test_step.dependOn(&zmath_tests.step);
-    test_step.dependOn(&znoise_tests.step);
-    test_step.dependOn(&znetwork_tests.step);
-    test_step.dependOn(&zpool_tests.step);
-    test_step.dependOn(&zaudio_tests.step);
-    test_step.dependOn(&zgpu_tests.step);
+
+    if (builtin.zig_backend == .stage1) {
+        const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&zmesh_tests.step);
+        const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&zmath_tests.step);
+        const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&znoise_tests.step);
+        const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&znetwork_tests.step);
+        const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&zpool_tests.step);
+        const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&zaudio_tests.step);
+        const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
+        test_step.dependOn(&zgpu_tests.step);
+    }
 
     //
     // Benchmarks
     //
-    const benchmark_step = b.step("benchmark", "Run all benchmarks");
-    {
-        const run_cmd = zmath.buildBenchmarks(b, options.target).run();
-        benchmark_step.dependOn(&run_cmd.step);
+    if (!builtin.is_test) {
+        const benchmark_step = b.step("benchmark", "Run all benchmarks");
+        {
+            const run_cmd = zmath.buildBenchmarks(b, options.target).run();
+            benchmark_step.dependOn(&run_cmd.step);
+        }
     }
 }
 
