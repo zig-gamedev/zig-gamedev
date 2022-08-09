@@ -573,7 +573,7 @@ const CompoundShapeImpl = opaque {
     pub const addChild = cbtShapeCompoundAddChild;
     extern fn cbtShapeCompoundAddChild(
         cshape: CompoundShape,
-        local_transform: *[12]f32,
+        local_transform: *const [12]f32,
         child_shape: Shape,
     ) void;
 
