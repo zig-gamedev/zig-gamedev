@@ -89,8 +89,6 @@ pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
     };
 }
 
-fn thisDir() []const u8 {
-    comptime {
-        return std.fs.path.dirname(@src().file) orelse ".";
-    }
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }

@@ -1387,8 +1387,8 @@ fn include(comptime rel: []const u8) []const u8 {
     return "-I" ++ (comptime thisDir()) ++ "/" ++ rel;
 }
 
-fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
 
 fn appendLangScannedSources(
