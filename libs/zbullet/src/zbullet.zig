@@ -1330,7 +1330,7 @@ test "zbullet.body.basic" {
 
 test "zbullet.constraint.point2point" {
     // TODO: Fix this.
-    if (builtin.zig_backend != .stage1) return;
+    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
 
     const zm = @import("zmath");
     init(std.testing.allocator);
