@@ -590,6 +590,7 @@ pub inline fn isNan(
     return v != v;
 }
 test "zmath.isNan" {
+    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
     {
         const v0 = F32x4{ math.inf_f32, math.nan_f32, math.qnan_f32, 7.0 };
         const b = isNan(v0);
@@ -1985,6 +1986,7 @@ pub inline fn normalize4(v: Vec) Vec {
     return v * splat(F32x4, 1.0) / sqrt(dot4(v, v));
 }
 test "zmath.normalize3" {
+    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
     {
         const v0 = F32x4{ 1.0, -2.0, 3.0, 1000.0 };
         var v = normalize3(v0);
@@ -1998,6 +2000,7 @@ test "zmath.normalize3" {
     }
 }
 test "zmath.normalize4" {
+    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
     {
         const v0 = F32x4{ 1.0, -2.0, 3.0, 10.0 };
         var v = normalize4(v0);
