@@ -788,6 +788,7 @@ const BodyImpl = opaque {
 };
 
 pub const ConstraintType = enum(c_int) {
+    _dummy = 0, // TODO: Self-hosted bug.
     point2point = 3,
 };
 
@@ -929,26 +930,49 @@ pub const DebugMode = packed struct {
 };
 
 pub const DebugDraw = extern struct {
-    drawLine1: fn (
+    const DrawLine1Fn = if (builtin.zig_backend == .stage1) fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,
         *const [3]f32,
-    ) callconv(.C) void,
-    drawLine2: ?fn (
+    ) callconv(.C) void else *const fn (
+        ?*anyopaque,
+        *const [3]f32,
+        *const [3]f32,
+        *const [3]f32,
+    ) callconv(.C) void;
+
+    const DrawLine2Fn = if (builtin.zig_backend == .stage1) fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,
         *const [3]f32,
         *const [3]f32,
-    ) callconv(.C) void,
-    drawContactPoint: ?fn (
+    ) callconv(.C) void else *const fn (
+        ?*anyopaque,
+        *const [3]f32,
+        *const [3]f32,
+        *const [3]f32,
+        *const [3]f32,
+    ) callconv(.C) void;
+
+    const DrawContactPointFn = if (builtin.zig_backend == .stage1) fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,
         f32,
         *const [3]f32,
-    ) callconv(.C) void,
+    ) callconv(.C) void else *const fn (
+        ?*anyopaque,
+        *const [3]f32,
+        *const [3]f32,
+        f32,
+        *const [3]f32,
+    ) callconv(.C) void;
+
+    drawLine1: DrawLine1Fn,
+    drawLine2: ?DrawLine2Fn,
+    drawContactPoint: ?DrawContactPointFn,
     context: ?*anyopaque,
 };
 
@@ -1329,8 +1353,6 @@ test "zbullet.body.basic" {
 }
 
 test "zbullet.constraint.point2point" {
-    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
-
     const zm = @import("zmath");
     init(std.testing.allocator);
     defer deinit();
