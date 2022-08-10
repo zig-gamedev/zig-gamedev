@@ -22,6 +22,7 @@ pub fn build(b: *std.build.Builder) void {
     // Cross-platform demos
     //
     if (!builtin.is_test) {
+        installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
         installDemo(b, network_test.build(b, options), "network_test");
         installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
         installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
@@ -30,7 +31,6 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
 
         if (builtin.zig_backend == .stage1) {
-            installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
             installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
         }
     }
