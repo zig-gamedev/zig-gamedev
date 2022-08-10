@@ -447,7 +447,7 @@ pub fn initBoxShape(half_extents: *const [3]f32) BoxShape {
 }
 
 const BoxShapeImpl = opaque {
-    usingnamespace ShapeFunctions(BoxShape);
+    pub usingnamespace ShapeFunctions(BoxShape);
 
     fn alloc() BoxShape {
         return @ptrCast(BoxShape, ShapeImpl.alloc(.box));
@@ -470,7 +470,7 @@ pub fn initSphereShape(radius: f32) SphereShape {
 }
 
 const SphereShapeImpl = opaque {
-    usingnamespace ShapeFunctions(SphereShape);
+    pub usingnamespace ShapeFunctions(SphereShape);
 
     fn alloc() SphereShape {
         return @ptrCast(SphereShape, ShapeImpl.alloc(.sphere));
@@ -493,7 +493,7 @@ pub fn initCapsuleShape(radius: f32, height: f32, upaxis: Axis) CapsuleShape {
 }
 
 const CapsuleShapeImpl = opaque {
-    usingnamespace ShapeFunctions(CapsuleShape);
+    pub usingnamespace ShapeFunctions(CapsuleShape);
 
     fn alloc() CapsuleShape {
         return @ptrCast(CapsuleShape, ShapeImpl.alloc(.capsule));
@@ -527,7 +527,7 @@ pub fn initCylinderShape(
 }
 
 const CylinderShapeImpl = opaque {
-    usingnamespace ShapeFunctions(CylinderShape);
+    pub usingnamespace ShapeFunctions(CylinderShape);
 
     fn alloc() CylinderShape {
         return @ptrCast(CylinderShape, ShapeImpl.alloc(.cylinder));
@@ -568,7 +568,7 @@ pub fn initCompoundShape(
 }
 
 const CompoundShapeImpl = opaque {
-    usingnamespace ShapeFunctions(CompoundShape);
+    pub usingnamespace ShapeFunctions(CompoundShape);
 
     fn alloc() CompoundShape {
         return @ptrCast(CompoundShape, ShapeImpl.alloc(.compound));
@@ -615,7 +615,7 @@ pub fn initTriangleMeshShape() TriangleMeshShape {
 }
 
 const TriangleMeshShapeImpl = opaque {
-    usingnamespace ShapeFunctions(TriangleMeshShape);
+    pub usingnamespace ShapeFunctions(TriangleMeshShape);
 
     pub fn finish(trimesh: TriangleMeshShape) void {
         trimesh.createEnd();
@@ -870,7 +870,7 @@ pub fn allocPoint2PointConstraint() Point2PointConstraint {
 }
 
 const Point2PointConstraintImpl = opaque {
-    usingnamespace ConstraintFunctions(Point2PointConstraint);
+    pub usingnamespace ConstraintFunctions(Point2PointConstraint);
 
     fn alloc() Point2PointConstraint {
         return @ptrCast(Point2PointConstraint, ConstraintImpl.alloc(.point2point));
