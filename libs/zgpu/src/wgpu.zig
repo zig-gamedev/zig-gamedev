@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 
@@ -1156,63 +1157,104 @@ pub const RenderBundleDescriptor = extern struct {
     label: ?[*:0]const u8 = null,
 };
 
-pub const CreateComputePipelineAsyncCallback = fn (
+pub const CreateComputePipelineAsyncCallback = if (builtin.zig_backend == .stage1) fn (
+    status: CreatePipelineAsyncStatus,
+    pipeline: ComputePipeline,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     status: CreatePipelineAsyncStatus,
     pipeline: ComputePipeline,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const CreateRenderPipelineAsyncCallback = fn (
+pub const CreateRenderPipelineAsyncCallback = if (builtin.zig_backend == .stage1) fn (
+    status: CreatePipelineAsyncStatus,
+    pipeline: RenderPipeline,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     status: CreatePipelineAsyncStatus,
     pipeline: RenderPipeline,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const ErrorCallback = fn (
+pub const ErrorCallback = if (builtin.zig_backend == .stage1) fn (
+    err_type: ErrorType,
+    message: [*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     err_type: ErrorType,
     message: [*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const LoggingCallback = fn (
+pub const LoggingCallback = if (builtin.zig_backend == .stage1) fn (
+    log_type: LoggingType,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     log_type: LoggingType,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const DeviceLostCallback = fn (
+pub const DeviceLostCallback = if (builtin.zig_backend == .stage1) fn (
+    reason: DeviceLostReason,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     reason: DeviceLostReason,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const RequestAdapterCallback = fn (
+pub const RequestAdapterCallback = if (builtin.zig_backend == .stage1) fn (
+    status: RequestAdapterStatus,
+    adapter: Adapter,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     status: RequestAdapterStatus,
     adapter: Adapter,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const RequestDeviceCallback = fn (
+pub const RequestDeviceCallback = if (builtin.zig_backend == .stage1) fn (
+    status: RequestDeviceStatus,
+    device: Device,
+    message: ?[*:0]const u8,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     status: RequestDeviceStatus,
     device: Device,
     message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const BufferMapCallback = fn (
+pub const BufferMapCallback = if (builtin.zig_backend == .stage1) fn (
+    status: BufferMapAsyncStatus,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     status: BufferMapAsyncStatus,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const QueueWorkDoneCallback = fn (
+pub const QueueWorkDoneCallback = if (builtin.zig_backend == .stage1) fn (
+    status: QueueWorkDoneStatus,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     status: QueueWorkDoneStatus,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
-pub const CompilationInfoCallback = fn (
+pub const CompilationInfoCallback = if (builtin.zig_backend == .stage1) fn (
+    status: CompilationInfoRequestStatus,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     status: CompilationInfoRequestStatus,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
