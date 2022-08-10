@@ -181,7 +181,11 @@ pub fn initRock(seed: i32, num_subdivisions: i32) Shape {
     return initShape(par_shapes_create_rock(seed, num_subdivisions));
 }
 
-pub const UvToPositionFn = fn (
+pub const UvToPositionFn = if (builtin.zig_backend == .stage1) fn (
+    uv: *const [2]f32,
+    position: *[3]f32,
+    userdata: ?*anyopaque,
+) callconv(.C) void else *const fn (
     uv: *const [2]f32,
     position: *[3]f32,
     userdata: ?*anyopaque,
