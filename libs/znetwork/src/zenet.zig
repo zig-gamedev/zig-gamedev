@@ -679,7 +679,10 @@ comptime {
     assert(@sizeOf(PacketFlags) == 4);
 }
 
-pub const PacketFreeCallback = fn (*Packet) callconv(.C) void;
+pub const PacketFreeCallback = if (builtin.zig_backend == .stage1)
+    fn (*Packet) callconv(.C) void
+else
+    *const fn (*Packet) callconv(.C) void;
 
 /// ENet packet structure.
 ///
