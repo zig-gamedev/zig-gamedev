@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
 
@@ -16,16 +17,36 @@ pub fn deinit() void {
     allocator = null;
 }
 
+const MallocFn = if (builtin.zig_backend == .stage1)
+    fn (size: usize) callconv(.C) ?*anyopaque
+else
+    *const fn (size: usize) callconv(.C) ?*anyopaque;
+
+const CallocFn = if (builtin.zig_backend == .stage1)
+    fn (num: usize, size: usize) callconv(.C) ?*anyopaque
+else
+    *const fn (num: usize, size: usize) callconv(.C) ?*anyopaque;
+
+const ReallocFn = if (builtin.zig_backend == .stage1)
+    fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque
+else
+    *const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+
+const FreeFn = if (builtin.zig_backend == .stage1)
+    fn (ptr: ?*anyopaque) callconv(.C) void
+else
+    *const fn (ptr: ?*anyopaque) callconv(.C) void;
+
 extern fn zmesh_setAllocator(
-    malloc: fn (size: usize) callconv(.C) ?*anyopaque,
-    calloc: fn (num: usize, size: usize) callconv(.C) ?*anyopaque,
-    realloc: fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque,
-    free: fn (ptr: ?*anyopaque) callconv(.C) void,
+    malloc: MallocFn,
+    calloc: CallocFn,
+    realloc: ReallocFn,
+    free: FreeFn,
 ) void;
 
 extern fn meshopt_setAllocator(
-    allocate: fn (size: usize) callconv(.C) ?*anyopaque,
-    deallocate: fn (ptr: ?*anyopaque) callconv(.C) void,
+    allocate: MallocFn,
+    deallocate: FreeFn,
 ) void;
 
 var allocator: ?std.mem.Allocator = null;
