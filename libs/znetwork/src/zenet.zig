@@ -424,11 +424,25 @@ pub fn List(comptime T: type) type {
 }
 
 // enet/callbacks.h
+pub const MallocFn = if (builtin.zig_backend == .stage1)
+    fn (size: usize) callconv(.C) *anyopaque
+else
+    *const fn (size: usize) callconv(.C) *anyopaque;
+
+pub const FreeFn = if (builtin.zig_backend == .stage1)
+    fn (memory: *anyopaque) callconv(.C) void
+else
+    *const fn (memory: *anyopaque) callconv(.C) void;
+
+pub const NoMemoryFn = if (builtin.zig_backend == .stage1)
+    fn () callconv(.C) void
+else
+    *const fn () callconv(.C) void;
 
 pub const Callbacks = extern struct {
-    malloc: ?fn (size: usize) callconv(.C) *anyopaque = null,
-    free: ?fn (memory: *anyopaque) callconv(.C) void = null,
-    no_memory: ?fn () callconv(.C) void = null,
+    malloc: ?MallocFn = null,
+    free: ?FreeFn = null,
+    no_memory: ?NoMemoryFn = null,
 };
 
 // enet/enet.h
@@ -1038,39 +1052,66 @@ pub const Peer = extern struct {
 };
 
 pub const Compressor = extern struct {
-    /// Context data for the compressor. Must be non-NULL.
-    context: *anyopaque,
-
-    /// Compresses from inBuffers[0..inBufferCount], containing inLimit bytes, to outData, outputting at most outLimit bytes. Should return 0 on failure.
-    compress: fn (
+    const CompressFn = if (builtin.zig_backend == .stage1) fn (
         context: *anyopaque,
         inBuffers: [*]const pl.Buffer,
         inBufferCount: usize,
         inLimit: usize,
         outData: [*]u8,
         outLimit: usize,
-    ) callconv(.C) usize,
+    ) callconv(.C) usize else *const fn (
+        context: *anyopaque,
+        inBuffers: [*]const pl.Buffer,
+        inBufferCount: usize,
+        inLimit: usize,
+        outData: [*]u8,
+        outLimit: usize,
+    ) callconv(.C) usize;
 
-    /// Decompresses from inData, containing inLimit bytes, to outData, outputting at most outLimit bytes. Should return 0 on failure.
-    decompress: fn (
+    const DecompressFn = if (builtin.zig_backend == .stage1) fn (
         context: *anyopaque,
         inData: [*]const u8,
         inLimit: usize,
         outData: [*]u8,
         outLimit: usize,
-    ) callconv(.C) usize,
+    ) callconv(.C) usize else *const fn (
+        context: *anyopaque,
+        inData: [*]const u8,
+        inLimit: usize,
+        outData: [*]u8,
+        outLimit: usize,
+    ) callconv(.C) usize;
+
+    const DestroyFn = if (builtin.zig_backend == .stage1) fn (
+        context: *anyopaque,
+    ) callconv(.C) void else *const fn (
+        context: *anyopaque,
+    ) callconv(.C) void;
+
+    /// Context data for the compressor. Must be non-NULL.
+    context: *anyopaque,
+
+    /// Compresses from inBuffers[0..inBufferCount], containing inLimit bytes, to outData, outputting at most outLimit bytes. Should return 0 on failure.
+    compress: CompressFn,
+
+    /// Decompresses from inData, containing inLimit bytes, to outData, outputting at most outLimit bytes. Should return 0 on failure.
+    decompress: DecompressFn,
 
     /// Destroys the context when compression is disabled or the host is destroyed. May be NULL.
-    destroy: ?fn (
-        context: *anyopaque,
-    ) callconv(.C) void,
+    destroy: ?DestroyFn,
 };
 
 /// Callback that computes the checksum of the data held in buffers[0..bufferCount]
-pub const ChecksumCallback = fn (buffers: [*]const pl.Buffer, bufferCount: usize) callconv(.C) u32;
+pub const ChecksumCallback = if (builtin.zig_backend == .stage1)
+    fn (buffers: [*]const pl.Buffer, bufferCount: usize) callconv(.C) u32
+else
+    *const fn (buffers: [*]const pl.Buffer, bufferCount: usize) callconv(.C) u32;
 
 /// Callback for intercepting received raw UDP packets. Should return 1 to intercept, 0 to ignore, or -1 to propagate an error.
-pub const InterceptCallback = fn (host: ?*Host, event: ?*Event) callconv(.C) c_int;
+pub const InterceptCallback = if (builtin.zig_backend == .stage1)
+    fn (host: ?*Host, event: ?*Event) callconv(.C) c_int
+else
+    *const fn (host: ?*Host, event: ?*Event) callconv(.C) c_int;
 
 /// An ENet host for communicating with peers.
 ///
