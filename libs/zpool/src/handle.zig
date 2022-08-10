@@ -265,6 +265,8 @@ test "Handle sort order" {
 ////////////////////////////////////////////////////////////////////////////////
 
 test "Handle.format()" {
+    if (@import("builtin").zig_backend != .stage1) return error.SkipZigTest;
+
     const bufPrint = std.fmt.bufPrint;
     const expectEqualStrings = std.testing.expectEqualStrings;
 
