@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 
@@ -24,21 +25,44 @@ pub const Result = enum(c_int) {
     legacy_gltf,
 };
 
+const MallocFn = if (builtin.zig_backend == .stage1)
+    fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque
+else
+    *const fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+
+const FreeFn = if (builtin.zig_backend == .stage1)
+    fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void
+else
+    *const fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void;
+
 pub const MemoryOptions = extern struct {
-    alloc: ?fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque = null,
-    free: ?fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void = null,
+    alloc: ?MallocFn = null,
+    free: ?FreeFn = null,
     user_data: ?*anyopaque = null,
 };
 
 pub const FileOptions = extern struct {
-    read: ?fn (
+    const ReadFn = if (builtin.zig_backend == .stage1) fn (
         *const MemoryOptions,
         *const FileOptions,
         CString,
         *usize,
         *?*anyopaque,
-    ) callconv(.C) Result = null,
-    release: ?fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void = null,
+    ) callconv(.C) Result else *const fn (
+        *const MemoryOptions,
+        *const FileOptions,
+        CString,
+        *usize,
+        *?*anyopaque,
+    ) callconv(.C) Result;
+
+    const ReleaseFn = if (builtin.zig_backend == .stage1)
+        fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void
+    else
+        *const fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void;
+
+    read: ?ReadFn = null,
+    release: ?ReleaseFn = null,
     user_data: ?*anyopaque = null,
 };
 
