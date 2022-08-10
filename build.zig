@@ -27,9 +27,12 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
         installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
         installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
-        installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
         installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
+
+        if (builtin.zig_backend == .stage1) {
+            installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
+            installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+        }
     }
 
     //
