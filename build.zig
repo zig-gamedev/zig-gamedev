@@ -80,14 +80,14 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&zbullet_tests.step);
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&znoise_tests.step);
+    const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&znetwork_tests.step);
 
     if (builtin.zig_backend == .stage1) {
         const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
         test_step.dependOn(&zmesh_tests.step);
         const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
         test_step.dependOn(&zmath_tests.step);
-        const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
-        test_step.dependOn(&znetwork_tests.step);
         const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
         test_step.dependOn(&zpool_tests.step);
         const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);

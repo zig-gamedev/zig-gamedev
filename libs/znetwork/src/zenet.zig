@@ -682,7 +682,8 @@ comptime {
 pub const PacketFreeCallback = if (builtin.zig_backend == .stage1)
     fn (*Packet) callconv(.C) void
 else
-    *const fn (*Packet) callconv(.C) void;
+    // TODO: Selfhosted bug. Dependency loop detected.
+    *const fn (*anyopaque) callconv(.C) void;
 
 /// ENet packet structure.
 ///
@@ -1114,7 +1115,8 @@ else
 pub const InterceptCallback = if (builtin.zig_backend == .stage1)
     fn (host: ?*Host, event: ?*Event) callconv(.C) c_int
 else
-    *const fn (host: ?*Host, event: ?*Event) callconv(.C) c_int;
+    // TODO: Selfhosted bug. Dependency loop detected.
+    *const fn (host: ?*anyopaque, event: ?*anyopaque) callconv(.C) c_int;
 
 /// An ENet host for communicating with peers.
 ///
