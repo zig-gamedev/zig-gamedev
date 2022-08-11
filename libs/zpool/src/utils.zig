@@ -50,34 +50,46 @@ pub fn AddressableUInt(comptime min_bits: u8) type {
 /// Returns: `StructOfSlices = struct { foo: []u32, bar: []u64 }`
 pub fn StructOfSlices(comptime Struct: type) type {
     const StructField = std.builtin.Type.StructField;
-    const alignment = std.meta.alignment;
-
-    // initialize a basic slice-typed field, no name, zero sized elements
-    const Template = struct { @"_template_": []u0 };
-    var slice_field: StructField = @typeInfo(Template).Struct.fields[0];
-    var slice_type_info = @typeInfo(slice_field.field_type);
 
     // same number of fields in the new struct
     const struct_fields = @typeInfo(Struct).Struct.fields;
-    var struct_of_slices_fields: [struct_fields.len]StructField = undefined;
 
-    inline for (struct_fields) |struct_field, i| {
+    comptime var struct_of_slices_fields: []const StructField = &.{};
+    inline for (struct_fields) |struct_field| {
         // u32 -> []u32
         const element_type = struct_field.field_type;
-        slice_type_info.Pointer.child = element_type;
-        slice_type_info.Pointer.alignment = alignment(element_type);
+
+        const slice_type_info = std.builtin.TypeInfo{
+            .Pointer = .{
+                .child = element_type,
+                .alignment = @alignOf(element_type),
+                .size = .Slice,
+                .is_const = false,
+                .is_volatile = false,
+                .address_space = .generic,
+                .is_allowzero = false,
+                .sentinel = null,
+            },
+        };
+
+        const FieldType = @Type(slice_type_info);
 
         // Struct.foo: u32 -> StructOfSlices.foo : []u32
-        slice_field.name = struct_field.name;
-        slice_field.field_type = @Type(slice_type_info);
+        const slice_field = std.builtin.TypeInfo.StructField{
+            .name = struct_field.name,
+            .field_type = FieldType,
+            .default_value = null,
+            .is_comptime = false,
+            .alignment = @alignOf(FieldType),
+        };
 
         // Struct.foo: u32 -> StructOfSlices.foo : []u32
-        struct_of_slices_fields[i] = slice_field;
+        struct_of_slices_fields = struct_of_slices_fields ++ [1]StructField{slice_field};
     }
 
     return @Type(.{ .Struct = .{
         .layout = std.builtin.Type.ContainerLayout.Auto,
-        .fields = &struct_of_slices_fields,
+        .fields = struct_of_slices_fields,
         .decls = &.{},
         .is_tuple = false,
     } });
