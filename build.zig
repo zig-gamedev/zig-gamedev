@@ -29,10 +29,7 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
         installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
         installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
-
-        if (builtin.zig_backend == .stage1) {
-            installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-        }
+        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
     }
 
     //
@@ -83,10 +80,8 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&zpool_tests.step);
     const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zgpu_tests.step);
-
     const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmath_tests.step);
-
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zbullet_tests.step);
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
@@ -95,11 +90,8 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&znetwork_tests.step);
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmesh_tests.step);
-
-    if (builtin.zig_backend == .stage1) {
-        const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
-        test_step.dependOn(&zaudio_tests.step);
-    }
+    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zaudio_tests.step);
 
     //
     // Benchmarks

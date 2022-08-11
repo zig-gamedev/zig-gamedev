@@ -1,7 +1,10 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const math = std.math;
-const c = @cImport(@cInclude("miniaudio.h"));
+const c = if (@import("builtin").zig_backend == .stage1)
+    @cImport(@cInclude("miniaudio.h"))
+else
+    @import("cimport_stage2.zig");
 
 // TODO: Get rid of WA_ma_* functions which are workarounds for Zig C ABI issues on aarch64.
 
@@ -73,13 +76,23 @@ pub const DeviceState = enum(u32) {
 pub const Channel = c.ma_channel;
 
 pub const PlaybackCallback = struct {
+    const CbType = if (@import("builtin").zig_backend == .stage1)
+        fn (context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void
+    else
+        *const fn (context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void;
+
     context: ?*anyopaque = null,
-    callback: ?fn (context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void = null,
+    callback: ?CbType = null,
 };
 
 pub const CaptureCallback = struct {
+    const CbType = if (@import("builtin").zig_backend == .stage1)
+        fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void
+    else
+        *const fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void;
+
     context: ?*anyopaque = null,
-    callback: ?fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void = null,
+    callback: ?CbType = null,
 };
 
 pub const ResourceManager = *align(@sizeOf(usize)) ResourceManagerImpl;
@@ -163,10 +176,10 @@ pub const WaveformConfig = struct {
         frequency: f64,
     ) WaveformConfig {
         return .{ .raw = c.ma_waveform_config_init(
-            @bitCast(u32, format),
+            @enumToInt(format),
             num_channels,
             sample_rate,
-            @bitCast(u32, wave_type),
+            @enumToInt(wave_type),
             amplitude,
             frequency,
         ) };
@@ -182,7 +195,7 @@ pub fn createWaveformDataSource(allocator: std.mem.Allocator, config: WaveformCo
 
 pub const WaveformDataSource = *align(@sizeOf(usize)) WaveformDataSourceImpl;
 const WaveformDataSourceImpl = opaque {
-    usingnamespace DataSourceImpl.Methods(WaveformDataSource);
+    pub usingnamespace DataSourceImpl.Methods(WaveformDataSource);
 
     pub fn destroy(waveform: WaveformDataSource, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_waveform, waveform);
@@ -197,7 +210,7 @@ const WaveformDataSourceImpl = opaque {
         try checkResult(c.ma_waveform_set_frequency(@ptrCast(*c.ma_waveform, waveform), frequency));
     }
     pub fn setType(waveform: WaveformDataSource, wave_type: WaveformType) Error!void {
-        try checkResult(c.ma_waveform_set_type(@ptrCast(*c.ma_waveform, waveform), @bitCast(u32, wave_type)));
+        try checkResult(c.ma_waveform_set_type(@ptrCast(*c.ma_waveform, waveform), @enumToInt(wave_type)));
     }
     pub fn setSampleRate(waveform: WaveformDataSource, sample_rate: u32) Error!void {
         try checkResult(c.ma_waveform_set_sample_rate(@ptrCast(*c.ma_waveform, waveform), sample_rate));
@@ -225,9 +238,9 @@ pub const NoiseConfig = struct {
         amplitude: f64,
     ) NoiseConfig {
         return .{ .raw = c.ma_noise_config_init(
-            @bitCast(u32, format),
+            @enumToInt(format),
             num_channels,
-            @bitCast(u32, noise_type),
+            @enumToInt(noise_type),
             seed,
             amplitude,
         ) };
@@ -243,7 +256,7 @@ pub fn createNoiseDataSource(allocator: std.mem.Allocator, config: NoiseConfig) 
 
 pub const NoiseDataSource = *align(@sizeOf(usize)) NoiseDataSourceImpl;
 const NoiseDataSourceImpl = opaque {
-    usingnamespace DataSourceImpl.Methods(NoiseDataSource);
+    pub usingnamespace DataSourceImpl.Methods(NoiseDataSource);
 
     pub fn destroy(noise: NoiseDataSource, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_noise, noise);
@@ -255,7 +268,7 @@ const NoiseDataSourceImpl = opaque {
         try checkResult(c.ma_noise_set_amplitude(@ptrCast(*c.ma_noise, noise), amplitude));
     }
     pub fn setType(noise: NoiseDataSource, noise_type: NoiseType) Error!void {
-        try checkResult(c.ma_noise_set_type(@ptrCast(*c.ma_noise, noise), @bitCast(u32, noise_type)));
+        try checkResult(c.ma_noise_set_type(@ptrCast(*c.ma_noise, noise), @enumToInt(noise_type)));
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -278,7 +291,7 @@ pub const NodeState = enum(u32) {
 
 pub const Node = *align(@sizeOf(usize)) NodeImpl;
 const NodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(Node);
+    pub usingnamespace NodeImpl.Methods(Node);
 
     fn Methods(comptime T: type) type {
         return struct {
@@ -339,7 +352,7 @@ const NodeImpl = opaque {
             }
 
             pub fn setState(node: T, state: NodeState) Error!void {
-                try checkResult(c.ma_node_set_state(node.asRawNode(), @bitCast(u32, state)));
+                try checkResult(c.ma_node_set_state(node.asRawNode(), @enumToInt(state)));
             }
             pub fn getState(node: T) NodeState {
                 return @intToEnum(NodeState, c.ma_node_get_state(node.asRawNode()));
@@ -369,7 +382,7 @@ pub const DataSourceNodeConfig = struct {
 
 pub const DataSourceNode = *align(@sizeOf(usize)) DataSourceNodeImpl;
 const DataSourceNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(DataSourceNode);
+    pub usingnamespace NodeImpl.Methods(DataSourceNode);
 
     pub fn destroy(ds_node: DataSourceNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_data_source_node, ds_node);
@@ -402,7 +415,7 @@ pub const SplitterNodeConfig = struct {
 
 pub const SplitterNode = *align(@sizeOf(usize)) SplitterNodeImpl;
 const SplitterNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(SplitterNode);
+    pub usingnamespace NodeImpl.Methods(SplitterNode);
 
     pub fn destroy(splitter_node: SplitterNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_splitter_node, splitter_node);
@@ -425,7 +438,7 @@ pub const BiquadNodeConfig = struct {
 
 pub const BiquadNode = *align(@sizeOf(usize)) BiquadNodeImpl;
 const BiquadNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(BiquadNode);
+    pub usingnamespace NodeImpl.Methods(BiquadNode);
 
     pub fn destroy(biquad_node: BiquadNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_biquad_node, biquad_node);
@@ -452,7 +465,7 @@ pub const LpfNodeConfig = struct {
 
 pub const LpfNode = *align(@sizeOf(usize)) LpfNodeImpl;
 const LpfNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(LpfNode);
+    pub usingnamespace NodeImpl.Methods(LpfNode);
 
     pub fn destroy(lpf_node: LpfNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_lpf_node, lpf_node);
@@ -479,7 +492,7 @@ pub const HpfNodeConfig = struct {
 
 pub const HpfNode = *align(@sizeOf(usize)) HpfNodeImpl;
 const HpfNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(HpfNode);
+    pub usingnamespace NodeImpl.Methods(HpfNode);
 
     pub fn destroy(hpf_node: HpfNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_hpf_node, hpf_node);
@@ -506,7 +519,7 @@ pub const NotchNodeConfig = struct {
 
 pub const NotchNode = *align(@sizeOf(usize)) NotchNodeImpl;
 const NotchNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(NotchNode);
+    pub usingnamespace NodeImpl.Methods(NotchNode);
 
     pub fn destroy(notch_node: NotchNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_notch_node, notch_node);
@@ -533,7 +546,7 @@ pub const PeakNodeConfig = struct {
 
 pub const PeakNode = *align(@sizeOf(usize)) PeakNodeImpl;
 const PeakNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(PeakNode);
+    pub usingnamespace NodeImpl.Methods(PeakNode);
 
     pub fn destroy(peak_node: PeakNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_peak_node, peak_node);
@@ -560,7 +573,7 @@ pub const LoshelfNodeConfig = struct {
 
 pub const LoshelfNode = *align(@sizeOf(usize)) LoshelfNodeImpl;
 const LoshelfNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(LoshelfNode);
+    pub usingnamespace NodeImpl.Methods(LoshelfNode);
 
     pub fn destroy(loshelf_node: LoshelfNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_loshelf_node, loshelf_node);
@@ -587,7 +600,7 @@ pub const HishelfNodeConfig = struct {
 
 pub const HishelfNode = *align(@sizeOf(usize)) HishelfNodeImpl;
 const HishelfNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(HishelfNode);
+    pub usingnamespace NodeImpl.Methods(HishelfNode);
 
     pub fn destroy(hishelf_node: HishelfNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_hishelf_node, hishelf_node);
@@ -614,7 +627,7 @@ pub const DelayNodeConfig = struct {
 
 pub const DelayNode = *align(@sizeOf(usize)) DelayNodeImpl;
 const DelayNodeImpl = opaque {
-    usingnamespace NodeImpl.Methods(DelayNode);
+    pub usingnamespace NodeImpl.Methods(DelayNode);
 
     pub fn destroy(delay_node: DelayNode, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_delay_node, delay_node);
@@ -665,8 +678,8 @@ pub fn createNodeGraph(allocator: std.mem.Allocator, config: NodeGraphConfig) Er
 
 pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
 const NodeGraphImpl = opaque {
-    usingnamespace NodeImpl.Methods(NodeGraph);
-    usingnamespace NodeGraphImpl.Methods(NodeGraph);
+    pub usingnamespace NodeImpl.Methods(NodeGraph);
+    pub usingnamespace NodeGraphImpl.Methods(NodeGraph);
 
     pub fn destroy(node_graph: NodeGraph, allocator: std.mem.Allocator) void {
         const raw = @ptrCast(*c.ma_node_graph, node_graph);
@@ -835,7 +848,7 @@ pub const DeviceConfig = struct {
     capture_callback: CaptureCallback = .{},
 
     pub fn init(device_type: DeviceType) DeviceConfig {
-        return .{ .raw = c.ma_device_config_init(@bitCast(u32, device_type)) };
+        return .{ .raw = c.ma_device_config_init(@enumToInt(device_type)) };
     }
 };
 
@@ -851,16 +864,17 @@ const DeviceImpl = opaque {
     };
 
     fn internalDataCallback(
-        raw_device: ?*c.ma_device,
+        raw_device: if (@import("builtin").zig_backend == .stage1) ?*c.ma_device else *anyopaque,
         outptr: ?*anyopaque,
         inptr: ?*const anyopaque,
         num_frames: u32,
     ) callconv(.C) void {
-        assert(raw_device != null);
+        //assert(raw_device != null);
 
+        const device = @ptrCast(*c.ma_device, @alignCast(8, raw_device));
         const internal_state = @ptrCast(
             *InternalState,
-            @alignCast(@alignOf(InternalState), raw_device.?.pUserData),
+            @alignCast(@alignOf(InternalState), device.pUserData),
         );
 
         if (num_frames > 0) {
@@ -977,8 +991,8 @@ pub fn createEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!E
 
 pub const Engine = *align(@sizeOf(usize)) EngineImpl;
 const EngineImpl = opaque {
-    usingnamespace NodeImpl.Methods(Engine);
-    usingnamespace NodeGraphImpl.Methods(Engine);
+    pub usingnamespace NodeImpl.Methods(Engine);
+    pub usingnamespace NodeGraphImpl.Methods(Engine);
 
     pub fn destroy(engine: Engine, allocator: std.mem.Allocator) void {
         const raw = engine.asRaw();
@@ -1187,7 +1201,7 @@ pub const SoundConfig = struct {
 
 pub const Sound = *align(@sizeOf(usize)) SoundImpl;
 const SoundImpl = opaque {
-    usingnamespace NodeImpl.Methods(Sound);
+    pub usingnamespace NodeImpl.Methods(Sound);
 
     fn createFromFile(
         allocator: std.mem.Allocator,
@@ -1538,7 +1552,7 @@ const SoundImpl = opaque {
 //--------------------------------------------------------------------------------------------------
 pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
 const SoundGroupImpl = opaque {
-    usingnamespace NodeImpl.Methods(SoundGroup);
+    pub usingnamespace NodeImpl.Methods(SoundGroup);
 
     fn create(
         allocator: std.mem.Allocator,
