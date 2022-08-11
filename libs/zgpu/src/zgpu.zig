@@ -1932,20 +1932,10 @@ test "zgpu.wgpu.init" {
         var features: [32]wgpu.FeatureName = undefined;
         const num_adapter_features = std.math.min(adapter.enumerateFeatures(null), features.len);
         _ = adapter.enumerateFeatures(&features);
-
-        std.debug.print("\n\nADAPTER FEATURES\n", .{});
-        var i: usize = 0;
-        while (i < num_adapter_features) : (i += 1) {
-            std.debug.print("{s}\n", .{@tagName(features[i])});
-        }
+        _ = num_adapter_features;
 
         var properties: wgpu.AdapterProperties = undefined;
         adapter.getProperties(&properties);
-        std.debug.print("\nADAPTER PROPERTIES\n", .{});
-        std.debug.print("{s}\n", .{properties.name});
-        std.debug.print("{s}\n", .{properties.driver_description});
-        std.debug.print("{s}\n", .{@tagName(properties.adapter_type)});
-        std.debug.print("{s}\n\n", .{@tagName(properties.backend_type)});
 
         break :adapter adapter;
     };

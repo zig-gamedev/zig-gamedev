@@ -79,8 +79,14 @@ pub fn build(b: *std.build.Builder) void {
     //
     const test_step = b.step("test", "Run all tests");
 
+    const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zpool_tests.step);
+    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zgpu_tests.step);
+
     const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmath_tests.step);
+
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zbullet_tests.step);
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
@@ -89,10 +95,6 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&znetwork_tests.step);
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmesh_tests.step);
-    const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zpool_tests.step);
-    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
-    test_step.dependOn(&zgpu_tests.step);
 
     if (builtin.zig_backend == .stage1) {
         const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
