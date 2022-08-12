@@ -384,6 +384,64 @@ extern fn zguiGetWindowSize(size: *[2]f32) void;
 extern fn zguiGetWindowWidth() f32;
 extern fn zguiGetWindowHeight() f32;
 //--------------------------------------------------------------------------------------------------
+//
+// Style
+//
+//--------------------------------------------------------------------------------------------------
+pub const Style = extern struct {
+    alpha: f32,
+    disabled_alpha: f32,
+    window_padding: [2]f32,
+    window_rounding: f32,
+    window_border_size: f32,
+    window_min_size: [2]f32,
+    window_title_align: [2]f32,
+    window_menu_button_position: Direction,
+    child_rounding: f32,
+    child_border_size: f32,
+    popup_rounding: f32,
+    popup_border_size: f32,
+    frame_padding: [2]f32,
+    frame_rounding: f32,
+    frame_border_size: f32,
+    item_spacing: [2]f32,
+    item_inner_spacing: [2]f32,
+    cell_padding: [2]f32,
+    touch_extra_padding: [2]f32,
+    indent_spacing: f32,
+    columns_min_spacing: f32,
+    scrollbar_size: f32,
+    scrollbar_rounding: f32,
+    grab_min_size: f32,
+    grab_rounding: f32,
+    log_slider_deadzone: f32,
+    tab_rounding: f32,
+    tab_border_size: f32,
+    tab_min_width_for_close_button: f32,
+    color_button_position: Direction,
+    button_text_align: [2]f32,
+    selectable_text_align: [2]f32,
+    display_window_padding: [2]f32,
+    display_safe_area_padding: [2]f32,
+    mouse_cursor_scale: f32,
+    anti_aliased_lines: bool,
+    anti_aliased_lines_use_tex: bool,
+    anti_aliased_fill: bool,
+    curve_tessellation_tol: f32,
+    circle_tessellation_max_error: f32,
+    colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
+
+    /// `pub fn init() Style`
+    pub const init = zguiStyleInit;
+    extern fn zguiStyleInit() Style;
+
+    /// `pub fn scaleAllSizes(style: *Style, scale_factor: f32) void`
+    pub const scaleAllSizes = zguiStyleScaleAllSizes;
+    extern fn zguiStyleScaleAllSizes(style: *Style, scale_factor: f32) void;
+};
+/// `pub fn getStyle() *Style`
+pub const getStyle = zguiGetStyle;
+extern fn zguiGetStyle() *Style;
 //--------------------------------------------------------------------------------------------------
 pub const StyleCol = enum(u32) {
     text,
@@ -537,6 +595,7 @@ extern fn zguiPushFont(font: Font) void;
 /// `void popFont() void`
 pub const popFont = zguiPopFont;
 extern fn zguiPopFont() void;
+//--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 const BeginDisabled = struct {
     disabled: bool = true,

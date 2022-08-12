@@ -879,6 +879,18 @@ ZGUI_API void zguiEndDisabled(void) {
     ImGui::EndDisabled();
 }
 
+ZGUI_API ImGuiStyle* zguiGetStyle(void) {
+    return &ImGui::GetStyle();
+}
+
+ZGUI_API ImGuiStyle zguiStyleInit(void) {
+    return ImGuiStyle();
+}
+
+ZGUI_API void zguiStyleScaleAllSizes(ImGuiStyle* style, float scale_factor) {
+    style->ScaleAllSizes(scale_factor);
+}
+
 ZGUI_API void zguiPushStyleColor4f(ImGuiCol idx, const float col[4]) {
     ImGui::PushStyleColor(idx, { col[0], col[1], col[2], col[3] });
 }

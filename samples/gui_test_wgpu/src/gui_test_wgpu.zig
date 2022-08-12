@@ -13,8 +13,8 @@ const window_title = "zig-gamedev: gui test (wgpu)";
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
     texture_view: zgpu.TextureViewHandle,
-    font_25px: zgui.Font,
-    font_40px: zgui.Font,
+    font_normal: zgui.Font,
+    font_large: zgui.Font,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
@@ -52,11 +52,19 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     );
 
     zgui.init();
-    const font_40px = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 40.0);
-    const font_25px = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 25.0);
-    assert(zgui.io.getFont(0) == font_40px);
-    assert(zgui.io.getFont(1) == font_25px);
-    zgui.io.setDefaultFont(font_25px);
+    const scale_factor = (try window.getContentScale()).x_scale;
+    const font_size = 16.0 * scale_factor;
+    const font_large = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size * 1.25);
+    const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
+    assert(zgui.io.getFont(0) == font_large);
+    assert(zgui.io.getFont(1) == font_normal);
+    zgui.io.setDefaultFont(font_normal);
+
+    const style = zgui.getStyle();
+    style.window_border_size = 8.0;
+    style.scrollbar_size = 6.0;
+    style.colors[@enumToInt(zgui.StyleCol.scrollbar_grab)] = .{ 0.8, 0.65, 0.1, 1 };
+    style.scaleAllSizes(scale_factor);
 
     zgpu.gui.init(window, gctx.device, content_dir, "", 0);
 
@@ -64,8 +72,8 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     demo.* = .{
         .gctx = gctx,
         .texture_view = texture_view,
-        .font_25px = font_25px,
-        .font_40px = font_40px,
+        .font_normal = font_normal,
+        .font_large = font_large,
     };
 
     return demo;
@@ -101,7 +109,7 @@ fn update(demo: *DemoState) !void {
         .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
     );
 
-    zgui.pushFont(demo.font_40px);
+    zgui.pushFont(demo.font_large);
     zgui.separator();
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "zgui -");
@@ -123,7 +131,7 @@ fn update(demo: *DemoState) !void {
             // 'Button 2' pressed.
         }
         zgui.sameLine(.{});
-        _ = zgui.button("Button 3", .{ .w = 100.0, .h = 0.0 });
+        _ = zgui.button("Button 3", .{ .w = 200.0, .h = 0.0 });
         zgui.sameLine(.{});
         _ = zgui.button("Button 4", .{});
         _ = zgui.button("Button 5", .{ .w = -1.0, .h = 100.0 });
