@@ -61,6 +61,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
     assert(zgui.io.getFont(0) == font_large);
     assert(zgui.io.getFont(1) == font_normal);
+
+    zgpu.gui.init(window, gctx.device, content_dir, "", 0);
+
     zgui.io.setDefaultFont(font_normal);
 
     const style = zgui.getStyle();
@@ -68,8 +71,6 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     style.scrollbar_size = 6.0;
     style.colors[@enumToInt(zgui.StyleCol.scrollbar_grab)] = .{ 0.8, 0.65, 0.1, 1 };
     style.scaleAllSizes(scale_factor);
-
-    zgpu.gui.init(window, gctx.device, content_dir, "", 0);
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
