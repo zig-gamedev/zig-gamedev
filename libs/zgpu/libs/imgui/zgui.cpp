@@ -915,8 +915,20 @@ ZGUI_API void zguiSetNextItemWidth(float item_width) {
     ImGui::SetNextItemWidth(item_width);
 }
 
+ZGUI_API ImFont* zguiGetFont(void) {
+    return ImGui::GetFont();
+}
+
 ZGUI_API float zguiGetFontSize(void) {
     return ImGui::GetFontSize();
+}
+
+ZGUI_API void zguiPushFont(ImFont* font) {
+    ImGui::PushFont(font);
+}
+
+ZGUI_API void zguiPopFont(void) {
+    ImGui::PopFont();
 }
 
 ZGUI_API bool zguiTreeNode(const char* label) {
@@ -1011,16 +1023,24 @@ ZGUI_API ImGuiID zguiGetPtrId(const void* ptr_id) {
     return ImGui::GetID(ptr_id);
 }
 
+ZGUI_API ImFont* zguiIoAddFontFromFile(const char* filename, float size_pixels) {
+    return ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, nullptr, nullptr);
+}
+
+ZGUI_API ImFont* zguiIoGetFont(unsigned int index) {
+    return ImGui::GetIO().Fonts->Fonts[index];
+}
+
+ZGUI_API void zguiIoSetDefaultFont(ImFont* font) {
+    ImGui::GetIO().FontDefault = font;
+}
+
 ZGUI_API bool zguiIoGetWantCaptureMouse(void) {
     return ImGui::GetIO().WantCaptureMouse;
 }
 
 ZGUI_API bool zguiIoGetWantCaptureKeyboard(void) {
     return ImGui::GetIO().WantCaptureKeyboard;
-}
-
-ZGUI_API void zguiIoAddFontFromFile(const char* filename, float size_pixels) {
-    ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, nullptr, nullptr);
 }
 
 ZGUI_API void zguiIoSetIniFilename(const char* filename) {

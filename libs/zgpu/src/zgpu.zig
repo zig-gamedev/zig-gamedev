@@ -1483,7 +1483,9 @@ pub const gui = struct {
             unreachable;
         }
 
-        zgui.io.addFontFromFile(content_dir ++ font_name ++ "\x00", font_size);
+        if (font_name.len > 1) {
+            _ = zgui.io.addFontFromFile(content_dir ++ font_name ++ "\x00", font_size);
+        }
 
         if (!ImGui_ImplWGPU_Init(
             device,

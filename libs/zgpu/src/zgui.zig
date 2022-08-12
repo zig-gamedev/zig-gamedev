@@ -5,33 +5,42 @@
 const std = @import("std");
 const assert = std.debug.assert;
 //--------------------------------------------------------------------------------------------------
-pub fn init() void {
-    assert(getCurrentContext() == null);
-    temp_buffer.resize(3 * 1024 + 1) catch unreachable;
-    _ = createContext(null);
-}
-pub fn deinit() void {
-    assert(getCurrentContext() != null);
-    destroyContext(null);
-    temp_buffer.deinit();
-}
-//--------------------------------------------------------------------------------------------------
 pub const f32_min: f32 = 1.17549435082228750796873653722225e-38;
 pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
 //--------------------------------------------------------------------------------------------------
-/// `fn createContext(shared_font_atlas: ?*const anyopaque) Context`
-const createContext = zguiCreateContext;
+pub fn init() void {
+    if (getCurrentContext() == null) {
+        _ = zguiCreateContext(null);
+        temp_buffer.resize(3 * 1024 + 1) catch unreachable;
+    }
+}
 extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
 
-/// `fn destroyContext(ctx: ?Context) void`
-const destroyContext = zguiDestroyContext;
+pub fn deinit() void {
+    if (getCurrentContext() != null) {
+        temp_buffer.deinit();
+        zguiDestroyContext(null);
+    }
+}
 extern fn zguiDestroyContext(ctx: ?Context) void;
 
-/// `fn getCurrentContext() ?Context`
 const getCurrentContext = zguiGetCurrentContext;
 extern fn zguiGetCurrentContext() ?Context;
 //--------------------------------------------------------------------------------------------------
 pub const io = struct {
+    pub fn addFontFromFile(filename: [:0]const u8, size_pixels: f32) Font {
+        return zguiIoAddFontFromFile(filename, size_pixels);
+    }
+    extern fn zguiIoAddFontFromFile(filename: [*:0]const u8, size_pixels: f32) Font;
+
+    /// `pub fn getFont(index: u32) Font`
+    pub const getFont = zguiIoGetFont;
+    extern fn zguiIoGetFont(index: u32) Font;
+
+    /// `pub fn setDefaultFont(font: Font) void`
+    pub const setDefaultFont = zguiIoSetDefaultFont;
+    extern fn zguiIoSetDefaultFont(font: Font) void;
+
     /// `pub fn zguiIoGetWantCaptureMouse() bool`
     pub const getWantCaptureMouse = zguiIoGetWantCaptureMouse;
     extern fn zguiIoGetWantCaptureMouse() bool;
@@ -39,11 +48,6 @@ pub const io = struct {
     /// `pub fn zguiIoGetWantCaptureKeyboard() bool`
     pub const getWantCaptureKeyboard = zguiIoGetWantCaptureKeyboard;
     extern fn zguiIoGetWantCaptureKeyboard() bool;
-
-    pub fn addFontFromFile(filename: [:0]const u8, size_pixels: f32) void {
-        zguiIoAddFontFromFile(filename, size_pixels);
-    }
-    extern fn zguiIoAddFontFromFile(filename: [*:0]const u8, size_pixels: f32) void;
 
     pub fn setIniFilename(filename: [:0]const u8) void {
         zguiIoSetIniFilename(filename);
@@ -61,6 +65,7 @@ pub const io = struct {
 //--------------------------------------------------------------------------------------------------
 const Context = *opaque {};
 pub const DrawData = *opaque {};
+pub const Font = *opaque {};
 pub const Ident = u32;
 pub const TextureIdent = *anyopaque;
 //--------------------------------------------------------------------------------------------------
@@ -520,9 +525,18 @@ extern fn zguiPushItemWidth(item_width: f32) void;
 extern fn zguiPopItemWidth() void;
 extern fn zguiSetNextItemWidth(item_width: f32) void;
 //--------------------------------------------------------------------------------------------------
+/// `pub fn getFont() Font'
+pub const getFont = zguiGetFont;
+extern fn zguiGetFont() Font;
 /// `pub fn getFontSize() f32'
 pub const getFontSize = zguiGetFontSize;
 extern fn zguiGetFontSize() f32;
+/// `void pushFont(font: Font) void`
+pub const pushFont = zguiPushFont;
+extern fn zguiPushFont(font: Font) void;
+/// `void popFont() void`
+pub const popFont = zguiPopFont;
+extern fn zguiPopFont() void;
 //--------------------------------------------------------------------------------------------------
 const BeginDisabled = struct {
     disabled: bool = true,

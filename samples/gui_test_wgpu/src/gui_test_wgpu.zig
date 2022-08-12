@@ -13,6 +13,8 @@ const window_title = "zig-gamedev: gui test (wgpu)";
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
     texture_view: zgpu.TextureViewHandle,
+    font_25px: zgui.Font,
+    font_40px: zgui.Font,
 };
 
 fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
@@ -49,16 +51,29 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         image.data,
     );
 
+    zgui.init();
+    const font_40px = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 40.0);
+    const font_25px = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 25.0);
+    assert(zgui.io.getFont(0) == font_40px);
+    assert(zgui.io.getFont(1) == font_25px);
+    zgui.io.setDefaultFont(font_25px);
+
+    zgpu.gui.init(window, gctx.device, content_dir, "", 0);
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,
         .texture_view = texture_view,
+        .font_25px = font_25px,
+        .font_40px = font_40px,
     };
 
     return demo;
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
+    zgpu.gui.deinit();
+    zgui.deinit();
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
 }
@@ -86,6 +101,7 @@ fn update(demo: *DemoState) !void {
         .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
     );
 
+    zgui.pushFont(demo.font_40px);
     zgui.separator();
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "zgui -");
@@ -95,6 +111,7 @@ fn update(demo: *DemoState) !void {
         "named parameters and Zig style text formatting.", .{});
     zgui.dummy(.{ .w = -1.0, .h = 20.0 });
     zgui.separator();
+    zgui.popFont();
 
     if (zgui.collapsingHeader("Widgets: Main", .{})) {
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Button");
@@ -422,9 +439,6 @@ pub fn main() !void {
 
     const demo = try init(allocator, window);
     defer deinit(allocator, demo);
-
-    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 25.0);
-    defer zgpu.gui.deinit();
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();
