@@ -1837,8 +1837,11 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
     };
 
     // NOTE: `func` is a var because making it const causes a compile error which I believe is a compiler bug.
-    var func = @ptrCast(FnType, objc.objc_msgSend);
-    const sel = objc.sel_getUid(sel_name);
+    var func = @ptrCast(
+        FnType,
+        if (@import("builtin").zig_backend == .stage1) objc.objc_msgSend else &objc.objc_msgSend,
+    );
+    const sel = objc.sel_getUid(sel_name.ptr);
 
     return @call(.{}, func, .{ obj, sel } ++ args);
 }
