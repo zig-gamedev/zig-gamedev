@@ -1794,7 +1794,7 @@ fn createSurface(instance: wgpu.Instance, descriptor: SurfaceDescriptor) wgpu.Su
 fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnType: type) ReturnType {
     const args_meta = @typeInfo(@TypeOf(args)).Struct.fields;
 
-    const FnType = switch (args_meta.len) {
+    const FnType = if (@import("builtin").zig_backend == .stage1) switch (args_meta.len) {
         0 => fn (@TypeOf(obj), objc.SEL) callconv(.C) ReturnType,
         1 => fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type) callconv(.C) ReturnType,
         2 => fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type, args_meta[1].field_type) callconv(.C) ReturnType,
@@ -1806,6 +1806,26 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
             args_meta[2].field_type,
         ) callconv(.C) ReturnType,
         4 => fn (
+            @TypeOf(obj),
+            objc.SEL,
+            args_meta[0].field_type,
+            args_meta[1].field_type,
+            args_meta[2].field_type,
+            args_meta[3].field_type,
+        ) callconv(.C) ReturnType,
+        else => @compileError("[zgpu] Unsupported number of args"),
+    } else switch (args_meta.len) {
+        0 => *const fn (@TypeOf(obj), objc.SEL) callconv(.C) ReturnType,
+        1 => *const fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type) callconv(.C) ReturnType,
+        2 => *const fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type, args_meta[1].field_type) callconv(.C) ReturnType,
+        3 => *const fn (
+            @TypeOf(obj),
+            objc.SEL,
+            args_meta[0].field_type,
+            args_meta[1].field_type,
+            args_meta[2].field_type,
+        ) callconv(.C) ReturnType,
+        4 => *const fn (
             @TypeOf(obj),
             objc.SEL,
             args_meta[0].field_type,
