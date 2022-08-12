@@ -52,9 +52,12 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     );
 
     zgui.init();
-    const scale_factor = (try window.getContentScale()).x_scale;
+    const scale_factor = scale_factor: {
+        const cs = try window.getContentScale();
+        break :scale_factor math.max(cs.x_scale, cs.y_scale);
+    };
     const font_size = 16.0 * scale_factor;
-    const font_large = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size * 1.25);
+    const font_large = zgui.io.addFontFromFile(content_dir ++ "FiraCode-Medium.ttf", font_size * 1.1);
     const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
     assert(zgui.io.getFont(0) == font_large);
     assert(zgui.io.getFont(1) == font_normal);
