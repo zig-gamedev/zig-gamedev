@@ -1,6 +1,13 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
+// To update submodules do:
+//
+// 1. Edit .gitmodules (update Dawn branch)
+// 2. git submodule update --remote --recursive
+// 3. git add .
+// 4. git commit -m "update submodules"
+
 pub fn build(b: *std.build.Builder) void {
     var options = Options{
         .build_mode = b.standardReleaseOptions(),
