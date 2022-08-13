@@ -551,8 +551,8 @@ pub inline fn setIcon(self: Window, allocator: mem.Allocator, images: ?[]Image) 
 }
 
 pub const Pos = struct {
-    x: i64,
-    y: i64,
+    x: u32,
+    y: u32,
 };
 
 /// Retrieves the position of the content area of the specified window.
@@ -578,7 +578,7 @@ pub inline fn getPos(self: Window) error{FeatureUnavailable}!Pos {
         Error.FeatureUnavailable => |e| e,
         else => unreachable,
     };
-    return Pos{ .x = @intCast(i64, x), .y = @intCast(i64, y) };
+    return Pos{ .x = @intCast(u32, x), .y = @intCast(u32, y) };
 }
 
 /// Sets the position of the content area of the specified window.
@@ -1197,7 +1197,7 @@ pub inline fn getMonitor(self: Window) ?Monitor {
 /// @thread_safety This function must only be called from the main thread.
 ///
 /// see also: window_monitor, window_full_screen, glfw.Window.getMonitor, glfw.Window.setSize
-pub inline fn setMonitor(self: Window, monitor: ?Monitor, xpos: i32, ypos: i32, width: u32, height: u32, refresh_rate: ?u32) error{PlatformError}!void {
+pub inline fn setMonitor(self: Window, monitor: ?Monitor, xpos: u32, ypos: u32, width: u32, height: u32, refresh_rate: ?u32) error{PlatformError}!void {
     internal_debug.assertInitialized();
     c.glfwSetWindowMonitor(
         self.handle,
