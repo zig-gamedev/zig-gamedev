@@ -46,15 +46,15 @@ pub const Options = struct {
 
     /// The Linux x86-64 SDK repository name.
     linux_x86_64: []const u8 = "sdk-linux-x86_64",
-    linux_x86_64_revision: []const u8 = "baace69c969b7577fbcd2dda2d4e139fb3a7bdf7",
+    linux_x86_64_revision: []const u8 = "1c2ea7f968bff3fbe4ddb0b605eef6b626e181ea",
 
     /// The Linux aarch64 SDK repository name.
     linux_aarch64: []const u8 = "sdk-linux-aarch64",
-    linux_aarch64_revision: []const u8 = "8f6ddaf6cc25df02925ef78448d512c3184abc63",
+    linux_aarch64_revision: []const u8 = "dbb05673a01050a937cbc8ad47a407111cac146c",
 
     /// The Windows x86-64 SDK repository name.
     windows_x86_64: []const u8 = "sdk-windows-x86_64",
-    windows_x86_64_revision: []const u8 = "5acba990efd112ea0ced364f0428e6ef6e7a5541",
+    windows_x86_64_revision: []const u8 = "13dcda7fe3f1aec0fc6130527226ad7ae0f4b792",
 
     /// If true, the Builder.sysroot will set to the SDK path. This has the drawback of preventing
     /// you from including headers, libraries, etc. from outside the SDK generally. However, it can
@@ -80,7 +80,7 @@ fn includeSdkMacOS(b: *Builder, step: *std.build.LibExeObjStep, options: Options
     const mac_12 = target.os.version_range.semver.isAtLeast(.{ .major = 12, .minor = 0 }) orelse false;
     const sdk_name = if (mac_12) options.macos_sdk_12 else options.macos_sdk_11;
     const sdk_revision = if (mac_12) options.macos_sdk_12_revision else options.macos_sdk_11_revision;
-    const sdk_root_dir = getSdkRoot(b.allocator, options.github_org, sdk_name, sdk_revision) catch unreachable;
+    const sdk_root_dir = getSdkRoot(b.allocator, step, options.github_org, sdk_name, sdk_revision) catch unreachable;
 
     if (options.set_sysroot) {
         step.addFrameworkDir("/System/Library/Frameworks");
@@ -103,7 +103,7 @@ fn includeSdkMacOS(b: *Builder, step: *std.build.LibExeObjStep, options: Options
 }
 
 fn includeSdkLinuxX8664(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void {
-    const sdk_root_dir = getSdkRoot(b.allocator, options.github_org, options.linux_x86_64, options.linux_x86_64_revision) catch unreachable;
+    const sdk_root_dir = getSdkRoot(b.allocator, step, options.github_org, options.linux_x86_64, options.linux_x86_64_revision) catch unreachable;
 
     if (options.set_sysroot) {
         var sdk_sysroot = std.fs.path.join(b.allocator, &.{ sdk_root_dir, "root/" }) catch unreachable;
@@ -125,7 +125,7 @@ fn includeSdkLinuxX8664(b: *Builder, step: *std.build.LibExeObjStep, options: Op
 }
 
 fn includeSdkLinuxAarch64(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void {
-    const sdk_root_dir = getSdkRoot(b.allocator, options.github_org, options.linux_aarch64, options.linux_aarch64_revision) catch unreachable;
+    const sdk_root_dir = getSdkRoot(b.allocator, step, options.github_org, options.linux_aarch64, options.linux_aarch64_revision) catch unreachable;
 
     if (options.set_sysroot) {
         var sdk_sysroot = std.fs.path.join(b.allocator, &.{ sdk_root_dir, "root/" }) catch unreachable;
@@ -147,7 +147,7 @@ fn includeSdkLinuxAarch64(b: *Builder, step: *std.build.LibExeObjStep, options: 
 }
 
 fn includeSdkWindowsX8664(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void {
-    const sdk_root_dir = getSdkRoot(b.allocator, options.github_org, options.windows_x86_64, options.windows_x86_64_revision) catch unreachable;
+    const sdk_root_dir = getSdkRoot(b.allocator, step, options.github_org, options.windows_x86_64, options.windows_x86_64_revision) catch unreachable;
 
     if (options.set_sysroot) {
         // We have no sysroot for Windows, but we still set one to prevent inclusion of other system
@@ -167,16 +167,22 @@ fn includeSdkWindowsX8664(b: *Builder, step: *std.build.LibExeObjStep, options: 
     step.addLibPath(sdk_libs);
 }
 
-var cached_sdk_root: ?[]const u8 = null;
+var cached_sdk_roots: ?std.AutoHashMap(*std.build.LibExeObjStep, []const u8) = null;
 
 /// returns the SDK root path, determining it iff necessary. In a real application, this may be
 /// tens or hundreds of times and so the result is cached in-memory (this also means the result
 /// cannot be freed until the result will never be used again, which is fine as the Zig build system
 /// Builder.allocator is an arena, you don't need to free.)
-fn getSdkRoot(allocator: std.mem.Allocator, org: []const u8, name: []const u8, revision: []const u8) ![]const u8 {
-    if (cached_sdk_root) |cached| return cached;
-    cached_sdk_root = try determineSdkRoot(allocator, org, name, revision);
-    return cached_sdk_root.?;
+fn getSdkRoot(allocator: std.mem.Allocator, step: *std.build.LibExeObjStep, org: []const u8, name: []const u8, revision: []const u8) ![]const u8 {
+    if (cached_sdk_roots == null) {
+        cached_sdk_roots = std.AutoHashMap(*std.build.LibExeObjStep, []const u8).init(allocator);
+    }
+
+    var entry = try cached_sdk_roots.?.getOrPut(step);
+    if (entry.found_existing) return entry.value_ptr.*;
+    const sdk_root = try determineSdkRoot(allocator, org, name, revision);
+    entry.value_ptr.* = sdk_root;
+    return sdk_root;
 }
 
 fn determineSdkRoot(allocator: std.mem.Allocator, org: []const u8, name: []const u8, revision: []const u8) ![]const u8 {
