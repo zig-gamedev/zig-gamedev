@@ -69,7 +69,11 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     const style = zgui.getStyle();
     style.window_border_size = 8.0;
     style.scrollbar_size = 6.0;
-    style.colors[@enumToInt(zgui.StyleCol.scrollbar_grab)] = .{ 0.8, 0.65, 0.1, 1 };
+    {
+        var color = style.getColor(.scrollbar_grab);
+        color[1] = 0.8;
+        style.setColor(.scrollbar_grab, color);
+    }
     style.scaleAllSizes(scale_factor);
 
     const demo = try allocator.create(DemoState);

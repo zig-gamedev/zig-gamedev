@@ -438,6 +438,13 @@ pub const Style = extern struct {
     /// `pub fn scaleAllSizes(style: *Style, scale_factor: f32) void`
     pub const scaleAllSizes = zguiStyleScaleAllSizes;
     extern fn zguiStyleScaleAllSizes(style: *Style, scale_factor: f32) void;
+
+    pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
+        return style.colors[@enumToInt(idx)];
+    }
+    pub fn setColor(style: *Style, idx: StyleCol, color: [4]f32) void {
+        style.colors[@enumToInt(idx)] = color;
+    }
 };
 /// `pub fn getStyle() *Style`
 pub const getStyle = zguiGetStyle;
