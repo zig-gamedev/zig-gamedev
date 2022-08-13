@@ -62,11 +62,17 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
     assert(zgui.io.getFont(0) == font_large);
     assert(zgui.io.getFont(1) == font_normal);
 
+    // This needs to be called *after* adding your custom fonts. Empty font name ("") means that you have added fonts yourself.
     zgpu.gui.init(window, gctx.device, content_dir, "", 0);
 
+    // This call is optional. Initially, zgui.io.getFont(0) is a default font.
     zgui.io.setDefaultFont(font_normal);
 
+    // You can directly manipulate zgui.Style *before* `newFrame()` call.
+    // Once frame is started (after `newFrame()` call) you have to use
+    // zgui.pushStyleColor*()/zgui.pushStyleVar*() functions.
     const style = zgui.getStyle();
+    style.window_min_size = .{ 300.0, 200.0 };
     style.window_border_size = 8.0;
     style.scrollbar_size = 6.0;
     {
@@ -75,6 +81,9 @@ fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
         style.setColor(.scrollbar_grab, color);
     }
     style.scaleAllSizes(scale_factor);
+
+    // To reset zgui.Style with default values:
+    //zgui.getStyle().* = zgui.Style.init();
 
     const demo = try allocator.create(DemoState);
     demo.* = .{
