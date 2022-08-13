@@ -11,30 +11,15 @@ pub fn build(b: *Builder) void {
         .from_source = b.option(bool, "dawn-from-source", "Build Dawn from source") orelse false,
     };
 
-    const lib = b.addStaticLibrary("gpu", "src/main.zig");
-    lib.setBuildMode(mode);
-    lib.setTarget(target);
-    lib.install();
-    link(b, lib, options);
-
-    const main_tests = b.addTest("src/main.zig");
-    main_tests.setBuildMode(mode);
-
-    const test_step = b.step("test", "Run library tests");
-    test_step.dependOn(&main_tests.step);
-
-    const dawn_example = b.addExecutable("dawn-example", "src/dawn/hello_triangle.zig");
-    dawn_example.setBuildMode(mode);
-    dawn_example.setTarget(target);
-    link(b, dawn_example, options);
-    glfw.link(b, dawn_example, .{ .system_sdk = .{ .set_sysroot = false } });
-    dawn_example.addPackagePath("glfw", "../mach-glfw/src/main.zig");
-    dawn_example.install();
-
-    const dawn_example_run_cmd = dawn_example.run();
-    dawn_example_run_cmd.step.dependOn(b.getInstallStep());
-    const dawn_example_run_step = b.step("run-dawn-example", "Run the dawn example");
-    dawn_example_run_step.dependOn(&dawn_example_run_cmd.step);
+    // Just to demonstrate/test linking. This is not a functional example, see the mach/gpu examples
+    // or Dawn C++ examples for functional example code.
+    const example = b.addExecutable("dawn-example", "src/main.zig");
+    example.setBuildMode(mode);
+    example.setTarget(target);
+    link(b, example, options);
+    glfw.link(b, example, .{ .system_sdk = .{ .set_sysroot = false } });
+    example.addPackage(glfw.pkg);
+    example.install();
 }
 
 pub const LinuxWindowManager = enum {
@@ -68,7 +53,7 @@ pub const Options = struct {
     /// specific, -g0 will be used (no debug symbols at all) to save an additional ~39M.
     ///
     /// When enabled, a debug build of the static library goes from ~947M to just ~53M.
-    minimal_debug_symbols: bool = false,
+    minimal_debug_symbols: bool = true,
 
     /// Whether or not to produce separate static libraries for each component of Dawn (reduces
     /// iteration times when building from source / testing changes to Dawn source code.)
@@ -78,7 +63,7 @@ pub const Options = struct {
     from_source: bool = false,
 
     /// The binary release version to use from https://github.com/hexops/mach-gpu-dawn/releases
-    binary_version: []const u8 = "release-f90302f",
+    binary_version: []const u8 = "release-777728f",
 
     /// Detects the default options to use for the given target.
     pub fn detectDefaults(self: Options, target: std.Target) Options {
@@ -158,6 +143,7 @@ fn linkFromSource(b: *Builder, step: *std.build.LibExeObjStep, options: Options)
 
     var main_abs = std.fs.path.join(b.allocator, &.{ (comptime thisDir()), "src/dawn/dummy.zig" }) catch unreachable;
     const lib_dawn = b.addStaticLibrary("dawn", main_abs);
+    lib_dawn.install();
     lib_dawn.setBuildMode(step.build_mode);
     lib_dawn.setTarget(step.target);
     lib_dawn.linkLibCpp();
@@ -504,10 +490,6 @@ fn buildLibMachDawnNative(b: *Builder, step: *std.build.LibExeObjStep, options: 
             "-D_DLL",
         }) catch unreachable;
     }
-
-    lib.addCSourceFile(std.fs.path.join(b.allocator, &.{
-        (comptime thisDir()), "src/dawn/dawn_native_mach.cpp",
-    }) catch unreachable, cpp_flags.items);
     return lib;
 }
 
@@ -524,9 +506,16 @@ fn buildLibDawnCommon(b: *Builder, step: *std.build.LibExeObjStep, options: Opti
     };
 
     var flags = std.ArrayList([]const u8).init(b.allocator);
-    flags.append(include("libs/dawn/src")) catch unreachable;
+    flags.appendSlice(&.{
+        include("libs/dawn/src"),
+        include("libs/dawn/out/Debug/gen/include"),
+        include("libs/dawn/out/Debug/gen/src"),
+    }) catch unreachable;
     appendLangScannedSources(b, lib, options, .{
-        .rel_dirs = &.{"libs/dawn/src/dawn/common/"},
+        .rel_dirs = &.{
+            "libs/dawn/src/dawn/common/",
+            "libs/dawn/out/Debug/gen/src/dawn/common/",
+        },
         .flags = flags.items,
         .excluding_contains = &.{
             "test",
@@ -674,6 +663,7 @@ fn buildLibDawnNative(b: *Builder, step: *std.build.LibExeObjStep, options: Opti
             "libs/dawn/out/Debug/gen/src/dawn/",
             "libs/dawn/src/dawn/native/",
             "libs/dawn/src/dawn/native/utils/",
+            "libs/dawn/src/dawn/native/stream/",
         },
         .flags = flags.items,
         .excluding_contains = &.{
@@ -931,12 +921,12 @@ fn buildLibTint(b: *Builder, step: *std.build.LibExeObjStep, options: Options) *
         include("libs/dawn/third_party/vulkan-deps/spirv-headers/src/include"),
         include("libs/dawn/out/Debug/gen/third_party/vulkan-deps/spirv-tools/src"),
         include("libs/dawn/out/Debug/gen/third_party/vulkan-deps/spirv-tools/src/include"),
+        include("libs/dawn/include"),
     }) catch unreachable;
 
     // libtint_core_all_src
     appendLangScannedSources(b, lib, options, .{
         .rel_dirs = &.{
-            "libs/dawn/src/tint/ast/",
             "libs/dawn/src/tint",
             "libs/dawn/src/tint/diagnostic/",
             "libs/dawn/src/tint/inspector/",
@@ -1141,6 +1131,7 @@ fn buildLibAbseilCpp(b: *Builder, step: *std.build.LibExeObjStep, options: Optio
         "-DD3D10_ARBITRARY_HEADER_ORDERING",
         "-D_CRT_SECURE_NO_WARNINGS",
         "-DNOMINMAX",
+        include("src/dawn/zig_mingw_pthread"),
     }) catch unreachable;
 
     // absl
@@ -1387,8 +1378,8 @@ fn include(comptime rel: []const u8) []const u8 {
     return "-I" ++ (comptime thisDir()) ++ "/" ++ rel;
 }
 
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
+fn thisDir() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse ".";
 }
 
 fn appendLangScannedSources(
