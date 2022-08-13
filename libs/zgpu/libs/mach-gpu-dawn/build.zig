@@ -202,10 +202,10 @@ pub fn linkFromBinary(b: *Builder, step: *std.build.LibExeObjStep, options: Opti
         std.process.exit(1);
     }
 
-    // TODO: Always link with release build on Windows due to Dawn bug (UBSAN causes crash).
-    if (@import("builtin").target.os.tag == .windows) {
-        b.is_release = true;
-    }
+    // TODO: Make an option?
+    // Always link with release build for smaller downloads and faster iteration times.
+    // If you want to debug Dawn please build it from source.
+    b.is_release = true;
 
     // Remove OS version range / glibc version from triple (we do not include that in our download
     // URLs.)
@@ -1393,7 +1393,7 @@ fn appendLangScannedSources(
     step: *std.build.LibExeObjStep,
     options: Options,
     args: struct {
-        zero_debug_symbols: bool = true,
+        zero_debug_symbols: bool = false,
         flags: []const []const u8,
         rel_dirs: []const []const u8 = &.{},
         objc: bool = false,
