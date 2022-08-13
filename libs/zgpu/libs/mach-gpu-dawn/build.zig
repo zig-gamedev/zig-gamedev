@@ -205,7 +205,7 @@ pub fn linkFromBinary(b: *Builder, step: *std.build.LibExeObjStep, options: Opti
     // TODO: Make an option?
     // Always link with release build for smaller downloads and faster iteration times.
     // If you want to debug Dawn please build it from source.
-    b.is_release = true;
+    const is_release = true;
 
     // Remove OS version range / glibc version from triple (we do not include that in our download
     // URLs.)
@@ -214,13 +214,13 @@ pub fn linkFromBinary(b: *Builder, step: *std.build.LibExeObjStep, options: Opti
     binary_target.os_version_max = .{ .none = undefined };
     binary_target.glibc_version = null;
     const zig_triple = binary_target.zigTriple(b.allocator) catch unreachable;
-    ensureBinaryDownloaded(b.allocator, zig_triple, b.is_release, target.os.tag == .windows, options.binary_version);
+    ensureBinaryDownloaded(b.allocator, zig_triple, is_release, target.os.tag == .windows, options.binary_version);
 
     const base_cache_dir_rel = std.fs.path.join(b.allocator, &.{ "zig-cache", "mach", "gpu-dawn" }) catch unreachable;
     std.fs.cwd().makePath(base_cache_dir_rel) catch unreachable;
     const base_cache_dir = std.fs.cwd().realpathAlloc(b.allocator, base_cache_dir_rel) catch unreachable;
     const commit_cache_dir = std.fs.path.join(b.allocator, &.{ base_cache_dir, options.binary_version }) catch unreachable;
-    const release_tag = if (b.is_release) "release-fast" else "debug";
+    const release_tag = if (is_release) "release-fast" else "debug";
     const target_cache_dir = std.fs.path.join(b.allocator, &.{ commit_cache_dir, zig_triple, release_tag }) catch unreachable;
     const include_dir = std.fs.path.join(b.allocator, &.{ commit_cache_dir, "include" }) catch unreachable;
 
