@@ -759,6 +759,20 @@ ZGUI_API void zguiLabelText(const char* label, const char* fmt, ...) {
     va_end(args);
 }
 
+ZGUI_API void zguiCalcTextSize(
+    const char* txt,
+    const char* txt_end,
+    bool hide_text_after_double_hash,
+    float wrap_width,
+    float* out_w,
+    float* out_h
+) {
+    assert(out_w && out_h);
+    const ImVec2 s = ImGui::CalcTextSize(txt, txt_end, hide_text_after_double_hash, wrap_width);
+    *out_w = s.x;
+    *out_h = s.y;
+}
+
 ZGUI_API bool zguiButton(const char* label, float x, float y) {
     return ImGui::Button(label, { x, y });
 }

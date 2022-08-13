@@ -810,6 +810,32 @@ pub fn labelText(label: [:0]const u8, comptime fmt: []const u8, args: anytype) v
 }
 extern fn zguiLabelText(label: [*:0]const u8, fmt: [*:0]const u8, ...) void;
 //--------------------------------------------------------------------------------------------------
+const CalcTextSize = struct {
+    hide_text_after_double_hash: bool = false,
+    wrap_width: f32 = -1.0,
+};
+pub fn calcTextSize(txt: []const u8, args: CalcTextSize) [2]f32 {
+    var w: f32 = undefined;
+    var h: f32 = undefined;
+    zguiCalcTextSize(
+        txt.ptr,
+        txt.ptr + txt.len,
+        args.hide_text_after_double_hash,
+        args.wrap_width,
+        &w,
+        &h,
+    );
+    return .{ w, h };
+}
+extern fn zguiCalcTextSize(
+    txt: [*]const u8,
+    txt_end: [*]const u8,
+    hide_text_after_double_hash: bool,
+    wrap_width: f32,
+    out_w: *f32,
+    out_h: *f32,
+) void;
+//--------------------------------------------------------------------------------------------------
 //
 // Widgets: Main
 //
