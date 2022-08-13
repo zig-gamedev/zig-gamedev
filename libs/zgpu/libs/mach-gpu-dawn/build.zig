@@ -615,6 +615,7 @@ const dawn_d3d12_flags = &[_][]const u8{
     "-DWIN32_LEAN_AND_MEAN",
     "-DD3D10_ARBITRARY_HEADER_ORDERING",
     "-DNOMINMAX",
+    "-fno-sanitize=undefined",
 };
 
 // Builds dawn native sources; derived from src/dawn/native/BUILD.gn
