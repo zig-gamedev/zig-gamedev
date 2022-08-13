@@ -202,6 +202,11 @@ pub fn linkFromBinary(b: *Builder, step: *std.build.LibExeObjStep, options: Opti
         std.process.exit(1);
     }
 
+    // TODO: Always link with release build on Windows due to Dawn bug (UBSAN causes crash).
+    if (@import("builtin").target.os.tag == .windows) {
+        b.is_release = true;
+    }
+
     // Remove OS version range / glibc version from triple (we do not include that in our download
     // URLs.)
     var binary_target = std.zig.CrossTarget.fromTarget(target);
@@ -1388,7 +1393,7 @@ fn appendLangScannedSources(
     step: *std.build.LibExeObjStep,
     options: Options,
     args: struct {
-        zero_debug_symbols: bool = false,
+        zero_debug_symbols: bool = true,
         flags: []const []const u8,
         rel_dirs: []const []const u8 = &.{},
         objc: bool = false,

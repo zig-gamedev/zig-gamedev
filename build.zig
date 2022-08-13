@@ -21,10 +21,6 @@ pub fn build(b: *std.build.Builder) void {
         "Build Dawn (wgpu implementation) from source",
     ) orelse false;
 
-    if (@import("builtin").target.os.tag == .windows) {
-        options.zgpu_dawn_from_source = true;
-    }
-
     if (options.zgpu_dawn_from_source) {
         ensureSubmodules(b.allocator) catch |err| @panic(@errorName(err));
     }
