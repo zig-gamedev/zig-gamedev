@@ -94,11 +94,8 @@ fn buildLibrary(b: *Builder, step: *std.build.LibExeObjStep, options: Options) *
 }
 
 fn addGLFWIncludes(step: *std.build.LibExeObjStep) void {
-    const include_dir = thisDir() ++ "/upstream/glfw/include";
-    step.addIncludeDir(include_dir);
-
-    const vulkan_include_dir = thisDir() ++ "/upstream/vulkan_headers/include";
-    step.addIncludeDir(vulkan_include_dir);
+    step.addIncludeDir(thisDir() ++ "/upstream/glfw/include");
+    step.addIncludeDir(thisDir() ++ "/upstream/vulkan_headers/include");
 }
 
 fn addGLFWSources(b: *Builder, step: *std.build.LibExeObjStep, lib: *std.build.LibExeObjStep, options: Options) void {
