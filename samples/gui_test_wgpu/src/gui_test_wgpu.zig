@@ -5,7 +5,6 @@ const glfw = @import("glfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
-const zmath = @import("zmath");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: gui test (wgpu)";

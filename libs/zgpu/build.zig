@@ -39,17 +39,19 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
 
     glfw.link(exe.builder, exe, bos.options.glfw);
     gpu_dawn.link(exe.builder, exe, bos.options.dawn);
-    exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
+
     exe.addIncludeDir(thisDir() ++ "/src");
+    exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
 
     if (bos.options.use_imgui) {
+        exe.addCSourceFile(thisDir() ++ "/src/zgui.cpp", &.{""});
+
         exe.addIncludeDir(thisDir() ++ "/libs");
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/zgui.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
     }
