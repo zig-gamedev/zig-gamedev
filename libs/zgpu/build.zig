@@ -39,7 +39,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
 
     glfw.link(exe.builder, exe, bos.options.glfw);
     gpu_dawn.link(exe.builder, exe, bos.options.dawn);
-    exe.addCSourceFile(thisDir() ++ "/src/dawn_native_mach.cpp", &.{"-std=c++17"});
+    exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
     exe.addIncludeDir(thisDir() ++ "/src");
 
     if (bos.options.use_imgui) {

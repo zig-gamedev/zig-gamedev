@@ -12,7 +12,7 @@ const assert = std.debug.assert;
 const glfw = @import("glfw");
 const c = @cImport({
     @cInclude("dawn/dawn_proc.h");
-    @cInclude("dawn_native_mach.h");
+    @cInclude("dawn.h");
 });
 const objc = @cImport({
     @cInclude("objc/message.h");
@@ -994,13 +994,13 @@ pub const GraphicsContext = struct {
 };
 
 pub fn createWgpuInstance() wgpu.Instance {
-    c.dawnProcSetProcs(c.machDawnNativeGetProcs());
-    const dawn_instance = c.machDawnNativeInstance_init();
-    c.machDawnNativeInstance_discoverDefaultAdapters(dawn_instance);
+    c.dawnProcSetProcs(c.dawnNativeGetProcs());
+    const native_instance = c.dawnNativeCreateInstance();
+    c.dawnNativeDiscoverDefaultAdapters(native_instance);
 
     const instance = @ptrCast(
         wgpu.Instance,
-        @alignCast(@sizeOf(usize), c.machDawnNativeInstance_get(dawn_instance).?),
+        @alignCast(@sizeOf(usize), c.dawnNativeGetWgpuInstance(native_instance).?),
     );
     return instance;
 }
@@ -1905,17 +1905,7 @@ fn formatToShaderFormat(format: wgpu.TextureFormat) []const u8 {
 const expect = std.testing.expect;
 
 test "zgpu.wgpu.init" {
-    c.dawnProcSetProcs(c.machDawnNativeGetProcs());
-
-    const dawn_instance = c.machDawnNativeInstance_init();
-    defer c.machDawnNativeInstance_deinit(dawn_instance);
-
-    c.machDawnNativeInstance_discoverDefaultAdapters(dawn_instance);
-
-    const instance = @ptrCast(
-        wgpu.Instance,
-        @alignCast(@sizeOf(usize), c.machDawnNativeInstance_get(dawn_instance).?),
-    );
+    const instance = createWgpuInstance();
     instance.reference();
     instance.release();
 
