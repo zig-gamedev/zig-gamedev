@@ -910,7 +910,7 @@ fn precomputeImageLighting(
         const num_groups = @divExact(brdf_integration_tex_resolution, 8);
         pass.setPipeline(gctx.lookupResource(demo.precompute_brdf_integration_tex_pipe).?);
         pass.setBindGroup(0, gctx.lookupResource(bg).?, null);
-        pass.dispatch(num_groups, num_groups, 1);
+        pass.dispatchWorkgroups(num_groups, num_groups, 1);
     }
 
     demo.is_lighting_precomputed = true;

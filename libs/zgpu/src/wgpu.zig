@@ -18,6 +18,7 @@ pub const AddressMode = enum(u32) {
 pub const AlphaMode = enum(u32) {
     premultiplied = 0x00000000,
     unpremultiplied = 0x00000001,
+    opaq = 0x00000002,
 };
 
 pub const BackendType = enum(u32) {
@@ -148,6 +149,7 @@ pub const FeatureName = enum(u32) {
     dawn_internal_usages = 0x000003EA,
     dawn_multi_planar_formats = 0x000003EB,
     dawn_native = 0x000003EC,
+    chromium_experimental_dp4a = 0x000003ED,
 };
 
 pub const FilterMode = enum(u32) {
@@ -191,11 +193,6 @@ pub const PowerPreference = enum(u32) {
     undef = 0x00000000,
     low_power = 0x00000001,
     high_performance = 0x00000002,
-};
-
-pub const PredefinedColorSpace = enum(u32) {
-    undef = 0x00000000,
-    srgb = 0x00000001,
 };
 
 pub const PresentMode = enum(u32) {
@@ -502,6 +499,7 @@ pub const VertexFormat = enum(u32) {
 pub const VertexStepMode = enum(u32) {
     vertex = 0x00000000,
     instance = 0x00000001,
+    vertex_buffer_not_used = 0x00000002,
 };
 
 pub const BufferUsage = packed struct {
@@ -769,7 +767,11 @@ pub const ExternalTextureDescriptor = extern struct {
     label: ?[*:0]const u8 = null,
     plane0: TextureView,
     plane1: TextureView,
-    color_space: PredefinedColorSpace,
+    do_yuv_to_rgb_conversion_only: bool,
+    yuv_to_rgb_conversion_matrix: ?[*]const f32,
+    src_transfer_function_parameters: [*]const f32,
+    dst_transfer_function_parameters: [*]const f32,
+    gamut_conversion_matrix: [*]const f32,
 };
 
 pub const PipelineLayoutDescriptor = extern struct {
@@ -1123,6 +1125,7 @@ pub const CopyTextureForBrowserOptions = extern struct {
     conversion_matrix: ?[*]const f32,
     dst_transfer_function_parameters: ?[*]const f32,
     dst_alpha_mode: AlphaMode,
+    internal_usage: bool,
 };
 
 pub const TextureViewDescriptor = extern struct {
@@ -1639,34 +1642,34 @@ pub const CommandEncoder = *opaque {
 };
 
 pub const ComputePassEncoder = *opaque {
-    pub inline fn dispatch(
+    pub inline fn dispatchWorkgroups(
         compute_pass_encoder: ComputePassEncoder,
         workgroup_count_x: u32,
         workgroup_count_y: u32,
         workgroup_count_z: u32,
     ) void {
-        wgpuComputePassEncoderDispatch(
+        wgpuComputePassEncoderDispatchWorkgroups(
             compute_pass_encoder,
             workgroup_count_x,
             workgroup_count_y,
             workgroup_count_z,
         );
     }
-    extern fn wgpuComputePassEncoderDispatch(
+    extern fn wgpuComputePassEncoderDispatchWorkgroups(
         compute_pass_encoder: ComputePassEncoder,
         workgroup_count_x: u32,
         workgroup_count_y: u32,
         workgroup_count_z: u32,
     ) void;
 
-    pub inline fn dispatchIndirect(
+    pub inline fn dispatchWorkgroupsIndirect(
         compute_pass_encoder: ComputePassEncoder,
         indirect_buffer: Buffer,
         indirect_offset: u64,
     ) void {
-        wgpuComputePassEncoderDispatchIndirect(compute_pass_encoder, indirect_buffer, indirect_offset);
+        wgpuComputePassEncoderDispatchWorkgroupsIndirect(compute_pass_encoder, indirect_buffer, indirect_offset);
     }
-    extern fn wgpuComputePassEncoderDispatchIndirect(
+    extern fn wgpuComputePassEncoderDispatchWorkgroupsIndirect(
         compute_pass_encoder: ComputePassEncoder,
         indirect_buffer: Buffer,
         indirect_offset: u64,
@@ -1676,11 +1679,6 @@ pub const ComputePassEncoder = *opaque {
         wgpuComputePassEncoderEnd(compute_pass_encoder);
     }
     extern fn wgpuComputePassEncoderEnd(compute_pass_encoder: ComputePassEncoder) void;
-
-    pub inline fn endPass(compute_pass_encoder: ComputePassEncoder) void {
-        wgpuComputePassEncoderEndPass(compute_pass_encoder);
-    }
-    extern fn wgpuComputePassEncoderEndPass(compute_pass_encoder: ComputePassEncoder) void;
 
     pub inline fn insertDebugMarker(compute_pass_encoder: ComputePassEncoder, marker_label: [*:0]const u8) void {
         wgpuComputePassEncoderInsertDebugMarker(compute_pass_encoder, marker_label);
@@ -2503,11 +2501,6 @@ pub const RenderPassEncoder = *opaque {
         wgpuRenderPassEncoderEndOcclusionQuery(render_pass_encoder);
     }
     extern fn wgpuRenderPassEncoderEndOcclusionQuery(render_pass_encoder: RenderPassEncoder) void;
-
-    pub inline fn endPass(render_pass_encoder: RenderPassEncoder) void {
-        wgpuRenderPassEncoderEndPass(render_pass_encoder);
-    }
-    extern fn wgpuRenderPassEncoderEndPass(render_pass_encoder: RenderPassEncoder) void;
 
     pub inline fn executeBundles(
         render_pass_encoder: RenderPassEncoder,

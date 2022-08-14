@@ -953,7 +953,7 @@ pub const GraphicsContext = struct {
                     };
                     pass.setBindGroup(0, gctx.lookupResource(bind_group).?, &.{mem.offset});
 
-                    pass.dispatch(
+                    pass.dispatchWorkgroups(
                         math.max(texture_info.size.width >> @intCast(u5, 3 + current_src_mip_level), 1),
                         math.max(texture_info.size.height >> @intCast(u5, 3 + current_src_mip_level), 1),
                         1,
