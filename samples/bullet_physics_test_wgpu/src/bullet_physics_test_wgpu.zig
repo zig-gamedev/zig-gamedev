@@ -296,21 +296,24 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
-
     const dt = demo.gctx.stats.delta_time;
     _ = demo.physics.world.stepSimulation(dt, .{});
 
+    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+
+    zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .always });
+    zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .always });
+
     if (zgui.begin("Demo Settings", .{ .flags = .{ .no_move = true, .no_resize = true } })) {
         zgui.bulletText(
-            "Average :  {d:.3} ms/frame ({d:.1} fps)",
+            "Average : {d:.3} ms/frame ({d:.1} fps)",
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
-        zgui.bulletText("Left Mouse Button + drag :  pick up and move object", .{});
-        zgui.bulletText("Right Mouse Button + drag :  rotate camera", .{});
-        zgui.bulletText("W, A, S, D :  move camera", .{});
-        zgui.bulletText("Space :  shoot", .{});
-        zgui.bulletText("Number of objects :  {}", .{demo.physics.world.getNumBodies()});
+        zgui.bulletText("LMB + drag : pick up and move object", .{});
+        zgui.bulletText("RMB + drag : rotate camera", .{});
+        zgui.bulletText("W, A, S, D : move camera", .{});
+        zgui.bulletText("Space : shoot", .{});
+        zgui.bulletText("Number of objects : {}", .{demo.physics.world.getNumBodies()});
         // Scene selection.
         {
             zgui.spacing();
@@ -1345,8 +1348,15 @@ pub fn main() !void {
     const demo = try init(allocator, window);
     defer deinit(allocator, demo);
 
-    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 25.0);
+    const scale_factor = scale_factor: {
+        const cs = try window.getContentScale();
+        break :scale_factor math.max(cs.x_scale, cs.y_scale);
+    };
+
+    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
     defer zgpu.gui.deinit();
+
+    zgui.getStyle().scaleAllSizes(scale_factor);
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();

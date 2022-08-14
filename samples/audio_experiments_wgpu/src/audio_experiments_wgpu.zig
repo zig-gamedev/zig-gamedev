@@ -465,33 +465,34 @@ fn update(demo: *DemoState) !void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
     const win_offset: f32 = 10.0;
-    const win_width: f32 = 450.0;
     var win_y: f32 = 10.0;
+    var win_width: f32 = 0.0;
     zgui.setNextWindowPos(.{ .x = win_offset, .y = win_y });
-    zgui.setNextWindowSize(.{ .w = win_width, .h = -1.0 });
+    zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0 });
 
     if (zgui.begin(
         "Info",
-        .{ .flags = .{ .no_move = true, .no_resize = true, .no_collapse = true } },
+        .{ .flags = .{ .no_move = true, .no_resize = true } },
     )) {
         zgui.bullet();
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Average :");
         zgui.sameLine(.{});
         zgui.text(
-            " {d:.3} ms/frame ({d:.1} fps)",
+            "{d:.3} ms/frame ({d:.1} fps)",
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
 
         zgui.bullet();
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "RMB + drag :");
         zgui.sameLine(.{});
-        zgui.textUnformatted(" rotate camera");
+        zgui.textUnformatted("rotate camera");
 
         zgui.bullet();
         zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "W, A, S, D :");
         zgui.sameLine(.{});
-        zgui.textUnformatted(" move camera");
+        zgui.textUnformatted("move camera");
     }
+    win_width = zgui.getWindowWidth();
     win_y += zgui.getWindowHeight() + win_offset;
     zgui.end();
 
@@ -500,7 +501,7 @@ fn update(demo: *DemoState) !void {
 
     if (zgui.begin(
         "Data Sources",
-        .{ .flags = .{ .no_move = true, .no_resize = true, .no_collapse = true } },
+        .{ .flags = .{ .no_move = true, .no_resize = true } },
     )) {
         zgui.textUnformatted("Music:");
         const music_is_playing = demo.music.isPlaying();
@@ -626,7 +627,7 @@ fn update(demo: *DemoState) !void {
     zgui.setNextWindowSize(.{ .w = win_width, .h = -1.0 });
 
     if (zgui.begin("Audio Filter", .{
-        .flags = .{ .no_move = true, .no_resize = true, .no_collapse = true },
+        .flags = .{ .no_move = true, .no_resize = true },
     })) {
         if (zgui.checkbox("Enabled", .{ .v = &demo.audio_filter.is_enabled })) {
             try updateAudioGraph(demo.*);
@@ -1000,8 +1001,15 @@ pub fn main() !void {
     const demo = try create(allocator, window);
     defer destroy(allocator, demo);
 
-    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 25.0);
+    const scale_factor = scale_factor: {
+        const cs = try window.getContentScale();
+        break :scale_factor math.max(cs.x_scale, cs.y_scale);
+    };
+
+    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
     defer zgpu.gui.deinit();
+
+    zgui.getStyle().scaleAllSizes(scale_factor);
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();

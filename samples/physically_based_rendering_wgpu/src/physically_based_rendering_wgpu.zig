@@ -510,20 +510,22 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 fn update(demo: *DemoState) void {
     zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
 
+    zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .always });
+    zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .always });
+
     if (zgui.begin("Demo Settings", .{ .flags = .{ .no_move = true, .no_resize = true } })) {
         zgui.bulletText(
-            "Average :  {d:.3} ms/frame ({d:.1} fps)",
+            "Average : {d:.3} ms/frame ({d:.1} fps)",
             .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
         );
-        zgui.bulletText("Left Mouse Button + drag :  rotate helmet", .{});
-        zgui.bulletText("Right Mouse Button + drag :  rotate camera", .{});
-        zgui.bulletText("W, A, S, D :  move camera", .{});
+        zgui.bulletText("LMB + drag : rotate helmet", .{});
+        zgui.bulletText("RMB + drag : rotate camera", .{});
+        zgui.bulletText("W, A, S, D : move camera", .{});
 
         zgui.spacing();
         zgui.spacing();
-        zgui.bulletText("Current HDRI :  ", .{});
         zgui.sameLine(.{ .spacing = 0.0 });
-        if (zgui.combo("##", .{
+        if (zgui.combo("HDRI", .{
             .current_item = &demo.current_hdri_index,
             .items_separated_by_zeros = "Newport Loft\x00Drackenstein Quarry\x00Freight Station\x00\x00",
         })) {
@@ -1079,7 +1081,7 @@ pub fn main() !void {
         return;
     };
 
-    const window = try glfw.Window.create(1400, 1000, window_title, null, null, .{
+    const window = try glfw.Window.create(1600, 1000, window_title, null, null, .{
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
     });
@@ -1094,8 +1096,15 @@ pub fn main() !void {
     const demo = try init(allocator, window);
     defer deinit(allocator, demo);
 
-    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 25.0);
+    const scale_factor = scale_factor: {
+        const cs = try window.getContentScale();
+        break :scale_factor math.max(cs.x_scale, cs.y_scale);
+    };
+
+    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
     defer zgpu.gui.deinit();
+
+    zgui.getStyle().scaleAllSizes(scale_factor);
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();

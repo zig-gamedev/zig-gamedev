@@ -311,7 +311,7 @@ pub fn main() !void {
         return;
     };
 
-    const window = try glfw.Window.create(1280, 960, window_title, null, null, .{
+    const window = try glfw.Window.create(1600, 1000, window_title, null, null, .{
         .client_api = .no_api,
         .cocoa_retina_framebuffer = true,
     });
@@ -326,8 +326,15 @@ pub fn main() !void {
     var demo = try init(allocator, window);
     defer deinit(allocator, &demo);
 
-    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 25.0);
+    const scale_factor = scale_factor: {
+        const cs = try window.getContentScale();
+        break :scale_factor math.max(cs.x_scale, cs.y_scale);
+    };
+
+    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
     defer zgpu.gui.deinit();
+
+    zgui.getStyle().scaleAllSizes(scale_factor);
 
     while (!window.shouldClose()) {
         try glfw.pollEvents();
