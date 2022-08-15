@@ -337,6 +337,7 @@ fn update(demo: *DemoState) !void {
 
     if (zgui.collapsingHeader("Widgets: Input with Keyboard", .{})) {
         const static = struct {
+            var buf: [128]u8 = undefined;
             var v1: f32 = 0;
             var v2: [2]f32 = .{ 0, 0 };
             var v3: [3]f32 = .{ 0, 0, 0 };
@@ -349,6 +350,7 @@ fn update(demo: *DemoState) !void {
             var si8: i8 = 0;
             var v3u8: [3]u8 = .{ 0, 0, 0 };
         };
+        _ = zgui.inputText("Input text", .{ .buf = static.buf[0..] });
         _ = zgui.inputFloat("Input float 1", .{ .v = &static.v1 });
         _ = zgui.inputFloat2("Input float 2", .{ .v = &static.v2 });
         _ = zgui.inputFloat3("Input float 3", .{ .v = &static.v3 });

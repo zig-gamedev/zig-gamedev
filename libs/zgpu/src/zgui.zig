@@ -68,6 +68,8 @@ pub const DrawData = *opaque {};
 pub const Font = *opaque {};
 pub const Ident = u32;
 pub const TextureIdent = *anyopaque;
+pub const Wchar = u16;
+pub const Key = i32;
 //--------------------------------------------------------------------------------------------------
 pub const WindowFlags = packed struct {
     no_title_bar: bool = false,
@@ -432,12 +434,12 @@ pub const Style = extern struct {
     colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
 
     /// `pub fn init() Style`
-    pub const init = zguiStyleInit;
-    extern fn zguiStyleInit() Style;
+    pub const init = zguiStyle_init;
+    extern fn zguiStyle_init() Style;
 
     /// `pub fn scaleAllSizes(style: *Style, scale_factor: f32) void`
-    pub const scaleAllSizes = zguiStyleScaleAllSizes;
-    extern fn zguiStyleScaleAllSizes(style: *Style, scale_factor: f32) void;
+    pub const scaleAllSizes = zguiStyle_scaleAllSizes;
+    extern fn zguiStyle_scaleAllSizes(style: *Style, scale_factor: f32) void;
 
     pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
         return style.colors[@enumToInt(idx)];
@@ -1721,6 +1723,88 @@ pub const InputTextFlags = packed struct {
         assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
     }
 };
+//--------------------------------------------------------------------------------------------------
+pub const InputTextCallbackData = extern struct {
+    event_flag: InputTextFlags,
+    flags: InputTextFlags,
+    user_data: *anyopaque,
+    event_char: Wchar,
+    event_key: Key,
+    buf: [*]u8,
+    buf_text_len: i32,
+    buf_size: i32,
+    buf_dirty: bool,
+    cursor_pos: i32,
+    selection_start: i32,
+    selection_end: i32,
+
+    /// `pub fn init() InputTextCallbackData`
+    pub const init = zguiInputTextCallbackData_init;
+
+    /// `pub fn deleteChars(data: *InputTextCallbackData, pos: i32, bytes_count: i32) void`
+    pub const deleteChars = zguiInputTextCallbackData_deleteChars;
+
+    pub fn insertChars(data: *InputTextCallbackData, pos: i32, txt: []const u8) void {
+        zguiInputTextCallbackData_insertChars(data, pos, txt.ptr, txt.ptr + txt.len);
+    }
+
+    pub fn selectAll(data: *InputTextCallbackData) void {
+        data.selection_start = 0;
+        data.selection_end = data.buf_text_len;
+    }
+
+    pub fn clearSelection(data: *InputTextCallbackData) void {
+        data.selection_start = data.buf_text_len;
+        data.selection_end = data.buf_text_len;
+    }
+
+    pub fn hasSelection(data: InputTextCallbackData) bool {
+        return data.selection_start != data.selection_end;
+    }
+
+    extern fn zguiInputTextCallbackData_init() InputTextCallbackData;
+    extern fn zguiInputTextCallbackData_deleteChars(
+        data: *InputTextCallbackData,
+        pos: i32,
+        bytes_count: i32,
+    ) void;
+    extern fn zguiInputTextCallbackData_insertChars(
+        data: *InputTextCallbackData,
+        pos: i32,
+        text: [*]const u8,
+        text_end: [*]const u8,
+    ) void;
+};
+
+pub const InputTextCallback = if (@import("builtin").zig_backend == .stage1)
+    fn (data: *InputTextCallbackData) i32
+else
+    *const fn (data: *InputTextCallbackData) i32;
+//--------------------------------------------------------------------------------------------------
+const InputText = struct {
+    buf: []u8,
+    flags: InputTextFlags = .{},
+    callback: ?InputTextCallback = null,
+    user_data: ?*anyopaque = null,
+};
+pub fn inputText(label: [:0]const u8, args: InputText) bool {
+    return zguiInputText(
+        label,
+        args.buf.ptr,
+        args.buf.len,
+        @bitCast(u32, args.flags),
+        if (args.callback) |cb| cb else null,
+        args.user_data,
+    );
+}
+extern fn zguiInputText(
+    label: [*:0]const u8,
+    buf: [*]u8,
+    buf_size: usize,
+    flags: u32,
+    callback: ?*const anyopaque,
+    user_data: ?*anyopaque,
+) bool;
 //--------------------------------------------------------------------------------------------------
 const InputFloat = struct {
     v: *f32,

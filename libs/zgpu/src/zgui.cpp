@@ -604,6 +604,38 @@ ZGUI_API bool zguiSliderAngle(
     return ImGui::SliderAngle(label, v_rad, v_degrees_min, v_degrees_max, format, flags);
 }
 
+ZGUI_API ImGuiInputTextCallbackData zguiInputTextCallbackData_init() {
+    return ImGuiInputTextCallbackData();
+}
+
+ZGUI_API void zguiInputTextCallbackData_deleteChars(
+    ImGuiInputTextCallbackData* data,
+    int pos,
+    int bytes_count
+) {
+    data->DeleteChars(pos, bytes_count);
+}
+
+ZGUI_API void zguiInputTextCallbackData_insertChars(
+    ImGuiInputTextCallbackData* data,
+    int pos,
+    const char* text,
+    const char* text_end
+) {
+    data->InsertChars(pos, text, text_end);
+}
+
+ZGUI_API bool zguiInputText(
+    const char* label,
+    char* buf,
+    size_t buf_size,
+    ImGuiInputTextFlags flags,
+    ImGuiInputTextCallback callback,
+    void* user_data
+) {
+    return ImGui::InputText(label, buf, buf_size, flags, callback, user_data);
+}
+
 ZGUI_API bool zguiInputFloat(
     const char* label,
     float* v,
@@ -897,11 +929,11 @@ ZGUI_API ImGuiStyle* zguiGetStyle(void) {
     return &ImGui::GetStyle();
 }
 
-ZGUI_API ImGuiStyle zguiStyleInit(void) {
+ZGUI_API ImGuiStyle zguiStyle_init(void) {
     return ImGuiStyle();
 }
 
-ZGUI_API void zguiStyleScaleAllSizes(ImGuiStyle* style, float scale_factor) {
+ZGUI_API void zguiStyle_scaleAllSizes(ImGuiStyle* style, float scale_factor) {
     style->ScaleAllSizes(scale_factor);
 }
 
