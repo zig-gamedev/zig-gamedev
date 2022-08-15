@@ -1,5 +1,8 @@
 const std = @import("std");
 const Builder = std.build.Builder;
+
+// TODO(mziulek): We've changed 'libs/mach-glfw' to '../mach-glfw'. Is there a way to make an option?
+const mach_glfw_dir = "../mach-glfw";
 const glfw = @import("../mach-glfw/build.zig");
 const system_sdk = @import("../mach-glfw/system_sdk.zig");
 
@@ -53,7 +56,7 @@ pub const Options = struct {
     /// specific, -g0 will be used (no debug symbols at all) to save an additional ~39M.
     ///
     /// When enabled, a debug build of the static library goes from ~947M to just ~53M.
-    minimal_debug_symbols: bool = true,
+    minimal_debug_symbols: bool = false, // TODO(mziulek): We provide full debug symbols by default.
 
     /// Whether or not to produce separate static libraries for each component of Dawn (reduces
     /// iteration times when building from source / testing changes to Dawn source code.)
@@ -202,7 +205,7 @@ pub fn linkFromBinary(b: *Builder, step: *std.build.LibExeObjStep, options: Opti
         std.process.exit(1);
     }
 
-    // TODO: Make an option?
+    // TODO(mziulek): Make an option?
     // Always link with release build for smaller downloads and faster iteration times.
     // If you want to debug Dawn please build it from source.
     const is_release = true;
@@ -481,7 +484,7 @@ fn buildLibMachDawnNative(b: *Builder, step: *std.build.LibExeObjStep, options: 
     options.appendFlags(&cpp_flags, false, true) catch unreachable;
     appendDawnEnableBackendTypeFlags(&cpp_flags, options) catch unreachable;
     cpp_flags.appendSlice(&.{
-        include("../mach-glfw/upstream/glfw/include"),
+        include(mach_glfw_dir ++ "/upstream/glfw/include"),
         include("libs/dawn/out/Debug/gen/include"),
         include("libs/dawn/out/Debug/gen/src"),
         include("libs/dawn/include"),
@@ -620,7 +623,7 @@ const dawn_d3d12_flags = &[_][]const u8{
     "-DWIN32_LEAN_AND_MEAN",
     "-DD3D10_ARBITRARY_HEADER_ORDERING",
     "-DNOMINMAX",
-    "-fno-sanitize=undefined",
+    "-fno-sanitize=undefined", // TODO(mziulek): Remove this once Dawn bug is fixed.
 };
 
 // Builds dawn native sources; derived from src/dawn/native/BUILD.gn
@@ -1222,7 +1225,7 @@ fn buildLibDawnUtils(b: *Builder, step: *std.build.LibExeObjStep, options: Optio
     var flags = std.ArrayList([]const u8).init(b.allocator);
     appendDawnEnableBackendTypeFlags(&flags, options) catch unreachable;
     flags.appendSlice(&.{
-        include("../mach-glfw/upstream/glfw/include"),
+        include(mach_glfw_dir ++ "/upstream/glfw/include"),
         include("libs/dawn/src"),
         include("libs/dawn/include"),
         include("libs/dawn/out/Debug/gen/include"),
