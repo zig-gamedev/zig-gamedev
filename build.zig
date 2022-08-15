@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
+// (Note to myself, users don't need to do this)
 // To update submodules do:
 //
 // 1. Edit .gitmodules (update Dawn branch)
