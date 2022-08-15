@@ -121,7 +121,7 @@ fn update(demo: *DemoState) !void {
     zgui.textUnformattedColored(.{ 0, 0.8, 0, 1 }, "Average :");
     zgui.sameLine(.{});
     zgui.text(
-        "  {d:.3} ms/frame ({d:.1} fps)",
+        "{d:.3} ms/frame ({d:.1} fps)",
         .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
     );
 
@@ -147,7 +147,11 @@ fn update(demo: *DemoState) !void {
             // 'Button 2' pressed.
         }
         zgui.sameLine(.{});
-        _ = zgui.button("Button 3", .{ .w = 200.0, .h = 0.0 });
+        {
+            const label = "Button 3 is special ;)";
+            const s = zgui.calcTextSize(label, .{});
+            _ = zgui.button(label, .{ .w = s[0] + 30.0 });
+        }
         zgui.sameLine(.{});
         _ = zgui.button("Button 4", .{});
         _ = zgui.button("Button 5", .{ .w = -1.0, .h = 100.0 });
