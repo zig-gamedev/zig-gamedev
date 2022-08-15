@@ -1727,7 +1727,7 @@ pub const InputTextFlags = packed struct {
 pub const InputTextCallbackData = extern struct {
     event_flag: InputTextFlags,
     flags: InputTextFlags,
-    user_data: *anyopaque,
+    user_data: ?*anyopaque,
     event_char: Wchar,
     event_key: Key,
     buf: [*]u8,
