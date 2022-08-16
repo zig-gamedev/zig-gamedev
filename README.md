@@ -127,6 +127,7 @@ Thanks to all people who sponsor zig-gamedev project! In particular, these fine 
 * **[Derek Collison (derekcollison)](https://github.com/derekcollison)**
 * **[mzet (mzet-)](https://github.com/mzet-)**
 * [Garett Bass (garettbass)](https://github.com/garettbass)
+* [Connor Rowland (ckrowland)](https://github.com/ckrowland)
 * Zig Software Foundation (ziglang)
 * Ian (LinuXY)
 * Simon A. Nielsen Knights (tauoverpi)
