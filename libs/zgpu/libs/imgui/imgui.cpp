@@ -4989,7 +4989,7 @@ ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_tex
 
     ImFont* font = g.Font;
     const float font_size = g.FontSize;
-    if (text == text_display_end || font == NULL)
+    if (text == text_display_end || font == NULL) // TODO(mziulek): `|| font == NULL` fixes issue found by UBSAN. Upstream this change.
         return ImVec2(0.0f, font_size);
     ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, wrap_width, text, text_display_end, NULL);
 
