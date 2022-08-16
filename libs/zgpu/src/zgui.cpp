@@ -636,6 +636,31 @@ ZGUI_API bool zguiInputText(
     return ImGui::InputText(label, buf, buf_size, flags, callback, user_data);
 }
 
+ZGUI_API bool zguiInputTextMultiline(
+    const char* label,
+    char* buf,
+    size_t buf_size,
+    float w,
+    float h,
+    ImGuiInputTextFlags flags,
+    ImGuiInputTextCallback callback,
+    void* user_data
+) {
+    return ImGui::InputTextMultiline(label, buf, buf_size, { w, h }, flags, callback, user_data);
+}
+
+ZGUI_API bool zguiInputTextWithHint(
+    const char* label,
+    const char* hint,
+    char* buf,
+    size_t buf_size,
+    ImGuiInputTextFlags flags,
+    ImGuiInputTextCallback callback,
+    void* user_data
+) {
+    return ImGui::InputTextWithHint(label, hint, buf, buf_size, flags, callback, user_data);
+}
+
 ZGUI_API bool zguiInputFloat(
     const char* label,
     float* v,

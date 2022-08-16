@@ -1806,6 +1806,65 @@ extern fn zguiInputText(
     user_data: ?*anyopaque,
 ) bool;
 //--------------------------------------------------------------------------------------------------
+const InputTextMultiline = struct {
+    buf: []u8,
+    w: f32 = 0.0,
+    h: f32 = 0.0,
+    flags: InputTextFlags = .{},
+    callback: ?InputTextCallback = null,
+    user_data: ?*anyopaque = null,
+};
+pub fn inputTextMultiline(label: [:0]const u8, args: InputTextMultiline) bool {
+    return zguiInputTextMultiline(
+        label,
+        args.buf.ptr,
+        args.buf.len,
+        args.w,
+        args.h,
+        @bitCast(u32, args.flags),
+        if (args.callback) |cb| cb else null,
+        args.user_data,
+    );
+}
+extern fn zguiInputTextMultiline(
+    label: [*:0]const u8,
+    buf: [*]u8,
+    buf_size: usize,
+    w: f32,
+    h: f32,
+    flags: u32,
+    callback: ?*const anyopaque,
+    user_data: ?*anyopaque,
+) bool;
+//--------------------------------------------------------------------------------------------------
+const InputTextWithHint = struct {
+    hint: [:0]const u8,
+    buf: []u8,
+    flags: InputTextFlags = .{},
+    callback: ?InputTextCallback = null,
+    user_data: ?*anyopaque = null,
+};
+pub fn inputTextWithHint(label: [:0]const u8, args: InputTextWithHint) bool {
+    return zguiInputTextWithHint(
+        label,
+        args.hint,
+        args.buf.ptr,
+        args.buf.len,
+        @bitCast(u32, args.flags),
+        if (args.callback) |cb| cb else null,
+        args.user_data,
+    );
+}
+extern fn zguiInputTextWithHint(
+    label: [*:0]const u8,
+    hint: [*:0]const u8,
+    buf: [*]u8,
+    buf_size: usize,
+    flags: u32,
+    callback: ?*const anyopaque,
+    user_data: ?*anyopaque,
+) bool;
+//--------------------------------------------------------------------------------------------------
 const InputFloat = struct {
     v: *f32,
     step: f32 = 0.0,
