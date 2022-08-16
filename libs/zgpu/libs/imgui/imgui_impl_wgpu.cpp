@@ -34,16 +34,17 @@
 // Dear ImGui prototypes from imgui_internal.h
 extern ImGuiID ImHashData(const void* data_p, size_t data_size, ImU32 seed = 0);
 
+// mziulek: We removed header file and declare all our external functions here.
 extern "C" {
 
 bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextureFormat rt_format);
-void ImGui_ImplWGPU_Shutdown();
-void ImGui_ImplWGPU_NewFrame();
+void ImGui_ImplWGPU_Shutdown(void);
+void ImGui_ImplWGPU_NewFrame(void);
 void ImGui_ImplWGPU_RenderDrawData(ImDrawData* draw_data, WGPURenderPassEncoder pass_encoder);
 
 // Use if you want to reset your rendering device without losing Dear ImGui state.
-void ImGui_ImplWGPU_InvalidateDeviceObjects();
-bool ImGui_ImplWGPU_CreateDeviceObjects();
+void ImGui_ImplWGPU_InvalidateDeviceObjects(void);
+bool ImGui_ImplWGPU_CreateDeviceObjects(void);
 
 } // extern "C"
 
@@ -552,7 +553,7 @@ static void ImGui_ImplWGPU_CreateUniformBuffer()
     g_resources.Uniforms = wgpuDeviceCreateBuffer(g_wgpuDevice, &ub_desc);
 }
 
-bool ImGui_ImplWGPU_CreateDeviceObjects()
+bool ImGui_ImplWGPU_CreateDeviceObjects(void)
 {
     if (!g_wgpuDevice)
         return false;
@@ -660,7 +661,7 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     return true;
 }
 
-void ImGui_ImplWGPU_InvalidateDeviceObjects()
+void ImGui_ImplWGPU_InvalidateDeviceObjects(void)
 {
     if (!g_wgpuDevice)
         return;
@@ -713,7 +714,7 @@ bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextur
     return true;
 }
 
-void ImGui_ImplWGPU_Shutdown()
+void ImGui_ImplWGPU_Shutdown(void)
 {
     ImGui_ImplWGPU_InvalidateDeviceObjects();
     delete[] g_pFrameResources;
@@ -724,7 +725,7 @@ void ImGui_ImplWGPU_Shutdown()
     g_frameIndex = UINT_MAX;
 }
 
-void ImGui_ImplWGPU_NewFrame()
+void ImGui_ImplWGPU_NewFrame(void)
 {
     if (!g_pipelineState)
         ImGui_ImplWGPU_CreateDeviceObjects();

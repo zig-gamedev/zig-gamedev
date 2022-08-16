@@ -1524,6 +1524,7 @@ pub const gui = struct {
         ImGui_ImplWGPU_RenderDrawData(zgui.getDrawData(), pass);
     }
 
+    // Those functions are defined in `imgui_impl_glfw.cpp` and 'imgui_impl_wgpu.cpp` (they include few custom changes).
     extern fn ImGui_ImplGlfw_InitForOther(window: *const anyopaque, install_callbacks: bool) bool;
     extern fn ImGui_ImplGlfw_NewFrame() void;
     extern fn ImGui_ImplGlfw_Shutdown() void;

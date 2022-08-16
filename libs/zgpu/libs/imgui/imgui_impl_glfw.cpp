@@ -124,7 +124,9 @@ struct ImGui_ImplGlfw_Data
     ImVec2                  LastValidMousePos;
     bool                    InstalledCallbacks;
 
-    ImVec2                  DpiScale; // mziulek
+    ImVec2                  DpiScale; // mziulek: We scale mouse coords so that we have pixel coords on all OSes.
+                                      // This also lets us set `FramebufferScale` to 1.0 and always work with pixel coords
+                                      // even on macOS Retina displays.
 
     // Chain GLFW callbacks: our callbacks will call the user's previously installed callbacks, if any.
     GLFWwindowfocusfun      PrevUserCallbackWindowFocus;
