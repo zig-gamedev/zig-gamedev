@@ -32,6 +32,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.addIncludeDir(thisDir() ++ "/libs");
+    lib.addIncludeDir(thisDir() ++ "/libs/JoltC");
     lib.linkSystemLibrary("c");
     lib.linkSystemLibrary("c++");
 
@@ -41,6 +42,8 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         "-DJPH_COMPILER_MINGW",
         "-fno-sanitize=undefined",
     };
+    lib.addIncludeDir(root ++ "/Math");
+
     lib.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltC.cpp", flags);
     lib.addCSourceFile(root ++ "/AABBTree/AABBTreeBuilder.cpp", flags);
     lib.addCSourceFile(root ++ "/Core/Color.cpp", flags);
