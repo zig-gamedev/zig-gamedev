@@ -1,8 +1,5 @@
 const std = @import("std");
 const assert = std.debug.assert;
-
-pub fn main() void {}
-
 const c = @cImport(@cInclude("JoltC.h"));
 
 const layers = struct {

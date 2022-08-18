@@ -10,6 +10,14 @@
 
 JPH_SUPPRESS_WARNINGS
 
+#ifdef JPH_ENABLE_ASSERTS
+
+static bool AssertFailedImpl(const char *inExpression, const char *inMessage, const char *inFile, uint inLine) {
+	return true;
+}
+
+#endif
+
 void JPH_RegisterDefaultAllocator(void) {
     JPH::RegisterDefaultAllocator();
 }
