@@ -10,13 +10,6 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const glfw = @import("glfw");
-const c = if (@import("builtin").target.os.tag == .macos) @import("cimport_macos_dawn.zig") else @cImport({
-    @cInclude("dawn/dawn_proc.h");
-    @cInclude("dawn.h");
-});
-const objc = if (@import("builtin").target.os.tag == .macos) @import("cimport_macos_objc.zig") else @cImport({
-    @cInclude("objc/message.h");
-});
 const wgsl = @import("common_wgsl.zig");
 pub const wgpu = @import("wgpu.zig");
 pub const zgui = @import("zgui.zig");
@@ -993,16 +986,29 @@ pub const GraphicsContext = struct {
     }
 };
 
-pub fn createWgpuInstance() wgpu.Instance {
-    c.dawnProcSetProcs(c.dawnNativeGetProcs());
-    const native_instance = c.dawnNativeCreateInstance();
-    c.dawnNativeDiscoverDefaultAdapters(native_instance);
+pub const DawnNativeInstance = ?*opaque {};
+pub const DawnProcsTable = ?*opaque {};
+pub extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
+pub extern fn dawnNativeCreateInstance() DawnNativeInstance;
+pub extern fn dawnNativeDestroyInstance(native_instance: DawnNativeInstance) void;
+pub extern fn dawnNativeGetWgpuInstance(native_instance: DawnNativeInstance) ?wgpu.Instance;
+pub extern fn dawnNativeDiscoverDefaultAdapters(native_instance: DawnNativeInstance) void;
+pub extern fn dawnNativeGetProcs() DawnProcsTable;
 
-    const instance = @ptrCast(
-        wgpu.Instance,
-        @alignCast(@sizeOf(usize), c.dawnNativeGetWgpuInstance(native_instance).?),
-    );
-    return instance;
+const objc = struct {
+    pub const SEL = ?*opaque {};
+    pub const Class = ?*opaque {};
+
+    pub extern fn sel_getUid(str: [*:0]const u8) SEL;
+    pub extern fn objc_getClass(name: [*:0]const u8) Class;
+    pub extern fn objc_msgSend() void;
+};
+
+pub fn createWgpuInstance() wgpu.Instance {
+    dawnProcSetProcs(dawnNativeGetProcs());
+    const native_instance = dawnNativeCreateInstance();
+    dawnNativeDiscoverDefaultAdapters(native_instance);
+    return dawnNativeGetWgpuInstance(native_instance).?;
 }
 
 pub const bglBuffer = wgpu.BindGroupLayoutEntry.buffer;
