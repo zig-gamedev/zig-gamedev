@@ -1685,7 +1685,7 @@ pub fn createSurfaceForWindow(
     window: glfw.Window,
 ) wgpu.Surface {
     comptime var glfw_options = detectGLFWOptions();
-    const glfw_native = glfw.Native(glfw_options);
+    const glfw_native = glfw.Native();
     const descriptor = if (glfw_options.win32) SurfaceDescriptor{
         .windows_hwnd = .{
             .label = "basic surface",

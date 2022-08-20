@@ -20,6 +20,25 @@ pub const BackendOptions = struct {
     osmesa: bool = false,
 };
 
+const native = if (@import("builtin").target.os.tag == .macos)
+    @import("cimport_macos.zig")
+else
+    @cImport({
+        @cDefine("GLFW_INCLUDE_VULKAN", "1");
+        @cInclude("GLFW/glfw3.h");
+
+        if (@import("builtin").target.os.tag == .windows) @cDefine("GLFW_EXPOSE_NATIVE_WIN32", "1");
+        //if (options.wgl) @cDefine("GLFW_EXPOSE_NATIVE_WGL", "1");
+        if (@import("builtin").target.os.tag == .macos) @cDefine("GLFW_EXPOSE_NATIVE_COCOA", "1");
+        //if (options.nsgl) @cDefine("GLFW_EXPOSE_NATIVE_NGSL", "1");
+        if (@import("builtin").target.os.tag == .linux) @cDefine("GLFW_EXPOSE_NATIVE_X11", "1");
+        //if (options.glx) @cDefine("GLFW_EXPOSE_NATIVE_GLX", "1");
+        //if (options.wayland) @cDefine("GLFW_EXPOSE_NATIVE_WAYLAND", "1");
+        //if (options.egl) @cDefine("GLFW_EXPOSE_NATIVE_EGL", "1");
+        //if (options.osmesa) @cDefine("GLFW_EXPOSE_NATIVE_OSMESA", "1");
+        @cInclude("GLFW/glfw3native.h");
+    });
+
 /// This function returns a type which allows provides an interface to access
 /// the native handles based on backends selected.
 ///
@@ -39,26 +58,7 @@ pub const BackendOptions = struct {
 ///
 /// The chosen backends must match those the library was compiled for. Failure to do so
 /// will cause a link-time error.
-pub fn Native(comptime options: BackendOptions) type {
-    // TODO: stage3 workaround
-    const native_macos = @import("cimport_macos.zig");
-    const native_other = @cImport({
-        @cDefine("GLFW_INCLUDE_VULKAN", "1");
-        @cInclude("GLFW/glfw3.h");
-
-        if (options.win32) @cDefine("GLFW_EXPOSE_NATIVE_WIN32", "1");
-        if (options.wgl) @cDefine("GLFW_EXPOSE_NATIVE_WGL", "1");
-        if (options.cocoa) @cDefine("GLFW_EXPOSE_NATIVE_COCOA", "1");
-        if (options.nsgl) @cDefine("GLFW_EXPOSE_NATIVE_NGSL", "1");
-        if (options.x11) @cDefine("GLFW_EXPOSE_NATIVE_X11", "1");
-        if (options.glx) @cDefine("GLFW_EXPOSE_NATIVE_GLX", "1");
-        if (options.wayland) @cDefine("GLFW_EXPOSE_NATIVE_WAYLAND", "1");
-        if (options.egl) @cDefine("GLFW_EXPOSE_NATIVE_EGL", "1");
-        if (options.osmesa) @cDefine("GLFW_EXPOSE_NATIVE_OSMESA", "1");
-        @cInclude("GLFW/glfw3native.h");
-    });
-    const native = if (@import("builtin").target.os.tag == .macos) native_macos else native_other;
-
+pub fn Native() type {
     return struct {
         /// Returns the adapter device name of the specified monitor.
         ///
