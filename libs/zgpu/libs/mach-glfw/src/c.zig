@@ -15,7 +15,7 @@
 //! pub const struct_GLFWvidmode = extern struct {
 //!                                ^
 //! ```
-pub const c = @cImport({
+pub const c = if (@import("builtin").target.os.tag == .macos) @import("cimport_macos.zig") else @cImport({
     @cDefine("GLFW_INCLUDE_VULKAN", "1");
     @cInclude("GLFW/glfw3.h");
 });
