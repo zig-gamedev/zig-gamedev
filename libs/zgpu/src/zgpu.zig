@@ -10,11 +10,11 @@ const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const glfw = @import("glfw");
-const c = @cImport({
+const c = if (@import("builtin").target.os.tag == .macos) @import("cimport_macos_dawn.zig") else @cImport({
     @cInclude("dawn/dawn_proc.h");
     @cInclude("dawn.h");
 });
-const objc = @cImport({
+const objc = if (@import("builtin").target.os.tag == .macos) @import("cimport_macos_objc.zig") else @cImport({
     @cInclude("objc/message.h");
 });
 const wgsl = @import("common_wgsl.zig");
