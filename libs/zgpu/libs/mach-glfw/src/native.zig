@@ -40,7 +40,9 @@ pub const BackendOptions = struct {
 /// The chosen backends must match those the library was compiled for. Failure to do so
 /// will cause a link-time error.
 pub fn Native(comptime options: BackendOptions) type {
-    const native = if (@import("builtin").target.isDarwin()) @import("cimport_macos.zig") else @cImport({
+    // TODO: stage3 workaround
+    const native_macos = @import("cimport_macos.zig");
+    const native_other = @cImport({
         @cDefine("GLFW_INCLUDE_VULKAN", "1");
         @cInclude("GLFW/glfw3.h");
 
@@ -55,6 +57,7 @@ pub fn Native(comptime options: BackendOptions) type {
         if (options.osmesa) @cDefine("GLFW_EXPOSE_NATIVE_OSMESA", "1");
         @cInclude("GLFW/glfw3native.h");
     });
+    const native = if (@import("builtin").target.os.tag == .macos) native_macos else native_other;
 
     return struct {
         /// Returns the adapter device name of the specified monitor.
