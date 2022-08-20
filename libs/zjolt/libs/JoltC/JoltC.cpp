@@ -18,6 +18,11 @@ static bool AssertFailedImpl(const char *inExpression, const char *inMessage, co
 
 #endif
 
+static_assert(sizeof(uint8) == 1, "sizeof(uint8) != 1");
+static_assert(sizeof(uint16) == 2, "sizeof(uint16) != 2");
+static_assert(sizeof(uint) == 4, "sizeof(uint) != 4");
+static_assert(sizeof(uint64) == 8, "sizeof(uint64) != 8");
+
 void JPH_RegisterDefaultAllocator(void) {
     JPH::RegisterDefaultAllocator();
 }
@@ -87,4 +92,27 @@ uint JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *inPhysicsSyst
 uint JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *inPhysicsSystem) {
     assert(inPhysicsSystem != nullptr);
     return reinterpret_cast<const JPH::PhysicsSystem *>(inPhysicsSystem)->GetMaxBodies();
+}
+
+//
+// Shape
+//
+JPH_ShapeType JPH_Shape_GetType(const JPH_Shape *inShape) {
+    assert(inShape != nullptr);
+    return static_cast<JPH_ShapeType>(reinterpret_cast<const JPH::Shape *>(inShape)->GetType());
+}
+
+JPH_ShapeSubType JPH_Shape_GetSubType(const JPH_Shape *inShape) {
+    assert(inShape != nullptr);
+    return static_cast<JPH_ShapeSubType>(reinterpret_cast<const JPH::Shape *>(inShape)->GetSubType());
+}
+
+uint64 JPH_Shape_GetUserData(const JPH_Shape *inShape) {
+    assert(inShape != nullptr);
+    return reinterpret_cast<const JPH::Shape *>(inShape)->GetUserData();
+}
+
+void JPH_Shape_SetUserData(JPH_Shape *inShape, uint64 inUserData) {
+    assert(inShape != nullptr);
+    return reinterpret_cast<JPH::Shape *>(inShape)->SetUserData(inUserData);
 }
