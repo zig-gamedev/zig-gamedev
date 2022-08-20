@@ -40,7 +40,7 @@ pub const BackendOptions = struct {
 /// The chosen backends must match those the library was compiled for. Failure to do so
 /// will cause a link-time error.
 pub fn Native(comptime options: BackendOptions) type {
-    const native = @cImport({
+    const native = if (@import("builtin").target.isDarwin()) @import("cimport_macos.zig") else @cImport({
         @cDefine("GLFW_INCLUDE_VULKAN", "1");
         @cInclude("GLFW/glfw3.h");
 
