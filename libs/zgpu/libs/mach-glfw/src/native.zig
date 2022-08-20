@@ -20,8 +20,8 @@ pub const BackendOptions = struct {
     osmesa: bool = false,
 };
 
-const native = if (@import("builtin").target.os.tag == .macos)
-    @import("cimport_macos.zig")
+const native = if (@import("builtin").target.os.tag == .macos and @import("builtin").target.cpu.arch == .aarch64)
+    @import("cimport_macos_aarch64.zig")
 else
     @cImport({
         @cDefine("GLFW_INCLUDE_VULKAN", "1");
