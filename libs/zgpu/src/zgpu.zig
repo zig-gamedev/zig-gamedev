@@ -986,6 +986,7 @@ pub const GraphicsContext = struct {
     }
 };
 
+// Defined in dawn.cpp
 pub const DawnNativeInstance = ?*opaque {};
 pub const DawnProcsTable = ?*opaque {};
 pub extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
@@ -994,15 +995,6 @@ pub extern fn dawnNativeDestroyInstance(native_instance: DawnNativeInstance) voi
 pub extern fn dawnNativeGetWgpuInstance(native_instance: DawnNativeInstance) ?wgpu.Instance;
 pub extern fn dawnNativeDiscoverDefaultAdapters(native_instance: DawnNativeInstance) void;
 pub extern fn dawnNativeGetProcs() DawnProcsTable;
-
-const objc = struct {
-    pub const SEL = ?*opaque {};
-    pub const Class = ?*opaque {};
-
-    pub extern fn sel_getUid(str: [*:0]const u8) SEL;
-    pub extern fn objc_getClass(name: [*:0]const u8) Class;
-    pub extern fn objc_msgSend() void;
-};
 
 pub fn createWgpuInstance() wgpu.Instance {
     dawnProcSetProcs(dawnNativeGetProcs());
@@ -1799,7 +1791,15 @@ fn createSurface(instance: wgpu.Instance, descriptor: SurfaceDescriptor) wgpu.Su
     };
 }
 
-// Borrowed from https://github.com/hazeycode/zig-objcrt
+const objc = struct {
+    pub const SEL = ?*opaque {};
+    pub const Class = ?*opaque {};
+
+    pub extern fn sel_getUid(str: [*:0]const u8) SEL;
+    pub extern fn objc_getClass(name: [*:0]const u8) Class;
+    pub extern fn objc_msgSend() void;
+};
+
 fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnType: type) ReturnType {
     const args_meta = @typeInfo(@TypeOf(args)).Struct.fields;
 

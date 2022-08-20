@@ -1,9 +1,10 @@
 #include <dawn/native/DawnNative.h>
-#include "dawn.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct DawnNativeInstanceImpl* DawnNativeInstance;
 
 DawnNativeInstance dawnNativeCreateInstance(void) {
     return reinterpret_cast<DawnNativeInstance>(new dawn_native::Instance());
