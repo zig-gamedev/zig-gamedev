@@ -547,14 +547,14 @@ fn update(demo: *DemoState) !void {
             if (!is_enabled) zgui.beginDisabled(.{});
             defer if (!is_enabled) zgui.endDisabled();
 
-            const selected_item = demo.waveform_config.raw.typ;
+            const selected_item = demo.waveform_config.raw.type;
             const names = [_][:0]const u8{ "Sine", "Square", "Triangle", "Sawtooth" };
             if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
                 for (names) |name, index| {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.waveform_config.raw.typ = @intCast(u32, index);
+                        demo.waveform_config.raw.type = @intCast(u32, index);
                         try demo.waveform_data_source.setType(@intToEnum(zaudio.WaveformType, index));
                     }
                 }
