@@ -989,12 +989,14 @@ pub const GraphicsContext = struct {
 // Defined in dawn.cpp
 pub const DawnNativeInstance = ?*opaque {};
 pub const DawnProcsTable = ?*opaque {};
-pub extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
 pub extern fn dawnNativeCreateInstance() DawnNativeInstance;
 pub extern fn dawnNativeDestroyInstance(native_instance: DawnNativeInstance) void;
 pub extern fn dawnNativeGetWgpuInstance(native_instance: DawnNativeInstance) ?wgpu.Instance;
 pub extern fn dawnNativeDiscoverDefaultAdapters(native_instance: DawnNativeInstance) void;
 pub extern fn dawnNativeGetProcs() DawnProcsTable;
+
+// Defined in Dawn codebase
+pub extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
 
 pub fn createWgpuInstance() wgpu.Instance {
     dawnProcSetProcs(dawnNativeGetProcs());
@@ -1522,7 +1524,8 @@ pub const gui = struct {
         ImGui_ImplWGPU_RenderDrawData(zgui.getDrawData(), pass);
     }
 
-    // Those functions are defined in `imgui_impl_glfw.cpp` and 'imgui_impl_wgpu.cpp` (they include few custom changes).
+    // Those functions are defined in `imgui_impl_glfw.cpp` and 'imgui_impl_wgpu.cpp`
+    // (they include few custom changes).
     extern fn ImGui_ImplGlfw_InitForOther(window: *const anyopaque, install_callbacks: bool) bool;
     extern fn ImGui_ImplGlfw_NewFrame() void;
     extern fn ImGui_ImplGlfw_Shutdown() void;

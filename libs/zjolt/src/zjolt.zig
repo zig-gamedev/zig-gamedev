@@ -63,6 +63,9 @@ fn myObjectCanCollide(inObject1: c.JPH_ObjectLayer, inObject2: c.JPH_ObjectLayer
 const expect = std.testing.expect;
 
 test "JoltC.basic" {
+    if (@import("builtin").target.os.tag == .macos and
+        @import("builtin").target.cpu.arch == .aarch64) return error.SkipZigTest;
+
     c.JPH_RegisterDefaultAllocator();
     c.JPH_CreateFactory();
     defer c.JPH_DestroyFactory();
