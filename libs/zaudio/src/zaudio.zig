@@ -175,15 +175,27 @@ pub const WaveformConfig = struct {
         amplitude: f64,
         frequency: f64,
     ) WaveformConfig {
-        return .{ .raw = c.ma_waveform_config_init(
+        var raw: c.ma_waveform_config = undefined;
+        WA_ma_waveform_config_init(
             @enumToInt(format),
             num_channels,
             sample_rate,
             @enumToInt(wave_type),
             amplitude,
             frequency,
-        ) };
+            &raw,
+        );
+        return .{ .raw = raw };
     }
+    pub extern fn WA_ma_waveform_config_init(
+        format: c.ma_format,
+        channels: c.ma_uint32,
+        sampleRate: c.ma_uint32,
+        @"type": c.ma_waveform_type,
+        amplitude: f64,
+        frequency: f64,
+        config: *c.ma_waveform_config,
+    ) void;
 };
 
 pub fn createWaveformDataSource(allocator: std.mem.Allocator, config: WaveformConfig) Error!WaveformDataSource {

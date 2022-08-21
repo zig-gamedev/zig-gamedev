@@ -50,3 +50,15 @@ void WA_ma_sound_get_direction(const ma_sound* sound, ma_vec3f* vout) {
 void WA_ma_sound_get_velocity(const ma_sound* sound, ma_vec3f* vout) {
     *vout = ma_sound_get_velocity(sound);
 }
+
+void WA_ma_waveform_config_init(
+    ma_format format,
+    ma_uint32 channels,
+    ma_uint32 sampleRate,
+    ma_waveform_type type,
+    double amplitude,
+    double frequency,
+    ma_waveform_config* config
+) {
+    *config = ma_waveform_config_init(format, channels, sampleRate, type, amplitude, frequency);
+}
