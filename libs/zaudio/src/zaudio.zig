@@ -175,14 +175,18 @@ pub const WaveformConfig = struct {
         amplitude: f64,
         frequency: f64,
     ) WaveformConfig {
-        return .{ .raw = c.ma_waveform_config_init(
-            @enumToInt(format),
-            num_channels,
-            sample_rate,
-            @enumToInt(wave_type),
-            amplitude,
-            frequency,
-        ) };
+        _ = format;
+        _ = wave_type;
+        return .{
+            .raw = c.ma_waveform_config_init(
+                5, //@enumToInt(format),
+                num_channels,
+                sample_rate,
+                0, //@enumToInt(wave_type),
+                amplitude,
+                frequency,
+            ),
+        };
     }
 };
 
