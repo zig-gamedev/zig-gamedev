@@ -2846,11 +2846,11 @@ pub const ma_waveform_config = extern struct {
     format: ma_format,
     channels: ma_uint32,
     sampleRate: ma_uint32,
-    type: ma_waveform_type,
+    typ: ma_waveform_type,
     amplitude: f64,
     frequency: f64,
 };
-pub extern fn ma_waveform_config_init(format: ma_format, channels: ma_uint32, sampleRate: ma_uint32, @"type": ma_waveform_type, amplitude: f64, frequency: f64) ma_waveform_config;
+pub extern fn ma_waveform_config_init(format: ma_format, channels: ma_uint32, sampleRate: ma_uint32, typ: ma_waveform_type, amplitude: f64, frequency: f64) ma_waveform_config;
 pub const ma_waveform = extern struct {
     ds: ma_data_source_base,
     config: ma_waveform_config,
