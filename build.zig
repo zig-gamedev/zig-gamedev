@@ -43,7 +43,7 @@ pub fn build(b: *std.build.Builder) void {
     //
     // Windows-only demos
     //
-    if (false and !builtin.is_test and @import("builtin").target.os.tag == .windows) {
+    if (!builtin.is_test and @import("builtin").target.os.tag == .windows and @import("builtin").zig_backend == .stage1) {
         options.zpix_enable = b.option(bool, "zpix-enable", "Enable PIX GPU events and markers") orelse false;
         options.enable_dx_debug = b.option(
             bool,
