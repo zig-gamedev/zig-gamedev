@@ -7,6 +7,8 @@
 #include <Jolt/Core/Factory.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
 
 JPH_SUPPRESS_WARNINGS
 
@@ -122,7 +124,7 @@ void JPH_Shape_SetUserData(JPH_Shape *inShape, uint64 inUserData) {
 //
 JPH_Shape * JPH_ShapeSettings_Cook(const JPH_ShapeSettings *inSettings) {
     assert(inSettings != nullptr);
-    auto *settings = reinterpret_cast<const JPH::ShapeSettings *>(inSettings);
+    auto settings = reinterpret_cast<const JPH::ShapeSettings *>(inSettings);
     const JPH::Result result = settings->Create();
     if (result.HasError())
         return nullptr;
@@ -144,35 +146,58 @@ void JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSettings, uint64 inUserD
 //
 const JPH_PhysicsMaterial * JPH_ConvexShapeSettings_GetMaterial(const JPH_ConvexShapeSettings *inSettings) {
     assert(inSettings != nullptr);
-    auto *settings = reinterpret_cast<const JPH::ConvexShapeSettings *>(inSettings);
+    auto settings = reinterpret_cast<const JPH::ConvexShapeSettings *>(inSettings);
     return reinterpret_cast<const JPH_PhysicsMaterial *>(settings->mMaterial.GetPtr());
 }
 
-#if 0
-void JPH_ConvexShapeSettings_SetMaterial(JPH_ConvexShapeSettings *inSettings, const PhysicsMaterial *inMaterial) {
+void JPH_ConvexShapeSettings_SetMaterial(
+    JPH_ConvexShapeSettings *inSettings,
+    const JPH_PhysicsMaterial *inMaterial
+) {
+    assert(inSettings != nullptr);
+    auto settings = reinterpret_cast<JPH::ConvexShapeSettings *>(inSettings);
+    settings->mMaterial = reinterpret_cast<const JPH::PhysicsMaterial *>(inMaterial);
 }
 
+
 float JPH_ConvexShapeSettings_GetDensity(const JPH_ConvexShapeSettings *inSettings) {
+    assert(inSettings != nullptr);
+    return reinterpret_cast<const JPH::ConvexShapeSettings *>(inSettings)->mDensity;
 }
 
 void JPH_ConvexShapeSettings_SetDensity(JPH_ConvexShapeSettings *inSettings, float inDensity) {
+    assert(inSettings != nullptr);
+    reinterpret_cast<JPH::ConvexShapeSettings *>(inSettings)->SetDensity(inDensity);
 }
 
 //
 // JPH_BoxShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
 //
 JPH_BoxShapeSettings * JPH_BoxShapeSettings_Create(const float inHalfExtent[3]) {
+    auto settings = new JPH::BoxShapeSettings(JPH::Vec3(inHalfExtent[0], inHalfExtent[1], inHalfExtent[2]));
+    return reinterpret_cast<JPH_BoxShapeSettings *>(settings);
 }
 
 void JPH_BoxShapeSettings_GetHalfExtent(const JPH_BoxShapeSettings *inSettings, float outHalfExtent[3]) {
+    assert(inSettings != nullptr && outHalfExtent != nullptr);
+    auto settings = reinterpret_cast<const JPH::BoxShapeSettings *>(inSettings);
+    outHalfExtent[0] = settings->mHalfExtent[0];
+    outHalfExtent[1] = settings->mHalfExtent[1];
+    outHalfExtent[2] = settings->mHalfExtent[2];
 }
 
 void JPH_BoxShapeSettings_SetHalfExtent(JPH_BoxShapeSettings *inSettings, const float inHalfExtent[3]) {
+    assert(inSettings != nullptr && inHalfExtent != nullptr);
+    auto settings = reinterpret_cast<JPH::BoxShapeSettings *>(inSettings);
+    settings->mHalfExtent = JPH::Vec3(inHalfExtent[0], inHalfExtent[1], inHalfExtent[2]);
 }
 
 float JPH_BoxShapeSettings_GetConvexRadius(const JPH_BoxShapeSettings *inSettings) {
+    assert(inSettings != nullptr);
+    return reinterpret_cast<const JPH::BoxShapeSettings *>(inSettings)->mConvexRadius;
 }
 
 void JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *inSettings, float inConvexRadius) {
+    assert(inSettings != nullptr);
+    reinterpret_cast<JPH::BoxShapeSettings *>(inSettings)->mConvexRadius = inConvexRadius;
 }
-#endif

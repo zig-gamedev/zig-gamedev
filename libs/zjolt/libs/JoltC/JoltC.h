@@ -59,12 +59,10 @@ JPH_CAPI void           JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSetti
 JPH_CAPI const JPH_PhysicsMaterial *    JPH_ConvexShapeSettings_GetMaterial(
                                             const JPH_ConvexShapeSettings *inSettings
                                         );
-#if 0
 JPH_CAPI void                           JPH_ConvexShapeSettings_SetMaterial(
                                             JPH_ConvexShapeSettings *inSettings,
-                                            const PhysicsMaterial *inMaterial
+                                            const JPH_PhysicsMaterial *inMaterial
                                         );
-
 JPH_CAPI float                          JPH_ConvexShapeSettings_GetDensity(
                                             const JPH_ConvexShapeSettings *inSettings
                                         );
@@ -76,7 +74,6 @@ JPH_CAPI void                           JPH_ConvexShapeSettings_SetDensity(
 // JPH_BoxShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
 //
 JPH_CAPI JPH_BoxShapeSettings * JPH_BoxShapeSettings_Create(const float inHalfExtent[3]);
-
 JPH_CAPI void                   JPH_BoxShapeSettings_GetHalfExtent(
                                     const JPH_BoxShapeSettings *inSettings,
                                     float outHalfExtent[3]
@@ -85,13 +82,11 @@ JPH_CAPI void                   JPH_BoxShapeSettings_SetHalfExtent(
                                     JPH_BoxShapeSettings *inSettings,
                                     const float inHalfExtent[3]
                                 );
-
 JPH_CAPI float                  JPH_BoxShapeSettings_GetConvexRadius(const JPH_BoxShapeSettings *inSettings);
 JPH_CAPI void                   JPH_BoxShapeSettings_SetConvexRadius(
                                     JPH_BoxShapeSettings *inSettings,
                                     float inConvexRadius
                                 );
-#endif
 //
 // Misc
 //
@@ -118,7 +113,6 @@ typedef struct JPH_BroadPhaseLayerInterfaceVTable {
 //
 JPH_CAPI JPH_PhysicsSystem *    JPH_PhysicsSystem_Create(void);
 JPH_CAPI void                   JPH_PhysicsSystem_Destroy(JPH_PhysicsSystem *inPhysicsSystem);
-
 JPH_CAPI void                   JPH_PhysicsSystem_Init(
                                     JPH_PhysicsSystem *inPhysicsSystem,
                                     uint inMaxBodies,
@@ -129,7 +123,6 @@ JPH_CAPI void                   JPH_PhysicsSystem_Init(
                                     JPH_ObjectVsBroadPhaseLayerFilter inObjectVsBroadPhaseLayerFilter,
                                     JPH_ObjectLayerPairFilter inObjectLayerPairFilter
                                 );
-
 JPH_CAPI uint                   JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *inPhysicsSystem);
 JPH_CAPI uint                   JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *inPhysicsSystem);
 JPH_CAPI uint                   JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *inPhysicsSystem);
