@@ -116,3 +116,63 @@ void JPH_Shape_SetUserData(JPH_Shape *inShape, uint64 inUserData) {
     assert(inShape != nullptr);
     return reinterpret_cast<JPH::Shape *>(inShape)->SetUserData(inUserData);
 }
+
+//
+// JPH_ShapeSettings
+//
+JPH_Shape * JPH_ShapeSettings_Cook(const JPH_ShapeSettings *inSettings) {
+    assert(inSettings != nullptr);
+    auto *settings = reinterpret_cast<const JPH::ShapeSettings *>(inSettings);
+    const JPH::Result result = settings->Create();
+    if (result.HasError())
+        return nullptr;
+    return reinterpret_cast<JPH_Shape *>(result.Get().GetPtr());
+}
+
+uint64 JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *inSettings) {
+    assert(inSettings != nullptr);
+    return reinterpret_cast<const JPH::ShapeSettings *>(inSettings)->mUserData;
+}
+
+void JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSettings, uint64 inUserData) {
+    assert(inSettings != nullptr);
+    reinterpret_cast<JPH::ShapeSettings *>(inSettings)->mUserData = inUserData;
+}
+
+//
+// JPH_ConvexShapeSettings (-> JPH_ShapeSettings)
+//
+const JPH_PhysicsMaterial * JPH_ConvexShapeSettings_GetMaterial(const JPH_ConvexShapeSettings *inSettings) {
+    assert(inSettings != nullptr);
+    auto *settings = reinterpret_cast<const JPH::ConvexShapeSettings *>(inSettings);
+    return reinterpret_cast<const JPH_PhysicsMaterial *>(settings->mMaterial.GetPtr());
+}
+
+#if 0
+void JPH_ConvexShapeSettings_SetMaterial(JPH_ConvexShapeSettings *inSettings, const PhysicsMaterial *inMaterial) {
+}
+
+float JPH_ConvexShapeSettings_GetDensity(const JPH_ConvexShapeSettings *inSettings) {
+}
+
+void JPH_ConvexShapeSettings_SetDensity(JPH_ConvexShapeSettings *inSettings, float inDensity) {
+}
+
+//
+// JPH_BoxShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+JPH_BoxShapeSettings * JPH_BoxShapeSettings_Create(const float inHalfExtent[3]) {
+}
+
+void JPH_BoxShapeSettings_GetHalfExtent(const JPH_BoxShapeSettings *inSettings, float outHalfExtent[3]) {
+}
+
+void JPH_BoxShapeSettings_SetHalfExtent(JPH_BoxShapeSettings *inSettings, const float inHalfExtent[3]) {
+}
+
+float JPH_BoxShapeSettings_GetConvexRadius(const JPH_BoxShapeSettings *inSettings) {
+}
+
+void JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *inSettings, float inConvexRadius) {
+}
+#endif
