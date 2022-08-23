@@ -2,48 +2,57 @@
 #include <assert.h>
 #include <stddef.h>
 
-static const JPH_ObjectLayer layer_non_moving = 0;
-static const JPH_ObjectLayer layer_moving = 1;
-
-static const JPH_BroadPhaseLayer bp_layer_non_moving = 0;
-static const JPH_BroadPhaseLayer bp_layer_moving = 1;
-
 #define NUM_LAYERS 2
 
-typedef struct BPLayerInterfaceImpl {
-    const JPH_BroadPhaseLayerInterfaceVTable *vtable_ptr;
-    JPH_BroadPhaseLayer object_to_broad_phase[NUM_LAYERS];
+static const JPH_ObjectLayer gLayerNonMoving = 0;
+static const JPH_ObjectLayer gLayerMoving = 1;
+
+static const JPH_BroadPhaseLayer gBpLayerNonMoving = 0;
+static const JPH_BroadPhaseLayer gBpLayerMoving = 1;
+
+typedef struct BPLayerInterfaceImpl
+{
+    const JPH_BroadPhaseLayerInterfaceVTable *  vtable;
+    JPH_BroadPhaseLayer                         objectToBroadPhase[NUM_LAYERS];
 } BPLayerInterfaceImpl;
 
-static uint32_t BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self) {
+static uint32_t BPLayerInterface_GetNumBroadPhaseLayers(const void *inSelf)
+{
     return NUM_LAYERS;
 }
 
-static JPH_BroadPhaseLayer BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPH_ObjectLayer layer) {
-    assert(layer < NUM_LAYERS);
-    const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
-    return self->object_to_broad_phase[layer];
+static JPH_BroadPhaseLayer BPLayerInterface_GetBroadPhaseLayer(const void *inSelf, JPH_ObjectLayer inLayer)
+{
+    assert(inLayer < NUM_LAYERS);
+    const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)inSelf;
+    return self->objectToBroadPhase[inLayer];
 }
 
-static const JPH_BroadPhaseLayerInterfaceVTable bp_layer_interface_vtable = {
+static const JPH_BroadPhaseLayerInterfaceVTable gBpLayerInterfaceVTable =
+{
     .GetNumBroadPhaseLayers = BPLayerInterface_GetNumBroadPhaseLayers,
-    .GetBroadPhaseLayer = BPLayerInterface_GetBroadPhaseLayer,
+    .GetBroadPhaseLayer     = BPLayerInterface_GetBroadPhaseLayer,
 };
 
-static BPLayerInterfaceImpl BPLayerInterface_Init(void) {
-    BPLayerInterfaceImpl impl = {
-        .vtable_ptr = &bp_layer_interface_vtable,
+static BPLayerInterfaceImpl BPLayerInterface_Init(void)
+{
+    BPLayerInterfaceImpl impl =
+    {
+        .vtable = &gBpLayerInterfaceVTable,
     };
-    impl.object_to_broad_phase[layer_non_moving] = bp_layer_non_moving;
-    impl.object_to_broad_phase[layer_moving] = bp_layer_moving;
+    impl.objectToBroadPhase[gLayerNonMoving] = gBpLayerNonMoving;
+    impl.objectToBroadPhase[gLayerMoving]    = gBpLayerMoving;
+
     return impl;
 }
 
-static bool myObjectCanCollide(JPH_ObjectLayer in_object1, JPH_ObjectLayer in_object2) {
-    switch (in_object1) {
-        case layer_non_moving:
-            return in_object2 == layer_moving;
-        case layer_moving:
+static bool MyObjectCanCollide(JPH_ObjectLayer inObject1, JPH_ObjectLayer inObject2)
+{
+    switch (inObject1)
+    {
+        case gLayerNonMoving:
+            return inObject2 == gLayerMoving;
+        case gLayerMoving:
             return true;
         default:
             assert(false);
@@ -51,65 +60,71 @@ static bool myObjectCanCollide(JPH_ObjectLayer in_object1, JPH_ObjectLayer in_ob
     }
 }
 
-static bool myBroadPhaseCanCollide(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2) {
-    switch (in_layer1) {
-        case layer_non_moving:
-            return in_layer2 == bp_layer_moving;
-        case layer_moving:
-            return true;	
+static bool MyBroadPhaseCanCollide(JPH_ObjectLayer inLayer1, JPH_BroadPhaseLayer inLayer2)
+{
+    switch (inLayer1)
+    {
+        case gLayerNonMoving:
+            return inLayer2 == gBpLayerMoving;
+        case gLayerMoving:
+            return true;
         default:
             assert(false);
             return false;
     }
 }
 
-static bool testBasic(void) {
+static bool TestBasic(void)
+{
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
     JPH_RegisterTypes();
-    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
+    JPH_PhysicsSystem *physicsSystem = JPH_PhysicsSystem_Create();
 
-    const uint32_t max_bodies = 1024;
-    const uint32_t num_body_mutexes = 0;
-    const uint32_t max_body_pairs = 1024;
-    const uint32_t max_contact_constraints = 1024;
+    const uint32_t maxBodies = 1024;
+    const uint32_t numBodyMutexes = 0;
+    const uint32_t maxBodyPairs = 1024;
+    const uint32_t maxContactConstraints = 1024;
 
-    BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
+    BPLayerInterfaceImpl broadPhaseLayerInterface = BPLayerInterface_Init();
 
     JPH_PhysicsSystem_Init(
-        physics_system,
-        max_bodies,
-        num_body_mutexes,
-        max_body_pairs,
-        max_contact_constraints,
-        &broad_phase_layer_interface,
-        myBroadPhaseCanCollide,
-        myObjectCanCollide
+        physicsSystem,
+        maxBodies,
+        numBodyMutexes,
+        maxBodyPairs,
+        maxContactConstraints,
+        &broadPhaseLayerInterface,
+        MyBroadPhaseCanCollide,
+        MyObjectCanCollide
     );
 
-    const float half_extent[3] = { 10.0, 20.0, 30.0 };
-    JPH_BoxShapeSettings *box_settings = JPH_BoxShapeSettings_Create(half_extent);
-    JPH_BoxShapeSettings_SetConvexRadius(box_settings, 1.0);
-    if (JPH_BoxShapeSettings_GetConvexRadius(box_settings) != 1.0) return false;
+    const float halfExtent[3] = { 10.0, 20.0, 30.0 };
+    JPH_BoxShapeSettings *boxSettings = JPH_BoxShapeSettings_Create(halfExtent);
+    JPH_BoxShapeSettings_SetConvexRadius(boxSettings, 1.0);
+    if (JPH_BoxShapeSettings_GetConvexRadius(boxSettings) != 1.0) return false;
 
-    JPH_ConvexShapeSettings_SetDensity((JPH_ConvexShapeSettings *)box_settings, 100.0);
-    if (JPH_ConvexShapeSettings_GetDensity((JPH_ConvexShapeSettings *)box_settings) != 100.0) return false;
+    JPH_ConvexShapeSettings_SetDensity((JPH_ConvexShapeSettings *)boxSettings, 100.0);
+    if (JPH_ConvexShapeSettings_GetDensity((JPH_ConvexShapeSettings *)boxSettings) != 100.0) return false;
 
-    JPH_Shape *box_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)box_settings);
-    if (box_shape == NULL) return false;
-    if (JPH_Shape_GetType(box_shape) != JPH_SHAPE_TYPE_CONVEX) return false;
-    if (JPH_Shape_GetSubType(box_shape) != JPH_SHAPE_SUB_TYPE_BOX) return false;
+    JPH_Shape *boxShape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)boxSettings);
+    if (boxShape == NULL) return false;
+    if (JPH_Shape_GetType(boxShape) != JPH_SHAPE_TYPE_CONVEX) return false;
+    if (JPH_Shape_GetSubType(boxShape) != JPH_SHAPE_SUB_TYPE_BOX) return false;
 
-    JPH_ShapeSettings_Destroy((JPH_ShapeSettings *)box_settings);
-    box_settings = NULL;
+    JPH_ShapeSettings_Destroy((JPH_ShapeSettings *)boxSettings);
+    boxSettings = NULL;
 
-    JPH_PhysicsSystem_Destroy(physics_system);
+    JPH_PhysicsSystem_Destroy(physicsSystem);
+    physicsSystem = NULL;
+
     JPH_DestroyFactory();
 
     return true;
 }
 
-bool joltcRunAllCTests(void) {
-    if (!testBasic()) return false;
+bool joltcRunAllCTests(void)
+{
+    if (!TestBasic()) return false;
     return true;
 }

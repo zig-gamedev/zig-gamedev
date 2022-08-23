@@ -15,7 +15,8 @@ JPH_SUPPRESS_WARNINGS
 #ifdef JPH_ENABLE_ASSERTS
 
 static bool
-AssertFailedImpl(const char *inExpression, const char *inMessage, const char *inFile, uint32_t inLine) {
+AssertFailedImpl(const char *inExpression, const char *inMessage, const char *inFile, uint32_t inLine)
+{
 	return true;
 }
 
