@@ -15,16 +15,11 @@ JPH_SUPPRESS_WARNINGS
 #ifdef JPH_ENABLE_ASSERTS
 
 static bool
-AssertFailedImpl(const char *inExpression, const char *inMessage, const char *inFile, uint inLine) {
+AssertFailedImpl(const char *inExpression, const char *inMessage, const char *inFile, uint32_t inLine) {
 	return true;
 }
 
 #endif
-
-static_assert(sizeof(uint8) == 1, "sizeof(uint8) != 1");
-static_assert(sizeof(uint16) == 2, "sizeof(uint16) != 2");
-static_assert(sizeof(uint) == 4, "sizeof(uint) != 4");
-static_assert(sizeof(uint64) == 8, "sizeof(uint64) != 8");
 
 JPH_CAPI void
 JPH_RegisterDefaultAllocator(void) {
@@ -66,10 +61,10 @@ JPH_PhysicsSystem_Destroy(JPH_PhysicsSystem *inPhysicsSystem) {
 JPH_CAPI void
 JPH_PhysicsSystem_Init(
     JPH_PhysicsSystem *inPhysicsSystem,
-    uint inMaxBodies,
-    uint inNumBodyMutexes,
-    uint inMaxBodyPairs,
-    uint inMaxContactConstraints,
+    uint32_t inMaxBodies,
+    uint32_t inNumBodyMutexes,
+    uint32_t inMaxBodyPairs,
+    uint32_t inMaxContactConstraints,
     const void *inBroadPhaseLayerInterface,
     JPH_ObjectVsBroadPhaseLayerFilter inObjectVsBroadPhaseLayerFilter,
     JPH_ObjectLayerPairFilter inObjectLayerPairFilter
@@ -89,19 +84,19 @@ JPH_PhysicsSystem_Init(
     );
 }
 
-JPH_CAPI uint
+JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *inPhysicsSystem) {
     assert(inPhysicsSystem != nullptr);
     return reinterpret_cast<const JPH::PhysicsSystem *>(inPhysicsSystem)->GetNumBodies();
 }
 
-JPH_CAPI uint
+JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *inPhysicsSystem) {
     assert(inPhysicsSystem != nullptr);
     return reinterpret_cast<const JPH::PhysicsSystem *>(inPhysicsSystem)->GetNumActiveBodies();
 }
 
-JPH_CAPI uint
+JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *inPhysicsSystem) {
     assert(inPhysicsSystem != nullptr);
     return reinterpret_cast<const JPH::PhysicsSystem *>(inPhysicsSystem)->GetMaxBodies();
@@ -122,14 +117,14 @@ JPH_Shape_GetSubType(const JPH_Shape *inShape) {
     return static_cast<JPH_ShapeSubType>(reinterpret_cast<const JPH::Shape *>(inShape)->GetSubType());
 }
 
-JPH_CAPI uint64
+JPH_CAPI uint64_t
 JPH_Shape_GetUserData(const JPH_Shape *inShape) {
     assert(inShape != nullptr);
     return reinterpret_cast<const JPH::Shape *>(inShape)->GetUserData();
 }
 
 JPH_CAPI void
-JPH_Shape_SetUserData(JPH_Shape *inShape, uint64 inUserData) {
+JPH_Shape_SetUserData(JPH_Shape *inShape, uint64_t inUserData) {
     assert(inShape != nullptr);
     return reinterpret_cast<JPH::Shape *>(inShape)->SetUserData(inUserData);
 }
@@ -147,14 +142,14 @@ JPH_ShapeSettings_Cook(const JPH_ShapeSettings *inSettings) {
     return reinterpret_cast<JPH_Shape *>(result.Get().GetPtr());
 }
 
-JPH_CAPI uint64
+JPH_CAPI uint64_t
 JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *inSettings) {
     assert(inSettings != nullptr);
     return reinterpret_cast<const JPH::ShapeSettings *>(inSettings)->mUserData;
 }
 
 JPH_CAPI void
-JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSettings, uint64 inUserData) {
+JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSettings, uint64_t inUserData) {
     assert(inSettings != nullptr);
     reinterpret_cast<JPH::ShapeSettings *>(inSettings)->mUserData = inUserData;
 }

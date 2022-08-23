@@ -20,6 +20,7 @@ pub fn buildTests(
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
     const tests = b.addTest(thisDir() ++ "/src/zjolt.zig");
+    tests.addCSourceFile(thisDir() ++ "/src/tests.c", &.{});
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     link(tests);

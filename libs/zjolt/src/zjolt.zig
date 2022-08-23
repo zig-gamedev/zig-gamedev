@@ -62,6 +62,11 @@ fn myObjectCanCollide(inObject1: c.JPH_ObjectLayer, inObject2: c.JPH_ObjectLayer
 
 const expect = std.testing.expect;
 
+extern fn joltcRunAllCTests() bool;
+test "JoltC.c" {
+    try expect(joltcRunAllCTests() == true);
+}
+
 test "JoltC.basic" {
     if (@import("builtin").target.os.tag == .macos and
         @import("builtin").target.cpu.arch == .aarch64) return error.SkipZigTest;

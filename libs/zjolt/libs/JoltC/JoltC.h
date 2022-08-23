@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #define JPH_CAPI
 
@@ -8,16 +9,11 @@
 extern "C" {
 #endif
 
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-typedef unsigned int uint;
-typedef unsigned long long uint64;
-
-typedef unsigned short JPH_ObjectLayer;
-typedef unsigned char JPH_BroadPhaseLayer;
-typedef unsigned int JPH_BodyID;
-typedef unsigned char JPH_ShapeType;
-typedef unsigned char JPH_ShapeSubType;
+typedef uint16_t JPH_ObjectLayer;
+typedef uint8_t JPH_BroadPhaseLayer;
+typedef uint32_t JPH_BodyID;
+typedef uint8_t JPH_ShapeType;
+typedef uint8_t JPH_ShapeSubType;
 
 typedef struct JPH_PhysicsSystem JPH_PhysicsSystem;
 typedef struct JPH_Shape JPH_Shape;
@@ -52,11 +48,11 @@ typedef struct JPH_SphereShapeSettings JPH_SphereShapeSettings;
 JPH_CAPI JPH_Shape *
 JPH_ShapeSettings_Cook(const JPH_ShapeSettings *inSettings);
 
-JPH_CAPI uint64
+JPH_CAPI uint64_t
 JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *inSettings);
 
 JPH_CAPI void
-JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSettings, uint64 inUserData);
+JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSettings, uint64_t inUserData);
 
 //
 // JPH_ConvexShapeSettings (-> JPH_ShapeSettings)
@@ -115,7 +111,7 @@ typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer inLayer1, JPH_
 typedef struct JPH_BroadPhaseLayerInterfaceVTable {
     void *reserved0;
     void *reserved1;
-    uint (*GetNumBroadPhaseLayers)(const void *inThis);
+    uint32_t (*GetNumBroadPhaseLayers)(const void *inThis);
     JPH_BroadPhaseLayer (*GetBroadPhaseLayer)(const void *inThis, JPH_ObjectLayer inLayer);
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
     const char *(*GetBroadPhaseLayerName)(const void *inThis, JPH_BroadPhaseLayer inLayer);
@@ -134,22 +130,22 @@ JPH_PhysicsSystem_Destroy(JPH_PhysicsSystem *inPhysicsSystem);
 JPH_CAPI void
 JPH_PhysicsSystem_Init(
     JPH_PhysicsSystem *inPhysicsSystem,
-    uint inMaxBodies,
-    uint inNumBodyMutexes,
-    uint inMaxBodyPairs,
-    uint inMaxContactConstraints,
+    uint32_t inMaxBodies,
+    uint32_t inNumBodyMutexes,
+    uint32_t inMaxBodyPairs,
+    uint32_t inMaxContactConstraints,
     const void *inBroadPhaseLayerInterface,
     JPH_ObjectVsBroadPhaseLayerFilter inObjectVsBroadPhaseLayerFilter,
     JPH_ObjectLayerPairFilter inObjectLayerPairFilter
 );
 
-JPH_CAPI uint
+JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *inPhysicsSystem);
 
-JPH_CAPI uint
+JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *inPhysicsSystem);
 
-JPH_CAPI uint
+JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *inPhysicsSystem);
 
 //
@@ -161,11 +157,11 @@ JPH_Shape_GetType(const JPH_Shape *inShape);
 JPH_CAPI JPH_ShapeSubType
 JPH_Shape_GetSubType(const JPH_Shape *inShape);
 
-JPH_CAPI uint64
+JPH_CAPI uint64_t
 JPH_Shape_GetUserData(const JPH_Shape *inShape);
 
 JPH_CAPI void
-JPH_Shape_SetUserData(JPH_Shape *inShape, uint64 inUserData);
+JPH_Shape_SetUserData(JPH_Shape *inShape, uint64_t inUserData);
 
 #ifdef __cplusplus
 }
