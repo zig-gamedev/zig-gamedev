@@ -20,21 +20,20 @@ static uint32_t BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self) {
 }
 
 static JPH_BroadPhaseLayer BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPH_ObjectLayer layer) {
-    const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
     assert(layer < NUM_LAYERS);
+    const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
     return self->object_to_broad_phase[layer];
 }
 
 static const JPH_BroadPhaseLayerInterfaceVTable bp_layer_interface_vtable = {
-    .reserved0 = NULL,
-    .reserved1 = NULL,
     .GetNumBroadPhaseLayers = BPLayerInterface_GetNumBroadPhaseLayers,
     .GetBroadPhaseLayer = BPLayerInterface_GetBroadPhaseLayer,
 };
 
 static BPLayerInterfaceImpl BPLayerInterface_Init(void) {
-    BPLayerInterfaceImpl impl;
-    impl.vtable_ptr = &bp_layer_interface_vtable;
+    BPLayerInterfaceImpl impl = {
+        .vtable_ptr = &bp_layer_interface_vtable,
+    };
     impl.object_to_broad_phase[layer_non_moving] = bp_layer_non_moving;
     impl.object_to_broad_phase[layer_moving] = bp_layer_moving;
     return impl;
