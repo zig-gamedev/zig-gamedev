@@ -87,6 +87,22 @@ static bool testBasic(void) {
         myObjectCanCollide
     );
 
+    const float half_extent[3] = { 10.0, 20.0, 30.0 };
+    JPH_BoxShapeSettings *box_settings = JPH_BoxShapeSettings_Create(half_extent);
+    JPH_BoxShapeSettings_SetConvexRadius(box_settings, 1.0);
+    if (JPH_BoxShapeSettings_GetConvexRadius(box_settings) != 1.0) return false;
+
+    JPH_ConvexShapeSettings_SetDensity((JPH_ConvexShapeSettings *)box_settings, 100.0);
+    if (JPH_ConvexShapeSettings_GetDensity((JPH_ConvexShapeSettings *)box_settings) != 100.0) return false;
+
+    JPH_Shape *box_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)box_settings);
+    if (box_shape == NULL) return false;
+    if (JPH_Shape_GetType(box_shape) != JPH_SHAPE_TYPE_CONVEX) return false;
+    if (JPH_Shape_GetSubType(box_shape) != JPH_SHAPE_SUB_TYPE_BOX) return false;
+
+    JPH_ShapeSettings_Destroy((JPH_ShapeSettings *)box_settings);
+    box_settings = NULL;
+
     JPH_PhysicsSystem_Destroy(physics_system);
     JPH_DestroyFactory();
 
