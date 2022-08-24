@@ -85,7 +85,7 @@ JPH_RegisterTypes(void)
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_CollisionGroup
-JPH_CollisionGroup_Init(void)
+JPH_CollisionGroup_InitDefault(void)
 {
     return {
         .group_id = ~JPH_CollisionGroupID(0),
@@ -94,7 +94,7 @@ JPH_CollisionGroup_Init(void)
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BodyCreationSettings
-JPH_BodyCreationSettings_Init(void)
+JPH_BodyCreationSettings_InitDefault(void)
 {
     return {
         .position = { 0.0f, 0.0f, 0.0f },
@@ -103,7 +103,7 @@ JPH_BodyCreationSettings_Init(void)
         .angular_velocity = { 0.0f, 0.0f, 0.0f },
         .user_data = 0,
         .object_layer = 0,
-        .collision_group = JPH_CollisionGroup_Init(),
+        .collision_group = JPH_CollisionGroup_InitDefault(),
         .motion_type = JPH_MOTION_TYPE_DYNAMIC,
         .allow_dynamic_or_kinematic = false,
         .is_sensor = false,
@@ -118,6 +118,41 @@ JPH_BodyCreationSettings_Init(void)
         .gravity_factor = 1.0f,
         .override_mass_properties = JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
         .inertia_multiplier = 1.0f,
+    };
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_BodyCreationSettings
+JPH_BodyCreationSettings_Init(
+    const JPH_Shape *in_shape,
+    const float in_position[3],
+    const float in_rotation[4],
+    JPH_MotionType in_motion_type,
+    JPH_ObjectLayer in_layer)
+{
+    assert(in_shape != nullptr && in_position != nullptr && in_rotation != nullptr);
+    return {
+        .position = { in_position[0], in_position[1], in_position[2] },
+        .rotation = { in_rotation[0], in_rotation[1], in_rotation[2], in_rotation[3] },
+        .linear_velocity = { 0.0f, 0.0f, 0.0f },
+        .angular_velocity = { 0.0f, 0.0f, 0.0f },
+        .user_data = 0,
+        .object_layer = in_layer,
+        .collision_group = JPH_CollisionGroup_InitDefault(),
+        .motion_type = in_motion_type,
+        .allow_dynamic_or_kinematic = false,
+        .is_sensor = false,
+        .motion_quality = JPH_MOTION_QUALITY_DISCRETE,
+        .allow_sleeping = true,
+        .friction = 0.2f,
+        .restitution = 0.0f,
+        .linear_damping = 0.05f,
+        .angular_damping = 0.05f,
+        .max_linear_velocity = 500.0f,
+        .max_angular_velocity = 0.25f * JPH::JPH_PI * 60.0f,
+        .gravity_factor = 1.0f,
+        .override_mass_properties = JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
+        .inertia_multiplier = 1.0f,
+        .shape = in_shape,
     };
 }
 //--------------------------------------------------------------------------------------------------
@@ -218,6 +253,14 @@ JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *in_physics_system)
 {
     assert(in_physics_system != nullptr);
     return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetMaxBodies();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_BodyInterface *
+JPH_PhysicsSystem_GetBodyInterface(JPH_PhysicsSystem *in_physics_system)
+{
+    assert(in_physics_system != nullptr);
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    return reinterpret_cast<JPH_BodyInterface *>(&physics_system->GetBodyInterface());
 }
 //--------------------------------------------------------------------------------------------------
 //

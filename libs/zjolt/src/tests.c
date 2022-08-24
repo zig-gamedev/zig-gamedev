@@ -75,7 +75,7 @@ static bool MyBroadPhaseCanCollide(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLaye
     }
 }
 //--------------------------------------------------------------------------------------------------
-bool JoltC_TestBasic1(void)
+bool JoltCTest_Basic1(void)
 {
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
@@ -136,7 +136,7 @@ bool JoltC_TestBasic1(void)
     return true;
 }
 //--------------------------------------------------------------------------------------------------
-bool JoltC_TestBasic2(void)
+bool JoltCTest_Basic2(void)
 {
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
@@ -163,16 +163,28 @@ bool JoltC_TestBasic2(void)
         MyBroadPhaseCanCollide,
         MyObjectCanCollide);
 
-    const float half_extent[3] = { 1.0, 1.0, 1.0 };
-    JPH_BoxShapeSettings *box_settings = JPH_BoxShapeSettings_Create(half_extent);
+    const float floor_half_extent[3] = { 100.0, 1.0, 100.0 };
+    JPH_BoxShapeSettings *floor_shape_settings = JPH_BoxShapeSettings_Create(floor_half_extent);
 
-    JPH_Shape *box_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)box_settings);
-    if (box_shape == NULL) return false;
+    JPH_Shape *floor_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)floor_shape_settings);
+    if (floor_shape == NULL) return false;
 
-    JPH_BodyCreationSettings body_settings = JPH_BodyCreationSettings_Init();
+    const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
+    const float floor_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    const JPH_BodyCreationSettings floor_settings = JPH_BodyCreationSettings_Init(
+        floor_shape,
+        floor_position,
+        floor_rotation,
+        JPH_MOTION_TYPE_STATIC,
+        LAYER_NON_MOVING);
 
-    JPH_ShapeSettings_Release((JPH_ShapeSettings *)box_settings);
-    JPH_Shape_Release(box_shape);
+    JPH_BodyInterface *body_interface = JPH_PhysicsSystem_GetBodyInterface(physics_system);
+
+    JPH_Body *floor = JPH_BodyInterface_CreateBody(body_interface, &floor_settings);
+    if (floor == NULL) return false;
+
+    JPH_ShapeSettings_Release((JPH_ShapeSettings *)floor_shape_settings);
+    JPH_Shape_Release(floor_shape);
 
     JPH_PhysicsSystem_Destroy(physics_system);
     JPH_JobSystem_Destroy(job_system);

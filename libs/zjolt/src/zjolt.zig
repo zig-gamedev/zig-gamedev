@@ -62,14 +62,14 @@ const assert = std.debug.assert;
 //
 const expect = std.testing.expect;
 
-extern fn JoltC_TestBasic1() bool;
+extern fn JoltCTest_Basic1() bool;
 test "jolt_c.basic1" {
-    try expect(JoltC_TestBasic1() == true);
+    try expect(JoltCTest_Basic1() == true);
 }
 
-extern fn JoltC_TestBasic2() bool;
+extern fn JoltCTest_Basic2() bool;
 test "jolt_c.basic2" {
-    try expect(JoltC_TestBasic2() == true);
+    try expect(JoltCTest_Basic2() == true);
 }
 
 //test "JoltC.basic" {

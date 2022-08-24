@@ -104,7 +104,7 @@ typedef struct JPH_CollisionGroup
 } JPH_CollisionGroup;
 
 JPH_CAPI JPH_CollisionGroup
-JPH_CollisionGroup_Init(void);
+JPH_CollisionGroup_InitDefault(void);
 
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
 typedef struct JPH_BodyCreationSettings
@@ -131,12 +131,19 @@ typedef struct JPH_BodyCreationSettings
     JPH_OverrideMassProperties  override_mass_properties;
     float                       inertia_multiplier;
     JPH_MassProperties          mass_properties_override;
-    const void *                reserved0;
-    const void *                reserved1;
+    const void *                reserved;
+    const JPH_Shape *           shape;
 } JPH_BodyCreationSettings;
 
 JPH_CAPI JPH_BodyCreationSettings
-JPH_BodyCreationSettings_Init(void);
+JPH_BodyCreationSettings_InitDefault(void);
+
+JPH_CAPI JPH_BodyCreationSettings
+JPH_BodyCreationSettings_Init(const JPH_Shape *in_shape,
+                              const float in_position[3],
+                              const float in_rotation[4],
+                              JPH_MotionType in_motion_type,
+                              JPH_ObjectLayer in_layer);
 //--------------------------------------------------------------------------------------------------
 //
 // Misc
@@ -216,6 +223,9 @@ JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *in_physics_system)
 
 JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *in_physics_system);
+
+JPH_CAPI JPH_BodyInterface *
+JPH_PhysicsSystem_GetBodyInterface(JPH_PhysicsSystem *in_physics_system);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_ShapeSettings
