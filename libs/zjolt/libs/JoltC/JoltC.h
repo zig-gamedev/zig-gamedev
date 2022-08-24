@@ -9,58 +9,60 @@
 extern "C" {
 #endif
 
-typedef uint16_t JPH_ObjectLayer;
-typedef uint8_t JPH_BroadPhaseLayer;
-typedef uint32_t JPH_BodyID;
-typedef uint8_t JPH_ShapeType;
-typedef uint8_t JPH_ShapeSubType;
+typedef uint16_t    JPH_ObjectLayer;
+typedef uint8_t     JPH_BroadPhaseLayer;
+typedef uint32_t    JPH_BodyID;
+typedef uint8_t     JPH_ShapeType;
+typedef uint8_t     JPH_ShapeSubType;
 
-typedef struct JPH_PhysicsSystem JPH_PhysicsSystem;
-typedef struct JPH_Shape JPH_Shape;
-typedef struct JPH_PhysicsMaterial JPH_PhysicsMaterial;
-typedef struct JPH_TempAllocator JPH_TempAllocator;
-typedef struct JPH_JobSystem JPH_JobSystem;
+typedef struct JPH_PhysicsSystem    JPH_PhysicsSystem;
+typedef struct JPH_Shape            JPH_Shape;
+typedef struct JPH_PhysicsMaterial  JPH_PhysicsMaterial;
+typedef struct JPH_TempAllocator    JPH_TempAllocator;
+typedef struct JPH_JobSystem        JPH_JobSystem;
+typedef struct JPH_Body             JPH_Body;
+typedef struct JPH_BodyInterface    JPH_BodyInterface;
 
-typedef struct JPH_ShapeSettings JPH_ShapeSettings;
-typedef struct JPH_ConvexShapeSettings JPH_ConvexShapeSettings;
-typedef struct JPH_BoxShapeSettings JPH_BoxShapeSettings;
-typedef struct JPH_SphereShapeSettings JPH_SphereShapeSettings;
+typedef struct JPH_ShapeSettings        JPH_ShapeSettings;
+typedef struct JPH_ConvexShapeSettings  JPH_ConvexShapeSettings;
+typedef struct JPH_BoxShapeSettings     JPH_BoxShapeSettings;
+typedef struct JPH_SphereShapeSettings  JPH_SphereShapeSettings;
 
-#define JPH_MAX_PHYSICS_JOBS 2048
+#define JPH_MAX_PHYSICS_JOBS     2048
 #define JPH_MAX_PHYSICS_BARRIERS 8
 
-#define JPH_SHAPE_TYPE_CONVEX 0
-#define JPH_SHAPE_TYPE_COMPOUND 1
-#define JPH_SHAPE_TYPE_DECORATED 2
-#define JPH_SHAPE_TYPE_MESH 3
+#define JPH_SHAPE_TYPE_CONVEX       0
+#define JPH_SHAPE_TYPE_COMPOUND     1
+#define JPH_SHAPE_TYPE_DECORATED    2
+#define JPH_SHAPE_TYPE_MESH         3
 #define JPH_SHAPE_TYPE_HEIGHT_FIELD 4
-#define JPH_SHAPE_TYPE_USER1 5
-#define JPH_SHAPE_TYPE_USER2 6
-#define JPH_SHAPE_TYPE_USER3 7
-#define JPH_SHAPE_TYPE_USER4 8
+#define JPH_SHAPE_TYPE_USER1        5
+#define JPH_SHAPE_TYPE_USER2        6
+#define JPH_SHAPE_TYPE_USER3        7
+#define JPH_SHAPE_TYPE_USER4        8
 
-#define JPH_SHAPE_SUB_TYPE_SPHERE 0
-#define JPH_SHAPE_SUB_TYPE_BOX 1
-#define JPH_SHAPE_SUB_TYPE_TRIANGLE 2
-#define JPH_SHAPE_SUB_TYPE_CAPSULE 3
-#define JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE 4
-#define JPH_SHAPE_SUB_TYPE_CYLINDER 5
-#define JPH_SHAPE_SUB_TYPE_CONVEX_HULL 6
-#define JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND 7
-#define JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND 8
-#define JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED 9
-#define JPH_SHAPE_SUB_TYPE_SCALED 10
+#define JPH_SHAPE_SUB_TYPE_SPHERE                0
+#define JPH_SHAPE_SUB_TYPE_BOX                   1
+#define JPH_SHAPE_SUB_TYPE_TRIANGLE              2
+#define JPH_SHAPE_SUB_TYPE_CAPSULE               3
+#define JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE       4
+#define JPH_SHAPE_SUB_TYPE_CYLINDER              5
+#define JPH_SHAPE_SUB_TYPE_CONVEX_HULL           6
+#define JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND       7
+#define JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND      8
+#define JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED    9
+#define JPH_SHAPE_SUB_TYPE_SCALED                10
 #define JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS 11
-#define JPH_SHAPE_SUB_TYPE_MESH 12
-#define JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD 13
-#define JPH_SHAPE_SUB_TYPE_USER1 14
-#define JPH_SHAPE_SUB_TYPE_USER2 15
-#define JPH_SHAPE_SUB_TYPE_USER3 16
-#define JPH_SHAPE_SUB_TYPE_USER4 17
-#define JPH_SHAPE_SUB_TYPE_USER5 18
-#define JPH_SHAPE_SUB_TYPE_USER6 19
-#define JPH_SHAPE_SUB_TYPE_USER7 20
-#define JPH_SHAPE_SUB_TYPE_USER8 21
+#define JPH_SHAPE_SUB_TYPE_MESH                  12
+#define JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD          13
+#define JPH_SHAPE_SUB_TYPE_USER1                 14
+#define JPH_SHAPE_SUB_TYPE_USER2                 15
+#define JPH_SHAPE_SUB_TYPE_USER3                 16
+#define JPH_SHAPE_SUB_TYPE_USER4                 17
+#define JPH_SHAPE_SUB_TYPE_USER5                 18
+#define JPH_SHAPE_SUB_TYPE_USER6                 19
+#define JPH_SHAPE_SUB_TYPE_USER7                 20
+#define JPH_SHAPE_SUB_TYPE_USER8                 21
 //--------------------------------------------------------------------------------------------------
 //
 // Misc
