@@ -2,6 +2,9 @@
 #include <assert.h>
 #include <stddef.h>
 
+//--------------------------------------------------------------------------------------------------
+// BPLayerInterface
+//--------------------------------------------------------------------------------------------------
 #define NUM_LAYERS 2
 #define LAYER_NON_MOVING 0
 #define LAYER_MOVING 1
@@ -43,7 +46,7 @@ static BPLayerInterfaceImpl BPLayerInterface_Init(void)
 
     return impl;
 }
-
+//--------------------------------------------------------------------------------------------------
 static bool MyObjectCanCollide(JPH_ObjectLayer in_object1, JPH_ObjectLayer in_object2)
 {
     switch (in_object1)
@@ -57,7 +60,7 @@ static bool MyObjectCanCollide(JPH_ObjectLayer in_object1, JPH_ObjectLayer in_ob
             return false;
     }
 }
-
+//--------------------------------------------------------------------------------------------------
 static bool MyBroadPhaseCanCollide(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2)
 {
     switch (in_layer1)
@@ -71,7 +74,7 @@ static bool MyBroadPhaseCanCollide(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLaye
             return false;
     }
 }
-
+//--------------------------------------------------------------------------------------------------
 static bool TestBasic1(void)
 {
     JPH_RegisterDefaultAllocator();
@@ -117,10 +120,54 @@ static bool TestBasic1(void)
 
     if (JPH_Shape_GetRefCount(box_shape) != 2) return false;
 
+    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)box_settings) != 1) return false;
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)box_settings);
     box_settings = NULL;
 
     if (JPH_Shape_GetRefCount(box_shape) != 1) return false;
+    JPH_Shape_Release(box_shape);
+    box_shape = NULL;
+
+    JPH_PhysicsSystem_Destroy(physics_system);
+    physics_system = NULL;
+
+    JPH_DestroyFactory();
+
+    return true;
+}
+//--------------------------------------------------------------------------------------------------
+static bool TestBasic2(void)
+{
+    JPH_RegisterDefaultAllocator();
+    JPH_CreateFactory();
+    JPH_RegisterTypes();
+    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
+
+    const uint32_t max_bodies = 1024;
+    const uint32_t num_body_mutexes = 0;
+    const uint32_t max_body_pairs = 1024;
+    const uint32_t max_contact_constraints = 1024;
+
+    BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
+
+    JPH_PhysicsSystem_Init(
+        physics_system,
+        max_bodies,
+        num_body_mutexes,
+        max_body_pairs,
+        max_contact_constraints,
+        &broad_phase_layer_interface,
+        MyBroadPhaseCanCollide,
+        MyObjectCanCollide);
+
+    const float half_extent[3] = { 1.0, 1.0, 1.0 };
+    JPH_BoxShapeSettings *box_settings = JPH_BoxShapeSettings_Create(half_extent);
+
+    JPH_Shape *box_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)box_settings);
+    if (box_shape == NULL) return false;
+
+    JPH_ShapeSettings_Release((JPH_ShapeSettings *)box_settings);
+    box_settings = NULL;
 
     JPH_Shape_Release(box_shape);
     box_shape = NULL;
@@ -132,9 +179,11 @@ static bool TestBasic1(void)
 
     return true;
 }
-
+//--------------------------------------------------------------------------------------------------
 bool joltcRunAllCTests(void)
 {
     if (!TestBasic1()) return false;
+    if (!TestBasic2()) return false;
     return true;
 }
+//--------------------------------------------------------------------------------------------------
