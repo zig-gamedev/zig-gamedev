@@ -188,6 +188,11 @@ JoltCTest_Basic2(void)
 
     JPH_Body *floor = JPH_BodyInterface_CreateBody(body_interface, &floor_settings);
     if (floor == NULL) return 0;
+    {
+        const uint32_t floor_id = JPH_Body_GetID(floor);
+        if (((floor_id & 0xff000000) >> 24) != 1) return 0;
+        if ((floor_id & 0x00ffffff) != 0) return 0;
+    }
 
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)floor_shape_settings);
     JPH_Shape_Release(floor_shape);
