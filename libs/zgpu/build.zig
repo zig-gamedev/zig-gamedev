@@ -58,7 +58,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.h", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_internal.h", &.{""});
+        //exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_internal.h", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", &.{""});
     }
 
