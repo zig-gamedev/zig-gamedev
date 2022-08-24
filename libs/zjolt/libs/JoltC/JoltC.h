@@ -6,6 +6,59 @@
 
 #define JPH_CAPI
 
+// JPH_JobSystem_Create
+#define JPH_MAX_PHYSICS_JOBS     2048
+#define JPH_MAX_PHYSICS_BARRIERS 8
+
+// JPH_ShapeType
+#define JPH_SHAPE_TYPE_CONVEX       0
+#define JPH_SHAPE_TYPE_COMPOUND     1
+#define JPH_SHAPE_TYPE_DECORATED    2
+#define JPH_SHAPE_TYPE_MESH         3
+#define JPH_SHAPE_TYPE_HEIGHT_FIELD 4
+#define JPH_SHAPE_TYPE_USER1        5
+#define JPH_SHAPE_TYPE_USER2        6
+#define JPH_SHAPE_TYPE_USER3        7
+#define JPH_SHAPE_TYPE_USER4        8
+
+// JPH_ShapeSubType
+#define JPH_SHAPE_SUB_TYPE_SPHERE                0
+#define JPH_SHAPE_SUB_TYPE_BOX                   1
+#define JPH_SHAPE_SUB_TYPE_TRIANGLE              2
+#define JPH_SHAPE_SUB_TYPE_CAPSULE               3
+#define JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE       4
+#define JPH_SHAPE_SUB_TYPE_CYLINDER              5
+#define JPH_SHAPE_SUB_TYPE_CONVEX_HULL           6
+#define JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND       7
+#define JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND      8
+#define JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED    9
+#define JPH_SHAPE_SUB_TYPE_SCALED                10
+#define JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS 11
+#define JPH_SHAPE_SUB_TYPE_MESH                  12
+#define JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD          13
+#define JPH_SHAPE_SUB_TYPE_USER1                 14
+#define JPH_SHAPE_SUB_TYPE_USER2                 15
+#define JPH_SHAPE_SUB_TYPE_USER3                 16
+#define JPH_SHAPE_SUB_TYPE_USER4                 17
+#define JPH_SHAPE_SUB_TYPE_USER5                 18
+#define JPH_SHAPE_SUB_TYPE_USER6                 19
+#define JPH_SHAPE_SUB_TYPE_USER7                 20
+#define JPH_SHAPE_SUB_TYPE_USER8                 21
+
+// JPH_MotionType
+#define JPH_MOTION_TYPE_STATIC    0
+#define JPH_MOTION_TYPE_KINEMATIC 1
+#define JPH_MOTION_TYPE_DYNAMIC   2
+
+// JPH_MotionQuality
+#define JPH_MOTION_QUALITY_DISCRETE    0
+#define JPH_MOTION_QUALITY_LINEAR_CAST 1
+
+// JPH_OverrideMassProperties
+#define JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA     0
+#define JPH_OVERRIDE_MASS_PROPS_CALC_INERTIA          1
+#define JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED 2
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -79,41 +132,8 @@ typedef struct JPH_BodyCreationSettings
     const void *                reserved1;
 } JPH_BodyCreationSettings;
 
-#define JPH_MAX_PHYSICS_JOBS     2048
-#define JPH_MAX_PHYSICS_BARRIERS 8
-
-#define JPH_SHAPE_TYPE_CONVEX       0
-#define JPH_SHAPE_TYPE_COMPOUND     1
-#define JPH_SHAPE_TYPE_DECORATED    2
-#define JPH_SHAPE_TYPE_MESH         3
-#define JPH_SHAPE_TYPE_HEIGHT_FIELD 4
-#define JPH_SHAPE_TYPE_USER1        5
-#define JPH_SHAPE_TYPE_USER2        6
-#define JPH_SHAPE_TYPE_USER3        7
-#define JPH_SHAPE_TYPE_USER4        8
-
-#define JPH_SHAPE_SUB_TYPE_SPHERE                0
-#define JPH_SHAPE_SUB_TYPE_BOX                   1
-#define JPH_SHAPE_SUB_TYPE_TRIANGLE              2
-#define JPH_SHAPE_SUB_TYPE_CAPSULE               3
-#define JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE       4
-#define JPH_SHAPE_SUB_TYPE_CYLINDER              5
-#define JPH_SHAPE_SUB_TYPE_CONVEX_HULL           6
-#define JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND       7
-#define JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND      8
-#define JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED    9
-#define JPH_SHAPE_SUB_TYPE_SCALED                10
-#define JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS 11
-#define JPH_SHAPE_SUB_TYPE_MESH                  12
-#define JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD          13
-#define JPH_SHAPE_SUB_TYPE_USER1                 14
-#define JPH_SHAPE_SUB_TYPE_USER2                 15
-#define JPH_SHAPE_SUB_TYPE_USER3                 16
-#define JPH_SHAPE_SUB_TYPE_USER4                 17
-#define JPH_SHAPE_SUB_TYPE_USER5                 18
-#define JPH_SHAPE_SUB_TYPE_USER6                 19
-#define JPH_SHAPE_SUB_TYPE_USER7                 20
-#define JPH_SHAPE_SUB_TYPE_USER8                 21
+JPH_CAPI JPH_BodyCreationSettings
+JPH_BodyCreationSettings_Init(void);
 //--------------------------------------------------------------------------------------------------
 //
 // Misc
@@ -131,18 +151,6 @@ JPH_DestroyFactory(void);
 JPH_CAPI void
 JPH_RegisterTypes(void);
 
-JPH_CAPI JPH_TempAllocator *
-JPH_CreateTempAllocator(uint32_t in_size);
-
-JPH_CAPI void
-JPH_DestroyTempAllocator(JPH_TempAllocator *in_allocator);
-
-JPH_CAPI JPH_JobSystem *
-JPH_CreateJobSystem(uint32_t in_max_jobs, uint32_t in_max_barriers, int32_t in_num_threads);
-
-JPH_CAPI void
-JPH_DestroyJobSystem(JPH_JobSystem *in_job_system);
-
 typedef bool (*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
 typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
 
@@ -156,6 +164,26 @@ typedef struct JPH_BroadPhaseLayerInterfaceVTable
     const char *        (*GetBroadPhaseLayerName)(const void *in_self, JPH_BroadPhaseLayer in_layer);
 #endif
 } JPH_BroadPhaseLayerInterfaceVTable;
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_TempAllocator
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_TempAllocator *
+JPH_TempAllocator_Create(uint32_t in_size);
+
+JPH_CAPI void
+JPH_TempAllocator_Destroy(JPH_TempAllocator *in_allocator);
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_JobSystem
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_JobSystem *
+JPH_JobSystem_Create(uint32_t in_max_jobs, uint32_t in_max_barriers, int32_t in_num_threads);
+
+JPH_CAPI void
+JPH_JobSystem_Destroy(JPH_JobSystem *in_job_system);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_PhysicsSystem
@@ -273,6 +301,8 @@ JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data);
 // JPH_BodyInterface
 //
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_Body *
+JPH_BodyInterface_CreateBody(const JPH_BodyCreationSettings *in_setting);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_Body

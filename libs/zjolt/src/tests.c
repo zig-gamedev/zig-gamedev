@@ -75,7 +75,7 @@ static bool MyBroadPhaseCanCollide(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLaye
     }
 }
 //--------------------------------------------------------------------------------------------------
-static bool TestBasic1(void)
+bool JoltC_TestBasic1(void)
 {
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
@@ -136,15 +136,15 @@ static bool TestBasic1(void)
     return true;
 }
 //--------------------------------------------------------------------------------------------------
-static bool TestBasic2(void)
+bool JoltC_TestBasic2(void)
 {
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
     JPH_RegisterTypes();
     JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
 
-    JPH_TempAllocator *temp_allocator = JPH_CreateTempAllocator(10 * 1024 * 1024);
-    JPH_JobSystem *job_system = JPH_CreateJobSystem(JPH_MAX_PHYSICS_JOBS, JPH_MAX_PHYSICS_BARRIERS, -1);
+    JPH_TempAllocator *temp_allocator = JPH_TempAllocator_Create(10 * 1024 * 1024);
+    JPH_JobSystem *job_system = JPH_JobSystem_Create(JPH_MAX_PHYSICS_JOBS, JPH_MAX_PHYSICS_BARRIERS, -1);
 
     const uint32_t max_bodies = 1024;
     const uint32_t num_body_mutexes = 0;
@@ -169,20 +169,17 @@ static bool TestBasic2(void)
     JPH_Shape *box_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)box_settings);
     if (box_shape == NULL) return false;
 
+    JPH_BodyCreationSettings body_settings = JPH_BodyCreationSettings_Init();
+
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)box_settings);
     JPH_Shape_Release(box_shape);
+
     JPH_PhysicsSystem_Destroy(physics_system);
-    JPH_DestroyJobSystem(job_system);
-    JPH_DestroyTempAllocator(temp_allocator);
+    JPH_JobSystem_Destroy(job_system);
+    JPH_TempAllocator_Destroy(temp_allocator);
+
     JPH_DestroyFactory();
 
-    return true;
-}
-//--------------------------------------------------------------------------------------------------
-bool joltcRunAllCTests(void)
-{
-    if (!TestBasic1()) return false;
-    if (!TestBasic2()) return false;
     return true;
 }
 //--------------------------------------------------------------------------------------------------

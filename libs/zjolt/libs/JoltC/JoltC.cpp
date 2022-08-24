@@ -66,29 +66,58 @@ JPH_RegisterTypes(void)
     JPH::RegisterTypes();
 }
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_BodyCreationSettings
+JPH_BodyCreationSettings_Init(void)
+{
+    return JPH_BodyCreationSettings
+    {
+        .rotation = { 0.0f, 0.0f, 0.0f, 1.0f },
+        .motion_type = JPH_MOTION_TYPE_DYNAMIC,
+        .motion_quality = JPH_MOTION_QUALITY_DISCRETE,
+        .allow_sleeping = true,
+        .friction = 0.2f,
+        .restitution = 0.0f,
+        .linear_damping = 0.05f,
+        .angular_damping = 0.05f,
+        .max_linear_velocity = 500.0f,
+        .max_angular_velocity = 0.25f * JPH::JPH_PI * 60.0f,
+        .gravity_factor = 1.0f,
+        .override_mass_properties = JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
+        .inertia_multiplier = 1.0f,
+    };
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_TempAllocator
+//
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_TempAllocator *
-JPH_CreateTempAllocator(uint32_t in_size)
+JPH_TempAllocator_Create(uint32_t in_size)
 {
     auto impl = new JPH::TempAllocatorImpl(in_size);
     return reinterpret_cast<JPH_TempAllocator *>(impl);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_DestroyTempAllocator(JPH_TempAllocator *in_allocator)
+JPH_TempAllocator_Destroy(JPH_TempAllocator *in_allocator)
 {
     assert(in_allocator != nullptr);
     delete reinterpret_cast<JPH::TempAllocator *>(in_allocator);
 }
 //--------------------------------------------------------------------------------------------------
+//
+// JPH_JobSystem
+//
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_JobSystem *
-JPH_CreateJobSystem(uint32_t in_max_jobs, uint32_t in_max_barriers, int32_t in_num_threads)
+JPH_JobSystem_Create(uint32_t in_max_jobs, uint32_t in_max_barriers, int32_t in_num_threads)
 {
     auto job_system = new JPH::JobSystemThreadPool(in_max_jobs, in_max_barriers, in_num_threads);
     return reinterpret_cast<JPH_JobSystem *>(job_system);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_DestroyJobSystem(JPH_JobSystem *in_job_system)
+JPH_JobSystem_Destroy(JPH_JobSystem *in_job_system)
 {
     assert(in_job_system != nullptr);
     delete reinterpret_cast<JPH::JobSystemThreadPool *>(in_job_system);
