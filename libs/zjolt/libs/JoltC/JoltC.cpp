@@ -1,6 +1,7 @@
 #include "JoltC.h"
 
 #include <assert.h>
+#include <stddef.h>
 
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -15,6 +16,8 @@
 
 JPH_SUPPRESS_WARNINGS
 
+#define ENSURE_TYPE(o, t) assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
+
 #ifdef JPH_ENABLE_ASSERTS
 
 static bool
@@ -24,9 +27,7 @@ AssertFailedImpl(const char *in_expression, const char *in_message, const char *
 }
 
 #endif
-
-#define ENSURE_TYPE(o, t) assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
-
+//--------------------------------------------------------------------------------------------------
 static_assert(sizeof(JPH::BodyID)                  == sizeof(JPH_BodyID),                 "");
 static_assert(sizeof(JPH::EShapeType)              == sizeof(JPH_ShapeType),              "");
 static_assert(sizeof(JPH::EShapeSubType)           == sizeof(JPH_ShapeSubType),           "");
@@ -38,6 +39,23 @@ static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer),  
 static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties),         "");
 static_assert(sizeof(JPH::CollisionGroup)          == sizeof(JPH_CollisionGroup),         "");
 static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSettings),   "");
+
+static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties),       "");
+static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup),       "");
+static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPH_BodyCreationSettings), "");
+
+static_assert(
+    offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
+    offsetof(JPH_BodyCreationSettings, inertia_multiplier),
+    "");
+static_assert(
+    offsetof(JPH::BodyCreationSettings, mIsSensor) ==
+    offsetof(JPH_BodyCreationSettings, is_sensor),
+    "");
+static_assert(
+    offsetof(JPH::BodyCreationSettings, mAngularDamping) ==
+    offsetof(JPH_BodyCreationSettings, angular_damping),
+    "");
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_RegisterDefaultAllocator(void)
