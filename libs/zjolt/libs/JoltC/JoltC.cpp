@@ -1,7 +1,6 @@
 #include "JoltC.h"
 
 #include <assert.h>
-#include <stdio.h>
 
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -12,6 +11,7 @@
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
 
 JPH_SUPPRESS_WARNINGS
 
@@ -27,6 +27,17 @@ AssertFailedImpl(const char *in_expression, const char *in_message, const char *
 
 #define ENSURE_TYPE(o, t) assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
 
+static_assert(sizeof(JPH::BodyID)                  == sizeof(JPH_BodyID),                 "");
+static_assert(sizeof(JPH::EShapeType)              == sizeof(JPH_ShapeType),              "");
+static_assert(sizeof(JPH::EShapeSubType)           == sizeof(JPH_ShapeSubType),           "");
+static_assert(sizeof(JPH::EMotionType)             == sizeof(JPH_MotionType),             "");
+static_assert(sizeof(JPH::EMotionQuality)          == sizeof(JPH_MotionQuality),          "");
+static_assert(sizeof(JPH::EOverrideMassProperties) == sizeof(JPH_OverrideMassProperties), "");
+static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer),        "");
+static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer),            "");
+static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties),         "");
+static_assert(sizeof(JPH::CollisionGroup)          == sizeof(JPH_CollisionGroup),         "");
+static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSettings),   "");
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_RegisterDefaultAllocator(void)
@@ -343,5 +354,22 @@ JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data)
 {
     assert(in_shape != nullptr);
     return reinterpret_cast<JPH::Shape *>(in_shape)->SetUserData(in_user_data);
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_BodyInterface
+//
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_Body
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_BodyID
+JPH_Body_GetID(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    const JPH::BodyID body_id = reinterpret_cast<const JPH::Body *>(in_body)->GetID();
+    return *reinterpret_cast<const JPH_BodyID *>(&body_id);
 }
 //--------------------------------------------------------------------------------------------------

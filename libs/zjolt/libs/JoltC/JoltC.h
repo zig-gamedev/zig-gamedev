@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdalign.h>
 
 #define JPH_CAPI
 
@@ -12,8 +13,13 @@ extern "C" {
 typedef uint16_t    JPH_ObjectLayer;
 typedef uint8_t     JPH_BroadPhaseLayer;
 typedef uint32_t    JPH_BodyID;
+typedef uint32_t    JPH_CollisionGroupID;
+typedef uint32_t    JPH_CollisionSubGroupID;
 typedef uint8_t     JPH_ShapeType;
 typedef uint8_t     JPH_ShapeSubType;
+typedef uint8_t     JPH_MotionType;
+typedef uint8_t     JPH_MotionQuality;
+typedef uint8_t     JPH_OverrideMassProperties;
 
 typedef struct JPH_PhysicsSystem    JPH_PhysicsSystem;
 typedef struct JPH_Shape            JPH_Shape;
@@ -27,6 +33,51 @@ typedef struct JPH_ShapeSettings        JPH_ShapeSettings;
 typedef struct JPH_ConvexShapeSettings  JPH_ConvexShapeSettings;
 typedef struct JPH_BoxShapeSettings     JPH_BoxShapeSettings;
 typedef struct JPH_SphereShapeSettings  JPH_SphereShapeSettings;
+typedef struct JPH_GroupFilter          JPH_GroupFilter;
+
+// NOTE: Needs to be kept in sync with JPH::MassProperties
+typedef struct JPH_MassProperties
+{
+    float              mass;
+    alignas(16) float  inertia[16];
+} JPH_MassProperties;
+
+// NOTE: Needs to be kept in sync with JPH::CollisionGroup
+typedef struct JPH_CollisionGroup
+{
+    const JPH_GroupFilter *  filter;
+    JPH_CollisionGroupID     group_id;
+    JPH_CollisionSubGroupID  sub_group_id;
+} JPH_CollisionGroup;
+
+// NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
+typedef struct JPH_BodyCreationSettings
+{
+    alignas(16) float           position[3];
+    alignas(16) float           rotation[4];
+    alignas(16) float           linear_velocity[3];
+    alignas(16) float           angular_velocity[3];
+    uint64_t                    user_data;
+    JPH_ObjectLayer             object_layer;
+    JPH_CollisionGroup          collision_group;
+    JPH_MotionType              motion_type;
+    bool                        allow_dynamic_or_kinematic;
+    bool                        is_sensor;
+    JPH_MotionQuality           motion_quality;
+    bool                        allow_sleeping;
+    float                       friction;
+    float                       restitution;
+    float                       linear_damping;
+    float                       angular_damping;
+    float                       max_linear_velocity;
+    float                       max_angular_velocity;
+    float                       gravity_factor;
+    JPH_OverrideMassProperties  override_mass_properties;
+    float                       inertia_multiplier;
+    JPH_MassProperties          mass_properties_override;
+    const void *                reserved0;
+    const void *                reserved1;
+} JPH_BodyCreationSettings;
 
 #define JPH_MAX_PHYSICS_JOBS     2048
 #define JPH_MAX_PHYSICS_BARRIERS 8
@@ -107,7 +158,7 @@ typedef struct JPH_BroadPhaseLayerInterfaceVTable
 } JPH_BroadPhaseLayerInterfaceVTable;
 //--------------------------------------------------------------------------------------------------
 //
-// PhysicsSystem
+// JPH_PhysicsSystem
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_PhysicsSystem *
@@ -194,7 +245,7 @@ JPH_CAPI void
 JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *in_settings, float in_convex_radius);
 //--------------------------------------------------------------------------------------------------
 //
-// Shape
+// JPH_Shape
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
@@ -217,6 +268,18 @@ JPH_Shape_GetUserData(const JPH_Shape *in_shape);
 
 JPH_CAPI void
 JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data);
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_BodyInterface
+//
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_Body
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_BodyID
+JPH_Body_GetID(const JPH_Body *in_body);
 
 #ifdef __cplusplus
 }
