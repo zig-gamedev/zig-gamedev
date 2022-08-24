@@ -120,6 +120,15 @@ JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *in_physics_system);
 // JPH_ShapeSettings
 //
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_ShapeSettings_AddRef(JPH_ShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_ShapeSettings_Release(JPH_ShapeSettings *in_settings);
+
+JPH_CAPI uint32_t
+JPH_ShapeSettings_GetRefCount(const JPH_ShapeSettings *in_settings);
+
 JPH_CAPI JPH_Shape *
 JPH_ShapeSettings_Cook(const JPH_ShapeSettings *in_settings);
 
@@ -128,9 +137,6 @@ JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *in_settings);
 
 JPH_CAPI void
 JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *in_settings, uint64_t in_user_data);
-
-JPH_CAPI void
-JPH_ShapeSettings_Destroy(JPH_ShapeSettings *in_settings);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_ConvexShapeSettings (-> JPH_ShapeSettings)
@@ -172,6 +178,15 @@ JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *in_settings, float in
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Shape_AddRef(JPH_Shape *in_shape);
+
+JPH_CAPI void
+JPH_Shape_Release(JPH_Shape *in_shape);
+
+JPH_CAPI uint32_t
+JPH_Shape_GetRefCount(const JPH_Shape *in_shape);
+
 JPH_CAPI JPH_ShapeType
 JPH_Shape_GetType(const JPH_Shape *in_shape);
 

@@ -1,6 +1,7 @@
 #include "JoltC.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -116,40 +117,32 @@ JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *in_physics_system)
 }
 //--------------------------------------------------------------------------------------------------
 //
-// JPH_Shape
+// JPH_ShapeSettings
 //
 //--------------------------------------------------------------------------------------------------
-JPH_CAPI JPH_ShapeType
-JPH_Shape_GetType(const JPH_Shape *in_shape)
+JPH_CAPI void
+JPH_ShapeSettings_AddRef(JPH_ShapeSettings *in_settings)
 {
-    assert(in_shape != nullptr);
-    return static_cast<JPH_ShapeType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetType());
-}
-//--------------------------------------------------------------------------------------------------
-JPH_CAPI JPH_ShapeSubType
-JPH_Shape_GetSubType(const JPH_Shape *in_shape)
-{
-    assert(in_shape != nullptr);
-    return static_cast<JPH_ShapeSubType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetSubType());
-}
-//--------------------------------------------------------------------------------------------------
-JPH_CAPI uint64_t
-JPH_Shape_GetUserData(const JPH_Shape *in_shape)
-{
-    assert(in_shape != nullptr);
-    return reinterpret_cast<const JPH::Shape *>(in_shape)->GetUserData();
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
+    reinterpret_cast<JPH::ShapeSettings *>(in_settings)->AddRef();
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data)
+JPH_ShapeSettings_Release(JPH_ShapeSettings *in_settings)
 {
-    assert(in_shape != nullptr);
-    return reinterpret_cast<JPH::Shape *>(in_shape)->SetUserData(in_user_data);
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
+    reinterpret_cast<JPH::ShapeSettings *>(in_settings)->Release();
 }
 //--------------------------------------------------------------------------------------------------
-//
-// JPH_ShapeSettings
-//
+JPH_CAPI uint32_t
+JPH_ShapeSettings_GetRefCount(const JPH_ShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
+    return reinterpret_cast<const JPH::ShapeSettings *>(in_settings)->GetRefCount();
+}
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_Shape *
 JPH_ShapeSettings_Cook(const JPH_ShapeSettings *in_settings)
@@ -160,7 +153,9 @@ JPH_ShapeSettings_Cook(const JPH_ShapeSettings *in_settings)
     const JPH::Result result = settings->Create();
     if (result.HasError())
         return nullptr;
-    return reinterpret_cast<JPH_Shape *>(result.Get().GetPtr());
+    JPH::Shape *shape = const_cast<JPH::Shape *>(result.Get().GetPtr());
+    shape->AddRef();
+    return reinterpret_cast<JPH_Shape *>(shape);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI uint64_t
@@ -177,14 +172,6 @@ JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *in_settings, uint64_t in_user_d
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::ShapeSettings);
     reinterpret_cast<JPH::ShapeSettings *>(in_settings)->mUserData = in_user_data;
-}
-//--------------------------------------------------------------------------------------------------
-JPH_CAPI void
-JPH_ShapeSettings_Destroy(JPH_ShapeSettings *in_settings)
-{
-    assert(in_settings != nullptr);
-    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
-    delete reinterpret_cast<JPH::ShapeSettings *>(in_settings);
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -235,6 +222,7 @@ JPH_BoxShapeSettings_Create(const float in_half_extent[3])
 {
     auto settings = new JPH::BoxShapeSettings(
         JPH::Vec3(in_half_extent[0], in_half_extent[1], in_half_extent[2]));
+    settings->AddRef();
     return reinterpret_cast<JPH_BoxShapeSettings *>(settings);
 }
 //--------------------------------------------------------------------------------------------------
@@ -272,5 +260,58 @@ JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *in_settings, float in
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
     reinterpret_cast<JPH::BoxShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_Shape
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Shape_AddRef(JPH_Shape *in_shape)
+{
+    assert(in_shape != nullptr);
+    reinterpret_cast<JPH::Shape *>(in_shape)->AddRef();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Shape_Release(JPH_Shape *in_shape)
+{
+    assert(in_shape != nullptr);
+    reinterpret_cast<JPH::Shape *>(in_shape)->Release();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI uint32_t
+JPH_Shape_GetRefCount(const JPH_Shape *in_shape)
+{
+    assert(in_shape != nullptr);
+    return reinterpret_cast<const JPH::Shape *>(in_shape)->GetRefCount();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_ShapeType
+JPH_Shape_GetType(const JPH_Shape *in_shape)
+{
+    assert(in_shape != nullptr);
+    return static_cast<JPH_ShapeType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetType());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_ShapeSubType
+JPH_Shape_GetSubType(const JPH_Shape *in_shape)
+{
+    assert(in_shape != nullptr);
+    return static_cast<JPH_ShapeSubType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetSubType());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI uint64_t
+JPH_Shape_GetUserData(const JPH_Shape *in_shape)
+{
+    assert(in_shape != nullptr);
+    return reinterpret_cast<const JPH::Shape *>(in_shape)->GetUserData();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data)
+{
+    assert(in_shape != nullptr);
+    return reinterpret_cast<JPH::Shape *>(in_shape)->SetUserData(in_user_data);
 }
 //--------------------------------------------------------------------------------------------------
