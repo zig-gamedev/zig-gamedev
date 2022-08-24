@@ -103,6 +103,9 @@ typedef struct JPH_CollisionGroup
     JPH_CollisionSubGroupID  sub_group_id;
 } JPH_CollisionGroup;
 
+JPH_CAPI JPH_CollisionGroup
+JPH_CollisionGroup_Init(void);
+
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
 typedef struct JPH_BodyCreationSettings
 {
@@ -302,7 +305,7 @@ JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data);
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_Body *
-JPH_BodyInterface_CreateBody(const JPH_BodyCreationSettings *in_setting);
+JPH_BodyInterface_CreateBody(JPH_BodyInterface *in_iface, const JPH_BodyCreationSettings *in_setting);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_Body

@@ -84,13 +84,29 @@ JPH_RegisterTypes(void)
     JPH::RegisterTypes();
 }
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_CollisionGroup
+JPH_CollisionGroup_Init(void)
+{
+    return {
+        .group_id = ~JPH_CollisionGroupID(0),
+        .sub_group_id = ~JPH_CollisionSubGroupID(0),
+    };
+}
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BodyCreationSettings
 JPH_BodyCreationSettings_Init(void)
 {
-    return JPH_BodyCreationSettings
-    {
+    return {
+        .position = { 0.0f, 0.0f, 0.0f },
         .rotation = { 0.0f, 0.0f, 0.0f, 1.0f },
+        .linear_velocity = { 0.0f, 0.0f, 0.0f },
+        .angular_velocity = { 0.0f, 0.0f, 0.0f },
+        .user_data = 0,
+        .object_layer = 0,
+        .collision_group = JPH_CollisionGroup_Init(),
         .motion_type = JPH_MOTION_TYPE_DYNAMIC,
+        .allow_dynamic_or_kinematic = false,
+        .is_sensor = false,
         .motion_quality = JPH_MOTION_QUALITY_DISCRETE,
         .allow_sleeping = true,
         .friction = 0.2f,
@@ -407,6 +423,14 @@ JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data)
 // JPH_BodyInterface
 //
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_Body *
+JPH_BodyInterface_CreateBody(JPH_BodyInterface *in_iface, const JPH_BodyCreationSettings *in_setting)
+{
+    assert(in_iface != nullptr && in_setting != nullptr);
+    auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
+    auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_setting);
+    return reinterpret_cast<JPH_Body *>(iface->CreateBody(*settings));
+}
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_Body
