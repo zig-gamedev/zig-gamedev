@@ -11,6 +11,7 @@ pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
 pub fn init() void {
     if (getCurrentContext() == null) {
         _ = zguiCreateContext(null);
+        //_ = createPlotContext(null);
         temp_buffer.resize(3 * 1024 + 1) catch unreachable;
     }
 }
@@ -20,12 +21,21 @@ pub fn deinit() void {
     if (getCurrentContext() != null) {
         temp_buffer.deinit();
         zguiDestroyContext(null);
+        //destroyPlotContext(null);
     }
 }
 extern fn zguiDestroyContext(ctx: ?Context) void;
 
 const getCurrentContext = zguiGetCurrentContext;
 extern fn zguiGetCurrentContext() ?Context;
+
+/// `fn createPlotContext(shared_font_atlas: ?*const anyopaque) ?Context`
+const createPlotContext = zguiCreatePlotContext;
+extern fn zguiCreatePlotContext(shared_font_atlas: ?*const anyopaque) ?Context;
+
+/// `fn destroyPlotContext(ctx: ?Context) void`
+const destroyPlotContext = zguiDestroyPlotContext;
+extern fn zguiDestroyPlotContext(ctx: ?Context) void;
 //--------------------------------------------------------------------------------------------------
 pub const io = struct {
     pub fn addFontFromFile(filename: [:0]const u8, size_pixels: f32) Font {
@@ -2414,3 +2424,56 @@ fn typeToDataTypeEnum(comptime T: type) DataType {
     };
 }
 //--------------------------------------------------------------------------------------------------
+
+pub const getContentRegionAvailWidth = zguiGetContentRegionAvailWidth;
+extern fn zguiGetContentRegionAvailWidth() f32;
+
+pub fn beginTabBar(label: [:0]const u8) bool { return zguiBeginTabBar(label); }
+extern fn zguiBeginTabBar(label: [*:0]const u8) bool;
+
+pub fn beginTabItem(label: [:0]const u8) bool { return zguiBeginTabItem(label); }
+extern fn zguiBeginTabItem(label: [*:0]const u8) bool;
+
+pub const endTabItem = zguiEndTabItem;
+extern fn zguiEndTabItem() void;
+
+pub const endTabBar = zguiEndTabBar;
+extern fn zguiEndTabBar() void;
+
+//// IMPLOT FUNCTIONS
+//pub const showPlotDemoWindow = zguiShowPlotDemoWindow;
+//extern fn zguiShowPlotDemoWindow(p_open: bool) void;
+//
+//pub const getCurrentPlotContext = zguiGetCurrentPlotContext;
+//extern fn zguiGetCurrentPlotContext() ?Context;
+//
+//pub const setCurrentPlotContext = zguiSetCurrentPlotContext;
+//extern fn zguiSetCurrentPlotContext(ctx: ?Context) void;
+//
+//pub const setupXAxisLimits = zguiSetupXAxisLimits;
+//extern fn zguiSetupXAxisLimits(v_min: f64, v_max: f64) void;
+//
+//pub const setupYAxisLimits = zguiSetupYAxisLimits;
+//extern fn zguiSetupYAxisLimits(v_min: f64, v_max: f64) void;
+//
+//pub const beginPlot = zguiBeginPlot;
+//extern fn zguiBeginPlot(title_id: [*:0]const u8, width: f32, height: f32) bool;
+//
+//pub const endPlot = zguiEndPlot;
+//extern fn zguiEndPlot() void;
+//
+//pub fn plotBars(label: [:0]const u8, data: []f32) void {
+//    zguiPlotBars(label, data.ptr, @intCast(i32, data.len));
+//}
+//extern fn zguiPlotBars(label_id: [*:0]const u8, values: [*]f32, count: i32) void;
+//
+//pub fn plotLine(label: [:0]const u8, x: []f32, y: []f32, count: i32, flags: i32, offset: i32, stride: i32) void {
+//    //Might need to check x and y length is the same
+//    zguiPlotLine(label, x.ptr, y.ptr, count, flags, offset, stride);
+//}
+//extern fn zguiPlotLine(label_id: [*:0]const u8, x: [*]f32, y: [*]f32, count: i32, flags: i32, offset: i32, stride: i32) void;
+//
+//pub fn plotLineValues(label: [:0]const u8, x: []f32) void {
+//    zguiPlotLineValues(label, x.ptr, @intCast(i32, x.len));
+//}
+//extern fn zguiPlotLineValues(label_id: [*:0]const u8, values: [*]f32, count: i32) void;

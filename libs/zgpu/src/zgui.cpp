@@ -1,4 +1,5 @@
 #include "./imgui/imgui.h"
+//#include "./imgui/implot.h"
 
 #define ZGUI_API extern "C"
 
@@ -1189,3 +1190,33 @@ ZGUI_API bool zguiIsAnyItemActive(void) {
 ZGUI_API bool zguiIsAnyItemFocused(void) {
     return ImGui::IsAnyItemFocused();
 }
+
+ZGUI_API float zguiGetContentRegionAvailWidth(void) {
+    return ImGui::GetContentRegionAvail().x;
+}
+
+ZGUI_API void zguiPushTextWrapPos(float wrap_pos_x) { ImGui::PushTextWrapPos(wrap_pos_x); }
+
+ZGUI_API bool zguiBeginTabBar(const char* string) { return ImGui::BeginTabBar(string, ImGuiTabBarFlags_None); }
+ZGUI_API bool zguiBeginTabItem(const char* string) { return ImGui::BeginTabItem(string); }
+ZGUI_API void zguiEndTabItem() { ImGui::EndTabItem(); }
+ZGUI_API void zguiEndTabBar() { ImGui::EndTabBar(); }
+
+
+// IMPLOT FUNCTIONS
+//ZGUI_API void zguiShowPlotDemoWindow(bool* p_open) { ImPlot::ShowDemoWindow(p_open); }
+//ZGUI_API ImPlotContext* zguiCreatePlotContext(){ return ImPlot::CreateContext(); }
+//ZGUI_API void zguiDestroyPlotContext(ImPlotContext* ctx = NULL){ ImPlot::DestroyContext(ctx); }
+//ZGUI_API ImPlotContext* zguiGetCurrentPlotContext(){ return ImPlot::GetCurrentContext(); }
+//ZGUI_API void zguiSetCurrentPlotContext(ImPlotContext* ctx){ ImPlot::SetCurrentContext(ctx); }
+//
+//ZGUI_API void zguiSetupXAxisLimits(double v_min, double v_max){ ImPlot::SetupAxisLimits(0, v_min, v_max, ImGuiCond_Always); }
+//ZGUI_API void zguiSetupYAxisLimits(double v_min, double v_max){ ImPlot::SetupAxisLimits(3, v_min, v_max, ImGuiCond_Always); }
+//
+//ZGUI_API bool zguiBeginPlot(const char* title_id, float width, float height) {
+//    return ImPlot::BeginPlot(title_id, { width, height });
+//}
+//ZGUI_API void zguiPlotBars(const char* label_id, const float* values, int count, double bar_size=0.67, double shift=0, ImPlotBarsFlags flags=0, int offset=0, int stride=sizeof(float)){ ImPlot::PlotBars(label_id, values, count); }
+//ZGUI_API void zguiPlotLine(const char* label_id, const float* xs, const float* ys, int count, ImPlotLineFlags flags, int offset, int stride){ ImPlot::PlotLine(label_id, xs, ys, count, flags, offset, stride); }
+//ZGUI_API void zguiPlotLineValues(const char* label_id, const float* values, int count){ ImPlot::PlotLine(label_id, values, count); }
+//ZGUI_API void zguiEndPlot() { ImPlot::EndPlot(); }
