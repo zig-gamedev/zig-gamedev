@@ -6,6 +6,8 @@
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
@@ -51,6 +53,34 @@ JPH_CAPI void
 JPH_RegisterTypes(void)
 {
     JPH::RegisterTypes();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_TempAllocator *
+JPH_CreateTempAllocator(uint32_t in_size)
+{
+    auto impl = new JPH::TempAllocatorImpl(in_size);
+    return reinterpret_cast<JPH_TempAllocator *>(impl);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_DestroyTempAllocator(JPH_TempAllocator *in_allocator)
+{
+    assert(in_allocator != nullptr);
+    delete reinterpret_cast<JPH::TempAllocator *>(in_allocator);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_JobSystem *
+JPH_CreateJobSystem(uint32_t in_max_jobs, uint32_t in_max_barriers, int32_t in_num_threads)
+{
+    auto job_system = new JPH::JobSystemThreadPool(in_max_jobs, in_max_barriers, in_num_threads);
+    return reinterpret_cast<JPH_JobSystem *>(job_system);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_DestroyJobSystem(JPH_JobSystem *in_job_system)
+{
+    assert(in_job_system != nullptr);
+    delete reinterpret_cast<JPH::JobSystemThreadPool *>(in_job_system);
 }
 //--------------------------------------------------------------------------------------------------
 //

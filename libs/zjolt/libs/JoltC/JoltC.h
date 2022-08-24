@@ -18,11 +18,16 @@ typedef uint8_t JPH_ShapeSubType;
 typedef struct JPH_PhysicsSystem JPH_PhysicsSystem;
 typedef struct JPH_Shape JPH_Shape;
 typedef struct JPH_PhysicsMaterial JPH_PhysicsMaterial;
+typedef struct JPH_TempAllocator JPH_TempAllocator;
+typedef struct JPH_JobSystem JPH_JobSystem;
 
 typedef struct JPH_ShapeSettings JPH_ShapeSettings;
 typedef struct JPH_ConvexShapeSettings JPH_ConvexShapeSettings;
 typedef struct JPH_BoxShapeSettings JPH_BoxShapeSettings;
 typedef struct JPH_SphereShapeSettings JPH_SphereShapeSettings;
+
+#define JPH_MAX_PHYSICS_JOBS 2048
+#define JPH_MAX_PHYSICS_BARRIERS 8
 
 #define JPH_SHAPE_TYPE_CONVEX 0
 #define JPH_SHAPE_TYPE_COMPOUND 1
@@ -72,6 +77,18 @@ JPH_DestroyFactory(void);
 
 JPH_CAPI void
 JPH_RegisterTypes(void);
+
+JPH_CAPI JPH_TempAllocator *
+JPH_CreateTempAllocator(uint32_t in_size);
+
+JPH_CAPI void
+JPH_DestroyTempAllocator(JPH_TempAllocator *in_allocator);
+
+JPH_CAPI JPH_JobSystem *
+JPH_CreateJobSystem(uint32_t in_max_jobs, uint32_t in_max_barriers, int32_t in_num_threads);
+
+JPH_CAPI void
+JPH_DestroyJobSystem(JPH_JobSystem *in_job_system);
 
 typedef bool (*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
 typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);

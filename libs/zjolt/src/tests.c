@@ -143,6 +143,9 @@ static bool TestBasic2(void)
     JPH_RegisterTypes();
     JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
 
+    JPH_TempAllocator *temp_allocator = JPH_CreateTempAllocator(10 * 1024 * 1024);
+    JPH_JobSystem *job_system = JPH_CreateJobSystem(JPH_MAX_PHYSICS_JOBS, JPH_MAX_PHYSICS_BARRIERS, -1);
+
     const uint32_t max_bodies = 1024;
     const uint32_t num_body_mutexes = 0;
     const uint32_t max_body_pairs = 1024;
@@ -167,14 +170,10 @@ static bool TestBasic2(void)
     if (box_shape == NULL) return false;
 
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)box_settings);
-    box_settings = NULL;
-
     JPH_Shape_Release(box_shape);
-    box_shape = NULL;
-
     JPH_PhysicsSystem_Destroy(physics_system);
-    physics_system = NULL;
-
+    JPH_DestroyJobSystem(job_system);
+    JPH_DestroyTempAllocator(temp_allocator);
     JPH_DestroyFactory();
 
     return true;
