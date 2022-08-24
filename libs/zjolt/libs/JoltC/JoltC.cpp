@@ -15,7 +15,7 @@ JPH_SUPPRESS_WARNINGS
 #ifdef JPH_ENABLE_ASSERTS
 
 static bool
-AssertFailedImpl(const char *inExpression, const char *inMessage, const char *inFile, uint32_t inLine)
+AssertFailedImpl(const char *in_expression, const char *in_message, const char *in_file, uint32_t in_line)
 {
 	return true;
 }
@@ -63,56 +63,56 @@ JPH_PhysicsSystem_Create(void)
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_PhysicsSystem_Destroy(JPH_PhysicsSystem *inPhysicsSystem)
+JPH_PhysicsSystem_Destroy(JPH_PhysicsSystem *in_physics_system)
 {
-    assert(inPhysicsSystem != nullptr);
-    delete reinterpret_cast<JPH::PhysicsSystem *>(inPhysicsSystem);
+    assert(in_physics_system != nullptr);
+    delete reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_PhysicsSystem_Init(JPH_PhysicsSystem *inPhysicsSystem,
-                       uint32_t inMaxBodies,
-                       uint32_t inNumBodyMutexes,
-                       uint32_t inMaxBodyPairs,
-                       uint32_t inMaxContactConstraints,
-                       const void *inBroadPhaseLayerInterface,
-                       JPH_ObjectVsBroadPhaseLayerFilter inObjectVsBroadPhaseLayerFilter,
-                       JPH_ObjectLayerPairFilter inObjectLayerPairFilter)
+JPH_PhysicsSystem_Init(JPH_PhysicsSystem *in_physics_system,
+                       uint32_t in_max_bodies,
+                       uint32_t in_num_bodyMutexes,
+                       uint32_t in_max_bodyPairs,
+                       uint32_t in_max_contactConstraints,
+                       const void *in_broad_phase_layer_interface,
+                       JPH_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
+                       JPH_ObjectLayerPairFilter in_object_layer_pair_filter)
 {
-    assert(inPhysicsSystem != nullptr);
-    assert(inBroadPhaseLayerInterface != nullptr);
-    assert(inObjectVsBroadPhaseLayerFilter != nullptr);
-    assert(inObjectLayerPairFilter != nullptr);
-    auto physicsSystem = reinterpret_cast<JPH::PhysicsSystem *>(inPhysicsSystem);
-    physicsSystem->Init(
-        inMaxBodies,
-        inNumBodyMutexes,
-        inMaxBodyPairs,
-        inMaxContactConstraints,
-        *static_cast<const JPH::BroadPhaseLayerInterface *>(inBroadPhaseLayerInterface),
-        reinterpret_cast<JPH::ObjectVsBroadPhaseLayerFilter>(inObjectVsBroadPhaseLayerFilter),
-        reinterpret_cast<JPH::ObjectLayerPairFilter>(inObjectLayerPairFilter));
+    assert(in_physics_system != nullptr);
+    assert(in_broad_phase_layer_interface != nullptr);
+    assert(in_object_vs_broad_phase_layer_filter != nullptr);
+    assert(in_object_layer_pair_filter != nullptr);
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    physics_system->Init(
+        in_max_bodies,
+        in_num_bodyMutexes,
+        in_max_bodyPairs,
+        in_max_contactConstraints,
+        *static_cast<const JPH::BroadPhaseLayerInterface *>(in_broad_phase_layer_interface),
+        reinterpret_cast<JPH::ObjectVsBroadPhaseLayerFilter>(in_object_vs_broad_phase_layer_filter),
+        reinterpret_cast<JPH::ObjectLayerPairFilter>(in_object_layer_pair_filter));
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI uint32_t
-JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *inPhysicsSystem)
+JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *in_physics_system)
 {
-    assert(inPhysicsSystem != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(inPhysicsSystem)->GetNumBodies();
+    assert(in_physics_system != nullptr);
+    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetNumBodies();
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI uint32_t
-JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *inPhysicsSystem)
+JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *in_physics_system)
 {
-    assert(inPhysicsSystem != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(inPhysicsSystem)->GetNumActiveBodies();
+    assert(in_physics_system != nullptr);
+    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetNumActiveBodies();
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI uint32_t
-JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *inPhysicsSystem)
+JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *in_physics_system)
 {
-    assert(inPhysicsSystem != nullptr);
-    return reinterpret_cast<const JPH::PhysicsSystem *>(inPhysicsSystem)->GetMaxBodies();
+    assert(in_physics_system != nullptr);
+    return reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system)->GetMaxBodies();
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -120,31 +120,31 @@ JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *inPhysicsSystem)
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_ShapeType
-JPH_Shape_GetType(const JPH_Shape *inShape)
+JPH_Shape_GetType(const JPH_Shape *in_shape)
 {
-    assert(inShape != nullptr);
-    return static_cast<JPH_ShapeType>(reinterpret_cast<const JPH::Shape *>(inShape)->GetType());
+    assert(in_shape != nullptr);
+    return static_cast<JPH_ShapeType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetType());
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_ShapeSubType
-JPH_Shape_GetSubType(const JPH_Shape *inShape)
+JPH_Shape_GetSubType(const JPH_Shape *in_shape)
 {
-    assert(inShape != nullptr);
-    return static_cast<JPH_ShapeSubType>(reinterpret_cast<const JPH::Shape *>(inShape)->GetSubType());
+    assert(in_shape != nullptr);
+    return static_cast<JPH_ShapeSubType>(reinterpret_cast<const JPH::Shape *>(in_shape)->GetSubType());
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI uint64_t
-JPH_Shape_GetUserData(const JPH_Shape *inShape)
+JPH_Shape_GetUserData(const JPH_Shape *in_shape)
 {
-    assert(inShape != nullptr);
-    return reinterpret_cast<const JPH::Shape *>(inShape)->GetUserData();
+    assert(in_shape != nullptr);
+    return reinterpret_cast<const JPH::Shape *>(in_shape)->GetUserData();
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_Shape_SetUserData(JPH_Shape *inShape, uint64_t inUserData)
+JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data)
 {
-    assert(inShape != nullptr);
-    return reinterpret_cast<JPH::Shape *>(inShape)->SetUserData(inUserData);
+    assert(in_shape != nullptr);
+    return reinterpret_cast<JPH::Shape *>(in_shape)->SetUserData(in_user_data);
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -152,11 +152,11 @@ JPH_Shape_SetUserData(JPH_Shape *inShape, uint64_t inUserData)
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_Shape *
-JPH_ShapeSettings_Cook(const JPH_ShapeSettings *inSettings)
+JPH_ShapeSettings_Cook(const JPH_ShapeSettings *in_settings)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::ShapeSettings);
-    auto settings = reinterpret_cast<const JPH::ShapeSettings *>(inSettings);
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
+    auto settings = reinterpret_cast<const JPH::ShapeSettings *>(in_settings);
     const JPH::Result result = settings->Create();
     if (result.HasError())
         return nullptr;
@@ -164,27 +164,27 @@ JPH_ShapeSettings_Cook(const JPH_ShapeSettings *inSettings)
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI uint64_t
-JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *inSettings)
+JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *in_settings)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::ShapeSettings);
-    return reinterpret_cast<const JPH::ShapeSettings *>(inSettings)->mUserData;
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
+    return reinterpret_cast<const JPH::ShapeSettings *>(in_settings)->mUserData;
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSettings, uint64_t inUserData)
+JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *in_settings, uint64_t in_user_data)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::ShapeSettings);
-    reinterpret_cast<JPH::ShapeSettings *>(inSettings)->mUserData = inUserData;
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
+    reinterpret_cast<JPH::ShapeSettings *>(in_settings)->mUserData = in_user_data;
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_ShapeSettings_Destroy(JPH_ShapeSettings *inSettings)
+JPH_ShapeSettings_Destroy(JPH_ShapeSettings *in_settings)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::ShapeSettings);
-    delete reinterpret_cast<JPH::ShapeSettings *>(inSettings);
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ShapeSettings);
+    delete reinterpret_cast<JPH::ShapeSettings *>(in_settings);
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -192,38 +192,38 @@ JPH_ShapeSettings_Destroy(JPH_ShapeSettings *inSettings)
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI const JPH_PhysicsMaterial *
-JPH_ConvexShapeSettings_GetMaterial(const JPH_ConvexShapeSettings *inSettings)
+JPH_ConvexShapeSettings_GetMaterial(const JPH_ConvexShapeSettings *in_settings)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::ConvexShapeSettings);
-    auto settings = reinterpret_cast<const JPH::ConvexShapeSettings *>(inSettings);
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexShapeSettings);
+    auto settings = reinterpret_cast<const JPH::ConvexShapeSettings *>(in_settings);
     return reinterpret_cast<const JPH_PhysicsMaterial *>(settings->mMaterial.GetPtr());
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_ConvexShapeSettings_SetMaterial(JPH_ConvexShapeSettings *inSettings,
-                                    const JPH_PhysicsMaterial *inMaterial)
+JPH_ConvexShapeSettings_SetMaterial(JPH_ConvexShapeSettings *in_settings,
+                                    const JPH_PhysicsMaterial *in_material)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::ConvexShapeSettings);
-    auto settings = reinterpret_cast<JPH::ConvexShapeSettings *>(inSettings);
-    settings->mMaterial = reinterpret_cast<const JPH::PhysicsMaterial *>(inMaterial);
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexShapeSettings);
+    auto settings = reinterpret_cast<JPH::ConvexShapeSettings *>(in_settings);
+    settings->mMaterial = reinterpret_cast<const JPH::PhysicsMaterial *>(in_material);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI float
-JPH_ConvexShapeSettings_GetDensity(const JPH_ConvexShapeSettings *inSettings)
+JPH_ConvexShapeSettings_GetDensity(const JPH_ConvexShapeSettings *in_settings)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::ConvexShapeSettings);
-    return reinterpret_cast<const JPH::ConvexShapeSettings *>(inSettings)->mDensity;
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexShapeSettings);
+    return reinterpret_cast<const JPH::ConvexShapeSettings *>(in_settings)->mDensity;
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_ConvexShapeSettings_SetDensity(JPH_ConvexShapeSettings *inSettings, float inDensity)
+JPH_ConvexShapeSettings_SetDensity(JPH_ConvexShapeSettings *in_settings, float in_density)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::ConvexShapeSettings);
-    reinterpret_cast<JPH::ConvexShapeSettings *>(inSettings)->SetDensity(inDensity);
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexShapeSettings);
+    reinterpret_cast<JPH::ConvexShapeSettings *>(in_settings)->SetDensity(in_density);
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -231,45 +231,46 @@ JPH_ConvexShapeSettings_SetDensity(JPH_ConvexShapeSettings *inSettings, float in
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BoxShapeSettings *
-JPH_BoxShapeSettings_Create(const float inHalfExtent[3])
+JPH_BoxShapeSettings_Create(const float in_half_extent[3])
 {
-    auto settings = new JPH::BoxShapeSettings(JPH::Vec3(inHalfExtent[0], inHalfExtent[1], inHalfExtent[2]));
+    auto settings = new JPH::BoxShapeSettings(
+        JPH::Vec3(in_half_extent[0], in_half_extent[1], in_half_extent[2]));
     return reinterpret_cast<JPH_BoxShapeSettings *>(settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_BoxShapeSettings_GetHalfExtent(const JPH_BoxShapeSettings *inSettings, float outHalfExtent[3])
+JPH_BoxShapeSettings_GetHalfExtent(const JPH_BoxShapeSettings *in_settings, float out_half_extent[3])
 {
-    assert(inSettings != nullptr && outHalfExtent != nullptr);
-    ENSURE_TYPE(inSettings, JPH::BoxShapeSettings);
-    auto settings = reinterpret_cast<const JPH::BoxShapeSettings *>(inSettings);
-    outHalfExtent[0] = settings->mHalfExtent[0];
-    outHalfExtent[1] = settings->mHalfExtent[1];
-    outHalfExtent[2] = settings->mHalfExtent[2];
+    assert(in_settings != nullptr && out_half_extent != nullptr);
+    ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
+    auto settings = reinterpret_cast<const JPH::BoxShapeSettings *>(in_settings);
+    out_half_extent[0] = settings->mHalfExtent[0];
+    out_half_extent[1] = settings->mHalfExtent[1];
+    out_half_extent[2] = settings->mHalfExtent[2];
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_BoxShapeSettings_SetHalfExtent(JPH_BoxShapeSettings *inSettings, const float inHalfExtent[3])
+JPH_BoxShapeSettings_SetHalfExtent(JPH_BoxShapeSettings *in_settings, const float in_half_extent[3])
 {
-    assert(inSettings != nullptr && inHalfExtent != nullptr);
-    ENSURE_TYPE(inSettings, JPH::BoxShapeSettings);
-    auto settings = reinterpret_cast<JPH::BoxShapeSettings *>(inSettings);
-    settings->mHalfExtent = JPH::Vec3(inHalfExtent[0], inHalfExtent[1], inHalfExtent[2]);
+    assert(in_settings != nullptr && in_half_extent != nullptr);
+    ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
+    auto settings = reinterpret_cast<JPH::BoxShapeSettings *>(in_settings);
+    settings->mHalfExtent = JPH::Vec3(in_half_extent[0], in_half_extent[1], in_half_extent[2]);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI float
-JPH_BoxShapeSettings_GetConvexRadius(const JPH_BoxShapeSettings *inSettings)
+JPH_BoxShapeSettings_GetConvexRadius(const JPH_BoxShapeSettings *in_settings)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::BoxShapeSettings);
-    return reinterpret_cast<const JPH::BoxShapeSettings *>(inSettings)->mConvexRadius;
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
+    return reinterpret_cast<const JPH::BoxShapeSettings *>(in_settings)->mConvexRadius;
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *inSettings, float inConvexRadius)
+JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *in_settings, float in_convex_radius)
 {
-    assert(inSettings != nullptr);
-    ENSURE_TYPE(inSettings, JPH::BoxShapeSettings);
-    reinterpret_cast<JPH::BoxShapeSettings *>(inSettings)->mConvexRadius = inConvexRadius;
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
+    reinterpret_cast<JPH::BoxShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------

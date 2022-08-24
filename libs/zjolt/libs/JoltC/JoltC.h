@@ -73,17 +73,17 @@ JPH_DestroyFactory(void);
 JPH_CAPI void
 JPH_RegisterTypes(void);
 
-typedef bool (*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer inLayer1, JPH_ObjectLayer inLayer2);
-typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer inLayer1, JPH_BroadPhaseLayer inLayer2);
+typedef bool (*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
+typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
 
 typedef struct JPH_BroadPhaseLayerInterfaceVTable
 {
-    void *reserved0;
-    void *reserved1;
-    uint32_t (*GetNumBroadPhaseLayers)(const void *inThis);
-    JPH_BroadPhaseLayer (*GetBroadPhaseLayer)(const void *inThis, JPH_ObjectLayer inLayer);
+    void *              reserved0;
+    void *              reserved1;
+    uint32_t            (*GetNumBroadPhaseLayers)(const void *in_self);
+    JPH_BroadPhaseLayer (*GetBroadPhaseLayer)(const void *in_self, JPH_ObjectLayer in_layer);
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-    const char *(*GetBroadPhaseLayerName)(const void *inThis, JPH_BroadPhaseLayer inLayer);
+    const char *        (*GetBroadPhaseLayerName)(const void *in_self, JPH_BroadPhaseLayer in_layer);
 #endif
 } JPH_BroadPhaseLayerInterfaceVTable;
 //--------------------------------------------------------------------------------------------------
@@ -95,94 +95,94 @@ JPH_CAPI JPH_PhysicsSystem *
 JPH_PhysicsSystem_Create(void);
 
 JPH_CAPI void
-JPH_PhysicsSystem_Destroy(JPH_PhysicsSystem *inPhysicsSystem);
+JPH_PhysicsSystem_Destroy(JPH_PhysicsSystem *in_physics_system);
 
 JPH_CAPI void
-JPH_PhysicsSystem_Init(JPH_PhysicsSystem *inPhysicsSystem,
-                       uint32_t inMaxBodies,
-                       uint32_t inNumBodyMutexes,
-                       uint32_t inMaxBodyPairs,
-                       uint32_t inMaxContactConstraints,
-                       const void *inBroadPhaseLayerInterface,
-                       JPH_ObjectVsBroadPhaseLayerFilter inObjectVsBroadPhaseLayerFilter,
-                       JPH_ObjectLayerPairFilter inObjectLayerPairFilter);
+JPH_PhysicsSystem_Init(JPH_PhysicsSystem *in_physics_system,
+                       uint32_t in_max_bodies,
+                       uint32_t in_num_body_mutexes,
+                       uint32_t in_max_body_pairs,
+                       uint32_t in_max_contact_constraints,
+                       const void *in_broad_phase_layer_interface,
+                       JPH_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
+                       JPH_ObjectLayerPairFilter in_object_layer_pair_filter);
 
 JPH_CAPI uint32_t
-JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *inPhysicsSystem);
+JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *in_physics_system);
 
 JPH_CAPI uint32_t
-JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *inPhysicsSystem);
+JPH_PhysicsSystem_GetNumActiveBodies(const JPH_PhysicsSystem *in_physics_system);
 
 JPH_CAPI uint32_t
-JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *inPhysicsSystem);
+JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *in_physics_system);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_ShapeSettings
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_Shape *
-JPH_ShapeSettings_Cook(const JPH_ShapeSettings *inSettings);
+JPH_ShapeSettings_Cook(const JPH_ShapeSettings *in_settings);
 
 JPH_CAPI uint64_t
-JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *inSettings);
+JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *in_settings);
 
 JPH_CAPI void
-JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *inSettings, uint64_t inUserData);
+JPH_ShapeSettings_SetUserData(JPH_ShapeSettings *in_settings, uint64_t in_user_data);
 
 JPH_CAPI void
-JPH_ShapeSettings_Destroy(JPH_ShapeSettings *inSettings);
+JPH_ShapeSettings_Destroy(JPH_ShapeSettings *in_settings);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_ConvexShapeSettings (-> JPH_ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI const JPH_PhysicsMaterial *
-JPH_ConvexShapeSettings_GetMaterial(const JPH_ConvexShapeSettings *inSettings);
+JPH_ConvexShapeSettings_GetMaterial(const JPH_ConvexShapeSettings *in_settings);
 
 JPH_CAPI void
-JPH_ConvexShapeSettings_SetMaterial(JPH_ConvexShapeSettings *inSettings,
-                                    const JPH_PhysicsMaterial *inMaterial);
+JPH_ConvexShapeSettings_SetMaterial(JPH_ConvexShapeSettings *in_settings,
+                                    const JPH_PhysicsMaterial *in_material);
 
 JPH_CAPI float
-JPH_ConvexShapeSettings_GetDensity(const JPH_ConvexShapeSettings *inSettings);
+JPH_ConvexShapeSettings_GetDensity(const JPH_ConvexShapeSettings *in_settings);
 
 JPH_CAPI void
-JPH_ConvexShapeSettings_SetDensity(JPH_ConvexShapeSettings *inSettings, float inDensity);
+JPH_ConvexShapeSettings_SetDensity(JPH_ConvexShapeSettings *in_settings, float in_density);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_BoxShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BoxShapeSettings *
-JPH_BoxShapeSettings_Create(const float inHalfExtent[3]);
+JPH_BoxShapeSettings_Create(const float in_half_extent[3]);
 
 JPH_CAPI void
-JPH_BoxShapeSettings_GetHalfExtent(const JPH_BoxShapeSettings *inSettings, float outHalfExtent[3]);
+JPH_BoxShapeSettings_GetHalfExtent(const JPH_BoxShapeSettings *in_settings, float out_half_extent[3]);
 
 JPH_CAPI void
-JPH_BoxShapeSettings_SetHalfExtent(JPH_BoxShapeSettings *inSettings, const float inHalfExtent[3]);
+JPH_BoxShapeSettings_SetHalfExtent(JPH_BoxShapeSettings *in_settings, const float in_half_extent[3]);
 
 JPH_CAPI float
-JPH_BoxShapeSettings_GetConvexRadius(const JPH_BoxShapeSettings *inSettings);
+JPH_BoxShapeSettings_GetConvexRadius(const JPH_BoxShapeSettings *in_settings);
 
 JPH_CAPI void
-JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *inSettings, float inConvexRadius);
+JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *in_settings, float in_convex_radius);
 //--------------------------------------------------------------------------------------------------
 //
 // Shape
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_ShapeType
-JPH_Shape_GetType(const JPH_Shape *inShape);
+JPH_Shape_GetType(const JPH_Shape *in_shape);
 
 JPH_CAPI JPH_ShapeSubType
-JPH_Shape_GetSubType(const JPH_Shape *inShape);
+JPH_Shape_GetSubType(const JPH_Shape *in_shape);
 
 JPH_CAPI uint64_t
-JPH_Shape_GetUserData(const JPH_Shape *inShape);
+JPH_Shape_GetUserData(const JPH_Shape *in_shape);
 
 JPH_CAPI void
-JPH_Shape_SetUserData(JPH_Shape *inShape, uint64_t inUserData);
+JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data);
 
 #ifdef __cplusplus
 }
