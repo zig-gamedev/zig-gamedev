@@ -166,8 +166,8 @@ typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH
 
 typedef struct JPH_BroadPhaseLayerInterfaceVTable
 {
-    void *              reserved0;
-    void *              reserved1;
+    const void *        reserved0;
+    const void *        reserved1;
     uint32_t            (*GetNumBroadPhaseLayers)(const void *in_self);
     JPH_BroadPhaseLayer (*GetBroadPhaseLayer)(const void *in_self, JPH_ObjectLayer in_layer);
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)

@@ -17,12 +17,14 @@ typedef struct BPLayerInterfaceImpl
     JPH_BroadPhaseLayer                         object_to_broad_phase[NUM_LAYERS];
 } BPLayerInterfaceImpl;
 
-static uint32_t BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self)
+static uint32_t
+BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self)
 {
     return NUM_LAYERS;
 }
 
-static JPH_BroadPhaseLayer BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPH_ObjectLayer in_layer)
+static JPH_BroadPhaseLayer
+BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPH_ObjectLayer in_layer)
 {
     assert(in_layer < NUM_LAYERS);
     const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
@@ -35,7 +37,8 @@ static const JPH_BroadPhaseLayerInterfaceVTable g_bp_layer_interface_vtable =
     .GetBroadPhaseLayer     = BPLayerInterface_GetBroadPhaseLayer,
 };
 
-static BPLayerInterfaceImpl BPLayerInterface_Init(void)
+static BPLayerInterfaceImpl
+BPLayerInterface_Init(void)
 {
     BPLayerInterfaceImpl impl =
     {
@@ -61,7 +64,8 @@ static bool MyObjectCanCollide(JPH_ObjectLayer in_object1, JPH_ObjectLayer in_ob
     }
 }
 //--------------------------------------------------------------------------------------------------
-static bool MyBroadPhaseCanCollide(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2)
+static bool
+MyBroadPhaseCanCollide(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2)
 {
     switch (in_layer1)
     {
@@ -75,7 +79,8 @@ static bool MyBroadPhaseCanCollide(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLaye
     }
 }
 //--------------------------------------------------------------------------------------------------
-bool JoltCTest_Basic1(void)
+uint32_t
+JoltCTest_Basic1(void)
 {
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
@@ -102,29 +107,29 @@ bool JoltCTest_Basic1(void)
     const float half_extent[3] = { 10.0, 20.0, 30.0 };
     JPH_BoxShapeSettings *box_settings = JPH_BoxShapeSettings_Create(half_extent);
 
-    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)box_settings) != 1) return false;
+    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)box_settings) != 1) return 0;
     JPH_ShapeSettings_AddRef((JPH_ShapeSettings *)box_settings);
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)box_settings);
-    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)box_settings) != 1) return false;
+    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)box_settings) != 1) return 0;
 
     JPH_BoxShapeSettings_SetConvexRadius(box_settings, 1.0);
-    if (JPH_BoxShapeSettings_GetConvexRadius(box_settings) != 1.0) return false;
+    if (JPH_BoxShapeSettings_GetConvexRadius(box_settings) != 1.0) return 0;
 
     JPH_ConvexShapeSettings_SetDensity((JPH_ConvexShapeSettings *)box_settings, 100.0);
-    if (JPH_ConvexShapeSettings_GetDensity((JPH_ConvexShapeSettings *)box_settings) != 100.0) return false;
+    if (JPH_ConvexShapeSettings_GetDensity((JPH_ConvexShapeSettings *)box_settings) != 100.0) return 0;
 
     JPH_Shape *box_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)box_settings);
-    if (box_shape == NULL) return false;
-    if (JPH_Shape_GetType(box_shape) != JPH_SHAPE_TYPE_CONVEX) return false;
-    if (JPH_Shape_GetSubType(box_shape) != JPH_SHAPE_SUB_TYPE_BOX) return false;
+    if (box_shape == NULL) return 0;
+    if (JPH_Shape_GetType(box_shape) != JPH_SHAPE_TYPE_CONVEX) return 0;
+    if (JPH_Shape_GetSubType(box_shape) != JPH_SHAPE_SUB_TYPE_BOX) return 0;
 
-    if (JPH_Shape_GetRefCount(box_shape) != 2) return false;
+    if (JPH_Shape_GetRefCount(box_shape) != 2) return 0;
 
-    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)box_settings) != 1) return false;
+    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)box_settings) != 1) return 0;
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)box_settings);
     box_settings = NULL;
 
-    if (JPH_Shape_GetRefCount(box_shape) != 1) return false;
+    if (JPH_Shape_GetRefCount(box_shape) != 1) return 0;
     JPH_Shape_Release(box_shape);
     box_shape = NULL;
 
@@ -133,10 +138,11 @@ bool JoltCTest_Basic1(void)
 
     JPH_DestroyFactory();
 
-    return true;
+    return 1;
 }
 //--------------------------------------------------------------------------------------------------
-bool JoltCTest_Basic2(void)
+uint32_t
+JoltCTest_Basic2(void)
 {
     JPH_RegisterDefaultAllocator();
     JPH_CreateFactory();
@@ -167,7 +173,7 @@ bool JoltCTest_Basic2(void)
     JPH_BoxShapeSettings *floor_shape_settings = JPH_BoxShapeSettings_Create(floor_half_extent);
 
     JPH_Shape *floor_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)floor_shape_settings);
-    if (floor_shape == NULL) return false;
+    if (floor_shape == NULL) return 0;
 
     const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
     const float floor_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -181,7 +187,7 @@ bool JoltCTest_Basic2(void)
     JPH_BodyInterface *body_interface = JPH_PhysicsSystem_GetBodyInterface(physics_system);
 
     JPH_Body *floor = JPH_BodyInterface_CreateBody(body_interface, &floor_settings);
-    if (floor == NULL) return false;
+    if (floor == NULL) return 0;
 
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)floor_shape_settings);
     JPH_Shape_Release(floor_shape);
@@ -192,6 +198,6 @@ bool JoltCTest_Basic2(void)
 
     JPH_DestroyFactory();
 
-    return true;
+    return 1;
 }
 //--------------------------------------------------------------------------------------------------
