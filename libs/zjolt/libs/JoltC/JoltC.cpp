@@ -34,6 +34,7 @@ static_assert(sizeof(JPH::EShapeSubType)           == sizeof(JPH_ShapeSubType), 
 static_assert(sizeof(JPH::EMotionType)             == sizeof(JPH_MotionType),             "");
 static_assert(sizeof(JPH::EMotionQuality)          == sizeof(JPH_MotionQuality),          "");
 static_assert(sizeof(JPH::EOverrideMassProperties) == sizeof(JPH_OverrideMassProperties), "");
+static_assert(sizeof(JPH::EActivation)             == sizeof(JPH_Activation),             "");
 static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer),        "");
 static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer),            "");
 static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties),         "");
@@ -473,6 +474,36 @@ JPH_BodyInterface_CreateBody(JPH_BodyInterface *in_iface, const JPH_BodyCreation
     auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
     auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_setting);
     return reinterpret_cast<JPH_Body *>(iface->CreateBody(*settings));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_BodyInterface_DestroyBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id)
+{
+    assert(in_iface != nullptr);
+    reinterpret_cast<JPH::BodyInterface *>(in_iface)->DestroyBody(JPH::BodyID(in_body_id));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_BodyInterface_AddBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id, JPH_Activation in_mode)
+{
+    assert(in_iface != nullptr);
+    reinterpret_cast<JPH::BodyInterface *>(in_iface)->AddBody(
+        JPH::BodyID(in_body_id),
+        static_cast<JPH::EActivation>(in_mode));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_BodyInterface_RemoveBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id)
+{
+    assert(in_iface != nullptr);
+    reinterpret_cast<JPH::BodyInterface *>(in_iface)->RemoveBody(JPH::BodyID(in_body_id));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_BodyInterface_IsAdded(const JPH_BodyInterface *in_iface, JPH_BodyID in_body_id)
+{
+    assert(in_iface != nullptr);
+    return reinterpret_cast<const JPH::BodyInterface *>(in_iface)->IsAdded(JPH::BodyID(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 //

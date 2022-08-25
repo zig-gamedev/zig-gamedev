@@ -171,9 +171,12 @@ JoltCTest_Basic2(void)
 
     const float floor_half_extent[3] = { 100.0, 1.0, 100.0 };
     JPH_BoxShapeSettings *floor_shape_settings = JPH_BoxShapeSettings_Create(floor_half_extent);
+    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)floor_shape_settings) != 1) return 0;
 
     JPH_Shape *floor_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)floor_shape_settings);
     if (floor_shape == NULL) return 0;
+    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)floor_shape_settings) != 1) return 0;
+    if (JPH_Shape_GetRefCount(floor_shape) != 2) return 0;
 
     const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
     const float floor_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -188,13 +191,39 @@ JoltCTest_Basic2(void)
 
     JPH_Body *floor = JPH_BodyInterface_CreateBody(body_interface, &floor_settings);
     if (floor == NULL) return 0;
-    {
-        const uint32_t floor_id = JPH_Body_GetID(floor);
-        if (((floor_id & 0xff000000) >> 24) != 1) return 0;
-        if ((floor_id & 0x00ffffff) != 0) return 0;
-    }
+    const JPH_BodyID floor_id = JPH_Body_GetID(floor);
+    if (((floor_id & 0xff000000) >> 24) != 1) return 0;
+    if ((floor_id & 0x00ffffff) != 0) return 0;
 
+    if (JPH_Shape_GetRefCount(floor_shape) != 3) return 0;
+
+    JPH_Body *floor1 = JPH_BodyInterface_CreateBody(body_interface, &floor_settings);
+    if (floor1 == NULL) return 0;
+    const JPH_BodyID floor1_id = JPH_Body_GetID(floor1);
+    if (((floor1_id & 0xff000000) >> 24) != 1) return 0;
+    if ((floor1_id & 0x00ffffff) != 1) return 0;
+
+    if (JPH_BodyInterface_IsAdded(body_interface, floor_id) != false) return 0;
+    if (JPH_BodyInterface_IsAdded(body_interface, floor1_id) != false) return 0;
+
+    JPH_BodyInterface_AddBody(body_interface, floor_id, JPH_ACTIVATION_ACTIVATE);
+    if (JPH_BodyInterface_IsAdded(body_interface, floor_id) != true) return 0;
+
+    JPH_BodyInterface_RemoveBody(body_interface, floor_id);
+    if (JPH_BodyInterface_IsAdded(body_interface, floor_id) != false) return 0;
+
+    if (JPH_Shape_GetRefCount(floor_shape) != 4) return 0;
+
+    if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)floor_shape_settings) != 1) return 0;
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)floor_shape_settings);
+    if (JPH_Shape_GetRefCount(floor_shape) != 3) return 0;
+
+    JPH_BodyInterface_DestroyBody(body_interface, floor_id);
+    if (JPH_Shape_GetRefCount(floor_shape) != 2) return 0;
+
+    JPH_BodyInterface_DestroyBody(body_interface, floor1_id);
+    if (JPH_Shape_GetRefCount(floor_shape) != 1) return 0;
+
     JPH_Shape_Release(floor_shape);
 
     JPH_PhysicsSystem_Destroy(physics_system);

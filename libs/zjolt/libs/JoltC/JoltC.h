@@ -6,7 +6,7 @@
 
 #define JPH_CAPI
 
-// JPH_JobSystem_Create
+// JPH_JobSystem_Create()
 #define JPH_MAX_PHYSICS_JOBS     2048
 #define JPH_MAX_PHYSICS_BARRIERS 8
 
@@ -59,6 +59,10 @@
 #define JPH_OVERRIDE_MASS_PROPS_CALC_INERTIA          1
 #define JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED 2
 
+// JPH_Activation
+#define JPH_ACTIVATION_ACTIVATE      0
+#define JPH_ACTIVATION_DONT_ACTIVATE 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -73,6 +77,7 @@ typedef uint8_t     JPH_ShapeSubType;
 typedef uint8_t     JPH_MotionType;
 typedef uint8_t     JPH_MotionQuality;
 typedef uint8_t     JPH_OverrideMassProperties;
+typedef uint32_t    JPH_Activation;
 
 typedef struct JPH_PhysicsSystem    JPH_PhysicsSystem;
 typedef struct JPH_Shape            JPH_Shape;
@@ -316,6 +321,18 @@ JPH_Shape_SetUserData(JPH_Shape *in_shape, uint64_t in_user_data);
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_Body *
 JPH_BodyInterface_CreateBody(JPH_BodyInterface *in_iface, const JPH_BodyCreationSettings *in_setting);
+
+JPH_CAPI void
+JPH_BodyInterface_DestroyBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id);
+
+JPH_CAPI void
+JPH_BodyInterface_AddBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id, JPH_Activation in_mode);
+
+JPH_CAPI void
+JPH_BodyInterface_RemoveBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id);
+
+JPH_CAPI bool
+JPH_BodyInterface_IsAdded(const JPH_BodyInterface *in_iface, JPH_BodyID in_body_id);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_Body
