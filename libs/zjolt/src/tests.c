@@ -1,6 +1,7 @@
 #include <JoltC.h>
 #include <assert.h>
 #include <stddef.h>
+#include <stdio.h>
 
 //--------------------------------------------------------------------------------------------------
 // BPLayerInterface
@@ -20,12 +21,14 @@ typedef struct BPLayerInterfaceImpl
 static uint32_t
 BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self)
 {
+    //fprintf(stderr, "BPLayerInterface_GetNumBroadPhaseLayers()\n");
     return NUM_LAYERS;
 }
 
 static JPH_BroadPhaseLayer
 BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPH_ObjectLayer in_layer)
 {
+    //fprintf(stderr, "BPLayerInterface_GetBroadPhaseLayer()\n");
     assert(in_layer < NUM_LAYERS);
     const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
     return self->object_to_broad_phase[in_layer];

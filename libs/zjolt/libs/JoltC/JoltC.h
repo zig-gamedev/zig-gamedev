@@ -1,9 +1,12 @@
 #pragma once
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdalign.h>
-
+//--------------------------------------------------------------------------------------------------
+//
+// Defines
+//
+//--------------------------------------------------------------------------------------------------
 #define JPH_CAPI
 
 // JPH_JobSystem_Create()
@@ -63,21 +66,35 @@
 #define JPH_ACTIVATION_ACTIVATE      0
 #define JPH_ACTIVATION_DONT_ACTIVATE 1
 
+// JPH_ValidateResult
+#define JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS 0
+#define JPH_VALIDATE_RESULT_ACCEPT_CONTACT      1
+#define JPH_VALIDATE_RESULT_REJECT_CONTACT      2
+#define JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS 3
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+//--------------------------------------------------------------------------------------------------
+//
+// Types
+//
+//--------------------------------------------------------------------------------------------------
 typedef uint16_t    JPH_ObjectLayer;
 typedef uint8_t     JPH_BroadPhaseLayer;
-typedef uint32_t    JPH_BodyID;
-typedef uint32_t    JPH_CollisionGroupID;
-typedef uint32_t    JPH_CollisionSubGroupID;
 typedef uint8_t     JPH_ShapeType;
 typedef uint8_t     JPH_ShapeSubType;
 typedef uint8_t     JPH_MotionType;
 typedef uint8_t     JPH_MotionQuality;
 typedef uint8_t     JPH_OverrideMassProperties;
 typedef uint32_t    JPH_Activation;
+typedef uint32_t    JPH_ValidateResult;
+
+// TODO: Consider using structures for IDs (`typedef struct JPH_BodyID { uint32_t bits; } JPH_BodyID;`)
+typedef uint32_t JPH_BodyID;
+typedef uint32_t JPH_SubShapeID;
+typedef uint32_t JPH_CollisionGroupID;
+typedef uint32_t JPH_CollisionSubGroupID;
 
 typedef struct JPH_PhysicsSystem    JPH_PhysicsSystem;
 typedef struct JPH_Shape            JPH_Shape;
@@ -93,31 +110,41 @@ typedef struct JPH_BoxShapeSettings     JPH_BoxShapeSettings;
 typedef struct JPH_SphereShapeSettings  JPH_SphereShapeSettings;
 typedef struct JPH_GroupFilter          JPH_GroupFilter;
 
+typedef bool (*JPH_ObjectLayerPairFilter)        (JPH_ObjectLayer in_layer1, JPH_ObjectLayer     in_layer2);
+typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
+
+typedef struct JPH_MassProperties       JPH_MassProperties;
+typedef struct JPH_CollisionGroup       JPH_CollisionGroup;
+typedef struct JPH_BodyCreationSettings JPH_BodyCreationSettings;
+typedef struct JPH_ContactManifold      JPH_ContactManifold;
+typedef struct JPH_ContactSettings      JPH_ContactSettings;
+typedef struct JPH_SubShapeIDPair       JPH_SubShapeIDPair;
+
+typedef struct JPH_BroadPhaseLayerInterfaceVTable   JPH_BroadPhaseLayerInterfaceVTable;
+typedef struct JPH_BodyActivationListenerVTable     JPH_BodyActivationListenerVTable;
+
 // NOTE: Needs to be kept in sync with JPH::MassProperties
-typedef struct JPH_MassProperties
+struct JPH_MassProperties
 {
     float              mass;
     alignas(16) float  inertia[16];
-} JPH_MassProperties;
+};
 
 // NOTE: Needs to be kept in sync with JPH::CollisionGroup
-typedef struct JPH_CollisionGroup
+struct JPH_CollisionGroup
 {
     const JPH_GroupFilter *  filter;
     JPH_CollisionGroupID     group_id;
     JPH_CollisionSubGroupID  sub_group_id;
-} JPH_CollisionGroup;
-
-JPH_CAPI JPH_CollisionGroup
-JPH_CollisionGroup_InitDefault(void);
+};
 
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
-typedef struct JPH_BodyCreationSettings
+struct JPH_BodyCreationSettings
 {
-    alignas(16) float           position[3];
+    alignas(16) float           position[4];
     alignas(16) float           rotation[4];
-    alignas(16) float           linear_velocity[3];
-    alignas(16) float           angular_velocity[3];
+    alignas(16) float           linear_velocity[4];
+    alignas(16) float           angular_velocity[4];
     uint64_t                    user_data;
     JPH_ObjectLayer             object_layer;
     JPH_CollisionGroup          collision_group;
@@ -138,20 +165,60 @@ typedef struct JPH_BodyCreationSettings
     JPH_MassProperties          mass_properties_override;
     const void *                reserved;
     const JPH_Shape *           shape;
-} JPH_BodyCreationSettings;
+};
 
-JPH_CAPI JPH_BodyCreationSettings
-JPH_BodyCreationSettings_InitDefault(void);
+// NOTE: Needs to be kept in sync with JPH::SubShapeIDPair
+struct JPH_SubShapeIDPair
+{
+    JPH_BodyID      body1_id;
+    JPH_SubShapeID  sub_shape1_id;
+    JPH_BodyID      body2_id;
+    JPH_SubShapeID  sub_shape2_id;
+};
 
-JPH_CAPI JPH_BodyCreationSettings
-JPH_BodyCreationSettings_Init(const JPH_Shape *in_shape,
-                              const float in_position[3],
-                              const float in_rotation[4],
-                              JPH_MotionType in_motion_type,
-                              JPH_ObjectLayer in_layer);
+// NOTE: Needs to be kept in sync with JPH::ContactManifold
+struct JPH_ContactManifold
+{
+    alignas(16) float       world_space_normal[4];
+    float                   penetration_depth;
+    JPH_SubShapeID          sub_shape1_id;
+    JPH_SubShapeID          sub_shape2_id;
+    alignas(16) uint32_t    num_points1;
+    alignas(16) float       world_space_contact_points1[64][4];
+    alignas(16) uint32_t    num_points2;
+    alignas(16) float       world_space_contact_points2[64][4];
+};
+
+// NOTE: Needs to be kept in sync with JPH::ContactSettings
+struct JPH_ContactSettings
+{
+    float combined_friction;
+    float combined_restitution;
+    bool  is_sensor;
+};
+
+// NOTE: Needs to be kept in sync with JPH::BroadPhaseLayerInterface
+struct JPH_BroadPhaseLayerInterfaceVTable
+{
+    const void *          reserved0;
+    const void *          reserved1;
+    uint32_t            (*GetNumBroadPhaseLayers)(const void *in_self);
+    JPH_BroadPhaseLayer (*GetBroadPhaseLayer)    (const void *in_self, JPH_ObjectLayer     in_layer);
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+    const char *        (*GetBroadPhaseLayerName)(const void *in_self, JPH_BroadPhaseLayer in_layer);
+#endif
+};
+
+// NOTE: Needs to be kept in sync with JPH::BodyActivationListener
+struct JPH_BodyActivationListenerVTable
+{
+    const void *    reserved;
+    void          (*OnBodyActivated)  (void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data);
+    void          (*OnBodyDeactivated)(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data);
+};
 //--------------------------------------------------------------------------------------------------
 //
-// Misc
+// Misc functions
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
@@ -166,19 +233,18 @@ JPH_DestroyFactory(void);
 JPH_CAPI void
 JPH_RegisterTypes(void);
 
-typedef bool (*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
-typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
+JPH_CAPI JPH_BodyCreationSettings
+JPH_BodyCreationSettings_InitDefault(void);
 
-typedef struct JPH_BroadPhaseLayerInterfaceVTable
-{
-    const void *        reserved0;
-    const void *        reserved1;
-    uint32_t            (*GetNumBroadPhaseLayers)(const void *in_self);
-    JPH_BroadPhaseLayer (*GetBroadPhaseLayer)(const void *in_self, JPH_ObjectLayer in_layer);
-#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-    const char *        (*GetBroadPhaseLayerName)(const void *in_self, JPH_BroadPhaseLayer in_layer);
-#endif
-} JPH_BroadPhaseLayerInterfaceVTable;
+JPH_CAPI JPH_BodyCreationSettings
+JPH_BodyCreationSettings_Init(const JPH_Shape *in_shape,
+                              const float in_position[3],
+                              const float in_rotation[4],
+                              JPH_MotionType in_motion_type,
+                              JPH_ObjectLayer in_layer);
+
+JPH_CAPI JPH_CollisionGroup
+JPH_CollisionGroup_InitDefault(void);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_TempAllocator
@@ -340,7 +406,7 @@ JPH_BodyInterface_IsAdded(const JPH_BodyInterface *in_iface, JPH_BodyID in_body_
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BodyID
 JPH_Body_GetID(const JPH_Body *in_body);
-
+//--------------------------------------------------------------------------------------------------
 #ifdef __cplusplus
 }
 #endif

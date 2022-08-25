@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+//#include <stdio.h>
 
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -29,21 +30,29 @@ AssertFailedImpl(const char *in_expression, const char *in_message, const char *
 #endif
 //--------------------------------------------------------------------------------------------------
 static_assert(sizeof(JPH::BodyID)                  == sizeof(JPH_BodyID),                 "");
+static_assert(sizeof(JPH::SubShapeID)              == sizeof(JPH_SubShapeID),             "");
 static_assert(sizeof(JPH::EShapeType)              == sizeof(JPH_ShapeType),              "");
 static_assert(sizeof(JPH::EShapeSubType)           == sizeof(JPH_ShapeSubType),           "");
 static_assert(sizeof(JPH::EMotionType)             == sizeof(JPH_MotionType),             "");
 static_assert(sizeof(JPH::EMotionQuality)          == sizeof(JPH_MotionQuality),          "");
 static_assert(sizeof(JPH::EOverrideMassProperties) == sizeof(JPH_OverrideMassProperties), "");
 static_assert(sizeof(JPH::EActivation)             == sizeof(JPH_Activation),             "");
+static_assert(sizeof(JPH::ValidateResult)          == sizeof(JPH_ValidateResult),         "");
 static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer),        "");
 static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer),            "");
 static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties),         "");
 static_assert(sizeof(JPH::CollisionGroup)          == sizeof(JPH_CollisionGroup),         "");
 static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSettings),   "");
+static_assert(sizeof(JPH::ContactManifold)         == sizeof(JPH_ContactManifold),        "");
+static_assert(sizeof(JPH::ContactSettings)         == sizeof(JPH_ContactSettings),        "");
+static_assert(sizeof(JPH::SubShapeIDPair)          == sizeof(JPH_SubShapeIDPair),         "");
 
 static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties),       "");
 static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup),       "");
 static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPH_BodyCreationSettings), "");
+static_assert(alignof(JPH::ContactManifold)      == alignof(JPH_ContactManifold),      "");
+static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings),      "");
+static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair),       "");
 
 static_assert(
     offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
@@ -56,6 +65,15 @@ static_assert(
 static_assert(
     offsetof(JPH::BodyCreationSettings, mAngularDamping) ==
     offsetof(JPH_BodyCreationSettings, angular_damping),
+    "");
+
+static_assert(
+    offsetof(JPH::ContactManifold, mPenetrationDepth) ==
+    offsetof(JPH_ContactManifold, penetration_depth),
+    "");
+static_assert(
+    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) ==
+    offsetof(JPH_ContactManifold, num_points1),
     "");
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
