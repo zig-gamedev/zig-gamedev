@@ -239,19 +239,21 @@ struct JPH_BroadPhaseLayerInterfaceVTable
 // NOTE: Needs to be kept in sync with JPH::BodyActivationListener
 struct JPH_BodyActivationListenerVTable
 {
-    const void *reserved;
+    const void *reserved0;
+    const void *reserved1;
 
     void
-    (*OnBodyActivated)(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data);
+    (*OnBodyActivated)(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data);
 
     void
-    (*OnBodyDeactivated)(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data);
+    (*OnBodyDeactivated)(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data);
 };
 
 // NOTE: Needs to be kept in sync with JPH::ContactListener
 struct JPH_ContactListenerVTable
 {
-    const void *reserved;
+    const void *reserved0;
+    const void *reserved1;
 
     JPH_ValidateResult
     (*OnContactValidate)(void *in_self,

@@ -74,6 +74,12 @@ test "jolt_c.basic2" {
     try expect(ret != 0);
 }
 
+extern fn JoltCTest_HelloWorld() u32;
+test "jolt_c.helloworld" {
+    const ret = JoltCTest_HelloWorld();
+    try expect(ret != 0);
+}
+
 //test "JoltC.basic" {
 //    if (@import("builtin").target.os.tag == .macos and
 //        @import("builtin").target.cpu.arch == .aarch64) return error.SkipZigTest;

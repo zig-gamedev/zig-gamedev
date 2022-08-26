@@ -125,13 +125,13 @@ struct MyActivationListener
 };
 
 static void
-MyActivationListener_OnBodyActivated(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data)
+MyActivationListener_OnBodyActivated(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data)
 {
     fprintf(stderr, "MyActivationListener_OnBodyActivated()\n");
 }
 
 static void
-MyActivationListener_OnBodyDeactivated(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data)
+MyActivationListener_OnBodyDeactivated(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data)
 {
     fprintf(stderr, "MyActivationListener_OnBodyDeactivated()\n");
 }
@@ -334,6 +334,134 @@ JoltCTest_Basic2(void)
     if (JPH_Shape_GetRefCount(floor_shape) != 1) return 0;
 
     JPH_Shape_Release(floor_shape);
+
+    JPH_PhysicsSystem_Destroy(physics_system);
+    JPH_JobSystem_Destroy(job_system);
+    JPH_TempAllocator_Destroy(temp_allocator);
+
+    JPH_DestroyFactory();
+
+    return 1;
+}
+//--------------------------------------------------------------------------------------------------
+uint32_t
+JoltCTest_HelloWorld(void)
+{
+    JPH_RegisterDefaultAllocator();
+    JPH_CreateFactory();
+    JPH_RegisterTypes();
+    JPH_PhysicsSystem *physics_system = JPH_PhysicsSystem_Create();
+
+    JPH_TempAllocator *temp_allocator = JPH_TempAllocator_Create(10 * 1024 * 1024);
+    JPH_JobSystem *job_system = JPH_JobSystem_Create(JPH_MAX_PHYSICS_JOBS, JPH_MAX_PHYSICS_BARRIERS, -1);
+
+    const uint32_t max_bodies = 1024;
+    const uint32_t num_body_mutexes = 0;
+    const uint32_t max_body_pairs = 1024;
+    const uint32_t max_contact_constraints = 1024;
+
+    BPLayerInterfaceImpl broad_phase_layer_interface = BPLayerInterface_Init();
+
+    JPH_PhysicsSystem_Init(
+        physics_system,
+        max_bodies,
+        num_body_mutexes,
+        max_body_pairs,
+        max_contact_constraints,
+        &broad_phase_layer_interface,
+        MyBroadPhaseCanCollide,
+        MyObjectCanCollide);
+
+    MyActivationListener body_activation_listener = MyActivationListener_Init();
+    JPH_PhysicsSystem_SetBodyActivationListener(physics_system, &body_activation_listener);
+
+    MyContactListener contact_listener = MyContactListener_Init();
+    JPH_PhysicsSystem_SetContactListener(physics_system, &contact_listener);
+
+    JPH_BodyInterface *body_interface = JPH_PhysicsSystem_GetBodyInterface(physics_system);
+
+    //
+    // Static floor
+    //
+    const float floor_half_extent[3] = { 100.0, 1.0, 100.0 };
+    JPH_BoxShapeSettings *floor_shape_settings = JPH_BoxShapeSettings_Create(floor_half_extent);
+    JPH_Shape *floor_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)floor_shape_settings);
+
+    const float identity_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
+    const JPH_BodyCreationSettings floor_settings = JPH_BodyCreationSettings_Init(
+        floor_shape,
+        floor_position,
+        identity_rotation,
+        JPH_MOTION_TYPE_STATIC,
+        LAYER_NON_MOVING);
+
+    JPH_Body *floor = JPH_BodyInterface_CreateBody(body_interface, &floor_settings);
+    const JPH_BodyID floor_id = JPH_Body_GetID(floor);
+    JPH_BodyInterface_AddBody(body_interface, floor_id, JPH_ACTIVATION_DONT_ACTIVATE);
+
+    //
+    // Falling sphere
+    //
+    JPH_SphereShapeSettings *sphere_shape_settings = JPH_SphereShapeSettings_Create(0.5f);
+    JPH_Shape *sphere_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)sphere_shape_settings);
+
+    const float sphere_position[3] = { 0.0f, 2.0f, 0.0f };
+    const JPH_BodyCreationSettings sphere_settings = JPH_BodyCreationSettings_Init(
+        sphere_shape,
+        sphere_position,
+        identity_rotation,
+        JPH_MOTION_TYPE_DYNAMIC,
+        LAYER_MOVING);
+
+    const JPH_BodyID sphere_id = JPH_BodyInterface_CreateAndAddBody(
+        body_interface,
+        &sphere_settings,
+        JPH_ACTIVATION_ACTIVATE);
+
+    const float sphere_velocity[3] = { 0.0f, -5.0f, 0.0f };
+    JPH_BodyInterface_SetLinearVelocity(body_interface, sphere_id, sphere_velocity);
+
+
+    JPH_PhysicsSystem_OptimizeBroadPhase(physics_system);
+
+    uint32_t step = 0;
+    while (JPH_BodyInterface_IsActive(body_interface, sphere_id))
+    {
+        step += 1;
+
+        float position[3];
+        JPH_BodyInterface_GetCenterOfMassPosition(body_interface, sphere_id, &position[0]);
+
+        float velocity[3];
+        JPH_BodyInterface_GetLinearVelocity(body_interface, sphere_id, &velocity[0]);
+
+        fprintf(stderr, "Step %d: Position = (%f, %f, %f), Velocity(%f, %f, %f)\n",
+                step,
+                position[0], position[1], position[2],
+                velocity[0], velocity[1], velocity[2]);
+
+        const float delta_time = 1.0f / 60.0f;
+        const int collision_steps = 1;
+        const int integration_sub_steps = 1;
+
+        JPH_PhysicsSystem_Update(
+            physics_system,
+            delta_time,
+            collision_steps,
+            integration_sub_steps,
+            temp_allocator,
+            job_system);
+    }
+
+    JPH_BodyInterface_RemoveBody(body_interface, sphere_id);
+    JPH_BodyInterface_DestroyBody(body_interface, sphere_id);
+
+    JPH_BodyInterface_RemoveBody(body_interface, floor_id);
+    JPH_BodyInterface_DestroyBody(body_interface, floor_id);
+
+    JPH_Shape_Release(floor_shape);
+    JPH_Shape_Release(sphere_shape);
 
     JPH_PhysicsSystem_Destroy(physics_system);
     JPH_JobSystem_Destroy(job_system);
