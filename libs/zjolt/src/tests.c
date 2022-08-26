@@ -228,6 +228,11 @@ JoltCTest_Basic1(void)
 
     if (JPH_Shape_GetRefCount(box_shape) != 2) return 0;
 
+    JPH_ShapeSettings_CreateShape((JPH_ShapeSettings *)box_settings);
+    if (JPH_Shape_GetRefCount(box_shape) != 3) return 0;
+    JPH_Shape_Release(box_shape);
+    if (JPH_Shape_GetRefCount(box_shape) != 2) return 0;
+
     if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)box_settings) != 1) return 0;
     JPH_ShapeSettings_Release((JPH_ShapeSettings *)box_settings);
     box_settings = NULL;
