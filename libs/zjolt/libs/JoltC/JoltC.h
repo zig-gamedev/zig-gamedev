@@ -110,8 +110,11 @@ typedef struct JPH_BoxShapeSettings     JPH_BoxShapeSettings;
 typedef struct JPH_SphereShapeSettings  JPH_SphereShapeSettings;
 typedef struct JPH_GroupFilter          JPH_GroupFilter;
 
-typedef bool (*JPH_ObjectLayerPairFilter)        (JPH_ObjectLayer in_layer1, JPH_ObjectLayer     in_layer2);
-typedef bool (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
+typedef bool
+(*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
+
+typedef bool
+(*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
 
 typedef struct JPH_MassProperties       JPH_MassProperties;
 typedef struct JPH_CollisionGroup       JPH_CollisionGroup;
@@ -119,9 +122,11 @@ typedef struct JPH_BodyCreationSettings JPH_BodyCreationSettings;
 typedef struct JPH_ContactManifold      JPH_ContactManifold;
 typedef struct JPH_ContactSettings      JPH_ContactSettings;
 typedef struct JPH_SubShapeIDPair       JPH_SubShapeIDPair;
+typedef struct JPH_CollideShapeResult   JPH_CollideShapeResult;
 
 typedef struct JPH_BroadPhaseLayerInterfaceVTable   JPH_BroadPhaseLayerInterfaceVTable;
 typedef struct JPH_BodyActivationListenerVTable     JPH_BodyActivationListenerVTable;
+typedef struct JPH_ContactListenerVTable            JPH_ContactListenerVTable;
 
 // NOTE: Needs to be kept in sync with JPH::MassProperties
 struct JPH_MassProperties
@@ -197,24 +202,79 @@ struct JPH_ContactSettings
     bool  is_sensor;
 };
 
+// NOTE: Needs to be kept in sync with JPH::CollideShapeResult
+struct JPH_CollideShapeResult
+{
+    alignas(16) float       contact_point1[4];
+    alignas(16) float       contact_point2[4];
+    alignas(16) float       penetration_axis[4];
+    float                   penetration_depth;
+    JPH_SubShapeID          sub_shape1_id;
+    JPH_SubShapeID          sub_shape2_id;
+    JPH_BodyID              body2_id;
+    alignas(16) uint32_t    num_face_points1;
+    alignas(16) float       shape1_face[32][4];
+    alignas(16) uint32_t    num_face_points2;
+    alignas(16) float       shape2_face[32][4];
+};
+
 // NOTE: Needs to be kept in sync with JPH::BroadPhaseLayerInterface
 struct JPH_BroadPhaseLayerInterfaceVTable
 {
-    const void *          reserved0;
-    const void *          reserved1;
-    uint32_t            (*GetNumBroadPhaseLayers)(const void *in_self);
-    JPH_BroadPhaseLayer (*GetBroadPhaseLayer)    (const void *in_self, JPH_ObjectLayer     in_layer);
+    const void *reserved0;
+    const void *reserved1;
+
+    uint32_t
+    (*GetNumBroadPhaseLayers)(const void *in_self);
+
+    JPH_BroadPhaseLayer
+    (*GetBroadPhaseLayer)(const void *in_self, JPH_ObjectLayer in_layer);
+
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-    const char *        (*GetBroadPhaseLayerName)(const void *in_self, JPH_BroadPhaseLayer in_layer);
+    const char *
+    (*GetBroadPhaseLayerName)(const void *in_self, JPH_BroadPhaseLayer in_layer);
 #endif
 };
 
 // NOTE: Needs to be kept in sync with JPH::BodyActivationListener
 struct JPH_BodyActivationListenerVTable
 {
-    const void *    reserved;
-    void          (*OnBodyActivated)  (void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data);
-    void          (*OnBodyDeactivated)(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data);
+    const void *reserved;
+
+    void
+    (*OnBodyActivated)(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data);
+
+    void
+    (*OnBodyDeactivated)(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data);
+};
+
+// NOTE: Needs to be kept in sync with JPH::ContactListener
+struct JPH_ContactListenerVTable
+{
+    const void *reserved;
+
+    JPH_ValidateResult
+    (*OnContactValidate)(void *in_self,
+                         const JPH_Body *in_body1,
+                         const JPH_Body *in_body2,
+                         const JPH_CollideShapeResult *in_collision_result);
+
+    void
+    (*OnContactAdded)(void *in_self,
+                      const JPH_Body *body1,
+                      const JPH_Body *body2,
+                      const JPH_ContactManifold *in_manifold,
+                      JPH_ContactSettings *io_settings);
+
+    void
+    (*OnContactPersisted)(void *in_self,
+                          const JPH_Body *body1,
+                          const JPH_Body *body2,
+                          const JPH_ContactManifold *in_manifold,
+                          JPH_ContactSettings *io_settings);
+
+    void
+    (*OnContactRemoved)(void *in_self, const JPH_SubShapeIDPair *in_sub_shape_pair);
 };
 //--------------------------------------------------------------------------------------------------
 //

@@ -11,9 +11,11 @@
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/CollideShape.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 
 JPH_SUPPRESS_WARNINGS
 
@@ -46,6 +48,7 @@ static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSet
 static_assert(sizeof(JPH::ContactManifold)         == sizeof(JPH_ContactManifold),        "");
 static_assert(sizeof(JPH::ContactSettings)         == sizeof(JPH_ContactSettings),        "");
 static_assert(sizeof(JPH::SubShapeIDPair)          == sizeof(JPH_SubShapeIDPair),         "");
+static_assert(sizeof(JPH::CollideShapeResult)      == sizeof(JPH_CollideShapeResult),     "");
 
 static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties),       "");
 static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup),       "");
@@ -53,6 +56,7 @@ static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPH_BodyCreationSett
 static_assert(alignof(JPH::ContactManifold)      == alignof(JPH_ContactManifold),      "");
 static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings),      "");
 static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair),       "");
+static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult),   "");
 
 static_assert(
     offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
@@ -74,6 +78,15 @@ static_assert(
 static_assert(
     offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) ==
     offsetof(JPH_ContactManifold, num_points1),
+    "");
+
+static_assert(
+    offsetof(JPH::CollideShapeResult, mPenetrationDepth) ==
+    offsetof(JPH_CollideShapeResult, penetration_depth),
+    "");
+static_assert(
+    offsetof(JPH::CollideShapeResult, mShape1Face) ==
+    offsetof(JPH_CollideShapeResult, num_face_points1),
     "");
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
