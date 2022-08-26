@@ -460,7 +460,12 @@ JoltCTest_HelloWorld(void)
     JPH_BodyInterface_RemoveBody(body_interface, floor_id);
     JPH_BodyInterface_DestroyBody(body_interface, floor_id);
 
+    JPH_ShapeSettings_Release((JPH_ShapeSettings *)floor_shape_settings);
+    if (JPH_Shape_GetRefCount(floor_shape) != 1) return 0;
     JPH_Shape_Release(floor_shape);
+
+    JPH_ShapeSettings_Release((JPH_ShapeSettings *)sphere_shape_settings);
+    if (JPH_Shape_GetRefCount(sphere_shape) != 1) return 0;
     JPH_Shape_Release(sphere_shape);
 
     JPH_PhysicsSystem_Destroy(physics_system);
