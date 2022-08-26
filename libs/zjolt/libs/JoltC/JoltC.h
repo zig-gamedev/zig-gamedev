@@ -258,21 +258,18 @@ struct JPH_ContactListenerVTable
                          const JPH_Body *in_body1,
                          const JPH_Body *in_body2,
                          const JPH_CollideShapeResult *in_collision_result);
-
     void
     (*OnContactAdded)(void *in_self,
                       const JPH_Body *body1,
                       const JPH_Body *body2,
                       const JPH_ContactManifold *in_manifold,
                       JPH_ContactSettings *io_settings);
-
     void
     (*OnContactPersisted)(void *in_self,
                           const JPH_Body *body1,
                           const JPH_Body *body2,
                           const JPH_ContactManifold *in_manifold,
                           JPH_ContactSettings *io_settings);
-
     void
     (*OnContactRemoved)(void *in_self, const JPH_SubShapeIDPair *in_sub_shape_pair);
 };

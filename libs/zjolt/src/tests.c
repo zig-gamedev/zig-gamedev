@@ -3,18 +3,18 @@
 #include <stddef.h>
 #include <stdio.h>
 
-typedef struct BPLayerInterfaceImpl BPLayerInterfaceImpl;
-typedef struct MyContactListener MyContactListener;
-typedef struct MyActivationListener MyActivationListener;
-//--------------------------------------------------------------------------------------------------
-// BPLayerInterface
-//--------------------------------------------------------------------------------------------------
 #define NUM_LAYERS 2
 #define LAYER_NON_MOVING 0
 #define LAYER_MOVING 1
 #define BP_LAYER_NON_MOVING 0
 #define BP_LAYER_MOVING 1
 
+typedef struct BPLayerInterfaceImpl BPLayerInterfaceImpl;
+typedef struct MyContactListener MyContactListener;
+typedef struct MyActivationListener MyActivationListener;
+//--------------------------------------------------------------------------------------------------
+// BPLayerInterface
+//--------------------------------------------------------------------------------------------------
 struct BPLayerInterfaceImpl
 {
     const JPH_BroadPhaseLayerInterfaceVTable *  vtable;
@@ -58,6 +58,11 @@ BPLayerInterface_Init(void)
 //--------------------------------------------------------------------------------------------------
 // MyContactListener
 //--------------------------------------------------------------------------------------------------
+struct MyContactListener
+{
+    const JPH_ContactListenerVTable *vtable;
+};
+
 static JPH_ValidateResult
 MyContactListener_OnContactValidate(void *in_self,
                                     const JPH_Body *in_body1,
@@ -102,11 +107,6 @@ static const JPH_ContactListenerVTable g_contact_listener_vtable =
     .OnContactRemoved   = MyContactListener_OnContactRemoved,
 };
 
-struct MyContactListener
-{
-    const JPH_ContactListenerVTable *vtable;
-};
-
 static MyContactListener
 MyContactListener_Init(void)
 {
@@ -119,6 +119,11 @@ MyContactListener_Init(void)
 //--------------------------------------------------------------------------------------------------
 // MyActivationListener
 //--------------------------------------------------------------------------------------------------
+struct MyActivationListener
+{
+    const JPH_BodyActivationListenerVTable *vtable;
+};
+
 static void
 MyActivationListener_OnBodyActivated(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data)
 {
@@ -137,11 +142,6 @@ static const JPH_BodyActivationListenerVTable g_activation_listener_vtable =
     .OnBodyDeactivated = MyActivationListener_OnBodyDeactivated,
 };
 
-struct MyActivationListener
-{
-    const JPH_BodyActivationListenerVTable *vtable;
-};
-
 static MyActivationListener
 MyActivationListener_Init(void)
 {
@@ -152,7 +152,8 @@ MyActivationListener_Init(void)
     return impl;
 }
 //--------------------------------------------------------------------------------------------------
-static bool MyObjectCanCollide(JPH_ObjectLayer in_object1, JPH_ObjectLayer in_object2)
+static bool
+MyObjectCanCollide(JPH_ObjectLayer in_object1, JPH_ObjectLayer in_object2)
 {
     switch (in_object1)
     {
