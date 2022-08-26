@@ -318,7 +318,7 @@ JPH_TempAllocator_Destroy(JPH_TempAllocator *in_allocator);
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_JobSystem *
-JPH_JobSystem_Create(uint32_t in_max_jobs, uint32_t in_max_barriers, int32_t in_num_threads);
+JPH_JobSystem_Create(uint32_t in_max_jobs, uint32_t in_max_barriers, int in_num_threads);
 
 JPH_CAPI void
 JPH_JobSystem_Destroy(JPH_JobSystem *in_job_system);
@@ -342,6 +342,17 @@ JPH_PhysicsSystem_Init(JPH_PhysicsSystem *in_physics_system,
                        const void *in_broad_phase_layer_interface,
                        JPH_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
                        JPH_ObjectLayerPairFilter in_object_layer_pair_filter);
+JPH_CAPI void
+JPH_PhysicsSystem_SetBodyActivationListener(JPH_PhysicsSystem *in_physics_system, void *in_listener);
+
+JPH_CAPI void *
+JPH_PhysicsSystem_GetBodyActivationListener(const JPH_PhysicsSystem *in_physics_system);
+
+JPH_CAPI void
+JPH_PhysicsSystem_SetContactListener(JPH_PhysicsSystem *in_physics_system, void *in_listener);
+
+JPH_CAPI void *
+JPH_PhysicsSystem_GetContactListener(const JPH_PhysicsSystem *in_physics_system);
 
 JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *in_physics_system);
@@ -354,6 +365,17 @@ JPH_PhysicsSystem_GetMaxBodies(const JPH_PhysicsSystem *in_physics_system);
 
 JPH_CAPI JPH_BodyInterface *
 JPH_PhysicsSystem_GetBodyInterface(JPH_PhysicsSystem *in_physics_system);
+
+JPH_CAPI void
+JPH_PhysicsSystem_OptimizeBroadPhase(JPH_PhysicsSystem *in_physics_system);
+
+JPH_CAPI void
+JPH_PhysicsSystem_Update(JPH_PhysicsSystem *in_physics_system,
+                         float in_delta_time,
+                         int in_collision_steps,
+                         int in_integration_sub_steps,
+                         JPH_TempAllocator *in_temp_allocator,
+                         JPH_JobSystem *in_job_system);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_ShapeSettings
@@ -454,8 +476,27 @@ JPH_BodyInterface_AddBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id, JP
 JPH_CAPI void
 JPH_BodyInterface_RemoveBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id);
 
+JPH_CAPI JPH_BodyID
+JPH_BodyInterface_CreateAndAddBody(JPH_BodyInterface *in_iface,
+                                   const JPH_BodyCreationSettings *in_setting,
+                                   JPH_Activation in_mode);
 JPH_CAPI bool
 JPH_BodyInterface_IsAdded(const JPH_BodyInterface *in_iface, JPH_BodyID in_body_id);
+
+JPH_CAPI void
+JPH_BodyInterface_SetLinearVelocity(JPH_BodyInterface *in_iface,
+                                    JPH_BodyID in_body_id,
+                                    const float in_velocity[3]);
+JPH_CAPI void
+JPH_BodyInterface_GetLinearVelocity(const JPH_BodyInterface *in_iface,
+                                    JPH_BodyID in_body_id,
+                                    float out_velocity[3]);
+JPH_CAPI void
+JPH_BodyInterface_GetCenterOfMassPosition(const JPH_BodyInterface *in_iface,
+                                          JPH_BodyID in_body_id,
+                                          float out_position[3]);
+JPH_CAPI bool
+JPH_BodyInterface_IsActive(const JPH_BodyInterface *in_iface, JPH_BodyID in_body_id);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_Body

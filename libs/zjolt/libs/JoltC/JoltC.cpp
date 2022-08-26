@@ -211,7 +211,7 @@ JPH_TempAllocator_Destroy(JPH_TempAllocator *in_allocator)
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_JobSystem *
-JPH_JobSystem_Create(uint32_t in_max_jobs, uint32_t in_max_barriers, int32_t in_num_threads)
+JPH_JobSystem_Create(uint32_t in_max_jobs, uint32_t in_max_barriers, int in_num_threads)
 {
     auto job_system = new JPH::JobSystemThreadPool(in_max_jobs, in_max_barriers, in_num_threads);
     return reinterpret_cast<JPH_JobSystem *>(job_system);
@@ -266,6 +266,38 @@ JPH_PhysicsSystem_Init(JPH_PhysicsSystem *in_physics_system,
         reinterpret_cast<JPH::ObjectLayerPairFilter>(in_object_layer_pair_filter));
 }
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_PhysicsSystem_SetBodyActivationListener(JPH_PhysicsSystem *in_physics_system, void *in_listener)
+{
+    assert(in_physics_system != nullptr);
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    physics_system->SetBodyActivationListener(reinterpret_cast<JPH::BodyActivationListener *>(in_listener));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void *
+JPH_PhysicsSystem_GetBodyActivationListener(const JPH_PhysicsSystem *in_physics_system)
+{
+    assert(in_physics_system != nullptr);
+    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
+    return physics_system->GetBodyActivationListener();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_PhysicsSystem_SetContactListener(JPH_PhysicsSystem *in_physics_system, void *in_listener)
+{
+    assert(in_physics_system != nullptr);
+    auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
+    physics_system->SetContactListener(reinterpret_cast<JPH::ContactListener *>(in_listener));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void *
+JPH_PhysicsSystem_GetContactListener(const JPH_PhysicsSystem *in_physics_system)
+{
+    assert(in_physics_system != nullptr);
+    auto physics_system = reinterpret_cast<const JPH::PhysicsSystem *>(in_physics_system);
+    return physics_system->GetContactListener();
+}
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI uint32_t
 JPH_PhysicsSystem_GetNumBodies(const JPH_PhysicsSystem *in_physics_system)
 {
@@ -293,6 +325,30 @@ JPH_PhysicsSystem_GetBodyInterface(JPH_PhysicsSystem *in_physics_system)
     assert(in_physics_system != nullptr);
     auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
     return reinterpret_cast<JPH_BodyInterface *>(&physics_system->GetBodyInterface());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_PhysicsSystem_OptimizeBroadPhase(JPH_PhysicsSystem *in_physics_system)
+{
+    assert(in_physics_system != nullptr);
+    reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system)->OptimizeBroadPhase();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_PhysicsSystem_Update(JPH_PhysicsSystem *in_physics_system,
+                         float in_delta_time,
+                         int in_collision_steps,
+                         int in_integration_sub_steps,
+                         JPH_TempAllocator *in_temp_allocator,
+                         JPH_JobSystem *in_job_system)
+{
+    assert(in_physics_system != nullptr && in_temp_allocator != nullptr && in_job_system != nullptr);
+    reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system)->Update(
+        in_delta_time,
+        in_collision_steps,
+        in_integration_sub_steps,
+        reinterpret_cast<JPH::TempAllocator *>(in_temp_allocator),
+        reinterpret_cast<JPH::JobSystem *>(in_job_system));
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -399,8 +455,8 @@ JPH_ConvexShapeSettings_SetDensity(JPH_ConvexShapeSettings *in_settings, float i
 JPH_CAPI JPH_BoxShapeSettings *
 JPH_BoxShapeSettings_Create(const float in_half_extent[3])
 {
-    auto settings = new JPH::BoxShapeSettings(
-        JPH::Vec3(in_half_extent[0], in_half_extent[1], in_half_extent[2]));
+    assert(in_half_extent != nullptr);
+    auto settings = new JPH::BoxShapeSettings(JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_half_extent)));
     settings->AddRef();
     return reinterpret_cast<JPH_BoxShapeSettings *>(settings);
 }
@@ -411,9 +467,7 @@ JPH_BoxShapeSettings_GetHalfExtent(const JPH_BoxShapeSettings *in_settings, floa
     assert(in_settings != nullptr && out_half_extent != nullptr);
     ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
     auto settings = reinterpret_cast<const JPH::BoxShapeSettings *>(in_settings);
-    out_half_extent[0] = settings->mHalfExtent[0];
-    out_half_extent[1] = settings->mHalfExtent[1];
-    out_half_extent[2] = settings->mHalfExtent[2];
+    settings->mHalfExtent.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_half_extent));
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
@@ -422,7 +476,7 @@ JPH_BoxShapeSettings_SetHalfExtent(JPH_BoxShapeSettings *in_settings, const floa
     assert(in_settings != nullptr && in_half_extent != nullptr);
     ENSURE_TYPE(in_settings, JPH::BoxShapeSettings);
     auto settings = reinterpret_cast<JPH::BoxShapeSettings *>(in_settings);
-    settings->mHalfExtent = JPH::Vec3(in_half_extent[0], in_half_extent[1], in_half_extent[2]);
+    settings->mHalfExtent = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_half_extent));
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI float
@@ -530,11 +584,62 @@ JPH_BodyInterface_RemoveBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id)
     reinterpret_cast<JPH::BodyInterface *>(in_iface)->RemoveBody(JPH::BodyID(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_BodyID
+JPH_BodyInterface_CreateAndAddBody(JPH_BodyInterface *in_iface,
+                                   const JPH_BodyCreationSettings *in_setting,
+                                   JPH_Activation in_mode)
+{
+    assert(in_iface != nullptr && in_setting != nullptr);
+    auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
+    auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_setting);
+    const JPH::BodyID body_id = iface->CreateAndAddBody(*settings, static_cast<JPH::EActivation>(in_mode));
+    return *reinterpret_cast<const JPH_BodyID *>(&body_id);
+}
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI bool
 JPH_BodyInterface_IsAdded(const JPH_BodyInterface *in_iface, JPH_BodyID in_body_id)
 {
     assert(in_iface != nullptr);
     return reinterpret_cast<const JPH::BodyInterface *>(in_iface)->IsAdded(JPH::BodyID(in_body_id));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_BodyInterface_SetLinearVelocity(JPH_BodyInterface *in_iface,
+                                    JPH_BodyID in_body_id,
+                                    const float in_velocity[3])
+{
+    assert(in_iface != nullptr && in_velocity != nullptr);
+    reinterpret_cast<JPH::BodyInterface *>(in_iface)->SetLinearVelocity(
+        JPH::BodyID(in_body_id),
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_velocity)));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_BodyInterface_GetLinearVelocity(const JPH_BodyInterface *in_iface,
+                                    JPH_BodyID in_body_id,
+                                    float out_velocity[3])
+{
+    assert(in_iface != nullptr && out_velocity != nullptr);
+    auto v = reinterpret_cast<const JPH::BodyInterface *>(in_iface)->GetLinearVelocity(JPH::BodyID(in_body_id));
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_BodyInterface_GetCenterOfMassPosition(const JPH_BodyInterface *in_iface,
+                                          JPH_BodyID in_body_id,
+                                          float out_position[3])
+{
+    assert(in_iface != nullptr && out_position != nullptr);
+    auto v = reinterpret_cast<const JPH::BodyInterface *>(in_iface)->GetCenterOfMassPosition(
+        JPH::BodyID(in_body_id));
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_BodyInterface_IsActive(const JPH_BodyInterface *in_iface, JPH_BodyID in_body_id)
+{
+    assert(in_iface != nullptr);
+    return reinterpret_cast<const JPH::BodyInterface *>(in_iface)->IsActive(JPH::BodyID(in_body_id));
 }
 //--------------------------------------------------------------------------------------------------
 //

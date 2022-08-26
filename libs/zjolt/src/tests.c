@@ -272,6 +272,12 @@ JoltCTest_Basic2(void)
         MyBroadPhaseCanCollide,
         MyObjectCanCollide);
 
+    MyActivationListener body_activation_listener = MyActivationListener_Init();
+    JPH_PhysicsSystem_SetBodyActivationListener(physics_system, &body_activation_listener);
+
+    MyContactListener contact_listener = MyContactListener_Init();
+    JPH_PhysicsSystem_SetContactListener(physics_system, &contact_listener);
+
     const float floor_half_extent[3] = { 100.0, 1.0, 100.0 };
     JPH_BoxShapeSettings *floor_shape_settings = JPH_BoxShapeSettings_Create(floor_half_extent);
     if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)floor_shape_settings) != 1) return 0;
