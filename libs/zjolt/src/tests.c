@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <stdio.h>
 
+typedef struct BPLayerInterfaceImpl BPLayerInterfaceImpl;
+typedef struct MyContactListener MyContactListener;
+typedef struct MyActivationListener MyActivationListener;
 //--------------------------------------------------------------------------------------------------
 // BPLayerInterface
 //--------------------------------------------------------------------------------------------------
@@ -12,23 +15,23 @@
 #define BP_LAYER_NON_MOVING 0
 #define BP_LAYER_MOVING 1
 
-typedef struct BPLayerInterfaceImpl
+struct BPLayerInterfaceImpl
 {
     const JPH_BroadPhaseLayerInterfaceVTable *  vtable;
     JPH_BroadPhaseLayer                         object_to_broad_phase[NUM_LAYERS];
-} BPLayerInterfaceImpl;
+};
 
 static uint32_t
 BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self)
 {
-    //fprintf(stderr, "BPLayerInterface_GetNumBroadPhaseLayers()\n");
+    fprintf(stderr, "BPLayerInterface_GetNumBroadPhaseLayers()\n");
     return NUM_LAYERS;
 }
 
 static JPH_BroadPhaseLayer
 BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPH_ObjectLayer in_layer)
 {
-    //fprintf(stderr, "BPLayerInterface_GetBroadPhaseLayer()\n");
+    fprintf(stderr, "BPLayerInterface_GetBroadPhaseLayer()\n");
     assert(in_layer < NUM_LAYERS);
     const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
     return self->object_to_broad_phase[in_layer];
@@ -50,6 +53,102 @@ BPLayerInterface_Init(void)
     impl.object_to_broad_phase[LAYER_NON_MOVING] = BP_LAYER_NON_MOVING;
     impl.object_to_broad_phase[LAYER_MOVING]     = BP_LAYER_MOVING;
 
+    return impl;
+}
+//--------------------------------------------------------------------------------------------------
+// MyContactListener
+//--------------------------------------------------------------------------------------------------
+static JPH_ValidateResult
+MyContactListener_OnContactValidate(void *in_self,
+                                    const JPH_Body *in_body1,
+                                    const JPH_Body *in_body2,
+                                    const JPH_CollideShapeResult *in_collision_result)
+{
+    fprintf(stderr, "MyContactListener_OnContactValidate()\n");
+    return JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS;
+}
+
+static void
+MyContactListener_OnContactAdded(void *in_self,
+                                 const JPH_Body *body1,
+                                 const JPH_Body *body2,
+                                 const JPH_ContactManifold *in_manifold,
+                                 JPH_ContactSettings *io_settings)
+{
+    fprintf(stderr, "MyContactListener_OnContactAdded()\n");
+}
+
+static void
+MyContactListener_OnContactPersisted(void *in_self,
+                                     const JPH_Body *body1,
+                                     const JPH_Body *body2,
+                                     const JPH_ContactManifold *in_manifold,
+                                     JPH_ContactSettings *io_settings)
+{
+    fprintf(stderr, "MyContactListener_OnContactPersisted()\n");
+}
+
+static void
+MyContactListener_OnContactRemoved(void *in_self, const JPH_SubShapeIDPair *in_sub_shape_pair)
+{
+    fprintf(stderr, "MyContactListener_OnContactRemoved()\n");
+}
+
+static const JPH_ContactListenerVTable g_contact_listener_vtable =
+{
+    .OnContactValidate  = MyContactListener_OnContactValidate,
+    .OnContactAdded     = MyContactListener_OnContactAdded,
+    .OnContactPersisted = MyContactListener_OnContactPersisted,
+    .OnContactRemoved   = MyContactListener_OnContactRemoved,
+};
+
+struct MyContactListener
+{
+    const JPH_ContactListenerVTable *vtable;
+};
+
+static MyContactListener
+MyContactListener_Init(void)
+{
+    MyContactListener impl =
+    {
+        .vtable = &g_contact_listener_vtable,
+    };
+    return impl;
+}
+//--------------------------------------------------------------------------------------------------
+// MyActivationListener
+//--------------------------------------------------------------------------------------------------
+static void
+MyActivationListener_OnBodyActivated(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data)
+{
+    fprintf(stderr, "MyActivationListener_OnBodyActivated()\n");
+}
+
+static void
+MyActivationListener_OnBodyDeactivated(void *in_self, JPH_BodyID in_body_id, uint64_t in_user_data)
+{
+    fprintf(stderr, "MyActivationListener_OnBodyDeactivated()\n");
+}
+
+static const JPH_BodyActivationListenerVTable g_activation_listener_vtable =
+{
+    .OnBodyActivated   = MyActivationListener_OnBodyActivated,
+    .OnBodyDeactivated = MyActivationListener_OnBodyDeactivated,
+};
+
+struct MyActivationListener
+{
+    const JPH_BodyActivationListenerVTable *vtable;
+};
+
+static MyActivationListener
+MyActivationListener_Init(void)
+{
+    MyActivationListener impl =
+    {
+        .vtable = &g_activation_listener_vtable,
+    };
     return impl;
 }
 //--------------------------------------------------------------------------------------------------
