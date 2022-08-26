@@ -380,7 +380,7 @@ JPH_ShapeSettings_GetRefCount(const JPH_ShapeSettings *in_settings)
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_Shape *
-JPH_ShapeSettings_Cook(const JPH_ShapeSettings *in_settings)
+JPH_ShapeSettings_CreateShape(const JPH_ShapeSettings *in_settings)
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::ShapeSettings);

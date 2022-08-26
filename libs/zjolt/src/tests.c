@@ -221,7 +221,7 @@ JoltCTest_Basic1(void)
     JPH_ConvexShapeSettings_SetDensity((JPH_ConvexShapeSettings *)box_settings, 100.0);
     if (JPH_ConvexShapeSettings_GetDensity((JPH_ConvexShapeSettings *)box_settings) != 100.0) return 0;
 
-    JPH_Shape *box_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)box_settings);
+    JPH_Shape *box_shape = JPH_ShapeSettings_CreateShape((JPH_ShapeSettings *)box_settings);
     if (box_shape == NULL) return 0;
     if (JPH_Shape_GetType(box_shape) != JPH_SHAPE_TYPE_CONVEX) return 0;
     if (JPH_Shape_GetSubType(box_shape) != JPH_SHAPE_SUB_TYPE_BOX) return 0;
@@ -282,7 +282,7 @@ JoltCTest_Basic2(void)
     JPH_BoxShapeSettings *floor_shape_settings = JPH_BoxShapeSettings_Create(floor_half_extent);
     if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)floor_shape_settings) != 1) return 0;
 
-    JPH_Shape *floor_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)floor_shape_settings);
+    JPH_Shape *floor_shape = JPH_ShapeSettings_CreateShape((JPH_ShapeSettings *)floor_shape_settings);
     if (floor_shape == NULL) return 0;
     if (JPH_ShapeSettings_GetRefCount((JPH_ShapeSettings *)floor_shape_settings) != 1) return 0;
     if (JPH_Shape_GetRefCount(floor_shape) != 2) return 0;
@@ -385,7 +385,7 @@ JoltCTest_HelloWorld(void)
     //
     const float floor_half_extent[3] = { 100.0, 1.0, 100.0 };
     JPH_BoxShapeSettings *floor_shape_settings = JPH_BoxShapeSettings_Create(floor_half_extent);
-    JPH_Shape *floor_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)floor_shape_settings);
+    JPH_Shape *floor_shape = JPH_ShapeSettings_CreateShape((JPH_ShapeSettings *)floor_shape_settings);
 
     const float identity_rotation[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     const float floor_position[3] = { 0.0f, -1.0f, 0.0f };
@@ -404,7 +404,7 @@ JoltCTest_HelloWorld(void)
     // Falling sphere
     //
     JPH_SphereShapeSettings *sphere_shape_settings = JPH_SphereShapeSettings_Create(0.5f);
-    JPH_Shape *sphere_shape = JPH_ShapeSettings_Cook((JPH_ShapeSettings *)sphere_shape_settings);
+    JPH_Shape *sphere_shape = JPH_ShapeSettings_CreateShape((JPH_ShapeSettings *)sphere_shape_settings);
 
     const float sphere_position[3] = { 0.0f, 2.0f, 0.0f };
     const JPH_BodyCreationSettings sphere_settings = JPH_BodyCreationSettings_Init(

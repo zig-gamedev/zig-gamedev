@@ -393,7 +393,7 @@ JPH_CAPI uint32_t
 JPH_ShapeSettings_GetRefCount(const JPH_ShapeSettings *in_settings);
 
 JPH_CAPI JPH_Shape *
-JPH_ShapeSettings_Cook(const JPH_ShapeSettings *in_settings);
+JPH_ShapeSettings_CreateShape(const JPH_ShapeSettings *in_settings);
 
 JPH_CAPI uint64_t
 JPH_ShapeSettings_GetUserData(const JPH_ShapeSettings *in_settings);
