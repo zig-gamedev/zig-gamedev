@@ -436,6 +436,19 @@ JPH_CAPI void
 JPH_BoxShapeSettings_SetConvexRadius(JPH_BoxShapeSettings *in_settings, float in_convex_radius);
 //--------------------------------------------------------------------------------------------------
 //
+// JPH_SphereShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_SphereShapeSettings *
+JPH_SphereShapeSettings_Create(float in_radius);
+
+JPH_CAPI float
+JPH_SphereShapeSettings_GetRadius(const JPH_SphereShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_SphereShapeSettings_SetRadius(JPH_SphereShapeSettings *in_settings, float in_radius);
+//--------------------------------------------------------------------------------------------------
+//
 // JPH_Shape
 //
 //--------------------------------------------------------------------------------------------------
