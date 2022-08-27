@@ -2473,7 +2473,7 @@ pub fn plotLine(label: [:0]const u8, x: []f32, y: []f32, count: i32, flags: i32,
 }
 extern fn zguiPlotLine(label_id: [*:0]const u8, x: [*]f32, y: [*]f32, count: i32, flags: i32, offset: i32, stride: i32) void;
 
-pub fn plotLineValues(label: [:0]const u8, x: []f32) void {
+pub fn plotLineValues(label: [:0]const u8, x: []i32) void {
     zguiPlotLineValues(label, x.ptr, @intCast(i32, x.len));
 }
-extern fn zguiPlotLineValues(label_id: [*:0]const u8, values: [*]f32, count: i32) void;
+extern fn zguiPlotLineValues(label_id: [*:0]const u8, values: [*]i32, count: i32) void;

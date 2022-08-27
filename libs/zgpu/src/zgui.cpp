@@ -1218,5 +1218,5 @@ ZGUI_API bool zguiBeginPlot(const char* title_id, float width, float height) {
 }
 ZGUI_API void zguiPlotBars(const char* label_id, const float* values, int count, double bar_size=0.67, double shift=0, ImPlotBarsFlags flags=0, int offset=0, int stride=sizeof(float)){ ImPlot::PlotBars(label_id, values, count); }
 ZGUI_API void zguiPlotLine(const char* label_id, const float* xs, const float* ys, int count, ImPlotLineFlags flags, int offset, int stride){ ImPlot::PlotLine(label_id, xs, ys, count, flags, offset, stride); }
-ZGUI_API void zguiPlotLineValues(const char* label_id, const float* values, int count){ ImPlot::PlotLine(label_id, values, count); }
+ZGUI_API void zguiPlotLineValues(const char* label_id, const int* values, int count){ ImPlot::PlotLine(label_id, values, count); }
 ZGUI_API void zguiEndPlot() { ImPlot::EndPlot(); }
