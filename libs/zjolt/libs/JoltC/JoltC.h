@@ -4,74 +4,100 @@
 #include <stdalign.h>
 //--------------------------------------------------------------------------------------------------
 //
-// Defines
+// Const
 //
 //--------------------------------------------------------------------------------------------------
 // TODO: Define this
 #define JPH_CAPI
 
 // JPH_JobSystem_Create()
-#define JPH_MAX_PHYSICS_JOBS     2048
-#define JPH_MAX_PHYSICS_BARRIERS 8
+enum
+{
+    JPH_MAX_PHYSICS_JOBS     = 2048,
+    JPH_MAX_PHYSICS_BARRIERS = 8
+};
 
 // JPH_ShapeType
-#define JPH_SHAPE_TYPE_CONVEX       0
-#define JPH_SHAPE_TYPE_COMPOUND     1
-#define JPH_SHAPE_TYPE_DECORATED    2
-#define JPH_SHAPE_TYPE_MESH         3
-#define JPH_SHAPE_TYPE_HEIGHT_FIELD 4
-#define JPH_SHAPE_TYPE_USER1        5
-#define JPH_SHAPE_TYPE_USER2        6
-#define JPH_SHAPE_TYPE_USER3        7
-#define JPH_SHAPE_TYPE_USER4        8
+enum
+{
+    JPH_SHAPE_TYPE_CONVEX       = 0,
+    JPH_SHAPE_TYPE_COMPOUND     = 1,
+    JPH_SHAPE_TYPE_DECORATED    = 2,
+    JPH_SHAPE_TYPE_MESH         = 3,
+    JPH_SHAPE_TYPE_HEIGHT_FIELD = 4,
+    JPH_SHAPE_TYPE_USER1        = 5,
+    JPH_SHAPE_TYPE_USER2        = 6,
+    JPH_SHAPE_TYPE_USER3        = 7,
+    JPH_SHAPE_TYPE_USER4        = 8
+};
 
 // JPH_ShapeSubType
-#define JPH_SHAPE_SUB_TYPE_SPHERE                0
-#define JPH_SHAPE_SUB_TYPE_BOX                   1
-#define JPH_SHAPE_SUB_TYPE_TRIANGLE              2
-#define JPH_SHAPE_SUB_TYPE_CAPSULE               3
-#define JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE       4
-#define JPH_SHAPE_SUB_TYPE_CYLINDER              5
-#define JPH_SHAPE_SUB_TYPE_CONVEX_HULL           6
-#define JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND       7
-#define JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND      8
-#define JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED    9
-#define JPH_SHAPE_SUB_TYPE_SCALED                10
-#define JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS 11
-#define JPH_SHAPE_SUB_TYPE_MESH                  12
-#define JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD          13
-#define JPH_SHAPE_SUB_TYPE_USER1                 14
-#define JPH_SHAPE_SUB_TYPE_USER2                 15
-#define JPH_SHAPE_SUB_TYPE_USER3                 16
-#define JPH_SHAPE_SUB_TYPE_USER4                 17
-#define JPH_SHAPE_SUB_TYPE_USER5                 18
-#define JPH_SHAPE_SUB_TYPE_USER6                 19
-#define JPH_SHAPE_SUB_TYPE_USER7                 20
-#define JPH_SHAPE_SUB_TYPE_USER8                 21
+enum
+{
+    JPH_SHAPE_SUB_TYPE_SPHERE                = 0,
+    JPH_SHAPE_SUB_TYPE_BOX                   = 1,
+    JPH_SHAPE_SUB_TYPE_TRIANGLE              = 2,
+    JPH_SHAPE_SUB_TYPE_CAPSULE               = 3,
+    JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE       = 4,
+    JPH_SHAPE_SUB_TYPE_CYLINDER              = 5,
+    JPH_SHAPE_SUB_TYPE_CONVEX_HULL           = 6,
+    JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND       = 7,
+    JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND      = 8,
+    JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED    = 9,
+    JPH_SHAPE_SUB_TYPE_SCALED                = 10,
+    JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS = 11,
+    JPH_SHAPE_SUB_TYPE_MESH                  = 12,
+    JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD          = 13,
+    JPH_SHAPE_SUB_TYPE_USER1                 = 14,
+    JPH_SHAPE_SUB_TYPE_USER2                 = 15,
+    JPH_SHAPE_SUB_TYPE_USER3                 = 16,
+    JPH_SHAPE_SUB_TYPE_USER4                 = 17,
+    JPH_SHAPE_SUB_TYPE_USER5                 = 18,
+    JPH_SHAPE_SUB_TYPE_USER6                 = 19,
+    JPH_SHAPE_SUB_TYPE_USER7                 = 20,
+    JPH_SHAPE_SUB_TYPE_USER8                 = 21
+};
 
 // JPH_MotionType
-#define JPH_MOTION_TYPE_STATIC    0
-#define JPH_MOTION_TYPE_KINEMATIC 1
-#define JPH_MOTION_TYPE_DYNAMIC   2
+enum
+{
+    JPH_MOTION_TYPE_STATIC    = 0,
+    JPH_MOTION_TYPE_KINEMATIC = 1,
+    JPH_MOTION_TYPE_DYNAMIC   = 2
+};
 
 // JPH_MotionQuality
-#define JPH_MOTION_QUALITY_DISCRETE    0
-#define JPH_MOTION_QUALITY_LINEAR_CAST 1
+enum
+{
+    JPH_MOTION_QUALITY_DISCRETE    = 0,
+    JPH_MOTION_QUALITY_LINEAR_CAST = 1
+};
 
 // JPH_OverrideMassProperties
-#define JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA     0
-#define JPH_OVERRIDE_MASS_PROPS_CALC_INERTIA          1
-#define JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED 2
+enum
+{
+    JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA     = 0,
+    JPH_OVERRIDE_MASS_PROPS_CALC_INERTIA          = 1,
+    JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED = 2
+};
 
 // JPH_Activation
-#define JPH_ACTIVATION_ACTIVATE      0
-#define JPH_ACTIVATION_DONT_ACTIVATE 1
+typedef enum JPH_Activation
+{
+    JPH_ACTIVATION_ACTIVATE      = 0,
+    JPH_ACTIVATION_DONT_ACTIVATE = 1,
+    _JPH_ACTIVATION_FORCEU32     = 0x7fffffff
+} JPH_Activation;
 
 // JPH_ValidateResult
-#define JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS 0
-#define JPH_VALIDATE_RESULT_ACCEPT_CONTACT      1
-#define JPH_VALIDATE_RESULT_REJECT_CONTACT      2
-#define JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS 3
+typedef enum JPH_ValidateResult
+{
+    JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS = 0,
+    JPH_VALIDATE_RESULT_ACCEPT_CONTACT      = 1,
+    JPH_VALIDATE_RESULT_REJECT_CONTACT      = 2,
+    JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS = 3,
+    _JPH_VALIDATE_RESULT_FORCEU32           = 0x7fffffff
+} JPH_ValidateResult;
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,8 +114,6 @@ typedef uint8_t     JPH_ShapeSubType;
 typedef uint8_t     JPH_MotionType;
 typedef uint8_t     JPH_MotionQuality;
 typedef uint8_t     JPH_OverrideMassProperties;
-typedef uint32_t    JPH_Activation;
-typedef uint32_t    JPH_ValidateResult;
 
 // TODO: Consider using structures for IDs (`typedef struct JPH_BodyID { uint32_t bits; } JPH_BodyID;`)
 typedef uint32_t JPH_BodyID;
