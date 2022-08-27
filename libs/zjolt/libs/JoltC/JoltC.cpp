@@ -682,3 +682,25 @@ JPH_Body_GetID(const JPH_Body *in_body)
     return *reinterpret_cast<const JPH_BodyID *>(&body_id);
 }
 //--------------------------------------------------------------------------------------------------
+//
+// JPH_BodyID
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI uint32_t
+JPH_BodyID_GetIndex(JPH_BodyID in_body_id)
+{
+    return JPH::BodyID(in_body_id).GetIndex();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI uint8_t
+JPH_BodyID_GetSequenceNumber(JPH_BodyID in_body_id)
+{
+    return JPH::BodyID(in_body_id).GetSequenceNumber();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_BodyID_IsInvalid(JPH_BodyID in_body_id)
+{
+    return JPH::BodyID(in_body_id).IsInvalid();
+}
+//--------------------------------------------------------------------------------------------------

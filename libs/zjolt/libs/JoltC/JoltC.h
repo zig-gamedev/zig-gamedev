@@ -7,6 +7,7 @@
 // Defines
 //
 //--------------------------------------------------------------------------------------------------
+// TODO: Define this
 #define JPH_CAPI
 
 // JPH_JobSystem_Create()
@@ -262,14 +263,14 @@ struct JPH_ContactListenerVTable
                          const JPH_CollideShapeResult *in_collision_result);
     void
     (*OnContactAdded)(void *in_self,
-                      const JPH_Body *body1,
-                      const JPH_Body *body2,
+                      const JPH_Body *in_body1,
+                      const JPH_Body *in_body2,
                       const JPH_ContactManifold *in_manifold,
                       JPH_ContactSettings *io_settings);
     void
     (*OnContactPersisted)(void *in_self,
-                          const JPH_Body *body1,
-                          const JPH_Body *body2,
+                          const JPH_Body *in_body1,
+                          const JPH_Body *in_body2,
                           const JPH_ContactManifold *in_manifold,
                           JPH_ContactSettings *io_settings);
     void
@@ -519,6 +520,19 @@ JPH_BodyInterface_IsActive(const JPH_BodyInterface *in_iface, JPH_BodyID in_body
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BodyID
 JPH_Body_GetID(const JPH_Body *in_body);
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_BodyID
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI uint32_t
+JPH_BodyID_GetIndex(JPH_BodyID in_body_id);
+
+JPH_CAPI uint8_t
+JPH_BodyID_GetSequenceNumber(JPH_BodyID in_body_id);
+
+JPH_CAPI bool
+JPH_BodyID_IsInvalid(JPH_BodyID in_body_id);
 //--------------------------------------------------------------------------------------------------
 #ifdef __cplusplus
 }

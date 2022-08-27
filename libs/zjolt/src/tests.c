@@ -69,34 +69,51 @@ MyContactListener_OnContactValidate(void *in_self,
                                     const JPH_Body *in_body2,
                                     const JPH_CollideShapeResult *in_collision_result)
 {
-    fprintf(stderr, "MyContactListener_OnContactValidate()\n");
+    const JPH_BodyID body1_id = JPH_Body_GetID(in_body1);
+    const JPH_BodyID body2_id = JPH_Body_GetID(in_body2);
+    fprintf(stderr, "\tOnContactValidate(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
+            JPH_BodyID_GetSequenceNumber(body1_id), JPH_BodyID_GetIndex(body1_id),
+            JPH_BodyID_GetSequenceNumber(body2_id), JPH_BodyID_GetIndex(body2_id));
+
     return JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS;
 }
 
 static void
 MyContactListener_OnContactAdded(void *in_self,
-                                 const JPH_Body *body1,
-                                 const JPH_Body *body2,
+                                 const JPH_Body *in_body1,
+                                 const JPH_Body *in_body2,
                                  const JPH_ContactManifold *in_manifold,
                                  JPH_ContactSettings *io_settings)
 {
-    fprintf(stderr, "MyContactListener_OnContactAdded()\n");
+    const JPH_BodyID body1_id = JPH_Body_GetID(in_body1);
+    const JPH_BodyID body2_id = JPH_Body_GetID(in_body2);
+    fprintf(stderr, "\tOnContactAdded(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
+            JPH_BodyID_GetSequenceNumber(body1_id), JPH_BodyID_GetIndex(body1_id),
+            JPH_BodyID_GetSequenceNumber(body2_id), JPH_BodyID_GetIndex(body2_id));
 }
 
 static void
 MyContactListener_OnContactPersisted(void *in_self,
-                                     const JPH_Body *body1,
-                                     const JPH_Body *body2,
+                                     const JPH_Body *in_body1,
+                                     const JPH_Body *in_body2,
                                      const JPH_ContactManifold *in_manifold,
                                      JPH_ContactSettings *io_settings)
 {
-    fprintf(stderr, "MyContactListener_OnContactPersisted()\n");
+    const JPH_BodyID body1_id = JPH_Body_GetID(in_body1);
+    const JPH_BodyID body2_id = JPH_Body_GetID(in_body2);
+    fprintf(stderr, "\tOnContactPersisted(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
+            JPH_BodyID_GetSequenceNumber(body1_id), JPH_BodyID_GetIndex(body1_id),
+            JPH_BodyID_GetSequenceNumber(body2_id), JPH_BodyID_GetIndex(body2_id));
 }
 
 static void
 MyContactListener_OnContactRemoved(void *in_self, const JPH_SubShapeIDPair *in_sub_shape_pair)
 {
-    fprintf(stderr, "MyContactListener_OnContactRemoved()\n");
+    const JPH_BodyID body1_id = in_sub_shape_pair->body1_id;
+    const JPH_BodyID body2_id = in_sub_shape_pair->body2_id;
+    fprintf(stderr, "\tOnContactRemoved(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
+            JPH_BodyID_GetSequenceNumber(body1_id), JPH_BodyID_GetIndex(body1_id),
+            JPH_BodyID_GetSequenceNumber(body2_id), JPH_BodyID_GetIndex(body2_id));
 }
 
 static const JPH_ContactListenerVTable g_contact_listener_vtable =
@@ -127,13 +144,17 @@ struct MyActivationListener
 static void
 MyActivationListener_OnBodyActivated(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data)
 {
-    fprintf(stderr, "MyActivationListener_OnBodyActivated()\n");
+    fprintf(stderr, "\tOnBodyActivated(): BodyID is (%d, %d)\n",
+            JPH_BodyID_GetSequenceNumber(*in_body_id),
+            JPH_BodyID_GetIndex(*in_body_id));
 }
 
 static void
 MyActivationListener_OnBodyDeactivated(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data)
 {
-    fprintf(stderr, "MyActivationListener_OnBodyDeactivated()\n");
+    fprintf(stderr, "\tOnBodyDeactivated(): BodyID is (%d, %d)\n",
+            JPH_BodyID_GetSequenceNumber(*in_body_id),
+            JPH_BodyID_GetIndex(*in_body_id));
 }
 
 static const JPH_BodyActivationListenerVTable g_activation_listener_vtable =
@@ -441,7 +462,7 @@ JoltCTest_HelloWorld(void)
         float velocity[3];
         JPH_BodyInterface_GetLinearVelocity(body_interface, sphere_id, &velocity[0]);
 
-        fprintf(stderr, "Step %d: Position = (%f, %f, %f), Velocity(%f, %f, %f)\n",
+        fprintf(stderr, "Step %d\n\tPosition = (%f, %f, %f), Velocity(%f, %f, %f)\n",
                 step,
                 position[0], position[1], position[2],
                 velocity[0], velocity[1], velocity[2]);
