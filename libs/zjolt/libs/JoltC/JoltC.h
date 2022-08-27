@@ -17,7 +17,7 @@ enum
     JPH_MAX_PHYSICS_BARRIERS = 8
 };
 
-// JPH_ShapeType
+typedef uint8_t JPH_ShapeType;
 enum
 {
     JPH_SHAPE_TYPE_CONVEX       = 0,
@@ -31,7 +31,7 @@ enum
     JPH_SHAPE_TYPE_USER4        = 8
 };
 
-// JPH_ShapeSubType
+typedef uint8_t JPH_ShapeSubType;
 enum
 {
     JPH_SHAPE_SUB_TYPE_SPHERE                = 0,
@@ -58,7 +58,7 @@ enum
     JPH_SHAPE_SUB_TYPE_USER8                 = 21
 };
 
-// JPH_MotionType
+typedef uint8_t JPH_MotionType;
 enum
 {
     JPH_MOTION_TYPE_STATIC    = 0,
@@ -66,14 +66,14 @@ enum
     JPH_MOTION_TYPE_DYNAMIC   = 2
 };
 
-// JPH_MotionQuality
+typedef uint8_t JPH_MotionQuality;
 enum
 {
     JPH_MOTION_QUALITY_DISCRETE    = 0,
     JPH_MOTION_QUALITY_LINEAR_CAST = 1
 };
 
-// JPH_OverrideMassProperties
+typedef uint8_t JPH_OverrideMassProperties;
 enum
 {
     JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA     = 0,
@@ -81,7 +81,6 @@ enum
     JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED = 2
 };
 
-// JPH_Activation
 typedef enum JPH_Activation
 {
     JPH_ACTIVATION_ACTIVATE      = 0,
@@ -89,7 +88,6 @@ typedef enum JPH_Activation
     _JPH_ACTIVATION_FORCEU32     = 0x7fffffff
 } JPH_Activation;
 
-// JPH_ValidateResult
 typedef enum JPH_ValidateResult
 {
     JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS = 0,
@@ -109,11 +107,6 @@ extern "C" {
 //--------------------------------------------------------------------------------------------------
 typedef uint16_t    JPH_ObjectLayer;
 typedef uint8_t     JPH_BroadPhaseLayer;
-typedef uint8_t     JPH_ShapeType;
-typedef uint8_t     JPH_ShapeSubType;
-typedef uint8_t     JPH_MotionType;
-typedef uint8_t     JPH_MotionQuality;
-typedef uint8_t     JPH_OverrideMassProperties;
 
 // TODO: Consider using structures for IDs (`typedef struct JPH_BodyID { uint32_t bits; } JPH_BodyID;`)
 typedef uint32_t JPH_BodyID;
