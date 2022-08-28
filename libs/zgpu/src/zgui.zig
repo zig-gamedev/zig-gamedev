@@ -2450,6 +2450,12 @@ extern fn zguiGetCurrentPlotContext() ?Context;
 pub const setCurrentPlotContext = zguiSetCurrentPlotContext;
 extern fn zguiSetCurrentPlotContext(ctx: ?Context) void;
 
+pub const setupLegend = zguiSetupLegend;
+extern fn zguiSetupLegend() void;
+
+pub const setupAxes = zguiSetupAxes;
+extern fn zguiSetupAxes(x: [*:0]const u8, y: [*:0]const u8) void;
+
 pub const setupXAxisLimits = zguiSetupXAxisLimits;
 extern fn zguiSetupXAxisLimits(v_min: f64, v_max: f64) void;
 
