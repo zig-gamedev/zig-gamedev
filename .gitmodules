@@ -2,10 +2,6 @@
 	path = libs/zgpu/libs/mach-gpu-dawn/libs/dawn
 	url = https://github.com/hexops/dawn.git
 	branch = generated-2022-08-06
-[submodule "libs/zgpu/libs/mach-gpu-dawn/libs/DirectXShaderCompiler"]
-	path = libs/zgpu/libs/mach-gpu-dawn/libs/DirectXShaderCompiler
-	url = https://github.com/michal-z/DirectXShaderCompiler.git
-	branch = mach
 [submodule "libs/zgpu/libs/mach-glfw/upstream"]
 	path = libs/zgpu/libs/mach-glfw/upstream
 	url = https://github.com/hexops/glfw.git
