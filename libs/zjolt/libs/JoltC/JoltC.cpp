@@ -31,32 +31,32 @@ AssertFailedImpl(const char *in_expression, const char *in_message, const char *
 
 #endif
 //--------------------------------------------------------------------------------------------------
-static_assert(sizeof(JPH::BodyID)                  == sizeof(JPH_BodyID),                 "");
-static_assert(sizeof(JPH::SubShapeID)              == sizeof(JPH_SubShapeID),             "");
-static_assert(sizeof(JPH::EShapeType)              == sizeof(JPH_ShapeType),              "");
-static_assert(sizeof(JPH::EShapeSubType)           == sizeof(JPH_ShapeSubType),           "");
-static_assert(sizeof(JPH::EMotionType)             == sizeof(JPH_MotionType),             "");
-static_assert(sizeof(JPH::EMotionQuality)          == sizeof(JPH_MotionQuality),          "");
-static_assert(sizeof(JPH::EOverrideMassProperties) == sizeof(JPH_OverrideMassProperties), "");
-static_assert(sizeof(JPH::EActivation)             == sizeof(JPH_Activation),             "");
-static_assert(sizeof(JPH::ValidateResult)          == sizeof(JPH_ValidateResult),         "");
-static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer),        "");
-static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer),            "");
-static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties),         "");
-static_assert(sizeof(JPH::CollisionGroup)          == sizeof(JPH_CollisionGroup),         "");
-static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSettings),   "");
-static_assert(sizeof(JPH::ContactManifold)         == sizeof(JPH_ContactManifold),        "");
-static_assert(sizeof(JPH::ContactSettings)         == sizeof(JPH_ContactSettings),        "");
-static_assert(sizeof(JPH::SubShapeIDPair)          == sizeof(JPH_SubShapeIDPair),         "");
-static_assert(sizeof(JPH::CollideShapeResult)      == sizeof(JPH_CollideShapeResult),     "");
+static_assert(sizeof(JPH::BodyID)                  == sizeof(JPH_BodyID));
+static_assert(sizeof(JPH::SubShapeID)              == sizeof(JPH_SubShapeID));
+static_assert(sizeof(JPH::EShapeType)              == sizeof(JPH_ShapeType));
+static_assert(sizeof(JPH::EShapeSubType)           == sizeof(JPH_ShapeSubType));
+static_assert(sizeof(JPH::EMotionType)             == sizeof(JPH_MotionType));
+static_assert(sizeof(JPH::EMotionQuality)          == sizeof(JPH_MotionQuality));
+static_assert(sizeof(JPH::EOverrideMassProperties) == sizeof(JPH_OverrideMassProperties));
+static_assert(sizeof(JPH::EActivation)             == sizeof(JPH_Activation));
+static_assert(sizeof(JPH::ValidateResult)          == sizeof(JPH_ValidateResult));
+static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer));
+static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer));
+static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties));
+static_assert(sizeof(JPH::CollisionGroup)          == sizeof(JPH_CollisionGroup));
+static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSettings));
+static_assert(sizeof(JPH::ContactManifold)         == sizeof(JPH_ContactManifold));
+static_assert(sizeof(JPH::ContactSettings)         == sizeof(JPH_ContactSettings));
+static_assert(sizeof(JPH::SubShapeIDPair)          == sizeof(JPH_SubShapeIDPair));
+static_assert(sizeof(JPH::CollideShapeResult)      == sizeof(JPH_CollideShapeResult));
 
-static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties),       "");
-static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup),       "");
-static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPH_BodyCreationSettings), "");
-static_assert(alignof(JPH::ContactManifold)      == alignof(JPH_ContactManifold),      "");
-static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings),      "");
-static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair),       "");
-static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult),   "");
+static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties));
+static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup));
+static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPH_BodyCreationSettings));
+static_assert(alignof(JPH::ContactManifold)      == alignof(JPH_ContactManifold));
+static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings));
+static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair));
+static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult));
 
 static_assert(JPH_SHAPE_TYPE_CONVEX       == static_cast<int>(JPH::EShapeType::Convex));
 static_assert(JPH_SHAPE_TYPE_COMPOUND     == static_cast<int>(JPH::EShapeType::Compound));
@@ -90,6 +90,28 @@ static_assert(JPH_SHAPE_SUB_TYPE_USER5                 == static_cast<int>(JPH::
 static_assert(JPH_SHAPE_SUB_TYPE_USER6                 == static_cast<int>(JPH::EShapeSubType::User6));
 static_assert(JPH_SHAPE_SUB_TYPE_USER7                 == static_cast<int>(JPH::EShapeSubType::User7));
 static_assert(JPH_SHAPE_SUB_TYPE_USER8                 == static_cast<int>(JPH::EShapeSubType::User8));
+
+static_assert(JPH_MOTION_TYPE_STATIC    == static_cast<int>(JPH::EMotionType::Static));
+static_assert(JPH_MOTION_TYPE_KINEMATIC == static_cast<int>(JPH::EMotionType::Kinematic));
+static_assert(JPH_MOTION_TYPE_DYNAMIC   == static_cast<int>(JPH::EMotionType::Dynamic));
+
+static_assert(JPH_MOTION_QUALITY_DISCRETE    == static_cast<int>(JPH::EMotionQuality::Discrete));
+static_assert(JPH_MOTION_QUALITY_LINEAR_CAST == static_cast<int>(JPH::EMotionQuality::LinearCast));
+
+static_assert(JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA     == static_cast<int>(JPH::EOverrideMassProperties::CalculateMassAndInertia));
+static_assert(JPH_OVERRIDE_MASS_PROPS_CALC_INERTIA          == static_cast<int>(JPH::EOverrideMassProperties::CalculateInertia));
+static_assert(JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED == static_cast<int>(JPH::EOverrideMassProperties::MassAndInertiaProvided));
+
+static_assert(JPH_ACTIVATION_ACTIVATE      == static_cast<int>(JPH::EActivation::Activate));
+static_assert(JPH_ACTIVATION_DONT_ACTIVATE == static_cast<int>(JPH::EActivation::DontActivate));
+
+static_assert(JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS == static_cast<int>(JPH::ValidateResult::AcceptAllContactsForThisBodyPair));
+static_assert(JPH_VALIDATE_RESULT_ACCEPT_CONTACT      == static_cast<int>(JPH::ValidateResult::AcceptContact));
+static_assert(JPH_VALIDATE_RESULT_REJECT_CONTACT      == static_cast<int>(JPH::ValidateResult::RejectContact));
+static_assert(JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS == static_cast<int>(JPH::ValidateResult::RejectAllContactsForThisBodyPair));
+
+static_assert(JPH_MAX_PHYSICS_JOBS     == JPH::cMaxPhysicsJobs);
+static_assert(JPH_MAX_PHYSICS_BARRIERS == JPH::cMaxPhysicsBarriers);
 
 static_assert(
     offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
