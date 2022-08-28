@@ -58,6 +58,39 @@ static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings)
 static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair),       "");
 static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult),   "");
 
+static_assert(JPH_SHAPE_TYPE_CONVEX       == static_cast<int>(JPH::EShapeType::Convex));
+static_assert(JPH_SHAPE_TYPE_COMPOUND     == static_cast<int>(JPH::EShapeType::Compound));
+static_assert(JPH_SHAPE_TYPE_DECORATED    == static_cast<int>(JPH::EShapeType::Decorated));
+static_assert(JPH_SHAPE_TYPE_MESH         == static_cast<int>(JPH::EShapeType::Mesh));
+static_assert(JPH_SHAPE_TYPE_HEIGHT_FIELD == static_cast<int>(JPH::EShapeType::HeightField));
+static_assert(JPH_SHAPE_TYPE_USER1        == static_cast<int>(JPH::EShapeType::User1));
+static_assert(JPH_SHAPE_TYPE_USER2        == static_cast<int>(JPH::EShapeType::User2));
+static_assert(JPH_SHAPE_TYPE_USER3        == static_cast<int>(JPH::EShapeType::User3));
+static_assert(JPH_SHAPE_TYPE_USER4        == static_cast<int>(JPH::EShapeType::User4));
+
+static_assert(JPH_SHAPE_SUB_TYPE_SPHERE                == static_cast<int>(JPH::EShapeSubType::Sphere));
+static_assert(JPH_SHAPE_SUB_TYPE_BOX                   == static_cast<int>(JPH::EShapeSubType::Box));
+static_assert(JPH_SHAPE_SUB_TYPE_TRIANGLE              == static_cast<int>(JPH::EShapeSubType::Triangle));
+static_assert(JPH_SHAPE_SUB_TYPE_CAPSULE               == static_cast<int>(JPH::EShapeSubType::Capsule));
+static_assert(JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE       == static_cast<int>(JPH::EShapeSubType::TaperedCapsule));
+static_assert(JPH_SHAPE_SUB_TYPE_CYLINDER              == static_cast<int>(JPH::EShapeSubType::Cylinder));
+static_assert(JPH_SHAPE_SUB_TYPE_CONVEX_HULL           == static_cast<int>(JPH::EShapeSubType::ConvexHull));
+static_assert(JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND       == static_cast<int>(JPH::EShapeSubType::StaticCompound));
+static_assert(JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND      == static_cast<int>(JPH::EShapeSubType::MutableCompound));
+static_assert(JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED    == static_cast<int>(JPH::EShapeSubType::RotatedTranslated));
+static_assert(JPH_SHAPE_SUB_TYPE_SCALED                == static_cast<int>(JPH::EShapeSubType::Scaled));
+static_assert(JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS == static_cast<int>(JPH::EShapeSubType::OffsetCenterOfMass));
+static_assert(JPH_SHAPE_SUB_TYPE_MESH                  == static_cast<int>(JPH::EShapeSubType::Mesh));
+static_assert(JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD          == static_cast<int>(JPH::EShapeSubType::HeightField));
+static_assert(JPH_SHAPE_SUB_TYPE_USER1                 == static_cast<int>(JPH::EShapeSubType::User1));
+static_assert(JPH_SHAPE_SUB_TYPE_USER2                 == static_cast<int>(JPH::EShapeSubType::User2));
+static_assert(JPH_SHAPE_SUB_TYPE_USER3                 == static_cast<int>(JPH::EShapeSubType::User3));
+static_assert(JPH_SHAPE_SUB_TYPE_USER4                 == static_cast<int>(JPH::EShapeSubType::User4));
+static_assert(JPH_SHAPE_SUB_TYPE_USER5                 == static_cast<int>(JPH::EShapeSubType::User5));
+static_assert(JPH_SHAPE_SUB_TYPE_USER6                 == static_cast<int>(JPH::EShapeSubType::User6));
+static_assert(JPH_SHAPE_SUB_TYPE_USER7                 == static_cast<int>(JPH::EShapeSubType::User7));
+static_assert(JPH_SHAPE_SUB_TYPE_USER8                 == static_cast<int>(JPH::EShapeSubType::User8));
+
 static_assert(
     offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
     offsetof(JPH_BodyCreationSettings, inertia_multiplier),
@@ -119,73 +152,37 @@ JPH_RegisterTypes(void)
 JPH_CAPI JPH_CollisionGroup
 JPH_CollisionGroup_InitDefault(void)
 {
-    return {
-        .group_id = ~JPH_CollisionGroupID(0),
-        .sub_group_id = ~JPH_CollisionSubGroupID(0),
-    };
+    const JPH::CollisionGroup group;
+    return *reinterpret_cast<const JPH_CollisionGroup *>(&group);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BodyCreationSettings
 JPH_BodyCreationSettings_InitDefault(void)
 {
-    return {
-        .position = { 0.0f, 0.0f, 0.0f },
-        .rotation = { 0.0f, 0.0f, 0.0f, 1.0f },
-        .linear_velocity = { 0.0f, 0.0f, 0.0f },
-        .angular_velocity = { 0.0f, 0.0f, 0.0f },
-        .user_data = 0,
-        .object_layer = 0,
-        .collision_group = JPH_CollisionGroup_InitDefault(),
-        .motion_type = JPH_MOTION_TYPE_DYNAMIC,
-        .allow_dynamic_or_kinematic = false,
-        .is_sensor = false,
-        .motion_quality = JPH_MOTION_QUALITY_DISCRETE,
-        .allow_sleeping = true,
-        .friction = 0.2f,
-        .restitution = 0.0f,
-        .linear_damping = 0.05f,
-        .angular_damping = 0.05f,
-        .max_linear_velocity = 500.0f,
-        .max_angular_velocity = 0.25f * JPH::JPH_PI * 60.0f,
-        .gravity_factor = 1.0f,
-        .override_mass_properties = JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
-        .inertia_multiplier = 1.0f,
-    };
+    const JPH::BodyCreationSettings settings;
+    return *reinterpret_cast<const JPH_BodyCreationSettings *>(&settings);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BodyCreationSettings
-JPH_BodyCreationSettings_Init(
-    const JPH_Shape *in_shape,
-    const float in_position[3],
-    const float in_rotation[4],
-    JPH_MotionType in_motion_type,
-    JPH_ObjectLayer in_layer)
+JPH_BodyCreationSettings_Init(const JPH_Shape *in_shape,
+                              const float in_position[3],
+                              const float in_rotation[4],
+                              JPH_MotionType in_motion_type,
+                              JPH_ObjectLayer in_layer)
 {
     assert(in_shape != nullptr && in_position != nullptr && in_rotation != nullptr);
-    return {
-        .position = { in_position[0], in_position[1], in_position[2] },
-        .rotation = { in_rotation[0], in_rotation[1], in_rotation[2], in_rotation[3] },
-        .linear_velocity = { 0.0f, 0.0f, 0.0f },
-        .angular_velocity = { 0.0f, 0.0f, 0.0f },
-        .user_data = 0,
-        .object_layer = in_layer,
-        .collision_group = JPH_CollisionGroup_InitDefault(),
-        .motion_type = in_motion_type,
-        .allow_dynamic_or_kinematic = false,
-        .is_sensor = false,
-        .motion_quality = JPH_MOTION_QUALITY_DISCRETE,
-        .allow_sleeping = true,
-        .friction = 0.2f,
-        .restitution = 0.0f,
-        .linear_damping = 0.05f,
-        .angular_damping = 0.05f,
-        .max_linear_velocity = 500.0f,
-        .max_angular_velocity = 0.25f * JPH::JPH_PI * 60.0f,
-        .gravity_factor = 1.0f,
-        .override_mass_properties = JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
-        .inertia_multiplier = 1.0f,
-        .shape = in_shape,
-    };
+    JPH_BodyCreationSettings settings = JPH_BodyCreationSettings_InitDefault();
+    settings.position[0] = in_position[0];
+    settings.position[1] = in_position[1];
+    settings.position[2] = in_position[2];
+    settings.rotation[0] = in_rotation[0];
+    settings.rotation[1] = in_rotation[1];
+    settings.rotation[2] = in_rotation[2];
+    settings.rotation[3] = in_rotation[3];
+    settings.object_layer = in_layer;
+    settings.motion_type = in_motion_type;
+    settings.shape = in_shape;
+    return settings;
 }
 //--------------------------------------------------------------------------------------------------
 //

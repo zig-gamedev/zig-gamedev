@@ -105,8 +105,8 @@ extern "C" {
 // Types
 //
 //--------------------------------------------------------------------------------------------------
-typedef uint16_t    JPH_ObjectLayer;
-typedef uint8_t     JPH_BroadPhaseLayer;
+typedef uint16_t JPH_ObjectLayer;
+typedef uint8_t  JPH_BroadPhaseLayer;
 
 // TODO: Consider using structures for IDs (`typedef struct JPH_BodyID { uint32_t bits; } JPH_BodyID;`)
 typedef uint32_t JPH_BodyID;
@@ -142,9 +142,9 @@ typedef struct JPH_ContactSettings      JPH_ContactSettings;
 typedef struct JPH_SubShapeIDPair       JPH_SubShapeIDPair;
 typedef struct JPH_CollideShapeResult   JPH_CollideShapeResult;
 
-typedef struct JPH_BroadPhaseLayerInterfaceVTable   JPH_BroadPhaseLayerInterfaceVTable;
-typedef struct JPH_BodyActivationListenerVTable     JPH_BodyActivationListenerVTable;
-typedef struct JPH_ContactListenerVTable            JPH_ContactListenerVTable;
+typedef struct JPH_BroadPhaseLayerInterfaceVTable JPH_BroadPhaseLayerInterfaceVTable;
+typedef struct JPH_BodyActivationListenerVTable   JPH_BodyActivationListenerVTable;
+typedef struct JPH_ContactListenerVTable          JPH_ContactListenerVTable;
 
 // NOTE: Needs to be kept in sync with JPH::MassProperties
 struct JPH_MassProperties
