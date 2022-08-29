@@ -14,6 +14,7 @@
 #include <Jolt/Physics/Collision/CollideShape.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/TriangleShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
@@ -540,6 +541,68 @@ JPH_SphereShapeSettings_SetRadius(JPH_SphereShapeSettings *in_settings, float in
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::SphereShapeSettings);
     reinterpret_cast<JPH::SphereShapeSettings *>(in_settings)->mRadius = in_radius;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_TriangleShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_TriangleShapeSettings *
+JPH_TriangleShapeSettings_Create(const float in_v1[3], const float in_v2[3], const float in_v3[3])
+{
+    assert(in_v1 != nullptr && in_v2 != nullptr && in_v3 != nullptr);
+    auto settings = new JPH::TriangleShapeSettings(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v1)),
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v2)),
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v3)));
+    settings->AddRef();
+    return reinterpret_cast<JPH_TriangleShapeSettings *>(settings);
+}
+
+JPH_CAPI void
+JPH_TriangleShapeSettings_SetVertices(JPH_TriangleShapeSettings *in_settings,
+                                      const float in_v1[3],
+                                      const float in_v2[3],
+                                      const float in_v3[3])
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
+    assert(in_v1 != nullptr && in_v2 != nullptr && in_v3 != nullptr);
+    auto settings = reinterpret_cast<JPH::TriangleShapeSettings *>(in_settings);
+    settings->mV1 = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v1));
+    settings->mV2 = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v2));
+    settings->mV3 = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v3));
+}
+
+JPH_CAPI void
+JPH_TriangleShapeSettings_GetVertices(const JPH_TriangleShapeSettings *in_settings,
+                                      float out_v1[3],
+                                      float out_v2[3],
+                                      float out_v3[3])
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
+    assert(out_v1 != nullptr && out_v2 != nullptr && out_v3 != nullptr);
+    auto settings = reinterpret_cast<const JPH::TriangleShapeSettings *>(in_settings);
+    settings->mV1.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_v1));
+    settings->mV2.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_v2));
+    settings->mV3.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_v3));
+}
+
+JPH_CAPI float
+JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
+    return reinterpret_cast<const JPH::TriangleShapeSettings *>(in_settings)->mConvexRadius;
+}
+
+JPH_CAPI void
+JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings, float in_convex_radius)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
+    reinterpret_cast<JPH::TriangleShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //

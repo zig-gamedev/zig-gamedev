@@ -17,8 +17,8 @@ typedef struct MyActivationListener MyActivationListener;
 //--------------------------------------------------------------------------------------------------
 struct BPLayerInterfaceImpl
 {
-    const JPH_BroadPhaseLayerInterfaceVTable *  vtable;
-    JPH_BroadPhaseLayer                         object_to_broad_phase[NUM_LAYERS];
+    const JPH_BroadPhaseLayerInterfaceVTable *vtable;
+    JPH_BroadPhaseLayer                       object_to_broad_phase[NUM_LAYERS];
 };
 
 static uint32_t

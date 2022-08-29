@@ -121,12 +121,13 @@ typedef struct JPH_TempAllocator    JPH_TempAllocator;
 typedef struct JPH_JobSystem        JPH_JobSystem;
 typedef struct JPH_Body             JPH_Body;
 typedef struct JPH_BodyInterface    JPH_BodyInterface;
+typedef struct JPH_GroupFilter      JPH_GroupFilter;
 
 typedef struct JPH_ShapeSettings        JPH_ShapeSettings;
 typedef struct JPH_ConvexShapeSettings  JPH_ConvexShapeSettings;
 typedef struct JPH_BoxShapeSettings     JPH_BoxShapeSettings;
 typedef struct JPH_SphereShapeSettings  JPH_SphereShapeSettings;
-typedef struct JPH_GroupFilter          JPH_GroupFilter;
+typedef struct JPH_TriangleShapeSettings  JPH_TriangleShapeSettings;
 
 typedef bool
 (*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
@@ -467,6 +468,29 @@ JPH_SphereShapeSettings_GetRadius(const JPH_SphereShapeSettings *in_settings);
 
 JPH_CAPI void
 JPH_SphereShapeSettings_SetRadius(JPH_SphereShapeSettings *in_settings, float in_radius);
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_TriangleShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_TriangleShapeSettings *
+JPH_TriangleShapeSettings_Create(const float in_v1[3], const float in_v2[3], const float in_v3[3]);
+
+JPH_CAPI void
+JPH_TriangleShapeSettings_SetVertices(JPH_TriangleShapeSettings *in_settings,
+                                      const float in_v1[3],
+                                      const float in_v2[3],
+                                      const float in_v3[3]);
+JPH_CAPI void
+JPH_TriangleShapeSettings_GetVertices(const JPH_TriangleShapeSettings *in_settings,
+                                      float out_v1[3],
+                                      float out_v2[3],
+                                      float out_v3[3]);
+JPH_CAPI float
+JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings, float in_convex_radius);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_Shape
