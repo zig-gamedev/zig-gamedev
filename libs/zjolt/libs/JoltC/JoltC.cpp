@@ -15,6 +15,7 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/TriangleShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
@@ -603,6 +604,52 @@ JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
     reinterpret_cast<JPH::TriangleShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_CapsuleShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_CapsuleShapeSettings *
+JPH_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radius)
+{
+    auto settings = new JPH::CapsuleShapeSettings(in_half_height_of_cylinder, in_radius);
+    settings->AddRef();
+    return reinterpret_cast<JPH_CapsuleShapeSettings *>(settings);
+}
+
+JPH_CAPI float
+JPH_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPH_CapsuleShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
+    return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder;
+}
+
+JPH_CAPI void
+JPH_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPH_CapsuleShapeSettings *in_settings,
+                                                 float in_half_height_of_cylinder)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
+    reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder =
+        in_half_height_of_cylinder;
+}
+
+JPH_CAPI float
+JPH_CapsuleShapeSettings_GetRadius(const JPH_CapsuleShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
+    return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mRadius;
+}
+
+JPH_CAPI void
+JPH_CapsuleShapeSettings_SetRadius(JPH_CapsuleShapeSettings *in_settings, float in_radius)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
+    reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mRadius = in_radius;
 }
 //--------------------------------------------------------------------------------------------------
 //
