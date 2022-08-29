@@ -20,8 +20,8 @@ extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
 pub fn deinit() void {
     if (getCurrentContext() != null) {
         temp_buffer.deinit();
-        zguiDestroyContext(null);
         destroyPlotContext(null);
+        zguiDestroyContext(null);
     }
 }
 extern fn zguiDestroyContext(ctx: ?Context) void;
