@@ -108,7 +108,7 @@ extern "C" {
 typedef uint16_t JPH_ObjectLayer;
 typedef uint8_t  JPH_BroadPhaseLayer;
 
-// TODO: Consider using structures for IDs (`typedef struct JPH_BodyID { uint32_t bits; } JPH_BodyID;`)
+// TODO: Consider using structures for IDs
 typedef uint32_t JPH_BodyID;
 typedef uint32_t JPH_SubShapeID;
 typedef uint32_t JPH_CollisionGroupID;
@@ -490,7 +490,8 @@ JPH_CAPI float
 JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_settings);
 
 JPH_CAPI void
-JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings, float in_convex_radius);
+JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings,
+                                          float in_convex_radius);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_CapsuleShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
