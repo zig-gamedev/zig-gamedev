@@ -830,7 +830,7 @@ JPH_BodyInterface_CreateAndAddBody(JPH_BodyInterface *in_iface,
     const JPH::BodyID body_id = iface->CreateAndAddBody(
         *settings,
         static_cast<JPH::EActivation>(in_mode));
-    return *reinterpret_cast<const JPH_BodyID *>(&body_id);
+    return body_id.GetIndexAndSequenceNumber();
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI bool
@@ -889,7 +889,7 @@ JPH_Body_GetID(const JPH_Body *in_body)
 {
     assert(in_body != nullptr);
     const JPH::BodyID body_id = reinterpret_cast<const JPH::Body *>(in_body)->GetID();
-    return *reinterpret_cast<const JPH_BodyID *>(&body_id);
+    return body_id.GetIndexAndSequenceNumber();
 }
 //--------------------------------------------------------------------------------------------------
 //

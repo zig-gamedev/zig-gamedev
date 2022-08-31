@@ -517,7 +517,7 @@ JPH_CapsuleShapeSettings_SetRadius(JPH_CapsuleShapeSettings *in_settings, float 
 // JPH_ConvexHullShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
-// `in_position` needs to be aligned to 16 bytes
+/// `in_points` needs to be aligned to 16 bytes
 JPH_CAPI JPH_ConvexHullShapeSettings *
 JPH_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points);
 
