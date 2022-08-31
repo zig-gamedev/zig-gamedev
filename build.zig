@@ -1,14 +1,6 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-// (Note to myself, users don't need to do this)
-// To update submodules do:
-//
-// 1. Edit .gitmodules (update Dawn branch)
-// 2. git submodule update --remote --recursive
-// 3. git add .
-// 4. git commit -m "update submodules"
-
 pub fn build(b: *std.build.Builder) void {
     var options = Options{
         .build_mode = b.standardReleaseOptions(),
@@ -16,15 +8,6 @@ pub fn build(b: *std.build.Builder) void {
     };
 
     options.ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
-    options.zgpu_dawn_from_source = b.option(
-        bool,
-        "zgpu-dawn-from-source",
-        "Build Dawn (wgpu implementation) from source",
-    ) orelse false;
-
-    if (options.zgpu_dawn_from_source) {
-        ensureSubmodules(b.allocator) catch |err| @panic(@errorName(err));
-    }
 
     //
     // Cross-platform demos
@@ -35,7 +18,11 @@ pub fn build(b: *std.build.Builder) void {
         installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
         installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
         installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
-        installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
+        installDemo(
+            b,
+            physically_based_rendering_wgpu.build(b, options),
+            "physically_based_rendering_wgpu",
+        );
         installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
         installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
     }
@@ -43,8 +30,14 @@ pub fn build(b: *std.build.Builder) void {
     //
     // Windows-only demos
     //
-    if (!builtin.is_test and @import("builtin").target.os.tag == .windows and @import("builtin").zig_backend == .stage1) {
-        options.zpix_enable = b.option(bool, "zpix-enable", "Enable PIX GPU events and markers") orelse false;
+    if (!builtin.is_test and @import("builtin").target.os.tag == .windows and
+        @import("builtin").zig_backend == .stage1)
+    {
+        options.zpix_enable = b.option(
+            bool,
+            "zpix-enable",
+            "Enable PIX GPU events and markers",
+        ) orelse false;
         options.enable_dx_debug = b.option(
             bool,
             "enable-dx-debug",
@@ -84,24 +77,56 @@ pub fn build(b: *std.build.Builder) void {
     //
     const test_step = b.step("test", "Run all tests");
 
-    const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
+    const zpool_tests = @import("libs/zpool/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
     test_step.dependOn(&zpool_tests.step);
-    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
+    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
     test_step.dependOn(&zgpu_tests.step);
     const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmath_tests.step);
-    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
+    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
     test_step.dependOn(&zbullet_tests.step);
-    const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
+    const znoise_tests = @import("libs/znoise/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
     test_step.dependOn(&znoise_tests.step);
-    const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
+    const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
     test_step.dependOn(&znetwork_tests.step);
-    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
+    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
     test_step.dependOn(&zmesh_tests.step);
-    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
+    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
     test_step.dependOn(&zaudio_tests.step);
 
-    const zjolt_tests = @import("libs/zjolt/build.zig").buildTests(b, options.build_mode, options.target);
+    const zjolt_tests = @import("libs/zjolt/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
     test_step.dependOn(&zjolt_tests.step);
 
     //
@@ -149,13 +174,16 @@ pub const Options = struct {
 
     ztracy_enable: bool = false,
     zpix_enable: bool = false,
-    zgpu_dawn_from_source: bool = false,
 
     enable_dx_debug: bool = false,
     enable_dx_gpu_debug: bool = false,
 };
 
-fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
+fn installDemo(
+    b: *std.build.Builder,
+    exe: *std.build.LibExeObjStep,
+    comptime name: []const u8,
+) void {
     comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
     comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;
@@ -169,17 +197,6 @@ fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime na
     run_step.dependOn(&run_cmd.step);
 
     b.getInstallStep().dependOn(install);
-}
-
-fn ensureSubmodules(allocator: std.mem.Allocator) !void {
-    if (std.process.getEnvVarOwned(allocator, "NO_ENSURE_SUBMODULES")) |no_ensure_submodules| {
-        if (std.mem.eql(u8, no_ensure_submodules, "true")) return;
-    } else |_| {}
-    var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--recursive" }, allocator);
-    child.cwd = thisDir();
-    child.stderr = std.io.getStdErr();
-    child.stdout = std.io.getStdOut();
-    _ = try child.spawnAndWait();
 }
 
 inline fn thisDir() []const u8 {

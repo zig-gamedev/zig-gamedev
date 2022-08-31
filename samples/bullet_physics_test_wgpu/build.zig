@@ -32,9 +32,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{ .shape_use_32bit_indices = true });
     const ztracy_options = ztracy.BuildOptionsStep.init(b, .{ .enable_ztracy = options.ztracy_enable });
-    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{
-        .dawn = .{ .from_source = options.zgpu_dawn_from_source },
-    });
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
