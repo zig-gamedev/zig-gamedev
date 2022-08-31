@@ -123,12 +123,13 @@ typedef struct JPH_Body             JPH_Body;
 typedef struct JPH_BodyInterface    JPH_BodyInterface;
 typedef struct JPH_GroupFilter      JPH_GroupFilter;
 
-typedef struct JPH_ShapeSettings         JPH_ShapeSettings;
-typedef struct JPH_ConvexShapeSettings   JPH_ConvexShapeSettings;
-typedef struct JPH_BoxShapeSettings      JPH_BoxShapeSettings;
-typedef struct JPH_SphereShapeSettings   JPH_SphereShapeSettings;
-typedef struct JPH_TriangleShapeSettings JPH_TriangleShapeSettings;
-typedef struct JPH_CapsuleShapeSettings  JPH_CapsuleShapeSettings;
+typedef struct JPH_ShapeSettings           JPH_ShapeSettings;
+typedef struct JPH_ConvexShapeSettings     JPH_ConvexShapeSettings;
+typedef struct JPH_BoxShapeSettings        JPH_BoxShapeSettings;
+typedef struct JPH_SphereShapeSettings     JPH_SphereShapeSettings;
+typedef struct JPH_TriangleShapeSettings   JPH_TriangleShapeSettings;
+typedef struct JPH_CapsuleShapeSettings    JPH_CapsuleShapeSettings;
+typedef struct JPH_ConvexHullShapeSettings JPH_ConvexHullShapeSettings;
 
 typedef bool
 (*JPH_ObjectLayerPairFilter)(JPH_ObjectLayer in_layer1, JPH_ObjectLayer in_layer2);
@@ -511,6 +512,33 @@ JPH_CapsuleShapeSettings_GetRadius(const JPH_CapsuleShapeSettings *in_settings);
 
 JPH_CAPI void
 JPH_CapsuleShapeSettings_SetRadius(JPH_CapsuleShapeSettings *in_settings, float in_radius);
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_ConvexHullShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+// `in_position` needs to be aligned to 16 bytes
+JPH_CAPI JPH_ConvexHullShapeSettings *
+JPH_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points);
+
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetMaxConvexRadius(const JPH_ConvexHullShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetMaxConvexRadius(JPH_ConvexHullShapeSettings *in_settings,
+                                               float in_max_convex_radius);
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetMaxErrorConvexRadius(const JPH_ConvexHullShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetMaxErrorConvexRadius(JPH_ConvexHullShapeSettings *in_settings,
+                                                    float in_max_err_convex_radius);
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetHullTolerance(const JPH_ConvexHullShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetHullTolerance(JPH_ConvexHullShapeSettings *in_settings,
+                                             float in_hull_tolerance);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_Shape

@@ -16,6 +16,7 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/TriangleShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
@@ -535,7 +536,7 @@ JPH_SphereShapeSettings_Create(float in_radius)
     settings->AddRef();
     return reinterpret_cast<JPH_SphereShapeSettings *>(settings);
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_SphereShapeSettings_GetRadius(const JPH_SphereShapeSettings *in_settings)
 {
@@ -543,7 +544,7 @@ JPH_SphereShapeSettings_GetRadius(const JPH_SphereShapeSettings *in_settings)
     ENSURE_TYPE(in_settings, JPH::SphereShapeSettings);
     return reinterpret_cast<const JPH::SphereShapeSettings *>(in_settings)->mRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_SphereShapeSettings_SetRadius(JPH_SphereShapeSettings *in_settings, float in_radius)
 {
@@ -567,7 +568,7 @@ JPH_TriangleShapeSettings_Create(const float in_v1[3], const float in_v2[3], con
     settings->AddRef();
     return reinterpret_cast<JPH_TriangleShapeSettings *>(settings);
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_TriangleShapeSettings_SetVertices(JPH_TriangleShapeSettings *in_settings,
                                       const float in_v1[3],
@@ -582,7 +583,7 @@ JPH_TriangleShapeSettings_SetVertices(JPH_TriangleShapeSettings *in_settings,
     settings->mV2 = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v2));
     settings->mV3 = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v3));
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_TriangleShapeSettings_GetVertices(const JPH_TriangleShapeSettings *in_settings,
                                       float out_v1[3],
@@ -597,7 +598,7 @@ JPH_TriangleShapeSettings_GetVertices(const JPH_TriangleShapeSettings *in_settin
     settings->mV2.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_v2));
     settings->mV3.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_v3));
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_settings)
 {
@@ -605,7 +606,7 @@ JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_se
     ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
     return reinterpret_cast<const JPH::TriangleShapeSettings *>(in_settings)->mConvexRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings,
                                           float in_convex_radius)
@@ -626,7 +627,7 @@ JPH_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radiu
     settings->AddRef();
     return reinterpret_cast<JPH_CapsuleShapeSettings *>(settings);
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPH_CapsuleShapeSettings *in_settings)
 {
@@ -634,7 +635,7 @@ JPH_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPH_CapsuleShapeSettings 
     ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
     return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPH_CapsuleShapeSettings *in_settings,
                                                  float in_half_height_of_cylinder)
@@ -644,7 +645,7 @@ JPH_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPH_CapsuleShapeSettings *in_se
     reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder =
         in_half_height_of_cylinder;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_CapsuleShapeSettings_GetRadius(const JPH_CapsuleShapeSettings *in_settings)
 {
@@ -652,13 +653,81 @@ JPH_CapsuleShapeSettings_GetRadius(const JPH_CapsuleShapeSettings *in_settings)
     ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
     return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_CapsuleShapeSettings_SetRadius(JPH_CapsuleShapeSettings *in_settings, float in_radius)
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
     reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mRadius = in_radius;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_ConvexHullShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_ConvexHullShapeSettings *
+JPH_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points)
+{
+    assert(in_points != nullptr && in_num_points > 0);
+    assert((reinterpret_cast<intptr_t>(&in_points[0][0]) & 0xf) == 0);
+    auto settings = new JPH::ConvexHullShapeSettings(
+        reinterpret_cast<const JPH::Vec3 *>(&in_points[0][0]), in_num_points);
+    settings->AddRef();
+    return reinterpret_cast<JPH_ConvexHullShapeSettings *>(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetMaxConvexRadius(const JPH_ConvexHullShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetMaxConvexRadius(JPH_ConvexHullShapeSettings *in_settings,
+                                               float in_max_convex_radius)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius =
+        in_max_convex_radius;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetMaxErrorConvexRadius(const JPH_ConvexHullShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mMaxErrorConvexRadius;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetMaxErrorConvexRadius(JPH_ConvexHullShapeSettings *in_settings,
+                                                    float in_max_err_convex_radius)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxErrorConvexRadius =
+        in_max_err_convex_radius;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetHullTolerance(const JPH_ConvexHullShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mHullTolerance;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetHullTolerance(JPH_ConvexHullShapeSettings *in_settings,
+                                             float in_hull_tolerance)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mHullTolerance = in_hull_tolerance;
 }
 //--------------------------------------------------------------------------------------------------
 //
