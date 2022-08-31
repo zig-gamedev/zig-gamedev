@@ -16,17 +16,22 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/TriangleShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
 JPH_SUPPRESS_WARNINGS
 
-#define ENSURE_TYPE(o, t) assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
+#define ENSURE_TYPE(o, t) \
+    assert(reinterpret_cast<const JPH::SerializableObject *>(o)->CastTo(JPH_RTTI(t)) != nullptr)
 
 #ifdef JPH_ENABLE_ASSERTS
 
 static bool
-AssertFailedImpl(const char *in_expression, const char *in_message, const char *in_file, uint32_t in_line)
+AssertFailedImpl(const char *in_expression,
+                 const char *in_message,
+                 const char *in_file,
+                 uint32_t in_line)
 {
 	return true;
 }
@@ -60,91 +65,93 @@ static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings)
 static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair));
 static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult));
 
-static_assert(JPH_SHAPE_TYPE_CONVEX       == static_cast<int>(JPH::EShapeType::Convex));
-static_assert(JPH_SHAPE_TYPE_COMPOUND     == static_cast<int>(JPH::EShapeType::Compound));
-static_assert(JPH_SHAPE_TYPE_DECORATED    == static_cast<int>(JPH::EShapeType::Decorated));
-static_assert(JPH_SHAPE_TYPE_MESH         == static_cast<int>(JPH::EShapeType::Mesh));
-static_assert(JPH_SHAPE_TYPE_HEIGHT_FIELD == static_cast<int>(JPH::EShapeType::HeightField));
-static_assert(JPH_SHAPE_TYPE_USER1        == static_cast<int>(JPH::EShapeType::User1));
-static_assert(JPH_SHAPE_TYPE_USER2        == static_cast<int>(JPH::EShapeType::User2));
-static_assert(JPH_SHAPE_TYPE_USER3        == static_cast<int>(JPH::EShapeType::User3));
-static_assert(JPH_SHAPE_TYPE_USER4        == static_cast<int>(JPH::EShapeType::User4));
+#define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
-static_assert(JPH_SHAPE_SUB_TYPE_SPHERE                == static_cast<int>(JPH::EShapeSubType::Sphere));
-static_assert(JPH_SHAPE_SUB_TYPE_BOX                   == static_cast<int>(JPH::EShapeSubType::Box));
-static_assert(JPH_SHAPE_SUB_TYPE_TRIANGLE              == static_cast<int>(JPH::EShapeSubType::Triangle));
-static_assert(JPH_SHAPE_SUB_TYPE_CAPSULE               == static_cast<int>(JPH::EShapeSubType::Capsule));
-static_assert(JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE       == static_cast<int>(JPH::EShapeSubType::TaperedCapsule));
-static_assert(JPH_SHAPE_SUB_TYPE_CYLINDER              == static_cast<int>(JPH::EShapeSubType::Cylinder));
-static_assert(JPH_SHAPE_SUB_TYPE_CONVEX_HULL           == static_cast<int>(JPH::EShapeSubType::ConvexHull));
-static_assert(JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND       == static_cast<int>(JPH::EShapeSubType::StaticCompound));
-static_assert(JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND      == static_cast<int>(JPH::EShapeSubType::MutableCompound));
-static_assert(JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED    == static_cast<int>(JPH::EShapeSubType::RotatedTranslated));
-static_assert(JPH_SHAPE_SUB_TYPE_SCALED                == static_cast<int>(JPH::EShapeSubType::Scaled));
-static_assert(JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS == static_cast<int>(JPH::EShapeSubType::OffsetCenterOfMass));
-static_assert(JPH_SHAPE_SUB_TYPE_MESH                  == static_cast<int>(JPH::EShapeSubType::Mesh));
-static_assert(JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD          == static_cast<int>(JPH::EShapeSubType::HeightField));
-static_assert(JPH_SHAPE_SUB_TYPE_USER1                 == static_cast<int>(JPH::EShapeSubType::User1));
-static_assert(JPH_SHAPE_SUB_TYPE_USER2                 == static_cast<int>(JPH::EShapeSubType::User2));
-static_assert(JPH_SHAPE_SUB_TYPE_USER3                 == static_cast<int>(JPH::EShapeSubType::User3));
-static_assert(JPH_SHAPE_SUB_TYPE_USER4                 == static_cast<int>(JPH::EShapeSubType::User4));
-static_assert(JPH_SHAPE_SUB_TYPE_USER5                 == static_cast<int>(JPH::EShapeSubType::User5));
-static_assert(JPH_SHAPE_SUB_TYPE_USER6                 == static_cast<int>(JPH::EShapeSubType::User6));
-static_assert(JPH_SHAPE_SUB_TYPE_USER7                 == static_cast<int>(JPH::EShapeSubType::User7));
-static_assert(JPH_SHAPE_SUB_TYPE_USER8                 == static_cast<int>(JPH::EShapeSubType::User8));
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_CONVEX,       JPH::EShapeType::Convex);
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_COMPOUND,     JPH::EShapeType::Compound);
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_DECORATED,    JPH::EShapeType::Decorated);
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_MESH,         JPH::EShapeType::Mesh);
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_HEIGHT_FIELD, JPH::EShapeType::HeightField);
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_USER1,        JPH::EShapeType::User1);
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_USER2,        JPH::EShapeType::User2);
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_USER3,        JPH::EShapeType::User3);
+ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_USER4,        JPH::EShapeType::User4);
 
-static_assert(JPH_MOTION_TYPE_STATIC    == static_cast<int>(JPH::EMotionType::Static));
-static_assert(JPH_MOTION_TYPE_KINEMATIC == static_cast<int>(JPH::EMotionType::Kinematic));
-static_assert(JPH_MOTION_TYPE_DYNAMIC   == static_cast<int>(JPH::EMotionType::Dynamic));
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_SPHERE,                JPH::EShapeSubType::Sphere);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_BOX,                   JPH::EShapeSubType::Box);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_TRIANGLE,              JPH::EShapeSubType::Triangle);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_CAPSULE,               JPH::EShapeSubType::Capsule);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_TAPERED_CAPSULE,       JPH::EShapeSubType::TaperedCapsule);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_CYLINDER,              JPH::EShapeSubType::Cylinder);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_CONVEX_HULL,           JPH::EShapeSubType::ConvexHull);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_STATIC_COMPOUND,       JPH::EShapeSubType::StaticCompound);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_MUTABLE_COMPOUND,      JPH::EShapeSubType::MutableCompound);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_ROTATED_TRANSLATED,    JPH::EShapeSubType::RotatedTranslated);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_SCALED,                JPH::EShapeSubType::Scaled);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_OFFSET_CENTER_OF_MASS, JPH::EShapeSubType::OffsetCenterOfMass);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_MESH,                  JPH::EShapeSubType::Mesh);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_HEIGHT_FIELD,          JPH::EShapeSubType::HeightField);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_USER1,                 JPH::EShapeSubType::User1);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_USER2,                 JPH::EShapeSubType::User2);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_USER3,                 JPH::EShapeSubType::User3);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_USER4,                 JPH::EShapeSubType::User4);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_USER5,                 JPH::EShapeSubType::User5);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_USER6,                 JPH::EShapeSubType::User6);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_USER7,                 JPH::EShapeSubType::User7);
+ENSURE_ENUM_EQ(JPH_SHAPE_SUB_TYPE_USER8,                 JPH::EShapeSubType::User8);
 
-static_assert(JPH_MOTION_QUALITY_DISCRETE    == static_cast<int>(JPH::EMotionQuality::Discrete));
-static_assert(JPH_MOTION_QUALITY_LINEAR_CAST == static_cast<int>(JPH::EMotionQuality::LinearCast));
+ENSURE_ENUM_EQ(JPH_MOTION_TYPE_STATIC,    JPH::EMotionType::Static);
+ENSURE_ENUM_EQ(JPH_MOTION_TYPE_KINEMATIC, JPH::EMotionType::Kinematic);
+ENSURE_ENUM_EQ(JPH_MOTION_TYPE_DYNAMIC,   JPH::EMotionType::Dynamic);
 
-static_assert(JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA     == static_cast<int>(JPH::EOverrideMassProperties::CalculateMassAndInertia));
-static_assert(JPH_OVERRIDE_MASS_PROPS_CALC_INERTIA          == static_cast<int>(JPH::EOverrideMassProperties::CalculateInertia));
-static_assert(JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED == static_cast<int>(JPH::EOverrideMassProperties::MassAndInertiaProvided));
+ENSURE_ENUM_EQ(JPH_MOTION_QUALITY_DISCRETE,    JPH::EMotionQuality::Discrete);
+ENSURE_ENUM_EQ(JPH_MOTION_QUALITY_LINEAR_CAST, JPH::EMotionQuality::LinearCast);
 
-static_assert(JPH_ACTIVATION_ACTIVATE      == static_cast<int>(JPH::EActivation::Activate));
-static_assert(JPH_ACTIVATION_DONT_ACTIVATE == static_cast<int>(JPH::EActivation::DontActivate));
+ENSURE_ENUM_EQ(JPH_ACTIVATION_ACTIVATE,      JPH::EActivation::Activate);
+ENSURE_ENUM_EQ(JPH_ACTIVATION_DONT_ACTIVATE, JPH::EActivation::DontActivate);
 
-static_assert(JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS == static_cast<int>(JPH::ValidateResult::AcceptAllContactsForThisBodyPair));
-static_assert(JPH_VALIDATE_RESULT_ACCEPT_CONTACT      == static_cast<int>(JPH::ValidateResult::AcceptContact));
-static_assert(JPH_VALIDATE_RESULT_REJECT_CONTACT      == static_cast<int>(JPH::ValidateResult::RejectContact));
-static_assert(JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS == static_cast<int>(JPH::ValidateResult::RejectAllContactsForThisBodyPair));
+ENSURE_ENUM_EQ(JPH_OVERRIDE_MASS_PROPS_CALC_MASS_INERTIA,
+               JPH::EOverrideMassProperties::CalculateMassAndInertia);
+ENSURE_ENUM_EQ(JPH_OVERRIDE_MASS_PROPS_CALC_INERTIA,
+               JPH::EOverrideMassProperties::CalculateInertia);
+ENSURE_ENUM_EQ(JPH_OVERRIDE_MASS_PROPS_MASS_INERTIA_PROVIDED,
+               JPH::EOverrideMassProperties::MassAndInertiaProvided);
 
-static_assert(JPH_MAX_PHYSICS_JOBS     == JPH::cMaxPhysicsJobs);
-static_assert(JPH_MAX_PHYSICS_BARRIERS == JPH::cMaxPhysicsBarriers);
+ENSURE_ENUM_EQ(JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS,
+               JPH::ValidateResult::AcceptAllContactsForThisBodyPair);
+ENSURE_ENUM_EQ(JPH_VALIDATE_RESULT_ACCEPT_CONTACT,
+               JPH::ValidateResult::AcceptContact);
+ENSURE_ENUM_EQ(JPH_VALIDATE_RESULT_REJECT_CONTACT,
+               JPH::ValidateResult::RejectContact);
+ENSURE_ENUM_EQ(JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS,
+               JPH::ValidateResult::RejectAllContactsForThisBodyPair);
+
+ENSURE_ENUM_EQ(JPH_MAX_PHYSICS_JOBS,     JPH::cMaxPhysicsJobs);
+ENSURE_ENUM_EQ(JPH_MAX_PHYSICS_BARRIERS, JPH::cMaxPhysicsBarriers);
 
 static_assert(
     offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
-    offsetof(JPH_BodyCreationSettings, inertia_multiplier),
-    "");
+    offsetof(JPH_BodyCreationSettings, inertia_multiplier));
 static_assert(
     offsetof(JPH::BodyCreationSettings, mIsSensor) ==
-    offsetof(JPH_BodyCreationSettings, is_sensor),
-    "");
+    offsetof(JPH_BodyCreationSettings, is_sensor));
 static_assert(
     offsetof(JPH::BodyCreationSettings, mAngularDamping) ==
-    offsetof(JPH_BodyCreationSettings, angular_damping),
-    "");
+    offsetof(JPH_BodyCreationSettings, angular_damping));
 
 static_assert(
     offsetof(JPH::ContactManifold, mPenetrationDepth) ==
-    offsetof(JPH_ContactManifold, penetration_depth),
-    "");
+    offsetof(JPH_ContactManifold, penetration_depth));
 static_assert(
     offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) ==
-    offsetof(JPH_ContactManifold, num_points1),
-    "");
+    offsetof(JPH_ContactManifold, num_points1));
 
 static_assert(
     offsetof(JPH::CollideShapeResult, mPenetrationDepth) ==
-    offsetof(JPH_CollideShapeResult, penetration_depth),
-    "");
+    offsetof(JPH_CollideShapeResult, penetration_depth));
 static_assert(
     offsetof(JPH::CollideShapeResult, mShape1Face) ==
-    offsetof(JPH_CollideShapeResult, num_face_points1),
-    "");
+    offsetof(JPH_CollideShapeResult, num_face_points1));
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_RegisterDefaultAllocator(void)
@@ -252,7 +259,7 @@ JPH_JobSystem_Destroy(JPH_JobSystem *in_job_system)
 JPH_CAPI JPH_PhysicsSystem *
 JPH_PhysicsSystem_Create(void)
 {
-    return reinterpret_cast<JPH_PhysicsSystem*>(new JPH::PhysicsSystem());
+    return reinterpret_cast<JPH_PhysicsSystem *>(new JPH::PhysicsSystem());
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
@@ -265,9 +272,9 @@ JPH_PhysicsSystem_Destroy(JPH_PhysicsSystem *in_physics_system)
 JPH_CAPI void
 JPH_PhysicsSystem_Init(JPH_PhysicsSystem *in_physics_system,
                        uint32_t in_max_bodies,
-                       uint32_t in_num_bodyMutexes,
-                       uint32_t in_max_bodyPairs,
-                       uint32_t in_max_contactConstraints,
+                       uint32_t in_num_body_mutexes,
+                       uint32_t in_max_body_pairs,
+                       uint32_t in_max_contact_constraints,
                        const void *in_broad_phase_layer_interface,
                        JPH_ObjectVsBroadPhaseLayerFilter in_object_vs_broad_phase_layer_filter,
                        JPH_ObjectLayerPairFilter in_object_layer_pair_filter)
@@ -279,9 +286,9 @@ JPH_PhysicsSystem_Init(JPH_PhysicsSystem *in_physics_system,
     auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
     physics_system->Init(
         in_max_bodies,
-        in_num_bodyMutexes,
-        in_max_bodyPairs,
-        in_max_contactConstraints,
+        in_num_body_mutexes,
+        in_max_body_pairs,
+        in_max_contact_constraints,
         *static_cast<const JPH::BroadPhaseLayerInterface *>(in_broad_phase_layer_interface),
         reinterpret_cast<JPH::ObjectVsBroadPhaseLayerFilter>(in_object_vs_broad_phase_layer_filter),
         reinterpret_cast<JPH::ObjectLayerPairFilter>(in_object_layer_pair_filter));
@@ -292,7 +299,8 @@ JPH_PhysicsSystem_SetBodyActivationListener(JPH_PhysicsSystem *in_physics_system
 {
     assert(in_physics_system != nullptr);
     auto physics_system = reinterpret_cast<JPH::PhysicsSystem *>(in_physics_system);
-    physics_system->SetBodyActivationListener(reinterpret_cast<JPH::BodyActivationListener *>(in_listener));
+    physics_system->SetBodyActivationListener(
+        reinterpret_cast<JPH::BodyActivationListener *>(in_listener));
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void *
@@ -477,7 +485,8 @@ JPH_CAPI JPH_BoxShapeSettings *
 JPH_BoxShapeSettings_Create(const float in_half_extent[3])
 {
     assert(in_half_extent != nullptr);
-    auto settings = new JPH::BoxShapeSettings(JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_half_extent)));
+    auto settings = new JPH::BoxShapeSettings(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_half_extent)));
     settings->AddRef();
     return reinterpret_cast<JPH_BoxShapeSettings *>(settings);
 }
@@ -527,7 +536,7 @@ JPH_SphereShapeSettings_Create(float in_radius)
     settings->AddRef();
     return reinterpret_cast<JPH_SphereShapeSettings *>(settings);
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_SphereShapeSettings_GetRadius(const JPH_SphereShapeSettings *in_settings)
 {
@@ -535,7 +544,7 @@ JPH_SphereShapeSettings_GetRadius(const JPH_SphereShapeSettings *in_settings)
     ENSURE_TYPE(in_settings, JPH::SphereShapeSettings);
     return reinterpret_cast<const JPH::SphereShapeSettings *>(in_settings)->mRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_SphereShapeSettings_SetRadius(JPH_SphereShapeSettings *in_settings, float in_radius)
 {
@@ -559,7 +568,7 @@ JPH_TriangleShapeSettings_Create(const float in_v1[3], const float in_v2[3], con
     settings->AddRef();
     return reinterpret_cast<JPH_TriangleShapeSettings *>(settings);
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_TriangleShapeSettings_SetVertices(JPH_TriangleShapeSettings *in_settings,
                                       const float in_v1[3],
@@ -574,7 +583,7 @@ JPH_TriangleShapeSettings_SetVertices(JPH_TriangleShapeSettings *in_settings,
     settings->mV2 = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v2));
     settings->mV3 = JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_v3));
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_TriangleShapeSettings_GetVertices(const JPH_TriangleShapeSettings *in_settings,
                                       float out_v1[3],
@@ -589,7 +598,7 @@ JPH_TriangleShapeSettings_GetVertices(const JPH_TriangleShapeSettings *in_settin
     settings->mV2.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_v2));
     settings->mV3.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_v3));
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_settings)
 {
@@ -597,9 +606,10 @@ JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_se
     ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
     return reinterpret_cast<const JPH::TriangleShapeSettings *>(in_settings)->mConvexRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings, float in_convex_radius)
+JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings,
+                                          float in_convex_radius)
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::TriangleShapeSettings);
@@ -617,7 +627,7 @@ JPH_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radiu
     settings->AddRef();
     return reinterpret_cast<JPH_CapsuleShapeSettings *>(settings);
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPH_CapsuleShapeSettings *in_settings)
 {
@@ -625,7 +635,7 @@ JPH_CapsuleShapeSettings_GetHalfHeightOfCylinder(const JPH_CapsuleShapeSettings 
     ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
     return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPH_CapsuleShapeSettings *in_settings,
                                                  float in_half_height_of_cylinder)
@@ -635,7 +645,7 @@ JPH_CapsuleShapeSettings_SetHalfHeightOfCylinder(JPH_CapsuleShapeSettings *in_se
     reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mHalfHeightOfCylinder =
         in_half_height_of_cylinder;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_CapsuleShapeSettings_GetRadius(const JPH_CapsuleShapeSettings *in_settings)
 {
@@ -643,13 +653,81 @@ JPH_CapsuleShapeSettings_GetRadius(const JPH_CapsuleShapeSettings *in_settings)
     ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
     return reinterpret_cast<const JPH::CapsuleShapeSettings *>(in_settings)->mRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_CapsuleShapeSettings_SetRadius(JPH_CapsuleShapeSettings *in_settings, float in_radius)
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
     reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mRadius = in_radius;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_ConvexHullShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_ConvexHullShapeSettings *
+JPH_ConvexHullShapeSettings_Create(const float in_points[][4], int in_num_points)
+{
+    assert(in_points != nullptr && in_num_points > 0);
+    assert((reinterpret_cast<intptr_t>(&in_points[0][0]) & 0xf) == 0);
+    auto settings = new JPH::ConvexHullShapeSettings(
+        reinterpret_cast<const JPH::Vec3 *>(&in_points[0][0]), in_num_points);
+    settings->AddRef();
+    return reinterpret_cast<JPH_ConvexHullShapeSettings *>(settings);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetMaxConvexRadius(const JPH_ConvexHullShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetMaxConvexRadius(JPH_ConvexHullShapeSettings *in_settings,
+                                               float in_max_convex_radius)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxConvexRadius =
+        in_max_convex_radius;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetMaxErrorConvexRadius(const JPH_ConvexHullShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mMaxErrorConvexRadius;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetMaxErrorConvexRadius(JPH_ConvexHullShapeSettings *in_settings,
+                                                    float in_max_err_convex_radius)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mMaxErrorConvexRadius =
+        in_max_err_convex_radius;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_ConvexHullShapeSettings_GetHullTolerance(const JPH_ConvexHullShapeSettings *in_settings)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    return reinterpret_cast<const JPH::ConvexHullShapeSettings *>(in_settings)->mHullTolerance;
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_ConvexHullShapeSettings_SetHullTolerance(JPH_ConvexHullShapeSettings *in_settings,
+                                             float in_hull_tolerance)
+{
+    assert(in_settings != nullptr);
+    ENSURE_TYPE(in_settings, JPH::ConvexHullShapeSettings);
+    reinterpret_cast<JPH::ConvexHullShapeSettings *>(in_settings)->mHullTolerance = in_hull_tolerance;
 }
 //--------------------------------------------------------------------------------------------------
 //
@@ -749,8 +827,10 @@ JPH_BodyInterface_CreateAndAddBody(JPH_BodyInterface *in_iface,
     assert(in_iface != nullptr && in_setting != nullptr);
     auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
     auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_setting);
-    const JPH::BodyID body_id = iface->CreateAndAddBody(*settings, static_cast<JPH::EActivation>(in_mode));
-    return *reinterpret_cast<const JPH_BodyID *>(&body_id);
+    const JPH::BodyID body_id = iface->CreateAndAddBody(
+        *settings,
+        static_cast<JPH::EActivation>(in_mode));
+    return body_id.GetIndexAndSequenceNumber();
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI bool
@@ -777,7 +857,8 @@ JPH_BodyInterface_GetLinearVelocity(const JPH_BodyInterface *in_iface,
                                     float out_velocity[3])
 {
     assert(in_iface != nullptr && out_velocity != nullptr);
-    auto v = reinterpret_cast<const JPH::BodyInterface *>(in_iface)->GetLinearVelocity(JPH::BodyID(in_body_id));
+    auto v = reinterpret_cast<const JPH::BodyInterface *>(in_iface)->GetLinearVelocity(
+        JPH::BodyID(in_body_id));
     v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_velocity));
 }
 //--------------------------------------------------------------------------------------------------
@@ -808,7 +889,7 @@ JPH_Body_GetID(const JPH_Body *in_body)
 {
     assert(in_body != nullptr);
     const JPH::BodyID body_id = reinterpret_cast<const JPH::Body *>(in_body)->GetID();
-    return *reinterpret_cast<const JPH_BodyID *>(&body_id);
+    return body_id.GetIndexAndSequenceNumber();
 }
 //--------------------------------------------------------------------------------------------------
 //

@@ -12,7 +12,11 @@ pub fn build(b: *Builder) void {
     test_step.dependOn(&testStepShared(b, mode, target).step);
 }
 
-pub fn testStep(b: *Builder, mode: std.builtin.Mode, target: std.zig.CrossTarget) *std.build.RunStep {
+pub fn testStep(
+    b: *Builder,
+    mode: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.build.RunStep {
     const main_tests = b.addTestExe("glfw_tests", thisDir() ++ "/src/main.zig");
     main_tests.setBuildMode(mode);
     main_tests.setTarget(target);
@@ -21,7 +25,11 @@ pub fn testStep(b: *Builder, mode: std.builtin.Mode, target: std.zig.CrossTarget
     return main_tests.run();
 }
 
-fn testStepShared(b: *Builder, mode: std.builtin.Mode, target: std.zig.CrossTarget) *std.build.RunStep {
+fn testStepShared(
+    b: *Builder,
+    mode: std.builtin.Mode,
+    target: std.zig.CrossTarget,
+) *std.build.RunStep {
     const main_tests = b.addTestExe("glfw_tests_shared", thisDir() ++ "/src/main.zig");
     main_tests.setBuildMode(mode);
     main_tests.setTarget(target);
@@ -74,12 +82,16 @@ pub fn link(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void 
     if (options.shared) step.defineCMacro("GLFW_DLL", null);
 }
 
-fn buildLibrary(b: *Builder, step: *std.build.LibExeObjStep, options: Options) *std.build.LibExeObjStep {
-    // TODO(build-system): https://github.com/hexops/mach/issues/229#issuecomment-1100958939
-    ensureDependencySubmodule(b.allocator, "upstream") catch unreachable;
-
+fn buildLibrary(
+    b: *Builder,
+    step: *std.build.LibExeObjStep,
+    options: Options,
+) *std.build.LibExeObjStep {
     const main_abs = thisDir() ++ "/src/main.zig";
-    const lib = if (options.shared) b.addSharedLibrary("glfw", main_abs, .unversioned) else b.addStaticLibrary("glfw", main_abs);
+    const lib = if (options.shared)
+        b.addSharedLibrary("glfw", main_abs, .unversioned)
+    else
+        b.addStaticLibrary("glfw", main_abs);
     lib.setBuildMode(step.build_mode);
     lib.setTarget(step.target);
     addGLFWIncludes(lib);
@@ -98,8 +110,16 @@ fn addGLFWIncludes(step: *std.build.LibExeObjStep) void {
     step.addIncludeDir(thisDir() ++ "/upstream/vulkan_headers/include");
 }
 
-fn addGLFWSources(b: *Builder, step: *std.build.LibExeObjStep, lib: *std.build.LibExeObjStep, options: Options) void {
-    const target = (std.zig.system.NativeTargetInfo.detect(b.allocator, step.target) catch unreachable).target;
+fn addGLFWSources(
+    b: *Builder,
+    step: *std.build.LibExeObjStep,
+    lib: *std.build.LibExeObjStep,
+    options: Options,
+) void {
+    const target = (std.zig.system.NativeTargetInfo.detect(
+        b.allocator,
+        step.target,
+    ) catch unreachable).target;
     const include_glfw_src = "-I" ++ thisDir() ++ "/upstream/glfw/src";
     switch (target.os.tag) {
         .windows => lib.addCSourceFiles(&.{
@@ -140,18 +160,6 @@ fn addGLFWSources(b: *Builder, step: *std.build.LibExeObjStep, lib: *std.build.L
     }
 }
 
-fn ensureDependencySubmodule(allocator: std.mem.Allocator, path: []const u8) !void {
-    if (std.process.getEnvVarOwned(allocator, "NO_ENSURE_SUBMODULES")) |no_ensure_submodules| {
-        if (std.mem.eql(u8, no_ensure_submodules, "true")) return;
-    } else |_| {}
-    var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", path }, allocator);
-    child.cwd = thisDir();
-    child.stderr = std.io.getStdErr();
-    child.stdout = std.io.getStdOut();
-
-    _ = try child.spawnAndWait();
-}
-
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
@@ -160,7 +168,10 @@ fn linkGLFWDependencies(b: *Builder, step: *std.build.LibExeObjStep, options: Op
     step.linkLibC();
     // TODO(build-system): pass system SDK options through
     system_sdk.include(b, step, .{});
-    const target = (std.zig.system.NativeTargetInfo.detect(b.allocator, step.target) catch unreachable).target;
+    const target = (std.zig.system.NativeTargetInfo.detect(
+        b.allocator,
+        step.target,
+    ) catch unreachable).target;
     switch (target.os.tag) {
         .windows => {
             step.linkSystemLibraryName("gdi32");
