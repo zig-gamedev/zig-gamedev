@@ -129,7 +129,7 @@ const UnixPlatform = struct {
 
 pub inline fn HOST_TO_NET(a: anytype) @TypeOf(a) {
     if (builtin.endian == .little) {
-        return @byteSwap(@TypeOf(a), a);
+        return @byteSwap(a);
     } else {
         return a;
     }
@@ -137,7 +137,7 @@ pub inline fn HOST_TO_NET(a: anytype) @TypeOf(a) {
 
 pub inline fn NET_TO_HOST(a: anytype) @TypeOf(a) {
     if (builtin.endian == .little) {
-        return @byteSwap(@TypeOf(a), a);
+        return @byteSwap(a);
     } else {
         return a;
     }
