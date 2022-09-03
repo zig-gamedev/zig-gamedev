@@ -121,6 +121,12 @@ pub fn build(b: *std.build.Builder) void {
         options.target,
     );
     test_step.dependOn(&zjolt_tests.step);
+    const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
+    test_step.dependOn(&zglfw_tests.step);
 
     if (@import("builtin").zig_backend == .stage1) {
         const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(
