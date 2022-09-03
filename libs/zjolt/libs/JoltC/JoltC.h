@@ -583,7 +583,7 @@ JPH_BodyInterface_RemoveBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id)
 
 JPH_CAPI JPH_BodyID
 JPH_BodyInterface_CreateAndAddBody(JPH_BodyInterface *in_iface,
-                                   const JPH_BodyCreationSettings *in_setting,
+                                   const JPH_BodyCreationSettings *in_settings,
                                    JPH_Activation in_mode);
 JPH_CAPI bool
 JPH_BodyInterface_IsAdded(const JPH_BodyInterface *in_iface, JPH_BodyID in_body_id);

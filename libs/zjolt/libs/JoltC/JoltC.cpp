@@ -821,12 +821,12 @@ JPH_BodyInterface_RemoveBody(JPH_BodyInterface *in_iface, JPH_BodyID in_body_id)
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BodyID
 JPH_BodyInterface_CreateAndAddBody(JPH_BodyInterface *in_iface,
-                                   const JPH_BodyCreationSettings *in_setting,
+                                   const JPH_BodyCreationSettings *in_settings,
                                    JPH_Activation in_mode)
 {
-    assert(in_iface != nullptr && in_setting != nullptr);
+    assert(in_iface != nullptr && in_settings != nullptr);
     auto iface = reinterpret_cast<JPH::BodyInterface *>(in_iface);
-    auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_setting);
+    auto settings = reinterpret_cast<const JPH::BodyCreationSettings *>(in_settings);
     const JPH::BodyID body_id = iface->CreateAndAddBody(
         *settings,
         static_cast<JPH::EActivation>(in_mode));
