@@ -165,6 +165,13 @@ pub fn getWin32Adapter(monitor: Monitor) Error![*:0]const u8 {
 }
 extern fn glfwGetWin32Adapter(monitor: Monitor) ?[*:0]const u8;
 
+pub fn getWin32Window(window: Window) Error!std.os.windows.HWND {
+    if (glfwGetWin32Window(window)) |hwnd| return hwnd;
+    try maybeError();
+    unreachable;
+}
+extern fn glfwGetWin32Window(window: Window) ?std.os.windows.HWND;
+
 pub fn getX11Adapter(monitor: Monitor) Error!u32 {
     const adapter = glfwGetX11Adapter(monitor);
     if (adapter != 0) return adapter;
@@ -172,6 +179,28 @@ pub fn getX11Adapter(monitor: Monitor) Error!u32 {
     unreachable;
 }
 extern fn glfwGetX11Adapter(monitor: Monitor) u32;
+
+pub fn getX11Display() Error!*anyopaque {
+    if (glfwGetX11Display()) |display| return display;
+    try maybeError();
+    unreachable;
+}
+extern fn glfwGetX11Display() ?*anyopaque;
+
+pub fn getX11Window(window: Window) Error!u32 {
+    const window_native = glfwGetX11Window(window);
+    if (window_native != 0) return window_native;
+    try maybeError();
+    unreachable;
+}
+extern fn glfwGetX11Window(window: Window) u32;
+
+pub fn getCocoaWindow(window: Window) Error!*anyopaque {
+    if (glfwGetCocoaWindow(window)) |window_native| return window_native;
+    try maybeError();
+    unreachable;
+}
+extern fn glfwGetCocoaWindow(window: Window) ?*anyopaque;
 //--------------------------------------------------------------------------------------------------
 //
 // Test
@@ -209,6 +238,15 @@ test "zglfw.basic" {
     windowHint(.client_api, 0);
     const window = try createWindow(200, 200, "test", null, null);
     defer window.destroy();
+
+    const window_native = try switch (@import("builtin").target.os.tag) {
+        .windows => getWin32Window(window),
+        .linux => getX11Window(window),
+        .macos => getCocoaWindow(window),
+        else => unreachable,
+    };
+    _ = window_native;
+
     window.setSizeLimits(10, 10, 300, 300);
     const content_scale = window.getContentScale();
     _ = content_scale.x;
