@@ -12,6 +12,24 @@ extern fn glfwTerminate() void;
 
 pub const pollEvents = glfwPollEvents;
 extern fn glfwPollEvents() void;
+
+pub fn vulkanSupported() bool {
+    return if (glfwVulkanSupported() == 0) false else true;
+}
+extern fn glfwVulkanSupported() i32;
+
+pub fn getRequiredInstanceExtensions() Error![][*:0]const u8 {
+    var count: u32 = 0;
+    if (glfwGetRequiredInstanceExtensions(&count)) |extensions| {
+        return @ptrCast([*][*:0]const u8, extensions)[0..count];
+    }
+    try maybeError();
+    unreachable;
+}
+extern fn glfwGetRequiredInstanceExtensions(count: *u32) ?*?[*:0]const u8;
+
+pub const getTime = glfwGetTime;
+extern fn glfwGetTime() f64;
 //--------------------------------------------------------------------------------------------------
 //
 // Error
@@ -118,11 +136,9 @@ pub fn createWindow(
     monitor: ?Monitor,
     share: ?Window,
 ) Error!Window {
-    const window = glfwCreateWindow(width, height, title, monitor, share);
-    if (window == null) {
-        try maybeError();
-    }
-    return window.?;
+    if (glfwCreateWindow(width, height, title, monitor, share)) |window| return window;
+    try maybeError();
+    unreachable;
 }
 extern fn glfwCreateWindow(
     width: i32,
@@ -139,6 +155,25 @@ pub const defaultWindowHints = glfwDefaultWindowHints;
 extern fn glfwDefaultWindowHints() void;
 //--------------------------------------------------------------------------------------------------
 //
+// Native
+//
+//--------------------------------------------------------------------------------------------------
+pub fn getWin32Adapter(monitor: Monitor) Error![*:0]const u8 {
+    if (glfwGetWin32Adapter(monitor)) |adapter| return adapter;
+    try maybeError();
+    unreachable;
+}
+extern fn glfwGetWin32Adapter(monitor: Monitor) ?[*:0]const u8;
+
+pub fn getX11Adapter(monitor: Monitor) Error!u32 {
+    const adapter = glfwGetX11Adapter(monitor);
+    if (adapter != 0) return adapter;
+    try maybeError();
+    unreachable;
+}
+extern fn glfwGetX11Adapter(monitor: Monitor) u32;
+//--------------------------------------------------------------------------------------------------
+//
 // Test
 //
 //--------------------------------------------------------------------------------------------------
@@ -148,13 +183,25 @@ test "zglfw.basic" {
     try init();
     defer terminate();
 
+    _ = vulkanSupported();
+    _ = try getRequiredInstanceExtensions();
+
+    _ = getTime();
+
     const primary_monitor = getPrimaryMonitor();
-    if (primary_monitor) |pm| {
+    if (primary_monitor) |monitor| {
         const monitors = getMonitors().?;
-        try expect(pm == monitors[0]);
-        const pos = pm.getPos();
+        try expect(monitor == monitors[0]);
+        const pos = monitor.getPos();
         _ = pos.x;
         _ = pos.y;
+
+        const adapter = try switch (@import("builtin").target.os.tag) {
+            .windows => getWin32Adapter(monitor),
+            .linux => getX11Adapter(monitor),
+            else => unreachable,
+        };
+        _ = adapter;
     }
 
     defaultWindowHints();
