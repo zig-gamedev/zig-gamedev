@@ -1,6 +1,8 @@
 const std = @import("std");
 const system_sdk = @import("system_sdk.zig");
 
+pub fn build(_: *std.build.Builder) void {}
+
 pub fn buildTests(
     b: *std.build.Builder,
     build_mode: std.builtin.Mode,
