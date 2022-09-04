@@ -1191,8 +1191,10 @@ ZGUI_API bool zguiIsAnyItemFocused(void) {
     return ImGui::IsAnyItemFocused();
 }
 
-ZGUI_API float zguiGetContentRegionAvailWidth(void) {
-    return ImGui::GetContentRegionAvail().x;
+ZGUI_API void zguiGetContentRegionAvail(float pos[2]) {
+    const ImVec2 p = ImGui::GetContentRegionAvail();
+    pos[0] = p.x;
+    pos[1] = p.y;
 }
 
 ZGUI_API void zguiPushTextWrapPos(float wrap_pos_x) {
@@ -1215,59 +1217,46 @@ ZGUI_API void zguiEndTabBar() {
     ImGui::EndTabBar();
 }
 
-// IMPLOT FUNCTIONS
-ZGUI_API void zguiShowPlotDemoWindow(bool* p_open) {
+ZGUI_API void zguipShowDemoWindow(bool* p_open) {
     ImPlot::ShowDemoWindow(p_open);
 }
 
-ZGUI_API ImPlotContext* zguiCreatePlotContext(){
+ZGUI_API ImPlotContext* zguipCreateContext(){
     return ImPlot::CreateContext();
 }
 
-ZGUI_API void zguiDestroyPlotContext(ImPlotContext* ctx = NULL){
+ZGUI_API void zguipDestroyContext(ImPlotContext* ctx = NULL){
     ImPlot::DestroyContext(ctx);
 }
 
-ZGUI_API ImPlotContext* zguiGetCurrentPlotContext(){
+ZGUI_API ImPlotContext* zguipGetCurrentContext(){
     return ImPlot::GetCurrentContext();
 }
 
-ZGUI_API void zguiSetCurrentPlotContext(ImPlotContext* ctx){
+ZGUI_API void zguipSetCurrentContext(ImPlotContext* ctx){
     ImPlot::SetCurrentContext(ctx);
 }
 
-ZGUI_API void zguiSetupLegend(){
-    ImPlot::SetupLegend(ImPlotLocation_North | ImPlotLocation_West, ImPlotLegendFlags_None);
+ZGUI_API void zguipSetupLegend(ImPlotLocation location, ImPlotLegendFlags flags){
+    ImPlot::SetupLegend(location, flags);
 }
 
-ZGUI_API void zguiSetupAxes(const char* x, const char* y){
-    ImPlot::SetupAxes(x, y, ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+ZGUI_API void zguipSetupXAxis(const char* label, ImPlotAxisFlags flags){
+    ImPlot::SetupAxis(ImAxis_X1, label, flags);
 }
 
-ZGUI_API void zguiSetupXAxisLimits(double v_min, double v_max){
-    ImPlot::SetupAxisLimits(0, v_min, v_max, ImGuiCond_Always);
+ZGUI_API void zguipSetupYAxis(const char* label, ImPlotAxisFlags flags){
+    ImPlot::SetupAxis(ImAxis_Y1, label, flags);
 }
 
-ZGUI_API void zguiSetupYAxisLimits(double v_min, double v_max){
-    ImPlot::SetupAxisLimits(3, v_min, v_max, ImGuiCond_Always);
+ZGUI_API bool zguipBeginPlot(const char* title_id, float width, float height, ImPlotFlags flags) {
+    return ImPlot::BeginPlot(title_id, { width, height }, flags);
 }
 
-ZGUI_API bool zguiBeginPlot(const char* title_id, float width, float height) {
-    return ImPlot::BeginPlot(title_id, { width, height });
+ZGUI_API void zguipPlotLineValues(const char* label_id, const int* values, int count, ImPlotLineFlags flags){
+    ImPlot::PlotLine(label_id, values, count, 1, 0, flags, 0, sizeof(int));
 }
 
-ZGUI_API void zguiPlotBars(const char* label_id, const float* values, int count, double bar_size=0.67, double shift=0, ImPlotBarsFlags flags=0, int offset=0, int stride=sizeof(float)){
-    ImPlot::PlotBars(label_id, values, count);
-}
-
-ZGUI_API void zguiPlotLine(const char* label_id, const float* xs, const float* ys, int count, ImPlotLineFlags flags, int offset, int stride){
-    ImPlot::PlotLine(label_id, xs, ys, count, flags, offset, stride);
-}
-
-ZGUI_API void zguiPlotLineValues(const char* label_id, const int* values, int count){
-    ImPlot::PlotLine(label_id, values, count);
-}
-
-ZGUI_API void zguiEndPlot() {
+ZGUI_API void zguipEnd() {
     ImPlot::EndPlot();
 }
