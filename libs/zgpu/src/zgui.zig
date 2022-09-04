@@ -11,11 +11,12 @@ pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
 pub fn init() void {
     if (getCurrentContext() == null) {
         _ = zguiCreateContext(null);
-        _ = createPlotContext(null);
+        _ = zguipCreateContext(null);
         temp_buffer.resize(3 * 1024 + 1) catch unreachable;
     }
 }
 extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
+extern fn zguipCreateContext(shared_font_atlas: ?*const anyopaque) ?Context;
 
 pub fn deinit() void {
     if (getCurrentContext() != null) {
@@ -25,17 +26,10 @@ pub fn deinit() void {
     }
 }
 extern fn zguiDestroyContext(ctx: ?Context) void;
+extern fn zguipDestroyContext(ctx: ?Context) void;
 
 const getCurrentContext = zguiGetCurrentContext;
 extern fn zguiGetCurrentContext() ?Context;
-
-/// `fn createPlotContext(shared_font_atlas: ?*const anyopaque) ?Context`
-const createPlotContext = zguipCreateContext;
-extern fn zguipCreateContext(shared_font_atlas: ?*const anyopaque) ?Context;
-
-/// `fn destroyPlotContext(ctx: ?Context) void`
-const destroyPlotContext = zguipDestroyContext;
-extern fn zguipDestroyContext(ctx: ?Context) void;
 //--------------------------------------------------------------------------------------------------
 pub const io = struct {
     pub fn addFontFromFile(filename: [:0]const u8, size_pixels: f32) Font {
