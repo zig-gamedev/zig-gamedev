@@ -71,6 +71,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     // Once frame is started (after `newFrame()` call) you have to use
     // zgui.pushStyleColor*()/zgui.pushStyleVar*() functions.
     const style = zgui.getStyle();
+
     style.window_min_size = .{ 320.0, 240.0 };
     style.window_border_size = 8.0;
     style.scrollbar_size = 6.0;

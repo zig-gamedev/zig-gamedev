@@ -1630,10 +1630,7 @@ pub const stbi = struct {
 const SurfaceDescriptorTag = enum {
     metal_layer,
     windows_hwnd,
-    windows_core_window,
-    windows_swap_chain_panel,
     xlib,
-    canvas_html_selector,
 };
 
 const SurfaceDescriptor = union(SurfaceDescriptorTag) {
@@ -1646,22 +1643,10 @@ const SurfaceDescriptor = union(SurfaceDescriptorTag) {
         hinstance: *anyopaque,
         hwnd: *anyopaque,
     },
-    windows_core_window: struct {
-        label: ?[*:0]const u8 = null,
-        core_window: *anyopaque,
-    },
-    windows_swap_chain_panel: struct {
-        label: ?[*:0]const u8 = null,
-        swap_chain_panel: *anyopaque,
-    },
     xlib: struct {
         label: ?[*:0]const u8 = null,
         display: *anyopaque,
         window: u32,
-    },
-    canvas_html_selector: struct {
-        label: ?[*:0]const u8 = null,
-        selector: [*:0]const u8,
     },
 };
 
@@ -1702,10 +1687,6 @@ pub fn createSurfaceForWindow(instance: wgpu.Instance, window: glfw.Window) wgpu
         };
     } else unreachable;
 
-    return createSurface(instance, descriptor);
-}
-
-fn createSurface(instance: wgpu.Instance, descriptor: SurfaceDescriptor) wgpu.Surface {
     return switch (descriptor) {
         .metal_layer => |src| blk: {
             var desc: wgpu.SurfaceDescriptorFromMetalLayer = undefined;
@@ -1739,7 +1720,6 @@ fn createSurface(instance: wgpu.Instance, descriptor: SurfaceDescriptor) wgpu.Su
                 .label = if (src.label) |l| l else null,
             });
         },
-        else => unreachable,
     };
 }
 
@@ -1778,7 +1758,12 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
     } else switch (args_meta.len) {
         0 => *const fn (@TypeOf(obj), objc.SEL) callconv(.C) ReturnType,
         1 => *const fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type) callconv(.C) ReturnType,
-        2 => *const fn (@TypeOf(obj), objc.SEL, args_meta[0].field_type, args_meta[1].field_type) callconv(.C) ReturnType,
+        2 => *const fn (
+            @TypeOf(obj),
+            objc.SEL,
+            args_meta[0].field_type,
+            args_meta[1].field_type,
+        ) callconv(.C) ReturnType,
         3 => *const fn (
             @TypeOf(obj),
             objc.SEL,
