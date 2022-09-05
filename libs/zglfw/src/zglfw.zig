@@ -226,10 +226,10 @@ test "zglfw.basic" {
         _ = pos.x;
         _ = pos.y;
 
-        const adapter = try switch (@import("builtin").target.os.tag) {
-            .windows => getWin32Adapter(monitor),
-            .linux => getX11Adapter(monitor),
-            else => unreachable,
+        const adapter = switch (@import("builtin").target.os.tag) {
+            .windows => try getWin32Adapter(monitor),
+            .linux => try getX11Adapter(monitor),
+            else => {},
         };
         _ = adapter;
     }
