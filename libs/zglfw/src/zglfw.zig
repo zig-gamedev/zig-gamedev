@@ -288,6 +288,22 @@ pub const Window = *opaque {
         return .{ .x = xpos, .y = ypos };
     }
     extern fn glfwGetCursorPos(window: Window, xpos: *f64, ypos: *f64) void;
+
+    pub fn getFramebufferSize(window: Window) struct { w: i32, h: i32 } {
+        var width: i32 = 0.0;
+        var height: i32 = 0.0;
+        glfwGetFramebufferSize(window, &width, &height);
+        return .{ .w = width, .h = height };
+    }
+    extern fn glfwGetFramebufferSize(window: Window, width: *i32, height: *i32) void;
+
+    pub fn getSize(window: Window) struct { w: i32, h: i32 } {
+        var width: i32 = 0.0;
+        var height: i32 = 0.0;
+        glfwGetWindowSize(window, &width, &height);
+        return .{ .w = width, .h = height };
+    }
+    extern fn glfwGetWindowSize(window: Window, width: *i32, height: *i32) void;
 };
 
 pub fn createWindow(

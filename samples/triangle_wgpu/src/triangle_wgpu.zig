@@ -1,6 +1,6 @@
 const std = @import("std");
 const math = std.math;
-const glfw = @import("glfw");
+const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
@@ -53,7 +53,7 @@ const DemoState = struct {
     depth_texture_view: zgpu.TextureViewHandle,
 };
 
-fn init(allocator: std.mem.Allocator, window: glfw.Window) !DemoState {
+fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
     const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
     // Create a bind group layout needed for our render pipeline.
@@ -303,20 +303,20 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 }
 
 pub fn main() !void {
-    try glfw.init(.{});
-    defer glfw.terminate();
+    try zglfw.init();
+    defer zglfw.terminate();
 
     zgpu.checkSystem(content_dir) catch {
         // In case of error zgpu.checkSystem() will print error message.
         return;
     };
 
-    const window = try glfw.Window.create(1600, 1000, window_title, null, null, .{
-        .client_api = .no_api,
-        .cocoa_retina_framebuffer = true,
-    });
+    zglfw.defaultWindowHints();
+    zglfw.windowHint(.cocoa_retina_framebuffer, 1);
+    zglfw.windowHint(.client_api, 0);
+    const window = try zglfw.createWindow(1600, 1000, window_title, null, null);
     defer window.destroy();
-    try window.setSizeLimits(.{ .width = 400, .height = 400 }, .{ .width = null, .height = null });
+    window.setSizeLimits(400, 400, -1, -1);
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -327,8 +327,8 @@ pub fn main() !void {
     defer deinit(allocator, &demo);
 
     const scale_factor = scale_factor: {
-        const cs = try window.getContentScale();
-        break :scale_factor math.max(cs.x_scale, cs.y_scale);
+        const scale = window.getContentScale();
+        break :scale_factor math.max(scale.x, scale.y);
     };
 
     zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
@@ -337,7 +337,7 @@ pub fn main() !void {
     zgui.getStyle().scaleAllSizes(scale_factor);
 
     while (!window.shouldClose()) {
-        try glfw.pollEvents();
+        zglfw.pollEvents();
         update(&demo);
         draw(&demo);
     }

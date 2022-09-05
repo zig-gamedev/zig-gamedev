@@ -13,18 +13,20 @@ pub fn build(b: *std.build.Builder) void {
     // Cross-platform demos
     //
     if (!builtin.is_test) {
-        installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-        installDemo(b, network_test.build(b, options), "network_test");
-        installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
         installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
+        installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
         installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
+        installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
+        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+        installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
         installDemo(
             b,
             physically_based_rendering_wgpu.build(b, options),
             "physically_based_rendering_wgpu",
         );
-        installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
-        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+        if (@import("builtin").zig_backend == .stage1) {
+            installDemo(b, network_test.build(b, options), "network_test");
+        }
     }
 
     //
@@ -83,44 +85,54 @@ pub fn build(b: *std.build.Builder) void {
         options.target,
     );
     test_step.dependOn(&zpool_tests.step);
+
     const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(
         b,
         options.build_mode,
         options.target,
     );
+    zglfw.link(zgpu_tests);
     test_step.dependOn(&zgpu_tests.step);
+
     const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmath_tests.step);
+
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(
         b,
         options.build_mode,
         options.target,
     );
+    zbullet_tests.addPackage(zmath.pkg);
     test_step.dependOn(&zbullet_tests.step);
+
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(
         b,
         options.build_mode,
         options.target,
     );
     test_step.dependOn(&znoise_tests.step);
+
     const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(
         b,
         options.build_mode,
         options.target,
     );
     test_step.dependOn(&zmesh_tests.step);
+
     const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(
         b,
         options.build_mode,
         options.target,
     );
     test_step.dependOn(&zaudio_tests.step);
+
     const zjolt_tests = @import("libs/zjolt/build.zig").buildTests(
         b,
         options.build_mode,
         options.target,
     );
     test_step.dependOn(&zjolt_tests.step);
+
     const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(
         b,
         options.build_mode,
@@ -150,6 +162,7 @@ pub fn build(b: *std.build.Builder) void {
 }
 
 const zmath = @import("libs/zmath/build.zig");
+const zglfw = @import("libs/zglfw/build.zig");
 
 const audio_experiments = @import("samples/audio_experiments/build.zig");
 const audio_playback_test = @import("samples/audio_playback_test/build.zig");

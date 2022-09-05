@@ -20,11 +20,6 @@ pub fn buildTests(
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
     const tests = b.addTest(thisDir() ++ "/src/zbullet.zig");
-    const zmath = std.build.Pkg{
-        .name = "zmath",
-        .source = .{ .path = thisDir() ++ "/../zmath/src/zmath.zig" },
-    };
-    tests.addPackage(zmath);
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     link(tests);

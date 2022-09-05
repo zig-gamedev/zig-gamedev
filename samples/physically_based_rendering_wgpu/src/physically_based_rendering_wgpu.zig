@@ -1,7 +1,7 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const glfw = @import("glfw");
+const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
@@ -99,7 +99,8 @@ const DemoState = struct {
         yaw: f32 = math.pi + 0.25 * math.pi,
     } = .{},
     mouse: struct {
-        cursor: glfw.Window.CursorPos = .{ .xpos = 0.0, .ypos = 0.0 },
+        cursor_pos_x: f64 = 0.0,
+        cursor_pos_y: f64 = 0.0,
     } = .{},
 };
 
@@ -162,7 +163,7 @@ fn loadAllMeshes(
     }
 }
 
-fn init(allocator: std.mem.Allocator, window: glfw.Window) !*DemoState {
+fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     const gctx = try zgpu.GraphicsContext.init(allocator, window);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
@@ -547,11 +548,11 @@ fn update(demo: *DemoState) void {
 
     // Handle camera rotation with mouse.
     {
-        const cursor = window.getCursorPos() catch unreachable;
-        const delta_x = @floatCast(f32, cursor.xpos - demo.mouse.cursor.xpos);
-        const delta_y = @floatCast(f32, cursor.ypos - demo.mouse.cursor.ypos);
-        demo.mouse.cursor.xpos = cursor.xpos;
-        demo.mouse.cursor.ypos = cursor.ypos;
+        const cursor_pos = window.getCursorPos();
+        const delta_x = @floatCast(f32, cursor_pos.x - demo.mouse.cursor_pos_x);
+        const delta_y = @floatCast(f32, cursor_pos.y - demo.mouse.cursor_pos_y);
+        demo.mouse.cursor_pos_x = cursor_pos.x;
+        demo.mouse.cursor_pos_y = cursor_pos.y;
 
         if (window.getMouseButton(.left) == .press) {
             demo.mesh_yaw += 0.0025 * delta_x;
@@ -1073,20 +1074,20 @@ fn createRenderPipe(
 }
 
 pub fn main() !void {
-    try glfw.init(.{});
-    defer glfw.terminate();
+    try zglfw.init();
+    defer zglfw.terminate();
 
     zgpu.checkSystem(content_dir) catch {
         // In case of error zgpu.checkSystem() will print error message.
         return;
     };
 
-    const window = try glfw.Window.create(1600, 1000, window_title, null, null, .{
-        .client_api = .no_api,
-        .cocoa_retina_framebuffer = true,
-    });
+    zglfw.defaultWindowHints();
+    zglfw.windowHint(.cocoa_retina_framebuffer, 1);
+    zglfw.windowHint(.client_api, 0);
+    const window = try zglfw.createWindow(1600, 1000, window_title, null, null);
     defer window.destroy();
-    try window.setSizeLimits(.{ .width = 400, .height = 400 }, .{ .width = null, .height = null });
+    window.setSizeLimits(400, 400, -1, -1);
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -1097,8 +1098,8 @@ pub fn main() !void {
     defer deinit(allocator, demo);
 
     const scale_factor = scale_factor: {
-        const cs = try window.getContentScale();
-        break :scale_factor math.max(cs.x_scale, cs.y_scale);
+        const scale = window.getContentScale();
+        break :scale_factor math.max(scale.x, scale.y);
     };
 
     zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
@@ -1107,7 +1108,7 @@ pub fn main() !void {
     zgui.getStyle().scaleAllSizes(scale_factor);
 
     while (!window.shouldClose()) {
-        try glfw.pollEvents();
+        zglfw.pollEvents();
         update(demo);
         draw(demo);
     }

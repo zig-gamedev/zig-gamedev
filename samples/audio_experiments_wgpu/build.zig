@@ -3,6 +3,7 @@ const zgpu = @import("../../libs/zgpu/build.zig");
 const zmath = @import("../../libs/zmath/build.zig");
 const zpool = @import("../../libs/zpool/build.zig");
 const zaudio = @import("../../libs/zaudio/build.zig");
+const zglfw = @import("../../libs/zglfw/build.zig");
 
 const Options = @import("../../build.zig").Options;
 
@@ -27,14 +28,16 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg });
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
 
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(zaudio.pkg);
+    exe.addPackage(zglfw.pkg);
 
     zgpu.link(exe, zgpu_options);
     zaudio.link(exe);
+    zglfw.link(exe);
 
     return exe;
 }

@@ -9,7 +9,7 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const glfw = @import("glfw");
+const glfw = @import("zglfw");
 const wgsl = @import("common_wgsl.zig");
 pub const wgpu = @import("wgpu.zig");
 pub const zgui = @import("zgui.zig");
@@ -148,14 +148,14 @@ pub const GraphicsContext = struct {
         const surface = createSurfaceForWindow(instance, window);
         errdefer surface.release();
 
-        const framebuffer_size = try window.getFramebufferSize();
+        const framebuffer_size = window.getFramebufferSize();
 
         const swapchain_descriptor = wgpu.SwapChainDescriptor{
             .label = "main window swap chain",
             .usage = .{ .render_attachment = true },
             .format = swapchain_format,
-            .width = framebuffer_size.width,
-            .height = framebuffer_size.height,
+            .width = @intCast(u32, framebuffer_size.w),
+            .height = @intCast(u32, framebuffer_size.h),
             .present_mode = .fifo,
             .implementation = 0,
         };
@@ -390,12 +390,12 @@ pub const GraphicsContext = struct {
     } {
         gctx.swapchain.present();
 
-        const fb_size = gctx.window.getFramebufferSize() catch unreachable;
-        if (gctx.swapchain_descriptor.width != fb_size.width or
-            gctx.swapchain_descriptor.height != fb_size.height)
+        const fb_size = gctx.window.getFramebufferSize();
+        if (gctx.swapchain_descriptor.width != fb_size.w or
+            gctx.swapchain_descriptor.height != fb_size.h)
         {
-            gctx.swapchain_descriptor.width = fb_size.width;
-            gctx.swapchain_descriptor.height = fb_size.height;
+            gctx.swapchain_descriptor.width = @intCast(u32, fb_size.w);
+            gctx.swapchain_descriptor.height = @intCast(u32, fb_size.h);
             gctx.swapchain.release();
 
             gctx.swapchain = gctx.device.createSwapChain(gctx.surface, gctx.swapchain_descriptor);
@@ -1473,7 +1473,7 @@ pub const gui = struct {
     ) void {
         zgui.init();
 
-        if (!ImGui_ImplGlfw_InitForOther(window.handle, true)) {
+        if (!ImGui_ImplGlfw_InitForOther(window, true)) {
             unreachable;
         }
 
@@ -1665,36 +1665,23 @@ const SurfaceDescriptor = union(SurfaceDescriptorTag) {
     },
 };
 
-fn detectGLFWOptions() glfw.BackendOptions {
-    const target = @import("builtin").target;
-    if (target.isDarwin()) return .{ .cocoa = true };
-    return switch (target.os.tag) {
-        .windows => .{ .win32 = true },
-        .linux => .{ .x11 = true },
-        else => .{},
-    };
-}
+pub fn createSurfaceForWindow(instance: wgpu.Instance, window: glfw.Window) wgpu.Surface {
+    const os_tag = @import("builtin").target.os.tag;
 
-pub fn createSurfaceForWindow(
-    instance: wgpu.Instance,
-    window: glfw.Window,
-) wgpu.Surface {
-    comptime var glfw_options = detectGLFWOptions();
-    const glfw_native = glfw.Native();
-    const descriptor = if (glfw_options.win32) SurfaceDescriptor{
+    const descriptor = if (os_tag == .windows) SurfaceDescriptor{
         .windows_hwnd = .{
             .label = "basic surface",
             .hinstance = std.os.windows.kernel32.GetModuleHandleW(null).?,
-            .hwnd = glfw_native.getWin32Window(window),
+            .hwnd = glfw.getWin32Window(window) catch unreachable,
         },
-    } else if (glfw_options.x11) SurfaceDescriptor{
+    } else if (os_tag == .linux) SurfaceDescriptor{
         .xlib = .{
             .label = "basic surface",
-            .display = glfw_native.getX11Display(),
-            .window = glfw_native.getX11Window(window),
+            .display = glfw.getX11Display() catch unreachable,
+            .window = glfw.getX11Window(window) catch unreachable,
         },
-    } else if (glfw_options.cocoa) blk: {
-        const ns_window = glfw_native.getCocoaWindow(window);
+    } else if (os_tag == .macos) blk: {
+        const ns_window = glfw.getCocoaWindow(window) catch unreachable;
         const ns_view = msgSend(ns_window, "contentView", .{}, *anyopaque); // [nsWindow contentView]
 
         // Create a CAMetalLayer that covers the whole window that will be passed to CreateSurface.
@@ -1713,9 +1700,6 @@ pub fn createSurfaceForWindow(
                 .layer = layer.?,
             },
         };
-    } else if (glfw_options.wayland) {
-        // bugs.chromium.org/p/dawn/issues/detail?id=1246&q=surface&can=2
-        @panic("Dawn does not yet have Wayland support");
     } else unreachable;
 
     return createSurface(instance, descriptor);
@@ -1744,26 +1728,6 @@ fn createSurface(instance: wgpu.Instance, descriptor: SurfaceDescriptor) wgpu.Su
                 .label = if (src.label) |l| l else null,
             });
         },
-        .windows_core_window => |src| blk: {
-            var desc: wgpu.SurfaceDescriptorFromWindowsCoreWindow = undefined;
-            desc.chain.next = null;
-            desc.chain.struct_type = .surface_descriptor_from_windows_core_window;
-            desc.core_window = src.core_window;
-            break :blk instance.createSurface(.{
-                .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &desc),
-                .label = if (src.label) |l| l else null,
-            });
-        },
-        .windows_swap_chain_panel => |src| blk: {
-            var desc: wgpu.SurfaceDescriptorFromWindowsSwapChainPanel = undefined;
-            desc.chain.next = null;
-            desc.chain.struct_type = .surface_descriptor_from_windows_swap_chain_panel;
-            desc.swap_chain_panel = src.swap_chain_panel;
-            break :blk instance.createSurface(.{
-                .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &desc),
-                .label = if (src.label) |l| l else null,
-            });
-        },
         .xlib => |src| blk: {
             var desc: wgpu.SurfaceDescriptorFromXlibWindow = undefined;
             desc.chain.next = null;
@@ -1775,16 +1739,7 @@ fn createSurface(instance: wgpu.Instance, descriptor: SurfaceDescriptor) wgpu.Su
                 .label = if (src.label) |l| l else null,
             });
         },
-        .canvas_html_selector => |src| blk: {
-            var desc: wgpu.SurfaceDescriptorFromCanvasHTMLSelector = undefined;
-            desc.chain.next = null;
-            desc.chain.struct_type = .surface_descriptor_from_canvas_html_selector;
-            desc.selector = src.selector;
-            break :blk instance.createSurface(.{
-                .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &desc),
-                .label = if (src.label) |l| l else null,
-            });
-        },
+        else => unreachable,
     };
 }
 
