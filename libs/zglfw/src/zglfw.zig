@@ -1,9 +1,9 @@
 const std = @import("std");
 
 pub fn init() Error!void {
-    if (glfwInit() == 0) {
-        try maybeError();
-    }
+    if (glfwInit() != 0) return;
+    try maybeError();
+    unreachable;
 }
 extern fn glfwInit() i32;
 
@@ -30,6 +30,153 @@ extern fn glfwGetRequiredInstanceExtensions(count: *u32) ?*?[*:0]const u8;
 
 pub const getTime = glfwGetTime;
 extern fn glfwGetTime() f64;
+//--------------------------------------------------------------------------------------------------
+//
+// Keyboard/Mouse
+//
+//--------------------------------------------------------------------------------------------------
+pub const Action = enum(i32) {
+    release,
+    press,
+    repeat,
+};
+
+pub const MouseButton = enum(i32) {
+    left,
+    right,
+    middle,
+    four,
+    five,
+    six,
+    seven,
+    eight,
+};
+
+pub const Key = enum(i32) {
+    unknown = -1,
+
+    space = 32,
+    apostrophe = 39,
+    comma = 44,
+    minus = 45,
+    period = 46,
+    slash = 47,
+    zero = 48,
+    one = 49,
+    two = 50,
+    three = 51,
+    four = 52,
+    five = 53,
+    six = 54,
+    seven = 55,
+    eight = 56,
+    nine = 57,
+    semicolon = 59,
+    equal = 61,
+    a = 65,
+    b = 66,
+    c = 67,
+    d = 68,
+    e = 69,
+    f = 70,
+    g = 71,
+    h = 72,
+    i = 73,
+    j = 74,
+    k = 75,
+    l = 76,
+    m = 77,
+    n = 78,
+    o = 79,
+    p = 80,
+    q = 81,
+    r = 82,
+    s = 83,
+    t = 84,
+    u = 85,
+    v = 86,
+    w = 87,
+    x = 88,
+    y = 89,
+    z = 90,
+    left_bracket = 91,
+    backslash = 92,
+    right_bracket = 93,
+    grave_accent = 96,
+    world_1 = 161,
+    world_2 = 162,
+
+    escape = 256,
+    enter = 257,
+    tab = 258,
+    backspace = 259,
+    insert = 260,
+    delete = 261,
+    right = 262,
+    left = 263,
+    down = 264,
+    up = 265,
+    page_up = 266,
+    page_down = 267,
+    home = 268,
+    end = 269,
+    caps_lock = 280,
+    scroll_lock = 281,
+    num_lock = 282,
+    print_screen = 283,
+    pause = 284,
+    F1 = 290,
+    F2 = 291,
+    F3 = 292,
+    F4 = 293,
+    F5 = 294,
+    F6 = 295,
+    F7 = 296,
+    F8 = 297,
+    F9 = 298,
+    F10 = 299,
+    F11 = 300,
+    F12 = 301,
+    F13 = 302,
+    F14 = 303,
+    F15 = 304,
+    F16 = 305,
+    F17 = 306,
+    F18 = 307,
+    F19 = 308,
+    F20 = 309,
+    F21 = 310,
+    F22 = 311,
+    F23 = 312,
+    F24 = 313,
+    F25 = 314,
+    kp_0 = 320,
+    kp_1 = 321,
+    kp_2 = 322,
+    kp_3 = 323,
+    kp_4 = 324,
+    kp_5 = 325,
+    kp_6 = 326,
+    kp_7 = 327,
+    kp_8 = 328,
+    kp_9 = 329,
+    kp_decimal = 330,
+    kp_divide = 331,
+    kp_multiply = 332,
+    kp_subtract = 333,
+    kp_add = 334,
+    kp_enter = 335,
+    kp_equal = 336,
+    left_shift = 340,
+    left_control = 341,
+    left_alt = 342,
+    left_super = 343,
+    right_shift = 344,
+    right_control = 345,
+    right_alt = 346,
+    right_super = 347,
+    menu = 348,
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Error
@@ -127,6 +274,20 @@ pub const Window = *opaque {
         return .{ .x = xscale, .y = yscale };
     }
     extern fn glfwGetWindowContentScale(window: Window, xscale: *f32, yscale: *f32) void;
+
+    pub const getKey = glfwGetKey;
+    extern fn glfwGetKey(window: Window, key: Key) Action;
+
+    pub const getMouseButton = glfwGetMouseButton;
+    extern fn glfwGetMouseButton(window: Window, button: MouseButton) Action;
+
+    pub fn getCursorPos(window: Window) struct { x: f64, y: f64 } {
+        var xpos: f64 = 0.0;
+        var ypos: f64 = 0.0;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        return .{ .x = xpos, .y = ypos };
+    }
+    extern fn glfwGetCursorPos(window: Window, xpos: *f64, ypos: *f64) void;
 };
 
 pub fn createWindow(
@@ -239,6 +400,12 @@ test "zglfw.basic" {
     windowHint(.client_api, 0);
     const window = try createWindow(200, 200, "test", null, null);
     defer window.destroy();
+
+    if (window.getKey(.a) == .press) {}
+    if (window.getMouseButton(.right) == .press) {}
+    const cursor_pos = window.getCursorPos();
+    _ = cursor_pos.x;
+    _ = cursor_pos.y;
 
     const window_native = try switch (@import("builtin").target.os.tag) {
         .windows => getWin32Window(window),
