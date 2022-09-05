@@ -1,4 +1,5 @@
 #include "./imgui/imgui.h"
+#include "./imgui/implot.h"
 
 #define ZGUI_API extern "C"
 
@@ -1188,4 +1189,74 @@ ZGUI_API bool zguiIsAnyItemActive(void) {
 
 ZGUI_API bool zguiIsAnyItemFocused(void) {
     return ImGui::IsAnyItemFocused();
+}
+
+ZGUI_API void zguiGetContentRegionAvail(float pos[2]) {
+    const ImVec2 p = ImGui::GetContentRegionAvail();
+    pos[0] = p.x;
+    pos[1] = p.y;
+}
+
+ZGUI_API void zguiPushTextWrapPos(float wrap_pos_x) {
+    ImGui::PushTextWrapPos(wrap_pos_x);
+}
+
+ZGUI_API bool zguiBeginTabBar(const char* string) {
+    return ImGui::BeginTabBar(string, ImGuiTabBarFlags_None);
+}
+
+ZGUI_API bool zguiBeginTabItem(const char* string) {
+    return ImGui::BeginTabItem(string);
+}
+
+ZGUI_API void zguiEndTabItem() {
+    ImGui::EndTabItem();
+}
+
+ZGUI_API void zguiEndTabBar() {
+    ImGui::EndTabBar();
+}
+
+ZGUI_API void zguipShowDemoWindow(bool* p_open) {
+    ImPlot::ShowDemoWindow(p_open);
+}
+
+ZGUI_API ImPlotContext* zguipCreateContext(){
+    return ImPlot::CreateContext();
+}
+
+ZGUI_API void zguipDestroyContext(ImPlotContext* ctx = NULL){
+    ImPlot::DestroyContext(ctx);
+}
+
+ZGUI_API ImPlotContext* zguipGetCurrentContext(){
+    return ImPlot::GetCurrentContext();
+}
+
+ZGUI_API void zguipSetCurrentContext(ImPlotContext* ctx){
+    ImPlot::SetCurrentContext(ctx);
+}
+
+ZGUI_API void zguipSetupLegend(ImPlotLocation location, ImPlotLegendFlags flags){
+    ImPlot::SetupLegend(location, flags);
+}
+
+ZGUI_API void zguipSetupXAxis(const char* label, ImPlotAxisFlags flags){
+    ImPlot::SetupAxis(ImAxis_X1, label, flags);
+}
+
+ZGUI_API void zguipSetupYAxis(const char* label, ImPlotAxisFlags flags){
+    ImPlot::SetupAxis(ImAxis_Y1, label, flags);
+}
+
+ZGUI_API bool zguipBeginPlot(const char* title_id, float width, float height, ImPlotFlags flags) {
+    return ImPlot::BeginPlot(title_id, { width, height }, flags);
+}
+
+ZGUI_API void zguipPlotLineValues(const char* label_id, const int* values, int count, ImPlotLineFlags flags){
+    ImPlot::PlotLine(label_id, values, count, 1, 0, flags, 0, sizeof(int));
+}
+
+ZGUI_API void zguipEnd() {
+    ImPlot::EndPlot();
 }

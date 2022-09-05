@@ -11,18 +11,22 @@ pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
 pub fn init() void {
     if (getCurrentContext() == null) {
         _ = zguiCreateContext(null);
+        _ = zguipCreateContext(null);
         temp_buffer.resize(3 * 1024 + 1) catch unreachable;
     }
 }
 extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
+extern fn zguipCreateContext(shared_font_atlas: ?*const anyopaque) ?Context;
 
 pub fn deinit() void {
     if (getCurrentContext() != null) {
         temp_buffer.deinit();
+        zguipDestroyContext(null);
         zguiDestroyContext(null);
     }
 }
 extern fn zguiDestroyContext(ctx: ?Context) void;
+extern fn zguipDestroyContext(ctx: ?Context) void;
 
 const getCurrentContext = zguiGetCurrentContext;
 extern fn zguiGetCurrentContext() ?Context;
@@ -377,6 +381,13 @@ pub fn getWindowSize() [2]f32 {
     zguiGetWindowSize(&size);
     return size;
 }
+
+pub fn getContentRegionAvail() [2]f32 {
+    var size: [2]f32 = undefined;
+    zguiGetContentRegionAvail(&size);
+    return size;
+}
+
 /// `pub fn getWindowWidth() f32`
 pub const getWindowWidth = zguiGetWindowWidth;
 /// `pub fn getWindowHeight() f32`
@@ -385,6 +396,7 @@ extern fn zguiGetWindowPos(pos: *[2]f32) void;
 extern fn zguiGetWindowSize(size: *[2]f32) void;
 extern fn zguiGetWindowWidth() f32;
 extern fn zguiGetWindowHeight() f32;
+extern fn zguiGetContentRegionAvail(size: *[2]f32) void;
 //--------------------------------------------------------------------------------------------------
 //
 // Style
@@ -2414,3 +2426,187 @@ fn typeToDataTypeEnum(comptime T: type) DataType {
     };
 }
 //--------------------------------------------------------------------------------------------------
+//
+// Tabs
+//
+//--------------------------------------------------------------------------------------------------
+pub fn beginTabBar(label: [:0]const u8) bool {
+    return zguiBeginTabBar(label);
+}
+pub fn beginTabItem(label: [:0]const u8) bool {
+    return zguiBeginTabItem(label);
+}
+pub const endTabItem = zguiEndTabItem;
+pub const endTabBar = zguiEndTabBar;
+
+extern fn zguiBeginTabBar(label: [*:0]const u8) bool;
+extern fn zguiBeginTabItem(label: [*:0]const u8) bool;
+extern fn zguiEndTabItem() void;
+extern fn zguiEndTabBar() void;
+
+//--------------------------------------------------------------------------------------------------
+//
+// ImPlot 
+//
+//--------------------------------------------------------------------------------------------------
+pub const PlotFlags = packed struct {
+    no_title: bool = false,
+    no_legend: bool = false,
+    no_mouse_text: bool = false,
+    no_inputs: bool = false,
+    no_menus: bool = false,
+    no_box_select: bool = false,
+    no_child: bool = false,
+    no_frame: bool = false,
+    equal: bool = false,
+    crosshairs: bool = false,
+
+    _padding: u22 = 0,
+
+    pub const canvas_only = PlotFlags{
+        .no_title = true,
+        .no_legend = true,
+        .no_menus = true,
+        .no_box_select = true,
+        .no_mouse_text = true,
+    };
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+pub const BeginPlot = struct {
+    w: f32 = 0.0,
+    h: f32 = 0.0,
+    flags: PlotFlags = .{},
+};
+
+pub const PlotLineFlags = packed struct {
+    _reserved0: bool = false,
+    _reserved1: bool = false,
+    _reserved2: bool = false,
+    _reserved3: bool = false,
+    _reserved4: bool = false,
+    _reserved5: bool = false,
+    _reserved6: bool = false,
+    _reserved7: bool = false,
+    _reserved8: bool = false,
+    _reserved9: bool = false,
+    segments: bool = false,
+    loop: bool = false,
+    skip_nan: bool = false,
+    no_clip: bool = false,
+    shaded: bool = false,
+
+    _padding: u17 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+const PlotValues = struct {
+    slice: []i32 = undefined,
+    flags: PlotLineFlags = .{},
+};
+
+pub const AxisFlags = packed struct {
+    no_label: bool = false,
+    no_grid_lines: bool = false,
+    no_tick_marks: bool = false,
+    no_tick_labels: bool = false,
+    no_initial_fit: bool = false,
+    no_menus: bool = false,
+    no_side_switch: bool = false,
+    no_highlight: bool = false,
+    opposite: bool = false,
+    foreground: bool = false,
+    invert: bool = false,
+    auto_fit: bool = false,
+    range_fit: bool = false,
+    pan_stretch: bool = false,
+    lock_min: bool = false,
+    lock_max: bool = false,
+
+    _padding: u16 = 0,
+
+    pub const lock = AxisFlags{
+        .lock_min = true,
+        .lock_max = true,
+    };
+    pub const no_decorations = AxisFlags{
+        .no_label = true,
+        .no_grid_lines = true,
+        .no_tick_marks = true,
+        .no_tick_labels = true,
+    };
+    pub const aux_default = AxisFlags{
+        .no_grid_lines = true,
+        .opposite = true,
+    };
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+pub const LegendFlags = packed struct {
+    no_buttons: bool = false,
+    no_highlight_item: bool = false,
+    no_highlight_axis: bool = false,
+    no_menus: bool = false,
+    outside: bool = false,
+    horizontal: bool = false,
+
+    _padding: u26 = 0,
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+pub const PlotLocation = packed struct {
+    north: bool = false,
+    south: bool = false,
+    west: bool = false,
+    east: bool = false,
+
+    _padding: u28 = 0,
+
+    pub const north_west = PlotLocation{ .north = true, .west = true };
+    pub const north_east = PlotLocation{ .north = true, .east = true };
+    pub const south_west = PlotLocation{ .south = true, .west = true };
+    pub const south_east = PlotLocation{ .south = true, .east = true };
+
+    comptime {
+        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
+    }
+};
+
+pub const showPlotDemoWindow = zguipShowDemoWindow;
+pub const getCurrentPlotContext = zguipGetCurrentContext;
+pub const setCurrentPlotContext = zguipSetCurrentContext;
+pub fn setupLegend(location: PlotLocation, args: LegendFlags) void {
+    zguipSetupLegend(@bitCast(u32, location), @bitCast(u32, args));
+}
+pub fn setupXAxis(label: [:0]const u8, args: AxisFlags) void {
+    zguipSetupXAxis(label, @bitCast(u32, args));
+}
+pub fn setupYAxis(label: [:0]const u8, args: AxisFlags) void {
+    zguipSetupYAxis(label, @bitCast(u32, args));
+}
+pub fn beginPlot(title_id: [:0]const u8, args: BeginPlot) bool {
+    return zguipBeginPlot(title_id, args.w, args.h, @bitCast(u32, args.flags));
+}
+pub fn plotLineValues(label: [:0]const u8, args: PlotValues) void {
+    zguipPlotLineValues(label, args.slice.ptr, @intCast(i32, args.slice.len), @bitCast(u32, args.flags));
+}
+pub const endPlot = zguipEnd;
+
+extern fn zguipShowDemoWindow(p_open: bool) void;
+extern fn zguipGetCurrentContext() ?Context;
+extern fn zguipSetCurrentContext(ctx: ?Context) void;
+extern fn zguipSetupLegend(location: u32, flags: u32) void;
+extern fn zguipSetupXAxis(label: [*:0]const u8, flags: u32) void;
+extern fn zguipSetupYAxis(label: [*:0]const u8, flags: u32) void;
+extern fn zguipBeginPlot(title_id: [*:0]const u8, width: f32, height: f32, flags: u32) bool;
+extern fn zguipPlotLineValues(label_id: [*:0]const u8, values: [*]i32, count: i32, flags: u32) void;
+extern fn zguipEnd() void;
