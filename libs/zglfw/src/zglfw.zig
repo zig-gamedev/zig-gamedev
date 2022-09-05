@@ -212,8 +212,9 @@ test "zglfw.basic" {
     try init();
     defer terminate();
 
-    _ = vulkanSupported();
-    _ = try getRequiredInstanceExtensions();
+    if (vulkanSupported()) {
+        _ = try getRequiredInstanceExtensions();
+    }
 
     _ = getTime();
 
