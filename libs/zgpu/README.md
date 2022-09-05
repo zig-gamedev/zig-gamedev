@@ -18,28 +18,29 @@ For more details please see below.
 
 ## Getting started
 
-Copy `zgpu` and `zpool` folders to a `libs` subdirectory of the root of your project.
+Copy `zgpu`, `zpool` and `zglfw` folders to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 ```zig
 const zgpu = @import("libs/zgpu/build.zig");
 const zpool = @import("libs/zpool/build.zig");
+const zglfw = @import("libs/zglfw/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{ .dawn = .{ .from_source = false } });
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg });
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
 
     exe.addPackage(zgpu_pkg);
+    exe.addPackage(zglfw.pkg);
 
     zgpu.link(exe, zgpu_options);
+    zglfw.link(exe);
 }
 ```
-Note that linking with `zgpu` package also gives you access to `glfw` package.
-
-Now in your code you may import and use `zgpu` and `glfw`:
+Now in your code you may import and use `zgpu` and `zglfw`:
 ```zig
-const glfw = @import("glfw");
+const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 
 pub fn main() !void {
