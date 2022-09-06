@@ -4,6 +4,7 @@ const zmath = @import("../../libs/zmath/build.zig");
 const zmesh = @import("../../libs/zmesh/build.zig");
 const zpool = @import("../../libs/zpool/build.zig");
 const zglfw = @import("../../libs/zglfw/build.zig");
+const zstbi = @import("../../libs/zstbi/build.zig");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "physically_based_rendering_wgpu_content/";
@@ -38,10 +39,12 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(zglfw.pkg);
+    exe.addPackage(zstbi.pkg);
 
     zgpu.link(exe, zgpu_options);
     zmesh.link(exe, zmesh_options);
     zglfw.link(exe);
+    zstbi.link(exe);
 
     return exe;
 }

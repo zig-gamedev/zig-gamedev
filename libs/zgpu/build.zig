@@ -2,7 +2,6 @@ const std = @import("std");
 
 pub const BuildOptions = struct {
     use_imgui: bool = true,
-    use_stb_image: bool = true,
 };
 
 pub const BuildOptionsStep = struct {
@@ -48,10 +47,6 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", &.{""});
         exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", &.{""});
-    }
-
-    if (bos.options.use_stb_image) {
-        exe.addCSourceFile(thisDir() ++ "/libs/stb/stb_image.c", &.{"-std=c99"});
     }
 }
 

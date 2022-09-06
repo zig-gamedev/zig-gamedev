@@ -8,6 +8,7 @@ const zgui = zgpu.zgui;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const wgsl = @import("physically_based_rendering_wgsl.zig");
+const zstbi = @import("zstbi");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: physically based rendering (wgpu)";
@@ -244,7 +245,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     var mesh_texv: [num_mesh_textures]zgpu.TextureViewHandle = undefined;
 
     for (mesh_texture_paths) |path, tex_index| {
-        var image = try zgpu.stbi.Image(u8).init(path, 4);
+        var image = try zstbi.Image(u8).init(path, 4);
         defer image.deinit();
 
         mesh_tex[tex_index] = gctx.createTexture(.{
@@ -801,14 +802,14 @@ fn precomputeImageLighting(
             content_dir ++ "drackenstein_quarry_4k.hdr",
             content_dir ++ "freight_station_4k.hdr",
         };
-        zgpu.stbi.setFlipVerticallyOnLoad(true);
-        var image = zgpu.stbi.Image(f16).init(
+        zstbi.setFlipVerticallyOnLoad(true);
+        var image = zstbi.Image(f16).init(
             hdri_paths[@intCast(usize, demo.current_hdri_index)],
             4,
         ) catch unreachable;
         defer {
             image.deinit();
-            zgpu.stbi.setFlipVerticallyOnLoad(false);
+            zstbi.setFlipVerticallyOnLoad(false);
         }
 
         const hdr_source_tex = gctx.createTexture(.{

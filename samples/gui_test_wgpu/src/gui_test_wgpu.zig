@@ -5,6 +5,7 @@ const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = zgpu.zgui;
+const zstbi = @import("zstbi");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: gui test (wgpu)";
@@ -24,7 +25,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     //const arena = arena_state.allocator();
 
     // Create a texture.
-    var image = try zgpu.stbi.Image(u8).init(content_dir ++ "genart_0025_5.png", 4);
+    var image = try zstbi.Image(u8).init(content_dir ++ "genart_0025_5.png", 4);
     defer image.deinit();
 
     const texture = gctx.createTexture(.{
