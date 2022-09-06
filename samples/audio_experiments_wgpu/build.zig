@@ -27,6 +27,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     exe.setBuildMode(options.build_mode);
     exe.setTarget(options.target);
+    exe.want_lto = false;
 
     const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
     const zgui_pkg = zgui.getPkg(&.{zglfw.pkg});
