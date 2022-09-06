@@ -4,7 +4,7 @@ const assert = std.debug.assert;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const zgui = zgpu.zgui;
+const zgui = @import("zgui");
 const zstbi = @import("zstbi");
 
 const content_dir = @import("build_options").content_dir;
@@ -63,7 +63,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     assert(zgui.io.getFont(1) == font_normal);
 
     // This needs to be called *after* adding your custom fonts. Empty font name ("") means that you have added fonts yourself.
-    zgpu.gui.init(window, gctx.device, content_dir, "", 0);
+    zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
 
     // This call is optional. Initially, zgui.io.getFont(0) is a default font.
     zgui.io.setDefaultFont(font_normal);
@@ -98,14 +98,17 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
-    zgpu.gui.deinit();
+    zgui.backend.deinit();
     zgui.deinit();
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
 }
 
 fn update(demo: *DemoState) !void {
-    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+    zgui.backend.newFrame(
+        demo.gctx.swapchain_descriptor.width,
+        demo.gctx.swapchain_descriptor.height,
+    );
 
     zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .first_use_ever });
     zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .first_use_ever });
@@ -441,7 +444,7 @@ fn draw(demo: *DemoState) void {
                 null,
             );
             defer zgpu.util.endRelease(pass);
-            zgpu.gui.draw(pass);
+            zgui.backend.draw(pass);
         }
 
         break :commands encoder.finish(null);

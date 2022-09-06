@@ -3,7 +3,7 @@ const math = std.math;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const zgui = zgpu.zgui;
+const zgui = @import("zgui");
 const zm = @import("zmath");
 const zstbi = @import("zstbi");
 
@@ -224,7 +224,10 @@ fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
 }
 
 fn update(demo: *DemoState) void {
-    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+    zgui.backend.newFrame(
+        demo.gctx.swapchain_descriptor.width,
+        demo.gctx.swapchain_descriptor.height,
+    );
 
     zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .always });
     zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .always });
@@ -309,7 +312,7 @@ fn draw(demo: *DemoState) void {
                 pass.release();
             }
 
-            zgpu.gui.draw(pass);
+            zgui.backend.draw(pass);
         }
 
         break :commands encoder.finish(null);
@@ -349,8 +352,17 @@ pub fn main() !void {
         break :scale_factor math.max(scale.x, scale.y);
     };
 
-    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
-    defer zgpu.gui.deinit();
+    zgui.init();
+    defer zgui.deinit();
+
+    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf" ++ "\x00", 16.0 * scale_factor);
+
+    zgui.backend.init(
+        window,
+        demo.gctx.device,
+        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+    );
+    defer zgui.backend.deinit();
 
     zgui.getStyle().scaleAllSizes(scale_factor);
 

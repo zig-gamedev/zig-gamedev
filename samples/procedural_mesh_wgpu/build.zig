@@ -5,6 +5,7 @@ const zmesh = @import("../../libs/zmesh/build.zig");
 const znoise = @import("../../libs/znoise/build.zig");
 const zpool = @import("../../libs/zpool/build.zig");
 const zglfw = @import("../../libs/zglfw/build.zig");
+const zgui = @import("../../libs/zgui/build.zig");
 
 const Options = @import("../../build.zig").Options;
 const content_dir = "procedural_mesh_wgpu_content/";
@@ -27,21 +28,23 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     const zmesh_options = zmesh.BuildOptionsStep.init(b, .{});
-    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
-    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
+    const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
+    const zgui_pkg = zgui.getPkg(&.{zglfw.pkg});
 
     exe.addPackage(zmesh_pkg);
     exe.addPackage(zgpu_pkg);
+    exe.addPackage(zgui_pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(znoise.pkg);
     exe.addPackage(zglfw.pkg);
 
-    zgpu.link(exe, zgpu_options);
+    zgpu.link(exe);
     zmesh.link(exe, zmesh_options);
     znoise.link(exe);
     zglfw.link(exe);
+    zgui.link(exe);
 
     return exe;
 }

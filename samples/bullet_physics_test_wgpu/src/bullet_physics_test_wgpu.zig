@@ -4,7 +4,7 @@ const assert = std.debug.assert;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const zgui = zgpu.zgui;
+const zgui = @import("zgui");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const zbt = @import("zbullet");
@@ -300,7 +300,11 @@ fn update(demo: *DemoState) void {
     const dt = demo.gctx.stats.delta_time;
     _ = demo.physics.world.stepSimulation(dt, .{});
 
-    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+    const want_capture_mouse = zgui.io.getWantCaptureMouse();
+    zgui.backend.newFrame(
+        demo.gctx.swapchain_descriptor.width,
+        demo.gctx.swapchain_descriptor.height,
+    );
 
     zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .always });
     zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .always });
@@ -423,7 +427,7 @@ fn update(demo: *DemoState) void {
         zm.storeArr3(&demo.camera.position, cam_pos);
     }
 
-    objectPicking(demo);
+    objectPicking(demo, want_capture_mouse);
 
     // Shooting.
     {
@@ -566,7 +570,7 @@ fn draw(demo: *DemoState) void {
         {
             const pass = zgpu.util.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
             defer zgpu.util.endRelease(pass);
-            zgpu.gui.draw(pass);
+            zgui.backend.draw(pass);
         }
 
         break :commands encoder.finish(null);
@@ -1197,10 +1201,10 @@ fn initMeshes(
     }
 }
 
-fn objectPicking(demo: *DemoState) void {
+fn objectPicking(demo: *DemoState, want_capture_mouse: bool) void {
     const window = demo.gctx.window;
 
-    const mouse_button_is_down = window.getMouseButton(.left) == .press and !zgpu.gui.want_capture_mouse;
+    const mouse_button_is_down = window.getMouseButton(.left) == .press and !want_capture_mouse;
 
     const ray_from = zm.loadArr3(demo.camera.position);
     const ray_to = ray_to: {
@@ -1354,8 +1358,17 @@ pub fn main() !void {
         break :scale_factor math.max(scale.x, scale.y);
     };
 
-    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
-    defer zgpu.gui.deinit();
+    zgui.init();
+    defer zgui.deinit();
+
+    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf" ++ "\x00", 16.0 * scale_factor);
+
+    zgui.backend.init(
+        window,
+        demo.gctx.device,
+        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+    );
+    defer zgui.backend.deinit();
 
     zgui.getStyle().scaleAllSizes(scale_factor);
 

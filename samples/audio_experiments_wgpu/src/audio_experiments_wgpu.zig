@@ -5,7 +5,7 @@ const Mutex = std.Thread.Mutex;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const zgui = zgpu.zgui;
+const zgui = @import("zgui");
 const zm = @import("zmath");
 const zaudio = @import("zaudio");
 const wgsl = @import("audio_experiments_wgsl.zig");
@@ -463,7 +463,10 @@ fn updateAudioGraph(demo: DemoState) !void {
 }
 
 fn update(demo: *DemoState) !void {
-    zgpu.gui.newFrame(demo.gctx.swapchain_descriptor.width, demo.gctx.swapchain_descriptor.height);
+    zgui.backend.newFrame(
+        demo.gctx.swapchain_descriptor.width,
+        demo.gctx.swapchain_descriptor.height,
+    );
 
     const win_offset: f32 = 10.0;
     var win_y: f32 = 10.0;
@@ -937,7 +940,7 @@ fn draw(demo: *DemoState) void {
                 null,
             );
             defer zgpu.util.endRelease(pass);
-            zgpu.gui.draw(pass);
+            zgui.backend.draw(pass);
         }
 
         break :commands encoder.finish(null);
@@ -1007,8 +1010,17 @@ pub fn main() !void {
         break :scale_factor math.max(scale.x, scale.y);
     };
 
-    zgpu.gui.init(window, demo.gctx.device, content_dir, "Roboto-Medium.ttf", 16.0 * scale_factor);
-    defer zgpu.gui.deinit();
+    zgui.init();
+    defer zgui.deinit();
+
+    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf" ++ "\x00", 16.0 * scale_factor);
+
+    zgui.backend.init(
+        window,
+        demo.gctx.device,
+        @enumToInt(zgpu.GraphicsContext.swapchain_format),
+    );
+    defer zgui.backend.deinit();
 
     zgui.getStyle().scaleAllSizes(scale_factor);
 

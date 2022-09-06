@@ -1,53 +1,10 @@
 const std = @import("std");
 
-pub const BuildOptions = struct {
-    use_imgui: bool = true,
-};
-
-pub const BuildOptionsStep = struct {
-    options: BuildOptions,
-    step: *std.build.OptionsStep,
-
-    pub fn init(b: *std.build.Builder, options: BuildOptions) BuildOptionsStep {
-        const bos = .{
-            .options = options,
-            .step = b.addOptions(),
-        };
-        return bos;
-    }
-
-    pub fn getPkg(bos: BuildOptionsStep) std.build.Pkg {
-        return bos.step.getPackage("zgpu_options");
-    }
-
-    fn addTo(bos: BuildOptionsStep, target_step: *std.build.LibExeObjStep) void {
-        target_step.addOptions("zgpu_options", bos.step);
-    }
-};
-
-pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
-    bos.addTo(exe);
-
+pub fn link(exe: *std.build.LibExeObjStep) void {
     linkDawn(exe);
 
     exe.addIncludeDir(thisDir() ++ "/src");
     exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
-
-    if (bos.options.use_imgui) {
-        exe.addCSourceFile(thisDir() ++ "/src/zgui.cpp", &.{""});
-
-        exe.addIncludeDir(thisDir() ++ "/libs");
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_widgets.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_tables.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_draw.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_demo.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_demo.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", &.{""});
-        exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", &.{""});
-    }
 }
 
 pub fn buildTests(
@@ -58,7 +15,7 @@ pub fn buildTests(
     const tests = b.addTest(thisDir() ++ "/src/zgpu.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
-    link(tests, BuildOptionsStep.init(b, .{}));
+    link(tests);
     return tests;
 }
 
