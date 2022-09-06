@@ -129,6 +129,7 @@ typedef struct JPH_BoxShapeSettings        JPH_BoxShapeSettings;
 typedef struct JPH_SphereShapeSettings     JPH_SphereShapeSettings;
 typedef struct JPH_TriangleShapeSettings   JPH_TriangleShapeSettings;
 typedef struct JPH_CapsuleShapeSettings    JPH_CapsuleShapeSettings;
+typedef struct JPH_TaperedCapsuleShapeSettings  JPH_TaperedCapsuleShapeSettings;
 typedef struct JPH_CylinderShapeSettings   JPH_CylinderShapeSettings;
 typedef struct JPH_ConvexHullShapeSettings JPH_ConvexHullShapeSettings;
 
@@ -513,6 +514,34 @@ JPH_CapsuleShapeSettings_GetRadius(const JPH_CapsuleShapeSettings *in_settings);
 
 JPH_CAPI void
 JPH_CapsuleShapeSettings_SetRadius(JPH_CapsuleShapeSettings *in_settings, float in_radius);
+
+
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_TaperedCapsuleShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_TaperedCapsuleShapeSettings *
+JPH_TaperedCapsuleShapeSettings_Create(float in_half_height, float in_top_radius, float in_bottom_radius);
+
+JPH_CAPI float
+JPH_TaperedCapsuleShapeSettings_GetHalfHeightOfTaperedCylinder(const JPH_TaperedCapsuleShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_TaperedCapsuleShapeSettings_SetHalfHeightOfTaperedCylinder(JPH_TaperedCapsuleShapeSettings *in_settings,
+                                          float in_half_height);
+
+JPH_CAPI float
+JPH_TaperedCapsuleShapeSettings_GetTopRadius(const JPH_TaperedCapsuleShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_TaperedCapsuleShapeSettings_SetTopRadius(JPH_TaperedCapsuleShapeSettings *in_settings, float in_top_radius);
+
+JPH_CAPI float
+JPH_TaperedCapsuleShapeSettings_GetBottomRadius(const JPH_TaperedCapsuleShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_TaperedCapsuleShapeSettings_SetBottomRadius(JPH_TaperedCapsuleShapeSettings *in_settings, float in_bottom_radius);
 
 
 //--------------------------------------------------------------------------------------------------
