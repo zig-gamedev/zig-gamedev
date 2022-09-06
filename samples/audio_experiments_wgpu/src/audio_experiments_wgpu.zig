@@ -1013,7 +1013,7 @@ pub fn main() !void {
     zgui.init();
     defer zgui.deinit();
 
-    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf" ++ "\x00", 16.0 * scale_factor);
+    _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 16.0 * scale_factor);
 
     zgui.backend.init(
         window,
