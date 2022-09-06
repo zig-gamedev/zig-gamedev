@@ -129,6 +129,7 @@ typedef struct JPH_BoxShapeSettings        JPH_BoxShapeSettings;
 typedef struct JPH_SphereShapeSettings     JPH_SphereShapeSettings;
 typedef struct JPH_TriangleShapeSettings   JPH_TriangleShapeSettings;
 typedef struct JPH_CapsuleShapeSettings    JPH_CapsuleShapeSettings;
+typedef struct JPH_CylinderShapeSettings   JPH_CylinderShapeSettings;
 typedef struct JPH_ConvexHullShapeSettings JPH_ConvexHullShapeSettings;
 
 typedef bool
@@ -512,6 +513,37 @@ JPH_CapsuleShapeSettings_GetRadius(const JPH_CapsuleShapeSettings *in_settings);
 
 JPH_CAPI void
 JPH_CapsuleShapeSettings_SetRadius(JPH_CapsuleShapeSettings *in_settings, float in_radius);
+
+
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_CylinderShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_CylinderShapeSettings *
+JPH_CylinderShapeSettings_Create(float in_half_height, float in_radius, float in_convex_radius);
+
+JPH_CAPI float
+JPH_CylinderShapeSettings_GetConvexRadius(const JPH_CylinderShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_CylinderShapeSettings_SetConvexRadius(JPH_CylinderShapeSettings *in_settings,
+                                          float in_convex_radius);
+
+JPH_CAPI float
+JPH_CylinderShapeSettings_GetHalfHeight(const JPH_CylinderShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_CylinderShapeSettings_SetHalfHeight(JPH_CylinderShapeSettings *in_settings,
+                                          float in_half_height);
+
+JPH_CAPI float
+JPH_CylinderShapeSettings_GetRadius(const JPH_CylinderShapeSettings *in_settings);
+
+JPH_CAPI void
+JPH_CylinderShapeSettings_SetRadius(JPH_CylinderShapeSettings *in_settings, float in_radius);
+
+
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_ConvexHullShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
