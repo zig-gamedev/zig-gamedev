@@ -1,7 +1,7 @@
 **Project requires [Zig 0.10.0-dev.3877 (master)](https://ziglang.org/download/) or newer to compile.**
 # zig-gamedev project
 
-This repository contains a collection of [sample applications](#cross-platfrom-winlinmac-sample-applications-native-wgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: 3D graphics, multi-threaded physics, SIMD math, audio, GUI, noise generation and profiling.
+This repository contains a collection of [sample applications](#cross-platfrom-winlinmac-sample-applications-native-wgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: 3D graphics, multi-threaded physics, SIMD math, audio, GUI, image loading, noise generation and profiling.
 
 The goal of the project is to build a **toolbox of libraries** for Zig game developers. A lot of effort is being put to make the whole package consistent and let the developer use only the components she needs. Project is being developed by contributors and by **one full-time developer**.
 
@@ -41,7 +41,7 @@ zig build physically_based_rendering_wgpu-run
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/), `git` with [Git LFS](https://git-lfs.github.com/) and `curl` - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings to carefully selected C/C++ libraries
-* Uses native version of wgpu API ([mach/gpu-dawn](https://github.com/hexops/mach-gpu-dawn)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
+* Uses native version of wgpu API (binaries from [mach/gpu-dawn](https://github.com/hexops/mach-gpu-dawn)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
 
 *I work on this project full-time and try to make a living from donations. If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
