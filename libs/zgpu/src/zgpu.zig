@@ -1354,7 +1354,7 @@ fn ResourcePool(comptime Info: type, comptime Resource: type) type {
 }
 
 pub fn checkSystem(comptime content_dir: []const u8) !void {
-    const local = struct {
+    const doSystemCheck = (struct {
         fn impl() error{ GraphicsApiUnavailable, InvalidDataFiles }!void {
             // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
             // On Linux we require Vulkan support.
@@ -1384,9 +1384,9 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
                 }
             }
         }
-    };
+    }).impl;
 
-    local.impl() catch |err| switch (err) {
+    doSystemCheck() catch |err| switch (err) {
         error.GraphicsApiUnavailable => {
             std.debug.print(
                 \\

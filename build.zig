@@ -2,6 +2,8 @@ const builtin = @import("builtin");
 const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
+    ensureGitLfs(b.allocator);
+
     var options = Options{
         .build_mode = b.standardReleaseOptions(),
         .target = b.standardTargetOptions(.{}),
@@ -222,4 +224,42 @@ fn installDemo(
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
+}
+
+fn ensureGitLfs(allocator: std.mem.Allocator) void {
+    const printErrorMsg = (struct {
+        fn impl() void {
+            std.debug.print(
+                \\---------------------------------------------------------------------------
+                \\git-lfs not found.
+                \\
+                \\Please install Git LFS (Large File Support) and run (in the repo):
+                \\
+                \\git lfs install
+                \\git lfs pull
+                \\
+                \\For more info please see: https://git-lfs.github.com/
+                \\---------------------------------------------------------------------------
+                \\
+            , .{});
+        }
+    }).impl;
+
+    const argv = &[_][]const u8{ "git-lfs", "--version" };
+    const result = std.ChildProcess.exec(.{
+        .allocator = allocator,
+        .argv = argv,
+        .cwd = ".",
+    }) catch { // e.g. FileNotFound
+        printErrorMsg();
+        std.process.exit(1);
+    };
+    defer {
+        allocator.free(result.stderr);
+        allocator.free(result.stdout);
+    }
+    if (result.term.Exited != 0) {
+        printErrorMsg();
+        std.process.exit(1);
+    }
 }
