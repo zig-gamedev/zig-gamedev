@@ -1,8 +1,8 @@
-# znetwork v0.1
+# znetwork
 
-This library uses [zig-network](https://github.com/MasterQ32/zig-network)
+This library uses [zig-network](https://github.com/MasterQ32/zig-network) developed by [MasterQ32](https://github.com/MasterQ32)
 
-ENet bindings developed by Martin Wickham: https://github.com/SpexGuy/Zig-ENet
+ENet bindings developed by [Martin Wickham](https://github.com/SpexGuy/Zig-ENet)
 
 For ENet test client/server application see: https://github.com/michal-z/zig-gamedev/tree/main/samples/network_test
 

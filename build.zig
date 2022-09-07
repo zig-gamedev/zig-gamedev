@@ -26,9 +26,8 @@ pub fn build(b: *std.build.Builder) void {
             physically_based_rendering_wgpu.build(b, options),
             "physically_based_rendering_wgpu",
         );
-        if (@import("builtin").zig_backend == .stage1) {
-            installDemo(b, network_test.build(b, options), "network_test");
-        }
+        // TODO: Re-enable zenet when stage3 compiler is more stable
+        //installDemo(b, network_test.build(b, options), "network_test");
     }
 
     //
@@ -142,14 +141,12 @@ pub fn build(b: *std.build.Builder) void {
     );
     test_step.dependOn(&zglfw_tests.step);
 
-    if (@import("builtin").zig_backend == .stage1) {
-        const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(
-            b,
-            options.build_mode,
-            options.target,
-        );
-        test_step.dependOn(&znetwork_tests.step);
-    }
+    const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(
+        b,
+        options.build_mode,
+        options.target,
+    );
+    test_step.dependOn(&znetwork_tests.step);
 
     //
     // Benchmarks

@@ -204,7 +204,7 @@ pub const Protocol = packed union {
         pub const mask = 0xF;
     };
 
-    pub const Flags = packed struct {
+    pub const Flags = packed struct(u32) {
         __pad0: u6 = 0,
         command_unsequenced: bool = false,
         command_acknowledge: bool = false,
@@ -217,18 +217,18 @@ pub const Protocol = packed union {
         pub const header_mask = Flags{ .header_compressed = true, .header_sent_time = true };
     };
 
-    pub const Header = packed struct {
+    pub const Header = packed struct(u32) {
         peerID: u16,
         sentTime: u16,
     };
 
-    pub const CommandHeader = packed struct {
+    pub const CommandHeader = packed struct(u32) {
         command: Command,
         channelID: u8,
         reliableSequenceNumber: u16,
     };
 
-    pub const Acknowledge = packed struct {
+    pub const Acknowledge = packed struct(u64) {
         header: CommandHeader,
         receivedReliableSequenceNumber: u16,
         receivedSentTime: u16,

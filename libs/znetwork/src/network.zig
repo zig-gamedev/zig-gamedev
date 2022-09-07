@@ -411,12 +411,12 @@ pub const Socket = struct {
         const recvfrom_fn = if (is_windows) windows.recvfrom else std.os.recvfrom;
         const flags = if (is_linux) std.os.linux.MSG.NOSIGNAL else 0;
 
-        // Use the ipv6 sockaddr to gurantee data will fit.
+        // Use the ipv6 sockaddr to guarantee data will fit.
         var addr: std.os.sockaddr.in6 align(4) = undefined;
         var size: std.os.socklen_t = @sizeOf(std.os.sockaddr.in6);
 
         var addr_ptr = @ptrCast(*std.os.sockaddr, &addr);
-        const len = try recvfrom_fn(self.internal, data, flags | 4, addr_ptr, &size);
+        const len = try recvfrom_fn(self.internal, data, flags | if (is_windows) 0 else 4, addr_ptr, &size);
 
         return ReceiveFrom{
             .numberOfBytes = len,
@@ -685,7 +685,7 @@ const WindowsOSLogic = struct {
         padding1: c_uint = 0, // This is added to guarantee &size is 8 byte aligned
         capacity: c_uint,
         size: c_uint,
-        padding2: c_uint = 0, // This is added to gurantee &fds is 8 byte aligned
+        padding2: c_uint = 0, // This is added to guarantee &fds is 8 byte aligned
         // fds: SOCKET[size]
 
         fn fdSlice(self: *align(8) FdSet) []windows.ws2_32.SOCKET {
@@ -753,8 +753,8 @@ const WindowsOSLogic = struct {
         // TODO: https://github.com/ziglang/zig/issues/5391
         var read_fds = std.ArrayListUnmanaged(windows.ws2_32.SOCKET){};
         var write_fds = std.ArrayListUnmanaged(windows.ws2_32.SOCKET){};
-        try read_fds.ensureCapacity(allocator, 8);
-        try write_fds.ensureCapacity(allocator, 8);
+        try read_fds.ensureTotalCapacity(allocator, 8);
+        try write_fds.ensureTotalCapacity(allocator, 8);
 
         return Self{
             .allocator = allocator,
