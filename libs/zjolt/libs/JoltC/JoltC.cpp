@@ -663,7 +663,6 @@ JPH_CapsuleShapeSettings_SetRadius(JPH_CapsuleShapeSettings *in_settings, float 
     ENSURE_TYPE(in_settings, JPH::CapsuleShapeSettings);
     reinterpret_cast<JPH::CapsuleShapeSettings *>(in_settings)->mRadius = in_radius;
 }
-
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_TaperedCapsuleShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
@@ -676,7 +675,7 @@ JPH_TaperedCapsuleShapeSettings_Create(float in_half_height, float in_top_radius
     settings->AddRef();
     return reinterpret_cast<JPH_TaperedCapsuleShapeSettings *>(settings);
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_TaperedCapsuleShapeSettings_GetHalfHeightOfTaperedCylinder(const JPH_TaperedCapsuleShapeSettings *in_settings)
 {
@@ -684,17 +683,17 @@ JPH_TaperedCapsuleShapeSettings_GetHalfHeightOfTaperedCylinder(const JPH_Tapered
     ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
     return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mHalfHeightOfTaperedCylinder;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_TaperedCapsuleShapeSettings_SetHalfHeightOfTaperedCylinder(JPH_TaperedCapsuleShapeSettings *in_settings,
-                                          float in_half_height)
+                                                               float in_half_height)
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
     reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mHalfHeightOfTaperedCylinder = 
         in_half_height;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_TaperedCapsuleShapeSettings_GetTopRadius(const JPH_TaperedCapsuleShapeSettings *in_settings)
 {
@@ -702,7 +701,7 @@ JPH_TaperedCapsuleShapeSettings_GetTopRadius(const JPH_TaperedCapsuleShapeSettin
     ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
     return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mTopRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_TaperedCapsuleShapeSettings_SetTopRadius(JPH_TaperedCapsuleShapeSettings *in_settings, float in_top_radius)
 {
@@ -710,7 +709,7 @@ JPH_TaperedCapsuleShapeSettings_SetTopRadius(JPH_TaperedCapsuleShapeSettings *in
     ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
     reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mTopRadius = in_top_radius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_TaperedCapsuleShapeSettings_GetBottomRadius(const JPH_TaperedCapsuleShapeSettings *in_settings)
 {
@@ -718,30 +717,29 @@ JPH_TaperedCapsuleShapeSettings_GetBottomRadius(const JPH_TaperedCapsuleShapeSet
     ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
     return reinterpret_cast<const JPH::TaperedCapsuleShapeSettings *>(in_settings)->mBottomRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_TaperedCapsuleShapeSettings_SetBottomRadius(JPH_TaperedCapsuleShapeSettings *in_settings, float in_bottom_radius)
+JPH_TaperedCapsuleShapeSettings_SetBottomRadius(JPH_TaperedCapsuleShapeSettings *in_settings,
+                                                float in_bottom_radius)
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::TaperedCapsuleShapeSettings);
     reinterpret_cast<JPH::TaperedCapsuleShapeSettings *>(in_settings)->mBottomRadius =
         in_bottom_radius;
 }
-
-
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_CylinderShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
 //
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_CylinderShapeSettings *
-JPH_CylinderShapeSettings_Create(float in_half_height, float in_radius, float in_convex_radius)
+JPH_CylinderShapeSettings_Create(float in_half_height, float in_radius)
 {
-    auto settings = new JPH::CylinderShapeSettings(in_half_height, in_radius, in_convex_radius);
+    auto settings = new JPH::CylinderShapeSettings(in_half_height, in_radius);
     settings->AddRef();
     return reinterpret_cast<JPH_CylinderShapeSettings *>(settings);
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_CylinderShapeSettings_GetConvexRadius(const JPH_CylinderShapeSettings *in_settings)
 {
@@ -749,16 +747,15 @@ JPH_CylinderShapeSettings_GetConvexRadius(const JPH_CylinderShapeSettings *in_se
     ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
     return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mConvexRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_CylinderShapeSettings_SetConvexRadius(JPH_CylinderShapeSettings *in_settings,
-                                          float in_convex_radius)
+JPH_CylinderShapeSettings_SetConvexRadius(JPH_CylinderShapeSettings *in_settings, float in_convex_radius)
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
     reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mConvexRadius = in_convex_radius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_CylinderShapeSettings_GetHalfHeight(const JPH_CylinderShapeSettings *in_settings)
 {
@@ -766,16 +763,15 @@ JPH_CylinderShapeSettings_GetHalfHeight(const JPH_CylinderShapeSettings *in_sett
     ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
     return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mHalfHeight;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_CylinderShapeSettings_SetHalfHeight(JPH_CylinderShapeSettings *in_settings,
-                                          float in_half_height)
+JPH_CylinderShapeSettings_SetHalfHeight(JPH_CylinderShapeSettings *in_settings, float in_half_height)
 {
     assert(in_settings != nullptr);
     ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
     reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mHalfHeight = in_half_height;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI float
 JPH_CylinderShapeSettings_GetRadius(const JPH_CylinderShapeSettings *in_settings)
 {
@@ -783,7 +779,7 @@ JPH_CylinderShapeSettings_GetRadius(const JPH_CylinderShapeSettings *in_settings
     ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
     return reinterpret_cast<const JPH::CylinderShapeSettings *>(in_settings)->mRadius;
 }
-
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_CylinderShapeSettings_SetRadius(JPH_CylinderShapeSettings *in_settings, float in_radius)
 {
@@ -791,8 +787,6 @@ JPH_CylinderShapeSettings_SetRadius(JPH_CylinderShapeSettings *in_settings, floa
     ENSURE_TYPE(in_settings, JPH::CylinderShapeSettings);
     reinterpret_cast<JPH::CylinderShapeSettings *>(in_settings)->mRadius = in_radius;
 }
-
-
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_ConvexHullShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)

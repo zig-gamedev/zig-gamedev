@@ -1,9 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 // zgpu v0.2
 //
-// This library uses [mach-glfw bindings](https://github.com/hexops/mach-glfw) and
-// build script from [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn).
-//
 // `zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of wgpu API (Dawn).
 //--------------------------------------------------------------------------------------------------
 const std = @import("std");
