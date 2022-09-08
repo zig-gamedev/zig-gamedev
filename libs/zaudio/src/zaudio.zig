@@ -207,69 +207,78 @@ pub const WaveformType = enum(u32) {
     sawtooth,
 };
 
-pub const WaveformConfig = struct {
-    raw: c.ma_waveform_config,
+pub const WaveformConfig = extern struct {
+    format: Format,
+    channels: u32,
+    sampleRate: u32,
+    waveform_type: WaveformType,
+    amplitude: f64,
+    frequency: f64,
 
     pub fn init(
         format: Format,
         num_channels: u32,
         sample_rate: u32,
-        wave_type: WaveformType,
+        waveform_type: WaveformType,
         amplitude: f64,
         frequency: f64,
     ) WaveformConfig {
-        var raw: c.ma_waveform_config = undefined;
-        WA_ma_waveform_config_init(
-            @enumToInt(format),
+        var config: WaveformConfig = undefined;
+        zaudioWaveformConfigInit(
+            format,
             num_channels,
             sample_rate,
-            @enumToInt(wave_type),
+            waveform_type,
             amplitude,
             frequency,
-            &raw,
+            &config,
         );
-        return .{ .raw = raw };
+        return config;
     }
-    pub extern fn WA_ma_waveform_config_init(
-        format: c.ma_format,
-        channels: c.ma_uint32,
-        sampleRate: c.ma_uint32,
-        @"type": c.ma_waveform_type,
+    extern fn zaudioWaveformConfigInit(
+        format: Format,
+        channels: u32,
+        sampleRate: u32,
+        waveform_type: WaveformType,
         amplitude: f64,
         frequency: f64,
-        config: *c.ma_waveform_config,
+        out_config: *WaveformConfig,
     ) void;
 };
 
-pub fn createWaveformDataSource(allocator: std.mem.Allocator, config: WaveformConfig) Error!WaveformDataSource {
-    var handle = allocator.create(c.ma_waveform) catch return error.OutOfMemory;
-    errdefer allocator.destroy(handle);
-    try checkResult(c.ma_waveform_init(&config.raw, handle));
-    return @ptrCast(WaveformDataSource, handle);
+pub fn createWaveformDataSource(config: WaveformConfig) Error!WaveformDataSource {
+    var handle: ?WaveformDataSource = null;
+    try maybeError(zaudioWaveformCreate(&config, &handle));
+    return handle.?;
 }
+extern fn zaudioWaveformCreate(config: *const WaveformConfig, handle: ?*?*WaveformDataSourceImpl) Result;
 
 pub const WaveformDataSource = *align(@sizeOf(usize)) WaveformDataSourceImpl;
 const WaveformDataSourceImpl = opaque {
     pub usingnamespace DataSourceImpl.Methods(WaveformDataSource);
 
-    pub fn destroy(waveform: WaveformDataSource, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_waveform, waveform);
-        c.ma_waveform_uninit(raw);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioWaveformDestroy;
+    extern fn zaudioWaveformDestroy(waveform: WaveformDataSource) void;
 
     pub fn setAmplitude(waveform: WaveformDataSource, amplitude: f64) Error!void {
-        try checkResult(c.ma_waveform_set_amplitude(@ptrCast(*c.ma_waveform, waveform), amplitude));
+        try maybeError(ma_waveform_set_amplitude(waveform, amplitude));
     }
+    extern fn ma_waveform_set_amplitude(waveform: WaveformDataSource, amplitude: f64) Result;
+
     pub fn setFrequency(waveform: WaveformDataSource, frequency: f64) Error!void {
-        try checkResult(c.ma_waveform_set_frequency(@ptrCast(*c.ma_waveform, waveform), frequency));
+        try maybeError(ma_waveform_set_frequency(waveform, frequency));
     }
-    pub fn setType(waveform: WaveformDataSource, wave_type: WaveformType) Error!void {
-        try checkResult(c.ma_waveform_set_type(@ptrCast(*c.ma_waveform, waveform), @enumToInt(wave_type)));
+    extern fn ma_waveform_set_frequency(waveform: WaveformDataSource, frequency: f64) Result;
+
+    pub fn setType(waveform: WaveformDataSource, waveform_type: WaveformType) Error!void {
+        try maybeError(ma_waveform_set_type(waveform, waveform_type));
     }
+    extern fn ma_waveform_set_type(waveform: WaveformDataSource, waveform_type: WaveformType) Result;
+
     pub fn setSampleRate(waveform: WaveformDataSource, sample_rate: u32) Error!void {
-        try checkResult(c.ma_waveform_set_sample_rate(@ptrCast(*c.ma_waveform, waveform), sample_rate));
+        try maybeError(ma_waveform_set_sample_rate(waveform, sample_rate));
     }
+    extern fn ma_waveform_set_sample_rate(waveform: WaveformDataSource, sample_rate: u32) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //

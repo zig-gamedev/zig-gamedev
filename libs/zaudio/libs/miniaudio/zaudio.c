@@ -34,10 +34,10 @@ void zaudioNoiseConfigInit(
 
 ma_result zaudioNoiseCreate(const ma_noise_config* config, ma_noise** out_handle) {
     assert(config != NULL && out_handle != NULL);
-    *out_handle = s_mem.onMalloc(sizeof(ma_noise), NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_noise), s_mem.pUserData);
     ma_result res = ma_noise_init(config, &s_mem, *out_handle);
     if (res != MA_SUCCESS) {
-        s_mem.onFree(*out_handle, NULL);
+        s_mem.onFree(*out_handle, s_mem.pUserData);
         *out_handle = NULL;
     }
     return res;
@@ -46,7 +46,7 @@ ma_result zaudioNoiseCreate(const ma_noise_config* config, ma_noise** out_handle
 void zaudioNoiseDestroy(ma_noise* handle) {
     assert(handle != NULL);
     ma_noise_uninit(handle, &s_mem);
-    s_mem.onFree(handle, NULL);
+    s_mem.onFree(handle, s_mem.pUserData);
 }
 
 void zaudioNodeConfigInit(ma_node_config* out_config) {
@@ -61,9 +61,10 @@ void zaudioDataSourceConfigInit(ma_data_source_config* out_config) {
 
 ma_result zaudioDataSourceCreate(const ma_data_source_config* config, ma_data_source** out_handle) {
     assert(config != NULL && out_handle != NULL);
-    *out_handle = s_mem.onMalloc(sizeof(ma_data_source), NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_data_source), s_mem.pUserData);
     ma_result res = ma_data_source_init(config, *out_handle);
     if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
         *out_handle = NULL;
     }
     return res;
@@ -72,7 +73,37 @@ ma_result zaudioDataSourceCreate(const ma_data_source_config* config, ma_data_so
 void zaudioDataSourceDestroy(ma_data_source* handle) {
     assert(handle != NULL);
     ma_data_source_uninit(handle);
-    s_mem.onFree(handle, NULL);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+
+void zaudioWaveformConfigInit(
+    ma_format format,
+    ma_uint32 channels,
+    ma_uint32 sampleRate,
+    ma_waveform_type type,
+    double amplitude,
+    double frequency,
+    ma_waveform_config* out_config
+) {
+    assert(out_config != NULL);
+    *out_config = ma_waveform_config_init(format, channels, sampleRate, type, amplitude, frequency);
+}
+
+ma_result zaudioWaveformCreate(const ma_waveform_config* config, ma_waveform** out_handle) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_waveform), s_mem.pUserData);
+    ma_result res = ma_waveform_init(config, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioWaveformDestroy(ma_waveform* handle) {
+    assert(handle != NULL);
+    ma_waveform_uninit(handle);
+    s_mem.onFree(handle, s_mem.pUserData);
 }
 
 // ma_engine
@@ -124,16 +155,4 @@ void WA_ma_sound_get_direction(const ma_sound* sound, ma_vec3f* vout) {
 
 void WA_ma_sound_get_velocity(const ma_sound* sound, ma_vec3f* vout) {
     *vout = ma_sound_get_velocity(sound);
-}
-
-void WA_ma_waveform_config_init(
-    ma_format format,
-    ma_uint32 channels,
-    ma_uint32 sampleRate,
-    ma_waveform_type type,
-    double amplitude,
-    double frequency,
-    ma_waveform_config* config
-) {
-    *config = ma_waveform_config_init(format, channels, sampleRate, type, amplitude, frequency);
 }

@@ -361,7 +361,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
         0.5,
         440.0,
     );
-    const waveform_data_source = try zaudio.createWaveformDataSource(allocator, waveform_config);
+    const waveform_data_source = try zaudio.createWaveformDataSource(waveform_config);
     const waveform_node = try audio.engine.createDataSourceNode(
         allocator,
         zaudio.DataSourceNodeConfig.init(waveform_data_source.asDataSource()),
@@ -435,7 +435,7 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.audio_filter.is_enabled = false;
     updateAudioGraph(demo.*) catch unreachable;
     demo.audio_filter.destroy(allocator);
-    demo.waveform_data_source.destroy(allocator);
+    demo.waveform_data_source.destroy();
     demo.waveform_node.destroy(allocator);
     demo.noise_data_source.destroy();
     demo.noise_node.destroy(allocator);
@@ -551,35 +551,35 @@ fn update(demo: *DemoState) !void {
             if (!is_enabled) zgui.beginDisabled(.{});
             defer if (!is_enabled) zgui.endDisabled();
 
-            const selected_item = demo.waveform_config.raw.type;
+            const selected_item = @enumToInt(demo.waveform_config.waveform_type);
             const names = [_][:0]const u8{ "Sine", "Square", "Triangle", "Sawtooth" };
             if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
                 for (names) |name, index| {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.waveform_config.raw.type = @intCast(u32, index);
-                        try demo.waveform_data_source.setType(@intToEnum(zaudio.WaveformType, index));
+                        demo.waveform_config.waveform_type = @intToEnum(zaudio.WaveformType, index);
+                        try demo.waveform_data_source.setType(demo.waveform_config.waveform_type);
                     }
                 }
                 zgui.endCombo();
             }
 
             if (zgui.sliderScalar("Frequency", f64, .{
-                .v = &demo.waveform_config.raw.frequency,
+                .v = &demo.waveform_config.frequency,
                 .min = 20.0,
                 .max = 1000.0,
                 .cfmt = "%.1f Hz",
             })) {
-                try demo.waveform_data_source.setFrequency(demo.waveform_config.raw.frequency);
+                try demo.waveform_data_source.setFrequency(demo.waveform_config.frequency);
             }
             if (zgui.sliderScalar("Amplitude", f64, .{
-                .v = &demo.waveform_config.raw.amplitude,
+                .v = &demo.waveform_config.amplitude,
                 .min = 0.05,
                 .max = 0.75,
                 .cfmt = "%.3f",
             })) {
-                try demo.waveform_data_source.setAmplitude(demo.waveform_config.raw.amplitude);
+                try demo.waveform_data_source.setAmplitude(demo.waveform_config.amplitude);
             }
         }
 
