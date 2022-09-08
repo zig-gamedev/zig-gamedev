@@ -28,6 +28,7 @@ pub fn build(b: *std.build.Builder) void {
         );
         // TODO: Re-enable zenet when stage3 compiler is more stable
         //installDemo(b, network_test.build(b, options), "network_test");
+        installDemo(b, wrinkles.build(b, options), "wrinkles");
     }
 
     //
@@ -187,6 +188,7 @@ const physically_based_rendering_wgpu = @import("samples/physically_based_render
 const bullet_physics_test_wgpu = @import("samples/bullet_physics_test_wgpu/build.zig");
 const audio_experiments_wgpu = @import("samples/audio_experiments_wgpu/build.zig");
 const gui_test_wgpu = @import("samples/gui_test_wgpu/build.zig");
+const wrinkles = @import("samples/wrinkles/build.zig");
 
 pub const Options = struct {
     build_mode: std.builtin.Mode,
