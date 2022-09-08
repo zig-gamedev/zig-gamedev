@@ -32,7 +32,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         exe.linkSystemLibrary("dl");
     }
 
-    lib.addCSourceFile(thisDir() ++ "/libs/miniaudio/cabi_workarounds.c", &.{});
+    lib.addCSourceFile(thisDir() ++ "/libs/miniaudio/zaudio.c", &.{"-std=c99"});
     lib.addCSourceFile(thisDir() ++ "/libs/miniaudio/miniaudio.c", &.{
         "-DMA_NO_WEBAUDIO",
         "-DMA_NO_ENCODING",

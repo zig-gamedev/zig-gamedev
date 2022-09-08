@@ -374,9 +374,9 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
         audio.engine.getNumChannels(),
         .pink,
         123,
-        0.5,
+        0.25,
     );
-    const noise_data_source = try zaudio.createNoiseDataSource(allocator, noise_config);
+    const noise_data_source = try zaudio.createNoiseDataSource(noise_config);
     const noise_node = try audio.engine.createDataSourceNode(
         allocator,
         zaudio.DataSourceNodeConfig.init(noise_data_source.asDataSource()),
@@ -437,7 +437,7 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.audio_filter.destroy(allocator);
     demo.waveform_data_source.destroy(allocator);
     demo.waveform_node.destroy(allocator);
-    demo.noise_data_source.destroy(allocator);
+    demo.noise_data_source.destroy();
     demo.noise_node.destroy(allocator);
     demo.music.destroy(allocator);
     for (demo.sounds.items) |sound| sound.destroy(allocator);
@@ -600,27 +600,27 @@ fn update(demo: *DemoState) !void {
             if (!is_enabled) zgui.beginDisabled(.{});
             defer if (!is_enabled) zgui.endDisabled();
 
-            const selected_item = demo.noise_config.raw.type;
+            const selected_item = @enumToInt(demo.noise_config.noise_type);
             const names = [_][:0]const u8{ "White", "Pink" };
             if (zgui.beginCombo("Type", .{ .preview_value = names[selected_item] })) {
                 for (names) |name, index| {
                     if (zgui.selectable(name, .{ .selected = (selected_item == index) }) and
                         selected_item != index)
                     {
-                        demo.noise_config.raw.type = @intCast(u32, index);
-                        try demo.noise_data_source.setType(@intToEnum(zaudio.NoiseType, index));
+                        demo.noise_config.noise_type = @intToEnum(zaudio.NoiseType, index);
+                        try demo.noise_data_source.setType(demo.noise_config.noise_type);
                     }
                 }
                 zgui.endCombo();
             }
 
             if (zgui.sliderScalar("Amplitude", f64, .{
-                .v = &demo.noise_config.raw.amplitude,
+                .v = &demo.noise_config.amplitude,
                 .min = 0.05,
                 .max = 0.75,
                 .cfmt = "%.3f",
             })) {
-                try demo.noise_data_source.setAmplitude(demo.noise_config.raw.amplitude);
+                try demo.noise_data_source.setAmplitude(demo.noise_config.amplitude);
             }
         }
     }

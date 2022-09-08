@@ -1,4 +1,53 @@
 #include "miniaudio.h"
+#include <stdlib.h>
+#include <assert.h>
+//#include <stdio.h>
+
+static void* defaultAlloc(size_t size, void* user_data) {
+    return malloc(size);
+}
+static void* defaulrRealloc(void* ptr, size_t size, void* user_data) {
+    return realloc(ptr, size);
+}
+static void defaultFree(void* ptr, void* user_data) {
+    return free(ptr);
+}
+
+static ma_allocation_callbacks s_mem = {
+    .pUserData = NULL,
+    .onMalloc = defaultAlloc,
+    .onRealloc = defaulrRealloc,
+    .onFree = defaultFree,
+};
+
+void zaudioNoiseConfigInit(
+    ma_format format,
+    ma_uint32 channels,
+    ma_noise_type type,
+    ma_int32 seed,
+    double amplitude,
+    ma_noise_config* out_config
+) {
+    assert(out_config != NULL);
+    *out_config = ma_noise_config_init(format, channels, type, seed, amplitude);
+}
+
+ma_result zaudioNoiseCreate(const ma_noise_config* config, ma_noise** out_handle) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_noise), NULL);
+    ma_result res = ma_noise_init(config, &s_mem, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, NULL);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioNoiseDestroy(ma_noise* handle) {
+    assert(handle != NULL);
+    ma_noise_uninit(handle, &s_mem);
+    s_mem.onFree(handle, NULL);
+}
 
 // ma_engine
 void WA_ma_engine_listener_get_position(const ma_engine* engine, ma_uint32 index, ma_vec3f* vout) {

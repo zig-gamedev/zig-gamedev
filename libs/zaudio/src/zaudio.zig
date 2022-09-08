@@ -32,6 +32,24 @@ pub const Error = error{
     OutOfMemory,
 };
 
+const Result = enum(i32) {
+    success = 0,
+    generic_error = -1,
+    invalid_args = -2,
+    invalid_operation = -3,
+    out_of_memory = -4,
+};
+
+pub fn maybeError(result: Result) Error!void {
+    return switch (result) {
+        .success => {},
+        .generic_error => Error.GenericError,
+        .invalid_args => Error.InvalidArgs,
+        .invalid_operation => Error.InvalidOperation,
+        .out_of_memory => Error.OutOfMemory,
+    };
+}
+
 pub const PanMode = enum(u32) {
     balance,
     pan,
@@ -73,6 +91,7 @@ pub const DeviceState = enum(u32) {
     stopping = 4,
 };
 
+pub const Bool32 = u32;
 pub const Channel = c.ma_channel;
 
 pub const PlaybackCallback = struct {
@@ -239,8 +258,13 @@ pub const NoiseType = enum(u32) {
     brownian,
 };
 
-pub const NoiseConfig = struct {
-    raw: c.ma_noise_config,
+pub const NoiseConfig = extern struct {
+    format: Format,
+    num_channels: u32,
+    noise_type: NoiseType,
+    seed: i32,
+    amplitude: f64,
+    duplicate_channels: Bool32,
 
     pub fn init(
         format: Format,
@@ -249,39 +273,50 @@ pub const NoiseConfig = struct {
         seed: i32,
         amplitude: f64,
     ) NoiseConfig {
-        return .{ .raw = c.ma_noise_config_init(
-            @enumToInt(format),
+        var config: NoiseConfig = undefined;
+        zaudioNoiseConfigInit(
+            format,
             num_channels,
-            @enumToInt(noise_type),
+            noise_type,
             seed,
             amplitude,
-        ) };
+            &config,
+        );
+        return config;
     }
+    extern fn zaudioNoiseConfigInit(
+        format: Format,
+        num_channels: u32,
+        noise_type: NoiseType,
+        seed: i32,
+        amplitude: f64,
+        out_config: *NoiseConfig,
+    ) void;
 };
 
-pub fn createNoiseDataSource(allocator: std.mem.Allocator, config: NoiseConfig) Error!NoiseDataSource {
-    var handle = allocator.create(c.ma_noise) catch return error.OutOfMemory;
-    errdefer allocator.destroy(handle);
-    try checkResult(c.ma_noise_init(&config.raw, null, handle));
-    return @ptrCast(NoiseDataSource, handle);
+pub fn createNoiseDataSource(config: NoiseConfig) Error!NoiseDataSource {
+    var handle: ?NoiseDataSource = null;
+    try maybeError(zaudioNoiseCreate(&config, &handle));
+    return handle.?;
 }
+extern fn zaudioNoiseCreate(config: *const NoiseConfig, out_handle: ?*?*NoiseDataSourceImpl) Result;
 
 pub const NoiseDataSource = *align(@sizeOf(usize)) NoiseDataSourceImpl;
-const NoiseDataSourceImpl = opaque {
+pub const NoiseDataSourceImpl = opaque {
     pub usingnamespace DataSourceImpl.Methods(NoiseDataSource);
 
-    pub fn destroy(noise: NoiseDataSource, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_noise, noise);
-        c.ma_noise_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioNoiseDestroy;
+    extern fn zaudioNoiseDestroy(handle: NoiseDataSource) void;
 
     pub fn setAmplitude(noise: NoiseDataSource, amplitude: f64) Error!void {
-        try checkResult(c.ma_noise_set_amplitude(@ptrCast(*c.ma_noise, noise), amplitude));
+        try maybeError(ma_noise_set_amplitude(noise, amplitude));
     }
+    extern fn ma_noise_set_amplitude(noise: NoiseDataSource, amplitude: f64) Result;
+
     pub fn setType(noise: NoiseDataSource, noise_type: NoiseType) Error!void {
-        try checkResult(c.ma_noise_set_type(@ptrCast(*c.ma_noise, noise), @enumToInt(noise_type)));
+        try maybeError(ma_noise_set_type(noise, noise_type));
     }
+    extern fn ma_noise_set_type(noise: NoiseDataSource, noise_type: NoiseType) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
