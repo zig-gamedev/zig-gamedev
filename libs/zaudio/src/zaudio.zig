@@ -136,36 +136,60 @@ const LogImpl = opaque {
 // Data Source
 //
 //--------------------------------------------------------------------------------------------------
-pub const DataSourceConfig = struct {
-    raw: c.ma_node_config,
-
-    pub fn init() DataSourceConfig {
-        return .{ .raw = c.ma_data_source_config_init() };
-    }
+pub const DataSourceFlags = packed struct(u32) {
+    self_managed_range_and_loop_point: bool = false,
+    _padding: u31 = 0,
 };
 
-pub fn createDataSource(allocator: std.mem.Allocator, config: DataSourceConfig) Error!DataSource {
-    var handle = allocator.create(c.ma_data_source) catch return error.OutOfMemory;
-    errdefer allocator.destroy(handle);
-    try checkResult(c.ma_data_source_init(&config.raw, handle));
-    return @ptrCast(DataSource, handle);
+pub const DataSourceVTable = extern struct {
+    onRead: ?*const fn (
+        ds: DataSource,
+        frames_out: ?*anyopaque,
+        frame_count: u64,
+        frames_read: *u64,
+    ) callconv(.C) Result,
+    onSeek: ?*const fn (ds: DataSource, frame_index: u64) callconv(.C) Result,
+    onGetDataFormat: ?*const fn (
+        ds: DataSource,
+        format: ?*Format,
+        channels: ?*u32,
+        sample_rate: ?*u32,
+        channel_map: ?[*]Channel,
+        channel_map_cap: usize,
+    ) callconv(.C) Result,
+    onGetCursor: ?*const fn (ds: DataSource, cursor: ?*u64) callconv(.C) Result,
+    onGetLength: ?*const fn (ds: DataSource, length: ?*u64) callconv(.C) Result,
+    onSetLooping: ?*const fn (ds: DataSource, is_looping: Bool32) callconv(.C) Result,
+    flags: DataSourceFlags,
+};
+
+pub const DataSourceConfig = extern struct {
+    vtable: *const DataSourceVTable,
+
+    pub fn init() DataSourceConfig {
+        var config: DataSourceConfig = undefined;
+        zaudioDataSourceConfigInit(&config);
+        return config;
+    }
+    extern fn zaudioDataSourceConfigInit(out_config: *DataSourceConfig) void;
+};
+
+pub fn createDataSource(config: DataSourceConfig) Error!DataSource {
+    var handle: ?DataSource = null;
+    try maybeError(zaudioDataSourceCreate(&config, &handle));
+    return handle.?;
 }
+extern fn zaudioDataSourceCreate(config: *const DataSourceConfig, out_handle: ?*?*DataSourceImpl) Result;
 
 pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
 const DataSourceImpl = opaque {
-    pub fn destroy(data_source: DataSource, allocator: std.mem.Allocator) void {
-        const raw = data_source.asRawDataSource();
-        c.ma_data_source_uninit(raw);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioDataSourceDestroy;
+    extern fn zaudioDataSourceDestroy(handle: DataSource) void;
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub fn asDataSource(data_source: T) DataSource {
-                return @ptrCast(DataSource, data_source);
-            }
-            pub fn asRawDataSource(data_source: T) *c.ma_data_source {
-                return @ptrCast(*c.ma_data_source, data_source);
+            pub fn asDataSource(ds: T) DataSource {
+                return @ptrCast(DataSource, ds);
             }
             // TODO: Add missing methods.
         };
@@ -355,7 +379,7 @@ pub const NodeVTable = extern struct {
     flags: NodeFlags,
 };
 
-pub const NodeConfig = struct {
+pub const NodeConfig = extern struct {
     vtable: *const NodeVTable,
     initial_state: NodeState,
     input_bus_count: u32,

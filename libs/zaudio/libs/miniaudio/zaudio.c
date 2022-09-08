@@ -54,6 +54,27 @@ void zaudioNodeConfigInit(ma_node_config* out_config) {
     *out_config = ma_node_config_init();
 }
 
+void zaudioDataSourceConfigInit(ma_data_source_config* out_config) {
+    assert(out_config != NULL);
+    *out_config = ma_data_source_config_init();
+}
+
+ma_result zaudioDataSourceCreate(const ma_data_source_config* config, ma_data_source** out_handle) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_data_source), NULL);
+    ma_result res = ma_data_source_init(config, *out_handle);
+    if (res != MA_SUCCESS) {
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioDataSourceDestroy(ma_data_source* handle) {
+    assert(handle != NULL);
+    ma_data_source_uninit(handle);
+    s_mem.onFree(handle, NULL);
+}
+
 // ma_engine
 void WA_ma_engine_listener_get_position(const ma_engine* engine, ma_uint32 index, ma_vec3f* vout) {
     *vout = ma_engine_listener_get_position(engine, index);
