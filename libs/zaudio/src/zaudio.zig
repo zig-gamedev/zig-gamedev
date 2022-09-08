@@ -323,17 +323,52 @@ pub const NoiseDataSourceImpl = opaque {
 // Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const NodeConfig = struct {
-    raw: c.ma_node_config,
-
-    pub fn init() NodeConfig {
-        return .{ .raw = c.ma_node_config_init() };
-    }
-};
-
 pub const NodeState = enum(u32) {
     started,
     stopped,
+};
+
+pub const NodeFlags = packed struct(u32) {
+    passthrough: bool = false,
+    continuous_processing: bool = false,
+    allow_null_input: bool = false,
+    different_processing_rates: bool = false,
+    silent_output: bool = false,
+    _padding: u27 = 0,
+};
+
+pub const NodeVTable = extern struct {
+    onProcess: ?*const fn (
+        node: Node,
+        frames_in: ?[*][*]const f32,
+        frame_count_in: *u32,
+        frames_out: [*][*]f32,
+        frame_count_out: *u32,
+    ) callconv(.C) void,
+    onGetRequiredInputFrameCount: ?*const fn (
+        node: Node,
+        num_output_frames: u32,
+        num_input_frames: *u32,
+    ) callconv(.C) Result,
+    input_bus_count: u8,
+    output_bus_count: u8,
+    flags: NodeFlags,
+};
+
+pub const NodeConfig = struct {
+    vtable: *const NodeVTable,
+    initial_state: NodeState,
+    input_bus_count: u32,
+    output_bus_count: u32,
+    input_channels: [*]const u32,
+    output_channels: [*]const u32,
+
+    pub fn init() NodeConfig {
+        var config: NodeConfig = undefined;
+        zaudioNodeConfigInit(&config);
+        return config;
+    }
+    extern fn zaudioNodeConfigInit(out_config: *NodeConfig) void;
 };
 
 pub const Node = *align(@sizeOf(usize)) NodeImpl;
@@ -350,22 +385,29 @@ const NodeImpl = opaque {
             }
 
             pub fn getNodeGraph(node: T) NodeGraph {
-                return @ptrCast(NodeGraph, c.ma_node_get_node_graph(node.asRawNode()));
+                return ma_node_get_node_graph(node.asNode());
             }
+            extern fn ma_node_get_node_graph(node: Node) NodeGraph;
 
             pub fn getNumInputBuses(node: T) u32 {
-                return c.ma_node_get_input_bus_count(node.asRawNode());
+                return ma_node_get_input_bus_count(node.asNode());
             }
+            extern fn ma_node_get_input_bus_count(node: Node) u32;
+
             pub fn getNumOutputBuses(node: T) u32 {
-                return c.ma_node_get_output_bus_count(node.asRawNode());
+                return ma_node_get_output_bus_count(node.asNode());
             }
+            extern fn ma_node_get_output_bus_count(node: Node) u32;
 
             pub fn getNumInputChannels(node: T, bus_index: u32) u32 {
-                return c.ma_node_get_input_channels(node.asRawNode(), bus_index);
+                return ma_node_get_input_channels(node.asNode(), bus_index);
             }
+            extern fn ma_node_get_input_channels(node: Node, bus_index: u32) u32;
+
             pub fn getNumOutputChannels(node: T, bus_index: u32) u32 {
-                return c.ma_node_get_output_channels(node.asRawNode(), bus_index);
+                return ma_node_get_output_channels(node.asNode(), bus_index);
             }
+            extern fn ma_node_get_output_channels(node: Node, bus_index: u32) u32;
 
             pub fn attachOutputBus(
                 node: T,
@@ -373,44 +415,59 @@ const NodeImpl = opaque {
                 other_node: Node,
                 other_node_input_bus_index: u32,
             ) Error!void {
-                try checkResult(c.ma_node_attach_output_bus(
-                    node.asRawNode(),
+                try maybeError(ma_node_attach_output_bus(
+                    node.asNode(),
                     output_bus_index,
-                    other_node.asRawNode(),
+                    other_node.asNode(),
                     other_node_input_bus_index,
                 ));
             }
+            extern fn ma_node_attach_output_bus(
+                node: Node,
+                output_bus_index: u32,
+                other_node: Node,
+                other_node_input_bus_index: u32,
+            ) Result;
+
             pub fn dettachOutputBus(node: T, output_bus_index: u32) Error!void {
-                try checkResult(c.ma_node_detach_output_bus(node.asRawNode(), output_bus_index));
+                try maybeError(ma_node_detach_output_bus(node.asNode(), output_bus_index));
             }
+            extern fn ma_node_detach_output_bus(node: Node, output_bus_index: u32) Result;
+
             pub fn dettachAllOutputBuses(node: T) Error!void {
-                try checkResult(c.ma_node_detach_all_output_buses(node.asRawNode()));
+                try maybeError(ma_node_detach_all_output_buses(node.asNode()));
             }
+            extern fn ma_node_detach_all_output_buses(node: Node) Result;
 
             pub fn setOutputBusVolume(node: T, output_bus_index: u32, volume: f32) Error!void {
-                try checkResult(c.ma_node_set_output_bus_volume(
-                    node.asRawNode(),
-                    output_bus_index,
-                    volume,
-                ));
+                try maybeError(ma_node_set_output_bus_volume(node.asNode(), output_bus_index, volume));
             }
+            extern fn ma_node_set_output_bus_volume(node: Node, output_bus_index: u32, volume: f32) Result;
+
             pub fn getOutputBusVolume(node: T, output_bus_index: u32) f32 {
-                return c.ma_node_get_output_bus_volume(node.asRawNode(), output_bus_index);
+                return ma_node_get_output_bus_volume(node.asNode(), output_bus_index);
             }
+            extern fn ma_node_get_output_bus_volume(node: Node, output_bus_index: u32) f32;
 
             pub fn setState(node: T, state: NodeState) Error!void {
-                try checkResult(c.ma_node_set_state(node.asRawNode(), @enumToInt(state)));
+                try maybeError(ma_node_set_state(node.asNode(), state));
             }
+            extern fn ma_node_set_state(node: Node, NodeState) Result;
+
             pub fn getState(node: T) NodeState {
-                return @intToEnum(NodeState, c.ma_node_get_state(node.asRawNode()));
+                return ma_node_get_state(node.asNode());
             }
+            extern fn ma_node_get_state(node: Node) NodeState;
 
             pub fn setTime(node: T, local_time: u64) Error!void {
-                try checkResult(c.ma_node_set_time(node.asRawNode(), local_time));
+                try maybeError(ma_node_set_time(node.asNode(), local_time));
             }
+            extern fn ma_node_set_time(node: Node, local_time: u64) Result;
+
             pub fn getTime(node: T) u64 {
-                return c.ma_node_get_time(node.asRawNode());
+                return ma_node_get_time(node.asNode());
             }
+            extern fn ma_node_get_time(node: Node) u64;
         };
     }
 };

@@ -6,7 +6,7 @@
 static void* defaultAlloc(size_t size, void* user_data) {
     return malloc(size);
 }
-static void* defaulrRealloc(void* ptr, size_t size, void* user_data) {
+static void* defaulRealloc(void* ptr, size_t size, void* user_data) {
     return realloc(ptr, size);
 }
 static void defaultFree(void* ptr, void* user_data) {
@@ -16,7 +16,7 @@ static void defaultFree(void* ptr, void* user_data) {
 static ma_allocation_callbacks s_mem = {
     .pUserData = NULL,
     .onMalloc = defaultAlloc,
-    .onRealloc = defaulrRealloc,
+    .onRealloc = defaulRealloc,
     .onFree = defaultFree,
 };
 
@@ -47,6 +47,11 @@ void zaudioNoiseDestroy(ma_noise* handle) {
     assert(handle != NULL);
     ma_noise_uninit(handle, &s_mem);
     s_mem.onFree(handle, NULL);
+}
+
+void zaudioNodeConfigInit(ma_node_config* out_config) {
+    assert(out_config != NULL);
+    *out_config = ma_node_config_init();
 }
 
 // ma_engine
