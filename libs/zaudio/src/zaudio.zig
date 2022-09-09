@@ -531,43 +531,42 @@ const DataSourceNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(DataSourceNode);
 
     pub const destroy = zaudioDataSourceNodeDestroy;
-    extern fn zaudioDataSourceNodeDestroy(ds_node: DataSourceNode) void;
+    extern fn zaudioDataSourceNodeDestroy(handle: DataSourceNode) void;
 
-    pub fn setLooping(ds_node: DataSourceNode, is_looping: bool) void {
-        try maybeError(ma_data_source_node_set_looping(ds_node, @boolToInt(is_looping)));
+    pub fn setLooping(handle: DataSourceNode, is_looping: bool) void {
+        try maybeError(ma_data_source_node_set_looping(handle, @boolToInt(is_looping)));
     }
-    extern fn ma_data_source_node_set_looping(
-        ds_node: DataSourceNode,
-        is_looping: Bool32,
-    ) Result;
+    extern fn ma_data_source_node_set_looping(handle: DataSourceNode, is_looping: Bool32) Result;
 
-    pub fn isLooping(ds_node: DataSourceNode) bool {
-        return if (ma_data_source_node_is_looping(ds_node) == 0) false else true;
+    pub fn isLooping(handle: DataSourceNode) bool {
+        return if (ma_data_source_node_is_looping(handle) == 0) false else true;
     }
-    extern fn ma_data_source_node_is_looping(ds_node: DataSourceNode) Bool32;
+    extern fn ma_data_source_node_is_looping(handle: DataSourceNode) Bool32;
 };
 //--------------------------------------------------------------------------------------------------
 //
 // Splitter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const SplitterNodeConfig = struct {
-    raw: c.ma_splitter_node_config,
+pub const SplitterNode = *align(@sizeOf(usize)) SplitterNodeImpl;
 
-    pub fn init(num_channels: u32) SplitterNodeConfig {
-        return .{ .raw = c.ma_splitter_node_config_init(num_channels) };
+pub const SplitterNodeConfig = struct {
+    node_config: NodeConfig,
+    channels: u32,
+
+    pub fn init(channels: u32) SplitterNodeConfig {
+        var config: SplitterNodeConfig = undefined;
+        zaudioSplitterNodeConfigInit(channels, &config);
+        return config;
     }
+    extern fn zaudioSplitterNodeConfigInit(channels: u32, out_config: *SplitterNodeConfig) void;
 };
 
-pub const SplitterNode = *align(@sizeOf(usize)) SplitterNodeImpl;
 const SplitterNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(SplitterNode);
 
-    pub fn destroy(splitter_node: SplitterNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_splitter_node, splitter_node);
-        c.ma_splitter_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioSplitterNodeDestroy;
+    extern fn zaudioSplitterNodeDestroy(handle: SplitterNode) void;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -888,14 +887,17 @@ const NodeGraphImpl = opaque {
 
             pub fn createSplitterNode(
                 node_graph: T,
-                allocator: std.mem.Allocator,
                 config: SplitterNodeConfig,
             ) Error!SplitterNode {
-                var handle = allocator.create(c.ma_splitter_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_splitter_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(SplitterNode, handle);
+                var handle: ?SplitterNode = null;
+                try maybeError(zaudioSplitterNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioSplitterNodeCreate(
+                node_graph: NodeGraph,
+                config: *const SplitterNodeConfig,
+                out_handle: ?*?*SplitterNodeImpl,
+            ) Result;
 
             pub fn createNotchNode(
                 node_graph: T,
