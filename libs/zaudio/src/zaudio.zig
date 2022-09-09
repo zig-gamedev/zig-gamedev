@@ -1145,6 +1145,153 @@ const NodeGraphImpl = opaque {
 // Device
 //
 //--------------------------------------------------------------------------------------------------
+pub const Device = *align(@sizeOf(usize)) DeviceImpl;
+
+pub const ma_device_type = c_uint;
+pub const ma_performance_profile = c_uint;
+pub const ma_device_data_proc = ?*const fn (*anyopaque, ?*anyopaque, ?*const anyopaque, u32) callconv(.C) void;
+pub const ma_device_notification_proc = ?*const fn (*const anyopaque) callconv(.C) void;
+pub const ma_stop_proc = ?*const fn (*anyopaque) callconv(.C) void;
+
+pub const ResampleAlgorithm = enum(u32) {
+    linear,
+    custom,
+};
+
+pub const DeviceId = extern union {
+    wasapi: [64]i32,
+    dsound: [16]u8,
+    winmm: u32,
+    alsa: [256]u8,
+    pulse: [256]u8,
+    jack: i32,
+    coreaudio: [256]u8,
+    sndio: [256]u8,
+    audio4: [256]u8,
+    oss: [64]u8,
+    aaudio: i32,
+    opensl: u32,
+    webaudio: [32]u8,
+    custom: extern union {
+        i: i32,
+        s: [256]u8,
+        p: ?*anyopaque,
+    },
+    nullbackend: i32,
+};
+
+pub const ChannelMixMode = enum(u32) {
+    rectangular,
+    simple,
+    custom_weights,
+
+    pub const default: ChannelMixMode = .rectangular;
+};
+
+pub const ShareMode = enum(u32) {
+    shared,
+    exclusive,
+};
+
+pub const OpenslStreamType = enum(u32) {
+    default,
+    voice,
+    system,
+    ring,
+    media,
+    alarm,
+    notification,
+};
+
+pub const OpenslRecordingPreset = enum(u32) {
+    default,
+    generic,
+    camcorder,
+    recognition,
+    voice_communication,
+    voice_unprocessed,
+};
+
+pub const ma_aaudio_usage = c_uint;
+pub const ma_aaudio_content_type = c_uint;
+pub const ma_aaudio_input_preset = c_uint;
+
+const struct_unnamed_36 = extern struct {
+    usage: ma_aaudio_usage,
+    contentType: ma_aaudio_content_type,
+    inputPreset: ma_aaudio_input_preset,
+    noAutoStartAfterReroute: Bool32,
+};
+
+pub const struct_ma_device_config = extern struct {
+    deviceType: ma_device_type,
+    sampleRate: u32,
+    periodSizeInFrames: u32,
+    periodSizeInMilliseconds: u32,
+    periods: u32,
+    performanceProfile: ma_performance_profile,
+    noPreSilencedOutputBuffer: bool,
+    noClip: bool,
+    noDisableDenormals: bool,
+    noFixedSizedCallback: bool,
+    dataCallback: ma_device_data_proc,
+    notificationCallback: ma_device_notification_proc,
+    stopCallback: ma_stop_proc,
+    pUserData: ?*anyopaque,
+    resampling: extern struct {
+        format: Format,
+        channels: u32,
+        sample_rate_in: u32,
+        sample_rate_out: u32,
+        algorithm: ResampleAlgorithm,
+        backend_vtable: ?*anyopaque, // TODO: *ma_resampling_backend_vtable (custom resamplers)
+        backend_user_data: ?*anyopaque,
+        linear: extern struct {
+            lpf_order: u32,
+        },
+    },
+    playback: extern struct {
+        device_id: ?*const DeviceId,
+        format: Format,
+        channels: u32,
+        channel_map: [*]Channel,
+        channel_mix_mode: ChannelMixMode,
+        share_mode: ShareMode,
+    },
+    capture: extern struct {
+        device_id: ?*const DeviceId,
+        format: Format,
+        channels: u32,
+        channel_map: [*]Channel,
+        channel_mix_mode: ChannelMixMode,
+        share_mode: ShareMode,
+    },
+    wasapi: extern struct {
+        no_auto_convert_src: bool,
+        no_default_quality_src: bool,
+        no_auto_stream_routing: bool,
+        no_hardware_offloading: bool,
+    },
+    alsa: extern struct {
+        no_mmap: Bool32,
+        no_auto_format: Bool32,
+        no_auto_channels: Bool32,
+        no_auto_resample: Bool32,
+    },
+    pulse: extern struct {
+        stream_name_playback: [*:0]const u8,
+        stream_name_capture: [*:0]const u8,
+    },
+    coreaudio: extern struct {
+        allow_nominal_sample_rate_change: Bool32,
+    },
+    opensl: extern struct {
+        stream_type: OpenslStreamType,
+        recording_preset: OpenslRecordingPreset,
+    },
+    aaudio: struct_unnamed_36,
+};
+
 pub const DeviceConfig = struct {
     raw: c.ma_device_config,
 
@@ -1160,7 +1307,6 @@ pub fn createDevice(allocator: std.mem.Allocator, context: ?Context, config: *De
     return DeviceImpl.create(allocator, context, config);
 }
 
-pub const Device = *align(@sizeOf(usize)) DeviceImpl;
 const DeviceImpl = opaque {
     const InternalState = struct {
         playback_callback: PlaybackCallback = .{},

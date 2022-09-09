@@ -26,7 +26,6 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     system_sdk.include(exe.builder, exe, .{});
 
     const target = (std.zig.system.NativeTargetInfo.detect(
-        exe.builder.allocator,
         exe.target,
     ) catch unreachable).target;
 

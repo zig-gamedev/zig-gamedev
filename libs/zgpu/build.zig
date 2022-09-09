@@ -53,7 +53,6 @@ const DawnOptions = struct {
 
 fn linkDawn(exe: *std.build.LibExeObjStep) void {
     const target = (std.zig.system.NativeTargetInfo.detect(
-        exe.builder.allocator,
         exe.target,
     ) catch unreachable).target;
     const options = DawnOptions.init(target);
@@ -62,7 +61,6 @@ fn linkDawn(exe: *std.build.LibExeObjStep) void {
 
 fn linkFromBinary(b: *std.build.Builder, step: *std.build.LibExeObjStep, options: DawnOptions) void {
     const target = (std.zig.system.NativeTargetInfo.detect(
-        b.allocator,
         step.target,
     ) catch unreachable).target;
     const binaries_available = switch (target.os.tag) {
