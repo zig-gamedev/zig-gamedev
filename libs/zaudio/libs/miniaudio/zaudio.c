@@ -228,6 +228,39 @@ void zaudioLpfNodeDestroy(ma_lpf_node* handle) {
     s_mem.onFree(handle, s_mem.pUserData);
 }
 
+
+void zaudioHpfNodeConfigInit(
+    ma_uint32 channels,
+    ma_uint32 sample_rate,
+    double cutoff_frequency,
+    ma_uint32 order,
+    ma_hpf_node_config* out_config
+) {
+    assert(out_config != NULL);
+    *out_config = ma_hpf_node_config_init(channels, sample_rate, cutoff_frequency, order);
+}
+
+ma_result zaudioHpfNodeCreate(
+    ma_node_graph* node_graph,
+    const ma_hpf_node_config* config,
+    ma_hpf_node** out_handle
+) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_hpf_node), s_mem.pUserData);
+    ma_result res = ma_hpf_node_init(node_graph, config, &s_mem, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioHpfNodeDestroy(ma_hpf_node* handle) {
+    assert(handle != NULL);
+    ma_hpf_node_uninit(handle, &s_mem);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+
 // ma_engine
 void WA_ma_engine_listener_get_position(const ma_engine* engine, ma_uint32 index, ma_vec3f* vout) {
     *vout = ma_engine_listener_get_position(engine, index);

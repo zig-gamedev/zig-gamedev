@@ -667,27 +667,44 @@ const LpfNodeImpl = opaque {
 // High-Pass Filter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const HpfNodeConfig = struct {
-    raw: c.ma_hpf_node_config,
+pub const HpfNode = *align(@sizeOf(usize)) HpfNodeImpl;
 
-    pub fn init(num_channels: u32, sample_rate: u32, cutoff_frequency: f64, order: u32) HpfNodeConfig {
-        return .{ .raw = c.ma_hpf_node_config_init(num_channels, sample_rate, cutoff_frequency, order) };
-    }
+pub const HpfConfig = extern struct {
+    format: Format,
+    channels: u32,
+    sampleRate: u32,
+    cutoffFrequency: f64,
+    order: u32,
 };
 
-pub const HpfNode = *align(@sizeOf(usize)) HpfNodeImpl;
+pub const HpfNodeConfig = extern struct {
+    node_config: NodeConfig,
+    hpf: HpfConfig,
+
+    pub fn init(channels: u32, sample_rate: u32, cutoff_frequency: f64, order: u32) HpfNodeConfig {
+        var config: HpfNodeConfig = undefined;
+        zaudioHpfNodeConfigInit(channels, sample_rate, cutoff_frequency, order, &config);
+        return config;
+    }
+    extern fn zaudioHpfNodeConfigInit(
+        channels: u32,
+        sample_rate: u32,
+        cutoff_frequency: f64,
+        order: u32,
+        out_config: *HpfNodeConfig,
+    ) void;
+};
+
 const HpfNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(HpfNode);
 
-    pub fn destroy(hpf_node: HpfNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_hpf_node, hpf_node);
-        c.ma_hpf_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioHpfNodeDestroy;
+    extern fn zaudioHpfNodeDestroy(handle: HpfNode) void;
 
-    pub fn reconfigure(hpf_node: HpfNode, config: HpfNodeConfig) Error!void {
-        try checkResult(c.ma_hpf_node_reinit(&config.raw.hpf, @ptrCast(*c.ma_hpf_node, hpf_node)));
+    pub fn reconfigure(handle: HpfNode, config: HpfConfig) Error!void {
+        try maybeError(ma_hpf_node_reinit(&config, handle));
     }
+    extern fn ma_hpf_node_reinit(config: *const HpfConfig, handle: HpfNode) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -914,16 +931,16 @@ const NodeGraphImpl = opaque {
                 out_handle: ?*?*LpfNodeImpl,
             ) Result;
 
-            pub fn createHpfNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: HpfNodeConfig,
-            ) Error!HpfNode {
-                var handle = allocator.create(c.ma_hpf_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_hpf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(HpfNode, handle);
+            pub fn createHpfNode(node_graph: T, config: HpfNodeConfig) Error!HpfNode {
+                var handle: ?HpfNode = null;
+                try maybeError(zaudioHpfNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioHpfNodeCreate(
+                node_graph: NodeGraph,
+                config: *const HpfNodeConfig,
+                out_handle: ?*?*HpfNodeImpl,
+            ) Result;
 
             pub fn createSplitterNode(node_graph: T, config: SplitterNodeConfig) Error!SplitterNode {
                 var handle: ?SplitterNode = null;
@@ -2038,13 +2055,13 @@ test "zaudio.engine.basic" {
     _ = engine.getLog();
     _ = engine.getEndpoint();
 
-    const hpf_node = try engine.createHpfNode(std.testing.allocator, HpfNodeConfig.init(
+    const hpf_node = try engine.createHpfNode(HpfNodeConfig.init(
         engine.getNumChannels(),
         engine.getSampleRate(),
         1000.0,
         2,
     ));
-    defer hpf_node.destroy(std.testing.allocator);
+    defer hpf_node.destroy();
     try hpf_node.attachOutputBus(0, engine.getEndpoint(), 0);
 }
 
