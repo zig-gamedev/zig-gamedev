@@ -1217,6 +1217,452 @@ ZGUI_API void zguiEndTabBar() {
     ImGui::EndTabBar();
 }
 
+ZGUI_API ImDrawList* zguiGetWindowDrawList() {
+    return ImGui::GetWindowDrawList();
+}
+
+ZGUI_API ImDrawList* zguiGetBackgroundDrawList() {
+    return ImGui::GetBackgroundDrawList();
+}
+
+ZGUI_API ImDrawList* zguiGetForegroundDrawList() {
+    return ImGui::GetForegroundDrawList();
+}
+
+ZGUI_API void zguiDrawList_PushClipRect(
+    ImDrawList* draw_list,
+    float clip_rect_min_x,
+    float clip_rect_min_y,
+    float clip_rect_max_x,
+    float clip_rect_max_y,
+    bool intersect_with_current_clip_rect
+) {
+    draw_list->PushClipRect(
+        { clip_rect_min_x, clip_rect_min_y },
+        { clip_rect_max_x, clip_rect_max_y },
+        intersect_with_current_clip_rect
+    );
+}
+
+ZGUI_API void zguiDrawList_PushClipRectFullScreen(ImDrawList* draw_list) {
+    draw_list->PushClipRectFullScreen();
+}
+
+ZGUI_API void zguiDrawList_PopClipRect(ImDrawList* draw_list) {
+    draw_list->PopClipRect();
+}
+
+ZGUI_API void zguiDrawList_PushTextureID(ImDrawList* draw_list, ImTextureID texture_id) {
+    draw_list->PushTextureID(texture_id);
+}
+
+ZGUI_API void zguiDrawList_PopTextureID(ImDrawList* draw_list) {
+    draw_list->PopTextureID();
+}
+
+ZGUI_API void zguiDrawList_GetClipRectMin(ImDrawList* draw_list, float clip_min[2]) {
+    const ImVec2 c = draw_list->GetClipRectMin();
+    clip_min[0] = c.x;
+    clip_min[1] = c.y;
+}
+
+ZGUI_API void zguiDrawList_GetClipRectMax(ImDrawList* draw_list, float clip_max[2]) {
+    const ImVec2 c = draw_list->GetClipRectMax();
+    clip_max[0] = c.x;
+    clip_max[1] = c.y;
+}
+
+ZGUI_API void zguiDrawList_AddLine(
+    ImDrawList* draw_list,
+    float p1_x,
+    float p1_y,
+    float p2_x,
+    float p2_y,
+    unsigned int col,
+    float thickness
+) {
+    draw_list->AddLine({ p1_x, p1_y }, { p2_x, p2_y }, col, thickness);
+}
+
+ZGUI_API void zguiDrawList_AddRect(
+    ImDrawList* draw_list,
+    float p_min_x,
+    float p_min_y,
+    float p_max_x,
+    float p_max_y,
+    unsigned int col,
+    float rounding,
+    ImDrawFlags flags,
+    float thickness
+) {
+    draw_list->AddRect({ p_min_x, p_min_y }, { p_max_x, p_max_y }, col, rounding, flags, thickness);
+}
+
+ZGUI_API void zguiDrawList_AddRectFilled(
+    ImDrawList* draw_list,
+    float p_min_x,
+    float p_min_y,
+    float p_max_x,
+    float p_max_y,
+    unsigned int col,
+    float rounding,
+    ImDrawFlags flags
+) {
+    draw_list->AddRectFilled({ p_min_x, p_min_y }, { p_max_x, p_max_y }, col, rounding, flags);
+}
+
+ZGUI_API void zguiDrawList_AddRectFilledMultiColor(
+    ImDrawList* draw_list,
+    float p_min_x,
+    float p_min_y,
+    float p_max_x,
+    float p_max_y,
+    unsigned int col_upr_left,
+    unsigned int col_upr_right,
+    unsigned int col_bot_right,
+    unsigned int col_bot_left
+) {
+    draw_list->AddRectFilledMultiColor(
+        { p_min_x, p_min_y },
+        { p_max_x, p_max_y },
+        col_upr_left,
+        col_upr_right,
+        col_bot_right,
+        col_bot_left
+    );
+}
+
+ZGUI_API void zguiDrawList_AddQuad(
+    ImDrawList* draw_list,
+    float p1_x,
+    float p1_y,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    float p4_x,
+    float p4_y,
+    unsigned int col,
+    float thickness
+) {
+    draw_list->AddQuad({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, { p4_x, p4_y }, col, thickness);
+}
+
+ZGUI_API void zguiDrawList_AddQuadFilled(
+    ImDrawList* draw_list,
+    float p1_x,
+    float p1_y,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    float p4_x,
+    float p4_y,
+    unsigned int col
+) {
+    draw_list->AddQuadFilled({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, { p4_x, p4_y }, col);
+}
+
+ZGUI_API void zguiDrawList_AddTriangle(
+    ImDrawList* draw_list,
+    float p1_x,
+    float p1_y,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    unsigned int col,
+    float thickness
+) {
+    draw_list->AddTriangle({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, col, thickness);
+}
+
+ZGUI_API void zguiDrawList_AddTriangleFilled(
+    ImDrawList* draw_list,
+    float p1_x,
+    float p1_y,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    unsigned int col
+) {
+    draw_list->AddTriangleFilled({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, col);
+}
+
+ZGUI_API void zguiDrawList_AddCircle(
+    ImDrawList* draw_list,
+    float center_x,
+    float center_y,
+    float radius,
+    unsigned int col,
+    int num_segments,
+    float thickness
+) {
+    draw_list->AddCircle({ center_x, center_y }, radius, col, num_segments, thickness);
+}
+
+ZGUI_API void zguiDrawList_AddCircleFilled(
+    ImDrawList* draw_list,
+    float center_x,
+    float center_y,
+    float radius,
+    unsigned int col,
+    int num_segments
+) {
+    draw_list->AddCircleFilled({ center_x, center_y }, radius, col, num_segments);
+}
+
+ZGUI_API void zguiDrawList_AddNgon(
+    ImDrawList* draw_list,
+    float center_x,
+    float center_y,
+    float radius,
+    unsigned int col,
+    int num_segments,
+    float thickness
+) {
+    draw_list->AddNgon({ center_x, center_y }, radius, col, num_segments, thickness);
+}
+
+ZGUI_API void zguiDrawList_AddNgonFilled(
+    ImDrawList* draw_list,
+    float center_x,
+    float center_y,
+    float radius,
+    unsigned int col,
+    int num_segments
+) {
+    draw_list->AddNgonFilled({ center_x, center_y }, radius, col, num_segments);
+}
+
+ZGUI_API void zguiDrawList_AddText(
+    ImDrawList* draw_list,
+    float pos_x,
+    float pos_y,
+    unsigned int col,
+    const char* text_begin,
+    const char* text_end
+) {
+    draw_list->AddText({ pos_x, pos_y }, col, text_begin, text_end);
+}
+
+ZGUI_API void zguiDrawList_AddPolyline(
+    ImDrawList* draw_list,
+    const float (*points)[2],
+    int num_points,
+    unsigned int col,
+    ImDrawFlags flags,
+    float thickness
+) {
+    draw_list->AddPolyline((const ImVec2*)points, num_points, col, flags, thickness);
+}
+
+ZGUI_API void zguiDrawList_AddConvexPolyFilled(
+    ImDrawList* draw_list,
+    const float (*points)[2],
+    int num_points,
+    unsigned int col
+) {
+    draw_list->AddConvexPolyFilled((const ImVec2*)points, num_points, col);
+}
+
+ZGUI_API void zguiDrawList_AddBezierCubic(
+    ImDrawList* draw_list,
+    float p1_x,
+    float p1_y,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    float p4_x,
+    float p4_y,
+    unsigned int col,
+    float thickness,
+    int num_segments
+) {
+    draw_list->AddBezierCubic({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, { p4_x, p4_y }, col, thickness, num_segments);
+}
+
+ZGUI_API void zguiDrawList_AddBezierQuadratic(
+    ImDrawList* draw_list,
+    float p1_x,
+    float p1_y,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    unsigned int col,
+    float thickness,
+    int num_segments
+) {
+    draw_list->AddBezierQuadratic({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, col, thickness, num_segments);
+}
+
+ZGUI_API void zguiDrawList_AddImage(
+    ImDrawList* draw_list,
+    ImTextureID user_texture_id,
+    float p_min_x,
+    float p_min_y,
+    float p_max_x,
+    float p_max_y,
+    float uv_min_x,
+    float uv_min_y,
+    float uv_max_x,
+    float uv_max_y,
+    unsigned int col
+) {
+    draw_list->AddImage(
+        user_texture_id,
+        { p_min_x, p_min_y },
+        { p_max_x, p_max_y },
+        { uv_min_x, uv_min_y },
+        { uv_max_x, uv_max_y },
+        col
+    );
+}
+
+ZGUI_API void zguiDrawList_AddImageQuad(
+    ImDrawList* draw_list,
+    ImTextureID user_texture_id,
+    float p1_x,
+    float p1_y,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    float p4_x,
+    float p4_y,
+    float uv1_x,
+    float uv1_y,
+    float uv2_x,
+    float uv2_y,
+    float uv3_x,
+    float uv3_y,
+    float uv4_x,
+    float uv4_y,
+    unsigned int col
+) {
+    draw_list->AddImageQuad(
+        user_texture_id,
+        { p1_x, p1_y },
+        { p2_x, p2_y },
+        { p3_x, p3_y },
+        { p4_x, p4_y },
+        { uv1_x, uv1_y },
+        { uv2_x, uv2_y },
+        { uv3_x, uv3_y },
+        { uv4_x, uv4_y },
+        col
+    );
+}
+
+ZGUI_API void zguiDrawList_AddImageRounded(
+    ImDrawList* draw_list,
+    ImTextureID user_texture_id,
+    float p_min_x,
+    float p_min_y,
+    float p_max_x,
+    float p_max_y,
+    float uv_min_x,
+    float uv_min_y,
+    float uv_max_x,
+    float uv_max_y,
+    unsigned int col,
+    float rounding,
+    ImDrawFlags flags
+) {
+    draw_list->AddImageRounded(
+        user_texture_id,
+        { p_min_x, p_min_y },
+        { p_max_x, p_max_y },
+        { uv_min_x, uv_min_y },
+        { uv_max_x, uv_max_y },
+        col,
+        rounding,
+        flags
+    );
+}
+
+ZGUI_API void zguiDrawList_PathClear(ImDrawList* draw_list) {
+    draw_list->PathClear();
+}
+
+ZGUI_API void zguiDrawList_PathLineTo(ImDrawList* draw_list, float pos_x, float pos_y) {
+    draw_list->PathLineTo({ pos_x, pos_y });
+}
+
+ZGUI_API void zguiDrawList_PathLineToMergeDuplicate(ImDrawList* draw_list, float pos_x, float pos_y) {
+    draw_list->PathLineToMergeDuplicate({ pos_x, pos_y });
+}
+
+ZGUI_API void zguiDrawList_PathFillConvex(ImDrawList* draw_list, unsigned int col) {
+    draw_list->PathFillConvex(col);
+}
+
+ZGUI_API void zguiDrawList_PathStroke(ImDrawList* draw_list, unsigned int col, ImDrawFlags flags, float thickness) {
+    draw_list->PathStroke(col, flags, thickness);
+}
+
+ZGUI_API void zguiDrawList_PathArcTo(
+    ImDrawList* draw_list,
+    float center_x,
+    float center_y,
+    float radius,
+    float a_min,
+    float a_max,
+    int num_segments
+) {
+    draw_list->PathArcTo({ center_x, center_y }, radius, a_min, a_max, num_segments);
+}
+
+ZGUI_API void zguiDrawList_PathArcToFast(
+    ImDrawList* draw_list,
+    float center_x,
+    float center_y,
+    float radius,
+    int a_min_of_12,
+    int a_max_of_12
+) {
+    draw_list->PathArcToFast({ center_x, center_y }, radius, a_min_of_12, a_max_of_12);
+}
+
+ZGUI_API void zguiDrawList_PathBezierCubicCurveTo(
+    ImDrawList* draw_list,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    float p4_x,
+    float p4_y,
+    int num_segments
+) {
+    draw_list->PathBezierCubicCurveTo({ p2_x, p2_y }, { p3_x, p3_y }, { p4_x, p4_y }, num_segments);
+}
+
+ZGUI_API void zguiDrawList_PathBezierQuadraticCurveTo(
+    ImDrawList* draw_list,
+    float p2_x,
+    float p2_y,
+    float p3_x,
+    float p3_y,
+    int num_segments
+) {
+    draw_list->PathBezierQuadraticCurveTo({ p2_x, p2_y }, { p3_x, p3_y }, num_segments);
+}
+
+ZGUI_API void zguiDrawList_PathRect(
+    ImDrawList* draw_list,
+    float rect_min_x,
+    float rect_min_y,
+    float rect_max_x,
+    float rect_max_y,
+    float rounding,
+    ImDrawFlags flags
+) {
+    draw_list->PathRect({ rect_min_x, rect_min_y }, { rect_max_x, rect_max_y }, rounding, flags);
+}
+
 ZGUI_API void zguipShowDemoWindow(bool* p_open) {
     ImPlot::ShowDemoWindow(p_open);
 }
