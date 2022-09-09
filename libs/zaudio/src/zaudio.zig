@@ -711,27 +711,44 @@ const HpfNodeImpl = opaque {
 // Notch Filter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const NotchNodeConfig = struct {
-    raw: c.ma_notch_node_config,
+pub const NotchNode = *align(@sizeOf(usize)) NotchNodeImpl;
 
-    pub fn init(num_channels: u32, sample_rate: u32, q: f64, frequency: f64) NotchNodeConfig {
-        return .{ .raw = c.ma_notch_node_config_init(num_channels, sample_rate, q, frequency) };
-    }
+pub const NotchConfig = extern struct {
+    format: Format,
+    channels: u32,
+    sampleRate: u32,
+    q: f64,
+    frequency: f64,
 };
 
-pub const NotchNode = *align(@sizeOf(usize)) NotchNodeImpl;
+pub const NotchNodeConfig = extern struct {
+    node_config: NodeConfig,
+    notch: NotchConfig,
+
+    pub fn init(channels: u32, sample_rate: u32, q: f64, frequency: f64) NotchNodeConfig {
+        var config: NotchNodeConfig = undefined;
+        zaudioNotchNodeConfigInit(channels, sample_rate, q, frequency, &config);
+        return config;
+    }
+    extern fn zaudioNotchNodeConfigInit(
+        channels: u32,
+        sample_rate: u32,
+        q: f64,
+        frequency: f64,
+        out_config: *NotchNodeConfig,
+    ) void;
+};
+
 const NotchNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(NotchNode);
 
-    pub fn destroy(notch_node: NotchNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_notch_node, notch_node);
-        c.ma_notch_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioNotchNodeDestroy;
+    extern fn zaudioNotchNodeDestroy(handle: NotchNode) void;
 
-    pub fn reconfigure(notch_node: NotchNode, config: NotchNodeConfig) Error!void {
-        try checkResult(c.ma_notch_node_reinit(&config.raw.notch, @ptrCast(*c.ma_notch_node, notch_node)));
+    pub fn reconfigure(handle: NotchNode, config: NotchConfig) Error!void {
+        try maybeError(ma_notch_node_reinit(&config, handle));
     }
+    extern fn ma_notch_node_reinit(config: *const NotchConfig, handle: NotchNode) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -953,16 +970,16 @@ const NodeGraphImpl = opaque {
                 out_handle: ?*?*SplitterNodeImpl,
             ) Result;
 
-            pub fn createNotchNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: NotchNodeConfig,
-            ) Error!NotchNode {
-                var handle = allocator.create(c.ma_notch_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_notch_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(NotchNode, handle);
+            pub fn createNotchNode(node_graph: T, config: NotchNodeConfig) Error!NotchNode {
+                var handle: ?NotchNode = null;
+                try maybeError(zaudioNotchNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioNotchNodeCreate(
+                node_graph: NodeGraph,
+                config: *const NotchNodeConfig,
+                out_handle: ?*?*NotchNodeImpl,
+            ) Result;
 
             pub fn createPeakNode(
                 node_graph: T,
