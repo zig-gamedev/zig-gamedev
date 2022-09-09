@@ -144,7 +144,7 @@ ma_result zaudioSplitterNodeCreate(
     ma_splitter_node** out_handle
 ) {
     assert(config != NULL && out_handle != NULL);
-    *out_handle = s_mem.onMalloc(sizeof(ma_data_source_node), s_mem.pUserData);
+    *out_handle = s_mem.onMalloc(sizeof(ma_splitter_node), s_mem.pUserData);
     ma_result res = ma_splitter_node_init(node_graph, config, &s_mem, *out_handle);
     if (res != MA_SUCCESS) {
         s_mem.onFree(*out_handle, s_mem.pUserData);
@@ -156,6 +156,42 @@ ma_result zaudioSplitterNodeCreate(
 void zaudioSplitterNodeDestroy(ma_splitter_node* handle) {
     assert(handle != NULL);
     ma_splitter_node_uninit(handle, &s_mem);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+
+
+void zaudioBiquadNodeConfigInit(
+    ma_uint32 channels,
+    float b0,
+    float b1,
+    float b2,
+    float a0,
+    float a1,
+    float a2,
+    ma_biquad_node_config* out_config
+) {
+    assert(out_config != NULL);
+    *out_config = ma_biquad_node_config_init(channels, b0, b1, b2, a0, a1, a2);
+}
+
+ma_result zaudioBiquadNodeCreate(
+    ma_node_graph* node_graph,
+    const ma_biquad_node_config* config,
+    ma_biquad_node** out_handle
+) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_biquad_node), s_mem.pUserData);
+    ma_result res = ma_biquad_node_init(node_graph, config, &s_mem, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioBiquadNodeDestroy(ma_biquad_node* handle) {
+    assert(handle != NULL);
+    ma_biquad_node_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
 

@@ -573,27 +573,50 @@ const SplitterNodeImpl = opaque {
 // Biquad Filter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const BiquadNodeConfig = struct {
-    raw: c.ma_biquad_node_config,
+pub const BiquadNode = *align(@sizeOf(usize)) BiquadNodeImpl;
 
-    pub fn init(num_channels: u32, b0: f32, b1: f32, b2: f32, a0: f32, a1: f32, a2: f32) BiquadNodeConfig {
-        return .{ .raw = c.ma_biquad_node_config_init(num_channels, b0, b1, b2, a0, a1, a2) };
-    }
+pub const BiquadConfig = extern struct {
+    format: Format,
+    channels: u32,
+    b0: f64,
+    b1: f64,
+    b2: f64,
+    a0: f64,
+    a1: f64,
+    a2: f64,
 };
 
-pub const BiquadNode = *align(@sizeOf(usize)) BiquadNodeImpl;
+pub const BiquadNodeConfig = struct {
+    node_config: NodeConfig,
+    biquad: BiquadConfig,
+
+    pub fn init(channels: u32, b0: f32, b1: f32, b2: f32, a0: f32, a1: f32, a2: f32) BiquadNodeConfig {
+        var config: BiquadNodeConfig = undefined;
+        zaudioBiquadNodeConfigInit(channels, b0, b1, b2, a0, a1, a2, &config);
+        return config;
+    }
+};
+extern fn zaudioBiquadNodeConfigInit(
+    channels: u32,
+    b0: f32,
+    b1: f32,
+    b2: f32,
+    a0: f32,
+    a1: f32,
+    a2: f32,
+    out_config: *BiquadNodeConfig,
+) void;
+
 const BiquadNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(BiquadNode);
 
-    pub fn destroy(biquad_node: BiquadNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_biquad_node, biquad_node);
-        c.ma_biquad_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioBiquadNodeDestroy;
+    extern fn zaudioBiquadNodeDestroy(handle: BiquadNode) void;
 
-    pub fn reconfigure(biquad_node: BiquadNode, config: BiquadNodeConfig) Error!void {
-        try checkResult(c.ma_biquad_node_reinit(&config.raw, @ptrCast(*c.ma_biquad_node, biquad_node)));
+    pub fn reconfigure(handle: BiquadNode, config: BiquadNodeConfig) Error!void {
+        try maybeError(ma_biquad_node_reinit(&config, handle));
     }
+    extern fn ma_biquad_node_reinit(config: *const BiquadNodeConfig, handle: BiquadNode) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -852,16 +875,16 @@ const NodeGraphImpl = opaque {
                 out_handle: ?*?*DataSourceNodeImpl,
             ) Result;
 
-            pub fn createBiquadNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: BiquadNodeConfig,
-            ) Error!BiquadNode {
-                var handle = allocator.create(c.ma_biquad_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_biquad_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(BiquadNode, handle);
+            pub fn createBiquadNode(node_graph: T, config: BiquadNodeConfig) Error!BiquadNode {
+                var handle: ?BiquadNode = null;
+                try maybeError(zaudioBiquadNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioBiquadNodeCreate(
+                node_graph: NodeGraph,
+                config: *const BiquadNodeConfig,
+                out_handle: ?*?*BiquadNodeImpl,
+            ) Result;
 
             pub fn createLpfNode(
                 node_graph: T,
@@ -885,10 +908,7 @@ const NodeGraphImpl = opaque {
                 return @ptrCast(HpfNode, handle);
             }
 
-            pub fn createSplitterNode(
-                node_graph: T,
-                config: SplitterNodeConfig,
-            ) Error!SplitterNode {
+            pub fn createSplitterNode(node_graph: T, config: SplitterNodeConfig) Error!SplitterNode {
                 var handle: ?SplitterNode = null;
                 try maybeError(zaudioSplitterNodeCreate(node_graph.asNodeGraph(), &config, &handle));
                 return handle.?;
