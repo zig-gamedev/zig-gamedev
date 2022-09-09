@@ -58,7 +58,7 @@ const AudioFilter = struct {
     is_enabled: bool = false,
 
     lpf: struct {
-        config: zaudio.LpfNodeConfig,
+        config: zaudio.LpfConfig,
         node: zaudio.LpfNode,
     },
     hpf: struct {
@@ -94,7 +94,7 @@ const AudioFilter = struct {
     }
 
     fn destroy(filter: AudioFilter, allocator: std.mem.Allocator) void {
-        filter.lpf.node.destroy(allocator);
+        filter.lpf.node.destroy();
         filter.hpf.node.destroy(allocator);
         filter.notch.node.destroy(allocator);
         filter.peak.node.destroy(allocator);
@@ -317,8 +317,8 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
 
         const audio_filter = AudioFilter{
             .lpf = .{
-                .config = lpf_config,
-                .node = try audio.engine.createLpfNode(allocator, lpf_config),
+                .config = lpf_config.lpf,
+                .node = try audio.engine.createLpfNode(lpf_config),
             },
             .hpf = .{
                 .config = hpf_config,
@@ -654,7 +654,7 @@ fn update(demo: *DemoState) !void {
             .lpf => {
                 const config = &demo.audio_filter.lpf.config;
                 if (zgui.sliderScalar("Cutoff", f64, .{
-                    .v = &config.raw.lpf.cutoffFrequency,
+                    .v = &config.cutoffFrequency,
                     .min = min_filter_fequency,
                     .max = max_filter_fequency,
                     .cfmt = "%.1f Hz",

@@ -586,7 +586,7 @@ pub const BiquadConfig = extern struct {
     a2: f64,
 };
 
-pub const BiquadNodeConfig = struct {
+pub const BiquadNodeConfig = extern struct {
     node_config: NodeConfig,
     biquad: BiquadConfig,
 
@@ -616,34 +616,51 @@ const BiquadNodeImpl = opaque {
     pub fn reconfigure(handle: BiquadNode, config: BiquadNodeConfig) Error!void {
         try maybeError(ma_biquad_node_reinit(&config, handle));
     }
-    extern fn ma_biquad_node_reinit(config: *const BiquadNodeConfig, handle: BiquadNode) Result;
+    extern fn ma_biquad_node_reinit(config: *const BiquadConfig, handle: BiquadNode) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
 // Low-Pass Filter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const LpfNodeConfig = struct {
-    raw: c.ma_lpf_node_config,
+pub const LpfNode = *align(@sizeOf(usize)) LpfNodeImpl;
 
-    pub fn init(num_channels: u32, sample_rate: u32, cutoff_frequency: f64, order: u32) LpfNodeConfig {
-        return .{ .raw = c.ma_lpf_node_config_init(num_channels, sample_rate, cutoff_frequency, order) };
-    }
+pub const LpfConfig = extern struct {
+    format: Format,
+    channels: u32,
+    sampleRate: u32,
+    cutoffFrequency: f64,
+    order: u32,
 };
 
-pub const LpfNode = *align(@sizeOf(usize)) LpfNodeImpl;
+pub const LpfNodeConfig = extern struct {
+    node_config: NodeConfig,
+    lpf: LpfConfig,
+
+    pub fn init(channels: u32, sample_rate: u32, cutoff_frequency: f64, order: u32) LpfNodeConfig {
+        var config: LpfNodeConfig = undefined;
+        zaudioLpfNodeConfigInit(channels, sample_rate, cutoff_frequency, order, &config);
+        return config;
+    }
+    extern fn zaudioLpfNodeConfigInit(
+        channels: u32,
+        sample_rate: u32,
+        cutoff_frequency: f64,
+        order: u32,
+        out_config: *LpfNodeConfig,
+    ) void;
+};
+
 const LpfNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(LpfNode);
 
-    pub fn destroy(lpf_node: LpfNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_lpf_node, lpf_node);
-        c.ma_lpf_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioLpfNodeDestroy;
+    extern fn zaudioLpfNodeDestroy(handle: LpfNode) void;
 
-    pub fn reconfigure(lpf_node: LpfNode, config: LpfNodeConfig) Error!void {
-        try checkResult(c.ma_lpf_node_reinit(&config.raw.lpf, @ptrCast(*c.ma_lpf_node, lpf_node)));
+    pub fn reconfigure(handle: LpfNode, config: LpfConfig) Error!void {
+        try maybeError(ma_lpf_node_reinit(&config, handle));
     }
+    extern fn ma_lpf_node_reinit(config: *const LpfConfig, handle: LpfNode) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -886,16 +903,16 @@ const NodeGraphImpl = opaque {
                 out_handle: ?*?*BiquadNodeImpl,
             ) Result;
 
-            pub fn createLpfNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: LpfNodeConfig,
-            ) Error!LpfNode {
-                var handle = allocator.create(c.ma_lpf_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_lpf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(LpfNode, handle);
+            pub fn createLpfNode(node_graph: T, config: LpfNodeConfig) Error!LpfNode {
+                var handle: ?LpfNode = null;
+                try maybeError(zaudioLpfNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioLpfNodeCreate(
+                node_graph: NodeGraph,
+                config: *const LpfNodeConfig,
+                out_handle: ?*?*LpfNodeImpl,
+            ) Result;
 
             pub fn createHpfNode(
                 node_graph: T,
