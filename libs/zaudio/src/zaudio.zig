@@ -755,27 +755,46 @@ const NotchNodeImpl = opaque {
 // Peak Filter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const PeakNodeConfig = struct {
-    raw: c.ma_peak_node_config,
+pub const PeakNode = *align(@sizeOf(usize)) PeakNodeImpl;
 
-    pub fn init(num_channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) PeakNodeConfig {
-        return .{ .raw = c.ma_peak_node_config_init(num_channels, sample_rate, gain_db, q, frequency) };
-    }
+pub const PeakConfig = extern struct {
+    format: Format,
+    channels: u32,
+    sampleRate: u32,
+    gainDB: f64,
+    q: f64,
+    frequency: f64,
 };
 
-pub const PeakNode = *align(@sizeOf(usize)) PeakNodeImpl;
+pub const PeakNodeConfig = extern struct {
+    node_config: NodeConfig,
+    peak: PeakConfig,
+
+    pub fn init(channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) PeakNodeConfig {
+        var config: PeakNodeConfig = undefined;
+        zaudioPeakNodeConfigInit(channels, sample_rate, gain_db, q, frequency, &config);
+        return config;
+    }
+    extern fn zaudioPeakNodeConfigInit(
+        channels: u32,
+        sample_rate: u32,
+        gain_db: f64,
+        q: f64,
+        frequency: f64,
+        out_config: *PeakNodeConfig,
+    ) void;
+};
+
 const PeakNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(PeakNode);
 
-    pub fn destroy(peak_node: PeakNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_peak_node, peak_node);
-        c.ma_peak_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioPeakNodeDestroy;
+    extern fn zaudioPeakNodeDestroy(handle: PeakNode) void;
 
-    pub fn reconfigure(peak_node: PeakNode, config: PeakNodeConfig) Error!void {
-        try checkResult(c.ma_peak_node_reinit(&config.raw.peak, @ptrCast(*c.ma_peak_node, peak_node)));
+    pub fn reconfigure(handle: PeakNode, config: PeakConfig) Error!void {
+        try maybeError(ma_peak_node_reinit(&config, handle));
     }
+    extern fn ma_peak_node_reinit(config: *const PeakConfig, handle: PeakNode) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -981,16 +1000,16 @@ const NodeGraphImpl = opaque {
                 out_handle: ?*?*NotchNodeImpl,
             ) Result;
 
-            pub fn createPeakNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: PeakNodeConfig,
-            ) Error!PeakNode {
-                var handle = allocator.create(c.ma_peak_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_peak_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(PeakNode, handle);
+            pub fn createPeakNode(node_graph: T, config: PeakNodeConfig) Error!PeakNode {
+                var handle: ?PeakNode = null;
+                try maybeError(zaudioPeakNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioPeakNodeCreate(
+                node_graph: NodeGraph,
+                config: *const PeakNodeConfig,
+                out_handle: ?*?*PeakNodeImpl,
+            ) Result;
 
             pub fn createLoshelfNode(
                 node_graph: T,

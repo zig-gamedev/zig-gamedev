@@ -70,7 +70,7 @@ const AudioFilter = struct {
         node: zaudio.NotchNode,
     },
     peak: struct {
-        config: zaudio.PeakNodeConfig,
+        config: zaudio.PeakConfig,
         node: zaudio.PeakNode,
     },
     loshelf: struct {
@@ -97,7 +97,7 @@ const AudioFilter = struct {
         filter.lpf.node.destroy();
         filter.hpf.node.destroy();
         filter.notch.node.destroy();
-        filter.peak.node.destroy(allocator);
+        filter.peak.node.destroy();
         filter.loshelf.node.destroy(allocator);
         filter.hishelf.node.destroy(allocator);
     }
@@ -329,8 +329,8 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
                 .node = try audio.engine.createNotchNode(notch_config),
             },
             .peak = .{
-                .config = peak_config,
-                .node = try audio.engine.createPeakNode(allocator, peak_config),
+                .config = peak_config.peak,
+                .node = try audio.engine.createPeakNode(peak_config),
             },
             .loshelf = .{
                 .config = loshelf_config,
@@ -694,19 +694,19 @@ fn update(demo: *DemoState) !void {
                 const config = &demo.audio_filter.peak.config;
                 var has_changed = false;
                 if (zgui.sliderScalar("Gain", f64, .{
-                    .v = &config.raw.peak.gainDB,
+                    .v = &config.gainDB,
                     .min = min_filter_gain,
                     .max = max_filter_gain,
                     .cfmt = "%.1f dB",
                 })) has_changed = true;
                 if (zgui.sliderScalar("Frequency", f64, .{
-                    .v = &config.raw.peak.frequency,
+                    .v = &config.frequency,
                     .min = min_filter_fequency,
                     .max = max_filter_fequency,
                     .cfmt = "%.1f Hz",
                 })) has_changed = true;
                 if (zgui.sliderScalar("Q", f64, .{
-                    .v = &config.raw.peak.q,
+                    .v = &config.q,
                     .min = min_filter_q,
                     .max = max_filter_q,
                     .cfmt = "%.3f",
