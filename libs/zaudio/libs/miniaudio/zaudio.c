@@ -387,6 +387,38 @@ void zaudioHishelfNodeDestroy(ma_hishelf_node* handle) {
     s_mem.onFree(handle, s_mem.pUserData);
 }
 //--------------------------------------------------------------------------------------------------
+void zaudioDelayNodeConfigInit(
+    ma_uint32 channels,
+    ma_uint32 sample_rate,
+    ma_uint32 delay_in_frames,
+    float decay,
+    ma_delay_node_config* out_config
+) {
+    assert(out_config != NULL);
+    *out_config = ma_delay_node_config_init(channels, sample_rate, delay_in_frames, decay);
+}
+
+ma_result zaudioDelayNodeCreate(
+    ma_node_graph* node_graph,
+    const ma_delay_node_config* config,
+    ma_delay_node** out_handle
+) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_delay_node), s_mem.pUserData);
+    ma_result res = ma_delay_node_init(node_graph, config, &s_mem, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioDelayNodeDestroy(ma_delay_node* handle) {
+    assert(handle != NULL);
+    ma_delay_node_uninit(handle, &s_mem);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+//--------------------------------------------------------------------------------------------------
 //
 // C ABI workarounds
 //

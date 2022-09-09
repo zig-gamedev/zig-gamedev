@@ -905,44 +905,59 @@ const HishelfNodeImpl = opaque {
 // Delay Filter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const DelayNodeConfig = struct {
-    raw: c.ma_delay_node_config,
+pub const DelayNode = *align(@sizeOf(usize)) DelayNodeImpl;
 
-    pub fn init(num_channels: u32, sample_rate: u32, delay_in_frames: u32, decay: f32) DelayNodeConfig {
-        return .{ .raw = c.ma_delay_node_config_init(num_channels, sample_rate, delay_in_frames, decay) };
-    }
+pub const DelayConfig = extern struct {
+    channels: u32,
+    sample_rate: u32,
+    delay_in_frames: u32,
+    delay_start: Bool32,
+    wet: f32,
+    dry: f32,
+    decay: f32,
 };
 
-pub const DelayNode = *align(@sizeOf(usize)) DelayNodeImpl;
+pub const DelayNodeConfig = extern struct {
+    node_config: NodeConfig,
+    delay: DelayConfig,
+
+    pub fn init(channels: u32, sample_rate: u32, delay_in_frames: u32, decay: f32) DelayNodeConfig {
+        var config: DelayNodeConfig = undefined;
+        zaudioDelayNodeConfigInit(channels, sample_rate, delay_in_frames, decay, &config);
+        return config;
+    }
+    extern fn zaudioDelayNodeConfigInit(
+        channels: u32,
+        sample_rate: u32,
+        delay_in_frames: u32,
+        decay: f32,
+        out_config: *DelayNodeConfig,
+    ) void;
+};
+
 const DelayNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(DelayNode);
 
-    pub fn destroy(delay_node: DelayNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_delay_node, delay_node);
-        c.ma_delay_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioDelayNodeDestroy;
+    extern fn zaudioDelayNodeDestroy(handle: DelayNode) void;
 
-    pub fn setWet(delay_node: DelayNode, value: f32) void {
-        c.ma_delay_node_set_wet(@ptrCast(*c.ma_delay_node, delay_node), value);
-    }
-    pub fn getWet(delay_node: DelayNode) f32 {
-        return c.ma_delay_node_get_wet(@ptrCast(*c.ma_delay_node, delay_node));
-    }
+    pub const setWet = ma_delay_node_set_wet;
+    extern fn ma_delay_node_set_wet(handle: DelayNode, value: f32) void;
 
-    pub fn setDry(delay_node: DelayNode, value: f32) void {
-        c.ma_delay_node_set_dry(@ptrCast(*c.ma_delay_node, delay_node), value);
-    }
-    pub fn getDry(delay_node: DelayNode) f32 {
-        return c.ma_delay_node_get_dry(@ptrCast(*c.ma_delay_node, delay_node));
-    }
+    pub const getWet = ma_delay_node_get_wet;
+    extern fn ma_delay_node_get_wet(handle: DelayNode) f32;
 
-    pub fn setDecay(delay_node: DelayNode, value: f32) void {
-        c.ma_delay_node_set_decay(@ptrCast(*c.ma_delay_node, delay_node), value);
-    }
-    pub fn getDecay(delay_node: DelayNode) f32 {
-        return c.ma_delay_node_get_decay(@ptrCast(*c.ma_delay_node, delay_node));
-    }
+    pub const setDry = ma_delay_node_set_dry;
+    extern fn ma_delay_node_set_dry(handle: DelayNode, value: f32) void;
+
+    pub const getDry = ma_delay_node_get_dry;
+    extern fn ma_delay_node_get_dry(handle: DelayNode) f32;
+
+    pub const setDecay = ma_delay_node_set_decay;
+    extern fn ma_delay_node_set_decay(handle: DelayNode, value: f32) void;
+
+    pub const getDecay = ma_delay_node_get_decay;
+    extern fn ma_delay_node_get_decay(handle: DelayNode) f32;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -1083,16 +1098,16 @@ const NodeGraphImpl = opaque {
                 out_handle: ?*?*HishelfNodeImpl,
             ) Result;
 
-            pub fn createDelayNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: DelayNodeConfig,
-            ) Error!DelayNode {
-                var handle = allocator.create(c.ma_delay_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_delay_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(DelayNode, handle);
+            pub fn createDelayNode(node_graph: T, config: DelayNodeConfig) Error!DelayNode {
+                var handle: ?DelayNode = null;
+                try maybeError(zaudioDelayNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioDelayNodeCreate(
+                node_graph: NodeGraph,
+                config: *const DelayNodeConfig,
+                out_handle: ?*?*DelayNodeImpl,
+            ) Result;
 
             pub fn getEndpoint(node_graph: T) Node {
                 return @ptrCast(
