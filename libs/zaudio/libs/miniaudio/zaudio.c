@@ -106,6 +106,32 @@ void zaudioWaveformDestroy(ma_waveform* handle) {
     s_mem.onFree(handle, s_mem.pUserData);
 }
 
+void zaudioDataSourceNodeConfigInit(ma_data_source* ds, ma_data_source_node_config* out_config) {
+    assert(out_config != NULL);
+    *out_config = ma_data_source_node_config_init(ds);
+}
+
+ma_result zaudioDataSourceNodeCreate(
+    ma_node_graph* node_graph,
+    const ma_data_source_node_config* config,
+    ma_data_source** out_handle
+) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_data_source_node), s_mem.pUserData);
+    ma_result res = ma_data_source_node_init(node_graph, config, &s_mem, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioDataSourceNodeDestroy(ma_data_source_node* handle) {
+    assert(handle != NULL);
+    ma_data_source_node_uninit(handle, &s_mem);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+
 // ma_engine
 void WA_ma_engine_listener_get_position(const ma_engine* engine, ma_uint32 index, ma_vec3f* vout) {
     *vout = ma_engine_listener_get_position(engine, index);

@@ -363,7 +363,6 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     );
     const waveform_data_source = try zaudio.createWaveformDataSource(waveform_config);
     const waveform_node = try audio.engine.createDataSourceNode(
-        allocator,
         zaudio.DataSourceNodeConfig.init(waveform_data_source.asDataSource()),
     );
     try waveform_node.setState(.stopped);
@@ -378,7 +377,6 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     );
     const noise_data_source = try zaudio.createNoiseDataSource(noise_config);
     const noise_node = try audio.engine.createDataSourceNode(
-        allocator,
         zaudio.DataSourceNodeConfig.init(noise_data_source.asDataSource()),
     );
     try noise_node.setState(.stopped);
@@ -436,9 +434,9 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     updateAudioGraph(demo.*) catch unreachable;
     demo.audio_filter.destroy(allocator);
     demo.waveform_data_source.destroy();
-    demo.waveform_node.destroy(allocator);
+    demo.waveform_node.destroy();
     demo.noise_data_source.destroy();
-    demo.noise_node.destroy(allocator);
+    demo.noise_node.destroy();
     demo.music.destroy(allocator);
     for (demo.sounds.items) |sound| sound.destroy(allocator);
     demo.sounds.deinit();

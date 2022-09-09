@@ -136,6 +136,15 @@ const LogImpl = opaque {
 // Data Source
 //
 //--------------------------------------------------------------------------------------------------
+pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
+
+pub fn createDataSource(config: DataSourceConfig) Error!DataSource {
+    var handle: ?DataSource = null;
+    try maybeError(zaudioDataSourceCreate(&config, &handle));
+    return handle.?;
+}
+extern fn zaudioDataSourceCreate(config: *const DataSourceConfig, out_handle: ?*?*DataSourceImpl) Result;
+
 pub const DataSourceFlags = packed struct(u32) {
     self_managed_range_and_loop_point: bool = false,
     _padding: u31 = 0,
@@ -174,14 +183,6 @@ pub const DataSourceConfig = extern struct {
     extern fn zaudioDataSourceConfigInit(out_config: *DataSourceConfig) void;
 };
 
-pub fn createDataSource(config: DataSourceConfig) Error!DataSource {
-    var handle: ?DataSource = null;
-    try maybeError(zaudioDataSourceCreate(&config, &handle));
-    return handle.?;
-}
-extern fn zaudioDataSourceCreate(config: *const DataSourceConfig, out_handle: ?*?*DataSourceImpl) Result;
-
-pub const DataSource = *align(@sizeOf(usize)) DataSourceImpl;
 const DataSourceImpl = opaque {
     pub const destroy = zaudioDataSourceDestroy;
     extern fn zaudioDataSourceDestroy(handle: DataSource) void;
@@ -200,6 +201,15 @@ const DataSourceImpl = opaque {
 // Waveform Data Source
 //
 //--------------------------------------------------------------------------------------------------
+pub const WaveformDataSource = *align(@sizeOf(usize)) WaveformDataSourceImpl;
+
+pub fn createWaveformDataSource(config: WaveformConfig) Error!WaveformDataSource {
+    var handle: ?WaveformDataSource = null;
+    try maybeError(zaudioWaveformCreate(&config, &handle));
+    return handle.?;
+}
+extern fn zaudioWaveformCreate(config: *const WaveformConfig, handle: ?*?*WaveformDataSourceImpl) Result;
+
 pub const WaveformType = enum(u32) {
     sine,
     square,
@@ -246,14 +256,6 @@ pub const WaveformConfig = extern struct {
     ) void;
 };
 
-pub fn createWaveformDataSource(config: WaveformConfig) Error!WaveformDataSource {
-    var handle: ?WaveformDataSource = null;
-    try maybeError(zaudioWaveformCreate(&config, &handle));
-    return handle.?;
-}
-extern fn zaudioWaveformCreate(config: *const WaveformConfig, handle: ?*?*WaveformDataSourceImpl) Result;
-
-pub const WaveformDataSource = *align(@sizeOf(usize)) WaveformDataSourceImpl;
 const WaveformDataSourceImpl = opaque {
     pub usingnamespace DataSourceImpl.Methods(WaveformDataSource);
 
@@ -285,6 +287,15 @@ const WaveformDataSourceImpl = opaque {
 // Noise Data Source
 //
 //--------------------------------------------------------------------------------------------------
+pub const NoiseDataSource = *align(@sizeOf(usize)) NoiseDataSourceImpl;
+
+pub fn createNoiseDataSource(config: NoiseConfig) Error!NoiseDataSource {
+    var handle: ?NoiseDataSource = null;
+    try maybeError(zaudioNoiseCreate(&config, &handle));
+    return handle.?;
+}
+extern fn zaudioNoiseCreate(config: *const NoiseConfig, out_handle: ?*?*NoiseDataSourceImpl) Result;
+
 pub const NoiseType = enum(u32) {
     white,
     pink,
@@ -327,15 +338,7 @@ pub const NoiseConfig = extern struct {
     ) void;
 };
 
-pub fn createNoiseDataSource(config: NoiseConfig) Error!NoiseDataSource {
-    var handle: ?NoiseDataSource = null;
-    try maybeError(zaudioNoiseCreate(&config, &handle));
-    return handle.?;
-}
-extern fn zaudioNoiseCreate(config: *const NoiseConfig, out_handle: ?*?*NoiseDataSourceImpl) Result;
-
-pub const NoiseDataSource = *align(@sizeOf(usize)) NoiseDataSourceImpl;
-pub const NoiseDataSourceImpl = opaque {
+const NoiseDataSourceImpl = opaque {
     pub usingnamespace DataSourceImpl.Methods(NoiseDataSource);
 
     pub const destroy = zaudioNoiseDestroy;
@@ -356,6 +359,8 @@ pub const NoiseDataSourceImpl = opaque {
 // Node
 //
 //--------------------------------------------------------------------------------------------------
+pub const Node = *align(@sizeOf(usize)) NodeImpl;
+
 pub const NodeState = enum(u32) {
     started,
     stopped,
@@ -404,7 +409,6 @@ pub const NodeConfig = extern struct {
     extern fn zaudioNodeConfigInit(out_config: *NodeConfig) void;
 };
 
-pub const Node = *align(@sizeOf(usize)) NodeImpl;
 const NodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(Node);
 
@@ -509,33 +513,38 @@ const NodeImpl = opaque {
 // Data Source Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const DataSourceNodeConfig = struct {
-    raw: c.ma_data_source_node_config,
+pub const DataSourceNode = *align(@sizeOf(usize)) DataSourceNodeImpl;
 
-    pub fn init(data_source: DataSource) DataSourceNodeConfig {
-        return .{ .raw = c.ma_data_source_node_config_init(data_source) };
+pub const DataSourceNodeConfig = extern struct {
+    node_config: NodeConfig,
+    data_source: DataSource,
+
+    pub fn init(ds: DataSource) DataSourceNodeConfig {
+        var config: DataSourceNodeConfig = undefined;
+        zaudioDataSourceNodeConfigInit(ds, &config);
+        return config;
     }
+    extern fn zaudioDataSourceNodeConfigInit(ds: DataSource, out_config: *DataSourceNodeConfig) void;
 };
 
-pub const DataSourceNode = *align(@sizeOf(usize)) DataSourceNodeImpl;
 const DataSourceNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(DataSourceNode);
 
-    pub fn destroy(ds_node: DataSourceNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_data_source_node, ds_node);
-        c.ma_data_source_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioDataSourceNodeDestroy;
+    extern fn zaudioDataSourceNodeDestroy(ds_node: DataSourceNode) void;
 
     pub fn setLooping(ds_node: DataSourceNode, is_looping: bool) void {
-        try checkResult(c.ma_data_source_node_set_looping(
-            @ptrCast(*c.ma_data_source_node, ds_node),
-            is_looping,
-        ));
+        try maybeError(ma_data_source_node_set_looping(ds_node, @boolToInt(is_looping)));
     }
+    extern fn ma_data_source_node_set_looping(
+        ds_node: DataSourceNode,
+        is_looping: Bool32,
+    ) Result;
+
     pub fn isLooping(ds_node: DataSourceNode) bool {
-        return c.ma_data_source_node_is_looping(@ptrCast(*c.ma_data_source_node, ds_node));
+        return if (ma_data_source_node_is_looping(ds_node) == 0) false else true;
     }
+    extern fn ma_data_source_node_is_looping(ds_node: DataSourceNode) Bool32;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -833,16 +842,16 @@ const NodeGraphImpl = opaque {
                 return @ptrCast(*c.ma_node_graph, node_graph);
             }
 
-            pub fn createDataSourceNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: DataSourceNodeConfig,
-            ) Error!DataSourceNode {
-                var handle = allocator.create(c.ma_data_source_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_data_source_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(DataSourceNode, handle);
+            pub fn createDataSourceNode(node_graph: T, config: DataSourceNodeConfig) Error!DataSourceNode {
+                var handle: ?DataSourceNode = null;
+                try maybeError(zaudioDataSourceNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioDataSourceNodeCreate(
+                node_graph: NodeGraph,
+                config: *const DataSourceNodeConfig,
+                out_handle: ?*?*DataSourceNodeImpl,
+            ) Result;
 
             pub fn createBiquadNode(
                 node_graph: T,
