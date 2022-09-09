@@ -92,7 +92,7 @@ pub const DeviceState = enum(u32) {
 };
 
 pub const Bool32 = u32;
-pub const Channel = c.ma_channel;
+pub const Channel = u8;
 
 pub const PlaybackCallback = struct {
     const CbType = if (@import("builtin").zig_backend == .stage1)
@@ -189,8 +189,8 @@ const DataSourceImpl = opaque {
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub fn asDataSource(ds: T) DataSource {
-                return @ptrCast(DataSource, ds);
+            pub fn asDataSource(handle: T) DataSource {
+                return @ptrCast(DataSource, handle);
             }
             // TODO: Add missing methods.
         };
@@ -964,39 +964,38 @@ const DelayNodeImpl = opaque {
 // Node Graph
 //
 //--------------------------------------------------------------------------------------------------
-pub const NodeGraphConfig = struct {
-    raw: c.ma_node_graph_config,
+pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
 
-    pub fn init(num_channels: u32) NodeGraphConfig {
-        return .{ .raw = c.ma_node_graph_config_init(num_channels) };
+pub fn createNodeGraph(config: NodeGraphConfig) Error!NodeGraph {
+    var handle: ?NodeGraph = null;
+    try maybeError(zaudioNodeGraphCreate(&config, &handle));
+    return handle.?;
+}
+extern fn zaudioNodeGraphCreate(config: *const NodeGraphConfig, out_handle: ?*?*NodeGraphImpl) Result;
+
+pub const NodeGraphConfig = extern struct {
+    channels: u32,
+    node_cache_cap_in_frames: u16,
+
+    pub fn init(channels: u32) NodeGraphConfig {
+        var config: NodeGraphConfig = undefined;
+        zaudioNodeGraphConfigInit(channels, &config);
+        return config;
     }
+    extern fn zaudioNodeGraphConfigInit(channels: u32, out_config: *NodeGraphConfig) void;
 };
 
-pub fn createNodeGraph(allocator: std.mem.Allocator, config: NodeGraphConfig) Error!NodeGraph {
-    var handle = allocator.create(c.ma_node_graph) catch return error.OutOfMemory;
-    errdefer allocator.destroy(handle);
-    try checkResult(c.ma_node_graph_init(&config.raw, null, handle));
-    return @ptrCast(NodeGraph, handle);
-}
-
-pub const NodeGraph = *align(@sizeOf(usize)) NodeGraphImpl;
 const NodeGraphImpl = opaque {
     pub usingnamespace NodeImpl.Methods(NodeGraph);
     pub usingnamespace NodeGraphImpl.Methods(NodeGraph);
 
-    pub fn destroy(node_graph: NodeGraph, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_node_graph, node_graph);
-        c.ma_node_graph_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioNodeGraphDestroy;
+    extern fn zaudioNodeGraphDestroy(handle: NodeGraph) void;
 
     fn Methods(comptime T: type) type {
         return struct {
-            pub fn asNodeGraph(node_graph: T) NodeGraph {
-                return @ptrCast(NodeGraph, node_graph);
-            }
-            pub fn asRawNodeGraph(node_graph: T) *c.ma_node_graph {
-                return @ptrCast(*c.ma_node_graph, node_graph);
+            pub fn asNodeGraph(handle: T) NodeGraph {
+                return @ptrCast(NodeGraph, handle);
             }
 
             pub fn createDataSourceNode(node_graph: T, config: DataSourceNodeConfig) Error!DataSourceNode {
@@ -1109,33 +1108,35 @@ const NodeGraphImpl = opaque {
                 out_handle: ?*?*DelayNodeImpl,
             ) Result;
 
-            pub fn getEndpoint(node_graph: T) Node {
-                return @ptrCast(
-                    Node,
-                    @alignCast(
-                        @sizeOf(usize),
-                        c.ma_node_graph_get_endpoint(node_graph.asRawNodeGraph()),
-                    ),
-                );
+            pub fn getEndpoint(handle: T) Node {
+                return ma_node_graph_get_endpoint(handle.asNodeGraph());
             }
+            extern fn ma_node_graph_get_endpoint(handle: NodeGraph) Node;
 
-            pub fn getNumChannels(node_graph: T) u32 {
-                return c.ma_node_graph_get_channels(node_graph.asRawNodeGraph());
+            pub fn getChannels(handle: T) u32 {
+                return ma_node_graph_get_channels(handle.asNodeGraph());
             }
+            extern fn ma_node_graph_get_channels(handle: NodeGraph) u32;
 
             pub fn readPcmFrames(
                 node_graph: T,
-                outptr: *anyopaque,
-                num_frames: u64,
-                num_frames_read: ?*u64,
+                frames_out: *anyopaque,
+                frame_count: u64,
+                frames_read: ?*u64,
             ) Error!void {
-                try checkResult(c.ma_node_graph_read_pcm_frames(
-                    node_graph.asRawNodeGraph(),
-                    outptr,
-                    num_frames,
-                    num_frames_read,
+                try maybeError(ma_node_graph_read_pcm_frames(
+                    node_graph.asNodeGraph(),
+                    frames_out,
+                    frame_count,
+                    frames_read,
                 ));
             }
+            extern fn ma_node_graph_read_pcm_frames(
+                handle: NodeGraph,
+                frames_out: *anyopaque,
+                frame_count: u64,
+                frames_read: ?*u64,
+            ) Result;
         };
     }
 };
@@ -2136,7 +2137,7 @@ test "zaudio.engine.basic" {
     try engine.setTime(engine.getTime());
 
     std.debug.print("Channels: {}, SampleRate: {}, NumListeners: {}, ClosestListener: {}\n", .{
-        engine.getNumChannels(),
+        engine.getChannels(),
         engine.getSampleRate(),
         engine.getNumListeners(),
         engine.findClosestListener(.{ 0.0, 0.0, 0.0 }),
@@ -2157,7 +2158,7 @@ test "zaudio.engine.basic" {
     _ = engine.getEndpoint();
 
     const hpf_node = try engine.createHpfNode(HpfNodeConfig.init(
-        engine.getNumChannels(),
+        engine.getChannels(),
         engine.getSampleRate(),
         1000.0,
         2,
@@ -2265,8 +2266,8 @@ test "zaudio.device.basic" {
 
 test "zaudio.node_graph.basic" {
     const config = NodeGraphConfig.init(2);
-    const node_graph = try createNodeGraph(std.testing.allocator, config);
-    defer node_graph.destroy(std.testing.allocator);
+    const node_graph = try createNodeGraph(config);
+    defer node_graph.destroy();
     _ = node_graph.getTime();
 }
 //--------------------------------------------------------------------------------------------------

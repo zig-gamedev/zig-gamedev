@@ -419,6 +419,28 @@ void zaudioDelayNodeDestroy(ma_delay_node* handle) {
     s_mem.onFree(handle, s_mem.pUserData);
 }
 //--------------------------------------------------------------------------------------------------
+void zaudioNodeGraphConfigInit(ma_uint32 channels, ma_node_graph_config* out_config) {
+    assert(out_config != NULL);
+    *out_config = ma_node_graph_config_init(channels);
+}
+
+ma_result zaudioNodeGraphCreate(const ma_node_graph_config* config, ma_node_graph** out_handle) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_node_graph), s_mem.pUserData);
+    ma_result res = ma_node_graph_init(config, &s_mem, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioNodeGraphDestroy(ma_node_graph* handle) {
+    assert(handle != NULL);
+    ma_node_graph_uninit(handle, &s_mem);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+//--------------------------------------------------------------------------------------------------
 //
 // C ABI workarounds
 //

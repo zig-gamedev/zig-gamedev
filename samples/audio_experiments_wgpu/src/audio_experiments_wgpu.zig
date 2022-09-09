@@ -276,39 +276,39 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
 
     const audio_filter = audio_filter: {
         const lpf_config = zaudio.LpfNodeConfig.init(
-            audio.engine.getNumChannels(),
+            audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_fequency,
             filter_order,
         );
         const hpf_config = zaudio.HpfNodeConfig.init(
-            audio.engine.getNumChannels(),
+            audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_fequency,
             filter_order,
         );
         const notch_config = zaudio.NotchNodeConfig.init(
-            audio.engine.getNumChannels(),
+            audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_q,
             min_filter_fequency,
         );
         const peak_config = zaudio.PeakNodeConfig.init(
-            audio.engine.getNumChannels(),
+            audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
             min_filter_q,
             min_filter_fequency,
         );
         const loshelf_config = zaudio.LoshelfNodeConfig.init(
-            audio.engine.getNumChannels(),
+            audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
             min_filter_q,
             min_filter_fequency,
         );
         const hishelf_config = zaudio.HishelfNodeConfig.init(
-            audio.engine.getNumChannels(),
+            audio.engine.getChannels(),
             audio.engine.getSampleRate(),
             min_filter_gain,
             min_filter_q,
@@ -355,7 +355,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     // Waveform generator
     const waveform_config = zaudio.WaveformConfig.init(
         .float32,
-        audio.engine.getNumChannels(),
+        audio.engine.getChannels(),
         audio.engine.getSampleRate(),
         .sine,
         0.5,
@@ -370,7 +370,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     // Noise generator
     const noise_config = zaudio.NoiseConfig.init(
         .float32,
-        audio.engine.getNumChannels(),
+        audio.engine.getChannels(),
         .pink,
         123,
         0.25,
