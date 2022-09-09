@@ -629,7 +629,7 @@ pub const LpfConfig = extern struct {
     format: Format,
     channels: u32,
     sampleRate: u32,
-    cutoffFrequency: f64,
+    cutoff_frequency: f64,
     order: u32,
 };
 
@@ -672,8 +672,8 @@ pub const HpfNode = *align(@sizeOf(usize)) HpfNodeImpl;
 pub const HpfConfig = extern struct {
     format: Format,
     channels: u32,
-    sampleRate: u32,
-    cutoffFrequency: f64,
+    sample_rate: u32,
+    cutoff_frequency: f64,
     order: u32,
 };
 
@@ -716,7 +716,7 @@ pub const NotchNode = *align(@sizeOf(usize)) NotchNodeImpl;
 pub const NotchConfig = extern struct {
     format: Format,
     channels: u32,
-    sampleRate: u32,
+    sample_rate: u32,
     q: f64,
     frequency: f64,
 };
@@ -760,8 +760,8 @@ pub const PeakNode = *align(@sizeOf(usize)) PeakNodeImpl;
 pub const PeakConfig = extern struct {
     format: Format,
     channels: u32,
-    sampleRate: u32,
-    gainDB: f64,
+    sample_rate: u32,
+    gain_db: f64,
     q: f64,
     frequency: f64,
 };
@@ -801,54 +801,104 @@ const PeakNodeImpl = opaque {
 // Low Shelf Filter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const LoshelfNodeConfig = struct {
-    raw: c.ma_loshelf_node_config,
+pub const LoshelfNode = *align(@sizeOf(usize)) LoshelfNodeImpl;
 
-    pub fn init(num_channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) LoshelfNodeConfig {
-        return .{ .raw = c.ma_loshelf_node_config_init(num_channels, sample_rate, gain_db, q, frequency) };
-    }
+pub const LoshelfConfig = extern struct {
+    format: Format,
+    channels: u32,
+    sample_rate: u32,
+    gain_db: f64,
+    shelf_slope: f64,
+    frequency: f64,
 };
 
-pub const LoshelfNode = *align(@sizeOf(usize)) LoshelfNodeImpl;
+pub const LoshelfNodeConfig = extern struct {
+    node_config: NodeConfig,
+    loshelf: LoshelfConfig,
+
+    pub fn init(
+        channels: u32,
+        sample_rate: u32,
+        gain_db: f64,
+        shelf_slope: f64,
+        frequency: f64,
+    ) LoshelfNodeConfig {
+        var config: LoshelfNodeConfig = undefined;
+        zaudioLoshelfNodeConfigInit(channels, sample_rate, gain_db, shelf_slope, frequency, &config);
+        return config;
+    }
+    extern fn zaudioLoshelfNodeConfigInit(
+        channels: u32,
+        sample_rate: u32,
+        gain_db: f64,
+        shelf_slope: f64,
+        frequency: f64,
+        out_config: *LoshelfNodeConfig,
+    ) void;
+};
+
 const LoshelfNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(LoshelfNode);
 
-    pub fn destroy(loshelf_node: LoshelfNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_loshelf_node, loshelf_node);
-        c.ma_loshelf_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioLoshelfNodeDestroy;
+    extern fn zaudioLoshelfNodeDestroy(handle: LoshelfNode) void;
 
-    pub fn reconfigure(loshelf_node: LoshelfNode, config: LoshelfNodeConfig) Error!void {
-        try checkResult(c.ma_loshelf_node_reinit(&config.raw.loshelf, @ptrCast(*c.ma_loshelf_node, loshelf_node)));
+    pub fn reconfigure(handle: LoshelfNode, config: LoshelfConfig) Error!void {
+        try maybeError(ma_loshelf_node_reinit(&config, handle));
     }
+    extern fn ma_loshelf_node_reinit(config: *const LoshelfConfig, handle: LoshelfNode) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
 // High Shelf Filter Node
 //
 //--------------------------------------------------------------------------------------------------
-pub const HishelfNodeConfig = struct {
-    raw: c.ma_hishelf_node_config,
+pub const HishelfNode = *align(@sizeOf(usize)) HishelfNodeImpl;
 
-    pub fn init(num_channels: u32, sample_rate: u32, gain_db: f64, q: f64, frequency: f64) HishelfNodeConfig {
-        return .{ .raw = c.ma_hishelf_node_config_init(num_channels, sample_rate, gain_db, q, frequency) };
-    }
+pub const HishelfConfig = extern struct {
+    format: Format,
+    channels: u32,
+    sample_rate: u32,
+    gain_db: f64,
+    shelf_slope: f64,
+    frequency: f64,
 };
 
-pub const HishelfNode = *align(@sizeOf(usize)) HishelfNodeImpl;
+pub const HishelfNodeConfig = extern struct {
+    node_config: NodeConfig,
+    hishelf: HishelfConfig,
+
+    pub fn init(
+        channels: u32,
+        sample_rate: u32,
+        gain_db: f64,
+        shelf_slope: f64,
+        frequency: f64,
+    ) HishelfNodeConfig {
+        var config: HishelfNodeConfig = undefined;
+        zaudioHishelfNodeConfigInit(channels, sample_rate, gain_db, shelf_slope, frequency, &config);
+        return config;
+    }
+    extern fn zaudioHishelfNodeConfigInit(
+        channels: u32,
+        sample_rate: u32,
+        gain_db: f64,
+        shelf_slope: f64,
+        frequency: f64,
+        out_config: *HishelfNodeConfig,
+    ) void;
+};
+
 const HishelfNodeImpl = opaque {
     pub usingnamespace NodeImpl.Methods(HishelfNode);
 
-    pub fn destroy(hishelf_node: HishelfNode, allocator: std.mem.Allocator) void {
-        const raw = @ptrCast(*c.ma_hishelf_node, hishelf_node);
-        c.ma_hishelf_node_uninit(raw, null);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioHishelfNodeDestroy;
+    extern fn zaudioHishelfNodeDestroy(handle: HishelfNode) void;
 
-    pub fn reconfigure(hishelf_node: HishelfNode, config: HishelfNodeConfig) Error!void {
-        try checkResult(c.ma_hishelf_node_reinit(&config.raw.hishelf, @ptrCast(*c.ma_hishelf_node, hishelf_node)));
+    pub fn reconfigure(handle: HishelfNode, config: HishelfConfig) Error!void {
+        try maybeError(ma_hishelf_node_reinit(&config, handle));
     }
+    extern fn ma_hishelf_node_reinit(config: *const HishelfConfig, handle: HishelfNode) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -1011,27 +1061,27 @@ const NodeGraphImpl = opaque {
                 out_handle: ?*?*PeakNodeImpl,
             ) Result;
 
-            pub fn createLoshelfNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: LoshelfNodeConfig,
-            ) Error!LoshelfNode {
-                var handle = allocator.create(c.ma_loshelf_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_loshelf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(LoshelfNode, handle);
+            pub fn createLoshelfNode(node_graph: T, config: LoshelfNodeConfig) Error!LoshelfNode {
+                var handle: ?LoshelfNode = null;
+                try maybeError(zaudioLoshelfNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioLoshelfNodeCreate(
+                node_graph: NodeGraph,
+                config: *const LoshelfNodeConfig,
+                out_handle: ?*?*LoshelfNodeImpl,
+            ) Result;
 
-            pub fn createHishelfNode(
-                node_graph: T,
-                allocator: std.mem.Allocator,
-                config: HishelfNodeConfig,
-            ) Error!HishelfNode {
-                var handle = allocator.create(c.ma_hishelf_node) catch return error.OutOfMemory;
-                errdefer allocator.destroy(handle);
-                try checkResult(c.ma_hishelf_node_init(node_graph.asRawNodeGraph(), &config.raw, null, handle));
-                return @ptrCast(HishelfNode, handle);
+            pub fn createHishelfNode(node_graph: T, config: HishelfNodeConfig) Error!HishelfNode {
+                var handle: ?HishelfNode = null;
+                try maybeError(zaudioHishelfNodeCreate(node_graph.asNodeGraph(), &config, &handle));
+                return handle.?;
             }
+            extern fn zaudioHishelfNodeCreate(
+                node_graph: NodeGraph,
+                config: *const HishelfNodeConfig,
+                out_handle: ?*?*HishelfNodeImpl,
+            ) Result;
 
             pub fn createDelayNode(
                 node_graph: T,

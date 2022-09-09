@@ -1,8 +1,7 @@
 #include "miniaudio.h"
 #include <stdlib.h>
 #include <assert.h>
-//#include <stdio.h>
-
+//--------------------------------------------------------------------------------------------------
 static void* defaultAlloc(size_t size, void* user_data) {
     return malloc(size);
 }
@@ -19,7 +18,7 @@ static ma_allocation_callbacks s_mem = {
     .onRealloc = defaulRealloc,
     .onFree = defaultFree,
 };
-
+//--------------------------------------------------------------------------------------------------
 void zaudioNoiseConfigInit(
     ma_format format,
     ma_uint32 channels,
@@ -48,12 +47,12 @@ void zaudioNoiseDestroy(ma_noise* handle) {
     ma_noise_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
+//--------------------------------------------------------------------------------------------------
 void zaudioNodeConfigInit(ma_node_config* out_config) {
     assert(out_config != NULL);
     *out_config = ma_node_config_init();
 }
-
+//--------------------------------------------------------------------------------------------------
 void zaudioDataSourceConfigInit(ma_data_source_config* out_config) {
     assert(out_config != NULL);
     *out_config = ma_data_source_config_init();
@@ -75,7 +74,7 @@ void zaudioDataSourceDestroy(ma_data_source* handle) {
     ma_data_source_uninit(handle);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
+//--------------------------------------------------------------------------------------------------
 void zaudioWaveformConfigInit(
     ma_format format,
     ma_uint32 channels,
@@ -105,7 +104,7 @@ void zaudioWaveformDestroy(ma_waveform* handle) {
     ma_waveform_uninit(handle);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
+//--------------------------------------------------------------------------------------------------
 void zaudioDataSourceNodeConfigInit(ma_data_source* ds, ma_data_source_node_config* out_config) {
     assert(out_config != NULL);
     *out_config = ma_data_source_node_config_init(ds);
@@ -131,8 +130,7 @@ void zaudioDataSourceNodeDestroy(ma_data_source_node* handle) {
     ma_data_source_node_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
-
+//--------------------------------------------------------------------------------------------------
 void zaudioSplitterNodeConfigInit(ma_uint32 channels, ma_splitter_node_config* out_config) {
     assert(out_config != NULL);
     *out_config = ma_splitter_node_config_init(channels);
@@ -158,8 +156,7 @@ void zaudioSplitterNodeDestroy(ma_splitter_node* handle) {
     ma_splitter_node_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
-
+//--------------------------------------------------------------------------------------------------
 void zaudioBiquadNodeConfigInit(
     ma_uint32 channels,
     float b0,
@@ -194,8 +191,7 @@ void zaudioBiquadNodeDestroy(ma_biquad_node* handle) {
     ma_biquad_node_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
-
+//--------------------------------------------------------------------------------------------------
 void zaudioLpfNodeConfigInit(
     ma_uint32 channels,
     ma_uint32 sample_rate,
@@ -227,8 +223,7 @@ void zaudioLpfNodeDestroy(ma_lpf_node* handle) {
     ma_lpf_node_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
-
+//--------------------------------------------------------------------------------------------------
 void zaudioHpfNodeConfigInit(
     ma_uint32 channels,
     ma_uint32 sample_rate,
@@ -260,8 +255,7 @@ void zaudioHpfNodeDestroy(ma_hpf_node* handle) {
     ma_hpf_node_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
-
+//--------------------------------------------------------------------------------------------------
 void zaudioNotchNodeConfigInit(
     ma_uint32 channels,
     ma_uint32 sample_rate,
@@ -293,8 +287,7 @@ void zaudioNotchNodeDestroy(ma_notch_node* handle) {
     ma_notch_node_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
-
-
+//--------------------------------------------------------------------------------------------------
 void zaudioPeakNodeConfigInit(
     ma_uint32 channels,
     ma_uint32 sample_rate,
@@ -327,7 +320,77 @@ void zaudioPeakNodeDestroy(ma_peak_node* handle) {
     ma_peak_node_uninit(handle, &s_mem);
     s_mem.onFree(handle, s_mem.pUserData);
 }
+//--------------------------------------------------------------------------------------------------
+void zaudioLoshelfNodeConfigInit(
+    ma_uint32 channels,
+    ma_uint32 sample_rate,
+    double gain_db,
+    double shelf_slope,
+    double frequency,
+    ma_loshelf_node_config* out_config
+) {
+    assert(out_config != NULL);
+    *out_config = ma_loshelf_node_config_init(channels, sample_rate, gain_db, shelf_slope, frequency);
+}
 
+ma_result zaudioLoshelfNodeCreate(
+    ma_node_graph* node_graph,
+    const ma_loshelf_node_config* config,
+    ma_loshelf_node** out_handle
+) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_loshelf_node), s_mem.pUserData);
+    ma_result res = ma_loshelf_node_init(node_graph, config, &s_mem, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioLoshelfNodeDestroy(ma_loshelf_node* handle) {
+    assert(handle != NULL);
+    ma_loshelf_node_uninit(handle, &s_mem);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+//--------------------------------------------------------------------------------------------------
+void zaudioHishelfNodeConfigInit(
+    ma_uint32 channels,
+    ma_uint32 sample_rate,
+    double gain_db,
+    double shelf_slope,
+    double frequency,
+    ma_hishelf_node_config* out_config
+) {
+    assert(out_config != NULL);
+    *out_config = ma_hishelf_node_config_init(channels, sample_rate, gain_db, shelf_slope, frequency);
+}
+
+ma_result zaudioHishelfNodeCreate(
+    ma_node_graph* node_graph,
+    const ma_hishelf_node_config* config,
+    ma_hishelf_node** out_handle
+) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_hishelf_node), s_mem.pUserData);
+    ma_result res = ma_hishelf_node_init(node_graph, config, &s_mem, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioHishelfNodeDestroy(ma_hishelf_node* handle) {
+    assert(handle != NULL);
+    ma_hishelf_node_uninit(handle, &s_mem);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+//--------------------------------------------------------------------------------------------------
+//
+// C ABI workarounds
+//
+//--------------------------------------------------------------------------------------------------
 // ma_engine
 void WA_ma_engine_listener_get_position(const ma_engine* engine, ma_uint32 index, ma_vec3f* vout) {
     *vout = ma_engine_listener_get_position(engine, index);
