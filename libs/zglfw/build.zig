@@ -25,9 +25,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.linkLibC();
     system_sdk.include(exe.builder, exe, .{});
 
-    const target = (std.zig.system.NativeTargetInfo.detect(
-        exe.target,
-    ) catch unreachable).target;
+    const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
     const src_dir = thisDir() ++ "/libs/glfw/src/";
 

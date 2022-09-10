@@ -19,14 +19,16 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.addIncludeDir(thisDir() ++ "/libs/miniaudio");
     lib.linkSystemLibrary("c");
 
-    if (exe.target.isDarwin()) {
+    const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
+
+    if (target.os.tag == .macos) {
         const system_sdk = @import("system_sdk.zig");
         system_sdk.include(exe.builder, lib, .{});
         exe.linkFramework("CoreAudio");
         exe.linkFramework("CoreFoundation");
         exe.linkFramework("AudioUnit");
         exe.linkFramework("AudioToolbox");
-    } else if (exe.target.isLinux()) {
+    } else if (target.os.tag == .linux) {
         exe.linkSystemLibrary("pthread");
         exe.linkSystemLibrary("m");
         exe.linkSystemLibrary("dl");
@@ -39,7 +41,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         "-DMA_NO_NULL",
         "-DMA_NO_JACK",
         "-fno-sanitize=undefined",
-        if (@import("builtin").target.os.tag == .macos) "-DMA_NO_RUNTIME_LINKING" else "",
+        if (target.os.tag == .macos) "-DMA_NO_RUNTIME_LINKING" else "",
     });
 
     return lib;
