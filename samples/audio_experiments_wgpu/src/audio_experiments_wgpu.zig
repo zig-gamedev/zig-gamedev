@@ -114,12 +114,15 @@ const AudioState = struct {
     current_set: u32 = num_sets - 1,
     samples: std.ArrayList(f32),
 
-    fn audioCallback(context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void {
-        if (context == null) return;
+    fn audioCallback(
+        device: zaudio.Device,
+        output: ?*anyopaque,
+        _: ?*const anyopaque,
+        num_frames: u32,
+    ) callconv(.C) void {
+        const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), device.getUserData()));
 
-        const audio = @ptrCast(*AudioState, @alignCast(@alignOf(AudioState), context));
-
-        audio.engine.readPcmFrames(outptr, num_frames, null) catch {};
+        audio.engine.readPcmFrames(output.?, num_frames, null) catch {};
 
         audio.mutex.lock();
         defer audio.mutex.unlock();
@@ -128,7 +131,7 @@ const AudioState = struct {
 
         const num_channels = 2;
         const base_index = samples_per_set * audio.current_set;
-        const frames = @ptrCast([*]f32, @alignCast(@sizeOf(f32), outptr));
+        const frames = @ptrCast([*]f32, @alignCast(@sizeOf(f32), output));
 
         var i: u32 = 0;
         while (i < math.min(num_frames, usable_samples_per_set)) : (i += 1) {
@@ -151,16 +154,14 @@ const AudioState = struct {
 
         const device = device: {
             var config = zaudio.DeviceConfig.init(.playback);
-            config.playback_callback = .{
-                .context = audio,
-                .callback = audioCallback,
-            };
-            config.playback.format = .float32;
-            config.playback.channels = 2;
+            config.data_callback = audioCallback;
+            config.user_data = audio;
             config.sample_rate = 48_000;
             config.period_size_in_frames = 480;
             config.period_size_in_milliseconds = 10;
-            break :device try zaudio.createDevice(allocator, null, &config);
+            config.playback.format = .float32;
+            config.playback.channels = 2;
+            break :device try zaudio.createDevice(null, config);
         };
 
         const engine = engine: {
@@ -181,7 +182,7 @@ const AudioState = struct {
     fn destroy(audio: *AudioState, allocator: std.mem.Allocator) void {
         audio.samples.deinit();
         audio.engine.destroy(allocator);
-        audio.device.destroy(allocator);
+        audio.device.destroy();
         allocator.destroy(audio);
     }
 };

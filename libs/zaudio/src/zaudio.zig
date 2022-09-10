@@ -87,20 +87,6 @@ pub const DeviceState = enum(u32) {
 pub const Bool32 = u32;
 pub const Channel = u8;
 
-pub const PlaybackCallback = extern struct {
-    const CbType = *const fn (context: ?*anyopaque, outptr: *anyopaque, num_frames: u32) void;
-
-    context: ?*anyopaque = null,
-    callback: ?CbType = null,
-};
-
-pub const CaptureCallback = extern struct {
-    const CbType = *const fn (context: ?*anyopaque, inptr: *const anyopaque, num_frames: u32) void;
-
-    context: ?*anyopaque = null,
-    callback: ?CbType = null,
-};
-
 pub const ResourceManager = *align(@sizeOf(usize)) ResourceManagerImpl;
 const ResourceManagerImpl = opaque {
     // TODO: Add methods.
@@ -1326,94 +1312,30 @@ pub const DeviceConfig = extern struct {
         no_auto_start_after_reroute: Bool32,
     },
 
-    // Our additional data (not present in miniaudio)
-    playback_callback: PlaybackCallback,
-    capture_callback: CaptureCallback,
-
     pub fn init(device_type: DeviceType) DeviceConfig {
         var config: DeviceConfig = undefined;
         zaudioDeviceConfigInit(device_type, &config);
-        config.playback_callback = .{};
-        config.capture_callback = .{};
         return config;
     }
     extern fn zaudioDeviceConfigInit(device_type: DeviceType, out_config: *DeviceConfig) void;
 };
 
-pub fn createDevice(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
-    return DeviceImpl.create(allocator, context, config);
+pub fn createDevice(context: ?Context, config: DeviceConfig) Error!Device {
+    var handle: ?Device = null;
+    try maybeError(zaudioDeviceCreate(if (context) |ctx| ctx else null, &config, &handle));
+    return handle.?;
 }
+extern fn zaudioDeviceCreate(
+    context: ?Context,
+    config: *const DeviceConfig,
+    out_handle: ?*?*DeviceImpl,
+) Result;
 
 const DeviceImpl = opaque {
-    const InternalState = struct {
-        playback_callback: PlaybackCallback = .{},
-        capture_callback: CaptureCallback = .{},
-    };
-
-    fn internalDataCallback(
-        device: Device,
-        outptr: ?*anyopaque,
-        inptr: ?*const anyopaque,
-        num_frames: u32,
-    ) callconv(.C) void {
-        const user_data = zaudioDeviceGetUserData(device);
-        const internal_state = @ptrCast(
-            *InternalState,
-            @alignCast(@alignOf(InternalState), user_data),
-        );
-
-        if (num_frames > 0) {
-            // Dispatch playback callback.
-            if (outptr != null) if (internal_state.playback_callback.callback) |func| {
-                func(internal_state.playback_callback.context, outptr.?, num_frames);
-            };
-
-            // Dispatch capture callback.
-            if (inptr != null) if (internal_state.capture_callback.callback) |func| {
-                func(internal_state.capture_callback.context, inptr.?, num_frames);
-            };
-        }
-    }
-
-    fn create(allocator: std.mem.Allocator, context: ?Context, config: *DeviceConfig) Error!Device {
-        // We don't allow setting below fields (we use them internally), please use
-        // `config.playback_callback` and/or `config.capture_callback` instead.
-        assert(config.data_callback == null);
-        assert(config.user_data == null);
-
-        const internal_state = allocator.create(InternalState) catch return error.OutOfMemory;
-        errdefer allocator.destroy(internal_state);
-
-        internal_state.* = .{
-            .playback_callback = config.playback_callback,
-            .capture_callback = config.capture_callback,
-        };
-
-        config.user_data = internal_state;
-
-        if (config.playback_callback.callback != null or config.capture_callback.callback != null) {
-            config.data_callback = internalDataCallback;
-        }
-
-        var handle: ?Device = null;
-        try maybeError(zaudioDeviceCreate(if (context) |ctx| ctx else null, config, &handle));
-        return handle.?;
-    }
-    extern fn zaudioDeviceCreate(
-        context: ?Context,
-        config: *const DeviceConfig,
-        out_handle: ?*?*DeviceImpl,
-    ) Result;
-
-    pub fn destroy(device: Device, allocator: std.mem.Allocator) void {
-        const user_data = zaudioDeviceGetUserData(device);
-        allocator.destroy(@ptrCast(
-            *InternalState,
-            @alignCast(@alignOf(InternalState), user_data),
-        ));
-        zaudioDeviceDestroy(device);
-    }
+    pub const destroy = zaudioDeviceDestroy;
     extern fn zaudioDeviceDestroy(device: Device) void;
+
+    pub const getUserData = zaudioDeviceGetUserData;
     extern fn zaudioDeviceGetUserData(device: Device) ?*anyopaque;
 
     pub fn asRaw(device: Device) *c.ma_device {
@@ -2433,8 +2355,8 @@ test "zaudio.device.basic" {
     config.playback.format = .float32;
     config.playback.channels = 2;
     config.sample_rate = 48_000;
-    const device = try createDevice(std.testing.allocator, null, &config);
-    defer device.destroy(std.testing.allocator);
+    const device = try createDevice(null, config);
+    defer device.destroy();
     try device.start();
     try expect(device.getState() == .started or device.getState() == .starting);
     try device.stop();
