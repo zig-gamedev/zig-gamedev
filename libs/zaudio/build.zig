@@ -6,24 +6,14 @@ pub const pkg = std.build.Pkg{
 };
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
-    const lib = buildLibrary(exe);
-    exe.linkLibrary(lib);
     exe.addIncludeDir(thisDir() ++ "/libs/miniaudio");
-}
-
-fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
-    const lib = exe.builder.addStaticLibrary("zaudio", thisDir() ++ "/src/zaudio.zig");
-
-    lib.setBuildMode(exe.build_mode);
-    lib.setTarget(exe.target);
-    lib.addIncludeDir(thisDir() ++ "/libs/miniaudio");
-    lib.linkSystemLibrary("c");
+    exe.linkLibC();
 
     const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
     if (target.os.tag == .macos) {
         const system_sdk = @import("system_sdk.zig");
-        system_sdk.include(exe.builder, lib, .{});
+        system_sdk.include(exe.builder, exe, .{});
         exe.linkFramework("CoreAudio");
         exe.linkFramework("CoreFoundation");
         exe.linkFramework("AudioUnit");
@@ -34,17 +24,16 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
         exe.linkSystemLibrary("dl");
     }
 
-    lib.addCSourceFile(thisDir() ++ "/libs/miniaudio/zaudio.c", &.{"-std=c99"});
-    lib.addCSourceFile(thisDir() ++ "/libs/miniaudio/miniaudio.c", &.{
+    exe.addCSourceFile(thisDir() ++ "/libs/miniaudio/zaudio.c", &.{"-std=c99"});
+    exe.addCSourceFile(thisDir() ++ "/libs/miniaudio/miniaudio.c", &.{
         "-DMA_NO_WEBAUDIO",
         "-DMA_NO_ENCODING",
         "-DMA_NO_NULL",
         "-DMA_NO_JACK",
+        "-std=c99",
         "-fno-sanitize=undefined",
         if (target.os.tag == .macos) "-DMA_NO_RUNTIME_LINKING" else "",
     });
-
-    return lib;
 }
 
 pub fn buildTests(
@@ -52,7 +41,7 @@ pub fn buildTests(
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 ) *std.build.LibExeObjStep {
-    const tests = b.addTest(thisDir() ++ "/src/zaudio.zig");
+    const tests = b.addTest(pkg.source.path);
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
     link(tests);
