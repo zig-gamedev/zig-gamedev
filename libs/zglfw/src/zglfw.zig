@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 pub fn init() Error!void {
     if (glfwInit() != 0) return;

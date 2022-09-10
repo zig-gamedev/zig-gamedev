@@ -1212,15 +1212,42 @@ pub const OpenslRecordingPreset = enum(u32) {
     voice_unprocessed,
 };
 
-pub const ma_aaudio_usage = c_uint;
-pub const ma_aaudio_content_type = c_uint;
-pub const ma_aaudio_input_preset = c_uint;
+pub const AaudioUsage = enum(u32) {
+    default,
+    announcement,
+    emergency,
+    safety,
+    vehicle_status,
+    alarm,
+    assistance_accessibility,
+    assistance_navigation_guidance,
+    assistance_sonification,
+    assitant,
+    game,
+    media,
+    notification,
+    notification_event,
+    notification_ringtone,
+    voice_communication,
+    voice_communication_signalling,
+};
 
-const struct_unnamed_36 = extern struct {
-    usage: ma_aaudio_usage,
-    contentType: ma_aaudio_content_type,
-    inputPreset: ma_aaudio_input_preset,
-    noAutoStartAfterReroute: Bool32,
+pub const AaudioContentType = enum(u32) {
+    default,
+    movie,
+    music,
+    sonification,
+    speech,
+};
+
+pub const AaudioInputPreset = enum(u32) {
+    default,
+    generic,
+    camcorder,
+    unprocessed,
+    voice_recognition,
+    voice_communication,
+    voice_performance,
 };
 
 pub const struct_ma_device_config = extern struct {
@@ -1289,7 +1316,12 @@ pub const struct_ma_device_config = extern struct {
         stream_type: OpenslStreamType,
         recording_preset: OpenslRecordingPreset,
     },
-    aaudio: struct_unnamed_36,
+    aaudio: extern struct {
+        usage: AaudioUsage,
+        content_type: AaudioContentType,
+        input_preset: AaudioInputPreset,
+        no_auto_start_after_reroute: Bool32,
+    },
 };
 
 pub const DeviceConfig = struct {
