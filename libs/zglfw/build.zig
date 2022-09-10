@@ -83,8 +83,6 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
         },
         else => {
             // We assume Linux (X11)
-            exe.target.abi = .gnu;
-            exe.setTarget(exe.target);
             exe.linkSystemLibraryName("X11");
             exe.linkSystemLibraryName("xcb");
             exe.linkSystemLibraryName("Xau");
