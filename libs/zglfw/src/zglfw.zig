@@ -177,6 +177,20 @@ pub const Key = enum(i32) {
     right_super = 347,
     menu = 348,
 };
+
+pub const Mods = packed struct {
+    shift: bool = false,
+    control: bool = false,
+    alt: bool = false,
+    super: bool = false,
+    caps_lock: bool = false,
+    num_lock: bool = false,
+    _padding: u2 = 0,
+
+    pub fn fromInt(flags: c_int) Mods {
+        return @bitCast(Mods, @intCast(u8, flags));
+    }
+};
 //--------------------------------------------------------------------------------------------------
 //
 // Error
@@ -304,6 +318,127 @@ pub const Window = *opaque {
         return .{ .w = width, .h = height };
     }
     extern fn glfwGetWindowSize(window: Window, width: *i32, height: *i32) void;
+
+    pub fn setKeyCallback(window: Window, comptime callback: ?fn (window: Window, key: Key, scancode: i32, action: Action, mods: Mods) void) void {
+        if (callback) |user_callback| {
+            const CWrapper = struct {
+                pub fn keyCallbackWrapper(handle: Window, key: c_int, scancode: c_int, action: c_int, mods: c_int) callconv(.C) void {
+                    @call(.{ .modifier = .always_inline }, user_callback, .{
+                        handle,
+                        @intToEnum(Key, @intCast(i32, key)),
+                        @intCast(i32, scancode),
+                        @intToEnum(Action, @intCast(i32, action)),
+                        Mods.fromInt(mods),
+                    });
+                }
+            };
+
+            glfwSetKeyCallback(window, CWrapper.keyCallbackWrapper);
+        } else {
+            glfwSetKeyCallback(window, null);
+        }
+    }
+    const KeyCallback = if (builtin.zig_backend == .stage1) fn (
+        window: Window,
+        key: c_int,
+        scancode: c_int,
+        action: c_int,
+        mods: c_int,
+    ) callconv(.C) void else *const fn (
+        window: Window,
+        key: c_int,
+        scancode: c_int,
+        action: c_int,
+        mods: c_int,
+    ) callconv(.C) void;
+    extern fn glfwSetKeyCallback(window: Window, callback: ?KeyCallback) void;
+
+    pub fn setMouseButtonCallback(window: Window, comptime callback: ?fn (window: Window, button: MouseButton, action: Action, mods: Mods) void) void {
+        if (callback) |user_callback| {
+            const CWrapper = struct {
+                pub fn mouseButtonCallbackWrapper(handle: Window, button: c_int, action: c_int, mods: c_int) callconv(.C) void {
+                    @call(.{ .modifier = .always_inline }, user_callback, .{
+                        handle,
+                        @intToEnum(MouseButton, @intCast(i32, button)),
+                        @intToEnum(Action, @intCast(i32, action)),
+                        Mods.fromInt(mods),
+                    });
+                }
+            };
+
+            glfwSetMouseButtonCallback(window, CWrapper.mouseButtonCallbackWrapper);
+        } else {
+            glfwSetMouseButtonCallback(window, null);
+        }
+    }
+    const MouseButtonCallback = if (builtin.zig_backend == .stage1) fn (
+        window: Window,
+        button: c_int,
+        action: c_int,
+        mods: c_int,
+    ) callconv(.C) void else *const fn (
+        window: Window,
+        button: c_int,
+        action: c_int,
+        mods: c_int,
+    ) callconv(.C) void;
+    extern fn glfwSetMouseButtonCallback(window: Window, callback: ?MouseButtonCallback) void;
+
+    pub fn setCursorPosCallback(window: Window, comptime callback: ?fn (window: Window, xpos: f64, ypos: f64) void) void {
+        if (callback) |user_callback| {
+            const CWrapper = struct {
+                pub fn cursorPosCallbackWrapper(handle: Window, xpos: f64, ypos: f64) callconv(.C) void {
+                    @call(.{ .modifier = .always_inline }, user_callback, .{
+                        handle,
+                        xpos,
+                        ypos,
+                    });
+                }
+            };
+
+            glfwSetCursorPosCallback(window, CWrapper.cursorPosCallbackWrapper);
+        } else {
+            glfwSetCursorPosCallback(window, null);
+        }
+    }
+    const CursorPosCallback = if (builtin.zig_backend == .stage1) fn (
+        window: Window,
+        xpos: f64,
+        ypos: f64,
+    ) callconv(.C) void else *const fn (
+        window: Window,
+        xpos: f64,
+        ypos: f64,
+    ) callconv(.C) void;
+    extern fn glfwSetCursorPosCallback(window: Window, callback: ?CursorPosCallback) void;
+
+    pub fn setScrollCallback(window: Window, comptime callback: ?fn (window: Window, xoffset: f64, yoffset: f64) void) void {
+        if (callback) |user_callback| {
+            const CWrapper = struct {
+                pub fn scrollCallbackWrapper(handle: Window, xoffset: f64, yoffset: f64) callconv(.C) void {
+                    @call(.{ .modifier = .always_inline }, user_callback, .{
+                        handle,
+                        xoffset,
+                        yoffset,
+                    });
+                }
+            };
+
+            glfwSetScrollCallback(window, CWrapper.scrollCallbackWrapper);
+        } else {
+            glfwSetScrollCallback(window, null);
+        }
+    }
+    const ScrollCallback = if (builtin.zig_backend == .stage1) fn (
+        window: Window,
+        xoffset: f64,
+        yoffset: f64,
+    ) callconv(.C) void else *const fn (
+        window: Window,
+        xoffset: f64,
+        yoffset: f64,
+    ) callconv(.C) void;
+    extern fn glfwSetScrollCallback(window: Window, callback: ?ScrollCallback) void;
 };
 
 pub fn createWindow(
