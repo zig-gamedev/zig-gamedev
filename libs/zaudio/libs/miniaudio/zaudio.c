@@ -441,6 +441,34 @@ void zaudioNodeGraphDestroy(ma_node_graph* handle) {
     s_mem.onFree(handle, s_mem.pUserData);
 }
 //--------------------------------------------------------------------------------------------------
+
+void zaudioDeviceConfigInit(ma_device_type device_type, ma_device_config* out_config) {
+    assert(out_config != NULL);
+    *out_config = ma_device_config_init(device_type);
+}
+
+ma_result zaudioDeviceCreate(ma_context* context, const ma_device_config* config, ma_device** out_handle) {
+    assert(config != NULL && out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_device), s_mem.pUserData);
+    ma_result res = ma_device_init(context, config, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioDeviceDestroy(ma_device* handle) {
+    assert(handle != NULL);
+    ma_device_uninit(handle);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+
+void* zaudioDeviceGetUserData(ma_device* handle) {
+    assert(handle != NULL);
+    return handle->pUserData;
+}
+//--------------------------------------------------------------------------------------------------
 //
 // C ABI workarounds
 //

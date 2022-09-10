@@ -155,11 +155,11 @@ const AudioState = struct {
                 .context = audio,
                 .callback = audioCallback,
             };
-            config.raw.playback.format = @enumToInt(zaudio.Format.float32);
-            config.raw.playback.channels = 2;
-            config.raw.sampleRate = 48_000;
-            config.raw.periodSizeInFrames = 480;
-            config.raw.periodSizeInMilliseconds = 10;
+            config.playback.format = .float32;
+            config.playback.channels = 2;
+            config.sample_rate = 48_000;
+            config.period_size_in_frames = 480;
+            config.period_size_in_milliseconds = 10;
             break :device try zaudio.createDevice(allocator, null, &config);
         };
 
