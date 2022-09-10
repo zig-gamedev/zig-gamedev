@@ -166,9 +166,9 @@ const AudioState = struct {
 
         const engine = engine: {
             var config = zaudio.EngineConfig.init();
-            config.raw.pDevice = device.asRaw();
-            config.raw.noAutoStart = 1;
-            break :engine try zaudio.createEngine(allocator, config);
+            config.device = device;
+            config.no_auto_start = 1;
+            break :engine try zaudio.createEngine(config);
         };
 
         audio.* = .{
@@ -181,7 +181,7 @@ const AudioState = struct {
 
     fn destroy(audio: *AudioState, allocator: std.mem.Allocator) void {
         audio.samples.deinit();
-        audio.engine.destroy(allocator);
+        audio.engine.destroy();
         audio.device.destroy();
         allocator.destroy(audio);
     }

@@ -6,8 +6,6 @@ const c = if (@import("builtin").zig_backend == .stage1)
 else
     @import("cimport_stage2.zig");
 
-// TODO: Get rid of WA_ma_* functions which are workarounds for Zig C ABI issues on aarch64.
-
 pub const SoundFlags = packed struct {
     stream: bool = false,
     decode: bool = false,
@@ -88,16 +86,25 @@ pub const Bool32 = u32;
 pub const Channel = u8;
 
 pub const ResourceManager = *align(@sizeOf(usize)) ResourceManagerImpl;
+
 const ResourceManagerImpl = opaque {
     // TODO: Add methods.
 };
 
+pub const Vfs = *align(@sizeOf(usize)) VfsImpl;
+
+const VfsImpl = opaque {
+    // TODO: Add methods.
+};
+
 pub const Context = *align(@sizeOf(usize)) ContextImpl;
+
 const ContextImpl = opaque {
     // TODO: Add methods.
 };
 
 pub const Log = *align(@sizeOf(usize)) LogImpl;
+
 const LogImpl = opaque {
     // TODO: Add methods.
 };
@@ -1322,7 +1329,7 @@ pub const DeviceConfig = extern struct {
 
 pub fn createDevice(context: ?Context, config: DeviceConfig) Error!Device {
     var handle: ?Device = null;
-    try maybeError(zaudioDeviceCreate(if (context) |ctx| ctx else null, &config, &handle));
+    try maybeError(zaudioDeviceCreate(context, &config, &handle));
     return handle.?;
 }
 extern fn zaudioDeviceCreate(
@@ -1372,7 +1379,7 @@ const DeviceImpl = opaque {
     extern fn ma_device_set_master_volume(device: Device, volume: f32) Result;
 
     pub fn getMasterVolume(device: Device) Error!f32 {
-        var volume: f32 = undefined;
+        var volume: f32 = 0.0;
         try maybeError(ma_device_get_master_volume(device, &volume));
         return volume;
     }
@@ -1383,31 +1390,67 @@ const DeviceImpl = opaque {
 // Engine
 //
 //--------------------------------------------------------------------------------------------------
-pub const EngineConfig = struct {
-    raw: c.ma_engine_config,
+pub const Engine = *align(@sizeOf(usize)) EngineImpl;
 
-    pub fn init() EngineConfig {
-        return .{ .raw = c.ma_engine_config_init() };
-    }
+pub const MonoExpansionMode = enum(u32) {
+    duplicate,
+    average,
+    stereo_only,
+
+    pub const default: MonoExpansionMode = .duplicate;
 };
 
-pub fn createEngine(allocator: std.mem.Allocator, config: ?EngineConfig) Error!Engine {
-    var handle = allocator.create(c.ma_engine) catch return error.OutOfMemory;
-    errdefer allocator.destroy(handle);
-    try checkResult(c.ma_engine_init(if (config) |conf| &conf.raw else null, handle));
-    return @ptrCast(Engine, handle);
-}
+pub const AllocationCallbacks = extern struct {
+    user_data: ?*anyopaque,
+    on_malloc: ?*const fn (len: usize, user_data: ?*anyopaque) callconv(.C) ?*anyopaque,
+    on_realloc: ?*const fn (
+        ptr: ?*anyopaque,
+        len: usize,
+        user_data: ?*anyopaque,
+    ) callconv(.C) ?*anyopaque,
+    on_free: ?*const fn (ptr: ?*anyopaque, user_data: ?*anyopaque) callconv(.C) void,
+};
 
-pub const Engine = *align(@sizeOf(usize)) EngineImpl;
+pub const EngineConfig = extern struct {
+    resource_manager: ?ResourceManager,
+    context: ?Context,
+    device: ?Device,
+    playback_device_id: ?*DeviceId,
+    log: ?Log,
+    listener_count: u32,
+    channels: u32,
+    sample_rate: u32,
+    period_size_in_frames: u32,
+    period_size_in_milliseconds: u32,
+    gain_smooth_time_in_frames: u32,
+    gain_smooth_time_in_milliseconds: u32,
+    allocation_callbacks: AllocationCallbacks,
+    no_auto_start: Bool32,
+    no_device: Bool32,
+    mono_expansion_mode: MonoExpansionMode,
+    resource_manager_vfs: ?*Vfs,
+
+    pub fn init() EngineConfig {
+        var config: EngineConfig = undefined;
+        zaudioEngineConfigInit(&config);
+        return config;
+    }
+    extern fn zaudioEngineConfigInit(out_config: *EngineConfig) void;
+};
+
+pub fn createEngine(config: ?EngineConfig) Error!Engine {
+    var handle: ?Engine = null;
+    try maybeError(zaudioEngineCreate(if (config) |conf| &conf else null, &handle));
+    return handle.?;
+}
+extern fn zaudioEngineCreate(config: ?*const EngineConfig, out_handle: ?*?*EngineImpl) Result;
+
 const EngineImpl = opaque {
     pub usingnamespace NodeImpl.Methods(Engine);
     pub usingnamespace NodeGraphImpl.Methods(Engine);
 
-    pub fn destroy(engine: Engine, allocator: std.mem.Allocator) void {
-        const raw = engine.asRaw();
-        c.ma_engine_uninit(raw);
-        allocator.destroy(raw);
-    }
+    pub const destroy = zaudioEngineDestroy;
+    extern fn zaudioEngineDestroy(handle: Engine) void;
 
     pub fn asRaw(engine: Engine) *c.ma_engine {
         return @ptrCast(*c.ma_engine, engine);
@@ -2236,8 +2279,8 @@ fn checkResult(result: c.ma_result) Error!void {
 const expect = std.testing.expect;
 
 test "zaudio.engine.basic" {
-    const engine = try createEngine(std.testing.allocator, null);
-    defer engine.destroy(std.testing.allocator);
+    const engine = try createEngine(null);
+    defer engine.destroy();
 
     try engine.setTime(engine.getTime());
 
@@ -2273,8 +2316,8 @@ test "zaudio.engine.basic" {
 }
 
 test "zaudio.soundgroup.basic" {
-    const engine = try createEngine(std.testing.allocator, null);
-    defer engine.destroy(std.testing.allocator);
+    const engine = try createEngine(null);
+    defer engine.destroy();
 
     const sgroup = try engine.createSoundGroup(std.testing.allocator, .{}, null);
     defer sgroup.destroy(std.testing.allocator);
@@ -2317,8 +2360,8 @@ test "zaudio.fence.basic" {
 }
 
 test "zaudio.sound.basic" {
-    const engine = try createEngine(std.testing.allocator, null);
-    defer engine.destroy(std.testing.allocator);
+    const engine = try createEngine(null);
+    defer engine.destroy();
 
     var config = SoundConfig.init();
     config.raw.channelsIn = 1;

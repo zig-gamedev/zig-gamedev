@@ -441,7 +441,6 @@ void zaudioNodeGraphDestroy(ma_node_graph* handle) {
     s_mem.onFree(handle, s_mem.pUserData);
 }
 //--------------------------------------------------------------------------------------------------
-
 void zaudioDeviceConfigInit(ma_device_type device_type, ma_device_config* out_config) {
     assert(out_config != NULL);
     *out_config = ma_device_config_init(device_type);
@@ -467,6 +466,28 @@ void zaudioDeviceDestroy(ma_device* handle) {
 void* zaudioDeviceGetUserData(ma_device* handle) {
     assert(handle != NULL);
     return handle->pUserData;
+}
+//--------------------------------------------------------------------------------------------------
+void zaudioEngineConfigInit(ma_engine_config* out_config) {
+    assert(out_config != NULL);
+    *out_config = ma_engine_config_init();
+}
+
+ma_result zaudioEngineCreate(const ma_engine_config* config, ma_engine** out_handle) {
+    assert(out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_engine), s_mem.pUserData);
+    ma_result res = ma_engine_init(config, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioEngineDestroy(ma_engine* handle) {
+    assert(handle != NULL);
+    ma_engine_uninit(handle);
+    s_mem.onFree(handle, s_mem.pUserData);
 }
 //--------------------------------------------------------------------------------------------------
 //
