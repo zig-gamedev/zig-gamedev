@@ -490,6 +490,46 @@ void zaudioEngineDestroy(ma_engine* handle) {
     s_mem.onFree(handle, s_mem.pUserData);
 }
 //--------------------------------------------------------------------------------------------------
+void zaudioSoundConfigInit(ma_sound_config* out_config) {
+    assert(out_config != NULL);
+    *out_config = ma_sound_config_init();
+}
+
+ma_result zaudioSoundCreate(ma_engine* engine, const ma_sound_config* config, ma_sound** out_handle) {
+    assert(out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_sound), s_mem.pUserData);
+    ma_result res = ma_sound_init_ex(engine, config, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+ma_result zaudioSoundCreateFromFile(
+    ma_engine* engine,
+    const char* file_path,
+    ma_uint32 flags,
+    ma_sound_group* sgroup,
+    ma_fence* done_fence,
+    ma_sound** out_handle
+) {
+    assert(out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_sound), s_mem.pUserData);
+    ma_result res = ma_sound_init_from_file(engine, file_path, flags, sgroup, done_fence, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioSoundDestroy(ma_sound* handle) {
+    assert(handle != NULL);
+    ma_sound_uninit(handle);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+//--------------------------------------------------------------------------------------------------
 //
 // C ABI workarounds
 //

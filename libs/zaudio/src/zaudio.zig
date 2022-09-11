@@ -6,7 +6,7 @@ const c = if (@import("builtin").zig_backend == .stage1)
 else
     @import("cimport_stage2.zig");
 
-pub const SoundFlags = packed struct {
+pub const SoundFlags = packed struct(u32) {
     stream: bool = false,
     decode: bool = false,
     async_load: bool = false,
@@ -14,12 +14,7 @@ pub const SoundFlags = packed struct {
     no_default_attachment: bool = false,
     no_pitch: bool = false,
     no_spatialization: bool = false,
-
     _padding: u25 = 0,
-
-    comptime {
-        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
-    }
 };
 
 // TODO: Add all errors.
@@ -1141,7 +1136,7 @@ pub const DeviceDataProc = *const fn (
 ) callconv(.C) void;
 
 pub const DeviceNotificationProc = *const fn (
-    *const anyopaque, // TODO: `*const ma_device_notification`
+    *const anyopaque, // TODO: Should be `*const ma_device_notification`.
 ) callconv(.C) void;
 
 pub const StopProc = *const fn (device: Device) callconv(.C) void;
@@ -1264,7 +1259,7 @@ pub const DeviceConfig = extern struct {
         sample_rate_in: u32,
         sample_rate_out: u32,
         algorithm: ResampleAlgorithm,
-        backend_vtable: ?*anyopaque, // TODO: `*ma_resampling_backend_vtable` (custom resamplers)
+        backend_vtable: ?*anyopaque, // TODO: Should be `*ma_resampling_backend_vtable` (custom resamplers).
         backend_user_data: ?*anyopaque,
         linear: extern struct {
             lpf_order: u32,
@@ -1455,15 +1450,14 @@ const EngineImpl = opaque {
 
     pub fn createSoundFromFile(
         engine: Engine,
-        allocator: std.mem.Allocator,
-        filepath: [:0]const u8,
+        file_path: [:0]const u8,
         args: struct {
             flags: SoundFlags = .{},
             sgroup: ?SoundGroup = null,
             done_fence: ?Fence = null,
         },
     ) Error!Sound {
-        return SoundImpl.createFromFile(allocator, engine, filepath, args.flags, args.sgroup, args.done_fence);
+        return SoundImpl.createFromFile(engine, file_path, args.flags, args.sgroup, args.done_fence);
     }
 
     pub fn createSoundFromDataSource(
@@ -1476,12 +1470,8 @@ const EngineImpl = opaque {
         return SoundImpl.createFromDataSource(allocator, engine, data_source, flags, sgroup);
     }
 
-    pub fn createSound(
-        engine: Engine,
-        allocator: std.mem.Allocator,
-        config: SoundConfig,
-    ) Error!Sound {
-        return SoundImpl.create(allocator, engine, config);
+    pub fn createSound(engine: Engine, config: SoundConfig) Error!Sound {
+        return SoundImpl.create(engine, config);
     }
 
     pub fn createSoundCopy(
@@ -1649,40 +1639,62 @@ const EngineImpl = opaque {
 // Sound
 //
 //--------------------------------------------------------------------------------------------------
-pub const SoundConfig = struct {
-    raw: c.ma_sound_config,
+pub const Sound = *align(@sizeOf(usize)) SoundImpl;
+
+pub const SoundConfig = extern struct {
+    file_path: [*:0]const u8,
+    file_path_w: [*:0]const i32,
+    data_source: ?DataSource,
+    initial_attachment: ?Node,
+    initial_attachment_input_bus_index: u32,
+    channels_in: u32,
+    channels_out: u32,
+    flags: SoundFlags,
+    initial_seek_point_in_pcm_frames: u64,
+    range_beg_in_pcm_frames: u64,
+    range_end_in_pcm_Frames: u64,
+    loop_point_beg_in_pcm_frames: u64,
+    loop_point_end_in_pcm_frames: u64,
+    is_looping: Bool32,
+    done_fence: ?Fence,
 
     pub fn init() SoundConfig {
-        return .{ .raw = c.ma_sound_config_init() };
+        var config: SoundConfig = undefined;
+        zaudioSoundConfigInit(&config);
+        return config;
     }
+    extern fn zaudioSoundConfigInit(out_config: *SoundConfig) void;
 };
 
-pub const Sound = *align(@sizeOf(usize)) SoundImpl;
 const SoundImpl = opaque {
     pub usingnamespace NodeImpl.Methods(Sound);
 
     fn createFromFile(
-        allocator: std.mem.Allocator,
         engine: Engine,
-        filepath: [:0]const u8,
+        file_path: [:0]const u8,
         flags: SoundFlags,
         sgroup: ?SoundGroup,
         done_fence: ?Fence,
     ) Error!Sound {
-        var handle = allocator.create(c.ma_sound) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
-
-        try checkResult(c.ma_sound_init_from_file(
-            engine.asRaw(),
-            filepath.ptr,
-            @bitCast(u32, flags),
-            if (sgroup) |g| g.asRaw() else null,
-            if (done_fence) |f| f.asRaw() else null,
-            handle,
+        var handle: ?Sound = null;
+        try maybeError(zaudioSoundCreateFromFile(
+            engine,
+            file_path.ptr,
+            flags,
+            sgroup,
+            done_fence,
+            &handle,
         ));
-
-        return @ptrCast(Sound, handle);
+        return handle.?;
     }
+    extern fn zaudioSoundCreateFromFile(
+        engine: Engine,
+        file_path: [*:0]const u8,
+        flags: SoundFlags,
+        sgroup: ?SoundGroup,
+        done_fence: ?Fence,
+        out_handle: ?*?*SoundImpl,
+    ) Result;
 
     fn createFromDataSource(
         allocator: std.mem.Allocator,
@@ -1726,23 +1738,15 @@ const SoundImpl = opaque {
         return @ptrCast(Sound, handle);
     }
 
-    fn create(
-        allocator: std.mem.Allocator,
-        engine: Engine,
-        config: SoundConfig,
-    ) Error!Sound {
-        var handle = allocator.create(c.ma_sound) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
-
-        try checkResult(c.ma_sound_init_ex(engine.asRaw(), &config.raw, handle));
-
-        return @ptrCast(Sound, handle);
+    fn create(engine: Engine, config: SoundConfig) Error!Sound {
+        var handle: ?Sound = null;
+        try maybeError(zaudioSoundCreate(engine, &config, &handle));
+        return handle.?;
     }
+    extern fn zaudioSoundCreate(engine: Engine, config: *const SoundConfig, out_handle: ?*?*SoundImpl) Result;
 
-    pub fn destroy(sound: Sound, allocator: std.mem.Allocator) void {
-        c.ma_sound_uninit(sound.asRaw());
-        allocator.destroy(sound.asRaw());
-    }
+    pub const destroy = zaudioSoundDestroy;
+    extern fn zaudioSoundDestroy(sound: Sound) void;
 
     pub fn asRaw(sound: Sound) *c.ma_sound {
         return @ptrCast(*c.ma_sound, sound);
@@ -2376,9 +2380,9 @@ test "zaudio.sound.basic" {
     defer engine.destroy();
 
     var config = SoundConfig.init();
-    config.raw.channelsIn = 1;
-    const sound = try engine.createSound(std.testing.allocator, config);
-    defer sound.destroy(std.testing.allocator);
+    config.channels_in = 1;
+    const sound = try engine.createSound(config);
+    defer sound.destroy();
 
     _ = sound.getNumInputChannels(0);
     _ = sound.getNumOutputChannels(0);

@@ -249,26 +249,13 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
 
     const sounds = sounds: {
         var sounds = std.ArrayList(zaudio.Sound).init(allocator);
-        try sounds.append(try audio.engine.createSoundFromFile(
-            allocator,
-            content_dir ++ "drum_bass_hard.flac",
-            .{},
-        ));
-        try sounds.append(try audio.engine.createSoundFromFile(
-            allocator,
-            content_dir ++ "tabla_tas1.flac",
-            .{},
-        ));
-        try sounds.append(try audio.engine.createSoundFromFile(
-            allocator,
-            content_dir ++ "loop_mika.flac",
-            .{},
-        ));
+        try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "drum_bass_hard.flac", .{}));
+        try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "tabla_tas1.flac", .{}));
+        try sounds.append(try audio.engine.createSoundFromFile(content_dir ++ "loop_mika.flac", .{}));
         break :sounds sounds;
     };
 
     const music = try audio.engine.createSoundFromFile(
-        allocator,
         content_dir ++ "Broke For Free - Night Owl.mp3",
         .{ .flags = .{ .stream = true } },
     );
@@ -438,8 +425,8 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     demo.waveform_node.destroy();
     demo.noise_data_source.destroy();
     demo.noise_node.destroy();
-    demo.music.destroy(allocator);
-    for (demo.sounds.items) |sound| sound.destroy(allocator);
+    demo.music.destroy();
+    for (demo.sounds.items) |sound| sound.destroy();
     demo.sounds.deinit();
     demo.audio.destroy(allocator);
     demo.gctx.deinit(allocator);
