@@ -1,5 +1,3 @@
-const builtin = @import("builtin");
-
 const windows = @import("windows.zig");
 const UINT = windows.UINT;
 const UINT64 = windows.UINT64;
@@ -527,22 +525,10 @@ pub const IObject = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetPrivateData: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const GUID, UINT, *const anyopaque) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const GUID, UINT, *const anyopaque) callconv(WINAPI) HRESULT,
-            },
-            SetPrivateDataInterface: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
-            },
-            GetPrivateData: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const GUID, *UINT, *anyopaque) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
-            },
-            GetParent: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            },
+            SetPrivateData: *const fn (*T, *const GUID, UINT, *const anyopaque) callconv(WINAPI) HRESULT,
+            SetPrivateDataInterface: *const fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
+            GetPrivateData: *const fn (*T, *const GUID, *UINT, *anyopaque) callconv(WINAPI) HRESULT,
+            GetParent: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -568,10 +554,7 @@ pub const IDeviceSubObject = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetDevice: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-                else => fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            },
+            GetDevice: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -608,22 +591,10 @@ pub const IResource = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetSharedHandle: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *HANDLE) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *HANDLE) callconv(WINAPI) HRESULT,
-            },
-            GetUsage: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *USAGE) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *HANDLE) callconv(WINAPI) HRESULT,
-            },
-            SetEvictionPriority: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, UINT) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, UINT) callconv(WINAPI) HRESULT,
-            },
-            GetEvictionPriority: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *UINT) callconv(WINAPI) HRESULT,
-                else => fn (*T, *UINT) callconv(WINAPI) HRESULT,
-            },
+            GetSharedHandle: *const fn (*T, *HANDLE) callconv(WINAPI) HRESULT,
+            GetUsage: *const fn (*T, *USAGE) callconv(WINAPI) HRESULT,
+            SetEvictionPriority: *const fn (*T, UINT) callconv(WINAPI) HRESULT,
+            GetEvictionPriority: *const fn (*T, *UINT) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -654,14 +625,8 @@ pub const IKeyedMutex = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            AcquireSync: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, UINT64, DWORD) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, UINT64, DWORD) callconv(WINAPI) HRESULT,
-            },
-            ReleaseSync: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, UINT64) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, UINT64) callconv(WINAPI) HRESULT,
-            },
+            AcquireSync: *const fn (*T, UINT64, DWORD) callconv(WINAPI) HRESULT,
+            ReleaseSync: *const fn (*T, UINT64) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -699,18 +664,9 @@ pub const ISurface = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *SURFACE_DESC) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *SURFACE_DESC) callconv(WINAPI) HRESULT,
-            },
-            Map: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *MAPPED_RECT, UINT) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *MAPPED_RECT, UINT) callconv(WINAPI) HRESULT,
-            },
-            Unmap: switch (buildin.zig_backend) {
-                .stage1 => fn (*T) callconv(WINAPI) HRESULT,
-                else => *const fn (*T) callconv(WINAPI) HRESULT,
-            },
+            GetDesc: *const fn (*T, *SURFACE_DESC) callconv(WINAPI) HRESULT,
+            Map: *const fn (*T, *MAPPED_RECT, UINT) callconv(WINAPI) HRESULT,
+            Unmap: *const fn (*T) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -742,18 +698,9 @@ pub const IAdapter = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumOutputs: switch (buildin.zig_backend) {
-                .stage1 => fn (*T, UINT, *?*IOutput) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, UINT, *?*IOutput) callconv(WINAPI) HRESULT,
-            },
-            GetDesc: switch (buildin.zig_backend) {
-                .stage1 => fn (*T, *ADAPTER_DESC) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, UINT, *?*IOutput) callconv(WINAPI) HRESULT,
-            },
-            CheckInterfaceSupport: switch (buildin.zig_backend) {
-                .stage1 => fn (*T, *const GUID, *LARGE_INTEGER) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const GUID, *LARGE_INTEGER) callconv(WINAPI) HRESULT,
-            },
+            EnumOutputs: *const fn (*T, UINT, *?*IOutput) callconv(WINAPI) HRESULT,
+            GetDesc: *const fn (*T, *ADAPTER_DESC) callconv(WINAPI) HRESULT,
+            CheckInterfaceSupport: *const fn (*T, *const GUID, *LARGE_INTEGER) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -828,54 +775,18 @@ pub const IOutput = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc: switch (buildin.zig_backend) {
-                .stage1 => fn (self: *T, desc: *OUTPUT_DESC) callconv(WINAPI) HRESULT,
-                else => *const fn (self: *T, desc: *OUTPUT_DESC) callconv(WINAPI) HRESULT,
-            },
-            GetDisplayModeList: switch (buildin.zig_backend) {
-                .stage1 => fn (*T, FORMAT, UINT, *UINT, ?*MODE_DESC) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, FORMAT, UINT, *UINT, ?*MODE_DESC) callconv(WINAPI) HRESULT,
-            },
-            FindClosestMatchingMode: switch (buildin.zig_backend) {
-                .stage1 => fn (*T, *const MODE_DESC, *MODE_DESC, ?*IUnknown) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const MODE_DESC, *MODE_DESC, ?*IUnknown) callconv(WINAPI) HRESULT,
-            },
-            WaitForVBlank: switch (buildin.zig_backend) {
-                .stage1 => fn (*T) callconv(WINAPI) HRESULT,
-                else => *const fn (*T) callconv(WINAPI) HRESULT,
-            },
-            TakeOwnership: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *IUnknown, BOOL) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *IUnknown, BOOL) callconv(WINAPI) HRESULT,
-            },
-            ReleaseOwnership: switch (builtin.zig_backend) {
-                .stage1 => fn (*T) callconv(WINAPI) void,
-                else => *const fn (*T) callconv(WINAPI) void,
-            },
-            GetGammaControlCapabilities: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *GAMMA_CONTROL_CAPABILITIES) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *GAMMA_CONTROL_CAPABILITIES) callconv(WINAPI) HRESULT,
-            },
-            SetGammaControl: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const GAMMA_CONTROL) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const GAMMA_CONTROL) callconv(WINAPI) HRESULT,
-            },
-            GetGammaControl: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *GAMMA_CONTROL) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *GAMMA_CONTROL) callconv(WINAPI) HRESULT,
-            },
-            SetDisplaySurface: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *ISurface) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *ISurface) callconv(WINAPI) HRESULT,
-            },
-            GetDisplaySurfaceData: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *ISurface) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *ISurface) callconv(WINAPI) HRESULT,
-            },
-            GetFrameStatistics: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *FRAME_STATISTICS) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *FRAME_STATISTICS) callconv(WINAPI) HRESULT,
-            },
+            GetDesc: *const fn (self: *T, desc: *OUTPUT_DESC) callconv(WINAPI) HRESULT,
+            GetDisplayModeList: *const fn (*T, FORMAT, UINT, *UINT, ?*MODE_DESC) callconv(WINAPI) HRESULT,
+            FindClosestMatchingMode: *const fn (*T, *const MODE_DESC, *MODE_DESC, ?*IUnknown) callconv(WINAPI) HRESULT,
+            WaitForVBlank: *const fn (*T) callconv(WINAPI) HRESULT,
+            TakeOwnership: *const fn (*T, *IUnknown, BOOL) callconv(WINAPI) HRESULT,
+            ReleaseOwnership: *const fn (*T) callconv(WINAPI) void,
+            GetGammaControlCapabilities: *const fn (*T, *GAMMA_CONTROL_CAPABILITIES) callconv(WINAPI) HRESULT,
+            SetGammaControl: *const fn (*T, *const GAMMA_CONTROL) callconv(WINAPI) HRESULT,
+            GetGammaControl: *const fn (*T, *GAMMA_CONTROL) callconv(WINAPI) HRESULT,
+            SetDisplaySurface: *const fn (*T, *ISurface) callconv(WINAPI) HRESULT,
+            GetDisplaySurfaceData: *const fn (*T, *ISurface) callconv(WINAPI) HRESULT,
+            GetFrameStatistics: *const fn (*T, *FRAME_STATISTICS) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -949,46 +860,16 @@ pub const ISwapChain = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            Present: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
-            },
-            GetBuffer: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, u32, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, u32, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            },
-            SetFullscreenState: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, ?*IOutput) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, ?*IOutput) callconv(WINAPI) HRESULT,
-            },
-            GetFullscreenState: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, ?*BOOL, ?*?*IOutput) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, ?*BOOL, ?*?*IOutput) callconv(WINAPI) HRESULT,
-            },
-            GetDesc: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *SWAP_CHAIN_DESC) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, ?*BOOL, ?*?*IOutput) callconv(WINAPI) HRESULT,
-            },
-            ResizeBuffers: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, UINT, UINT, UINT, FORMAT, SWAP_CHAIN_FLAG) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, UINT, UINT, UINT, FORMAT, SWAP_CHAIN_FLAG) callconv(WINAPI) HRESULT,
-            },
-            ResizeTarget: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const MODE_DESC) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const MODE_DESC) callconv(WINAPI) HRESULT,
-            },
-            GetContainingOutput: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,
-            },
-            GetFrameStatistics: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *FRAME_STATISTICS) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *FRAME_STATISTICS) callconv(WINAPI) HRESULT,
-            },
-            GetLastPresentCount: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *UINT) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *UINT) callconv(WINAPI) HRESULT,
-            },
+            Present: *const fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
+            GetBuffer: *const fn (*T, u32, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            SetFullscreenState: *const fn (*T, ?*IOutput) callconv(WINAPI) HRESULT,
+            GetFullscreenState: *const fn (*T, ?*BOOL, ?*?*IOutput) callconv(WINAPI) HRESULT,
+            GetDesc: *const fn (*T, *SWAP_CHAIN_DESC) callconv(WINAPI) HRESULT,
+            ResizeBuffers: *const fn (*T, UINT, UINT, UINT, FORMAT, SWAP_CHAIN_FLAG) callconv(WINAPI) HRESULT,
+            ResizeTarget: *const fn (*T, *const MODE_DESC) callconv(WINAPI) HRESULT,
+            GetContainingOutput: *const fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,
+            GetFrameStatistics: *const fn (*T, *FRAME_STATISTICS) callconv(WINAPI) HRESULT,
+            GetLastPresentCount: *const fn (*T, *UINT) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1031,26 +912,11 @@ pub const IFactory = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumAdapters: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, UINT, *?*IAdapter) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, UINT, *?*IAdapter) callconv(WINAPI) HRESULT,
-            },
-            MakeWindowAssociation: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, HWND, UINT) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, HWND, UINT) callconv(WINAPI) HRESULT,
-            },
-            GetWindowAssociation: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *HWND) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
-            },
-            CreateSwapChain: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *IUnknown, *SWAP_CHAIN_DESC, *?*ISwapChain) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *IUnknown, *SWAP_CHAIN_DESC, *?*ISwapChain) callconv(WINAPI) HRESULT,
-            },
-            CreateSoftwareAdapter: switch (builtin.zig_backend){
-                .stage1 => fn (*T, *?*IAdapter) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *?*IAdapter) callconv(WINAPI) HRESULT,
-            },
+            EnumAdapters: *const fn (*T, UINT, *?*IAdapter) callconv(WINAPI) HRESULT,
+            MakeWindowAssociation: *const fn (*T, HWND, UINT) callconv(WINAPI) HRESULT,
+            GetWindowAssociation: *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
+            CreateSwapChain: *const fn (*T, *IUnknown, *SWAP_CHAIN_DESC, *?*ISwapChain) callconv(WINAPI) HRESULT,
+            CreateSoftwareAdapter: *const fn (*T, *?*IAdapter) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1100,8 +966,8 @@ pub const IDevice = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetAdapter: fn (self: *T, adapter: *?*IAdapter) callconv(WINAPI) HRESULT,
-            CreateSurface: fn (
+            GetAdapter: *const fn (self: *T, adapter: *?*IAdapter) callconv(WINAPI) HRESULT,
+            CreateSurface: *const fn (
                 *T,
                 *const SURFACE_DESC,
                 UINT,
@@ -1109,14 +975,14 @@ pub const IDevice = extern struct {
                 ?*const SHARED_RESOURCE,
                 *?*ISurface,
             ) callconv(WINAPI) HRESULT,
-            QueryResourceResidency: fn (
+            QueryResourceResidency: *const fn (
                 *T,
                 *const *IUnknown,
                 [*]RESIDENCY,
                 UINT,
             ) callconv(WINAPI) HRESULT,
-            SetGPUThreadPriority: fn (self: *T, priority: INT) callconv(WINAPI) HRESULT,
-            GetGPUThreadPriority: fn (self: *T, priority: *INT) callconv(WINAPI) HRESULT,
+            SetGPUThreadPriority: *const fn (self: *T, priority: INT) callconv(WINAPI) HRESULT,
+            GetGPUThreadPriority: *const fn (self: *T, priority: *INT) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1165,8 +1031,8 @@ pub const IFactory1 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumAdapters1: fn (*T, UINT, *?*IAdapter1) callconv(WINAPI) HRESULT,
-            IsCurrent: fn (*T) callconv(WINAPI) BOOL,
+            EnumAdapters1: *const fn (*T, UINT, *?*IAdapter1) callconv(WINAPI) HRESULT,
+            IsCurrent: *const fn (*T) callconv(WINAPI) BOOL,
         };
     }
 };
@@ -1313,7 +1179,7 @@ pub const IFactory5 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            CheckFeatureSupport: fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
+            CheckFeatureSupport: *const fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1363,7 +1229,7 @@ pub const IFactory6 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            EnumAdapterByGpuPreference: fn (*T, UINT, GPU_PREFERENCE, *const GUID, *?*IAdapter1) callconv(WINAPI) HRESULT,
+            EnumAdapterByGpuPreference: *const fn (*T, UINT, GPU_PREFERENCE, *const GUID, *?*IAdapter1) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1392,7 +1258,7 @@ pub const IAdapter1 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc1: fn (*T, *ADAPTER_DESC1) callconv(WINAPI) HRESULT,
+            GetDesc1: *const fn (*T, *ADAPTER_DESC1) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1423,8 +1289,8 @@ pub const IDevice1 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetMaximumFrameLatency: fn (self: *T, max_latency: UINT) callconv(WINAPI) HRESULT,
-            GetMaximumFrameLatency: fn (self: *T, max_latency: *UINT) callconv(WINAPI) HRESULT,
+            SetMaximumFrameLatency: *const fn (self: *T, max_latency: UINT) callconv(WINAPI) HRESULT,
+            GetMaximumFrameLatency: *const fn (self: *T, max_latency: *UINT) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1554,17 +1420,17 @@ pub const ISwapChain1 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc1: fn (*T, *SWAP_CHAIN_DESC1) callconv(WINAPI) HRESULT,
-            GetFullscreenDesc: fn (*T, *SWAP_CHAIN_FULLSCREEN_DESC) callconv(WINAPI) HRESULT,
-            GetHwnd: fn (*T, *HWND) callconv(WINAPI) HRESULT,
-            GetCoreWindow: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            Present1: fn (*T, UINT, UINT, *const PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
-            IsTemporaryMonoSupported: fn (*T) callconv(WINAPI) BOOL,
-            GetRestrictToOutput: fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,
-            SetBackgroundColor: fn (*T, *const RGBA) callconv(WINAPI) HRESULT,
-            GetBackgroundColor: fn (*T, *RGBA) callconv(WINAPI) HRESULT,
-            SetRotation: fn (*T, MODE_ROTATION) callconv(WINAPI) HRESULT,
-            GetRotation: fn (*T, *MODE_ROTATION) callconv(WINAPI) HRESULT,
+            GetDesc1: *const fn (*T, *SWAP_CHAIN_DESC1) callconv(WINAPI) HRESULT,
+            GetFullscreenDesc: *const fn (*T, *SWAP_CHAIN_FULLSCREEN_DESC) callconv(WINAPI) HRESULT,
+            GetHwnd: *const fn (*T, *HWND) callconv(WINAPI) HRESULT,
+            GetCoreWindow: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            Present1: *const fn (*T, UINT, UINT, *const PRESENT_PARAMETERS) callconv(WINAPI) HRESULT,
+            IsTemporaryMonoSupported: *const fn (*T) callconv(WINAPI) BOOL,
+            GetRestrictToOutput: *const fn (*T, *?*IOutput) callconv(WINAPI) HRESULT,
+            SetBackgroundColor: *const fn (*T, *const RGBA) callconv(WINAPI) HRESULT,
+            GetBackgroundColor: *const fn (*T, *RGBA) callconv(WINAPI) HRESULT,
+            SetRotation: *const fn (*T, MODE_ROTATION) callconv(WINAPI) HRESULT,
+            GetRotation: *const fn (*T, *MODE_ROTATION) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1630,13 +1496,13 @@ pub const ISwapChain2 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetSourceSize: fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
-            GetSourceSize: fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
-            SetMaximumFrameLatency: fn (*T, UINT) callconv(WINAPI) HRESULT,
-            GetMaximumFrameLatency: fn (*T, *UINT) callconv(WINAPI) HRESULT,
-            GetFrameLatencyWaitableObject: fn (*T) callconv(WINAPI) HANDLE,
-            SetMatrixTransform: fn (*T, *const MATRIX_3X2_F) callconv(WINAPI) HRESULT,
-            GetMatrixTransform: fn (*T, *MATRIX_3X2_F) callconv(WINAPI) HRESULT,
+            SetSourceSize: *const fn (*T, UINT, UINT) callconv(WINAPI) HRESULT,
+            GetSourceSize: *const fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
+            SetMaximumFrameLatency: *const fn (*T, UINT) callconv(WINAPI) HRESULT,
+            GetMaximumFrameLatency: *const fn (*T, *UINT) callconv(WINAPI) HRESULT,
+            GetFrameLatencyWaitableObject: *const fn (*T) callconv(WINAPI) HANDLE,
+            SetMatrixTransform: *const fn (*T, *const MATRIX_3X2_F) callconv(WINAPI) HRESULT,
+            GetMatrixTransform: *const fn (*T, *MATRIX_3X2_F) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1704,10 +1570,10 @@ pub const ISwapChain3 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetCurrentBackBufferIndex: fn (*T) callconv(WINAPI) UINT,
-            CheckColorSpaceSupport: fn (*T, COLOR_SPACE_TYPE, *UINT) callconv(WINAPI) HRESULT,
-            SetColorSpace1: fn (*T, COLOR_SPACE_TYPE) callconv(WINAPI) HRESULT,
-            ResizeBuffers1: fn (
+            GetCurrentBackBufferIndex: *const fn (*T) callconv(WINAPI) UINT,
+            CheckColorSpaceSupport: *const fn (*T, COLOR_SPACE_TYPE, *UINT) callconv(WINAPI) HRESULT,
+            SetColorSpace1: *const fn (*T, COLOR_SPACE_TYPE) callconv(WINAPI) HRESULT,
+            ResizeBuffers1: *const fn (
                 *T,
                 UINT,
                 UINT,

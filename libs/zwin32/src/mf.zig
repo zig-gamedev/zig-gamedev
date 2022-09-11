@@ -77,10 +77,10 @@ pub const IAttributes = extern struct {
             GetItemType: *anyopaque,
             CompareItem: *anyopaque,
             Compare: *anyopaque,
-            GetUINT32: fn (*T, *const GUID, *UINT32) callconv(WINAPI) HRESULT,
+            GetUINT32: *const fn (*T, *const GUID, *UINT32) callconv(WINAPI) HRESULT,
             GetUINT64: *anyopaque,
             GetDouble: *anyopaque,
-            GetGUID: fn (*T, *const GUID, *GUID) callconv(WINAPI) HRESULT,
+            GetGUID: *const fn (*T, *const GUID, *GUID) callconv(WINAPI) HRESULT,
             GetStringLength: *anyopaque,
             GetString: *anyopaque,
             GetAllocatedString: *anyopaque,
@@ -91,13 +91,13 @@ pub const IAttributes = extern struct {
             SetItem: *anyopaque,
             DeleteItem: *anyopaque,
             DeleteAllItems: *anyopaque,
-            SetUINT32: fn (*T, *const GUID, UINT32) callconv(WINAPI) HRESULT,
+            SetUINT32: *const fn (*T, *const GUID, UINT32) callconv(WINAPI) HRESULT,
             SetUINT64: *anyopaque,
             SetDouble: *anyopaque,
-            SetGUID: fn (*T, *const GUID, *const GUID) callconv(WINAPI) HRESULT,
+            SetGUID: *const fn (*T, *const GUID, *const GUID) callconv(WINAPI) HRESULT,
             SetString: *anyopaque,
             SetBlob: *anyopaque,
-            SetUnknown: fn (*T, *const GUID, ?*IUnknown) callconv(WINAPI) HRESULT,
+            SetUnknown: *const fn (*T, *const GUID, ?*IUnknown) callconv(WINAPI) HRESULT,
             LockStore: *anyopaque,
             UnlockStore: *anyopaque,
             GetCount: *anyopaque,
@@ -137,10 +137,10 @@ pub const IMediaEvent = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetType: fn (*T, *MediaEventType) callconv(WINAPI) HRESULT,
-            GetExtendedType: fn (*T, *GUID) callconv(WINAPI) HRESULT,
-            GetStatus: fn (*T, *HRESULT) callconv(WINAPI) HRESULT,
-            GetValue: fn (*T, *PROPVARIANT) callconv(WINAPI) HRESULT,
+            GetType: *const fn (*T, *MediaEventType) callconv(WINAPI) HRESULT,
+            GetExtendedType: *const fn (*T, *GUID) callconv(WINAPI) HRESULT,
+            GetStatus: *const fn (*T, *HRESULT) callconv(WINAPI) HRESULT,
+            GetValue: *const fn (*T, *PROPVARIANT) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -208,11 +208,11 @@ pub const ISourceReader = extern struct {
         return extern struct {
             GetStreamSelection: *anyopaque,
             SetStreamSelection: *anyopaque,
-            GetNativeMediaType: fn (*T, DWORD, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
-            GetCurrentMediaType: fn (*T, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
-            SetCurrentMediaType: fn (*T, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
-            SetCurrentPosition: fn (*T, *const GUID, *const PROPVARIANT) callconv(WINAPI) HRESULT,
-            ReadSample: fn (*T, DWORD, DWORD, ?*DWORD, ?*DWORD, ?*LONGLONG, ?*?*ISample) callconv(WINAPI) HRESULT,
+            GetNativeMediaType: *const fn (*T, DWORD, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
+            GetCurrentMediaType: *const fn (*T, DWORD, **IMediaType) callconv(WINAPI) HRESULT,
+            SetCurrentMediaType: *const fn (*T, DWORD, ?*DWORD, *IMediaType) callconv(WINAPI) HRESULT,
+            SetCurrentPosition: *const fn (*T, *const GUID, *const PROPVARIANT) callconv(WINAPI) HRESULT,
+            ReadSample: *const fn (*T, DWORD, DWORD, ?*DWORD, ?*DWORD, ?*LONGLONG, ?*?*ISample) callconv(WINAPI) HRESULT,
             Flush: *anyopaque,
             GetServiceForStream: *anyopaque,
             GetPresentationAttribute: *anyopaque,
@@ -279,8 +279,8 @@ pub const ISample = extern struct {
             GetSampleDuration: *anyopaque,
             SetSampleDuration: *anyopaque,
             GetBufferCount: *anyopaque,
-            GetBufferByIndex: fn (*T, DWORD, **IMediaBuffer) callconv(WINAPI) HRESULT,
-            ConvertToContiguousBuffer: fn (*T, **IMediaBuffer) callconv(WINAPI) HRESULT,
+            GetBufferByIndex: *const fn (*T, DWORD, **IMediaBuffer) callconv(WINAPI) HRESULT,
+            ConvertToContiguousBuffer: *const fn (*T, **IMediaBuffer) callconv(WINAPI) HRESULT,
             AddBuffer: *anyopaque,
             RemoveBufferByIndex: *anyopaque,
             RemoveAllBuffers: *anyopaque,
@@ -315,9 +315,9 @@ pub const IMediaBuffer = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Lock: fn (*T, *[*]BYTE, ?*DWORD, ?*DWORD) callconv(WINAPI) HRESULT,
-            Unlock: fn (*T) callconv(WINAPI) HRESULT,
-            GetCurrentLength: fn (*T, *DWORD) callconv(WINAPI) HRESULT,
+            Lock: *const fn (*T, *[*]BYTE, ?*DWORD, ?*DWORD) callconv(WINAPI) HRESULT,
+            Unlock: *const fn (*T) callconv(WINAPI) HRESULT,
+            GetCurrentLength: *const fn (*T, *DWORD) callconv(WINAPI) HRESULT,
             SetCurrentLength: *anyopaque,
             GetMaxLength: *anyopaque,
         };
@@ -330,9 +330,9 @@ pub fn ISourceReaderCallbackVTable(comptime T: type) type {
     return extern struct {
         unknown: IUnknown.VTable(T),
         cb: extern struct {
-            OnReadSample: fn (*T, HRESULT, DWORD, DWORD, LONGLONG, ?*ISample) callconv(WINAPI) HRESULT,
-            OnFlush: fn (*T, DWORD) callconv(WINAPI) HRESULT,
-            OnEvent: fn (*T, DWORD, *IMediaEvent) callconv(WINAPI) HRESULT,
+            OnReadSample: *const fn (*T, HRESULT, DWORD, DWORD, LONGLONG, ?*ISample) callconv(WINAPI) HRESULT,
+            OnFlush: *const fn (*T, DWORD) callconv(WINAPI) HRESULT,
+            OnEvent: *const fn (*T, DWORD, *IMediaEvent) callconv(WINAPI) HRESULT,
         },
     };
 }

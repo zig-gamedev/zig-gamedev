@@ -52,7 +52,7 @@ pub const IMMDevice = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            Activate: fn (*T, *const GUID, DWORD, ?*PROPVARIANT, *?*anyopaque) callconv(WINAPI) HRESULT,
+            Activate: *const fn (*T, *const GUID, DWORD, ?*PROPVARIANT, *?*anyopaque) callconv(WINAPI) HRESULT,
             OpenPropertyStore: *anyopaque,
             GetId: *anyopaque,
             GetState: *anyopaque,
@@ -85,7 +85,7 @@ pub const IMMDeviceEnumerator = extern struct {
     pub fn VTable(comptime T: type) type {
         return extern struct {
             EnumAudioEndpoints: *anyopaque,
-            GetDefaultAudioEndpoint: fn (*T, EDataFlow, ERole, *?*IMMDevice) callconv(WINAPI) HRESULT,
+            GetDefaultAudioEndpoint: *const fn (*T, EDataFlow, ERole, *?*IMMDevice) callconv(WINAPI) HRESULT,
             GetDevice: *anyopaque,
             RegisterEndpointNotificationCallback: *anyopaque,
             UnregisterEndpointNotificationCallback: *anyopaque,
@@ -212,7 +212,7 @@ pub const IAudioClient = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            Initialize: fn (
+            Initialize: *const fn (
                 *T,
                 AUDCLNT_SHAREMODE,
                 DWORD,
@@ -221,22 +221,22 @@ pub const IAudioClient = extern struct {
                 *const WAVEFORMATEX,
                 ?*?*GUID,
             ) callconv(WINAPI) HRESULT,
-            GetBufferSize: fn (*T, *UINT32) callconv(WINAPI) HRESULT,
-            GetStreamLatency: fn (*T, *REFERENCE_TIME) callconv(WINAPI) HRESULT,
-            GetCurrentPadding: fn (*T, *UINT32) callconv(WINAPI) HRESULT,
-            IsFormatSupported: fn (
+            GetBufferSize: *const fn (*T, *UINT32) callconv(WINAPI) HRESULT,
+            GetStreamLatency: *const fn (*T, *REFERENCE_TIME) callconv(WINAPI) HRESULT,
+            GetCurrentPadding: *const fn (*T, *UINT32) callconv(WINAPI) HRESULT,
+            IsFormatSupported: *const fn (
                 *T,
                 AUDCLNT_SHAREMODE,
                 *const WAVEFORMATEX,
                 ?*?*WAVEFORMATEX,
             ) callconv(WINAPI) HRESULT,
-            GetMixFormat: fn (*T, **WAVEFORMATEX) callconv(WINAPI) HRESULT,
-            GetDevicePeriod: fn (*T, ?*REFERENCE_TIME, ?*REFERENCE_TIME) callconv(WINAPI) HRESULT,
-            Start: fn (*T) callconv(WINAPI) HRESULT,
-            Stop: fn (*T) callconv(WINAPI) HRESULT,
-            Reset: fn (*T) callconv(WINAPI) HRESULT,
-            SetEventHandle: fn (*T, HANDLE) callconv(WINAPI) HRESULT,
-            GetService: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            GetMixFormat: *const fn (*T, **WAVEFORMATEX) callconv(WINAPI) HRESULT,
+            GetDevicePeriod: *const fn (*T, ?*REFERENCE_TIME, ?*REFERENCE_TIME) callconv(WINAPI) HRESULT,
+            Start: *const fn (*T) callconv(WINAPI) HRESULT,
+            Stop: *const fn (*T) callconv(WINAPI) HRESULT,
+            Reset: *const fn (*T) callconv(WINAPI) HRESULT,
+            SetEventHandle: *const fn (*T, HANDLE) callconv(WINAPI) HRESULT,
+            GetService: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -318,8 +318,8 @@ pub const IAudioRenderClient = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            GetBuffer: fn (*T, UINT32, ?*?[*]BYTE) callconv(WINAPI) HRESULT,
-            ReleaseBuffer: fn (*T, UINT32, DWORD) callconv(WINAPI) HRESULT,
+            GetBuffer: *const fn (*T, UINT32, ?*?[*]BYTE) callconv(WINAPI) HRESULT,
+            ReleaseBuffer: *const fn (*T, UINT32, DWORD) callconv(WINAPI) HRESULT,
         };
     }
 };

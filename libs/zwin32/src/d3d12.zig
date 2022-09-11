@@ -1800,10 +1800,10 @@ pub const IObject = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetPrivateData: fn (*T, *const GUID, *UINT, ?*anyopaque) callconv(WINAPI) HRESULT,
-            SetPrivateData: fn (*T, *const GUID, UINT, ?*const anyopaque) callconv(WINAPI) HRESULT,
-            SetPrivateDataInterface: fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
-            SetName: fn (*T, LPCWSTR) callconv(WINAPI) HRESULT,
+            GetPrivateData: *const fn (*T, *const GUID, *UINT, ?*anyopaque) callconv(WINAPI) HRESULT,
+            SetPrivateData: *const fn (*T, *const GUID, UINT, ?*const anyopaque) callconv(WINAPI) HRESULT,
+            SetPrivateDataInterface: *const fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
+            SetName: *const fn (*T, LPCWSTR) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1829,7 +1829,7 @@ pub const IDeviceChild = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDevice: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            GetDevice: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1961,7 +1961,7 @@ pub const IHeap = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc: fn (*T, *HEAP_DESC) callconv(WINAPI) *HEAP_DESC,
+            GetDesc: *const fn (*T, *HEAP_DESC) callconv(WINAPI) *HEAP_DESC,
         };
     }
 };
@@ -2043,13 +2043,13 @@ pub const IResource = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Map: fn (*T, UINT, ?*const RANGE, *?*anyopaque) callconv(WINAPI) HRESULT,
-            Unmap: fn (*T, UINT, ?*const RANGE) callconv(WINAPI) void,
-            GetDesc: fn (*T, *RESOURCE_DESC) callconv(WINAPI) *RESOURCE_DESC,
-            GetGPUVirtualAddress: fn (*T) callconv(WINAPI) GPU_VIRTUAL_ADDRESS,
-            WriteToSubresource: fn (*T, UINT, ?*const BOX, *const anyopaque, UINT, UINT) callconv(WINAPI) HRESULT,
-            ReadFromSubresource: fn (*T, *anyopaque, UINT, UINT, UINT, ?*const BOX) callconv(WINAPI) HRESULT,
-            GetHeapProperties: fn (*T, ?*HEAP_PROPERTIES, ?*HEAP_FLAGS) callconv(WINAPI) HRESULT,
+            Map: *const fn (*T, UINT, ?*const RANGE, *?*anyopaque) callconv(WINAPI) HRESULT,
+            Unmap: *const fn (*T, UINT, ?*const RANGE) callconv(WINAPI) void,
+            GetDesc: *const fn (*T, *RESOURCE_DESC) callconv(WINAPI) *RESOURCE_DESC,
+            GetGPUVirtualAddress: *const fn (*T) callconv(WINAPI) GPU_VIRTUAL_ADDRESS,
+            WriteToSubresource: *const fn (*T, UINT, ?*const BOX, *const anyopaque, UINT, UINT) callconv(WINAPI) HRESULT,
+            ReadFromSubresource: *const fn (*T, *anyopaque, UINT, UINT, UINT, ?*const BOX) callconv(WINAPI) HRESULT,
+            GetHeapProperties: *const fn (*T, ?*HEAP_PROPERTIES, ?*HEAP_FLAGS) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -2081,7 +2081,7 @@ pub const IResource1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetProtectedResourceSession: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            GetProtectedResourceSession: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -2111,7 +2111,7 @@ pub const ICommandAllocator = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Reset: fn (*T) callconv(WINAPI) HRESULT,
+            Reset: *const fn (*T) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -2147,9 +2147,9 @@ pub const IFence = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetCompletedValue: fn (*T) callconv(WINAPI) UINT64,
-            SetEventOnCompletion: fn (*T, UINT64, HANDLE) callconv(WINAPI) HRESULT,
-            Signal: fn (*T, UINT64) callconv(WINAPI) HRESULT,
+            GetCompletedValue: *const fn (*T) callconv(WINAPI) UINT64,
+            SetEventOnCompletion: *const fn (*T, UINT64, HANDLE) callconv(WINAPI) HRESULT,
+            Signal: *const fn (*T, UINT64) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -2181,7 +2181,7 @@ pub const IFence1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetCreationFlags: fn (*T) callconv(WINAPI) FENCE_FLAGS,
+            GetCreationFlags: *const fn (*T) callconv(WINAPI) FENCE_FLAGS,
         };
     }
 };
@@ -2211,7 +2211,7 @@ pub const IPipelineState = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetCachedBlob: fn (*T, **d3d.IBlob) callconv(WINAPI) HRESULT,
+            GetCachedBlob: *const fn (*T, **d3d.IBlob) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -2253,12 +2253,12 @@ pub const IDescriptorHeap = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc: fn (*T, *DESCRIPTOR_HEAP_DESC) callconv(WINAPI) *DESCRIPTOR_HEAP_DESC,
-            GetCPUDescriptorHandleForHeapStart: fn (
+            GetDesc: *const fn (*T, *DESCRIPTOR_HEAP_DESC) callconv(WINAPI) *DESCRIPTOR_HEAP_DESC,
+            GetCPUDescriptorHandleForHeapStart: *const fn (
                 *T,
                 *CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) *CPU_DESCRIPTOR_HANDLE,
-            GetGPUDescriptorHandleForHeapStart: fn (
+            GetGPUDescriptorHandleForHeapStart: *const fn (
                 *T,
                 *GPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) *GPU_DESCRIPTOR_HANDLE,
@@ -2289,7 +2289,7 @@ pub const ICommandList = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetType: fn (*T) callconv(WINAPI) COMMAND_LIST_TYPE,
+            GetType: *const fn (*T) callconv(WINAPI) COMMAND_LIST_TYPE,
         };
     }
 };
@@ -2704,14 +2704,14 @@ pub const IGraphicsCommandList = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Close: fn (*T) callconv(.C) HRESULT,
-            Reset: fn (*T, *ICommandAllocator, ?*IPipelineState) callconv(WINAPI) HRESULT,
-            ClearState: fn (*T, ?*IPipelineState) callconv(WINAPI) void,
-            DrawInstanced: fn (*T, UINT, UINT, UINT, UINT) callconv(WINAPI) void,
-            DrawIndexedInstanced: fn (*T, UINT, UINT, UINT, INT, UINT) callconv(WINAPI) void,
-            Dispatch: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-            CopyBufferRegion: fn (*T, *IResource, UINT64, *IResource, UINT64, UINT64) callconv(WINAPI) void,
-            CopyTextureRegion: fn (
+            Close: *const fn (*T) callconv(.C) HRESULT,
+            Reset: *const fn (*T, *ICommandAllocator, ?*IPipelineState) callconv(WINAPI) HRESULT,
+            ClearState: *const fn (*T, ?*IPipelineState) callconv(WINAPI) void,
+            DrawInstanced: *const fn (*T, UINT, UINT, UINT, UINT) callconv(WINAPI) void,
+            DrawIndexedInstanced: *const fn (*T, UINT, UINT, UINT, INT, UINT) callconv(WINAPI) void,
+            Dispatch: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+            CopyBufferRegion: *const fn (*T, *IResource, UINT64, *IResource, UINT64, UINT64) callconv(WINAPI) void,
+            CopyTextureRegion: *const fn (
                 *T,
                 *const TEXTURE_COPY_LOCATION,
                 UINT,
@@ -2720,8 +2720,8 @@ pub const IGraphicsCommandList = extern struct {
                 *const TEXTURE_COPY_LOCATION,
                 ?*const BOX,
             ) callconv(WINAPI) void,
-            CopyResource: fn (*T, *IResource, *IResource) callconv(WINAPI) void,
-            CopyTiles: fn (
+            CopyResource: *const fn (*T, *IResource, *IResource) callconv(WINAPI) void,
+            CopyTiles: *const fn (
                 *T,
                 *IResource,
                 *const TILED_RESOURCE_COORDINATE,
@@ -2730,41 +2730,41 @@ pub const IGraphicsCommandList = extern struct {
                 buffer_start_offset_in_bytes: UINT64,
                 TILE_COPY_FLAGS,
             ) callconv(WINAPI) void,
-            ResolveSubresource: fn (*T, *IResource, UINT, *IResource, UINT, dxgi.FORMAT) callconv(WINAPI) void,
-            IASetPrimitiveTopology: fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
-            RSSetViewports: fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
-            RSSetScissorRects: fn (*T, UINT, [*]const RECT) callconv(WINAPI) void,
-            OMSetBlendFactor: fn (*T, *const [4]FLOAT) callconv(WINAPI) void,
-            OMSetStencilRef: fn (*T, UINT) callconv(WINAPI) void,
-            SetPipelineState: fn (*T, *IPipelineState) callconv(WINAPI) void,
-            ResourceBarrier: fn (*T, UINT, [*]const RESOURCE_BARRIER) callconv(WINAPI) void,
-            ExecuteBundle: fn (*T, *IGraphicsCommandList) callconv(WINAPI) void,
-            SetDescriptorHeaps: fn (*T, UINT, [*]const *IDescriptorHeap) callconv(WINAPI) void,
-            SetComputeRootSignature: fn (*T, ?*IRootSignature) callconv(WINAPI) void,
-            SetGraphicsRootSignature: fn (*T, ?*IRootSignature) callconv(WINAPI) void,
-            SetComputeRootDescriptorTable: fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
-            SetGraphicsRootDescriptorTable: fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
-            SetComputeRoot32BitConstant: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-            SetGraphicsRoot32BitConstant: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
-            SetComputeRoot32BitConstants: fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
-            SetGraphicsRoot32BitConstants: fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
-            SetComputeRootConstantBufferView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootConstantBufferView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetComputeRootShaderResourceView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootShaderResourceView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetComputeRootUnorderedAccessView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            SetGraphicsRootUnorderedAccessView: fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
-            IASetIndexBuffer: fn (*T, ?*const INDEX_BUFFER_VIEW) callconv(WINAPI) void,
-            IASetVertexBuffers: fn (*T, UINT, UINT, ?[*]const VERTEX_BUFFER_VIEW) callconv(WINAPI) void,
-            SOSetTargets: fn (*T, UINT, UINT, ?[*]const STREAM_OUTPUT_BUFFER_VIEW) callconv(WINAPI) void,
-            OMSetRenderTargets: fn (
+            ResolveSubresource: *const fn (*T, *IResource, UINT, *IResource, UINT, dxgi.FORMAT) callconv(WINAPI) void,
+            IASetPrimitiveTopology: *const fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
+            RSSetViewports: *const fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
+            RSSetScissorRects: *const fn (*T, UINT, [*]const RECT) callconv(WINAPI) void,
+            OMSetBlendFactor: *const fn (*T, *const [4]FLOAT) callconv(WINAPI) void,
+            OMSetStencilRef: *const fn (*T, UINT) callconv(WINAPI) void,
+            SetPipelineState: *const fn (*T, *IPipelineState) callconv(WINAPI) void,
+            ResourceBarrier: *const fn (*T, UINT, [*]const RESOURCE_BARRIER) callconv(WINAPI) void,
+            ExecuteBundle: *const fn (*T, *IGraphicsCommandList) callconv(WINAPI) void,
+            SetDescriptorHeaps: *const fn (*T, UINT, [*]const *IDescriptorHeap) callconv(WINAPI) void,
+            SetComputeRootSignature: *const fn (*T, ?*IRootSignature) callconv(WINAPI) void,
+            SetGraphicsRootSignature: *const fn (*T, ?*IRootSignature) callconv(WINAPI) void,
+            SetComputeRootDescriptorTable: *const fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            SetGraphicsRootDescriptorTable: *const fn (*T, UINT, GPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            SetComputeRoot32BitConstant: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+            SetGraphicsRoot32BitConstant: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+            SetComputeRoot32BitConstants: *const fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
+            SetGraphicsRoot32BitConstants: *const fn (*T, UINT, UINT, *const anyopaque, UINT) callconv(WINAPI) void,
+            SetComputeRootConstantBufferView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootConstantBufferView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetComputeRootShaderResourceView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootShaderResourceView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetComputeRootUnorderedAccessView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            SetGraphicsRootUnorderedAccessView: *const fn (*T, UINT, GPU_VIRTUAL_ADDRESS) callconv(WINAPI) void,
+            IASetIndexBuffer: *const fn (*T, ?*const INDEX_BUFFER_VIEW) callconv(WINAPI) void,
+            IASetVertexBuffers: *const fn (*T, UINT, UINT, ?[*]const VERTEX_BUFFER_VIEW) callconv(WINAPI) void,
+            SOSetTargets: *const fn (*T, UINT, UINT, ?[*]const STREAM_OUTPUT_BUFFER_VIEW) callconv(WINAPI) void,
+            OMSetRenderTargets: *const fn (
                 *T,
                 UINT,
                 ?[*]const CPU_DESCRIPTOR_HANDLE,
                 BOOL,
                 ?*const CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
-            ClearDepthStencilView: fn (
+            ClearDepthStencilView: *const fn (
                 *T,
                 CPU_DESCRIPTOR_HANDLE,
                 CLEAR_FLAGS,
@@ -2773,14 +2773,14 @@ pub const IGraphicsCommandList = extern struct {
                 UINT,
                 ?[*]const RECT,
             ) callconv(WINAPI) void,
-            ClearRenderTargetView: fn (
+            ClearRenderTargetView: *const fn (
                 *T,
                 CPU_DESCRIPTOR_HANDLE,
                 *const [4]FLOAT,
                 UINT,
                 ?[*]const RECT,
             ) callconv(WINAPI) void,
-            ClearUnorderedAccessViewUint: fn (
+            ClearUnorderedAccessViewUint: *const fn (
                 *T,
                 GPU_DESCRIPTOR_HANDLE,
                 CPU_DESCRIPTOR_HANDLE,
@@ -2789,7 +2789,7 @@ pub const IGraphicsCommandList = extern struct {
                 UINT,
                 ?[*]const RECT,
             ) callconv(WINAPI) void,
-            ClearUnorderedAccessViewFloat: fn (
+            ClearUnorderedAccessViewFloat: *const fn (
                 *T,
                 GPU_DESCRIPTOR_HANDLE,
                 CPU_DESCRIPTOR_HANDLE,
@@ -2798,10 +2798,10 @@ pub const IGraphicsCommandList = extern struct {
                 UINT,
                 ?[*]const RECT,
             ) callconv(WINAPI) void,
-            DiscardResource: fn (*T, *IResource, ?*const DISCARD_REGION) callconv(WINAPI) void,
-            BeginQuery: fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
-            EndQuery: fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
-            ResolveQueryData: fn (
+            DiscardResource: *const fn (*T, *IResource, ?*const DISCARD_REGION) callconv(WINAPI) void,
+            BeginQuery: *const fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
+            EndQuery: *const fn (*T, *IQueryHeap, QUERY_TYPE, UINT) callconv(WINAPI) void,
+            ResolveQueryData: *const fn (
                 *T,
                 *IQueryHeap,
                 QUERY_TYPE,
@@ -2810,11 +2810,11 @@ pub const IGraphicsCommandList = extern struct {
                 *IResource,
                 UINT64,
             ) callconv(WINAPI) void,
-            SetPredication: fn (*T, ?*IResource, UINT64, PREDICATION_OP) callconv(WINAPI) void,
-            SetMarker: fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
-            BeginEvent: fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
-            EndEvent: fn (*T) callconv(WINAPI) void,
-            ExecuteIndirect: fn (
+            SetPredication: *const fn (*T, ?*IResource, UINT64, PREDICATION_OP) callconv(WINAPI) void,
+            SetMarker: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+            BeginEvent: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+            EndEvent: *const fn (*T) callconv(WINAPI) void,
+            ExecuteIndirect: *const fn (
                 *T,
                 *ICommandSignature,
                 UINT,
@@ -2956,7 +2956,7 @@ pub const IGraphicsCommandList1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            AtomicCopyBufferUINT: fn (
+            AtomicCopyBufferUINT: *const fn (
                 *T,
                 *IResource,
                 UINT64,
@@ -2966,7 +2966,7 @@ pub const IGraphicsCommandList1 = extern struct {
                 [*]const *IResource,
                 [*]const SUBRESOURCE_RANGE_UINT64,
             ) callconv(WINAPI) void,
-            AtomicCopyBufferUINT64: fn (
+            AtomicCopyBufferUINT64: *const fn (
                 *T,
                 *IResource,
                 UINT64,
@@ -2976,9 +2976,9 @@ pub const IGraphicsCommandList1 = extern struct {
                 [*]const *IResource,
                 [*]const SUBRESOURCE_RANGE_UINT64,
             ) callconv(WINAPI) void,
-            OMSetDepthBounds: fn (*T, FLOAT, FLOAT) callconv(WINAPI) void,
-            SetSamplePositions: fn (*T, UINT, UINT, *SAMPLE_POSITION) callconv(WINAPI) void,
-            ResolveSubresourceRegion: fn (
+            OMSetDepthBounds: *const fn (*T, FLOAT, FLOAT) callconv(WINAPI) void,
+            SetSamplePositions: *const fn (*T, UINT, UINT, *SAMPLE_POSITION) callconv(WINAPI) void,
+            ResolveSubresourceRegion: *const fn (
                 *T,
                 *IResource,
                 UINT,
@@ -2990,7 +2990,7 @@ pub const IGraphicsCommandList1 = extern struct {
                 dxgi.FORMAT,
                 RESOLVE_MODE,
             ) callconv(WINAPI) void,
-            SetViewInstanceMask: fn (*T, UINT) callconv(WINAPI) void,
+            SetViewInstanceMask: *const fn (*T, UINT) callconv(WINAPI) void,
         };
     }
 };
@@ -3040,7 +3040,7 @@ pub const IGraphicsCommandList2 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            WriteBufferImmediate: fn (
+            WriteBufferImmediate: *const fn (
                 *T,
                 UINT,
                 [*]const WRITEBUFFERIMMEDIATE_PARAMETER,
@@ -3081,7 +3081,7 @@ pub const IGraphicsCommandList3 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            SetProtectedResourceSession: fn (*T, ?*IProtectedResourceSession) callconv(WINAPI) void,
+            SetProtectedResourceSession: *const fn (*T, ?*IProtectedResourceSession) callconv(WINAPI) void,
         };
     }
 };
@@ -3236,7 +3236,7 @@ pub const IMetaCommand = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetRequiredParameterResourceSize: fn (
+            GetRequiredParameterResourceSize: *const fn (
                 *T,
                 META_COMMAND_PARAMETER_STAGE,
                 UINT,
@@ -3606,10 +3606,10 @@ pub const IStateObjectProperties = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetShaderIdentifier: fn (*T, LPCWSTR) callconv(WINAPI) *anyopaque,
-            GetShaderStackSize: fn (*T, LPCWSTR) callconv(WINAPI) UINT64,
-            GetPipelineStackSize: fn (*T) callconv(WINAPI) UINT64,
-            SetPipelineStackSize: fn (*T, UINT64) callconv(WINAPI) void,
+            GetShaderIdentifier: *const fn (*T, LPCWSTR) callconv(WINAPI) *anyopaque,
+            GetShaderStackSize: *const fn (*T, LPCWSTR) callconv(WINAPI) UINT64,
+            GetPipelineStackSize: *const fn (*T) callconv(WINAPI) UINT64,
+            SetPipelineStackSize: *const fn (*T, UINT64) callconv(WINAPI) void,
         };
     }
 };
@@ -3717,36 +3717,36 @@ pub const IGraphicsCommandList4 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            BeginRenderPass: fn (
+            BeginRenderPass: *const fn (
                 *T,
                 UINT,
                 ?[*]const RENDER_PASS_RENDER_TARGET_DESC,
                 ?*const RENDER_PASS_DEPTH_STENCIL_DESC,
                 RENDER_PASS_FLAGS,
             ) callconv(WINAPI) void,
-            EndRenderPass: fn (*T) callconv(WINAPI) void,
-            InitializeMetaCommand: fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
-            ExecuteMetaCommand: fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
-            BuildRaytracingAccelerationStructure: fn (
+            EndRenderPass: *const fn (*T) callconv(WINAPI) void,
+            InitializeMetaCommand: *const fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
+            ExecuteMetaCommand: *const fn (*T, *IMetaCommand, ?*const anyopaque, SIZE_T) callconv(WINAPI) void,
+            BuildRaytracingAccelerationStructure: *const fn (
                 *T,
                 *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC,
                 UINT,
                 ?[*]const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
             ) callconv(WINAPI) void,
-            EmitRaytracingAccelerationStructurePostbuildInfo: fn (
+            EmitRaytracingAccelerationStructurePostbuildInfo: *const fn (
                 *T,
                 *const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC,
                 UINT,
                 [*]const GPU_VIRTUAL_ADDRESS,
             ) callconv(WINAPI) void,
-            CopyRaytracingAccelerationStructure: fn (
+            CopyRaytracingAccelerationStructure: *const fn (
                 *T,
                 GPU_VIRTUAL_ADDRESS,
                 GPU_VIRTUAL_ADDRESS,
                 RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE,
             ) callconv(WINAPI) void,
-            SetPipelineState1: fn (*T, *IStateObject) callconv(WINAPI) void,
-            DispatchRays: fn (*T, *const DISPATCH_RAYS_DESC) callconv(WINAPI) void,
+            SetPipelineState1: *const fn (*T, *IStateObject) callconv(WINAPI) void,
+            DispatchRays: *const fn (*T, *const DISPATCH_RAYS_DESC) callconv(WINAPI) void,
         };
     }
 };
@@ -3813,12 +3813,12 @@ pub const IGraphicsCommandList5 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            RSSetShadingRate: fn (
+            RSSetShadingRate: *const fn (
                 *T,
                 SHADING_RATE,
                 ?[RS_SET_SHADING_RATE_COMBINER_COUNT]SHADING_RATE_COMBINER,
             ) callconv(WINAPI) void,
-            RSSetShadingRateImage: fn (*T, ?*IResource) callconv(WINAPI) void,
+            RSSetShadingRateImage: *const fn (*T, ?*IResource) callconv(WINAPI) void,
         };
     }
 };
@@ -3865,7 +3865,7 @@ pub const IGraphicsCommandList6 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            DispatchMesh: fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
+            DispatchMesh: *const fn (*T, UINT, UINT, UINT) callconv(WINAPI) void,
         };
     }
 };
@@ -3967,7 +3967,7 @@ pub const ICommandQueue = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            UpdateTileMappings: fn (
+            UpdateTileMappings: *const fn (
                 *T,
                 *IResource,
                 UINT,
@@ -3980,7 +3980,7 @@ pub const ICommandQueue = extern struct {
                 ?[*]const UINT,
                 TILE_MAPPING_FLAGS,
             ) callconv(WINAPI) void,
-            CopyTileMappings: fn (
+            CopyTileMappings: *const fn (
                 *T,
                 *IResource,
                 *const TILED_RESOURCE_COORDINATE,
@@ -3989,15 +3989,15 @@ pub const ICommandQueue = extern struct {
                 *const TILE_REGION_SIZE,
                 TILE_MAPPING_FLAGS,
             ) callconv(WINAPI) void,
-            ExecuteCommandLists: fn (*T, UINT, [*]const *ICommandList) callconv(WINAPI) void,
-            SetMarker: fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
-            BeginEvent: fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
-            EndEvent: fn (*T) callconv(WINAPI) void,
-            Signal: fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
-            Wait: fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
-            GetTimestampFrequency: fn (*T, *UINT64) callconv(WINAPI) HRESULT,
-            GetClockCalibration: fn (*T, *UINT64, *UINT64) callconv(WINAPI) HRESULT,
-            GetDesc: fn (*T, *COMMAND_QUEUE_DESC) callconv(WINAPI) *COMMAND_QUEUE_DESC,
+            ExecuteCommandLists: *const fn (*T, UINT, [*]const *ICommandList) callconv(WINAPI) void,
+            SetMarker: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+            BeginEvent: *const fn (*T, UINT, ?*const anyopaque, UINT) callconv(WINAPI) void,
+            EndEvent: *const fn (*T) callconv(WINAPI) void,
+            Signal: *const fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
+            Wait: *const fn (*T, *IFence, UINT64) callconv(WINAPI) HRESULT,
+            GetTimestampFrequency: *const fn (*T, *UINT64) callconv(WINAPI) HRESULT,
+            GetClockCalibration: *const fn (*T, *UINT64, *UINT64) callconv(WINAPI) HRESULT,
+            GetDesc: *const fn (*T, *COMMAND_QUEUE_DESC) callconv(WINAPI) *COMMAND_QUEUE_DESC,
         };
     }
 };
@@ -4350,22 +4350,22 @@ pub const IDevice = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetNodeCount: fn (*T) callconv(WINAPI) UINT,
-            CreateCommandQueue: fn (*T, *const COMMAND_QUEUE_DESC, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            CreateCommandAllocator: fn (*T, COMMAND_LIST_TYPE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            CreateGraphicsPipelineState: fn (
+            GetNodeCount: *const fn (*T) callconv(WINAPI) UINT,
+            CreateCommandQueue: *const fn (*T, *const COMMAND_QUEUE_DESC, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            CreateCommandAllocator: *const fn (*T, COMMAND_LIST_TYPE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            CreateGraphicsPipelineState: *const fn (
                 *T,
                 *const GRAPHICS_PIPELINE_STATE_DESC,
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateComputePipelineState: fn (
+            CreateComputePipelineState: *const fn (
                 *T,
                 *const COMPUTE_PIPELINE_STATE_DESC,
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateCommandList: fn (
+            CreateCommandList: *const fn (
                 *T,
                 UINT,
                 COMMAND_LIST_TYPE,
@@ -4374,47 +4374,47 @@ pub const IDevice = extern struct {
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CheckFeatureSupport: fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
-            CreateDescriptorHeap: fn (
+            CheckFeatureSupport: *const fn (*T, FEATURE, *anyopaque, UINT) callconv(WINAPI) HRESULT,
+            CreateDescriptorHeap: *const fn (
                 *T,
                 *const DESCRIPTOR_HEAP_DESC,
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            GetDescriptorHandleIncrementSize: fn (*T, DESCRIPTOR_HEAP_TYPE) callconv(WINAPI) UINT,
-            CreateRootSignature: fn (*T, UINT, *const anyopaque, UINT64, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            CreateConstantBufferView: fn (
+            GetDescriptorHandleIncrementSize: *const fn (*T, DESCRIPTOR_HEAP_TYPE) callconv(WINAPI) UINT,
+            CreateRootSignature: *const fn (*T, UINT, *const anyopaque, UINT64, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            CreateConstantBufferView: *const fn (
                 *T,
                 ?*const CONSTANT_BUFFER_VIEW_DESC,
                 CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
-            CreateShaderResourceView: fn (
+            CreateShaderResourceView: *const fn (
                 *T,
                 ?*IResource,
                 ?*const SHADER_RESOURCE_VIEW_DESC,
                 CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
-            CreateUnorderedAccessView: fn (
+            CreateUnorderedAccessView: *const fn (
                 *T,
                 ?*IResource,
                 ?*IResource,
                 ?*const UNORDERED_ACCESS_VIEW_DESC,
                 CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
-            CreateRenderTargetView: fn (
+            CreateRenderTargetView: *const fn (
                 *T,
                 ?*IResource,
                 ?*const RENDER_TARGET_VIEW_DESC,
                 CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
-            CreateDepthStencilView: fn (
+            CreateDepthStencilView: *const fn (
                 *T,
                 ?*IResource,
                 ?*const DEPTH_STENCIL_VIEW_DESC,
                 CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
-            CreateSampler: fn (*T, *const SAMPLER_DESC, CPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
-            CopyDescriptors: fn (
+            CreateSampler: *const fn (*T, *const SAMPLER_DESC, CPU_DESCRIPTOR_HANDLE) callconv(WINAPI) void,
+            CopyDescriptors: *const fn (
                 *T,
                 UINT,
                 [*]const CPU_DESCRIPTOR_HANDLE,
@@ -4424,27 +4424,27 @@ pub const IDevice = extern struct {
                 ?[*]const UINT,
                 DESCRIPTOR_HEAP_TYPE,
             ) callconv(WINAPI) void,
-            CopyDescriptorsSimple: fn (
+            CopyDescriptorsSimple: *const fn (
                 *T,
                 UINT,
                 CPU_DESCRIPTOR_HANDLE,
                 CPU_DESCRIPTOR_HANDLE,
                 DESCRIPTOR_HEAP_TYPE,
             ) callconv(WINAPI) void,
-            GetResourceAllocationInfo: fn (
+            GetResourceAllocationInfo: *const fn (
                 *T,
                 *RESOURCE_ALLOCATION_INFO,
                 UINT,
                 UINT,
                 [*]const RESOURCE_DESC,
             ) callconv(WINAPI) *RESOURCE_ALLOCATION_INFO,
-            GetCustomHeapProperties: fn (
+            GetCustomHeapProperties: *const fn (
                 *T,
                 *HEAP_PROPERTIES,
                 UINT,
                 HEAP_TYPE,
             ) callconv(WINAPI) *HEAP_PROPERTIES,
-            CreateCommittedResource: fn (
+            CreateCommittedResource: *const fn (
                 *T,
                 *const HEAP_PROPERTIES,
                 HEAP_FLAGS,
@@ -4454,8 +4454,8 @@ pub const IDevice = extern struct {
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateHeap: fn (*T, *const HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            CreatePlacedResource: fn (
+            CreateHeap: *const fn (*T, *const HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            CreatePlacedResource: *const fn (
                 *T,
                 *IHeap,
                 UINT64,
@@ -4465,7 +4465,7 @@ pub const IDevice = extern struct {
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateReservedResource: fn (
+            CreateReservedResource: *const fn (
                 *T,
                 *const RESOURCE_DESC,
                 RESOURCE_STATES,
@@ -4473,7 +4473,7 @@ pub const IDevice = extern struct {
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateSharedHandle: fn (
+            CreateSharedHandle: *const fn (
                 *T,
                 *IDeviceChild,
                 ?*const SECURITY_ATTRIBUTES,
@@ -4481,13 +4481,13 @@ pub const IDevice = extern struct {
                 ?LPCWSTR,
                 ?*HANDLE,
             ) callconv(WINAPI) HRESULT,
-            OpenSharedHandle: fn (*T, HANDLE, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            OpenSharedHandleByName: fn (*T, LPCWSTR, DWORD, ?*HANDLE) callconv(WINAPI) HRESULT,
-            MakeResident: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
-            Evict: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
-            CreateFence: fn (*T, UINT64, FENCE_FLAGS, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            GetDeviceRemovedReason: fn (*T) callconv(WINAPI) HRESULT,
-            GetCopyableFootprints: fn (
+            OpenSharedHandle: *const fn (*T, HANDLE, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            OpenSharedHandleByName: *const fn (*T, LPCWSTR, DWORD, ?*HANDLE) callconv(WINAPI) HRESULT,
+            MakeResident: *const fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+            Evict: *const fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+            CreateFence: *const fn (*T, UINT64, FENCE_FLAGS, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            GetDeviceRemovedReason: *const fn (*T) callconv(WINAPI) HRESULT,
+            GetCopyableFootprints: *const fn (
                 *T,
                 *const RESOURCE_DESC,
                 UINT,
@@ -4498,16 +4498,16 @@ pub const IDevice = extern struct {
                 ?[*]UINT64,
                 ?*UINT64,
             ) callconv(WINAPI) void,
-            CreateQueryHeap: fn (*T, *const QUERY_HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            SetStablePowerState: fn (*T, BOOL) callconv(WINAPI) HRESULT,
-            CreateCommandSignature: fn (
+            CreateQueryHeap: *const fn (*T, *const QUERY_HEAP_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            SetStablePowerState: *const fn (*T, BOOL) callconv(WINAPI) HRESULT,
+            CreateCommandSignature: *const fn (
                 *T,
                 *const COMMAND_SIGNATURE_DESC,
                 ?*IRootSignature,
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            GetResourceTiling: fn (
+            GetResourceTiling: *const fn (
                 *T,
                 *IResource,
                 ?*UINT,
@@ -4517,7 +4517,7 @@ pub const IDevice = extern struct {
                 UINT,
                 [*]SUBRESOURCE_TILING,
             ) callconv(WINAPI) void,
-            GetAdapterLuid: fn (*T, *LUID) callconv(WINAPI) *LUID,
+            GetAdapterLuid: *const fn (*T, *LUID) callconv(WINAPI) *LUID,
         };
     }
 };
@@ -4589,8 +4589,8 @@ pub const IDevice1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreatePipelineLibrary: fn (*T, *const anyopaque, SIZE_T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            SetEventOnMultipleFenceCompletion: fn (
+            CreatePipelineLibrary: *const fn (*T, *const anyopaque, SIZE_T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            SetEventOnMultipleFenceCompletion: *const fn (
                 *T,
                 [*]const *IFence,
                 [*]const UINT64,
@@ -4598,7 +4598,7 @@ pub const IDevice1 = extern struct {
                 MULTIPLE_FENCE_WAIT_FLAGS,
                 HANDLE,
             ) callconv(WINAPI) HRESULT,
-            SetResidencyPriority: fn (
+            SetResidencyPriority: *const fn (
                 *T,
                 UINT,
                 [*]const *IPageable,
@@ -4771,7 +4771,7 @@ pub const IDevice2 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreatePipelineState: fn (
+            CreatePipelineState: *const fn (
                 *T,
                 *const PIPELINE_STATE_STREAM_DESC,
                 *const GUID,
@@ -4842,9 +4842,9 @@ pub const IDevice3 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            OpenExistingHeapFromAddress: fn (*T, *const anyopaque, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            OpenExistingHeapFromFileMapping: fn (*T, HANDLE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            EnqueueMakeResident: fn (
+            OpenExistingHeapFromAddress: *const fn (*T, *const anyopaque, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            OpenExistingHeapFromFileMapping: *const fn (*T, HANDLE, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            EnqueueMakeResident: *const fn (
                 *T,
                 RESIDENCY_FLAGS,
                 UINT,
@@ -4977,7 +4977,7 @@ pub const IDevice4 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreateCommandList1: fn (
+            CreateCommandList1: *const fn (
                 *T,
                 UINT,
                 COMMAND_LIST_TYPE,
@@ -4985,13 +4985,13 @@ pub const IDevice4 = extern struct {
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateProtectedResourceSession: fn (
+            CreateProtectedResourceSession: *const fn (
                 *T,
                 *const PROTECTED_RESOURCE_SESSION_DESC,
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateCommittedResource1: fn (
+            CreateCommittedResource1: *const fn (
                 *T,
                 *const HEAP_PROPERTIES,
                 HEAP_FLAGS,
@@ -5002,14 +5002,14 @@ pub const IDevice4 = extern struct {
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateHeap1: fn (
+            CreateHeap1: *const fn (
                 *T,
                 *const HEAP_DESC,
                 ?*IProtectedResourceSession,
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateReservedResource1: fn (
+            CreateReservedResource1: *const fn (
                 *T,
                 *const RESOURCE_DESC,
                 RESOURCE_STATES,
@@ -5018,7 +5018,7 @@ pub const IDevice4 = extern struct {
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            GetResourceAllocationInfo1: fn (
+            GetResourceAllocationInfo1: *const fn (
                 *T,
                 *RESOURCE_ALLOCATION_INFO,
                 UINT,
@@ -5054,7 +5054,7 @@ pub const ILifetimeOwner = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            LifetimeStateUpdated: fn (*T, LIFETIME_STATE) callconv(WINAPI) void,
+            LifetimeStateUpdated: *const fn (*T, LIFETIME_STATE) callconv(WINAPI) void,
         };
     }
 };
@@ -5163,10 +5163,10 @@ pub const IDevice5 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreateLifetimeTracker: fn (*T, *ILifetimeOwner, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            RemoveDevice: fn (self: *T) callconv(WINAPI) void,
-            EnumerateMetaCommands: fn (*T, *UINT, ?[*]META_COMMAND_DESC) callconv(WINAPI) HRESULT,
-            EnumerateMetaCommandParameters: fn (
+            CreateLifetimeTracker: *const fn (*T, *ILifetimeOwner, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            RemoveDevice: *const fn (self: *T) callconv(WINAPI) void,
+            EnumerateMetaCommands: *const fn (*T, *UINT, ?[*]META_COMMAND_DESC) callconv(WINAPI) HRESULT,
+            EnumerateMetaCommandParameters: *const fn (
                 *T,
                 *const GUID,
                 META_COMMAND_PARAMETER_STAGE,
@@ -5174,7 +5174,7 @@ pub const IDevice5 = extern struct {
                 *UINT,
                 ?[*]META_COMMAND_PARAMETER_DESC,
             ) callconv(WINAPI) HRESULT,
-            CreateMetaCommand: fn (
+            CreateMetaCommand: *const fn (
                 *T,
                 *const GUID,
                 UINT,
@@ -5183,18 +5183,18 @@ pub const IDevice5 = extern struct {
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateStateObject: fn (
+            CreateStateObject: *const fn (
                 *T,
                 *const STATE_OBJECT_DESC,
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            GetRaytracingAccelerationStructurePrebuildInfo: fn (
+            GetRaytracingAccelerationStructurePrebuildInfo: *const fn (
                 *T,
                 *const BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS,
                 *RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO,
             ) callconv(WINAPI) void,
-            CheckDriverMatchingIdentifier: fn (
+            CheckDriverMatchingIdentifier: *const fn (
                 *T,
                 SERIALIZED_DATA_TYPE,
                 *const SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER,
@@ -5262,7 +5262,7 @@ pub const IDevice6 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            SetBackgroundProcessingMode: fn (
+            SetBackgroundProcessingMode: *const fn (
                 *T,
                 BACKGROUND_PROCESSING_MODE,
                 MEASUREMENTS_ACTION,
@@ -5328,14 +5328,14 @@ pub const IDevice7 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            AddToStateObject: fn (
+            AddToStateObject: *const fn (
                 *T,
                 *const STATE_OBJECT_DESC,
                 *IStateObject,
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateProtectedResourceSession1: fn (
+            CreateProtectedResourceSession1: *const fn (
                 *T,
                 *const PROTECTED_RESOURCE_SESSION_DESC1,
                 *const GUID,
@@ -5497,14 +5497,14 @@ pub const IDevice8 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetResourceAllocationInfo2: fn (
+            GetResourceAllocationInfo2: *const fn (
                 *T,
                 UINT,
                 UINT,
                 *const RESOURCE_DESC1,
                 ?[*]RESOURCE_ALLOCATION_INFO1,
             ) callconv(WINAPI) RESOURCE_ALLOCATION_INFO,
-            CreateCommittedResource2: fn (
+            CreateCommittedResource2: *const fn (
                 *T,
                 *const HEAP_PROPERTIES,
                 HEAP_FLAGS,
@@ -5515,7 +5515,7 @@ pub const IDevice8 = extern struct {
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreatePlacedResource1: fn (
+            CreatePlacedResource1: *const fn (
                 *T,
                 *IHeap,
                 UINT64,
@@ -5525,13 +5525,13 @@ pub const IDevice8 = extern struct {
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateSamplerFeedbackUnorderedAccessView: fn (
+            CreateSamplerFeedbackUnorderedAccessView: *const fn (
                 *T,
                 ?*IResource,
                 ?*IResource,
                 CPU_DESCRIPTOR_HANDLE,
             ) callconv(WINAPI) void,
-            GetCopyableFootprints1: fn (
+            GetCopyableFootprints1: *const fn (
                 *T,
                 *const RESOURCE_DESC1,
                 UINT,
@@ -5637,18 +5637,18 @@ pub const IDevice9 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreateShaderCacheSession: fn (
+            CreateShaderCacheSession: *const fn (
                 *T,
                 *const SHADER_CACHE_SESSION_DESC,
                 *const GUID,
                 ?*?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            ShaderCacheControl: fn (
+            ShaderCacheControl: *const fn (
                 *T,
                 SHADER_CACHE_KIND_FLAGS,
                 SHADER_CACHE_CONTROL_FLAGS,
             ) callconv(WINAPI) HRESULT,
-            CreateCommandQueue1: fn (
+            CreateCommandQueue1: *const fn (
                 *T,
                 *const COMMAND_QUEUE_DESC,
                 *const GUID,
@@ -5690,8 +5690,8 @@ pub const IProtectedSession = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetStatusFence: fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            GetSessionStatus: fn (*T) callconv(WINAPI) PROTECTED_SESSION_STATUS,
+            GetStatusFence: *const fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            GetSessionStatus: *const fn (*T) callconv(WINAPI) PROTECTED_SESSION_STATUS,
         };
     }
 };
@@ -5730,7 +5730,7 @@ pub const IProtectedResourceSession = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDesc: fn (
+            GetDesc: *const fn (
                 *T,
                 *PROTECTED_RESOURCE_SESSION_DESC,
             ) callconv(WINAPI) *PROTECTED_RESOURCE_SESSION_DESC,

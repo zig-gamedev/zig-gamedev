@@ -62,30 +62,30 @@ pub fn IXAPOVTable(comptime T: type) type {
     return extern struct {
         unknown: w.IUnknown.VTable(T),
         xapo: extern struct {
-            GetRegistrationProperties: fn (*T, **REGISTRATION_PROPERTIES) callconv(WINAPI) HRESULT,
-            IsInputFormatSupported: fn (
+            GetRegistrationProperties: *const fn (*T, **REGISTRATION_PROPERTIES) callconv(WINAPI) HRESULT,
+            IsInputFormatSupported: *const fn (
                 *T,
                 *const WAVEFORMATEX,
                 *const WAVEFORMATEX,
                 ?**WAVEFORMATEX,
             ) callconv(WINAPI) HRESULT,
-            IsOutputFormatSupported: fn (
+            IsOutputFormatSupported: *const fn (
                 *T,
                 *const WAVEFORMATEX,
                 *const WAVEFORMATEX,
                 ?**WAVEFORMATEX,
             ) callconv(WINAPI) HRESULT,
-            Initialize: fn (*T, ?*const anyopaque, UINT32) callconv(WINAPI) HRESULT,
-            Reset: fn (*T) callconv(WINAPI) void,
-            LockForProcess: fn (
+            Initialize: *const fn (*T, ?*const anyopaque, UINT32) callconv(WINAPI) HRESULT,
+            Reset: *const fn (*T) callconv(WINAPI) void,
+            LockForProcess: *const fn (
                 *T,
                 UINT32,
                 ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
                 UINT32,
                 ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
             ) callconv(WINAPI) HRESULT,
-            UnlockForProcess: fn (*T) callconv(WINAPI) void,
-            Process: fn (
+            UnlockForProcess: *const fn (*T) callconv(WINAPI) void,
+            Process: *const fn (
                 *T,
                 UINT32,
                 ?[*]const PROCESS_BUFFER_PARAMETERS,
@@ -93,8 +93,8 @@ pub fn IXAPOVTable(comptime T: type) type {
                 ?[*]PROCESS_BUFFER_PARAMETERS,
                 BOOL,
             ) callconv(WINAPI) void,
-            CalcInputFrames: fn (*T, UINT32) callconv(WINAPI) UINT32,
-            CalcOutputFrames: fn (*T, UINT32) callconv(WINAPI) UINT32,
+            CalcInputFrames: *const fn (*T, UINT32) callconv(WINAPI) UINT32,
+            CalcOutputFrames: *const fn (*T, UINT32) callconv(WINAPI) UINT32,
         },
     };
 }
@@ -193,8 +193,8 @@ pub fn IXAPOParametersVTable(comptime T: type) type {
     return extern struct {
         unknown: w.IUnknown.VTable(T),
         params: extern struct {
-            SetParameters: fn (*T, *const anyopaque, UINT32) callconv(WINAPI) void,
-            GetParameters: fn (*T, *anyopaque, UINT32) callconv(WINAPI) void,
+            SetParameters: *const fn (*T, *const anyopaque, UINT32) callconv(WINAPI) void,
+            GetParameters: *const fn (*T, *anyopaque, UINT32) callconv(WINAPI) void,
         },
     };
 }

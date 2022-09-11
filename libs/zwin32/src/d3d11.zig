@@ -773,39 +773,39 @@ pub const IDeviceContext = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            VSSetConstantBuffers: fn (
+            VSSetConstantBuffers: *const fn (
                 *T,
                 UINT,
                 UINT,
                 ?[*]const *IBuffer,
             ) callconv(WINAPI) void,
-            PSSetShaderResources: fn (
+            PSSetShaderResources: *const fn (
                 *T,
                 UINT,
                 UINT,
                 ?[*]const *IShaderResourceView,
             ) callconv(WINAPI) void,
-            PSSetShader: fn (
+            PSSetShader: *const fn (
                 *T,
                 ?*IPixelShader,
                 ?[*]const *IClassInstance,
                 UINT,
             ) callconv(WINAPI) void,
-            PSSetSamplers: fn (
+            PSSetSamplers: *const fn (
                 *T,
                 UINT,
                 UINT,
                 ?[*]const *ISamplerState,
             ) callconv(WINAPI) void,
-            VSSetShader: fn (
+            VSSetShader: *const fn (
                 *T,
                 ?*IVertexShader,
                 ?[*]const *IClassInstance,
                 UINT,
             ) callconv(WINAPI) void,
             DrawIndexed: *anyopaque,
-            Draw: fn (*T, UINT, UINT) callconv(WINAPI) void,
-            Map: fn (
+            Draw: *const fn (*T, UINT, UINT) callconv(WINAPI) void,
+            Map: *const fn (
                 *T,
                 *IResource,
                 UINT,
@@ -813,15 +813,15 @@ pub const IDeviceContext = extern struct {
                 MAP_FLAG,
                 ?*MAPPED_SUBRESOURCE,
             ) callconv(WINAPI) HRESULT,
-            Unmap: fn (*T, *IResource, UINT) callconv(WINAPI) void,
-            PSSetConstantBuffers: fn (
+            Unmap: *const fn (*T, *IResource, UINT) callconv(WINAPI) void,
+            PSSetConstantBuffers: *const fn (
                 *T,
                 UINT,
                 UINT,
                 ?[*]const *IBuffer,
             ) callconv(WINAPI) void,
-            IASetInputLayout: fn (*T, ?*IInputLayout) callconv(WINAPI) void,
-            IASetVertexBuffers: fn (
+            IASetInputLayout: *const fn (*T, ?*IInputLayout) callconv(WINAPI) void,
+            IASetVertexBuffers: *const fn (
                 *T,
                 UINT,
                 UINT,
@@ -834,8 +834,8 @@ pub const IDeviceContext = extern struct {
             DrawInstanced: *anyopaque,
             GSSetConstantBuffers: *anyopaque,
             GSSetShader: *anyopaque,
-            IASetPrimitiveTopology: fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
-            VSSetShaderResources: fn (
+            IASetPrimitiveTopology: *const fn (*T, PRIMITIVE_TOPOLOGY) callconv(WINAPI) void,
+            VSSetShaderResources: *const fn (
                 *T,
                 UINT,
                 UINT,
@@ -848,14 +848,14 @@ pub const IDeviceContext = extern struct {
             SetPredication: *anyopaque,
             GSSetShaderResources: *anyopaque,
             GSSetSamplers: *anyopaque,
-            OMSetRenderTargets: fn (
+            OMSetRenderTargets: *const fn (
                 *T,
                 UINT,
                 ?[*]const IRenderTargetView,
                 ?*IDepthStencilView,
             ) callconv(WINAPI) void,
             OMSetRenderTargetsAndUnorderedAccessViews: *anyopaque,
-            OMSetBlendState: fn (
+            OMSetBlendState: *const fn (
                 *T,
                 ?*IBlendState,
                 ?*const [4]FLOAT,
@@ -868,14 +868,14 @@ pub const IDeviceContext = extern struct {
             DrawInstancedIndirect: *anyopaque,
             Dispatch: *anyopaque,
             DispatchIndirect: *anyopaque,
-            RSSetState: fn (*T, ?*IRasterizerState) callconv(WINAPI) void,
-            RSSetViewports: fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
-            RSSetScissorRects: fn (*T, UINT, ?[*]const RECT) callconv(WINAPI) void,
+            RSSetState: *const fn (*T, ?*IRasterizerState) callconv(WINAPI) void,
+            RSSetViewports: *const fn (*T, UINT, [*]const VIEWPORT) callconv(WINAPI) void,
+            RSSetScissorRects: *const fn (*T, UINT, ?[*]const RECT) callconv(WINAPI) void,
             CopySubresourceRegion: *anyopaque,
             CopyResource: *anyopaque,
             UpdateSubresource: *anyopaque,
             CopyStructureCount: *anyopaque,
-            ClearRenderTargetView: fn (*T, *IRenderTargetView, *const [4]FLOAT) callconv(WINAPI) void,
+            ClearRenderTargetView: *const fn (*T, *IRenderTargetView, *const [4]FLOAT) callconv(WINAPI) void,
             ClearUnorderedAccessViewUint: *anyopaque,
             ClearUnorderedAccessViewFloat: *anyopaque,
             ClearDepthStencilView: *anyopaque,
@@ -936,7 +936,7 @@ pub const IDeviceContext = extern struct {
             CSGetSamplers: *anyopaque,
             CSGetConstantBuffers: *anyopaque,
             ClearState: *anyopaque,
-            Flush: fn (*T) callconv(WINAPI) void,
+            Flush: *const fn (*T) callconv(WINAPI) void,
             GetType: *anyopaque,
             GetContextFlags: *anyopaque,
             FinishCommandList: *anyopaque,
@@ -1089,35 +1089,35 @@ pub const IDevice = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            CreateBuffer: fn (
+            CreateBuffer: *const fn (
                 *T,
                 *const BUFFER_DESC,
                 ?*const SUBRESOURCE_DATA,
                 *?*IBuffer,
             ) callconv(WINAPI) HRESULT,
             CreateTexture1D: *anyopaque,
-            CreateTexture2D: fn (
+            CreateTexture2D: *const fn (
                 *T,
                 *const TEXTURE2D_DESC,
                 ?*const SUBRESOURCE_DATA,
                 ?*?*ITexture2D,
             ) callconv(WINAPI) HRESULT,
             CreateTexture3D: *anyopaque,
-            CreateShaderResourceView: fn (
+            CreateShaderResourceView: *const fn (
                 *T,
                 *IResource,
                 ?*const SHADER_RESOURCE_VIEW_DESC,
                 ?*?*IShaderResourceView,
             ) callconv(WINAPI) HRESULT,
             CreateUnorderedAccessView: *anyopaque,
-            CreateRenderTargetView: fn (
+            CreateRenderTargetView: *const fn (
                 *T,
                 ?*IResource,
                 ?*const RENDER_TARGET_VIEW_DESC,
                 ?*?*IRenderTargetView,
             ) callconv(WINAPI) HRESULT,
             CreateDepthStencilView: *anyopaque,
-            CreateInputLayout: fn (
+            CreateInputLayout: *const fn (
                 *T,
                 *const INPUT_ELEMENT_DESC,
                 UINT,
@@ -1125,7 +1125,7 @@ pub const IDevice = extern struct {
                 SIZE_T,
                 *?*IInputLayout,
             ) callconv(WINAPI) HRESULT,
-            CreateVertexShader: fn (
+            CreateVertexShader: *const fn (
                 *T,
                 ?*anyopaque,
                 SIZE_T,
@@ -1134,7 +1134,7 @@ pub const IDevice = extern struct {
             ) callconv(WINAPI) HRESULT,
             CreateGeometryShader: *anyopaque,
             CreateGeometryShaderWithStreamOutput: *anyopaque,
-            CreatePixelShader: fn (
+            CreatePixelShader: *const fn (
                 *T,
                 ?*anyopaque,
                 SIZE_T,
@@ -1145,18 +1145,18 @@ pub const IDevice = extern struct {
             CreateDomainShader: *anyopaque,
             CreateComputeShader: *anyopaque,
             CreateClassLinkage: *anyopaque,
-            CreateBlendState: fn (
+            CreateBlendState: *const fn (
                 *T,
                 *const BLEND_DESC,
                 ?*?*IBlendState,
             ) callconv(WINAPI) HRESULT,
             CreateDepthStencilState: *anyopaque,
-            CreateRasterizerState: fn (
+            CreateRasterizerState: *const fn (
                 *T,
                 *const RASTERIZER_DESC,
                 ?*?*IRasterizerState,
             ) callconv(WINAPI) HRESULT,
-            CreateSamplerState: fn (
+            CreateSamplerState: *const fn (
                 *T,
                 *const SAMPLER_DESC,
                 ?*?*ISamplerState,

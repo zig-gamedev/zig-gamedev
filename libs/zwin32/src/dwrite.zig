@@ -111,8 +111,8 @@ pub const ITextFormat = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetTextAlignment: fn (*T, TEXT_ALIGNMENT) callconv(WINAPI) HRESULT,
-            SetParagraphAlignment: fn (*T, PARAGRAPH_ALIGNMENT) callconv(WINAPI) HRESULT,
+            SetTextAlignment: *const fn (*T, TEXT_ALIGNMENT) callconv(WINAPI) HRESULT,
+            SetParagraphAlignment: *const fn (*T, PARAGRAPH_ALIGNMENT) callconv(WINAPI) HRESULT,
             SetWordWrapping: *anyopaque,
             SetReadingDirection: *anyopaque,
             SetFlowDirection: *anyopaque,
@@ -191,7 +191,7 @@ pub const IFactory = extern struct {
             CreateCustomRenderingParams: *anyopaque,
             RegisterFontFileLoader: *anyopaque,
             UnregisterFontFileLoader: *anyopaque,
-            CreateTextFormat: fn (
+            CreateTextFormat: *const fn (
                 *T,
                 LPCWSTR,
                 ?*IFontCollection,

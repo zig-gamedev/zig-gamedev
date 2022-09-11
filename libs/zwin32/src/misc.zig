@@ -1,5 +1,3 @@
-const builtin = @import("builtin");
-
 const std = @import("std");
 const windows = std.os.windows;
 const WORD = windows.WORD;
@@ -81,18 +79,9 @@ pub inline fn HIWORD(dword: DWORD) WORD {
 pub fn IUnknownVTable(comptime T: type) type {
     return extern struct {
         unknown: extern struct {
-            QueryInterface: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            },
-            AddRef: switch (builtin.zig_backend) {
-                .stage1 => fn (*T) callconv(WINAPI) ULONG,
-                else => *const fn (*T) callconv(WINAPI) ULONG,
-            },
-            Release: switch (builtin.zig_backend) {
-                .stage1 => fn (*T) callconv(WINAPI) ULONG,
-                else => *const fn (*T) callconv(WINAPI) ULONG,
-            },
+            QueryInterface: *const fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            AddRef: *const fn (*T) callconv(WINAPI) ULONG,
+            Release: *const fn (*T) callconv(WINAPI) ULONG,
         },
     };
 }
@@ -120,18 +109,9 @@ pub const IUnknown = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            QueryInterface: switch (builtin.zig_backend) {
-                .stage1 => fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-                else => *const fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            },
-            AddRef: switch (builtin.zig_backend) {
-                .stage1 => fn (*T) callconv(WINAPI) ULONG,
-                else => *const fn (*T) callconv(WINAPI) ULONG,
-            },
-            Release: switch (builtin.zig_backend) {
-                .stage1 => fn (*T) callconv(WINAPI) ULONG,
-                else => *const fn (*T) callconv(WINAPI) ULONG,
-            },
+            QueryInterface: *const fn (*T, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            AddRef: *const fn (*T) callconv(WINAPI) ULONG,
+            Release: *const fn (*T) callconv(WINAPI) ULONG,
         };
     }
 };

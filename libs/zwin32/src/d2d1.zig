@@ -414,8 +414,8 @@ pub const ISolidColorBrush = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetColor: fn (*T, *const COLOR_F) callconv(WINAPI) void,
-            GetColor: fn (*T, *COLOR_F) callconv(WINAPI) *COLOR_F,
+            SetColor: *const fn (*T, *const COLOR_F) callconv(WINAPI) void,
+            GetColor: *const fn (*T, *COLOR_F) callconv(WINAPI) *COLOR_F,
         };
     }
 };
@@ -777,13 +777,13 @@ pub const ISimplifiedGeometrySink = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetFillMode: fn (*T, FILL_MODE) callconv(WINAPI) void,
-            SetSegmentFlags: fn (*T, PATH_SEGMENT) callconv(WINAPI) void,
-            BeginFigure: fn (*T, POINT_2F, FIGURE_BEGIN) callconv(WINAPI) void,
-            AddLines: fn (*T, [*]const POINT_2F, UINT32) callconv(WINAPI) void,
-            AddBeziers: fn (*T, [*]const BEZIER_SEGMENT, UINT32) callconv(WINAPI) void,
-            EndFigure: fn (*T, FIGURE_END) callconv(WINAPI) void,
-            Close: fn (*T) callconv(WINAPI) HRESULT,
+            SetFillMode: *const fn (*T, FILL_MODE) callconv(WINAPI) void,
+            SetSegmentFlags: *const fn (*T, PATH_SEGMENT) callconv(WINAPI) void,
+            BeginFigure: *const fn (*T, POINT_2F, FIGURE_BEGIN) callconv(WINAPI) void,
+            AddLines: *const fn (*T, [*]const POINT_2F, UINT32) callconv(WINAPI) void,
+            AddBeziers: *const fn (*T, [*]const BEZIER_SEGMENT, UINT32) callconv(WINAPI) void,
+            EndFigure: *const fn (*T, FIGURE_END) callconv(WINAPI) void,
+            Close: *const fn (*T) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -821,11 +821,11 @@ pub const IGeometrySink = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            AddLine: fn (*T, POINT_2F) callconv(WINAPI) void,
-            AddBezier: fn (*T, *const BEZIER_SEGMENT) callconv(WINAPI) void,
-            AddQuadraticBezier: fn (*T, *const QUADRATIC_BEZIER_SEGMENT) callconv(WINAPI) void,
-            AddQuadraticBeziers: fn (*T, [*]const QUADRATIC_BEZIER_SEGMENT, UINT32) callconv(WINAPI) void,
-            AddArc: fn (*T, *const ARC_SEGMENT) callconv(WINAPI) void,
+            AddLine: *const fn (*T, POINT_2F) callconv(WINAPI) void,
+            AddBezier: *const fn (*T, *const BEZIER_SEGMENT) callconv(WINAPI) void,
+            AddQuadraticBezier: *const fn (*T, *const QUADRATIC_BEZIER_SEGMENT) callconv(WINAPI) void,
+            AddQuadraticBeziers: *const fn (*T, [*]const QUADRATIC_BEZIER_SEGMENT, UINT32) callconv(WINAPI) void,
+            AddArc: *const fn (*T, *const ARC_SEGMENT) callconv(WINAPI) void,
         };
     }
 };
@@ -882,10 +882,10 @@ pub const IPathGeometry = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            Open: fn (*T, *?*IGeometrySink) callconv(WINAPI) HRESULT,
+            Open: *const fn (*T, *?*IGeometrySink) callconv(WINAPI) HRESULT,
             Stream: *anyopaque,
-            GetSegmentCount: fn (*T, *UINT32) callconv(WINAPI) HRESULT,
-            GetFigureCount: fn (*T, *UINT32) callconv(WINAPI) HRESULT,
+            GetSegmentCount: *const fn (*T, *UINT32) callconv(WINAPI) HRESULT,
+            GetFigureCount: *const fn (*T, *UINT32) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -1159,13 +1159,13 @@ pub const IRenderTarget = extern struct {
             CreateBitmapFromWicBitmap: *anyopaque,
             CreateSharedBitmap: *anyopaque,
             CreateBitmapBrush: *anyopaque,
-            CreateSolidColorBrush: fn (
+            CreateSolidColorBrush: *const fn (
                 *T,
                 *const COLOR_F,
                 ?*const BRUSH_PROPERTIES,
                 *?*ISolidColorBrush,
             ) callconv(WINAPI) HRESULT,
-            CreateGradientStopCollection: fn (
+            CreateGradientStopCollection: *const fn (
                 *T,
                 [*]const GRADIENT_STOP,
                 UINT32,
@@ -1174,7 +1174,7 @@ pub const IRenderTarget = extern struct {
                 *?*IGradientStopCollection,
             ) callconv(WINAPI) HRESULT,
             CreateLinearGradientBrush: *anyopaque,
-            CreateRadialGradientBrush: fn (
+            CreateRadialGradientBrush: *const fn (
                 *T,
                 *const RADIAL_GRADIENT_BRUSH_PROPERTIES,
                 ?*const BRUSH_PROPERTIES,
@@ -1184,7 +1184,7 @@ pub const IRenderTarget = extern struct {
             CreateCompatibleRenderTarget: *anyopaque,
             CreateLayer: *anyopaque,
             CreateMesh: *anyopaque,
-            DrawLine: fn (
+            DrawLine: *const fn (
                 *T,
                 POINT_2F,
                 POINT_2F,
@@ -1192,23 +1192,23 @@ pub const IRenderTarget = extern struct {
                 FLOAT,
                 ?*IStrokeStyle,
             ) callconv(WINAPI) void,
-            DrawRectangle: fn (*T, *const RECT_F, *IBrush, FLOAT, ?*IStrokeStyle) callconv(WINAPI) void,
-            FillRectangle: fn (*T, *const RECT_F, *IBrush) callconv(WINAPI) void,
-            DrawRoundedRectangle: fn (
+            DrawRectangle: *const fn (*T, *const RECT_F, *IBrush, FLOAT, ?*IStrokeStyle) callconv(WINAPI) void,
+            FillRectangle: *const fn (*T, *const RECT_F, *IBrush) callconv(WINAPI) void,
+            DrawRoundedRectangle: *const fn (
                 *T,
                 *const ROUNDED_RECT,
                 *IBrush,
                 FLOAT,
                 ?*IStrokeStyle,
             ) callconv(WINAPI) void,
-            FillRoundedRectangle: fn (*T, *const ROUNDED_RECT, *IBrush) callconv(WINAPI) void,
-            DrawEllipse: fn (*T, *const ELLIPSE, *IBrush, FLOAT, ?*IStrokeStyle) callconv(WINAPI) void,
-            FillEllipse: fn (*T, *const ELLIPSE, *IBrush) callconv(WINAPI) void,
-            DrawGeometry: fn (*T, *IGeometry, *IBrush, FLOAT, ?*IStrokeStyle) callconv(WINAPI) void,
-            FillGeometry: fn (*T, *IGeometry, *IBrush, ?*IBrush) callconv(WINAPI) void,
+            FillRoundedRectangle: *const fn (*T, *const ROUNDED_RECT, *IBrush) callconv(WINAPI) void,
+            DrawEllipse: *const fn (*T, *const ELLIPSE, *IBrush, FLOAT, ?*IStrokeStyle) callconv(WINAPI) void,
+            FillEllipse: *const fn (*T, *const ELLIPSE, *IBrush) callconv(WINAPI) void,
+            DrawGeometry: *const fn (*T, *IGeometry, *IBrush, FLOAT, ?*IStrokeStyle) callconv(WINAPI) void,
+            FillGeometry: *const fn (*T, *IGeometry, *IBrush, ?*IBrush) callconv(WINAPI) void,
             FillMesh: *anyopaque,
             FillOpacityMask: *anyopaque,
-            DrawBitmap: fn (
+            DrawBitmap: *const fn (
                 *T,
                 *IBitmap,
                 ?*const RECT_F,
@@ -1216,7 +1216,7 @@ pub const IRenderTarget = extern struct {
                 BITMAP_INTERPOLATION_MODE,
                 ?*const RECT_F,
             ) callconv(WINAPI) void,
-            DrawText: fn (
+            DrawText: *const fn (
                 *T,
                 LPCWSTR,
                 UINT,
@@ -1228,7 +1228,7 @@ pub const IRenderTarget = extern struct {
             ) callconv(WINAPI) void,
             DrawTextLayout: *anyopaque,
             DrawGlyphRun: *anyopaque,
-            SetTransform: fn (*T, *const MATRIX_3X2_F) callconv(WINAPI) void,
+            SetTransform: *const fn (*T, *const MATRIX_3X2_F) callconv(WINAPI) void,
             GetTransform: *anyopaque,
             SetAntialiasMode: *anyopaque,
             GetAntialiasMode: *anyopaque,
@@ -1245,9 +1245,9 @@ pub const IRenderTarget = extern struct {
             RestoreDrawingState: *anyopaque,
             PushAxisAlignedClip: *anyopaque,
             PopAxisAlignedClip: *anyopaque,
-            Clear: fn (*T, ?*const COLOR_F) callconv(WINAPI) void,
-            BeginDraw: fn (*T) callconv(WINAPI) void,
-            EndDraw: fn (*T, ?*TAG, ?*TAG) callconv(WINAPI) HRESULT,
+            Clear: *const fn (*T, ?*const COLOR_F) callconv(WINAPI) void,
+            BeginDraw: *const fn (*T) callconv(WINAPI) void,
+            EndDraw: *const fn (*T, ?*TAG, ?*TAG) callconv(WINAPI) HRESULT,
             GetPixelFormat: *anyopaque,
             SetDpi: *anyopaque,
             GetDpi: *anyopaque,
@@ -1302,17 +1302,17 @@ pub const IFactory = extern struct {
         return extern struct {
             ReloadSystemMetrics: *anyopaque,
             GetDesktopDpi: *anyopaque,
-            CreateRectangleGeometry: fn (*T, *const RECT_F, *?*IRectangleGeometry) callconv(WINAPI) HRESULT,
-            CreateRoundedRectangleGeometry: fn (
+            CreateRectangleGeometry: *const fn (*T, *const RECT_F, *?*IRectangleGeometry) callconv(WINAPI) HRESULT,
+            CreateRoundedRectangleGeometry: *const fn (
                 *T,
                 *const ROUNDED_RECT,
                 *?*IRoundedRectangleGeometry,
             ) callconv(WINAPI) HRESULT,
-            CreateEllipseGeometry: fn (*T, *const ELLIPSE, *?*IEllipseGeometry) callconv(WINAPI) HRESULT,
+            CreateEllipseGeometry: *const fn (*T, *const ELLIPSE, *?*IEllipseGeometry) callconv(WINAPI) HRESULT,
             CreateGeometryGroup: *anyopaque,
             CreateTransformedGeometry: *anyopaque,
-            CreatePathGeometry: fn (*T, *?*IPathGeometry) callconv(WINAPI) HRESULT,
-            CreateStrokeStyle: fn (
+            CreatePathGeometry: *const fn (*T, *?*IPathGeometry) callconv(WINAPI) HRESULT,
+            CreateStrokeStyle: *const fn (
                 *T,
                 *const STROKE_STYLE_PROPERTIES,
                 ?[*]const FLOAT,
@@ -1464,7 +1464,7 @@ pub const IDeviceContext = extern struct {
             CreateColorContext: *anyopaque,
             CreateColorContextFromFilename: *anyopaque,
             CreateColorContextFromWicColorContext: *anyopaque,
-            CreateBitmapFromDxgiSurface: fn (
+            CreateBitmapFromDxgiSurface: *const fn (
                 *T,
                 *dxgi.ISurface,
                 ?*const BITMAP_PROPERTIES1,
@@ -1481,7 +1481,7 @@ pub const IDeviceContext = extern struct {
             GetImageWorldBounds: *anyopaque,
             GetGlyphRunWorldBounds: *anyopaque,
             GetDevice: *anyopaque,
-            SetTarget: fn (*T, ?*IImage) callconv(WINAPI) void,
+            SetTarget: *const fn (*T, ?*IImage) callconv(WINAPI) void,
             GetTarget: *anyopaque,
             SetRenderingControls: *anyopaque,
             GetRenderingControls: *anyopaque,
@@ -1724,14 +1724,14 @@ pub const IInk = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            SetStartPoint: fn (*T, *const INK_POINT) callconv(WINAPI) void,
-            GetStartPoint: fn (*T, *INK_POINT) callconv(WINAPI) *INK_POINT,
-            AddSegments: fn (*T, [*]const INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
-            RemoveSegmentsAtEnd: fn (*T, UINT32) callconv(WINAPI) HRESULT,
-            SetSegments: fn (*T, UINT32, [*]const INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
-            SetSegmentAtEnd: fn (*T, *const INK_BEZIER_SEGMENT) callconv(WINAPI) HRESULT,
-            GetSegmentCount: fn (*T) callconv(WINAPI) UINT32,
-            GetSegments: fn (*T, UINT32, [*]const INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
+            SetStartPoint: *const fn (*T, *const INK_POINT) callconv(WINAPI) void,
+            GetStartPoint: *const fn (*T, *INK_POINT) callconv(WINAPI) *INK_POINT,
+            AddSegments: *const fn (*T, [*]const INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
+            RemoveSegmentsAtEnd: *const fn (*T, UINT32) callconv(WINAPI) HRESULT,
+            SetSegments: *const fn (*T, UINT32, [*]const INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
+            SetSegmentAtEnd: *const fn (*T, *const INK_BEZIER_SEGMENT) callconv(WINAPI) HRESULT,
+            GetSegmentCount: *const fn (*T) callconv(WINAPI) UINT32,
+            GetSegments: *const fn (*T, UINT32, [*]const INK_BEZIER_SEGMENT, UINT32) callconv(WINAPI) HRESULT,
             StreamAsGeometry: *anyopaque,
             GetBounds: *anyopaque,
         };
@@ -1802,14 +1802,14 @@ pub const IDeviceContext2 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            CreateInk: fn (*T, *const INK_POINT, *?*IInk) callconv(WINAPI) HRESULT,
-            CreateInkStyle: fn (*T, ?*const INK_STYLE_PROPERTIES, *?*IInkStyle) callconv(WINAPI) HRESULT,
+            CreateInk: *const fn (*T, *const INK_POINT, *?*IInk) callconv(WINAPI) HRESULT,
+            CreateInkStyle: *const fn (*T, ?*const INK_STYLE_PROPERTIES, *?*IInkStyle) callconv(WINAPI) HRESULT,
             CreateGradientMesh: *anyopaque,
             CreateImageSourceFromWic: *anyopaque,
             CreateLookupTable3D: *anyopaque,
             CreateImageSourceFromDxgi: *anyopaque,
             GetGradientMeshWorldBounds: *anyopaque,
-            DrawInk: fn (*T, *IInk, *IBrush, ?*IInkStyle) callconv(WINAPI) void,
+            DrawInk: *const fn (*T, *IInk, *IBrush, ?*IInkStyle) callconv(WINAPI) void,
             DrawGradientMesh: *anyopaque,
             DrawGdiMetafile1: *anyopaque,
             CreateTransformedImageSource: *anyopaque,
@@ -2124,7 +2124,7 @@ pub const IFactory7 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            CreateDevice6: fn (*T, *dxgi.IDevice, *?*IDevice6) callconv(WINAPI) HRESULT,
+            CreateDevice6: *const fn (*T, *dxgi.IDevice, *?*IDevice6) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -2294,7 +2294,7 @@ pub const IDevice6 = extern struct {
 
     pub fn VTable(comptime T: type) type {
         return extern struct {
-            CreateDeviceContext6: fn (
+            CreateDeviceContext6: *const fn (
                 *T,
                 DEVICE_CONTEXT_OPTIONS,
                 *?*IDeviceContext6,

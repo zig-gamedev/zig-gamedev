@@ -145,7 +145,7 @@ pub fn createVolumeMeter(apo: *?*IUnknown, _: UINT32) HRESULT {
         xaudio2_dll = (std.DynLib.openZ("d3d12/xaudio2_9redist.dll") catch unreachable).dll;
     }
 
-    var CreateAudioVolumeMeter: fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
+    var CreateAudioVolumeMeter: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
     CreateAudioVolumeMeter = @ptrCast(
         @TypeOf(CreateAudioVolumeMeter),
         windows.kernel32.GetProcAddress(xaudio2_dll.?, "CreateAudioVolumeMeter").?,
@@ -160,7 +160,7 @@ pub fn createReverb(apo: *?*IUnknown, _: UINT32) HRESULT {
         xaudio2_dll = (std.DynLib.openZ("d3d12/xaudio2_9redist.dll") catch unreachable).dll;
     }
 
-    var CreateAudioReverb: fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
+    var CreateAudioReverb: *const fn (*?*IUnknown) callconv(WINAPI) HRESULT = undefined;
     CreateAudioReverb = @ptrCast(
         @TypeOf(CreateAudioReverb),
         windows.kernel32.GetProcAddress(xaudio2_dll.?, "CreateAudioReverb").?,

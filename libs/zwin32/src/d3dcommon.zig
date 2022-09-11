@@ -107,8 +107,8 @@ pub const IBlob = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetBufferPointer: fn (*T) callconv(WINAPI) *anyopaque,
-            GetBufferSize: fn (*T) callconv(WINAPI) SIZE_T,
+            GetBufferPointer: *const fn (*T) callconv(WINAPI) *anyopaque,
+            GetBufferSize: *const fn (*T) callconv(WINAPI) SIZE_T,
         };
     }
 };
@@ -127,8 +127,8 @@ pub const IInclude = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Open: fn (*T, INCLUDE_TYPE, LPCSTR, *anyopaque, **anyopaque, *UINT) callconv(WINAPI) void,
-            Close: fn (*T, *anyopaque) callconv(WINAPI) void,
+            Open: *const fn (*T, INCLUDE_TYPE, LPCSTR, *anyopaque, **anyopaque, *UINT) callconv(WINAPI) void,
+            Close: *const fn (*T, *anyopaque) callconv(WINAPI) void,
         };
     }
 };

@@ -356,10 +356,10 @@ pub const IObject = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetPrivateData: fn (*T, *const GUID, *UINT, ?*anyopaque) callconv(WINAPI) HRESULT,
-            SetPrivateData: fn (*T, *const GUID, UINT, ?*const anyopaque) callconv(WINAPI) HRESULT,
-            SetPrivateDataInterface: fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
-            SetName: fn (*T, LPCWSTR) callconv(WINAPI) HRESULT,
+            GetPrivateData: *const fn (*T, *const GUID, *UINT, ?*anyopaque) callconv(WINAPI) HRESULT,
+            SetPrivateData: *const fn (*T, *const GUID, UINT, ?*const anyopaque) callconv(WINAPI) HRESULT,
+            SetPrivateDataInterface: *const fn (*T, *const GUID, ?*const IUnknown) callconv(WINAPI) HRESULT,
+            SetName: *const fn (*T, LPCWSTR) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -386,7 +386,7 @@ pub const IDeviceChild = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetDevice: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            GetDevice: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -475,7 +475,7 @@ pub const IDispatchable = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetBindingProperties: fn (*T, *BINDING_PROPERTIES) callconv(WINAPI) *BINDING_PROPERTIES,
+            GetBindingProperties: *const fn (*T, *BINDING_PROPERTIES) callconv(WINAPI) *BINDING_PROPERTIES,
         };
     }
 };
@@ -537,7 +537,7 @@ pub const IOperatorInitializer = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Reset: fn (*T, UINT, [*]const *ICompiledOperator) callconv(WINAPI) HRESULT,
+            Reset: *const fn (*T, UINT, [*]const *ICompiledOperator) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -600,11 +600,11 @@ pub const IBindingTable = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            BindInputs: fn (*T, UINT, ?[*]const BINDING_DESC) callconv(WINAPI) void,
-            BindOutputs: fn (*T, UINT, ?[*]const BINDING_DESC) callconv(WINAPI) void,
-            BindTemporaryResource: fn (*T, ?*const BINDING_DESC) callconv(WINAPI) void,
-            BindPersistentResource: fn (*T, ?*const BINDING_DESC) callconv(WINAPI) void,
-            Reset: fn (*T, ?*const BINDING_TABLE_DESC) callconv(WINAPI) HRESULT,
+            BindInputs: *const fn (*T, UINT, ?[*]const BINDING_DESC) callconv(WINAPI) void,
+            BindOutputs: *const fn (*T, UINT, ?[*]const BINDING_DESC) callconv(WINAPI) void,
+            BindTemporaryResource: *const fn (*T, ?*const BINDING_DESC) callconv(WINAPI) void,
+            BindPersistentResource: *const fn (*T, ?*const BINDING_DESC) callconv(WINAPI) void,
+            Reset: *const fn (*T, ?*const BINDING_TABLE_DESC) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -638,7 +638,7 @@ pub const ICommandRecorder = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            RecordDispatch: fn (*T, *d3d12.ICommandList, *IDispatchable, *IBindingTable) callconv(WINAPI) void,
+            RecordDispatch: *const fn (*T, *d3d12.ICommandList, *IDispatchable, *IBindingTable) callconv(WINAPI) void,
         };
     }
 };
@@ -663,7 +663,7 @@ pub const IDebugDevice = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            SetMuteDebugOutput: fn (*T, BOOL) callconv(WINAPI) void,
+            SetMuteDebugOutput: *const fn (*T, BOOL) callconv(WINAPI) void,
         };
     }
 };
@@ -748,22 +748,22 @@ pub const IDevice = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CheckFeatureSupport: fn (*T, FEATURE, UINT, ?*const anyopaque, UINT, *anyopaque) callconv(WINAPI) HRESULT,
-            CreateOperator: fn (*T, *const OPERATOR_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            CompileOperator: fn (*T, *IOperator, EXECUTION_FLAGS, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
-            CreateOperatorInitializer: fn (
+            CheckFeatureSupport: *const fn (*T, FEATURE, UINT, ?*const anyopaque, UINT, *anyopaque) callconv(WINAPI) HRESULT,
+            CreateOperator: *const fn (*T, *const OPERATOR_DESC, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            CompileOperator: *const fn (*T, *IOperator, EXECUTION_FLAGS, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            CreateOperatorInitializer: *const fn (
                 *T,
                 UINT,
                 ?[*]const *ICompiledOperator,
                 *const GUID,
                 *?*anyopaque,
             ) callconv(WINAPI) HRESULT,
-            CreateCommandRecorder: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            CreateBindingTable: fn (*T, ?*const BINDING_TABLE_DESC, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
-            Evict: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
-            MakeResident: fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
-            GetDeviceRemovedReason: fn (*T) callconv(WINAPI) HRESULT,
-            GetParentDevice: fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            CreateCommandRecorder: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            CreateBindingTable: *const fn (*T, ?*const BINDING_TABLE_DESC, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
+            Evict: *const fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+            MakeResident: *const fn (*T, UINT, [*]const *IPageable) callconv(WINAPI) HRESULT,
+            GetDeviceRemovedReason: *const fn (*T) callconv(WINAPI) HRESULT,
+            GetParentDevice: *const fn (*T, *const GUID, *?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -864,7 +864,7 @@ pub const IDevice1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CompileGraph: fn (*T, *const GRAPH_DESC, EXECUTION_FLAGS, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
+            CompileGraph: *const fn (*T, *const GRAPH_DESC, EXECUTION_FLAGS, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -931,7 +931,7 @@ pub fn createDevice(
     guid: *const GUID,
     ppv: ?*?*anyopaque,
 ) HRESULT {
-    var DMLCreateDevice1: fn (
+    var DMLCreateDevice1: *const fn (
         *d3d12.IDevice,
         CREATE_DEVICE_FLAGS,
         FEATURE_LEVEL,

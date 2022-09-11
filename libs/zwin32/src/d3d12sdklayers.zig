@@ -29,7 +29,7 @@ pub const IDebug = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            EnableDebugLayer: fn (*T) callconv(WINAPI) void,
+            EnableDebugLayer: *const fn (*T) callconv(WINAPI) void,
         };
     }
 };
@@ -59,9 +59,9 @@ pub const IDebug1 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            EnableDebugLayer: fn (*T) callconv(WINAPI) void,
-            SetEnableGPUBasedValidation: fn (*T, BOOL) callconv(WINAPI) void,
-            SetEnableSynchronizedCommandQueueValidation: fn (*T, BOOL) callconv(WINAPI) void,
+            EnableDebugLayer: *const fn (*T) callconv(WINAPI) void,
+            SetEnableGPUBasedValidation: *const fn (*T, BOOL) callconv(WINAPI) void,
+            SetEnableSynchronizedCommandQueueValidation: *const fn (*T, BOOL) callconv(WINAPI) void,
         };
     }
 };
@@ -85,7 +85,7 @@ pub const IDebug2 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            SetGPUBasedValidationFlags: fn (*T, GPU_BASED_VALIDATION_FLAGS) callconv(WINAPI) void,
+            SetGPUBasedValidationFlags: *const fn (*T, GPU_BASED_VALIDATION_FLAGS) callconv(WINAPI) void,
         };
     }
 };
@@ -117,9 +117,9 @@ pub const IDebug3 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            SetEnableGPUBasedValidation: fn (*T, BOOL) callconv(WINAPI) void,
-            SetEnableSynchronizedCommandQueueValidation: fn (*T, BOOL) callconv(WINAPI) void,
-            SetGPUBasedValidationFlags: fn (*T, GPU_BASED_VALIDATION_FLAGS) callconv(WINAPI) void,
+            SetEnableGPUBasedValidation: *const fn (*T, BOOL) callconv(WINAPI) void,
+            SetEnableSynchronizedCommandQueueValidation: *const fn (*T, BOOL) callconv(WINAPI) void,
+            SetGPUBasedValidationFlags: *const fn (*T, GPU_BASED_VALIDATION_FLAGS) callconv(WINAPI) void,
         };
     }
 };
@@ -147,7 +147,7 @@ pub const IDebug4 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            DisableDebugLayer: fn (*T) callconv(WINAPI) void,
+            DisableDebugLayer: *const fn (*T) callconv(WINAPI) void,
         };
     }
 };
@@ -177,7 +177,7 @@ pub const IDebug5 = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            SetEnableAutoName: fn (*T, BOOL) callconv(WINAPI) void,
+            SetEnableAutoName: *const fn (*T, BOOL) callconv(WINAPI) void,
         };
     }
 };
@@ -261,13 +261,13 @@ pub const IInfoQueue = extern struct {
             GetNumStoredMessagesAllowedByRetrievalFilter: *anyopaque,
             GetNumMessagesDiscardedByMessageCountLimit: *anyopaque,
             GetMessageCountLimit: *anyopaque,
-            AddStorageFilterEntries: fn (*T, *INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
+            AddStorageFilterEntries: *const fn (*T, *INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
             GetStorageFilter: *anyopaque,
             ClearStorageFilter: *anyopaque,
             PushEmptyStorageFilter: *anyopaque,
             PushCopyOfStorageFilter: *anyopaque,
-            PushStorageFilter: fn (*T, *INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
-            PopStorageFilter: fn (*T) callconv(WINAPI) void,
+            PushStorageFilter: *const fn (*T, *INFO_QUEUE_FILTER) callconv(WINAPI) HRESULT,
+            PopStorageFilter: *const fn (*T) callconv(WINAPI) void,
             GetStorageFilterStackSize: *anyopaque,
             AddRetrievalFilterEntries: *anyopaque,
             GetRetrievalFilter: *anyopaque,
@@ -285,7 +285,7 @@ pub const IInfoQueue = extern struct {
             GetBreakOnCategory: *anyopaque,
             GetBreakOnSeverity: *anyopaque,
             GetBreakOnID: *anyopaque,
-            SetMuteDebugOutput: fn (*T, BOOL) callconv(WINAPI) void,
+            SetMuteDebugOutput: *const fn (*T, BOOL) callconv(WINAPI) void,
             GetMuteDebugOutput: *anyopaque,
         };
     }

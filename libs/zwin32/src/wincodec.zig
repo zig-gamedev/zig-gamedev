@@ -99,7 +99,7 @@ pub const IBitmapDecoder = extern struct {
             GetColorContexts: *anyopaque,
             GetThumbnail: *anyopaque,
             GetFrameCount: *anyopaque,
-            GetFrame: fn (*T, UINT, ?*?*IBitmapFrameDecode) callconv(WINAPI) HRESULT,
+            GetFrame: *const fn (*T, UINT, ?*?*IBitmapFrameDecode) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -129,11 +129,11 @@ pub const IBitmapSource = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            GetSize: fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
-            GetPixelFormat: fn (*T, *GUID) callconv(WINAPI) HRESULT,
+            GetSize: *const fn (*T, *UINT, *UINT) callconv(WINAPI) HRESULT,
+            GetPixelFormat: *const fn (*T, *GUID) callconv(WINAPI) HRESULT,
             GetResolution: *anyopaque,
             CopyPalette: *anyopaque,
-            CopyPixels: fn (*T, ?*const Rect, UINT, UINT, [*]BYTE) callconv(WINAPI) HRESULT,
+            CopyPixels: *const fn (*T, ?*const Rect, UINT, UINT, [*]BYTE) callconv(WINAPI) HRESULT,
         };
     }
 };
@@ -239,7 +239,7 @@ pub const IFormatConverter = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            Initialize: fn (
+            Initialize: *const fn (
                 *T,
                 ?*IBitmapSource,
                 *const PixelFormatGUID,
@@ -282,7 +282,7 @@ pub const IImagingFactory = extern struct {
 
     fn VTable(comptime T: type) type {
         return extern struct {
-            CreateDecoderFromFilename: fn (
+            CreateDecoderFromFilename: *const fn (
                 *T,
                 LPCWSTR,
                 ?*const GUID,
@@ -296,7 +296,7 @@ pub const IImagingFactory = extern struct {
             CreateDecoder: *anyopaque,
             CreateEncoder: *anyopaque,
             CreatePalette: *anyopaque,
-            CreateFormatConverter: fn (*T, ?*?*IFormatConverter) callconv(WINAPI) HRESULT,
+            CreateFormatConverter: *const fn (*T, ?*?*IFormatConverter) callconv(WINAPI) HRESULT,
             CreateBitmapScaler: *anyopaque,
             CreateBitmapClipper: *anyopaque,
             CreateBitmapFlipRotator: *anyopaque,
