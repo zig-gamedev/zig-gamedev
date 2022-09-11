@@ -3505,12 +3505,14 @@ pub const RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC = e
     CurrentSizeInBytes: UINT64,
 };
 
-pub const RAYTRACING_INSTANCE_DESC = packed struct {
+pub const RAYTRACING_INSTANCE_DESC = extern struct {
     Transform: [3][4]FLOAT,
-    InstanceID: u24,
-    InstanceMask: u8,
-    InstanceContributionToHitGroupIndex: u24,
-    Flags: u8,
+    bits: packed struct {
+        InstanceID: u24,
+        Mask: u8,
+        InstanceContributionToHitGroupIndex: u24,
+        Flags: u8,
+    },
     AccelerationStructure: GPU_VIRTUAL_ADDRESS,
 };
 comptime {
