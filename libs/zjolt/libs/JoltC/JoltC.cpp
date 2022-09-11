@@ -1018,6 +1018,137 @@ JPH_Body_GetID(const JPH_Body *in_body)
     return body_id.GetIndexAndSequenceNumber();
 }
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_IsActive(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->IsActive();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_IsStatic(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->IsStatic();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_IsKinematic(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->IsKinematic();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_IsDynamic(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->IsDynamic();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_CanBeKinematicOrDynamic(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->CanBeKinematicOrDynamic();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetIsSensor(JPH_Body *in_body, bool in_is_sensor)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetIsSensor(in_is_sensor);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_IsSensor(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->IsSensor();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_MotionType
+JPH_Body_GetMotionType(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return static_cast<JPH_MotionType>(reinterpret_cast<const JPH::Body *>(in_body)->GetMotionType());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetMotionType(JPH_Body *in_body, JPH_MotionType in_motion_type)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetMotionType(static_cast<JPH::EMotionType>(in_motion_type));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_BroadPhaseLayer
+JPH_Body_GetBroadPhaseLayer(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return static_cast<JPH_BroadPhaseLayer>(reinterpret_cast<const JPH::Body *>(in_body)->GetBroadPhaseLayer());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_ObjectLayer
+JPH_Body_GetObjectLayer(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return static_cast<JPH_ObjectLayer>(reinterpret_cast<const JPH::Body *>(in_body)->GetObjectLayer());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_CollisionGroup
+JPH_Body_GetCollisionGroup(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH_CollisionGroup &>(reinterpret_cast<const JPH::Body *>(in_body)->GetCollisionGroup());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetCollisionGroup(JPH_Body *in_body, JPH_CollisionGroup in_group)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetCollisionGroup(reinterpret_cast<JPH::CollisionGroup &>(in_group));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_GetAllowSleeping(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->GetAllowSleeping();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetAllowSleeping(JPH_Body *in_body, bool in_allow)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetAllowSleeping(in_allow);
+}//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_Body_GetFriction(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->GetFriction();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetFriction(JPH_Body *in_body, float in_friction)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetFriction(in_friction);
+}//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_Body_GetRestitution(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->GetRestitution();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetRestitution(JPH_Body *in_body, float in_restitution)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetRestitution(in_restitution);
+}
+//--------------------------------------------------------------------------------------------------
 //
 // JPH_BodyID
 //
