@@ -355,15 +355,15 @@ pub const NodeFlags = packed struct(u32) {
 pub const NodeVTable = extern struct {
     onProcess: ?*const fn (
         node: Node,
-        frames_in: ?[*][*]const f32,
-        frame_count_in: *u32,
-        frames_out: [*][*]f32,
+        frames_in: ?*[*]const f32,
+        frame_count_in: ?*u32,
+        frames_out: *[*]f32,
         frame_count_out: *u32,
     ) callconv(.C) void,
     onGetRequiredInputFrameCount: ?*const fn (
         node: Node,
-        num_output_frames: u32,
-        num_input_frames: *u32,
+        output_frame_count: u32,
+        input_frame_count: *u32,
     ) callconv(.C) Result,
     input_bus_count: u8,
     output_bus_count: u8,
@@ -393,9 +393,6 @@ const NodeImpl = opaque {
         return struct {
             pub fn asNode(node: T) Node {
                 return @ptrCast(Node, node);
-            }
-            pub fn asRawNode(node: T) *c.ma_node {
-                return @ptrCast(*c.ma_node, node);
             }
 
             pub fn getNodeGraph(node: T) NodeGraph {
@@ -1506,123 +1503,131 @@ const EngineImpl = opaque {
         return SoundGroupImpl.create(allocator, engine, flags, parent);
     }
 
-    pub fn getResourceManager(engine: Engine) ResourceManager {
-        return @ptrCast(ResourceManager, c.ma_engine_get_resource_manager(engine.asRaw()));
-    }
+    pub const getResourceManager = ma_engine_get_resource_manager;
+    extern fn ma_engine_get_resource_manager(engine: Engine) ResourceManager;
 
-    pub fn getDevice(engine: Engine) ?Device {
-        return @ptrCast(?Device, c.ma_engine_get_device(engine.asRaw()));
-    }
+    pub const getDevice = ma_engine_get_device;
+    extern fn ma_engine_get_device(engine: Engine) ?Device;
 
-    pub fn getLog(engine: Engine) ?Log {
-        return @ptrCast(?Log, c.ma_engine_get_log(engine.asRaw()));
-    }
+    pub const getLog = ma_engine_get_log;
+    extern fn ma_engine_get_log(engine: Engine) ?Log;
 
-    pub fn getSampleRate(engine: Engine) u32 {
-        return c.ma_engine_get_sample_rate(engine.asRaw());
-    }
+    pub const getSampleRate = ma_engine_get_sample_rate;
+    extern fn ma_engine_get_sample_rate(engine: Engine) u32;
 
     pub fn start(engine: Engine) Error!void {
-        try checkResult(c.ma_engine_start(engine.asRaw()));
+        try maybeError(ma_engine_start(engine));
     }
+    extern fn ma_engine_start(engine: Engine) Result;
+
     pub fn stop(engine: Engine) Error!void {
-        try checkResult(c.ma_engine_stop(engine.asRaw()));
+        try maybeError(ma_engine_stop(engine));
     }
+    extern fn ma_engine_stop(engine: Engine) Result;
 
     pub fn setVolume(engine: Engine, volume: f32) Error!void {
-        try checkResult(c.ma_engine_set_volume(engine.asRaw(), volume));
+        try maybeError(ma_engine_set_volume(engine, volume));
     }
+    extern fn ma_engine_set_volume(engine: Engine, volume: f32) Result;
 
     pub fn setGainDb(engine: Engine, gain_db: f32) Error!void {
-        try checkResult(c.ma_engine_set_gain_db(engine.asRaw(), gain_db));
+        try maybeError(ma_engine_set_gain_db(engine, gain_db));
     }
+    extern fn ma_engine_set_gain_db(engine: Engine, gain_db: f32) Result;
 
-    pub fn getNumListeners(engine: Engine) u32 {
-        return c.ma_engine_get_listener_count(engine.asRaw());
-    }
+    pub const getListenerCount = ma_engine_get_listener_count;
+    extern fn ma_engine_get_listener_count(engine: Engine) u32;
 
     pub fn findClosestListener(engine: Engine, absolute_pos_xyz: [3]f32) u32 {
-        return c.ma_engine_find_closest_listener(
-            engine.asRaw(),
+        return ma_engine_find_closest_listener(
+            engine,
             absolute_pos_xyz[0],
             absolute_pos_xyz[1],
             absolute_pos_xyz[2],
         );
     }
+    extern fn ma_engine_find_closest_listener(engine: Engine, x: f32, y: f32, z: f32) u32;
 
     pub fn setListenerPosition(engine: Engine, index: u32, v: [3]f32) void {
-        c.ma_engine_listener_set_position(engine.asRaw(), index, v[0], v[1], v[2]);
+        ma_engine_listener_set_position(engine, index, v[0], v[1], v[2]);
     }
+    extern fn ma_engine_listener_set_position(engine: Engine, index: u32, x: f32, y: f32, z: f32) void;
+
     pub fn getListenerPosition(engine: Engine, index: u32) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_engine_listener_get_position(engine.asRaw(), index, &v);
-        return .{ v.x, v.y, v.z };
+        var v: [3]f32 = undefined;
+        WA_ma_engine_listener_get_position(engine, index, &v);
+        return v;
     }
-    extern fn WA_ma_engine_listener_get_position(engine: *c.ma_engine, index: u32, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_engine_listener_get_position(engine: Engine, index: u32, vout: *[3]f32) void;
 
     pub fn setListenerDirection(engine: Engine, index: u32, v: [3]f32) void {
-        c.ma_engine_listener_set_direction(engine.asRaw(), index, v[0], v[1], v[2]);
+        ma_engine_listener_set_direction(engine, index, v[0], v[1], v[2]);
     }
+    extern fn ma_engine_listener_set_direction(engine: Engine, index: u32, x: f32, y: f32, z: f32) void;
+
     pub fn getListenerDirection(engine: Engine, index: u32) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_engine_listener_get_direction(engine.asRaw(), index, &v);
-        return .{ v.x, v.y, v.z };
+        var v: [3]f32 = undefined;
+        WA_ma_engine_listener_get_direction(engine, index, &v);
+        return v;
     }
-    extern fn WA_ma_engine_listener_get_direction(engine: *c.ma_engine, index: u32, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_engine_listener_get_direction(engine: Engine, index: u32, vout: *[3]f32) void;
 
     pub fn setListenerVelocity(engine: Engine, index: u32, v: [3]f32) void {
-        c.ma_engine_listener_set_velocity(engine.asRaw(), index, v[0], v[1], v[2]);
+        ma_engine_listener_set_velocity(engine, index, v[0], v[1], v[2]);
     }
+    extern fn ma_engine_listener_set_velocity(engine: Engine, index: u32, x: f32, y: f32, z: f32) void;
+
     pub fn getListenerVelocity(engine: Engine, index: u32) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_engine_listener_get_velocity(engine.asRaw(), index, &v);
-        return .{ v.x, v.y, v.z };
+        var v: [3]f32 = undefined;
+        WA_ma_engine_listener_get_velocity(engine, index, &v);
+        return v;
     }
-    extern fn WA_ma_engine_listener_get_velocity(engine: *c.ma_engine, index: u32, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_engine_listener_get_velocity(engine: *Engine, index: u32, vout: *[3]f32) void;
 
     pub fn setListenerWorldUp(engine: Engine, index: u32, v: [3]f32) void {
-        c.ma_engine_listener_set_world_up(engine.asRaw(), index, v[0], v[1], v[2]);
+        ma_engine_listener_set_world_up(engine, index, v[0], v[1], v[2]);
     }
+    extern fn ma_engine_listener_set_world_up(engine: Engine, index: u32, x: f32, y: f32, z: f32) void;
+
     pub fn getListenerWorldUp(engine: Engine, index: u32) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_engine_listener_get_world_up(engine.asRaw(), index, &v);
-        return .{ v.x, v.y, v.z };
+        var v: [3]f32 = undefined;
+        WA_ma_engine_listener_get_world_up(engine, index, &v);
+        return v;
     }
-    extern fn WA_ma_engine_listener_get_world_up(engine: *c.ma_engine, index: u32, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_engine_listener_get_world_up(engine: Engine, index: u32, vout: *[3]f32) void;
 
     pub fn setListenerEnabled(engine: Engine, index: u32, enabled: bool) void {
-        c.ma_engine_listener_set_enabled(engine.asRaw(), index, if (enabled) c.MA_TRUE else c.MA_FALSE);
+        ma_engine_listener_set_enabled(engine, index, if (enabled) 1 else 0);
     }
-    pub fn isListenerEnabled(engine: Engine, index: u32) bool {
-        return c.ma_engine_listener_is_enabled(engine.asRaw(), index) == c.MA_TRUE;
-    }
+    extern fn ma_engine_listener_set_enabled(engine: Engine, index: u32, is_enabled: Bool32) void;
 
-    pub fn setListenerCone(
+    pub fn isListenerEnabled(engine: Engine, index: u32) bool {
+        return ma_engine_listener_is_enabled(engine, index) != 0;
+    }
+    extern fn ma_engine_listener_is_enabled(engine: Engine, index: u32) Bool32;
+
+    pub const setListenerCone = ma_engine_listener_set_cone;
+    extern fn ma_engine_listener_set_cone(
         engine: Engine,
         index: u32,
         inner_radians: f32,
         outer_radians: f32,
         outer_gain: f32,
-    ) void {
-        c.ma_engine_listener_set_cone(engine.asRaw(), index, inner_radians, outer_radians, outer_gain);
-    }
-    pub fn getListenerCone(
+    ) void;
+
+    pub const getListenerCone = ma_engine_listener_get_cone;
+    extern fn ma_engine_listener_get_cone(
         engine: Engine,
         index: u32,
         inner_radians: ?*f32,
         outer_radians: ?*f32,
         outer_gain: ?*f32,
-    ) void {
-        c.ma_engine_listener_get_cone(engine.asRaw(), index, inner_radians, outer_radians, outer_gain);
-    }
+    ) void;
 
     pub fn playSound(engine: Engine, filepath: [:0]const u8, sgroup: ?SoundGroup) Error!void {
-        try checkResult(c.ma_engine_play_sound(
-            engine.asRaw(),
-            filepath.ptr,
-            if (sgroup) |g| g.asRaw() else null,
-        ));
+        try maybeError(ma_engine_play_sound(engine, filepath.ptr, sgroup));
     }
+    extern fn ma_engine_play_sound(engine: Engine, filepath: [*:0]const u8, sgroup: ?SoundGroup) Result;
 
     pub fn playSoundEx(
         engine: Engine,
@@ -1630,13 +1635,14 @@ const EngineImpl = opaque {
         node: ?Node,
         node_input_bus_index: u32,
     ) Error!void {
-        try checkResult(c.ma_engine_play_sound_ex(
-            engine.asRaw(),
-            filepath.ptr,
-            if (node) |n| n.asRawNode() else null,
-            node_input_bus_index,
-        ));
+        try maybeError(ma_engine_play_sound_ex(engine, filepath.ptr, node, node_input_bus_index));
     }
+    extern fn ma_engine_play_sound_ex(
+        engine: Engine,
+        filepath: [*:0]const u8,
+        node: ?Node,
+        node_input_bus_index: u32,
+    ) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -2287,7 +2293,7 @@ test "zaudio.engine.basic" {
     std.debug.print("Channels: {}, SampleRate: {}, NumListeners: {}, ClosestListener: {}\n", .{
         engine.getChannels(),
         engine.getSampleRate(),
-        engine.getNumListeners(),
+        engine.getListenerCount(),
         engine.findClosestListener(.{ 0.0, 0.0, 0.0 }),
     });
 
@@ -2299,6 +2305,12 @@ test "zaudio.engine.basic" {
 
     engine.setListenerEnabled(0, true);
     try expect(engine.isListenerEnabled(0) == true);
+
+    engine.setListenerPosition(0, .{ 1.0, 2.0, 3.0 });
+    {
+        const pos = engine.getListenerPosition(0);
+        try expect(pos[0] == 1.0 and pos[1] == 2.0 and pos[2] == 3.0);
+    }
 
     try expect(engine.getDevice() != null);
     _ = engine.getResourceManager();
