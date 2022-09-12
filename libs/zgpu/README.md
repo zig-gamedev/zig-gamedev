@@ -97,9 +97,9 @@ about all resources it binds so it becomes invalid if any of those resources bec
 const buffer_handle = gctx.createBuffer(...);
 
 if (gctx.isResourceValid(buffer_handle)) {
-    const buffer = gctx.lookupResource(buffer_handle).?;  // Returns gpu.Buffer
+    const buffer = gctx.lookupResource(buffer_handle).?;  // Returns `wgpu.Buffer`
 
-    const buffer_info = gctx.lookupResourceInfo(buffer_handle).?; // Returns zgpu.BufferInfo
+    const buffer_info = gctx.lookupResourceInfo(buffer_handle).?; // Returns `zgpu.BufferInfo`
     std.debug.print("Buffer size is: {d}", .{buffer_info.size});
 }
 
