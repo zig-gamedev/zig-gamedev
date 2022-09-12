@@ -1,10 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const math = std.math;
-const c = if (@import("builtin").zig_backend == .stage1)
-    @cImport(@cInclude("miniaudio.h"))
-else
-    @import("cimport_stage2.zig");
 
 pub const SoundFlags = packed struct(u32) {
     stream: bool = false,
@@ -1337,10 +1333,6 @@ const DeviceImpl = opaque {
     pub const getUserData = zaudioDeviceGetUserData;
     extern fn zaudioDeviceGetUserData(device: Device) ?*anyopaque;
 
-    pub fn asRaw(device: Device) *c.ma_device {
-        return @ptrCast(*c.ma_device, device);
-    }
-
     pub const getContext = ma_device_get_context;
     extern fn ma_device_get_context(device: Device) Context;
 
@@ -1444,10 +1436,6 @@ const EngineImpl = opaque {
     pub const destroy = zaudioEngineDestroy;
     extern fn zaudioEngineDestroy(handle: Engine) void;
 
-    pub fn asRaw(engine: Engine) *c.ma_engine {
-        return @ptrCast(*c.ma_engine, engine);
-    }
-
     pub fn createSoundFromFile(
         engine: Engine,
         file_path: [:0]const u8,
@@ -1484,13 +1472,8 @@ const EngineImpl = opaque {
         return SoundImpl.createCopy(allocator, engine, existing_sound, flags, sgroup);
     }
 
-    pub fn createSoundGroup(
-        engine: Engine,
-        allocator: std.mem.Allocator,
-        flags: SoundFlags,
-        parent: ?SoundGroup,
-    ) Error!SoundGroup {
-        return SoundGroupImpl.create(allocator, engine, flags, parent);
+    pub fn createSoundGroup(engine: Engine, flags: SoundFlags, parent: ?SoundGroup) Error!SoundGroup {
+        return SoundGroupImpl.create(engine, flags, parent);
     }
 
     pub const getResourceManager = ma_engine_get_resource_manager;
@@ -1677,14 +1660,7 @@ const SoundImpl = opaque {
         done_fence: ?Fence,
     ) Error!Sound {
         var handle: ?Sound = null;
-        try maybeError(zaudioSoundCreateFromFile(
-            engine,
-            file_path.ptr,
-            flags,
-            sgroup,
-            done_fence,
-            &handle,
-        ));
+        try maybeError(zaudioSoundCreateFromFile(engine, file_path.ptr, flags, sgroup, done_fence, &handle));
         return handle.?;
     }
     extern fn zaudioSoundCreateFromFile(
@@ -1697,46 +1673,35 @@ const SoundImpl = opaque {
     ) Result;
 
     fn createFromDataSource(
-        allocator: std.mem.Allocator,
         engine: Engine,
         data_source: DataSource,
         flags: SoundFlags,
         sgroup: ?SoundGroup,
     ) Error!Sound {
-        var handle = allocator.create(c.ma_sound) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
-
-        try checkResult(c.ma_sound_init_from_data_source(
-            engine.asRaw(),
-            data_source.asRaw(),
-            @bitCast(u32, flags),
-            if (sgroup) |g| g.handle else null,
-            handle,
-        ));
-
-        return @ptrCast(Sound, handle);
+        var handle: ?Sound = null;
+        try maybeError(zaudioSoundCreateFromDataSource(engine, data_source, flags, sgroup, &handle));
+        return handle.?;
     }
+    extern fn zaudioSoundCreateFromDataSource(
+        engine: Engine,
+        data_source: DataSource,
+        flags: SoundFlags,
+        sgroup: ?SoundGroup,
+        out_handle: ?*?*SoundImpl,
+    ) Result;
 
-    fn createCopy(
-        allocator: std.mem.Allocator,
+    fn createCopy(engine: Engine, existing_sound: Sound, flags: SoundFlags, sgroup: ?SoundGroup) Error!Sound {
+        var handle: ?Sound = null;
+        try maybeError(zaudioSoundCreateCopy(engine, existing_sound, flags, sgroup, &handle));
+        return handle.?;
+    }
+    extern fn zaudioSoundCreateCopy(
         engine: Engine,
         existing_sound: Sound,
         flags: SoundFlags,
         sgroup: ?SoundGroup,
-    ) Error!Sound {
-        var handle = allocator.create(c.ma_sound) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
-
-        try checkResult(c.ma_sound_init_copy(
-            engine.asRaw(),
-            existing_sound.asRaw(),
-            @bitCast(u32, flags),
-            if (sgroup) |g| g.asRaw() else null,
-            handle,
-        ));
-
-        return @ptrCast(Sound, handle);
-    }
+        out_handle: ?*?*SoundImpl,
+    ) Result;
 
     fn create(engine: Engine, config: SoundConfig) Error!Sound {
         var handle: ?Sound = null;
@@ -1748,264 +1713,279 @@ const SoundImpl = opaque {
     pub const destroy = zaudioSoundDestroy;
     extern fn zaudioSoundDestroy(sound: Sound) void;
 
-    pub fn asRaw(sound: Sound) *c.ma_sound {
-        return @ptrCast(*c.ma_sound, sound);
-    }
+    pub const getDataSource = ma_sound_get_data_source;
+    extern fn ma_sound_get_data_source(sound: Sound) ?DataSource;
 
-    pub fn getEngine(sound: Sound) Engine {
-        return @ptrCast(Engine, c.ma_sound_get_engine(sound.asRaw()));
-    }
-
-    pub fn getDataSource(sound: Sound) ?DataSource {
-        return @ptrCast(?DataSource, c.ma_sound_get_data_source(sound.asRaw()));
-    }
+    pub const getEngine = ma_sound_get_engine;
+    extern fn ma_sound_get_engine(sound: Sound) Engine;
 
     pub fn start(sound: Sound) Error!void {
-        try checkResult(c.ma_sound_start(sound.asRaw()));
+        try maybeError(ma_sound_start(sound));
     }
+    extern fn ma_sound_start(sound: Sound) Result;
+
     pub fn stop(sound: Sound) Error!void {
-        try checkResult(c.ma_sound_stop(sound.asRaw()));
+        try maybeError(ma_sound_stop(sound));
     }
+    extern fn ma_sound_stop(sound: Sound) Result;
 
-    pub fn setVolume(sound: Sound, volume: f32) void {
-        c.ma_sound_set_volume(sound.asRaw(), volume);
-    }
-    pub fn getVolume(sound: Sound) f32 {
-        return c.ma_sound_get_volume(sound.asRaw());
-    }
+    pub const setVolume = ma_sound_set_volume;
+    extern fn ma_sound_set_volume(sound: Sound, volume: f32) void;
 
-    pub fn setPan(sound: Sound, pan: f32) void {
-        c.ma_sound_set_pan(sound.asRaw(), pan);
-    }
-    pub fn getPan(sound: Sound) f32 {
-        return c.ma_sound_get_pan(sound.asRaw());
-    }
+    pub const getVolume = ma_sound_get_volume;
+    extern fn ma_sound_get_volume(sound: Sound) f32;
 
-    pub fn setPanMode(sound: Sound, pan_mode: PanMode) void {
-        c.ma_sound_set_pan_mode(sound.asRaw(), @enumToInt(pan_mode));
-    }
-    pub fn getPanMode(sound: Sound) PanMode {
-        return @intToEnum(PanMode, c.ma_sound_get_pan_mode(sound.asRaw()));
-    }
+    pub const setPan = ma_sound_set_pan;
+    extern fn ma_sound_set_pan(sound: Sound, pan: f32) void;
 
-    pub fn setPitch(sound: Sound, pitch: f32) void {
-        c.ma_sound_set_pitch(sound.asRaw(), pitch);
-    }
-    pub fn getPitch(sound: Sound) f32 {
-        return c.ma_sound_get_pitch(sound.asRaw());
-    }
+    pub const getPan = ma_sound_get_pan;
+    extern fn ma_sound_get_pan(sound: Sound) f32;
+
+    pub const setPanMode = ma_sound_set_pan_mode;
+    extern fn ma_sound_set_pan_mode(sound: Sound, pan_mode: PanMode) void;
+
+    pub const getPanMode = ma_sound_get_pan_mode;
+    extern fn ma_sound_get_pan_mode(sound: Sound) PanMode;
+
+    pub const setPitch = ma_sound_set_pitch;
+    extern fn ma_sound_set_pitch(sound: Sound, pitch: f32) void;
+
+    pub const getPitch = ma_sound_get_pitch;
+    extern fn ma_sound_get_pitch(sound: Sound) f32;
 
     pub fn setSpatializationEnabled(sound: Sound, enabled: bool) void {
-        c.ma_sound_set_spatialization_enabled(sound.asRaw(), if (enabled) c.MA_TRUE else c.MA_FALSE);
+        ma_sound_set_spatialization_enabled(sound, @boolToInt(enabled));
     }
-    pub fn isSpatializationEnabled(sound: Sound) bool {
-        return c.ma_sound_is_spatialization_enabled(sound.asRaw()) == c.MA_TRUE;
-    }
+    extern fn ma_sound_set_spatialization_enabled(sound: Sound, enabled: Bool32) void;
 
-    pub fn setPinnedListenerIndex(sound: Sound, index: u32) void {
-        c.ma_sound_set_pinned_listener_index(sound.asRaw(), index);
+    pub fn isSpatializationEnabled(sound: Sound) bool {
+        return ma_sound_is_spatialization_enabled(sound) != 0;
     }
-    pub fn getPinnedListenerIndex(sound: Sound) u32 {
-        return c.ma_sound_get_pinned_listener_index(sound.asRaw());
-    }
-    pub fn getListenerIndex(sound: Sound) u32 {
-        return c.ma_sound_get_listener_index(sound.asRaw());
-    }
+    extern fn ma_sound_is_spatialization_enabled(sound: Sound) Bool32;
+
+    pub const setPinnedListenerIndex = ma_sound_set_pinned_listener_index;
+    extern fn ma_sound_set_pinned_listener_index(sound: Sound, index: u32) void;
+
+    pub const getPinnedListenerIndex = ma_sound_get_pinned_listener_index;
+    extern fn ma_sound_get_pinned_listener_index(sound: Sound) u32;
+
+    pub const getListenerIndex = ma_sound_get_listener_index;
+    extern fn ma_sound_get_listener_index(sound: Sound) u32;
 
     pub fn getDirectionToListener(sound: Sound) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_sound_get_direction_to_listener(sound.asRaw(), &v);
-        return .{ v.x, v.y, v.z };
+        var v: [3]f32 = undefined;
+        WA_ma_sound_get_direction_to_listener(sound, &v);
+        return v;
     }
-    extern fn WA_ma_sound_get_direction_to_listener(sound: *c.ma_sound, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_sound_get_direction_to_listener(sound: Sound, vout: *[3]f32) void;
 
     pub fn setPosition(sound: Sound, v: [3]f32) void {
-        c.ma_sound_set_position(sound.asRaw(), v[0], v[1], v[2]);
+        ma_sound_set_position(sound, v[0], v[1], v[2]);
     }
+    extern fn ma_sound_set_position(sound: Sound, x: f32, y: f32, z: f32) void;
+
     pub fn getPosition(sound: Sound) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_sound_get_position(sound.asRaw(), &v);
-        return .{ v.x, v.y, v.z };
+        var v: [3]f32 = undefined;
+        WA_ma_sound_get_position(sound, &v);
+        return v;
     }
-    extern fn WA_ma_sound_get_position(sound: *c.ma_sound, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_sound_get_position(sound: Sound, vout: *[3]f32) void;
 
     pub fn setDirection(sound: Sound, v: [3]f32) void {
-        c.ma_sound_set_direction(sound.asRaw(), v[0], v[1], v[2]);
+        ma_sound_set_direction(sound, v[0], v[1], v[2]);
     }
+    extern fn ma_sound_set_direction(sound: Sound, x: f32, y: f32, z: f32) void;
+
     pub fn getDirection(sound: Sound) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_sound_get_direction(sound.asRaw());
-        return .{ v.x, v.y, v.z };
+        var v: [3]f32 = undefined;
+        WA_ma_sound_get_direction(sound, &v);
+        return v;
     }
-    extern fn WA_ma_sound_get_direction(sound: *c.ma_sound, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_sound_get_direction(sound: Sound, vout: *[3]f32) void;
 
     pub fn setVelocity(sound: Sound, v: [3]f32) void {
-        c.ma_sound_set_velocity(sound.asRaw(), v[0], v[1], v[2]);
+        ma_sound_set_velocity(sound, v[0], v[1], v[2]);
     }
+    extern fn ma_sound_set_velocity(sound: Sound, x: f32, y: f32, z: f32) void;
+
     pub fn getVelocity(sound: Sound) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_sound_get_velocity(sound.asRaw(), &v);
-        return .{ v.x, v.y, v.z };
+        var v: [3]f32 = undefined;
+        WA_ma_sound_get_velocity(sound, &v);
+        return v;
     }
-    extern fn WA_ma_sound_get_velocity(sound: *c.ma_sound, vout: *c.ma_vec3f) void;
+    extern fn WA_ma_sound_get_velocity(sound: Sound, vout: *[3]f32) void;
 
-    pub fn setAttenuationModel(sound: Sound, model: AttenuationModel) void {
-        c.ma_sound_set_attenuation_model(sound.asRaw(), @enumToInt(model));
-    }
-    pub fn getAttenuationModel(sound: Sound) AttenuationModel {
-        return @intToEnum(AttenuationModel, c.ma_sound_get_attenuation_model(sound.asRaw()));
-    }
+    pub const setAttenuationModel = ma_sound_set_attenuation_model;
+    extern fn ma_sound_set_attenuation_model(sound: Sound, model: AttenuationModel) void;
 
-    pub fn setPositioning(sound: Sound, pos: Positioning) void {
-        c.ma_sound_set_positioning(sound.asRaw(), @enumToInt(pos));
-    }
-    pub fn getPositioning(sound: Sound) Positioning {
-        return @intToEnum(Positioning, c.ma_sound_get_positioning(sound.asRaw()));
-    }
+    pub const getAttenuationModel = ma_sound_get_attenuation_model;
+    extern fn ma_sound_get_attenuation_model(sound: Sound) AttenuationModel;
 
-    pub fn setRolloff(sound: Sound, rolloff: f32) void {
-        c.ma_sound_set_rolloff(sound.asRaw(), rolloff);
-    }
-    pub fn getRolloff(sound: Sound) f32 {
-        return c.ma_sound_get_rolloff(sound.asRaw());
-    }
+    pub const setPositioning = ma_sound_set_positioning;
+    extern fn ma_sound_set_positioning(sound: Sound, pos: Positioning) void;
 
-    pub fn setMinGain(sound: Sound, min_gain: f32) void {
-        c.ma_sound_set_min_gain(sound.asRaw(), min_gain);
-    }
-    pub fn getMinGain(sound: Sound) f32 {
-        return c.ma_sound_get_min_gain(sound.asRaw());
-    }
+    pub const getPositioning = ma_sound_get_positioning;
+    extern fn ma_sound_get_positioning(sound: Sound) Positioning;
 
-    pub fn setMaxGain(sound: Sound, max_gain: f32) void {
-        c.ma_sound_set_max_gain(sound.asRaw(), max_gain);
-    }
-    pub fn getMaxGain(sound: Sound) f32 {
-        return c.ma_sound_get_max_gain(sound.asRaw());
-    }
+    pub const setRolloff = ma_sound_set_rolloff;
+    extern fn ma_sound_set_rolloff(sound: Sound, rolloff: f32) void;
 
-    pub fn setMinDistance(sound: Sound, min_distance: f32) void {
-        c.ma_sound_set_min_distance(sound.asRaw(), min_distance);
-    }
-    pub fn getMinDistance(sound: Sound) f32 {
-        return c.ma_sound_get_min_distance(sound.asRaw());
-    }
+    pub const getRolloff = ma_sound_get_rolloff;
+    extern fn ma_sound_get_rolloff(sound: Sound) f32;
 
-    pub fn setMaxDistance(sound: Sound, max_distance: f32) void {
-        c.ma_sound_set_max_distance(sound.asRaw(), max_distance);
-    }
-    pub fn getMaxDistance(sound: Sound) f32 {
-        return c.ma_sound_get_max_distance(sound.asRaw());
-    }
+    pub const setMinGain = ma_sound_set_min_gain;
+    extern fn ma_sound_set_min_gain(sound: Sound, min_gain: f32) void;
 
-    pub fn setCone(sound: Sound, inner_radians: f32, outer_radians: f32, outer_gain: f32) void {
-        c.ma_sound_set_cone(sound.asRaw(), inner_radians, outer_radians, outer_gain);
-    }
-    pub fn getCone(sound: Sound, inner_radians: ?*f32, outer_radians: ?*f32, outer_gain: ?*f32) void {
-        c.ma_sound_get_cone(sound.asRaw(), inner_radians, outer_radians, outer_gain);
-    }
+    pub const getMinGain = ma_sound_get_min_gain;
+    extern fn ma_sound_get_min_gain(sound: Sound) f32;
 
-    pub fn setDopplerFactor(sound: Sound, factor: f32) void {
-        c.ma_sound_set_doppler_factor(sound.asRaw(), factor);
-    }
-    pub fn getDopplerFactor(sound: Sound) f32 {
-        return c.ma_sound_get_doppler_factor(sound.asRaw());
-    }
+    pub const setMaxGain = ma_sound_set_max_gain;
+    extern fn ma_sound_set_max_gain(sound: Sound, max_gain: f32) void;
 
-    pub fn setDirectionalAttenuationFactor(sound: Sound, factor: f32) void {
-        c.ma_sound_set_directional_attenuation_factor(sound.asRaw(), factor);
-    }
-    pub fn getDirectionalAttenuationFactor(sound: Sound) f32 {
-        return c.ma_sound_get_directional_attenuation_factor(sound.asRaw());
-    }
+    pub const getMaxGain = ma_sound_get_max_gain;
+    extern fn ma_sound_get_max_gain(sound: Sound) f32;
 
-    pub fn setFadePcmFrames(sound: Sound, volume_begin: f32, volume_end: f32, len_in_frames: u64) void {
-        c.ma_sound_set_fade_in_pcm_frames(sound.asRaw(), volume_begin, volume_end, len_in_frames);
-    }
-    pub fn setFadeMilliseconds(sound: Sound, volume_begin: f32, volume_end: f32, len_in_ms: u64) void {
-        c.ma_sound_set_fade_in_milliseconds(sound.asRaw(), volume_begin, volume_end, len_in_ms);
-    }
-    pub fn getCurrentFadeVolume(sound: Sound) f32 {
-        return c.ma_sound_get_current_fade_volume(sound.asRaw());
-    }
+    pub const setMinDistance = ma_sound_set_min_distance;
+    extern fn ma_sound_set_min_distance(sound: Sound, min_distance: f32) void;
 
-    pub fn setStartTimePcmFrames(sound: Sound, abs_global_time_in_frames: u64) void {
-        c.ma_sound_set_start_time_in_pcm_frames(sound.asRaw(), abs_global_time_in_frames);
-    }
-    pub fn setStartTimeMilliseconds(sound: Sound, abs_global_time_in_ms: u64) void {
-        c.ma_sound_set_start_time_in_milliseconds(sound.asRaw(), abs_global_time_in_ms);
-    }
+    pub const getMinDistance = ma_sound_get_min_distance;
+    extern fn ma_sound_get_min_distance(sound: Sound) f32;
 
-    pub fn setStopTimePcmFrames(sound: Sound, abs_global_time_in_frames: u64) void {
-        c.ma_sound_set_stop_time_in_pcm_frames(sound.asRaw(), abs_global_time_in_frames);
-    }
-    pub fn setStopTimeMilliseconds(sound: Sound, abs_global_time_in_ms: u64) void {
-        c.ma_sound_set_stop_time_in_milliseconds(sound.asRaw(), abs_global_time_in_ms);
-    }
+    pub const setMaxDistance = ma_sound_set_max_distance;
+    extern fn ma_sound_set_max_distance(sound: Sound, max_distance: f32) void;
+
+    pub const getMaxDistance = ma_sound_get_max_distance;
+    extern fn ma_sound_get_max_distance(sound: Sound) f32;
+
+    pub const setCone = ma_sound_set_cone;
+    extern fn ma_sound_set_cone(sound: Sound, inner_radians: f32, outer_radians: f32, outer_gain: f32) void;
+
+    pub const getCone = ma_sound_get_cone;
+    extern fn ma_sound_get_cone(sound: Sound, inner_radians: ?*f32, outer_radians: ?*f32, outer_gain: ?*f32) void;
+
+    pub const setDopplerFactor = ma_sound_set_doppler_factor;
+    extern fn ma_sound_set_doppler_factor(sound: Sound, factor: f32) void;
+
+    pub const getDopplerFactor = ma_sound_get_doppler_factor;
+    extern fn ma_sound_get_doppler_factor(sound: Sound) f32;
+
+    pub const setDirectionalAttenuationFactor = ma_sound_set_directional_attenuation_factor;
+    extern fn ma_sound_set_directional_attenuation_factor(sound: Sound, factor: f32) void;
+
+    pub const getDirectionalAttenuationFactor = ma_sound_get_directional_attenuation_factor;
+    extern fn ma_sound_get_directional_attenuation_factor(sound: Sound) f32;
+
+    pub const setFadeInPcmFrames = ma_sound_set_fade_in_pcm_frames;
+    extern fn ma_sound_set_fade_in_pcm_frames(
+        sound: Sound,
+        volume_begin: f32,
+        volume_end: f32,
+        len_in_frames: u64,
+    ) void;
+
+    pub const setFadeInMilliseconds = ma_sound_set_fade_in_milliseconds;
+    extern fn ma_sound_set_fade_in_milliseconds(
+        sound: Sound,
+        volume_begin: f32,
+        volume_end: f32,
+        len_in_ms: u64,
+    ) void;
+
+    pub const getCurrentFadeVolume = ma_sound_get_current_fade_volume;
+    extern fn ma_sound_get_current_fade_volume(sound: Sound) f32;
+
+    pub const setStartTimeInPcmFrames = ma_sound_set_start_time_in_pcm_frames;
+    extern fn ma_sound_set_start_time_in_pcm_frames(sound: Sound, abs_global_time_in_frames: u64) void;
+
+    pub const setStartTimeInMilliseconds = ma_sound_set_start_time_in_milliseconds;
+    extern fn ma_sound_set_start_time_in_milliseconds(sound: Sound, abs_global_time_in_ms: u64) void;
+
+    pub const setStopTimeInPcmFrames = ma_sound_set_stop_time_in_pcm_frames;
+    extern fn ma_sound_set_stop_time_in_pcm_frames(sound: Sound, abs_global_time_in_frames: u64) void;
+
+    pub const setStopTimeInMilliseconds = ma_sound_set_stop_time_in_milliseconds;
+    extern fn ma_sound_set_stop_time_in_milliseconds(sound: Sound, abs_global_time_in_ms: u64) void;
 
     pub fn isPlaying(sound: Sound) bool {
-        return c.ma_sound_is_playing(sound.asRaw()) == c.MA_TRUE;
+        return ma_sound_is_playing(sound) != 0;
     }
+    extern fn ma_sound_is_playing(sound: Sound) Bool32;
 
-    pub fn getTimePcmFrames(sound: Sound) u64 {
-        return c.ma_sound_get_time_in_pcm_frames(sound.asRaw());
-    }
+    pub const getTimeInPcmFrames = ma_sound_get_time_in_pcm_frames;
+    extern fn ma_sound_get_time_in_pcm_frames(sound: Sound) u64;
 
     pub fn setLooping(sound: Sound, looping: bool) void {
-        return c.ma_sound_set_looping(sound.asRaw(), if (looping) c.MA_TRUE else c.MA_FALSE);
+        ma_sound_set_looping(sound, @boolToInt(looping));
     }
+    extern fn ma_sound_set_looping(sound: Sound, looping: Bool32) void;
+
     pub fn isLooping(sound: Sound) bool {
-        return c.ma_sound_is_looping(sound.asRaw()) == c.MA_TRUE;
+        return ma_sound_is_looping(sound) != 0;
     }
+    extern fn ma_sound_is_looping(sound: Sound) Bool32;
 
     pub fn isAtEnd(sound: Sound) bool {
-        return c.ma_sound_at_end(sound.asRaw()) == c.MA_TRUE;
+        return ma_sound_at_end(sound) != 0;
     }
+    extern fn ma_sound_at_end(sound: Sound) Bool32;
 
-    pub fn seekToPcmFrame(sound: Sound, frame: u64) Error!void {
-        try checkResult(c.ma_sound_seek_to_pcm_frame(sound.asRaw(), frame));
+    pub fn seekToPcmFrame(sound: Sound, frame_index: u64) Error!void {
+        try maybeError(ma_sound_seek_to_pcm_frame(sound, frame_index));
     }
+    extern fn ma_sound_seek_to_pcm_frame(sound: Sound, frame_index: u64) Result;
 
     pub fn getDataFormat(
         sound: Sound,
         format: ?*Format,
-        num_channels: ?*u32,
+        channels: ?*u32,
         sample_rate: ?*u32,
         channel_map: ?[]Channel,
     ) Error!void {
-        try checkResult(c.ma_sound_get_data_format(
-            sound.asRaw(),
-            if (format) |fmt| @ptrCast(*u32, fmt) else null,
-            num_channels,
+        try maybeError(ma_sound_get_data_format(
+            sound,
+            format,
+            channels,
             sample_rate,
             if (channel_map) |chm| chm.ptr else null,
             if (channel_map) |chm| chm.len else 0,
         ));
     }
+    extern fn ma_sound_get_data_format(
+        sound: Sound,
+        format: ?*Format,
+        channels: ?*u32,
+        sample_rate: ?*u32,
+        channel_map: ?[*]Channel,
+        channel_map_cap: usize,
+    ) Result;
 
-    pub fn getCursorPcmFrames(sound: Sound) Error!u64 {
-        var cursor: u64 = undefined;
-        try checkResult(c.ma_sound_get_cursor_in_pcm_frames(sound.asRaw(), &cursor));
+    pub fn getCursorInPcmFrames(sound: Sound) Error!u64 {
+        var cursor: u64 = 0;
+        try maybeError(ma_sound_get_cursor_in_pcm_frames(sound, &cursor));
         return cursor;
     }
+    extern fn ma_sound_get_cursor_in_pcm_frames(sound: Sound, cursor: *u64) Result;
 
-    pub fn getLengthPcmFrames(sound: Sound) Error!u64 {
-        var length: u64 = undefined;
-        try checkResult(c.ma_sound_get_length_in_pcm_frames(sound.asRaw(), &length));
+    pub fn getLengthInPcmFrames(sound: Sound) Error!u64 {
+        var length: u64 = 0;
+        try maybeError(ma_sound_get_length_in_pcm_frames(sound, &length));
         return length;
     }
+    extern fn ma_sound_get_length_in_pcm_frames(sound: Sound, length: *u64) Result;
 
-    pub fn getCursorSeconds(sound: Sound) Error!f32 {
-        var cursor: f32 = undefined;
-        try checkResult(c.ma_sound_get_cursor_in_seconds(sound.asRaw(), &cursor));
+    pub fn getCursorInSeconds(sound: Sound) Error!f32 {
+        var cursor: f32 = 0.0;
+        try maybeError(ma_sound_get_cursor_in_seconds(sound, &cursor));
         return cursor;
     }
+    extern fn ma_sound_get_cursor_in_seconds(sound: Sound, cursor: *f32) Result;
 
-    pub fn getLengthSeconds(sound: Sound) Error!f32 {
-        var length: f32 = undefined;
-        try checkResult(c.ma_sound_get_length_in_seconds(sound.asRaw(), &length));
+    pub fn getLengthInSeconds(sound: Sound) Error!f32 {
+        var length: f32 = 0.0;
+        try maybeError(ma_sound_get_length_in_seconds(sound, &length));
         return length;
     }
+    extern fn ma_sound_get_length_in_seconds(sound: Sound, length: *f32) Result;
 };
 //--------------------------------------------------------------------------------------------------
 //
@@ -2013,274 +1993,266 @@ const SoundImpl = opaque {
 //
 //--------------------------------------------------------------------------------------------------
 pub const SoundGroup = *align(@sizeOf(usize)) SoundGroupImpl;
+
 const SoundGroupImpl = opaque {
     pub usingnamespace NodeImpl.Methods(SoundGroup);
 
-    fn create(
-        allocator: std.mem.Allocator,
+    fn create(engine: Engine, flags: SoundFlags, parent: ?SoundGroup) Error!SoundGroup {
+        var handle: ?SoundGroup = null;
+        try maybeError(zaudioSoundGroupCreate(engine, flags, parent, &handle));
+        return handle.?;
+    }
+    extern fn zaudioSoundGroupCreate(
         engine: Engine,
         flags: SoundFlags,
         parent: ?SoundGroup,
-    ) Error!SoundGroup {
-        var handle = allocator.create(c.ma_sound_group) catch return error.OutOfMemory;
-        errdefer allocator.destroy(handle);
+        out_handle: ?*?*SoundGroupImpl,
+    ) Result;
 
-        try checkResult(c.ma_sound_group_init(
-            engine.asRaw(),
-            @bitCast(u32, flags),
-            if (parent) |p| p.asRaw() else null,
-            handle,
-        ));
+    pub const destroy = zaudioSoundGroupDestroy;
+    extern fn zaudioSoundGroupDestroy(handle: SoundGroup) void;
 
-        return @ptrCast(SoundGroup, handle);
-    }
+    pub const getEngine = ma_sound_group_get_engine;
+    extern fn ma_sound_group_get_engine(sound: SoundGroup) Engine;
 
-    pub fn destroy(sgroup: SoundGroup, allocator: std.mem.Allocator) void {
-        c.ma_sound_group_uninit(sgroup.asRaw());
-        allocator.destroy(sgroup.asRaw());
+    pub fn start(sound: SoundGroup) Error!void {
+        try maybeError(ma_sound_group_start(sound));
     }
+    extern fn ma_sound_group_start(sound: SoundGroup) Result;
 
-    pub fn asRaw(sound: SoundGroup) *c.ma_sound_group {
-        return @ptrCast(*c.ma_sound_group, sound);
+    pub fn stop(sound: SoundGroup) Error!void {
+        try maybeError(ma_sound_group_stop(sound));
     }
+    extern fn ma_sound_group_stop(sound: SoundGroup) Result;
 
-    pub fn getEngine(sgroup: SoundGroup) Engine {
-        return @ptrCast(Engine, c.ma_sound_group_get_engine(sgroup.asRaw()));
-    }
+    pub const setVolume = ma_sound_group_set_volume;
+    extern fn ma_sound_group_set_volume(sound: SoundGroup, volume: f32) void;
 
-    pub fn start(sgroup: SoundGroup) Error!void {
-        try checkResult(c.ma_sound_group_start(sgroup.asRaw()));
-    }
-    pub fn stop(sgroup: SoundGroup) Error!void {
-        try checkResult(c.ma_sound_group_stop(sgroup.asRaw()));
-    }
+    pub const getVolume = ma_sound_group_get_volume;
+    extern fn ma_sound_group_get_volume(sound: SoundGroup) f32;
 
-    pub fn setVolume(sgroup: SoundGroup, volume: f32) void {
-        c.ma_sound_group_set_volume(sgroup.asRaw(), volume);
-    }
-    pub fn getVolume(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_volume(sgroup.asRaw());
-    }
+    pub const setPan = ma_sound_group_set_pan;
+    extern fn ma_sound_group_set_pan(sound: SoundGroup, pan: f32) void;
 
-    pub fn setPan(sgroup: SoundGroup, pan: f32) void {
-        c.ma_sound_group_set_pan(sgroup.asRaw(), pan);
-    }
-    pub fn getPan(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_pan(sgroup.asRaw());
-    }
+    pub const getPan = ma_sound_group_get_pan;
+    extern fn ma_sound_group_get_pan(sound: SoundGroup) f32;
 
-    pub fn setPanMode(sgroup: SoundGroup, pan_mode: PanMode) void {
-        c.ma_sound_group_set_pan_mode(sgroup.asRaw(), pan_mode);
-    }
-    pub fn getPanMode(sgroup: SoundGroup) PanMode {
-        return c.ma_sound_group_get_pan_mode(sgroup.asRaw());
-    }
+    pub const setPanMode = ma_sound_group_set_pan_mode;
+    extern fn ma_sound_group_set_pan_mode(sound: SoundGroup, pan_mode: PanMode) void;
 
-    pub fn setPitch(sgroup: SoundGroup, pitch: f32) void {
-        c.ma_sound_group_set_pitch(sgroup.asRaw(), pitch);
-    }
-    pub fn getPitch(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_pitch(sgroup.asRaw());
-    }
+    pub const getPanMode = ma_sound_group_get_pan_mode;
+    extern fn ma_sound_group_get_pan_mode(sound: SoundGroup) PanMode;
 
-    pub fn setSpatializationEnabled(sgroup: SoundGroup, enabled: bool) void {
-        c.ma_sound_group_set_spatialization_enabled(sgroup.asRaw(), if (enabled) c.MA_TRUE else c.MA_FALSE);
-    }
-    pub fn isSpatializationEnabled(sgroup: SoundGroup) bool {
-        return c.ma_sound_group_is_spatialization_enabled(sgroup.asRaw()) == c.MA_TRUE;
-    }
+    pub const setPitch = ma_sound_group_set_pitch;
+    extern fn ma_sound_group_set_pitch(sound: SoundGroup, pitch: f32) void;
 
-    pub fn setPinnedListenerIndex(sgroup: SoundGroup, index: u32) void {
-        c.ma_sound_group_set_pinned_listener_index(sgroup.asRaw(), index);
-    }
-    pub fn getPinnedListenerIndex(sgroup: SoundGroup) u32 {
-        return c.ma_sound_group_get_pinned_listener_index(sgroup.asRaw());
-    }
-    pub fn getListenerIndex(sgroup: SoundGroup) u32 {
-        return c.ma_sound_group_get_listener_index(sgroup.asRaw());
-    }
+    pub const getPitch = ma_sound_group_get_pitch;
+    extern fn ma_sound_group_get_pitch(sound: SoundGroup) f32;
 
-    pub fn getDirectionToListener(sgroup: SoundGroup) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_sound_group_get_direction_to_listener(sgroup.asRaw(), &v);
-        return .{ v.x, v.y, v.z };
+    pub fn setSpatializationEnabled(sound: SoundGroup, enabled: bool) void {
+        ma_sound_group_set_spatialization_enabled(sound, @boolToInt(enabled));
     }
-    extern fn WA_ma_sound_group_get_direction_to_listener(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
+    extern fn ma_sound_group_set_spatialization_enabled(sound: SoundGroup, enabled: Bool32) void;
 
-    pub fn setPosition(sgroup: SoundGroup, v: [3]f32) void {
-        c.ma_sound_group_set_position(sgroup.asRaw(), v[0], v[1], v[2]);
+    pub fn isSpatializationEnabled(sound: SoundGroup) bool {
+        return ma_sound_group_is_spatialization_enabled(sound) != 0;
     }
-    pub fn getPosition(sgroup: SoundGroup) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_sound_group_get_position(sgroup.asRaw(), &v);
-        return .{ v.x, v.y, v.z };
-    }
-    extern fn WA_ma_sound_group_get_position(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
+    extern fn ma_sound_group_is_spatialization_enabled(sound: SoundGroup) Bool32;
 
-    pub fn setDirection(sgroup: SoundGroup, v: [3]f32) void {
-        c.ma_sound_group_set_direction(sgroup.asRaw(), v[0], v[1], v[2]);
-    }
-    pub fn getDirection(sgroup: SoundGroup) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_sound_group_get_direction(sgroup.asRaw(), &v);
-        return .{ v.x, v.y, v.z };
-    }
-    extern fn WA_ma_sound_group_get_direction(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
+    pub const setPinnedListenerIndex = ma_sound_group_set_pinned_listener_index;
+    extern fn ma_sound_group_set_pinned_listener_index(sound: SoundGroup, index: u32) void;
 
-    pub fn setVelocity(sgroup: SoundGroup, v: [3]f32) void {
-        c.ma_sound_group_set_velocity(sgroup.asRaw(), v[0], v[1], v[2]);
-    }
-    pub fn getVelocity(sgroup: SoundGroup) [3]f32 {
-        var v: c.ma_vec3f = undefined;
-        WA_ma_sound_group_get_velocity(sgroup.asRaw(), &v);
-        return .{ v.x, v.y, v.z };
-    }
-    extern fn WA_ma_sound_group_get_velocity(sgroup: *c.ma_sound_group, vout: *c.ma_vec3f) void;
+    pub const getPinnedListenerIndex = ma_sound_group_get_pinned_listener_index;
+    extern fn ma_sound_group_get_pinned_listener_index(sound: SoundGroup) u32;
 
-    pub fn setAttenuationModel(sgroup: SoundGroup, model: AttenuationModel) void {
-        c.ma_sound_group_set_attenuation_model(sgroup.asRaw(), model);
-    }
-    pub fn getAttenuationModel(sgroup: SoundGroup) AttenuationModel {
-        return c.ma_sound_group_get_attenuation_model(sgroup.asRaw());
-    }
+    pub const getListenerIndex = ma_sound_group_get_listener_index;
+    extern fn ma_sound_group_get_listener_index(sound: SoundGroup) u32;
 
-    pub fn setPositioning(sgroup: SoundGroup, pos: Positioning) void {
-        c.ma_sound_group_set_positioning(sgroup.asRaw(), pos);
+    pub fn getDirectionToListener(sound: SoundGroup) [3]f32 {
+        var v: [3]f32 = undefined;
+        WA_ma_sound_group_get_direction_to_listener(sound, &v);
+        return v;
     }
-    pub fn getPositioning(sgroup: SoundGroup) Positioning {
-        return c.ma_sound_group_get_positioning(sgroup.asRaw());
-    }
+    extern fn WA_ma_sound_group_get_direction_to_listener(sound: SoundGroup, vout: *[3]f32) void;
 
-    pub fn setRolloff(sgroup: SoundGroup, rolloff: f32) void {
-        c.ma_sound_group_set_rolloff(sgroup.asRaw(), rolloff);
+    pub fn setPosition(sound: SoundGroup, v: [3]f32) void {
+        ma_sound_group_set_position(sound, v[0], v[1], v[2]);
     }
-    pub fn getRolloff(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_rolloff(sgroup.asRaw());
-    }
+    extern fn ma_sound_group_set_position(sound: SoundGroup, x: f32, y: f32, z: f32) void;
 
-    pub fn setMinGain(sgroup: SoundGroup, min_gain: f32) void {
-        c.ma_sound_group_set_min_gain(sgroup.asRaw(), min_gain);
+    pub fn getPosition(sound: SoundGroup) [3]f32 {
+        var v: [3]f32 = undefined;
+        WA_ma_sound_group_get_position(sound, &v);
+        return v;
     }
-    pub fn getMinGain(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_min_gain(sgroup.asRaw());
-    }
+    extern fn WA_ma_sound_group_get_position(sound: SoundGroup, vout: *[3]f32) void;
 
-    pub fn setMaxGain(sgroup: SoundGroup, max_gain: f32) void {
-        c.ma_sound_group_set_max_gain(sgroup.asRaw(), max_gain);
+    pub fn setDirection(sound: SoundGroup, v: [3]f32) void {
+        ma_sound_group_set_direction(sound, v[0], v[1], v[2]);
     }
-    pub fn getMaxGain(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_max_gain(sgroup.asRaw());
-    }
+    extern fn ma_sound_group_set_direction(sound: SoundGroup, x: f32, y: f32, z: f32) void;
 
-    pub fn setMinDistance(sgroup: SoundGroup, min_distance: f32) void {
-        c.ma_sound_group_set_min_distance(sgroup.asRaw(), min_distance);
+    pub fn getDirection(sound: SoundGroup) [3]f32 {
+        var v: [3]f32 = undefined;
+        WA_ma_sound_group_get_direction(sound, &v);
+        return v;
     }
-    pub fn getMinDistance(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_min_distance(sgroup.asRaw());
-    }
+    extern fn WA_ma_sound_group_get_direction(sound: SoundGroup, vout: *[3]f32) void;
 
-    pub fn setMaxDistance(sgroup: SoundGroup, max_distance: f32) void {
-        c.ma_sound_group_set_max_distance(sgroup.asRaw(), max_distance);
+    pub fn setVelocity(sound: SoundGroup, v: [3]f32) void {
+        ma_sound_group_set_velocity(sound, v[0], v[1], v[2]);
     }
-    pub fn getMaxDistance(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_max_distance(sgroup.asRaw());
-    }
+    extern fn ma_sound_group_set_velocity(sound: SoundGroup, x: f32, y: f32, z: f32) void;
 
-    pub fn setCone(sgroup: SoundGroup, inner_radians: f32, outer_radians: f32, outer_gain: f32) void {
-        c.ma_sound_group_set_cone(sgroup.asRaw(), inner_radians, outer_radians, outer_gain);
+    pub fn getVelocity(sound: SoundGroup) [3]f32 {
+        var v: [3]f32 = undefined;
+        WA_ma_sound_group_get_velocity(sound, &v);
+        return v;
     }
-    pub fn getCone(sgroup: SoundGroup, inner_radians: ?*f32, outer_radians: ?*f32, outer_gain: ?*f32) void {
-        c.ma_sound_group_get_cone(sgroup.asRaw(), inner_radians, outer_radians, outer_gain);
-    }
+    extern fn WA_ma_sound_group_get_velocity(sound: SoundGroup, vout: *[3]f32) void;
 
-    pub fn setDopplerFactor(sgroup: SoundGroup, factor: f32) void {
-        c.ma_sound_group_set_doppler_factor(sgroup.asRaw(), factor);
-    }
-    pub fn getDopplerFactor(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_doppler_factor(sgroup.asRaw());
-    }
+    pub const setAttenuationModel = ma_sound_group_set_attenuation_model;
+    extern fn ma_sound_group_set_attenuation_model(sound: SoundGroup, model: AttenuationModel) void;
 
-    pub fn setDirectionalAttenuationFactor(sgroup: SoundGroup, factor: f32) void {
-        c.ma_sound_group_set_directional_attenuation_factor(sgroup.asRaw(), factor);
-    }
-    pub fn getDirectionalAttenuationFactor(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_directional_attenuation_factor(sgroup.asRaw());
-    }
+    pub const getAttenuationModel = ma_sound_group_get_attenuation_model;
+    extern fn ma_sound_group_get_attenuation_model(sound: SoundGroup) AttenuationModel;
 
-    pub fn setFadePcmFrames(sgroup: SoundGroup, volume_begin: f32, volume_end: f32, len_in_frames: u64) void {
-        c.ma_sound_group_set_fade_in_pcm_frames(sgroup.asRaw(), volume_begin, volume_end, len_in_frames);
-    }
-    pub fn setFadeMilliseconds(sgroup: SoundGroup, volume_begin: f32, volume_end: f32, len_in_ms: u64) void {
-        c.ma_sound_group_set_fade_in_milliseconds(sgroup.asRaw(), volume_begin, volume_end, len_in_ms);
-    }
-    pub fn getCurrentFadeVolume(sgroup: SoundGroup) f32 {
-        return c.ma_sound_group_get_current_fade_volume(sgroup.asRaw());
-    }
+    pub const setPositioning = ma_sound_group_set_positioning;
+    extern fn ma_sound_group_set_positioning(sound: SoundGroup, pos: Positioning) void;
 
-    pub fn setStartTimePcmFrames(sgroup: SoundGroup, abs_global_time_in_frames: u64) void {
-        c.ma_sound_group_set_start_time_in_pcm_frames(sgroup.asRaw(), abs_global_time_in_frames);
-    }
-    pub fn setStartTimeMilliseconds(sgroup: SoundGroup, abs_global_time_in_ms: u64) void {
-        c.ma_sound_group_set_start_time_in_milliseconds(sgroup.asRaw(), abs_global_time_in_ms);
-    }
+    pub const getPositioning = ma_sound_group_get_positioning;
+    extern fn ma_sound_group_get_positioning(sound: SoundGroup) Positioning;
 
-    pub fn setStopTimePcmFrames(sgroup: SoundGroup, abs_global_time_in_frames: u64) void {
-        c.ma_sound_group_set_stop_time_in_pcm_frames(sgroup.asRaw(), abs_global_time_in_frames);
-    }
-    pub fn setStopTimeMilliseconds(sgroup: SoundGroup, abs_global_time_in_ms: u64) void {
-        c.ma_sound_group_set_stop_time_in_milliseconds(sgroup.asRaw(), abs_global_time_in_ms);
-    }
+    pub const setRolloff = ma_sound_group_set_rolloff;
+    extern fn ma_sound_group_set_rolloff(sound: SoundGroup, rolloff: f32) void;
 
-    pub fn isPlaying(sgroup: SoundGroup) bool {
-        return c.ma_sound_group_is_playing(sgroup.asRaw()) == c.MA_TRUE;
-    }
+    pub const getRolloff = ma_sound_group_get_rolloff;
+    extern fn ma_sound_group_get_rolloff(sound: SoundGroup) f32;
 
-    pub fn getTimePcmFrames(sgroup: SoundGroup) u64 {
-        return c.ma_sound_group_get_time_in_pcm_frames(sgroup.asRaw());
+    pub const setMinGain = ma_sound_group_set_min_gain;
+    extern fn ma_sound_group_set_min_gain(sound: SoundGroup, min_gain: f32) void;
+
+    pub const getMinGain = ma_sound_group_get_min_gain;
+    extern fn ma_sound_group_get_min_gain(sound: SoundGroup) f32;
+
+    pub const setMaxGain = ma_sound_group_set_max_gain;
+    extern fn ma_sound_group_set_max_gain(sound: SoundGroup, max_gain: f32) void;
+
+    pub const getMaxGain = ma_sound_group_get_max_gain;
+    extern fn ma_sound_group_get_max_gain(sound: SoundGroup) f32;
+
+    pub const setMinDistance = ma_sound_group_set_min_distance;
+    extern fn ma_sound_group_set_min_distance(sound: SoundGroup, min_distance: f32) void;
+
+    pub const getMinDistance = ma_sound_group_get_min_distance;
+    extern fn ma_sound_group_get_min_distance(sound: SoundGroup) f32;
+
+    pub const setMaxDistance = ma_sound_group_set_max_distance;
+    extern fn ma_sound_group_set_max_distance(sound: SoundGroup, max_distance: f32) void;
+
+    pub const getMaxDistance = ma_sound_group_get_max_distance;
+    extern fn ma_sound_group_get_max_distance(sound: SoundGroup) f32;
+
+    pub const setCone = ma_sound_group_set_cone;
+    extern fn ma_sound_group_set_cone(
+        sound: SoundGroup,
+        inner_radians: f32,
+        outer_radians: f32,
+        outer_gain: f32,
+    ) void;
+
+    pub const getCone = ma_sound_group_get_cone;
+    extern fn ma_sound_group_get_cone(
+        sound: SoundGroup,
+        inner_radians: ?*f32,
+        outer_radians: ?*f32,
+        outer_gain: ?*f32,
+    ) void;
+
+    pub const setDopplerFactor = ma_sound_group_set_doppler_factor;
+    extern fn ma_sound_group_set_doppler_factor(sound: SoundGroup, factor: f32) void;
+
+    pub const getDopplerFactor = ma_sound_group_get_doppler_factor;
+    extern fn ma_sound_group_get_doppler_factor(sound: SoundGroup) f32;
+
+    pub const setDirectionalAttenuationFactor = ma_sound_group_set_directional_attenuation_factor;
+    extern fn ma_sound_group_set_directional_attenuation_factor(sound: SoundGroup, factor: f32) void;
+
+    pub const getDirectionalAttenuationFactor = ma_sound_group_get_directional_attenuation_factor;
+    extern fn ma_sound_group_get_directional_attenuation_factor(sound: SoundGroup) f32;
+
+    pub const setFadeInPcmFrames = ma_sound_group_set_fade_in_pcm_frames;
+    extern fn ma_sound_group_set_fade_in_pcm_frames(
+        sound: SoundGroup,
+        volume_begin: f32,
+        volume_end: f32,
+        len_in_frames: u64,
+    ) void;
+
+    pub const setFadeInMilliseconds = ma_sound_group_set_fade_in_milliseconds;
+    extern fn ma_sound_group_set_fade_in_milliseconds(
+        sound: SoundGroup,
+        volume_begin: f32,
+        volume_end: f32,
+        len_in_ms: u64,
+    ) void;
+
+    pub const getCurrentFadeVolume = ma_sound_group_get_current_fade_volume;
+    extern fn ma_sound_group_get_current_fade_volume(sound: SoundGroup) f32;
+
+    pub const setStartTimeInPcmFrames = ma_sound_group_set_start_time_in_pcm_frames;
+    extern fn ma_sound_group_set_start_time_in_pcm_frames(sound: SoundGroup, abs_global_time_in_frames: u64) void;
+
+    pub const setStartTimeInMilliseconds = ma_sound_group_set_start_time_in_milliseconds;
+    extern fn ma_sound_group_set_start_time_in_milliseconds(sound: SoundGroup, abs_global_time_in_ms: u64) void;
+
+    pub const setStopTimeInPcmFrames = ma_sound_group_set_stop_time_in_pcm_frames;
+    extern fn ma_sound_group_set_stop_time_in_pcm_frames(sound: SoundGroup, abs_global_time_in_frames: u64) void;
+
+    pub const setStopTimeInMilliseconds = ma_sound_group_set_stop_time_in_milliseconds;
+    extern fn ma_sound_group_set_stop_time_in_milliseconds(sound: SoundGroup, abs_global_time_in_ms: u64) void;
+
+    pub fn isPlaying(sound: SoundGroup) bool {
+        return ma_sound_group_is_playing(sound) != 0;
     }
+    extern fn ma_sound_group_is_playing(sound: SoundGroup) Bool32;
+
+    pub const getTimeInPcmFrames = ma_sound_group_get_time_in_pcm_frames;
+    extern fn ma_sound_group_get_time_in_pcm_frames(sound: SoundGroup) u64;
 };
 //--------------------------------------------------------------------------------------------------
 //
 // Fence
 //
 //--------------------------------------------------------------------------------------------------
-pub fn createFence(allocator: std.mem.Allocator) Error!Fence {
-    var handle = allocator.create(c.ma_fence) catch return error.OutOfMemory;
-    errdefer allocator.destroy(handle);
-    try checkResult(c.ma_fence_init(handle));
-    return @ptrCast(Fence, handle);
-}
-
 pub const Fence = *align(@sizeOf(usize)) FenceImpl;
-const FenceImpl = opaque {
-    pub fn destroy(fence: Fence, allocator: std.mem.Allocator) void {
-        const raw = fence.asRaw();
-        c.ma_fence_uninit(raw);
-        allocator.destroy(raw);
-    }
 
-    pub fn asRaw(fence: Fence) *c.ma_fence {
-        return @ptrCast(*c.ma_fence, fence);
-    }
+pub fn createFence() Error!Fence {
+    var handle: ?Fence = null;
+    try maybeError(zaudioFenceCreate(&handle));
+    return handle.?;
+}
+extern fn zaudioFenceCreate(out_handle: ?*?*FenceImpl) Result;
+
+const FenceImpl = opaque {
+    pub const destroy = zaudioFenceDestroy;
+    extern fn zaudioFenceDestroy(handle: Fence) void;
 
     pub fn acquire(fence: Fence) Error!void {
-        try checkResult(c.ma_fence_acquire(fence.asRaw()));
+        try maybeError(ma_fence_acquire(fence));
     }
+    extern fn ma_fence_acquire(fence: Fence) Result;
 
     pub fn release(fence: Fence) Error!void {
-        try checkResult(c.ma_fence_release(fence.asRaw()));
+        try maybeError(ma_fence_release(fence));
     }
+    extern fn ma_fence_release(fence: Fence) Result;
 
     pub fn wait(fence: Fence) Error!void {
-        try checkResult(c.ma_fence_wait(fence.asRaw()));
+        try maybeError(ma_fence_wait(fence));
     }
+    extern fn ma_fence_wait(fence: Fence) Result;
 };
-//--------------------------------------------------------------------------------------------------
-fn checkResult(result: c.ma_result) Error!void {
-    // TODO: Handle all errors.
-    if (result != c.MA_SUCCESS)
-        return error.GenericError;
-}
 //--------------------------------------------------------------------------------------------------
 //
 // Tests
@@ -2335,8 +2307,8 @@ test "zaudio.soundgroup.basic" {
     const engine = try createEngine(null);
     defer engine.destroy();
 
-    const sgroup = try engine.createSoundGroup(std.testing.allocator, .{}, null);
-    defer sgroup.destroy(std.testing.allocator);
+    const sgroup = try engine.createSoundGroup(.{}, null);
+    defer sgroup.destroy();
 
     try expect(sgroup.getEngine() == engine);
 
@@ -2367,8 +2339,8 @@ test "zaudio.soundgroup.basic" {
 }
 
 test "zaudio.fence.basic" {
-    const fence = try createFence(std.testing.allocator);
-    defer fence.destroy(std.testing.allocator);
+    const fence = try createFence();
+    defer fence.destroy();
 
     try fence.acquire();
     try fence.release();
@@ -2394,6 +2366,9 @@ test "zaudio.sound.basic" {
 
     sound.setPanMode(.pan);
     try expect(sound.getPanMode() == .pan);
+
+    sound.setLooping(false);
+    try expect(sound.isLooping() == false);
 
     sound.setPitch(0.5);
     try expect(sound.getPitch() == 0.5);

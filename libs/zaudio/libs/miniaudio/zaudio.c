@@ -471,6 +471,7 @@ void* zaudioDeviceGetUserData(ma_device* handle) {
 void zaudioEngineConfigInit(ma_engine_config* out_config) {
     assert(out_config != NULL);
     *out_config = ma_engine_config_init();
+    out_config->allocationCallbacks = s_mem;
 }
 
 ma_result zaudioEngineCreate(const ma_engine_config* config, ma_engine** out_handle) {
@@ -524,9 +525,82 @@ ma_result zaudioSoundCreateFromFile(
     return res;
 }
 
+ma_result zaudioSoundCreateFromDataSource(
+    ma_engine* engine,
+    ma_data_source* data_source,
+    ma_uint32 flags,
+    ma_sound_group* sgroup,
+    ma_sound** out_handle
+) {
+    assert(out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_sound), s_mem.pUserData);
+    ma_result res = ma_sound_init_from_data_source(engine, data_source, flags, sgroup, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+ma_result zaudioSoundCreateCopy(
+    ma_engine* engine,
+    ma_sound* existing_sound,
+    ma_uint32 flags,
+    ma_sound_group* sgroup,
+    ma_sound** out_handle
+) {
+    assert(out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_sound), s_mem.pUserData);
+    ma_result res = ma_sound_init_copy(engine, existing_sound, flags, sgroup, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
 void zaudioSoundDestroy(ma_sound* handle) {
     assert(handle != NULL);
     ma_sound_uninit(handle);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+//--------------------------------------------------------------------------------------------------
+ma_result zaudioSoundGroupCreate(
+    ma_engine* engine,
+    ma_uint32 flags,
+    ma_sound_group* parent,
+    ma_sound_group** out_handle
+) {
+    assert(out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_sound_group), s_mem.pUserData);
+    ma_result res = ma_sound_group_init(engine, flags, parent, *out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioSoundGroupDestroy(ma_sound_group* handle) {
+    assert(handle != NULL);
+    ma_sound_group_uninit(handle);
+    s_mem.onFree(handle, s_mem.pUserData);
+}
+//--------------------------------------------------------------------------------------------------
+ma_result zaudioFenceCreate(ma_sound_group** out_handle) {
+    assert(out_handle != NULL);
+    *out_handle = s_mem.onMalloc(sizeof(ma_fence), s_mem.pUserData);
+    ma_result res = ma_fence_init(*out_handle);
+    if (res != MA_SUCCESS) {
+        s_mem.onFree(*out_handle, s_mem.pUserData);
+        *out_handle = NULL;
+    }
+    return res;
+}
+
+void zaudioFenceDestroy(ma_fence* handle) {
+    assert(handle != NULL);
+    ma_fence_uninit(handle);
     s_mem.onFree(handle, s_mem.pUserData);
 }
 //--------------------------------------------------------------------------------------------------
@@ -584,3 +658,4 @@ void WA_ma_sound_get_direction(const ma_sound* sound, ma_vec3f* vout) {
 void WA_ma_sound_get_velocity(const ma_sound* sound, ma_vec3f* vout) {
     *vout = ma_sound_get_velocity(sound);
 }
+//--------------------------------------------------------------------------------------------------
