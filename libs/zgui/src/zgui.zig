@@ -2830,7 +2830,7 @@ pub const DrawList = *opaque {
     //----------------------------------------------------------------------------------------------
     pub fn addPolyline(
         draw_list: DrawList,
-        points: []const [2]u8,
+        points: []const [2]f32,
         col: u32,
         flags: DrawFlags,
         thickness: f32,
@@ -2847,7 +2847,7 @@ pub const DrawList = *opaque {
 
     pub fn addConvexPolyFilled(
         draw_list: DrawList,
-        points: []const [2]u8,
+        points: []const [2]f32,
         col: u32,
     ) void {
         zguiDrawList_AddConvexPolyFilled(
