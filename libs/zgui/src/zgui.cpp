@@ -1569,49 +1569,41 @@ ZGUI_API void zguiDrawList_PathArcTo(
 
 ZGUI_API void zguiDrawList_PathArcToFast(
     ImDrawList* draw_list,
-    float center_x,
-    float center_y,
+    const float center[2],
     float radius,
     int a_min_of_12,
     int a_max_of_12
 ) {
-    draw_list->PathArcToFast({ center_x, center_y }, radius, a_min_of_12, a_max_of_12);
+    draw_list->PathArcToFast({ center[0], center[1] }, radius, a_min_of_12, a_max_of_12);
 }
 
 ZGUI_API void zguiDrawList_PathBezierCubicCurveTo(
     ImDrawList* draw_list,
-    float p2_x,
-    float p2_y,
-    float p3_x,
-    float p3_y,
-    float p4_x,
-    float p4_y,
+    const float p2[2],
+    const float p3[2],
+    const float p4[2],
     int num_segments
 ) {
-    draw_list->PathBezierCubicCurveTo({ p2_x, p2_y }, { p3_x, p3_y }, { p4_x, p4_y }, num_segments);
+    draw_list->PathBezierCubicCurveTo({ p2[0], p2[1] }, { p3[0], p3[1] }, { p4[0], p4[1] }, num_segments);
 }
 
 ZGUI_API void zguiDrawList_PathBezierQuadraticCurveTo(
     ImDrawList* draw_list,
-    float p2_x,
-    float p2_y,
-    float p3_x,
-    float p3_y,
+    const float p2[2],
+    const float p3[2],
     int num_segments
 ) {
-    draw_list->PathBezierQuadraticCurveTo({ p2_x, p2_y }, { p3_x, p3_y }, num_segments);
+    draw_list->PathBezierQuadraticCurveTo({ p2[0], p2[1] }, { p3[0], p3[1] }, num_segments);
 }
 
 ZGUI_API void zguiDrawList_PathRect(
     ImDrawList* draw_list,
-    float rect_min_x,
-    float rect_min_y,
-    float rect_max_x,
-    float rect_max_y,
+    const float rect_min[2],
+    const float rect_max[2],
     float rounding,
     ImDrawFlags flags
 ) {
-    draw_list->PathRect({ rect_min_x, rect_min_y }, { rect_max_x, rect_max_y }, rounding, flags);
+    draw_list->PathRect({ rect_min[0], rect_min[1] }, { rect_max[0], rect_max[1] }, rounding, flags);
 }
 
 ZGUI_API void zguipShowDemoWindow(bool* p_open) {

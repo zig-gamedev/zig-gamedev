@@ -3057,120 +3057,72 @@ pub const DrawList = *opaque {
         num_segments: u32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    pub fn pathArcToFast(
+    const PathArcToFast = struct {
+        p: [2]f32,
+        r: f32,
+        amin_of_12: f32,
+        amax_of_12: f32,
+    };
+    pub fn pathArcToFast(draw_list: DrawList, args: PathArcToFast) void {
+        zguiDrawList_PathArcToFast(draw_list, &args.p, args.r, args.amin_of_12, args.amax_of_12);
+    }
+    extern fn zguiDrawList_PathArcToFast(
         draw_list: DrawList,
-        center: [2]f32,
+        center: *const [2]f32,
         radius: f32,
         a_min_of_12: f32,
         a_max_of_12: f32,
-    ) void {
-        zguiDrawList_PathArcToFast(
-            draw_list,
-            center[0],
-            center[0],
-            radius,
-            a_min_of_12,
-            a_max_of_12,
-        );
-    }
-
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const PathBezierCubicCurveTo = struct {
-        num_segments: u32 = 0,
-    };
-    pub fn pathBezierCubicCurveTo(
-        draw_list: DrawList,
         p2: [2]f32,
         p3: [2]f32,
         p4: [2]f32,
-        args: PathBezierCubicCurveTo,
-    ) void {
-        zguiDrawList_PathBezierCubicCurveTo(
-            draw_list,
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            p4[0],
-            p4[1],
-            args.num_segments,
-        );
-    }
-
-    const PathBezierQuadraticCurveTo = struct {
         num_segments: u32 = 0,
     };
-    pub fn pathPathBezierQuadraticCurveTo(
+    pub fn pathBezierCubicCurveTo(draw_list: DrawList, args: PathBezierCubicCurveTo) void {
+        zguiDrawList_PathBezierCubicCurveTo(draw_list, &args.p2, &args.p3, &args.p4, args.num_segments);
+    }
+    extern fn zguiDrawList_PathBezierCubicCurveTo(
         draw_list: DrawList,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
+        p4: *const [2]f32,
+        num_segments: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const PathBezierQuadraticCurveTo = struct {
         p2: [2]f32,
         p3: [2]f32,
-        args: PathBezierQuadraticCurveTo,
-    ) void {
-        zguiDrawList_PathBezierQuadraticCurveTo(
-            draw_list,
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            args.num_segments,
-        );
+        num_segments: u32 = 0,
+    };
+    pub fn pathPathBezierQuadraticCurveTo(draw_list: DrawList, args: PathBezierQuadraticCurveTo) void {
+        zguiDrawList_PathBezierQuadraticCurveTo(draw_list, &args.p2, &args.p3, args.num_segments);
     }
-
+    extern fn zguiDrawList_PathBezierQuadraticCurveTo(
+        draw_list: DrawList,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
+        num_segments: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const PathRect = struct {
+        bmin: [2]f32,
+        bmax: [2]f32,
         rounding: f32 = 0.0,
         flags: DrawFlags = .{},
     };
-    pub fn pathRect(
-        draw_list: DrawList,
-        rect_min: [2]f32,
-        rect_max: [2]f32,
-        args: PathRect,
-    ) void {
-        zguiDrawList_PathRect(
-            draw_list,
-            rect_min[0],
-            rect_min[1],
-            rect_max[0],
-            rect_max[1],
-            args.rounding,
-            @bitCast(u32, args.flags),
-        );
+    pub fn pathRect(draw_list: DrawList, args: PathRect) void {
+        zguiDrawList_PathRect(draw_list, &args.bmin, &args.bmax, args.rounding, args.flags);
     }
-
-    extern fn zguiDrawList_PathArcToFast(
-        draw_list: DrawList,
-        center_x: f32,
-        center_y: f32,
-        radius: f32,
-        a_min_of_12: f32,
-        a_max_of_12: f32,
-    ) void;
-    extern fn zguiDrawList_PathBezierCubicCurveTo(
-        draw_list: DrawList,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        p4_x: f32,
-        p4_y: f32,
-        num_segments: u32,
-    ) void;
-    extern fn zguiDrawList_PathBezierQuadraticCurveTo(
-        draw_list: DrawList,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        num_segments: u32,
-    ) void;
     extern fn zguiDrawList_PathRect(
         draw_list: DrawList,
-        rect_min_x: f32,
-        rect_min_y: f32,
-        rect_max_x: f32,
-        rect_max_y: f32,
+        rect_min: *const [2]f32,
+        rect_max: *const [2]f32,
         rounding: f32,
-        flags: u32,
+        flags: DrawFlags,
     ) void;
+    //----------------------------------------------------------------------------------------------
 };
 //--------------------------------------------------------------------------------------------------
 //
