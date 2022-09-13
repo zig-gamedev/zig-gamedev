@@ -418,6 +418,48 @@ fn update(demo: *DemoState) !void {
         _ = zgui.imageButton(tex_id, .{ .w = 512.0, .h = 512.0, .frame_padding = 10 });
     }
 
+    const draw_list = zgui.getWindowDrawList();
+    draw_list.pushClipRect(.{ .pmin = .{ 0, 0 }, .pmax = .{ 400, 400 } });
+    draw_list.addLine(.{ .p1 = .{ 0, 0 }, .p2 = .{ 400, 400 }, .col = 0xff_ff_00_ff, .thickness = 5.0 });
+    draw_list.popClipRect();
+
+    draw_list.pushClipRectFullScreen();
+    draw_list.addRectFilled(.{
+        .pmin = .{ 100, 100 },
+        .pmax = .{ 300, 200 },
+        .col = 0xff_ff_ff_ff,
+        .rounding = 25.0,
+    });
+    draw_list.addRectFilledMultiColor(.{
+        .pmin = .{ 100, 300 },
+        .pmax = .{ 200, 400 },
+        .col_upr_left = 0xff_00_00_ff,
+        .col_upr_right = 0xff_00_ff_00,
+        .col_bot_right = 0xff_ff_00_00,
+        .col_bot_left = 0xff_00_ff_ff,
+    });
+    draw_list.addQuadFilled(.{
+        .p1 = .{ 150, 400 },
+        .p2 = .{ 250, 400 },
+        .p3 = .{ 200, 500 },
+        .p4 = .{ 100, 500 },
+        .col = 0xff_ff_ff_ff,
+    });
+    draw_list.addQuad(.{
+        .p1 = .{ 170, 420 },
+        .p2 = .{ 270, 420 },
+        .p3 = .{ 220, 520 },
+        .p4 = .{ 120, 520 },
+        .col = 0xff_00_00_ff,
+        .thickness = 3.0,
+    });
+    draw_list.addText(.{ 130, 130 }, 0xff_00_00_ff, "The number is: {}", .{7});
+    draw_list.addCircleFilled(.{ .p = .{ 200, 600 }, .r = 50, .col = 0xff_ff_ff_ff });
+    draw_list.addCircle(.{ .p = .{ 200, 600 }, .r = 30, .col = 0xff_00_00_ff, .thickness = 11 });
+    _ = draw_list.getClipRectMin();
+    _ = draw_list.getClipRectMax();
+    draw_list.popClipRect();
+
     zgui.end();
 }
 

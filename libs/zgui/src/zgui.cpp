@@ -1231,15 +1231,13 @@ ZGUI_API ImDrawList* zguiGetForegroundDrawList() {
 
 ZGUI_API void zguiDrawList_PushClipRect(
     ImDrawList* draw_list,
-    float clip_rect_min_x,
-    float clip_rect_min_y,
-    float clip_rect_max_x,
-    float clip_rect_max_y,
+    const float clip_rect_min[2],
+    const float clip_rect_max[2],
     bool intersect_with_current_clip_rect
 ) {
     draw_list->PushClipRect(
-        { clip_rect_min_x, clip_rect_min_y },
-        { clip_rect_max_x, clip_rect_max_y },
+        { clip_rect_min[0], clip_rect_min[1] },
+        { clip_rect_max[0], clip_rect_max[1] },
         intersect_with_current_clip_rect
     );
 }
@@ -1252,11 +1250,11 @@ ZGUI_API void zguiDrawList_PopClipRect(ImDrawList* draw_list) {
     draw_list->PopClipRect();
 }
 
-ZGUI_API void zguiDrawList_PushTextureID(ImDrawList* draw_list, ImTextureID texture_id) {
+ZGUI_API void zguiDrawList_PushTextureId(ImDrawList* draw_list, ImTextureID texture_id) {
     draw_list->PushTextureID(texture_id);
 }
 
-ZGUI_API void zguiDrawList_PopTextureID(ImDrawList* draw_list) {
+ZGUI_API void zguiDrawList_PopTextureId(ImDrawList* draw_list) {
     draw_list->PopTextureID();
 }
 
@@ -1274,57 +1272,49 @@ ZGUI_API void zguiDrawList_GetClipRectMax(ImDrawList* draw_list, float clip_max[
 
 ZGUI_API void zguiDrawList_AddLine(
     ImDrawList* draw_list,
-    float p1_x,
-    float p1_y,
-    float p2_x,
-    float p2_y,
+    const float p1[2],
+    const float p2[2],
     unsigned int col,
     float thickness
 ) {
-    draw_list->AddLine({ p1_x, p1_y }, { p2_x, p2_y }, col, thickness);
+    draw_list->AddLine({ p1[0], p1[1] }, { p2[0], p2[1] }, col, thickness);
 }
 
 ZGUI_API void zguiDrawList_AddRect(
     ImDrawList* draw_list,
-    float p_min_x,
-    float p_min_y,
-    float p_max_x,
-    float p_max_y,
+    const float pmin[2],
+    const float pmax[2],
     unsigned int col,
     float rounding,
     ImDrawFlags flags,
     float thickness
 ) {
-    draw_list->AddRect({ p_min_x, p_min_y }, { p_max_x, p_max_y }, col, rounding, flags, thickness);
+    draw_list->AddRect({ pmin[0], pmin[1] }, { pmax[0], pmax[1] }, col, rounding, flags, thickness);
 }
 
 ZGUI_API void zguiDrawList_AddRectFilled(
     ImDrawList* draw_list,
-    float p_min_x,
-    float p_min_y,
-    float p_max_x,
-    float p_max_y,
+    const float pmin[2],
+    const float pmax[2],
     unsigned int col,
     float rounding,
     ImDrawFlags flags
 ) {
-    draw_list->AddRectFilled({ p_min_x, p_min_y }, { p_max_x, p_max_y }, col, rounding, flags);
+    draw_list->AddRectFilled({ pmin[0], pmin[1] }, { pmax[0], pmax[1] }, col, rounding, flags);
 }
 
 ZGUI_API void zguiDrawList_AddRectFilledMultiColor(
     ImDrawList* draw_list,
-    float p_min_x,
-    float p_min_y,
-    float p_max_x,
-    float p_max_y,
+    const float pmin[2],
+    const float pmax[2],
     unsigned int col_upr_left,
     unsigned int col_upr_right,
     unsigned int col_bot_right,
     unsigned int col_bot_left
 ) {
     draw_list->AddRectFilledMultiColor(
-        { p_min_x, p_min_y },
-        { p_max_x, p_max_y },
+        { pmin[0], pmin[1] },
+        { pmax[0], pmax[1] },
         col_upr_left,
         col_upr_right,
         col_bot_right,
@@ -1334,117 +1324,98 @@ ZGUI_API void zguiDrawList_AddRectFilledMultiColor(
 
 ZGUI_API void zguiDrawList_AddQuad(
     ImDrawList* draw_list,
-    float p1_x,
-    float p1_y,
-    float p2_x,
-    float p2_y,
-    float p3_x,
-    float p3_y,
-    float p4_x,
-    float p4_y,
+    const float p1[2],
+    const float p2[2],
+    const float p3[2],
+    const float p4[2],
     unsigned int col,
     float thickness
 ) {
-    draw_list->AddQuad({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, { p4_x, p4_y }, col, thickness);
+    draw_list->AddQuad({ p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, { p4[0], p4[1] }, col, thickness);
 }
 
 ZGUI_API void zguiDrawList_AddQuadFilled(
     ImDrawList* draw_list,
-    float p1_x,
-    float p1_y,
-    float p2_x,
-    float p2_y,
-    float p3_x,
-    float p3_y,
-    float p4_x,
-    float p4_y,
+    const float p1[2],
+    const float p2[2],
+    const float p3[2],
+    const float p4[2],
     unsigned int col
 ) {
-    draw_list->AddQuadFilled({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, { p4_x, p4_y }, col);
+    draw_list->AddQuadFilled({ p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, { p4[0], p4[1] }, col);
 }
 
 ZGUI_API void zguiDrawList_AddTriangle(
     ImDrawList* draw_list,
-    float p1_x,
-    float p1_y,
-    float p2_x,
-    float p2_y,
-    float p3_x,
-    float p3_y,
+    const float p1[2],
+    const float p2[2],
+    const float p3[2],
     unsigned int col,
     float thickness
 ) {
-    draw_list->AddTriangle({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, col, thickness);
+    draw_list->AddTriangle({ p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, col, thickness);
 }
 
 ZGUI_API void zguiDrawList_AddTriangleFilled(
     ImDrawList* draw_list,
-    float p1_x,
-    float p1_y,
-    float p2_x,
-    float p2_y,
-    float p3_x,
-    float p3_y,
+    const float p1[2],
+    const float p2[2],
+    const float p3[2],
     unsigned int col
 ) {
-    draw_list->AddTriangleFilled({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, col);
+    draw_list->AddTriangleFilled({ p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, col);
 }
 
 ZGUI_API void zguiDrawList_AddCircle(
     ImDrawList* draw_list,
-    float center_x,
-    float center_y,
+    const float center[2],
     float radius,
     unsigned int col,
     int num_segments,
     float thickness
 ) {
-    draw_list->AddCircle({ center_x, center_y }, radius, col, num_segments, thickness);
+    draw_list->AddCircle({ center[0], center[1] }, radius, col, num_segments, thickness);
 }
 
 ZGUI_API void zguiDrawList_AddCircleFilled(
     ImDrawList* draw_list,
-    float center_x,
-    float center_y,
+    const float center[2],
     float radius,
     unsigned int col,
     int num_segments
 ) {
-    draw_list->AddCircleFilled({ center_x, center_y }, radius, col, num_segments);
+    draw_list->AddCircleFilled({ center[0], center[1] }, radius, col, num_segments);
 }
 
 ZGUI_API void zguiDrawList_AddNgon(
     ImDrawList* draw_list,
-    float center_x,
-    float center_y,
+    const float center[2],
     float radius,
     unsigned int col,
     int num_segments,
     float thickness
 ) {
-    draw_list->AddNgon({ center_x, center_y }, radius, col, num_segments, thickness);
+    draw_list->AddNgon({ center[0], center[1] }, radius, col, num_segments, thickness);
 }
 
 ZGUI_API void zguiDrawList_AddNgonFilled(
     ImDrawList* draw_list,
-    float center_x,
-    float center_y,
+    const float center[2],
     float radius,
     unsigned int col,
     int num_segments
 ) {
-    draw_list->AddNgonFilled({ center_x, center_y }, radius, col, num_segments);
+    draw_list->AddNgonFilled({ center[0], center[1] }, radius, col, num_segments);
 }
 
 ZGUI_API void zguiDrawList_AddText(
     ImDrawList* draw_list,
-    float pos_x,
-    float pos_y,
+    const float pos[2],
     unsigned int col,
     const char* text_begin,
     const char* text_end
 ) {
-    draw_list->AddText({ pos_x, pos_y }, col, text_begin, text_end);
+    draw_list->AddText({ pos[0], pos[1] }, col, text_begin, text_end);
 }
 
 ZGUI_API void zguiDrawList_AddPolyline(

@@ -2448,8 +2448,8 @@ extern fn zguiEndTabBar() void;
 // DrawList
 //
 //--------------------------------------------------------------------------------------------------
-pub const DrawFlags = packed struct {
-    closed: bool = true, // Always true
+pub const DrawFlags = packed struct(u32) {
+    closed: bool = false,
     _padding1: u3 = 0,
     round_corners_top_left: bool = false,
     round_corners_top_right: bool = false,
@@ -2485,353 +2485,358 @@ pub const DrawFlags = packed struct {
         .round_corners_bottom_left = true,
         .round_corners_bottom_right = true,
     };
-
-    comptime {
-        assert(@sizeOf(@This()) == @sizeOf(u32) and @bitSizeOf(@This()) == @bitSizeOf(u32));
-    }
 };
 
-pub const DrawList = struct {
-    const _DrawList = *opaque {};
-    dl: _DrawList,
+pub const getWindowDrawList = zguiGetWindowDrawList;
+pub const getBackgroundDrawList = zguiGetBackgroundDrawList;
+pub const getForegroundDrawList = zguiGetForegroundDrawList;
 
-    pub fn fromCurrentWindow() DrawList {
-        return .{ .dl = zguiGetWindowDrawList() };
-    }
+extern fn zguiGetWindowDrawList() DrawList;
+extern fn zguiGetBackgroundDrawList() DrawList;
+extern fn zguiGetForegroundDrawList() DrawList;
 
-    pub fn fromBackground() DrawList {
-        return .{ .dl = zguiGetBackgroundDrawList() };
-    }
-
-    pub fn fromForeground() DrawList {
-        return .{ .dl = zguiGetForegroundDrawList() };
-    }
-
-    pub fn pushClipRect(
-        self: DrawList,
-        clip_rect_min: [2]f32,
-        clip_rect_max: [2]f32,
-        intersect_with_current_clip_rect: bool,
-    ) void {
+pub const DrawList = *opaque {
+    //----------------------------------------------------------------------------------------------
+    const ClipRect = struct {
+        pmin: [2]f32,
+        pmax: [2]f32,
+        intersect_with_current: bool = false,
+    };
+    pub fn pushClipRect(draw_list: DrawList, args: ClipRect) void {
         zguiDrawList_PushClipRect(
-            self.dl,
-            clip_rect_min[0],
-            clip_rect_min[1],
-            clip_rect_max[0],
-            clip_rect_max[1],
-            intersect_with_current_clip_rect,
+            draw_list,
+            &args.pmin,
+            &args.pmax,
+            args.intersect_with_current,
         );
     }
+    extern fn zguiDrawList_PushClipRect(
+        draw_list: DrawList,
+        clip_rect_min: *const [2]f32,
+        clip_rect_max: *const [2]f32,
+        intersect_with_current_clip_rect: bool,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    pub const pushClipRectFullScreen = zguiDrawList_PushClipRectFullScreen;
+    extern fn zguiDrawList_PushClipRectFullScreen(draw_list: DrawList) void;
 
-    pub fn pushClipRectFullScreen(self: DrawList) void {
-        zguiDrawList_PushClipRectFullScreen(self.dl);
+    pub const popClipRect = zguiDrawList_PopClipRect;
+    extern fn zguiDrawList_PopClipRect(draw_list: DrawList) void;
+    //----------------------------------------------------------------------------------------------
+    pub const pushTextureId = zguiDrawList_PushTextureId;
+    extern fn zguiDrawList_PushTextureId(draw_list: DrawList, texture_id: TextureIdent) void;
+
+    pub const popTextureId = zguiDrawList_PopTextureId;
+    extern fn zguiDrawList_PopTextureId(draw_list: DrawList) void;
+    //----------------------------------------------------------------------------------------------
+    pub fn getClipRectMin(draw_list: DrawList) [2]f32 {
+        var v: [2]f32 = undefined;
+        zguiDrawList_GetClipRectMin(draw_list, &v);
+        return v;
     }
+    extern fn zguiDrawList_GetClipRectMin(draw_list: DrawList, clip_min: *[2]f32) void;
 
-    pub fn pushTextureID(self: DrawList, texture_id: TextureIdent) void {
-        zguiDrawList_PushTextureID(self.dl, texture_id);
+    pub fn getClipRectMax(draw_list: DrawList) [2]f32 {
+        var v: [2]f32 = undefined;
+        zguiDrawList_GetClipRectMax(draw_list, &v);
+        return v;
     }
-
-    pub fn popTextureID(self: DrawList) void {
-        zguiDrawList_PopTextureID(self.dl);
-    }
-
-    pub fn getClipRectMin(self: DrawList, clip_min: *[2]f32) void {
-        zguiDrawList_GetClipRectMin(self.dl, clip_min);
-    }
-
-    pub fn getClipRectMax(self: DrawList, clip_max: *[2]f32) void {
-        zguiDrawList_GetClipRectMax(self.dl, clip_max);
-    }
-
+    extern fn zguiDrawList_GetClipRectMax(draw_list: DrawList, clip_min: *[2]f32) void;
+    //----------------------------------------------------------------------------------------------
     const AddLine = struct {
-        thickness: f32 = 1.0,
-    };
-    pub fn addLine(
-        self: DrawList,
         p1: [2]f32,
         p2: [2]f32,
         col: u32,
-        args: AddLine,
-    ) void {
-        zguiDrawList_AddLine(
-            self.dl,
-            p1[0],
-            p1[1],
-            p2[0],
-            p2[1],
-            col,
-            args.thickness,
-        );
-    }
-
-    const AddRect = struct {
-        rounding: f32 = 0.0,
-        flags: DrawFlags = .{},
         thickness: f32,
     };
-    pub fn addRect(
-        self: DrawList,
-        p_min: [2]f32,
-        p_max: [2]f32,
+    pub fn addLine(draw_list: DrawList, args: AddLine) void {
+        zguiDrawList_AddLine(draw_list, &args.p1, &args.p2, args.col, args.thickness);
+    }
+    extern fn zguiDrawList_AddLine(
+        draw_list: DrawList,
+        p1: *const [2]f32,
+        p2: *const [2]f32,
         col: u32,
-        args: AddRect,
-    ) void {
+        thickness: f32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const AddRect = struct {
+        pmin: [2]f32,
+        pmax: [2]f32,
+        col: u32,
+        rounding: f32 = 0.0,
+        flags: DrawFlags = .{},
+        thickness: f32 = 1.0,
+    };
+    pub fn addRect(draw_list: DrawList, args: AddRect) void {
         zguiDrawList_AddRect(
-            self.dl,
-            p_min[0],
-            p_min[1],
-            p_max[0],
-            p_max[1],
-            col,
+            draw_list,
+            &args.pmin,
+            &args.pmax,
+            args.col,
             args.rounding,
-            @bitCast(u32, args.flags),
+            args.flags,
             args.thickness,
         );
     }
-
+    extern fn zguiDrawList_AddRect(
+        draw_list: DrawList,
+        pmin: *const [2]f32,
+        pmax: *const [2]f32,
+        col: u32,
+        rounding: f32,
+        flags: DrawFlags,
+        thickness: f32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const AddRectFilled = struct {
+        pmin: [2]f32,
+        pmax: [2]f32,
+        col: u32,
         rounding: f32 = 0.0,
         flags: DrawFlags = .{},
     };
-    pub fn addRectFilled(
-        self: DrawList,
-        p_min: [2]f32,
-        p_max: [2]f32,
-        col: u32,
-        args: AddRectFilled,
-    ) void {
-        zguiDrawList_AddRect(
-            self.dl,
-            p_min[0],
-            p_min[1],
-            p_max[0],
-            p_max[1],
-            col,
+    pub fn addRectFilled(draw_list: DrawList, args: AddRectFilled) void {
+        zguiDrawList_AddRectFilled(
+            draw_list,
+            &args.pmin,
+            &args.pmax,
+            args.col,
             args.rounding,
-            @bitCast(u32, args.flags),
+            args.flags,
         );
     }
-
-    pub fn addRectFilledMultiColor(
-        self: DrawList,
-        p_min: [2]f32,
-        p_max: [2]f32,
+    extern fn zguiDrawList_AddRectFilled(
+        draw_list: DrawList,
+        pmin: *const [2]f32,
+        pmax: *const [2]f32,
+        col: u32,
+        rounding: f32,
+        flags: DrawFlags,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const AddRectFilledMultiColor = struct {
+        pmin: [2]f32,
+        pmax: [2]f32,
         col_upr_left: u32,
         col_upr_right: u32,
         col_bot_right: u32,
         col_bot_left: u32,
-    ) void {
+    };
+    pub fn addRectFilledMultiColor(draw_list: DrawList, args: AddRectFilledMultiColor) void {
         zguiDrawList_AddRectFilledMultiColor(
-            self.dl,
-            p_min[0],
-            p_min[1],
-            p_max[0],
-            p_max[1],
-            col_upr_left,
-            col_upr_right,
-            col_bot_right,
-            col_bot_left,
+            draw_list,
+            &args.pmin,
+            &args.pmax,
+            args.col_upr_left,
+            args.col_upr_right,
+            args.col_bot_right,
+            args.col_bot_left,
         );
     }
-
+    extern fn zguiDrawList_AddRectFilledMultiColor(
+        draw_list: DrawList,
+        pmin: *const [2]f32,
+        pmax: *const [2]f32,
+        col_upr_left: u32,
+        col_upr_right: u32,
+        col_bot_right: u32,
+        col_bot_left: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const AddQuad = struct {
-        thickness: f32 = 1.0,
-    };
-    pub fn addQuad(
-        self: DrawList,
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         p4: [2]f32,
         col: u32,
-        args: AddQuad,
-    ) void {
+        thickness: f32 = 1.0,
+    };
+    pub fn addQuad(draw_list: DrawList, args: AddQuad) void {
         zguiDrawList_AddQuad(
-            self.dl,
-            p1[0],
-            p1[1],
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            p4[0],
-            p4[1],
-            col,
+            draw_list,
+            &args.p1,
+            &args.p2,
+            &args.p3,
+            &args.p4,
+            args.col,
             args.thickness,
         );
     }
-
-    pub fn addQuadFilled(
-        self: DrawList,
+    extern fn zguiDrawList_AddQuad(
+        draw_list: DrawList,
+        p1: *const [2]f32,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
+        p4: *const [2]f32,
+        col: u32,
+        thickness: f32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const AddQuadFilled = struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         p4: [2]f32,
         col: u32,
-    ) void {
-        zguiDrawList_AddQuad(
-            self.dl,
-            p1[0],
-            p1[1],
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            p4[0],
-            p4[1],
-            col,
-        );
+    };
+    pub fn addQuadFilled(draw_list: DrawList, args: AddQuadFilled) void {
+        zguiDrawList_AddQuadFilled(draw_list, &args.p1, &args.p2, &args.p3, &args.p4, args.col);
     }
-
+    extern fn zguiDrawList_AddQuadFilled(
+        draw_list: DrawList,
+        p1: *const [2]f32,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
+        p4: *const [2]f32,
+        col: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const AddTriangle = struct {
+        p1: [2]f32,
+        p2: [2]f32,
+        p3: [2]f32,
+        col: u32,
         thickness: f32 = 1.0,
     };
-    pub fn addTriangle(
-        self: DrawList,
+    pub fn addTriangle(draw_list: DrawList, args: AddTriangle) void {
+        zguiDrawList_AddTriangle(draw_list, &args.p1, &args.p2, &args.p3, args.col, args.thickness);
+    }
+    extern fn zguiDrawList_AddTriangle(
+        draw_list: DrawList,
+        p1: *const [2]f32,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
+        col: u32,
+        thickness: f32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const AddTriangleFilled = struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         col: u32,
-        args: AddTriangle,
-    ) void {
-        zguiDrawList_AddTriangle(
-            self.dl,
-            p1[0],
-            p1[1],
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            col,
-            args.thickness,
-        );
+    };
+    pub fn addTriangleFilled(draw_list: DrawList, args: AddTriangleFilled) void {
+        zguiDrawList_AddTriangleFilled(draw_list, &args.p1, &args.p2, &args.p3, args.col);
     }
-
-    pub fn addTriangleFilled(
-        self: DrawList,
-        p1: [2]f32,
-        p2: [2]f32,
-        p3: [2]f32,
+    extern fn zguiDrawList_AddTriangleFilled(
+        draw_list: DrawList,
+        p1: *const [2]f32,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
         col: u32,
-    ) void {
-        zguiDrawList_AddTriangleFilled(
-            self.dl,
-            p1[0],
-            p1[1],
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            col,
-        );
-    }
-
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const AddCircle = struct {
+        p: [2]f32,
+        r: f32,
+        col: u32,
         num_segments: u32 = 0,
         thickness: f32 = 1.0,
     };
-    pub fn addCircle(
-        self: DrawList,
-        center: [2]f32,
+    pub fn addCircle(draw_list: DrawList, args: AddCircle) void {
+        zguiDrawList_AddCircle(draw_list, &args.p, args.r, args.col, args.num_segments, args.thickness);
+    }
+    extern fn zguiDrawList_AddCircle(
+        draw_list: DrawList,
+        center: *const [2]f32,
         radius: f32,
         col: u32,
-        args: AddCircle,
-    ) void {
-        zguiDrawList_AddCircle(
-            self.dl,
-            center[0],
-            center[1],
-            radius,
-            col,
-            args.num_segments,
-            args.thickness,
-        );
-    }
-
+        num_segments: u32,
+        thickness: f32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const AddCircleFilled = struct {
+        p: [2]f32,
+        r: f32,
+        col: u32,
         num_segments: u32 = 0,
     };
-    pub fn addCircleFilled(
-        self: DrawList,
-        center: [2]f32,
+    pub fn addCircleFilled(draw_list: DrawList, args: AddCircleFilled) void {
+        zguiDrawList_AddCircleFilled(draw_list, &args.p, args.r, args.col, args.num_segments);
+    }
+    extern fn zguiDrawList_AddCircleFilled(
+        draw_list: DrawList,
+        center: *const [2]f32,
         radius: f32,
         col: u32,
-        args: AddCircleFilled,
-    ) void {
-        zguiDrawList_AddCircleFilled(
-            self.dl,
-            center[0],
-            center[1],
-            radius,
-            col,
-            args.num_segments,
-        );
-    }
-
+        num_segments: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const AddNgon = struct {
+        p: [2]f32,
+        r: f32,
+        col: u32,
         num_segments: u32,
         thickness: f32 = 1.0,
     };
-    pub fn addNgon(
-        self: DrawList,
-        center: [2]f32,
-        radius: f32,
-        col: u32,
-        args: AddNgon,
-    ) void {
+    pub fn addNgon(draw_list: DrawList, args: AddNgon) void {
         zguiDrawList_AddNgon(
-            self.dl,
-            center[0],
-            center[1],
-            radius,
-            col,
+            draw_list,
+            &args.p,
+            args.r,
+            args.col,
             args.num_segments,
             args.thickness,
         );
     }
-
-    pub fn AddNgonFilled(
-        self: DrawList,
-        center: [2]f32,
+    extern fn zguiDrawList_AddNgon(
+        draw_list: DrawList,
+        center: *const [2]f32,
         radius: f32,
         col: u32,
         num_segments: u32,
-    ) void {
-        zguiDrawList_AddNgonFilled(
-            self.dl,
-            center[0],
-            center[1],
-            radius,
-            col,
-            num_segments,
-        );
-    }
-
-    pub fn addText(
-        self: DrawList,
-        pos: [2]f32,
+        thickness: f32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const AddNgonFilled = struct {
+        p: [2]f32,
+        r: f32,
         col: u32,
-        txt: []const u8,
-    ) void {
+        num_segments: u32,
+    };
+    pub fn addNgonFilled(draw_list: DrawList, args: AddNgonFilled) void {
+        zguiDrawList_AddNgonFilled(draw_list, &args.p, args.r, args.col, args.num_segments);
+    }
+    extern fn zguiDrawList_AddNgonFilled(
+        draw_list: DrawList,
+        center: *const [2]f32,
+        radius: f32,
+        col: u32,
+        num_segments: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    pub fn addText(draw_list: DrawList, pos: [2]f32, col: u32, comptime fmt: []const u8, args: anytype) void {
+        const txt = format(fmt, args);
+        draw_list.addTextUnformatted(pos, col, txt);
+    }
+    pub fn addTextUnformatted(draw_list: DrawList, pos: [2]f32, col: u32, txt: []const u8) void {
         zguiDrawList_AddText(
-            self.dl,
-            pos[0],
-            pos[1],
+            draw_list,
+            &pos,
             col,
             txt.ptr,
             txt.ptr + txt.len,
         );
     }
-
+    extern fn zguiDrawList_AddText(
+        draw_list: DrawList,
+        pos: *const [2]f32,
+        col: u32,
+        text: [*]const u8,
+        text_end: [*]const u8,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     pub fn addPolyline(
-        self: DrawList,
+        draw_list: DrawList,
         points: []const [2]u8,
         col: u32,
         flags: DrawFlags,
         thickness: f32,
     ) void {
         zguiDrawList_AddPolyline(
-            self.dl,
+            draw_list,
             points.ptr,
             @intCast(u32, points.len),
             col,
@@ -2841,12 +2846,12 @@ pub const DrawList = struct {
     }
 
     pub fn addConvexPolyFilled(
-        self: DrawList,
+        draw_list: DrawList,
         points: []const [2]u8,
         col: u32,
     ) void {
         zguiDrawList_AddConvexPolyFilled(
-            self.dl,
+            draw_list,
             points.ptr,
             @intCast(u32, points.len),
             col,
@@ -2857,7 +2862,7 @@ pub const DrawList = struct {
         num_segments: u32 = 0,
     };
     pub fn addBezierCubic(
-        self: DrawList,
+        draw_list: DrawList,
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
@@ -2867,7 +2872,7 @@ pub const DrawList = struct {
         args: AddBezierCubic,
     ) void {
         zguiDrawList_AddBezierCubic(
-            self.dl,
+            draw_list,
             p1[0],
             p1[1],
             p2[0],
@@ -2886,7 +2891,7 @@ pub const DrawList = struct {
         num_segments: u32 = 0,
     };
     pub fn addBezierQuadratic(
-        self: DrawList,
+        draw_list: DrawList,
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
@@ -2895,7 +2900,7 @@ pub const DrawList = struct {
         args: AddBezierQuadratic,
     ) void {
         zguiDrawList_AddBezierQuadratic(
-            self.dl,
+            draw_list,
             p1[0],
             p1[1],
             p2[0],
@@ -2914,14 +2919,14 @@ pub const DrawList = struct {
         col: u32 = 0xffffffff,
     };
     pub fn addImage(
-        self: DrawList,
+        draw_list: DrawList,
         user_texture_id: TextureIdent,
         p_min: [2]f32,
         p_max: [2]f32,
         args: AddImage,
     ) void {
         zguiDrawList_AddImage(
-            self.dl,
+            draw_list,
             user_texture_id,
             p_min[0],
             p_min[1],
@@ -2943,7 +2948,7 @@ pub const DrawList = struct {
         col: u32 = 0xffffffff,
     };
     pub fn addImageQuad(
-        self: DrawList,
+        draw_list: DrawList,
         user_texture_id: TextureIdent,
         p1: [2]f32,
         p2: [2]f32,
@@ -2952,7 +2957,7 @@ pub const DrawList = struct {
         args: AddImageQuad,
     ) void {
         zguiDrawList_AddImageQuad(
-            self.dl,
+            draw_list,
             user_texture_id,
             p1[0],
             p1[1],
@@ -2978,18 +2983,18 @@ pub const DrawList = struct {
         uv_min: [2]f32 = .{ 0, 0 },
         uv_max: [2]f32 = .{ 1, 1 },
         col: u32 = 0xffffffff,
-        rounding: f32,
+        rounding: f32 = 4.0,
         flags: DrawFlags = .{},
     };
     pub fn addImageRounded(
-        self: DrawList,
+        draw_list: DrawList,
         user_texture_id: TextureIdent,
         p_min: [2]f32,
         p_max: [2]f32,
         args: AddImageRounded,
     ) void {
         zguiDrawList_AddImageRounded(
-            self.dl,
+            draw_list,
             user_texture_id,
             p_min[0],
             p_min[1],
@@ -3005,20 +3010,20 @@ pub const DrawList = struct {
         );
     }
 
-    pub fn pathClear(self: DrawList) void {
-        zguiDrawList_PathClear(self.dl);
+    pub fn pathClear(draw_list: DrawList) void {
+        zguiDrawList_PathClear(draw_list);
     }
 
-    pub fn pathLineTo(self: DrawList, pos: [2]f32) void {
-        zguiDrawList_PathLineTo(self.dl, pos[0], pos[1]);
+    pub fn pathLineTo(draw_list: DrawList, pos: [2]f32) void {
+        zguiDrawList_PathLineTo(draw_list, pos[0], pos[1]);
     }
 
-    pub fn pathLineToMergeDuplicate(self: DrawList, pos: [2]f32) void {
-        zguiDrawList_PathLineToMergeDuplicate(self.dl, pos[0], pos[1]);
+    pub fn pathLineToMergeDuplicate(draw_list: DrawList, pos: [2]f32) void {
+        zguiDrawList_PathLineToMergeDuplicate(draw_list, pos[0], pos[1]);
     }
 
-    pub fn pathFillConvex(self: DrawList, col: u32) void {
-        zguiDrawList_PathFillConvex(self.dl, col);
+    pub fn pathFillConvex(draw_list: DrawList, col: u32) void {
+        zguiDrawList_PathFillConvex(draw_list, col);
     }
 
     const PathStroke = struct {
@@ -3026,12 +3031,12 @@ pub const DrawList = struct {
         thickness: f32 = 1.0,
     };
     pub fn pathStroke(
-        self: DrawList,
+        draw_list: DrawList,
         col: u32,
         args: PathStroke,
     ) void {
         zguiDrawList_PathStroke(
-            self.dl,
+            draw_list,
             col,
             @bitCast(u32, args.flags),
             args.thickness,
@@ -3042,7 +3047,7 @@ pub const DrawList = struct {
         num_segments: u32 = 0,
     };
     pub fn pathArcTo(
-        self: DrawList,
+        draw_list: DrawList,
         center: [2]f32,
         radius: f32,
         a_min: f32,
@@ -3050,7 +3055,7 @@ pub const DrawList = struct {
         args: PathArcTo,
     ) void {
         zguiDrawList_PathArcTo(
-            self.dl,
+            draw_list,
             center[0],
             center[0],
             radius,
@@ -3061,14 +3066,14 @@ pub const DrawList = struct {
     }
 
     pub fn pathArcToFast(
-        self: DrawList,
+        draw_list: DrawList,
         center: [2]f32,
         radius: f32,
         a_min_of_12: f32,
         a_max_of_12: f32,
     ) void {
         zguiDrawList_PathArcToFast(
-            self.dl,
+            draw_list,
             center[0],
             center[0],
             radius,
@@ -3081,14 +3086,14 @@ pub const DrawList = struct {
         num_segments: u32 = 0,
     };
     pub fn pathBezierCubicCurveTo(
-        self: DrawList,
+        draw_list: DrawList,
         p2: [2]f32,
         p3: [2]f32,
         p4: [2]f32,
         args: PathBezierCubicCurveTo,
     ) void {
         zguiDrawList_PathBezierCubicCurveTo(
-            self.dl,
+            draw_list,
             p2[0],
             p2[1],
             p3[0],
@@ -3103,13 +3108,13 @@ pub const DrawList = struct {
         num_segments: u32 = 0,
     };
     pub fn pathPathBezierQuadraticCurveTo(
-        self: DrawList,
+        draw_list: DrawList,
         p2: [2]f32,
         p3: [2]f32,
         args: PathBezierQuadraticCurveTo,
     ) void {
         zguiDrawList_PathBezierQuadraticCurveTo(
-            self.dl,
+            draw_list,
             p2[0],
             p2[1],
             p3[0],
@@ -3123,13 +3128,13 @@ pub const DrawList = struct {
         flags: DrawFlags = .{},
     };
     pub fn pathRect(
-        self: DrawList,
+        draw_list: DrawList,
         rect_min: [2]f32,
         rect_max: [2]f32,
         args: PathRect,
     ) void {
         zguiDrawList_PathRect(
-            self.dl,
+            draw_list,
             rect_min[0],
             rect_min[1],
             rect_max[0],
@@ -3139,168 +3144,22 @@ pub const DrawList = struct {
         );
     }
 
-    extern fn zguiGetWindowDrawList() _DrawList;
-    extern fn zguiGetBackgroundDrawList() _DrawList;
-    extern fn zguiGetForegroundDrawList() _DrawList;
-    extern fn zguiDrawList_PushClipRect(
-        draw_list: _DrawList,
-        clip_rect_min_x: f32,
-        clip_rect_min_y: f32,
-        clip_rect_max_x: f32,
-        clip_rect_max_y: f32,
-        intersect_with_current_clip_rect: bool,
-    ) void;
-    extern fn zguiDrawList_PushClipRectFullScreen(draw_list: _DrawList) void;
-    extern fn zguiDrawList_PopClipRect(draw_list: _DrawList) void;
-    extern fn zguiDrawList_PushTextureID(draw_list: _DrawList, texture_id: TextureIdent) void;
-    extern fn zguiDrawList_PopTextureID(draw_list: _DrawList) void;
-    extern fn zguiDrawList_GetClipRectMin(draw_list: _DrawList, clip_min: *[2]f32) void;
-    extern fn zguiDrawList_GetClipRectMax(draw_list: _DrawList, clip_min: *[2]f32) void;
-    extern fn zguiDrawList_AddLine(
-        draw_list: _DrawList,
-        p1_x: f32,
-        p1_y: f32,
-        p2_x: f32,
-        p2_y: f32,
-        col: u32,
-        thickness: f32,
-    ) void;
-    extern fn zguiDrawList_AddRect(
-        draw_list: _DrawList,
-        p_min_x: f32,
-        p_min_y: f32,
-        p_max_x: f32,
-        p_max_y: f32,
-        col: u32,
-        rounding: f32,
-        flags: u32,
-        thickness: f32,
-    ) void;
-    extern fn zguiDrawList_AddRectFilled(
-        draw_list: _DrawList,
-        p_min_x: f32,
-        p_min_y: f32,
-        p_max_x: f32,
-        p_max_y: f32,
-        col: u32,
-        rounding: f32,
-        flags: u32,
-    ) void;
-    extern fn zguiDrawList_AddRectFilledMultiColor(
-        draw_list: _DrawList,
-        p_min_x: f32,
-        p_min_y: f32,
-        p_max_x: f32,
-        p_max_y: f32,
-        col_upr_left: u32,
-        col_upr_right: u32,
-        col_bot_right: u32,
-        col_bot_left: u32,
-    ) void;
-    extern fn zguiDrawList_AddQuad(
-        draw_list: _DrawList,
-        p1_x: f32,
-        p1_y: f32,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        p4_x: f32,
-        p4_y: f32,
-        col: u32,
-        thickness: f32,
-    ) void;
-    extern fn zguiDrawList_AddQuadFilled(
-        draw_list: _DrawList,
-        p1_x: f32,
-        p1_y: f32,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        p4_x: f32,
-        p4_y: f32,
-        col: u32,
-    ) void;
-    extern fn zguiDrawList_AddTriangle(
-        draw_list: _DrawList,
-        p1_x: f32,
-        p1_y: f32,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        col: u32,
-        thickness: f32,
-    ) void;
-    extern fn zguiDrawList_AddTriangleFilled(
-        draw_list: _DrawList,
-        p1_x: f32,
-        p1_y: f32,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        col: u32,
-    ) void;
-    extern fn zguiDrawList_AddCircle(
-        draw_list: _DrawList,
-        center_x: f32,
-        center_y: f32,
-        radius: f32,
-        col: u32,
-        num_segments: u32,
-        thickness: f32,
-    ) void;
-    extern fn zguiDrawList_AddCircleFilled(
-        draw_list: _DrawList,
-        center_x: f32,
-        center_y: f32,
-        radius: f32,
-        col: u32,
-        num_segments: u32,
-    ) void;
-    extern fn zguiDrawList_AddNgon(
-        draw_list: _DrawList,
-        center_x: f32,
-        center_y: f32,
-        radius: f32,
-        col: u32,
-        num_segments: u32,
-        thickness: f32,
-    ) void;
-    extern fn zguiDrawList_AddNgonFilled(
-        draw_list: _DrawList,
-        center_x: f32,
-        center_y: f32,
-        radius: f32,
-        col: u32,
-        num_segments: u32,
-    ) void;
-    extern fn zguiDrawList_AddText(
-        draw_list: _DrawList,
-        pos_x: f32,
-        pos_y: f32,
-        col: u32,
-        text: [*]const u8,
-        text_end: [*]const u8,
-    ) void;
     extern fn zguiDrawList_AddPolyline(
-        draw_list: _DrawList,
-        points: [*]const [2]u8,
+        draw_list: DrawList,
+        points: [*]const [2]f32,
         num_points: u32,
         col: u32,
         flags: u32,
         thickness: f32,
     ) void;
     extern fn zguiDrawList_AddConvexPolyFilled(
-        draw_list: _DrawList,
-        points: [*]const [2]u8,
+        draw_list: DrawList,
+        points: [*]const [2]f32,
         num_points: u32,
         col: u32,
     ) void;
     extern fn zguiDrawList_AddBezierCubic(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         p1_x: f32,
         p1_y: f32,
         p2_x: f32,
@@ -3314,7 +3173,7 @@ pub const DrawList = struct {
         num_segments: u32,
     ) void;
     extern fn zguiDrawList_AddBezierQuadratic(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         p1_x: f32,
         p1_y: f32,
         p2_x: f32,
@@ -3326,7 +3185,7 @@ pub const DrawList = struct {
         num_segments: u32,
     ) void;
     extern fn zguiDrawList_AddImage(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         user_texture_id: TextureIdent,
         p_min_x: f32,
         p_min_y: f32,
@@ -3339,7 +3198,7 @@ pub const DrawList = struct {
         col: u32,
     ) void;
     extern fn zguiDrawList_AddImageQuad(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         user_texture_id: TextureIdent,
         p1_x: f32,
         p1_y: f32,
@@ -3360,7 +3219,7 @@ pub const DrawList = struct {
         col: u32,
     ) void;
     extern fn zguiDrawList_AddImageRounded(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         user_texture_id: TextureIdent,
         p_min_x: f32,
         p_min_y: f32,
@@ -3374,13 +3233,13 @@ pub const DrawList = struct {
         rounding: f32,
         flags: u32,
     ) void;
-    extern fn zguiDrawList_PathClear(draw_list: _DrawList) void;
-    extern fn zguiDrawList_PathLineTo(draw_list: _DrawList, pos_x: f32, pos_y: f32) void;
-    extern fn zguiDrawList_PathLineToMergeDuplicate(draw_list: _DrawList, pos_x: f32, pos_y: f32) void;
-    extern fn zguiDrawList_PathFillConvex(draw_list: _DrawList, col: u32) void;
-    extern fn zguiDrawList_PathStroke(draw_list: _DrawList, col: u32, flags: u32, thickness: f32) void;
+    extern fn zguiDrawList_PathClear(draw_list: DrawList) void;
+    extern fn zguiDrawList_PathLineTo(draw_list: DrawList, pos_x: f32, pos_y: f32) void;
+    extern fn zguiDrawList_PathLineToMergeDuplicate(draw_list: DrawList, pos_x: f32, pos_y: f32) void;
+    extern fn zguiDrawList_PathFillConvex(draw_list: DrawList, col: u32) void;
+    extern fn zguiDrawList_PathStroke(draw_list: DrawList, col: u32, flags: u32, thickness: f32) void;
     extern fn zguiDrawList_PathArcTo(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         center_x: f32,
         center_y: f32,
         radius: f32,
@@ -3389,7 +3248,7 @@ pub const DrawList = struct {
         num_segments: u32,
     ) void;
     extern fn zguiDrawList_PathArcToFast(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         center_x: f32,
         center_y: f32,
         radius: f32,
@@ -3397,7 +3256,7 @@ pub const DrawList = struct {
         a_max_of_12: f32,
     ) void;
     extern fn zguiDrawList_PathBezierCubicCurveTo(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         p2_x: f32,
         p2_y: f32,
         p3_x: f32,
@@ -3407,7 +3266,7 @@ pub const DrawList = struct {
         num_segments: u32,
     ) void;
     extern fn zguiDrawList_PathBezierQuadraticCurveTo(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         p2_x: f32,
         p2_y: f32,
         p3_x: f32,
@@ -3415,7 +3274,7 @@ pub const DrawList = struct {
         num_segments: u32,
     ) void;
     extern fn zguiDrawList_PathRect(
-        draw_list: _DrawList,
+        draw_list: DrawList,
         rect_min_x: f32,
         rect_min_y: f32,
         rect_max_x: f32,
@@ -3424,7 +3283,6 @@ pub const DrawList = struct {
         flags: u32,
     ) void;
 };
-
 //--------------------------------------------------------------------------------------------------
 //
 // ImPlot
