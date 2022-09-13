@@ -3005,61 +3005,58 @@ pub const DrawList = *opaque {
         flags: u32,
     ) void;
     //----------------------------------------------------------------------------------------------
-    pub fn pathClear(draw_list: DrawList) void {
-        zguiDrawList_PathClear(draw_list);
-    }
-
+    pub const pathClear = zguiDrawList_PathClear;
+    extern fn zguiDrawList_PathClear(draw_list: DrawList) void;
+    //----------------------------------------------------------------------------------------------
     pub fn pathLineTo(draw_list: DrawList, pos: [2]f32) void {
-        zguiDrawList_PathLineTo(draw_list, pos[0], pos[1]);
+        zguiDrawList_PathLineTo(draw_list, &pos);
     }
-
+    extern fn zguiDrawList_PathLineTo(draw_list: DrawList, pos: *const [2]f32) void;
+    //----------------------------------------------------------------------------------------------
     pub fn pathLineToMergeDuplicate(draw_list: DrawList, pos: [2]f32) void {
-        zguiDrawList_PathLineToMergeDuplicate(draw_list, pos[0], pos[1]);
+        zguiDrawList_PathLineToMergeDuplicate(draw_list, &pos);
     }
-
-    pub fn pathFillConvex(draw_list: DrawList, col: u32) void {
-        zguiDrawList_PathFillConvex(draw_list, col);
-    }
-
+    extern fn zguiDrawList_PathLineToMergeDuplicate(draw_list: DrawList, pos: *const [2]f32) void;
+    //----------------------------------------------------------------------------------------------
+    pub const pathFillConvex = zguiDrawList_PathFillConvex;
+    extern fn zguiDrawList_PathFillConvex(draw_list: DrawList, col: u32) void;
+    //----------------------------------------------------------------------------------------------
     const PathStroke = struct {
+        col: u32,
         flags: DrawFlags = .{},
         thickness: f32 = 1.0,
     };
-    pub fn pathStroke(
-        draw_list: DrawList,
-        col: u32,
-        args: PathStroke,
-    ) void {
-        zguiDrawList_PathStroke(
-            draw_list,
-            col,
-            @bitCast(u32, args.flags),
-            args.thickness,
-        );
+    pub fn pathStroke(draw_list: DrawList, args: PathStroke) void {
+        zguiDrawList_PathStroke(draw_list, args.col, args.flags, args.thickness);
     }
-
+    extern fn zguiDrawList_PathStroke(draw_list: DrawList, col: u32, flags: DrawFlags, thickness: f32) void;
+    //----------------------------------------------------------------------------------------------
     const PathArcTo = struct {
+        p: [2]f32,
+        r: f32,
+        amin: f32,
+        amax: f32,
         num_segments: u32 = 0,
     };
-    pub fn pathArcTo(
-        draw_list: DrawList,
-        center: [2]f32,
-        radius: f32,
-        a_min: f32,
-        a_max: f32,
-        args: PathArcTo,
-    ) void {
+    pub fn pathArcTo(draw_list: DrawList, args: PathArcTo) void {
         zguiDrawList_PathArcTo(
             draw_list,
-            center[0],
-            center[0],
-            radius,
-            a_min,
-            a_max,
+            &args.p,
+            args.r,
+            args.amin,
+            args.amax,
             args.num_segments,
         );
     }
-
+    extern fn zguiDrawList_PathArcTo(
+        draw_list: DrawList,
+        center: *const [2]f32,
+        radius: f32,
+        amin: f32,
+        amax: f32,
+        num_segments: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     pub fn pathArcToFast(
         draw_list: DrawList,
         center: [2]f32,
@@ -3139,20 +3136,6 @@ pub const DrawList = *opaque {
         );
     }
 
-    extern fn zguiDrawList_PathClear(draw_list: DrawList) void;
-    extern fn zguiDrawList_PathLineTo(draw_list: DrawList, pos_x: f32, pos_y: f32) void;
-    extern fn zguiDrawList_PathLineToMergeDuplicate(draw_list: DrawList, pos_x: f32, pos_y: f32) void;
-    extern fn zguiDrawList_PathFillConvex(draw_list: DrawList, col: u32) void;
-    extern fn zguiDrawList_PathStroke(draw_list: DrawList, col: u32, flags: u32, thickness: f32) void;
-    extern fn zguiDrawList_PathArcTo(
-        draw_list: DrawList,
-        center_x: f32,
-        center_y: f32,
-        radius: f32,
-        a_min: f32,
-        a_max: f32,
-        num_segments: u32,
-    ) void;
     extern fn zguiDrawList_PathArcToFast(
         draw_list: DrawList,
         center_x: f32,

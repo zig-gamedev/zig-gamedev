@@ -1540,12 +1540,12 @@ ZGUI_API void zguiDrawList_PathClear(ImDrawList* draw_list) {
     draw_list->PathClear();
 }
 
-ZGUI_API void zguiDrawList_PathLineTo(ImDrawList* draw_list, float pos_x, float pos_y) {
-    draw_list->PathLineTo({ pos_x, pos_y });
+ZGUI_API void zguiDrawList_PathLineTo(ImDrawList* draw_list, const float pos[2]) {
+    draw_list->PathLineTo({ pos[0], pos[1] });
 }
 
-ZGUI_API void zguiDrawList_PathLineToMergeDuplicate(ImDrawList* draw_list, float pos_x, float pos_y) {
-    draw_list->PathLineToMergeDuplicate({ pos_x, pos_y });
+ZGUI_API void zguiDrawList_PathLineToMergeDuplicate(ImDrawList* draw_list, const float pos[2]) {
+    draw_list->PathLineToMergeDuplicate({ pos[0], pos[1] });
 }
 
 ZGUI_API void zguiDrawList_PathFillConvex(ImDrawList* draw_list, unsigned int col) {
@@ -1558,14 +1558,13 @@ ZGUI_API void zguiDrawList_PathStroke(ImDrawList* draw_list, unsigned int col, I
 
 ZGUI_API void zguiDrawList_PathArcTo(
     ImDrawList* draw_list,
-    float center_x,
-    float center_y,
+    const float center[2],
     float radius,
     float a_min,
     float a_max,
     int num_segments
 ) {
-    draw_list->PathArcTo({ center_x, center_y }, radius, a_min, a_max, num_segments);
+    draw_list->PathArcTo({ center[0], center[1] }, radius, a_min, a_max, num_segments);
 }
 
 ZGUI_API void zguiDrawList_PathArcToFast(
