@@ -2450,14 +2450,13 @@ extern fn zguiEndTabBar() void;
 //--------------------------------------------------------------------------------------------------
 pub const DrawFlags = packed struct(u32) {
     closed: bool = false,
-    _padding1: u3 = 0,
+    _padding0: u3 = 0,
     round_corners_top_left: bool = false,
     round_corners_top_right: bool = false,
     round_corners_bottom_left: bool = false,
     round_corners_bottom_right: bool = false,
     round_corners_none: bool = false,
-
-    _padding2: u23 = 0,
+    _padding1: u23 = 0,
 
     pub const round_corners_top = DrawFlags{
         .round_corners_top_left = true,
@@ -2597,14 +2596,7 @@ pub const DrawList = *opaque {
         flags: DrawFlags = .{},
     };
     pub fn addRectFilled(draw_list: DrawList, args: AddRectFilled) void {
-        zguiDrawList_AddRectFilled(
-            draw_list,
-            &args.pmin,
-            &args.pmax,
-            args.col,
-            args.rounding,
-            args.flags,
-        );
+        zguiDrawList_AddRectFilled(draw_list, &args.pmin, &args.pmax, args.col, args.rounding, args.flags);
     }
     extern fn zguiDrawList_AddRectFilled(
         draw_list: DrawList,
@@ -2653,15 +2645,7 @@ pub const DrawList = *opaque {
         thickness: f32 = 1.0,
     };
     pub fn addQuad(draw_list: DrawList, args: AddQuad) void {
-        zguiDrawList_AddQuad(
-            draw_list,
-            &args.p1,
-            &args.p2,
-            &args.p3,
-            &args.p4,
-            args.col,
-            args.thickness,
-        );
+        zguiDrawList_AddQuad(draw_list, &args.p1, &args.p2, &args.p3, &args.p4, args.col, args.thickness);
     }
     extern fn zguiDrawList_AddQuad(
         draw_list: DrawList,
@@ -2772,14 +2756,7 @@ pub const DrawList = *opaque {
         thickness: f32 = 1.0,
     };
     pub fn addNgon(draw_list: DrawList, args: AddNgon) void {
-        zguiDrawList_AddNgon(
-            draw_list,
-            &args.p,
-            args.r,
-            args.col,
-            args.num_segments,
-            args.thickness,
-        );
+        zguiDrawList_AddNgon(draw_list, &args.p, args.r, args.col, args.num_segments, args.thickness);
     }
     extern fn zguiDrawList_AddNgon(
         draw_list: DrawList,
@@ -2812,13 +2789,7 @@ pub const DrawList = *opaque {
         draw_list.addTextUnformatted(pos, col, txt);
     }
     pub fn addTextUnformatted(draw_list: DrawList, pos: [2]f32, col: u32, txt: []const u8) void {
-        zguiDrawList_AddText(
-            draw_list,
-            &pos,
-            col,
-            txt.ptr,
-            txt.ptr + txt.len,
-        );
+        zguiDrawList_AddText(draw_list, &pos, col, txt.ptr, txt.ptr + txt.len);
     }
     extern fn zguiDrawList_AddText(
         draw_list: DrawList,
@@ -2828,23 +2799,30 @@ pub const DrawList = *opaque {
         text_end: [*]const u8,
     ) void;
     //----------------------------------------------------------------------------------------------
-    pub fn addPolyline(
-        draw_list: DrawList,
-        points: []const [2]u8,
+    const AddPolyline = struct {
         col: u32,
-        flags: DrawFlags,
-        thickness: f32,
-    ) void {
+        flags: DrawFlags = .{},
+        thickness: f32 = 1.0,
+    };
+    pub fn addPolyline(draw_list: DrawList, points: []const [2]f32, args: AddPolyline) void {
         zguiDrawList_AddPolyline(
             draw_list,
             points.ptr,
             @intCast(u32, points.len),
-            col,
-            @bitCast(u32, flags),
-            thickness,
+            args.col,
+            args.flags,
+            args.thickness,
         );
     }
-
+    extern fn zguiDrawList_AddPolyline(
+        draw_list: DrawList,
+        points: [*]const [2]f32,
+        num_points: u32,
+        col: u32,
+        flags: DrawFlags,
+        thickness: f32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     pub fn addConvexPolyFilled(
         draw_list: DrawList,
         points: []const [2]u8,
@@ -2857,95 +2835,108 @@ pub const DrawList = *opaque {
             col,
         );
     }
-
-    const AddBezierCubic = struct {
-        num_segments: u32 = 0,
-    };
-    pub fn addBezierCubic(
+    extern fn zguiDrawList_AddConvexPolyFilled(
         draw_list: DrawList,
+        points: [*]const [2]f32,
+        num_points: u32,
+        col: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const AddBezierCubic = struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         p4: [2]f32,
         col: u32,
-        thickness: f32,
-        args: AddBezierCubic,
-    ) void {
+        thickness: f32 = 1.0,
+        num_segments: u32 = 0,
+    };
+    pub fn addBezierCubic(draw_list: DrawList, args: AddBezierCubic) void {
         zguiDrawList_AddBezierCubic(
             draw_list,
-            p1[0],
-            p1[1],
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            p4[0],
-            p4[1],
-            col,
-            thickness,
+            &args.p1,
+            &args.p2,
+            &args.p3,
+            &args.p4,
+            args.col,
+            args.thickness,
             args.num_segments,
         );
     }
-
-    const AddBezierQuadratic = struct {
-        num_segments: u32 = 0,
-    };
-    pub fn addBezierQuadratic(
+    extern fn zguiDrawList_AddBezierCubic(
         draw_list: DrawList,
+        p1: *const [2]f32,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
+        p4: *const [2]f32,
+        col: u32,
+        thickness: f32,
+        num_segments: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const AddBezierQuadratic = struct {
         p1: [2]f32,
         p2: [2]f32,
         p3: [2]f32,
         col: u32,
-        thickness: f32,
-        args: AddBezierQuadratic,
-    ) void {
+        thickness: f32 = 1.0,
+        num_segments: u32 = 0,
+    };
+    pub fn addBezierQuadratic(draw_list: DrawList, args: AddBezierQuadratic) void {
         zguiDrawList_AddBezierQuadratic(
             draw_list,
-            p1[0],
-            p1[1],
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            col,
-            thickness,
+            &args.p1,
+            &args.p2,
+            &args.p3,
+            args.col,
+            args.thickness,
             args.num_segments,
         );
     }
-
-    const AddImage = struct {
-        uv_min: [2]f32 = .{ 0, 0 },
-        uv_max: [2]f32 = .{ 1, 1 },
-        col: u32 = 0xffffffff,
-    };
-    pub fn addImage(
+    extern fn zguiDrawList_AddBezierQuadratic(
         draw_list: DrawList,
-        user_texture_id: TextureIdent,
-        p_min: [2]f32,
-        p_max: [2]f32,
-        args: AddImage,
-    ) void {
+        p1: *const [2]f32,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
+        col: u32,
+        thickness: f32,
+        num_segments: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    const AddImage = struct {
+        pmin: [2]f32,
+        pmax: [2]f32,
+        uvmin: [2]f32 = .{ 0, 0 },
+        uvmax: [2]f32 = .{ 1, 1 },
+        col: u32 = 0xff_ff_ff_ff,
+    };
+    pub fn addImage(draw_list: DrawList, user_texture_id: TextureIdent, args: AddImage) void {
         zguiDrawList_AddImage(
             draw_list,
             user_texture_id,
-            p_min[0],
-            p_min[1],
-            p_max[0],
-            p_max[1],
-            args.uv_min[0],
-            args.uv_min[1],
-            args.uv_max[0],
-            args.uv_max[1],
+            &args.pmin,
+            &args.pmax,
+            &args.uvmin,
+            &args.uvmax,
             args.col,
         );
     }
-
+    extern fn zguiDrawList_AddImage(
+        draw_list: DrawList,
+        user_texture_id: TextureIdent,
+        pmin: *const [2]f32,
+        pmax: *const [2]f32,
+        uvmin: *const [2]f32,
+        uvmax: *const [2]f32,
+        col: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const AddImageQuad = struct {
         uv1: [2]f32 = .{ 0, 0 },
         uv2: [2]f32 = .{ 1, 0 },
         uv3: [2]f32 = .{ 1, 1 },
         uv4: [2]f32 = .{ 0, 1 },
-        col: u32 = 0xffffffff,
+        col: u32 = 0xff_ff_ff_ff,
     };
     pub fn addImageQuad(
         draw_list: DrawList,
@@ -2982,7 +2973,7 @@ pub const DrawList = *opaque {
     const AddImageRounded = struct {
         uv_min: [2]f32 = .{ 0, 0 },
         uv_max: [2]f32 = .{ 1, 1 },
-        col: u32 = 0xffffffff,
+        col: u32 = 0xff_ff_ff_ff,
         rounding: f32 = 4.0,
         flags: DrawFlags = .{},
     };
@@ -3144,59 +3135,6 @@ pub const DrawList = *opaque {
         );
     }
 
-    extern fn zguiDrawList_AddPolyline(
-        draw_list: DrawList,
-        points: [*]const [2]f32,
-        num_points: u32,
-        col: u32,
-        flags: u32,
-        thickness: f32,
-    ) void;
-    extern fn zguiDrawList_AddConvexPolyFilled(
-        draw_list: DrawList,
-        points: [*]const [2]f32,
-        num_points: u32,
-        col: u32,
-    ) void;
-    extern fn zguiDrawList_AddBezierCubic(
-        draw_list: DrawList,
-        p1_x: f32,
-        p1_y: f32,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        p4_x: f32,
-        p4_y: f32,
-        col: u32,
-        thickness: f32,
-        num_segments: u32,
-    ) void;
-    extern fn zguiDrawList_AddBezierQuadratic(
-        draw_list: DrawList,
-        p1_x: f32,
-        p1_y: f32,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        col: u32,
-        thickness: f32,
-        num_segments: u32,
-    ) void;
-    extern fn zguiDrawList_AddImage(
-        draw_list: DrawList,
-        user_texture_id: TextureIdent,
-        p_min_x: f32,
-        p_min_y: f32,
-        p_max_x: f32,
-        p_max_y: f32,
-        uv_min_x: f32,
-        uv_min_y: f32,
-        uv_max_x: f32,
-        uv_max_y: f32,
-        col: u32,
-    ) void;
     extern fn zguiDrawList_AddImageQuad(
         draw_list: DrawList,
         user_texture_id: TextureIdent,

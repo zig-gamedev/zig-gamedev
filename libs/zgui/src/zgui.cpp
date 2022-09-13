@@ -1420,75 +1420,68 @@ ZGUI_API void zguiDrawList_AddText(
 
 ZGUI_API void zguiDrawList_AddPolyline(
     ImDrawList* draw_list,
-    const float (*points)[2],
+    const float points[][2],
     int num_points,
     unsigned int col,
     ImDrawFlags flags,
     float thickness
 ) {
-    draw_list->AddPolyline((const ImVec2*)points, num_points, col, flags, thickness);
+    draw_list->AddPolyline((const ImVec2*)&points[0][0], num_points, col, flags, thickness);
 }
 
 ZGUI_API void zguiDrawList_AddConvexPolyFilled(
     ImDrawList* draw_list,
-    const float (*points)[2],
+    const float points[][2],
     int num_points,
     unsigned int col
 ) {
-    draw_list->AddConvexPolyFilled((const ImVec2*)points, num_points, col);
+    draw_list->AddConvexPolyFilled((const ImVec2*)&points[0][0], num_points, col);
 }
 
 ZGUI_API void zguiDrawList_AddBezierCubic(
     ImDrawList* draw_list,
-    float p1_x,
-    float p1_y,
-    float p2_x,
-    float p2_y,
-    float p3_x,
-    float p3_y,
-    float p4_x,
-    float p4_y,
+    const float p1[2],
+    const float p2[2],
+    const float p3[2],
+    const float p4[2],
     unsigned int col,
     float thickness,
     int num_segments
 ) {
-    draw_list->AddBezierCubic({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, { p4_x, p4_y }, col, thickness, num_segments);
+    draw_list->AddBezierCubic(
+        { p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, { p4[0], p4[1] }, col, thickness, num_segments
+    );
 }
 
 ZGUI_API void zguiDrawList_AddBezierQuadratic(
     ImDrawList* draw_list,
-    float p1_x,
-    float p1_y,
-    float p2_x,
-    float p2_y,
-    float p3_x,
-    float p3_y,
+    const float p1[2],
+    const float p2[2],
+    const float p3[2],
     unsigned int col,
     float thickness,
     int num_segments
 ) {
-    draw_list->AddBezierQuadratic({ p1_x, p1_y }, { p2_x, p2_y }, { p3_x, p3_y }, col, thickness, num_segments);
+    draw_list->AddBezierQuadratic(
+        { p1[0], p1[1] }, { p2[0], p2[1] }, { p3[0], p3[1] }, col, thickness, num_segments
+    );
 }
 
 ZGUI_API void zguiDrawList_AddImage(
     ImDrawList* draw_list,
     ImTextureID user_texture_id,
-    float p_min_x,
-    float p_min_y,
-    float p_max_x,
-    float p_max_y,
-    float uv_min_x,
-    float uv_min_y,
-    float uv_max_x,
-    float uv_max_y,
+    const float pmin[2],
+    const float pmax[2],
+    const float uvmin[2],
+    const float uvmax[2],
     unsigned int col
 ) {
     draw_list->AddImage(
         user_texture_id,
-        { p_min_x, p_min_y },
-        { p_max_x, p_max_y },
-        { uv_min_x, uv_min_y },
-        { uv_max_x, uv_max_y },
+        { pmin[0], pmin[1] },
+        { pmax[0], pmax[1] },
+        { uvmin[0], uvmin[1] },
+        { uvmax[0], uvmax[1] },
         col
     );
 }

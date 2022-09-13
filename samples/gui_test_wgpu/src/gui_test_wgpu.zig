@@ -456,6 +456,10 @@ fn update(demo: *DemoState) !void {
     draw_list.addText(.{ 130, 130 }, 0xff_00_00_ff, "The number is: {}", .{7});
     draw_list.addCircleFilled(.{ .p = .{ 200, 600 }, .r = 50, .col = 0xff_ff_ff_ff });
     draw_list.addCircle(.{ .p = .{ 200, 600 }, .r = 30, .col = 0xff_00_00_ff, .thickness = 11 });
+    draw_list.addPolyline(
+        &.{ .{ 100, 700 }, .{ 200, 600 }, .{ 300, 700 }, .{ 400, 600 } },
+        .{ .col = 0xff_00_aa_11, .thickness = 7 },
+    );
     _ = draw_list.getClipRectMin();
     _ = draw_list.getClipRectMax();
     draw_list.popClipRect();
