@@ -2769,7 +2769,6 @@ pub const DrawList = struct {
     }
 
     const AddNgon = struct {
-        num_segments: u32,
         thickness: f32 = 1.0,
     };
     pub fn addNgon(
@@ -2777,6 +2776,7 @@ pub const DrawList = struct {
         center: [2]f32,
         radius: f32,
         col: u32,
+        num_segments: u32,
         args: AddNgon,
     ) void {
         zguiDrawList_AddNgon(
@@ -2785,7 +2785,7 @@ pub const DrawList = struct {
             center[1],
             radius,
             col,
-            args.num_segments,
+            num_segments,
             args.thickness,
         );
     }
@@ -2807,7 +2807,7 @@ pub const DrawList = struct {
         );
     }
 
-    pub fn addText(
+    pub fn addTextUnformatted(
         self: DrawList,
         pos: [2]f32,
         col: u32,
@@ -2823,9 +2823,20 @@ pub const DrawList = struct {
         );
     }
 
+    pub fn addText(
+        self: DrawList,
+        pos: [2]f32,
+        col: u32,
+        comptime fmt: []const u8,
+        args: anytype,
+    ) void {
+        const result = format(fmt, args);
+        self.addText(pos, col, result);
+    }
+
     pub fn addPolyline(
         self: DrawList,
-        points: []const [2]u8,
+        points: []const [2]f32,
         col: u32,
         flags: DrawFlags,
         thickness: f32,
@@ -2842,7 +2853,7 @@ pub const DrawList = struct {
 
     pub fn addConvexPolyFilled(
         self: DrawList,
-        points: []const [2]u8,
+        points: []const [2]f32,
         col: u32,
     ) void {
         zguiDrawList_AddConvexPolyFilled(
@@ -2978,7 +2989,7 @@ pub const DrawList = struct {
         uv_min: [2]f32 = .{ 0, 0 },
         uv_max: [2]f32 = .{ 1, 1 },
         col: u32 = 0xffffffff,
-        rounding: f32,
+        rounding: f32 = 4,
         flags: DrawFlags = .{},
     };
     pub fn addImageRounded(
@@ -3287,7 +3298,7 @@ pub const DrawList = struct {
     ) void;
     extern fn zguiDrawList_AddPolyline(
         draw_list: _DrawList,
-        points: [*]const [2]u8,
+        points: [*]const [2]f32,
         num_points: u32,
         col: u32,
         flags: u32,
@@ -3295,7 +3306,7 @@ pub const DrawList = struct {
     ) void;
     extern fn zguiDrawList_AddConvexPolyFilled(
         draw_list: _DrawList,
-        points: [*]const [2]u8,
+        points: [*]const [2]f32,
         num_points: u32,
         col: u32,
     ) void;
