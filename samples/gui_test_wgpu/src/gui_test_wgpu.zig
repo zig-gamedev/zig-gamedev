@@ -52,6 +52,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     );
 
     zgui.init();
+    zgui.plot.init();
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
         break :scale_factor math.max(scale.x, scale.y);
@@ -99,6 +100,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
     zgui.backend.deinit();
+    zgui.plot.deinit();
     zgui.deinit();
     demo.gctx.deinit(allocator);
     allocator.destroy(demo);
@@ -463,6 +465,11 @@ fn update(demo: *DemoState) !void {
     _ = draw_list.getClipRectMin();
     _ = draw_list.getClipRectMax();
     draw_list.popClipRect();
+
+    if (zgui.plot.beginPlot("test_plot", .{})) {
+        zgui.plot.plotLineValuesInt("Some data", &.{ 0, 1, 0, 1, 0, 1 }, .{});
+        zgui.plot.endPlot();
+    }
 
     zgui.end();
 }

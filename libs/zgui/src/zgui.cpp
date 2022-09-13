@@ -1606,46 +1606,38 @@ ZGUI_API void zguiDrawList_PathRect(
     draw_list->PathRect({ rect_min[0], rect_min[1] }, { rect_max[0], rect_max[1] }, rounding, flags);
 }
 
-ZGUI_API void zguipShowDemoWindow(bool* p_open) {
-    ImPlot::ShowDemoWindow(p_open);
-}
-
-ZGUI_API ImPlotContext* zguipCreateContext(){
+ZGUI_API ImPlotContext* zguiPlot_CreateContext() {
     return ImPlot::CreateContext();
 }
 
-ZGUI_API void zguipDestroyContext(ImPlotContext* ctx = NULL){
+ZGUI_API void zguiPlot_DestroyContext(ImPlotContext* ctx) {
     ImPlot::DestroyContext(ctx);
 }
 
-ZGUI_API ImPlotContext* zguipGetCurrentContext(){
+ZGUI_API ImPlotContext* zguiPlot_GetCurrentContext() {
     return ImPlot::GetCurrentContext();
 }
 
-ZGUI_API void zguipSetCurrentContext(ImPlotContext* ctx){
-    ImPlot::SetCurrentContext(ctx);
-}
-
-ZGUI_API void zguipSetupLegend(ImPlotLocation location, ImPlotLegendFlags flags){
+ZGUI_API void zguiPlot_SetupLegend(ImPlotLocation location, ImPlotLegendFlags flags) {
     ImPlot::SetupLegend(location, flags);
 }
 
-ZGUI_API void zguipSetupXAxis(const char* label, ImPlotAxisFlags flags){
+ZGUI_API void zguiPlot_SetupXAxis(const char* label, ImPlotAxisFlags flags) {
     ImPlot::SetupAxis(ImAxis_X1, label, flags);
 }
 
-ZGUI_API void zguipSetupYAxis(const char* label, ImPlotAxisFlags flags){
+ZGUI_API void zguiPlot_SetupYAxis(const char* label, ImPlotAxisFlags flags) {
     ImPlot::SetupAxis(ImAxis_Y1, label, flags);
 }
 
-ZGUI_API bool zguipBeginPlot(const char* title_id, float width, float height, ImPlotFlags flags) {
+ZGUI_API bool zguiPlot_BeginPlot(const char* title_id, float width, float height, ImPlotFlags flags) {
     return ImPlot::BeginPlot(title_id, { width, height }, flags);
 }
 
-ZGUI_API void zguipPlotLineValues(const char* label_id, const int* values, int count, ImPlotLineFlags flags){
+ZGUI_API void zguiPlot_PlotLineValues(const char* label_id, const int* values, int count, ImPlotLineFlags flags) {
     ImPlot::PlotLine(label_id, values, count, 1, 0, flags, 0, sizeof(int));
 }
 
-ZGUI_API void zguipEnd() {
+ZGUI_API void zguiPlot_EndPlot() {
     ImPlot::EndPlot();
 }
