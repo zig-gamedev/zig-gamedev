@@ -2932,75 +2932,79 @@ pub const DrawList = *opaque {
     ) void;
     //----------------------------------------------------------------------------------------------
     const AddImageQuad = struct {
+        p1: [2]f32,
+        p2: [2]f32,
+        p3: [2]f32,
+        p4: [2]f32,
         uv1: [2]f32 = .{ 0, 0 },
         uv2: [2]f32 = .{ 1, 0 },
         uv3: [2]f32 = .{ 1, 1 },
         uv4: [2]f32 = .{ 0, 1 },
         col: u32 = 0xff_ff_ff_ff,
     };
-    pub fn addImageQuad(
-        draw_list: DrawList,
-        user_texture_id: TextureIdent,
-        p1: [2]f32,
-        p2: [2]f32,
-        p3: [2]f32,
-        p4: [2]f32,
-        args: AddImageQuad,
-    ) void {
+    pub fn addImageQuad(draw_list: DrawList, user_texture_id: TextureIdent, args: AddImageQuad) void {
         zguiDrawList_AddImageQuad(
             draw_list,
             user_texture_id,
-            p1[0],
-            p1[1],
-            p2[0],
-            p2[1],
-            p3[0],
-            p3[1],
-            p4[0],
-            p4[1],
-            args.uv1[0],
-            args.uv1[1],
-            args.uv2[0],
-            args.uv2[1],
-            args.uv3[0],
-            args.uv3[1],
-            args.uv4[0],
-            args.uv4[1],
+            &args.p1,
+            &args.p2,
+            &args.p3,
+            &args.p4,
+            &args.uv1,
+            &args.uv2,
+            &args.uv3,
+            &args.uv4,
             args.col,
         );
     }
-
+    extern fn zguiDrawList_AddImageQuad(
+        draw_list: DrawList,
+        user_texture_id: TextureIdent,
+        p1: *const [2]f32,
+        p2: *const [2]f32,
+        p3: *const [2]f32,
+        p4: *const [2]f32,
+        uv1: *const [2]f32,
+        uv2: *const [2]f32,
+        uv3: *const [2]f32,
+        uv4: *const [2]f32,
+        col: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     const AddImageRounded = struct {
-        uv_min: [2]f32 = .{ 0, 0 },
-        uv_max: [2]f32 = .{ 1, 1 },
+        pmin: [2]f32,
+        pmax: [2]f32,
+        uvmin: [2]f32 = .{ 0, 0 },
+        uvmax: [2]f32 = .{ 1, 1 },
         col: u32 = 0xff_ff_ff_ff,
         rounding: f32 = 4.0,
         flags: DrawFlags = .{},
     };
-    pub fn addImageRounded(
-        draw_list: DrawList,
-        user_texture_id: TextureIdent,
-        p_min: [2]f32,
-        p_max: [2]f32,
-        args: AddImageRounded,
-    ) void {
+    pub fn addImageRounded(draw_list: DrawList, user_texture_id: TextureIdent, args: AddImageRounded) void {
         zguiDrawList_AddImageRounded(
             draw_list,
             user_texture_id,
-            p_min[0],
-            p_min[1],
-            p_max[0],
-            p_max[1],
-            args.uv_min[0],
-            args.uv_min[1],
-            args.uv_max[0],
-            args.uv_max[1],
+            &args.pmin,
+            &args.pmax,
+            &args.uvmin,
+            &args.uvmax,
             args.col,
             args.rounding,
-            @bitCast(u32, args.flags),
+            args.flags,
         );
     }
-
+    extern fn zguiDrawList_AddImageRounded(
+        draw_list: DrawList,
+        user_texture_id: TextureIdent,
+        pmin: *const [2]f32,
+        pmax: *const [2]f32,
+        uvmin: *const [2]f32,
+        uvmax: *const [2]f32,
+        col: u32,
+        rounding: f32,
+        flags: u32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     pub fn pathClear(draw_list: DrawList) void {
         zguiDrawList_PathClear(draw_list);
     }
@@ -3135,42 +3139,6 @@ pub const DrawList = *opaque {
         );
     }
 
-    extern fn zguiDrawList_AddImageQuad(
-        draw_list: DrawList,
-        user_texture_id: TextureIdent,
-        p1_x: f32,
-        p1_y: f32,
-        p2_x: f32,
-        p2_y: f32,
-        p3_x: f32,
-        p3_y: f32,
-        p4_x: f32,
-        p4_y: f32,
-        uv1_x: f32,
-        uv1_y: f32,
-        uv2_x: f32,
-        uv2_y: f32,
-        uv3_x: f32,
-        uv3_y: f32,
-        uv4_x: f32,
-        uv4_y: f32,
-        col: u32,
-    ) void;
-    extern fn zguiDrawList_AddImageRounded(
-        draw_list: DrawList,
-        user_texture_id: TextureIdent,
-        p_min_x: f32,
-        p_min_y: f32,
-        p_max_x: f32,
-        p_max_y: f32,
-        uv_min_x: f32,
-        uv_min_y: f32,
-        uv_max_x: f32,
-        uv_max_y: f32,
-        col: u32,
-        rounding: f32,
-        flags: u32,
-    ) void;
     extern fn zguiDrawList_PathClear(draw_list: DrawList) void;
     extern fn zguiDrawList_PathLineTo(draw_list: DrawList, pos_x: f32, pos_y: f32) void;
     extern fn zguiDrawList_PathLineToMergeDuplicate(draw_list: DrawList, pos_x: f32, pos_y: f32) void;
