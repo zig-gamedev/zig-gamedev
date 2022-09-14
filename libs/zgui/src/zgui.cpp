@@ -175,11 +175,11 @@ ZGUI_API void zguiGetCursorPos(float pos[2]) {
     pos[1] = p.y;
 }
 
-ZGUI_API float zguiGetCursorPosX() {
+ZGUI_API float zguiGetCursorPosX(void) {
     return ImGui::GetCursorPosX();
 }
 
-ZGUI_API float zguiGetCursorPosY() {
+ZGUI_API float zguiGetCursorPosY(void) {
     return ImGui::GetCursorPosY();
 }
 
@@ -211,23 +211,23 @@ ZGUI_API void zguiSetCursorScreenPos(float screen_x, float screen_y) {
     ImGui::SetCursorScreenPos({ screen_x, screen_y });
 }
 
-ZGUI_API void zguiAlignTextToFramePadding() {
+ZGUI_API void zguiAlignTextToFramePadding(void) {
     ImGui::AlignTextToFramePadding();
 }
 
-ZGUI_API float zguiGetTextLineHeight() {
+ZGUI_API float zguiGetTextLineHeight(void) {
     return ImGui::GetTextLineHeight();
 }
 
-ZGUI_API float zguiGetTextLineHeightWithSpacing() {
+ZGUI_API float zguiGetTextLineHeightWithSpacing(void) {
     return ImGui::GetTextLineHeightWithSpacing();
 }
 
-ZGUI_API float zguiGetFrameHeight() {
+ZGUI_API float zguiGetFrameHeight(void) {
     return ImGui::GetFrameHeight();
 }
 
-ZGUI_API float zguiGetFrameHeightWithSpacing() {
+ZGUI_API float zguiGetFrameHeightWithSpacing(void) {
     return ImGui::GetFrameHeightWithSpacing();
 }
 
@@ -605,11 +605,11 @@ ZGUI_API bool zguiSliderAngle(
     return ImGui::SliderAngle(label, v_rad, v_degrees_min, v_degrees_max, format, flags);
 }
 
-ZGUI_API ImGuiInputTextCallbackData zguiInputTextCallbackData_init() {
+ZGUI_API ImGuiInputTextCallbackData zguiInputTextCallbackData_Init(void) {
     return ImGuiInputTextCallbackData();
 }
 
-ZGUI_API void zguiInputTextCallbackData_deleteChars(
+ZGUI_API void zguiInputTextCallbackData_DeleteChars(
     ImGuiInputTextCallbackData* data,
     int pos,
     int bytes_count
@@ -617,7 +617,7 @@ ZGUI_API void zguiInputTextCallbackData_deleteChars(
     data->DeleteChars(pos, bytes_count);
 }
 
-ZGUI_API void zguiInputTextCallbackData_insertChars(
+ZGUI_API void zguiInputTextCallbackData_InsertChars(
     ImGuiInputTextCallbackData* data,
     int pos,
     const char* text,
@@ -955,11 +955,11 @@ ZGUI_API ImGuiStyle* zguiGetStyle(void) {
     return &ImGui::GetStyle();
 }
 
-ZGUI_API ImGuiStyle zguiStyle_init(void) {
+ZGUI_API ImGuiStyle zguiStyle_Init(void) {
     return ImGuiStyle();
 }
 
-ZGUI_API void zguiStyle_scaleAllSizes(ImGuiStyle* style, float scale_factor) {
+ZGUI_API void zguiStyle_ScaleAllSizes(ImGuiStyle* style, float scale_factor) {
     style->ScaleAllSizes(scale_factor);
 }
 
@@ -1209,11 +1209,11 @@ ZGUI_API bool zguiBeginTabItem(const char* string) {
     return ImGui::BeginTabItem(string);
 }
 
-ZGUI_API void zguiEndTabItem() {
+ZGUI_API void zguiEndTabItem(void) {
     ImGui::EndTabItem();
 }
 
-ZGUI_API void zguiEndTabBar() {
+ZGUI_API void zguiEndTabBar(void) {
     ImGui::EndTabBar();
 }
 //--------------------------------------------------------------------------------------------------
@@ -1221,15 +1221,15 @@ ZGUI_API void zguiEndTabBar() {
 // DrawList
 //
 //--------------------------------------------------------------------------------------------------
-ZGUI_API ImDrawList* zguiGetWindowDrawList() {
+ZGUI_API ImDrawList* zguiGetWindowDrawList(void) {
     return ImGui::GetWindowDrawList();
 }
 
-ZGUI_API ImDrawList* zguiGetBackgroundDrawList() {
+ZGUI_API ImDrawList* zguiGetBackgroundDrawList(void) {
     return ImGui::GetBackgroundDrawList();
 }
 
-ZGUI_API ImDrawList* zguiGetForegroundDrawList() {
+ZGUI_API ImDrawList* zguiGetForegroundDrawList(void) {
     return ImGui::GetForegroundDrawList();
 }
 
@@ -1614,18 +1614,18 @@ ZGUI_API void zguiDrawList_PathRect(
 // Viewport
 //
 //--------------------------------------------------------------------------------------------------
-ZGUI_API ImGuiViewport* zguiGetMainViewport() {
+ZGUI_API ImGuiViewport* zguiGetMainViewport(void) {
     return ImGui::GetMainViewport();
 }
 
 ZGUI_API void zguiViewport_GetWorkPos(ImGuiViewport* viewport, float p[2]) {
-    ImVec2 pos = viewport->WorkPos;
+    const ImVec2 pos = viewport->WorkPos;
     p[0] = pos.x;
     p[1] = pos.y;
 }
 
 ZGUI_API void zguiViewport_GetWorkSize(ImGuiViewport* viewport, float p[2]) {
-    ImVec2 sz = viewport->WorkSize;
+    const ImVec2 sz = viewport->WorkSize;
     p[0] = sz.x;
     p[1] = sz.y;
 }
@@ -1634,7 +1634,7 @@ ZGUI_API void zguiViewport_GetWorkSize(ImGuiViewport* viewport, float p[2]) {
 // ImPlot
 //
 //--------------------------------------------------------------------------------------------------
-ZGUI_API ImPlotContext* zguiPlot_CreateContext() {
+ZGUI_API ImPlotContext* zguiPlot_CreateContext(void) {
     return ImPlot::CreateContext();
 }
 
@@ -1642,7 +1642,7 @@ ZGUI_API void zguiPlot_DestroyContext(ImPlotContext* ctx) {
     ImPlot::DestroyContext(ctx);
 }
 
-ZGUI_API ImPlotContext* zguiPlot_GetCurrentContext() {
+ZGUI_API ImPlotContext* zguiPlot_GetCurrentContext(void) {
     return ImPlot::GetCurrentContext();
 }
 
@@ -1666,7 +1666,7 @@ ZGUI_API void zguiPlot_PlotLineValues(const char* label_id, const int* values, i
     ImPlot::PlotLine(label_id, values, count, 1, 0, flags, 0, sizeof(int));
 }
 
-ZGUI_API void zguiPlot_EndPlot() {
+ZGUI_API void zguiPlot_EndPlot(void) {
     ImPlot::EndPlot();
 }
 //--------------------------------------------------------------------------------------------------

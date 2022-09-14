@@ -414,12 +414,12 @@ pub const Style = extern struct {
     colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
 
     /// `pub fn init() Style`
-    pub const init = zguiStyle_init;
-    extern fn zguiStyle_init() Style;
+    pub const init = zguiStyle_Init;
+    extern fn zguiStyle_Init() Style;
 
     /// `pub fn scaleAllSizes(style: *Style, scale_factor: f32) void`
-    pub const scaleAllSizes = zguiStyle_scaleAllSizes;
-    extern fn zguiStyle_scaleAllSizes(style: *Style, scale_factor: f32) void;
+    pub const scaleAllSizes = zguiStyle_ScaleAllSizes;
+    extern fn zguiStyle_ScaleAllSizes(style: *Style, scale_factor: f32) void;
 
     pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
         return style.colors[@enumToInt(idx)];
@@ -1635,13 +1635,13 @@ pub const InputTextCallbackData = extern struct {
     selection_end: i32,
 
     /// `pub fn init() InputTextCallbackData`
-    pub const init = zguiInputTextCallbackData_init;
+    pub const init = zguiInputTextCallbackData_Init;
 
     /// `pub fn deleteChars(data: *InputTextCallbackData, pos: i32, bytes_count: i32) void`
-    pub const deleteChars = zguiInputTextCallbackData_deleteChars;
+    pub const deleteChars = zguiInputTextCallbackData_DeleteChars;
 
     pub fn insertChars(data: *InputTextCallbackData, pos: i32, txt: []const u8) void {
-        zguiInputTextCallbackData_insertChars(data, pos, txt.ptr, txt.ptr + txt.len);
+        zguiInputTextCallbackData_InsertChars(data, pos, txt.ptr, txt.ptr + txt.len);
     }
 
     pub fn selectAll(data: *InputTextCallbackData) void {
@@ -1658,13 +1658,13 @@ pub const InputTextCallbackData = extern struct {
         return data.selection_start != data.selection_end;
     }
 
-    extern fn zguiInputTextCallbackData_init() InputTextCallbackData;
-    extern fn zguiInputTextCallbackData_deleteChars(
+    extern fn zguiInputTextCallbackData_Init() InputTextCallbackData;
+    extern fn zguiInputTextCallbackData_DeleteChars(
         data: *InputTextCallbackData,
         pos: i32,
         bytes_count: i32,
     ) void;
-    extern fn zguiInputTextCallbackData_insertChars(
+    extern fn zguiInputTextCallbackData_InsertChars(
         data: *InputTextCallbackData,
         pos: i32,
         text: [*]const u8,
@@ -1672,10 +1672,7 @@ pub const InputTextCallbackData = extern struct {
     ) void;
 };
 
-pub const InputTextCallback = if (@import("builtin").zig_backend == .stage1)
-    fn (data: *InputTextCallbackData) i32
-else
-    *const fn (data: *InputTextCallbackData) i32;
+pub const InputTextCallback = *const fn (data: *InputTextCallbackData) i32;
 //--------------------------------------------------------------------------------------------------
 const InputText = struct {
     buf: []u8,
