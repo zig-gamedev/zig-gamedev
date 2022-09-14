@@ -104,8 +104,7 @@ const DemoState = struct {
     },
     camera: Camera,
     mouse: struct {
-        cursor_pos_x: f64 = 0.0,
-        cursor_pos_y: f64 = 0.0,
+        cursor_pos: [2]f64 = .{ 0, 0 },
     } = .{},
     pick: struct {
         body: ?zbt.Body = null,
@@ -385,10 +384,9 @@ fn update(demo: *DemoState) void {
     // Handle camera rotation with mouse.
     {
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos.x - demo.mouse.cursor_pos_x);
-        const delta_y = @floatCast(f32, cursor_pos.y - demo.mouse.cursor_pos_y);
-        demo.mouse.cursor_pos_x = cursor_pos.x;
-        demo.mouse.cursor_pos_y = cursor_pos.y;
+        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
+        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.right) == .press) {
             demo.camera.pitch += 0.0025 * delta_y;
@@ -1203,14 +1201,14 @@ fn objectPicking(demo: *DemoState, want_capture_mouse: bool) void {
     const ray_from = zm.loadArr3(demo.camera.position);
     const ray_to = ray_to: {
         const cursor_pos = window.getCursorPos();
-        const mousex = @floatCast(f32, cursor_pos.x);
-        const mousey = @floatCast(f32, cursor_pos.y);
+        const mousex = @floatCast(f32, cursor_pos[0]);
+        const mousey = @floatCast(f32, cursor_pos[1]);
 
         const far_plane = zm.f32x4s(10_000.0);
         const tanfov = zm.f32x4s(@tan(0.5 * camera_fovy));
         const winsize = window.getSize();
-        const width = @intToFloat(f32, winsize.w);
-        const height = @intToFloat(f32, winsize.h);
+        const width = @intToFloat(f32, winsize[0]);
+        const height = @intToFloat(f32, winsize[1]);
         const aspect = zm.f32x4s(width / height);
 
         const ray_forward = zm.loadArr3(demo.camera.forward) * far_plane;
@@ -1349,7 +1347,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale.x, scale.y);
+        break :scale_factor math.max(scale[0], scale[1]);
     };
 
     zgui.init();

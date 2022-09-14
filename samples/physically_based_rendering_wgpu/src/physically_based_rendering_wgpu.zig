@@ -100,8 +100,7 @@ const DemoState = struct {
         yaw: f32 = math.pi + 0.25 * math.pi,
     } = .{},
     mouse: struct {
-        cursor_pos_x: f64 = 0.0,
-        cursor_pos_y: f64 = 0.0,
+        cursor_pos: [2]f64 = .{ 0, 0 },
     } = .{},
 };
 
@@ -553,10 +552,9 @@ fn update(demo: *DemoState) void {
     // Handle camera rotation with mouse.
     {
         const cursor_pos = window.getCursorPos();
-        const delta_x = @floatCast(f32, cursor_pos.x - demo.mouse.cursor_pos_x);
-        const delta_y = @floatCast(f32, cursor_pos.y - demo.mouse.cursor_pos_y);
-        demo.mouse.cursor_pos_x = cursor_pos.x;
-        demo.mouse.cursor_pos_y = cursor_pos.y;
+        const delta_x = @floatCast(f32, cursor_pos[0] - demo.mouse.cursor_pos[0]);
+        const delta_y = @floatCast(f32, cursor_pos[1] - demo.mouse.cursor_pos[1]);
+        demo.mouse.cursor_pos = cursor_pos;
 
         if (window.getMouseButton(.left) == .press) {
             demo.mesh_yaw += 0.0025 * delta_x;
@@ -1103,7 +1101,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale.x, scale.y);
+        break :scale_factor math.max(scale[0], scale[1]);
     };
 
     zgui.init();

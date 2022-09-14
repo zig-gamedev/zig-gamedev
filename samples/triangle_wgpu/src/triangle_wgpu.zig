@@ -331,7 +331,7 @@ pub fn main() !void {
 
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
-        break :scale_factor math.max(scale.x, scale.y);
+        break :scale_factor math.max(scale[0], scale[1]);
     };
 
     zgui.init();

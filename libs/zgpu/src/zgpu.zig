@@ -150,8 +150,8 @@ pub const GraphicsContext = struct {
             .label = "main window swap chain",
             .usage = .{ .render_attachment = true },
             .format = swapchain_format,
-            .width = @intCast(u32, framebuffer_size.w),
-            .height = @intCast(u32, framebuffer_size.h),
+            .width = @intCast(u32, framebuffer_size[0]),
+            .height = @intCast(u32, framebuffer_size[1]),
             .present_mode = .fifo,
             .implementation = 0,
         };
@@ -387,11 +387,11 @@ pub const GraphicsContext = struct {
         gctx.swapchain.present();
 
         const fb_size = gctx.window.getFramebufferSize();
-        if (gctx.swapchain_descriptor.width != fb_size.w or
-            gctx.swapchain_descriptor.height != fb_size.h)
+        if (gctx.swapchain_descriptor.width != fb_size[0] or
+            gctx.swapchain_descriptor.height != fb_size[1])
         {
-            gctx.swapchain_descriptor.width = @intCast(u32, fb_size.w);
-            gctx.swapchain_descriptor.height = @intCast(u32, fb_size.h);
+            gctx.swapchain_descriptor.width = @intCast(u32, fb_size[0]);
+            gctx.swapchain_descriptor.height = @intCast(u32, fb_size[1]);
             gctx.swapchain.release();
 
             gctx.swapchain = gctx.device.createSwapChain(gctx.surface, gctx.swapchain_descriptor);
