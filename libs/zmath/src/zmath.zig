@@ -1989,12 +1989,12 @@ pub inline fn normalize4(v: Vec) Vec {
     return v * splat(F32x4, 1.0) / sqrt(dot4(v, v));
 }
 test "zmath.normalize3" {
-    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
     {
         const v0 = F32x4{ 1.0, -2.0, 3.0, 1000.0 };
         var v = normalize3(v0);
         try expect(approxEqAbs(v, v0 * splat(F32x4, 1.0 / math.sqrt(14.0)), 0.0005));
     }
+    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
     {
         try expect(any(isNan(normalize3(F32x4{ 1.0, math.inf_f32, 1.0, 1.0 })), 0));
         try expect(any(isNan(normalize3(F32x4{ -math.inf_f32, math.inf_f32, 0.0, 0.0 })), 0));
@@ -2003,12 +2003,12 @@ test "zmath.normalize3" {
     }
 }
 test "zmath.normalize4" {
-    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
     {
         const v0 = F32x4{ 1.0, -2.0, 3.0, 10.0 };
         var v = normalize4(v0);
         try expect(approxEqAbs(v, v0 * splat(F32x4, 1.0 / math.sqrt(114.0)), 0.0005));
     }
+    if (builtin.zig_backend != .stage1) return error.SkipZigTest;
     {
         try expect(any(isNan(normalize4(F32x4{ 1.0, math.inf_f32, 1.0, 1.0 })), 0));
         try expect(any(isNan(normalize4(F32x4{ -math.inf_f32, math.inf_f32, 0.0, 0.0 })), 0));

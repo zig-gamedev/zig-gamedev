@@ -611,13 +611,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     return .{ .tex = tex, .texv = texv };
 }
 
-const SceneSetupFunc = if (@import("builtin").zig_backend == .stage1) fn (
-    world: zbt.World,
-    common_shapes: std.ArrayList(zbt.Shape),
-    scene_shapes: *std.ArrayList(zbt.Shape),
-    entities: *std.ArrayList(Entity),
-    camera: *Camera,
-) void else *const fn (
+const SceneSetupFunc = *const fn (
     world: zbt.World,
     common_shapes: std.ArrayList(zbt.Shape),
     scene_shapes: *std.ArrayList(zbt.Shape),
