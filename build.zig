@@ -80,72 +80,39 @@ pub fn build(b: *std.build.Builder) void {
     //
     const test_step = b.step("test", "Run all tests");
 
-    const zpool_tests = @import("libs/zpool/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zpool_tests.step);
 
-    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const zgpu_tests = @import("libs/zgpu/build.zig").buildTests(b, options.build_mode, options.target);
+    zgpu_tests.want_lto = false; // TODO: Problems with LTO on Windows.
     zglfw.link(zgpu_tests);
     test_step.dependOn(&zgpu_tests.step);
 
     const zmath_tests = zmath.buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmath_tests.step);
 
-    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     zbullet_tests.addPackage(zmath.pkg);
+    zbullet_tests.want_lto = false; // TODO: Problems with LTO on Windows.
     test_step.dependOn(&zbullet_tests.step);
 
-    const znoise_tests = @import("libs/znoise/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&znoise_tests.step);
 
-    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const zmesh_tests = @import("libs/zmesh/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zmesh_tests.step);
 
-    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const zaudio_tests = @import("libs/zaudio/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zaudio_tests.step);
 
-    const zjolt_tests = @import("libs/zjolt/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const zjolt_tests = @import("libs/zjolt/build.zig").buildTests(b, options.build_mode, options.target);
+    zjolt_tests.want_lto = false; // TODO: Problems with LTO on Windows.
     test_step.dependOn(&zjolt_tests.step);
 
-    const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zglfw_tests.step);
 
-    const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(
-        b,
-        options.build_mode,
-        options.target,
-    );
+    const znetwork_tests = @import("libs/znetwork/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&znetwork_tests.step);
 
     //
@@ -204,6 +171,9 @@ fn installDemo(
     exe: *std.build.LibExeObjStep,
     comptime name: []const u8,
 ) void {
+    // TODO: Problems with LTO on Windows.
+    exe.want_lto = false;
+
     comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);
     comptime var desc_size = std.mem.indexOf(u8, &desc_name, "\x00").?;

@@ -26,7 +26,6 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
-    lib.want_lto = false;
     lib.addIncludeDir(thisDir() ++ "/src/c");
 
     lib.linkSystemLibrary("c");
