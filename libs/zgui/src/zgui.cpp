@@ -1641,3 +1641,19 @@ ZGUI_API void zguiPlot_PlotLineValues(const char* label_id, const int* values, i
 ZGUI_API void zguiPlot_EndPlot() {
     ImPlot::EndPlot();
 }
+
+ZGUI_API ImGuiViewport* zguiGetMainViewport() {
+    return ImGui::GetMainViewport();
+}
+
+ZGUI_API void zguiViewport_GetWorkPos(ImGuiViewport* viewport, float p[2]) {
+    ImVec2 pos = viewport->WorkPos;
+    p[0] = pos.x;
+    p[1] = pos.y;
+}
+
+ZGUI_API void zguiViewport_GetWorkSize(ImGuiViewport* viewport, float p[2]) {
+    ImVec2 sz = viewport->WorkSize;
+    p[0] = sz.x;
+    p[1] = sz.y;
+}

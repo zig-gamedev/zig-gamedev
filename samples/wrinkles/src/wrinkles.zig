@@ -8,7 +8,7 @@ const zm = @import("zmath");
 const zstbi = @import("zstbi");
 
 const content_dir = @import("build_options").content_dir;
-const window_title = "zig-gamedev: textured quad (wgpu)";
+const window_title = "zig-gamedev: wrinkles (wgpu)";
 
 const wgsl_common = @embedFile("wrinkles_common.wgsl");
 const wgsl_vs = wgsl_common ++ @embedFile("wrinkles_vs.wgsl");
@@ -199,21 +199,80 @@ fn update(demo: *DemoState) void {
         demo.gctx.swapchain_descriptor.height,
     );
 
-    zgui.setNextWindowPos(.{ .x = 20.0, .y = 20.0, .cond = .always });
-    zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .always });
+    zgui.setNextWindowPos(.{ .x = 20.0, .y = 120.0, .cond = .first_use_ever });
+    zgui.setNextWindowSize(.{ .w = -1.0, .h = -1.0, .cond = .first_use_ever });
 
-    if (zgui.begin("Demo Settings", .{ .flags = .{ .no_move = true, .no_resize = true } })) {
-        zgui.bulletText(
-            "Average : {d:.3} ms/frame ({d:.1} fps)",
-            .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
-        );
-        zgui.spacing();
-        _ = zgui.sliderInt("Mipmap Level", .{
-            .v = &demo.mip_level,
-            .min = 0,
-            .max = @intCast(i32, demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1),
-        });
+    if (!zgui.begin("Demo Settings", .{})) {
+        zgui.end();
+        return;
+    } 
+
+    zgui.bulletText(
+        "Average : {d:.3} ms/frame ({d:.1} fps)",
+        .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
+    );
+    zgui.spacing();
+    _ = zgui.sliderInt("Mipmap Level", .{
+        .v = &demo.mip_level,
+        .min = 0,
+        .max = @intCast(i32, demo.gctx.lookupResourceInfo(demo.texture).?.mip_level_count - 1),
+    });
+
+    const viewport = zgui.getMainViewport();
+    const vsz = viewport.getWorkSize();
+    std.debug.print("vp: {d}, {d}\n", .{vsz[0], vsz[1]});
+
+    const draw_list = zgui.getWindowDrawList();
+    draw_list.pushClipRect(.{ .pmin = .{ 0, 0 }, .pmax = .{ 400, 400 } });
+    draw_list.addLine(.{ .p1 = .{ 0, 0 }, .p2 = .{ 400, 400 }, .col = 0xff_ff_00_ff, .thickness = 5.0 });
+    draw_list.popClipRect();
+
+    draw_list.pushClipRectFullScreen();
+    draw_list.addRectFilled(.{
+        .pmin = .{ 100, 100 },
+        .pmax = .{ 300, 200 },
+        .col = 0xff_ff_ff_ff,
+        .rounding = 25.0,
+    });
+    draw_list.addRectFilledMultiColor(.{
+        .pmin = .{ 100, 300 },
+        .pmax = .{ 200, 400 },
+        .col_upr_left = 0xff_00_00_ff,
+        .col_upr_right = 0xff_00_ff_00,
+        .col_bot_right = 0xff_ff_00_00,
+        .col_bot_left = 0xff_00_ff_ff,
+    });
+    draw_list.addQuadFilled(.{
+        .p1 = .{ 150, 400 },
+        .p2 = .{ 250, 400 },
+        .p3 = .{ 200, 500 },
+        .p4 = .{ 100, 500 },
+        .col = 0xff_ff_ff_ff,
+    });
+    draw_list.addQuad(.{
+        .p1 = .{ 170, 420 },
+        .p2 = .{ 270, 420 },
+        .p3 = .{ 220, 520 },
+        .p4 = .{ 120, 520 },
+        .col = 0xff_00_00_ff,
+        .thickness = 3.0,
+    });
+    draw_list.addText(.{ 130, 130 }, 0xff_00_00_ff, "The number is: {}", .{7});
+    draw_list.addCircleFilled(.{ .p = .{ 200, 600 }, .r = 50, .col = 0xff_ff_ff_ff });
+    draw_list.addCircle(.{ .p = .{ 200, 600 }, .r = 30, .col = 0xff_00_00_ff, .thickness = 11 });
+    draw_list.addPolyline(
+        &.{ .{ 100, 700 }, .{ 200, 600 }, .{ 300, 700 }, .{ 400, 600 } },
+        .{ .col = 0xff_00_aa_11, .thickness = 7 },
+    );
+    _ = draw_list.getClipRectMin();
+    _ = draw_list.getClipRectMax();
+    draw_list.popClipRect();
+
+    if (zgui.plot.beginPlot("test_plot", .{})) {
+        zgui.plot.plotLineValuesInt("Some data", &.{ 0, 1, 0, 1, 0, 1 }, .{});
+        zgui.plot.endPlot();
     }
+
     zgui.end();
 }
 
@@ -323,6 +382,9 @@ pub fn main() !void {
     };
 
     zgui.init();
+    zgui.plot.init();
+    defer zgui.plot.deinit();
+    //defer zgui.backend.deinit(); will be invoked by glfw
     defer zgui.deinit();
 
     _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 16.0 * scale_factor);

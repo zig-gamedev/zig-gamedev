@@ -2337,6 +2337,30 @@ extern fn zguiBeginTabBar(label: [*:0]const u8) bool;
 extern fn zguiBeginTabItem(label: [*:0]const u8) bool;
 extern fn zguiEndTabItem() void;
 extern fn zguiEndTabBar() void;
+
+//--------------------------------------------------------------------------------------------------
+//
+// Viewport
+//
+//--------------------------------------------------------------------------------------------------
+pub const Viewport = *opaque {
+    pub fn getWorkPos(viewport: Viewport) [2]f32 {
+       var pos: [2]f32 = undefined;
+       zguiViewport_GetWorkPos(viewport, &pos);
+       return pos;
+    }
+    extern fn zguiViewport_GetWorkPos(viewport: Viewport, pos: *[2]f32) void;
+    pub fn getWorkSize(viewport: Viewport) [2]f32 {
+       var pos: [2]f32 = undefined;
+        zguiViewport_GetWorkSize(viewport, &pos);
+        return pos;
+    }
+    extern fn zguiViewport_GetWorkSize(viewport: Viewport, size: *[2]f32) void;
+};
+pub const getMainViewport = zguiGetMainViewport;
+extern fn zguiGetMainViewport() Viewport;
+
+
 //--------------------------------------------------------------------------------------------------
 //
 // DrawList
