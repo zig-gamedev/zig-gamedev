@@ -32,11 +32,11 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.addIncludeDir(thisDir() ++ "/libs/enet/include");
-    lib.linkSystemLibrary("c");
+    lib.linkSystemLibraryName("c");
 
     if (exe.target.isWindows()) {
-        lib.linkSystemLibrary("ws2_32");
-        lib.linkSystemLibrary("winmm");
+        lib.linkSystemLibraryName("ws2_32");
+        lib.linkSystemLibraryName("winmm");
     }
 
     const defines = .{

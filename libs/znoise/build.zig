@@ -32,7 +32,7 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.addIncludeDir(thisDir() ++ "/libs/FastNoiseLite");
-    lib.linkSystemLibrary("c");
+    lib.linkSystemLibraryName("c");
 
     lib.addCSourceFile(
         thisDir() ++ "/libs/FastNoiseLite/FastNoiseLite.c",

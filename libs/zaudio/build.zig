@@ -7,7 +7,7 @@ pub const pkg = std.build.Pkg{
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addIncludeDir(thisDir() ++ "/libs/miniaudio");
-    exe.linkLibC();
+    exe.linkSystemLibraryName("c");
 
     const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
@@ -19,9 +19,9 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
         exe.linkFramework("AudioUnit");
         exe.linkFramework("AudioToolbox");
     } else if (target.os.tag == .linux) {
-        exe.linkSystemLibrary("pthread");
-        exe.linkSystemLibrary("m");
-        exe.linkSystemLibrary("dl");
+        exe.linkSystemLibraryName("pthread");
+        exe.linkSystemLibraryName("m");
+        exe.linkSystemLibraryName("dl");
     }
 
     exe.addCSourceFile(thisDir() ++ "/libs/miniaudio/zaudio.c", &.{"-std=c99"});

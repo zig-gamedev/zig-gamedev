@@ -50,14 +50,14 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
             "-fno-sanitize=undefined",
         });
 
-        exe.linkSystemLibrary("c");
-        exe.linkSystemLibrary("c++");
+        exe.linkSystemLibraryName("c");
+        exe.linkSystemLibraryName("c++");
 
         if (exe.target.isWindows()) {
-            exe.linkSystemLibrary("Advapi32");
-            exe.linkSystemLibrary("User32");
-            exe.linkSystemLibrary("Ws2_32");
-            exe.linkSystemLibrary("DbgHelp");
+            exe.linkSystemLibraryName("Advapi32");
+            exe.linkSystemLibraryName("User32");
+            exe.linkSystemLibraryName("Ws2_32");
+            exe.linkSystemLibraryName("DbgHelp");
         }
     }
 }

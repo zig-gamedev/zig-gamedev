@@ -33,8 +33,8 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
     lib.addIncludeDir(thisDir() ++ "/libs");
-    lib.linkSystemLibrary("c");
-    lib.linkSystemLibrary("c++");
+    lib.linkSystemLibraryName("c");
+    lib.linkSystemLibraryName("c++");
 
     const root = thisDir() ++ "/libs/Jolt";
     const flags = &.{

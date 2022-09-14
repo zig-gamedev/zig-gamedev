@@ -62,8 +62,8 @@ fn buildLibrary(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) *std.build
 
     lib.setBuildMode(exe.build_mode);
     lib.setTarget(exe.target);
-    lib.linkSystemLibrary("c");
-    lib.linkSystemLibrary("c++");
+    lib.linkSystemLibraryName("c");
+    lib.linkSystemLibraryName("c++");
 
     const par_shapes_t = if (bos.options.shape_use_32bit_indices) "-DPAR_SHAPES_T=uint32_t" else "";
 

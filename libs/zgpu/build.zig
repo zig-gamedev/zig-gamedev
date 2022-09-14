@@ -138,7 +138,8 @@ fn linkFromBinary(b: *std.build.Builder, step: *std.build.LibExeObjStep, options
 
     step.addLibraryPath(target_cache_dir);
     step.linkSystemLibraryName("dawn");
-    step.linkLibCpp();
+    step.linkSystemLibraryName("c");
+    step.linkSystemLibraryName("c++");
 
     step.addIncludeDir(include_dir);
     step.addIncludeDir((comptime thisDir()) ++ "/src/dawn");

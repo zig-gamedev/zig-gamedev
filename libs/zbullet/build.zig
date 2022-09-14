@@ -33,8 +33,8 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.setTarget(exe.target);
     lib.addIncludeDir(thisDir() ++ "/libs/cbullet");
     lib.addIncludeDir(thisDir() ++ "/libs/bullet");
-    lib.linkSystemLibrary("c");
-    lib.linkSystemLibrary("c++");
+    lib.linkSystemLibraryName("c");
+    lib.linkSystemLibraryName("c++");
 
     // TODO: Use the old damping method for now otherwise there is a hang in powf().
     const flags = &.{

@@ -28,9 +28,9 @@ fn buildLibrary(exe: *std.build.LibExeObjStep) *std.build.LibExeObjStep {
     lib.setTarget(exe.target);
     lib.addIncludeDir(thisDir() ++ "/src/c");
 
-    lib.linkSystemLibrary("c");
-    lib.linkSystemLibrary("c++");
-    lib.linkSystemLibrary("imm32");
+    lib.linkSystemLibraryName("c");
+    lib.linkSystemLibraryName("c++");
+    lib.linkSystemLibraryName("imm32");
 
     lib.addIncludeDir(thisDir() ++ "/libs");
     lib.addCSourceFile(thisDir() ++ "/libs/imgui/imgui.cpp", &.{""});
