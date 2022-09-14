@@ -1216,7 +1216,11 @@ ZGUI_API void zguiEndTabItem() {
 ZGUI_API void zguiEndTabBar() {
     ImGui::EndTabBar();
 }
-
+//--------------------------------------------------------------------------------------------------
+//
+// DrawList
+//
+//--------------------------------------------------------------------------------------------------
 ZGUI_API ImDrawList* zguiGetWindowDrawList() {
     return ImGui::GetWindowDrawList();
 }
@@ -1605,7 +1609,31 @@ ZGUI_API void zguiDrawList_PathRect(
 ) {
     draw_list->PathRect({ rect_min[0], rect_min[1] }, { rect_max[0], rect_max[1] }, rounding, flags);
 }
+//--------------------------------------------------------------------------------------------------
+//
+// Viewport
+//
+//--------------------------------------------------------------------------------------------------
+ZGUI_API ImGuiViewport* zguiGetMainViewport() {
+    return ImGui::GetMainViewport();
+}
 
+ZGUI_API void zguiViewport_GetWorkPos(ImGuiViewport* viewport, float p[2]) {
+    ImVec2 pos = viewport->WorkPos;
+    p[0] = pos.x;
+    p[1] = pos.y;
+}
+
+ZGUI_API void zguiViewport_GetWorkSize(ImGuiViewport* viewport, float p[2]) {
+    ImVec2 sz = viewport->WorkSize;
+    p[0] = sz.x;
+    p[1] = sz.y;
+}
+//--------------------------------------------------------------------------------------------------
+//
+// ImPlot
+//
+//--------------------------------------------------------------------------------------------------
 ZGUI_API ImPlotContext* zguiPlot_CreateContext() {
     return ImPlot::CreateContext();
 }
@@ -1641,3 +1669,4 @@ ZGUI_API void zguiPlot_PlotLineValues(const char* label_id, const int* values, i
 ZGUI_API void zguiPlot_EndPlot() {
     ImPlot::EndPlot();
 }
+//--------------------------------------------------------------------------------------------------
