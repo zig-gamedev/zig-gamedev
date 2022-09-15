@@ -18,15 +18,8 @@ pub const Body = *align(@sizeOf(usize)) BodyImpl;
 pub const Constraint = *align(@sizeOf(usize)) ConstraintImpl;
 pub const Point2PointConstraint = *align(@sizeOf(usize)) Point2PointConstraintImpl;
 
-pub const AllocFn = if (builtin.zig_backend == .stage1)
-    fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque
-else
-    *const fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque;
-
-pub const FreeFn = if (builtin.zig_backend == .stage1)
-    fn (ptr: ?*anyopaque) callconv(.C) void
-else
-    *const fn (ptr: ?*anyopaque) callconv(.C) void;
+pub const AllocFn = *const fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque;
+pub const FreeFn = *const fn (ptr: ?*anyopaque) callconv(.C) void;
 
 extern fn cbtAlignedAllocSetCustomAligned(
     alloc: ?AllocFn,
@@ -930,25 +923,14 @@ pub const DebugMode = packed struct {
 };
 
 pub const DebugDraw = extern struct {
-    const DrawLine1Fn = if (builtin.zig_backend == .stage1) fn (
-        ?*anyopaque,
-        *const [3]f32,
-        *const [3]f32,
-        *const [3]f32,
-    ) callconv(.C) void else *const fn (
+    const DrawLine1Fn = *const fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,
         *const [3]f32,
     ) callconv(.C) void;
 
-    const DrawLine2Fn = if (builtin.zig_backend == .stage1) fn (
-        ?*anyopaque,
-        *const [3]f32,
-        *const [3]f32,
-        *const [3]f32,
-        *const [3]f32,
-    ) callconv(.C) void else *const fn (
+    const DrawLine2Fn = *const fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,
@@ -956,13 +938,7 @@ pub const DebugDraw = extern struct {
         *const [3]f32,
     ) callconv(.C) void;
 
-    const DrawContactPointFn = if (builtin.zig_backend == .stage1) fn (
-        ?*anyopaque,
-        *const [3]f32,
-        *const [3]f32,
-        f32,
-        *const [3]f32,
-    ) callconv(.C) void else *const fn (
+    const DrawContactPointFn = *const fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,

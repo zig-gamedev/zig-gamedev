@@ -25,15 +25,8 @@ pub const Result = enum(c_int) {
     legacy_gltf,
 };
 
-const MallocFn = if (builtin.zig_backend == .stage1)
-    fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque
-else
-    *const fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
-
-const FreeFn = if (builtin.zig_backend == .stage1)
-    fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void
-else
-    *const fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void;
+const MallocFn = *const fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+const FreeFn = *const fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void;
 
 pub const MemoryOptions = extern struct {
     alloc: ?MallocFn = null,
@@ -42,13 +35,7 @@ pub const MemoryOptions = extern struct {
 };
 
 pub const FileOptions = extern struct {
-    const ReadFn = if (builtin.zig_backend == .stage1) fn (
-        *const MemoryOptions,
-        *const FileOptions,
-        CString,
-        *usize,
-        *?*anyopaque,
-    ) callconv(.C) Result else *const fn (
+    const ReadFn = *const fn (
         *const MemoryOptions,
         *const FileOptions,
         CString,
@@ -56,10 +43,7 @@ pub const FileOptions = extern struct {
         *?*anyopaque,
     ) callconv(.C) Result;
 
-    const ReleaseFn = if (builtin.zig_backend == .stage1)
-        fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void
-    else
-        *const fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void;
+    const ReleaseFn = *const fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void;
 
     read: ?ReadFn = null,
     release: ?ReleaseFn = null,

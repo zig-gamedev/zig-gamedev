@@ -17,25 +17,10 @@ pub fn deinit() void {
     allocator = null;
 }
 
-const MallocFn = if (builtin.zig_backend == .stage1)
-    fn (size: usize) callconv(.C) ?*anyopaque
-else
-    *const fn (size: usize) callconv(.C) ?*anyopaque;
-
-const CallocFn = if (builtin.zig_backend == .stage1)
-    fn (num: usize, size: usize) callconv(.C) ?*anyopaque
-else
-    *const fn (num: usize, size: usize) callconv(.C) ?*anyopaque;
-
-const ReallocFn = if (builtin.zig_backend == .stage1)
-    fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque
-else
-    *const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
-
-const FreeFn = if (builtin.zig_backend == .stage1)
-    fn (ptr: ?*anyopaque) callconv(.C) void
-else
-    *const fn (ptr: ?*anyopaque) callconv(.C) void;
+const MallocFn = *const fn (size: usize) callconv(.C) ?*anyopaque;
+const CallocFn = *const fn (num: usize, size: usize) callconv(.C) ?*anyopaque;
+const ReallocFn = *const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+const FreeFn = *const fn (ptr: ?*anyopaque) callconv(.C) void;
 
 extern fn zmesh_setAllocator(
     malloc: MallocFn,
