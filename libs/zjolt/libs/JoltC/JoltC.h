@@ -298,6 +298,8 @@ struct JPH_ContactListenerVTable
     void
     (*OnContactRemoved)(void *in_self, const JPH_SubShapeIDPair *in_sub_shape_pair);
 };
+
+
 //--------------------------------------------------------------------------------------------------
 //
 // Misc functions
@@ -719,6 +721,45 @@ JPH_Body_GetRestitution(const JPH_Body *in_body);
 
 JPH_CAPI void
 JPH_Body_SetRestitution(JPH_Body *in_body, float in_restitution);
+
+JPH_CAPI void
+JPH_Body_GetLinearVelocity(const JPH_Body *in_body, float out_angular_velocity[3]);
+
+JPH_CAPI void
+JPH_Body_SetLinearVelocity(JPH_Body *in_body, const float in_linear_velocity[3]);
+
+JPH_CAPI void
+JPH_Body_SetLinearVelocityClamped(JPH_Body *in_body, const float in_linear_velocity[3]);
+
+JPH_CAPI void
+JPH_Body_GetAngularVelocity(const JPH_Body *in_body, float out_angular_velocity[3]);
+
+JPH_CAPI void
+JPH_Body_SetAnglularVelocity(JPH_Body *in_body, const float in_angular_velocity[3]);
+
+JPH_CAPI void
+JPH_Body_SetAnglularVelocityClamped(JPH_Body *in_body, const float in_angular_velocity[3]);
+
+JPH_CAPI void
+JPH_Body_GetPointVelocityCOM(
+    const JPH_Body *in_body,
+    const float in_point_relative_to_com[3],
+    float out_velocity[3]
+);
+
+JPH_CAPI void
+JPH_Body_GetPointVelocity(const JPH_Body *in_body, const float in_point[3], float out_velocity[3]);
+
+JPH_CAPI void
+JPH_Body_AddForce(JPH_Body *in_body, const float in_force[3]);
+
+JPH_CAPI void
+JPH_Body_AddForceAtPosition(JPH_Body *in_body, const float in_force[3], const float in_position[3]);
+
+JPH_CAPI void
+JPH_Body_AddTorque(JPH_Body *in_body, const float in_torque[3]);
+
+
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_BodyID
@@ -732,6 +773,8 @@ JPH_BodyID_GetSequenceNumber(JPH_BodyID in_body_id);
 
 JPH_CAPI bool
 JPH_BodyID_IsInvalid(JPH_BodyID in_body_id);
+//--------------------------------------------------------------------------------------------------
+
 //--------------------------------------------------------------------------------------------------
 #ifdef __cplusplus
 }
