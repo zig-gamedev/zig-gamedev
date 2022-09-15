@@ -265,8 +265,6 @@ test "Handle sort order" {
 ////////////////////////////////////////////////////////////////////////////////
 
 test "Handle.format()" {
-    if (@import("builtin").zig_backend != .stage1) return error.SkipZigTest;
-
     const bufPrint = std.fmt.bufPrint;
     const expectEqualStrings = std.testing.expectEqualStrings;
 
@@ -276,5 +274,5 @@ test "Handle.format()" {
 
     var buffer = [_]u8{0} ** 128;
     const s = try bufPrint(buffer[0..], "{}", .{h});
-    try expectEqualStrings("Foo[0#1]", s);
+    try expectEqualStrings("handle.test.Handle.format().Foo[0#1]", s);
 }
