@@ -16,18 +16,18 @@ cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
 #### Cross-platfrom (Win/Lin/Mac) libraries:
-* [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - Cross-platform graphics layer built on top of native wgpu API (Dawn)
-* [zgui](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgui) - Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings
+* [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - cross-platform graphics layer built on top of native wgpu API (Dawn)
+* [zgui](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgui) - easy to use [dear imgui](https://github.com/ocornut/imgui) bindings
 * [zaudio](https://github.com/michal-z/zig-gamedev/tree/main/libs/zaudio) - Cross-platform audio built on top of [miniaudio](https://github.com/mackron/miniaudio) library
 * [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers
 * [zstbi](https://github.com/michal-z/zig-gamedev/blob/main/libs/zstbi) - image loading with [stbi](https://github.com/nothings/stb)
-* [zglfw](https://github.com/michal-z/zig-gamedev/blob/main/libs/zglfw) - [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
+* [zglfw](https://github.com/michal-z/zig-gamedev/blob/main/libs/zglfw) - minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
 * [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
 * [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - loading, generating, processing and optimizing triangle meshes
 * [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
 * [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 * [zpool](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpool) - generic pool & handle implementation
-* [znetwork](https://github.com/michal-z/zig-gamedev/blob/main/libs/znetwork) - Zig bindings for [ENet](https://github.com/lsalzman/enet) (experimental)
+* [znetwork](https://github.com/michal-z/zig-gamedev/blob/main/libs/znetwork) - small abstraction layer around TCP & UDP (vendored from [here](https://github.com/MasterQ32/zig-network))
 
 #### Windows libraries:
 * [zwin32](https://github.com/michal-z/zig-gamedev/blob/main/libs/zwin32) - Zig bindings for Win32 API
