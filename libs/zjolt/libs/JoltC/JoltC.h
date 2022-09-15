@@ -759,6 +759,57 @@ JPH_Body_AddForceAtPosition(JPH_Body *in_body, const float in_force[3], const fl
 JPH_CAPI void
 JPH_Body_AddTorque(JPH_Body *in_body, const float in_torque[3]);
 
+JPH_CAPI void
+JPH_Body_GetInverseInertia(const JPH_Body *in_body, float out_inverse_inertia[16]);
+
+JPH_CAPI void
+JPH_Body_AddImpulse(JPH_Body *in_body, const float in_impulse[3]);
+
+JPH_CAPI void
+JPH_Body_AddAngularImpulse(JPH_Body *in_body, const float in_angular_impulse[3]);
+
+JPH_CAPI void
+JPH_Body_MoveKinematic(
+    JPH_Body *in_body,
+    const float in_target_rotation[4],
+    float in_delta_time
+);
+
+JPH_CAPI void
+JPH_Body_ApplyBuoyancyImpulse(
+    JPH_Body *in_body,
+    const float in_plane[4],
+    float in_buoyancy,
+    float in_linear_drag,
+    float in_angular_drag,
+    const float in_fluid_velocity[4],
+    const float in_gravity[4],
+    float in_delta_time
+);
+
+JPH_CAPI bool
+JPH_Body_IsInBroadPhase(const JPH_Body *in_body);
+
+JPH_CAPI bool
+JPH_Body_IsCollisionCacheInvalid(const JPH_Body *in_body);
+
+JPH_CAPI const JPH_Shape *
+JPH_Body_GetShape(const JPH_Body *in_body);
+
+JPH_CAPI void
+JPH_Body_GetPosition(const JPH_Body *in_body, float out_position[3]);
+
+JPH_CAPI void
+JPH_Body_GetRotation(const JPH_Body *in_body, float out_rotation[4]);
+
+JPH_CAPI void
+JPH_Body_GetWorldTransform(const JPH_Body *in_body, float out_transform[16]);
+
+JPH_CAPI void
+JPH_Body_GetCenterOfMassPosition(const JPH_Body *in_body, float out_position_com[3]);
+
+JPH_CAPI void
+JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_transform[16]);
 
 //--------------------------------------------------------------------------------------------------
 //

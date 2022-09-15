@@ -1256,6 +1256,140 @@ JPH_Body_AddTorque(JPH_Body *in_body, const float in_torque[3])
         JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_torque))
     );
 }
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetInverseInertia(const JPH_Body *in_body, float out_inverse_inertia[16])
+{
+    assert(in_body != nullptr);
+    const JPH::Mat44 m = reinterpret_cast<const JPH::Body *>(in_body)->GetInverseInertia();
+    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_inverse_inertia));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_AddImpulse(JPH_Body *in_body, const float in_impulse[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->AddImpulse(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_impulse))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_AddAngularImpulse(JPH_Body *in_body, const float in_angular_impulse[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->AddAngularImpulse(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_impulse))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_MoveKinematic(
+    JPH_Body *in_body,
+    const float in_target_position[3],
+    const float in_target_rotation[4],
+    float in_delta_time
+)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->MoveKinematic(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_target_position)),
+        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(
+            reinterpret_cast<const JPH::Float4 *>(in_target_rotation))
+        ),
+        in_delta_time
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_ApplyBuoyancyImpulse(
+    JPH_Body *in_body,
+    const float in_plane[4],
+    float in_buoyancy,
+    float in_linear_drag,
+    float in_angular_drag,
+    const float in_fluid_velocity[3],
+    const float in_gravity[3],
+    float in_delta_time
+)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->ApplyBuoyancyImpulse(
+        JPH::Plane(JPH::Vec4::sLoadFloat4Aligned(
+            reinterpret_cast<const JPH::Float4 *>(in_plane)
+        )),
+        in_buoyancy,
+        in_linear_drag,
+        in_angular_drag,
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_fluid_velocity)),
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_gravity)),
+        in_delta_time
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_IsInBroadPhase(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->IsInBroadPhase();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI bool
+JPH_Body_IsCollisionCacheInvalid(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->IsCollisionCacheInvalid();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI const JPH_Shape *
+JPH_Body_GetShape(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH_Shape *>(
+        reinterpret_cast<const JPH::Body *>(in_body)->GetShape()
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetPosition(const JPH_Body *in_body, float out_position[3])
+{
+    assert(in_body != nullptr);
+    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetPosition();
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetRotation(const JPH_Body *in_body, float out_rotation[4])
+{
+    assert(in_body != nullptr);
+    const JPH::Quat q = reinterpret_cast<const JPH::Body *>(in_body)->GetRotation();
+    q.GetXYZW().StoreFloat4(reinterpret_cast<JPH::Float4 *>(out_rotation));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetWorldTransform(const JPH_Body *in_body, float out_transform[16])
+{
+    assert(in_body != nullptr);
+    const JPH::Mat44 m = reinterpret_cast<const JPH::Body *>(in_body)->GetWorldTransform();
+    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_transform));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetCenterOfMassPosition(const JPH_Body *in_body, float out_position[3])
+{
+    assert(in_body != nullptr);
+    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetCenterOfMassPosition();
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_position));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_transform[16])
+{
+    assert(in_body != nullptr);
+    const JPH::Body *body = body;
+    const JPH::Mat44 m = body->GetInverseCenterOfMassTransform();
+    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_transform));
+}
 
 //--------------------------------------------------------------------------------------------------
 //
