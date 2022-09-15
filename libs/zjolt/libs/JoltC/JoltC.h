@@ -679,46 +679,46 @@ JPH_CAPI bool
 JPH_Body_CanBeKinematicOrDynamic(const JPH_Body *in_body);
 
 JPH_CAPI void
-SetIsSensor(JPH_Body *in_body, bool in_is_sensor);
+JPH_Body_SetIsSensor(JPH_Body *in_body, bool in_is_sensor);
 
 JPH_CAPI bool
-IsSensor(const JPH_Body *in_body);
+JPH_Body_IsSensor(const JPH_Body *in_body);
 
 JPH_CAPI JPH_MotionType
-GetMotionType(const JPH_Body *in_body);
+JPH_Body_GetMotionType(const JPH_Body *in_body);
 
 JPH_CAPI void
-SetMotionType(JPH_Body *in_body, JPH_MotionType in_motion_type);
+JPH_Body_SetMotionType(JPH_Body *in_body, JPH_MotionType in_motion_type);
 
 JPH_CAPI JPH_BroadPhaseLayer
-GetBroadPhaseLayer(const JPH_Body *in_body);
+JPH_Body_GetBroadPhaseLayer(const JPH_Body *in_body);
 
 JPH_CAPI JPH_ObjectLayer
-GetObjectLayer(const JPH_Body *in_body);
+JPH_Body_GetObjectLayer(const JPH_Body *in_body);
 
-JPH_CAPI JPH_CollisionGroup
-GetCollisionGroup(const JPH_Body *in_body);
+JPH_CAPI JPH_CollisionGroup *
+JPH_Body_GetCollisionGroup(JPH_Body *in_body);
 
 JPH_CAPI void
-SetCollisionGroup(JPH_Body *in_body, JPH_CollisionGroup group);
+JPH_Body_SetCollisionGroup(JPH_Body *in_body, const JPH_CollisionGroup *in_group);
 
 JPH_CAPI bool
-GetAllowSleeping(const JPH_Body *in_body);
+JPH_Body_GetAllowSleeping(const JPH_Body *in_body);
 
 JPH_CAPI void
-SetAllowSleeping(JPH_Body *in_body, bool in_allow_sleeping);
+JPH_Body_SetAllowSleeping(JPH_Body *in_body, bool in_allow_sleeping);
 
 JPH_CAPI float
-GetFriction(const JPH_Body *in_body);
+JPH_Body_GetFriction(const JPH_Body *in_body);
 
 JPH_CAPI void
-SetFriction(JPH_Body *in_body, float in_friction);
+JPH_Body_SetFriction(JPH_Body *in_body, float in_friction);
 
 JPH_CAPI float
-GetRestitution(const JPH_Body *in_body);
+JPH_Body_GetRestitution(const JPH_Body *in_body);
 
 JPH_CAPI void
-SetRestitution(JPH_Body *in_body, float in_restitution);
+JPH_Body_SetRestitution(JPH_Body *in_body, float in_restitution);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_BodyID

@@ -1095,18 +1095,20 @@ JPH_Body_GetObjectLayer(const JPH_Body *in_body)
     return static_cast<JPH_ObjectLayer>(reinterpret_cast<const JPH::Body *>(in_body)->GetObjectLayer());
 }
 //--------------------------------------------------------------------------------------------------
-JPH_CAPI JPH_CollisionGroup
-JPH_Body_GetCollisionGroup(const JPH_Body *in_body)
+JPH_CAPI JPH_CollisionGroup *
+JPH_Body_GetCollisionGroup(JPH_Body *in_body)
 {
     assert(in_body != nullptr);
-    return reinterpret_cast<const JPH_CollisionGroup &>(reinterpret_cast<const JPH::Body *>(in_body)->GetCollisionGroup());
+    JPH::CollisionGroup *ptr = &reinterpret_cast<JPH::Body *>(in_body)->GetCollisionGroup();
+    return reinterpret_cast<JPH_CollisionGroup *>(ptr);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_Body_SetCollisionGroup(JPH_Body *in_body, JPH_CollisionGroup in_group)
+JPH_Body_SetCollisionGroup(JPH_Body *in_body, const JPH_CollisionGroup *in_group)
 {
-    assert(in_body != nullptr);
-    reinterpret_cast<JPH::Body *>(in_body)->SetCollisionGroup(reinterpret_cast<JPH::CollisionGroup &>(in_group));
+    assert(in_body != nullptr && in_group != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetCollisionGroup(
+        *reinterpret_cast<const JPH::CollisionGroup *>(in_group));
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI bool
