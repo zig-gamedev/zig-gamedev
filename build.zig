@@ -26,8 +26,6 @@ pub fn build(b: *std.build.Builder) void {
             physically_based_rendering_wgpu.build(b, options),
             "physically_based_rendering_wgpu",
         );
-        // TODO: Re-enable zenet when stage3 compiler is more stable
-        //installDemo(b, network_test.build(b, options), "network_test");
     }
 
     //
@@ -146,7 +144,6 @@ const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
 const intro = @import("samples/intro/build.zig");
 const minimal = @import("samples/minimal/build.zig");
 const procedural_mesh = @import("samples/procedural_mesh/build.zig");
-const network_test = @import("samples/network_test/build.zig");
 const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
 const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
