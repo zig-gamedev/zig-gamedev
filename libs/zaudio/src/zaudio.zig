@@ -2266,12 +2266,10 @@ test "zaudio.engine.basic" {
 
     try engine.setTime(engine.getTime());
 
-    std.debug.print("Channels: {}, SampleRate: {}, NumListeners: {}, ClosestListener: {}\n", .{
-        engine.getChannels(),
-        engine.getSampleRate(),
-        engine.getListenerCount(),
-        engine.findClosestListener(.{ 0.0, 0.0, 0.0 }),
-    });
+    _ = engine.getChannels();
+    _ = engine.getSampleRate();
+    _ = engine.getListenerCount();
+    _ = engine.findClosestListener(.{ 0.0, 0.0, 0.0 });
 
     try engine.start();
     try engine.stop();

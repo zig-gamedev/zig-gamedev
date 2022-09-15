@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
+//#define PRINT_OUTPUT
 #define NUM_LAYERS 2
 #define LAYER_NON_MOVING 0
 #define LAYER_MOVING 1
@@ -24,14 +25,18 @@ struct BPLayerInterfaceImpl
 static uint32_t
 BPLayerInterface_GetNumBroadPhaseLayers(const void *in_self)
 {
+#ifdef PRINT_OUTPUT
     fprintf(stderr, "BPLayerInterface_GetNumBroadPhaseLayers()\n");
+#endif
     return NUM_LAYERS;
 }
 
 static JPH_BroadPhaseLayer
 BPLayerInterface_GetBroadPhaseLayer(const void *in_self, JPH_ObjectLayer in_layer)
 {
+#ifdef PRINT_OUTPUT
     fprintf(stderr, "BPLayerInterface_GetBroadPhaseLayer()\n");
+#endif
     assert(in_layer < NUM_LAYERS);
     const BPLayerInterfaceImpl *self = (BPLayerInterfaceImpl *)in_self;
     return self->object_to_broad_phase[in_layer];
@@ -71,9 +76,11 @@ MyContactListener_OnContactValidate(void *in_self,
 {
     const JPH_BodyID body1_id = JPH_Body_GetID(in_body1);
     const JPH_BodyID body2_id = JPH_Body_GetID(in_body2);
+#ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnContactValidate(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
             JPH_BodyID_GetSequenceNumber(body1_id), JPH_BodyID_GetIndex(body1_id),
             JPH_BodyID_GetSequenceNumber(body2_id), JPH_BodyID_GetIndex(body2_id));
+#endif
 
     return JPH_VALIDATE_RESULT_ACCEPT_ALL_CONTACTS;
 }
@@ -87,9 +94,11 @@ MyContactListener_OnContactAdded(void *in_self,
 {
     const JPH_BodyID body1_id = JPH_Body_GetID(in_body1);
     const JPH_BodyID body2_id = JPH_Body_GetID(in_body2);
+#ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnContactAdded(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
             JPH_BodyID_GetSequenceNumber(body1_id), JPH_BodyID_GetIndex(body1_id),
             JPH_BodyID_GetSequenceNumber(body2_id), JPH_BodyID_GetIndex(body2_id));
+#endif
 }
 
 static void
@@ -101,9 +110,11 @@ MyContactListener_OnContactPersisted(void *in_self,
 {
     const JPH_BodyID body1_id = JPH_Body_GetID(in_body1);
     const JPH_BodyID body2_id = JPH_Body_GetID(in_body2);
+#ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnContactPersisted(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
             JPH_BodyID_GetSequenceNumber(body1_id), JPH_BodyID_GetIndex(body1_id),
             JPH_BodyID_GetSequenceNumber(body2_id), JPH_BodyID_GetIndex(body2_id));
+#endif
 }
 
 static void
@@ -111,9 +122,11 @@ MyContactListener_OnContactRemoved(void *in_self, const JPH_SubShapeIDPair *in_s
 {
     const JPH_BodyID body1_id = in_sub_shape_pair->body1_id;
     const JPH_BodyID body2_id = in_sub_shape_pair->body2_id;
+#ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnContactRemoved(): First BodyID is (%d, %d), second BodyID is (%d, %d)\n",
             JPH_BodyID_GetSequenceNumber(body1_id), JPH_BodyID_GetIndex(body1_id),
             JPH_BodyID_GetSequenceNumber(body2_id), JPH_BodyID_GetIndex(body2_id));
+#endif
 }
 
 static const JPH_ContactListenerVTable g_contact_listener_vtable =
@@ -144,17 +157,21 @@ struct MyActivationListener
 static void
 MyActivationListener_OnBodyActivated(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data)
 {
+#ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnBodyActivated(): BodyID is (%d, %d)\n",
             JPH_BodyID_GetSequenceNumber(*in_body_id),
             JPH_BodyID_GetIndex(*in_body_id));
+#endif
 }
 
 static void
 MyActivationListener_OnBodyDeactivated(void *in_self, const JPH_BodyID *in_body_id, uint64_t in_user_data)
 {
+#ifdef PRINT_OUTPUT
     fprintf(stderr, "\tOnBodyDeactivated(): BodyID is (%d, %d)\n",
             JPH_BodyID_GetSequenceNumber(*in_body_id),
             JPH_BodyID_GetIndex(*in_body_id));
+#endif
 }
 
 static const JPH_BodyActivationListenerVTable g_activation_listener_vtable =
@@ -462,10 +479,12 @@ JoltCTest_HelloWorld(void)
         float velocity[3];
         JPH_BodyInterface_GetLinearVelocity(body_interface, sphere_id, &velocity[0]);
 
+#ifdef PRINT_OUTPUT
         fprintf(stderr, "Step %d\n\tPosition = (%f, %f, %f), Velocity(%f, %f, %f)\n",
                 step,
                 position[0], position[1], position[2],
                 velocity[0], velocity[1], velocity[2]);
+#endif
 
         const float delta_time = 1.0f / 60.0f;
         const int collision_steps = 1;
