@@ -1151,6 +1151,113 @@ JPH_Body_SetRestitution(JPH_Body *in_body, float in_restitution)
     reinterpret_cast<JPH::Body *>(in_body)->SetRestitution(in_restitution);
 }
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetLinearVelocity(JPH_Body *in_body, float out_linear_velocity[3])
+{
+    assert(in_body != nullptr);
+    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetLinearVelocity();
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_linear_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetLinearVelocity(JPH_Body *in_body, const float in_linear_velocity[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetLinearVelocity(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetLinearVelocityClamped(JPH_Body *in_body, const float in_linear_velocity[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetLinearVelocityClamped(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetAngularVelocity(JPH_Body *in_body, float out_angular_velocity[3])
+{
+    assert(in_body != nullptr);
+    const JPH::Vec3 v = static_cast<JPH::Vec3>(
+        reinterpret_cast<const JPH::Body *>(in_body)->GetAngularVelocity()
+    );
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_angular_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetAnglularVelocity(JPH_Body *in_body, const float in_angular_velocity[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetAngularVelocity(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetAnglularVelocityClamped(JPH_Body *in_body, const float in_angular_velocity[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetAngularVelocityClamped(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetPointVelocityCOM(
+    JPH_Body *in_body,
+    const float in_point_relative_to_com[3],
+    float out_velocity[3]
+)
+{
+    assert(in_body != nullptr);
+    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetPointVelocityCOM(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_point_relative_to_com))
+    );
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetPointVelocity(JPH_Body *in_body, const float in_point[3], float out_velocity[3])
+{
+    assert(in_body != nullptr);
+    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetPointVelocity(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_point))
+    );
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_AddForce(JPH_Body *in_body, const float in_force[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->AddForce(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_force))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_AddForceAtPosition(JPH_Body *in_body, const float in_force[3], const float in_position[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->AddForce(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_force)),
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_position))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_AddTorque(JPH_Body *in_body, const float in_torque[3])
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->AddTorque(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_torque))
+    );
+}
+
+//--------------------------------------------------------------------------------------------------
 //
 // JPH_BodyID
 //
@@ -1173,3 +1280,4 @@ JPH_BodyID_IsInvalid(JPH_BodyID in_body_id)
     return JPH::BodyID(in_body_id).IsInvalid();
 }
 //--------------------------------------------------------------------------------------------------
+
