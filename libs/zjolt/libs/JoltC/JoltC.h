@@ -123,6 +123,15 @@ typedef struct JPH_Body             JPH_Body;
 typedef struct JPH_BodyInterface    JPH_BodyInterface;
 typedef struct JPH_GroupFilter      JPH_GroupFilter;
 
+//--------------------------------------------------------------------------------------------------
+//
+// Geometry Types
+//
+//--------------------------------------------------------------------------------------------------
+typedef struct JPH_AABox            JPH_AABox;
+typedef struct JPH_Plane            JPH_Plane;
+typedef struct JPH_Sphere           JPH_Sphere;
+
 typedef struct JPH_ShapeSettings               JPH_ShapeSettings;
 typedef struct JPH_ConvexShapeSettings         JPH_ConvexShapeSettings;
 typedef struct JPH_BoxShapeSettings            JPH_BoxShapeSettings;
@@ -139,7 +148,14 @@ typedef bool
 typedef bool
 (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
 
+//--------------------------------------------------------------------------------------------------
+//
+// Physics/Body Types
+//
+//--------------------------------------------------------------------------------------------------
 typedef struct JPH_MassProperties       JPH_MassProperties;
+typedef struct JPH_MotionProperties     JPH_MotionProperties;
+
 typedef struct JPH_CollisionGroup       JPH_CollisionGroup;
 typedef struct JPH_BodyCreationSettings JPH_BodyCreationSettings;
 typedef struct JPH_ContactManifold      JPH_ContactManifold;
@@ -151,11 +167,74 @@ typedef struct JPH_BroadPhaseLayerInterfaceVTable JPH_BroadPhaseLayerInterfaceVT
 typedef struct JPH_BodyActivationListenerVTable   JPH_BodyActivationListenerVTable;
 typedef struct JPH_ContactListenerVTable          JPH_ContactListenerVTable;
 
+
+//--------------------------------------------------------------------------------------------------
+//
+// Structures
+//
+//--------------------------------------------------------------------------------------------------
+// NOTE: Needs to be kept in sync with JPH::AABox
+struct JPH_AABox
+{
+    alignas(16) float  min[3];
+    alignas(16) float  max[3];
+};
+
+// NOTE: Needs to be kept in sync with JPH::Plane
+struct JPH_Plane
+{
+    alignas(16) float  normal_and_constant[3];
+};
+
+// NOTE: Needs to be kept in sync with JPH::Sphere
+struct JPH_Sphere
+{
+    float  center[3];
+    float  radius;
+};
+
 // NOTE: Needs to be kept in sync with JPH::MassProperties
 struct JPH_MassProperties
 {
     float              mass;
     alignas(16) float  inertia[16];
+};
+
+// NOTE: Needs to be kept in sync with JPH::MotionProperties
+// TODO: Fix me! Incorrect size and/or incorrectly aligned members
+struct JPH_MotionProperties
+{
+    // 1st cache line
+    // 16 byte aligned
+    alignas(16) float   linear_velocity[3];
+    alignas(16) float   angular_velocity[3];
+    alignas(16) float   inv_inertia_diagnonal[3];
+    alignas(16) float   inertia_rotation[4];
+
+    // 2nd cache line
+    // 4 byte aligned
+    float    force[3];
+    float               torque[3];
+    float               inv_mass;
+    float               linear_damping;
+    float               angular_daming;
+    float               max_linear_velocity;
+    float               gravity_factor;
+    uint32_t            index_in_active_bodies;
+    uint32_t            island_index;
+
+    // 1 byte aligned
+    JPH_MotionQuality   motion_quality;
+    bool                allow_sleeping;
+
+    // 3rd cache line (least freqently used)
+    // 4 byte aligned
+    JPH_Sphere          sleep_test_spheres[3];
+    float               sleep_test_timer;
+
+#ifdef JPH_ENABLE_ASSERTS
+    JPH_MotionType      cached_motion_type;
+#endif
 };
 
 // NOTE: Needs to be kept in sync with JPH::CollisionGroup
@@ -326,6 +405,16 @@ JPH_BodyCreationSettings_Init(const JPH_Shape *in_shape,
                               const float in_rotation[4],
                               JPH_MotionType in_motion_type,
                               JPH_ObjectLayer in_layer);
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_MotionProperties
+//
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_CollisionGroup
+//
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_CollisionGroup
 JPH_CollisionGroup_InitDefault(void);
 //--------------------------------------------------------------------------------------------------
@@ -778,7 +867,7 @@ JPH_Body_MoveKinematic(
 JPH_CAPI void
 JPH_Body_ApplyBuoyancyImpulse(
     JPH_Body *in_body,
-    const float in_plane[4],
+    const JPH_Plane *in_plane,
     float in_buoyancy,
     float in_linear_drag,
     float in_angular_drag,

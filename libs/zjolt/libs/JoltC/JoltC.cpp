@@ -51,7 +51,13 @@ static_assert(sizeof(JPH::EActivation)             == sizeof(JPH_Activation));
 static_assert(sizeof(JPH::ValidateResult)          == sizeof(JPH_ValidateResult));
 static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer));
 static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer));
+
+static_assert(sizeof(JPH::AABox)                   == sizeof(JPH_AABox));
+static_assert(sizeof(JPH::Plane)                   == sizeof(JPH_Plane));
+static_assert(sizeof(JPH::Sphere)                  == sizeof(JPH_Sphere));
+
 static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties));
+static_assert(sizeof(JPH::MotionProperties)        == sizeof(JPH_MotionProperties));
 static_assert(sizeof(JPH::CollisionGroup)          == sizeof(JPH_CollisionGroup));
 static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSettings));
 static_assert(sizeof(JPH::ContactManifold)         == sizeof(JPH_ContactManifold));
@@ -59,13 +65,18 @@ static_assert(sizeof(JPH::ContactSettings)         == sizeof(JPH_ContactSettings
 static_assert(sizeof(JPH::SubShapeIDPair)          == sizeof(JPH_SubShapeIDPair));
 static_assert(sizeof(JPH::CollideShapeResult)      == sizeof(JPH_CollideShapeResult));
 
-static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties));
-static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup));
-static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPH_BodyCreationSettings));
-static_assert(alignof(JPH::ContactManifold)      == alignof(JPH_ContactManifold));
-static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings));
-static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair));
-static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult));
+static_assert(alignof(JPH::AABox)                  == alignof(JPH_AABox));
+static_assert(alignof(JPH::Plane)                  == alignof(JPH_Plane));
+static_assert(alignof(JPH::Sphere)                 == alignof(JPH_Sphere));
+
+static_assert(alignof(JPH::MassProperties)         == alignof(JPH_MassProperties));
+static_assert(alignof(JPH::MotionProperties)       == alignof(JPH_MotionProperties));
+static_assert(alignof(JPH::CollisionGroup)         == alignof(JPH_CollisionGroup));
+static_assert(alignof(JPH::BodyCreationSettings)   == alignof(JPH_BodyCreationSettings));
+static_assert(alignof(JPH::ContactManifold)        == alignof(JPH_ContactManifold));
+static_assert(alignof(JPH::ContactSettings)        == alignof(JPH_ContactSettings));
+static_assert(alignof(JPH::SubShapeIDPair)         == alignof(JPH_SubShapeIDPair));
+static_assert(alignof(JPH::CollideShapeResult)     == alignof(JPH_CollideShapeResult));
 
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
@@ -1304,7 +1315,7 @@ JPH_Body_MoveKinematic(
 JPH_CAPI void
 JPH_Body_ApplyBuoyancyImpulse(
     JPH_Body *in_body,
-    const float in_plane[4],
+    const JPH_Plane *in_plane,
     float in_buoyancy,
     float in_linear_drag,
     float in_angular_drag,
