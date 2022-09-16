@@ -91,7 +91,6 @@ pub fn build(b: *std.build.Builder) void {
 
     const zbullet_tests = @import("libs/zbullet/build.zig").buildTests(b, options.build_mode, options.target);
     zbullet_tests.addPackage(zmath.pkg);
-    zbullet_tests.want_lto = false; // TODO: Problems with LTO on Windows.
     test_step.dependOn(&zbullet_tests.step);
 
     const znoise_tests = @import("libs/znoise/build.zig").buildTests(b, options.build_mode, options.target);
@@ -104,7 +103,6 @@ pub fn build(b: *std.build.Builder) void {
     test_step.dependOn(&zaudio_tests.step);
 
     const zjolt_tests = @import("libs/zjolt/build.zig").buildTests(b, options.build_mode, options.target);
-    zjolt_tests.want_lto = false; // TODO: Problems with LTO on Windows.
     test_step.dependOn(&zjolt_tests.step);
 
     const zglfw_tests = @import("libs/zglfw/build.zig").buildTests(b, options.build_mode, options.target);
