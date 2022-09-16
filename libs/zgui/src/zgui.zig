@@ -2285,17 +2285,17 @@ extern fn zguiIsAnyItemActive() bool;
 extern fn zguiIsAnyItemFocused() bool;
 //--------------------------------------------------------------------------------------------------
 //
-// Internal Helpers
+// Helpers
 //
 //--------------------------------------------------------------------------------------------------
 var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
 
-fn format(comptime fmt: []const u8, args: anytype) []const u8 {
+pub fn format(comptime fmt: []const u8, args: anytype) []const u8 {
     const len = std.fmt.count(fmt, args);
     if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
     return std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
 }
-fn formatZ(comptime fmt: []const u8, args: anytype) [:0]const u8 {
+pub fn formatZ(comptime fmt: []const u8, args: anytype) [:0]const u8 {
     const len = std.fmt.count(fmt ++ "\x00", args);
     if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
     return std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
