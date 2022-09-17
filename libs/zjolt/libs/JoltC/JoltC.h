@@ -114,7 +114,6 @@ typedef uint32_t JPH_SubShapeID;
 typedef uint32_t JPH_CollisionGroupID;
 typedef uint32_t JPH_CollisionSubGroupID;
 
-typedef struct JPH_PhysicsSystem    JPH_PhysicsSystem;
 typedef struct JPH_Shape            JPH_Shape;
 typedef struct JPH_PhysicsMaterial  JPH_PhysicsMaterial;
 typedef struct JPH_TempAllocator    JPH_TempAllocator;
@@ -147,6 +146,14 @@ typedef bool
 
 typedef bool
 (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
+
+//--------------------------------------------------------------------------------------------------
+//
+// Physics Types
+//
+//--------------------------------------------------------------------------------------------------
+typedef struct JPH_PhysicsSystem        JPH_PhysicsSystem;
+typedef struct JPH_StateRecorder        JPH_StateRecorder;
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -378,7 +385,6 @@ struct JPH_ContactListenerVTable
     (*OnContactRemoved)(void *in_self, const JPH_SubShapeIDPair *in_sub_shape_pair);
 };
 
-
 //--------------------------------------------------------------------------------------------------
 //
 // Misc functions
@@ -410,6 +416,234 @@ JPH_BodyCreationSettings_Init(const JPH_Shape *in_shape,
 // JPH_MotionProperties
 //
 //--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_MotionQuality
+JPH_MotionProperties_GetMotionQuality(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_SetMotionQuality(
+    JPH_MotionProperties *in_properties,
+    JPH_MotionQuality in_motion_quality
+);
+
+JPH_CAPI void
+JPH_MotionProperties_GetLinearVelocity(
+    const JPH_MotionProperties *in_properties,
+    float out_linear_velocity[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SetLinearVelocity(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_velocity[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SetLinearVelocityClamped(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_velocity[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SetAngularVelocity(
+    JPH_MotionProperties *in_properties,
+    const float in_angular_velocity[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SetAngularVelocityClamped(
+    JPH_MotionProperties *in_properties,
+    const float in_angular_velocity[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_MoveKinematic(
+    JPH_MotionProperties *in_properties,
+    const float in_delta_position[3],
+    const float in_delta_rotation[4],
+    float in_delta_time
+);
+
+JPH_CAPI void
+JPH_MotionProperties_ClampLinearVelocity(JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_ClampAngularVelocity(JPH_MotionProperties *in_properties);
+
+JPH_CAPI float
+JPH_MotionProperties_GetLinearDamping(JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_SetLinearDamping(
+    JPH_MotionProperties *in_properties,
+    float in_linear_damping
+);
+
+JPH_CAPI float
+JPH_MotionProperties_GetAngularDamping(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_SetAngularDamping(
+    JPH_MotionProperties *in_properties,
+    float in_angular_damping
+);
+
+JPH_CAPI float
+JPH_MotionProperties_GetGravityFactor(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_SetGravityFactor(
+    JPH_MotionProperties *in_properties,
+    float in_gravity_factor
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SetMassProperties(
+    JPH_MotionProperties *in_properties,
+    const JPH_MassProperties *in_mass_properties
+);
+
+JPH_CAPI float
+JPH_MotionProperties_GetInverseMass(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI float
+JPH_MotionProperties_GetInverseMassUnchecked(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_SetInverseMass(JPH_MotionProperties *in_properties, float in_inv_mass);
+
+JPH_CAPI void
+JPH_MotionProperties_GetInverseInertiaDiagonal(
+    const JPH_MotionProperties *in_properties,
+    float out_inverse_inertia_diagonal[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_GetInertiaRotation(
+    const JPH_MotionProperties *in_properties,
+    float out_inertia_rotation[4]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SetInverseInertia(
+    JPH_MotionProperties *in_properties,
+    const float in_diagonal[3],
+    const float in_rotation[4]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_GetLocalSpaceInverseInertia(
+    const JPH_MotionProperties *in_properties,
+    float out_matrix[16]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_GetLocalSpaceInverseInertiaUnchecked(
+    const JPH_MotionProperties *in_properties,
+    float out_matrix[16]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_GetInverseInertiaForRotation(
+    const JPH_MotionProperties *in_properties,
+    const float in_rotation_matrix[4],
+    float out_matrix[16]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(
+    JPH_MotionProperties *in_properties,
+    const float in_body_rotation[4],
+    const float in_vector[3],
+    float out_vector[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_GetPointVelocityCOM(
+    const JPH_MotionProperties *in_properties,
+    const float in_point_relative_to_com[3],
+    float out_point[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_ApplyForceTorqueAndDragInternal(
+    JPH_MotionProperties *in_properties,
+    const float in_body_rotation[4],
+    const float in_gravity[3],
+    float in_delta_time
+);
+
+JPH_CAPI void
+JPH_MotionProperties_ResetForceAndTorqueInternal(JPH_MotionProperties *in_properties);
+
+JPH_CAPI uint32_t
+JPH_MotionProperties_GetIslandIndexInternal(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_SetIslandIndexInternal(JPH_MotionProperties *in_properties, uint32_t in_index);
+
+JPH_CAPI uint32_t
+JPH_MotionProperties_GetIndexInActiveBodiesInternal(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_ResetSleepTestSpheres(
+    JPH_MotionProperties *in_properties,
+    const float *in_points
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SaveState(
+    const JPH_MotionProperties *in_properties,
+    JPH_StateRecorder *in_stream
+);
+
+JPH_CAPI void
+JPH_MotionProperties_RestoreState(
+    JPH_MotionProperties *in_properties,
+    JPH_StateRecorder *in_stream
+);
+
+JPH_CAPI float
+JPH_MotionProperties_GetMaxLinearVelocity(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_SetMaxLinearVelocity(
+    JPH_MotionProperties *in_properties,
+    float in_max_linear_velocity
+);
+
+JPH_CAPI float
+JPH_MotionProperties_GetMaxAngularVelocity(const JPH_MotionProperties *in_properties);
+
+JPH_CAPI void
+JPH_MotionProperties_SetMaxAngularVelocity(
+    JPH_MotionProperties *in_properties,
+    float in_max_angular_velocity
+);
+
+JPH_CAPI void
+JPH_MotionProperties_AddLinearVelocityStep(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_velocity_change[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SubLinearVelocityStep(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_velocity_change[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_AddAngularVelocityStep(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_angular_change[3]
+);
+
+JPH_CAPI void
+JPH_MotionProperties_SubAngularangularStep(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_angular_change[3]
+);
+
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_CollisionGroup
@@ -586,11 +820,7 @@ JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_se
 JPH_CAPI void
 JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings,
                                           float in_convex_radius);
-//--------------------------------------------------------------------------------------------------
-//
-// JPH_CapsuleShapeSettings (-> JPH_ConvexShapeSettings -> JPH_ShapeSettings)
-//
-//--------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_CapsuleShapeSettings *
 JPH_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radius);
 
