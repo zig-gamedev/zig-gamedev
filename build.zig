@@ -168,6 +168,8 @@ fn installDemo(
 ) void {
     // TODO: Problems with LTO on Windows.
     exe.want_lto = false;
+    if (exe.build_mode == .ReleaseFast)
+        exe.strip = true;
 
     comptime var desc_name: [256]u8 = [_]u8{0} ** 256;
     comptime _ = std.mem.replace(u8, name, "_", " ", desc_name[0..]);

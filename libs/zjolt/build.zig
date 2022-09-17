@@ -5,7 +5,14 @@ pub const pkg = std.build.Pkg{
     .source = .{ .path = thisDir() ++ "/src/zjolt.zig" },
 };
 
-pub fn build(_: *std.build.Builder) void {}
+pub fn build(b: *std.build.Builder) void {
+    const build_mode = b.standardReleaseOptions();
+    const target = b.standardTargetOptions(.{});
+    const tests = buildTests(b, build_mode, target);
+
+    const test_step = b.step("test", "Run zjolt tests");
+    test_step.dependOn(&tests.step);
+}
 
 pub fn buildTests(
     b: *std.build.Builder,
