@@ -20,8 +20,8 @@ pub fn buildTests(
 }
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
-    exe.addIncludeDir(thisDir() ++ "/libs/cbullet");
-    exe.addIncludeDir(thisDir() ++ "/libs/bullet");
+    exe.addIncludePath(thisDir() ++ "/libs/cbullet");
+    exe.addIncludePath(thisDir() ++ "/libs/bullet");
     exe.linkSystemLibraryName("c");
     exe.linkSystemLibraryName("c++");
 

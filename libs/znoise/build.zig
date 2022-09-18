@@ -20,7 +20,7 @@ pub fn buildTests(
 }
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
-    exe.addIncludeDir(thisDir() ++ "/libs/FastNoiseLite");
+    exe.addIncludePath(thisDir() ++ "/libs/FastNoiseLite");
     exe.linkSystemLibraryName("c");
 
     exe.addCSourceFile(

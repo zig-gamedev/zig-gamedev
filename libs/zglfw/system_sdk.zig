@@ -163,7 +163,7 @@ fn includeSdkWindowsX8664(b: *Builder, step: *std.build.LibExeObjStep, options: 
         b.allocator.free(sdk_libs);
     }
 
-    step.addIncludeDir(sdk_includes);
+    step.addIncludePath(sdk_includes);
     step.addLibPath(sdk_libs);
 }
 

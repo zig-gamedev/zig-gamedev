@@ -56,7 +56,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
 
     const par_shapes_t = if (bos.options.shape_use_32bit_indices) "-DPAR_SHAPES_T=uint32_t" else "";
 
-    exe.addIncludeDir(thisDir() ++ "/libs/par_shapes");
+    exe.addIncludePath(thisDir() ++ "/libs/par_shapes");
     exe.addCSourceFile(
         thisDir() ++ "/libs/par_shapes/par_shapes.c",
         &.{ "-std=c99", "-fno-sanitize=undefined", par_shapes_t },
@@ -72,7 +72,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
     exe.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/overdrawanalyzer.cpp", &.{""});
     exe.addCSourceFile(thisDir() ++ "/libs/meshoptimizer/allocator.cpp", &.{""});
 
-    exe.addIncludeDir(thisDir() ++ "/libs/cgltf");
+    exe.addIncludePath(thisDir() ++ "/libs/cgltf");
     exe.addCSourceFile(thisDir() ++ "/libs/cgltf/cgltf.c", &.{"-std=c99"});
 }
 

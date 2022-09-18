@@ -28,8 +28,8 @@ pub fn buildTests(
 }
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
-    exe.addIncludeDir(thisDir() ++ "/libs");
-    exe.addIncludeDir(thisDir() ++ "/libs/JoltC");
+    exe.addIncludePath(thisDir() ++ "/libs");
+    exe.addIncludePath(thisDir() ++ "/libs/JoltC");
     exe.linkSystemLibraryName("c");
     exe.linkSystemLibraryName("c++");
 

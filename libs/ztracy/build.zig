@@ -40,7 +40,7 @@ pub fn link(exe: *std.build.LibExeObjStep, bos: BuildOptionsStep) void {
     if (bos.options.enable_ztracy) {
         const enable_fibers = if (bos.options.enable_fibers) "-DTRACY_FIBERS" else "";
 
-        exe.addIncludeDir(thisDir() ++ "/libs/tracy");
+        exe.addIncludePath(thisDir() ++ "/libs/tracy");
         exe.addCSourceFile(thisDir() ++ "/libs/tracy/TracyClient.cpp", &.{
             "-DTRACY_ENABLE",
             enable_fibers,

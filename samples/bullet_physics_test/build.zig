@@ -59,7 +59,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     zbullet.link(exe);
 
     // We use 'cbullet' directly so we need to add it to the include path.
-    exe.addIncludeDir(thisDir() ++ "/../../libs/zbullet/libs/cbullet");
+    exe.addIncludePath(thisDir() ++ "/../../libs/zbullet/libs/cbullet");
 
     return exe;
 }

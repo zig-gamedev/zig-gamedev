@@ -21,7 +21,7 @@ pub const pkg = std.build.Pkg{
 };
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
-    exe.addIncludeDir(thisDir() ++ "/libs/glfw/include");
+    exe.addIncludePath(thisDir() ++ "/libs/glfw/include");
     exe.linkSystemLibraryName("c");
     system_sdk.include(exe.builder, exe, .{});
 

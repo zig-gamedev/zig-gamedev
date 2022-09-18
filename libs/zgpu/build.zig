@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn link(exe: *std.build.LibExeObjStep) void {
     linkDawn(exe);
 
-    exe.addIncludeDir(thisDir() ++ "/src");
+    exe.addIncludePath(thisDir() ++ "/src");
     exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
 }
 
@@ -141,8 +141,8 @@ fn linkFromBinary(b: *std.build.Builder, step: *std.build.LibExeObjStep, options
     step.linkSystemLibraryName("c");
     step.linkSystemLibraryName("c++");
 
-    step.addIncludeDir(include_dir);
-    step.addIncludeDir((comptime thisDir()) ++ "/src/dawn");
+    step.addIncludePath(include_dir);
+    step.addIncludePath((comptime thisDir()) ++ "/src/dawn");
 
     if (options.vulkan.?) {
         step.linkSystemLibraryName("X11");

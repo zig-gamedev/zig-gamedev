@@ -6,7 +6,7 @@ pub const pkg = std.build.Pkg{
 };
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
-    exe.addIncludeDir(thisDir() ++ "/libs/miniaudio");
+    exe.addIncludePath(thisDir() ++ "/libs/miniaudio");
     exe.linkSystemLibraryName("c");
 
     const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
