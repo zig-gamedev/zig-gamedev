@@ -3,6 +3,13 @@ const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
     ensureGitLfs(b.allocator);
+    {
+        var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
+        child.cwd = thisDir();
+        child.stderr = std.io.getStdErr();
+        child.stdout = std.io.getStdOut();
+        _ = child.spawnAndWait() catch unreachable;
+    }
 
     var options = Options{
         .build_mode = b.standardReleaseOptions(),

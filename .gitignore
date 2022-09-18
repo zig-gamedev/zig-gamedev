@@ -34,6 +34,7 @@
 !.vimrc
 !.gitkeep
 
+!/libs/zgpu/libs/**
 !/libs/zwin32/bin/x64/*
 
 # Ignore some special directories
