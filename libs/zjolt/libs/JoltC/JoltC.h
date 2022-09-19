@@ -213,15 +213,15 @@ struct JPH_MotionProperties
 {
     // 1st cache line
     // 16 byte aligned
-    alignas(16) float   linear_velocity[4];
-    float   angular_velocity[4];
-    float   inv_inertia_diagnonal[4];
-    float   inertia_rotation[4];
+    alignas(16) float   linear_velocity[3];
+    alignas(16) float   angular_velocity[3];
+    alignas(16) float   inv_inertia_diagnonal[3];
+    float               inertia_rotation[4];
 
     // 2nd cache line
     // 4 byte aligned
-    alignas(4) float   force[4];
-    float               torque[4];
+    alignas(4) float    force[3];
+    alignas(16)float    torque[3];
     float               inv_mass;
     float               linear_damping;
     float               angular_daming;
@@ -256,10 +256,10 @@ struct JPH_CollisionGroup
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
 struct JPH_BodyCreationSettings
 {
-    alignas(16) float           position[4];
+    alignas(16) float           position[3];
     alignas(16) float           rotation[4];
-    alignas(16) float           linear_velocity[4];
-    alignas(16) float           angular_velocity[4];
+    alignas(16) float           linear_velocity[3];
+    alignas(16) float           angular_velocity[3];
     uint64_t                    user_data;
     JPH_ObjectLayer             object_layer;
     JPH_CollisionGroup          collision_group;
@@ -294,8 +294,8 @@ struct JPH_SubShapeIDPair
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
 struct JPH_ContactManifold
 {
-    alignas(16) float       world_space_normal[4];
-    float                   penetration_depth;
+    alignas(16) float       world_space_normal[3];
+    alignas(16) float       penetration_depth;
     JPH_SubShapeID          sub_shape1_id;
     JPH_SubShapeID          sub_shape2_id;
     alignas(16) uint32_t    num_points1;
@@ -315,10 +315,10 @@ struct JPH_ContactSettings
 // NOTE: Needs to be kept in sync with JPH::CollideShapeResult
 struct JPH_CollideShapeResult
 {
-    alignas(16) float       contact_point1[4];
-    alignas(16) float       contact_point2[4];
-    alignas(16) float       penetration_axis[4];
-    float                   penetration_depth;
+    alignas(16) float       contact_point1[3];
+    alignas(16) float       contact_point2[3];
+    alignas(16) float       penetration_axis[3];
+    alignas(16) float       penetration_depth;
     JPH_SubShapeID          sub_shape1_id;
     JPH_SubShapeID          sub_shape2_id;
     JPH_BodyID              body2_id;
@@ -1102,8 +1102,8 @@ JPH_Body_ApplyBuoyancyImpulse(
     float in_buoyancy,
     float in_linear_drag,
     float in_angular_drag,
-    const float in_fluid_velocity[4],
-    const float in_gravity[4],
+    const float in_fluid_velocity[3],
+    const float in_gravity[3],
     float in_delta_time
 );
 
