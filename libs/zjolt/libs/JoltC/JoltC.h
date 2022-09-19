@@ -216,13 +216,13 @@ struct JPH_MotionProperties
     alignas(16) float   linear_velocity[3];
     alignas(16) float   angular_velocity[3];
     alignas(16) float   inv_inertia_diagnonal[3];
-    float               inertia_rotation[4];
+    alignas(16) float   inertia_rotation[4];
 
     // 2nd cache line
     // 4 byte aligned
     alignas(4) float    force[3];
-    alignas(16)float    torque[3];
-    float               inv_mass;
+    alignas(16) float   torque[3];
+    alignas(16) float   inv_mass;
     float               linear_damping;
     float               angular_daming;
     float               max_linear_velocity;
@@ -238,7 +238,7 @@ struct JPH_MotionProperties
     // 3rd cache line (least freqently used)
     // 4 byte aligned
     alignas(4) JPH_Sphere          sleep_test_spheres[3];
-    float                          sleep_test_timer;
+    alignas(4) float               sleep_test_timer;
 
 #ifdef JPH_ENABLE_ASSERTS
     JPH_MotionType      cached_motion_type;
@@ -260,7 +260,7 @@ struct JPH_BodyCreationSettings
     alignas(16) float           rotation[4];
     alignas(16) float           linear_velocity[3];
     alignas(16) float           angular_velocity[3];
-    uint64_t                    user_data;
+    alignas(16) uint64_t        user_data;
     JPH_ObjectLayer             object_layer;
     JPH_CollisionGroup          collision_group;
     JPH_MotionType              motion_type;
