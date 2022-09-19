@@ -1,10 +1,11 @@
 const std = @import("std");
 
-pub fn link(exe: *std.build.LibExeObjStep) void {
-    linkDawn(exe);
-
-    exe.addIncludePath(thisDir() ++ "/src");
-    exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
+pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
+    return .{
+        .name = "zgpu",
+        .source = .{ .path = thisDir() ++ "/src/zgpu.zig" },
+        .dependencies = dependencies,
+    };
 }
 
 pub fn buildTests(
@@ -19,46 +20,12 @@ pub fn buildTests(
     return tests;
 }
 
-pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
-    return .{
-        .name = "zgpu",
-        .source = .{ .path = thisDir() ++ "/src/zgpu.zig" },
-        .dependencies = dependencies,
-    };
-}
-
-inline fn thisDir() []const u8 {
-    return comptime std.fs.path.dirname(@src().file) orelse ".";
-}
-
-const DawnOptions = struct {
-    d3d12: ?bool = null,
-    metal: ?bool = null,
-    vulkan: ?bool = null,
-
-    fn init(target: std.Target) DawnOptions {
-        const tag = target.os.tag;
-        var options = DawnOptions{};
-        options.d3d12 = (tag == .windows);
-        options.metal = (tag == .macos);
-        options.vulkan = (tag == .linux);
-        return options;
-    }
-};
-
-fn linkDawn(exe: *std.build.LibExeObjStep) void {
+pub fn link(exe: *std.build.LibExeObjStep) void {
     const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
-    const options = DawnOptions.init(target);
-    linkFromBinary(exe.builder, exe, options);
-}
 
-fn linkFromBinary(b: *std.build.Builder, step: *std.build.LibExeObjStep, options: DawnOptions) void {
-    const target = (std.zig.system.NativeTargetInfo.detect(
-        step.target,
-    ) catch unreachable).target;
     const binaries_available = switch (target.os.tag) {
-        .windows => target.abi.isGnu(),
-        .linux => target.cpu.arch.isX86() and target.abi.isGnu(),
+        .windows => target.cpu.arch.isX86() and target.abi.isGnu(),
+        .linux => (target.cpu.arch.isX86() or target.cpu.arch.isAARCH64()) and target.abi.isGnu(),
         .macos => blk: {
             if (!target.cpu.arch.isX86() and !target.cpu.arch.isAARCH64()) break :blk false;
 
@@ -71,15 +38,14 @@ fn linkFromBinary(b: *std.build.Builder, step: *std.build.LibExeObjStep, options
         else => false,
     };
     if (!binaries_available) {
-        const zig_triple = target.zigTriple(b.allocator) catch unreachable;
-        std.log.err("Dawn binaries for {s} not available.", .{zig_triple});
+        const zig_triple = target.zigTriple(exe.builder.allocator) catch unreachable;
+        std.debug.print("Dawn binaries for {s} not available.", .{zig_triple});
         if (target.os.tag == .macos) {
-            std.log.err("", .{});
-            if (target.cpu.arch.isX86()) std.log.err(
+            if (target.cpu.arch.isX86()) std.debug.print(
                 "-> Did you mean to use -Dtarget=x86_64-macos.12 ?",
                 .{},
             );
-            if (target.cpu.arch.isAARCH64()) std.log.err(
+            if (target.cpu.arch.isAARCH64()) std.debug.print(
                 "-> Did you mean to use -Dtarget=aarch64-macos.12 ?",
                 .{},
             );
@@ -88,36 +54,46 @@ fn linkFromBinary(b: *std.build.Builder, step: *std.build.LibExeObjStep, options
     }
 
     switch (target.os.tag) {
-        .windows => step.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-windows-gnu"),
-        .linux => step.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-linux-gnu"),
+        .windows => {
+            exe.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-windows-gnu");
+
+            exe.linkSystemLibraryName("ole32");
+            exe.linkSystemLibraryName("dxguid");
+        },
+        .linux => {
+            if (target.cpu.arch.isX86())
+                exe.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-linux-gnu")
+            else
+                exe.addLibraryPath(thisDir() ++ "/libs/dawn/aarch64-linux-gnu");
+
+            exe.linkSystemLibraryName("X11");
+        },
         .macos => {
             if (target.cpu.arch.isX86())
-                step.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-macos-none")
+                exe.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-macos-none")
             else
-                step.addLibraryPath(thisDir() ++ "/libs/dawn/aarch64-macos-none");
+                exe.addLibraryPath(thisDir() ++ "/libs/dawn/aarch64-macos-none");
+
+            exe.linkFramework("Metal");
+            exe.linkFramework("CoreGraphics");
+            exe.linkFramework("Foundation");
+            exe.linkFramework("IOKit");
+            exe.linkFramework("IOSurface");
+            exe.linkFramework("QuartzCore");
         },
         else => unreachable,
     }
 
-    step.linkSystemLibraryName("dawn");
-    step.linkSystemLibraryName("c");
-    step.linkSystemLibraryName("c++");
+    exe.linkSystemLibraryName("dawn");
+    exe.linkSystemLibraryName("c");
+    exe.linkSystemLibraryName("c++");
 
-    step.addIncludePath(thisDir() ++ "/libs/dawn/include");
+    exe.addIncludePath(thisDir() ++ "/libs/dawn/include");
+    exe.addIncludePath(thisDir() ++ "/src");
 
-    if (options.vulkan.?) {
-        step.linkSystemLibraryName("X11");
-    }
-    if (options.metal.?) {
-        step.linkFramework("Metal");
-        step.linkFramework("CoreGraphics");
-        step.linkFramework("Foundation");
-        step.linkFramework("IOKit");
-        step.linkFramework("IOSurface");
-        step.linkFramework("QuartzCore");
-    }
-    if (options.d3d12.?) {
-        step.linkSystemLibraryName("ole32");
-        step.linkSystemLibraryName("dxguid");
-    }
+    exe.addCSourceFile(thisDir() ++ "/src/dawn.cpp", &.{"-std=c++17"});
+}
+
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
