@@ -1,7 +1,5 @@
 # zgpu v0.2 - Cross-platform graphics layer
 
-This library uses wgpu binaries kindly provided by [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn) project.
-
 `zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of native wgpu API (Dawn).
 
 ## Features:
@@ -17,6 +15,10 @@ For more details please see below.
 ## Getting started
 
 Copy `zgpu`, `zpool` and `zglfw` folders to a `libs` subdirectory of the root of your project.
+
+`zgpu` uses prebuilt, native wgpu implementation (Dawn). Binaries can be found in [dawn-bin](https://github.com/michal-z/dawn-bin) repo. Build script expects binaries in `libs/zgpu/libs/dawn` folder. You can create a submodule in your project to fetch the binaries:
+
+`git submodule add -b main https://github.com/michal-z/dawn-bin libs/zgpu/libs/dawn`
 
 Then in your `build.zig` add:
 ```zig
