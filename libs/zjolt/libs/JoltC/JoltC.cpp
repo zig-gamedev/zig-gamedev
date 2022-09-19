@@ -51,7 +51,13 @@ static_assert(sizeof(JPH::EActivation)             == sizeof(JPH_Activation));
 static_assert(sizeof(JPH::ValidateResult)          == sizeof(JPH_ValidateResult));
 static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer));
 static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer));
+
+static_assert(sizeof(JPH::AABox)                   == sizeof(JPH_AABox));
+static_assert(sizeof(JPH::Plane)                   == sizeof(JPH_Plane));
+static_assert(sizeof(JPH::Sphere)                  == sizeof(JPH_Sphere));
+
 static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties));
+static_assert(sizeof(JPH::MotionProperties)        == sizeof(JPH_MotionProperties));
 static_assert(sizeof(JPH::CollisionGroup)          == sizeof(JPH_CollisionGroup));
 static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSettings));
 static_assert(sizeof(JPH::ContactManifold)         == sizeof(JPH_ContactManifold));
@@ -59,13 +65,18 @@ static_assert(sizeof(JPH::ContactSettings)         == sizeof(JPH_ContactSettings
 static_assert(sizeof(JPH::SubShapeIDPair)          == sizeof(JPH_SubShapeIDPair));
 static_assert(sizeof(JPH::CollideShapeResult)      == sizeof(JPH_CollideShapeResult));
 
-static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties));
-static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup));
-static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPH_BodyCreationSettings));
-static_assert(alignof(JPH::ContactManifold)      == alignof(JPH_ContactManifold));
-static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings));
-static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair));
-static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult));
+static_assert(alignof(JPH::AABox)                  == alignof(JPH_AABox));
+static_assert(alignof(JPH::Plane)                  == alignof(JPH_Plane));
+static_assert(alignof(JPH::Sphere)                 == alignof(JPH_Sphere));
+
+static_assert(alignof(JPH::MassProperties)         == alignof(JPH_MassProperties));
+static_assert(alignof(JPH::MotionProperties)       == alignof(JPH_MotionProperties));
+static_assert(alignof(JPH::CollisionGroup)         == alignof(JPH_CollisionGroup));
+static_assert(alignof(JPH::BodyCreationSettings)   == alignof(JPH_BodyCreationSettings));
+static_assert(alignof(JPH::ContactManifold)        == alignof(JPH_ContactManifold));
+static_assert(alignof(JPH::ContactSettings)        == alignof(JPH_ContactSettings));
+static_assert(alignof(JPH::SubShapeIDPair)         == alignof(JPH_SubShapeIDPair));
+static_assert(alignof(JPH::CollideShapeResult)     == alignof(JPH_CollideShapeResult));
 
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
@@ -1304,7 +1315,7 @@ JPH_Body_MoveKinematic(
 JPH_CAPI void
 JPH_Body_ApplyBuoyancyImpulse(
     JPH_Body *in_body,
-    const float in_plane[4],
+    const JPH_Plane *in_plane,
     float in_buoyancy,
     float in_linear_drag,
     float in_angular_drag,
@@ -1390,6 +1401,495 @@ JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_tran
     const JPH::Mat44 m = body->GetInverseCenterOfMassTransform();
     m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_transform));
 }
+
+//--------------------------------------------------------------------------------------------------
+//
+// JPH_MotionProperties
+//
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_MotionQuality
+JPH_MotionProperties_GetMotionQuality(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return static_cast<JPH_MotionQuality>(
+        reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMotionQuality()
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetMotionQuality(
+    JPH_MotionProperties *in_properties,
+    JPH_MotionQuality in_motion_quality
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetMotionQuality(
+        static_cast<JPH::EMotionQuality>(in_motion_quality)
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_GetLinearVelocity(
+    const JPH_MotionProperties *in_properties,
+    float out_linear_velocity[3]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    const JPH::Vec3 v = properties->GetLinearVelocity();
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_linear_velocity));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetLinearVelocity(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_velocity[3]
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearVelocity(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetLinearVelocityClamped(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_velocity[3]
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearVelocityClamped(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetAngularVelocity(
+    JPH_MotionProperties *in_properties,
+    const float in_angular_velocity[3]
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularVelocity(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetAngularVelocityClamped(
+    JPH_MotionProperties *in_properties,
+    const float in_angular_velocity[3]
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularVelocityClamped(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_MoveKinematic(
+    JPH_MotionProperties *in_properties,
+    const float in_delta_position[3],
+    const float in_delta_rotation[4],
+    float in_delta_time
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->MoveKinematic(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_delta_position)),
+        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(
+            reinterpret_cast<const JPH::Float4 *>(in_delta_rotation)
+        )),
+        in_delta_time
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_ClampLinearVelocity(JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ClampLinearVelocity();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_ClampAngularVelocity(JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ClampAngularVelocity();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_MotionProperties_GetLinearDamping(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetLinearDamping();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetLinearDamping(
+    JPH_MotionProperties *in_properties,
+    float in_linear_damping
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetLinearDamping(in_linear_damping);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_MotionProperties_GetAngularDamping(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetAngularDamping();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetAngularDamping(
+    JPH_MotionProperties *in_properties,
+    float in_angular_damping
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetAngularDamping(in_angular_damping);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_MotionProperties_GetGravityFactor(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetGravityFactor();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetGravityFactor(
+    JPH_MotionProperties *in_properties,
+    float in_gravity_factor
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetGravityFactor(in_gravity_factor);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetMassProperties(
+    JPH_MotionProperties *in_properties,
+    const JPH_MassProperties *in_mass_properties
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetMassProperties(
+        *reinterpret_cast<const JPH::MassProperties *>(in_mass_properties)
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_MotionProperties_GetInverseMass(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetInverseMass();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_MotionProperties_GetInverseMassUnchecked(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetInverseMassUnchecked();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetInverseMass(JPH_MotionProperties *in_properties, float in_inv_mass)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetInverseMass(in_inv_mass);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_GetInverseInertiaDiagonal(
+    const JPH_MotionProperties *in_properties,
+    float out_inverse_inertia_diagonal[3]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    const JPH::Vec3 v = properties->GetInverseInertiaDiagonal();
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_inverse_inertia_diagonal));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_GetInertiaRotation(
+    const JPH_MotionProperties *in_properties,
+    float out_inertia_rotation[4]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    const JPH::Quat v = properties->GetInertiaRotation();
+    v.GetXYZW().StoreFloat4(reinterpret_cast<JPH::Float4 *>(out_inertia_rotation));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetInverseInertia(
+    JPH_MotionProperties *in_properties,
+    const float in_diagonal[3],
+    const float in_rotation[4]
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetInverseInertia(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_diagonal)),
+        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(
+            reinterpret_cast<const JPH::Float4 *>(in_rotation)
+        ))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_GetLocalSpaceInverseInertia(
+    const JPH_MotionProperties *in_properties,
+    float out_matrix[16]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    const JPH::Mat44 m = properties->GetLocalSpaceInverseInertia();
+    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_GetLocalSpaceInverseInertiaUnchecked(
+    const JPH_MotionProperties *in_properties,
+    float out_matrix[16]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    const JPH::Mat44 m = properties->GetLocalSpaceInverseInertiaUnchecked();
+    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_GetInverseInertiaForRotation(
+    const JPH_MotionProperties *in_properties,
+    const float in_rotation_matrix[16],
+    float out_matrix[16]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    const JPH::Mat44 m = properties->GetInverseInertiaForRotation(
+        *reinterpret_cast<const JPH::Mat44 *>(in_rotation_matrix)
+    );
+    m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_matrix));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(
+    const JPH_MotionProperties *in_properties,
+    const float in_body_rotation[4],
+    const float in_vector[3],
+    float out_vector[3]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    const JPH::Vec3 v = properties->MultiplyWorldSpaceInverseInertiaByVector(
+        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(
+            reinterpret_cast<const JPH::Float4 *>(in_body_rotation)
+        )),
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_vector))
+    );
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_vector));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_GetPointVelocityCOM(
+    const JPH_MotionProperties *in_properties,
+    const float in_point_relative_to_com[3],
+    float out_point[3]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    const JPH::Vec3 v = properties->GetPointVelocityCOM(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_point_relative_to_com))
+    );
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_point));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_ApplyForceTorqueAndDragInternal(
+    JPH_MotionProperties *in_properties,
+    const float in_body_rotation[4],
+    const float in_gravity[3],
+    float in_delta_time
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ApplyForceTorqueAndDragInternal(
+        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(
+            reinterpret_cast<const JPH::Float4 *>(in_body_rotation)
+        )),
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_gravity)),
+        in_delta_time
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_ResetForceAndTorqueInternal(JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ResetForceAndTorqueInternal();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI uint32_t
+JPH_MotionProperties_GetIslandIndexInternal(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetIslandIndexInternal();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetIslandIndexInternal(JPH_MotionProperties *in_properties, uint32_t in_index)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetIslandIndexInternal(in_index);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI uint32_t
+JPH_MotionProperties_GetIndexInActiveBodiesInternal(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
+    return properties->GetIndexInActiveBodiesInternal();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_ResetSleepTestSpheres(
+    JPH_MotionProperties *in_properties,
+    const float *in_points
+)
+{
+    assert(in_properties != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->ResetSleepTestSpheres(
+        reinterpret_cast<const JPH::Vec3 *>(in_points)
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SaveState(
+    const JPH_MotionProperties *in_properties,
+    JPH_StateRecorder *in_stream
+)
+{
+    assert(in_properties != nullptr);
+    assert(in_stream != nullptr);
+    reinterpret_cast<const JPH::MotionProperties *>(in_properties)->SaveState(
+        reinterpret_cast<JPH::StateRecorder &>(in_stream)
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_RestoreState(
+    JPH_MotionProperties *in_properties,
+    JPH_StateRecorder *in_stream
+)
+{
+    assert(in_properties != nullptr);
+    assert(in_stream != nullptr);
+    reinterpret_cast<JPH::MotionProperties *>(in_properties)->RestoreState(
+        reinterpret_cast<JPH::StateRecorder &>(in_stream)
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_MotionProperties_GetMaxLinearVelocity(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMaxLinearVelocity();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetMaxLinearVelocity(
+    JPH_MotionProperties *in_properties,
+    float in_max_linear_velocity
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
+    properties->SetMaxLinearVelocity(in_max_linear_velocity);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI float
+JPH_MotionProperties_GetMaxAngularVelocity(const JPH_MotionProperties *in_properties)
+{
+    assert(in_properties != nullptr);
+    return reinterpret_cast<const JPH::MotionProperties *>(in_properties)->GetMaxAngularVelocity();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SetMaxAngularVelocity(
+    JPH_MotionProperties *in_properties,
+    float in_max_angular_velocity
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
+    properties->SetMaxAngularVelocity(in_max_angular_velocity);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_AddLinearVelocityStep(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_velocity_change[3]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
+    properties->AddLinearVelocityStep(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity_change))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SubLinearVelocityStep(
+    JPH_MotionProperties *in_properties,
+    const float in_linear_velocity_change[3]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
+    properties->SubLinearVelocityStep(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_linear_velocity_change))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_AddAngularVelocityStep(
+    JPH_MotionProperties *in_properties,
+    const float in_angular_velocity_change[3]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
+    properties->AddAngularVelocityStep(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity_change))
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_MotionProperties_SubAngularangularStep(
+    JPH_MotionProperties *in_properties,
+    const float in_angular_velocity_change[3]
+)
+{
+    assert(in_properties != nullptr);
+    const auto properties = reinterpret_cast<JPH::MotionProperties *>(in_properties);
+    properties->SubAngularVelocityStep(
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity_change))
+    );
+}
+//--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
 //
