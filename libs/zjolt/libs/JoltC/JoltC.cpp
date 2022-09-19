@@ -165,6 +165,22 @@ static_assert(
 static_assert(
     offsetof(JPH::CollideShapeResult, mShape1Face) ==
     offsetof(JPH_CollideShapeResult, num_face_points1));
+
+// This passes when JPH::MotionProperties fields are public
+/*
+static_assert(
+    offsetof(JPH::MotionProperties, mForce) ==
+    offsetof(JPH_MotionProperties, force));
+static_assert(
+    offsetof(JPH::MotionProperties, mTorque) ==
+    offsetof(JPH_MotionProperties, torque));
+static_assert(
+    offsetof(JPH::MotionProperties, mMotionQuality) ==
+    offsetof(JPH_MotionProperties, motion_quality));
+static_assert(
+    offsetof(JPH::MotionProperties, mSleepTestTimer) ==
+    offsetof(JPH_MotionProperties, sleep_test_timer));
+*/
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_RegisterDefaultAllocator(void)

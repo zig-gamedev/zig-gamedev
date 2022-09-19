@@ -10,6 +10,12 @@
 // TODO: Define this
 #define JPH_CAPI
 
+// Copied from IssueReporting.h
+// Always turn on asserts in Debug mode
+#if defined(_DEBUG) && !defined(JPH_ENABLE_ASSERTS)
+    #define JPH_ENABLE_ASSERTS
+#endif
+
 // JPH_JobSystem_Create()
 enum
 {
@@ -208,20 +214,15 @@ struct JPH_MassProperties
 };
 
 // NOTE: Needs to be kept in sync with JPH::MotionProperties
-// TODO: Fix me! Incorrect size and/or incorrectly aligned members
 struct JPH_MotionProperties
 {
-    // 1st cache line
-    // 16 byte aligned
-    alignas(16) float   linear_velocity[3];
-    alignas(16) float   angular_velocity[3];
-    alignas(16) float   inv_inertia_diagnonal[3];
-    float               inertia_rotation[4];
+    alignas(16) float   linear_velocity[4];
+    alignas(16) float   angular_velocity[4];
+    alignas(16) float   inv_inertia_diagnonal[4];
+    alignas(16) float   inertia_rotation[4];
 
-    // 2nd cache line
-    // 4 byte aligned
-    alignas(4) float    force[3];
-    alignas(16)float    torque[3];
+    float               force[3];
+    float               torque[3];
     float               inv_mass;
     float               linear_damping;
     float               angular_daming;
@@ -231,14 +232,11 @@ struct JPH_MotionProperties
     uint32_t            index_in_active_bodies;
     uint32_t            island_index;
 
-    // 1 byte aligned
-    alignas(1) JPH_MotionQuality   motion_quality;
-    bool                           allow_sleeping;
+    JPH_MotionQuality   motion_quality;
+    bool                allow_sleeping;
 
-    // 3rd cache line (least freqently used)
-    // 4 byte aligned
-    alignas(4) JPH_Sphere          sleep_test_spheres[3];
-    float                          sleep_test_timer;
+    JPH_Sphere          sleep_test_spheres[3];
+    float               sleep_test_timer;
 
 #ifdef JPH_ENABLE_ASSERTS
     JPH_MotionType      cached_motion_type;
@@ -256,10 +254,10 @@ struct JPH_CollisionGroup
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
 struct JPH_BodyCreationSettings
 {
-    alignas(16) float           position[3];
+    alignas(16) float           position[4];
     alignas(16) float           rotation[4];
-    alignas(16) float           linear_velocity[3];
-    alignas(16) float           angular_velocity[3];
+    alignas(16) float           linear_velocity[4];
+    alignas(16) float           angular_velocity[4];
     uint64_t                    user_data;
     JPH_ObjectLayer             object_layer;
     JPH_CollisionGroup          collision_group;
@@ -294,7 +292,7 @@ struct JPH_SubShapeIDPair
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
 struct JPH_ContactManifold
 {
-    alignas(16) float       world_space_normal[3];
+    alignas(16) float       world_space_normal[4];
     alignas(16) float       penetration_depth;
     JPH_SubShapeID          sub_shape1_id;
     JPH_SubShapeID          sub_shape2_id;
@@ -315,9 +313,9 @@ struct JPH_ContactSettings
 // NOTE: Needs to be kept in sync with JPH::CollideShapeResult
 struct JPH_CollideShapeResult
 {
-    alignas(16) float       contact_point1[3];
-    alignas(16) float       contact_point2[3];
-    alignas(16) float       penetration_axis[3];
+    alignas(16) float       contact_point1[4];
+    alignas(16) float       contact_point2[4];
+    alignas(16) float       penetration_axis[4];
     alignas(16) float       penetration_depth;
     JPH_SubShapeID          sub_shape1_id;
     JPH_SubShapeID          sub_shape2_id;
