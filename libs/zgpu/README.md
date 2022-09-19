@@ -27,7 +27,13 @@ const zpool = @import("libs/zpool/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
-    ...
+    // Fetch latest Dawn binaries from dawn-bin repo
+    var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
+    child.cwd = thisDir();
+    child.stderr = std.io.getStdErr();
+    child.stdout = std.io.getStdOut();
+    _ = child.spawnAndWait() catch unreachable;
+
     const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
 
     exe.addPackage(zgpu_pkg);
