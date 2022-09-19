@@ -83,9 +83,9 @@ fn includeSdkMacOS(b: *Builder, step: *std.build.LibExeObjStep, options: Options
     const sdk_root_dir = getSdkRoot(b.allocator, step, options.github_org, sdk_name, sdk_revision) catch unreachable;
 
     if (options.set_sysroot) {
-        step.addFrameworkDir("/System/Library/Frameworks");
+        step.addFrameworkPath("/System/Library/Frameworks");
         step.addSystemIncludeDir("/usr/include");
-        step.addLibPath("/usr/lib");
+        step.addLibraryPath("/usr/lib");
 
         var sdk_sysroot = std.fs.path.join(b.allocator, &.{ sdk_root_dir, "root/" }) catch unreachable;
         b.sysroot = sdk_sysroot;
@@ -93,13 +93,13 @@ fn includeSdkMacOS(b: *Builder, step: *std.build.LibExeObjStep, options: Options
     }
 
     var sdk_framework_dir = std.fs.path.join(b.allocator, &.{ sdk_root_dir, "root/System/Library/Frameworks" }) catch unreachable;
-    step.addFrameworkDir(sdk_framework_dir);
+    step.addFrameworkPath(sdk_framework_dir);
 
     var sdk_include_dir = std.fs.path.join(b.allocator, &.{ sdk_root_dir, "root/usr/include" }) catch unreachable;
     step.addSystemIncludeDir(sdk_include_dir);
 
     var sdk_lib_dir = std.fs.path.join(b.allocator, &.{ sdk_root_dir, "root/usr/lib" }) catch unreachable;
-    step.addLibPath(sdk_lib_dir);
+    step.addLibraryPath(sdk_lib_dir);
 }
 
 fn includeSdkLinuxX8664(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void {
@@ -121,7 +121,7 @@ fn includeSdkLinuxX8664(b: *Builder, step: *std.build.LibExeObjStep, options: Op
     }
     step.addSystemIncludeDir(sdk_root_includes);
     step.addSystemIncludeDir(wayland_protocols_include);
-    step.addLibPath(sdk_root_libs);
+    step.addLibraryPath(sdk_root_libs);
 }
 
 fn includeSdkLinuxAarch64(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void {
@@ -143,7 +143,7 @@ fn includeSdkLinuxAarch64(b: *Builder, step: *std.build.LibExeObjStep, options: 
     }
     step.addSystemIncludeDir(sdk_root_includes);
     step.addSystemIncludeDir(wayland_protocols_include);
-    step.addLibPath(sdk_root_libs);
+    step.addLibraryPath(sdk_root_libs);
 }
 
 fn includeSdkWindowsX8664(b: *Builder, step: *std.build.LibExeObjStep, options: Options) void {
@@ -164,7 +164,7 @@ fn includeSdkWindowsX8664(b: *Builder, step: *std.build.LibExeObjStep, options: 
     }
 
     step.addIncludePath(sdk_includes);
-    step.addLibPath(sdk_libs);
+    step.addLibraryPath(sdk_libs);
 }
 
 var cached_sdk_roots: ?std.AutoHashMap(*std.build.LibExeObjStep, []const u8) = null;
