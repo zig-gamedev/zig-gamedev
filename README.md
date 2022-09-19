@@ -38,10 +38,10 @@ zig build physically_based_rendering_wgpu-run
 
 #### Project vision:
 * Works on Windows, Linux and macOS
-* Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/), `git` with [Git LFS](https://git-lfs.github.com/) and `curl` - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
+* Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings to carefully selected C/C++ libraries
-* Uses native version of wgpu API (binaries from [mach/gpu-dawn](https://github.com/hexops/mach-gpu-dawn)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
+* Uses native version of wgpu API (binaries from [dawn-bin](https://github.com/michal-z/dawn-bin)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows
 
 *I work on this project full-time and try to make a living from donations. If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
