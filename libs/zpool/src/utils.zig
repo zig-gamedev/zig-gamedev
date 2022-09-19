@@ -59,7 +59,7 @@ pub fn StructOfSlices(comptime Struct: type) type {
         // u32 -> []u32
         const element_type = struct_field.field_type;
 
-        const slice_type_info = std.builtin.TypeInfo{
+        const slice_type_info = std.builtin.Type{
             .Pointer = .{
                 .child = element_type,
                 .alignment = @alignOf(element_type),
@@ -75,7 +75,7 @@ pub fn StructOfSlices(comptime Struct: type) type {
         const FieldType = @Type(slice_type_info);
 
         // Struct.foo: u32 -> StructOfSlices.foo : []u32
-        const slice_field = std.builtin.TypeInfo.StructField{
+        const slice_field = std.builtin.Type.StructField{
             .name = struct_field.name,
             .field_type = FieldType,
             .default_value = null,
