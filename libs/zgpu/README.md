@@ -32,7 +32,7 @@ pub fn build(b: *std.build.Builder) void {
     zglfw.link(exe);
 }
 ```
-NOTE
+**NOTE**
 
 `zgpu/libs/dawn` folder contains large binary files - Dawn static libs compiled for several platforms/architectures.
 To avoid storing those files in your repo it is recommended to create a submodule pointing to the [dawn-bin](https://github.com/michal-z/dawn-bin) repo which contains all needed files.
