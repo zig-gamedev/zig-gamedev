@@ -17,10 +17,10 @@ pub fn deinit() void {
     allocator = null;
 }
 
-const MallocFn = *const fn (size: usize) callconv(.C) ?*anyopaque;
-const CallocFn = *const fn (num: usize, size: usize) callconv(.C) ?*anyopaque;
-const ReallocFn = *const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
-const FreeFn = *const fn (ptr: ?*anyopaque) callconv(.C) void;
+const MallocFn = fn (size: usize) callconv(.C) ?*anyopaque;
+const CallocFn = fn (num: usize, size: usize) callconv(.C) ?*anyopaque;
+const ReallocFn = fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+const FreeFn = fn (ptr: ?*anyopaque) callconv(.C) void;
 
 extern fn zmesh_setAllocator(
     malloc: MallocFn,

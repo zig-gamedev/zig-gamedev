@@ -181,7 +181,7 @@ pub fn initRock(seed: i32, num_subdivisions: i32) Shape {
     return initShape(par_shapes_create_rock(seed, num_subdivisions));
 }
 
-pub const UvToPositionFn = *const fn (
+pub const UvToPositionFn = fn (
     uv: *const [2]f32,
     position: *[3]f32,
     userdata: ?*anyopaque,

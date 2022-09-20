@@ -25,8 +25,8 @@ pub const Result = enum(c_int) {
     legacy_gltf,
 };
 
-const MallocFn = *const fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
-const FreeFn = *const fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void;
+const MallocFn = fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
+const FreeFn = fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void;
 
 pub const MemoryOptions = extern struct {
     alloc: ?MallocFn = null,
@@ -35,7 +35,7 @@ pub const MemoryOptions = extern struct {
 };
 
 pub const FileOptions = extern struct {
-    const ReadFn = *const fn (
+    const ReadFn = fn (
         *const MemoryOptions,
         *const FileOptions,
         CString,
@@ -43,7 +43,7 @@ pub const FileOptions = extern struct {
         *?*anyopaque,
     ) callconv(.C) Result;
 
-    const ReleaseFn = *const fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void;
+    const ReleaseFn = fn (*const MemoryOptions, *const FileOptions, ?*anyopaque) callconv(.C) void;
 
     read: ?ReadFn = null,
     release: ?ReleaseFn = null,

@@ -18,8 +18,8 @@ pub const Body = *align(@sizeOf(usize)) BodyImpl;
 pub const Constraint = *align(@sizeOf(usize)) ConstraintImpl;
 pub const Point2PointConstraint = *align(@sizeOf(usize)) Point2PointConstraintImpl;
 
-pub const AllocFn = *const fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque;
-pub const FreeFn = *const fn (ptr: ?*anyopaque) callconv(.C) void;
+pub const AllocFn = fn (size: usize, alignment: i32) callconv(.C) ?*anyopaque;
+pub const FreeFn = fn (ptr: ?*anyopaque) callconv(.C) void;
 
 extern fn cbtAlignedAllocSetCustomAligned(
     alloc: ?AllocFn,
@@ -923,14 +923,14 @@ pub const DebugMode = packed struct {
 };
 
 pub const DebugDraw = extern struct {
-    const DrawLine1Fn = *const fn (
+    const DrawLine1Fn = fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,
         *const [3]f32,
     ) callconv(.C) void;
 
-    const DrawLine2Fn = *const fn (
+    const DrawLine2Fn = fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,
@@ -938,7 +938,7 @@ pub const DebugDraw = extern struct {
         *const [3]f32,
     ) callconv(.C) void;
 
-    const DrawContactPointFn = *const fn (
+    const DrawContactPointFn = fn (
         ?*anyopaque,
         *const [3]f32,
         *const [3]f32,
