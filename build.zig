@@ -3,6 +3,8 @@ const std = @import("std");
 pub fn build(b: *std.build.Builder) void {
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator) catch return;
+
+    // Fetach the latest Dawn/WebGPU binaries.
     {
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
         child.cwd = thisDir();
@@ -152,7 +154,19 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
     if (!supported) {
         const zig_triple = target.zigTriple(b.allocator) catch unreachable;
         std.debug.print(
-            "\nNot supported target. Dawn/WebGPU binaries for {s} not available.\n\n",
+            \\---------------------------------------------------------------------------
+            \\Not supported target. Dawn/WebGPU binaries for {s} not available.
+            \\
+            \\Following targets are supported:
+            \\
+            \\x86_64-windows-gnu
+            \\x86_64-linux-gnu
+            \\x86_64-macos-none
+            \\aarch64-linux-gnu
+            \\aarch64-macos-none
+            \\---------------------------------------------------------------------------
+            \\
+        ,
             .{zig_triple},
         );
         if (target.os.tag == .macos) {
@@ -176,7 +190,16 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
         .argv = argv,
         .cwd = ".",
     }) catch { // e.g. FileNotFound
-        std.debug.print("'git --version' failed. Is git not installed?", .{});
+        std.debug.print(
+            \\---------------------------------------------------------------------------
+            \\'git --version' failed.
+            \\
+            \\Please install Git and try again.
+            \\
+            \\For more info see: https://git-scm.com/
+            \\---------------------------------------------------------------------------
+            \\
+        , .{});
         return error.GitNotFound;
     };
     defer {
@@ -194,14 +217,14 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
         fn impl() void {
             std.debug.print(
                 \\---------------------------------------------------------------------------
-                \\git-lfs not found.
+                \\'git-lfs --version' failed.
                 \\
                 \\Please install Git LFS (Large File Support) and run (in the repo):
                 \\
                 \\git lfs install
                 \\git lfs pull
                 \\
-                \\For more info please see: https://git-lfs.github.com/
+                \\For more info see: https://git-lfs.github.com/
                 \\---------------------------------------------------------------------------
                 \\
             , .{});
