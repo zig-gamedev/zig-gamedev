@@ -23,36 +23,6 @@ pub fn buildTests(
 pub fn link(exe: *std.build.LibExeObjStep) void {
     const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
-    const binaries_available = switch (target.os.tag) {
-        .windows => target.cpu.arch.isX86() and target.abi.isGnu(),
-        .linux => (target.cpu.arch.isX86() or target.cpu.arch.isAARCH64()) and target.abi.isGnu(),
-        .macos => blk: {
-            if (!target.cpu.arch.isX86() and !target.cpu.arch.isAARCH64()) break :blk false;
-
-            // If min. target macOS version is lesser than the min version we have available, then
-            // our binary is incompatible with the target.
-            const min_available = std.builtin.Version{ .major = 12, .minor = 0 };
-            if (target.os.version_range.semver.min.order(min_available) == .lt) break :blk false;
-            break :blk true;
-        },
-        else => false,
-    };
-    if (!binaries_available) {
-        const zig_triple = target.zigTriple(exe.builder.allocator) catch unreachable;
-        std.debug.print("Dawn binaries for {s} not available.", .{zig_triple});
-        if (target.os.tag == .macos) {
-            if (target.cpu.arch.isX86()) std.debug.print(
-                "-> Did you mean to use -Dtarget=x86_64-macos.12 ?",
-                .{},
-            );
-            if (target.cpu.arch.isAARCH64()) std.debug.print(
-                "-> Did you mean to use -Dtarget=aarch64-macos.12 ?",
-                .{},
-            );
-        }
-        std.process.exit(1);
-    }
-
     switch (target.os.tag) {
         .windows => {
             exe.addLibraryPath(thisDir() ++ "/libs/dawn/x86_64-windows-gnu");

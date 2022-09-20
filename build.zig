@@ -14,12 +14,12 @@ pub fn build(b: *std.build.Builder) void {
         };
     }
 
-    var options = Options{
+    const options = Options{
         .build_mode = b.standardReleaseOptions(),
         .target = b.standardTargetOptions(.{}),
+        .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
     };
-
-    options.ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
+    ensureTarget(b, options.target) catch return;
 
     //
     // Sample application
@@ -99,7 +99,7 @@ pub const Options = struct {
     build_mode: std.builtin.Mode,
     target: std.zig.CrossTarget,
 
-    ztracy_enable: bool = false,
+    ztracy_enable: bool,
 };
 
 fn installDemo(
@@ -129,6 +129,44 @@ fn installDemo(
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
+}
+
+fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
+    const target = (std.zig.system.NativeTargetInfo.detect(cross) catch unreachable).target;
+
+    const supported = switch (target.os.tag) {
+        .windows => target.cpu.arch.isX86() and target.abi.isGnu(),
+        .linux => (target.cpu.arch.isX86() or target.cpu.arch.isAARCH64()) and target.abi.isGnu(),
+        .macos => blk: {
+            if (!target.cpu.arch.isX86() and !target.cpu.arch.isAARCH64()) break :blk false;
+
+            // If min. target macOS version is lesser than the min version we have available, then
+            // our Dawn binary is incompatible with the target.
+            const min_available = std.builtin.Version{ .major = 12, .minor = 0 };
+            if (target.os.version_range.semver.min.order(min_available) == .lt) break :blk false;
+            break :blk true;
+        },
+        else => false,
+    };
+
+    if (!supported) {
+        const zig_triple = target.zigTriple(b.allocator) catch unreachable;
+        std.debug.print(
+            "\nNot supported target. Dawn/WebGPU binaries for {s} not available.\n\n",
+            .{zig_triple},
+        );
+        if (target.os.tag == .macos) {
+            if (target.cpu.arch.isX86()) std.debug.print(
+                "-> Did you mean to use -Dtarget=x86_64-macos.12 ?",
+                .{},
+            );
+            if (target.cpu.arch.isAARCH64()) std.debug.print(
+                "-> Did you mean to use -Dtarget=aarch64-macos.12 ?",
+                .{},
+            );
+        }
+        return error.TargetNotSupported;
+    }
 }
 
 fn ensureGit(allocator: std.mem.Allocator) !void {
