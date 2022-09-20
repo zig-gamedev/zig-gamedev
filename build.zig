@@ -36,51 +36,6 @@ pub fn build(b: *std.build.Builder) void {
     }
 
     //
-    // Windows-only demos
-    //
-    if (!builtin.is_test and @import("builtin").target.os.tag == .windows and
-        @import("builtin").zig_backend == .stage1)
-    {
-        options.zpix_enable = b.option(
-            bool,
-            "zpix-enable",
-            "Enable PIX GPU events and markers",
-        ) orelse false;
-        options.enable_dx_debug = b.option(
-            bool,
-            "enable-dx-debug",
-            "Enable debug layer for D3D12, D2D1, DirectML and DXGI",
-        ) orelse false;
-        options.enable_dx_gpu_debug = b.option(
-            bool,
-            "enable-dx-gpu-debug",
-            "Enable GPU-based validation for D3D12",
-        ) orelse false;
-
-        installDemo(b, audio_experiments.build(b, options), "audio_experiments");
-        installDemo(b, audio_playback_test.build(b, options), "audio_playback_test");
-        installDemo(b, bindless.build(b, options), "bindless");
-        installDemo(b, bullet_physics_test.build(b, options), "bullet_physics_test");
-        installDemo(b, directml_convolution_test.build(b, options), "directml_convolution_test");
-        installDemo(b, mesh_shader_test.build(b, options), "mesh_shader_test");
-        installDemo(b, physically_based_rendering.build(b, options), "physically_based_rendering");
-        installDemo(b, rasterization.build(b, options), "rasterization");
-        installDemo(b, simple3d.build(b, options), "simple3d");
-        installDemo(b, simple_raytracer.build(b, options), "simple_raytracer");
-        installDemo(b, textured_quad.build(b, options), "textured_quad");
-        installDemo(b, vector_graphics_test.build(b, options), "vector_graphics_test");
-        installDemo(b, triangle.build(b, options), "triangle");
-        installDemo(b, minimal.build(b, options), "minimal");
-        installDemo(b, procedural_mesh.build(b, options), "procedural_mesh");
-
-        comptime var intro_index: u32 = 0;
-        inline while (intro_index < 7) : (intro_index += 1) {
-            const name = "intro" ++ comptime std.fmt.comptimePrint("{}", .{intro_index});
-            installDemo(b, intro.build(b, options, intro_index), name);
-        }
-    }
-
-    //
     // Tests
     //
     const test_step = b.step("test", "Run all tests");
@@ -133,22 +88,6 @@ pub fn build(b: *std.build.Builder) void {
 const zmath = @import("libs/zmath/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 
-const audio_experiments = @import("samples/audio_experiments/build.zig");
-const audio_playback_test = @import("samples/audio_playback_test/build.zig");
-const bindless = @import("samples/bindless/build.zig");
-const bullet_physics_test = @import("samples/bullet_physics_test/build.zig");
-const directml_convolution_test = @import("samples/directml_convolution_test/build.zig");
-const mesh_shader_test = @import("samples/mesh_shader_test/build.zig");
-const physically_based_rendering = @import("samples/physically_based_rendering/build.zig");
-const rasterization = @import("samples/rasterization/build.zig");
-const simple3d = @import("samples/simple3d/build.zig");
-const simple_raytracer = @import("samples/simple_raytracer/build.zig");
-const textured_quad = @import("samples/textured_quad/build.zig");
-const triangle = @import("samples/triangle/build.zig");
-const vector_graphics_test = @import("samples/vector_graphics_test/build.zig");
-const intro = @import("samples/intro/build.zig");
-const minimal = @import("samples/minimal/build.zig");
-const procedural_mesh = @import("samples/procedural_mesh/build.zig");
 const triangle_wgpu = @import("samples/triangle_wgpu/build.zig");
 const procedural_mesh_wgpu = @import("samples/procedural_mesh_wgpu/build.zig");
 const textured_quad_wgpu = @import("samples/textured_quad_wgpu/build.zig");
@@ -162,10 +101,6 @@ pub const Options = struct {
     target: std.zig.CrossTarget,
 
     ztracy_enable: bool = false,
-    zpix_enable: bool = false,
-
-    enable_dx_debug: bool = false,
-    enable_dx_gpu_debug: bool = false,
 };
 
 fn installDemo(
