@@ -1,4 +1,3 @@
-const builtin = @import("builtin");
 const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
@@ -19,21 +18,19 @@ pub fn build(b: *std.build.Builder) void {
     options.ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false;
 
     //
-    // Cross-platform demos
+    // Sample application
     //
-    if (!builtin.is_test) {
-        installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
-        installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
-        installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
-        installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
-        installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
-        installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-        installDemo(
-            b,
-            physically_based_rendering_wgpu.build(b, options),
-            "physically_based_rendering_wgpu",
-        );
-    }
+    installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
+    installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
+    installDemo(b, textured_quad_wgpu.build(b, options), "textured_quad_wgpu");
+    installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
+    installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
+    installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
+    installDemo(
+        b,
+        physically_based_rendering_wgpu.build(b, options),
+        "physically_based_rendering_wgpu",
+    );
 
     //
     // Tests
@@ -76,12 +73,10 @@ pub fn build(b: *std.build.Builder) void {
     //
     // Benchmarks
     //
-    if (!builtin.is_test) {
-        const benchmark_step = b.step("benchmark", "Run all benchmarks");
-        {
-            const run_cmd = zmath.buildBenchmarks(b, options.target).run();
-            benchmark_step.dependOn(&run_cmd.step);
-        }
+    const benchmark_step = b.step("benchmark", "Run all benchmarks");
+    {
+        const run_cmd = zmath.buildBenchmarks(b, options.target).run();
+        benchmark_step.dependOn(&run_cmd.step);
     }
 }
 
