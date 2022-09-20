@@ -1,6 +1,7 @@
 const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
+    ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator) catch return;
     {
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
@@ -128,6 +129,26 @@ fn installDemo(
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
+}
+
+fn ensureGit(allocator: std.mem.Allocator) !void {
+    const argv = &[_][]const u8{ "git", "--version" };
+    const result = std.ChildProcess.exec(.{
+        .allocator = allocator,
+        .argv = argv,
+        .cwd = ".",
+    }) catch { // e.g. FileNotFound
+        std.debug.print("'git --version' failed. Is git not installed?", .{});
+        return error.GitNotFound;
+    };
+    defer {
+        allocator.free(result.stderr);
+        allocator.free(result.stdout);
+    }
+    if (result.term.Exited != 0) {
+        std.debug.print("'git --version' failed. Is git not installed?", .{});
+        return error.GitNotFound;
+    }
 }
 
 fn ensureGitLfs(allocator: std.mem.Allocator) !void {
