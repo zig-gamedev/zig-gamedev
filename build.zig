@@ -1,13 +1,16 @@
 const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
-    ensureGitLfs(b.allocator);
+    ensureGitLfs(b.allocator) catch return;
     {
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
         child.cwd = thisDir();
         child.stderr = std.io.getStdErr();
         child.stdout = std.io.getStdOut();
-        _ = child.spawnAndWait() catch unreachable;
+        _ = child.spawnAndWait() catch {
+            std.debug.print("Failed to fetch git submodule. Try to re-clone.\n", .{});
+            return;
+        };
     }
 
     var options = Options{
@@ -127,7 +130,7 @@ inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
 
-fn ensureGitLfs(allocator: std.mem.Allocator) void {
+fn ensureGitLfs(allocator: std.mem.Allocator) !void {
     const printErrorMsg = (struct {
         fn impl() void {
             std.debug.print(
@@ -153,7 +156,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator) void {
         .cwd = ".",
     }) catch { // e.g. FileNotFound
         printErrorMsg();
-        std.process.exit(1);
+        return error.GitLfsNotFound;
     };
     defer {
         allocator.free(result.stderr);
@@ -161,6 +164,6 @@ fn ensureGitLfs(allocator: std.mem.Allocator) void {
     }
     if (result.term.Exited != 0) {
         printErrorMsg();
-        std.process.exit(1);
+        return error.GitLfsNotFound;
     }
 }
