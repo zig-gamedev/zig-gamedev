@@ -120,13 +120,10 @@ typedef uint32_t JPH_SubShapeID;
 typedef uint32_t JPH_CollisionGroupID;
 typedef uint32_t JPH_CollisionSubGroupID;
 
-typedef struct JPH_Shape            JPH_Shape;
-typedef struct JPH_PhysicsMaterial  JPH_PhysicsMaterial;
 typedef struct JPH_TempAllocator    JPH_TempAllocator;
 typedef struct JPH_JobSystem        JPH_JobSystem;
 typedef struct JPH_Body             JPH_Body;
 typedef struct JPH_BodyInterface    JPH_BodyInterface;
-typedef struct JPH_GroupFilter      JPH_GroupFilter;
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -169,17 +166,28 @@ typedef struct JPH_StateRecorder        JPH_StateRecorder;
 typedef struct JPH_MassProperties       JPH_MassProperties;
 typedef struct JPH_MotionProperties     JPH_MotionProperties;
 
-typedef struct JPH_CollisionGroup       JPH_CollisionGroup;
 typedef struct JPH_BodyCreationSettings JPH_BodyCreationSettings;
 typedef struct JPH_ContactManifold      JPH_ContactManifold;
 typedef struct JPH_ContactSettings      JPH_ContactSettings;
-typedef struct JPH_SubShapeIDPair       JPH_SubShapeIDPair;
 typedef struct JPH_CollideShapeResult   JPH_CollideShapeResult;
 
 typedef struct JPH_BroadPhaseLayerInterfaceVTable JPH_BroadPhaseLayerInterfaceVTable;
 typedef struct JPH_BodyActivationListenerVTable   JPH_BodyActivationListenerVTable;
 typedef struct JPH_ContactListenerVTable          JPH_ContactListenerVTable;
 
+
+//--------------------------------------------------------------------------------------------------
+//
+// Physics/Collision Types
+//
+//--------------------------------------------------------------------------------------------------
+typedef struct JPH_Shape             JPH_Shape;
+typedef struct JPH_SubShapeIDCreator JPH_SubShapeIDCreator;
+typedef struct JPH_SubShapeIDPair    JPH_SubShapeIDPair;
+typedef struct JPH_PhysicsMaterial   JPH_PhysicsMaterial;
+typedef struct JPH_GroupFilter       JPH_GroupFilter;
+typedef struct JPH_CollisionGroup    JPH_CollisionGroup;
+typedef struct JPH_TransformedShape  JPH_TransformedShape;
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -278,6 +286,13 @@ struct JPH_BodyCreationSettings
     JPH_MassProperties          mass_properties_override;
     const void *                reserved;
     const JPH_Shape *           shape;
+};
+
+// NOTE: Needs to be kept in sync with JPH::SubShapeIDCreator
+struct JPH_SubShapeIDCreator
+{
+    JPH_SubShapeID    id;
+    unsigned int      current_bit;
 };
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDPair
@@ -383,6 +398,18 @@ struct JPH_ContactListenerVTable
     void
     (*OnContactRemoved)(void *in_self, const JPH_SubShapeIDPair *in_sub_shape_pair);
 };
+
+// NOTE: Needs to be kept in sync with JPH::TransformedShape
+struct JPH_TransformedShape
+{
+    alignas(16) float      shape_position_com[4];
+    alignas(16) float      shape_rotation[4];
+    const JPH_Shape *      shape;
+    float                  shape_scale[3];
+    JPH_BodyID             body_id;
+    JPH_SubShapeIDCreator  sub_shape_id_creator;
+};
+
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -1130,6 +1157,35 @@ JPH_Body_GetCenterOfMassPosition(const JPH_Body *in_body, float out_position_com
 
 JPH_CAPI void
 JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_transform[16]);
+
+JPH_CAPI JPH_AABox
+JPH_Body_GetWorldSpaceBounds(const JPH_Body *in_body);
+
+JPH_CAPI JPH_MotionProperties *
+JPH_Body_GetMotionProperties(JPH_Body *in_body);
+
+JPH_CAPI JPH_MotionProperties *
+JPH_Body_GetMotionPropertiesUnchecked(JPH_Body *in_body);
+
+JPH_CAPI uint64_t
+JPH_Body_GetUserData(const JPH_Body *in_body);
+
+JPH_CAPI void
+JPH_Body_SetUserData(JPH_Body *in_body, uint64_t in_user_data);
+
+JPH_CAPI void
+JPH_Body_GetWorldSpaceSurfaceNormal(
+    const JPH_Body *in_body,
+    const JPH_SubShapeID *in_sub_shape_id,
+    const float in_position[3],
+    float out_normal_vector[3]
+);
+
+JPH_CAPI JPH_TransformedShape
+JPH_Body_GetTransformedShape(const JPH_Body *in_body);
+
+JPH_CAPI JPH_BodyCreationSettings
+JPH_Body_GetBodyCreationSettings(const JPH_Body *in_body);
 
 //--------------------------------------------------------------------------------------------------
 //
