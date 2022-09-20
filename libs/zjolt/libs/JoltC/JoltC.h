@@ -638,10 +638,12 @@ JPH_MotionProperties_AddAngularVelocityStep(
 );
 
 JPH_CAPI void
-JPH_MotionProperties_SubAngularangularStep(
+JPH_MotionProperties_SubAngularVelocityStep(
     JPH_MotionProperties *in_properties,
     const float in_linear_angular_change[3]
 );
+
+
 
 //--------------------------------------------------------------------------------------------------
 //
