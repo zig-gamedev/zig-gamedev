@@ -51,6 +51,9 @@ pub const io = struct {
     }
     extern fn zguiIoSetIniFilename(filename: [*:0]const u8) void;
 
+    pub const setConfigFlags = zguiIoSetConfigFlags;
+    extern fn zguiIoSetConfigFlags(flags: ConfigFlags) void;
+
     /// `pub fn setDisplaySize(width: f32, height: f32) void`
     pub const setDisplaySize = zguiIoSetDisplaySize;
     extern fn zguiIoSetDisplaySize(width: f32, height: f32) void;
@@ -58,6 +61,18 @@ pub const io = struct {
     /// `pub fn setDisplayFramebufferScale(sx: f32, sy: f32) void`
     pub const setDisplayFramebufferScale = zguiIoSetDisplayFramebufferScale;
     extern fn zguiIoSetDisplayFramebufferScale(sx: f32, sy: f32) void;
+};
+//--------------------------------------------------------------------------------------------------
+pub const ConfigFlags = enum(u32) {
+    none = 0,
+    nav_enable_keyboard = 1 << 0,
+    nav_enable_gamepad = 1 << 1,
+    nav_enable_set_mouse_pos = 1 << 2,
+    nav_no_capture_keyboard = 1 << 3,
+    no_mouse = 1 << 4,
+    no_mouse_cursor_change = 1 << 5,
+    is_srgb = 1 << 20,
+    is_touch_screen = 1 << 21,
 };
 //--------------------------------------------------------------------------------------------------
 const Context = *opaque {};
