@@ -190,6 +190,31 @@ pub const Mods = packed struct(i32) {
 };
 //--------------------------------------------------------------------------------------------------
 //
+// Cursor
+//
+//--------------------------------------------------------------------------------------------------
+pub const CursorShape = enum(i32) {
+    arrow = 0x00036001,
+    ibeam = 0x00036002,
+    crosshair = 0x00036003,
+    hand = 0x00036004,
+    hresize = 0x00036005,
+    vresize = 0x00036006,
+};
+
+pub const Cursor = *opaque {
+    pub const destroy = glfwDestroyCursor;
+    extern fn glfwDestroyCursor(cursor: Cursor) void;
+};
+
+pub fn createStandardCursor(shape: CursorShape) Error!Cursor {
+    if (glfwCreateStandardCursor(shape)) |ptr| return ptr;
+    try maybeError();
+    unreachable;
+}
+extern fn glfwCreateStandardCursor(shape: CursorShape) ?Cursor;
+//--------------------------------------------------------------------------------------------------
+//
 // Error
 //
 //--------------------------------------------------------------------------------------------------
@@ -349,6 +374,9 @@ pub const Window = *opaque {
             yoffset: f64,
         ) callconv(.C) void,
     ) void;
+
+    pub const setCursor = glfwSetCursor;
+    extern fn glfwSetCursor(window: Window, cursor: ?Cursor) void;
 };
 
 pub fn createWindow(
@@ -494,6 +522,11 @@ test "zglfw.basic" {
     window.setKeyCallback(keyCallback);
     window.setScrollCallback(scrollCallback);
     window.setKeyCallback(null);
+
+    const cursor = try createStandardCursor(.hand);
+    defer cursor.destroy();
+    window.setCursor(cursor);
+    window.setCursor(null);
 
     if (window.getKey(.a) == .press) {}
     if (window.getMouseButton(.right) == .press) {}
