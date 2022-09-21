@@ -24,6 +24,18 @@ extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
 extern fn zguiDestroyContext(ctx: ?Context) void;
 extern fn zguiGetCurrentContext() ?Context;
 //--------------------------------------------------------------------------------------------------
+pub const ConfigFlags = enum(u32) {
+    none = 0,
+    nav_enable_keyboard = 1 << 0,
+    nav_enable_gamepad = 1 << 1,
+    nav_enable_set_mouse_pos = 1 << 2,
+    nav_no_capture_keyboard = 1 << 3,
+    no_mouse = 1 << 4,
+    no_mouse_cursor_change = 1 << 5,
+    is_srgb = 1 << 20,
+    is_touch_screen = 1 << 21,
+};
+
 pub const io = struct {
     pub fn addFontFromFile(filename: [:0]const u8, size_pixels: f32) Font {
         return zguiIoAddFontFromFile(filename, size_pixels);
@@ -58,6 +70,10 @@ pub const io = struct {
     /// `pub fn setDisplayFramebufferScale(sx: f32, sy: f32) void`
     pub const setDisplayFramebufferScale = zguiIoSetDisplayFramebufferScale;
     extern fn zguiIoSetDisplayFramebufferScale(sx: f32, sy: f32) void;
+
+    /// `pub fn setConfigFlags(flags: ConfigFlags) void`
+    pub const setConfigFlags = zguiIoSetConfigFlags;
+    extern fn zguiIoSetConfigFlags(flags: ConfigFlags) void;
 };
 //--------------------------------------------------------------------------------------------------
 const Context = *opaque {};

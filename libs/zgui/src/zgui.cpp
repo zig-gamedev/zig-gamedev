@@ -1131,6 +1131,10 @@ ZGUI_API void zguiIoSetIniFilename(const char* filename) {
     ImGui::GetIO().IniFilename = filename;
 }
 
+ZGUI_API void zguiIoSetConfigFlags(ImGuiConfigFlags flags) {
+    ImGui::GetIO().ConfigFlags = flags;
+}
+
 ZGUI_API void zguiIoSetDisplaySize(float width, float height) {
     ImGui::GetIO().DisplaySize = { width, height };
 }
