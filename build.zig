@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const min_zig_version = std.SemanticVersion{ .major = 0, .minor = 10, .patch = 0, .pre = "dev.4060" };
+
 pub fn build(b: *std.build.Builder) void {
     ensureZigVersion(b.allocator) catch return;
     ensureGit(b.allocator) catch return;
@@ -12,7 +14,7 @@ pub fn build(b: *std.build.Builder) void {
         child.stderr = std.io.getStdErr();
         child.stdout = std.io.getStdOut();
         _ = child.spawnAndWait() catch {
-            std.debug.print("Failed to fetch git submodule. Try to re-clone.\n", .{});
+            std.log.err("Failed to fetch git submodule. Try to re-clone.\n", .{});
             return;
         };
     }
@@ -101,11 +103,7 @@ pub const Options = struct {
     ztracy_enable: bool,
 };
 
-fn installDemo(
-    b: *std.build.Builder,
-    exe: *std.build.LibExeObjStep,
-    comptime name: []const u8,
-) void {
+fn installDemo(b: *std.build.Builder, exe: *std.build.LibExeObjStep, comptime name: []const u8) void {
     // TODO: Problems with LTO on Windows.
     exe.want_lto = false;
     if (exe.build_mode == .ReleaseFast)
@@ -149,8 +147,9 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
     };
     if (!supported) {
         const zig_triple = target.zigTriple(b.allocator) catch unreachable;
-        std.debug.print(
+        std.log.err("\n" ++
             \\---------------------------------------------------------------------------
+            \\
             \\Unsupported build target. Dawn/WebGPU binaries for {s} not available.
             \\
             \\Following targets are supported:
@@ -160,17 +159,16 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
             \\x86_64-macos-none
             \\aarch64-linux-gnu
             \\aarch64-macos-none
+            \\
             \\---------------------------------------------------------------------------
             \\
-        ,
-            .{zig_triple},
-        );
+        , .{zig_triple});
         if (target.os.tag == .macos) {
-            if (target.cpu.arch.isX86()) std.debug.print(
+            if (target.cpu.arch.isX86()) std.log.err(
                 "-> Did you mean to use -Dtarget=x86_64-macos.12 ?",
                 .{},
             );
-            if (target.cpu.arch.isAARCH64()) std.debug.print(
+            if (target.cpu.arch.isAARCH64()) std.log.err(
                 "-> Did you mean to use -Dtarget=aarch64-macos.12 ?",
                 .{},
             );
@@ -186,7 +184,7 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
         .argv = argv,
         .cwd = ".",
     }) catch { // e.g. FileNotFound
-        std.debug.print(
+        std.log.err("\n" ++
             \\---------------------------------------------------------------------------
             \\
             \\'zig version' failed. Is Zig compiler installed?
@@ -201,7 +199,7 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
         allocator.free(result.stdout);
     }
     if (result.term.Exited != 0) {
-        std.debug.print(
+        std.log.err("\n" ++
             \\---------------------------------------------------------------------------
             \\
             \\'zig version' failed. Is Zig compiler installed?
@@ -212,14 +210,11 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
         return error.ZigNotFound;
     }
 
-    const min_rquired_ver = std.SemanticVersion{ .major = 0, .minor = 10, .patch = 0, .pre = "dev.4060" };
-    var installed_ver = try std.SemanticVersion.parse(
-        std.mem.trimRight(u8, result.stdout, "\n"),
-    );
+    var installed_ver = try std.SemanticVersion.parse(std.mem.trimRight(u8, result.stdout, "\n"));
     installed_ver.build = null;
 
-    if (installed_ver.order(min_rquired_ver) == .lt) {
-        std.debug.print(
+    if (installed_ver.order(min_zig_version) == .lt) {
+        std.log.err("\n" ++
             \\---------------------------------------------------------------------------
             \\
             \\Installed Zig compiler version is too old.
@@ -232,7 +227,7 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
             \\
             \\---------------------------------------------------------------------------
             \\
-        , .{ min_rquired_ver, installed_ver });
+        , .{ min_zig_version, installed_ver });
         return error.ZigIsTooOld;
     }
 }
@@ -240,7 +235,7 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
 fn ensureGit(allocator: std.mem.Allocator) !void {
     const printErrorMsg = (struct {
         fn impl() void {
-            std.debug.print(
+            std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
                 \\
                 \\'git --version' failed. Is Git installed?
@@ -272,8 +267,9 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
 fn ensureGitLfs(allocator: std.mem.Allocator) !void {
     const printErrorMsg = (struct {
         fn impl() void {
-            std.debug.print(
+            std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
+                \\
                 \\'git-lfs --version' failed.
                 \\
                 \\Please install Git LFS (Large File Support) and run (in the repo):
@@ -282,6 +278,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
                 \\git lfs pull
                 \\
                 \\For more info see: https://git-lfs.github.com/
+                \\
                 \\---------------------------------------------------------------------------
                 \\
             , .{});

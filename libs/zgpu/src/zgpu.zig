@@ -1385,9 +1385,8 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
 
     doSystemCheck() catch |err| switch (err) {
         error.GraphicsApiUnavailable => {
-            std.debug.print(
+            std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
-                \\GRAPHICS ERROR
                 \\
                 \\This program requires:
                 \\
@@ -1396,15 +1395,15 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
                 \\  * Metal graphics driver on macOS
                 \\
                 \\Please install latest supported driver and try again.
+                \\
                 \\---------------------------------------------------------------------------
                 \\
             , .{});
             return err;
         },
         error.InvalidDataFiles => {
-            std.debug.print(
+            std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
-                \\DATA ERROR
                 \\
                 \\Invalid data files or missing content folder.
                 \\Please install Git LFS (Large File Support) and run (in the repo):
@@ -1413,6 +1412,7 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
                 \\git lfs pull
                 \\
                 \\For more info please see: https://git-lfs.github.com/
+                \\
                 \\---------------------------------------------------------------------------
                 \\
             , .{});
