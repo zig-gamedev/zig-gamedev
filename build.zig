@@ -237,14 +237,14 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
             std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
                 \\
-                \\'git --version' failed. Is Git installed?
+                \\'git version' failed. Is Git installed?
                 \\
                 \\---------------------------------------------------------------------------
                 \\
             , .{});
         }
     }).impl;
-    const argv = &[_][]const u8{ "git-lfs", "--version" };
+    const argv = &[_][]const u8{ "git", "version" };
     const result = std.ChildProcess.exec(.{
         .allocator = allocator,
         .argv = argv,
@@ -269,7 +269,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
             std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
                 \\
-                \\'git-lfs --version' failed.
+                \\'git lfs version' failed.
                 \\
                 \\Please install Git LFS (Large File Support) and run (in the repo):
                 \\
@@ -283,7 +283,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
             , .{});
         }
     }).impl;
-    const argv = &[_][]const u8{ "git-lfs", "--version" };
+    const argv = &[_][]const u8{ "git", "lfs", "version" };
     const result = std.ChildProcess.exec(.{
         .allocator = allocator,
         .argv = argv,
