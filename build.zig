@@ -1,6 +1,7 @@
 const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
+    ensureZigVersion(b.allocator) catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator) catch return;
 
@@ -150,7 +151,7 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
         const zig_triple = target.zigTriple(b.allocator) catch unreachable;
         std.debug.print(
             \\---------------------------------------------------------------------------
-            \\Not supported target. Dawn/WebGPU binaries for {s} not available.
+            \\Unsupported build target. Dawn/WebGPU binaries for {s} not available.
             \\
             \\Following targets are supported:
             \\
@@ -178,16 +179,72 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
     }
 }
 
+fn ensureZigVersion(allocator: std.mem.Allocator) !void {
+    const argv = &[_][]const u8{ "zig", "version" };
+    const result = std.ChildProcess.exec(.{
+        .allocator = allocator,
+        .argv = argv,
+        .cwd = ".",
+    }) catch { // e.g. FileNotFound
+        std.debug.print(
+            \\---------------------------------------------------------------------------
+            \\
+            \\'zig version' failed. Is Zig compiler installed?
+            \\
+            \\---------------------------------------------------------------------------
+            \\
+        , .{});
+        return error.ZigNotFound;
+    };
+    defer {
+        allocator.free(result.stderr);
+        allocator.free(result.stdout);
+    }
+    if (result.term.Exited != 0) {
+        std.debug.print(
+            \\---------------------------------------------------------------------------
+            \\
+            \\'zig version' failed. Is Zig compiler installed?
+            \\
+            \\---------------------------------------------------------------------------
+            \\
+        , .{});
+        return error.ZigNotFound;
+    }
+
+    const min_rquired_ver = std.SemanticVersion{ .major = 0, .minor = 10, .patch = 0, .pre = "dev.4060" };
+    var installed_ver = try std.SemanticVersion.parse(
+        std.mem.trimRight(u8, result.stdout, "\n"),
+    );
+    installed_ver.build = null;
+
+    if (installed_ver.order(min_rquired_ver) == .lt) {
+        std.debug.print(
+            \\---------------------------------------------------------------------------
+            \\
+            \\Installed Zig compiler version is too old.
+            \\
+            \\Min. required version is: {any}
+            \\Installed version is: {any}
+            \\
+            \\Please install newer version and try again.
+            \\Latest version can be found here: https://ziglang.org/download/
+            \\
+            \\---------------------------------------------------------------------------
+            \\
+        , .{ min_rquired_ver, installed_ver });
+        return error.ZigIsTooOld;
+    }
+}
+
 fn ensureGit(allocator: std.mem.Allocator) !void {
     const printErrorMsg = (struct {
         fn impl() void {
             std.debug.print(
                 \\---------------------------------------------------------------------------
-                \\'git --version' failed.
                 \\
-                \\Please install Git and try again.
+                \\'git --version' failed. Is Git installed?
                 \\
-                \\For more info see: https://git-scm.com/
                 \\---------------------------------------------------------------------------
                 \\
             , .{});
