@@ -186,7 +186,7 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
         std.log.err("\n" ++
             \\---------------------------------------------------------------------------
             \\
-            \\'zig version' failed. Is Zig compiler installed?
+            \\'zig version' failed. Is Zig compiler not installed?
             \\
             \\---------------------------------------------------------------------------
             \\
@@ -201,7 +201,7 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
         std.log.err("\n" ++
             \\---------------------------------------------------------------------------
             \\
-            \\'zig version' failed. Is Zig compiler installed?
+            \\'zig version' failed. Is Zig compiler not installed?
             \\
             \\---------------------------------------------------------------------------
             \\
@@ -237,7 +237,7 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
             std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
                 \\
-                \\'git version' failed. Is Git installed?
+                \\'git version' failed. Is Git not installed?
                 \\
                 \\---------------------------------------------------------------------------
                 \\
