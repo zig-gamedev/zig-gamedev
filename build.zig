@@ -7,6 +7,13 @@ pub fn build(b: *std.build.Builder) void {
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator) catch return;
 
+    const options = Options{
+        .build_mode = b.standardReleaseOptions(),
+        .target = b.standardTargetOptions(.{}),
+        .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
+    };
+    ensureTarget(b, options.target) catch return;
+
     // Fetach the latest Dawn/WebGPU binaries.
     {
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
@@ -18,13 +25,6 @@ pub fn build(b: *std.build.Builder) void {
             return;
         };
     }
-
-    const options = Options{
-        .build_mode = b.standardReleaseOptions(),
-        .target = b.standardTargetOptions(.{}),
-        .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
-    };
-    ensureTarget(b, options.target) catch return;
 
     //
     // Sample applications
