@@ -24,7 +24,7 @@ pub fn build(b: *std.build.Builder) void {
     ensureTarget(b, options.target) catch return;
 
     //
-    // Sample application
+    // Sample applications
     //
     installDemo(b, procedural_mesh_wgpu.build(b, options), "procedural_mesh_wgpu");
     installDemo(b, triangle_wgpu.build(b, options), "triangle_wgpu");
@@ -32,11 +32,7 @@ pub fn build(b: *std.build.Builder) void {
     installDemo(b, gui_test_wgpu.build(b, options), "gui_test_wgpu");
     installDemo(b, audio_experiments_wgpu.build(b, options), "audio_experiments_wgpu");
     installDemo(b, bullet_physics_test_wgpu.build(b, options), "bullet_physics_test_wgpu");
-    installDemo(
-        b,
-        physically_based_rendering_wgpu.build(b, options),
-        "physically_based_rendering_wgpu",
-    );
+    installDemo(b, physically_based_rendering_wgpu.build(b, options), "physically_based_rendering_wgpu");
 
     //
     // Tests
@@ -150,7 +146,6 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
         },
         else => false,
     };
-
     if (!supported) {
         const zig_triple = target.zigTriple(b.allocator) catch unreachable;
         std.debug.print(
@@ -184,22 +179,27 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
 }
 
 fn ensureGit(allocator: std.mem.Allocator) !void {
-    const argv = &[_][]const u8{ "git", "--version" };
+    const printErrorMsg = (struct {
+        fn impl() void {
+            std.debug.print(
+                \\---------------------------------------------------------------------------
+                \\'git --version' failed.
+                \\
+                \\Please install Git and try again.
+                \\
+                \\For more info see: https://git-scm.com/
+                \\---------------------------------------------------------------------------
+                \\
+            , .{});
+        }
+    }).impl;
+    const argv = &[_][]const u8{ "git-lfs", "--version" };
     const result = std.ChildProcess.exec(.{
         .allocator = allocator,
         .argv = argv,
         .cwd = ".",
     }) catch { // e.g. FileNotFound
-        std.debug.print(
-            \\---------------------------------------------------------------------------
-            \\'git --version' failed.
-            \\
-            \\Please install Git and try again.
-            \\
-            \\For more info see: https://git-scm.com/
-            \\---------------------------------------------------------------------------
-            \\
-        , .{});
+        printErrorMsg();
         return error.GitNotFound;
     };
     defer {
@@ -207,7 +207,7 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
         allocator.free(result.stdout);
     }
     if (result.term.Exited != 0) {
-        std.debug.print("'git --version' failed. Is git not installed?", .{});
+        printErrorMsg();
         return error.GitNotFound;
     }
 }
@@ -230,7 +230,6 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
             , .{});
         }
     }).impl;
-
     const argv = &[_][]const u8{ "git-lfs", "--version" };
     const result = std.ChildProcess.exec(.{
         .allocator = allocator,
