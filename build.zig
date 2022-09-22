@@ -219,8 +219,8 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
             \\
             \\Installed Zig compiler version is too old.
             \\
-            \\Min. required version is: {any}
-            \\Installed version is: {any}
+            \\Min. required version: {any}
+            \\Installed version: {any}
             \\
             \\Please install newer version and try again.
             \\Latest version can be found here: https://ziglang.org/download/
