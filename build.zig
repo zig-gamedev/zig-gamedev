@@ -9,7 +9,7 @@ pub fn build(b: *std.build.Builder) void {
         .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
     };
     ensureTarget(b, options.target) catch return;
-    ensureZigVersion(b.allocator) catch return;
+    ensureZigVersion() catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator) catch return;
 
@@ -176,26 +176,8 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
     }
 }
 
-fn ensureZigVersion(allocator: std.mem.Allocator) !void {
-    const argv = &[_][]const u8{ "zig", "version" };
-    const result = std.ChildProcess.exec(.{
-        .allocator = allocator,
-        .argv = argv,
-        .cwd = ".",
-    }) catch { // e.g. FileNotFound
-        // 'zig version' failed for some reason but we will try to compile anyway.
-        return;
-    };
-    defer {
-        allocator.free(result.stderr);
-        allocator.free(result.stdout);
-    }
-    if (result.term.Exited != 0) {
-        // 'zig version' failed for some reason but we will try to compile anyway.
-        return;
-    }
-
-    var installed_ver = try std.SemanticVersion.parse(std.mem.trimRight(u8, result.stdout, "\n"));
+fn ensureZigVersion() !void {
+    var installed_ver = @import("builtin").zig_version;
     installed_ver.build = null;
 
     if (installed_ver.order(min_zig_version) == .lt) {
