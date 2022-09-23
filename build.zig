@@ -197,17 +197,6 @@ fn ensureZigVersion(allocator: std.mem.Allocator) !void {
         allocator.free(result.stderr);
         allocator.free(result.stdout);
     }
-    if (result.term.Exited != 0) {
-        std.log.err("\n" ++
-            \\---------------------------------------------------------------------------
-            \\
-            \\'zig version' failed. Is Zig compiler not installed?
-            \\
-            \\---------------------------------------------------------------------------
-            \\
-        , .{});
-        return error.ZigNotFound;
-    }
 
     var installed_ver = try std.SemanticVersion.parse(std.mem.trimRight(u8, result.stdout, "\n"));
     installed_ver.build = null;
