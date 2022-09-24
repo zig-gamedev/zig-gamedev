@@ -2,18 +2,17 @@
 
 This repository contains a collection of [sample applications](#cross-platfrom-winlinmac-sample-applications-native-wgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: 3D graphics, multi-threaded physics, SIMD math, audio, GUI, image loading, noise generation and profiling.
 
-The goal of the project is to build a **toolbox of libraries** for Zig game developers. A lot of effort is being put to make the whole package consistent and let the developer use only the components she needs. Project is being developed by contributors and by **one full-time developer**.
-
-If you are interested, please see [Monthly Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) and our [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap).
-
 To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
-
-(`git` with [Git LFS](https://git-lfs.github.com/) extension and [Zig 0.10.0-dev.4060 (master)](https://ziglang.org/download/) or newer is required)
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
+
+The goal of the project is to build a **toolbox of libraries** for Zig game developers. A lot of effort is being put to make the whole package consistent and let the developer use only the components she needs. Project is being developed by contributors and by **one full-time developer**.
+
+If you are interested, please see [Monthly Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) and our [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap).
+
 #### Cross-platfrom (Win/Lin/Mac) libraries:
 Library | Latest version | Description
 ------- | --------- | ---------------
