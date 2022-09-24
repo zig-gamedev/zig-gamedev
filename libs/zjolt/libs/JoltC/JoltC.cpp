@@ -42,6 +42,7 @@ AssertFailedImpl(const char *in_expression,
 //--------------------------------------------------------------------------------------------------
 static_assert(sizeof(JPH::BodyID)                  == sizeof(JPH_BodyID));
 static_assert(sizeof(JPH::SubShapeID)              == sizeof(JPH_SubShapeID));
+static_assert(sizeof(JPH::SubShapeIDCreator)       == sizeof(JPH_SubShapeIDCreator));
 static_assert(sizeof(JPH::EShapeType)              == sizeof(JPH_ShapeType));
 static_assert(sizeof(JPH::EShapeSubType)           == sizeof(JPH_ShapeSubType));
 static_assert(sizeof(JPH::EMotionType)             == sizeof(JPH_MotionType));
@@ -64,6 +65,7 @@ static_assert(sizeof(JPH::ContactManifold)         == sizeof(JPH_ContactManifold
 static_assert(sizeof(JPH::ContactSettings)         == sizeof(JPH_ContactSettings));
 static_assert(sizeof(JPH::SubShapeIDPair)          == sizeof(JPH_SubShapeIDPair));
 static_assert(sizeof(JPH::CollideShapeResult)      == sizeof(JPH_CollideShapeResult));
+static_assert(sizeof(JPH::TransformedShape)        == sizeof(JPH_TransformedShape));
 
 static_assert(alignof(JPH::AABox)                  == alignof(JPH_AABox));
 static_assert(alignof(JPH::Plane)                  == alignof(JPH_Plane));
@@ -77,6 +79,7 @@ static_assert(alignof(JPH::ContactManifold)        == alignof(JPH_ContactManifol
 static_assert(alignof(JPH::ContactSettings)        == alignof(JPH_ContactSettings));
 static_assert(alignof(JPH::SubShapeIDPair)         == alignof(JPH_SubShapeIDPair));
 static_assert(alignof(JPH::CollideShapeResult)     == alignof(JPH_CollideShapeResult));
+static_assert(alignof(JPH::TransformedShape)       == alignof(JPH_TransformedShape));
 
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
@@ -1417,6 +1420,79 @@ JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_tran
     const JPH::Mat44 m = body->GetInverseCenterOfMassTransform();
     m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_transform));
 }
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI const JPH_AABox *
+JPH_Body_GetWorldSpaceBounds(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH_AABox *>(
+        &reinterpret_cast<const JPH::Body *>(in_body)->GetWorldSpaceBounds()
+    );
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_MotionProperties *
+JPH_Body_GetMotionProperties(JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    const auto body = reinterpret_cast<JPH::Body *>(in_body);
+    return reinterpret_cast<JPH_MotionProperties *>(body->GetMotionProperties());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_MotionProperties *
+JPH_Body_GetMotionPropertiesUnchecked(JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    const auto body = reinterpret_cast<JPH::Body *>(in_body);
+    return reinterpret_cast<JPH_MotionProperties *>(body->GetMotionPropertiesUnchecked());
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI uint64_t
+JPH_Body_GetUserData(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    return reinterpret_cast<const JPH::Body *>(in_body)->GetUserData();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_SetUserData(JPH_Body *in_body, uint64_t in_user_data)
+{
+    assert(in_body != nullptr);
+    reinterpret_cast<JPH::Body *>(in_body)->SetUserData(in_user_data);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_Body_GetWorldSpaceSurfaceNormal(
+    const JPH_Body *in_body,
+    const JPH_SubShapeID *in_sub_shape_id,
+    const float in_position[3],
+    float out_normal_vector[3]
+)
+{
+    assert(in_body != nullptr);
+    const JPH::Vec3 v = reinterpret_cast<const JPH::Body *>(in_body)->GetWorldSpaceSurfaceNormal(
+        reinterpret_cast<const JPH::SubShapeID &>(in_sub_shape_id),
+        JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_position))
+    );
+    v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_normal_vector));
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_TransformedShape
+JPH_Body_GetTransformedShape(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    const auto body = reinterpret_cast<const JPH::Body *>(in_body);
+    const JPH::TransformedShape transformed_shape = body->GetTransformedShape();
+    return *reinterpret_cast<const JPH_TransformedShape *>(&transformed_shape);
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI JPH_BodyCreationSettings
+JPH_Body_GetBodyCreationSettings(const JPH_Body *in_body)
+{
+    assert(in_body != nullptr);
+    const auto body = reinterpret_cast<const JPH::Body *>(in_body);
+    const JPH::BodyCreationSettings settings = body->GetBodyCreationSettings();
+    return *reinterpret_cast<const JPH_BodyCreationSettings *>(&settings);
+}
 
 //--------------------------------------------------------------------------------------------------
 //
@@ -1894,7 +1970,7 @@ JPH_MotionProperties_AddAngularVelocityStep(
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
-JPH_MotionProperties_SubAngularangularStep(
+JPH_MotionProperties_SubAngularVelocityStep(
     JPH_MotionProperties *in_properties,
     const float in_angular_velocity_change[3]
 )
@@ -1905,7 +1981,7 @@ JPH_MotionProperties_SubAngularangularStep(
         JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_angular_velocity_change))
     );
 }
-//--------------------------------------------------------------------------------------------------
+
 
 //--------------------------------------------------------------------------------------------------
 //
