@@ -1421,12 +1421,12 @@ JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_tran
     m.StoreFloat4x4(reinterpret_cast<JPH::Float4 *>(out_transform));
 }
 //--------------------------------------------------------------------------------------------------
-JPH_CAPI JPH_AABox
+JPH_CAPI const JPH_AABox *
 JPH_Body_GetWorldSpaceBounds(const JPH_Body *in_body)
 {
     assert(in_body != nullptr);
-    return static_cast<JPH_AABox>(
-        reinterpret_cast<const JPH::Body *>(in_body)->GetWorldSpaceBounds()
+    return reinterpret_cast<const JPH_AABox *>(
+        &reinterpret_cast<const JPH::Body *>(in_body)->GetWorldSpaceBounds()
     );
 }
 //--------------------------------------------------------------------------------------------------
@@ -1481,9 +1481,8 @@ JPH_Body_GetTransformedShape(const JPH_Body *in_body)
 {
     assert(in_body != nullptr);
     const auto body = reinterpret_cast<const JPH::Body *>(in_body);
-    return static_cast<JPH_TransformedShape>(
-        reinterpret_cast<const JPH::Body *>(in_body)->GetTransformedShape()
-    );
+    const JPH::TransformedShape transformed_shape = body->GetTransformedShape();
+    return *reinterpret_cast<const JPH_TransformedShape *>(&transformed_shape);
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_BodyCreationSettings
@@ -1491,9 +1490,8 @@ JPH_Body_GetBodyCreationSettings(const JPH_Body *in_body)
 {
     assert(in_body != nullptr);
     const auto body = reinterpret_cast<const JPH::Body *>(in_body);
-    return static_cast<JPH_BodyCreationSettings>(
-        reinterpret_cast<const JPH::Body *>(in_body)->GetBodyCreationSettings()
-    );
+    const JPH::BodyCreationSettings settings = body->GetBodyCreationSettings();
+    return *reinterpret_cast<const JPH_BodyCreationSettings *>(&settings);
 }
 
 //--------------------------------------------------------------------------------------------------

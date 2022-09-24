@@ -1158,7 +1158,7 @@ JPH_Body_GetCenterOfMassPosition(const JPH_Body *in_body, float out_position_com
 JPH_CAPI void
 JPH_Body_GetInverseCenterOfMassTransform(const JPH_Body *in_body, float out_transform[16]);
 
-JPH_CAPI JPH_AABox
+JPH_CAPI const JPH_AABox *
 JPH_Body_GetWorldSpaceBounds(const JPH_Body *in_body);
 
 JPH_CAPI JPH_MotionProperties *
