@@ -15,18 +15,20 @@ cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
 #### Cross-platfrom (Win/Lin/Mac) libraries:
-* [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) - cross-platform graphics layer built on top of native wgpu API (Dawn)
-* [zgui](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgui) - easy to use [dear imgui](https://github.com/ocornut/imgui) bindings
-* [zaudio](https://github.com/michal-z/zig-gamedev/tree/main/libs/zaudio) - Cross-platform audio built on top of [miniaudio](https://github.com/mackron/miniaudio) library
-* [zmath](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmath) - SIMD math library for game developers
-* [zstbi](https://github.com/michal-z/zig-gamedev/blob/main/libs/zstbi) - image loading with [stbi](https://github.com/nothings/stb)
-* [zglfw](https://github.com/michal-z/zig-gamedev/blob/main/libs/zglfw) - minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
-* [zbullet](https://github.com/michal-z/zig-gamedev/blob/main/libs/zbullet) - Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
-* [zmesh](https://github.com/michal-z/zig-gamedev/blob/main/libs/zmesh) - loading, generating, processing and optimizing triangle meshes
-* [znoise](https://github.com/michal-z/zig-gamedev/blob/main/libs/znoise) - Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
-* [ztracy](https://github.com/michal-z/zig-gamedev/blob/main/libs/ztracy) - support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
-* [zpool](https://github.com/michal-z/zig-gamedev/blob/main/libs/zpool) - generic pool & handle implementation
-* [znetwork](https://github.com/michal-z/zig-gamedev/blob/main/libs/znetwork) - small abstraction layer around TCP & UDP (vendored from [here](https://github.com/MasterQ32/zig-network))
+Library | Latest version | Description
+------- | --------- | ---------------
+**[zgpu](libs/zgpu)** | 0.2 | graphics layer built on top of native wgpu API (Dawn) |
+**[zgui](libs/zgui)** | 0.9 | easy to use [dear imgui](https://github.com/ocornut/imgui) bindings
+**[zaudio](libs/zaudio)** | 0.2 | cross-platform audio built on top of [miniaudio](https://github.com/mackron/miniaudio) library
+**[zmath](libs/zmath)** | 0.3 | SIMD math library for game developers
+**[zstbi](libs/zstbi)** | 0.2 | image loading with [stbi](https://github.com/nothings/stb)
+**[zglfw](libs/zglfw)** | 0.1 | minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
+**[zbullet](libs/zbullet)** | 0.2 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
+**[zmesh](libs/zmesh)** | 0.2 | loading, generating, processing and optimizing triangle meshes
+**[znoise](libs/znoise)** | 0.1 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
+**[ztracy](libs/ztracy)** | 0.9 | support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
+**[zpool](libs/zpool)** | 0.9 | generic pool & handle implementation
+**[znetwork](libs/znetwork)** | 0.1 | small abstraction layer around TCP & UDP (vendored from [here](https://github.com/MasterQ32/zig-network))
 
 #### Project vision:
 * Works on Windows, Linux and macOS
