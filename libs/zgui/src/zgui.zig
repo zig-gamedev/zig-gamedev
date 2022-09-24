@@ -8,21 +8,66 @@ const assert = std.debug.assert;
 pub const f32_min: f32 = 1.17549435082228750796873653722225e-38;
 pub const f32_max: f32 = 3.40282346638528859811704183484517e+38;
 //--------------------------------------------------------------------------------------------------
-pub fn init() void {
+pub fn init(allocator: std.mem.Allocator) void {
     if (zguiGetCurrentContext() == null) {
+        mem_allocator = allocator;
+        mem_allocations = std.AutoHashMap(usize, usize).init(allocator);
+        mem_allocations.?.ensureTotalCapacity(32) catch @panic("zgui: out of memory");
+        zguiSetAllocatorFunctions(zguiMemAlloc, zguiMemFree);
+
         _ = zguiCreateContext(null);
-        temp_buffer.resize(3 * 1024 + 1) catch unreachable;
+
+        temp_buffer = std.ArrayList(u8).init(allocator);
+        temp_buffer.?.resize(3 * 1024 + 1) catch unreachable;
     }
 }
 pub fn deinit() void {
     if (zguiGetCurrentContext() != null) {
-        temp_buffer.deinit();
+        temp_buffer.?.deinit();
         zguiDestroyContext(null);
+        zguiSetAllocatorFunctions(null, null);
+
+        assert(mem_allocations.?.count() == 0);
+        mem_allocations.?.deinit();
+        mem_allocations = null;
+        mem_allocator = null;
     }
 }
 extern fn zguiCreateContext(shared_font_atlas: ?*const anyopaque) Context;
 extern fn zguiDestroyContext(ctx: ?Context) void;
 extern fn zguiGetCurrentContext() ?Context;
+//--------------------------------------------------------------------------------------------------
+var mem_allocator: ?std.mem.Allocator = null;
+var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
+var mem_mutex: std.Thread.Mutex = .{};
+
+export fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
+    mem_mutex.lock();
+    defer mem_mutex.unlock();
+
+    const mem = mem_allocator.?.allocBytes(16, size, 0, @returnAddress()) catch @panic("zgui: out of memory");
+
+    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch
+        @panic("zgui: out of memory");
+
+    return mem.ptr;
+}
+
+export fn zguiMemFree(in_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
+    if (in_ptr) |ptr| {
+        mem_mutex.lock();
+        defer mem_mutex.unlock();
+
+        const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const mem = @ptrCast([*]align(16) u8, @alignCast(16, ptr))[0..size];
+        mem_allocator.?.free(mem);
+    }
+}
+
+extern fn zguiSetAllocatorFunctions(
+    alloc_func: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque,
+    free_func: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void,
+) void;
 //--------------------------------------------------------------------------------------------------
 pub const ConfigFlags = enum(u32) {
     none = 0,
@@ -2304,17 +2349,17 @@ extern fn zguiIsAnyItemFocused() bool;
 // Helpers
 //
 //--------------------------------------------------------------------------------------------------
-var temp_buffer = std.ArrayList(u8).init(std.heap.c_allocator);
+var temp_buffer: ?std.ArrayList(u8) = null;
 
 pub fn format(comptime fmt: []const u8, args: anytype) []const u8 {
     const len = std.fmt.count(fmt, args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
-    return std.fmt.bufPrint(temp_buffer.items, fmt, args) catch unreachable;
+    if (len > temp_buffer.?.items.len) temp_buffer.?.resize(len + 64) catch unreachable;
+    return std.fmt.bufPrint(temp_buffer.?.items, fmt, args) catch unreachable;
 }
 pub fn formatZ(comptime fmt: []const u8, args: anytype) [:0]const u8 {
     const len = std.fmt.count(fmt ++ "\x00", args);
-    if (len > temp_buffer.items.len) temp_buffer.resize(len + 64) catch unreachable;
-    return std.fmt.bufPrintZ(temp_buffer.items, fmt, args) catch unreachable;
+    if (len > temp_buffer.?.items.len) temp_buffer.?.resize(len + 64) catch unreachable;
+    return std.fmt.bufPrintZ(temp_buffer.?.items, fmt, args) catch unreachable;
 }
 //--------------------------------------------------------------------------------------------------
 fn typeToDataTypeEnum(comptime T: type) DataType {

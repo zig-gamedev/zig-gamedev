@@ -1364,7 +1364,7 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
             // Change directory to where an executable is located.
             {
                 var exe_path_buffer: [1024]u8 = undefined;
-                const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch "./";
+                const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch ".";
                 std.os.chdir(exe_path) catch {};
             }
             // Make sure font file is a valid data file and not just a Git LFS pointer.
@@ -1375,7 +1375,7 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
                 ) catch return error.InvalidDataFiles;
                 defer file.close();
 
-                const size = @intCast(usize, file.getEndPos() catch return error.InvalidDataFiles);
+                const size = file.getEndPos() catch return error.InvalidDataFiles;
                 if (size <= 1024) {
                     return error.InvalidDataFiles;
                 }

@@ -51,7 +51,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
         image.data,
     );
 
-    zgui.init();
+    zgui.init(allocator);
     zgui.plot.init();
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();

@@ -17,6 +17,13 @@ ZGUI_API float zguiGetFloatMax(void) {
 }
 */
 
+ZGUI_API void zguiSetAllocatorFunctions(
+    void* (*alloc_func)(size_t, void*),
+    void (*free_func)(void*, void*)
+) {
+    ImGui::SetAllocatorFunctions(alloc_func, free_func, nullptr);
+}
+
 ZGUI_API void zguiSetNextWindowPos(float x, float y, ImGuiCond cond, float pivot_x, float pivot_y) {
     ImGui::SetNextWindowPos({ x, y }, cond, { pivot_x, pivot_y });
 }

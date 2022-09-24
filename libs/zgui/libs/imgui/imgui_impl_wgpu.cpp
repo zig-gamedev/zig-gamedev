@@ -716,6 +716,9 @@ bool ImGui_ImplWGPU_Init(WGPUDevice device, int num_frames_in_flight, WGPUTextur
 
 void ImGui_ImplWGPU_Shutdown(void)
 {
+    // mziulek: Explicitly release the memory reserved in ImGui_ImplWGPU_Init().
+    g_resources.ImageBindGroups.Clear();
+
     ImGui_ImplWGPU_InvalidateDeviceObjects();
     delete[] g_pFrameResources;
     g_pFrameResources = NULL;

@@ -1104,7 +1104,7 @@ pub fn main() !void {
         break :scale_factor math.max(scale[0], scale[1]);
     };
 
-    zgui.init();
+    zgui.init(allocator);
     defer zgui.deinit();
 
     _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 16.0 * scale_factor);

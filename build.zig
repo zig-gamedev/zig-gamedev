@@ -232,19 +232,19 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
 }
 
 fn ensureGitLfs(allocator: std.mem.Allocator) !void {
-    const printErrorMsg = (struct {
+    const printNoGitLfs = (struct {
         fn impl() void {
             std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
                 \\
                 \\'git lfs version' failed.
                 \\
-                \\Please install Git LFS (Large File Support) and run (in the repo):
+                \\Please install Git LFS (Large File Support), run (in the repo):
                 \\
-                \\git lfs install
-                \\git lfs pull
+                \\'git lfs install'
+                \\'git lfs pull'
                 \\
-                \\For more info see: https://git-lfs.github.com/
+                \\and try again. For more info see: https://git-lfs.github.com/
                 \\
                 \\---------------------------------------------------------------------------
                 \\
@@ -257,7 +257,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
         .argv = argv,
         .cwd = ".",
     }) catch { // e.g. FileNotFound
-        printErrorMsg();
+        printNoGitLfs();
         return error.GitLfsNotFound;
     };
     defer {
@@ -265,7 +265,39 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
         allocator.free(result.stdout);
     }
     if (result.term.Exited != 0) {
-        printErrorMsg();
+        printNoGitLfs();
         return error.GitLfsNotFound;
+    }
+
+    const printNoGitLfsContent = (struct {
+        fn impl() void {
+            std.log.err("\n" ++
+                \\---------------------------------------------------------------------------
+                \\
+                \\Git LFS content not downloaded. Please run (in the repo):
+                \\
+                \\'git lfs install'
+                \\'git lfs pull'
+                \\
+                \\and try again.
+                \\
+                \\---------------------------------------------------------------------------
+                \\
+            , .{});
+        }
+    }).impl;
+    const file = std.fs.openFileAbsolute(thisDir() ++ "/libs/zgpu/libs/dawn/x86_64-windows-gnu/dawn.lib", .{}) catch {
+        printNoGitLfsContent();
+        return error.GitLfsNoContent;
+    };
+    defer file.close();
+
+    const size = file.getEndPos() catch {
+        printNoGitLfsContent();
+        return error.GitLfsNoContent;
+    };
+    if (size <= 1024) {
+        printNoGitLfsContent();
+        return error.GitLfsNoContent;
     }
 }
