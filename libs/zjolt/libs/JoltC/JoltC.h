@@ -149,7 +149,6 @@ typedef bool
 
 typedef bool
 (*JPH_ObjectVsBroadPhaseLayerFilter)(JPH_ObjectLayer in_layer1, JPH_BroadPhaseLayer in_layer2);
-
 //--------------------------------------------------------------------------------------------------
 //
 // Physics Types
@@ -157,7 +156,6 @@ typedef bool
 //--------------------------------------------------------------------------------------------------
 typedef struct JPH_PhysicsSystem        JPH_PhysicsSystem;
 typedef struct JPH_StateRecorder        JPH_StateRecorder;
-
 //--------------------------------------------------------------------------------------------------
 //
 // Physics/Body Types
@@ -174,8 +172,6 @@ typedef struct JPH_CollideShapeResult   JPH_CollideShapeResult;
 typedef struct JPH_BroadPhaseLayerInterfaceVTable JPH_BroadPhaseLayerInterfaceVTable;
 typedef struct JPH_BodyActivationListenerVTable   JPH_BodyActivationListenerVTable;
 typedef struct JPH_ContactListenerVTable          JPH_ContactListenerVTable;
-
-
 //--------------------------------------------------------------------------------------------------
 //
 // Physics/Collision Types
@@ -188,7 +184,6 @@ typedef struct JPH_PhysicsMaterial   JPH_PhysicsMaterial;
 typedef struct JPH_GroupFilter       JPH_GroupFilter;
 typedef struct JPH_CollisionGroup    JPH_CollisionGroup;
 typedef struct JPH_TransformedShape  JPH_TransformedShape;
-
 //--------------------------------------------------------------------------------------------------
 //
 // Structures
@@ -197,14 +192,14 @@ typedef struct JPH_TransformedShape  JPH_TransformedShape;
 // NOTE: Needs to be kept in sync with JPH::AABox
 struct JPH_AABox
 {
-    alignas(16) float  min[3];
-    alignas(16) float  max[3];
+    alignas(16) float  min[4];
+    alignas(16) float  max[4];
 };
 
 // NOTE: Needs to be kept in sync with JPH::Plane
 struct JPH_Plane
 {
-    alignas(16) float  normal_and_constant[3];
+    alignas(16) float  normal_and_constant[4];
 };
 
 // NOTE: Needs to be kept in sync with JPH::Sphere
@@ -409,8 +404,6 @@ struct JPH_TransformedShape
     JPH_BodyID             body_id;
     JPH_SubShapeIDCreator  sub_shape_id_creator;
 };
-
-
 //--------------------------------------------------------------------------------------------------
 //
 // Misc functions
@@ -446,49 +439,28 @@ JPH_CAPI JPH_MotionQuality
 JPH_MotionProperties_GetMotionQuality(const JPH_MotionProperties *in_properties);
 
 JPH_CAPI void
-JPH_MotionProperties_SetMotionQuality(
-    JPH_MotionProperties *in_properties,
-    JPH_MotionQuality in_motion_quality
-);
-
+JPH_MotionProperties_SetMotionQuality(JPH_MotionProperties *in_properties,
+                                      JPH_MotionQuality in_motion_quality);
 JPH_CAPI void
-JPH_MotionProperties_GetLinearVelocity(
-    const JPH_MotionProperties *in_properties,
-    float out_linear_velocity[3]
-);
-
+JPH_MotionProperties_GetLinearVelocity(const JPH_MotionProperties *in_properties,
+                                       float out_linear_velocity[3]);
 JPH_CAPI void
-JPH_MotionProperties_SetLinearVelocity(
-    JPH_MotionProperties *in_properties,
-    const float in_linear_velocity[3]
-);
-
+JPH_MotionProperties_SetLinearVelocity(JPH_MotionProperties *in_properties,
+                                       const float in_linear_velocity[3]);
 JPH_CAPI void
-JPH_MotionProperties_SetLinearVelocityClamped(
-    JPH_MotionProperties *in_properties,
-    const float in_linear_velocity[3]
-);
-
+JPH_MotionProperties_SetLinearVelocityClamped(JPH_MotionProperties *in_properties,
+                                              const float in_linear_velocity[3]);
 JPH_CAPI void
-JPH_MotionProperties_SetAngularVelocity(
-    JPH_MotionProperties *in_properties,
-    const float in_angular_velocity[3]
-);
-
+JPH_MotionProperties_SetAngularVelocity(JPH_MotionProperties *in_properties,
+                                        const float in_angular_velocity[3]);
 JPH_CAPI void
-JPH_MotionProperties_SetAngularVelocityClamped(
-    JPH_MotionProperties *in_properties,
-    const float in_angular_velocity[3]
-);
-
+JPH_MotionProperties_SetAngularVelocityClamped(JPH_MotionProperties *in_properties,
+                                               const float in_angular_velocity[3]);
 JPH_CAPI void
-JPH_MotionProperties_MoveKinematic(
-    JPH_MotionProperties *in_properties,
-    const float in_delta_position[3],
-    const float in_delta_rotation[4],
-    float in_delta_time
-);
-
+JPH_MotionProperties_MoveKinematic(JPH_MotionProperties *in_properties,
+                                   const float in_delta_position[3],
+                                   const float in_delta_rotation[4],
+                                   float in_delta_time);
 JPH_CAPI void
 JPH_MotionProperties_ClampLinearVelocity(JPH_MotionProperties *in_properties);
 
@@ -499,35 +471,23 @@ JPH_CAPI float
 JPH_MotionProperties_GetLinearDamping(JPH_MotionProperties *in_properties);
 
 JPH_CAPI void
-JPH_MotionProperties_SetLinearDamping(
-    JPH_MotionProperties *in_properties,
-    float in_linear_damping
-);
-
+JPH_MotionProperties_SetLinearDamping(JPH_MotionProperties *in_properties,
+                                      float in_linear_damping);
 JPH_CAPI float
 JPH_MotionProperties_GetAngularDamping(const JPH_MotionProperties *in_properties);
 
 JPH_CAPI void
-JPH_MotionProperties_SetAngularDamping(
-    JPH_MotionProperties *in_properties,
-    float in_angular_damping
-);
-
+JPH_MotionProperties_SetAngularDamping(JPH_MotionProperties *in_properties,
+                                       float in_angular_damping);
 JPH_CAPI float
 JPH_MotionProperties_GetGravityFactor(const JPH_MotionProperties *in_properties);
 
 JPH_CAPI void
-JPH_MotionProperties_SetGravityFactor(
-    JPH_MotionProperties *in_properties,
-    float in_gravity_factor
-);
-
+JPH_MotionProperties_SetGravityFactor(JPH_MotionProperties *in_properties,
+                                      float in_gravity_factor);
 JPH_CAPI void
-JPH_MotionProperties_SetMassProperties(
-    JPH_MotionProperties *in_properties,
-    const JPH_MassProperties *in_mass_properties
-);
-
+JPH_MotionProperties_SetMassProperties(JPH_MotionProperties *in_properties,
+                                       const JPH_MassProperties *in_mass_properties);
 JPH_CAPI float
 JPH_MotionProperties_GetInverseMass(const JPH_MotionProperties *in_properties);
 
@@ -538,66 +498,39 @@ JPH_CAPI void
 JPH_MotionProperties_SetInverseMass(JPH_MotionProperties *in_properties, float in_inv_mass);
 
 JPH_CAPI void
-JPH_MotionProperties_GetInverseInertiaDiagonal(
-    const JPH_MotionProperties *in_properties,
-    float out_inverse_inertia_diagonal[3]
-);
-
+JPH_MotionProperties_GetInverseInertiaDiagonal(const JPH_MotionProperties *in_properties,
+                                               float out_inverse_inertia_diagonal[3]);
 JPH_CAPI void
-JPH_MotionProperties_GetInertiaRotation(
-    const JPH_MotionProperties *in_properties,
-    float out_inertia_rotation[4]
-);
-
+JPH_MotionProperties_GetInertiaRotation(const JPH_MotionProperties *in_properties,
+                                        float out_inertia_rotation[4]);
 JPH_CAPI void
-JPH_MotionProperties_SetInverseInertia(
-    JPH_MotionProperties *in_properties,
-    const float in_diagonal[3],
-    const float in_rotation[4]
-);
-
+JPH_MotionProperties_SetInverseInertia(JPH_MotionProperties *in_properties,
+                                       const float in_diagonal[3],
+                                       const float in_rotation[4]);
 JPH_CAPI void
-JPH_MotionProperties_GetLocalSpaceInverseInertia(
-    const JPH_MotionProperties *in_properties,
-    float out_matrix[16]
-);
-
+JPH_MotionProperties_GetLocalSpaceInverseInertia(const JPH_MotionProperties *in_properties,
+                                                 float out_matrix[16]);
 JPH_CAPI void
-JPH_MotionProperties_GetLocalSpaceInverseInertiaUnchecked(
-    const JPH_MotionProperties *in_properties,
-    float out_matrix[16]
-);
-
+JPH_MotionProperties_GetLocalSpaceInverseInertiaUnchecked(const JPH_MotionProperties *in_properties,
+                                                          float out_matrix[16]);
 JPH_CAPI void
-JPH_MotionProperties_GetInverseInertiaForRotation(
-    const JPH_MotionProperties *in_properties,
-    const float in_rotation_matrix[4],
-    float out_matrix[16]
-);
-
+JPH_MotionProperties_GetInverseInertiaForRotation(const JPH_MotionProperties *in_properties,
+                                                  const float in_rotation_matrix[4],
+                                                  float out_matrix[16]);
 JPH_CAPI void
-JPH_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(
-    JPH_MotionProperties *in_properties,
-    const float in_body_rotation[4],
-    const float in_vector[3],
-    float out_vector[3]
-);
-
+JPH_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(JPH_MotionProperties *in_properties,
+                                                              const float in_body_rotation[4],
+                                                              const float in_vector[3],
+                                                              float out_vector[3]);
 JPH_CAPI void
-JPH_MotionProperties_GetPointVelocityCOM(
-    const JPH_MotionProperties *in_properties,
-    const float in_point_relative_to_com[3],
-    float out_point[3]
-);
-
+JPH_MotionProperties_GetPointVelocityCOM(const JPH_MotionProperties *in_properties,
+                                         const float in_point_relative_to_com[3],
+                                         float out_point[3]);
 JPH_CAPI void
-JPH_MotionProperties_ApplyForceTorqueAndDragInternal(
-    JPH_MotionProperties *in_properties,
-    const float in_body_rotation[4],
-    const float in_gravity[3],
-    float in_delta_time
-);
-
+JPH_MotionProperties_ApplyForceTorqueAndDragInternal(JPH_MotionProperties *in_properties,
+                                                     const float in_body_rotation[4],
+                                                     const float in_gravity[3],
+                                                     float in_delta_time);
 JPH_CAPI void
 JPH_MotionProperties_ResetForceAndTorqueInternal(JPH_MotionProperties *in_properties);
 
@@ -611,67 +544,38 @@ JPH_CAPI uint32_t
 JPH_MotionProperties_GetIndexInActiveBodiesInternal(const JPH_MotionProperties *in_properties);
 
 JPH_CAPI void
-JPH_MotionProperties_ResetSleepTestSpheres(
-    JPH_MotionProperties *in_properties,
-    const float *in_points
-);
-
+JPH_MotionProperties_ResetSleepTestSpheres(JPH_MotionProperties *in_properties,
+                                           const float *in_points);
 JPH_CAPI void
-JPH_MotionProperties_SaveState(
-    const JPH_MotionProperties *in_properties,
-    JPH_StateRecorder *in_stream
-);
-
+JPH_MotionProperties_SaveState(const JPH_MotionProperties *in_properties,
+                               JPH_StateRecorder *in_stream);
 JPH_CAPI void
-JPH_MotionProperties_RestoreState(
-    JPH_MotionProperties *in_properties,
-    JPH_StateRecorder *in_stream
-);
-
+JPH_MotionProperties_RestoreState(JPH_MotionProperties *in_properties,
+                                  JPH_StateRecorder *in_stream);
 JPH_CAPI float
 JPH_MotionProperties_GetMaxLinearVelocity(const JPH_MotionProperties *in_properties);
 
 JPH_CAPI void
-JPH_MotionProperties_SetMaxLinearVelocity(
-    JPH_MotionProperties *in_properties,
-    float in_max_linear_velocity
-);
-
+JPH_MotionProperties_SetMaxLinearVelocity(JPH_MotionProperties *in_properties,
+                                          float in_max_linear_velocity);
 JPH_CAPI float
 JPH_MotionProperties_GetMaxAngularVelocity(const JPH_MotionProperties *in_properties);
 
 JPH_CAPI void
-JPH_MotionProperties_SetMaxAngularVelocity(
-    JPH_MotionProperties *in_properties,
-    float in_max_angular_velocity
-);
-
+JPH_MotionProperties_SetMaxAngularVelocity(JPH_MotionProperties *in_properties,
+                                           float in_max_angular_velocity);
 JPH_CAPI void
-JPH_MotionProperties_AddLinearVelocityStep(
-    JPH_MotionProperties *in_properties,
-    const float in_linear_velocity_change[3]
-);
-
+JPH_MotionProperties_AddLinearVelocityStep(JPH_MotionProperties *in_properties,
+                                           const float in_linear_velocity_change[3]);
 JPH_CAPI void
-JPH_MotionProperties_SubLinearVelocityStep(
-    JPH_MotionProperties *in_properties,
-    const float in_linear_velocity_change[3]
-);
-
+JPH_MotionProperties_SubLinearVelocityStep(JPH_MotionProperties *in_properties,
+                                           const float in_linear_velocity_change[3]);
 JPH_CAPI void
-JPH_MotionProperties_AddAngularVelocityStep(
-    JPH_MotionProperties *in_properties,
-    const float in_linear_angular_change[3]
-);
-
+JPH_MotionProperties_AddAngularVelocityStep(JPH_MotionProperties *in_properties,
+                                            const float in_linear_angular_change[3]);
 JPH_CAPI void
-JPH_MotionProperties_SubAngularVelocityStep(
-    JPH_MotionProperties *in_properties,
-    const float in_linear_angular_change[3]
-);
-
-
-
+JPH_MotionProperties_SubAngularVelocityStep(JPH_MotionProperties *in_properties,
+                                            const float in_linear_angular_change[3]);
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_CollisionGroup
@@ -1088,12 +992,9 @@ JPH_CAPI void
 JPH_Body_SetAnglularVelocityClamped(JPH_Body *in_body, const float in_angular_velocity[3]);
 
 JPH_CAPI void
-JPH_Body_GetPointVelocityCOM(
-    const JPH_Body *in_body,
-    const float in_point_relative_to_com[3],
-    float out_velocity[3]
-);
-
+JPH_Body_GetPointVelocityCOM(const JPH_Body *in_body,
+                             const float in_point_relative_to_com[3],
+                             float out_velocity[3]);
 JPH_CAPI void
 JPH_Body_GetPointVelocity(const JPH_Body *in_body, const float in_point[3], float out_velocity[3]);
 
@@ -1116,24 +1017,18 @@ JPH_CAPI void
 JPH_Body_AddAngularImpulse(JPH_Body *in_body, const float in_angular_impulse[3]);
 
 JPH_CAPI void
-JPH_Body_MoveKinematic(
-    JPH_Body *in_body,
-    const float in_target_rotation[4],
-    float in_delta_time
-);
-
+JPH_Body_MoveKinematic(JPH_Body *in_body,
+                       const float in_target_rotation[4],
+                       float in_delta_time);
 JPH_CAPI void
-JPH_Body_ApplyBuoyancyImpulse(
-    JPH_Body *in_body,
-    const JPH_Plane *in_plane,
-    float in_buoyancy,
-    float in_linear_drag,
-    float in_angular_drag,
-    const float in_fluid_velocity[3],
-    const float in_gravity[3],
-    float in_delta_time
-);
-
+JPH_Body_ApplyBuoyancyImpulse(JPH_Body *in_body,
+                              const JPH_Plane *in_plane,
+                              float in_buoyancy,
+                              float in_linear_drag,
+                              float in_angular_drag,
+                              const float in_fluid_velocity[3],
+                              const float in_gravity[3],
+                              float in_delta_time);
 JPH_CAPI bool
 JPH_Body_IsInBroadPhase(const JPH_Body *in_body);
 
@@ -1174,19 +1069,15 @@ JPH_CAPI void
 JPH_Body_SetUserData(JPH_Body *in_body, uint64_t in_user_data);
 
 JPH_CAPI void
-JPH_Body_GetWorldSpaceSurfaceNormal(
-    const JPH_Body *in_body,
-    const JPH_SubShapeID *in_sub_shape_id,
-    const float in_position[3],
-    float out_normal_vector[3]
-);
-
+JPH_Body_GetWorldSpaceSurfaceNormal(const JPH_Body *in_body,
+                                    const JPH_SubShapeID *in_sub_shape_id,
+                                    const float in_position[3],
+                                    float out_normal_vector[3]);
 JPH_CAPI JPH_TransformedShape
 JPH_Body_GetTransformedShape(const JPH_Body *in_body);
 
 JPH_CAPI JPH_BodyCreationSettings
 JPH_Body_GetBodyCreationSettings(const JPH_Body *in_body);
-
 //--------------------------------------------------------------------------------------------------
 //
 // JPH_BodyID
@@ -1200,8 +1091,6 @@ JPH_BodyID_GetSequenceNumber(JPH_BodyID in_body_id);
 
 JPH_CAPI bool
 JPH_BodyID_IsInvalid(JPH_BodyID in_body_id);
-//--------------------------------------------------------------------------------------------------
-
 //--------------------------------------------------------------------------------------------------
 #ifdef __cplusplus
 }
