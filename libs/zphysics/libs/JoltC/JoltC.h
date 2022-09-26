@@ -285,8 +285,8 @@ struct JPH_BodyCreationSettings
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDCreator
 struct JPH_SubShapeIDCreator
 {
-    JPH_SubShapeID    id;
-    unsigned int      current_bit;
+    JPH_SubShapeID id;
+    uint32_t       current_bit;
 };
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDPair

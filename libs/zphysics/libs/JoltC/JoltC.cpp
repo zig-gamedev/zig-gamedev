@@ -66,7 +66,7 @@ static_assert(sizeof(JPH::ContactSettings)      == sizeof(JPH_ContactSettings));
 static_assert(sizeof(JPH::SubShapeIDPair)       == sizeof(JPH_SubShapeIDPair));
 static_assert(sizeof(JPH::CollideShapeResult)   == sizeof(JPH_CollideShapeResult));
 static_assert(sizeof(JPH::TransformedShape)     == sizeof(JPH_TransformedShape));
-
+//--------------------------------------------------------------------------------------------------
 static_assert(alignof(JPH::AABox)  == alignof(JPH_AABox));
 static_assert(alignof(JPH::Plane)  == alignof(JPH_Plane));
 static_assert(alignof(JPH::Sphere) == alignof(JPH_Sphere));
@@ -80,7 +80,7 @@ static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings)
 static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair));
 static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult));
 static_assert(alignof(JPH::TransformedShape)     == alignof(JPH_TransformedShape));
-
+//--------------------------------------------------------------------------------------------------
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
 ENSURE_ENUM_EQ(JPH_SHAPE_TYPE_CONVEX,       JPH::EShapeType::Convex);
@@ -144,7 +144,7 @@ ENSURE_ENUM_EQ(JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS,
 
 ENSURE_ENUM_EQ(JPH_MAX_PHYSICS_JOBS,     JPH::cMaxPhysicsJobs);
 ENSURE_ENUM_EQ(JPH_MAX_PHYSICS_BARRIERS, JPH::cMaxPhysicsBarriers);
-
+//--------------------------------------------------------------------------------------------------
 static_assert(
     offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
     offsetof(JPH_BodyCreationSettings, inertia_multiplier));
