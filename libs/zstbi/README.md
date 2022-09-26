@@ -1,4 +1,4 @@
-# zstbi - stbi bindings
+# zstbi v0.1 - stbi bindings
 
 ## Getting started
 
