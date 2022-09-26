@@ -1,8 +1,8 @@
 const std = @import("std");
 
 pub const pkg = std.build.Pkg{
-    .name = "zjolt",
-    .source = .{ .path = thisDir() ++ "/src/zjolt.zig" },
+    .name = "zphysics",
+    .source = .{ .path = thisDir() ++ "/src/zphysics.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {
@@ -10,7 +10,7 @@ pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
     const tests = buildTests(b, build_mode, target);
 
-    const test_step = b.step("test", "Run zjolt tests");
+    const test_step = b.step("test", "Run zphysics tests");
     test_step.dependOn(&tests.step);
 }
 
