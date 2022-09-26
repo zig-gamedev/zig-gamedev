@@ -1,4 +1,4 @@
-# ztracy - performance markers for Tracy 0.8.2
+# ztracy v0.9 - performance markers for Tracy 0.8.2
 
 Zig bindings taken from: https://github.com/SpexGuy/Zig-Tracy
 
