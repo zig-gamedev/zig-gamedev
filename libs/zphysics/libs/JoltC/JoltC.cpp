@@ -145,46 +145,6 @@ ENSURE_ENUM_EQ(JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS,
 ENSURE_ENUM_EQ(JPH_MAX_PHYSICS_JOBS,     JPH::cMaxPhysicsJobs);
 ENSURE_ENUM_EQ(JPH_MAX_PHYSICS_BARRIERS, JPH::cMaxPhysicsBarriers);
 //--------------------------------------------------------------------------------------------------
-static_assert(
-    offsetof(JPH::BodyCreationSettings, mInertiaMultiplier) ==
-    offsetof(JPH_BodyCreationSettings, inertia_multiplier));
-static_assert(
-    offsetof(JPH::BodyCreationSettings, mIsSensor) ==
-    offsetof(JPH_BodyCreationSettings, is_sensor));
-static_assert(
-    offsetof(JPH::BodyCreationSettings, mAngularDamping) ==
-    offsetof(JPH_BodyCreationSettings, angular_damping));
-
-static_assert(
-    offsetof(JPH::ContactManifold, mPenetrationDepth) ==
-    offsetof(JPH_ContactManifold, penetration_depth));
-static_assert(
-    offsetof(JPH::ContactManifold, mWorldSpaceContactPointsOn1) ==
-    offsetof(JPH_ContactManifold, num_points1));
-
-static_assert(
-    offsetof(JPH::CollideShapeResult, mPenetrationDepth) ==
-    offsetof(JPH_CollideShapeResult, penetration_depth));
-static_assert(
-    offsetof(JPH::CollideShapeResult, mShape1Face) ==
-    offsetof(JPH_CollideShapeResult, num_face_points1));
-
-// This passes when JPH::MotionProperties fields are public
-/*
-static_assert(
-    offsetof(JPH::MotionProperties, mForce) ==
-    offsetof(JPH_MotionProperties, force));
-static_assert(
-    offsetof(JPH::MotionProperties, mTorque) ==
-    offsetof(JPH_MotionProperties, torque));
-static_assert(
-    offsetof(JPH::MotionProperties, mMotionQuality) ==
-    offsetof(JPH_MotionProperties, motion_quality));
-static_assert(
-    offsetof(JPH::MotionProperties, mSleepTestTimer) ==
-    offsetof(JPH_MotionProperties, sleep_test_timer));
-*/
-//--------------------------------------------------------------------------------------------------
 JPH_CAPI void
 JPH_RegisterDefaultAllocator(void)
 {

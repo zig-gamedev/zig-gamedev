@@ -346,6 +346,8 @@ JoltCTest_Basic2(void)
     const JPH_BodyID floor_id = JPH_Body_GetID(floor);
     if (((floor_id & 0xff000000) >> 24) != 1) return 0;
     if ((floor_id & 0x00ffffff) != 0) return 0;
+    if (JPH_Body_IsStatic(floor) == false) return 0;
+    if (JPH_Body_IsDynamic(floor) == true) return 0;
 
     if (JPH_Shape_GetRefCount(floor_shape) != 3) return 0;
 
@@ -461,6 +463,10 @@ JoltCTest_HelloWorld(void)
         body_interface,
         &sphere_settings,
         JPH_ACTIVATION_ACTIVATE);
+
+
+    //if (JPH_Body_IsStatic(floor) == false) return 0;
+    //if (JPH_Body_IsDynamic(floor) == true) return 0;
 
     const float sphere_velocity[3] = { 0.0f, -5.0f, 0.0f };
     JPH_BodyInterface_SetLinearVelocity(body_interface, sphere_id, sphere_velocity);

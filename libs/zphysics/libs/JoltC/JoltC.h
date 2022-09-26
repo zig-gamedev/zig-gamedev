@@ -120,10 +120,10 @@ typedef uint32_t JPH_SubShapeID;
 typedef uint32_t JPH_CollisionGroupID;
 typedef uint32_t JPH_CollisionSubGroupID;
 
-typedef struct JPH_TempAllocator    JPH_TempAllocator;
-typedef struct JPH_JobSystem        JPH_JobSystem;
-typedef struct JPH_Body             JPH_Body;
-typedef struct JPH_BodyInterface    JPH_BodyInterface;
+typedef struct JPH_TempAllocator JPH_TempAllocator;
+typedef struct JPH_JobSystem     JPH_JobSystem;
+typedef struct JPH_Body          JPH_Body;
+typedef struct JPH_BodyInterface JPH_BodyInterface;
 //--------------------------------------------------------------------------------------------------
 //
 // Geometry Types
@@ -325,7 +325,7 @@ struct JPH_CollideShapeResult
     alignas(16) float    contact_point1[4];
     alignas(16) float    contact_point2[4];
     alignas(16) float    penetration_axis[4];
-    alignas(16) float    penetration_depth;
+    float                penetration_depth;
     JPH_SubShapeID       sub_shape1_id;
     JPH_SubShapeID       sub_shape2_id;
     JPH_BodyID           body2_id;

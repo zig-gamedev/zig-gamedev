@@ -39,6 +39,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
         "-fno-sanitize=undefined",
     };
     exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltC.cpp", flags);
+    exe.addCSourceFile(thisDir() ++ "/libs/JoltC/JoltC_assert.cpp", flags);
 
     const src_dir = thisDir() ++ "/libs/Jolt";
     exe.addCSourceFile(src_dir ++ "/AABBTree/AABBTreeBuilder.cpp", flags);
