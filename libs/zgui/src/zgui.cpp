@@ -1677,8 +1677,35 @@ ZGUI_API bool zguiPlot_BeginPlot(const char* title_id, float width, float height
     return ImPlot::BeginPlot(title_id, { width, height }, flags);
 }
 
-ZGUI_API void zguiPlot_PlotLineValues(const char* label_id, const int* values, int count, ImPlotLineFlags flags) {
-    ImPlot::PlotLine(label_id, values, count, 1, 0, flags, 0, sizeof(int));
+ZGUI_API void zguiPlot_PlotLineValues(
+    const char* label_id,
+    ImGuiDataType data_type,
+    const void* values,
+    int count,
+    double xscale,
+    double x0,
+    ImPlotLineFlags flags,
+    int offset,
+    int stride
+) {
+    if (data_type == ImGuiDataType_S8)
+        ImPlot::PlotLine(label_id, (const ImS8*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U8)
+        ImPlot::PlotLine(label_id, (const ImU8*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S16)
+        ImPlot::PlotLine(label_id, (const ImS16*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U16)
+        ImPlot::PlotLine(label_id, (const ImU16*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S32)
+        ImPlot::PlotLine(label_id, (const ImS32*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U32)
+        ImPlot::PlotLine(label_id, (const ImU32*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Float)
+        ImPlot::PlotLine(label_id, (const float*)values, count, xscale, x0, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Double)
+        ImPlot::PlotLine(label_id, (const double*)values, count, xscale, x0, flags, offset, stride);
+    else
+        assert(false);
 }
 
 ZGUI_API void zguiPlot_EndPlot(void) {

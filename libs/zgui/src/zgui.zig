@@ -3284,14 +3284,39 @@ pub const plot = struct {
         shaded: bool = false,
         _padding: u17 = 0,
     };
-    pub fn plotLineValuesInt(label: [:0]const u8, values: []const i32, flags: LineFlags) void {
-        zguiPlot_PlotLineValues(label, values.ptr, @intCast(i32, values.len), flags);
+    fn PlotLineValuesGen(comptime T: type) type {
+        return struct {
+            v: []const T,
+            xscale: f64 = 1.0,
+            x0: f64 = 0.0,
+            flags: LineFlags = .{},
+            offset: i32 = 0,
+            stride: i32 = @sizeOf(T),
+        };
+    }
+    pub fn plotLineValues(label_id: [:0]const u8, comptime T: type, args: PlotLineValuesGen(T)) void {
+        zguiPlot_PlotLineValues(
+            label_id,
+            typeToDataTypeEnum(T),
+            args.v.ptr,
+            @intCast(i32, args.v.len),
+            args.xscale,
+            args.x0,
+            args.flags,
+            args.offset,
+            args.stride,
+        );
     }
     extern fn zguiPlot_PlotLineValues(
         label_id: [*:0]const u8,
-        values: [*]const i32,
+        data_type: DataType,
+        values: *const anyopaque,
         count: i32,
+        xscale: f64,
+        x0: f64,
         flags: LineFlags,
+        offset: i32,
+        stride: i32,
     ) void;
     //----------------------------------------------------------------------------------------------
     pub const endPlot = zguiPlot_EndPlot;

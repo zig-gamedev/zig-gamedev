@@ -467,7 +467,7 @@ fn update(demo: *DemoState) !void {
     draw_list.popClipRect();
 
     if (zgui.plot.beginPlot("test_plot", .{})) {
-        zgui.plot.plotLineValuesInt("Some data", &.{ 0, 1, 0, 1, 0, 1 }, .{});
+        zgui.plot.plotLineValues("Some data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
         zgui.plot.endPlot();
     }
 
