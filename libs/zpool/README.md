@@ -1,4 +1,4 @@
-# zpool v0.2 - Generic pool & handle implementation
+# zpool v0.9 - Generic pool & handle implementation
 
 Based on [Andre Weissflog's "Handles Are The Better Pointers"](https://floooh.github.io/2018/06/17/handles-vs-pointers.html)
 
