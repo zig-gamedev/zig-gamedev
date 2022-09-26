@@ -40,12 +40,18 @@ extern fn zguiGetCurrentContext() ?Context;
 var mem_allocator: ?std.mem.Allocator = null;
 var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 var mem_mutex: std.Thread.Mutex = .{};
+const mem_alignment = 16;
 
 export fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 
-    const mem = mem_allocator.?.allocBytes(16, size, 0, @returnAddress()) catch @panic("zgui: out of memory");
+    const mem = mem_allocator.?.allocBytes(
+        mem_alignment,
+        size,
+        0,
+        @returnAddress(),
+    ) catch @panic("zgui: out of memory");
 
     mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch
         @panic("zgui: out of memory");
@@ -53,13 +59,16 @@ export fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
     return mem.ptr;
 }
 
-export fn zguiMemFree(in_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
-    if (in_ptr) |ptr| {
+export fn zguiMemFree(maybe_ptr: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
+    if (maybe_ptr) |ptr| {
         mem_mutex.lock();
         defer mem_mutex.unlock();
 
         const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
-        const mem = @ptrCast([*]align(16) u8, @alignCast(16, ptr))[0..size];
+        const mem = @ptrCast(
+            [*]align(mem_alignment) u8,
+            @alignCast(mem_alignment, ptr),
+        )[0..size];
         mem_allocator.?.free(mem);
     }
 }
