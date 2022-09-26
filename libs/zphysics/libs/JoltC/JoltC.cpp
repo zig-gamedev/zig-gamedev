@@ -53,33 +53,33 @@ static_assert(sizeof(JPH::ValidateResult)          == sizeof(JPH_ValidateResult)
 static_assert(sizeof(JPH::BroadPhaseLayer)         == sizeof(JPH_BroadPhaseLayer));
 static_assert(sizeof(JPH::ObjectLayer)             == sizeof(JPH_ObjectLayer));
 
-static_assert(sizeof(JPH::AABox)                   == sizeof(JPH_AABox));
-static_assert(sizeof(JPH::Plane)                   == sizeof(JPH_Plane));
-static_assert(sizeof(JPH::Sphere)                  == sizeof(JPH_Sphere));
+static_assert(sizeof(JPH::AABox)  == sizeof(JPH_AABox));
+static_assert(sizeof(JPH::Plane)  == sizeof(JPH_Plane));
+static_assert(sizeof(JPH::Sphere) == sizeof(JPH_Sphere));
 
-static_assert(sizeof(JPH::MassProperties)          == sizeof(JPH_MassProperties));
-static_assert(sizeof(JPH::MotionProperties)        == sizeof(JPH_MotionProperties));
-static_assert(sizeof(JPH::CollisionGroup)          == sizeof(JPH_CollisionGroup));
-static_assert(sizeof(JPH::BodyCreationSettings)    == sizeof(JPH_BodyCreationSettings));
-static_assert(sizeof(JPH::ContactManifold)         == sizeof(JPH_ContactManifold));
-static_assert(sizeof(JPH::ContactSettings)         == sizeof(JPH_ContactSettings));
-static_assert(sizeof(JPH::SubShapeIDPair)          == sizeof(JPH_SubShapeIDPair));
-static_assert(sizeof(JPH::CollideShapeResult)      == sizeof(JPH_CollideShapeResult));
-static_assert(sizeof(JPH::TransformedShape)        == sizeof(JPH_TransformedShape));
+static_assert(sizeof(JPH::MassProperties)       == sizeof(JPH_MassProperties));
+static_assert(sizeof(JPH::MotionProperties)     == sizeof(JPH_MotionProperties));
+static_assert(sizeof(JPH::CollisionGroup)       == sizeof(JPH_CollisionGroup));
+static_assert(sizeof(JPH::BodyCreationSettings) == sizeof(JPH_BodyCreationSettings));
+static_assert(sizeof(JPH::ContactManifold)      == sizeof(JPH_ContactManifold));
+static_assert(sizeof(JPH::ContactSettings)      == sizeof(JPH_ContactSettings));
+static_assert(sizeof(JPH::SubShapeIDPair)       == sizeof(JPH_SubShapeIDPair));
+static_assert(sizeof(JPH::CollideShapeResult)   == sizeof(JPH_CollideShapeResult));
+static_assert(sizeof(JPH::TransformedShape)     == sizeof(JPH_TransformedShape));
 
-static_assert(alignof(JPH::AABox)                  == alignof(JPH_AABox));
-static_assert(alignof(JPH::Plane)                  == alignof(JPH_Plane));
-static_assert(alignof(JPH::Sphere)                 == alignof(JPH_Sphere));
+static_assert(alignof(JPH::AABox)  == alignof(JPH_AABox));
+static_assert(alignof(JPH::Plane)  == alignof(JPH_Plane));
+static_assert(alignof(JPH::Sphere) == alignof(JPH_Sphere));
 
-static_assert(alignof(JPH::MassProperties)         == alignof(JPH_MassProperties));
-static_assert(alignof(JPH::MotionProperties)       == alignof(JPH_MotionProperties));
-static_assert(alignof(JPH::CollisionGroup)         == alignof(JPH_CollisionGroup));
-static_assert(alignof(JPH::BodyCreationSettings)   == alignof(JPH_BodyCreationSettings));
-static_assert(alignof(JPH::ContactManifold)        == alignof(JPH_ContactManifold));
-static_assert(alignof(JPH::ContactSettings)        == alignof(JPH_ContactSettings));
-static_assert(alignof(JPH::SubShapeIDPair)         == alignof(JPH_SubShapeIDPair));
-static_assert(alignof(JPH::CollideShapeResult)     == alignof(JPH_CollideShapeResult));
-static_assert(alignof(JPH::TransformedShape)       == alignof(JPH_TransformedShape));
+static_assert(alignof(JPH::MassProperties)       == alignof(JPH_MassProperties));
+static_assert(alignof(JPH::MotionProperties)     == alignof(JPH_MotionProperties));
+static_assert(alignof(JPH::CollisionGroup)       == alignof(JPH_CollisionGroup));
+static_assert(alignof(JPH::BodyCreationSettings) == alignof(JPH_BodyCreationSettings));
+static_assert(alignof(JPH::ContactManifold)      == alignof(JPH_ContactManifold));
+static_assert(alignof(JPH::ContactSettings)      == alignof(JPH_ContactSettings));
+static_assert(alignof(JPH::SubShapeIDPair)       == alignof(JPH_SubShapeIDPair));
+static_assert(alignof(JPH::CollideShapeResult)   == alignof(JPH_CollideShapeResult));
+static_assert(alignof(JPH::TransformedShape)     == alignof(JPH_TransformedShape));
 
 #define ENSURE_ENUM_EQ(c_const, cpp_enum) static_assert(c_const == static_cast<int>(cpp_enum))
 
@@ -1311,8 +1311,7 @@ JPH_Body_MoveKinematic(JPH_Body *in_body,
     assert(in_body != nullptr);
     reinterpret_cast<JPH::Body *>(in_body)->MoveKinematic(
         JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_target_position)),
-        // TODO: We should use non-aligned load here.
-        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(reinterpret_cast<const JPH::Float4 *>(in_target_rotation))),
+        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_target_rotation))),
         in_delta_time);
 }
 //--------------------------------------------------------------------------------------------------
@@ -1328,7 +1327,7 @@ JPH_Body_ApplyBuoyancyImpulse(JPH_Body *in_body,
 {
     assert(in_body != nullptr);
     reinterpret_cast<JPH::Body *>(in_body)->ApplyBuoyancyImpulse(
-        JPH::Plane(JPH::Vec4::sLoadFloat4Aligned(reinterpret_cast<const JPH::Float4 *>(in_plane))),
+        JPH::Plane(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_plane))),
         in_buoyancy,
         in_linear_drag,
         in_angular_drag,
@@ -1547,7 +1546,7 @@ JPH_MotionProperties_MoveKinematic(JPH_MotionProperties *in_properties,
     assert(in_properties != nullptr);
     reinterpret_cast<JPH::MotionProperties *>(in_properties)->MoveKinematic(
         JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_delta_position)),
-        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(reinterpret_cast<const JPH::Float4 *>(in_delta_rotation))),
+        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_delta_rotation))),
         in_delta_time);
 }
 //--------------------------------------------------------------------------------------------------
@@ -1668,7 +1667,7 @@ JPH_MotionProperties_SetInverseInertia(JPH_MotionProperties *in_properties,
     assert(in_properties != nullptr);
     reinterpret_cast<JPH::MotionProperties *>(in_properties)->SetInverseInertia(
         JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_diagonal)),
-        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(reinterpret_cast<const JPH::Float4 *>(in_rotation))));
+        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_rotation))));
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
@@ -1712,7 +1711,7 @@ JPH_MotionProperties_MultiplyWorldSpaceInverseInertiaByVector(const JPH_MotionPr
     assert(in_properties != nullptr);
     const auto properties = reinterpret_cast<const JPH::MotionProperties *>(in_properties);
     const JPH::Vec3 v = properties->MultiplyWorldSpaceInverseInertiaByVector(
-        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned(reinterpret_cast<const JPH::Float4 *>(in_body_rotation))),
+        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_body_rotation))),
         JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_vector)));
     v.StoreFloat3(reinterpret_cast<JPH::Float3 *>(out_vector));
 }
@@ -1737,7 +1736,7 @@ JPH_MotionProperties_ApplyForceTorqueAndDragInternal(JPH_MotionProperties *in_pr
 {
     assert(in_properties != nullptr);
     reinterpret_cast<JPH::MotionProperties *>(in_properties)->ApplyForceTorqueAndDragInternal(
-        JPH::Quat(JPH::Vec4::sLoadFloat4Aligned( reinterpret_cast<const JPH::Float4 *>(in_body_rotation))),
+        JPH::Quat(JPH::Vec4::sLoadFloat4(reinterpret_cast<const JPH::Float4 *>(in_body_rotation))),
         JPH::Vec3(*reinterpret_cast<const JPH::Float3 *>(in_gravity)),
         in_delta_time);
 }

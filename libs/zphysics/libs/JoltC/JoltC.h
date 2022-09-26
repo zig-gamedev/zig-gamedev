@@ -16,6 +16,10 @@
     #define JPH_ENABLE_ASSERTS
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // JPH_JobSystem_Create()
 enum
 {
@@ -102,10 +106,6 @@ typedef enum JPH_ValidateResult
     JPH_VALIDATE_RESULT_REJECT_ALL_CONTACTS = 3,
     _JPH_VALIDATE_RESULT_FORCEU32           = 0x7fffffff
 } JPH_ValidateResult;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 //--------------------------------------------------------------------------------------------------
 //
 // Types
@@ -124,15 +124,14 @@ typedef struct JPH_TempAllocator    JPH_TempAllocator;
 typedef struct JPH_JobSystem        JPH_JobSystem;
 typedef struct JPH_Body             JPH_Body;
 typedef struct JPH_BodyInterface    JPH_BodyInterface;
-
 //--------------------------------------------------------------------------------------------------
 //
 // Geometry Types
 //
 //--------------------------------------------------------------------------------------------------
-typedef struct JPH_AABox            JPH_AABox;
-typedef struct JPH_Plane            JPH_Plane;
-typedef struct JPH_Sphere           JPH_Sphere;
+typedef struct JPH_AABox  JPH_AABox;
+typedef struct JPH_Plane  JPH_Plane;
+typedef struct JPH_Sphere JPH_Sphere;
 
 typedef struct JPH_ShapeSettings               JPH_ShapeSettings;
 typedef struct JPH_ConvexShapeSettings         JPH_ConvexShapeSettings;
@@ -154,15 +153,15 @@ typedef bool
 // Physics Types
 //
 //--------------------------------------------------------------------------------------------------
-typedef struct JPH_PhysicsSystem        JPH_PhysicsSystem;
-typedef struct JPH_StateRecorder        JPH_StateRecorder;
+typedef struct JPH_PhysicsSystem JPH_PhysicsSystem;
+typedef struct JPH_StateRecorder JPH_StateRecorder;
 //--------------------------------------------------------------------------------------------------
 //
 // Physics/Body Types
 //
 //--------------------------------------------------------------------------------------------------
-typedef struct JPH_MassProperties       JPH_MassProperties;
-typedef struct JPH_MotionProperties     JPH_MotionProperties;
+typedef struct JPH_MassProperties   JPH_MassProperties;
+typedef struct JPH_MotionProperties JPH_MotionProperties;
 
 typedef struct JPH_BodyCreationSettings JPH_BodyCreationSettings;
 typedef struct JPH_ContactManifold      JPH_ContactManifold;
@@ -192,57 +191,57 @@ typedef struct JPH_TransformedShape  JPH_TransformedShape;
 // NOTE: Needs to be kept in sync with JPH::AABox
 struct JPH_AABox
 {
-    alignas(16) float  min[4];
-    alignas(16) float  max[4];
+    alignas(16) float min[4];
+    alignas(16) float max[4];
 };
 
 // NOTE: Needs to be kept in sync with JPH::Plane
 struct JPH_Plane
 {
-    alignas(16) float  normal_and_constant[4];
+    alignas(16) float normal_and_constant[4];
 };
 
 // NOTE: Needs to be kept in sync with JPH::Sphere
 struct JPH_Sphere
 {
-    float  center[3];
-    float  radius;
+    float center[3];
+    float radius;
 };
 
 // NOTE: Needs to be kept in sync with JPH::MassProperties
 struct JPH_MassProperties
 {
-    float              mass;
-    alignas(16) float  inertia[16];
+    float             mass;
+    alignas(16) float inertia[16];
 };
 
 // NOTE: Needs to be kept in sync with JPH::MotionProperties
 struct JPH_MotionProperties
 {
-    alignas(16) float   linear_velocity[4];
-    alignas(16) float   angular_velocity[4];
-    alignas(16) float   inv_inertia_diagnonal[4];
-    alignas(16) float   inertia_rotation[4];
+    alignas(16) float linear_velocity[4];
+    alignas(16) float angular_velocity[4];
+    alignas(16) float inv_inertia_diagnonal[4];
+    alignas(16) float inertia_rotation[4];
 
-    float               force[3];
-    float               torque[3];
-    float               inv_mass;
-    float               linear_damping;
-    float               angular_daming;
-    float               max_linear_velocity;
-    float               max_angular_velocity;
-    float               gravity_factor;
-    uint32_t            index_in_active_bodies;
-    uint32_t            island_index;
+    float             force[3];
+    float             torque[3];
+    float             inv_mass;
+    float             linear_damping;
+    float             angular_daming;
+    float             max_linear_velocity;
+    float             max_angular_velocity;
+    float             gravity_factor;
+    uint32_t          index_in_active_bodies;
+    uint32_t          island_index;
 
-    JPH_MotionQuality   motion_quality;
-    bool                allow_sleeping;
+    JPH_MotionQuality motion_quality;
+    bool              allow_sleeping;
 
-    JPH_Sphere          sleep_test_spheres[3];
-    float               sleep_test_timer;
+    JPH_Sphere        sleep_test_spheres[3];
+    float             sleep_test_timer;
 
 #ifdef JPH_ENABLE_ASSERTS
-    JPH_MotionType      cached_motion_type;
+    JPH_MotionType    cached_motion_type;
 #endif
 };
 
@@ -257,30 +256,30 @@ struct JPH_CollisionGroup
 // NOTE: Needs to be kept in sync with JPH::BodyCreationSettings
 struct JPH_BodyCreationSettings
 {
-    alignas(16) float           position[4];
-    alignas(16) float           rotation[4];
-    alignas(16) float           linear_velocity[4];
-    alignas(16) float           angular_velocity[4];
-    uint64_t                    user_data;
-    JPH_ObjectLayer             object_layer;
-    JPH_CollisionGroup          collision_group;
-    JPH_MotionType              motion_type;
-    bool                        allow_dynamic_or_kinematic;
-    bool                        is_sensor;
-    JPH_MotionQuality           motion_quality;
-    bool                        allow_sleeping;
-    float                       friction;
-    float                       restitution;
-    float                       linear_damping;
-    float                       angular_damping;
-    float                       max_linear_velocity;
-    float                       max_angular_velocity;
-    float                       gravity_factor;
-    JPH_OverrideMassProperties  override_mass_properties;
-    float                       inertia_multiplier;
-    JPH_MassProperties          mass_properties_override;
-    const void *                reserved;
-    const JPH_Shape *           shape;
+    alignas(16) float          position[4];
+    alignas(16) float          rotation[4];
+    alignas(16) float          linear_velocity[4];
+    alignas(16) float          angular_velocity[4];
+    uint64_t                   user_data;
+    JPH_ObjectLayer            object_layer;
+    JPH_CollisionGroup         collision_group;
+    JPH_MotionType             motion_type;
+    bool                       allow_dynamic_or_kinematic;
+    bool                       is_sensor;
+    JPH_MotionQuality          motion_quality;
+    bool                       allow_sleeping;
+    float                      friction;
+    float                      restitution;
+    float                      linear_damping;
+    float                      angular_damping;
+    float                      max_linear_velocity;
+    float                      max_angular_velocity;
+    float                      gravity_factor;
+    JPH_OverrideMassProperties override_mass_properties;
+    float                      inertia_multiplier;
+    JPH_MassProperties         mass_properties_override;
+    const void *               reserved;
+    const JPH_Shape *          shape;
 };
 
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDCreator
@@ -293,23 +292,23 @@ struct JPH_SubShapeIDCreator
 // NOTE: Needs to be kept in sync with JPH::SubShapeIDPair
 struct JPH_SubShapeIDPair
 {
-    JPH_BodyID      body1_id;
-    JPH_SubShapeID  sub_shape1_id;
-    JPH_BodyID      body2_id;
-    JPH_SubShapeID  sub_shape2_id;
+    JPH_BodyID     body1_id;
+    JPH_SubShapeID sub_shape1_id;
+    JPH_BodyID     body2_id;
+    JPH_SubShapeID sub_shape2_id;
 };
 
 // NOTE: Needs to be kept in sync with JPH::ContactManifold
 struct JPH_ContactManifold
 {
-    alignas(16) float       world_space_normal[4];
-    alignas(16) float       penetration_depth;
-    JPH_SubShapeID          sub_shape1_id;
-    JPH_SubShapeID          sub_shape2_id;
-    alignas(16) uint32_t    num_points1;
-    alignas(16) float       world_space_contact_points1[64][4];
-    alignas(16) uint32_t    num_points2;
-    alignas(16) float       world_space_contact_points2[64][4];
+    alignas(16) float    world_space_normal[4];
+    alignas(16) float    penetration_depth;
+    JPH_SubShapeID       sub_shape1_id;
+    JPH_SubShapeID       sub_shape2_id;
+    alignas(16) uint32_t num_points1;
+    alignas(16) float    world_space_contact_points1[64][4];
+    alignas(16) uint32_t num_points2;
+    alignas(16) float    world_space_contact_points2[64][4];
 };
 
 // NOTE: Needs to be kept in sync with JPH::ContactSettings
@@ -323,17 +322,17 @@ struct JPH_ContactSettings
 // NOTE: Needs to be kept in sync with JPH::CollideShapeResult
 struct JPH_CollideShapeResult
 {
-    alignas(16) float       contact_point1[4];
-    alignas(16) float       contact_point2[4];
-    alignas(16) float       penetration_axis[4];
-    alignas(16) float       penetration_depth;
-    JPH_SubShapeID          sub_shape1_id;
-    JPH_SubShapeID          sub_shape2_id;
-    JPH_BodyID              body2_id;
-    alignas(16) uint32_t    num_face_points1;
-    alignas(16) float       shape1_face[32][4];
-    alignas(16) uint32_t    num_face_points2;
-    alignas(16) float       shape2_face[32][4];
+    alignas(16) float    contact_point1[4];
+    alignas(16) float    contact_point2[4];
+    alignas(16) float    penetration_axis[4];
+    alignas(16) float    penetration_depth;
+    JPH_SubShapeID       sub_shape1_id;
+    JPH_SubShapeID       sub_shape2_id;
+    JPH_BodyID           body2_id;
+    alignas(16) uint32_t num_face_points1;
+    alignas(16) float    shape1_face[32][4];
+    alignas(16) uint32_t num_face_points2;
+    alignas(16) float    shape2_face[32][4];
 };
 
 // NOTE: Needs to be kept in sync with JPH::BroadPhaseLayerInterface
@@ -397,12 +396,12 @@ struct JPH_ContactListenerVTable
 // NOTE: Needs to be kept in sync with JPH::TransformedShape
 struct JPH_TransformedShape
 {
-    alignas(16) float      shape_position_com[4];
-    alignas(16) float      shape_rotation[4];
-    const JPH_Shape *      shape;
-    float                  shape_scale[3];
-    JPH_BodyID             body_id;
-    JPH_SubShapeIDCreator  sub_shape_id_creator;
+    alignas(16) float     shape_position_com[4];
+    alignas(16) float     shape_rotation[4];
+    const JPH_Shape *     shape;
+    float                 shape_scale[3];
+    JPH_BodyID            body_id;
+    JPH_SubShapeIDCreator sub_shape_id_creator;
 };
 //--------------------------------------------------------------------------------------------------
 //
