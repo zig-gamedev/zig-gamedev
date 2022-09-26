@@ -2382,19 +2382,57 @@ fn typeToDataTypeEnum(comptime T: type) DataType {
 // Tabs
 //
 //--------------------------------------------------------------------------------------------------
-pub fn beginTabBar(label: [:0]const u8) bool {
-    return zguiBeginTabBar(label);
-}
-pub fn beginTabItem(label: [:0]const u8) bool {
-    return zguiBeginTabItem(label);
-}
-pub const endTabItem = zguiEndTabItem;
-pub const endTabBar = zguiEndTabBar;
+pub const TabBarFlags = packed struct(u32) {
+    reorderable: bool = false,
+    auto_select_new_tabs: bool = false,
+    tab_list_popup_button: bool = false,
+    no_close_with_middle_mouse_button: bool = false,
+    no_tab_list_scrolling_buttons: bool = false,
+    no_tooltip: bool = false,
+    fitting_policy_resize_down: bool = false,
+    fitting_policy_scroll: bool = false,
+    _padding: u24 = 0,
 
-extern fn zguiBeginTabBar(label: [*:0]const u8) bool;
-extern fn zguiBeginTabItem(label: [*:0]const u8) bool;
+    pub const fitting_policy_mask = TabBarFlags{
+        .fitting_policy_resize_down = true,
+        .fitting_policy_scroll = true,
+    };
+    pub const fitting_policy_default = TabBarFlags{ .fitting_policy_resize_down = true };
+};
+pub const TabItemFlags = packed struct(u32) {
+    unsaved_document: bool = false,
+    set_selected: bool = false,
+    no_close_with_middle_mouse_button: bool = false,
+    no_push_id: bool = false,
+    no_tooltip: bool = false,
+    no_reorder: bool = false,
+    leading: bool = false,
+    trailing: bool = false,
+    _padding: u24 = 0,
+};
+pub fn beginTabBar(label: [:0]const u8, flags: TabBarFlags) bool {
+    return zguiBeginTabBar(label, flags);
+}
+const BeginTabItem = struct {
+    p_open: ?*bool = null,
+    flags: TabItemFlags = .{},
+};
+pub fn beginTabItem(label: [:0]const u8, args: BeginTabItem) bool {
+    return zguiBeginTabItem(label, args.p_open, args.flags);
+}
+/// `void endTabItem() void`
+pub const endTabItem = zguiEndTabItem;
+/// `void endTabBar() void`
+pub const endTabBar = zguiEndTabBar;
+pub fn setTabItemClosed(tab_or_docked_window_label: [:0]const u8) void {
+    zguiSetTabItemClosed(tab_or_docked_window_label);
+}
+
+extern fn zguiBeginTabBar(label: [*:0]const u8, flags: TabBarFlags) bool;
+extern fn zguiBeginTabItem(label: [*:0]const u8, p_open: ?*bool, flags: TabItemFlags) bool;
 extern fn zguiEndTabItem() void;
 extern fn zguiEndTabBar() void;
+extern fn zguiSetTabItemClosed(tab_or_docked_window_label: [*:0]const u8) void;
 //--------------------------------------------------------------------------------------------------
 //
 // Viewport

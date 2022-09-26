@@ -1212,12 +1212,12 @@ ZGUI_API void zguiPushTextWrapPos(float wrap_pos_x) {
     ImGui::PushTextWrapPos(wrap_pos_x);
 }
 
-ZGUI_API bool zguiBeginTabBar(const char* string) {
-    return ImGui::BeginTabBar(string, ImGuiTabBarFlags_None);
+ZGUI_API bool zguiBeginTabBar(const char* string, ImGuiTabBarFlags flags) {
+    return ImGui::BeginTabBar(string, flags);
 }
 
-ZGUI_API bool zguiBeginTabItem(const char* string) {
-    return ImGui::BeginTabItem(string);
+ZGUI_API bool zguiBeginTabItem(const char* string, bool* p_open, ImGuiTabItemFlags flags) {
+    return ImGui::BeginTabItem(string, p_open, flags);
 }
 
 ZGUI_API void zguiEndTabItem(void) {
@@ -1226,6 +1226,10 @@ ZGUI_API void zguiEndTabItem(void) {
 
 ZGUI_API void zguiEndTabBar(void) {
     ImGui::EndTabBar();
+}
+
+ZGUI_API void zguiSetTabItemClosed(const char* tab_or_docked_window_label) {
+    ImGui::SetTabItemClosed(tab_or_docked_window_label);
 }
 //--------------------------------------------------------------------------------------------------
 //
