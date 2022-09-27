@@ -1,6 +1,6 @@
 # zig-gamedev project
 
-Building gamedev ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021.
+Building gamedev ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021. [Help to sustain](https://github.com/sponsors/michal-z) the project.
 
 * Sample [applications](#sample-applications)
 * Cross-platform and composable [libraries](#libraries)
