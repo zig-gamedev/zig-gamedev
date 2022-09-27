@@ -466,13 +466,25 @@ fn update(demo: *DemoState) !void {
     _ = draw_list.getClipRectMax();
     draw_list.popClipRect();
 
-    if (zgui.plot.beginPlot("test_plot", .{})) {
+    if (zgui.plot.beginPlot("Line Plot", .{})) {
         zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
         zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
         zgui.plot.setupLegend(.{ .north = true }, .{});
         zgui.plot.setupFinish();
         zgui.plot.plotLineValues("y data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
         zgui.plot.plotLine("xy data", f32, .{
+            .xv = &.{ 0.1, 0.2, 0.5, 2.5 },
+            .yv = &.{ 0.1, 0.3, 0.5, 0.9 },
+        });
+        zgui.plot.endPlot();
+    }
+    if (zgui.plot.beginPlot("Scatter Plot", .{})) {
+        zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
+        zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
+        zgui.plot.setupLegend(.{ .north = true }, .{});
+        zgui.plot.setupFinish();
+        zgui.plot.plotScatterValues("y data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
+        zgui.plot.plotScatter("xy data", f32, .{
             .xv = &.{ 0.1, 0.2, 0.5, 2.5 },
             .yv = &.{ 0.1, 0.3, 0.5, 0.9 },
         });

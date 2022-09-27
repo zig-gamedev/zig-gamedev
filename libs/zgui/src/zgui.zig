@@ -3373,6 +3373,88 @@ pub const plot = struct {
         stride: i32,
     ) void;
     //----------------------------------------------------------------------------------------------
+    pub const ScatterFlags = packed struct(u32) {
+        _reserved0: bool = false,
+        _reserved1: bool = false,
+        _reserved2: bool = false,
+        _reserved3: bool = false,
+        _reserved4: bool = false,
+        _reserved5: bool = false,
+        _reserved6: bool = false,
+        _reserved7: bool = false,
+        _reserved8: bool = false,
+        _reserved9: bool = false,
+        no_clip: bool = false,
+        _padding: u21 = 0,
+    };
+    fn PlotScatterValuesGen(comptime T: type) type {
+        return struct {
+            v: []const T,
+            xscale: f64 = 1.0,
+            xstart: f64 = 0.0,
+            flags: ScatterFlags = .{},
+            offset: i32 = 0,
+            stride: i32 = @sizeOf(T),
+        };
+    }
+    pub fn plotScatterValues(label_id: [:0]const u8, comptime T: type, args: PlotScatterValuesGen(T)) void {
+        zguiPlot_PlotScatterValues(
+            label_id,
+            typeToDataTypeEnum(T),
+            args.v.ptr,
+            @intCast(i32, args.v.len),
+            args.xscale,
+            args.xstart,
+            args.flags,
+            args.offset,
+            args.stride,
+        );
+    }
+    extern fn zguiPlot_PlotScatterValues(
+        label_id: [*:0]const u8,
+        data_type: DataType,
+        values: *const anyopaque,
+        count: i32,
+        xscale: f64,
+        xstart: f64,
+        flags: ScatterFlags,
+        offset: i32,
+        stride: i32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    fn PlotScatterGen(comptime T: type) type {
+        return struct {
+            xv: []const T,
+            yv: []const T,
+            flags: ScatterFlags = .{},
+            offset: i32 = 0,
+            stride: i32 = @sizeOf(T),
+        };
+    }
+    pub fn plotScatter(label_id: [:0]const u8, comptime T: type, args: PlotScatterGen(T)) void {
+        assert(args.xv.len == args.yv.len);
+        zguiPlot_PlotScatter(
+            label_id,
+            typeToDataTypeEnum(T),
+            args.xv.ptr,
+            args.yv.ptr,
+            @intCast(i32, args.xv.len),
+            args.flags,
+            args.offset,
+            args.stride,
+        );
+    }
+    extern fn zguiPlot_PlotScatter(
+        label_id: [*:0]const u8,
+        data_type: DataType,
+        xv: *const anyopaque,
+        yv: *const anyopaque,
+        count: i32,
+        flags: ScatterFlags,
+        offset: i32,
+        stride: i32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
     pub const endPlot = zguiPlot_EndPlot;
     extern fn zguiPlot_EndPlot() void;
     //----------------------------------------------------------------------------------------------
