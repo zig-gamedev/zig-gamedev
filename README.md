@@ -1,6 +1,10 @@
 # zig-gamedev project
 
-This repository contains a collection of [sample applications](#cross-platfrom-winlinmac-sample-applications-native-wgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: 3D graphics, multi-threaded physics, SIMD math, audio, GUI, image loading, noise generation and profiling.
+Game development ecosystem for [Zig programming language](https://ziglang.org/).
+
+* Sample [applications](#sample-applications)
+* Cross-platform and composable [libraries](#libraries)
+* Mini-games (coming soon)
 
 To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 ```
