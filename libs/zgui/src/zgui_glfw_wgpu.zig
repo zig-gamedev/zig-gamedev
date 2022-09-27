@@ -1,6 +1,6 @@
 const std = @import("std");
 const zglfw = @import("zglfw");
-const zgui = @import("zgui.zig");
+const zgui = @import("gui.zig");
 
 /// This call will install GLFW callbacks to handle GUI interactions.
 /// Those callbacks will chain-call user's previously installed callbacks, if any.
