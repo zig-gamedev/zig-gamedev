@@ -1,6 +1,10 @@
 # zig-gamedev project
 
-This repository contains a collection of [sample applications](#cross-platfrom-winlinmac-sample-applications-native-wgpu) and **cross-platform, composable libraries** written in **[Zig programming language](https://ziglang.org/)**. Currently, it provides a solution for: 3D graphics, multi-threaded physics, SIMD math, audio, GUI, image loading, noise generation and profiling.
+Building gamedev ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021. If you can, please [help to sustain](https://github.com/sponsors/michal-z) the project.
+
+* Sample [applications](#sample-applications)
+* Cross-platform and composable [libraries](#libraries)
+* Mini-games (coming soon)
 
 To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 ```
@@ -34,8 +38,6 @@ Library | Latest version | Description
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings to carefully selected C/C++ libraries
 * Uses native version of wgpu API (binaries from [dawn-bin](https://github.com/michal-z/dawn-bin)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows ([windows branch](https://github.com/michal-z/zig-gamedev/tree/windows))
-
-*I work on this project full-time and try to make a living from donations. If you like it, please consider [supporting me](https://github.com/sponsors/michal-z). Thanks!*
 
 ## Sample applications
 
