@@ -467,7 +467,15 @@ fn update(demo: *DemoState) !void {
     draw_list.popClipRect();
 
     if (zgui.plot.beginPlot("test_plot", .{})) {
-        zgui.plot.plotLineValues("Some data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
+        zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
+        zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
+        zgui.plot.setupLegend(.{ .north = true }, .{});
+        zgui.plot.setupFinish();
+        zgui.plot.plotLineValues("y data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
+        zgui.plot.plotLine("xy data", f32, .{
+            .xv = &.{ 0.1, 0.2, 0.5, 2.5 },
+            .yv = &.{ 0.1, 0.3, 0.5, 0.9 },
+        });
         zgui.plot.endPlot();
     }
 

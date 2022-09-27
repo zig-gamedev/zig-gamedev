@@ -1,4 +1,5 @@
 //--------------------------------------------------------------------------------------------------
+// zgui v0.9
 // Zig bindings for 'dear imgui' library. Easy to use, hand-crafted API with default arguments,
 // named parameters and Zig style text formatting.
 //--------------------------------------------------------------------------------------------------
@@ -3226,14 +3227,34 @@ pub const plot = struct {
             .opposite = true,
         };
     };
-    pub fn setupXAxis(label: [:0]const u8, flags: AxisFlags) void {
-        zguiPlot_SetupXAxis(label, flags);
+    pub const Axis = enum(u32) { x1, x2, x3, y1, y2, y3 };
+    pub const SetupAxis = struct {
+        label: ?[:0]const u8 = null,
+        flags: AxisFlags = .{},
+    };
+    pub fn setupAxis(axis: Axis, args: SetupAxis) void {
+        zguiPlot_SetupAxis(axis, if (args.label) |l| l else null, args.flags);
     }
-    pub fn setupYAxis(label: [:0]const u8, flags: AxisFlags) void {
-        zguiPlot_SetupYAxis(label, flags);
+    extern fn zguiPlot_SetupAxis(axis: Axis, label: ?[*:0]const u8, flags: AxisFlags) void;
+    //----------------------------------------------------------------------------------------------
+    pub const PlotCond = enum(u32) {
+        none = @enumToInt(Condition.none),
+        always = @enumToInt(Condition.always),
+        once = @enumToInt(Condition.once),
+    };
+    const SetupAxisLimits = struct {
+        min: f64,
+        max: f64,
+        cond: PlotCond = .once,
+    };
+    pub fn setupAxisLimits(axis: Axis, args: SetupAxisLimits) void {
+        zguiPlot_SetupAxisLimits(axis, args.min, args.max, args.cond);
     }
-    extern fn zguiPlot_SetupXAxis(label: [*:0]const u8, flags: AxisFlags) void;
-    extern fn zguiPlot_SetupYAxis(label: [*:0]const u8, flags: AxisFlags) void;
+    extern fn zguiPlot_SetupAxisLimits(axis: Axis, min: f64, max: f64, cond: PlotCond) void;
+    //----------------------------------------------------------------------------------------------
+    /// `pub fn setupFinish() void`
+    pub const setupFinish = zguiPlot_SetupFinish;
+    extern fn zguiPlot_SetupFinish() void;
     //----------------------------------------------------------------------------------------------
     pub const Flags = packed struct(u32) {
         no_title: bool = false,
@@ -3288,7 +3309,7 @@ pub const plot = struct {
         return struct {
             v: []const T,
             xscale: f64 = 1.0,
-            x0: f64 = 0.0,
+            xstart: f64 = 0.0,
             flags: LineFlags = .{},
             offset: i32 = 0,
             stride: i32 = @sizeOf(T),
@@ -3301,7 +3322,7 @@ pub const plot = struct {
             args.v.ptr,
             @intCast(i32, args.v.len),
             args.xscale,
-            args.x0,
+            args.xstart,
             args.flags,
             args.offset,
             args.stride,
@@ -3313,7 +3334,40 @@ pub const plot = struct {
         values: *const anyopaque,
         count: i32,
         xscale: f64,
-        x0: f64,
+        xstart: f64,
+        flags: LineFlags,
+        offset: i32,
+        stride: i32,
+    ) void;
+    //----------------------------------------------------------------------------------------------
+    fn PlotLineGen(comptime T: type) type {
+        return struct {
+            xv: []const T,
+            yv: []const T,
+            flags: LineFlags = .{},
+            offset: i32 = 0,
+            stride: i32 = @sizeOf(T),
+        };
+    }
+    pub fn plotLine(label_id: [:0]const u8, comptime T: type, args: PlotLineGen(T)) void {
+        assert(args.xv.len == args.yv.len);
+        zguiPlot_PlotLine(
+            label_id,
+            typeToDataTypeEnum(T),
+            args.xv.ptr,
+            args.yv.ptr,
+            @intCast(i32, args.xv.len),
+            args.flags,
+            args.offset,
+            args.stride,
+        );
+    }
+    extern fn zguiPlot_PlotLine(
+        label_id: [*:0]const u8,
+        data_type: DataType,
+        xv: *const anyopaque,
+        yv: *const anyopaque,
+        count: i32,
         flags: LineFlags,
         offset: i32,
         stride: i32,

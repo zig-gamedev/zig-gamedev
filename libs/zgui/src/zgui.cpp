@@ -1665,12 +1665,16 @@ ZGUI_API void zguiPlot_SetupLegend(ImPlotLocation location, ImPlotLegendFlags fl
     ImPlot::SetupLegend(location, flags);
 }
 
-ZGUI_API void zguiPlot_SetupXAxis(const char* label, ImPlotAxisFlags flags) {
-    ImPlot::SetupAxis(ImAxis_X1, label, flags);
+ZGUI_API void zguiPlot_SetupAxis(ImAxis axis, const char* label, ImPlotAxisFlags flags) {
+    ImPlot::SetupAxis(axis, label, flags);
 }
 
-ZGUI_API void zguiPlot_SetupYAxis(const char* label, ImPlotAxisFlags flags) {
-    ImPlot::SetupAxis(ImAxis_Y1, label, flags);
+ZGUI_API void zguiPlot_SetupAxisLimits(ImAxis axis, double v_min, double v_max, ImPlotCond cond) {
+    ImPlot::SetupAxisLimits(axis, v_min, v_max, cond);
+}
+
+ZGUI_API void zguiPlot_SetupFinish(void) {
+    ImPlot::SetupFinish();
 }
 
 ZGUI_API bool zguiPlot_BeginPlot(const char* title_id, float width, float height, ImPlotFlags flags) {
@@ -1704,6 +1708,36 @@ ZGUI_API void zguiPlot_PlotLineValues(
         ImPlot::PlotLine(label_id, (const float*)values, count, xscale, x0, flags, offset, stride);
     else if (data_type == ImGuiDataType_Double)
         ImPlot::PlotLine(label_id, (const double*)values, count, xscale, x0, flags, offset, stride);
+    else
+        assert(false);
+}
+
+ZGUI_API void zguiPlot_PlotLine(
+    const char* label_id,
+    ImGuiDataType data_type,
+    const void* xv,
+    const void* yv,
+    int count,
+    ImPlotLineFlags flags,
+    int offset,
+    int stride
+) {
+    if (data_type == ImGuiDataType_S8)
+        ImPlot::PlotLine(label_id, (const ImS8*)xv, (const ImS8*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U8)
+        ImPlot::PlotLine(label_id, (const ImU8*)xv, (const ImU8*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S16)
+        ImPlot::PlotLine(label_id, (const ImS16*)xv, (const ImS16*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U16)
+        ImPlot::PlotLine(label_id, (const ImU16*)xv, (const ImU16*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_S32)
+        ImPlot::PlotLine(label_id, (const ImS32*)xv, (const ImS32*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_U32)
+        ImPlot::PlotLine(label_id, (const ImU32*)xv, (const ImU32*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Float)
+        ImPlot::PlotLine(label_id, (const float*)xv, (const float*)yv, count, flags, offset, stride);
+    else if (data_type == ImGuiDataType_Double)
+        ImPlot::PlotLine(label_id, (const double*)xv, (const double*)yv, count, flags, offset, stride);
     else
         assert(false);
 }
