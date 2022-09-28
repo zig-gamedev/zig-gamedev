@@ -1661,6 +1661,42 @@ ZGUI_API ImPlotContext* zguiPlot_GetCurrentContext(void) {
     return ImPlot::GetCurrentContext();
 }
 
+ZGUI_API ImPlotStyle zguiPlotStyle_Init(void) {
+    return ImPlotStyle();
+}
+
+ZGUI_API ImPlotStyle* zguiPlot_GetStyle(void) {
+    return &ImPlot::GetStyle();
+}
+
+ZGUI_API void zguiPlot_PushStyleColor4f(ImPlotCol idx, const float col[4]) {
+    ImPlot::PushStyleColor(idx, { col[0], col[1], col[2], col[3] });
+}
+
+ZGUI_API void zguiPlot_PushStyleColor1u(ImPlotCol idx, unsigned int col) {
+    ImPlot::PushStyleColor(idx, col);
+}
+
+ZGUI_API void zguiPlot_PopStyleColor(int count) {
+    ImPlot::PopStyleColor(count);
+}
+
+ZGUI_API void zguiPlot_PushStyleVar1i(ImPlotStyleVar idx, int var) {
+    ImPlot::PushStyleVar(idx, var);
+}
+
+ZGUI_API void zguiPlot_PushStyleVar1f(ImPlotStyleVar idx, float var) {
+    ImPlot::PushStyleVar(idx, var);
+}
+
+ZGUI_API void zguiPlot_PushStyleVar2f(ImPlotStyleVar idx, const float var[2]) {
+    ImPlot::PushStyleVar(idx, { var[0], var[1] });
+}
+
+ZGUI_API void zguiPlot_PopStyleVar(int count) {
+    ImPlot::PopStyleVar(count);
+}
+
 ZGUI_API void zguiPlot_SetupLegend(ImPlotLocation location, ImPlotLegendFlags flags) {
     ImPlot::SetupLegend(location, flags);
 }

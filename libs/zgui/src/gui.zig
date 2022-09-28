@@ -478,6 +478,7 @@ pub const Style = extern struct {
     anti_aliased_fill: bool,
     curve_tessellation_tol: f32,
     circle_tessellation_max_error: f32,
+
     colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
 
     /// `pub fn init() Style`

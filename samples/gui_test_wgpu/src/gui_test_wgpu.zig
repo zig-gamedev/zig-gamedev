@@ -87,6 +87,13 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     // To reset zgui.Style with default values:
     //zgui.getStyle().* = zgui.Style.init();
 
+    {
+        zgui.plot.getStyle().line_weight = 3.0;
+        const plot_style = zgui.plot.getStyle();
+        plot_style.marker = @enumToInt(zgui.plot.Marker.circle);
+        plot_style.marker_size = 5.0;
+    }
+
     const demo = try allocator.create(DemoState);
     demo.* = .{
         .gctx = gctx,

@@ -7,4 +7,4 @@
 //--------------------------------------------------------------------------------------------------
 pub usingnamespace @import("gui.zig");
 pub const plot = @import("plot.zig");
-pub const backend = @import("zgui_glfw_wgpu.zig");
+pub const backend = @import("backend_glfw_wgpu.zig");

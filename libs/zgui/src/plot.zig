@@ -19,6 +19,198 @@ extern fn zguiPlot_GetCurrentContext() ?Context;
 extern fn zguiPlot_CreateContext() Context;
 extern fn zguiPlot_DestroyContext(ctx: ?Context) void;
 //--------------------------------------------------------------------------------------------------
+pub const Marker = enum(i32) {
+    none = -1,
+    circle = 0,
+    square,
+    diamond,
+    up,
+    down,
+    left,
+    right,
+    cross,
+    plus,
+    asterisk,
+};
+
+pub const Colormap = enum(u32) {
+    deep,
+    dark,
+    pastel,
+    paired,
+    viridis,
+    plasma,
+    hot,
+    cool,
+    pink,
+    jet,
+    twilight,
+    rd_bu,
+    br_b_g,
+    pi_y_g,
+    spectral,
+    greys,
+};
+
+pub const Style = extern struct {
+    line_weight: f32,
+    marker: i32, // Marker enum or custom colormap index.
+    marker_size: f32,
+    marker_weight: f32,
+    fill_alpha: f32,
+    error_bar_size: f32,
+    error_bar_weight: f32,
+    digital_bit_height: f32,
+    digital_bit_gap: f32,
+    plot_border_size: f32,
+    minor_alpha: f32,
+    major_tick_len: [2]f32,
+    minor_tick_len: [2]f32,
+    major_tick_size: [2]f32,
+    minor_tick_size: [2]f32,
+    major_grid_size: [2]f32,
+    minor_grid_size: [2]f32,
+    plot_padding: [2]f32,
+    label_padding: [2]f32,
+    legend_padding: [2]f32,
+    legend_inner_padding: [2]f32,
+    legend_spacing: [2]f32,
+    mouse_pos_padding: [2]f32,
+    annotation_padding: [2]f32,
+    fit_padding: [2]f32,
+    plot_default_size: [2]f32,
+    plot_min_size: [2]f32,
+
+    colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
+    colormap: Colormap,
+
+    use_local_time: bool,
+    use_iso_8601: bool,
+    use_24h_clock: bool,
+
+    /// `pub fn init() Style`
+    pub const init = zguiPlotStyle_Init;
+    extern fn zguiPlotStyle_Init() Style;
+
+    pub fn getColor(style: Style, idx: StyleCol) [4]f32 {
+        return style.colors[@enumToInt(idx)];
+    }
+    pub fn setColor(style: *Style, idx: StyleCol, color: [4]f32) void {
+        style.colors[@enumToInt(idx)] = color;
+    }
+};
+/// `pub fn getStyle() *Style`
+pub const getStyle = zguiPlot_GetStyle;
+extern fn zguiPlot_GetStyle() *Style;
+//--------------------------------------------------------------------------------------------------
+pub const StyleCol = enum(u32) {
+    line,
+    fill,
+    marker_outline,
+    marker_fill,
+    error_bar,
+    frame_bg,
+    plot_bg,
+    plot_border,
+    legend_bg,
+    legend_border,
+    legend_text,
+    title_text,
+    inlay_text,
+    axis_text,
+    axis_grid,
+    axis_tick,
+    axis_bg,
+    axis_bg_hovered,
+    axis_bg_active,
+    selection,
+    crosshairs,
+};
+const PushStyleColor4f = struct {
+    idx: StyleCol,
+    c: [4]f32,
+};
+pub fn pushStyleColor4f(args: PushStyleColor4f) void {
+    zguiPlot_PushStyleColor4f(args.idx, &args.c);
+}
+const PushStyleColor1u = struct {
+    idx: StyleCol,
+    c: u32,
+};
+pub fn pushStyleColor1u(args: PushStyleColor1u) void {
+    zguiPlot_PushStyleColor1u(args.idx, args.c);
+}
+const PopStyleColor = struct {
+    count: i32 = 1,
+};
+pub fn popStyleColor(args: PopStyleColor) void {
+    zguiPlot_PopStyleColor(args.count);
+}
+extern fn zguiPlot_PushStyleColor4f(idx: StyleCol, col: *const [4]f32) void;
+extern fn zguiPlot_PushStyleColor1u(idx: StyleCol, col: u32) void;
+extern fn zguiPlot_PopStyleColor(count: i32) void;
+//--------------------------------------------------------------------------------------------------
+pub const StyleVar = enum(u32) {
+    line_weight, // 1f
+    marker, // 1i
+    marker_size, // 1f
+    marker_weight, // 1f
+    fill_alpha, // 1f
+    error_bar_size, // 1f
+    error_bar_weight, // 1f
+    digital_bit_height, // 1f
+    digital_bit_gap, // 1f
+    plot_border_size, // 1f
+    minor_alpha, // 1f
+    major_tick_len, // 2f
+    minor_tick_len, // 2f
+    major_tick_size, // 2f
+    minor_tick_size, // 2f
+    major_grid_size, // 2f
+    minor_grid_size, // 2f
+    plot_padding, // 2f
+    label_padding, // 2f
+    legend_padding, // 2f
+    legend_inner_padding, // 2f
+    legend_spacing, // 2f
+    mouse_pos_padding, // 2f
+    annotation_padding, // 2f
+    fit_padding, // 2f
+    plot_default_size, // 2f
+    plot_min_size, // 2f
+};
+const PushStyleVar1i = struct {
+    idx: StyleVar,
+    v: i32,
+};
+pub fn pushStyleVar1i(args: PushStyleVar1i) void {
+    zguiPlot_PushStyleVar1i(args.idx, args.v);
+}
+const PushStyleVar1f = struct {
+    idx: StyleVar,
+    v: f32,
+};
+pub fn pushStyleVar1f(args: PushStyleVar1f) void {
+    zguiPlot_PushStyleVar1f(args.idx, args.v);
+}
+const PushStyleVar2f = struct {
+    idx: StyleVar,
+    v: [2]f32,
+};
+pub fn pushStyleVar2f(args: PushStyleVar2f) void {
+    zguiPlot_PushStyleVar2f(args.idx, &args.v);
+}
+const PopStyleVar = struct {
+    count: i32 = 1,
+};
+pub fn popStyleVar(args: PopStyleVar) void {
+    zguiPlot_PopStyleVar(args.count);
+}
+extern fn zguiPlot_PushStyleVar1i(idx: StyleVar, v: i32) void;
+extern fn zguiPlot_PushStyleVar1f(idx: StyleVar, v: f32) void;
+extern fn zguiPlot_PushStyleVar2f(idx: StyleVar, v: *const [2]f32) void;
+extern fn zguiPlot_PopStyleVar(count: i32) void;
+//--------------------------------------------------------------------------------------------------
 pub const PlotLocation = packed struct(u32) {
     north: bool = false,
     south: bool = false,
@@ -307,6 +499,7 @@ extern fn zguiPlot_PlotScatter(
     stride: i32,
 ) void;
 //----------------------------------------------------------------------------------------------
+/// `pub fn endPlot() void`
 pub const endPlot = zguiPlot_EndPlot;
 extern fn zguiPlot_EndPlot() void;
 //----------------------------------------------------------------------------------------------
