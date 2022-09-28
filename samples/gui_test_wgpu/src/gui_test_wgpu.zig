@@ -63,7 +63,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     assert(zgui.io.getFont(0) == font_large);
     assert(zgui.io.getFont(1) == font_normal);
 
-    // This needs to be called *after* adding your custom fonts. Empty font name ("") means that you have added fonts yourself.
+    // This needs to be called *after* adding your custom fonts.
     zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
 
     // This call is optional. Initially, zgui.io.getFont(0) is a default font.
@@ -368,7 +368,10 @@ fn update(demo: *DemoState) !void {
         };
         _ = zgui.inputText("Input text", .{ .buf = static.buf[0..] });
         _ = zgui.inputTextMultiline("Input text multiline", .{ .buf = static.buf1[0..] });
-        _ = zgui.inputTextWithHint("Input text with hint", .{ .hint = "Enter your name", .buf = static.buf2[0..] });
+        _ = zgui.inputTextWithHint(
+            "Input text with hint",
+            .{ .hint = "Enter your name", .buf = static.buf2[0..] },
+        );
         _ = zgui.inputFloat("Input float 1", .{ .v = &static.v1 });
         _ = zgui.inputFloat2("Input float 2", .{ .v = &static.v2 });
         _ = zgui.inputFloat3("Input float 3", .{ .v = &static.v3 });
