@@ -90,7 +90,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     {
         zgui.plot.getStyle().line_weight = 3.0;
         const plot_style = zgui.plot.getStyle();
-        plot_style.marker = @enumToInt(zgui.plot.Marker.circle);
+        plot_style.marker = .circle;
         plot_style.marker_size = 5.0;
     }
 
@@ -476,7 +476,7 @@ fn update(demo: *DemoState) !void {
     if (zgui.plot.beginPlot("Line Plot", .{})) {
         zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
         zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
-        zgui.plot.setupLegend(.{ .north = true }, .{});
+        zgui.plot.setupLegend(.{ .south = true, .west = true }, .{});
         zgui.plot.setupFinish();
         zgui.plot.plotLineValues("y data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
         zgui.plot.plotLine("xy data", f32, .{
@@ -485,10 +485,12 @@ fn update(demo: *DemoState) !void {
         });
         zgui.plot.endPlot();
     }
+    zgui.plot.pushStyleVar1f(.{ .idx = .marker_size, .v = 3.0 });
+    zgui.plot.pushStyleVar1f(.{ .idx = .marker_weight, .v = 1.0 });
     if (zgui.plot.beginPlot("Scatter Plot", .{})) {
         zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
         zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
-        zgui.plot.setupLegend(.{ .north = true }, .{});
+        zgui.plot.setupLegend(.{ .north = true, .east = true }, .{});
         zgui.plot.setupFinish();
         zgui.plot.plotScatterValues("y data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
         zgui.plot.plotScatter("xy data", f32, .{
@@ -497,6 +499,7 @@ fn update(demo: *DemoState) !void {
         });
         zgui.plot.endPlot();
     }
+    zgui.plot.popStyleVar(.{ .count = 2 });
 
     zgui.end();
 }

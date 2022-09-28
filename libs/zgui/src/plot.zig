@@ -54,7 +54,7 @@ pub const Colormap = enum(u32) {
 
 pub const Style = extern struct {
     line_weight: f32,
-    marker: i32, // Marker enum.
+    marker: Marker,
     marker_size: f32,
     marker_weight: f32,
     fill_alpha: f32,
@@ -82,7 +82,7 @@ pub const Style = extern struct {
     plot_min_size: [2]f32,
 
     colors: [@typeInfo(StyleCol).Enum.fields.len][4]f32,
-    colormap: i32, // Colormap enum or index of the custom colormap.
+    colormap: Colormap,
 
     use_local_time: bool,
     use_iso_8601: bool,
