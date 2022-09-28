@@ -57,7 +57,11 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 1. [procedural mesh (wgpu)](samples/procedural_mesh_wgpu): This sample shows how to efficiently draw several procedurally generated meshes.<br />Build and run with: `zig build procedural_mesh_wgpu-run`
 
-    <a href="samples/procedural_mesh_wgpu"><img src="samples/procedural_mesh_wgpu/screenshot.png" alt="procedural mesh wgpu (wgpu)" height="200"></a>
+    <a href="samples/procedural_mesh_wgpu"><img src="samples/procedural_mesh_wgpu/screenshot.png" alt="procedural mesh (wgpu)" height="200"></a>
+
+1. [gui test (wgpu)](samples/gui_test_wgpu): This sample shows how to use our [zgui](libs/zgui) library.<br />Build and run with: `zig build gui_test_wgpu-run`
+
+    <a href="samples/gui_test_wgpu"><img src="samples/gui_test_wgpu/screenshot.png" alt="gui test (wgpu)" height="200"></a>
 
 ## Building sample applications
 
