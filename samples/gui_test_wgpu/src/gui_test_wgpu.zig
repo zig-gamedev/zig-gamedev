@@ -427,7 +427,7 @@ fn update(demo: *DemoState) !void {
         _ = zgui.imageButton(tex_id, .{ .w = 512.0, .h = 512.0, .frame_padding = 10 });
     }
 
-    const draw_list = zgui.getWindowDrawList();
+    const draw_list = zgui.getBackgroundDrawList();
     draw_list.pushClipRect(.{ .pmin = .{ 0, 0 }, .pmax = .{ 400, 400 } });
     draw_list.addLine(.{ .p1 = .{ 0, 0 }, .p2 = .{ 400, 400 }, .col = 0xff_ff_00_ff, .thickness = 5.0 });
     draw_list.popClipRect();
@@ -473,7 +473,32 @@ fn update(demo: *DemoState) !void {
     _ = draw_list.getClipRectMax();
     draw_list.popClipRect();
 
-    if (zgui.plot.beginPlot("Line Plot", .{})) {
+    if (zgui.collapsingHeader("Plot: Scatter", .{})) {
+        zgui.plot.pushStyleVar1f(.{ .idx = .marker_size, .v = 3.0 });
+        zgui.plot.pushStyleVar1f(.{ .idx = .marker_weight, .v = 1.0 });
+        if (zgui.plot.beginPlot("Scatter Plot", .{ .flags = .{ .no_title = true } })) {
+            zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
+            zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
+            zgui.plot.setupLegend(.{ .north = true, .east = true }, .{});
+            zgui.plot.setupFinish();
+            zgui.plot.plotScatterValues("y data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
+            zgui.plot.plotScatter("xy data", f32, .{
+                .xv = &.{ 0.1, 0.2, 0.5, 2.5 },
+                .yv = &.{ 0.1, 0.3, 0.5, 0.9 },
+            });
+            zgui.plot.endPlot();
+        }
+        zgui.plot.popStyleVar(.{ .count = 2 });
+    }
+
+    zgui.end();
+
+    if (!zgui.begin("Plot", .{})) {
+        zgui.end();
+        return;
+    }
+
+    if (zgui.plot.beginPlot("Line Plot", .{ .h = -1.0 })) {
         zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
         zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
         zgui.plot.setupLegend(.{ .south = true, .west = true }, .{});
@@ -485,22 +510,6 @@ fn update(demo: *DemoState) !void {
         });
         zgui.plot.endPlot();
     }
-    zgui.plot.pushStyleVar1f(.{ .idx = .marker_size, .v = 3.0 });
-    zgui.plot.pushStyleVar1f(.{ .idx = .marker_weight, .v = 1.0 });
-    if (zgui.plot.beginPlot("Scatter Plot", .{})) {
-        zgui.plot.setupAxis(.x1, .{ .label = "xaxis" });
-        zgui.plot.setupAxisLimits(.x1, .{ .min = 0, .max = 5 });
-        zgui.plot.setupLegend(.{ .north = true, .east = true }, .{});
-        zgui.plot.setupFinish();
-        zgui.plot.plotScatterValues("y data", i32, .{ .v = &.{ 0, 1, 0, 1, 0, 1 } });
-        zgui.plot.plotScatter("xy data", f32, .{
-            .xv = &.{ 0.1, 0.2, 0.5, 2.5 },
-            .yv = &.{ 0.1, 0.3, 0.5, 0.9 },
-        });
-        zgui.plot.endPlot();
-    }
-    zgui.plot.popStyleVar(.{ .count = 2 });
-
     zgui.end();
 }
 
