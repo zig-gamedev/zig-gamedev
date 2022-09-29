@@ -6,14 +6,14 @@
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
-const glfw = @import("zglfw");
+const zglfw = @import("zglfw");
 const wgsl = @import("common_wgsl.zig");
 pub const wgpu = @import("wgpu.zig");
 
 pub const GraphicsContext = struct {
     pub const swapchain_format = wgpu.TextureFormat.bgra8_unorm;
 
-    window: glfw.Window,
+    window: zglfw.Window,
     stats: FrameStats = .{},
 
     instance: wgpu.Instance,
@@ -57,7 +57,7 @@ pub const GraphicsContext = struct {
     const bind_group_layout_pool_size = 32;
     const pipeline_layout_pool_size = 32;
 
-    pub fn init(allocator: std.mem.Allocator, window: glfw.Window) !*GraphicsContext {
+    pub fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*GraphicsContext {
         const instance = createWgpuInstance();
         errdefer instance.release();
 
@@ -1359,10 +1359,10 @@ pub fn checkSystem(comptime content_dir: []const u8) !void {
             // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
             // On Linux we require Vulkan support.
             if (@import("builtin").target.os.tag == .linux) {
-                if (!glfw.vulkanSupported()) {
+                if (!zglfw.vulkanSupported()) {
                     return error.GraphicsApiUnavailable;
                 }
-                _ = glfw.getRequiredInstanceExtensions() catch return error.GraphicsApiUnavailable;
+                _ = zglfw.getRequiredInstanceExtensions() catch return error.GraphicsApiUnavailable;
             }
             // Change directory to where an executable is located.
             {
@@ -1437,7 +1437,7 @@ const FrameStats = struct {
     gpu_frame_number: u64 = 0,
 
     fn tick(stats: *FrameStats) void {
-        stats.time = glfw.getTime();
+        stats.time = zglfw.getTime();
         stats.delta_time = @floatCast(f32, stats.time - stats.previous_time);
         stats.previous_time = stats.time;
 
@@ -1479,23 +1479,23 @@ const SurfaceDescriptor = union(SurfaceDescriptorTag) {
     },
 };
 
-pub fn createSurfaceForWindow(instance: wgpu.Instance, window: glfw.Window) wgpu.Surface {
+pub fn createSurfaceForWindow(instance: wgpu.Instance, window: zglfw.Window) wgpu.Surface {
     const os_tag = @import("builtin").target.os.tag;
 
     const descriptor = if (os_tag == .windows) SurfaceDescriptor{
         .windows_hwnd = .{
             .label = "basic surface",
             .hinstance = std.os.windows.kernel32.GetModuleHandleW(null).?,
-            .hwnd = glfw.getWin32Window(window) catch unreachable,
+            .hwnd = zglfw.getWin32Window(window) catch unreachable,
         },
     } else if (os_tag == .linux) SurfaceDescriptor{
         .xlib = .{
             .label = "basic surface",
-            .display = glfw.getX11Display() catch unreachable,
-            .window = glfw.getX11Window(window) catch unreachable,
+            .display = zglfw.getX11Display() catch unreachable,
+            .window = zglfw.getX11Window(window) catch unreachable,
         },
     } else if (os_tag == .macos) blk: {
-        const ns_window = glfw.getCocoaWindow(window) catch unreachable;
+        const ns_window = zglfw.getCocoaWindow(window) catch unreachable;
         const ns_view = msgSend(ns_window, "contentView", .{}, *anyopaque); // [nsWindow contentView]
 
         // Create a CAMetalLayer that covers the whole window that will be passed to CreateSurface.
