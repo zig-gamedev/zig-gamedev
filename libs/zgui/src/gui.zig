@@ -762,6 +762,26 @@ extern fn zguiGetCursorStartPos(pos: *[2]f32) void;
 extern fn zguiGetCursorScreenPos(pos: *[2]f32) void;
 extern fn zguiSetCursorScreenPos(screen_x: f32, screen_y: f32) void;
 //--------------------------------------------------------------------------------------------------
+pub const Cursor = enum(i32) {
+    none = -1,
+    arrow = 0,
+    text_input,
+    resize_all,
+    resize_ns,
+    resize_ew,
+    resize_nesw,
+    resize_nwse,
+    hand,
+    not_allowed,
+    count,
+};
+/// 'pub fn getMouseCursor() MouseCursor'
+pub const getMouseCursor = zguiGetMouseCursor;
+/// 'pub fn setMouseCursor(cursor: MouseCursor) void'
+pub const setMouseCursor = zguiSetMouseCursor;
+extern fn zguiGetMouseCursor() Cursor;
+extern fn zguiSetMouseCursor(cursor: Cursor) void;
+//--------------------------------------------------------------------------------------------------
 /// `pub fn alignTextToFramePadding() void`
 pub const alignTextToFramePadding = zguiAlignTextToFramePadding;
 /// `pub fn getTextLineHeight() f32`
