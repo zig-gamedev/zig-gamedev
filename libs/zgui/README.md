@@ -34,7 +34,6 @@ Now in your code you may import and use `zgui`:
 const zgui = @import("zgui");
 
 zgui.init(allocator);
-defer zgui.deinit();
 
 _ = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", 16.0);
 
