@@ -1,4 +1,5 @@
-#include <dawn/native/DawnNative.h>
+#include "dawn/native/DawnNative.h"
+#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -6,25 +7,37 @@ extern "C" {
 
 typedef struct DawnNativeInstanceImpl* DawnNativeInstance;
 
-DawnNativeInstance dawnNativeCreateInstance(void) {
-    return reinterpret_cast<DawnNativeInstance>(new dawn_native::Instance());
+DawnNativeInstance dniCreate(void) {
+    return reinterpret_cast<DawnNativeInstance>(new dawn::native::Instance());
 }
 
-void dawnNativeDestroyInstance(DawnNativeInstance instance) {
-    delete reinterpret_cast<dawn_native::Instance*>(instance);
+void dniDestroy(DawnNativeInstance instance) {
+    assert(instance);
+    delete reinterpret_cast<dawn::native::Instance*>(instance);
 }
 
-WGPUInstance dawnNativeGetWgpuInstance(DawnNativeInstance instance) {
-    return reinterpret_cast<dawn_native::Instance*>(instance)->Get();
+WGPUInstance dniGetWgpuInstance(DawnNativeInstance instance) {
+    assert(instance);
+    return reinterpret_cast<dawn::native::Instance*>(instance)->Get();
 }
 
-void dawnNativeDiscoverDefaultAdapters(DawnNativeInstance instance) {
-    dawn_native::Instance* self = reinterpret_cast<dawn_native::Instance*>(instance);
+void dniDiscoverDefaultAdapters(DawnNativeInstance instance) {
+    assert(instance);
+    dawn::native::Instance* self = reinterpret_cast<dawn::native::Instance*>(instance);
     self->DiscoverDefaultAdapters();
 }
 
-const DawnProcTable* dawnNativeGetProcs(void) {
-    return &dawn_native::GetProcs();
+/*
+void dniEnableBackendValidation(DawnNativeInstance instance, bool enable) {
+    assert(instance);
+    dawn::native::Instance* self = reinterpret_cast<dawn::native::Instance*>(instance);
+    self->EnableBackendValidation(enable);
+    self->SetBackendValidationLevel(enable ? dawn::native::Full : dawn::native::Disabled);
+}
+*/
+
+const DawnProcTable* dnGetProcs(void) {
+    return &dawn::native::GetProcs();
 }
 
 #ifdef __cplusplus
