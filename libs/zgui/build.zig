@@ -19,7 +19,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", &.{""});
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", &.{""});
 
-    // This is needed for 'glfw_wgpu' rendering backend.
+    // This is needed for 'glfw/wgpu' rendering backend.
     // You may need to remove/change this is you different backend.
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
