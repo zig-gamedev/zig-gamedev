@@ -32,6 +32,7 @@ pub fn build(b: *std.build.Builder) void {
     zglfw.link(exe);
 }
 ```
+------------
 #### NOTE
 
 `zgpu/libs/dawn` folder contains large binary files - Dawn/WebGPU static libs compiled for several platforms/architectures.
@@ -43,6 +44,7 @@ rm -rf libs/zgpu/libs
 git submodule add -b main https://github.com/michal-z/dawn-bin libs/zgpu/libs/dawn
 git submodule update --init --remote
 ```
+--------------
 ## Sample applications
 
 * [gui test (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/gui_test_wgpu)
