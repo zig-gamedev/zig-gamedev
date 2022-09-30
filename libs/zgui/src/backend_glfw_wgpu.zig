@@ -1,11 +1,9 @@
-const std = @import("std");
-const zglfw = @import("zglfw");
 const zgui = @import("gui.zig");
 
 /// This call will install GLFW callbacks to handle GUI interactions.
 /// Those callbacks will chain-call user's previously installed callbacks, if any.
 /// This means that custom user's callbacks need to be installed *before* calling zgpu.gui.init().
-pub fn init(window: zglfw.Window, wgpu_device: *const anyopaque, wgpu_swap_chain_format: u32) void {
+pub fn init(window: *const anyopaque, wgpu_device: *const anyopaque, wgpu_swap_chain_format: u32) void {
     if (!ImGui_ImplGlfw_InitForOther(window, true)) {
         unreachable;
     }

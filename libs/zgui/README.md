@@ -11,34 +11,32 @@ Easy to use, hand-crafted API with default arguments, named parameters and Zig s
 
 ## Getting started
 
-Copy `zgui` and `zglfw` folders to a `libs` subdirectory of the root of your project.
+Copy `zgui` folder to a `libs` subdirectory of the root of your project.
 
-To get wgpu rendering backend working also copy `zgpu` and `zpool` folders (see [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) for the details). Alternatively, you can provide your own rendering backend, see: [backend_glfw_wgpu.zig](src/backend_glfw_wgpu.zig) for an example.
+To get glfw/wgpu rendering backend working also copy `zgpu`, `zglfw` and `zpool` folders (see [zgpu](https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu) for the details). Alternatively, you can provide your own rendering backend, see: [backend_glfw_wgpu.zig](src/backend_glfw_wgpu.zig) for an example.
 
 Then in your `build.zig` add:
 ```zig
 const zgui = @import("libs/zgui/build.zig");
-const zglfw = @import("libs/zglfw/build.zig");
 
 // For wgpu rendering backend
+const zglfw = @import("libs/zglfw/build.zig");
 const zgpu = @import("libs/zgpu/build.zig");
 const zpool = @import("libs/zpool/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     ...
-    const zgui_pkg = zgui.getPkg(&.{zglfw.pkg});
-
-    exe.addPackage(zgui_pkg);
-    exe.addPackage(zglfw.pkg);
+    exe.addPackage(zgui.pkg);
 
     zgui.link(exe);
-    zglfw.link(exe);
     
     // For wgpu rendering backend
     const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
 
+    exe.addPackage(zglfw.pkg);
     exe.addPackage(zgpu_pkg);
 
+    zglfw.link(exe);
     zgpu.link(exe);
 }
 ```

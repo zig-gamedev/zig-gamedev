@@ -29,10 +29,9 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     exe.setTarget(options.target);
 
     const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
-    const zgui_pkg = zgui.getPkg(&.{zglfw.pkg});
 
     exe.addPackage(zgpu_pkg);
-    exe.addPackage(zgui_pkg);
+    exe.addPackage(zgui.pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(zglfw.pkg);
     exe.addPackage(zstbi.pkg);

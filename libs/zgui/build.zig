@@ -1,12 +1,9 @@
 const std = @import("std");
 
-pub fn getPkg(dependencies: []const std.build.Pkg) std.build.Pkg {
-    return .{
-        .name = "zgui",
-        .source = .{ .path = thisDir() ++ "/src/main.zig" },
-        .dependencies = dependencies,
-    };
-}
+pub const pkg = std.build.Pkg{
+    .name = "zgui",
+    .source = .{ .path = thisDir() ++ "/src/main.zig" },
+};
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addIncludePath(thisDir() ++ "/libs");
@@ -22,6 +19,8 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot.cpp", &.{""});
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/implot_items.cpp", &.{""});
 
+    // This is needed for 'glfw_wgpu' rendering backend.
+    // You may need to remove/change this is you different backend.
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_glfw.cpp", &.{""});
     exe.addCSourceFile(thisDir() ++ "/libs/imgui/imgui_impl_wgpu.cpp", &.{""});
 }

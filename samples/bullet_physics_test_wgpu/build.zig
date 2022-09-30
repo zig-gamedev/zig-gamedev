@@ -38,12 +38,11 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
     const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
-    const zgui_pkg = zgui.getPkg(&.{zglfw.pkg});
 
     exe.addPackage(zmesh_pkg);
     exe.addPackage(ztracy_pkg);
     exe.addPackage(zgpu_pkg);
-    exe.addPackage(zgui_pkg);
+    exe.addPackage(zgui.pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(zbullet.pkg);
     exe.addPackage(zglfw.pkg);
