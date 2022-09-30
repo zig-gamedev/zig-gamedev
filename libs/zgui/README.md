@@ -19,7 +19,7 @@ Then in your `build.zig` add:
 ```zig
 const zgui = @import("libs/zgui/build.zig");
 
-// For wgpu rendering backend
+// Needed for glfw/wgpu rendering backend
 const zglfw = @import("libs/zglfw/build.zig");
 const zgpu = @import("libs/zgpu/build.zig");
 const zpool = @import("libs/zpool/build.zig");
@@ -30,7 +30,7 @@ pub fn build(b: *std.build.Builder) void {
 
     zgui.link(exe);
     
-    // For wgpu rendering backend
+    // Needed for glfw/wgpu rendering backend
     const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
 
     exe.addPackage(zglfw.pkg);
