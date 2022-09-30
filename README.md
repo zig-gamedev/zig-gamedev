@@ -13,8 +13,6 @@ cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
 
-The goal of the project is to build a **toolbox of libraries** for Zig game developers. A lot of effort is being put to make the whole package consistent and let the developer use only the components she needs. Project is being developed by contributors and by **one full-time developer**.
-
 If you are interested, please see [Monthly Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) and our [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap).
 
 ## Libraries
@@ -33,6 +31,7 @@ Library | Latest version | Description
 **[zpool](libs/zpool)** | 0.9 | generic pool & handle implementation
 
 ## Project vision
+* Very modular, user can use only the components she needs
 * Works on Windows, Linux and macOS
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
