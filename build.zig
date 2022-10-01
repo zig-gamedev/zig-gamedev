@@ -24,6 +24,7 @@ pub fn build(b: *std.build.Builder) void {
             return;
         };
     }
+    ensureGitLfsContent() catch return;
 
     //
     // Sample applications
@@ -268,7 +269,9 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
         printNoGitLfs();
         return error.GitLfsNotFound;
     }
+}
 
+fn ensureGitLfsContent() !void {
     const printNoGitLfsContent = (struct {
         fn impl() void {
             std.log.err("\n" ++
