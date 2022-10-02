@@ -18,17 +18,17 @@ If you are interested, please see [Monthly Progress Reports](https://github.com/
 ## Libraries
 Library | Latest version | Description
 ------- | --------- | ---------------
-**[zgpu](libs/zgpu)** | 0.9 | small helper library built on top of native wgpu implementation (Dawn) |
-**[zgui](libs/zgui)** | 0.9 | easy to use [dear imgui](https://github.com/ocornut/imgui) bindings
-**[zaudio](libs/zaudio)** | 0.2 | cross-platform audio built on top of [miniaudio](https://github.com/mackron/miniaudio) library
+**[zgpu](libs/zgpu)** | 0.9 | Small helper library built on top of native wgpu implementation (Dawn)
+**[zgui](libs/zgui)** | 0.9 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings
+**[zaudio](libs/zaudio)** | 0.2 | Full-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
 **[zmath](libs/zmath)** | 0.3 | SIMD math library for game developers
-**[zstbi](libs/zstbi)** | 0.2 | image loading with [stbi](https://github.com/nothings/stb)
-**[zglfw](libs/zglfw)** | 0.1 | minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
+**[zstbi](libs/zstbi)** | 0.2 | Image loading with [stbi](https://github.com/nothings/stb)
+**[zglfw](libs/zglfw)** | 0.1 | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
 **[zbullet](libs/zbullet)** | 0.2 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
-**[zmesh](libs/zmesh)** | 0.2 | loading, generating, processing and optimizing triangle meshes
+**[zmesh](libs/zmesh)** | 0.2 | Loading, generating, processing and optimizing triangle meshes
 **[znoise](libs/znoise)** | 0.1 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
-**[ztracy](libs/ztracy)** | 0.9 | support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
-**[zpool](libs/zpool)** | 0.9 | generic pool & handle implementation
+**[ztracy](libs/ztracy)** | 0.9 | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
+**[zpool](libs/zpool)** | 0.9 | Generic pool & handle implementation
 
 ## Project vision
 * Very modular, user can use only the components she needs
