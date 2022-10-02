@@ -156,23 +156,13 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
             \\
             \\x86_64-windows-gnu
             \\x86_64-linux-gnu
-            \\x86_64-macos-none
+            \\x86_64-macos.12-none
             \\aarch64-linux-gnu
-            \\aarch64-macos-none
+            \\aarch64-macos.12-none
             \\
             \\---------------------------------------------------------------------------
             \\
         , .{zig_triple});
-        if (target.os.tag == .macos) {
-            if (target.cpu.arch.isX86()) std.log.err(
-                "-> Did you mean to use -Dtarget=x86_64-macos.12 ?",
-                .{},
-            );
-            if (target.cpu.arch.isAARCH64()) std.log.err(
-                "-> Did you mean to use -Dtarget=aarch64-macos.12 ?",
-                .{},
-            );
-        }
         return error.TargetNotSupported;
     }
 }

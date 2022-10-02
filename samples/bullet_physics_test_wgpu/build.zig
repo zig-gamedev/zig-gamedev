@@ -37,11 +37,14 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     const zmesh_pkg = zmesh.getPkg(&.{zmesh_options.getPkg()});
     const ztracy_pkg = ztracy.getPkg(&.{ztracy_options.getPkg()});
-    const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
+
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
 
     exe.addPackage(zmesh_pkg);
     exe.addPackage(ztracy_pkg);
     exe.addPackage(zgpu_pkg);
+
     exe.addPackage(zgui.pkg);
     exe.addPackage(zmath.pkg);
     exe.addPackage(zbullet.pkg);
@@ -49,7 +52,7 @@ pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
 
     zmesh.link(exe, zmesh_options);
     ztracy.link(exe, ztracy_options);
-    zgpu.link(exe);
+    zgpu.link(exe, zgpu_options);
     zbullet.link(exe);
     zglfw.link(exe);
     zgui.link(exe);

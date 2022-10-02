@@ -1,6 +1,6 @@
 # zgpu v0.2 - Cross-platform graphics layer
 
-`zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of native wgpu API (Dawn).
+`zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of native wgpu implementation (Dawn).
 
 ## Features:
 
@@ -23,12 +23,13 @@ const zpool = @import("libs/zpool/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
-    const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
 
     exe.addPackage(zgpu_pkg);
     exe.addPackage(zglfw.pkg);
 
-    zgpu.link(exe);
+    zgpu.link(exe, zgpu_options);
     zglfw.link(exe);
 }
 ```

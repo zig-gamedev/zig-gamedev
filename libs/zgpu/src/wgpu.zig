@@ -966,6 +966,14 @@ pub const QueueDescription = extern struct {
     label: ?[*:0]const u8 = null,
 };
 
+pub const DawnTogglesDeviceDescriptor = extern struct {
+    chain: ChainedStruct,
+    force_enabled_toggles_count: u32 = 0,
+    force_enabled_toggles: ?[*]const [*:0]const u8 = null,
+    force_disabled_toggles_count: u32 = 0,
+    force_disabled_toggles: ?[*]const [*:0]const u8 = null,
+};
+
 pub const DeviceDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,

@@ -31,13 +31,14 @@ pub fn build(b: *std.build.Builder) void {
     zgui.link(exe);
     
     // Needed for glfw/wgpu rendering backend
-    const zgpu_pkg = zgpu.getPkg(&.{ zpool.pkg, zglfw.pkg });
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{});
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
 
     exe.addPackage(zglfw.pkg);
     exe.addPackage(zgpu_pkg);
 
     zglfw.link(exe);
-    zgpu.link(exe);
+    zgpu.link(exe, zgpu_options);
 }
 ```
 Now in your code you may import and use `zgui`:

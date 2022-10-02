@@ -1,13 +1,17 @@
 //--------------------------------------------------------------------------------------------------
-// zgpu v0.2
+// zgpu v0.9
 //
-// `zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of wgpu API (Dawn).
+// `zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of native wgpu
+// implementation (Dawn).
+//
+// https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu
 //--------------------------------------------------------------------------------------------------
 const std = @import("std");
 const math = std.math;
 const assert = std.debug.assert;
 const zglfw = @import("zglfw");
 const wgsl = @import("common_wgsl.zig");
+const zgpu_options = @import("zgpu_options");
 pub const wgpu = @import("wgpu.zig");
 
 pub const GraphicsContext = struct {
@@ -16,6 +20,7 @@ pub const GraphicsContext = struct {
     window: zglfw.Window,
     stats: FrameStats = .{},
 
+    native_instance: DawnNativeInstance,
     instance: wgpu.Instance,
     device: wgpu.Device,
     queue: wgpu.Queue,
@@ -46,20 +51,15 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
-    // TODO: Adjust pool sizes.
-    const buffer_pool_size = 256;
-    const texture_pool_size = 256;
-    const texture_view_pool_size = 256;
-    const sampler_pool_size = 16;
-    const render_pipeline_pool_size = 128;
-    const compute_pipeline_pool_size = 128;
-    const bind_group_pool_size = 32;
-    const bind_group_layout_pool_size = 32;
-    const pipeline_layout_pool_size = 32;
-
     pub fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*GraphicsContext {
-        const instance = createWgpuInstance();
-        errdefer instance.release();
+        dawnProcSetProcs(dnGetProcs());
+
+        const native_instance = dniCreate();
+        errdefer dniDestroy(native_instance);
+
+        dniDiscoverDefaultAdapters(native_instance);
+
+        const instance = dniGetWgpuInstance(native_instance).?;
 
         const adapter = adapter: {
             const Response = struct {
@@ -89,7 +89,7 @@ pub const GraphicsContext = struct {
             );
 
             if (response.status != .success) {
-                std.debug.print("Failed to request GPU adapter (status: {any}).\n", .{response.status});
+                std.log.err("Failed to request GPU adapter (status: {s}).", .{@tagName(response.status)});
                 return error.NoGraphicsAdapter;
             }
             break :adapter response.adapter;
@@ -98,11 +98,11 @@ pub const GraphicsContext = struct {
 
         var properties: wgpu.AdapterProperties = undefined;
         adapter.getProperties(&properties);
-        std.debug.print("[zgpu] High-performance device has been selected:\n", .{});
-        std.debug.print("[zgpu]   Name: {s}\n", .{properties.name});
-        std.debug.print("[zgpu]   Driver: {s}\n", .{properties.driver_description});
-        std.debug.print("[zgpu]   Adapter type: {s}\n", .{@tagName(properties.adapter_type)});
-        std.debug.print("[zgpu]   Backend type: {s}\n", .{@tagName(properties.backend_type)});
+        std.log.info("[zgpu] High-performance device has been selected:", .{});
+        std.log.info("[zgpu]   Name: {s}", .{properties.name});
+        std.log.info("[zgpu]   Driver: {s}", .{properties.driver_description});
+        std.log.info("[zgpu]   Adapter type: {s}", .{@tagName(properties.adapter_type)});
+        std.log.info("[zgpu]   Backend type: {s}", .{@tagName(properties.backend_type)});
 
         const device = device: {
             const Response = struct {
@@ -124,22 +124,34 @@ pub const GraphicsContext = struct {
                 }
             }).callback;
 
+            const toggles = [_][*:0]const u8{"skip_validation"};
+            const dawn_toggles = wgpu.DawnTogglesDeviceDescriptor{
+                .chain = .{ .next = null, .struct_type = .dawn_toggles_device_descriptor },
+                .force_enabled_toggles_count = toggles.len,
+                .force_enabled_toggles = &toggles,
+            };
+
             var response = Response{};
             adapter.requestDevice(
-                wgpu.DeviceDescriptor{},
+                wgpu.DeviceDescriptor{
+                    .next_in_chain = if (zgpu_options.dawn_skip_validation)
+                        @ptrCast(*const wgpu.ChainedStruct, &dawn_toggles)
+                    else
+                        null,
+                },
                 callback,
                 @ptrCast(*anyopaque, &response),
             );
 
             if (response.status != .success) {
-                std.debug.print("Failed to request GPU device (status: {any}).\n", .{response.status});
+                std.log.err("Failed to request GPU device (status: {s}).", .{@tagName(response.status)});
                 return error.NoGraphicsDevice;
             }
             break :device response.device;
         };
         errdefer device.release();
 
-        device.setUncapturedErrorCallback(printUnhandledError, null);
+        device.setUncapturedErrorCallback(logUnhandledError, null);
 
         const surface = createSurfaceForWindow(instance, window);
         errdefer surface.release();
@@ -160,6 +172,7 @@ pub const GraphicsContext = struct {
 
         const gctx = try allocator.create(GraphicsContext);
         gctx.* = .{
+            .native_instance = native_instance,
             .instance = instance,
             .device = device,
             .queue = device.getQueue(),
@@ -167,15 +180,15 @@ pub const GraphicsContext = struct {
             .surface = surface,
             .swapchain = swapchain,
             .swapchain_descriptor = swapchain_descriptor,
-            .buffer_pool = BufferPool.init(allocator, buffer_pool_size),
-            .texture_pool = TexturePool.init(allocator, texture_pool_size),
-            .texture_view_pool = TextureViewPool.init(allocator, texture_view_pool_size),
-            .sampler_pool = SamplerPool.init(allocator, sampler_pool_size),
-            .render_pipeline_pool = RenderPipelinePool.init(allocator, render_pipeline_pool_size),
-            .compute_pipeline_pool = ComputePipelinePool.init(allocator, compute_pipeline_pool_size),
-            .bind_group_pool = BindGroupPool.init(allocator, bind_group_pool_size),
-            .bind_group_layout_pool = BindGroupLayoutPool.init(allocator, bind_group_layout_pool_size),
-            .pipeline_layout_pool = PipelineLayoutPool.init(allocator, pipeline_layout_pool_size),
+            .buffer_pool = BufferPool.init(allocator, zgpu_options.buffer_pool_size),
+            .texture_pool = TexturePool.init(allocator, zgpu_options.texture_pool_size),
+            .texture_view_pool = TextureViewPool.init(allocator, zgpu_options.texture_view_pool_size),
+            .sampler_pool = SamplerPool.init(allocator, zgpu_options.sampler_pool_size),
+            .render_pipeline_pool = RenderPipelinePool.init(allocator, zgpu_options.render_pipeline_pool_size),
+            .compute_pipeline_pool = ComputePipelinePool.init(allocator, zgpu_options.compute_pipeline_pool_size),
+            .bind_group_pool = BindGroupPool.init(allocator, zgpu_options.bind_group_pool_size),
+            .bind_group_layout_pool = BindGroupLayoutPool.init(allocator, zgpu_options.bind_group_layout_pool_size),
+            .pipeline_layout_pool = PipelineLayoutPool.init(allocator, zgpu_options.pipeline_layout_pool_size),
             .mipgens = std.AutoHashMap(wgpu.TextureFormat, MipgenResources).init(allocator),
         };
 
@@ -184,8 +197,6 @@ pub const GraphicsContext = struct {
     }
 
     pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
-        // TODO: How to release `native_instance`?
-
         // Wait for the GPU to finish all encoded commands.
         while (gctx.stats.cpu_frame_number != gctx.stats.gpu_frame_number) {
             gctx.device.tick();
@@ -217,6 +228,7 @@ pub const GraphicsContext = struct {
         gctx.swapchain.release();
         gctx.queue.release();
         gctx.device.release();
+        dniDestroy(gctx.native_instance);
         allocator.destroy(gctx);
     }
 
@@ -234,7 +246,8 @@ pub const GraphicsContext = struct {
         const offset = gctx.uniforms.offset;
         const aligned_size = (size + (uniforms_alloc_alignment - 1)) & ~(uniforms_alloc_alignment - 1);
         if ((offset + aligned_size) >= uniforms_buffer_size) {
-            // TODO: Better error handling; pool is full; flush it?
+            std.log.err("[zgpu] Uniforms buffer size is too small. " ++
+                "Consider increasing 'zgpu.BuildOptions.uniforms_buffer_size' constant.", .{});
             return .{ .slice = @as([*]T, undefined)[0..0], .offset = 0 };
         }
 
@@ -252,7 +265,7 @@ pub const GraphicsContext = struct {
         slice: ?[]u8 = null,
         buffer: wgpu.Buffer = undefined,
     };
-    const uniforms_buffer_size = 4 * 1024 * 1024;
+    const uniforms_buffer_size = zgpu_options.uniforms_buffer_size;
     const uniforms_staging_pipeline_len = 8;
     const uniforms_alloc_alignment: u32 = 256;
 
@@ -270,7 +283,7 @@ pub const GraphicsContext = struct {
         if (status == .success) {
             usb.slice = usb.buffer.getMappedRange(u8, 0, uniforms_buffer_size).?;
         } else {
-            std.debug.print("[zgpu] Failed to map buffer (code: {d})\n", .{@enumToInt(status)});
+            std.log.err("[zgpu] Failed to map buffer (status: {s}).", .{@tagName(status)});
         }
     }
 
@@ -376,7 +389,7 @@ pub const GraphicsContext = struct {
         const gpu_frame_number = @ptrCast(*u64, @alignCast(@sizeOf(usize), userdata));
         gpu_frame_number.* += 1;
         if (status != .success) {
-            std.debug.print("[zgpu] Failed to complete GPU work (code: {d})\n", .{@enumToInt(status)});
+            std.log.err("[zgpu] Failed to complete GPU work (status: {s}).", .{@tagName(status)});
         }
     }
 
@@ -396,8 +409,8 @@ pub const GraphicsContext = struct {
 
             gctx.swapchain = gctx.device.createSwapChain(gctx.surface, gctx.swapchain_descriptor);
 
-            std.debug.print(
-                "[zgpu] Window has been resized to: {d}x{d}\n",
+            std.log.info(
+                "[zgpu] Window has been resized to: {d}x{d}.",
                 .{ gctx.swapchain_descriptor.width, gctx.swapchain_descriptor.height },
             );
             return .swap_chain_resized;
@@ -511,9 +524,9 @@ pub const GraphicsContext = struct {
                     .{ .gpuobj = pipeline, .pipeline_layout_handle = op.pipeline_layout },
                 );
             } else {
-                std.debug.print(
-                    "[zgpu] Failed to async create render pipeline (code: {s})\n{s}\n",
-                    .{ @tagName(status), if (message) |msg| msg else "[zgpu] No error details from the driver" },
+                std.log.err(
+                    "[zgpu] Failed to async create render pipeline (status: {s}, message: {?s}).",
+                    .{ @tagName(status), message },
                 );
             }
             op.allocator.destroy(op);
@@ -572,9 +585,9 @@ pub const GraphicsContext = struct {
                     .{ .gpuobj = pipeline, .pipeline_layout_handle = op.pipeline_layout },
                 );
             } else {
-                std.debug.print(
-                    "[zgpu] Failed to async create compute pipeline (code: {s})\n{s}\n",
-                    .{ @tagName(status), if (message) |msg| msg else "[zgpu] No error details from the driver" },
+                std.log.err(
+                    "[zgpu] Failed to async create compute pipeline (status: {s}, message: {?s}).",
+                    .{ @tagName(status), message },
                 );
             }
             op.allocator.destroy(op);
@@ -983,26 +996,16 @@ pub const GraphicsContext = struct {
 };
 
 // Defined in dawn.cpp
-pub const DawnNativeInstance = ?*opaque {};
-pub const DawnProcsTable = ?*opaque {};
-pub extern fn dniCreate() DawnNativeInstance;
-pub extern fn dniDestroy(native_instance: DawnNativeInstance) void;
-pub extern fn dniGetWgpuInstance(native_instance: DawnNativeInstance) ?wgpu.Instance;
-pub extern fn dniDiscoverDefaultAdapters(native_instance: DawnNativeInstance) void;
-pub extern fn dniEnableBackendValidation(native_instance: DawnNativeInstance, enable: bool) void;
-
-pub extern fn dnGetProcs() DawnProcsTable;
+const DawnNativeInstance = ?*opaque {};
+const DawnProcsTable = ?*opaque {};
+extern fn dniCreate() DawnNativeInstance;
+extern fn dniDestroy(dni: DawnNativeInstance) void;
+extern fn dniGetWgpuInstance(dni: DawnNativeInstance) ?wgpu.Instance;
+extern fn dniDiscoverDefaultAdapters(dni: DawnNativeInstance) void;
+extern fn dnGetProcs() DawnProcsTable;
 
 // Defined in Dawn codebase
-pub extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
-
-pub fn createWgpuInstance() wgpu.Instance {
-    dawnProcSetProcs(dnGetProcs());
-    const native_instance = dniCreate();
-    dniDiscoverDefaultAdapters(native_instance);
-    //dniEnableBackendValidation(native_instance, true);
-    return dniGetWgpuInstance(native_instance).?;
-}
+extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
 
 pub const bglBuffer = wgpu.BindGroupLayoutEntry.buffer;
 pub const bglTexture = wgpu.BindGroupLayoutEntry.texture;
@@ -1119,10 +1122,7 @@ pub const util = struct {
         label: ?[*:0]const u8,
     ) wgpu.ShaderModule {
         const wgsl_desc = wgpu.ShaderModuleWgslDescriptor{
-            .chain = .{
-                .next = null,
-                .struct_type = .shader_module_wgsl_descriptor,
-            },
+            .chain = .{ .next = null, .struct_type = .shader_module_wgsl_descriptor },
             .source = source,
         };
         const desc = wgpu.ShaderModuleDescriptor{
@@ -1479,7 +1479,7 @@ const SurfaceDescriptor = union(SurfaceDescriptorTag) {
     },
 };
 
-pub fn createSurfaceForWindow(instance: wgpu.Instance, window: zglfw.Window) wgpu.Surface {
+fn createSurfaceForWindow(instance: wgpu.Instance, window: zglfw.Window) wgpu.Surface {
     const os_tag = @import("builtin").target.os.tag;
 
     const descriptor = if (os_tag == .windows) SurfaceDescriptor{
@@ -1597,21 +1597,19 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
     return @call(.{}, func, .{ obj, sel } ++ args);
 }
 
-fn printUnhandledError(
+fn logUnhandledError(
     err_type: wgpu.ErrorType,
     message: [*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void {
     _ = userdata;
     switch (err_type) {
-        .validation => std.debug.print("[zgpu] Validation error: {s}\n", .{message}),
-        .out_of_memory => std.debug.print("[zgpu] Out of memory: {s}\n", .{message}),
-        .device_lost => std.debug.print("[zgpu] Device lost: {s}\n", .{message}),
-        .unknown => std.debug.print("[zgpu] Unknown error: {s}\n", .{message}),
+        .validation => std.log.err("[zgpu] Validation: {s}", .{message}),
+        .out_of_memory => std.log.err("[zgpu] Out of memory: {s}", .{message}),
+        .device_lost => std.log.err("[zgpu] Device lost: {s}", .{message}),
+        .unknown => std.log.err("[zgpu] Unknown error: {s}", .{message}),
         else => unreachable,
     }
-    // TODO: Do something better.
-    std.process.exit(1);
 }
 
 fn handleToGpuResourceType(comptime T: type) type {
@@ -1658,7 +1656,15 @@ fn formatToShaderFormat(format: wgpu.TextureFormat) []const u8 {
 const expect = std.testing.expect;
 
 test "zgpu.wgpu.init" {
-    const instance = createWgpuInstance();
+    dawnProcSetProcs(dnGetProcs());
+
+    const native_instance = dniCreate();
+    defer dniDestroy(native_instance);
+
+    dniDiscoverDefaultAdapters(native_instance);
+
+    const instance = dniGetWgpuInstance(native_instance).?;
+
     instance.reference();
     instance.release();
 
@@ -1676,14 +1682,9 @@ test "zgpu.wgpu.init" {
                 userdata: ?*anyopaque,
             ) callconv(.C) void {
                 _ = message;
-
                 var response = @ptrCast(*Response, @alignCast(@sizeOf(usize), userdata));
                 response.status = status;
                 response.adapter = adapter;
-
-                if (status != .success) {
-                    std.debug.print("Failed to request GPU adapter (status: {any}).\n", .{status});
-                }
             }
         }).callback;
 
@@ -1723,14 +1724,9 @@ test "zgpu.wgpu.init" {
                 userdata: ?*anyopaque,
             ) callconv(.C) void {
                 _ = message;
-
                 var response = @ptrCast(*Response, @alignCast(@sizeOf(usize), userdata));
                 response.status = status;
                 response.device = device;
-
-                if (status != .success) {
-                    std.debug.print("Failed to request GPU device (status: {any}).\n", .{status});
-                }
             }
         }).callback;
 

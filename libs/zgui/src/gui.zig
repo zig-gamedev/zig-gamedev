@@ -775,9 +775,9 @@ pub const Cursor = enum(i32) {
     not_allowed,
     count,
 };
-/// 'pub fn getMouseCursor() MouseCursor'
+/// `pub fn getMouseCursor() MouseCursor`
 pub const getMouseCursor = zguiGetMouseCursor;
-/// 'pub fn setMouseCursor(cursor: MouseCursor) void'
+/// `pub fn setMouseCursor(cursor: MouseCursor) void`
 pub const setMouseCursor = zguiSetMouseCursor;
 extern fn zguiGetMouseCursor() Cursor;
 extern fn zguiSetMouseCursor(cursor: Cursor) void;
