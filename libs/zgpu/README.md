@@ -61,10 +61,10 @@ Below you can find an overview of main `zgpu` features.
 
 ### Init
 ```zig
-const gctx = try zgpu.GraphicsContext.init(allocator, window);
+const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
 // When you are done:
-gctx.deinit(allocator);
+gctx.destroy(allocator);
 ```
 ### Uniforms
 

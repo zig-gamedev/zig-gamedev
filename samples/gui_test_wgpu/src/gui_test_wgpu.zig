@@ -17,8 +17,8 @@ const DemoState = struct {
     font_large: zgui.Font,
 };
 
-fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
-    const gctx = try zgpu.GraphicsContext.init(allocator, window);
+fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
+    const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
@@ -105,11 +105,11 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     return demo;
 }
 
-fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
+fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     zgui.backend.deinit();
     zgui.plot.deinit();
     zgui.deinit();
-    demo.gctx.deinit(allocator);
+    demo.gctx.destroy(allocator);
     allocator.destroy(demo);
 }
 
@@ -551,18 +551,26 @@ fn draw(demo: *DemoState) void {
 }
 
 pub fn main() !void {
-    try zglfw.init();
-    defer zglfw.terminate();
-
-    zgpu.checkSystem(content_dir) catch {
-        // In case of error zgpu.checkSystem() will print error message.
+    zglfw.init() catch {
+        std.log.err("Failed to initialize GLFW library.", .{});
         return;
     };
+    defer zglfw.terminate();
+
+    // Change current working directory to where the executable is located.
+    {
+        var buffer: [1024]u8 = undefined;
+        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
+        std.os.chdir(path) catch {};
+    }
 
     zglfw.defaultWindowHints();
     zglfw.windowHint(.cocoa_retina_framebuffer, 1);
     zglfw.windowHint(.client_api, 0);
-    const window = try zglfw.createWindow(1600, 1000, window_title, null, null);
+    const window = zglfw.createWindow(1600, 1000, window_title, null, null) catch {
+        std.log.err("Failed to create demo window.", .{});
+        return;
+    };
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 
@@ -571,10 +579,13 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    const demo = try init(allocator, window);
-    defer deinit(allocator, demo);
+    const demo = create(allocator, window) catch {
+        std.log.err("Failed to initialize the demo.", .{});
+        return;
+    };
+    defer destroy(allocator, demo);
 
-    while (!window.shouldClose()) {
+    while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
         try update(demo);
         draw(demo);

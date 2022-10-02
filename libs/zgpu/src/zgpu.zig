@@ -51,7 +51,39 @@ pub const GraphicsContext = struct {
         } = .{},
     } = .{},
 
-    pub fn init(allocator: std.mem.Allocator, window: zglfw.Window) !*GraphicsContext {
+    pub fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*GraphicsContext {
+        const checkGraphicsApiSupport = (struct {
+            fn impl() error{VulkanNotSupported}!void {
+                // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
+
+                // On Linux we require Vulkan support.
+                if (@import("builtin").target.os.tag == .linux) {
+                    if (!zglfw.vulkanSupported()) {
+                        return error.VulkanNotSupported;
+                    }
+                    _ = zglfw.getRequiredInstanceExtensions() catch return error.VulkanNotSupported;
+                }
+            }
+        }).impl;
+
+        checkGraphicsApiSupport() catch |err| switch (err) {
+            error.VulkanNotSupported => {
+                std.log.err("\n" ++
+                    \\---------------------------------------------------------------------------
+                    \\
+                    \\This program requires:
+                    \\
+                    \\  * Vulkan graphics driver on Linux (OpenGL is NOT supported)
+                    \\
+                    \\Please install latest supported driver and try again.
+                    \\
+                    \\---------------------------------------------------------------------------
+                    \\
+                , .{});
+                return err;
+            },
+        };
+
         dawnProcSetProcs(dnGetProcs());
 
         const native_instance = dniCreate();
@@ -196,7 +228,7 @@ pub const GraphicsContext = struct {
         return gctx;
     }
 
-    pub fn deinit(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
+    pub fn destroy(gctx: *GraphicsContext, allocator: std.mem.Allocator) void {
         // Wait for the GPU to finish all encoded commands.
         while (gctx.stats.cpu_frame_number != gctx.stats.gpu_frame_number) {
             gctx.device.tick();
@@ -1353,78 +1385,6 @@ fn ResourcePool(comptime Info: type, comptime Resource: type) type {
     };
 }
 
-pub fn checkSystem(comptime content_dir: []const u8) !void {
-    const doSystemCheck = (struct {
-        fn impl() error{ GraphicsApiUnavailable, InvalidDataFiles }!void {
-            // TODO: On Windows we should check if DirectX 12 is supported (Windows 10+).
-            // On Linux we require Vulkan support.
-            if (@import("builtin").target.os.tag == .linux) {
-                if (!zglfw.vulkanSupported()) {
-                    return error.GraphicsApiUnavailable;
-                }
-                _ = zglfw.getRequiredInstanceExtensions() catch return error.GraphicsApiUnavailable;
-            }
-            // Change directory to where an executable is located.
-            {
-                var exe_path_buffer: [1024]u8 = undefined;
-                const exe_path = std.fs.selfExeDirPath(exe_path_buffer[0..]) catch ".";
-                std.os.chdir(exe_path) catch {};
-            }
-            // Make sure font file is a valid data file and not just a Git LFS pointer.
-            {
-                const file = std.fs.cwd().openFile(
-                    content_dir ++ "Roboto-Medium.ttf",
-                    .{},
-                ) catch return error.InvalidDataFiles;
-                defer file.close();
-
-                const size = file.getEndPos() catch return error.InvalidDataFiles;
-                if (size <= 1024) {
-                    return error.InvalidDataFiles;
-                }
-            }
-        }
-    }).impl;
-
-    doSystemCheck() catch |err| switch (err) {
-        error.GraphicsApiUnavailable => {
-            std.log.err("\n" ++
-                \\---------------------------------------------------------------------------
-                \\
-                \\This program requires:
-                \\
-                \\  * DirectX 12 graphics driver on Windows
-                \\  * Vulkan graphics driver on Linux (OpenGL is NOT supported)
-                \\  * Metal graphics driver on macOS
-                \\
-                \\Please install latest supported driver and try again.
-                \\
-                \\---------------------------------------------------------------------------
-                \\
-            , .{});
-            return err;
-        },
-        error.InvalidDataFiles => {
-            std.log.err("\n" ++
-                \\---------------------------------------------------------------------------
-                \\
-                \\Invalid data files or missing content folder.
-                \\Please install Git LFS (Large File Support) and run (in the repo):
-                \\
-                \\'git lfs install'
-                \\'git lfs pull'
-                \\
-                \\For more info see: https://git-lfs.github.com/
-                \\
-                \\---------------------------------------------------------------------------
-                \\
-            , .{});
-            return err;
-        },
-        else => unreachable,
-    };
-}
-
 const FrameStats = struct {
     time: f64 = 0.0,
     delta_time: f32 = 0.0,
@@ -1553,12 +1513,12 @@ fn createSurfaceForWindow(instance: wgpu.Instance, window: zglfw.Window) wgpu.Su
 }
 
 const objc = struct {
-    pub const SEL = ?*opaque {};
-    pub const Class = ?*opaque {};
+    const SEL = ?*opaque {};
+    const Class = ?*opaque {};
 
-    pub extern fn sel_getUid(str: [*:0]const u8) SEL;
-    pub extern fn objc_getClass(name: [*:0]const u8) Class;
-    pub extern fn objc_msgSend() void;
+    extern fn sel_getUid(str: [*:0]const u8) SEL;
+    extern fn objc_getClass(name: [*:0]const u8) Class;
+    extern fn objc_msgSend() void;
 };
 
 fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnType: type) ReturnType {

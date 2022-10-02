@@ -54,7 +54,7 @@ const DemoState = struct {
 };
 
 fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
-    const gctx = try zgpu.GraphicsContext.init(allocator, window);
+    const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
     // Create a bind group layout needed for our render pipeline.
     const bind_group_layout = gctx.createBindGroupLayout(&.{
@@ -152,7 +152,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
 }
 
 fn deinit(allocator: std.mem.Allocator, demo: *DemoState) void {
-    demo.gctx.deinit(allocator);
+    demo.gctx.destroy(allocator);
     demo.* = undefined;
 }
 
@@ -306,18 +306,26 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
 }
 
 pub fn main() !void {
-    try zglfw.init();
-    defer zglfw.terminate();
-
-    zgpu.checkSystem(content_dir) catch {
-        // In case of error zgpu.checkSystem() will print error message.
+    zglfw.init() catch {
+        std.log.err("Failed to initialize GLFW library.", .{});
         return;
     };
+    defer zglfw.terminate();
+
+    // Change current working directory to where the executable is located.
+    {
+        var buffer: [1024]u8 = undefined;
+        const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
+        std.os.chdir(path) catch {};
+    }
 
     zglfw.defaultWindowHints();
     zglfw.windowHint(.cocoa_retina_framebuffer, 1);
     zglfw.windowHint(.client_api, 0);
-    const window = try zglfw.createWindow(1600, 1000, window_title, null, null);
+    const window = zglfw.createWindow(1600, 1000, window_title, null, null) catch {
+        std.log.err("Failed to create demo window.", .{});
+        return;
+    };
     defer window.destroy();
     window.setSizeLimits(400, 400, -1, -1);
 
@@ -326,7 +334,10 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    var demo = try init(allocator, window);
+    var demo = init(allocator, window) catch {
+        std.log.err("Failed to initialize the demo.", .{});
+        return;
+    };
     defer deinit(allocator, &demo);
 
     const scale_factor = scale_factor: {
@@ -348,7 +359,7 @@ pub fn main() !void {
 
     zgui.getStyle().scaleAllSizes(scale_factor);
 
-    while (!window.shouldClose()) {
+    while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
         update(&demo);
         draw(&demo);
