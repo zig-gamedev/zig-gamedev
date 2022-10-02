@@ -18,6 +18,7 @@ Copy `zgpu`, `zpool` and `zglfw` folders to a `libs` subdirectory of the root of
 
 Then in your `build.zig` add:
 ```zig
+const std = @import("std");
 const zgpu = @import("libs/zgpu/build.zig");
 const zpool = @import("libs/zpool/build.zig");
 const zglfw = @import("libs/zglfw/build.zig");
