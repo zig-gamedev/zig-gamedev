@@ -1,6 +1,6 @@
 # zgpu v0.9 - Cross-platform graphics layer
 
-`zgpu` is small helper library built on top of native wgpu implementation (Dawn).
+`zgpu` is a small helper library built on top of native wgpu implementation (Dawn).
 
 It supports Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan).
 
