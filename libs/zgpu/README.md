@@ -62,12 +62,40 @@ git submodule update --init --remote
 
 Below you can find an overview of main `zgpu` features.
 
-### Init
-```zig
-const gctx = try zgpu.GraphicsContext.create(allocator, window);
+### Compile-time options
 
-// When you are done:
-gctx.destroy(allocator);
+The list of compile-time options with default values:
+
+```zig
+pub const BuildOptions = struct {
+    uniforms_buffer_size: u64 = 4 * 1024 * 1024,
+
+    dawn_skip_validation: bool = false, // Skip expensive Dawn validation
+
+    buffer_pool_size: u32 = 256,
+    texture_pool_size: u32 = 256,
+    texture_view_pool_size: u32 = 256,
+    sampler_pool_size: u32 = 16,
+    render_pipeline_pool_size: u32 = 128,
+    compute_pipeline_pool_size: u32 = 128,
+    bind_group_pool_size: u32 = 32,
+    bind_group_layout_pool_size: u32 = 32,
+    pipeline_layout_pool_size: u32 = 32,
+};
+```
+You can override default values:
+```zig
+pub fn build(b: *std.build.Builder) void {
+    ...
+    const zgpu_options = zgpu.BuildOptionsStep.init(b, .{
+        .uniforms_buffer_size = 8 * 1024 * 1024,
+        .dawn_skip_validation = true,
+    });
+    const zgpu_pkg = zgpu.getPkg(&.{ zgpu_options.getPkg(), zpool.pkg, zglfw.pkg });
+
+    zgpu.link(exe, zgpu_options);
+    ...
+}
 ```
 ### Uniforms
 
