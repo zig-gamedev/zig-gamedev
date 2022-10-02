@@ -18,7 +18,7 @@ If you are interested, please see [Monthly Progress Reports](https://github.com/
 ## Libraries
 Library | Latest version | Description
 ------- | --------- | ---------------
-**[zgpu](libs/zgpu)** | 0.9 | Small helper library built on top of native wgpu implementation (Dawn)
+**[zgpu](libs/zgpu)** | 0.9 | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))
 **[zgui](libs/zgui)** | 0.9 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
 **[zaudio](libs/zaudio)** | 0.2 | Full-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
 **[zmath](libs/zmath)** | 0.3 | SIMD math library for game developers
@@ -36,7 +36,7 @@ Library | Latest version | Description
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
 * Libraries are written from scratch in Zig *or* provide Ziggified bindings to carefully selected C/C++ libraries
-* Uses native version of wgpu implementation (binaries from [dawn-bin](https://github.com/michal-z/dawn-bin)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows ([windows branch](https://github.com/michal-z/zig-gamedev/tree/windows))
+* Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows ([windows branch](https://github.com/michal-z/zig-gamedev/tree/windows))
 
 ## Sample applications
 
