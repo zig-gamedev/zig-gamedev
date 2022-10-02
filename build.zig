@@ -8,7 +8,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = b.standardTargetOptions(.{}),
         .ztracy_enable = b.option(bool, "ztracy-enable", "Enable Tracy profiler") orelse false,
     };
-    ensureTarget(b, options.target) catch return;
+    ensureTarget(options.target) catch return;
     ensureZigVersion() catch return;
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator) catch return;
@@ -20,7 +20,7 @@ pub fn build(b: *std.build.Builder) void {
         child.stderr = std.io.getStdErr();
         child.stdout = std.io.getStdOut();
         _ = child.spawnAndWait() catch {
-            std.log.err("Failed to fetch git submodule. Try to re-clone.\n", .{});
+            std.log.err("Failed to fetch git submodule. Please try to re-clone.\n", .{});
             return;
         };
     }
@@ -128,7 +128,7 @@ inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
 
-fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
+fn ensureTarget(cross: std.zig.CrossTarget) !void {
     const target = (std.zig.system.NativeTargetInfo.detect(cross) catch unreachable).target;
 
     const supported = switch (target.os.tag) {
@@ -146,11 +146,10 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
         else => false,
     };
     if (!supported) {
-        const zig_triple = target.zigTriple(b.allocator) catch unreachable;
         std.log.err("\n" ++
             \\---------------------------------------------------------------------------
             \\
-            \\Unsupported build target. Dawn/WebGPU binaries for {s} not available.
+            \\Unsupported build target. Dawn/WebGPU binary for this target is not available.
             \\
             \\Following targets are supported:
             \\
@@ -162,7 +161,7 @@ fn ensureTarget(b: *std.build.Builder, cross: std.zig.CrossTarget) !void {
             \\
             \\---------------------------------------------------------------------------
             \\
-        , .{zig_triple});
+        , .{});
         return error.TargetNotSupported;
     }
 }

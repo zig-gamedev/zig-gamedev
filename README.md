@@ -18,7 +18,7 @@ If you are interested, please see [Monthly Progress Reports](https://github.com/
 ## Libraries
 Library | Latest version | Description
 ------- | --------- | ---------------
-**[zgpu](libs/zgpu)** | 0.2 | graphics layer built on top of native wgpu implementation (Dawn) |
+**[zgpu](libs/zgpu)** | 0.9 | small helper library built on top of native wgpu implementation (Dawn) |
 **[zgui](libs/zgui)** | 0.9 | easy to use [dear imgui](https://github.com/ocornut/imgui) bindings
 **[zaudio](libs/zaudio)** | 0.2 | cross-platform audio built on top of [miniaudio](https://github.com/mackron/miniaudio) library
 **[zmath](libs/zmath)** | 0.3 | SIMD math library for game developers
