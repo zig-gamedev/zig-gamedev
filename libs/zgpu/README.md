@@ -1,4 +1,4 @@
-# zgpu v0.9 - Cross-platform graphics layer
+# zgpu v0.9 - Cross-platform graphics library
 
 `zgpu` is a small helper library built on top of native wgpu implementation (Dawn).
 
