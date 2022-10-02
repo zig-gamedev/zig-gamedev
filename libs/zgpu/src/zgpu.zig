@@ -1,8 +1,9 @@
 //--------------------------------------------------------------------------------------------------
 // zgpu v0.9
 //
-// `zgpu` is a cross-platform (Windows/Linux/macOS) graphics layer built on top of native wgpu
-// implementation (Dawn).
+// zgpu is a small helper library built on top of native wgpu implementation (Dawn).
+//
+// It supports Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan).
 //
 // https://github.com/michal-z/zig-gamedev/tree/main/libs/zgpu
 //--------------------------------------------------------------------------------------------------
