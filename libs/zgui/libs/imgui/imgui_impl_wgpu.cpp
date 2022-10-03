@@ -463,6 +463,12 @@ void ImGui_ImplWGPU_RenderDrawData(ImDrawData* draw_data, WGPURenderPassEncoder 
                 if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
                     continue;
 
+                // mziulek: Fixes 'Popups and Modal windows->Modals->Stacked modals..' from showDemoWindow().
+                if (clip_min.x < 0.0f) clip_min.x = 0.0f;
+                if (clip_min.y < 0.0f) clip_min.y = 0.0f;
+                if (clip_max.x > draw_data->DisplaySize.x) clip_max.x = draw_data->DisplaySize.x;
+                if (clip_max.y > draw_data->DisplaySize.y) clip_max.y = draw_data->DisplaySize.y;
+
                 // Apply scissor/clipping rectangle, Draw
                 wgpuRenderPassEncoderSetScissorRect(pass_encoder, (uint32_t)clip_min.x, (uint32_t)clip_min.y, (uint32_t)(clip_max.x - clip_min.x), (uint32_t)(clip_max.y - clip_min.y));
                 wgpuRenderPassEncoderDrawIndexed(pass_encoder, pcmd->ElemCount, 1, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset, 0);
