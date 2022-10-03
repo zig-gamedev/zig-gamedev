@@ -124,7 +124,7 @@ pub fn JobQueue(
 
         // zig fmt: off
         data     : Data align(cache_line_size) = undefined,
-        main     : Main align(cache_line_size) = undefined,
+        exec     : Main align(cache_line_size) = undefined,
         name     : []const u8                  = undefined,
         id       : JobId                       = JobId.none,
         prereq   : JobId                       = JobId.none,
@@ -155,10 +155,10 @@ pub fn JobQueue(
             std.mem.set(u8, &self.data, 0);
             std.mem.copy(u8, &self.data, std.mem.asBytes(job));
 
-            const main: *const fn (*Job) void = &@field(Job, "main");
+            const exec: *const fn (*Job) void = &@field(Job, "exec");
             const id = jobId(@truncate(u16, index), new_cycle);
 
-            self.main = @ptrCast(Main, main);
+            self.exec = @ptrCast(Main, exec);
             self.name = @typeName(Job);
             self.id = id;
             self.prereq = if (prereq != id) prereq else JobId.none;
@@ -175,7 +175,7 @@ pub fn JobQueue(
             const new_cycle: u16 = old_cycle +% 1;
             assert(isFreeCycle(new_cycle));
 
-            self.main(&self.data);
+            self.exec(&self.data);
 
             const released : bool = null == self.cycle.compareAndSwap(
                 old_cycle,
@@ -445,11 +445,11 @@ pub fn JobQueue(
         /// The provided `job` must satisfy the following requirements:
         /// * The total size of the job must not exceed `config.max_job_size`
         /// * The job must be an instance of a struct
-        /// * The job must declare a function named `main` with one of the
+        /// * The job must declare a function named `exec` with one of the
         ///   following supported signatures:
         /// ```
-        ///   fn main(*@This())
-        ///   fn main(*const @This())
+        ///   fn exec(*@This())
+        ///   fn exec(*const @This())
         /// ```
         pub fn schedule(self: *Self, prereq: JobId, job: anytype) Error!JobId {
             const Job = @TypeOf(job);
@@ -580,7 +580,7 @@ pub fn JobQueue(
             jobs: *Self = .{},
             prereqs: [max_prereqs]JobId = [_]JobId{JobId.none} ** max_prereqs,
 
-            fn main(job: *@This()) void {
+            fn exec(job: *@This()) void {
                 for (job.prereqs) |prereq| {
                     job.jobs.wait(prereq);
                 }
@@ -839,27 +839,27 @@ pub fn JobQueue(
                 );
 
                 for (struct_info.decls) |decl| {
-                    if (std.mem.eql(u8, decl.name, "main")) {
+                    if (std.mem.eql(u8, decl.name, "exec")) {
                         // compileAssert(
                         //     decl.is_pub,
-                        //     "{s}.main must be public",
+                        //     "{s}.exec must be public",
                         //     .{ @typeName(Job) },
                         // );
                         break;
                     }
                 } else {
                     compileError(
-                        "{s}.main(*{s}) not found",
+                        "{s}.exec(*{s}) not found",
                         .{ @typeName(Job), @typeName(Job) },
                     );
                 }
 
-                const Main = @TypeOf(@field(Job, "main"));
+                const Main = @TypeOf(@field(Job, "exec"));
                 const fn_info = switch (@typeInfo(Main)) {
                     .Fn => |info| info,
                     else => {
                         compileError(
-                            "{s}.main must be a function",
+                            "{s}.exec must be a function",
                             .{@typeName(Job)},
                         );
                         unreachable;
@@ -868,31 +868,31 @@ pub fn JobQueue(
 
                 compileAssert(
                     fn_info.is_generic == false,
-                    "{s}.main() must not be generic",
+                    "{s}.exec() must not be generic",
                     .{@typeName(Job)},
                 );
 
                 compileAssert(
                     fn_info.is_var_args == false,
-                    "{s}.main() must not have variadic arguments",
+                    "{s}.exec() must not have variadic arguments",
                     .{@typeName(Job)},
                 );
 
                 compileAssert(
                     fn_info.return_type != null,
-                    "{s}.main() must return void",
+                    "{s}.exec() must return void",
                     .{@typeName(Job)},
                 );
 
                 compileAssert(
                     fn_info.return_type == void,
-                    "{s}.main() must return void, not {s}",
+                    "{s}.exec() must return void, not {s}",
                     .{ @typeName(Job), @typeName(fn_info.return_type.?) },
                 );
 
                 compileAssert(
                     fn_info.args.len > 0,
-                    "{s}.main() must have at least one parameter",
+                    "{s}.exec() must have at least one parameter",
                     .{@typeName(Job)},
                 );
 
@@ -900,7 +900,7 @@ pub fn JobQueue(
 
                 compileAssert(
                     arg_type_0 == *Job or arg_type_0 == *const Job,
-                    "{s}.main() must accept *@This() or *const @This() as first parameter",
+                    "{s}.exec() must accept *@This() or *const @This() as first parameter",
                     .{@typeName(Job)},
                 );
             }
@@ -954,12 +954,12 @@ test "JobQueue example" {
     defer jobs.deinit(); // ensure that `jobs` is cleaned up when we're done
 
     // First we will define a job that will print "hello " when it runs.
-    // The job must declare a `main` function, which defines the code that
+    // The job must declare a `exec` function, which defines the code that
     // will be executed on a background thread by the `JobQueue`.
     // Our `HelloJob` doesn't contain any member variables, but it could.
     // We will see an example of a job with some member variables below.
     const HelloJob = struct {
-        pub fn main(_: *@This()) void {
+        pub fn exec(_: *@This()) void {
             print("hello ", .{});
         }
     };
@@ -973,12 +973,12 @@ test "JobQueue example" {
     // Here, we specify the `prereq` of `JobId.none`, which means that
     // this job does not need to wait for any other jobs to complete.
     // The second argument to `schedule()` is the `job`, which is a user-
-    // defined struct that declares a `main` function that will be executed
+    // defined struct that declares a `exec` function that will be executed
     // on a background thread.
     // Here we are providing an instance of our `HelloJob` defined above.
     const hello_job_id: JobId = try jobs.schedule(
         JobId.none, // does not wait for any other job
-        HelloJob{}, // runs `HelloJob.main()` on another thread
+        HelloJob{}, // runs `HelloJob.exec()` on another thread
     );
 
     // Scheduled jobs will not execute until `start()` is called.
@@ -998,7 +998,7 @@ test "JobQueue example" {
     const world_job_id: JobId = try jobs.schedule(
         hello_job_id, // waits for `hello_job_id` to be completed
         struct {
-            fn main(_: *@This()) void {
+            fn exec(_: *@This()) void {
                 print("world!\n", .{});
             }
         }{}, // trailing `{}` initializes an instance of this anonymous struct
@@ -1016,7 +1016,7 @@ test "JobQueue example" {
         world_job_id, // waits for `world_job_id` to be completed
         struct {
             jobs: *Jobs, // stores a pointer to `jobs`
-            fn main(self: *@This()) void {
+            fn exec(self: *@This()) void {
                 self.jobs.stop();
             }
         }{ // trailing `{}` initializes an instance of this anonymous struct
@@ -1103,7 +1103,7 @@ test "JobQueue throughput" {
         stat: *JobStat,
         workload: *JobWorkload,
 
-        fn main(self: *@This()) void {
+        fn exec(self: *@This()) void {
             self.stat.start();
             defer self.stat.stop();
 
@@ -1129,7 +1129,7 @@ test "JobQueue throughput" {
     // schedule a job to stop the job queue
     _ = try jobs.schedule(.none, struct {
         jobs: *Jobs,
-        fn main(self: *@This()) void {
+        fn exec(self: *@This()) void {
             self.jobs.stop();
         }
     }{ .jobs = &jobs });
