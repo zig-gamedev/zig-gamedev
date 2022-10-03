@@ -5,7 +5,7 @@ run much of your application logic on separate threads.  This `JobQueue`
 provides a simple API to schedule "jobs" to run on a pool of threads, typically
 as many threads as your CPU supports, less 1 (the main thread).
 
-Each "job" is a user-defined struct that declares a `main` function that will
+Each "job" is a user-defined struct that declares a `exec` function that will
 be executed on a background thread by the `JobQueue`.
 
 ## Getting started
@@ -35,12 +35,12 @@ var jobs = Jobs.init(); // initialize an instance of `Jobs`
 defer jobs.deinit(); // ensure that `jobs` is cleaned up when we're done
 
 // First we will define a job that will print "hello " when it runs.
-// The job must declare a `main` function, which defines the code that
+// The job must declare a `exec` function, which defines the code that
 // will be executed on a background thread by the `JobQueue`.
 // Our `HelloJob` doesn't contain any member variables, but it could.
 // We will see an example of a job with some member variables below.
 const HelloJob = struct {
-    pub fn main(_: *@This()) void {
+    pub fn exec(_: *@This()) void {
         print("hello ", .{});
     }
 };
@@ -54,12 +54,12 @@ const HelloJob = struct {
 // Here, we specify the `prereq` of `JobId.none`, which means that
 // this job does not need to wait for any other jobs to complete.
 // The second argument to `schedule()` is the `job`, which is a user-
-// defined struct that declares a `main` function that will be executed
+// defined struct that declares a `exec` function that will be executed
 // on a background thread.
 // Here we are providing an instance of our `HelloJob` defined above.
 const hello_job_id: JobId = try jobs.schedule(
     JobId.none, // does not wait for any other job
-    HelloJob{}, // runs `HelloJob.main()` on another thread
+    HelloJob{}, // runs `HelloJob.exec()` on another thread
 );
 
 // Scheduled jobs will not execute until `start()` is called.
@@ -79,7 +79,7 @@ jobs.start();
 const world_job_id: JobId = try jobs.schedule(
     hello_job_id, // waits for `hello_job_id` to be completed
     struct {
-        fn main(_: *@This()) void {
+        fn exec(_: *@This()) void {
             print("world!\n", .{});
         }
     }{}, // trailing `{}` initializes an instance of this anonymous struct
@@ -97,7 +97,7 @@ _ = try jobs.schedule(
     world_job_id, // waits for `world_job_id` to be completed
     struct {
         jobs: *Jobs, // stores a pointer to `jobs`
-        fn main(self: *@This()) void {
+        fn exec(self: *@This()) void {
             self.jobs.stop();
         }
     }{ // trailing `{}` initializes an instance of this anonymous struct
