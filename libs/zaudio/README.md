@@ -1,6 +1,6 @@
-# zaudio v0.2 - Cross-platform audio
+# zaudio v0.9 - Cross-platform audio
 
-Zig friendly bindings for great [miniaudio](https://github.com/mackron/miniaudio) library. Tested on Windows, Linux and macOS but should also work on mobile/web platforms.
+Zig bindings for [miniaudio](https://github.com/mackron/miniaudio) library. Tested on Windows, Linux and macOS but should also work on mobile/web platforms.
 
 As an example program please see [audio experiments (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/audio_experiments_wgpu).
 
@@ -17,10 +17,10 @@ Provided structs:
 - [ ] `Context` (missing methods)
 - [ ] `ResourceManager` (missing methods)
 - [ ] `Log` (missing methods)
-- [ ] `DataSource` (missing methods)
+- [x] `DataSource` (missing methods)
   - [x] `WaveformDataSource`
   - [x] `NoiseDataSource`
-  - [ ] custom data sources
+  - [x] custom data sources
 - [x] `Node`
   - [x] `DataSourceNode`
   - [x] `SplitterNode`
@@ -32,7 +32,7 @@ Provided structs:
   - [x] `LoshelfNode`
   - [x] `HishelfNode`
   - [x] `DelayNode`
-  - [ ] custom nodes
+  - [x] custom nodes
 
 ## Getting started
 
@@ -59,6 +59,9 @@ const zaudio = @import("zaudio");
 
 pub fn main() !void {
     ...
+    zaudio.init(allocator);
+    defer zaudio.deinit();
+
     const engine = try zaudio.createEngine(allocator, null);
 
     const music = try engine.createSoundFromFile(
