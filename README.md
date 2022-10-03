@@ -33,10 +33,10 @@ Library | Latest version | Description
 
 ## Project vision
 * Very modular, user can use only the components she needs
-* Works on Windows, Linux and macOS
+* Works on Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan)
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
-* Libraries are written from scratch in Zig *or* provide Ziggified bindings to carefully selected C/C++ libraries
+* Libraries are written from scratch in Zig *or* provide Ziggified bindings for carefully selected C/C++ libraries
 * Uses native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin)) for cross-platfrom graphics and DirectX 12 for low-level graphics on Windows ([windows branch](https://github.com/michal-z/zig-gamedev/tree/windows))
 
 ## Sample applications
