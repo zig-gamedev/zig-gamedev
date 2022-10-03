@@ -22,12 +22,15 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
 
     var arena_state = std.heap.ArenaAllocator.init(allocator);
     defer arena_state.deinit();
-    //const arena = arena_state.allocator();
+    const arena = arena_state.allocator();
 
-    // Create a texture.
+    zstbi.init(arena);
+    defer zstbi.deinit();
+
     var image = try zstbi.Image(u8).init(content_dir ++ "genart_0025_5.png", 4);
     defer image.deinit();
 
+    // Create a texture.
     const texture = gctx.createTexture(.{
         .usage = .{ .texture_binding = true, .copy_dst = true },
         .size = .{
@@ -43,7 +46,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     gctx.queue.writeTexture(
         .{ .texture = gctx.lookupResource(texture).? },
         .{
-            .bytes_per_row = image.width * image.channels_in_memory,
+            .bytes_per_row = image.width * image.num_channels,
             .rows_per_image = image.height,
         },
         .{ .width = image.width, .height = image.height },

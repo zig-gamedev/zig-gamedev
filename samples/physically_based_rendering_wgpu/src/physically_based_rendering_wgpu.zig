@@ -1104,6 +1104,9 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
+    zstbi.init(allocator);
+    defer zstbi.deinit();
+
     const demo = create(allocator, window) catch {
         std.log.err("Failed to initialize the demo.", .{});
         return;
