@@ -83,7 +83,7 @@ pub const BuildOptions = struct {
     pipeline_layout_pool_size: u32 = 32,
 };
 ```
-You can override default values:
+You can override default values in your `build.zig`:
 ```zig
 pub fn build(b: *std.build.Builder) void {
     ...
