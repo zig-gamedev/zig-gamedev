@@ -42,6 +42,9 @@ pub fn build(b: *std.build.Builder) void {
     //
     const test_step = b.step("test", "Run all tests");
 
+    const zjobs_tests = @import("libs/zjobs/build.zig").buildTests(b, options.build_mode, options.target);
+    test_step.dependOn(&zjobs_tests.step);
+
     const zpool_tests = @import("libs/zpool/build.zig").buildTests(b, options.build_mode, options.target);
     test_step.dependOn(&zpool_tests.step);
 
