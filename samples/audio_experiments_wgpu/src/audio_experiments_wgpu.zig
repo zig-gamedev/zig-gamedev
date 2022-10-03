@@ -243,6 +243,8 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
 
     const depth = createDepthTexture(gctx);
 
+    zaudio.init(allocator);
+
     const audio = try AudioState.create(allocator);
     try audio.engine.start();
 
@@ -428,6 +430,7 @@ fn destroy(allocator: std.mem.Allocator, demo: *DemoState) void {
     for (demo.sounds.items) |sound| sound.destroy();
     demo.sounds.deinit();
     demo.audio.destroy(allocator);
+    zaudio.deinit();
     demo.gctx.destroy(allocator);
     allocator.destroy(demo);
 }

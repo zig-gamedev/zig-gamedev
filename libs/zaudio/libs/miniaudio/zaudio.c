@@ -2,21 +2,15 @@
 #include <stdlib.h>
 #include <assert.h>
 //--------------------------------------------------------------------------------------------------
-static void* defaultAlloc(size_t size, void* user_data) {
-    return malloc(size);
-}
-static void* defaulRealloc(void* ptr, size_t size, void* user_data) {
-    return realloc(ptr, size);
-}
-static void defaultFree(void* ptr, void* user_data) {
-    return free(ptr);
-}
+extern void* zaudioMalloc(size_t size, void* user_data);
+extern void* zaudioRealloc(void* ptr, size_t size, void* user_data);
+extern void zaudioFree(void* ptr, void* user_data);
 
 static ma_allocation_callbacks s_mem = {
     .pUserData = NULL,
-    .onMalloc = defaultAlloc,
-    .onRealloc = defaulRealloc,
-    .onFree = defaultFree,
+    .onMalloc = zaudioMalloc,
+    .onRealloc = zaudioRealloc,
+    .onFree = zaudioFree,
 };
 //--------------------------------------------------------------------------------------------------
 void zaudioNoiseConfigInit(
