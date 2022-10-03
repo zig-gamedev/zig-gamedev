@@ -29,6 +29,7 @@ Library | Latest version | Description
 **[znoise](libs/znoise)** | 0.1 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
 **[ztracy](libs/ztracy)** | 0.9 | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 **[zpool](libs/zpool)** | 0.9 | Generic pool & handle implementation
+**[zjobs](libs/zjobs)** | 0.1 | Generic job queue implementation
 
 ## Project vision
 * Very modular, user can use only the components she needs
