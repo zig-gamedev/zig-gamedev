@@ -1560,16 +1560,16 @@ fn msgSend(obj: anytype, sel_name: [:0]const u8, args: anytype, comptime ReturnT
 
 fn logUnhandledError(
     err_type: wgpu.ErrorType,
-    message: [*:0]const u8,
+    message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void {
     _ = userdata;
     switch (err_type) {
-        .validation => std.log.err("[zgpu] Validation: {s}", .{message}),
-        .out_of_memory => std.log.err("[zgpu] Out of memory: {s}", .{message}),
-        .device_lost => std.log.err("[zgpu] Device lost: {s}", .{message}),
-        .unknown => std.log.err("[zgpu] Unknown error: {s}", .{message}),
-        else => unreachable,
+        .no_error => std.log.info("[zgpu] No error: {?s}", .{message}),
+        .validation => std.log.err("[zgpu] Validation: {?s}", .{message}),
+        .out_of_memory => std.log.err("[zgpu] Out of memory: {?s}", .{message}),
+        .device_lost => std.log.err("[zgpu] Device lost: {?s}", .{message}),
+        .unknown => std.log.err("[zgpu] Unknown error: {?s}", .{message}),
     }
 
     // Exit the process for easier debugging.

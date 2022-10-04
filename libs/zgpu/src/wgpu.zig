@@ -1153,7 +1153,7 @@ pub const CreateRenderPipelineAsyncCallback = *const fn (
 
 pub const ErrorCallback = *const fn (
     err_type: ErrorType,
-    message: [*:0]const u8,
+    message: ?[*:0]const u8,
     userdata: ?*anyopaque,
 ) callconv(.C) void;
 
