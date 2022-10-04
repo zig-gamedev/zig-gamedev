@@ -254,7 +254,11 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
                 .height = image.height,
                 .depth_or_array_layers = 1,
             },
-            .format = .rgba8_unorm,
+            .format = zgpu.suggestTextureFormat(
+                image.num_components,
+                image.bytes_per_component,
+                image.is_hdr,
+            ),
             .mip_level_count = math.log2_int(u32, math.max(image.width, image.height)) + 1,
         });
         mesh_texv[tex_index] = gctx.createTextureView(mesh_tex[tex_index], .{});
@@ -820,7 +824,11 @@ fn precomputeImageLighting(
                 .height = image.height,
                 .depth_or_array_layers = 1,
             },
-            .format = .rgba16_float,
+            .format = zgpu.suggestTextureFormat(
+                image.num_components,
+                image.bytes_per_component,
+                image.is_hdr,
+            ),
             .mip_level_count = 1,
         });
 

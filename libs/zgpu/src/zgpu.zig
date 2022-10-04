@@ -1229,6 +1229,28 @@ pub fn createWgslShaderModule(
     return device.createShaderModule(desc);
 }
 
+pub fn suggestTextureFormat(num_components: u32, bytes_per_component: u32, is_hdr: bool) wgpu.TextureFormat {
+    assert(num_components == 1 or num_components == 2 or num_components == 4);
+    assert(bytes_per_component == 1 or bytes_per_component == 2);
+    assert(if (is_hdr and bytes_per_component != 2) false else true);
+
+    if (is_hdr) {
+        if (num_components == 1) return .r16_float;
+        if (num_components == 2) return .rg16_float;
+        if (num_components == 4) return .rgba16_float;
+    } else {
+        if (bytes_per_component == 1) {
+            if (num_components == 1) return .r8_unorm;
+            if (num_components == 2) return .rg8_unorm;
+            if (num_components == 4) return .rgba8_unorm;
+        } else {
+            // TODO: Looks like wgpu does not support 16 bit unorm formats.
+            unreachable;
+        }
+    }
+    unreachable;
+}
+
 pub const BufferInfo = struct {
     gpuobj: ?wgpu.Buffer = null,
     size: usize = 0,
