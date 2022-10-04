@@ -40,7 +40,7 @@ const filtered_env_tex_resolution = 512;
 const filtered_env_tex_mip_levels = 6;
 const brdf_integration_tex_resolution = 512;
 
-const MeshUniforms = extern struct {
+const MeshUniforms = struct {
     object_to_world: zm.Mat,
     world_to_clip: zm.Mat,
     camera_position: [3]f32,
