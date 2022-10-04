@@ -15,59 +15,92 @@ pub fn deinit() void {
     mem_allocator = null;
 }
 
-pub fn Image(comptime ChannelType: type) type {
-    return struct {
-        const Self = @This();
+pub const Image = struct {
+    data: []u8,
+    width: u32,
+    height: u32,
+    num_components: u32,
+    bytes_per_component: u32,
+    bytes_per_row: u32,
+    is_hdr: bool,
 
-        data: []ChannelType,
-        width: u32,
-        height: u32,
-        bytes_per_row: u32,
-        num_channels: u32,
-        num_channels_in_file: u32,
+    pub fn init(filename: [:0]const u8, forced_num_channels: u32) !Image {
+        var width: u32 = 0;
+        var height: u32 = 0;
+        var num_components: u32 = 0;
+        var bytes_per_component: u32 = 0;
+        var bytes_per_row: u32 = 0;
+        var is_hdr = false;
 
-        pub fn init(filename: [:0]const u8, forced_num_channels: u32) !Self {
+        const data = if (isHdr(filename)) data: {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
-            var data = switch (ChannelType) {
-                u8 => stbi_load(filename, &x, &y, &ch, @intCast(c_int, forced_num_channels)),
-                f16 => @ptrCast(?[*]f16, stbi_loadf(filename, &x, &y, &ch, @intCast(c_int, forced_num_channels))),
-                f32 => stbi_loadf(filename, &x, &y, &ch, @intCast(c_int, forced_num_channels)),
-                else => @compileError("[zstbi] ChannelType can be u8, f16 or f32."),
-            };
-            if (data == null)
+            const ptr = stbi_loadf(
+                filename,
+                &x,
+                &y,
+                &ch,
+                @intCast(c_int, forced_num_channels),
+            );
+            if (ptr == null)
                 return error.StbiLoadFailed;
 
-            const num_channels = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
-            const width = @intCast(u32, x);
-            const height = @intCast(u32, y);
+            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            width = @intCast(u32, x);
+            height = @intCast(u32, y);
+            bytes_per_component = 2;
+            bytes_per_row = width * num_components * bytes_per_component;
+            is_hdr = true;
 
-            if (ChannelType == f16) {
-                var data_f32 = @ptrCast([*]f32, data.?);
-                const num = width * height * num_channels;
-                var i: u32 = 0;
-                while (i < num) : (i += 1) {
-                    data.?[i] = @floatCast(f16, data_f32[i]);
-                }
+            // Convert each component from f32 to f16.
+            var ptr_f16 = @ptrCast([*]f16, ptr.?);
+            const num = width * height * num_components;
+            var i: u32 = 0;
+            while (i < num) : (i += 1) {
+                ptr_f16[i] = @floatCast(f16, ptr.?[i]);
             }
+            break :data @ptrCast([*]u8, ptr_f16)[0 .. height * bytes_per_row];
+        } else data: {
+            var x: c_int = undefined;
+            var y: c_int = undefined;
+            var ch: c_int = undefined;
+            const ptr = stbi_load(
+                filename,
+                &x,
+                &y,
+                &ch,
+                @intCast(c_int, forced_num_channels),
+            );
+            if (ptr == null)
+                return error.StbiLoadFailed;
 
-            return Self{
-                .data = data.?[0 .. width * height * num_channels],
-                .width = width,
-                .height = height,
-                .bytes_per_row = width * num_channels * @sizeOf(ChannelType),
-                .num_channels = num_channels,
-                .num_channels_in_file = @intCast(u32, ch),
-            };
-        }
+            num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
+            width = @intCast(u32, x);
+            height = @intCast(u32, y);
+            bytes_per_component = 1; // TODO: Add support for 16bit channels.
+            bytes_per_row = width * num_components * bytes_per_component;
+            is_hdr = false;
 
-        pub fn deinit(image: *Self) void {
-            stbi_image_free(image.data.ptr);
-            image.* = undefined;
-        }
-    };
-}
+            break :data @ptrCast([*]u8, ptr)[0 .. height * bytes_per_row];
+        };
+
+        return Image{
+            .data = data,
+            .width = width,
+            .height = height,
+            .num_components = num_components,
+            .bytes_per_component = bytes_per_component,
+            .bytes_per_row = bytes_per_row,
+            .is_hdr = is_hdr,
+        };
+    }
+
+    pub fn deinit(image: *Image) void {
+        stbi_image_free(image.data.ptr);
+        image.* = undefined;
+    }
+};
 
 /// `pub fn setHdrToLdrScale(scale: f32) void`
 pub const setHdrToLdrScale = stbi_hdr_to_ldr_scale;
@@ -169,7 +202,7 @@ extern fn stbi_loadf(
     desired_channels: c_int,
 ) ?[*]f32;
 
-extern fn stbi_image_free(image_data: ?*anyopaque) void;
+extern fn stbi_image_free(image_data: ?[*]u8) void;
 
 extern fn stbi_hdr_to_ldr_scale(scale: f32) void;
 extern fn stbi_hdr_to_ldr_gamma(gamma: f32) void;

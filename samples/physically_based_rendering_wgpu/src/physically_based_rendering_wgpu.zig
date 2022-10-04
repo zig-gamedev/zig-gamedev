@@ -244,7 +244,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     var mesh_texv: [num_mesh_textures]zgpu.TextureViewHandle = undefined;
 
     for (mesh_texture_paths) |path, tex_index| {
-        var image = try zstbi.Image(u8).init(path, 4);
+        var image = try zstbi.Image.init(path, 4);
         defer image.deinit();
 
         mesh_tex[tex_index] = gctx.createTexture(.{
@@ -804,7 +804,7 @@ fn precomputeImageLighting(
             content_dir ++ "freight_station_4k.hdr",
         };
         zstbi.setFlipVerticallyOnLoad(true);
-        var image = zstbi.Image(f16).init(
+        var image = zstbi.Image.init(
             hdri_paths[@intCast(usize, demo.current_hdri_index)],
             4,
         ) catch unreachable;
@@ -831,7 +831,7 @@ fn precomputeImageLighting(
                 .rows_per_image = image.height,
             },
             .{ .width = image.width, .height = image.height },
-            f16,
+            u8,
             image.data,
         );
 
