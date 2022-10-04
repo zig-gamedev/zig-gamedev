@@ -1571,6 +1571,10 @@ fn logUnhandledError(
         .unknown => std.log.err("[zgpu] Unknown error: {s}", .{message}),
         else => unreachable,
     }
+
+    // Exit the process for easier debugging.
+    if (@import("builtin").mode == .Debug)
+        std.process.exit(1);
 }
 
 fn handleToGpuResourceType(comptime T: type) type {
