@@ -24,6 +24,24 @@ pub const Image = struct {
     bytes_per_row: u32,
     is_hdr: bool,
 
+    pub fn info(filename: [:0]const u8) struct {
+        is_supported: bool,
+        width: u32,
+        height: u32,
+        num_components: u32,
+    } {
+        var w: c_int = 0;
+        var h: c_int = 0;
+        var c: c_int = 0;
+        const is_supported = stbi_info(filename, &w, &h, &c);
+        return .{
+            .is_supported = is_supported,
+            .width = @intCast(u32, w),
+            .height = @intCast(u32, h),
+            .num_components = @intCast(u32, c),
+        };
+    }
+
     pub fn init(filename: [:0]const u8, forced_num_channels: u32) !Image {
         var width: u32 = 0;
         var height: u32 = 0;
@@ -43,7 +61,7 @@ pub const Image = struct {
                 &ch,
                 @intCast(c_int, forced_num_channels),
             );
-            if (ptr == null) return error.StbiLoadFailed;
+            if (ptr == null) return error.ImageInitFailed;
 
             num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
             width = @intCast(u32, x);
@@ -78,7 +96,7 @@ pub const Image = struct {
                 &ch,
                 @intCast(c_int, forced_num_channels),
             );
-            if (ptr == null) return error.StbiLoadFailed;
+            if (ptr == null) return error.ImageInitFailed;
 
             num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
             width = @intCast(u32, x);
@@ -194,6 +212,8 @@ export fn zstbiFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
         mem_allocator.?.free(mem);
     }
 }
+
+extern fn stbi_info(filename: [*:0]const u8, x: *c_int, y: *c_int, comp: *c_int) c_int;
 
 extern fn stbi_load(
     filename: [*:0]const u8,
