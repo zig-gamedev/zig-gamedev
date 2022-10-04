@@ -43,8 +43,7 @@ pub const Image = struct {
                 &ch,
                 @intCast(c_int, forced_num_channels),
             );
-            if (ptr == null)
-                return error.StbiLoadFailed;
+            if (ptr == null) return error.StbiLoadFailed;
 
             num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
             width = @intCast(u32, x);
@@ -65,20 +64,26 @@ pub const Image = struct {
             var x: c_int = undefined;
             var y: c_int = undefined;
             var ch: c_int = undefined;
-            const ptr = stbi_load(
+            const is_16bit = is16bit(filename);
+            const ptr = if (is_16bit) @ptrCast(?[*]u8, stbi_load_16(
+                filename,
+                &x,
+                &y,
+                &ch,
+                @intCast(c_int, forced_num_channels),
+            )) else stbi_load(
                 filename,
                 &x,
                 &y,
                 &ch,
                 @intCast(c_int, forced_num_channels),
             );
-            if (ptr == null)
-                return error.StbiLoadFailed;
+            if (ptr == null) return error.StbiLoadFailed;
 
             num_components = if (forced_num_channels == 0) @intCast(u32, ch) else forced_num_channels;
             width = @intCast(u32, x);
             height = @intCast(u32, y);
-            bytes_per_component = 1; // TODO: Add support for 16bit channels.
+            bytes_per_component = if (is_16bit) 2 else 1;
             bytes_per_row = width * num_components * bytes_per_component;
             is_hdr = false;
 
@@ -116,6 +121,10 @@ pub const setLdrToHdrGamma = stbi_ldr_to_hdr_gamma;
 
 pub fn isHdr(filename: [:0]const u8) bool {
     return stbi_is_hdr(filename) == 1;
+}
+
+pub fn is16bit(filename: [:0]const u8) bool {
+    return stbi_is_16_bit(filename) == 1;
 }
 
 pub fn setFlipVerticallyOnLoad(should_flip: bool) void {
@@ -194,6 +203,14 @@ extern fn stbi_load(
     desired_channels: c_int,
 ) ?[*]u8;
 
+extern fn stbi_load_16(
+    filename: [*:0]const u8,
+    x: *c_int,
+    y: *c_int,
+    channels_in_file: *c_int,
+    desired_channels: c_int,
+) ?[*]u16;
+
 extern fn stbi_loadf(
     filename: [*:0]const u8,
     x: *c_int,
@@ -209,5 +226,7 @@ extern fn stbi_hdr_to_ldr_gamma(gamma: f32) void;
 extern fn stbi_ldr_to_hdr_scale(scale: f32) void;
 extern fn stbi_ldr_to_hdr_gamma(gamma: f32) void;
 
+extern fn stbi_is_16_bit(filename: [*:0]const u8) c_int;
 extern fn stbi_is_hdr(filename: [*:0]const u8) c_int;
+
 extern fn stbi_set_flip_vertically_on_load(flag_true_if_should_flip: c_int) void;
