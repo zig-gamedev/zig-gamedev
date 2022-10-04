@@ -13,7 +13,7 @@ pub fn build(b: *std.build.Builder) void {
     ensureGit(b.allocator) catch return;
     ensureGitLfs(b.allocator) catch return;
 
-    // Fetach the latest Dawn/WebGPU binaries.
+    // Fetch the latest Dawn/WebGPU binaries.
     {
         var child = std.ChildProcess.init(&.{ "git", "submodule", "update", "--init", "--remote" }, b.allocator);
         child.cwd = thisDir();
@@ -230,21 +230,18 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
             std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
                 \\
-                \\'git lfs version' failed.
+                \\'git lfs install' failed.
                 \\
-                \\Please install Git LFS (Large File Support), run (in the repo):
+                \\Please install Git LFS (Large File Support) extension and run 'zig build' again.
                 \\
-                \\'git lfs install'
-                \\'git lfs pull'
-                \\
-                \\and try again. For more info see: https://git-lfs.github.com/
+                \\For more info about Git LFS see: https://git-lfs.github.com/
                 \\
                 \\---------------------------------------------------------------------------
                 \\
             , .{});
         }
     }).impl;
-    const argv = &[_][]const u8{ "git", "lfs", "version" };
+    const argv = &[_][]const u8{ "git", "lfs", "install" };
     const result = std.ChildProcess.exec(.{
         .allocator = allocator,
         .argv = argv,
@@ -269,12 +266,9 @@ fn ensureGitLfsContent() !void {
             std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
                 \\
-                \\Git LFS content not downloaded. Please run (in the repo):
+                \\Something went wrong, Git LFS content has not been downloaded.
                 \\
-                \\'git lfs install'
-                \\'git lfs pull'
-                \\
-                \\and try again.
+                \\Please try to re-clone the repo and build again.
                 \\
                 \\---------------------------------------------------------------------------
                 \\
