@@ -526,15 +526,8 @@ fn draw(demo: *DemoState) void {
 
         // Gui pass.
         {
-            const pass = zgpu.util.beginRenderPassSimple(
-                encoder,
-                .load,
-                swapchain_texv,
-                null,
-                null,
-                null,
-            );
-            defer zgpu.util.endRelease(pass);
+            const pass = zgpu.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
+            defer zgpu.endReleasePass(pass);
             zgui.backend.draw(pass);
         }
 

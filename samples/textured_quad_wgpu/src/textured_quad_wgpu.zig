@@ -79,9 +79,9 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     const arena = arena_state.allocator();
 
     const bind_group_layout = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-        zgpu.bglTexture(1, .{ .fragment = true }, .float, .tvdim_2d, false),
-        zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
+        zgpu.bufferEntry(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
+        zgpu.textureEntry(1, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.samplerEntry(2, .{ .fragment = true }, .filtering),
     });
     defer gctx.releaseResource(bind_group_layout);
 
@@ -139,7 +139,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     // Create a sampler.
     const sampler = gctx.createSampler(.{});
 
-    const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
+    const bind_group = gctx.createBindGroup(bind_group_layout, &.{
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = 256 },
         .{ .binding = 1, .texture_view_handle = texture_view },
         .{ .binding = 2, .sampler_handle = sampler },
@@ -175,10 +175,10 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
         });
         defer gctx.releaseResource(pipeline_layout);
 
-        const vs_module = zgpu.util.createWgslShaderModule(gctx.device, wgsl_vs, "vs");
+        const vs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_vs, "vs");
         defer vs_module.release();
 
-        const fs_module = zgpu.util.createWgslShaderModule(gctx.device, wgsl_fs, "fs");
+        const fs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_fs, "fs");
         defer fs_module.release();
 
         const color_targets = [_]wgpu.ColorTargetState{.{
@@ -197,18 +197,18 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
 
         // Create a render pipeline.
         const pipeline_descriptor = wgpu.RenderPipelineDescriptor{
-            .vertex = wgpu.VertexState{
+            .vertex = .{
                 .module = vs_module,
                 .entry_point = "main",
                 .buffer_count = vertex_buffers.len,
                 .buffers = &vertex_buffers,
             },
-            .primitive = wgpu.PrimitiveState{
+            .primitive = .{
                 .front_face = .cw,
                 .cull_mode = .back,
                 .topology = .triangle_list,
             },
-            .fragment = &wgpu.FragmentState{
+            .fragment = &.{
                 .module = fs_module,
                 .entry_point = "main",
                 .target_count = color_targets.len,

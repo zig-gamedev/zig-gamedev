@@ -897,12 +897,12 @@ pub const GraphicsContext = struct {
 
         if (!entry.found_existing) {
             mipgen.bind_group_layout = gctx.createBindGroupLayout(&.{
-                bglBuffer(0, .{ .compute = true }, .uniform, true, 0),
-                bglTexture(1, .{ .compute = true }, .unfilterable_float, .tvdim_2d, false),
-                bglStorageTexture(2, .{ .compute = true }, .write_only, format, .tvdim_2d),
-                bglStorageTexture(3, .{ .compute = true }, .write_only, format, .tvdim_2d),
-                bglStorageTexture(4, .{ .compute = true }, .write_only, format, .tvdim_2d),
-                bglStorageTexture(5, .{ .compute = true }, .write_only, format, .tvdim_2d),
+                bufferEntry(0, .{ .compute = true }, .uniform, true, 0),
+                textureEntry(1, .{ .compute = true }, .unfilterable_float, .tvdim_2d, false),
+                storageTextureEntry(2, .{ .compute = true }, .write_only, format, .tvdim_2d),
+                storageTextureEntry(3, .{ .compute = true }, .write_only, format, .tvdim_2d),
+                storageTextureEntry(4, .{ .compute = true }, .write_only, format, .tvdim_2d),
+                storageTextureEntry(5, .{ .compute = true }, .write_only, format, .tvdim_2d),
             });
 
             const pipeline_layout = gctx.createPipelineLayout(&.{
@@ -911,7 +911,7 @@ pub const GraphicsContext = struct {
             defer gctx.releaseResource(pipeline_layout);
 
             const wgsl_src = wgsl.csGenerateMipmaps(arena, formatToShaderFormat(format));
-            const cs_module = util.createWgslShaderModule(gctx.device, wgsl_src, "zgpu_cs_generate_mipmaps");
+            const cs_module = createWgslShaderModule(gctx.device, wgsl_src, "zgpu_cs_generate_mipmaps");
             defer {
                 arena.free(wgsl_src);
                 cs_module.release();
@@ -1040,131 +1040,194 @@ extern fn dnGetProcs() DawnProcsTable;
 // Defined in Dawn codebase
 extern fn dawnProcSetProcs(procs: DawnProcsTable) void;
 
-pub const bglBuffer = wgpu.BindGroupLayoutEntry.buffer;
-pub const bglTexture = wgpu.BindGroupLayoutEntry.texture;
-pub const bglSampler = wgpu.BindGroupLayoutEntry.sampler;
-pub const bglStorageTexture = wgpu.BindGroupLayoutEntry.storageTexture;
+/// Helper to create a buffer BindGroupLayoutEntry.
+pub fn bufferEntry(
+    binding: u32,
+    visibility: wgpu.ShaderStage,
+    binding_type: wgpu.BufferBindingType,
+    has_dynamic_offset: bool,
+    min_binding_size: u64,
+) wgpu.BindGroupLayoutEntry {
+    return .{
+        .binding = binding,
+        .visibility = visibility,
+        .buffer = .{
+            .binding_type = binding_type,
+            .has_dynamic_offset = has_dynamic_offset,
+            .min_binding_size = min_binding_size,
+        },
+    };
+}
 
-pub const util = struct {
-    /// You may disable async shader compilation for debugging purposes.
-    const enable_async_shader_compilation = true;
+/// Helper to create a sampler BindGroupLayoutEntry.
+pub fn samplerEntry(
+    binding: u32,
+    visibility: wgpu.ShaderStage,
+    binding_type: wgpu.SamplerBindingType,
+) wgpu.BindGroupLayoutEntry {
+    return .{
+        .binding = binding,
+        .visibility = visibility,
+        .sampler = .{ .binding_type = binding_type },
+    };
+}
 
-    /// Helper function for creating render pipelines.
-    /// Supports: one vertex buffer, one non-blending render target,
-    /// one vertex shader module and one fragment shader module.
-    pub fn createRenderPipelineSimple(
-        allocator: std.mem.Allocator,
-        gctx: *GraphicsContext,
-        bgls: []const BindGroupLayoutHandle,
-        wgsl_vs: [:0]const u8,
-        wgsl_fs: [:0]const u8,
-        vertex_stride: ?u64,
-        vertex_attribs: ?[]const wgpu.VertexAttribute,
-        primitive_state: wgpu.PrimitiveState,
-        rt_format: wgpu.TextureFormat,
-        depth_state: ?wgpu.DepthStencilState,
-        out_pipe: *RenderPipelineHandle,
-    ) void {
-        const pl = gctx.createPipelineLayout(bgls);
-        defer gctx.releaseResource(pl);
+/// Helper to create a texture BindGroupLayoutEntry.
+pub fn textureEntry(
+    binding: u32,
+    visibility: wgpu.ShaderStage,
+    sample_type: wgpu.TextureSampleType,
+    view_dimension: wgpu.TextureViewDimension,
+    multisampled: bool,
+) wgpu.BindGroupLayoutEntry {
+    return .{
+        .binding = binding,
+        .visibility = visibility,
+        .texture = .{
+            .sample_type = sample_type,
+            .view_dimension = view_dimension,
+            .multisampled = multisampled,
+        },
+    };
+}
 
-        const vs_mod = createWgslShaderModule(gctx.device, wgsl_vs, null);
-        defer vs_mod.release();
+/// Helper to create a storage texture BindGroupLayoutEntry.
+pub fn storageTextureEntry(
+    binding: u32,
+    visibility: wgpu.ShaderStage,
+    access: wgpu.StorageTextureAccess,
+    format: wgpu.TextureFormat,
+    view_dimension: wgpu.TextureViewDimension,
+) wgpu.BindGroupLayoutEntry {
+    return .{
+        .binding = binding,
+        .visibility = visibility,
+        .storage_texture = .{
+            .access = access,
+            .format = format,
+            .view_dimension = view_dimension,
+        },
+    };
+}
 
-        const fs_mod = createWgslShaderModule(gctx.device, wgsl_fs, null);
-        defer fs_mod.release();
+/// You may disable async shader compilation for debugging purposes.
+const enable_async_shader_compilation = true;
 
-        const color_targets = [_]wgpu.ColorTargetState{.{ .format = rt_format }};
+/// Helper function for creating render pipelines.
+/// Supports: one vertex buffer, one non-blending render target,
+/// one vertex shader module and one fragment shader module.
+pub fn createRenderPipelineSimple(
+    allocator: std.mem.Allocator,
+    gctx: *GraphicsContext,
+    bgls: []const BindGroupLayoutHandle,
+    wgsl_vs: [:0]const u8,
+    wgsl_fs: [:0]const u8,
+    vertex_stride: ?u64,
+    vertex_attribs: ?[]const wgpu.VertexAttribute,
+    primitive_state: wgpu.PrimitiveState,
+    rt_format: wgpu.TextureFormat,
+    depth_state: ?wgpu.DepthStencilState,
+    out_pipe: *RenderPipelineHandle,
+) void {
+    const pl = gctx.createPipelineLayout(bgls);
+    defer gctx.releaseResource(pl);
 
-        const vertex_buffers = if (vertex_stride) |vs| [_]wgpu.VertexBufferLayout{.{
-            .array_stride = vs,
-            .attribute_count = @intCast(u32, vertex_attribs.?.len),
-            .attributes = vertex_attribs.?.ptr,
-        }} else null;
+    const vs_mod = createWgslShaderModule(gctx.device, wgsl_vs, null);
+    defer vs_mod.release();
 
-        const pipe_desc = wgpu.RenderPipelineDescriptor{
-            .vertex = wgpu.VertexState{
-                .module = vs_mod,
-                .entry_point = "main",
-                .buffer_count = if (vertex_buffers) |vbs| vbs.len else 0,
-                .buffers = if (vertex_buffers) |vbs| &vbs else null,
-            },
-            .fragment = &wgpu.FragmentState{
-                .module = fs_mod,
-                .entry_point = "main",
-                .target_count = color_targets.len,
-                .targets = &color_targets,
-            },
-            .depth_stencil = if (depth_state) |ds| &ds else null,
-            .primitive = primitive_state,
-        };
+    const fs_mod = createWgslShaderModule(gctx.device, wgsl_fs, null);
+    defer fs_mod.release();
 
-        if (enable_async_shader_compilation) {
-            gctx.createRenderPipelineAsync(allocator, pl, pipe_desc, out_pipe);
-        } else {
-            out_pipe.* = gctx.createRenderPipeline(pl, pipe_desc);
-        }
+    const color_targets = [_]wgpu.ColorTargetState{.{ .format = rt_format }};
+
+    const vertex_buffers = if (vertex_stride) |vs| [_]wgpu.VertexBufferLayout{.{
+        .array_stride = vs,
+        .attribute_count = @intCast(u32, vertex_attribs.?.len),
+        .attributes = vertex_attribs.?.ptr,
+    }} else null;
+
+    const pipe_desc = wgpu.RenderPipelineDescriptor{
+        .vertex = wgpu.VertexState{
+            .module = vs_mod,
+            .entry_point = "main",
+            .buffer_count = if (vertex_buffers) |vbs| vbs.len else 0,
+            .buffers = if (vertex_buffers) |vbs| &vbs else null,
+        },
+        .fragment = &wgpu.FragmentState{
+            .module = fs_mod,
+            .entry_point = "main",
+            .target_count = color_targets.len,
+            .targets = &color_targets,
+        },
+        .depth_stencil = if (depth_state) |ds| &ds else null,
+        .primitive = primitive_state,
+    };
+
+    if (enable_async_shader_compilation) {
+        gctx.createRenderPipelineAsync(allocator, pl, pipe_desc, out_pipe);
+    } else {
+        out_pipe.* = gctx.createRenderPipeline(pl, pipe_desc);
     }
+}
 
-    /// Helper function for creating render passes.
-    /// Supports: One color attachment and optional depth attachment.
-    pub fn beginRenderPassSimple(
-        encoder: wgpu.CommandEncoder,
-        load_op: wgpu.LoadOp,
-        color_texv: wgpu.TextureView,
-        clear_color: ?wgpu.Color,
-        depth_texv: ?wgpu.TextureView,
-        clear_depth: ?f32,
-    ) wgpu.RenderPassEncoder {
-        if (depth_texv == null) {
-            assert(clear_depth == null);
-        }
-        const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
-            .view = color_texv,
-            .load_op = load_op,
-            .store_op = .store,
-            .clear_value = if (clear_color) |cc| cc else .{ .r = 0, .g = 0, .b = 0, .a = 0 },
-        }};
-        if (depth_texv) |dtexv| {
-            const depth_attachment = wgpu.RenderPassDepthStencilAttachment{
-                .view = dtexv,
-                .depth_load_op = load_op,
-                .depth_store_op = .store,
-                .depth_clear_value = if (clear_depth) |cd| cd else 0.0,
-            };
-            return encoder.beginRenderPass(.{
-                .color_attachment_count = color_attachments.len,
-                .color_attachments = &color_attachments,
-                .depth_stencil_attachment = &depth_attachment,
-            });
-        }
+/// Helper function for creating render passes.
+/// Supports: One color attachment and optional depth attachment.
+pub fn beginRenderPassSimple(
+    encoder: wgpu.CommandEncoder,
+    load_op: wgpu.LoadOp,
+    color_texv: wgpu.TextureView,
+    clear_color: ?wgpu.Color,
+    depth_texv: ?wgpu.TextureView,
+    clear_depth: ?f32,
+) wgpu.RenderPassEncoder {
+    if (depth_texv == null) {
+        assert(clear_depth == null);
+    }
+    const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
+        .view = color_texv,
+        .load_op = load_op,
+        .store_op = .store,
+        .clear_value = if (clear_color) |cc| cc else .{ .r = 0, .g = 0, .b = 0, .a = 0 },
+    }};
+    if (depth_texv) |dtexv| {
+        const depth_attachment = wgpu.RenderPassDepthStencilAttachment{
+            .view = dtexv,
+            .depth_load_op = load_op,
+            .depth_store_op = .store,
+            .depth_clear_value = if (clear_depth) |cd| cd else 0.0,
+        };
         return encoder.beginRenderPass(.{
             .color_attachment_count = color_attachments.len,
             .color_attachments = &color_attachments,
+            .depth_stencil_attachment = &depth_attachment,
         });
     }
+    return encoder.beginRenderPass(.{
+        .color_attachment_count = color_attachments.len,
+        .color_attachments = &color_attachments,
+    });
+}
 
-    pub fn endRelease(pass: anytype) void {
-        pass.end();
-        pass.release();
-    }
+pub fn endReleasePass(pass: anytype) void {
+    pass.end();
+    pass.release();
+}
 
-    pub fn createWgslShaderModule(
-        device: wgpu.Device,
-        source: [*:0]const u8,
-        label: ?[*:0]const u8,
-    ) wgpu.ShaderModule {
-        const wgsl_desc = wgpu.ShaderModuleWgslDescriptor{
-            .chain = .{ .next = null, .struct_type = .shader_module_wgsl_descriptor },
-            .source = source,
-        };
-        const desc = wgpu.ShaderModuleDescriptor{
-            .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &wgsl_desc),
-            .label = if (label) |l| l else null,
-        };
-        return device.createShaderModule(desc);
-    }
-};
+pub fn createWgslShaderModule(
+    device: wgpu.Device,
+    source: [*:0]const u8,
+    label: ?[*:0]const u8,
+) wgpu.ShaderModule {
+    const wgsl_desc = wgpu.ShaderModuleWgslDescriptor{
+        .chain = .{ .next = null, .struct_type = .shader_module_wgsl_descriptor },
+        .source = source,
+    };
+    const desc = wgpu.ShaderModuleDescriptor{
+        .next_in_chain = @ptrCast(*const wgpu.ChainedStruct, &wgsl_desc),
+        .label = if (label) |l| l else null,
+    };
+    return device.createShaderModule(desc);
+}
 
 pub const BufferInfo = struct {
     gpuobj: ?wgpu.Buffer = null,

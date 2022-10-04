@@ -58,7 +58,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
 
     // Create a bind group layout needed for our render pipeline.
     const bind_group_layout = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true }, .uniform, true, 0),
+        zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
     });
     defer gctx.releaseResource(bind_group_layout);
 
@@ -66,10 +66,10 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
     defer gctx.releaseResource(pipeline_layout);
 
     const pipeline = pipline: {
-        const vs_module = zgpu.util.createWgslShaderModule(gctx.device, wgsl_vs, "vs");
+        const vs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_vs, "vs");
         defer vs_module.release();
 
-        const fs_module = zgpu.util.createWgslShaderModule(gctx.device, wgsl_fs, "fs");
+        const fs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_fs, "fs");
         defer fs_module.release();
 
         const color_targets = [_]wgpu.ColorTargetState{.{

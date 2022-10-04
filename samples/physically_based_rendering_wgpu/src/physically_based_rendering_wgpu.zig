@@ -174,30 +174,30 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     // Create bind group layouts.
     //
     const mesh_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-        zgpu.bglTexture(1, .{ .fragment = true }, .float, .tvdim_2d, false),
-        zgpu.bglTexture(2, .{ .fragment = true }, .float, .tvdim_2d, false),
-        zgpu.bglTexture(3, .{ .fragment = true }, .float, .tvdim_2d, false),
-        zgpu.bglTexture(4, .{ .fragment = true }, .float, .tvdim_2d, false),
-        zgpu.bglTexture(5, .{ .fragment = true }, .float, .tvdim_cube, false),
-        zgpu.bglTexture(6, .{ .fragment = true }, .float, .tvdim_cube, false),
-        zgpu.bglTexture(7, .{ .fragment = true }, .float, .tvdim_2d, false),
-        zgpu.bglSampler(8, .{ .fragment = true }, .filtering),
+        zgpu.bufferEntry(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
+        zgpu.textureEntry(1, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.textureEntry(2, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.textureEntry(3, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.textureEntry(4, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.textureEntry(5, .{ .fragment = true }, .float, .tvdim_cube, false),
+        zgpu.textureEntry(6, .{ .fragment = true }, .float, .tvdim_cube, false),
+        zgpu.textureEntry(7, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.samplerEntry(8, .{ .fragment = true }, .filtering),
     });
     defer gctx.releaseResource(mesh_bgl);
 
     const uniform_tex2d_sam_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true }, .uniform, true, 0),
-        zgpu.bglTexture(1, .{ .fragment = true }, .float, .tvdim_2d, false),
-        zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
+        zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
+        zgpu.textureEntry(1, .{ .fragment = true }, .float, .tvdim_2d, false),
+        zgpu.samplerEntry(2, .{ .fragment = true }, .filtering),
     });
     const uniform_texcube_sam_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
-        zgpu.bglTexture(1, .{ .fragment = true }, .float, .tvdim_cube, false),
-        zgpu.bglSampler(2, .{ .fragment = true }, .filtering),
+        zgpu.bufferEntry(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
+        zgpu.textureEntry(1, .{ .fragment = true }, .float, .tvdim_cube, false),
+        zgpu.samplerEntry(2, .{ .fragment = true }, .filtering),
     });
     const texstorage2d_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglStorageTexture(0, .{ .compute = true }, .write_only, .rgba16_float, .tvdim_2d),
+        zgpu.storageTextureEntry(0, .{ .compute = true }, .write_only, .rgba16_float, .tvdim_2d),
     });
 
     //
@@ -479,7 +479,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
         const pl = gctx.createPipelineLayout(&.{texstorage2d_bgl});
         defer gctx.releaseResource(pl);
 
-        const cs_mod = zgpu.util.createWgslShaderModule(
+        const cs_mod = zgpu.createWgslShaderModule(
             gctx.device,
             wgsl.precompute_brdf_integration_tex_cs,
             null,
@@ -1029,10 +1029,10 @@ fn createRenderPipe(
     const pl = gctx.createPipelineLayout(bgls);
     defer gctx.releaseResource(pl);
 
-    const vs_mod = zgpu.util.createWgslShaderModule(gctx.device, wgsl_vs, null);
+    const vs_mod = zgpu.createWgslShaderModule(gctx.device, wgsl_vs, null);
     defer vs_mod.release();
 
-    const fs_mod = zgpu.util.createWgslShaderModule(gctx.device, wgsl_fs, null);
+    const fs_mod = zgpu.createWgslShaderModule(gctx.device, wgsl_fs, null);
     defer fs_mod.release();
 
     const color_targets = [_]wgpu.ColorTargetState{.{

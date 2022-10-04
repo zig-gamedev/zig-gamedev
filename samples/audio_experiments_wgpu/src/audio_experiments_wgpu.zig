@@ -230,7 +230,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
     //const arena = arena_state.allocator();
 
     const uniform_bgl = gctx.createBindGroupLayout(&.{
-        zgpu.bglBuffer(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
+        zgpu.bufferEntry(0, .{ .vertex = true, .fragment = true }, .uniform, true, 0),
     });
     defer gctx.releaseResource(uniform_bgl);
 
@@ -400,7 +400,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
         .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
         .{ .format = .float32x3, .offset = @offsetOf(Vertex, "color"), .shader_location = 1 },
     };
-    zgpu.util.createRenderPipelineSimple(
+    zgpu.createRenderPipelineSimple(
         allocator,
         gctx,
         &.{ uniform_bgl, uniform_bgl },
@@ -877,15 +877,8 @@ fn draw(demo: *DemoState) void {
             const depth_texv = gctx.lookupResource(demo.depth_texv) orelse break :pass;
             const uniform_bg = gctx.lookupResource(demo.uniform_bg) orelse break :pass;
 
-            const pass = zgpu.util.beginRenderPassSimple(
-                encoder,
-                .clear,
-                swapchain_texv,
-                null,
-                depth_texv,
-                1.0,
-            );
-            defer zgpu.util.endRelease(pass);
+            const pass = zgpu.beginRenderPassSimple(encoder, .clear, swapchain_texv, null, depth_texv, 1.0);
+            defer zgpu.endReleasePass(pass);
 
             pass.setPipeline(lines_pipe);
             pass.setVertexBuffer(
@@ -918,15 +911,8 @@ fn draw(demo: *DemoState) void {
 
         // Gui pass.
         {
-            const pass = zgpu.util.beginRenderPassSimple(
-                encoder,
-                .load,
-                swapchain_texv,
-                null,
-                null,
-                null,
-            );
-            defer zgpu.util.endRelease(pass);
+            const pass = zgpu.beginRenderPassSimple(encoder, .load, swapchain_texv, null, null, null);
+            defer zgpu.endReleasePass(pass);
             zgui.backend.draw(pass);
         }
 
