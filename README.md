@@ -32,7 +32,7 @@ Library | Latest version | Description
 **[zjobs](libs/zjobs)** | 0.1 | Generic job queue implementation
 
 ## Project vision
-* Very modular, user can use only the components she needs
+* Very modular "toolbox of libraries", user can use only the components she needs
 * Works on Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan)
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
 * Building is as easy as running `zig build` (see: [Building](#building-sample-applications))
