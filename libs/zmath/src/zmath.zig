@@ -431,13 +431,13 @@ pub inline fn storeArr4(arr: *[4]f32, v: F32x4) void {
     arr.* = .{ v[0], v[1], v[2], v[3] };
 }
 
-// TODO: Add support for U32x4
 pub inline fn arr3Ptr(ptr: anytype) *const [3]f32 {
     comptime assert(@typeInfo(@TypeOf(ptr)) == .Pointer);
+    const T = std.meta.Child(@TypeOf(ptr));
+    comptime assert(T == F32x4);
     return @ptrCast(*const [3]f32, ptr);
 }
 
-// TODO: Add support for U32xN
 pub inline fn arrNPtr(ptr: anytype) [*]const f32 {
     comptime assert(@typeInfo(@TypeOf(ptr)) == .Pointer);
     const T = std.meta.Child(@TypeOf(ptr));
@@ -1881,7 +1881,6 @@ test "zmath.dot2" {
 }
 
 pub inline fn dot3(v0: Vec, v1: Vec) F32x4 {
-    @setFloatMode(.Optimized);
     const dot = v0 * v1;
     return f32x4s(dot[0] + dot[1] + dot[2]);
 }
@@ -1959,21 +1958,19 @@ pub inline fn length4(v: Vec) F32x4 {
 test "zmath.length3" {
     if (builtin.target.os.tag == .macos and builtin.zig_backend != .stage1) return error.SkipZigTest;
     {
-        var v = length3(f32x4(1.0, -2.0, 3.0, 1000.0));
+        const v = length3(f32x4(1.0, -2.0, 3.0, 1000.0));
         try expect(approxEqAbs(v, splat(F32x4, math.sqrt(14.0)), 0.001));
     }
     {
-        // TODO: Passes in debug, fails in release
-        //var v = length3(f32x4(1.0, math.nan_f32, math.inf_f32, 1000.0));
-        //try expect(all(isNan(v), 0));
+        const v = length3(f32x4(1.0, math.nan_f32, math.nan_f32, 1000.0));
+        try expect(all(isNan(v), 0));
     }
     {
-        // TODO: Passes in debug, fails in release
-        //var v = length3(f32x4(1.0, math.inf_f32, 3.0, 1000.0));
-        //try expect(all(isInf(v), 0));
+        const v = length3(f32x4(1.0, math.inf_f32, 3.0, 1000.0));
+        try expect(all(isInf(v), 0));
     }
     {
-        var v = length3(f32x4(3.0, 2.0, 1.0, math.nan_f32));
+        const v = length3(f32x4(3.0, 2.0, 1.0, math.nan_f32));
         try expect(approxEqAbs(v, splat(F32x4, math.sqrt(14.0)), 0.001));
     }
 }
