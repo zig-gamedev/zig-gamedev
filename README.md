@@ -12,8 +12,7 @@ git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
-
-If you are interested, please see [Monthly Progress Reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) and our [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap).
+[Projects using zig-gamedev](#projects-using-zig-gamedev) - [Monthly progress reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
 
 ## Libraries
 Library | Latest version | Description
@@ -62,6 +61,13 @@ Some of the sample applications are listed below. More can be found in [samples]
 1. [gui test (wgpu)](samples/gui_test_wgpu): This sample shows how to use our [zgui](libs/zgui) library.<br />Build and run with: `zig build gui_test_wgpu-run`
 
     <a href="samples/gui_test_wgpu"><img src="samples/gui_test_wgpu/screenshot.png" alt="gui test (wgpu)" height="200"></a>
+
+## Projects using zig-gamedev
+
+* [Aftersun](https://github.com/foxnne/aftersun) - Top-down 2D RPG
+* [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
+* [elvengroin-legacy](https://github.com/Srekel/elvengroin-legacy) - TBD
+* [Wrinkles](https://github.com/meshula/wrinkles) - Wrinkles zig demonstrator
 
 ## Building sample applications
 
