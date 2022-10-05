@@ -21,7 +21,7 @@ Library | Latest version | Description
 **[zgpu](libs/zgpu)** | 0.9 | Small helper library built on top of native wgpu implementation ([Dawn](https://github.com/michal-z/dawn-bin))
 **[zgui](libs/zgui)** | 0.9 | Easy to use [dear imgui](https://github.com/ocornut/imgui) bindings (includes [ImPlot](https://github.com/epezent/implot))
 **[zaudio](libs/zaudio)** | 0.9 | Full-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
-**[zmath](libs/zmath)** | 0.3 | SIMD math library for game developers
+**[zmath](libs/zmath)** | 0.9 | SIMD math library for game developers
 **[zstbi](libs/zstbi)** | 0.9 | Image loading with [stbi](https://github.com/nothings/stb)
 **[zglfw](libs/zglfw)** | 0.1 | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
 **[zbullet](libs/zbullet)** | 0.2 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)

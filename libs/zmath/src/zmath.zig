@@ -1,6 +1,6 @@
 // ==============================================================================
 //
-// zmath v0.4 (wip)
+// zmath v0.9
 // SIMD math library for game developers
 // https://github.com/michal-z/zig-gamedev/tree/main/libs/zmath
 //
@@ -46,8 +46,6 @@
 // store(mem[0..], v4, 0);
 // store(mem[100..], v8, 0);
 // store(mem[200..], v16, 0);
-//
-// Example programs: https://github.com/michal-z/zig-gamedev/tree/main/samples/intro
 //
 // ------------------------------------------------------------------------------
 // 1. Initialization functions
