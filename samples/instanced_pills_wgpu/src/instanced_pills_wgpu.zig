@@ -15,7 +15,7 @@ const wgsl_vs =
 \\  @group(0) @binding(0) var<uniform> object_to_clip: mat4x4<f32>;
 \\
 \\  struct Vertex {
-\\      @location(0) position: vec3<f32>,
+\\      @location(0) position: vec2<f32>,
 \\  }
 \\  struct Fragment {
 \\      @builtin(position) position: vec4<f32>,
@@ -24,7 +24,7 @@ const wgsl_vs =
 \\
 \\  @vertex fn main(vertex: Vertex) -> Fragment {
 \\      var fragment: Fragment;
-\\      fragment.position = vec4(vertex.position, 1.0) * object_to_clip;
+\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * object_to_clip;
 \\      fragment.color = vec4(1.0, 0.0, 0.0, 1.0);
 \\      return fragment;
 \\  }
@@ -46,7 +46,7 @@ const wgsl_fs =
 ;
 
 const Vertex = struct {
-    position: [3]f32,
+    position: [2]f32,
 };
 
 const Dimensions = struct {
@@ -62,9 +62,6 @@ dimensions: Dimensions,
 
 pipeline: zgpu.RenderPipelineHandle,
 bind_group: zgpu.BindGroupHandle,
-
-vertex_buffer: zgpu.BufferHandle,
-index_buffer: zgpu.BufferHandle,
 
 depth_texture: zgpu.TextureHandle,
 depth_texture_view: zgpu.TextureViewHandle,
@@ -117,7 +114,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         }};
 
         const vertex_attributes = [_]wgpu.VertexAttribute{
-            .{ .format = .float32x3, .offset = 0, .shader_location = 0 },
+            .{ .format = .float32x2, .offset = 0, .shader_location = 0 },
             // .{ .format = .float32x3, .offset = @offsetOf(Vertex, "color"), .shader_location = 1 },
         };
         const vertex_buffers = [_]wgpu.VertexBufferLayout{.{
@@ -157,32 +154,6 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
     });
 
-    // Create a vertex buffer.
-    const vertex_buffer = gctx.createBuffer(.{
-        .usage = .{ .copy_dst = true, .vertex = true },
-        .size = 3 * @sizeOf(Vertex),
-    });
-    const vertex_data = [_]Vertex{
-        .{
-            .position = .{ -1.0, 1.0, 0.0 },
-        },
-        .{
-            .position = .{ -1.0, -1.0, 0.0 },
-        },
-        .{
-            .position = .{ 1.0, 1.0, 0.0 },
-        },
-    };
-    gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data[0..]);
-
-    // Create an index buffer.
-    const index_buffer = gctx.createBuffer(.{
-        .usage = .{ .copy_dst = true, .index = true },
-        .size = 3 * @sizeOf(u32),
-    });
-    const index_data = [_]u32{ 0, 1, 2 };
-    gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data[0..]);
-
     // Create a depth texture and its 'view'.
     const depth = createDepthTexture(gctx);
 
@@ -191,8 +162,6 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         .dimensions = calculateDimenions(gctx),
         .pipeline = pipeline,
         .bind_group = bind_group,
-        .vertex_buffer = vertex_buffer,
-        .index_buffer = index_buffer,
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
     };
@@ -256,8 +225,37 @@ fn draw(demo: *DemoState) void {
         defer encoder.release();
 
         pass: {
-            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
-            const ib_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
+
+            // Create a vertex buffer.
+            const vertex_buffer = gctx.createBuffer(.{
+                .usage = .{ .copy_dst = true, .vertex = true },
+                .size = 3 * @sizeOf(Vertex),
+            });
+            defer gctx.releaseResource(vertex_buffer);
+            const vertex_data = [_]Vertex{
+                .{
+                    .position = .{ -1.0, 1.0 },
+                },
+                .{
+                    .position = .{ -1.0, -1.0 },
+                },
+                .{
+                    .position = .{ 1.0, 1.0 },
+                },
+            };
+            gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data[0..]);
+
+            // Create an index buffer.
+            const index_buffer = gctx.createBuffer(.{
+                .usage = .{ .copy_dst = true, .index = true },
+                .size = 3 * @sizeOf(u32),
+            });
+            defer gctx.releaseResource(index_buffer);
+            const index_data = [_]u32{ 0, 1, 2 };
+            gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data[0..]);
+
+            const vb_info = gctx.lookupResourceInfo(vertex_buffer) orelse break :pass;
+            const ib_info = gctx.lookupResourceInfo(index_buffer) orelse break :pass;
             const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
             const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
             const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
