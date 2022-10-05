@@ -1229,7 +1229,7 @@ pub fn createWgslShaderModule(
     return device.createShaderModule(desc);
 }
 
-pub fn suggestTextureFormat(num_components: u32, bytes_per_component: u32, is_hdr: bool) wgpu.TextureFormat {
+pub fn imageInfoToTextureFormat(num_components: u32, bytes_per_component: u32, is_hdr: bool) wgpu.TextureFormat {
     assert(num_components == 1 or num_components == 2 or num_components == 4);
     assert(bytes_per_component == 1 or bytes_per_component == 2);
     assert(if (is_hdr and bytes_per_component != 2) false else true);

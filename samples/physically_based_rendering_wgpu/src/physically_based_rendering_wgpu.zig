@@ -254,7 +254,7 @@ fn create(allocator: std.mem.Allocator, window: zglfw.Window) !*DemoState {
                 .height = image.height,
                 .depth_or_array_layers = 1,
             },
-            .format = zgpu.suggestTextureFormat(
+            .format = zgpu.imageInfoToTextureFormat(
                 image.num_components,
                 image.bytes_per_component,
                 image.is_hdr,
@@ -824,7 +824,7 @@ fn precomputeImageLighting(
                 .height = image.height,
                 .depth_or_array_layers = 1,
             },
-            .format = zgpu.suggestTextureFormat(
+            .format = zgpu.imageInfoToTextureFormat(
                 image.num_components,
                 image.bytes_per_component,
                 image.is_hdr,
