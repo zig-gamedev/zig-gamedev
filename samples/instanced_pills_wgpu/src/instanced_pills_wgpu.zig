@@ -49,9 +49,16 @@ const Vertex = struct {
     position: [3]f32,
 };
 
+const Dimensions = struct {
+    width: f32,
+    height: f32,
+};
+
 const DemoState = @This();
 
 gctx: *zgpu.GraphicsContext,
+
+dimensions: Dimensions,
 
 pipeline: zgpu.RenderPipelineHandle,
 bind_group: zgpu.BindGroupHandle,
@@ -157,13 +164,13 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
     });
     const vertex_data = [_]Vertex{
         .{
-            .position = .{ 0.0, 0.5, 0.0 },
+            .position = .{ -1.0, 1.0, 0.0 },
         },
         .{
-            .position = .{ -0.5, -0.5, 0.0 },
+            .position = .{ -1.0, -1.0, 0.0 },
         },
         .{
-            .position = .{ 0.5, -0.5, 0.0 },
+            .position = .{ 1.0, 1.0, 0.0 },
         },
     };
     gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data[0..]);
@@ -181,6 +188,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
 
     return .{
         .gctx = gctx,
+        .dimensions = calculateDimenions(gctx),
         .pipeline = pipeline,
         .bind_group = bind_group,
         .vertex_buffer = vertex_buffer,
@@ -225,24 +233,20 @@ fn update(demo: *DemoState) !void {
     zgui.end();
 }
 
+fn calculateDimenions(gctx: *zgpu.GraphicsContext) Dimensions {
+    const width = @intToFloat(f32, gctx.swapchain_descriptor.width);
+    const height = @intToFloat(f32, gctx.swapchain_descriptor.height);
+    const delta = math.sign(@bitCast(i32, gctx.swapchain_descriptor.width) - @bitCast(i32, gctx.swapchain_descriptor.height));
+    return switch (delta) {
+        -1 => .{ .width = 2.0, .height = 2 * width / height },
+        0 => .{ .width = 2.0, .height = 2.0 },
+        1 => .{ .width = 2 * height / width, .height = 2.0 },
+        else => unreachable,
+    };
+}
+
 fn draw(demo: *DemoState) void {
     const gctx = demo.gctx;
-    const fb_width = gctx.swapchain_descriptor.width;
-    const fb_height = gctx.swapchain_descriptor.height;
-    const t = @floatCast(f32, gctx.stats.time);
-
-    const cam_world_to_view = zm.lookAtLh(
-        zm.f32x4(3.0, 3.0, -3.0, 1.0),
-        zm.f32x4(0.0, 0.0, 0.0, 1.0),
-        zm.f32x4(0.0, 1.0, 0.0, 0.0),
-    );
-    const cam_view_to_clip = zm.perspectiveFovLh(
-        0.25 * math.pi,
-        @intToFloat(f32, fb_width) / @intToFloat(f32, fb_height),
-        0.01,
-        200.0,
-    );
-    const cam_world_to_clip = zm.mul(cam_world_to_view, cam_view_to_clip);
 
     const back_buffer_view = gctx.swapchain.getCurrentTextureView();
     defer back_buffer_view.release();
@@ -285,22 +289,8 @@ fn draw(demo: *DemoState) void {
 
             pass.setPipeline(pipeline);
 
-            // Draw triangle 1.
             {
-                const object_to_world = zm.mul(zm.rotationY(t), zm.translation(-1.0, 0.0, 0.0));
-                const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
-
-                const mem = gctx.uniformsAllocate(zm.Mat, 1);
-                mem.slice[0] = zm.transpose(object_to_clip);
-
-                pass.setBindGroup(0, bind_group, &.{mem.offset});
-                pass.drawIndexed(3, 1, 0, 0, 0);
-            }
-
-            // Draw triangle 2.
-            {
-                const object_to_world = zm.mul(zm.rotationY(0.75 * t), zm.translation(1.0, 0.0, 0.0));
-                const object_to_clip = zm.mul(object_to_world, cam_world_to_clip);
+                const object_to_clip = zm.scaling(demo.dimensions.width / 2, demo.dimensions.height / 2, 1.0);
 
                 const mem = gctx.uniformsAllocate(zm.Mat, 1);
                 mem.slice[0] = zm.transpose(object_to_clip);
@@ -334,6 +324,8 @@ fn draw(demo: *DemoState) void {
 
     gctx.submit(&.{commands});
     if (gctx.present() == .swap_chain_resized) {
+        demo.dimensions = calculateDimenions(gctx);
+
         // Release old depth texture.
         gctx.releaseResource(demo.depth_texture_view);
         gctx.destroyResource(demo.depth_texture);
