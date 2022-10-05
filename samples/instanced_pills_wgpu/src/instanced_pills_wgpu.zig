@@ -6,6 +6,7 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zgui = @import("zgui");
 const zm = @import("zmath");
+const vertex_generator = @import("vertex_generator.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: instanced pills (wgpu)";
@@ -45,11 +46,16 @@ const wgsl_fs =
 // zig fmt: on
 ;
 
-const Vertex = struct {
+const Vertex = vertex_generator.Vertex;
+
+const Pill = struct {
+    length: f32,
+    width: f32,
     position: [2]f32,
+    angle: f32,
 };
 
-const Dimensions = struct {
+const Dimension = struct {
     width: f32,
     height: f32,
 };
@@ -58,10 +64,15 @@ const DemoState = @This();
 
 gctx: *zgpu.GraphicsContext,
 
-dimensions: Dimensions,
+pills: std.ArrayList(Pill),
+
+dimension: Dimension,
 
 pipeline: zgpu.RenderPipelineHandle,
 bind_group: zgpu.BindGroupHandle,
+
+vertex_buffer: ?zgpu.BufferHandle,
+index_buffer: ?zgpu.BufferHandle,
 
 depth_texture: zgpu.TextureHandle,
 depth_texture_view: zgpu.TextureViewHandle,
@@ -132,8 +143,9 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
             },
             .primitive = wgpu.PrimitiveState{
                 .front_face = .ccw,
-                .cull_mode = .none,
-                .topology = .triangle_list,
+                .cull_mode = .back,
+                .topology = .triangle_strip,
+                .strip_index_format = .uint32,
             },
             .depth_stencil = &wgpu.DepthStencilState{
                 .format = .depth32_float,
@@ -151,7 +163,12 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
     };
 
     const bind_group = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{
-        .{ .binding = 0, .buffer_handle = gctx.uniforms.buffer, .offset = 0, .size = @sizeOf(zm.Mat) },
+        .{
+            .binding = 0,
+            .buffer_handle = gctx.uniforms.buffer,
+            .offset = 0,
+            .size = @sizeOf(zm.Mat),
+        },
     });
 
     // Create a depth texture and its 'view'.
@@ -159,8 +176,11 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
 
     return .{
         .gctx = gctx,
-        .dimensions = calculateDimenions(gctx),
+        .pills = std.ArrayList(Pill).init(allocator),
+        .dimension = calculateDimenions(gctx),
         .pipeline = pipeline,
+        .vertex_buffer = null,
+        .index_buffer = null,
         .bind_group = bind_group,
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
@@ -168,23 +188,33 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
 }
 
 fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
+    const gctx = demo.gctx;
     zgui.backend.deinit();
     zgui.deinit();
-    demo.gctx.destroy(allocator);
+    if (demo.vertex_buffer) |vb| {
+        gctx.releaseResource(vb);
+    }
+    if (demo.index_buffer) |ib| {
+        gctx.releaseResource(ib);
+    }
+    demo.pills.deinit();
+    gctx.destroy(allocator);
 }
 
-fn update(demo: *DemoState) !void {
+fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
+    const gctx = demo.gctx;
+
     zgui.backend.newFrame(
-        demo.gctx.swapchain_descriptor.width,
-        demo.gctx.swapchain_descriptor.height,
+        gctx.swapchain_descriptor.width,
+        gctx.swapchain_descriptor.height,
     );
     if (zgui.begin("Pill control", .{})) {
         zgui.text(
             "{d:.3} ms/frame ({d:.1} fps)",
-            .{ demo.gctx.stats.average_cpu_time, demo.gctx.stats.fps },
+            .{ gctx.stats.average_cpu_time, gctx.stats.fps },
         );
 
-        const static = struct {
+        const pillControl = struct {
             var segments: i32 = 6;
             var length: f32 = 0.5;
             var width: f32 = 0.1;
@@ -192,17 +222,58 @@ fn update(demo: *DemoState) !void {
             var y: f32 = 0.5;
             var angle: f32 = math.pi / 3.0;
         };
-        _ = zgui.sliderInt("Segments", .{ .v = &static.segments, .min = 1, .max = 20 });
-        _ = zgui.sliderFloat("Length", .{ .v = &static.length, .min = 0.0, .max = 1.0 });
-        _ = zgui.sliderFloat("Width", .{ .v = &static.width, .min = 0.0, .max = 1.0 });
-        _ = zgui.sliderFloat("X", .{ .v = &static.x, .min = 0.0, .max = 1.0 });
-        _ = zgui.sliderFloat("Y", .{ .v = &static.y, .min = 0.0, .max = 1.0 });
-        _ = zgui.sliderAngle("Angle", .{ .vrad = &static.angle, .deg_min = 0.0, .deg_max = 360.0 });
+        const needsVertexUpdate = demo.vertex_buffer == null or zgui.sliderInt("Segments", .{ .v = &pillControl.segments, .min = 1, .max = 20 });
+        if (needsVertexUpdate) {
+            const vertex_count = @intCast(u64, pillControl.segments + 1);
+            var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
+            defer allocator.free(vertex_data);
+
+            var index_data = try allocator.alloc(u32, @intCast(usize, vertex_count));
+            defer allocator.free(index_data);
+
+            vertex_generator.leftDisc(vertex_data, index_data);
+
+            if (demo.vertex_buffer) |vb| {
+                gctx.releaseResource(vb);
+            }
+            const vertex_buffer = gctx.createBuffer(.{
+                .usage = .{ .copy_dst = true, .vertex = true },
+                .size = vertex_count * @sizeOf(Vertex),
+            });
+            gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
+            demo.vertex_buffer = vertex_buffer;
+
+            if (demo.index_buffer) |ib| {
+                gctx.releaseResource(ib);
+            }
+            const index_buffer = gctx.createBuffer(.{
+                .usage = .{ .copy_dst = true, .index = true },
+                .size = vertex_count * @sizeOf(u32),
+            });
+            gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data);
+            demo.index_buffer = index_buffer;
+        }
+
+        var needInstanceUpdate = false;
+        needInstanceUpdate = needInstanceUpdate or zgui.sliderFloat("Length", .{ .v = &pillControl.length, .min = 0.0, .max = 1.0 });
+        needInstanceUpdate = needInstanceUpdate or zgui.sliderFloat("Width", .{ .v = &pillControl.width, .min = 0.0, .max = 1.0 });
+        needInstanceUpdate = needInstanceUpdate or zgui.sliderFloat("X", .{ .v = &pillControl.x, .min = 0.0, .max = 1.0 });
+        needInstanceUpdate = needInstanceUpdate or zgui.sliderFloat("Y", .{ .v = &pillControl.y, .min = 0.0, .max = 1.0 });
+        needInstanceUpdate = needInstanceUpdate or zgui.sliderAngle("Angle", .{ .vrad = &pillControl.angle, .deg_min = 0.0, .deg_max = 360.0 });
+        if (needInstanceUpdate) {
+            demo.pills.clearRetainingCapacity();
+            try demo.pills.append(.{
+                .length = pillControl.length,
+                .width = pillControl.width,
+                .position = .{ pillControl.x, pillControl.y },
+                .angle = pillControl.angle,
+            });
+        }
     }
     zgui.end();
 }
 
-fn calculateDimenions(gctx: *zgpu.GraphicsContext) Dimensions {
+fn calculateDimenions(gctx: *zgpu.GraphicsContext) Dimension {
     const width = @intToFloat(f32, gctx.swapchain_descriptor.width);
     const height = @intToFloat(f32, gctx.swapchain_descriptor.height);
     const delta = math.sign(@bitCast(i32, gctx.swapchain_descriptor.width) - @bitCast(i32, gctx.swapchain_descriptor.height));
@@ -225,37 +296,8 @@ fn draw(demo: *DemoState) void {
         defer encoder.release();
 
         pass: {
-
-            // Create a vertex buffer.
-            const vertex_buffer = gctx.createBuffer(.{
-                .usage = .{ .copy_dst = true, .vertex = true },
-                .size = 3 * @sizeOf(Vertex),
-            });
-            defer gctx.releaseResource(vertex_buffer);
-            const vertex_data = [_]Vertex{
-                .{
-                    .position = .{ -1.0, 1.0 },
-                },
-                .{
-                    .position = .{ -1.0, -1.0 },
-                },
-                .{
-                    .position = .{ 1.0, 1.0 },
-                },
-            };
-            gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data[0..]);
-
-            // Create an index buffer.
-            const index_buffer = gctx.createBuffer(.{
-                .usage = .{ .copy_dst = true, .index = true },
-                .size = 3 * @sizeOf(u32),
-            });
-            defer gctx.releaseResource(index_buffer);
-            const index_data = [_]u32{ 0, 1, 2 };
-            gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data[0..]);
-
-            const vb_info = gctx.lookupResourceInfo(vertex_buffer) orelse break :pass;
-            const ib_info = gctx.lookupResourceInfo(index_buffer) orelse break :pass;
+            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer.?) orelse break :pass;
+            const ib_info = gctx.lookupResourceInfo(demo.index_buffer.?) orelse break :pass;
             const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
             const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
             const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
@@ -288,13 +330,13 @@ fn draw(demo: *DemoState) void {
             pass.setPipeline(pipeline);
 
             {
-                const object_to_clip = zm.scaling(demo.dimensions.width / 2, demo.dimensions.height / 2, 1.0);
+                const object_to_clip = zm.scaling(demo.dimension.width / 2, demo.dimension.height / 2, 1.0);
 
                 const mem = gctx.uniformsAllocate(zm.Mat, 1);
                 mem.slice[0] = zm.transpose(object_to_clip);
 
                 pass.setBindGroup(0, bind_group, &.{mem.offset});
-                pass.drawIndexed(3, 1, 0, 0, 0);
+                pass.drawIndexed(7, 1, 0, 0, 0);
             }
         }
         {
@@ -322,7 +364,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.submit(&.{commands});
     if (gctx.present() == .swap_chain_resized) {
-        demo.dimensions = calculateDimenions(gctx);
+        demo.dimension = calculateDimenions(gctx);
 
         // Release old depth texture.
         gctx.releaseResource(demo.depth_texture_view);
@@ -392,7 +434,7 @@ pub fn main() !void {
 
     while (!window.shouldClose() and window.getKey(.escape) != .press) {
         zglfw.pollEvents();
-        try demo.update();
+        try demo.update(allocator);
         demo.draw();
     }
 }
