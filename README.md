@@ -66,7 +66,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
 * [Aftersun](https://github.com/foxnne/aftersun) - Top-down 2D RPG
 * [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
-* [elvengroin-legacy](https://github.com/Srekel/elvengroin-legacy) - TBD
+* [elvengroin legacy](https://github.com/Srekel/elvengroin-legacy) - TBD
 * [Wrinkles](https://github.com/meshula/wrinkles) - Wrinkles zig demonstrator
 
 ## Building sample applications
