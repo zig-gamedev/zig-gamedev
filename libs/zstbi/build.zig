@@ -1,7 +1,10 @@
 const std = @import("std");
 
 pub fn link(exe: *std.build.LibExeObjStep) void {
-    exe.addCSourceFile(thisDir() ++ "/libs/stbi/stb_image.c", &.{"-std=c99"});
+    exe.addCSourceFile(thisDir() ++ "/libs/stbi/stb_image.c", &.{
+        "-std=c99",
+        "-fno-sanitize=undefined",
+    });
 }
 
 pub const pkg = std.build.Pkg{
