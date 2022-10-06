@@ -25,12 +25,12 @@ Provided structs:
   - [x] `DataSourceNode`
   - [x] `SplitterNode`
   - [x] `BiquadNode`
-  - [x] `LpfNode`
-  - [x] `HpfNode`
+  - [x] `LpfNode // Low-Pass Filter`
+  - [x] `HpfNode // High-Pass Filter`
   - [x] `NotchNode`
   - [x] `PeakNode`
-  - [x] `LoshelfNode`
-  - [x] `HishelfNode`
+  - [x] `LoshelfNode // Low Shelf Filter`
+  - [x] `HishelfNode // High Shelf Filter`
   - [x] `DelayNode`
   - [x] custom nodes
 
