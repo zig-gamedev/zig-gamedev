@@ -53,14 +53,8 @@ _ = image_info.width;
 _ = image_info.height;
 _ = image_info.num_components;
 ```
-More functions:
+Misc functions:
 ```zig
-pub fn setHdrToLdrScale(scale: f32) void
-pub fn setHdrToLdrGamma(gamma: f32) void
-
-pub fn setLdrToHdrScale(scale: f32) void
-pub fn setLdrToHdrGamma(gamma: f32) void
-
 pub fn isHdr(filename: [:0]const u8) bool
 pub fn is16bit(filename: [:0]const u8) bool
 
