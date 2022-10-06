@@ -68,6 +68,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 * [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
 * [elvengroin legacy](https://github.com/Srekel/elvengroin-legacy) - TBD
 * [Wrinkles](https://github.com/meshula/wrinkles) - Wrinkles zig demonstrator
+* [jok](https://github.com/jack-ji/jok) - A minimal 2d/3d game framework for zig
 
 ## Building sample applications
 
