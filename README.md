@@ -1,12 +1,12 @@
 # zig-gamedev project
 
-Building gamedev ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021. If you can, please [help to sustain](https://github.com/sponsors/michal-z) the project. We create:
+We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021. Please consider [helping to sustain](https://github.com/sponsors/michal-z) the project. We create:
 
 * Sample [applications](#sample-applications)
 * Cross-platform and composable [libraries](#libraries)
 * Mini-games (coming soon)
 
-To get started on Windows/Linux/Mac try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
+To get started on Windows/Linux/macOS try out [physically based rendering (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/physically_based_rendering_wgpu) sample:
 ```
 git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
@@ -67,8 +67,8 @@ Some of the sample applications are listed below. More can be found in [samples]
 * [Aftersun](https://github.com/foxnne/aftersun) - Top-down 2D RPG
 * [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
 * [elvengroin legacy](https://github.com/Srekel/elvengroin-legacy) - TBD
-* [Wrinkles](https://github.com/meshula/wrinkles) - Wrinkles zig demonstrator
-* [jok](https://github.com/jack-ji/jok) - A minimal 2d/3d game framework for zig
+* [Wrinkles](https://github.com/meshula/wrinkles) - Wrinkles Zig demonstrator
+* [jok](https://github.com/jack-ji/jok) - A minimal 2D/3D game framework for Zig
 
 ## Building sample applications
 
