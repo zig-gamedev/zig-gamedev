@@ -62,10 +62,9 @@ pub fn main() !void {
     zaudio.init(allocator);
     defer zaudio.deinit();
 
-    const engine = try zaudio.createEngine(allocator, null);
+    const engine = try zaudio.createEngine(null);
 
     const music = try engine.createSoundFromFile(
-        allocator,
         content_dir ++ "Broke For Free - Night Owl.mp3",
         .{ .flags = .{ .stream = true } },
     );
