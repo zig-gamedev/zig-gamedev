@@ -1,4 +1,5 @@
 const std = @import("std");
+const expectEqual = std.testing.expectEqual;
 const expectApproxEqAbs = std.testing.expectApproxEqAbs;
 const math = std.math;
 
@@ -19,17 +20,25 @@ pub fn leftDisc(vertex_data: []Vertex, index_data: []u32) void {
             .position = .{ @round(@cos(angle) * 100) / 100.0, @round(@sin(angle) * 100) / 100.0 },
         };
     }
-    index_data[0] = 1;
-    index_data[1] = 0;
-    index_data[2] = 2;
-    index_data[3] = 6;
-    index_data[4] = 3;
-    index_data[5] = 5;
-    index_data[6] = 4;
+    var up = @intCast(u32, (index_data.len - 1) / 2 + @mod((index_data.len - 1), 2));
+    std.debug.print("up {} index_data.len {}\n", .{ up, index_data.len });
+    var down = up - 1;
+    var i: usize = 0;
+    while (i < index_data.len) : (i += 2) {
+        index_data[i] = up;
+        if (i + 1 == index_data.len) {
+            break;
+        }
+        index_data[i + 1] = down;
+        up += 1;
+        if (down > 0) {
+            down -= 1;
+        }
+    }
 }
 
 test "generate left disc" {
-    const segments = 6;
+    const segments = 7;
     const vertex_count = segments + 1;
     var vertex_data: [vertex_count]Vertex = undefined;
     var index_data: [vertex_count]u32 = undefined;
@@ -38,4 +47,5 @@ test "generate left disc" {
     try expectApproxEqAbs(-vertex_data[0].position[1], 1.0, 0.1);
     try expectApproxEqAbs(vertex_data[segments].position[0], 0.0, 0.1);
     try expectApproxEqAbs(vertex_data[segments].position[1], 1.0, 0.1);
+    try expectEqual(index_data, .{ 4, 3, 5, 2, 6, 1, 7, 0 });
 }

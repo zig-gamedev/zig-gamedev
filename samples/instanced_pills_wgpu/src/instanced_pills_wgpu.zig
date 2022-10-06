@@ -65,6 +65,7 @@ const DemoState = @This();
 gctx: *zgpu.GraphicsContext,
 
 pills: std.ArrayList(Pill),
+vertex_count: u32,
 
 dimension: Dimension,
 
@@ -177,6 +178,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
     return .{
         .gctx = gctx,
         .pills = std.ArrayList(Pill).init(allocator),
+        .vertex_count = 0,
         .dimension = calculateDimenions(gctx),
         .pipeline = pipeline,
         .vertex_buffer = null,
@@ -215,16 +217,16 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         );
 
         const pillControl = struct {
-            var segments: i32 = 6;
+            var segments: i32 = 7;
             var length: f32 = 0.5;
             var width: f32 = 0.1;
             var x: f32 = 0.5;
             var y: f32 = 0.5;
             var angle: f32 = math.pi / 3.0;
         };
-        const needsVertexUpdate = demo.vertex_buffer == null or zgui.sliderInt("Segments", .{ .v = &pillControl.segments, .min = 1, .max = 20 });
+        const needsVertexUpdate = demo.vertex_buffer == null or zgui.sliderInt("Segments", .{ .v = &pillControl.segments, .min = 2, .max = 20 });
         if (needsVertexUpdate) {
-            const vertex_count = @intCast(u64, pillControl.segments + 1);
+            const vertex_count = @intCast(u32, pillControl.segments + 1);
             var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
             defer allocator.free(vertex_data);
 
@@ -252,6 +254,8 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             });
             gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data);
             demo.index_buffer = index_buffer;
+
+            demo.vertex_count = vertex_count;
         }
 
         var needInstanceUpdate = false;
@@ -336,7 +340,7 @@ fn draw(demo: *DemoState) void {
                 mem.slice[0] = zm.transpose(object_to_clip);
 
                 pass.setBindGroup(0, bind_group, &.{mem.offset});
-                pass.drawIndexed(7, 1, 0, 0, 0);
+                pass.drawIndexed(demo.vertex_count, 1, 0, 0, 0);
             }
         }
         {
