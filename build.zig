@@ -11,7 +11,9 @@ pub fn build(b: *std.build.Builder) void {
     ensureTarget(options.target) catch return;
     ensureZigVersion() catch return;
     ensureGit(b.allocator) catch return;
-    ensureGitLfs(b.allocator) catch return;
+    ensureGitLfs(b.allocator, "install") catch return;
+    ensureGitLfs(b.allocator, "pull") catch return;
+    ensureGitLfsContent("/samples/triangle_wgpu/triangle_wgpu_content/Roboto-Medium.ttf") catch return;
 
     // Fetch the latest Dawn/WebGPU binaries.
     {
@@ -24,7 +26,7 @@ pub fn build(b: *std.build.Builder) void {
             return;
         };
     }
-    ensureGitLfsContent() catch return;
+    ensureGitLfsContent("/libs/zgpu/libs/dawn/x86_64-windows-gnu/dawn.lib") catch return;
 
     //
     // Sample applications
@@ -224,13 +226,11 @@ fn ensureGit(allocator: std.mem.Allocator) !void {
     }
 }
 
-fn ensureGitLfs(allocator: std.mem.Allocator) !void {
+fn ensureGitLfs(allocator: std.mem.Allocator, cmd: []const u8) !void {
     const printNoGitLfs = (struct {
         fn impl() void {
             std.log.err("\n" ++
                 \\---------------------------------------------------------------------------
-                \\
-                \\'git lfs install' failed.
                 \\
                 \\Please install Git LFS (Large File Support) extension and run 'zig build' again.
                 \\
@@ -241,7 +241,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
             , .{});
         }
     }).impl;
-    const argv = &[_][]const u8{ "git", "lfs", "install" };
+    const argv = &[_][]const u8{ "git", "lfs", cmd };
     const result = std.ChildProcess.exec(.{
         .allocator = allocator,
         .argv = argv,
@@ -260,7 +260,7 @@ fn ensureGitLfs(allocator: std.mem.Allocator) !void {
     }
 }
 
-fn ensureGitLfsContent() !void {
+fn ensureGitLfsContent(comptime file_path: []const u8) !void {
     const printNoGitLfsContent = (struct {
         fn impl() void {
             std.log.err("\n" ++
@@ -275,7 +275,7 @@ fn ensureGitLfsContent() !void {
             , .{});
         }
     }).impl;
-    const file = std.fs.openFileAbsolute(thisDir() ++ "/libs/zgpu/libs/dawn/x86_64-windows-gnu/dawn.lib", .{}) catch {
+    const file = std.fs.openFileAbsolute(thisDir() ++ file_path, .{}) catch {
         printNoGitLfsContent();
         return error.GitLfsNoContent;
     };
