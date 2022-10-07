@@ -1,3 +1,5 @@
+[Libraries](#libraries) - [Sample applications](#sample-applications) - [Vision](#vision) - [Others using zig-gamedev](#others-using-zig-gamedev) - [Monthly reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
+
 # zig-gamedev project
 
 We build game development ecosystem for [Zig programming language](https://ziglang.org/), everyday, full-time since July 2021. Please consider [helping to sustain](https://github.com/sponsors/michal-z) the project. We create:
@@ -12,7 +14,6 @@ git clone https://github.com/michal-z/zig-gamedev.git
 cd zig-gamedev
 zig build physically_based_rendering_wgpu-run
 ```
-[Projects using zig-gamedev](#projects-using-zig-gamedev) - [Monthly progress reports](https://github.com/michal-z/zig-gamedev/wiki/Progress-Reports) - [Roadmap](https://github.com/michal-z/zig-gamedev/wiki/Roadmap)
 
 ## Libraries
 Library | Latest version | Description
@@ -30,7 +31,7 @@ Library | Latest version | Description
 **[zpool](libs/zpool)** | 0.9 | Generic pool & handle implementation
 **[zjobs](libs/zjobs)** | 0.1 | Generic job queue implementation
 
-## Project vision
+## Vision
 * Very modular "toolbox of libraries", user can use only the components she needs
 * Works on Windows 10+ (DirectX 12), macOS 12+ (Metal) and Linux (Vulkan)
 * Has zero dependency except [Zig compiler (master)](https://ziglang.org/download/) and `git` with [Git LFS](https://git-lfs.github.com/) - no Visual Studio, Build Tools, Windows SDK, gcc, dev packages, system headers/libs, cmake, ninja, etc. is needed
@@ -62,7 +63,7 @@ Some of the sample applications are listed below. More can be found in [samples]
 
     <a href="samples/gui_test_wgpu"><img src="samples/gui_test_wgpu/screenshot.png" alt="gui test (wgpu)" height="200"></a>
 
-## Projects using zig-gamedev
+## Others using zig-gamedev
 
 * [Aftersun](https://github.com/foxnne/aftersun) - Top-down 2D RPG
 * [Simulations](https://github.com/ckrowland/simulations) - GPU Accelerated agent-based modeling to visualize and simulate complex systems
