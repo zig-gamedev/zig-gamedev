@@ -16,11 +16,12 @@ fn lerp(a: f32, b: f32, t: f32) f32 {
 pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
     var i: usize = 0;
     while (i <= segments) : (i += 1) {
-        const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @intToFloat(f32, i) / @intToFloat(f32, vertex_data.len - 1));
+        const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @intToFloat(f32, i) / @intToFloat(f32, segments));
         vertex_data[i] = .{
-            .position = .{ @round(@cos(angle) * 100) / 100.0, @round(@sin(angle) * 100) / 100.0 },
+            .position = .{ @cos(angle), @sin(angle) },
         };
     }
+
     var up = (segments + 1) / 2;
     var down = up - 1;
     i = 0;
@@ -37,7 +38,7 @@ pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
     }
 }
 
-test "generate left disc" {
+test "generate pull" {
     const segments = 7;
     const vertex_count = segments + 1;
     var vertex_data: [vertex_count]Vertex = undefined;
