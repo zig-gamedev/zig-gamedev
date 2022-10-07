@@ -17,15 +17,38 @@ const wgsl_vs =
 \\
 \\  struct Vertex {
 \\      @location(0) position: vec2<f32>,
+\\      @location(1) side: f32,
 \\  }
+\\
+\\  struct Instance {
+\\      @location(10) width: f32,
+\\      @location(11) length: f32,
+\\      @location(12) angle: f32,
+\\      @location(13) x: f32,
+\\      @location(14) y: f32,
+\\  }
+\\
 \\  struct Fragment {
 \\      @builtin(position) position: vec4<f32>,
 \\      @location(0) color: vec4<f32>,
 \\  }
 \\
-\\  @vertex fn main(vertex: Vertex) -> Fragment {
+\\  @vertex fn main(vertex: Vertex, instance: Instance) -> Fragment {
+\\      // WebGPU mat4x4 are column vectors
+\\      var width_mat: mat4x4<f32> = mat4x4(
+\\          instance.width, 0.0, 0.0, 0.0,
+\\          0.0, instance.width, 0.0, 0.0,
+\\          0.0, 0.0, instance.width, 0.0,
+\\          0.0, 0.0, 0.0, 1.0,
+\\      );
+\\      var length_mat: mat4x4<f32> = mat4x4(
+\\          1.0, 0.0, 0.0, 0.0,
+\\          0.0, 1.0, 0.0, 0.0,
+\\          0.0, 0.0, 1.0, 0.0,
+\\          0.0, 0.0, 0.0, 1.0,
+\\      );
 \\      var fragment: Fragment;
-\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * object_to_clip;
+\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * object_to_clip;
 \\      fragment.color = vec4(1.0, 0.0, 0.0, 1.0);
 \\      return fragment;
 \\  }
@@ -47,12 +70,12 @@ const wgsl_fs =
 ;
 
 const Vertex = vertex_generator.Vertex;
-
 const Pill = struct {
-    length: f32,
     width: f32,
-    position: [2]f32,
+    length: f32,
     angle: f32,
+    x: f32,
+    y: f32,
 };
 
 const Dimension = struct {
@@ -74,6 +97,7 @@ bind_group: zgpu.BindGroupHandle,
 
 vertex_buffer: ?zgpu.BufferHandle,
 index_buffer: ?zgpu.BufferHandle,
+instance_buffer: ?zgpu.BufferHandle,
 
 depth_texture: zgpu.TextureHandle,
 depth_texture_view: zgpu.TextureViewHandle,
@@ -86,7 +110,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const scale = window.getContentScale();
         break :scale_factor math.max(scale[0], scale[1]);
     };
-    const font_size = 16.0 * scale_factor;
+    const font_size = 20.0 * scale_factor;
     const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
     assert(zgui.io.getFont(0) == font_normal);
 
@@ -126,14 +150,57 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         }};
 
         const vertex_attributes = [_]wgpu.VertexAttribute{
-            .{ .format = .float32x2, .offset = 0, .shader_location = 0 },
-            // .{ .format = .float32x3, .offset = @offsetOf(Vertex, "color"), .shader_location = 1 },
+            .{
+                .format = .float32x2,
+                .offset = @offsetOf(Vertex, "position"),
+                .shader_location = 0,
+            },
+            .{
+                .format = .float32,
+                .offset = @offsetOf(Vertex, "side"),
+                .shader_location = 1,
+            },
         };
-        const vertex_buffers = [_]wgpu.VertexBufferLayout{.{
-            .array_stride = @sizeOf(Vertex),
-            .attribute_count = vertex_attributes.len,
-            .attributes = &vertex_attributes,
-        }};
+        const instance_attributes = [_]wgpu.VertexAttribute{
+            .{
+                .format = .float32,
+                .offset = @offsetOf(Pill, "width"),
+                .shader_location = 10,
+            },
+            .{
+                .format = .float32,
+                .offset = @offsetOf(Pill, "length"),
+                .shader_location = 11,
+            },
+            .{
+                .format = .float32,
+                .offset = @offsetOf(Pill, "angle"),
+                .shader_location = 12,
+            },
+            .{
+                .format = .float32,
+                .offset = @offsetOf(Pill, "x"),
+                .shader_location = 13,
+            },
+            .{
+                .format = .float32,
+                .offset = @offsetOf(Pill, "y"),
+                .shader_location = 14,
+            },
+        };
+        const vertex_buffers = [_]wgpu.VertexBufferLayout{
+            .{
+                .array_stride = @sizeOf(Vertex),
+                .attribute_count = vertex_attributes.len,
+                .attributes = &vertex_attributes,
+            },
+            .{
+                .array_stride = @sizeOf(Pill),
+                .step_mode = .instance,
+                .attribute_count = instance_attributes.len,
+                .attributes = &instance_attributes,
+            },
+        };
 
         const pipeline_descriptor = wgpu.RenderPipelineDescriptor{
             .vertex = wgpu.VertexState{
@@ -179,10 +246,11 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         .gctx = gctx,
         .pills = std.ArrayList(Pill).init(allocator),
         .vertex_count = 0,
-        .dimension = calculateDimenions(gctx),
+        .dimension = calculate_dimensions(gctx),
         .pipeline = pipeline,
         .vertex_buffer = null,
         .index_buffer = null,
+        .instance_buffer = null,
         .bind_group = bind_group,
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
@@ -196,11 +264,18 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     if (demo.vertex_buffer) |vb| {
         gctx.releaseResource(vb);
     }
-    if (demo.index_buffer) |ib| {
-        gctx.releaseResource(ib);
+    if (demo.index_buffer) |idb| {
+        gctx.releaseResource(idb);
+    }
+    if (demo.instance_buffer) |itb| {
+        gctx.releaseResource(itb);
     }
     demo.pills.deinit();
     gctx.destroy(allocator);
+}
+
+fn ensure_4b_multiple(size: usize) usize {
+    return (size + 3) & ~@as(usize, 3);
 }
 
 fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
@@ -216,7 +291,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             .{ gctx.stats.average_cpu_time, gctx.stats.fps },
         );
 
-        const pillControl = struct {
+        const pill_control = struct {
             var segments: i32 = 7;
             var length: f32 = 0.5;
             var width: f32 = 0.1;
@@ -224,9 +299,10 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             var y: f32 = 0.5;
             var angle: f32 = math.pi / 3.0;
         };
-        const needsVertexUpdate = demo.vertex_buffer == null or zgui.sliderInt("Segments", .{ .v = &pillControl.segments, .min = 2, .max = 20 });
-        if (needsVertexUpdate) {
-            const segments = @intCast(u32, pillControl.segments);
+        const init_buffers = demo.vertex_buffer == null;
+        const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &pill_control.segments, .min = 2, .max = 20 });
+        if (init_buffers or needs_vertex_update) {
+            const segments = @intCast(u32, pill_control.segments);
             const vertex_count = 2 * (segments + 1);
             var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
             defer allocator.free(vertex_data);
@@ -241,44 +317,54 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             }
             const vertex_buffer = gctx.createBuffer(.{
                 .usage = .{ .copy_dst = true, .vertex = true },
-                .size = vertex_count * @sizeOf(Vertex),
+                .size = ensure_4b_multiple(vertex_count * @sizeOf(Vertex)),
             });
             gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
             demo.vertex_buffer = vertex_buffer;
 
-            if (demo.index_buffer) |ib| {
-                gctx.releaseResource(ib);
+            if (demo.index_buffer) |idb| {
+                gctx.releaseResource(idb);
             }
             const index_buffer = gctx.createBuffer(.{
                 .usage = .{ .copy_dst = true, .index = true },
-                .size = vertex_count * @sizeOf(u32),
+                .size = ensure_4b_multiple(vertex_count * @sizeOf(u32)),
             });
             gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data);
             demo.index_buffer = index_buffer;
 
+            if (demo.instance_buffer) |itb| {
+                gctx.releaseResource(itb);
+            }
+            const instance_buffer = gctx.createBuffer(.{
+                .usage = .{ .copy_dst = true, .vertex = true },
+                .size = ensure_4b_multiple(1 + @sizeOf(Pill)),
+            });
+            demo.instance_buffer = instance_buffer;
+
             demo.vertex_count = vertex_count;
         }
 
-        var needInstanceUpdate = false;
-        needInstanceUpdate = needInstanceUpdate or zgui.sliderFloat("Length", .{ .v = &pillControl.length, .min = 0.0, .max = 1.0 });
-        needInstanceUpdate = needInstanceUpdate or zgui.sliderFloat("Width", .{ .v = &pillControl.width, .min = 0.0, .max = 1.0 });
-        needInstanceUpdate = needInstanceUpdate or zgui.sliderFloat("X", .{ .v = &pillControl.x, .min = 0.0, .max = 1.0 });
-        needInstanceUpdate = needInstanceUpdate or zgui.sliderFloat("Y", .{ .v = &pillControl.y, .min = 0.0, .max = 1.0 });
-        needInstanceUpdate = needInstanceUpdate or zgui.sliderAngle("Angle", .{ .vrad = &pillControl.angle, .deg_min = 0.0, .deg_max = 360.0 });
-        if (needInstanceUpdate) {
+        var need_instance_update = std.bit_set.ArrayBitSet(u8, 5).initEmpty();
+        need_instance_update.setValue(0, zgui.sliderFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = 1.0 }));
+        need_instance_update.setValue(1, zgui.sliderFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = 1.0 }));
+        need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = 0.0, .deg_max = 360.0 }));
+        need_instance_update.setValue(3, zgui.sliderFloat("X", .{ .v = &pill_control.x, .min = 0.0, .max = 1.0 }));
+        need_instance_update.setValue(4, zgui.sliderFloat("Y", .{ .v = &pill_control.y, .min = 0.0, .max = 1.0 }));
+        if (init_buffers or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.pills.append(.{
-                .length = pillControl.length,
-                .width = pillControl.width,
-                .position = .{ pillControl.x, pillControl.y },
-                .angle = pillControl.angle,
+                .width = pill_control.width,
+                .length = pill_control.length,
+                .angle = pill_control.angle,
+                .x = pill_control.x,
+                .y = pill_control.y,
             });
         }
     }
     zgui.end();
 }
 
-fn calculateDimenions(gctx: *zgpu.GraphicsContext) Dimension {
+fn calculate_dimensions(gctx: *zgpu.GraphicsContext) Dimension {
     const width = @intToFloat(f32, gctx.swapchain_descriptor.width);
     const height = @intToFloat(f32, gctx.swapchain_descriptor.height);
     const delta = math.sign(@bitCast(i32, gctx.swapchain_descriptor.width) - @bitCast(i32, gctx.swapchain_descriptor.height));
@@ -302,10 +388,13 @@ fn draw(demo: *DemoState) void {
 
         pass: {
             const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer.?) orelse break :pass;
-            const ib_info = gctx.lookupResourceInfo(demo.index_buffer.?) orelse break :pass;
+            const itb_info = gctx.lookupResourceInfo(demo.instance_buffer.?) orelse break :pass;
+            const idb_info = gctx.lookupResourceInfo(demo.index_buffer.?) orelse break :pass;
             const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
             const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
             const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
+
+            gctx.queue.writeBuffer(gctx.lookupResource(demo.instance_buffer.?).?, 0, Pill, demo.pills.items);
 
             const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                 .view = back_buffer_view,
@@ -330,7 +419,9 @@ fn draw(demo: *DemoState) void {
             }
 
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
-            pass.setIndexBuffer(ib_info.gpuobj.?, .uint32, 0, ib_info.size);
+            pass.setVertexBuffer(1, itb_info.gpuobj.?, 0, itb_info.size);
+
+            pass.setIndexBuffer(idb_info.gpuobj.?, .uint32, 0, idb_info.size);
 
             pass.setPipeline(pipeline);
 
@@ -341,7 +432,7 @@ fn draw(demo: *DemoState) void {
                 mem.slice[0] = zm.transpose(object_to_clip);
 
                 pass.setBindGroup(0, bind_group, &.{mem.offset});
-                pass.drawIndexed(demo.vertex_count, 1, 0, 0, 0);
+                pass.drawIndexed(demo.vertex_count, @intCast(u32, demo.pills.items.len), 0, 0, 0);
             }
         }
         {
@@ -369,7 +460,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.submit(&.{commands});
     if (gctx.present() == .swap_chain_resized) {
-        demo.dimension = calculateDimenions(gctx);
+        demo.dimension = calculate_dimensions(gctx);
 
         // Release old depth texture.
         gctx.releaseResource(demo.depth_texture_view);

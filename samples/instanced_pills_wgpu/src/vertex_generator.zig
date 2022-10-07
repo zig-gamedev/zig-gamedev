@@ -7,6 +7,7 @@ const tau = 2 * math.pi;
 
 pub const Vertex = struct {
     position: [2]f32,
+    side: f32,
 };
 
 fn lerp(a: f32, b: f32, t: f32) f32 {
@@ -19,12 +20,14 @@ pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
         const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @intToFloat(f32, i) / @intToFloat(f32, segments));
         vertex_data[i] = .{
             .position = .{ @cos(angle), @sin(angle) },
+            .side = -1.0,
         };
     }
     i = 0;
     while (i <= segments) : (i += 1) {
         vertex_data[i + segments + 1] = .{
             .position = .{ -vertex_data[segments - i].position[0], vertex_data[segments - i].position[1] },
+            .side = 1.0,
         };
     }
 
