@@ -227,7 +227,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         const needsVertexUpdate = demo.vertex_buffer == null or zgui.sliderInt("Segments", .{ .v = &pillControl.segments, .min = 2, .max = 20 });
         if (needsVertexUpdate) {
             const segments = @intCast(u32, pillControl.segments);
-            const vertex_count = segments + 1;
+            const vertex_count = 2 * (segments + 1);
             var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
             defer allocator.free(vertex_data);
 

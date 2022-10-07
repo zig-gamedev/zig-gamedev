@@ -21,32 +21,47 @@ pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
             .position = .{ @cos(angle), @sin(angle) },
         };
     }
+    i = 0;
+    while (i <= segments) : (i += 1) {
+        vertex_data[i + segments + 1] = .{
+            .position = .{ -vertex_data[segments - i].position[0], vertex_data[segments - i].position[1] },
+        };
+    }
 
     var up = (segments + 1) / 2;
     var down = up - 1;
     i = 0;
-    while (i <= segments) : (i += 2) {
+    while (i < index_data.len) : (i += 2) {
         index_data[i] = up;
-        if (i == segments) {
+        if (i == index_data.len - 1) {
             break;
         }
         index_data[i + 1] = down;
         up += 1;
-        if (down > 0) {
-            down -= 1;
+        if (down == 0) {
+            down = @intCast(u32, index_data.len);
         }
+        down -= 1;
     }
 }
 
-test "generate pull" {
-    const segments = 7;
-    const vertex_count = segments + 1;
-    var vertex_data: [vertex_count]Vertex = undefined;
-    var index_data: [vertex_count]u32 = undefined;
-    pill(segments, &vertex_data, &index_data);
+test "generate 6 segment pill" {
+    var vertex_data: [14]Vertex = undefined;
+    var index_data: [14]u32 = undefined;
+    pill(6, &vertex_data, &index_data);
     try expectApproxEqAbs(vertex_data[0].position[0], 0.0, 0.1);
-    try expectApproxEqAbs(-vertex_data[0].position[1], 1.0, 0.1);
-    try expectApproxEqAbs(vertex_data[segments].position[0], 0.0, 0.1);
-    try expectApproxEqAbs(vertex_data[segments].position[1], 1.0, 0.1);
-    try expectEqual(index_data, .{ 4, 3, 5, 2, 6, 1, 7, 0 });
+    try expectApproxEqAbs(vertex_data[0].position[1], -1.0, 0.1);
+    try expectApproxEqAbs(vertex_data[3].position[0], -1.0, 0.1);
+    try expectApproxEqAbs(vertex_data[3].position[1], 0.0, 0.1);
+    try expectApproxEqAbs(vertex_data[6].position[0], 0.0, 0.1);
+    try expectApproxEqAbs(vertex_data[6].position[1], 1.0, 0.1);
+
+    try expectApproxEqAbs(vertex_data[7].position[0], 0.0, 0.1);
+    try expectApproxEqAbs(vertex_data[7].position[1], 1.0, 0.1);
+    try expectApproxEqAbs(vertex_data[10].position[0], 1.0, 0.1);
+    try expectApproxEqAbs(vertex_data[10].position[1], 0.0, 0.1);
+    try expectApproxEqAbs(vertex_data[13].position[0], 0.0, 0.1);
+    try expectApproxEqAbs(vertex_data[13].position[1], -1.0, 0.1);
+
+    try expectEqual(index_data, .{ 3, 2, 4, 1, 5, 0, 6, 13, 7, 12, 8, 11, 9, 10 });
 }
