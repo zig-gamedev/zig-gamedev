@@ -20,8 +20,7 @@ pub fn leftDisc(vertex_data: []Vertex, index_data: []u32) void {
             .position = .{ @round(@cos(angle) * 100) / 100.0, @round(@sin(angle) * 100) / 100.0 },
         };
     }
-    var up = @intCast(u32, (index_data.len - 1) / 2 + @mod((index_data.len - 1), 2));
-    std.debug.print("up {} index_data.len {}\n", .{ up, index_data.len });
+    var up = @intCast(u32, index_data.len / 2);
     var down = up - 1;
     var i: usize = 0;
     while (i < index_data.len) : (i += 2) {
