@@ -13,19 +13,20 @@ fn lerp(a: f32, b: f32, t: f32) f32 {
     return a * (1 - t) + b * t;
 }
 
-pub fn leftDisc(vertex_data: []Vertex, index_data: []u32) void {
-    for (vertex_data) |*vertex, i| {
+pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
+    var i: usize = 0;
+    while (i <= segments) : (i += 1) {
         const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @intToFloat(f32, i) / @intToFloat(f32, vertex_data.len - 1));
-        vertex.* = .{
+        vertex_data[i] = .{
             .position = .{ @round(@cos(angle) * 100) / 100.0, @round(@sin(angle) * 100) / 100.0 },
         };
     }
-    var up = @intCast(u32, index_data.len / 2);
+    var up = (segments + 1) / 2;
     var down = up - 1;
-    var i: usize = 0;
-    while (i < index_data.len) : (i += 2) {
+    i = 0;
+    while (i <= segments) : (i += 2) {
         index_data[i] = up;
-        if (i + 1 == index_data.len) {
+        if (i == segments) {
             break;
         }
         index_data[i + 1] = down;
@@ -41,7 +42,7 @@ test "generate left disc" {
     const vertex_count = segments + 1;
     var vertex_data: [vertex_count]Vertex = undefined;
     var index_data: [vertex_count]u32 = undefined;
-    leftDisc(&vertex_data, &index_data);
+    pill(segments, &vertex_data, &index_data);
     try expectApproxEqAbs(vertex_data[0].position[0], 0.0, 0.1);
     try expectApproxEqAbs(-vertex_data[0].position[1], 1.0, 0.1);
     try expectApproxEqAbs(vertex_data[segments].position[0], 0.0, 0.1);
