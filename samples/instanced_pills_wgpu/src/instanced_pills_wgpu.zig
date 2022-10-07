@@ -42,13 +42,13 @@ const wgsl_vs =
 \\          0.0, 0.0, 0.0, 1.0,
 \\      );
 \\      var length_mat: mat4x4<f32> = mat4x4(
-\\          1.0, 0.0, 0.0, 0.0,
+\\          1.0, 0.0, 0.0, vertex.side * instance.length,
 \\          0.0, 1.0, 0.0, 0.0,
 \\          0.0, 0.0, 1.0, 0.0,
 \\          0.0, 0.0, 0.0, 1.0,
 \\      );
 \\      var fragment: Fragment;
-\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * object_to_clip;
+\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * length_mat * object_to_clip;
 \\      fragment.color = vec4(1.0, 0.0, 0.0, 1.0);
 \\      return fragment;
 \\  }
