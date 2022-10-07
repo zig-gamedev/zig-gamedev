@@ -22,7 +22,7 @@ pub fn build(b: *std.build.Builder) void {
         child.stderr = std.io.getStdErr();
         child.stdout = std.io.getStdOut();
         _ = child.spawnAndWait() catch {
-            std.log.err("Failed to fetch git submodule. Please try to re-clone.\n", .{});
+            std.log.err("Failed to fetch git submodule. Please try to re-clone.", .{});
             return;
         };
     }

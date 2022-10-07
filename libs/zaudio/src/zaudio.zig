@@ -606,22 +606,22 @@ const NodeImpl = opaque {
             }
             extern fn ma_node_get_node_graph(node: Node) NodeGraph;
 
-            pub fn getNumInputBuses(node: T) u32 {
+            pub fn getInputBusCount(node: T) u32 {
                 return ma_node_get_input_bus_count(node.asNode());
             }
             extern fn ma_node_get_input_bus_count(node: Node) u32;
 
-            pub fn getNumOutputBuses(node: T) u32 {
+            pub fn getOutputBusCount(node: T) u32 {
                 return ma_node_get_output_bus_count(node.asNode());
             }
             extern fn ma_node_get_output_bus_count(node: Node) u32;
 
-            pub fn getNumInputChannels(node: T, bus_index: u32) u32 {
+            pub fn getInputChannels(node: T, bus_index: u32) u32 {
                 return ma_node_get_input_channels(node.asNode(), bus_index);
             }
             extern fn ma_node_get_input_channels(node: Node, bus_index: u32) u32;
 
-            pub fn getNumOutputChannels(node: T, bus_index: u32) u32 {
+            pub fn getOutputChannels(node: T, bus_index: u32) u32 {
                 return ma_node_get_output_channels(node.asNode(), bus_index);
             }
             extern fn ma_node_get_output_channels(node: Node, bus_index: u32) u32;
@@ -2603,10 +2603,10 @@ test "zaudio.soundgroup.basic" {
     try sgroup.stop();
     try sgroup.start();
 
-    _ = sgroup.getNumInputChannels(0);
-    _ = sgroup.getNumOutputChannels(0);
-    _ = sgroup.getNumInputBuses();
-    _ = sgroup.getNumOutputBuses();
+    _ = sgroup.getInputChannels(0);
+    _ = sgroup.getOutputChannels(0);
+    _ = sgroup.getInputBusCount();
+    _ = sgroup.getOutputBusCount();
 
     sgroup.setVolume(0.5);
     try expect(sgroup.getVolume() == 0.5);
@@ -2649,10 +2649,10 @@ test "zaudio.sound.basic" {
     const sound = try engine.createSound(config);
     defer sound.destroy();
 
-    _ = sound.getNumInputChannels(0);
-    _ = sound.getNumOutputChannels(0);
-    _ = sound.getNumInputBuses();
-    _ = sound.getNumOutputBuses();
+    _ = sound.getInputChannels(0);
+    _ = sound.getOutputChannels(0);
+    _ = sound.getInputBusCount();
+    _ = sound.getOutputBusCount();
 
     sound.setVolume(0.25);
     try expect(sound.getVolume() == 0.25);
