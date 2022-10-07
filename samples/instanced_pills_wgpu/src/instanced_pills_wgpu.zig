@@ -47,8 +47,14 @@ const wgsl_vs =
 \\          0.0, 0.0, 1.0, 0.0,
 \\          0.0, 0.0, 0.0, 1.0,
 \\      );
+\\      var angle_mat: mat4x4<f32> = mat4x4(
+\\          cos(instance.angle), -sin(instance.angle), 0.0, 0.0,
+\\          sin(instance.angle), cos(instance.angle), 0.0, 0.0,
+\\          0.0, 0.0, 1.0, 0.0,
+\\          0.0, 0.0, 0.0, 1.0,
+\\      );
 \\      var fragment: Fragment;
-\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * length_mat * object_to_clip;
+\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * length_mat * angle_mat * object_to_clip;
 \\      fragment.color = vec4(1.0, 0.0, 0.0, 1.0);
 \\      return fragment;
 \\  }
