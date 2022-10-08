@@ -53,8 +53,14 @@ const wgsl_vs =
 \\          0.0, 0.0, 1.0, 0.0,
 \\          0.0, 0.0, 0.0, 1.0,
 \\      );
+\\      var position_mat: mat4x4<f32> = mat4x4(
+\\          1.0, 0.0, 0.0, instance.x,
+\\          0.0, 1.0, 0.0, instance.y,
+\\          0.0, 0.0, 1.0, 0.0,
+\\          0.0, 0.0, 0.0, 1.0,
+\\      );
 \\      var fragment: Fragment;
-\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * length_mat * angle_mat * object_to_clip;
+\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * length_mat * angle_mat * position_mat * object_to_clip;
 \\      fragment.color = vec4(1.0, 0.0, 0.0, 1.0);
 \\      return fragment;
 \\  }
@@ -268,13 +274,13 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     zgui.backend.deinit();
     zgui.deinit();
     if (demo.vertex_buffer) |vb| {
-        gctx.releaseResource(vb);
+        gctx.destroyResource(vb);
     }
     if (demo.index_buffer) |idb| {
-        gctx.releaseResource(idb);
+        gctx.destroyResource(idb);
     }
     if (demo.instance_buffer) |itb| {
-        gctx.releaseResource(itb);
+        gctx.destroyResource(itb);
     }
     demo.pills.deinit();
     gctx.destroy(allocator);
@@ -302,7 +308,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             var length: f32 = 0.5;
             var width: f32 = 0.1;
             var x: f32 = 0.5;
-            var y: f32 = 0.5;
+            var y: f32 = -0.25;
             var angle: f32 = math.pi / 3.0;
         };
         const init_buffers = demo.vertex_buffer == null;
@@ -319,7 +325,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             vertex_generator.pill(segments, vertex_data, index_data);
 
             if (demo.vertex_buffer) |vb| {
-                gctx.releaseResource(vb);
+                gctx.destroyResource(vb);
             }
             const vertex_buffer = gctx.createBuffer(.{
                 .usage = .{ .copy_dst = true, .vertex = true },
@@ -329,7 +335,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             demo.vertex_buffer = vertex_buffer;
 
             if (demo.index_buffer) |idb| {
-                gctx.releaseResource(idb);
+                gctx.destroyResource(idb);
             }
             const index_buffer = gctx.createBuffer(.{
                 .usage = .{ .copy_dst = true, .index = true },
@@ -339,7 +345,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             demo.index_buffer = index_buffer;
 
             if (demo.instance_buffer) |itb| {
-                gctx.releaseResource(itb);
+                gctx.destroyResource(itb);
             }
             const instance_buffer = gctx.createBuffer(.{
                 .usage = .{ .copy_dst = true, .vertex = true },
@@ -351,11 +357,11 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         }
 
         var need_instance_update = std.bit_set.ArrayBitSet(u8, 5).initEmpty();
-        need_instance_update.setValue(0, zgui.sliderFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = 1.0 }));
+        need_instance_update.setValue(0, zgui.sliderFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = 0.5 }));
         need_instance_update.setValue(1, zgui.sliderFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = 1.0 }));
         need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = 0.0, .deg_max = 360.0 }));
-        need_instance_update.setValue(3, zgui.sliderFloat("X", .{ .v = &pill_control.x, .min = 0.0, .max = 1.0 }));
-        need_instance_update.setValue(4, zgui.sliderFloat("Y", .{ .v = &pill_control.y, .min = 0.0, .max = 1.0 }));
+        need_instance_update.setValue(3, zgui.sliderFloat("X", .{ .v = &pill_control.x, .min = -1.0, .max = 1.0 }));
+        need_instance_update.setValue(4, zgui.sliderFloat("Y", .{ .v = &pill_control.y, .min = -1.0, .max = 1.0 }));
         if (init_buffers or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.pills.append(.{
