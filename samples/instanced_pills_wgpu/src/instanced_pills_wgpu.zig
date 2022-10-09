@@ -320,7 +320,14 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         gctx.swapchain_descriptor.width,
         gctx.swapchain_descriptor.height,
     );
-    if (zgui.begin("Pill control", .{})) {
+    if (zgui.begin("Pill control", .{
+        .flags = .{
+            .no_title_bar = true,
+            .no_move = true,
+            .no_collapse = true,
+            .always_auto_resize = true,
+        },
+    })) {
         zgui.text(
             "{d:.3} ms/frame ({d:.1} fps)",
             .{ gctx.stats.average_cpu_time, gctx.stats.fps },
@@ -424,7 +431,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             const v1 = zm.mul(v, zm.mul(width_mat, zm.mul(v1_length_mat, zm.mul(angle_mat, position_mat))));
 
             if (dragging.state == .idle and demo.gctx.window.getMouseButton(.left) == .press) {
-                try gctx.window.setInputMode(zglfw.InputMode.cursor, zglfw.InputModeCursor.disabled);
+                try gctx.window.setInputMode(.cursor, .disabled);
 
                 const v0_dx = object_position[0] - v0[0];
                 const v0_dy = object_position[1] - v0[1];
@@ -444,7 +451,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             } else {
                 if (demo.gctx.window.getMouseButton(.left) == .release) {
                     dragging.state = .idle;
-                    try gctx.window.setInputMode(zglfw.InputMode.cursor, zglfw.InputModeCursor.normal);
+                    try gctx.window.setInputMode(.cursor, .normal);
                 } else {
                     const object_position_delta: zm.F32x4 = .{ object_position[0] - dragging.object_position_start[0], object_position[1] - dragging.object_position_start[1], 0.0, 1.0 };
 
