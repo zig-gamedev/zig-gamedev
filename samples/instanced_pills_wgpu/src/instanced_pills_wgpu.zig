@@ -320,20 +320,22 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         gctx.swapchain_descriptor.width,
         gctx.swapchain_descriptor.height,
     );
-    if (zgui.begin("Pill control", .{
+    _ = zgui.begin("Pill", .{
         .flags = .{
             .no_title_bar = true,
             .no_move = true,
             .no_collapse = true,
             .always_auto_resize = true,
         },
-    })) {
-        zgui.text(
-            "{d:.3} ms/frame ({d:.1} fps)",
-            .{ gctx.stats.average_cpu_time, gctx.stats.fps },
-        );
-        zgui.separator();
-
+    });
+    defer zgui.end();
+    zgui.text(
+        "{d:.3} ms/frame ({d:.1} fps)",
+        .{ gctx.stats.average_cpu_time, gctx.stats.fps },
+    );
+    _ = zgui.beginTabBar("Demo picker", .{});
+    defer zgui.endTabBar();
+    if (zgui.beginTabItem("Single pill", .{})) {
         const pill_control = struct {
             var segments: i32 = 7;
             var length: f32 = 0.5;
@@ -487,8 +489,8 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                 }
             }
         }
+        zgui.endTabItem();
     }
-    zgui.end();
 }
 
 fn calculate_dimensions(gctx: *zgpu.GraphicsContext) Dimension {
