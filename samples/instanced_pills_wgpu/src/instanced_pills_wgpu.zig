@@ -332,6 +332,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             "{d:.3} ms/frame ({d:.1} fps)",
             .{ gctx.stats.average_cpu_time, gctx.stats.fps },
         );
+        zgui.separator();
 
         const pill_control = struct {
             var segments: i32 = 7;
@@ -340,7 +341,6 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             var position: [2]f32 = .{ 0.5, -0.25 };
             var angle: f32 = math.pi / 3.0;
         };
-        zgui.textUnformatted("");
         zgui.textUnformatted("Drag sliders or pill directly");
         const init_buffers = demo.vertex_buffer == null;
         const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &pill_control.segments, .min = 2, .max = 20 });
@@ -388,10 +388,10 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         }
 
         var need_instance_update = std.bit_set.ArrayBitSet(u8, 4).initEmpty();
-        need_instance_update.setValue(0, zgui.sliderFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = 0.5 }));
-        need_instance_update.setValue(1, zgui.sliderFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = 1.0 }));
+        need_instance_update.setValue(0, zgui.dragFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = std.math.inf(f32), .speed = 0.001 }));
+        need_instance_update.setValue(1, zgui.dragFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = std.math.inf(f32), .speed = 0.01 }));
         need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = -180.0, .deg_max = 180.0 }));
-        need_instance_update.setValue(3, zgui.sliderFloat2("Position", .{ .v = &pill_control.position, .min = -1.0, .max = 1.0 }));
+        need_instance_update.setValue(3, zgui.dragFloat2("Position", .{ .v = &pill_control.position, .speed = 0.01 }));
         if (init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.add_pill(.{
