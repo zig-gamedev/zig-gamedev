@@ -15,36 +15,38 @@ fn lerp(a: f32, b: f32, t: f32) f32 {
 }
 
 pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
-    var i: usize = 0;
-    while (i <= segments) : (i += 1) {
-        const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @intToFloat(f32, i) / @intToFloat(f32, segments));
-        vertex_data[i] = .{
-            .position = .{ @cos(angle), @sin(angle) },
-            .side = -1.0,
-        };
+    {
+        var i: usize = 0;
+        while (i <= segments) : (i += 1) {
+            const angle = lerp(3.0 * tau / 4.0, tau / 4.0, @intToFloat(f32, i) / @intToFloat(f32, segments));
+            vertex_data[i] = .{
+                .position = .{ @cos(angle), @sin(angle) },
+                .side = -1.0,
+            };
+        }
     }
-    i = 0;
-    while (i <= segments) : (i += 1) {
-        vertex_data[i + segments + 1] = .{
-            .position = .{ -vertex_data[segments - i].position[0], vertex_data[segments - i].position[1] },
+    for (vertex_data[0..(segments + 1)]) |v, i| {
+        vertex_data[vertex_data.len - 1 - i] = .{
+            .position = .{ -v.position[0], v.position[1] },
             .side = 1.0,
         };
     }
-
-    var up = (segments + 1) / 2;
-    var down = up - 1;
-    i = 0;
-    while (i < index_data.len) : (i += 2) {
-        index_data[i] = up;
-        if (i == index_data.len - 1) {
-            break;
+    {
+        var up = (segments + 1) / 2;
+        var down = up - 1;
+        var i: usize = 0;
+        while (i < index_data.len) : (i += 2) {
+            index_data[i] = up;
+            if (i == index_data.len - 1) {
+                break;
+            }
+            index_data[i + 1] = down;
+            up += 1;
+            if (down == 0) {
+                down = @intCast(u32, index_data.len);
+            }
+            down -= 1;
         }
-        index_data[i + 1] = down;
-        up += 1;
-        if (down == 0) {
-            down = @intCast(u32, index_data.len);
-        }
-        down -= 1;
     }
 }
 

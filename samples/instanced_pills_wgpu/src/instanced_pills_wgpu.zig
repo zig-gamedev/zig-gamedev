@@ -38,11 +38,11 @@ const wgsl_vs =
 \\      var width_mat: mat4x4<f32> = mat4x4(
 \\          instance.width, 0.0, 0.0, 0.0,
 \\          0.0, instance.width, 0.0, 0.0,
-\\          0.0, 0.0, instance.width, 0.0,
+\\          0.0, 0.0, 1.0, 0.0,
 \\          0.0, 0.0, 0.0, 1.0,
 \\      );
 \\      var length_mat: mat4x4<f32> = mat4x4(
-\\          1.0, 0.0, 0.0, vertex.side * instance.length,
+\\          1.0, 0.0, 0.0, vertex.side * instance.length / 2.0,
 \\          0.0, 1.0, 0.0, 0.0,
 \\          0.0, 0.0, 1.0, 0.0,
 \\          0.0, 0.0, 0.0, 1.0,
@@ -290,6 +290,40 @@ fn ensure_4b_multiple(size: usize) usize {
     return (size + 3) & ~@as(usize, 3);
 }
 
+fn add_pill(demo: *DemoState, pill: Pill) !void {
+    try demo.pills.append(pill);
+}
+
+const UpdatedPill = struct {
+    length: f32,
+    angle: f32,
+    x: f32,
+    y: f32,
+};
+
+fn add_pill_by_endpoints(demo: *DemoState, width: f32, v0: zm.F32x4, v1: zm.F32x4) !UpdatedPill {
+    const dx = v1[0] - v0[0];
+    const dy = v1[1] - v0[1];
+    const length = @sqrt(dx * dx + dy * dy);
+    const angle = math.atan2(f32, dy, dx);
+    const x = (v0[0] + v1[0]) / 2.0;
+    const y = (v0[1] + v1[1]) / 2.0;
+    try demo.pills.append(.{
+        .width = width,
+        .length = length,
+        .angle = angle,
+        .x = x,
+        .y = y,
+    });
+
+    return .{
+        .length = length,
+        .angle = angle,
+        .x = x,
+        .y = y,
+    };
+}
+
 fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
     const gctx = demo.gctx;
 
@@ -359,18 +393,105 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         var need_instance_update = std.bit_set.ArrayBitSet(u8, 5).initEmpty();
         need_instance_update.setValue(0, zgui.sliderFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = 0.5 }));
         need_instance_update.setValue(1, zgui.sliderFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = 1.0 }));
-        need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = 0.0, .deg_max = 360.0 }));
+        need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = -180.0, .deg_max = 180.0 }));
         need_instance_update.setValue(3, zgui.sliderFloat("X", .{ .v = &pill_control.x, .min = -1.0, .max = 1.0 }));
         need_instance_update.setValue(4, zgui.sliderFloat("Y", .{ .v = &pill_control.y, .min = -1.0, .max = 1.0 }));
         if (init_buffers or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
-            try demo.pills.append(.{
+            try demo.add_pill(.{
                 .width = pill_control.width,
                 .length = pill_control.length,
                 .angle = pill_control.angle,
                 .x = pill_control.x,
                 .y = pill_control.y,
             });
+        } else {
+            const State = enum {
+                idle,
+                v0,
+                v1,
+            };
+            const dragging = struct {
+                var state: State = .idle;
+                var object_position_start: zm.F32x4 = undefined;
+                var vertex_start: zm.F32x4 = undefined;
+            };
+            const scale = gctx.window.getContentScale();
+            const screen_to_clip = zm.mul(zm.scaling(2 * scale[0] / @intToFloat(f32, gctx.swapchain_descriptor.width), -2 * scale[1] / @intToFloat(f32, gctx.swapchain_descriptor.height), 1), zm.translation(-1, 1, 0.0));
+            const clip_to_object = zm.scaling(2 / demo.dimension.width, 2 / demo.dimension.height, 1.0);
+
+            const cursor_position = demo.gctx.window.getCursorPos();
+            const screen_position: zm.F32x4 = .{ @floatCast(f32, cursor_position[0]), @floatCast(f32, cursor_position[1]), 0.0, 1.0 };
+            const clip_position = zm.mul(screen_position, screen_to_clip);
+            const object_position = zm.mul(clip_position, clip_to_object);
+
+            const width_mat = zm.scaling(pill_control.width, pill_control.width, 1.0);
+            const v0_length_mat = zm.translation(-1 * pill_control.length / 2.0, 0.0, 0.0);
+            const v1_length_mat = zm.translation(1 * pill_control.length / 2.0, 0.0, 0.0);
+            const angle_mat = zm.rotationZ(pill_control.angle);
+            const position_mat = zm.translation(pill_control.x, pill_control.y, 0.0);
+
+            const v: zm.F32x4 = .{ 0.0, 0.0, 0.0, 1.0 };
+            const v0 = zm.mul(v, zm.mul(width_mat, zm.mul(v0_length_mat, zm.mul(angle_mat, position_mat))));
+            const v1 = zm.mul(v, zm.mul(width_mat, zm.mul(v1_length_mat, zm.mul(angle_mat, position_mat))));
+
+            if (dragging.state == .idle and demo.gctx.window.getMouseButton(.left) == .press) {
+                try gctx.window.setInputMode(zglfw.InputMode.cursor, zglfw.InputModeCursor.disabled);
+
+                const v0_dx = object_position[0] - v0[0];
+                const v0_dy = object_position[1] - v0[1];
+                const v0_squared_distance = v0_dx * v0_dx + v0_dy * v0_dy;
+                const v1_dx = object_position[0] - v1[0];
+                const v1_dy = object_position[1] - v1[1];
+                const v1_squared_distance = v1_dx * v1_dx + v1_dy * v1_dy;
+
+                if (v0_squared_distance < v1_squared_distance) {
+                    dragging.state = .v0;
+                    dragging.vertex_start = v0;
+                } else {
+                    dragging.state = .v1;
+                    dragging.vertex_start = v1;
+                }
+                dragging.object_position_start = object_position;
+            } else {
+                if (demo.gctx.window.getMouseButton(.left) == .release) {
+                    dragging.state = .idle;
+                    try gctx.window.setInputMode(zglfw.InputMode.cursor, zglfw.InputModeCursor.normal);
+                } else {
+                    const object_position_delta: zm.F32x4 = .{ object_position[0] - dragging.object_position_start[0], object_position[1] - dragging.object_position_start[1], 0.0, 1.0 };
+
+                    demo.pills.clearRetainingCapacity();
+                    const updated_pill = if (dragging.state == .v0) move_v0: {
+                        const moved_v0: zm.F32x4 = .{
+                            dragging.vertex_start[0] + object_position_delta[0],
+                            dragging.vertex_start[1] + object_position_delta[1],
+                            0.0,
+                            1.0,
+                        };
+                        break :move_v0 try demo.add_pill_by_endpoints(
+                            pill_control.width,
+                            moved_v0,
+                            v1,
+                        );
+                    } else move_v1: {
+                        const moved_v1: zm.F32x4 = .{
+                            dragging.vertex_start[0] + object_position_delta[0],
+                            dragging.vertex_start[1] + object_position_delta[1],
+                            0.0,
+                            1.0,
+                        };
+                        break :move_v1 try demo.add_pill_by_endpoints(
+                            pill_control.width,
+                            v0,
+                            moved_v1,
+                        );
+                    };
+                    pill_control.length = updated_pill.length;
+                    pill_control.angle = updated_pill.angle;
+                    pill_control.x = updated_pill.x;
+                    pill_control.y = updated_pill.y;
+                }
+            }
         }
     }
     zgui.end();
