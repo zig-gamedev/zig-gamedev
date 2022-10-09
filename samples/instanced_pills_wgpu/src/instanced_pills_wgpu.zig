@@ -24,8 +24,7 @@ const wgsl_vs =
 \\      @location(10) width: f32,
 \\      @location(11) length: f32,
 \\      @location(12) angle: f32,
-\\      @location(13) x: f32,
-\\      @location(14) y: f32,
+\\      @location(13) position: vec2<f32>,
 \\  }
 \\
 \\  struct Fragment {
@@ -54,8 +53,8 @@ const wgsl_vs =
 \\          0.0, 0.0, 0.0, 1.0,
 \\      );
 \\      var position_mat: mat4x4<f32> = mat4x4(
-\\          1.0, 0.0, 0.0, instance.x,
-\\          0.0, 1.0, 0.0, instance.y,
+\\          1.0, 0.0, 0.0, instance.position.x,
+\\          0.0, 1.0, 0.0, instance.position.y,
 \\          0.0, 0.0, 1.0, 0.0,
 \\          0.0, 0.0, 0.0, 1.0,
 \\      );
@@ -86,8 +85,7 @@ const Pill = struct {
     width: f32,
     length: f32,
     angle: f32,
-    x: f32,
-    y: f32,
+    position: [2]f32,
 };
 
 const Dimension = struct {
@@ -190,14 +188,9 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
                 .shader_location = 12,
             },
             .{
-                .format = .float32,
-                .offset = @offsetOf(Pill, "x"),
+                .format = .float32x2,
+                .offset = @offsetOf(Pill, "position"),
                 .shader_location = 13,
-            },
-            .{
-                .format = .float32,
-                .offset = @offsetOf(Pill, "y"),
-                .shader_location = 14,
             },
         };
         const vertex_buffers = [_]wgpu.VertexBufferLayout{
@@ -297,8 +290,7 @@ fn add_pill(demo: *DemoState, pill: Pill) !void {
 const UpdatedPill = struct {
     length: f32,
     angle: f32,
-    x: f32,
-    y: f32,
+    position: [2]f32,
 };
 
 fn add_pill_by_endpoints(demo: *DemoState, width: f32, v0: zm.F32x4, v1: zm.F32x4) !UpdatedPill {
@@ -306,21 +298,18 @@ fn add_pill_by_endpoints(demo: *DemoState, width: f32, v0: zm.F32x4, v1: zm.F32x
     const dy = v1[1] - v0[1];
     const length = @sqrt(dx * dx + dy * dy);
     const angle = math.atan2(f32, dy, dx);
-    const x = (v0[0] + v1[0]) / 2.0;
-    const y = (v0[1] + v1[1]) / 2.0;
+    const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
     try demo.pills.append(.{
         .width = width,
         .length = length,
         .angle = angle,
-        .x = x,
-        .y = y,
+        .position = position,
     });
 
     return .{
         .length = length,
         .angle = angle,
-        .x = x,
-        .y = y,
+        .position = position,
     };
 }
 
@@ -341,11 +330,11 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             var segments: i32 = 7;
             var length: f32 = 0.5;
             var width: f32 = 0.1;
-            var x: f32 = 0.5;
-            var y: f32 = -0.25;
+            var position: [2]f32 = .{ 0.5, -0.25 };
             var angle: f32 = math.pi / 3.0;
         };
-        zgui.text("Drag sliders or pill directly", .{});
+        zgui.textUnformatted("");
+        zgui.textUnformatted("Drag sliders or pill directly");
         const init_buffers = demo.vertex_buffer == null;
         const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &pill_control.segments, .min = 2, .max = 20 });
         if (init_buffers or needs_vertex_update) {
@@ -391,20 +380,18 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             demo.vertex_count = vertex_count;
         }
 
-        var need_instance_update = std.bit_set.ArrayBitSet(u8, 5).initEmpty();
+        var need_instance_update = std.bit_set.ArrayBitSet(u8, 4).initEmpty();
         need_instance_update.setValue(0, zgui.sliderFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = 0.5 }));
         need_instance_update.setValue(1, zgui.sliderFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = 1.0 }));
         need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = -180.0, .deg_max = 180.0 }));
-        need_instance_update.setValue(3, zgui.sliderFloat("X", .{ .v = &pill_control.x, .min = -1.0, .max = 1.0 }));
-        need_instance_update.setValue(4, zgui.sliderFloat("Y", .{ .v = &pill_control.y, .min = -1.0, .max = 1.0 }));
+        need_instance_update.setValue(3, zgui.sliderFloat2("Position", .{ .v = &pill_control.position, .min = -1.0, .max = 1.0 }));
         if (init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.add_pill(.{
                 .width = pill_control.width,
                 .length = pill_control.length,
                 .angle = pill_control.angle,
-                .x = pill_control.x,
-                .y = pill_control.y,
+                .position = pill_control.position,
             });
         } else {
             const State = enum {
@@ -430,7 +417,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             const v0_length_mat = zm.translation(-1 * pill_control.length / 2.0, 0.0, 0.0);
             const v1_length_mat = zm.translation(1 * pill_control.length / 2.0, 0.0, 0.0);
             const angle_mat = zm.rotationZ(pill_control.angle);
-            const position_mat = zm.translation(pill_control.x, pill_control.y, 0.0);
+            const position_mat = zm.translation(pill_control.position[0], pill_control.position[1], 0.0);
 
             const v: zm.F32x4 = .{ 0.0, 0.0, 0.0, 1.0 };
             const v0 = zm.mul(v, zm.mul(width_mat, zm.mul(v0_length_mat, zm.mul(angle_mat, position_mat))));
@@ -489,8 +476,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                     };
                     pill_control.length = updated_pill.length;
                     pill_control.angle = updated_pill.angle;
-                    pill_control.x = updated_pill.x;
-                    pill_control.y = updated_pill.y;
+                    pill_control.position = updated_pill.position;
                 }
             }
         }
