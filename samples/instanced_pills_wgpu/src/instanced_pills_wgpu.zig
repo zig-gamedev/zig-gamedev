@@ -345,6 +345,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             var y: f32 = -0.25;
             var angle: f32 = math.pi / 3.0;
         };
+        zgui.text("Drag sliders or pill directly", .{});
         const init_buffers = demo.vertex_buffer == null;
         const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &pill_control.segments, .min = 2, .max = 20 });
         if (init_buffers or needs_vertex_update) {
@@ -396,7 +397,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = -180.0, .deg_max = 180.0 }));
         need_instance_update.setValue(3, zgui.sliderFloat("X", .{ .v = &pill_control.x, .min = -1.0, .max = 1.0 }));
         need_instance_update.setValue(4, zgui.sliderFloat("Y", .{ .v = &pill_control.y, .min = -1.0, .max = 1.0 }));
-        if (init_buffers or need_instance_update.findFirstSet() != null) {
+        if (init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.add_pill(.{
                 .width = pill_control.width,
