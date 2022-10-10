@@ -14,7 +14,7 @@ fn lerp(a: f32, b: f32, t: f32) f32 {
     return a * (1 - t) + b * t;
 }
 
-pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
+pub fn pill(segments: u16, vertex_data: []Vertex, index_data: []u16) void {
     {
         var i: usize = 0;
         while (i <= segments) : (i += 1) {
@@ -43,7 +43,7 @@ pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
             index_data[i + 1] = down;
             up += 1;
             if (down == 0) {
-                down = @intCast(u32, index_data.len);
+                down = @intCast(u16, index_data.len);
             }
             down -= 1;
         }
@@ -52,7 +52,7 @@ pub fn pill(segments: u32, vertex_data: []Vertex, index_data: []u32) void {
 
 test "generate 6 segment pill" {
     var vertex_data: [14]Vertex = undefined;
-    var index_data: [14]u32 = undefined;
+    var index_data: [14]u16 = undefined;
     pill(6, &vertex_data, &index_data);
     try expectApproxEqAbs(vertex_data[0].position[0], 0.0, 0.1);
     try expectApproxEqAbs(vertex_data[0].position[1], -1.0, 0.1);

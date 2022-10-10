@@ -232,7 +232,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
                 .front_face = .ccw,
                 .cull_mode = .back,
                 .topology = .triangle_strip,
-                .strip_index_format = .uint32,
+                .strip_index_format = .uint16,
             },
             .depth_stencil = &wgpu.DepthStencilState{
                 .format = .depth32_float,
@@ -365,12 +365,12 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         const init_buffers = demo.vertex_buffer == null;
         const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &pill_control.segments, .min = 2, .max = 20 });
         if (init_buffers or needs_vertex_update) {
-            const segments = @intCast(u32, pill_control.segments);
+            const segments = @intCast(u16, pill_control.segments);
             const vertex_count = 2 * (segments + 1);
             var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
             defer allocator.free(vertex_data);
 
-            var index_data = try allocator.alloc(u32, @intCast(usize, vertex_count));
+            var index_data = try allocator.alloc(u16, @intCast(usize, vertex_count));
             defer allocator.free(index_data);
 
             vertex_generator.pill(segments, vertex_data, index_data);
@@ -390,9 +390,9 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             }
             const index_buffer = gctx.createBuffer(.{
                 .usage = .{ .copy_dst = true, .index = true },
-                .size = ensure_4b_multiple(vertex_count * @sizeOf(u32)),
+                .size = ensure_4b_multiple(vertex_count * @sizeOf(u16)),
             });
-            gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u32, index_data);
+            gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data);
             demo.index_buffer = index_buffer;
 
             if (demo.instance_buffer) |itb| {
@@ -580,7 +580,7 @@ fn draw(demo: *DemoState) void {
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setVertexBuffer(1, itb_info.gpuobj.?, 0, itb_info.size);
 
-            pass.setIndexBuffer(idb_info.gpuobj.?, .uint32, 0, idb_info.size);
+            pass.setIndexBuffer(idb_info.gpuobj.?, .uint16, 0, idb_info.size);
 
             pass.setPipeline(pipeline);
 
