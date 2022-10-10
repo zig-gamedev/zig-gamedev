@@ -4,7 +4,6 @@ const assert = std.debug.assert;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const zgui = @import("zgui");
 const zm = @import("zmath");
 const vertex_generator = @import("vertex_generator.zig");
 
@@ -125,30 +124,6 @@ const DemoState = struct {
 
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
-
-        zgui.init(allocator);
-        const scale_factor = scale_factor: {
-            const scale = window.getContentScale();
-            break :scale_factor math.max(scale[0], scale[1]);
-        };
-        const font_size = 20.0 * scale_factor;
-        const font_normal = zgui.io.addFontFromFile(content_dir ++ "Roboto-Medium.ttf", font_size);
-        assert(zgui.io.getFont(0) == font_normal);
-
-        // This needs to be called *after* adding your custom fonts.
-        zgui.backend.init(window, gctx.device, @enumToInt(zgpu.GraphicsContext.swapchain_format));
-
-        const style = zgui.getStyle();
-
-        style.window_min_size = .{ 320.0, 240.0 };
-        style.window_border_size = 8.0;
-        style.scrollbar_size = 6.0;
-        {
-            var color = style.getColor(.scrollbar_grab);
-            color[1] = 0.8;
-            style.setColor(.scrollbar_grab, color);
-        }
-        style.scaleAllSizes(scale_factor);
 
         // Create a bind group layout needed for our render pipeline.
         const bind_group_layout = gctx.createBindGroupLayout(&.{
@@ -272,8 +247,6 @@ const DemoState = struct {
 
     fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
         const gctx = demo.gctx;
-        zgui.backend.deinit();
-        zgui.deinit();
         demo.pills.deinit();
         gctx.destroy(allocator);
     }
@@ -354,260 +327,27 @@ const DemoState = struct {
     }
 
     fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
-        const gctx = demo.gctx;
-
-        zgui.backend.newFrame(
-            gctx.swapchain_descriptor.width,
-            gctx.swapchain_descriptor.height,
-        );
-        _ = zgui.begin("Pill", .{
-            .flags = .{
-                .no_title_bar = true,
-                .no_move = true,
-                .no_collapse = true,
-                .always_auto_resize = true,
-            },
-        });
-        defer zgui.end();
-
-        zgui.text(
-            "{d:.3} ms/frame ({d:.1} fps)",
-            .{ gctx.stats.average_cpu_time, gctx.stats.fps },
-        );
-        _ = zgui.beginTabBar("Demo picker", .{});
-        defer zgui.endTabBar();
-
-        const demo_picker = struct {
-            var active_tab: u8 = 0;
+        const single_pill = struct {
+            var segments: i32 = 7;
+            var length: f32 = 0.5;
+            var width: f32 = 0.1;
+            var angle: f32 = math.pi / 3.0;
+            var position: [2]f32 = .{ 0.5, -0.25 };
+            var start_color: [4]f32 = .{ 1.0, 0.0, 0.0, 1.0 };
+            var end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
         };
-        if (zgui.beginTabItem("Single pill", .{})) {
-            const tab_activated = demo_picker.active_tab != 0;
-            demo_picker.active_tab = 0;
-            const single_pill = struct {
-                var segments: i32 = 7;
-                var length: f32 = 0.5;
-                var width: f32 = 0.1;
-                var angle: f32 = math.pi / 3.0;
-                var position: [2]f32 = .{ 0.5, -0.25 };
-                var start_color: [4]f32 = .{ 1.0, 0.0, 0.0, 1.0 };
-                var end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
-            };
-            zgui.textUnformatted("Drag sliders or pill directly");
-            const init_buffers = !gctx.isResourceValid(demo.vertex_buffer);
-            const needs_vertex_update = zgui.sliderInt(
-                "Segments",
-                .{ .v = &single_pill.segments, .min = 2, .max = 20 },
-            );
-            if (tab_activated or init_buffers or needs_vertex_update) {
-                const segments = @intCast(u16, single_pill.segments);
-                try demo.recreateVertexBuffers(segments, allocator);
-                demo.recreateInstanceBuffer(1);
-            }
-
-            var need_instance_update = std.bit_set.ArrayBitSet(u8, 6).initEmpty();
-            need_instance_update.setValue(0, zgui.dragFloat(
-                "Width",
-                .{ .v = &single_pill.width, .min = 0.0, .max = std.math.inf(f32), .speed = 0.001 },
-            ));
-            need_instance_update.setValue(1, zgui.dragFloat(
-                "Length",
-                .{ .v = &single_pill.length, .min = 0.0, .max = std.math.inf(f32), .speed = 0.01 },
-            ));
-            need_instance_update.setValue(2, zgui.sliderAngle(
-                "Angle",
-                .{ .vrad = &single_pill.angle, .deg_min = -180.0, .deg_max = 180.0 },
-            ));
-            need_instance_update.setValue(3, zgui.dragFloat2(
-                "Position",
-                .{ .v = &single_pill.position, .speed = 0.01 },
-            ));
-            need_instance_update.setValue(4, zgui.colorEdit3(
-                "Start color",
-                .{ .col = single_pill.start_color[0..3], .flags = .{ .no_options = true } },
-            ));
-            need_instance_update.setValue(5, zgui.colorEdit3(
-                "End color",
-                .{ .col = single_pill.end_color[0..3], .flags = .{ .no_options = true } },
-            ));
-
-            if (tab_activated or init_buffers or zgui.io.getWantCaptureMouse() or
-                need_instance_update.findFirstSet() != null)
-            {
-                demo.pills.clearRetainingCapacity();
-                try demo.addPill(.{
-                    .width = single_pill.width,
-                    .length = single_pill.length,
-                    .angle = single_pill.angle,
-                    .position = single_pill.position,
-                    .start_color = single_pill.start_color,
-                    .end_color = single_pill.end_color,
-                });
-            } else {
-                const State = enum {
-                    idle,
-                    v0,
-                    v1,
-                };
-                const dragging = struct {
-                    var state: State = .idle;
-                    var object_position_start: zm.F32x4 = undefined;
-                    var vertex_start: zm.F32x4 = undefined;
-                };
-                const scale = gctx.window.getContentScale();
-                const screen_to_clip = zm.mul(
-                    zm.scaling(
-                        2 * scale[0] / @intToFloat(f32, gctx.swapchain_descriptor.width),
-                        -2 * scale[1] / @intToFloat(f32, gctx.swapchain_descriptor.height),
-                        1,
-                    ),
-                    zm.translation(-1, 1, 0.0),
-                );
-                const clip_to_object = zm.scaling(2 / demo.dimension.width, 2 / demo.dimension.height, 1.0);
-
-                const cursor_position = demo.gctx.window.getCursorPos();
-                const screen_position = zm.f32x4(
-                    @floatCast(f32, cursor_position[0]),
-                    @floatCast(f32, cursor_position[1]),
-                    0.0,
-                    1.0,
-                );
-                const clip_position = zm.mul(screen_position, screen_to_clip);
-                const object_position = zm.mul(clip_position, clip_to_object);
-
-                const width_mat = zm.scaling(single_pill.width, single_pill.width, 1.0);
-                const v0_length_mat = zm.translation(-1 * single_pill.length / 2.0, 0.0, 0.0);
-                const v1_length_mat = zm.translation(1 * single_pill.length / 2.0, 0.0, 0.0);
-                const angle_mat = zm.rotationZ(single_pill.angle);
-                const position_mat = zm.translation(single_pill.position[0], single_pill.position[1], 0.0);
-
-                const v = zm.f32x4(0.0, 0.0, 0.0, 1.0);
-                const v0 = zm.mul(v, zm.mul(width_mat, zm.mul(v0_length_mat, zm.mul(angle_mat, position_mat))));
-                const v1 = zm.mul(v, zm.mul(width_mat, zm.mul(v1_length_mat, zm.mul(angle_mat, position_mat))));
-
-                if (dragging.state == .idle and demo.gctx.window.getMouseButton(.left) == .press) {
-                    gctx.window.setInputMode(.cursor, .disabled);
-
-                    const v0_dx = object_position[0] - v0[0];
-                    const v0_dy = object_position[1] - v0[1];
-                    const v0_squared_distance = v0_dx * v0_dx + v0_dy * v0_dy;
-                    const v1_dx = object_position[0] - v1[0];
-                    const v1_dy = object_position[1] - v1[1];
-                    const v1_squared_distance = v1_dx * v1_dx + v1_dy * v1_dy;
-
-                    if (v0_squared_distance < v1_squared_distance) {
-                        dragging.state = .v0;
-                        dragging.vertex_start = v0;
-                    } else {
-                        dragging.state = .v1;
-                        dragging.vertex_start = v1;
-                    }
-                    dragging.object_position_start = object_position;
-                } else {
-                    if (demo.gctx.window.getMouseButton(.left) == .release) {
-                        dragging.state = .idle;
-                        gctx.window.setInputMode(.cursor, .normal);
-                    } else {
-                        const object_position_delta = zm.f32x4(
-                            object_position[0] - dragging.object_position_start[0],
-                            object_position[1] - dragging.object_position_start[1],
-                            0.0,
-                            1.0,
-                        );
-
-                        demo.pills.clearRetainingCapacity();
-                        const updated_pill = if (dragging.state == .v0) move_v0: {
-                            const moved_v0 = zm.f32x4(
-                                dragging.vertex_start[0] + object_position_delta[0],
-                                dragging.vertex_start[1] + object_position_delta[1],
-                                0.0,
-                                1.0,
-                            );
-                            break :move_v0 try demo.addPillByEndpoints(
-                                single_pill.width,
-                                single_pill.start_color,
-                                single_pill.end_color,
-                                moved_v0,
-                                v1,
-                            );
-                        } else move_v1: {
-                            const moved_v1 = zm.f32x4(
-                                dragging.vertex_start[0] + object_position_delta[0],
-                                dragging.vertex_start[1] + object_position_delta[1],
-                                0.0,
-                                1.0,
-                            );
-                            break :move_v1 try demo.addPillByEndpoints(
-                                single_pill.width,
-                                single_pill.start_color,
-                                single_pill.end_color,
-                                v0,
-                                moved_v1,
-                            );
-                        };
-                        single_pill.length = updated_pill.length;
-                        single_pill.angle = updated_pill.angle;
-                        single_pill.position = updated_pill.position;
-                    }
-                }
-            }
-            zgui.endTabItem();
-        }
-        if (zgui.beginTabItem("Multiple pills", .{})) {
-            const tab_activated = demo_picker.active_tab != 1;
-            demo_picker.active_tab = 1;
-
-            const multiple_pills = struct {
-                var segments: i32 = 7;
-                var instance_index: i32 = 0;
-                var rng = std.rand.DefaultPrng.init(42);
-            };
-            const needs_vertex_update = zgui.sliderInt(
-                "Segments",
-                .{ .v = &multiple_pills.segments, .min = 2, .max = 20 },
-            );
-            if (tab_activated or needs_vertex_update) {
-                const segments = @intCast(u16, multiple_pills.segments);
-                try demo.recreateVertexBuffers(segments, allocator);
-            }
-            const InstanceValues = [_]usize{ 1000, 10000, 100000, 1000000 };
-            const InstanceStrings = [_][:0]const u8{ "1,000", "10,000", "100,000", "1,000,000" };
-            const need_instance_update = zgui.sliderInt("Instances", .{
-                .v = &multiple_pills.instance_index,
-                .min = 0,
-                .max = InstanceValues.len - 1,
-                .cfmt = InstanceStrings[@intCast(usize, multiple_pills.instance_index)],
-            });
-            if (tab_activated or need_instance_update) {
-                const instances = InstanceValues[@intCast(usize, multiple_pills.instance_index)];
-                demo.pills.clearRetainingCapacity();
-                var i: usize = 0;
-                while (i < instances) : (i += 1) {
-                    try demo.addPill(.{
-                        .width = multiple_pills.rng.random().float(f32) / 50.0 + 0.01,
-                        .length = multiple_pills.rng.random().float(f32) / 5.0 + 0.1,
-                        .angle = multiple_pills.rng.random().float(f32) * 2.0 * math.pi,
-                        .position = .{
-                            multiple_pills.rng.random().float(f32) * 2 - 1,
-                            multiple_pills.rng.random().float(f32) * 2 - 1,
-                        },
-                        .start_color = .{
-                            multiple_pills.rng.random().float(f32),
-                            multiple_pills.rng.random().float(f32),
-                            multiple_pills.rng.random().float(f32),
-                            1.0,
-                        },
-                        .end_color = .{
-                            multiple_pills.rng.random().float(f32),
-                            multiple_pills.rng.random().float(f32),
-                            multiple_pills.rng.random().float(f32),
-                            1.0,
-                        },
-                    });
-                }
-                demo.recreateInstanceBuffer(instances);
-            }
-            zgui.endTabItem();
-        }
+        const segments = @intCast(u16, single_pill.segments);
+        try demo.recreateVertexBuffers(segments, allocator);
+        demo.recreateInstanceBuffer(1);
+        demo.pills.clearRetainingCapacity();
+        try demo.addPill(.{
+            .width = single_pill.width,
+            .length = single_pill.length,
+            .angle = single_pill.angle,
+            .position = single_pill.position,
+            .start_color = single_pill.start_color,
+            .end_color = single_pill.end_color,
+        });
     }
 
     fn draw(demo: *DemoState) void {
@@ -668,24 +408,6 @@ const DemoState = struct {
                     pass.setBindGroup(0, bind_group, &.{mem.offset});
                     pass.drawIndexed(demo.vertex_count, @intCast(u32, demo.pills.items.len), 0, 0, 0);
                 }
-            }
-            {
-                const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
-                    .view = back_buffer_view,
-                    .load_op = .load,
-                    .store_op = .store,
-                }};
-                const render_pass_info = wgpu.RenderPassDescriptor{
-                    .color_attachment_count = color_attachments.len,
-                    .color_attachments = &color_attachments,
-                };
-                const pass = encoder.beginRenderPass(render_pass_info);
-                defer {
-                    pass.end();
-                    pass.release();
-                }
-
-                zgui.backend.draw(pass);
             }
 
             break :commands encoder.finish(null);
