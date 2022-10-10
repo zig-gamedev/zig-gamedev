@@ -25,6 +25,8 @@ const wgsl_vs =
 \\      @location(11) length: f32,
 \\      @location(12) angle: f32,
 \\      @location(13) position: vec2<f32>,
+\\      @location(14) start_color: vec4<f32>,
+\\      @location(15) end_color: vec4<f32>,
 \\  }
 \\
 \\  struct Fragment {
@@ -60,7 +62,7 @@ const wgsl_vs =
 \\      );
 \\      var fragment: Fragment;
 \\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * length_mat * angle_mat * position_mat * object_to_clip;
-\\      fragment.color = vec4(1.0, 0.0, 0.0, 1.0);
+\\      fragment.color = select(instance.end_color, instance.start_color, vertex.side == -1);
 \\      return fragment;
 \\  }
 ;
@@ -86,6 +88,8 @@ const Pill = struct {
     length: f32,
     angle: f32,
     position: [2]f32,
+    start_color: [4]f32,
+    end_color: [4]f32,
 };
 
 const Dimension = struct {
@@ -192,6 +196,16 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
                 .offset = @offsetOf(Pill, "position"),
                 .shader_location = 13,
             },
+            .{
+                .format = .float32x4,
+                .offset = @offsetOf(Pill, "start_color"),
+                .shader_location = 14,
+            },
+            .{
+                .format = .float32x4,
+                .offset = @offsetOf(Pill, "end_color"),
+                .shader_location = 15,
+            },
         };
         const vertex_buffers = [_]wgpu.VertexBufferLayout{
             .{
@@ -293,17 +307,19 @@ const UpdatedPill = struct {
     position: [2]f32,
 };
 
-fn add_pill_by_endpoints(demo: *DemoState, width: f32, v0: zm.F32x4, v1: zm.F32x4) !UpdatedPill {
+fn add_pill_by_endpoints(demo: *DemoState, width: f32, start_color: [4]f32, end_color: [4]f32, v0: zm.F32x4, v1: zm.F32x4) !UpdatedPill {
     const dx = v1[0] - v0[0];
     const dy = v1[1] - v0[1];
     const length = @sqrt(dx * dx + dy * dy);
     const angle = math.atan2(f32, dy, dx);
     const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
-    try demo.pills.append(.{
+    try demo.add_pill(.{
         .width = width,
         .length = length,
         .angle = angle,
         .position = position,
+        .start_color = start_color,
+        .end_color = end_color,
     });
 
     return .{
@@ -340,8 +356,10 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             var segments: i32 = 7;
             var length: f32 = 0.5;
             var width: f32 = 0.1;
-            var position: [2]f32 = .{ 0.5, -0.25 };
             var angle: f32 = math.pi / 3.0;
+            var position: [2]f32 = .{ 0.5, -0.25 };
+            var start_color: [4]f32 = .{ 1.0, 0.0, 0.0, 1.0 };
+            var end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
         };
         zgui.textUnformatted("Drag sliders or pill directly");
         const init_buffers = demo.vertex_buffer == null;
@@ -389,11 +407,13 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             demo.vertex_count = vertex_count;
         }
 
-        var need_instance_update = std.bit_set.ArrayBitSet(u8, 4).initEmpty();
+        var need_instance_update = std.bit_set.ArrayBitSet(u8, 6).initEmpty();
         need_instance_update.setValue(0, zgui.dragFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = std.math.inf(f32), .speed = 0.001 }));
         need_instance_update.setValue(1, zgui.dragFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = std.math.inf(f32), .speed = 0.01 }));
         need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = -180.0, .deg_max = 180.0 }));
         need_instance_update.setValue(3, zgui.dragFloat2("Position", .{ .v = &pill_control.position, .speed = 0.01 }));
+        need_instance_update.setValue(4, zgui.colorEdit4("Start color", .{ .col = &pill_control.start_color, .flags = .{} }));
+        need_instance_update.setValue(5, zgui.colorEdit4("End color", .{ .col = &pill_control.end_color, .flags = .{} }));
         if (init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.add_pill(.{
@@ -401,6 +421,8 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                 .length = pill_control.length,
                 .angle = pill_control.angle,
                 .position = pill_control.position,
+                .start_color = pill_control.start_color,
+                .end_color = pill_control.end_color,
             });
         } else {
             const State = enum {
@@ -467,6 +489,8 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                         };
                         break :move_v0 try demo.add_pill_by_endpoints(
                             pill_control.width,
+                            pill_control.start_color,
+                            pill_control.end_color,
                             moved_v0,
                             v1,
                         );
@@ -479,6 +503,8 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                         };
                         break :move_v1 try demo.add_pill_by_endpoints(
                             pill_control.width,
+                            pill_control.start_color,
+                            pill_control.end_color,
                             v0,
                             moved_v1,
                         );
