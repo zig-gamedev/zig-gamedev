@@ -8,10 +8,11 @@ const zgui = @import("../../libs/zgui/build.zig");
 const Options = @import("../../build.zig").Options;
 
 const demo_name = "instanced_pills_wgpu";
+const demo_filename = "InstancedPillsWgpu";
 const content_dir = demo_name ++ "_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
-    const exe = b.addExecutable(demo_name, thisDir() ++ "/src/" ++ demo_name ++ ".zig");
+    const exe = b.addExecutable(demo_name, thisDir() ++ "/src/" ++ demo_filename ++ ".zig");
 
     const exe_options = b.addOptions();
     exe.addOptions("build_options", exe_options);
