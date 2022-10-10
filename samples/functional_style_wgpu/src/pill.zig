@@ -1,6 +1,9 @@
 const std = @import("std");
+const math = std.math;
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
+const zm = @import("zmath");
+
 const vertex_generator = @import("vertex_generator.zig");
 
 // zig fmt: off
@@ -89,6 +92,12 @@ pub const Instance = struct {
     end_color: [4]f32,
 };
 
+const UpdatedInstance = struct {
+    length: f32,
+    angle: f32,
+    position: [2]f32,
+};
+
 pub const State = struct {
     gctx: *zgpu.GraphicsContext,
 
@@ -99,12 +108,13 @@ pub const State = struct {
     instance_attributes: [6]wgpu.VertexAttribute,
 
     vertex_count: u32,
+    instances: std.ArrayList(Instance),
 
     vertex_buffer: zgpu.BufferHandle,
     index_buffer: zgpu.BufferHandle,
     instance_buffer: zgpu.BufferHandle,
 
-    pub fn init(gctx: *zgpu.GraphicsContext) State {
+    pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) State {
         return .{
             .gctx = gctx,
 
@@ -147,6 +157,7 @@ pub const State = struct {
             } },
 
             .vertex_count = 0,
+            .instances = std.ArrayList(Instance).init(allocator),
 
             .vertex_buffer = .{},
             .index_buffer = .{},
@@ -154,8 +165,12 @@ pub const State = struct {
         };
     }
 
-    pub fn recreateVertexBuffers(state: *State, segments: u16, allocator: std.mem.Allocator) !void {
-        const gctx = state.gctx;
+    pub fn deinit(self: *State) void {
+        self.instances.deinit();
+    }
+
+    pub fn recreateVertexBuffers(self: *State, segments: u16, allocator: std.mem.Allocator) !void {
+        const gctx = self.gctx;
 
         const vertex_count = 2 * (segments + 1);
         var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
@@ -166,34 +181,71 @@ pub const State = struct {
 
         vertex_generator.pill(segments, vertex_data, index_data);
 
-        gctx.destroyResource(state.vertex_buffer);
+        gctx.destroyResource(self.vertex_buffer);
         const vertex_buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .vertex = true },
             .size = ensureFourByteMultiple(vertex_count * @sizeOf(Vertex)),
         });
         gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
-        state.vertex_buffer = vertex_buffer;
+        self.vertex_buffer = vertex_buffer;
 
-        gctx.destroyResource(state.index_buffer);
+        gctx.destroyResource(self.index_buffer);
         const index_buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .index = true },
             .size = ensureFourByteMultiple(vertex_count * @sizeOf(u16)),
         });
         gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data);
-        state.index_buffer = index_buffer;
+        self.index_buffer = index_buffer;
 
-        state.vertex_count = vertex_count;
+        self.vertex_count = vertex_count;
     }
 
-    pub fn recreateInstanceBuffer(state: *State, instances: usize) void {
-        const gctx = state.gctx;
+    pub fn recreateInstanceBuffer(self: *State, instances: usize) void {
+        const gctx = self.gctx;
 
-        gctx.destroyResource(state.instance_buffer);
+        gctx.destroyResource(self.instance_buffer);
         const instance_buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .vertex = true },
             .size = ensureFourByteMultiple(instances * @sizeOf(Instance)),
         });
-        state.instance_buffer = instance_buffer;
+        self.instance_buffer = instance_buffer;
+    }
+
+    pub fn addInstance(self: *State, instance: Instance) !void {
+        try self.instances.append(instance);
+    }
+
+    pub fn addInstanceByEndpoints(
+        self: *State,
+        width: f32,
+        start_color: [4]f32,
+        end_color: [4]f32,
+        v0: zm.F32x4,
+        v1: zm.F32x4,
+    ) !UpdatedInstance {
+        const dx = v1[0] - v0[0];
+        const dy = v1[1] - v0[1];
+        const length = @sqrt(dx * dx + dy * dy);
+        const angle = math.atan2(f32, dy, dx);
+        const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
+        try self.addInstance(.{
+            .width = width,
+            .length = length,
+            .angle = angle,
+            .position = position,
+            .start_color = start_color,
+            .end_color = end_color,
+        });
+
+        return .{
+            .length = length,
+            .angle = angle,
+            .position = position,
+        };
+    }
+
+    pub fn clearInstances(self: *State) void {
+        self.instances.clearRetainingCapacity();
     }
 };
 

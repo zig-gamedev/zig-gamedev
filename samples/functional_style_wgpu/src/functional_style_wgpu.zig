@@ -19,17 +19,10 @@ const Dimension = struct {
     height: f32,
 };
 
-const UpdatedInstance = struct {
-    length: f32,
-    angle: f32,
-    position: [2]f32,
-};
-
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
     pills: Pills,
-    instances: std.ArrayList(Instance),
 
     dimension: Dimension,
 
@@ -42,7 +35,7 @@ const DemoState = struct {
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
-        const pills = Pills.init(gctx);
+        const pills = Pills.init(gctx, allocator);
         // Create a bind group layout needed for our render pipeline.
         const bind_group_layout = gctx.createBindGroupLayout(&.{
             zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
@@ -119,7 +112,6 @@ const DemoState = struct {
         return .{
             .gctx = gctx,
             .pills = pills,
-            .instances = std.ArrayList(Instance).init(allocator),
             .dimension = calculateDimensions(gctx),
             .pipeline = pipeline,
             .bind_group = bind_group,
@@ -130,41 +122,8 @@ const DemoState = struct {
 
     fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
         const gctx = demo.gctx;
-        demo.instances.deinit();
+        demo.pills.deinit();
         gctx.destroy(allocator);
-    }
-
-    fn addInstance(demo: *DemoState, instance: Instance) !void {
-        try demo.instances.append(instance);
-    }
-
-    fn addInstanceByEndpoints(
-        demo: *DemoState,
-        width: f32,
-        start_color: [4]f32,
-        end_color: [4]f32,
-        v0: zm.F32x4,
-        v1: zm.F32x4,
-    ) !UpdatedInstance {
-        const dx = v1[0] - v0[0];
-        const dy = v1[1] - v0[1];
-        const length = @sqrt(dx * dx + dy * dy);
-        const angle = math.atan2(f32, dy, dx);
-        const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
-        try demo.addInstance(.{
-            .width = width,
-            .length = length,
-            .angle = angle,
-            .position = position,
-            .start_color = start_color,
-            .end_color = end_color,
-        });
-
-        return .{
-            .length = length,
-            .angle = angle,
-            .position = position,
-        };
     }
 
     fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
@@ -180,8 +139,8 @@ const DemoState = struct {
         const segments = @intCast(u16, single_pill.segments);
         try demo.pills.recreateVertexBuffers(segments, allocator);
         demo.pills.recreateInstanceBuffer(1);
-        demo.instances.clearRetainingCapacity();
-        try demo.addInstance(.{
+        demo.pills.clearInstances();
+        try demo.pills.addInstance(.{
             .width = single_pill.width,
             .length = single_pill.length,
             .angle = single_pill.angle,
@@ -209,7 +168,7 @@ const DemoState = struct {
                 const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
                 const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
 
-                gctx.queue.writeBuffer(gctx.lookupResource(demo.pills.instance_buffer).?, 0, Instance, demo.instances.items);
+                gctx.queue.writeBuffer(gctx.lookupResource(demo.pills.instance_buffer).?, 0, Instance, demo.pills.instances.items);
 
                 const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                     .view = back_buffer_view,
@@ -247,7 +206,7 @@ const DemoState = struct {
                     mem.slice[0] = zm.transpose(object_to_clip);
 
                     pass.setBindGroup(0, bind_group, &.{mem.offset});
-                    pass.drawIndexed(demo.pills.vertex_count, @intCast(u32, demo.instances.items.len), 0, 0, 0);
+                    pass.drawIndexed(demo.pills.vertex_count, @intCast(u32, demo.pills.instances.items.len), 0, 0, 0);
                 }
             }
 
