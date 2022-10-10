@@ -329,6 +329,54 @@ fn add_pill_by_endpoints(demo: *DemoState, width: f32, start_color: [4]f32, end_
     };
 }
 
+fn recreate_vertex_buffers(demo: *DemoState, segments: u16, allocator: std.mem.Allocator) !void {
+    const gctx = demo.gctx;
+
+    const vertex_count = 2 * (segments + 1);
+    var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
+    defer allocator.free(vertex_data);
+
+    var index_data = try allocator.alloc(u16, @intCast(usize, vertex_count));
+    defer allocator.free(index_data);
+
+    vertex_generator.pill(segments, vertex_data, index_data);
+
+    if (demo.vertex_buffer) |vb| {
+        gctx.destroyResource(vb);
+    }
+    const vertex_buffer = gctx.createBuffer(.{
+        .usage = .{ .copy_dst = true, .vertex = true },
+        .size = ensure_4b_multiple(vertex_count * @sizeOf(Vertex)),
+    });
+    gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
+    demo.vertex_buffer = vertex_buffer;
+
+    if (demo.index_buffer) |idb| {
+        gctx.destroyResource(idb);
+    }
+    const index_buffer = gctx.createBuffer(.{
+        .usage = .{ .copy_dst = true, .index = true },
+        .size = ensure_4b_multiple(vertex_count * @sizeOf(u16)),
+    });
+    gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data);
+    demo.index_buffer = index_buffer;
+
+    demo.vertex_count = vertex_count;
+}
+
+fn recreate_instance_buffer(demo: *DemoState, instances: usize) void {
+    const gctx = demo.gctx;
+
+    if (demo.instance_buffer) |itb| {
+        gctx.destroyResource(itb);
+    }
+    const instance_buffer = gctx.createBuffer(.{
+        .usage = .{ .copy_dst = true, .vertex = true },
+        .size = ensure_4b_multiple(instances * @sizeOf(Pill)),
+    });
+    demo.instance_buffer = instance_buffer;
+}
+
 fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
     const gctx = demo.gctx;
 
@@ -351,8 +399,13 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
     );
     _ = zgui.beginTabBar("Demo picker", .{});
     defer zgui.endTabBar();
+    const demo_picker = struct {
+        var active_tab: u8 = 0;
+    };
     if (zgui.beginTabItem("Single pill", .{})) {
-        const pill_control = struct {
+        const tab_activated = demo_picker.active_tab != 0;
+        demo_picker.active_tab = 0;
+        const single_pill = struct {
             var segments: i32 = 7;
             var length: f32 = 0.5;
             var width: f32 = 0.1;
@@ -363,70 +416,33 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         };
         zgui.textUnformatted("Drag sliders or pill directly");
         const init_buffers = demo.vertex_buffer == null;
-        const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &pill_control.segments, .min = 2, .max = 20 });
-        if (init_buffers or needs_vertex_update) {
-            const segments = @intCast(u16, pill_control.segments);
-            const vertex_count = 2 * (segments + 1);
-            var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
-            defer allocator.free(vertex_data);
-
-            var index_data = try allocator.alloc(u16, @intCast(usize, vertex_count));
-            defer allocator.free(index_data);
-
-            vertex_generator.pill(segments, vertex_data, index_data);
-
-            if (demo.vertex_buffer) |vb| {
-                gctx.destroyResource(vb);
-            }
-            const vertex_buffer = gctx.createBuffer(.{
-                .usage = .{ .copy_dst = true, .vertex = true },
-                .size = ensure_4b_multiple(vertex_count * @sizeOf(Vertex)),
-            });
-            gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
-            demo.vertex_buffer = vertex_buffer;
-
-            if (demo.index_buffer) |idb| {
-                gctx.destroyResource(idb);
-            }
-            const index_buffer = gctx.createBuffer(.{
-                .usage = .{ .copy_dst = true, .index = true },
-                .size = ensure_4b_multiple(vertex_count * @sizeOf(u16)),
-            });
-            gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data);
-            demo.index_buffer = index_buffer;
-
-            if (demo.instance_buffer) |itb| {
-                gctx.destroyResource(itb);
-            }
-            const instance_buffer = gctx.createBuffer(.{
-                .usage = .{ .copy_dst = true, .vertex = true },
-                .size = ensure_4b_multiple(1 + @sizeOf(Pill)),
-            });
-            demo.instance_buffer = instance_buffer;
-
-            demo.vertex_count = vertex_count;
+        const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &single_pill.segments, .min = 2, .max = 20 });
+        if (tab_activated or init_buffers or needs_vertex_update) {
+            const segments = @intCast(u16, single_pill.segments);
+            try demo.recreate_vertex_buffers(segments, allocator);
+            demo.recreate_instance_buffer(1);
         }
 
         var need_instance_update = std.bit_set.ArrayBitSet(u8, 6).initEmpty();
-        need_instance_update.setValue(0, zgui.dragFloat("Width", .{ .v = &pill_control.width, .min = 0.0, .max = std.math.inf(f32), .speed = 0.001 }));
-        need_instance_update.setValue(1, zgui.dragFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = std.math.inf(f32), .speed = 0.01 }));
-        need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = -180.0, .deg_max = 180.0 }));
-        need_instance_update.setValue(3, zgui.dragFloat2("Position", .{ .v = &pill_control.position, .speed = 0.01 }));
-        need_instance_update.setValue(4, zgui.colorEdit3("Start color", .{ .col = pill_control.start_color[0..3], .flags = .{
+        need_instance_update.setValue(0, zgui.dragFloat("Width", .{ .v = &single_pill.width, .min = 0.0, .max = std.math.inf(f32), .speed = 0.001 }));
+        need_instance_update.setValue(1, zgui.dragFloat("Length", .{ .v = &single_pill.length, .min = 0.0, .max = std.math.inf(f32), .speed = 0.01 }));
+        need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &single_pill.angle, .deg_min = -180.0, .deg_max = 180.0 }));
+        need_instance_update.setValue(3, zgui.dragFloat2("Position", .{ .v = &single_pill.position, .speed = 0.01 }));
+        need_instance_update.setValue(4, zgui.colorEdit3("Start color", .{ .col = single_pill.start_color[0..3], .flags = .{
             .no_options = true,
         } }));
-        need_instance_update.setValue(5, zgui.colorEdit3("End color", .{ .col = pill_control.end_color[0..3], .flags = .{
+        need_instance_update.setValue(5, zgui.colorEdit3("End color", .{ .col = single_pill.end_color[0..3], .flags = .{
             .no_options = true,
         } }));
-        if (init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
+        if (tab_activated or init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.add_pill(.{
-                .width = pill_control.width,
-                .length = pill_control.length,
-                .angle = pill_control.angle,
-                .position = pill_control.position,
-                .start_color = pill_control.start_color,
-                .end_color = pill_control.end_color,
+                .width = single_pill.width,
+                .length = single_pill.length,
+                .angle = single_pill.angle,
+                .position = single_pill.position,
+                .start_color = single_pill.start_color,
+                .end_color = single_pill.end_color,
             });
         } else {
             const State = enum {
@@ -448,11 +464,11 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             const clip_position = zm.mul(screen_position, screen_to_clip);
             const object_position = zm.mul(clip_position, clip_to_object);
 
-            const width_mat = zm.scaling(pill_control.width, pill_control.width, 1.0);
-            const v0_length_mat = zm.translation(-1 * pill_control.length / 2.0, 0.0, 0.0);
-            const v1_length_mat = zm.translation(1 * pill_control.length / 2.0, 0.0, 0.0);
-            const angle_mat = zm.rotationZ(pill_control.angle);
-            const position_mat = zm.translation(pill_control.position[0], pill_control.position[1], 0.0);
+            const width_mat = zm.scaling(single_pill.width, single_pill.width, 1.0);
+            const v0_length_mat = zm.translation(-1 * single_pill.length / 2.0, 0.0, 0.0);
+            const v1_length_mat = zm.translation(1 * single_pill.length / 2.0, 0.0, 0.0);
+            const angle_mat = zm.rotationZ(single_pill.angle);
+            const position_mat = zm.translation(single_pill.position[0], single_pill.position[1], 0.0);
 
             const v: zm.F32x4 = .{ 0.0, 0.0, 0.0, 1.0 };
             const v0 = zm.mul(v, zm.mul(width_mat, zm.mul(v0_length_mat, zm.mul(angle_mat, position_mat))));
@@ -492,9 +508,9 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                             1.0,
                         };
                         break :move_v0 try demo.add_pill_by_endpoints(
-                            pill_control.width,
-                            pill_control.start_color,
-                            pill_control.end_color,
+                            single_pill.width,
+                            single_pill.start_color,
+                            single_pill.end_color,
                             moved_v0,
                             v1,
                         );
@@ -506,18 +522,54 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                             1.0,
                         };
                         break :move_v1 try demo.add_pill_by_endpoints(
-                            pill_control.width,
-                            pill_control.start_color,
-                            pill_control.end_color,
+                            single_pill.width,
+                            single_pill.start_color,
+                            single_pill.end_color,
                             v0,
                             moved_v1,
                         );
                     };
-                    pill_control.length = updated_pill.length;
-                    pill_control.angle = updated_pill.angle;
-                    pill_control.position = updated_pill.position;
+                    single_pill.length = updated_pill.length;
+                    single_pill.angle = updated_pill.angle;
+                    single_pill.position = updated_pill.position;
                 }
             }
+        }
+        zgui.endTabItem();
+    }
+    if (zgui.beginTabItem("Multiple pills", .{})) {
+        const tab_activated = demo_picker.active_tab != 1;
+        demo_picker.active_tab = 1;
+        if (tab_activated) {
+            try demo.recreate_vertex_buffers(7, allocator);
+        }
+        const multiple_pills = struct {
+            var instance_index: i32 = 0;
+            var rng = std.rand.DefaultPrng.init(42);
+        };
+        const InstanceValues = [_]usize{ 1000, 10000, 100000, 1000000 };
+        const InstanceStrings = [_][:0]const u8{ "1,000", "10,000", "100,000", "1,000,000" };
+        const need_instance_update = zgui.sliderInt("Instances", .{
+            .v = &multiple_pills.instance_index,
+            .min = 0,
+            .max = InstanceValues.len - 1,
+            .cfmt = InstanceStrings[@intCast(usize, multiple_pills.instance_index)],
+        });
+        if (tab_activated or need_instance_update) {
+            const instances = InstanceValues[@intCast(usize, multiple_pills.instance_index)];
+            demo.pills.clearRetainingCapacity();
+            var i: usize = 0;
+            while (i < instances) : (i += 1) {
+                try demo.add_pill(.{
+                    .width = multiple_pills.rng.random().float(f32) / 50.0,
+                    .length = multiple_pills.rng.random().float(f32) / 5.0,
+                    .angle = multiple_pills.rng.random().float(f32) * 2.0 * math.pi,
+                    .position = .{ multiple_pills.rng.random().float(f32) * 2 - 1, multiple_pills.rng.random().float(f32) * 2 - 1 },
+                    .start_color = .{ multiple_pills.rng.random().float(f32), multiple_pills.rng.random().float(f32), multiple_pills.rng.random().float(f32), 1.0 },
+                    .end_color = .{ multiple_pills.rng.random().float(f32), multiple_pills.rng.random().float(f32), multiple_pills.rng.random().float(f32), 1.0 },
+                });
+            }
+            demo.recreate_instance_buffer(instances);
         }
         zgui.endTabItem();
     }
