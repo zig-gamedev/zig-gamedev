@@ -2406,6 +2406,41 @@ pub fn typeToDataTypeEnum(comptime T: type) DataType {
 }
 //--------------------------------------------------------------------------------------------------
 //
+// Menus
+//
+//--------------------------------------------------------------------------------------------------
+/// 'pub fn zguiBeginMenuBar() bool'
+pub const beginMenuBar = zguiBeginMenuBar;
+/// 'pub fn zguiEndMenuBar() void'
+pub const endMenuBar = zguiEndMenuBar;
+/// 'pub fn zguiBeginMainMenuBar() bool'
+pub const beginMainMenuBar = zguiBeginMainMenuBar;
+/// 'pub fn zguiEndMainMenuBar() void'
+pub const endMainMenuBar = zguiEndMainMenuBar;
+/// 'pub fn zguiBeginMenu(label: [:0]const u8, enabled: bool) bool'
+pub const beginMenu = zguiBeginMenu;
+/// 'pub fn zguiEndMenu() void'
+pub const endMenu = zguiEndMenu;
+
+const MenuItem = struct {
+    shortcut: ?[*:0]const u8 = null,
+    selected: bool = false,
+    enabled: bool = true,
+};
+
+pub fn menuItem(label: [:0]const u8, args: MenuItem) bool {
+    return zguiMenuItem(label, args.shortcut, args.selected, args.enabled);
+}
+
+extern fn zguiBeginMenuBar() bool;
+extern fn zguiEndMenuBar() void;
+extern fn zguiBeginMainMenuBar() bool;
+extern fn zguiEndMainMenuBar() void;
+extern fn zguiBeginMenu(label: [*:0]const u8, enabled: bool) bool;
+extern fn zguiEndMenu() void;
+extern fn zguiMenuItem(label: [*:0]const u8, shortcut: ?[*:0]const u8, selected: bool, enabled: bool) bool;
+//--------------------------------------------------------------------------------------------------
+//
 // Tabs
 //
 //--------------------------------------------------------------------------------------------------
