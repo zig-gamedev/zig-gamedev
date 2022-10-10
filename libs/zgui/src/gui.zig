@@ -403,8 +403,8 @@ pub fn isWindowHovered(flags: HoveredFlags) bool {
 }
 extern fn zguiIsWindowAppearing() bool;
 extern fn zguiIsWindowCollapsed() bool;
-extern fn zguiIsWindowFocused(flags: WindowFlags) bool;
-extern fn zguiIsWindowHovered(flags: WindowFlags) bool;
+extern fn zguiIsWindowFocused(flags: FocusedFlags) bool;
+extern fn zguiIsWindowHovered(flags: HoveredFlags) bool;
 //--------------------------------------------------------------------------------------------------
 pub fn getWindowPos() [2]f32 {
     var pos: [2]f32 = undefined;
