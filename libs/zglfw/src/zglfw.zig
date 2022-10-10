@@ -226,7 +226,7 @@ pub const InputMode = enum(i32) {
     raw_mouse_motion = 0x00033005,
 };
 
-pub const InputModeCursor = enum(i32) {
+pub const CursorMode = enum(i32) {
     normal = 0x00034001,
     hidden = 0x00034002,
     disabled = 0x00034003,
@@ -399,7 +399,7 @@ pub const Window = *opaque {
     pub fn setInputMode(window: Window, mode: InputMode, value: anytype) void {
         const T = @TypeOf(value);
         const i32_value = switch (@typeInfo(T)) {
-            .Enum, .EnumLiteral => @enumToInt(@as(InputModeCursor, value)),
+            .Enum, .EnumLiteral => @enumToInt(@as(CursorMode, value)),
             .Bool => @boolToInt(value),
             else => unreachable,
         };
