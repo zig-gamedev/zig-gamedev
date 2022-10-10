@@ -6,85 +6,14 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zm = @import("zmath");
 const vertex_generator = @import("vertex_generator.zig");
+const Pill = @import("pill.zig").Pill;
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: functional style (wgpu)";
 
-// zig fmt: off
-const wgsl_vs =
-\\  @group(0) @binding(0) var<uniform> object_to_clip: mat4x4<f32>;
-\\
-\\  struct Vertex {
-\\      @location(0) position: vec2<f32>,
-\\      @location(1) side: f32,
-\\  }
-\\
-\\  struct Instance {
-\\      @location(10) width: f32,
-\\      @location(11) length: f32,
-\\      @location(12) angle: f32,
-\\      @location(13) position: vec2<f32>,
-\\      @location(14) start_color: vec4<f32>,
-\\      @location(15) end_color: vec4<f32>,
-\\  }
-\\
-\\  struct Fragment {
-\\      @builtin(position) position: vec4<f32>,
-\\      @location(0) color: vec4<f32>,
-\\  }
-\\
-\\  @vertex fn main(vertex: Vertex, instance: Instance) -> Fragment {
-\\      // WebGPU mat4x4 are column vectors
-\\      var width_mat: mat4x4<f32> = mat4x4(
-\\          instance.width, 0.0, 0.0, 0.0,
-\\          0.0, instance.width, 0.0, 0.0,
-\\          0.0, 0.0, 1.0, 0.0,
-\\          0.0, 0.0, 0.0, 1.0,
-\\      );
-\\      var length_mat: mat4x4<f32> = mat4x4(
-\\          1.0, 0.0, 0.0, vertex.side * instance.length / 2.0,
-\\          0.0, 1.0, 0.0, 0.0,
-\\          0.0, 0.0, 1.0, 0.0,
-\\          0.0, 0.0, 0.0, 1.0,
-\\      );
-\\      var angle_mat: mat4x4<f32> = mat4x4(
-\\          cos(instance.angle), -sin(instance.angle), 0.0, 0.0,
-\\          sin(instance.angle), cos(instance.angle), 0.0, 0.0,
-\\          0.0, 0.0, 1.0, 0.0,
-\\          0.0, 0.0, 0.0, 1.0,
-\\      );
-\\      var position_mat: mat4x4<f32> = mat4x4(
-\\          1.0, 0.0, 0.0, instance.position.x,
-\\          0.0, 1.0, 0.0, instance.position.y,
-\\          0.0, 0.0, 1.0, 0.0,
-\\          0.0, 0.0, 0.0, 1.0,
-\\      );
-\\      var fragment: Fragment;
-\\      fragment.position = vec4(vertex.position, 0.0, 1.0) * width_mat * length_mat * angle_mat *
-\\          position_mat * object_to_clip;
-\\      fragment.color = select(instance.end_color, instance.start_color, vertex.side == -1);
-\\      return fragment;
-\\  }
-;
-const wgsl_fs =
-\\  struct Fragment {
-\\      @location(0) color: vec4<f32>,
-\\  }
-\\  struct Screen {
-\\      @location(0) color: vec4<f32>,
-\\  }
-\\
-\\  @fragment fn main(fragment: Fragment) -> Screen {
-\\      var screen: Screen;
-\\      screen.color = fragment.color;
-\\      return screen;
-\\  }
-// zig fmt: on
-;
-
 const Vertex = vertex_generator.Vertex;
 
-const Pill = struct {
+const Instance = struct {
     width: f32,
     length: f32,
     angle: f32,
@@ -98,7 +27,7 @@ const Dimension = struct {
     height: f32,
 };
 
-const UpdatedPill = struct {
+const UpdatedInstance = struct {
     length: f32,
     angle: f32,
     position: [2]f32,
@@ -107,7 +36,8 @@ const UpdatedPill = struct {
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
-    pills: std.ArrayList(Pill),
+    pill: Pill,
+    pills: std.ArrayList(Instance),
     vertex_count: u32,
 
     dimension: Dimension,
@@ -125,6 +55,7 @@ const DemoState = struct {
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
+        const pill = Pill.init();
         // Create a bind group layout needed for our render pipeline.
         const bind_group_layout = gctx.createBindGroupLayout(&.{
             zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
@@ -135,10 +66,10 @@ const DemoState = struct {
         defer gctx.releaseResource(pipeline_layout);
 
         const pipeline = pipline: {
-            const vs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_vs, "vs");
+            const vs_module = zgpu.createWgslShaderModule(gctx.device, pill.vertex_shader, "vs");
             defer vs_module.release();
 
-            const fs_module = zgpu.createWgslShaderModule(gctx.device, wgsl_fs, "fs");
+            const fs_module = zgpu.createWgslShaderModule(gctx.device, pill.fragment_shader, "fs");
             defer fs_module.release();
 
             const color_targets = [_]wgpu.ColorTargetState{.{
@@ -157,27 +88,27 @@ const DemoState = struct {
 
             const instance_attributes = [_]wgpu.VertexAttribute{ .{
                 .format = .float32,
-                .offset = @offsetOf(Pill, "width"),
+                .offset = @offsetOf(Instance, "width"),
                 .shader_location = 10,
             }, .{
                 .format = .float32,
-                .offset = @offsetOf(Pill, "length"),
+                .offset = @offsetOf(Instance, "length"),
                 .shader_location = 11,
             }, .{
                 .format = .float32,
-                .offset = @offsetOf(Pill, "angle"),
+                .offset = @offsetOf(Instance, "angle"),
                 .shader_location = 12,
             }, .{
                 .format = .float32x2,
-                .offset = @offsetOf(Pill, "position"),
+                .offset = @offsetOf(Instance, "position"),
                 .shader_location = 13,
             }, .{
                 .format = .float32x4,
-                .offset = @offsetOf(Pill, "start_color"),
+                .offset = @offsetOf(Instance, "start_color"),
                 .shader_location = 14,
             }, .{
                 .format = .float32x4,
-                .offset = @offsetOf(Pill, "end_color"),
+                .offset = @offsetOf(Instance, "end_color"),
                 .shader_location = 15,
             } };
 
@@ -186,7 +117,7 @@ const DemoState = struct {
                 .attribute_count = vertex_attributes.len,
                 .attributes = &vertex_attributes,
             }, .{
-                .array_stride = @sizeOf(Pill),
+                .array_stride = @sizeOf(Instance),
                 .step_mode = .instance,
                 .attribute_count = instance_attributes.len,
                 .attributes = &instance_attributes,
@@ -232,7 +163,8 @@ const DemoState = struct {
 
         return .{
             .gctx = gctx,
-            .pills = std.ArrayList(Pill).init(allocator),
+            .pill = pill,
+            .pills = std.ArrayList(Instance).init(allocator),
             .vertex_count = 0,
             .dimension = calculateDimensions(gctx),
             .pipeline = pipeline,
@@ -251,24 +183,24 @@ const DemoState = struct {
         gctx.destroy(allocator);
     }
 
-    fn addPill(demo: *DemoState, pill: Pill) !void {
+    fn addInstance(demo: *DemoState, pill: Instance) !void {
         try demo.pills.append(pill);
     }
 
-    fn addPillByEndpoints(
+    fn addInstanceByEndpoints(
         demo: *DemoState,
         width: f32,
         start_color: [4]f32,
         end_color: [4]f32,
         v0: zm.F32x4,
         v1: zm.F32x4,
-    ) !UpdatedPill {
+    ) !UpdatedInstance {
         const dx = v1[0] - v0[0];
         const dy = v1[1] - v0[1];
         const length = @sqrt(dx * dx + dy * dy);
         const angle = math.atan2(f32, dy, dx);
         const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
-        try demo.addPill(.{
+        try demo.addInstance(.{
             .width = width,
             .length = length,
             .angle = angle,
@@ -321,7 +253,7 @@ const DemoState = struct {
         gctx.destroyResource(demo.instance_buffer);
         const instance_buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .vertex = true },
-            .size = ensureFourByteMultiple(instances * @sizeOf(Pill)),
+            .size = ensureFourByteMultiple(instances * @sizeOf(Instance)),
         });
         demo.instance_buffer = instance_buffer;
     }
@@ -340,7 +272,7 @@ const DemoState = struct {
         try demo.recreateVertexBuffers(segments, allocator);
         demo.recreateInstanceBuffer(1);
         demo.pills.clearRetainingCapacity();
-        try demo.addPill(.{
+        try demo.addInstance(.{
             .width = single_pill.width,
             .length = single_pill.length,
             .angle = single_pill.angle,
@@ -368,7 +300,7 @@ const DemoState = struct {
                 const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
                 const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
 
-                gctx.queue.writeBuffer(gctx.lookupResource(demo.instance_buffer).?, 0, Pill, demo.pills.items);
+                gctx.queue.writeBuffer(gctx.lookupResource(demo.instance_buffer).?, 0, Instance, demo.pills.items);
 
                 const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                     .view = back_buffer_view,
