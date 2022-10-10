@@ -1,7 +1,7 @@
 const std = @import("std");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const Vertex = @import("vertex_generator.zig").Vertex;
+const vertex_generator = @import("vertex_generator.zig");
 
 // zig fmt: off
 const wgsl_vs =
@@ -75,6 +75,11 @@ const wgsl_fs =
 // zig fmt: on
 ;
 
+pub const Vertex = struct {
+    position: [2]f32,
+    side: f32,
+};
+
 pub const Instance = struct {
     width: f32,
     length: f32,
@@ -85,15 +90,27 @@ pub const Instance = struct {
 };
 
 pub const State = struct {
+    gctx: *zgpu.GraphicsContext,
+
     vertex_shader: [*:0]const u8,
     fragment_shader: [*:0]const u8,
+
     vertex_attributes: [2]wgpu.VertexAttribute,
     instance_attributes: [6]wgpu.VertexAttribute,
 
-    pub fn init() State {
+    vertex_count: u32,
+
+    vertex_buffer: zgpu.BufferHandle,
+    index_buffer: zgpu.BufferHandle,
+    instance_buffer: zgpu.BufferHandle,
+
+    pub fn init(gctx: *zgpu.GraphicsContext) State {
         return .{
+            .gctx = gctx,
+
             .vertex_shader = wgsl_vs,
             .fragment_shader = wgsl_fs,
+
             .vertex_attributes = [_]wgpu.VertexAttribute{ .{
                 .format = .float32x2,
                 .offset = @offsetOf(Vertex, "position"),
@@ -128,6 +145,58 @@ pub const State = struct {
                 .offset = @offsetOf(Instance, "end_color"),
                 .shader_location = 15,
             } },
+
+            .vertex_count = 0,
+
+            .vertex_buffer = .{},
+            .index_buffer = .{},
+            .instance_buffer = .{},
         };
     }
+
+    pub fn recreateVertexBuffers(state: *State, segments: u16, allocator: std.mem.Allocator) !void {
+        const gctx = state.gctx;
+
+        const vertex_count = 2 * (segments + 1);
+        var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
+        defer allocator.free(vertex_data);
+
+        var index_data = try allocator.alloc(u16, @intCast(usize, vertex_count));
+        defer allocator.free(index_data);
+
+        vertex_generator.pill(segments, vertex_data, index_data);
+
+        gctx.destroyResource(state.vertex_buffer);
+        const vertex_buffer = gctx.createBuffer(.{
+            .usage = .{ .copy_dst = true, .vertex = true },
+            .size = ensureFourByteMultiple(vertex_count * @sizeOf(Vertex)),
+        });
+        gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
+        state.vertex_buffer = vertex_buffer;
+
+        gctx.destroyResource(state.index_buffer);
+        const index_buffer = gctx.createBuffer(.{
+            .usage = .{ .copy_dst = true, .index = true },
+            .size = ensureFourByteMultiple(vertex_count * @sizeOf(u16)),
+        });
+        gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data);
+        state.index_buffer = index_buffer;
+
+        state.vertex_count = vertex_count;
+    }
+
+    pub fn recreateInstanceBuffer(state: *State, instances: usize) void {
+        const gctx = state.gctx;
+
+        gctx.destroyResource(state.instance_buffer);
+        const instance_buffer = gctx.createBuffer(.{
+            .usage = .{ .copy_dst = true, .vertex = true },
+            .size = ensureFourByteMultiple(instances * @sizeOf(Instance)),
+        });
+        state.instance_buffer = instance_buffer;
+    }
 };
+
+fn ensureFourByteMultiple(size: usize) usize {
+    return (size + 3) & ~@as(usize, 3);
+}

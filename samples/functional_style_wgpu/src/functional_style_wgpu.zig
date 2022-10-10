@@ -5,15 +5,13 @@ const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zm = @import("zmath");
-const vertex_generator = @import("vertex_generator.zig");
 const pill = @import("pill.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: functional style (wgpu)";
 
-const Vertex = vertex_generator.Vertex;
-
 const Pills = pill.State;
+const Vertex = pill.Vertex;
 const Instance = pill.Instance;
 
 const Dimension = struct {
@@ -32,16 +30,11 @@ const DemoState = struct {
 
     pills: Pills,
     instances: std.ArrayList(Instance),
-    vertex_count: u32,
 
     dimension: Dimension,
 
     pipeline: zgpu.RenderPipelineHandle,
     bind_group: zgpu.BindGroupHandle,
-
-    vertex_buffer: zgpu.BufferHandle,
-    index_buffer: zgpu.BufferHandle,
-    instance_buffer: zgpu.BufferHandle,
 
     depth_texture: zgpu.TextureHandle,
     depth_texture_view: zgpu.TextureViewHandle,
@@ -49,7 +42,7 @@ const DemoState = struct {
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
-        const pills = Pills.init();
+        const pills = Pills.init(gctx);
         // Create a bind group layout needed for our render pipeline.
         const bind_group_layout = gctx.createBindGroupLayout(&.{
             zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
@@ -127,12 +120,8 @@ const DemoState = struct {
             .gctx = gctx,
             .pills = pills,
             .instances = std.ArrayList(Instance).init(allocator),
-            .vertex_count = 0,
             .dimension = calculateDimensions(gctx),
             .pipeline = pipeline,
-            .vertex_buffer = .{},
-            .index_buffer = .{},
-            .instance_buffer = .{},
             .bind_group = bind_group,
             .depth_texture = depth.texture,
             .depth_texture_view = depth.view,
@@ -178,48 +167,6 @@ const DemoState = struct {
         };
     }
 
-    fn recreateVertexBuffers(demo: *DemoState, segments: u16, allocator: std.mem.Allocator) !void {
-        const gctx = demo.gctx;
-
-        const vertex_count = 2 * (segments + 1);
-        var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
-        defer allocator.free(vertex_data);
-
-        var index_data = try allocator.alloc(u16, @intCast(usize, vertex_count));
-        defer allocator.free(index_data);
-
-        vertex_generator.pill(segments, vertex_data, index_data);
-
-        gctx.destroyResource(demo.vertex_buffer);
-        const vertex_buffer = gctx.createBuffer(.{
-            .usage = .{ .copy_dst = true, .vertex = true },
-            .size = ensureFourByteMultiple(vertex_count * @sizeOf(Vertex)),
-        });
-        gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
-        demo.vertex_buffer = vertex_buffer;
-
-        gctx.destroyResource(demo.index_buffer);
-        const index_buffer = gctx.createBuffer(.{
-            .usage = .{ .copy_dst = true, .index = true },
-            .size = ensureFourByteMultiple(vertex_count * @sizeOf(u16)),
-        });
-        gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data);
-        demo.index_buffer = index_buffer;
-
-        demo.vertex_count = vertex_count;
-    }
-
-    fn recreateInstanceBuffer(demo: *DemoState, instances: usize) void {
-        const gctx = demo.gctx;
-
-        gctx.destroyResource(demo.instance_buffer);
-        const instance_buffer = gctx.createBuffer(.{
-            .usage = .{ .copy_dst = true, .vertex = true },
-            .size = ensureFourByteMultiple(instances * @sizeOf(Instance)),
-        });
-        demo.instance_buffer = instance_buffer;
-    }
-
     fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         const single_pill = struct {
             var segments: i32 = 7;
@@ -231,8 +178,8 @@ const DemoState = struct {
             var end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
         };
         const segments = @intCast(u16, single_pill.segments);
-        try demo.recreateVertexBuffers(segments, allocator);
-        demo.recreateInstanceBuffer(1);
+        try demo.pills.recreateVertexBuffers(segments, allocator);
+        demo.pills.recreateInstanceBuffer(1);
         demo.instances.clearRetainingCapacity();
         try demo.addInstance(.{
             .width = single_pill.width,
@@ -255,14 +202,14 @@ const DemoState = struct {
             defer encoder.release();
 
             pass: {
-                const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
-                const itb_info = gctx.lookupResourceInfo(demo.instance_buffer) orelse break :pass;
-                const idb_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
+                const vb_info = gctx.lookupResourceInfo(demo.pills.vertex_buffer) orelse break :pass;
+                const itb_info = gctx.lookupResourceInfo(demo.pills.instance_buffer) orelse break :pass;
+                const idb_info = gctx.lookupResourceInfo(demo.pills.index_buffer) orelse break :pass;
                 const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
                 const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
                 const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
 
-                gctx.queue.writeBuffer(gctx.lookupResource(demo.instance_buffer).?, 0, Instance, demo.instances.items);
+                gctx.queue.writeBuffer(gctx.lookupResource(demo.pills.instance_buffer).?, 0, Instance, demo.instances.items);
 
                 const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                     .view = back_buffer_view,
@@ -300,7 +247,7 @@ const DemoState = struct {
                     mem.slice[0] = zm.transpose(object_to_clip);
 
                     pass.setBindGroup(0, bind_group, &.{mem.offset});
-                    pass.drawIndexed(demo.vertex_count, @intCast(u32, demo.instances.items.len), 0, 0, 0);
+                    pass.drawIndexed(demo.pills.vertex_count, @intCast(u32, demo.instances.items.len), 0, 0, 0);
                 }
             }
 
@@ -323,10 +270,6 @@ const DemoState = struct {
         }
     }
 };
-
-fn ensureFourByteMultiple(size: usize) usize {
-    return (size + 3) & ~@as(usize, 3);
-}
 
 fn calculateDimensions(gctx: *zgpu.GraphicsContext) Dimension {
     const width = @intToFloat(f32, gctx.swapchain_descriptor.width);

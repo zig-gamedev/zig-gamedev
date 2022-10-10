@@ -2,13 +2,9 @@ const std = @import("std");
 const expectEqual = std.testing.expectEqual;
 const expectApproxEqAbs = std.testing.expectApproxEqAbs;
 const math = std.math;
+const Vertex = @import("pill.zig").Vertex;
 
 const tau = 2 * math.pi;
-
-pub const Vertex = struct {
-    position: [2]f32,
-    side: f32,
-};
 
 fn lerp(a: f32, b: f32, t: f32) f32 {
     return a * (1 - t) + b * t;
