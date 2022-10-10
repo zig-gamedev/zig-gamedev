@@ -109,9 +109,9 @@ dimension: Dimension,
 pipeline: zgpu.RenderPipelineHandle,
 bind_group: zgpu.BindGroupHandle,
 
-vertex_buffer: ?zgpu.BufferHandle,
-index_buffer: ?zgpu.BufferHandle,
-instance_buffer: ?zgpu.BufferHandle,
+vertex_buffer: zgpu.BufferHandle,
+index_buffer: zgpu.BufferHandle,
+instance_buffer: zgpu.BufferHandle,
 
 depth_texture: zgpu.TextureHandle,
 depth_texture_view: zgpu.TextureViewHandle,
@@ -267,9 +267,9 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         .vertex_count = 0,
         .dimension = calculateDimensions(gctx),
         .pipeline = pipeline,
-        .vertex_buffer = null,
-        .index_buffer = null,
-        .instance_buffer = null,
+        .vertex_buffer = .{},
+        .index_buffer = .{},
+        .instance_buffer = .{},
         .bind_group = bind_group,
         .depth_texture = depth.texture,
         .depth_texture_view = depth.view,
@@ -280,15 +280,6 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     const gctx = demo.gctx;
     zgui.backend.deinit();
     zgui.deinit();
-    if (demo.vertex_buffer) |vb| {
-        gctx.destroyResource(vb);
-    }
-    if (demo.index_buffer) |idb| {
-        gctx.destroyResource(idb);
-    }
-    if (demo.instance_buffer) |itb| {
-        gctx.destroyResource(itb);
-    }
     demo.pills.deinit();
     gctx.destroy(allocator);
 }
@@ -341,9 +332,7 @@ fn recreateVertexBuffers(demo: *DemoState, segments: u16, allocator: std.mem.All
 
     vertex_generator.pill(segments, vertex_data, index_data);
 
-    if (demo.vertex_buffer) |vb| {
-        gctx.destroyResource(vb);
-    }
+    gctx.destroyResource(demo.vertex_buffer);
     const vertex_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
         .size = ensureFourByteMultiple(vertex_count * @sizeOf(Vertex)),
@@ -351,9 +340,7 @@ fn recreateVertexBuffers(demo: *DemoState, segments: u16, allocator: std.mem.All
     gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
     demo.vertex_buffer = vertex_buffer;
 
-    if (demo.index_buffer) |idb| {
-        gctx.destroyResource(idb);
-    }
+    gctx.destroyResource(demo.index_buffer);
     const index_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
         .size = ensureFourByteMultiple(vertex_count * @sizeOf(u16)),
@@ -367,9 +354,7 @@ fn recreateVertexBuffers(demo: *DemoState, segments: u16, allocator: std.mem.All
 fn recreateInstanceBuffer(demo: *DemoState, instances: usize) void {
     const gctx = demo.gctx;
 
-    if (demo.instance_buffer) |itb| {
-        gctx.destroyResource(itb);
-    }
+    gctx.destroyResource(demo.instance_buffer);
     const instance_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
         .size = ensureFourByteMultiple(instances * @sizeOf(Pill)),
@@ -415,7 +400,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             var end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
         };
         zgui.textUnformatted("Drag sliders or pill directly");
-        const init_buffers = demo.vertex_buffer == null;
+        const init_buffers = !gctx.isResourceValid(demo.vertex_buffer);
         const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &single_pill.segments, .min = 2, .max = 20 });
         if (tab_activated or init_buffers or needs_vertex_update) {
             const segments = @intCast(u16, single_pill.segments);
@@ -434,7 +419,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         need_instance_update.setValue(5, zgui.colorEdit3("End color", .{ .col = single_pill.end_color[0..3], .flags = .{
             .no_options = true,
         } }));
-        if (tab_activated or init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
+        if (tab_activated or init_buffers or zgui.io.getWantCaptureMouse() or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.addPill(.{
                 .width = single_pill.width,
@@ -602,14 +587,14 @@ fn draw(demo: *DemoState) void {
         defer encoder.release();
 
         pass: {
-            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer.?) orelse break :pass;
-            const itb_info = gctx.lookupResourceInfo(demo.instance_buffer.?) orelse break :pass;
-            const idb_info = gctx.lookupResourceInfo(demo.index_buffer.?) orelse break :pass;
+            const vb_info = gctx.lookupResourceInfo(demo.vertex_buffer) orelse break :pass;
+            const itb_info = gctx.lookupResourceInfo(demo.instance_buffer) orelse break :pass;
+            const idb_info = gctx.lookupResourceInfo(demo.index_buffer) orelse break :pass;
             const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
             const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
             const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
 
-            gctx.queue.writeBuffer(gctx.lookupResource(demo.instance_buffer.?).?, 0, Pill, demo.pills.items);
+            gctx.queue.writeBuffer(gctx.lookupResource(demo.instance_buffer).?, 0, Pill, demo.pills.items);
 
             const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                 .view = back_buffer_view,
