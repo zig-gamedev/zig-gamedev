@@ -2409,21 +2409,23 @@ pub fn typeToDataTypeEnum(comptime T: type) DataType {
 // Menus
 //
 //--------------------------------------------------------------------------------------------------
-/// 'pub fn zguiBeginMenuBar() bool'
+/// `pub fn beginMenuBar() bool`
 pub const beginMenuBar = zguiBeginMenuBar;
-/// 'pub fn zguiEndMenuBar() void'
+/// `pub fn endMenuBar() void`
 pub const endMenuBar = zguiEndMenuBar;
-/// 'pub fn zguiBeginMainMenuBar() bool'
+/// `pub fn beginMainMenuBar() bool`
 pub const beginMainMenuBar = zguiBeginMainMenuBar;
-/// 'pub fn zguiEndMainMenuBar() void'
+/// `pub fn endMainMenuBar() void`
 pub const endMainMenuBar = zguiEndMainMenuBar;
-/// 'pub fn zguiBeginMenu(label: [:0]const u8, enabled: bool) bool'
-pub const beginMenu = zguiBeginMenu;
-/// 'pub fn zguiEndMenu() void'
+
+pub fn beginMenu(label: [:0]const u8, enabled: bool) bool {
+    return zguiBeginMenu(label, enabled);
+}
+/// `pub fn endMenu() void'
 pub const endMenu = zguiEndMenu;
 
 const MenuItem = struct {
-    shortcut: ?[*:0]const u8 = null,
+    shortcut: ?[:0]const u8 = null,
     selected: bool = false,
     enabled: bool = true,
 };
