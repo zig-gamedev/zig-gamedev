@@ -540,13 +540,17 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
     if (zgui.beginTabItem("Multiple pills", .{})) {
         const tab_activated = demo_picker.active_tab != 1;
         demo_picker.active_tab = 1;
-        if (tab_activated) {
-            try demo.recreate_vertex_buffers(7, allocator);
-        }
+
         const multiple_pills = struct {
+            var segments: i32 = 7;
             var instance_index: i32 = 0;
             var rng = std.rand.DefaultPrng.init(42);
         };
+        const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &multiple_pills.segments, .min = 2, .max = 20 });
+        if (tab_activated or needs_vertex_update) {
+            const segments = @intCast(u16, multiple_pills.segments);
+            try demo.recreate_vertex_buffers(segments, allocator);
+        }
         const InstanceValues = [_]usize{ 1000, 10000, 100000, 1000000 };
         const InstanceStrings = [_][:0]const u8{ "1,000", "10,000", "100,000", "1,000,000" };
         const need_instance_update = zgui.sliderInt("Instances", .{
