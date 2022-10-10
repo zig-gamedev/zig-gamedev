@@ -1,3 +1,8 @@
+const std = @import("std");
+const zgpu = @import("zgpu");
+const wgpu = zgpu.wgpu;
+const Vertex = @import("vertex_generator.zig").Vertex;
+
 // zig fmt: off
 const wgsl_vs =
 \\  @group(0) @binding(0) var<uniform> object_to_clip: mat4x4<f32>;
@@ -70,14 +75,59 @@ const wgsl_fs =
 // zig fmt: on
 ;
 
-pub const Pill = struct {
+pub const Instance = struct {
+    width: f32,
+    length: f32,
+    angle: f32,
+    position: [2]f32,
+    start_color: [4]f32,
+    end_color: [4]f32,
+};
+
+pub const State = struct {
     vertex_shader: [*:0]const u8,
     fragment_shader: [*:0]const u8,
+    vertex_attributes: [2]wgpu.VertexAttribute,
+    instance_attributes: [6]wgpu.VertexAttribute,
 
-    pub fn init() Pill {
+    pub fn init() State {
         return .{
             .vertex_shader = wgsl_vs,
             .fragment_shader = wgsl_fs,
+            .vertex_attributes = [_]wgpu.VertexAttribute{ .{
+                .format = .float32x2,
+                .offset = @offsetOf(Vertex, "position"),
+                .shader_location = 0,
+            }, .{
+                .format = .float32,
+                .offset = @offsetOf(Vertex, "side"),
+                .shader_location = 1,
+            } },
+            .instance_attributes = [_]wgpu.VertexAttribute{ .{
+                .format = .float32,
+                .offset = @offsetOf(Instance, "width"),
+                .shader_location = 10,
+            }, .{
+                .format = .float32,
+                .offset = @offsetOf(Instance, "length"),
+                .shader_location = 11,
+            }, .{
+                .format = .float32,
+                .offset = @offsetOf(Instance, "angle"),
+                .shader_location = 12,
+            }, .{
+                .format = .float32x2,
+                .offset = @offsetOf(Instance, "position"),
+                .shader_location = 13,
+            }, .{
+                .format = .float32x4,
+                .offset = @offsetOf(Instance, "start_color"),
+                .shader_location = 14,
+            }, .{
+                .format = .float32x4,
+                .offset = @offsetOf(Instance, "end_color"),
+                .shader_location = 15,
+            } },
         };
     }
 };

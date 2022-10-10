@@ -6,21 +6,15 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zm = @import("zmath");
 const vertex_generator = @import("vertex_generator.zig");
-const Pill = @import("pill.zig").Pill;
+const pill = @import("pill.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: functional style (wgpu)";
 
 const Vertex = vertex_generator.Vertex;
 
-const Instance = struct {
-    width: f32,
-    length: f32,
-    angle: f32,
-    position: [2]f32,
-    start_color: [4]f32,
-    end_color: [4]f32,
-};
+const Pills = pill.State;
+const Instance = pill.Instance;
 
 const Dimension = struct {
     width: f32,
@@ -36,8 +30,8 @@ const UpdatedInstance = struct {
 const DemoState = struct {
     gctx: *zgpu.GraphicsContext,
 
-    pill: Pill,
-    pills: std.ArrayList(Instance),
+    pills: Pills,
+    instances: std.ArrayList(Instance),
     vertex_count: u32,
 
     dimension: Dimension,
@@ -55,7 +49,7 @@ const DemoState = struct {
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const gctx = try zgpu.GraphicsContext.create(allocator, window);
 
-        const pill = Pill.init();
+        const pills = Pills.init();
         // Create a bind group layout needed for our render pipeline.
         const bind_group_layout = gctx.createBindGroupLayout(&.{
             zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
@@ -66,51 +60,19 @@ const DemoState = struct {
         defer gctx.releaseResource(pipeline_layout);
 
         const pipeline = pipline: {
-            const vs_module = zgpu.createWgslShaderModule(gctx.device, pill.vertex_shader, "vs");
+            const vs_module = zgpu.createWgslShaderModule(gctx.device, pills.vertex_shader, "vs");
             defer vs_module.release();
 
-            const fs_module = zgpu.createWgslShaderModule(gctx.device, pill.fragment_shader, "fs");
+            const fs_module = zgpu.createWgslShaderModule(gctx.device, pills.fragment_shader, "fs");
             defer fs_module.release();
 
             const color_targets = [_]wgpu.ColorTargetState{.{
                 .format = zgpu.GraphicsContext.swapchain_format,
             }};
 
-            const vertex_attributes = [_]wgpu.VertexAttribute{ .{
-                .format = .float32x2,
-                .offset = @offsetOf(Vertex, "position"),
-                .shader_location = 0,
-            }, .{
-                .format = .float32,
-                .offset = @offsetOf(Vertex, "side"),
-                .shader_location = 1,
-            } };
+            const vertex_attributes = pills.vertex_attributes;
 
-            const instance_attributes = [_]wgpu.VertexAttribute{ .{
-                .format = .float32,
-                .offset = @offsetOf(Instance, "width"),
-                .shader_location = 10,
-            }, .{
-                .format = .float32,
-                .offset = @offsetOf(Instance, "length"),
-                .shader_location = 11,
-            }, .{
-                .format = .float32,
-                .offset = @offsetOf(Instance, "angle"),
-                .shader_location = 12,
-            }, .{
-                .format = .float32x2,
-                .offset = @offsetOf(Instance, "position"),
-                .shader_location = 13,
-            }, .{
-                .format = .float32x4,
-                .offset = @offsetOf(Instance, "start_color"),
-                .shader_location = 14,
-            }, .{
-                .format = .float32x4,
-                .offset = @offsetOf(Instance, "end_color"),
-                .shader_location = 15,
-            } };
+            const instance_attributes = pills.instance_attributes;
 
             const vertex_buffers = [_]wgpu.VertexBufferLayout{ .{
                 .array_stride = @sizeOf(Vertex),
@@ -163,8 +125,8 @@ const DemoState = struct {
 
         return .{
             .gctx = gctx,
-            .pill = pill,
-            .pills = std.ArrayList(Instance).init(allocator),
+            .pills = pills,
+            .instances = std.ArrayList(Instance).init(allocator),
             .vertex_count = 0,
             .dimension = calculateDimensions(gctx),
             .pipeline = pipeline,
@@ -179,12 +141,12 @@ const DemoState = struct {
 
     fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
         const gctx = demo.gctx;
-        demo.pills.deinit();
+        demo.instances.deinit();
         gctx.destroy(allocator);
     }
 
-    fn addInstance(demo: *DemoState, pill: Instance) !void {
-        try demo.pills.append(pill);
+    fn addInstance(demo: *DemoState, instance: Instance) !void {
+        try demo.instances.append(instance);
     }
 
     fn addInstanceByEndpoints(
@@ -271,7 +233,7 @@ const DemoState = struct {
         const segments = @intCast(u16, single_pill.segments);
         try demo.recreateVertexBuffers(segments, allocator);
         demo.recreateInstanceBuffer(1);
-        demo.pills.clearRetainingCapacity();
+        demo.instances.clearRetainingCapacity();
         try demo.addInstance(.{
             .width = single_pill.width,
             .length = single_pill.length,
@@ -300,7 +262,7 @@ const DemoState = struct {
                 const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
                 const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
 
-                gctx.queue.writeBuffer(gctx.lookupResource(demo.instance_buffer).?, 0, Instance, demo.pills.items);
+                gctx.queue.writeBuffer(gctx.lookupResource(demo.instance_buffer).?, 0, Instance, demo.instances.items);
 
                 const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                     .view = back_buffer_view,
@@ -338,7 +300,7 @@ const DemoState = struct {
                     mem.slice[0] = zm.transpose(object_to_clip);
 
                     pass.setBindGroup(0, bind_group, &.{mem.offset});
-                    pass.drawIndexed(demo.vertex_count, @intCast(u32, demo.pills.items.len), 0, 0, 0);
+                    pass.drawIndexed(demo.vertex_count, @intCast(u32, demo.instances.items.len), 0, 0, 0);
                 }
             }
 
