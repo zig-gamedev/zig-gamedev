@@ -412,8 +412,12 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         need_instance_update.setValue(1, zgui.dragFloat("Length", .{ .v = &pill_control.length, .min = 0.0, .max = std.math.inf(f32), .speed = 0.01 }));
         need_instance_update.setValue(2, zgui.sliderAngle("Angle", .{ .vrad = &pill_control.angle, .deg_min = -180.0, .deg_max = 180.0 }));
         need_instance_update.setValue(3, zgui.dragFloat2("Position", .{ .v = &pill_control.position, .speed = 0.01 }));
-        need_instance_update.setValue(4, zgui.colorEdit4("Start color", .{ .col = &pill_control.start_color, .flags = .{} }));
-        need_instance_update.setValue(5, zgui.colorEdit4("End color", .{ .col = &pill_control.end_color, .flags = .{} }));
+        need_instance_update.setValue(4, zgui.colorEdit3("Start color", .{ .col = pill_control.start_color[0..3], .flags = .{
+            .no_options = true,
+        } }));
+        need_instance_update.setValue(5, zgui.colorEdit3("End color", .{ .col = pill_control.end_color[0..3], .flags = .{
+            .no_options = true,
+        } }));
         if (init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
             try demo.add_pill(.{
