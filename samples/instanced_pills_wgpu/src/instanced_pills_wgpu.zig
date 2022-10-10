@@ -561,8 +561,8 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             var i: usize = 0;
             while (i < instances) : (i += 1) {
                 try demo.add_pill(.{
-                    .width = multiple_pills.rng.random().float(f32) / 50.0,
-                    .length = multiple_pills.rng.random().float(f32) / 5.0,
+                    .width = multiple_pills.rng.random().float(f32) / 50.0 + 0.01,
+                    .length = multiple_pills.rng.random().float(f32) / 5.0 + 0.1,
                     .angle = multiple_pills.rng.random().float(f32) * 2.0 * math.pi,
                     .position = .{ multiple_pills.rng.random().float(f32) * 2 - 1, multiple_pills.rng.random().float(f32) * 2 - 1 },
                     .start_color = .{ multiple_pills.rng.random().float(f32), multiple_pills.rng.random().float(f32), multiple_pills.rng.random().float(f32), 1.0 },
