@@ -265,7 +265,7 @@ fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         .gctx = gctx,
         .pills = std.ArrayList(Pill).init(allocator),
         .vertex_count = 0,
-        .dimension = calculate_dimensions(gctx),
+        .dimension = calculateDimensions(gctx),
         .pipeline = pipeline,
         .vertex_buffer = null,
         .index_buffer = null,
@@ -293,11 +293,11 @@ fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
     gctx.destroy(allocator);
 }
 
-fn ensure_4b_multiple(size: usize) usize {
+fn ensureFourByteMultiple(size: usize) usize {
     return (size + 3) & ~@as(usize, 3);
 }
 
-fn add_pill(demo: *DemoState, pill: Pill) !void {
+fn addPill(demo: *DemoState, pill: Pill) !void {
     try demo.pills.append(pill);
 }
 
@@ -307,13 +307,13 @@ const UpdatedPill = struct {
     position: [2]f32,
 };
 
-fn add_pill_by_endpoints(demo: *DemoState, width: f32, start_color: [4]f32, end_color: [4]f32, v0: zm.F32x4, v1: zm.F32x4) !UpdatedPill {
+fn addPillByEndpoints(demo: *DemoState, width: f32, start_color: [4]f32, end_color: [4]f32, v0: zm.F32x4, v1: zm.F32x4) !UpdatedPill {
     const dx = v1[0] - v0[0];
     const dy = v1[1] - v0[1];
     const length = @sqrt(dx * dx + dy * dy);
     const angle = math.atan2(f32, dy, dx);
     const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
-    try demo.add_pill(.{
+    try demo.addPill(.{
         .width = width,
         .length = length,
         .angle = angle,
@@ -329,7 +329,7 @@ fn add_pill_by_endpoints(demo: *DemoState, width: f32, start_color: [4]f32, end_
     };
 }
 
-fn recreate_vertex_buffers(demo: *DemoState, segments: u16, allocator: std.mem.Allocator) !void {
+fn recreateVertexBuffers(demo: *DemoState, segments: u16, allocator: std.mem.Allocator) !void {
     const gctx = demo.gctx;
 
     const vertex_count = 2 * (segments + 1);
@@ -346,7 +346,7 @@ fn recreate_vertex_buffers(demo: *DemoState, segments: u16, allocator: std.mem.A
     }
     const vertex_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
-        .size = ensure_4b_multiple(vertex_count * @sizeOf(Vertex)),
+        .size = ensureFourByteMultiple(vertex_count * @sizeOf(Vertex)),
     });
     gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
     demo.vertex_buffer = vertex_buffer;
@@ -356,7 +356,7 @@ fn recreate_vertex_buffers(demo: *DemoState, segments: u16, allocator: std.mem.A
     }
     const index_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .index = true },
-        .size = ensure_4b_multiple(vertex_count * @sizeOf(u16)),
+        .size = ensureFourByteMultiple(vertex_count * @sizeOf(u16)),
     });
     gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data);
     demo.index_buffer = index_buffer;
@@ -364,7 +364,7 @@ fn recreate_vertex_buffers(demo: *DemoState, segments: u16, allocator: std.mem.A
     demo.vertex_count = vertex_count;
 }
 
-fn recreate_instance_buffer(demo: *DemoState, instances: usize) void {
+fn recreateInstanceBuffer(demo: *DemoState, instances: usize) void {
     const gctx = demo.gctx;
 
     if (demo.instance_buffer) |itb| {
@@ -372,7 +372,7 @@ fn recreate_instance_buffer(demo: *DemoState, instances: usize) void {
     }
     const instance_buffer = gctx.createBuffer(.{
         .usage = .{ .copy_dst = true, .vertex = true },
-        .size = ensure_4b_multiple(instances * @sizeOf(Pill)),
+        .size = ensureFourByteMultiple(instances * @sizeOf(Pill)),
     });
     demo.instance_buffer = instance_buffer;
 }
@@ -419,8 +419,8 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &single_pill.segments, .min = 2, .max = 20 });
         if (tab_activated or init_buffers or needs_vertex_update) {
             const segments = @intCast(u16, single_pill.segments);
-            try demo.recreate_vertex_buffers(segments, allocator);
-            demo.recreate_instance_buffer(1);
+            try demo.recreateVertexBuffers(segments, allocator);
+            demo.recreateInstanceBuffer(1);
         }
 
         var need_instance_update = std.bit_set.ArrayBitSet(u8, 6).initEmpty();
@@ -436,7 +436,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         } }));
         if (tab_activated or init_buffers or zgui.isWindowFocused(zgui.FocusedFlags.root_and_child_windows) or need_instance_update.findFirstSet() != null) {
             demo.pills.clearRetainingCapacity();
-            try demo.add_pill(.{
+            try demo.addPill(.{
                 .width = single_pill.width,
                 .length = single_pill.length,
                 .angle = single_pill.angle,
@@ -507,7 +507,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                             0.0,
                             1.0,
                         };
-                        break :move_v0 try demo.add_pill_by_endpoints(
+                        break :move_v0 try demo.addPillByEndpoints(
                             single_pill.width,
                             single_pill.start_color,
                             single_pill.end_color,
@@ -521,7 +521,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                             0.0,
                             1.0,
                         };
-                        break :move_v1 try demo.add_pill_by_endpoints(
+                        break :move_v1 try demo.addPillByEndpoints(
                             single_pill.width,
                             single_pill.start_color,
                             single_pill.end_color,
@@ -549,7 +549,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
         const needs_vertex_update = zgui.sliderInt("Segments", .{ .v = &multiple_pills.segments, .min = 2, .max = 20 });
         if (tab_activated or needs_vertex_update) {
             const segments = @intCast(u16, multiple_pills.segments);
-            try demo.recreate_vertex_buffers(segments, allocator);
+            try demo.recreateVertexBuffers(segments, allocator);
         }
         const InstanceValues = [_]usize{ 1000, 10000, 100000, 1000000 };
         const InstanceStrings = [_][:0]const u8{ "1,000", "10,000", "100,000", "1,000,000" };
@@ -564,7 +564,7 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
             demo.pills.clearRetainingCapacity();
             var i: usize = 0;
             while (i < instances) : (i += 1) {
-                try demo.add_pill(.{
+                try demo.addPill(.{
                     .width = multiple_pills.rng.random().float(f32) / 50.0 + 0.01,
                     .length = multiple_pills.rng.random().float(f32) / 5.0 + 0.1,
                     .angle = multiple_pills.rng.random().float(f32) * 2.0 * math.pi,
@@ -573,13 +573,13 @@ fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
                     .end_color = .{ multiple_pills.rng.random().float(f32), multiple_pills.rng.random().float(f32), multiple_pills.rng.random().float(f32), 1.0 },
                 });
             }
-            demo.recreate_instance_buffer(instances);
+            demo.recreateInstanceBuffer(instances);
         }
         zgui.endTabItem();
     }
 }
 
-fn calculate_dimensions(gctx: *zgpu.GraphicsContext) Dimension {
+fn calculateDimensions(gctx: *zgpu.GraphicsContext) Dimension {
     const width = @intToFloat(f32, gctx.swapchain_descriptor.width);
     const height = @intToFloat(f32, gctx.swapchain_descriptor.height);
     const delta = math.sign(@bitCast(i32, gctx.swapchain_descriptor.width) - @bitCast(i32, gctx.swapchain_descriptor.height));
@@ -675,7 +675,7 @@ fn draw(demo: *DemoState) void {
 
     gctx.submit(&.{commands});
     if (gctx.present() == .swap_chain_resized) {
-        demo.dimension = calculate_dimensions(gctx);
+        demo.dimension = calculateDimensions(gctx);
 
         // Release old depth texture.
         gctx.releaseResource(demo.depth_texture_view);
