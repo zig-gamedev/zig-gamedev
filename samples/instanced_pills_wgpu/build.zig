@@ -8,7 +8,7 @@ const zgui = @import("../../libs/zgui/build.zig");
 const Options = @import("../../build.zig").Options;
 
 const demo_name = "instanced_pills_wgpu";
-const demo_filename = "InstancedPillsWgpu";
+const demo_filename = "instanced_pills_wgpu";
 const content_dir = demo_name ++ "_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
