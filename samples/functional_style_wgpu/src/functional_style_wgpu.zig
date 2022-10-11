@@ -5,7 +5,9 @@ const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zm = @import("zmath");
+
 const pill = @import("pill.zig");
+const vertex_generator = @import("vertex_generator.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: functional style (wgpu)";
@@ -126,28 +128,32 @@ const DemoState = struct {
         gctx.destroy(allocator);
     }
 
-    fn update(demo: *DemoState, allocator: std.mem.Allocator) !void {
-        const single_pill = struct {
-            var segments: i32 = 7;
-            var length: f32 = 0.5;
-            var width: f32 = 0.1;
-            var angle: f32 = math.pi / 3.0;
-            var position: [2]f32 = .{ 0.5, -0.25 };
-            var start_color: [4]f32 = .{ 1.0, 0.0, 0.0, 1.0 };
-            var end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
-        };
-        const segments = @intCast(u16, single_pill.segments);
-        try demo.pills.recreateVertexBuffers(segments, allocator);
-        demo.pills.recreateInstanceBuffer(1);
+    fn update(demo: *DemoState, _: std.mem.Allocator) !void {
+        const segments: u16 = 7;
+        demo.pills.clearVertices();
+        try vertex_generator.generateVertices(segments, &demo.pills.vertices);
+        demo.pills.recreateVertexBuffer();
+
+        demo.pills.clearIndices();
+        try vertex_generator.generateIndices(segments, &demo.pills.indices);
+        demo.pills.recreateIndexBuffer();
+
         demo.pills.clearInstances();
+        const length: f32 = 0.5;
+        const width: f32 = 0.1;
+        const angle: f32 = math.pi / 3.0;
+        const position: [2]f32 = .{ 0.5, -0.25 };
+        const start_color: [4]f32 = .{ 1.0, 0.0, 0.0, 1.0 };
+        const end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
         try demo.pills.addInstance(.{
-            .width = single_pill.width,
-            .length = single_pill.length,
-            .angle = single_pill.angle,
-            .position = single_pill.position,
-            .start_color = single_pill.start_color,
-            .end_color = single_pill.end_color,
+            .width = width,
+            .length = length,
+            .angle = angle,
+            .position = position,
+            .start_color = start_color,
+            .end_color = end_color,
         });
+        demo.pills.recreateInstanceBuffer();
     }
 
     fn draw(demo: *DemoState) void {
@@ -167,8 +173,6 @@ const DemoState = struct {
                 const pipeline = gctx.lookupResource(demo.pipeline) orelse break :pass;
                 const bind_group = gctx.lookupResource(demo.bind_group) orelse break :pass;
                 const depth_view = gctx.lookupResource(demo.depth_texture_view) orelse break :pass;
-
-                gctx.queue.writeBuffer(gctx.lookupResource(demo.pills.instance_buffer).?, 0, Instance, demo.pills.instances.items);
 
                 const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
                     .view = back_buffer_view,
@@ -206,7 +210,7 @@ const DemoState = struct {
                     mem.slice[0] = zm.transpose(object_to_clip);
 
                     pass.setBindGroup(0, bind_group, &.{mem.offset});
-                    pass.drawIndexed(demo.pills.vertex_count, @intCast(u32, demo.pills.instances.items.len), 0, 0, 0);
+                    pass.drawIndexed(@intCast(u32, demo.pills.vertices.items.len), @intCast(u32, demo.pills.instances.items.len), 0, 0, 0);
                 }
             }
 

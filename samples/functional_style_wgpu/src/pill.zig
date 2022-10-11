@@ -4,8 +4,6 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zm = @import("zmath");
 
-const vertex_generator = @import("vertex_generator.zig");
-
 // zig fmt: off
 const wgsl_vs =
 \\  @group(0) @binding(0) var<uniform> object_to_clip: mat4x4<f32>;
@@ -92,12 +90,6 @@ pub const Instance = struct {
     end_color: [4]f32,
 };
 
-const UpdatedInstance = struct {
-    length: f32,
-    angle: f32,
-    position: [2]f32,
-};
-
 pub const State = struct {
     gctx: *zgpu.GraphicsContext,
 
@@ -107,7 +99,8 @@ pub const State = struct {
     vertex_attributes: [2]wgpu.VertexAttribute,
     instance_attributes: [6]wgpu.VertexAttribute,
 
-    vertex_count: u32,
+    vertices: std.ArrayList(Vertex),
+    indices: std.ArrayList(u16),
     instances: std.ArrayList(Instance),
 
     vertex_buffer: zgpu.BufferHandle,
@@ -156,7 +149,8 @@ pub const State = struct {
                 .shader_location = 15,
             } },
 
-            .vertex_count = 0,
+            .vertices = std.ArrayList(Vertex).init(allocator),
+            .indices = std.ArrayList(u16).init(allocator),
             .instances = std.ArrayList(Instance).init(allocator),
 
             .vertex_buffer = .{},
@@ -166,48 +160,44 @@ pub const State = struct {
     }
 
     pub fn deinit(self: *State) void {
+        self.vertices.deinit();
+        self.indices.deinit();
         self.instances.deinit();
     }
 
-    pub fn recreateVertexBuffers(self: *State, segments: u16, allocator: std.mem.Allocator) !void {
+    pub fn recreateVertexBuffer(self: *State) void {
         const gctx = self.gctx;
-
-        const vertex_count = 2 * (segments + 1);
-        var vertex_data = try allocator.alloc(Vertex, @intCast(usize, vertex_count));
-        defer allocator.free(vertex_data);
-
-        var index_data = try allocator.alloc(u16, @intCast(usize, vertex_count));
-        defer allocator.free(index_data);
-
-        vertex_generator.pill(segments, vertex_data, index_data);
 
         gctx.destroyResource(self.vertex_buffer);
         const vertex_buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .vertex = true },
-            .size = ensureFourByteMultiple(vertex_count * @sizeOf(Vertex)),
+            .size = ensureFourByteMultiple(self.vertices.items.len * @sizeOf(Vertex)),
         });
-        gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, vertex_data);
+        gctx.queue.writeBuffer(gctx.lookupResource(vertex_buffer).?, 0, Vertex, self.vertices.items);
         self.vertex_buffer = vertex_buffer;
+    }
+
+    pub fn recreateIndexBuffer(self: *State) void {
+        const gctx = self.gctx;
 
         gctx.destroyResource(self.index_buffer);
         const index_buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .index = true },
-            .size = ensureFourByteMultiple(vertex_count * @sizeOf(u16)),
+            .size = ensureFourByteMultiple(self.indices.items.len * @sizeOf(u16)),
         });
-        gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, index_data);
+        gctx.queue.writeBuffer(gctx.lookupResource(index_buffer).?, 0, u16, self.indices.items);
         self.index_buffer = index_buffer;
-
-        self.vertex_count = vertex_count;
     }
 
-    pub fn recreateInstanceBuffer(self: *State, instances: usize) void {
+    pub fn recreateInstanceBuffer(self: *State) void {
         const gctx = self.gctx;
 
         gctx.destroyResource(self.instance_buffer);
         const instance_buffer = gctx.createBuffer(.{
             .usage = .{ .copy_dst = true, .vertex = true },
-            .size = ensureFourByteMultiple(instances * @sizeOf(Instance)),
+            .size = ensureFourByteMultiple(self.instances.items.len * @sizeOf(Instance)),
         });
+        gctx.queue.writeBuffer(gctx.lookupResource(instance_buffer).?, 0, Instance, self.instances.items);
         self.instance_buffer = instance_buffer;
     }
 
@@ -222,7 +212,7 @@ pub const State = struct {
         end_color: [4]f32,
         v0: zm.F32x4,
         v1: zm.F32x4,
-    ) !UpdatedInstance {
+    ) !void {
         const dx = v1[0] - v0[0];
         const dy = v1[1] - v0[1];
         const length = @sqrt(dx * dx + dy * dy);
@@ -236,14 +226,14 @@ pub const State = struct {
             .start_color = start_color,
             .end_color = end_color,
         });
-
-        return .{
-            .length = length,
-            .angle = angle,
-            .position = position,
-        };
     }
 
+    pub fn clearVertices(self: *State) void {
+        self.vertices.clearRetainingCapacity();
+    }
+    pub fn clearIndices(self: *State) void {
+        self.indices.clearRetainingCapacity();
+    }
     pub fn clearInstances(self: *State) void {
         self.instances.clearRetainingCapacity();
     }
