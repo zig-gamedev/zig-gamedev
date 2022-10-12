@@ -128,46 +128,38 @@ pub const Instance = struct {
     end_color: [4]f32,
 };
 
-pub const State = struct {
-    element: Element(Vertex, Instance),
+pub const Pills = Element(Vertex, Instance);
 
-    pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) State {
-        return .{
-            .element = Element(Vertex, Instance).init(
-                gctx,
-                allocator,
-                &vertex_attributes,
-                &instance_attributes,
-                wgsl_vs,
-                wgsl_fs,
-            ),
-        };
-    }
+pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) Pills {
+    return Pills.init(
+        gctx,
+        allocator,
+        &vertex_attributes,
+        &instance_attributes,
+        wgsl_vs,
+        wgsl_fs,
+    );
+}
 
-    pub fn deinit(self: *State) void {
-        self.element.deinit();
-    }
-
-    pub fn addInstanceByEndpoints(
-        self: *State,
-        width: f32,
-        start_color: [4]f32,
-        end_color: [4]f32,
-        v0: zm.F32x4,
-        v1: zm.F32x4,
-    ) !void {
-        const dx = v1[0] - v0[0];
-        const dy = v1[1] - v0[1];
-        const length = @sqrt(dx * dx + dy * dy);
-        const angle = math.atan2(f32, dy, dx);
-        const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
-        try self.element.instances.append(.{
-            .width = width,
-            .length = length,
-            .angle = angle,
-            .position = position,
-            .start_color = start_color,
-            .end_color = end_color,
-        });
-    }
-};
+pub fn addInstanceByEndpoints(
+    self: *Pills,
+    width: f32,
+    start_color: [4]f32,
+    end_color: [4]f32,
+    v0: zm.F32x4,
+    v1: zm.F32x4,
+) !void {
+    const dx = v1[0] - v0[0];
+    const dy = v1[1] - v0[1];
+    const length = @sqrt(dx * dx + dy * dy);
+    const angle = math.atan2(f32, dy, dx);
+    const position = .{ (v0[0] + v1[0]) / 2.0, (v0[1] + v1[1]) / 2.0 };
+    try self.element.instances.append(.{
+        .width = width,
+        .length = length,
+        .angle = angle,
+        .position = position,
+        .start_color = start_color,
+        .end_color = end_color,
+    });
+}

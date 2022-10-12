@@ -14,20 +14,16 @@ const vertex_generator = @import("vertex_generator.zig");
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: functional style (wgpu)";
 
-const Pills = pill.State;
-const Vertex = pill.Vertex;
-const Instance = pill.Instance;
-
 const DemoState = struct {
     graphics: Graphics,
 
-    pills: Pills,
+    pills: pill.Pills,
 
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const graphics = try Graphics.init(allocator, window);
         return .{
             .graphics = graphics,
-            .pills = Pills.init(graphics.gctx, allocator),
+            .pills = pill.init(graphics.gctx, allocator),
         };
     }
 
@@ -38,22 +34,22 @@ const DemoState = struct {
 
     fn update(demo: *DemoState, _: std.mem.Allocator) !void {
         const segments: u16 = 7;
-        demo.pills.element.vertices.clearRetainingCapacity();
-        try vertex_generator.generateVertices(segments, &demo.pills.element.vertices);
-        demo.pills.element.recreateVertexBuffer();
+        demo.pills.vertices.clearRetainingCapacity();
+        try vertex_generator.generateVertices(segments, &demo.pills.vertices);
+        demo.pills.recreateVertexBuffer();
 
-        demo.pills.element.indices.clearRetainingCapacity();
-        try vertex_generator.generateIndices(segments, &demo.pills.element.indices);
-        demo.pills.element.recreateIndexBuffer();
+        demo.pills.indices.clearRetainingCapacity();
+        try vertex_generator.generateIndices(segments, &demo.pills.indices);
+        demo.pills.recreateIndexBuffer();
 
-        demo.pills.element.instances.clearRetainingCapacity();
+        demo.pills.instances.clearRetainingCapacity();
         const length: f32 = 0.5;
         const width: f32 = 0.1;
         const angle: f32 = math.pi / 3.0;
         const position: [2]f32 = .{ 0.5, -0.25 };
         const start_color: [4]f32 = .{ 1.0, 0.0, 0.0, 1.0 };
         const end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
-        try demo.pills.element.instances.append(.{
+        try demo.pills.instances.append(.{
             .width = width,
             .length = length,
             .angle = angle,
@@ -61,10 +57,10 @@ const DemoState = struct {
             .start_color = start_color,
             .end_color = end_color,
         });
-        demo.pills.element.recreateInstanceBuffer();
+        demo.pills.recreateInstanceBuffer();
 
         demo.graphics.layers.layers.clearRetainingCapacity();
-        try demo.graphics.layers.layers.append(demo.pills.element.getLayer());
+        try demo.graphics.layers.layers.append(demo.pills.getLayer());
     }
 };
 
