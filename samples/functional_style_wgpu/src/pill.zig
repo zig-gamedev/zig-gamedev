@@ -4,6 +4,8 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zm = @import("zmath");
 
+const Layer = @import("layers.zig").Layer;
+
 // zig fmt: off
 const wgsl_vs =
 \\  @group(0) @binding(0) var<uniform> object_to_clip: mat4x4<f32>;
@@ -76,10 +78,46 @@ const wgsl_fs =
 // zig fmt: on
 ;
 
+const vertex_attributes = [_]wgpu.VertexAttribute{ .{
+    .format = .float32x2,
+    .offset = @offsetOf(Vertex, "position"),
+    .shader_location = 0,
+}, .{
+    .format = .float32,
+    .offset = @offsetOf(Vertex, "side"),
+    .shader_location = 1,
+} };
+
 pub const Vertex = struct {
     position: [2]f32,
     side: f32,
 };
+
+const instance_attributes = [_]wgpu.VertexAttribute{ .{
+    .format = .float32,
+    .offset = @offsetOf(Instance, "width"),
+    .shader_location = 10,
+}, .{
+    .format = .float32,
+    .offset = @offsetOf(Instance, "length"),
+    .shader_location = 11,
+}, .{
+    .format = .float32,
+    .offset = @offsetOf(Instance, "angle"),
+    .shader_location = 12,
+}, .{
+    .format = .float32x2,
+    .offset = @offsetOf(Instance, "position"),
+    .shader_location = 13,
+}, .{
+    .format = .float32x4,
+    .offset = @offsetOf(Instance, "start_color"),
+    .shader_location = 14,
+}, .{
+    .format = .float32x4,
+    .offset = @offsetOf(Instance, "end_color"),
+    .shader_location = 15,
+} };
 
 pub const Instance = struct {
     width: f32,
@@ -93,61 +131,18 @@ pub const Instance = struct {
 pub const State = struct {
     gctx: *zgpu.GraphicsContext,
 
-    vertex_shader: [*:0]const u8,
-    fragment_shader: [*:0]const u8,
-
-    vertex_attributes: [2]wgpu.VertexAttribute,
-    instance_attributes: [6]wgpu.VertexAttribute,
-
     vertices: std.ArrayList(Vertex),
-    indices: std.ArrayList(u16),
-    instances: std.ArrayList(Instance),
-
     vertex_buffer: zgpu.BufferHandle,
+
+    indices: std.ArrayList(u16),
     index_buffer: zgpu.BufferHandle,
+
+    instances: std.ArrayList(Instance),
     instance_buffer: zgpu.BufferHandle,
 
     pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) State {
         return .{
             .gctx = gctx,
-
-            .vertex_shader = wgsl_vs,
-            .fragment_shader = wgsl_fs,
-
-            .vertex_attributes = [_]wgpu.VertexAttribute{ .{
-                .format = .float32x2,
-                .offset = @offsetOf(Vertex, "position"),
-                .shader_location = 0,
-            }, .{
-                .format = .float32,
-                .offset = @offsetOf(Vertex, "side"),
-                .shader_location = 1,
-            } },
-            .instance_attributes = [_]wgpu.VertexAttribute{ .{
-                .format = .float32,
-                .offset = @offsetOf(Instance, "width"),
-                .shader_location = 10,
-            }, .{
-                .format = .float32,
-                .offset = @offsetOf(Instance, "length"),
-                .shader_location = 11,
-            }, .{
-                .format = .float32,
-                .offset = @offsetOf(Instance, "angle"),
-                .shader_location = 12,
-            }, .{
-                .format = .float32x2,
-                .offset = @offsetOf(Instance, "position"),
-                .shader_location = 13,
-            }, .{
-                .format = .float32x4,
-                .offset = @offsetOf(Instance, "start_color"),
-                .shader_location = 14,
-            }, .{
-                .format = .float32x4,
-                .offset = @offsetOf(Instance, "end_color"),
-                .shader_location = 15,
-            } },
 
             .vertices = std.ArrayList(Vertex).init(allocator),
             .indices = std.ArrayList(u16).init(allocator),
@@ -236,6 +231,24 @@ pub const State = struct {
     }
     pub fn clearInstances(self: *State) void {
         self.instances.clearRetainingCapacity();
+    }
+
+    pub fn getLayer(self: *State) Layer {
+        return .{
+            .vertex_attributes = &vertex_attributes,
+            .vertex_shader = wgsl_vs,
+            .vertex_count = @intCast(u32, self.vertices.items.len),
+            .vertex_stride = @sizeOf(Vertex),
+            .vertex_buffer = self.vertex_buffer,
+            .index_buffer = self.index_buffer,
+
+            .instance_count = @intCast(u32, self.instances.items.len),
+            .instance_attributes = &instance_attributes,
+            .instance_stride = @sizeOf(Instance),
+            .instance_buffer = self.instance_buffer,
+
+            .fragment_shader = wgsl_fs,
+        };
     }
 };
 
