@@ -1150,3 +1150,57 @@ test "JobQueue throughput" {
     const throughput = @intToFloat(f64, job_ms) / @intToFloat(f64, main_ms);
     print("completed {} jobs ({}ms) in {}ms ({d:.1}x)\n", .{ job_count, job_ms, main_ms, throughput });
 }
+
+test "combine jobs respect prereq" {
+    const Jobs = JobQueue(.{});
+    var jobs = Jobs.init();
+    defer jobs.deinit();
+
+    const Counter = std.atomic.Atomic(u32);
+
+    const PrereqJob = struct {
+        counter: *Counter,
+
+        fn exec(self: *@This()) void {
+            _ = self.counter.fetchAdd(1, .Monotonic);
+        }
+    };
+
+    const FinalJob = struct {
+        counter: *Counter,
+
+        fn exec(self: *@This()) void {
+            const count = self.counter.load(.Monotonic);
+            self.counter.store(count * 100, .Monotonic);
+        }
+    };
+
+    var counter = try std.testing.allocator.create(Counter);
+    defer std.testing.allocator.destroy(counter);
+    counter.* = Counter.init(0);
+
+    jobs.start();
+    var stressers: usize = 0;
+    while (stressers < 1000) : (stressers += 1) {
+        const pre_req_count = 5;
+        var chain_data: [pre_req_count]PrereqJob = undefined;
+        for (chain_data) |*step| {
+            step.* = PrereqJob{ .counter = counter };
+        }
+
+        var job_ids: [pre_req_count]JobId = undefined;
+        for (chain_data) |step, i| {
+            job_ids[i] = try jobs.schedule(JobId.none, step);
+        }
+
+        const final = FinalJob{ .counter = counter };
+        const combined_ids = try jobs.combine(&job_ids);
+        const final_job = try jobs.schedule(combined_ids, final);
+
+        jobs.wait(final_job);
+        try std.testing.expectEqual(@as(u32, pre_req_count * 100), counter.load(.Monotonic));
+        counter.store(0, .Monotonic);
+    }
+
+    jobs.deinit();
+}
