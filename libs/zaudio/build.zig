@@ -24,7 +24,7 @@ pub fn link(exe: *std.build.LibExeObjStep) void {
         exe.linkSystemLibraryName("dl");
     }
 
-    exe.addCSourceFile(thisDir() ++ "/libs/miniaudio/zaudio.c", &.{"-std=c99"});
+    exe.addCSourceFile(thisDir() ++ "/src/zaudio.c", &.{"-std=c99"});
     exe.addCSourceFile(thisDir() ++ "/libs/miniaudio/miniaudio.c", &.{
         "-DMA_NO_WEBAUDIO",
         "-DMA_NO_ENCODING",
