@@ -577,7 +577,7 @@ pub fn JobQueue(
             const prereq_size = @sizeOf(JobId);
             const max_prereqs = (max_job_size - jobs_size) / prereq_size;
 
-            jobs: *Self = .{},
+            jobs: *Self = undefined,
             prereqs: [max_prereqs]JobId = [_]JobId{JobId.none} ** max_prereqs,
 
             fn exec(job: *@This()) void {
