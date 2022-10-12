@@ -147,7 +147,7 @@ fn createPipeline(gctx: *zgpu.GraphicsContext, layer: Layer) wgpu.RenderPipeline
             .strip_index_format = .uint16,
         },
         .depth_stencil = &wgpu.DepthStencilState{
-            .format = .depth32_float,
+            .format = .depth16_unorm,
             .depth_write_enabled = true,
             .depth_compare = .less,
         },

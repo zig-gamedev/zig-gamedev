@@ -102,7 +102,7 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
             .height = gctx.swapchain_descriptor.height,
             .depth_or_array_layers = 1,
         },
-        .format = .depth32_float,
+        .format = .depth16_unorm,
         .mip_level_count = 1,
         .sample_count = 1,
     });
