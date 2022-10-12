@@ -3,60 +3,52 @@ const std = @import("std");
 const Mutex = std.Thread.Mutex;
 
 pub fn init(alloc: std.mem.Allocator) void {
-    std.debug.assert(allocator == null and allocations == null);
-    allocator = alloc;
-    allocations = std.AutoHashMap(usize, usize).init(allocator.?);
-    allocations.?.ensureTotalCapacity(32) catch unreachable;
-    zmesh_setAllocator(zmeshAlloc, zmeshClearAlloc, zmeshReAlloc, zmeshFree);
-    meshopt_setAllocator(zmeshAlloc, zmeshFree);
+    std.debug.assert(mem_allocator == null and mem_allocations == null);
+
+    mem_allocator = alloc;
+    mem_allocations = std.AutoHashMap(usize, usize).init(alloc);
+    mem_allocations.?.ensureTotalCapacity(32) catch unreachable;
+
+    meshopt_setAllocator(zmeshMalloc, zmeshFree);
 }
 
 pub fn deinit() void {
-    allocations.?.deinit();
-    allocations = null;
-    allocator = null;
+    mem_allocations.?.deinit();
+    mem_allocations = null;
+    mem_allocator = null;
 }
 
 const MallocFn = *const fn (size: usize) callconv(.C) ?*anyopaque;
-const CallocFn = *const fn (num: usize, size: usize) callconv(.C) ?*anyopaque;
-const ReallocFn = *const fn (ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque;
 const FreeFn = *const fn (ptr: ?*anyopaque) callconv(.C) void;
-
-extern fn zmesh_setAllocator(
-    malloc: MallocFn,
-    calloc: CallocFn,
-    realloc: ReallocFn,
-    free: FreeFn,
-) void;
 
 extern fn meshopt_setAllocator(
     allocate: MallocFn,
     deallocate: FreeFn,
 ) void;
 
-var allocator: ?std.mem.Allocator = null;
-var allocations: ?std.AutoHashMap(usize, usize) = null;
-var mutex: Mutex = .{};
+var mem_allocator: ?std.mem.Allocator = null;
+var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
+var mem_mutex: Mutex = .{};
+const mem_alignment = 16;
 
-export fn zmeshAlloc(size: usize) callconv(.C) ?*anyopaque {
-    mutex.lock();
-    defer mutex.unlock();
+export fn zmeshMalloc(size: usize) callconv(.C) ?*anyopaque {
+    mem_mutex.lock();
+    defer mem_mutex.unlock();
 
-    var slice = allocator.?.allocBytes(
-        @sizeOf(usize),
+    const mem = mem_allocator.?.allocBytes(
+        mem_alignment,
         size,
         0,
         @returnAddress(),
     ) catch @panic("zmesh: out of memory");
 
-    allocations.?.put(@ptrToInt(slice.ptr), size) catch
-        @panic("zmesh: out of memory");
+    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zmesh: out of memory");
 
-    return slice.ptr;
+    return mem.ptr;
 }
 
-export fn zmeshClearAlloc(num: usize, size: usize) callconv(.C) ?*anyopaque {
-    const ptr = zmeshAlloc(num * size);
+export fn zmeshCalloc(num: usize, size: usize) callconv(.C) ?*anyopaque {
+    const ptr = zmeshMalloc(num * size);
     if (ptr != null) {
         @memset(@ptrCast([*]u8, ptr), 0, num * size);
         return ptr;
@@ -66,51 +58,50 @@ export fn zmeshClearAlloc(num: usize, size: usize) callconv(.C) ?*anyopaque {
 
 pub export fn zmeshAllocUser(user: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     _ = user;
-    return zmeshAlloc(size);
+    return zmeshMalloc(size);
 }
 
-export fn zmeshReAlloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
-    mutex.lock();
-    defer mutex.unlock();
+export fn zmeshRealloc(ptr: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
+    mem_mutex.lock();
+    defer mem_mutex.unlock();
 
-    const old_len = if (ptr != null)
-        allocations.?.get(@ptrToInt(ptr.?)).?
-    else
-        0;
+    const old_size = if (ptr != null) mem_allocations.?.get(@ptrToInt(ptr.?)).? else 0;
 
-    var old_mem = if (old_len > 0)
-        @ptrCast([*]u8, ptr)[0..old_len]
+    var old_mem = if (old_size > 0)
+        @ptrCast([*]u8, ptr)[0..old_size]
     else
         @as([*]u8, undefined)[0..0];
 
-    var slice = allocator.?.reallocBytes(
+    const mem = mem_allocator.?.reallocBytes(
         old_mem,
-        @sizeOf(usize),
+        mem_alignment,
         size,
-        @sizeOf(usize),
+        mem_alignment,
         0,
         @returnAddress(),
     ) catch @panic("zmesh: out of memory");
 
     if (ptr != null) {
-        const removed = allocations.?.remove(@ptrToInt(ptr.?));
+        const removed = mem_allocations.?.remove(@ptrToInt(ptr.?));
         std.debug.assert(removed);
     }
 
-    allocations.?.put(@ptrToInt(slice.ptr), size) catch
-        @panic("zmesh: out of memory");
+    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zmesh: out of memory");
 
-    return slice.ptr;
+    return mem.ptr;
 }
 
-export fn zmeshFree(ptr: ?*anyopaque) callconv(.C) void {
-    if (ptr != null) {
-        mutex.lock();
-        defer mutex.unlock();
+export fn zmeshFree(maybe_ptr: ?*anyopaque) callconv(.C) void {
+    if (maybe_ptr) |ptr| {
+        mem_mutex.lock();
+        defer mem_mutex.unlock();
 
-        const size = allocations.?.fetchRemove(@ptrToInt(ptr.?)).?.value;
-        const slice = @ptrCast([*]u8, ptr.?)[0..size];
-        allocator.?.free(slice);
+        const size = mem_allocations.?.fetchRemove(@ptrToInt(ptr)).?.value;
+        const mem = @ptrCast(
+            [*]align(mem_alignment) u8,
+            @alignCast(mem_alignment, ptr),
+        )[0..size];
+        mem_allocator.?.free(mem);
     }
 }
 
