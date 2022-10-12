@@ -478,9 +478,23 @@ pub fn JobQueue(
             if (prereqs.len == 0) return JobId.none;
             if (prereqs.len == 1) return prereqs[0];
 
-            var job = CombinePrereqsJob { .jobs = self };
-            std.mem.copy(JobId, &job.prereqs, prereqs);
-            const id = try self.schedule(JobId.none, job);
+            var id = JobId.none;
+            var i: usize = 0;
+            const in: []const JobId = prereqs;
+            while (i < in.len) {
+                var job = CombinePrereqsJob{ .jobs = self };
+
+                // copy prereqs to job
+                var o: usize = 0;
+                const out: []JobId = &job.prereqs;
+                while (i < in.len and o < out.len) {
+                    out[o] = in[i];
+                    i += 1;
+                    o += 1;
+                }
+
+                id = try self.schedule(id, job);
+            }
             return id;
         }
 
@@ -1167,23 +1181,24 @@ test "combine jobs respect prereq" {
     jobs.start();
     var stressers: usize = 0;
     while (stressers < 1000) : (stressers += 1) {
-        const pre_req_count = 5;
-        var chain_data: [pre_req_count]PrereqJob = undefined;
+        // Generate more prereqs than fit in a single CombinePrereqsJob
+        const prereq_count = Jobs.CombinePrereqsJob.max_prereqs + 2;
+        var chain_data: [prereq_count]PrereqJob = undefined;
         for (chain_data) |*step| {
             step.* = PrereqJob{ .counter = counter };
         }
 
-        var job_ids: [pre_req_count]JobId = undefined;
+        var prereqs: [prereq_count]JobId = undefined;
         for (chain_data) |step, i| {
-            job_ids[i] = try jobs.schedule(JobId.none, step);
+            prereqs[i] = try jobs.schedule(JobId.none, step);
         }
 
         const final = FinalJob{ .counter = counter };
-        const combined_ids = try jobs.combine(&job_ids);
-        const final_job = try jobs.schedule(combined_ids, final);
+        const combined_prereq = try jobs.combine(&prereqs);
+        const final_job = try jobs.schedule(combined_prereq, final);
 
         jobs.wait(final_job);
-        try std.testing.expectEqual(@as(u32, pre_req_count * 100), counter.load(.Monotonic));
+        try std.testing.expectEqual(@as(u32, prereq_count * 100), counter.load(.Monotonic));
         counter.store(0, .Monotonic);
     }
 
