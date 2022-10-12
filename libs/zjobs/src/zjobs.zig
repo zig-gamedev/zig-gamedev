@@ -478,23 +478,9 @@ pub fn JobQueue(
             if (prereqs.len == 0) return JobId.none;
             if (prereqs.len == 1) return prereqs[0];
 
-            var id = JobId.none;
-            var i: usize = 0;
-            const in: []const JobId = prereqs;
-            while (i < in.len) {
-                var job = CombinePrereqsJob{ .jobs = self };
-
-                // copy prereqs to job
-                var o: usize = 0;
-                const out: []JobId = &job.prereqs;
-                while (i < in.len and o < out.len) {
-                    out[o] = in[i];
-                    i += 1;
-                    o += 1;
-                }
-
-                id = try self.schedule(id, job);
-            }
+            var job = CombinePrereqsJob { .jobs = self };
+            std.mem.copy(JobId, &job.prereqs, prereqs);
+            const id = try self.schedule(JobId.none, job);
             return id;
         }
 
@@ -1092,7 +1078,6 @@ test "JobQueue throughput" {
                     "ran on thread id {} and took {}ms",
                     .{ self.thread, self.ms() },
                 );
-
             }
         }
     };
