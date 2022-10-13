@@ -4,7 +4,7 @@ const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
 const zm = @import("zmath");
 
-const Element = @import("element.zig").Element;
+const Layer = @import("layer.zig").Layer;
 
 // zig fmt: off
 const wgsl_vs =
@@ -128,7 +128,7 @@ pub const Instance = struct {
     end_color: [4]f32,
 };
 
-pub const Pills = Element(Vertex, Instance);
+pub const Pills = Layer(Vertex, Instance);
 
 pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) Pills {
     return Pills.init(

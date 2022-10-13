@@ -1,10 +1,6 @@
 const std = @import("std");
 const math = std.math;
-const assert = std.debug.assert;
 const zglfw = @import("zglfw");
-const zgpu = @import("zgpu");
-const wgpu = zgpu.wgpu;
-const zm = @import("zmath");
 
 const Graphics = @import("graphics.zig").State;
 
@@ -59,8 +55,8 @@ const DemoState = struct {
         });
         demo.pills.recreateInstanceBuffer();
 
-        demo.graphics.layers.layers.clearRetainingCapacity();
-        try demo.graphics.layers.layers.append(demo.pills.getLayer());
+        demo.graphics.layers.clearRetainingCapacity();
+        try demo.graphics.addLayer(demo.pills);
     }
 };
 

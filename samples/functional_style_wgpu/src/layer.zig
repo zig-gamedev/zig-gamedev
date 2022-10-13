@@ -1,31 +1,28 @@
 const std = @import("std");
-const math = std.math;
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const zm = @import("zmath");
 
-const Layer = @import("layers.zig").Layer;
-
-pub fn Element(comptime Vertex: type, comptime Instance: type) type {
+pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
     return struct {
         const State = @This();
 
         gctx: *zgpu.GraphicsContext,
 
-        vertex_attributes: []const wgpu.VertexAttribute,
-        instance_attributes: []const wgpu.VertexAttribute,
-
-        vertex_shader: [*:0]const u8,
-        fragment_shader: [*:0]const u8,
-
         vertices: std.ArrayList(Vertex),
+        vertex_attributes: []const wgpu.VertexAttribute,
+        vertex_stride: u32,
         vertex_buffer: zgpu.BufferHandle,
+        vertex_shader: [*:0]const u8,
 
         indices: std.ArrayList(u16),
         index_buffer: zgpu.BufferHandle,
 
         instances: std.ArrayList(Instance),
+        instance_attributes: []const wgpu.VertexAttribute,
+        instance_stride: u32,
         instance_buffer: zgpu.BufferHandle,
+
+        fragment_shader: [*:0]const u8,
 
         pub fn init(
             gctx: *zgpu.GraphicsContext,
@@ -38,18 +35,21 @@ pub fn Element(comptime Vertex: type, comptime Instance: type) type {
             return .{
                 .gctx = gctx,
 
-                .vertex_attributes = vertex_attributes,
-                .instance_attributes = instance_attributes,
-                .vertex_shader = vertex_shader,
-                .fragment_shader = fragment_shader,
-
                 .vertices = std.ArrayList(Vertex).init(allocator),
-                .indices = std.ArrayList(u16).init(allocator),
-                .instances = std.ArrayList(Instance).init(allocator),
-
+                .vertex_attributes = vertex_attributes,
+                .vertex_stride = @sizeOf(Vertex),
                 .vertex_buffer = .{},
+                .vertex_shader = vertex_shader,
+
+                .indices = std.ArrayList(u16).init(allocator),
                 .index_buffer = .{},
+
+                .instances = std.ArrayList(Instance).init(allocator),
+                .instance_attributes = instance_attributes,
+                .instance_stride = @sizeOf(Instance),
                 .instance_buffer = .{},
+
+                .fragment_shader = fragment_shader,
             };
         }
 
@@ -93,24 +93,6 @@ pub fn Element(comptime Vertex: type, comptime Instance: type) type {
             });
             gctx.queue.writeBuffer(gctx.lookupResource(instance_buffer).?, 0, Instance, self.instances.items);
             self.instance_buffer = instance_buffer;
-        }
-
-        pub fn getLayer(self: *State) Layer {
-            return .{
-                .vertex_attributes = self.vertex_attributes,
-                .vertex_shader = self.vertex_shader,
-                .vertex_count = @intCast(u32, self.vertices.items.len),
-                .vertex_stride = @sizeOf(Vertex),
-                .vertex_buffer = self.vertex_buffer,
-                .index_buffer = self.index_buffer,
-
-                .instance_count = @intCast(u32, self.instances.items.len),
-                .instance_attributes = self.instance_attributes,
-                .instance_stride = @sizeOf(Instance),
-                .instance_buffer = self.instance_buffer,
-
-                .fragment_shader = self.fragment_shader,
-            };
         }
     };
 }
