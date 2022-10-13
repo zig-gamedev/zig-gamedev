@@ -8,7 +8,7 @@ const pill = @import("pill.zig");
 const vertex_generator = @import("vertex_generator.zig");
 
 const content_dir = @import("build_options").content_dir;
-const window_title = "zig-gamedev: functional style (wgpu)";
+const window_title = "zig-gamedev: Layers (wgpu)";
 
 const DemoState = struct {
     graphics: Graphics,

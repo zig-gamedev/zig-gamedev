@@ -6,7 +6,7 @@ const zglfw = @import("../../libs/zglfw/build.zig");
 
 const Options = @import("../../build.zig").Options;
 
-const demo_name = "functional_style_wgpu";
+const demo_name = "layers_wgpu";
 const content_dir = demo_name ++ "_content/";
 
 pub fn build(b: *std.build.Builder, options: Options) *std.build.LibExeObjStep {
