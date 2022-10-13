@@ -1,12 +1,16 @@
 const std = @import("std");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
+const zm = @import("zmath");
 
 pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
     return struct {
         const State = @This();
 
         gctx: *zgpu.GraphicsContext,
+
+        bind_group: zgpu.BindGroupHandle,
+        pipeline: zgpu.RenderPipelineHandle,
 
         vertices: std.ArrayList(Vertex),
         vertex_buffer: zgpu.BufferHandle,
@@ -16,9 +20,6 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
 
         instances: std.ArrayList(Instance),
         instance_buffer: zgpu.BufferHandle,
-
-        // bind_group: zgpu.BindGroupHandle,
-        pipeline: zgpu.RenderPipelineHandle,
 
         pub fn init(
             gctx: *zgpu.GraphicsContext,
@@ -31,6 +32,9 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
             return .{
                 .gctx = gctx,
 
+                .bind_group = createBindGroup(gctx),
+                .pipeline = createPipeline(gctx, vertex_attributes, instance_attributes, vertex_shader, fragment_shader),
+
                 .vertices = std.ArrayList(Vertex).init(allocator),
                 .vertex_buffer = .{},
 
@@ -39,8 +43,6 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
 
                 .instances = std.ArrayList(Instance).init(allocator),
                 .instance_buffer = .{},
-
-                .pipeline = createPipeline(gctx, vertex_attributes, instance_attributes, vertex_shader, fragment_shader),
             };
         }
 
@@ -84,6 +86,20 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
             });
             gctx.queue.writeBuffer(gctx.lookupResource(instance_buffer).?, 0, Instance, self.instances.items);
             self.instance_buffer = instance_buffer;
+        }
+
+        fn createBindGroup(gctx: *zgpu.GraphicsContext) zgpu.BindGroupHandle {
+            const bind_group_layout = gctx.createBindGroupLayout(&.{
+                zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
+            });
+            defer gctx.releaseResource(bind_group_layout);
+
+            return gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{.{
+                .binding = 0,
+                .buffer_handle = gctx.uniforms.buffer,
+                .offset = 0,
+                .size = @sizeOf(zm.Mat),
+            }});
         }
 
         fn createPipeline(

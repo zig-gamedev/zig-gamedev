@@ -11,6 +11,9 @@ const Dimension = struct {
 };
 
 const Layer = struct {
+    bind_group: zgpu.BindGroupHandle,
+    pipeline: zgpu.RenderPipelineHandle,
+
     vertex_count: u32,
     vertex_buffer: zgpu.BufferHandle,
 
@@ -18,8 +21,6 @@ const Layer = struct {
 
     instance_count: u32,
     instance_buffer: zgpu.BufferHandle,
-
-    pipeline: zgpu.RenderPipelineHandle,
 };
 
 pub const State = struct {
@@ -58,14 +59,15 @@ pub const State = struct {
 
     pub fn addLayer(self: *State, layer: anytype) !void {
         try self.layers.append(.{
+            .bind_group = layer.bind_group,
+            .pipeline = layer.pipeline,
+
             .vertex_count = @intCast(u32, layer.vertices.items.len),
             .vertex_buffer = layer.vertex_buffer,
             .index_buffer = layer.index_buffer,
 
             .instance_count = @intCast(u32, layer.instances.items.len),
             .instance_buffer = layer.instance_buffer,
-
-            .pipeline = layer.pipeline,
         });
     }
 
@@ -95,10 +97,11 @@ pub const State = struct {
                 pass.release();
             }
 
+            const bind_group = gctx.lookupResource(layer.bind_group) orelse continue;
+            const pipeline = gctx.lookupResource(layer.pipeline) orelse continue;
             const vb_info = gctx.lookupResourceInfo(layer.vertex_buffer) orelse continue;
             const itb_info = gctx.lookupResourceInfo(layer.instance_buffer) orelse continue;
             const idb_info = gctx.lookupResourceInfo(layer.index_buffer) orelse continue;
-            const pipeline = gctx.lookupResource(layer.pipeline) orelse continue;
 
             pass.setVertexBuffer(0, vb_info.gpuobj.?, 0, vb_info.size);
             pass.setVertexBuffer(1, itb_info.gpuobj.?, 0, itb_info.size);
@@ -112,7 +115,7 @@ pub const State = struct {
             const mem = gctx.uniformsAllocate(zm.Mat, 1);
             mem.slice[0] = zm.transpose(object_to_clip);
 
-            pass.setBindGroup(0, createBindGroup(gctx), &.{mem.offset});
+            pass.setBindGroup(0, bind_group, &.{mem.offset});
             pass.drawIndexed(layer.vertex_count, layer.instance_count, 0, 0, 0);
         }
     }
@@ -205,19 +208,4 @@ fn createDepthTexture(gctx: *zgpu.GraphicsContext) struct {
     });
     const view = gctx.createTextureView(texture, .{});
     return .{ .texture = texture, .view = view };
-}
-
-fn createBindGroup(gctx: *zgpu.GraphicsContext) wgpu.BindGroup {
-    const bind_group_layout = gctx.createBindGroupLayout(&.{
-        zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
-    });
-    defer gctx.releaseResource(bind_group_layout);
-
-    const handle = gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{.{
-        .binding = 0,
-        .buffer_handle = gctx.uniforms.buffer,
-        .offset = 0,
-        .size = @sizeOf(zm.Mat),
-    }});
-    return gctx.lookupResource(handle).?;
 }
