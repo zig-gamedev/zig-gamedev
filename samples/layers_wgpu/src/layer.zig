@@ -9,20 +9,16 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
         gctx: *zgpu.GraphicsContext,
 
         vertices: std.ArrayList(Vertex),
-        vertex_attributes: []const wgpu.VertexAttribute,
-        vertex_stride: u32,
         vertex_buffer: zgpu.BufferHandle,
-        vertex_shader: [*:0]const u8,
 
         indices: std.ArrayList(u16),
         index_buffer: zgpu.BufferHandle,
 
         instances: std.ArrayList(Instance),
-        instance_attributes: []const wgpu.VertexAttribute,
-        instance_stride: u32,
         instance_buffer: zgpu.BufferHandle,
 
-        fragment_shader: [*:0]const u8,
+        // bind_group: zgpu.BindGroupHandle,
+        pipeline: zgpu.RenderPipelineHandle,
 
         pub fn init(
             gctx: *zgpu.GraphicsContext,
@@ -36,20 +32,15 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
                 .gctx = gctx,
 
                 .vertices = std.ArrayList(Vertex).init(allocator),
-                .vertex_attributes = vertex_attributes,
-                .vertex_stride = @sizeOf(Vertex),
                 .vertex_buffer = .{},
-                .vertex_shader = vertex_shader,
 
                 .indices = std.ArrayList(u16).init(allocator),
                 .index_buffer = .{},
 
                 .instances = std.ArrayList(Instance).init(allocator),
-                .instance_attributes = instance_attributes,
-                .instance_stride = @sizeOf(Instance),
                 .instance_buffer = .{},
 
-                .fragment_shader = fragment_shader,
+                .pipeline = createPipeline(gctx, vertex_attributes, instance_attributes, vertex_shader, fragment_shader),
             };
         }
 
@@ -93,6 +84,70 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
             });
             gctx.queue.writeBuffer(gctx.lookupResource(instance_buffer).?, 0, Instance, self.instances.items);
             self.instance_buffer = instance_buffer;
+        }
+
+        fn createPipeline(
+            gctx: *zgpu.GraphicsContext,
+            vertex_attributes: []const wgpu.VertexAttribute,
+            instance_attributes: []const wgpu.VertexAttribute,
+            vertex_shader: [*:0]const u8,
+            fragment_shader: [*:0]const u8,
+        ) zgpu.RenderPipelineHandle {
+            const bind_group_layout = gctx.createBindGroupLayout(&.{
+                zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
+            });
+            defer gctx.releaseResource(bind_group_layout);
+
+            const pipeline_layout = gctx.createPipelineLayout(&.{bind_group_layout});
+            defer gctx.releaseResource(pipeline_layout);
+
+            const vs_module = zgpu.createWgslShaderModule(gctx.device, vertex_shader, "vs");
+            defer vs_module.release();
+
+            const fs_module = zgpu.createWgslShaderModule(gctx.device, fragment_shader, "fs");
+            defer fs_module.release();
+
+            const color_targets = [_]wgpu.ColorTargetState{.{
+                .format = zgpu.GraphicsContext.swapchain_format,
+            }};
+
+            const vertex_buffers = [_]wgpu.VertexBufferLayout{ .{
+                .array_stride = @sizeOf(Vertex),
+                .attribute_count = @intCast(u32, vertex_attributes.len),
+                .attributes = vertex_attributes.ptr,
+            }, .{
+                .array_stride = @sizeOf(Instance),
+                .step_mode = .instance,
+                .attribute_count = @intCast(u32, instance_attributes.len),
+                .attributes = instance_attributes.ptr,
+            } };
+
+            const pipeline_descriptor = wgpu.RenderPipelineDescriptor{
+                .vertex = wgpu.VertexState{
+                    .module = vs_module,
+                    .entry_point = "main",
+                    .buffer_count = vertex_buffers.len,
+                    .buffers = &vertex_buffers,
+                },
+                .primitive = wgpu.PrimitiveState{
+                    .front_face = .ccw,
+                    .cull_mode = .back,
+                    .topology = .triangle_strip,
+                    .strip_index_format = .uint16,
+                },
+                .depth_stencil = &wgpu.DepthStencilState{
+                    .format = .depth16_unorm,
+                    .depth_write_enabled = true,
+                    .depth_compare = .less,
+                },
+                .fragment = &wgpu.FragmentState{
+                    .module = fs_module,
+                    .entry_point = "main",
+                    .target_count = color_targets.len,
+                    .targets = &color_targets,
+                },
+            };
+            return gctx.createRenderPipeline(pipeline_layout, pipeline_descriptor);
         }
     };
 }
