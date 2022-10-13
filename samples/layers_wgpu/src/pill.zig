@@ -7,7 +7,7 @@ const zm = @import("zmath");
 const Layer = @import("layer.zig").Layer;
 
 // zig fmt: off
-const wgsl_vs =
+const vertex_shader =
 \\  @group(0) @binding(0) var<uniform> object_to_clip: mat4x4<f32>;
 \\
 \\  struct Vertex {
@@ -63,7 +63,7 @@ const wgsl_vs =
 \\      return fragment;
 \\  }
 ;
-const wgsl_fs =
+const fragment_shader =
 \\  struct Fragment {
 \\      @location(0) color: vec4<f32>,
 \\  }
@@ -137,13 +137,34 @@ pub const Instance = struct {
 pub const Pills = Layer(Vertex, Instance);
 
 pub fn init(gctx: *zgpu.GraphicsContext, allocator: std.mem.Allocator) Pills {
+    const bind_groups = [_]zgpu.BindGroupLayoutHandle{
+        gctx.createBindGroupLayout(&.{
+            zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
+        }),
+    };
+    defer for (bind_groups) |bind_group| gctx.releaseResource(bind_group);
+    const vertex_bindings = [_]zgpu.BindGroupEntryInfo{.{
+        .binding = 0,
+        .buffer_handle = gctx.uniforms.buffer,
+        .offset = 0,
+        .size = @sizeOf(zm.Mat),
+    }};
     return Pills.init(
         gctx,
         allocator,
+
+        &bind_groups,
+        null,
+        .{
+            .group = 0,
+            .bindings = &vertex_bindings,
+        },
         &vertex_attributes,
         &instance_attributes,
-        wgsl_vs,
-        wgsl_fs,
+        vertex_shader,
+
+        null,
+        fragment_shader,
     );
 }
 

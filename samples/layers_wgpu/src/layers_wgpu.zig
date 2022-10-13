@@ -1,6 +1,7 @@
 const std = @import("std");
 const math = std.math;
 const zglfw = @import("zglfw");
+const zm = @import("zmath");
 
 const Graphics = @import("graphics.zig").State;
 
@@ -23,11 +24,9 @@ const DemoState = struct {
         var hexagons = pill.init(graphics.gctx, allocator);
         {
             const hexagonSegments: u16 = 3;
-            hexagons.vertices.clearRetainingCapacity();
             try vertex_generator.generateVertices(hexagonSegments, &hexagons.vertices);
             hexagons.recreateVertexBuffer();
 
-            hexagons.indices.clearRetainingCapacity();
             try vertex_generator.generateIndices(hexagonSegments, &hexagons.indices);
             hexagons.recreateIndexBuffer();
         }
@@ -35,11 +34,9 @@ const DemoState = struct {
         var pills = pill.init(graphics.gctx, allocator);
         {
             const pillSegments: u16 = 10;
-            pills.vertices.clearRetainingCapacity();
             try vertex_generator.generateVertices(pillSegments, &pills.vertices);
             pills.recreateVertexBuffer();
 
-            pills.indices.clearRetainingCapacity();
             try vertex_generator.generateIndices(pillSegments, &pills.indices);
             pills.recreateIndexBuffer();
         }
@@ -57,38 +54,53 @@ const DemoState = struct {
     }
 
     fn update(demo: *DemoState, _: std.mem.Allocator) !void {
-        demo.hexagons.instances.clearRetainingCapacity();
-        try demo.hexagons.instances.append(.{
-            .width = 0.4,
-            .length = 0.0,
-            .angle = 0.0,
-            .position = .{ 0.0, 0.0 },
-            .depth = 0.1,
-            .start_color = .{ 1.0, 0.0, 0.0, 1.0 },
-            .end_color = .{ 1.0, 0.0, 0.0, 1.0 },
-        });
-        demo.hexagons.recreateInstanceBuffer();
+        {
+            demo.hexagons.instances.clearRetainingCapacity();
+            try demo.hexagons.instances.append(.{
+                .width = 0.4,
+                .length = 0.0,
+                .angle = 0.0,
+                .position = .{ 0.0, 0.0 },
+                .depth = 0.1,
+                .start_color = .{ 1.0, 0.0, 0.0, 1.0 },
+                .end_color = .{ 1.0, 0.0, 0.0, 1.0 },
+            });
+            demo.hexagons.recreateInstanceBuffer();
 
-        demo.pills.instances.clearRetainingCapacity();
-        try demo.pills.instances.append(.{
-            .width = 0.05,
-            .length = 0.8,
-            .angle = -math.pi / 3.0,
-            .position = .{ 0.0, 0.0 },
-            .depth = 0.0,
-            .start_color = .{ 1.0, 1.0, 1.0, 1.0 },
-            .end_color = .{ 1.0, 1.0, 1.0, 1.0 },
-        });
-        try demo.pills.instances.append(.{
-            .width = 0.05,
-            .length = 0.8,
-            .angle = math.pi / 3.0,
-            .position = .{ 0.0, 0.0 },
-            .depth = 0.2,
-            .start_color = .{ 1.0, 1.0, 1.0, 1.0 },
-            .end_color = .{ 1.0, 1.0, 1.0, 1.0 },
-        });
-        demo.pills.recreateInstanceBuffer();
+            const vertex_uniforms_data = demo.graphics.gctx.uniformsAllocate(zm.Mat, 1);
+            const object_to_clip = zm.scaling(demo.graphics.dimension.width / 2, demo.graphics.dimension.height / 2, 1.0);
+            vertex_uniforms_data.slice[0] = zm.transpose(object_to_clip);
+            demo.hexagons.vertex_uniforms_offsets.clearRetainingCapacity();
+            try demo.hexagons.vertex_uniforms_offsets.append(vertex_uniforms_data.offset);
+        }
+        {
+            demo.pills.instances.clearRetainingCapacity();
+            try demo.pills.instances.append(.{
+                .width = 0.05,
+                .length = 0.8,
+                .angle = -math.pi / 3.0,
+                .position = .{ 0.0, 0.0 },
+                .depth = 0.0,
+                .start_color = .{ 1.0, 1.0, 1.0, 1.0 },
+                .end_color = .{ 1.0, 1.0, 1.0, 1.0 },
+            });
+            try demo.pills.instances.append(.{
+                .width = 0.05,
+                .length = 0.8,
+                .angle = math.pi / 3.0,
+                .position = .{ 0.0, 0.0 },
+                .depth = 0.2,
+                .start_color = .{ 1.0, 1.0, 1.0, 1.0 },
+                .end_color = .{ 1.0, 1.0, 1.0, 1.0 },
+            });
+            demo.pills.recreateInstanceBuffer();
+
+            const vertex_uniforms_data = demo.graphics.gctx.uniformsAllocate(zm.Mat, 1);
+            const object_to_clip = zm.scaling(demo.graphics.dimension.width / 2, demo.graphics.dimension.height / 2, 1.0);
+            vertex_uniforms_data.slice[0] = zm.transpose(object_to_clip);
+            demo.pills.vertex_uniforms_offsets.clearRetainingCapacity();
+            try demo.pills.vertex_uniforms_offsets.append(vertex_uniforms_data.offset);
+        }
 
         demo.graphics.layers.clearRetainingCapacity();
         try demo.graphics.addLayer(demo.pills);

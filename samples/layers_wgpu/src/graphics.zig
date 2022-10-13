@@ -3,15 +3,23 @@ const math = std.math;
 const zglfw = @import("zglfw");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const zm = @import("zmath");
 
 const Dimension = struct {
     width: f32,
     height: f32,
 };
 
-const Layer = struct {
+const BindGroup = struct {
+    group: u32,
     bind_group: zgpu.BindGroupHandle,
+    offsets: []const u32,
+};
+
+const Layer = struct {
+    common_uniforms: ?BindGroup,
+    vertex_uniforms: ?BindGroup,
+    fragment_uniforms: ?BindGroup,
+
     pipeline: zgpu.RenderPipelineHandle,
 
     vertex_count: u32,
@@ -59,7 +67,21 @@ pub const State = struct {
 
     pub fn addLayer(self: *State, layer: anytype) !void {
         try self.layers.append(.{
-            .bind_group = layer.bind_group,
+            .common_uniforms = if (layer.common_uniforms) |cu| .{
+                .group = cu.group,
+                .bind_group = cu.bind_group,
+                .offsets = layer.common_uniforms_offsets.items,
+            } else null,
+            .vertex_uniforms = if (layer.vertex_uniforms) |vu| .{
+                .group = vu.group,
+                .bind_group = vu.bind_group,
+                .offsets = layer.vertex_uniforms_offsets.items,
+            } else null,
+            .fragment_uniforms = if (layer.fragment_uniforms) |fu| .{
+                .group = fu.group,
+                .bind_group = fu.bind_group,
+                .offsets = layer.fragment_uniforms_offsets.items,
+            } else null,
             .pipeline = layer.pipeline,
 
             .vertex_count = @intCast(u32, layer.vertices.items.len),
@@ -97,7 +119,6 @@ pub const State = struct {
                 pass.release();
             }
 
-            const bind_group = gctx.lookupResource(layer.bind_group) orelse continue;
             const pipeline = gctx.lookupResource(layer.pipeline) orelse continue;
             const vb_info = gctx.lookupResourceInfo(layer.vertex_buffer) orelse continue;
             const itb_info = gctx.lookupResourceInfo(layer.instance_buffer) orelse continue;
@@ -110,12 +131,19 @@ pub const State = struct {
 
             pass.setPipeline(pipeline);
 
-            const object_to_clip = zm.scaling(self.dimension.width / 2, self.dimension.height / 2, 1.0);
+            if (layer.common_uniforms) |cu| {
+                const bind_group = gctx.lookupResource(cu.bind_group) orelse continue;
+                pass.setBindGroup(cu.group, bind_group, cu.offsets);
+            }
+            if (layer.vertex_uniforms) |vu| {
+                const bind_group = gctx.lookupResource(vu.bind_group) orelse continue;
+                pass.setBindGroup(vu.group, bind_group, vu.offsets);
+            }
+            if (layer.fragment_uniforms) |fu| {
+                const bind_group = gctx.lookupResource(fu.bind_group) orelse continue;
+                pass.setBindGroup(fu.group, bind_group, fu.offsets);
+            }
 
-            const mem = gctx.uniformsAllocate(zm.Mat, 1);
-            mem.slice[0] = zm.transpose(object_to_clip);
-
-            pass.setBindGroup(0, bind_group, &.{mem.offset});
             pass.drawIndexed(layer.vertex_count, layer.instance_count, 0, 0, 0);
         }
     }

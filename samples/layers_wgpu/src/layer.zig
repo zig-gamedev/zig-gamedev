@@ -1,7 +1,15 @@
 const std = @import("std");
 const zgpu = @import("zgpu");
 const wgpu = zgpu.wgpu;
-const zm = @import("zmath");
+
+const UniformsGroup = struct {
+    group: u32,
+    bindings: []const zgpu.BindGroupEntryInfo,
+};
+const BindGroup = struct {
+    group: u32,
+    bind_group: zgpu.BindGroupHandle,
+};
 
 pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
     return struct {
@@ -9,7 +17,15 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
 
         gctx: *zgpu.GraphicsContext,
 
-        bind_group: zgpu.BindGroupHandle,
+        common_uniforms: ?BindGroup,
+        common_uniforms_offsets: std.ArrayList(u32),
+
+        vertex_uniforms: ?BindGroup,
+        vertex_uniforms_offsets: std.ArrayList(u32),
+
+        fragment_uniforms: ?BindGroup,
+        fragment_uniforms_offsets: std.ArrayList(u32),
+
         pipeline: zgpu.RenderPipelineHandle,
 
         vertices: std.ArrayList(Vertex),
@@ -24,16 +40,37 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
         pub fn init(
             gctx: *zgpu.GraphicsContext,
             allocator: std.mem.Allocator,
+            bind_groups: []const zgpu.BindGroupLayoutHandle,
+            common_uniforms: ?UniformsGroup,
+            vertex_uniforms: ?UniformsGroup,
             vertex_attributes: []const wgpu.VertexAttribute,
             instance_attributes: []const wgpu.VertexAttribute,
             vertex_shader: [*:0]const u8,
+            fragment_uniforms: ?UniformsGroup,
             fragment_shader: [*:0]const u8,
         ) State {
             return .{
                 .gctx = gctx,
 
-                .bind_group = createBindGroup(gctx),
-                .pipeline = createPipeline(gctx, vertex_attributes, instance_attributes, vertex_shader, fragment_shader),
+                .common_uniforms = if (common_uniforms) |cu| .{
+                    .group = cu.group,
+                    .bind_group = gctx.createBindGroup(bind_groups[cu.group], cu.bindings),
+                } else null,
+                .common_uniforms_offsets = std.ArrayList(u32).init(allocator),
+
+                .vertex_uniforms = if (vertex_uniforms) |vu| .{
+                    .group = vu.group,
+                    .bind_group = gctx.createBindGroup(bind_groups[vu.group], vu.bindings),
+                } else null,
+                .vertex_uniforms_offsets = std.ArrayList(u32).init(allocator),
+
+                .fragment_uniforms = if (fragment_uniforms) |fu| .{
+                    .group = fu.group,
+                    .bind_group = gctx.createBindGroup(bind_groups[fu.group], fu.bindings),
+                } else null,
+                .fragment_uniforms_offsets = std.ArrayList(u32).init(allocator),
+
+                .pipeline = createPipeline(gctx, bind_groups, vertex_attributes, instance_attributes, vertex_shader, fragment_shader),
 
                 .vertices = std.ArrayList(Vertex).init(allocator),
                 .vertex_buffer = .{},
@@ -47,6 +84,10 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
         }
 
         pub fn deinit(self: *State) void {
+            self.common_uniforms_offsets.deinit();
+            self.vertex_uniforms_offsets.deinit();
+            self.fragment_uniforms_offsets.deinit();
+
             self.vertices.deinit();
             self.indices.deinit();
             self.instances.deinit();
@@ -88,33 +129,15 @@ pub fn Layer(comptime Vertex: type, comptime Instance: type) type {
             self.instance_buffer = instance_buffer;
         }
 
-        fn createBindGroup(gctx: *zgpu.GraphicsContext) zgpu.BindGroupHandle {
-            const bind_group_layout = gctx.createBindGroupLayout(&.{
-                zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
-            });
-            defer gctx.releaseResource(bind_group_layout);
-
-            return gctx.createBindGroup(bind_group_layout, &[_]zgpu.BindGroupEntryInfo{.{
-                .binding = 0,
-                .buffer_handle = gctx.uniforms.buffer,
-                .offset = 0,
-                .size = @sizeOf(zm.Mat),
-            }});
-        }
-
         fn createPipeline(
             gctx: *zgpu.GraphicsContext,
+            bind_groups: []const zgpu.BindGroupLayoutHandle,
             vertex_attributes: []const wgpu.VertexAttribute,
             instance_attributes: []const wgpu.VertexAttribute,
             vertex_shader: [*:0]const u8,
             fragment_shader: [*:0]const u8,
         ) zgpu.RenderPipelineHandle {
-            const bind_group_layout = gctx.createBindGroupLayout(&.{
-                zgpu.bufferEntry(0, .{ .vertex = true }, .uniform, true, 0),
-            });
-            defer gctx.releaseResource(bind_group_layout);
-
-            const pipeline_layout = gctx.createPipelineLayout(&.{bind_group_layout});
+            const pipeline_layout = gctx.createPipelineLayout(bind_groups);
             defer gctx.releaseResource(pipeline_layout);
 
             const vs_module = zgpu.createWgslShaderModule(gctx.device, vertex_shader, "vs");
