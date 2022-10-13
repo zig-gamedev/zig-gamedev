@@ -13,50 +13,79 @@ const window_title = "zig-gamedev: functional style (wgpu)";
 const DemoState = struct {
     graphics: Graphics,
 
+    hexagons: pill.Pills,
     pills: pill.Pills,
 
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const graphics = try Graphics.init(allocator, window);
         return .{
             .graphics = graphics,
+            .hexagons = pill.init(graphics.gctx, allocator),
             .pills = pill.init(graphics.gctx, allocator),
         };
     }
 
     fn deinit(demo: *DemoState, allocator: std.mem.Allocator) void {
         demo.graphics.deinit(allocator);
+        demo.hexagons.deinit();
         demo.pills.deinit();
     }
 
     fn update(demo: *DemoState, _: std.mem.Allocator) !void {
-        const segments: u16 = 7;
+        const hexagonSegments: u16 = 3;
+        demo.hexagons.vertices.clearRetainingCapacity();
+        try vertex_generator.generateVertices(hexagonSegments, &demo.hexagons.vertices);
+        demo.hexagons.recreateVertexBuffer();
+
+        demo.hexagons.indices.clearRetainingCapacity();
+        try vertex_generator.generateIndices(hexagonSegments, &demo.hexagons.indices);
+        demo.hexagons.recreateIndexBuffer();
+
+        demo.hexagons.instances.clearRetainingCapacity();
+        try demo.hexagons.instances.append(.{
+            .width = 0.4,
+            .length = 0.0,
+            .angle = 0.0,
+            .position = .{ 0.0, 0.0 },
+            .depth = 0.1,
+            .start_color = .{ 1.0, 0.0, 0.0, 1.0 },
+            .end_color = .{ 1.0, 0.0, 0.0, 1.0 },
+        });
+        demo.hexagons.recreateInstanceBuffer();
+
+        const pillSegments: u16 = 10;
         demo.pills.vertices.clearRetainingCapacity();
-        try vertex_generator.generateVertices(segments, &demo.pills.vertices);
+        try vertex_generator.generateVertices(pillSegments, &demo.pills.vertices);
         demo.pills.recreateVertexBuffer();
 
         demo.pills.indices.clearRetainingCapacity();
-        try vertex_generator.generateIndices(segments, &demo.pills.indices);
+        try vertex_generator.generateIndices(pillSegments, &demo.pills.indices);
         demo.pills.recreateIndexBuffer();
 
         demo.pills.instances.clearRetainingCapacity();
-        const length: f32 = 0.5;
-        const width: f32 = 0.1;
-        const angle: f32 = math.pi / 3.0;
-        const position: [2]f32 = .{ 0.5, -0.25 };
-        const start_color: [4]f32 = .{ 1.0, 0.0, 0.0, 1.0 };
-        const end_color: [4]f32 = .{ 0.0, 0.0, 1.0, 1.0 };
         try demo.pills.instances.append(.{
-            .width = width,
-            .length = length,
-            .angle = angle,
-            .position = position,
-            .start_color = start_color,
-            .end_color = end_color,
+            .width = 0.05,
+            .length = 0.8,
+            .angle = -math.pi / 3.0,
+            .position = .{ 0.0, 0.0 },
+            .depth = 0.0,
+            .start_color = .{ 1.0, 1.0, 1.0, 1.0 },
+            .end_color = .{ 1.0, 1.0, 1.0, 1.0 },
+        });
+        try demo.pills.instances.append(.{
+            .width = 0.05,
+            .length = 0.8,
+            .angle = math.pi / 3.0,
+            .position = .{ 0.0, 0.0 },
+            .depth = 0.2,
+            .start_color = .{ 1.0, 1.0, 1.0, 1.0 },
+            .end_color = .{ 1.0, 1.0, 1.0, 1.0 },
         });
         demo.pills.recreateInstanceBuffer();
 
         demo.graphics.layers.clearRetainingCapacity();
         try demo.graphics.addLayer(demo.pills);
+        try demo.graphics.addLayer(demo.hexagons);
     }
 };
 

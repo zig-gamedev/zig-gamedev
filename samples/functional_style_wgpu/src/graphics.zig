@@ -82,12 +82,12 @@ pub const State = struct {
 
         const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
             .view = back_buffer_view,
-            .load_op = .clear,
+            .load_op = .load,
             .store_op = .store,
         }};
         const depth_attachment = wgpu.RenderPassDepthStencilAttachment{
             .view = depth_view,
-            .depth_load_op = .clear,
+            .depth_load_op = .load,
             .depth_store_op = .store,
             .depth_clear_value = 1.0,
         };
@@ -134,7 +134,29 @@ pub const State = struct {
         const commands = commands: {
             const encoder = gctx.device.createCommandEncoder(null);
             defer encoder.release();
-
+            {
+                const color_attachments = [_]wgpu.RenderPassColorAttachment{.{
+                    .view = back_buffer_view,
+                    .load_op = .clear,
+                    .store_op = .store,
+                }};
+                const depth_attachment = wgpu.RenderPassDepthStencilAttachment{
+                    .view = depth_view,
+                    .depth_load_op = .clear,
+                    .depth_store_op = .store,
+                    .depth_clear_value = 1.0,
+                };
+                const render_pass_info = wgpu.RenderPassDescriptor{
+                    .color_attachment_count = color_attachments.len,
+                    .color_attachments = &color_attachments,
+                    .depth_stencil_attachment = &depth_attachment,
+                };
+                const pass = encoder.beginRenderPass(render_pass_info);
+                defer {
+                    pass.end();
+                    pass.release();
+                }
+            }
             self.drawLayers(back_buffer_view, depth_view, encoder);
 
             break :commands encoder.finish(null);

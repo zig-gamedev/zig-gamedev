@@ -16,10 +16,11 @@ const wgsl_vs =
 \\  }
 \\
 \\  struct Instance {
-\\      @location(10) width: f32,
-\\      @location(11) length: f32,
-\\      @location(12) angle: f32,
-\\      @location(13) position: vec2<f32>,
+\\      @location(9) width: f32,
+\\      @location(10) length: f32,
+\\      @location(11) angle: f32,
+\\      @location(12) position: vec3<f32>,
+\\      @location(13) depth: f32,
 \\      @location(14) start_color: vec4<f32>,
 \\      @location(15) end_color: vec4<f32>,
 \\  }
@@ -52,7 +53,7 @@ const wgsl_vs =
 \\      var position_mat: mat4x4<f32> = mat4x4(
 \\          1.0, 0.0, 0.0, instance.position.x,
 \\          0.0, 1.0, 0.0, instance.position.y,
-\\          0.0, 0.0, 1.0, 0.0,
+\\          0.0, 0.0, 1.0, instance.depth,
 \\          0.0, 0.0, 0.0, 1.0,
 \\      );
 \\      var fragment: Fragment;
@@ -96,18 +97,22 @@ pub const Vertex = struct {
 const instance_attributes = [_]wgpu.VertexAttribute{ .{
     .format = .float32,
     .offset = @offsetOf(Instance, "width"),
-    .shader_location = 10,
+    .shader_location = 9,
 }, .{
     .format = .float32,
     .offset = @offsetOf(Instance, "length"),
-    .shader_location = 11,
+    .shader_location = 10,
 }, .{
     .format = .float32,
     .offset = @offsetOf(Instance, "angle"),
-    .shader_location = 12,
+    .shader_location = 11,
 }, .{
     .format = .float32x2,
     .offset = @offsetOf(Instance, "position"),
+    .shader_location = 12,
+}, .{
+    .format = .float32,
+    .offset = @offsetOf(Instance, "depth"),
     .shader_location = 13,
 }, .{
     .format = .float32x4,
@@ -124,6 +129,7 @@ pub const Instance = struct {
     length: f32,
     angle: f32,
     position: [2]f32,
+    depth: f32,
     start_color: [4]f32,
     end_color: [4]f32,
 };
