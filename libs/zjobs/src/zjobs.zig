@@ -577,7 +577,7 @@ pub fn JobQueue(
             const prereq_size = @sizeOf(JobId);
             const max_prereqs = (max_job_size - jobs_size) / prereq_size;
 
-            jobs: *Self = .{},
+            jobs: *Self,
             prereqs: [max_prereqs]JobId = [_]JobId{JobId.none} ** max_prereqs,
 
             fn exec(job: *@This()) void {
@@ -1092,7 +1092,6 @@ test "JobQueue throughput" {
                     "ran on thread id {} and took {}ms",
                     .{ self.thread, self.ms() },
                 );
-
             }
         }
     };
@@ -1149,4 +1148,59 @@ test "JobQueue throughput" {
 
     const throughput = @intToFloat(f64, job_ms) / @intToFloat(f64, main_ms);
     print("completed {} jobs ({}ms) in {}ms ({d:.1}x)\n", .{ job_count, job_ms, main_ms, throughput });
+}
+
+test "combine jobs respect prereq" {
+    const Jobs = JobQueue(.{});
+    var jobs = Jobs.init();
+    defer jobs.deinit();
+
+    const Counter = std.atomic.Atomic(u32);
+
+    const PrereqJob = struct {
+        counter: *Counter,
+
+        fn exec(self: *@This()) void {
+            _ = self.counter.fetchAdd(1, .Monotonic);
+        }
+    };
+
+    const FinalJob = struct {
+        counter: *Counter,
+
+        fn exec(self: *@This()) void {
+            const count = self.counter.load(.Monotonic);
+            self.counter.store(count * 100, .Monotonic);
+        }
+    };
+
+    var counter = try std.testing.allocator.create(Counter);
+    defer std.testing.allocator.destroy(counter);
+    counter.* = Counter.init(0);
+
+    jobs.start();
+    var stressers: usize = 0;
+    while (stressers < 1000) : (stressers += 1) {
+        // Generate more prereqs than fit in a single CombinePrereqsJob
+        const prereq_count = Jobs.CombinePrereqsJob.max_prereqs + 2;
+        var chain_data: [prereq_count]PrereqJob = undefined;
+        for (chain_data) |*step| {
+            step.* = PrereqJob{ .counter = counter };
+        }
+
+        var prereqs: [prereq_count]JobId = undefined;
+        for (chain_data) |step, i| {
+            prereqs[i] = try jobs.schedule(JobId.none, step);
+        }
+
+        const final = FinalJob{ .counter = counter };
+        const combined_prereq = try jobs.combine(&prereqs);
+        const final_job = try jobs.schedule(combined_prereq, final);
+
+        jobs.wait(final_job);
+        try std.testing.expectEqual(@as(u32, prereq_count * 100), counter.load(.Monotonic));
+        counter.store(0, .Monotonic);
+    }
+
+    jobs.deinit();
 }
