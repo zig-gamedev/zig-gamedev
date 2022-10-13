@@ -17,8 +17,9 @@ const DemoState = struct {
     pills: pill.Pills,
 
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
-        const graphics = try Graphics.init(allocator, window);
+        var graphics = try Graphics.init(allocator, window);
 
+        graphics.background_color = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 };
         var hexagons = pill.init(graphics.gctx, allocator);
         {
             const hexagonSegments: u16 = 3;

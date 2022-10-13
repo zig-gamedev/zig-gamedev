@@ -30,6 +30,7 @@ const Layer = struct {
 pub const State = struct {
     gctx: *zgpu.GraphicsContext,
 
+    background_color: wgpu.Color,
     dimension: Dimension,
     layers: std.ArrayList(Layer),
 
@@ -45,6 +46,7 @@ pub const State = struct {
         return .{
             .gctx = gctx,
 
+            .background_color = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 },
             .dimension = calculateDimensions(gctx),
             .layers = std.ArrayList(Layer).init(allocator),
 
@@ -139,6 +141,7 @@ pub const State = struct {
                     .view = back_buffer_view,
                     .load_op = .clear,
                     .store_op = .store,
+                    .clear_value = self.background_color,
                 }};
                 const depth_attachment = wgpu.RenderPassDepthStencilAttachment{
                     .view = depth_view,
