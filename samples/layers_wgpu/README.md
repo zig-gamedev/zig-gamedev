@@ -1,3 +1,7 @@
-## functional style (wgpu)
+## layers (wgpu)
 
-Demo of functional style draw calls for WebGPU. Same concept as https://github.com/regl-project/regl and https://github.com/pex-gl/pex-context.
+Demo of organizing instanced passes to simulate 2D layers.
+
+Instances have depth control which allows layers to interleave.
+
+![image](screenshot.png)
