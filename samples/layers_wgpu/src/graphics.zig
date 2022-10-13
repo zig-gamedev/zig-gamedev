@@ -77,7 +77,7 @@ pub const State = struct {
         });
     }
 
-    pub fn drawLayers(self: *State, back_buffer_view: wgpu.TextureView, depth_view: wgpu.TextureView, encoder: wgpu.CommandEncoder) void {
+    fn drawLayers(self: *State, back_buffer_view: wgpu.TextureView, depth_view: wgpu.TextureView, encoder: wgpu.CommandEncoder) void {
         const gctx = self.gctx;
 
         const color_attachments = [_]wgpu.RenderPassColorAttachment{.{

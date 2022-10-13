@@ -18,10 +18,34 @@ const DemoState = struct {
 
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         const graphics = try Graphics.init(allocator, window);
+
+        var hexagons = pill.init(graphics.gctx, allocator);
+        {
+            const hexagonSegments: u16 = 3;
+            hexagons.vertices.clearRetainingCapacity();
+            try vertex_generator.generateVertices(hexagonSegments, &hexagons.vertices);
+            hexagons.recreateVertexBuffer();
+
+            hexagons.indices.clearRetainingCapacity();
+            try vertex_generator.generateIndices(hexagonSegments, &hexagons.indices);
+            hexagons.recreateIndexBuffer();
+        }
+
+        var pills = pill.init(graphics.gctx, allocator);
+        {
+            const pillSegments: u16 = 10;
+            pills.vertices.clearRetainingCapacity();
+            try vertex_generator.generateVertices(pillSegments, &pills.vertices);
+            pills.recreateVertexBuffer();
+
+            pills.indices.clearRetainingCapacity();
+            try vertex_generator.generateIndices(pillSegments, &pills.indices);
+            pills.recreateIndexBuffer();
+        }
         return .{
             .graphics = graphics,
-            .hexagons = pill.init(graphics.gctx, allocator),
-            .pills = pill.init(graphics.gctx, allocator),
+            .hexagons = hexagons,
+            .pills = pills,
         };
     }
 
@@ -32,15 +56,6 @@ const DemoState = struct {
     }
 
     fn update(demo: *DemoState, _: std.mem.Allocator) !void {
-        const hexagonSegments: u16 = 3;
-        demo.hexagons.vertices.clearRetainingCapacity();
-        try vertex_generator.generateVertices(hexagonSegments, &demo.hexagons.vertices);
-        demo.hexagons.recreateVertexBuffer();
-
-        demo.hexagons.indices.clearRetainingCapacity();
-        try vertex_generator.generateIndices(hexagonSegments, &demo.hexagons.indices);
-        demo.hexagons.recreateIndexBuffer();
-
         demo.hexagons.instances.clearRetainingCapacity();
         try demo.hexagons.instances.append(.{
             .width = 0.4,
@@ -52,15 +67,6 @@ const DemoState = struct {
             .end_color = .{ 1.0, 0.0, 0.0, 1.0 },
         });
         demo.hexagons.recreateInstanceBuffer();
-
-        const pillSegments: u16 = 10;
-        demo.pills.vertices.clearRetainingCapacity();
-        try vertex_generator.generateVertices(pillSegments, &demo.pills.vertices);
-        demo.pills.recreateVertexBuffer();
-
-        demo.pills.indices.clearRetainingCapacity();
-        try vertex_generator.generateIndices(pillSegments, &demo.pills.indices);
-        demo.pills.recreateIndexBuffer();
 
         demo.pills.instances.clearRetainingCapacity();
         try demo.pills.instances.append(.{
