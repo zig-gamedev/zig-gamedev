@@ -31,7 +31,7 @@ var mem_allocations: ?std.AutoHashMap(usize, usize) = null;
 var mem_mutex: Mutex = .{};
 const mem_alignment = 16;
 
-export fn zmeshMalloc(size: usize) callconv(.C) ?*anyopaque {
+pub export fn zmeshMalloc(size: usize) callconv(.C) ?*anyopaque {
     mem_mutex.lock();
     defer mem_mutex.unlock();
 

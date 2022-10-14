@@ -1,4 +1,7 @@
 const builtin = @import("builtin");
+const std = @import("std");
+const assert = std.debug.assert;
+const zmeshMalloc = @import("memory.zig").zmeshMalloc;
 
 pub const IndexType: type = blk: {
     if (!builtin.is_test) {
@@ -21,16 +24,79 @@ normals: ?[][3]f32,
 texcoords: ?[][2]f32,
 handle: ShapeHandle,
 
+pub fn init(
+    indices: std.ArrayList(IndexType),
+    positions: std.ArrayList([3]f32),
+    maybe_normals: ?std.ArrayList([3]f32),
+    maybe_texcoords: ?std.ArrayList([2]f32),
+) Shape {
+    const handle = par_shapes_create_empty();
+    const parmesh = @ptrCast(
+        *ParShape,
+        @alignCast(@alignOf(ParShape), handle),
+    );
+
+    parmesh.triangles = @ptrCast(
+        [*]IndexType,
+        @alignCast(@alignOf(IndexType), zmeshMalloc(indices.items.len * @sizeOf(IndexType))),
+    );
+    parmesh.ntriangles = @intCast(c_int, @divExact(indices.items.len, 3));
+    std.mem.copy(IndexType, parmesh.triangles[0..indices.items.len], indices.items);
+
+    parmesh.points = @ptrCast(
+        [*]f32,
+        @alignCast(@alignOf(f32), zmeshMalloc(positions.items.len * @sizeOf(f32) * 3)),
+    );
+    parmesh.npoints = @intCast(c_int, positions.items.len);
+    std.mem.copy(
+        f32,
+        parmesh.points[0 .. positions.items.len * 3],
+        @ptrCast([*]f32, positions.items.ptr)[0 .. positions.items.len * 3],
+    );
+
+    if (maybe_normals) |normals| {
+        assert(normals.items.len == positions.items.len);
+
+        parmesh.normals = @ptrCast(
+            [*]f32,
+            @alignCast(@alignOf(f32), zmeshMalloc(normals.items.len * @sizeOf(f32) * 3)),
+        );
+        std.mem.copy(
+            f32,
+            parmesh.normals.?[0 .. normals.items.len * 3],
+            @ptrCast([*]f32, normals.items.ptr)[0 .. normals.items.len * 3],
+        );
+    }
+
+    if (maybe_texcoords) |texcoords| {
+        assert(texcoords.items.len == positions.items.len);
+
+        parmesh.tcoords = @ptrCast(
+            [*]f32,
+            @alignCast(@alignOf(f32), zmeshMalloc(texcoords.items.len * @sizeOf(f32) * 2)),
+        );
+        std.mem.copy(
+            f32,
+            parmesh.tcoords.?[0 .. texcoords.items.len * 2],
+            @ptrCast([*]f32, texcoords.items.ptr)[0 .. texcoords.items.len * 2],
+        );
+    }
+
+    return initShape(handle);
+}
+
 pub fn deinit(mesh: Shape) void {
     par_shapes_free_mesh(mesh.handle);
 }
 
-pub fn saveToObj(mesh: Shape, filename: [*:0]const u8) void {
+pub fn saveToObj(mesh: Shape, filename: [:0]const u8) void {
     par_shapes_export(mesh.handle, filename);
 }
 
-pub fn computeAabb(mesh: Shape, aabb: *[6]f32) void {
-    par_shapes_compute_aabb(mesh.handle, aabb);
+pub fn computeAabb(mesh: Shape) [6]f32 {
+    var aabb: [6]f32 = undefined;
+    par_shapes_compute_aabb(mesh.handle, &aabb);
+    return aabb;
 }
 
 pub fn clone(mesh: Shape) Shape {
@@ -261,8 +327,8 @@ extern fn par_shapes_create_parametric(
     stacks: i32,
     userdata: ?*anyopaque,
 ) ShapeHandle;
+extern fn par_shapes_create_empty() ShapeHandle;
 
-const std = @import("std");
 const zmesh = @import("main.zig");
 const save = false;
 const expect = std.testing.expect;
@@ -302,6 +368,7 @@ test "zmesh.basic" {
     const hemisphere = Shape.initHemisphere(10, 10);
     defer hemisphere.deinit();
     if (save) hemisphere.saveToObj("zmesh.hemisphere.obj");
+    _ = hemisphere.computeAabb();
 
     const plane = Shape.initPlane(10, 10);
     defer plane.deinit();
@@ -382,4 +449,26 @@ test "zmesh.invert" {
     hemisphere.weld(0.001, null);
 
     if (save) hemisphere.saveToObj("zmesh.invert.obj");
+}
+
+test "zmesh.custom" {
+    zmesh.init(std.testing.allocator);
+    defer zmesh.deinit();
+
+    var positions = std.ArrayList([3]f32).init(std.testing.allocator);
+    defer positions.deinit();
+    try positions.append(.{ 0.0, 0.0, 0.0 });
+    try positions.append(.{ 1.0, 0.0, 0.0 });
+    try positions.append(.{ 1.0, 0.0, 1.0 });
+
+    var indices = std.ArrayList(IndexType).init(std.testing.allocator);
+    defer indices.deinit();
+    try indices.append(0);
+    try indices.append(1);
+    try indices.append(2);
+
+    var shape = Shape.init(indices, positions, null, null);
+    defer shape.deinit();
+
+    if (save) shape.saveToObj("zmesh.custom.obj");
 }
