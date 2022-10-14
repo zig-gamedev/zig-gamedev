@@ -23,13 +23,13 @@ Library | Latest version | Description
 **[zaudio](libs/zaudio)** | 0.9 | Full-featured audio library built on top of [miniaudio](https://github.com/mackron/miniaudio)
 **[zmath](libs/zmath)** | 0.9 | SIMD math library for game developers
 **[zstbi](libs/zstbi)** | 0.9 | Image loading with [stbi](https://github.com/nothings/stb)
-**[zglfw](libs/zglfw)** | 0.1 | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
-**[zbullet](libs/zbullet)** | 0.2 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
-**[zmesh](libs/zmesh)** | 0.2 | Loading, generating, processing and optimizing triangle meshes
-**[znoise](libs/znoise)** | 0.1 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
+**[zmesh](libs/zmesh)** | 0.9 | Loading, generating, processing and optimizing triangle meshes
 **[ztracy](libs/ztracy)** | 0.9 | Support for CPU profiling with [Tracy](https://github.com/wolfpld/tracy)
 **[zpool](libs/zpool)** | 0.9 | Generic pool & handle implementation
+**[zglfw](libs/zglfw)** | 0.1 | Minimalistic [GLFW](https://github.com/glfw/glfw) bindings with no translate-c dependency
+**[znoise](libs/znoise)** | 0.1 | Zig bindings for [FastNoiseLite](https://github.com/Auburn/FastNoiseLite)
 **[zjobs](libs/zjobs)** | 0.1 | Generic job queue implementation
+**[zbullet](libs/zbullet)** | 0.2 | Zig bindings and C API for [Bullet physics library](https://github.com/bulletphysics/bullet3)
 
 ## Vision
 * Very modular "toolbox of libraries", user can use only the components she needs

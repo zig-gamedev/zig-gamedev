@@ -1,4 +1,4 @@
-// zmesh v0.3 (wip)
+// zmesh v0.9
 
 pub const Shape = @import("Shape.zig");
 pub const io = @import("io.zig");

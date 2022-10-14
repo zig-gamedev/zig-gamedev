@@ -121,7 +121,7 @@ fn loadAllMeshes(
         const pre_positions_len = positions.items.len;
 
         const data = try zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf");
-        defer zmesh.io.cgltf.free(data);
+        defer zmesh.io.freeData(data);
         try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords, &tangents);
 
         try out_meshes.append(.{
@@ -136,7 +136,7 @@ fn loadAllMeshes(
         const pre_positions_len = positions.items.len;
 
         const data = try zmesh.io.parseAndLoadFile(content_dir ++ "SciFiHelmet/SciFiHelmet.gltf");
-        defer zmesh.io.cgltf.free(data);
+        defer zmesh.io.freeData(data);
         try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, &texcoords, &tangents);
 
         try out_meshes.append(.{

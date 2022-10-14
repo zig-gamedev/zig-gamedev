@@ -29,8 +29,8 @@ const MallocFn = *const fn (user: ?*anyopaque, size: usize) callconv(.C) ?*anyop
 const FreeFn = *const fn (user: ?*anyopaque, ptr: ?*anyopaque) callconv(.C) void;
 
 pub const MemoryOptions = extern struct {
-    alloc: ?MallocFn = null,
-    free: ?FreeFn = null,
+    alloc_func: ?MallocFn = null,
+    free_func: ?FreeFn = null,
     user_data: ?*anyopaque = null,
 };
 
@@ -72,6 +72,7 @@ pub const AttributeType = enum(c_int) {
     color,
     joints,
     weights,
+    custom,
 };
 
 pub const ComponentType = enum(c_int) {
@@ -171,8 +172,10 @@ pub const MeshoptCompressionFilter = enum(c_int) {
 };
 
 pub const Extras = extern struct {
-    start_offset: usize,
-    end_offset: usize,
+    start_offset: usize, // DEPRECATED: Please use `data` instead.
+    end_offset: usize, // DEPRECATED: Please use `data` instead.
+
+    data: ?[*]u8,
 };
 
 pub const Extension = extern struct {
@@ -343,7 +346,6 @@ pub const PbrMetallicRoughness = extern struct {
     base_color_factor: [4]f32,
     metallic_factor: f32,
     roughness_factor: f32,
-    extras: Extras,
 };
 
 pub const PbrSpecularGlossiness = extern struct {

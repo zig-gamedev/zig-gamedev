@@ -1,6 +1,6 @@
 ![image](logo.jpg)
 
-# zmesh v0.2 - loading, generating, processing and optimizing triangle meshes
+# zmesh v0.9 - loading, generating, processing and optimizing triangle meshes
 
 As an example program please see [procedural mesh (wgpu)](https://github.com/michal-z/zig-gamedev/tree/main/samples/procedural_mesh_wgpu).
 
@@ -44,6 +44,9 @@ pub fn main() !void {
     zmesh.init(allocator);
     defer zmesh.deinit();
 
+    var custom = zmesh.Shape.init(indices, positions, normals, texcoords);
+    defer custom.deinit();
+
     var disk = zmesh.Shape.initParametricDisk(10, 2);
     defer disk.deinit();
     disk.invert(0, 0);
@@ -76,7 +79,7 @@ pub fn main() !void {
     // Load mesh
     //
     const data = try zmesh.io.parseAndLoadFile(content_dir ++ "cube.gltf");
-    defer zmesh.io.cgltf.free(data);
+    defer zmesh.io.freeData(data);
 
     var mesh_indices = std.ArrayList(u32).init(allocator);
     var mesh_positions = std.ArrayList([3]f32).init(allocator);

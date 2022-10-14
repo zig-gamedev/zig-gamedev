@@ -1160,7 +1160,7 @@ fn initMeshes(
         defer normals.deinit();
 
         const data = try zmesh.io.parseAndLoadFile(content_dir ++ "world.gltf");
-        defer zmesh.io.cgltf.free(data);
+        defer zmesh.io.freeData(data);
         try zmesh.io.appendMeshPrimitive(data, 0, 0, &indices, &positions, &normals, null, null);
 
         // "Unweld" mesh, this creates un-optimized mesh with duplicated vertices.
