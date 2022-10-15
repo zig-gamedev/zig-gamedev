@@ -1423,6 +1423,36 @@ void par_shapes_unweld(par_shapes_mesh* mesh, bool create_indices)
     PAR_FREE(mesh->points);
     mesh->points = points;
     mesh->npoints = npoints;
+
+    // NOTE(mziulek): Handle normals.
+    if (mesh->normals) {
+        float* normals = PAR_MALLOC(float, 3 * npoints);
+        float* dst = normals;
+        PAR_SHAPES_T const* index = mesh->triangles;
+        for (int i = 0; i < npoints; i++) {
+            float const* src = mesh->normals + 3 * (*index++);
+            *dst++ = src[0];
+            *dst++ = src[1];
+            *dst++ = src[2];
+        }
+        PAR_FREE(mesh->normals);
+        mesh->normals = normals;
+    }
+
+    // NOTE(mziulek): Handle tcoords.
+    if (mesh->tcoords) {
+        float* tcoords = PAR_MALLOC(float, 2 * npoints);
+        float* dst = tcoords;
+        PAR_SHAPES_T const* index = mesh->triangles;
+        for (int i = 0; i < npoints; i++) {
+            float const* src = mesh->tcoords + 2 * (*index++);
+            *dst++ = src[0];
+            *dst++ = src[1];
+        }
+        PAR_FREE(mesh->tcoords);
+        mesh->tcoords = tcoords;
+    }
+
     if (create_indices) {
         PAR_SHAPES_T* tris = PAR_MALLOC(PAR_SHAPES_T, 3 * mesh->ntriangles);
         PAR_SHAPES_T* index = tris;
@@ -1432,11 +1462,6 @@ void par_shapes_unweld(par_shapes_mesh* mesh, bool create_indices)
         PAR_FREE(mesh->triangles);
         mesh->triangles = tris;
     }
-    // NOTE(mziulek): This operation invalidates 'normals' and 'tcoords'.
-    PAR_FREE(mesh->normals);
-    mesh->normals = 0;
-    PAR_FREE(mesh->tcoords);
-    mesh->tcoords = 0;
 }
 
 void par_shapes_compute_normals(par_shapes_mesh* m)
@@ -1797,6 +1822,13 @@ par_shapes_mesh* par_shapes_weld(par_shapes_mesh const* mesh, float epsilon,
     PAR_SHAPES_T* weldmap)
 {
     par_shapes_mesh* clone = par_shapes_clone(mesh, 0);
+
+    // NOTE(mziulek): This operation invalidates 'normals' and 'tcoords'.
+    PAR_FREE(clone->normals);
+    clone->normals = 0;
+    PAR_FREE(clone->tcoords);
+    clone->tcoords = 0;
+
     float aabb[6];
     int gridsize = 20;
     float maxcell = gridsize - 1;
@@ -1832,12 +1864,6 @@ par_shapes_mesh* par_shapes_weld(par_shapes_mesh const* mesh, float epsilon,
     PAR_FREE(sortmap);
     par_shapes_scale(clone, 1.0 / scale[0], 1.0 / scale[1], 1.0 / scale[2]);
     par_shapes_translate(clone, aabb[0], aabb[1], aabb[2]);
-
-    // NOTE(mziulek): This operation invalidates 'normals' and 'tcoords'.
-    PAR_FREE(clone->normals);
-    clone->normals = 0;
-    PAR_FREE(clone->tcoords);
-    clone->tcoords = 0;
 
     return clone;
 }
