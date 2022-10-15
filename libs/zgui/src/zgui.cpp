@@ -1117,13 +1117,21 @@ ZGUI_API ImGuiID zguiGetStrId(const char* str_id_begin, const char* str_id_end) 
 ZGUI_API ImGuiID zguiGetStrIdZ(const char* str_id) {
     return ImGui::GetID(str_id);
 }
-
+5
 ZGUI_API ImGuiID zguiGetPtrId(const void* ptr_id) {
     return ImGui::GetID(ptr_id);
 }
 
 ZGUI_API ImFont* zguiIoAddFontFromFile(const char* filename, float size_pixels) {
     return ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, nullptr, nullptr);
+}
+
+ZGUI_API ImFont* zguiIoAddFontFromFileWithConfig(const char* filename, float size_pixels, ImFontConfig* config, unsigned short ranges[]) {
+    return ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, size_pixels, config, ranges);
+}
+
+ZGUI_API ImFontConfig zguiImFontConfig_Init(void) {
+    return ImFontConfig();
 }
 
 ZGUI_API ImFont* zguiIoGetFont(unsigned int index) {

@@ -87,11 +87,43 @@ pub const ConfigFlags = enum(u32) {
     is_touch_screen = 1 << 21,
 };
 
+pub const FontConfig = extern struct {
+    font_data: ?*anyopaque,
+    font_data_size: i32,
+    font_data_owned_by_atlas: bool,
+    font_no: i32,
+    size_pixels: f32,
+    oversample_h: i32,
+    oversample_v: i32,
+    pixel_snap_h: bool,
+    glyph_extra_spacing: [2]f32,
+    glyph_offset: [2]f32,
+    glyph_ranges: [*c]u16,
+    glyph_min_advance_x: f32,
+    glyph_max_advance_x: f32,
+    merge_mode: bool,
+    font_builder_flags: u32,
+    rasterizer_multiply: f32,
+    ellipsis_char: Wchar,
+    name: [40]u8,
+    dst_font: *Font,
+
+    pub fn init() FontConfig {
+        return zguiImFontConfig_Init();
+    }
+};
+
 pub const io = struct {
     pub fn addFontFromFile(filename: [:0]const u8, size_pixels: f32) Font {
         return zguiIoAddFontFromFile(filename, size_pixels);
     }
     extern fn zguiIoAddFontFromFile(filename: [*:0]const u8, size_pixels: f32) Font;
+
+    pub fn addFontFromFileWithConfig(filename: [:0]const u8, size_pixels: f32, config: *FontConfig, ranges: [*]const Wchar) Font {
+        return zguiIoAddFontFromFileWithConfig(filename, size_pixels, config, ranges);
+    }
+    extern fn zguiIoAddFontFromFileWithConfig(filename: [*:0]const u8, size_pixels: f32, config: *FontConfig, ranges: [*]const Wchar) Font;
+    extern fn zguiImFontConfig_Init(void) FontConfig;
 
     /// `pub fn getFont(index: u32) Font`
     pub const getFont = zguiIoGetFont;
