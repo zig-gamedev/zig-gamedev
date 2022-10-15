@@ -109,8 +109,9 @@ pub const FontConfig = extern struct {
     dst_font: *Font,
 
     pub fn init() FontConfig {
-        return zguiImFontConfig_Init();
+        return zguiFontConfig_Init();
     }
+    extern fn zguiFontConfig_Init() FontConfig;
 };
 
 pub const io = struct {
@@ -119,11 +120,20 @@ pub const io = struct {
     }
     extern fn zguiIoAddFontFromFile(filename: [*:0]const u8, size_pixels: f32) Font;
 
-    pub fn addFontFromFileWithConfig(filename: [:0]const u8, size_pixels: f32, config: *FontConfig, ranges: [*]const Wchar) Font {
-        return zguiIoAddFontFromFileWithConfig(filename, size_pixels, config, ranges);
+    pub fn addFontFromFileWithConfig(
+        filename: [:0]const u8,
+        size_pixels: f32,
+        config: ?FontConfig,
+        ranges: ?[*]const Wchar,
+    ) Font {
+        return zguiIoAddFontFromFileWithConfig(filename, size_pixels, if (config) |c| &c else null, ranges);
     }
-    extern fn zguiIoAddFontFromFileWithConfig(filename: [*:0]const u8, size_pixels: f32, config: *FontConfig, ranges: [*]const Wchar) Font;
-    extern fn zguiImFontConfig_Init(void) FontConfig;
+    extern fn zguiIoAddFontFromFileWithConfig(
+        filename: [*:0]const u8,
+        size_pixels: f32,
+        config: ?*const FontConfig,
+        ranges: ?[*]const Wchar,
+    ) Font;
 
     /// `pub fn getFont(index: u32) Font`
     pub const getFont = zguiIoGetFont;
