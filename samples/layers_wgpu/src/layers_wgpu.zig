@@ -6,7 +6,6 @@ const zm = @import("zmath");
 const Graphics = @import("graphics.zig").State;
 
 const pill = @import("pill.zig");
-const vertex_generator = @import("vertex_generator.zig");
 
 const content_dir = @import("build_options").content_dir;
 const window_title = "zig-gamedev: Layers (wgpu)";
@@ -19,31 +18,12 @@ const DemoState = struct {
 
     fn init(allocator: std.mem.Allocator, window: zglfw.Window) !DemoState {
         var graphics = try Graphics.init(allocator, window);
-
         graphics.background_color = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 };
-        var hexagons = pill.init(graphics.gctx, allocator);
-        {
-            const hexagonSegments: u16 = 3;
-            try vertex_generator.generateVertices(hexagonSegments, &hexagons.vertices);
-            hexagons.recreateVertexBuffer();
 
-            try vertex_generator.generateIndices(hexagonSegments, &hexagons.indices);
-            hexagons.recreateIndexBuffer();
-        }
-
-        var pills = pill.init(graphics.gctx, allocator);
-        {
-            const pillSegments: u16 = 10;
-            try vertex_generator.generateVertices(pillSegments, &pills.vertices);
-            pills.recreateVertexBuffer();
-
-            try vertex_generator.generateIndices(pillSegments, &pills.indices);
-            pills.recreateIndexBuffer();
-        }
         return .{
             .graphics = graphics,
-            .hexagons = hexagons,
-            .pills = pills,
+            .hexagons = try pill.init(graphics.gctx, allocator, 3),
+            .pills = try pill.init(graphics.gctx, allocator, 10),
         };
     }
 
