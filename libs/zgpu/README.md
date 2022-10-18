@@ -16,7 +16,7 @@ For more details please see below.
 
 ## Getting started
 
-Copy `zgpu`, `zpool` and `zglfw` folders to a `libs` subdirectory of the root of your project.
+Copy `zgpu`, `zpool`, `zglfw` and `system-sdk` folders to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 ```zig

@@ -2,7 +2,7 @@
 
 ## Getting started
 
-Copy `zglfw` folder to a `libs` subdirectory of the root of your project.
+Copy `zglfw` and `system-sdk` folders to a `libs` subdirectory of the root of your project.
 
 Then in your `build.zig` add:
 ```zig
