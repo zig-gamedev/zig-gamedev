@@ -538,32 +538,6 @@ JPH_CAPI void
 JPH_MotionProperties_GetPointVelocityCOM(const JPH_MotionProperties *in_properties,
                                          const float in_point_relative_to_com[3],
                                          float out_point[3]);
-JPH_CAPI void
-JPH_MotionProperties_ApplyForceTorqueAndDragInternal(JPH_MotionProperties *in_properties,
-                                                     const float in_body_rotation[4],
-                                                     const float in_gravity[3],
-                                                     float in_delta_time);
-JPH_CAPI void
-JPH_MotionProperties_ResetForceAndTorqueInternal(JPH_MotionProperties *in_properties);
-
-JPH_CAPI uint32_t
-JPH_MotionProperties_GetIslandIndexInternal(const JPH_MotionProperties *in_properties);
-
-JPH_CAPI void
-JPH_MotionProperties_SetIslandIndexInternal(JPH_MotionProperties *in_properties, uint32_t in_index);
-
-JPH_CAPI uint32_t
-JPH_MotionProperties_GetIndexInActiveBodiesInternal(const JPH_MotionProperties *in_properties);
-
-JPH_CAPI void
-JPH_MotionProperties_ResetSleepTestSpheres(JPH_MotionProperties *in_properties,
-                                           const float *in_points);
-JPH_CAPI void
-JPH_MotionProperties_SaveState(const JPH_MotionProperties *in_properties,
-                               JPH_StateRecorder *in_stream);
-JPH_CAPI void
-JPH_MotionProperties_RestoreState(JPH_MotionProperties *in_properties,
-                                  JPH_StateRecorder *in_stream);
 JPH_CAPI float
 JPH_MotionProperties_GetMaxLinearVelocity(const JPH_MotionProperties *in_properties);
 
@@ -764,7 +738,7 @@ JPH_TriangleShapeSettings_GetConvexRadius(const JPH_TriangleShapeSettings *in_se
 JPH_CAPI void
 JPH_TriangleShapeSettings_SetConvexRadius(JPH_TriangleShapeSettings *in_settings,
                                           float in_convex_radius);
-//---------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 JPH_CAPI JPH_CapsuleShapeSettings *
 JPH_CapsuleShapeSettings_Create(float in_half_height_of_cylinder, float in_radius);
 
