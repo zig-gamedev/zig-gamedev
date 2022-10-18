@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 //
-// zgui v0.9
+// zgui v0.9.1
 // Zig bindings for 'dear imgui' library. Easy to use, hand-crafted API with default arguments,
 // named parameters and Zig style text formatting.
 //
