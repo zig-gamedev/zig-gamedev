@@ -1,4 +1,5 @@
 #pragma once
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdalign.h>
@@ -124,6 +125,13 @@ typedef struct JPH_TempAllocator JPH_TempAllocator;
 typedef struct JPH_JobSystem     JPH_JobSystem;
 typedef struct JPH_Body          JPH_Body;
 typedef struct JPH_BodyInterface JPH_BodyInterface;
+
+// Must be 16 byte aligned
+typedef void *(*JPH_AllocateFunction)(size_t in_size);
+typedef void (*JPH_FreeFunction)(void *in_block);
+
+typedef void *(*JPH_AlignedAllocateFunction)(size_t in_size, size_t in_alignment);
+typedef void (*JPH_AlignedFreeFunction)(void *in_block);
 //--------------------------------------------------------------------------------------------------
 //
 // Geometry Types
@@ -411,6 +419,11 @@ struct JPH_TransformedShape
 JPH_CAPI void
 JPH_RegisterDefaultAllocator(void);
 
+JPH_CAPI void
+JPH_RegisterCustomAllocator(JPH_AllocateFunction in_alloc,
+                            JPH_FreeFunction in_free,
+                            JPH_AlignedAllocateFunction in_aligned_alloc,
+                            JPH_AlignedFreeFunction in_aligned_free);
 JPH_CAPI void
 JPH_CreateFactory(void);
 

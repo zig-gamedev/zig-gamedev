@@ -50,8 +50,7 @@ export fn zguiMemAlloc(size: usize, _: ?*anyopaque) callconv(.C) ?*anyopaque {
         @returnAddress(),
     ) catch @panic("zgui: out of memory");
 
-    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch
-        @panic("zgui: out of memory");
+    mem_allocations.?.put(@ptrToInt(mem.ptr), size) catch @panic("zgui: out of memory");
 
     return mem.ptr;
 }
@@ -682,10 +681,10 @@ extern fn zguiPushItemWidth(item_width: f32) void;
 extern fn zguiPopItemWidth() void;
 extern fn zguiSetNextItemWidth(item_width: f32) void;
 //--------------------------------------------------------------------------------------------------
-/// `pub fn getFont() Font'
+/// `pub fn getFont() Font`
 pub const getFont = zguiGetFont;
 extern fn zguiGetFont() Font;
-/// `pub fn getFontSize() f32'
+/// `pub fn getFontSize() f32`
 pub const getFontSize = zguiGetFontSize;
 extern fn zguiGetFontSize() f32;
 /// `void pushFont(font: Font) void`
@@ -2463,7 +2462,7 @@ pub const endMainMenuBar = zguiEndMainMenuBar;
 pub fn beginMenu(label: [:0]const u8, enabled: bool) bool {
     return zguiBeginMenu(label, enabled);
 }
-/// `pub fn endMenu() void'
+/// `pub fn endMenu() void`
 pub const endMenu = zguiEndMenu;
 
 const MenuItem = struct {

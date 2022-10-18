@@ -8,6 +8,7 @@
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
 #include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/Memory.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -44,6 +45,20 @@ JPH_CAPI void
 JPH_RegisterDefaultAllocator(void)
 {
     JPH::RegisterDefaultAllocator();
+}
+//--------------------------------------------------------------------------------------------------
+JPH_CAPI void
+JPH_RegisterCustomAllocator(JPH_AllocateFunction in_alloc,
+                            JPH_FreeFunction in_free,
+                            JPH_AlignedAllocateFunction in_aligned_alloc,
+                            JPH_AlignedFreeFunction in_aligned_free)
+{
+#ifndef JPH_DISABLE_CUSTOM_ALLOCATOR
+    JPH::Allocate = in_alloc;
+    JPH::Free = in_free;
+    JPH::AlignedAllocate = in_aligned_alloc;
+    JPH::AlignedFree = in_aligned_free;
+#endif
 }
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void
