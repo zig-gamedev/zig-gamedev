@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-const std = @import("std");
-const assert = std.debug.assert;
+const assert = @import("std").debug.assert;
 const gui = @import("gui.zig");
 //--------------------------------------------------------------------------------------------------
 pub fn init() void {

@@ -1,4 +1,4 @@
-const zgui = @import("gui.zig");
+const gui = @import("gui.zig");
 
 /// This call will install GLFW callbacks to handle GUI interactions.
 /// Those callbacks will chain-call user's previously installed callbacks, if any.
@@ -22,15 +22,15 @@ pub fn newFrame(fb_width: u32, fb_height: u32) void {
     ImGui_ImplWGPU_NewFrame();
     ImGui_ImplGlfw_NewFrame();
 
-    zgui.io.setDisplaySize(@intToFloat(f32, fb_width), @intToFloat(f32, fb_height));
-    zgui.io.setDisplayFramebufferScale(1.0, 1.0);
+    gui.io.setDisplaySize(@intToFloat(f32, fb_width), @intToFloat(f32, fb_height));
+    gui.io.setDisplayFramebufferScale(1.0, 1.0);
 
-    zgui.newFrame();
+    gui.newFrame();
 }
 
 pub fn draw(wgpu_render_pass: *const anyopaque) void {
-    zgui.render();
-    ImGui_ImplWGPU_RenderDrawData(zgui.getDrawData(), wgpu_render_pass);
+    gui.render();
+    ImGui_ImplWGPU_RenderDrawData(gui.getDrawData(), wgpu_render_pass);
 }
 
 // Those functions are defined in `imgui_impl_glfw.cpp` and 'imgui_impl_wgpu.cpp`
